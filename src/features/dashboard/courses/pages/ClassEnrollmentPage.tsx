@@ -199,13 +199,6 @@ export default function ClassEnrollmentPage({
   const occupancyPercentage = maxParticipants > 0 ? (enrolledCount / maxParticipants) * 100 : 0;
   const isAlmostFull = !isClassFull && occupancyPercentage >= 75;
 
-  console.log(isClassFull, "CLAS FULL")
-  console.log(alreadyEnrolled, "AL REND")
-  console.log(maxParticipants, "MAX PART")
-  console.log(enrolledCount, "ENROLLED")
-  console.log(activeEnrollments, "ACT ENR")
-
-
   const { formattedDates } = useMemo(() => {
     if (!enrollingClass) return { formattedDates: '' };
     try {

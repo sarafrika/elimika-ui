@@ -35,9 +35,12 @@ import {
   getAllCategoriesOptions,
   getAllDifficultyLevelsOptions,
   getAllTrainingProgramsOptions,
+  getClassDefinitionsForProgramOptions,
   getCourseRecommendationsOptions,
   getCourseReviewsOptions,
   getPublishedCoursesOptions,
+  getProgramCoursesOptions,
+  getProgramEnrollmentsOptions,
   searchCourseCreatorsOptions,
   searchProgramTrainingApplicationsOptions,
   searchProgramTrainingApplicationsQueryKey,
@@ -147,7 +150,10 @@ const createCatalogCards = (
   canOrganisationApply: boolean,
   instructorCourseApplicationMap: Map<string, { status?: string | null }>,
   instructorProgramApplicationMap: Map<string, { status?: string | null }>,
-  courseClassesMap: Record<string, ClassDefinition[]>
+  courseClassesMap: Record<string, ClassDefinition[]>,
+  programClassesMap: Record<string, ClassDefinition[]>,
+  programCoursesMap: Record<string, Course[]>,
+  programLearnerCountMap: Record<string, number>
 ): CoursesCatalogCardData[] =>
   items.map((item, index) => {
     const presentation = getCardPresentation(index);
@@ -177,11 +183,39 @@ const createCatalogCards = (
                 ? 'Reapply to Train'
                 : 'Apply to Train';
 
-    const activeClasses = (courseClassesMap[item.id] ?? []).filter(
-      cls => cls.is_active
+    const classDefinitions =
+      item.kind === 'program' ? programClassesMap[item.id] ?? [] : courseClassesMap[item.id] ?? [];
+    const activeClasses = classDefinitions;
+    const activeClassesInstructors = new Set(
+      activeClasses
+        .map(cls => cls.default_instructor_uuid)
+        .filter((uuid): uuid is string => Boolean(uuid))
     );
-    // each of the activeclasses has default_instructor_uuid, we need to get the array of instructors who have created classes under a course, (an instructor can create 2 or more classes, so we just pick one instance in that case)
-    const activeClassesInstructors = []
+
+    const programAgeRange = (() => {
+      if (item.kind !== 'program') {
+        return { minAge: item.minAge ?? null, maxAge: item.maxAge ?? null };
+      }
+
+      const youngestCourse = (programCoursesMap[item.id] ?? [])
+        .filter(course => course.age_lower_limit != null || course.age_upper_limit != null)
+        .sort((left, right) => {
+          const leftLower = left.age_lower_limit ?? Number.POSITIVE_INFINITY;
+          const rightLower = right.age_lower_limit ?? Number.POSITIVE_INFINITY;
+          if (leftLower !== rightLower) {
+            return leftLower - rightLower;
+          }
+
+          const leftUpper = left.age_upper_limit ?? Number.POSITIVE_INFINITY;
+          const rightUpper = right.age_upper_limit ?? Number.POSITIVE_INFINITY;
+          return leftUpper - rightUpper;
+        })[0];
+
+      return {
+        minAge: youngestCourse?.age_lower_limit ?? youngestCourse?.age_upper_limit ?? null,
+        maxAge: youngestCourse?.age_upper_limit ?? youngestCourse?.age_lower_limit ?? null,
+      };
+    })();
 
     return {
       id: item.id,
@@ -195,7 +229,7 @@ const createCatalogCards = (
 
       duration: item.durationLabel,
 
-      enrolledClasses: 1,
+      enrolledClasses: activeClasses.length,
 
       secondaryMeta:
         item.secondaryMeta ||
@@ -265,18 +299,21 @@ const createCatalogCards = (
 
       rating: item.rating,
       reviewCount: item.reviewCount,
-      enrollmentCount: item.enrollmentCount,
+      enrollmentCount:
+        item.kind === 'program'
+          ? programLearnerCountMap[item.id] ?? item.enrollmentCount
+          : item.enrollmentCount,
 
       certificateHref: '',
       category: '',
       subject: '',
       programType: '',
-      minAge: item.minAge ?? "N?A",
-      maxAge: item.maxAge ?? "N?A",
+      minAge: programAgeRange.minAge ?? item.minAge ?? undefined,
+      maxAge: programAgeRange.maxAge ?? item.maxAge ?? undefined,
 
       // Actual number of active classes
       activeClasses: activeClasses.length,
-      instructorCount: activeClassesInstructors.length
+      instructorCount: activeClassesInstructors.size,
     };
   });
 
@@ -389,8 +426,6 @@ export function SharedCoursesPage({ domain }: SharedCoursesPageProps) {
   const courses = useMemo(() => coursesResponse?.data?.content ?? [], [coursesResponse]);
   const programs = useMemo(() => programsResponse?.data?.content ?? [], [programsResponse]);
   const categories = useMemo(() => categoriesResponse?.data?.content ?? [], [categoriesResponse]);
-
-  console.log(courses, "CSSS")
 
   const { data: instructorCourseApplications } = useQuery({
     ...searchTrainingApplicationsOptions({
@@ -865,8 +900,6 @@ export function SharedCoursesPage({ domain }: SharedCoursesPageProps) {
     [currentCatalogPage, filteredItems]
   );
 
-  console.log(paginatedItems, "PAG IT")
-
   const instructorCourseApplicationMap = useMemo(() => {
     const map = new Map<string, { status?: string | null }>();
     instructorCourseApplications?.data?.content?.forEach(application => {
@@ -1041,6 +1074,91 @@ export function SharedCoursesPage({ domain }: SharedCoursesPageProps) {
     isLoading: courseClassesLoading,
   } = useCourseClasses(courseUuids);
 
+  const programUuids = useMemo(
+    () =>
+      paginatedItems
+        .filter(item => item.kind === 'program')
+        .map(item => item.id)
+        .filter(Boolean),
+    [paginatedItems]
+  );
+
+  const programClassDefinitionsQueries = useQueries({
+    queries: programUuids.map(programUuid => ({
+      ...getClassDefinitionsForProgramOptions({
+        path: { programUuid },
+        query: { pageable: { page: 0, size: 200 } },
+      }),
+      enabled: Boolean(programUuid),
+      staleTime: 5 * 60 * 1000,
+      refetchOnWindowFocus: false,
+      refetchOnMount: false,
+      refetchOnReconnect: false,
+    })),
+  });
+
+  const programCoursesQueries = useQueries({
+    queries: programUuids.map(programUuid => ({
+      ...getProgramCoursesOptions({
+        path: { programUuid },
+      }),
+      enabled: Boolean(programUuid),
+      staleTime: 5 * 60 * 1000,
+      refetchOnWindowFocus: false,
+      refetchOnMount: false,
+      refetchOnReconnect: false,
+    })),
+  });
+
+  const programEnrollmentQueries = useQueries({
+    queries: programUuids.map(programUuid => ({
+      ...getProgramEnrollmentsOptions({
+        path: { programUuid },
+        query: { pageable: { page: 0, size: 1 } },
+      }),
+      enabled: Boolean(programUuid),
+      staleTime: 60 * 1000,
+      refetchOnWindowFocus: false,
+      refetchOnMount: false,
+      refetchOnReconnect: false,
+    })),
+  });
+
+  const programClassesMap = useMemo<Record<string, ClassDefinition[]>>(() => {
+    const map: Record<string, ClassDefinition[]> = {};
+
+    programUuids.forEach((programUuid, index) => {
+      map[programUuid] =
+        programClassDefinitionsQueries[index]?.data?.data
+          ?.map(item => item.class_definition)
+          .filter((definition): definition is ClassDefinition => Boolean(definition)) ?? [];
+    });
+
+    return map;
+  }, [programClassDefinitionsQueries, programUuids]);
+
+  const programCoursesMap = useMemo<Record<string, Course[]>>(() => {
+    const map: Record<string, Course[]> = {};
+
+    programUuids.forEach((programUuid, index) => {
+      map[programUuid] = programCoursesQueries[index]?.data?.data ?? [];
+    });
+
+    return map;
+  }, [programCoursesQueries, programUuids]);
+
+  const programLearnerCountMap = useMemo<Record<string, number>>(() => {
+    const map: Record<string, number> = {};
+
+    programUuids.forEach((programUuid, index) => {
+      const response = programEnrollmentQueries[index]?.data?.data;
+      const totalElements = Number(response?.metadata?.totalElements ?? 0);
+      map[programUuid] = totalElements || (response?.content?.length ?? 0);
+    });
+
+    return map;
+  }, [programEnrollmentQueries, programUuids]);
+
 
   const catalogCards = useMemo(
     () =>
@@ -1053,7 +1171,10 @@ export function SharedCoursesPage({ domain }: SharedCoursesPageProps) {
         canOrganisationApply,
         instructorCourseApplicationMap,
         instructorProgramApplicationMap,
-        courseClassesMap
+        courseClassesMap,
+        programClassesMap,
+        programCoursesMap,
+        programLearnerCountMap
       ),
     [
       paginatedItems,
@@ -1065,10 +1186,11 @@ export function SharedCoursesPage({ domain }: SharedCoursesPageProps) {
       instructorCourseApplicationMap,
       instructorProgramApplicationMap,
       courseClassesMap,
+      programClassesMap,
+      programCoursesMap,
+      programLearnerCountMap,
     ]
   );
-
-  console.log(catalogCards, "CAT CAEDS")
 
   const recommendationCards = useMemo(
     () =>
@@ -1088,7 +1210,11 @@ export function SharedCoursesPage({ domain }: SharedCoursesPageProps) {
     programsLoading ||
     categoriesLoading ||
     difficultiesLoading ||
-    (isStudentDomain && studentCoursesLoading);
+    (isStudentDomain && studentCoursesLoading) ||
+    courseClassesLoading ||
+    programClassDefinitionsQueries.some(query => query.isLoading || query.isFetching) ||
+    programCoursesQueries.some(query => query.isLoading || query.isFetching) ||
+    programEnrollmentQueries.some(query => query.isLoading || query.isFetching);
 
   const setFilterValue = (key: CoursesFilterSection['key'], value: string) => {
     setFilters(current => ({

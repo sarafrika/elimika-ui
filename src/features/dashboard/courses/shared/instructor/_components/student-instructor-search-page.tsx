@@ -48,6 +48,7 @@ import {
 import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
 import { useEffect, useMemo, useState } from 'react';
+import { Skeleton } from '../../../../../../../components/ui/skeleton';
 import { toAuthenticatedMediaUrl } from '../../../../../../lib/media-url';
 import { stripHtml } from '../../_components/courses-data';
 
@@ -137,6 +138,86 @@ function getDeliveryModesLabel(instructor: SearchInstructor) {
   return instructor.has_location_coordinates ? 'Physical, Online' : 'Online';
 }
 
+function InstructorSearchPageSkeleton() {
+  return (
+    <div className='px-4 py-6'>
+      <div className='flex items-center gap-2'>
+        <Skeleton className='h-4 w-4 rounded-full' />
+        <Skeleton className='h-4 w-40' />
+      </div>
+
+      <div className='mt-3 flex flex-wrap items-center justify-between gap-3'>
+        <div className='space-y-2'>
+          <Skeleton className='h-7 w-48' />
+          <Skeleton className='h-4 w-60' />
+        </div>
+
+        <div className='flex flex-wrap gap-2'>
+          <Skeleton className='h-9 w-20 rounded-md' />
+          <Skeleton className='h-9 w-20 rounded-md' />
+          <Skeleton className='h-9 w-20 rounded-md' />
+        </div>
+      </div>
+
+      <div className='mt-4 grid gap-4 lg:grid-cols-[280px_1fr]'>
+        <Card className='space-y-4 rounded-xl border bg-card p-4'>
+          {Array.from({ length: 6 }).map((_, index) => (
+            <div key={`filter-skeleton-${index}`} className='space-y-2'>
+              <Skeleton className='h-3 w-24' />
+              <Skeleton className='h-10 w-full rounded-md' />
+            </div>
+          ))}
+          <Skeleton className='h-9 w-full rounded-md' />
+        </Card>
+
+        <div className='space-y-4'>
+          <div className='flex items-center justify-between text-xs text-muted-foreground'>
+            <Skeleton className='h-4 w-32' />
+            <Skeleton className='h-4 w-20' />
+          </div>
+
+          {Array.from({ length: 3 }).map((_, index) => (
+            <Card key={`instructor-skeleton-${index}`}>
+              <CardHeader className='pb-3'>
+                <div className='flex items-start gap-3'>
+                  <Skeleton className='h-16 w-16 rounded-full' />
+
+                  <div className='flex-1 space-y-3'>
+                    <div className='flex flex-wrap items-center gap-2'>
+                      <Skeleton className='h-5 w-40' />
+                      <Skeleton className='h-5 w-20 rounded-full' />
+                      <Skeleton className='h-5 w-20 rounded-full' />
+                    </div>
+                    <Skeleton className='h-4 w-64' />
+                    <Skeleton className='h-4 w-52' />
+                  </div>
+                </div>
+              </CardHeader>
+
+              <CardContent className='space-y-4'>
+                <div className='grid gap-2 text-xs text-muted-foreground md:grid-cols-3'>
+                  <Skeleton className='h-4 w-full' />
+                  <Skeleton className='h-4 w-full' />
+                  <Skeleton className='h-4 w-full' />
+                  <Skeleton className='h-4 w-full' />
+                  <Skeleton className='h-4 w-full' />
+                  <Skeleton className='h-4 w-full' />
+                </div>
+
+                <div className='grid gap-2 md:grid-cols-3'>
+                  <Skeleton className='h-9 rounded-md' />
+                  <Skeleton className='h-9 rounded-md' />
+                  <Skeleton className='h-9 rounded-md' />
+                </div>
+              </CardContent>
+            </Card>
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+}
+
 export default function StudentInstructorSearchPage() {
   const searchParams = useSearchParams();
   const courseId = searchParams.get('courseId');
@@ -153,14 +234,19 @@ export default function StudentInstructorSearchPage() {
   const [page, setPage] = useState(1);
   const [savedInstructorUuids, setSavedInstructorUuids] = useState<string[]>([]);
 
-  const { data: courseResp } = useQuery({
+  const { data: courseResp, isLoading: isCourseLoading, isFetching: isCourseFetching } = useQuery({
     ...getCourseByUuidOptions({
       path: { uuid: courseId as string },
-    })
+    }),
+    enabled: Boolean(courseId),
   });
   const course = courseResp?.data;
 
-  const { data: applications } = useQuery({
+  const {
+    data: applications,
+    isLoading: isApplicationsLoading,
+    isFetching: isApplicationsFetching,
+  } = useQuery({
     ...listTrainingApplicationsOptions({
       path: { courseUuid: courseId as string },
       query: { pageable: {}, status: 'approved' },
@@ -243,6 +329,13 @@ export default function StudentInstructorSearchPage() {
         ? hiredInstructors
         : scopedInstructors;
 
+  const isPageLoading =
+    loading ||
+    isCourseLoading ||
+    isCourseFetching ||
+    isApplicationsLoading ||
+    isApplicationsFetching;
+
   const showDistance = filters.mode === 'physical' && filters.location.trim().length > 0;
 
   const { data: instructorPricing } = useQuery({
@@ -255,6 +348,7 @@ export default function StudentInstructorSearchPage() {
         },
       },
     }),
+    enabled: Boolean(courseId) && activeInstructorList.length > 0,
   });
 
   const pricingMap = useMemo(() => {
@@ -493,7 +587,9 @@ export default function StudentInstructorSearchPage() {
         </div>
       </div>
 
-      {!loading && activeInstructorList.length === 0 ? (
+      {isPageLoading ? (
+        <InstructorSearchPageSkeleton />
+      ) : activeInstructorList.length === 0 ? (
         <InstructorEmptyState activeView={activeView} onReset={resetFilters} />
       ) : (
         <>
@@ -809,11 +905,12 @@ export default function StudentInstructorSearchPage() {
                                 <Star className="h-3 w-3 fill-warning text-warning" />
                                 {instructor.rating ?? '—'} ({instructor.reviews?.length ?? 0} reviews)
                               </span>
-                              <span>Students taught: Not available</span>
+
+                              {instructor?.totalStudents && <span>{instructor?.totalStudents} students</span>}
                             </div>
 
                             <div className="mt-1 text-xs text-foreground">
-                              {instructor.professional_headline ?? 'Not available'}
+                              {instructor.professional_headline ?? ''}
                             </div>
                           </div>
                         </div>
@@ -824,11 +921,11 @@ export default function StudentInstructorSearchPage() {
                           <div className="inline-flex items-center gap-1.5">
                             <Languages className="h-3.5 w-3.5" /> English
                           </div>
-                          <div>Teaching: Not available</div>
+                          <div>Teaching: Method not specified</div>
                           <div>Modes: {getDeliveryModesLabel(instructor)}</div>
-                          <div>Hourly: {instructor.pricing?.rate_card?.currency} {instructor.pricing?.rate_card?.group_inperson_hourly_rate ?? 'Not available'}</div>
-                          <div>Group: {instructor.pricing?.rate_card?.currency} {instructor.pricing?.rate_card?.group_inperson_hourly_rate ?? 'Not available'}</div>
-                          <div>Private: {instructor.pricing?.rate_card?.currency} {instructor.pricing?.rate_card?.private_inperson_hourly_rate ?? 'Not available'}</div>
+                          <div>Hourly: {instructor.pricing?.rate_card?.currency} {instructor.pricing?.rate_card?.group_inperson_hourly_rate ?? ''}</div>
+                          <div>Group: {instructor.pricing?.rate_card?.currency} {instructor.pricing?.rate_card?.group_inperson_hourly_rate ?? ''}</div>
+                          <div>Private: {instructor.pricing?.rate_card?.currency} {instructor.pricing?.rate_card?.private_inperson_hourly_rate ?? ''}</div>
                         </div>
 
                         <div className="mt-4 flex flex-wrap gap-2">
