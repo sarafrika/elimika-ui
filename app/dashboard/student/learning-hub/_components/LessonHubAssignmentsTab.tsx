@@ -375,7 +375,7 @@ function AssignmentDetailSheet({
                     ) : (
                         <div className='flex justify-end'>
                             <Button variant='outline' asChild>
-                                <Link href='/dashboard/student/assignment' className='inline-flex items-center gap-2'>
+                                <Link href={`/dashboard/student/assignment/${assignment?.uuid}`} className='inline-flex items-center gap-2'>
                                     Open full assignments page
                                     <ArrowRight className='h-4 w-4' />
                                 </Link>

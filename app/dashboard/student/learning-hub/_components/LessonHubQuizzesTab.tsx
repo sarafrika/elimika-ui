@@ -28,7 +28,7 @@ import {
     getQuizByUuidOptions,
     getQuizSchedulesOptions,
 } from '@/services/client/@tanstack/react-query.gen';
-import type { ClassQuizSchedule, Enrollment, Quiz, QuizAttempt } from '@/services/client/types.gen';
+import type { ClassQuizSchedule, Enrollment, Quiz, QuizAttempt, Student } from '@/services/client/types.gen';
 import { useQueries } from '@tanstack/react-query';
 import {
     ArrowRight,
@@ -42,7 +42,6 @@ import {
 import Link from 'next/link';
 import { useMemo, useState } from 'react';
 import { Card, CardContent } from '../../../../../components/ui/card';
-import { Student } from '../../../../services/api/schema';
 
 type ClassMeta = {
     classUuid: string;
@@ -193,38 +192,57 @@ function QuizDetailSheet({
     const status = getQuizStatus(latestAttempt);
     const schedule = payload?.schedule;
     const quiz = payload?.quiz;
+    const classMeta = payload?.classMeta;
 
     return (
         <Sheet open={Boolean(payload)} onOpenChange={open => !open && onClose()}>
             <SheetContent className='overflow-y-auto sm:max-w-xl'>
                 <SheetHeader>
-                    <SheetTitle>{quiz?.title || 'Untitled quiz'}</SheetTitle>
+                    <SheetTitle>{quiz?.title ?? ''}</SheetTitle>
                     <SheetDescription>
                         {schedule?.due_at ? `Due ${formatDate(schedule.due_at)} · ` : ''}
                         {schedule ? formatTimeLimit(schedule, quiz) : 'Untimed'}
                     </SheetDescription>
                 </SheetHeader>
 
-                <div className='space-y-4 px-4 pb-4'>
-                    <div className='flex flex-wrap gap-2'>
-                        <Badge variant='outline' className='text-[10px]'>
-                            {payload?.classMeta.courseTitle}
-                        </Badge>
-                        {status && <Badge variant={status.variant}>{status.label}</Badge>}
-                    </div>
+                <SheetHeader className='py-0 -mt-2'>
+                    <SheetTitle>{classMeta?.classTitle ?? ''}</SheetTitle>
 
+                    <div className="text-sm leading-5">
+                        <SheetDescription className="inline">
+                            {classMeta?.courseTitle}
+                        </SheetDescription>
+
+                        {status && (
+                            <Badge
+                                variant={status.variant}
+                                className="ml-2 inline-flex align-middle"
+                            >
+                                {status.label}
+                            </Badge>
+                        )}
+                    </div>
+                </SheetHeader>
+
+                <div className='space-y-4 px-4 pb-4'>
                     {payload?.quiz?.description ? (
-                        <div className='rounded-xl border bg-muted/30 p-3 text-sm leading-relaxed'>
+                        <div className='rounded-md border bg-muted/30 p-3 text-sm leading-relaxed'>
                             {payload.quiz.description}
                         </div>
                     ) : (
-                        <div className='rounded-xl border bg-muted/30 p-3 text-sm leading-relaxed'>
+                        <div className='rounded-md border bg-muted/30 p-3 text-sm leading-relaxed'>
                             Open this quiz to review the prompt and continue your attempt.
                         </div>
                     )}
 
+                    {payload?.quiz?.instructions && (
+                        <div className='rounded-md border bg-muted/30 p-3 text-sm leading-relaxed'>
+                            {payload.quiz.instructions}
+                        </div>
+                    )}
+
                     {latestAttempt ? (
-                        <div className='rounded-xl border border-success/20 bg-success/5 p-3'>
+                        <div className='rounded-md border border-success/20 bg-success/5 p-3'>
                             <p className='text-sm font-medium text-success'>
                                 Latest score: {latestAttempt.grade_display || `${latestAttempt.score ?? 0}/${latestAttempt.max_score ?? 0}`}
                             </p>
@@ -233,25 +251,25 @@ function QuizDetailSheet({
                             </p>
                         </div>
                     ) : (
-                        <div className='rounded-xl border bg-muted/30 p-3 text-sm leading-relaxed'>
+                        <div className='rounded-md border bg-muted/30 p-3 text-sm leading-relaxed'>
                             No attempt has been started yet.
                         </div>
                     )}
 
                     <div className='grid grid-cols-3 gap-2'>
-                        <div className='rounded-xl border bg-background/70 p-3'>
+                        <div className='rounded-md border bg-background/70 p-3'>
                             <p className='text-muted-foreground text-[10px] font-semibold uppercase tracking-wide'>Due</p>
                             <p className='text-foreground mt-1 text-sm font-semibold'>
                                 {formatDate(schedule?.due_at)}
                             </p>
                         </div>
-                        <div className='rounded-xl border bg-background/70 p-3'>
+                        <div className='rounded-md border bg-background/70 p-3'>
                             <p className='text-muted-foreground text-[10px] font-semibold uppercase tracking-wide'>Time</p>
                             <p className='text-foreground mt-1 text-sm font-semibold'>
                                 {schedule ? formatTimeLimit(schedule, quiz) : 'Untimed'}
                             </p>
                         </div>
-                        <div className='rounded-xl border bg-background/70 p-3'>
+                        <div className='rounded-md border bg-background/70 p-3'>
                             <p className='text-muted-foreground text-[10px] font-semibold uppercase tracking-wide'>Attempts</p>
                             <p className='text-foreground mt-1 text-sm font-semibold'>
                                 {payload?.attempts.length ?? 0}/{schedule?.attempt_limit_override ?? quiz?.attempts_allowed ?? '∞'}

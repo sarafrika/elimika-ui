@@ -71,22 +71,22 @@ export function StudentCoursesCard({
   const [selectedId, setSelectedId] = useState<string | null>(null);
 
   return (
-    <div>
+    <div className="h-full">
       <Card
         onClick={() => {
           setSelectedId(card.id);
           setOpen(true);
           onOpenDetails(card);
         }}
-        className='hover:border-primary/40 flex cursor-pointer flex-col overflow-hidden pt-0 transition hover:shadow-md'
+        className="flex h-full min-h-[520px] cursor-pointer flex-col overflow-hidden pt-0 transition hover:border-primary/40 hover:shadow-md"
       >
         {/* Cover */}
-        <div className='relative h-40 w-full overflow-hidden'>
+        <div className="relative h-40 w-full shrink-0 overflow-hidden">
           <ImageWithFallback
             src={imageUrl}
             alt={card.title || 'Course'}
             fill
-            className='object-cover transition-transform duration-300 hover:scale-105'
+            className="object-cover transition-transform duration-300 hover:scale-105"
             unoptimized={isAuthenticatedMediaUrl(imageUrl)}
             fallback={
               <div
@@ -95,89 +95,126 @@ export function StudentCoursesCard({
                   imageToneClasses[card.imageTone]
                 )}
               >
-                <card.icon className='text-muted-foreground h-10 w-10' />
+                <card.icon className="text-muted-foreground h-10 w-10" />
               </div>
             }
           />
         </div>
 
-        <CardHeader className='pb-2'>
-          <div className='flex flex-wrap items-center gap-1.5'>
-            <Badge variant='secondary'>{card.category ?? ""}</Badge>
-
-            <Badge
-              variant='outline'
-              className={cn(
-                levelStyles[card.secondaryMeta?.toLowerCase()] ?? 'bg-muted text-muted-foreground'
+        {/* Header */}
+        <CardHeader className="flex min-h-[168px] flex-col pb-2">
+          {/* Badges */}
+          <div className="min-h-[28px]">
+            <div className="flex max-h-[52px] flex-wrap content-start gap-1.5 overflow-hidden">
+              {card?.categoryNames?.length! > 0 && (
+                <>
+                  {card?.categoryNames?.map(category => (
+                    <Badge key={category} variant="secondary">
+                      {category}
+                    </Badge>
+                  ))}
+                </>
               )}
-            >
-              {card.secondaryMeta ?? ""}
-            </Badge>
 
-            {card.skillsFundEligible && (
-              <Badge className='bg-success/90 hover:bg-success/70'>
-                <PiggyBank className='mr-1 h-3 w-3' />
-                Skills Fund
+              <Badge
+                variant="outline"
+                className={cn(
+                  levelStyles[card.secondaryMeta?.toLowerCase()] ??
+                  'bg-muted text-muted-foreground'
+                )}
+              >
+                {card.secondaryMeta ?? ''}
               </Badge>
-            )}
+
+              {card.skillsFundEligible && (
+                <Badge className="bg-success/90 hover:bg-success/70">
+                  <PiggyBank className="mr-1 h-3 w-3" />
+                  Skills Fund
+                </Badge>
+              )}
+            </div>
           </div>
 
-          <CardTitle className='mt-2 text-lg'>{card.title || 'Untitled Course'}</CardTitle>
+          {/* Title */}
+          <CardTitle className="mt-2 line-clamp-2 min-h-[56px] text-lg leading-7">
+            {card.title || 'Untitled Course'}
+          </CardTitle>
 
-          <CardDescription className='line-clamp-2'>
-            {card.description ?? ""}
+          {/* Description */}
+          <CardDescription className="line-clamp-2 min-h-[40px]">
+            {card?.description ?? ''}
           </CardDescription>
         </CardHeader>
 
-        <CardContent className='mt-auto space-y-3'>
-          <div className='text-muted-foreground grid grid-cols-2 gap-x-3 gap-y-1.5 text-xs'>
-            <div className='flex items-center gap-1'>
-              <Star className='h-3.5 w-3.5 fill-[var(--warning)] text-[var(--warning)]' />
-              {(card.rating ?? 0).toFixed(1)}
+        {/* Content */}
+        <CardContent className="mt-auto flex flex-1 flex-col space-y-3">
+          {/* Metadata */}
+          <div className="grid min-h-[60px] grid-cols-2 gap-x-3 gap-y-1.5 text-xs text-muted-foreground">
+            <div className="flex min-w-0 items-center gap-1">
+              <Star className="h-3.5 w-3.5 shrink-0 fill-[var(--warning)] text-[var(--warning)]" />
+              <span className="truncate">
+                {(card.rating ?? 0).toFixed(1)}
+              </span>
             </div>
 
-            <div className='flex items-center gap-1'>
-              <Clock className='h-3.5 w-3.5' />
-              {card.duration || '0h'}
+            <div className="flex min-w-0 items-center gap-1">
+              <Clock className="h-3.5 w-3.5 shrink-0" />
+              <span className="truncate">
+                {card.duration || '0h'}
+              </span>
             </div>
 
-            <div className='flex items-center gap-1'>
-              <GraduationCap className='h-3.5 w-3.5' />
-              {card.minAge || 'Not available'}+
+            <div className="flex min-w-0 items-center gap-1">
+              <GraduationCap className="h-3.5 w-3.5 shrink-0" />
+              <span className="truncate">
+                {card.minAge || 'Not available'}+
+              </span>
             </div>
 
-            <div className='flex items-center gap-1'>
-              <Layers className='h-3.5 w-3.5' />
-              {card.units ?? 0} units
+            <div className="flex min-w-0 items-center gap-1">
+              <Layers className="h-3.5 w-3.5 shrink-0" />
+              <span className="truncate">
+                {card.units ?? 0} units
+              </span>
             </div>
 
-            <div className='flex items-center gap-1'>
-              <Users className='h-3.5 w-3.5' />
-              {card.enrollmentCount ?? 0} learners
+            <div className="flex min-w-0 items-center gap-1">
+              <Users className="h-3.5 w-3.5 shrink-0" />
+              <span className="truncate">
+                {card.enrollmentCount ?? 0} learners
+              </span>
             </div>
 
-            <div className='flex items-center gap-1'>
-              <CalendarDays className='h-3.5 w-3.5' />
-              {(card.activeClasses ?? card.bundledCourseCount ?? 0)} classes
+            <div className="flex min-w-0 items-center gap-1">
+              <CalendarDays className="h-3.5 w-3.5 shrink-0" />
+              <span className="truncate">
+                {card.activeClasses ?? 0} classes
+              </span>
             </div>
 
-            <div className='flex items-center gap-1'>
-              <UserCheck className='h-3.5 w-3.5' />
-              {card.instructorCount ?? 0} instructors
+            <div className="flex min-w-0 items-center gap-1">
+              <UserCheck className="h-3.5 w-3.5 shrink-0" />
+              <span className="truncate">
+                {card.instructorCount ?? 0} instructors
+              </span>
             </div>
           </div>
 
-          <div className='grid grid-cols-2 gap-2' onClick={e => e.stopPropagation()}>
-            <Button asChild size='sm'>
+          {/* Actions */}
+          <div
+            className="mt-auto grid shrink-0 grid-cols-2 gap-2"
+            onClick={e => e.stopPropagation()}
+          >
+            <Button asChild size="sm">
               <Link href={card.enrollHref}>
-                <Users className='mr-1 h-3 w-3' />
+                <Users className="mr-1 h-3 w-3" />
                 Join Class
               </Link>
             </Button>
 
-            <Button asChild size='sm' variant='outline'>
+            <Button asChild size="sm" variant="outline">
               <Link href={card.instructorHref}>
-                <Search className='h-3 w-3' />
+                <Search className="h-3 w-3" />
                 Search Instructor
               </Link>
             </Button>

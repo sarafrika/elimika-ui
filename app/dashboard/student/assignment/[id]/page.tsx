@@ -286,11 +286,12 @@ export default function StudentAssignmentSubmissionPage() {
   // ── Render ───────────────────────────────────────────────────────────────
   return (
     <div className='mx-auto w-full max-w-5xl space-y-6 p-4 sm:p-6 lg:p-8'>
+      {/* // automatically go to learning-hub page, assignment tab */}
       <Button
         variant='ghost'
         size='sm'
         className='text-muted-foreground -ml-2 w-fit rounded-full'
-        onClick={() => router.push('/dashboard/student/assignment')}
+        onClick={() => router.push('/dashboard/student/learning-hub')}
       >
         <ArrowLeft className='mr-2 h-4 w-4' />
         All assignments

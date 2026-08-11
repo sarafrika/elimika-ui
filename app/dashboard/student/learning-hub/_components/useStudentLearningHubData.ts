@@ -43,6 +43,10 @@ export type LearningHubClass = {
   href: string;
   bannerUrl?: string;
   accent: 'blue' | 'green' | 'slate';
+  lessonId?: string;
+  contentId?: string;
+  lastLessonId?: string;
+  nextLessonId?: string;
 };
 
 export type LearningHubActiveCourse = {
@@ -63,6 +67,10 @@ export type LearningHubLiveClass = {
   instructor: string;
   locationLabel: string;
   href: string;
+  lessonId?: string;
+  contentId?: string;
+  lastLessonId?: string;
+  nextLessonId?: string;
 };
 
 export type LearningHubNextClass = LearningHubUpcomingClass & {
@@ -78,6 +86,10 @@ export type LearningHubUpcomingClass = {
   locationLabel: string;
   href: string;
   startMs?: number;
+  lessonId?: string;
+  contentId?: string;
+  lastLessonId?: string;
+  nextLessonId?: string;
 };
 
 export type LearningHubAssignment = {
@@ -142,6 +154,10 @@ export type LearningHubClassEnrollment = StudentClassEnrollmentSummary & {
   latestStartLabel: string;
   href: string;
   tone: 'blue' | 'green' | 'slate';
+  lessonId?: string;
+  contentId?: string;
+  lastLessonId?: string;
+  nextLessonId?: string;
 };
 
 const MOCK_RECOMMENDED_COURSES: LearningHubRecommendedCourse[] = [
@@ -170,6 +186,25 @@ const MOCK_INVITE: LearningHubInvite = {
   timeLabel: '10:00 AM - 11:00 AM',
   href: '/dashboard/student/schedule',
 };
+
+function buildClassLearningHref(
+  classUuid: string,
+  route?: {
+    contentId?: string;
+    lessonId?: string;
+  }
+) {
+  const params = new URLSearchParams();
+
+  if (route?.lessonId) params.set('lesson', route.lessonId);
+  if (route?.contentId) params.set('content', route.contentId);
+
+  const query = params.toString();
+
+  return query
+    ? `/dashboard/student/learning-hub/classes/${classUuid}?${query}`
+    : `/dashboard/student/learning-hub/classes/${classUuid}`;
+}
 
 const formatDate = (value?: Date | string | null, options?: Intl.DateTimeFormatOptions) => {
   if (!value) return 'TBD';
@@ -263,6 +298,40 @@ export function useStudentLearningHubData(): LearningHubData {
   const { classDefinitions, loading: classDefinitionsLoading } = useStudentClassDefinitions(
     student ?? undefined
   );
+
+  const classLearningRoutes = useMemo(() => {
+    const routes = new Map<
+      string,
+      {
+        contentId?: string;
+        lessonId?: string;
+        lastLessonId?: string;
+        nextLessonId?: string;
+      }
+    >();
+
+    classDefinitions.forEach(classInfo => {
+      const lessons = [...(classInfo.lessons ?? [])].filter(lesson => Boolean(lesson?.uuid));
+
+      lessons.sort((left, right) => {
+        const leftOrder = left.lesson_sequence ?? left.lesson_number ?? 0;
+        const rightOrder = right.lesson_sequence ?? right.lesson_number ?? 0;
+        return leftOrder - rightOrder;
+      });
+
+      const firstLesson = lessons[0];
+
+      routes.set(classInfo.uuid, {
+        lessonId: firstLesson?.uuid,
+        // Future progress tracking can fill these from last/next treated lesson data.
+        contentId: undefined,
+        lastLessonId: undefined,
+        nextLessonId: undefined,
+      });
+    });
+
+    return routes;
+  }, [classDefinitions]);
 
   const {
     data: studentScheduledInstanceEnrollmentsResponse,
@@ -414,6 +483,7 @@ export function useStudentLearningHubData(): LearningHubData {
       const classDetails = classInfo.classDetails;
       const course = classInfo.course;
       const classTitle = classDetails?.title ?? course?.name ?? 'Untitled class';
+      const route = classLearningRoutes.get(classInfo.uuid);
 
       return (classInfo.schedules ?? [])
         .filter((schedule): schedule is ScheduledInstance => Boolean(schedule?.uuid))
@@ -430,11 +500,15 @@ export function useStudentLearningHubData(): LearningHubData {
             classDetails?.title ??
             'Location pending',
           href: schedule.uuid
-            ? `/dashboard/student/schedule/classes/${schedule.uuid}`
-            : '/dashboard/student/schedule',
+            ? buildClassLearningHref(classInfo.uuid, route)
+            : '/dashboard/student/learning-hub',
+          lessonId: route?.lessonId,
+          contentId: route?.contentId,
+          lastLessonId: route?.lastLessonId,
+          nextLessonId: route?.nextLessonId,
         }));
     });
-  }, [classDefinitions, enrolledScheduledInstanceUuids]);
+  }, [classDefinitions, classLearningRoutes, enrolledScheduledInstanceUuids]);
 
   const activeCourses = useMemo<LearningHubActiveCourse[]>(() => {
     const courseGroups = new Map<
@@ -516,6 +590,7 @@ export function useStudentLearningHubData(): LearningHubData {
       classEnrollmentSummaries.map((item, index) => {
         const latestStart = item.latest_scheduled_instance_start_time ?? null;
         const statusLabel = getClassEnrollmentStatusLabel(item.latest_enrollment_status, latestStart);
+        const route = classLearningRoutes.get(item.class_definition_uuid);
 
         return {
           ...item,
@@ -529,11 +604,15 @@ export function useStudentLearningHubData(): LearningHubData {
             ? `Updated ${formatDate(item.latest_activity_date)}`
             : 'No recent activity',
           latestStartLabel: latestStart ? `Starts ${formatDate(latestStart)}` : 'Start time pending',
-          href: `/dashboard/student/learning-hub/classes/${item.class_definition_uuid}`,
+          href: buildClassLearningHref(item.class_definition_uuid, route),
           tone: index % 3 === 0 ? 'blue' : index % 3 === 1 ? 'slate' : 'green',
+          lessonId: route?.lessonId,
+          contentId: route?.contentId,
+          lastLessonId: route?.lastLessonId,
+          nextLessonId: route?.nextLessonId,
         };
       }),
-    [classEnrollmentSummaries]
+    [classEnrollmentSummaries, classLearningRoutes]
   );
 
   const instructorUuids = useMemo(
@@ -588,6 +667,7 @@ export function useStudentLearningHubData(): LearningHubData {
     return classDefinitions.map((item, index) => {
       const course = item?.course;
       const classDetails = item?.classDetails;
+      const route = classLearningRoutes.get(item.uuid);
 
       const rawProgress = course?.uuid ? item?.classDetails?.class_progress_percentage : 0;
 
@@ -619,13 +699,17 @@ export function useStudentLearningHubData(): LearningHubData {
 
         ctaLabel: isCompleted ? 'Class completed' : progress > 0 ? 'Resume class' : 'Start class',
 
-        href: `/dashboard/student/learning-hub/classes/${classDetails?.uuid}`,
+        href: buildClassLearningHref(item.uuid, route),
         bannerUrl: item?.classDetails?.thumbnail_url ?? '',
 
         accent: index % 3 === 0 ? 'blue' : index % 3 === 1 ? 'slate' : 'green',
+        lessonId: route?.lessonId,
+        contentId: route?.contentId,
+        lastLessonId: route?.lastLessonId,
+        nextLessonId: route?.nextLessonId,
       };
     });
-  }, [certificateMap, classDefinitions]);
+  }, [certificateMap, classDefinitions, classLearningRoutes]);
 
   const ONE_DAY_MS = 24 * 60 * 60 * 1000;
   const TWO_WEEKS_MS = 30 * ONE_DAY_MS;
@@ -695,6 +779,7 @@ export function useStudentLearningHubData(): LearningHubData {
           const start = item.start_time ? new Date(item.start_time) : null;
           const end = item.end_time ? new Date(item.end_time) : null;
           const instructor = instructorMap.get(item.instructorUuid);
+          const route = classLearningRoutes.get(item.classDefinitionUuid ?? item.uuid ?? '');
 
           return {
             id: item.uuid ?? item.classDefinitionUuid,
@@ -707,11 +792,14 @@ export function useStudentLearningHubData(): LearningHubData {
             timeLabel: `${formatTime(start)} - ${formatTime(end)}`,
             instructor: instructor?.full_name ?? 'Instructor',
             locationLabel: item.locationLabel,
-            // href: item.href,
-            href: `/dashboard/student/learning-hub/classes/${item?.uuid}`,
+            href: buildClassLearningHref(item.classDefinitionUuid ?? item.uuid ?? '', route),
+            lessonId: route?.lessonId,
+            contentId: route?.contentId,
+            lastLessonId: route?.lastLessonId,
+            nextLessonId: route?.nextLessonId,
           };
         }),
-    [instructorMap, now, upcomingClasses]
+    [classLearningRoutes, instructorMap, now, upcomingClasses]
   );
 
   const upcomingClassesList = useMemo<LearningHubUpcomingClass[]>(
@@ -721,6 +809,7 @@ export function useStudentLearningHubData(): LearningHubData {
           const start = item.start_time ? new Date(item.start_time) : null;
           const end = item.end_time ? new Date(item.end_time) : null;
           const startMs = start?.getTime();
+          const route = classLearningRoutes.get(item.classDefinitionUuid ?? item.uuid ?? '');
 
           return {
             id: item.uuid ?? item.classDefinitionUuid,
@@ -733,11 +822,15 @@ export function useStudentLearningHubData(): LearningHubData {
             }),
             timeLabel: `${formatTime(start)} - ${formatTime(end)}`,
             locationLabel: item.locationLabel,
-            href: item.href,
+            href: buildClassLearningHref(item.classDefinitionUuid ?? item.uuid ?? '', route),
             startMs: typeof startMs === 'number' && !Number.isNaN(startMs) ? startMs : undefined,
+            lessonId: route?.lessonId,
+            contentId: route?.contentId,
+            lastLessonId: route?.lastLessonId,
+            nextLessonId: route?.nextLessonId,
           };
         }),
-    [upcomingClasses]
+    [classLearningRoutes, upcomingClasses]
   );
 
   const assignments = useMemo<LearningHubAssignment[]>(() => {
@@ -861,8 +954,8 @@ export function useStudentLearningHubData(): LearningHubData {
     studentName:
       profile?.first_name && profile?.last_name
         ? `${profile.first_name} ${profile.last_name}`
-        : 'Sarah Otieno',
-    firstName: profile?.first_name ?? 'Emma',
+        : '',
+    firstName: profile?.first_name ?? '',
     stats,
     courseEnrollments,
     classEnrollments,

@@ -70,7 +70,11 @@ export type CoursesCatalogCardData = {
   activeClasses?: number;
   minAge?: number;
   maxAge?: number;
-  instructorCount?: number
+  instructorCount?: number;
+  categoryNames?: string[];
+  description?: string;
+  units?: number | undefined;
+  skillsFundEligible: boolean | null
 };
 
 export type CoursesRecommendationCardData = {

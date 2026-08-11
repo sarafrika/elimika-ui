@@ -313,7 +313,7 @@ function getYouTubeEmbedUrl(source: string) {
       const videoId = url.searchParams.get('v');
       return videoId ? `https://www.youtube.com/embed/${videoId}` : '';
     }
-  } catch {}
+  } catch { }
 
   return '';
 }
@@ -747,11 +747,10 @@ function SubmissionPanel({
                 key={tab.value}
                 type='button'
                 onClick={() => setActivePanel(tab.value)}
-                className={`flex h-8 min-w-0 items-center justify-center gap-1.5 overflow-hidden rounded px-1 text-[11px] font-medium transition-colors ${
-                  isActive
-                    ? 'bg-background text-foreground shadow-sm'
-                    : 'text-muted-foreground hover:text-foreground'
-                }`}
+                className={`flex h-8 min-w-0 items-center justify-center gap-1.5 overflow-hidden rounded px-1 text-[11px] font-medium transition-colors ${isActive
+                  ? 'bg-background text-foreground shadow-sm'
+                  : 'text-muted-foreground hover:text-foreground'
+                  }`}
               >
                 <Icon className='h-3.5 w-3.5 shrink-0' />
                 <span className='truncate'>{tab.label}</span>
@@ -866,10 +865,10 @@ function SubmissionPanel({
                       <p className='text-muted-foreground mt-2 text-xs'>
                         {item.submission
                           ? item.submission.grade_display ||
-                            item.submission.submission_status_display ||
-                            (item.submission.percentage != null
-                              ? `${item.submission.percentage}% recorded`
-                              : 'Submission received')
+                          item.submission.submission_status_display ||
+                          (item.submission.percentage != null
+                            ? `${item.submission.percentage}% recorded`
+                            : 'Submission received')
                           : 'No submission recorded for this assignment yet.'}
                       </p>
                       {item.submission?.submitted_at ? (
@@ -1801,10 +1800,10 @@ export default function StudentClassTrainingPage({
                         isAssigningAssignment={addAssignmentScheduleMut.isPending}
                         isAssigningQuiz={addQuizScheduleMut.isPending}
                         classId={classId}
-                        // assignmentVisibleAt={''}
-                        // quizVisibleAt={''}
-                        // onAssignmentVisibleAtChange={() => { }}
-                        // onQuizVisibleAtChange={() => { }}
+                      // assignmentVisibleAt={''}
+                      // quizVisibleAt={''}
+                      // onAssignmentVisibleAtChange={() => { }}
+                      // onQuizVisibleAtChange={() => { }}
                       />
                     </div>
                   </article>
