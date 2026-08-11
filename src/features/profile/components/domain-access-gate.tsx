@@ -8,6 +8,7 @@ import { useOptionalCourseCreator } from '@/context/course-creator-context';
 import { cn } from '@/lib/utils';
 import type { Organisation } from '@/services/client';
 import { useUserDomain } from '@/src/features/dashboard/context/user-domain-context';
+import { buildWorkspaceAliasPath } from '@/src/features/dashboard/lib/active-domain-storage';
 import { useOrganisation } from '@/src/features/organisation/context/organisation-context';
 import { useUserProfile } from '@/src/features/profile/context/profile-context';
 
@@ -24,7 +25,6 @@ const PROFILE_PREFIX = '/dashboard/profile';
 const ACCOUNT_PREFIX = '/dashboard/account';
 const ORGANISATION_PROFILE_PREFIX = `${ACCOUNT_PREFIX}/training-center`;
 const ADD_PROFILE_PREFIX = '/dashboard/add-profile';
-const CREDENTIALS_PREFIX = '/dashboard/credentials';
 const SETTINGS_PREFIX = '/dashboard/settings';
 
 function resolveOrganisationVerified(
@@ -57,11 +57,16 @@ export default function DomainAccessGate({ children }: { children: ReactNode }) 
       return { renderChildren: true };
     }
 
+    const profilePrefix = buildWorkspaceAliasPath(domain, PROFILE_PREFIX);
+    const accountPrefix = buildWorkspaceAliasPath(domain, ACCOUNT_PREFIX);
+    const organisationProfilePrefix = buildWorkspaceAliasPath(domain, ORGANISATION_PROFILE_PREFIX);
+    const settingsPrefix = buildWorkspaceAliasPath(domain, SETTINGS_PREFIX);
+
     const shared = {
       instructor: {
         verified: Boolean(profile.instructor?.admin_verified),
-        allowedPrefixes: [PROFILE_PREFIX, ADD_PROFILE_PREFIX, SETTINGS_PREFIX],
-        fallback: `${PROFILE_PREFIX}/general`,
+        allowedPrefixes: [profilePrefix, ADD_PROFILE_PREFIX, settingsPrefix],
+        fallback: `${profilePrefix}/general`,
         title: 'Instructor verification pending',
         description:
           'Update your profile details so the Elimika team can verify your instructor account.',
@@ -70,26 +75,26 @@ export default function DomainAccessGate({ children }: { children: ReactNode }) 
         verified: Boolean(
           courseCreator?.profile?.admin_verified ?? profile.courseCreator?.admin_verified
         ),
-        allowedPrefixes: [PROFILE_PREFIX, ADD_PROFILE_PREFIX, SETTINGS_PREFIX],
-        fallback: PROFILE_PREFIX,
+        allowedPrefixes: [profilePrefix, ADD_PROFILE_PREFIX, settingsPrefix],
+        fallback: profilePrefix,
         title: 'Course creator verification pending',
         description:
           'Complete your course creator profile to request publishing access on Elimika.',
       },
       organisation: {
         verified: organisationVerified,
-        allowedExactPaths: [ACCOUNT_PREFIX],
-        allowedPrefixes: [ORGANISATION_PROFILE_PREFIX, PROFILE_PREFIX, CREDENTIALS_PREFIX],
-        fallback: ORGANISATION_PROFILE_PREFIX,
+        allowedExactPaths: [accountPrefix],
+        allowedPrefixes: [organisationProfilePrefix],
+        fallback: organisationProfilePrefix,
         title: 'Organisation verification pending',
         description:
           'Your organisation profile and validation documents are under admin review. Verified-only tools are locked until admin approval is complete.',
       },
       organisation_user: {
         verified: organisationVerified,
-        allowedExactPaths: [ACCOUNT_PREFIX],
-        allowedPrefixes: [ORGANISATION_PROFILE_PREFIX, PROFILE_PREFIX, CREDENTIALS_PREFIX],
-        fallback: ORGANISATION_PROFILE_PREFIX,
+        allowedExactPaths: [accountPrefix],
+        allowedPrefixes: [organisationProfilePrefix],
+        fallback: organisationProfilePrefix,
         title: 'Organisation verification pending',
         description:
           'Your organisation profile and validation documents are under admin review. Verified-only tools are locked until admin approval is complete.',

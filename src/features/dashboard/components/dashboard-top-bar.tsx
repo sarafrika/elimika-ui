@@ -251,9 +251,7 @@ export default function DashboardTopBar() {
               availableDomains={domain.domains}
               activeDomain={activeDomain}
               onSwitch={handleDashboardSwitch}
-              onAddProfile={() =>
-                router.push(buildWorkspaceAliasPath(activeDomain, '/dashboard/add-profile'))
-              }
+              onAddProfile={() => router.push('/dashboard/add-profile')}
               onLogout={async () => {
                 await logout({
                   clearDomain: domain.clearDomain,

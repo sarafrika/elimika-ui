@@ -82,6 +82,10 @@ export function isInternalDashboardPath(path?: string | null) {
   return Boolean(path?.startsWith('/dashboard'));
 }
 
+function isNonRoleScopedDashboardPath(pathname: string) {
+  return pathname === '/dashboard/add-profile' || pathname.startsWith('/dashboard/add-profile/');
+}
+
 function splitDashboardPath(path: string) {
   const [pathname = '', search = ''] = path.split('?');
 
@@ -122,7 +126,14 @@ export function buildWorkspaceAliasPath(domain: UserDomain | null, path = '/dash
     return path;
   }
 
-  return dashboardUrl(domain, normalizeRequestedDashboardPath(path));
+  const normalizedPath = normalizeRequestedDashboardPath(path);
+  const { pathname } = splitDashboardPath(normalizedPath);
+
+  if (isNonRoleScopedDashboardPath(pathname)) {
+    return normalizedPath;
+  }
+
+  return dashboardUrl(domain, normalizedPath);
 }
 
 export function resolveWorkspaceSwitchPath(

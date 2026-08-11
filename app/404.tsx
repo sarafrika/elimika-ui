@@ -25,7 +25,7 @@ export default function NotFoundPage() {
             </Link>
           </Button>
           <Button asChild variant='ghost'>
-            <Link href='/dashboard/overview' prefetch>
+            <Link href='/dashboard' prefetch>
               Go to dashboard
             </Link>
           </Button>
