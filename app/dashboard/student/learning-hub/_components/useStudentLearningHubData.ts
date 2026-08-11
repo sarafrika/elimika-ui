@@ -430,8 +430,8 @@ export function useStudentLearningHubData(): LearningHubData {
             classDetails?.title ??
             'Location pending',
           href: schedule.uuid
-            ? `/dashboard/student/schedule/classes/${schedule.uuid}`
-            : '/dashboard/student/schedule',
+            ? `/dashboard/student/learning-hub/classes/${classInfo.uuid}`
+            : '/dashboard/student/learning-hub',
         }));
     });
   }, [classDefinitions, enrolledScheduledInstanceUuids]);
@@ -861,8 +861,8 @@ export function useStudentLearningHubData(): LearningHubData {
     studentName:
       profile?.first_name && profile?.last_name
         ? `${profile.first_name} ${profile.last_name}`
-        : 'Sarah Otieno',
-    firstName: profile?.first_name ?? 'Emma',
+        : '',
+    firstName: profile?.first_name ?? '',
     stats,
     courseEnrollments,
     classEnrollments,

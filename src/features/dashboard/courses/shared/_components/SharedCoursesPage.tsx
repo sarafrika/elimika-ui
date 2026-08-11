@@ -38,9 +38,9 @@ import {
   getClassDefinitionsForProgramOptions,
   getCourseRecommendationsOptions,
   getCourseReviewsOptions,
-  getPublishedCoursesOptions,
   getProgramCoursesOptions,
   getProgramEnrollmentsOptions,
+  getPublishedCoursesOptions,
   searchCourseCreatorsOptions,
   searchProgramTrainingApplicationsOptions,
   searchProgramTrainingApplicationsQueryKey,
@@ -157,7 +157,6 @@ const createCatalogCards = (
 ): CoursesCatalogCardData[] =>
   items.map((item, index) => {
     const presentation = getCardPresentation(index);
-
     const isInstructorApplyCard = canApplyToTrain;
 
     const application =
@@ -217,10 +216,21 @@ const createCatalogCards = (
       };
     })();
 
+    const programCategoryNames = (() => {
+      if (item.kind !== 'program') {
+        return item.categoryNames ?? [];
+      }
+
+      const courses = programCoursesMap[item.id] ?? [];
+      const categories = courses.flatMap(course => course.category_names ?? []);
+      return [...new Set(categories)];
+    })();
+
     return {
       id: item.id,
       contentKind: item.kind,
       title: item.title,
+      description: item.description,
 
       provider:
         creatorMap.get(item.creatorUuid) ??
@@ -310,6 +320,7 @@ const createCatalogCards = (
       programType: '',
       minAge: programAgeRange.minAge ?? item.minAge ?? undefined,
       maxAge: programAgeRange.maxAge ?? item.maxAge ?? undefined,
+      categoryNames: programCategoryNames ?? item.categoryLabels ?? undefined,
 
       // Actual number of active classes
       activeClasses: activeClasses.length,
@@ -523,7 +534,8 @@ export function SharedCoursesPage({ domain }: SharedCoursesPageProps) {
           subject: '',
           programType: '',
           minAge: program.age_lower_limit,
-          maxAge: program.age_upper_limit
+          maxAge: program.age_upper_limit,
+          // categoryNames: course.category_names
         };
       }),
     [categoryMap, courseEnrollmentMap, domain, programs, reviewMap]
@@ -567,7 +579,8 @@ export function SharedCoursesPage({ domain }: SharedCoursesPageProps) {
           subject: '',
           programType: '',
           minAge: course.age_lower_limit,
-          maxAge: course.age_upper_limit
+          maxAge: course.age_upper_limit,
+          categoryNames: course.category_names
         };
       }),
     [courseEnrollmentMap, courses, difficultyMap, domain, reviewMap]
@@ -687,7 +700,8 @@ export function SharedCoursesPage({ domain }: SharedCoursesPageProps) {
           subject: '',
           programType: '',
           minAge: course.age_lower_limit,
-          maxAge: course.age_upper_limit
+          maxAge: course.age_upper_limit,
+          categoryNames: course.category_names
         });
       });
 

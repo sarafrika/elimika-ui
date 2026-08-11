@@ -149,6 +149,7 @@ export function LessonHubDashboardTab({ learningHubData }: LearningHubDataProps)
             return ta - tb;
         });
 
+
     const assignmentRowsSorted = useMemo(
         () =>
             [...assignmentRows]
@@ -201,7 +202,7 @@ export function LessonHubDashboardTab({ learningHubData }: LearningHubDataProps)
                     value={active.length}
                     icon={BookOpen}
                     tint='bg-primary/5 text-primary'
-                    href='/learning-hub'
+                    href='/dashboard/student/learning-hub'
                     query={{ tab: 'my-courses' }}
                 />
                 <StatCard
@@ -209,7 +210,7 @@ export function LessonHubDashboardTab({ learningHubData }: LearningHubDataProps)
                     value={upcomingView.length}
                     icon={CalendarIcon}
                     tint='bg-secondary text-secondary-foreground'
-                    href='/learning-hub'
+                    href='/dashboard/student/learning-hub'
                     query={{ tab: 'my-classes' }}
                 />
                 <StatCard
@@ -217,7 +218,7 @@ export function LessonHubDashboardTab({ learningHubData }: LearningHubDataProps)
                     value={pendingAssignments}
                     icon={ClipboardList}
                     tint='bg-warning/5 text-warning'
-                    href='/learning-hub'
+                    href='/dashboard/student/learning-hub'
                     query={{ tab: 'assignments' }}
                 />
                 <StatCard
@@ -225,7 +226,7 @@ export function LessonHubDashboardTab({ learningHubData }: LearningHubDataProps)
                     value={completedCourses}
                     icon={Award}
                     tint='bg-success/5 text-success'
-                    href='/learning-hub'
+                    href='/dashboard/student/learning-hub'
                     query={{ tab: 'certificates' }}
                 />
             </div>
@@ -238,7 +239,7 @@ export function LessonHubDashboardTab({ learningHubData }: LearningHubDataProps)
                             <CardDescription>Pick up from your last active course</CardDescription>
                         </div>
                         <Button asChild variant='ghost' size='sm' className='text-primary'>
-                            <Link href={{ pathname: '/learning-hub', query: { tab: 'my-courses' } }}>
+                            <Link href={{ pathname: '/dashboard/student/learning-hub', query: { tab: 'my-courses' } }}>
                                 View all <ArrowRight className='ml-1 h-3.5 w-3.5' />
                             </Link>
                         </Button>
@@ -323,9 +324,10 @@ export function LessonHubDashboardTab({ learningHubData }: LearningHubDataProps)
                             </CardTitle>
                             <CardDescription>Your currently enrolled programmes</CardDescription>
                         </div>
+
                         {/* // switch to tab my-courses */}
                         <Button asChild variant='ghost' size='sm' className='rounded-sm text-primary'>
-                            <Link href='/learning-hub'>
+                            <Link href='/dashboard/student/learning-hub'>
                                 Manage <ArrowRight className='ml-1 h-3.5 w-3.5' />
                             </Link>
                         </Button>
@@ -379,7 +381,7 @@ export function LessonHubDashboardTab({ learningHubData }: LearningHubDataProps)
                             activeView.slice(0, 5).map(enrollment => (
                                 <Link
                                     key={enrollment.id}
-                                    href='/learning-hub'
+                                    href='/dashboard/student/learning-hub'
                                     className='flex items-center justify-between rounded-md border p-3 transition-colors hover:border-primary'
                                 >
                                     <div className='min-w-0'>
@@ -497,7 +499,7 @@ export function LessonHubDashboardTab({ learningHubData }: LearningHubDataProps)
                             : 'No pending submissions'
                     }
                     ctaLabel='Open Assignments'
-                    href='/learning-hub'
+                    href='/dashboard/student/learning-hub'
                     query={{ tab: 'assignments' }}
                 />
                 <SummaryCard
@@ -507,7 +509,7 @@ export function LessonHubDashboardTab({ learningHubData }: LearningHubDataProps)
                     primary={learningHubData.stats.find(stat => stat.id === 'overall-progress')?.value ?? '0%'}
                     secondary='Overall progress'
                     ctaLabel='View Assessments'
-                    href='/learning-hub'
+                    href='/dashboard/student/learning-hub'
                     query={{ tab: 'assessments' }}
                 />
                 <SummaryCard
@@ -517,7 +519,7 @@ export function LessonHubDashboardTab({ learningHubData }: LearningHubDataProps)
                     primary={String(completedCourses)}
                     secondary={completedCourses ? 'Ready to download' : 'Complete a course to earn one'}
                     ctaLabel='View Certificates'
-                    href='/learning-hub'
+                    href='/dashboard/student/learning-hub'
                     query={{ tab: 'certificates' }}
                 />
             </div>
@@ -579,7 +581,7 @@ export function LessonHubDashboardTab({ learningHubData }: LearningHubDataProps)
                 </CardHeader>
                 <CardContent className='flex flex-wrap gap-2'>
                     <Button asChild size='sm' variant='outline'>
-                        <Link href='/learning-hub'>Continue Learning</Link>
+                        <Link href='/dashboard/student/learning-hub'>Continue Learning</Link>
                     </Button>
                     <Button asChild size='sm' variant='outline'>
                         <Link href='/dashboard/student/courses'>Browse Courses</Link>
