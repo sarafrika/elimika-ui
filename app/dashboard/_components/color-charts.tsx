@@ -1,54 +1,133 @@
-export function TrendChart() {
-    const months = ["Dec", "Jan", "Feb", "Mar", "Apr", "May"];
-    const awarded = [10, 30, 45, 52, 54, 56];
-    const disbursed = [2, 8, 12, 15, 17, 18];
-    const spent = [1, 5, 9, 12, 14, 17];
-    const W = 520, H = 220, P = 30;
-    const max = 60;
-    const x = (i: number) => P + (i * (W - P * 2)) / (months.length - 1);
-    const y = (v: number) => H - P - (v / max) * (H - P * 2);
-    const path = (arr: number[]) => arr.map((v, i) => `${i === 0 ? "M" : "L"} ${x(i)} ${y(v)}`).join(" ");
+type TrendSeries = {
+    label: string;
+    data: number[];
+    color: string;
+};
+
+type TrendChartProps = {
+    months: string[];
+    series: TrendSeries[];
+    max?: number;
+    height?: number;
+};
+
+export function TrendChart({
+    months,
+    series,
+    max,
+    height = 220,
+}: TrendChartProps) {
+    const W = 520;
+    const H = height;
+    const P = 30;
+
+    const calculatedMax =
+        max ?? Math.max(...series.flatMap(item => item.data), 0);
+
+    const chartMax = calculatedMax > 0 ? calculatedMax : 60;
+
+    const x = (i: number) =>
+        P + (i * (W - P * 2)) / Math.max(months.length - 1, 1);
+
+    const y = (value: number) =>
+        H - P - (value / chartMax) * (H - P * 2);
+
+    const path = (data: number[]) =>
+        data
+            .map(
+                (value, i) =>
+                    `${i === 0 ? 'M' : 'L'} ${x(i)} ${y(value)}`
+            )
+            .join(' ');
+
+    const gridValues = [0, 0.25, 0.5, 0.75, 1].map(
+        percentage => chartMax * percentage
+    );
+
     return (
-        <svg viewBox={`0 0 ${W} ${H}`} className="w-full h-[220px]">
-            {[0, 15, 30, 45, 60].map((g) => (
-                <g key={g}>
-                    <line x1={P} x2={W - P} y1={y(g)} y2={y(g)} stroke="#f1f5f9" />
+        <svg
+            viewBox={`0 0 ${W} ${H}`}
+            className='h-[220px] w-full'
+            preserveAspectRatio='none'
+        >
+            {/* Grid */}
+            {gridValues.map((value, index) => (
+                <g key={index}>
+                    <line
+                        x1={P}
+                        x2={W - P}
+                        y1={y(value)}
+                        y2={y(value)}
+                        stroke='#f1f5f9'
+                    />
+
                     <text
                         x={4}
-                        y={y(g) + 3}
-                        fill="#94A3B8"
+                        y={y(value) + 3}
+                        fill='#94A3B8'
                         style={{ fontSize: 10 }}
                     >
-                        {g}k
+                        {Math.round(value)}k
                     </text>
                 </g>
             ))}
-            {months.map((m, i) => (
+
+            {/* Months */}
+            {months.map((month, index) => (
                 <text
-                    key={m}
-                    x={x(i)}
+                    key={`${month}-${index}`}
+                    x={x(index)}
                     y={H - 8}
-                    textAnchor="middle"
-                    fill="#64748B"
+                    textAnchor='middle'
+                    fill='#64748B'
                     style={{ fontSize: 10 }}
                 >
-                    {m}
+                    {month}
                 </text>
             ))}
-            <path d={path(awarded)} fill="none" stroke="#0f766e" strokeWidth={2.5} />
-            <path d={path(disbursed)} fill="none" stroke="#3b82f6" strokeWidth={2.5} />
-            <path d={path(spent)} fill="none" stroke="#f59e0b" strokeWidth={2.5} />
-            <g style={{ fontSize: 10 }}>
-                <circle cx={W - 160} cy={12} r={4} fill="#0f766e" />
-                <text x={W - 150} y={15} fill="#475569">Awarded</text>
 
-                <circle cx={W - 100} cy={12} r={4} fill="#3b82f6" />
-                <text x={W - 90} y={15} fill="#475569">Disbursed</text>
+            {/* Lines */}
+            {series.map(item => (
+                <path
+                    key={item.label}
+                    d={path(item.data)}
+                    fill='none'
+                    stroke={item.color}
+                    strokeWidth={2.5}
+                />
+            ))}
 
-                <circle cx={W - 40} cy={12} r={4} fill="#f59e0b" />
-                <text x={W - 30} y={15} fill="#475569">Spent</text>
+            {/* Legend */}
+            <g
+                style={{
+                    fontSize: 10,
+                }}
+            >
+                {series.map((item, index) => {
+                    const legendStart = W - 230;
+                    const spacing = 75;
+                    const legendX = legendStart + index * spacing;
+
+                    return (
+                        <g key={item.label}>
+                            <circle
+                                cx={legendX}
+                                cy={12}
+                                r={4}
+                                fill={item.color}
+                            />
+
+                            <text
+                                x={legendX + 9}
+                                y={15}
+                                fill='#475569'
+                            >
+                                {item.label}
+                            </text>
+                        </g>
+                    );
+                })}
             </g>
-
         </svg>
     );
 }
