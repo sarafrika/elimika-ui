@@ -182,7 +182,7 @@ export function LearningProgressDrilldown({ enrollments }: { enrollments: EnrolC
                         key: "open-first-lesson",
                         label: `Open first lesson: ${selectedFirstLesson}`,
                         icon: PlayCircle,
-                        href: "/learning-hub",
+                        href: "/dashboard/student/learning-hub",
                         query: { tab: "lessons" },
                         primary: true,
                     });
@@ -191,7 +191,7 @@ export function LearningProgressDrilldown({ enrollments }: { enrollments: EnrolC
                     key: "view-courses",
                     label: "Review all active courses",
                     icon: BookOpen,
-                    href: "/learning-hub",
+                    href: "/dashboard/student/learning-hub",
                     query: { tab: "my-courses" },
                 });
                 actions.push({

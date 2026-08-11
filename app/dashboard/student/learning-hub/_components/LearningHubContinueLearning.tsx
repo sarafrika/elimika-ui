@@ -162,7 +162,7 @@ export function LearningHubContinueLearning({
 
                         <Link
                           prefetch
-                          href={`/dashboard/student/learning-hub/${classItem.id}`}
+                          href={`/dashboard/student/learning-hub/classes/${classItem.id}`}
                           className='bg-primary text-primary-foreground hover:bg-primary/90 inline-flex w-full items-center justify-center rounded-[8px] px-3 py-2 text-center text-[0.78rem] font-medium transition'
                         >
                           View Details
@@ -183,7 +183,7 @@ export function LearningHubContinueLearning({
 
                         <Link
                           prefetch
-                          href={`/dashboard/student/learning-hub/${classItem.id}`}
+                          href={`/dashboard/student/learning-hub/classes/${classItem.id}`}
                           className='border-border text-muted-foreground hover:bg-muted inline-flex flex-1 items-center justify-center rounded-[8px] border px-3 py-2 text-[0.78rem] font-medium transition'
                         >
                           View Details

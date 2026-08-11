@@ -28,7 +28,7 @@ import {
     getQuizByUuidOptions,
     getQuizSchedulesOptions,
 } from '@/services/client/@tanstack/react-query.gen';
-import type { ClassQuizSchedule, Enrollment, Quiz, QuizAttempt } from '@/services/client/types.gen';
+import type { ClassQuizSchedule, Enrollment, Quiz, QuizAttempt, Student } from '@/services/client/types.gen';
 import { useQueries } from '@tanstack/react-query';
 import {
     ArrowRight,
@@ -42,7 +42,6 @@ import {
 import Link from 'next/link';
 import { useMemo, useState } from 'react';
 import { Card, CardContent } from '../../../../../components/ui/card';
-import { Student } from '../../../../services/api/schema';
 
 type ClassMeta = {
     classUuid: string;
