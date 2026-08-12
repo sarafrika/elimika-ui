@@ -163,8 +163,21 @@ function createQueryOptions(
       }
       return await fetchUserProfile();
     },
-    staleTime: 1000 * 60 * 15,
+    staleTime: 1000 * 60 * 2,
     refetchOnWindowFocus: true,
     refetchOnReconnect: true,
+    refetchInterval: query => {
+      const user = query.state.data;
+      if (!user) return false;
+      const isInstructorPending = user.instructor && user.instructor.admin_verified === false;
+      const isCreatorPending = user.courseCreator && user.courseCreator.admin_verified === false;
+      const isOrgPending = user.organisation_affiliations?.some(
+        a => a.admin_verified === false
+      );
+      if (isInstructorPending || isCreatorPending || isOrgPending) {
+        return 30_000;
+      }
+      return false;
+    },
   });
 }

@@ -1,6 +1,6 @@
 'use client';
 
-import { useMutation, useQuery } from '@tanstack/react-query';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import {
   AlertTriangle,
   BookOpen,
@@ -388,6 +388,8 @@ export function PendingApprovalsClient() {
     [coursesQuery.data?.data?.content, term]
   );
 
+  const queryClient = useQueryClient();
+
   const approveInstructor = async (instructor: Instructor) => {
     if (!instructor.uuid) return;
     setPendingKey(`instructor-${instructor.uuid}`);
@@ -397,6 +399,7 @@ export function PendingApprovalsClient() {
         query: { reason: 'Approved from pending approvals queue' },
       });
       toast.success('Instructor approved');
+      await queryClient.invalidateQueries({ queryKey: ['profile'] });
       await instructorsQuery.refetch();
     } catch (error) {
       toast.error(error instanceof Error ? error.message : 'Unable to approve instructor');
@@ -414,6 +417,7 @@ export function PendingApprovalsClient() {
         query: { reason: 'Approved from pending approvals queue' },
       });
       toast.success('Course creator approved');
+      await queryClient.invalidateQueries({ queryKey: ['profile'] });
       await creatorsQuery.refetch();
     } catch (error) {
       toast.error(error instanceof Error ? error.message : 'Unable to approve course creator');
@@ -431,6 +435,7 @@ export function PendingApprovalsClient() {
         query: { action: 'approve', reason: 'Approved from pending approvals queue' },
       });
       toast.success('Organisation approved');
+      await queryClient.invalidateQueries({ queryKey: ['profile'] });
       await organisationsQuery.refetch();
     } catch (error) {
       toast.error(error instanceof Error ? error.message : 'Unable to approve organisation');

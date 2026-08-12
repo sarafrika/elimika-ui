@@ -1,6 +1,6 @@
 'use client';
 
-import { useMutation } from '@tanstack/react-query';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { BadgeCheck, GraduationCap, ShieldCheck, ShieldX } from 'lucide-react';
 import { useState } from 'react';
 import { toast } from 'sonner';
@@ -81,6 +81,7 @@ export function DomainVerificationSection({
 }) {
   const [active, setActive] = useState<CredentialDocument | null>(null);
 
+  const queryClient = useQueryClient();
   const verifyInstructor = useMutation(verifyInstructorMutation());
   const unverifyInstructor = useMutation(unverifyInstructorMutation());
   const verifyCreator = useMutation(verifyCourseCreatorMutation());
@@ -104,6 +105,7 @@ export function DomainVerificationSection({
       toast.success(
         verify ? `${domain.roleLabel} verified` : `${domain.roleLabel} verification revoked`
       );
+      await queryClient.invalidateQueries({ queryKey: ['profile'] });
       onChanged();
     } catch (error) {
       toast.error(error instanceof Error ? error.message : 'Action failed');
