@@ -323,7 +323,7 @@ export function PendingApprovalsClient() {
     ...searchCourseCreatorsOptions({
       query: {
         pageable: PAGEABLE,
-        searchParams: { adminVerified: 'false' },
+        searchParams: { adminVerified: false },
       },
     }),
     staleTime: 30_000,
@@ -344,7 +344,8 @@ export function PendingApprovalsClient() {
   const term = search.trim().toLowerCase();
   const instructors = useMemo(
     () =>
-      (instructorsQuery.data?.content ?? [])
+      ((instructorsQuery.data as unknown as { data?: { content?: Instructor[] } })?.data
+        ?.content ?? [])
         .filter(isInstructor)
         .filter(instructor =>
           includesTerm(
@@ -352,16 +353,17 @@ export function PendingApprovalsClient() {
             term
           )
         ),
-    [instructorsQuery.data?.content, term]
+    [instructorsQuery.data, term]
   );
   const creators = useMemo(
     () =>
-      (creatorsQuery.data?.content ?? [])
+      ((creatorsQuery.data as unknown as { data?: { content?: CourseCreator[] } })?.data
+        ?.content ?? [])
         .filter(isCourseCreator)
         .filter(creator =>
           includesTerm([creator.full_name, creator.professional_headline, creator.bio], term)
         ),
-    [creatorsQuery.data?.content, term]
+    [creatorsQuery.data, term]
   );
   const organisations = useMemo(
     () =>
