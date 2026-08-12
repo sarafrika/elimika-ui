@@ -122,7 +122,7 @@ export function LessonHubMyCoursesTab({ learningHubData }: LessonHubMyCoursesTab
           description='Try a different filter or browse the course catalogue to add more learning paths.'
           action={
             <Button asChild>
-              <Link href='/dashboard/student/courses/my-courses'>
+              <Link href='/dashboard/student/courses'>
                 Browse courses
               </Link>
             </Button>

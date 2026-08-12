@@ -1,6 +1,6 @@
 'use client'
 
-import { AlertTriangle } from "lucide-react";
+import { AlertTriangle, CalendarCheck, ReceiptText } from "lucide-react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "../../../../../components/ui/card";
 import { formatKES } from "../../../../../src/features/dashboard/courses/pages/PaymentMethodPicker";
 import { balanceBreakdown, fmtDate, METHOD_LABEL, TxnRow, useWallet, WalletDashboardTabProps, WalletPayment } from "../page";
@@ -54,7 +54,23 @@ export function DashboardTab({ onNavigate, wallet, transactions }: WalletDashboa
                         {transactions?.slice(0, 6).map((t) => (
                             <TxnRow key={t.uuid} txn={t} />
                         ))}
-                        {transactions?.length === 0 && <p className="py-6 text-sm text-muted-foreground">No transactions yet.</p>}
+
+                        {transactions?.length === 0 && (
+                            <div className='flex flex-col items-center justify-center rounded-xl  bg-muted/20 px-6 py-12 text-center'>
+                                <div className='mb-4 flex h-11 w-11 items-center justify-center rounded-full bg-muted'>
+                                    <ReceiptText className='h-5 w-5 text-muted-foreground' />
+                                </div>
+
+                                <h4 className='text-sm font-semibold text-foreground'>
+                                    No transactions recorded
+                                </h4>
+
+                                <p className='mt-1.5 max-w-sm text-xs leading-relaxed text-muted-foreground'>
+                                    Your wallet activity will appear here once payments, top-ups,
+                                    or other transactions are recorded.
+                                </p>
+                            </div>
+                        )}
                     </CardContent>
                 </Card>
 
@@ -76,7 +92,23 @@ export function DashboardTab({ onNavigate, wallet, transactions }: WalletDashboa
                                 </div>
                             </div>
                         ))}
-                        {pendingPayments.length === 0 && <p className="py-6 text-sm text-muted-foreground">Nothing due — you're all settled.</p>}
+
+                        {pendingPayments.length === 0 && (
+                            <div className='flex flex-col items-center justify-center rounded-xl  bg-muted/20 px-6 py-12 text-center'>
+                                <div className='mb-4 flex h-11 w-11 items-center justify-center rounded-full bg-muted'>
+                                    <CalendarCheck className='h-5 w-5 text-muted-foreground' />
+                                </div>
+
+                                <h4 className='text-sm font-semibold text-foreground'>
+                                    No upcoming payments
+                                </h4>
+
+                                <p className='mt-1.5 max-w-sm text-xs leading-relaxed text-muted-foreground'>
+                                    Any scheduled or outstanding payments will appear here when
+                                    they become due.
+                                </p>
+                            </div>
+                        )}
                     </CardContent>
                 </Card>
             </div>

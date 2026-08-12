@@ -1,6 +1,6 @@
 'use client'
 
-import { Download } from "lucide-react";
+import { ArrowLeftRight, Download } from "lucide-react";
 import { useState } from "react";
 import { Button } from "../../../../../components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "../../../../../components/ui/card";
@@ -67,18 +67,35 @@ export function TransactionsTab() {
                 </div>
             </CardHeader>
 
-            <CardContent className="divide-y">
-                {rows.map((t) => (
-                    <div key={t.uuid} className="py-3 space-y-1">
-                        <TxnRow txn={t} />
+            <CardContent className='divide-y'>
+                {rows.length > 0 ? (
+                    rows.map(t => (
+                        <div key={t.uuid} className='space-y-1 py-3'>
+                            <TxnRow txn={t} />
 
-                        <p className="text-[11px] text-muted-foreground pl-11">
-                            {t.source ?? "—"} → {t.destination ?? "—"} · funded by {t.funding_source ?? "—"}
-                            {t.method ? ` · ${METHOD_LABEL[t.method]}` : ""}
+                            <p className='pl-11 text-[11px] text-muted-foreground'>
+                                {t.source ?? '—'} → {t.destination ?? '—'} · funded by{' '}
+                                {t.funding_source ?? '—'}
+                                {t.method ? ` · ${METHOD_LABEL[t.method]}` : ''}
+                            </p>
+                        </div>
+                    ))
+                ) : (
+                    <div className='flex flex-col items-center justify-center py-12 text-center'>
+                        <div className='mb-3 flex h-10 w-10 items-center justify-center rounded-full bg-muted'>
+                            <ArrowLeftRight className='h-5 w-5 text-muted-foreground' />
+                        </div>
+
+                        <h4 className='text-sm font-semibold text-foreground'>
+                            No transactions found
+                        </h4>
+
+                        <p className='mt-1 max-w-sm text-xs text-muted-foreground'>
+                            There are no wallet transactions matching the selected filters.
+                            Transactions will appear here when funds are added or used.
                         </p>
                     </div>
-                ))}
-                {rows.length === 0 && <p className="py-6 text-sm text-muted-foreground">No transactions match these filters.</p>}
+                )}
             </CardContent>
         </Card>
     );

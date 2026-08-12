@@ -1,9 +1,8 @@
 'use client'
 
-import { ArrowLeftRight, CalendarDays, ChevronLeft, ChevronRight, Inbox, Search } from 'lucide-react'
+import { ChevronLeft, ChevronRight, Inbox, Search } from 'lucide-react'
 import { useEffect, useMemo, useRef, useState } from 'react'
 
-import { Button } from '../../../../../components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '../../../../../components/ui/card'
 import { Input } from '../../../../../components/ui/input'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../../../../../components/ui/select'
@@ -138,9 +137,8 @@ export function TransactionsTab() {
                   if (el) tabRefs.current.set(tab, el)
                 }}
                 onClick={() => setActiveTab(tab)}
-                className={`-mb-px shrink-0 border-b-2 px-3 py-2 text-sm ${
-                  tab === activeTab ? 'border-primary font-medium text-primary' : 'border-transparent text-muted-foreground hover:text-foreground'
-                }`}
+                className={`-mb-px shrink-0 border-b-2 px-3 py-2 text-sm ${tab === activeTab ? 'border-primary font-medium text-primary' : 'border-transparent text-muted-foreground hover:text-foreground'
+                  }`}
               >
                 {tab}
               </button>

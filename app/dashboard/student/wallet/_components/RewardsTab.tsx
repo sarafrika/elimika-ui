@@ -15,7 +15,7 @@ export function RewardsTab() {
     return (
         <div className="space-y-4">
             <Card className="bg-gradient-to-br from-primary to-accent text-primary-foreground border-0">
-                <CardHeader className="pb-2">
+                <CardHeader>
                     <CardDescription className="text-primary-foreground/80">Total rewards earned</CardDescription>
                     <CardTitle className="text-2xl">{formatKES(total)}</CardTitle>
                 </CardHeader>
@@ -45,7 +45,19 @@ export function RewardsTab() {
                                         <span className="text-sm font-semibold text-success">+ {formatKES(r.amount_kes)}</span>
                                     </div>
                                 ))}
-                                {rows.length === 0 && <p className="py-3 text-sm text-muted-foreground">None yet.</p>}
+
+                                {rows.length === 0 && (
+                                    <div className='flex flex-col items-center justify-center pt-0 pb-8 text-center'>
+                                        <p className='text-sm font-medium text-foreground'>
+                                            No {k.toLowerCase()} rewards available
+                                        </p>
+                                        <p className='mt-1 max-w-xs text-xs leading-relaxed text-muted-foreground'>
+                                            Rewards of this type will appear here when they are earned and added to
+                                            your wallet.
+                                        </p>
+                                    </div>
+                                )}
+
                             </CardContent>
                         </Card>
                     );

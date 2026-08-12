@@ -131,15 +131,26 @@ export function DisbursementsTab() {
 
                 <Card>
                     <CardHeader className='pb-2'>
-                        <CardTitle className='text-base'>
-                            {activeStatus === 'All' ? `All Disbursements (${rows.length})` : `${activeStatus} Disbursements (${rows.length})`}
+                        <CardTitle className="text-base">
+                            {activeStatus === 'All'
+                                ? `All Disbursements (${rows.length})`
+                                : `${activeStatus.charAt(0).toUpperCase() + activeStatus.slice(1).toLowerCase()} Disbursements (${rows.length})`}
                         </CardTitle>
                     </CardHeader>
                     <CardContent className='p-0 overflow-x-auto'>
                         {rows.length === 0 ? (
-                            <div className='flex flex-col items-center gap-2 py-12 text-sm text-muted-foreground'>
-                                <Inbox className='h-6 w-6' />
-                                Not available
+                            <div className='flex flex-col items-center justify-center gap-2 py-12 text-center'>
+                                <Inbox className='h-8 w-8 text-muted-foreground/60' />
+                                <div>
+                                    <p className='font-medium text-foreground'>
+                                        No {activeStatus === 'All' ? '' : activeStatus.toLowerCase() + ' '}disbursements found
+                                    </p>
+                                    <p className='mt-1 text-xs text-muted-foreground'>
+                                        {activeStatus === 'All'
+                                            ? 'There are no disbursement records available at this time.'
+                                            : `There are no ${activeStatus.toLowerCase()} disbursements at this time.`}
+                                    </p>
+                                </div>
                             </div>
                         ) : (
                             <table className='w-full text-sm'>

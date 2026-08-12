@@ -68,17 +68,17 @@ export function OverviewTab() {
                 series={[
                   {
                     label: 'Awarded',
-                    data: [10, 30, 45, 52, 54, 56],
+                    data: [0, 0, 0, 0, 0, 0],
                     color: TOKEN.chart1,
                   },
                   {
                     label: 'Disbursed',
-                    data: [2, 8, 12, 15, 17, 18],
+                    data: [0, 0, 0, 0, 0, 0],
                     color: TOKEN.chart2,
                   },
                   {
                     label: 'Spent',
-                    data: [1, 5, 9, 12, 14, 17],
+                    data: [0, 0, 0, 0, 0, 0],
                     color: TOKEN.chart3,
                   },
                 ]}
