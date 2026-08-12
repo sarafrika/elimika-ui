@@ -13,6 +13,15 @@ import {
     SheetHeader,
     SheetTitle,
 } from '@/components/ui/sheet';
+import { useQueries } from '@tanstack/react-query';
+
+import { useStudent } from '@/context/student-context';
+import useStudentClassDefinitions from '@/hooks/use-student-class-definition';
+import { STALE_TIMES } from '@/lib/query-client';
+import {
+    getCourseAssessmentsOptions,
+} from '@/services/client/@tanstack/react-query.gen';
+import type { CourseAssessment } from '@/services/client/types.gen';
 
 import {
     CheckCircle2,
@@ -63,6 +72,7 @@ interface Assessment {
     title: string;
     type: AssessmentType;
     course_title: string;
+    course_uuid?: string;
     duration_minutes: number;
     pass_mark: number;
     max_score: number;
@@ -115,139 +125,34 @@ const RUBRIC_MAX_LEVEL = 4;
 
 const assessmentType = (a: Assessment) => a.type;
 
-/* =========================================================================
-   Mock data
-   ========================================================================= */
+function normalizeAssessmentType(type?: string): AssessmentType {
+    const normalized = String(type ?? '').trim().toLowerCase();
 
-function seedAssessments(): Assessment[] {
-    return [
-        {
-            id: 'as-1',
-            title: 'Python Fundamentals Quiz',
-            type: 'quiz',
-            course_title: 'Python for Data Science',
-            duration_minutes: 20,
-            pass_mark: 70,
-            max_score: 4,
-            instructions: 'Answer all questions. You have one attempt.',
-            criteria: [],
-            tasks: [],
-            scores: [],
-            questions: [
-                { id: 'q1', prompt: 'Which keyword defines a function in Python?', points: 1, options: ['func', 'def', 'lambda', 'fn'], correct_index: 1 },
-                { id: 'q2', prompt: 'What does len([1,2,3]) return?', points: 1, options: ['2', '3', '4', 'Error'], correct_index: 1 },
-                { id: 'q3', prompt: 'Which data type is immutable?', points: 1, options: ['list', 'dict', 'tuple', 'set'], correct_index: 2 },
-                { id: 'q4', prompt: 'What is the output of 3 // 2?', points: 1, options: ['1.5', '1', '2', '0'], correct_index: 1 },
-            ],
-        },
-        {
-            id: 'as-2',
-            title: 'Data Structures Midterm Exam',
-            type: 'exam',
-            course_title: 'Python for Data Science',
-            duration_minutes: 60,
-            pass_mark: 60,
-            max_score: 3,
-            instructions: 'Closed book. Submit once — no drafts after submission.',
-            criteria: [],
-            tasks: [],
-            scores: [],
-            questions: [
-                { id: 'q1', prompt: 'Which structure is FIFO?', points: 1, options: ['Stack', 'Queue', 'Tree', 'Graph'], correct_index: 1 },
-                { id: 'q2', prompt: 'Average lookup time in a hash map?', points: 1, options: ['O(n)', 'O(log n)', 'O(1)', 'O(n^2)'], correct_index: 2 },
-                { id: 'q3', prompt: 'Which traversal visits the root first?', points: 1, options: ['In-order', 'Post-order', 'Pre-order', 'Level-order'], correct_index: 2 },
-            ],
-        },
-        {
-            id: 'as-3',
-            title: 'UX Design Case Study',
-            type: 'assignment',
-            course_title: 'UX Design Certification',
-            duration_minutes: 90,
-            pass_mark: 65,
-            max_score: 3,
-            instructions: 'Submit your written case study answers below.',
-            criteria: [],
-            tasks: [],
-            scores: [],
-            questions: [
-                { id: 'q1', prompt: 'Which method best surfaces usability issues early?', points: 1, options: ['A/B testing', 'Heuristic evaluation', 'Focus groups', 'Analytics review'], correct_index: 1 },
-                { id: 'q2', prompt: 'What is a persona primarily used for?', points: 1, options: ['Billing', 'Representing a user segment', 'Server config', 'Sprint planning'], correct_index: 1 },
-                { id: 'q3', prompt: 'Which is a core principle of accessible design?', points: 1, options: ['Low contrast', 'Sufficient color contrast', 'Small tap targets', 'Auto-playing audio'], correct_index: 1 },
-            ],
-        },
-        {
-            id: 'as-4',
-            title: 'Capstone Robotics Build',
-            type: 'project',
-            course_title: 'Robotics Fundamentals',
-            duration_minutes: 240,
-            pass_mark: 60,
-            max_score: 0,
-            instructions: 'Submit your build for rubric-based review by your instructor.',
-            questions: [],
-            criteria: [
-                { id: 'c1', name: 'Design & Planning', position: 1 },
-                { id: 'c2', name: 'Build Quality', position: 2 },
-                { id: 'c3', name: 'Functionality', position: 3 },
-                { id: 'c4', name: 'Documentation', position: 4 },
-            ],
-            tasks: [
-                { id: 't1', name: 'Chassis assembly', position: 1 },
-                { id: 't2', name: 'Sensor integration', position: 2 },
-            ],
-            scores: [
-                { task_id: 't1', criterion_id: 'c1', level: 3, comment: 'Solid plan, minor gaps in wiring diagram.' },
-                { task_id: 't1', criterion_id: 'c2', level: 4, comment: 'Clean build, well soldered.' },
-                { task_id: 't1', criterion_id: 'c3', level: 3 },
-                { task_id: 't1', criterion_id: 'c4', level: 2, comment: 'Documentation needs more detail.' },
-                { task_id: 't2', criterion_id: 'c1', level: 3 },
-                { task_id: 't2', criterion_id: 'c2', level: 3 },
-                { task_id: 't2', criterion_id: 'c3', level: 4, comment: 'Sensors calibrated well.' },
-                { task_id: 't2', criterion_id: 'c4', level: 3 },
-            ],
-        },
-        {
-            id: 'as-5',
-            title: 'Regional Hackathon Submission',
-            type: 'competition',
-            course_title: 'Advanced React Bootcamp',
-            duration_minutes: 0,
-            pass_mark: 0,
-            max_score: 0,
-            instructions: 'Awaiting judge review — rubric scores will appear here once marking is complete.',
-            questions: [],
-            criteria: [
-                { id: 'c1', name: 'Innovation', position: 1 },
-                { id: 'c2', name: 'Execution', position: 2 },
-                { id: 'c3', name: 'Presentation', position: 3 },
-            ],
-            tasks: [
-                { id: 't1', name: 'Final submission', position: 1 },
-            ],
-            scores: [],
-        },
-    ];
+    if (normalized.includes('quiz')) return 'quiz';
+    if (normalized.includes('exam')) return 'exam';
+    if (normalized.includes('assignment')) return 'assignment';
+    if (normalized.includes('project')) return 'project';
+    if (normalized.includes('competition')) return 'competition';
+
+    return 'assignment';
 }
 
-function seedAttempts(): Attempt[] {
-    return [
-        {
-            id: 'att-1',
-            assessment_id: 'as-1',
-            status: 'submitted',
-            answers: { q1: 1, q2: 1, q3: 2, q4: 0 },
-            score: 3,
-            max_score: 4,
-            passed: true,
-        },
-        {
-            id: 'att-2',
-            assessment_id: 'as-3',
-            status: 'in_progress',
-            answers: { q1: 1 },
-        },
-    ];
+function mapCourseAssessmentToUI(assessment: CourseAssessment, courseTitle: string): Assessment {
+    return {
+        id: assessment.uuid ?? assessment.title ?? 'untitled-assessment',
+        course_uuid: assessment.course_uuid,
+        title: assessment.title ?? 'Untitled assessment',
+        type: normalizeAssessmentType(assessment.assessment_type),
+        course_title: courseTitle,
+        duration_minutes: 0,
+        pass_mark: 0,
+        max_score: 0,
+        instructions: assessment.description ?? undefined,
+        questions: [],
+        criteria: [],
+        tasks: [],
+        scores: [],
+    };
 }
 
 /* =========================================================================
@@ -350,11 +255,61 @@ function downloadReport(assessment: Assessment, attempt: Attempt) {
    ========================================================================= */
 
 const LessonHubAssessmentsTab = () => {
-    const [assessments] = useState<Assessment[]>(seedAssessments);
-    const [attempts, setAttempts] = useState<Attempt[]>(seedAttempts);
+    const student = useStudent();
+    const { classDefinitions } = useStudentClassDefinitions(student ?? undefined);
+    const [attempts, setAttempts] = useState<Attempt[]>([]);
     const [openId, setOpenId] = useState<string | null>(null);
     const [typeFilter, setTypeFilter] = useState<AssessmentType | 'all'>('all');
-    const [loading] = useState(false);
+
+    const courseUuids = useMemo(
+        () =>
+            Array.from(
+                new Set(
+                    classDefinitions
+                        .map((definition) => definition.course?.uuid)
+                        .filter((value): value is string => Boolean(value))
+                )
+            ),
+        [classDefinitions]
+    );
+
+    const courseTitleMap = useMemo(() => {
+        const map = new Map<string, string>();
+
+        classDefinitions.forEach((definition) => {
+            const courseUuid = definition.course?.uuid;
+            const courseName = definition.course?.name;
+
+            if (courseUuid) {
+                map.set(courseUuid, courseName ?? 'Untitled course');
+            }
+        });
+
+        return map;
+    }, [classDefinitions]);
+
+    const assessmentQueries = useQueries({
+        queries: courseUuids.map((courseUuid) => ({
+            ...getCourseAssessmentsOptions({
+                path: { courseUuid },
+                query: { pageable: {} },
+            }),
+            enabled: !!courseUuid,
+            staleTime: STALE_TIMES.entity,
+        })),
+    });
+
+    const assessments = useMemo(() => {
+        return courseUuids.flatMap((courseUuid, index) => {
+            const query = assessmentQueries[index];
+            const items = query?.data?.data?.content ?? [];
+            const courseTitle = courseTitleMap.get(courseUuid) ?? 'Unknown course';
+
+            return items.map((item) => mapCourseAssessmentToUI(item, courseTitle));
+        });
+    }, [assessmentQueries, courseTitleMap, courseUuids]);
+
+    const loading = assessmentQueries.some((query) => query.isLoading);
 
     const attemptFor = (assessmentId: string) =>
         attempts.find((a) => a.assessment_id === assessmentId) ?? null;
