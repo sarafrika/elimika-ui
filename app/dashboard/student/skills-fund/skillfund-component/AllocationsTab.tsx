@@ -153,7 +153,7 @@ export function AllocationsTab() {
           ))}
         </div>
 
-        <div className='rounded-md border border-info/20 bg-info/10 p-3 text-sm text-info flex items-center gap-2'>
+        <div className='rounded-md border border-info/20 bg-success/10 p-3 text-sm text-primary flex items-center gap-2'>
           <Info className='h-4 w-4' />
           Funds are restricted to approved uses only. Ensure you meet all conditions before making a payment.
         </div>

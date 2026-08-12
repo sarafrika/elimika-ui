@@ -9,8 +9,6 @@ import {
 } from "react";
 
 import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 
 
 import { useQuery } from "@tanstack/react-query";
@@ -19,7 +17,6 @@ import {
     ArrowLeftRight,
     ArrowUpRight,
     CreditCard,
-    Download,
     FileText,
     Gift,
     Landmark,
@@ -34,8 +31,9 @@ import { useUserProfile } from "../../../../context/profile-context";
 import { Wallet, WalletTransaction } from "../../../../services/client";
 import { getWalletOptions, listTransactions1Options } from "../../../../services/client/@tanstack/react-query.gen";
 import { AccountsTab } from "./_components/AccountsTab";
+import { AuditTab } from "./_components/AuditTab";
 import { DashboardTab } from "./_components/DashboardTab";
-import { BUCKET_META, BUCKET_RULES, seedAudit, seedPayments, seedStatements } from "./_components/data";
+import { BUCKET_META, BUCKET_RULES } from "./_components/data";
 import { PaymentsTab } from "./_components/PaymentsTab";
 import { RefundsTab } from "./_components/RefundsTab";
 import { RewardsTab } from "./_components/RewardsTab";
@@ -255,6 +253,7 @@ function WalletProvider({ children }: { children: ReactNode }) {
     })
     const transactionsData = transactionsResp?.data?.content
 
+
     const accounts = useMemo<WalletAccount[]>(() => [
         {
             id: wallet?.uuid ?? "acc-personal",
@@ -299,13 +298,13 @@ function WalletProvider({ children }: { children: ReactNode }) {
             label: "Refund Balance",
             balance_kes: 0,
         },
-    ], [wallet]);
+    ], [wallet]);  // seedAccounts
 
-    const [transactions, setTransactions] = useState<WalletTransaction[]>(transactionsData || []);
-    const [payments, setPayments] = useState<WalletPayment[]>(seedPayments);
-    const [rewards] = useState<WalletReward[]>([]);
-    const [statements] = useState<WalletStatement[]>(seedStatements);
-    const [audit, setAudit] = useState<AuditEntry[]>(seedAudit);
+    const [transactions, setTransactions] = useState<WalletTransaction[]>(transactionsData || []); // seedTransactions
+    const [payments, setPayments] = useState<WalletPayment[]>([]); // seedPayments
+    const [rewards] = useState<WalletReward[]>([]); // seedRewards
+    const [statements] = useState<WalletStatement[]>([]); //seedStatements
+    const [audit, setAudit] = useState<AuditEntry[]>([]); // seedAudit
     const [toasts, setToasts] = useState<Toast[]>([]);
 
     function notify(t: Omit<Toast, "id">) {
@@ -545,54 +544,6 @@ export function downloadCsv(filename: string, header: string[], rows: (string | 
     URL.revokeObjectURL(url);
 }
 
-/* =========================================================================
-   Audit tab
-   ========================================================================= */
-
-function AuditTab() {
-    const { audit, notify } = useWallet();
-
-    function exportCsv() {
-        downloadCsv(
-            "elimika-wallet-audit.csv",
-            ["Timestamp", "User role", "Event", "Entity", "Reason", "Previous", "Updated"],
-            audit.map((r) => [
-                fmtDateTime(r.created_at), r.actor_role, r.event_type, r.entity_type ?? "", r.reason ?? "",
-                JSON.stringify(r.previous_values ?? {}), JSON.stringify(r.updated_values ?? {}),
-            ]),
-        );
-        notify({ type: "success", message: "Export ready", description: "elimika-wallet-audit.csv downloaded." });
-    }
-
-    return (
-        <Card>
-            <CardHeader className="flex-row items-center justify-between space-y-0">
-                <div>
-                    <CardTitle className="text-base">Financial audit trail</CardTitle>
-                    <CardDescription>Immutable log of every wallet event.</CardDescription>
-                </div>
-                <Button variant="outline" size="sm" onClick={exportCsv}><Download className="h-4 w-4 mr-1.5" /> Export</Button>
-            </CardHeader>
-            <CardContent className="divide-y">
-                {audit.map((r) => (
-                    <div key={r.id} className="py-3 space-y-1">
-                        <div className="flex items-center justify-between gap-2">
-                            <p className="text-sm font-medium">
-                                {r.event_type.replace(/_/g, " ")}{r.entity_type ? ` · ${r.entity_type.replace(/_/g, " ")}` : ""}
-                            </p>
-                            <span className="text-xs text-muted-foreground">{fmtDateTime(r.created_at)}</span>
-                        </div>
-                        {r.reason && <p className="text-xs text-muted-foreground">{r.reason}</p>}
-                        <p className="text-[11px] text-muted-foreground break-all">
-                            Role: {r.actor_role} · Previous: {JSON.stringify(r.previous_values ?? {})} · Updated: {JSON.stringify(r.updated_values ?? {})}
-                        </p>
-                    </div>
-                ))}
-                {audit.length === 0 && <p className="py-6 text-sm text-muted-foreground">No audit events yet.</p>}
-            </CardContent>
-        </Card>
-    );
-}
 
 function WalletShell() {
     const [tab, setTab] = useState<TabId>("payments");

@@ -1,5 +1,6 @@
 'use client'
 
+import { ReceiptText, RefreshCcw } from "lucide-react";
 import { useState } from "react";
 import { Badge } from "../../../../../components/ui/badge";
 import { Button } from "../../../../../components/ui/button";
@@ -39,15 +40,15 @@ export function RefundsTab() {
         <div className="space-y-4">
             <div className="grid gap-3 sm:grid-cols-3">
                 <Card>
-                    <CardHeader className="pb-2"><CardDescription>Available balance</CardDescription><CardTitle className="text-xl text-success">{formatKES(breakdown.available)}</CardTitle></CardHeader>
+                    <CardHeader><CardDescription>Available balance</CardDescription><CardTitle className="text-xl text-success">{formatKES(breakdown.available)}</CardTitle></CardHeader>
                     <CardContent className="pt-0 text-xs text-muted-foreground">Refunds of unrestricted spend land here</CardContent>
                 </Card>
                 <Card>
-                    <CardHeader className="pb-2"><CardDescription>Restricted balance</CardDescription><CardTitle className="text-xl text-warning">{formatKES(breakdown.restricted)}</CardTitle></CardHeader>
+                    <CardHeader><CardDescription>Restricted balance</CardDescription><CardTitle className="text-xl text-warning">{formatKES(breakdown.restricted)}</CardTitle></CardHeader>
                     <CardContent className="pt-0 text-xs text-muted-foreground">Skills Fund & marketplace credits keep their funder rules after a refund</CardContent>
                 </Card>
                 <Card>
-                    <CardHeader className="pb-2"><CardDescription>Expired funder balance</CardDescription><CardTitle className="text-xl text-muted-foreground">{formatKES(breakdown.expired)}</CardTitle></CardHeader>
+                    <CardHeader><CardDescription>Expired funder balance</CardDescription><CardTitle className="text-xl text-muted-foreground">{formatKES(breakdown.expired)}</CardTitle></CardHeader>
                     <CardContent className="pt-0 text-xs text-muted-foreground">Refunds to an expired allocation are re-routed to your Refund Balance</CardContent>
                 </Card>
             </div>
@@ -79,7 +80,23 @@ export function RefundsTab() {
                                 </div>
                             );
                         })}
-                        {candidates.length === 0 && <p className="py-6 text-sm text-muted-foreground">No payments available for refund.</p>}
+
+                        {candidates.length === 0 && (
+                            <div className='flex flex-col items-center justify-center rounded-xl  bg-muted/20 px-6 py-12 text-center'>
+                                <div className='mb-4 flex h-11 w-11 items-center justify-center rounded-full bg-muted'>
+                                    <RefreshCcw className='h-5 w-5 text-muted-foreground' />
+                                </div>
+
+                                <h4 className='text-sm font-semibold text-foreground'>
+                                    No refundable payments
+                                </h4>
+
+                                <p className='mt-1.5 max-w-sm text-xs leading-relaxed text-muted-foreground'>
+                                    Payments that are eligible for a refund will appear here. Any approved
+                                    refund will be returned to the appropriate funding bucket.
+                                </p>
+                            </div>
+                        )}
                     </CardContent>
                 </Card>
 
@@ -100,7 +117,23 @@ export function RefundsTab() {
                                 </div>
                             </div>
                         ))}
-                        {refunded.length === 0 && <p className="py-6 text-sm text-muted-foreground">No refunds yet.</p>}
+
+                        {refunded.length === 0 && (
+                            <div className='flex flex-col items-center justify-center rounded-xl bg-muted/20 px-6 py-12 text-center'>
+                                <div className='mb-4 flex h-11 w-11 items-center justify-center rounded-full bg-muted'>
+                                    <ReceiptText className='h-5 w-5 text-muted-foreground' />
+                                </div>
+
+                                <h4 className='text-sm font-semibold text-foreground'>
+                                    No refund history
+                                </h4>
+
+                                <p className='mt-1.5 max-w-sm text-xs leading-relaxed text-muted-foreground'>
+                                    Approved refunds will appear here with details about the amount
+                                    returned and the funding bucket it was restored to.
+                                </p>
+                            </div>
+                        )}
                     </CardContent>
                 </Card>
             </div>

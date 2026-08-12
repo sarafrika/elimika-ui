@@ -35,43 +35,89 @@ export function PaymentsTab() {
             </div>
 
             <div className="grid gap-4 md:grid-cols-2">
-                {payments.map((p, i) => {
-                    const outstanding = p.amount_kes - p.amount_paid_kes;
-                    const pct = Math.round((p.amount_paid_kes / p.amount_kes) * 100);
-                    return (
-                        <Card key={i}>
-                            <CardHeader className="pb-2">
-                                <div className="flex items-start justify-between gap-2">
-                                    <div className="min-w-0">
-                                        <CardDescription>{p.item_type}</CardDescription>
-                                        <CardTitle className="text-base truncate">{p.item_name}</CardTitle>
+                {payments.length === 0 ? (
+                    <Card className="md:col-span-2">
+                        <CardContent className="flex flex-col items-center justify-center py-12 text-center">
+                            <div className="mb-3 flex h-12 w-12 items-center justify-center rounded-full bg-muted">
+                                <CreditCard className="h-6 w-6 text-muted-foreground" />
+                            </div>
+                            <CardTitle className="text-base">No payments</CardTitle>
+                            <CardDescription className="mt-1 text-xs">
+                                You don't have any payments to make at the moment.
+                            </CardDescription>
+                        </CardContent>
+                    </Card>
+                ) : (
+                    payments.map((p, i) => {
+                        const outstanding = p.amount_kes - p.amount_paid_kes;
+                        const pct = Math.round((p.amount_paid_kes / p.amount_kes) * 100);
+
+                        return (
+                            <Card key={i}>
+                                <CardHeader className="pb-2">
+                                    <div className="flex items-start justify-between gap-2">
+                                        <div className="min-w-0">
+                                            <CardDescription>{p.item_type}</CardDescription>
+                                            <CardTitle className="text-base truncate">
+                                                {p.item_name}
+                                            </CardTitle>
+                                        </div>
+                                        <StatusBadge status={p.status} />
                                     </div>
-                                    <StatusBadge status={p.status} />
-                                </div>
-                            </CardHeader>
-                            <CardContent className="space-y-3">
-                                <div className="flex items-center justify-between text-sm">
-                                    <span className="text-muted-foreground">Outstanding</span>
-                                    <span className="font-semibold">{formatKES(outstanding)}</span>
-                                </div>
-                                {p.amount_paid_kes > 0 && (
-                                    <div className="space-y-1">
-                                        <Progress value={pct} className="h-1.5" />
-                                        <p className="text-[11px] text-muted-foreground">{formatKES(p.amount_paid_kes)} of {formatKES(p.amount_kes)} paid</p>
+                                </CardHeader>
+
+                                <CardContent className="space-y-3">
+                                    <div className="flex items-center justify-between text-sm">
+                                        <span className="text-muted-foreground">Outstanding</span>
+                                        <span className="font-semibold">
+                                            {formatKES(outstanding)}
+                                        </span>
                                     </div>
-                                )}
-                                <div className="flex items-center gap-3 text-xs text-muted-foreground">
-                                    <span className="flex items-center gap-1"><Clock className="h-3 w-3" /> Due {fmtDate(p.due_at)}</span>
-                                    {p.partial_allowed && <Badge variant="outline">Partial payments allowed</Badge>}
-                                </div>
-                                <Button size="sm" className="w-full" disabled={p.status === "completed"} onClick={() => setTarget(p)}>
-                                    {p.status === "completed" ? (<><CheckCircle2 className="h-4 w-4 mr-1.5" /> Settled</>) : "Pay now"}
-                                </Button>
-                            </CardContent>
-                        </Card>
-                    );
-                })}
+
+                                    {p.amount_paid_kes > 0 && (
+                                        <div className="space-y-1">
+                                            <Progress value={pct} className="h-1.5" />
+                                            <p className="text-[11px] text-muted-foreground">
+                                                {formatKES(p.amount_paid_kes)} of{" "}
+                                                {formatKES(p.amount_kes)} paid
+                                            </p>
+                                        </div>
+                                    )}
+
+                                    <div className="flex items-center gap-3 text-xs text-muted-foreground">
+                                        <span className="flex items-center gap-1">
+                                            <Clock className="h-3 w-3" />
+                                            Due {fmtDate(p.due_at)}
+                                        </span>
+                                        {p.partial_allowed && (
+                                            <Badge variant="outline">
+                                                Partial payments allowed
+                                            </Badge>
+                                        )}
+                                    </div>
+
+                                    <Button
+                                        size="sm"
+                                        className="w-full"
+                                        disabled={p.status === "completed"}
+                                        onClick={() => setTarget(p)}
+                                    >
+                                        {p.status === "completed" ? (
+                                            <>
+                                                <CheckCircle2 className="h-4 w-4 mr-1.5" />
+                                                Settled
+                                            </>
+                                        ) : (
+                                            "Pay now"
+                                        )}
+                                    </Button>
+                                </CardContent>
+                            </Card>
+                        );
+                    })
+                )}
             </div>
+
 
             <PayDialog
                 open={!!target || adhoc}

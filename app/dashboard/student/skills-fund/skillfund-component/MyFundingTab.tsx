@@ -362,21 +362,34 @@ export function MyFundingTab() {
         </Card>
 
         <Card>
-          <CardHeader className='pb-2'>
-            <CardTitle className='text-base'>Next Disbursement</CardTitle>
+          <CardHeader className="pb-2">
+            <CardTitle className="text-base">Next Disbursement</CardTitle>
           </CardHeader>
-          <CardContent className='space-y-2 text-sm'>
-            <div className='flex items-start gap-3'>
-              <Banknote className='h-5 w-5 text-success' />
-              <div>
-                <p className='font-medium'>Not available</p>
-                <p className='text-xs text-muted-foreground'>No upcoming disbursement data is available in the live hook.</p>
+
+          <CardContent className="space-y-2 text-sm">
+            <div className="flex items-start gap-3">
+              <Banknote className="h-5 w-5 text-muted-foreground" />
+
+              <div className="min-w-0">
+                <p className="font-medium">No upcoming program</p>
+                <p className="text-xs text-muted-foreground">
+                  There is no scheduled disbursement at this time.
+                </p>
               </div>
-              <span className='ml-auto font-semibold'>{NOT_AVAILABLE}</span>
+
+              <span className="ml-auto shrink-0 font-semibold text-muted-foreground">
+                KES 0
+              </span>
             </div>
-            <div className='flex justify-between rounded-md bg-muted/50 p-2 text-xs'>
-              <span>On <b>{NOT_AVAILABLE}</b></span>
-              <span>In <b>{NOT_AVAILABLE}</b></span>
+
+            <div className="flex justify-between rounded-md bg-muted/50 p-2 text-xs text-muted-foreground">
+              <span>
+                On <b>—</b>
+              </span>
+
+              <span>
+                In <b>—</b>
+              </span>
             </div>
           </CardContent>
         </Card>
@@ -387,9 +400,9 @@ export function MyFundingTab() {
           </CardHeader>
           <CardContent className='space-y-3 text-sm'>
             {[
-              ['Maintain 80% attendance', NOT_AVAILABLE, 'text-muted-foreground'],
-              ['Submit Assignment 2', NOT_AVAILABLE, 'text-muted-foreground'],
-              ['Mid-Term Exam', NOT_AVAILABLE, 'text-muted-foreground'],
+              ['Maintain 80% attendance', "Pending", 'text-muted-foreground'],
+              ['Submit Assignment 2', "Pending", 'text-muted-foreground'],
+              ['Mid-Term Exam', "Pending", 'text-muted-foreground'],
             ].map(([title, state, tone]) => (
               <div key={title} className='flex items-start gap-2'>
                 <CheckCircle2 className='mt-0.5 h-4 w-4 text-success' />

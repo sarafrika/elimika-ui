@@ -368,9 +368,10 @@ export function LessonHubLessonsTab({ learningHubData }: LessonHubLessonsTabProp
                 icon={BookOpen}
                 title='No class lessons yet'
                 description='Enroll in a class to unlock the lesson library and access course content through that class.'
+                // go to learning-hub page (switch to my-classes tab)
                 action={
                     <Button asChild>
-                        <Link href='/dashboard/student/learning-hub/classes'>Browse classes</Link>
+                        <Link href='/dashboard/student/learning-hub'>Browse classes</Link>
                     </Button>
                 }
             />
