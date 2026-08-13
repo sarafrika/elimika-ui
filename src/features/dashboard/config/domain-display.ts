@@ -102,7 +102,13 @@ export function useCreateMenuActions(activeDomain: UserDomain | null): CreateAct
             label: 'Add Certificate',
             description: 'Upload a qualification or document',
             icon: FileCheck,
-            onSelect: () => router.push('/dashboard/course-management/certificates'),
+            onSelect: () =>
+              router.push(
+                buildWorkspaceAliasPath(
+                  activeDomain,
+                  '/dashboard/course-management/certificates'
+                )
+              ),
           },
         ];
 
@@ -128,13 +134,14 @@ export function useCreateMenuActions(activeDomain: UserDomain | null): CreateAct
             label: 'Post a Job',
             description: 'Advertise an instructor opening',
             icon: Briefcase,
-            onSelect: () => router.push('/dashboard/jobs/new'),
+            onSelect: () => router.push(buildWorkspaceAliasPath(activeDomain, '/dashboard/jobs/new')),
           },
           {
             label: 'Add Classroom',
             description: 'Register a venue or online room',
             icon: MapPin,
-            onSelect: () => router.push('/dashboard/venues/new'),
+            onSelect: () =>
+              router.push(buildWorkspaceAliasPath(activeDomain, '/dashboard/venues/new')),
           },
         ];
 

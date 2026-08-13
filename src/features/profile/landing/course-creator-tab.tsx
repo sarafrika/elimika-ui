@@ -4,6 +4,16 @@ import { WatchedText, WatchedValue } from '@/components/form/watched-value';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Checkbox } from '@/components/ui/checkbox';
 import {
@@ -783,6 +793,7 @@ function creatorcertificatestab({ sharedProfile }: DomainTabProps) {
   const [isSaving, setIsSaving] = useState(false);
   const [isUploadSheetOpen, setIsUploadSheetOpen] = useState(false);
   const [attachments, setAttachments] = useState<AttachedFile[]>([]);
+  const [deleteIndex, setDeleteIndex] = useState<number | null>(null);
 
   const { data, isLoading } = useQuery({
     ...getCourseCreatorEducationOptions({
@@ -876,11 +887,17 @@ function creatorcertificatestab({ sharedProfile }: DomainTabProps) {
     setAttachments(prev => [...prev, {}]);
   };
 
-  const removeEntry = async (index: number) => {
-    if (!confirm('Remove this qualification?')) return;
+  const removeEntry = (index: number) => {
+    setDeleteIndex(index);
+  };
+
+  const confirmRemoveEntry = () => {
+    if (deleteIndex === null) return;
+    const index = deleteIndex;
     const edUuid = form.getValues(`educations.${index}.uuid`);
     remove(index);
     setAttachments(prev => prev.filter((_, i) => i !== index));
+    setDeleteIndex(null);
     if (edUuid) {
       deleteEducationMut.mutate(
         { path: { educationUuid: edUuid, courseCreatorUuid: sharedProfile.uuid } },
@@ -1338,6 +1355,21 @@ function creatorcertificatestab({ sharedProfile }: DomainTabProps) {
         open={isUploadSheetOpen}
         onOpenChange={setIsUploadSheetOpen}
       />
+      <AlertDialog open={deleteIndex !== null} onOpenChange={open => !open && setDeleteIndex(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Remove qualification?</AlertDialogTitle>
+            <AlertDialogDescription>
+              This will delete the selected qualification from your profile. This action cannot be
+              undone.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction onClick={confirmRemoveEntry}>Remove</AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </TabShell>
   );
 }
@@ -1419,6 +1451,7 @@ function CreatorCareerTab({ sharedProfile }: DomainTabProps) {
   const qc = useQueryClient();
   const [isEditing, setIsEditing] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
+  const [deleteIndex, setDeleteIndex] = useState<number | null>(null);
 
   const { data, isLoading } = useQuery({
     ...getCourseCreatorExperienceOptions({
@@ -1519,10 +1552,16 @@ function CreatorCareerTab({ sharedProfile }: DomainTabProps) {
   };
 
   // add a delete modal here instead
-  const removeEntry = async (index: number) => {
-    if (!confirm('Remove this experience?')) return;
+  const removeEntry = (index: number) => {
+    setDeleteIndex(index);
+  };
+
+  const confirmRemoveEntry = () => {
+    if (deleteIndex === null) return;
+    const index = deleteIndex;
     const expUuid = form.getValues(`experiences.${index}.uuid`);
     remove(index);
+    setDeleteIndex(null);
     if (expUuid) {
       deleteExperienceMut.mutate(
         { path: { experienceUuid: expUuid, courseCreatorUuid: sharedProfile.uuid } },
@@ -1838,6 +1877,21 @@ function CreatorCareerTab({ sharedProfile }: DomainTabProps) {
           </Card>
         </form>
       </Form>
+      <AlertDialog open={deleteIndex !== null} onOpenChange={open => !open && setDeleteIndex(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Remove experience?</AlertDialogTitle>
+            <AlertDialogDescription>
+              This will delete the selected experience from your profile. This action cannot be
+              undone.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction onClick={confirmRemoveEntry}>Remove</AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </TabShell>
   );
 }
