@@ -1,9 +1,9 @@
 'use client';
 
-import { Globe, Mail, MapPin, Phone } from 'lucide-react';
-import type { ReactNode } from 'react';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Card, CardContent } from '@/components/ui/card';
+import { Globe, Mail, MapPin, Phone } from 'lucide-react';
+import type { ReactNode } from 'react';
 
 function MetaItem({ icon, value }: { icon: ReactNode; value?: string }) {
   if (!value) return null;
@@ -76,9 +76,7 @@ export function ProfileHero({
         </div>
 
         <div className='min-w-0 flex-1'>
-          {badge ? <div className='flex flex-wrap items-center gap-2'>{badge}</div> : null}
-
-          <h1 className='mt-2 text-3xl font-bold tracking-tight sm:text-4xl'>{name}</h1>
+          <h1 className='text-3xl font-bold tracking-tight sm:text-4xl'>{name}</h1>
 
           {headline ? (
             <p className='text-primary-foreground/85 mt-1 text-sm sm:text-base'>{headline}</p>

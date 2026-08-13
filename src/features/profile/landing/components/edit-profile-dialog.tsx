@@ -64,7 +64,7 @@ export function EditProfileDialog({
         onOpenChange(nextOpen);
       }}
     >
-      <DialogContent className='max-h-[90vh] overflow-y-auto sm:max-w-2xl'>
+      <DialogContent className='max-h-[90vh] overflow-y-auto sm:max-w-4xl'>
         <DialogHeader>
           <DialogTitle>Edit profile details</DialogTitle>
           <DialogDescription>

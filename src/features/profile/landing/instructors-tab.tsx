@@ -2,25 +2,6 @@
 'use client';
 
 import { WatchedText, WatchedValue } from '@/components/form/watched-value';
-import { zodResolver } from '@hookform/resolvers/zod';
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import {
-  Briefcase,
-  FileText,
-  GraduationCap,
-  Grip,
-  Paperclip,
-  Pencil,
-  PlusCircle,
-  Trash2,
-  Upload,
-  X,
-  XCircle,
-} from 'lucide-react';
-import React, { useEffect, useMemo, useRef, useState } from 'react';
-import { useFieldArray, useForm } from 'react-hook-form';
-import { toast } from 'sonner';
-import * as z from 'zod';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -65,11 +46,29 @@ import {
   uploadInstructorDocumentMutation,
 } from '@/services/client/@tanstack/react-query.gen';
 import type {
-  InstructorDocument,
   InstructorEducation,
-  InstructorExperience,
+  InstructorExperience
 } from '@/services/client/types.gen';
 import CoursesPage from '@/src/features/profile/components/instructor/rate-card/CoursesPage';
+import { zodResolver } from '@hookform/resolvers/zod';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import {
+  Briefcase,
+  FileText,
+  GraduationCap,
+  Grip,
+  Paperclip,
+  Pencil,
+  PlusCircle,
+  Trash2,
+  Upload,
+  X,
+  XCircle,
+} from 'lucide-react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
+import { useFieldArray, useForm } from 'react-hook-form';
+import { toast } from 'sonner';
+import * as z from 'zod';
 import type { DomainTabProps, TabDefinition } from './types';
 
 function TabShell({ children }: { children: React.ReactNode }) {
@@ -895,6 +894,7 @@ function instructorcertificatestab({ sharedProfile }: DomainTabProps) {
 
   const onSubmit = async (values: EducationFormValues) => {
     setIsSaving(true);
+
     try {
       for (const [i, ed] of values.educations.entries()) {
         const attachment = attachments[i];
@@ -923,7 +923,8 @@ function instructorcertificatestab({ sharedProfile }: DomainTabProps) {
                 education_uuid: educationUuid,
                 title: ed.school_name,
                 description: ed.field_of_study,
-                document_type_uuid: '35b49d4c-aec0-4a88-873b-5fa91342198f', // contnent type uuid for pdfs
+                document_type_uuid: '35b49d4c-aec0-4a88-873b-5fa91342198f',
+                // contnent type uuid for pdfs
                 experience_uuid: '',
                 expiry_date: undefined,
                 membership_uuid: '',
@@ -1187,12 +1188,11 @@ function instructorcertificatestab({ sharedProfile }: DomainTabProps) {
                     </div>
 
                     <div className='flex w-full justify-end'>
-                      {/* Hidden start year */}
                       <FormField
                         control={form.control}
                         name={`educations.${index}.year_started`}
                         render={({ field }) => (
-                          <FormItem className='hidden'>
+                          <FormItem>
                             <FormLabel>Start year</FormLabel>
                             <FormControl>
                               <Input
@@ -1494,6 +1494,7 @@ function InstructorCareerTab({ sharedProfile }: DomainTabProps) {
     form.reset();
   };
 
+  // add a delete modal here instead
   const removeEntry = async (index: number) => {
     if (!confirm('Remove this experience?')) return;
     const expUuid = form.getValues(`experiences.${index}.uuid`);

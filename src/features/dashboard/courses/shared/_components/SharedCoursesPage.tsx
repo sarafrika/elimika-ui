@@ -3,7 +3,6 @@
 
 import NotesModal from '@/components/custom-modals/notes-modal';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
 import {
   Pagination,
   PaginationContent,
@@ -77,11 +76,9 @@ import {
   GraduationCap,
   Layers,
   type LucideIcon,
-  Search,
   SlidersHorizontal,
   SquareDashedMousePointer,
-  Users,
-  X,
+  Users
 } from 'lucide-react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
@@ -1393,53 +1390,57 @@ export function SharedCoursesPage({ domain }: SharedCoursesPageProps) {
   return (
     <div className='bg-background mx-auto w-full max-w-[1680px] px-3 py-4 sm:px-4 lg:px-6 2xl:px-8'>
       <div className='space-y-6'>
-        {isStudentDomain ? (
-          <div className=''>
-            <div className='mx-auto pb-4'>
+        <header className='bg-card'>
+          <div className='flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between'>
+            {isStudentDomain ? <div className=''>
               <h1 className='text-2xl font-bold'>Start a Course</h1>
               <p className='text-muted-foreground/60 text-sm'>
                 Choose how you want to learn — join a class or find an instructor.
               </p>
+            </div> : <div className=''>
+              <h1 className='text-2xl font-bold'>Course Catalogue</h1>
+              <p className='text-muted-foreground/60 text-sm'>
+                {catalogueSubtitle}
+              </p>
+            </div>}
+
+            <div className='flex flex-wrap gap-2'>
+              {[
+                {
+                  icon: GraduationCap,
+                  value: mappedCourses.length,
+                  label: 'Courses',
+                },
+                {
+                  icon: Layers,
+                  value: mappedPrograms.length,
+                  label: 'Programmes',
+                },
+                {
+                  icon: Users,
+                  value: providerCount,
+                  label: 'Providers',
+                },
+              ].map(({ icon: Icon, value, label }) => (
+                <span
+                  key={label}
+                  className='border-border bg-background inline-flex items-center gap-1.5 rounded-lg border px-3 py-2'
+                >
+                  <Icon className='text-primary size-4' />
+
+                  <span className='text-foreground text-sm font-semibold tabular-nums'>
+                    {value}
+                  </span>
+
+                  <span className='text-muted-foreground text-sm'>
+                    {label}
+                  </span>
+                </span>
+              ))}
             </div>
           </div>
-        ) : (
-          <header className='border-border bg-card rounded-xl border p-4 sm:p-5'>
-            <div className='flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between'>
-              <div className='min-w-0'>
-                <h1 className='text-foreground text-[clamp(1.35rem,2vw,1.75rem)] font-semibold tracking-[-0.02em]'>
-                  Course Catalogue
-                </h1>
-                <p className='text-muted-foreground mt-1 max-w-2xl text-sm sm:text-[0.95rem]'>
-                  {catalogueSubtitle}
-                </p>
-              </div>
 
-              <div className='flex flex-wrap gap-2'>
-                <span className='border-border bg-background inline-flex items-center gap-2 rounded-lg border px-3 py-2'>
-                  <GraduationCap className='text-primary size-4' />
-                  <span className='text-foreground text-sm font-semibold tabular-nums'>
-                    {mappedCourses.length}
-                  </span>
-                  <span className='text-muted-foreground text-xs'>Courses</span>
-                </span>
-                <span className='border-border bg-background inline-flex items-center gap-2 rounded-lg border px-3 py-2'>
-                  <Layers className='text-primary size-4' />
-                  <span className='text-foreground text-sm font-semibold tabular-nums'>
-                    {mappedPrograms.length}
-                  </span>
-                  <span className='text-muted-foreground text-xs'>Programmes</span>
-                </span>
-                <span className='border-border bg-background inline-flex items-center gap-2 rounded-lg border px-3 py-2'>
-                  <Users className='text-primary size-4' />
-                  <span className='text-foreground text-sm font-semibold tabular-nums'>
-                    {providerCount}
-                  </span>
-                  <span className='text-muted-foreground text-xs'>Providers</span>
-                </span>
-              </div>
-            </div>
-
-            <div className='relative mt-4'>
+          {/* <div className='relative mt-4'>
               <Search className='text-muted-foreground pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2' />
               <Input
                 value={search}
@@ -1458,9 +1459,8 @@ export function SharedCoursesPage({ domain }: SharedCoursesPageProps) {
                   <X className='size-4' />
                 </button>
               ) : null}
-            </div>
-          </header>
-        )}
+            </div> */}
+        </header>
 
         <CoursesCategoryTabs
           activeFilter={activeFilter}
@@ -1669,80 +1669,80 @@ export function SharedCoursesPage({ domain }: SharedCoursesPageProps) {
           </div>
         </section>
 
-        {!isStudentDomain && (
-          <>
-            <section className='space-y-4'>
-              <div className='flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between'>
-                <h2 className='text-foreground text-[clamp(1.1rem,1.5vw,1.35rem)] font-semibold tracking-[-0.02em]'>
-                  Recommended for You
-                </h2>
-                <Link
-                  href={buildWorkspaceAliasPath(domain, '/dashboard/courses')}
-                  className='text-muted-foreground hover:text-foreground inline-flex items-center gap-1.5 text-xs font-semibold sm:text-sm'
-                >
-                  View All
-                  <ArrowRight className='size-3.5' />
-                </Link>
-              </div>
-
-              {isLoading ? (
-                <div className='grid grid-cols-[repeat(auto-fit,minmax(270px,270px))] gap-4'>
-                  {Array.from({ length: 3 }).map((_, index) => (
-                    <div key={index} className='space-y-4 rounded-2xl border p-4'>
-                      <Skeleton className='h-28 w-full rounded-xl' />
-                      <Skeleton className='h-6 w-3/4' />
-                      <div className='space-y-2'>
-                        <Skeleton className='h-4 w-full' />
-                        <Skeleton className='h-4 w-5/6' />
-                      </div>
-                      <div className='flex items-center justify-between pt-2'>
-                        <Skeleton className='h-5 w-20' />
-                        <Skeleton className='h-10 w-28 rounded-lg' />
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              ) : recommendationCards.length > 0 ? (
-                <div className='scrollbar-hidden flex gap-4 overflow-x-auto pb-2'>
-                  {recommendationCards.map(card => (
-                    <CoursesRecommendationCard
-                      onApplyToTrain={handleRecommendedApply}
-                      key={card.id}
-                      card={card}
-                    />
-                  ))}
-                </div>
-              ) : null}
-            </section>
-
-            <section className='border-border bg-primary text-primary-foreground flex flex-col gap-4 rounded-[12px] border px-4 py-4 sm:px-5 md:flex-row md:items-center md:justify-between'>
-              <div className='flex items-start gap-3'>
-                <span className='bg-background/15 mt-1 inline-flex size-9 shrink-0 items-center justify-center rounded-xl'>
-                  <SquareDashedMousePointer className='size-4' />
-                </span>
-                <div>
-                  <h2 className='text-[clamp(1rem,1.3vw,1.2rem)] font-semibold tracking-[-0.02em]'>
-                    Want a structured career path?
-                  </h2>
-                  <p className='text-primary-foreground/85 mt-1 text-sm sm:text-[0.95rem]'>
-                    Apply for a certified training program with funding opportunities.
-                  </p>
-                </div>
-              </div>
-
-              <Button
-                asChild
-                variant='warning'
-                className='h-10 w-full rounded-xl px-5 text-sm font-semibold shadow-none sm:w-auto'
+        {/* // Recommended courses and Career path banner - hidden */}
+        <section className='hidden'>
+          <section className='space-y-4'>
+            <div className='flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between'>
+              <h2 className='text-foreground text-[clamp(1.1rem,1.5vw,1.35rem)] font-semibold tracking-[-0.02em]'>
+                Recommended for You
+              </h2>
+              <Link
+                href={buildWorkspaceAliasPath(domain, '/dashboard/courses')}
+                className='text-muted-foreground hover:text-foreground inline-flex items-center gap-1.5 text-xs font-semibold sm:text-sm'
               >
-                <Link href={buildWorkspaceAliasPath(domain, '/dashboard/skills-fund')}>
-                  Apply Now
-                </Link>
-              </Button>
-            </section>
-          </>
-        )}
+                View All
+                <ArrowRight className='size-3.5' />
+              </Link>
+            </div>
+
+            {isLoading ? (
+              <div className='grid grid-cols-[repeat(auto-fit,minmax(270px,270px))] gap-4'>
+                {Array.from({ length: 3 }).map((_, index) => (
+                  <div key={index} className='space-y-4 rounded-2xl border p-4'>
+                    <Skeleton className='h-28 w-full rounded-xl' />
+                    <Skeleton className='h-6 w-3/4' />
+                    <div className='space-y-2'>
+                      <Skeleton className='h-4 w-full' />
+                      <Skeleton className='h-4 w-5/6' />
+                    </div>
+                    <div className='flex items-center justify-between pt-2'>
+                      <Skeleton className='h-5 w-20' />
+                      <Skeleton className='h-10 w-28 rounded-lg' />
+                    </div>
+                  </div>
+                ))}
+              </div>
+            ) : recommendationCards.length > 0 ? (
+              <div className='scrollbar-hidden flex gap-4 overflow-x-auto pb-2'>
+                {recommendationCards.map(card => (
+                  <CoursesRecommendationCard
+                    onApplyToTrain={handleRecommendedApply}
+                    key={card.id}
+                    card={card}
+                  />
+                ))}
+              </div>
+            ) : null}
+          </section>
+
+          <section className='border-border bg-primary text-primary-foreground flex flex-col gap-4 rounded-[12px] border px-4 py-4 sm:px-5 md:flex-row md:items-center md:justify-between '>
+            <div className='flex items-start gap-3'>
+              <span className='bg-background/15 mt-1 inline-flex size-9 shrink-0 items-center justify-center rounded-xl'>
+                <SquareDashedMousePointer className='size-4' />
+              </span>
+              <div>
+                <h2 className='text-[clamp(1rem,1.3vw,1.2rem)] font-semibold tracking-[-0.02em]'>
+                  Want a structured career path?
+                </h2>
+                <p className='text-primary-foreground/85 mt-1 text-sm sm:text-[0.95rem]'>
+                  Apply for a certified training program with funding opportunities.
+                </p>
+              </div>
+            </div>
+
+            <Button
+              asChild
+              variant='warning'
+              className='h-10 w-full rounded-xl px-5 text-sm font-semibold shadow-none sm:w-auto'
+            >
+              <Link href={buildWorkspaceAliasPath(domain, '/dashboard/skills-fund')}>
+                Apply Now
+              </Link>
+            </Button>
+          </section>
+        </section>
       </div>
+
       {selectedApplicationCard ? (
         <NotesModal
           open={applyModalOpen}

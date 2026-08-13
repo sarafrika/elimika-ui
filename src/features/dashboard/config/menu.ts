@@ -1,13 +1,11 @@
 import type { UserDomain } from '@/lib/types';
 import {
-  Award,
   BadgeCheck,
   BarChart3,
   Bell,
   BoltIcon,
   BookAIcon,
   BookOpen,
-  Briefcase,
   Building2,
   Calendar,
   CalendarClock,
@@ -371,7 +369,7 @@ export default {
       items: [
         {
           title: 'Courses',
-          url: '/dashboard/all-courses',
+          url: '/dashboard/courses',
           icon: GraduationCap,
         },
         {
@@ -394,11 +392,11 @@ export default {
           url: '/dashboard/calendar',
           icon: CalendarClock,
         },
-        {
-          title: 'Portfolio',
-          url: '/dashboard/portfolio',
-          icon: Briefcase,
-        },
+        // {
+        //   title: 'Portfolio',
+        //   url: '/dashboard/portfolio',
+        //   icon: Briefcase,
+        // },
         // {
         //   title: 'Communities',
         //   url: '/dashboard/communities',
@@ -425,11 +423,11 @@ export default {
           url: '/dashboard/assessment',
           icon: BarChart3,
         },
-        {
-          title: 'Credentials Vault',
-          url: '/dashboard/credentials',
-          icon: Award, // changed (certification/badges)
-        },
+        // {
+        //   title: 'Credentials Vault',
+        //   url: '/dashboard/credentials',
+        //   icon: Award, // changed (certification/badges)
+        // },
         // {
         //   title: 'Reviews',
         //   url: '/dashboard/reviews',
@@ -438,19 +436,36 @@ export default {
       ],
     },
     {
-      title: 'Controls',
-      icon: Settings,
+      title: 'Finance',
+      icon: '',
       items: [
+        {
+          title: 'Wallet',
+          url: '/dashboard/wallet',
+          icon: Wallet,
+        },
         {
           title: 'Skills Fund',
           url: '/dashboard/skills-fund',
           icon: PiggyBank,
         },
-        {
-          title: 'Revenue',
-          url: '/dashboard/revenue',
-          icon: DollarSign,
-        },
+        // {
+        //   title: 'Revenue',
+        //   url: '/dashboard/revenue',
+        //   icon: DollarSign,
+        // },
+        // {
+        //   title: 'Payments',
+        //   url: '/dashboard/payments',
+        //   icon: DollarSign,
+        // },
+      ],
+    },
+    {
+      title: 'Controls',
+      icon: Settings,
+      items: [
+
         {
           title: 'Analytics',
           url: '/dashboard/analytics',
@@ -522,7 +537,7 @@ export default {
       items: [
         {
           title: 'Courses',
-          url: '/dashboard/all-courses',
+          url: '/dashboard/courses',
           icon: GraduationCap,
         },
         {
@@ -557,11 +572,32 @@ export default {
           url: '/dashboard/rubrics',
           icon: ClipboardList,
         },
+        // {
+        //   title: 'Credentials Vault',
+        //   url: '/dashboard/credentials',
+        //   icon: Award, // changed (certification/badges)
+        // },
+      ],
+    },
+    {
+      title: 'Finance',
+      icon: '',
+      items: [
         {
-          title: 'Credentials Vault',
-          url: '/dashboard/credentials',
-          icon: Award, // changed (certification/badges)
+          title: 'Wallet',
+          url: '/dashboard/wallet',
+          icon: Wallet,
         },
+        {
+          title: 'Skills Fund',
+          url: '/dashboard/skills-fund',
+          icon: PiggyBank,
+        },
+        // {
+        //   title: 'Payments',
+        //   url: '/dashboard/payments',
+        //   icon: DollarSign,
+        // },
       ],
     },
     {

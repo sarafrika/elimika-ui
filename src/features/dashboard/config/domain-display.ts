@@ -1,5 +1,8 @@
-import { BookOpen, GraduationCap, type LucideIcon, Shield, Sparkles, Users } from 'lucide-react';
 import type { UserDomain } from '@/lib/types';
+import { BookOpen, Briefcase, CalendarPlus, FileCheck, GraduationCap, type LucideIcon, MapPin, Shield, Sparkles, Users } from 'lucide-react';
+import { useRouter } from 'next/navigation';
+import { useMemo } from 'react';
+import { buildWorkspaceAliasPath } from '../lib/active-domain-storage';
 
 type DashboardDomainDisplay = {
   icon: LucideIcon;
@@ -68,3 +71,85 @@ export const dashboardDomainDisplayConfig: Record<UserDomain, DashboardDomainDis
     borderColor: 'border-destructive/30 dark:border-destructive/30',
   },
 };
+
+export type CreateAction = {
+  label: string;
+  description: string;
+  icon: LucideIcon;
+  onSelect: () => void;
+};
+
+export function useCreateMenuActions(activeDomain: UserDomain | null): CreateAction[] {
+  const router = useRouter();
+
+  const createCourseHref = buildWorkspaceAliasPath(
+    activeDomain,
+    '/dashboard/course-management/create-new-course'
+  );
+  const createClassHref = buildWorkspaceAliasPath(activeDomain, '/dashboard/classes/new');
+
+  return useMemo(() => {
+    switch (activeDomain) {
+      case 'course_creator':
+        return [
+          {
+            label: 'Create Course',
+            description: 'Start building a new course',
+            icon: Sparkles,
+            onSelect: () => router.push(createCourseHref),
+          },
+          {
+            label: 'Add Certificate',
+            description: 'Upload a qualification or document',
+            icon: FileCheck,
+            onSelect: () => router.push('/dashboard/course-management/certificates'),
+          },
+        ];
+
+      case 'instructor':
+        return [
+          {
+            label: 'Create Class',
+            description: 'Schedule a new class',
+            icon: CalendarPlus,
+            onSelect: () => router.push(createClassHref),
+          },
+        ];
+
+      case 'organisation':
+        return [
+          {
+            label: 'Create Class',
+            description: 'Schedule a class or event',
+            icon: CalendarPlus,
+            onSelect: () => router.push(createClassHref),
+          },
+          {
+            label: 'Post a Job',
+            description: 'Advertise an instructor opening',
+            icon: Briefcase,
+            onSelect: () => router.push('/dashboard/jobs/new'),
+          },
+          {
+            label: 'Add Classroom',
+            description: 'Register a venue or online room',
+            icon: MapPin,
+            onSelect: () => router.push('/dashboard/venues/new'),
+          },
+        ];
+
+      case 'student':
+        return [
+          {
+            label: 'Enroll Course',
+            description: 'Browse and join a course',
+            icon: GraduationCap,
+            onSelect: () => router.push('/dashboard/student/courses'),
+          },
+        ];
+
+      default:
+        return [];
+    }
+  }, [activeDomain, createCourseHref, createClassHref, router]);
+}
