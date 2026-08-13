@@ -238,7 +238,7 @@ export function useWallet() {
     return ctx;
 }
 
-function WalletProvider({ children }: { children: ReactNode }) {
+export function WalletProvider({ children }: { children: ReactNode }) {
     const user = useUserProfile()
     const { data: walletResp } = useQuery({
         ...getWalletOptions({ path: { userUuid: user?.uuid as string } })
@@ -545,7 +545,13 @@ export function downloadCsv(filename: string, header: string[], rows: (string | 
 }
 
 
-function WalletShell() {
+export function WalletShell({
+    title = "Student Wallet",
+    description = "Personal funds, Skills Fund balances, rewards, refunds and marketplace credits",
+}: {
+    title?: string;
+    description?: string;
+}) {
     const [tab, setTab] = useState<TabId>("payments");
     const { wallet, accounts, transactions } = useWallet()
 
@@ -554,11 +560,9 @@ function WalletShell() {
             <header className="flex flex-wrap items-start justify-between gap-3">
                 <div>
                     <h1 className="text-xl md:text-2xl font-semibold flex items-center gap-2">
-                        <WalletIcon className="h-5 w-5 text-primary" /> Student Wallet
+                        <WalletIcon className="h-5 w-5 text-primary" /> {title}
                     </h1>
-                    <p className="text-sm text-muted-foreground">
-                        Personal funds, Skills Fund balances, rewards, refunds and marketplace credits
-                    </p>
+                    <p className="text-sm text-muted-foreground">{description}</p>
                 </div>
             </header>
 
