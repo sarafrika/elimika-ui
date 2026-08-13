@@ -1,18 +1,5 @@
 'use client';
 
-import { format } from 'date-fns';
-import {
-  ArrowRight,
-  CheckCircle2,
-  Clock,
-  DollarSign,
-  Layers,
-  ListCheck,
-  ShieldAlert,
-  ShieldCheck,
-  Sparkles,
-} from 'lucide-react';
-import Link from 'next/link';
 import DomainOverviewShell from '@/components/domain-overview-shell';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -26,6 +13,20 @@ import type {
 import PurchasableCatalogue from '@/src/features/dashboard/components/PurchasableCatalogue';
 import { useUserDomain } from '@/src/features/dashboard/context/user-domain-context';
 import { buildWorkspaceAliasPath } from '@/src/features/dashboard/lib/active-domain-storage';
+import { format } from 'date-fns';
+import {
+  ArrowRight,
+  CheckCircle2,
+  Clock,
+  DollarSign,
+  Layers,
+  ListCheck,
+  ShieldAlert,
+  ShieldCheck,
+  Sparkles,
+} from 'lucide-react';
+import Link from 'next/link';
+import { UserDomain } from '../../../../../lib/types';
 
 export default function CourseCreatorOverviewContent() {
   const { activeDomain } = useUserDomain();
@@ -61,14 +62,14 @@ export default function CourseCreatorOverviewContent() {
       leftColumn={
         <>
           <VerificationCard verification={verification} />
-          <QuickActionsCard />
+          <QuickActionsCard activeDomain={activeDomain} />
         </>
       }
       rightColumn={
         <>
           <MetricsGrid metrics={metrics} />
-          <MonetizationCard monetization={monetization} />
-          <TrainingRequirementsCard trainingRequirements={trainingRequirements} />
+          <MonetizationCard monetization={monetization} activeDomain={activeDomain} />
+          <TrainingRequirementsCard trainingRequirements={trainingRequirements} activeDomain={activeDomain} />
           <PurchasableCatalogue scope='course_creator' />
         </>
       }
@@ -126,7 +127,7 @@ function buildMetricCards(analytics: CourseCreatorAnalyticsSummary) {
   ];
 }
 
-function MonetizationCard({ monetization }: { monetization: CourseCreatorMonetizationSummary }) {
+function MonetizationCard({ monetization, activeDomain }: { monetization: CourseCreatorMonetizationSummary, activeDomain: UserDomain | null }) {
   return (
     <Card className='border-border/70'>
       <CardHeader>
@@ -184,8 +185,10 @@ function MonetizationCard({ monetization }: { monetization: CourseCreatorMonetiz
 
 function TrainingRequirementsCard({
   trainingRequirements,
+  activeDomain
 }: {
   trainingRequirements: CourseCreatorTrainingRequirementSummary;
+  activeDomain: UserDomain | null
 }) {
   return (
     <Card className='border-border/70'>
@@ -261,7 +264,7 @@ function VerificationCard({ verification }: { verification: CourseCreatorVerific
   );
 }
 
-function QuickActionsCard() {
+function QuickActionsCard({ activeDomain }: { activeDomain: UserDomain | null }) {
   return (
     <Card className='border-border/70'>
       <CardHeader>
@@ -280,7 +283,7 @@ function QuickActionsCard() {
           title='Share assets'
           description='Upload brand kits and curriculum collateral.'
           href='#'
-          // href={buildWorkspaceAliasPath(activeDomain, '/dashboard/library')}
+        // href={buildWorkspaceAliasPath(activeDomain, '/dashboard/library')}
         />
         <ActionTile
           title='Create syllabus'

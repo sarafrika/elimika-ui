@@ -29,7 +29,7 @@ import { useOrganisation } from '@/src/features/organisation/context/organisatio
 import { useUserProfile } from '@/src/features/profile/context/profile-context';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
-import { ChevronRight, LayoutPanelLeft, ShieldCheck, Wallet } from 'lucide-react';
+import { ChevronRight, LayoutPanelLeft, Pencil, ShieldCheck, Wallet } from 'lucide-react';
 import Link from 'next/link';
 import { usePathname, useRouter, useSearchParams } from 'next/navigation';
 import type React from 'react';
@@ -136,6 +136,15 @@ function DashboardSettingsPageBody({ variant }: DashboardSettingsPageProps) {
   const profile = useUserProfile();
   const organisation = useOrganisation();
   const fileInputRef = useRef<HTMLInputElement | null>(null);
+
+  const normalizedDomain =
+    activeDomain === "course_creator"
+      ? "course-creator"
+      : activeDomain === "organisation_user"
+        ? "organisation"
+        : activeDomain;
+
+  const PROFILE_ROUTE = `/dashboard/${normalizedDomain}/profile`;
 
   const updateUser = useMutation(updateUserMutation());
   const updateStudentProfile = useMutation(updateStudentMutation());
@@ -525,14 +534,20 @@ function DashboardSettingsPageBody({ variant }: DashboardSettingsPageProps) {
                 <Card className='border-border/70 rounded-md p-0 shadow-sm'>
                   <CardHeader className='border-border/60 border-b px-4 py-4 sm:px-5'>
                     <div className='flex flex-wrap items-start justify-between gap-4'>
-                      <div className='min-w-0 space-y-1'>
-                        <CardTitle className='text-base font-semibold sm:text-lg'>
-                          Profile Details
-                        </CardTitle>
-                        <div className='text-muted-foreground sm:text-md text-sm leading-6'>
+                      <div className="min-w-0 space-y-2">
+                        <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+                          <CardTitle className="text-base font-semibold sm:text-lg">
+                            Profile Details
+                          </CardTitle>
+
+
+                        </div>
+
+                        <div className="text-sm leading-6 text-muted-foreground sm:text-base">
                           <RichTextRenderer htmlString={descriptionByVariant[variant]} />
                         </div>
                       </div>
+
                       <Badge
                         variant='outline'
                         className='rounded-md px-3 py-1 text-[10px] tracking-[0.16em] uppercase'
@@ -545,20 +560,51 @@ function DashboardSettingsPageBody({ variant }: DashboardSettingsPageProps) {
                   <CardContent className='space-y-5 px-4 py-5 sm:px-5'>
                     <div className='flex flex-col gap-5 sm:flex-row sm:items-center sm:justify-between'>
                       <div className='flex min-w-0 items-center gap-4'>
-                        <Avatar className='border-border/70 size-20 border sm:size-24'>
-                          <AvatarImage
-                            src={toAuthenticatedMediaUrl(profileImage) as string}
-                            alt={profileName}
-                          />
-                          <AvatarFallback className='bg-primary/10 text-primary text-xl font-semibold'>
-                            {profileInitials}
-                          </AvatarFallback>
-                        </Avatar>
+                        {/* Profile image */}
+                        <div className='flex shrink-0 flex-col items-center gap-1.5'>
+                          <button
+                            type='button'
+                            onClick={openProfileImagePicker}
+                            disabled={!profile?.uuid || uploadProfileImage.isPending}
+                            className='group relative rounded-full focus:outline-none focus:ring-2 focus:ring-primary/40 focus:ring-offset-2'
+                            aria-label='Change profile photo'
+                          >
+                            <Avatar className='border-border/70 size-20 border sm:size-24'>
+                              <AvatarImage
+                                src={toAuthenticatedMediaUrl(profileImage) as string}
+                                alt={profileName}
+                              />
+                              <AvatarFallback className='bg-primary/10 text-primary text-xl font-semibold'>
+                                {profileInitials}
+                              </AvatarFallback>
+                            </Avatar>
 
+                            {/* Change photo indication */}
+                            <div className='absolute inset-0 flex items-center justify-center rounded-full bg-black/0 text-white transition group-hover:bg-black/40'>
+                              <span className='text-xs font-medium opacity-0 transition group-hover:opacity-100'>
+                                Change
+                              </span>
+                            </div>
+                          </button>
+
+                          <Button
+                            type='button'
+                            variant='ghost'
+                            size='sm'
+                            className='h-7 px-2 text-xs text-muted-foreground hover:text-foreground'
+                            onClick={openProfileImagePicker}
+                            disabled={!profile?.uuid || uploadProfileImage.isPending}
+                          >
+                            {uploadProfileImage.isPending ? 'Uploading...' : 'Change photo'}
+                          </Button>
+                        </div>
+
+                        {/* Profile details */}
                         <div className='min-w-0 space-y-1'>
                           <h2 className='text-foreground truncate text-xl font-semibold sm:text-2xl'>
                             {profileName}
                           </h2>
+
                           <p className='text-muted-foreground truncate text-sm sm:text-base'>
                             {profile?.courseCreator?.professional_headline ??
                               profile?.instructor?.professional_headline ??
@@ -567,36 +613,46 @@ function DashboardSettingsPageBody({ variant }: DashboardSettingsPageProps) {
                           </p>
 
                           <div className='flex flex-wrap gap-2 pt-1'>
-                            <Badge variant='secondary' className='rounded-md px-3 py-1 text-xs'>
+                            <Badge
+                              variant='secondary'
+                              className='rounded-md px-3 py-1 text-xs'
+                            >
                               {roleLabel}
                             </Badge>
-                            <Badge variant='outline' className='rounded-md px-3 py-1 text-xs'>
+
+                            <Badge
+                              variant='outline'
+                              className='rounded-md px-3 py-1 text-xs'
+                            >
                               Joined {joinedDate}
                             </Badge>
                           </div>
                         </div>
                       </div>
 
-                      <div className='flex flex-wrap gap-2'>
+                      {/* Subtle edit action */}
+                      <div className='flex flex-col gap-2 items-end' >
                         <Button
-                          type='button'
-                          variant='outline'
-                          className='h-10 rounded-md px-4 text-sm font-medium shadow-sm'
+                          type="button"
+                          variant="ghost"
+                          size="sm"
+                          className="h-8 w-fit gap-1.5 px-2.5 text-xs font-medium text-muted-foreground hover:bg-muted hover:text-foreground"
                           onClick={handleStartEditing}
                           disabled={isEditing || !profile?.uuid}
                         >
-                          Edit details
+                          <Pencil className="h-3.5 w-3.5" />
+                          Edit info
                         </Button>
-                        <Button
-                          type='button'
-                          variant='outline'
-                          className='h-10 rounded-md px-4 text-sm font-medium shadow-sm'
-                          onClick={openProfileImagePicker}
-                          disabled={!profile?.uuid || uploadProfileImage.isPending}
+
+                        <Link
+                          href={PROFILE_ROUTE}
+                          className="text-sm font-medium text-primary transition-colors hover:text-primary/80"
                         >
-                          {uploadProfileImage.isPending ? 'Uploading...' : 'Upload New'}
-                        </Button>
+                          View full profile →
+                        </Link>
                       </div>
+
+
                       <input
                         ref={fileInputRef}
                         type='file'
@@ -853,43 +909,43 @@ function DashboardSettingsPageBody({ variant }: DashboardSettingsPageProps) {
                           ))}
                         </div>
 
-                        <div className='border-border/60 flex flex-col gap-3 border-t pt-4 sm:flex-row sm:items-center sm:justify-end'>
-                          <Button
-                            type='button'
-                            variant='outline'
-                            className='h-10 min-w-[140px] rounded-md px-4 text-sm'
-                            onClick={handleCancelEditing}
-                            disabled={!isEditing}
-                          >
-                            Cancel
-                          </Button>
+                        {isEditing && (
+                          <div className='border-border/60 flex flex-col gap-3 border-t pt-4 sm:flex-row sm:items-center sm:justify-end'>
+                            <Button
+                              type='button'
+                              variant='outline'
+                              className='h-10 min-w-[140px] rounded-md px-4 text-sm'
+                              onClick={handleCancelEditing}
+                            >
+                              Cancel
+                            </Button>
 
-                          <Button
-                            type='submit'
-                            className='h-10 min-w-[140px] rounded-md px-4 text-sm'
-                            disabled={
-                              !isEditing ||
-                              updateUser.isPending ||
-                              isSubmitting ||
-                              updateStudentProfile.isPending ||
-                              updateInstructorProfile.isPending ||
-                              updateCourseCreatorProfile.isPending
-                            }
-                          >
-                            {updateUser.isPending ||
-                              updateStudentProfile.isPending ||
-                              updateInstructorProfile.isPending ||
-                              updateCourseCreatorProfile.isPending ||
-                              isSubmitting ? (
-                              <span className='flex items-center gap-2'>
-                                <Spinner className='h-4 w-4' />
-                                Saving...
-                              </span>
-                            ) : (
-                              'Save Changes'
-                            )}
-                          </Button>
-                        </div>
+                            <Button
+                              type='submit'
+                              className='h-10 min-w-[140px] rounded-md px-4 text-sm'
+                              disabled={
+                                updateUser.isPending ||
+                                isSubmitting ||
+                                updateStudentProfile.isPending ||
+                                updateInstructorProfile.isPending ||
+                                updateCourseCreatorProfile.isPending
+                              }
+                            >
+                              {updateUser.isPending ||
+                                updateStudentProfile.isPending ||
+                                updateInstructorProfile.isPending ||
+                                updateCourseCreatorProfile.isPending ||
+                                isSubmitting ? (
+                                <span className='flex items-center gap-2'>
+                                  <Spinner className='h-4 w-4' />
+                                  Saving...
+                                </span>
+                              ) : (
+                                'Save Changes'
+                              )}
+                            </Button>
+                          </div>
+                        )}
                       </form>
                     </Form>
                   </CardContent>

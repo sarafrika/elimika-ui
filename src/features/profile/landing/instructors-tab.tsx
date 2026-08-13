@@ -2,28 +2,19 @@
 'use client';
 
 import { WatchedText, WatchedValue } from '@/components/form/watched-value';
-import { zodResolver } from '@hookform/resolvers/zod';
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import {
-  Briefcase,
-  FileText,
-  GraduationCap,
-  Grip,
-  Paperclip,
-  Pencil,
-  PlusCircle,
-  Trash2,
-  Upload,
-  X,
-  XCircle,
-} from 'lucide-react';
-import React, { useEffect, useMemo, useRef, useState } from 'react';
-import { useFieldArray, useForm } from 'react-hook-form';
-import { toast } from 'sonner';
-import * as z from 'zod';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Checkbox } from '@/components/ui/checkbox';
 import {
@@ -65,11 +56,29 @@ import {
   uploadInstructorDocumentMutation,
 } from '@/services/client/@tanstack/react-query.gen';
 import type {
-  InstructorDocument,
   InstructorEducation,
-  InstructorExperience,
+  InstructorExperience
 } from '@/services/client/types.gen';
 import CoursesPage from '@/src/features/profile/components/instructor/rate-card/CoursesPage';
+import { zodResolver } from '@hookform/resolvers/zod';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import {
+  Briefcase,
+  FileText,
+  GraduationCap,
+  Grip,
+  Paperclip,
+  Pencil,
+  PlusCircle,
+  Trash2,
+  Upload,
+  X,
+  XCircle,
+} from 'lucide-react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
+import { useFieldArray, useForm } from 'react-hook-form';
+import { toast } from 'sonner';
+import * as z from 'zod';
 import type { DomainTabProps, TabDefinition } from './types';
 
 function TabShell({ children }: { children: React.ReactNode }) {
@@ -770,6 +779,7 @@ function instructorcertificatestab({ sharedProfile }: DomainTabProps) {
   const [isSaving, setIsSaving] = useState(false);
   const [isUploadSheetOpen, setIsUploadSheetOpen] = useState(false);
   const [attachments, setAttachments] = useState<AttachedFile[]>([]);
+  const [deleteIndex, setDeleteIndex] = useState<number | null>(null);
 
   const { data, isLoading } = useQuery({
     ...getInstructorEducationOptions({ path: { instructorUuid: sharedProfile?.uuid } }),
@@ -861,11 +871,17 @@ function instructorcertificatestab({ sharedProfile }: DomainTabProps) {
     setAttachments(prev => [...prev, {}]);
   };
 
-  const removeEntry = async (index: number) => {
-    if (!confirm('Remove this qualification?')) return;
+  const removeEntry = (index: number) => {
+    setDeleteIndex(index);
+  };
+
+  const confirmRemoveEntry = () => {
+    if (deleteIndex === null) return;
+    const index = deleteIndex;
     const edUuid = form.getValues(`educations.${index}.uuid`);
     remove(index);
     setAttachments(prev => prev.filter((_, i) => i !== index));
+    setDeleteIndex(null);
     if (edUuid) {
       deleteEducationMut.mutate(
         { path: { educationUuid: edUuid, instructorUuid: sharedProfile.uuid } },
@@ -895,6 +911,7 @@ function instructorcertificatestab({ sharedProfile }: DomainTabProps) {
 
   const onSubmit = async (values: EducationFormValues) => {
     setIsSaving(true);
+
     try {
       for (const [i, ed] of values.educations.entries()) {
         const attachment = attachments[i];
@@ -923,7 +940,8 @@ function instructorcertificatestab({ sharedProfile }: DomainTabProps) {
                 education_uuid: educationUuid,
                 title: ed.school_name,
                 description: ed.field_of_study,
-                document_type_uuid: '35b49d4c-aec0-4a88-873b-5fa91342198f', // contnent type uuid for pdfs
+                document_type_uuid: '35b49d4c-aec0-4a88-873b-5fa91342198f',
+                // contnent type uuid for pdfs
                 experience_uuid: '',
                 expiry_date: undefined,
                 membership_uuid: '',
@@ -1187,12 +1205,11 @@ function instructorcertificatestab({ sharedProfile }: DomainTabProps) {
                     </div>
 
                     <div className='flex w-full justify-end'>
-                      {/* Hidden start year */}
                       <FormField
                         control={form.control}
                         name={`educations.${index}.year_started`}
                         render={({ field }) => (
-                          <FormItem className='hidden'>
+                          <FormItem>
                             <FormLabel>Start year</FormLabel>
                             <FormControl>
                               <Input
@@ -1320,9 +1337,24 @@ function instructorcertificatestab({ sharedProfile }: DomainTabProps) {
         open={isUploadSheetOpen}
         onOpenChange={setIsUploadSheetOpen}
       />
+      <AlertDialog open={deleteIndex !== null} onOpenChange={open => !open && setDeleteIndex(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Remove qualification?</AlertDialogTitle>
+            <AlertDialogDescription>
+              This will delete the selected qualification from your profile. This action cannot be
+              undone.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction onClick={confirmRemoveEntry}>Remove</AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </TabShell>
   );
-}
+  }
 
 const experienceSchema = z.object({
   uuid: z.string().optional(),
@@ -1395,6 +1427,7 @@ function InstructorCareerTab({ sharedProfile }: DomainTabProps) {
   const qc = useQueryClient();
   const [isEditing, setIsEditing] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
+  const [deleteIndex, setDeleteIndex] = useState<number | null>(null);
 
   const { data, isLoading } = useQuery({
     ...getInstructorExperienceOptions({
@@ -1494,10 +1527,16 @@ function InstructorCareerTab({ sharedProfile }: DomainTabProps) {
     form.reset();
   };
 
-  const removeEntry = async (index: number) => {
-    if (!confirm('Remove this experience?')) return;
+  const removeEntry = (index: number) => {
+    setDeleteIndex(index);
+  };
+
+  const confirmRemoveEntry = () => {
+    if (deleteIndex === null) return;
+    const index = deleteIndex;
     const expUuid = form.getValues(`experiences.${index}.uuid`);
     remove(index);
+    setDeleteIndex(null);
     if (expUuid) {
       deleteExperienceMut.mutate(
         { path: { experienceUuid: expUuid, instructorUuid: sharedProfile.uuid } },
@@ -1813,6 +1852,21 @@ function InstructorCareerTab({ sharedProfile }: DomainTabProps) {
           </Card>
         </form>
       </Form>
+      <AlertDialog open={deleteIndex !== null} onOpenChange={open => !open && setDeleteIndex(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Remove experience?</AlertDialogTitle>
+            <AlertDialogDescription>
+              This will delete the selected experience from your profile. This action cannot be
+              undone.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction onClick={confirmRemoveEntry}>Remove</AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </TabShell>
   );
 }

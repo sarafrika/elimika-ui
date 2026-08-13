@@ -1,8 +1,5 @@
 'use client';
 
-import { ShieldAlert } from 'lucide-react';
-import { usePathname, useRouter } from 'next/navigation';
-import { type ReactNode, useEffect, useMemo } from 'react';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { useOptionalCourseCreator } from '@/context/course-creator-context';
 import { cn } from '@/lib/utils';
@@ -11,6 +8,9 @@ import { useUserDomain } from '@/src/features/dashboard/context/user-domain-cont
 import { buildWorkspaceAliasPath } from '@/src/features/dashboard/lib/active-domain-storage';
 import { useOrganisation } from '@/src/features/organisation/context/organisation-context';
 import { useUserProfile } from '@/src/features/profile/context/profile-context';
+import { ShieldAlert } from 'lucide-react';
+import { usePathname, useRouter } from 'next/navigation';
+import { type ReactNode, useEffect, useMemo } from 'react';
 
 type DomainGateState = {
   renderChildren: boolean;
@@ -66,7 +66,7 @@ export default function DomainAccessGate({ children }: { children: ReactNode }) 
       instructor: {
         verified: Boolean(profile.instructor?.admin_verified),
         allowedPrefixes: [profilePrefix, ADD_PROFILE_PREFIX, settingsPrefix],
-        fallback: `${profilePrefix}/general`,
+        fallback: `${profilePrefix}`,
         title: 'Instructor verification pending',
         description:
           'Update your profile details so the Elimika team can verify your instructor account.',

@@ -17,7 +17,7 @@ import { cn } from '@/lib/utils';
 import type { ApiResponseWallet } from '@/services/client';
 import { getWalletOptions } from '@/services/client/@tanstack/react-query.gen';
 import { useLogout } from '@/src/features/auth/logout';
-import { dashboardDomainDisplayConfig } from '@/src/features/dashboard/config/domain-display';
+import { CreateAction, dashboardDomainDisplayConfig, useCreateMenuActions } from '@/src/features/dashboard/config/domain-display';
 import { useUserDomain } from '@/src/features/dashboard/context/user-domain-context';
 import {
   buildDashboardSwitchPath,
@@ -94,6 +94,7 @@ export default function DashboardTopBar() {
   const logout = useLogout();
 
   const activeDomain = domain.activeDomain ?? null;
+  const createActions = useCreateMenuActions(activeDomain);
 
   const activeDomainConfig = activeDomain
     ? dashboardDomainDisplayConfig[activeDomain as keyof typeof dashboardDomainDisplayConfig]
@@ -152,20 +153,6 @@ export default function DashboardTopBar() {
     <header className='bg-background/90 sticky top-0 z-50 backdrop-blur-md'>
       <div className='flex flex-col'>
         <div className='flex items-center gap-3 px-1 py-3 sm:px-3 lg:px-4'>
-          {/* <div className='hidden min-w-0 flex-1 xl:block'>
-            <Label className='relative block max-w-2xl'>
-              <Search className='text-muted-foreground pointer-events-none absolute top-1/2 left-4 h-4 w-4 -translate-y-1/2' />
-              <Input
-                type='search'
-                placeholder='Search courses, students, and more...'
-                className='border-border/70 bg-card/80 h-10 rounded-md pl-11 pr-16 shadow-sm text-xs'
-              />
-              <span className='text-muted-foreground absolute top-1/2 right-4 -translate-y-1/2 text-xs font-medium'>
-                Ctrl K
-              </span>
-            </Label>
-          </div> */}
-
           <div className='hidden min-w-0 flex-1 xl:block'>
             <Label className='relative block max-w-2xl 2xl:max-w-3xl'>
               <Search className='text-muted-foreground pointer-events-none absolute top-1/2 left-4 h-4 w-4 -translate-y-1/2' />
@@ -223,6 +210,8 @@ export default function DashboardTopBar() {
                 </Link>
               </Button>
             )}
+
+            {/* <CreateMenu actions={createActions} compact /> */}
 
             <DashboardNotifications
               notificationHref={notificationHref}
@@ -489,6 +478,60 @@ function DashboardProfileMenu({
             Sign out
           </DropdownMenuItem>
         </div>
+      </DropdownMenuContent>
+    </DropdownMenu>
+  );
+}
+
+function CreateMenu({ actions, compact = false }: { actions: CreateAction[]; compact?: boolean }) {
+  if (actions.length === 0) return null;
+
+  // Single action, no need for a dropdown at all
+  if (actions.length === 1) {
+    const [only] = actions;
+    return (
+      <Button
+        size='sm'
+        className='h-9 gap-2 rounded-md px-4 font-semibold'
+        onClick={only?.onSelect}
+      >
+        <only.icon className='h-4 w-4' />
+        <span className={compact ? 'hidden sm:inline' : ''}>{only?.label}</span>
+        {!compact && <ChevronDown className='h-4 w-4' />}
+      </Button>
+    );
+  }
+
+  return (
+    <DropdownMenu>
+      <DropdownMenuTrigger asChild>
+        <Button size='sm' className='h-9 gap-2 rounded-md px-3 font-semibold'>
+          <Sparkles className='h-4 w-4' />
+          <span className={compact ? 'hidden sm:inline' : ''}>Create</span>
+          <ChevronDown className='h-4 w-4' />
+        </Button>
+      </DropdownMenuTrigger>
+      <DropdownMenuContent align='end' className='w-64'>
+        <DropdownMenuLabel>Quick actions</DropdownMenuLabel>
+        <DropdownMenuSeparator />
+        {actions.map(a => (
+          <DropdownMenuItem
+            key={a.label}
+            onSelect={e => {
+              e.preventDefault();
+              a.onSelect();
+            }}
+            className='flex items-start gap-3 py-2'
+          >
+            <span className='mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-md bg-primary/10 text-primary'>
+              <a.icon className='h-4 w-4' />
+            </span>
+            <span className='flex flex-col'>
+              <span className='text-sm leading-tight font-medium'>{a.label}</span>
+              <span className='text-muted-foreground text-xs'>{a.description}</span>
+            </span>
+          </DropdownMenuItem>
+        ))}
       </DropdownMenuContent>
     </DropdownMenu>
   );

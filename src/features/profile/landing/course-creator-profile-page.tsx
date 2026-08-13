@@ -1,7 +1,5 @@
 'use client';
 
-import { useQuery } from '@tanstack/react-query';
-import { Award, BookOpen, CalendarClock, FileEdit } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { extractPage, getTotalFromMetadata } from '@/lib/api-helpers';
 import { parseApiDate } from '@/lib/date';
@@ -9,6 +7,9 @@ import {
   getCourseCreatorCertificationsOptions,
   searchCoursesOptions,
 } from '@/services/client/@tanstack/react-query.gen';
+import { useQuery } from '@tanstack/react-query';
+import { Award, BadgeCheck, BookOpen, CalendarClock, FileEdit } from 'lucide-react';
+import { Badge } from '../../../../components/ui/badge';
 import { StatValue } from './components/profile-stat-strip';
 import { creatorTabs } from './course-creator-tab';
 import { ProfilePage } from './profile-page';
@@ -113,37 +114,66 @@ export default function CourseCreatorProfilePage({
       isPublic={isPublic}
       stats={stats}
       sidebar={
-        <Card>
-          <CardHeader>
-            <CardTitle className='text-base'>Course library</CardTitle>
-          </CardHeader>
-          <CardContent className='space-y-3 text-sm'>
-            <div className='flex items-center justify-between gap-3'>
-              <span className='text-muted-foreground'>Published</span>
-              <span className='font-medium'>
-                <StatValue
-                  loading={publishedQuery.isLoading}
-                  value={publishedQuery.isError ? undefined : String(publishedTotal)}
-                />
-              </span>
-            </div>
-            <div className='flex items-center justify-between gap-3'>
-              <span className='text-muted-foreground'>Drafts</span>
-              <span className='font-medium'>
-                <StatValue
-                  loading={draftQuery.isLoading}
-                  value={draftQuery.isError ? undefined : String(draftTotal)}
-                />
-              </span>
-            </div>
-            <div className='flex items-center justify-between gap-3'>
-              <span className='text-muted-foreground'>Profile</span>
-              <span className='font-medium'>
-                {profile.is_profile_complete ? 'Complete' : 'Incomplete'}
-              </span>
-            </div>
-          </CardContent>
-        </Card>
+        <div className='flex flex-col gap-6' >
+          <Card>
+            <CardHeader>
+              <CardTitle className='text-base'>Course library</CardTitle>
+            </CardHeader>
+            <CardContent className='space-y-3 text-sm'>
+              <div className='flex items-center justify-between gap-3'>
+                <span className='text-muted-foreground'>Published</span>
+                <span className='font-medium'>
+                  <StatValue
+                    loading={publishedQuery.isLoading}
+                    value={publishedQuery.isError ? undefined : String(publishedTotal)}
+                  />
+                </span>
+              </div>
+              <div className='flex items-center justify-between gap-3'>
+                <span className='text-muted-foreground'>Drafts</span>
+                <span className='font-medium'>
+                  <StatValue
+                    loading={draftQuery.isLoading}
+                    value={draftQuery.isError ? undefined : String(draftTotal)}
+                  />
+                </span>
+              </div>
+              <div className='flex items-center justify-between gap-3'>
+                <span className='text-muted-foreground'>Profile</span>
+                <span className='font-medium'>
+                  {profile.is_profile_complete ? 'Complete' : 'Incomplete'}
+                </span>
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader>
+              <CardTitle className='text-base'>Verification</CardTitle>
+            </CardHeader>
+            <CardContent className='space-y-3 text-sm'>
+              <div className='flex items-center justify-between gap-3'>
+                <span className='text-muted-foreground'>Admin verified</span>
+                {profile.admin_verified ? (
+                  <Badge
+                    variant='outline'
+                    className='border-success/30 bg-success/10 text-success gap-1'
+                  >
+                    <BadgeCheck className='h-3 w-3' /> Verified
+                  </Badge>
+                ) : (
+                  <Badge variant='outline'>Pending</Badge>
+                )}
+              </div>
+              <div className='flex items-center justify-between gap-3'>
+                <span className='text-muted-foreground'>Profile</span>
+                <span className='font-medium'>
+                  {profile.is_profile_complete ? 'Complete' : 'Incomplete'}
+                </span>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
       }
     />
   );
