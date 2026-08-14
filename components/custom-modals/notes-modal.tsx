@@ -215,7 +215,7 @@ export default function NotesModal({
       }}
     >
       <SheetContent className='flex w-full flex-col p-3 sm:max-w-[600px] sm:p-6'>
-        <SheetHeader className='border-border border-b pb-4'>
+        <SheetHeader className='border-border border-b p-0 pb-4'>
           <SheetTitle>{title}</SheetTitle>
           {description && (
             <SheetDescription className='text-muted-foreground text-sm'>

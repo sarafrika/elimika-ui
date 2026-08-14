@@ -1,7 +1,5 @@
-import InstructorsApplicationPage from './_comonent/InstructorPage';
+import { redirect } from 'next/navigation';
 
-const page = () => {
-  return <InstructorsApplicationPage />;
-};
-
-export default page;
+export default function Page() {
+  redirect('/dashboard/course-creator/pending-approvals');
+}

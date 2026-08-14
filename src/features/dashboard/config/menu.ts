@@ -505,9 +505,8 @@ export default {
         //   icon: FileStack,
         // },
         {
-          title: 'Instructors',
-          url: '/dashboard/instructors',
-          // url: '/dashboard/training-applications',
+          title: 'Pending Approvals',
+          url: '/dashboard/pending-approvals',
           icon: Users,
         },
         // {

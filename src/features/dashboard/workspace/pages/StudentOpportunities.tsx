@@ -178,7 +178,7 @@ const StudentOpportunities = ({ opportunities, classInvites, data }: StudentOppo
 
             {/* // this page should route to student's my skills page, tab credential */}
             <Button asChild variant='outline' className='mt-3 w-full'>
-              <Link href='/dashboard/student/credentials'>Open vault</Link>
+              <Link href='/dashboard/student/skills-wallet'>Open vault</Link>
             </Button>
           </CardContent>
         </Card>
