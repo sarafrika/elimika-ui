@@ -537,6 +537,7 @@ function CreatorCertificateDocumentsSection({
       }),
     });
 
+  // use a delete modal here
   const handleDelete = (uuid: string) => {
     if (!confirm('Remove this document?')) return;
 

@@ -364,6 +364,8 @@ export const CourseBrandingForm = forwardRef<CourseFormRef, CourseFormProps>(
                             >
                               Replace
                             </Button>
+
+                            {/* // add uploading indicator for video upload (might be a loader showing 1-100%) here to keep UI busy and alert user that data is still uploading until it finishes */}
                           </div>
 
                           <video controls className='w-full max-w-md rounded shadow'>
@@ -466,6 +468,11 @@ export const CourseBrandingForm = forwardRef<CourseFormRef, CourseFormProps>(
                             >
                               Replace
                             </Button>
+
+
+                            {/* // add uploading indicator for banner upload (might be a loader showing 1-100%) here to keep UI busy and alert user that data is still uploading until it finishes */}
+
+
                           </div>
 
                           <div className='h-24 w-full max-w-3xl overflow-hidden rounded border'>
@@ -566,6 +573,8 @@ export const CourseBrandingForm = forwardRef<CourseFormRef, CourseFormProps>(
                             >
                               Replace
                             </Button>
+
+                            {/* // add uploading indicator for thumbnail upload (might be a loader showing 1-100%) here to keep UI busy and alert user that data is still uploading until it finishes */}
                           </div>
 
                           <div className='h-32 w-48 overflow-hidden rounded border'>

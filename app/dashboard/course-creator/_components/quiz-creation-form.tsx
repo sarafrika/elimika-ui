@@ -54,7 +54,7 @@ type QuizSummary = Pick<
   | 'status'
   | 'rubric_uuid'
 >;
-type QuizPayload = {
+export type QuizPayload = {
   title: string;
   instructions: string;
   time_limit_minutes: number;
@@ -98,6 +98,7 @@ export type QuizCreationFormProps = {
   addQuestionOption: (payload: unknown) => Promise<unknown>;
 
   openBulkUploadSheet: () => void;
+  onDraftChange?: (payload: QuizPayload) => void;
 
   isPending: boolean;
 };
@@ -181,23 +182,20 @@ const QuestionRow = ({
               <div
                 key={`tf-${qIndex}-${oIndex}`}
                 onClick={() => setCorrectOption(qIndex, oIndex)}
-                className={`flex cursor-pointer items-center gap-3 rounded-lg border-2 p-3 transition-all ${
-                  opt.isCorrect
+                className={`flex cursor-pointer items-center gap-3 rounded-lg border-2 p-3 transition-all ${opt.isCorrect
                     ? 'border-primary bg-primary/10'
                     : 'border-border hover:border-primary/50'
-                }`}
+                  }`}
               >
                 <div
-                  className={`flex h-5 w-5 items-center justify-center rounded-full border-2 ${
-                    opt.isCorrect ? 'border-primary bg-primary' : 'border-border'
-                  }`}
+                  className={`flex h-5 w-5 items-center justify-center rounded-full border-2 ${opt.isCorrect ? 'border-primary bg-primary' : 'border-border'
+                    }`}
                 >
                   {opt.isCorrect && <Check className='text-primary-foreground h-3 w-3' />}
                 </div>
                 <span
-                  className={`text-sm font-medium ${
-                    opt.isCorrect ? 'text-primary' : 'text-foreground'
-                  }`}
+                  className={`text-sm font-medium ${opt.isCorrect ? 'text-primary' : 'text-foreground'
+                    }`}
                 >
                   {opt.text}
                 </span>
@@ -392,6 +390,7 @@ export const QuizCreationForm = ({
   deleteQuizForLesson,
   isPending,
   openBulkUploadSheet,
+  onDraftChange,
 }: QuizCreationFormProps) => {
   const creator = useCourseCreator();
 
@@ -425,6 +424,10 @@ export const QuizCreationForm = ({
     () => ({ ...localQuizData, lesson_uuid: selectedLessonId as string }),
     [selectedLessonId, localQuizData]
   );
+
+  useEffect(() => {
+    onDraftChange?.(selectedQuizData);
+  }, [onDraftChange, selectedQuizData]);
 
   const handleQuizInputChange = useCallback(
     <K extends keyof typeof EMPTY_QUIZ>(field: K, value: (typeof EMPTY_QUIZ)[K]) => {
@@ -487,6 +490,7 @@ export const QuizCreationForm = ({
     onSelectQuiz,
   ]);
 
+  // use a delete modal here
   const handleDeleteQuiz = useCallback(async () => {
     if (!quizUuid) return;
     if (!confirm('Are you sure you want to delete this quiz? This action cannot be undone.'))
@@ -810,86 +814,88 @@ export const QuizCreationForm = ({
           </div>
 
           {/* Questions section */}
-          {quizUuid !== '' && (
-            <div className='mt-8 border-t pt-6'>
-              <div className='mb-6'>
-                <h4 className='text-foreground mb-3 text-lg font-semibold'>Questions</h4>
-
-                <div className='flex w-full flex-row flex-wrap items-center justify-between'>
-                  <div className='flex flex-wrap gap-2'>
-                    {QUESTION_TYPES.map(type => (
-                      <Button
-                        key={type.value}
-                        size='sm'
-                        variant='outline'
-                        onClick={() => addQuestion(type.value)}
-                      >
-                        + {type.label}
-                      </Button>
-                    ))}
-                  </div>
-
-                  <Button variant='outline' onClick={openBulkUploadSheet}>
-                    <FileText className='mr-2 h-4 w-4' />
-                    Paste Bulk Questions
-                  </Button>
-                </div>
+          <div className='mt-8 border-t pt-6'>
+            <div className='mb-6'>
+              <div className='mb-3 flex items-center justify-between gap-3'>
+                <h4 className='text-foreground text-lg font-semibold'>Questions</h4>
+                {!quizUuid && (
+                  <span className='bg-muted text-muted-foreground rounded-full px-2.5 py-1 text-xs font-medium'>
+                    Will be created on save
+                  </span>
+                )}
               </div>
 
-              <TooltipProvider>
-                <div className='overflow-hidden rounded-lg border'>
-                  <table className='w-full'>
-                    <thead>
-                      <tr className='bg-muted border-b'>
-                        <th className='text-foreground w-1/3 px-4 py-3 text-left text-sm font-semibold'>
-                          Question
-                        </th>
-                        <th className='text-foreground px-4 py-3 text-left text-sm font-semibold'>
-                          Answer/Options
-                        </th>
-                        <th className='text-foreground w-24 px-4 py-3 text-left text-sm font-semibold'>
-                          Points
-                        </th>
-                      </tr>
-                    </thead>
-                    <tbody className='divide-y'>
-                      {questions.length > 0 ? (
-                        questions.map((q, qIndex) => (
-                          <QuestionRow
-                            key={`question-${qIndex}`}
-                            question={q}
-                            qIndex={qIndex}
-                            updateQuestionText={updateQuestionText}
-                            updateQuestionPoint={updateQuestionPoint}
-                            updateOptionText={updateOptionText}
-                            toggleCorrectOption={toggleCorrectOption}
-                            setCorrectOption={setCorrectOption}
-                            addOption={addOption}
-                            deleteOption={deleteOption}
-                            updatePairText={updatePairText}
-                            deletePair={deletePair}
-                            addPair={addPair}
-                            deleteQuestion={deleteQuestion}
-                          />
-                        ))
-                      ) : (
-                        <tr>
-                          <td
-                            colSpan={3}
-                            className='text-muted-foreground py-12 text-center text-sm'
-                          >
-                            <div className='rounded-lg border border-dashed py-8'>
-                              No questions added yet. Click "Add Question" to get started.
-                            </div>
-                          </td>
-                        </tr>
-                      )}
-                    </tbody>
-                  </table>
+              <div className='flex w-full flex-row flex-wrap items-center justify-between gap-3'>
+                <div className='flex flex-wrap gap-2'>
+                  {QUESTION_TYPES.map(type => (
+                    <Button
+                      key={type.value}
+                      size='sm'
+                      variant='outline'
+                      onClick={() => addQuestion(type.value)}
+                    >
+                      + {type.label}
+                    </Button>
+                  ))}
                 </div>
-              </TooltipProvider>
+
+                <Button variant='outline' onClick={openBulkUploadSheet}>
+                  <FileText className='mr-2 h-4 w-4' />
+                  Paste Bulk Questions
+                </Button>
+              </div>
             </div>
-          )}
+
+            <TooltipProvider>
+              <div className='overflow-hidden rounded-lg border'>
+                <table className='w-full'>
+                  <thead>
+                    <tr className='bg-muted border-b'>
+                      <th className='text-foreground w-1/3 px-4 py-3 text-left text-sm font-semibold'>
+                        Question
+                      </th>
+                      <th className='text-foreground px-4 py-3 text-left text-sm font-semibold'>
+                        Answer/Options
+                      </th>
+                      <th className='text-foreground w-24 px-4 py-3 text-left text-sm font-semibold'>
+                        Points
+                      </th>
+                    </tr>
+                  </thead>
+                  <tbody className='divide-y'>
+                    {questions.length > 0 ? (
+                      questions.map((q, qIndex) => (
+                        <QuestionRow
+                          key={`question-${qIndex}`}
+                          question={q}
+                          qIndex={qIndex}
+                          updateQuestionText={updateQuestionText}
+                          updateQuestionPoint={updateQuestionPoint}
+                          updateOptionText={updateOptionText}
+                          toggleCorrectOption={toggleCorrectOption}
+                          setCorrectOption={setCorrectOption}
+                          addOption={addOption}
+                          deleteOption={deleteOption}
+                          updatePairText={updatePairText}
+                          deletePair={deletePair}
+                          addPair={addPair}
+                          deleteQuestion={deleteQuestion}
+                        />
+                      ))
+                    ) : (
+                      <tr>
+                        <td colSpan={3} className='text-muted-foreground py-12 text-center text-sm'>
+                          <div className='rounded-lg border border-dashed py-8'>
+                            No questions added yet. Click "Add Question" to get started.
+                          </div>
+                        </td>
+                      </tr>
+                    )}
+                  </tbody>
+                </table>
+              </div>
+            </TooltipProvider>
+          </div>
         </div>
       )}
     </div>

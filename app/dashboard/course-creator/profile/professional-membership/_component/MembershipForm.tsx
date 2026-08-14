@@ -205,6 +205,7 @@ export default function ProfessionalBodySettings() {
     });
   };
 
+  // use a delete modal here
   async function handleRemove(index: number) {
     if (!isEditing) return;
     const shouldRemove = confirm('Are you sure you want to remove this membership?');

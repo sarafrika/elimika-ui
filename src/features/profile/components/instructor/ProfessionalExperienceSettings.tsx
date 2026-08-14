@@ -184,6 +184,7 @@ export default function ProfessionalExperienceSettings() {
     });
   };
 
+  // use a delete modal here
   async function onDelete(index: number) {
     if (!isEditing) return;
     const shouldRemove = confirm('Are you sure you want to remove this experience?');

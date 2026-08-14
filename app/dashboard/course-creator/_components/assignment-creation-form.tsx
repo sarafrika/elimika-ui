@@ -335,6 +335,7 @@ export const AssignmentCreationForm = ({
     }
   };
 
+  // use a delete modal here
   const handleDeleteAssignment = async () => {
     if (!assignmentUuid) return;
     if (!confirm('Are you sure you want to delete this assignment? This action cannot be undone.'))
@@ -386,6 +387,8 @@ export const AssignmentCreationForm = ({
     );
   };
 
+
+  // use a delete modal here
   const handleDeleteAttachment = (attachmentUuid: string) => {
     if (!confirm('Are you sure you want to delete this attachment?')) return;
 

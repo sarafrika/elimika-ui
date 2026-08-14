@@ -219,6 +219,7 @@ export default function EducationSettings() {
     });
   };
 
+  // use a delete modal here
   async function onRemove(index: number) {
     if (!isEditing) return;
     const shouldRemove = confirm('Are you sure you want to remove this qualification?');

@@ -370,7 +370,7 @@ function getYouTubeEmbedUrl(source: string) {
       const videoId = url.searchParams.get('v');
       return videoId ? `https://www.youtube.com/embed/${videoId}` : '';
     }
-  } catch {}
+  } catch { }
 
   return '';
 }
@@ -530,11 +530,10 @@ function AssessmentTasksSection({
         <button
           type='button'
           onClick={() => setActiveTab('assigned')}
-          className={`flex flex-1 items-center justify-center gap-2 rounded-md px-3 py-2 text-xs font-medium transition-all ${
-            activeTab === 'assigned'
+          className={`flex flex-1 items-center justify-center gap-2 rounded-md px-3 py-2 text-xs font-medium transition-all ${activeTab === 'assigned'
               ? 'bg-background text-foreground shadow-sm'
               : 'text-muted-foreground hover:text-foreground'
-          }`}
+            }`}
         >
           <ListChecks className='size-3.5' />
           Assigned Tasks
@@ -547,11 +546,10 @@ function AssessmentTasksSection({
         <button
           type='button'
           onClick={() => setActiveTab('add')}
-          className={`flex flex-1 items-center justify-center gap-2 rounded-md px-3 py-2 text-xs font-medium transition-all ${
-            activeTab === 'add'
+          className={`flex flex-1 items-center justify-center gap-2 rounded-md px-3 py-2 text-xs font-medium transition-all ${activeTab === 'add'
               ? 'bg-background text-foreground shadow-sm'
               : 'text-muted-foreground hover:text-foreground'
-          }`}
+            }`}
         >
           <Plus className='size-3.5' />
           Issue a new task
@@ -566,11 +564,10 @@ function AssessmentTasksSection({
             <button
               type='button'
               onClick={() => setAddType('assignment')}
-              className={`flex items-center justify-center gap-2 rounded-md py-2 text-xs font-medium transition-all ${
-                addType === 'assignment'
+              className={`flex items-center justify-center gap-2 rounded-md py-2 text-xs font-medium transition-all ${addType === 'assignment'
                   ? 'bg-primary text-primary-foreground shadow-sm'
                   : 'text-muted-foreground hover:text-foreground'
-              }`}
+                }`}
             >
               <SquarePen className='size-3.5' />
               Assignment
@@ -578,11 +575,10 @@ function AssessmentTasksSection({
             <button
               type='button'
               onClick={() => setAddType('quiz')}
-              className={`flex items-center justify-center gap-2 rounded-md py-2 text-xs font-medium transition-all ${
-                addType === 'quiz'
+              className={`flex items-center justify-center gap-2 rounded-md py-2 text-xs font-medium transition-all ${addType === 'quiz'
                   ? 'bg-primary text-primary-foreground shadow-sm'
                   : 'text-muted-foreground hover:text-foreground'
-              }`}
+                }`}
             >
               <ClipboardList className='size-3.5' />
               Quiz
@@ -618,13 +614,12 @@ function AssessmentTasksSection({
                       return (
                         <div
                           key={assignment.uuid}
-                          className={`rounded-lg border transition-all ${
-                            isDraft
+                          className={`rounded-lg border transition-all ${isDraft
                               ? 'opacity-60'
                               : isSelected
                                 ? 'border-primary bg-primary/5'
                                 : 'border-border'
-                          }`}
+                            }`}
                         >
                           <div className='p-3'>
                             <div className='flex items-start justify-between gap-3'>
@@ -671,12 +666,12 @@ function AssessmentTasksSection({
 
                                   {((assignment.submission_types as unknown as string[] | undefined)
                                     ?.length ?? 0) > 0 && (
-                                    <Badge variant='outline'>
-                                      📤{' '}
-                                      {assignment.submission_summary ??
-                                        `${(assignment.submission_types as unknown as string[] | undefined)?.length ?? 0} submission types`}
-                                    </Badge>
-                                  )}
+                                      <Badge variant='outline'>
+                                        📤{' '}
+                                        {assignment.submission_summary ??
+                                          `${(assignment.submission_types as unknown as string[] | undefined)?.length ?? 0} submission types`}
+                                      </Badge>
+                                    )}
 
                                   {assignment.assignment_category && (
                                     <Badge variant='outline'>
@@ -687,20 +682,20 @@ function AssessmentTasksSection({
 
                                 {((assignment.submission_types as unknown as string[] | undefined)
                                   ?.length ?? 0) > 0 && (
-                                  <div className='mt-2 flex flex-wrap gap-1'>
-                                    <p className='text-muted-foreground text-xs'>
-                                      Accepted Submissions:
-                                    </p>
+                                    <div className='mt-2 flex flex-wrap gap-1'>
+                                      <p className='text-muted-foreground text-xs'>
+                                        Accepted Submissions:
+                                      </p>
 
-                                    {(
-                                      assignment.submission_types as unknown as string[] | undefined
-                                    )?.map(type => (
-                                      <Badge key={type} variant='secondary' className='text-[10px]'>
-                                        {type}
-                                      </Badge>
-                                    ))}
-                                  </div>
-                                )}
+                                      {(
+                                        assignment.submission_types as unknown as string[] | undefined
+                                      )?.map(type => (
+                                        <Badge key={type} variant='secondary' className='text-[10px]'>
+                                          {type}
+                                        </Badge>
+                                      ))}
+                                    </div>
+                                  )}
                               </div>
 
                               <div className='flex items-center gap-2'>
@@ -757,9 +752,8 @@ function AssessmentTasksSection({
                       return (
                         <div
                           key={quiz.uuid}
-                          className={`rounded-lg border transition-all ${
-                            isSelected ? 'border-primary bg-primary/5' : 'border-border'
-                          }`}
+                          className={`rounded-lg border transition-all ${isSelected ? 'border-primary bg-primary/5' : 'border-border'
+                            }`}
                         >
                           <div className='p-3'>
                             <div className='flex items-start justify-between gap-3'>
@@ -1156,6 +1150,8 @@ function AssignedTaskRow({
 
   const isDeleting = deleteAssignmentSchedMut.isPending || deleteQuizSchedMut.isPending;
 
+
+  // use a delete modal here
   const handleDelete = () => {
     const confirmed = window.confirm(
       `Are you sure you want to remove this ${type} from the class schedule?`
@@ -1211,9 +1207,8 @@ function AssignedTaskRow({
       {/* Row header */}
       <div className='flex items-center gap-3 p-3'>
         <div
-          className={`grid size-7 shrink-0 place-items-center rounded-md ${
-            type === 'assignment' ? 'bg-primary/10 text-primary' : 'bg-muted text-muted-foreground'
-          }`}
+          className={`grid size-7 shrink-0 place-items-center rounded-md ${type === 'assignment' ? 'bg-primary/10 text-primary' : 'bg-muted text-muted-foreground'
+            }`}
         >
           {type === 'assignment' ? (
             <SquarePen className='size-3.5' />
@@ -1609,9 +1604,8 @@ export function RosterPanel({
 
         {/* STATUS MESSAGE (NEW UX) */}
         <div
-          className={`text-center text-xs leading-snug ${
-            isSessionExpired ? 'text-destructive' : 'text-muted-foreground'
-          }`}
+          className={`text-center text-xs leading-snug ${isSessionExpired ? 'text-destructive' : 'text-muted-foreground'
+            }`}
         >
           {isSessionExpired && (
             <span>Attendance window closed. This session has exceeded its scheduled end time.</span>
@@ -1651,11 +1645,10 @@ export function RosterPanel({
                   type='button'
                   key={entry.enrollment?.uuid ?? entry.user?.uuid ?? entry.student?.uuid}
                   onClick={() => onSelectStudent(entry)}
-                  className={`w-full rounded-md border p-2.5 text-left transition-colors ${
-                    isSelected
+                  className={`w-full rounded-md border p-2.5 text-left transition-colors ${isSelected
                       ? 'border-primary/30 bg-primary/8'
                       : 'hover:bg-primary/5 border-transparent'
-                  }`}
+                    }`}
                 >
                   <div className='flex items-start gap-2.5'>
                     <Avatar className='border-border/60 size-8 border'>
@@ -1991,11 +1984,10 @@ function SubmissionPanel({
                 type='button'
                 variant='ghost'
                 onClick={() => setActivePanel(tab.value)}
-                className={`flex h-8 min-w-0 items-center justify-center gap-1.5 overflow-hidden rounded-md px-2 py-1.5 text-[11px] font-medium transition-all ${
-                  isActive
+                className={`flex h-8 min-w-0 items-center justify-center gap-1.5 overflow-hidden rounded-md px-2 py-1.5 text-[11px] font-medium transition-all ${isActive
                     ? `bg-background text-foreground dark:bg-primary dark:text-primary-foreground shadow-sm dark:shadow-md`
                     : `text-muted-foreground hover:bg-background/80 hover:text-foreground dark:text-muted-foreground/70 dark:hover:bg-muted/50 dark:hover:text-foreground`
-                } `}
+                  } `}
               >
                 <Icon className='h-3.5 w-3.5 shrink-0' />
                 <span className='truncate'>{tab.label}</span>
@@ -2143,10 +2135,10 @@ function SubmissionPanel({
                       <p className='text-muted-foreground mt-2 text-xs'>
                         {item.submission
                           ? item.submission.grade_display ||
-                            item.submission.submission_status_display ||
-                            (item.submission.percentage != null
-                              ? `${item.submission.percentage}% recorded`
-                              : 'Submission received')
+                          item.submission.submission_status_display ||
+                          (item.submission.percentage != null
+                            ? `${item.submission.percentage}% recorded`
+                            : 'Submission received')
                           : 'No submission recorded for this assignment yet.'}
                       </p>
 
@@ -2888,9 +2880,9 @@ export default function ClassTrainingPage({
         dueAt: assignment.due_at,
         submission: submission
           ? {
-              ...submission,
-              attachments: submissionAttachmentQueries[index]?.data?.data ?? [],
-            }
+            ...submission,
+            attachments: submissionAttachmentQueries[index]?.data?.data ?? [],
+          }
           : null,
       })),
     [studentSubmissions, submissionAttachmentQueries]

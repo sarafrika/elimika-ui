@@ -2,9 +2,6 @@
 'use client';
 
 import { WatchedText, WatchedValue } from '@/components/form/watched-value';
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { Badge } from '@/components/ui/badge';
-import { Button } from '@/components/ui/button';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -15,6 +12,9 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Checkbox } from '@/components/ui/checkbox';
 import {
@@ -528,6 +528,7 @@ function InstructorCertificateDocumentsSection({
       queryKey: getInstructorDocumentsQueryKey({ path: { instructorUuid: sharedProfile?.uuid } }),
     });
 
+  // use a delete modal here
   const handleDelete = (uuid: string) => {
     if (!confirm('Remove this document?')) return;
 
@@ -1354,7 +1355,7 @@ function instructorcertificatestab({ sharedProfile }: DomainTabProps) {
       </AlertDialog>
     </TabShell>
   );
-  }
+}
 
 const experienceSchema = z.object({
   uuid: z.string().optional(),
