@@ -1,13 +1,13 @@
 // @ts-nocheck -- pre-existing @hey-api generated-client type drift (see memory: elimika-ui-typecheck)
 'use client';
 
+import { AsyncSection } from '@/components/data/async-section';
+import { Skeleton } from '@/components/ui/skeleton';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { AlertTriangle, Info, Pencil, Plus, Save, Trash2, X } from 'lucide-react';
 import Link from 'next/link';
 import { useState } from 'react';
 import { toast } from 'sonner';
-import { AsyncSection } from '@/components/data/async-section';
-import { Skeleton } from '@/components/ui/skeleton';
 import { Button } from '../../../../components/ui/button';
 import { Input } from '../../../../components/ui/input';
 import { Label } from '../../../../components/ui/label';
@@ -296,19 +296,22 @@ function AssessmentSheet({
     const body = {
       title: form.title.trim(),
       description: form.description.trim(),
-      rubric_uuid: form.rubric_uuid,
+      rubric_uuid: form.rubric_uuid || null,
       weight_percentage: Number(form.weight_percentage),
       is_required: form.is_required,
       is_major_assessment: form.is_major_assessment,
       assessment_type: form.assessment_type,
       assessment_category: form.assessment_category,
+      // aggregation_strategy: 'points_sum',
+      // sync_class_attendance: true,
+      created_by: createdBy || undefined,
     };
 
     if (mode === 'add') {
       createMut.mutate(
         {
           path: { courseUuid },
-          body: { ...body, course_uuid: courseUuid, created_by: createdBy } as never,
+          body: { ...body, course_uuid: courseUuid } as never,
         },
         {
           onSuccess: () => {
@@ -835,11 +838,10 @@ export const CourseAssessmentStructure = ({
                           {a.weight_percentage}% (0–{a.weight_percentage})
                         </span>
                         <span
-                          className={`inline-flex max-w-fit items-center rounded-full px-2.5 py-0.5 text-xs font-medium ${
-                            a.is_required
-                              ? 'bg-success/10 text-success/70'
-                              : 'bg-muted-foreground/10 text-muted-foreground'
-                          }`}
+                          className={`inline-flex max-w-fit items-center rounded-full px-2.5 py-0.5 text-xs font-medium ${a.is_required
+                            ? 'bg-success/10 text-success/70'
+                            : 'bg-muted-foreground/10 text-muted-foreground'
+                            }`}
                         >
                           {a.is_required ? 'Required' : 'Not required'}
                         </span>

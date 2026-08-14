@@ -61,16 +61,16 @@ export default function CourseCreatorOverviewContent() {
       }
       leftColumn={
         <>
-          <VerificationCard verification={verification} />
-          <QuickActionsCard activeDomain={activeDomain} />
-        </>
-      }
-      rightColumn={
-        <>
           <MetricsGrid metrics={metrics} />
           <MonetizationCard monetization={monetization} activeDomain={activeDomain} />
           <TrainingRequirementsCard trainingRequirements={trainingRequirements} activeDomain={activeDomain} />
           <PurchasableCatalogue scope='course_creator' />
+        </>
+      }
+      rightColumn={
+        <>
+          <VerificationCard verification={verification} />
+          <QuickActionsCard activeDomain={activeDomain} />
         </>
       }
     />
@@ -274,17 +274,17 @@ function QuickActionsCard({ activeDomain }: { activeDomain: UserDomain | null })
         </CardDescription>
       </CardHeader>
       <CardContent className='grid gap-3 sm:grid-cols-2'>
-        <ActionTile
+        {/* <ActionTile
           title='Provision instructors'
           description='Invite mentors and outline their revenue share.'
           href={buildWorkspaceAliasPath(activeDomain, '/dashboard/instructors')}
-        />
-        <ActionTile
+        /> */}
+        {/* <ActionTile
           title='Share assets'
           description='Upload brand kits and curriculum collateral.'
+          // href={buildWorkspaceAliasPath(activeDomain, '/dashboard/library')}
           href='#'
-        // href={buildWorkspaceAliasPath(activeDomain, '/dashboard/library')}
-        />
+        /> */}
         <ActionTile
           title='Create syllabus'
           description='Use guided steps to structure lessons and assessments.'

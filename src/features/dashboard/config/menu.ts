@@ -61,6 +61,14 @@ export type MenuItem = {
   course_creator?: MenuItem[];
 };
 
+
+type MenuSection = {
+  title: string
+  icon: string
+  items: MenuItem[]
+}
+
+
 /**
  * A labelled group of nav items (Lovable-style sidebar sections). A domain's nav
  * may be either a flat `MenuItem[]` or a grouped `MenuGroup[]`; consumers use
@@ -129,7 +137,7 @@ type Menu = {
   secondary?: MenuItem[];
   user?: MenuItem[];
   admin?: MenuItem[];
-  student?: MenuItem[];
+  student?: MenuSection[]
   instructor?: MenuItem[];
   organisation_user?: MenuItem[] | MenuGroup[];
   course_creator?: MenuItem[];
@@ -180,8 +188,8 @@ export default {
   // ============================================================
   student: [
     {
-      title: 'Overview',
-      icon: LayoutDashboard,
+      title: '',
+      icon: '',
       items: [
         {
           title: 'Home',
@@ -193,38 +201,11 @@ export default {
           url: '/dashboard/skills-wallet',
           icon: BadgeCheck,
         },
-        // {
-        //   title: 'Profile',
-        //   url: '/dashboard/profile',
-        //   icon: UserCircle,
-        // },
-      ],
-    },
-    // {
-    //   title: 'Onboarding',
-    //   icon: 'Handshake',
-    //   items: [
-    //     {
-    //       title: 'Invites',
-    //       url: '/dashboard/invites',
-    //       icon: UserPlus,
-    //     },
-    //   ],
-    // },
-    {
-      title: 'Operations',
-      icon: Users,
-      items: [
         {
           title: 'Start a course',
           url: '/dashboard/courses',
           icon: Rocket,
         },
-        // {
-        //   title: 'My Courses',
-        //   url: '/dashboard/courses/my-courses',
-        //   icon: School,
-        // },
         {
           title: 'Learning Hub',
           url: '/dashboard/learning-hub',
@@ -235,10 +216,30 @@ export default {
           url: '/dashboard/calendar',
           icon: Calendar,
         },
+        {
+          title: 'Wallet',
+          url: '/dashboard/wallet',
+          icon: Wallet,
+        },
+        {
+          title: 'Skills Fund',
+          url: '/dashboard/skills-fund',
+          icon: PiggyBank,
+        },
+        {
+          title: 'Notifications',
+          url: '/dashboard/notifications',
+          icon: Bell,
+        },
+        {
+          title: 'Settings',
+          url: '/dashboard/settings',
+          icon: Settings,
+        },
         // {
-        //   title: 'Portfolio',
-        //   url: '/dashboard/portfolio',
-        //   icon: Briefcase,
+        //   title: 'My Courses',
+        //   url: '/dashboard/courses/my-courses',
+        //   icon: School,
         // },
         // {
         //   title: 'Contacts',
@@ -255,72 +256,25 @@ export default {
         //   url: '/dashboard/library',
         //   icon: LucideBookUser,
         // },
-      ],
-    },
-    {
-      title: 'Assessment',
-      icon: ClipboardList,
-      items: [
         // {
         //   title: 'Assignment',
         //   url: '/dashboard/assignment',
         //   icon: FileText,
         // },
-        {
-          title: 'Assessment',
-          url: '/dashboard/assessment',
-          icon: BarChart3,
-        },
-        // {
-        //   title: 'Credentials Vault',
-        //   url: '/dashboard/credentials',
-        //   icon: Award,
-        // },
-      ],
-    },
-    {
-      title: 'Finance',
-      icon: '',
-      items: [
-        {
-          title: 'Wallet',
-          url: '/dashboard/wallet',
-          icon: Wallet,
-        },
-        {
-          title: 'Skills Fund',
-          url: '/dashboard/skills-fund',
-          icon: PiggyBank,
-        },
-        // {
-        //   title: 'Payments',
-        //   url: '/dashboard/payments',
-        //   icon: DollarSign,
-        // },
-      ],
-    },
-    {
-      title: 'System',
-      icon: Settings,
-      items: [
-        {
-          title: 'Notifications',
-          url: '/dashboard/notifications',
-          icon: Bell,
-        },
         // {
         //   title: 'Analytics',
         //   url: '/dashboard/analytics',
         //   icon: LineChart,
         // },
-        {
-          title: 'Settings',
-          url: '/dashboard/settings',
-          icon: Settings,
-        },
+        // {
+        //   title: 'Profile',
+        //   url: '/dashboard/profile',
+        //   icon: UserCircle,
+        // },
       ],
     },
   ],
+
 
   // ============================================================
   // INSTRUCTOR
@@ -551,9 +505,8 @@ export default {
         //   icon: FileStack,
         // },
         {
-          title: 'Instructors',
-          url: '/dashboard/instructors',
-          // url: '/dashboard/training-applications',
+          title: 'Pending Approvals',
+          url: '/dashboard/pending-approvals',
           icon: Users,
         },
         // {
