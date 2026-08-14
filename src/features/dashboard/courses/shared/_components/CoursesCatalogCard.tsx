@@ -1,13 +1,13 @@
-import { Award, BookOpen, Calendar, Search } from 'lucide-react';
-import Link from 'next/link';
 import { ImageWithFallback } from '@/components/data/image-with-fallback';
-import { Button } from '@/components/ui/button';
-import { cn } from '@/lib/utils';
-import { isAuthenticatedMediaUrl, toAuthenticatedMediaUrl } from '@/src/lib/media-url';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
+import { cn } from '@/lib/utils';
 import type { CoursesCatalogCardData } from '@/src/features/dashboard/courses/shared/_components/courses-data';
 import { StarRatingSummary } from '@/src/features/dashboard/courses/shared/_components/StarRating';
+import { isAuthenticatedMediaUrl, toAuthenticatedMediaUrl } from '@/src/lib/media-url';
+import { Award, BookOpen, Calendar, Search } from 'lucide-react';
+import Link from 'next/link';
 
 const imageToneClasses = {
   primary: 'bg-gradient-to-br from-primary/20 via-primary/10 to-background',
@@ -101,14 +101,14 @@ export function CoursesCatalogCard({ card, type, onPrimaryAction }: CoursesCatal
         <div>
           <Link href={card.detailsHref} className='block'>
             <h3
-              className='text-foreground line-clamp-2 text-[clamp(0.95rem,1vw,1.05rem)] leading-tight font-semibold group-hover:line-clamp-none'
+              className='text-foreground line-clamp-2 h-[2.5rem] text-[clamp(0.95rem,1vw,1.05rem)] leading-tight font-semibold'
               title={card.title}
             >
               {card.title}
             </h3>
           </Link>
 
-          <div className='mt-1 flex flex-row items-center justify-between'>
+          <div className='mt-2 flex flex-row items-center justify-between'>
             {isLoading ? (
               <>
                 <div className='flex items-center gap-2'>
