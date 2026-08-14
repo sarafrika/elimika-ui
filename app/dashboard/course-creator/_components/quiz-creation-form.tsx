@@ -8,6 +8,7 @@ import { toast } from 'sonner';
 import { Badge } from '../../../../components/ui/badge';
 import { Button } from '../../../../components/ui/button';
 import { Checkbox } from '../../../../components/ui/checkbox';
+import { DeleteConfirmationDialog } from '../../../../components/ui/delete-confirmation-dialog';
 import { Input } from '../../../../components/ui/input';
 import { Label } from '../../../../components/ui/label';
 import {
@@ -182,20 +183,23 @@ const QuestionRow = ({
               <div
                 key={`tf-${qIndex}-${oIndex}`}
                 onClick={() => setCorrectOption(qIndex, oIndex)}
-                className={`flex cursor-pointer items-center gap-3 rounded-lg border-2 p-3 transition-all ${opt.isCorrect
+                className={`flex cursor-pointer items-center gap-3 rounded-lg border-2 p-3 transition-all ${
+                  opt.isCorrect
                     ? 'border-primary bg-primary/10'
                     : 'border-border hover:border-primary/50'
-                  }`}
+                }`}
               >
                 <div
-                  className={`flex h-5 w-5 items-center justify-center rounded-full border-2 ${opt.isCorrect ? 'border-primary bg-primary' : 'border-border'
-                    }`}
+                  className={`flex h-5 w-5 items-center justify-center rounded-full border-2 ${
+                    opt.isCorrect ? 'border-primary bg-primary' : 'border-border'
+                  }`}
                 >
                   {opt.isCorrect && <Check className='text-primary-foreground h-3 w-3' />}
                 </div>
                 <span
-                  className={`text-sm font-medium ${opt.isCorrect ? 'text-primary' : 'text-foreground'
-                    }`}
+                  className={`text-sm font-medium ${
+                    opt.isCorrect ? 'text-primary' : 'text-foreground'
+                  }`}
                 >
                   {opt.text}
                 </span>
@@ -408,6 +412,8 @@ export const QuizCreationForm = ({
 
   // ── Quiz state ────────────────────────────────────────────────────────────
   const [localQuizData, setLocalQuizData] = useState({ ...EMPTY_QUIZ });
+  const [showDeleteQuizDialog, setShowDeleteQuizDialog] = useState(false);
+  const [isDeletingQuiz, setIsDeletingQuiz] = useState(false);
 
   const selectedRubric = rubrics.find(r => r.uuid === localQuizData.rubric_uuid);
 
@@ -490,17 +496,22 @@ export const QuizCreationForm = ({
     onSelectQuiz,
   ]);
 
-  // use a delete modal here
-  const handleDeleteQuiz = useCallback(async () => {
+  const handleDeleteQuiz = useCallback(() => {
     if (!quizUuid) return;
-    if (!confirm('Are you sure you want to delete this quiz? This action cannot be undone.'))
-      return;
+    setShowDeleteQuizDialog(true);
+  }, [quizUuid]);
+
+  const confirmDeleteQuiz = useCallback(async () => {
+    if (!quizUuid) return;
 
     try {
+      setIsDeletingQuiz(true);
       await deleteQuizForLesson(quizUuid);
       onSelectQuiz?.(null);
     } catch (err) {
       toast.error('Failed to delete quiz.');
+    } finally {
+      setIsDeletingQuiz(false);
     }
   }, [quizUuid, deleteQuizForLesson, onSelectQuiz]);
 
@@ -898,6 +909,15 @@ export const QuizCreationForm = ({
           </div>
         </div>
       )}
+      <DeleteConfirmationDialog
+        open={showDeleteQuizDialog}
+        onOpenChange={setShowDeleteQuizDialog}
+        onConfirm={confirmDeleteQuiz}
+        title='Delete quiz?'
+        description='This quiz and its questions will be permanently deleted. This action cannot be undone.'
+        confirmLabel='Delete quiz'
+        isDeleting={isDeletingQuiz}
+      />
     </div>
   );
 };

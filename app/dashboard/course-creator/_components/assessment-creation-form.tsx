@@ -6,6 +6,7 @@ import { Disc } from 'lucide-react';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { toast } from 'sonner';
 import { Button } from '../../../../components/ui/button';
+import { DeleteConfirmationDialog } from '../../../../components/ui/delete-confirmation-dialog';
 import {
   Sheet,
   SheetContent,
@@ -160,6 +161,7 @@ const AssessmentCreationForm = ({
 
   const [activeQuizUuid, setActiveQuizUuid] = useState<string | null>(null);
   const [quizDraft, setQuizDraft] = useState<QuizPayload | null>(null);
+  const [questionToDelete, setQuestionToDelete] = useState<number | null>(null);
 
   const handleQuizCreatedOrSelected = (quizUuid: string | null) => {
     setActiveQuizUuid(quizUuid);
@@ -309,13 +311,8 @@ const AssessmentCreationForm = ({
     [updateQuiz, qc, selectedLessonId]
   );
 
-  // use a delete modal here
   const handleDeleteQuiz = useCallback(
     async (quizUuid: string) => {
-      if (!confirm('Are you sure you want to delete this quiz? This action cannot be undone.')) {
-        return;
-      }
-
       try {
         await deleteQuiz.mutateAsync({
           path: { uuid: quizUuid as string },
@@ -960,7 +957,9 @@ const AssessmentCreationForm = ({
       try {
         quizUuidToUse = await createQuizForLesson(selectedLessonId, quizDraft);
       } catch (err) {
-        toast.error(`Failed to create quiz: ${err instanceof Error ? err.message : 'Unknown error'}`);
+        toast.error(
+          `Failed to create quiz: ${err instanceof Error ? err.message : 'Unknown error'}`
+        );
         return;
       }
     }
@@ -1048,48 +1047,51 @@ const AssessmentCreationForm = ({
     [selectedLessonId]
   );
 
-
-  // use a delete modal here
   const handleDeleteQuestion = useCallback(
-    async (qIndex: number) => {
-      const question = questions[qIndex];
-      if (!question) return;
+    (qIndex: number) => {
+      if (!questions[qIndex]) return;
+      setQuestionToDelete(qIndex);
+    },
+    [questions]
+  );
 
-      if (question?.uuid) {
-        if (!confirm('Delete this question from the quiz?')) return;
+  const confirmDeleteQuestion = useCallback(async () => {
+    if (questionToDelete === null) return;
+    const qIndex = questionToDelete;
+    const question = questions[qIndex];
+    if (!question) return;
 
-        try {
-          await deleteQuizQuestion.mutateAsync({
-            path: {
-              quizUuid: activeQuizUuid!,
-              questionUuid: question?.uuid as string,
-            },
-          });
+    if (question?.uuid) {
+      try {
+        await deleteQuizQuestion.mutateAsync({
+          path: {
+            quizUuid: activeQuizUuid!,
+            questionUuid: question?.uuid as string,
+          },
+        });
 
-          qc.invalidateQueries({
-            queryKey: getQuizQuestionsQueryKey({ path: { quizUuid: activeQuizUuid as string } }),
-          });
+        qc.invalidateQueries({
+          queryKey: getQuizQuestionsQueryKey({ path: { quizUuid: activeQuizUuid as string } }),
+        });
 
-          setQuizData(prev => {
-            const updated = [...(prev[selectedLessonId] ?? [])];
-            updated.splice(qIndex, 1);
-            return { ...prev, [selectedLessonId]: updated };
-          });
-
-          toast.success('Question deleted!');
-        } catch (err) {
-          toast.error('Failed to delete question');
-        }
-      } else {
         setQuizData(prev => {
           const updated = [...(prev[selectedLessonId] ?? [])];
           updated.splice(qIndex, 1);
           return { ...prev, [selectedLessonId]: updated };
         });
+
+        toast.success('Question deleted!');
+      } catch (err) {
+        toast.error('Failed to delete question');
       }
-    },
-    [questions, activeQuizUuid, selectedLessonId, deleteQuizQuestion, qc]
-  );
+    } else {
+      setQuizData(prev => {
+        const updated = [...(prev[selectedLessonId] ?? [])];
+        updated.splice(qIndex, 1);
+        return { ...prev, [selectedLessonId]: updated };
+      });
+    }
+  }, [questionToDelete, questions, activeQuizUuid, selectedLessonId, deleteQuizQuestion, qc]);
 
   const handleDeleteOption = useCallback(
     async (qIndex: number, oIndex: number) => {
@@ -1439,7 +1441,8 @@ const AssessmentCreationForm = ({
                   <Textarea
                     value={bulkText}
                     onChange={e => setBulkText(e.target.value)}
-                    placeholder={`---
+                    placeholder={`
+---
 TYPE: MULTIPLE_CHOICE
 QUESTION: What is React?
 POINTS: 2
@@ -1454,7 +1457,8 @@ TYPE: TRUE_FALSE
 QUESTION: React is developed by Meta.
 
 A. True *
-B. False`}
+B. False
+                    `}
                     className='min-h-[500px] font-mono text-sm'
                   />
                 </div>
@@ -1506,6 +1510,15 @@ B. False`}
           </div>
         )}
       </div>
+      <DeleteConfirmationDialog
+        open={questionToDelete !== null}
+        onOpenChange={open => !open && setQuestionToDelete(null)}
+        onConfirm={confirmDeleteQuestion}
+        title='Delete question?'
+        description='This question will be permanently removed from the quiz.'
+        confirmLabel='Delete question'
+        isDeleting={deleteQuizQuestion.isPending}
+      />
     </div>
   );
 };

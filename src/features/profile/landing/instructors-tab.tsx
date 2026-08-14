@@ -17,6 +17,7 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Checkbox } from '@/components/ui/checkbox';
+import { DeleteConfirmationDialog } from '@/components/ui/delete-confirmation-dialog';
 import {
   Form,
   FormControl,
@@ -55,10 +56,7 @@ import {
   updateInstructorExperienceMutation,
   uploadInstructorDocumentMutation,
 } from '@/services/client/@tanstack/react-query.gen';
-import type {
-  InstructorEducation,
-  InstructorExperience
-} from '@/services/client/types.gen';
+import type { InstructorEducation, InstructorExperience } from '@/services/client/types.gen';
 import CoursesPage from '@/src/features/profile/components/instructor/rate-card/CoursesPage';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
@@ -511,6 +509,7 @@ function InstructorCertificateDocumentsSection({
 }) {
   const qc = useQueryClient();
   const [selectedPdf, setSelectedPdf] = useState<string | null>(null);
+  const [documentToDelete, setDocumentToDelete] = useState<string | null>(null);
 
   const { data, isLoading } = useQuery({
     ...getInstructorDocumentsOptions({ path: { instructorUuid: sharedProfile?.uuid } }),
@@ -528,20 +527,21 @@ function InstructorCertificateDocumentsSection({
       queryKey: getInstructorDocumentsQueryKey({ path: { instructorUuid: sharedProfile?.uuid } }),
     });
 
-  // use a delete modal here
   const handleDelete = (uuid: string) => {
-    if (!confirm('Remove this document?')) return;
+    setDocumentToDelete(uuid);
+  };
 
-    deleteDocumentMut.mutate(
-      { path: { documentUuid: uuid, instructorUuid: sharedProfile?.uuid } },
-      {
-        onSuccess: () => {
-          invalidateDocs();
-          toast.success('Document removed');
-        },
-        onError: () => toast.error('Could not remove document'),
-      }
-    );
+  const confirmDelete = async () => {
+    if (!documentToDelete) return;
+    try {
+      await deleteDocumentMut.mutateAsync({
+        path: { documentUuid: documentToDelete, instructorUuid: sharedProfile?.uuid },
+      });
+      invalidateDocs();
+      toast.success('Document removed');
+    } catch {
+      toast.error('Could not remove document');
+    }
   };
 
   const docs = data?.data ?? [];
@@ -662,6 +662,16 @@ function InstructorCertificateDocumentsSection({
           </div>
         </div>
       )}
+
+      <DeleteConfirmationDialog
+        open={documentToDelete !== null}
+        onOpenChange={open => !open && setDocumentToDelete(null)}
+        onConfirm={confirmDelete}
+        title='Remove document?'
+        description='This certificate document will be permanently removed from your profile.'
+        confirmLabel='Remove document'
+        isDeleting={deleteDocumentMut.isPending}
+      />
     </>
   );
 }

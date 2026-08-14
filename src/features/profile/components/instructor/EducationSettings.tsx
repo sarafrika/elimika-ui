@@ -180,30 +180,34 @@ export default function EducationSettings() {
     });
   };
 
-  // use a delete modal here
-  async function onRemove(index: number) {
+  function onRemove(index: number) {
     if (!isEditing) return;
-    const shouldRemove = confirm('Are you sure you want to remove this qualification?');
-    if (!shouldRemove) return;
+    requestConfirmation({
+      title: 'Remove qualification?',
+      description: 'This qualification will be permanently removed from your profile.',
+      confirmLabel: 'Remove qualification',
+      cancelLabel: 'Keep qualification',
+      onConfirm: async () => {
+        const edUUID = form.getValues('educations')[index]?.uuid;
+        remove(index);
 
-    const edUUID = form.getValues('educations')[index]?.uuid;
-    remove(index);
+        if (edUUID) {
+          const resp = await deleteInstructorEducation({
+            path: {
+              educationUuid: edUUID,
+              instructorUuid: instructor?.uuid!,
+            },
+          });
+          if (resp.error) {
+            toast.error('Unable to remove the qualification right now.');
+            return;
+          }
+        }
 
-    if (edUUID) {
-      const resp = await deleteInstructorEducation({
-        path: {
-          educationUuid: edUUID,
-          instructorUuid: instructor?.uuid!,
-        },
-      });
-      if (resp.error) {
-        toast.error('Unable to remove the qualification right now.');
-        return;
-      }
-    }
-
-    await invalidateQuery?.();
-    toast('Education removed successfully');
+        await invalidateQuery?.();
+        toast('Education removed successfully');
+      },
+    });
   }
 
   const formatCompletionYear = (endYear?: string | number, isCurrent?: boolean) => {

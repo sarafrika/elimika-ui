@@ -17,6 +17,7 @@ import { useRef, useState } from 'react';
 import { toast } from 'sonner';
 import { Badge } from '../../../../components/ui/badge';
 import { Button } from '../../../../components/ui/button';
+import { DeleteConfirmationDialog } from '../../../../components/ui/delete-confirmation-dialog';
 import { Input } from '../../../../components/ui/input';
 import { Label } from '../../../../components/ui/label';
 import {
@@ -177,6 +178,8 @@ export const AssignmentCreationForm = ({
   const [isDragging, setIsDragging] = useState(false);
   const [isDeletingAssignment, setIsDeletingAssignment] = useState(false);
   const [deletingAttachmentUuid, setDeletingAttachmentUuid] = useState<string | null>(null);
+  const [showDeleteAssignmentDialog, setShowDeleteAssignmentDialog] = useState(false);
+  const [attachmentToDelete, setAttachmentToDelete] = useState<string | null>(null);
   const uploadAssignmentMut = useMutation(uploadAssignmentAttachmentMutation());
   const deleteAttachmentMut = useMutation(deleteAssignmentAttachmentMutation());
   const isCreatingNewAssignment = !assignmentUuid;
@@ -335,11 +338,13 @@ export const AssignmentCreationForm = ({
     }
   };
 
-  // use a delete modal here
-  const handleDeleteAssignment = async () => {
+  const handleDeleteAssignment = () => {
     if (!assignmentUuid) return;
-    if (!confirm('Are you sure you want to delete this assignment? This action cannot be undone.'))
-      return;
+    setShowDeleteAssignmentDialog(true);
+  };
+
+  const confirmDeleteAssignment = async () => {
+    if (!assignmentUuid) return;
 
     try {
       setIsDeletingAssignment(true);
@@ -387,31 +392,32 @@ export const AssignmentCreationForm = ({
     );
   };
 
-
-  // use a delete modal here
   const handleDeleteAttachment = (attachmentUuid: string) => {
-    if (!confirm('Are you sure you want to delete this attachment?')) return;
+    setAttachmentToDelete(attachmentUuid);
+  };
 
-    setDeletingAttachmentUuid(attachmentUuid);
-    deleteAttachmentMut.mutate(
-      { path: { assignmentUuid: assignmentUuid as string, attachmentUuid } },
-      {
-        onSuccess: () => {
-          toast.success('Deleted successfully');
-          qc.invalidateQueries({
-            queryKey: getAssignmentAttachmentsQueryKey({
-              path: { assignmentUuid: assignmentUuid as string },
-            }),
-          });
+  const confirmDeleteAttachment = async () => {
+    if (!attachmentToDelete) return;
+
+    setDeletingAttachmentUuid(attachmentToDelete);
+    try {
+      await deleteAttachmentMut.mutateAsync({
+        path: {
+          assignmentUuid: assignmentUuid as string,
+          attachmentUuid: attachmentToDelete,
         },
-        onError: error => {
-          toast.error(getErrorMessage(error, 'Failed to delete attachment'));
-        },
-        onSettled: () => {
-          setDeletingAttachmentUuid(null);
-        },
-      }
-    );
+      });
+      toast.success('Deleted successfully');
+      qc.invalidateQueries({
+        queryKey: getAssignmentAttachmentsQueryKey({
+          path: { assignmentUuid: assignmentUuid as string },
+        }),
+      });
+    } catch (error) {
+      toast.error(getErrorMessage(error, 'Failed to delete attachment'));
+    } finally {
+      setDeletingAttachmentUuid(null);
+    }
   };
 
   const isSaving = assignmentAction === 'save' && (isPending || uploadAssignmentMut.isPending);
@@ -997,6 +1003,24 @@ export const AssignmentCreationForm = ({
           )}
         </div>
       )}
+      <DeleteConfirmationDialog
+        open={showDeleteAssignmentDialog}
+        onOpenChange={setShowDeleteAssignmentDialog}
+        onConfirm={confirmDeleteAssignment}
+        title='Delete assignment?'
+        description='This assignment and its attachments will be permanently deleted. This action cannot be undone.'
+        confirmLabel='Delete assignment'
+        isDeleting={isDeletingAssignment}
+      />
+      <DeleteConfirmationDialog
+        open={attachmentToDelete !== null}
+        onOpenChange={open => !open && setAttachmentToDelete(null)}
+        onConfirm={confirmDeleteAttachment}
+        title='Delete attachment?'
+        description='This attachment will be permanently removed from the assignment.'
+        confirmLabel='Delete attachment'
+        isDeleting={deleteAttachmentMut.isPending}
+      />
     </div>
   );
 };

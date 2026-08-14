@@ -205,36 +205,40 @@ export default function ProfessionalBodySettings() {
     });
   };
 
-  // use a delete modal here
-  async function handleRemove(index: number) {
+  function handleRemove(index: number) {
     if (!isEditing) return;
-    const shouldRemove = confirm('Are you sure you want to remove this membership?');
-    if (!shouldRemove) return;
+    requestConfirmation({
+      title: 'Remove membership?',
+      description: 'This professional membership will be permanently removed from your profile.',
+      confirmLabel: 'Remove membership',
+      cancelLabel: 'Keep membership',
+      onConfirm: async () => {
+        const memUUID = form.getValues('professional_bodies')[index]?.uuid;
+        remove(index);
 
-    const memUUID = form.getValues('professional_bodies')[index]?.uuid;
-    remove(index);
+        if (memUUID) {
+          const resp = await deleteCourseCreatorMembership({
+            path: {
+              courseCreatorUuid: courseCreator?.uuid!,
+              membershipUuid: memUUID,
+            },
+          });
+          if (resp.error) {
+            toast.error('Unable to remove this membership right now.');
+            return;
+          }
+        }
 
-    if (memUUID) {
-      const resp = await deleteCourseCreatorMembership({
-        path: {
-          courseCreatorUuid: courseCreator?.uuid!,
-          membershipUuid: memUUID,
-        },
-      });
-      if (resp.error) {
-        toast.error('Unable to remove this membership right now.');
-        return;
-      }
-    }
-
-    await invalidateQuery?.();
-    qc.invalidateQueries({
-      queryKey: getCourseCreatorMembershipsQueryKey({
-        path: { courseCreatorUuid: courseCreator?.uuid as string },
-        query: { pageable: {} },
-      }),
+        await invalidateQuery?.();
+        qc.invalidateQueries({
+          queryKey: getCourseCreatorMembershipsQueryKey({
+            path: { courseCreatorUuid: courseCreator?.uuid as string },
+            query: { pageable: {} },
+          }),
+        });
+        toast('Membership removed successfully');
+      },
     });
-    toast('Membership removed successfully');
   }
 
   const formatDateRange = (
