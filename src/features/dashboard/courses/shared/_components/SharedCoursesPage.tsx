@@ -1562,11 +1562,11 @@ export function SharedCoursesPage({ domain }: SharedCoursesPageProps) {
                   </div>
                 ) : catalogCards.length > 0 ? (
                   <div className=''>
-                    <div className='grid grid-cols-[repeat(auto-fit,minmax(320px,1fr))] gap-4'>
+                    <div className="grid grid-cols-[repeat(auto-fill,minmax(320px,380px))] gap-4">
                       {!isStudentDomain &&
                         catalogCards.map(card => (
                           <CoursesCatalogCard
-                            type='general'
+                            type="general"
                             key={card.id}
                             card={card}
                             onPrimaryAction={handleCatalogCardAction}
@@ -1576,7 +1576,7 @@ export function SharedCoursesPage({ domain }: SharedCoursesPageProps) {
                       {isStudentDomain &&
                         catalogCards.map(card => (
                           <StudentCoursesCard
-                            type='general'
+                            type="general"
                             key={card.id}
                             card={card}
                             onPrimaryAction={handleCatalogCardAction}
