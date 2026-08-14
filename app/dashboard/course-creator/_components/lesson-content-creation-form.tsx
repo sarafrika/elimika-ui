@@ -130,6 +130,8 @@ export const ContentCreationForm: React.FC<LessonCreationFormProps> = ({
   const [contentType, setContentType] = useState<ContentType>('TEXT');
   const [mediaFile, setMediaFile] = useState<File | null>(null);
   const [isDragging, setIsDragging] = useState(false);
+  const isMediaContent = ['VIDEO', 'AUDIO', 'PDF', 'IMAGE'].includes(contentType);
+  const isLocalMediaSelected = isMediaContent && !!mediaFile;
 
   const [isViewerOpen, setIsViewerOpen] = useState(false);
   const [selectedLesson, setSelectedLesson] = useState<ContentItem | null>(null);
@@ -880,29 +882,32 @@ export const ContentCreationForm: React.FC<LessonCreationFormProps> = ({
                                 <Button type='button' variant='outline' onClick={resetContentForm}>
                                   Cancel
                                 </Button>
-                                <Button
-                                  type='button'
-                                  onClick={() => {
-                                    try {
-                                      const data = contentForm.getValues();
-                                      lessonContentSchema.parse(data);
-                                      handleSaveLessonContent(data);
-                                    } catch (err) {
-                                      if (err instanceof z.ZodError) {
-                                        toast.error('Please fix validation errors');
+                                {!isLocalMediaSelected ? (
+                                  <Button
+                                    type='button'
+                                    onClick={() => {
+                                      try {
+                                        const data = contentForm.getValues();
+                                        lessonContentSchema.parse(data);
+                                        handleSaveLessonContent(data);
+                                      } catch (err) {
+                                        if (err instanceof z.ZodError) {
+                                          toast.error('Please fix validation errors');
+                                        }
                                       }
+                                    }}
+                                    disabled={
+                                      createLessonContent.isPending ||
+                                      updateLessonContent.isPending
                                     }
-                                  }}
-                                  disabled={
-                                    createLessonContent.isPending || updateLessonContent.isPending
-                                  }
-                                >
-                                  {createLessonContent.isPending || updateLessonContent.isPending
-                                    ? 'Saving...'
-                                    : contentForm.getValues('uuid')
-                                      ? 'Update Content'
-                                      : 'Save Content'}
-                                </Button>
+                                  >
+                                    {createLessonContent.isPending || updateLessonContent.isPending
+                                      ? 'Saving...'
+                                      : contentForm.getValues('uuid')
+                                        ? 'Update Content'
+                                        : 'Save Content'}
+                                  </Button>
+                                ) : null}
                               </div>
                             </div>
                           </Form>
