@@ -184,29 +184,34 @@ export default function ProfessionalExperienceSettings() {
     });
   };
 
-  async function onDelete(index: number) {
+  function onDelete(index: number) {
     if (!isEditing) return;
-    const shouldRemove = confirm('Are you sure you want to remove this experience?');
-    if (!shouldRemove) return;
+    requestConfirmation({
+      title: 'Remove experience?',
+      description: 'This experience will be permanently removed from your profile.',
+      confirmLabel: 'Remove experience',
+      cancelLabel: 'Keep experience',
+      onConfirm: async () => {
+        const expUUID = form.getValues('experiences')[index]?.uuid;
+        remove(index);
 
-    const expUUID = form.getValues('experiences')[index]?.uuid;
-    remove(index);
+        if (expUUID) {
+          const resp = await deleteInstructorExperience({
+            path: {
+              instructorUuid: instructor?.uuid!,
+              experienceUuid: expUUID,
+            },
+          });
+          if (resp.error) {
+            toast.error('Unable to remove this experience right now.');
+            return;
+          }
+        }
 
-    if (expUUID) {
-      const resp = await deleteInstructorExperience({
-        path: {
-          instructorUuid: instructor?.uuid!,
-          experienceUuid: expUUID,
-        },
-      });
-      if (resp.error) {
-        toast.error('Unable to remove this experience right now.');
-        return;
-      }
-    }
-
-    await invalidateQuery?.();
-    toast('Experience removed successfully');
+        await invalidateQuery?.();
+        toast('Experience removed successfully');
+      },
+    });
   }
 
   const formatDateRange = (

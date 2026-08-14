@@ -94,6 +94,56 @@ type UploadOptions = {
   onChange: (val: string) => void;
 };
 
+function UploadIndicator({ isUploading }: { isUploading: boolean }) {
+  const [progress, setProgress] = useState(0);
+
+  useEffect(() => {
+    if (!isUploading) {
+      setProgress(100);
+
+      const timeout = setTimeout(() => {
+        setProgress(0);
+      }, 400);
+
+      return () => clearTimeout(timeout);
+    }
+
+    setProgress(5);
+
+    const interval = setInterval(() => {
+      setProgress((current) => {
+        if (current >= 95) return current;
+
+        const increment =
+          current < 30 ? 8 :
+            current < 60 ? 5 :
+              current < 80 ? 3 :
+                1;
+
+        return Math.min(current + increment, 95);
+      });
+    }, 300);
+
+    return () => clearInterval(interval);
+  }, [isUploading]);
+
+  if (!isUploading && progress === 0) return null;
+
+  return (
+    <span
+      role='status'
+      aria-live='polite'
+      className='text-muted-foreground inline-flex items-center gap-2 text-sm'
+    >
+      <Spinner className='h-4 w-4' />
+
+      <span>
+        {progress < 100 ? `Uploading… ${progress}%` : 'Upload complete'}
+      </span>
+    </span>
+  );
+}
+
 export const brandingSchema = courseCreationSchema.pick({
   welcome_message: true,
   theme_color: true,
@@ -361,9 +411,12 @@ export const CourseBrandingForm = forwardRef<CourseFormRef, CourseFormProps>(
                               variant='outline'
                               size='sm'
                               onClick={() => document.getElementById('introVideoUpload')?.click()}
+                              disabled={courseIntroVideoMutation.isPending}
                             >
                               Replace
                             </Button>
+
+                            <UploadIndicator isUploading={courseIntroVideoMutation.isPending} />
                           </div>
 
                           <video controls className='w-full max-w-md rounded shadow'>
@@ -463,9 +516,11 @@ export const CourseBrandingForm = forwardRef<CourseFormRef, CourseFormProps>(
                               variant='outline'
                               size='sm'
                               onClick={() => document.getElementById('bannerUpload')?.click()}
+                              disabled={courseBannerMutation.isPending}
                             >
                               Replace
                             </Button>
+                            <UploadIndicator isUploading={courseBannerMutation.isPending} />
                           </div>
 
                           <div className='h-24 w-full max-w-3xl overflow-hidden rounded border'>
@@ -563,9 +618,12 @@ export const CourseBrandingForm = forwardRef<CourseFormRef, CourseFormProps>(
                               variant='outline'
                               size='sm'
                               onClick={() => document.getElementById('thumbnailUpload')?.click()}
+                              disabled={courseThumbnailMutation.isPending}
                             >
                               Replace
                             </Button>
+
+                            <UploadIndicator isUploading={courseThumbnailMutation.isPending} />
                           </div>
 
                           <div className='h-32 w-48 overflow-hidden rounded border'>

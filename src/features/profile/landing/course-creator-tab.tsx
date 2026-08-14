@@ -16,6 +16,7 @@ import {
 } from '@/components/ui/alert-dialog';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Checkbox } from '@/components/ui/checkbox';
+import { DeleteConfirmationDialog } from '@/components/ui/delete-confirmation-dialog';
 import {
   Form,
   FormControl,
@@ -518,6 +519,7 @@ function CreatorCertificateDocumentsSection({
 }) {
   const qc = useQueryClient();
   const [selectedPdf, setSelectedPdf] = useState<string | null>(null);
+  const [documentToDelete, setDocumentToDelete] = useState<string | null>(null);
 
   const { data, isLoading } = useQuery({
     ...getCourseCreatorDocumentsOptions({ path: { courseCreatorUuid: sharedProfile?.uuid } }),
@@ -538,18 +540,23 @@ function CreatorCertificateDocumentsSection({
     });
 
   const handleDelete = (uuid: string) => {
-    if (!confirm('Remove this document?')) return;
+    setDocumentToDelete(uuid);
+  };
 
-    deleteDocumentMut.mutate(
-      { path: { documentUuid: uuid, courseCreatorUuid: sharedProfile?.uuid } },
-      {
-        onSuccess: () => {
-          invalidateDocs();
-          toast.success('Document removed');
+  const confirmDelete = async () => {
+    if (!documentToDelete) return;
+    try {
+      await deleteDocumentMut.mutateAsync({
+        path: {
+          documentUuid: documentToDelete,
+          courseCreatorUuid: sharedProfile?.uuid,
         },
-        onError: () => toast.error('Could not remove document'),
-      }
-    );
+      });
+      invalidateDocs();
+      toast.success('Document removed');
+    } catch {
+      toast.error('Could not remove document');
+    }
   };
 
   const docs: CourseCreatorDocumentRecord[] = (data?.data ?? []) as CourseCreatorDocumentRecord[];
@@ -672,6 +679,16 @@ function CreatorCertificateDocumentsSection({
           </div>
         </div>
       )}
+
+      <DeleteConfirmationDialog
+        open={documentToDelete !== null}
+        onOpenChange={open => !open && setDocumentToDelete(null)}
+        onConfirm={confirmDelete}
+        title='Remove document?'
+        description='This certificate document will be permanently removed from your profile.'
+        confirmLabel='Remove document'
+        isDeleting={deleteDocumentMut.isPending}
+      />
     </>
   );
 }
@@ -955,8 +972,8 @@ function creatorcertificatestab({ sharedProfile }: DomainTabProps) {
               query: {
                 education_uuid: educationUuid,
                 document_type_uuid: '35b49d4c-aec0-4a88-873b-5fa91342198f',
-                experience_uuid: "",
-                membership_uuid: ""
+                experience_uuid: '',
+                membership_uuid: '',
               },
             },
             {
@@ -1275,10 +1292,7 @@ function creatorcertificatestab({ sharedProfile }: DomainTabProps) {
                               render={({ field: cb }) => (
                                 <FormItem className='mt-2 flex flex-row items-center gap-2 space-y-0'>
                                   <FormControl>
-                                    <Checkbox
-                                      checked={cb.value}
-                                      onCheckedChange={cb.onChange}
-                                    />
+                                    <Checkbox checked={cb.value} onCheckedChange={cb.onChange} />
                                   </FormControl>
 
                                   <FormLabel className='cursor-pointer text-sm font-normal'>

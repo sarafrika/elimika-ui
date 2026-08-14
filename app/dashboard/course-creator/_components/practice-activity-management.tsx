@@ -1,5 +1,6 @@
 'use client';
 
+import DeleteModal from '@/components/custom-modals/delete-modal';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import {
@@ -28,7 +29,6 @@ import {
 } from '@/components/ui/select';
 import { Switch } from '@/components/ui/switch';
 import { Textarea } from '@/components/ui/textarea';
-import DeleteModal from '@/components/custom-modals/delete-modal';
 import {
   createPracticeActivityMutation,
   deletePracticeActivityMutation,
@@ -129,9 +129,9 @@ const getPracticeActivityFormValues = (
 const getDisplayLabel = (value?: string) =>
   value
     ? value
-        .replace(/_/g, ' ')
-        .toLowerCase()
-        .replace(/\b\w/g, character => character.toUpperCase())
+      .replace(/_/g, ' ')
+      .toLowerCase()
+      .replace(/\b\w/g, character => character.toUpperCase())
     : 'Not set';
 
 const getMaterialsList = (value: string) =>
@@ -481,9 +481,8 @@ function SortablePracticeActivityCard({
     <div
       ref={setNodeRef}
       style={{ transform: CSS.Transform.toString(transform), transition }}
-      className={`group border-border bg-card/80 dark:border-border/70 dark:bg-card/70 flex w-full flex-col gap-4 rounded-2xl border p-4 shadow-lg ${
-        isDragging ? 'ring-primary/20 shadow-xl ring-2' : ''
-      }`}
+      className={`group border-border bg-card/80 dark:border-border/70 dark:bg-card/70 flex w-full flex-col gap-4 rounded-2xl border p-4 shadow-lg ${isDragging ? 'ring-primary/20 shadow-xl ring-2' : ''
+        }`}
     >
       <div className='flex items-start justify-between gap-4'>
         <div className='flex min-w-0 flex-1 gap-3'>
@@ -499,7 +498,7 @@ function SortablePracticeActivityCard({
           >
             <GripVertical className='h-4 w-4' />
           </Button>
-          <div className='bg-primary/10 text-primary mt-1 rounded-full p-2'>
+          <div className='bg-primary/10 text-primary mt-1 rounded-full p-2 max-w-9 max-h-9'>
             <ClipboardList className='h-5 w-5' />
           </div>
           <ActivityCardBody activity={activity} />
@@ -826,9 +825,8 @@ export function PracticeActivityManager({
         open={openDeletePracticeActivityModal}
         setOpen={setOpenDeletePracticeActivityModal}
         title='Delete Practice Activity'
-        description={`Are you sure you want to delete ${
-          editingPracticeActivity?.title ?? 'this practice activity'
-        }? This action cannot be undone.`}
+        description={`Are you sure you want to delete ${editingPracticeActivity?.title ?? 'this practice activity'
+          }? This action cannot be undone.`}
         onConfirm={confirmDeletePracticeActivity}
         isLoading={deletePracticeActivity.isPending}
         confirmText='Delete Activity'
