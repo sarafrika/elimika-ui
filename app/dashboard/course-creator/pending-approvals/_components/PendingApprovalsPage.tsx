@@ -8,7 +8,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useCourseCreator } from '@/context/course-creator-context';
 import { extractPage } from '@/lib/api-helpers';
 import { useQuery } from '@tanstack/react-query';
-import { Building2, Clock3, ExternalLink, GraduationCap, Search, Users } from 'lucide-react';
+import { Building2, Clock3, ExternalLink, GraduationCap, Loader2, Search, Users } from 'lucide-react';
 import Link from 'next/link';
 import { useMemo, useState } from 'react';
 
@@ -346,13 +346,8 @@ export default function PendingApprovalsPage() {
 
             <TabsContent value='all' className='mt-0 space-y-4'>
               {isLoading ? (
-                <div className='flex flex-col gap-4'>
-                  {Array.from({ length: 4 }).map((_, index) => (
-                    <div
-                      key={index}
-                      className='bg-muted/20 border-border/60 h-48 rounded-md border'
-                    />
-                  ))}
+                <div className='flex h-48 items-center justify-center'>
+                  <Loader2 className='text-muted-foreground h-6 w-6 animate-spin' />
                 </div>
               ) : applicants.length === 0 ? (
                 <EmptyState

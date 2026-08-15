@@ -154,6 +154,7 @@ export function AdminTable<TData, TValue>({
     getPaginationRowModel: getPaginationRowModel(),
     getFacetedRowModel: getFacetedRowModel(),
     getFacetedUniqueValues: getFacetedUniqueValues(),
+    autoResetPageIndex: false,
     initialState: { pagination: { pageSize } },
   });
 
