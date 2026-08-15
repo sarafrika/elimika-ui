@@ -136,13 +136,13 @@ const TABS = [
     { id: "audit", label: "Audit", icon: ShieldCheck },
 ] as const;
 
-type TabId = (typeof TABS)[number]["id"];
+export type WalletTabId = (typeof TABS)[number]["id"];
 
 /* =========================================================================
    Formatting helpers
    ========================================================================= */
 
-function fmtKES(value: number | string) {
+export function fmtKES(value: number | string) {
     const n = Number(value ?? 0);
     return new Intl.NumberFormat("en-KE", { style: "currency", currency: "KES", maximumFractionDigits: 0 }).format(n);
 }
@@ -161,10 +161,59 @@ export function fmtDateTime(iso?: string | null) {
     });
 }
 export function daysFromNow(days: number) {
-    const d = new Date();
-    d.setDate(d.getDate() + days);
-    return d.toISOString();
+  const d = new Date();
+  d.setDate(d.getDate() + days);
+  return d.toISOString();
 }
+
+export function buildWalletAccounts(wallet?: Wallet | null): WalletAccount[] {
+    return [
+        {
+            id: wallet?.uuid ?? "acc-personal",
+            bucket: "personal",
+            label: "Personal Wallet",
+            balance_kes: wallet?.balance_amount ?? 0,
+            currency_code: wallet?.currency_code ?? "KES",
+        },
+        {
+            id: "acc-skillsfund-1",
+            bucket: "skills_fund",
+            label: "County Skills Fund — 2026 Cohort",
+            balance_kes: 0,
+            funder: "Nairobi County Government",
+            expires_at: daysFromNow(120),
+            permitted_purpose: "Courses, assessments & certifications only",
+        },
+        {
+            id: "acc-skillsfund-2",
+            bucket: "skills_fund",
+            label: "Elimika Bootcamp Grant",
+            balance_kes: 0,
+            funder: "Mastercard Foundation",
+            expires_at: daysFromNow(-10),
+            permitted_purpose: "Courses, assessments & certifications only",
+        },
+        {
+            id: "acc-marketplace",
+            bucket: "marketplace_credits",
+            label: "Marketplace Credits",
+            balance_kes: 0,
+        },
+        {
+            id: "acc-rewards",
+            bucket: "rewards",
+            label: "Rewards Balance",
+            balance_kes: 0,
+        },
+        {
+            id: "acc-refunds",
+            bucket: "refunds",
+            label: "Refund Balance",
+            balance_kes: 0,
+        },
+    ];
+}
+
 function uid(prefix: string) {
     return `${prefix}-${Math.random().toString(36).slice(2, 9)}`;
 }
@@ -254,51 +303,7 @@ export function WalletProvider({ children }: { children: ReactNode }) {
     const transactionsData = transactionsResp?.data?.content
 
 
-    const accounts = useMemo<WalletAccount[]>(() => [
-        {
-            id: wallet?.uuid ?? "acc-personal",
-            bucket: "personal",
-            label: "Personal Wallet",
-            balance_kes: wallet?.balance_amount ?? 0,
-            currency_code: wallet?.currency_code ?? "KES",
-        },
-        {
-            id: "acc-skillsfund-1",
-            bucket: "skills_fund",
-            label: "County Skills Fund — 2026 Cohort",
-            balance_kes: 0,
-            funder: "Nairobi County Government",
-            expires_at: daysFromNow(120),
-            permitted_purpose: "Courses, assessments & certifications only",
-        },
-        {
-            id: "acc-skillsfund-2",
-            bucket: "skills_fund",
-            label: "Elimika Bootcamp Grant",
-            balance_kes: 0,
-            funder: "Mastercard Foundation",
-            expires_at: daysFromNow(-10),
-            permitted_purpose: "Courses, assessments & certifications only",
-        },
-        {
-            id: "acc-marketplace",
-            bucket: "marketplace_credits",
-            label: "Marketplace Credits",
-            balance_kes: 0,
-        },
-        {
-            id: "acc-rewards",
-            bucket: "rewards",
-            label: "Rewards Balance",
-            balance_kes: 0,
-        },
-        {
-            id: "acc-refunds",
-            bucket: "refunds",
-            label: "Refund Balance",
-            balance_kes: 0,
-        },
-    ], [wallet]);  // seedAccounts
+    const accounts = useMemo<WalletAccount[]>(() => buildWalletAccounts(wallet), [wallet]);  // seedAccounts
 
     const [transactions, setTransactions] = useState<WalletTransaction[]>(transactionsData || []); // seedTransactions
     const [payments, setPayments] = useState<WalletPayment[]>([]); // seedPayments
@@ -546,13 +551,15 @@ export function downloadCsv(filename: string, header: string[], rows: (string | 
 
 
 export function WalletShell({
-    title = "Student Wallet",
-    description = "Personal funds, Skills Fund balances, rewards, refunds and marketplace credits",
+  title = "Student Wallet",
+  description = "Personal funds, Skills Fund balances, rewards, refunds and marketplace credits",
+  initialTab = "payments",
 }: {
-    title?: string;
-    description?: string;
+  title?: string;
+  description?: string;
+  initialTab?: WalletTabId;
 }) {
-    const [tab, setTab] = useState<TabId>("payments");
+    const [tab, setTab] = useState<WalletTabId>(initialTab);
     const { wallet, accounts, transactions } = useWallet()
 
     return (

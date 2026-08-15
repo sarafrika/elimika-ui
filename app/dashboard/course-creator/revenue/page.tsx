@@ -37,7 +37,6 @@ import {
   listTransactionsOptions,
   transferMutation,
 } from '../../../../services/client/@tanstack/react-query.gen';
-import { TransferFundsSheet } from '../../_components/transfer-funds-sheet';
 
 const STATUS_BADGE_MAP = {
   completed:
@@ -343,7 +342,7 @@ const RevenuePage = () => {
       {showSummary && (
         <section className='grid gap-4 sm:grid-cols-2 xl:grid-cols-4'>
           {summaryCards.map(card => (
-            <Card key={card.label} className={card.tone === 'primary' ? 'border-primary/20 bg-primary text-primary-foreground' : ''}>
+            <Card key={card.label} className={card.tone === 'primary' ? 'border-primary/20 bg-primary text-primary-foreground rounded-sm' : 'rounded-sm'}>
               <CardHeader className='pb-0'>
                 <div className='flex items-start justify-between gap-3'>
                   <div className='space-y-2'>
@@ -531,60 +530,6 @@ const RevenuePage = () => {
         <div className='space-y-6'>
           <Card className='overflow-hidden'>
             <CardHeader className='border-border border-b'>
-              <div className='flex items-start justify-between gap-3'>
-                <div className='space-y-1'>
-                  <CardTitle className='text-base'>Withdraw balance</CardTitle>
-                  <CardDescription>
-                    Keep the current withdraw flow visible while matching the new dashboard style.
-                  </CardDescription>
-                </div>
-
-                <div className='rounded-xl bg-primary/10 p-3'>
-                  <Landmark className='h-5 w-5 text-primary' />
-                </div>
-              </div>
-            </CardHeader>
-
-            <CardContent className='space-y-5'>
-              <div className='rounded-2xl border border-border/70 bg-muted/30 p-4'>
-                <p className='text-sm text-muted-foreground'>Available balance</p>
-                <p className='mt-2 text-3xl font-bold text-foreground'>
-                  {formatKES(analyticsData.netRevenue)}
-                </p>
-                <p className='mt-2 text-xs text-muted-foreground'>Ready for withdrawal or transfer</p>
-              </div>
-
-              <div className='grid gap-3 sm:grid-cols-2'>
-                <Button disabled className='w-full'>
-                  Withdraw Funds
-                </Button>
-                <Button variant='outline' className='w-full' onClick={() => setIsTransferSheetOpen(true)}>
-                  <Send className='mr-2 h-4 w-4' />
-                  Transfer
-                </Button>
-              </div>
-
-              <div className='grid grid-cols-2 gap-3 text-sm'>
-                <div className='rounded-xl border border-border/70 bg-card p-3'>
-                  <p className='text-muted-foreground text-xs'>Pending</p>
-                  <p className='mt-1 font-semibold text-foreground'>
-                    {formatKES(
-                      transactions
-                        .filter(txn => getStatusFromType(txn.transaction_type) === 'pending')
-                        .reduce((sum, txn) => sum + txn.amount, 0)
-                    )}
-                  </p>
-                </div>
-                <div className='rounded-xl border border-border/70 bg-card p-3'>
-                  <p className='text-muted-foreground text-xs'>Success rate</p>
-                  <p className='mt-1 font-semibold text-foreground'>{analyticsData.successRate.toFixed(0)}%</p>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card className='overflow-hidden'>
-            <CardHeader className='border-border border-b'>
               <div className='space-y-1'>
                 <CardTitle className='text-base'>Revenue by course</CardTitle>
                 <CardDescription>Reframed as a card stack so it feels consistent with the wallet UI.</CardDescription>
@@ -652,36 +597,6 @@ const RevenuePage = () => {
           </Card>
         </div>
       </section>
-
-      <TransferFundsSheet
-        open={isTransferSheetOpen}
-        onOpenChange={open => {
-          setIsTransferSheetOpen(open);
-          if (!open) resetTransferForm();
-        }}
-        balance={analyticsData.netRevenue}
-        isInsufficientBalance={isInsufficientBalance}
-        targetUserUuid={targetUserUuid}
-        setTargetUserUuid={setTargetUserUuid}
-        transferAmount={transferAmount}
-        setTransferAmount={setTransferAmount}
-        transferCurrency={transferCurrency}
-        setTransferCurrency={setTransferCurrency}
-        transferReference={transferReference}
-        setTransferReference={setTransferReference}
-        transferDescription={transferDescription}
-        setTransferDescription={setTransferDescription}
-        userSearchQuery={userSearchQuery}
-        setUserSearchQuery={setUserSearchQuery}
-        isPending={transferFundsMut.isPending}
-        isError={transferFundsMut.isError}
-        isSuccess={transferFundsMut.isSuccess}
-        onSubmit={handleTransferFunds}
-        onCancel={() => {
-          setIsTransferSheetOpen(false);
-          resetTransferForm();
-        }}
-      />
     </div>
   );
 };
