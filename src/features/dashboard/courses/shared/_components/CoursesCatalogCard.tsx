@@ -8,6 +8,9 @@ import { StarRatingSummary } from '@/src/features/dashboard/courses/shared/_comp
 import { isAuthenticatedMediaUrl, toAuthenticatedMediaUrl } from '@/src/lib/media-url';
 import { Award, BookOpen, Calendar, Search } from 'lucide-react';
 import Link from 'next/link';
+import { useState } from 'react';
+
+import { CourseDetailsSheet } from './CourseDetailsSheet';
 
 const imageToneClasses = {
   primary: 'bg-gradient-to-br from-primary/20 via-primary/10 to-background',
@@ -43,10 +46,18 @@ export function CoursesCatalogCard({ card, type, onPrimaryAction }: CoursesCatal
   const level = card.secondaryMeta.toLowerCase();
 
   const isLoading = !card.provider;
+  const [open, setOpen] = useState(false);
+  const [selectedId, setSelectedId] = useState<string | null>(null);
 
   return (
-    <article className='border-border bg-card group overflow-hidden rounded-sm border'>
-      <Link href={card.detailsHref} className='block'>
+    <article
+      className='border-border bg-card group cursor-pointer overflow-hidden rounded-sm border transition hover:border-primary/40 hover:shadow-md'
+      onClick={() => {
+        setSelectedId(card.id);
+        setOpen(!open);
+      }}
+    >
+      <div className='block'>
         <div
           className={cn(
             'border-border relative flex h-40 items-center justify-center overflow-hidden border-b',
@@ -95,18 +106,16 @@ export function CoursesCatalogCard({ card, type, onPrimaryAction }: CoursesCatal
           />
           <div className='from-overlay/20 absolute inset-0 bg-gradient-to-t via-transparent to-transparent' />
         </div>
-      </Link>
+      </div>
 
       <div className='space-y-3 px-4 py-3.5'>
         <div>
-          <Link href={card.detailsHref} className='block'>
-            <h3
-              className='text-foreground line-clamp-2 h-[2.5rem] text-[clamp(0.95rem,1vw,1.05rem)] leading-tight font-semibold'
-              title={card.title}
-            >
-              {card.title}
-            </h3>
-          </Link>
+          <h3
+            className='text-foreground line-clamp-2 h-[2.5rem] text-[clamp(0.95rem,1vw,1.05rem)] leading-tight font-semibold'
+            title={card.title}
+          >
+            {card.title}
+          </h3>
 
           <div className='mt-2 flex flex-row items-center justify-between'>
             {isLoading ? (
@@ -155,7 +164,10 @@ export function CoursesCatalogCard({ card, type, onPrimaryAction }: CoursesCatal
           </span>
         </div>
 
-        <div className={cn('grid gap-2', card.showInstructorCta !== false && 'sm:grid-cols-2')}>
+        <div
+          className={cn('grid gap-2', card.showInstructorCta !== false && 'sm:grid-cols-2')}
+          onClick={e => e.stopPropagation()}
+        >
           {/* Instructor CTA */}
           {card.showInstructorCta !== false && (
             <Button asChild variant='outline' className='h-9 rounded-sm text-sm shadow-none'>
@@ -205,6 +217,20 @@ export function CoursesCatalogCard({ card, type, onPrimaryAction }: CoursesCatal
           )}
         </div>
       </div>
+
+      <CourseDetailsSheet
+        key={selectedId}
+        itemId={selectedId}
+        type={card.contentKind}
+        open={open}
+        onOpenChange={value => {
+          setOpen(value);
+
+          if (!value) {
+            setTimeout(() => setSelectedId(null), 200);
+          }
+        }}
+      />
     </article>
   );
 }

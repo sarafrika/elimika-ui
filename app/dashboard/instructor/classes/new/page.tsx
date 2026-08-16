@@ -1,22 +1,6 @@
 // @ts-nocheck -- pre-existing @hey-api generated-client type drift (see memory: elimika-ui-typecheck)
 'use client';
 
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { format } from 'date-fns';
-import {
-  AlertTriangle,
-  BellRing,
-  Building2,
-  CalendarDays,
-  Globe,
-  Loader2,
-  LockKeyhole,
-  MapPin,
-  Users,
-} from 'lucide-react';
-import { useRouter } from 'next/navigation';
-import { type FormEvent, useEffect, useMemo, useRef, useState } from 'react';
-import { toast } from 'sonner';
 import LocationInput from '@/components/locationInput';
 import { RecurrenceEditor } from '@/components/scheduling/recurrence-editor';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
@@ -34,6 +18,22 @@ import {
   useInstructorClassesWithSchedules,
 } from '@/hooks/use-instructor-classes-with-schedules';
 import { defaultRecurrenceValue, type RecurrenceValue, toClassRecurrence } from '@/lib/recurrence';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { format } from 'date-fns';
+import {
+  AlertTriangle,
+  BellRing,
+  Building2,
+  CalendarDays,
+  Globe,
+  Loader2,
+  LockKeyhole,
+  MapPin,
+  Users,
+} from 'lucide-react';
+import { useRouter } from 'next/navigation';
+import { type FormEvent, useEffect, useMemo, useRef, useState } from 'react';
+import { toast } from 'sonner';
 import { Button } from '../../../../../components/ui/button';
 import { Calendar } from '../../../../../components/ui/calendar';
 import { Checkbox } from '../../../../../components/ui/checkbox';
@@ -438,6 +438,8 @@ const expandSessionsForConflictCheck = (
   return sessions;
 };
 
+
+// correct mobile screen layout issue
 const ClassCreationPage = () => {
   const router = useRouter();
   const qc = useQueryClient();
@@ -545,13 +547,15 @@ const ClassCreationPage = () => {
   const handleServiceTypeChange = (
     newServiceType: ServiceType,
     classType: 'PRIVATE' | 'GROUP',
-    locationType: 'ONLINE' | 'IN_PERSON' | 'HYBRID'
+    locationType: 'ONLINE' | 'IN_PERSON' | 'HYBRID',
+    rateCardPrice?: number
   ) => {
     setServiceType(newServiceType);
     setClassDetails(prev => ({
       ...prev,
       class_type: classType === 'PRIVATE' ? 'PRIVATE' : 'PUBLIC',
       location_type: locationType,
+      rate_card: rateCardPrice != null ? String(rateCardPrice) : prev.rate_card,
     }));
   };
 
@@ -650,12 +654,31 @@ const ClassCreationPage = () => {
 
   const rateCard = selectedCatalogItem?.rateCard;
   const ratePerHour = useMemo(() => {
-    if (!rateCard || !classDetails.class_type || !classDetails.location_type) return 0;
-    const classType = classDetails.class_type === 'PRIVATE' ? 'private' : 'group';
-    const locationType = classDetails.location_type === 'ONLINE' ? 'online' : 'inperson';
-    const rateKey = `${classType}_${locationType}_rate`;
-    return Number(rateCard[rateKey] ?? 0);
-  }, [classDetails.class_type, classDetails.location_type, rateCard]);
+    if (rateCard && classDetails.class_type && classDetails.location_type) {
+      const classType = classDetails.class_type === 'PRIVATE' ? 'private' : 'group';
+      const locationType = classDetails.location_type === 'ONLINE' ? 'online' : 'inperson';
+      const rateKey = `${classType}_${locationType}_rate`;
+      const derivedRate = Number(rateCard[rateKey] ?? 0);
+
+      if (Number.isFinite(derivedRate) && derivedRate > 0) {
+        return derivedRate;
+      }
+    }
+
+    const storedRate = Number(classDetails.rate_card);
+    return Number.isFinite(storedRate) && storedRate > 0 ? storedRate : 0;
+  }, [classDetails.class_type, classDetails.location_type, classDetails.rate_card, rateCard]);
+
+  useEffect(() => {
+    const nextRateCard = ratePerHour > 0 ? String(ratePerHour) : '';
+
+    if (classDetails.rate_card !== nextRateCard) {
+      setClassDetails(prev => ({
+        ...prev,
+        rate_card: nextRateCard,
+      }));
+    }
+  }, [classDetails.rate_card, ratePerHour]);
 
   const totalSessions = sessionsForConflictCheck.length || classData?.scheduled_session_count;
 
@@ -691,7 +714,7 @@ const ClassCreationPage = () => {
 
   const totalAmount =
     Math.max(ratePerHour * totalHours, 0) ||
-    Math.max(Number(classData?.sale_price) * totalHours) | 0;
+    (Number(classData?.sale_price) > 0 ? Number(classData.sale_price) * totalHours : 0);
 
   const firstSessionTimeLabel = useMemo(() => {
     if (scheduleSettings.allDay) return 'All Day';
@@ -1385,10 +1408,10 @@ const ClassCreationPage = () => {
         }),
         resolvedId
           ? qc.invalidateQueries({
-              queryKey: getClassDefinitionQueryKey({
-                path: { uuid: resolvedId },
-              }),
-            })
+            queryKey: getClassDefinitionQueryKey({
+              path: { uuid: resolvedId },
+            }),
+          })
           : Promise.resolve(),
       ]);
 
@@ -1532,9 +1555,8 @@ const ClassCreationPage = () => {
           <div
             key={day}
             onClick={toggleDay}
-            className={`flex flex-row items-center gap-2 rounded-md border px-3 py-2 transition ${
-              active ? 'border-primary bg-primary/5' : 'border-border bg-background'
-            }`}
+            className={`flex flex-row items-center gap-2 rounded-md border px-3 py-2 transition ${active ? 'border-primary bg-primary/5' : 'border-border bg-background'
+              }`}
           >
             <button
               type='button'
@@ -1547,11 +1569,10 @@ const ClassCreationPage = () => {
               //     return { ...prev, repeat: { ...prev.repeat, days: nextDays, unit: 'week' } };
               //   })
               // }
-              className={`w-14 shrink-0 rounded-md border px-2 py-1.5 text-xs font-semibold transition ${
-                active
-                  ? 'border-primary bg-primary text-primary-foreground'
-                  : 'border-border bg-muted text-muted-foreground hover:border-primary/50'
-              }`}
+              className={`w-14 shrink-0 rounded-md border px-2 py-1.5 text-xs font-semibold transition ${active
+                ? 'border-primary bg-primary text-primary-foreground'
+                : 'border-border bg-muted text-muted-foreground hover:border-primary/50'
+                }`}
             >
               {DAY_SHORT[index]}
             </button>
@@ -2000,11 +2021,10 @@ const ClassCreationPage = () => {
                       key={option.key}
                       type='button'
                       onClick={() => setSchedulePreset(option.key)}
-                      className={`flex-1 rounded-md border px-4 py-3 text-left transition ${
-                        schedulePreset === option.key
-                          ? 'border-primary bg-primary/5'
-                          : 'border-border hover:border-primary/40'
-                      }`}
+                      className={`flex-1 rounded-md border px-4 py-3 text-left transition ${schedulePreset === option.key
+                        ? 'border-primary bg-primary/5'
+                        : 'border-border hover:border-primary/40'
+                        }`}
                     >
                       <div className='text-sm font-semibold'>{option.title}</div>
                       <div className='text-muted-foreground mt-1 text-xs'>{option.description}</div>
