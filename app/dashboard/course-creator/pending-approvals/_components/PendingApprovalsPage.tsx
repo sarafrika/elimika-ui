@@ -336,10 +336,12 @@ export default function PendingApprovalsPage() {
           }
         >
           <Tabs value={typeFilter} onValueChange={value => setTypeFilter(value as typeof typeFilter)} className='space-y-4'>
-            <TabsList className='h-auto flex-wrap justify-start'>
-              <TabsTrigger value='all'>All · {stats.total}</TabsTrigger>
-              <TabsTrigger value='instructor'>Instructors · {stats.instructors}</TabsTrigger>
-              <TabsTrigger value='organisation'>
+            <TabsList className="h-auto flex-wrap gap-2 justify-start">
+              <TabsTrigger value="all">All · {stats.total}</TabsTrigger>
+              <TabsTrigger value="instructor">
+                Instructors · {stats.instructors}
+              </TabsTrigger>
+              <TabsTrigger value="organisation">
                 Organisations · {stats.organisations}
               </TabsTrigger>
             </TabsList>

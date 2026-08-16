@@ -174,7 +174,7 @@ export function ClassCreationPreviewRail({
 
           <div className='bg-card divide-y'>
             <PreviewRow icon={Users} label='Instructor' value={data.instructorName || 'John Doe'} />
-            <PreviewRow icon={Globe} label='Lecture Type' value={data.lectureTypeLabel} />
+            <PreviewRow icon={Globe} label='Lecture Type' value={data.classTypeLabel} />
             <PreviewRow
               icon={MapPin}
               label='Location'
@@ -275,14 +275,18 @@ export const PreviewRow = ({
   label: string;
   value: string | number;
 }) => (
-  <div className='grid gap-2 px-4 py-2.5 sm:px-5 md:grid-cols-[minmax(0,1fr)_auto] md:items-center'>
-    <div className='flex items-center gap-3'>
-      <div className='bg-primary/10 text-primary flex h-8 w-8 shrink-0 items-center justify-center rounded-full'>
-        <Icon className='h-4 w-4' />
+  <div className="grid min-w-0 gap-2 px-4 py-2.5 sm:px-5 md:grid-cols-[minmax(0,1fr)_minmax(0,1fr)] md:items-center">
+    <div className="flex min-w-0 items-center gap-3">
+      <div className="bg-primary/10 text-primary flex h-8 w-8 shrink-0 items-center justify-center rounded-full">
+        <Icon className="h-4 w-4" />
       </div>
-      <span className='text-muted-foreground text-sm font-medium'>{label}</span>
+
+      <span className="text-muted-foreground min-w-0 truncate text-sm font-medium">
+        {label}
+      </span>
     </div>
-    <div className='text-foreground min-w-0 text-sm font-medium break-all whitespace-pre-line md:text-right'>
+
+    <div className="text-foreground min-w-0 truncate text-sm font-medium md:text-right">
       {value}
     </div>
   </div>

@@ -145,12 +145,14 @@ export default function NotesModal({
     student: 'Student',
     instructor: 'Instructor',
     organisation_user: 'Organisation',
-  };
+  } as const;
+
+  const activeProvider = useMemo(() => normalizeProvider(activeDomain), [activeDomain]);
 
   const checkableProviders = useMemo(() => {
-    switch (normalizeProvider(activeDomain)) {
+    switch (activeProvider) {
       case 'instructor':
-        return ['organisation_user', 'instructor'];
+        return ['instructor'];
 
       case 'organisation_user':
         return ['organisation_user', 'instructor'];
@@ -158,7 +160,10 @@ export default function NotesModal({
       default:
         return [];
     }
-  }, [activeDomain]);
+  }, [activeProvider]);
+
+  const canCheckProvider = (provider?: string | null) =>
+    checkableProviders.includes(normalizeProvider(provider) ?? '');
 
   const groupedRequirements = useMemo(() => {
     return requirements.reduce(
@@ -177,12 +182,24 @@ export default function NotesModal({
     );
   }, [requirements]);
 
+  const requirementGroups = useMemo(() => {
+    return Object.entries(groupedRequirements).map(([provider, items]) => ({
+      provider,
+      label:
+        providerLabels[normalizeProvider(provider) as keyof typeof providerLabels] ?? provider,
+      items,
+      hasUncheckedMandatoryRequirements: items.some(
+        req =>
+          req.is_mandatory &&
+          canCheckProvider(req.provided_by) &&
+          !(req as { checked?: boolean }).checked
+      ),
+    }));
+  }, [groupedRequirements, checkableProviders]);
+
   const hasUncheckedMandatoryRequirements = useMemo(() => {
     return requirements
-      .filter(
-        req =>
-          req.is_mandatory && checkableProviders.includes(normalizeProvider(req.provided_by) ?? '')
-      )
+      .filter(req => req.is_mandatory && canCheckProvider(req.provided_by))
       .some(req => !(req as { checked?: boolean }).checked);
   }, [requirements, checkableProviders]);
 
@@ -336,10 +353,10 @@ export default function NotesModal({
             <div>
               <h3 className='text-sm font-medium'>Course Training Requirements</h3>
               <p className='text-muted-foreground text-xs'>
-                Select the requirements that are currently available.
+                Review the requirements below. Tick only the ones your role is responsible for.
               </p>
             </div>
-            {Object.keys(groupedRequirements).length === 0 ? (
+            {requirementGroups.length === 0 ? (
               <div className='text-muted-foreground rounded-md border border-dashed p-6 text-center'>
                 <p className='text-sm font-medium'>No training requirements have been set.</p>
                 <p className='mt-1 text-xs'>
@@ -347,19 +364,15 @@ export default function NotesModal({
                 </p>
               </div>
             ) : (
-              Object.entries(groupedRequirements).map(([provider, items]) => (
-                <div key={provider} className='rounded-md border p-3'>
+              requirementGroups.map(group => (
+                <div key={group.provider} className='rounded-md border p-3'>
                   <div className='mb-2 flex items-center justify-between'>
-                    <h4 className='text-sm font-semibold'>
-                      {providerLabels[normalizeProvider(provider) as keyof typeof providerLabels]}
-                    </h4>
+                    <h4 className='text-sm font-semibold'>{group.label}</h4>
                   </div>
 
                   <div className='space-y-2'>
-                    {items?.map(item => {
-                      const canCheck = checkableProviders.includes(
-                        normalizeProvider(item.provided_by) ?? ''
-                      );
+                    {group.items?.map(item => {
+                      const canCheck = canCheckProvider(item.provided_by);
 
                       return (
                         <div
@@ -408,7 +421,7 @@ export default function NotesModal({
                     })}
                   </div>
 
-                  {hasUncheckedMandatoryRequirements && (
+                  {group.hasUncheckedMandatoryRequirements && (
                     <p className='text-destructive text-xs'>
                       Please confirm all required training requirements before submitting.
                     </p>
