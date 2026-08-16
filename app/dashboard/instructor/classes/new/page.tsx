@@ -66,7 +66,6 @@ import {
   SessionFormatEnum,
 } from '../../../../../services/client/types.gen';
 import { toAuthenticatedMediaUrl } from '../../../../../src/lib/media-url';
-import { CLASS_COLOR_OPTIONS } from '../../../_components/class-colors';
 import {
   ClassDetails,
   NotificationSettings,
@@ -296,6 +295,66 @@ const getMutationErrorMessage = (error: unknown, fallback: string) => {
     if (typeof message === 'string' && message.trim().length > 0) return message;
   }
   return fallback;
+};
+
+const getMutationErrorDetails = (error: unknown) => {
+  if (!error || typeof error !== 'object') return undefined;
+
+  const details: string[] = [];
+  const pushText = (value: unknown) => {
+    if (typeof value === 'string' && value.trim().length > 0) {
+      details.push(value.trim());
+    }
+  };
+
+  if ('message' in error) {
+    pushText((error as { message?: unknown }).message);
+  }
+
+  const nestedError = (error as { error?: unknown }).error;
+  if (nestedError && typeof nestedError === 'object') {
+    if ('message' in nestedError) {
+      pushText((nestedError as { message?: unknown }).message);
+    }
+
+    if ('errors' in nestedError) {
+      const nestedErrors = (nestedError as { errors?: Record<string, unknown> }).errors;
+      if (nestedErrors && typeof nestedErrors === 'object') {
+        const fieldMessages = Object.entries(nestedErrors)
+          .filter(([, value]) => typeof value === 'string' && value.trim().length > 0)
+          .map(([field, value]) => `${field}: ${String(value).trim()}`);
+        details.push(...fieldMessages);
+      }
+    }
+  }
+
+  if ('errors' in error) {
+    const rawErrors = (error as { errors?: Record<string, unknown> }).errors;
+    if (rawErrors && typeof rawErrors === 'object') {
+      const fieldMessages = Object.entries(rawErrors)
+        .filter(([, value]) => typeof value === 'string' && value.trim().length > 0)
+        .map(([field, value]) => `${field}: ${String(value).trim()}`);
+      details.push(...fieldMessages);
+    }
+  }
+
+  const uniqueDetails = [...new Set(details)];
+  return uniqueDetails.length > 0 ? uniqueDetails.join(' • ') : undefined;
+};
+
+const showMutationError = (error: unknown, fallback: string) => {
+  const message = getMutationErrorMessage(error, fallback);
+  const details = getMutationErrorDetails(error);
+
+  if (details) {
+    toast.error(message, {
+      description: details,
+      duration: 8000,
+    });
+    return;
+  }
+
+  toast.error(message);
 };
 
 const getRepeatSummary = (scheduleSettings: ScheduleSettings) => {
@@ -555,7 +614,7 @@ const ClassCreationPage = () => {
       ...prev,
       class_type: classType === 'PRIVATE' ? 'PRIVATE' : 'PUBLIC',
       location_type: locationType,
-      rate_card: rateCardPrice != null ? String(rateCardPrice) : prev.rate_card,
+      rate_card: Number.isFinite(rateCardPrice ?? Number.NaN) ? String(rateCardPrice) : prev.rate_card,
     }));
   };
 
@@ -669,16 +728,7 @@ const ClassCreationPage = () => {
     return Number.isFinite(storedRate) && storedRate > 0 ? storedRate : 0;
   }, [classDetails.class_type, classDetails.location_type, classDetails.rate_card, rateCard]);
 
-  useEffect(() => {
-    const nextRateCard = ratePerHour > 0 ? String(ratePerHour) : '';
-
-    if (classDetails.rate_card !== nextRateCard) {
-      setClassDetails(prev => ({
-        ...prev,
-        rate_card: nextRateCard,
-      }));
-    }
-  }, [classDetails.rate_card, ratePerHour]);
+  const selectedRateCardPrice = Number(classDetails.rate_card);
 
   const totalSessions = sessionsForConflictCheck.length || classData?.scheduled_session_count;
 
@@ -713,6 +763,7 @@ const ClassCreationPage = () => {
   const totalHoursInMinutes = BigInt(Math.round(totalHours * 60));
 
   const totalAmount =
+    Math.max(selectedRateCardPrice * totalHours, 0) ||
     Math.max(ratePerHour * totalHours, 0) ||
     (Number(classData?.sale_price) > 0 ? Number(classData.sale_price) * totalHours : 0);
 
@@ -1125,8 +1176,20 @@ const ClassCreationPage = () => {
       toast.error('Please select a lecture type');
       return false;
     }
+    if (!selectedCatalogItem) {
+      toast.error('Please select a valid course or program');
+      return false;
+    }
+    if (!Number.isFinite(Number(classDetails.rate_card)) || Number(classDetails.rate_card) <= 0) {
+      toast.error('Please choose a service type with a valid approved rate');
+      return false;
+    }
     if (requiresPhysicalLocation(locationType) && !trimToUndefined(classDetails.location_name)) {
       toast.error('Please enter a location');
+      return false;
+    }
+    if ((locationType === 'ONLINE' || locationType === 'HYBRID') && !trimToUndefined(classDetails.meeting_link)) {
+      toast.error('Please enter a class meeting link');
       return false;
     }
     if (schedulePreset === 'pick-dates' && pickedDates.length === 0) {
@@ -1150,6 +1213,7 @@ const ClassCreationPage = () => {
     const meetingLinkAllowed = locationType === 'ONLINE' || locationType === 'HYBRID';
     const selectedSource: CatalogSource =
       selectedCatalogItem?.source || (classDetails.program_uuid ? 'program' : 'course');
+    const selectedRate = Number(classDetails.rate_card);
 
     const academicPeriodStart = buildDateFromInput(scheduleSettings.academicPeriod.start);
     const academicPeriodEnd = buildDateFromInput(scheduleSettings.academicPeriod.end);
@@ -1338,7 +1402,7 @@ const ClassCreationPage = () => {
       location_longitude: toCoordinate(locationLongitude),
       max_participants: classDetails.class_limit > 0 ? classDetails.class_limit : undefined,
       classroom: trimToUndefined(classDetails.classroom),
-      class_color: trimToUndefined(CLASS_COLOR_OPTIONS?.[0]?.value || classDetails.class_color),
+      class_color: trimToUndefined(notificationSettings.classColour || classDetails.class_color),
       academic_period_start_date: academicPeriodStart,
       academic_period_end_date: academicPeriodEnd,
       registration_period_start_date: registrationPeriodStart,
@@ -1346,9 +1410,9 @@ const ClassCreationPage = () => {
       scheduled_session_count: totalSessions,
       class_reminder_minutes: reminderToMinutes(notificationSettings.reminder),
       duration_minutes: totalHoursInMinutes,
-      sale_price: ratePerHour,
-      instructor_pay: ratePerHour,
-      allow_waitlist: true,
+      sale_price: selectedRate,
+      instructor_pay: selectedRate,
+      allow_waitlist: allowWaitlist,
       is_active: !isDraft,
       default_start_time: new Date(buildUtcIsoDateTime(payloadRefDate, payloadStartTime)),
       default_end_time: new Date(buildUtcIsoDateTime(payloadRefDate, payloadEndTime)),
@@ -1391,7 +1455,7 @@ const ClassCreationPage = () => {
             toast.success('Video uploaded');
           }
         } catch (error) {
-          toast.error(getMutationErrorMessage(error, 'Failed to upload class media'));
+          showMutationError(error, 'Failed to upload class media');
         }
       }
 
@@ -1431,7 +1495,7 @@ const ClassCreationPage = () => {
         { path: { uuid: resolvedId }, body: payload },
         {
           onSuccess: () => onSuccess(resolvedId),
-          onError: error => toast.error(getMutationErrorMessage(error, 'Failed to update class')),
+          onError: error => showMutationError(error, 'Failed to update class'),
         }
       );
     } else {
@@ -1447,7 +1511,7 @@ const ClassCreationPage = () => {
               onSuccess();
             }
           },
-          onError: error => toast.error(getMutationErrorMessage(error, 'Failed to create class')),
+          onError: error => showMutationError(error, 'Failed to create class'),
         }
       );
     }
@@ -1498,7 +1562,7 @@ const ClassCreationPage = () => {
     timeLabel: firstSessionTimeLabel,
     classroom: classDetails.classroom,
     totalHoursLabel: `${totalHours || 0} ${totalHours === 1 ? 'Hour' : 'Hours'}`,
-    pricePerHourLabel: `${rateCard?.currency || 'KES'} ${ratePerHour.toLocaleString()}`,
+    pricePerHourLabel: `${rateCard?.currency || 'KES'} ${(selectedRateCardPrice > 0 ? selectedRateCardPrice : ratePerHour).toLocaleString()}`,
     totalSessionsLabel: `${totalSessions || 0} Class${totalSessions === 1 ? '' : 'es'}`,
     totalAmountLabel: `${rateCard?.currency || 'KES'} ${totalAmount.toLocaleString() || '0'}`,
     meetingLink,
@@ -1853,7 +1917,7 @@ const ClassCreationPage = () => {
   }
 
   return (
-    <div className='h-auto px-2 py-4 sm:px-3 sm:py-6 lg:px-6'>
+    <div className='h-auto overflow-x-hidden px-2 py-4 pb-8 sm:px-3 sm:py-6 lg:px-6'>
       <form onSubmit={handleSubmit} className='space-y-6'>
         <ClassCreationHeader
           isSubmitting={createClassDefinition.isPending || updateClassDefinition.isPending}
@@ -1868,7 +1932,7 @@ const ClassCreationPage = () => {
           draftSavedTick={draftSavedTick}
         />
 
-        <div className='flex h-fit flex-col items-start gap-4 self-start xl:sticky xl:top-4 xl:flex-row'>
+        <div className='flex w-full min-w-0 flex-col gap-4 xl:flex-row xl:items-start'>
           <div className='min-w-0 flex-1 space-y-4'>
             {/* ── Class Details Card ─────────────────────────────────────── */}
             <div ref={classDetailsCardRef} className='scroll-mt-24'>
@@ -2421,7 +2485,7 @@ const ClassCreationPage = () => {
             </div>
           </div>
 
-          <div className='w-full xl:w-[360px] xl:shrink-0'>
+          <div className='w-full min-w-0 xl:sticky xl:top-4 xl:w-[360px] xl:shrink-0 xl:self-start'>
             <ClassCreationPreviewRail data={previewData} />
           </div>
         </div>
