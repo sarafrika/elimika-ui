@@ -2,6 +2,11 @@
 
 import { Check } from 'lucide-react';
 import { useMemo } from 'react';
+import {
+  DEFAULT_RATE_BASIS,
+  type RateBasis,
+  rateBasisUnit,
+} from '@/components/class-form/class-form-shared';
 
 export type ServiceType = 'PRIVATE_ONLINE' | 'GROUP_ONLINE' | 'GROUP_INPERSON' | 'PRIVATE_INPERSON';
 
@@ -11,6 +16,7 @@ export interface ServiceTypeOption {
   description: string;
   classType: 'PRIVATE' | 'GROUP';
   locationType: 'ONLINE' | 'IN_PERSON' | 'HYBRID';
+  /** Rate-card column prefix; the basis decides the suffix. */
   key: string;
   price?: number;
 }
@@ -23,9 +29,21 @@ interface ServiceTypeSelectorProps {
     locationType: 'ONLINE' | 'IN_PERSON' | 'HYBRID'
   ) => void;
   rateCard?: Record<string, number | string | null | undefined>;
+  /** The contracted basis, so the card shows the rate the class will actually bill at. */
+  rateBasis?: RateBasis;
 }
 
-export function ServiceTypeSelector({ value, onChange, rateCard }: ServiceTypeSelectorProps) {
+const rateSuffix = (basis: RateBasis) =>
+  basis === 'per_session' ? 'session_rate' : basis === 'per_day' ? 'daily_rate' : 'hourly_rate';
+
+export function ServiceTypeSelector({
+  value,
+  onChange,
+  rateCard,
+  rateBasis = DEFAULT_RATE_BASIS,
+}: ServiceTypeSelectorProps) {
+  const unit = rateBasisUnit(rateBasis);
+
   const serviceOptions = useMemo<ServiceTypeOption[]>(() => {
     const base: Omit<ServiceTypeOption, 'price'>[] = [
       {
@@ -34,7 +52,7 @@ export function ServiceTypeSelector({ value, onChange, rateCard }: ServiceTypeSe
         description: '1 student, online',
         classType: 'PRIVATE',
         locationType: 'ONLINE',
-        key: 'private_online_hourly_rate',
+        key: 'private_online',
       },
       {
         label: 'Group Session (2–5)',
@@ -42,7 +60,7 @@ export function ServiceTypeSelector({ value, onChange, rateCard }: ServiceTypeSe
         description: 'Small group learning, online',
         classType: 'GROUP',
         locationType: 'ONLINE',
-        key: 'group_online_hourly_rate',
+        key: 'group_online',
       },
       {
         label: 'Online Course',
@@ -50,7 +68,7 @@ export function ServiceTypeSelector({ value, onChange, rateCard }: ServiceTypeSe
         description: 'Structured course delivery, in-person',
         classType: 'GROUP',
         locationType: 'IN_PERSON',
-        key: 'group_inperson_hourly_rate',
+        key: 'group_inperson',
       },
       {
         label: 'Private In-Person Class',
@@ -58,7 +76,7 @@ export function ServiceTypeSelector({ value, onChange, rateCard }: ServiceTypeSe
         description: '1-on-1 physical session',
         classType: 'PRIVATE',
         locationType: 'IN_PERSON',
-        key: 'private_inperson_hourly_rate',
+        key: 'private_inperson',
       },
       // {
       //   label: 'Private Hybrid Session',
@@ -78,18 +96,22 @@ export function ServiceTypeSelector({ value, onChange, rateCard }: ServiceTypeSe
       // },
     ];
 
-    return base.map(opt => ({
-      ...opt,
-      price: rateCard && opt.key in rateCard ? Number(rateCard[opt.key] ?? 0) : 0,
-    }));
-  }, [rateCard]);
+    return base.map(opt => {
+      const column = `${opt.key}_${rateSuffix(rateBasis)}`;
+      return {
+        ...opt,
+        price: rateCard && column in rateCard ? Number(rateCard[column] ?? 0) : 0,
+      };
+    });
+  }, [rateCard, rateBasis]);
 
   return (
     <div className='space-y-3'>
       <div className='space-y-1'>
         <label className='text-foreground text-sm font-semibold'>Service Type *</label>
         <p className='text-muted-foreground text-xs'>
-          Select the type of session you want to create. This determines pricing and format.
+          Select the type of session you want to create. This determines pricing and format. Rates
+          shown are the ones approved for you, for a per-{unit} contract.
         </p>
       </div>
 
@@ -114,10 +136,12 @@ export function ServiceTypeSelector({ value, onChange, rateCard }: ServiceTypeSe
               <p className='text-foreground text-sm font-semibold'>{option.label}</p>
               <p className='text-muted-foreground text-xs'>{option.description}</p>
             </div>
-            {(option?.price ?? 0) > 0 && (
+            {(option?.price ?? 0) > 0 ? (
               <div className='text-primary text-xs font-medium'>
-                KES {option?.price?.toLocaleString()}/hour
+                KES {option?.price?.toLocaleString()}/{unit}
               </div>
+            ) : (
+              <div className='text-muted-foreground text-xs'>No approved per-{unit} rate</div>
             )}
           </button>
         ))}
