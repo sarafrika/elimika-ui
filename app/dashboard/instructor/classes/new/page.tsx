@@ -1422,8 +1422,6 @@ const ClassCreationPage = () => {
       session_templates,
     };
 
-    console.log(payload, "PAYLOAD")
-
     const onSuccess = async (createdUuid?: string) => {
       const finalUuid = createdUuid || resolvedId;
 

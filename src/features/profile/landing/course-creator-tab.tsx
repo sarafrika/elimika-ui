@@ -514,6 +514,7 @@ function CreatorCertificateUploadSheet({
 function CreatorCertificateDocumentsSection({
   sharedProfile,
   onOpenUpload,
+  isPublic,
 }: DomainTabProps & {
   onOpenUpload: () => void;
 }) {
@@ -586,15 +587,17 @@ function CreatorCertificateDocumentsSection({
           <CardContent className='flex flex-col items-center justify-center py-10 text-center'>
             <FileText className='text-muted-foreground/30 mb-3 h-10 w-10' />
             <p className='text-muted-foreground text-sm'>No documents uploaded yet.</p>
-            <Button
-              type='button'
-              variant='link'
-              size='sm'
-              className='mt-1 text-xs'
-              onClick={onOpenUpload}
-            >
-              Upload your first document
-            </Button>
+            {!isPublic && (
+              <Button
+                type='button'
+                variant='link'
+                size='sm'
+                className='mt-1 text-xs'
+                onClick={onOpenUpload}
+              >
+                Upload your first document
+              </Button>
+            )}
           </CardContent>
         </Card>
       ) : (
@@ -616,15 +619,17 @@ function CreatorCertificateDocumentsSection({
                       </Badge>
                     )}
                   </div>
-                  <Button
-                    type='button'
-                    variant='ghost'
-                    size='icon'
-                    className='hover:bg-destructive/10 hover:text-destructive h-7 w-7 shrink-0'
-                    onClick={() => cert.uuid && handleDelete(cert.uuid)}
-                  >
-                    <Trash2 className='h-3.5 w-3.5' />
-                  </Button>
+                  {!isPublic && (
+                    <Button
+                      type='button'
+                      variant='ghost'
+                      size='icon'
+                      className='hover:bg-destructive/10 hover:text-destructive h-7 w-7 shrink-0'
+                      onClick={() => cert.uuid && handleDelete(cert.uuid)}
+                    >
+                      <Trash2 className='h-3.5 w-3.5' />
+                    </Button>
+                  )}
                 </div>
 
                 <div>
@@ -804,13 +809,14 @@ function creatorskillstab({ sharedProfile }: DomainTabProps) {
   );
 }
 
-function creatorcertificatestab({ sharedProfile }: DomainTabProps) {
+function creatorcertificatestab({ sharedProfile, isPublic }: DomainTabProps) {
   const qc = useQueryClient();
   const [isEditing, setIsEditing] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [isUploadSheetOpen, setIsUploadSheetOpen] = useState(false);
   const [attachments, setAttachments] = useState<AttachedFile[]>([]);
   const [deleteIndex, setDeleteIndex] = useState<number | null>(null);
+  const canManageProfile = !isPublic;
 
   const { data, isLoading } = useQuery({
     ...getCourseCreatorEducationOptions({
@@ -1021,13 +1027,16 @@ function creatorcertificatestab({ sharedProfile }: DomainTabProps) {
         </Card>
         <CreatorCertificateDocumentsSection
           sharedProfile={sharedProfile}
+          isPublic={isPublic}
           onOpenUpload={() => setIsUploadSheetOpen(true)}
         />
-        <CreatorCertificateUploadSheet
-          sharedProfile={sharedProfile}
-          open={isUploadSheetOpen}
-          onOpenChange={setIsUploadSheetOpen}
-        />
+        {canManageProfile && (
+          <CreatorCertificateUploadSheet
+            sharedProfile={sharedProfile}
+            open={isUploadSheetOpen}
+            onOpenChange={setIsUploadSheetOpen}
+          />
+        )}
       </TabShell>
     );
   }
@@ -1039,26 +1048,28 @@ function creatorcertificatestab({ sharedProfile }: DomainTabProps) {
           <CardHeader className='pb-2'>
             <div className='flex items-center justify-between gap-3'>
               <CardTitle className='text-sm font-semibold'>Education</CardTitle>
-              <div className='flex items-center gap-2'>
-                <Button
-                  type='button'
-                  variant='outline'
-                  size='sm'
-                  className='h-8 gap-1.5 text-xs'
-                  onClick={() => setIsUploadSheetOpen(true)}
-                >
-                  <Upload className='h-3.5 w-3.5' /> Upload New Certificate
-                </Button>
-                <Button
-                  type='button'
-                  variant='outline'
-                  size='sm'
-                  className='h-8 gap-1.5 text-xs'
-                  onClick={enterEditMode}
-                >
-                  <Pencil className='h-3.5 w-3.5' /> Edit
-                </Button>
-              </div>
+              {canManageProfile && (
+                <div className='flex items-center gap-2'>
+                  <Button
+                    type='button'
+                    variant='outline'
+                    size='sm'
+                    className='h-8 gap-1.5 text-xs'
+                    onClick={() => setIsUploadSheetOpen(true)}
+                  >
+                    <Upload className='h-3.5 w-3.5' /> Upload New Certificate
+                  </Button>
+                  <Button
+                    type='button'
+                    variant='outline'
+                    size='sm'
+                    className='h-8 gap-1.5 text-xs'
+                    onClick={enterEditMode}
+                  >
+                    <Pencil className='h-3.5 w-3.5' /> Edit
+                  </Button>
+                </div>
+              )}
             </div>
           </CardHeader>
           <CardContent className='pt-0'>
@@ -1070,21 +1081,24 @@ function creatorcertificatestab({ sharedProfile }: DomainTabProps) {
               <div className='flex flex-col items-center justify-center py-10 text-center'>
                 <GraduationCap className='text-muted-foreground/30 mb-3 h-10 w-10' />
                 <p className='text-muted-foreground text-sm'>No education history added yet.</p>
-                <Button
-                  type='button'
-                  variant='link'
-                  size='sm'
-                  className='mt-1 text-xs'
-                  onClick={enterEditMode}
-                >
-                  Add your first qualification
-                </Button>
+                {canManageProfile && (
+                  <Button
+                    type='button'
+                    variant='link'
+                    size='sm'
+                    className='mt-1 text-xs'
+                    onClick={enterEditMode}
+                  >
+                    Add your first qualification
+                  </Button>
+                )}
               </div>
             )}
           </CardContent>
         </Card>
         <CreatorCertificateDocumentsSection
           sharedProfile={sharedProfile}
+          isPublic={isPublic}
           onOpenUpload={() => setIsUploadSheetOpen(true)}
         />
         <CreatorCertificateUploadSheet
@@ -1362,6 +1376,7 @@ function creatorcertificatestab({ sharedProfile }: DomainTabProps) {
       </Form>
       <CreatorCertificateDocumentsSection
         sharedProfile={sharedProfile}
+        isPublic={isPublic}
         onOpenUpload={() => setIsUploadSheetOpen(true)}
       />
       <CreatorCertificateUploadSheet
@@ -1461,11 +1476,12 @@ function ExperienceViewCard({
   );
 }
 
-function CreatorCareerTab({ sharedProfile }: DomainTabProps) {
+function CreatorCareerTab({ sharedProfile, isPublic }: DomainTabProps) {
   const qc = useQueryClient();
   const [isEditing, setIsEditing] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [deleteIndex, setDeleteIndex] = useState<number | null>(null);
+  const canManageProfile = !isPublic;
 
   const { data, isLoading } = useQuery({
     ...getCourseCreatorExperienceOptions({
@@ -1655,15 +1671,17 @@ function CreatorCareerTab({ sharedProfile }: DomainTabProps) {
                 </p>
               </div>
 
-              <Button
-                type='button'
-                variant='outline'
-                size='sm'
-                className='h-8 gap-1.5 text-xs'
-                onClick={enterEditMode}
-              >
-                <Pencil className='h-3.5 w-3.5' /> Edit
-              </Button>
+              {canManageProfile && (
+                <Button
+                  type='button'
+                  variant='outline'
+                  size='sm'
+                  className='h-8 gap-1.5 text-xs'
+                  onClick={enterEditMode}
+                >
+                  <Pencil className='h-3.5 w-3.5' /> Edit
+                </Button>
+              )}
             </div>
           </CardHeader>
           <CardContent className='pt-0'>
@@ -1673,15 +1691,17 @@ function CreatorCareerTab({ sharedProfile }: DomainTabProps) {
                 <p className='text-muted-foreground text-sm'>
                   No professional experience added yet.
                 </p>
-                <Button
-                  type='button'
-                  variant='link'
-                  size='sm'
-                  className='mt-1 text-xs'
-                  onClick={enterEditMode}
-                >
-                  Add your first experience
-                </Button>
+                {canManageProfile && (
+                  <Button
+                    type='button'
+                    variant='link'
+                    size='sm'
+                    className='mt-1 text-xs'
+                    onClick={enterEditMode}
+                  >
+                    Add your first experience
+                  </Button>
+                )}
               </div>
             ) : (
               <div className='relative pl-8'>
