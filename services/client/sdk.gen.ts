@@ -1018,6 +1018,9 @@ import type {
   ReviewApplicationData,
   ReviewApplicationResponses,
   ReviewApplicationErrors,
+  WithdrawApplicationData,
+  WithdrawApplicationResponses,
+  WithdrawApplicationErrors,
   GetAllCertificatesData,
   GetAllCertificatesResponses,
   GetAllCertificatesErrors,
@@ -2102,6 +2105,7 @@ import {
   listJobApplicationsResponseTransformer,
   applyToJobResponseTransformer,
   reviewApplicationResponseTransformer,
+  withdrawApplicationResponseTransformer,
   getAllCertificatesResponseTransformer,
   createCertificateResponseTransformer,
   uploadCertificatePdfResponseTransformer,
@@ -12420,6 +12424,38 @@ export const reviewApplication = <ThrowOnError extends boolean = false>(
       },
     ],
     url: '/api/v1/classes/jobs/{jobUuid}/applications/{applicationUuid}',
+    ...options,
+    headers: {
+      'Content-Type': 'application/json',
+      ...options.headers,
+    },
+  });
+};
+
+/**
+ * Withdraw the current instructor's own marketplace class job application
+ * Allowed at any stage before assignment. A withdrawn application can be submitted again while the job is open.
+ */
+export const withdrawApplication = <ThrowOnError extends boolean = false>(
+  options: Options<WithdrawApplicationData, ThrowOnError>
+) => {
+  return (options.client ?? _heyApiClient).post<
+    WithdrawApplicationResponses,
+    WithdrawApplicationErrors,
+    ThrowOnError
+  >({
+    responseTransformer: withdrawApplicationResponseTransformer,
+    security: [
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+    ],
+    url: '/api/v1/classes/jobs/{jobUuid}/applications/{applicationUuid}/withdraw',
     ...options,
     headers: {
       'Content-Type': 'application/json',

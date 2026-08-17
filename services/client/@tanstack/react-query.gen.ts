@@ -340,6 +340,7 @@ import {
   listJobApplications,
   applyToJob,
   reviewApplication,
+  withdrawApplication,
   getAllCertificates,
   createCertificate,
   uploadCertificatePdf,
@@ -1508,6 +1509,9 @@ import type {
   ReviewApplicationData,
   ReviewApplicationError,
   ReviewApplicationResponse,
+  WithdrawApplicationData,
+  WithdrawApplicationError,
+  WithdrawApplicationResponse,
   GetAllCertificatesData,
   GetAllCertificatesError,
   GetAllCertificatesResponse,
@@ -16098,6 +16102,56 @@ export const reviewApplicationMutation = (
   > = {
     mutationFn: async localOptions => {
       const { data } = await reviewApplication({
+        ...options,
+        ...localOptions,
+        throwOnError: true,
+      });
+      return data;
+    },
+  };
+  return mutationOptions;
+};
+
+export const withdrawApplicationQueryKey = (options: Options<WithdrawApplicationData>) =>
+  createQueryKey('withdrawApplication', options);
+
+/**
+ * Withdraw the current instructor's own marketplace class job application
+ * Allowed at any stage before assignment. A withdrawn application can be submitted again while the job is open.
+ */
+export const withdrawApplicationOptions = (options: Options<WithdrawApplicationData>) => {
+  return queryOptions({
+    queryFn: async ({ queryKey, signal }) => {
+      const { data } = await withdrawApplication({
+        ...options,
+        ...queryKey[0],
+        signal,
+        throwOnError: true,
+      });
+      return data;
+    },
+    queryKey: withdrawApplicationQueryKey(options),
+  });
+};
+
+/**
+ * Withdraw the current instructor's own marketplace class job application
+ * Allowed at any stage before assignment. A withdrawn application can be submitted again while the job is open.
+ */
+export const withdrawApplicationMutation = (
+  options?: Partial<Options<WithdrawApplicationData>>
+): UseMutationOptions<
+  WithdrawApplicationResponse,
+  WithdrawApplicationError,
+  Options<WithdrawApplicationData>
+> => {
+  const mutationOptions: UseMutationOptions<
+    WithdrawApplicationResponse,
+    WithdrawApplicationError,
+    Options<WithdrawApplicationData>
+  > = {
+    mutationFn: async localOptions => {
+      const { data } = await withdrawApplication({
         ...options,
         ...localOptions,
         throwOnError: true,
