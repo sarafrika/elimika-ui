@@ -46,7 +46,17 @@ export function resolveStatusTone(status?: string | null): { tone: StatusTone; l
   const key = raw.toLowerCase().replace(/[\s-]+/g, '_');
   const label = raw.replace(/_/g, ' ').replace(/\b\w/g, char => char.toUpperCase());
 
-  const success = ['verified', 'active', 'published', 'approved', 'completed', 'paid', 'true'];
+  const success = [
+    'verified',
+    'active',
+    'published',
+    'approved',
+    'completed',
+    'paid',
+    'true',
+    // A marketplace applicant who has been hired.
+    'assigned',
+  ];
   const warning = [
     'pending',
     'in_review',
@@ -56,6 +66,9 @@ export function resolveStatusTone(status?: string | null): { tone: StatusTone; l
     'submitted',
     'awaiting_class',
   ];
+  // Mid-funnel recruitment stages: live and progressing, but not yet a decision. Toning these
+  // separately is what stops the whole marketplace funnel rendering as one undifferentiated grey.
+  const info = ['shortlisted', 'interviewing', 'offered'];
   const destructive = [
     'rejected',
     'inactive',
@@ -65,9 +78,13 @@ export function resolveStatusTone(status?: string | null): { tone: StatusTone; l
     'suspended',
     'false',
   ];
+  // Closed without a rejection — the outcome is final but nobody was turned down.
+  const closed = ['not_selected', 'withdrawn', 'expired', 'cancelled'];
 
   if (success.includes(key)) return { tone: 'success', label };
   if (warning.includes(key)) return { tone: 'warning', label };
+  if (info.includes(key)) return { tone: 'info', label };
   if (destructive.includes(key)) return { tone: 'destructive', label };
+  if (closed.includes(key)) return { tone: 'neutral', label };
   return { tone: 'neutral', label };
 }

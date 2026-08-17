@@ -1,9 +1,10 @@
 'use client';
 
-import { useQuery } from '@tanstack/react-query';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { ArrowRight, BriefcaseBusiness, CheckCircle2, Clock, Search, XCircle } from 'lucide-react';
 import Link from 'next/link';
 import { useEffect, useMemo, useState } from 'react';
+import { toast } from 'sonner';
 
 import {
   AdminPageHeader,
@@ -14,6 +15,7 @@ import {
   StatCardSkeleton,
   StatusBadge,
 } from '@/app/dashboard/admin/_components/ui';
+import DeleteModal from '@/components/custom-modals/delete-modal';
 import { AsyncSection } from '@/components/data/async-section';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -27,15 +29,24 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { Skeleton } from '@/components/ui/skeleton';
-import type { ClassMarketplaceJob } from '@/services/client';
+import { getErrorMessage } from '@/lib/error-utils';
+import type { ClassMarketplaceJob, ClassMarketplaceJobApplication } from '@/services/client';
 import {
   listJobsOptions,
   listMyApplicationsOptions,
+  listMyApplicationsQueryKey,
+  withdrawApplicationMutation,
 } from '@/services/client/@tanstack/react-query.gen';
-import { useUserProfile } from '@/src/features/profile/context/profile-context';
-import { useBreadcrumb } from '../../../context/breadcrumb-provider';
 import { useUserDomain } from '@/src/features/dashboard/context/user-domain-context';
 import { buildWorkspaceAliasPath } from '@/src/features/dashboard/lib/active-domain-storage';
+import { useUserProfile } from '@/src/features/profile/context/profile-context';
+import { useBreadcrumb } from '../../../context/breadcrumb-provider';
+import {
+  APPLICATION_STATUSES,
+  type ApplicationStatus,
+  canWithdraw,
+  isLiveApplication,
+} from '../application-status';
 
 function formatDate(value?: string | Date | null) {
   if (!value) return 'Not provided';
@@ -52,15 +63,18 @@ function formatLabel(value?: string | null) {
     .replace(/(^|\s)\S/g, letter => letter.toUpperCase());
 }
 
+
 export function MyJobApplicationsPage() {
   const { activeDomain } = useUserDomain();
   const profile = useUserProfile();
   const [searchQuery, setSearchQuery] = useState('');
-  const [statusFilter, setStatusFilter] = useState<
-    'ALL' | 'pending' | 'approved' | 'rejected' | 'assigned'
-  >('ALL');
+  const [statusFilter, setStatusFilter] = useState<'ALL' | ApplicationStatus>('ALL');
   const [sortBy, setSortBy] = useState<'newest' | 'oldest'>('newest');
+  const [pendingWithdrawal, setPendingWithdrawal] = useState<ClassMarketplaceJobApplication | null>(
+    null
+  );
   const { replaceBreadcrumbs } = useBreadcrumb();
+  const queryClient = useQueryClient();
 
   useEffect(() => {
     replaceBreadcrumbs([
@@ -99,24 +113,62 @@ export function MyJobApplicationsPage() {
     enabled: true,
   });
 
+  // Hoisted so the query and the post-withdraw invalidation build the identical key — calling
+  // listMyApplicationsQueryKey() with no argument does not compile, and a differently-shaped
+  // argument would invalidate a key nothing is subscribed to.
+  const myApplicationsQueryArgs = useMemo(
+    () => ({
+      query: {
+        pageable: { page: 0, size: 200 },
+        status: statusFilter === 'ALL' ? undefined : statusFilter,
+      },
+    }),
+    [statusFilter]
+  );
+
   const {
     data: applicationsResponse,
     isLoading,
     error: applicationsError,
     refetch: refetchApplications,
   } = useQuery({
-    ...listMyApplicationsOptions({
-      query: {
-        pageable: {
-          page: 0,
-          size: 200,
-          // sort: [sortBy === 'newest' ? 'created_date,desc' : 'created_date,asc'],
-        },
-        status: statusFilter === 'ALL' ? undefined : statusFilter,
-      },
-    }),
+    ...listMyApplicationsOptions(myApplicationsQueryArgs),
     enabled: Boolean(profile?.uuid),
   });
+
+  const withdrawMutation = useMutation({
+    ...withdrawApplicationMutation(),
+    onSuccess: () => {
+      toast.success('Application withdrawn.');
+      setPendingWithdrawal(null);
+      // The eligibility and job lists both cache "you already applied"; without invalidating them
+      // the Opportunities page keeps offering no way back in after a withdrawal.
+      queryClient.invalidateQueries({
+        queryKey: listMyApplicationsQueryKey(myApplicationsQueryArgs),
+      });
+      // Generated keys are a single object carrying `_id`, so match on that rather than a
+      // string prefix, which would never hit.
+      queryClient.invalidateQueries({
+        predicate: query => {
+          const key = query.queryKey?.[0] as { _id?: string } | undefined;
+          return key?._id === 'getJobEligibility' || key?._id === 'listJobs';
+        },
+      });
+    },
+    onError: (error: unknown) => {
+      toast.error(getErrorMessage(error, 'Unable to withdraw this application.'));
+    },
+  });
+
+  const withdrawApplication = (application: ClassMarketplaceJobApplication) => {
+    if (!application.job_uuid || !application.uuid) {
+      toast.error('This application cannot be withdrawn.');
+      return;
+    }
+    withdrawMutation.mutate({
+      path: { jobUuid: application.job_uuid, applicationUuid: application.uuid },
+    });
+  };
 
   const applications = applicationsResponse?.data?.content ?? [];
   const jobs = jobsResponse?.data?.content ?? [];
@@ -155,9 +207,13 @@ export function MyJobApplicationsPage() {
   const stats = useMemo(
     () => ({
       total: applications.length,
-      pending: applications.filter(application => application.status === 'pending').length,
-      approved: applications.filter(application => application.status === 'approved').length,
-      rejected: applications.filter(application => application.status === 'rejected').length,
+      // Anything the organisation is still weighing up, at any stage of the funnel.
+      inProgress: applications.filter(application => isLiveApplication(application.status))
+        .length,
+      hired: applications.filter(application => application.status === 'assigned').length,
+      closed: applications.filter(application =>
+        ['rejected', 'not_selected', 'withdrawn'].includes(application.status ?? '')
+      ).length,
     }),
     [applications]
   );
@@ -166,9 +222,9 @@ export function MyJobApplicationsPage() {
 
   const kpis = [
     { label: 'Total', value: stats.total, icon: BriefcaseBusiness, tone: 'info' as const },
-    { label: 'Pending', value: stats.pending, icon: Clock, tone: 'warning' as const },
-    { label: 'Approved', value: stats.approved, icon: CheckCircle2, tone: 'success' as const },
-    { label: 'Rejected', value: stats.rejected, icon: XCircle, tone: 'destructive' as const },
+    { label: 'In progress', value: stats.inProgress, icon: Clock, tone: 'warning' as const },
+    { label: 'Hired', value: stats.hired, icon: CheckCircle2, tone: 'success' as const },
+    { label: 'Closed', value: stats.closed, icon: XCircle, tone: 'destructive' as const },
   ];
 
   return (
@@ -215,10 +271,11 @@ export function MyJobApplicationsPage() {
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value='ALL'>All statuses</SelectItem>
-                <SelectItem value='pending'>Pending</SelectItem>
-                <SelectItem value='approved'>Approved</SelectItem>
-                <SelectItem value='rejected'>Rejected</SelectItem>
-                <SelectItem value='assigned'>Assigned</SelectItem>
+                {APPLICATION_STATUSES.map(status => (
+                  <SelectItem key={status} value={status}>
+                    {formatLabel(status)}
+                  </SelectItem>
+                ))}
               </SelectContent>
             </Select>
 
@@ -308,6 +365,16 @@ export function MyJobApplicationsPage() {
                       ) : null}
 
                       <div className='ml-auto flex flex-wrap gap-2'>
+                        {canWithdraw(application.status) ? (
+                          <Button
+                            variant='outline'
+                            size='sm'
+                            onClick={() => setPendingWithdrawal(application)}
+                          >
+                            Withdraw
+                          </Button>
+                        ) : null}
+
                         <Button asChild variant='outline' size='sm'>
                           <Link href={buildWorkspaceAliasPath(activeDomain, '/dashboard/opportunities')}>
                             View opportunities
@@ -323,6 +390,29 @@ export function MyJobApplicationsPage() {
           </AsyncSection>
         </SectionCard>
       </div>
+
+      <DeleteModal
+        open={Boolean(pendingWithdrawal)}
+        setOpen={open => {
+          if (!open) setPendingWithdrawal(null);
+        }}
+        title='Withdraw application'
+        description={
+          <span>
+            This removes you from consideration for{' '}
+            <strong>
+              {jobsByUuid.get(pendingWithdrawal?.job_uuid ?? '')?.title ?? 'this job posting'}
+            </strong>
+            . You can apply again while the posting is still open.
+          </span>
+        }
+        confirmText='Withdraw application'
+        onConfirm={() => {
+          if (!pendingWithdrawal) return;
+          withdrawApplication(pendingWithdrawal);
+        }}
+        isLoading={withdrawMutation.isPending}
+      />
     </div>
   );
 }

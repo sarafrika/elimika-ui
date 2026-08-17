@@ -99,9 +99,12 @@ const stageStyles: Record<string, string> = {
   Offer: 'border-primary/30 bg-primary/10 text-primary',
   Hire: 'border-success/30 bg-success/10 text-success',
 };
+// `withdrawn` belongs here too: the candidate pulled out, so they are no longer in the funnel.
+// Leaving it out put them back in the Applied column looking like they were still waiting.
+const CLOSED_STATUSES = ['rejected', 'not_selected', 'withdrawn'];
 const stageOf = (status?: string) =>
   STATUS_TO_STAGE[(status ?? '').toLowerCase()] ??
-  (['rejected', 'not_selected'].includes((status ?? '').toLowerCase()) ? 'Rejected' : 'Applied');
+  (CLOSED_STATUSES.includes((status ?? '').toLowerCase()) ? 'Rejected' : 'Applied');
 const matchScore = (a: ClassMarketplaceJobApplication) =>
   (a.instructor_admin_verified ? 50 : 0) + (a.training_approved ? 50 : 0);
 const matchColor = (n: number) =>
