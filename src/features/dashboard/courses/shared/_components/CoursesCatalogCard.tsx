@@ -41,10 +41,6 @@ const levelStyles: Record<string, string> = {
   advanced: 'bg-primary/5 text-primary border-primary/20 border',
 };
 
-// on coursescatalogcard, users (instructor and organisation) can apply to train course or program
-// after the application is sent, the status can either be pending, approved or rejected.
-// currently, only the apply to train button opens the application sheet, now we need to make an update such that pending, rejected, and approved buttons also opens the application sheet, but this time, it shows the data of the users' application to the selected course., it its rejected, let there be a re-apply button for users to re-fill the application afresh
-
 export function CoursesCatalogCard({ card, type, onPrimaryAction }: CoursesCatalogCardProps) {
   const imageUrl = toAuthenticatedMediaUrl(card.imageUrl);
   const level = card.secondaryMeta.toLowerCase();
