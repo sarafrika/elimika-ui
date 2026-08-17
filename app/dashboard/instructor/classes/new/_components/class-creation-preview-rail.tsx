@@ -40,7 +40,11 @@ export type ClassCreationPreviewData = {
   scheduleLabel: string;
   timeLabel: string;
   totalHoursLabel: string;
+  /** "Price per hour" / "Price per session" / "Price per day", per the contracted basis. */
+  priceUnitLabel?: string;
   pricePerHourLabel: string | number;
+  /** How the total was arrived at, e.g. "8 sessions × KES 1,750". */
+  billingBasisLabel?: string;
   totalSessionsLabel: string;
   totalAmountLabel: string | number;
   meetingLink: string;
@@ -182,7 +186,11 @@ export function ClassCreationPreviewRail({
             />
             <PreviewRow icon={MapPin} label='Classroom' value={data.classroom || 'N/A'} />
             <PreviewRow icon={Clock3} label='Total Hours' value={data.totalHoursLabel} />
-            <PreviewRow icon={TimerReset} label='Price per Hour' value={data.pricePerHourLabel} />
+            <PreviewRow
+              icon={TimerReset}
+              label={data.priceUnitLabel ?? 'Price per Hour'}
+              value={data.pricePerHourLabel}
+            />
             <PreviewRow
               icon={CalendarDays}
               label='Total Classes'
@@ -193,6 +201,9 @@ export function ClassCreationPreviewRail({
               label='Total Amount'
               value={data?.totalAmountLabel || '0'}
             />
+            {data.billingBasisLabel ? (
+              <p className='text-muted-foreground px-4 pb-3 text-xs'>{data.billingBasisLabel}</p>
+            ) : null}
           </div>
 
           {data.summaryItems?.length ? (
