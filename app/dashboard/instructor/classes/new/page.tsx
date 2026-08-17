@@ -66,6 +66,7 @@ import {
   SessionFormatEnum,
 } from '../../../../../services/client/types.gen';
 import { toAuthenticatedMediaUrl } from '../../../../../src/lib/media-url';
+import { TOKEN } from '../../../_components/color-charts';
 import {
   ClassDetails,
   NotificationSettings,
@@ -191,7 +192,7 @@ const createInitialScheduleSettings = (): ScheduleSettings => ({
 
 const createInitialNotificationSettings = (): NotificationSettings => ({
   reminder: '24h',
-  classColour: 'var(--chart-1)',
+  classColour: TOKEN.primary,
 });
 
 const reminderToMinutes = (reminder?: string) => {
@@ -1402,7 +1403,8 @@ const ClassCreationPage = () => {
       location_longitude: toCoordinate(locationLongitude),
       max_participants: classDetails.class_limit > 0 ? classDetails.class_limit : undefined,
       classroom: trimToUndefined(classDetails.classroom),
-      class_color: trimToUndefined(notificationSettings.classColour || classDetails.class_color),
+      // class_color: trimToUndefined(notificationSettings.classColour || classDetails.class_color),
+      class_color: TOKEN.primary,
       academic_period_start_date: academicPeriodStart,
       academic_period_end_date: academicPeriodEnd,
       registration_period_start_date: registrationPeriodStart,
@@ -1419,6 +1421,8 @@ const ClassCreationPage = () => {
       meeting_link: meetingLinkAllowed ? trimToUndefined(classDetails.meeting_link) : undefined,
       session_templates,
     };
+
+    console.log(payload, "PAYLOAD")
 
     const onSuccess = async (createdUuid?: string) => {
       const finalUuid = createdUuid || resolvedId;
