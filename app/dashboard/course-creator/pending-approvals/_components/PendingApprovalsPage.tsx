@@ -18,6 +18,7 @@ import {
   searchProgramTrainingApplicationsOptions,
   searchTrainingApplicationsOptions,
 } from '@/services/client/@tanstack/react-query.gen';
+import { stripHtml } from '../../../../../src/features/dashboard/courses/shared/_components/courses-data';
 import { AdminPageHeader, adminTheme, SectionCard, StatusBadge } from '../../../admin/_components/ui';
 
 type ApplicantType = 'instructor' | 'organisation';
@@ -102,7 +103,7 @@ function ApplicantCard({ applicant }: { applicant: ApplicantSummary }) {
                 label={applicant.type === 'organisation' ? 'Organisation' : 'Instructor'}
               />
             </div>
-            <p className='text-muted-foreground truncate text-xs'>{applicant.headline}</p>
+            <p className='text-muted-foreground truncate text-xs'>{stripHtml(applicant.headline) || 'No profile headline'}</p>
             <p className='text-muted-foreground mt-1 truncate text-xs'>{applicant.location}</p>
           </div>
         </div>
@@ -123,7 +124,7 @@ function ApplicantCard({ applicant }: { applicant: ApplicantSummary }) {
 export default function PendingApprovalsPage() {
   const { profile: courseCreator } = useCourseCreator();
   const [search, setSearch] = useState('');
-  const [typeFilter, setTypeFilter] = useState<'all' | ApplicantType>('all');
+  const [typeFilter, setTypeFilter] = useState<'all' | ApplicantType>('instructor');
 
   const courseApplicationsQuery = useQuery({
     ...searchTrainingApplicationsOptions({
@@ -337,7 +338,7 @@ export default function PendingApprovalsPage() {
         >
           <Tabs value={typeFilter} onValueChange={value => setTypeFilter(value as typeof typeFilter)} className='space-y-4'>
             <TabsList className="h-auto flex-wrap gap-2 justify-start">
-              <TabsTrigger value="all">All · {stats.total}</TabsTrigger>
+              {/* <TabsTrigger value="all">All · {stats.total}</TabsTrigger> */}
               <TabsTrigger value="instructor">
                 Instructors · {stats.instructors}
               </TabsTrigger>

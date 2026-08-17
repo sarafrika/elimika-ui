@@ -224,7 +224,7 @@ export function CoursesCatalogCard({ card, type, onPrimaryAction }: CoursesCatal
         type={card.contentKind}
         open={open}
         onOpenChange={value => {
-          setOpen(value);
+          setOpen(!value);
 
           if (!value) {
             setTimeout(() => setSelectedId(null), 200);

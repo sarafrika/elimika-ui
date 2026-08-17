@@ -50,6 +50,7 @@ import {
 } from '@/services/client/@tanstack/react-query.gen';
 import type { Category, CourseReview } from '@/services/client/types.gen';
 import {
+  type CatalogTrainingApplicationData,
   type CoursesCatalogCardData,
   type CoursesCatalogTab,
   type CoursesFilterSection,
@@ -81,7 +82,6 @@ import {
   Users
 } from 'lucide-react';
 import Link from 'next/link';
-import { useRouter } from 'next/navigation';
 import { useEffect, useMemo, useState } from 'react';
 import { toast } from 'sonner';
 
@@ -145,8 +145,8 @@ const createCatalogCards = (
   canApplyToTrain: boolean,
   isOrganisationDomain: boolean,
   canOrganisationApply: boolean,
-  instructorCourseApplicationMap: Map<string, { status?: string | null }>,
-  instructorProgramApplicationMap: Map<string, { status?: string | null }>,
+  instructorCourseApplicationMap: Map<string, CatalogTrainingApplicationData>,
+  instructorProgramApplicationMap: Map<string, CatalogTrainingApplicationData>,
   courseClassesMap: Record<string, ClassDefinition[]>,
   programClassesMap: Record<string, ClassDefinition[]>,
   programCoursesMap: Record<string, Course[]>,
@@ -161,22 +161,18 @@ const createCatalogCards = (
         ? instructorProgramApplicationMap.get(item.id)
         : instructorCourseApplicationMap.get(item.id);
 
-    const applicationStatus = normalizeApplicationStatus(
-      application?.status
-    );
+    const applicationStatus = normalizeApplicationStatus(application?.status);
 
     const ctaLabel = !isInstructorApplyCard
       ? 'Enroll Classes'
       : isOrganisationDomain && !canOrganisationApply
         ? 'Verify Organisation'
-        : isOrganisationDomain && applicationStatus === 'approved'
-          ? 'Create Class Job'
-          : applicationStatus === 'approved'
-            ? 'Approved'
-            : applicationStatus === 'pending'
+        : applicationStatus === 'approved'
+          ? 'Approved'
+          : applicationStatus === 'pending'
               ? 'Pending'
-              : applicationStatus === 'revoked'
-                ? 'Reapply to Train'
+              : applicationStatus === 'rejected' || applicationStatus === 'revoked'
+                ? 'Rejected'
                 : 'Apply to Train';
 
     const classDefinitions =
@@ -251,16 +247,8 @@ const createCatalogCards = (
 
       ctaDisabled: isInstructorApplyCard
         ? isOrganisationDomain
-          ? !canOrganisationApply ||
-          Boolean(
-            applicationStatus &&
-            applicationStatus !== 'revoked' &&
-            applicationStatus !== 'approved'
-          )
-          : Boolean(
-            applicationStatus &&
-            applicationStatus !== 'revoked'
-          )
+          ? !canOrganisationApply
+          : false
         : false,
 
       ctaKind: isInstructorApplyCard
@@ -274,7 +262,7 @@ const createCatalogCards = (
           ? 'approved'
           : applicationStatus === 'pending'
             ? 'pending'
-            : applicationStatus === 'revoked'
+            : applicationStatus === 'rejected' || applicationStatus === 'revoked'
               ? 'revoked'
               : 'default'
         : 'default',
@@ -322,6 +310,7 @@ const createCatalogCards = (
       // Actual number of active classes
       activeClasses: activeClasses.length,
       instructorCount: activeClassesInstructors.size,
+      application,
     };
   });
 
@@ -344,6 +333,7 @@ const createRecommendationCards = (
       rating: ratingsMap.get(item.id) ?? 'New',
       weeks: item.durationLabel,
       secondaryMeta: item.categoryLabels[0] ?? item.secondaryMeta ?? 'Published Course',
+      minimumRate: item.minimumRate,
       ctaLabel: shouldApplyToTrain ? 'Apply to Train' : 'Enroll',
       ctaHref: shouldApplyToTrain
         ? getApplyToTrainHref(item.id)
@@ -359,7 +349,6 @@ const createRecommendationCards = (
 
 export function SharedCoursesPage({ domain }: SharedCoursesPageProps) {
   const qc = useQueryClient();
-  const router = useRouter();
   const user = useUserProfile();
   const instructor = useInstructor();
   const organisation = useOrganisation();
@@ -389,6 +378,10 @@ export function SharedCoursesPage({ domain }: SharedCoursesPageProps) {
   const [selectedApplicationCard, setSelectedApplicationCard] = useState<
     CoursesCatalogCardData | CoursesRecommendationCardData | null
   >(null);
+  const [selectedApplicationRecord, setSelectedApplicationRecord] =
+    useState<CatalogTrainingApplicationData | null>(null);
+  const [applicationSheetMode, setApplicationSheetMode] = useState<'apply' | 'review'>('apply');
+  const [applicationSheetRevision, setApplicationSheetRevision] = useState(0);
 
   const { data: coursesResponse, isLoading: coursesLoading } = useQuery({
     ...getPublishedCoursesOptions({
@@ -912,40 +905,40 @@ export function SharedCoursesPage({ domain }: SharedCoursesPageProps) {
   );
 
   const instructorCourseApplicationMap = useMemo(() => {
-    const map = new Map<string, { status?: string | null }>();
+    const map = new Map<string, CatalogTrainingApplicationData>();
     instructorCourseApplications?.data?.content?.forEach(application => {
       if (application.course_uuid) {
-        map.set(application.course_uuid, { status: application.status });
+        map.set(application.course_uuid, application);
       }
     });
     return map;
   }, [instructorCourseApplications]);
 
   const instructorProgramApplicationMap = useMemo(() => {
-    const map = new Map<string, { status?: string | null }>();
+    const map = new Map<string, CatalogTrainingApplicationData>();
     instructorProgramApplications?.data?.content?.forEach(application => {
       if (application.program_uuid) {
-        map.set(application.program_uuid, { status: application.status });
+        map.set(application.program_uuid, application);
       }
     });
     return map;
   }, [instructorProgramApplications]);
 
   const organisationCourseApplicationMap = useMemo(() => {
-    const map = new Map<string, { status?: string | null }>();
+    const map = new Map<string, CatalogTrainingApplicationData>();
     organisationCourseApplications?.data?.content?.forEach(application => {
       if (application.course_uuid) {
-        map.set(application.course_uuid, { status: application.status });
+        map.set(application.course_uuid, application);
       }
     });
     return map;
   }, [organisationCourseApplications]);
 
   const organisationProgramApplicationMap = useMemo(() => {
-    const map = new Map<string, { status?: string | null }>();
+    const map = new Map<string, CatalogTrainingApplicationData>();
     organisationProgramApplications?.data?.content?.forEach(application => {
       if (application.program_uuid) {
-        map.set(application.program_uuid, { status: application.status });
+        map.set(application.program_uuid, application);
       }
     });
     return map;
@@ -1269,27 +1262,28 @@ export function SharedCoursesPage({ domain }: SharedCoursesPageProps) {
       return;
     }
 
-    if (isOrganisationDomain && card.applicationStatus === 'approved') {
-      const params = new URLSearchParams({
-        create: '1',
-        type: card.contentKind,
-        id: card.id,
-      });
-      router.push(buildWorkspaceAliasPath(domain, `/dashboard/opportunities?${params.toString()}`));
-      return;
-    }
-
     if (!applicantUuid) {
       toast.error('Please wait for your organisation profile to load.');
       return;
     }
 
     setSelectedApplicationCard(card);
+    setSelectedApplicationRecord(card.application ?? null);
+    setApplicationSheetMode(
+      card.application?.status?.toLowerCase() === 'approved' ||
+        card.application?.status?.toLowerCase() === 'pending' ||
+        card.application?.status?.toLowerCase() === 'rejected' ||
+        card.application?.status?.toLowerCase() === 'revoked'
+        ? 'review'
+        : 'apply'
+    );
     setApplyModalOpen(true);
   };
 
   const handleRecommendedApply = (card: CoursesRecommendationCardData) => {
     setSelectedApplicationCard(card);
+    setSelectedApplicationRecord(null);
+    setApplicationSheetMode('apply');
     setApplyModalOpen(true);
   };
 
@@ -1750,34 +1744,59 @@ export function SharedCoursesPage({ domain }: SharedCoursesPageProps) {
             setApplyModalOpen(open);
             if (!open) {
               setSelectedApplicationCard(null);
+              setSelectedApplicationRecord(null);
+              setApplicationSheetMode('apply');
             }
           }}
           title={
-            selectedApplicationCard.ctaKind === 'apply-program'
-              ? 'Apply to Train a Program'
-              : 'Apply to Train a Course'
+            applicationSheetMode === 'review'
+              ? 'Application Details'
+              : selectedApplicationCard.ctaKind === 'apply-program'
+                ? 'Apply to Train a Program'
+                : 'Apply to Train a Course'
           }
           description={
             <div className='space-y-2'>
-              <p>
-                You are applying to train the{' '}
-                {selectedApplicationCard.ctaKind === 'apply-program' ? 'program' : 'course'} titled{' '}
-                <span className='font-semibold'>&ldquo;{selectedApplicationCard.title}&rdquo;</span>
-                .
-              </p>
-              <p>
-                Provider: <span className='font-medium'>{selectedApplicationCard.provider}</span>
-                {selectedApplicationCard.duration
-                  ? ` · Duration: ${selectedApplicationCard.duration}`
-                  : ''}
-                {selectedApplicationCard.secondaryMeta
-                  ? ` · Focus: ${selectedApplicationCard.secondaryMeta}`
-                  : ''}
-              </p>
-              <p>
-                Submit your application notes and set the amount you want to charge students per
-                hour per head, while respecting the creator-set minimum shown below.
-              </p>
+              {applicationSheetMode === 'review' && selectedApplicationRecord ? (
+                <>
+                  <p>
+                    This is your submitted application for{' '}
+                    <span className='font-semibold'>&ldquo;{selectedApplicationCard.title}&rdquo;</span>
+                    .
+                  </p>
+                  <p>
+                    Status:{' '}
+                    <span className='font-medium capitalize'>
+                      {selectedApplicationRecord.status ?? 'unknown'}
+                    </span>
+                    {selectedApplicationRecord.reviewed_at
+                      ? ` · Reviewed ${new Date(selectedApplicationRecord.reviewed_at).toLocaleDateString()}`
+                      : ''}
+                  </p>
+                </>
+              ) : (
+                <>
+                  <p>
+                    You are applying to train the{' '}
+                    {selectedApplicationCard.ctaKind === 'apply-program' ? 'program' : 'course'} titled{' '}
+                    <span className='font-semibold'>&ldquo;{selectedApplicationCard.title}&rdquo;</span>
+                    .
+                  </p>
+                  <p>
+                    Provider: <span className='font-medium'>{selectedApplicationCard.provider}</span>
+                    {selectedApplicationCard.duration
+                      ? ` · Duration: ${selectedApplicationCard.duration}`
+                      : ''}
+                    {selectedApplicationCard.secondaryMeta
+                      ? ` · Focus: ${selectedApplicationCard.secondaryMeta}`
+                      : ''}
+                  </p>
+                  <p>
+                    Submit your application notes and set the amount you want to charge students per
+                    hour per head, while respecting the creator-set minimum shown below.
+                  </p>
+                </>
+              )}
             </div>
           }
           onSave={handleApplyToTrain}
@@ -1787,6 +1806,19 @@ export function SharedCoursesPage({ domain }: SharedCoursesPageProps) {
           isLoading={applyToTrainCourseMut.isPending || applyToTrainProgramMut.isPending}
           minimum_rate={selectedApplicationCard.minimumRate ?? 0}
           selectedApplicationCard={selectedApplicationCard}
+          existingApplication={selectedApplicationRecord}
+          readOnly={applicationSheetMode === 'review'}
+          canReapply={
+            applicationSheetMode === 'review' &&
+            (selectedApplicationRecord?.status?.toLowerCase() === 'rejected' ||
+              selectedApplicationRecord?.status?.toLowerCase() === 'revoked')
+          }
+          onReapply={() => {
+            setApplicationSheetMode('apply');
+            setSelectedApplicationRecord(null);
+            setApplicationSheetRevision(value => value + 1);
+          }}
+          formRevision={applicationSheetRevision}
         />
       ) : null}
     </div>

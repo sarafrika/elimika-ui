@@ -41,18 +41,16 @@ import {
   Award,
   Building2,
   Calendar,
-  Copy,
+  ClipboardList,
   FileText,
   GraduationCap,
+  LinkIcon,
   MapPin,
-  Search,
-  Send,
   Star,
   ThumbsDown,
   ThumbsUp,
-  User,
   Users,
-  XCircle,
+  XCircle
 } from 'lucide-react';
 import Link from 'next/link';
 import { useMemo, useState } from 'react';
@@ -281,8 +279,6 @@ function ApplicationCard({
         columns={2}
         className='mt-4'
         items={[
-          { label: 'Application UUID', value: <span className='font-mono text-xs'>{application.uuid}</span> },
-          { label: 'Applicant UUID', value: <span className='font-mono text-xs'>{application.applicant_uuid}</span> },
           {
             label: 'Notes',
             value: application.application_notes || '-',
@@ -794,6 +790,7 @@ export default function ManageApplicantPage({ uuid }: { uuid: string }) {
                   {applicantInitials}
                 </AvatarFallback>
               </Avatar>
+
               <div className='min-w-0 flex-1 space-y-2'>
                 <div className='flex flex-wrap items-center gap-2'>
                   <StatusBadge status='pending' label='Applicant dossier' />
@@ -813,12 +810,47 @@ export default function ManageApplicantPage({ uuid }: { uuid: string }) {
                   </span>
                 </div>
                 <p className='text-muted-foreground max-w-3xl text-sm'>{applicantHeadline}</p>
+
+                <div className='flex items-center gap-1'>
+                  <Button
+                    variant='ghost'
+                    size='icon'
+                    className='text-muted-foreground hover:text-primary hover:bg-primary/10 size-9'
+                    asChild
+                    title='Open public profile'
+                  >
+                    <Link
+                      href={`/profile-user/${instructor?.user_uuid}?domain=instructor`}
+                      target='_blank'
+                      rel='noopener noreferrer'
+                    >
+                      <LinkIcon className='size-5 rotate-45' />
+                      <span className='sr-only'>Open public profile</span>
+                    </Link>
+                  </Button>
+
+                  <Button
+                    variant='ghost'
+                    size='icon'
+                    className='text-muted-foreground hover:text-primary hover:bg-primary/10 size-9'
+                    title='Copy profile link'
+                    onClick={() => {
+                      const url = `${window.location.origin}/profile-user/${instructor?.user_uuid}?domain=instructor`;
+
+                      navigator.clipboard.writeText(url);
+                      toast.success('Profile link copied');
+                    }}
+                  >
+                    <ClipboardList className='size-5' />
+                    <span className='sr-only'>Copy profile link</span>
+                  </Button>
+                </div>
               </div>
             </div>
           </div>
         </section>
 
-        <div className='grid items-start gap-4 lg:grid-cols-[minmax(0,1fr)_340px]'>
+        <div className=''>
           <div className='min-w-0 space-y-4'>
             <SectionCard title='Applicant dossier' description='Profile details and application history.'>
               <Tabs value={tab} onValueChange={value => setTab(value as typeof tab)} className='gap-4'>
@@ -833,6 +865,14 @@ export default function ManageApplicantPage({ uuid }: { uuid: string }) {
                     Program applications
                   </TabsTrigger>
                 </TabsList>
+
+                {/* // manage applicant page
+                // we need to 
+                
+                
+                
+                
+                */}
 
                 <TabsContent value='profile' className='mt-0'>
                   <ProfileCard
@@ -882,7 +922,7 @@ export default function ManageApplicantPage({ uuid }: { uuid: string }) {
               </div>
             ) : null}
           </div>
-
+          {/* 
           <aside className='space-y-4 lg:sticky lg:top-6'>
             <SectionCard title='Review notes' description='Use this panel to understand the current queue status.'>
               <div className='space-y-3 text-sm'>
@@ -902,52 +942,42 @@ export default function ManageApplicantPage({ uuid }: { uuid: string }) {
             </SectionCard>
 
             {displayApplicantType === 'instructor' && instructor?.user_uuid ? (
-              <SectionCard title='Profile links' description='Helpful shortcuts for this applicant.'>
-                <div className='space-y-2'>
-                  <Button variant='outline' className='w-full justify-start' asChild>
-                    <Link href={`/profile-user/${instructor.user_uuid}?domain=instructor`}>
-                      <Send className='size-4' />
-                      View public profile
-                    </Link>
-                  </Button>
+              <SectionCard
+                title='Profile link'
+                description='View or copy this applicant’s public profile.'
+              >
+                <div className='flex items-center gap-2'>
                   <Button
                     variant='outline'
-                    className='w-full justify-start'
+                    className='flex-1 gap-2'
+                    asChild
+                  >
+                    <Link
+                      href={`/profile-user/${instructor.user_uuid}?domain=instructor`}
+                      target='_blank'
+                      rel='noopener noreferrer'
+                    >
+                      <LinkIcon className='size-6 rotate-45' />
+                    </Link>
+                  </Button>
+
+                  <Button
+                    variant='outline'
+                    className='flex-1 gap-2'
+                    title='Copy profile link'
                     onClick={() => {
                       const url = `${window.location.origin}/profile-user/${instructor.user_uuid}?domain=instructor`;
+
                       navigator.clipboard.writeText(url);
                       toast.success('Profile link copied');
                     }}
                   >
-                    <Copy className='size-4' />
-                    Copy profile link
+                    <ClipboardList className='size-6' />
                   </Button>
                 </div>
               </SectionCard>
             ) : null}
-
-            <SectionCard title='Filters' description='Jump between applicant records quickly.'>
-              <div className='text-muted-foreground text-sm'>
-                <p className='mb-3'>
-                  The course and program tabs already scope this dossier to the selected applicant.
-                </p>
-                <div className='flex flex-wrap gap-2'>
-                  <Button size='sm' variant='outline' onClick={() => setTab('profile')}>
-                    <User className='size-4' />
-                    Profile
-                  </Button>
-                  <Button size='sm' variant='outline' onClick={() => setTab('course')}>
-                    <Search className='size-4' />
-                    Courses
-                  </Button>
-                  <Button size='sm' variant='outline' onClick={() => setTab('program')}>
-                    <Users className='size-4' />
-                    Programs
-                  </Button>
-                </div>
-              </div>
-            </SectionCard>
-          </aside>
+          </aside> */}
         </div>
       </div>
 

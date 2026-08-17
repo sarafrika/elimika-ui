@@ -1,5 +1,6 @@
 import type { UserDomain } from '@/lib/types';
 import type { LucideIcon } from 'lucide-react';
+import type { CourseTrainingRateCard } from '@/services/client';
 import {
   BadgeCheck,
   BookOpen,
@@ -74,7 +75,19 @@ export type CoursesCatalogCardData = {
   categoryNames?: string[];
   description?: string;
   units?: number | undefined;
-  skillsFundEligible: boolean | null
+  skillsFundEligible: boolean | null;
+  application?: CatalogTrainingApplicationData | null;
+};
+
+export type CatalogTrainingApplicationData = {
+  uuid?: string;
+  status?: string | null;
+  application_notes?: string | null;
+  review_notes?: string | null;
+  reviewed_by?: string | null;
+  reviewed_at?: Date | string | null;
+  created_date?: Date | string | null;
+  rate_card?: CourseTrainingRateCard | null;
 };
 
 export type CoursesRecommendationCardData = {
@@ -84,6 +97,7 @@ export type CoursesRecommendationCardData = {
   rating: string;
   weeks: string;
   secondaryMeta: string;
+  minimumRate?: number;
   ctaLabel: string;
   ctaHref: string;
   ctaKind: 'enroll' | 'apply-to-train';
