@@ -438,11 +438,9 @@ export default function CoursePreviewComponent({ authorName }: { authorName?: st
                       </p>
                     )}
 
-                    {/* {assessment?.is_major_assessment && (
-                      <p className="text-muted-foreground text-sm">
-                        Major Assessment
-                      </p>
-                    )} */}
+                    {assessment?.is_major_assessment && (
+                      <p className='text-muted-foreground text-sm'>Major Assessment</p>
+                    )}
                   </div>
                 </div>
               );
