@@ -60,6 +60,22 @@ type ClassMarketplaceJobWithProgram = ClassMarketplaceJob & {
 const JOB_PAGE_SIZE = 50;
 const APPLICATION_PAGE_SIZE = 100;
 
+/**
+ * Every step an organisation can take on a live application. The backend multiplexes all of them
+ * through one review endpoint keyed on `action` (lower-cased server-side), so the stage moves need
+ * no separate mutation. Each one notifies the applicant, which is why they all route through the
+ * notes sheet rather than firing on a bare click.
+ */
+const REVIEW_ACTIONS = {
+  SHORTLIST: { title: 'Shortlist candidate', confirmLabel: 'Confirm shortlist' },
+  INTERVIEW: { title: 'Move to interview', confirmLabel: 'Confirm interview' },
+  OFFER: { title: 'Extend an offer', confirmLabel: 'Confirm offer' },
+  APPROVE: { title: 'Approve application', confirmLabel: 'Confirm approval' },
+  REJECT: { title: 'Reject application', confirmLabel: 'Confirm rejection' },
+} as const;
+
+type ReviewAction = keyof typeof REVIEW_ACTIONS;
+
 function shortId(value?: string | null) {
   if (!value) return 'Unknown';
   return value.slice(0, 8);
@@ -81,7 +97,7 @@ export function OrganisationJobApplicationsPage({ jobUuid }: JobApplicationsPage
   const [reviewDialogOpen, setReviewDialogOpen] = useState(false);
   const [pendingReview, setPendingReview] = useState<{
     application: ClassMarketplaceJobApplication;
-    action: 'APPROVE' | 'REJECT';
+    action: ReviewAction;
   } | null>(null);
   const jobsListOptions = {
     query: {
@@ -197,18 +213,20 @@ export function OrganisationJobApplicationsPage({ jobUuid }: JobApplicationsPage
   const stats = useMemo(
     () => ({
       total: applications.length,
-      pending: applications.filter(application => application.status === 'pending').length,
+      // Everyone still moving through the funnel, not just those yet to be looked at.
+      pending: applications.filter(application =>
+        ['pending', 'shortlisted', 'interviewing', 'offered'].includes(application.status ?? '')
+      ).length,
       approved: applications.filter(application => application.status === 'approved').length,
-      rejected: applications.filter(application => application.status === 'rejected').length,
+      rejected: applications.filter(application =>
+        ['rejected', 'not_selected', 'withdrawn'].includes(application.status ?? '')
+      ).length,
       assigned: applications.filter(application => application.status === 'assigned').length,
     }),
     [applications]
   );
 
-  const openReviewDialog = (
-    application: ClassMarketplaceJobApplication,
-    action: 'APPROVE' | 'REJECT'
-  ) => {
+  const openReviewDialog = (application: ClassMarketplaceJobApplication, action: ReviewAction) => {
     setPendingReview({ application, action });
     setReviewNotes(application.review_notes ?? '');
     setReviewDialogOpen(true);
@@ -335,6 +353,7 @@ export function OrganisationJobApplicationsPage({ jobUuid }: JobApplicationsPage
                 jobInstructorPay={job?.instructor_pay}
                 onApprove={application => openReviewDialog(application, 'APPROVE')}
                 onReject={application => openReviewDialog(application, 'REJECT')}
+                onMoveToStage={(application, stage) => openReviewDialog(application, stage)}
                 onAssign={handleAssign}
                 onViewProfile={application => {
                   if (application.uuid) {
@@ -375,13 +394,11 @@ export function OrganisationJobApplicationsPage({ jobUuid }: JobApplicationsPage
             <div className='space-y-6 p-3 sm:p-6'>
               <SheetHeader className='space-y-3 pr-10 text-left'>
                 <SheetTitle>
-                  {pendingReview?.action === 'APPROVE'
-                    ? 'Approve application'
-                    : 'Reject application'}
+                  {pendingReview ? REVIEW_ACTIONS[pendingReview.action].title : 'Review application'}
                 </SheetTitle>
                 <SheetDescription>
-                  Add review notes before confirming this decision. The applicant will receive the
-                  submitted notes with the review outcome.
+                  Add review notes before confirming. The applicant is notified of this step and
+                  receives the notes you submit with it.
                 </SheetDescription>
               </SheetHeader>
 
@@ -420,10 +437,8 @@ export function OrganisationJobApplicationsPage({ jobUuid }: JobApplicationsPage
                       <Spinner className='mr-2 size-4' />
                       Submitting...
                     </>
-                  ) : pendingReview?.action === 'APPROVE' ? (
-                    'Confirm approval'
                   ) : (
-                    'Confirm rejection'
+                    (pendingReview && REVIEW_ACTIONS[pendingReview.action].confirmLabel) ?? 'Confirm'
                   )}
                 </Button>
               </div>
