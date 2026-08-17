@@ -52,7 +52,7 @@ import type {
   ResponseDtoVoid,
 } from '../../../../services/client/types.gen';
 import { useRubricsData } from '../rubrics/rubric-chaining';
-import { ASSESSMENT_CATEGORIES, ASSESSMENT_TYPES } from '../rubrics/rubric-manager';
+import { ASSESSMENT_TYPES } from '../rubrics/rubric-manager';
 import { CATEGORY_META, LinkItemsModal, TaskItemType } from './assesment-link-items';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
@@ -71,8 +71,6 @@ type AssessmentFormValues = {
   weight_percentage: number | '';
   is_required: boolean;
   assessment_type: string;
-  assessment_category: string;
-  is_major_assessment: boolean;
 };
 
 const DEFAULT_FORM: AssessmentFormValues = {
@@ -82,9 +80,33 @@ const DEFAULT_FORM: AssessmentFormValues = {
   weight_percentage: '',
   is_required: true,
   assessment_type: '',
-  assessment_category: '',
-  is_major_assessment: false,
 };
+
+// The server derives category, major-assessment and contribution level from the type and the weight
+// and ignores anything the client sends for them (see CourseAssessmentDTO in the backend). Mirrored
+// here only so the form can show what will be recorded while the user is still typing — if the
+// backend rules change, these move with them.
+const deriveCategory = (assessmentType: string): string => {
+  if (!assessmentType) return 'General Assessment';
+  const type = assessmentType.toLowerCase();
+  if (type.includes('attendance')) return 'Participation Component';
+  if (type.includes('assignment')) return 'Coursework Component';
+  if (type.includes('quiz')) return 'Quiz Component';
+  if (type.includes('exam')) return 'Examination Component';
+  if (type.includes('project')) return 'Project Component';
+  if (type.includes('presentation')) return 'Presentation Component';
+  return 'Assessment Component';
+};
+
+const deriveContributionLevel = (weight: number | ''): string => {
+  if (weight === '') return 'Unknown Contribution';
+  if (weight >= 40) return 'Major Contribution';
+  if (weight >= 25) return 'Significant Contribution';
+  if (weight >= 10) return 'Standard Contribution';
+  return 'Minor Contribution';
+};
+
+const isMajorAssessment = (weight: number | ''): boolean => weight !== '' && weight >= 25;
 
 const getErrorMessage = (error: unknown, fallback: string) =>
   (error as ResponseDtoVoid | undefined)?.message ||
@@ -238,8 +260,6 @@ function AssessmentSheet({
       weight_percentage: assessment.weight_percentage,
       is_required: assessment.is_required ?? false,
       assessment_type: assessment.assessment_type ?? '',
-      assessment_category: assessment.assessment_category ?? '',
-      is_major_assessment: assessment.is_major_assessment ?? false,
     };
   };
 
@@ -299,9 +319,7 @@ function AssessmentSheet({
       rubric_uuid: form.rubric_uuid,
       weight_percentage: Number(form.weight_percentage),
       is_required: form.is_required,
-      is_major_assessment: form.is_major_assessment,
       assessment_type: form.assessment_type,
-      assessment_category: form.assessment_category,
     };
 
     if (mode === 'add') {
@@ -419,30 +437,22 @@ function AssessmentSheet({
                 <div className='flex flex-1 flex-col gap-1.5'>
                   <Label className='flex items-center gap-1 text-sm font-medium'>
                     Assessment Category
-                    <span className='text-destructive'>*</span>
-                    <LabelInfo text='Select the category of assessment. This helps instructors organize and manage their assessments.' />
+                    <LabelInfo text='Derived from the assessment type — the platform categorises assessments consistently across every course, so this is shown rather than chosen.' />
                   </Label>
 
-                  <Select
-                    value={form.assessment_category}
-                    onValueChange={v => set('assessment_category', v)}
-                  >
-                    <SelectTrigger
-                      className={`w-full ${errors.assessment_category ? 'border-destructive' : ''}`}
+                  <div className='bg-muted/50 flex h-9 items-center rounded-md border px-3'>
+                    <span
+                      className={
+                        form.assessment_type
+                          ? 'text-foreground text-sm'
+                          : 'text-muted-foreground text-sm'
+                      }
                     >
-                      <SelectValue placeholder='Select category' />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {ASSESSMENT_CATEGORIES.map(t => (
-                        <SelectItem key={t} value={t}>
-                          {t}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                  {errors.assessment_category && (
-                    <p className='text-destructive text-xs'>{errors.assessment_category}</p>
-                  )}
+                      {form.assessment_type
+                        ? deriveCategory(form.assessment_type)
+                        : 'Choose a type to see the category'}
+                    </span>
+                  </div>
                 </div>
               </div>
             </div>
@@ -462,8 +472,18 @@ function AssessmentSheet({
                 }
                 className={errors.weight_percentage ? 'border-destructive' : ''}
               />
-              {errors.weight_percentage && (
+              {errors.weight_percentage ? (
                 <p className='text-destructive text-xs'>{errors.weight_percentage}</p>
+              ) : (
+                form.weight_percentage !== '' && (
+                  <p className='text-muted-foreground text-xs'>
+                    {form.weight_percentage}% of the final grade —{' '}
+                    {deriveContributionLevel(form.weight_percentage)}
+                    {isMajorAssessment(form.weight_percentage)
+                      ? ', counted as a major assessment'
+                      : ''}
+                  </p>
+                )
               )}
             </div>
 
@@ -573,12 +593,19 @@ function AssessmentSheet({
               <div className='flex items-center justify-between border-t pt-4'>
                 <div>
                   <p className='text-foreground text-sm font-medium'>Major Assessment</p>
-                  <p className='text-muted-foreground text-xs'>Mark as a high-stakes assessment</p>
+                  <p className='text-muted-foreground text-xs'>
+                    Set automatically once the weight reaches 25%
+                  </p>
                 </div>
-                <Switch
-                  checked={form.is_major_assessment}
-                  onCheckedChange={v => set('is_major_assessment', v)}
-                />
+                <span
+                  className={`rounded-full px-2.5 py-1 text-xs font-medium ${
+                    isMajorAssessment(form.weight_percentage)
+                      ? 'bg-primary/10 text-primary'
+                      : 'bg-muted text-muted-foreground'
+                  }`}
+                >
+                  {isMajorAssessment(form.weight_percentage) ? 'Yes' : 'No'}
+                </span>
               </div>
             </div>
           </div>
