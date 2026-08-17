@@ -282,8 +282,8 @@ export type Student = {
    */
   bio?: string | null;
   primaryGuardianContact?: string;
-  secondaryGuardianContact?: string;
   allGuardianContacts?: Array<string>;
+  secondaryGuardianContact?: string;
   /**
    * **[READ-ONLY]** Complete name of the student. Automatically derived from the linked user profile.
    */
@@ -549,13 +549,13 @@ export type RubricScoringLevel = {
    */
   readonly display_name?: string;
   /**
-   * **[READ-ONLY]** Performance classification based on level order and passing status.
-   */
-  readonly performance_indicator?: string;
-  /**
    * **[READ-ONLY]** CSS-safe color class name derived from the color code.
    */
   readonly css_color_class?: string;
+  /**
+   * **[READ-ONLY]** Performance classification based on level order and passing status.
+   */
+  readonly performance_indicator?: string;
   /**
    * **[READ-ONLY]** Indicates if this is the highest performance level (level_order = 1).
    */
@@ -717,13 +717,13 @@ export type RubricMatrix = {
    */
   matrix_statistics?: MatrixStatistics;
   /**
-   * **[READ-ONLY]** Whether all matrix cells have been completed with descriptions.
-   */
-  readonly is_complete?: boolean;
-  /**
    * **[READ-ONLY]** Expected number of matrix cells (criteria count × scoring levels count).
    */
   readonly expected_cell_count?: number;
+  /**
+   * **[READ-ONLY]** Whether all matrix cells have been completed with descriptions.
+   */
+  readonly is_complete?: boolean;
 };
 
 export type ApiResponseRubricCriteria = {
@@ -1222,13 +1222,13 @@ export type TrainingProgram = {
    */
   readonly updated_by?: string;
   /**
-   * **[READ-ONLY]** Classification of program type based on duration and content.
-   */
-  readonly program_type?: string;
-  /**
    * **[READ-ONLY]** Human-readable format of total program duration.
    */
   readonly total_duration_display?: string;
+  /**
+   * **[READ-ONLY]** Classification of program type based on duration and content.
+   */
+  readonly program_type?: string;
 };
 
 export type ApiResponseTrainingProgram = {
@@ -2331,10 +2331,6 @@ export type AvailabilitySlot = {
    */
   readonly updated_by?: string;
   /**
-   * **[READ-ONLY]** Duration of the availability slot in minutes.
-   */
-  readonly duration_minutes?: bigint;
-  /**
    * **[READ-ONLY]** Human-readable formatted duration.
    */
   readonly duration_formatted?: string;
@@ -2350,6 +2346,10 @@ export type AvailabilitySlot = {
    * **[READ-ONLY]** Human-readable description of the availability pattern.
    */
   readonly availability_description?: string;
+  /**
+   * **[READ-ONLY]** Duration of the availability slot in minutes.
+   */
+  readonly duration_minutes?: bigint;
 };
 
 export type ApiResponseAvailabilitySlot = {
@@ -2481,6 +2481,22 @@ export type Course = {
    */
   readonly updated_by?: string;
   /**
+   * **[READ-ONLY]** Human-readable format of total course duration.
+   */
+  readonly total_duration_display?: string;
+  /**
+   * **[READ-ONLY]** Indicates if the course belongs to multiple categories.
+   */
+  readonly has_multiple_categories?: boolean;
+  /**
+   * **[READ-ONLY]** Number of categories this course belongs to.
+   */
+  readonly category_count?: number;
+  /**
+   * **[READ-ONLY]** Human-readable description of the course's current lifecycle stage.
+   */
+  readonly lifecycle_stage?: string;
+  /**
    * **[READ-ONLY]** Indicates if the course is published and discoverable.
    */
   readonly is_published?: boolean;
@@ -2500,22 +2516,6 @@ export type Course = {
    * **[READ-ONLY]** Indicates if the course is currently under review.
    */
   readonly is_in_review?: boolean;
-  /**
-   * **[READ-ONLY]** Human-readable format of total course duration.
-   */
-  readonly total_duration_display?: string;
-  /**
-   * **[READ-ONLY]** Indicates if the course belongs to multiple categories.
-   */
-  readonly has_multiple_categories?: boolean;
-  /**
-   * **[READ-ONLY]** Number of categories this course belongs to.
-   */
-  readonly category_count?: number;
-  /**
-   * **[READ-ONLY]** Human-readable description of the course's current lifecycle stage.
-   */
-  readonly lifecycle_stage?: string;
 };
 
 /**
@@ -2810,13 +2810,13 @@ export type Lesson = {
    */
   readonly updated_by?: string;
   /**
-   * **[READ-ONLY]** Indicates if the lesson is published and accessible to students.
-   */
-  readonly is_published?: boolean;
-  /**
    * **[READ-ONLY]** Formatted lesson sequence for display purposes.
    */
   readonly lesson_sequence?: string;
+  /**
+   * **[READ-ONLY]** Indicates if the lesson is published and accessible to students.
+   */
+  readonly is_published?: boolean;
 };
 
 export type ApiResponseLesson = {
@@ -2967,13 +2967,13 @@ export type LessonContent = {
    */
   readonly updated_by?: string;
   /**
-   * **[READ-ONLY]** Category of content based on its type and format.
-   */
-  readonly content_category?: string;
-  /**
    * **[READ-ONLY]** Human-readable format of file size.
    */
   readonly file_size_display?: string;
+  /**
+   * **[READ-ONLY]** Category of content based on its type and format.
+   */
+  readonly content_category?: string;
 };
 
 export type ApiResponseLessonContent = {
@@ -3906,6 +3906,7 @@ export type ClassDefinition = {
    * **[OPTIONAL]** Per-session pay owed to the instructor. The difference between this and the sale price is the organisation's margin.
    */
   instructor_pay?: number | null;
+  rate_basis?: RateBasisEnum;
   class_visibility: ClassVisibilityEnum;
   session_format: SessionFormatEnum;
   /**
@@ -3977,7 +3978,6 @@ export type ClassDefinition = {
    * **[OPTIONAL]** Category the class falls under. Courses supply their own categories, so this carries the category chosen for program-backed classes.
    */
   category_uuid?: string | null;
-  rate_basis?: RateBasisEnum;
   /**
    * **[READ-ONLY]** Persisted session templates originally used to generate scheduled class instances.
    * Legacy classes created before template persistence may return an empty list.
@@ -4025,17 +4025,17 @@ export type ClassDefinition = {
    */
   readonly is_standalone?: boolean;
   /**
-   * **[READ-ONLY]** Computed duration of the class in minutes based on start and end times.
+   * **[READ-ONLY]** Human-readable capacity information including waitlist availability.
    */
-  readonly duration_minutes?: bigint;
+  readonly capacity_info?: string;
   /**
    * **[READ-ONLY]** Human-readable formatted duration.
    */
   readonly duration_formatted?: string;
   /**
-   * **[READ-ONLY]** Human-readable capacity information including waitlist availability.
+   * **[READ-ONLY]** Computed duration of the class in minutes based on start and end times.
    */
-  readonly capacity_info?: string;
+  readonly duration_minutes?: bigint;
 };
 
 /**
@@ -4866,10 +4866,6 @@ export type ScheduledInstance = {
    */
   readonly updated_by?: string;
   /**
-   * **[READ-ONLY]** Duration of the scheduled instance in minutes.
-   */
-  readonly duration_minutes?: bigint;
-  /**
    * **[READ-ONLY]** Human-readable formatted duration.
    */
   readonly duration_formatted?: string;
@@ -4881,6 +4877,10 @@ export type ScheduledInstance = {
    * **[READ-ONLY]** Indicates if the scheduled instance is currently active (ongoing).
    */
   readonly is_currently_active?: boolean;
+  /**
+   * **[READ-ONLY]** Duration of the scheduled instance in minutes.
+   */
+  readonly duration_minutes?: bigint;
   /**
    * **[READ-ONLY]** Indicates if the scheduled instance can be cancelled.
    */
@@ -6524,6 +6524,7 @@ export type ClassDefinitionCreateRequest = {
    * **[OPTIONAL]** Per-session pay owed to the instructor.
    */
   instructor_pay?: number;
+  rate_basis?: RateBasisEnum2;
   class_visibility: ClassVisibilityEnum;
   session_format: SessionFormatEnum;
   /**
@@ -7754,13 +7755,13 @@ export type StudentSchedule = {
    */
   readonly attendance_marked_at?: Date | null;
   /**
-   * **[READ-ONLY]** Duration of the scheduled class in minutes.
-   */
-  readonly duration_minutes?: bigint;
-  /**
    * **[READ-ONLY]** Indicates if the student attended this class.
    */
   readonly did_attend?: boolean;
+  /**
+   * **[READ-ONLY]** Duration of the scheduled class in minutes.
+   */
+  readonly duration_minutes?: bigint;
   /**
    * **[READ-ONLY]** Indicates if this class is upcoming.
    */
@@ -10537,9 +10538,14 @@ export type ClassMarketplaceJobEligibility = {
    */
   readonly training_approved?: boolean;
   /**
-   * Whether the instructor already has an application for this job
+   * Whether the instructor already has an application for this job, in any state
    */
   readonly already_applied?: boolean;
+  application_status?: ApplicationStatusEnum;
+  /**
+   * Whether the instructor's existing application is closed in a way that allows applying again
+   */
+  readonly can_reapply?: boolean;
   /**
    * Whether the instructor's existing schedule is free for every session of this job
    */
@@ -11835,7 +11841,7 @@ export const LocationTypeEnum = {
 export type LocationTypeEnum = (typeof LocationTypeEnum)[keyof typeof LocationTypeEnum];
 
 /**
- * **[READ-ONLY]** Unit the sale price and instructor pay are quoted in, carried over from the job that contracted this class.
+ * **[OPTIONAL]** Unit the sale price and instructor pay are quoted in. When the class was contracted through a marketplace job this is carried over from that job; otherwise it defaults to `per_hour`.
  */
 export const RateBasisEnum = {
   PER_HOUR: 'per_hour',
@@ -11844,7 +11850,7 @@ export const RateBasisEnum = {
 } as const;
 
 /**
- * **[READ-ONLY]** Unit the sale price and instructor pay are quoted in, carried over from the job that contracted this class.
+ * **[OPTIONAL]** Unit the sale price and instructor pay are quoted in. When the class was contracted through a marketplace job this is carried over from that job; otherwise it defaults to `per_hour`.
  */
 export type RateBasisEnum = (typeof RateBasisEnum)[keyof typeof RateBasisEnum];
 
@@ -12011,6 +12017,13 @@ export const TypeEnum = {
   CLASS_MARKETPLACE_JOB_APPLICATION_REJECTED: 'CLASS_MARKETPLACE_JOB_APPLICATION_REJECTED',
   CLASS_MARKETPLACE_JOB_APPLICATION_NOT_SELECTED: 'CLASS_MARKETPLACE_JOB_APPLICATION_NOT_SELECTED',
   CLASS_MARKETPLACE_JOB_EXPIRED: 'CLASS_MARKETPLACE_JOB_EXPIRED',
+  CLASS_MARKETPLACE_JOB_APPLICATION_SHORTLISTED: 'CLASS_MARKETPLACE_JOB_APPLICATION_SHORTLISTED',
+  CLASS_MARKETPLACE_JOB_APPLICATION_INTERVIEWING: 'CLASS_MARKETPLACE_JOB_APPLICATION_INTERVIEWING',
+  CLASS_MARKETPLACE_JOB_APPLICATION_OFFERED: 'CLASS_MARKETPLACE_JOB_APPLICATION_OFFERED',
+  CLASS_MARKETPLACE_JOB_APPLICATION_APPROVED: 'CLASS_MARKETPLACE_JOB_APPLICATION_APPROVED',
+  CLASS_MARKETPLACE_JOB_APPLICATION_ASSIGNED: 'CLASS_MARKETPLACE_JOB_APPLICATION_ASSIGNED',
+  CLASS_MARKETPLACE_JOB_APPLICATION_CANCELLED: 'CLASS_MARKETPLACE_JOB_APPLICATION_CANCELLED',
+  CLASS_MARKETPLACE_JOB_APPLICATION_WITHDRAWN: 'CLASS_MARKETPLACE_JOB_APPLICATION_WITHDRAWN',
   CLASS_ENROLLMENT_CONFIRMED: 'CLASS_ENROLLMENT_CONFIRMED',
   COURSE_ENROLLMENT_MILESTONE: 'COURSE_ENROLLMENT_MILESTONE',
   COURSE_ENROLLMENT_NOTICE: 'COURSE_ENROLLMENT_NOTICE',
@@ -12165,6 +12178,7 @@ export const StatusEnum14 = {
   REJECTED: 'rejected',
   ASSIGNED: 'assigned',
   NOT_SELECTED: 'not_selected',
+  WITHDRAWN: 'withdrawn',
 } as const;
 
 export type StatusEnum14 = (typeof StatusEnum14)[keyof typeof StatusEnum14];
@@ -12427,6 +12441,27 @@ export const StatusEnum20 = {
  * **[READ-ONLY]** Review state of the edit.
  */
 export type StatusEnum20 = (typeof StatusEnum20)[keyof typeof StatusEnum20];
+
+/**
+ * Status of the instructor's existing application, when they have one
+ */
+export const ApplicationStatusEnum = {
+  PENDING: 'pending',
+  SHORTLISTED: 'shortlisted',
+  INTERVIEWING: 'interviewing',
+  OFFERED: 'offered',
+  APPROVED: 'approved',
+  REJECTED: 'rejected',
+  ASSIGNED: 'assigned',
+  NOT_SELECTED: 'not_selected',
+  WITHDRAWN: 'withdrawn',
+} as const;
+
+/**
+ * Status of the instructor's existing application, when they have one
+ */
+export type ApplicationStatusEnum =
+  (typeof ApplicationStatusEnum)[keyof typeof ApplicationStatusEnum];
 
 /**
  * **[READ-ONLY]** Type of the moderated content.
@@ -12947,6 +12982,21 @@ export type LocationTypeEnumWritable =
   (typeof LocationTypeEnumWritable)[keyof typeof LocationTypeEnumWritable];
 
 /**
+ * **[OPTIONAL]** Unit the sale price and instructor pay are quoted in. When the class was contracted through a marketplace job this is carried over from that job; otherwise it defaults to `per_hour`.
+ */
+export const RateBasisEnumWritable = {
+  PER_HOUR: 'per_hour',
+  PER_SESSION: 'per_session',
+  PER_DAY: 'per_day',
+} as const;
+
+/**
+ * **[OPTIONAL]** Unit the sale price and instructor pay are quoted in. When the class was contracted through a marketplace job this is carried over from that job; otherwise it defaults to `per_hour`.
+ */
+export type RateBasisEnumWritable =
+  (typeof RateBasisEnumWritable)[keyof typeof RateBasisEnumWritable];
+
+/**
  * Recurrence type to apply for the session template
  */
 export const RecurrenceTypeEnumWritable = {
@@ -13086,6 +13136,13 @@ export const TypeEnumWritable = {
   CLASS_MARKETPLACE_JOB_APPLICATION_REJECTED: 'CLASS_MARKETPLACE_JOB_APPLICATION_REJECTED',
   CLASS_MARKETPLACE_JOB_APPLICATION_NOT_SELECTED: 'CLASS_MARKETPLACE_JOB_APPLICATION_NOT_SELECTED',
   CLASS_MARKETPLACE_JOB_EXPIRED: 'CLASS_MARKETPLACE_JOB_EXPIRED',
+  CLASS_MARKETPLACE_JOB_APPLICATION_SHORTLISTED: 'CLASS_MARKETPLACE_JOB_APPLICATION_SHORTLISTED',
+  CLASS_MARKETPLACE_JOB_APPLICATION_INTERVIEWING: 'CLASS_MARKETPLACE_JOB_APPLICATION_INTERVIEWING',
+  CLASS_MARKETPLACE_JOB_APPLICATION_OFFERED: 'CLASS_MARKETPLACE_JOB_APPLICATION_OFFERED',
+  CLASS_MARKETPLACE_JOB_APPLICATION_APPROVED: 'CLASS_MARKETPLACE_JOB_APPLICATION_APPROVED',
+  CLASS_MARKETPLACE_JOB_APPLICATION_ASSIGNED: 'CLASS_MARKETPLACE_JOB_APPLICATION_ASSIGNED',
+  CLASS_MARKETPLACE_JOB_APPLICATION_CANCELLED: 'CLASS_MARKETPLACE_JOB_APPLICATION_CANCELLED',
+  CLASS_MARKETPLACE_JOB_APPLICATION_WITHDRAWN: 'CLASS_MARKETPLACE_JOB_APPLICATION_WITHDRAWN',
   CLASS_ENROLLMENT_CONFIRMED: 'CLASS_ENROLLMENT_CONFIRMED',
   COURSE_ENROLLMENT_MILESTONE: 'COURSE_ENROLLMENT_MILESTONE',
   COURSE_ENROLLMENT_NOTICE: 'COURSE_ENROLLMENT_NOTICE',
@@ -24974,6 +25031,39 @@ export type ReviewApplicationResponses = {
 
 export type ReviewApplicationResponse =
   ReviewApplicationResponses[keyof ReviewApplicationResponses];
+
+export type WithdrawApplicationData = {
+  body?: ClassMarketplaceJobDecisionRequest;
+  path: {
+    jobUuid: string;
+    applicationUuid: string;
+  };
+  query?: never;
+  url: '/api/v1/classes/jobs/{jobUuid}/applications/{applicationUuid}/withdraw';
+};
+
+export type WithdrawApplicationErrors = {
+  /**
+   * Not Found
+   */
+  404: ResponseDtoVoid;
+  /**
+   * Internal Server Error
+   */
+  500: ResponseDtoVoid;
+};
+
+export type WithdrawApplicationError = WithdrawApplicationErrors[keyof WithdrawApplicationErrors];
+
+export type WithdrawApplicationResponses = {
+  /**
+   * OK
+   */
+  200: ApiResponseClassMarketplaceJobApplication;
+};
+
+export type WithdrawApplicationResponse =
+  WithdrawApplicationResponses[keyof WithdrawApplicationResponses];
 
 export type GetAllCertificatesData = {
   body?: never;

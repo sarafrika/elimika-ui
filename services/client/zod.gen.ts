@@ -378,8 +378,8 @@ export const zStudent = z
       .optional(),
     bio: z.union([z.string().min(0).max(2000), z.null()]).optional(),
     primaryGuardianContact: z.string().optional(),
-    secondaryGuardianContact: z.string().optional(),
     allGuardianContacts: z.array(z.string()).optional(),
+    secondaryGuardianContact: z.string().optional(),
     full_name: z
       .string()
       .describe(
@@ -705,16 +705,16 @@ export const zRubricScoringLevel = z
       .describe('**[READ-ONLY]** Formatted display name combining level name and points for UI.')
       .readonly()
       .optional(),
+    css_color_class: z
+      .string()
+      .describe('**[READ-ONLY]** CSS-safe color class name derived from the color code.')
+      .readonly()
+      .optional(),
     performance_indicator: z
       .string()
       .describe(
         '**[READ-ONLY]** Performance classification based on level order and passing status.'
       )
-      .readonly()
-      .optional(),
-    css_color_class: z
-      .string()
-      .describe('**[READ-ONLY]** CSS-safe color class name derived from the color code.')
       .readonly()
       .optional(),
     is_highest_level: z
@@ -897,17 +897,17 @@ export const zRubricMatrix = z
         "**[REQUIRED]** Matrix cells mapping criteria to scoring levels with descriptions. Key format: 'criteriaUuid_scoringLevelUuid'."
       ),
     matrix_statistics: zMatrixStatistics.optional(),
-    is_complete: z
-      .boolean()
-      .describe('**[READ-ONLY]** Whether all matrix cells have been completed with descriptions.')
-      .readonly()
-      .optional(),
     expected_cell_count: z
       .number()
       .int()
       .describe(
         '**[READ-ONLY]** Expected number of matrix cells (criteria count × scoring levels count).'
       )
+      .readonly()
+      .optional(),
+    is_complete: z
+      .boolean()
+      .describe('**[READ-ONLY]** Whether all matrix cells have been completed with descriptions.')
       .readonly()
       .optional(),
   })
@@ -1627,14 +1627,14 @@ export const zTrainingProgram = z
       )
       .readonly()
       .optional(),
-    program_type: z
-      .string()
-      .describe('**[READ-ONLY]** Classification of program type based on duration and content.')
-      .readonly()
-      .optional(),
     total_duration_display: z
       .string()
       .describe('**[READ-ONLY]** Human-readable format of total program duration.')
+      .readonly()
+      .optional(),
+    program_type: z
+      .string()
+      .describe('**[READ-ONLY]** Classification of program type based on duration and content.')
       .readonly()
       .optional(),
   })
@@ -2965,11 +2965,6 @@ export const zAvailabilitySlot = z
       )
       .readonly()
       .optional(),
-    duration_minutes: z.coerce
-      .bigint()
-      .describe('**[READ-ONLY]** Duration of the availability slot in minutes.')
-      .readonly()
-      .optional(),
     duration_formatted: z
       .string()
       .describe('**[READ-ONLY]** Human-readable formatted duration.')
@@ -2990,6 +2985,11 @@ export const zAvailabilitySlot = z
     availability_description: z
       .string()
       .describe('**[READ-ONLY]** Human-readable description of the availability pattern.')
+      .readonly()
+      .optional(),
+    duration_minutes: z.coerce
+      .bigint()
+      .describe('**[READ-ONLY]** Duration of the availability slot in minutes.')
       .readonly()
       .optional(),
   })
@@ -3231,6 +3231,29 @@ export const zCourse = z
       )
       .readonly()
       .optional(),
+    total_duration_display: z
+      .string()
+      .describe('**[READ-ONLY]** Human-readable format of total course duration.')
+      .readonly()
+      .optional(),
+    has_multiple_categories: z
+      .boolean()
+      .describe('**[READ-ONLY]** Indicates if the course belongs to multiple categories.')
+      .readonly()
+      .optional(),
+    category_count: z
+      .number()
+      .int()
+      .describe('**[READ-ONLY]** Number of categories this course belongs to.')
+      .readonly()
+      .optional(),
+    lifecycle_stage: z
+      .string()
+      .describe(
+        "**[READ-ONLY]** Human-readable description of the course's current lifecycle stage."
+      )
+      .readonly()
+      .optional(),
     is_published: z
       .boolean()
       .describe('**[READ-ONLY]** Indicates if the course is published and discoverable.')
@@ -3256,29 +3279,6 @@ export const zCourse = z
     is_in_review: z
       .boolean()
       .describe('**[READ-ONLY]** Indicates if the course is currently under review.')
-      .readonly()
-      .optional(),
-    total_duration_display: z
-      .string()
-      .describe('**[READ-ONLY]** Human-readable format of total course duration.')
-      .readonly()
-      .optional(),
-    has_multiple_categories: z
-      .boolean()
-      .describe('**[READ-ONLY]** Indicates if the course belongs to multiple categories.')
-      .readonly()
-      .optional(),
-    category_count: z
-      .number()
-      .int()
-      .describe('**[READ-ONLY]** Number of categories this course belongs to.')
-      .readonly()
-      .optional(),
-    lifecycle_stage: z
-      .string()
-      .describe(
-        "**[READ-ONLY]** Human-readable description of the course's current lifecycle stage."
-      )
       .readonly()
       .optional(),
   })
@@ -3590,14 +3590,14 @@ export const zLesson = z
       )
       .readonly()
       .optional(),
-    is_published: z
-      .boolean()
-      .describe('**[READ-ONLY]** Indicates if the lesson is published and accessible to students.')
-      .readonly()
-      .optional(),
     lesson_sequence: z
       .string()
       .describe('**[READ-ONLY]** Formatted lesson sequence for display purposes.')
+      .readonly()
+      .optional(),
+    is_published: z
+      .boolean()
+      .describe('**[READ-ONLY]** Indicates if the lesson is published and accessible to students.')
       .readonly()
       .optional(),
   })
@@ -3820,14 +3820,14 @@ export const zLessonContent = z
       )
       .readonly()
       .optional(),
-    content_category: z
-      .string()
-      .describe('**[READ-ONLY]** Category of content based on its type and format.')
-      .readonly()
-      .optional(),
     file_size_display: z
       .string()
       .describe('**[READ-ONLY]** Human-readable format of file size.')
+      .readonly()
+      .optional(),
+    content_category: z
+      .string()
+      .describe('**[READ-ONLY]** Category of content based on its type and format.')
       .readonly()
       .optional(),
   })
@@ -4926,12 +4926,12 @@ export const zClassDefinitionUpdateRequest = z
   );
 
 /**
- * **[READ-ONLY]** Unit the sale price and instructor pay are quoted in, carried over from the job that contracted this class.
+ * **[OPTIONAL]** Unit the sale price and instructor pay are quoted in. When the class was contracted through a marketplace job this is carried over from that job; otherwise it defaults to `per_hour`.
  */
 export const zRateBasisEnum = z
   .enum(['per_hour', 'per_session', 'per_day'])
   .describe(
-    '**[READ-ONLY]** Unit the sale price and instructor pay are quoted in, carried over from the job that contracted this class.'
+    '**[OPTIONAL]** Unit the sale price and instructor pay are quoted in. When the class was contracted through a marketplace job this is carried over from that job; otherwise it defaults to `per_hour`.'
   );
 
 /**
@@ -5027,6 +5027,7 @@ export const zClassDefinition = z
     program_uuid: z.union([z.string().uuid(), z.null()]).optional(),
     sale_price: z.union([z.number().gte(0), z.null()]).optional(),
     instructor_pay: z.union([z.number().gte(0), z.null()]).optional(),
+    rate_basis: zRateBasisEnum.optional(),
     class_visibility: zClassVisibilityEnum,
     session_format: zSessionFormatEnum,
     default_start_time: z
@@ -5067,7 +5068,6 @@ export const zClassDefinition = z
       .optional(),
     venue_resource_uuid: z.union([z.string().uuid(), z.null()]).optional(),
     category_uuid: z.union([z.string().uuid(), z.null()]).optional(),
-    rate_basis: zRateBasisEnum.optional(),
     session_templates: z
       .array(zClassSessionTemplate)
       .describe(
@@ -5130,10 +5130,10 @@ export const zClassDefinition = z
       )
       .readonly()
       .optional(),
-    duration_minutes: z.coerce
-      .bigint()
+    capacity_info: z
+      .string()
       .describe(
-        '**[READ-ONLY]** Computed duration of the class in minutes based on start and end times.'
+        '**[READ-ONLY]** Human-readable capacity information including waitlist availability.'
       )
       .readonly()
       .optional(),
@@ -5142,10 +5142,10 @@ export const zClassDefinition = z
       .describe('**[READ-ONLY]** Human-readable formatted duration.')
       .readonly()
       .optional(),
-    capacity_info: z
-      .string()
+    duration_minutes: z.coerce
+      .bigint()
       .describe(
-        '**[READ-ONLY]** Human-readable capacity information including waitlist availability.'
+        '**[READ-ONLY]** Computed duration of the class in minutes based on start and end times.'
       )
       .readonly()
       .optional(),
@@ -5963,11 +5963,6 @@ export const zScheduledInstance = z
       )
       .readonly()
       .optional(),
-    duration_minutes: z.coerce
-      .bigint()
-      .describe('**[READ-ONLY]** Duration of the scheduled instance in minutes.')
-      .readonly()
-      .optional(),
     duration_formatted: z
       .string()
       .describe('**[READ-ONLY]** Human-readable formatted duration.')
@@ -5983,6 +5978,11 @@ export const zScheduledInstance = z
       .describe(
         '**[READ-ONLY]** Indicates if the scheduled instance is currently active (ongoing).'
       )
+      .readonly()
+      .optional(),
+    duration_minutes: z.coerce
+      .bigint()
+      .describe('**[READ-ONLY]** Duration of the scheduled instance in minutes.')
       .readonly()
       .optional(),
     can_be_cancelled: z
@@ -6664,6 +6664,13 @@ export const zTypeEnum = z.enum([
   'CLASS_MARKETPLACE_JOB_APPLICATION_REJECTED',
   'CLASS_MARKETPLACE_JOB_APPLICATION_NOT_SELECTED',
   'CLASS_MARKETPLACE_JOB_EXPIRED',
+  'CLASS_MARKETPLACE_JOB_APPLICATION_SHORTLISTED',
+  'CLASS_MARKETPLACE_JOB_APPLICATION_INTERVIEWING',
+  'CLASS_MARKETPLACE_JOB_APPLICATION_OFFERED',
+  'CLASS_MARKETPLACE_JOB_APPLICATION_APPROVED',
+  'CLASS_MARKETPLACE_JOB_APPLICATION_ASSIGNED',
+  'CLASS_MARKETPLACE_JOB_APPLICATION_CANCELLED',
+  'CLASS_MARKETPLACE_JOB_APPLICATION_WITHDRAWN',
   'CLASS_ENROLLMENT_CONFIRMED',
   'COURSE_ENROLLMENT_MILESTONE',
   'COURSE_ENROLLMENT_NOTICE',
@@ -7495,6 +7502,7 @@ export const zClassDefinitionCreateRequest = z
       .gte(0)
       .describe('**[OPTIONAL]** Per-session pay owed to the instructor.')
       .optional(),
+    rate_basis: zRateBasisEnum2.optional(),
     class_visibility: zClassVisibilityEnum,
     session_format: zSessionFormatEnum,
     default_start_time: z
@@ -7950,6 +7958,7 @@ export const zStatusEnum14 = z.enum([
   'rejected',
   'assigned',
   'not_selected',
+  'withdrawn',
 ]);
 
 /**
@@ -8880,14 +8889,14 @@ export const zStudentSchedule = z
       .union([z.string().datetime().readonly(), z.null()])
       .readonly()
       .optional(),
-    duration_minutes: z.coerce
-      .bigint()
-      .describe('**[READ-ONLY]** Duration of the scheduled class in minutes.')
-      .readonly()
-      .optional(),
     did_attend: z
       .boolean()
       .describe('**[READ-ONLY]** Indicates if the student attended this class.')
+      .readonly()
+      .optional(),
+    duration_minutes: z.coerce
+      .bigint()
+      .describe('**[READ-ONLY]** Duration of the scheduled class in minutes.')
       .readonly()
       .optional(),
     is_upcoming: z
@@ -11626,6 +11635,23 @@ export const zApiResponsePagedDtoClassMarketplaceJob = z.object({
 });
 
 /**
+ * Status of the instructor's existing application, when they have one
+ */
+export const zApplicationStatusEnum = z
+  .enum([
+    'pending',
+    'shortlisted',
+    'interviewing',
+    'offered',
+    'approved',
+    'rejected',
+    'assigned',
+    'not_selected',
+    'withdrawn',
+  ])
+  .describe("Status of the instructor's existing application, when they have one");
+
+/**
  * Current instructor's eligibility to apply for a marketplace class job
  */
 export const zClassMarketplaceJobEligibility = z
@@ -11650,7 +11676,15 @@ export const zClassMarketplaceJobEligibility = z
       .optional(),
     already_applied: z
       .boolean()
-      .describe('Whether the instructor already has an application for this job')
+      .describe('Whether the instructor already has an application for this job, in any state')
+      .readonly()
+      .optional(),
+    application_status: zApplicationStatusEnum.optional(),
+    can_reapply: z
+      .boolean()
+      .describe(
+        "Whether the instructor's existing application is closed in a way that allows applying again"
+      )
       .readonly()
       .optional(),
     schedule_clear: z
@@ -12653,6 +12687,15 @@ export const zLocationTypeEnumWritable = z
   .describe('**[REQUIRED]** Delivery location type.');
 
 /**
+ * **[OPTIONAL]** Unit the sale price and instructor pay are quoted in. When the class was contracted through a marketplace job this is carried over from that job; otherwise it defaults to `per_hour`.
+ */
+export const zRateBasisEnumWritable = z
+  .enum(['per_hour', 'per_session', 'per_day'])
+  .describe(
+    '**[OPTIONAL]** Unit the sale price and instructor pay are quoted in. When the class was contracted through a marketplace job this is carried over from that job; otherwise it defaults to `per_hour`.'
+  );
+
+/**
  * Recurrence type to apply for the session template
  */
 export const zRecurrenceTypeEnumWritable = z
@@ -12734,6 +12777,13 @@ export const zTypeEnumWritable = z.enum([
   'CLASS_MARKETPLACE_JOB_APPLICATION_REJECTED',
   'CLASS_MARKETPLACE_JOB_APPLICATION_NOT_SELECTED',
   'CLASS_MARKETPLACE_JOB_EXPIRED',
+  'CLASS_MARKETPLACE_JOB_APPLICATION_SHORTLISTED',
+  'CLASS_MARKETPLACE_JOB_APPLICATION_INTERVIEWING',
+  'CLASS_MARKETPLACE_JOB_APPLICATION_OFFERED',
+  'CLASS_MARKETPLACE_JOB_APPLICATION_APPROVED',
+  'CLASS_MARKETPLACE_JOB_APPLICATION_ASSIGNED',
+  'CLASS_MARKETPLACE_JOB_APPLICATION_CANCELLED',
+  'CLASS_MARKETPLACE_JOB_APPLICATION_WITHDRAWN',
   'CLASS_ENROLLMENT_CONFIRMED',
   'COURSE_ENROLLMENT_MILESTONE',
   'COURSE_ENROLLMENT_NOTICE',
@@ -17587,6 +17637,20 @@ export const zReviewApplicationData = z.object({
  * OK
  */
 export const zReviewApplicationResponse = zApiResponseClassMarketplaceJobApplication;
+
+export const zWithdrawApplicationData = z.object({
+  body: zClassMarketplaceJobDecisionRequest.optional(),
+  path: z.object({
+    jobUuid: z.string().uuid(),
+    applicationUuid: z.string().uuid(),
+  }),
+  query: z.never().optional(),
+});
+
+/**
+ * OK
+ */
+export const zWithdrawApplicationResponse = zApiResponseClassMarketplaceJobApplication;
 
 export const zGetAllCertificatesData = z.object({
   body: z.never().optional(),
