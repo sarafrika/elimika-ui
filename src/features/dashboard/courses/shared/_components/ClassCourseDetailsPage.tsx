@@ -69,6 +69,7 @@ import CourseRating, {
 import CourseReviews from '@/src/features/dashboard/courses/shared/_components/CourseReviews';
 import ClassCourseTabNav from '@/src/features/dashboard/courses/shared/_components/CourseTabNav';
 import {
+  decisiveTrainingApplication,
   formatDurationFromParts,
   getContentHref,
   getEnrollHref,
@@ -400,7 +401,10 @@ export default function ClassCourseDetailsPage({
   const creatorHeadline = creator?.professional_headline ?? '';
 
   const durationLabel = getDurationLabel(course);
-  const currentTrainingApplication = trainingApplicationsResponse?.data?.content?.[0] ?? null;
+  // Several rows can exist for one course (reapply after a rejection, re-approval after a
+  // revocation); the decisive one — not whichever the API listed first — sets the button state.
+  const currentTrainingApplication =
+    decisiveTrainingApplication(trainingApplicationsResponse?.data?.content ?? []) ?? null;
   const currentTrainingApplicationStatus = currentTrainingApplication?.status ?? null;
   const trainingApplicationStatusRefreshing =
     canApplyToTrain &&

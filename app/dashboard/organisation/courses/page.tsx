@@ -193,6 +193,9 @@ export default function CoursesPage() {
       },
     }),
     enabled: Boolean(organisationUuid),
+    staleTime: 0,
+    refetchOnMount: 'always',
+    refetchOnWindowFocus: true,
   });
   const applications: CourseTrainingApplication[] = applicationsQuery.data?.data?.content ?? [];
 

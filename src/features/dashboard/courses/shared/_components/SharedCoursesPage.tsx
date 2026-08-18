@@ -75,6 +75,7 @@ import {
   type CoursesCatalogTab,
   type CoursesFilterSection,
   type CoursesRecommendationCardData,
+  decisiveTrainingApplication,
   formatDurationFromParts,
   getApplyToTrainHref,
   getCardPresentation,
@@ -947,41 +948,69 @@ export function SharedCoursesPage({ domain }: SharedCoursesPageProps) {
   );
 
   const instructorCourseApplicationMap = useMemo(() => {
-    const map = new Map<string, CatalogTrainingApplicationData>();
+    const grouped = new Map<string, CatalogTrainingApplicationData[]>();
     instructorCourseApplications?.data?.content?.forEach(application => {
       if (application.course_uuid) {
-        map.set(application.course_uuid, application);
+        const bucket = grouped.get(application.course_uuid) ?? [];
+        bucket.push(application);
+        grouped.set(application.course_uuid, bucket);
       }
+    });
+    const map = new Map<string, CatalogTrainingApplicationData>();
+    grouped.forEach((applications, uuid) => {
+      const decisive = decisiveTrainingApplication(applications);
+      if (decisive) map.set(uuid, decisive);
     });
     return map;
   }, [instructorCourseApplications]);
 
   const instructorProgramApplicationMap = useMemo(() => {
-    const map = new Map<string, CatalogTrainingApplicationData>();
+    const grouped = new Map<string, CatalogTrainingApplicationData[]>();
     instructorProgramApplications?.data?.content?.forEach(application => {
       if (application.program_uuid) {
-        map.set(application.program_uuid, application);
+        const bucket = grouped.get(application.program_uuid) ?? [];
+        bucket.push(application);
+        grouped.set(application.program_uuid, bucket);
       }
+    });
+    const map = new Map<string, CatalogTrainingApplicationData>();
+    grouped.forEach((applications, uuid) => {
+      const decisive = decisiveTrainingApplication(applications);
+      if (decisive) map.set(uuid, decisive);
     });
     return map;
   }, [instructorProgramApplications]);
 
   const organisationCourseApplicationMap = useMemo(() => {
-    const map = new Map<string, CatalogTrainingApplicationData>();
+    const grouped = new Map<string, CatalogTrainingApplicationData[]>();
     organisationCourseApplications?.data?.content?.forEach(application => {
       if (application.course_uuid) {
-        map.set(application.course_uuid, application);
+        const bucket = grouped.get(application.course_uuid) ?? [];
+        bucket.push(application);
+        grouped.set(application.course_uuid, bucket);
       }
+    });
+    const map = new Map<string, CatalogTrainingApplicationData>();
+    grouped.forEach((applications, uuid) => {
+      const decisive = decisiveTrainingApplication(applications);
+      if (decisive) map.set(uuid, decisive);
     });
     return map;
   }, [organisationCourseApplications]);
 
   const organisationProgramApplicationMap = useMemo(() => {
-    const map = new Map<string, CatalogTrainingApplicationData>();
+    const grouped = new Map<string, CatalogTrainingApplicationData[]>();
     organisationProgramApplications?.data?.content?.forEach(application => {
       if (application.program_uuid) {
-        map.set(application.program_uuid, application);
+        const bucket = grouped.get(application.program_uuid) ?? [];
+        bucket.push(application);
+        grouped.set(application.program_uuid, bucket);
       }
+    });
+    const map = new Map<string, CatalogTrainingApplicationData>();
+    grouped.forEach((applications, uuid) => {
+      const decisive = decisiveTrainingApplication(applications);
+      if (decisive) map.set(uuid, decisive);
     });
     return map;
   }, [organisationProgramApplications]);

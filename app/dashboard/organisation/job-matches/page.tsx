@@ -67,6 +67,7 @@ import type {
   Instructor,
 } from '@/services/client';
 import {
+  assignInstructorMutation,
   getInstructorByUuidOptions,
   getInstructorSkillsOptions,
   listJobApplicationsOptions,
@@ -362,11 +363,33 @@ export default function JobMatchesPage() {
   );
   const [shortlistNote, setShortlistNote] = useState('');
 
+  const assignMutation = useMutation({
+    ...assignInstructorMutation(),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['listJobApplications'] });
+      applicationsQuery.refetch();
+      toast.success('Candidate hired', {
+        description: 'They now belong to your organisation. Create the class to schedule it.',
+      });
+    },
+    onError: error =>
+      toast.error(error instanceof Error ? error.message : 'Could not complete the hire'),
+  });
+
   const moveMutation = useMutation({
     ...reviewApplicationMutation(),
     onSuccess: (_d, vars) => {
       queryClient.invalidateQueries({ queryKey: ['listJobApplications'] });
       applicationsQuery.refetch();
+      // Approve marks the choice; the assignment is the hire — it affiliates the instructor
+      // with the organisation, opens class creation and sends the hired notice.
+      if (vars?.query?.action === 'approve' && vars?.path?.applicationUuid) {
+        assignMutation.mutate({
+          path: { jobUuid: selectedJobUuid },
+          body: { application_uuid: vars.path.applicationUuid as string },
+        });
+        return;
+      }
       toast.success(`Candidate moved to ${vars?.query?.action ?? 'stage'}`);
     },
     onError: () => toast.error('Could not update candidate stage'),

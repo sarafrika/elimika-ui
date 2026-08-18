@@ -1,4 +1,9 @@
 'use client';
+import { Menu } from 'lucide-react';
+import Image from 'next/image';
+import Link from 'next/link';
+import { usePathname } from 'next/navigation';
+import type * as React from 'react';
 import {
   Sidebar,
   SidebarContent,
@@ -19,11 +24,6 @@ import { buildWorkspaceAliasPath } from '@/src/features/dashboard/lib/active-dom
 import { SettingsSupportWidget } from '@/src/features/dashboard/settings/_components/settings-support-widget';
 import { useOrganisation } from '@/src/features/organisation/context/organisation-context';
 import { useUserProfile } from '@/src/features/profile/context/profile-context';
-import { Menu } from 'lucide-react';
-import Image from 'next/image';
-import Link from 'next/link';
-import { usePathname } from 'next/navigation';
-import type * as React from 'react';
 import { NavMain } from './nav-main';
 import { NavSecondary } from './nav-secondary';
 
@@ -102,8 +102,11 @@ export function AppSidebar({
             </div>
 
             <div className='grid flex-1 text-left text-sm leading-tight group-data-[collapsible=icon]:hidden'>
+              {/* The organisation is resolved for anyone who belongs to one, so branding the
+                  sidebar with it unconditionally left the org's name over the instructor and
+                  course-creator workspaces too. Only the organisation workspace is its own brand. */}
               <span className='truncate text-[15px] font-bold capitalize'>
-                {organisation?.name || 'Elimika'}
+                {(isOrganisationDomain && organisation?.name) || 'Elimika'}
               </span>
               {isOrganisationDomain && (
                 <span className='text-muted-foreground truncate text-xs'>
