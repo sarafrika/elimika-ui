@@ -1,6 +1,22 @@
 // @ts-nocheck -- pre-existing @hey-api generated-client type drift (see memory: elimika-ui-typecheck)
 'use client';
 
+import { useMutation, useQueries, useQuery, useQueryClient } from '@tanstack/react-query';
+import {
+  ArrowRight,
+  GraduationCap,
+  Layers,
+  type LucideIcon,
+  Search,
+  SlidersHorizontal,
+  SquareDashedMousePointer,
+  Users,
+  X,
+} from 'lucide-react';
+import Link from 'next/link';
+import { useRouter } from 'next/navigation';
+import { useEffect, useMemo, useState } from 'react';
+import { toast } from 'sonner';
 import NotesModal from '@/components/custom-modals/notes-modal';
 import { Button } from '@/components/ui/button';
 import {
@@ -49,6 +65,10 @@ import {
   submitTrainingApplicationMutation,
 } from '@/services/client/@tanstack/react-query.gen';
 import type { Category, CourseReview } from '@/services/client/types.gen';
+import { CoursesCatalogCard } from '@/src/features/dashboard/courses/shared/_components/CoursesCatalogCard';
+import { CoursesCategoryFilters } from '@/src/features/dashboard/courses/shared/_components/CoursesCategoryFilters';
+import { CoursesCategoryTabs } from '@/src/features/dashboard/courses/shared/_components/CoursesCategoryTabs';
+import { CoursesRecommendationCard } from '@/src/features/dashboard/courses/shared/_components/CoursesRecommendationCard';
 import {
   type CatalogTrainingApplicationData,
   type CoursesCatalogCardData,
@@ -65,25 +85,8 @@ import {
   getInstructorHref,
   stripHtml,
 } from '@/src/features/dashboard/courses/shared/_components/courses-data';
-import { CoursesCatalogCard } from '@/src/features/dashboard/courses/shared/_components/CoursesCatalogCard';
-import { CoursesCategoryFilters } from '@/src/features/dashboard/courses/shared/_components/CoursesCategoryFilters';
-import { CoursesCategoryTabs } from '@/src/features/dashboard/courses/shared/_components/CoursesCategoryTabs';
-import { CoursesRecommendationCard } from '@/src/features/dashboard/courses/shared/_components/CoursesRecommendationCard';
 import { StudentCoursesCard } from '@/src/features/dashboard/courses/shared/_components/StudentCoursesCard';
 import { buildWorkspaceAliasPath } from '@/src/features/dashboard/lib/active-domain-storage';
-import { useMutation, useQueries, useQuery, useQueryClient } from '@tanstack/react-query';
-import {
-  ArrowRight,
-  GraduationCap,
-  Layers,
-  type LucideIcon,
-  SlidersHorizontal,
-  SquareDashedMousePointer,
-  Users
-} from 'lucide-react';
-import Link from 'next/link';
-import { useEffect, useMemo, useState } from 'react';
-import { toast } from 'sonner';
 
 type SharedCoursesPageProps = {
   domain: UserDomain;
@@ -129,6 +132,16 @@ const defaultFilterValues: FilterValues = {
 };
 
 const CATALOG_PAGE_SIZE = 18;
+const trainingApplicationStatusQueryOptions = {
+  staleTime: 0,
+  refetchOnMount: 'always' as const,
+  refetchOnWindowFocus: true,
+  refetchOnReconnect: true,
+};
+
+/** Outcomes the backend lets an applicant submit against again (see ClassMarketplaceJobApplicationStatus). */
+const REAPPLYABLE = new Set(['rejected', 'revoked']);
+const REAPPLYABLE_OR_APPROVED = new Set(['rejected', 'revoked', 'approved']);
 
 function normalizeApplicationStatus(status?: string | null) {
   return status?.toLowerCase() ?? null;
@@ -145,8 +158,9 @@ const createCatalogCards = (
   canApplyToTrain: boolean,
   isOrganisationDomain: boolean,
   canOrganisationApply: boolean,
-  instructorCourseApplicationMap: Map<string, CatalogTrainingApplicationData>,
-  instructorProgramApplicationMap: Map<string, CatalogTrainingApplicationData>,
+  applicationStateRefreshing: boolean,
+  courseApplicationMap: Map<string, CatalogTrainingApplicationData>,
+  programApplicationMap: Map<string, CatalogTrainingApplicationData>,
   courseClassesMap: Record<string, ClassDefinition[]>,
   programClassesMap: Record<string, ClassDefinition[]>,
   programCoursesMap: Record<string, Course[]>,
@@ -158,25 +172,32 @@ const createCatalogCards = (
 
     const application =
       item.kind === 'program'
-        ? instructorProgramApplicationMap.get(item.id)
-        : instructorCourseApplicationMap.get(item.id);
+        ? programApplicationMap.get(item.id)
+        : courseApplicationMap.get(item.id);
 
     const applicationStatus = normalizeApplicationStatus(application?.status);
+    const applicationStatusRefreshing = isInstructorApplyCard && applicationStateRefreshing;
 
-    const ctaLabel = !isInstructorApplyCard
-      ? 'Enroll Classes'
-      : isOrganisationDomain && !canOrganisationApply
-        ? 'Verify Organisation'
-        : applicationStatus === 'approved'
-          ? 'Approved'
-          : applicationStatus === 'pending'
-              ? 'Pending'
-              : applicationStatus === 'rejected' || applicationStatus === 'revoked'
-                ? 'Rejected'
-                : 'Apply to Train';
+    const ctaLabel = applicationStatusRefreshing
+      ? 'Checking'
+      : !isInstructorApplyCard
+        ? 'Enroll Classes'
+        : isOrganisationDomain && !canOrganisationApply
+          ? 'Verify Organisation'
+          : isOrganisationDomain && applicationStatus === 'approved'
+            ? 'Create Class Job'
+            : applicationStatus === 'approved'
+              ? 'Approved'
+              : applicationStatus === 'pending'
+                ? 'Pending'
+                : applicationStatus === 'rejected' || applicationStatus === 'revoked'
+                  ? 'Reapply to Train'
+                  : 'Apply to Train';
 
     const classDefinitions =
-      item.kind === 'program' ? programClassesMap[item.id] ?? [] : courseClassesMap[item.id] ?? [];
+      item.kind === 'program'
+        ? (programClassesMap[item.id] ?? [])
+        : (courseClassesMap[item.id] ?? []);
     const activeClasses = classDefinitions;
     const activeClassesInstructors = new Set(
       activeClasses
@@ -225,10 +246,7 @@ const createCatalogCards = (
       title: item.title,
       description: item.description,
 
-      provider:
-        creatorMap.get(item.creatorUuid) ??
-        item.creatorName ??
-        'Course Creator',
+      provider: creatorMap.get(item.creatorUuid) ?? item.creatorName ?? 'Course Creator',
 
       duration: item.durationLabel,
 
@@ -238,18 +256,18 @@ const createCatalogCards = (
         item.secondaryMeta ||
         item.levelLabel ||
         item.categoryLabels[0] ||
-        (item.kind === 'program'
-          ? 'Training Program'
-          : 'Course'),
+        (item.kind === 'program' ? 'Training Program' : 'Course'),
 
       applicationStatus,
       ctaLabel,
 
-      ctaDisabled: isInstructorApplyCard
-        ? isOrganisationDomain
-          ? !canOrganisationApply
-          : false
-        : false,
+      ctaDisabled: applicationStatusRefreshing
+        ? true
+        : isInstructorApplyCard
+          ? isOrganisationDomain
+            ? !canOrganisationApply || Boolean(applicationStatus && !REAPPLYABLE_OR_APPROVED.has(applicationStatus))
+            : Boolean(applicationStatus && !REAPPLYABLE.has(applicationStatus))
+          : false,
 
       ctaKind: isInstructorApplyCard
         ? item.kind === 'program'
@@ -258,35 +276,28 @@ const createCatalogCards = (
         : 'link',
 
       ctaTone: isInstructorApplyCard
-        ? applicationStatus === 'approved'
-          ? 'approved'
-          : applicationStatus === 'pending'
-            ? 'pending'
-            : applicationStatus === 'rejected' || applicationStatus === 'revoked'
-              ? 'revoked'
-              : 'default'
+        ? applicationStatusRefreshing
+          ? 'pending'
+          : applicationStatus === 'approved'
+            ? 'approved'
+            : applicationStatus === 'pending'
+              ? 'pending'
+              : applicationStatus === 'rejected' || applicationStatus === 'revoked'
+                ? 'revoked'
+                : 'default'
         : 'default',
 
       minimumRate: item.minimumRate,
 
       showInstructorCta: !isInstructorApplyCard,
 
-      detailsHref: buildWorkspaceAliasPath(
-        domain,
-        item.href
-      ),
+      detailsHref: buildWorkspaceAliasPath(domain, item.href),
 
       enrollHref: isInstructorApplyCard
         ? getApplyToTrainHref(item.id)
-        : buildWorkspaceAliasPath(
-          domain,
-          getEnrollHref(domain, item.kind, item.id)
-        ),
+        : buildWorkspaceAliasPath(domain, getEnrollHref(domain, item.kind, item.id)),
 
-      instructorHref: buildWorkspaceAliasPath(
-        domain,
-        getInstructorHref(domain, item.id)
-      ),
+      instructorHref: buildWorkspaceAliasPath(domain, getInstructorHref(domain, item.id)),
 
       icon: presentation.icon,
       imageTone: presentation.imageTone,
@@ -296,7 +307,7 @@ const createCatalogCards = (
       reviewCount: item.reviewCount,
       enrollmentCount:
         item.kind === 'program'
-          ? programLearnerCountMap[item.id] ?? item.enrollmentCount
+          ? (programLearnerCountMap[item.id] ?? item.enrollmentCount)
           : item.enrollmentCount,
 
       certificateHref: '',
@@ -428,36 +439,68 @@ export function SharedCoursesPage({ domain }: SharedCoursesPageProps) {
   const programs = useMemo(() => programsResponse?.data?.content ?? [], [programsResponse]);
   const categories = useMemo(() => categoriesResponse?.data?.content ?? [], [categoriesResponse]);
 
-  const { data: instructorCourseApplications } = useQuery({
-    ...searchTrainingApplicationsOptions({
-      query: { pageable: {}, searchParams: { applicant_uuid_eq: instructor?.uuid as string } },
-    }),
-    enabled: isInstructorDomain && Boolean(instructor?.uuid),
-    refetchOnWindowFocus: false,
-  });
+  const { data: instructorCourseApplications, isFetching: instructorCourseApplicationsFetching } =
+    useQuery({
+      ...searchTrainingApplicationsOptions({
+        query: {
+          pageable: {},
+          searchParams: {
+            applicant_uuid_eq: instructor?.uuid as string,
+            applicant_type_eq: ApplicantTypeEnum.INSTRUCTOR,
+          },
+        },
+      }),
+      enabled: isInstructorDomain && Boolean(instructor?.uuid),
+      ...trainingApplicationStatusQueryOptions,
+    });
 
-  const { data: instructorProgramApplications } = useQuery({
-    ...searchProgramTrainingApplicationsOptions({
-      query: { pageable: {}, searchParams: { applicant_uuid_eq: instructor?.uuid as string } },
-    }),
-    enabled: isInstructorDomain && Boolean(instructor?.uuid),
-    refetchOnWindowFocus: false,
-  });
+  const { data: instructorProgramApplications, isFetching: instructorProgramApplicationsFetching } =
+    useQuery({
+      ...searchProgramTrainingApplicationsOptions({
+        query: {
+          pageable: {},
+          searchParams: {
+            applicant_uuid_eq: instructor?.uuid as string,
+            applicant_type_eq: ApplicantTypeEnum.INSTRUCTOR,
+          },
+        },
+      }),
+      enabled: isInstructorDomain && Boolean(instructor?.uuid),
+      ...trainingApplicationStatusQueryOptions,
+    });
 
-  const { data: organisationCourseApplications } = useQuery({
+  const {
+    data: organisationCourseApplications,
+    isFetching: organisationCourseApplicationsFetching,
+  } = useQuery({
     ...searchTrainingApplicationsOptions({
-      query: { pageable: {}, searchParams: { applicant_uuid_eq: organisationUuid as string } },
+      query: {
+        pageable: {},
+        searchParams: {
+          applicant_uuid_eq: organisationUuid as string,
+          applicant_type_eq: ApplicantTypeEnum.ORGANISATION,
+        },
+      },
     }),
     enabled: isOrganisationDomain && Boolean(organisationUuid),
-    refetchOnWindowFocus: false,
+    ...trainingApplicationStatusQueryOptions,
   });
 
-  const { data: organisationProgramApplications } = useQuery({
+  const {
+    data: organisationProgramApplications,
+    isFetching: organisationProgramApplicationsFetching,
+  } = useQuery({
     ...searchProgramTrainingApplicationsOptions({
-      query: { pageable: {}, searchParams: { applicant_uuid_eq: organisationUuid as string } },
+      query: {
+        pageable: {},
+        searchParams: {
+          applicant_uuid_eq: organisationUuid as string,
+          applicant_type_eq: ApplicantTypeEnum.ORGANISATION,
+        },
+      },
     }),
     enabled: isOrganisationDomain && Boolean(organisationUuid),
-    refetchOnWindowFocus: false,
+    ...trainingApplicationStatusQueryOptions,
   });
 
   const categoryMap = useMemo(
@@ -570,12 +613,11 @@ export function SharedCoursesPage({ domain }: SharedCoursesPageProps) {
           programType: '',
           minAge: course.age_lower_limit,
           maxAge: course.age_upper_limit,
-          categoryNames: course.category_names
+          categoryNames: course.category_names,
         };
       }),
     [courseEnrollmentMap, courses, difficultyMap, domain, reviewMap]
   );
-
 
   const approvedInstructorCourseIds = useMemo(() => {
     const ids = new Set<string>();
@@ -691,7 +733,7 @@ export function SharedCoursesPage({ domain }: SharedCoursesPageProps) {
           programType: '',
           minAge: course.age_lower_limit,
           maxAge: course.age_upper_limit,
-          categoryNames: course.category_names
+          categoryNames: course.category_names,
         });
       });
 
@@ -950,6 +992,11 @@ export function SharedCoursesPage({ domain }: SharedCoursesPageProps) {
   const activeProgramApplicationMap = isOrganisationDomain
     ? organisationProgramApplicationMap
     : instructorProgramApplicationMap;
+  const applicationStateRefreshing = isInstructorDomain
+    ? instructorCourseApplicationsFetching || instructorProgramApplicationsFetching
+    : isOrganisationDomain
+      ? organisationCourseApplicationsFetching || organisationProgramApplicationsFetching
+      : false;
 
   const recommendationsQuery = useQuery({
     ...getCourseRecommendationsOptions({
@@ -1063,7 +1110,6 @@ export function SharedCoursesPage({ domain }: SharedCoursesPageProps) {
     return map;
   }, [recommendationReviewQueries, recommendedBase]);
 
-
   const courseUuids = useMemo(
     () =>
       paginatedItems
@@ -1073,10 +1119,7 @@ export function SharedCoursesPage({ domain }: SharedCoursesPageProps) {
     [paginatedItems]
   );
 
-  const {
-    courseClassesMap,
-    isLoading: courseClassesLoading,
-  } = useCourseClasses(courseUuids);
+  const { courseClassesMap, isLoading: courseClassesLoading } = useCourseClasses(courseUuids);
 
   const programUuids = useMemo(
     () =>
@@ -1163,7 +1206,6 @@ export function SharedCoursesPage({ domain }: SharedCoursesPageProps) {
     return map;
   }, [programEnrollmentQueries, programUuids]);
 
-
   const catalogCards = useMemo(
     () =>
       createCatalogCards(
@@ -1173,8 +1215,9 @@ export function SharedCoursesPage({ domain }: SharedCoursesPageProps) {
         canApplyToTrain,
         isOrganisationDomain,
         canOrganisationApply,
-        instructorCourseApplicationMap,
-        instructorProgramApplicationMap,
+        applicationStateRefreshing,
+        activeCourseApplicationMap,
+        activeProgramApplicationMap,
         courseClassesMap,
         programClassesMap,
         programCoursesMap,
@@ -1187,8 +1230,9 @@ export function SharedCoursesPage({ domain }: SharedCoursesPageProps) {
       canApplyToTrain,
       isOrganisationDomain,
       canOrganisationApply,
-      instructorCourseApplicationMap,
-      instructorProgramApplicationMap,
+      applicationStateRefreshing,
+      activeCourseApplicationMap,
+      activeProgramApplicationMap,
       courseClassesMap,
       programClassesMap,
       programCoursesMap,
@@ -1320,7 +1364,13 @@ export function SharedCoursesPage({ domain }: SharedCoursesPageProps) {
           onSuccess: response => {
             qc.invalidateQueries({
               queryKey: searchProgramTrainingApplicationsQueryKey({
-                query: { pageable: {}, searchParams: { applicant_uuid_eq: applicantUuid } },
+                query: {
+                  pageable: {},
+                  searchParams: {
+                    applicant_uuid_eq: applicantUuid,
+                    applicant_type_eq: applicantType,
+                  },
+                },
               }),
             });
             toast.success(response?.message);
@@ -1344,7 +1394,13 @@ export function SharedCoursesPage({ domain }: SharedCoursesPageProps) {
         onSuccess: response => {
           qc.invalidateQueries({
             queryKey: searchTrainingApplicationsQueryKey({
-              query: { pageable: {}, searchParams: { applicant_uuid_eq: applicantUuid } },
+              query: {
+                pageable: {},
+                searchParams: {
+                  applicant_uuid_eq: applicantUuid,
+                  applicant_type_eq: applicantType,
+                },
+              },
             }),
           });
           toast.success(response?.message);
