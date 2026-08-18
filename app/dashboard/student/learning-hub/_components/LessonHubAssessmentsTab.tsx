@@ -122,8 +122,8 @@ function RubricMatrixTable({ matrix }: { matrix: RubricMatrix }) {
         ))}
       </div>
 
-      <div className='rounded-md border'>
-        <Table>
+      <div className='rounded-md border overflow-x-auto'>
+        <Table className='min-w-max'>
           <TableHeader>
             <TableRow>
               <TableHead className='min-w-48'>Criteria</TableHead>
@@ -144,7 +144,7 @@ function RubricMatrixTable({ matrix }: { matrix: RubricMatrix }) {
                   <div className='space-y-1'>
                     <p className='font-medium'>{criteriaItem.component_name}</p>
                     <p className='text-muted-foreground text-xs leading-relaxed'>
-                      {criteriaItem.description || 'No criteria description provided.'}
+                      {criteriaItem.description || ''}
                     </p>
                   </div>
                 </TableCell>
@@ -161,7 +161,7 @@ function RubricMatrixTable({ matrix }: { matrix: RubricMatrix }) {
                         <div className='space-y-1'>
                           <p>{cell.description}</p>
                           {cell.points != null ? (
-                            <p className='text-muted-foreground text-[11px]'>{cell.points} pts</p>
+                            <p className='text-muted-foreground text-[11px]'></p>
                           ) : null}
                         </div>
                       ) : (
@@ -198,7 +198,7 @@ function AssessmentSheet({
 
   return (
     <Sheet open={Boolean(row)} onOpenChange={open => !open && onClose()}>
-      <SheetContent side='right' className='w-full overflow-y-auto sm:max-w-3xl lg:max-w-4xl'>
+      <SheetContent side='right' className='w-full overflow-y-auto sm:max-w-6xl lg:max-w-7xl'>
         <SheetHeader className='pr-10'>
           <SheetTitle>{assessment?.title || 'Assessment details'}</SheetTitle>
           <SheetDescription>
@@ -212,7 +212,7 @@ function AssessmentSheet({
               <StatChip label='Course' value={row?.courseTitle || 'Unknown course'} icon={BookOpenText} />
               <StatChip
                 label='Weight'
-                value={formatPercentage(assessment?.weight_percentage)}
+                value={assessment?.weight_display!}
                 icon={SlidersHorizontal}
               />
               <StatChip
@@ -249,7 +249,7 @@ function AssessmentSheet({
                 </p>
               </div>
 
-              <div className='grid gap-3 sm:grid-cols-3'>
+              {/* <div className='grid gap-3 sm:grid-cols-3'>
                 <div className='rounded-md border p-3'>
                   <p className='text-muted-foreground text-xs'>Rubric</p>
                   <p className='mt-1 font-medium'>{rubric?.title || rubricUuid || 'No rubric selected'}</p>
@@ -264,7 +264,7 @@ function AssessmentSheet({
                     {rubric?.max_score != null ? rubric.max_score : '—'}
                   </p>
                 </div>
-              </div>
+              </div> */}
 
               {courseRubrics.length > 0 ? (
                 <div className='space-y-2'>
@@ -309,8 +309,8 @@ function AssessmentSheet({
                     icon={SlidersHorizontal}
                   />
                   <StatChip
-                    label='Completion'
-                    value={`${Math.round(rubricMatrix.matrix_statistics?.completion_percentage ?? 0)}%`}
+                    label='Score Obtainable'
+                    value={rubric?.total_weight! ?? ''}
                     icon={ShieldCheck}
                   />
                   <StatChip
@@ -334,7 +334,13 @@ function AssessmentSheet({
                       by matching their work to the rubric cell descriptions.
                     </p>
                   </div>
-                  <RubricMatrixTable matrix={rubricMatrix} />
+
+                  <ScrollArea className='flex-1 px-4 pb-4'>
+                    <div className='space-y-5'>
+                      <RubricMatrixTable matrix={rubricMatrix} />
+                    </div>
+                  </ScrollArea>
+
                 </div>
               </div>
             ) : (
@@ -594,7 +600,6 @@ export default function LessonHubAssessmentsTab() {
               <TableRow>
                 <TableHead>Assessment</TableHead>
                 <TableHead>Course</TableHead>
-                <TableHead>Type</TableHead>
                 <TableHead>Weight</TableHead>
                 <TableHead>Rubric</TableHead>
                 <TableHead>Required</TableHead>
@@ -625,9 +630,6 @@ export default function LessonHubAssessmentsTab() {
                       >
                         {row.courseTitle}
                       </Badge>
-                    </TableCell>
-                    <TableCell>
-                      <Badge variant='secondary'>{formatLabel(assessment.assessment_type)}</Badge>
                     </TableCell>
                     <TableCell>{formatPercentage(assessment.weight_percentage)}</TableCell>
                     <TableCell>

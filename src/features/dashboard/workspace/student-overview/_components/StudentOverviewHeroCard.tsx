@@ -140,7 +140,7 @@ export function StudentOverviewHeroCard({ profile, data }: StudentOverviewHeroCa
             <h1 className='mt-1 text-2xl font-semibold'>{profile?.full_name}</h1>
             <p className='text-sm opacity-90'>
               {profile?.username ?? 'Web Design & Data Analytics'} ·{' '}
-              {profile?.student?.demographic_tag ?? 'Nairobi, Kenya'}
+              {profile?.student?.demographic_tag ?? ''}
             </p>
             <div className='mt-4 flex flex-wrap gap-2'>
               <Badge className='bg-primary-foreground/15 hover:bg-primary-foreground/20 text-primary-foreground border-0'>

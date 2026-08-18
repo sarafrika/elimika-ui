@@ -91,7 +91,7 @@ export function StudentOverviewActiveCoursesCard({
         ) : null}
 
         {!isLoading && courses.length === 0 ? (
-          <p className='text-muted-foreground mt-3 text-[0.78rem]'>
+          <p className='text-muted-foreground mt-3 text-center text-[0.78rem]'>
             Your active enrollments will show up here once your courses are live.
           </p>
         ) : null}
