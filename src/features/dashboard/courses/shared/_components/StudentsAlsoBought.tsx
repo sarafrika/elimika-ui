@@ -2,9 +2,10 @@
 
 import type { Course, CourseReview } from '@/services/client';
 import { getCourseReviewsOptions } from '@/services/client/@tanstack/react-query.gen';
+import StarRating from '@/src/features/dashboard/courses/shared/_components/StarRating';
 import { useQueries } from '@tanstack/react-query';
 import { BookOpen } from 'lucide-react';
-import StarRating from '@/src/features/dashboard/courses/shared/_components/StarRating';
+import { toAuthenticatedMediaUrl } from '../../../../../lib/media-url';
 
 type Props = {
   courses: Course[];
@@ -17,18 +18,18 @@ export default function StudentsAlsoBought({ courses, creatorName, activeDomain 
     queries: courses.map(course =>
       course.uuid
         ? {
-            ...getCourseReviewsOptions({
-              path: { courseUuid: course.uuid },
-            }),
-            enabled: !!course.uuid,
-            staleTime: 5 * 60 * 1000,
-            refetchOnWindowFocus: false,
-          }
+          ...getCourseReviewsOptions({
+            path: { courseUuid: course.uuid },
+          }),
+          enabled: !!course.uuid,
+          staleTime: 5 * 60 * 1000,
+          refetchOnWindowFocus: false,
+        }
         : {
-            queryKey: ['course-reviews-missing', course.name],
-            queryFn: async () => ({ data: [] as CourseReview[] }),
-            enabled: false,
-          }
+          queryKey: ['course-reviews-missing', course.name],
+          queryFn: async () => ({ data: [] as CourseReview[] }),
+          enabled: false,
+        }
     ),
   });
 
@@ -46,8 +47,8 @@ export default function StudentsAlsoBought({ courses, creatorName, activeDomain 
           const averageRating =
             reviewCount > 0
               ? (
-                  reviews.reduce((sum, review) => sum + (review.rating || 0), 0) / reviewCount
-                ).toFixed(1)
+                reviews.reduce((sum, review) => sum + (review.rating || 0), 0) / reviewCount
+              ).toFixed(1)
               : '0';
 
           return (
@@ -62,7 +63,7 @@ export default function StudentsAlsoBought({ courses, creatorName, activeDomain 
                 {course?.thumbnail_url ? (
                   <>
                     <img
-                      src={course.thumbnail_url}
+                      src={toAuthenticatedMediaUrl(course.thumbnail_url)!}
                       alt={course.name || 'Course thumbnail'}
                       className='h-full w-full object-cover transition-transform duration-300 group-hover:scale-105'
                     />

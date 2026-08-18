@@ -348,7 +348,10 @@ function CourseRow({ course }: { course: Course }) {
           },
         }
       );
-    } catch (_err) {}
+    } catch (_err) {
+      // @ts-ignore
+      toast.error(_err?.message)
+    }
   };
 
   return (

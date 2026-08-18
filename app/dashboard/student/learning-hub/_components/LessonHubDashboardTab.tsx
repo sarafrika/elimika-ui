@@ -557,7 +557,7 @@ export function LessonHubDashboardTab({ learningHubData }: LearningHubDataProps)
                         <p className='mt-1 text-xs text-muted-foreground'>Target: 10 h / week</p>
                     </CardContent>
                 </Card>
-                <Card>
+                <Card className='hidden'>
                     <CardHeader className='pb-3'>
                         <CardTitle className='flex items-center gap-2 text-base'>
                             <Sparkles className='text-primary h-4 w-4' /> AI Recommendations
