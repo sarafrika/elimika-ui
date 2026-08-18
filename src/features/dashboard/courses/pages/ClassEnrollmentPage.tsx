@@ -237,8 +237,6 @@ export default function ClassEnrollmentPage({
     }
   }, [enrollingClass]);
 
-  console.log(enrollingClass, "ENROLL CLASS")
-
   // CLASS SCHEDULES
   const schedules = enrollingClass?.schedule ?? [];
   const sortedSchedules = [...schedules].sort(
@@ -466,20 +464,6 @@ export default function ClassEnrollmentPage({
     eligibleToJoin &&
     termsOk &&
     allMandatoryRequirementsChecked
-
-  console.log(enrollingClass, "ENR CLAS")
-
-  //  <InfoRow
-  //                 icon={<Calendar className='h-4 w-4' />}
-  //                 label='Starts'
-  //                 value={startsAt ? formatScheduleDate(startsAt) : 'Not available'}
-  //               />
-
-  //               <InfoRow
-  //                 icon={<Calendar className='h-4 w-4' />}
-  //                 label='Ends'
-  //                 value={endsAt ? formatScheduleDate(endsAt) : 'Not available'}
-  //               />
 
   // ── Render ─────────────────────────────────────────────────────────────
   return (
