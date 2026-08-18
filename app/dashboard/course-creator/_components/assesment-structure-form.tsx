@@ -500,7 +500,7 @@ function AssessmentSheet({
                         <span className="text-muted-foreground">None</span>
                       </SelectItem>
 
-                      {rubrics.map((r: any) => (
+                      {rubrics.map((r: AssessmentRubric) => (
                         <SelectItem key={r.uuid} value={r.uuid}>
                           <div className="flex min-w-0 flex-col text-start">
                             <span className="font-medium">
