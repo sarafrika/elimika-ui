@@ -113,7 +113,6 @@ export default function ClassDetailsPage() {
   const [showCalendar, setShowCalendar] = useState(false);
   const [selectedSchedule, setSelectedSchedule] = useState<ScheduleDetailsItem | null>(null);
   const [showCourseProgram, setShowCourseProgram] = useState(true);
-  const [expandedModules, setExpandedModules] = useState<string[]>([]);
   const [expandedModuleId, setExpandedModuleId] = useState<string | null>(null);
   const [selectedLesson, setSelectedLesson] = useState<LessonContent | null>(null);
   const [viewedLesson, setViewedLesson] = useState<LessonContent | null>(null);
@@ -306,10 +305,22 @@ export default function ClassDetailsPage() {
     const firstLesson = courseProgramLessons[0];
 
     if (firstLesson && !selectedLesson) {
-      setExpandedModules([firstLesson.lesson.uuid]);
+      setExpandedModuleId(firstLesson.lesson.uuid);
       setSelectedLesson(firstLesson.content.data[0] ?? null);
     }
   }, [courseProgramLessons, selectedLesson]);
+
+  useEffect(() => {
+    if (!selectedLesson) return;
+
+    const selectedModule = courseProgramLessons.find(module =>
+      module.content.data.some(content => content.uuid === selectedLesson.uuid)
+    );
+
+    if (selectedModule && selectedModule.lesson.uuid !== expandedModuleId) {
+      setExpandedModuleId(selectedModule.lesson.uuid);
+    }
+  }, [courseProgramLessons, expandedModuleId, selectedLesson]);
 
   // Handlers
   const handleSubmitFeedback = () => {
@@ -385,7 +396,19 @@ export default function ClassDetailsPage() {
   };
 
   const handleToggleModule = (uuid: string) => {
-    setExpandedModuleId(prev => (prev === uuid ? null : uuid));
+    const nextExpandedModuleId = expandedModuleId === uuid ? null : uuid;
+    setExpandedModuleId(nextExpandedModuleId);
+
+    if (nextExpandedModuleId) {
+      const nextModule = courseProgramLessons.find(module => module.lesson.uuid === uuid);
+      const nextLesson = nextModule?.content.data[0] ?? null;
+
+      if (nextLesson) {
+        setSelectedLesson(nextLesson);
+        setIsPlaying(false);
+        setIsReading(false);
+      }
+    }
   };
 
   // Loading State

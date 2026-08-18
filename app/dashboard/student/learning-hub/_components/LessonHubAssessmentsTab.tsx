@@ -21,7 +21,6 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { EmptyState } from '@/components/ui/empty-state';
 import { Input } from '@/components/ui/input';
-import { ScrollArea } from '@/components/ui/scroll-area';
 import {
   Select,
   SelectContent,
@@ -92,13 +91,13 @@ function StatChip({
   icon: LucideIcon;
 }) {
   return (
-    <div className='border-border/70 bg-card flex items-center gap-3 rounded-md border p-3 shadow-sm'>
-      <div className='bg-primary/10 text-primary flex h-9 w-9 items-center justify-center rounded-md'>
+    <div className='border-border/70 bg-card flex min-w-0 items-center gap-3 rounded-md border p-3 shadow-sm'>
+      <div className='bg-primary/10 text-primary flex h-9 w-9 shrink-0 items-center justify-center rounded-md'>
         <Icon className='h-4 w-4' />
       </div>
-      <div>
+      <div className='min-w-0'>
         <p className='text-muted-foreground text-xs'>{label}</p>
-        <p className='text-foreground text-lg font-semibold'>{value}</p>
+        <p className='text-foreground truncate text-lg font-semibold'>{value}</p>
       </div>
     </div>
   );
@@ -113,16 +112,16 @@ function RubricMatrixTable({ matrix }: { matrix: RubricMatrix }) {
   );
 
   return (
-    <div className='space-y-3'>
+    <div className='min-w-0 space-y-3'>
       <div className='flex flex-wrap gap-2'>
         {scoringLevels.map(level => (
           <Badge key={level.uuid ?? `${level.rubric_uuid}-${level.level_order}`} variant='outline'>
-            {level.name} · {level.points} pts{level.is_passing ? ' · Passing' : ''}
+            {level.name} · {level.points} pts
           </Badge>
         ))}
       </div>
 
-      <div className='rounded-md border overflow-x-auto'>
+      <div className='min-w-0 overflow-x-auto rounded-md border'>
         <Table className='min-w-max'>
           <TableHeader>
             <TableRow>
@@ -206,153 +205,129 @@ function AssessmentSheet({
           </SheetDescription>
         </SheetHeader>
 
-        <ScrollArea className='flex-1 px-4 pb-4'>
-          <div className='space-y-5'>
-            <div className='grid gap-3 sm:grid-cols-2'>
-              <StatChip label='Course' value={row?.courseTitle || 'Unknown course'} icon={BookOpenText} />
-              <StatChip
-                label='Weight'
-                value={assessment?.weight_display!}
-                icon={SlidersHorizontal}
-              />
-              <StatChip
-                label='Rubric linked'
-                value={rubricUuid ? 'Yes' : 'No'}
-                icon={ShieldCheck}
-              />
-              <StatChip
-                label='Required'
-                value={assessment?.is_required ? 'Yes' : 'No'}
-                icon={CheckCircle2}
-              />
-            </div>
-
-            <div className='space-y-3 rounded-md border p-4'>
-              <div className='flex flex-wrap items-center gap-2'>
-                <Badge variant='outline'>{formatLabel(assessment?.assessment_type)}</Badge>
-                {assessment?.sync_class_attendance ? (
-                  <Badge className='bg-primary text-primary-foreground'>Attendance synced</Badge>
-                ) : null}
-                {assessment?.is_required ? (
-                  <Badge className='bg-warning text-warning-foreground'>Required</Badge>
-                ) : (
-                  <Badge variant='secondary'>Optional</Badge>
-                )}
-              </div>
-
-              <div>
-                <p className='text-muted-foreground text-xs uppercase tracking-[0.18em]'>
-                  How this task is graded
-                </p>
-                <p className='mt-2 text-sm leading-7'>
-                  {assessment?.description || 'This assessment is graded with the linked rubric and scoring levels below.'}
-                </p>
-              </div>
-
-              {/* <div className='grid gap-3 sm:grid-cols-3'>
-                <div className='rounded-md border p-3'>
-                  <p className='text-muted-foreground text-xs'>Rubric</p>
-                  <p className='mt-1 font-medium'>{rubric?.title || rubricUuid || 'No rubric selected'}</p>
-                </div>
-                <div className='rounded-md border p-3'>
-                  <p className='text-muted-foreground text-xs'>Rubric type</p>
-                  <p className='mt-1 font-medium'>{rubric?.rubric_type || '—'}</p>
-                </div>
-                <div className='rounded-md border p-3'>
-                  <p className='text-muted-foreground text-xs'>Max score</p>
-                  <p className='mt-1 font-medium'>
-                    {rubric?.max_score != null ? rubric.max_score : '—'}
-                  </p>
-                </div>
-              </div> */}
-
-              {courseRubrics.length > 0 ? (
-                <div className='space-y-2'>
-                  <p className='text-muted-foreground text-xs uppercase tracking-[0.18em]'>
-                    Course rubrics
-                  </p>
-                  <div className='flex flex-wrap gap-2'>
-                    {courseRubrics.map(association => {
-                      const isActive = association.rubric_uuid === rubricUuid;
-
-                      return (
-                        <Badge
-                          key={association.uuid ?? association.rubric_uuid}
-                          variant={isActive ? 'default' : 'outline'}
-                          className='max-w-full'
-                        >
-                          {association.usage_context || 'General'} · {association.rubric_uuid}
-                        </Badge>
-                      );
-                    })}
-                  </div>
-                </div>
-              ) : null}
-            </div>
-
-            {rubricLoading ? (
-              <div className='space-y-3'>
-                <Skeleton className='h-10 rounded-md' />
-                <Skeleton className='h-72 rounded-md' />
-              </div>
-            ) : rubricMatrix ? (
-              <div className='space-y-4'>
-                <div className='grid gap-3 sm:grid-cols-4'>
-                  <StatChip
-                    label='Criteria'
-                    value={rubricMatrix.criteria.length}
-                    icon={FileCheck2}
-                  />
-                  <StatChip
-                    label='Scoring levels'
-                    value={rubricMatrix.scoring_levels.length}
-                    icon={SlidersHorizontal}
-                  />
-                  <StatChip
-                    label='Score Obtainable'
-                    value={rubric?.total_weight! ?? ''}
-                    icon={ShieldCheck}
-                  />
-                  <StatChip
-                    label='Passing score'
-                    value={
-                      rubricMatrix.matrix_statistics?.min_passing_score ??
-                      rubric?.min_passing_score ??
-                      '—'
-                    }
-                    icon={CheckCircle2}
-                  />
-                </div>
-
-                <div className='space-y-3 rounded-md border p-4'>
-                  <div>
-                    <p className='text-muted-foreground text-xs uppercase tracking-[0.18em]'>
-                      Grading matrix
-                    </p>
-                    <p className='text-muted-foreground mt-1 text-sm'>
-                      Each row is a criteria and each column is a performance level. Students are scored
-                      by matching their work to the rubric cell descriptions.
-                    </p>
-                  </div>
-
-                  <ScrollArea className='flex-1 px-4 pb-4'>
-                    <div className='space-y-5'>
-                      <RubricMatrixTable matrix={rubricMatrix} />
-                    </div>
-                  </ScrollArea>
-
-                </div>
-              </div>
-            ) : (
-              <EmptyState
-                variant='card'
-                icon={FileCheck2}
-                title='Rubric details are not available yet'
-                description='The assessment is linked to a rubric, but the rubric matrix could not be loaded right now.'
-              />
-            )}
+        <div className='min-w-0 space-y-5 px-4 pb-4'>
+          <div className='grid gap-3 sm:grid-cols-2'>
+            <StatChip label='Course' value={row?.courseTitle || 'Unknown course'} icon={BookOpenText} />
+            <StatChip
+              label='Weight'
+              value={assessment?.weight_display!}
+              icon={SlidersHorizontal}
+            />
+            <StatChip
+              label='Rubric linked'
+              value={rubricUuid ? 'Yes' : 'No'}
+              icon={ShieldCheck}
+            />
+            <StatChip
+              label='Required'
+              value={assessment?.is_required ? 'Yes' : 'No'}
+              icon={CheckCircle2}
+            />
           </div>
-        </ScrollArea>
+
+          <div className='min-w-0 space-y-3 rounded-md border p-4'>
+            <div className='flex flex-wrap items-center gap-2'>
+              <Badge variant='outline'>{formatLabel(assessment?.assessment_type)}</Badge>
+              {assessment?.sync_class_attendance ? (
+                <Badge className='bg-primary text-primary-foreground'>Attendance synced</Badge>
+              ) : null}
+              {assessment?.is_required ? (
+                <Badge className='bg-warning text-warning-foreground'>Required</Badge>
+              ) : (
+                <Badge variant='secondary'>Optional</Badge>
+              )}
+            </div>
+
+            <div>
+              <p className='text-muted-foreground text-xs uppercase tracking-[0.18em]'>
+                How this task is graded
+              </p>
+              <p className='mt-2 text-sm leading-7'>
+                {assessment?.description || 'This assessment is graded with the linked rubric and scoring levels below.'}
+              </p>
+            </div>
+
+            {courseRubrics.length > 0 ? (
+              <div className='min-w-0 space-y-2'>
+                <p className='text-muted-foreground text-xs uppercase tracking-[0.18em]'>
+                  Course rubrics
+                </p>
+                <div className='flex flex-wrap gap-2'>
+                  {courseRubrics.map(association => {
+                    const isActive = association.rubric_uuid === rubricUuid;
+
+                    return (
+                      <Badge
+                        key={association.uuid ?? association.rubric_uuid}
+                        variant={isActive ? 'default' : 'outline'}
+                        className='max-w-full'
+                      >
+                        {association.usage_context || 'General'} · {association.rubric_uuid}
+                      </Badge>
+                    );
+                  })}
+                </div>
+              </div>
+            ) : null}
+          </div>
+
+          {rubricLoading ? (
+            <div className='space-y-3'>
+              <Skeleton className='h-10 rounded-md' />
+              <Skeleton className='h-72 rounded-md' />
+            </div>
+          ) : rubricMatrix ? (
+            <div className='min-w-0 space-y-4'>
+              <div className='grid gap-3 sm:grid-cols-4'>
+                <StatChip
+                  label='Criteria'
+                  value={rubricMatrix.criteria.length}
+                  icon={FileCheck2}
+                />
+                <StatChip
+                  label='Scoring levels'
+                  value={rubricMatrix.scoring_levels.length}
+                  icon={SlidersHorizontal}
+                />
+                <StatChip
+                  label='Score Obtainable'
+                  value={rubric?.total_weight! ?? ''}
+                  icon={ShieldCheck}
+                />
+                <StatChip
+                  label='Passing score'
+                  value={
+                    rubricMatrix.matrix_statistics?.min_passing_score ??
+                    rubric?.min_passing_score ??
+                    '—'
+                  }
+                  icon={CheckCircle2}
+                />
+              </div>
+
+              <div className='min-w-0 space-y-3 rounded-md border p-4'>
+                <div>
+                  <p className='text-muted-foreground text-xs uppercase tracking-[0.18em]'>
+                    Grading matrix
+                  </p>
+                  <p className='text-muted-foreground mt-1 text-sm'>
+                    Each row is a criteria and each column is a performance level. Students are scored
+                    by matching their work to the rubric cell descriptions.
+                  </p>
+                </div>
+
+                <RubricMatrixTable matrix={rubricMatrix} />
+              </div>
+            </div>
+          ) : (
+            <EmptyState
+              variant='card'
+              icon={FileCheck2}
+              title='Rubric details are not available yet'
+              description='The assessment is linked to a rubric, but the rubric matrix could not be loaded right now.'
+            />
+          )}
+        </div>
       </SheetContent>
     </Sheet>
   );
@@ -545,7 +520,7 @@ export default function LessonHubAssessmentsTab() {
 
       <div className='border-border/70 bg-card rounded-md border p-4 shadow-sm'>
         <div className='flex flex-col gap-3 lg:flex-row lg:items-end lg:justify-between'>
-          <div className='flex-1 space-y-1'>
+          <div className='min-w-0 flex-1 space-y-1'>
             <p className='text-muted-foreground text-sm font-medium'>Search assessments</p>
             <div className='relative max-w-2xl'>
               <Search className='text-muted-foreground absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2' />
@@ -594,7 +569,7 @@ export default function LessonHubAssessmentsTab() {
           description='Try a different course or search term to surface more assessments.'
         />
       ) : (
-        <div className='border-border/70 bg-card overflow-hidden rounded-md border shadow-sm'>
+        <div className='border-border/70 bg-card overflow-x-auto rounded-md border shadow-sm'>
           <Table>
             <TableHeader>
               <TableRow>
