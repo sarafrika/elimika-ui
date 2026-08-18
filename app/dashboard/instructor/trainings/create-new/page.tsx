@@ -761,6 +761,12 @@ const ClassBuilderPage = ({
           ? toCoordinate(classDetails.location_longitude)
           : undefined,
         max_participants: classDetails.class_limit,
+        academic_period_start_date: scheduleSettings.academicPeriod.start
+          ? new Date(`${scheduleSettings.academicPeriod.start}T00:00:00`)
+          : undefined,
+        academic_period_end_date: scheduleSettings.academicPeriod.end
+          ? new Date(`${scheduleSettings.academicPeriod.end}T00:00:00`)
+          : undefined,
         allow_waitlist: true,
         is_active: !isDraft,
         default_start_time:
@@ -846,6 +852,32 @@ const ClassBuilderPage = ({
 
               qc.invalidateQueries({
                 queryKey: getAllClassDefinitionsQueryKey({ query: { pageable: {} } }),
+              });
+
+              qc.refetchQueries({
+                predicate: query => {
+                  const key = query.queryKey[0] as
+                    | { _id?: string; path?: { instructorUuid?: string } }
+                    | undefined;
+
+                  return (
+                    key?._id === 'getClassDefinitionsForInstructor' &&
+                    key.path?.instructorUuid === instructor?.uuid
+                  );
+                },
+              });
+
+              qc.refetchQueries({
+                predicate: query => {
+                  const key = query.queryKey[0] as
+                    | { _id?: string; path?: { instructorUuid?: string } }
+                    | undefined;
+
+                  return (
+                    key?._id === 'getInstructorSchedule' &&
+                    key.path?.instructorUuid === instructor?.uuid
+                  );
+                },
               });
 
               if (typeof window !== 'undefined') {

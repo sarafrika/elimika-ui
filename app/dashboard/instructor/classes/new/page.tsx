@@ -1472,6 +1472,27 @@ const ClassCreationPage = () => {
             query: { pageable: {} },
           }),
         }),
+        qc.refetchQueries({
+          predicate: query => {
+            const key = query.queryKey[0] as
+              | { _id?: string; path?: { instructorUuid?: string } }
+              | undefined;
+
+            return (
+              key?._id === 'getClassDefinitionsForInstructor' &&
+              key.path?.instructorUuid === instructor?.uuid
+            );
+          },
+        }),
+        qc.refetchQueries({
+          predicate: query => {
+            const key = query.queryKey[0] as
+              | { _id?: string; path?: { instructorUuid?: string } }
+              | undefined;
+
+            return key?._id === 'getInstructorSchedule' && key.path?.instructorUuid === instructor?.uuid;
+          },
+        }),
         resolvedId
           ? qc.invalidateQueries({
             queryKey: getClassDefinitionQueryKey({
