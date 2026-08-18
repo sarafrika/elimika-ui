@@ -273,6 +273,18 @@ export default function ProgramClassEnrollmentPage({
     }
   }, [enrollingClass]);
 
+  // CLASS SCHEDULES
+  const schedules = enrollingClass?.schedule ?? [];
+  const sortedSchedules = [...schedules].sort(
+    (a, b) => new Date(a.start_time).getTime() - new Date(b.start_time).getTime()
+  );
+
+  const firstSchedule = sortedSchedules[0];
+  const lastSchedule = sortedSchedules[sortedSchedules.length - 1];
+
+  const startsAt = firstSchedule?.start_time;
+  const endsAt = lastSchedule?.end_time;
+
   const programCourses = enrollingClass?.course ?? [];
 
   // ── Age requirement, combined across every course bundled in the program ──
@@ -552,7 +564,16 @@ export default function ProgramClassEnrollmentPage({
             value={enrollingClass.instructor?.data?.full_name}
           />
           {/* No discrete "academic period" field is exposed for this class. */}
-          <InfoRow icon={<Calendar className='h-4 w-4' />} label='Academic period' value={"Academic period not provided"} />
+          <InfoRow
+            icon={<Calendar className='h-4 w-4' />}
+            label='Academic period'
+            value={
+              <>
+                <div>Start at: {startsAt ? formatScheduleDate(startsAt) : 'Not available'}</div>
+                <div>End at: {endsAt ? formatScheduleDate(endsAt) : 'Not available'}</div>
+              </>
+            }
+          />
 
           <InfoRow
             icon={<Clock className='h-4 w-4' />}
@@ -743,3 +764,12 @@ export default function ProgramClassEnrollmentPage({
     </div >
   );
 }
+
+const formatScheduleDate = (date: Date | string) =>
+  new Date(date).toLocaleString(undefined, {
+    day: 'numeric',
+    month: 'short',
+    year: 'numeric',
+    hour: 'numeric',
+    minute: '2-digit',
+  });

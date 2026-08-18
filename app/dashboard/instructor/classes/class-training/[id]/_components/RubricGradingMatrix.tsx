@@ -184,9 +184,9 @@ export function RubricGradingMatrix({
       </div>
 
       {/* ── Grading grid ── */}
-      <div className='w-full overflow-x-auto'>
-        <div className='min-w-[640px]'>
-          <table className='w-full min-w-[640px] border-collapse text-left'>
+      <div className='w-full max-w-full overflow-x-auto overflow-y-hidden'>
+        <div className='min-w-max'>
+          <table className='min-w-max border-collapse text-left'>
             <thead>
               <tr className='bg-muted/40'>
                 <th className='border-border/70 bg-muted/40 text-foreground sticky left-0 z-10 min-w-[180px] border-b px-3 py-2 text-xs font-semibold'>

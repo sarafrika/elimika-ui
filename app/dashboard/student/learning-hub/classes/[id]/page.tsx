@@ -1627,7 +1627,7 @@ export default function StudentClassTrainingPage({
         <section className='min-h-0 overflow-hidden bg-[color-mix(in_oklch,var(--el-brand-50)_35%,var(--background))]'>
           <div className='border-border/70 bg-card/95 border-b px-4 py-3'>
             <div className='flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between'>
-              <div className='w-full min-w-0'>
+              <div className='min-w-0 w-full'>
                 <h2 className='truncate text-lg font-semibold'>
                   {selectedContent?.title || activeLesson?.title || 'No lesson selected'}
                 </h2>
@@ -1636,14 +1636,14 @@ export default function StudentClassTrainingPage({
                   <Tabs
                     value={activeTab}
                     onValueChange={value => setActiveTab(value as typeof activeTab)}
-                    className='w-full max-w-xl'
+                    className='w-full min-w-0 lg:max-w-fit'
                   >
                     <TabsList className='grid w-full grid-cols-3'>
                       {TAB_ITEMS.map(tab => (
                         <TabsTrigger
                           key={tab.value}
                           value={tab.value}
-                          className='truncate text-xs sm:text-sm'
+                          className='truncate text-xs sm:text-sm px-4'
                         >
                           {tab.label}
                         </TabsTrigger>
@@ -1651,8 +1651,8 @@ export default function StudentClassTrainingPage({
                     </TabsList>
                   </Tabs>
 
-                  <div className='flex flex-col gap-3 lg:w-[34rem] lg:flex-row lg:items-end lg:justify-end'>
-                    <div className='flex flex-1 flex-col gap-2'>
+                  <div className='grid min-w-0 w-full grid-cols-1 gap-3 sm:grid-cols-2 lg:flex lg:w-[34rem] lg:flex-row lg:items-end lg:justify-end'>
+                    <div className='flex min-w-0 flex-1 flex-col gap-2'>
                       <p className='text-muted-foreground text-sm'>Lesson</p>
                       <Select
                         value={selectedLessonId}
@@ -1660,7 +1660,7 @@ export default function StudentClassTrainingPage({
                         disabled={lessonOptions.length === 0}
                       >
                         <SelectTrigger className='h-9 w-full lg:min-w-48'>
-                          <SelectValue placeholder='Select lesson' />
+                          <SelectValue placeholder='Select lesson' className='truncate' />
                         </SelectTrigger>
                         <SelectContent>
                           {lessonOptions.map(module => (
@@ -1672,7 +1672,7 @@ export default function StudentClassTrainingPage({
                       </Select>
                     </div>
 
-                    <div className='flex flex-1 flex-col gap-2'>
+                    <div className='flex min-w-0 flex-1 flex-col gap-2'>
                       <p className='text-muted-foreground text-sm'>Content</p>
                       <Select
                         value={selectedContentId}
@@ -1680,7 +1680,7 @@ export default function StudentClassTrainingPage({
                         disabled={activeLessonContents.length === 0}
                       >
                         <SelectTrigger className='h-9 w-full lg:min-w-56'>
-                          <SelectValue placeholder='Select content' />
+                          <SelectValue placeholder='Select content' className='truncate' />
                         </SelectTrigger>
                         <SelectContent>
                           {activeLessonContents

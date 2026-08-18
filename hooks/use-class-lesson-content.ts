@@ -35,6 +35,7 @@ export function useClassLessonContent({ courseUuid, programUuid }: UseClassLesso
   const courseLessonResult = useCourseLessonsWithContent({
     courseUuid: hasProgram ? undefined : (courseUuid ?? undefined),
     enabled: !hasProgram && Boolean(courseUuid),
+    includeContent: !hasProgram,
   });
 
   const programLessonResult = useProgramLessonsWithContent({
@@ -47,17 +48,16 @@ export function useClassLessonContent({ courseUuid, programUuid }: UseClassLesso
     () =>
       hasProgram
         ? programLessonResult.coursesWithLessons.flatMap(({ course, lessons }) =>
-            lessons.map(lesson => ({
-              ...lesson,
-              course,
-            }))
-          )
-        : (courseLessonResult.lessons ?? []).map(lesson => ({
+          lessons.map(lesson => ({
             ...lesson,
-          })),
+            course,
+          }))
+        )
+        : (courseLessonResult.lessons ?? []).map(lesson => ({
+          ...lesson,
+        })),
     [courseLessonResult.lessons, hasProgram, programLessonResult.coursesWithLessons]
   );
-
   return {
     contentTypeMap: hasProgram
       ? programLessonResult.contentTypeMap
