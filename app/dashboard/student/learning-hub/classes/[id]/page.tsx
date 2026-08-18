@@ -83,6 +83,7 @@ import { AssignmentContentPreview } from '../../../../../../components/content-p
 import { LessonContentPreview } from '../../../../../../components/content-preview/LessonContentPreview';
 import { QuizContentPreview } from '../../../../../../components/content-preview/QuizContentPreview';
 import RichTextRenderer from '../../../../../../components/editors/richTextRenders';
+import { useLearningHubStudyMetrics } from '../../_components/useLearningHubStudyMetrics';
 import { getPreferredScheduleInstance } from '../../../../instructor/classes/_components/new-class-page.utils';
 
 type TrainingSchedule = ClassDetailsScheduleItem & { meeting_url?: string | null };
@@ -924,6 +925,7 @@ export default function StudentClassTrainingPage({
   classId: classIdProp,
   requestedScheduleId: requestedScheduleIdProp,
 }: ClassTrainingPageProps = {}) {
+  useLearningHubStudyMetrics();
   const params = useParams();
   const searchParams = useSearchParams();
   const router = useRouter();

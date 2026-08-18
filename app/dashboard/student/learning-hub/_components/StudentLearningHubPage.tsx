@@ -2,6 +2,7 @@
 
 import { Award, BookOpen, ChevronLeft, ChevronRight, ClipboardList, FileCheck2, LayoutDashboard, Mail, PlayCircle, Users } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
+import { usePathname, useRouter, useSearchParams } from 'next/navigation';
 import LessonHubAssessmentsTab from './LessonHubAssessmentsTab';
 import LessonHubAssignmentsTab from './LessonHubAssignmentsTab';
 import LessonHubCertificatesTab from './LessonHubCertificatesTab';
@@ -26,10 +27,20 @@ const TABS = [
   // { id: "calendar", label: "Learning Calendar", icon: CalendarIcon },
 ] as const;
 
+type TabId = (typeof TABS)[number]['id'];
+
+function isTabId(value: string | null): value is TabId {
+  return Boolean(value && TABS.some((tab) => tab.id === value));
+}
+
 export function StudentLearningHubPage() {
-  const [tab, setTab] = useState<(typeof TABS)[number]["id"]>("dashboard");
+  const router = useRouter();
+  const pathname = usePathname();
+  const searchParams = useSearchParams();
+  const requestedTab = searchParams.get('tab');
+  const [tab, setTab] = useState<TabId>(isTabId(requestedTab) ? requestedTab : 'dashboard');
   const tabRowRef = useRef<HTMLDivElement>(null);
-  const tabRefs = useRef(new Map<(typeof TABS)[number]["id"], HTMLButtonElement>());
+  const tabRefs = useRef(new Map<TabId, HTMLButtonElement>());
 
   const scrollTabs = (direction: "left" | "right") => {
     tabRowRef.current?.scrollBy({
@@ -45,6 +56,25 @@ export function StudentLearningHubPage() {
       block: "nearest",
     });
   }, [tab]);
+
+  useEffect(() => {
+    const nextTab = isTabId(requestedTab) ? requestedTab : 'dashboard';
+    setTab((current) => (current === nextTab ? current : nextTab));
+  }, [requestedTab]);
+
+  const handleTabChange = (nextTab: TabId) => {
+    setTab(nextTab);
+
+    const params = new URLSearchParams(searchParams.toString());
+    if (nextTab === 'dashboard') {
+      params.delete('tab');
+    } else {
+      params.set('tab', nextTab);
+    }
+
+    const query = params.toString();
+    router.replace(query ? `${pathname}?${query}` : pathname, { scroll: false });
+  };
 
   const data = useStudentLearningHubData();
 
@@ -86,7 +116,7 @@ export function StudentLearningHubPage() {
                     }
                   }}
                   type="button"
-                  onClick={() => setTab(t.id)}
+                  onClick={() => handleTabChange(t.id)}
                   className={`inline-flex shrink-0 items-center gap-2 whitespace-nowrap rounded-full border px-4 py-1.5 text-sm transition-colors ${active
                     ? 'border-primary bg-primary text-primary-foreground shadow-sm'
                     : 'border-border bg-card text-muted-foreground hover:border-primary hover:text-foreground'
