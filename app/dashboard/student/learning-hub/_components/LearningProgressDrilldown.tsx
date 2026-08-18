@@ -372,10 +372,14 @@ export function LearningProgressDrilldown({ enrollments }: { enrollments: EnrolC
 
                                 <div className="flex flex-wrap gap-2 pt-1">
                                     <Button asChild size="sm" variant="outline">
-                                        <Link href="/learning-hub">Open learning hub</Link>
+                                        <Link href={buildWorkspaceAliasPath(activeDomain, '/dashboard/student/learning-hub')}>
+                                            Open learning hub
+                                        </Link>
                                     </Button>
                                     <Button asChild size="sm" variant="outline">
-                                        <Link href="/learning-hub?tab=my-courses">My courses</Link>
+                                        <Link href={buildWorkspaceAliasPath(activeDomain, '/dashboard/student/learning-hub?tab=my-courses')}>
+                                            My courses
+                                        </Link>
                                     </Button>
                                 </div>
                             </div>

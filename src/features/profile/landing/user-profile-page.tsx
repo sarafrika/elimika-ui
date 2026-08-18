@@ -6,8 +6,8 @@ import type { CourseCreator, Organisation, Student } from '@/services/client/typ
 import { useUserDomain } from '@/src/features/dashboard/context/user-domain-context';
 import { useUserProfile } from '@/src/features/profile/context/profile-context';
 import { useMemo } from 'react';
-import { creatorTabs } from './course-creator-tab';
 import CourseCreatorProfilePage from './course-creator-profile-page';
+import { creatorTabs } from './course-creator-tab';
 import InstructorProfilePage from './instructor-profile-page';
 import { instructorTabs } from './instructors-tab';
 import { ProfilePage } from './profile-page';
@@ -206,12 +206,13 @@ function normaliseProfile(
           avatar_url: rawUser?.profile_image_url,
           bio: p.bio,
           dob: normalizeDob(rawUser?.dob),
-          address: location?.formatted_location || location?.location || location?.address || '',
+          address: p.location_name,
           latitude: location?.latitude,
           longitude: location?.longitude,
           profile_image_url: rawUser?.profile_image_url,
           username: rawUser?.username,
           website: p.website,
+          admin_verified: p.admin_verified,
           professional_headline: p.professional_headline,
           is_profile_complete: p.is_profile_complete,
           is_online: true,
@@ -225,6 +226,7 @@ function normaliseProfile(
         const organizations = rawUser?.organizations;
         const p = Array.isArray(organizations) ? organizations[0] : rawUser?.organization;
         if (!p) return null;
+
         return {
           uuid: p.uuid ?? rawUser?.uuid ?? '',
           active: rawUser?.active,

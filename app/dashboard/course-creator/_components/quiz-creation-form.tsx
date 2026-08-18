@@ -8,6 +8,7 @@ import { toast } from 'sonner';
 import { Badge } from '../../../../components/ui/badge';
 import { Button } from '../../../../components/ui/button';
 import { Checkbox } from '../../../../components/ui/checkbox';
+import { DeleteConfirmationDialog } from '../../../../components/ui/delete-confirmation-dialog';
 import { Input } from '../../../../components/ui/input';
 import { Label } from '../../../../components/ui/label';
 import {
@@ -54,7 +55,7 @@ type QuizSummary = Pick<
   | 'status'
   | 'rubric_uuid'
 >;
-type QuizPayload = {
+export type QuizPayload = {
   title: string;
   instructions: string;
   time_limit_minutes: number;
@@ -98,6 +99,7 @@ export type QuizCreationFormProps = {
   addQuestionOption: (payload: unknown) => Promise<unknown>;
 
   openBulkUploadSheet: () => void;
+  onDraftChange?: (payload: QuizPayload) => void;
 
   isPending: boolean;
 };
@@ -392,6 +394,7 @@ export const QuizCreationForm = ({
   deleteQuizForLesson,
   isPending,
   openBulkUploadSheet,
+  onDraftChange,
 }: QuizCreationFormProps) => {
   const creator = useCourseCreator();
 
@@ -409,6 +412,8 @@ export const QuizCreationForm = ({
 
   // ── Quiz state ────────────────────────────────────────────────────────────
   const [localQuizData, setLocalQuizData] = useState({ ...EMPTY_QUIZ });
+  const [showDeleteQuizDialog, setShowDeleteQuizDialog] = useState(false);
+  const [isDeletingQuiz, setIsDeletingQuiz] = useState(false);
 
   const selectedRubric = rubrics.find(r => r.uuid === localQuizData.rubric_uuid);
 
@@ -425,6 +430,10 @@ export const QuizCreationForm = ({
     () => ({ ...localQuizData, lesson_uuid: selectedLessonId as string }),
     [selectedLessonId, localQuizData]
   );
+
+  useEffect(() => {
+    onDraftChange?.(selectedQuizData);
+  }, [onDraftChange, selectedQuizData]);
 
   const handleQuizInputChange = useCallback(
     <K extends keyof typeof EMPTY_QUIZ>(field: K, value: (typeof EMPTY_QUIZ)[K]) => {
@@ -487,16 +496,22 @@ export const QuizCreationForm = ({
     onSelectQuiz,
   ]);
 
-  const handleDeleteQuiz = useCallback(async () => {
+  const handleDeleteQuiz = useCallback(() => {
     if (!quizUuid) return;
-    if (!confirm('Are you sure you want to delete this quiz? This action cannot be undone.'))
-      return;
+    setShowDeleteQuizDialog(true);
+  }, [quizUuid]);
+
+  const confirmDeleteQuiz = useCallback(async () => {
+    if (!quizUuid) return;
 
     try {
+      setIsDeletingQuiz(true);
       await deleteQuizForLesson(quizUuid);
       onSelectQuiz?.(null);
     } catch (err) {
       toast.error('Failed to delete quiz.');
+    } finally {
+      setIsDeletingQuiz(false);
     }
   }, [quizUuid, deleteQuizForLesson, onSelectQuiz]);
 
@@ -810,88 +825,99 @@ export const QuizCreationForm = ({
           </div>
 
           {/* Questions section */}
-          {quizUuid !== '' && (
-            <div className='mt-8 border-t pt-6'>
-              <div className='mb-6'>
-                <h4 className='text-foreground mb-3 text-lg font-semibold'>Questions</h4>
-
-                <div className='flex w-full flex-row flex-wrap items-center justify-between'>
-                  <div className='flex flex-wrap gap-2'>
-                    {QUESTION_TYPES.map(type => (
-                      <Button
-                        key={type.value}
-                        size='sm'
-                        variant='outline'
-                        onClick={() => addQuestion(type.value)}
-                      >
-                        + {type.label}
-                      </Button>
-                    ))}
-                  </div>
-
-                  <Button variant='outline' onClick={openBulkUploadSheet}>
-                    <FileText className='mr-2 h-4 w-4' />
-                    Paste Bulk Questions
-                  </Button>
-                </div>
+          <div className='mt-8 border-t pt-6'>
+            <div className='mb-6'>
+              <div className='mb-3 flex items-center justify-between gap-3'>
+                <h4 className='text-foreground text-lg font-semibold'>Questions</h4>
+                {!quizUuid && (
+                  <span className='bg-muted text-muted-foreground rounded-full px-2.5 py-1 text-xs font-medium'>
+                    Will be created on save
+                  </span>
+                )}
               </div>
 
-              <TooltipProvider>
-                <div className='overflow-hidden rounded-lg border'>
-                  <table className='w-full'>
-                    <thead>
-                      <tr className='bg-muted border-b'>
-                        <th className='text-foreground w-1/3 px-4 py-3 text-left text-sm font-semibold'>
-                          Question
-                        </th>
-                        <th className='text-foreground px-4 py-3 text-left text-sm font-semibold'>
-                          Answer/Options
-                        </th>
-                        <th className='text-foreground w-24 px-4 py-3 text-left text-sm font-semibold'>
-                          Points
-                        </th>
-                      </tr>
-                    </thead>
-                    <tbody className='divide-y'>
-                      {questions.length > 0 ? (
-                        questions.map((q, qIndex) => (
-                          <QuestionRow
-                            key={`question-${qIndex}`}
-                            question={q}
-                            qIndex={qIndex}
-                            updateQuestionText={updateQuestionText}
-                            updateQuestionPoint={updateQuestionPoint}
-                            updateOptionText={updateOptionText}
-                            toggleCorrectOption={toggleCorrectOption}
-                            setCorrectOption={setCorrectOption}
-                            addOption={addOption}
-                            deleteOption={deleteOption}
-                            updatePairText={updatePairText}
-                            deletePair={deletePair}
-                            addPair={addPair}
-                            deleteQuestion={deleteQuestion}
-                          />
-                        ))
-                      ) : (
-                        <tr>
-                          <td
-                            colSpan={3}
-                            className='text-muted-foreground py-12 text-center text-sm'
-                          >
-                            <div className='rounded-lg border border-dashed py-8'>
-                              No questions added yet. Click "Add Question" to get started.
-                            </div>
-                          </td>
-                        </tr>
-                      )}
-                    </tbody>
-                  </table>
+              <div className='flex w-full flex-row flex-wrap items-center justify-between gap-3'>
+                <div className='flex flex-wrap gap-2'>
+                  {QUESTION_TYPES.map(type => (
+                    <Button
+                      key={type.value}
+                      size='sm'
+                      variant='outline'
+                      onClick={() => addQuestion(type.value)}
+                    >
+                      + {type.label}
+                    </Button>
+                  ))}
                 </div>
-              </TooltipProvider>
+
+                <Button variant='outline' onClick={openBulkUploadSheet}>
+                  <FileText className='mr-2 h-4 w-4' />
+                  Paste Bulk Questions
+                </Button>
+              </div>
             </div>
-          )}
+
+            <TooltipProvider>
+              <div className='overflow-hidden rounded-lg border'>
+                <table className='w-full'>
+                  <thead>
+                    <tr className='bg-muted border-b'>
+                      <th className='text-foreground w-1/3 px-4 py-3 text-left text-sm font-semibold'>
+                        Question
+                      </th>
+                      <th className='text-foreground px-4 py-3 text-left text-sm font-semibold'>
+                        Answer/Options
+                      </th>
+                      <th className='text-foreground w-24 px-4 py-3 text-left text-sm font-semibold'>
+                        Points
+                      </th>
+                    </tr>
+                  </thead>
+                  <tbody className='divide-y'>
+                    {questions.length > 0 ? (
+                      questions.map((q, qIndex) => (
+                        <QuestionRow
+                          key={`question-${qIndex}`}
+                          question={q}
+                          qIndex={qIndex}
+                          updateQuestionText={updateQuestionText}
+                          updateQuestionPoint={updateQuestionPoint}
+                          updateOptionText={updateOptionText}
+                          toggleCorrectOption={toggleCorrectOption}
+                          setCorrectOption={setCorrectOption}
+                          addOption={addOption}
+                          deleteOption={deleteOption}
+                          updatePairText={updatePairText}
+                          deletePair={deletePair}
+                          addPair={addPair}
+                          deleteQuestion={deleteQuestion}
+                        />
+                      ))
+                    ) : (
+                      <tr>
+                        <td colSpan={3} className='text-muted-foreground py-12 text-center text-sm'>
+                          <div className='rounded-lg border border-dashed py-8'>
+                            No questions added yet. Click "Add Question" to get started.
+                          </div>
+                        </td>
+                      </tr>
+                    )}
+                  </tbody>
+                </table>
+              </div>
+            </TooltipProvider>
+          </div>
         </div>
       )}
+      <DeleteConfirmationDialog
+        open={showDeleteQuizDialog}
+        onOpenChange={setShowDeleteQuizDialog}
+        onConfirm={confirmDeleteQuiz}
+        title='Delete quiz?'
+        description='This quiz and its questions will be permanently deleted. This action cannot be undone.'
+        confirmLabel='Delete quiz'
+        isDeleting={isDeletingQuiz}
+      />
     </div>
   );
 };

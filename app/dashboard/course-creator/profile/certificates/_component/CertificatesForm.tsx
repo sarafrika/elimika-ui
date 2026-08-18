@@ -228,35 +228,40 @@ export default function CertificatesSettings() {
     });
   };
 
-  async function onDelete(index: number) {
+  function onDelete(index: number) {
     if (!isEditing) return;
-    const shouldRemove = confirm('Are you sure you want to remove this certification?');
-    if (!shouldRemove) return;
+    requestConfirmation({
+      title: 'Remove certification?',
+      description: 'This certification will be permanently removed from your profile.',
+      confirmLabel: 'Remove certification',
+      cancelLabel: 'Keep certification',
+      onConfirm: async () => {
+        const certUUID = form.getValues('certifications')[index]?.uuid;
+        remove(index);
 
-    const certUUID = form.getValues('certifications')[index]?.uuid;
-    remove(index);
+        if (certUUID) {
+          const resp = await deleteCourseCreatorCertification({
+            path: {
+              courseCreatorUuid: courseCreator?.uuid!,
+              certificationUuid: certUUID,
+            },
+          });
+          if (resp.error) {
+            toast.error('Unable to remove this certification right now.');
+            return;
+          }
+        }
 
-    if (certUUID) {
-      const resp = await deleteCourseCreatorCertification({
-        path: {
-          courseCreatorUuid: courseCreator?.uuid!,
-          certificationUuid: certUUID,
-        },
-      });
-      if (resp.error) {
-        toast.error('Unable to remove this certification right now.');
-        return;
-      }
-    }
-
-    await invalidateQuery?.();
-    qc.invalidateQueries({
-      queryKey: getCourseCreatorCertificationsQueryKey({
-        path: { courseCreatorUuid: courseCreator?.uuid as string },
-        query: { pageable: {} },
-      }),
+        await invalidateQuery?.();
+        qc.invalidateQueries({
+          queryKey: getCourseCreatorCertificationsQueryKey({
+            path: { courseCreatorUuid: courseCreator?.uuid as string },
+            query: { pageable: {} },
+          }),
+        });
+        toast('Certification removed successfully');
+      },
     });
-    toast('Certification removed successfully');
   }
 
   const formatDateRange = (issuedDate?: string | Date, expiryDate?: string | Date) => {

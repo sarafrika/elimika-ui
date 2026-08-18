@@ -65,7 +65,7 @@ import type {
   InstructorExperience,
 } from '@/services/client/types.gen';
 
-type SkillsWalletRole = Extract<VerifiedSkillsRole, 'instructor' | 'course_creator'>;
+export type SkillsWalletRole = Extract<VerifiedSkillsRole, 'instructor' | 'course_creator'>;
 
 type RoleSkillsWalletPageProps = {
   role: SkillsWalletRole;
@@ -86,11 +86,11 @@ const TABS = [
 
 type TabId = (typeof TABS)[number]['id'];
 
-function getRoleLabel(role: SkillsWalletRole) {
+export function getRoleLabel(role: SkillsWalletRole) {
   return role === 'instructor' ? 'Instructor' : 'Course creator';
 }
 
-function getRoleWalletId(role: SkillsWalletRole, uuid?: string) {
+export function getRoleWalletId(role: SkillsWalletRole, uuid?: string) {
   if (!uuid) return `${role.toUpperCase()}-WALLET`;
   return `${role === 'instructor' ? 'INS' : 'CCR'}-${uuid.slice(0, 8).toUpperCase()}`;
 }
@@ -296,7 +296,7 @@ function mapAchievements({
   ];
 }
 
-function buildRoleWalletData({
+export function buildRoleWalletData({
   role,
   profileName,
   skillsWalletContent,
@@ -401,7 +401,7 @@ function buildRoleWalletData({
   };
 }
 
-type RoleWalletData = SkillsWalletData & {
+export type RoleWalletData = SkillsWalletData & {
   experiences: ExperienceRecord[];
   achievements: AchievementRecord[];
   verificationEvents: VerificationEventRecord[];

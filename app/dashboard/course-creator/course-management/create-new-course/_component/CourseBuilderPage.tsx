@@ -4,27 +4,31 @@
 import HTMLTextPreview from '@/components/editors/html-text-preview';
 import RichTextRenderer from '@/components/editors/richTextRenders';
 import { DifficultyLabel } from '@/components/labels/difficulty-label';
+import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import Spinner from '@/components/ui/spinner';
 import { StepperContent, StepperList, StepperRoot, StepperTrigger } from '@/components/ui/stepper';
 import { useBreadcrumb } from '@/context/breadcrumb-provider';
 import { useCourseCreator } from '@/context/course-creator-context';
+import { cn } from '@/lib/utils';
 import {
   getAllContentTypesOptions,
   getCourseByUuidOptions,
   getCourseLessonsOptions,
   getLessonContentOptions,
-  getLessonContentQueryKey,
   publishCourseMutation,
-  publishCourseQueryKey,
+  publishCourseQueryKey
 } from '@/services/client/@tanstack/react-query.gen';
 import type { Lesson } from '@/services/client/types.gen';
+import { isAuthenticatedMediaUrl, toAuthenticatedMediaUrl } from '@/src/lib/media-url';
 import { useMutation, useQueries, useQuery, useQueryClient } from '@tanstack/react-query';
 import {
+  AlertCircle,
   BadgeDollarSign,
   BookOpen,
   CheckCheck,
   CheckCircle,
+  CheckCircle2, Clock3,
   File,
   FileCheck,
   GraduationCap,
@@ -35,7 +39,6 @@ import Image from 'next/image';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useEffect, useRef, useState } from 'react';
 import { toast } from 'sonner';
-import { isAuthenticatedMediaUrl, toAuthenticatedMediaUrl } from '@/src/lib/media-url';
 import AssessmentCreationForm from '../../../_components/assessment-creation-form';
 import CourseBrandingForm from '../../../_components/course-branding-form';
 import { CourseCreationForm, type CourseFormRef } from '../../../_components/course-creation-form';
@@ -203,7 +206,7 @@ export default function CourseBuilderPage() {
           },
         }
       );
-    } catch (_err) {}
+    } catch (_err) { }
   };
 
   if (creatorLoading) {
@@ -221,29 +224,58 @@ export default function CourseBuilderPage() {
   return (
     <div className='relative w-full'>
       <div className='relative mx-auto flex w-full flex-col gap-10 px-4 pb-12 lg:pb-16'>
-        {/* <header className='border-border bg-card/90 rounded-[36px] border p-8 shadow-xl backdrop-blur'>
-          <span className='border-primary/40 bg-primary/10 text-primary inline-flex items-center gap-2 rounded-full border px-4 py-1 text-xs font-semibold tracking-[0.4em] uppercase'>
-            Course creator studio
-          </span>
-          <h1 className='text-foreground mt-4 text-3xl font-semibold sm:text-4xl'>
+        <header
+          className={cn(
+            'rounded-xl border px-5 py-4 transition-colors',
+            course?.data?.admin_approved
+              ? 'border-success/30 bg-success/5'
+              : !course?.data?.is_published
+                ? 'border-warning/30 bg-warning/5'
+                : 'border-muted-foreground/20 bg-muted/30',
+          )}
+        >
+          <div className='flex flex-row items-center justify-between gap-4'>
+            <span
+              className={cn('text-[10px] font-medium tracking-widest uppercase')}
+            >
+              Course creator studio
+            </span>
+
+            {course?.data?.admin_approved ? (
+              <Badge variant='success' className='gap-2 font-semibold text-sm capitalize'>
+                <CheckCircle2 className='h-4 w-4' />
+                ADMIN APPROVED
+              </Badge>
+            ) : !course?.data?.is_published ? (
+              <Badge
+                variant='outline'
+                className='gap-2 font-semibold text-sm leading-5 border-warning/50 bg-warning/10 text-warning capitalize'
+              >
+                <AlertCircle className='h-4 w-4' />
+                PUBLISH FOR REVIEW
+              </Badge>
+            ) : (
+              <Badge variant='secondary' className='gap-2 font-semibold text-sm capitalize'>
+                <Clock3 className='h-4 w-4' />
+                AWAITING ADMIN APPROVAL
+              </Badge>
+            )}
+          </div>
+
+          <h1
+            className={cn(
+              'mt-2 text-xl font-semibold',
+              course?.data?.admin_approved
+                ? 'text-success'
+                : !course?.data?.is_published
+                  ? 'text-warning'
+                  : 'text-foreground',
+            )}
+          >
             Design learning experiences that match your vision
           </h1>
-          <p className='text-muted-foreground mt-3 max-w-2xl text-sm sm:text-base'>
-            Outline your course blueprint, orchestrate lessons, and refine assessments with
-            guardrails that echo the Elimika brand.
-          </p>
-        </header> */}
 
-        <header className='border-border bg-card rounded-xl border px-5 py-4'>
-          <span className='text-muted-foreground text-[10px] font-medium tracking-widest uppercase'>
-            Course creator studio
-          </span>
-
-          <h1 className='text-foreground mt-2 text-xl font-semibold'>
-            Design learning experiences that match your vision
-          </h1>
-
-          <p className='text-muted-foreground mt-1 max-w-xl text-sm'>
+          <p className='text-muted-foreground mt-1 text-sm'>
             Outline your course blueprint, orchestrate lessons, and refine assessments with
             guardrails that echo the Elimika brand.
           </p>

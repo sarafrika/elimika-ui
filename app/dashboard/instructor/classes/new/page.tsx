@@ -74,7 +74,7 @@ import {
   SessionFormatEnum,
 } from '../../../../../services/client/types.gen';
 import { toAuthenticatedMediaUrl } from '../../../../../src/lib/media-url';
-import { CLASS_COLOR_OPTIONS } from '../../../_components/class-colors';
+import { TOKEN } from '../../../_components/color-charts';
 import {
   ClassDetails,
   NotificationSettings,
@@ -200,7 +200,7 @@ const createInitialScheduleSettings = (): ScheduleSettings => ({
 
 const createInitialNotificationSettings = (): NotificationSettings => ({
   reminder: '24h',
-  classColour: 'var(--chart-1)',
+  classColour: TOKEN.primary,
 });
 
 const reminderToMinutes = (reminder?: string) => {
@@ -304,6 +304,66 @@ const getMutationErrorMessage = (error: unknown, fallback: string) => {
     if (typeof message === 'string' && message.trim().length > 0) return message;
   }
   return fallback;
+};
+
+const getMutationErrorDetails = (error: unknown) => {
+  if (!error || typeof error !== 'object') return undefined;
+
+  const details: string[] = [];
+  const pushText = (value: unknown) => {
+    if (typeof value === 'string' && value.trim().length > 0) {
+      details.push(value.trim());
+    }
+  };
+
+  if ('message' in error) {
+    pushText((error as { message?: unknown }).message);
+  }
+
+  const nestedError = (error as { error?: unknown }).error;
+  if (nestedError && typeof nestedError === 'object') {
+    if ('message' in nestedError) {
+      pushText((nestedError as { message?: unknown }).message);
+    }
+
+    if ('errors' in nestedError) {
+      const nestedErrors = (nestedError as { errors?: Record<string, unknown> }).errors;
+      if (nestedErrors && typeof nestedErrors === 'object') {
+        const fieldMessages = Object.entries(nestedErrors)
+          .filter(([, value]) => typeof value === 'string' && value.trim().length > 0)
+          .map(([field, value]) => `${field}: ${String(value).trim()}`);
+        details.push(...fieldMessages);
+      }
+    }
+  }
+
+  if ('errors' in error) {
+    const rawErrors = (error as { errors?: Record<string, unknown> }).errors;
+    if (rawErrors && typeof rawErrors === 'object') {
+      const fieldMessages = Object.entries(rawErrors)
+        .filter(([, value]) => typeof value === 'string' && value.trim().length > 0)
+        .map(([field, value]) => `${field}: ${String(value).trim()}`);
+      details.push(...fieldMessages);
+    }
+  }
+
+  const uniqueDetails = [...new Set(details)];
+  return uniqueDetails.length > 0 ? uniqueDetails.join(' • ') : undefined;
+};
+
+const showMutationError = (error: unknown, fallback: string) => {
+  const message = getMutationErrorMessage(error, fallback);
+  const details = getMutationErrorDetails(error);
+
+  if (details) {
+    toast.error(message, {
+      description: details,
+      duration: 8000,
+    });
+    return;
+  }
+
+  toast.error(message);
 };
 
 const getRepeatSummary = (scheduleSettings: ScheduleSettings) => {
@@ -446,6 +506,8 @@ const expandSessionsForConflictCheck = (
   return sessions;
 };
 
+
+// correct mobile screen layout issue
 const ClassCreationPage = () => {
   const router = useRouter();
   const qc = useQueryClient();
@@ -557,13 +619,15 @@ const ClassCreationPage = () => {
   const handleServiceTypeChange = (
     newServiceType: ServiceType,
     classType: 'PRIVATE' | 'GROUP',
-    locationType: 'ONLINE' | 'IN_PERSON' | 'HYBRID'
+    locationType: 'ONLINE' | 'IN_PERSON' | 'HYBRID',
+    rateCardPrice?: number
   ) => {
     setServiceType(newServiceType);
     setClassDetails(prev => ({
       ...prev,
       class_type: classType === 'PRIVATE' ? 'PRIVATE' : 'PUBLIC',
       location_type: locationType,
+      rate_card: Number.isFinite(rateCardPrice ?? Number.NaN) ? String(rateCardPrice) : prev.rate_card,
     }));
   };
 
@@ -1127,8 +1191,20 @@ const ClassCreationPage = () => {
       toast.error('Please select a lecture type');
       return false;
     }
+    if (!selectedCatalogItem) {
+      toast.error('Please select a valid course or program');
+      return false;
+    }
+    if (!Number.isFinite(Number(classDetails.rate_card)) || Number(classDetails.rate_card) <= 0) {
+      toast.error('Please choose a service type with a valid approved rate');
+      return false;
+    }
     if (requiresPhysicalLocation(locationType) && !trimToUndefined(classDetails.location_name)) {
       toast.error('Please enter a location');
+      return false;
+    }
+    if ((locationType === 'ONLINE' || locationType === 'HYBRID') && !trimToUndefined(classDetails.meeting_link)) {
+      toast.error('Please enter a class meeting link');
       return false;
     }
     if (schedulePreset === 'pick-dates' && pickedDates.length === 0) {
@@ -1340,7 +1416,8 @@ const ClassCreationPage = () => {
       location_longitude: toCoordinate(locationLongitude),
       max_participants: classDetails.class_limit > 0 ? classDetails.class_limit : undefined,
       classroom: trimToUndefined(classDetails.classroom),
-      class_color: trimToUndefined(CLASS_COLOR_OPTIONS?.[0]?.value || classDetails.class_color),
+      // class_color: trimToUndefined(notificationSettings.classColour || classDetails.class_color),
+      class_color: TOKEN.primary,
       academic_period_start_date: academicPeriodStart,
       academic_period_end_date: academicPeriodEnd,
       registration_period_start_date: registrationPeriodStart,
@@ -1351,7 +1428,7 @@ const ClassCreationPage = () => {
       sale_price: approvedRate,
       instructor_pay: approvedRate,
       rate_basis: rateBasis,
-      allow_waitlist: true,
+      allow_waitlist: allowWaitlist,
       is_active: !isDraft,
       default_start_time: new Date(buildUtcIsoDateTime(payloadRefDate, payloadStartTime)),
       default_end_time: new Date(buildUtcIsoDateTime(payloadRefDate, payloadEndTime)),
@@ -1394,7 +1471,7 @@ const ClassCreationPage = () => {
             toast.success('Video uploaded');
           }
         } catch (error) {
-          toast.error(getMutationErrorMessage(error, 'Failed to upload class media'));
+          showMutationError(error, 'Failed to upload class media');
         }
       }
 
@@ -1409,12 +1486,33 @@ const ClassCreationPage = () => {
             query: { pageable: {} },
           }),
         }),
+        qc.refetchQueries({
+          predicate: query => {
+            const key = query.queryKey[0] as
+              | { _id?: string; path?: { instructorUuid?: string } }
+              | undefined;
+
+            return (
+              key?._id === 'getClassDefinitionsForInstructor' &&
+              key.path?.instructorUuid === instructor?.uuid
+            );
+          },
+        }),
+        qc.refetchQueries({
+          predicate: query => {
+            const key = query.queryKey[0] as
+              | { _id?: string; path?: { instructorUuid?: string } }
+              | undefined;
+
+            return key?._id === 'getInstructorSchedule' && key.path?.instructorUuid === instructor?.uuid;
+          },
+        }),
         resolvedId
           ? qc.invalidateQueries({
-              queryKey: getClassDefinitionQueryKey({
-                path: { uuid: resolvedId },
-              }),
-            })
+            queryKey: getClassDefinitionQueryKey({
+              path: { uuid: resolvedId },
+            }),
+          })
           : Promise.resolve(),
       ]);
 
@@ -1434,7 +1532,7 @@ const ClassCreationPage = () => {
         { path: { uuid: resolvedId }, body: payload },
         {
           onSuccess: () => onSuccess(resolvedId),
-          onError: error => toast.error(getMutationErrorMessage(error, 'Failed to update class')),
+          onError: error => showMutationError(error, 'Failed to update class'),
         }
       );
     } else {
@@ -1450,7 +1548,7 @@ const ClassCreationPage = () => {
               onSuccess();
             }
           },
-          onError: error => toast.error(getMutationErrorMessage(error, 'Failed to create class')),
+          onError: error => showMutationError(error, 'Failed to create class'),
         }
       );
     }
@@ -1560,9 +1658,8 @@ const ClassCreationPage = () => {
           <div
             key={day}
             onClick={toggleDay}
-            className={`flex flex-row items-center gap-2 rounded-md border px-3 py-2 transition ${
-              active ? 'border-primary bg-primary/5' : 'border-border bg-background'
-            }`}
+            className={`flex flex-row items-center gap-2 rounded-md border px-3 py-2 transition ${active ? 'border-primary bg-primary/5' : 'border-border bg-background'
+              }`}
           >
             <button
               type='button'
@@ -1575,11 +1672,10 @@ const ClassCreationPage = () => {
               //     return { ...prev, repeat: { ...prev.repeat, days: nextDays, unit: 'week' } };
               //   })
               // }
-              className={`w-14 shrink-0 rounded-md border px-2 py-1.5 text-xs font-semibold transition ${
-                active
-                  ? 'border-primary bg-primary text-primary-foreground'
-                  : 'border-border bg-muted text-muted-foreground hover:border-primary/50'
-              }`}
+              className={`w-14 shrink-0 rounded-md border px-2 py-1.5 text-xs font-semibold transition ${active
+                ? 'border-primary bg-primary text-primary-foreground'
+                : 'border-border bg-muted text-muted-foreground hover:border-primary/50'
+                }`}
             >
               {DAY_SHORT[index]}
             </button>
@@ -1860,7 +1956,7 @@ const ClassCreationPage = () => {
   }
 
   return (
-    <div className='h-auto px-2 py-4 sm:px-3 sm:py-6 lg:px-6'>
+    <div className='h-auto overflow-x-hidden px-2 py-4 pb-8 sm:px-3 sm:py-6 lg:px-6'>
       <form onSubmit={handleSubmit} className='space-y-6'>
         <ClassCreationHeader
           isSubmitting={createClassDefinition.isPending || updateClassDefinition.isPending}
@@ -1875,7 +1971,7 @@ const ClassCreationPage = () => {
           draftSavedTick={draftSavedTick}
         />
 
-        <div className='flex h-fit flex-col items-start gap-4 self-start xl:sticky xl:top-4 xl:flex-row'>
+        <div className='flex w-full min-w-0 flex-col gap-4 xl:flex-row xl:items-start'>
           <div className='min-w-0 flex-1 space-y-4'>
             {/* ── Class Details Card ─────────────────────────────────────── */}
             <div ref={classDetailsCardRef} className='scroll-mt-24'>
@@ -2055,11 +2151,10 @@ const ClassCreationPage = () => {
                       key={option.key}
                       type='button'
                       onClick={() => setSchedulePreset(option.key)}
-                      className={`flex-1 rounded-md border px-4 py-3 text-left transition ${
-                        schedulePreset === option.key
-                          ? 'border-primary bg-primary/5'
-                          : 'border-border hover:border-primary/40'
-                      }`}
+                      className={`flex-1 rounded-md border px-4 py-3 text-left transition ${schedulePreset === option.key
+                        ? 'border-primary bg-primary/5'
+                        : 'border-border hover:border-primary/40'
+                        }`}
                     >
                       <div className='text-sm font-semibold'>{option.title}</div>
                       <div className='text-muted-foreground mt-1 text-xs'>{option.description}</div>
@@ -2456,7 +2551,7 @@ const ClassCreationPage = () => {
             </div>
           </div>
 
-          <div className='w-full xl:w-[360px] xl:shrink-0'>
+          <div className='w-full min-w-0 xl:sticky xl:top-4 xl:w-[360px] xl:shrink-0 xl:self-start'>
             <ClassCreationPreviewRail data={previewData} />
           </div>
         </div>

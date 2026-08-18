@@ -1,7 +1,5 @@
 'use client';
 
-import { useQuery } from '@tanstack/react-query';
-import { Award, BadgeCheck, Briefcase, CalendarClock, GraduationCap } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { extractList, extractPage, getTotalFromMetadata } from '@/lib/api-helpers';
@@ -11,6 +9,8 @@ import {
   getInstructorEducationOptions,
   getInstructorExperienceOptions,
 } from '@/services/client/@tanstack/react-query.gen';
+import { useQuery } from '@tanstack/react-query';
+import { Award, BadgeCheck, Briefcase, CalendarClock, GraduationCap } from 'lucide-react';
 import { StatValue } from './components/profile-stat-strip';
 import { instructorTabs } from './instructors-tab';
 import { ProfilePage } from './profile-page';

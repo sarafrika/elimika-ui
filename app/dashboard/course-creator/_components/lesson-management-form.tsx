@@ -37,10 +37,10 @@ import {
 } from '@/components/ui/select';
 import Spinner from '@/components/ui/spinner';
 import { Textarea } from '@/components/ui/textarea';
-import { addCourseAssessment } from '@/services/client';
 import {
   addCourseLessonMutation,
   addLessonContentMutation,
+  addCourseAssessmentMutation,
   deleteCourseAssessmentMutation,
   getAllContentTypesOptions,
   getCourseAssessmentsQueryKey,
@@ -53,6 +53,7 @@ import {
   updateLessonContentMutation,
   uploadLessonMediaMutation,
 } from '@/services/client/@tanstack/react-query.gen';
+import type { AddCourseAssessmentData } from '@/services/client/types.gen';
 import type { CourseAssessment, Lesson, LessonContent } from '@/services/client/types.gen';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
@@ -1695,24 +1696,11 @@ function AssessmentCreationForm({
   };
 
   // CREATE ASSESSMENT MUTATION
-  const createAssessmentMutation = useMutation({
-    mutationKey: ['create-assessment'],
-    mutationFn: ({
-      uuid,
-      body,
-    }: {
-      uuid: string;
-      body: MutationVariables<typeof addCourseAssessment>['body'];
-    }) => addCourseAssessment({ body, path: { courseUuid: uuid } }),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['assessments'] });
-    },
-  });
+  const createAssessmentMutation = useMutation(addCourseAssessmentMutation());
 
   const onSubmit = async (values: AssessmentFormValues) => {
     createAssessmentMutation.mutate(
       {
-        uuid: courseId as string,
         body: {
           course_uuid: courseId,
           assessment_type: values.assessment_type,
@@ -1727,11 +1715,11 @@ function AssessmentCreationForm({
           weight_display: `${values.weight_percentage}% of final grade`,
           is_major_assessment: false,
           contribution_level: 'Standard Contribution',
-        } as never,
+        } as AddCourseAssessmentData['body'],
       },
       {
         onSuccess: data => {
-          toast.success(data?.data?.message || 'Assessment created successfully!');
+          toast.success(data?.message || 'Assessment created successfully!');
           queryClient.invalidateQueries({
             queryKey: getCourseAssessmentsQueryKey({
               path: { courseUuid: courseId as string },

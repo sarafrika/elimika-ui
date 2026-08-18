@@ -221,6 +221,8 @@ export function CourseDetailsSheet({
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
       <SheetDescription />
+      <SheetTitle></SheetTitle>
+      <SheetHeader></SheetHeader>
 
       <SheetContent side='right' className='w-full overflow-y-auto px-4 pt-6 sm:max-w-2xl'>
         {isLoading || !title ? (
@@ -332,13 +334,12 @@ export function CourseDetailsSheet({
               <p className='text-foreground'>
                 {studentRequirements.length > 0
                   ? studentRequirements
-                      .map(
-                        (requirement: CourseTrainingRequirement) =>
-                          `${requirement.name} (${requirement.quantity ?? 0} ${
-                            requirement.unit ?? ''
-                          })`
-                      )
-                      .join(', ') + '.'
+                    .map(
+                      (requirement: CourseTrainingRequirement) =>
+                        `${requirement.name} (${requirement.quantity ?? 0} ${requirement.unit ?? ''
+                        })`
+                    )
+                    .join(', ') + '.'
                   : 'No student-provided materials required.'}
               </p>
             </Section>
@@ -350,11 +351,11 @@ export function CourseDetailsSheet({
               <p className='text-foreground'>
                 {assessments.length > 0
                   ? assessments
-                      .map(
-                        (assessment: CourseAssessment) =>
-                          `${assessment.title || 'Untitled Assessment'} (${assessment.weight_percentage ?? 0}%)`
-                      )
-                      .join(', ') + '.'
+                    .map(
+                      (assessment: CourseAssessment) =>
+                        `${assessment.title || 'Untitled Assessment'} (${assessment.weight_percentage ?? 0}%)`
+                    )
+                    .join(', ') + '.'
                   : 'Assessment details will be shared by the instructor.'}
               </p>
             </Section>
@@ -406,7 +407,7 @@ export function CourseDetailsSheet({
             <Separator />
 
             <div className='flex flex-wrap gap-2 pb-4'>
-              <Button
+              {/* <Button
                 asChild
                 className='bg-primary hover:bg-primary/90'
                 onClick={() => onOpenChange(false)}
@@ -421,9 +422,11 @@ export function CourseDetailsSheet({
                 >
                   <Users className='mr-1 h-4 w-4' /> Join a Class
                 </Link>
-              </Button>
+              </Button> */}
 
-              <Button asChild variant='outline' onClick={() => onOpenChange(false)}>
+              <Button asChild
+                className='bg-primary hover:bg-primary/90'
+                onClick={() => onOpenChange(false)}>
                 <Link
                   href={buildWorkspaceAliasPath(
                     activeDomain,

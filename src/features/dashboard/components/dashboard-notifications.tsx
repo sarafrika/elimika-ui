@@ -114,16 +114,22 @@ export const getNotificationUrlPath = (
 ): string => {
   const { type, metadata, action_url } = notification;
 
+  const STUDENT_PATH = `/dashboard/student`
+  const INSTRUCTOR_PATH = `/dashboard/instructor`
+  const COURSE_CREATOR_PATH = `/dashboard/course-creator`
+  const ORGANISATION_PATH = `/dashboard/organisation`
+  const ADMIN_PATH = `/dashboard/admin`
+
   switch (type) {
     case 'QUIZ_DEADLINE_REMINDER':
       if (activeDomain === 'student') {
         return metadata.quiz_uuid && metadata.class_definition_uuid
-          ? `/dashboard/assignment/quiz/${metadata.quiz_uuid}`
+          ? `${STUDENT_PATH}/assignment/quiz/${metadata.quiz_uuid}`
           : '';
       }
 
       return metadata.quiz_uuid && metadata.class_definition_uuid
-        ? `/dashboard/assignment/quiz_${metadata.quiz_uuid}?classId=${metadata.class_definition_uuid}`
+        ? `${STUDENT_PATH}/assignment/quiz_${metadata.quiz_uuid}?classId=${metadata.class_definition_uuid}`
         : '';
 
     case 'ASSIGNMENT_DUE_REMINDER':
@@ -133,40 +139,64 @@ export const getNotificationUrlPath = (
     case 'ASSIGNMENT_GRADED':
       if (activeDomain === 'student') {
         return metadata.assignment_uuid && metadata.class_definition_uuid
-          ? `/dashboard/assignment/${metadata.assignment_uuid}`
+          ? `${STUDENT_PATH}/assignment/${metadata.assignment_uuid}`
           : '';
       }
 
       return metadata.assignment_uuid && metadata.class_definition_uuid
-        ? `/dashboard/assignment/assignment_${metadata.assignment_uuid}?classId=${metadata.class_definition_uuid}`
+        ? `${STUDENT_PATH}/assignment/assignment_${metadata.assignment_uuid}?classId=${metadata.class_definition_uuid}`
         : '';
 
     case 'ASSESSMENT_COMPLETED':
-      return '/dashboard/assessment';
+      return `${STUDENT_PATH}/learning-hub`;
 
     case 'CLASS_ENROLLMENT_CONFIRMED':
     case 'INSTRUCTOR_CLASS_ENROLLMENT_MILESTONE':
     case 'INSTRUCTOR_CLASS_ENROLLMENT_NOTICE':
       if (activeDomain === 'student') {
         return metadata.class_definition_uuid
-          ? `/dashboard/learning-hub/classes/${metadata.class_definition_uuid}`
+          ? `${STUDENT_PATH}/learning-hub/classes/${metadata.class_definition_uuid}`
           : '';
       }
 
       return metadata.class_definition_uuid
-        ? `/dashboard/classes/class-training/${metadata.class_definition_uuid}`
+        ? `${STUDENT_PATH}/classes/class-training/${metadata.class_definition_uuid}`
         : '';
 
     case 'UPCOMING_CLASS_REMINDER':
       if (activeDomain === 'student') {
         return metadata.class_definition_uuid
-          ? `/dashboard/learning-hub/classes/${metadata.class_definition_uuid}`
+          ? `${STUDENT_PATH}/learning-hub/classes/${metadata.class_definition_uuid}`
           : '';
       }
 
       return metadata.class_definition_uuid
-        ? `/dashboard/classes/class-training/${metadata.class_definition_uuid}`
+        ? `${STUDENT_PATH}/classes/class-training/${metadata.class_definition_uuid}`
         : '';
+
+    case 'COURSE_TRAINING_APPLICATION_SUBMITTED':
+    case 'COURSE_TRAINING_APPLICATION_APPROVED':
+    case 'COURSE_TRAINING_APPLICATION_REJECTED':
+    case 'COURSE_TRAINING_APPLICATION_REVOKED':
+    case 'PROGRAM_TRAINING_APPLICATION_SUBMITTED':
+    case 'PROGRAM_TRAINING_APPLICATION_APPROVED':
+    case 'PROGRAM_TRAINING_APPLICATION_REJECTED':
+    case 'PROGRAM_TRAINING_APPLICATION_REVOKED':
+      if (activeDomain === "instructor") {
+        return metadata?.application_uuid ? `${INSTRUCTOR_PATH}/courses` : ''
+      } else if (activeDomain === "organisation") {
+        return metadata?.application_uuid ? `${ORGANISATION_PATH}/courses` : ''
+      } else if (activeDomain === "course_creator") {
+        return metadata?.application_uuid ? `${COURSE_CREATOR_PATH}/manage-applicant/${metadata?.applicant_uuid}` : ''
+      }
+
+    case 'COURSE_CONTENT_APPROVED':
+    case 'COURSE_CONTENT_REJECTED':
+    case 'PROGRAM_CONTENT_APPROVED':
+    case 'PROGRAM_CONTENT_REJECTED':
+      if (activeDomain === "course_creator") {
+        return metadata?.course_uuid ? `${COURSE_CREATOR_PATH}/course-management/create-new-course?id=${metadata?.course_uuid}` : ''
+      }
 
     // Not yet implemented
     case 'COURSE_ENROLLMENT_WELCOME':
@@ -176,18 +206,6 @@ export const getNotificationUrlPath = (
     case 'NEW_ASSIGNMENT_SUBMISSION':
     case 'CLASS_SCHEDULE_UPDATED':
     case 'GRADING_REMINDER':
-    case 'COURSE_CONTENT_APPROVED':
-    case 'COURSE_CONTENT_REJECTED':
-    case 'PROGRAM_CONTENT_APPROVED':
-    case 'PROGRAM_CONTENT_REJECTED':
-    case 'COURSE_TRAINING_APPLICATION_SUBMITTED':
-    case 'COURSE_TRAINING_APPLICATION_APPROVED':
-    case 'COURSE_TRAINING_APPLICATION_REJECTED':
-    case 'COURSE_TRAINING_APPLICATION_REVOKED':
-    case 'PROGRAM_TRAINING_APPLICATION_SUBMITTED':
-    case 'PROGRAM_TRAINING_APPLICATION_APPROVED':
-    case 'PROGRAM_TRAINING_APPLICATION_REJECTED':
-    case 'PROGRAM_TRAINING_APPLICATION_REVOKED':
     case 'COURSE_ENROLLMENT_MILESTONE':
     case 'COURSE_ENROLLMENT_NOTICE':
     case 'ACCOUNT_CREATED':
@@ -263,11 +281,11 @@ export function DashboardNotifications({
         description: notification.body,
         action: notification.action_url
           ? {
-              label: 'Open',
-              onClick: () => {
-                window.location.href = notification.action_url || notificationHref;
-              },
-            }
+            label: 'Open',
+            onClick: () => {
+              window.location.href = notification.action_url || notificationHref;
+            },
+          }
           : undefined,
       });
       actionMutation.mutate({ uuid: notification.uuid, action: 'popup_seen' });

@@ -1,18 +1,5 @@
 'use client';
 
-import { format } from 'date-fns';
-import {
-  ArrowRight,
-  CheckCircle2,
-  Clock,
-  DollarSign,
-  Layers,
-  ListCheck,
-  ShieldAlert,
-  ShieldCheck,
-  Sparkles,
-} from 'lucide-react';
-import Link from 'next/link';
 import DomainOverviewShell from '@/components/domain-overview-shell';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -26,6 +13,20 @@ import type {
 import PurchasableCatalogue from '@/src/features/dashboard/components/PurchasableCatalogue';
 import { useUserDomain } from '@/src/features/dashboard/context/user-domain-context';
 import { buildWorkspaceAliasPath } from '@/src/features/dashboard/lib/active-domain-storage';
+import { format } from 'date-fns';
+import {
+  ArrowRight,
+  CheckCircle2,
+  Clock,
+  DollarSign,
+  Layers,
+  ListCheck,
+  ShieldAlert,
+  ShieldCheck,
+  Sparkles,
+} from 'lucide-react';
+import Link from 'next/link';
+import { UserDomain } from '../../../../../lib/types';
 
 export default function CourseCreatorOverviewContent() {
   const { activeDomain } = useUserDomain();
@@ -60,16 +61,16 @@ export default function CourseCreatorOverviewContent() {
       }
       leftColumn={
         <>
-          <VerificationCard verification={verification} />
-          <QuickActionsCard />
+          <MetricsGrid metrics={metrics} />
+          <MonetizationCard monetization={monetization} activeDomain={activeDomain} />
+          <TrainingRequirementsCard trainingRequirements={trainingRequirements} activeDomain={activeDomain} />
+          <PurchasableCatalogue scope='course_creator' />
         </>
       }
       rightColumn={
         <>
-          <MetricsGrid metrics={metrics} />
-          <MonetizationCard monetization={monetization} />
-          <TrainingRequirementsCard trainingRequirements={trainingRequirements} />
-          <PurchasableCatalogue scope='course_creator' />
+          <VerificationCard verification={verification} />
+          <QuickActionsCard activeDomain={activeDomain} />
         </>
       }
     />
@@ -126,7 +127,7 @@ function buildMetricCards(analytics: CourseCreatorAnalyticsSummary) {
   ];
 }
 
-function MonetizationCard({ monetization }: { monetization: CourseCreatorMonetizationSummary }) {
+function MonetizationCard({ monetization, activeDomain }: { monetization: CourseCreatorMonetizationSummary, activeDomain: UserDomain | null }) {
   return (
     <Card className='border-border/70'>
       <CardHeader>
@@ -184,8 +185,10 @@ function MonetizationCard({ monetization }: { monetization: CourseCreatorMonetiz
 
 function TrainingRequirementsCard({
   trainingRequirements,
+  activeDomain
 }: {
   trainingRequirements: CourseCreatorTrainingRequirementSummary;
+  activeDomain: UserDomain | null
 }) {
   return (
     <Card className='border-border/70'>
@@ -261,7 +264,7 @@ function VerificationCard({ verification }: { verification: CourseCreatorVerific
   );
 }
 
-function QuickActionsCard() {
+function QuickActionsCard({ activeDomain }: { activeDomain: UserDomain | null }) {
   return (
     <Card className='border-border/70'>
       <CardHeader>
@@ -271,17 +274,17 @@ function QuickActionsCard() {
         </CardDescription>
       </CardHeader>
       <CardContent className='grid gap-3 sm:grid-cols-2'>
-        <ActionTile
+        {/* <ActionTile
           title='Provision instructors'
           description='Invite mentors and outline their revenue share.'
           href={buildWorkspaceAliasPath(activeDomain, '/dashboard/instructors')}
-        />
-        <ActionTile
+        /> */}
+        {/* <ActionTile
           title='Share assets'
           description='Upload brand kits and curriculum collateral.'
-          href='#'
           // href={buildWorkspaceAliasPath(activeDomain, '/dashboard/library')}
-        />
+          href='#'
+        /> */}
         <ActionTile
           title='Create syllabus'
           description='Use guided steps to structure lessons and assessments.'

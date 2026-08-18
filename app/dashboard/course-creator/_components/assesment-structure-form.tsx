@@ -316,17 +316,20 @@ function AssessmentSheet({
     const body = {
       title: form.title.trim(),
       description: form.description.trim(),
-      rubric_uuid: form.rubric_uuid,
+      rubric_uuid: form.rubric_uuid || null,
       weight_percentage: Number(form.weight_percentage),
       is_required: form.is_required,
       assessment_type: form.assessment_type,
+      // aggregation_strategy: 'points_sum',
+      // sync_class_attendance: true,
+      created_by: createdBy || undefined,
     };
 
     if (mode === 'add') {
       createMut.mutate(
         {
           path: { courseUuid },
-          body: { ...body, course_uuid: courseUuid, created_by: createdBy } as never,
+          body: { ...body, course_uuid: courseUuid } as never,
         },
         {
           onSuccess: () => {
@@ -508,19 +511,24 @@ function AssessmentSheet({
                     value={form.rubric_uuid || '__none__'}
                     onValueChange={v => set('rubric_uuid', v === '__none__' ? '' : v)}
                   >
-                    <SelectTrigger className='w-full'>
-                      <SelectValue placeholder='Select a rubric (optional)' />
+                    <SelectTrigger className="w-full sm:max-w-[650px]">
+                      <SelectValue placeholder="Select a rubric (optional)" />
                     </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value='__none__'>
-                        <span className='text-muted-foreground'>None</span>
+
+                    <SelectContent className="w-full sm:max-w-[600px]">
+                      <SelectItem value="__none__">
+                        <span className="text-muted-foreground">None</span>
                       </SelectItem>
-                      {rubrics.map((r: unknown) => (
+
+                      {rubrics.map((r: AssessmentRubric) => (
                         <SelectItem key={r.uuid} value={r.uuid}>
-                          <div className='flex flex-col'>
-                            <span className='font-medium'>{r.title}</span>
+                          <div className="flex min-w-0 flex-col text-start">
+                            <span className="font-medium">
+                              {r.title}
+                            </span>
+
                             {r.description && (
-                              <span className='text-muted-foreground line-clamp-1 text-xs'>
+                              <span className="line-clamp-1 text-xs text-muted-foreground group-hover:text-muted-foreground">
                                 {r.description}
                               </span>
                             )}
@@ -537,7 +545,7 @@ function AssessmentSheet({
                           {selectedRubric.title}
                         </p>
                         {selectedRubric.description && (
-                          <p className='text-muted-foreground mt-0.5 line-clamp-2 text-xs'>
+                          <p className='text-muted-foreground mt-0.5 line-clamp-5 text-xs'>
                             {selectedRubric.description}
                           </p>
                         )}
@@ -862,11 +870,10 @@ export const CourseAssessmentStructure = ({
                           {a.weight_percentage}% (0–{a.weight_percentage})
                         </span>
                         <span
-                          className={`inline-flex max-w-fit items-center rounded-full px-2.5 py-0.5 text-xs font-medium ${
-                            a.is_required
-                              ? 'bg-success/10 text-success/70'
-                              : 'bg-muted-foreground/10 text-muted-foreground'
-                          }`}
+                          className={`inline-flex max-w-fit items-center rounded-full px-2.5 py-0.5 text-xs font-medium ${a.is_required
+                            ? 'bg-success/10 text-success/70'
+                            : 'bg-muted-foreground/10 text-muted-foreground'
+                            }`}
                         >
                           {a.is_required ? 'Required' : 'Not required'}
                         </span>

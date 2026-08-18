@@ -58,9 +58,9 @@ export function DomainOverviewShell({
         </div>
       </div>
 
-      <div className='grid gap-5 xl:grid-cols-[minmax(0,360px)_minmax(0,1fr)]'>
-        <section className='space-y-4'>{leftColumn}</section>
-        <section className='space-y-4'>{rightColumn}</section>
+      <div className="grid gap-5 xl:grid-cols-[minmax(0,1fr)_minmax(0,360px)]">
+        <section className="space-y-4">{leftColumn}</section>
+        <section className="space-y-4">{rightColumn}</section>
       </div>
     </div>
   );

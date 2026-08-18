@@ -333,3 +333,24 @@ export const instructorInitials = (u?: User) =>
     : '?';
 export const instructorName = (u?: User) =>
   u ? `${u.first_name ?? ''} ${u.last_name ?? ''}`.trim() || u.email || 'Instructor' : 'Unassigned';
+
+/**
+ * One instructor the organisation may assign a class to. `uuid` is the **instructor profile**
+ * uuid, not the user uuid — `default_instructor_uuid` on a class definition is checked against
+ * the training approvals, which are recorded per instructor profile.
+ */
+export type InstructorOption = {
+  uuid: string;
+  name: string;
+  avatarUrl?: string;
+};
+
+export const instructorOptionInitials = (option?: InstructorOption) =>
+  option
+    ? option.name
+        .split(/\s+/)
+        .slice(0, 2)
+        .map(part => part[0] ?? '')
+        .join('')
+        .toUpperCase() || '?'
+    : '?';

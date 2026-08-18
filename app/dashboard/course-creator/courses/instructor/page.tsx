@@ -1,0 +1,12 @@
+import StudentInstructorSearchPage from "../../../../../src/features/dashboard/courses/shared/instructor/_components/student-instructor-search-page";
+
+type WorkspaceInstructorSearchPageProps = {
+  params: Promise<{ domain: string }>;
+};
+
+export default async function StudentInstructorSearchRoute({
+  params,
+}: WorkspaceInstructorSearchPageProps) {
+
+  return <StudentInstructorSearchPage />;
+}

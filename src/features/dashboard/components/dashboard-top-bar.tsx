@@ -1,5 +1,6 @@
 'use client';
 
+import { buildWalletAccounts } from '@/app/dashboard/student/wallet/page';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -12,12 +13,19 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { Input } from '@/components/ui/input';
+import {
+  Sheet,
+  SheetContent,
+  SheetDescription,
+  SheetHeader,
+  SheetTitle,
+} from '@/components/ui/sheet';
 import type { UserDomain } from '@/lib/types';
 import { cn } from '@/lib/utils';
 import type { ApiResponseWallet } from '@/services/client';
 import { getWalletOptions } from '@/services/client/@tanstack/react-query.gen';
 import { useLogout } from '@/src/features/auth/logout';
-import { dashboardDomainDisplayConfig } from '@/src/features/dashboard/config/domain-display';
+import { CreateAction, dashboardDomainDisplayConfig, useCreateMenuActions } from '@/src/features/dashboard/config/domain-display';
 import { useUserDomain } from '@/src/features/dashboard/context/user-domain-context';
 import {
   buildDashboardSwitchPath,
@@ -27,19 +35,27 @@ import { useUserProfile } from '@/src/features/profile/context/profile-context';
 import { toAuthenticatedMediaUrl } from '@/src/lib/media-url';
 import { useQuery, type UseQueryOptions } from '@tanstack/react-query';
 import {
+  ArrowLeftRight,
   Check,
   ChevronDown,
+  Download,
+  ExternalLink,
+  Eye,
+  EyeOff,
   Laptop2,
   LayoutDashboard,
   MoonStar,
   Search,
+  Send,
   Sparkles,
   SunMedium,
-  Wallet,
+  Upload,
+  Wallet
 } from 'lucide-react';
 import { useTheme } from 'next-themes';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
+import { useEffect, useMemo, useState } from 'react';
 import { Label } from '../../../../components/ui/label';
 import { DashboardNotifications } from './dashboard-notifications';
 
@@ -94,6 +110,7 @@ export default function DashboardTopBar() {
   const logout = useLogout();
 
   const activeDomain = domain.activeDomain ?? null;
+  const createActions = useCreateMenuActions(activeDomain);
 
   const activeDomainConfig = activeDomain
     ? dashboardDomainDisplayConfig[activeDomain as keyof typeof dashboardDomainDisplayConfig]
@@ -105,6 +122,19 @@ export default function DashboardTopBar() {
 
   const profileName = getProfileName(profile);
   const profileInitials = getInitials(profileName);
+  const [walletBalanceVisible, setWalletBalanceVisible] = useState(true);
+  const [isDepositSheetOpen, setIsDepositSheetOpen] = useState(false);
+
+  useEffect(() => {
+    const stored = window.localStorage.getItem('dashboard-wallet-balance-visible');
+    if (stored === null) return;
+    setWalletBalanceVisible(stored === 'true');
+  }, []);
+
+  const setWalletBalanceVisiblePersisted = (nextVisible: boolean) => {
+    setWalletBalanceVisible(nextVisible);
+    window.localStorage.setItem('dashboard-wallet-balance-visible', String(nextVisible));
+  };
 
   const walletOptions = profile?.uuid
     ? getWalletOptions({ path: { userUuid: profile.uuid } })
@@ -128,6 +158,9 @@ export default function DashboardTopBar() {
     walletData?.data?.balance_amount,
     walletData?.data?.currency_code
   );
+  const balance = walletData?.data?.balance_amount
+  const walletBalanceDisplay = walletBalanceVisible ? walletBalance : '••••••';
+  const walletAccounts = useMemo(() => buildWalletAccounts(walletData?.data ?? undefined), [walletData?.data]);
 
   const activeDomainLabel = activeDomainConfig?.title ?? dashboardLabelByDomain(activeDomain);
   const roleLabel = activeDomainLabel.replace(' Dashboard', '');
@@ -147,25 +180,13 @@ export default function DashboardTopBar() {
     '/dashboard/course-management/create-new-course'
   );
   const createClassHref = buildWorkspaceAliasPath(activeDomain, '/dashboard/classes/new');
+  const walletHref = buildWorkspaceAliasPath(activeDomain, '/dashboard/wallet');
+  const withdrawHref = `${walletHref}/withdraw`;
 
   return (
     <header className='bg-background/90 sticky top-0 z-50 backdrop-blur-md'>
       <div className='flex flex-col'>
         <div className='flex items-center gap-3 px-1 py-3 sm:px-3 lg:px-4'>
-          {/* <div className='hidden min-w-0 flex-1 xl:block'>
-            <Label className='relative block max-w-2xl'>
-              <Search className='text-muted-foreground pointer-events-none absolute top-1/2 left-4 h-4 w-4 -translate-y-1/2' />
-              <Input
-                type='search'
-                placeholder='Search courses, students, and more...'
-                className='border-border/70 bg-card/80 h-10 rounded-md pl-11 pr-16 shadow-sm text-xs'
-              />
-              <span className='text-muted-foreground absolute top-1/2 right-4 -translate-y-1/2 text-xs font-medium'>
-                Ctrl K
-              </span>
-            </Label>
-          </div> */}
-
           <div className='hidden min-w-0 flex-1 xl:block'>
             <Label className='relative block max-w-2xl 2xl:max-w-3xl'>
               <Search className='text-muted-foreground pointer-events-none absolute top-1/2 left-4 h-4 w-4 -translate-y-1/2' />
@@ -224,22 +245,25 @@ export default function DashboardTopBar() {
               </Button>
             )}
 
+            {/* <CreateMenu actions={createActions} compact /> */}
+
             <DashboardNotifications
               notificationHref={notificationHref}
               activeDomain={activeDomain}
             />
 
-            <div className='border-border/70 bg-card/80 hidden h-10 items-center gap-2 rounded-md border px-3 shadow-sm xl:flex'>
-              <div className='bg-success/10 text-success flex h-8 w-8 items-center justify-center rounded-full'>
-                <Wallet className='h-4 w-4' />
-              </div>
-
-              <div className='flex min-w-0 flex-col justify-center leading-tight'>
-                <div className='text-foreground truncate text-sm leading-none font-semibold'>
-                  {walletBalance}
-                </div>
-              </div>
-            </div>
+            <DashboardWalletMenu
+              walletBalance={walletBalanceDisplay as string}
+              balance={balance as number}
+              walletCurrency={walletData?.data?.currency_code}
+              accounts={walletAccounts}
+              walletHref={walletHref}
+              withdrawHref={withdrawHref}
+              onToggleBalance={() => setWalletBalanceVisiblePersisted(!walletBalanceVisible)}
+              onDeposit={() => setIsDepositSheetOpen(true)}
+              onTransfer={() => router.push(`${withdrawHref}?section=transfer`)}
+              onWithdraw={() => router.push(`${withdrawHref}?section=withdraw`)}
+            />
 
             <DashboardProfileMenu
               profileName={profileName}
@@ -285,24 +309,28 @@ export default function DashboardTopBar() {
               </Button>
             )}
 
-            {
-              <div className='border-border/70 bg-card/80 mb-2 flex items-center gap-2 rounded-md border px-3 py-2 shadow-sm sm:hidden'>
-                <div className='bg-success/10 text-success flex size-7 items-center justify-center rounded-full'>
-                  <Wallet className='h-3.5 w-3.5' />
-                </div>
-                <div className='min-w-0 leading-tight'>
-                  <div className='text-muted-foreground text-[10px] tracking-wide uppercase'>
-                    Skills Wallet
-                  </div>
-                  <div className='text-foreground truncate text-xs font-semibold'>
-                    {walletBalance}
-                  </div>
-                </div>
-              </div>
-            }
+            <DashboardWalletMenu
+              compact
+              walletBalance={walletBalanceDisplay as string}
+              balance={balance as number}
+              walletCurrency={walletData?.data?.currency_code}
+              accounts={walletAccounts}
+              walletHref={walletHref}
+              withdrawHref={withdrawHref}
+              onToggleBalance={() => setWalletBalanceVisiblePersisted(!walletBalanceVisible)}
+              onDeposit={() => setIsDepositSheetOpen(true)}
+              onTransfer={() => router.push(`${withdrawHref}?section=transfer`)}
+              onWithdraw={() => router.push(`${withdrawHref}?section=withdraw`)}
+            />
           </div>
         </div>
       </div>
+
+      <DepositMethodSheet
+        open={isDepositSheetOpen}
+        onOpenChange={setIsDepositSheetOpen}
+        walletHref={`${walletHref}?tab=top-up`}
+      />
     </header>
   );
 }
@@ -489,6 +517,255 @@ function DashboardProfileMenu({
             Sign out
           </DropdownMenuItem>
         </div>
+      </DropdownMenuContent>
+    </DropdownMenu>
+  );
+}
+
+function DashboardWalletMenu({
+  compact = false,
+  walletBalance,
+  balance,
+  walletCurrency,
+  accounts,
+  walletHref,
+  withdrawHref,
+  onToggleBalance,
+  onDeposit,
+  onTransfer,
+  onWithdraw,
+}: {
+  compact?: boolean;
+  walletBalance: string;
+  balance: number | string;
+  walletCurrency?: string | null;
+  accounts: ReturnType<typeof buildWalletAccounts>;
+  walletHref: string;
+  withdrawHref: string;
+  onToggleBalance: () => void;
+  onDeposit: () => void;
+  onTransfer: () => void;
+  onWithdraw: () => void;
+}) {
+  return (
+    <DropdownMenu>
+      <DropdownMenuTrigger asChild>
+        <Button
+          variant='outline'
+          className={cn(
+            'border-border/70 bg-card/80 hover:border-primary/40 hover:bg-primary/15 h-10 rounded-md px-3 shadow-sm transition',
+            compact && 'h-9 px-2.5'
+          )}
+        >
+          <div className='bg-success/10 text-success flex h-8 w-8 items-center justify-center rounded-full'>
+            <Wallet className='h-4 w-4' />
+          </div>
+
+          {!compact && (
+            <span className='hidden min-w-0 flex-col items-start leading-tight md:flex'>
+              <span className='text-foreground truncate text-sm font-semibold'>{walletBalance}</span>
+            </span>
+          )}
+
+          {compact && (
+            <span className='text-foreground text-xs font-semibold sm:text-sm'>{walletBalance}</span>
+          )}
+
+          <ChevronDown className='text-muted-foreground h-4 w-4' />
+        </Button>
+      </DropdownMenuTrigger>
+
+      <DropdownMenuContent align='end' className='border-border/70 w-96 rounded-md p-3 shadow-lg'>
+        <div className='bg-muted/60 flex items-start justify-between gap-3 rounded-md p-3'>
+          <div className='min-w-0'>
+            <div className='flex flex-row items-center gap-4'>
+              <p className='text-muted-foreground text-xs tracking-wide'>Wallet Overview</p>
+              <button
+                type='button'
+                className='text-muted-foreground hover:text-foreground rounded-full p-2 transition'
+                onClick={onToggleBalance}
+              >
+                {walletBalance === '••••••' ? <Eye className='h-4 w-4' /> : <EyeOff className='h-4 w-4' />}
+              </button>
+            </div>
+
+            <div className='flex flex-row items-end gap-2' >
+              <p className='text-foreground truncate text-3xl font-bold'>{balance}</p>
+              <p className='text-foreground truncate text-lg font-semibold'>{walletCurrency}</p>
+            </div>
+
+            <p className='text-muted-foreground mt-1 text-xs'>
+              {walletCurrency?.toUpperCase() ?? 'KES'} available across your accounts
+            </p>
+          </div>
+        </div>
+
+        <p className='text-muted-foreground mt-2 px-1 text-[11px]'>
+          * Data may be delayed.
+        </p>
+
+        <div className='mt-3 grid grid-cols-3 gap-2'>
+          <button
+            type='button'
+            className='border-border bg-background hover:border-primary/40 hover:bg-primary/10 flex items-center justify-center gap-2 rounded-full border px-3 py-2 text-sm font-medium transition'
+            onClick={onDeposit}
+          >
+            <Upload className='h-4 w-4 text-warning' />
+            Deposit
+          </button>
+          <button
+            type='button'
+            className='border-border bg-background hover:border-primary/40 hover:bg-primary/10 flex items-center justify-center gap-2 rounded-full border px-3 py-2 text-sm font-medium transition'
+            onClick={onWithdraw}
+          >
+            <Download className='h-4 w-4 text-warning' />
+            Withdraw
+          </button>
+          <button
+            type='button'
+            className='border-border bg-background hover:border-primary/40 hover:bg-primary/10 flex items-center justify-center gap-2 rounded-full border px-3 py-2 text-sm font-medium transition'
+            onClick={onTransfer}
+          >
+            <ArrowLeftRight className='h-4 w-4 text-warning' />
+            Transfer
+          </button>
+        </div>
+
+        <DropdownMenuSeparator className='my-3' />
+
+        <DropdownMenuLabel className='px-2 text-[11px] uppercase tracking-wide'>
+          Accounts
+        </DropdownMenuLabel>
+
+        <div className='mt-2 space-y-1'>
+          {accounts.slice(0, 4).map(account => (
+            <div
+              key={account.id}
+              className='flex items-center justify-between rounded-md px-2 py-2 text-sm transition hover:bg-muted/60'
+            >
+              <div className='min-w-0'>
+                <p className='truncate font-medium text-foreground'>{account.label}</p>
+                <p className='truncate text-[11px] text-muted-foreground'>
+                  {account.bucket.replace(/_/g, ' ')}
+                </p>
+              </div>
+              <div className='shrink-0 text-right'>
+                <p className='font-medium text-foreground'>
+                  {new Intl.NumberFormat('en-KE', {
+                    maximumFractionDigits: 0,
+                  }).format(account.balance_kes)}
+                </p>
+              </div>
+            </div>
+          ))}
+        </div>
+
+        <DropdownMenuSeparator className='my-3' />
+
+        <button
+          type='button'
+          className='hover:bg-muted/60 flex w-full items-center justify-between rounded-md px-2 py-2 text-sm transition'
+          onClick={() => window.location.assign(walletHref)}
+        >
+          <span>Open wallet</span>
+          <ExternalLink className='h-4 w-4' />
+        </button>
+      </DropdownMenuContent>
+    </DropdownMenu>
+  );
+}
+
+function DepositMethodSheet({
+  open,
+  onOpenChange,
+  walletHref,
+}: {
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+  walletHref: string;
+}) {
+  const router = useRouter();
+
+  return (
+    <Sheet open={open} onOpenChange={onOpenChange}>
+      <SheetContent side='right' className='w-auto max-w-xl'>
+        <SheetHeader>
+          <SheetTitle>Choose payment method</SheetTitle>
+          <SheetDescription>
+            M-Pesa is the only available deposit option right now.
+          </SheetDescription>
+        </SheetHeader>
+
+        <div className='mt-6 space-y-3 px-4'>
+          <button
+            type='button'
+            className='border-border bg-card hover:border-primary/40 hover:bg-primary/10 flex w-full items-center justify-between rounded-2xl border p-4 text-left transition'
+            onClick={() => {
+              onOpenChange(false);
+              router.push(walletHref);
+            }}
+          >
+            <div>
+              <p className='text-sm font-semibold text-foreground'>Pay with M-Pesa</p>
+              <p className='text-muted-foreground mt-1 text-xs'>Continue to the wallet top-up tab.</p>
+            </div>
+            <Send className='text-primary h-4 w-4' />
+          </button>
+        </div>
+      </SheetContent>
+    </Sheet>
+  );
+}
+
+function CreateMenu({ actions, compact = false }: { actions: CreateAction[]; compact?: boolean }) {
+  if (actions.length === 0) return null;
+
+  // Single action, no need for a dropdown at all
+  if (actions.length === 1) {
+    const [only] = actions;
+    return (
+      <Button
+        size='sm'
+        className='h-9 gap-2 rounded-md px-4 font-semibold'
+        onClick={only?.onSelect}
+      >
+        <only.icon className='h-4 w-4' />
+        <span className={compact ? 'hidden sm:inline' : ''}>{only?.label}</span>
+        {!compact && <ChevronDown className='h-4 w-4' />}
+      </Button>
+    );
+  }
+
+  return (
+    <DropdownMenu>
+      <DropdownMenuTrigger asChild>
+        <Button size='sm' className='h-9 gap-2 rounded-md px-3 font-semibold'>
+          <Sparkles className='h-4 w-4' />
+          <span className={compact ? 'hidden sm:inline' : ''}>Create</span>
+          <ChevronDown className='h-4 w-4' />
+        </Button>
+      </DropdownMenuTrigger>
+      <DropdownMenuContent align='end' className='w-64'>
+        <DropdownMenuLabel>Quick actions</DropdownMenuLabel>
+        <DropdownMenuSeparator />
+        {actions.map(a => (
+          <DropdownMenuItem
+            key={a.label}
+            onSelect={e => {
+              e.preventDefault();
+              a.onSelect();
+            }}
+            className='flex items-start gap-3 py-2'
+          >
+            <span className='mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-md bg-primary/10 text-primary'>
+              <a.icon className='h-4 w-4' />
+            </span>
+            <span className='flex flex-col'>
+              <span className='text-sm leading-tight font-medium'>{a.label}</span>
+              <span className='text-muted-foreground text-xs'>{a.description}</span>
+            </span>
+          </DropdownMenuItem>
+        ))}
       </DropdownMenuContent>
     </DropdownMenu>
   );

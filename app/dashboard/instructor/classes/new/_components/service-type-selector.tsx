@@ -26,7 +26,8 @@ interface ServiceTypeSelectorProps {
   onChange: (
     value: ServiceType,
     classType: 'PRIVATE' | 'GROUP',
-    locationType: 'ONLINE' | 'IN_PERSON' | 'HYBRID'
+    locationType: 'ONLINE' | 'IN_PERSON' | 'HYBRID',
+    rateCardPrice?: number
   ) => void;
   rateCard?: Record<string, number | string | null | undefined>;
   /** The contracted basis, so the card shows the rate the class will actually bill at. */
@@ -120,7 +121,7 @@ export function ServiceTypeSelector({
           <button
             key={option.value}
             type='button'
-            onClick={() => onChange(option.value, option.classType, option.locationType)}
+            onClick={() => onChange(option.value, option.classType, option.locationType, option.price)}
             className={`relative flex flex-col gap-2 rounded-lg border p-4 text-left transition-all ${
               value === option.value
                 ? 'border-primary bg-primary/5'

@@ -215,10 +215,10 @@ function QuestionOptionsPreview({
           <Input
             disabled={submitted}
             value={typeof answer === 'string' ? answer : ''}
-            // onChange={(e) =>
-            //     onChange?.(e.target.value)
-            // }
-            // placeholder='Enter your answer'
+          // onChange={(e) =>
+          //     onChange?.(e.target.value)
+          // }
+          // placeholder='Enter your answer'
           />
         )}
       </div>
@@ -336,7 +336,7 @@ export function QuizContentPreview({
 
       setSubmitted(true);
     } catch (error) {
-      // console.error(error);
+
     }
   };
 

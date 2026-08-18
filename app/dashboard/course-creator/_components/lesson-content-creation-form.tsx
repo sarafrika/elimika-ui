@@ -1,5 +1,6 @@
 'use client';
 
+import { SimpleEditor } from '@/components/tiptap-templates/simple/simple-editor-lazy';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import {
@@ -18,7 +19,6 @@ import React, { useMemo, useRef, useState } from 'react';
 import { useForm, useWatch } from 'react-hook-form';
 import { toast } from 'sonner';
 import { z } from 'zod';
-import { SimpleEditor } from '@/components/tiptap-templates/simple/simple-editor-lazy';
 import { LessonContentViewerDialog } from '../../../../components/content-preview/LessonContentPreview';
 import { Button } from '../../../../components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '../../../../components/ui/card';
@@ -130,6 +130,8 @@ export const ContentCreationForm: React.FC<LessonCreationFormProps> = ({
   const [contentType, setContentType] = useState<ContentType>('TEXT');
   const [mediaFile, setMediaFile] = useState<File | null>(null);
   const [isDragging, setIsDragging] = useState(false);
+  const isMediaContent = ['VIDEO', 'AUDIO', 'PDF', 'IMAGE'].includes(contentType);
+  const isLocalMediaSelected = isMediaContent && !!mediaFile;
 
   const [isViewerOpen, setIsViewerOpen] = useState(false);
   const [selectedLesson, setSelectedLesson] = useState<ContentItem | null>(null);
@@ -379,7 +381,7 @@ export const ContentCreationForm: React.FC<LessonCreationFormProps> = ({
           },
         }
       );
-    } catch (_err) {}
+    } catch (_err) { }
   };
 
   const getContentIcon = (type: string) => {
@@ -402,7 +404,7 @@ export const ContentCreationForm: React.FC<LessonCreationFormProps> = ({
   return (
     <div>
       <div className='mb-10 flex h-auto'>
-        <aside className='border-border w-1/4 border-r px-2 pb-4'>
+        <aside className='border-border w-1/4 border-r pr-2 pb-4'>
           <div className='mb-4'>
             <p className='font-bold'>Course Lesson Content</p>
             <p className='text-xs'>Add skills and learning materials for your course</p>
@@ -459,11 +461,10 @@ export const ContentCreationForm: React.FC<LessonCreationFormProps> = ({
               <button
                 key={tab}
                 onClick={() => setActiveTab(tab)}
-                className={`-mb-px border-b-2 px-4 py-2 transition-colors ${
-                  activeTab === tab
-                    ? 'border-primary text-primary font-semibold'
-                    : 'text-muted-foreground hover:text-foreground'
-                }`}
+                className={`-mb-px border-b-2 px-4 py-2 transition-colors ${activeTab === tab
+                  ? 'border-primary text-primary font-semibold'
+                  : 'text-muted-foreground hover:text-foreground'
+                  }`}
               >
                 {tab}
               </button>
@@ -514,11 +515,10 @@ export const ContentCreationForm: React.FC<LessonCreationFormProps> = ({
                             )}
                           >
                             <div
-                              className={`flex h-8 w-8 items-center justify-center rounded-lg ${
-                                selectedContentId === content.uuid
-                                  ? 'bg-primary/20 text-primary'
-                                  : 'bg-background text-muted-foreground'
-                              }`}
+                              className={`flex h-8 w-8 items-center justify-center rounded-lg ${selectedContentId === content.uuid
+                                ? 'bg-primary/20 text-primary'
+                                : 'bg-background text-muted-foreground'
+                                }`}
                             >
                               {getContentIcon(content.content_type_key ?? 'TEXT')}
                             </div>
@@ -880,29 +880,32 @@ export const ContentCreationForm: React.FC<LessonCreationFormProps> = ({
                                 <Button type='button' variant='outline' onClick={resetContentForm}>
                                   Cancel
                                 </Button>
-                                <Button
-                                  type='button'
-                                  onClick={() => {
-                                    try {
-                                      const data = contentForm.getValues();
-                                      lessonContentSchema.parse(data);
-                                      handleSaveLessonContent(data);
-                                    } catch (err) {
-                                      if (err instanceof z.ZodError) {
-                                        toast.error('Please fix validation errors');
+                                {!isLocalMediaSelected ? (
+                                  <Button
+                                    type='button'
+                                    onClick={() => {
+                                      try {
+                                        const data = contentForm.getValues();
+                                        lessonContentSchema.parse(data);
+                                        handleSaveLessonContent(data);
+                                      } catch (err) {
+                                        if (err instanceof z.ZodError) {
+                                          toast.error('Please fix validation errors');
+                                        }
                                       }
+                                    }}
+                                    disabled={
+                                      createLessonContent.isPending ||
+                                      updateLessonContent.isPending
                                     }
-                                  }}
-                                  disabled={
-                                    createLessonContent.isPending || updateLessonContent.isPending
-                                  }
-                                >
-                                  {createLessonContent.isPending || updateLessonContent.isPending
-                                    ? 'Saving...'
-                                    : contentForm.getValues('uuid')
-                                      ? 'Update Content'
-                                      : 'Save Content'}
-                                </Button>
+                                  >
+                                    {createLessonContent.isPending || updateLessonContent.isPending
+                                      ? 'Saving...'
+                                      : contentForm.getValues('uuid')
+                                        ? 'Update Content'
+                                        : 'Save Content'}
+                                  </Button>
+                                ) : null}
                               </div>
                             </div>
                           </Form>
@@ -957,6 +960,7 @@ export const ContentCreationForm: React.FC<LessonCreationFormProps> = ({
           contentType={contentTypeName}
         />
       </div>
+
       {/* {activeTab === "Lesson Content" &&
 
         } */}

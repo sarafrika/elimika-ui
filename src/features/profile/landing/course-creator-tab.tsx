@@ -1,30 +1,22 @@
 'use client';
 
 import { WatchedText, WatchedValue } from '@/components/form/watched-value';
-import { zodResolver } from '@hookform/resolvers/zod';
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import {
-  Briefcase,
-  FileText,
-  GraduationCap,
-  Grip,
-  Paperclip,
-  Pencil,
-  PlusCircle,
-  Trash2,
-  Upload,
-  X,
-  XCircle,
-} from 'lucide-react';
-import React, { useEffect, useMemo, useRef, useState } from 'react';
-import { useFieldArray, useForm } from 'react-hook-form';
-import { toast } from 'sonner';
-import * as z from 'zod';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Checkbox } from '@/components/ui/checkbox';
+import { DeleteConfirmationDialog } from '@/components/ui/delete-confirmation-dialog';
 import {
   Form,
   FormControl,
@@ -68,6 +60,25 @@ import type {
   CourseCreatorEducation,
   CourseCreatorExperience,
 } from '@/services/client/types.gen';
+import { zodResolver } from '@hookform/resolvers/zod';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import {
+  Briefcase,
+  FileText,
+  GraduationCap,
+  Grip,
+  Paperclip,
+  Pencil,
+  PlusCircle,
+  Trash2,
+  Upload,
+  X,
+  XCircle,
+} from 'lucide-react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
+import { useFieldArray, useForm } from 'react-hook-form';
+import { toast } from 'sonner';
+import * as z from 'zod';
 import type { DomainTabProps, TabDefinition } from './types';
 
 function TabShell({ children }: { children: React.ReactNode }) {
@@ -503,11 +514,13 @@ function CreatorCertificateUploadSheet({
 function CreatorCertificateDocumentsSection({
   sharedProfile,
   onOpenUpload,
+  isPublic,
 }: DomainTabProps & {
   onOpenUpload: () => void;
 }) {
   const qc = useQueryClient();
   const [selectedPdf, setSelectedPdf] = useState<string | null>(null);
+  const [documentToDelete, setDocumentToDelete] = useState<string | null>(null);
 
   const { data, isLoading } = useQuery({
     ...getCourseCreatorDocumentsOptions({ path: { courseCreatorUuid: sharedProfile?.uuid } }),
@@ -528,18 +541,23 @@ function CreatorCertificateDocumentsSection({
     });
 
   const handleDelete = (uuid: string) => {
-    if (!confirm('Remove this document?')) return;
+    setDocumentToDelete(uuid);
+  };
 
-    deleteDocumentMut.mutate(
-      { path: { documentUuid: uuid, courseCreatorUuid: sharedProfile?.uuid } },
-      {
-        onSuccess: () => {
-          invalidateDocs();
-          toast.success('Document removed');
+  const confirmDelete = async () => {
+    if (!documentToDelete) return;
+    try {
+      await deleteDocumentMut.mutateAsync({
+        path: {
+          documentUuid: documentToDelete,
+          courseCreatorUuid: sharedProfile?.uuid,
         },
-        onError: () => toast.error('Could not remove document'),
-      }
-    );
+      });
+      invalidateDocs();
+      toast.success('Document removed');
+    } catch {
+      toast.error('Could not remove document');
+    }
   };
 
   const docs: CourseCreatorDocumentRecord[] = (data?.data ?? []) as CourseCreatorDocumentRecord[];
@@ -569,15 +587,17 @@ function CreatorCertificateDocumentsSection({
           <CardContent className='flex flex-col items-center justify-center py-10 text-center'>
             <FileText className='text-muted-foreground/30 mb-3 h-10 w-10' />
             <p className='text-muted-foreground text-sm'>No documents uploaded yet.</p>
-            <Button
-              type='button'
-              variant='link'
-              size='sm'
-              className='mt-1 text-xs'
-              onClick={onOpenUpload}
-            >
-              Upload your first document
-            </Button>
+            {!isPublic && (
+              <Button
+                type='button'
+                variant='link'
+                size='sm'
+                className='mt-1 text-xs'
+                onClick={onOpenUpload}
+              >
+                Upload your first document
+              </Button>
+            )}
           </CardContent>
         </Card>
       ) : (
@@ -599,15 +619,17 @@ function CreatorCertificateDocumentsSection({
                       </Badge>
                     )}
                   </div>
-                  <Button
-                    type='button'
-                    variant='ghost'
-                    size='icon'
-                    className='hover:bg-destructive/10 hover:text-destructive h-7 w-7 shrink-0'
-                    onClick={() => cert.uuid && handleDelete(cert.uuid)}
-                  >
-                    <Trash2 className='h-3.5 w-3.5' />
-                  </Button>
+                  {!isPublic && (
+                    <Button
+                      type='button'
+                      variant='ghost'
+                      size='icon'
+                      className='hover:bg-destructive/10 hover:text-destructive h-7 w-7 shrink-0'
+                      onClick={() => cert.uuid && handleDelete(cert.uuid)}
+                    >
+                      <Trash2 className='h-3.5 w-3.5' />
+                    </Button>
+                  )}
                 </div>
 
                 <div>
@@ -662,6 +684,16 @@ function CreatorCertificateDocumentsSection({
           </div>
         </div>
       )}
+
+      <DeleteConfirmationDialog
+        open={documentToDelete !== null}
+        onOpenChange={open => !open && setDocumentToDelete(null)}
+        onConfirm={confirmDelete}
+        title='Remove document?'
+        description='This certificate document will be permanently removed from your profile.'
+        confirmLabel='Remove document'
+        isDeleting={deleteDocumentMut.isPending}
+      />
     </>
   );
 }
@@ -777,12 +809,14 @@ function creatorskillstab({ sharedProfile }: DomainTabProps) {
   );
 }
 
-function creatorcertificatestab({ sharedProfile }: DomainTabProps) {
+function creatorcertificatestab({ sharedProfile, isPublic }: DomainTabProps) {
   const qc = useQueryClient();
   const [isEditing, setIsEditing] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [isUploadSheetOpen, setIsUploadSheetOpen] = useState(false);
   const [attachments, setAttachments] = useState<AttachedFile[]>([]);
+  const [deleteIndex, setDeleteIndex] = useState<number | null>(null);
+  const canManageProfile = !isPublic;
 
   const { data, isLoading } = useQuery({
     ...getCourseCreatorEducationOptions({
@@ -876,11 +910,17 @@ function creatorcertificatestab({ sharedProfile }: DomainTabProps) {
     setAttachments(prev => [...prev, {}]);
   };
 
-  const removeEntry = async (index: number) => {
-    if (!confirm('Remove this qualification?')) return;
+  const removeEntry = (index: number) => {
+    setDeleteIndex(index);
+  };
+
+  const confirmRemoveEntry = () => {
+    if (deleteIndex === null) return;
+    const index = deleteIndex;
     const edUuid = form.getValues(`educations.${index}.uuid`);
     remove(index);
     setAttachments(prev => prev.filter((_, i) => i !== index));
+    setDeleteIndex(null);
     if (edUuid) {
       deleteEducationMut.mutate(
         { path: { educationUuid: edUuid, courseCreatorUuid: sharedProfile.uuid } },
@@ -910,6 +950,7 @@ function creatorcertificatestab({ sharedProfile }: DomainTabProps) {
 
   const onSubmit = async (values: EducationFormValues) => {
     setIsSaving(true);
+
     try {
       for (const [i, ed] of values.educations.entries()) {
         const attachment = attachments[i];
@@ -937,6 +978,8 @@ function creatorcertificatestab({ sharedProfile }: DomainTabProps) {
               query: {
                 education_uuid: educationUuid,
                 document_type_uuid: '35b49d4c-aec0-4a88-873b-5fa91342198f',
+                experience_uuid: '',
+                membership_uuid: '',
               },
             },
             {
@@ -984,13 +1027,16 @@ function creatorcertificatestab({ sharedProfile }: DomainTabProps) {
         </Card>
         <CreatorCertificateDocumentsSection
           sharedProfile={sharedProfile}
+          isPublic={isPublic}
           onOpenUpload={() => setIsUploadSheetOpen(true)}
         />
-        <CreatorCertificateUploadSheet
-          sharedProfile={sharedProfile}
-          open={isUploadSheetOpen}
-          onOpenChange={setIsUploadSheetOpen}
-        />
+        {canManageProfile && (
+          <CreatorCertificateUploadSheet
+            sharedProfile={sharedProfile}
+            open={isUploadSheetOpen}
+            onOpenChange={setIsUploadSheetOpen}
+          />
+        )}
       </TabShell>
     );
   }
@@ -1002,26 +1048,28 @@ function creatorcertificatestab({ sharedProfile }: DomainTabProps) {
           <CardHeader className='pb-2'>
             <div className='flex items-center justify-between gap-3'>
               <CardTitle className='text-sm font-semibold'>Education</CardTitle>
-              <div className='flex items-center gap-2'>
-                <Button
-                  type='button'
-                  variant='outline'
-                  size='sm'
-                  className='h-8 gap-1.5 text-xs'
-                  onClick={() => setIsUploadSheetOpen(true)}
-                >
-                  <Upload className='h-3.5 w-3.5' /> Upload New Certificate
-                </Button>
-                <Button
-                  type='button'
-                  variant='outline'
-                  size='sm'
-                  className='h-8 gap-1.5 text-xs'
-                  onClick={enterEditMode}
-                >
-                  <Pencil className='h-3.5 w-3.5' /> Edit
-                </Button>
-              </div>
+              {canManageProfile && (
+                <div className='flex items-center gap-2'>
+                  <Button
+                    type='button'
+                    variant='outline'
+                    size='sm'
+                    className='h-8 gap-1.5 text-xs'
+                    onClick={() => setIsUploadSheetOpen(true)}
+                  >
+                    <Upload className='h-3.5 w-3.5' /> Upload New Certificate
+                  </Button>
+                  <Button
+                    type='button'
+                    variant='outline'
+                    size='sm'
+                    className='h-8 gap-1.5 text-xs'
+                    onClick={enterEditMode}
+                  >
+                    <Pencil className='h-3.5 w-3.5' /> Edit
+                  </Button>
+                </div>
+              )}
             </div>
           </CardHeader>
           <CardContent className='pt-0'>
@@ -1033,21 +1081,24 @@ function creatorcertificatestab({ sharedProfile }: DomainTabProps) {
               <div className='flex flex-col items-center justify-center py-10 text-center'>
                 <GraduationCap className='text-muted-foreground/30 mb-3 h-10 w-10' />
                 <p className='text-muted-foreground text-sm'>No education history added yet.</p>
-                <Button
-                  type='button'
-                  variant='link'
-                  size='sm'
-                  className='mt-1 text-xs'
-                  onClick={enterEditMode}
-                >
-                  Add your first qualification
-                </Button>
+                {canManageProfile && (
+                  <Button
+                    type='button'
+                    variant='link'
+                    size='sm'
+                    className='mt-1 text-xs'
+                    onClick={enterEditMode}
+                  >
+                    Add your first qualification
+                  </Button>
+                )}
               </div>
             )}
           </CardContent>
         </Card>
         <CreatorCertificateDocumentsSection
           sharedProfile={sharedProfile}
+          isPublic={isPublic}
           onOpenUpload={() => setIsUploadSheetOpen(true)}
         />
         <CreatorCertificateUploadSheet
@@ -1198,13 +1249,13 @@ function creatorcertificatestab({ sharedProfile }: DomainTabProps) {
                       />
                     </div>
 
-                    <div className='grid grid-cols-1 gap-4 self-end md:grid-cols-2'>
-                      {/* Hidden start year */}
+                    <div className='grid grid-cols-1 gap-4 md:grid-cols-2'>
+                      {/* Start year */}
                       <FormField
                         control={form.control}
                         name={`educations.${index}.year_started`}
                         render={({ field }) => (
-                          <FormItem className='hidden'>
+                          <FormItem>
                             <FormLabel>Start year</FormLabel>
                             <FormControl>
                               <Input
@@ -1225,8 +1276,9 @@ function creatorcertificatestab({ sharedProfile }: DomainTabProps) {
                         control={form.control}
                         name={`educations.${index}.year_completed`}
                         render={({ field }) => (
-                          <FormItem className='md:col-start-2'>
+                          <FormItem>
                             <FormLabel>End year</FormLabel>
+
                             <FormControl>
                               <WatchedValue
                                 control={form.control}
@@ -1246,24 +1298,23 @@ function creatorcertificatestab({ sharedProfile }: DomainTabProps) {
                               </WatchedValue>
                             </FormControl>
 
-                            <div className='mt-2'>
-                              <FormField
-                                control={form.control}
-                                name={`educations.${index}.is_recent_qualification`}
-                                render={({ field: cb }) => (
-                                  <FormItem className='flex flex-row items-center gap-2 space-y-0'>
-                                    <FormControl>
-                                      <Checkbox checked={cb.value} onCheckedChange={cb.onChange} />
-                                    </FormControl>
-                                    <FormLabel className='cursor-pointer text-sm font-normal'>
-                                      Currently studying here
-                                    </FormLabel>
-                                  </FormItem>
-                                )}
-                              />
-                            </div>
-
                             <FormMessage />
+
+                            <FormField
+                              control={form.control}
+                              name={`educations.${index}.is_recent_qualification`}
+                              render={({ field: cb }) => (
+                                <FormItem className='mt-2 flex flex-row items-center gap-2 space-y-0'>
+                                  <FormControl>
+                                    <Checkbox checked={cb.value} onCheckedChange={cb.onChange} />
+                                  </FormControl>
+
+                                  <FormLabel className='cursor-pointer text-sm font-normal'>
+                                    Currently studying here
+                                  </FormLabel>
+                                </FormItem>
+                              )}
+                            />
                           </FormItem>
                         )}
                       />
@@ -1315,7 +1366,7 @@ function creatorcertificatestab({ sharedProfile }: DomainTabProps) {
                 <Button type='button' variant='ghost' onClick={cancelEdit} disabled={isSaving}>
                   Cancel
                 </Button>
-                <Button type='submit' className='min-w-32' disabled={isSaving}>
+                <Button type='submit' className='min-w-32' disabled={false}>
                   {isSaving ? 'Saving…' : 'Save changes'}
                 </Button>
               </div>
@@ -1325,6 +1376,7 @@ function creatorcertificatestab({ sharedProfile }: DomainTabProps) {
       </Form>
       <CreatorCertificateDocumentsSection
         sharedProfile={sharedProfile}
+        isPublic={isPublic}
         onOpenUpload={() => setIsUploadSheetOpen(true)}
       />
       <CreatorCertificateUploadSheet
@@ -1332,6 +1384,21 @@ function creatorcertificatestab({ sharedProfile }: DomainTabProps) {
         open={isUploadSheetOpen}
         onOpenChange={setIsUploadSheetOpen}
       />
+      <AlertDialog open={deleteIndex !== null} onOpenChange={open => !open && setDeleteIndex(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Remove qualification?</AlertDialogTitle>
+            <AlertDialogDescription>
+              This will delete the selected qualification from your profile. This action cannot be
+              undone.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction onClick={confirmRemoveEntry}>Remove</AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </TabShell>
   );
 }
@@ -1409,10 +1476,12 @@ function ExperienceViewCard({
   );
 }
 
-function CreatorCareerTab({ sharedProfile }: DomainTabProps) {
+function CreatorCareerTab({ sharedProfile, isPublic }: DomainTabProps) {
   const qc = useQueryClient();
   const [isEditing, setIsEditing] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
+  const [deleteIndex, setDeleteIndex] = useState<number | null>(null);
+  const canManageProfile = !isPublic;
 
   const { data, isLoading } = useQuery({
     ...getCourseCreatorExperienceOptions({
@@ -1512,10 +1581,17 @@ function CreatorCareerTab({ sharedProfile }: DomainTabProps) {
     form.reset();
   };
 
-  const removeEntry = async (index: number) => {
-    if (!confirm('Remove this experience?')) return;
+  // add a delete modal here instead
+  const removeEntry = (index: number) => {
+    setDeleteIndex(index);
+  };
+
+  const confirmRemoveEntry = () => {
+    if (deleteIndex === null) return;
+    const index = deleteIndex;
     const expUuid = form.getValues(`experiences.${index}.uuid`);
     remove(index);
+    setDeleteIndex(null);
     if (expUuid) {
       deleteExperienceMut.mutate(
         { path: { experienceUuid: expUuid, courseCreatorUuid: sharedProfile.uuid } },
@@ -1595,15 +1671,17 @@ function CreatorCareerTab({ sharedProfile }: DomainTabProps) {
                 </p>
               </div>
 
-              <Button
-                type='button'
-                variant='outline'
-                size='sm'
-                className='h-8 gap-1.5 text-xs'
-                onClick={enterEditMode}
-              >
-                <Pencil className='h-3.5 w-3.5' /> Edit
-              </Button>
+              {canManageProfile && (
+                <Button
+                  type='button'
+                  variant='outline'
+                  size='sm'
+                  className='h-8 gap-1.5 text-xs'
+                  onClick={enterEditMode}
+                >
+                  <Pencil className='h-3.5 w-3.5' /> Edit
+                </Button>
+              )}
             </div>
           </CardHeader>
           <CardContent className='pt-0'>
@@ -1613,15 +1691,17 @@ function CreatorCareerTab({ sharedProfile }: DomainTabProps) {
                 <p className='text-muted-foreground text-sm'>
                   No professional experience added yet.
                 </p>
-                <Button
-                  type='button'
-                  variant='link'
-                  size='sm'
-                  className='mt-1 text-xs'
-                  onClick={enterEditMode}
-                >
-                  Add your first experience
-                </Button>
+                {canManageProfile && (
+                  <Button
+                    type='button'
+                    variant='link'
+                    size='sm'
+                    className='mt-1 text-xs'
+                    onClick={enterEditMode}
+                  >
+                    Add your first experience
+                  </Button>
+                )}
               </div>
             ) : (
               <div className='relative pl-8'>
@@ -1831,6 +1911,21 @@ function CreatorCareerTab({ sharedProfile }: DomainTabProps) {
           </Card>
         </form>
       </Form>
+      <AlertDialog open={deleteIndex !== null} onOpenChange={open => !open && setDeleteIndex(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Remove experience?</AlertDialogTitle>
+            <AlertDialogDescription>
+              This will delete the selected experience from your profile. This action cannot be
+              undone.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction onClick={confirmRemoveEntry}>Remove</AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </TabShell>
   );
 }

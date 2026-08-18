@@ -2,30 +2,22 @@
 'use client';
 
 import { WatchedText, WatchedValue } from '@/components/form/watched-value';
-import { zodResolver } from '@hookform/resolvers/zod';
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import {
-  Briefcase,
-  FileText,
-  GraduationCap,
-  Grip,
-  Paperclip,
-  Pencil,
-  PlusCircle,
-  Trash2,
-  Upload,
-  X,
-  XCircle,
-} from 'lucide-react';
-import React, { useEffect, useMemo, useRef, useState } from 'react';
-import { useFieldArray, useForm } from 'react-hook-form';
-import { toast } from 'sonner';
-import * as z from 'zod';
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Checkbox } from '@/components/ui/checkbox';
+import { DeleteConfirmationDialog } from '@/components/ui/delete-confirmation-dialog';
 import {
   Form,
   FormControl,
@@ -64,12 +56,27 @@ import {
   updateInstructorExperienceMutation,
   uploadInstructorDocumentMutation,
 } from '@/services/client/@tanstack/react-query.gen';
-import type {
-  InstructorDocument,
-  InstructorEducation,
-  InstructorExperience,
-} from '@/services/client/types.gen';
+import type { InstructorEducation, InstructorExperience } from '@/services/client/types.gen';
 import CoursesPage from '@/src/features/profile/components/instructor/rate-card/CoursesPage';
+import { zodResolver } from '@hookform/resolvers/zod';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import {
+  Briefcase,
+  FileText,
+  GraduationCap,
+  Grip,
+  Paperclip,
+  Pencil,
+  PlusCircle,
+  Trash2,
+  Upload,
+  X,
+  XCircle,
+} from 'lucide-react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
+import { useFieldArray, useForm } from 'react-hook-form';
+import { toast } from 'sonner';
+import * as z from 'zod';
 import type { DomainTabProps, TabDefinition } from './types';
 
 function TabShell({ children }: { children: React.ReactNode }) {
@@ -497,11 +504,13 @@ function InstructorCertificateUploadSheet({
 function InstructorCertificateDocumentsSection({
   sharedProfile,
   onOpenUpload,
+  isPublic,
 }: DomainTabProps & {
   onOpenUpload: () => void;
 }) {
   const qc = useQueryClient();
   const [selectedPdf, setSelectedPdf] = useState<string | null>(null);
+  const [documentToDelete, setDocumentToDelete] = useState<string | null>(null);
 
   const { data, isLoading } = useQuery({
     ...getInstructorDocumentsOptions({ path: { instructorUuid: sharedProfile?.uuid } }),
@@ -520,18 +529,20 @@ function InstructorCertificateDocumentsSection({
     });
 
   const handleDelete = (uuid: string) => {
-    if (!confirm('Remove this document?')) return;
+    setDocumentToDelete(uuid);
+  };
 
-    deleteDocumentMut.mutate(
-      { path: { documentUuid: uuid, instructorUuid: sharedProfile?.uuid } },
-      {
-        onSuccess: () => {
-          invalidateDocs();
-          toast.success('Document removed');
-        },
-        onError: () => toast.error('Could not remove document'),
-      }
-    );
+  const confirmDelete = async () => {
+    if (!documentToDelete) return;
+    try {
+      await deleteDocumentMut.mutateAsync({
+        path: { documentUuid: documentToDelete, instructorUuid: sharedProfile?.uuid },
+      });
+      invalidateDocs();
+      toast.success('Document removed');
+    } catch {
+      toast.error('Could not remove document');
+    }
   };
 
   const docs = data?.data ?? [];
@@ -561,15 +572,17 @@ function InstructorCertificateDocumentsSection({
           <CardContent className='flex flex-col items-center justify-center py-10 text-center'>
             <FileText className='text-muted-foreground/30 mb-3 h-10 w-10' />
             <p className='text-muted-foreground text-sm'>No documents uploaded yet.</p>
-            <Button
-              type='button'
-              variant='link'
-              size='sm'
-              className='mt-1 text-xs'
-              onClick={onOpenUpload}
-            >
-              Upload your first document
-            </Button>
+            {!isPublic && (
+              <Button
+                type='button'
+                variant='link'
+                size='sm'
+                className='mt-1 text-xs'
+                onClick={onOpenUpload}
+              >
+                Upload your first document
+              </Button>
+            )}
           </CardContent>
         </Card>
       ) : (
@@ -591,15 +604,17 @@ function InstructorCertificateDocumentsSection({
                       </Badge>
                     )}
                   </div>
-                  <Button
-                    type='button'
-                    variant='ghost'
-                    size='icon'
-                    className='hover:bg-destructive/10 hover:text-destructive h-7 w-7 shrink-0'
-                    onClick={() => cert.uuid && handleDelete(cert.uuid)}
-                  >
-                    <Trash2 className='h-3.5 w-3.5' />
-                  </Button>
+                  {!isPublic && (
+                    <Button
+                      type='button'
+                      variant='ghost'
+                      size='icon'
+                      className='hover:bg-destructive/10 hover:text-destructive h-7 w-7 shrink-0'
+                      onClick={() => cert.uuid && handleDelete(cert.uuid)}
+                    >
+                      <Trash2 className='h-3.5 w-3.5' />
+                    </Button>
+                  )}
                 </div>
 
                 <div>
@@ -652,6 +667,16 @@ function InstructorCertificateDocumentsSection({
           </div>
         </div>
       )}
+
+      <DeleteConfirmationDialog
+        open={documentToDelete !== null}
+        onOpenChange={open => !open && setDocumentToDelete(null)}
+        onConfirm={confirmDelete}
+        title='Remove document?'
+        description='This certificate document will be permanently removed from your profile.'
+        confirmLabel='Remove document'
+        isDeleting={deleteDocumentMut.isPending}
+      />
     </>
   );
 }
@@ -756,20 +781,22 @@ function InstructorVerifiedDocumentsSection({ sharedProfile }: DomainTabProps) {
   );
 }
 
-function instructorskillstab({ sharedProfile }: DomainTabProps) {
+function instructorskillstab({ sharedProfile, isPublic }: DomainTabProps) {
   return (
     <TabShell>
-      <InstructorVerifiedDocumentsSection sharedProfile={sharedProfile} />
+      <InstructorVerifiedDocumentsSection sharedProfile={sharedProfile} isPublic={isPublic} />
     </TabShell>
   );
 }
 
-function instructorcertificatestab({ sharedProfile }: DomainTabProps) {
+function instructorcertificatestab({ sharedProfile, isPublic }: DomainTabProps) {
   const qc = useQueryClient();
   const [isEditing, setIsEditing] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [isUploadSheetOpen, setIsUploadSheetOpen] = useState(false);
   const [attachments, setAttachments] = useState<AttachedFile[]>([]);
+  const [deleteIndex, setDeleteIndex] = useState<number | null>(null);
+  const canManageProfile = !isPublic;
 
   const { data, isLoading } = useQuery({
     ...getInstructorEducationOptions({ path: { instructorUuid: sharedProfile?.uuid } }),
@@ -861,11 +888,17 @@ function instructorcertificatestab({ sharedProfile }: DomainTabProps) {
     setAttachments(prev => [...prev, {}]);
   };
 
-  const removeEntry = async (index: number) => {
-    if (!confirm('Remove this qualification?')) return;
+  const removeEntry = (index: number) => {
+    setDeleteIndex(index);
+  };
+
+  const confirmRemoveEntry = () => {
+    if (deleteIndex === null) return;
+    const index = deleteIndex;
     const edUuid = form.getValues(`educations.${index}.uuid`);
     remove(index);
     setAttachments(prev => prev.filter((_, i) => i !== index));
+    setDeleteIndex(null);
     if (edUuid) {
       deleteEducationMut.mutate(
         { path: { educationUuid: edUuid, instructorUuid: sharedProfile.uuid } },
@@ -895,6 +928,7 @@ function instructorcertificatestab({ sharedProfile }: DomainTabProps) {
 
   const onSubmit = async (values: EducationFormValues) => {
     setIsSaving(true);
+
     try {
       for (const [i, ed] of values.educations.entries()) {
         const attachment = attachments[i];
@@ -923,7 +957,8 @@ function instructorcertificatestab({ sharedProfile }: DomainTabProps) {
                 education_uuid: educationUuid,
                 title: ed.school_name,
                 description: ed.field_of_study,
-                document_type_uuid: '35b49d4c-aec0-4a88-873b-5fa91342198f', // contnent type uuid for pdfs
+                document_type_uuid: '35b49d4c-aec0-4a88-873b-5fa91342198f',
+                // contnent type uuid for pdfs
                 experience_uuid: '',
                 expiry_date: undefined,
                 membership_uuid: '',
@@ -974,13 +1009,16 @@ function instructorcertificatestab({ sharedProfile }: DomainTabProps) {
         </Card>
         <InstructorCertificateDocumentsSection
           sharedProfile={sharedProfile}
+          isPublic={isPublic}
           onOpenUpload={() => setIsUploadSheetOpen(true)}
         />
-        <InstructorCertificateUploadSheet
-          sharedProfile={sharedProfile}
-          open={isUploadSheetOpen}
-          onOpenChange={setIsUploadSheetOpen}
-        />
+        {canManageProfile && (
+          <InstructorCertificateUploadSheet
+            sharedProfile={sharedProfile}
+            open={isUploadSheetOpen}
+            onOpenChange={setIsUploadSheetOpen}
+          />
+        )}
       </TabShell>
     );
   }
@@ -992,26 +1030,28 @@ function instructorcertificatestab({ sharedProfile }: DomainTabProps) {
           <CardHeader className='pb-2'>
             <div className='flex items-center justify-between gap-3'>
               <CardTitle className='text-sm font-semibold'>Education</CardTitle>
-              <div className='flex items-center gap-2'>
-                <Button
-                  type='button'
-                  variant='outline'
-                  size='sm'
-                  className='h-8 gap-1.5 text-xs'
-                  onClick={() => setIsUploadSheetOpen(true)}
-                >
-                  <Upload className='h-3.5 w-3.5' /> Upload New Certificate
-                </Button>
-                <Button
-                  type='button'
-                  variant='outline'
-                  size='sm'
-                  className='h-8 gap-1.5 text-xs'
-                  onClick={enterEditMode}
-                >
-                  <Pencil className='h-3.5 w-3.5' /> Edit
-                </Button>
-              </div>
+              {canManageProfile && (
+                <div className='flex items-center gap-2'>
+                  <Button
+                    type='button'
+                    variant='outline'
+                    size='sm'
+                    className='h-8 gap-1.5 text-xs'
+                    onClick={() => setIsUploadSheetOpen(true)}
+                  >
+                    <Upload className='h-3.5 w-3.5' /> Upload New Certificate
+                  </Button>
+                  <Button
+                    type='button'
+                    variant='outline'
+                    size='sm'
+                    className='h-8 gap-1.5 text-xs'
+                    onClick={enterEditMode}
+                  >
+                    <Pencil className='h-3.5 w-3.5' /> Edit
+                  </Button>
+                </div>
+              )}
             </div>
           </CardHeader>
           <CardContent className='pt-0'>
@@ -1019,15 +1059,17 @@ function instructorcertificatestab({ sharedProfile }: DomainTabProps) {
               <div className='flex flex-col items-center justify-center py-10 text-center'>
                 <GraduationCap className='text-muted-foreground/30 mb-3 h-10 w-10' />
                 <p className='text-muted-foreground text-sm'>No education history added yet.</p>
-                <Button
-                  type='button'
-                  variant='link'
-                  size='sm'
-                  className='mt-1 text-xs'
-                  onClick={enterEditMode}
-                >
-                  Add your first qualification
-                </Button>
+                {canManageProfile && (
+                  <Button
+                    type='button'
+                    variant='link'
+                    size='sm'
+                    className='mt-1 text-xs'
+                    onClick={enterEditMode}
+                  >
+                    Add your first qualification
+                  </Button>
+                )}
               </div>
             ) : (
               serverEducations.map(edu => <EducationViewCard key={edu.uuid} edu={edu} />)
@@ -1036,13 +1078,16 @@ function instructorcertificatestab({ sharedProfile }: DomainTabProps) {
         </Card>
         <InstructorCertificateDocumentsSection
           sharedProfile={sharedProfile}
+          isPublic={isPublic}
           onOpenUpload={() => setIsUploadSheetOpen(true)}
         />
-        <InstructorCertificateUploadSheet
-          sharedProfile={sharedProfile}
-          open={isUploadSheetOpen}
-          onOpenChange={setIsUploadSheetOpen}
-        />
+        {canManageProfile && (
+          <InstructorCertificateUploadSheet
+            sharedProfile={sharedProfile}
+            open={isUploadSheetOpen}
+            onOpenChange={setIsUploadSheetOpen}
+          />
+        )}
       </TabShell>
     );
   }
@@ -1187,12 +1232,11 @@ function instructorcertificatestab({ sharedProfile }: DomainTabProps) {
                     </div>
 
                     <div className='flex w-full justify-end'>
-                      {/* Hidden start year */}
                       <FormField
                         control={form.control}
                         name={`educations.${index}.year_started`}
                         render={({ field }) => (
-                          <FormItem className='hidden'>
+                          <FormItem>
                             <FormLabel>Start year</FormLabel>
                             <FormControl>
                               <Input
@@ -1320,6 +1364,21 @@ function instructorcertificatestab({ sharedProfile }: DomainTabProps) {
         open={isUploadSheetOpen}
         onOpenChange={setIsUploadSheetOpen}
       />
+      <AlertDialog open={deleteIndex !== null} onOpenChange={open => !open && setDeleteIndex(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Remove qualification?</AlertDialogTitle>
+            <AlertDialogDescription>
+              This will delete the selected qualification from your profile. This action cannot be
+              undone.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction onClick={confirmRemoveEntry}>Remove</AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </TabShell>
   );
 }
@@ -1391,10 +1450,12 @@ function ExperienceViewCard({ item, color }: { item: InstructorExperienceRecord;
   );
 }
 
-function InstructorCareerTab({ sharedProfile }: DomainTabProps) {
+function InstructorCareerTab({ sharedProfile, isPublic }: DomainTabProps) {
   const qc = useQueryClient();
   const [isEditing, setIsEditing] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
+  const [deleteIndex, setDeleteIndex] = useState<number | null>(null);
+  const canManageProfile = !isPublic;
 
   const { data, isLoading } = useQuery({
     ...getInstructorExperienceOptions({
@@ -1494,10 +1555,16 @@ function InstructorCareerTab({ sharedProfile }: DomainTabProps) {
     form.reset();
   };
 
-  const removeEntry = async (index: number) => {
-    if (!confirm('Remove this experience?')) return;
+  const removeEntry = (index: number) => {
+    setDeleteIndex(index);
+  };
+
+  const confirmRemoveEntry = () => {
+    if (deleteIndex === null) return;
+    const index = deleteIndex;
     const expUuid = form.getValues(`experiences.${index}.uuid`);
     remove(index);
+    setDeleteIndex(null);
     if (expUuid) {
       deleteExperienceMut.mutate(
         { path: { experienceUuid: expUuid, instructorUuid: sharedProfile.uuid } },
@@ -1577,15 +1644,17 @@ function InstructorCareerTab({ sharedProfile }: DomainTabProps) {
                 </p>
               </div>
 
-              <Button
-                type='button'
-                variant='outline'
-                size='sm'
-                className='h-8 gap-1.5 text-xs'
-                onClick={enterEditMode}
-              >
-                <Pencil className='h-3.5 w-3.5' /> Edit
-              </Button>
+              {canManageProfile && (
+                <Button
+                  type='button'
+                  variant='outline'
+                  size='sm'
+                  className='h-8 gap-1.5 text-xs'
+                  onClick={enterEditMode}
+                >
+                  <Pencil className='h-3.5 w-3.5' /> Edit
+                </Button>
+              )}
             </div>
           </CardHeader>
           <CardContent className='pt-0'>
@@ -1595,15 +1664,17 @@ function InstructorCareerTab({ sharedProfile }: DomainTabProps) {
                 <p className='text-muted-foreground text-sm'>
                   No professional experience added yet.
                 </p>
-                <Button
-                  type='button'
-                  variant='link'
-                  size='sm'
-                  className='mt-1 text-xs'
-                  onClick={enterEditMode}
-                >
-                  Add your first experience
-                </Button>
+                {canManageProfile && (
+                  <Button
+                    type='button'
+                    variant='link'
+                    size='sm'
+                    className='mt-1 text-xs'
+                    onClick={enterEditMode}
+                  >
+                    Add your first experience
+                  </Button>
+                )}
               </div>
             ) : (
               <div className='relative pl-8'>
@@ -1813,6 +1884,21 @@ function InstructorCareerTab({ sharedProfile }: DomainTabProps) {
           </Card>
         </form>
       </Form>
+      <AlertDialog open={deleteIndex !== null} onOpenChange={open => !open && setDeleteIndex(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Remove experience?</AlertDialogTitle>
+            <AlertDialogDescription>
+              This will delete the selected experience from your profile. This action cannot be
+              undone.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction onClick={confirmRemoveEntry}>Remove</AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </TabShell>
   );
 }

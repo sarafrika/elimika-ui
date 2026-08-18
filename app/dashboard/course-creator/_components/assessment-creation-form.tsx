@@ -6,6 +6,7 @@ import { Disc } from 'lucide-react';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { toast } from 'sonner';
 import { Button } from '../../../../components/ui/button';
+import { DeleteConfirmationDialog } from '../../../../components/ui/delete-confirmation-dialog';
 import {
   Sheet,
   SheetContent,
@@ -43,7 +44,7 @@ import type {
   QuizQuestionOption,
 } from '../../../../services/client/types.gen';
 import { AssignmentCreationForm } from './assignment-creation-form';
-import { QuizCreationForm } from './quiz-creation-form';
+import { QuizCreationForm, type QuizPayload } from './quiz-creation-form';
 
 const sampleQuestions = [
   'Sample question 1?',
@@ -103,7 +104,6 @@ type MessageWithData<T> = {
   option_uuid?: string;
 };
 type AssignmentPayload = Record<string, unknown> & { lesson_uuid?: string };
-type QuizPayload = Record<string, unknown> & { lesson_uuid?: string };
 type QuestionOptionApi = {
   uuid?: string;
   option_text?: string;
@@ -160,6 +160,8 @@ const AssessmentCreationForm = ({
   );
 
   const [activeQuizUuid, setActiveQuizUuid] = useState<string | null>(null);
+  const [quizDraft, setQuizDraft] = useState<QuizPayload | null>(null);
+  const [questionToDelete, setQuestionToDelete] = useState<number | null>(null);
 
   const handleQuizCreatedOrSelected = (quizUuid: string | null) => {
     setActiveQuizUuid(quizUuid);
@@ -183,6 +185,45 @@ const AssessmentCreationForm = ({
   const createAssignmentMut = useMutation(createAssignmentMutation());
   const updateAssignmentMut = useMutation(updateAssignmentMutation());
   const deleteAssignmentMut = useMutation(deleteAssignmentMutation());
+
+  const createQuizForLesson = useCallback(
+    async (lessonId: string, payload: QuizPayload) => {
+      return new Promise<string>((resolve, reject) => {
+        createQuiz.mutate(
+          {
+            body: {
+              ...payload,
+              lesson_uuid: lessonId,
+            } as CreateQuizVariables['body'],
+          },
+          {
+            onSuccess: (data: MessageWithData<Quiz>) => {
+              const quizUuid = data?.data?.uuid || data?.uuid;
+              qc.invalidateQueries({
+                queryKey: searchQuizzesQueryKey({
+                  query: {
+                    pageable: {},
+                    searchParams: { lesson_uuid_eq: lessonId },
+                  },
+                }),
+              });
+
+              if (quizUuid) {
+                resolve(quizUuid);
+                return;
+              }
+
+              reject(new Error('Quiz UUID missing from response'));
+            },
+            onError: error => {
+              reject(error);
+            },
+          }
+        );
+      });
+    },
+    [createQuiz, qc]
+  );
 
   const buildQuestionPayload = useCallback(
     (q: Question, index: number, quizUuid: string, userEmail?: string) =>
@@ -272,10 +313,6 @@ const AssessmentCreationForm = ({
 
   const handleDeleteQuiz = useCallback(
     async (quizUuid: string) => {
-      if (!confirm('Are you sure you want to delete this quiz? This action cannot be undone.')) {
-        return;
-      }
-
       try {
         await deleteQuiz.mutateAsync({
           path: { uuid: quizUuid as string },
@@ -399,9 +436,9 @@ const AssessmentCreationForm = ({
           pairs:
             questionType === 'MATCHING'
               ? optionsData.map((pair: QuestionOptionApi) => ({
-                  left: pair.left_text ?? '',
-                  right: pair.right_text ?? '',
-                }))
+                left: pair.left_text ?? '',
+                right: pair.right_text ?? '',
+              }))
               : undefined,
           answer: questionType === 'ESSAY' || questionType === 'SHORT_ANSWER' ? '' : undefined,
         };
@@ -665,9 +702,241 @@ const AssessmentCreationForm = ({
   };
   /////
 
+  const saveQuizQuestionsForQuiz = useCallback(
+    async (quizUuid: string) => {
+      if (!selectedLessonId) {
+        toast.error('Please select a lesson first');
+        return;
+      }
+
+      const questions = quizData[selectedLessonId] ?? [];
+      if (!questions.length) {
+        toast.error('No questions to save');
+        return;
+      }
+
+      let savedCount = 0;
+      let skippedCount = 0;
+      let failedCount = 0;
+
+      try {
+        for (let qIndex = 0; qIndex < questions.length; qIndex++) {
+          const question = questions[qIndex];
+          if (!question) {
+            continue;
+          }
+          let questionUuid = question?.uuid;
+
+          const isNewQuestion = !questionUuid || questionUuid === '';
+          const questionChanged =
+            isNewQuestion || hasQuestionChanged(qIndex) || modifiedQuestions.has(qIndex);
+
+          if (!questionChanged) {
+            if (
+              ['MULTIPLE_CHOICE', 'TRUE_FALSE', 'SHORT_ANSWER', 'ESSAY'].includes(question.type) &&
+              question.options?.length
+            ) {
+              const modifiedOptionsForQuestion = modifiedOptions.get(qIndex);
+              let hasChangedOptions = false;
+
+              for (let oIndex = 0; oIndex < question.options.length; oIndex++) {
+                const option = question.options[oIndex];
+                if (!option) {
+                  continue;
+                }
+                const isNewOption = !option.uuid || option.uuid === '';
+                const optionChanged =
+                  isNewOption ||
+                  hasOptionChanged(qIndex, oIndex) ||
+                  modifiedOptionsForQuestion?.has(oIndex);
+
+                if (optionChanged) {
+                  hasChangedOptions = true;
+                  break;
+                }
+              }
+
+              if (!hasChangedOptions) {
+                skippedCount++;
+                continue;
+              }
+            } else {
+              skippedCount++;
+              continue;
+            }
+          }
+
+          try {
+            if (isNewQuestion) {
+              const res = (await addQuizQuestion.mutateAsync({
+                path: { quizUuid },
+                body: buildQuestionPayload(question, qIndex, quizUuid, 'test@example.com'),
+              })) as MessageWithData<QuizQuestion>;
+
+              questionUuid = res?.data?.uuid || res?.uuid || res?.question_uuid;
+
+              if (!questionUuid) {
+                throw new Error('Failed to get question UUID from API response');
+              }
+              question.uuid = questionUuid;
+
+              setQuizData(prev => {
+                const updated = [...(prev[selectedLessonId] || [])];
+                const currentQuestion = updated[qIndex];
+                if (!currentQuestion) return prev;
+                updated[qIndex] = { ...currentQuestion, uuid: questionUuid };
+                return { ...prev, [selectedLessonId]: updated };
+              });
+            } else if (questionChanged) {
+              await updateQuizQuestion.mutateAsync({
+                path: { quizUuid, questionUuid: questionUuid as string },
+                body: buildQuestionPayload(question, qIndex, quizUuid, 'test@example.com'),
+              });
+            }
+
+            if (
+              ['MULTIPLE_CHOICE', 'TRUE_FALSE', 'SHORT_ANSWER', 'ESSAY'].includes(question.type) &&
+              question.options?.length
+            ) {
+              const modifiedOptionsForQuestion = modifiedOptions.get(qIndex);
+
+              for (let oIndex = 0; oIndex < question.options.length; oIndex++) {
+                const option = question.options[oIndex];
+                if (!option) {
+                  continue;
+                }
+
+                if (!option.text?.trim()) {
+                  continue;
+                }
+
+                const isNewOption = !option.uuid || option.uuid === '';
+                const optionChanged =
+                  isNewOption ||
+                  hasOptionChanged(qIndex, oIndex) ||
+                  modifiedOptionsForQuestion?.has(oIndex);
+
+                if (!optionChanged) {
+                  continue;
+                }
+
+                try {
+                  if (isNewOption) {
+                    const newOpt = (await addQuestionOption.mutateAsync({
+                      path: { quizUuid, questionUuid: questionUuid as string },
+                      body: buildOptionPayload(
+                        option,
+                        oIndex,
+                        questionUuid as string,
+                        'test@example.com'
+                      ),
+                    })) as MessageWithData<QuizQuestionOption>;
+
+                    const optionUuid = newOpt?.data?.uuid || newOpt?.uuid || newOpt?.option_uuid;
+
+                    if (optionUuid) {
+                      option.uuid = optionUuid;
+
+                      setQuizData(prev => {
+                        const updated = [...(prev[selectedLessonId] || [])];
+                        const currentQuestion = updated[qIndex];
+                        if (!currentQuestion) return prev;
+                        const opts = [...(currentQuestion.options || [])];
+                        const currentOption = opts[oIndex];
+                        if (!currentOption) return prev;
+                        opts[oIndex] = { ...currentOption, uuid: optionUuid };
+                        updated[qIndex] = { ...currentQuestion, options: opts };
+                        return { ...prev, [selectedLessonId]: updated };
+                      });
+                    }
+                  } else {
+                    await updateQuestionOption.mutateAsync({
+                      path: {
+                        quizUuid,
+                        questionUuid: questionUuid as string,
+                        optionUuid: option.uuid as string,
+                      },
+                      body: buildOptionPayload(
+                        option,
+                        oIndex,
+                        questionUuid as string,
+                        'test@example.com'
+                      ),
+                    });
+                  }
+                } catch (optionErr) { }
+              }
+
+              qc.invalidateQueries({
+                queryKey: getQuestionOptionsQueryKey({
+                  path: { quizUuid, questionUuid: questionUuid as string },
+                  query: { pageable: {} },
+                }),
+              });
+            }
+
+            savedCount++;
+          } catch (qErr) {
+            failedCount++;
+            toast.error(`Failed to save question ${qIndex + 1}`);
+          }
+        }
+
+        qc.invalidateQueries({
+          queryKey: getQuizQuestionsQueryKey({ path: { quizUuid } }),
+        });
+
+        setOriginalQuizData(prev => ({
+          ...prev,
+          [selectedLessonId]: JSON.parse(JSON.stringify(quizData[selectedLessonId])),
+        }));
+
+        setModifiedQuestions(new Set());
+        setModifiedOptions(new Map());
+
+        if (failedCount === 0) {
+          if (skippedCount > 0) {
+            toast.success(
+              `Saved ${savedCount} changed items! (${skippedCount} unchanged items skipped)`
+            );
+          } else {
+            toast.success(`All ${savedCount} questions and options saved successfully!`);
+          }
+        } else if (savedCount > 0) {
+          toast.warning(
+            `Saved ${savedCount} questions, skipped ${skippedCount}, but ${failedCount} failed.`
+          );
+        } else {
+          toast.error('Failed to save all questions. Please try again.');
+        }
+      } catch (err) {
+        toast.error(
+          `Failed to save quiz questions: ${err instanceof Error ? err.message : 'Unknown error'}`
+        );
+      }
+    },
+    [
+      selectedLessonId,
+      quizData,
+      originalQuizData,
+      modifiedQuestions,
+      modifiedOptions,
+      addQuizQuestion,
+      updateQuizQuestion,
+      addQuestionOption,
+      updateQuestionOption,
+      buildQuestionPayload,
+      buildOptionPayload,
+      hasQuestionChanged,
+      hasOptionChanged,
+      qc,
+      setQuizData,
+    ]
+  );
+
   const handleSaveQuizQuestions = useCallback(async () => {
-    if (!selectedLessonId || !activeQuizUuid) {
-      toast.error('Please select a lesson and create/select a quiz first');
+    if (!selectedLessonId) {
+      toast.error('Please select a lesson first');
       return;
     }
 
@@ -677,226 +946,36 @@ const AssessmentCreationForm = ({
       return;
     }
 
-    let savedCount = 0;
-    let skippedCount = 0;
-    let failedCount = 0;
+    let quizUuidToUse = activeQuizUuid;
 
-    try {
-      for (let qIndex = 0; qIndex < questions.length; qIndex++) {
-        const question = questions[qIndex];
-        if (!question) {
-          continue;
-        }
-        let questionUuid = question?.uuid;
-
-        const isNewQuestion = !questionUuid || questionUuid === '';
-        const questionChanged =
-          isNewQuestion || hasQuestionChanged(qIndex) || modifiedQuestions.has(qIndex);
-
-        if (!questionChanged) {
-          if (
-            ['MULTIPLE_CHOICE', 'TRUE_FALSE', 'SHORT_ANSWER', 'ESSAY'].includes(question.type) &&
-            question.options?.length
-          ) {
-            const modifiedOptionsForQuestion = modifiedOptions.get(qIndex);
-            let hasChangedOptions = false;
-
-            for (let oIndex = 0; oIndex < question.options.length; oIndex++) {
-              const option = question.options[oIndex];
-              if (!option) {
-                continue;
-              }
-              const isNewOption = !option.uuid || option.uuid === '';
-              const optionChanged =
-                isNewOption ||
-                hasOptionChanged(qIndex, oIndex) ||
-                modifiedOptionsForQuestion?.has(oIndex);
-
-              if (optionChanged) {
-                hasChangedOptions = true;
-                break;
-              }
-            }
-
-            if (!hasChangedOptions) {
-              skippedCount++;
-              continue;
-            }
-          } else {
-            skippedCount++;
-            continue;
-          }
-        }
-
-        try {
-          if (isNewQuestion) {
-            // CREATE NEW QUESTION
-            const res = (await addQuizQuestion.mutateAsync({
-              path: { quizUuid: activeQuizUuid },
-              body: buildQuestionPayload(question, qIndex, activeQuizUuid, 'test@example.com'),
-            })) as MessageWithData<QuizQuestion>;
-
-            questionUuid = res?.data?.uuid || res?.uuid || res?.question_uuid;
-
-            if (!questionUuid) {
-              throw new Error('Failed to get question UUID from API response');
-            }
-            question.uuid = questionUuid;
-
-            setQuizData(prev => {
-              const updated = [...(prev[selectedLessonId] || [])];
-              const currentQuestion = updated[qIndex];
-              if (!currentQuestion) return prev;
-              updated[qIndex] = { ...currentQuestion, uuid: questionUuid };
-              return { ...prev, [selectedLessonId]: updated };
-            });
-          } else if (questionChanged) {
-            // UPDATE EXISTING QUESTION (only if it changed)
-            await updateQuizQuestion.mutateAsync({
-              path: { quizUuid: activeQuizUuid, questionUuid: questionUuid as string },
-              body: buildQuestionPayload(question, qIndex, activeQuizUuid, 'test@example.com'),
-            });
-          }
-
-          if (
-            ['MULTIPLE_CHOICE', 'TRUE_FALSE', 'SHORT_ANSWER', 'ESSAY'].includes(question.type) &&
-            question.options?.length
-          ) {
-            const modifiedOptionsForQuestion = modifiedOptions.get(qIndex);
-
-            for (let oIndex = 0; oIndex < question.options.length; oIndex++) {
-              const option = question.options[oIndex];
-              if (!option) {
-                continue;
-              }
-
-              if (!option.text?.trim()) {
-                continue;
-              }
-
-              const isNewOption = !option.uuid || option.uuid === '';
-              const optionChanged =
-                isNewOption ||
-                hasOptionChanged(qIndex, oIndex) ||
-                modifiedOptionsForQuestion?.has(oIndex);
-
-              if (!optionChanged) {
-                continue;
-              }
-
-              try {
-                if (isNewOption) {
-                  // CREATE NEW OPTION
-                  const newOpt = (await addQuestionOption.mutateAsync({
-                    path: { quizUuid: activeQuizUuid, questionUuid: questionUuid as string },
-                    body: buildOptionPayload(
-                      option,
-                      oIndex,
-                      questionUuid as string,
-                      'test@example.com'
-                    ),
-                  })) as MessageWithData<QuizQuestionOption>;
-
-                  const optionUuid = newOpt?.data?.uuid || newOpt?.uuid || newOpt?.option_uuid;
-
-                  if (optionUuid) {
-                    option.uuid = optionUuid;
-
-                    setQuizData(prev => {
-                      const updated = [...(prev[selectedLessonId] || [])];
-                      const currentQuestion = updated[qIndex];
-                      if (!currentQuestion) return prev;
-                      const opts = [...(currentQuestion.options || [])];
-                      const currentOption = opts[oIndex];
-                      if (!currentOption) return prev;
-                      opts[oIndex] = { ...currentOption, uuid: optionUuid };
-                      updated[qIndex] = { ...currentQuestion, options: opts };
-                      return { ...prev, [selectedLessonId]: updated };
-                    });
-                  }
-                } else {
-                  // UPDATE EXISTING OPTION
-                  await updateQuestionOption.mutateAsync({
-                    path: {
-                      quizUuid: activeQuizUuid,
-                      questionUuid: questionUuid as string,
-                      optionUuid: option.uuid as string,
-                    },
-                    body: buildOptionPayload(
-                      option,
-                      oIndex,
-                      questionUuid as string,
-                      'test@example.com'
-                    ),
-                  });
-                }
-              } catch (optionErr) {}
-            }
-
-            qc.invalidateQueries({
-              queryKey: getQuestionOptionsQueryKey({
-                path: { quizUuid: activeQuizUuid, questionUuid: questionUuid as string },
-                query: { pageable: {} },
-              }),
-            });
-          }
-
-          savedCount++;
-        } catch (qErr) {
-          failedCount++;
-          toast.error(`Failed to save question ${qIndex + 1}`);
-        }
+    if (!quizUuidToUse) {
+      if (!quizDraft?.title.trim()) {
+        toast.error('Enter a quiz title before saving questions');
+        return;
       }
 
-      qc.invalidateQueries({
-        queryKey: getQuizQuestionsQueryKey({ path: { quizUuid: activeQuizUuid } }),
-      });
-
-      setOriginalQuizData(prev => ({
-        ...prev,
-        [selectedLessonId]: JSON.parse(JSON.stringify(quizData[selectedLessonId])),
-      }));
-
-      setModifiedQuestions(new Set());
-      setModifiedOptions(new Map());
-
-      if (failedCount === 0) {
-        if (skippedCount > 0) {
-          toast.success(
-            `Saved ${savedCount} changed items! (${skippedCount} unchanged items skipped)`
-          );
-        } else {
-          toast.success(`All ${savedCount} questions and options saved successfully!`);
-        }
-      } else if (savedCount > 0) {
-        toast.warning(
-          `Saved ${savedCount} questions, skipped ${skippedCount}, but ${failedCount} failed.`
+      try {
+        quizUuidToUse = await createQuizForLesson(selectedLessonId, quizDraft);
+      } catch (err) {
+        toast.error(
+          `Failed to create quiz: ${err instanceof Error ? err.message : 'Unknown error'}`
         );
-      } else {
-        toast.error('Failed to save all questions. Please try again.');
+        return;
       }
-    } catch (err) {
-      toast.error(
-        `Failed to save quiz questions: ${err instanceof Error ? err.message : 'Unknown error'}`
-      );
+    }
+
+    await saveQuizQuestionsForQuiz(quizUuidToUse);
+
+    if (!activeQuizUuid) {
+      setActiveQuizUuid(quizUuidToUse);
     }
   }, [
-    selectedLessonId,
     activeQuizUuid,
+    createQuizForLesson,
     quizData,
-    originalQuizData,
-    modifiedQuestions,
-    modifiedOptions,
-    addQuizQuestion,
-    updateQuizQuestion,
-    addQuestionOption,
-    updateQuestionOption,
-    buildQuestionPayload,
-    buildOptionPayload,
-    hasQuestionChanged,
-    hasOptionChanged,
-    qc,
-    setQuizData,
+    quizDraft,
+    saveQuizQuestionsForQuiz,
+    selectedLessonId,
   ]);
 
   const addQuestion = useCallback(
@@ -969,45 +1048,50 @@ const AssessmentCreationForm = ({
   );
 
   const handleDeleteQuestion = useCallback(
-    async (qIndex: number) => {
-      const question = questions[qIndex];
-      if (!question) return;
+    (qIndex: number) => {
+      if (!questions[qIndex]) return;
+      setQuestionToDelete(qIndex);
+    },
+    [questions]
+  );
 
-      if (question?.uuid) {
-        if (!confirm('Delete this question from the quiz?')) return;
+  const confirmDeleteQuestion = useCallback(async () => {
+    if (questionToDelete === null) return;
+    const qIndex = questionToDelete;
+    const question = questions[qIndex];
+    if (!question) return;
 
-        try {
-          await deleteQuizQuestion.mutateAsync({
-            path: {
-              quizUuid: activeQuizUuid!,
-              questionUuid: question?.uuid as string,
-            },
-          });
+    if (question?.uuid) {
+      try {
+        await deleteQuizQuestion.mutateAsync({
+          path: {
+            quizUuid: activeQuizUuid!,
+            questionUuid: question?.uuid as string,
+          },
+        });
 
-          qc.invalidateQueries({
-            queryKey: getQuizQuestionsQueryKey({ path: { quizUuid: activeQuizUuid as string } }),
-          });
+        qc.invalidateQueries({
+          queryKey: getQuizQuestionsQueryKey({ path: { quizUuid: activeQuizUuid as string } }),
+        });
 
-          setQuizData(prev => {
-            const updated = [...(prev[selectedLessonId] ?? [])];
-            updated.splice(qIndex, 1);
-            return { ...prev, [selectedLessonId]: updated };
-          });
-
-          toast.success('Question deleted!');
-        } catch (err) {
-          toast.error('Failed to delete question');
-        }
-      } else {
         setQuizData(prev => {
           const updated = [...(prev[selectedLessonId] ?? [])];
           updated.splice(qIndex, 1);
           return { ...prev, [selectedLessonId]: updated };
         });
+
+        toast.success('Question deleted!');
+      } catch (err) {
+        toast.error('Failed to delete question');
       }
-    },
-    [questions, activeQuizUuid, selectedLessonId, deleteQuizQuestion, qc]
-  );
+    } else {
+      setQuizData(prev => {
+        const updated = [...(prev[selectedLessonId] ?? [])];
+        updated.splice(qIndex, 1);
+        return { ...prev, [selectedLessonId]: updated };
+      });
+    }
+  }, [questionToDelete, questions, activeQuizUuid, selectedLessonId, deleteQuizQuestion, qc]);
 
   const handleDeleteOption = useCallback(
     async (qIndex: number, oIndex: number) => {
@@ -1259,11 +1343,10 @@ const AssessmentCreationForm = ({
           <button
             key={tab}
             onClick={() => setActiveTab(tab)}
-            className={`-mb-px border-b-2 px-4 py-2 transition-colors ${
-              activeTab === tab
-                ? 'border-primary text-primary font-semibold'
-                : 'text-muted-foreground hover:text-foreground'
-            }`}
+            className={`-mb-px border-b-2 px-4 py-2 transition-colors ${activeTab === tab
+              ? 'border-primary text-primary font-semibold'
+              : 'text-muted-foreground hover:text-foreground'
+              }`}
           >
             {tab}
           </button>
@@ -1277,6 +1360,7 @@ const AssessmentCreationForm = ({
               lessons={lessons}
               quizId={activeQuizUuid}
               onSelectQuiz={handleQuizCreatedOrSelected}
+              onDraftChange={setQuizDraft}
               questions={questions}
               selectedLessonId={selectedLessonId}
               selectedLesson={selectedLesson}
@@ -1294,59 +1378,27 @@ const AssessmentCreationForm = ({
               addPair={addPair}
               deleteQuestion={handleDeleteQuestion}
               deleteOption={handleDeleteOption}
-              createQuizForLesson={async (lessonId, payload) => {
-                return new Promise<string>((resolve, reject) => {
-                  createQuiz.mutate(
-                    {
-                      body: {
-                        ...payload,
-                        lesson_uuid: lessonId,
-                      } as CreateQuizVariables['body'],
-                    },
-                    {
-                      onSuccess: (data: MessageWithData<Quiz>) => {
-                        const quizUuid = data?.data?.uuid || data?.uuid;
-                        qc.invalidateQueries({
-                          queryKey: searchQuizzesQueryKey({
-                            query: {
-                              pageable: {},
-                              searchParams: { lesson_uuid_eq: selectedLessonId as string },
-                            },
-                          }),
-                        });
-                        if (quizUuid) {
-                          resolve(quizUuid);
-                          return;
-                        }
-                        reject(new Error('Quiz UUID missing from response'));
-                      },
-                      onError: error => {
-                        reject(error);
-                      },
-                    }
-                  );
-                });
-              }}
+              createQuizForLesson={createQuizForLesson}
               updateQuizForLesson={handleUpdateQuiz}
               deleteQuizForLesson={handleDeleteQuiz}
-              addQuizQuestion={async payload => {}}
-              addQuestionOption={async payload => {}}
+              addQuizQuestion={async payload => { }}
+              addQuestionOption={async payload => { }}
               isPending={createQuiz.isPending || updateQuiz.isPending}
               openBulkUploadSheet={() => setBulkSheetOpen(true)}
-              // createQuizForLesson={async (lessonId, payload) => {
-              //   // const res = await createQuiz.mutateAsync({
-              //   //     body: {
-              //   //         ...payload,
-              //   //         lesson_uuid: lessonId,
-              //   //     },
-              //   // });
-              //   // qc.invalidateQueries({
-              //   //     queryKey: searchQuizzesQueryKey({
-              //   //         query: { pageable: {}, searchParams: { lesson_uuid_eq: selectedLessonId as string } },
-              //   //     }),
-              //   // });
-              //   // return res?.data?.quiz_uuid || res?.quiz_uuid;
-              // }}
+            // createQuizForLesson={async (lessonId, payload) => {
+            //   // const res = await createQuiz.mutateAsync({
+            //   //     body: {
+            //   //         ...payload,
+            //   //         lesson_uuid: lessonId,
+            //   //     },
+            //   // });
+            //   // qc.invalidateQueries({
+            //   //     queryKey: searchQuizzesQueryKey({
+            //   //         query: { pageable: {}, searchParams: { lesson_uuid_eq: selectedLessonId as string } },
+            //   //     }),
+            //   // });
+            //   // return res?.data?.quiz_uuid || res?.quiz_uuid;
+            // }}
             />
 
             <div className='mt-4 flex justify-end self-end'>
@@ -1357,18 +1409,21 @@ const AssessmentCreationForm = ({
                   addQuestionOption.isPending ||
                   updateQuizQuestion.isPending ||
                   updateQuestionOption.isPending ||
+                  createQuiz.isPending ||
                   !selectedLessonId ||
-                  !activeQuizUuid ||
                   (quizData[selectedLessonId]?.length ?? 0) === 0
                 }
               >
                 <Disc className='mr-2 h-4 w-4' />
                 {addQuizQuestion.isPending ||
-                addQuestionOption.isPending ||
-                updateQuizQuestion.isPending ||
-                updateQuestionOption.isPending
+                  addQuestionOption.isPending ||
+                  updateQuizQuestion.isPending ||
+                  updateQuestionOption.isPending ||
+                  createQuiz.isPending
                   ? 'Saving...'
-                  : 'Save Questions'}
+                  : activeQuizUuid
+                    ? 'Save Questions'
+                    : 'Create Quiz & Save Questions'}
               </Button>
             </div>
 
@@ -1386,7 +1441,8 @@ const AssessmentCreationForm = ({
                   <Textarea
                     value={bulkText}
                     onChange={e => setBulkText(e.target.value)}
-                    placeholder={`---
+                    placeholder={`
+---
 TYPE: MULTIPLE_CHOICE
 QUESTION: What is React?
 POINTS: 2
@@ -1401,7 +1457,8 @@ TYPE: TRUE_FALSE
 QUESTION: React is developed by Meta.
 
 A. True *
-B. False`}
+B. False
+                    `}
                     className='min-h-[500px] font-mono text-sm'
                   />
                 </div>
@@ -1453,6 +1510,15 @@ B. False`}
           </div>
         )}
       </div>
+      <DeleteConfirmationDialog
+        open={questionToDelete !== null}
+        onOpenChange={open => !open && setQuestionToDelete(null)}
+        onConfirm={confirmDeleteQuestion}
+        title='Delete question?'
+        description='This question will be permanently removed from the quiz.'
+        confirmLabel='Delete question'
+        isDeleting={deleteQuizQuestion.isPending}
+      />
     </div>
   );
 };

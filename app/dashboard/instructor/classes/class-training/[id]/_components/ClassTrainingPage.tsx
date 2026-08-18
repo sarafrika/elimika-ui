@@ -7,6 +7,7 @@ import ConfirmModal from '@/components/custom-modals/confirm-modal';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
+import { DeleteConfirmationDialog } from '@/components/ui/delete-confirmation-dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { ScrollArea } from '@/components/ui/scroll-area';
@@ -1139,6 +1140,7 @@ function AssignedTaskRow({
 }) {
   const qc = useQueryClient();
   const [expanded, setExpanded] = React.useState(false);
+  const [showDeleteDialog, setShowDeleteDialog] = React.useState(false);
 
   const [visibleAt, setEditVisibleAt] = React.useState(formatDateTimeInput(assignmentVisibleAt));
 
@@ -1157,52 +1159,48 @@ function AssignedTaskRow({
   const isDeleting = deleteAssignmentSchedMut.isPending || deleteQuizSchedMut.isPending;
 
   const handleDelete = () => {
-    const confirmed = window.confirm(
-      `Are you sure you want to remove this ${type} from the class schedule?`
-    );
+    setShowDeleteDialog(true);
+  };
 
-    if (!confirmed) return;
-
+  const confirmDelete = async () => {
     if (type === 'assignment' && assignment?.uuid) {
-      deleteAssignmentSchedMut.mutate(
-        {
+      try {
+        await deleteAssignmentSchedMut.mutateAsync({
           path: {
             classUuid: activeSchedule?.class_definition_uuid as string,
             scheduleUuid: activeSchedule?.uuid as string,
           },
-        },
-        {
-          onSuccess: () => {
-            qc.invalidateQueries({
-              queryKey: getAssignmentSchedulesQueryKey({
-                path: { classUuid: activeSchedule?.class_definition_uuid as string },
-              }),
-            });
-          },
-        }
-      );
+        });
+        qc.invalidateQueries({
+          queryKey: getAssignmentSchedulesQueryKey({
+            path: { classUuid: activeSchedule?.class_definition_uuid as string },
+          }),
+        });
+        toast.success('Assignment removed from the class schedule.');
+      } catch (error) {
+        toast.error(getApiToastMessage(error, 'Could not remove the assignment schedule.'));
+      }
 
       return;
     }
 
     if (type === 'quiz' && quiz?.uuid) {
-      deleteQuizSchedMut.mutate(
-        {
+      try {
+        await deleteQuizSchedMut.mutateAsync({
           path: {
             classUuid: activeSchedule?.class_definition_uuid as string,
             scheduleUuid: activeSchedule?.uuid as string,
           },
-        },
-        {
-          onSuccess: () => {
-            qc.invalidateQueries({
-              queryKey: getQuizSchedulesQueryKey({
-                path: { classUuid: activeSchedule?.class_definition_uuid as string },
-              }),
-            });
-          },
-        }
-      );
+        });
+        qc.invalidateQueries({
+          queryKey: getQuizSchedulesQueryKey({
+            path: { classUuid: activeSchedule?.class_definition_uuid as string },
+          }),
+        });
+        toast.success('Quiz removed from the class schedule.');
+      } catch (error) {
+        toast.error(getApiToastMessage(error, 'Could not remove the quiz schedule.'));
+      }
     }
   };
 
@@ -1442,6 +1440,15 @@ function AssignedTaskRow({
           </div>
         </div>
       )}
+      <DeleteConfirmationDialog
+        open={showDeleteDialog}
+        onOpenChange={setShowDeleteDialog}
+        onConfirm={confirmDelete}
+        title={`Remove ${type} from schedule?`}
+        description={`This ${type} will no longer be available in this class schedule.`}
+        confirmLabel={`Remove ${type}`}
+        isDeleting={isDeleting}
+      />
     </div>
   );
 }

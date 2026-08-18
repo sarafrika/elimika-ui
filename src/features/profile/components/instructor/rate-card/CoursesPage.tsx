@@ -1,9 +1,6 @@
 // @ts-nocheck -- pre-existing @hey-api generated-client type drift (see memory: elimika-ui-typecheck)
 'use client';
 
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import React, { useEffect, useMemo, useState } from 'react';
-import { toast } from 'sonner';
 import DeleteModal from '@/components/custom-modals/delete-modal';
 import type { Course, CourseTrainingApplication } from '@/services/client';
 import {
@@ -17,6 +14,9 @@ import {
 } from '@/services/client/@tanstack/react-query.gen';
 import { useUserProfile } from '@/src/features/profile/context/profile-context';
 import { useProfileFormMode } from '@/src/features/profile/context/profile-form-mode-context';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import React, { useEffect, useMemo, useState } from 'react';
+import { toast } from 'sonner';
 import CourseDetailsPanel from './CourseDetailsPanel';
 import CourseList from './CourseList';
 import CourseMobileModal from './CourseMobileModal';
@@ -105,7 +105,7 @@ export default function CoursesPage() {
           },
         }
       );
-    } catch (_error) {}
+    } catch (_error) { }
   };
 
   const handleUnverifyCourse = async (_course: CourseWithApplication) => {
@@ -158,6 +158,9 @@ export default function CoursesPage() {
             queryKey: getAllCoursesQueryKey({ query: { pageable: {} } }),
           });
         },
+        onError: (error) => {
+          toast.error(error.message)
+        }
       }
     );
   };

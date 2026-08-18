@@ -89,6 +89,12 @@ const RATE_TIERS: {
   { method: 'Private Virtual', fmt: 'INDIVIDUAL', loc: 'ONLINE', key: 'private_online_hourly_rate' },
 ];
 
+/** "KES 1,200" for one price, "KES 1,200 – KES 2,000" when the methods are priced differently. */
+const amountLabel = (min: number, max: number) => {
+  if (max <= 0) return '—';
+  return min === max ? currency.format(max) : `${currency.format(min)} – ${currency.format(max)}`;
+};
+
 const normStatus = (s?: string): string => {
   const v = (s ?? '').toLowerCase();
   if (v === 'approved' || v === 'accepted') return 'Active';
@@ -270,7 +276,9 @@ export default function CoursesPage() {
   const [subjectByCategory, setSubjectByCategory] = useState<Record<string, string>>({});
   const [activeProgramType, setActiveProgramType] = useState<string | null>(null);
 
-  // One entry per (application × rate-card tier) — a course appears once per delivery method it's priced for.
+  // One row per course. A course is priced for several delivery methods and may run several
+  // class definitions, but it is still one course — listing it once per method made the same
+  // course appear up to four times. The methods and their prices are summarised on the row.
   const rows = useMemo(
     () =>
       applications
@@ -278,7 +286,7 @@ export default function CoursesPage() {
           const s = (app.status ?? '').toLowerCase();
           return s === 'approved' || s === 'accepted';
         })
-        .flatMap(app => {
+        .map(app => {
           const courseUuid = app.course_uuid ?? '';
           const course = courseByUuid.get(courseUuid);
           const cats = course?.category_names ?? [];
@@ -287,33 +295,40 @@ export default function CoursesPage() {
           const name = course?.name ?? app.course_uuid ?? 'Course';
           const image =
             toAuthenticatedMediaUrl(course?.banner_url ?? course?.thumbnail_url) ?? null;
-          const baseStatus = archived[app.uuid as string] ? 'Archived' : normStatus(app.status);
+          const status = archived[app.uuid as string] ? 'Archived' : normStatus(app.status);
 
           const tiers = RATE_TIERS.filter(t => Number(app.rate_card?.[t.key] ?? 0) > 0);
-          const effectiveTiers = tiers.length
-            ? tiers
-            : [{ method: '—', fmt: '', loc: '', key: '' }];
+          const amounts = tiers.map(t => Number(app.rate_card?.[t.key] ?? 0));
+          const classDefs = tiers
+            .map(t => classDefByKey.get(`${courseUuid}|${t.fmt}|${t.loc}`))
+            .filter((cd): cd is ClassDefinition => Boolean(cd));
 
-          return effectiveTiers.map((tier, idx) => {
-            const cd = tier.fmt
-              ? classDefByKey.get(`${courseUuid}|${tier.fmt}|${tier.loc}`)
-              : undefined;
-            return {
-              rowKey: `${app.uuid}-${idx}`,
-              courseUuid,
-              category,
-              subject,
-              programType: null,
-              displayName: effectiveTiers.length > 1 ? `${name} — ${tier.method}` : name,
-              subjectLabel: subject ?? '—',
-              method: tier.method,
-              amount: tier.key ? Number(app.rate_card?.[tier.key] ?? 0) : (cd?.sale_price ?? 0),
-              lessons: cd ? Number(cd.scheduled_session_count ?? 0) : 0,
-              instructor: resolveInstructor(cd?.default_instructor_uuid),
-              image,
-              status: baseStatus,
-            };
-          });
+          const instructors = Array.from(
+            new Map(
+              classDefs
+                .map(cd => resolveInstructor(cd.default_instructor_uuid))
+                .filter((i): i is NonNullable<ClassInstructor> => Boolean(i))
+                .map(i => [i.name, i])
+            ).values()
+          );
+
+          return {
+            rowKey: app.uuid as string,
+            courseUuid,
+            category,
+            subject,
+            programType: null,
+            displayName: name,
+            subjectLabel: subject ?? '—',
+            methods: tiers.map(t => t.method),
+            minAmount: amounts.length ? Math.min(...amounts) : 0,
+            maxAmount: amounts.length ? Math.max(...amounts) : 0,
+            lessons: classDefs.reduce((sum, cd) => sum + Number(cd.scheduled_session_count ?? 0), 0),
+            instructor: instructors[0],
+            extraInstructorCount: Math.max(instructors.length - 1, 0),
+            image,
+            status,
+          };
         }),
     [applications, courseByUuid, classDefByKey, resolveInstructor, archived]
   );
@@ -399,11 +414,19 @@ export default function CoursesPage() {
                           </div>
                           <p className='text-muted-foreground text-xs'>{row.subjectLabel}</p>
                           <div className='flex flex-wrap items-center gap-2'>
+                            {row.methods.length === 0 ? (
+                              <Badge variant='outline' className='text-xs'>
+                                —
+                              </Badge>
+                            ) : (
+                              row.methods.map(method => (
+                                <Badge key={method} variant='outline' className='text-xs'>
+                                  {method}
+                                </Badge>
+                              ))
+                            )}
                             <Badge variant='outline' className='text-xs'>
-                              {row.method}
-                            </Badge>
-                            <Badge variant='outline' className='text-xs'>
-                              {row.amount > 0 ? currency.format(row.amount) : '—'}
+                              {amountLabel(row.minAmount, row.maxAmount)}
                             </Badge>
                             <Badge variant='outline' className='text-xs'>
                               {row.lessons} Lessons
@@ -424,6 +447,7 @@ export default function CoursesPage() {
                               </Avatar>
                               <span className='text-muted-foreground truncate text-sm'>
                                 {instructorName(row.instructor)}
+                                {row.extraInstructorCount > 0 ? ` +${row.extraInstructorCount}` : ''}
                               </span>
                             </div>
                             <CourseActions
@@ -432,7 +456,7 @@ export default function CoursesPage() {
                               onPostJob={() => postJobForCourse(row.courseUuid)}
                               onCreateClass={goToNewClass}
                               onArchive={() =>
-                                handleArchive(row.rowKey.split('-')[0], row.displayName)
+                                handleArchive(row.rowKey, row.displayName)
                               }
                             />
                           </div>
@@ -482,13 +506,23 @@ export default function CoursesPage() {
                           <TableCell className='min-w-[120px] whitespace-nowrap'>
                             {row.subjectLabel}
                           </TableCell>
-                          <TableCell className='whitespace-nowrap'>
-                            <Badge variant='outline' className='text-xs'>
-                              {row.method}
-                            </Badge>
+                          <TableCell>
+                            <div className='flex flex-wrap gap-1'>
+                              {row.methods.length === 0 ? (
+                                <Badge variant='outline' className='text-xs'>
+                                  —
+                                </Badge>
+                              ) : (
+                                row.methods.map(method => (
+                                  <Badge key={method} variant='outline' className='text-xs'>
+                                    {method}
+                                  </Badge>
+                                ))
+                              )}
+                            </div>
                           </TableCell>
                           <TableCell className='text-right font-mono whitespace-nowrap'>
-                            {row.amount > 0 ? currency.format(row.amount) : '—'}
+                            {amountLabel(row.minAmount, row.maxAmount)}
                           </TableCell>
                           <TableCell className='whitespace-nowrap'>{row.lessons}</TableCell>
                           <TableCell className='whitespace-nowrap'>
@@ -500,6 +534,7 @@ export default function CoursesPage() {
                               </Avatar>
                               <span className='text-muted-foreground'>
                                 {instructorName(row.instructor)}
+                                {row.extraInstructorCount > 0 ? ` +${row.extraInstructorCount}` : ''}
                               </span>
                             </div>
                           </TableCell>
@@ -515,7 +550,7 @@ export default function CoursesPage() {
                               onPostJob={() => postJobForCourse(row.courseUuid)}
                               onCreateClass={goToNewClass}
                               onArchive={() =>
-                                handleArchive(row.rowKey.split('-')[0], row.displayName)
+                                handleArchive(row.rowKey, row.displayName)
                               }
                             />
                           </TableCell>

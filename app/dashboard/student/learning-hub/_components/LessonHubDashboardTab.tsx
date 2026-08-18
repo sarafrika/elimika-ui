@@ -32,6 +32,7 @@ import { Button } from '../../../../../components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../../../../../components/ui/card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../../../../../components/ui/select';
 import { LearningProgressDrilldown } from './LearningProgressDrilldown';
+import { useLearningHubStudyMetrics } from './useLearningHubStudyMetrics';
 import { LearningHubData } from './useStudentLearningHubData';
 
 type LearningProgressDrilldownProps = Parameters<typeof LearningProgressDrilldown>[0];
@@ -68,6 +69,7 @@ interface LearningHubDataProps {
 export function LessonHubDashboardTab({ learningHubData }: LearningHubDataProps) {
     const { assignmentRows, isLoading: assignmentsLoading } = useStudentAssignmentData();
     const { activeDomain } = useUserDomain();
+    const { studyStreakDays, weeklyStudyMinutes } = useLearningHubStudyMetrics();
 
     const activeCourses = learningHubData.activeCourses;
     const upcomingClasses = learningHubData.upcomingClasses;
@@ -327,7 +329,7 @@ export function LessonHubDashboardTab({ learningHubData }: LearningHubDataProps)
 
                         {/* // switch to tab my-courses */}
                         <Button asChild variant='ghost' size='sm' className='rounded-sm text-primary'>
-                            <Link href='/dashboard/student/learning-hub'>
+                            <Link href='/dashboard/student/learning-hub?tab=my-courses'>
                                 Manage <ArrowRight className='ml-1 h-3.5 w-3.5' />
                             </Link>
                         </Button>
@@ -541,8 +543,14 @@ export function LessonHubDashboardTab({ learningHubData }: LearningHubDataProps)
                         </CardTitle>
                     </CardHeader>
                     <CardContent>
-                        <p className='text-3xl font-semibold'>5 days</p>
-                        <p className='text-muted-foreground text-xs'>Study today to extend your streak.</p>
+                        <p className='text-3xl font-semibold'>
+                            {studyStreakDays > 0 ? `${studyStreakDays} day${studyStreakDays === 1 ? '' : 's'}` : '0 days'}
+                        </p>
+                        <p className='text-muted-foreground text-xs'>
+                            {studyStreakDays > 0
+                                ? 'Tracked from recent learning activity.'
+                                : 'Study to start building your streak.'}
+                        </p>
                     </CardContent>
                 </Card>
                 <Card>
@@ -551,13 +559,13 @@ export function LessonHubDashboardTab({ learningHubData }: LearningHubDataProps)
                     </CardHeader>
                     <CardContent>
                         <p className='text-3xl font-semibold'>
-                            {learningHubData.stats.find(stat => stat.id === 'weekly-learning-time')?.value ?? '0h'}
+                            {`${Math.max(0, Math.round((weeklyStudyMinutes / 60) * 10) / 10)}h`}
                         </p>
-                        <Progress value={65} className='mt-2' />
+                        <Progress value={Math.min(100, Math.round((weeklyStudyMinutes / (10 * 60)) * 100))} className='mt-2' />
                         <p className='mt-1 text-xs text-muted-foreground'>Target: 10 h / week</p>
                     </CardContent>
                 </Card>
-                <Card>
+                <Card className='hidden'>
                     <CardHeader className='pb-3'>
                         <CardTitle className='flex items-center gap-2 text-base'>
                             <Sparkles className='text-primary h-4 w-4' /> AI Recommendations

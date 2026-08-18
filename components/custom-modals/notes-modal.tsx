@@ -1,7 +1,6 @@
 'use client';
 
-import { useQuery } from '@tanstack/react-query';
-import { useEffect, useMemo, useState } from 'react';
+import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import {
@@ -20,12 +19,15 @@ import {
 } from '@/components/ui/sheet';
 import Spinner from '@/components/ui/spinner';
 import { Textarea } from '@/components/ui/textarea';
+import { useQuery } from '@tanstack/react-query';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useUserDomain } from '../../context/user-domain-context';
 import { CourseTrainingRequirement } from '../../services/client';
 import {
   getCourseTrainingRequirementsOptions,
   getProgramRequirementsOptions,
 } from '../../services/client/@tanstack/react-query.gen';
+import type { CatalogTrainingApplicationData } from '../../src/features/dashboard/courses/shared/_components/courses-data';
 import {
   CoursesCatalogCardData,
   CoursesRecommendationCardData,
@@ -55,6 +57,11 @@ interface NotesModalProps {
   userType?: 'course_creator' | 'instructor';
   minimum_rate: number | string;
   selectedApplicationCard?: CoursesCatalogCardData | CoursesRecommendationCardData;
+  existingApplication?: CatalogTrainingApplicationData | null;
+  readOnly?: boolean;
+  canReapply?: boolean;
+  onReapply?: () => void;
+  formRevision?: number;
 }
 
 export default function NotesModal({
@@ -73,6 +80,11 @@ export default function NotesModal({
   userType = 'instructor',
   minimum_rate,
   selectedApplicationCard,
+  existingApplication,
+  readOnly = false,
+  canReapply = false,
+  onReapply,
+  formRevision = 0,
 }: NotesModalProps) {
   const [notes, setNotes] = useState('');
   const [privateOnlineRate, setPrivateOnlineRate] = useState<number | ''>(0);
@@ -84,14 +96,24 @@ export default function NotesModal({
   const { activeDomain } = useUserDomain();
   const [requirements, setRequirements] = useState<CourseTrainingRequirement[]>([]);
 
-  const resetForm = () => {
+  const applyExistingApplication = useCallback(() => {
+    const rateCard = existingApplication?.rate_card;
+    setNotes(existingApplication?.application_notes ?? '');
+    setPrivateOnlineRate(rateCard?.private_online_hourly_rate ?? '');
+    setPrivateInpersonRate(rateCard?.private_inperson_hourly_rate ?? '');
+    setGroupOnlineRate(rateCard?.group_online_hourly_rate ?? '');
+    setGroupInpersonRate(rateCard?.group_inperson_hourly_rate ?? '');
+    setCurrency((rateCard?.currency ?? 'KES').toUpperCase());
+  }, [existingApplication]);
+
+  const resetForm = useCallback(() => {
     setNotes('');
     setPrivateOnlineRate(0);
     setPrivateInpersonRate(0);
     setGroupOnlineRate(0);
     setGroupInpersonRate(0);
     setCurrency('KES');
-  };
+  }, []);
 
   const handleSave = () => {
     onSave({
@@ -109,6 +131,17 @@ export default function NotesModal({
     setOpen(false);
     resetForm();
   };
+
+  useEffect(() => {
+    if (!open) return;
+
+    if (readOnly && existingApplication) {
+      applyExistingApplication();
+      return;
+    }
+
+    resetForm();
+  }, [applyExistingApplication, existingApplication, formRevision, open, readOnly, resetForm]);
 
   const { data: courseTrainingReqResp } = useQuery({
     ...getCourseTrainingRequirementsOptions({
@@ -145,12 +178,14 @@ export default function NotesModal({
     student: 'Student',
     instructor: 'Instructor',
     organisation_user: 'Organisation',
-  };
+  } as const;
+
+  const activeProvider = useMemo(() => normalizeProvider(activeDomain), [activeDomain]);
 
   const checkableProviders = useMemo(() => {
-    switch (normalizeProvider(activeDomain)) {
+    switch (activeProvider) {
       case 'instructor':
-        return ['organisation_user', 'instructor'];
+        return ['instructor'];
 
       case 'organisation_user':
         return ['organisation_user', 'instructor'];
@@ -158,7 +193,10 @@ export default function NotesModal({
       default:
         return [];
     }
-  }, [activeDomain]);
+  }, [activeProvider]);
+
+  const canCheckProvider = (provider?: string | null) =>
+    checkableProviders.includes(normalizeProvider(provider) ?? '');
 
   const groupedRequirements = useMemo(() => {
     return requirements.reduce(
@@ -177,12 +215,24 @@ export default function NotesModal({
     );
   }, [requirements]);
 
+  const requirementGroups = useMemo(() => {
+    return Object.entries(groupedRequirements).map(([provider, items]) => ({
+      provider,
+      label:
+        providerLabels[normalizeProvider(provider) as keyof typeof providerLabels] ?? provider,
+      items,
+      hasUncheckedMandatoryRequirements: items.some(
+        req =>
+          req.is_mandatory &&
+          canCheckProvider(req.provided_by) &&
+          !(req as { checked?: boolean }).checked
+      ),
+    }));
+  }, [groupedRequirements, checkableProviders]);
+
   const hasUncheckedMandatoryRequirements = useMemo(() => {
     return requirements
-      .filter(
-        req =>
-          req.is_mandatory && checkableProviders.includes(normalizeProvider(req.provided_by) ?? '')
-      )
+      .filter(req => req.is_mandatory && canCheckProvider(req.provided_by))
       .some(req => !(req as { checked?: boolean }).checked);
   }, [requirements, checkableProviders]);
 
@@ -206,6 +256,8 @@ export default function NotesModal({
     (selectedApplicationCard as { contentKind?: string } | undefined)?.contentKind,
   ]);
 
+  const statusLabel = (existingApplication?.status ?? '').toLowerCase() || 'unknown';
+
   return (
     <Sheet
       open={open}
@@ -215,7 +267,7 @@ export default function NotesModal({
       }}
     >
       <SheetContent className='flex w-full flex-col p-3 sm:max-w-[600px] sm:p-6'>
-        <SheetHeader className='border-border border-b pb-4'>
+        <SheetHeader className='border-border border-b p-0 pb-4'>
           <SheetTitle>{title}</SheetTitle>
           {description && (
             <SheetDescription className='text-muted-foreground text-sm'>
@@ -226,6 +278,44 @@ export default function NotesModal({
 
         {/* Scrollable body */}
         <div className='flex-1 space-y-4 overflow-y-auto py-4 pr-1'>
+          {existingApplication ? (
+            <div className='bg-muted/40 space-y-3 rounded-md border p-3'>
+              <div className='flex items-center justify-between gap-2'>
+                <div>
+                  <p className='text-sm font-semibold'>Application summary</p>
+                  <p className='text-muted-foreground text-xs capitalize'>
+                    Status: {statusLabel}
+                  </p>
+                </div>
+                <Badge variant={statusLabel === 'approved' ? 'default' : statusLabel === 'pending' ? 'secondary' : 'destructive'}>
+                  {statusLabel}
+                </Badge>
+              </div>
+
+              <div className='grid gap-2 text-sm sm:grid-cols-2'>
+                <div>
+                  <p className='text-muted-foreground text-xs'>Submitted</p>
+                  <p>{existingApplication.created_date ? new Date(existingApplication.created_date).toLocaleDateString() : '—'}</p>
+                </div>
+                <div>
+                  <p className='text-muted-foreground text-xs'>Reviewed</p>
+                  <p>{existingApplication.reviewed_at ? new Date(existingApplication.reviewed_at).toLocaleDateString() : '—'}</p>
+                </div>
+                <div className='sm:col-span-2'>
+                  <p className='text-muted-foreground text-xs'>Reviewer</p>
+                  <p>{existingApplication.reviewed_by ?? '—'}</p>
+                </div>
+              </div>
+
+              {existingApplication.review_notes ? (
+                <div>
+                  <p className='text-muted-foreground text-xs'>Reviewer notes</p>
+                  <p className='text-sm'>{existingApplication.review_notes}</p>
+                </div>
+              ) : null}
+            </div>
+          ) : null}
+
           {/* Notes */}
           <div className='space-y-1'>
             <label className='text-muted-foreground text-sm font-medium'>Notes</label>
@@ -234,6 +324,7 @@ export default function NotesModal({
               onChange={e => setNotes(e.target.value)}
               placeholder={placeholder}
               rows={6}
+              disabled={readOnly}
             />
           </div>
 
@@ -242,7 +333,7 @@ export default function NotesModal({
               {/* Currency */}
               <div className='space-y-1'>
                 <label className='text-muted-foreground text-sm font-medium'>Currency</label>
-                <Select value={currency} onValueChange={setCurrency}>
+                <Select value={currency} onValueChange={setCurrency} disabled={readOnly}>
                   <SelectTrigger className='w-full'>
                     <SelectValue placeholder='Select currency' />
                   </SelectTrigger>
@@ -279,6 +370,7 @@ export default function NotesModal({
                       type='number'
                       min={minimum_rate}
                       value={privateOnlineRate}
+                      disabled={readOnly}
                       onChange={e =>
                         setPrivateOnlineRate(e.target.value ? Number(e.target.value) : '')
                       }
@@ -290,6 +382,7 @@ export default function NotesModal({
                       type='number'
                       min={minimum_rate}
                       value={privateInpersonRate}
+                      disabled={readOnly}
                       onChange={e =>
                         setPrivateInpersonRate(e.target.value ? Number(e.target.value) : '')
                       }
@@ -312,6 +405,7 @@ export default function NotesModal({
                       type='number'
                       min={minimum_rate}
                       value={groupOnlineRate}
+                      disabled={readOnly}
                       onChange={e =>
                         setGroupOnlineRate(e.target.value ? Number(e.target.value) : '')
                       }
@@ -323,6 +417,7 @@ export default function NotesModal({
                       type='number'
                       min={minimum_rate}
                       value={groupInpersonRate}
+                      disabled={readOnly}
                       onChange={e =>
                         setGroupInpersonRate(e.target.value ? Number(e.target.value) : '')
                       }
@@ -336,10 +431,10 @@ export default function NotesModal({
             <div>
               <h3 className='text-sm font-medium'>Course Training Requirements</h3>
               <p className='text-muted-foreground text-xs'>
-                Select the requirements that are currently available.
+                Review the requirements below. Tick only the ones your role is responsible for.
               </p>
             </div>
-            {Object.keys(groupedRequirements).length === 0 ? (
+            {requirementGroups.length === 0 ? (
               <div className='text-muted-foreground rounded-md border border-dashed p-6 text-center'>
                 <p className='text-sm font-medium'>No training requirements have been set.</p>
                 <p className='mt-1 text-xs'>
@@ -347,19 +442,15 @@ export default function NotesModal({
                 </p>
               </div>
             ) : (
-              Object.entries(groupedRequirements).map(([provider, items]) => (
-                <div key={provider} className='rounded-md border p-3'>
+              requirementGroups.map(group => (
+                <div key={group.provider} className='rounded-md border p-3'>
                   <div className='mb-2 flex items-center justify-between'>
-                    <h4 className='text-sm font-semibold'>
-                      {providerLabels[normalizeProvider(provider) as keyof typeof providerLabels]}
-                    </h4>
+                    <h4 className='text-sm font-semibold'>{group.label}</h4>
                   </div>
 
                   <div className='space-y-2'>
-                    {items?.map(item => {
-                      const canCheck = checkableProviders.includes(
-                        normalizeProvider(item.provided_by) ?? ''
-                      );
+                    {group.items?.map(item => {
+                      const canCheck = canCheckProvider(item.provided_by);
 
                       return (
                         <div
@@ -368,8 +459,9 @@ export default function NotesModal({
                         >
                           {canCheck ? (
                             <Checkbox
-                              className='mt-0.5'
+                              className="mt-0.5 h-4 w-4 border-2 border-foreground bg-background shadow-none data-[state=checked]:bg-primary data-[state=checked]:border-primary"
                               checked={(item as { checked?: boolean }).checked}
+                              disabled={readOnly}
                               onCheckedChange={checked => {
                                 setRequirements(prev =>
                                   prev.map(req =>
@@ -381,7 +473,7 @@ export default function NotesModal({
                               }}
                             />
                           ) : (
-                            <div className='mt-0.5 h-4 w-4' />
+                            <div className="mt-0.5 h-4 w-4" />
                           )}
 
                           <div className='flex-1'>
@@ -408,7 +500,7 @@ export default function NotesModal({
                     })}
                   </div>
 
-                  {hasUncheckedMandatoryRequirements && (
+                  {!readOnly && group.hasUncheckedMandatoryRequirements && (
                     <p className='text-destructive text-xs'>
                       Please confirm all required training requirements before submitting.
                     </p>
@@ -421,22 +513,42 @@ export default function NotesModal({
 
         {/* Sticky footer */}
         <div className='border-border flex justify-end gap-2 border-t pt-4'>
-          <Button
-            variant='outline'
-            onClick={handleClose}
-            disabled={isLoading}
-            {...cancelButtonProps}
-          >
-            {cancelText}
-          </Button>
-          <Button
-            onClick={handleSave}
-            className='min-w-[100px]'
-            disabled={isLoading || !notes.trim() || hasUncheckedMandatoryRequirements}
-            {...saveButtonProps}
-          >
-            {isLoading ? <Spinner /> : saveText}
-          </Button>
+          {readOnly ? (
+            <>
+              {canReapply && onReapply ? (
+                <Button
+                  variant='outline'
+                  onClick={onReapply}
+                  disabled={isLoading}
+                  {...cancelButtonProps}
+                >
+                  Re-apply
+                </Button>
+              ) : null}
+              <Button onClick={handleClose} disabled={isLoading}>
+                Close
+              </Button>
+            </>
+          ) : (
+            <>
+              <Button
+                variant='outline'
+                onClick={handleClose}
+                disabled={isLoading}
+                {...cancelButtonProps}
+              >
+                {cancelText}
+              </Button>
+              <Button
+                onClick={handleSave}
+                className='min-w-[100px]'
+                disabled={isLoading || !notes.trim() || hasUncheckedMandatoryRequirements}
+                {...saveButtonProps}
+              >
+                {isLoading ? <Spinner /> : saveText}
+              </Button>
+            </>
+          )}
         </div>
       </SheetContent>
     </Sheet>
