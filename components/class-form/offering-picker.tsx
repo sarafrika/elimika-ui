@@ -13,8 +13,8 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { Skeleton } from '@/components/ui/skeleton';
-import type { Category, User } from '@/services/client';
-import { type ApprovedRateCard, instructorName } from './class-form-shared';
+import type { Category } from '@/services/client';
+import { type ApprovedRateCard, type InstructorOption } from './class-form-shared';
 
 export type Offering = {
   value: string;
@@ -133,6 +133,8 @@ export function OfferingPicker({
   selectedInstructor,
   onlyAvailable,
   onOnlyAvailableChange,
+  instructorsLoading = false,
+  instructorEmptyHint,
   showInstructor = true,
   titleLabel = 'Class title',
   titleHint = 'Auto-generated from the approved offering. This is what appears on the classes list.',
@@ -147,10 +149,12 @@ export function OfferingPicker({
   programCategoryUuid: string;
   onProgramCategoryChange: (v: string) => void;
   title: string;
-  instructors?: User[];
+  instructors?: InstructorOption[];
   instructorUuid?: string;
   onInstructorChange?: (v: string) => void;
-  selectedInstructor?: User;
+  selectedInstructor?: InstructorOption;
+  instructorsLoading?: boolean;
+  instructorEmptyHint?: string;
   onlyAvailable?: boolean;
   onOnlyAvailableChange?: (v: boolean) => void;
   showInstructor?: boolean;
@@ -229,34 +233,40 @@ export function OfferingPicker({
               <div className='flex min-w-0 items-center gap-2'>
                 {selectedInstructor ? (
                   <AvatarWithSkeleton
-                    src={selectedInstructor.profile_image_url ?? ''}
-                    name={instructorName(selectedInstructor)}
+                    src={selectedInstructor.avatarUrl ?? ''}
+                    name={selectedInstructor.name}
                     className='h-6 w-6 shrink-0'
                   />
                 ) : null}
                 <span className='truncate'>
-                  <SelectValue placeholder='Select an instructor' />
+                  <SelectValue
+                    placeholder={
+                      instructorsLoading ? 'Loading instructors…' : 'Select an instructor'
+                    }
+                  />
                 </span>
               </div>
             </SelectTrigger>
             <SelectContent>
               {(instructors ?? []).length === 0 ? (
                 <div className='text-muted-foreground px-2 py-1.5 text-xs'>
-                  No instructors in your organisation yet
+                  {instructorsLoading
+                    ? 'Loading instructors…'
+                    : (instructorEmptyHint ?? 'No instructors in your organisation yet')}
                 </div>
               ) : (
                 (instructors ?? []).map(i => (
-                  <SelectItem key={i.uuid} value={i.uuid ?? ''}>
-                    {instructorName(i)}
+                  <SelectItem key={i.uuid} value={i.uuid}>
+                    {i.name}
                   </SelectItem>
                 ))
               )}
             </SelectContent>
           </Select>
           <p className='text-muted-foreground text-[11px]'>
-            On publish the class is assigned to this instructor and scheduled — it appears on their
-            calendar and the organisation calendar. Leave unset to post it for instructors to apply
-            instead.
+            Only instructors your organisation has hired <em>and</em> who are approved to deliver
+            this offering can be assigned. On publish the class is scheduled on their calendar and
+            the organisation calendar. To reach instructors you have not hired yet, post a job.
           </p>
         </div>
         ) : null}

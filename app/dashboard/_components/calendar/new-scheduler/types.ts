@@ -8,7 +8,8 @@ export type SchedulerEvent = {
   id: string;
   instanceUuid?: string;
   classDefinitionUuid?: string;
-  eventType?: 'class' | 'booking_request';
+  /** `resource_reservation` covers both recruitment holds and confirmed resource bookings. */
+  eventType?: 'class' | 'booking_request' | 'resource_reservation';
   title: string;
   course: string;
   instructor: string;

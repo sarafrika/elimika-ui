@@ -9,6 +9,7 @@ import useAmdinClassesWithDetails from '@/hooks/use-admin-classes';
 import { useInstructorsByIds, useStudentsByIds, useUsersByIds } from '@/hooks/use-batched-lookups';
 import { useInstructorClassesWithSchedules } from '@/hooks/use-instructor-classes-with-schedules';
 import {
+  getCalendarOptions,
   getClassDefinitionOptions,
   getClassDefinitionsForOrganisationOptions,
   getClassScheduleOptions,
@@ -18,6 +19,7 @@ import {
   getStudentByIdOptions,
   getStudentScheduleOptions,
   getUserByUuidOptions,
+  listResourcesOptions,
 } from '@/services/client/@tanstack/react-query.gen';
 import type { ClassDefinition, Course, Student, User } from '@/services/client/types.gen';
 import type {
@@ -33,7 +35,88 @@ import {
   toClassLookup,
 } from './calendar-utils';
 import { SchedulerCalendarView } from './new-scheduler-calendar-view';
-import type { SchedulerProfile } from './types';
+import type { SchedulerEvent, SchedulerProfile } from './types';
+
+/**
+ * Reservations a recruitment hold or a confirmed booking puts on an organisation resource.
+ * They are what the organisation sees when a venue or a piece of equipment is spoken for —
+ * previously the calendar drew class sessions only, so a room reserved by a marketplace job
+ * looked free right up until someone double-booked it.
+ */
+function useOrganisationResourceReservations(organisationUuid?: string) {
+  const range = useMemo(() => {
+    const start = new Date();
+    start.setMonth(start.getMonth() - 3);
+    const end = new Date();
+    end.setMonth(end.getMonth() + 9);
+    const asDate = (value: Date) => value.toISOString().slice(0, 10);
+    return { start_date: asDate(start), end_date: asDate(end) };
+  }, []);
+
+  const resourcesQuery = useQuery({
+    ...listResourcesOptions({
+      path: { organisationUuid: organisationUuid ?? '' },
+      query: { pageable: { page: 0, size: 100 }, active: true },
+    }),
+    enabled: !!organisationUuid,
+    staleTime: 5 * 60 * 1000,
+  });
+
+  const resources = useMemo(
+    () => (resourcesQuery.data?.data?.content ?? []).filter(resource => resource?.uuid),
+    [resourcesQuery.data]
+  );
+
+  const calendarQueries = useQueries({
+    queries: resources.map(resource => ({
+      ...getCalendarOptions({
+        path: { organisationUuid: organisationUuid ?? '', resourceUuid: resource.uuid as string },
+        query: range,
+      }),
+      enabled: !!organisationUuid && !!resource.uuid,
+      staleTime: 5 * 60 * 1000,
+    })),
+  });
+
+  const events = useMemo<SchedulerEvent[]>(
+    () =>
+      calendarQueries.flatMap((query, index) => {
+        const resource = resources[index];
+        const entries = query.data?.data ?? [];
+        return entries
+          // Open hours and blackouts describe when a resource *could* be used; only holds and
+          // confirmed bookings are time somebody has actually taken.
+          .filter(entry => entry.entry_type === 'HOLD' || entry.entry_type === 'CONFIRMED')
+          .filter(entry => entry.start_time && entry.end_time)
+          .map((entry, entryIndex) => {
+            const held = entry.entry_type === 'HOLD';
+            const resourceName = resource?.name ?? 'Resource';
+            return {
+              id: `resource-${resource?.uuid}-${entryIndex}`,
+              classDefinitionUuid: entry.class_definition_uuid ?? undefined,
+              eventType: 'resource_reservation' as const,
+              title: held ? `${resourceName} — held` : `${resourceName} — reserved`,
+              course: entry.notes ?? (held ? 'Recruitment hold' : 'Confirmed booking'),
+              instructor: '',
+              location: resourceName,
+              locationType: resource?.resource_type ?? undefined,
+              startTime: new Date(entry.start_time as unknown as string),
+              endTime: new Date(entry.end_time as unknown as string),
+              status: held ? 'Tentative' : 'Reserved',
+              category: 'TVET / Vocational' as const,
+              students: [],
+              classCode: entry.quantity ? `x${entry.quantity}` : '',
+            };
+          });
+      }),
+    [calendarQueries, resources]
+  );
+
+  return {
+    events,
+    isLoading: resourcesQuery.isLoading || calendarQueries.some(query => query.isLoading),
+  };
+}
 
 function useClassStudentSummaries(classUuids: Array<string | null | undefined>) {
   const normalizedClassUuids = useMemo(
@@ -318,21 +401,58 @@ function InstructorCalendarPage() {
     classData.map(classDef => classDef.uuid ?? undefined)
   );
 
-  const events = useMemo(
-    () =>
-      classData
-        .flatMap((classDef, classIndex) =>
-          mapClassSchedule(
-            classDef,
-            classIndex,
-            new Map(instructorSummary.map(item => [item.uuid, item.fullName] as const)),
-            new Map(instructorSummary.map(item => [item.uuid, item]))
-          )
+  const events = useMemo(() => {
+    const classEvents = classData
+      .flatMap((classDef, classIndex) =>
+        mapClassSchedule(
+          classDef,
+          classIndex,
+          new Map(instructorSummary.map(item => [item.uuid, item.fullName] as const)),
+          new Map(instructorSummary.map(item => [item.uuid, item]))
         )
-        .filter(event => event.status !== 'Cancelled')
-        .sort((a, b) => a.startTime.getTime() - b.startTime.getTime()),
-    [classData, instructorSummary]
-  );
+      )
+      .filter(event => event.status !== 'Cancelled');
+
+    // Anything the instructor's own schedule holds that the class list did not explain:
+    // sessions of a class owned by an organisation that hired them, and instructor block
+    // entries, which carry no class definition at all. Without these the instructor's
+    // calendar showed free time they had already been booked for.
+    const coveredInstanceUuids = new Set(
+      classEvents.map(event => event.instanceUuid).filter(Boolean)
+    );
+    const name = profile?.instructor?.full_name || 'Instructor';
+    const reservedEvents: SchedulerEvent[] = (instructorClassesQuery.schedule ?? [])
+      .filter(instance => instance?.uuid && !coveredInstanceUuids.has(instance.uuid))
+      .filter(instance => (instance.status ?? '').toUpperCase() !== 'CANCELLED')
+      .map(instance => ({
+        id: `reserved-${instance.uuid}`,
+        instanceUuid: instance.uuid ?? undefined,
+        classDefinitionUuid: instance.class_definition_uuid ?? undefined,
+        eventType: instance.class_definition_uuid ? 'class' : 'resource_reservation',
+        title: instance.title || 'Reserved time',
+        course: instance.class_definition_uuid ? 'Assigned class' : 'Blocked time',
+        instructor: name,
+        instructorUuid: instructorUuid,
+        location: instance.location_name ?? '',
+        locationType: instance.location_type ?? undefined,
+        startTime: new Date(instance.start_time as unknown as string),
+        endTime: new Date(instance.end_time as unknown as string),
+        status: instance.status ?? 'Reserved',
+        category: 'TVET / Vocational',
+        students: [],
+        classCode: '',
+      }));
+
+    return [...classEvents, ...reservedEvents].sort(
+      (a, b) => a.startTime.getTime() - b.startTime.getTime()
+    );
+  }, [
+    classData,
+    instructorSummary,
+    instructorClassesQuery.schedule,
+    instructorUuid,
+    profile?.instructor?.full_name,
+  ]);
 
   const data: SchedulerCalendarData = {
     allInstructors: instructorSummary,
@@ -720,6 +840,8 @@ function OrganizationCalendarPage() {
     }));
   }, [classData, courseMap, instructorMap, scheduleData]);
 
+  const resourceReservations = useOrganisationResourceReservations(organizationUuid);
+
   const events = useMemo(
     () =>
       classesWithCourseAndInstructor
@@ -727,8 +849,9 @@ function OrganizationCalendarPage() {
           mapClassSchedule(classDef as ClassWithScheduleInput, classIndex)
         )
         .filter(event => event.status !== 'Cancelled')
+        .concat(resourceReservations.events)
         .sort((a, b) => a.startTime.getTime() - b.startTime.getTime()),
-    [classesWithCourseAndInstructor]
+    [classesWithCourseAndInstructor, resourceReservations.events]
   );
 
   const instructorSummaries = useMemo<InstructorSummary[]>(() => {
@@ -755,6 +878,7 @@ function OrganizationCalendarPage() {
       courseQueries.some(query => query.isLoading) ||
       instructorQueries.some(query => query.isLoading) ||
       scheduleQueries.some(query => query.isLoading) ||
+      resourceReservations.isLoading ||
       studentData.isLoading,
     students: studentData.students,
   };

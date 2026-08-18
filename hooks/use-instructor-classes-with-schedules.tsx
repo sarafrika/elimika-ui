@@ -213,6 +213,13 @@ export function useInstructorClassesWithSchedules(instructorUuid?: string) {
 
   return {
     classes: data,
+    /**
+     * Every scheduled instance the instructor is booked for, whether or not its class
+     * definition came back in `classes` — that list is filtered to active classes with
+     * approved content, so an organisation-owned class the instructor was hired onto can
+     * be missing from it while the instructor's time is very much reserved.
+     */
+    schedule: instructorScheduleQuery.data?.data ?? [],
     isLoading,
     isPending,
     isError,
