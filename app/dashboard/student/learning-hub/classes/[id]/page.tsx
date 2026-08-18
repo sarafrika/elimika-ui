@@ -83,8 +83,8 @@ import { AssignmentContentPreview } from '../../../../../../components/content-p
 import { LessonContentPreview } from '../../../../../../components/content-preview/LessonContentPreview';
 import { QuizContentPreview } from '../../../../../../components/content-preview/QuizContentPreview';
 import RichTextRenderer from '../../../../../../components/editors/richTextRenders';
-import { useLearningHubStudyMetrics } from '../../_components/useLearningHubStudyMetrics';
 import { getPreferredScheduleInstance } from '../../../../instructor/classes/_components/new-class-page.utils';
+import { useLearningHubStudyMetrics } from '../../_components/useLearningHubStudyMetrics';
 
 type TrainingSchedule = ClassDetailsScheduleItem & { meeting_url?: string | null };
 type LessonContentItem = CourseLessonContent;
@@ -941,6 +941,7 @@ export default function StudentClassTrainingPage({
   const { rosterAllEnrollments, isLoading: rosterLoading } = useClassRoster(classId);
   const [studentSearch, setStudentSearch] = useState('');
   const [pageSearch, setPageSearch] = useState('');
+  const [selectedLessonId, setSelectedLessonId] = useState('');
   const [selectedContentId, setSelectedContentId] = useState('');
   const [activeScheduleId, setActiveScheduleId] = useState('');
 
@@ -1005,12 +1006,6 @@ export default function StudentClassTrainingPage({
     );
   }, [lessonsWithContent]);
 
-  const sortedLessonModules = useMemo(() => {
-    return [...lessonModules].sort(
-      (a, b) => (a.lesson.lesson_number ?? 0) - (b.lesson.lesson_number ?? 0)
-    );
-  }, [lessonModules]);
-
   const selectedCourseUuid = useMemo(() => {
     if (classData?.program_uuid) {
       return requestedCourseId || course?.uuid || programCourses[0]?.uuid || '';
@@ -1029,22 +1024,35 @@ export default function StudentClassTrainingPage({
     return filteredModules.length > 0 ? filteredModules : lessonModules;
   }, [lessonModules, selectedCourseUuid]);
 
-  const requestedLessonModule = useMemo(() => {
-    const activeModulePool = scopedLessonModules.length > 0 ? scopedLessonModules : lessonModules;
-    const byLessonId = activeModulePool.find(module => module.lesson.uuid === requestedLessonId);
-    if (byLessonId) return byLessonId;
+  const lessonOptions = scopedLessonModules.length > 0 ? scopedLessonModules : lessonModules;
 
-    if (!requestedContentId) return null;
+  useEffect(() => {
+    if (lessonOptions.length === 0) {
+      if (selectedLessonId) {
+        setSelectedLessonId('');
+      }
+      return;
+    }
 
-    return (
-      activeModulePool.find(module =>
-        module.content?.data?.some(content => content.uuid === requestedContentId)
-      ) ?? null
-    );
-  }, [lessonModules, requestedContentId, requestedLessonId, scopedLessonModules]);
+    const requestedLessonModule =
+      lessonOptions.find(module => module.lesson.uuid === requestedLessonId) ?? null;
+    const currentLessonModule =
+      lessonOptions.find(module => module.lesson.uuid === selectedLessonId) ?? null;
+    const fallbackLessonModule = lessonOptions[0] ?? null;
+    const nextLessonModule = requestedLessonModule ?? currentLessonModule ?? fallbackLessonModule;
+    const nextLessonId = nextLessonModule?.lesson.uuid ?? '';
+
+    if (nextLessonId && nextLessonId !== selectedLessonId) {
+      setSelectedLessonId(nextLessonId);
+    }
+  }, [lessonOptions, requestedLessonId, selectedLessonId]);
 
   const activeLessonModule =
-    requestedLessonModule ?? scopedLessonModules[0] ?? lessonModules[0] ?? null;
+    lessonOptions.find(module => module.lesson.uuid === selectedLessonId) ??
+    lessonOptions.find(module => module.lesson.uuid === requestedLessonId) ??
+    lessonOptions[0] ??
+    lessonModules[0] ??
+    null;
   const activeLesson = activeLessonModule?.lesson ?? null;
   const activeLessonContents = activeLessonModule?.content?.data ?? [];
   const activeLessonCourse =
@@ -1088,7 +1096,9 @@ export default function StudentClassTrainingPage({
     selectedContent && 'duration' in selectedContent ? String(selectedContent.duration || '') : '';
 
   const handleContentChange = (contentId: string) => {
-    const module = lessonModules.find(m => m.content?.data?.some(c => c.uuid === contentId));
+    const module =
+      lessonOptions.find(m => m.lesson.uuid === selectedLessonId) ??
+      lessonModules.find(m => m.content?.data?.some(c => c.uuid === contentId));
 
     const lessonId = module?.lesson?.uuid;
 
@@ -1098,6 +1108,25 @@ export default function StudentClassTrainingPage({
 
     if (lessonId) {
       params.set('lesson', lessonId);
+    }
+
+    router.push(`${pathname}?${params.toString()}`);
+  };
+
+  const handleLessonChange = (lessonId: string) => {
+    const module = lessonOptions.find(item => item.lesson.uuid === lessonId) ?? null;
+    const firstContentId = module?.content?.data?.[0]?.uuid ?? '';
+
+    setSelectedLessonId(lessonId);
+    setSelectedContentId(firstContentId);
+
+    const params = new URLSearchParams(searchParams.toString());
+    params.set('lesson', lessonId);
+
+    if (firstContentId) {
+      params.set('content', firstContentId);
+    } else {
+      params.delete('content');
     }
 
     router.push(`${pathname}?${params.toString()}`);
@@ -1622,36 +1651,49 @@ export default function StudentClassTrainingPage({
                     </TabsList>
                   </Tabs>
 
-                  <div className='flex items-center gap-3 lg:w-72 lg:justify-end'>
-                    <p className='text-muted-foreground text-sm'>Lesson</p>
-                    <Select
-                      value={selectedContentId}
-                      onValueChange={handleContentChange}
-                      disabled={lessonModules.length === 0}
-                    >
-                      <SelectTrigger className='h-9 w-full lg:min-w-52'>
-                        <SelectValue placeholder='Select content' />
-                      </SelectTrigger>
-
-                      <SelectContent>
-                        {sortedLessonModules.map(module => (
-                          <div key={module.lesson.uuid}>
-                            <div className='text-muted-foreground bg-muted/60 border-muted my-1 rounded border px-2 py-1 text-[13px] font-semibold italic'>
+                  <div className='flex flex-col gap-3 lg:w-[34rem] lg:flex-row lg:items-end lg:justify-end'>
+                    <div className='flex flex-1 flex-col gap-2'>
+                      <p className='text-muted-foreground text-sm'>Lesson</p>
+                      <Select
+                        value={selectedLessonId}
+                        onValueChange={handleLessonChange}
+                        disabled={lessonOptions.length === 0}
+                      >
+                        <SelectTrigger className='h-9 w-full lg:min-w-48'>
+                          <SelectValue placeholder='Select lesson' />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {lessonOptions.map(module => (
+                            <SelectItem key={module.lesson.uuid} value={module.lesson.uuid}>
                               {module.lesson.title}
-                            </div>
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
 
-                            {module.content?.data
-                              ?.slice() // optional safety copy
-                              .sort((a, b) => (a.display_order ?? 0) - (b.display_order ?? 0))
-                              .map(content => (
-                                <SelectItem key={content.uuid} value={content.uuid}>
-                                  {content.title}
-                                </SelectItem>
-                              ))}
-                          </div>
-                        ))}
-                      </SelectContent>
-                    </Select>
+                    <div className='flex flex-1 flex-col gap-2'>
+                      <p className='text-muted-foreground text-sm'>Content</p>
+                      <Select
+                        value={selectedContentId}
+                        onValueChange={handleContentChange}
+                        disabled={activeLessonContents.length === 0}
+                      >
+                        <SelectTrigger className='h-9 w-full lg:min-w-56'>
+                          <SelectValue placeholder='Select content' />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {activeLessonContents
+                            .slice()
+                            .sort((a, b) => (a.display_order ?? 0) - (b.display_order ?? 0))
+                            .map(content => (
+                              <SelectItem key={content.uuid} value={content.uuid}>
+                                {content.title}
+                              </SelectItem>
+                            ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
                   </div>
                 </div>
               </div>
