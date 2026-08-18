@@ -491,19 +491,24 @@ function AssessmentSheet({
                     value={form.rubric_uuid || '__none__'}
                     onValueChange={v => set('rubric_uuid', v === '__none__' ? '' : v)}
                   >
-                    <SelectTrigger className='w-full'>
-                      <SelectValue placeholder='Select a rubric (optional)' />
+                    <SelectTrigger className="w-full sm:max-w-[650px]">
+                      <SelectValue placeholder="Select a rubric (optional)" />
                     </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value='__none__'>
-                        <span className='text-muted-foreground'>None</span>
+
+                    <SelectContent className="w-full sm:max-w-[600px]">
+                      <SelectItem value="__none__">
+                        <span className="text-muted-foreground">None</span>
                       </SelectItem>
-                      {rubrics.map((r: unknown) => (
+
+                      {rubrics.map((r: any) => (
                         <SelectItem key={r.uuid} value={r.uuid}>
-                          <div className='flex flex-col'>
-                            <span className='font-medium'>{r.title}</span>
+                          <div className="flex min-w-0 flex-col text-start">
+                            <span className="font-medium">
+                              {r.title}
+                            </span>
+
                             {r.description && (
-                              <span className='text-muted-foreground line-clamp-1 text-xs'>
+                              <span className="line-clamp-1 text-xs text-muted-foreground group-hover:text-muted-foreground">
                                 {r.description}
                               </span>
                             )}
@@ -520,7 +525,7 @@ function AssessmentSheet({
                           {selectedRubric.title}
                         </p>
                         {selectedRubric.description && (
-                          <p className='text-muted-foreground mt-0.5 line-clamp-2 text-xs'>
+                          <p className='text-muted-foreground mt-0.5 line-clamp-5 text-xs'>
                             {selectedRubric.description}
                           </p>
                         )}

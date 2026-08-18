@@ -336,6 +336,7 @@ export function QuizContentPreview({
 
       setSubmitted(true);
     } catch (error) {
+
     }
   };
 

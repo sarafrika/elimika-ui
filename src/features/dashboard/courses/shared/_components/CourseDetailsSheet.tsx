@@ -407,7 +407,7 @@ export function CourseDetailsSheet({
             <Separator />
 
             <div className='flex flex-wrap gap-2 pb-4'>
-              <Button
+              {/* <Button
                 asChild
                 className='bg-primary hover:bg-primary/90'
                 onClick={() => onOpenChange(false)}
@@ -422,9 +422,11 @@ export function CourseDetailsSheet({
                 >
                   <Users className='mr-1 h-4 w-4' /> Join a Class
                 </Link>
-              </Button>
+              </Button> */}
 
-              <Button asChild variant='outline' onClick={() => onOpenChange(false)}>
+              <Button asChild
+                className='bg-primary hover:bg-primary/90'
+                onClick={() => onOpenChange(false)}>
                 <Link
                   href={buildWorkspaceAliasPath(
                     activeDomain,

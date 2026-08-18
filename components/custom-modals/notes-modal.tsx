@@ -459,7 +459,7 @@ export default function NotesModal({
                         >
                           {canCheck ? (
                             <Checkbox
-                              className='mt-0.5'
+                              className="mt-0.5 h-4 w-4 border-2 border-foreground bg-background shadow-none data-[state=checked]:bg-primary data-[state=checked]:border-primary"
                               checked={(item as { checked?: boolean }).checked}
                               disabled={readOnly}
                               onCheckedChange={checked => {
@@ -473,7 +473,7 @@ export default function NotesModal({
                               }}
                             />
                           ) : (
-                            <div className='mt-0.5 h-4 w-4' />
+                            <div className="mt-0.5 h-4 w-4" />
                           )}
 
                           <div className='flex-1'>

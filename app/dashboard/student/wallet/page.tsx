@@ -161,9 +161,9 @@ export function fmtDateTime(iso?: string | null) {
     });
 }
 export function daysFromNow(days: number) {
-  const d = new Date();
-  d.setDate(d.getDate() + days);
-  return d.toISOString();
+    const d = new Date();
+    d.setDate(d.getDate() + days);
+    return d.toISOString();
 }
 
 export function buildWalletAccounts(wallet?: Wallet | null): WalletAccount[] {
@@ -549,15 +549,14 @@ export function downloadCsv(filename: string, header: string[], rows: (string | 
     URL.revokeObjectURL(url);
 }
 
-
 export function WalletShell({
-  title = "Student Wallet",
-  description = "Personal funds, Skills Fund balances, rewards, refunds and marketplace credits",
-  initialTab = "payments",
+    title = "Student Wallet",
+    description = "Personal funds, Skills Fund balances, rewards, refunds and marketplace credits",
+    initialTab = "dashboard",
 }: {
-  title?: string;
-  description?: string;
-  initialTab?: WalletTabId;
+    title?: string;
+    description?: string;
+    initialTab?: WalletTabId;
 }) {
     const [tab, setTab] = useState<WalletTabId>(initialTab);
     const { wallet, accounts, transactions } = useWallet()

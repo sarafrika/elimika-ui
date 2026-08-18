@@ -13,6 +13,7 @@ import {
   Users,
   Wallet,
 } from 'lucide-react';
+import { useDifficultyLevels } from '../../../../../../hooks/use-difficultyLevels';
 import { ClassSessionTemplate, Lesson } from '../../../../../../services/client';
 import { BundledClass } from '../../types';
 
@@ -45,6 +46,8 @@ export function ClassDetailSheet({
   formatSessionSchedule,
   formatScheduleDate,
 }: ClassDetailSheetProps) {
+  const { difficultyMap } = useDifficultyLevels();
+
   return (
     <Sheet open={open} onOpenChange={value => !value && onClose()}>
       <SheetContent side='right' className='w-full overflow-y-auto p-4 sm:max-w-xl'>
@@ -73,19 +76,19 @@ export function ClassDetailSheet({
                   <InfoRow
                     icon={<BookOpen className='h-4 w-4' />}
                     label='Institution'
-                    value={detail.organization?.data?.name}
+                    value={detail?.organization?.data?.name || "-"}
                   />
 
                   <InfoRow
                     icon={<Users className='h-4 w-4' />}
                     label='Instructor'
-                    value={detail.instructor?.data?.full_name}
+                    value={detail?.instructor?.data?.full_name}
                   />
 
                   <InfoRow
                     icon={<GraduationCap className='h-4 w-4' />}
                     label='Level'
-                    value={detail.level_of_study}
+                    value={difficultyMap[detail?.course?.difficulty_uuid!]}
                   />
 
                   <InfoRow
@@ -97,7 +100,7 @@ export function ClassDetailSheet({
                   <InfoRow
                     icon={<Calendar className='h-4 w-4' />}
                     label='Academic Period'
-                    value={detail.academic_period}
+                    value={detail?.academic_period}
                   />
 
                   <InfoRow

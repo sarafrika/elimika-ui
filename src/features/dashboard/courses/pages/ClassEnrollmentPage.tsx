@@ -45,6 +45,7 @@ import {
 import { useRouter } from 'next/navigation';
 import { useMemo, useState } from 'react';
 import { toast } from 'sonner';
+import { useDifficultyLevels } from '../../../../../hooks/use-difficultyLevels';
 import { useUserProfile } from '../../../profile/context/profile-context';
 import { formatSessionSchedule } from '../components/availability-listing-layout';
 import { EnrollmentLoadingState } from '../components/EnrollmentLoadingState';
@@ -114,6 +115,7 @@ export default function ClassEnrollmentPage({
 
   // ── Data fetching ──────────────────────────────────────────────────────
   const { classes = [], loading } = useBundledClassInfo(courseId, undefined, undefined, student);
+  const { difficultyMap } = useDifficultyLevels()
 
   // The platform already knows the learner's date of birth and the course's limits, so it decides
   // this rather than asking them to vouch for themselves. Checkout enforces the same rule.
@@ -451,6 +453,7 @@ export default function ClassEnrollmentPage({
     termsOk &&
     allMandatoryRequirementsChecked
 
+
   // ── Render ─────────────────────────────────────────────────────────────
   return (
     <div className='w-full max-w-5xl space-y-4 px-6 pt-4 pb-12'>
@@ -488,8 +491,7 @@ export default function ClassEnrollmentPage({
         </CardHeader>
 
         <CardContent className='grid gap-2 sm:grid-cols-2'>
-          {/* Institution name is not part of the current class/course data model. */}
-          <InfoRow icon={<Building2 className='h-4 w-4' />} label='Institution' value={null} />
+          <InfoRow icon={<Building2 className='h-4 w-4' />} label='Institution' value={enrollingClass.organisation_uuid || "-"} />
 
           <InfoRow
             icon={<Users className='h-4 w-4' />}
@@ -497,14 +499,15 @@ export default function ClassEnrollmentPage({
             value={enrollingClass.instructor?.data?.full_name}
           />
           {/* No discrete "academic period" field is exposed for this class. */}
-          <InfoRow icon={<Calendar className='h-4 w-4' />} label='Academic period' value={null} />
+          <InfoRow icon={<Calendar className='h-4 w-4' />} label='Academic period' value={"Academic period not provided"} />
+
           <InfoRow
             icon={<Clock className='h-4 w-4' />}
             label='Session duration'
             value={formatSessionSchedule(enrollingClass.session_templates)}
           />
 
-          <InfoRow icon={<Calendar className='h-4 w-4' />} label='Dates' value={formattedDates} />
+          <InfoRow icon={<Calendar className='h-4 w-4' />} label='Dates' value={`Starts ${formattedDates}`} />
 
           <InfoRow
             icon={<MapPin className='h-4 w-4' />}
@@ -515,10 +518,8 @@ export default function ClassEnrollmentPage({
                 : (enrollingClass.location_name ?? enrollingClass.meeting_link ?? null)
             }
           />
-          {/* Language of instruction is not tracked on this class record. */}
-          <InfoRow icon={<Languages className='h-4 w-4' />} label='Language' value={null} />
-          {/* No level-of-study field is exposed on this class/course. */}
-          <InfoRow icon={<GraduationCap className='h-4 w-4' />} label='Level of study' value={null} />
+          <InfoRow icon={<Languages className='h-4 w-4' />} label='Language' value={'English'} />
+          <InfoRow icon={<GraduationCap className='h-4 w-4' />} label='Level of study' value={difficultyMap[enrollingClass?.course?.difficulty_uuid]} />
         </CardContent>
       </Card>
 

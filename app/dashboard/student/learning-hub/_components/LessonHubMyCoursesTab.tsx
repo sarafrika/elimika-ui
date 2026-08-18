@@ -14,6 +14,7 @@ import { cn } from '@/lib/utils';
 
 import { useCoursesByIds } from '../../../../../hooks/use-batched-lookups';
 import { stripHtml } from '../../../../../src/features/dashboard/courses/shared/_components/courses-data';
+import { toAuthenticatedMediaUrl } from '../../../../../src/lib/media-url';
 import type {
   LearningHubCourseEnrollment,
   LearningHubData,
@@ -153,7 +154,7 @@ function CourseCard({ course }: { course: LearningHubCourseEnrollment }) {
         style={
           courseObj?.banner_url
             ? {
-              backgroundImage: `url(${courseObj.banner_url})`,
+              backgroundImage: `url(${toAuthenticatedMediaUrl(courseObj.banner_url)})`,
               backgroundSize: 'cover',
               backgroundPosition: 'center',
             }
