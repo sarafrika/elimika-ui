@@ -1,7 +1,36 @@
 'use client';
 
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { CalendarClock, Heart, Share2 } from 'lucide-react';
+import { useParams, useRouter } from 'next/navigation';
+import { type ComponentProps, useEffect, useMemo, useState } from 'react';
+import { toast } from 'sonner';
+import { CourseTrainingRequirements } from '@/app/dashboard/_components/course-training-requirements';
+import { socialShareActions } from '@/app/dashboard/instructor/classes/overview/[id]/page';
+import NotesModal from '@/components/custom-modals/notes-modal';
+import { LinkShareCard } from '@/components/shared/link-share-card';
+import { Button } from '@/components/ui/button';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from '@/components/ui/table';
 import { useInstructor } from '@/context/instructor-context';
+import { useOrganisation } from '@/context/organisation-context';
+import { useAssignmentsByLessonIds, useQuizzesByLessonIds } from '@/hooks/use-batched-lookups';
+import { ClassDetailsScheduleItem, CombinedClassDetailsData } from '@/hooks/use-class-details';
 import { useCourseLessonsWithContent } from '@/hooks/use-courselessonwithcontent';
+import { buildSocialShareUrl, openShareWindow } from '@/lib/share';
 import type {
   Assignment,
   ClassReview,
@@ -29,36 +58,6 @@ import {
 } from '@/services/client/@tanstack/react-query.gen';
 import { useUserDomain } from '@/src/features/dashboard/context/user-domain-context';
 import { EnrollmentLoadingState } from '@/src/features/dashboard/courses/components/EnrollmentLoadingState';
-import { buildWorkspaceAliasPath } from '@/src/features/dashboard/lib/active-domain-storage';
-import { useUserProfile } from '@/src/features/profile/context/profile-context';
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { CalendarClock, Heart, Share2 } from 'lucide-react';
-import { useParams, useRouter } from 'next/navigation';
-import { type ComponentProps, useEffect, useMemo, useState } from 'react';
-import { toast } from 'sonner';
-import NotesModal from '@/components/custom-modals/notes-modal';
-import { LinkShareCard } from '@/components/shared/link-share-card';
-import { Button } from '@/components/ui/button';
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
-} from '@/components/ui/dialog';
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from '@/components/ui/table';
-import { useAssignmentsByLessonIds, useQuizzesByLessonIds } from '@/hooks/use-batched-lookups';
-import { ClassDetailsScheduleItem, CombinedClassDetailsData } from '@/hooks/use-class-details';
-import { buildSocialShareUrl, openShareWindow } from '@/lib/share';
-import { socialShareActions } from '@/app/dashboard/instructor/classes/overview/[id]/page';
-import { CourseTrainingRequirements } from '@/app/dashboard/_components/course-training-requirements';
 import CourseDetailsHero from '@/src/features/dashboard/courses/shared/_components/CourseDetailsHero';
 import CourseFaq from '@/src/features/dashboard/courses/shared/_components/CourseFaq';
 import CourseOverview, {
@@ -68,19 +67,28 @@ import CourseRating, {
   ClassRating,
 } from '@/src/features/dashboard/courses/shared/_components/CourseRating';
 import CourseReviews from '@/src/features/dashboard/courses/shared/_components/CourseReviews';
+import ClassCourseTabNav from '@/src/features/dashboard/courses/shared/_components/CourseTabNav';
 import {
   formatDurationFromParts,
   getContentHref,
   getEnrollHref,
   stripHtml,
 } from '@/src/features/dashboard/courses/shared/_components/courses-data';
-import ClassCourseTabNav from '@/src/features/dashboard/courses/shared/_components/CourseTabNav';
 import EnrollSidebar from '@/src/features/dashboard/courses/shared/_components/EnrollSidebar';
 import ShareClassCourse, {
   ShareClass,
 } from '@/src/features/dashboard/courses/shared/_components/ShareClassCourse';
 import { UnifiedContentItem } from '@/src/features/dashboard/courses/shared/_components/SharedCoursesPage';
 import StudentsAlsoBought from '@/src/features/dashboard/courses/shared/_components/StudentsAlsoBought';
+import { buildWorkspaceAliasPath } from '@/src/features/dashboard/lib/active-domain-storage';
+import { useUserProfile } from '@/src/features/profile/context/profile-context';
+
+const trainingApplicationStatusQueryOptions = {
+  staleTime: 0,
+  refetchOnMount: 'always' as const,
+  refetchOnWindowFocus: true,
+  refetchOnReconnect: true,
+};
 
 function getDurationLabel(course?: Course) {
   if (!course) return 'N/A';
@@ -110,6 +118,7 @@ export default function ClassCourseDetailsPage({
   const [activeTab, setActiveTab] = useState('Overview');
 
   const instructor = useInstructor();
+  const organisation = useOrganisation();
   const qc = useQueryClient();
 
   const resolvedCourseId = courseId || (params?.id as string);
@@ -126,10 +135,11 @@ export default function ClassCourseDetailsPage({
   // Both instructors and organisations may apply to train an approved course.
   const canApplyToTrain = isInstructorDomain || isOrganisationDomain;
   const userProfile = useUserProfile();
-  const organisationUuid = useMemo(() => {
+  const profileOrganisationUuid = useMemo(() => {
     const affiliations = userProfile?.organisation_affiliations ?? [];
     return (affiliations.find(a => a.active) ?? affiliations[0])?.organisation_uuid;
   }, [userProfile?.organisation_affiliations]);
+  const organisationUuid = organisation?.uuid ?? profileOrganisationUuid;
   const applicantUuid = isOrganisationDomain ? organisationUuid : instructor?.uuid;
   const applicantType = isOrganisationDomain
     ? ApplicantTypeEnum.ORGANISATION
@@ -333,19 +343,22 @@ export default function ClassCourseDetailsPage({
     enabled: !!course?.course_creator_uuid,
   });
 
-  const { data: trainingApplicationsResponse } = useQuery({
-    ...searchTrainingApplicationsOptions({
-      query: {
-        pageable: {},
-        searchParams: {
-          applicant_uuid_eq: applicantUuid ?? '',
-          course_uuid_eq: course?.uuid ?? '',
+  const { data: trainingApplicationsResponse, isFetching: trainingApplicationsFetching } = useQuery(
+    {
+      ...searchTrainingApplicationsOptions({
+        query: {
+          pageable: {},
+          searchParams: {
+            applicant_uuid_eq: applicantUuid ?? '',
+            applicant_type_eq: applicantType,
+            course_uuid_eq: course?.uuid ?? '',
+          },
         },
-      },
-    }),
-    enabled: canApplyToTrain && Boolean(applicantUuid) && Boolean(course?.uuid),
-    refetchOnWindowFocus: false,
-  });
+      }),
+      enabled: canApplyToTrain && Boolean(applicantUuid) && Boolean(course?.uuid),
+      ...trainingApplicationStatusQueryOptions,
+    }
+  );
 
   const filteredAssignments = useMemo(
     () => assignments.filter(assignment => lessonUuids.includes(assignment.lesson_uuid)),
@@ -389,8 +402,14 @@ export default function ClassCourseDetailsPage({
   const durationLabel = getDurationLabel(course);
   const currentTrainingApplication = trainingApplicationsResponse?.data?.content?.[0] ?? null;
   const currentTrainingApplicationStatus = currentTrainingApplication?.status ?? null;
-  const instructorActionLabel =
-    currentTrainingApplicationStatus === 'approved'
+  const trainingApplicationStatusRefreshing =
+    canApplyToTrain &&
+    Boolean(applicantUuid) &&
+    Boolean(course?.uuid) &&
+    trainingApplicationsFetching;
+  const instructorActionLabel = trainingApplicationStatusRefreshing
+    ? 'Checking status'
+    : currentTrainingApplicationStatus === 'approved'
       ? 'Approved'
       : currentTrainingApplicationStatus === 'pending'
         ? 'Pending'
@@ -399,6 +418,7 @@ export default function ClassCourseDetailsPage({
           ? 'Reapply to Train'
           : 'Apply to Train';
   const instructorActionDisabled =
+    trainingApplicationStatusRefreshing ||
     currentTrainingApplicationStatus === 'approved' ||
     currentTrainingApplicationStatus === 'pending';
 
@@ -460,6 +480,7 @@ export default function ClassCourseDetailsPage({
                 pageable: {},
                 searchParams: {
                   applicant_uuid_eq: submitterUuid,
+                  applicant_type_eq: applicantType,
                   course_uuid_eq: submitCourseUuid,
                 },
               },
@@ -469,7 +490,10 @@ export default function ClassCourseDetailsPage({
             queryKey: searchTrainingApplicationsQueryKey({
               query: {
                 pageable: {},
-                searchParams: { applicant_uuid_eq: submitterUuid },
+                searchParams: {
+                  applicant_uuid_eq: submitterUuid,
+                  applicant_type_eq: applicantType,
+                },
               },
             }),
           });
