@@ -588,11 +588,56 @@ export const CoursePricingForm = forwardRef<CourseFormRef, CourseFormProps>(
             </div>
           </FormSection> */}
 
+          {/* {isPublished ? (
+            <Button
+              variant='outline'
+              onClick={handleUnpublishCourse}
+              disabled={!courseId || isCourseActionPending}
+              className='px-6'
+            >
+              {UnpublishCourse.isPending ? <Spinner /> : <Undo2 />}
+              Unpublish
+            </Button>
+          ) : (
+            <Button
+              variant='ghost'
+              onClick={handlePublishCourse}
+              disabled={!courseId || isCourseActionPending}
+              className='border-muted-foreground/50 border px-12'
+            >
+              {PublishCourse.isPending ? <Spinner /> : <BookCheck />}
+              Publish
+            </Button>
+          )} */}
+
+
           {showSubmitButton && (
             <div className='xxs:flex-col flex flex-col justify-center gap-4 pt-6 sm:flex-row sm:justify-end'>
               <Button type='submit' className='min-w-32'>
                 {createCourseIsPending || updateCourseIsPending ? <Spinner /> : 'Save Course'}
               </Button>
+
+              {/* {isPublished ? (
+                <Button
+                  variant='outline'
+                  onClick={handleUnpublishCourse}
+                  disabled={!courseId || isCourseActionPending}
+                  className='px-6'
+                >
+                  {UnpublishCourse.isPending ? <Spinner /> : <Undo2 />}
+                  Unpublish
+                </Button>
+              ) : (
+                <Button
+                  variant='ghost'
+                  onClick={handlePublishCourse}
+                  disabled={!courseId || isCourseActionPending}
+                  className='border-muted-foreground/50 border px-12'
+                >
+                  {PublishCourse.isPending ? <Spinner /> : <BookCheck />}
+                  Publish
+                </Button>
+              )} */}
             </div>
           )}
         </form>

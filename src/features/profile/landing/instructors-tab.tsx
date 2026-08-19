@@ -52,11 +52,12 @@ import {
   getInstructorEducationQueryKey,
   getInstructorExperienceOptions,
   getInstructorExperienceQueryKey,
+  listDocumentTypesOptions,
   updateInstructorEducationMutation,
   updateInstructorExperienceMutation,
   uploadInstructorDocumentMutation,
 } from '@/services/client/@tanstack/react-query.gen';
-import type { InstructorEducation, InstructorExperience } from '@/services/client/types.gen';
+import type { DocumentTypeOption, InstructorEducation, InstructorExperience } from '@/services/client/types.gen';
 import CoursesPage from '@/src/features/profile/components/instructor/rate-card/CoursesPage';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
@@ -74,7 +75,7 @@ import {
   XCircle,
 } from 'lucide-react';
 import React, { useEffect, useMemo, useRef, useState } from 'react';
-import { useFieldArray, useForm } from 'react-hook-form';
+import { useFieldArray, useForm, useWatch } from 'react-hook-form';
 import { toast } from 'sonner';
 import * as z from 'zod';
 import type { DomainTabProps, TabDefinition } from './types';
@@ -144,6 +145,7 @@ const edSchema = z.object({
   year_completed: z.string().optional().nullable(),
   is_recent_qualification: z.boolean().default(false),
   full_description: z.string().optional().nullable(),
+  document_type_uuid: z.string().default(''),
 });
 
 const educationFormSchema = z.object({ educations: z.array(edSchema) });
@@ -281,6 +283,55 @@ function FileUploadField({
   );
 }
 
+function DocumentTypeSelect({
+  control,
+  index,
+  form,
+  orderedDocumentTypes,
+  preferredDocumentTypeUuid,
+}: {
+  control: ReturnType<typeof useForm<EducationFormValues>>['control'];
+  index: number;
+  form: ReturnType<typeof useForm<EducationFormValues>>;
+  orderedDocumentTypes: DocumentTypeOption[];
+  preferredDocumentTypeUuid: string;
+}) {
+  const selectedDocumentTypeUuid = useWatch({
+    control,
+    name: `educations.${index}.document_type_uuid`,
+  });
+
+  return (
+    <div className='space-y-2'>
+      <label className='text-sm font-medium'>Document type</label>
+      <Select
+        value={selectedDocumentTypeUuid || preferredDocumentTypeUuid || undefined}
+        onValueChange={value =>
+          form.setValue(`educations.${index}.document_type_uuid`, value, {
+            shouldDirty: true,
+          })
+        }
+        disabled={orderedDocumentTypes.length === 0}
+      >
+        <SelectTrigger className='w-full'>
+          <SelectValue
+            placeholder={
+              orderedDocumentTypes.length ? 'Select document type' : 'Loading document types...'
+            }
+          />
+        </SelectTrigger>
+        <SelectContent>
+          {orderedDocumentTypes.map(type => (
+            <SelectItem key={type.uuid} value={type.uuid ?? ''}>
+              {type.name ?? type.description ?? 'Document'}
+            </SelectItem>
+          ))}
+        </SelectContent>
+      </Select>
+    </div>
+  );
+}
+
 function EducationViewCard({ edu }: { edu: InstructorEducationRecord }) {
   return (
     <div className='border-border flex items-start gap-4 border-b py-4 last:border-0'>
@@ -322,8 +373,44 @@ function InstructorCertificateUploadSheet({
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [uploadMeta, setUploadMeta] = useState({ title: '', description: '' });
   const [stagedFile, setStagedFile] = useState<File | null>(null);
+  const [selectedDocumentTypeUuid, setSelectedDocumentTypeUuid] = useState('');
   const [isDragging, setIsDragging] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
+
+  const documentTypesQuery = useQuery({
+    ...listDocumentTypesOptions(),
+    staleTime: 5 * 60 * 1000,
+  });
+  const documentTypes = (documentTypesQuery.data?.data ?? []) as DocumentTypeOption[];
+  const orderedDocumentTypes = useMemo(() => {
+    const score = (type: DocumentTypeOption) => {
+      const text = `${type.name ?? ''} ${type.description ?? ''}`.toLowerCase();
+      if (text.includes('pdf')) return 0;
+      if (text.includes('image') || text.includes('photo')) return 1;
+      if (text.includes('word') || text.includes('doc')) return 2;
+      return 3;
+    };
+
+    return [...documentTypes].sort((a, b) => {
+      const diff = score(a) - score(b);
+      if (diff !== 0) return diff;
+      const left = `${a.name ?? ''} ${a.description ?? ''}`.toLowerCase();
+      const right = `${b.name ?? ''} ${b.description ?? ''}`.toLowerCase();
+      return left.localeCompare(right);
+    });
+  }, [documentTypes]);
+
+  useEffect(() => {
+    if (!selectedDocumentTypeUuid) {
+      const preferred =
+        orderedDocumentTypes.find(type => {
+          const text = `${type.name ?? ''} ${type.description ?? ''}`.toLowerCase();
+          return text.includes('pdf') || text.includes('image') || text.includes('word') || text.includes('doc');
+        })?.uuid ?? orderedDocumentTypes[0]?.uuid ?? '';
+
+      if (preferred) setSelectedDocumentTypeUuid(preferred);
+    }
+  }, [orderedDocumentTypes, selectedDocumentTypeUuid]);
 
   const uploadDocumentMut = useMutation(uploadInstructorDocumentMutation());
 
@@ -336,6 +423,14 @@ function InstructorCertificateUploadSheet({
     setStagedFile(null);
     setIsDragging(false);
     setUploadMeta({ title: '', description: '' });
+    if (documentTypes.length > 0) {
+      const preferred =
+        orderedDocumentTypes.find(type => {
+          const text = `${type.name ?? ''} ${type.description ?? ''}`.toLowerCase();
+          return text.includes('pdf') || text.includes('image') || text.includes('word') || text.includes('doc');
+        })?.uuid ?? orderedDocumentTypes[0]?.uuid ?? '';
+      setSelectedDocumentTypeUuid(preferred);
+    }
     if (fileInputRef.current) fileInputRef.current.value = '';
   };
 
@@ -351,6 +446,11 @@ function InstructorCertificateUploadSheet({
       return;
     }
 
+    if (!selectedDocumentTypeUuid) {
+      toast.error('Please select a document type');
+      return;
+    }
+
     setIsUploading(true);
     uploadDocumentMut.mutate(
       {
@@ -359,7 +459,7 @@ function InstructorCertificateUploadSheet({
         query: {
           title: uploadMeta.title,
           description: uploadMeta.description,
-          document_type_uuid: '',
+          document_type_uuid: selectedDocumentTypeUuid,
           education_uuid: '',
           experience_uuid: '',
           expiry_date: undefined,
@@ -433,6 +533,30 @@ function InstructorCertificateUploadSheet({
           </div>
 
           <div className='grid grid-cols-1 gap-3'>
+            <div className='space-y-2'>
+              <label className='text-sm font-medium'>Document type</label>
+              <Select
+                value={selectedDocumentTypeUuid}
+                onValueChange={setSelectedDocumentTypeUuid}
+                disabled={orderedDocumentTypes.length === 0}
+              >
+                <SelectTrigger className='w-full'>
+                  <SelectValue
+                    placeholder={
+                      orderedDocumentTypes.length ? 'Select document type' : 'Loading document types...'
+                    }
+                  />
+                </SelectTrigger>
+                <SelectContent>
+                  {orderedDocumentTypes.map(type => (
+                    <SelectItem key={type.uuid} value={type.uuid ?? ''}>
+                      {type.name ?? type.description ?? 'Document'}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
             <Input
               placeholder='Document title'
               value={uploadMeta.title}
@@ -489,7 +613,7 @@ function InstructorCertificateUploadSheet({
               size='sm'
               className='gap-2'
               onClick={handleUpload}
-              disabled={!stagedFile || !uploadMeta.title.trim() || isUploading}
+              disabled={!stagedFile || !uploadMeta.title.trim() || !selectedDocumentTypeUuid || isUploading}
             >
               <Upload className='h-3.5 w-3.5' />
               {isUploading ? 'Uploading…' : 'Upload'}
@@ -798,6 +922,34 @@ function instructorcertificatestab({ sharedProfile, isPublic }: DomainTabProps) 
   const [deleteIndex, setDeleteIndex] = useState<number | null>(null);
   const canManageProfile = !isPublic;
 
+  const documentTypesQuery = useQuery({
+    ...listDocumentTypesOptions(),
+    staleTime: 5 * 60 * 1000,
+  });
+  const documentTypes = (documentTypesQuery.data?.data ?? []) as DocumentTypeOption[];
+  const orderedDocumentTypes = useMemo(() => {
+    const score = (type: DocumentTypeOption) => {
+      const text = `${type.name ?? ''} ${type.description ?? ''}`.toLowerCase();
+      if (text.includes('pdf')) return 0;
+      if (text.includes('image') || text.includes('photo')) return 1;
+      if (text.includes('word') || text.includes('doc')) return 2;
+      return 3;
+    };
+
+    return [...documentTypes].sort((a, b) => {
+      const diff = score(a) - score(b);
+      if (diff !== 0) return diff;
+      const left = `${a.name ?? ''} ${a.description ?? ''}`.toLowerCase();
+      const right = `${b.name ?? ''} ${b.description ?? ''}`.toLowerCase();
+      return left.localeCompare(right);
+    });
+  }, [documentTypes]);
+  const preferredDocumentTypeUuid =
+    orderedDocumentTypes.find(type => {
+      const text = `${type.name ?? ''} ${type.description ?? ''}`.toLowerCase();
+      return text.includes('pdf') || text.includes('image') || text.includes('word') || text.includes('doc');
+    })?.uuid ?? orderedDocumentTypes[0]?.uuid ?? '';
+
   const { data, isLoading } = useQuery({
     ...getInstructorEducationOptions({ path: { instructorUuid: sharedProfile?.uuid } }),
     enabled: !!sharedProfile?.uuid,
@@ -819,6 +971,7 @@ function instructorcertificatestab({ sharedProfile, isPublic }: DomainTabProps) 
     year_completed: '',
     is_recent_qualification: false,
     full_description: '',
+    document_type_uuid: preferredDocumentTypeUuid,
   });
 
   const form = useForm<EducationFormValues>({
@@ -844,18 +997,21 @@ function instructorcertificatestab({ sharedProfile, isPublic }: DomainTabProps) 
 
   const enterEditMode = () => {
     if (serverEducations.length > 0) {
-      const mapped: EdEntry[] = serverEducations.map(ed => ({
-        uuid: ed.uuid,
-        instructor_uuid: sharedProfile?.uuid ?? '',
-        school_name: ed.school_name ?? '',
-        qualification: ed.qualification ?? '',
-        field_of_study: ed.field_of_study ?? '',
-        certificate_number: ed.certificate_number ?? '',
-        year_started: ed.year_started?.toString() ?? '',
-        year_completed: ed.year_completed?.toString() ?? '',
-        is_recent_qualification: ed.is_recent_qualification ?? false,
-        full_description: ed.full_description ?? '',
-      }));
+      const mapped: EdEntry[] = serverEducations.map(
+        (ed): EdEntry => ({
+          uuid: ed.uuid,
+          instructor_uuid: sharedProfile?.uuid ?? '',
+          school_name: ed.school_name ?? '',
+          qualification: ed.qualification ?? '',
+          field_of_study: ed.field_of_study ?? '',
+          certificate_number: ed.certificate_number ?? '',
+          year_started: ed.year_started?.toString() ?? '',
+          year_completed: ed.year_completed?.toString() ?? '',
+          is_recent_qualification: ed.is_recent_qualification ?? false,
+          full_description: ed.full_description ?? '',
+          document_type_uuid: preferredDocumentTypeUuid,
+        })
+      );
       replace(mapped);
       setAttachments(
         serverEducations.map(ed =>
@@ -950,6 +1106,12 @@ function instructorcertificatestab({ sharedProfile, isPublic }: DomainTabProps) 
         }
 
         if (attachment?.local && educationUuid) {
+          const documentTypeUuid = ed.document_type_uuid || preferredDocumentTypeUuid;
+          if (!documentTypeUuid) {
+            toast.error('Please select a document type before uploading.');
+            return;
+          }
+
           uploadDocumentMut.mutate(
             {
               body: { file: attachment.local },
@@ -958,8 +1120,7 @@ function instructorcertificatestab({ sharedProfile, isPublic }: DomainTabProps) 
                 education_uuid: educationUuid,
                 title: ed.school_name,
                 description: ed.field_of_study,
-                document_type_uuid: '35b49d4c-aec0-4a88-873b-5fa91342198f',
-                // contnent type uuid for pdfs
+                document_type_uuid: documentTypeUuid,
                 experience_uuid: '',
                 expiry_date: undefined,
                 membership_uuid: '',
@@ -1321,6 +1482,14 @@ function instructorcertificatestab({ sharedProfile, isPublic }: DomainTabProps) 
                           <FormMessage />
                         </FormItem>
                       )}
+                    />
+
+                    <DocumentTypeSelect
+                      control={form.control}
+                      index={index}
+                      form={form}
+                      orderedDocumentTypes={orderedDocumentTypes}
+                      preferredDocumentTypeUuid={preferredDocumentTypeUuid}
                     />
 
                     <div className='border-border/60 border-t pt-3'>

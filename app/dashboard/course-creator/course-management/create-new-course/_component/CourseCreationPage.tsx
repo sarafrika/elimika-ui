@@ -71,7 +71,7 @@ const CourseCreationPage = () => {
           },
         }
       );
-    } catch (_err) {}
+    } catch (_err) { }
   };
 
   const handleUnpublishCourse = async () => {
@@ -108,7 +108,7 @@ const CourseCreationPage = () => {
           },
         }
       );
-    } catch (_err) {}
+    } catch (_err) { }
   };
 
   const isPublished = course?.data?.is_published === true || course?.data?.status === 'published';
@@ -124,7 +124,7 @@ const CourseCreationPage = () => {
         <h1 className='text-sm'>Back</h1>
       </div>
 
-      <div className='flex w-auto max-w-6xl flex-row items-center justify-between'>
+      <div className='flex w-auto flex-row items-center justify-between'>
         <div className='flex flex-row items-center gap-4'>
           <Button
             onClick={() => setActiveTab('builder')}

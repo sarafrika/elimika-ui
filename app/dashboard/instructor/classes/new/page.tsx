@@ -509,9 +509,6 @@ const ClassCreationPage = () => {
   const instructor = profile?.instructor;
   const organisation = profile?.organisation_affiliations?.[0];
 
-  console.log(profile, "PROF")
-  console.log(activeDomain, "ACT")
-
   const [classId, setClassId] = useState<string | null>(null);
   const [isClientReady, setIsClientReady] = useState(false);
 
