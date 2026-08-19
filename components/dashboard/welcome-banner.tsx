@@ -1,4 +1,5 @@
 import type { ReactNode } from 'react';
+import { cn } from '../../lib/utils';
 
 /**
  * Gradient welcome banner ported from the Lovable dashboard. Presentational —
@@ -11,11 +12,23 @@ export interface WelcomeBannerProps {
   /** Rich summary line (can embed highlighted counts). */
   description?: ReactNode;
   actions?: ReactNode;
+  className?: string
 }
 
-export function WelcomeBanner({ eyebrow, title, description, actions }: WelcomeBannerProps) {
+export function WelcomeBanner({
+  eyebrow,
+  title,
+  description,
+  actions,
+  className,
+}: WelcomeBannerProps) {
   return (
-    <div className='to-primary relative overflow-hidden rounded-2xl border bg-gradient-to-r from-teal-700 via-teal-600 p-4 text-white shadow-sm sm:p-5 2xl:p-6'>
+    <div
+      className={cn(
+        'to-primary relative overflow-hidden rounded-2xl border bg-gradient-to-r from-teal-700 via-teal-600 p-4 text-white shadow-sm sm:p-5 2xl:p-6',
+        className,
+      )}
+    >
       <div
         aria-hidden
         className='pointer-events-none absolute -top-16 -right-16 h-56 w-56 rounded-full bg-teal-300/30 blur-3xl'
@@ -33,5 +46,6 @@ export function WelcomeBanner({ eyebrow, title, description, actions }: WelcomeB
         {actions && <div className='flex flex-wrap gap-2'>{actions}</div>}
       </div>
     </div>
-  );
+  )
 }
+

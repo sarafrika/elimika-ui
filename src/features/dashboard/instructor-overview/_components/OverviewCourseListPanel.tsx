@@ -1,5 +1,4 @@
 import { BriefcaseBusiness, Users } from 'lucide-react';
-import Link from 'next/link';
 import { OverviewSectionShell } from './OverviewSectionShell';
 import { ActionButton } from './OverviewSharedBits';
 import type { OverviewCourse, OverviewCourseSummary } from './overview-data';
@@ -102,7 +101,7 @@ function CourseRow({ course }: { course: OverviewCourse }) {
           </div>
 
           {/* actions */}
-          <div className='mt-4 flex flex-row justify-end gap-2 sm:flex-row'>
+          {/* <div className='mt-4 flex flex-row justify-end gap-2 sm:flex-row'>
             <ActionButton href={course.viewHref} label={course.actionLabel} />
 
             <Link
@@ -111,7 +110,7 @@ function CourseRow({ course }: { course: OverviewCourse }) {
             >
               Edit Class
             </Link>
-          </div>
+          </div> */}
         </div>
       </div>
     </article>
@@ -121,15 +120,13 @@ function CourseRow({ course }: { course: OverviewCourse }) {
 export function OverviewCourseListPanel({ courses, summary }: OverviewCourseListPanelProps) {
   return (
     <div className='space-y-4'>
-      <OverviewSectionShell title='Active Courses' trailingMode='none'>
-        <SkillsProgressCard summary={summary} />
-      </OverviewSectionShell>
-
       <OverviewSectionShell
         title='Active Courses'
         onActionLabel='See All'
-        onActionHref='/dashboard/instructor/all-courses'
+        onActionHref='/dashboard/instructor/courses'
       >
+        <SkillsProgressCard summary={summary} />
+
         {courses.length ? (
           <div className='w-full min-w-0 space-y-3 overflow-hidden'>
             {courses.map(course => (

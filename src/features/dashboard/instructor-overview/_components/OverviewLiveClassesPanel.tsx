@@ -16,10 +16,16 @@ type OverviewLiveClassesPanelProps = {
 };
 
 function LiveClassRow({ liveClass }: { liveClass: OverviewLiveClass }) {
+  const infoHref = `/dashboard/instructor/training-hub/classes/${liveClass?.id}`;
+  const manageHref = `/dashboard/instructor/classes/new?id=${liveClass?.id}`;
+
   return (
     <article className='border-border bg-card rounded-[10px] border px-4 py-3 shadow-sm'>
       <div className='flex items-start justify-between gap-3'>
-        <p className='text-muted-foreground text-[0.9rem] font-medium'>{liveClass.timeLabel}</p>
+        <p className='text-muted-foreground text-[0.9rem] font-medium'>
+          {liveClass.timeLabel}
+        </p>
+
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
             <Button
@@ -35,12 +41,13 @@ function LiveClassRow({ liveClass }: { liveClass: OverviewLiveClass }) {
 
           <DropdownMenuContent align='end' className='w-44'>
             <DropdownMenuItem asChild>
-              <Link href={liveClass.infoHref} className='flex w-full items-center gap-2'>
+              <Link href={infoHref} className='flex w-full items-center gap-2'>
                 View info
               </Link>
             </DropdownMenuItem>
+
             <DropdownMenuItem asChild>
-              <Link href={liveClass.href} className='flex w-full items-center gap-2'>
+              <Link href={manageHref} className='flex w-full items-center gap-2'>
                 Manage class
               </Link>
             </DropdownMenuItem>
@@ -62,19 +69,29 @@ function LiveClassRow({ liveClass }: { liveClass: OverviewLiveClass }) {
 
       <div className='mt-2 flex flex-wrap items-center justify-end gap-2 self-end'>
         <InitialsGroup initials={liveClass.attendeeInitials} />
-        <ActionButton href={liveClass.infoHref} label='View info' tone='muted' />
-        <ActionButton href={liveClass.href} label={liveClass.actionLabel} />
+
+        <ActionButton
+          href={infoHref}
+          label='View info'
+          tone='muted'
+        />
+
+        <ActionButton
+          href={manageHref}
+          label={liveClass.actionLabel}
+        />
       </div>
     </article>
   );
 }
+
 
 export function OverviewLiveClassesPanel({ liveClasses }: OverviewLiveClassesPanelProps) {
   return (
     <OverviewSectionShell
       title='Live Classes'
       onActionLabel='See All'
-      onActionHref='/dashboard/instructor/classes'
+      onActionHref='/dashboard/instructor/training-hub'
     >
       {liveClasses.length ? (
         <div className='space-y-3'>

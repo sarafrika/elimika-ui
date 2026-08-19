@@ -8,33 +8,41 @@ type OverviewUpcomingClassesPanelProps = {
 };
 
 function UpcomingClassRow({ upcomingClass }: { upcomingClass: OverviewUpcomingClass }) {
-  return (
-    <Link href={upcomingClass.href} className='block'>
-      <article className='border-border/60 flex items-start gap-3 border-b px-2 py-3 last:border-b-0'>
-        <PersonAvatar name={upcomingClass.title} />
-        <div className='min-w-0 flex-1'>
-          <div className='flex items-start justify-between gap-3'>
-            <div className='min-w-0'>
-              <h3 className='text-foreground truncate text-[1rem] font-semibold sm:text-[1.05rem]'>
-                {upcomingClass.title}
-              </h3>
-              <p className='text-muted-foreground truncate text-sm'>{upcomingClass.metaLabel}</p>
-            </div>
+  const upcomingClassHref = `/dashboard/instructor/training-hub`;
 
-            <div className='flex flex-col items-end gap-1'>
-              {upcomingClass.status ? (
-                <span className='bg-warning/10 text-warning rounded-full px-3 py-1 text-[0.75rem] font-medium dark:text-amber-300'>
-                  {upcomingClass.status}
-                </span>
-              ) : null}
-              <span className='text-muted-foreground text-right text-sm'>
-                {upcomingClass.scheduleLabel}
+  return (
+    <Link href={upcomingClassHref} className='block'>
+      <article className='border-border/60 flex gap-3 border-b px-2 py-3 last:border-b-0'>
+        <div className='shrink-0'>
+          <PersonAvatar name={upcomingClass.title} />
+        </div>
+
+        <div className='min-w-0 flex-1'>
+          <div className='flex min-w-0 items-center gap-2'>
+            <h3 className='text-foreground min-w-0 truncate text-[1rem] font-semibold sm:text-[1.05rem]'>
+              {upcomingClass.title}
+            </h3>
+
+            {upcomingClass.status ? (
+              <span className='bg-warning/10 text-warning shrink-0 rounded-full px-2.5 py-1 text-[0.7rem] font-medium dark:text-amber-300'>
+                {upcomingClass.status}
               </span>
-            </div>
+            ) : null}
+          </div>
+
+          <div className='mt-1.5 flex min-w-0 items-center justify-between gap-3'>
+            <p className='text-muted-foreground min-w-0 truncate text-sm'>
+              {upcomingClass.metaLabel}
+            </p>
+
+            <span className='text-muted-foreground shrink-0 text-right text-xs'>
+              {upcomingClass.scheduleLabel}
+            </span>
           </div>
         </div>
       </article>
     </Link>
+
   );
 }
 
@@ -48,7 +56,7 @@ export function OverviewUpcomingClassesPanel({
       onActionHref='/dashboard/instructor/calendar'
     >
       {upcomingClasses.length ? (
-        <div className='border-border bg-card rounded-[10px] border px-2 py-1 shadow-sm'>
+        <div className=''>
           {upcomingClasses.map(upcomingClass => (
             <UpcomingClassRow key={upcomingClass.id} upcomingClass={upcomingClass} />
           ))}
