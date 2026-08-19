@@ -1,22 +1,6 @@
 // @ts-nocheck -- pre-existing @hey-api generated-client type drift (see memory: elimika-ui-typecheck)
 'use client';
 
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { format } from 'date-fns';
-import {
-  AlertTriangle,
-  BellRing,
-  Building2,
-  CalendarDays,
-  Globe,
-  Loader2,
-  LockKeyhole,
-  MapPin,
-  Users,
-} from 'lucide-react';
-import { useRouter } from 'next/navigation';
-import { type FormEvent, useEffect, useMemo, useRef, useState } from 'react';
-import { toast } from 'sonner';
 import {
   type ApprovedRateCard,
   approvedRateFor,
@@ -42,6 +26,22 @@ import {
   useInstructorClassesWithSchedules,
 } from '@/hooks/use-instructor-classes-with-schedules';
 import { defaultRecurrenceValue, type RecurrenceValue, toClassRecurrence } from '@/lib/recurrence';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { format } from 'date-fns';
+import {
+  AlertTriangle,
+  BellRing,
+  Building2,
+  CalendarDays,
+  Globe,
+  Loader2,
+  LockKeyhole,
+  MapPin,
+  Users,
+} from 'lucide-react';
+import { useRouter } from 'next/navigation';
+import { type FormEvent, useEffect, useMemo, useRef, useState } from 'react';
+import { toast } from 'sonner';
 import { Button } from '../../../../../components/ui/button';
 import { Calendar } from '../../../../../components/ui/calendar';
 import { Checkbox } from '../../../../../components/ui/checkbox';
@@ -1958,7 +1958,7 @@ const ClassCreationPage = () => {
   }
 
   return (
-    <div className='h-auto overflow-x-hidden px-2 py-4 pb-8 sm:px-3 sm:py-6 lg:px-6'>
+    <div className='overflow-x-hidden px-2 py-4 pb-8 sm:px-3 sm:py-6 lg:px-6'>
       <form onSubmit={handleSubmit} className='space-y-6'>
         <ClassCreationHeader
           isSubmitting={createClassDefinition.isPending || updateClassDefinition.isPending}

@@ -31,9 +31,9 @@ export function SkillsWalletAchievementsTab({
 
   const stats = [
     { icon: Trophy, label: 'Total Achievements', value: data.length, sub: 'Across all categories', tint: 'bg-primary/10 text-primary' },
-    { icon: Star, label: 'Milestones Reached', value: completed.length, sub: '+20% this month', tint: 'bg-success/10 text-success' },
-    { icon: Flame, label: 'Streak', value: 15, sub: 'Days in a row 🔥', tint: 'bg-warning/10 text-warning' },
-    { icon: Award, label: 'Points Earned', value: totalPts.toLocaleString(), sub: '+180 this month', tint: 'bg-muted text-foreground' },
+    { icon: Star, label: 'Milestones Reached', value: completed.length, sub: '+0% this month', tint: 'bg-success/10 text-success' },
+    { icon: Flame, label: 'Streak', value: 0, sub: 'Days in a row 🔥', tint: 'bg-warning/10 text-warning' },
+    { icon: Award, label: 'Points Earned', value: totalPts.toLocaleString(), sub: '+0 this month', tint: 'bg-muted text-foreground' },
   ];
 
   const badges = data.map(a => ({
@@ -55,7 +55,15 @@ export function SkillsWalletAchievementsTab({
         </div>
         <div className='flex items-center gap-2'>
           <Button variant='outline'><Share2 className='h-4 w-4 mr-2' /> Share Achievements</Button>
-          <Button className='bg-primary hover:bg-primary/90' onClick={onAddAchievement}><Plus className='h-4 w-4 mr-2' /> Add Achievement</Button>
+          <Button
+            disabled={true}
+            className="bg-primary hover:bg-primary/90 disabled:cursor-not-allowed"
+            onClick={onAddAchievement}
+          >
+            <Plus className="h-4 w-4 mr-2" />
+            Add Achievement
+          </Button>
+
         </div>
       </div>
 

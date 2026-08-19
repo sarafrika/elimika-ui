@@ -9,7 +9,7 @@ export default function DashboardMainContent({ children }: { children: ReactNode
   useDashboardView();
 
   return (
-    <div className='flex h-full flex-1 flex-col'>
+    <div className='flex flex-1 flex-col'>
       <div className='bg-background sticky top-0 z-20 shrink-0'>
         <DashboardTopBar />
       </div>

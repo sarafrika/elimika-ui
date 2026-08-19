@@ -487,16 +487,16 @@ export function useInstructorOverviewData() {
       ? [
         {
           id: 'estimated-earnings',
-          title: formatMoney(revenueDashboard.estimated_earnings?.[0]?.amount, displayCurrency),
+          title: formatMoney(revenueDashboard.estimated_earnings?.[0]?.amount ?? 0, displayCurrency),
           subtitle: 'Estimated earnings',
           provider: 'Gross sales',
-          students: formatMoney(revenueDashboard.gross_totals?.[0]?.amount, displayCurrency),
+          students: formatMoney(revenueDashboard.gross_totals?.[0]?.amount ?? 0, displayCurrency),
           valueLabel: `${Number(revenueDashboard.order_count ?? 0n)} payments processed`,
           attendeeInitials: [],
         },
         {
           id: 'average-order-value',
-          title: formatMoney(revenueDashboard.average_order_value?.[0]?.amount, displayCurrency),
+          title: formatMoney(revenueDashboard.average_order_value?.[0]?.amount ?? 0, displayCurrency),
           subtitle: 'Average order value',
           provider: 'Units sold',
           students: formatCompactNumber(Number(revenueDashboard.units_sold ?? 0n)),
