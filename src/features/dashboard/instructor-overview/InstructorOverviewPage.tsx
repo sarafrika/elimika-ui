@@ -74,31 +74,19 @@ export function InstructorOverviewPage({ firstName }: InstructorOverviewPageProp
             {stats.map(stat => <OverviewStatCard key={stat.label} stat={stat} />)}
           </section>
 
-          <section className='grid min-w-0 gap-3 overflow-x-hidden xl:grid-cols-[minmax(0,0.94fr)_minmax(0,0.94fr)_minmax(240px,0.72fr)] 2xl:grid-cols-[minmax(0,1fr)_minmax(0,1fr)_minmax(260px,0.78fr)]'>
-            {/* LEFT COLUMN */}
-            <div className='min-w-0 space-y-3 overflow-hidden'>
+          <section className='grid min-w-0 gap-4 overflow-x-hidden xl:grid-cols-2'>
+            <div className='min-w-0 space-y-4 overflow-hidden'>
               <OverviewCourseListPanel courses={activeCourses} summary={courseSummary} />
+              <OverviewUpcomingClassesPanel upcomingClasses={upcomingClasses} />
             </div>
 
-            {/* MIDDLE COLUMN */}
-            <div className='min-w-0 space-y-3 overflow-hidden'>
+            <div className='min-w-0 space-y-4 overflow-hidden'>
               <OverviewLiveClassesPanel liveClasses={liveClasses} />
               <OverviewEarningPanel earningOverview={earningOverview} />
             </div>
 
-            {/* RIGHT COLUMN */}
-            <div className='grid min-w-0 gap-3 overflow-hidden'>
-              <OverviewUpcomingClassesPanel upcomingClasses={upcomingClasses} />
+            <div className='xl:col-span-2'>
               <OverviewClassInvitesPanel invites={classInvites} />
-
-              <Button
-                type='button'
-                className='bg-primary mt-4 flex w-full items-center justify-center gap-3 rounded-md px-4 py-3 text-[0.96rem] font-medium transition'
-              >
-                <CalendarDays className='size-4 shrink-0' />
-                <span className='truncate'>Invite Past Students</span>
-                <span aria-hidden='true'>›</span>
-              </Button>
             </div>
           </section>
         </div>

@@ -11,35 +11,35 @@ function EarningCard({ item }: { item: OverviewEarningCard }) {
   const isTimeline = !!item.actionLabel;
 
   return (
-    <article className='border-border bg-card rounded-[10px] border px-4 py-3 shadow-sm'>
+    <article className='border-border/70 bg-card/80 rounded-[12px] border px-3.5 py-3 shadow-sm'>
       <div className='flex items-start justify-between gap-3'>
         <div className='space-y-1'>
-          <p className='text-muted-foreground text-[1rem] font-medium'>{item.subtitle}</p>
-          <h3 className='text-foreground text-[1.05rem] font-semibold sm:text-[1.12rem]'>
+          <p className='text-muted-foreground text-[0.9rem] font-medium'>{item.subtitle}</p>
+          <h3 className='text-foreground text-[1rem] font-semibold sm:text-[1.05rem]'>
             {item.title}
           </h3>
         </div>
         {isTimeline ? (
-          <ActionButton href='#' label='eer Rport' tone='muted' />
+          <ActionButton href='#' label='View report' tone='muted' />
         ) : (
           <InitialsGroup initials={item.attendeeInitials} />
         )}
       </div>
 
       <div className='mt-3 flex flex-col gap-3 min-[560px]:flex-row min-[560px]:items-center min-[560px]:justify-between'>
-        <div className='text-muted-foreground space-y-1 text-[0.96rem]'>
+        <div className='text-muted-foreground space-y-1.5 text-[0.9rem]'>
           <div className='flex items-center gap-2'>
-            <Clock3 className='text-muted-foreground size-4' />
+            <Clock3 className='size-4' />
             <span>{item.valueLabel}</span>
           </div>
-          <div className='flex items-center gap-2'>
+          <div className='flex flex-wrap items-center gap-2'>
             <span className='text-primary font-semibold'>{item.provider}</span>
-            <span>|</span>
+            <span className='text-muted-foreground/60'>|</span>
             <span>{item.students}</span>
           </div>
         </div>
 
-        {item.actionLabel ? <ActionButton label={item.actionLabel} href={''} /> : null}
+        {item.actionLabel ? <ActionButton label={item.actionLabel} href='#' /> : null}
       </div>
     </article>
   );

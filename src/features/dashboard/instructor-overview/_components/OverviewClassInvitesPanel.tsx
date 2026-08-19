@@ -1,4 +1,5 @@
 import { CalendarDays } from 'lucide-react';
+import { Button } from '../../../../../components/ui/button';
 import { OverviewSectionShell } from './OverviewSectionShell';
 import { ActionButton } from './OverviewSharedBits';
 import type { OverviewInvite } from './overview-data';
@@ -41,20 +42,36 @@ function InviteCard({ invite }: { invite: OverviewInvite }) {
   );
 }
 
-export function OverviewClassInvitesPanel({ invites }: OverviewClassInvitesPanelProps) {
+export function OverviewClassInvitesPanel({
+  invites,
+}: OverviewClassInvitesPanelProps) {
   return (
-    <OverviewSectionShell title='Class Invites' trailingMode='none' onActionHref=''>
-      {invites.length ? (
-        <div className='space-y-3'>
-          {invites.map(invite => (
+    <OverviewSectionShell
+      title="Class Invites"
+      trailingMode="none"
+      onActionHref=""
+    >
+      <div className="space-y-3">
+        {invites.length ? (
+          invites.map(invite => (
             <InviteCard key={invite.id} invite={invite} />
-          ))}
-        </div>
-      ) : (
-        <p className='border-border bg-card text-muted-foreground rounded-[10px] border border-dashed px-4 py-6 text-center text-sm'>
-          No student enrollment interest has been recorded yet.
-        </p>
-      )}
+          ))
+        ) : (
+          <p className="border-border bg-card text-muted-foreground rounded-[10px] border border-dashed px-4 py-6 text-center text-sm">
+            No student enrollment interest has been recorded yet.
+          </p>
+        )}
+
+        <Button
+          type="button"
+          className="mx-auto bg-primary flex max-w-fit self-center items-center justify-center gap-3 rounded-md px-4 py-3 text-[0.96rem] font-medium transition hover:bg-primary/90"
+        >
+          <CalendarDays className="size-4 shrink-0" />
+          <span className="truncate">Invite Past Students</span>
+          <span aria-hidden="true">›</span>
+        </Button>
+      </div>
     </OverviewSectionShell>
   );
 }
+

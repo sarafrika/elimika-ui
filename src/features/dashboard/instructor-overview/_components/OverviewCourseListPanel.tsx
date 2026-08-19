@@ -10,10 +10,10 @@ type OverviewCourseListPanelProps = {
 
 function SkillsProgressCard({ summary }: { summary: OverviewCourseSummary }) {
   return (
-    <div className='bg-card rounded-[10px] p-2'>
+    <div className='border-border/70 bg-muted/15 rounded-[12px] border p-3 sm:p-4'>
       <div className='flex flex-wrap items-center justify-between gap-4'>
         <div className='space-y-1'>
-          <div className='text-foreground flex items-center gap-2 text-[1rem] font-medium'>
+          <div className='text-foreground flex items-center gap-2 text-[0.96rem] font-medium'>
             <BriefcaseBusiness className='text-primary size-4' />
             {summary.title}
           </div>
@@ -26,8 +26,8 @@ function SkillsProgressCard({ summary }: { summary: OverviewCourseSummary }) {
         </div>
 
         <div className='relative flex h-[112px] w-[112px] items-center justify-center rounded-full bg-[conic-gradient(color-mix(in_srgb,var(--success)_76%,white)_0deg_306deg,color-mix(in_srgb,var(--primary)_76%,white)_306deg_360deg,color-mix(in_srgb,var(--muted)_80%,white)_360deg)]'>
-          <div className='bg-card flex h-[82px] w-[82px] flex-col items-center justify-center rounded-full text-center'>
-            <span className='text-foreground text-[2rem] leading-none font-semibold'>
+          <div className='bg-card flex h-[82px] w-[82px] flex-col items-center justify-center rounded-full text-center shadow-sm'>
+            <span className='text-foreground text-[1.5rem] leading-none font-semibold'>
               {summary.percent}%
             </span>
             <span className='text-muted-foreground mt-1 text-[0.54rem] tracking-[0.08em] uppercase'>
@@ -37,7 +37,7 @@ function SkillsProgressCard({ summary }: { summary: OverviewCourseSummary }) {
         </div>
       </div>
 
-      <div className='mt-4 flex items-center gap-2 sm:flex-row'>
+      <div className='mt-4 flex flex-wrap items-center gap-2'>
         <ActionButton
           label={summary.primaryActionLabel}
           tone='muted'
@@ -57,35 +57,27 @@ function CourseRow({ course }: { course: OverviewCourse }) {
   const Icon = course.icon;
 
   return (
-    <article className='border-border bg-card w-full min-w-0 overflow-hidden rounded-[10px] border p-3 shadow-sm'>
+    <article className='border-border/70 bg-card/80 w-full min-w-0 overflow-hidden rounded-[12px] border p-3 shadow-sm transition-colors hover:bg-muted/10'>
       <div className='flex w-full min-w-0 gap-3'>
-        {/* icon */}
+        <div className='shrink-0'>
+          <div className='bg-primary text-primary-foreground flex h-9 w-9 items-center justify-center rounded-[8px]'>
+            <Icon className='size-4' />
+          </div>
+        </div>
 
-        {/* content */}
         <div className='min-w-0 flex-1'>
-          <div className='flex flex-row items-center gap-2'>
-            <div className='shrink-0'>
-              <div className='bg-primary text-primary-foreground flex h-9 w-9 items-center justify-center rounded-[8px]'>
-                <Icon className='size-4' />
-              </div>
-            </div>
+          <div className='min-w-0'>
+            <h3 className='text-foreground block w-full min-w-0 truncate text-[1rem] font-semibold sm:text-[1.05rem]'>
+              {course?.title}
+            </h3>
 
-            {/* title block */}
-            <div className='min-w-0'>
-              <h3 className='text-foreground block w-full min-w-0 truncate text-[1rem] font-semibold sm:text-[1.05rem]'>
-                {' '}
-                {course?.title}{' '}
-              </h3>
-
-              <p className='text-muted-foreground block w-full min-w-0 truncate text-sm'>
-                <span className='text-primary'>{course.provider}</span> | {course.level}
-              </p>
-            </div>
+            <p className='text-muted-foreground block w-full min-w-0 truncate text-sm'>
+              <span className='text-primary'>{course.provider}</span> | {course.level}
+            </p>
           </div>
 
-          {/* stats */}
           <div className='mt-3 flex w-full min-w-0 flex-col gap-2 sm:flex-row sm:items-center sm:gap-3'>
-            <div className='flex min-w-0 items-center gap-1'>
+            <div className='flex min-w-0 items-center gap-1.5'>
               <Users className='text-muted-foreground size-4 shrink-0' />
               <span className='truncate text-[0.95rem] font-medium'>
                 {course.students} students
@@ -99,18 +91,6 @@ function CourseRow({ course }: { course: OverviewCourse }) {
               />
             </div>
           </div>
-
-          {/* actions */}
-          {/* <div className='mt-4 flex flex-row justify-end gap-2 sm:flex-row'>
-            <ActionButton href={course.viewHref} label={course.actionLabel} />
-
-            <Link
-              href={course.editHref}
-              className='border-border bg-card text-foreground hover:bg-muted/50 inline-flex h-8 items-center justify-center rounded-[6px] border px-4 text-[0.82rem] font-medium'
-            >
-              Edit Class
-            </Link>
-          </div> */}
         </div>
       </div>
     </article>
@@ -128,7 +108,7 @@ export function OverviewCourseListPanel({ courses, summary }: OverviewCourseList
         <SkillsProgressCard summary={summary} />
 
         {courses.length ? (
-          <div className='w-full min-w-0 space-y-3 overflow-hidden'>
+          <div className='pt-4 w-full min-w-0 space-y-3 overflow-hidden'>
             {courses.map(course => (
               <CourseRow key={course.id} course={course} />
             ))}
