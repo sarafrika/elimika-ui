@@ -36,6 +36,7 @@ import { extractEntity, extractList } from '@/lib/api-helpers';
 import { cn } from '@/lib/utils';
 import type { ClassMarketplaceJobApplication, Instructor } from '@/services/client';
 import {
+  assignInstructorMutation,
   getInstructorByUuidOptions,
   getInstructorEducationOptions,
   getInstructorExperienceOptions,
@@ -69,9 +70,11 @@ const stageStyles: Record<string, string> = {
   Offer: 'border-primary/30 bg-primary/10 text-primary',
   Hire: 'border-success/30 bg-success/10 text-success',
 };
+// `withdrawn` belongs here too: the candidate pulled out, so they are no longer in the funnel.
+const CLOSED_STATUSES = ['rejected', 'not_selected', 'withdrawn'];
 const stageOf = (s?: string) =>
   STATUS_TO_STAGE[(s ?? '').toLowerCase()] ??
-  (['rejected', 'not_selected'].includes((s ?? '').toLowerCase()) ? 'Rejected' : 'Applied');
+  (CLOSED_STATUSES.includes((s ?? '').toLowerCase()) ? 'Rejected' : 'Applied');
 const matchScore = (a?: ClassMarketplaceJobApplication) =>
   (a?.instructor_admin_verified ? 50 : 0) + (a?.training_approved ? 50 : 0);
 const initials = (name: string) =>
@@ -180,10 +183,35 @@ export default function CandidateDetailPage() {
   const stage = stageOf(app?.status);
   const match = matchScore(app);
 
+  // Approving a candidate only marks them as the organisation's choice. The hire itself is the
+  // assignment: it is what affiliates the instructor with the organisation, moves the job to
+  // awaiting-class so the class can be created, and sends the "you've been hired" notice.
+  // "Hire" used to stop at approve, which left all three undone.
+  const assignMutation = useMutation({
+    ...assignInstructorMutation(),
+    onSuccess: () => {
+      applicationsQuery.refetch();
+      toast.success('Candidate hired', {
+        description: 'They now belong to your organisation. Create the class to schedule it.',
+      });
+    },
+    onError: error =>
+      toast.error(
+        error instanceof Error ? error.message : 'Could not complete the hire'
+      ),
+  });
+
   const moveMutation = useMutation({
     ...reviewApplicationMutation(),
     onSuccess: (_d, vars) => {
       applicationsQuery.refetch();
+      if (vars?.query?.action === 'approve' && app?.uuid) {
+        assignMutation.mutate({
+          path: { jobUuid },
+          body: { application_uuid: app.uuid },
+        });
+        return;
+      }
       toast.success(`Candidate moved to ${vars?.query?.action ?? 'stage'}`);
     },
     onError: () => toast.error('Could not update candidate stage'),
@@ -530,7 +558,7 @@ export default function CandidateDetailPage() {
                       key={s}
                       variant={stage === s ? 'default' : 'outline'}
                       className='justify-start'
-                      disabled={!app || moveMutation.isPending}
+                      disabled={!app || moveMutation.isPending || assignMutation.isPending}
                       onClick={() => act(STAGE_TO_ACTION[s])}
                     >
                       <UserCheck className='mr-2 h-4 w-4' /> Move to {s}
@@ -539,7 +567,7 @@ export default function CandidateDetailPage() {
                   <Button
                     variant='outline'
                     className='text-destructive justify-start'
-                    disabled={!app || moveMutation.isPending}
+                    disabled={!app || moveMutation.isPending || assignMutation.isPending}
                     onClick={() => act('reject')}
                   >
                     <ThumbsDown className='mr-2 h-4 w-4' /> Reject candidate

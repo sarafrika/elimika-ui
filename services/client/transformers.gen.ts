@@ -266,6 +266,7 @@ import type {
   ListJobApplicationsResponse,
   ApplyToJobResponse,
   ReviewApplicationResponse,
+  WithdrawApplicationResponse,
   GetAllCertificatesResponse,
   CreateCertificateResponse,
   UploadCertificatePdfResponse,
@@ -4909,6 +4910,13 @@ export const applyToJobResponseTransformer = async (data: any): Promise<ApplyToJ
 export const reviewApplicationResponseTransformer = async (
   data: any
 ): Promise<ReviewApplicationResponse> => {
+  data = apiResponseClassMarketplaceJobApplicationSchemaResponseTransformer(data);
+  return data;
+};
+
+export const withdrawApplicationResponseTransformer = async (
+  data: any
+): Promise<WithdrawApplicationResponse> => {
   data = apiResponseClassMarketplaceJobApplicationSchemaResponseTransformer(data);
   return data;
 };

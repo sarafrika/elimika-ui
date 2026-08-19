@@ -1,6 +1,30 @@
 // @ts-nocheck -- pre-existing @hey-api generated-client type drift (see memory: elimika-ui-typecheck)
 'use client';
 
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { format } from 'date-fns';
+import {
+  AlertTriangle,
+  BellRing,
+  Building2,
+  CalendarDays,
+  Globe,
+  Loader2,
+  LockKeyhole,
+  MapPin,
+  Users,
+} from 'lucide-react';
+import { useRouter } from 'next/navigation';
+import { type FormEvent, useEffect, useMemo, useRef, useState } from 'react';
+import { toast } from 'sonner';
+import {
+  type ApprovedRateCard,
+  approvedRateFor,
+  DEFAULT_RATE_BASIS,
+  RATE_BASES,
+  type RateBasis,
+  rateBasisUnit,
+} from '@/components/class-form/class-form-shared';
 import LocationInput from '@/components/locationInput';
 import { RecurrenceEditor } from '@/components/scheduling/recurrence-editor';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
@@ -18,22 +42,6 @@ import {
   useInstructorClassesWithSchedules,
 } from '@/hooks/use-instructor-classes-with-schedules';
 import { defaultRecurrenceValue, type RecurrenceValue, toClassRecurrence } from '@/lib/recurrence';
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { format } from 'date-fns';
-import {
-  AlertTriangle,
-  BellRing,
-  Building2,
-  CalendarDays,
-  Globe,
-  Loader2,
-  LockKeyhole,
-  MapPin,
-  Users,
-} from 'lucide-react';
-import { useRouter } from 'next/navigation';
-import { type FormEvent, useEffect, useMemo, useRef, useState } from 'react';
-import { toast } from 'sonner';
 import { Button } from '../../../../../components/ui/button';
 import { Calendar } from '../../../../../components/ui/calendar';
 import { Checkbox } from '../../../../../components/ui/checkbox';
@@ -531,6 +539,10 @@ const ClassCreationPage = () => {
   const [catalogSearch, setCatalogSearch] = useState('');
   const [schedulePreset, setSchedulePreset] = useState<SchedulePreset>('standard');
   const [serviceType, setServiceType] = useState<ServiceType | undefined>(undefined);
+  // The unit the approved rate is quoted in. It decides both which rate-card column is read and
+  // how many units the class bills for, so it has to be an explicit choice rather than a default
+  // nobody sees — an hourly figure billed per session is a different contract entirely.
+  const [rateBasis, setRateBasis] = useState<RateBasis>(DEFAULT_RATE_BASIS);
   const [selectedThumbnail, setSelectedThumbnail] = useState<File | null>(null);
   const [selectedVideo, setSelectedVideo] = useState<File | null>(null);
   const [existingThumbnailUrl, setExistingThumbnailUrl] = useState<string | null>(null);
@@ -715,23 +727,15 @@ const ClassCreationPage = () => {
   );
 
   const rateCard = selectedCatalogItem?.rateCard;
-  const ratePerHour = useMemo(() => {
-    if (rateCard && classDetails.class_type && classDetails.location_type) {
-      const classType = classDetails.class_type === 'PRIVATE' ? 'private' : 'group';
-      const locationType = classDetails.location_type === 'ONLINE' ? 'online' : 'inperson';
-      const rateKey = `${classType}_${locationType}_rate`;
-      const derivedRate = Number(rateCard[rateKey] ?? 0);
-
-      if (Number.isFinite(derivedRate) && derivedRate > 0) {
-        return derivedRate;
-      }
-    }
-
-    const storedRate = Number(classDetails.rate_card);
-    return Number.isFinite(storedRate) && storedRate > 0 ? storedRate : 0;
-  }, [classDetails.class_type, classDetails.location_type, classDetails.rate_card, rateCard]);
-
-  const selectedRateCardPrice = Number(classDetails.rate_card);
+  // Reads the approved rate for the selected format, delivery mode and contracted basis. The
+  // previous lookup built a `*_rate` key that no longer exists — the rate card was split into
+  // hourly/session/daily columns — so it silently resolved to 0 and every class was priced free.
+  const approvedRate = useMemo(() => {
+    if (!rateCard || !classDetails.class_type || !classDetails.location_type) return 0;
+    const format = classDetails.class_type === 'PRIVATE' ? 'INDIVIDUAL' : 'GROUP';
+    const delivery = classDetails.location_type === 'ONLINE' ? 'ONLINE' : 'IN_PERSON';
+    return approvedRateFor(rateCard as ApprovedRateCard, format, delivery, rateBasis) ?? 0;
+  }, [classDetails.class_type, classDetails.location_type, rateCard, rateBasis]);
 
   const totalSessions = sessionsForConflictCheck.length || classData?.scheduled_session_count;
 
@@ -765,10 +769,20 @@ const ClassCreationPage = () => {
 
   const totalHoursInMinutes = BigInt(Math.round(totalHours * 60));
 
-  const totalAmount =
-    Math.max(selectedRateCardPrice * totalHours, 0) ||
-    Math.max(ratePerHour * totalHours, 0) ||
-    (Number(classData?.sale_price) > 0 ? Number(classData.sale_price) * totalHours : 0);
+  /** Distinct calendar days holding a session — two sessions in one day bill once on a daily rate. */
+  const totalDays = useMemo(
+    () => new Set(sessionsForConflictCheck.map(session => session.date)).size,
+    [sessionsForConflictCheck]
+  );
+
+  /** How many units of the contracted basis this schedule adds up to. */
+  const billableUnits = useMemo(() => {
+    if (rateBasis === 'per_session') return totalSessions || 0;
+    if (rateBasis === 'per_day') return totalDays;
+    return totalHours || 0;
+  }, [rateBasis, totalSessions, totalDays, totalHours]);
+
+  const totalAmount = Math.max(approvedRate * billableUnits, 0);
 
   const firstSessionTimeLabel = useMemo(() => {
     if (scheduleSettings.allDay) return 'All Day';
@@ -1216,7 +1230,6 @@ const ClassCreationPage = () => {
     const meetingLinkAllowed = locationType === 'ONLINE' || locationType === 'HYBRID';
     const selectedSource: CatalogSource =
       selectedCatalogItem?.source || (classDetails.program_uuid ? 'program' : 'course');
-    const selectedRate = Number(classDetails.rate_card);
 
     const academicPeriodStart = buildDateFromInput(scheduleSettings.academicPeriod.start);
     const academicPeriodEnd = buildDateFromInput(scheduleSettings.academicPeriod.end);
@@ -1414,8 +1427,9 @@ const ClassCreationPage = () => {
       scheduled_session_count: totalSessions,
       class_reminder_minutes: reminderToMinutes(notificationSettings.reminder),
       duration_minutes: totalHoursInMinutes,
-      sale_price: selectedRate,
-      instructor_pay: selectedRate,
+      sale_price: approvedRate,
+      instructor_pay: approvedRate,
+      rate_basis: rateBasis,
       allow_waitlist: allowWaitlist,
       is_active: !isDraft,
       default_start_time: new Date(buildUtcIsoDateTime(payloadRefDate, payloadStartTime)),
@@ -1587,7 +1601,9 @@ const ClassCreationPage = () => {
     timeLabel: firstSessionTimeLabel,
     classroom: classDetails.classroom,
     totalHoursLabel: `${totalHours || 0} ${totalHours === 1 ? 'Hour' : 'Hours'}`,
-    pricePerHourLabel: `${rateCard?.currency || 'KES'} ${(selectedRateCardPrice > 0 ? selectedRateCardPrice : ratePerHour).toLocaleString()}`,
+    priceUnitLabel: `Price per ${rateBasisUnit(rateBasis)}`,
+    pricePerHourLabel: `${rateCard?.currency || 'KES'} ${approvedRate.toLocaleString()}`,
+    billingBasisLabel: `${billableUnits.toLocaleString()} ${rateBasisUnit(rateBasis)}${billableUnits === 1 ? '' : 's'} × ${rateCard?.currency || 'KES'} ${approvedRate.toLocaleString()}`,
     totalSessionsLabel: `${totalSessions || 0} Class${totalSessions === 1 ? '' : 'es'}`,
     totalAmountLabel: `${rateCard?.currency || 'KES'} ${totalAmount.toLocaleString() || '0'}`,
     meetingLink,
@@ -2036,9 +2052,36 @@ const ClassCreationPage = () => {
                 </div>
 
                 <div className='border-border/60 border-t px-2 py-4 sm:px-3'>
+                  <div className='mb-4 flex flex-col gap-1.5'>
+                    <FieldGroup label='Billing basis *'>
+                      <Select
+                        value={rateBasis}
+                        onValueChange={value => setRateBasis(value as RateBasis)}
+                      >
+                        <SelectTrigger className='w-full sm:w-64'>
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {RATE_BASES.map(basis => (
+                            <SelectItem key={basis.value} value={basis.value}>
+                              {basis.label}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </FieldGroup>
+                    <p className='text-muted-foreground text-xs'>
+                      The unit this class is contracted and paid in. It picks which approved rate
+                      applies and how many units are billed —{' '}
+                      {billableUnits.toLocaleString()} {rateBasisUnit(rateBasis)}
+                      {billableUnits === 1 ? '' : 's'} on the current schedule.
+                    </p>
+                  </div>
+
                   <ServiceTypeSelector
                     value={serviceType}
                     onChange={handleServiceTypeChange}
+                    rateBasis={rateBasis}
                     rateCard={
                       rateCard as Record<string, number | string | null | undefined> | undefined
                     }

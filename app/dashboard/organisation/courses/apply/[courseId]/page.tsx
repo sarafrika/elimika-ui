@@ -67,6 +67,11 @@ type TrainingMethod =
 type Classroom = { id: string; name: string; photoUrl?: string };
 type EquipmentItem = { id: string; name: string; brand: string; serial: string };
 type EquipmentAnswer = {
+  /** Requirements are keyed by uuid, not name: a course may list the same name twice
+   * (this catalogue has four such pairs) and name-keyed answers made those rows share
+   * one another's state while leaving orphan rows nobody could answer — the wizard could
+   * then never satisfy its own validation. */
+  requirementUuid: string;
   requirementName: string;
   has: 'yes' | 'no' | null;
   items: EquipmentItem[];
@@ -98,15 +103,15 @@ type Action =
   | { type: 'removeClassroom'; id: string }
   | { type: 'moveClassroom'; id: string; direction: 'up' | 'down' }
   | { type: 'reorderClassrooms'; fromId: string; toId: string }
-  | { type: 'equipHas'; name: string; has: 'yes' | 'no' }
-  | { type: 'equipAcquisition'; name: string; acquisition: 'lease' | 'hire' }
-  | { type: 'equipAddItem'; name: string }
-  | { type: 'equipRemoveItem'; name: string; itemId: string }
-  | { type: 'equipItem'; name: string; itemId: string; patch: Partial<EquipmentItem> }
+  | { type: 'equipHas'; uuid: string; has: 'yes' | 'no' }
+  | { type: 'equipAcquisition'; uuid: string; acquisition: 'lease' | 'hire' }
+  | { type: 'equipAddItem'; uuid: string; name: string }
+  | { type: 'equipRemoveItem'; uuid: string; itemId: string }
+  | { type: 'equipItem'; uuid: string; itemId: string; patch: Partial<EquipmentItem> }
   | { type: 'priceAdd' }
   | { type: 'priceRemove'; id: string }
   | { type: 'priceUpdate'; id: string; patch: Partial<PriceTier> }
-  | { type: 'initEquipment'; names: string[] };
+  | { type: 'initEquipment'; requirements: { uuid: string; name: string }[] };
 
 const uid = () => Math.random().toString(36).slice(2, 9);
 
@@ -123,9 +128,11 @@ function reducer(state: State, action: Action): State {
     case 'initEquipment':
       return {
         ...state,
-        equipment: action.names.map(name => {
-          const existing = state.equipment.find(e => e.requirementName === name);
-          return existing ?? { requirementName: name, has: null, items: [] };
+        equipment: action.requirements.map(req => {
+          const existing = state.equipment.find(e => e.requirementUuid === req.uuid);
+          return (
+            existing ?? { requirementUuid: req.uuid, requirementName: req.name, has: null, items: [] }
+          );
         }),
       };
     case 'toggleMethod': {
@@ -188,13 +195,13 @@ function reducer(state: State, action: Action): State {
       return {
         ...state,
         equipment: state.equipment.map(e =>
-          e.requirementName === action.name
+          e.requirementUuid === action.uuid
             ? {
                 ...e,
                 has: action.has,
                 items:
                   action.has === 'yes' && e.items.length === 0
-                    ? [{ id: uid(), name: action.name, brand: '', serial: '' }]
+                    ? [{ id: uid(), name: e.requirementName, brand: '', serial: '' }]
                     : e.items,
                 acquisition: action.has === 'yes' ? undefined : e.acquisition,
               }
@@ -205,14 +212,14 @@ function reducer(state: State, action: Action): State {
       return {
         ...state,
         equipment: state.equipment.map(e =>
-          e.requirementName === action.name ? { ...e, acquisition: action.acquisition } : e
+          e.requirementUuid === action.uuid ? { ...e, acquisition: action.acquisition } : e
         ),
       };
     case 'equipAddItem':
       return {
         ...state,
         equipment: state.equipment.map(e =>
-          e.requirementName === action.name
+          e.requirementUuid === action.uuid
             ? { ...e, items: [...e.items, { id: uid(), name: action.name, brand: '', serial: '' }] }
             : e
         ),
@@ -221,7 +228,7 @@ function reducer(state: State, action: Action): State {
       return {
         ...state,
         equipment: state.equipment.map(e =>
-          e.requirementName === action.name
+          e.requirementUuid === action.uuid
             ? { ...e, items: e.items.filter(it => it.id !== action.itemId) }
             : e
         ),
@@ -230,7 +237,7 @@ function reducer(state: State, action: Action): State {
       return {
         ...state,
         equipment: state.equipment.map(e =>
-          e.requirementName === action.name
+          e.requirementUuid === action.uuid
             ? {
                 ...e,
                 items: e.items.map(it =>
@@ -403,9 +410,12 @@ export default function ApplyPage() {
   }));
 
   // Seed equipment answers from the course creator's real requirements once loaded.
-  const reqKey = requirements.map(r => r.name).join('|');
+  const reqKey = requirements.map(r => r.uuid ?? r.name).join('|');
   useEffect(() => {
-    dispatch({ type: 'initEquipment', names: requirements.map(r => r.name) });
+    dispatch({
+      type: 'initEquipment',
+      requirements: requirements.map(r => ({ uuid: (r.uuid ?? r.name) as string, name: r.name })),
+    });
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [reqKey]);
 
@@ -1075,11 +1085,12 @@ function StepEquipment({
       </div>
       <div className='space-y-3'>
         {requirements.map(req => {
-          const answer = state.equipment.find(e => e.requirementName === req.name);
+          const requirementUuid = (req.uuid ?? req.name) as string;
+          const answer = state.equipment.find(e => e.requirementUuid === requirementUuid);
           if (!answer) return null;
           return (
             <EquipmentBlock
-              key={req.name}
+              key={requirementUuid}
               requirement={req}
               answer={answer}
               dispatch={dispatch}
@@ -1130,7 +1141,7 @@ function EquipmentBlock({
             type='button'
             size='sm'
             variant={answer.has === 'yes' ? 'default' : 'outline'}
-            onClick={() => dispatch({ type: 'equipHas', name: requirement.name, has: 'yes' })}
+            onClick={() => dispatch({ type: 'equipHas', uuid: answer.requirementUuid, has: 'yes' })}
           >
             Yes
           </Button>
@@ -1138,7 +1149,7 @@ function EquipmentBlock({
             type='button'
             size='sm'
             variant={answer.has === 'no' ? 'default' : 'outline'}
-            onClick={() => dispatch({ type: 'equipHas', name: requirement.name, has: 'no' })}
+            onClick={() => dispatch({ type: 'equipHas', uuid: answer.requirementUuid, has: 'no' })}
           >
             No
           </Button>
@@ -1169,7 +1180,7 @@ function EquipmentBlock({
                     onChange={e =>
                       dispatch({
                         type: 'equipItem',
-                        name: requirement.name,
+                        uuid: answer.requirementUuid,
                         itemId: item.id,
                         patch: { name: e.target.value },
                       })
@@ -1192,7 +1203,7 @@ function EquipmentBlock({
                     onChange={e =>
                       dispatch({
                         type: 'equipItem',
-                        name: requirement.name,
+                        uuid: answer.requirementUuid,
                         itemId: item.id,
                         patch: { brand: e.target.value },
                       })
@@ -1214,7 +1225,7 @@ function EquipmentBlock({
                     onChange={e =>
                       dispatch({
                         type: 'equipItem',
-                        name: requirement.name,
+                        uuid: answer.requirementUuid,
                         itemId: item.id,
                         patch: { serial: e.target.value },
                       })
@@ -1232,7 +1243,7 @@ function EquipmentBlock({
                   variant='ghost'
                   size='icon'
                   onClick={() =>
-                    dispatch({ type: 'equipRemoveItem', name: requirement.name, itemId: item.id })
+                    dispatch({ type: 'equipRemoveItem', uuid: answer.requirementUuid, itemId: item.id })
                   }
                   aria-label='Remove item'
                   className='self-end'
@@ -1255,7 +1266,7 @@ function EquipmentBlock({
               type='button'
               variant='outline'
               size='sm'
-              onClick={() => dispatch({ type: 'equipAddItem', name: requirement.name })}
+              onClick={() => dispatch({ type: 'equipAddItem', uuid: answer.requirementUuid, name: requirement.name })}
             >
               <Plus className='mr-2 h-4 w-4' /> Add another {requirement.name}
             </Button>
@@ -1272,7 +1283,7 @@ function EquipmentBlock({
               size='sm'
               variant={answer.acquisition === 'lease' ? 'default' : 'outline'}
               onClick={() =>
-                dispatch({ type: 'equipAcquisition', name: requirement.name, acquisition: 'lease' })
+                dispatch({ type: 'equipAcquisition', uuid: answer.requirementUuid, acquisition: 'lease' })
               }
             >
               Lease to own
@@ -1282,7 +1293,7 @@ function EquipmentBlock({
               size='sm'
               variant={answer.acquisition === 'hire' ? 'default' : 'outline'}
               onClick={() =>
-                dispatch({ type: 'equipAcquisition', name: requirement.name, acquisition: 'hire' })
+                dispatch({ type: 'equipAcquisition', uuid: answer.requirementUuid, acquisition: 'hire' })
               }
             >
               Hire
@@ -1618,10 +1629,11 @@ function StepReview({
         />
         <ul className='space-y-2'>
           {requirements.map(req => {
-            const a = state.equipment.find(e => e.requirementName === req.name);
+            const requirementUuid = (req.uuid ?? req.name) as string;
+            const a = state.equipment.find(e => e.requirementUuid === requirementUuid);
             if (!a) return null;
             return (
-              <li key={req.name} className='rounded-md border p-3'>
+              <li key={requirementUuid} className='rounded-md border p-3'>
                 <div className='flex flex-wrap items-center justify-between gap-2'>
                   <span className='font-medium'>{req.name}</span>
                   {a.has === 'yes' && (

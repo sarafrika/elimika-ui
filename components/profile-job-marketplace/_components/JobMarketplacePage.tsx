@@ -97,6 +97,7 @@ import { useUserProfile } from '@/src/features/profile/context/profile-context';
 
 import { useOrganisationsByIds } from '../../../hooks/use-batched-lookups';
 import { extractPage } from '../../../lib/api-helpers';
+import { canReapply as statusAllowsReapply } from '../application-status';
 import type { JobMarketplaceRole } from '../data';
 import { getJobMarketplaceRoleConfig } from '../data';
 import { JobCard } from './JobMarketplaceCard';
@@ -428,7 +429,6 @@ function JobDetailsSheet({
   const { activeDomain } = useUserDomain();
   const [applicationNote, setApplicationNote] = useState('');
   const [showAllSessions, setShowAllSessions] = useState(false);
-  const alreadyApplied = Boolean(application);
   const jobUuid = job?.uuid;
 
   const { organisationMap } = useOrganisationsByIds([job?.organisation_uuid as string]);
@@ -447,12 +447,22 @@ function JobDetailsSheet({
   const endsAt = lastSchedule?.end_time;
 
   const [applyConflicts, setApplyConflicts] = useState<ConflictItem[]>([]);
+  // Asked unconditionally now. This endpoint exists precisely to answer "can this instructor apply",
+  // and gating it on the locally-cached application list meant an instructor whose application fell
+  // outside that page was silently offered a fresh application the server would then reject.
   const eligibilityQuery = useQuery({
     ...getJobEligibilityOptions({ path: { jobUuid: jobUuid ?? '' } }),
-    enabled:
-      open && Boolean(jobUuid) && !isManagementView && !alreadyApplied && job?.status === 'open',
+    enabled: open && Boolean(jobUuid) && !isManagementView && job?.status === 'open',
   });
   const eligibility = eligibilityQuery.data?.data;
+
+  // The server is the authority on both of these; the locally-cached application is only a
+  // fallback for the moment before eligibility resolves.
+  const applicationStatus = eligibility?.application_status ?? application?.status;
+  const alreadyApplied = eligibility?.already_applied ?? Boolean(application);
+  const canReapply =
+    eligibility?.can_reapply ?? statusAllowsReapply(application?.status);
+  const hasLiveApplication = alreadyApplied && !canReapply;
   const isIneligible = Boolean(eligibility && !eligibility.eligible);
   const eligibilityScheduleConflicts = useMemo<ConflictItem[]>(() => {
     if (!eligibility || eligibility.schedule_clear !== false) return [];
@@ -743,12 +753,19 @@ function JobDetailsSheet({
                 onChange={event => setApplicationNote(event.target.value)}
                 placeholder='Add a short note to support your application.'
                 className='min-h-28'
-                disabled={alreadyApplied}
+                disabled={hasLiveApplication}
               />
               {alreadyApplied ? (
                 <div className='border-border/70 bg-muted/30 text-muted-foreground flex flex-wrap items-center gap-2 rounded-md border border-dashed p-3 text-sm'>
-                  <StatusBadge status='approved' label='Applied' />
-                  <span>You have already applied to this opportunity.</span>
+                  <StatusBadge
+                    status={applicationStatus}
+                    label={formatEnumLabel(applicationStatus ?? 'applied')}
+                  />
+                  <span>
+                    {canReapply
+                      ? 'Your previous application for this opportunity is closed. You can apply again.'
+                      : 'You have already applied to this opportunity.'}
+                  </span>
                   {myApplicationsHref ? (
                     <Button asChild variant='outline' size='sm'>
                       <Link href={myApplicationsHref}>View my applications</Link>
@@ -759,9 +776,13 @@ function JobDetailsSheet({
               <div className='flex flex-wrap gap-2'>
                 <Button
                   onClick={handleApply}
-                  disabled={applyMutation.isPending || alreadyApplied || isIneligible}
+                  disabled={applyMutation.isPending || hasLiveApplication || isIneligible}
                 >
-                  {applyMutation.isPending ? 'Submitting...' : 'Apply for job'}
+                  {applyMutation.isPending
+                    ? 'Submitting...'
+                    : canReapply
+                      ? 'Apply again'
+                      : 'Apply for job'}
                 </Button>
                 <Button variant='outline' onClick={() => onOpenChange(false)}>
                   Close
@@ -858,7 +879,9 @@ export function JobMarketplacePage({ role }: { role: JobMarketplaceRole }) {
   const myApplicationsQuery = useQuery({
     ...listMyApplicationsOptions({
       query: {
-        pageable: {},
+        // Every application has to be reconciled against the listings, so the default
+        // page of 20 would silently drop the "already applied" badge on older postings.
+        pageable: { page: 0, size: 200 },
       },
     }),
     // Only appliers (instructors) have applications to reconcile against listings.
@@ -1452,6 +1475,9 @@ export function JobMarketplacePage({ role }: { role: JobMarketplaceRole }) {
                               }
                               applicationStatus={application?.status ?? null}
                               hasApplied={Boolean(application)}
+                              // The grid has no per-job eligibility call — one per card would be
+                              // dozens of requests — so the cached application decides here.
+                              canReapply={statusAllowsReapply(application?.status)}
                               applicationsHref={
                                 isOrganizationView && job.uuid
                                   ? buildWorkspaceAliasPath(

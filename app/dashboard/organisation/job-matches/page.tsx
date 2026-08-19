@@ -67,6 +67,7 @@ import type {
   Instructor,
 } from '@/services/client';
 import {
+  assignInstructorMutation,
   getInstructorByUuidOptions,
   getInstructorSkillsOptions,
   listJobApplicationsOptions,
@@ -99,9 +100,12 @@ const stageStyles: Record<string, string> = {
   Offer: 'border-primary/30 bg-primary/10 text-primary',
   Hire: 'border-success/30 bg-success/10 text-success',
 };
+// `withdrawn` belongs here too: the candidate pulled out, so they are no longer in the funnel.
+// Leaving it out put them back in the Applied column looking like they were still waiting.
+const CLOSED_STATUSES = ['rejected', 'not_selected', 'withdrawn'];
 const stageOf = (status?: string) =>
   STATUS_TO_STAGE[(status ?? '').toLowerCase()] ??
-  (['rejected', 'not_selected'].includes((status ?? '').toLowerCase()) ? 'Rejected' : 'Applied');
+  (CLOSED_STATUSES.includes((status ?? '').toLowerCase()) ? 'Rejected' : 'Applied');
 const matchScore = (a: ClassMarketplaceJobApplication) =>
   (a.instructor_admin_verified ? 50 : 0) + (a.training_approved ? 50 : 0);
 const matchColor = (n: number) =>
@@ -359,11 +363,33 @@ export default function JobMatchesPage() {
   );
   const [shortlistNote, setShortlistNote] = useState('');
 
+  const assignMutation = useMutation({
+    ...assignInstructorMutation(),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['listJobApplications'] });
+      applicationsQuery.refetch();
+      toast.success('Candidate hired', {
+        description: 'They now belong to your organisation. Create the class to schedule it.',
+      });
+    },
+    onError: error =>
+      toast.error(error instanceof Error ? error.message : 'Could not complete the hire'),
+  });
+
   const moveMutation = useMutation({
     ...reviewApplicationMutation(),
     onSuccess: (_d, vars) => {
       queryClient.invalidateQueries({ queryKey: ['listJobApplications'] });
       applicationsQuery.refetch();
+      // Approve marks the choice; the assignment is the hire — it affiliates the instructor
+      // with the organisation, opens class creation and sends the hired notice.
+      if (vars?.query?.action === 'approve' && vars?.path?.applicationUuid) {
+        assignMutation.mutate({
+          path: { jobUuid: selectedJobUuid },
+          body: { application_uuid: vars.path.applicationUuid as string },
+        });
+        return;
+      }
       toast.success(`Candidate moved to ${vars?.query?.action ?? 'stage'}`);
     },
     onError: () => toast.error('Could not update candidate stage'),

@@ -187,6 +187,9 @@ export default function CatalogPage() {
       },
     }),
     enabled: Boolean(organisationUuid),
+    staleTime: 0,
+    refetchOnMount: 'always',
+    refetchOnWindowFocus: true,
   });
   const approvedCourseUuids = useMemo(() => {
     const set = new Set<string>();

@@ -630,14 +630,14 @@ export const StudentSchema = {
     primaryGuardianContact: {
       type: 'string',
     },
-    secondaryGuardianContact: {
-      type: 'string',
-    },
     allGuardianContacts: {
       type: 'array',
       items: {
         type: 'string',
       },
+    },
+    secondaryGuardianContact: {
+      type: 'string',
     },
     full_name: {
       type: 'string',
@@ -1105,17 +1105,17 @@ export const RubricScoringLevelSchema = {
       example: 'Excellent (4.0 pts)',
       readOnly: true,
     },
+    css_color_class: {
+      type: 'string',
+      description: '**[READ-ONLY]** CSS-safe color class name derived from the color code.',
+      example: 'level-green',
+      readOnly: true,
+    },
     performance_indicator: {
       type: 'string',
       description:
         '**[READ-ONLY]** Performance classification based on level order and passing status.',
       example: 'Exceeds Expectations',
-      readOnly: true,
-    },
-    css_color_class: {
-      type: 'string',
-      description: '**[READ-ONLY]** CSS-safe color class name derived from the color code.',
-      example: 'level-green',
       readOnly: true,
     },
     is_highest_level: {
@@ -1432,19 +1432,19 @@ export const RubricMatrixSchema = {
         '**[READ-ONLY]** Statistical information about the matrix completion and scoring.',
       readOnly: true,
     },
-    is_complete: {
-      type: 'boolean',
-      description:
-        '**[READ-ONLY]** Whether all matrix cells have been completed with descriptions.',
-      example: true,
-      readOnly: true,
-    },
     expected_cell_count: {
       type: 'integer',
       format: 'int32',
       description:
         '**[READ-ONLY]** Expected number of matrix cells (criteria count × scoring levels count).',
       example: 20,
+      readOnly: true,
+    },
+    is_complete: {
+      type: 'boolean',
+      description:
+        '**[READ-ONLY]** Whether all matrix cells have been completed with descriptions.',
+      example: true,
       readOnly: true,
     },
   },
@@ -2450,16 +2450,16 @@ export const TrainingProgramSchema = {
       example: 'instructor@sarafrika.com',
       readOnly: true,
     },
-    program_type: {
-      type: 'string',
-      description: '**[READ-ONLY]** Classification of program type based on duration and content.',
-      example: 'Comprehensive Masterclass',
-      readOnly: true,
-    },
     total_duration_display: {
       type: 'string',
       description: '**[READ-ONLY]** Human-readable format of total program duration.',
       example: '120 hours 30 minutes',
+      readOnly: true,
+    },
+    program_type: {
+      type: 'string',
+      description: '**[READ-ONLY]** Classification of program type based on duration and content.',
+      example: 'Comprehensive Masterclass',
       readOnly: true,
     },
   },
@@ -4628,13 +4628,6 @@ export const AvailabilitySlotSchema = {
       example: 'instructor@sarafrika.com',
       readOnly: true,
     },
-    duration_minutes: {
-      type: 'integer',
-      format: 'int64',
-      description: '**[READ-ONLY]** Duration of the availability slot in minutes.',
-      example: 480,
-      readOnly: true,
-    },
     duration_formatted: {
       type: 'string',
       description: '**[READ-ONLY]** Human-readable formatted duration.',
@@ -4658,6 +4651,13 @@ export const AvailabilitySlotSchema = {
       type: 'string',
       description: '**[READ-ONLY]** Human-readable description of the availability pattern.',
       example: 'Weekly on Monday',
+      readOnly: true,
+    },
+    duration_minutes: {
+      type: 'integer',
+      format: 'int64',
+      description: '**[READ-ONLY]** Duration of the availability slot in minutes.',
+      example: 480,
       readOnly: true,
     },
   },
@@ -4965,6 +4965,32 @@ export const CourseSchema = {
       example: 'instructor@sarafrika.com',
       readOnly: true,
     },
+    total_duration_display: {
+      type: 'string',
+      description: '**[READ-ONLY]** Human-readable format of total course duration.',
+      example: '40 hours 30 minutes',
+      readOnly: true,
+    },
+    has_multiple_categories: {
+      type: 'boolean',
+      description: '**[READ-ONLY]** Indicates if the course belongs to multiple categories.',
+      example: true,
+      readOnly: true,
+    },
+    category_count: {
+      type: 'integer',
+      format: 'int32',
+      description: '**[READ-ONLY]** Number of categories this course belongs to.',
+      example: 2,
+      readOnly: true,
+    },
+    lifecycle_stage: {
+      type: 'string',
+      description:
+        "**[READ-ONLY]** Human-readable description of the course's current lifecycle stage.",
+      example: 'Published and Active',
+      readOnly: true,
+    },
     is_published: {
       type: 'boolean',
       description: '**[READ-ONLY]** Indicates if the course is published and discoverable.',
@@ -4994,32 +5020,6 @@ export const CourseSchema = {
       type: 'boolean',
       description: '**[READ-ONLY]** Indicates if the course is currently under review.',
       example: false,
-      readOnly: true,
-    },
-    total_duration_display: {
-      type: 'string',
-      description: '**[READ-ONLY]** Human-readable format of total course duration.',
-      example: '40 hours 30 minutes',
-      readOnly: true,
-    },
-    has_multiple_categories: {
-      type: 'boolean',
-      description: '**[READ-ONLY]** Indicates if the course belongs to multiple categories.',
-      example: true,
-      readOnly: true,
-    },
-    category_count: {
-      type: 'integer',
-      format: 'int32',
-      description: '**[READ-ONLY]** Number of categories this course belongs to.',
-      example: 2,
-      readOnly: true,
-    },
-    lifecycle_stage: {
-      type: 'string',
-      description:
-        "**[READ-ONLY]** Human-readable description of the course's current lifecycle stage.",
-      example: 'Published and Active',
       readOnly: true,
     },
   },
@@ -5608,17 +5608,17 @@ export const LessonSchema = {
       example: 'instructor@sarafrika.com',
       readOnly: true,
     },
+    lesson_sequence: {
+      type: 'string',
+      description: '**[READ-ONLY]** Formatted lesson sequence for display purposes.',
+      example: 'Lesson 3',
+      readOnly: true,
+    },
     is_published: {
       type: 'boolean',
       description:
         '**[READ-ONLY]** Indicates if the lesson is published and accessible to students.',
       example: true,
-      readOnly: true,
-    },
-    lesson_sequence: {
-      type: 'string',
-      description: '**[READ-ONLY]** Formatted lesson sequence for display purposes.',
-      example: 'Lesson 3',
       readOnly: true,
     },
   },
@@ -5925,16 +5925,16 @@ export const LessonContentSchema = {
       example: 'instructor@sarafrika.com',
       readOnly: true,
     },
-    content_category: {
-      type: 'string',
-      description: '**[READ-ONLY]** Category of content based on its type and format.',
-      example: 'Video Content',
-      readOnly: true,
-    },
     file_size_display: {
       type: 'string',
       description: '**[READ-ONLY]** Human-readable format of file size.',
       example: '150 MB',
+      readOnly: true,
+    },
+    content_category: {
+      type: 'string',
+      description: '**[READ-ONLY]** Category of content based on its type and format.',
+      example: 'Video Content',
       readOnly: true,
     },
   },
@@ -8124,6 +8124,9 @@ export const ClassDefinitionSchema = {
       example: 180,
       minimum: 0,
     },
+    rate_basis: {
+      $ref: '#/components/schemas/RateBasisEnum',
+    },
     class_visibility: {
       $ref: '#/components/schemas/ClassVisibilityEnum',
     },
@@ -8242,9 +8245,6 @@ export const ClassDefinitionSchema = {
       description:
         '**[OPTIONAL]** Category the class falls under. Courses supply their own categories, so this carries the category chosen for program-backed classes.',
     },
-    rate_basis: {
-      $ref: '#/components/schemas/RateBasisEnum',
-    },
     session_templates: {
       type: 'array',
       description: `**[READ-ONLY]** Persisted session templates originally used to generate scheduled class instances.
@@ -8325,12 +8325,11 @@ conflict_resolution per template:
       example: false,
       readOnly: true,
     },
-    duration_minutes: {
-      type: 'integer',
-      format: 'int64',
+    capacity_info: {
+      type: 'string',
       description:
-        '**[READ-ONLY]** Computed duration of the class in minutes based on start and end times.',
-      example: 90,
+        '**[READ-ONLY]** Human-readable capacity information including waitlist availability.',
+      example: 'Max 25 participants (waitlist enabled)',
       readOnly: true,
     },
     duration_formatted: {
@@ -8339,11 +8338,12 @@ conflict_resolution per template:
       example: '1h 30m',
       readOnly: true,
     },
-    capacity_info: {
-      type: 'string',
+    duration_minutes: {
+      type: 'integer',
+      format: 'int64',
       description:
-        '**[READ-ONLY]** Human-readable capacity information including waitlist availability.',
-      example: 'Max 25 participants (waitlist enabled)',
+        '**[READ-ONLY]** Computed duration of the class in minutes based on start and end times.',
+      example: 90,
       readOnly: true,
     },
   },
@@ -9962,13 +9962,6 @@ export const ScheduledInstanceSchema = {
       example: 'instructor@sarafrika.com',
       readOnly: true,
     },
-    duration_minutes: {
-      type: 'integer',
-      format: 'int64',
-      description: '**[READ-ONLY]** Duration of the scheduled instance in minutes.',
-      example: 90,
-      readOnly: true,
-    },
     duration_formatted: {
       type: 'string',
       description: '**[READ-ONLY]** Human-readable formatted duration.',
@@ -9986,6 +9979,13 @@ export const ScheduledInstanceSchema = {
       description:
         '**[READ-ONLY]** Indicates if the scheduled instance is currently active (ongoing).',
       example: false,
+      readOnly: true,
+    },
+    duration_minutes: {
+      type: 'integer',
+      format: 'int64',
+      description: '**[READ-ONLY]** Duration of the scheduled instance in minutes.',
+      example: 90,
       readOnly: true,
     },
     can_be_cancelled: {
@@ -12699,6 +12699,9 @@ export const ClassDefinitionCreateRequestSchema = {
       description: '**[OPTIONAL]** Per-session pay owed to the instructor.',
       minimum: 0,
     },
+    rate_basis: {
+      $ref: '#/components/schemas/RateBasisEnum2',
+    },
     class_visibility: {
       $ref: '#/components/schemas/ClassVisibilityEnum',
     },
@@ -14919,17 +14922,17 @@ export const StudentScheduleSchema = {
       example: '2024-09-15T09:15:00Z',
       readOnly: true,
     },
+    did_attend: {
+      type: 'boolean',
+      description: '**[READ-ONLY]** Indicates if the student attended this class.',
+      example: false,
+      readOnly: true,
+    },
     duration_minutes: {
       type: 'integer',
       format: 'int64',
       description: '**[READ-ONLY]** Duration of the scheduled class in minutes.',
       example: 90,
-      readOnly: true,
-    },
-    did_attend: {
-      type: 'boolean',
-      description: '**[READ-ONLY]** Indicates if the student attended this class.',
-      example: false,
       readOnly: true,
     },
     is_upcoming: {
@@ -20847,7 +20850,16 @@ export const ClassMarketplaceJobEligibilitySchema = {
     },
     already_applied: {
       type: 'boolean',
-      description: 'Whether the instructor already has an application for this job',
+      description: 'Whether the instructor already has an application for this job, in any state',
+      readOnly: true,
+    },
+    application_status: {
+      $ref: '#/components/schemas/ApplicationStatusEnum',
+    },
+    can_reapply: {
+      type: 'boolean',
+      description:
+        "Whether the instructor's existing application is closed in a way that allows applying again",
       readOnly: true,
     },
     schedule_clear: {
@@ -22487,10 +22499,9 @@ export const LocationTypeEnumSchema = {
 export const RateBasisEnumSchema = {
   type: ['string', 'null'],
   description:
-    '**[READ-ONLY]** Unit the sale price and instructor pay are quoted in, carried over from the job that contracted this class.',
+    '**[OPTIONAL]** Unit the sale price and instructor pay are quoted in. When the class was contracted through a marketplace job this is carried over from that job; otherwise it defaults to `per_hour`.',
   enum: ['per_hour', 'per_session', 'per_day'],
   example: 'per_hour',
-  readOnly: true,
 } as const;
 
 export const RecurrenceTypeEnumSchema = {
@@ -22594,6 +22605,13 @@ export const TypeEnumSchema = {
     'CLASS_MARKETPLACE_JOB_APPLICATION_REJECTED',
     'CLASS_MARKETPLACE_JOB_APPLICATION_NOT_SELECTED',
     'CLASS_MARKETPLACE_JOB_EXPIRED',
+    'CLASS_MARKETPLACE_JOB_APPLICATION_SHORTLISTED',
+    'CLASS_MARKETPLACE_JOB_APPLICATION_INTERVIEWING',
+    'CLASS_MARKETPLACE_JOB_APPLICATION_OFFERED',
+    'CLASS_MARKETPLACE_JOB_APPLICATION_APPROVED',
+    'CLASS_MARKETPLACE_JOB_APPLICATION_ASSIGNED',
+    'CLASS_MARKETPLACE_JOB_APPLICATION_CANCELLED',
+    'CLASS_MARKETPLACE_JOB_APPLICATION_WITHDRAWN',
     'CLASS_ENROLLMENT_CONFIRMED',
     'COURSE_ENROLLMENT_MILESTONE',
     'COURSE_ENROLLMENT_NOTICE',
@@ -22703,6 +22721,7 @@ export const StatusEnum14Schema = {
     'rejected',
     'assigned',
     'not_selected',
+    'withdrawn',
   ],
   readOnly: true,
 } as const;
@@ -22839,6 +22858,23 @@ export const StatusEnum20Schema = {
   description: '**[READ-ONLY]** Review state of the edit.',
   enum: ['pending', 'approved', 'rejected', 'withdrawn'],
   example: 'pending',
+  readOnly: true,
+} as const;
+
+export const ApplicationStatusEnumSchema = {
+  type: ['string', 'null'],
+  description: "Status of the instructor's existing application, when they have one",
+  enum: [
+    'pending',
+    'shortlisted',
+    'interviewing',
+    'offered',
+    'approved',
+    'rejected',
+    'assigned',
+    'not_selected',
+    'withdrawn',
+  ],
   readOnly: true,
 } as const;
 
@@ -23168,6 +23204,14 @@ export const LocationTypeEnumWritableSchema = {
   enum: ['ONLINE', 'IN_PERSON', 'HYBRID'],
 } as const;
 
+export const RateBasisEnumWritableSchema = {
+  type: ['string', 'null'],
+  description:
+    '**[OPTIONAL]** Unit the sale price and instructor pay are quoted in. When the class was contracted through a marketplace job this is carried over from that job; otherwise it defaults to `per_hour`.',
+  enum: ['per_hour', 'per_session', 'per_day'],
+  example: 'per_hour',
+} as const;
+
 export const RecurrenceTypeEnumWritableSchema = {
   type: 'string',
   description: 'Recurrence type to apply for the session template',
@@ -23251,6 +23295,13 @@ export const TypeEnumWritableSchema = {
     'CLASS_MARKETPLACE_JOB_APPLICATION_REJECTED',
     'CLASS_MARKETPLACE_JOB_APPLICATION_NOT_SELECTED',
     'CLASS_MARKETPLACE_JOB_EXPIRED',
+    'CLASS_MARKETPLACE_JOB_APPLICATION_SHORTLISTED',
+    'CLASS_MARKETPLACE_JOB_APPLICATION_INTERVIEWING',
+    'CLASS_MARKETPLACE_JOB_APPLICATION_OFFERED',
+    'CLASS_MARKETPLACE_JOB_APPLICATION_APPROVED',
+    'CLASS_MARKETPLACE_JOB_APPLICATION_ASSIGNED',
+    'CLASS_MARKETPLACE_JOB_APPLICATION_CANCELLED',
+    'CLASS_MARKETPLACE_JOB_APPLICATION_WITHDRAWN',
     'CLASS_ENROLLMENT_CONFIRMED',
     'COURSE_ENROLLMENT_MILESTONE',
     'COURSE_ENROLLMENT_NOTICE',

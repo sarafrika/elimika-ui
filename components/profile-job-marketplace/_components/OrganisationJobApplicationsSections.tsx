@@ -38,12 +38,25 @@ import type {
   ClassMarketplaceJob,
   ClassMarketplaceJobApplication,
   Instructor,
-  StatusEnum12,
 } from '@/services/client';
 import { useUserDomain } from '@/src/features/dashboard/context/user-domain-context';
 import { buildWorkspaceAliasPath } from '@/src/features/dashboard/lib/active-domain-storage';
+import {
+  APPLICATION_STATUSES,
+  type ApplicationStatus,
+  canReviewApplication,
+} from '../application-status';
 
-export type ApplicationStatusFilter = 'ALL' | StatusEnum12;
+export { APPLICATION_STATUSES };
+
+export type ApplicationStatusFilter = 'ALL' | ApplicationStatus;
+
+/** The pre-decision stages, in funnel order, with the status each one lands the candidate on. */
+const STAGE_MOVES = [
+  { action: 'SHORTLIST', label: 'Shortlist', reachedStatus: 'shortlisted' },
+  { action: 'INTERVIEW', label: 'Interview', reachedStatus: 'interviewing' },
+  { action: 'OFFER', label: 'Offer', reachedStatus: 'offered' },
+] as const;
 
 export type ApplicationStats = {
   total: number;
@@ -92,9 +105,9 @@ export function ApplicationStatsCards({
 
   const cards = [
     { label: 'Total', value: stats.total, icon: Users, tone: 'info' as const },
-    { label: 'Pending', value: stats.pending, icon: Clock, tone: 'warning' as const },
+    { label: 'In review', value: stats.pending, icon: Clock, tone: 'warning' as const },
     { label: 'Approved', value: stats.approved, icon: CheckCircle2, tone: 'success' as const },
-    { label: 'Rejected', value: stats.rejected, icon: XCircle, tone: 'destructive' as const },
+    { label: 'Closed', value: stats.rejected, icon: XCircle, tone: 'destructive' as const },
     { label: 'Assigned', value: stats.assigned, icon: BriefcaseBusiness, tone: 'neutral' as const },
   ];
 
@@ -145,10 +158,11 @@ export function ApplicationsFilterBar({
         </SelectTrigger>
         <SelectContent>
           <SelectItem value='ALL'>All statuses</SelectItem>
-          <SelectItem value='pending'>Pending</SelectItem>
-          <SelectItem value='approved'>Approved</SelectItem>
-          <SelectItem value='rejected'>Rejected</SelectItem>
-          <SelectItem value='assigned'>Assigned</SelectItem>
+          {APPLICATION_STATUSES.map(status => (
+            <SelectItem key={status} value={status}>
+              {formatLabel(status)}
+            </SelectItem>
+          ))}
         </SelectContent>
       </Select>
     </div>
@@ -165,6 +179,7 @@ export function ApplicationsListSection({
   onApprove,
   onReject,
   onAssign,
+  onMoveToStage,
   onViewProfile,
 }: {
   applications: ClassMarketplaceJobApplication[];
@@ -176,6 +191,10 @@ export function ApplicationsListSection({
   onApprove: (application: ClassMarketplaceJobApplication) => void;
   onReject: (application: ClassMarketplaceJobApplication) => void;
   onAssign: (application: ClassMarketplaceJobApplication) => void;
+  onMoveToStage: (
+    application: ClassMarketplaceJobApplication,
+    stage: 'SHORTLIST' | 'INTERVIEW' | 'OFFER'
+  ) => void;
   onViewProfile: (application: ClassMarketplaceJobApplication) => void;
 }) {
   return (
@@ -193,7 +212,9 @@ export function ApplicationsListSection({
             .join('')
             .slice(0, 2)
             .toUpperCase() || '?';
-        const reviewDisabled = application.status !== 'pending';
+        // A candidate moved to shortlisted/interviewing/offered — from here or from the job-matches
+        // board — is still live and must stay actionable. Gating on `pending` alone stranded them.
+        const reviewDisabled = !canReviewApplication(application.status);
         const isVerified = application.instructor_admin_verified ?? instructor?.admin_verified;
         const trainingApproved = application.training_approved;
         const approvedRate = application.approved_rate;
@@ -297,6 +318,19 @@ export function ApplicationsListSection({
                   <UserRound className='mr-2 size-4' />
                   View profile
                 </Button>
+                {STAGE_MOVES.map(stage => (
+                  <Button
+                    key={stage.action}
+                    variant='ghost'
+                    size='sm'
+                    onClick={() => onMoveToStage(application, stage.action)}
+                    disabled={
+                      isReviewPending || reviewDisabled || application.status === stage.reachedStatus
+                    }
+                  >
+                    {stage.label}
+                  </Button>
+                ))}
                 <Button
                   variant='outline'
                   size='sm'

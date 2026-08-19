@@ -1,6 +1,4 @@
-import type { UserDomain } from '@/lib/types';
 import type { LucideIcon } from 'lucide-react';
-import type { CourseTrainingRateCard } from '@/services/client';
 import {
   BadgeCheck,
   BookOpen,
@@ -17,6 +15,8 @@ import {
   Trophy,
   Users,
 } from 'lucide-react';
+import type { UserDomain } from '@/lib/types';
+import type { CourseTrainingRateCard } from '@/services/client';
 
 export type CoursesHeroAction = {
   title: string;
@@ -244,4 +244,43 @@ export function stripHtml(value?: string | null) {
 
 export function isShortCourse(totalMinutes: number) {
   return totalMinutes > 0 && totalMinutes <= 20 * 60;
+}
+
+type TrainingApplicationLike = {
+  status?: string | null;
+  created_date?: string | Date | null;
+};
+
+/** Lower sorts first: the state that should decide what the catalogue shows. */
+const APPLICATION_STATUS_RANK: Record<string, number> = {
+  approved: 0,
+  pending: 1,
+  revoked: 2,
+  rejected: 3,
+};
+
+/**
+ * The application that decides an applicant's standing on a course or program.
+ *
+ * An applicant can hold several rows for the same offering — a rejection followed by a fresh
+ * attempt, or a revocation followed by a re-approval. Taking whichever row the API happened to
+ * return last showed a stale status that survived reloads, which is what made a freshly approved
+ * organisation still look unapproved until it signed out and back in. Approval wins, then a live
+ * pending application, then the most recent of the rest.
+ */
+export function decisiveTrainingApplication<T extends TrainingApplicationLike>(
+  candidates: readonly T[]
+): T | undefined {
+  const time = (value?: string | Date | null) => {
+    if (!value) return 0;
+    const parsed = new Date(value).getTime();
+    return Number.isNaN(parsed) ? 0 : parsed;
+  };
+
+  return [...candidates].sort((left, right) => {
+    const leftRank = APPLICATION_STATUS_RANK[(left.status ?? '').toLowerCase()] ?? 9;
+    const rightRank = APPLICATION_STATUS_RANK[(right.status ?? '').toLowerCase()] ?? 9;
+    if (leftRank !== rightRank) return leftRank - rightRank;
+    return time(right.created_date) - time(left.created_date);
+  })[0];
 }

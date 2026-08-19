@@ -23,6 +23,7 @@ import {
   type Delivery,
   firstOccurrenceOnOrAfter,
   fmtDate,
+  type InstructorOption,
   LocationVenue,
   num,
   type Offering,
@@ -51,7 +52,7 @@ import { ResourceConflictAlert } from '@/components/resourcing/ResourceConflictA
 import { Button } from '@/components/ui/button';
 import { useOrganisation } from '@/context/organisation-context';
 import { useCoursesByIds, useProgramsByIds } from '@/hooks/use-batched-lookups';
-import { extractPage } from '@/lib/api-helpers';
+import { extractList, extractPage } from '@/lib/api-helpers';
 import { toCoordinate } from '@/lib/location-types';
 import { STALE_TIMES } from '@/lib/query-client';
 import type {
@@ -59,13 +60,13 @@ import type {
   ClassDefinitionCreateRequest,
   ClassSessionTemplate,
   OrganisationResource,
-  User,
+  OrgInstructorSummary,
 } from '@/services/client';
 import { RecurrenceTypeEnum, ResourceTypeEnum } from '@/services/client';
 import {
   createClassDefinitionMultipartMutation,
   getAllCategoriesOptions,
-  getUsersByOrganisationAndDomainOptions,
+  getOrganisationInstructorSummariesOptions,
   listResourcesOptions,
   searchProgramTrainingApplicationsOptions,
   searchTrainingApplicationsOptions,
@@ -195,21 +196,80 @@ export default function OrganisationCreateClassPage() {
 
   const title = useMemo(() => selectedOffering?.label ?? 'New Class', [selectedOffering]);
 
-  const instructorsQuery = useQuery({
-    ...getUsersByOrganisationAndDomainOptions({
-      path: { uuid: organisationUuid, domainName: 'instructor' },
-    }),
+  // Who may teach this class: the organisation's own instructor directory (everyone it has
+  // hired or invited) narrowed to the ones the course creator approved for this offering.
+  // The backend re-checks the same approval on create, so an unapproved pick is rejected —
+  // the earlier list of every org user was both too wide and keyed by user uuid, while
+  // `default_instructor_uuid` is matched against the instructor profile uuid.
+  const [offeringKind, offeringUuid] = useMemo(() => {
+    const [kind = '', uuid = ''] = offering.split(':');
+    return [kind, uuid] as const;
+  }, [offering]);
+
+  const orgInstructorsQuery = useQuery({
+    ...getOrganisationInstructorSummariesOptions({ path: { organisationUuid } }),
     enabled: Boolean(organisationUuid),
   });
-  const instructors = useMemo(
-    () => extractPage<User>(instructorsQuery.data).items,
-    [instructorsQuery.data]
+  const orgInstructors = useMemo(
+    () => extractList<OrgInstructorSummary>(orgInstructorsQuery.data),
+    [orgInstructorsQuery.data]
   );
+
+  const approvedInstructorParams = {
+    applicant_type_eq: 'instructor',
+    status_eq: 'approved',
+  };
+  const courseQualifiedQuery = useQuery({
+    ...searchTrainingApplicationsOptions({
+      query: {
+        searchParams: { ...approvedInstructorParams, course_uuid_eq: offeringUuid },
+        pageable: { page: 0, size: 100 },
+      },
+    }),
+    enabled: offeringKind === 'course' && Boolean(offeringUuid),
+  });
+  const programQualifiedQuery = useQuery({
+    ...searchProgramTrainingApplicationsOptions({
+      query: {
+        searchParams: { ...approvedInstructorParams, program_uuid_eq: offeringUuid },
+        pageable: { page: 0, size: 100 },
+      },
+    }),
+    enabled: offeringKind === 'program' && Boolean(offeringUuid),
+  });
+  const qualifiedQuery = offeringKind === 'program' ? programQualifiedQuery : courseQualifiedQuery;
+  const qualifiedInstructorUuids = useMemo(
+    () =>
+      new Set(
+        (qualifiedQuery.data?.data?.content ?? [])
+          .map(row => row.applicant_uuid)
+          .filter((uuid): uuid is string => Boolean(uuid))
+      ),
+    [qualifiedQuery.data]
+  );
+
+  const instructors: InstructorOption[] = useMemo(
+    () =>
+      orgInstructors
+        .filter(row => row.instructor_uuid && qualifiedInstructorUuids.has(row.instructor_uuid))
+        .map(row => ({
+          uuid: row.instructor_uuid as string,
+          name: row.full_name || row.email || 'Instructor',
+        })),
+    [orgInstructors, qualifiedInstructorUuids]
+  );
+  const instructorsLoading = orgInstructorsQuery.isLoading || qualifiedQuery.isLoading;
+
   const [instructorUuid, setInstructorUuid] = useState('');
   const [onlyAvailable, setOnlyAvailable] = useState(true);
   useEffect(() => {
-    if (instructors.length > 0 && !instructors.some(i => i.uuid === instructorUuid)) {
-      setInstructorUuid(instructors[0].uuid ?? '');
+    if (instructors.length === 0) {
+      // The previous pick may not be approved for the newly selected offering.
+      if (instructorUuid) setInstructorUuid('');
+      return;
+    }
+    if (!instructors.some(i => i.uuid === instructorUuid)) {
+      setInstructorUuid(instructors[0].uuid);
     }
   }, [instructors, instructorUuid]);
   const selectedInstructor = instructors.find(i => i.uuid === instructorUuid);
@@ -453,7 +513,9 @@ export default function OrganisationCreateClassPage() {
     if (!offering) return toast.error('Select an approved course or program.');
     if (!instructorUuid) {
       return toast.error(
-        'Pick the instructor who will teach this class. To advertise it instead, post a job.'
+        instructors.length === 0
+          ? 'None of your instructors are approved to deliver this offering yet. Post a job to recruit one.'
+          : 'Pick the instructor who will teach this class. To advertise it instead, post a job.'
       );
     }
     if (selectedOffering?.kind === 'Program' && !programCategoryUuid) {
@@ -490,7 +552,6 @@ export default function OrganisationCreateClassPage() {
     const earliest = sessionTemplates.reduce((a, b) => (a.start_time <= b.start_time ? a : b));
 
     setResourceConflicts([]);
-    const [offeringKind, offeringUuid] = offering.split(':');
 
     const apStarts = academicPeriods
       .map(p => p.startDate)
@@ -563,6 +624,8 @@ export default function OrganisationCreateClassPage() {
           selectedOffering={selectedOffering}
           title={title}
           instructors={instructors}
+          instructorsLoading={instructorsLoading}
+          instructorEmptyHint='No hired instructor is approved to deliver this offering yet — post a job to recruit one.'
           instructorUuid={instructorUuid}
           onInstructorChange={setInstructorUuid}
           selectedInstructor={selectedInstructor}

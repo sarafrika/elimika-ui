@@ -119,6 +119,7 @@ export function JobCard({
   instructor,
   applicationStatus,
   hasApplied,
+  canReapply,
   applicationsHref,
   createClassHref,
 }: {
@@ -134,6 +135,7 @@ export function JobCard({
   instructor?: Instructor;
   applicationStatus?: string | null;
   hasApplied?: boolean;
+  canReapply?: boolean;
   applicationsHref?: string;
   createClassHref?: string;
 }) {
@@ -224,7 +226,13 @@ export function JobCard({
           ) : null}
 
           {!isManagementView && hasApplied ? (
-            <StatusBadge status='approved' label='You already applied' />
+            canReapply ? (
+              <span className='text-muted-foreground text-xs'>
+                Your previous application closed — you can apply again.
+              </span>
+            ) : (
+              <StatusBadge status={applicationStatus} label={`You already applied — ${applicationLabel}`} />
+            )
           ) : null}
         </div>
       </div>
