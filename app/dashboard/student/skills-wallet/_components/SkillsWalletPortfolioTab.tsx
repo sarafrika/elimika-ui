@@ -1,6 +1,6 @@
 'use client';
 
-import { Bookmark, CheckCircle2, Download, Eye, Plus, Star, Briefcase } from 'lucide-react';
+import { Bookmark, Briefcase, CheckCircle2, Download, Eye, Plus, Star } from 'lucide-react';
 
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -41,7 +41,7 @@ export function SkillsWalletPortfolioTab({ data }: SkillsWalletPortfolioTabProps
               <Eye className='mr-1 h-3 w-3' /> Public
             </Badge>
           </div>
-          <Button className='bg-primary hover:bg-primary/90'>
+          <Button disabled={true} className='bg-primary hover:bg-primary/90 disabled:cursor-not-allowed'>
             <Plus className='mr-2 h-4 w-4' /> Add New Project
           </Button>
         </div>

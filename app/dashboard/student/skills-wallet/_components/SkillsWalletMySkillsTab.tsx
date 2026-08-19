@@ -153,7 +153,7 @@ export function SkillsWalletMySkillsTab({ data }: SkillsWalletMySkillsTabProps) 
           </p>
         </div>
         <div className='flex items-center gap-3'>
-          <Button className='bg-primary hover:bg-primary/90'>
+          <Button disabled={true} className='bg-primary hover:bg-primary/90 disabled:cursor-not-allowed'>
             <Plus className='mr-2 h-4 w-4' /> Add Skill
           </Button>
         </div>

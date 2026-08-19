@@ -52,7 +52,7 @@ export function SkillsWalletCompetenciesTab({ data }: SkillsWalletCompetenciesTa
           </p>
         </div>
         <div className='flex items-center gap-2'>
-          <Button className='bg-primary hover:bg-primary/90'>
+          <Button disabled={true} className='bg-primary hover:bg-primary/90 disabled:cursor-not-allowed'>
             <ArrowUpRight className='h-3 w-3' /> Add Evidence
           </Button>
           <Button variant='outline'

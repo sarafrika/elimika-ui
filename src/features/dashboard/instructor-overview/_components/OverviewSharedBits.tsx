@@ -33,11 +33,15 @@ export function ActionButton({
     <Link href={href}>
       <Button
         className={cn(
-          'h-8 rounded-[6px] px-4 text-[0.82rem] font-medium',
-          tone === 'primary' && 'bg-primary text-primary-foreground hover:bg-primary/90',
-          tone === 'success' && 'bg-success text-success-foreground hover:bg-success/90',
-          tone === 'danger' && 'bg-destructive hover:bg-destructive/90 text-white',
-          tone === 'muted' && 'bg-muted text-foreground hover:bg-muted/80'
+          'h-8 rounded-md border px-3 text-[0.76rem] font-medium shadow-none transition-colors',
+          tone === 'primary' &&
+          'border-primary/40 bg-primary text-primary-foreground hover:bg-primary/90',
+          tone === 'success' &&
+          'border-success/40 bg-success text-success-foreground hover:bg-success/90',
+          tone === 'danger' &&
+          'border-destructive/40 bg-destructive text-destructive-foreground hover:bg-destructive/90',
+          tone === 'muted' &&
+          'border-border bg-muted/70 text-foreground hover:bg-muted/90'
         )}
       >
         {label}

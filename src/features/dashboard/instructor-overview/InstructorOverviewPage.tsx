@@ -1,12 +1,12 @@
 'use client';
 
 import { CalendarDays } from 'lucide-react';
+import { WelcomeBanner } from '../../../../components/dashboard';
 import { Button } from '../../../../components/ui/button';
 import { Skeleton } from '../../../../components/ui/skeleton';
 import { OverviewClassInvitesPanel } from './_components/OverviewClassInvitesPanel';
 import { OverviewCourseListPanel } from './_components/OverviewCourseListPanel';
 import { OverviewEarningPanel } from './_components/OverviewEarningPanel';
-import { OverviewHeader } from './_components/OverviewHeader';
 import { OverviewLiveClassesPanel } from './_components/OverviewLiveClassesPanel';
 import { OverviewStatCard } from './_components/OverviewStatCard';
 import { OverviewUpcomingClassesPanel } from './_components/OverviewUpcomingClassesPanel';
@@ -15,6 +15,13 @@ import { useInstructorOverviewData } from './useInstructorOverviewData';
 type InstructorOverviewPageProps = {
   firstName: string;
 };
+
+const dateLabel = () =>
+  new Date().toLocaleDateString('en-KE', {
+    weekday: 'long',
+    day: 'numeric',
+    month: 'long',
+  });
 
 export function InstructorOverviewPage({ firstName }: InstructorOverviewPageProps) {
   const {
@@ -52,39 +59,34 @@ export function InstructorOverviewPage({ firstName }: InstructorOverviewPageProp
     <main className='mb-20 w-full'>
       <div className='px-2 py-2 sm:px-3 lg:px-4'>
         <div className='space-y-3'>
-          <OverviewHeader firstName={firstName} />
+          <WelcomeBanner
+            eyebrow={dateLabel()}
+            title={`Welcome back, ${firstName}`}
+            description={
+              firstName
+                ? `Here's your teaching overview for today, including your classes, students, and upcoming sessions.`
+                : 'Here’s your teaching overview, including classes, students, and upcoming sessions.'
+            }
+            className='bg-primary/95'
+          />
 
           <section className='grid gap-3 sm:grid-cols-2 2xl:grid-cols-4'>
-            {stats.map(stat => (
-              <OverviewStatCard key={stat.label} stat={stat} />
-            ))}
+            {stats.map(stat => <OverviewStatCard key={stat.label} stat={stat} />)}
           </section>
 
-          <section className='grid min-w-0 gap-3 overflow-x-hidden xl:grid-cols-[minmax(0,0.94fr)_minmax(0,0.94fr)_minmax(240px,0.72fr)] 2xl:grid-cols-[minmax(0,1fr)_minmax(0,1fr)_minmax(260px,0.78fr)]'>
-            {/* LEFT COLUMN */}
-            <div className='min-w-0 space-y-3 overflow-hidden'>
+          <section className='grid min-w-0 gap-4 overflow-x-hidden xl:grid-cols-2'>
+            <div className='min-w-0 space-y-4 overflow-hidden'>
               <OverviewCourseListPanel courses={activeCourses} summary={courseSummary} />
+              <OverviewUpcomingClassesPanel upcomingClasses={upcomingClasses} />
             </div>
 
-            {/* MIDDLE COLUMN */}
-            <div className='min-w-0 space-y-3 overflow-hidden'>
+            <div className='min-w-0 space-y-4 overflow-hidden'>
               <OverviewLiveClassesPanel liveClasses={liveClasses} />
               <OverviewEarningPanel earningOverview={earningOverview} />
             </div>
 
-            {/* RIGHT COLUMN */}
-            <div className='grid min-w-0 gap-3 overflow-hidden'>
-              <OverviewUpcomingClassesPanel upcomingClasses={upcomingClasses} />
+            <div className='xl:col-span-2'>
               <OverviewClassInvitesPanel invites={classInvites} />
-
-              <Button
-                type='button'
-                className='bg-primary mt-4 flex w-full items-center justify-center gap-3 rounded-md px-4 py-3 text-[0.96rem] font-medium transition'
-              >
-                <CalendarDays className='size-4 shrink-0' />
-                <span className='truncate'>Invite Past Students</span>
-                <span aria-hidden='true'>›</span>
-              </Button>
             </div>
           </section>
         </div>

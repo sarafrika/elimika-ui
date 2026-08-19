@@ -401,7 +401,7 @@ export function useInstructorOverviewData() {
         ).length;
 
         return {
-          id: item.instance.uuid ?? item.classDefinition.uuid ?? item.instance.title,
+          id: item.classDefinition.uuid ?? '',
           timeLabel: formatRelativeClassTime(item.instance.start_time),
           title: item.classDefinition.title,
           provider:
@@ -426,7 +426,7 @@ export function useInstructorOverviewData() {
   const upcomingClasses = useMemo<OverviewUpcomingClass[]>(
     () =>
       upcomingSource.map(item => ({
-        id: item.instance.uuid ?? item.classDefinition.uuid ?? item.instance.title,
+        id: item.classDefinition.uuid ?? '',
         title: item.classDefinition.title,
         scheduleLabel: formatDateTime(item.instance.start_time),
         metaLabel:
@@ -434,7 +434,7 @@ export function useInstructorOverviewData() {
           formatSessionFormat(item.classDefinition.location_type) ||
           'Scheduled class',
         status: item.instance.status === 'ONGOING' ? 'Ongoing' : 'Scheduled',
-        href: item.instance.uuid
+        href: item.classDefinition.uuid
           ? `/dashboard/class-instance/${item.instance.uuid}`
           : `/dashboard/classes/class-training/${item.classDefinition.uuid ?? ''}`,
       })),
@@ -485,25 +485,25 @@ export function useInstructorOverviewData() {
   const earningOverview = useMemo<OverviewEarningCard[]>(() => {
     const summaryCards: OverviewEarningCard[] = revenueDashboard
       ? [
-          {
-            id: 'estimated-earnings',
-            title: formatMoney(revenueDashboard.estimated_earnings?.[0]?.amount, displayCurrency),
-            subtitle: 'Estimated earnings',
-            provider: 'Gross sales',
-            students: formatMoney(revenueDashboard.gross_totals?.[0]?.amount, displayCurrency),
-            valueLabel: `${Number(revenueDashboard.order_count ?? 0n)} payments processed`,
-            attendeeInitials: [],
-          },
-          {
-            id: 'average-order-value',
-            title: formatMoney(revenueDashboard.average_order_value?.[0]?.amount, displayCurrency),
-            subtitle: 'Average order value',
-            provider: 'Units sold',
-            students: formatCompactNumber(Number(revenueDashboard.units_sold ?? 0n)),
-            valueLabel: `${Number(revenueDashboard.line_item_count ?? 0n)} line items`,
-            attendeeInitials: [],
-          },
-        ]
+        {
+          id: 'estimated-earnings',
+          title: formatMoney(revenueDashboard.estimated_earnings?.[0]?.amount ?? 0, displayCurrency),
+          subtitle: 'Estimated earnings',
+          provider: 'Gross sales',
+          students: formatMoney(revenueDashboard.gross_totals?.[0]?.amount ?? 0, displayCurrency),
+          valueLabel: `${Number(revenueDashboard.order_count ?? 0n)} payments processed`,
+          attendeeInitials: [],
+        },
+        {
+          id: 'average-order-value',
+          title: formatMoney(revenueDashboard.average_order_value?.[0]?.amount ?? 0, displayCurrency),
+          subtitle: 'Average order value',
+          provider: 'Units sold',
+          students: formatCompactNumber(Number(revenueDashboard.units_sold ?? 0n)),
+          valueLabel: `${Number(revenueDashboard.line_item_count ?? 0n)} line items`,
+          attendeeInitials: [],
+        },
+      ]
       : [];
 
     if (summaryCards.length) {

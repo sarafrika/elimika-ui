@@ -157,8 +157,10 @@ function mapPortfolio(experiences: ExperienceRecord[], role: SkillsWalletRole): 
     title: experience.role,
     tag: role === 'instructor' ? 'Teaching history' : 'Curriculum history',
     description: experience.description,
-    views: 84 + index * 18,
-    likes: 12 + index * 4,
+    // views: 84 + index * 18,
+    // likes: 12 + index * 4,
+    views: 0,
+    likes: 0,
     project_date: experience.start_date,
     featured: index === 0 || experience.is_current,
   }));
@@ -275,7 +277,7 @@ function mapAchievements({
       points: verifiedEvents * 35,
       achieved_at: verifiedEvents ? new Date().toISOString() : null,
       status: verifiedEvents ? 'Completed' : 'In Progress',
-      color_key: 'bg-secondary',
+      color_key: 'bg-success/70',
       progress: verifiedEvents ? null : 30,
     },
     topSkill
@@ -286,7 +288,7 @@ function mapAchievements({
         points: topSkill.score,
         achieved_at: topSkill.verified ? new Date().toISOString() : null,
         status: topSkill.verified ? 'Completed' : 'In Progress',
-        color_key: 'bg-muted',
+        color_key: 'bg-primary/70',
         progress: topSkill.score,
       }
       : {
@@ -296,7 +298,7 @@ function mapAchievements({
         points: 0,
         achieved_at: null,
         status: 'In Progress',
-        color_key: 'bg-muted',
+        color_key: 'bg-warning/70',
         progress: 0,
       },
   ];
