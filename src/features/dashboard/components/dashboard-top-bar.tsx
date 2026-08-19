@@ -212,7 +212,7 @@ export default function DashboardTopBar() {
                 <Link href={createCourseHref}>
                   <Sparkles className='h-4 w-4' />
                   Create Course
-                  <ChevronDown className='h-4 w-4' />
+                  <ChevronDown className='h-4 w-4 hidden sm:flex' />
                 </Link>
               </Button>
             )}
@@ -226,7 +226,8 @@ export default function DashboardTopBar() {
                 <Link href={createClassHref} className='flex flex-row items-center'>
                   <Sparkles className='h-4 w-4' />
                   Create Class
-                  <ChevronDown className='h-4 w-4' />
+
+                  <ChevronDown className='h-4 w-4 hidden sm:flex' />
                 </Link>
               </Button>
             )}
@@ -238,9 +239,9 @@ export default function DashboardTopBar() {
                 className='h-9 rounded-md px-4 text-sm font-semibold md:inline-flex'
               >
                 <Link className='flex flex-row items-center' href='/dashboard/student/courses'>
-                  <Sparkles className='h-3 w-3' />
+                  <Sparkles className='h-3 w-3 hidden sm:flex' />
                   Enroll Course
-                  <ChevronDown className='h-3 w-3' />
+                  <ChevronDown className='h-3 w-3 hidden sm:flex' />
                 </Link>
               </Button>
             )}
@@ -298,31 +299,6 @@ export default function DashboardTopBar() {
               Ctrl K
             </span> */}
           </label>
-
-          <div className='mt-3 flex flex-wrap items-center gap-2'>
-            {isCourseCreator && (
-              <Button asChild size='sm' className='rounded-full px-4 font-semibold'>
-                <Link href={createCourseHref}>
-                  <Sparkles className='h-4 w-4' />
-                  Create Course
-                </Link>
-              </Button>
-            )}
-
-            <DashboardWalletMenu
-              compact
-              walletBalance={walletBalanceDisplay as string}
-              balance={balance as number}
-              walletCurrency={walletData?.data?.currency_code}
-              accounts={walletAccounts}
-              walletHref={walletHref}
-              withdrawHref={withdrawHref}
-              onToggleBalance={() => setWalletBalanceVisiblePersisted(!walletBalanceVisible)}
-              onDeposit={() => setIsDepositSheetOpen(true)}
-              onTransfer={() => router.push(`${withdrawHref}?section=transfer`)}
-              onWithdraw={() => router.push(`${withdrawHref}?section=withdraw`)}
-            />
-          </div>
         </div>
       </div>
 
@@ -376,25 +352,29 @@ function DashboardProfileMenu({
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
         <Button
-          variant='outline'
-          className='border-border/70 bg-card/80 hover:border-primary/40 hover:bg-primary/15 h-10 rounded-md px-3 shadow-sm transition'
+          variant="ghost"
+          className="h-10 rounded-md border-0 bg-transparent p-0 shadow-none hover:bg-transparent sm:border sm:border-border/70 sm:bg-card/80 sm:px-3 sm:shadow-sm sm:hover:border-primary/40 sm:hover:bg-primary/15"
         >
-          <Avatar className='border-border/60 h-8 w-8 border'>
+          <Avatar className="border-border/60 h-8 w-8 border">
             <AvatarImage src={userImage} alt={profileName} />
-            <AvatarFallback className='bg-primary/10 text-primary text-xs font-semibold'>
+            <AvatarFallback className="bg-primary/10 text-primary text-xs font-semibold">
               {profileInitials}
             </AvatarFallback>
           </Avatar>
 
-          <span className='hidden min-w-0 flex-col items-start leading-tight md:flex'>
-            <span className='text-foreground truncate text-sm font-semibold'>{profileName}</span>
-
-            <span className='text-muted-foreground truncate text-xs'>{roleLabel}</span>
+          <span className="hidden min-w-0 flex-col items-start leading-tight md:flex">
+            <span className="text-foreground truncate text-sm font-semibold">
+              {profileName}
+            </span>
+            <span className="text-muted-foreground truncate text-xs">
+              {roleLabel}
+            </span>
           </span>
 
-          <ChevronDown className='text-muted-foreground h-4 w-4' />
+          <ChevronDown className="text-muted-foreground hidden h-4 w-4 sm:flex" />
         </Button>
       </DropdownMenuTrigger>
+
 
       <DropdownMenuContent align='end' className='border-border/70 w-80 rounded-md p-3 shadow-lg'>
         <div className='bg-muted/40 flex items-center gap-3 rounded-md p-3'>
@@ -551,29 +531,40 @@ function DashboardWalletMenu({
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
         <Button
-          variant='outline'
+          variant="outline"
           className={cn(
             'border-border/70 bg-card/80 hover:border-primary/40 hover:bg-primary/15 h-10 rounded-md px-3 shadow-sm transition',
             compact && 'h-9 px-2.5'
           )}
         >
-          <div className='bg-success/10 text-success flex h-8 w-8 items-center justify-center rounded-full'>
-            <Wallet className='h-4 w-4' />
+          {/* Mobile: balance */}
+          <span className="text-foreground text-xs font-semibold sm:hidden">
+            {walletBalance}
+          </span>
+
+          {/* Desktop/tablet: wallet icon */}
+          <div className="bg-success/10 text-success hidden h-8 w-8 items-center justify-center rounded-full sm:flex">
+            <Wallet className="h-4 w-4" />
           </div>
 
           {!compact && (
-            <span className='hidden min-w-0 flex-col items-start leading-tight md:flex'>
-              <span className='text-foreground truncate text-sm font-semibold'>{walletBalance}</span>
+            <span className="hidden min-w-0 flex-col items-start leading-tight md:flex">
+              <span className="text-foreground truncate text-sm font-semibold">
+                {walletBalance}
+              </span>
             </span>
           )}
 
           {compact && (
-            <span className='text-foreground text-xs font-semibold sm:text-sm'>{walletBalance}</span>
+            <span className="text-foreground hidden text-xs font-semibold sm:flex sm:text-sm">
+              {walletBalance}
+            </span>
           )}
 
-          <ChevronDown className='text-muted-foreground h-4 w-4' />
+          <ChevronDown className="text-muted-foreground hidden h-4 w-4 sm:flex" />
         </Button>
       </DropdownMenuTrigger>
+
 
       <DropdownMenuContent align='end' className='border-border/70 w-96 rounded-md p-3 shadow-lg'>
         <div className='bg-muted/60 flex items-start justify-between gap-3 rounded-md p-3'>

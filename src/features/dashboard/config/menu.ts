@@ -306,7 +306,7 @@ export default {
       icon: Handshake,
       items: [
         {
-          title: 'Opportunities',
+          title: 'Jobs',
           url: '/dashboard/opportunities',
           icon: Handshake,
         },

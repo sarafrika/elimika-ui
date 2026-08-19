@@ -24,20 +24,25 @@ import { useStepper } from '@/components/ui/stepper';
 import { Textarea } from '@/components/ui/textarea';
 import { useOptionalCourseCreator } from '@/context/course-creator-context';
 import { useInstructor } from '@/context/instructor-context';
-import { createCategory, updateCourse } from '@/services/client';
+import { updateCourse } from '@/services/client';
 import {
-  createCourseMutation,
   getAllCategoriesOptions,
-  getAllCategoriesQueryKey,
+  getCourseByUuidOptions,
   getCourseByUuidQueryKey,
+  publishCourseMutation,
+  publishCourseQueryKey,
+  searchCoursesQueryKey,
+  unpublishCourseMutation,
+  unpublishCourseQueryKey
 } from '@/services/client/@tanstack/react-query.gen';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { forwardRef, useEffect, useImperativeHandle, useRef, useState } from 'react';
+import { BookCheck, Undo2 } from 'lucide-react';
+import { useRouter } from 'next/navigation';
+import { forwardRef, useEffect, useImperativeHandle, useRef } from 'react';
 import { useForm, useWatch } from 'react-hook-form';
 import { toast } from 'sonner';
 import z from 'zod';
-import { useDifficultyLevels } from '../../../../hooks/use-difficultyLevels';
 import { FormSection } from './course-creation-form';
 import { type CourseCreationFormValues, CURRENCIES } from './course-creation-types';
 
@@ -54,6 +59,11 @@ const getFormErrorMessage = (value: unknown) => {
   if (Array.isArray(value)) return value.find(item => typeof item === 'string');
   return undefined;
 };
+
+const getErrorMessage = (error: unknown) =>
+  typeof error === 'object' && error !== null && 'message' in error
+    ? String(error.message)
+    : undefined;
 
 export type CourseFormProps = {
   showSubmitButton?: boolean;
@@ -100,6 +110,8 @@ export const CoursePricingForm = forwardRef<CourseFormRef, CourseFormProps>(
     ref
   ) {
     const dialogCloseRef = useRef<HTMLButtonElement>(null);
+    const router = useRouter();
+    const targetCourseId = courseId ?? editingCourseId;
 
     const form = useForm<coursePricingFormValues>({
       resolver: zodResolver(coursePricingSchema),
@@ -137,46 +149,94 @@ export const CoursePricingForm = forwardRef<CourseFormRef, CourseFormProps>(
     const courseCreatorContext = useOptionalCourseCreator();
     const courseCreatorProfile = courseCreatorContext?.profile;
 
-    const authorName = courseCreatorProfile?.full_name ?? instructor?.full_name ?? '';
     const authorUuid = courseCreatorProfile?.uuid ?? instructor?.uuid ?? '';
     const { setActiveStep } = useStepper();
-    const { difficultyLevels, isLoading: difficultyIsLoading } = useDifficultyLevels();
 
-    // states
-    const [categoryInput, setCategoryInput] = useState('');
-
-    // MUTATION
-    const { mutate: createCategoryMutation, isPending: createCategoryPending } = useMutation({
-      mutationFn: ({ body }: { body: CategoryPayload }) => createCategory({ body }),
-      onSuccess: (data: CourseMutationResult) => {
-        if (data?.error) {
-          const duplicateMessage = getFormErrorMessage(data.error.error);
-          if (duplicateMessage?.toLowerCase().includes('duplicate key')) {
-            toast.error('Category already exists');
-          } else {
-            toast.error('Failed to add category');
-          }
-          dialogCloseRef.current?.click();
-          setCategoryInput('');
-          return;
-        }
-
-        toast.success(data?.message || 'Category added successfully');
-        dialogCloseRef.current?.click();
-        queryClient.invalidateQueries({
-          queryKey: getAllCategoriesQueryKey({ query: { pageable: {} } }),
-        });
-        setCategoryInput('');
-      },
-    });
-
-    const { mutate: createCourse, isPending: createCourseIsPending } =
-      useMutation(createCourseMutation());
 
     const { mutate: updateCourseMutation, isPending: updateCourseIsPending } = useMutation({
       mutationFn: ({ body, uuid }: { body: MutationPayload; uuid: string }) =>
         updateCourse({ body: body as never, path: { uuid: uuid } }),
     });
+
+    const { data: courseData } = useQuery({
+      ...getCourseByUuidOptions({ path: { uuid: targetCourseId as string } }),
+      enabled: !!targetCourseId,
+    });
+
+    const PublishCourse = useMutation(publishCourseMutation());
+    const UnpublishCourse = useMutation(unpublishCourseMutation());
+
+    const handlePublishCourse = async () => {
+      if (!targetCourseId) return;
+
+      try {
+        await PublishCourse.mutateAsync(
+          { path: { uuid: targetCourseId } },
+          {
+            onSuccess(data) {
+              toast.success(data?.message || 'Course published successfully');
+              queryClient.invalidateQueries({
+                queryKey: publishCourseQueryKey({ path: { uuid: targetCourseId } }),
+              });
+              queryClient.invalidateQueries({
+                queryKey: getCourseByUuidQueryKey({ path: { uuid: targetCourseId } }),
+              });
+              queryClient.invalidateQueries({
+                queryKey: searchCoursesQueryKey({
+                  query: {
+                    searchParams: { course_creator_uuid_eq: authorUuid },
+                    pageable: {},
+                  },
+                }),
+              });
+              router.push('/dashboard/course-creator/course-management/all');
+            },
+            onError: error => {
+              toast.error(getErrorMessage(error) || 'Failed to publish course');
+            },
+          }
+        );
+      } catch {
+        // handled by mutation error callback
+      }
+    };
+
+    const handleUnpublishCourse = async () => {
+      if (!targetCourseId) return;
+
+      try {
+        await UnpublishCourse.mutateAsync(
+          { path: { uuid: targetCourseId } },
+          {
+            onSuccess(data) {
+              toast.success(data?.message || 'Course unpublished successfully');
+              queryClient.invalidateQueries({
+                queryKey: unpublishCourseQueryKey({ path: { uuid: targetCourseId } }),
+              });
+              queryClient.invalidateQueries({
+                queryKey: publishCourseQueryKey({ path: { uuid: targetCourseId } }),
+              });
+              queryClient.invalidateQueries({
+                queryKey: getCourseByUuidQueryKey({ path: { uuid: targetCourseId } }),
+              });
+              queryClient.invalidateQueries({
+                queryKey: searchCoursesQueryKey({
+                  query: {
+                    searchParams: { course_creator_uuid_eq: authorUuid },
+                    pageable: {},
+                  },
+                }),
+              });
+            },
+            onError: error => {
+              toast.error(getErrorMessage(error) || 'Failed to unpublish course');
+            },
+          }
+        );
+      } catch {
+        // handled by mutation error callback
+      }
+    };
 
     // GET COURSE CATEGORIES
     const { data: categories } = useQuery(
@@ -304,6 +364,9 @@ export const CoursePricingForm = forwardRef<CourseFormRef, CourseFormProps>(
     }));
 
     const isFree = useWatch({ control: form.control, name: 'is_free' }) ?? [];
+    const isPublished =
+      courseData?.data?.is_published === true || courseData?.data?.status === 'published';
+    const isCourseActionPending = PublishCourse.isPending || UnpublishCourse.isPending;
 
     useEffect(() => {
       if (isFree) {
@@ -588,10 +651,57 @@ export const CoursePricingForm = forwardRef<CourseFormRef, CourseFormProps>(
             </div>
           </FormSection> */}
 
+          {/* {isPublished ? (
+            <Button
+              variant='outline'
+              onClick={handleUnpublishCourse}
+              disabled={!courseId || isCourseActionPending}
+              className='px-6'
+            >
+              {UnpublishCourse.isPending ? <Spinner /> : <Undo2 />}
+              Unpublish
+            </Button>
+          ) : (
+            <Button
+              variant='ghost'
+              onClick={handlePublishCourse}
+              disabled={!courseId || isCourseActionPending}
+              className='border-muted-foreground/50 border px-12'
+            >
+              {PublishCourse.isPending ? <Spinner /> : <BookCheck />}
+              Publish
+            </Button>
+          )} */}
+
+
           {showSubmitButton && (
             <div className='xxs:flex-col flex flex-col justify-center gap-4 pt-6 sm:flex-row sm:justify-end'>
+              {isPublished ? (
+                <Button
+                  type='button'
+                  variant='outline'
+                  onClick={handleUnpublishCourse}
+                  disabled={!targetCourseId || isCourseActionPending}
+                  className='px-6'
+                >
+                  {UnpublishCourse.isPending ? <Spinner /> : <Undo2 />}
+                  Unpublish
+                </Button>
+              ) : (
+                <Button
+                  type='button'
+                  variant='ghost'
+                  onClick={handlePublishCourse}
+                  disabled={!targetCourseId || isCourseActionPending}
+                  className='border-muted-foreground/50 border px-12'
+                >
+                  {PublishCourse.isPending ? <Spinner /> : <BookCheck />}
+                  Publish
+                </Button>
+              )}
+
               <Button type='submit' className='min-w-32'>
-                {createCourseIsPending || updateCourseIsPending ? <Spinner /> : 'Save Course'}
+                {updateCourseIsPending ? <Spinner /> : 'Save Course'}
               </Button>
             </div>
           )}

@@ -43,7 +43,6 @@ import { type ConflictItem, parseConflictError } from '@/components/resourcing/c
 import { ResourceConflictAlert } from '@/components/resourcing/ResourceConflictAlert';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Checkbox } from '@/components/ui/checkbox';
 import { EmptyState } from '@/components/ui/empty-state';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -64,13 +63,11 @@ import {
 } from '@/components/ui/sheet';
 import { Tabs, TabsContent } from '@/components/ui/tabs';
 import { Textarea } from '@/components/ui/textarea';
-import { useCoursesByIds } from '@/hooks/use-batched-lookups';
 import { formatCurrency } from '@/lib/format-currency';
 import { cn } from '@/lib/utils';
 import {
   applyToJobMutation,
   cancelJobMutation,
-  createJobMutation,
   getAllCoursesOptions,
   getAllOrganisationsOptions,
   getAllTrainingProgramsOptions,
@@ -79,30 +76,26 @@ import {
   listJobsOptions,
   listJobsQueryKey,
   listMyApplicationsOptions,
-  listMyApplicationsQueryKey,
-  listResourcesOptions,
-  searchTrainingApplicationsOptions,
-  updateJobMutation,
+  listMyApplicationsQueryKey
 } from '@/services/client/@tanstack/react-query.gen';
 import type {
   ClassMarketplaceJob,
   ClassMarketplaceJobRequest,
-  ClassMarketplaceJobResource,
   ClassVisibilityEnum,
   Course,
+  Instructor,
   LocationTypeEnum,
   Organisation,
-  OrganisationResource,
   SessionFormatEnum,
   StatusEnum7,
-  TrainingProgram,
+  TrainingProgram
 } from '@/services/client/types.gen';
-import { ResourceTypeEnum } from '@/services/client/types.gen';
 import { useUserDomain } from '@/src/features/dashboard/context/user-domain-context';
 import { buildWorkspaceAliasPath } from '@/src/features/dashboard/lib/active-domain-storage';
 import { useOrganisation } from '@/src/features/organisation/context/organisation-context';
 import { useUserProfile } from '@/src/features/profile/context/profile-context';
 
+import { useOrganisationsByIds } from '../../../hooks/use-batched-lookups';
 import { extractPage } from '../../../lib/api-helpers';
 import { canReapply as statusAllowsReapply } from '../application-status';
 import type { JobMarketplaceRole } from '../data';
@@ -115,6 +108,7 @@ import {
 } from './JobMarketplaceSkeletons';
 import { MarketplaceSidebar } from './MarketplaceSidebar';
 import { MarketplaceTabs } from './MarketplaceTabs';
+
 
 type JobFilter = 'all' | StatusEnum7;
 type MarketplaceTabId = 'all' | 'full-time' | 'freelance' | 'internship' | 'remote';
@@ -170,12 +164,12 @@ const marketplaceTabs: Array<{
   count: number;
   icon: typeof BriefcaseBusiness;
 }> = [
-  { id: 'all', label: 'All', count: 0, icon: BriefcaseBusiness },
-  { id: 'full-time', label: 'Full-Time', count: 0, icon: BriefcaseBusiness },
-  { id: 'internship', label: 'Internship', count: 0, icon: GraduationCap },
-  { id: 'freelance', label: 'Freelance', count: 0, icon: Star },
-  { id: 'remote', label: 'Remote', count: 0, icon: Globe2 },
-];
+    { id: 'all', label: 'All', count: 0, icon: BriefcaseBusiness },
+    { id: 'full-time', label: 'Full-Time', count: 0, icon: BriefcaseBusiness },
+    { id: 'internship', label: 'Internship', count: 0, icon: GraduationCap },
+    { id: 'freelance', label: 'Freelance', count: 0, icon: Star },
+    { id: 'remote', label: 'Remote', count: 0, icon: Globe2 },
+  ];
 
 function matchesMarketplaceTab(job: ClassMarketplaceJobWithProgram, tabId: MarketplaceTabId) {
   const searchable = [job.title, job.description, job.location_name, job.meeting_link]
@@ -408,6 +402,8 @@ function JobDetailsSheet({
   onOpenChange,
   isManagementView,
   organisationName,
+  organisation,
+  instructor,
   course,
   program,
   onEdit,
@@ -420,6 +416,8 @@ function JobDetailsSheet({
   onOpenChange: (open: boolean) => void;
   isManagementView: boolean;
   organisationName?: string | null;
+  organisation?: Organisation;
+  instructor?: Instructor;
   course?: Course | null;
   program?: TrainingProgram | null;
   onEdit?: () => void;
@@ -432,6 +430,21 @@ function JobDetailsSheet({
   const [applicationNote, setApplicationNote] = useState('');
   const [showAllSessions, setShowAllSessions] = useState(false);
   const jobUuid = job?.uuid;
+
+  const { organisationMap } = useOrganisationsByIds([job?.organisation_uuid as string]);
+  const displayName = organisationMap?.[job?.organisation_uuid as string]?.name;
+
+  // JOB CLASS SCHEDULES
+  const schedules = job?.session_templates ?? [];
+  const sortedSchedules = [...schedules].sort(
+    (a, b) => new Date(a.start_time).getTime() - new Date(b.start_time).getTime()
+  );
+
+  const firstSchedule = sortedSchedules[0];
+  const lastSchedule = sortedSchedules[sortedSchedules.length - 1];
+
+  const startsAt = firstSchedule?.start_time;
+  const endsAt = lastSchedule?.end_time;
 
   const [applyConflicts, setApplyConflicts] = useState<ConflictItem[]>([]);
   // Asked unconditionally now. This endpoint exists precisely to answer "can this instructor apply",
@@ -528,7 +541,7 @@ function JobDetailsSheet({
               {job.title || 'Untitled job'}
             </SheetTitle>
             <SheetDescription>
-              {getDisplayOrganisationLabel(job, organisationName)} ·{' '}
+              {getDisplayOrganisationLabel(job, displayName)} ·{' '}
               {getDisplayContentLabel(job, course, program)}
             </SheetDescription>
           </SheetHeader>
@@ -578,14 +591,13 @@ function JobDetailsSheet({
                   const recurrenceLabel =
                     recurrence?.recurrence_type === 'WEEKLY'
                       ? `Repeats weekly on ${(recurrence.days_of_week ?? '')
-                          .split(',')
-                          .map(day => formatEnumLabel(day.trim()))
-                          .filter(Boolean)
-                          .join(', ')}${
-                          recurrence.end_date
-                            ? ` until ${new Date(recurrence.end_date).toLocaleDateString()}`
-                            : ''
-                        }`
+                        .split(',')
+                        .map(day => formatEnumLabel(day.trim()))
+                        .filter(Boolean)
+                        .join(', ')}${recurrence.end_date
+                          ? ` until ${new Date(recurrence.end_date).toLocaleDateString()}`
+                          : ''
+                      }`
                       : recurrence?.recurrence_type
                         ? `Repeats ${formatEnumLabel(recurrence.recurrence_type).toLowerCase()}`
                         : null;
@@ -647,11 +659,11 @@ function JobDetailsSheet({
                 { label: 'Meeting link', value: job.meeting_link || 'Not provided' },
                 {
                   label: 'Academic period start',
-                  value: formatDateTime(job.academic_period_start_date),
+                  value: formatDateTime(job.academic_period_start_date || startsAt),
                 },
                 {
                   label: 'Academic period end',
-                  value: formatDateTime(job.academic_period_end_date),
+                  value: formatDateTime(job.academic_period_end_date || endsAt),
                 },
                 {
                   label: 'Registration start',
@@ -787,8 +799,16 @@ function JobDetailsSheet({
 export function JobMarketplacePage({ role }: { role: JobMarketplaceRole }) {
   const config = getJobMarketplaceRoleConfig(role);
   const { activeDomain } = useUserDomain();
-  const organisation = useOrganisation();
   const profile = useUserProfile();
+  const profileOrg = profile?.organisation_affiliations?.[0];
+  const orgData = useOrganisation();
+
+  const organisation =
+    orgData?.uuid === profileOrg?.organisation_uuid
+      ? orgData
+      : undefined;
+  const instructor = profile?.instructor || undefined
+
   const queryClient = useQueryClient();
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -804,8 +824,10 @@ export function JobMarketplacePage({ role }: { role: JobMarketplaceRole }) {
   const isOrgVerified = Boolean(organisation?.admin_verified);
   // Posting a class job requires an admin-verified organisation (mirrors the backend gate).
   const canCreateJob = canManageJobs && isOrgVerified;
+
   const userUuid = profile?.uuid ?? '';
-  const organisationName = organisation?.name ?? profile?.organizations?.[0]?.name ?? null;
+  const organisationName = organisation?.name;
+  const instructorName = instructor?.formatted_location;
 
   const [search, setSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState<JobFilter>(isOrganizationView ? 'all' : 'open');
@@ -1106,13 +1128,13 @@ export function JobMarketplacePage({ role }: { role: JobMarketplaceRole }) {
       ...(isOrganizationView
         ? []
         : [
-            {
-              label: 'Applied',
-              value: myApplications.length,
-              icon: CheckCircle2,
-              tone: 'neutral' as const,
-            },
-          ]),
+          {
+            label: 'Applied',
+            value: myApplications.length,
+            icon: CheckCircle2,
+            tone: 'neutral' as const,
+          },
+        ]),
       { label: 'Remote', value: remoteCount, icon: Globe2, tone: 'warning' as const },
     ];
   }, [isOrganizationView, jobs, myApplications.length]);
@@ -1204,14 +1226,14 @@ export function JobMarketplacePage({ role }: { role: JobMarketplaceRole }) {
           {jobsLoading
             ? kpis.map(kpi => <StatCardSkeleton key={kpi.label} />)
             : kpis.map(kpi => (
-                <StatCard
-                  key={kpi.label}
-                  label={kpi.label}
-                  value={kpi.value}
-                  icon={kpi.icon}
-                  tone={kpi.tone}
-                />
-              ))}
+              <StatCard
+                key={kpi.label}
+                label={kpi.label}
+                value={kpi.value}
+                icon={kpi.icon}
+                tone={kpi.tone}
+              />
+            ))}
         </div>
 
         <div className='grid gap-4 xl:grid-cols-[280px_minmax(0,1fr)]'>
@@ -1228,12 +1250,12 @@ export function JobMarketplacePage({ role }: { role: JobMarketplaceRole }) {
                 onApplicationsClick={
                   !isOrganizationView
                     ? () =>
-                        router.push(
-                          buildWorkspaceAliasPath(
-                            activeDomain,
-                            '/dashboard/opportunities/my-applications'
-                          )
+                      router.push(
+                        buildWorkspaceAliasPath(
+                          activeDomain,
+                          '/dashboard/opportunities/my-applications'
                         )
+                      )
                     : undefined
                 }
               />
@@ -1273,12 +1295,12 @@ export function JobMarketplacePage({ role }: { role: JobMarketplaceRole }) {
                         onApplicationsClick={
                           !isOrganizationView
                             ? () =>
-                        router.push(
-                          buildWorkspaceAliasPath(
-                            activeDomain,
-                            '/dashboard/opportunities/my-applications'
-                          )
-                        )
+                              router.push(
+                                buildWorkspaceAliasPath(
+                                  activeDomain,
+                                  '/dashboard/opportunities/my-applications'
+                                )
+                              )
                             : undefined
                         }
                       />
@@ -1399,9 +1421,9 @@ export function JobMarketplacePage({ role }: { role: JobMarketplaceRole }) {
                   tab.id === 'all'
                     ? sortedJobs
                     : sortJobs(
-                        filteredJobs.filter(job => matchesMarketplaceTab(job, tab.id)),
-                        sortDirection
-                      );
+                      filteredJobs.filter(job => matchesMarketplaceTab(job, tab.id)),
+                      sortDirection
+                    );
 
                 return (
                   <TabsContent key={tab.id} value={tab.id} className='mt-4 space-y-4'>
@@ -1444,6 +1466,8 @@ export function JobMarketplacePage({ role }: { role: JobMarketplaceRole }) {
                               program={program}
                               isManagementView={isOrganizationView}
                               organisationName={organisationName}
+                              organisation={organisation}
+                              instructor={instructor}
                               onView={() => setSelectedJobUuid(job.uuid ?? null)}
                               onEdit={isOrganizationView ? () => handleEdit(job) : undefined}
                               onCancel={
@@ -1457,17 +1481,17 @@ export function JobMarketplacePage({ role }: { role: JobMarketplaceRole }) {
                               applicationsHref={
                                 isOrganizationView && job.uuid
                                   ? buildWorkspaceAliasPath(
-                                      activeDomain,
-                                      `/dashboard/opportunities/${job.uuid}`
-                                    )
+                                    activeDomain,
+                                    `/dashboard/opportunities/${job.uuid}`
+                                  )
                                   : undefined
                               }
                               createClassHref={
                                 isOrganizationView && job.uuid
                                   ? buildWorkspaceAliasPath(
-                                      activeDomain,
-                                      `/dashboard/opportunities/${job.uuid}/create-class`
-                                    )
+                                    activeDomain,
+                                    `/dashboard/opportunities/${job.uuid}/create-class`
+                                  )
                                   : undefined
                               }
                             />
@@ -1490,6 +1514,8 @@ export function JobMarketplacePage({ role }: { role: JobMarketplaceRole }) {
           if (!open) setSelectedJobUuid(null);
         }}
         isManagementView={isOrganizationView}
+        organisation={organisation}
+        instructor={instructor}
         organisationName={organisationName}
         course={selectedJob ? (jobsByCourseId.get(selectedJob.course_uuid ?? '') ?? null) : null}
         program={

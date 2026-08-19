@@ -49,11 +49,15 @@ import {
   addCourseCreatorExperienceMutation,
   addInstructorExperienceMutation,
   getCourseCreatorDocumentsQueryKey,
+  getCourseCreatorEducationOptions,
   getCourseCreatorExperienceOptions,
   getCourseCreatorExperienceQueryKey,
+  getCourseCreatorMembershipsOptions,
   getInstructorDocumentsQueryKey,
+  getInstructorEducationOptions,
   getInstructorExperienceOptions,
   getInstructorExperienceQueryKey,
+  getInstructorMembershipsOptions,
   listDocumentTypesOptions,
   uploadCourseCreatorDocumentMutation,
   uploadInstructorDocumentMutation,
@@ -62,7 +66,9 @@ import type {
   Certificate,
   CourseCreatorExperience,
   DocumentTypeOption,
+  InstructorEducation,
   InstructorExperience,
+  InstructorProfessionalMembership
 } from '@/services/client/types.gen';
 
 export type SkillsWalletRole = Extract<VerifiedSkillsRole, 'instructor' | 'course_creator'>;
@@ -569,6 +575,8 @@ function AddCredentialDialog({
     description: '',
     expiry_date: '',
     file: null as File | null,
+    related_kind: 'none',
+    related_uuid: '',
   });
 
   const reset = () =>
@@ -578,7 +586,89 @@ function AddCredentialDialog({
       description: '',
       expiry_date: '',
       file: null,
+      related_kind: 'none',
+      related_uuid: '',
     });
+
+  // Fetch related records (educations, memberships, experiences) so user can attach a document
+  const educationQuery = useQuery({
+    ...(role === 'instructor'
+      ? getInstructorEducationOptions({ path: { instructorUuid: profileUuid ?? '' } })
+      : getCourseCreatorEducationOptions({ path: { courseCreatorUuid: profileUuid ?? '' } })),
+    enabled: Boolean(profileUuid),
+    staleTime: STALE_TIMES.reference,
+  });
+
+  const membershipQuery = useQuery({
+    ...(role === 'instructor'
+      ? getInstructorMembershipsOptions({ path: { instructorUuid: profileUuid ?? '' }, query: { pageable: { page: 0, size: 200 } } })
+      : getCourseCreatorMembershipsOptions({ path: { courseCreatorUuid: profileUuid ?? '' }, query: { pageable: { page: 0, size: 200 } } })),
+    enabled: Boolean(profileUuid),
+    staleTime: STALE_TIMES.reference,
+  });
+
+  const relatedExperienceQuery = useQuery({
+    ...(role === 'instructor'
+      ? getInstructorExperienceOptions({ path: { instructorUuid: profileUuid ?? '' }, query: { pageable: { page: 0, size: 200 } } })
+      : getCourseCreatorExperienceOptions({ path: { courseCreatorUuid: profileUuid ?? '' }, query: { pageable: { page: 0, size: 200 } } })),
+    enabled: Boolean(profileUuid),
+    staleTime: STALE_TIMES.reference,
+  });
+
+  const educations = (educationQuery.data?.data?.content ?? educationQuery.data?.data ?? []) as InstructorEducation[];
+  const memberships = (membershipQuery.data?.data?.content ?? membershipQuery.data?.data ?? []) as InstructorProfessionalMembership[];
+  const experiences = (relatedExperienceQuery.data?.data?.content ?? relatedExperienceQuery.data?.data ?? []) as InstructorExperience[];
+
+  function RelatedRecordSelector() {
+    return (
+      <>
+        <div className='space-y-2'>
+          <Label htmlFor='related_kind'>Attach to</Label>
+          <select
+            id='related_kind'
+            className='border-input bg-background h-10 w-full rounded-md border px-3 text-sm'
+            value={draft.related_kind}
+            onChange={e => setDraft(current => ({ ...current, related_kind: e.target.value, related_uuid: '' }))}
+          >
+            <option value='none'>None</option>
+            <option value='education'>Education</option>
+            <option value='membership'>Membership</option>
+            <option value='experience'>Experience</option>
+          </select>
+        </div>
+
+        {draft.related_kind !== 'none' ? (
+          <div className='space-y-2'>
+            <Label htmlFor='related_uuid'>Select record</Label>
+            <select
+              id='related_uuid'
+              className='border-input bg-background h-10 w-full rounded-md border px-3 text-sm'
+              value={draft.related_uuid}
+              onChange={e => setDraft(current => ({ ...current, related_uuid: e.target.value }))}
+              required={draft.related_kind !== 'none'}
+            >
+              <option value=''>Select a record</option>
+              {draft.related_kind === 'education' && educations.map(ed => (
+                <option key={ed.uuid ?? ed.id} value={ed.uuid ?? ed.id}>
+                  {ed.school_name ?? ed.qualification ?? ed.title ?? ed.name ?? ed.uuid}
+                </option>
+              ))}
+              {draft.related_kind === 'membership' && memberships.map(mb => (
+                <option key={mb.uuid ?? mb.id} value={mb.uuid ?? mb.id}>
+                  {mb.organisation_name ?? mb.name ?? mb.title ?? mb.uuid}
+                </option>
+              ))}
+              {draft.related_kind === 'experience' && experiences.map(ex => (
+                <option key={ex.uuid ?? ex.id} value={ex.uuid ?? ex.id}>
+                  {ex.position ?? ex.title ?? `${ex.organisation_name ?? ''} ${ex.position ?? ''}`}
+                </option>
+              ))}
+            </select>
+          </div>
+        ) : null}
+      </>
+    );
+  }
 
   const submit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
@@ -594,9 +684,22 @@ function AddCredentialDialog({
         document_type_uuid: draft.document_type_uuid,
         title: draft.title.trim() || undefined,
         description: draft.description.trim() || undefined,
-        expiry_date: draft.expiry_date ? new Date(draft.expiry_date) : undefined,
+        expiry_date: draft.expiry_date || undefined,
+        education_uuid:
+          draft.related_kind === 'education'
+            ? draft.related_uuid || undefined
+            : undefined,
+        experience_uuid:
+          draft.related_kind === 'experience'
+            ? draft.related_uuid || undefined
+            : undefined,
+        membership_uuid:
+          draft.related_kind === 'membership'
+            ? draft.related_uuid || undefined
+            : undefined,
       },
     } as never);
+
 
     if (response) {
       const queryKey =
@@ -620,9 +723,20 @@ function AddCredentialDialog({
         </DialogHeader>
         <form className='grid gap-4 md:grid-cols-2' onSubmit={submit}>
           <div className='space-y-2 md:col-span-2'>
-            <Label htmlFor='file'>PDF document</Label>
-            <Input id='file' type='file' accept='application/pdf' onChange={e => setDraft(current => ({ ...current, file: e.target.files?.[0] ?? null }))} required />
+            <Label htmlFor='file'>Document (PDF, image, Word)</Label>
+            <Input
+              id='file'
+              type='file'
+              accept='.pdf,image/*,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document'
+              onChange={e => setDraft(current => ({ ...current, file: e.target.files?.[0] ?? null }))}
+              required
+            />
           </div>
+
+          {/* Related record selector: education / membership / experience */}
+          <RelatedRecordSelector />
+
+
           <div className='space-y-2'>
             <Label htmlFor='document_type_uuid'>Document type</Label>
             <select
@@ -635,11 +749,22 @@ function AddCredentialDialog({
               <option value='' disabled>
                 Select a document type
               </option>
-              {documentTypes.map(type => (
-                <option key={type.uuid} value={type.uuid ?? ''}>
-                  {type.name ?? type.description ?? 'Document type'}
-                </option>
-              ))}
+              {(() => {
+                const prefs = ['pdf', 'image', 'word', 'doc', 'docx', 'png', 'jpg', 'jpeg'];
+                const sorted = [...documentTypes].sort((a, b) => {
+                  const aText = (a.name ?? a.description ?? '').toLowerCase();
+                  const bText = (b.name ?? b.description ?? '').toLowerCase();
+                  const aScore = prefs.findIndex(p => aText.includes(p)) === -1 ? 1 : 0;
+                  const bScore = prefs.findIndex(p => bText.includes(p)) === -1 ? 1 : 0;
+                  if (aScore !== bScore) return aScore - bScore;
+                  return (aText > bText) ? 1 : -1;
+                });
+                return sorted.map(type => (
+                  <option key={type.uuid} value={type.uuid ?? ''}>
+                    {type.name ?? type.description ?? 'Document type'}
+                  </option>
+                ));
+              })()}
             </select>
           </div>
           <div className='space-y-2'>
