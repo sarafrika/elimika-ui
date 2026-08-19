@@ -926,6 +926,7 @@ function instructorcertificatestab({ sharedProfile, isPublic }: DomainTabProps) 
     full_description: education.full_description || undefined,
   });
 
+  // for upload document, use listdocumenttypeoptions data
   const onSubmit = async (values: EducationFormValues) => {
     setIsSaving(true);
 
@@ -2065,7 +2066,7 @@ export const instructorTabs: TabDefinition[] = [
   { id: 'skills', label: 'Skills Card', component: instructorskillstab },
   { id: 'certs', label: 'Certificates', component: instructorcertificatestab },
   { id: 'career', label: 'Career Pathways', component: InstructorCareerTab },
-  { id: 'rates', label: 'Rate Card', component: InstructorRatesTab },
+  // { id: 'rates', label: 'Rate Card', component: InstructorRatesTab },
   // { id: 'gallery', label: 'Gallery', component: InstructorGalleryTab },
   // { id: 'friends', label: 'Connections', component: InstructorFriendsTab },
 ];

@@ -38,6 +38,7 @@ import { Button } from '../../../../../components/ui/button';
 import { Calendar } from '../../../../../components/ui/calendar';
 import { Checkbox } from '../../../../../components/ui/checkbox';
 import { useUserProfile } from '../../../../../context/profile-context';
+import { useUserDomain } from '../../../../../context/user-domain-context';
 import { useCoursesByIds, useProgramsByIds } from '../../../../../hooks/use-batched-lookups';
 import { useClassDetails } from '../../../../../hooks/use-class-details';
 import {
@@ -503,9 +504,13 @@ const expandSessionsForConflictCheck = (
 const ClassCreationPage = () => {
   const router = useRouter();
   const qc = useQueryClient();
+  const { activeDomain } = useUserDomain()
   const profile = useUserProfile();
   const instructor = profile?.instructor;
   const organisation = profile?.organisation_affiliations?.[0];
+
+  console.log(profile, "PROF")
+  console.log(activeDomain, "ACT")
 
   const [classId, setClassId] = useState<string | null>(null);
   const [isClientReady, setIsClientReady] = useState(false);
@@ -1386,7 +1391,7 @@ const ClassCreationPage = () => {
 
     const payload: CreateClassDefinitionMultipartData['body'] = {
       default_instructor_uuid: instructor?.uuid as string,
-      organisation_uuid: organisation?.organisation_uuid as string,
+      organisation_uuid: activeDomain === "instructor" ? null : organisation?.organisation_uuid,
       course_uuid: selectedSource === 'course' ? classDetails.course_uuid || undefined : undefined,
       program_uuid:
         selectedSource === 'program' ? classDetails.program_uuid || undefined : undefined,

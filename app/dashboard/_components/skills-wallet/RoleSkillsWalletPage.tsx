@@ -623,6 +623,12 @@ function AddCredentialDialog({
             <Label htmlFor='file'>PDF document</Label>
             <Input id='file' type='file' accept='application/pdf' onChange={e => setDraft(current => ({ ...current, file: e.target.files?.[0] ?? null }))} required />
           </div>
+
+          <div>
+            {/* // add a select component, to list users's educations, memberships, experience etc, then add the selected uuid to the payload sent for this request */}
+          </div>
+
+
           <div className='space-y-2'>
             <Label htmlFor='document_type_uuid'>Document type</Label>
             <select

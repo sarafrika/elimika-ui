@@ -8,7 +8,8 @@ import { type RateBasis, rateBasisShort } from '@/components/class-form';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { formatCurrency } from '@/lib/format-currency';
-import type { ClassMarketplaceJob, Course, TrainingProgram } from '@/services/client/types.gen';
+import type { ClassMarketplaceJob, Course, Instructor, Organisation, TrainingProgram } from '@/services/client/types.gen';
+import { useOrganisationsByIds } from '../../../hooks/use-batched-lookups';
 
 type ClassMarketplaceJobWithProgram = ClassMarketplaceJob & {
   readonly program_uuid?: string | null;
@@ -114,6 +115,8 @@ export function JobCard({
   course,
   program,
   organisationName,
+  organisation,
+  instructor,
   applicationStatus,
   hasApplied,
   applicationsHref,
@@ -127,6 +130,8 @@ export function JobCard({
   course?: Course | null;
   program?: TrainingProgram | null;
   organisationName?: string | null;
+  organisation?: Organisation;
+  instructor?: Instructor;
   applicationStatus?: string | null;
   hasApplied?: boolean;
   applicationsHref?: string;
@@ -134,6 +139,9 @@ export function JobCard({
 }) {
   const title = job.title ?? 'Untitled job';
   const applicationLabel = getApplicationStatusLabel(applicationStatus);
+
+  const { organisationMap } = useOrganisationsByIds([job?.organisation_uuid as string]);
+  const displayName = organisationMap?.[job?.organisation_uuid as string]?.name;
 
   return (
     <div className='group border-border/70 bg-card hover:border-border flex gap-4 rounded-md border p-5 shadow-sm transition hover:shadow-md'>
@@ -154,7 +162,7 @@ export function JobCard({
               {title}
             </h3>
             <p className='text-muted-foreground mt-0.5 text-sm'>
-              {getDisplayOrganisationLabel(job, organisationName)} ·{' '}
+              {getDisplayOrganisationLabel(job, displayName)} ·{' '}
               {getDisplayContentLabel(job, course, program)}
             </p>
           </div>
@@ -170,7 +178,7 @@ export function JobCard({
           job={job}
           course={course}
           program={program}
-          organisationName={organisationName}
+          organisationName={displayName}
         />
 
         <div className='grid gap-2 sm:grid-cols-2'>

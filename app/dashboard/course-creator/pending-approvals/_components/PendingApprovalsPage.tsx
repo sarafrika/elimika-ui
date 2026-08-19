@@ -258,15 +258,27 @@ export default function PendingApprovalsPage() {
       });
   }, [applicantMap, courseApplications, organisationMap, instructorMap, programApplications, search, typeFilter]);
 
-  const stats = useMemo(
-    () => ({
-      total: applicants.length,
-      pending: applicants.reduce((sum, applicant) => sum + applicant.pendingCount, 0),
-      instructors: applicants.filter(applicant => applicant.type === 'instructor').length,
-      organisations: applicants.filter(applicant => applicant.type === 'organisation').length,
-    }),
-    [applicants]
-  );
+  const stats = useMemo(() => {
+    const allApplicants = Array.from(applicantMap.values());
+
+    return {
+      total: allApplicants.length,
+      pending: allApplicants.reduce(
+        (sum, applicant) =>
+          sum +
+          applicant.applications.filter(
+            application => application.status?.toLowerCase() === 'pending'
+          ).length,
+        0
+      ),
+      instructors: allApplicants.filter(
+        applicant => applicant.type === 'instructor'
+      ).length,
+      organisations: allApplicants.filter(
+        applicant => applicant.type === 'organisation'
+      ).length,
+    };
+  }, [applicantMap]);
 
   const isLoading = courseApplicationsQuery.isLoading || programApplicationsQuery.isLoading;
 
