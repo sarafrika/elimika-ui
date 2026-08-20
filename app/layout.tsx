@@ -25,7 +25,7 @@ export default function RootLayout({
       <body
         className={`${plusJakartaSans.className} bg-background text-foreground min-h-screen antialiased`}
       >
-        <ThemeProvider attribute='class' defaultTheme='light' enableSystem>
+        <ThemeProvider attribute='class' defaultTheme='system' enableSystem>
           <div className='relative min-h-screen'>
             <RootProviders>
               <div className='relative z-0 flex min-h-screen flex-col'>{children}</div>
