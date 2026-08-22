@@ -221,7 +221,7 @@ function AssignmentDetailSheet({
 
     return (
         <Sheet open={Boolean(payload)} onOpenChange={open => !open && handleClose()}>
-            <SheetContent className='overflow-y-auto sm:max-w-xl'>
+            <SheetContent className='overflow-y-auto sm:max-w-3xl'>
                 <SheetHeader>
                     <SheetTitle>{assignment?.title || 'Untitled assignment'}</SheetTitle>
                     <SheetDescription>
@@ -373,8 +373,8 @@ function AssignmentDetailSheet({
                     {canEdit ? (
                         <div className='flex justify-end gap-2 pt-2'>
                             <Button variant='outline' asChild>
-                                <Link href='/dashboard/student/learning-hub?tab=assignments' className='inline-flex items-center gap-2'>
-                                    Go to assignments page
+                                <Link href={`/dashboard/student/assignment/${assignment?.uuid}`} className='inline-flex items-center gap-2'>
+                                    Go to assignment page
                                     <ArrowRight className='h-4 w-4' />
                                 </Link>
                             </Button>

@@ -12,11 +12,16 @@ import { Skeleton } from '@/components/ui/skeleton';
 
 import { cn } from '@/lib/utils';
 
+import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { toast } from 'sonner';
+import { useUserProfile } from '../../../../../context/profile-context';
 import { useClassesByIds } from '../../../../../hooks/use-batched-lookups';
 import { ClassDefinition } from '../../../../../services/client';
+import { getClassReviewsQueryKey, submitClassReviewMutation } from '../../../../../services/client/@tanstack/react-query.gen';
 import { formatSessionSchedule } from '../../../../../src/features/dashboard/courses/components/availability-listing-layout';
 import { stripHtml } from '../../../../../src/features/dashboard/courses/shared/_components/courses-data';
 import { toAuthenticatedMediaUrl } from '../../../../../src/lib/media-url';
+import { FeedbackDialog } from '../../../_components/review-instructor-modal';
 import type {
   LearningHubClassEnrollment,
   LearningHubData,
@@ -184,10 +189,53 @@ function ClassCard({
   item: LearningHubClassEnrollment;
   classDefinitionMap: ClassDefinitionMap;
 }) {
+  const [isReviewModalOpen, setIsReviewModalOpen] = useState(false);
+
+  const profile = useUserProfile()
+  const student = profile?.student
   const classObj = classDefinitionMap?.[item.class_definition_uuid];
   const upcoming = isUpcoming(item, classDefinitionMap);
   const completed = isCompleted(item, classDefinitionMap);
   const active = isActive(item, classDefinitionMap)
+
+  const qc = useQueryClient();
+  const [newRating, setNewRating] = useState(0);
+  const [feedbackComment, setFeedbackComment] = useState('');
+  const [headline, setHeadline] = useState('');
+  const [anonymous, setAnonymous] = useState(true);
+
+  const reviewClassMut = useMutation(submitClassReviewMutation());
+
+  const handleSubmitFeedback = () => {
+    reviewClassMut.mutate(
+      {
+        body: {
+          rating: newRating,
+          student_uuid: student?.uuid as string,
+          comments: feedbackComment,
+          headline,
+          is_anonymous: anonymous,
+        },
+        path: { uuid: classObj?.uuid as string },
+      },
+      {
+        onSuccess: data => {
+          toast.success(data?.message);
+          setIsReviewModalOpen(false);
+          qc.invalidateQueries({
+            queryKey: getClassReviewsQueryKey({
+              path: { uuid: classObj?.uuid as string },
+              query: { pageable: {} },
+            }),
+          });
+        },
+        onError: error => {
+          toast.error(error?.message);
+          setIsReviewModalOpen(false);
+        },
+      }
+    );
+  };
 
   return (
     <Card className='pt-0 pb-4 border-border/70 bg-card overflow-hidden shadow-sm transition-shadow hover:shadow-md'>
@@ -297,19 +345,51 @@ function ClassCard({
           </span>
         </div>
 
-        <div className='flex flex-wrap gap-2 pt-1'>
-          <Button asChild size={"sm"} className='min-w-32 text-[13px]'>
+        <div className="flex flex-row flex-wrap items-center gap-2 pt-1">
+          <Button asChild size="sm" className="flex-1 min-w-32 text-[13px]">
             <Link href={item.href}>
               Open class
             </Link>
           </Button>
-          <Button asChild variant='outline' size={'sm'} className='min-w-32 text-[13px]'>
-            <Link href='/dashboard/student/calendar'>
+
+          <Button
+            asChild
+            variant="outline"
+            size="sm"
+            className="flex-1 min-w-32 text-[13px]"
+          >
+            <Link href="/dashboard/student/calendar">
               View schedule
             </Link>
           </Button>
         </div>
+
+        <Button
+          type="button"
+          variant="ghost"
+          size="sm"
+          className="self-center h-8 px-2 text-xs font-medium text-muted-foreground hover:text-foreground"
+          onClick={() => setIsReviewModalOpen(true)}
+        >
+          Leave a review
+        </Button>
       </CardContent>
+
+      <FeedbackDialog
+        type='others'
+        open={isReviewModalOpen}
+        onOpenChange={setIsReviewModalOpen}
+        headline={headline}
+        onHeadlineChange={setHeadline}
+        feedback={feedbackComment}
+        onFeedbackChange={setFeedbackComment}
+        rating={newRating}
+        anonymous={anonymous}
+        onAnonymousChange={setAnonymous}
+        onRatingChange={setNewRating}
+        isSubmitting={reviewClassMut.isPending}
+        onSubmit={handleSubmitFeedback}
+      />
     </Card>
   );
 }

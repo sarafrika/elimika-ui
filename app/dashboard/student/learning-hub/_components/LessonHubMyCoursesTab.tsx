@@ -12,9 +12,14 @@ import { Skeleton } from '@/components/ui/skeleton';
 
 import { cn } from '@/lib/utils';
 
+import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { toast } from 'sonner';
+import { useUserProfile } from '../../../../../context/profile-context';
 import { useCoursesByIds } from '../../../../../hooks/use-batched-lookups';
+import { getCourseReviewsQueryKey, submitCourseReviewMutation } from '../../../../../services/client/@tanstack/react-query.gen';
 import { stripHtml } from '../../../../../src/features/dashboard/courses/shared/_components/courses-data';
 import { toAuthenticatedMediaUrl } from '../../../../../src/lib/media-url';
+import { FeedbackDialog } from '../../../_components/review-instructor-modal';
 import type {
   LearningHubCourseEnrollment,
   LearningHubData,
@@ -153,11 +158,56 @@ export function LessonHubMyCoursesTab({ learningHubData }: LessonHubMyCoursesTab
 }
 
 function CourseCard({ course }: { course: LearningHubCourseEnrollment }) {
+  const qc = useQueryClient();
+  const profile = useUserProfile()
+  const student = profile?.student
+
+  const [isReviewModalOpen, setIsReviewModalOpen] = useState(false);
+  const [newRating, setNewRating] = useState(0);
+  const [feedbackComment, setFeedbackComment] = useState('');
+  const [headline, setHeadline] = useState('');
+  const [anonymous, setAnonymous] = useState(true);
+
   const progress = Math.max(0, Math.min(100, course.progress_percentage ?? 0));
   const completed = progress >= 100;
 
   const { courseMap } = useCoursesByIds([course?.course_uuid])
   const courseObj = courseMap?.[course?.course_uuid];
+
+  const reviewCourseMut = useMutation(submitCourseReviewMutation());
+  const handleSubmitFeedback = () => {
+    if (!student?.uuid) {
+      toast.error('Student not found. Kindly login to your student account')
+      return
+    }
+
+    reviewCourseMut.mutate(
+      {
+        body: {
+          course_uuid: course?.course_uuid as string,
+          rating: newRating,
+          student_uuid: student?.uuid as string,
+          comments: feedbackComment,
+          headline,
+          is_anonymous: false,
+        },
+        path: { courseUuid: course.course_uuid as string },
+      },
+      {
+        onSuccess: data => {
+          toast.success(data?.message);
+          setIsReviewModalOpen(false);
+          qc.invalidateQueries({
+            queryKey: getCourseReviewsQueryKey({ path: { courseUuid: course?.course_uuid as string } }),
+          });
+        },
+        onError: error => {
+          toast.error(error?.message);
+          setIsReviewModalOpen(false);
+        },
+      }
+    );
+  };
 
   return (
     <Card className='pt-0 pb-4 border-border/70 bg-card overflow-hidden shadow-sm transition-shadow hover:shadow-md'>
@@ -224,25 +274,55 @@ function CourseCard({ course }: { course: LearningHubCourseEnrollment }) {
           </Badge>
         ))}
 
-        <div className='flex items-center justify-between gap-3 text-sm'>
+        <div className='flex flex-row items-center justify-between gap-3 text-sm'>
           <span className='text-xs text-muted-foreground inline-flex items-center gap-1.5'>
             Starts {course.updatedLabel}
           </span>
         </div>
 
-        <div className='flex flex-wrap gap-2 pt-1'>
-          <Button asChild size={'sm'} variant={'success'} className='min-w-32 text-xs'>
-            <Link href={`/dashboard/student/courses/available-classes/${course?.course_uuid}`}>
+        <div className="flex w-full flex-row flex-wrap items-center gap-2 pt-1">
+          <Button asChild size="sm" variant="success" className="flex-1 min-w-32 text-xs"          >
+            <Link
+              href={`/dashboard/student/courses/available-classes/${course?.course_uuid}`}
+            >
               Join Class
             </Link>
           </Button>
-          <Button asChild size={'sm'} variant='outline' className='min-w-32 text-xs'>
-            <Link href={`/dashboard/student/courses`}>
+
+          <Button asChild size="sm" variant="outline" className="flex-1 min-w-32 text-xs"          >
+            <Link href="/dashboard/student/courses">
               View details
             </Link>
           </Button>
         </div>
+
+        <Button
+          type="button"
+          variant="ghost"
+          size="sm"
+          className="self-center h-8 px-2 text-xs font-medium text-muted-foreground hover:text-foreground"
+          onClick={() => setIsReviewModalOpen(true)}
+        >
+          Leave a review
+        </Button>
       </CardContent>
+
+
+      <FeedbackDialog
+        type='others'
+        open={isReviewModalOpen}
+        onOpenChange={setIsReviewModalOpen}
+        headline={headline}
+        onHeadlineChange={setHeadline}
+        feedback={feedbackComment}
+        onFeedbackChange={setFeedbackComment}
+        rating={newRating}
+        anonymous={anonymous}
+        onAnonymousChange={setAnonymous}
+        onRatingChange={setNewRating}
+        isSubmitting={reviewCourseMut.isPending}
+        onSubmit={handleSubmitFeedback}
+      />
     </Card>
   );
 }

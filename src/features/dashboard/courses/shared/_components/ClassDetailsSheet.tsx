@@ -9,17 +9,20 @@ import {
   Languages,
   MapPin,
   Sparkles,
+  Star,
   Timer,
   Users,
   Wallet,
 } from 'lucide-react';
 import { useDifficultyLevels } from '../../../../../../hooks/use-difficultyLevels';
-import { ClassSessionTemplate, Lesson } from '../../../../../../services/client';
+import { ClassSessionTemplate, Lesson, Organisation } from '../../../../../../services/client';
 import { BundledClass } from '../../types';
 
 interface ClassDetailSheetProps {
   open: boolean;
   detail: BundledClass | null;
+  organisation: Organisation | null;
+
   startsAt?: string | Date | null;
   endsAt?: string | Date | null;
   uniqueStudentUuids: string[];
@@ -36,6 +39,7 @@ interface ClassDetailSheetProps {
 export function ClassDetailSheet({
   open,
   detail,
+  organisation,
   startsAt,
   endsAt,
   uniqueStudentUuids,
@@ -47,6 +51,7 @@ export function ClassDetailSheet({
   formatScheduleDate,
 }: ClassDetailSheetProps) {
   const { difficultyMap } = useDifficultyLevels();
+  const rating = Math.round(detail?.classRating?.average_rating ?? 0);
 
   return (
     <Sheet open={open} onOpenChange={value => !value && onClose()}>
@@ -56,15 +61,40 @@ export function ClassDetailSheet({
             <SheetHeader className='p-0'>
               <SheetTitle className='text-xl'>{detail.title}</SheetTitle>
 
-              <div className='mt-2 flex flex-wrap gap-2'>
-                {detail.session_format && <Badge>{detail.session_format}</Badge>}
+              <div className="mt-2 flex flex-wrap items-center gap-2">
+                {detail.session_format && (
+                  <Badge>{detail.session_format}</Badge>
+                )}
 
-                {detail.location_type && <Badge variant='outline'>{detail.location_type}</Badge>}
+                {detail.location_type && (
+                  <Badge variant="outline">{detail.location_type}</Badge>
+                )}
 
                 {detail.skills_fund_eligible && (
-                  <Badge className='bg-success/10 text-success'>Fund Eligible</Badge>
+                  <Badge className="bg-success/10 text-success">
+                    Fund Eligible
+                  </Badge>
                 )}
+
+                <Badge variant="outline" className="gap-1">
+                  <span className="flex items-center text-warning">
+                    {rating > 0 ? (
+                      Array.from({ length: rating }).map((_, index) => (
+                        <Star
+                          key={index}
+                          className="h-3.5 w-3.5 fill-current"
+                        />
+                      ))
+                    ) : (
+                      <Star className="h-3.5 w-3.5 text-muted-foreground" />
+                    )}
+                  </span>
+
+                  <span>{rating}</span>
+                </Badge>
+
               </div>
+
             </SheetHeader>
 
             <div className='mt-6 space-y-6'>
@@ -73,11 +103,11 @@ export function ClassDetailSheet({
                 <h3 className='font-semibold'>Overview</h3>
 
                 <div className='grid gap-3 text-sm sm:grid-cols-2'>
-                  <InfoRow
+                  {detail?.organisation_uuid && organisation && <InfoRow
                     icon={<BookOpen className='h-4 w-4' />}
                     label='Institution'
-                    value={detail?.organization?.data?.name || "-"}
-                  />
+                    value={organisation?.name || "-"}
+                  />}
 
                   <InfoRow
                     icon={<Users className='h-4 w-4' />}
@@ -174,7 +204,7 @@ export function ClassDetailSheet({
                 <div className='space-y-3 rounded-lg border p-4'>
                   <InfoRow
                     icon={<BookOpen className='h-4 w-4' />}
-                    label='Units'
+                    label='Units/Modules'
                     value={`${courseLessons.length}`}
                   />
 
