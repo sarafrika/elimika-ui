@@ -1,3 +1,5 @@
+import type { UserDomain } from '@/lib/types';
+import type { CourseTrainingRateCard } from '@/services/client';
 import type { LucideIcon } from 'lucide-react';
 import {
   BadgeCheck,
@@ -15,8 +17,6 @@ import {
   Trophy,
   Users,
 } from 'lucide-react';
-import type { UserDomain } from '@/lib/types';
-import type { CourseTrainingRateCard } from '@/services/client';
 
 export type CoursesHeroAction = {
   title: string;

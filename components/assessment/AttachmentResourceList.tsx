@@ -70,30 +70,30 @@ export function AttachmentResourceList({
 
   const preparedAttachments = useMemo(
     () =>
-      attachments.filter(
+      attachments?.filter(
         attachment =>
           attachment && (attachment.file_url || attachment.original_filename || attachment.uuid)
       ),
     [attachments]
   );
 
-  if (preparedAttachments.length === 0) {
+  if (preparedAttachments?.length === 0) {
     return <p className='text-muted-foreground text-sm'>{emptyMessage}</p>;
   }
 
   const previewContent: PreviewableAttachment | null = previewAttachment
     ? ({
-        ...previewAttachment,
-        title: previewAttachment.original_filename ?? 'Attachment',
-        content_text: null,
-        value: previewAttachment.file_url || null,
-      } as unknown as PreviewableAttachment)
+      ...previewAttachment,
+      title: previewAttachment.original_filename ?? 'Attachment',
+      content_text: null,
+      value: previewAttachment.file_url || null,
+    } as unknown as PreviewableAttachment)
     : null;
 
   return (
     <>
       <div className='space-y-2'>
-        {preparedAttachments.map(attachment => {
+        {preparedAttachments?.map(attachment => {
           const fileSize = formatFileSize(attachment.file_size_bytes);
 
           return (

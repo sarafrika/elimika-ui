@@ -201,12 +201,12 @@ export function useStudentAssignmentData() {
 
           const enrollmentUuid = classDefinition.courseEnrollments.find(
             enrollment =>
-              enrollment.student_uuid === student?.uuid && enrollment.status !== 'ACTIVE'
+              enrollment.student_uuid === student?.uuid // && enrollment.status !== 'ACTIVE'
           )?.uuid;
 
           const courseEnrollmentUuid = classDefinition.courseEnrollments.find(
             enrollment =>
-              enrollment.student_uuid === student?.uuid && enrollment.status === 'ACTIVE'
+              enrollment.student_uuid === student?.uuid // && enrollment.status === 'ACTIVE'
           )?.uuid;
 
           return {

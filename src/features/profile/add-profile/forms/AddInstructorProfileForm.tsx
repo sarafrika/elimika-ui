@@ -1,12 +1,5 @@
 'use client';
 
-import { zodResolver } from '@hookform/resolvers/zod';
-import { useQueryClient } from '@tanstack/react-query';
-import { ArrowLeft, BookOpen, MapPin } from 'lucide-react';
-import { useRouter } from 'next/navigation';
-import { useEffect, useState } from 'react';
-import { useForm } from 'react-hook-form';
-import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Form } from '@/components/ui/form';
@@ -23,6 +16,13 @@ import {
   instructorProfileSchema,
   normalizeInstructorProfileData,
 } from '@/src/features/profile/forms/shared/instructor-profile';
+import { zodResolver } from '@hookform/resolvers/zod';
+import { useQueryClient } from '@tanstack/react-query';
+import { ArrowLeft, BookOpen, MapPin } from 'lucide-react';
+import { useRouter } from 'next/navigation';
+import { useEffect, useState } from 'react';
+import { useForm } from 'react-hook-form';
+import { toast } from 'sonner';
 
 export default function AddInstructorProfileForm() {
   const router = useRouter();
@@ -55,11 +55,10 @@ export default function AddInstructorProfileForm() {
       return;
     }
 
-    if (!data.user_uuid) {
-      data.user_uuid = user.uuid;
-    }
-
-    const cleanedData = normalizeInstructorProfileData(data);
+    const cleanedData = normalizeInstructorProfileData({
+      ...data,
+      user_uuid: data.user_uuid || user.uuid,
+    });
 
     setIsSubmitting(true);
     try {
@@ -68,7 +67,7 @@ export default function AddInstructorProfileForm() {
       });
 
       if (response.error) {
-        throw new Error(response.error.message || 'Failed to create instructor profile');
+        throw response.error;
       }
 
       await queryClient.invalidateQueries({ queryKey: ['instructors'] });
@@ -84,6 +83,8 @@ export default function AddInstructorProfileForm() {
       userDomain.setActiveDomain('instructor');
       router.replace(buildDashboardSwitchPath('instructor'));
     } catch (error) {
+      // @ts-ignore
+      toast.error(error?.message)
       toast.error(getErrorMessage(error, 'Failed to create instructor profile. Please try again.'));
     } finally {
       setIsSubmitting(false);

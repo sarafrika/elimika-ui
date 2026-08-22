@@ -93,27 +93,39 @@ export function LessonHubMyCoursesTab({ learningHubData }: LessonHubMyCoursesTab
         </div>
       </div>
 
-      <div className='flex flex-wrap gap-2'>
+      <div className="flex flex-wrap gap-2">
         {COURSE_FILTERS.map(item => {
           const active = item.id === filter;
 
           return (
             <Button
               key={item.id}
-              type='button'
-              size='sm'
+              type="button"
+              size="sm"
               variant={active ? 'default' : 'outline'}
               onClick={() => setFilter(item.id)}
-              className={cn('rounded-full', active && 'shadow-sm')}
+              className={cn(
+                'group rounded-full',
+                active && 'shadow-sm'
+              )}
             >
-              {item.label}
-              <span className='text-muted-foreground ml-2 tabular-nums'>
+              <span className="group-hover:text-white">
+                {item.label}
+              </span>
+
+              <span
+                className={cn(
+                  'ml-2 tabular-nums',
+                  active ? 'text-white' : 'text-muted-foreground/70 group-hover:text-white'
+                )}
+              >
                 ({totals[item.id]})
               </span>
             </Button>
           );
         })}
       </div>
+
 
       {filteredRows.length === 0 ? (
         <EmptyState

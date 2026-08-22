@@ -14,6 +14,7 @@ import { Student } from '@/services/api/schema';
 import {
   getCourseEnrollmentsOptions,
   getEnrollmentsForClassOptions,
+  getQuizAttemptsOptions,
   getQuizAttemptsQueryKey,
   getQuizSchedulesOptions,
   getStudentQuizReviewOptions,
@@ -274,7 +275,7 @@ export default function StudentQuizSubmissionPage() {
     return null;
   }, [classMetaList, quizScheduleQueries, quizId]);
 
-  const enrollmentUuid = matchingScheduleRow?.classMeta.enrollmentUuid;
+  const enrollmentUuid = matchingScheduleRow?.classMeta?.enrollmentUuid;
   const courseEnrollmentUuid = matchingScheduleRow?.classMeta?.courseEnrollment?.uuid;
   const schedule = matchingScheduleRow?.schedule;
 
@@ -289,21 +290,24 @@ export default function StudentQuizSubmissionPage() {
   });
   const studentQuiz = studentQuizQuery.data?.data;
 
-  // const quizAttemptsQuery = useQuery({
-  //   ...getQuizAttemptsOptions({ path: { quizUuid: quizId }, query: { pageable: {} } }),
-  //   enabled: !!quizId,
-  //   staleTime: STALE_TIMES.live,
-  // });
 
-  // const attempts = useMemo<QuizAttempt[]>(() => {
-  //   const all = quizAttemptsQuery.data?.data?.content ?? [];
-  //   return all
-  //     .filter(a => !enrollmentUuid || a.enrollment_uuid === enrollmentUuid)
-  //     .slice()
-  //     .sort((l, r) => (r.attempt_number ?? 0) - (l.attempt_number ?? 0));
-  // }, [quizAttemptsQuery.data, enrollmentUuid]);
+  // const attempts: QuizAttempt[] = [];
+  const quizAttemptsQuery = useQuery({
+    ...getQuizAttemptsOptions({ path: { quizUuid: quizId }, query: { pageable: {} } }),
+    enabled: !!quizId,
+    staleTime: STALE_TIMES.live,
+  });
 
-  const attempts: QuizAttempt[] = [];
+  const attempts = useMemo<QuizAttempt[]>(() => {
+    const all = quizAttemptsQuery.data?.data?.content ?? [];
+
+    return all
+      .filter(a => !courseEnrollmentUuid || a.enrollment_uuid === courseEnrollmentUuid)
+      .slice()
+      .sort((l, r) => (r.attempt_number ?? 0) - (l.attempt_number ?? 0));
+  }, [quizAttemptsQuery.data, courseEnrollmentUuid]);
+
+
 
   const latestAttempt = attempts[0] ?? null;
   const inProgressAttempt = attempts.find(a => String(a.status).toLowerCase() === 'in_progress');
@@ -439,7 +443,7 @@ export default function StudentQuizSubmissionPage() {
             This quiz may not be scheduled for your current classes yet.
           </p>
         </div>
-        <Button variant='outline' onClick={() => router.push('/dashboard/student/assignment')}>
+        <Button variant='outline' onClick={() => router.push('/dashboard/student/learning-hub?tab=assignments')}>
           <ArrowLeft className='mr-2 h-4 w-4' />
           Back to assignments
         </Button>
@@ -468,11 +472,12 @@ export default function StudentQuizSubmissionPage() {
           variant='ghost'
           size='sm'
           className='mb-2 -ml-2 rounded-full'
-          onClick={() => router.push('/dashboard/student/learning-hub')}
+          onClick={() => router.push('/dashboard/student/learning-hub?tab=quizzes')}
         >
           <ArrowLeft className='mr-2 h-4 w-4' />
           All quizzes
         </Button>
+
         <div className='flex flex-wrap items-center gap-2'>
           <Badge variant='secondary'>{matchingScheduleRow.classMeta.courseTitle}</Badge>
           <Badge variant='outline'>{matchingScheduleRow.classMeta.classTitle}</Badge>
@@ -777,7 +782,7 @@ export default function StudentQuizSubmissionPage() {
             ) : (
               <span />
             )}
-            <Button className='gap-2' onClick={() => router.push('/dashboard/student/assignment')}>
+            <Button className='gap-2' onClick={() => router.push('/dashboard/student/learning-hub?tab=quizzes')}>
               Done
             </Button>
           </div>
