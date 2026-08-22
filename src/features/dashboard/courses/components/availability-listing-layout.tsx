@@ -2,23 +2,27 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Checkbox } from '@radix-ui/react-checkbox';
+import { format } from 'date-fns';
 import {
   Bookmark,
   BookOpen,
   Calendar,
   Clock,
+  CoinsIcon,
   Eye,
   GraduationCap,
   Languages,
   Layers,
   MapPin,
-  MessageSquare,
+  MessageSquareDot,
   PiggyBank,
+  Star,
   Timer,
   Users,
-  Wallet,
+  Wallet
 } from 'lucide-react';
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
+import { useOrganisationsByIds } from '../../../../../hooks/use-batched-lookups';
 import { useCourseLessonsWithContent } from '../../../../../hooks/use-courselessonwithcontent';
 import { ClassSessionTemplate } from '../../../../../services/client';
 import { toAuthenticatedMediaUrl } from '../../../../lib/media-url';
@@ -145,6 +149,18 @@ export default function AvailabilityClassCard({ cls, onEnroll, onViewCourse, onV
   const student = profile?.student;
 
   const [detail, setDetail] = useState<BundledClass | null>(null);
+  const [isRegistrationOngoing, setIsRegistrationOngoing] = useState(false);
+  const [isRegistrationPeriodUndefined, setIsRegistrationPeriodUndefined] =
+    useState(false);
+  const [isClassEnded, setIsClassEnded] = useState(false);
+  const [canEnrollClass, setCanEnrollClass] = useState(false);
+
+  // ORGANISATION DETAILS
+  const rating = Math.round(cls?.classRating?.average_rating ?? 0);
+
+  const { organisationMap } = useOrganisationsByIds([cls?.organisation_uuid!]);
+  const organisation =
+    (cls?.organisation_uuid && organisationMap[cls.organisation_uuid]) || null;
 
   // CLASS LESSONS
   const { isLoading: lessonsLoading, lessons: lessonsWithContent } = useCourseLessonsWithContent({
@@ -167,6 +183,8 @@ export default function AvailabilityClassCard({ cls, onEnroll, onViewCourse, onV
 
   const startsAt = firstSchedule?.start_time;
   const endsAt = lastSchedule?.end_time;
+  const registrationStart = cls?.registration_period_start_date;
+  const registrationEnd = cls?.registration_period_end_date
 
   // CLASS ENROLLMENTS
   const enrollments = cls.enrollments ?? [];
@@ -175,7 +193,68 @@ export default function AvailabilityClassCard({ cls, onEnroll, onViewCourse, onV
   ];
   const isStudentEnrolled = student ? uniqueStudentUuids.includes(student?.uuid) : false;
 
-  // console.log(cls, "CLASS")
+  // REGISTRATION PERIOD, CLASS ENDED BLOCK
+  useEffect(() => {
+    const now = new Date();
+
+    const registrationStartDate = registrationStart
+      ? new Date(registrationStart)
+      : null;
+
+    const registrationEndDate = registrationEnd
+      ? new Date(registrationEnd)
+      : null;
+
+    const classEndDate = endsAt
+      ? new Date(endsAt)
+      : null;
+
+    const noRegistrationPeriod =
+      !registrationStartDate && !registrationEndDate;
+
+    const registrationOngoing = noRegistrationPeriod
+      ? false
+      : (
+        (!registrationStartDate || now >= registrationStartDate) &&
+        (!registrationEndDate || now <= registrationEndDate)
+      );
+
+    const classEnded =
+      classEndDate !== null &&
+      now >= classEndDate;
+
+    setIsRegistrationPeriodUndefined(noRegistrationPeriod);
+    setIsRegistrationOngoing(registrationOngoing);
+    setIsClassEnded(classEnded);
+
+    setCanEnrollClass(
+      !classEnded &&
+      (registrationOngoing || noRegistrationPeriod)
+    );
+  }, [
+    registrationStart,
+    registrationEnd,
+    endsAt,
+  ]);
+
+  useEffect(() => {
+    const now = new Date();
+
+    if (!cls?.registration_period_start_date) {
+      setIsRegistrationOngoing(false);
+      return;
+    }
+
+    const start = new Date(cls?.registration_period_start_date);
+    const end = cls?.registration_period_end_date ? new Date(cls?.registration_period_end_date) : null;
+
+    const isOngoing =
+      now >= start &&
+      (end === null || now <= end);
+
+    setIsRegistrationOngoing(isOngoing);
+  }, [cls?.registration_period_start_date, cls?.registration_period_end_date]);
+
 
   return (
     <div>
@@ -213,18 +292,51 @@ export default function AvailabilityClassCard({ cls, onEnroll, onViewCourse, onV
                 )}
               </div>
 
-              <div className='text-muted-foreground mt-1 flex flex-wrap items-center gap-3 text-xs'>
-                <span>{cls.organization?.data?.name ?? 'Institution not available'}</span>
+              <div className="mt-1 flex flex-wrap items-center gap-2 text-xs text-muted-foreground [&>span:not(:last-child)]:after:ml-2 [&>span:not(:last-child)]:after:text-sm [&>span:not(:last-child)]:after:font-bold [&>span:not(:last-child)]:after:text-foreground/70 [&>span:not(:last-child)]:after:content-['•']">
+                {organisation && <span>{organisation.name}</span>}
+                <span>{cls.instructor?.data?.full_name ?? ''}</span>
+                <span>{cls.level_of_study ?? 'Certificate'}</span>
+                <div className="flex flex-row items-center gap-1.5">
+                  <span className="flex items-center text-warning">
+                    {rating > 0 ? (
+                      Array.from({ length: rating }).map((_, index) => (
+                        <Star
+                          key={index}
+                          className="h-3.5 w-3.5 fill-current"
+                        />
+                      ))
+                    ) : (
+                      <Star className="h-3.5 w-3.5 text-muted-foreground" />
+                    )}
+                  </span>
 
-                <span>· {cls.instructor?.data?.full_name ?? ''}</span>
+                  <span className="h-3.5">{rating}</span>
+                </div>
 
-                <span>· {cls.level_of_study ?? 'Certificate'}</span>
-
-                <span>· ⭐ {cls.classRating?.average_rating ?? '0'}</span>
               </div>
             </div>
           </div>
         </CardHeader>
+
+        <CardContent className="px-6 -mt-4 text-sm">
+          {isClassEnded ? (
+            <p className="rounded-md bg-destructive/10 px-3 py-2 text-destructive">
+              This class has ended. Enrollment is no longer available.
+            </p>
+          ) : isRegistrationPeriodUndefined ? (
+            <p className="rounded-md bg-success/10 px-3 py-2 text-success">
+              Registration period is not indicated. You can enroll for this class.
+            </p>
+          ) : isRegistrationOngoing ? (
+            <p className="rounded-md bg-success/10 px-3 py-2 text-success">
+              Registration is currently open for this class.
+            </p>
+          ) : (
+            <p className="rounded-md bg-warning/10 px-3 py-2 text-warning">
+              Registration is not currently open.
+            </p>
+          )}
+        </CardContent>
 
         <CardContent>
           {/* Summary badges */}
@@ -241,7 +353,7 @@ export default function AvailabilityClassCard({ cls, onEnroll, onViewCourse, onV
 
             <Badge variant='outline' className='bg-primary/5 text-primary gap-1'>
               <BookOpen className='h-3 w-3' />
-              {courseLessons.length} units
+              {courseLessons.length} modules/units
             </Badge>
 
             <Badge variant='outline' className='bg-muted text-muted-foreground gap-1'>
@@ -251,10 +363,22 @@ export default function AvailabilityClassCard({ cls, onEnroll, onViewCourse, onV
 
           {/* Details */}
           <div className='text-muted-foreground grid gap-2 text-xs md:grid-cols-3'>
-            <div className='inline-flex items-center gap-1.5'>
-              <Calendar className='h-3.5 w-3.5' />
-              {cls.academic_period ?? 'Academic period not provided'}
+            <div className="inline-flex items-center gap-1.5">
+              <Calendar className="h-3.5 w-3.5" />
+              {cls.academic_period_start_date && cls.academic_period_end_date
+                ? `${format(
+                  new Date(cls.academic_period_start_date),
+                  'MMM d, yyyy'
+                )} - ${format(
+                  new Date(cls.academic_period_end_date),
+                  'MMM d, yyyy'
+                )}`
+                : `${format(startsAt, 'MMM d, yyyy')} - ${format(
+                  endsAt,
+                  'MMM d, yyyy'
+                )}`}
             </div>
+
 
             <div className='inline-flex items-center gap-1.5'>
               <Clock className='h-3.5 w-3.5' />
@@ -277,7 +401,7 @@ export default function AvailabilityClassCard({ cls, onEnroll, onViewCourse, onV
             </div>
 
             <div className='inline-flex items-center gap-1.5'>
-              <MapPin className='h-3.5 w-3.5' />
+              <MapPin className='max-h-3.5 max-w-3.5 min-h-3.5 min-w-3.5' />
               {cls.venue ?? cls.location_name ?? cls?.meeting_link ?? 'Location not provided'}
             </div>
 
@@ -292,6 +416,7 @@ export default function AvailabilityClassCard({ cls, onEnroll, onViewCourse, onV
             </div>
 
             <div className='text-foreground inline-flex items-center gap-1.5 font-semibold'>
+              <CoinsIcon className='h-3.5 w-3.5' />
               KES {Number(cls.sale_price ?? 0).toLocaleString()}
             </div>
           </div>
@@ -302,7 +427,9 @@ export default function AvailabilityClassCard({ cls, onEnroll, onViewCourse, onV
             {isStudentEnrolled ? (
               <Button className='bg-success hover:bg-success/90'>Enrolled</Button>
             ) : (
-              <Button onClick={() => onEnroll(cls)} className='bg-primary hover:bg-primary/90'>
+              <Button
+                disabled={!canEnrollClass}
+                onClick={() => onEnroll(cls)} className='bg-primary hover:bg-primary/90'>
                 Join Class
               </Button>
             )}
@@ -317,12 +444,12 @@ export default function AvailabilityClassCard({ cls, onEnroll, onViewCourse, onV
               Class Info
             </Button>
 
-            <Button variant='outline'>
+            <Button disabled={true} variant='outline'>
               <Bookmark className='mr-1 h-4 w-4' />
               Save
             </Button>
 
-            <Button variant='outline'>
+            <Button disabled={true} variant='outline'>
               <Wallet className='mr-1 h-4 w-4' />
               Pay Using Wallet
             </Button>
@@ -334,8 +461,8 @@ export default function AvailabilityClassCard({ cls, onEnroll, onViewCourse, onV
               </Button>
             )}
 
-            <Button variant='ghost'>
-              <MessageSquare className='mr-1 h-4 w-4' />
+            <Button disabled={true} variant='ghost'>
+              <MessageSquareDot className='mr-1 h-4 w-4' />
               Contact Institution
             </Button>
           </div>
@@ -345,6 +472,7 @@ export default function AvailabilityClassCard({ cls, onEnroll, onViewCourse, onV
       <ClassDetailSheet
         open={!!detail}
         detail={detail}
+        organisation={organisation}
         startsAt={startsAt}
         endsAt={endsAt}
         uniqueStudentUuids={uniqueStudentUuids as string[]}

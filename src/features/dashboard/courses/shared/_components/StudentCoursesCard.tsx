@@ -78,7 +78,7 @@ export function StudentCoursesCard({
           setOpen(true);
           onOpenDetails(card);
         }}
-        className="flex h-full min-h-[520px] cursor-pointer flex-col overflow-hidden pt-0 transition hover:border-primary/40 hover:shadow-md"
+        className="flex h-full min-h-[520px] cursor-pointer flex-col overflow-hidden pt-0 transition hover:border-primary/40 hover:shadow-md gap-0"
       >
         {/* Cover */}
         <div className="relative h-40 w-full shrink-0 overflow-hidden">
@@ -102,10 +102,10 @@ export function StudentCoursesCard({
         </div>
 
         {/* Header */}
-        <CardHeader className="flex min-h-[168px] flex-col pb-2">
+        <CardHeader className="flex min-h-[168px] pt-4 flex-col -gap-4">
           {/* Badges */}
           <div className="min-h-[28px]">
-            <div className="flex max-h-[52px] flex-wrap content-start gap-1.5 overflow-hidden">
+            <div className="flex max-h-[52px] flex-wrap content-start gap-1 overflow-hidden">
               {card?.categoryNames?.length! > 0 && (
                 <>
                   {card?.categoryNames?.map(category => (
@@ -136,7 +136,7 @@ export function StudentCoursesCard({
           </div>
 
           {/* Title */}
-          <CardTitle className="mt-2 line-clamp-2 min-h-[56px] text-lg leading-7">
+          <CardTitle className="py-2 line-clamp-2 min-h-[56px]  text-lg leading-7">
             {card.title || 'Untitled Course'}
           </CardTitle>
 
@@ -147,7 +147,7 @@ export function StudentCoursesCard({
         </CardHeader>
 
         {/* Content */}
-        <CardContent className="mt-auto flex flex-1 flex-col space-y-3">
+        <CardContent className="mt-auto flex flex-1 flex-col py-3">
           {/* Metadata */}
           <div className="grid min-h-[60px] grid-cols-2 gap-x-3 gap-y-1.5 text-xs text-muted-foreground">
             <div className="flex min-w-0 items-center gap-1">

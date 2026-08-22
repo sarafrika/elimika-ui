@@ -40,19 +40,19 @@ import {
   Languages,
   MapPin,
   ShieldCheck,
-  Users,
+  User,
   Wallet
 } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { useMemo, useState } from 'react';
 import { toast } from 'sonner';
+import { useOrganisationsByIds } from '../../../../../hooks/use-batched-lookups';
 import { useDifficultyLevels } from '../../../../../hooks/use-difficultyLevels';
 import { useUserProfile } from '../../../profile/context/profile-context';
 import { formatSessionSchedule } from '../components/availability-listing-layout';
 import { EnrollmentLoadingState } from '../components/EnrollmentLoadingState';
 import { getErrorMessage, type ProgramBundledClass } from '../types';
 import PaymentMethodPicker, { formatKES } from './PaymentMethodPicker';
-
 
 const STUDENT_SCHEDULE_START = new Date('2024-10-10');
 const STUDENT_SCHEDULE_END = new Date('2030-10-10');
@@ -272,6 +272,11 @@ export default function ProgramClassEnrollmentPage({
       return { formattedDates: 'N/A' };
     }
   }, [enrollingClass]);
+
+  // ORGANISATION DETAILS
+  const { organisationMap } = useOrganisationsByIds([enrollingClass?.organisation_uuid!]);
+  const organisation =
+    (enrollingClass?.organisation_uuid && organisationMap[enrollingClass.organisation_uuid]) || null;
 
   // CLASS SCHEDULES
   const schedules = enrollingClass?.schedule ?? [];
@@ -556,12 +561,12 @@ export default function ProgramClassEnrollmentPage({
           </CardContent>
         )}
         <CardContent className='grid gap-2 sm:grid-cols-2'>
-          <InfoRow icon={<Building2 className='h-4 w-4' />} label='Institution' value={enrollingClass.organisation_uuid || "-"} />
+          {organisation && <InfoRow icon={<Building2 className='h-4 w-4' />} label='Institution' value={organisation?.name || "-"} />}
 
           <InfoRow
-            icon={<Users className='h-4 w-4' />}
+            icon={<User className='h-4 w-4' />}
             label='Instructor'
-            value={enrollingClass.instructor?.data?.full_name}
+            value={`${enrollingClass.instructor?.data?.full_name} - Instructor`}
           />
           {/* No discrete "academic period" field is exposed for this class. */}
           <InfoRow

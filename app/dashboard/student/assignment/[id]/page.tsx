@@ -291,7 +291,7 @@ export default function StudentAssignmentSubmissionPage() {
         variant='ghost'
         size='sm'
         className='text-muted-foreground -ml-2 w-fit rounded-full'
-        onClick={() => router.push('/dashboard/student/learning-hub')}
+        onClick={() => router.push('/dashboard/student/learning-hub?tab=assignments')}
       >
         <ArrowLeft className='mr-2 h-4 w-4' />
         All assignments

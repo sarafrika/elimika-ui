@@ -10,6 +10,7 @@ import {
 import { Label } from '@/components/ui/label';
 import Spinner from '@/components/ui/spinner';
 import { Textarea } from '@/components/ui/textarea';
+import { Checkbox } from '../../../../../components/ui/checkbox';
 import { StarRating } from './star-rating';
 
 type FeedbackType = 'instructor' | 'others';
@@ -28,6 +29,9 @@ type FeedbackDialogProps = {
 
   rating: number;
   onRatingChange: (value: number) => void;
+
+  anonymous?: boolean;
+  onAnonymousChange?: (value: boolean) => void;
 
   // Instructor-only ratings
   clarityRating?: number;
@@ -51,6 +55,8 @@ export function FeedbackDialog({
   onHeadlineChange,
   feedback,
   onFeedbackChange,
+  anonymous,
+  onAnonymousChange,
   rating,
   onRatingChange,
   clarityRating,
@@ -100,11 +106,37 @@ export function FeedbackDialog({
           </div>
 
           <div
-            className={`mb-8 grid gap-4 ${
-              isInstructor ? 'grid-cols-1 md:grid-cols-2' : 'grid-cols-1'
-            }`}
+            className={`mb-8 grid gap-4 ${isInstructor ? 'grid-cols-1 md:grid-cols-2' : 'grid-cols-1'
+              }`}
           >
-            <RatingField label='Overall Rating' value={rating} onChange={onRatingChange} />
+            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between space-y-4">
+              <RatingField
+                label="Overall Rating"
+                value={rating}
+                onChange={onRatingChange}
+              />
+
+              <div className="flex flex-col items-start space-x-3">
+                <div className='flex flex-row items-center gap-2'>
+                  <Checkbox
+                    id="anonymous-review"
+                    checked={anonymous ?? false}
+                    onCheckedChange={(checked) => onAnonymousChange?.(checked === true)}
+                  />
+                  <Label
+                    htmlFor="anonymous-review"
+                    className="cursor-pointer text-sm font-medium"
+                  >
+                    Submit anonymously
+                  </Label>
+                </div>
+
+                <p className="text-xs text-muted-foreground">
+                  Your name will not be shown with this review.
+                </p>
+              </div>
+            </div>
+
 
             {isInstructor && (
               <>
