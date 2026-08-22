@@ -727,7 +727,7 @@ function JobDetailsSheet({
                       <Link
                         href={buildWorkspaceAliasPath(
                           activeDomain,
-                          `/dashboard/apply-to-train/${job.course_uuid}`
+                          `/dashboard/courses`
                         )}
                       >
                         Apply to train this course

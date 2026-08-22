@@ -26,7 +26,7 @@ export function LearningHubAssignments({
         </div>
         <Link
           prefetch
-          href='/dashboard/student/assignment'
+          href='/dashboard/student/learning-hub?tab=assignments'
           className='text-primary hover:text-primary/80 inline-flex items-center gap-1 text-[0.82rem] font-medium transition'
         >
           View All Assignments

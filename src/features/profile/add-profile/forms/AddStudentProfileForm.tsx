@@ -1,16 +1,9 @@
 'use client';
 
-import { zodResolver } from '@hookform/resolvers/zod';
-import { useQueryClient } from '@tanstack/react-query';
-import { ArrowLeft, GraduationCap } from 'lucide-react';
-import { useRouter } from 'next/navigation';
-import { useSearchParams } from 'next/navigation';
-import { useState } from 'react';
-import { useForm } from 'react-hook-form';
-import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Form } from '@/components/ui/form';
+import { getErrorMessage } from '@/lib/error-utils';
 import { createStudent } from '@/services/client';
 import { useUserDomain } from '@/src/features/dashboard/context/user-domain-context';
 import { buildDashboardSwitchPath } from '@/src/features/dashboard/lib/active-domain-storage';
@@ -20,6 +13,13 @@ import {
   type StudentProfileFormData,
   studentProfileSchema,
 } from '@/src/features/profile/forms/shared/student-profile';
+import { zodResolver } from '@hookform/resolvers/zod';
+import { useQueryClient } from '@tanstack/react-query';
+import { ArrowLeft, GraduationCap } from 'lucide-react';
+import { useRouter, useSearchParams } from 'next/navigation';
+import { useState } from 'react';
+import { useForm } from 'react-hook-form';
+import { toast } from 'sonner';
 
 export default function AddStudentProfileForm() {
   const router = useRouter();
@@ -49,27 +49,36 @@ export default function AddStudentProfileForm() {
       return;
     }
 
+    const payload = {
+      ...data,
+      user_uuid: data.user_uuid || user.uuid,
+    };
+
     setIsSubmitting(true);
     try {
-      await createStudent({
-        body: data,
+      const response = await createStudent({
+        body: payload,
       });
 
-      // Invalidate student-related queries
+      if (response.error) {
+        throw response.error;
+      }
+
       await queryClient.invalidateQueries({ queryKey: ['students'] });
       await queryClient.invalidateQueries({ queryKey: ['searchStudents'] });
 
-      // Invalidate and refetch user profile to get updated user_domain
       await queryClient.invalidateQueries({ queryKey: ['profile'] });
       await user.invalidateQuery?.();
 
       toast.success('Student profile added successfully!');
 
-      // Set the new domain as active and redirect
       userDomain.setActiveDomain('student');
       router.replace(buildDashboardSwitchPath('student', returnPath || undefined));
-    } catch (_error) {
-      toast.error('Failed to create student profile. Please try again.');
+    } catch (error) {
+      // @ts-ignore
+      toast.error(error?.message)
+      toast.error(getErrorMessage(error, 'Failed to create student profile. Please try again.'));
+    } finally {
       setIsSubmitting(false);
     }
   };

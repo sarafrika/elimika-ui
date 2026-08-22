@@ -39,8 +39,10 @@ import {
 import Link from 'next/link';
 import { useEffect, useMemo, useState } from 'react';
 import { toast } from 'sonner';
+import { AttachmentResourceList } from '../../../../../components/assessment/AttachmentResourceList';
 import { Card, CardContent } from '../../../../../components/ui/card';
 import { stripHtml } from '../../../../../src/features/dashboard/courses/shared/_components/courses-data';
+import { toAttachmentResourceItems } from '../../_components/student-assignment-workspace';
 
 type SortKey = 'due' | 'course' | 'title';
 
@@ -137,8 +139,10 @@ function AssignmentDetailSheet({
         onClose();
     };
 
-    const submitMut = useMutation(submitAssignmentQueryMutation());
-    const uploadMut = useMutation(uploadSubmissionAttachmentMutation());
+
+    const submitAssignmentMut = useMutation(submitAssignmentQueryMutation());
+    const uploadSubmissionAttachmentMut = useMutation(uploadSubmissionAttachmentMutation());
+    const isSubmitting = submitAssignmentMut.isPending || uploadSubmissionAttachmentMut.isPending;
 
     const handleFiles = (files: FileList | null) => {
         if (!files) return;
@@ -155,7 +159,7 @@ function AssignmentDetailSheet({
         );
     };
 
-    const handleSubmit = async () => {
+    const handleSubmitAssignment = async () => {
         if (!assignment?.uuid) {
             toast.error('This assignment is missing an assignment record.');
             return;
@@ -172,23 +176,14 @@ function AssignmentDetailSheet({
         }
 
         try {
-            const response = await submitMut.mutateAsync({
-                path: { assignmentUuid: assignment.uuid },
+            // @ts-ignore
+            const response = await submitAssignmentMut.mutateAsync({
+                path: { assignmentUuid: assignment?.uuid },
                 body: {
                     enrollment_uuid: activeEnrollmentUuid,
                     student_uuid: row?.classMeta.studentUuid ?? student?.uuid,
                     submission_text: submissionText,
-                    file_urls: [],
-                },
-                query: {
-                    enrollmentUuid: activeEnrollmentUuid,
-                    enrollment_uuid: activeEnrollmentUuid,
-                    student_uuid: row?.classMeta.studentUuid ?? student?.uuid,
-                    studentUuid: row?.classMeta.studentUuid ?? student?.uuid,
-                    submission_text: submissionText,
-                    content: submissionText,
-                    file_urls: [],
-                    fileUrls: [],
+                    file_urls: ['/assignment.pdf'],
                 },
             });
 
@@ -199,7 +194,7 @@ function AssignmentDetailSheet({
 
             await Promise.all(
                 queuedFiles.map(file =>
-                    uploadMut.mutateAsync({
+                    uploadSubmissionAttachmentMut.mutateAsync({
                         path: {
                             assignmentUuid: assignment.uuid as string,
                             submissionUuid,
@@ -212,11 +207,12 @@ function AssignmentDetailSheet({
             await queryClient.invalidateQueries({
                 queryKey: getAssignmentSubmissionsQueryKey({ path: { assignmentUuid: assignment.uuid } }),
             });
+            await queryClient.invalidateQueries({ queryKey: ['student-assignments'] });
 
             toast.success('Assignment submitted successfully.');
             handleClose();
         } catch (error) {
-            toast.error(error instanceof Error ? error.message : 'Unable to submit this assignment.');
+            toast.error(error?.message);
         }
     };
 
@@ -242,6 +238,14 @@ function AssignmentDetailSheet({
                         {submissionState && <Badge variant={submissionState.variant}>{submissionState.label}</Badge>}
                     </div>
 
+                    <AttachmentResourceList
+                        attachments={toAttachmentResourceItems(
+                            payload?.row?.attachments as unknown[]
+                        )}
+                        emptyMessage='No files were uploaded with the latest submission.'
+                        previewLabel='Read file'
+                    />
+
                     {assignment?.description && (
                         <div className="rounded-sm border bg-muted/30 p-3 text-sm leading-relaxed">
                             <p className="mb-1 text-xs font-medium text-muted-foreground">
@@ -266,6 +270,22 @@ function AssignmentDetailSheet({
                             <p className="whitespace-pre-wrap leading-relaxed">
                                 {stripHtml(assignment.instructions)}
                             </p>
+                        </div>
+                    )}
+
+                    {assignment?.submission_types?.length > 0 && (
+                        <div className="rounded-sm border bg-muted/30 p-3">
+                            <p className="mb-2 text-xs font-medium text-muted-foreground">
+                                Accepted submission types
+                            </p>
+
+                            <div className="flex flex-wrap gap-2">
+                                {assignment.submission_types.map((type) => (
+                                    <Badge key={type} variant="default">
+                                        {type}
+                                    </Badge>
+                                ))}
+                            </div>
                         </div>
                     )}
 
@@ -340,7 +360,7 @@ function AssignmentDetailSheet({
                             <Input
                                 type='file'
                                 multiple
-                                disabled={submitMut.isPending || uploadMut.isPending}
+                                disabled={isSubmitting}
                                 onChange={event => handleFiles(event.target.files)}
                             />
                         ) : (
@@ -353,13 +373,13 @@ function AssignmentDetailSheet({
                     {canEdit ? (
                         <div className='flex justify-end gap-2 pt-2'>
                             <Button variant='outline' asChild>
-                                <Link href='/dashboard/student/assignment' className='inline-flex items-center gap-2'>
+                                <Link href='/dashboard/student/learning-hub?tab=assignments' className='inline-flex items-center gap-2'>
                                     Go to assignments page
                                     <ArrowRight className='h-4 w-4' />
                                 </Link>
                             </Button>
-                            <Button onClick={handleSubmit} disabled={submitMut.isPending || uploadMut.isPending}>
-                                {submitMut.isPending || uploadMut.isPending ? (
+                            <Button onClick={handleSubmitAssignment} disabled={isSubmitting}>
+                                {isSubmitting ? (
                                     <>
                                         <Upload className='mr-2 h-4 w-4 animate-pulse' />
                                         Submitting

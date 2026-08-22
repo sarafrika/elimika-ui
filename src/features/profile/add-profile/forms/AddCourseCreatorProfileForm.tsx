@@ -1,12 +1,5 @@
 'use client';
 
-import { zodResolver } from '@hookform/resolvers/zod';
-import { useQueryClient } from '@tanstack/react-query';
-import { ArrowLeft, GraduationCap } from 'lucide-react';
-import { useRouter } from 'next/navigation';
-import { useEffect, useState } from 'react';
-import { useForm } from 'react-hook-form';
-import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Form } from '@/components/ui/form';
@@ -24,6 +17,13 @@ import {
   courseCreatorProfileSchema,
   normalizeCourseCreatorProfileData,
 } from '@/src/features/profile/forms/shared/course-creator-profile';
+import { zodResolver } from '@hookform/resolvers/zod';
+import { useQueryClient } from '@tanstack/react-query';
+import { ArrowLeft, GraduationCap } from 'lucide-react';
+import { useRouter } from 'next/navigation';
+import { useEffect, useState } from 'react';
+import { useForm } from 'react-hook-form';
+import { toast } from 'sonner';
 
 export default function AddCourseCreatorProfileForm() {
   const router = useRouter();
@@ -59,11 +59,10 @@ export default function AddCourseCreatorProfileForm() {
       return;
     }
 
-    if (!data.user_uuid) {
-      data.user_uuid = user.uuid;
-    }
-
-    const cleanedData = normalizeCourseCreatorProfileData(data);
+    const cleanedData = normalizeCourseCreatorProfileData({
+      ...data,
+      user_uuid: data.user_uuid || user.uuid,
+    });
 
     setIsSubmitting(true);
     try {
@@ -72,7 +71,7 @@ export default function AddCourseCreatorProfileForm() {
       });
 
       if (response.error) {
-        throw new Error(response.error.message || 'Failed to create course creator profile');
+        throw response.error;
       }
 
       await queryClient.invalidateQueries({ queryKey: ['courseCreators'] });
@@ -88,6 +87,8 @@ export default function AddCourseCreatorProfileForm() {
       userDomain.setActiveDomain('course_creator');
       router.replace(buildDashboardSwitchPath('course_creator'));
     } catch (error) {
+      // @ts-ignore
+      toast.error(error?.message)
       toast.error(
         getErrorMessage(error, 'Failed to create course creator profile. Please try again.')
       );

@@ -85,6 +85,7 @@ export function OverviewTab() {
               />
             </CardContent>
           </Card>
+
           <Card className='min-w-0 overflow-hidden'>
             <CardHeader className='pb-2'>
               <CardTitle className='text-base'>Allocation Utilization</CardTitle>

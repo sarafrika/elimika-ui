@@ -233,7 +233,7 @@ export default function StudentAssignmentSubmissionPage() {
       ]);
 
       toast.success('Assignment submitted successfully.');
-      router.push('/dashboard/student/assignment');
+      router.push('/dashboard/student/learning-hub?tab=assignments');
     } catch (error) {
       toast.error(getErrorMessage(error, 'Unable to submit this assignment right now.'));
     }
@@ -266,7 +266,7 @@ export default function StudentAssignmentSubmissionPage() {
             The assignment you&apos;re looking for may have been deleted, moved, or you may not have
             permission to access it.
           </p>
-          <Button className='mt-8' onClick={() => router.push('/dashboard/student/assignment')}>
+          <Button className='mt-8' onClick={() => router.push('/dashboard/student/learning-hub?tab=assignments')}>
             <ArrowLeft className='mr-2 h-4 w-4' />
             Back to assignments
           </Button>

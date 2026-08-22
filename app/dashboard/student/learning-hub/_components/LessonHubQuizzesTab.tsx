@@ -49,6 +49,7 @@ type ClassMeta = {
     courseTitle: string;
     courseUuid: string;
     enrollmentUuid?: string;
+    courseEnrollmentUuid?: string
 };
 
 type StudentClassDefinitionRow = ReturnType<
@@ -407,12 +408,19 @@ export default function LessonHubQuizzesTab() {
             (classDefinitions ?? [])
                 .map((classDefinition: StudentClassDefinitionRow) => {
                     const classDetails = classDefinition.classDetails as ResolvedClassDetails | undefined;
+
+                    const courseEnrollmentUuid = classDefinition.courseEnrollments.find(
+                        enrollment =>
+                            enrollment.student_uuid === student?.uuid // && enrollment.status === 'ACTIVE'
+                    )?.uuid;
+
                     return {
                         classTitle: getClassTitle(classDetails),
                         classUuid:
                             classDefinition.uuid || classDetails?.uuid || classDetails?.class_definition?.uuid,
                         courseTitle: classDefinition.course?.name || classDetails?.course_name || 'Untitled course',
                         courseUuid: classDefinition.course?.uuid || '',
+                        courseEnrollmentUuid,
                     };
                 })
                 .filter(
@@ -423,6 +431,7 @@ export default function LessonHubQuizzesTab() {
                         classUuid: string;
                         courseTitle: string;
                         courseUuid: string;
+                        courseEnrollmentUuid: string
                     } => Boolean(classItem.classUuid)
                 ),
         [classDefinitions]
@@ -520,9 +529,9 @@ export default function LessonHubQuizzesTab() {
                 const quizUuid = schedule.quiz_uuid as string | undefined;
                 const quiz = quizUuid ? quizMap.get(quizUuid) : undefined;
                 const attempts =
-                    quizUuid && classMeta.enrollmentUuid
+                    quizUuid && classMeta.courseEnrollmentUuid
                         ? (attemptMap.get(quizUuid) ?? []).filter(
-                            attempt => attempt.enrollment_uuid === classMeta.enrollmentUuid
+                            attempt => attempt.enrollment_uuid === classMeta.courseEnrollmentUuid
                         )
                         : quizUuid
                             ? (attemptMap.get(quizUuid) ?? [])
