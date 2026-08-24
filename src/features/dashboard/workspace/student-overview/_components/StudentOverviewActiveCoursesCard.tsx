@@ -6,6 +6,7 @@ import Link from 'next/link';
 import { Badge } from '../../../../../../components/ui/badge';
 import { Button } from '../../../../../../components/ui/button';
 import { Progress } from '../../../../../../components/ui/progress';
+import { cn } from '../../../../../../lib/utils';
 import type {
   StudentOverviewActiveCourse,
   StudentOverviewAssessment,
@@ -106,30 +107,75 @@ export function StudentOverviewActiveCoursesCard({
         </CardHeader>
         <CardContent className='space-y-3'>
           {hasAssessments ? (
-            upcomingAssessments.map(a => (
-              <Link
-                key={a.id}
-                href={a.href}
-                className='hover:border-primary/30 flex items-start gap-3 rounded-lg border p-3 transition-colors'
-              >
-                <div className='bg-primary/10 text-primary grid h-9 w-9 shrink-0 place-items-center rounded-md'>
-                  <FileText className='h-4 w-4' />
-                </div>
-                <div className='min-w-0 flex-1'>
-                  <p className='truncate text-sm font-medium'>{a.title}</p>
-                  <p className='text-muted-foreground text-xs'>
-                    {a.provider} · {a.dueLabel}
-                  </p>
-                  <p className='text-muted-foreground mt-1 text-[0.72rem]'>
-                    {a.classTitle}
-                    {a.courseTitle ? ` · ${a.courseTitle}` : ''}
-                  </p>
-                </div>
-                <Badge variant='secondary' className='h-fit text-[10px]'>
-                  {a.badgeLabel}
-                </Badge>
-              </Link>
-            ))
+            <>
+              {upcomingAssessments.slice(0, 5).map(a => {
+                const isDue =
+                  new Date(a.dueLabel.replace(/^Due\s+/, '')) <= new Date();
+
+                return (
+                  <Link
+                    key={a.id}
+                    href={a.href}
+                    className={cn(
+                      'flex items-start gap-3 rounded-lg border p-3 transition-colors',
+                      isDue
+                        ? 'border-destructive/30 bg-destructive/5 hover:border-destructive/50 dark:bg-destructive/10'
+                        : 'hover:border-primary/30'
+                    )}
+                  >
+                    <div
+                      className={cn(
+                        'grid h-9 w-9 shrink-0 place-items-center rounded-md',
+                        isDue
+                          ? 'bg-destructive/10 text-destructive'
+                          : 'bg-primary/10 text-primary'
+                      )}
+                    >
+                      <FileText className='h-4 w-4' />
+                    </div>
+
+                    <div className='min-w-0 flex-1'>
+                      <p className='truncate text-sm font-medium'>{a.title}</p>
+
+                      <p
+                        className={cn(
+                          'text-xs',
+                          isDue
+                            ? 'font-medium text-destructive'
+                            : 'text-muted-foreground'
+                        )}
+                      >
+                        {a.provider} · {a.dueLabel}
+                      </p>
+
+                      <p className='mt-1 text-[0.72rem] text-muted-foreground'>
+                        {a.classTitle}
+                        {a.courseTitle ? ` · ${a.courseTitle}` : ''}
+                      </p>
+                    </div>
+
+                    <Badge
+                      variant={isDue ? 'destructive' : 'secondary'}
+                      className='h-fit text-[10px]'
+                    >
+                      {isDue ? 'Due' : a.badgeLabel}
+                    </Badge>
+                  </Link>
+                );
+              })}
+
+              {upcomingAssessments.length > 5 && (
+                <Button
+                  asChild
+                  variant='outline'
+                  className='w-full'
+                >
+                  <Link href='/dashboard/student/learning-hub?tab=assignments'>
+                    See all
+                  </Link>
+                </Button>
+              )}
+            </>
           ) : (
             <div className='rounded-lg border border-dashed p-4'>
               <p className='text-muted-foreground text-sm'>
@@ -138,6 +184,7 @@ export function StudentOverviewActiveCoursesCard({
             </div>
           )}
         </CardContent>
+
       </Card>
     </section>
   );
