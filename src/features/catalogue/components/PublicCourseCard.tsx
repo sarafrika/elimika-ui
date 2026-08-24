@@ -1,6 +1,3 @@
-import { Clock, GraduationCap, Layers } from 'lucide-react';
-import Image from 'next/image';
-import Link from 'next/link';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -11,6 +8,10 @@ import {
   sanitizeRichText,
 } from '@/src/features/catalogue/format';
 import type { PublicCatalogueCourse } from '@/src/features/catalogue/types';
+import { Clock, GraduationCap, Layers } from 'lucide-react';
+import Image from 'next/image';
+import Link from 'next/link';
+import { toAuthenticatedMediaUrl } from '../../../lib/media-url';
 
 export function PublicCourseCard({ item }: { item: PublicCatalogueCourse }) {
   const { course, creatorName, isFree } = item;
@@ -20,11 +21,11 @@ export function PublicCourseCard({ item }: { item: PublicCatalogueCourse }) {
   const courseUuid = course.uuid ?? '';
 
   return (
-    <Card className='group border-border bg-card h-full rounded-[28px] border transition hover:-translate-y-1 hover:shadow-lg'>
+    <Card className='group border-border bg-card h-full rounded-[28px] border transition hover:-translate-y-1 hover:shadow-lg pt-0'>
       {course.thumbnail_url ? (
         <div className='border-border/60 bg-muted relative aspect-[16/9] w-full overflow-hidden rounded-t-[28px] border-b'>
           <Image
-            src={course.thumbnail_url}
+            src={toAuthenticatedMediaUrl(course.thumbnail_url)!}
             alt={displayTitle}
             fill
             sizes='(min-width: 1024px) 320px, 100vw'

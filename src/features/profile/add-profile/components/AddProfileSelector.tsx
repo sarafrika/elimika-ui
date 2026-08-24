@@ -1,12 +1,14 @@
 'use client';
 
-import { ArrowLeft, ArrowRight, BookOpen, Building2, GraduationCap, Users } from 'lucide-react';
-import Link from 'next/link';
-import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import type { UserDomain } from '@/lib/types';
 import { cn } from '@/lib/utils';
 import { useUserProfile } from '@/src/features/profile/context/profile-context';
+import { ArrowLeft, ArrowRight, BookOpen, Building2, GraduationCap, Users } from 'lucide-react';
+import Link from 'next/link';
+import { useRouter } from 'next/navigation';
+import { useUserDomain } from '../../../dashboard/context/user-domain-context';
+import { buildWorkspaceAliasPath } from '../../../dashboard/lib/active-domain-storage';
 
 type ProfileAccent = {
   icon: string;
@@ -96,7 +98,9 @@ const profileTypes: ProfileType[] = [
 
 export default function AddProfileSelector() {
   const profile = useUserProfile();
+  const { activeDomain } = useUserDomain()
   const router = useRouter();
+
 
   // Filter out profile types that the user already has
   const existingDomains = new Set(
@@ -125,8 +129,11 @@ export default function AddProfileSelector() {
             You already have all available profile types. You can switch between them using the
             dashboard switcher.
           </p>
-          <Button onClick={() => router.push('/dashboard/overview')} variant='default'>
-            <ArrowLeft className='mr-2 h-4 w-4' />
+          <Button
+            onClick={() => router.push(buildWorkspaceAliasPath(activeDomain, '/dashboard/overview'))}
+            variant="default"
+          >
+            <ArrowLeft className="mr-2 h-4 w-4" />
             Back to Dashboard
           </Button>
         </div>

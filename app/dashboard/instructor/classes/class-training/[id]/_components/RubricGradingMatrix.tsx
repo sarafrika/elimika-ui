@@ -255,7 +255,7 @@ export function RubricGradingMatrix({
                               ) : null}
                             </span>
                             {cell?.description ? (
-                              <span className='text-muted-foreground leading-snug'>
+                              <span className='text-muted-foreground  max-w-[200px] text-wrap leading-snug'>
                                 {cell.description}
                               </span>
                             ) : null}
@@ -296,11 +296,10 @@ export function RubricSummaryPreview({ matrix }: { matrix: RubricMatrix }) {
         {sortedLevels.map(level => (
           <span
             key={level.uuid}
-            className={`inline-flex items-center gap-1 rounded-full border px-2 py-0.5 text-[10px] font-medium ${
-              level.is_passing === false
-                ? 'border-destructive/30 bg-destructive/5 text-destructive'
-                : 'border-primary/20 bg-primary/5 text-primary'
-            }`}
+            className={`inline-flex items-center gap-1 rounded-full border px-2 py-0.5 text-[10px] font-medium ${level.is_passing === false
+              ? 'border-destructive/30 bg-destructive/5 text-destructive'
+              : 'border-primary/20 bg-primary/5 text-primary'
+              }`}
           >
             {level.name}
             <span className='text-muted-foreground'>{level.points}pts</span>

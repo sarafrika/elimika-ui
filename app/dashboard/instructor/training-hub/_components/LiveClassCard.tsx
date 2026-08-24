@@ -13,6 +13,11 @@ import {
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import {
+  Collapsible,
+  CollapsibleContent,
+  CollapsibleTrigger,
+} from '@/components/ui/collapsible';
+import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
@@ -27,20 +32,24 @@ import {
   CalendarDays,
   Check,
   CheckCircle2,
+  ChevronDown,
   CircleCheck,
   EllipsisVertical,
   Eye,
   Filter,
   Pencil,
+  Play,
   Plus,
   Trash2,
   UserPlus,
-  Users,
+  Users
 } from 'lucide-react';
 import Image from 'next/image';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import { useMemo, useState } from 'react';
 import { toast } from 'sonner';
+import { Badge } from '../../../../../components/ui/badge';
 import {
   Sheet,
   SheetContent,
@@ -68,6 +77,7 @@ type LiveClassCardProps = {
 export function LiveClassCard({ liveClass }: LiveClassCardProps) {
   const qc = useQueryClient();
   const profile = useUserProfile();
+  const router = useRouter()
 
   const [search, setSearch] = useState('');
   const [filter, setFilter] = useState<'all' | 'enrolled' | 'not_enrolled'>('all');
@@ -210,18 +220,18 @@ export function LiveClassCard({ liveClass }: LiveClassCardProps) {
   const statusConfig =
     liveClass.status === 'published'
       ? {
-          label: 'Published',
-          className: 'border-success/20 bg-success/10 text-success',
-        }
+        label: 'Published',
+        className: 'border-success/20 bg-success/10 text-success',
+      }
       : liveClass.status === 'draft'
         ? {
-            label: 'Draft',
-            className: 'border-warning/20 bg-warning/10 text-warning',
-          }
+          label: 'Draft',
+          className: 'border-warning/20 bg-warning/10 text-warning',
+        }
         : {
-            label: 'On-going',
-            className: 'border-primary/20 bg-primary/10 text-primary',
-          };
+          label: 'On-going',
+          className: 'border-primary/20 bg-primary/10 text-primary',
+        };
 
   const { difficultyMap } = useDifficultyLevels();
 
@@ -233,10 +243,10 @@ export function LiveClassCard({ liveClass }: LiveClassCardProps) {
 
   const formattedDate = liveClass?.class?.default_start_time
     ? new Date(liveClass.class.default_start_time).toLocaleDateString('en-KE', {
-        day: 'numeric',
-        month: 'long',
-        year: 'numeric',
-      })
+      day: 'numeric',
+      month: 'long',
+      year: 'numeric',
+    })
     : 'Not set';
 
   const bundledCourses = liveClass.programCourses ?? [];
@@ -261,6 +271,27 @@ export function LiveClassCard({ liveClass }: LiveClassCardProps) {
   const hours = Math.floor(totalMinutes / 60);
   const minutes = totalMinutes % 60;
   const timeHrsMinutes = `${hours} hrs ${minutes} mins`;
+
+  const schedules = liveClass?.class?.schedule || []
+  const now = new Date();
+  const notStartedSessions = schedules.filter(schedule => {
+    const endTime = schedule.end_time
+      ? new Date(schedule.end_time)
+      : null;
+
+    return (
+      !schedule.started_at &&
+      !schedule.concluded_at &&
+      endTime &&
+      endTime.getTime() < now.getTime()
+    );
+  });
+
+  const handleStartClass = (schedule: (typeof schedules)[number]) => {
+    router.push(
+      `/dashboard/instructor/classes/class-training/${liveClass.classUuid}?schedule=${schedule.uuid}`
+    );
+  };
 
   return (
     <Card className='border-border/60 bg-card overflow-hidden rounded-md border p-0 shadow-sm'>
@@ -487,7 +518,9 @@ export function LiveClassCard({ liveClass }: LiveClassCardProps) {
                 {/* PROGRESS */}
                 <div className='min-w-0 flex-1'>
                   <div className='mb-2 flex items-center justify-between gap-3'>
-                    <p className='text-foreground text-sm font-medium'>Overall Progress</p>
+                    <p className='text-foreground text-sm font-medium'>
+                      Overall Progress
+                    </p>
 
                     <p className='text-primary text-sm font-semibold'>
                       {sessionsRemaining} Sessions Remaining
@@ -500,21 +533,92 @@ export function LiveClassCard({ liveClass }: LiveClassCardProps) {
                     indicatorClassName='bg-primary'
                   />
 
-                  <p className='text-muted-foreground mt-2 text-sm'>{progress}% completed</p>
+                  <p className='text-muted-foreground mt-2 text-sm'>
+                    {progress}% completed
+                  </p>
                 </div>
 
                 {/* ACTIONS */}
                 <div className='flex items-center gap-2'>
                   <Link
-                    href={(() => {
-                      return `/dashboard/instructor/classes/class-training/${liveClass.classUuid}`;
-                    })()}
+                    href={`/dashboard/instructor/classes/class-training/${liveClass.classUuid}`}
                     className='bg-primary text-primary-foreground hover:bg-primary/90 inline-flex h-9 min-w-[120px] items-center justify-center gap-2 rounded-md px-5 text-sm font-semibold transition'
                   >
                     Open Class
                   </Link>
                 </div>
               </div>
+
+              {notStartedSessions.length > 0 && (
+                <Collapsible className='border-border/60 mt-4 border-t pt-4'>
+                  <CollapsibleTrigger className='group flex w-full items-center justify-between gap-3 text-left'>
+                    <div className='min-w-0'>
+                      <div className='flex items-center gap-2'>
+                        <h4 className='text-foreground text-sm font-semibold'>
+                          Sessions Missed
+                        </h4>
+
+                        <Badge variant='secondary'>
+                          {notStartedSessions.length}
+                        </Badge>
+                      </div>
+
+                      <p className='text-muted-foreground mt-1 text-xs'>
+                        These scheduled sessions were not started before their scheduled
+                        end time.
+                      </p>
+                    </div>
+
+                    <ChevronDown className='text-muted-foreground h-4 w-4 shrink-0 transition-transform group-data-[state=open]:rotate-180' />
+                  </CollapsibleTrigger>
+
+                  <CollapsibleContent className='pt-3'>
+                    <div className='space-y-2'>
+                      {notStartedSessions.map((schedule, index) => (
+                        <div
+                          key={schedule.uuid ?? `unscheduled-${index}`}
+                          className='bg-background border-border/60 flex flex-col gap-3 rounded-lg border p-3 sm:flex-row sm:items-center sm:justify-between'
+                        >
+                          <div className='flex min-w-0 items-center gap-3'>
+                            <div className='bg-primary/10 text-primary flex h-9 w-9 shrink-0 items-center justify-center rounded-md'>
+                              <CalendarDays className='h-4 w-4' />
+                            </div>
+
+                            <div className='min-w-0'>
+                              <p className='text-foreground text-sm font-medium'>
+                                {schedule.title || `Class Session ${index + 1}`}
+                              </p>
+
+                              <div className='text-muted-foreground mt-0.5 flex flex-wrap items-center gap-2 text-xs'>
+                                <span>
+                                  {schedule.duration_formatted ?? 'Duration not set'}
+                                </span>
+
+                                <span>•</span>
+
+                                <span>
+                                  {schedule.time_range ?? 'Time not scheduled'}
+                                </span>
+                              </div>
+                            </div>
+                          </div>
+
+                          <Button
+                            type='button'
+                            size='sm'
+                            className='w-full shrink-0 sm:w-auto'
+                            disabled={!schedule.can_be_started}
+                            onClick={() => handleStartClass(schedule)}
+                          >
+                            <Play className='mr-2 h-4 w-4' />
+                            Start Class
+                          </Button>
+                        </div>
+                      ))}
+                    </div>
+                  </CollapsibleContent>
+                </Collapsible>
+              )}
             </div>
           )}
         </div>
