@@ -18,9 +18,8 @@ import {
   Plus,
   Search,
   SlidersHorizontal,
-  Star,
   Trash2,
-  Users,
+  Users
 } from 'lucide-react';
 import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
@@ -36,6 +35,9 @@ import {
   StatusBadge,
 } from '@/app/dashboard/admin/_components/ui';
 import { type RateBasis, rateBasisUnit } from '@/components/class-form';
+import {
+  RATE_BASES
+} from '@/components/class-form/class-form-shared';
 import DeleteModal from '@/components/custom-modals/delete-modal';
 import { PageHeader as AdminPageHeader } from '@/components/dashboard';
 import { AsyncSection } from '@/components/data/async-section';
@@ -111,7 +113,7 @@ import { MarketplaceTabs } from './MarketplaceTabs';
 
 
 type JobFilter = 'all' | StatusEnum7;
-type MarketplaceTabId = 'all' | 'full-time' | 'freelance' | 'internship' | 'remote';
+type MarketplaceTabId = 'all' | RateBasis;
 type JobSortDirection = 'newest' | 'oldest';
 type MarketplaceContentType = 'course' | 'program';
 type JobContentPrefill = { type: MarketplaceContentType; id: string };
@@ -149,7 +151,14 @@ const weekdayValueByJsDay = [
 
 const locationTypeOptions: LocationTypeEnum[] = ['ONLINE', 'IN_PERSON', 'HYBRID'];
 const classVisibilityOptions: ClassVisibilityEnum[] = ['PUBLIC', 'PRIVATE'];
-const sessionFormatOptions: SessionFormatEnum[] = ['INDIVIDUAL', 'GROUP'];
+const sessionFormatOptions: SessionFormatEnum[] = [
+  'ONE_ON_ONE',
+  'GROUP',
+  'ONLINE',
+  'PRIVATE_ONLINE',
+];
+
+
 const statusOptions: Array<{ label: string; value: JobFilter }> = [
   { label: 'All', value: 'all' },
   { label: 'Open', value: 'open' },
@@ -165,44 +174,22 @@ const marketplaceTabs: Array<{
   icon: typeof BriefcaseBusiness;
 }> = [
     { id: 'all', label: 'All', count: 0, icon: BriefcaseBusiness },
-    { id: 'full-time', label: 'Full-Time', count: 0, icon: BriefcaseBusiness },
-    { id: 'internship', label: 'Internship', count: 0, icon: GraduationCap },
-    { id: 'freelance', label: 'Freelance', count: 0, icon: Star },
-    { id: 'remote', label: 'Remote', count: 0, icon: Globe2 },
+    ...RATE_BASES.map(basis => ({
+      id: basis.value as MarketplaceTabId,
+      label: basis.label,
+      count: 0,
+      icon:
+        basis.value === 'per_hour'
+          ? Clock
+          : basis.value === 'per_session'
+            ? CalendarDays
+            : BriefcaseBusiness,
+    })),
   ];
 
 function matchesMarketplaceTab(job: ClassMarketplaceJobWithProgram, tabId: MarketplaceTabId) {
-  const searchable = [job.title, job.description, job.location_name, job.meeting_link]
-    .filter(Boolean)
-    .join(' ')
-    .toLowerCase();
-
-  const isRemote = job.location_type === 'ONLINE' || searchable.includes('remote');
-  const isInternship =
-    searchable.includes('intern') ||
-    searchable.includes('internship') ||
-    searchable.includes('trainee') ||
-    searchable.includes('apprentice');
-  const isFreelance =
-    searchable.includes('freelance') ||
-    searchable.includes('contract') ||
-    searchable.includes('project') ||
-    searchable.includes('gig') ||
-    searchable.includes('consult');
-
-  switch (tabId) {
-    case 'all':
-      return true;
-    case 'remote':
-      return isRemote;
-    case 'internship':
-      return isInternship;
-    case 'freelance':
-      return isFreelance;
-    case 'full-time':
-    default:
-      return !isRemote && !isInternship && !isFreelance;
-  }
+  if (tabId === 'all') return true;
+  return job.rate_basis === tabId;
 }
 
 function formatDateTime(value?: Date | string | null) {
