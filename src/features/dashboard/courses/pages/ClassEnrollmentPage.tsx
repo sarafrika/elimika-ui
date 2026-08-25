@@ -321,7 +321,7 @@ export default function ClassEnrollmentPage({
               queryKey: getCartQueryKey({ path: { cartId: cartId as string } }),
             });
             toast.success('Class added to cart!');
-            router.push('/cart');
+            router.push('/dashboard/cart');
           },
           onError: error => {
             toast.error(getErrorMessage(error, 'Failed to add class to cart'));

@@ -2,7 +2,6 @@
 'use client';
 
 import { AsyncSection } from '@/components/data/async-section';
-import { PublicTopNav } from '@/components/PublicTopNav';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
@@ -120,7 +119,6 @@ export default function CartPage() {
 
   return (
     <div className='bg-background text-foreground min-h-screen'>
-      <PublicTopNav />
       <div className='mx-auto flex w-full max-w-6xl flex-col gap-10 px-6 py-12 lg:py-16'>
         {/* Header */}
         <div className='flex items-center justify-between'>
