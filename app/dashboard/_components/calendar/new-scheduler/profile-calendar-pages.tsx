@@ -828,8 +828,6 @@ function OrganizationCalendarPage() {
     [scheduleQueries]
   );
 
-  console.log(scheduleData, "SCHED")
-
   const classesWithCourseAndInstructor = useMemo(() => {
     return classData.map((cls, i) => ({
       ...cls,

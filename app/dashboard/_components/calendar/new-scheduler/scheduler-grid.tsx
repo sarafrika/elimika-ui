@@ -1,6 +1,6 @@
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { cn } from '@/lib/utils';
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState, type CSSProperties } from 'react';
 import { CreateClassDialog } from '../create-class-dialog';
 import { categoryStyles, schedulerHours } from './data';
 import type { SchedulerEvent, SchedulerView } from './types';
@@ -104,6 +104,138 @@ function getEventHeight(event: SchedulerEvent) {
   return Math.max((durationMinutes / 60) * rowHeight, 40);
 }
 
+function getEventStartMs(event: SchedulerEvent) {
+  return event.startTime.getTime();
+}
+
+function getEventEndMs(event: SchedulerEvent) {
+  return event.endTime.getTime();
+}
+
+function overlapsInTime(left: SchedulerEvent, right: SchedulerEvent) {
+  return getEventStartMs(left) < getEventEndMs(right) && getEventEndMs(left) > getEventStartMs(right);
+}
+
+type PositionedEvent = {
+  column: number;
+  height: number;
+  left: number;
+  span: number;
+  top: number;
+  width: number;
+};
+
+function getCollisionGroups(events: SchedulerEvent[]) {
+  if (!events.length) return [];
+
+  const sorted = [...events].sort(
+    (left, right) =>
+      getEventStartMs(left) - getEventStartMs(right) ||
+      getEventEndMs(left) - getEventEndMs(right) ||
+      left.id.localeCompare(right.id)
+  );
+
+  const groups: SchedulerEvent[][] = [];
+  let currentGroup: SchedulerEvent[] = [];
+  let currentGroupEnd = 0;
+
+  sorted.forEach(event => {
+    const start = getEventStartMs(event);
+    const end = getEventEndMs(event);
+
+    if (!currentGroup.length) {
+      currentGroup = [event];
+      currentGroupEnd = end;
+      return;
+    }
+
+    if (start < currentGroupEnd) {
+      currentGroup.push(event);
+      currentGroupEnd = Math.max(currentGroupEnd, end);
+      return;
+    }
+
+    groups.push(currentGroup);
+    currentGroup = [event];
+    currentGroupEnd = end;
+  });
+
+  if (currentGroup.length) {
+    groups.push(currentGroup);
+  }
+
+  return groups;
+}
+
+function layoutCollisionGroups(events: SchedulerEvent[]) {
+  const positioned = new Map<string, PositionedEvent>();
+  const groups = getCollisionGroups(events);
+
+  groups.forEach(group => {
+    const sorted = [...group].sort(
+      (left, right) =>
+        getEventStartMs(left) - getEventStartMs(right) ||
+        getEventEndMs(left) - getEventEndMs(right) ||
+        left.id.localeCompare(right.id)
+    );
+
+    const columns: Array<{ end: number; events: SchedulerEvent[] }> = [];
+    const assignments = new Map<string, number>();
+
+    sorted.forEach(event => {
+      const start = getEventStartMs(event);
+      const end = getEventEndMs(event);
+      let columnIndex = columns.findIndex(column => column.end <= start);
+
+      if (columnIndex < 0) {
+        columnIndex = columns.length;
+        columns.push({ end, events: [event] });
+      } else {
+        columns[columnIndex] = {
+          end,
+          events: [...columns[columnIndex].events, event],
+        };
+      }
+
+      assignments.set(event.id, columnIndex);
+    });
+
+    const columnCount = Math.max(columns.length, 1);
+    const columnWidth = 100 / columnCount;
+
+    sorted.forEach(event => {
+      const column = assignments.get(event.id) ?? 0;
+      let span = 1;
+
+      for (let nextColumn = column + 1; nextColumn < columnCount; nextColumn += 1) {
+        const hasConflict = columns[nextColumn]?.events.some(other => overlapsInTime(event, other));
+        if (hasConflict) break;
+        span += 1;
+      }
+
+      positioned.set(event.id, {
+        column,
+        height: getEventHeight(event),
+        left: column * columnWidth,
+        span,
+        top: getEventTop(event),
+        width: span * columnWidth,
+      });
+    });
+  });
+
+  return positioned;
+}
+
+function getEventWrapperStyle(layout: PositionedEvent): CSSProperties {
+  return {
+    height: `${layout.height}px`,
+    left: `${layout.left}%`,
+    top: `${layout.top}px`,
+    width: `${layout.width}%`,
+  };
+}
+
 function isCancelledStatus(status?: string) {
   return Boolean(status?.toLowerCase().includes('cancel'));
 }
@@ -146,13 +278,9 @@ function EventBlock({
     <button
       type='button'
       className={cn(
-        'focus-visible:ring-ring absolute inset-x-0 cursor-pointer overflow-hidden rounded-md border border-l-4 px-1 py-1 text-left shadow-sm transition hover:shadow-md focus-visible:ring-2 focus-visible:outline-none sm:px-1.5 lg:p-2',
+        'focus-visible:ring-ring h-full w-full cursor-pointer overflow-hidden rounded-md border border-l-4 px-1 py-1 text-left shadow-sm transition hover:shadow-md focus-visible:ring-2 focus-visible:outline-none sm:px-1.5 lg:p-2',
         getEventStyles(event)
       )}
-      style={{
-        top: 0,
-        height: `${getEventHeight(event)}px`,
-      }}
       onClick={eventData => {
         eventData.stopPropagation();
         onClick?.(event);
@@ -192,12 +320,9 @@ function WeekEventBlock({
     <button
       type='button'
       className={cn(
-        'focus-visible:ring-ring w-full cursor-pointer overflow-hidden rounded-md border border-l-4 px-2 py-1 text-left shadow-sm transition hover:shadow-md focus-visible:ring-2 focus-visible:outline-none',
+        'focus-visible:ring-ring h-full w-full cursor-pointer overflow-hidden rounded-md border border-l-4 px-2 py-1 text-left shadow-sm transition hover:shadow-md focus-visible:ring-2 focus-visible:outline-none',
         getEventStyles(event)
       )}
-      style={{
-        height: `${getEventHeight(event)}px`,
-      }}
       onClick={eventData => {
         eventData.stopPropagation();
         onClick?.(event);
@@ -268,6 +393,7 @@ function DayGrid({
   onClassCreated?: () => void;
 }) {
   const dayEvents = getDayEvents(events, currentDate);
+  const dayEventLayouts = useMemo(() => layoutCollisionGroups(dayEvents), [dayEvents]);
 
   const shouldShowCurrentTime = isSameCalendarDay(currentDate, currentTime);
 
@@ -363,17 +489,20 @@ function DayGrid({
                     empty space pass through to the hour slots underneath;
                     each event re-enables pointer events for itself. */}
                 <div className='pointer-events-none absolute inset-0 left-[72px]'>
-                  {dayEvents.map(event => (
-                    <div
-                      key={event.id}
-                      className='pointer-events-auto absolute right-2 left-2'
-                      style={{
-                        top: `${getEventTop(event)}px`,
-                      }}
-                    >
-                      <EventBlock event={event} onClick={onEventClick} />
-                    </div>
-                  ))}
+                  {dayEvents.map(event => {
+                    const layout = dayEventLayouts.get(event.id);
+                    if (!layout) return null;
+
+                    return (
+                      <div
+                        key={event.id}
+                        className='pointer-events-auto absolute px-0.5'
+                        style={getEventWrapperStyle(layout)}
+                      >
+                        <EventBlock event={event} onClick={onEventClick} />
+                      </div>
+                    );
+                  })}
                 </div>
               </div>
             </div>
@@ -440,10 +569,10 @@ function DayGrid({
           prefill={
             createSlot
               ? {
-                  date: createSlot.date,
-                  startTime: createSlot.startTime,
-                  endTime: createSlot.endTime,
-                }
+                date: createSlot.date,
+                startTime: createSlot.startTime,
+                endTime: createSlot.endTime,
+              }
               : null
           }
           onCreated={() => {
@@ -474,6 +603,16 @@ function WeekGrid({
   onClassCreated?: () => void;
 }) {
   const schedulerDays = getWeekDays(currentDate);
+  const weekEventLayouts = useMemo(() => {
+    const map = new Map<string, Map<string, PositionedEvent>>();
+
+    schedulerDays.forEach(day => {
+      const dayEvents = getDayEvents(events, day);
+      map.set(getCalendarKey(day), layoutCollisionGroups(dayEvents));
+    });
+
+    return map;
+  }, [events, schedulerDays]);
 
   // Same click-to-create wiring as DayGrid — gated to instructor / organisation profiles.
   const [createSlot, setCreateSlot] = useState<EmptySlot | null>(null);
@@ -580,20 +719,24 @@ function WeekGrid({
 
                 {schedulerDays.map(day => {
                   const dayEvents = events.filter(event => isSameCalendarDay(event.startTime, day));
+                  const dayEventLayouts = weekEventLayouts.get(getCalendarKey(day)) ?? new Map();
 
                   return (
                     <div key={day.toISOString()} className='pointer-events-none relative'>
-                      {dayEvents.map(event => (
-                        <div
-                          key={event.id}
-                          className='pointer-events-auto absolute right-1 left-1'
-                          style={{
-                            top: `${getEventTop(event)}px`,
-                          }}
-                        >
-                          <WeekEventBlock event={event} onClick={onEventClick} />
-                        </div>
-                      ))}
+                      {dayEvents.map(event => {
+                        const layout = dayEventLayouts.get(event.id);
+                        if (!layout) return null;
+
+                        return (
+                          <div
+                            key={event.id}
+                            className='pointer-events-auto absolute px-0.5'
+                            style={getEventWrapperStyle(layout)}
+                          >
+                            <WeekEventBlock event={event} onClick={onEventClick} />
+                          </div>
+                        );
+                      })}
                     </div>
                   );
                 })}
@@ -612,10 +755,10 @@ function WeekGrid({
           prefill={
             createSlot
               ? {
-                  date: createSlot.date,
-                  startTime: createSlot.startTime,
-                  endTime: createSlot.endTime,
-                }
+                date: createSlot.date,
+                startTime: createSlot.startTime,
+                endTime: createSlot.endTime,
+              }
               : null
           }
           onCreated={() => {
@@ -719,12 +862,12 @@ function MonthGrid({
                     className={cn(
                       'flex h-6 w-6 items-center justify-center rounded text-xs font-semibold',
                       isSameCalendarDay(day, today) &&
-                        (hasCancelledEvents
-                          ? 'bg-destructive text-destructive-foreground'
-                          : 'bg-primary text-primary-foreground'),
+                      (hasCancelledEvents
+                        ? 'bg-destructive text-destructive-foreground'
+                        : 'bg-primary text-primary-foreground'),
                       dayEvents.length > 0 &&
-                        !isSameCalendarDay(day, today) &&
-                        (hasCancelledEvents ? 'bg-destructive/10' : 'bg-primary/10')
+                      !isSameCalendarDay(day, today) &&
+                      (hasCancelledEvents ? 'bg-destructive/10' : 'bg-primary/10')
                     )}
                   >
                     {day.getDate()}
@@ -820,14 +963,14 @@ function YearGrid({
                       'hover:bg-muted relative flex aspect-square cursor-pointer items-center justify-center rounded text-[11px] font-semibold transition-colors',
                       inMonth ? 'text-foreground' : 'text-muted-foreground/50',
                       isSameCalendarDay(day, today) &&
-                        (hasCancelledEvents
-                          ? 'bg-destructive text-destructive-foreground'
-                          : 'bg-primary text-primary-foreground'),
+                      (hasCancelledEvents
+                        ? 'bg-destructive text-destructive-foreground'
+                        : 'bg-primary text-primary-foreground'),
                       hasEvents &&
-                        !isSameCalendarDay(day, today) &&
-                        (hasCancelledEvents
-                          ? 'bg-destructive/10 ring-destructive/30 ring-1'
-                          : 'bg-primary/10 ring-primary/30 ring-1')
+                      !isSameCalendarDay(day, today) &&
+                      (hasCancelledEvents
+                        ? 'bg-destructive/10 ring-destructive/30 ring-1'
+                        : 'bg-primary/10 ring-primary/30 ring-1')
                     )}
                     onClick={e => {
                       e.stopPropagation();
