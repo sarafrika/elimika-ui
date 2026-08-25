@@ -341,7 +341,7 @@ export default function ClassEnrollmentPage({
           qc.invalidateQueries({
             queryKey: getCartQueryKey({ path: { cartId: savedCartId as string } }),
           });
-          router.push('/cart');
+          router.push('/dashboard/cart');
           toast.success('Class added to cart!');
         },
       }

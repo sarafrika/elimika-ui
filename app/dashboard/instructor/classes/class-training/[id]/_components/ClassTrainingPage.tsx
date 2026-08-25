@@ -306,6 +306,25 @@ function getScheduleState(schedule?: { start_time?: string | Date; end_time?: st
   return 'upcoming' as const;
 }
 
+function canStartSchedule(
+  schedule: TrainingSchedule | null,
+  now: number,
+  enrolledStudentCount: number
+) {
+  if (!schedule?.start_time || !schedule?.end_time) return false;
+  if (enrolledStudentCount === 0) return false;
+
+  const startTime = dayjs(schedule.start_time);
+  const endTime = dayjs(schedule.end_time);
+  if (!startTime.isValid() || !endTime.isValid()) return false;
+  if (!endTime.isAfter(startTime)) return false;
+
+  const currentTime = dayjs(now);
+  const openAt = startTime.subtract(5, 'minute').valueOf();
+
+  return currentTime.valueOf() >= openAt && currentTime.valueOf() < endTime.valueOf();
+}
+
 function getContentTypeName(
   content: LessonContentItem | null | undefined,
   contentTypeDetailsMap: Record<
@@ -2307,7 +2326,7 @@ function SubmissionPanel({
             !isCancelled &&
             !isBlocked &&
             !isConcluded &&
-            (activeSchedule.can_be_started ?? status === 'SCHEDULED');
+            canStartScheduledInstance;
 
           const canEnd =
             !!activeSchedule &&
@@ -2437,6 +2456,7 @@ export default function ClassTrainingPage({
   const [noteDraft, setNoteDraft] = useState('');
   const [sentNotes, setSentNotes] = useState<NoteEntry[]>([]);
   const [isEndClassConfirmOpen, setIsEndClassConfirmOpen] = useState(false);
+  const [now, setNow] = useState(() => Date.now());
   const appliedRouteContentSelectionRef = useRef('');
 
   const [activeTab, setActiveTab] = useState<'content' | 'practice' | 'assessment'>('content');
@@ -2475,6 +2495,21 @@ export default function ClassTrainingPage({
 
   const activeSchedule =
     sortedSchedules.find(schedule => schedule.uuid === activeScheduleId) ?? null;
+  const enrolledStudentCount = rosterAllEnrollments.length;
+
+  useEffect(() => {
+    const syncNow = () => setNow(Date.now());
+
+    syncNow();
+    const timer = window.setInterval(syncNow, 30_000);
+
+    return () => window.clearInterval(timer);
+  }, []);
+
+  const canStartScheduledInstance = useMemo(
+    () => canStartSchedule(activeSchedule, now, enrolledStudentCount),
+    [activeSchedule, enrolledStudentCount, now]
+  );
 
   const lessonModules = useMemo(() => {
     const modules = (lessonsWithContent as LessonModule[]) ?? [];
@@ -3709,7 +3744,7 @@ export default function ClassTrainingPage({
                       {selectedContent?.title || activeLesson?.title || 'No lesson selected'}
                     </h2>
 
-                    <div className='border-border/70 max-w-[500px] border-t p-3'>
+                    <div className='border-border/70 max-w-[500px]'>
                       {(() => {
                         const status = activeSchedule?.status?.toUpperCase();
                         const isCancelled = status === 'CANCELLED';
@@ -3721,7 +3756,7 @@ export default function ClassTrainingPage({
                           !isCancelled &&
                           !isBlocked &&
                           !isConcluded &&
-                          (activeSchedule.can_be_started ?? status === 'SCHEDULED');
+                          canStartScheduledInstance;
                         const canEnd =
                           !!activeSchedule &&
                           !isCancelled &&

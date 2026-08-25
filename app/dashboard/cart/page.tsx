@@ -15,6 +15,7 @@ import {
   getCartQueryKey,
   removeItemMutation,
 } from '@/services/client/@tanstack/react-query.gen';
+import { buildWorkspaceAliasPath } from '@/src/features/dashboard/lib/active-domain-storage';
 import { useCartStore } from '@/store/cart-store';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import {
@@ -30,6 +31,8 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useMemo, useState } from 'react';
 import { toast } from 'sonner';
+import { useUserDomain } from '../../../context/user-domain-context';
+
 
 const DEFAULT_CURRENCY = 'KES';
 
@@ -49,6 +52,7 @@ const formatMoney = (amount: number | string | undefined, currency = DEFAULT_CUR
 export default function CartPage() {
   const { cartId, clearCart } = useCartStore();
   const queryClient = useQueryClient();
+  const { activeDomain } = useUserDomain()
   const router = useRouter();
   const profile = useUserProfile();
   const removeItemMut = useMutation(removeItemMutation());
@@ -118,7 +122,7 @@ export default function CartPage() {
   const initialLoading = cartQuery.isLoading && !cart;
 
   return (
-    <div className='bg-background text-foreground min-h-screen'>
+    <div className='bg-background text-foreground h-auto'>
       <div className='mx-auto flex w-full max-w-6xl flex-col gap-10 px-6 py-12 lg:py-16'>
         {/* Header */}
         <div className='flex items-center justify-between'>
@@ -133,7 +137,7 @@ export default function CartPage() {
             </p>
           </div>
           <Link
-            href='/courses'
+            href={buildWorkspaceAliasPath(activeDomain, '/dashboard/courses')}
             className='text-primary inline-flex items-center gap-2 text-sm font-medium hover:underline'
           >
             <ArrowLeft className='h-4 w-4' />
@@ -199,7 +203,7 @@ export default function CartPage() {
                   Looks like you haven't added any courses yet. Start exploring our catalogue to
                   find courses that match your goals.
                 </CardDescription>
-                <Link href='/courses' className='inline-block pt-4'>
+                <Link href={buildWorkspaceAliasPath(activeDomain, '/dashboard/courses')} className='inline-block pt-4'>
                   <Button
                     size='lg'
                     className='bg-primary hover:bg-primary/90 rounded-full px-8 shadow-lg transition'
