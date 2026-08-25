@@ -312,8 +312,8 @@ export default function AvailabilityClassCard({ cls, onEnroll, onViewCourse, onV
 
                   <span className="h-3.5">{rating}</span>
                 </div>
-
               </div>
+
             </div>
           </div>
         </CardHeader>

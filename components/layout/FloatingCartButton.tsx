@@ -5,7 +5,7 @@ import { cn } from '@/lib/utils';
 import { useQuery } from '@tanstack/react-query';
 import { ShoppingCart } from 'lucide-react';
 import { useRouter } from 'next/navigation';
-import { useEffect, useRef, useState, type PointerEvent as ReactPointerEvent } from 'react';
+import { useEffect, useMemo, useRef, useState, type PointerEvent as ReactPointerEvent } from 'react';
 import { getCartOptions } from '../../services/client/@tanstack/react-query.gen';
 import { useCartStore } from '../../store/cart-store';
 
@@ -60,12 +60,14 @@ export function FloatingCartButton() {
   const router = useRouter();
   const { cartId } = useCartStore()
 
-  const { data: cartData } = useQuery({
+  const cartQuery = useQuery({
     ...getCartOptions({ path: { cartId: cartId ?? 'unset' } }),
     enabled: !!cartId,
     retry: 1,
   });
-  const cartItemCount = cartData?.items?.length ?? 0;
+
+  const cart = cartQuery?.data?.data ?? null;
+  const cartItems = useMemo(() => cart?.items ?? [], [cart?.items]);
 
   const buttonRef = useRef<HTMLButtonElement | null>(null);
   const dragState = useRef<DragState>({
@@ -209,11 +211,11 @@ export function FloatingCartButton() {
         onPointerCancel={handlePointerCancel}
         onClick={handleClick}
       >
-        {cartItemCount > 0 && (
+        {cartItems?.length > 0 && (
           <span
             className='absolute -top-1 left-5/6 -translate-x-1/2 min-w-5 h-5 px-1.5 flex items-center justify-center rounded-full bg-destructive text-xs font-bold text-white shadow-md'
           >
-            {cartItemCount}
+            {cartItems?.length}
           </span>
         )}
 

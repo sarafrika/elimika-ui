@@ -1,10 +1,5 @@
 'use client';
 
-import { createSyncStoragePersister } from '@tanstack/query-sync-storage-persister';
-import { PersistQueryClientProvider } from '@tanstack/react-query-persist-client';
-import { SessionProvider } from 'next-auth/react';
-import dynamic from 'next/dynamic';
-import { type ReactNode, useState } from 'react';
 import { TimeZoneProvider } from '@/context/timezone-context';
 import {
   CLIENT_QUERY_CACHE_BUSTER,
@@ -12,14 +7,19 @@ import {
   CLIENT_QUERY_CACHE_STORAGE_KEY,
   makeQueryClient,
 } from '@/lib/query-client';
+import { createSyncStoragePersister } from '@tanstack/query-sync-storage-persister';
+import { PersistQueryClientProvider } from '@tanstack/react-query-persist-client';
+import { SessionProvider } from 'next-auth/react';
+import dynamic from 'next/dynamic';
+import { type ReactNode, useState } from 'react';
 
 const ReactQueryDevtools =
   process.env.NODE_ENV === 'development'
     ? dynamic(() =>
-        import('@tanstack/react-query-devtools').then(m => ({
-          default: m.ReactQueryDevtools,
-        }))
-      )
+      import('@tanstack/react-query-devtools').then(m => ({
+        default: m.ReactQueryDevtools,
+      }))
+    )
     : null;
 
 export function RootProviders({ children }: { children: ReactNode }) {
