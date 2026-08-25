@@ -3,6 +3,7 @@ import { Plus_Jakarta_Sans } from 'next/font/google';
 import './globals.css';
 import { ThemeProvider } from '@/components/theme-provider';
 import { Toaster } from '@/components/ui/sonner';
+import { FloatingCartButton } from '@/components/layout/FloatingCartButton';
 import { RootProviders } from '@/context/root-providers';
 import { siteMetadata } from '@/src/lib/seo';
 
@@ -29,6 +30,7 @@ export default function RootLayout({
           <div className='relative min-h-screen'>
             <RootProviders>
               <div className='relative z-0 flex min-h-screen flex-col'>{children}</div>
+              <FloatingCartButton />
             </RootProviders>
             <Toaster richColors />
           </div>
