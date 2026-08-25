@@ -12,7 +12,8 @@ import {
   Trash2,
 } from 'lucide-react';
 import Link from 'next/link';
-import { useMemo } from 'react';
+import { useRouter } from 'next/navigation';
+import { useMemo, useState } from 'react';
 import { toast } from 'sonner';
 import { AsyncSection } from '@/components/data/async-section';
 import { PublicTopNav } from '@/components/PublicTopNav';
@@ -20,8 +21,11 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
 import { Skeleton } from '@/components/ui/skeleton';
+import { useUserProfile } from '@/context/profile-context';
+import { usePaymentMode } from '@/hooks/use-payment-mode';
 import type { CartItemResponse } from '@/services/client';
 import {
+  completeCheckoutMutation,
   getCartOptions,
   getCartQueryKey,
   removeItemMutation,
@@ -44,9 +48,14 @@ const formatMoney = (amount: number | string | undefined, currency = DEFAULT_CUR
 };
 
 export default function CartPage() {
-  const { cartId } = useCartStore();
+  const { cartId, clearCart } = useCartStore();
   const queryClient = useQueryClient();
+  const router = useRouter();
+  const profile = useUserProfile();
   const removeItemMut = useMutation(removeItemMutation());
+  const completeCheckout = useMutation(completeCheckoutMutation());
+  const { paymentRequired } = usePaymentMode();
+  const [enrolling, setEnrolling] = useState(false);
 
   // HeyAPI's path serializer leaves `{cartId}` literal in the URL when path value is null/empty.
   // Use a sentinel string when no cartId; `enabled: false` blocks the actual fetch.
@@ -76,6 +85,35 @@ export default function CartPage() {
   }, [cart?.total]);
 
   const currency = cart?.currency_code ?? DEFAULT_CURRENCY;
+
+  // On an environment that captures orders without a gateway there is nothing to pay, so the
+  // payment page is skipped entirely rather than shown and instantly dismissed: completing the
+  // cart is what enrols the learner, and asking to pay for an already-captured order is rejected.
+  const enrolWithoutPayment = async () => {
+    if (!cartId) {
+      toast.error('No cart found');
+      return;
+    }
+    const email = profile?.email;
+    if (!email) {
+      toast.error('Please sign in to complete your enrolment.');
+      return;
+    }
+
+    setEnrolling(true);
+    try {
+      await completeCheckout.mutateAsync({
+        body: { cart_id: cartId, customer_email: email, payment_provider_id: 'manual' },
+      });
+      toast.success('You are enrolled! Your courses are unlocked.');
+      clearCart();
+      router.push('/dashboard/student/learning-hub');
+    } catch (_error) {
+      toast.error('Could not complete your enrolment. Please try again.');
+    } finally {
+      setEnrolling(false);
+    }
+  };
 
   // Only true during the first cart load; keeps stale data visible on refetch.
   const initialLoading = cartQuery.isLoading && !cart;
@@ -264,16 +302,28 @@ export default function CartPage() {
                   </div>
 
                   <div className='space-y-3 pt-4'>
-                    <Button
-                      size='lg'
-                      className='bg-primary hover:bg-primary/90 w-full rounded-full text-base font-semibold shadow-lg transition'
-                      asChild
-                    >
-                      <Link href='/checkout'>
-                        Proceed to Checkout
+                    {paymentRequired ? (
+                      <Button
+                        size='lg'
+                        className='bg-primary hover:bg-primary/90 w-full rounded-full text-base font-semibold shadow-lg transition'
+                        asChild
+                      >
+                        <Link href='/checkout'>
+                          Proceed to Checkout
+                          <ArrowRight className='ml-2 h-4 w-4' />
+                        </Link>
+                      </Button>
+                    ) : (
+                      <Button
+                        size='lg'
+                        className='bg-primary hover:bg-primary/90 w-full rounded-full text-base font-semibold shadow-lg transition'
+                        onClick={enrolWithoutPayment}
+                        disabled={enrolling}
+                      >
+                        {enrolling ? 'Enrolling…' : 'Complete Enrolment'}
                         <ArrowRight className='ml-2 h-4 w-4' />
-                      </Link>
-                    </Button>
+                      </Button>
+                    )}
                     <Button
                       variant='outline'
                       size='lg'
@@ -287,11 +337,19 @@ export default function CartPage() {
                   <div className='space-y-2 pt-4'>
                     <div className='text-muted-foreground flex items-start gap-2 text-xs'>
                       <ShieldCheck className='text-primary h-4 w-4 shrink-0' />
-                      <span>Secure checkout powered by MPesa</span>
+                      <span>
+                        {paymentRequired
+                          ? 'Secure checkout powered by MPesa'
+                          : 'No payment required on this environment'}
+                      </span>
                     </div>
                     <div className='text-muted-foreground flex items-start gap-2 text-xs'>
                       <Package className='text-primary h-4 w-4 shrink-0' />
-                      <span>Instant course access after payment</span>
+                      <span>
+                        {paymentRequired
+                          ? 'Instant course access after payment'
+                          : 'Instant course access once you enrol'}
+                      </span>
                     </div>
                   </div>
                 </CardContent>

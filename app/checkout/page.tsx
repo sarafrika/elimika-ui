@@ -34,6 +34,7 @@ import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Separator } from '@/components/ui/separator';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useUserProfile } from '@/context/profile-context';
+import { usePaymentMode } from '@/hooks/use-payment-mode';
 import type { CartItemResponse } from '@/services/client';
 import {
   completeCheckoutMutation,
@@ -116,6 +117,7 @@ export default function CheckoutPage() {
   const router = useRouter();
   const { cartId, clearCart } = useCartStore();
   const profile = useUserProfile();
+  const { paymentRequired } = usePaymentMode();
   const [isProcessing, setIsProcessing] = useState(false);
 
   // M-Pesa flow state.
@@ -305,6 +307,15 @@ export default function CheckoutPage() {
 
     await startMpesaPayment(values);
   };
+
+  // Nothing to collect on an environment that captures orders on completion, and the STK call this
+  // page makes would be rejected there because the order is already captured. The cart enrols
+  // directly instead, so send anyone who reaches this URL back to it.
+  useEffect(() => {
+    if (!paymentRequired) {
+      router.replace('/cart');
+    }
+  }, [paymentRequired, router]);
 
   // Redirect if no cart. Skip while an M-Pesa payment is in-flight or settled — clearing the cart
   // on success would otherwise bounce the learner to /cart instead of the confirmation screen.
