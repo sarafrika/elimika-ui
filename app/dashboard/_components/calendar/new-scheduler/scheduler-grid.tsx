@@ -1,6 +1,9 @@
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
+import { Button } from '@/components/ui/button';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/tiptap-ui-primitive/popover';
 import { cn } from '@/lib/utils';
-import { useEffect, useMemo, useState, type CSSProperties } from 'react';
+import { Video, MapPin, CalendarDays } from 'lucide-react';
+import { useEffect, useMemo, useState, type CSSProperties, type ReactElement } from 'react';
 import { CreateClassDialog } from '../create-class-dialog';
 import { categoryStyles, schedulerHours } from './data';
 import type { SchedulerEvent, SchedulerView } from './types';
@@ -125,6 +128,11 @@ type PositionedEvent = {
   width: number;
 };
 
+type CollisionLayout = {
+  groups: Map<string, SchedulerEvent[]>;
+  positions: Map<string, PositionedEvent>;
+};
+
 function getCollisionGroups(events: SchedulerEvent[]) {
   if (!events.length) return [];
 
@@ -167,8 +175,9 @@ function getCollisionGroups(events: SchedulerEvent[]) {
   return groups;
 }
 
-function layoutCollisionGroups(events: SchedulerEvent[]) {
+function layoutCollisionGroups(events: SchedulerEvent[]): CollisionLayout {
   const positioned = new Map<string, PositionedEvent>();
+  const groupsByEvent = new Map<string, SchedulerEvent[]>();
   const groups = getCollisionGroups(events);
 
   groups.forEach(group => {
@@ -221,10 +230,14 @@ function layoutCollisionGroups(events: SchedulerEvent[]) {
         top: getEventTop(event),
         width: span * columnWidth,
       });
+      groupsByEvent.set(event.id, group);
     });
   });
 
-  return positioned;
+  return {
+    groups: groupsByEvent,
+    positions: positioned,
+  };
 }
 
 function getEventWrapperStyle(layout: PositionedEvent): CSSProperties {
@@ -267,13 +280,7 @@ function CurrentTimeIndicator({ currentTime }: { currentTime: Date }) {
   );
 }
 
-function EventBlock({
-  event,
-  onClick,
-}: {
-  event: SchedulerEvent;
-  onClick?: (event: SchedulerEvent) => void;
-}) {
+function EventBlock({ event }: { event: SchedulerEvent }) {
   return (
     <button
       type='button'
@@ -281,10 +288,6 @@ function EventBlock({
         'focus-visible:ring-ring h-full w-full cursor-pointer overflow-hidden rounded-md border border-l-4 px-1 py-1 text-left shadow-sm transition hover:shadow-md focus-visible:ring-2 focus-visible:outline-none sm:px-1.5 lg:p-2',
         getEventStyles(event)
       )}
-      onClick={eventData => {
-        eventData.stopPropagation();
-        onClick?.(event);
-      }}
     >
       <p className='truncate text-[9px] font-semibold sm:text-[10px] lg:text-xs'>{event.title}</p>
 
@@ -309,13 +312,7 @@ function EventBlock({
   );
 }
 
-function WeekEventBlock({
-  event,
-  onClick,
-}: {
-  event: SchedulerEvent;
-  onClick?: (event: SchedulerEvent) => void;
-}) {
+function WeekEventBlock({ event }: { event: SchedulerEvent }) {
   return (
     <button
       type='button'
@@ -323,10 +320,6 @@ function WeekEventBlock({
         'focus-visible:ring-ring h-full w-full cursor-pointer overflow-hidden rounded-md border border-l-4 px-2 py-1 text-left shadow-sm transition hover:shadow-md focus-visible:ring-2 focus-visible:outline-none',
         getEventStyles(event)
       )}
-      onClick={eventData => {
-        eventData.stopPropagation();
-        onClick?.(event);
-      }}
     >
       <p className='truncate text-[10px] font-semibold sm:text-[11px]'>{event.title}</p>
 
@@ -347,21 +340,10 @@ function WeekEventBlock({
   );
 }
 
-function CompactEvent({
-  event,
-  onClick,
-}: {
-  event: SchedulerEvent;
-  onClick?: (event: SchedulerEvent) => void;
-}) {
+function CompactEvent({ event }: { event: SchedulerEvent }) {
   return (
-    <div
-      role='button'
-      tabIndex={0}
-      onClick={eventData => {
-        eventData.stopPropagation();
-        onClick?.(event);
-      }}
+    <button
+      type='button'
       className={cn(
         'min-w-0 rounded border border-l-[3px] px-2 py-1 text-left text-[10px] font-semibold transition hover:shadow-sm',
         getEventStyles(event)
@@ -371,7 +353,146 @@ function CompactEvent({
       <p className='truncate opacity-75'>
         {event.startTime.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' })}
       </p>
-    </div>
+    </button>
+  );
+}
+
+function SchedulerEventDisclosure({
+  event,
+  overlapEvents,
+  onViewDetails,
+  children,
+}: {
+  event: SchedulerEvent;
+  overlapEvents: SchedulerEvent[];
+  onViewDetails?: (event: SchedulerEvent) => void;
+  children: ReactElement;
+}) {
+  const hasOverlapPreview = overlapEvents.length > 1;
+  const previewEvents = overlapEvents.slice(0, 2);
+  const extraPreviewCount = Math.max(overlapEvents.length - previewEvents.length, 0);
+  const joinHref = event.meetingLink?.trim() || '';
+
+  return (
+    <Popover>
+      <div className='group relative'>
+        {hasOverlapPreview ? (
+          <div className='pointer-events-none absolute bottom-full left-0 z-40 mb-2 hidden w-[min(18rem,calc(100vw-1rem))] rounded-xl border border-border/60 bg-card/95 p-2 text-left shadow-2xl backdrop-blur group-hover:block group-focus-within:block'>
+            <div className='mb-2 flex items-center justify-between gap-2'>
+              <p className='text-muted-foreground text-[10px] font-semibold uppercase tracking-wide'>
+                Overlapping events
+              </p>
+              <span className='text-muted-foreground text-[10px]'>
+                {overlapEvents.length} total
+              </span>
+            </div>
+
+            <div className='space-y-1.5'>
+              {previewEvents.map(peer => (
+                <div key={peer.id} className='rounded-lg border border-border/60 bg-muted/35 px-2 py-1.5'>
+                  <p className='truncate text-[11px] font-semibold text-foreground'>{peer.title}</p>
+                  <p className='truncate text-[10px] text-muted-foreground'>
+                    {peer.startTime.toLocaleTimeString('en-US', {
+                      hour: 'numeric',
+                      minute: '2-digit',
+                    })}
+                    {' - '}
+                    {peer.endTime.toLocaleTimeString('en-US', {
+                      hour: 'numeric',
+                      minute: '2-digit',
+                    })}
+                  </p>
+                </div>
+              ))}
+            </div>
+
+            {extraPreviewCount > 0 ? (
+              <p className='text-muted-foreground mt-2 text-[10px] font-medium'>
+                +{extraPreviewCount} more overlapping event
+                {extraPreviewCount === 1 ? '' : 's'}
+              </p>
+            ) : null}
+          </div>
+        ) : null}
+
+        <PopoverTrigger asChild>{children}</PopoverTrigger>
+      </div>
+
+      <PopoverContent
+        align='start'
+        side='top'
+        sideOffset={10}
+        className='w-[min(19rem,calc(100vw-1rem))] rounded-xl border border-border/60 bg-card p-0 shadow-2xl'
+      >
+        <div className='border-b border-border/60 px-4 py-3'>
+          <div className='flex items-start justify-between gap-3'>
+            <div className='min-w-0'>
+              <p className='text-foreground truncate text-sm font-semibold'>{event.title}</p>
+              <p className='text-muted-foreground mt-0.5 text-xs'>
+                {event.startTime.toLocaleString('en-US', {
+                  weekday: 'short',
+                  month: 'short',
+                  day: 'numeric',
+                })}
+                {' · '}
+                {event.startTime.toLocaleTimeString('en-US', {
+                  hour: 'numeric',
+                  minute: '2-digit',
+                })}
+                {' - '}
+                {event.endTime.toLocaleTimeString('en-US', {
+                  hour: 'numeric',
+                  minute: '2-digit',
+                })}
+              </p>
+            </div>
+
+            <span className='bg-primary/10 text-primary rounded-full px-2 py-1 text-[10px] font-semibold'>
+              {event.category}
+            </span>
+          </div>
+        </div>
+
+        <div className='space-y-3 px-4 py-4'>
+          <div className='space-y-2'>
+            <div className='flex items-center gap-2 text-sm'>
+              <CalendarDays className='text-muted-foreground h-4 w-4 shrink-0' />
+              <span className='min-w-0 truncate'>{event.course}</span>
+            </div>
+            <div className='flex items-center gap-2 text-sm'>
+              <MapPin className='text-muted-foreground h-4 w-4 shrink-0' />
+              <span className='min-w-0 truncate'>{event.location}</span>
+            </div>
+            <div className='flex items-center gap-2 text-sm'>
+              <Video className='text-muted-foreground h-4 w-4 shrink-0' />
+              <span className='min-w-0 truncate'>
+                {event.meetingLink ? 'Meeting link available' : 'No meeting link available'}
+              </span>
+            </div>
+          </div>
+
+          <div className='grid gap-2'>
+            {joinHref ? (
+              <Button asChild className='w-full'>
+                <a href={joinHref} target='_blank' rel='noreferrer noopener'>
+                  Join Class
+                </a>
+              </Button>
+            ) : null}
+
+            {onViewDetails && event.instanceUuid ? (
+              <Button
+                variant={joinHref ? 'outline' : 'default'}
+                className='w-full'
+                onClick={() => onViewDetails(event)}
+              >
+                View Details
+              </Button>
+            ) : null}
+          </div>
+        </div>
+      </PopoverContent>
+    </Popover>
   );
 }
 
@@ -490,7 +611,8 @@ function DayGrid({
                     each event re-enables pointer events for itself. */}
                 <div className='pointer-events-none absolute inset-0 left-[72px]'>
                   {dayEvents.map(event => {
-                    const layout = dayEventLayouts.get(event.id);
+                    const layout = dayEventLayouts.positions.get(event.id);
+                    const overlapEvents = dayEventLayouts.groups.get(event.id) ?? [event];
                     if (!layout) return null;
 
                     return (
@@ -499,7 +621,13 @@ function DayGrid({
                         className='pointer-events-auto absolute px-0.5'
                         style={getEventWrapperStyle(layout)}
                       >
-                        <EventBlock event={event} onClick={onEventClick} />
+                        <SchedulerEventDisclosure
+                          event={event}
+                          overlapEvents={overlapEvents}
+                          onViewDetails={onEventClick}
+                        >
+                          <EventBlock event={event} />
+                        </SchedulerEventDisclosure>
                       </div>
                     );
                   })}
@@ -719,12 +847,16 @@ function WeekGrid({
 
                 {schedulerDays.map(day => {
                   const dayEvents = events.filter(event => isSameCalendarDay(event.startTime, day));
-                  const dayEventLayouts = weekEventLayouts.get(getCalendarKey(day)) ?? new Map();
+                  const dayEventLayouts = weekEventLayouts.get(getCalendarKey(day)) ?? {
+                    groups: new Map<string, SchedulerEvent[]>(),
+                    positions: new Map<string, PositionedEvent>(),
+                  };
 
                   return (
                     <div key={day.toISOString()} className='pointer-events-none relative'>
                       {dayEvents.map(event => {
-                        const layout = dayEventLayouts.get(event.id);
+                        const layout = dayEventLayouts.positions.get(event.id);
+                        const overlapEvents = dayEventLayouts.groups.get(event.id) ?? [event];
                         if (!layout) return null;
 
                         return (
@@ -733,7 +865,13 @@ function WeekGrid({
                             className='pointer-events-auto absolute px-0.5'
                             style={getEventWrapperStyle(layout)}
                           >
-                            <WeekEventBlock event={event} onClick={onEventClick} />
+                            <SchedulerEventDisclosure
+                              event={event}
+                              overlapEvents={overlapEvents}
+                              onViewDetails={onEventClick}
+                            >
+                              <WeekEventBlock event={event} />
+                            </SchedulerEventDisclosure>
                           </div>
                         );
                       })}
@@ -880,7 +1018,14 @@ function MonthGrid({
                 </div>
                 <div className='cursor-pointer space-y-1'>
                   {dayEvents.slice(0, 3).map(event => (
-                    <CompactEvent key={event.id} event={event} onClick={onEventClick} />
+                    <SchedulerEventDisclosure
+                      key={event.id}
+                      event={event}
+                      overlapEvents={[event]}
+                      onViewDetails={onEventClick}
+                    >
+                      <CompactEvent event={event} />
+                    </SchedulerEventDisclosure>
                   ))}
                   {dayEvents.length > 3 ? (
                     <p className='text-muted-foreground text-[10px] font-semibold'>
