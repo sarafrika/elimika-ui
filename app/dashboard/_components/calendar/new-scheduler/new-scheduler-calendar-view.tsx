@@ -22,6 +22,7 @@ import { CalendarDays, ChevronLeft, ChevronRight, Info, Settings } from 'lucide-
 import { useRouter } from 'next/navigation';
 import { useEffect, useMemo, useState } from 'react';
 import { useUserDomain } from '../../../../../context/user-domain-context';
+import { buildWorkspaceAliasPath } from '../../../../../src/features/dashboard/lib/active-domain-storage';
 import type { SchedulerCalendarData } from './calendar-utils';
 import {
   DEFAULT_PREFERENCES,
@@ -299,7 +300,7 @@ export function SchedulerCalendarView({ profile, data }: Props) {
           setSelectedFilter({ id, kind: 'class' });
           setFiltersOpen(false);
         },
-        onToggle: () => {},
+        onToggle: () => { },
         selectedId: selectedFilter.kind === 'class' ? selectedFilter.id : null,
       },
 
@@ -313,7 +314,7 @@ export function SchedulerCalendarView({ profile, data }: Props) {
           setSelectedFilter({ id, kind: 'venue' });
           setFiltersOpen(false);
         },
-        onToggle: () => {},
+        onToggle: () => { },
         selectedId: selectedFilter.kind === 'venue' ? selectedFilter.id : null,
       },
       // {
@@ -346,7 +347,7 @@ export function SchedulerCalendarView({ profile, data }: Props) {
           setSelectedFilter({ id, kind: 'instructor' });
           setFiltersOpen(false);
         },
-        onToggle: () => {},
+        onToggle: () => { },
         selectedId: selectedFilter.kind === 'instructor' ? selectedFilter.id : null,
       });
     }
@@ -501,7 +502,7 @@ export function SchedulerCalendarView({ profile, data }: Props) {
                 canCreateClass={
                   activeDomain === 'instructor' || activeDomain === 'organisation_user'
                 }
-                onClassCreated={() => {}}
+                onClassCreated={() => { }}
                 onSelectDate={handleSelectDate}
               />
             )}

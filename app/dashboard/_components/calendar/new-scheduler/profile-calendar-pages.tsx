@@ -1,8 +1,6 @@
 // @ts-nocheck -- pre-existing @hey-api generated-client type drift (see memory: elimika-ui-typecheck)
 'use client';
 
-import { useQueries, useQuery } from '@tanstack/react-query';
-import { useMemo } from 'react';
 import { useOrganisation } from '@/context/organisation-context';
 import { useUserProfile } from '@/context/profile-context';
 import useAmdinClassesWithDetails from '@/hooks/use-admin-classes';
@@ -16,12 +14,13 @@ import {
   getCourseByUuidOptions,
   getEnrollmentsForClassOptions,
   getInstructorByUuidOptions,
-  getStudentByIdOptions,
   getStudentScheduleOptions,
   getUserByUuidOptions,
-  listResourcesOptions,
+  listResourcesOptions
 } from '@/services/client/@tanstack/react-query.gen';
 import type { ClassDefinition, Course, Student, User } from '@/services/client/types.gen';
+import { useQueries, useQuery } from '@tanstack/react-query';
+import { useMemo } from 'react';
 import type {
   ClassWithScheduleInput,
   InstructorSummary,
@@ -388,12 +387,12 @@ function InstructorCalendarPage() {
     const name = profile?.instructor?.full_name || 'Instructor';
     return instructorUuid
       ? [
-          {
-            uuid: instructorUuid,
-            fullName: name,
-            subtitle: profile?.instructor?.professional_headline || 'Your classes',
-          },
-        ]
+        {
+          uuid: instructorUuid,
+          fullName: name,
+          subtitle: profile?.instructor?.professional_headline || 'Your classes',
+        },
+      ]
       : [];
   }, [instructorUuid, profile?.instructor?.full_name, profile?.instructor?.professional_headline]);
 
@@ -685,24 +684,24 @@ function StudentCalendarPage() {
     return studentData.students.length
       ? studentData.students
       : (studentScheduleQuery.data?.data ?? []).reduce<StudentSummary[]>((acc, item) => {
-          const classDefinitionUuid = item.class_definition_uuid?.trim();
-          const enrollmentUuid =
-            item.enrollment_uuid?.trim() || item.scheduled_instance_uuid?.trim();
+        const classDefinitionUuid = item.class_definition_uuid?.trim();
+        const enrollmentUuid =
+          item.enrollment_uuid?.trim() || item.scheduled_instance_uuid?.trim();
 
-          const studentUuid = enrollmentUuid || classDefinitionUuid;
-          if (!studentUuid) return acc;
+        const studentUuid = enrollmentUuid || classDefinitionUuid;
+        if (!studentUuid) return acc;
 
-          if (acc.some(entry => entry.uuid === studentUuid)) return acc;
+        if (acc.some(entry => entry.uuid === studentUuid)) return acc;
 
-          acc.push({
-            uuid: studentUuid,
-            fullName: profile?.student?.full_name || 'Student',
-            classDefinitionUuid,
-            enrollmentUuid,
-          });
+        acc.push({
+          uuid: studentUuid,
+          fullName: profile?.student?.full_name || 'Student',
+          classDefinitionUuid,
+          enrollmentUuid,
+        });
 
-          return acc;
-        }, []);
+        return acc;
+      }, []);
   }, [studentData.students, studentScheduleQuery.data, profile?.student?.full_name]);
 
   const data: SchedulerCalendarData = {
