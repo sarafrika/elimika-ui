@@ -416,11 +416,11 @@ function DayGrid({
 
   return (
     <>
-      <section className='bg-card flex w-full flex-col overflow-hidden rounded-md border shadow-sm'>
+      <section className='bg-card flex w-full flex-col overflow-visible rounded-md border shadow-sm'>
         <div className='grid gap-4 p-3 lg:grid-cols-[minmax(0,1fr)_260px] lg:p-4'>
           {/* LEFT SCHEDULE */}
-          <div className='bg-background min-w-0 overflow-hidden rounded-md border'>
-            <div className='bg-muted/40 grid grid-cols-[72px_1fr] border-b'>
+          <div className='min-w-0'>
+            <div className='bg-background/95 sticky top-0 z-30 grid grid-cols-[72px_1fr] rounded-t-md border border-b-0 border-border/60 shadow-sm backdrop-blur supports-[backdrop-filter]:bg-background/90'>
               <div className='px-2 py-2 text-center text-[10px] font-semibold sm:text-xs'>Time</div>
 
               <div className='px-2 py-2 text-center text-[10px] font-semibold sm:text-xs'>
@@ -428,7 +428,7 @@ function DayGrid({
               </div>
             </div>
 
-            <div className='[&::-webkit-scrollbar-thumb]:bg-border max-h-[640px] overflow-y-auto [scrollbar-width:thin] [&::-webkit-scrollbar]:w-px [&::-webkit-scrollbar-thumb]:rounded-full [&::-webkit-scrollbar-track]:bg-transparent'>
+            <div className='bg-background rounded-b-md border border-t-0'>
               <div
                 className='relative'
                 style={{
@@ -629,29 +629,29 @@ function WeekGrid({
 
   return (
     <>
-      <section className='bg-card ring-border/60 flex w-full min-w-0 flex-col overflow-hidden rounded-md shadow-sm ring-1'>
-        <div className='bg-background [&::-webkit-scrollbar-thumb]:bg-border max-h-[720px] overflow-auto [scrollbar-width:thin] [&::-webkit-scrollbar]:w-px [&::-webkit-scrollbar-thumb]:rounded-full [&::-webkit-scrollbar-track]:bg-transparent'>
-          <div className='relative w-full min-w-0'>
-            {/* HEADER */}
-            <div className='bg-muted/40 sticky top-0 z-20'>
-              <div className={cn('grid border-b', weekColumnClass)}>
-                <div className='px-2 py-2 text-center text-xs font-semibold'>Time</div>
+      <section className='bg-card ring-border/60 flex w-full min-w-0 flex-col overflow-visible rounded-md shadow-sm ring-1'>
+        <div className='bg-background relative w-full min-w-0'>
+          {/* HEADER */}
+          <div className='bg-background/95 sticky top-0 z-30 rounded-t-md border border-b-0 border-border/60 shadow-sm backdrop-blur supports-[backdrop-filter]:bg-background/90'>
+            <div className={cn('grid border-b border-border/60', weekColumnClass)}>
+              <div className='px-2 py-2 text-center text-xs font-semibold'>Time</div>
 
-                {schedulerDays.map(day => (
-                  <div
-                    key={day.toISOString()}
-                    className='border-l px-2 py-2 text-center text-xs font-semibold'
-                  >
-                    {day.toLocaleDateString('en-US', {
-                      weekday: 'short',
-                    })}{' '}
-                    {day.getDate()}
-                  </div>
-                ))}
-              </div>
+              {schedulerDays.map(day => (
+                <div
+                  key={day.toISOString()}
+                  className='border-l px-2 py-2 text-center text-xs font-semibold'
+                >
+                  {day.toLocaleDateString('en-US', {
+                    weekday: 'short',
+                  })}{' '}
+                  {day.getDate()}
+                </div>
+              ))}
             </div>
+          </div>
 
-            {/* GRID */}
+          {/* GRID */}
+          <div className='bg-background rounded-b-md border border-t-0'>
             <div
               className='relative'
               style={{
@@ -805,33 +805,35 @@ function MonthGrid({
   }
 
   return (
-    <section className='bg-card w-full min-w-0 overflow-hidden rounded-md border shadow-sm'>
-      <div className='border-b px-3 py-3 sm:px-4'>
-        <div className='flex items-center justify-between gap-2'>
-          <div>
-            <p className='text-muted-foreground text-xs font-semibold tracking-wide uppercase'>
-              Month view
-            </p>
-            <h2 className='text-foreground text-base font-semibold sm:text-lg'>
-              {currentDate.toLocaleDateString('en-US', { month: 'long', year: 'numeric' })}
-            </h2>
-          </div>
-          <span className='text-muted-foreground text-xs'>
-            {monthEvents.length} session{monthEvents.length === 1 ? '' : 's'}
-          </span>
-        </div>
-      </div>
-
+    <section className='bg-card w-full min-w-0 overflow-visible rounded-md border shadow-sm'>
       <div className='w-full min-w-0'>
-        <div
-          className='bg-muted/40 grid w-full border-b'
-          style={{ gridTemplateColumns: 'repeat(7, minmax(0, 1fr))' }}
-        >
-          {weekLabels.map(label => (
-            <div key={label} className='px-2 py-2 text-center text-xs font-semibold'>
-              {label}
+        <div className='sticky top-0 z-30 bg-card/95 shadow-sm backdrop-blur supports-[backdrop-filter]:bg-card/90'>
+          <div className='border-b border-border/60 px-3 py-3 sm:px-4'>
+            <div className='flex items-center justify-between gap-2'>
+              <div>
+                <p className='text-muted-foreground text-xs font-semibold tracking-wide uppercase'>
+                  Month view
+                </p>
+                <h2 className='text-foreground text-base font-semibold sm:text-lg'>
+                  {currentDate.toLocaleDateString('en-US', { month: 'long', year: 'numeric' })}
+                </h2>
+              </div>
+              <span className='text-muted-foreground text-xs'>
+                {monthEvents.length} session{monthEvents.length === 1 ? '' : 's'}
+              </span>
             </div>
-          ))}
+          </div>
+
+          <div
+            className='bg-muted/40 grid w-full border-b border-border/60'
+            style={{ gridTemplateColumns: 'repeat(7, minmax(0, 1fr))' }}
+          >
+            {weekLabels.map(label => (
+              <div key={label} className='px-2 py-2 text-center text-xs font-semibold'>
+                {label}
+              </div>
+            ))}
+          </div>
         </div>
 
         <div className='grid w-full' style={{ gridTemplateColumns: 'repeat(7, minmax(0, 1fr))' }}>
