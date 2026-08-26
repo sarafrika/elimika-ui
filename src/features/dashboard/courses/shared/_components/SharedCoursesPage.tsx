@@ -1,22 +1,6 @@
 // @ts-nocheck -- pre-existing @hey-api generated-client type drift (see memory: elimika-ui-typecheck)
 'use client';
 
-import { useMutation, useQueries, useQuery, useQueryClient } from '@tanstack/react-query';
-import {
-  ArrowRight,
-  GraduationCap,
-  Layers,
-  type LucideIcon,
-  Search,
-  SlidersHorizontal,
-  SquareDashedMousePointer,
-  Users,
-  X,
-} from 'lucide-react';
-import Link from 'next/link';
-import { useRouter } from 'next/navigation';
-import { useEffect, useMemo, useState } from 'react';
-import { toast } from 'sonner';
 import NotesModal from '@/components/custom-modals/notes-modal';
 import { Button } from '@/components/ui/button';
 import {
@@ -65,10 +49,6 @@ import {
   submitTrainingApplicationMutation,
 } from '@/services/client/@tanstack/react-query.gen';
 import type { Category, CourseReview } from '@/services/client/types.gen';
-import { CoursesCatalogCard } from '@/src/features/dashboard/courses/shared/_components/CoursesCatalogCard';
-import { CoursesCategoryFilters } from '@/src/features/dashboard/courses/shared/_components/CoursesCategoryFilters';
-import { CoursesCategoryTabs } from '@/src/features/dashboard/courses/shared/_components/CoursesCategoryTabs';
-import { CoursesRecommendationCard } from '@/src/features/dashboard/courses/shared/_components/CoursesRecommendationCard';
 import {
   type CatalogTrainingApplicationData,
   type CoursesCatalogCardData,
@@ -86,8 +66,25 @@ import {
   getInstructorHref,
   stripHtml,
 } from '@/src/features/dashboard/courses/shared/_components/courses-data';
+import { CoursesCatalogCard } from '@/src/features/dashboard/courses/shared/_components/CoursesCatalogCard';
+import { CoursesCategoryFilters } from '@/src/features/dashboard/courses/shared/_components/CoursesCategoryFilters';
+import { CoursesCategoryTabs } from '@/src/features/dashboard/courses/shared/_components/CoursesCategoryTabs';
+import { CoursesRecommendationCard } from '@/src/features/dashboard/courses/shared/_components/CoursesRecommendationCard';
 import { StudentCoursesCard } from '@/src/features/dashboard/courses/shared/_components/StudentCoursesCard';
 import { buildWorkspaceAliasPath } from '@/src/features/dashboard/lib/active-domain-storage';
+import { useMutation, useQueries, useQuery, useQueryClient } from '@tanstack/react-query';
+import {
+  ArrowRight,
+  GraduationCap,
+  Layers,
+  type LucideIcon,
+  SlidersHorizontal,
+  SquareDashedMousePointer,
+  Users
+} from 'lucide-react';
+import Link from 'next/link';
+import { useEffect, useMemo, useState } from 'react';
+import { toast } from 'sonner';
 
 type SharedCoursesPageProps = {
   domain: UserDomain;
@@ -795,7 +792,7 @@ export function SharedCoursesPage({ domain }: SharedCoursesPageProps) {
           { label: 'All Courses', value: 'all-courses' },
           { label: 'Program', value: 'programs' },
           { label: 'Short Course', value: 'short-courses' },
-          { label: 'My Courses', value: 'my-courses' },
+          // { label: 'My Courses', value: 'my-courses' },
         ],
       },
       {
