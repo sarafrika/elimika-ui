@@ -332,6 +332,11 @@ export default {
           icon: ClipboardList,
         },
         {
+          title: 'My Courses',
+          url: '/dashboard/my-courses',
+          icon: BookOpen,
+        },
+        {
           title: 'Students',
           url: '/dashboard/students',
           icon: Users,
