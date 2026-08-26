@@ -25,19 +25,17 @@ import { useInstructor } from '@/context/instructor-context';
 import { extractEntity } from '@/lib/api-helpers';
 import { ApplicantTypeEnum } from '@/services/client';
 import { getCourseByUuidOptions, searchTrainingApplicationsOptions } from '@/services/client/@tanstack/react-query.gen';
-import type { Course, CourseTrainingApplication } from '@/services/client/types.gen';
+import type {
+  Course,
+  CourseTrainingApplication,
+  CourseTrainingRateCard,
+} from '@/services/client/types.gen';
 import { formatDurationFromParts } from '@/src/features/dashboard/courses/shared/_components/courses-data';
 import { toAuthenticatedMediaUrl } from '@/src/lib/media-url';
 import { useQueries, useQuery } from '@tanstack/react-query';
 import { BookOpen, Eye, MoreHorizontal, PlusSquare } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { useMemo, useState } from 'react';
-
-const currency = new Intl.NumberFormat('en-KE', {
-  style: 'currency',
-  currency: 'KES',
-  maximumFractionDigits: 0,
-});
 
 type ApprovedCourseRow = {
   rowKey: string;
@@ -46,7 +44,8 @@ type ApprovedCourseRow = {
   subject: string;
   programType: string | null;
   displayName: string;
-  subjectLabel: string;
+  classLimit: number | null;
+  subjectLabel: string | string[];
   durationLabel: string;
   rateLabel: string;
   image: string | null;
@@ -103,6 +102,49 @@ function getCourseCategory(course: Course) {
   return course.category_names?.[0] ?? 'General';
 }
 
+function getRateFromRateCard(rateCard?: CourseTrainingRateCard | null) {
+  if (!rateCard) {
+    return undefined;
+  }
+
+  const rates = [
+    rateCard.group_inperson_hourly_rate,
+    rateCard.group_online_hourly_rate,
+    rateCard.private_inperson_hourly_rate,
+    rateCard.private_online_hourly_rate,
+    rateCard.group_inperson_session_rate,
+    rateCard.group_online_session_rate,
+    rateCard.private_inperson_session_rate,
+    rateCard.private_online_session_rate,
+    rateCard.group_inperson_daily_rate,
+    rateCard.group_online_daily_rate,
+    rateCard.private_inperson_daily_rate,
+    rateCard.private_online_daily_rate,
+  ].filter((value): value is number => typeof value === 'number' && Number.isFinite(value) && value > 0);
+
+  return rates[0];
+}
+
+function formatRateLabel(rateCard?: CourseTrainingRateCard | null, fallbackRate?: number) {
+  const amount = getRateFromRateCard(rateCard) ?? fallbackRate;
+
+  if (typeof amount !== 'number') {
+    return '—';
+  }
+
+  const currencyCode = rateCard?.currency ?? 'KES';
+
+  try {
+    return new Intl.NumberFormat('en-KE', {
+      style: 'currency',
+      currency: currencyCode,
+      maximumFractionDigits: 0,
+    }).format(amount);
+  } catch {
+    return `${currencyCode} ${amount.toLocaleString()}`;
+  }
+}
+
 export default function InstructorApprovedCoursesPage() {
   const router = useRouter();
   const instructor = useInstructor();
@@ -131,6 +173,18 @@ export default function InstructorApprovedCoursesPage() {
     const content = (applicationsQuery.data?.data?.content ?? []) as CourseTrainingApplication[];
     return content.filter(application => application.status === 'approved' && application.course_uuid);
   }, [applicationsQuery.data]);
+
+  const approvedApplicationMap = useMemo(() => {
+    const map = new Map<string, CourseTrainingApplication>();
+
+    approvedApplications.forEach(application => {
+      if (application.course_uuid) {
+        map.set(application.course_uuid, application);
+      }
+    });
+
+    return map;
+  }, [approvedApplications]);
 
   const distinctCourseUuids = useMemo(
     () =>
@@ -164,6 +218,7 @@ export default function InstructorApprovedCoursesPage() {
     return distinctCourseUuids
       .map(courseUuid => {
         const course = courseByUuid.get(courseUuid);
+        const application = approvedApplicationMap.get(courseUuid);
 
         if (!course) return null;
 
@@ -173,28 +228,22 @@ export default function InstructorApprovedCoursesPage() {
         }
 
         const category = getCourseCategory(course);
-        const subject =
-          course.category_names?.[1] ??
-          course.category_names?.[0] ??
-          '';
+        const subject = course?.category_names
 
         const image =
           toAuthenticatedMediaUrl(
             course.banner_url ?? course.thumbnail_url
           ) ?? null;
-
-        console.log(course, "COURSE")
-
-        const rate = getCourseRate(course); // this rate should come from the ratecard of application to train
+        const rateLabel = formatRateLabel(application?.rate_card, getCourseRate(course));
 
         return {
           rowKey: courseUuid,
           courseUuid,
           category,
-          subject, // list of category_names from course - string array
+          subject,
           programType: null,
           displayName: course.name ?? 'Course',
-          classLimit: course?.class_limit, // add class limit to table
+          classLimit: course?.class_limit ?? null,
           subjectLabel: subject || '—',
           durationLabel:
             formatDurationFromParts(
@@ -202,7 +251,7 @@ export default function InstructorApprovedCoursesPage() {
               course.duration_minutes,
               course.total_duration_display
             ) || 'Duration unavailable',
-          rateLabel: rate === undefined ? '—' : currency.format(rate),
+          rateLabel,
           image,
           status: 'Approved',
         };
@@ -211,15 +260,12 @@ export default function InstructorApprovedCoursesPage() {
       .sort((left, right) =>
         left.displayName.localeCompare(right.displayName)
       );
-  }, [courseByUuid, distinctCourseUuids]);
-
-  console.log(rows, "ROWS")
+  }, [approvedApplicationMap, courseByUuid, distinctCourseUuids]);
 
   const filteredRows = useMemo(
     () => filterByCategoryTabs(rows, activeCategory, subjectByCategory),
     [activeCategory, rows, subjectByCategory]
   );
-
 
   const loading = applicationsQuery.isLoading || courseQueries.some(query => query.isLoading);
 
@@ -292,6 +338,9 @@ export default function InstructorApprovedCoursesPage() {
                             {row.durationLabel}
                           </Badge>
                           <Badge variant='outline' className='text-xs'>
+                            Class limit {row.classLimit ?? 'Open'}
+                          </Badge>
+                          <Badge variant='outline' className='text-xs'>
                             {row.rateLabel}
                           </Badge>
                         </div>
@@ -316,15 +365,16 @@ export default function InstructorApprovedCoursesPage() {
                     <TableHead className='whitespace-nowrap'>Course</TableHead>
                     <TableHead className='min-w-[120px] whitespace-nowrap'>Subject</TableHead>
                     <TableHead className='whitespace-nowrap'>Duration</TableHead>
+                    <TableHead className='whitespace-nowrap'>Class limit</TableHead>
                     <TableHead className='text-right whitespace-nowrap'>Rate</TableHead>
                     <TableHead className='whitespace-nowrap'>Status</TableHead>
-                    <TableHead className='text-right whitespace-nowrap'>Actions</TableHead>
+                    {/* <TableHead className='text-right whitespace-nowrap'>Actions</TableHead> */}
                   </TableRow>
                 </TableHeader>
                 <TableBody>
                   {filteredRows.length === 0 ? (
                     <TableRow>
-                      <TableCell colSpan={7} className='text-muted-foreground h-24 text-center'>
+                      <TableCell colSpan={8} className='text-muted-foreground h-24 text-center'>
                         No courses available.
                       </TableCell>
                     </TableRow>
@@ -342,21 +392,24 @@ export default function InstructorApprovedCoursesPage() {
                           {row.displayName}
                         </TableCell>
                         <TableCell className='min-w-[120px] whitespace-nowrap'>
-                          {row.subjectLabel}
+                          {row.subjectLabel.join(', ')}
                         </TableCell>
                         <TableCell className='whitespace-nowrap'>{row.durationLabel}</TableCell>
+                        <TableCell className='whitespace-nowrap'>
+                          {row.classLimit ?? 'Open'}
+                        </TableCell>
                         <TableCell className='text-right font-mono whitespace-nowrap'>
                           {row.rateLabel}
                         </TableCell>
                         <TableCell className='whitespace-nowrap'>
                           <Badge>{row.status}</Badge>
                         </TableCell>
-                        <TableCell className='text-right whitespace-nowrap'>
+                        {/* <TableCell className='text-right whitespace-nowrap'>
                           <CourseActions
                             onView={() => goToCourse(row.courseUuid)}
                             onCreateClass={() => createClass(row.courseUuid)}
                           />
-                        </TableCell>
+                        </TableCell> */}
                       </TableRow>
                     ))
                   )}

@@ -21,7 +21,7 @@ import {
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import useCourseClasses from '@/hooks/use-course-classes';
 import { useCourseLessonsWithContent } from '@/hooks/use-courselessonwithcontent';
-import { extractEntity, extractList, extractPage, getTotalFromMetadata } from '@/lib/api-helpers';
+import { extractEntity, extractList, extractPage } from '@/lib/api-helpers';
 import { cn } from '@/lib/utils';
 import {
   ApplicantTypeEnum,
@@ -30,16 +30,16 @@ import {
   type CourseTrainingApplication,
   type CourseTrainingRequirement,
   type DifficultyLevel,
-  type User,
+  type User
 } from '@/services/client';
 import {
   getAllDifficultyLevelsOptions,
   getCourseByUuidOptions,
   getCourseCreatorByUuidOptions,
   getCourseEnrollmentsOptions,
-  getCourseRequirementsOptions,
   getCourseReviewsOptions,
-  searchTrainingApplicationsOptions,
+  getCourseTrainingRequirementsOptions,
+  searchTrainingApplicationsOptions
 } from '@/services/client/@tanstack/react-query.gen';
 import { absoluteUrl, publicCourseUrl } from '@/src/features/dashboard/lib/dashboard-url';
 import { toAuthenticatedMediaUrl } from '@/src/lib/media-url';
@@ -246,17 +246,14 @@ export default function InstructorApprovedCourseDetailsPage({ courseId }: { cour
     enabled: Boolean(courseId),
     retry: false,
   });
-  const enrolledCount = useMemo(
-    () => getTotalFromMetadata(extractPage(enrollmentsQuery.data).metadata) ?? 0,
-    [enrollmentsQuery.data]
-  );
+  const enrolledCount = enrollmentsQuery?.data?.data?.metadata?.totalElements || 0
 
   const requirementsQuery = useQuery({
-    ...getCourseRequirementsOptions({ path: { courseUuid: courseId as string }, query: { pageable: {} } }),
+    ...getCourseTrainingRequirementsOptions({ path: { courseUuid: courseId as string }, query: { pageable: {} } }),
     enabled: Boolean(courseId),
     retry: false,
   });
-  const requirements = extractList<CourseTrainingRequirement>(requirementsQuery.data);
+  const requirements = extractList<CourseTrainingRequirement>(requirementsQuery?.data?.data?.content);
 
   const reviewsQuery = useQuery({
     ...getCourseReviewsOptions({ path: { courseUuid: courseId } }),
@@ -269,6 +266,15 @@ export default function InstructorApprovedCourseDetailsPage({ courseId }: { cour
     return reviews.reduce((sum, review) => sum + (review.rating ?? 0), 0) / reviews.length;
   }, [reviews]);
   const ratingDisplay = ratingLabel(averageRating);
+  const reviewStudentIds = useMemo(
+    () =>
+      reviews
+        .filter(review => !review.is_anonymous)
+        .map(review => review.student_uuid)
+        .filter((id): id is string => Boolean(id)),
+    [reviews]
+  );
+  const { studentMap: reviewStudentMap } = useStudentsByIds(reviewStudentIds);
 
   const {
     isLoading: lessonsLoading,
@@ -621,8 +627,8 @@ export default function InstructorApprovedCourseDetailsPage({ courseId }: { cour
                               ? `${classCount} class${classCount === 1 ? '' : 'es'} running`
                               : 'Not available',
                         },
-                      ].map(({ icon: Icon, label }) => (
-                        <li key={label} className='flex items-center gap-2 text-sm'>
+                      ].map(({ icon: Icon, label }, index) => (
+                        <li key={index} className='flex items-center gap-2 text-sm'>
                           <div className='bg-teal-50 text-teal-600 flex h-8 w-8 items-center justify-center rounded-md'>
                             <Icon className='h-4 w-4' />
                           </div>
@@ -894,8 +900,9 @@ export default function InstructorApprovedCourseDetailsPage({ courseId }: { cour
                 </Card>
                 <div className='grid gap-3'>
                   {reviews.map(review => {
-                    const { studentMap } = useStudentsByIds([review?.student_uuid])
-                    const student = studentMap[review?.student_uuid]
+                    const student = review?.student_uuid
+                      ? reviewStudentMap[review.student_uuid]
+                      : undefined;
 
                     const name = review?.is_anonymous ? 'Anonymous learner' : student?.full_name
 
@@ -905,7 +912,7 @@ export default function InstructorApprovedCourseDetailsPage({ courseId }: { cour
                           <div className='flex items-center justify-between'>
                             <div className='flex items-center gap-3'>
                               <div className='bg-teal-100 text-teal-700 flex h-9 w-9 items-center justify-center rounded-full text-sm font-semibold'>
-                                {ReviewInitials(name!)}
+                                {name}
                               </div>
                               <div>
                                 <div className='text-sm font-medium'>{name}</div>
