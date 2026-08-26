@@ -790,6 +790,9 @@ export default function ClassCourseDetailsPage({
             placeholder='Enter your application notes here...'
             isLoading={applyToTrainCourseMut.isPending}
             minimum_rate={course.minimum_training_fee ?? 0}
+            contentKind='course'
+            contentId={course.uuid}
+            applicantRole={isOrganisationDomain ? 'organisation_user' : 'instructor'}
           />
         ) : null}
       </main>

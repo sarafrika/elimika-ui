@@ -46,6 +46,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
+import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Progress } from '@/components/ui/progress';
 import {
@@ -117,6 +118,24 @@ const initials = (name: string) =>
     .join('')
     .slice(0, 2)
     .toUpperCase() || '?';
+
+function toUtcLocalDateTime(value: string) {
+  if (!value) return null;
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return null;
+  return date.toISOString().slice(0, 19);
+}
+
+function toDateTimeInputValue(value?: string | Date | null) {
+  if (!value) return '';
+  const date = value instanceof Date ? value : new Date(value);
+  if (Number.isNaN(date.getTime())) return '';
+
+  const pad = (part: number) => String(part).padStart(2, '0');
+  return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}T${pad(
+    date.getHours()
+  )}:${pad(date.getMinutes())}`;
+}
 
 function useInstructor(uuid?: string) {
   const q = useQuery({
@@ -362,6 +381,11 @@ export default function JobMatchesPage() {
     null
   );
   const [shortlistNote, setShortlistNote] = useState('');
+  const [interviewTarget, setInterviewTarget] = useState<ClassMarketplaceJobApplication | null>(
+    null
+  );
+  const [interviewAt, setInterviewAt] = useState('');
+  const [interviewNote, setInterviewNote] = useState('');
 
   const assignMutation = useMutation({
     ...assignInstructorMutation(),
@@ -394,21 +418,50 @@ export default function JobMatchesPage() {
     },
     onError: () => toast.error('Could not update candidate stage'),
   });
-  const move = (app: ClassMarketplaceJobApplication, action: string, note?: string) =>
+  const move = (
+    app: ClassMarketplaceJobApplication,
+    action: string,
+    note?: string,
+    scheduledInterviewAt?: string
+  ) =>
     moveMutation.mutate({
       path: { jobUuid: selectedJobUuid, applicationUuid: app.uuid as string },
       query: { action },
-      body: note ? { review_notes: note } : undefined,
+      body:
+        note || scheduledInterviewAt
+          ? {
+              ...(note ? { review_notes: note } : {}),
+              ...(scheduledInterviewAt ? { interview_at: scheduledInterviewAt } : {}),
+            }
+          : undefined,
     });
 
   const moveToStage = (app: ClassMarketplaceJobApplication, stage: string) => {
     const action = STAGE_TO_ACTION[stage];
+    if (action === 'interview') {
+      setInterviewTarget(app);
+      setInterviewAt(toDateTimeInputValue(app.interview_at));
+      setInterviewNote(app.review_notes ?? '');
+      return;
+    }
     if (action) move(app, action);
   };
   const confirmShortlist = () => {
     if (shortlistTarget) move(shortlistTarget, 'shortlist', shortlistNote.trim() || undefined);
     setShortlistTarget(null);
     setShortlistNote('');
+  };
+  const confirmInterview = () => {
+    if (!interviewTarget) return;
+    const scheduledInterviewAt = toUtcLocalDateTime(interviewAt);
+    if (!scheduledInterviewAt) {
+      toast.error('Select an interview date and time.');
+      return;
+    }
+    move(interviewTarget, 'interview', interviewNote.trim() || undefined, scheduledInterviewAt);
+    setInterviewTarget(null);
+    setInterviewAt('');
+    setInterviewNote('');
   };
 
   const topThree = useMemo(
@@ -626,6 +679,60 @@ export default function JobMatchesPage() {
           <AlertDialogFooter>
             <AlertDialogCancel>Cancel</AlertDialogCancel>
             <AlertDialogAction onClick={confirmShortlist}>Shortlist</AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      <AlertDialog
+        open={interviewTarget !== null}
+        onOpenChange={open => {
+          if (!open) {
+            setInterviewTarget(null);
+            setInterviewAt('');
+            setInterviewNote('');
+          }
+        }}
+      >
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Move candidate to interview?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Set the interview date and time before notifying the instructor.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <div className='space-y-3'>
+            <div className='space-y-1.5'>
+              <Label htmlFor='pipeline-interview-at' className='text-xs'>
+                Interview date and time
+              </Label>
+              <Input
+                id='pipeline-interview-at'
+                type='datetime-local'
+                value={interviewAt}
+                min={toDateTimeInputValue(new Date())}
+                onChange={event => setInterviewAt(event.target.value)}
+              />
+            </div>
+            <div className='space-y-1.5'>
+              <Label htmlFor='pipeline-interview-note' className='text-xs'>
+                Note (optional)
+              </Label>
+              <Textarea
+                id='pipeline-interview-note'
+                placeholder='e.g. Prepare a 10-minute demo lesson'
+                value={interviewNote}
+                onChange={event => setInterviewNote(event.target.value)}
+              />
+            </div>
+          </div>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={confirmInterview}
+              disabled={!toUtcLocalDateTime(interviewAt)}
+            >
+              Confirm interview
+            </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>

@@ -2,9 +2,10 @@
 
 import type { DashboardClass } from '@/app/dashboard/_components/types';
 import { useInstructor } from '@/context/instructor-context';
+import { localDate } from '@/lib/date';
 import { getInstructorCalendarOptions } from '@/services/client/@tanstack/react-query.gen';
 import { useQuery } from '@tanstack/react-query';
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import {
   type AvailabilityData,
   type ClassScheduleItem,
@@ -19,6 +20,16 @@ interface TimetablePageProps {
 
 const TimeTablePage = ({ classesWithCourseAndInstructor, loading }: TimetablePageProps) => {
   const instructor = useInstructor();
+  const scheduleRange = useMemo(() => {
+    const start = new Date();
+    start.setFullYear(start.getFullYear() - 2);
+    const end = new Date();
+    end.setFullYear(end.getFullYear() + 2);
+    return {
+      start_date: localDate(start),
+      end_date: localDate(end),
+    };
+  }, []);
 
   const {
     data: timetable,
@@ -27,10 +38,7 @@ const TimeTablePage = ({ classesWithCourseAndInstructor, loading }: TimetablePag
   } = useQuery({
     ...getInstructorCalendarOptions({
       path: { instructorUuid: instructor?.uuid as string },
-      query: {
-        start_date: new Date('2024-09-10'),
-        end_date: new Date('2026-11-11'),
-      },
+      query: scheduleRange,
     }),
     enabled: !!instructor?.uuid,
   });

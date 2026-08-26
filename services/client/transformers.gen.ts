@@ -4857,6 +4857,9 @@ export const assignInstructorResponseTransformer = async (
 };
 
 const classMarketplaceJobApplicationSchemaResponseTransformer = (data: any) => {
+  if (data.interview_at) {
+    data.interview_at = new Date(data.interview_at);
+  }
   if (data.reviewed_at) {
     data.reviewed_at = new Date(data.reviewed_at);
   }

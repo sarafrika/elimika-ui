@@ -57,12 +57,30 @@ interface NotesModalProps {
   userType?: 'course_creator' | 'instructor';
   minimum_rate: number | string;
   selectedApplicationCard?: CoursesCatalogCardData | CoursesRecommendationCardData;
+  contentKind?: 'course' | 'program';
+  contentId?: string;
+  applicantRole?: 'course_creator' | 'instructor' | 'organisation' | 'organisation_user';
   existingApplication?: CatalogTrainingApplicationData | null;
   readOnly?: boolean;
   canReapply?: boolean;
   onReapply?: () => void;
   formRevision?: number;
 }
+
+type RequirementDisplayItem = Omit<Partial<CourseTrainingRequirement>, 'provided_by'> & {
+  uuid?: string;
+  name: string;
+  provided_by?: string | null;
+  checked?: boolean;
+};
+
+type ProgramRequirementLike = {
+  uuid?: string;
+  requirement_text?: string;
+  requirement_type?: string;
+  requirement_category?: string;
+  is_mandatory?: boolean;
+};
 
 export default function NotesModal({
   open,
@@ -80,6 +98,9 @@ export default function NotesModal({
   userType = 'instructor',
   minimum_rate,
   selectedApplicationCard,
+  contentKind,
+  contentId,
+  applicantRole,
   existingApplication,
   readOnly = false,
   canReapply = false,
@@ -94,7 +115,11 @@ export default function NotesModal({
   const [currency, setCurrency] = useState('KES');
 
   const { activeDomain } = useUserDomain();
-  const [requirements, setRequirements] = useState<CourseTrainingRequirement[]>([]);
+  const [requirements, setRequirements] = useState<RequirementDisplayItem[]>([]);
+  const selectedContentKind =
+    contentKind ??
+    (selectedApplicationCard as { contentKind?: 'course' | 'program' } | undefined)?.contentKind;
+  const selectedContentId = contentId ?? selectedApplicationCard?.id ?? '';
 
   const applyExistingApplication = useCallback(() => {
     const rateCard = existingApplication?.rate_card;
@@ -145,11 +170,10 @@ export default function NotesModal({
 
   const { data: courseTrainingReqResp } = useQuery({
     ...getCourseTrainingRequirementsOptions({
-      path: { courseUuid: selectedApplicationCard?.id ?? '' },
+      path: { courseUuid: selectedContentId },
       query: { pageable: {} },
     }),
-    enabled:
-      (selectedApplicationCard as { contentKind?: string } | undefined)?.contentKind === 'course',
+    enabled: selectedContentKind === 'course' && Boolean(selectedContentId),
   });
   // const { data: courseRequirementResp } = useQuery({
   //   ...getCourseRequirementsOptions({ path: { courseUuid: selectedApplicationCard?.id }, query: { pageable: {} } }),
@@ -157,20 +181,35 @@ export default function NotesModal({
   // })
   const { data: programRequirementResp } = useQuery({
     ...getProgramRequirementsOptions({
-      path: { programUuid: selectedApplicationCard?.id ?? '' },
+      path: { programUuid: selectedContentId },
       query: { pageable: {} },
     }),
-    enabled:
-      (selectedApplicationCard as { contentKind?: string } | undefined)?.contentKind === 'program',
+    enabled: selectedContentKind === 'program' && Boolean(selectedContentId),
   });
 
   const normalizeProvider = (provider?: string | undefined | null) => {
-    switch (provider) {
+    switch (provider?.toLowerCase()) {
       case 'organisation':
+      case 'organization':
       case 'organisation_user':
+      case 'organization_user':
+      case 'training_center':
         return 'organisation_user';
       default:
-        return provider;
+        return provider?.toLowerCase();
+    }
+  };
+
+  const providerFromProgramRequirement = (requirementType?: string) => {
+    switch (requirementType?.toUpperCase()) {
+      case 'TRAINING_CENTER':
+        return 'organisation_user';
+      case 'INSTRUCTOR':
+        return 'instructor';
+      case 'STUDENT':
+        return 'student';
+      default:
+        return null;
     }
   };
 
@@ -178,9 +217,14 @@ export default function NotesModal({
     student: 'Student',
     instructor: 'Instructor',
     organisation_user: 'Organisation',
+    course_creator: 'Course creator',
+    unassigned: 'Unassigned',
   } as const;
 
-  const activeProvider = useMemo(() => normalizeProvider(activeDomain), [activeDomain]);
+  const activeProvider = useMemo(
+    () => normalizeProvider(applicantRole ?? activeDomain ?? userType),
+    [activeDomain, applicantRole, userType]
+  );
 
   const checkableProviders = useMemo(() => {
     switch (activeProvider) {
@@ -188,7 +232,7 @@ export default function NotesModal({
         return ['instructor'];
 
       case 'organisation_user':
-        return ['organisation_user', 'instructor'];
+        return ['organisation_user'];
 
       default:
         return [];
@@ -201,7 +245,7 @@ export default function NotesModal({
   const groupedRequirements = useMemo(() => {
     return requirements.reduce(
       (acc, req) => {
-        const provider = normalizeProvider(req?.provided_by as string) ?? '';
+        const provider = normalizeProvider(req?.provided_by as string) ?? 'unassigned';
 
         if (!acc[provider]) {
           acc[provider] = [];
@@ -218,8 +262,7 @@ export default function NotesModal({
   const requirementGroups = useMemo(() => {
     return Object.entries(groupedRequirements).map(([provider, items]) => ({
       provider,
-      label:
-        providerLabels[normalizeProvider(provider) as keyof typeof providerLabels] ?? provider,
+      label: providerLabels[normalizeProvider(provider) as keyof typeof providerLabels] ?? provider,
       items,
       hasUncheckedMandatoryRequirements: items.some(
         req =>
@@ -237,23 +280,38 @@ export default function NotesModal({
   }, [requirements, checkableProviders]);
 
   useEffect(() => {
-    const data =
-      (selectedApplicationCard as { contentKind?: string } | undefined)?.contentKind === 'course'
-        ? courseTrainingReqResp?.data?.content
-        : programRequirementResp?.data?.content;
+    if (!open || !selectedContentKind) {
+      setRequirements([]);
+      return;
+    }
 
-    if (!data) return;
+    if (selectedContentKind === 'program') {
+      const data = programRequirementResp?.data?.content as ProgramRequirementLike[] | undefined;
+      setRequirements(
+        (data ?? []).map((req, index) => ({
+          uuid: req.uuid ?? `program-requirement-${index}`,
+          name: req.requirement_text ?? req.requirement_category ?? 'Program requirement',
+          description: req.requirement_category,
+          provided_by: providerFromProgramRequirement(req.requirement_type),
+          is_mandatory: req.is_mandatory,
+          checked: false,
+        }))
+      );
+      return;
+    }
 
     setRequirements(
-      data.map(req => ({
+      (courseTrainingReqResp?.data?.content ?? []).map(req => ({
         ...req,
         checked: false,
-      })) as unknown as CourseTrainingRequirement[]
+      }))
     );
   }, [
+    open,
+    selectedContentKind,
+    selectedContentId,
     courseTrainingReqResp?.data?.content,
     programRequirementResp?.data?.content,
-    (selectedApplicationCard as { contentKind?: string } | undefined)?.contentKind,
   ]);
 
   const statusLabel = (existingApplication?.status ?? '').toLowerCase() || 'unknown';
@@ -283,11 +341,17 @@ export default function NotesModal({
               <div className='flex items-center justify-between gap-2'>
                 <div>
                   <p className='text-sm font-semibold'>Application summary</p>
-                  <p className='text-muted-foreground text-xs capitalize'>
-                    Status: {statusLabel}
-                  </p>
+                  <p className='text-muted-foreground text-xs capitalize'>Status: {statusLabel}</p>
                 </div>
-                <Badge variant={statusLabel === 'approved' ? 'default' : statusLabel === 'pending' ? 'secondary' : 'destructive'}>
+                <Badge
+                  variant={
+                    statusLabel === 'approved'
+                      ? 'default'
+                      : statusLabel === 'pending'
+                        ? 'secondary'
+                        : 'destructive'
+                  }
+                >
                   {statusLabel}
                 </Badge>
               </div>
@@ -295,11 +359,19 @@ export default function NotesModal({
               <div className='grid gap-2 text-sm sm:grid-cols-2'>
                 <div>
                   <p className='text-muted-foreground text-xs'>Submitted</p>
-                  <p>{existingApplication.created_date ? new Date(existingApplication.created_date).toLocaleDateString() : '—'}</p>
+                  <p>
+                    {existingApplication.created_date
+                      ? new Date(existingApplication.created_date).toLocaleDateString()
+                      : '—'}
+                  </p>
                 </div>
                 <div>
                   <p className='text-muted-foreground text-xs'>Reviewed</p>
-                  <p>{existingApplication.reviewed_at ? new Date(existingApplication.reviewed_at).toLocaleDateString() : '—'}</p>
+                  <p>
+                    {existingApplication.reviewed_at
+                      ? new Date(existingApplication.reviewed_at).toLocaleDateString()
+                      : '—'}
+                  </p>
                 </div>
                 <div className='sm:col-span-2'>
                   <p className='text-muted-foreground text-xs'>Reviewer</p>
@@ -454,12 +526,12 @@ export default function NotesModal({
 
                       return (
                         <div
-                          key={item.uuid}
+                          key={item.uuid ?? `${group.provider}-${item.name}`}
                           className='flex items-start gap-3 rounded-md border p-2.5'
                         >
                           {canCheck ? (
                             <Checkbox
-                              className="mt-0.5 h-4 w-4 border-2 border-foreground bg-background shadow-none data-[state=checked]:bg-primary data-[state=checked]:border-primary"
+                              className='border-foreground bg-background data-[state=checked]:bg-primary data-[state=checked]:border-primary mt-0.5 h-4 w-4 border-2 shadow-none'
                               checked={(item as { checked?: boolean }).checked}
                               disabled={readOnly}
                               onCheckedChange={checked => {
@@ -473,7 +545,7 @@ export default function NotesModal({
                               }}
                             />
                           ) : (
-                            <div className="mt-0.5 h-4 w-4" />
+                            <div className='mt-0.5 h-4 w-4' />
                           )}
 
                           <div className='flex-1'>

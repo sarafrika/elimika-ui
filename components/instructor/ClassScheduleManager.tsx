@@ -761,10 +761,13 @@ export function ClassScheduleManager({
                 const isCancelled = status === 'CANCELLED';
                 const isBlocked = status === 'BLOCKED';
                 const isConcluded = Boolean(concludedAt?.isValid()) || status === 'COMPLETED';
+                const students = studentsByScheduleInstance[schedule.uuid] ?? [];
+                const hasEnrolledStudents = students.length > 0;
                 const canStart =
                   !isCancelled &&
                   !isBlocked &&
                   !isConcluded &&
+                  hasEnrolledStudents &&
                   (schedule.can_be_started ?? status === 'SCHEDULED');
                 const canEnd =
                   !isCancelled &&
@@ -800,7 +803,6 @@ export function ClassScheduleManager({
                     : isConcluded || isBlocked || isPast
                       ? 'secondary'
                       : 'outline';
-                const students = studentsByScheduleInstance[schedule.uuid] ?? [];
                 const rosterPreviewAvailable =
                   !!fixedClassId || selectedSchedule?.classId === schedule.classId;
 
@@ -868,7 +870,9 @@ export function ClassScheduleManager({
                                   ? 'Cancelled'
                                   : isBlocked
                                     ? 'Blocked'
-                                    : 'Start'}
+                                    : !hasEnrolledStudents
+                                      ? 'No students'
+                                      : 'Start'}
                             </Button>
                           )}
                           <DropdownMenu>

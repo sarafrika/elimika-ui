@@ -11,6 +11,7 @@ import { AdminPageHeader, adminTheme, SectionCard } from '@/app/dashboard/admin/
 import { AsyncSection } from '@/components/data/async-section';
 import { Button } from '@/components/ui/button';
 import { EmptyState } from '@/components/ui/empty-state';
+import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import {
   Sheet,
@@ -76,6 +77,28 @@ const REVIEW_ACTIONS = {
 
 type ReviewAction = keyof typeof REVIEW_ACTIONS;
 
+function toDateTimeInputValue(value?: string | Date | null) {
+  if (!value) return '';
+  const date = value instanceof Date ? value : new Date(value);
+  if (Number.isNaN(date.getTime())) return '';
+
+  const pad = (part: number) => String(part).padStart(2, '0');
+  return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}T${pad(
+    date.getHours()
+  )}:${pad(date.getMinutes())}`;
+}
+
+function toUtcLocalDateTime(value: string) {
+  if (!value) return null;
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return null;
+  return date.toISOString().slice(0, 19);
+}
+
+function isInterviewAction(action?: ReviewAction) {
+  return action === 'INTERVIEW';
+}
+
 function shortId(value?: string | null) {
   if (!value) return 'Unknown';
   return value.slice(0, 8);
@@ -94,6 +117,7 @@ export function OrganisationJobApplicationsPage({ jobUuid }: JobApplicationsPage
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState<ApplicationStatusFilter>('ALL');
   const [reviewNotes, setReviewNotes] = useState('');
+  const [interviewAt, setInterviewAt] = useState('');
   const [reviewDialogOpen, setReviewDialogOpen] = useState(false);
   const [pendingReview, setPendingReview] = useState<{
     application: ClassMarketplaceJobApplication;
@@ -149,6 +173,7 @@ export function OrganisationJobApplicationsPage({ jobUuid }: JobApplicationsPage
     onSuccess: async () => {
       toast.success('Application reviewed successfully.');
       setReviewNotes('');
+      setInterviewAt('');
       setPendingReview(null);
       setReviewDialogOpen(false);
       await queryClient.invalidateQueries({
@@ -229,11 +254,25 @@ export function OrganisationJobApplicationsPage({ jobUuid }: JobApplicationsPage
   const openReviewDialog = (application: ClassMarketplaceJobApplication, action: ReviewAction) => {
     setPendingReview({ application, action });
     setReviewNotes(application.review_notes ?? '');
+    setInterviewAt(isInterviewAction(action) ? toDateTimeInputValue(application.interview_at) : '');
     setReviewDialogOpen(true);
   };
 
   const handleReviewConfirm = () => {
     if (!pendingReview?.application.uuid) return;
+
+    const scheduledInterviewAt = isInterviewAction(pendingReview.action)
+      ? toUtcLocalDateTime(interviewAt)
+      : null;
+    if (isInterviewAction(pendingReview.action) && !scheduledInterviewAt) {
+      toast.error('Select an interview date and time.');
+      return;
+    }
+
+    const body = {
+      ...(reviewNotes.trim() ? { review_notes: reviewNotes.trim() } : {}),
+      ...(scheduledInterviewAt ? { interview_at: scheduledInterviewAt } : {}),
+    };
 
     reviewMutation.mutate({
       path: {
@@ -243,7 +282,7 @@ export function OrganisationJobApplicationsPage({ jobUuid }: JobApplicationsPage
       query: {
         action: pendingReview.action,
       },
-      body: reviewNotes.trim() ? { review_notes: reviewNotes.trim() } : undefined,
+      body: Object.keys(body).length ? body : undefined,
     });
   };
 
@@ -384,6 +423,7 @@ export function OrganisationJobApplicationsPage({ jobUuid }: JobApplicationsPage
             if (!open) {
               setPendingReview(null);
               setReviewNotes('');
+              setInterviewAt('');
             }
           }}
         >
@@ -394,13 +434,31 @@ export function OrganisationJobApplicationsPage({ jobUuid }: JobApplicationsPage
             <div className='space-y-6 p-3 sm:p-6'>
               <SheetHeader className='space-y-3 pr-10 text-left'>
                 <SheetTitle>
-                  {pendingReview ? REVIEW_ACTIONS[pendingReview.action].title : 'Review application'}
+                  {pendingReview
+                    ? REVIEW_ACTIONS[pendingReview.action].title
+                    : 'Review application'}
                 </SheetTitle>
                 <SheetDescription>
-                  Add review notes before confirming. The applicant is notified of this step and
-                  receives the notes you submit with it.
+                  {isInterviewAction(pendingReview?.action)
+                    ? 'Set the interview date and add notes before confirming. The applicant is notified of both.'
+                    : 'Add review notes before confirming. The applicant is notified of this step and receives the notes you submit with it.'}
                 </SheetDescription>
               </SheetHeader>
+
+              {isInterviewAction(pendingReview?.action) ? (
+                <div className='space-y-2'>
+                  <Label htmlFor='interview-at' className='text-sm font-medium'>
+                    Interview date and time
+                  </Label>
+                  <Input
+                    id='interview-at'
+                    type='datetime-local'
+                    value={interviewAt}
+                    min={toDateTimeInputValue(new Date())}
+                    onChange={event => setInterviewAt(event.target.value)}
+                  />
+                </div>
+              ) : null}
 
               <div className='space-y-2'>
                 <Label htmlFor='review-notes' className='text-sm font-medium'>
@@ -422,6 +480,7 @@ export function OrganisationJobApplicationsPage({ jobUuid }: JobApplicationsPage
                     setReviewDialogOpen(false);
                     setPendingReview(null);
                     setReviewNotes('');
+                    setInterviewAt('');
                   }}
                   disabled={reviewMutation.isPending}
                 >
@@ -430,7 +489,11 @@ export function OrganisationJobApplicationsPage({ jobUuid }: JobApplicationsPage
                 <Button
                   variant={pendingReview?.action === 'REJECT' ? 'destructive' : 'default'}
                   onClick={handleReviewConfirm}
-                  disabled={reviewMutation.isPending || !pendingReview?.application.uuid}
+                  disabled={
+                    reviewMutation.isPending ||
+                    !pendingReview?.application.uuid ||
+                    (isInterviewAction(pendingReview?.action) && !toUtcLocalDateTime(interviewAt))
+                  }
                 >
                   {reviewMutation.isPending ? (
                     <>
@@ -438,7 +501,8 @@ export function OrganisationJobApplicationsPage({ jobUuid }: JobApplicationsPage
                       Submitting...
                     </>
                   ) : (
-                    (pendingReview && REVIEW_ACTIONS[pendingReview.action].confirmLabel) ?? 'Confirm'
+                    ((pendingReview && REVIEW_ACTIONS[pendingReview.action].confirmLabel) ??
+                    'Confirm')
                   )}
                 </Button>
               </div>

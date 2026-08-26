@@ -7972,6 +7972,7 @@ export const zClassMarketplaceJobApplication = z
     instructor_uuid: z.string().uuid().readonly().optional(),
     application_note: z.string().readonly().optional(),
     review_notes: z.string().readonly().optional(),
+    interview_at: z.string().datetime().readonly().optional(),
     instructor_admin_verified: z.union([z.boolean().readonly(), z.null()]).readonly().optional(),
     training_approved: z.union([z.boolean().readonly(), z.null()]).readonly().optional(),
     approved_rate: z.union([z.number().readonly(), z.null()]).readonly().optional(),
@@ -7997,8 +7998,11 @@ export const zApiResponseClassMarketplaceJobApplication = z.object({
 export const zClassMarketplaceJobDecisionRequest = z
   .object({
     review_notes: z.string().min(0).max(2000).optional(),
+    interview_at: z.string().datetime().optional(),
   })
-  .describe('Organisation review notes when approving or rejecting an instructor application');
+  .describe(
+    'Organisation review notes and optional interview scheduling details for an instructor application'
+  );
 
 /**
  * Request payload for creating a booking for an instructor and course

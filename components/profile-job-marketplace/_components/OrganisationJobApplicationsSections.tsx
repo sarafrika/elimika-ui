@@ -311,6 +311,11 @@ export function ApplicationsListSection({
                     Reviewed {formatDate(application.reviewed_at)}
                   </Badge>
                 ) : null}
+                {application.interview_at ? (
+                  <Badge variant='outline' className='rounded-md'>
+                    Interview {formatDate(application.interview_at)}
+                  </Badge>
+                ) : null}
               </div>
 
               <div className='ml-auto flex flex-wrap gap-2'>
@@ -325,7 +330,9 @@ export function ApplicationsListSection({
                     size='sm'
                     onClick={() => onMoveToStage(application, stage.action)}
                     disabled={
-                      isReviewPending || reviewDisabled || application.status === stage.reachedStatus
+                      isReviewPending ||
+                      reviewDisabled ||
+                      application.status === stage.reachedStatus
                     }
                   >
                     {stage.label}
@@ -425,7 +432,9 @@ export function JobOverviewPanel({
           {
             label: 'Sale price per session',
             value:
-              typeof job?.sale_price === 'number' ? formatCurrency(job.sale_price) : 'Not specified',
+              typeof job?.sale_price === 'number'
+                ? formatCurrency(job.sale_price)
+                : 'Not specified',
           },
           {
             label: 'Instructor pay per session',

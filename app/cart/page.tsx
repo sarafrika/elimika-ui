@@ -3,6 +3,7 @@
 
 import { AsyncSection } from '@/components/data/async-section';
 import { PublicTopNav } from '@/components/PublicTopNav';
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
@@ -12,12 +13,13 @@ import { usePaymentMode } from '@/hooks/use-payment-mode';
 import type { CartItemResponse } from '@/services/client';
 import {
   completeCheckoutMutation,
+  getClassEnrolmentEligibilityOptions,
   getCartOptions,
   getCartQueryKey,
   removeItemMutation,
 } from '@/services/client/@tanstack/react-query.gen';
 import { useCartStore } from '@/store/cart-store';
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { useMutation, useQueries, useQuery, useQueryClient } from '@tanstack/react-query';
 import {
   ArrowLeft,
   ArrowRight,
@@ -33,6 +35,7 @@ import { useMemo, useState } from 'react';
 import { toast } from 'sonner';
 
 const DEFAULT_CURRENCY = 'KES';
+const UUID_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 
 const formatMoney = (amount: number | string | undefined, currency = DEFAULT_CURRENCY) => {
   if (amount === undefined || amount === null) return '—';
@@ -45,6 +48,11 @@ const formatMoney = (amount: number | string | undefined, currency = DEFAULT_CUR
     minimumFractionDigits: 2,
     maximumFractionDigits: 2,
   }).format(numAmount);
+};
+
+const getClassDefinitionUuid = (item: CartItemResponse): string | null => {
+  const value = item.metadata?.class_definition_uuid;
+  return typeof value === 'string' && UUID_PATTERN.test(value) ? value : null;
 };
 
 export default function CartPage() {
@@ -68,6 +76,60 @@ export default function CartPage() {
   const cart = cartQuery?.data?.data ?? null;
   const cartItems = useMemo(() => cart?.items ?? [], [cart?.items]);
   const isEmpty = cartItems.length === 0;
+  const studentUuid = profile?.student?.uuid;
+  const classCartItems = useMemo(
+    () =>
+      cartItems
+        .map(item => ({
+          item,
+          classDefinitionUuid: getClassDefinitionUuid(item),
+        }))
+        .filter((entry): entry is { item: CartItemResponse; classDefinitionUuid: string } =>
+          Boolean(entry.classDefinitionUuid)
+        ),
+    [cartItems]
+  );
+
+  const eligibilityQueries = useQueries({
+    queries: classCartItems.map(entry => ({
+      ...getClassEnrolmentEligibilityOptions({
+        path: {
+          classDefinitionUuid: entry.classDefinitionUuid,
+          studentUuid: studentUuid ?? 'unset',
+        },
+      }),
+      enabled: Boolean(studentUuid),
+      retry: 1,
+    })),
+  });
+
+  const eligibilityBlockers = useMemo(
+    () =>
+      classCartItems.flatMap((entry, index) => {
+        const eligibility = eligibilityQueries[index]?.data?.data;
+        if (!eligibility || eligibility.eligible !== false) {
+          return [];
+        }
+        return [
+          {
+            itemId: entry.item.id,
+            title: entry.item.title ?? 'Selected class',
+            reason: eligibility.reason ?? 'This class cannot be enrolled right now.',
+          },
+        ];
+      }),
+    [classCartItems, eligibilityQueries]
+  );
+  const eligibilityLoading =
+    Boolean(studentUuid) &&
+    classCartItems.length > 0 &&
+    eligibilityQueries.some(query => query.isLoading || query.isFetching);
+  const eligibilityError =
+    Boolean(studentUuid) &&
+    classCartItems.length > 0 &&
+    eligibilityBlockers.length === 0 &&
+    eligibilityQueries.some(query => query.isError);
+  const checkoutBlocked = eligibilityLoading || eligibilityBlockers.length > 0;
 
   const subtotal = useMemo(() => {
     if (!cart?.subtotal) return 0;
@@ -92,6 +154,14 @@ export default function CartPage() {
   const enrolWithoutPayment = async () => {
     if (!cartId) {
       toast.error('No cart found');
+      return;
+    }
+    if (eligibilityLoading) {
+      toast.info('Checking class enrolment eligibility. Please wait a moment.');
+      return;
+    }
+    if (eligibilityBlockers.length > 0) {
+      toast.error(eligibilityBlockers[0].reason);
       return;
     }
     const email = profile?.email;
@@ -301,8 +371,44 @@ export default function CartPage() {
                     <span className='text-primary text-2xl font-bold'>{formatMoney(total)}</span>
                   </div>
 
+                  {eligibilityBlockers.length > 0 && (
+                    <Alert variant='destructive'>
+                      <AlertCircle className='h-4 w-4' />
+                      <AlertTitle>Enrollment needs attention</AlertTitle>
+                      <AlertDescription>
+                        <ul className='list-disc space-y-1 pl-4'>
+                          {eligibilityBlockers.map(blocker => (
+                            <li key={blocker.itemId ?? blocker.title}>
+                              <span className='font-medium'>{blocker.title}:</span> {blocker.reason}
+                            </li>
+                          ))}
+                        </ul>
+                      </AlertDescription>
+                    </Alert>
+                  )}
+
+                  {eligibilityError && (
+                    <Alert>
+                      <AlertCircle className='h-4 w-4' />
+                      <AlertTitle>Eligibility check unavailable</AlertTitle>
+                      <AlertDescription>
+                        Checkout will re-check your class eligibility before any payment is
+                        captured.
+                      </AlertDescription>
+                    </Alert>
+                  )}
+
                   <div className='space-y-3 pt-4'>
-                    {paymentRequired ? (
+                    {paymentRequired && checkoutBlocked ? (
+                      <Button
+                        size='lg'
+                        className='bg-primary hover:bg-primary/90 w-full rounded-full text-base font-semibold shadow-lg transition'
+                        disabled
+                      >
+                        {eligibilityLoading ? 'Checking eligibility...' : 'Resolve enrolment issue'}
+                        <ArrowRight className='ml-2 h-4 w-4' />
+                      </Button>
+                    ) : paymentRequired ? (
                       <Button
                         size='lg'
                         className='bg-primary hover:bg-primary/90 w-full rounded-full text-base font-semibold shadow-lg transition'
@@ -318,9 +424,13 @@ export default function CartPage() {
                         size='lg'
                         className='bg-primary hover:bg-primary/90 w-full rounded-full text-base font-semibold shadow-lg transition'
                         onClick={enrolWithoutPayment}
-                        disabled={enrolling}
+                        disabled={enrolling || checkoutBlocked}
                       >
-                        {enrolling ? 'Enrolling…' : 'Complete Enrollment'}
+                        {eligibilityLoading
+                          ? 'Checking eligibility...'
+                          : enrolling
+                            ? 'Enrolling...'
+                            : 'Complete Enrollment'}
                         <ArrowRight className='ml-2 h-4 w-4' />
                       </Button>
                     )}

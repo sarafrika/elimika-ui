@@ -20,18 +20,31 @@ import {
 } from 'lucide-react';
 import Link from 'next/link';
 import { useParams, useRouter, useSearchParams } from 'next/navigation';
-import { useMemo } from 'react';
+import { useMemo, useState } from 'react';
 import { toast } from 'sonner';
 
 import { AsyncSection } from '@/components/data/async-section';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
 import { Progress } from '@/components/ui/progress';
 import { Separator } from '@/components/ui/separator';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Textarea } from '@/components/ui/textarea';
 import { extractEntity, extractList } from '@/lib/api-helpers';
 import { cn } from '@/lib/utils';
 import type { ClassMarketplaceJobApplication, Instructor } from '@/services/client';
@@ -91,6 +104,24 @@ const stripHtml = (html?: string) =>
     .replace(/\s+/g, ' ')
     .trim();
 
+function toUtcLocalDateTime(value: string) {
+  if (!value) return null;
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return null;
+  return date.toISOString().slice(0, 19);
+}
+
+function toDateTimeInputValue(value?: string | Date | null) {
+  if (!value) return '';
+  const date = value instanceof Date ? value : new Date(value);
+  if (Number.isNaN(date.getTime())) return '';
+
+  const pad = (part: number) => String(part).padStart(2, '0');
+  return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}T${pad(
+    date.getHours()
+  )}:${pad(date.getMinutes())}`;
+}
+
 function StatCard({
   icon,
   label,
@@ -135,6 +166,9 @@ export default function CandidateDetailPage() {
   const applicationUuid = search.get('application') ?? '';
   const router = useRouter();
   const queryClient = useQueryClient();
+  const [interviewDialogOpen, setInterviewDialogOpen] = useState(false);
+  const [interviewAt, setInterviewAt] = useState('');
+  const [interviewNote, setInterviewNote] = useState('');
 
   const instructorQuery = useQuery({
     ...getInstructorByUuidOptions({ path: { uuid: instructorUuid } }),
@@ -196,9 +230,7 @@ export default function CandidateDetailPage() {
       });
     },
     onError: error =>
-      toast.error(
-        error instanceof Error ? error.message : 'Could not complete the hire'
-      ),
+      toast.error(error instanceof Error ? error.message : 'Could not complete the hire'),
   });
 
   const moveMutation = useMutation({
@@ -216,12 +248,35 @@ export default function CandidateDetailPage() {
     },
     onError: () => toast.error('Could not update candidate stage'),
   });
-  const act = (action: string) =>
+  const act = (action: string, body?: Record<string, string>) =>
     app &&
     moveMutation.mutate({
       path: { jobUuid, applicationUuid: app.uuid as string },
       query: { action },
+      body,
     });
+
+  const openInterviewDialog = () => {
+    if (!app) return;
+    setInterviewAt(toDateTimeInputValue(app.interview_at));
+    setInterviewNote(app.review_notes ?? '');
+    setInterviewDialogOpen(true);
+  };
+
+  const confirmInterview = () => {
+    const scheduledInterviewAt = toUtcLocalDateTime(interviewAt);
+    if (!scheduledInterviewAt) {
+      toast.error('Select an interview date and time.');
+      return;
+    }
+    act('interview', {
+      ...(interviewNote.trim() ? { review_notes: interviewNote.trim() } : {}),
+      interview_at: scheduledInterviewAt,
+    });
+    setInterviewDialogOpen(false);
+    setInterviewAt('');
+    setInterviewNote('');
+  };
 
   const skillNames = useMemo(
     () => skills.map(s => String(s.skill_name ?? s.name ?? '')).filter(Boolean),
@@ -559,7 +614,11 @@ export default function CandidateDetailPage() {
                       variant={stage === s ? 'default' : 'outline'}
                       className='justify-start'
                       disabled={!app || moveMutation.isPending || assignMutation.isPending}
-                      onClick={() => act(STAGE_TO_ACTION[s])}
+                      onClick={() =>
+                        STAGE_TO_ACTION[s] === 'interview'
+                          ? openInterviewDialog()
+                          : act(STAGE_TO_ACTION[s])
+                      }
                     >
                       <UserCheck className='mr-2 h-4 w-4' /> Move to {s}
                     </Button>
@@ -621,6 +680,60 @@ export default function CandidateDetailPage() {
           </Card>
         </aside>
       </div>
+
+      <AlertDialog
+        open={interviewDialogOpen}
+        onOpenChange={open => {
+          setInterviewDialogOpen(open);
+          if (!open) {
+            setInterviewAt('');
+            setInterviewNote('');
+          }
+        }}
+      >
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Move candidate to interview?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Set the interview date and time before notifying the instructor.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <div className='space-y-3'>
+            <div className='space-y-1.5'>
+              <Label htmlFor='candidate-interview-at' className='text-xs'>
+                Interview date and time
+              </Label>
+              <Input
+                id='candidate-interview-at'
+                type='datetime-local'
+                value={interviewAt}
+                min={toDateTimeInputValue(new Date())}
+                onChange={event => setInterviewAt(event.target.value)}
+              />
+            </div>
+            <div className='space-y-1.5'>
+              <Label htmlFor='candidate-interview-note' className='text-xs'>
+                Note (optional)
+              </Label>
+              <Textarea
+                id='candidate-interview-note'
+                placeholder='e.g. Prepare a 10-minute demo lesson'
+                value={interviewNote}
+                onChange={event => setInterviewNote(event.target.value)}
+              />
+            </div>
+          </div>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={confirmInterview}
+              disabled={!toUtcLocalDateTime(interviewAt)}
+            >
+              Confirm interview
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }

@@ -263,7 +263,8 @@ const createCatalogCards = (
         ? true
         : isInstructorApplyCard
           ? isOrganisationDomain
-            ? !canOrganisationApply || Boolean(applicationStatus && !REAPPLYABLE_OR_APPROVED.has(applicationStatus))
+            ? !canOrganisationApply ||
+              Boolean(applicationStatus && !REAPPLYABLE_OR_APPROVED.has(applicationStatus))
             : Boolean(applicationStatus && !REAPPLYABLE.has(applicationStatus))
           : false,
 
@@ -1468,17 +1469,19 @@ export function SharedCoursesPage({ domain }: SharedCoursesPageProps) {
       <div className='space-y-6'>
         <header className='bg-card'>
           <div className='flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between'>
-            {isStudentDomain ? <div className=''>
-              <h1 className='text-2xl font-bold'>Start a Course</h1>
-              <p className='text-muted-foreground/60 text-sm'>
-                Choose how you want to learn — join a class or find an instructor.
-              </p>
-            </div> : <div className=''>
-              <h1 className='text-2xl font-bold'>Course Catalogue</h1>
-              <p className='text-muted-foreground/60 text-sm'>
-                {catalogueSubtitle}
-              </p>
-            </div>}
+            {isStudentDomain ? (
+              <div className=''>
+                <h1 className='text-2xl font-bold'>Start a Course</h1>
+                <p className='text-muted-foreground/60 text-sm'>
+                  Choose how you want to learn — join a class or find an instructor.
+                </p>
+              </div>
+            ) : (
+              <div className=''>
+                <h1 className='text-2xl font-bold'>Course Catalogue</h1>
+                <p className='text-muted-foreground/60 text-sm'>{catalogueSubtitle}</p>
+              </div>
+            )}
 
             <div className='flex flex-wrap gap-2'>
               {[
@@ -1508,9 +1511,7 @@ export function SharedCoursesPage({ domain }: SharedCoursesPageProps) {
                     {value}
                   </span>
 
-                  <span className='text-muted-foreground text-sm'>
-                    {label}
-                  </span>
+                  <span className='text-muted-foreground text-sm'>{label}</span>
                 </span>
               ))}
             </div>
@@ -1638,11 +1639,11 @@ export function SharedCoursesPage({ domain }: SharedCoursesPageProps) {
                   </div>
                 ) : catalogCards.length > 0 ? (
                   <div className=''>
-                    <div className="grid grid-cols-[repeat(auto-fill,minmax(320px,380px))] gap-4">
+                    <div className='grid grid-cols-[repeat(auto-fill,minmax(320px,380px))] gap-4'>
                       {!isStudentDomain &&
                         catalogCards.map(card => (
                           <CoursesCatalogCard
-                            type="general"
+                            type='general'
                             key={card.id}
                             card={card}
                             onPrimaryAction={handleCatalogCardAction}
@@ -1652,7 +1653,7 @@ export function SharedCoursesPage({ domain }: SharedCoursesPageProps) {
                       {isStudentDomain &&
                         catalogCards.map(card => (
                           <StudentCoursesCard
-                            type="general"
+                            type='general'
                             key={card.id}
                             card={card}
                             onPrimaryAction={handleCatalogCardAction}
@@ -1791,7 +1792,7 @@ export function SharedCoursesPage({ domain }: SharedCoursesPageProps) {
             ) : null}
           </section>
 
-          <section className='border-border bg-primary text-primary-foreground flex flex-col gap-4 rounded-[12px] border px-4 py-4 sm:px-5 md:flex-row md:items-center md:justify-between '>
+          <section className='border-border bg-primary text-primary-foreground flex flex-col gap-4 rounded-[12px] border px-4 py-4 sm:px-5 md:flex-row md:items-center md:justify-between'>
             <div className='flex items-start gap-3'>
               <span className='bg-background/15 mt-1 inline-flex size-9 shrink-0 items-center justify-center rounded-xl'>
                 <SquareDashedMousePointer className='size-4' />
@@ -1843,7 +1844,9 @@ export function SharedCoursesPage({ domain }: SharedCoursesPageProps) {
                 <>
                   <p>
                     This is your submitted application for{' '}
-                    <span className='font-semibold'>&ldquo;{selectedApplicationCard.title}&rdquo;</span>
+                    <span className='font-semibold'>
+                      &ldquo;{selectedApplicationCard.title}&rdquo;
+                    </span>
                     .
                   </p>
                   <p>
@@ -1860,12 +1863,16 @@ export function SharedCoursesPage({ domain }: SharedCoursesPageProps) {
                 <>
                   <p>
                     You are applying to train the{' '}
-                    {selectedApplicationCard.ctaKind === 'apply-program' ? 'program' : 'course'} titled{' '}
-                    <span className='font-semibold'>&ldquo;{selectedApplicationCard.title}&rdquo;</span>
+                    {selectedApplicationCard.ctaKind === 'apply-program' ? 'program' : 'course'}{' '}
+                    titled{' '}
+                    <span className='font-semibold'>
+                      &ldquo;{selectedApplicationCard.title}&rdquo;
+                    </span>
                     .
                   </p>
                   <p>
-                    Provider: <span className='font-medium'>{selectedApplicationCard.provider}</span>
+                    Provider:{' '}
+                    <span className='font-medium'>{selectedApplicationCard.provider}</span>
                     {selectedApplicationCard.duration
                       ? ` · Duration: ${selectedApplicationCard.duration}`
                       : ''}
@@ -1888,6 +1895,7 @@ export function SharedCoursesPage({ domain }: SharedCoursesPageProps) {
           isLoading={applyToTrainCourseMut.isPending || applyToTrainProgramMut.isPending}
           minimum_rate={selectedApplicationCard.minimumRate ?? 0}
           selectedApplicationCard={selectedApplicationCard}
+          applicantRole={isOrganisationDomain ? 'organisation_user' : 'instructor'}
           existingApplication={selectedApplicationRecord}
           readOnly={applicationSheetMode === 'review'}
           canReapply={

@@ -52,6 +52,7 @@ import { cn } from '@/lib/utils';
 import type { Course, CourseTrainingRequirement } from '@/services/client';
 import {
   getCourseByUuidOptions,
+  getCourseTrainingRequirementsOptions,
   submitTrainingApplicationMutation,
 } from '@/services/client/@tanstack/react-query.gen';
 
@@ -131,7 +132,12 @@ function reducer(state: State, action: Action): State {
         equipment: action.requirements.map(req => {
           const existing = state.equipment.find(e => e.requirementUuid === req.uuid);
           return (
-            existing ?? { requirementUuid: req.uuid, requirementName: req.name, has: null, items: [] }
+            existing ?? {
+              requirementUuid: req.uuid,
+              requirementName: req.name,
+              has: null,
+              items: [],
+            }
           );
         }),
       };
@@ -145,9 +151,15 @@ function reducer(state: State, action: Action): State {
         : state.pricing.some(p => p.method === action.method)
           ? state.pricing
           : [
-            ...state.pricing,
-            { id: uid(), method: action.method, duration: '', amount: '', basis: DEFAULT_RATE_BASIS },
-          ];
+              ...state.pricing,
+              {
+                id: uid(),
+                method: action.method,
+                duration: '',
+                amount: '',
+                basis: DEFAULT_RATE_BASIS,
+              },
+            ];
       return { ...state, methods, pricing };
     }
     case 'classroomCount': {
@@ -317,6 +329,30 @@ function validatePricing(pricing: PriceTier[], methods: TrainingMethod[]): strin
   return errors;
 }
 
+function normalizeRequirementProvider(provider?: string | null) {
+  switch (provider?.toLowerCase()) {
+    case 'organisation':
+    case 'organization':
+    case 'organisation_user':
+    case 'organization_user':
+    case 'training_center':
+      return 'organisation';
+    case 'instructor':
+      return 'instructor';
+    case 'student':
+      return 'student';
+    case 'course_creator':
+      return 'course_creator';
+    default:
+      return null;
+  }
+}
+
+function isOrganisationTrainingRequirement(requirement: CourseTrainingRequirement) {
+  const provider = normalizeRequirementProvider(requirement.provided_by);
+  return provider === null || provider === 'organisation';
+}
+
 // ---------- component ----------
 
 const STEPS = ['Training method', 'Classrooms & labs', 'Equipment', 'Pricing', 'Review'] as const;
@@ -381,7 +417,8 @@ function buildRateCard(pricing: PriceTier[]) {
   for (const tier of pricing) {
     const cell = tier.method ? modality[tier.method] : null;
     const amt = parseFloat(tier.amount);
-    if (cell && Number.isFinite(amt)) rate[`${cell}_${suffix[tier.basis ?? DEFAULT_RATE_BASIS]}`] = amt;
+    if (cell && Number.isFinite(amt))
+      rate[`${cell}_${suffix[tier.basis ?? DEFAULT_RATE_BASIS]}`] = amt;
   }
   return { currency: 'KES', ...rate };
 }
@@ -397,8 +434,22 @@ export default function ApplyPage() {
     ...getCourseByUuidOptions({ path: { uuid: courseId } }),
     enabled: Boolean(courseId),
   });
+  const courseRequirementsQuery = useQuery({
+    ...getCourseTrainingRequirementsOptions({
+      path: { courseUuid: courseId },
+      query: { pageable: { page: 0, size: 200 } },
+    }),
+    enabled: Boolean(courseId),
+  });
   const course = extractEntity<Course>(courseQuery.data);
-  const requirements: CourseTrainingRequirement[] = course?.training_requirements ?? [];
+  const courseRequirements = useMemo(
+    () => courseRequirementsQuery.data?.data?.content ?? course?.training_requirements ?? [],
+    [course?.training_requirements, courseRequirementsQuery.data?.data?.content]
+  );
+  const requirements = useMemo(
+    () => courseRequirements.filter(isOrganisationTrainingRequirement),
+    [courseRequirements]
+  );
 
   const [state, dispatch] = useReducer(reducer, undefined, () => ({
     step: 0,
@@ -1065,8 +1116,8 @@ function StepEquipment({
   if (requirements.length === 0) {
     return (
       <div className='bg-muted/30 text-muted-foreground rounded-md border border-dashed p-6 text-center text-sm'>
-        The course creator has not listed any equipment requirements for this course. You can
-        continue to the next step.
+        The course creator has not listed any organisation equipment requirements for this course.
+        You can continue to the next step.
       </div>
     );
   }
@@ -1243,7 +1294,11 @@ function EquipmentBlock({
                   variant='ghost'
                   size='icon'
                   onClick={() =>
-                    dispatch({ type: 'equipRemoveItem', uuid: answer.requirementUuid, itemId: item.id })
+                    dispatch({
+                      type: 'equipRemoveItem',
+                      uuid: answer.requirementUuid,
+                      itemId: item.id,
+                    })
                   }
                   aria-label='Remove item'
                   className='self-end'
@@ -1266,7 +1321,13 @@ function EquipmentBlock({
               type='button'
               variant='outline'
               size='sm'
-              onClick={() => dispatch({ type: 'equipAddItem', uuid: answer.requirementUuid, name: requirement.name })}
+              onClick={() =>
+                dispatch({
+                  type: 'equipAddItem',
+                  uuid: answer.requirementUuid,
+                  name: requirement.name,
+                })
+              }
             >
               <Plus className='mr-2 h-4 w-4' /> Add another {requirement.name}
             </Button>
@@ -1283,7 +1344,11 @@ function EquipmentBlock({
               size='sm'
               variant={answer.acquisition === 'lease' ? 'default' : 'outline'}
               onClick={() =>
-                dispatch({ type: 'equipAcquisition', uuid: answer.requirementUuid, acquisition: 'lease' })
+                dispatch({
+                  type: 'equipAcquisition',
+                  uuid: answer.requirementUuid,
+                  acquisition: 'lease',
+                })
               }
             >
               Lease to own
@@ -1293,7 +1358,11 @@ function EquipmentBlock({
               size='sm'
               variant={answer.acquisition === 'hire' ? 'default' : 'outline'}
               onClick={() =>
-                dispatch({ type: 'equipAcquisition', uuid: answer.requirementUuid, acquisition: 'hire' })
+                dispatch({
+                  type: 'equipAcquisition',
+                  uuid: answer.requirementUuid,
+                  acquisition: 'hire',
+                })
               }
             >
               Hire

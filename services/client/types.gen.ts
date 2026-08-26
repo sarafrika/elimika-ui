@@ -6931,6 +6931,7 @@ export type ClassMarketplaceJobApplication = {
   readonly instructor_uuid?: string;
   readonly application_note?: string;
   readonly review_notes?: string;
+  readonly interview_at?: Date;
   /**
    * Whether the applicant's instructor profile has been verified by an administrator
    */
@@ -6956,6 +6957,7 @@ export type ClassMarketplaceJobApplication = {
  */
 export type ClassMarketplaceJobDecisionRequest = {
   review_notes?: string;
+  interview_at?: string;
 };
 
 /**

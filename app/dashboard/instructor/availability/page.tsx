@@ -1,52 +1,36 @@
 'use client';
 
-import { useInstructor } from '@/context/instructor-context';
 import { useUserProfile } from '@/context/profile-context';
 import { localDate } from '@/lib/date';
-import {
-  getInstructorCalendarOptions,
-  getInstructorScheduleOptions,
-} from '@/services/client/@tanstack/react-query.gen';
+import { getInstructorCalendarOptions } from '@/services/client/@tanstack/react-query.gen';
 import type { InstructorCalendarEntry } from '@/services/client/types.gen';
 import { useQuery } from '@tanstack/react-query';
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import AvailabilityManager from './components/availability-manager';
-import {
-  type AvailabilityData,
-  type ClassScheduleItem,
-  convertToCalendarEvents,
-} from './components/types';
+import { type AvailabilityData } from './components/types';
 
 const Page = () => {
   const user = useUserProfile();
-  const instructor = useInstructor();
+  const calendarRange = useMemo(() => {
+    const start = new Date();
+    start.setFullYear(start.getFullYear() - 2);
+    const end = new Date();
+    end.setFullYear(end.getFullYear() + 2);
+    return {
+      start_date: localDate(start),
+      end_date: localDate(end),
+    };
+  }, []);
 
-  const { data: availabilitySlotsResponse } = useQuery(
-    getInstructorCalendarOptions({
+  const { data: availabilitySlotsResponse } = useQuery({
+    ...getInstructorCalendarOptions({
       path: { instructorUuid: user?.instructor?.uuid as string },
-      query: {
-        start_date: new Date('2025-09-11'),
-        end_date: new Date('2026-11-11'),
-      },
-    })
-  );
-
-  const { data: timetable } = useQuery({
-    ...getInstructorScheduleOptions({
-      path: { instructorUuid: instructor?.uuid as string },
-      query: {
-        start: localDate('2025-10-10'),
-        end: localDate('2025-11-11'),
-      },
+      query: calendarRange,
     }),
-    enabled: !!instructor?.uuid,
+    enabled: !!user?.instructor?.uuid,
   });
 
   useEffect(() => {
-    const eventsFromSchedule = timetable?.data
-      ? convertToCalendarEvents(timetable.data as ClassScheduleItem[])
-      : [];
-
     const calendarEvents = (availabilitySlotsResponse?.data ?? []).map(
       (entry: InstructorCalendarEntry) => {
         const start = entry.start_time ? new Date(entry.start_time) : new Date();
@@ -74,9 +58,9 @@ const Page = () => {
 
     setAvailabilityData(prev => ({
       ...prev,
-      events: [...calendarEvents, ...eventsFromSchedule],
+      events: calendarEvents,
     }));
-  }, [availabilitySlotsResponse?.data, timetable?.data]);
+  }, [availabilitySlotsResponse?.data]);
 
   const [availabilityData, setAvailabilityData] = useState<AvailabilityData>({
     events: [],

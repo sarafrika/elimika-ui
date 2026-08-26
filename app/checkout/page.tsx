@@ -2,8 +2,9 @@
 'use client';
 
 import { zodResolver } from '@hookform/resolvers/zod';
-import { useMutation, useQuery } from '@tanstack/react-query';
+import { useMutation, useQueries, useQuery } from '@tanstack/react-query';
 import {
+  AlertCircle,
   ArrowLeft,
   ArrowRight,
   CalendarDays,
@@ -25,6 +26,7 @@ import { toast } from 'sonner';
 import { z } from 'zod';
 
 import { PublicTopNav } from '@/components/PublicTopNav';
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -38,6 +40,7 @@ import { usePaymentMode } from '@/hooks/use-payment-mode';
 import type { CartItemResponse } from '@/services/client';
 import {
   completeCheckoutMutation,
+  getClassEnrolmentEligibilityOptions,
   getCartOptions,
   getPaymentStatusOptions,
   payWithMpesaMutation,
@@ -46,6 +49,7 @@ import {
 import { useCartStore } from '@/store/cart-store';
 
 const DEFAULT_CURRENCY = 'KES';
+const UUID_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 
 // How long we wait for the customer to confirm the STK Push before giving up.
 const MPESA_POLL_INTERVAL_MS = 4000;
@@ -62,6 +66,11 @@ const formatMoney = (amount: number | string | undefined, currency = DEFAULT_CUR
     minimumFractionDigits: 2,
     maximumFractionDigits: 2,
   }).format(numAmount);
+};
+
+const getClassDefinitionUuid = (item: CartItemResponse): string | null => {
+  const value = item.metadata?.class_definition_uuid;
+  return typeof value === 'string' && UUID_PATTERN.test(value) ? value : null;
 };
 
 /**
@@ -136,7 +145,6 @@ export default function CheckoutPage() {
     },
   });
 
-
   // HeyAPI's path serializer leaves `{cartId}` literal in the URL when path value is null/empty.
   // Use a sentinel string when no cartId; `enabled: false` blocks the actual fetch.
   const cartQuery = useQuery({
@@ -147,6 +155,55 @@ export default function CheckoutPage() {
 
   const cart = cartQuery.data?.data ?? null;
   const cartItems = cart?.items ?? [];
+  const studentUuid = profile?.student?.uuid;
+  const classCartItems = useMemo(
+    () =>
+      cartItems
+        .map(item => ({
+          item,
+          classDefinitionUuid: getClassDefinitionUuid(item),
+        }))
+        .filter((entry): entry is { item: CartItemResponse; classDefinitionUuid: string } =>
+          Boolean(entry.classDefinitionUuid)
+        ),
+    [cartItems]
+  );
+
+  const eligibilityQueries = useQueries({
+    queries: classCartItems.map(entry => ({
+      ...getClassEnrolmentEligibilityOptions({
+        path: {
+          classDefinitionUuid: entry.classDefinitionUuid,
+          studentUuid: studentUuid ?? 'unset',
+        },
+      }),
+      enabled: Boolean(studentUuid),
+      retry: 1,
+    })),
+  });
+
+  const eligibilityBlockers = useMemo(
+    () =>
+      classCartItems.flatMap((entry, index) => {
+        const eligibility = eligibilityQueries[index]?.data?.data;
+        if (!eligibility || eligibility.eligible !== false) {
+          return [];
+        }
+        return [
+          {
+            itemId: entry.item.id,
+            title: entry.item.title ?? 'Selected class',
+            reason: eligibility.reason ?? 'This class cannot be enrolled right now.',
+          },
+        ];
+      }),
+    [classCartItems, eligibilityQueries]
+  );
+  const eligibilityLoading =
+    Boolean(studentUuid) &&
+    classCartItems.length > 0 &&
+    eligibilityQueries.some(query => query.isLoading || query.isFetching);
+  const checkoutBlocked = eligibilityLoading || eligibilityBlockers.length > 0;
 
   const subtotal = useMemo(() => {
     if (!cart?.subtotal) return 0;
@@ -164,7 +221,6 @@ export default function CheckoutPage() {
   }, [cart?.total]);
 
   const currency = cart?.currency_code ?? DEFAULT_CURRENCY;
-
 
   const selectPaymentSession = useMutation(selectPaymentSessionMutation());
   const completeCheckout = useMutation(completeCheckoutMutation());
@@ -216,6 +272,14 @@ export default function CheckoutPage() {
   const startMpesaPayment = async (values: CheckoutFormValues) => {
     if (!cartId) {
       toast.error('No cart found');
+      return;
+    }
+    if (eligibilityLoading) {
+      toast.info('Checking class enrolment eligibility. Please wait a moment.');
+      return;
+    }
+    if (eligibilityBlockers.length > 0) {
+      toast.error(eligibilityBlockers[0].reason);
       return;
     }
 
@@ -579,6 +643,53 @@ export default function CheckoutPage() {
                       </div>
                     </label>
 
+                    <div
+                      aria-disabled='true'
+                      className='border-border bg-muted/30 text-muted-foreground flex cursor-not-allowed items-start gap-4 rounded-lg border-2 p-4'
+                    >
+                      <div className='bg-background mt-1 flex size-10 shrink-0 items-center justify-center rounded-md border'>
+                        <Wallet className='h-5 w-5' />
+                      </div>
+                      <div className='min-w-0 space-y-1'>
+                        <div className='flex flex-wrap items-center gap-2'>
+                          <p className='text-foreground font-semibold'>Wallet balance</p>
+                          <Badge variant='secondary' className='rounded-md'>
+                            Not connected
+                          </Badge>
+                        </div>
+                        <p className='text-sm'>
+                          Wallet checkout is not available on this checkout yet.
+                        </p>
+                      </div>
+                    </div>
+
+                    <div
+                      aria-disabled='true'
+                      className='border-border bg-muted/30 text-muted-foreground flex cursor-not-allowed items-start gap-4 rounded-lg border-2 p-4'
+                    >
+                      <div className='bg-background mt-1 flex size-10 shrink-0 items-center justify-center rounded-md border'>
+                        <CalendarDays className='h-5 w-5' />
+                      </div>
+                      <div className='min-w-0 space-y-2'>
+                        <div className='flex flex-wrap items-center gap-2'>
+                          <p className='text-foreground font-semibold'>Installments</p>
+                          <Badge variant='secondary' className='rounded-md'>
+                            Not connected
+                          </Badge>
+                        </div>
+                        <div className='flex flex-wrap gap-2'>
+                          {INSTALLMENT_PLANS.map(plan => (
+                            <Badge key={plan.id} variant='outline' className='rounded-md'>
+                              {plan.label}
+                            </Badge>
+                          ))}
+                        </div>
+                        <p className='text-sm'>
+                          Installment checkout needs backend payment support before it can be used.
+                        </p>
+                      </div>
+                    </div>
+
                     {/* M-Pesa phone number */}
                     {paymentProvider === 'mpesa' && (
                       <div className='border-border bg-muted/30 space-y-2 rounded-lg border p-4'>
@@ -604,7 +715,6 @@ export default function CheckoutPage() {
                         )}
                       </div>
                     )}
-
                   </RadioGroup>
                 </CardContent>
               </Card>
@@ -656,20 +766,43 @@ export default function CheckoutPage() {
                   <div className='space-y-2'>
                     <div className='flex justify-between text-lg font-bold'>
                       <span>Total</span>
-                      <span className='text-primary'>
-                        {formatMoney(total, currency)}
-                      </span>
+                      <span className='text-primary'>{formatMoney(total, currency)}</span>
                     </div>
-
                   </div>
+
+                  {eligibilityBlockers.length > 0 && (
+                    <Alert variant='destructive'>
+                      <AlertCircle className='h-4 w-4' />
+                      <AlertTitle>Enrollment needs attention</AlertTitle>
+                      <AlertDescription>
+                        <ul className='list-disc space-y-1 pl-4'>
+                          {eligibilityBlockers.map(blocker => (
+                            <li key={blocker.itemId ?? blocker.title}>
+                              <span className='font-medium'>{blocker.title}:</span> {blocker.reason}
+                            </li>
+                          ))}
+                        </ul>
+                      </AlertDescription>
+                    </Alert>
+                  )}
 
                   <Button
                     type='submit'
                     size='lg'
                     className='w-full'
-                    disabled={isProcessing || !form.formState.isValid}
+                    disabled={isProcessing || !form.formState.isValid || checkoutBlocked}
                   >
-                    {isProcessing ? (
+                    {eligibilityLoading ? (
+                      <>
+                        <Loader2 className='mr-2 h-4 w-4 animate-spin' />
+                        Checking eligibility...
+                      </>
+                    ) : eligibilityBlockers.length > 0 ? (
+                      <>
+                        Resolve enrolment issue
+                        <ArrowRight className='ml-2 h-4 w-4' />
+                      </>
+                    ) : isProcessing ? (
                       <>
                         <Loader2 className='mr-2 h-4 w-4 animate-spin' />
                         Processing...
