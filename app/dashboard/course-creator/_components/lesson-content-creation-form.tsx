@@ -295,6 +295,9 @@ export const ContentCreationForm: React.FC<LessonCreationFormProps> = ({
             toast.success(response?.message || 'Content updated successfully');
             resetContentForm();
           },
+          onError: error => {
+            toast.error(error?.message)
+          }
         }
       );
     } else {
@@ -313,6 +316,9 @@ export const ContentCreationForm: React.FC<LessonCreationFormProps> = ({
             toast.success(response?.message || 'Content created successfully');
             resetContentForm();
           },
+          onError: error => {
+            toast.error(error?.message)
+          }
         }
       );
     }
@@ -729,6 +735,12 @@ export const ContentCreationForm: React.FC<LessonCreationFormProps> = ({
                                 <FormField
                                   control={contentForm.control}
                                   name='value'
+                                  rules={{
+                                    maxLength: {
+                                      value: 500,
+                                      message: 'File URL must not exceed 500 characters',
+                                    },
+                                  }}
                                   render={({ field }) => (
                                     <FormItem>
                                       <FormLabel className='text-foreground mb-2 block text-sm font-medium'>
@@ -737,9 +749,12 @@ export const ContentCreationForm: React.FC<LessonCreationFormProps> = ({
                                       <Input
                                         {...field}
                                         placeholder='Enter URL'
+                                        maxLength={500}
                                         onChange={e => {
                                           field.onChange(e);
-                                          contentForm.setValue('file_url', e.target.value);
+                                          contentForm.setValue('file_url', e.target.value, {
+                                            shouldValidate: true,
+                                          });
                                         }}
                                         className='border-border focus:border-primary focus:ring-primary/20 rounded-lg border px-4 py-2.5 transition-all outline-none focus:ring-2'
                                       />
@@ -754,6 +769,12 @@ export const ContentCreationForm: React.FC<LessonCreationFormProps> = ({
                                   <FormField
                                     control={contentForm.control}
                                     name='value'
+                                    rules={{
+                                      maxLength: {
+                                        value: 500,
+                                        message: 'File URL must not exceed 500 characters',
+                                      },
+                                    }}
                                     render={({ field }) => (
                                       <FormItem>
                                         <FormLabel className='text-foreground mb-2 block text-sm font-medium'>
@@ -762,9 +783,12 @@ export const ContentCreationForm: React.FC<LessonCreationFormProps> = ({
                                         <Input
                                           {...field}
                                           placeholder='Enter URL'
+                                          maxLength={500}
                                           onChange={e => {
                                             field.onChange(e);
-                                            contentForm.setValue('file_url', e.target.value);
+                                            contentForm.setValue('file_url', e.target.value, {
+                                              shouldValidate: true,
+                                            });
                                           }}
                                           className='border-border focus:border-primary focus:ring-primary/20 rounded-lg border px-4 py-2.5 transition-all outline-none focus:ring-2'
                                         />
@@ -861,6 +885,9 @@ export const ContentCreationForm: React.FC<LessonCreationFormProps> = ({
                                                 });
                                                 resetContentForm();
                                               },
+                                              onError: error => {
+                                                toast.error(error?.message)
+                                              }
                                             }
                                           );
                                         }}

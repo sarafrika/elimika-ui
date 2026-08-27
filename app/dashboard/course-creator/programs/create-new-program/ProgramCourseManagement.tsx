@@ -618,18 +618,15 @@ const ProgramCourseManagement = ({
           >
             Save
           </Button>
-          {/* <Button
-                        onClick={onPublish}
-                        disabled={
-                            isPublishing ||
-                            editingProgram?.status === 'published'
-                        }
-                        className='rounded-lg bg-primary px-6 py-2 font-medium text-primary-foreground hover:bg-primary/90 disabled:opacity-50'
-                    >
-                        {isPublishing
-                            ? 'Publishing...'
-                            : 'Publish Program'}
-                    </Button> */}
+          {onPublish && (
+            <Button
+              onClick={onPublish}
+              disabled={isPublishing || editingProgram?.status === 'published'}
+              className='rounded-lg bg-primary px-6 py-2 font-medium text-primary-foreground hover:bg-primary/90 disabled:opacity-50'
+            >
+              {isPublishing ? 'Publishing...' : 'Publish Program'}
+            </Button>
+          )}
         </div>
       </div>
 

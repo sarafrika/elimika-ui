@@ -3,6 +3,7 @@
 import { useMutation, useQueries, useQuery, useQueryClient } from '@tanstack/react-query';
 import { format } from 'date-fns';
 import { PlusCircle, Trash2 } from 'lucide-react';
+import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useMemo, useState } from 'react';
 import { toast } from 'sonner';
@@ -218,7 +219,7 @@ const ProgramsList = ({ onEdit, onPreview, onCreate, creator }: ProgramsListProp
           {onCreate && (
             <Button
               onClick={() =>
-                router.push('/dashboard/course-creator/course-management/create-new-program')
+                router.push('/dashboard/course-creator/courses/create-program')
               }
             >
               <PlusCircle className='mr-2 h-4 w-4' />
@@ -421,10 +422,11 @@ function ProgramRow({ program, onEdit, onPreview, onDelete }: ProgramRowProps) {
             variant='ghost'
             onClick={e => {
               e.stopPropagation();
-              onEdit(program);
             }}
           >
-            Edit
+            <Link href={`/dashboard/course-creator/courses/create-program?id=${program?.uuid}`} >
+              Edit
+            </Link>
           </Button>
           <Button
             size='sm'

@@ -131,7 +131,7 @@ export default function CourseCreatorCoursesContent() {
 
   const handleEdit = (program: ProgramListItem) => {
     router.push(
-      `/dashboard/course-creator/course-management/create-new-program?id=${program?.uuid}`
+      `/dashboard/course-creator/courses/create-program?id=${program?.uuid}`
     );
   };
 
@@ -167,7 +167,7 @@ export default function CourseCreatorCoursesContent() {
               <Button asChild>
                 <Link
                   prefetch
-                  href='/dashboard/course-creator/course-management/create-new-program'
+                  href='/dashboard/course-creator/courses/create-program'
                 >
                   <PlusCircle className='mr-2 h-4 w-4' />
                   Bundle Course

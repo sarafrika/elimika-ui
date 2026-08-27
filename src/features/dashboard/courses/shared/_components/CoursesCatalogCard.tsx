@@ -10,6 +10,7 @@ import { Award, BookOpen, Calendar, Search } from 'lucide-react';
 import Link from 'next/link';
 import { useState } from 'react';
 
+import { useRouter } from 'next/navigation';
 import { CourseDetailsSheet } from './CourseDetailsSheet';
 
 const imageToneClasses = {
@@ -42,6 +43,7 @@ const levelStyles: Record<string, string> = {
 };
 
 export function CoursesCatalogCard({ card, type, onPrimaryAction }: CoursesCatalogCardProps) {
+  const router = useRouter()
   const imageUrl = toAuthenticatedMediaUrl(card.imageUrl);
   const level = card.secondaryMeta.toLowerCase();
 
@@ -177,6 +179,16 @@ export function CoursesCatalogCard({ card, type, onPrimaryAction }: CoursesCatal
               </Link>
             </Button>
           )}
+
+          <Button
+            type='button'
+            className={cn(
+              'h-9 rounded-sm text-sm shadow-none',
+            )}
+            onClick={() => router.push(`/dashboard/instructor/courses/apply/${card.id}`)}
+          >
+            New Apply to train
+          </Button>
 
           {/* Primary CTA */}
           {card.ctaKind === 'apply-course' || card.ctaKind === 'apply-program' ? (
