@@ -260,7 +260,7 @@ export default function CreateCoursePage() {
         });
 
     return (
-        <div className="space-y-6 pb-24 py-6">
+        <div className="space-y-6 pb-24 p-6">
             <PageHeader
                 eyebrow="Course Creator"
                 title="Create New Course"
