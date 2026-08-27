@@ -441,9 +441,13 @@ export default function ClassesPage() {
                               <Users className='mr-2 h-4 w-4' /> Manage enrolment
                             </DropdownMenuItem>
                             <DropdownMenuItem
-                              onClick={() => router.push('/dashboard/organisation/notifications')}
+                              onClick={() =>
+                                router.push(
+                                  `/dashboard/organisation/invite-students?classUuid=${r.uuid}`
+                                )
+                              }
                             >
-                              <Send className='mr-2 h-4 w-4' /> Message class
+                              <Send className='mr-2 h-4 w-4' /> Invite students
                             </DropdownMenuItem>
                             {r.status === 'Active' && (
                               <>

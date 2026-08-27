@@ -4,16 +4,24 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import {
   ArrowLeft,
   ArrowRight,
+  BookOpenCheck,
   Check,
   CheckCircle2,
+  Clock3,
+  Layers3,
+  ListChecks,
+  Loader2,
   Mail,
+  MailCheck,
+  RotateCw,
   Send,
   ShieldCheck,
   Users,
   UsersRound,
+  X,
   XCircle,
 } from 'lucide-react';
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { toast } from 'sonner';
 
 import { CategoryTabs, filterByCategoryTabs } from '@/components/category-tabs';
@@ -24,14 +32,19 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Checkbox } from '@/components/ui/checkbox';
 import { Label } from '@/components/ui/label';
 import { ScrollArea } from '@/components/ui/scroll-area';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Textarea } from '@/components/ui/textarea';
 import { cn } from '@/lib/utils';
 import { useOrganisation } from '@/context/organisation-context';
+import { useCoursesByIds, useProgramsByIds } from '@/hooks/use-batched-lookups';
 import type { ClassDefinition, StudentGroup } from '@/services/client';
 import {
   getClassDefinitionsForOrganisationOptions,
   listGroupsOptions,
+  listOrganisationInvitationsOptions,
   listOrganisationInvitationsQueryKey,
+  resendOrganisationInvitationMutation,
+  revokeOrganisationInvitationMutation,
   sendOrganisationInvitationsMutation,
 } from '@/services/client/@tanstack/react-query.gen';
 
@@ -70,23 +83,51 @@ const DEFAULT_TEMPLATE = TEMPLATES[0];
 
 type Recipient = { name: string; email: string };
 type SendResult = { email: string; ok: boolean; message?: string };
+type RecipientParse = { recipients: Recipient[]; invalid: string[] };
+type SelectionMode = 'offerings' | 'classes';
+type OfferingGroup = {
+  key: string;
+  kind: 'course' | 'program' | 'standalone';
+  title: string;
+  subtitle: string;
+  classIds: string[];
+  classes: ClassDefinition[];
+  deliveryLabels: string[];
+};
+
+const LIVE_STATUSES = ['PENDING', 'AWAITING_GUARDIAN_CONSENT'];
+const ACCEPTED_STATUSES = ['ACCEPTED'];
 
 /** Parses "Name <email>", "Name, email" or bare emails from free text. */
-function parseRecipients(raw: string): Recipient[] {
-  const out: Recipient[] = [];
+function parseRecipientInput(raw: string): RecipientParse {
+  const recipients: Recipient[] = [];
+  const invalid: string[] = [];
   const seen = new Set<string>();
-  for (const line of raw.split(/[\n,]+/)) {
-    const token = line.trim();
-    if (!token) continue;
-    const emailMatch = token.match(/[^\s<>]+@[^\s<>]+\.[^\s<>]+/);
-    if (!emailMatch) continue;
-    const email = emailMatch[0].toLowerCase();
-    if (seen.has(email)) continue;
-    seen.add(email);
-    const namePart = token.replace(emailMatch[0], '').replace(/[<>,]/g, '').trim();
-    out.push({ name: namePart, email });
+  const emailPattern = /[^\s<>;,]+@[^\s<>;,]+\.[^\s<>;,]+/g;
+
+  for (const line of raw.split(/[\n;]+/)) {
+    const parts = line.includes('<') ? [line] : line.split(',');
+    for (const part of parts) {
+      const token = part.trim();
+      if (!token) continue;
+      const matches = Array.from(token.matchAll(emailPattern));
+      if (matches.length === 0) {
+        invalid.push(token);
+        continue;
+      }
+
+      for (const match of matches) {
+        const email = match[0].toLowerCase();
+        if (seen.has(email)) continue;
+        seen.add(email);
+        const namePart =
+          matches.length === 1 ? token.replace(match[0], '').replace(/[<>,]/g, '').trim() : '';
+        recipients.push({ name: namePart, email });
+      }
+    }
   }
-  return out;
+
+  return { recipients, invalid };
 }
 
 const STEPS = [
@@ -98,12 +139,18 @@ const STEPS = [
 const toggle = (arr: string[], id: string) =>
   arr.includes(id) ? arr.filter(x => x !== id) : [...arr, id];
 
+const uniqueStrings = (items: string[]) => Array.from(new Set(items.filter(Boolean)));
+
+const shortId = (uuid: string) => uuid.slice(0, 8);
+
 export default function InviteStudentsPage() {
   const organisation = useOrganisation();
   const organisationUuid = organisation?.uuid ?? '';
   const queryClient = useQueryClient();
+  const preselectKeyRef = useRef('');
 
   const [step, setStep] = useState<1 | 2 | 3>(1);
+  const [selectionMode, setSelectionMode] = useState<SelectionMode>('offerings');
   const [selectedClasses, setSelectedClasses] = useState<string[]>([]);
   const [selectedGroups, setSelectedGroups] = useState<string[]>([]);
   const [emails, setEmails] = useState('');
@@ -112,6 +159,8 @@ export default function InviteStudentsPage() {
   const [activeCategory, setActiveCategory] = useState('All');
   const [subjectByCategory, setSubjectByCategory] = useState<Record<string, string>>({});
   const [results, setResults] = useState<SendResult[] | null>(null);
+  const [actingOnInvitation, setActingOnInvitation] = useState<string | null>(null);
+  const [preselectKey, setPreselectKey] = useState('');
 
   const classesQuery = useQuery({
     ...getClassDefinitionsForOrganisationOptions({ path: { organisationUuid } }),
@@ -124,6 +173,74 @@ export default function InviteStudentsPage() {
         .filter((c): c is ClassDefinition => Boolean(c?.uuid)),
     [classesQuery.data]
   );
+  const courseIds = useMemo(() => uniqueStrings(classes.map(c => c.course_uuid ?? '')), [classes]);
+  const programIds = useMemo(
+    () => uniqueStrings(classes.map(c => c.program_uuid ?? '')),
+    [classes]
+  );
+  const { courseMap } = useCoursesByIds(courseIds);
+  const { programMap } = useProgramsByIds(programIds);
+  const offeringGroups: OfferingGroup[] = useMemo(() => {
+    const grouped = new Map<
+      string,
+      {
+        kind: OfferingGroup['kind'];
+        uuid: string;
+        classes: ClassDefinition[];
+      }
+    >();
+
+    for (const klass of classes) {
+      const classUuid = klass.uuid;
+      if (!classUuid) continue;
+      const kind: OfferingGroup['kind'] = klass.program_uuid
+        ? 'program'
+        : klass.course_uuid
+          ? 'course'
+          : 'standalone';
+      const uuid = klass.program_uuid ?? klass.course_uuid ?? classUuid;
+      const key = `${kind}:${uuid}`;
+      const current = grouped.get(key);
+      if (current) {
+        current.classes.push(klass);
+      } else {
+        grouped.set(key, { kind, uuid, classes: [klass] });
+      }
+    }
+
+    return Array.from(grouped.entries())
+      .map(([key, group]) => {
+        const sortedClasses = [...group.classes].sort((a, b) => a.title.localeCompare(b.title));
+        const classIds = sortedClasses
+          .map(klass => klass.uuid)
+          .filter((uuid): uuid is string => Boolean(uuid));
+        const deliveryLabels = uniqueStrings(sortedClasses.map(categoryLabel));
+        const fallbackTitle = sortedClasses[0]?.title ?? 'Class';
+        const title =
+          group.kind === 'program'
+            ? (programMap[group.uuid]?.title ?? `Program ${shortId(group.uuid)}`)
+            : group.kind === 'course'
+              ? (courseMap[group.uuid]?.name ?? `Course ${shortId(group.uuid)}`)
+              : fallbackTitle;
+        const offeringLabel =
+          group.kind === 'program'
+            ? 'Program bundle'
+            : group.kind === 'course'
+              ? 'Course'
+              : 'Standalone class';
+        const classLabel = `${classIds.length} class${classIds.length === 1 ? '' : 'es'}`;
+        return {
+          key,
+          kind: group.kind,
+          title,
+          subtitle: `${offeringLabel} · ${classLabel}`,
+          classIds,
+          classes: sortedClasses,
+          deliveryLabels,
+        };
+      })
+      .sort((a, b) => a.title.localeCompare(b.title));
+  }, [classes, courseMap, programMap]);
 
   const classTabItems = useMemo(
     () =>
@@ -159,7 +276,25 @@ export default function InviteStudentsPage() {
     [groupsQuery.data]
   );
 
-  const recipients = useMemo(() => parseRecipients(emails), [emails]);
+  const invitationsQuery = useQuery({
+    ...listOrganisationInvitationsOptions({ path: { organisationUuid } }),
+    enabled: Boolean(organisationUuid),
+  });
+  const invitations = invitationsQuery.data?.data ?? [];
+  const recentInvitations = useMemo(() => invitations.slice(0, 8), [invitations]);
+  const invitationCounts = useMemo(
+    () => ({
+      live: invitations.filter(i => LIVE_STATUSES.includes(String(i.status))).length,
+      accepted: invitations.filter(i => ACCEPTED_STATUSES.includes(String(i.status))).length,
+    }),
+    [invitations]
+  );
+  const revokeInvitation = useMutation(revokeOrganisationInvitationMutation());
+  const resendInvitation = useMutation(resendOrganisationInvitationMutation());
+
+  const recipientInput = useMemo(() => parseRecipientInput(emails), [emails]);
+  const recipients = recipientInput.recipients;
+  const invalidRecipients = recipientInput.invalid;
 
   /** Students reached via a group, on top of any addresses pasted in. */
   const groupReach = useMemo(
@@ -172,13 +307,93 @@ export default function InviteStudentsPage() {
 
   const sendInvitations = useMutation(sendOrganisationInvitationsMutation());
   const sending = sendInvitations.isPending;
+  const canSend = recipients.length > 0 || selectedGroups.length > 0;
+
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    setPreselectKey(
+      [
+        params.get('classUuid') ?? params.get('class_uuid') ?? params.get('class') ?? '',
+        params.get('courseUuid') ?? params.get('course_uuid') ?? params.get('course') ?? '',
+        params.get('programUuid') ?? params.get('program_uuid') ?? params.get('program') ?? '',
+      ].join('|')
+    );
+  }, []);
+
+  useEffect(() => {
+    if (!classes.length || !preselectKey || preselectKeyRef.current === preselectKey) return;
+
+    const [classUuid, courseUuid, programUuid] = preselectKey.split('|');
+    const ids =
+      classUuid && classes.some(klass => klass.uuid === classUuid)
+        ? [classUuid]
+        : programUuid
+          ? classes
+              .filter(klass => klass.program_uuid === programUuid)
+              .map(klass => klass.uuid)
+              .filter((uuid): uuid is string => Boolean(uuid))
+          : courseUuid
+            ? classes
+                .filter(klass => klass.course_uuid === courseUuid)
+                .map(klass => klass.uuid)
+                .filter((uuid): uuid is string => Boolean(uuid))
+            : [];
+
+    preselectKeyRef.current = preselectKey;
+    if (ids.length === 0) return;
+
+    setSelectedClasses(prev => uniqueStrings([...prev, ...ids]));
+    setStep(2);
+  }, [classes, preselectKey]);
+
+  const toggleClassSet = (classIds: string[]) => {
+    setSelectedClasses(prev => {
+      const selected = new Set(prev);
+      const everySelected = classIds.every(id => selected.has(id));
+      for (const id of classIds) {
+        if (everySelected) {
+          selected.delete(id);
+        } else {
+          selected.add(id);
+        }
+      }
+      return Array.from(selected);
+    });
+  };
+
+  const refreshInvitations = () =>
+    queryClient.invalidateQueries({
+      queryKey: listOrganisationInvitationsQueryKey({ path: { organisationUuid } }),
+    });
+
+  const actOnInvitation = async (
+    invitationUuid: string,
+    kind: 'resend' | 'revoke',
+    run: () => Promise<unknown>
+  ) => {
+    setActingOnInvitation(`${kind}:${invitationUuid}`);
+    try {
+      await run();
+      toast.success(kind === 'resend' ? 'Invitation resent' : 'Invitation revoked');
+      await refreshInvitations();
+    } catch (err) {
+      toast.error(
+        kind === 'resend' ? 'Could not resend invitation' : 'Could not revoke invitation',
+        {
+          description: err instanceof Error ? err.message : 'Please try again.',
+        }
+      );
+    } finally {
+      setActingOnInvitation(null);
+    }
+  };
 
   /**
    * One request carries the whole batch: the server decides per recipient whether an
    * offer can be created, so a single bad address never costs the rest of the batch.
    */
   const send = async () => {
-    if (recipients.length === 0 && selectedGroups.length === 0) {
+    if (!canSend) {
       toast.error('Add at least one recipient email, or pick a student group.');
       return;
     }
@@ -235,8 +450,7 @@ export default function InviteStudentsPage() {
     setSelectedGroups([]);
   };
 
-  const canNext =
-    step === 1 ? true : step === 2 ? recipients.length > 0 || selectedGroups.length > 0 : true;
+  const canNext = step === 1 ? true : step === 2 ? canSend : true;
 
   return (
     <div className='mx-auto w-full max-w-[1600px] space-y-6 px-3 py-4 sm:px-5 lg:px-6 2xl:max-w-[1840px]'>
@@ -351,72 +565,197 @@ export default function InviteStudentsPage() {
             <Card>
               <CardHeader>
                 <CardTitle className='flex items-center gap-2 text-base'>
-                  <Users className='h-4 w-4' /> Select classes
+                  <BookOpenCheck className='h-4 w-4' /> Select what to share
                 </CardTitle>
                 <CardDescription>
-                  Pick the classes students will be invited to enroll in (optional).
+                  Share a single course, a program bundle, or the exact classes students should see
+                  after accepting.
                 </CardDescription>
               </CardHeader>
               <CardContent className='space-y-4'>
-                {classes.length > 0 && (
-                  <CategoryTabs
-                    items={classTabItems}
-                    activeCategory={activeCategory}
-                    onCategoryChange={setActiveCategory}
-                    subjectByCategory={subjectByCategory}
-                    onSubjectChange={setSubjectByCategory}
-                  />
-                )}
-                <ScrollArea className='h-[340px] pr-3'>
-                  {filteredClasses.length === 0 ? (
-                    <p className='text-muted-foreground py-12 text-center text-sm'>
-                      No classes to select.
-                    </p>
-                  ) : (
-                    <div className='grid gap-2 sm:grid-cols-2'>
-                      {filteredClasses.map(item => {
-                        const checked = selectedClasses.includes(item.id);
-                        return (
-                          <label
-                            key={item.id}
-                            className={cn(
-                              'flex cursor-pointer items-start gap-3 rounded-md border p-3 transition-colors',
-                              checked ? 'border-primary bg-primary/5' : 'hover:bg-muted/50'
-                            )}
-                          >
-                            <Checkbox
-                              checked={checked}
-                              onCheckedChange={() => setSelectedClasses(s => toggle(s, item.id))}
-                              className='mt-0.5'
-                            />
-                            <div className='min-w-0 flex-1'>
-                              <div className='truncate text-sm font-medium'>{item.title}</div>
-                              <div className='text-muted-foreground truncate text-xs'>
-                                {item.category}
-                              </div>
-                            </div>
-                          </label>
-                        );
-                      })}
+                <Tabs
+                  value={selectionMode}
+                  onValueChange={value => setSelectionMode(value as SelectionMode)}
+                  className='gap-4'
+                >
+                  <TabsList className='w-full sm:w-fit'>
+                    <TabsTrigger value='offerings' className='flex-1 sm:flex-none'>
+                      <Layers3 className='h-4 w-4' /> Courses &amp; bundles
+                    </TabsTrigger>
+                    <TabsTrigger value='classes' className='flex-1 sm:flex-none'>
+                      <ListChecks className='h-4 w-4' /> Class list
+                    </TabsTrigger>
+                  </TabsList>
+
+                  <TabsContent value='offerings' className='space-y-4'>
+                    <ScrollArea className='h-[360px] pr-3'>
+                      {offeringGroups.length === 0 ? (
+                        <p className='text-muted-foreground py-12 text-center text-sm'>
+                          No classes to share yet.
+                        </p>
+                      ) : (
+                        <div className='grid gap-2 lg:grid-cols-2'>
+                          {offeringGroups.map(group => {
+                            const selectedCount = group.classIds.filter(id =>
+                              selectedClasses.includes(id)
+                            ).length;
+                            const checked =
+                              selectedCount === group.classIds.length
+                                ? true
+                                : selectedCount > 0
+                                  ? 'indeterminate'
+                                  : false;
+                            return (
+                              <label
+                                key={group.key}
+                                className={cn(
+                                  'flex cursor-pointer items-start gap-3 rounded-md border p-3 transition-colors',
+                                  selectedCount > 0
+                                    ? 'border-primary bg-primary/5'
+                                    : 'hover:bg-muted/50'
+                                )}
+                              >
+                                <Checkbox
+                                  checked={checked}
+                                  onCheckedChange={() => toggleClassSet(group.classIds)}
+                                  className='mt-0.5'
+                                  aria-label={`Select ${group.title}`}
+                                />
+                                <div className='min-w-0 flex-1 space-y-2'>
+                                  <div className='flex flex-wrap items-center gap-2'>
+                                    <span className='min-w-0 flex-1 truncate text-sm font-medium'>
+                                      {group.title}
+                                    </span>
+                                    <Badge variant='secondary' className='capitalize'>
+                                      {group.kind === 'program'
+                                        ? 'Bundle'
+                                        : group.kind === 'course'
+                                          ? 'Course'
+                                          : 'Class'}
+                                    </Badge>
+                                  </div>
+                                  <p className='text-muted-foreground text-xs'>{group.subtitle}</p>
+                                  <div className='text-muted-foreground flex flex-wrap gap-1.5 text-xs'>
+                                    {group.deliveryLabels.map(label => (
+                                      <Badge key={label} variant='outline'>
+                                        {label}
+                                      </Badge>
+                                    ))}
+                                  </div>
+                                  <div className='text-muted-foreground flex flex-wrap gap-1.5 text-xs'>
+                                    {group.classes.slice(0, 3).map(klass => (
+                                      <span
+                                        key={klass.uuid}
+                                        className='bg-muted rounded px-1.5 py-0.5'
+                                      >
+                                        {klass.title}
+                                      </span>
+                                    ))}
+                                    {group.classes.length > 3 && (
+                                      <span className='bg-muted rounded px-1.5 py-0.5'>
+                                        +{group.classes.length - 3} more
+                                      </span>
+                                    )}
+                                  </div>
+                                </div>
+                              </label>
+                            );
+                          })}
+                        </div>
+                      )}
+                    </ScrollArea>
+                    <div className='text-muted-foreground flex flex-wrap items-center justify-between gap-2 text-xs'>
+                      <span>
+                        {selectedClasses.length} of {classes.length} class
+                        {classes.length === 1 ? '' : 'es'} selected
+                      </span>
+                      <div className='flex gap-2'>
+                        <Button
+                          variant='ghost'
+                          size='sm'
+                          onClick={() =>
+                            setSelectedClasses(classes.flatMap(c => (c.uuid ? [c.uuid] : [])))
+                          }
+                        >
+                          Select all
+                        </Button>
+                        <Button variant='ghost' size='sm' onClick={() => setSelectedClasses([])}>
+                          Clear
+                        </Button>
+                      </div>
                     </div>
-                  )}
-                </ScrollArea>
+                  </TabsContent>
+
+                  <TabsContent value='classes' className='space-y-4'>
+                    {classes.length > 0 && (
+                      <CategoryTabs
+                        items={classTabItems}
+                        activeCategory={activeCategory}
+                        onCategoryChange={setActiveCategory}
+                        subjectByCategory={subjectByCategory}
+                        onSubjectChange={setSubjectByCategory}
+                      />
+                    )}
+                    <ScrollArea className='h-[340px] pr-3'>
+                      {filteredClasses.length === 0 ? (
+                        <p className='text-muted-foreground py-12 text-center text-sm'>
+                          No classes to select.
+                        </p>
+                      ) : (
+                        <div className='grid gap-2 sm:grid-cols-2'>
+                          {filteredClasses.map(item => {
+                            const checked = selectedClasses.includes(item.id);
+                            return (
+                              <label
+                                key={item.id}
+                                className={cn(
+                                  'flex cursor-pointer items-start gap-3 rounded-md border p-3 transition-colors',
+                                  checked ? 'border-primary bg-primary/5' : 'hover:bg-muted/50'
+                                )}
+                              >
+                                <Checkbox
+                                  checked={checked}
+                                  onCheckedChange={() =>
+                                    setSelectedClasses(s => toggle(s, item.id))
+                                  }
+                                  className='mt-0.5'
+                                  aria-label={`Select ${item.title}`}
+                                />
+                                <div className='min-w-0 flex-1'>
+                                  <div className='truncate text-sm font-medium'>{item.title}</div>
+                                  <div className='text-muted-foreground truncate text-xs'>
+                                    {item.category}
+                                  </div>
+                                </div>
+                              </label>
+                            );
+                          })}
+                        </div>
+                      )}
+                    </ScrollArea>
+                    <div className='text-muted-foreground flex items-center justify-between text-xs'>
+                      <span>
+                        {selectedClasses.length} of {filteredClasses.length} selected
+                      </span>
+                      <div className='flex gap-2'>
+                        <Button
+                          variant='ghost'
+                          size='sm'
+                          onClick={() => setSelectedClasses(filteredClasses.map(c => c.id))}
+                        >
+                          Select all
+                        </Button>
+                        <Button variant='ghost' size='sm' onClick={() => setSelectedClasses([])}>
+                          Clear
+                        </Button>
+                      </div>
+                    </div>
+                  </TabsContent>
+                </Tabs>
                 <div className='text-muted-foreground flex items-center justify-between text-xs'>
                   <span>
-                    {selectedClasses.length} of {filteredClasses.length} selected
+                    Leaving this empty sends an organisation invite without surfacing a class.
                   </span>
-                  <div className='flex gap-2'>
-                    <Button
-                      variant='ghost'
-                      size='sm'
-                      onClick={() => setSelectedClasses(filteredClasses.map(c => c.id))}
-                    >
-                      Select all
-                    </Button>
-                    <Button variant='ghost' size='sm' onClick={() => setSelectedClasses([])}>
-                      Clear
-                    </Button>
-                  </div>
                 </div>
               </CardContent>
             </Card>
@@ -485,10 +824,23 @@ export default function InviteStudentsPage() {
                     onChange={e => setEmails(e.target.value)}
                     rows={6}
                   />
-                  <p className='text-muted-foreground mt-1 text-xs'>
-                    One per line or comma-separated. Optional name before the email (e.g. "Jane Doe
-                    &lt;jane@example.com&gt;").
-                  </p>
+                  <div className='text-muted-foreground mt-2 flex flex-wrap items-center gap-2 text-xs'>
+                    <Badge variant='outline'>{recipients.length} valid</Badge>
+                    {invalidRecipients.length > 0 && (
+                      <Badge variant='destructive'>{invalidRecipients.length} invalid</Badge>
+                    )}
+                    <span className='sm:ml-auto'>
+                      Separate with commas, semicolons, spaces, or new lines.
+                    </span>
+                  </div>
+                  {invalidRecipients.length > 0 && (
+                    <p className='text-destructive mt-1 text-xs'>
+                      Ignored: {invalidRecipients.slice(0, 3).join(', ')}
+                      {invalidRecipients.length > 3
+                        ? `, +${invalidRecipients.length - 3} more`
+                        : ''}
+                    </p>
+                  )}
                 </div>
                 <div className='bg-muted/50 space-y-1.5 rounded-md p-3 text-sm'>
                   <div className='flex items-center justify-between'>
@@ -512,6 +864,11 @@ export default function InviteStudentsPage() {
                       Anyone appearing in both is invited once.
                     </p>
                   )}
+                  {invalidRecipients.length > 0 && (
+                    <p className='text-muted-foreground text-xs'>
+                      Invalid entries stay out of the send batch until corrected.
+                    </p>
+                  )}
                 </div>
               </CardContent>
             </Card>
@@ -525,8 +882,7 @@ export default function InviteStudentsPage() {
                   <Mail className='h-4 w-4' /> Message &amp; send
                 </CardTitle>
                 <CardDescription>
-                  Pick a template, choose channels, and send {recipients.length} invitation
-                  {recipients.length === 1 ? '' : 's'}.
+                  Pick a template, review the audience, and send the invitations.
                 </CardDescription>
               </CardHeader>
               <CardContent className='space-y-4'>
@@ -575,9 +931,18 @@ export default function InviteStudentsPage() {
                   <div className='flex items-center justify-between'>
                     <span className='text-muted-foreground'>Ready to invite</span>
                     <span className='font-semibold'>
-                      {recipients.length} recipient{recipients.length === 1 ? '' : 's'}
+                      {recipients.length} address{recipients.length === 1 ? '' : 'es'}
+                      {selectedGroups.length > 0
+                        ? ` + ${selectedGroups.length} group${selectedGroups.length === 1 ? '' : 's'}`
+                        : ''}
                     </span>
                   </div>
+                  {selectedGroups.length > 0 && (
+                    <p className='text-muted-foreground mt-1 text-xs'>
+                      Student groups currently reach about {groupReach} member
+                      {groupReach === 1 ? '' : 's'} before server-side de-duplication.
+                    </p>
+                  )}
                   {selectedClasses.length > 0 && (
                     <p className='text-muted-foreground mt-1 text-xs'>
                       {selectedClasses.length} class{selectedClasses.length === 1 ? '' : 'es'} will
@@ -618,16 +983,139 @@ export default function InviteStudentsPage() {
                 Next <ArrowRight className='ml-2 h-4 w-4' />
               </Button>
             ) : (
-              <Button type='button' onClick={send} disabled={sending || recipients.length === 0}>
+              <Button type='button' onClick={send} disabled={sending || !canSend}>
                 <Send className='mr-2 h-4 w-4' />{' '}
                 {sending
                   ? 'Sending…'
-                  : `Send ${recipients.length} invitation${recipients.length === 1 ? '' : 's'}`}
+                  : `Send invitation${recipients.length + selectedGroups.length === 1 ? '' : 's'}`}
               </Button>
             )}
           </div>
         </>
       )}
+
+      <Card>
+        <CardHeader>
+          <CardTitle className='flex items-center gap-2 text-base'>
+            <MailCheck className='h-4 w-4' /> Invitation status
+          </CardTitle>
+          <CardDescription>
+            Track recent invites and follow up while students decide whether to join.
+          </CardDescription>
+        </CardHeader>
+        <CardContent className='space-y-4'>
+          <div className='flex flex-wrap gap-2 text-xs'>
+            <Badge variant='secondary' className='gap-1'>
+              <Clock3 className='h-3 w-3' /> {invitationCounts.live} pending
+            </Badge>
+            <Badge variant='secondary' className='bg-success/10 text-success gap-1'>
+              <CheckCircle2 className='h-3 w-3' /> {invitationCounts.accepted} accepted
+            </Badge>
+          </div>
+
+          {invitationsQuery.isLoading && !invitationsQuery.data ? (
+            <div className='text-muted-foreground flex items-center gap-2 text-sm'>
+              <Loader2 className='h-4 w-4 animate-spin' /> Loading invitations…
+            </div>
+          ) : recentInvitations.length === 0 ? (
+            <div className='text-muted-foreground flex flex-col items-center justify-center gap-2 rounded-md border border-dashed p-6 text-center text-sm'>
+              <Mail className='h-5 w-5' />
+              No invitations sent yet.
+            </div>
+          ) : (
+            <div className='space-y-2'>
+              {recentInvitations.map(invite => {
+                const invitationUuid = invite.uuid;
+                const status = String(invite.status ?? '');
+                const live = LIVE_STATUSES.includes(status);
+                const accepted = ACCEPTED_STATUSES.includes(status);
+                const resendBusy =
+                  invitationUuid && actingOnInvitation === `resend:${invitationUuid}`;
+                const revokeBusy =
+                  invitationUuid && actingOnInvitation === `revoke:${invitationUuid}`;
+                return (
+                  <div
+                    key={invitationUuid ?? invite.recipient_email}
+                    className='flex flex-wrap items-center justify-between gap-3 rounded-md border p-3 text-sm'
+                    aria-busy={Boolean(resendBusy || revokeBusy)}
+                  >
+                    <div className='min-w-0 flex-1'>
+                      <p className='truncate font-medium'>
+                        {invite.recipient_name || invite.recipient_email}
+                      </p>
+                      <p className='text-muted-foreground truncate text-xs'>
+                        {invite.recipient_email}
+                        {invite.expires_at
+                          ? ` · expires ${new Date(invite.expires_at).toLocaleDateString()}`
+                          : ''}
+                        {invite.accepted_at
+                          ? ` · accepted ${new Date(invite.accepted_at).toLocaleDateString()}`
+                          : ''}
+                      </p>
+                    </div>
+                    <div className='flex flex-wrap items-center gap-2'>
+                      <Badge
+                        variant='secondary'
+                        className={accepted ? 'bg-success/10 text-success' : undefined}
+                      >
+                        {status === 'AWAITING_GUARDIAN_CONSENT'
+                          ? 'Awaiting guardian'
+                          : accepted
+                            ? 'Accepted'
+                            : status || 'Pending'}
+                      </Badge>
+                      {live && invitationUuid && (
+                        <>
+                          <Button
+                            type='button'
+                            variant='ghost'
+                            size='sm'
+                            disabled={Boolean(resendBusy || revokeBusy)}
+                            onClick={() =>
+                              actOnInvitation(invitationUuid, 'resend', () =>
+                                resendInvitation.mutateAsync({
+                                  path: { organisationUuid, invitationUuid },
+                                })
+                              )
+                            }
+                          >
+                            {resendBusy ? (
+                              <Loader2 className='mr-1.5 h-3.5 w-3.5 animate-spin' />
+                            ) : (
+                              <RotateCw className='mr-1.5 h-3.5 w-3.5' />
+                            )}
+                            Resend
+                          </Button>
+                          <Button
+                            type='button'
+                            variant='ghost'
+                            size='sm'
+                            disabled={Boolean(resendBusy || revokeBusy)}
+                            onClick={() =>
+                              actOnInvitation(invitationUuid, 'revoke', () =>
+                                revokeInvitation.mutateAsync({
+                                  path: { organisationUuid, invitationUuid },
+                                })
+                              )
+                            }
+                          >
+                            {revokeBusy ? (
+                              <Loader2 className='mr-1.5 h-3.5 w-3.5 animate-spin' />
+                            ) : (
+                              <X className='mr-1.5 h-3.5 w-3.5' />
+                            )}
+                            Revoke
+                          </Button>
+                        </>
+                      )}
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          )}
+        </CardContent>
+      </Card>
     </div>
   );
 }
