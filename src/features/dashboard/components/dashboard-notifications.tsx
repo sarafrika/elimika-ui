@@ -114,11 +114,10 @@ export const getNotificationUrlPath = (
 ): string => {
   const { type, metadata, action_url } = notification;
 
-  const STUDENT_PATH = `/dashboard/student`
-  const INSTRUCTOR_PATH = `/dashboard/instructor`
-  const COURSE_CREATOR_PATH = `/dashboard/course-creator`
-  const ORGANISATION_PATH = `/dashboard/organisation`
-  const ADMIN_PATH = `/dashboard/admin`
+  const STUDENT_PATH = `/dashboard/student`;
+  const INSTRUCTOR_PATH = `/dashboard/instructor`;
+  const COURSE_CREATOR_PATH = `/dashboard/course-creator`;
+  const ORGANISATION_PATH = `/dashboard/organisation`;
 
   switch (type) {
     case 'QUIZ_DEADLINE_REMINDER':
@@ -151,17 +150,26 @@ export const getNotificationUrlPath = (
       return `${STUDENT_PATH}/learning-hub`;
 
     case 'CLASS_ENROLLMENT_CONFIRMED':
-    case 'INSTRUCTOR_CLASS_ENROLLMENT_MILESTONE':
-    case 'INSTRUCTOR_CLASS_ENROLLMENT_NOTICE':
       if (activeDomain === 'student') {
         return metadata.class_definition_uuid
           ? `${STUDENT_PATH}/learning-hub/classes/${metadata.class_definition_uuid}`
           : '';
       }
 
+      return action_url || '';
+
+    case 'INSTRUCTOR_CLASS_ENROLLMENT_MILESTONE':
+    case 'INSTRUCTOR_CLASS_ENROLLMENT_NOTICE':
+    case 'NEW_STUDENT_ENROLLMENT':
+      if (activeDomain === 'instructor') {
+        return metadata.class_definition_uuid
+          ? `${INSTRUCTOR_PATH}/classes/class-training/${metadata.class_definition_uuid}`
+          : `${INSTRUCTOR_PATH}/training-hub`;
+      }
+
       return metadata.class_definition_uuid
-        ? `${STUDENT_PATH}/classes/class-training/${metadata.class_definition_uuid}`
-        : '';
+        ? `${INSTRUCTOR_PATH}/classes/class-training/${metadata.class_definition_uuid}`
+        : action_url || '';
 
     case 'UPCOMING_CLASS_REMINDER':
       if (activeDomain === 'student') {
@@ -182,27 +190,30 @@ export const getNotificationUrlPath = (
     case 'PROGRAM_TRAINING_APPLICATION_APPROVED':
     case 'PROGRAM_TRAINING_APPLICATION_REJECTED':
     case 'PROGRAM_TRAINING_APPLICATION_REVOKED':
-      if (activeDomain === "instructor") {
-        return metadata?.application_uuid ? `${INSTRUCTOR_PATH}/courses` : ''
-      } else if (activeDomain === "organisation") {
-        return metadata?.application_uuid ? `${ORGANISATION_PATH}/courses` : ''
-      } else if (activeDomain === "course_creator") {
-        return metadata?.application_uuid ? `${COURSE_CREATOR_PATH}/manage-applicant/${metadata?.applicant_uuid}` : ''
+      if (activeDomain === 'instructor') {
+        return metadata?.application_uuid ? `${INSTRUCTOR_PATH}/courses` : '';
+      } else if (activeDomain === 'organisation') {
+        return metadata?.application_uuid ? `${ORGANISATION_PATH}/courses` : '';
+      } else if (activeDomain === 'course_creator') {
+        return metadata?.application_uuid
+          ? `${COURSE_CREATOR_PATH}/manage-applicant/${metadata?.applicant_uuid}`
+          : '';
       }
 
     case 'COURSE_CONTENT_APPROVED':
     case 'COURSE_CONTENT_REJECTED':
     case 'PROGRAM_CONTENT_APPROVED':
     case 'PROGRAM_CONTENT_REJECTED':
-      if (activeDomain === "course_creator") {
-        return metadata?.course_uuid ? `${COURSE_CREATOR_PATH}/course-management/create-new-course?id=${metadata?.course_uuid}` : ''
+      if (activeDomain === 'course_creator') {
+        return metadata?.course_uuid
+          ? `${COURSE_CREATOR_PATH}/course-management/create-new-course?id=${metadata?.course_uuid}`
+          : '';
       }
 
     // Not yet implemented
     case 'COURSE_ENROLLMENT_WELCOME':
     case 'COURSE_COMPLETION_CERTIFICATE':
     case 'LEARNING_MILESTONE_ACHIEVED':
-    case 'NEW_STUDENT_ENROLLMENT':
     case 'NEW_ASSIGNMENT_SUBMISSION':
     case 'CLASS_SCHEDULE_UPDATED':
     case 'GRADING_REMINDER':
@@ -277,15 +288,20 @@ export function DashboardNotifications({
       }
 
       shownPopupIds.current.add(notification.uuid);
+      const popupHref = getNotificationUrlPath(
+        notification,
+        notification.recipient_domain ?? activeDomain ?? ''
+      );
+
       toast(notification.title, {
         description: notification.body,
-        action: notification.action_url
+        action: popupHref
           ? {
-            label: 'Open',
-            onClick: () => {
-              window.location.href = notification.action_url || notificationHref;
-            },
-          }
+              label: 'Open',
+              onClick: () => {
+                window.location.href = popupHref || notificationHref;
+              },
+            }
           : undefined,
       });
       actionMutation.mutate({ uuid: notification.uuid, action: 'popup_seen' });

@@ -22,10 +22,14 @@ import {
 } from '@/components/ui/sheet';
 import type { UserDomain } from '@/lib/types';
 import { cn } from '@/lib/utils';
-import type { ApiResponseWallet } from '@/services/client';
-import { getWalletOptions } from '@/services/client/@tanstack/react-query.gen';
+import type { ApiResponseWallet, CartResponse } from '@/services/client';
+import { getCartOptions, getWalletOptions } from '@/services/client/@tanstack/react-query.gen';
 import { useLogout } from '@/src/features/auth/logout';
-import { CreateAction, dashboardDomainDisplayConfig, useCreateMenuActions } from '@/src/features/dashboard/config/domain-display';
+import {
+  CreateAction,
+  dashboardDomainDisplayConfig,
+  useCreateMenuActions,
+} from '@/src/features/dashboard/config/domain-display';
 import { useUserDomain } from '@/src/features/dashboard/context/user-domain-context';
 import {
   buildDashboardSwitchPath,
@@ -48,15 +52,17 @@ import {
   Search,
   Send,
   Sparkles,
+  ShoppingCart,
   SunMedium,
   Upload,
-  Wallet
+  Wallet,
 } from 'lucide-react';
 import { useTheme } from 'next-themes';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useEffect, useMemo, useState } from 'react';
 import { Label } from '../../../../components/ui/label';
+import { useCartStore } from '../../../../store/cart-store';
 import { DashboardNotifications } from './dashboard-notifications';
 
 const dashboardLabelByDomain = (domain?: string | null) => {
@@ -103,6 +109,23 @@ const getInitials = (name: string) =>
     .map(part => part[0]?.toUpperCase() ?? '')
     .join('');
 
+function isCartResponse(value: unknown): value is CartResponse {
+  return Boolean(value && typeof value === 'object' && ('items' in value || 'id' in value));
+}
+
+function resolveCartResponse(value: unknown): CartResponse | null {
+  if (isCartResponse(value)) {
+    return value;
+  }
+
+  if (!value || typeof value !== 'object' || !('data' in value)) {
+    return null;
+  }
+
+  const data = (value as Record<'data', unknown>).data;
+  return isCartResponse(data) ? data : null;
+}
+
 export default function DashboardTopBar() {
   const router = useRouter();
   const profile = useUserProfile();
@@ -119,6 +142,7 @@ export default function DashboardTopBar() {
   const isInstructor = activeDomain === 'instructor';
   const isOrganisation = activeDomain === 'organisation';
   const isStudent = activeDomain === 'student';
+  const canUseStudentCart = isStudent && Boolean(profile?.student?.uuid);
 
   const profileName = getProfileName(profile);
   const profileInitials = getInitials(profileName);
@@ -158,9 +182,12 @@ export default function DashboardTopBar() {
     walletData?.data?.balance_amount,
     walletData?.data?.currency_code
   );
-  const balance = walletData?.data?.balance_amount
+  const balance = walletData?.data?.balance_amount;
   const walletBalanceDisplay = walletBalanceVisible ? walletBalance : '••••••';
-  const walletAccounts = useMemo(() => buildWalletAccounts(walletData?.data ?? undefined), [walletData?.data]);
+  const walletAccounts = useMemo(
+    () => buildWalletAccounts(walletData?.data ?? undefined),
+    [walletData?.data]
+  );
 
   const activeDomainLabel = activeDomainConfig?.title ?? dashboardLabelByDomain(activeDomain);
   const roleLabel = activeDomainLabel.replace(' Dashboard', '');
@@ -212,7 +239,7 @@ export default function DashboardTopBar() {
                 <Link href={createCourseHref}>
                   <Sparkles className='h-4 w-4' />
                   Create Course
-                  <ChevronDown className='h-4 w-4 hidden sm:flex' />
+                  <ChevronDown className='hidden h-4 w-4 sm:flex' />
                 </Link>
               </Button>
             )}
@@ -226,8 +253,7 @@ export default function DashboardTopBar() {
                 <Link href={createClassHref} className='flex flex-row items-center'>
                   <Sparkles className='h-4 w-4' />
                   Create Class
-
-                  <ChevronDown className='h-4 w-4 hidden sm:flex' />
+                  <ChevronDown className='hidden h-4 w-4 sm:flex' />
                 </Link>
               </Button>
             )}
@@ -239,9 +265,9 @@ export default function DashboardTopBar() {
                 className='h-9 rounded-md px-4 text-sm font-semibold md:inline-flex'
               >
                 <Link className='flex flex-row items-center' href='/dashboard/student/courses'>
-                  <Sparkles className='h-3 w-3 hidden sm:flex' />
+                  <Sparkles className='hidden h-3 w-3 sm:flex' />
                   Enroll Course
-                  <ChevronDown className='h-3 w-3 hidden sm:flex' />
+                  <ChevronDown className='hidden h-3 w-3 sm:flex' />
                 </Link>
               </Button>
             )}
@@ -252,6 +278,8 @@ export default function DashboardTopBar() {
               notificationHref={notificationHref}
               activeDomain={activeDomain}
             />
+
+            {canUseStudentCart && <DashboardCartButton />}
 
             <DashboardWalletMenu
               walletBalance={walletBalanceDisplay as string}
@@ -311,6 +339,37 @@ export default function DashboardTopBar() {
   );
 }
 
+function DashboardCartButton() {
+  const { cartId } = useCartStore();
+  const cartQuery = useQuery({
+    ...getCartOptions({ path: { cartId: cartId ?? 'disabled-cart' } }),
+    enabled: Boolean(cartId),
+    retry: 1,
+  });
+
+  const cart = resolveCartResponse(cartQuery.data);
+  const itemCount = cart?.items?.length ?? 0;
+  const cartLabel = itemCount > 0 ? `Open cart, ${itemCount} items` : 'Open cart';
+
+  return (
+    <Button
+      asChild
+      variant='outline'
+      size='icon'
+      className='border-border/70 bg-card/80 hover:border-primary/40 hover:bg-primary/15 relative h-10 w-10 rounded-md shadow-sm transition'
+    >
+      <Link href='/dashboard/cart' aria-label={cartLabel} title={cartLabel}>
+        <ShoppingCart className='h-4 w-4' />
+        {itemCount > 0 && (
+          <span className='bg-destructive text-destructive-foreground absolute -top-1 -right-1 flex h-5 min-w-5 items-center justify-center rounded-full px-1 text-[10px] font-bold shadow-md'>
+            {itemCount > 9 ? '9+' : itemCount}
+          </span>
+        )}
+      </Link>
+    </Button>
+  );
+}
+
 type DashboardProfileMenuProps = {
   profileName: string;
   profileInitials: string;
@@ -352,29 +411,24 @@ function DashboardProfileMenu({
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
         <Button
-          variant="ghost"
-          className="h-10 rounded-md border-0 bg-transparent p-0 shadow-none hover:bg-transparent sm:border sm:border-border/70 sm:bg-card/80 sm:px-3 sm:shadow-sm sm:hover:border-primary/40 sm:hover:bg-primary/15"
+          variant='ghost'
+          className='sm:border-border/70 sm:bg-card/80 sm:hover:border-primary/40 sm:hover:bg-primary/15 h-10 rounded-md border-0 bg-transparent p-0 shadow-none hover:bg-transparent sm:border sm:px-3 sm:shadow-sm'
         >
-          <Avatar className="border-border/60 h-8 w-8 border">
+          <Avatar className='border-border/60 h-8 w-8 border'>
             <AvatarImage src={userImage} alt={profileName} />
-            <AvatarFallback className="bg-primary/10 text-primary text-xs font-semibold">
+            <AvatarFallback className='bg-primary/10 text-primary text-xs font-semibold'>
               {profileInitials}
             </AvatarFallback>
           </Avatar>
 
-          <span className="hidden min-w-0 flex-col items-start leading-tight md:flex">
-            <span className="text-foreground truncate text-sm font-semibold">
-              {profileName}
-            </span>
-            <span className="text-muted-foreground truncate text-xs">
-              {roleLabel}
-            </span>
+          <span className='hidden min-w-0 flex-col items-start leading-tight md:flex'>
+            <span className='text-foreground truncate text-sm font-semibold'>{profileName}</span>
+            <span className='text-muted-foreground truncate text-xs'>{roleLabel}</span>
           </span>
 
-          <ChevronDown className="text-muted-foreground hidden h-4 w-4 sm:flex" />
+          <ChevronDown className='text-muted-foreground hidden h-4 w-4 sm:flex' />
         </Button>
       </DropdownMenuTrigger>
-
 
       <DropdownMenuContent align='end' className='border-border/70 w-80 rounded-md p-3 shadow-lg'>
         <div className='bg-muted/40 flex items-center gap-3 rounded-md p-3'>
@@ -531,40 +585,37 @@ function DashboardWalletMenu({
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
         <Button
-          variant="outline"
+          variant='outline'
           className={cn(
             'border-border/70 bg-card/80 hover:border-primary/40 hover:bg-primary/15 h-10 rounded-md px-3 shadow-sm transition',
             compact && 'h-9 px-2.5'
           )}
         >
           {/* Mobile: balance */}
-          <span className="text-foreground text-xs font-semibold sm:hidden">
-            {walletBalance}
-          </span>
+          <span className='text-foreground text-xs font-semibold sm:hidden'>{walletBalance}</span>
 
           {/* Desktop/tablet: wallet icon */}
-          <div className="bg-success/10 text-success hidden h-8 w-8 items-center justify-center rounded-full sm:flex">
-            <Wallet className="h-4 w-4" />
+          <div className='bg-success/10 text-success hidden h-8 w-8 items-center justify-center rounded-full sm:flex'>
+            <Wallet className='h-4 w-4' />
           </div>
 
           {!compact && (
-            <span className="hidden min-w-0 flex-col items-start leading-tight md:flex">
-              <span className="text-foreground truncate text-sm font-semibold">
+            <span className='hidden min-w-0 flex-col items-start leading-tight md:flex'>
+              <span className='text-foreground truncate text-sm font-semibold'>
                 {walletBalance}
               </span>
             </span>
           )}
 
           {compact && (
-            <span className="text-foreground hidden text-xs font-semibold sm:flex sm:text-sm">
+            <span className='text-foreground hidden text-xs font-semibold sm:flex sm:text-sm'>
               {walletBalance}
             </span>
           )}
 
-          <ChevronDown className="text-muted-foreground hidden h-4 w-4 sm:flex" />
+          <ChevronDown className='text-muted-foreground hidden h-4 w-4 sm:flex' />
         </Button>
       </DropdownMenuTrigger>
-
 
       <DropdownMenuContent align='end' className='border-border/70 w-96 rounded-md p-3 shadow-lg'>
         <div className='bg-muted/60 flex items-start justify-between gap-3 rounded-md p-3'>
@@ -576,11 +627,15 @@ function DashboardWalletMenu({
                 className='text-muted-foreground hover:text-foreground rounded-full p-2 transition'
                 onClick={onToggleBalance}
               >
-                {walletBalance === '••••••' ? <Eye className='h-4 w-4' /> : <EyeOff className='h-4 w-4' />}
+                {walletBalance === '••••••' ? (
+                  <Eye className='h-4 w-4' />
+                ) : (
+                  <EyeOff className='h-4 w-4' />
+                )}
               </button>
             </div>
 
-            <div className='flex flex-row items-end gap-2' >
+            <div className='flex flex-row items-end gap-2'>
               <p className='text-foreground truncate text-3xl font-bold'>{balance}</p>
               <p className='text-foreground truncate text-lg font-semibold'>{walletCurrency}</p>
             </div>
@@ -591,9 +646,7 @@ function DashboardWalletMenu({
           </div>
         </div>
 
-        <p className='text-muted-foreground mt-2 px-1 text-[11px]'>
-          * Data may be delayed.
-        </p>
+        <p className='text-muted-foreground mt-2 px-1 text-[11px]'>* Data may be delayed.</p>
 
         <div className='mt-3 grid grid-cols-3 gap-2'>
           <button
@@ -601,7 +654,7 @@ function DashboardWalletMenu({
             className='border-border bg-background hover:border-primary/40 hover:bg-primary/10 flex items-center justify-center gap-2 rounded-full border px-3 py-2 text-sm font-medium transition'
             onClick={onDeposit}
           >
-            <Upload className='h-4 w-4 text-warning' />
+            <Upload className='text-warning h-4 w-4' />
             Deposit
           </button>
           <button
@@ -609,7 +662,7 @@ function DashboardWalletMenu({
             className='border-border bg-background hover:border-primary/40 hover:bg-primary/10 flex items-center justify-center gap-2 rounded-full border px-3 py-2 text-sm font-medium transition'
             onClick={onWithdraw}
           >
-            <Download className='h-4 w-4 text-warning' />
+            <Download className='text-warning h-4 w-4' />
             Withdraw
           </button>
           <button
@@ -617,14 +670,14 @@ function DashboardWalletMenu({
             className='border-border bg-background hover:border-primary/40 hover:bg-primary/10 flex items-center justify-center gap-2 rounded-full border px-3 py-2 text-sm font-medium transition'
             onClick={onTransfer}
           >
-            <ArrowLeftRight className='h-4 w-4 text-warning' />
+            <ArrowLeftRight className='text-warning h-4 w-4' />
             Transfer
           </button>
         </div>
 
         <DropdownMenuSeparator className='my-3' />
 
-        <DropdownMenuLabel className='px-2 text-[11px] uppercase tracking-wide'>
+        <DropdownMenuLabel className='px-2 text-[11px] tracking-wide uppercase'>
           Accounts
         </DropdownMenuLabel>
 
@@ -632,16 +685,16 @@ function DashboardWalletMenu({
           {accounts.slice(0, 4).map(account => (
             <div
               key={account.id}
-              className='flex items-center justify-between rounded-md px-2 py-2 text-sm transition hover:bg-muted/60'
+              className='hover:bg-muted/60 flex items-center justify-between rounded-md px-2 py-2 text-sm transition'
             >
               <div className='min-w-0'>
-                <p className='truncate font-medium text-foreground'>{account.label}</p>
-                <p className='truncate text-[11px] text-muted-foreground'>
+                <p className='text-foreground truncate font-medium'>{account.label}</p>
+                <p className='text-muted-foreground truncate text-[11px]'>
                   {account.bucket.replace(/_/g, ' ')}
                 </p>
               </div>
               <div className='shrink-0 text-right'>
-                <p className='font-medium text-foreground'>
+                <p className='text-foreground font-medium'>
                   {new Intl.NumberFormat('en-KE', {
                     maximumFractionDigits: 0,
                   }).format(account.balance_kes)}
@@ -697,8 +750,10 @@ function DepositMethodSheet({
             }}
           >
             <div>
-              <p className='text-sm font-semibold text-foreground'>Pay with M-Pesa</p>
-              <p className='text-muted-foreground mt-1 text-xs'>Continue to the wallet top-up tab.</p>
+              <p className='text-foreground text-sm font-semibold'>Pay with M-Pesa</p>
+              <p className='text-muted-foreground mt-1 text-xs'>
+                Continue to the wallet top-up tab.
+              </p>
             </div>
             <Send className='text-primary h-4 w-4' />
           </button>
@@ -714,14 +769,13 @@ function CreateMenu({ actions, compact = false }: { actions: CreateAction[]; com
   // Single action, no need for a dropdown at all
   if (actions.length === 1) {
     const [only] = actions;
+    if (!only) return null;
+    const Icon = only.icon;
+
     return (
-      <Button
-        size='sm'
-        className='h-9 gap-2 rounded-md px-4 font-semibold'
-        onClick={only?.onSelect}
-      >
-        <only.icon className='h-4 w-4' />
-        <span className={compact ? 'hidden sm:inline' : ''}>{only?.label}</span>
+      <Button size='sm' className='h-9 gap-2 rounded-md px-4 font-semibold' onClick={only.onSelect}>
+        <Icon className='h-4 w-4' />
+        <span className={compact ? 'hidden sm:inline' : ''}>{only.label}</span>
         {!compact && <ChevronDown className='h-4 w-4' />}
       </Button>
     );
@@ -748,7 +802,7 @@ function CreateMenu({ actions, compact = false }: { actions: CreateAction[]; com
             }}
             className='flex items-start gap-3 py-2'
           >
-            <span className='mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-md bg-primary/10 text-primary'>
+            <span className='bg-primary/10 text-primary mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-md'>
               <a.icon className='h-4 w-4' />
             </span>
             <span className='flex flex-col'>
