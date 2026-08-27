@@ -302,7 +302,7 @@ export function InstructorTrainingHubPage() {
             className='bg-primary text-primary-foreground hover:bg-primary/90 flex w-full items-center justify-center gap-3 rounded-[10px] px-4 py-3 text-center text-[0.96rem] font-medium transition-colors'
           >
             <CalendarDays className='size-4 shrink-0' />
-            <span className='truncate'>Invite Past Students</span>
+            <span className='truncate'>Invite Students</span>
             <span aria-hidden='true'>›</span>
           </Button>
         </aside>

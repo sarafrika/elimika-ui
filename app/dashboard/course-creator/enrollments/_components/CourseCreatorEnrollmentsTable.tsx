@@ -95,7 +95,7 @@ export function CourseCreatorEnrollmentsTable() {
           description: summaryText(program),
           published: Boolean(program.published),
           updatedDate: program.updated_date,
-          thumbnail_url: course.thumbnail_url
+          thumbnail_url: ""
         })),
     ],
     [courses, programs]

@@ -1,12 +1,10 @@
-import { CourseCreatorEnrollmentStudentsTable } from "./_components/CourseCreatorEnrollmentStudentsTable";
-
+import { redirect } from 'next/navigation';
 
 export default async function CourseCreatorEnrollmentStudentsPage({
   params,
 }: {
   params: Promise<{ contentId: string }>;
 }) {
-  const { contentId } = await params;
-
-  return <CourseCreatorEnrollmentStudentsTable contentId={contentId} />;
+  await params;
+  redirect('/dashboard/course-creator/enrollments');
 }
