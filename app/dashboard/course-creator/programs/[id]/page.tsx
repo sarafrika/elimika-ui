@@ -1,10 +1,10 @@
 'use client';
 
+import type { Course, ProgramEnrollment, TrainingProgram } from '@/services/client/types.gen';
 import { useQuery } from '@tanstack/react-query';
 import { Pen, Users } from 'lucide-react';
 import { useParams, useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
-import type { Course, ProgramEnrollment, TrainingProgram } from '@/services/client/types.gen';
 import { Button } from '../../../../../components/ui/button';
 import { Skeleton } from '../../../../../components/ui/skeleton';
 import { useBreadcrumb } from '../../../../../context/breadcrumb-provider';
@@ -165,7 +165,7 @@ const ProgramPreview = ({ onEdit }: ProgramPreviewProps) => {
 
               if (program.uuid) {
                 router.push(
-                  `/dashboard/course-creator/course-management/create-new-program?id=${program.uuid}`
+                  `/dashboard/course-creator/courses/create-program?id=${program.uuid}`
                 );
               }
             }}
@@ -201,11 +201,10 @@ const ProgramPreview = ({ onEdit }: ProgramPreviewProps) => {
             <button
               key={tab}
               onClick={() => setActiveTab(tab)}
-              className={`border-b-2 px-1 py-2 text-sm font-medium whitespace-nowrap md:py-3 md:text-base ${
-                activeTab === tab
-                  ? 'border-primary text-primary'
-                  : 'text-muted-foreground hover:text-foreground border-transparent'
-              }`}
+              className={`border-b-2 px-1 py-2 text-sm font-medium whitespace-nowrap md:py-3 md:text-base ${activeTab === tab
+                ? 'border-primary text-primary'
+                : 'text-muted-foreground hover:text-foreground border-transparent'
+                }`}
             >
               {tab.charAt(0).toUpperCase() + tab.slice(1)}
               {tab === 'courses' && ` (${courses.length})`}

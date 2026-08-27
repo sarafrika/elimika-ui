@@ -46,6 +46,7 @@ import {
 import { toAuthenticatedMediaUrl } from '@/src/lib/media-url';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import {
+    ArrowLeft,
     Check,
     ChevronDown,
     ChevronUp,
@@ -55,6 +56,7 @@ import {
     Sparkles,
     Trash2
 } from 'lucide-react';
+import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useDeferredValue, useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import { toast } from 'sonner';
@@ -96,6 +98,7 @@ type RequirementDraft = {
 };
 
 type CourseDraft = {
+    associationUuid?: string;
     courseUuid: string;
     sequenceOrder: number;
     isRequired: boolean;
@@ -155,6 +158,7 @@ const normalizeCourseDrafts = (value: unknown): CourseDraft[] => {
 
     return value.filter(isCourseDraft).map(draft => ({
         ...draft,
+        associationUuid: draft.associationUuid ?? undefined,
         prerequisiteCourseUuid: draft.prerequisiteCourseUuid ?? '',
         sequenceOrder: Number(draft.sequenceOrder) || 1,
         isRequired: draft.isRequired ?? true,
@@ -533,6 +537,12 @@ export default function CreateProgramPage() {
     const selectedClassLimit = toNullableNumber(formState.classLimit);
     const selectedCoursesCount = courseDrafts.length;
     const selectedRequirementCount = requirements.filter(row => row.requirementText.trim()).length;
+    const readinessChecks = [
+        { label: 'Title is set', complete: Boolean(formState.title.trim()) },
+        { label: 'Price is set', complete: selectedPrice !== null },
+        { label: 'At least 2 courses selected', complete: selectedCoursesCount >= 2 },
+    ];
+    const canPublish = readinessChecks.every(check => check.complete);
 
     useEffect(() => {
         if (!programQuery.data?.data || isHydrated) return;
@@ -589,6 +599,7 @@ export default function CreateProgramPage() {
         const nextRows = programCourseRows
             .filter((row): row is ProgramCourse => Boolean(row.course_uuid))
             .map((row, index) => ({
+                associationUuid: row.uuid,
                 courseUuid: row.course_uuid,
                 sequenceOrder: row.sequence_order ?? index + 1,
                 isRequired: row.is_required ?? true,
@@ -596,7 +607,7 @@ export default function CreateProgramPage() {
             }));
 
         setCourseDrafts(nextRows);
-        originalCourseUuidsRef.current = nextRows.map(row => row.courseUuid);
+        originalCourseUuidsRef.current = nextRows.map(row => row.associationUuid).filter(Boolean) as string[];
     }, [programCourseRows, programCoursesQuery.data, programUuid]);
 
     useEffect(() => {
@@ -779,14 +790,18 @@ export default function CreateProgramPage() {
             prerequisiteCourseUuid: row.prerequisiteCourseUuid.trim(),
         }));
 
-        const currentUuids = new Set(currentRows.map(row => row.courseUuid));
-        const originalUuids = originalCourseUuidsRef.current;
-        const removals = originalUuids.filter(courseUuid => !currentUuids.has(courseUuid));
+        const currentAssociationUuids = new Set(
+            currentRows.map(row => row.associationUuid).filter(Boolean) as string[]
+        );
+        const originalAssociationUuids = originalCourseUuidsRef.current;
+        const removals = originalAssociationUuids.filter(
+            associationUuid => !currentAssociationUuids.has(associationUuid)
+        );
 
         await Promise.all(
-            removals.map(courseUuid =>
+            removals.map(associationUuid =>
                 removeCourseMut.mutateAsync({
-                    path: { programUuid: uuid, courseUuid },
+                    path: { programUuid: uuid, courseUuid: associationUuid },
                 })
             )
         );
@@ -801,23 +816,29 @@ export default function CreateProgramPage() {
                 prerequisite_course_uuid: row.prerequisiteCourseUuid || null,
             };
 
-            if (originalUuids.includes(row.courseUuid)) {
+            if (row.associationUuid) {
                 await updateCourseMut.mutateAsync({
                     body,
-                    path: { programUuid: uuid, courseUuid: row.courseUuid },
+                    path: { programUuid: uuid, courseUuid: row.associationUuid },
                 });
             } else {
-                await addCourseMut.mutateAsync({
+                const response = await addCourseMut.mutateAsync({
                     body,
                     path: { programUuid: uuid },
                 });
+                const savedAssociationUuid = response?.data?.uuid;
+                nextRows.push({
+                    ...row,
+                    associationUuid: savedAssociationUuid ?? row.associationUuid,
+                });
+                continue;
             }
 
             nextRows.push(row);
         }
 
         setCourseDrafts(nextRows);
-        originalCourseUuidsRef.current = nextRows.map(row => row.courseUuid);
+        originalCourseUuidsRef.current = nextRows.map(row => row.associationUuid).filter(Boolean) as string[];
     };
 
     const saveProgramAndAdvance = async (nextStep?: number, statusOverride?: SchemaEnum4) => {
@@ -901,6 +922,25 @@ export default function CreateProgramPage() {
         );
     };
 
+    const deleteCourseDraft = async (row: CourseDraft) => {
+        if (!programUuid || !row.associationUuid) {
+            removeCourseRow(row.courseUuid);
+            return;
+        }
+
+        try {
+            await removeCourseMut.mutateAsync({
+                path: { programUuid, courseUuid: row.associationUuid },
+            });
+            originalCourseUuidsRef.current = originalCourseUuidsRef.current.filter(
+                associationUuid => associationUuid !== row.associationUuid
+            );
+            removeCourseRow(row.courseUuid);
+        } catch (error) {
+            toast.error(getErrorMessage(error, 'Failed to remove course'));
+        }
+    };
+
     const moveCourse = (courseUuid: string, direction: 'up' | 'down') => {
         setCourseDrafts(prev => {
             const index = prev.findIndex(row => row.courseUuid === courseUuid);
@@ -951,6 +991,13 @@ export default function CreateProgramPage() {
 
     return (
         <div className='space-y-6 p-6'>
+            <Link
+                href='/course-management/all?type=courses'
+                className='text-muted-foreground hover:text-foreground inline-flex items-center gap-1 text-sm'
+            >
+                <ArrowLeft className='h-4 w-4' /> Back to my courses
+            </Link>
+
             <PageHeader
                 eyebrow='Program Creator'
                 title={programUuid ? programQuery?.data?.data?.title! : 'Create New Program'}
@@ -972,7 +1019,7 @@ export default function CreateProgramPage() {
                         <Button
                             type='button'
                             onClick={handlePublish}
-                            disabled={publishProgramMut.isPending || !creatorUuid}
+                            disabled={publishProgramMut.isPending || !creatorUuid || !canPublish}
                         >
                             <Sparkles className='mr-2 h-4 w-4' />
                             Publish
@@ -1421,6 +1468,7 @@ export default function CreateProgramPage() {
                                         <div className='space-y-3'>
                                             {selectedCourseDrafts.map((row, index) => {
                                                 const course = courseMap.get(row.courseUuid);
+
                                                 return (
                                                     <div key={row.courseUuid} className='rounded-xl border p-4'>
                                                         <div className='space-y-4'>
@@ -1433,9 +1481,8 @@ export default function CreateProgramPage() {
 
                                                                 <div className='min-w-0 flex-1'>
                                                                     <p className='truncate text-sm font-semibold'>
-                                                                        {course?.name ?? row.courseUuid}
+                                                                        {course?.name}
                                                                     </p>
-
                                                                     <p className='text-muted-foreground truncate text-xs'>
                                                                         {course?.category_names?.join(' · ') || 'Selected course'}
                                                                     </p>
@@ -1467,7 +1514,7 @@ export default function CreateProgramPage() {
                                                                         type='button'
                                                                         variant='ghost'
                                                                         size='icon'
-                                                                        onClick={() => removeCourseRow(row.courseUuid)}
+                                                                        onClick={() => deleteCourseDraft(row)}
                                                                     >
                                                                         <Trash2 className='h-4 w-4' />
                                                                     </Button>
@@ -1589,7 +1636,7 @@ export default function CreateProgramPage() {
                                     Confirm the final program shape before publishing.
                                 </CardDescription>
                             </CardHeader>
-                            <CardContent className='space-y-6'>
+                            <CardContent className='space-y-8'>
                                 <div className='grid gap-4 lg:grid-cols-2'>
                                     <NumberCard label='Title' value={formState.title || 'Untitled program'} />
                                     <NumberCard
@@ -1608,14 +1655,14 @@ export default function CreateProgramPage() {
                                     <NumberCard label='Status' value={formState.status} />
                                 </div>
 
-                                <div className='space-y-2'>
+                                <CardContent className='space-y-2'>
                                     <h3 className='text-sm font-semibold'>Description</h3>
                                     <p className='text-muted-foreground text-sm'>
                                         {formState.description || 'No description added yet.'}
                                     </p>
-                                </div>
+                                </CardContent>
 
-                                <div className='space-y-2'>
+                                <CardContent className='space-y-2'>
                                     <h3 className='text-sm font-semibold'>Objectives</h3>
                                     {splitLines(formState.objectives).length ? (
                                         <ul className='space-y-2 text-sm'>
@@ -1629,9 +1676,9 @@ export default function CreateProgramPage() {
                                     ) : (
                                         <p className='text-muted-foreground text-sm'>No objectives added yet.</p>
                                     )}
-                                </div>
+                                </CardContent>
 
-                                <div className='space-y-2'>
+                                <CardContent className='space-y-2'>
                                     <h3 className='text-sm font-semibold'>Requirements</h3>
                                     {requirements.filter(row => row.requirementText.trim()).length ? (
                                         <ul className='space-y-2 text-sm'>
@@ -1655,9 +1702,9 @@ export default function CreateProgramPage() {
                                     ) : (
                                         <p className='text-muted-foreground text-sm'>No requirements added yet.</p>
                                     )}
-                                </div>
+                                </CardContent>
 
-                                <div className='space-y-2'>
+                                <CardContent className='space-y-2'>
                                     <h3 className='text-sm font-semibold'>Curriculum</h3>
                                     {selectedCourseDrafts.length ? (
                                         <ol className='space-y-3 text-sm'>
@@ -1688,33 +1735,43 @@ export default function CreateProgramPage() {
                                     ) : (
                                         <p className='text-muted-foreground text-sm'>No courses selected yet.</p>
                                     )}
-                                </div>
+                                </CardContent>
 
+                                <CardContent className='rounded-xl border bg-muted/30 p-4'>
+                                    {/* Header */}
+                                    <div className='space-y-1'>
+                                        <h3 className='text-foreground text-sm font-semibold'>
+                                            Readiness checklist
+                                        </h3>
 
-                                <div className='rounded-xl border bg-muted/30 p-4'>
-                                    <div className='flex items-center gap-2 text-sm font-medium'>
-                                        Readiness checklist
-                                        <span>Ensure everything is complete before publishing</span>
+                                        <p className='text-muted-foreground text-xs'>
+                                            Focus on title, price, and at least two courses before publishing.
+                                        </p>
                                     </div>
 
-                                    {/* // check most importantly for title, price and curriculum (at least 2 courses) */}
-                                    <ul className='mt-3 space-y-2 text-sm text-muted-foreground'>
-                                        <li className='flex items-start gap-2'>
-                                            <Check className='mt-0.5 h-4 w-4 text-primary' />
-                                            Title and category are set
-                                        </li>
-                                        <li className='flex items-start gap-2'>
-                                            <Check className='mt-0.5 h-4 w-4 text-primary' />
-                                            Core details saved to the API
-                                        </li>
-                                        <li className='flex items-start gap-2'>
-                                            <Check className='mt-0.5 h-4 w-4 text-primary' />
-                                            Requirements and curriculum synced
-                                        </li>
+                                    {/* Checklist */}
+                                    <ul className='mt-4 space-y-2.5'>
+                                        {readinessChecks.map(check => (
+                                            <li key={check.label} className='flex items-center gap-2.5 text-sm'>
+                                                <span
+                                                    className={`flex h-6 w-6 shrink-0 items-center justify-center rounded-full ${check.complete ? 'bg-success/10 text-success' : 'bg-muted text-muted-foreground'
+                                                        }`}
+                                                >
+                                                    {check.complete ? (
+                                                        <Check className='h-3.5 w-3.5' />
+                                                    ) : (
+                                                        <span className='text-[10px] font-semibold'>!</span>
+                                                    )}
+                                                </span>
+                                                <span className={check.complete ? 'text-foreground' : 'text-muted-foreground'}>
+                                                    {check.label}
+                                                </span>
+                                            </li>
+                                        ))}
                                     </ul>
-                                </div>
+                                </CardContent>
 
-                                <div className='flex flex-wrap justify-end gap-3'>
+                                <CardContent className='flex flex-wrap justify-end gap-3'>
                                     <Button type='button' variant='outline' onClick={() => setStep(2)}>
                                         Back
                                     </Button>
@@ -1726,11 +1783,15 @@ export default function CreateProgramPage() {
                                     >
                                         Save Draft
                                     </Button>
-                                    <Button type='button' onClick={handlePublish} disabled={!creatorUuid}>
+                                    <Button
+                                        type='button'
+                                        onClick={handlePublish}
+                                        disabled={!creatorUuid || !canPublish || publishProgramMut.isPending}
+                                    >
                                         <Sparkles className='mr-2 h-4 w-4' />
                                         Publish program
                                     </Button>
-                                </div>
+                                </CardContent>
                             </CardContent>
                         </Card>
                     )}

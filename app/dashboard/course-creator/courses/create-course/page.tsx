@@ -27,6 +27,7 @@ import {
 } from "@/components/ui/table";
 import { Textarea } from "@/components/ui/textarea";
 import {
+    ArrowLeft,
     BookOpen,
     Check,
     ClipboardList,
@@ -35,6 +36,7 @@ import {
     Trash2,
     Video,
 } from "lucide-react";
+import Link from "next/link";
 import { useMemo, useState } from "react";
 import { toast } from "sonner";
 
@@ -261,6 +263,13 @@ export default function CreateCoursePage() {
 
     return (
         <div className="space-y-6 pb-24 p-6">
+            <Link
+                href='/course-management/all?type=courses'
+                className='text-muted-foreground hover:text-foreground inline-flex items-center gap-1 text-sm'
+            >
+                <ArrowLeft className='h-4 w-4' /> Back to my courses
+            </Link>
+
             <PageHeader
                 eyebrow="Course Creator"
                 title="Create New Course"
