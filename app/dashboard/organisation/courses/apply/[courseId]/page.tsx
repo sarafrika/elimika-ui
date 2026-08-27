@@ -46,9 +46,11 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { Skeleton } from '@/components/ui/skeleton';
+import { useInstructor } from '@/context/instructor-context';
 import { useOrganisation } from '@/context/organisation-context';
 import { extractEntity } from '@/lib/api-helpers';
 import { cn } from '@/lib/utils';
+import { useUserDomain } from '@/src/features/dashboard/context/user-domain-context';
 import type { Course, CourseTrainingRequirement } from '@/services/client';
 import {
   getCourseByUuidOptions,
@@ -424,11 +426,22 @@ function buildRateCard(pricing: PriceTier[]) {
 }
 
 export default function ApplyPage() {
-  const params = useParams<{ courseId: string }>();
-  const courseId = params?.courseId ?? '';
+  const params = useParams<{ courseId?: string; id?: string }>();
+  const courseId = params?.courseId ?? params?.id ?? '';
   const router = useRouter();
+  const { activeDomain } = useUserDomain();
+  const isInstructorDomain = activeDomain === 'instructor';
   const organisation = useOrganisation();
+  const instructor = useInstructor();
   const organisationUuid = organisation?.uuid ?? '';
+  const applicantUuid = isInstructorDomain ? instructor?.uuid ?? '' : organisationUuid;
+  const applicantType = isInstructorDomain ? 'instructor' : 'organisation';
+  const backHref = isInstructorDomain
+    ? '/dashboard/instructor/courses'
+    : '/dashboard/organisation/courses/catalog';
+  const successHref = isInstructorDomain
+    ? '/dashboard/instructor/opportunities/my-applications'
+    : '/dashboard/organisation/my-applications';
 
   const courseQuery = useQuery({
     ...getCourseByUuidOptions({ path: { uuid: courseId } }),
@@ -499,7 +512,7 @@ export default function ApplyPage() {
   const goBack = () => dispatch({ type: 'step', step: Math.max(0, state.step - 1) });
 
   const submit = () => {
-    if (!course || !organisationUuid) return;
+    if (!course || !applicantUuid) return;
     const methodTitles = state.methods
       .map(v => METHOD_OPTIONS.find(m => m.value === v)?.title)
       .filter(Boolean)
@@ -514,8 +527,8 @@ export default function ApplyPage() {
       {
         path: { courseUuid: courseId },
         body: {
-          applicant_type: 'organisation',
-          applicant_uuid: organisationUuid,
+          applicant_type: applicantType,
+          applicant_uuid: applicantUuid,
           rate_card: buildRateCard(state.pricing),
           application_notes: notes,
         },
@@ -525,7 +538,7 @@ export default function ApplyPage() {
           toast.success('Application submitted', {
             description: `Your application to train ${course.name} is under review.`,
           });
-          router.push('/dashboard/organisation/my-applications');
+          router.push(successHref);
         },
         onError: () => {
           toast.error('Could not submit application', {
@@ -549,11 +562,8 @@ export default function ApplyPage() {
     return (
       <div className='text-muted-foreground p-8 text-center text-sm'>
         Course not found.{' '}
-        <Link
-          href='/dashboard/organisation/courses/catalog'
-          className='text-primary hover:underline'
-        >
-          Back to catalog
+        <Link href={backHref} className='text-primary hover:underline'>
+          Back to {isInstructorDomain ? 'courses' : 'catalog'}
         </Link>
       </div>
     );
@@ -566,8 +576,8 @@ export default function ApplyPage() {
         description={`${course.category_names?.[0] ?? 'General'} · ${course.total_duration_display ?? '—'}`}
         action={
           <Button asChild variant='ghost' size='sm'>
-            <Link href='/dashboard/organisation/courses/catalog'>
-              <ArrowLeft className='mr-2 h-4 w-4' /> Back to catalog
+            <Link href={backHref}>
+              <ArrowLeft className='mr-2 h-4 w-4' /> Back to {isInstructorDomain ? 'courses' : 'catalog'}
             </Link>
           </Button>
         }
@@ -633,11 +643,7 @@ export default function ApplyPage() {
                 Next <ArrowRight className='ml-2 h-4 w-4' />
               </Button>
             ) : (
-              <Button
-                type='button'
-                onClick={submit}
-                disabled={!canNext || submitMutation.isPending}
-              >
+              <Button type='button' onClick={submit} disabled={!canNext || submitMutation.isPending}>
                 <Check className='mr-2 h-4 w-4' />{' '}
                 {submitMutation.isPending ? 'Submitting…' : 'Submit application'}
               </Button>
