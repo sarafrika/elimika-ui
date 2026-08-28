@@ -714,18 +714,19 @@ export function PracticeActivityManager({
       {showHeader && (
         <div className='flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between'>
           <div>
-            <p className='text-lg font-semibold'>Class Practice Activities</p>
-            <p className='text-muted-foreground text-sm'>
+            <p className='text-[15px] font-semibold'>Class Practice Activities</p>
+            <p className='text-muted-foreground text-xs'>
               Manage reusable class practice activities tied to this skill.
             </p>
           </div>
+
           <Button
             onClick={handleAddPracticeActivity}
             variant='secondary'
             size='sm'
-            className='flex w-fit items-center gap-1'
+            className='flex w-fit items-center gap-1 text-xs'
           >
-            <PlusCircle className='h-4 w-4' />
+            <PlusCircle className='h-3.5 w-3.5' />
             Add Activity
           </Button>
         </div>
@@ -737,16 +738,18 @@ export function PracticeActivityManager({
             onClick={handleAddPracticeActivity}
             variant='secondary'
             size='sm'
-            className='flex w-fit items-center gap-1'
+            className='flex w-fit items-center gap-1 text-xs'
           >
-            <PlusCircle className='h-4 w-4' />
+            <PlusCircle className='h-3.5 w-3.5' />
             Add Activity
           </Button>
         </div>
       )}
 
       {practiceActivitiesIsFetching ? (
-        <p className='text-muted-foreground text-sm'>Loading practice activities...</p>
+        <p className='text-muted-foreground text-xs'>
+          Loading practice activities...
+        </p>
       ) : orderedPracticeActivities.length > 0 ? (
         <DndContext
           sensors={practiceSensors}
@@ -772,40 +775,47 @@ export function PracticeActivityManager({
         </DndContext>
       ) : (
         <div className='text-muted-foreground flex flex-col items-center justify-center rounded-lg border border-dashed p-6 text-center'>
-          <EyeOff className='text-muted-foreground mb-2 h-8 w-8' />
-          <p className='font-medium'>No practice activities yet</p>
-          <p className='mt-1 text-sm'>Add activities learners can complete during class.</p>
+          <EyeOff className='text-muted-foreground mb-2 h-7 w-7' />
+          <p className='text-xs font-medium'>No practice activities yet</p>
+          <p className='mt-1 text-xs'>
+            Add activities learners can complete during class.
+          </p>
         </div>
       )}
 
-      {(practiceTotalPages > 1 || practiceTotalElements > PRACTICE_ACTIVITY_PAGE_SIZE) && (
-        <div className='mt-2 flex flex-col gap-3 border-t pt-4 text-sm md:flex-row md:items-center md:justify-between'>
-          <p className='text-muted-foreground'>
-            Page {practicePageNumber + 1} of {practiceTotalPages} - {practiceTotalElements}{' '}
-            activities
-          </p>
-          <div className='flex items-center gap-2'>
-            <Button
-              variant='outline'
-              size='sm'
-              disabled={!hasPracticePrevious}
-              onClick={() => setPracticePage(page => Math.max(page - 1, 0))}
-            >
-              <ChevronLeft className='h-4 w-4' />
-              Previous
-            </Button>
-            <Button
-              variant='outline'
-              size='sm'
-              disabled={!hasPracticeNext}
-              onClick={() => setPracticePage(page => page + 1)}
-            >
-              Next
-              <ChevronRight className='h-4 w-4' />
-            </Button>
+      {(practiceTotalPages > 1 ||
+        practiceTotalElements > PRACTICE_ACTIVITY_PAGE_SIZE) && (
+          <div className='mt-2 flex flex-col gap-3 border-t pt-4 text-xs md:flex-row md:items-center md:justify-between'>
+            <p className='text-muted-foreground'>
+              Page {practicePageNumber + 1} of {practiceTotalPages} -{' '}
+              {practiceTotalElements} activities
+            </p>
+
+            <div className='flex items-center gap-2'>
+              <Button
+                variant='outline'
+                size='sm'
+                disabled={!hasPracticePrevious}
+                onClick={() => setPracticePage(page => Math.max(page - 1, 0))}
+                className='text-xs'
+              >
+                <ChevronLeft className='h-3.5 w-3.5' />
+                Previous
+              </Button>
+
+              <Button
+                variant='outline'
+                size='sm'
+                disabled={!hasPracticeNext}
+                onClick={() => setPracticePage(page => page + 1)}
+                className='text-xs'
+              >
+                Next
+                <ChevronRight className='h-3.5 w-3.5' />
+              </Button>
+            </div>
           </div>
-        </div>
-      )}
+        )}
 
       <PracticeActivityDialog
         open={openPracticeActivityModal}
@@ -817,7 +827,9 @@ export function PracticeActivityManager({
           }
         }}
         activity={editingPracticeActivity}
-        isSubmitting={createPracticeActivity.isPending || updatePracticeActivity.isPending}
+        isSubmitting={
+          createPracticeActivity.isPending || updatePracticeActivity.isPending
+        }
         onSubmit={handleSavePracticeActivity}
       />
 

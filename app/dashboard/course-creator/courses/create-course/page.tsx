@@ -5,8 +5,6 @@ import { PageHeader } from '@/components/page-header';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { EmptyState } from '@/components/ui/empty-state';
-import { Label } from '@/components/ui/label';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle } from '@/components/ui/sheet';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useCourseCreator } from '@/context/course-creator-context';
@@ -44,8 +42,8 @@ import {
     LessonContentDialog,
     LessonDialog,
     getContentTypeIcon,
-    type LessonFormValues,
     type ContentType,
+    type LessonFormValues,
 } from '../../_components/lesson-management-form';
 import {
     CourseCreatorEmptyState,
@@ -70,7 +68,7 @@ type LessonEditable = CourseLesson & {
     resources?: Array<{ title?: string; url?: string }>;
 };
 
-const CONTENT_TYPE_OPTIONS: ContentType[] = ['TEXT', 'IMAGE', 'VIDEO', 'AUDIO', 'PDF', 'LINK', 'YOUTUBE'];
+const CONTENT_TYPE_OPTIONS: ContentType[] = ['TEXT', 'IMAGE', 'VIDEO', 'AUDIO', 'PDF'];
 
 const STEP_DETAILS = [
     { title: 'Course Setup', description: 'Create the course and define its training requirements.' },
@@ -124,7 +122,6 @@ const mapLessonValues = (lesson: LessonEditable | null): Partial<LessonFormValue
         title: lesson.title ?? '',
         description: lesson.description ?? '',
         objectives: lesson.learning_objectives ?? '',
-        resources: lesson.resources ?? [],
         duration_hours: lesson.duration_hours ?? 0,
         duration_minutes: lesson.duration_minutes ?? 0,
         uuid: lesson.uuid,
@@ -214,6 +211,14 @@ function LessonContentStack({
         setSelectedContentType(contentType ?? null);
         setContentDialogOpen(true);
     };
+
+    // How many content blocks the currently-targeted lesson already has — used to
+    // seed display_order for a brand-new piece of content as (count + 1). Recomputed
+    // on every render off the live lessonContentsMap, so it stays correct even if the
+    // map refreshes while the sheet is open.
+    const nextDisplayOrder = selectedLessonId
+        ? (lessonContentsMap.get(selectedLessonId)?.length ?? 0) + 1
+        : 1;
 
     const openEditContent = (lessonId: string, content: LessonContent) => {
         setSelectedLessonId(lessonId);
@@ -454,7 +459,8 @@ function LessonContentStack({
                                         content_category: '',
                                         content_text: '',
                                         value: '',
-                                        display_order: 1,
+                                        // Auto-filled from the lesson's current content count, not hardcoded.
+                                        display_order: nextDisplayOrder,
                                     } as never)
                                     : undefined
                         }
@@ -682,29 +688,37 @@ export default function CreateCoursePage() {
                                     description='Practice activities are available after at least one lesson exists.'
                                 >
                                     <div className='space-y-6'>
-                                        <div className='space-y-2'>
-                                            <Label htmlFor='practice-lesson-select'>Lesson</Label>
-                                            <Select
-                                                value={selectedPracticeLessonId}
-                                                onValueChange={setSelectedPracticeLessonId}
-                                            >
-                                                <SelectTrigger id='practice-lesson-select' className='w-full max-w-xl'>
-                                                    <SelectValue placeholder='Choose a lesson' />
-                                                </SelectTrigger>
-                                                <SelectContent>
-                                                    {lessonsWithUuid.map((lesson, index) => (
-                                                        <SelectItem key={lesson.uuid} value={lesson.uuid}>
-                                                            {lesson.lesson_number ?? index + 1}. {lesson.title || 'Untitled lesson'}
-                                                        </SelectItem>
-                                                    ))}
-                                                </SelectContent>
-                                            </Select>
-                                        </div>
+                                        <div className='space-y-8'>
+                                            {lessonsWithUuid.map((lesson, index) => (
+                                                <section key={lesson.uuid} className='relative'>
+                                                    {/* Lesson header */}
+                                                    <div className='mb-3 flex items-center gap-2'>
+                                                        <div className='flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-primary text-xs font-semibold text-primary-foreground'>
+                                                            {lesson.lesson_number ?? index + 1}
+                                                        </div>
 
-                                        <PracticeActivityManager
-                                            courseUuid={resolvedCourseId}
-                                            lessonUuid={practiceLesson?.uuid}
-                                        />
+                                                        <div>
+                                                            <p className='text-[10px] font-medium uppercase tracking-wide text-primary'>
+                                                                Lesson {lesson.lesson_number ?? index + 1}
+                                                            </p>
+
+                                                            <h3 className='text-sm font-semibold'>
+                                                                {lesson.title || 'Untitled lesson'}
+                                                            </h3>
+                                                        </div>
+                                                    </div>
+
+                                                    {/* Activities */}
+                                                    <div className='ml-3 border-l pl-6'>
+                                                        <PracticeActivityManager
+                                                            courseUuid={resolvedCourseId}
+                                                            lessonUuid={lesson.uuid}
+                                                            showHeader
+                                                        />
+                                                    </div>
+                                                </section>
+                                            ))}
+                                        </div>
                                     </div>
                                 </SectionGuard>
                             ) : step === 3 ? (

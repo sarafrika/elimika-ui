@@ -1151,8 +1151,7 @@ const lessonContentSchema = z.object({
   content_category: z.string().min(1, 'Content category is required'),
   title: z.string().min(1, 'Title is required'),
   description: z.string().optional(),
-  value: z.unknown().optional(),
-  display_order: z.coerce.number().min(0, 'Order number must be positive'),
+  value: z.string().max(499, 'Value must be less than 500 characters').optional(), display_order: z.coerce.number().min(0, 'Order number must be positive'),
   uuid: z.string().optional(),
 });
 
@@ -1191,8 +1190,6 @@ function LessonContentForm({
 
   const isEditMode = !!initialValues?.uuid;
 
-  console.log(initialValues, "INIT")
-
   const draftKey = React.useMemo(
     () => `lesson-content-draft:${courseId}:${lessonId}:${contentId ?? 'new'}`,
     [courseId, lessonId, contentId]
@@ -1220,21 +1217,25 @@ function LessonContentForm({
   // Reset the form whenever the sheet opens or closes.
   // - Opens for edit -> hydrate with the editing content's values.
   // - Opens fresh (e.g. "Add Image") -> blank form, but keep the preselected content_type.
-  // - Closes -> wipe everything so the next open never shows stale input.
+  // - Closes (isOpen === false, explicitly) -> wipe everything so the next open never
+  //   shows stale input. We check `=== false` rather than falsy so that if the parent
+  //   hasn't wired the isOpen prop through yet, this never fights with edit-mode
+  //   population — `undefined` is treated the same as "open".
   React.useEffect(() => {
-    if (isOpen) {
-      form.reset({
-        ...getFreshDefaults(),
-        ...mappedInitialValues,
-      });
-      setMediaFile(null);
-    } else {
+    if (isOpen === false) {
       form.reset(getFreshDefaults());
       setMediaFile(null);
       if (!isEditMode) {
         localStorage.removeItem(draftKey);
       }
+      return;
     }
+
+    form.reset({
+      ...getFreshDefaults(),
+      ...mappedInitialValues,
+    });
+    setMediaFile(null);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isOpen, mappedInitialValues]);
 
@@ -1610,6 +1611,7 @@ function LessonContentForm({
                   render={({ field }) => (
                     <FormItem>
                       <FormLabel>URL</FormLabel>
+
                       <FormControl>
                         <Input
                           type='url'
@@ -1617,12 +1619,14 @@ function LessonContentForm({
                           {...field}
                         />
                       </FormControl>
+
                       {isMediaUploadType && (
                         <p className='text-muted-foreground text-xs'>
                           Paste a URL, or clear this and upload a file below — not both.
                         </p>
                       )}
-                      <FormMessage />
+
+                      <FormMessage className='text-xs' />
                     </FormItem>
                   )}
                 />
