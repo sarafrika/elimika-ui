@@ -2,6 +2,7 @@
 
 import { LessonContentViewerDialog } from '@/components/content-preview/LessonContentPreview';
 import { PageHeader } from '@/components/page-header';
+import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { EmptyState } from '@/components/ui/empty-state';
@@ -9,28 +10,33 @@ import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle } from '
 import { Skeleton } from '@/components/ui/skeleton';
 import { useCourseCreator } from '@/context/course-creator-context';
 import {
+    deleteAssignmentMutation,
     deleteLessonContentMutation,
+    deleteQuizMutation,
     getCourseByUuidOptions,
     getCourseLessonsOptions,
     getLessonContentOptions,
     getLessonContentQueryKey,
+    searchAssignmentsOptions,
+    searchQuizzesOptions,
 } from '@/services/client/@tanstack/react-query.gen';
 import type {
     ApiResponseCourse,
+    Assignment,
     Course,
     Lesson,
     LessonContent,
     PagedDtoLesson,
+    Quiz,
 } from '@/services/client/types.gen';
 import { useMutation, useQueries, useQuery, useQueryClient } from '@tanstack/react-query';
-import { ArrowLeft, Pencil, Sparkles, Trash } from 'lucide-react';
+import { ArrowLeft, Eye, Pencil, PlusCircle, Sparkles, Trash } from 'lucide-react';
 import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
-import { useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { toast } from 'sonner';
 import DeleteModal from '../../../../../components/custom-modals/delete-modal';
 import { stripHtml } from '../../../../../src/features/dashboard/courses/shared/_components/courses-data';
-import AssessmentCreationForm from '../../_components/assessment-creation-form';
 import CourseBrandingForm from '../../_components/course-branding-form';
 import { CourseCreationForm } from '../../_components/course-creation-form';
 import type { CourseCreationFormValues } from '../../_components/course-creation-types';
@@ -54,6 +60,7 @@ import {
     createEmptyDraftsByProvider,
     type Provider,
 } from '../../_components/training-requirement-section';
+import AssessmentCreation from './assessment-creation';
 import { Stepper } from './stepper';
 
 
@@ -68,7 +75,39 @@ type LessonEditable = CourseLesson & {
     resources?: Array<{ title?: string; url?: string }>;
 };
 
+type AssessmentMode = 'Quiz' | 'Assignment';
+
+type AssessmentListItem = {
+    kind: AssessmentMode;
+    uuid: string;
+    lessonUuid: string;
+    lessonTitle: string;
+    lessonOrder: number;
+    title: string;
+    description: string;
+    statusLabel: string;
+    statusTone: 'default' | 'secondary' | 'outline';
+    meta: string[];
+};
+
 const CONTENT_TYPE_OPTIONS: ContentType[] = ['TEXT', 'IMAGE', 'VIDEO', 'AUDIO', 'PDF'];
+
+const formatAssessmentDate = (value?: string | Date | null) => {
+    if (!value) return 'No due date';
+    const date = value instanceof Date ? value : new Date(value);
+    if (Number.isNaN(date.getTime())) return 'No due date';
+    return new Intl.DateTimeFormat('en-US', { dateStyle: 'medium' }).format(date);
+};
+
+const getAssessmentDescription = (value?: string | null) => {
+    const description = stripHtml(value ?? '').trim();
+    return description || 'No description provided.';
+};
+
+const getAssessmentStatusTone = (isActive?: boolean, isPublished?: boolean): AssessmentListItem['statusTone'] => {
+    if (isActive || isPublished) return 'default';
+    return 'secondary';
+};
 
 const STEP_DETAILS = [
     { title: 'Course Setup', description: 'Create the course and define its training requirements.' },
@@ -503,8 +542,14 @@ export default function CreateCoursePage() {
     const [requirementDrafts, setRequirementDrafts] = useState(createEmptyDraftsByProvider());
     const [activeRequirementProvider, setActiveRequirementProvider] =
         useState<Provider | null>(null);
-    const [assessmentSheetOpen, setAssessmentSheetOpen] = useState(false);
     const [selectedPracticeLessonId, setSelectedPracticeLessonId] = useState<string>('');
+    const [assessmentSheetOpen, setAssessmentSheetOpen] = useState(false);
+    const [assessmentMode, setAssessmentMode] = useState<AssessmentMode>('Quiz');
+    const [selectedAssessmentLessonId, setSelectedAssessmentLessonId] = useState<string>('');
+    const [selectedAssessmentLesson, setSelectedAssessmentLesson] = useState<Lesson | null>(null);
+    const [selectedQuizUuid, setSelectedQuizUuid] = useState<string | null>(null);
+    const [selectedAssignmentUuid, setSelectedAssignmentUuid] = useState<string | null>(null);
+    const [assessmentToDelete, setAssessmentToDelete] = useState<AssessmentListItem | null>(null);
     const searchParams = useSearchParams();
     const queryCourseId = searchParams.get('id');
 
@@ -592,6 +637,214 @@ export default function CreateCoursePage() {
         () => lessonsWithUuid.find(lesson => lesson.uuid === selectedPracticeLessonId),
         [lessonsWithUuid, selectedPracticeLessonId]
     );
+
+    useEffect(() => {
+        if (!lessonsWithUuid.length) return;
+
+        const matchedLesson =
+            lessonsWithUuid.find(lesson => lesson.uuid === selectedAssessmentLessonId) ?? null;
+
+        if (!selectedAssessmentLessonId) {
+            const fallbackLesson = lessonsWithUuid[0];
+            if (fallbackLesson) {
+                setSelectedAssessmentLessonId(fallbackLesson.uuid);
+                setSelectedAssessmentLesson(fallbackLesson);
+            }
+            return;
+        }
+
+        if (!matchedLesson) {
+            const fallbackLesson = lessonsWithUuid[0];
+            setSelectedAssessmentLessonId(fallbackLesson?.uuid ?? '');
+            setSelectedAssessmentLesson(fallbackLesson ?? null);
+            return;
+        }
+
+        if (matchedLesson.uuid !== selectedAssessmentLesson?.uuid) {
+            setSelectedAssessmentLesson(matchedLesson);
+        }
+    }, [
+        lessonsWithUuid,
+        selectedAssessmentLesson?.uuid,
+        selectedAssessmentLessonId,
+    ]);
+
+    const assessmentQueries = useQueries({
+        queries: lessonsWithUuid.map(lesson => ({
+            ...searchQuizzesOptions({
+                query: { searchParams: { lesson_uuid_eq: lesson.uuid }, pageable: {} },
+            }),
+            enabled: Boolean(lesson.uuid),
+            staleTime: 60_000,
+        })),
+    });
+
+    const assignmentQueries = useQueries({
+        queries: lessonsWithUuid.map(lesson => ({
+            ...searchAssignmentsOptions({
+                query: { searchParams: { lesson_uuid_eq: lesson.uuid }, pageable: {} },
+            }),
+            enabled: Boolean(lesson.uuid),
+            staleTime: 60_000,
+        })),
+    });
+
+    const lessonTitlesById = useMemo(() => {
+        const map = new Map<string, { title: string; order: number }>();
+
+        lessonsWithUuid.forEach((lesson, index) => {
+            map.set(lesson.uuid, {
+                title: lesson.title || `Lesson ${index + 1}`,
+                order: index,
+            });
+        });
+
+        return map;
+    }, [lessonsWithUuid]);
+
+    const assessmentItems = useMemo<AssessmentListItem[]>(() => {
+        const quizItems = assessmentQueries.flatMap((query, index) => {
+            const lesson = lessonsWithUuid[index];
+            if (!lesson) return [];
+
+            const lessonMeta = lessonTitlesById.get(lesson.uuid);
+            const quizzes = query.data?.data?.content ?? [];
+
+            return quizzes.map((quiz: Quiz) => ({
+                kind: 'Quiz' as const,
+                uuid: quiz.uuid ?? '',
+                lessonUuid: lesson.uuid,
+                lessonTitle: lessonMeta?.title ?? lesson.title ?? 'Untitled lesson',
+                lessonOrder: lessonMeta?.order ?? index,
+                title: quiz.title || 'Untitled quiz',
+                description: getAssessmentDescription(quiz.description ?? quiz.instructions ?? ''),
+                statusLabel: quiz.active ? 'Active' : 'Draft',
+                statusTone: getAssessmentStatusTone(quiz.active),
+                meta: [
+                    `Pass ${quiz.passing_score ?? 0}%`,
+                    `Attempts ${quiz.attempts_allowed ?? 1}`,
+                    quiz.time_limit_minutes ? `${quiz.time_limit_minutes} min` : 'No time limit',
+                ],
+            }));
+        });
+
+        const assignmentItems = assignmentQueries.flatMap((query, index) => {
+            const lesson = lessonsWithUuid[index];
+            if (!lesson) return [];
+
+            const lessonMeta = lessonTitlesById.get(lesson.uuid);
+            const assignments = query.data?.data?.content ?? [];
+
+            return assignments.map((assignment: Assignment) => ({
+                kind: 'Assignment' as const,
+                uuid: assignment.uuid ?? '',
+                lessonUuid: lesson.uuid,
+                lessonTitle: lessonMeta?.title ?? lesson.title ?? 'Untitled lesson',
+                lessonOrder: lessonMeta?.order ?? index,
+                title: assignment.title || 'Untitled assignment',
+                description: getAssessmentDescription(assignment.description ?? assignment.instructions ?? ''),
+                statusLabel: assignment.is_published ? 'Published' : 'Draft',
+                statusTone: getAssessmentStatusTone(undefined, assignment.is_published),
+                meta: [
+                    assignment.due_date ? `Due ${formatAssessmentDate(assignment.due_date)}` : 'No due date',
+                    assignment.max_points != null ? `${assignment.max_points} pts` : 'No max points',
+                    assignment.submission_types ? String(assignment.submission_types).replaceAll('_', ' ') : 'Submission type open',
+                ],
+            }));
+        });
+
+        return [...quizItems, ...assignmentItems].filter(item => item.uuid).sort((left, right) => {
+            if (left.lessonOrder !== right.lessonOrder) {
+                return left.lessonOrder - right.lessonOrder;
+            }
+
+            if (left.kind !== right.kind) {
+                return left.kind === 'Quiz' ? -1 : 1;
+            }
+
+            return left.title.localeCompare(right.title);
+        });
+    }, [assessmentQueries, assignmentQueries, lessonTitlesById, lessonsWithUuid]);
+
+    console.log(assessmentItems, "ASS ITEMS")
+
+    const isAssessmentsLoading =
+        assessmentQueries.some(query => query.isLoading) ||
+        assignmentQueries.some(query => query.isLoading);
+
+    const refreshAssessmentLists = useCallback(async () => {
+        await Promise.all([
+            ...assessmentQueries.map(query => query.refetch()),
+            ...assignmentQueries.map(query => query.refetch()),
+        ]);
+    }, [assessmentQueries, assignmentQueries]);
+
+    const openAssessmentSheet = useCallback(
+        (mode: AssessmentMode, lessonId?: string, quizUuid?: string | null, assignmentUuid?: string | null) => {
+            const lesson =
+                lessonsWithUuid.find(currentLesson => currentLesson.uuid === lessonId) ??
+                lessonsWithUuid[0] ??
+                null;
+
+            setAssessmentMode(mode);
+            setSelectedAssessmentLessonId(lesson?.uuid ?? '');
+            setSelectedAssessmentLesson(lesson);
+            setSelectedQuizUuid(mode === 'Quiz' ? quizUuid ?? null : null);
+            setSelectedAssignmentUuid(mode === 'Assignment' ? assignmentUuid ?? null : null);
+            setAssessmentSheetOpen(true);
+        },
+        [lessonsWithUuid]
+    );
+
+    const closeAssessmentSheet = useCallback(() => {
+        setAssessmentSheetOpen(false);
+        setSelectedQuizUuid(null);
+        setSelectedAssignmentUuid(null);
+    }, []);
+
+    const openNewAssessment = useCallback(
+        (mode: AssessmentMode) => {
+            openAssessmentSheet(mode);
+        },
+        [openAssessmentSheet]
+    );
+
+    const openAssessmentEditor = useCallback(
+        (item: AssessmentListItem) => {
+            openAssessmentSheet(
+                item.kind,
+                item.lessonUuid,
+                item.kind === 'Quiz' ? item.uuid : null,
+                item.kind === 'Assignment' ? item.uuid : null
+            );
+        },
+        [openAssessmentSheet]
+    );
+
+    const deleteQuizMut = useMutation(deleteQuizMutation());
+    const deleteAssignmentMut = useMutation(deleteAssignmentMutation());
+
+    const handleDeleteAssessment = useCallback((item: AssessmentListItem) => {
+        setAssessmentToDelete(item);
+    }, []);
+
+    const confirmAssessmentDelete = useCallback(async () => {
+        if (!assessmentToDelete?.uuid) return;
+
+        try {
+            if (assessmentToDelete.kind === 'Quiz') {
+                await deleteQuizMut.mutateAsync({ path: { uuid: assessmentToDelete.uuid } });
+            } else {
+                await deleteAssignmentMut.mutateAsync({ path: { uuid: assessmentToDelete.uuid } });
+            }
+
+            await refreshAssessmentLists();
+            setAssessmentToDelete(null);
+            toast.success(`${assessmentToDelete.kind} deleted successfully.`);
+        } catch (error) {
+            toast.error(error instanceof Error ? error.message : `Failed to delete ${assessmentToDelete.kind.toLowerCase()}.`);
+        }
+    }, [assessmentToDelete, deleteAssignmentMut, deleteQuizMut, refreshAssessmentLists]);
 
     const canRenderCourseSections = Boolean(resolvedCourseId && courseApiResponse);
 
@@ -728,35 +981,174 @@ export default function CreateCoursePage() {
                                     title='Add lessons first'
                                     description='Assessment tasks need at least one lesson before they can be created.'
                                 >
-                                    <div className='space-y-4'>
-                                        <div className='flex items-center justify-between gap-3'>
+                                    <div className='space-y-6'>
+                                        <div className='flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between'>
                                             <div className='space-y-1'>
                                                 <p className='text-foreground text-sm font-medium'>Assessment builder</p>
                                                 <p className='text-muted-foreground text-sm'>
-                                                    Create or edit quizzes and assignments without leaving this page.
+                                                    Create quizzes and assignments, then review every assessment from one combined list.
                                                 </p>
                                             </div>
-                                            <Button type='button' onClick={() => setAssessmentSheetOpen(true)}>
-                                                Open assessment sheet
-                                            </Button>
+
+                                            <div className='flex flex-wrap items-center gap-2'>
+                                                <Button type='button' onClick={() => openNewAssessment('Quiz')}>
+                                                    <PlusCircle className='mr-2 h-4 w-4' />
+                                                    Add Quiz
+                                                </Button>
+                                                <Button type='button' variant='outline' onClick={() => openNewAssessment('Assignment')}>
+                                                    <PlusCircle className='mr-2 h-4 w-4' />
+                                                    Add Assignment
+                                                </Button>
+                                            </div>
                                         </div>
 
-                                        <Sheet open={assessmentSheetOpen} onOpenChange={setAssessmentSheetOpen}>
-                                            <SheetContent side='right'
+                                        <div className='grid gap-3 sm:grid-cols-3'>
+                                            <Card className='rounded-2xl border-border/70 bg-card/80 shadow-sm'>
+                                                <CardContent className='p-4'>
+                                                    <p className='text-muted-foreground text-sm'>Lessons</p>
+                                                    <p className='text-foreground text-2xl font-semibold'>{lessonsWithUuid.length}</p>
+                                                </CardContent>
+                                            </Card>
+                                            <Card className='rounded-2xl border-border/70 bg-card/80 shadow-sm'>
+                                                <CardContent className='p-4'>
+                                                    <p className='text-muted-foreground text-sm'>Quizzes</p>
+                                                    <p className='text-foreground text-2xl font-semibold'>
+                                                        {assessmentItems.filter(item => item.kind === 'Quiz').length}
+                                                    </p>
+                                                </CardContent>
+                                            </Card>
+                                            <Card className='rounded-2xl border-border/70 bg-card/80 shadow-sm'>
+                                                <CardContent className='p-4'>
+                                                    <p className='text-muted-foreground text-sm'>Assignments</p>
+                                                    <p className='text-foreground text-2xl font-semibold'>
+                                                        {assessmentItems.filter(item => item.kind === 'Assignment').length}
+                                                    </p>
+                                                </CardContent>
+                                            </Card>
+                                        </div>
+
+                                        {isAssessmentsLoading && assessmentItems.length === 0 ? (
+                                            <div className='grid gap-4'>
+                                                {Array.from({ length: 3 }).map((_, index) => (
+                                                    <Card key={index} className='rounded-2xl border-border/70 bg-card/80'>
+                                                        <CardContent className='space-y-3 p-5'>
+                                                            <Skeleton className='h-5 w-32' />
+                                                            <Skeleton className='h-7 w-3/5' />
+                                                            <Skeleton className='h-4 w-4/5' />
+                                                            <div className='flex gap-2'>
+                                                                <Skeleton className='h-8 w-20' />
+                                                                <Skeleton className='h-8 w-20' />
+                                                                <Skeleton className='h-8 w-20' />
+                                                            </div>
+                                                        </CardContent>
+                                                    </Card>
+                                                ))}
+                                            </div>
+                                        ) : assessmentItems.length === 0 ? (
+                                            <EmptyState
+                                                title='No assessments yet'
+                                                description='Use the buttons above to add your first quiz or assignment, then manage them from this list.'
+                                            />
+                                        ) : (
+                                            <div className='grid gap-4'>
+                                                {assessmentItems.map(item => (
+                                                    <Card
+                                                        key={`${item.kind}-${item.uuid}`}
+                                                        className='overflow-hidden rounded-2xl border-border/70 bg-card/80 shadow-sm transition hover:border-primary/30 hover:shadow-md'
+                                                    >
+                                                        <CardHeader className='flex flex-col gap-4 border-b border-border/70 p-5 lg:flex-row lg:items-start lg:justify-between'>
+                                                            <div className='space-y-3'>
+                                                                <div className='flex flex-wrap items-center gap-2'>
+                                                                    <Badge variant='secondary'>{item.kind}</Badge>
+                                                                    <Badge variant='outline'>{item.lessonTitle}</Badge>
+                                                                    <Badge variant={item.statusTone}>{item.statusLabel}</Badge>
+                                                                </div>
+                                                                <div className='space-y-1'>
+                                                                    <CardTitle className='text-lg'>{item.title}</CardTitle>
+                                                                    <CardDescription className='max-w-3xl'>{item.description}</CardDescription>
+                                                                </div>
+                                                            </div>
+
+                                                            <div className='flex flex-wrap gap-2'>
+                                                                <Button type='button' variant='outline' size='sm' onClick={() => openAssessmentEditor(item)}>
+                                                                    <Eye className='mr-2 h-4 w-4' />
+                                                                    View
+                                                                </Button>
+                                                                <Button type='button' variant='outline' size='sm' onClick={() => openAssessmentEditor(item)}>
+                                                                    <Pencil className='mr-2 h-4 w-4' />
+                                                                    Edit
+                                                                </Button>
+                                                                <Button
+                                                                    type='button'
+                                                                    variant='destructive'
+                                                                    size='sm'
+                                                                    onClick={() => handleDeleteAssessment(item)}
+                                                                >
+                                                                    <Trash className='mr-2 h-4 w-4' />
+                                                                    Delete
+                                                                </Button>
+                                                            </div>
+                                                        </CardHeader>
+
+                                                        <CardContent className='flex flex-wrap gap-2 p-5'>
+                                                            {item.meta.map(meta => (
+                                                                <Badge key={meta} variant='outline' className='rounded-full'>
+                                                                    {meta}
+                                                                </Badge>
+                                                            ))}
+                                                        </CardContent>
+                                                    </Card>
+                                                ))}
+                                            </div>
+                                        )}
+
+                                        <Sheet open={assessmentSheetOpen} onOpenChange={open => (!open ? closeAssessmentSheet() : setAssessmentSheetOpen(true))}>
+                                            <SheetContent
+                                                side='right'
                                                 className='flex h-full w-full max-w-4xl flex-col overflow-hidden p-0 sm:max-w-4xl'
                                             >
-                                                <SheetHeader className='space-y-2'>
-                                                    <SheetTitle>Assessment Tasks</SheetTitle>
+                                                <SheetHeader className='space-y-2 px-6 pt-6'>
+                                                    <SheetTitle>
+                                                        {assessmentMode === 'Quiz' ? 'Quiz Builder' : 'Assignment Builder'}
+                                                    </SheetTitle>
                                                     <SheetDescription>
-                                                        Manage quizzes and assignments for every lesson from a right-side sheet.
+                                                        {assessmentMode === 'Quiz'
+                                                            ? 'Create or edit quiz questions for the selected lesson.'
+                                                            : 'Create or edit assignment details for the selected lesson.'}
                                                     </SheetDescription>
                                                 </SheetHeader>
 
-                                                <div className='mt-6'>
-                                                    <AssessmentCreationForm
+                                                <div className='mt-6 overflow-y-auto px-6 pb-6'>
+                                                    <AssessmentCreation
+                                                        key={`${assessmentMode}-${selectedQuizUuid ?? selectedAssignmentUuid ?? 'new'}-${selectedAssessmentLessonId || 'lesson'}`}
                                                         course={courseApiResponse}
                                                         lessons={lessonsResponse?.data}
                                                         lessonContentsMap={lessonContentMap}
+                                                        mode={assessmentMode}
+                                                        selectedLessonId={selectedAssessmentLessonId}
+                                                        selectedLesson={selectedAssessmentLesson}
+                                                        setSelectedLessonId={setSelectedAssessmentLessonId}
+                                                        setSelectedLesson={setSelectedAssessmentLesson}
+                                                        initialQuizUuid={assessmentMode === 'Quiz' ? selectedQuizUuid : null}
+                                                        initialAssignmentUuid={
+                                                            assessmentMode === 'Assignment' ? selectedAssignmentUuid : null
+                                                        }
+                                                        onQuizSaved={() => {
+                                                            closeAssessmentSheet();
+                                                            void refreshAssessmentLists();
+                                                        }}
+                                                        onQuizDeleted={() => {
+                                                            closeAssessmentSheet();
+                                                            void refreshAssessmentLists();
+                                                        }}
+                                                        onAssignmentSaved={() => {
+                                                            closeAssessmentSheet();
+                                                            void refreshAssessmentLists();
+                                                        }}
+                                                        onAssignmentDeleted={() => {
+                                                            closeAssessmentSheet();
+                                                            void refreshAssessmentLists();
+                                                        }}
                                                     />
                                                 </div>
                                             </SheetContent>
@@ -803,6 +1195,20 @@ export default function CreateCoursePage() {
                     </CardContent>
                 </Card>
             </div>
+
+            <DeleteModal
+                open={Boolean(assessmentToDelete)}
+                setOpen={open => {
+                    if (!open) {
+                        setAssessmentToDelete(null);
+                    }
+                }}
+                title={`Delete ${assessmentToDelete?.kind ?? 'Assessment'}?`}
+                description={`This will permanently remove the selected ${assessmentToDelete?.kind?.toLowerCase() ?? 'assessment'} from the course.`}
+                onConfirm={() => void confirmAssessmentDelete()}
+                isLoading={deleteQuizMut.isPending || deleteAssignmentMut.isPending}
+                confirmText={`Delete ${assessmentToDelete?.kind ?? 'Assessment'}`}
+            />
         </main>
     );
 }

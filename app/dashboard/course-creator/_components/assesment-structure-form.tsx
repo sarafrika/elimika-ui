@@ -1,13 +1,13 @@
 // @ts-nocheck -- pre-existing @hey-api generated-client type drift (see memory: elimika-ui-typecheck)
 'use client';
 
+import { AsyncSection } from '@/components/data/async-section';
+import { Skeleton } from '@/components/ui/skeleton';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { AlertTriangle, Info, Pencil, Plus, Save, Trash2, X } from 'lucide-react';
 import Link from 'next/link';
 import { useState } from 'react';
 import { toast } from 'sonner';
-import { AsyncSection } from '@/components/data/async-section';
-import { Skeleton } from '@/components/ui/skeleton';
 import { Button } from '../../../../components/ui/button';
 import { Input } from '../../../../components/ui/input';
 import { Label } from '../../../../components/ui/label';
@@ -606,11 +606,10 @@ function AssessmentSheet({
                   </p>
                 </div>
                 <span
-                  className={`rounded-full px-2.5 py-1 text-xs font-medium ${
-                    isMajorAssessment(form.weight_percentage)
-                      ? 'bg-primary/10 text-primary'
-                      : 'bg-muted text-muted-foreground'
-                  }`}
+                  className={`rounded-full px-2.5 py-1 text-xs font-medium ${isMajorAssessment(form.weight_percentage)
+                    ? 'bg-primary/10 text-primary'
+                    : 'bg-muted text-muted-foreground'
+                    }`}
                 >
                   {isMajorAssessment(form.weight_percentage) ? 'Yes' : 'No'}
                 </span>
@@ -777,10 +776,10 @@ export const CourseAssessmentStructure = ({
         {/* Header */}
         <div className='flex flex-col gap-1 border-b px-6 py-5 sm:flex-row sm:items-center sm:justify-between'>
           <div>
-            <h3 className='text-foreground text-lg font-bold'>
+            <h3 className='text-foreground text-[16px] font-bold'>
               Overall Course Assessment Structure
             </h3>
-            <p className='text-muted-foreground mt-0.5 text-sm'>
+            <p className='text-muted-foreground mt-0.5 text-[13px]'>
               Define the assessment components and their weights (total: 100%)
             </p>
           </div>
