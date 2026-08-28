@@ -34,6 +34,7 @@ import {
   CheckCircle2,
   ChevronDown,
   CircleCheck,
+  Copy,
   EllipsisVertical,
   Eye,
   Filter,
@@ -49,7 +50,9 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useMemo, useState } from 'react';
 import { toast } from 'sonner';
+import { LinkShareCard } from '../../../../../components/shared/link-share-card';
 import { Badge } from '../../../../../components/ui/badge';
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '../../../../../components/ui/dialog';
 import {
   Sheet,
   SheetContent,
@@ -59,6 +62,7 @@ import {
 } from '../../../../../components/ui/sheet';
 import { useUserProfile } from '../../../../../context/profile-context';
 import { useDifficultyLevels } from '../../../../../hooks/use-difficultyLevels';
+import { buildSocialShareUrl, openShareWindow } from '../../../../../lib/share';
 import { cn } from '../../../../../lib/utils';
 import {
   deactivateClassDefinitionMutation,
@@ -68,6 +72,7 @@ import {
   getEnrollmentsForClassOptions,
 } from '../../../../../services/client/@tanstack/react-query.gen';
 import { RichTextPreview } from '../../classes/class-training/[id]/_components/ClassTrainingPage';
+import { socialShareActions } from '../../classes/overview/[id]/page';
 import type { TrainingHubLiveClass } from './training-hub-data';
 
 type LiveClassCardProps = {
@@ -212,6 +217,9 @@ export function LiveClassCard({ liveClass }: LiveClassCardProps) {
 
   const [deleteOpen, setDeleteOpen] = useState(false);
   const [inviteOpen, setInviteOpen] = useState(false);
+  const [shareOpen, setShareOpen] = useState(false);
+
+
   const registrationLink =
     typeof window !== 'undefined'
       ? `${window.location.origin}/dashboard/student/courses/available-classes/${liveClass?.class?.course?.uuid}/enroll?id=${liveClass?.classUuid}`
@@ -341,6 +349,12 @@ export function LiveClassCard({ liveClass }: LiveClassCardProps) {
                   >
                     <UserPlus />
                     <p>Invite student</p>
+                  </Button>
+
+                  <Button variant={"ghost"} onClick={() => {
+                    setShareOpen(true)
+                  }}  >
+                    <Copy className='w-3 h-3' />
                   </Button>
 
                   <DropdownMenu>
@@ -623,6 +637,50 @@ export function LiveClassCard({ liveClass }: LiveClassCardProps) {
           )}
         </div>
       </CardContent>
+
+      <Dialog open={shareOpen} onOpenChange={setShareOpen}>
+        <DialogContent className='sm:max-w-lg'>
+          <DialogHeader>
+            <DialogTitle>Share Class Link</DialogTitle>
+            <DialogDescription>Share this class with learners.</DialogDescription>
+          </DialogHeader>
+
+          <LinkShareCard
+            title='Class Registration Link'
+            description='Copy or share this class link.'
+            url={registrationLink}
+            footer={
+              <div className='space-y-3'>
+                <h4 className='text-sm font-medium'>Share via</h4>
+
+                <div className='flex flex-wrap gap-2'>
+                  {socialShareActions.map(({ icon: Icon, label, platform }) => (
+                    <Button
+                      key={label}
+                      size='sm'
+                      variant='outline'
+                      className='gap-2'
+                      disabled={!registrationLink}
+                      onClick={() =>
+                        openShareWindow(
+                          buildSocialShareUrl(platform, {
+                            title: liveClass?.title ?? 'Class',
+                            url: registrationLink,
+                            description: `Check out this class: ${liveClass?.title}`,
+                          })
+                        )
+                      }
+                    >
+                      <Icon className='h-4 w-4' />
+                      {label}
+                    </Button>
+                  ))}
+                </div>
+              </div>
+            }
+          />
+        </DialogContent>
+      </Dialog>
 
       <AlertDialog open={deleteOpen} onOpenChange={setDeleteOpen}>
         <AlertDialogContent>

@@ -77,7 +77,7 @@ function ProgressRing({
       <div className='absolute inset-0 grid place-items-center'>
         <div className='text-center'>
           <div className='text-3xl font-semibold tracking-tight'>{value}%</div>
-          <div className='text-muted-foreground text-[10px] tracking-wider uppercase'>
+          <div className='text-muted text-[10px] tracking-wider uppercase'>
             Skill Level
           </div>
         </div>
@@ -122,7 +122,7 @@ export function StudentOverviewHeroCard({ profile, data }: StudentOverviewHeroCa
 
   return (
     <section className='grid gap-4 lg:grid-cols-3'>
-      <Card className='from-primary to-success text-primary-foreground overflow-hidden border-0 bg-gradient-to-br lg:col-span-2'>
+      <Card className='from-primary to-success text-primary-foreground overflow-hidden border-0 bg-primary/90 lg:col-span-2'>
         <CardContent className='flex flex-col items-start gap-6 p-6 sm:flex-row'>
           <Avatar className='ring-primary-foreground/20 h-16 w-16 rounded-full ring-4'>
             <AvatarImage

@@ -91,47 +91,50 @@ export function ClassMediaUpload({
           the class.
         </p>
 
-        <div className='grid gap-4 md:grid-cols-2'>
+        <div className="grid w-full gap-4 md:grid-cols-2">
           {/* Thumbnail Upload */}
-          <div className='space-y-3'>
-            <label className='text-foreground text-sm font-semibold'>Class Thumbnail</label>
+          <div className="w-full space-y-3">
+            <label className="text-foreground text-sm font-semibold">
+              Class Thumbnail
+            </label>
+
             {thumbnailPreview || selectedThumbnail || existingThumbnailUrl ? (
-              <div className='border-border bg-muted relative overflow-hidden rounded-lg border'>
+              <div className="border-border bg-muted relative w-full overflow-hidden rounded-lg border">
                 {thumbnailPreview ? (
                   <img
                     src={toAuthenticatedMediaUrl(thumbnailPreview) as string}
-                    alt='Thumbnail preview'
-                    className='aspect-video w-full object-cover'
+                    alt="Thumbnail preview"
+                    className="aspect-video w-full object-cover"
                   />
                 ) : existingThumbnailUrl && !selectedThumbnail ? (
                   <img
                     src={toAuthenticatedMediaUrl(existingThumbnailUrl) as string}
-                    alt='Existing thumbnail'
-                    className='aspect-video w-full object-cover'
+                    alt="Existing thumbnail"
+                    className="aspect-video w-full object-cover"
                   />
                 ) : (
-                  <div className='bg-muted/50 flex aspect-video items-center justify-center'>
-                    <Image className='text-muted-foreground h-8 w-8' />
+                  <div className="bg-muted/50 flex aspect-video w-full items-center justify-center">
+                    <Image className="text-muted-foreground h-8 w-8" />
                   </div>
                 )}
 
                 {thumbnailPreview && (
                   <button
-                    type='button'
+                    type="button"
                     onClick={handleRemoveThumbnail}
-                    className='bg-destructive/90 hover:bg-destructive absolute top-2 right-2 rounded-full p-1.5 text-white'
+                    className="bg-destructive/90 hover:bg-destructive absolute top-2 right-2 rounded-full p-1.5 text-white"
                   >
-                    <X className='h-4 w-4' />
+                    <X className="h-4 w-4" />
                   </button>
                 )}
 
                 {existingThumbnailUrl && !thumbnailPreview && (
                   <Button
-                    type='button'
-                    variant='outline'
-                    size='sm'
+                    type="button"
+                    variant="outline"
+                    size="sm"
                     onClick={() => fileInputRef.current?.click()}
-                    className='w-full rounded-none'
+                    className="w-full rounded-none"
                   >
                     Replace thumbnail
                   </Button>
@@ -139,60 +142,74 @@ export function ClassMediaUpload({
               </div>
             ) : (
               <button
-                type='button'
+                type="button"
                 onClick={() => fileInputRef.current?.click()}
-                className='border-border/60 hover:border-primary/50 hover:bg-accent/30 flex flex-col items-center justify-center rounded-lg border-2 border-dashed py-6 transition'
+                className="border-border/60 hover:border-primary/50 hover:bg-accent/30 flex w-full flex-col items-center justify-center rounded-lg border-2 border-dashed py-6 transition"
               >
-                <Image className='text-muted-foreground mb-2 h-8 w-8' />
-                <p className='text-muted-foreground text-xs font-medium'>Click to upload image</p>
-                <p className='text-muted-foreground text-[10px]'>PNG, JPG up to 10MB</p>
+                <Image className="text-muted-foreground mb-2 h-8 w-8" />
+
+                <p className="text-muted-foreground text-xs font-medium">
+                  Click to upload image
+                </p>
+
+                <p className="text-muted-foreground text-[10px]">
+                  PNG, JPG up to 10MB
+                </p>
               </button>
             )}
+
             <input
               ref={fileInputRef}
-              type='file'
-              accept='image/*'
+              type="file"
+              accept="image/*"
               onChange={handleThumbnailSelect}
-              className='hidden'
+              className="hidden"
             />
           </div>
 
           {/* Video Upload */}
-          <div className='space-y-3'>
-            <label className='text-foreground text-sm font-semibold'>Promotional Video</label>
+          <div className="w-full space-y-3">
+            <label className="text-foreground text-sm font-semibold">
+              Promotional Video
+            </label>
+
             {videoPreview || selectedVideo || existingVideoUrl ? (
-              <div className='border-border bg-muted relative overflow-hidden rounded-lg border'>
+              <div className="border-border bg-muted relative w-full overflow-hidden rounded-lg border">
                 {videoPreview ? (
-                  <video src={videoPreview} className='aspect-video w-full object-cover' controls />
+                  <video
+                    src={videoPreview}
+                    className="aspect-video w-full object-cover"
+                    controls
+                  />
                 ) : existingVideoUrl && !selectedVideo ? (
                   <video
                     src={existingVideoUrl}
-                    className='aspect-video w-full object-cover'
+                    className="aspect-video w-full object-cover"
                     controls
                   />
                 ) : (
-                  <div className='bg-muted/50 flex aspect-video items-center justify-center'>
-                    <FileVideo className='text-muted-foreground h-8 w-8' />
+                  <div className="bg-muted/50 flex aspect-video w-full items-center justify-center">
+                    <FileVideo className="text-muted-foreground h-8 w-8" />
                   </div>
                 )}
 
                 {videoPreview && (
                   <button
-                    type='button'
+                    type="button"
                     onClick={handleRemoveVideo}
-                    className='bg-destructive/90 hover:bg-destructive absolute top-2 right-2 rounded-full p-1.5 text-white'
+                    className="bg-destructive/90 hover:bg-destructive absolute top-2 right-2 rounded-full p-1.5 text-white"
                   >
-                    <X className='h-4 w-4' />
+                    <X className="h-4 w-4" />
                   </button>
                 )}
 
                 {existingVideoUrl && !videoPreview && (
                   <Button
-                    type='button'
-                    variant='outline'
-                    size='sm'
+                    type="button"
+                    variant="outline"
+                    size="sm"
                     onClick={() => videoInputRef.current?.click()}
-                    className='w-full rounded-none'
+                    className="w-full rounded-none"
                   >
                     Replace video
                   </Button>
@@ -200,24 +217,32 @@ export function ClassMediaUpload({
               </div>
             ) : (
               <button
-                type='button'
+                type="button"
                 onClick={() => videoInputRef.current?.click()}
-                className='border-border/60 hover:border-primary/50 hover:bg-accent/30 flex flex-col items-center justify-center rounded-lg border-2 border-dashed py-6 transition'
+                className="border-border/60 hover:border-primary/50 hover:bg-accent/30 flex w-full flex-col items-center justify-center rounded-lg border-2 border-dashed py-6 transition"
               >
-                <FileVideo className='text-muted-foreground mb-2 h-8 w-8' />
-                <p className='text-muted-foreground text-xs font-medium'>Click to upload video</p>
-                <p className='text-muted-foreground text-[10px]'>MP4, WebM up to 100MB</p>
+                <FileVideo className="text-muted-foreground mb-2 h-8 w-8" />
+
+                <p className="text-muted-foreground text-xs font-medium">
+                  Click to upload video
+                </p>
+
+                <p className="text-muted-foreground text-[10px]">
+                  MP4, WebM up to 100MB
+                </p>
               </button>
             )}
+
             <input
               ref={videoInputRef}
-              type='file'
-              accept='video/*'
+              type="file"
+              accept="video/*"
               onChange={handleVideoSelect}
-              className='hidden'
+              className="hidden"
             />
           </div>
         </div>
+
       </div>
     </Card>
   );

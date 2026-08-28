@@ -883,12 +883,34 @@ export default function CreateCoursePage() {
 
     return (
         <main className='mx-auto w-full space-y-6 px-4 py-6 lg:px-6'>
-            <Link
-                href='/dashboard/course-creator/course-management/all?type=courses'
-                className='text-muted-foreground hover:text-foreground inline-flex items-center gap-1 text-sm'
-            >
-                <ArrowLeft className='h-4 w-4' /> Back to my courses
-            </Link>
+            <div className='flex flex-row items-center justify-between' >
+                <Link
+                    href='/dashboard/course-creator/course-management/all?type=courses'
+                    className='text-muted-foreground hover:text-foreground inline-flex items-center gap-1 text-sm'
+                >
+                    <ArrowLeft className='h-4 w-4' /> Back to my courses
+                </Link>
+
+                <div className='flex flex-wrap items-center gap-2'>
+                    <Button
+                        type='button'
+                        variant='outline'
+                    // onClick={() => saveProgramAndAdvance(undefined)}
+                    // disabled={createProgramMut.isPending || updateProgramMut.isPending || !creatorUuid}
+                    >
+                        Save Draft
+                    </Button>
+                    <Button
+                        type='button'
+                    // onClick={handlePublish}
+                    // disabled={publishProgramMut.isPending || !creatorUuid || !canPublish}
+                    >
+                        <Sparkles className='mr-2 h-4 w-4' />
+                        Publish
+                    </Button>
+                </div>
+
+            </div>
 
             <PageHeader
                 eyebrow='Program Creator'
@@ -899,24 +921,7 @@ export default function CreateCoursePage() {
                         : 'Build a high-quality course and empower students to learn new skills.'
                 }
                 action={
-                    <div className='flex flex-wrap items-center gap-2'>
-                        <Button
-                            type='button'
-                            variant='outline'
-                        // onClick={() => saveProgramAndAdvance(undefined)}
-                        // disabled={createProgramMut.isPending || updateProgramMut.isPending || !creatorUuid}
-                        >
-                            Save Draft
-                        </Button>
-                        <Button
-                            type='button'
-                        // onClick={handlePublish}
-                        // disabled={publishProgramMut.isPending || !creatorUuid || !canPublish}
-                        >
-                            <Sparkles className='mr-2 h-4 w-4' />
-                            Publish
-                        </Button>
-                    </div>
+                    <></>
                 }
             />
 
