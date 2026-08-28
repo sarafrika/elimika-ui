@@ -1,5 +1,5 @@
 'use client';
-import { useMutation } from '@tanstack/react-query';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { BookOpen, CheckCircle2, Layers, XCircle } from 'lucide-react';
 import { useState } from 'react';
 import { toast } from 'sonner';
@@ -20,6 +20,7 @@ import {
   moderateCourseMutation,
   moderateProgramMutation,
 } from '@/services/client/@tanstack/react-query.gen';
+import { invalidateContentModerationWorkflowQueries } from '@/src/features/dashboard/workflow-query-invalidation';
 import { adminTheme } from '../../_components/ui/admin-theme';
 import { SectionCard } from '../../_components/ui/SectionCard';
 import { StatusBadge } from '../../_components/ui/StatusBadge';
@@ -27,6 +28,7 @@ import { StatusBadge } from '../../_components/ui/StatusBadge';
 function ContentRow({ item, onModerated }: { item: ContentItem; onModerated: () => void }) {
   const [rejecting, setRejecting] = useState(false);
   const [reason, setReason] = useState('');
+  const queryClient = useQueryClient();
   const moderateCourse = useMutation(moderateCourseMutation());
   const moderateProgram = useMutation(moderateProgramMutation());
   const isPending = moderateCourse.isPending || moderateProgram.isPending;
@@ -45,6 +47,7 @@ function ContentRow({ item, onModerated }: { item: ContentItem; onModerated: () 
       toast.success(action === 'approve' ? `${item.title} approved` : `${item.title} rejected`);
       setRejecting(false);
       setReason('');
+      await invalidateContentModerationWorkflowQueries(queryClient);
       onModerated();
     } catch (error) {
       toast.error(error instanceof Error ? error.message : 'Moderation failed');

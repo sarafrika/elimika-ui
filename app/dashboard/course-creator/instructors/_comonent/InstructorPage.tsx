@@ -44,9 +44,8 @@ import {
   getOrganisationByUuidOptions,
   getTrainingProgramByUuidOptions,
   getUserByUuidOptions,
-  searchProgramTrainingApplicationsQueryKey,
-  searchTrainingApplicationsQueryKey,
 } from '@/services/client/@tanstack/react-query.gen';
+import { invalidateTrainingApplicationWorkflowQueries } from '@/src/features/dashboard/workflow-query-invalidation';
 import { useMutation, useQueries, useQuery, useQueryClient } from '@tanstack/react-query';
 import { format } from 'date-fns';
 import {
@@ -1481,16 +1480,9 @@ const InstructorsApplicationPage = () => {
         body: { review_notes: reviewNotes },
       },
       {
-        onSuccess: () => {
+        onSuccess: async () => {
           toast.success(`Application ${reviewAction}d successfully`);
-          qc.invalidateQueries({
-            queryKey: searchTrainingApplicationsQueryKey({
-              query: {
-                searchParams: { course_creator_uuid: courseCreator?.uuid as string },
-                pageable: {},
-              },
-            }),
-          });
+          await invalidateTrainingApplicationWorkflowQueries(qc);
           setReviewDialogOpen(false);
           setSelectedApplication(null);
         },
@@ -1520,13 +1512,9 @@ const InstructorsApplicationPage = () => {
         body: { review_notes: reviewNotes },
       },
       {
-        onSuccess: () => {
+        onSuccess: async () => {
           toast.success(`Application ${reviewAction}d successfully`);
-          qc.invalidateQueries({
-            queryKey: searchProgramTrainingApplicationsQueryKey({
-              query: { searchParams: {}, pageable: {} },
-            }),
-          });
+          await invalidateTrainingApplicationWorkflowQueries(qc);
           setReviewDialogOpen(false);
           setSelectedApplication(null);
         },

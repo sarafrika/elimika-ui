@@ -32,12 +32,11 @@ import type { ClassMarketplaceJob, ClassMarketplaceJobApplication } from '@/serv
 import {
   assignInstructorMutation,
   listJobApplicationsOptions,
-  listJobApplicationsQueryKey,
   listJobsOptions,
-  listJobsQueryKey,
   reviewApplicationMutation,
 } from '@/services/client/@tanstack/react-query.gen';
 import { useUserDomain } from '@/src/features/dashboard/context/user-domain-context';
+import { invalidateJobApplicationWorkflowQueries } from '@/src/features/dashboard/workflow-query-invalidation';
 import { buildWorkspaceAliasPath } from '@/src/features/dashboard/lib/active-domain-storage';
 import { useOrganisation } from '@/src/features/organisation/context/organisation-context';
 import {
@@ -176,10 +175,7 @@ export function OrganisationJobApplicationsPage({ jobUuid }: JobApplicationsPage
       setInterviewAt('');
       setPendingReview(null);
       setReviewDialogOpen(false);
-      await queryClient.invalidateQueries({
-        queryKey: listJobApplicationsQueryKey(applicationsListOptions),
-      });
-      await queryClient.invalidateQueries({ queryKey: listJobsQueryKey(jobsListOptions) });
+      await invalidateJobApplicationWorkflowQueries(queryClient);
     },
     onError: error => {
       toast.error(error instanceof Error ? error.message : 'Unable to review this application.');
@@ -195,10 +191,7 @@ export function OrganisationJobApplicationsPage({ jobUuid }: JobApplicationsPage
     ...assignInstructorMutation(),
     onSuccess: async () => {
       toast.success('Instructor assigned. Create the class to confirm the reserved bookings.');
-      await queryClient.invalidateQueries({
-        queryKey: listJobApplicationsQueryKey(applicationsListOptions),
-      });
-      await queryClient.invalidateQueries({ queryKey: listJobsQueryKey(jobsListOptions) });
+      await invalidateJobApplicationWorkflowQueries(queryClient);
       router.push(createClassHref);
     },
     onError: error => {

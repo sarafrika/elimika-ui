@@ -16,14 +16,12 @@ import {
   createCartMutation,
   enrollStudentMutation,
   getCartQueryKey,
-  getClassEnrollmentsForStudentQueryKey,
   getCourseTrainingRequirementsOptions,
   getEnrollmentsForClassOptions,
-  getEnrollmentsForClassQueryKey,
-  getStudentScheduleQueryKey,
   joinWaitlistMutation,
 } from '@/services/client/@tanstack/react-query.gen';
 import { useUserDomain } from '@/src/features/dashboard/context/user-domain-context';
+import { invalidateEnrollmentSuccessQueries } from '@/src/features/dashboard/courses/shared/enrollment-query-invalidation';
 import { buildWorkspaceAliasPath } from '@/src/features/dashboard/lib/active-domain-storage';
 import { useCartStore } from '@/store/cart-store';
 import { useMutation, useQueries, useQuery, useQueryClient } from '@tanstack/react-query';
@@ -54,8 +52,6 @@ import { EnrollmentLoadingState } from '../components/EnrollmentLoadingState';
 import { getErrorMessage, type ProgramBundledClass } from '../types';
 import PaymentMethodPicker, { formatKES } from './PaymentMethodPicker';
 
-const STUDENT_SCHEDULE_START = new Date('2024-10-10');
-const STUDENT_SCHEDULE_END = new Date('2030-10-10');
 const ACTIVE_ENROLLMENT_STATUSES = new Set(['ENROLLED', 'ATTENDED', 'ABSENT']);
 
 function FieldValue({ value }: { value: React.ReactNode }) {
@@ -396,21 +392,7 @@ export default function ProgramClassEnrollmentPage({
 
   const invalidateStudentEnrollmentData = () => {
     if (!student?.uuid) return;
-    qc.invalidateQueries({
-      queryKey: getStudentScheduleQueryKey({
-        path: { studentUuid: student.uuid as string },
-        query: { start: STUDENT_SCHEDULE_START, end: STUDENT_SCHEDULE_END },
-      }),
-    });
-    qc.invalidateQueries({
-      queryKey: getClassEnrollmentsForStudentQueryKey({
-        path: { studentUuid: student.uuid as string },
-        query: { pageable: {} },
-      }),
-    });
-    qc.invalidateQueries({
-      queryKey: getEnrollmentsForClassQueryKey({ path: { uuid: classId } }),
-    });
+    return invalidateEnrollmentSuccessQueries(qc);
   };
 
   const handleWaitlist = () => {
@@ -421,8 +403,8 @@ export default function ProgramClassEnrollmentPage({
     waitlistStudent.mutate(
       { body: { class_definition_uuid: classId, student_uuid: student.uuid } },
       {
-        onSuccess: data => {
-          invalidateStudentEnrollmentData();
+        onSuccess: async data => {
+          await invalidateStudentEnrollmentData();
           toast.success(data?.message || 'Student added to waitlist successfully');
           router.push('/dashboard/courses');
         },
@@ -456,8 +438,8 @@ export default function ProgramClassEnrollmentPage({
     enrollStudent.mutate(
       { body: { class_definition_uuid: classId, student_uuid: student.uuid } },
       {
-        onSuccess: data => {
-          invalidateStudentEnrollmentData();
+        onSuccess: async data => {
+          await invalidateStudentEnrollmentData();
           toast.success(data?.message || 'You are enrolled in this class');
           router.push('/dashboard/courses');
         },

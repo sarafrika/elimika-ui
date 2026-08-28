@@ -1,7 +1,7 @@
 // @ts-nocheck -- 1:1 Lovable port; @hey-api generated-client type drift
 'use client';
 
-import { useMutation, useQuery } from '@tanstack/react-query';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import {
   ArrowLeft,
   ArrowRight,
@@ -51,6 +51,7 @@ import { useOrganisation } from '@/context/organisation-context';
 import { extractEntity } from '@/lib/api-helpers';
 import { cn } from '@/lib/utils';
 import { useUserDomain } from '@/src/features/dashboard/context/user-domain-context';
+import { invalidateTrainingApplicationWorkflowQueries } from '@/src/features/dashboard/workflow-query-invalidation';
 import type { Course, CourseTrainingRequirement } from '@/services/client';
 import {
   getCourseByUuidOptions,
@@ -429,6 +430,7 @@ export default function ApplyPage() {
   const params = useParams<{ courseId?: string; id?: string }>();
   const courseId = params?.courseId ?? params?.id ?? '';
   const router = useRouter();
+  const queryClient = useQueryClient();
   const { activeDomain } = useUserDomain();
   const isInstructorDomain = activeDomain === 'instructor';
   const organisation = useOrganisation();
@@ -534,7 +536,8 @@ export default function ApplyPage() {
         },
       },
       {
-        onSuccess: () => {
+        onSuccess: async () => {
+          await invalidateTrainingApplicationWorkflowQueries(queryClient);
           toast.success('Application submitted', {
             description: `Your application to train ${course.name} is under review.`,
           });

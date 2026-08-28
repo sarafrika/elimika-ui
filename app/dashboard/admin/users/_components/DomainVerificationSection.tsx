@@ -17,6 +17,7 @@ import {
   verifyCourseCreatorMutation,
   verifyInstructorMutation,
 } from '@/services/client/@tanstack/react-query.gen';
+import { invalidateDomainVerificationWorkflowQueries } from '@/src/features/dashboard/workflow-query-invalidation';
 import { adminTheme } from '../../_components/ui/admin-theme';
 import {
   CredentialDocumentCard,
@@ -105,7 +106,7 @@ export function DomainVerificationSection({
       toast.success(
         verify ? `${domain.roleLabel} verified` : `${domain.roleLabel} verification revoked`
       );
-      await queryClient.invalidateQueries({ queryKey: ['profile'] });
+      await invalidateDomainVerificationWorkflowQueries(queryClient);
       onChanged();
     } catch (error) {
       toast.error(error instanceof Error ? error.message : 'Action failed');

@@ -53,11 +53,11 @@ import {
   getCourseTrainingRequirementsOptions,
   getPublishedCoursesOptions,
   searchTrainingApplicationsOptions,
-  searchTrainingApplicationsQueryKey,
   submitTrainingApplicationMutation,
 } from '@/services/client/@tanstack/react-query.gen';
 import { useUserDomain } from '@/src/features/dashboard/context/user-domain-context';
 import { EnrollmentLoadingState } from '@/src/features/dashboard/courses/components/EnrollmentLoadingState';
+import { invalidateTrainingApplicationWorkflowQueries } from '@/src/features/dashboard/workflow-query-invalidation';
 import CourseDetailsHero from '@/src/features/dashboard/courses/shared/_components/CourseDetailsHero';
 import CourseFaq from '@/src/features/dashboard/courses/shared/_components/CourseFaq';
 import CourseOverview, {
@@ -477,30 +477,8 @@ export default function ClassCourseDetailsPage({
         path: { courseUuid: course.uuid },
       },
       {
-        onSuccess: response => {
-          qc.invalidateQueries({
-            queryKey: searchTrainingApplicationsQueryKey({
-              query: {
-                pageable: {},
-                searchParams: {
-                  applicant_uuid_eq: submitterUuid,
-                  applicant_type_eq: applicantType,
-                  course_uuid_eq: submitCourseUuid,
-                },
-              },
-            }),
-          });
-          qc.invalidateQueries({
-            queryKey: searchTrainingApplicationsQueryKey({
-              query: {
-                pageable: {},
-                searchParams: {
-                  applicant_uuid_eq: submitterUuid,
-                  applicant_type_eq: applicantType,
-                },
-              },
-            }),
-          });
+        onSuccess: async response => {
+          await invalidateTrainingApplicationWorkflowQueries(qc);
           toast.success(response?.message ?? 'Application submitted successfully.');
           setApplyModalOpen(false);
         },

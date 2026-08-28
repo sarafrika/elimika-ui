@@ -1,19 +1,5 @@
-import { getCartQueryKey } from '@/services/client/@tanstack/react-query.gen';
+import { invalidateEnrollmentWorkflowQueries } from '@/src/features/dashboard/workflow-query-invalidation';
 import type { QueryClient } from '@tanstack/react-query';
-
-const enrollmentQueryIds = [
-  'getEnrollmentOverviewForStudent',
-  'getCourseEnrollmentsForStudent',
-  'getClassEnrollmentsForStudent',
-  'getScheduledInstanceEnrollmentsForStudent',
-  'getStudentSchedule',
-  'getStudentCertificates',
-  'getStudentDashboard',
-  'getEnrollmentsForClass',
-  'getClassDefinition',
-  'getPublishedCourses',
-  'getCourseRecommendations',
-] as const;
 
 type EnrollmentSuccessInvalidationOptions = {
   cartId?: string | null;
@@ -21,21 +7,7 @@ type EnrollmentSuccessInvalidationOptions = {
 
 export async function invalidateEnrollmentSuccessQueries(
   queryClient: QueryClient,
-  options: EnrollmentSuccessInvalidationOptions = {}
+  _options: EnrollmentSuccessInvalidationOptions = {}
 ) {
-  const invalidations = enrollmentQueryIds.map(_id =>
-    queryClient.invalidateQueries({ queryKey: [{ _id }] })
-  );
-
-  invalidations.push(queryClient.invalidateQueries({ queryKey: ['notifications'] }));
-
-  if (options.cartId) {
-    invalidations.push(
-      queryClient.invalidateQueries({
-        queryKey: getCartQueryKey({ path: { cartId: options.cartId } }),
-      })
-    );
-  }
-
-  await Promise.all(invalidations);
+  await invalidateEnrollmentWorkflowQueries(queryClient);
 }

@@ -18,12 +18,12 @@ import {
   getCourseCreatorByUuidOptions,
   getCourseLessonsOptions,
   getCourseReviewsOptions,
-  getCourseReviewsQueryKey,
   submitCourseReviewMutation,
 } from '@/services/client/@tanstack/react-query.gen';
 import { useUserDomain } from '@/src/features/dashboard/context/user-domain-context';
 import { EnrollmentLoadingState } from '@/src/features/dashboard/courses/components/EnrollmentLoadingState';
 import { buildWorkspaceAliasPath } from '@/src/features/dashboard/lib/active-domain-storage';
+import { invalidateReviewWorkflowQueries } from '@/src/features/dashboard/workflow-query-invalidation';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import {
   BookOpen,
@@ -96,12 +96,10 @@ export default function ReusableCourseDetailsPage({
         path: { courseUuid: courseId as string },
       },
       {
-        onSuccess: data => {
+        async onSuccess(data) {
           toast.success(data?.message);
           setShowFeedbackDialog(false);
-          qc.invalidateQueries({
-            queryKey: getCourseReviewsQueryKey({ path: { courseUuid: courseId as string } }),
-          });
+          await invalidateReviewWorkflowQueries(qc);
         },
         onError: error => {
           toast.error(error?.message);

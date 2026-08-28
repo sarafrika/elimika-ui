@@ -29,6 +29,10 @@ import {
   verifyCourseCreatorMutation,
   verifyInstructorMutation,
 } from '@/services/client/@tanstack/react-query.gen';
+import {
+  invalidateContentModerationWorkflowQueries,
+  invalidateDomainVerificationWorkflowQueries,
+} from '@/src/features/dashboard/workflow-query-invalidation';
 import { toAuthenticatedMediaUrl } from '@/src/lib/media-url';
 import { DetailGrid } from '../../_components/ui/DetailPanel';
 import { SectionCard, SectionCardSkeleton } from '../../_components/ui/SectionCard';
@@ -399,8 +403,7 @@ export function PendingApprovalsClient() {
         query: { reason: 'Approved from pending approvals queue' },
       });
       toast.success('Instructor approved');
-      await queryClient.invalidateQueries({ queryKey: ['profile'] });
-      await instructorsQuery.refetch();
+      await invalidateDomainVerificationWorkflowQueries(queryClient);
     } catch (error) {
       toast.error(error instanceof Error ? error.message : 'Unable to approve instructor');
     } finally {
@@ -417,8 +420,7 @@ export function PendingApprovalsClient() {
         query: { reason: 'Approved from pending approvals queue' },
       });
       toast.success('Course creator approved');
-      await queryClient.invalidateQueries({ queryKey: ['profile'] });
-      await creatorsQuery.refetch();
+      await invalidateDomainVerificationWorkflowQueries(queryClient);
     } catch (error) {
       toast.error(error instanceof Error ? error.message : 'Unable to approve course creator');
     } finally {
@@ -435,8 +437,8 @@ export function PendingApprovalsClient() {
         query: { action: 'approve', reason: 'Approved from pending approvals queue' },
       });
       toast.success('Organisation approved');
-      await queryClient.invalidateQueries({ queryKey: ['profile'] });
-      await organisationsQuery.refetch();
+      await invalidateDomainVerificationWorkflowQueries(queryClient);
+      await invalidateContentModerationWorkflowQueries(queryClient);
     } catch (error) {
       toast.error(error instanceof Error ? error.message : 'Unable to approve organisation');
     } finally {

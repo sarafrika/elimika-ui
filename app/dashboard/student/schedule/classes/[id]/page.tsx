@@ -1,7 +1,7 @@
 // @ts-nocheck -- pre-existing @hey-api generated-client type drift (see memory: elimika-ui-typecheck)
 'use client';
 
-import { useMutation, useQuery } from '@tanstack/react-query';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { format, isAfter } from 'date-fns';
 import { BookOpen, Calendar } from 'lucide-react';
 import { useParams } from 'next/navigation';
@@ -15,6 +15,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 // Import hooks
 import { useBreadcrumb } from '@/context/breadcrumb-provider';
 import { useStudent } from '@/context/student-context';
+import { invalidateReviewWorkflowQueries } from '@/src/features/dashboard/workflow-query-invalidation';
 import { useCourseLessonsWithContent } from '@/hooks/use-courselessonwithcontent';
 import { useDifficultyLevels } from '@/hooks/use-difficultyLevels';
 import { resolveLessonContentSource } from '@/lib/lesson-content-preview';
@@ -103,6 +104,7 @@ function normalizeScheduleItem(
 }
 
 export default function ClassDetailsPage() {
+  const queryClient = useQueryClient();
   const params = useParams();
   const classId = params?.id as string;
   const student = useStudent();
@@ -350,7 +352,7 @@ export default function ClassDetailsPage() {
         path: { instructorUuid },
       },
       {
-        onSuccess: data => {
+        async onSuccess(data) {
           toast.success(data?.message);
           setShowFeedbackDialog(false);
           setFeedbackComment('');
@@ -359,6 +361,7 @@ export default function ClassDetailsPage() {
           setClarityRating(0);
           setEngagementRating(0);
           setPunctualityRating(0);
+          await invalidateReviewWorkflowQueries(queryClient);
         },
         onError: data => {
           toast.error(data?.message);

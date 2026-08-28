@@ -16,7 +16,8 @@ import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
 import { useUserProfile } from '../../../../../context/profile-context';
 import { useCoursesByIds } from '../../../../../hooks/use-batched-lookups';
-import { getCourseReviewsQueryKey, submitCourseReviewMutation } from '../../../../../services/client/@tanstack/react-query.gen';
+import { submitCourseReviewMutation } from '../../../../../services/client/@tanstack/react-query.gen';
+import { invalidateReviewWorkflowQueries } from '../../../../../src/features/dashboard/workflow-query-invalidation';
 import { stripHtml } from '../../../../../src/features/dashboard/courses/shared/_components/courses-data';
 import { toAuthenticatedMediaUrl } from '../../../../../src/lib/media-url';
 import { FeedbackDialog } from '../../../_components/review-instructor-modal';
@@ -194,12 +195,10 @@ function CourseCard({ course }: { course: LearningHubCourseEnrollment }) {
         path: { courseUuid: course.course_uuid as string },
       },
       {
-        onSuccess: data => {
+        async onSuccess(data) {
           toast.success(data?.message);
           setIsReviewModalOpen(false);
-          qc.invalidateQueries({
-            queryKey: getCourseReviewsQueryKey({ path: { courseUuid: course?.course_uuid as string } }),
-          });
+          await invalidateReviewWorkflowQueries(qc);
         },
         onError: error => {
           toast.error(error?.message);

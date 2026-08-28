@@ -18,6 +18,7 @@ import {
   getCartQueryKey,
   removeItemMutation,
 } from '@/services/client/@tanstack/react-query.gen';
+import { invalidateEnrollmentSuccessQueries } from '@/src/features/dashboard/courses/shared/enrollment-query-invalidation';
 import { useCartStore } from '@/store/cart-store';
 import { useMutation, useQueries, useQuery, useQueryClient } from '@tanstack/react-query';
 import {
@@ -175,6 +176,7 @@ export default function CartPage() {
       await completeCheckout.mutateAsync({
         body: { cart_id: cartId, customer_email: email, payment_provider_id: 'manual' },
       });
+      await invalidateEnrollmentSuccessQueries(queryClient, { cartId });
       toast.success('You are enrolled! Your courses are unlocked.');
       clearCart();
       router.push('/dashboard/student/learning-hub');

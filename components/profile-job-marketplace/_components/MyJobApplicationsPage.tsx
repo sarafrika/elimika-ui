@@ -34,10 +34,10 @@ import type { ClassMarketplaceJob, ClassMarketplaceJobApplication } from '@/serv
 import {
   listJobsOptions,
   listMyApplicationsOptions,
-  listMyApplicationsQueryKey,
   withdrawApplicationMutation,
 } from '@/services/client/@tanstack/react-query.gen';
 import { useUserDomain } from '@/src/features/dashboard/context/user-domain-context';
+import { invalidateJobApplicationWorkflowQueries } from '@/src/features/dashboard/workflow-query-invalidation';
 import { buildWorkspaceAliasPath } from '@/src/features/dashboard/lib/active-domain-storage';
 import { useUserProfile } from '@/src/features/profile/context/profile-context';
 import { useBreadcrumb } from '../../../context/breadcrumb-provider';
@@ -141,19 +141,7 @@ export function MyJobApplicationsPage() {
     onSuccess: () => {
       toast.success('Application withdrawn.');
       setPendingWithdrawal(null);
-      // The eligibility and job lists both cache "you already applied"; without invalidating them
-      // the Opportunities page keeps offering no way back in after a withdrawal.
-      queryClient.invalidateQueries({
-        queryKey: listMyApplicationsQueryKey(myApplicationsQueryArgs),
-      });
-      // Generated keys are a single object carrying `_id`, so match on that rather than a
-      // string prefix, which would never hit.
-      queryClient.invalidateQueries({
-        predicate: query => {
-          const key = query.queryKey?.[0] as { _id?: string } | undefined;
-          return key?._id === 'getJobEligibility' || key?._id === 'listJobs';
-        },
-      });
+      void invalidateJobApplicationWorkflowQueries(queryClient);
     },
     onError: (error: unknown) => {
       toast.error(getErrorMessage(error, 'Unable to withdraw this application.'));

@@ -74,12 +74,10 @@ import {
   getAllOrganisationsOptions,
   getAllTrainingProgramsOptions,
   getJobEligibilityOptions,
-  listJobApplicationsQueryKey,
   listJobsOptions,
-  listJobsQueryKey,
   listMyApplicationsOptions,
-  listMyApplicationsQueryKey
 } from '@/services/client/@tanstack/react-query.gen';
+import { invalidateJobApplicationWorkflowQueries } from '@/src/features/dashboard/workflow-query-invalidation';
 import type {
   ClassMarketplaceJob,
   ClassMarketplaceJobRequest,
@@ -470,18 +468,7 @@ function JobDetailsSheet({
       toast.success('Application submitted successfully.');
       setApplicationNote('');
       onOpenChange(false);
-      await queryClient.invalidateQueries({
-        queryKey: listMyApplicationsQueryKey({ query: { pageable: {} } }),
-      });
-
-      if (jobUuid) {
-        await queryClient.invalidateQueries({
-          queryKey: listJobApplicationsQueryKey({
-            path: { jobUuid },
-            query: { pageable: {} },
-          }),
-        });
-      }
+      await invalidateJobApplicationWorkflowQueries(queryClient);
     },
     onError: error => {
       const report = parseConflictError(error);
@@ -1131,7 +1118,7 @@ export function JobMarketplacePage({ role }: { role: JobMarketplaceRole }) {
     onSuccess: async () => {
       toast.success('Job posting cancelled.');
       setPendingCancelJob(null);
-      await queryClient.invalidateQueries({ queryKey: listJobsQueryKey(jobsListOptions) });
+      await invalidateJobApplicationWorkflowQueries(queryClient);
     },
     onError: error => {
       toast.error(error instanceof Error ? error.message : 'Unable to cancel this posting.');

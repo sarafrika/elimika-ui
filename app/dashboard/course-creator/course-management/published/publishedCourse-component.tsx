@@ -28,6 +28,7 @@ import {
   unpublishCourseMutation,
   unpublishCourseQueryKey,
 } from '@/services/client/@tanstack/react-query.gen';
+import { invalidateContentModerationWorkflowQueries } from '@/src/features/dashboard/workflow-query-invalidation';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { EyeIcon, FilePenIcon, MoreVertical, PlusCircle, TrashIcon } from 'lucide-react';
 import Image from 'next/image';
@@ -96,7 +97,7 @@ export default function PublishedCoursesComponent({
         path: { uuid: uuid },
       },
       {
-        onSuccess(data) {
+        async onSuccess(data) {
           if (!data?.success) {
             toast.error(
               typeof data?.error === 'string'
@@ -119,6 +120,7 @@ export default function PublishedCoursesComponent({
                 },
               }),
             });
+            await invalidateContentModerationWorkflowQueries(queryClient);
             router.push('/dashboard/course-creator/course-management/drafts');
           }
         },

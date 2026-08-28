@@ -150,6 +150,9 @@ type PerDayOccurrence = {
   occurrenceCount: number;
 };
 
+const isRecord = (value: unknown): value is Record<string, unknown> =>
+  typeof value === 'object' && value !== null && !Array.isArray(value);
+
 const normalizeDateTimeValue = (value: string | Date | undefined | null) => {
   if (!value) return null;
   const parsed = value instanceof Date ? value : new Date(value);
@@ -280,6 +283,39 @@ const buildUtcIsoDateTime = (date?: string, time?: string) => {
   return parsed.toISOString();
 };
 
+const getSessionTimeRange = (date?: string, startTime?: string, endTime?: string) => {
+  try {
+    const start = new Date(buildUtcIsoDateTime(date, startTime));
+    const end = new Date(buildUtcIsoDateTime(date, endTime));
+    if (Number.isNaN(start.getTime()) || Number.isNaN(end.getTime())) return null;
+    return { start, end };
+  } catch {
+    return null;
+  }
+};
+
+const hasValidSessionTimeRange = (session: ScheduledSession) => {
+  const range = getSessionTimeRange(session.date, session.startTime, session.endTime);
+  return Boolean(range && range.start < range.end);
+};
+
+const normalizeMeetingLink = (value?: string | null) => {
+  const trimmed = trimToUndefined(value ?? '');
+  if (!trimmed) return undefined;
+
+  const markdownLinkMatch = trimmed.match(/^\[([^\]]+)\]\(([^)]+)\)$/);
+  return trimToUndefined(markdownLinkMatch?.[2] ?? trimmed);
+};
+
+const isValidMeetingLink = (value: string) => {
+  try {
+    const url = new URL(value);
+    return url.protocol === 'https:' || url.protocol === 'http:';
+  } catch {
+    return false;
+  }
+};
+
 export const formatClassType = (value?: string | null) => {
   if (!value) return 'Group Class';
   return value.toUpperCase() === 'PRIVATE' ? 'Private Class' : 'Group Class';
@@ -299,62 +335,79 @@ const formatScheduleTime = (start?: string, end?: string, allDay?: boolean) => {
   return `${start} - ${end}`;
 };
 
+const getStringValue = (value: unknown) =>
+  typeof value === 'string' && value.trim().length > 0 ? value.trim() : undefined;
+
 const getMutationErrorMessage = (error: unknown, fallback: string) => {
-  if (error && typeof error === 'object' && 'message' in error) {
-    const { message } = error as { message?: unknown };
-    if (typeof message === 'string' && message.trim().length > 0) return message;
-  }
-  return fallback;
+  if (error instanceof Error) return getStringValue(error.message) ?? fallback;
+  if (!isRecord(error)) return fallback;
+
+  return (
+    getStringValue(error.message) ??
+    getStringValue(isRecord(error.error) ? error.error.message : undefined) ??
+    getStringValue(isRecord(error.data) ? error.data.message : undefined) ??
+    getStringValue(error.error) ??
+    fallback
+  );
 };
 
-const getMutationErrorDetails = (error: unknown) => {
-  if (!error || typeof error !== 'object') return undefined;
+const collectErrorDetails = (value: unknown, prefix = ''): string[] => {
+  const text = getStringValue(value);
+  if (text) return prefix ? [`${prefix}: ${text}`] : [text];
+
+  if (Array.isArray(value)) {
+    return value.flatMap((item, index) => collectErrorDetails(item, prefix || String(index + 1)));
+  }
+
+  if (!isRecord(value)) {
+    return [];
+  }
 
   const details: string[] = [];
-  const pushText = (value: unknown) => {
-    if (typeof value === 'string' && value.trim().length > 0) {
-      details.push(value.trim());
-    }
-  };
 
-  if ('message' in error) {
-    pushText((error as { message?: unknown }).message);
+  const nestedMessage = getStringValue(value.message);
+  if (nestedMessage && prefix) {
+    details.push(`${prefix}: ${nestedMessage}`);
   }
 
-  const nestedError = (error as { error?: unknown }).error;
-  if (nestedError && typeof nestedError === 'object') {
-    if ('message' in nestedError) {
-      pushText((nestedError as { message?: unknown }).message);
+  const skippedKeys = new Set(['data', 'error', 'errors', 'message', 'path', 'status', 'success', 'timestamp']);
+  for (const [field, fieldValue] of Object.entries(value)) {
+    if (skippedKeys.has(field)) {
+      continue;
     }
 
-    if ('errors' in nestedError) {
-      const nestedErrors = (nestedError as { errors?: Record<string, unknown> }).errors;
-      if (nestedErrors && typeof nestedErrors === 'object') {
-        const fieldMessages = Object.entries(nestedErrors)
-          .filter(([, value]) => typeof value === 'string' && value.trim().length > 0)
-          .map(([field, value]) => `${field}: ${String(value).trim()}`);
-        details.push(...fieldMessages);
-      }
-    }
+    const fieldPath = prefix ? `${prefix}.${field}` : field;
+    details.push(...collectErrorDetails(fieldValue, fieldPath));
   }
 
-  if ('errors' in error) {
-    const rawErrors = (error as { errors?: Record<string, unknown> }).errors;
-    if (rawErrors && typeof rawErrors === 'object') {
-      const fieldMessages = Object.entries(rawErrors)
-        .filter(([, value]) => typeof value === 'string' && value.trim().length > 0)
-        .map(([field, value]) => `${field}: ${String(value).trim()}`);
-      details.push(...fieldMessages);
-    }
+  details.push(...collectErrorDetails(value.error, prefix));
+  details.push(...collectErrorDetails(value.errors, prefix));
+
+  return details;
+};
+
+const getMutationErrorDetails = (error: unknown, message?: string) => {
+  if (!isRecord(error)) return undefined;
+
+  const details = [
+    ...collectErrorDetails(error.error),
+    ...collectErrorDetails(error.errors),
+    ...collectErrorDetails(isRecord(error.data) ? error.data.error : undefined),
+    ...collectErrorDetails(isRecord(error.data) ? error.data.errors : undefined),
+  ];
+
+  if (details.length === 0 && !('message' in error || 'error' in error || 'errors' in error)) {
+    details.push(...collectErrorDetails(error));
   }
 
   const uniqueDetails = [...new Set(details)];
-  return uniqueDetails.length > 0 ? uniqueDetails.join(' • ') : undefined;
+  const filteredDetails = uniqueDetails.filter(detail => detail !== message);
+  return filteredDetails.length > 0 ? filteredDetails.join(' • ') : undefined;
 };
 
 const showMutationError = (error: unknown, fallback: string) => {
   const message = getMutationErrorMessage(error, fallback);
-  const details = getMutationErrorDetails(error);
+  const details = getMutationErrorDetails(error, message);
 
   if (details) {
     toast.error(message, {
@@ -1205,9 +1258,16 @@ const ClassCreationPage = () => {
       toast.error('Please enter a location');
       return false;
     }
-    if ((locationType === 'ONLINE' || locationType === 'HYBRID') && !trimToUndefined(classDetails.meeting_link)) {
-      toast.error('Please enter a class meeting link');
-      return false;
+    if (locationType === 'ONLINE' || locationType === 'HYBRID') {
+      const meetingLink = normalizeMeetingLink(classDetails.meeting_link);
+      if (!meetingLink) {
+        toast.error('Please enter a class meeting link');
+        return false;
+      }
+      if (!isValidMeetingLink(meetingLink)) {
+        toast.error('Please enter a valid class meeting link');
+        return false;
+      }
     }
     if (schedulePreset === 'pick-dates' && pickedDates.length === 0) {
       toast.error('Please select at least one date');
@@ -1228,6 +1288,7 @@ const ClassCreationPage = () => {
 
     const locationType = normalizeLocationType(classDetails.location_type);
     const meetingLinkAllowed = locationType === 'ONLINE' || locationType === 'HYBRID';
+    const meetingLink = meetingLinkAllowed ? normalizeMeetingLink(classDetails.meeting_link) : undefined;
     const selectedSource: CatalogSource =
       selectedCatalogItem?.source || (classDetails.program_uuid ? 'program' : 'course');
 
@@ -1262,6 +1323,27 @@ const ClassCreationPage = () => {
     };
 
     const { startTime: defaultStart, endTime: defaultEnd } = getDefaultTimes();
+    const defaultRange = getSessionTimeRange(referenceDate, defaultStart, defaultEnd);
+
+    if (!defaultRange) {
+      toast.error('Please set a valid class date, start time, and end time');
+      return;
+    }
+
+    if (defaultRange.start >= defaultRange.end) {
+      toast.error('Class end time must be after start time', {
+        description: `${referenceDate} ${defaultStart} - ${defaultEnd}`,
+      });
+      return;
+    }
+
+    const invalidSession = sessionsForConflictCheck.find(session => !hasValidSessionTimeRange(session));
+    if (invalidSession) {
+      toast.error('Each session end time must be after its start time', {
+        description: `${invalidSession.date} ${invalidSession.startTime} - ${invalidSession.endTime}`,
+      });
+      return;
+    }
 
     let session_templates: CreateClassDefinitionMultipartData['body']['session_templates'];
 
@@ -1434,7 +1516,7 @@ const ClassCreationPage = () => {
       is_active: !isDraft,
       default_start_time: new Date(buildUtcIsoDateTime(payloadRefDate, payloadStartTime)),
       default_end_time: new Date(buildUtcIsoDateTime(payloadRefDate, payloadEndTime)),
-      meeting_link: meetingLinkAllowed ? trimToUndefined(classDetails.meeting_link) : undefined,
+      meeting_link: meetingLink,
       session_templates,
     };
 
@@ -2130,6 +2212,12 @@ const ClassCreationPage = () => {
                           value={classDetails.meeting_link}
                           onChange={e =>
                             setClassDetails(prev => ({ ...prev, meeting_link: e.target.value }))
+                          }
+                          onBlur={() =>
+                            setClassDetails(prev => ({
+                              ...prev,
+                              meeting_link: normalizeMeetingLink(prev.meeting_link) ?? '',
+                            }))
                           }
                           placeholder='https://meet.google.com/abc-defg-hij'
                         />
