@@ -2,6 +2,7 @@
 
 import { LessonContentViewerDialog } from '@/components/content-preview/LessonContentPreview';
 import { PageHeader } from '@/components/page-header';
+import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { EmptyState } from '@/components/ui/empty-state';
@@ -9,28 +10,33 @@ import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle } from '
 import { Skeleton } from '@/components/ui/skeleton';
 import { useCourseCreator } from '@/context/course-creator-context';
 import {
+    deleteAssignmentMutation,
     deleteLessonContentMutation,
+    deleteQuizMutation,
     getCourseByUuidOptions,
     getCourseLessonsOptions,
     getLessonContentOptions,
     getLessonContentQueryKey,
+    searchAssignmentsOptions,
+    searchQuizzesOptions,
 } from '@/services/client/@tanstack/react-query.gen';
 import type {
     ApiResponseCourse,
+    Assignment,
     Course,
     Lesson,
     LessonContent,
     PagedDtoLesson,
+    Quiz,
 } from '@/services/client/types.gen';
 import { useMutation, useQueries, useQuery, useQueryClient } from '@tanstack/react-query';
-import { ArrowLeft, Pencil, Sparkles, Trash } from 'lucide-react';
+import { ArrowLeft, ChevronDown, ChevronUp, Pencil, PlusCircle, Sparkles, Trash } from 'lucide-react';
 import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
-import { useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { toast } from 'sonner';
 import DeleteModal from '../../../../../components/custom-modals/delete-modal';
 import { stripHtml } from '../../../../../src/features/dashboard/courses/shared/_components/courses-data';
-import AssessmentCreationForm from '../../_components/assessment-creation-form';
 import CourseBrandingForm from '../../_components/course-branding-form';
 import { CourseCreationForm } from '../../_components/course-creation-form';
 import type { CourseCreationFormValues } from '../../_components/course-creation-types';
@@ -54,6 +60,7 @@ import {
     createEmptyDraftsByProvider,
     type Provider,
 } from '../../_components/training-requirement-section';
+import AssessmentCreation from './assessment-creation';
 import { Stepper } from './stepper';
 
 
@@ -68,7 +75,39 @@ type LessonEditable = CourseLesson & {
     resources?: Array<{ title?: string; url?: string }>;
 };
 
+type AssessmentMode = 'Quiz' | 'Assignment';
+
+type AssessmentListItem = {
+    kind: AssessmentMode;
+    uuid: string;
+    lessonUuid: string;
+    lessonTitle: string;
+    lessonOrder: number;
+    title: string;
+    description: string;
+    statusLabel: string;
+    statusTone: 'default' | 'secondary' | 'outline';
+    meta: string[];
+};
+
 const CONTENT_TYPE_OPTIONS: ContentType[] = ['TEXT', 'IMAGE', 'VIDEO', 'AUDIO', 'PDF'];
+
+const formatAssessmentDate = (value?: string | Date | null) => {
+    if (!value) return 'No due date';
+    const date = value instanceof Date ? value : new Date(value);
+    if (Number.isNaN(date.getTime())) return 'No due date';
+    return new Intl.DateTimeFormat('en-US', { dateStyle: 'medium' }).format(date);
+};
+
+const getAssessmentDescription = (value?: string | null) => {
+    const description = stripHtml(value ?? '').trim();
+    return description || 'No description provided.';
+};
+
+const getAssessmentStatusTone = (isActive?: boolean, isPublished?: boolean): AssessmentListItem['statusTone'] => {
+    if (isActive || isPublished) return 'default';
+    return 'secondary';
+};
 
 const STEP_DETAILS = [
     { title: 'Course Setup', description: 'Create the course and define its training requirements.' },
@@ -280,7 +319,7 @@ function LessonContentStack({
                     </p>
                 </div>
                 <Button type='button' onClick={openCreateLesson}>
-                    Add Lesson
+                    <PlusCircle className="h-4 w-4" />  Add Lesson
                 </Button>
             </div>
 
@@ -503,8 +542,14 @@ export default function CreateCoursePage() {
     const [requirementDrafts, setRequirementDrafts] = useState(createEmptyDraftsByProvider());
     const [activeRequirementProvider, setActiveRequirementProvider] =
         useState<Provider | null>(null);
-    const [assessmentSheetOpen, setAssessmentSheetOpen] = useState(false);
     const [selectedPracticeLessonId, setSelectedPracticeLessonId] = useState<string>('');
+    const [assessmentSheetOpen, setAssessmentSheetOpen] = useState(false);
+    const [assessmentMode, setAssessmentMode] = useState<AssessmentMode>('Quiz');
+    const [selectedAssessmentLessonId, setSelectedAssessmentLessonId] = useState<string>('');
+    const [selectedAssessmentLesson, setSelectedAssessmentLesson] = useState<Lesson | null>(null);
+    const [selectedQuizUuid, setSelectedQuizUuid] = useState<string | null>(null);
+    const [selectedAssignmentUuid, setSelectedAssignmentUuid] = useState<string | null>(null);
+    const [assessmentToDelete, setAssessmentToDelete] = useState<AssessmentListItem | null>(null);
     const searchParams = useSearchParams();
     const queryCourseId = searchParams.get('id');
 
@@ -593,6 +638,239 @@ export default function CreateCoursePage() {
         [lessonsWithUuid, selectedPracticeLessonId]
     );
 
+    useEffect(() => {
+        if (!lessonsWithUuid.length) return;
+
+        const matchedLesson =
+            lessonsWithUuid.find(lesson => lesson.uuid === selectedAssessmentLessonId) ?? null;
+
+        if (!selectedAssessmentLessonId) {
+            const fallbackLesson = lessonsWithUuid[0];
+            if (fallbackLesson) {
+                setSelectedAssessmentLessonId(fallbackLesson.uuid);
+                setSelectedAssessmentLesson(fallbackLesson);
+            }
+            return;
+        }
+
+        if (!matchedLesson) {
+            const fallbackLesson = lessonsWithUuid[0];
+            setSelectedAssessmentLessonId(fallbackLesson?.uuid ?? '');
+            setSelectedAssessmentLesson(fallbackLesson ?? null);
+            return;
+        }
+
+        if (matchedLesson.uuid !== selectedAssessmentLesson?.uuid) {
+            setSelectedAssessmentLesson(matchedLesson);
+        }
+    }, [
+        lessonsWithUuid,
+        selectedAssessmentLesson?.uuid,
+        selectedAssessmentLessonId,
+    ]);
+
+    const assessmentQueries = useQueries({
+        queries: lessonsWithUuid.map(lesson => ({
+            ...searchQuizzesOptions({
+                query: { searchParams: { lesson_uuid_eq: lesson.uuid }, pageable: {} },
+            }),
+            enabled: Boolean(lesson.uuid),
+            staleTime: 60_000,
+        })),
+    });
+
+    const assignmentQueries = useQueries({
+        queries: lessonsWithUuid.map(lesson => ({
+            ...searchAssignmentsOptions({
+                query: { searchParams: { lesson_uuid_eq: lesson.uuid }, pageable: {} },
+            }),
+            enabled: Boolean(lesson.uuid),
+            staleTime: 60_000,
+        })),
+    });
+
+    const lessonTitlesById = useMemo(() => {
+        const map = new Map<string, { title: string; order: number }>();
+
+        lessonsWithUuid.forEach((lesson, index) => {
+            map.set(lesson.uuid, {
+                title: lesson.title || `Lesson ${index + 1}`,
+                order: index,
+            });
+        });
+
+        return map;
+    }, [lessonsWithUuid]);
+
+    const assessmentItems = useMemo<AssessmentListItem[]>(() => {
+        const quizItems = assessmentQueries.flatMap((query, index) => {
+            const lesson = lessonsWithUuid[index];
+            if (!lesson) return [];
+
+            const lessonMeta = lessonTitlesById.get(lesson.uuid);
+            const quizzes = query.data?.data?.content ?? [];
+
+            return quizzes.map((quiz: Quiz) => ({
+                kind: 'Quiz' as const,
+                uuid: quiz.uuid ?? '',
+                lessonUuid: lesson.uuid,
+                lessonTitle: lessonMeta?.title ?? lesson.title ?? 'Untitled lesson',
+                lessonOrder: lessonMeta?.order ?? index,
+                title: quiz.title || 'Untitled quiz',
+                description: getAssessmentDescription(quiz.description ?? quiz.instructions ?? ''),
+                statusLabel: quiz.active ? 'Active' : 'Draft',
+                statusTone: getAssessmentStatusTone(quiz.active),
+                meta: [
+                    `Pass ${quiz.passing_score ?? 0}%`,
+                    `Attempts ${quiz.attempts_allowed ?? 1}`,
+                    quiz.time_limit_minutes ? `${quiz.time_limit_minutes} min` : 'No time limit',
+                ],
+            }));
+        });
+
+        const assignmentItems = assignmentQueries.flatMap((query, index) => {
+            const lesson = lessonsWithUuid[index];
+            if (!lesson) return [];
+
+            const lessonMeta = lessonTitlesById.get(lesson.uuid);
+            const assignments = query.data?.data?.content ?? [];
+
+            return assignments.map((assignment: Assignment) => ({
+                kind: 'Assignment' as const,
+                uuid: assignment.uuid ?? '',
+                lessonUuid: lesson.uuid,
+                lessonTitle: lessonMeta?.title ?? lesson.title ?? 'Untitled lesson',
+                lessonOrder: lessonMeta?.order ?? index,
+                title: assignment.title || 'Untitled assignment',
+                description: getAssessmentDescription(assignment.description ?? assignment.instructions ?? ''),
+                statusLabel: assignment.is_published ? 'Published' : 'Draft',
+                statusTone: getAssessmentStatusTone(undefined, assignment.is_published),
+                meta: [
+                    assignment.due_date ? `Due ${formatAssessmentDate(assignment.due_date)}` : 'No due date',
+                    assignment.max_points != null ? `${assignment.max_points} pts` : 'No max points',
+                    assignment.submission_types ? String(assignment.submission_types).replaceAll('_', ' ') : 'Submission type open',
+                ],
+            }));
+        });
+
+        return [...quizItems, ...assignmentItems].filter(item => item.uuid).sort((left, right) => {
+            if (left.lessonOrder !== right.lessonOrder) {
+                return left.lessonOrder - right.lessonOrder;
+            }
+
+            if (left.kind !== right.kind) {
+                return left.kind === 'Quiz' ? -1 : 1;
+            }
+
+            return left.title.localeCompare(right.title);
+        });
+    }, [assessmentQueries, assignmentQueries, lessonTitlesById, lessonsWithUuid]);
+
+    const [expandedAssessmentLessonIds, setExpandedAssessmentLessonIds] = useState<string[]>([]);
+
+    const assessmentsByLesson = useMemo(() => {
+        const map = new Map<string, AssessmentListItem[]>();
+
+        assessmentItems.forEach(item => {
+            const items = map.get(item.lessonUuid) ?? [];
+            items.push(item);
+            map.set(item.lessonUuid, items);
+        });
+
+        for (const [lessonUuid, items] of map.entries()) {
+            map.set(
+                lessonUuid,
+                items.sort((left, right) => {
+                    if (left.kind !== right.kind) {
+                        return left.kind === 'Quiz' ? -1 : 1;
+                    }
+
+                    return left.title.localeCompare(right.title);
+                })
+            );
+        }
+
+        return map;
+    }, [assessmentItems]);
+
+    const isAssessmentsLoading =
+        assessmentQueries.some(query => query.isLoading) ||
+        assignmentQueries.some(query => query.isLoading);
+
+    const refreshAssessmentLists = useCallback(async () => {
+        await Promise.all([
+            ...assessmentQueries.map(query => query.refetch()),
+            ...assignmentQueries.map(query => query.refetch()),
+        ]);
+    }, [assessmentQueries, assignmentQueries]);
+
+    const openAssessmentSheet = useCallback(
+        (mode: AssessmentMode, lessonId?: string, quizUuid?: string | null, assignmentUuid?: string | null) => {
+            const lesson =
+                lessonsWithUuid.find(currentLesson => currentLesson.uuid === lessonId) ??
+                lessonsWithUuid[0] ??
+                null;
+
+            setAssessmentMode(mode);
+            setSelectedAssessmentLessonId(lesson?.uuid ?? '');
+            setSelectedAssessmentLesson(lesson);
+            setSelectedQuizUuid(mode === 'Quiz' ? quizUuid ?? null : null);
+            setSelectedAssignmentUuid(mode === 'Assignment' ? assignmentUuid ?? null : null);
+            setAssessmentSheetOpen(true);
+        },
+        [lessonsWithUuid]
+    );
+
+    const closeAssessmentSheet = useCallback(() => {
+        setAssessmentSheetOpen(false);
+        setSelectedQuizUuid(null);
+        setSelectedAssignmentUuid(null);
+    }, []);
+
+    const openNewAssessment = useCallback(
+        (mode: AssessmentMode, lessonId?: string) => {
+            openAssessmentSheet(mode, lessonId);
+        },
+        [openAssessmentSheet]
+    );
+
+    const openAssessmentEditor = useCallback(
+        (item: AssessmentListItem) => {
+            openAssessmentSheet(
+                item.kind,
+                item.lessonUuid,
+                item.kind === 'Quiz' ? item.uuid : null,
+                item.kind === 'Assignment' ? item.uuid : null
+            );
+        },
+        [openAssessmentSheet]
+    );
+
+    const deleteQuizMut = useMutation(deleteQuizMutation());
+    const deleteAssignmentMut = useMutation(deleteAssignmentMutation());
+
+    const handleDeleteAssessment = useCallback((item: AssessmentListItem) => {
+        setAssessmentToDelete(item);
+    }, []);
+
+    const confirmAssessmentDelete = useCallback(async () => {
+        if (!assessmentToDelete?.uuid) return;
+
+        try {
+            if (assessmentToDelete.kind === 'Quiz') {
+                await deleteQuizMut.mutateAsync({ path: { uuid: assessmentToDelete.uuid } });
+            } else {
+                await deleteAssignmentMut.mutateAsync({ path: { uuid: assessmentToDelete.uuid } });
+            }
+
+            await refreshAssessmentLists();
+            setAssessmentToDelete(null);
+            toast.success(`${assessmentToDelete.kind} deleted successfully.`);
+        } catch (error) {
+            toast.error(error instanceof Error ? error.message : `Failed to delete ${assessmentToDelete.kind.toLowerCase()}.`);
+        }
+    }, [assessmentToDelete, deleteAssignmentMut, deleteQuizMut, refreshAssessmentLists]);
+
     const canRenderCourseSections = Boolean(resolvedCourseId && courseApiResponse);
 
     if (creator.isLoading) {
@@ -605,12 +883,34 @@ export default function CreateCoursePage() {
 
     return (
         <main className='mx-auto w-full space-y-6 px-4 py-6 lg:px-6'>
-            <Link
-                href='/dashboard/course-creator/course-management/all?type=courses'
-                className='text-muted-foreground hover:text-foreground inline-flex items-center gap-1 text-sm'
-            >
-                <ArrowLeft className='h-4 w-4' /> Back to my courses
-            </Link>
+            <div className='flex flex-row items-center justify-between' >
+                <Link
+                    href='/dashboard/course-creator/course-management/all?type=courses'
+                    className='text-muted-foreground hover:text-foreground inline-flex items-center gap-1 text-sm'
+                >
+                    <ArrowLeft className='h-4 w-4' /> Back to my courses
+                </Link>
+
+                <div className='flex flex-wrap items-center gap-2'>
+                    <Button
+                        type='button'
+                        variant='outline'
+                    // onClick={() => saveProgramAndAdvance(undefined)}
+                    // disabled={createProgramMut.isPending || updateProgramMut.isPending || !creatorUuid}
+                    >
+                        Save Draft
+                    </Button>
+                    <Button
+                        type='button'
+                    // onClick={handlePublish}
+                    // disabled={publishProgramMut.isPending || !creatorUuid || !canPublish}
+                    >
+                        <Sparkles className='mr-2 h-4 w-4' />
+                        Publish
+                    </Button>
+                </div>
+
+            </div>
 
             <PageHeader
                 eyebrow='Program Creator'
@@ -621,24 +921,7 @@ export default function CreateCoursePage() {
                         : 'Build a high-quality course and empower students to learn new skills.'
                 }
                 action={
-                    <div className='flex flex-wrap items-center gap-2'>
-                        <Button
-                            type='button'
-                            variant='outline'
-                        // onClick={() => saveProgramAndAdvance(undefined)}
-                        // disabled={createProgramMut.isPending || updateProgramMut.isPending || !creatorUuid}
-                        >
-                            Save Draft
-                        </Button>
-                        <Button
-                            type='button'
-                        // onClick={handlePublish}
-                        // disabled={publishProgramMut.isPending || !creatorUuid || !canPublish}
-                        >
-                            <Sparkles className='mr-2 h-4 w-4' />
-                            Publish
-                        </Button>
-                    </div>
+                    <></>
                 }
             />
 
@@ -728,35 +1011,259 @@ export default function CreateCoursePage() {
                                     title='Add lessons first'
                                     description='Assessment tasks need at least one lesson before they can be created.'
                                 >
-                                    <div className='space-y-4'>
-                                        <div className='flex items-center justify-between gap-3'>
-                                            <div className='space-y-1'>
-                                                <p className='text-foreground text-sm font-medium'>Assessment builder</p>
-                                                <p className='text-muted-foreground text-sm'>
-                                                    Create or edit quizzes and assignments without leaving this page.
-                                                </p>
-                                            </div>
-                                            <Button type='button' onClick={() => setAssessmentSheetOpen(true)}>
-                                                Open assessment sheet
-                                            </Button>
+                                    <div className='space-y-6'>
+                                        <div className='space-y-1'>
+                                            <p className='text-foreground text-sm font-medium'>Assessment builder</p>
+                                            <p className='text-muted-foreground text-sm'>
+                                                Track quizzes and assignments by lesson, then open the sheet to create or edit one.
+                                            </p>
                                         </div>
 
-                                        <Sheet open={assessmentSheetOpen} onOpenChange={setAssessmentSheetOpen}>
-                                            <SheetContent side='right'
+                                        {isAssessmentsLoading && assessmentItems.length === 0 ? (
+                                            <div className='grid gap-4'>
+                                                {Array.from({ length: 3 }).map((_, index) => (
+                                                    <Card key={index} className='rounded-2xl border-border/70 bg-card/80'>
+                                                        <CardContent className='space-y-3 p-5'>
+                                                            <Skeleton className='h-5 w-32' />
+                                                            <Skeleton className='h-7 w-3/5' />
+                                                            <Skeleton className='h-4 w-4/5' />
+                                                            <div className='flex gap-2'>
+                                                                <Skeleton className='h-8 w-20' />
+                                                                <Skeleton className='h-8 w-20' />
+                                                                <Skeleton className='h-8 w-20' />
+                                                            </div>
+                                                        </CardContent>
+                                                    </Card>
+                                                ))}
+                                            </div>
+                                        ) : (
+                                            <div className="space-y-4">
+                                                {lessonsWithUuid.map((lesson, index) => {
+                                                    const items = assessmentsByLesson.get(lesson.uuid) ?? [];
+                                                    const isExpanded = expandedAssessmentLessonIds.includes(lesson.uuid);
+                                                    const lessonLabel = lesson.lesson_number ?? index + 1;
+
+                                                    const toggleLesson = () => {
+                                                        setExpandedAssessmentLessonIds(prev =>
+                                                            prev.includes(lesson.uuid)
+                                                                ? prev.filter(id => id !== lesson.uuid)
+                                                                : [...prev, lesson.uuid]
+                                                        );
+                                                    };
+
+                                                    return (
+                                                        <Card
+                                                            key={lesson.uuid}
+                                                            className="overflow-hidden rounded-2xl border-border/70 bg-card/80 shadow-sm transition hover:border-primary/30 hover:shadow-md py-0"
+                                                        >
+                                                            <CardHeader
+                                                                className="bg-muted/30 cursor-pointer border-b border-border/70 pt-4 pb-2"
+                                                                onClick={toggleLesson}
+                                                            >
+                                                                <div className="  flex items-center justify-between gap-4">
+                                                                    {/* Lesson info */}
+                                                                    <div className="min-w-0 flex-1 space-y-2">
+                                                                        <div className="flex flex-wrap items-center gap-2 justify-between">
+                                                                            <div className='flex flex-wrap items-center gap-2'>
+                                                                                <Badge variant="secondary">
+                                                                                    Lesson {lessonLabel}
+                                                                                </Badge>
+
+                                                                                <CardTitle className="text-lg">
+                                                                                    {lesson.title || 'Untitled lesson'}
+                                                                                </CardTitle>
+                                                                            </div>
+
+                                                                            {/* Expand indicator */}
+                                                                            <div className="shrink-0">
+                                                                                {isExpanded ? (
+                                                                                    <ChevronUp className="h-5 w-5" />
+                                                                                ) : (
+                                                                                    <ChevronDown className="h-5 w-5" />
+                                                                                )}
+                                                                            </div>
+                                                                        </div>
+
+                                                                        <div className="w-full min-w-0 line-clamp-2 text-sm text-muted-foreground">
+                                                                            {getAssessmentDescription(lesson.description)}
+                                                                        </div>
+
+
+                                                                        {/* Actions */}
+                                                                        <div className='flex flex-row flex-wrap items-center justify-between mt-2' >
+                                                                            <Badge variant="outline" className='text-[13px]'>
+                                                                                {items.length}{' '}
+                                                                                {items.length === 1
+                                                                                    ? 'assessment added to this lesson'
+                                                                                    : 'assessments added to this lesson'}
+                                                                            </Badge>
+                                                                            <div
+                                                                                className="flex flex-wrap gap-2 sef-end justify-end "
+                                                                                onClick={e => e.stopPropagation()}
+                                                                            >
+                                                                                <Button
+                                                                                    type="button"
+                                                                                    size="sm"
+                                                                                    onClick={() =>
+                                                                                        openNewAssessment('Quiz', lesson.uuid)
+                                                                                    }
+                                                                                >
+                                                                                    <PlusCircle className="h-4 w-4" />
+                                                                                    Quiz
+                                                                                </Button>
+
+                                                                                <Button
+                                                                                    type="button"
+                                                                                    size="sm"
+                                                                                    variant="outline"
+                                                                                    onClick={() =>
+                                                                                        openNewAssessment(
+                                                                                            'Assignment',
+                                                                                            lesson.uuid
+                                                                                        )
+                                                                                    }
+                                                                                >
+                                                                                    <PlusCircle className="h-4 w-4" />
+                                                                                    Assignment
+                                                                                </Button>
+                                                                            </div>
+                                                                        </div>
+                                                                    </div>
+                                                                </div>
+                                                            </CardHeader>
+
+                                                            {isExpanded ? (
+                                                                <CardContent className="space-y-3 p-5">
+                                                                    {items.length === 0 ? (
+                                                                        <div className="rounded-xl border border-dashed border-border px-4 py-8 text-sm text-muted-foreground">
+                                                                            No assessments have been added to this lesson yet.
+                                                                        </div>
+                                                                    ) : (
+                                                                        items.map(item => (
+                                                                            <div
+                                                                                key={`${item.kind}-${item.uuid}`}
+                                                                                className="flex flex-col gap-4 rounded-xl border border-border bg-muted/40 p-4"
+                                                                            >
+                                                                                <div className="space-y-2">
+                                                                                    <div className="flex flex-wrap items-center gap-2">
+                                                                                        <Badge variant="secondary">
+                                                                                            {item.kind}
+                                                                                        </Badge>
+
+                                                                                        <Badge variant={item.statusTone}>
+                                                                                            {item.statusLabel}
+                                                                                        </Badge>
+
+
+                                                                                        <div className="flex flex-wrap gap-2">
+                                                                                            {item.meta.map(meta => (
+                                                                                                <Badge
+                                                                                                    key={meta}
+                                                                                                    variant="outline"
+                                                                                                    className="rounded-full"
+                                                                                                >
+                                                                                                    {meta}
+                                                                                                </Badge>
+                                                                                            ))}
+                                                                                        </div>
+                                                                                    </div>
+
+                                                                                    <div className="space-y-1">
+                                                                                        <p className="font-semibold text-foreground">
+                                                                                            {item.title}
+                                                                                        </p>
+
+                                                                                        <p className="line-clamp-2 text-sm text-muted-foreground">
+                                                                                            {item.description}
+                                                                                        </p>
+                                                                                    </div>
+                                                                                </div>
+
+                                                                                <div
+                                                                                    className="flex flex-row flex-wrap gap-2 items-end justify-end"
+                                                                                    onClick={e => e.stopPropagation()}
+                                                                                >
+                                                                                    <Button
+                                                                                        type="button"
+                                                                                        variant="outline"
+                                                                                        size="sm"
+                                                                                        onClick={() =>
+                                                                                            openAssessmentEditor(item)
+                                                                                        }
+                                                                                    >
+                                                                                        <Pencil className=" h-4 w-4" />
+                                                                                    </Button>
+
+                                                                                    <Button
+                                                                                        type="button"
+                                                                                        variant="destructive"
+                                                                                        size="sm"
+                                                                                        onClick={() =>
+                                                                                            handleDeleteAssessment(item)
+                                                                                        }
+                                                                                    >
+                                                                                        <Trash className="h-4 w-4" />
+                                                                                    </Button>
+                                                                                </div>
+                                                                            </div>
+                                                                        ))
+                                                                    )}
+                                                                </CardContent>
+                                                            ) : null}
+                                                        </Card>
+                                                    );
+                                                })}
+                                            </div>
+
+                                        )}
+
+                                        <Sheet open={assessmentSheetOpen} onOpenChange={open => (!open ? closeAssessmentSheet() : setAssessmentSheetOpen(true))}>
+                                            <SheetContent
+                                                side='right'
                                                 className='flex h-full w-full max-w-4xl flex-col overflow-hidden p-0 sm:max-w-4xl'
                                             >
-                                                <SheetHeader className='space-y-2'>
-                                                    <SheetTitle>Assessment Tasks</SheetTitle>
+                                                <SheetHeader className='px-6 pt-6'>
+                                                    <SheetTitle className='font-semibold text-xl' >
+                                                        {assessmentMode === 'Quiz' ? 'Quiz Builder' : 'Assignment Builder'}
+                                                    </SheetTitle>
                                                     <SheetDescription>
-                                                        Manage quizzes and assignments for every lesson from a right-side sheet.
+                                                        {assessmentMode === 'Quiz'
+                                                            ? 'Create or edit quiz questions for the selected lesson.'
+                                                            : 'Create or edit assignment details for the selected lesson.'}
                                                     </SheetDescription>
                                                 </SheetHeader>
 
-                                                <div className='mt-6'>
-                                                    <AssessmentCreationForm
+                                                <div className='overflow-y-auto px-6 pb-6'>
+                                                    <AssessmentCreation
+                                                        key={`${assessmentMode}-${selectedQuizUuid ?? selectedAssignmentUuid ?? 'new'}-${selectedAssessmentLessonId || 'lesson'}`}
                                                         course={courseApiResponse}
                                                         lessons={lessonsResponse?.data}
                                                         lessonContentsMap={lessonContentMap}
+                                                        mode={assessmentMode}
+                                                        selectedLessonId={selectedAssessmentLessonId}
+                                                        selectedLesson={selectedAssessmentLesson}
+                                                        setSelectedLessonId={setSelectedAssessmentLessonId}
+                                                        setSelectedLesson={setSelectedAssessmentLesson}
+                                                        initialQuizUuid={assessmentMode === 'Quiz' ? selectedQuizUuid : null}
+                                                        initialAssignmentUuid={
+                                                            assessmentMode === 'Assignment' ? selectedAssignmentUuid : null
+                                                        }
+                                                        onQuizSaved={() => {
+                                                            closeAssessmentSheet();
+                                                            void refreshAssessmentLists();
+                                                        }}
+                                                        onQuizDeleted={() => {
+                                                            closeAssessmentSheet();
+                                                            void refreshAssessmentLists();
+                                                        }}
+                                                        onAssignmentSaved={() => {
+                                                            closeAssessmentSheet();
+                                                            void refreshAssessmentLists();
+                                                        }}
+                                                        onAssignmentDeleted={() => {
+                                                            closeAssessmentSheet();
+                                                            void refreshAssessmentLists();
+                                                        }}
                                                     />
                                                 </div>
                                             </SheetContent>
@@ -803,6 +1310,20 @@ export default function CreateCoursePage() {
                     </CardContent>
                 </Card>
             </div>
+
+            <DeleteModal
+                open={Boolean(assessmentToDelete)}
+                setOpen={open => {
+                    if (!open) {
+                        setAssessmentToDelete(null);
+                    }
+                }}
+                title={`Delete ${assessmentToDelete?.kind ?? 'Assessment'}?`}
+                description={`This will permanently remove the selected ${assessmentToDelete?.kind?.toLowerCase() ?? 'assessment'} from the course.`}
+                onConfirm={() => void confirmAssessmentDelete()}
+                isLoading={deleteQuizMut.isPending || deleteAssignmentMut.isPending}
+                confirmText={`Delete ${assessmentToDelete?.kind ?? 'Assessment'}`}
+            />
         </main>
     );
 }

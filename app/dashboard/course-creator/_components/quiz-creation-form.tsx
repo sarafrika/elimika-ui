@@ -1,11 +1,10 @@
 'use client';
 
 import { useQuery } from '@tanstack/react-query';
-import { AlertTriangle, Check, FileText, Plus, PlusCircle, Trash2, X } from 'lucide-react';
+import { AlertTriangle, Check, FileText, Plus, Trash2, X } from 'lucide-react';
 import Link from 'next/link';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { toast } from 'sonner';
-import { Badge } from '../../../../components/ui/badge';
 import { Button } from '../../../../components/ui/button';
 import { Checkbox } from '../../../../components/ui/checkbox';
 import { DeleteConfirmationDialog } from '../../../../components/ui/delete-confirmation-dialog';
@@ -18,7 +17,6 @@ import {
   SelectTrigger,
   SelectValue,
 } from '../../../../components/ui/select';
-import { Separator } from '../../../../components/ui/separator';
 import Spinner from '../../../../components/ui/spinner';
 import { Textarea } from '../../../../components/ui/textarea';
 import {
@@ -28,7 +26,6 @@ import {
   TooltipTrigger,
 } from '../../../../components/ui/tooltip';
 import { useCourseCreator } from '../../../../context/course-creator-context';
-import { cn } from '../../../../lib/utils';
 import {
   searchAssessmentRubricsOptions,
   searchQuizzesOptions,
@@ -183,23 +180,20 @@ const QuestionRow = ({
               <div
                 key={`tf-${qIndex}-${oIndex}`}
                 onClick={() => setCorrectOption(qIndex, oIndex)}
-                className={`flex cursor-pointer items-center gap-3 rounded-lg border-2 p-3 transition-all ${
-                  opt.isCorrect
-                    ? 'border-primary bg-primary/10'
-                    : 'border-border hover:border-primary/50'
-                }`}
+                className={`flex cursor-pointer items-center gap-3 rounded-lg border-2 p-3 transition-all ${opt.isCorrect
+                  ? 'border-primary bg-primary/10'
+                  : 'border-border hover:border-primary/50'
+                  }`}
               >
                 <div
-                  className={`flex h-5 w-5 items-center justify-center rounded-full border-2 ${
-                    opt.isCorrect ? 'border-primary bg-primary' : 'border-border'
-                  }`}
+                  className={`flex h-5 w-5 items-center justify-center rounded-full border-2 ${opt.isCorrect ? 'border-primary bg-primary' : 'border-border'
+                    }`}
                 >
                   {opt.isCorrect && <Check className='text-primary-foreground h-3 w-3' />}
                 </div>
                 <span
-                  className={`text-sm font-medium ${
-                    opt.isCorrect ? 'text-primary' : 'text-foreground'
-                  }`}
+                  className={`text-sm font-medium ${opt.isCorrect ? 'text-primary' : 'text-foreground'
+                    }`}
                 >
                   {opt.text}
                 </span>
@@ -368,34 +362,32 @@ const EMPTY_QUIZ = {
   rubric_uuid: '',
 };
 
-export const QuizCreationForm = ({
-  lessons,
-  quizId,
-  questions,
-  selectedLessonId,
-  selectedLesson,
-  setSelectedLessonId,
-  setSelectedLesson,
-  onSelectQuiz,
-  addQuestion,
-  updateQuestionText,
-  updateQuestionPoint,
-  updateOptionText,
-  setCorrectOption,
-  toggleCorrectOption,
-  addOption,
-  updatePairText,
-  deletePair,
-  addPair,
-  deleteQuestion,
-  deleteOption,
-  createQuizForLesson,
-  updateQuizForLesson,
-  deleteQuizForLesson,
-  isPending,
-  openBulkUploadSheet,
-  onDraftChange,
-}: QuizCreationFormProps) => {
+export const QuizCreationForm = (props: QuizCreationFormProps) => {
+  const {
+    quizId,
+    questions,
+    selectedLessonId,
+    selectedLesson,
+    onSelectQuiz,
+    addQuestion,
+    updateQuestionText,
+    updateQuestionPoint,
+    updateOptionText,
+    setCorrectOption,
+    toggleCorrectOption,
+    addOption,
+    updatePairText,
+    deletePair,
+    addPair,
+    deleteQuestion,
+    deleteOption,
+    createQuizForLesson,
+    updateQuizForLesson,
+    deleteQuizForLesson,
+    isPending,
+    openBulkUploadSheet,
+    onDraftChange,
+  } = props;
   const creator = useCourseCreator();
 
   // ── Rubrics ───────────────────────────────────────────────────────────────
@@ -515,400 +507,271 @@ export const QuizCreationForm = ({
     }
   }, [quizUuid, deleteQuizForLesson, onSelectQuiz]);
 
-  const handleLessonSelect = useCallback(
-    (lesson: LessonItem) => {
-      setSelectedLessonId(lesson.uuid);
-      setSelectedLesson(lesson);
-      handleQuizSelect(null);
-    },
-    [setSelectedLessonId, setSelectedLesson, handleQuizSelect]
-  );
-
   return (
-    <div className='grid grid-cols-4 gap-6'>
-      {/* Lessons sidebar */}
-      <div className='shadow-sm'>
-        <h3 className='text-foreground mb-4 text-lg font-semibold'>Lessons</h3>
-        <ul className='flex flex-col gap-2 space-y-2'>
-          {lessons?.content?.length ? (
-            lessons.content
-              .sort(
-                (a: LessonItem, b: LessonItem) => (a.lesson_number ?? 0) - (b.lesson_number ?? 0)
-              )
-              .map((lesson: LessonItem) => (
-                <li
-                  key={`lesson-${lesson.uuid}`}
-                  onClick={() => handleLessonSelect(lesson)}
-                  className={cn(
-                    'flex cursor-pointer flex-col items-start gap-2 rounded-lg px-3 py-2.5 text-sm font-medium transition-all duration-200',
-                    selectedLessonId === lesson.uuid
-                      ? 'bg-primary/10 border-primary text-primary border-2 shadow-sm'
-                      : 'hover:bg-muted text-foreground border-2 border-transparent'
-                  )}
-                >
-                  <p className='text-xs'>LESSON {lesson.lesson_number}.</p>
-                  <p className='line-clamp-2'>{lesson.title}</p>{' '}
-                </li>
-              ))
-          ) : (
-            <li className='text-muted-foreground rounded-lg border border-dashed py-6 text-center text-sm'>
-              Looks like you haven't added any lessons to this course yet.
-            </li>
-          )}
-        </ul>
+    <div className='bg-card space-y-6 rounded-xl border p-6 shadow-sm'>
+      <div className='flex items-center justify-between gap-4 border-b pb-4'>
+        <div className='space-y-1'>
+          <h3 className='text-foreground text-lg font-bold uppercase'>
+            {selectedLesson?.title || 'Selected lesson'}
+          </h3>
+          <p className='text-muted-foreground text-xs'>
+            {quizUuid && quizUuid !== '' ? 'Editing an existing quiz' : 'Create a new quiz for this lesson'}
+          </p>
+        </div>
+        <span className='bg-muted text-muted-foreground rounded-full px-2.5 py-1 text-xs font-medium'>
+          {quizUuid && quizUuid !== '' ? 'Editing' : 'New'}
+        </span>
       </div>
 
-      {/* Quiz form */}
-      {!selectedLessonId ? (
-        <div className='border-border bg-muted col-span-3 flex min-h-[50vh] items-center justify-center rounded-xl border-2 border-dashed'>
-          <div className='text-center'>
-            <p className='text-foreground text-lg font-medium'>Select a lesson</p>
-            <p className='text-muted-foreground mt-1 text-sm'>
-              Choose a lesson from the left to create or manage quizzes
-            </p>
+      <div className='flex flex-col gap-6'>
+        {selectedQuizData.title && selectedQuizData?.status !== 'published' && (
+          <div className='border-destructive/20 bg-destructive/5 text-destructive rounded-md border p-3 text-sm'>
+            This quiz is in draft mode and is not visible to instructors until it is published.
+          </div>
+        )}
+
+        {/* Title */}
+        <div className='flex flex-col gap-2'>
+          <Label>Quiz Title</Label>
+          <Input
+            placeholder='Enter quiz title'
+            value={selectedQuizData.title}
+            onChange={e => handleQuizInputChange('title', e.target.value)}
+          />
+        </div>
+
+        {/* Instructions */}
+        <div className='flex flex-col gap-2'>
+          <Label>Instructions (optional)</Label>
+          <Textarea
+            placeholder='Enter quiz instructions'
+            rows={3}
+            value={selectedQuizData.instructions}
+            onChange={e => handleQuizInputChange('instructions', e.target.value)}
+          />
+        </div>
+
+        {/* Numeric settings */}
+        <div className='grid grid-cols-3 gap-4'>
+          <div className='flex flex-col gap-2'>
+            <Label>Time Limit (minutes)</Label>
+            <Input
+              type='number'
+              value={selectedQuizData.time_limit_minutes}
+              onChange={e => handleQuizInputChange('time_limit_minutes', Number(e.target.value))}
+            />
+          </div>
+          <div className='flex flex-col gap-2'>
+            <Label>Attempts Allowed</Label>
+            <Input
+              type='number'
+              value={selectedQuizData.attempts_allowed}
+              onChange={e => handleQuizInputChange('attempts_allowed', Number(e.target.value))}
+            />
+          </div>
+          <div className='flex flex-col gap-2'>
+            <Label>Passing Score (%)</Label>
+            <Input
+              type='number'
+              value={selectedQuizData.passing_score}
+              onChange={e => handleQuizInputChange('passing_score', Number(e.target.value))}
+            />
           </div>
         </div>
-      ) : (
-        <div className='bg-card col-span-3 space-y-6 rounded-xl border p-6 shadow-sm'>
-          {/* Header */}
-          <div className='flex items-center justify-between gap-4 border-b pb-4'>
-            <h3 className='text-foreground max-w-[70%] truncate text-lg font-bold uppercase'>
-              QUIZ: {selectedLesson?.title || 'Select a lesson'}
-            </h3>
-            <Button size='sm' className='shrink-0' onClick={() => handleQuizSelect('')}>
-              <PlusCircle size={16} className='mr-1' />
-              Create Quiz
-            </Button>
-          </div>
 
-          {/* Existing quizzes */}
-          <div className='flex flex-col gap-2'>
-            <div className='flex flex-col space-y-3'>
-              <div className='flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between'>
-                <div className='flex flex-col'>
-                  <h4 className='text-foreground text-base font-semibold'>Existing Quizzes</h4>
-                  <p className='text-muted-foreground text-xs'>
-                    Select a quiz to edit or create a new one.
-                  </p>
-                </div>
-              </div>
+        {/* ── Rubric ──────────────────────────────────────────────────── */}
+        <div className='flex flex-col gap-1.5'>
+          <Label className='text-sm font-medium'>Rubric (optional)</Label>
+          <p className='text-muted-foreground text-xs'>
+            Associate a grading rubric with this quiz
+          </p>
 
-              <div className='flex flex-col space-y-2'>
-                {quizzes?.data?.content?.length ? (
-                  quizzes.data.content.map((quiz, idx: number) => {
-                    const isSelected = quizUuid === quiz.uuid;
+          {isLoadingRubrics ? (
+            <div className='flex items-center gap-2 py-2'>
+              <Spinner className='h-4 w-4' />
+              <span className='text-muted-foreground text-xs'>Loading rubrics...</span>
+            </div>
+          ) : (
+            <>
+              <Select
+                value={localQuizData.rubric_uuid || '__none__'}
+                onValueChange={v =>
+                  handleQuizInputChange('rubric_uuid', v === '__none__' ? '' : v)
+                }
+              >
+                <SelectTrigger className='w-full'>
+                  <SelectValue placeholder='Select a rubric (optional)' />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value='__none__'>
+                    <span className='text-muted-foreground'>None</span>
+                  </SelectItem>
+                  {rubrics
+                    .filter((r): r is RubricItem & { uuid: string } => Boolean(r.uuid))
+                    .map(r => (
+                      <SelectItem key={r.uuid} value={r.uuid}>
+                        <div className='flex flex-col'>
+                          <span className='font-medium'>{r.title}</span>
+                          {r.description && (
+                            <span className='text-muted-foreground line-clamp-1 text-xs'>
+                              {r.description}
+                            </span>
+                          )}
+                        </div>
+                      </SelectItem>
+                    ))}
+                </SelectContent>
+              </Select>
 
-                    return (
-                      <div
-                        key={`quiz-${quiz.uuid}`}
-                        onClick={() => handleQuizSelect(quiz.uuid ?? null)}
-                        className={cn(
-                          'group flex cursor-pointer items-center justify-between rounded-md border px-4 py-2.5 text-sm font-medium transition-all',
-                          isSelected
-                            ? 'bg-primary/20 border-primary text-primary shadow-sm'
-                            : 'bg-primary/5 hover:bg-muted text-foreground border-transparent'
-                        )}
-                      >
-                        {/* Title */}
-                        <span className='truncate'>
-                          {idx + 1} - {quiz.title}
-                        </span>
-
-                        {/* Status badge */}
-                        {quiz.is_published ? (
-                          <Badge variant='secondary' className='text-[10px]'>
-                            Published
-                          </Badge>
-                        ) : (
-                          <Badge className='bg-destructive/10 text-destructive border-destructive/20 border text-[10px]'>
-                            Draft
-                          </Badge>
-                        )}
-                      </div>
-                    );
-                  })
-                ) : (
-                  <div className='text-muted-foreground rounded-lg border border-dashed py-4 text-center text-sm'>
-                    No quizzes available for this lesson yet.
+              {selectedRubric ? (
+                <div className='bg-muted/50 mt-1 flex items-start justify-between gap-2 rounded-lg border px-3 py-2'>
+                  <div className='min-w-0'>
+                    <p className='text-foreground truncate text-xs font-semibold'>
+                      {selectedRubric.title}
+                    </p>
+                    {selectedRubric.description && (
+                      <p className='text-muted-foreground mt-0.5 line-clamp-2 text-xs'>
+                        {selectedRubric.description}
+                      </p>
+                    )}
                   </div>
-                )}
-              </div>
-            </div>
-          </div>
-
-          {/* Quiz fields */}
-          <div className='flex flex-col gap-6'>
-            <Separator />
-            {selectedQuizData.title && selectedQuizData?.status !== 'published' && (
-              <div className='border-destructive/20 bg-destructive/5 text-destructive rounded-md border p-3 text-sm'>
-                This quiz is in draft mode and is not visible to instructors until it is published.
-              </div>
-            )}
-
-            <div className='-my-4 flex items-center justify-between'>
-              <h2 className='text-foreground text-lg font-bold tracking-tight'>
-                {quizUuid && quizUuid !== '' ? 'Edit Quiz' : 'Create New Quiz'}
-              </h2>
-              <span className='bg-muted text-muted-foreground rounded-full px-2.5 py-1 text-xs font-medium'>
-                {quizUuid && quizUuid !== '' ? 'Editing' : 'New'}
-              </span>
-            </div>
-            <Separator />
-
-            {/* Title */}
-            <div className='flex flex-col gap-2'>
-              <Label>Quiz Title</Label>
-              <Input
-                placeholder='Enter quiz title'
-                value={selectedQuizData.title}
-                onChange={e => handleQuizInputChange('title', e.target.value)}
-              />
-            </div>
-
-            {/* Instructions */}
-            <div className='flex flex-col gap-2'>
-              <Label>Instructions (optional)</Label>
-              <Textarea
-                placeholder='Enter quiz instructions'
-                rows={3}
-                value={selectedQuizData.instructions}
-                onChange={e => handleQuizInputChange('instructions', e.target.value)}
-              />
-            </div>
-
-            {/* Numeric settings */}
-            <div className='grid grid-cols-3 gap-4'>
-              <div className='flex flex-col gap-2'>
-                <Label>Time Limit (minutes)</Label>
-                <Input
-                  type='number'
-                  value={selectedQuizData.time_limit_minutes}
-                  onChange={e =>
-                    handleQuizInputChange('time_limit_minutes', Number(e.target.value))
-                  }
-                />
-              </div>
-              <div className='flex flex-col gap-2'>
-                <Label>Attempts Allowed</Label>
-                <Input
-                  type='number'
-                  value={selectedQuizData.attempts_allowed}
-                  onChange={e => handleQuizInputChange('attempts_allowed', Number(e.target.value))}
-                />
-              </div>
-              <div className='flex flex-col gap-2'>
-                <Label>Passing Score (%)</Label>
-                <Input
-                  type='number'
-                  value={selectedQuizData.passing_score}
-                  onChange={e => handleQuizInputChange('passing_score', Number(e.target.value))}
-                />
-              </div>
-            </div>
-
-            {/* ── Rubric ──────────────────────────────────────────────────── */}
-            <div className='flex flex-col gap-1.5'>
-              <Label className='text-sm font-medium'>Rubric (optional)</Label>
-              <p className='text-muted-foreground text-xs'>
-                Associate a grading rubric with this quiz
-              </p>
-
-              {isLoadingRubrics ? (
-                <div className='flex items-center gap-2 py-2'>
-                  <Spinner className='h-4 w-4' />
-                  <span className='text-muted-foreground text-xs'>Loading rubrics...</span>
+                  <button
+                    type='button'
+                    onClick={() => handleQuizInputChange('rubric_uuid', '')}
+                    className='text-muted-foreground hover:text-foreground hover:bg-muted mt-0.5 shrink-0 rounded p-0.5 transition-colors'
+                    title='Clear rubric'
+                  >
+                    <X size={13} />
+                  </button>
                 </div>
               ) : (
-                <>
-                  <Select
-                    value={localQuizData.rubric_uuid || '__none__'}
-                    onValueChange={v =>
-                      handleQuizInputChange('rubric_uuid', v === '__none__' ? '' : v)
-                    }
-                  >
-                    <SelectTrigger className='w-full'>
-                      <SelectValue placeholder='Select a rubric (optional)' />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value='__none__'>
-                        <span className='text-muted-foreground'>None</span>
-                      </SelectItem>
-                      {rubrics
-                        .filter((r): r is RubricItem & { uuid: string } => Boolean(r.uuid))
-                        .map(r => (
-                          <SelectItem key={r.uuid} value={r.uuid}>
-                            <div className='flex flex-col'>
-                              <span className='font-medium'>{r.title}</span>
-                              {r.description && (
-                                <span className='text-muted-foreground line-clamp-1 text-xs'>
-                                  {r.description}
-                                </span>
-                              )}
-                            </div>
-                          </SelectItem>
-                        ))}
-                    </SelectContent>
-                  </Select>
-
-                  {selectedRubric ? (
-                    <div className='bg-muted/50 mt-1 flex items-start justify-between gap-2 rounded-lg border px-3 py-2'>
-                      <div className='min-w-0'>
-                        <p className='text-foreground truncate text-xs font-semibold'>
-                          {selectedRubric.title}
-                        </p>
-                        {selectedRubric.description && (
-                          <p className='text-muted-foreground mt-0.5 line-clamp-2 text-xs'>
-                            {selectedRubric.description}
-                          </p>
-                        )}
-                      </div>
-                      <button
-                        type='button'
-                        onClick={() => handleQuizInputChange('rubric_uuid', '')}
-                        className='text-muted-foreground hover:text-foreground hover:bg-muted mt-0.5 shrink-0 rounded p-0.5 transition-colors'
-                        title='Clear rubric'
-                      >
-                        <X size={13} />
-                      </button>
+                <div className='bg-warning/20 border-warning/40 flex flex-col gap-3 rounded-lg border p-4'>
+                  <div className='flex items-start gap-2'>
+                    <AlertTriangle className='text-warning-foreground mt-0.5 h-4 w-4 shrink-0' />
+                    <div className='text-sm'>
+                      <p className='text-warning-foreground font-medium'>No rubric selected</p>
+                      <p className='text-warning-foreground/80 text-xs'>
+                        If none of the available rubrics fit, you can create a new one.
+                      </p>
                     </div>
-                  ) : (
-                    <div className='bg-warning/20 border-warning/40 flex flex-col gap-3 rounded-lg border p-4'>
-                      <div className='flex items-start gap-2'>
-                        <AlertTriangle className='text-warning-foreground mt-0.5 h-4 w-4 shrink-0' />
-                        <div className='text-sm'>
-                          <p className='text-warning-foreground font-medium'>No rubric selected</p>
-                          <p className='text-warning-foreground/80 text-xs'>
-                            If none of the available rubrics fit, you can create a new one.
-                          </p>
-                        </div>
-                      </div>
-                      <Link href='/dashboard/course-creator/rubrics' target='_blank'>
-                        <Button
-                          type='button'
-                          variant='outline'
-                          size='sm'
-                          className='border-warning text-warning-foreground hover:bg-warning/100 w-fit self-center'
-                        >
-                          Create New Rubric
-                        </Button>
-                      </Link>
-                    </div>
-                  )}
-                </>
+                  </div>
+                  <Link href='/dashboard/course-creator/rubrics' target='_blank'>
+                    <Button
+                      type='button'
+                      variant='outline'
+                      size='sm'
+                      className='border-warning text-warning-foreground hover:bg-warning/100 w-fit self-center'
+                    >
+                      Create New Rubric
+                    </Button>
+                  </Link>
+                </div>
               )}
-            </div>
+            </>
+          )}
+        </div>
 
-            {/* Active toggle */}
-            <Label className='flex cursor-pointer items-center gap-3'>
-              <Checkbox
-                checked={selectedQuizData.active}
-                onCheckedChange={checked => handleQuizInputChange('active', Boolean(checked))}
-              />
-              <span>Active</span>
-            </Label>
+        {/* Active toggle */}
+        <Label className='flex cursor-pointer items-center gap-3'>
+          <Checkbox
+            checked={selectedQuizData.active}
+            onCheckedChange={checked => handleQuizInputChange('active', Boolean(checked))}
+          />
+          <span>Active</span>
+        </Label>
 
-            {/* Save / delete */}
-            <div className='flex flex-row items-end justify-end gap-6 pt-2'>
-              {quizUuid && quizUuid !== '' && (
-                <Button size='sm' variant='destructive' onClick={handleDeleteQuiz}>
-                  <Trash2 />
-                </Button>
-              )}
-              <Button size='sm' onClick={handleSaveQuiz} disabled={isPending}>
-                {isPending ? (
-                  'Saving...'
-                ) : (
-                  <>{quizUuid && quizUuid !== '' ? 'Update Quiz' : 'Save Quiz'}</>
-                )}
-              </Button>
-            </div>
+        {/* Save / delete */}
+        <div className='flex flex-row items-end justify-end gap-6 pt-2'>
+          {quizUuid && quizUuid !== '' && (
+            <Button size='sm' variant='destructive' onClick={handleDeleteQuiz}>
+              <Trash2 />
+            </Button>
+          )}
+          <Button size='sm' onClick={handleSaveQuiz} disabled={isPending}>
+            {isPending ? 'Saving...' : <>{quizUuid && quizUuid !== '' ? 'Update Quiz' : 'Save Quiz'}</>}
+          </Button>
+        </div>
+      </div>
+
+      {/* Questions section */}
+      <div className='mt-8 border-t pt-6'>
+        <div className='mb-6'>
+          <div className='mb-3 flex items-center justify-between gap-3'>
+            <h4 className='text-foreground text-lg font-semibold'>Questions</h4>
+            {!quizUuid && (
+              <span className='bg-muted text-muted-foreground rounded-full px-2.5 py-1 text-xs font-medium'>
+                Will be created on save
+              </span>
+            )}
           </div>
 
-          {/* Questions section */}
-          <div className='mt-8 border-t pt-6'>
-            <div className='mb-6'>
-              <div className='mb-3 flex items-center justify-between gap-3'>
-                <h4 className='text-foreground text-lg font-semibold'>Questions</h4>
-                {!quizUuid && (
-                  <span className='bg-muted text-muted-foreground rounded-full px-2.5 py-1 text-xs font-medium'>
-                    Will be created on save
-                  </span>
-                )}
-              </div>
-
-              <div className='flex w-full flex-row flex-wrap items-center justify-between gap-3'>
-                <div className='flex flex-wrap gap-2'>
-                  {QUESTION_TYPES.map(type => (
-                    <Button
-                      key={type.value}
-                      size='sm'
-                      variant='outline'
-                      onClick={() => addQuestion(type.value)}
-                    >
-                      + {type.label}
-                    </Button>
-                  ))}
-                </div>
-
-                <Button variant='outline' onClick={openBulkUploadSheet}>
-                  <FileText className='mr-2 h-4 w-4' />
-                  Paste Bulk Questions
+          <div className='flex w-full flex-row flex-wrap items-center justify-between gap-3'>
+            <div className='flex flex-wrap gap-2'>
+              {QUESTION_TYPES.map(type => (
+                <Button key={type.value} size='sm' variant='outline' onClick={() => addQuestion(type.value)}>
+                  + {type.label}
                 </Button>
-              </div>
+              ))}
             </div>
 
-            <TooltipProvider>
-              <div className='overflow-hidden rounded-lg border'>
-                <table className='w-full'>
-                  <thead>
-                    <tr className='bg-muted border-b'>
-                      <th className='text-foreground w-1/3 px-4 py-3 text-left text-sm font-semibold'>
-                        Question
-                      </th>
-                      <th className='text-foreground px-4 py-3 text-left text-sm font-semibold'>
-                        Answer/Options
-                      </th>
-                      <th className='text-foreground w-24 px-4 py-3 text-left text-sm font-semibold'>
-                        Points
-                      </th>
-                    </tr>
-                  </thead>
-                  <tbody className='divide-y'>
-                    {questions.length > 0 ? (
-                      questions.map((q, qIndex) => (
-                        <QuestionRow
-                          key={`question-${qIndex}`}
-                          question={q}
-                          qIndex={qIndex}
-                          updateQuestionText={updateQuestionText}
-                          updateQuestionPoint={updateQuestionPoint}
-                          updateOptionText={updateOptionText}
-                          toggleCorrectOption={toggleCorrectOption}
-                          setCorrectOption={setCorrectOption}
-                          addOption={addOption}
-                          deleteOption={deleteOption}
-                          updatePairText={updatePairText}
-                          deletePair={deletePair}
-                          addPair={addPair}
-                          deleteQuestion={deleteQuestion}
-                        />
-                      ))
-                    ) : (
-                      <tr>
-                        <td colSpan={3} className='text-muted-foreground py-12 text-center text-sm'>
-                          <div className='rounded-lg border border-dashed py-8'>
-                            No questions added yet. Click "Add Question" to get started.
-                          </div>
-                        </td>
-                      </tr>
-                    )}
-                  </tbody>
-                </table>
-              </div>
-            </TooltipProvider>
+            <Button variant='outline' onClick={openBulkUploadSheet}>
+              <FileText className='mr-2 h-4 w-4' />
+              Paste Bulk Questions
+            </Button>
           </div>
         </div>
-      )}
+
+        <TooltipProvider>
+          <div className='overflow-hidden rounded-lg border'>
+            <table className='w-full'>
+              <thead>
+                <tr className='bg-muted border-b'>
+                  <th className='text-foreground w-1/3 px-4 py-3 text-left text-sm font-semibold'>
+                    Question
+                  </th>
+                  <th className='text-foreground px-4 py-3 text-left text-sm font-semibold'>
+                    Answer/Options
+                  </th>
+                  <th className='text-foreground w-24 px-4 py-3 text-left text-sm font-semibold'>
+                    Points
+                  </th>
+                </tr>
+              </thead>
+              <tbody className='divide-y'>
+                {questions.length > 0 ? (
+                  questions.map((q, qIndex) => (
+                    <QuestionRow
+                      key={`question-${qIndex}`}
+                      question={q}
+                      qIndex={qIndex}
+                      updateQuestionText={updateQuestionText}
+                      updateQuestionPoint={updateQuestionPoint}
+                      updateOptionText={updateOptionText}
+                      toggleCorrectOption={toggleCorrectOption}
+                      setCorrectOption={setCorrectOption}
+                      addOption={addOption}
+                      deleteOption={deleteOption}
+                      updatePairText={updatePairText}
+                      deletePair={deletePair}
+                      addPair={addPair}
+                      deleteQuestion={deleteQuestion}
+                    />
+                  ))
+                ) : (
+                  <tr>
+                    <td colSpan={3} className='text-muted-foreground py-12 text-center text-sm'>
+                      <div className='rounded-lg border border-dashed py-8'>
+                        No questions added yet. Click "Add Question" to get started.
+                      </div>
+                    </td>
+                  </tr>
+                )}
+              </tbody>
+            </table>
+          </div>
+        </TooltipProvider>
+      </div>
+
       <DeleteConfirmationDialog
         open={showDeleteQuizDialog}
         onOpenChange={setShowDeleteQuizDialog}

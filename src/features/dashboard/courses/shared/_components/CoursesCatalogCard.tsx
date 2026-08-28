@@ -180,7 +180,7 @@ export function CoursesCatalogCard({ card, type, onPrimaryAction }: CoursesCatal
             </Button>
           )}
 
-          <Button
+          {/* <Button
             type='button'
             className={cn(
               'h-9 rounded-sm text-sm shadow-none',
@@ -188,7 +188,7 @@ export function CoursesCatalogCard({ card, type, onPrimaryAction }: CoursesCatal
             onClick={() => router.push(`/dashboard/instructor/courses/apply/${card.id}`)}
           >
             New Apply to train
-          </Button>
+          </Button> */}
 
           {/* Primary CTA */}
           {card.ctaKind === 'apply-course' || card.ctaKind === 'apply-program' ? (

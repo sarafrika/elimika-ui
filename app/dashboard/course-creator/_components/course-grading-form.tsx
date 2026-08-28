@@ -1,11 +1,9 @@
 'use client';
 
 import { useQuery } from '@tanstack/react-query';
-import { Plus } from 'lucide-react';
 import { useEffect, useMemo, useState } from 'react';
 import { Input } from '../../../../components/ui/input';
 import { Label } from '../../../../components/ui/label';
-import Spinner from '../../../../components/ui/spinner';
 import { Switch } from '../../../../components/ui/switch';
 import { getCourseAssessmentsOptions } from '../../../../services/client/@tanstack/react-query.gen';
 import type { CourseAssessment } from '../../../../services/client/types.gen';
@@ -69,7 +67,7 @@ export default function CourseGradingForm({ courseUuid }: CourseGradingFormProps
 
   return (
     <div className='space-y-6'>
-      <div className='bg-card rounded-xl border shadow-sm'>
+      {/* <div className='bg-card rounded-xl border shadow-sm'>
         <div className='flex flex-col gap-1 border-b px-6 py-5 sm:flex-row sm:items-center sm:justify-between'>
           <div>
             <h3 className='text-foreground text-lg font-bold'>Course Grading Components</h3>
@@ -150,7 +148,7 @@ export default function CourseGradingForm({ courseUuid }: CourseGradingFormProps
             </table>
           </div>
         )}
-      </div>
+      </div> */}
 
       <div className='flex flex-col gap-4'>
         {/* <div className='bg-card rounded-xl border shadow-sm'>

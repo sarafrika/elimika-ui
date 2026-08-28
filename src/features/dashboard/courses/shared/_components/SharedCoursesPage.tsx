@@ -263,7 +263,7 @@ const createCatalogCards = (
         : isInstructorApplyCard
           ? isOrganisationDomain
             ? !canOrganisationApply ||
-              Boolean(applicationStatus && !REAPPLYABLE_OR_APPROVED.has(applicationStatus))
+            Boolean(applicationStatus && !REAPPLYABLE_OR_APPROVED.has(applicationStatus))
             : Boolean(applicationStatus && !REAPPLYABLE.has(applicationStatus))
           : false,
 
@@ -436,6 +436,7 @@ export function SharedCoursesPage({ domain }: SharedCoursesPageProps) {
   const courses = useMemo(() => coursesResponse?.data?.content ?? [], [coursesResponse]);
   const programs = useMemo(() => programsResponse?.data?.content ?? [], [programsResponse]);
   const categories = useMemo(() => categoriesResponse?.data?.content ?? [], [categoriesResponse]);
+
 
   const { data: instructorCourseApplications, isFetching: instructorCourseApplicationsFetching } =
     useQuery({
@@ -906,7 +907,7 @@ export function SharedCoursesPage({ domain }: SharedCoursesPageProps) {
 
         const matchesPrice =
           filters.price === 'all' ||
-          (filters.price === 'free' ? !item.price || item.price <= 0 : (item.price ?? 0) > 0);
+          (filters.price === 'free' ? !item.minimumRate || item.minimumRate <= 0 : (item.minimumRate ?? 0) > 0);
 
         const matchesContentType =
           filters.contentType === 'all-courses' ||
