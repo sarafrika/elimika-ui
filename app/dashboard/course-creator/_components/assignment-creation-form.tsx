@@ -414,7 +414,6 @@ export const AssignmentCreationForm = (props: AssignmentCreationFormProps) => {
         </div>
       ) : (
         <div className='flex flex-col gap-6'>
-          <Separator />
           {!assignmentData?.is_published && assignmentData?.title && (
             <div className='border-destructive/20 bg-destructive/5 text-destructive rounded-md border p-3 text-sm'>
               This assignment is in draft mode and is not visible to instructors until it is

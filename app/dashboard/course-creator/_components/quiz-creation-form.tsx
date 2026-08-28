@@ -17,7 +17,6 @@ import {
   SelectTrigger,
   SelectValue,
 } from '../../../../components/ui/select';
-import { Separator } from '../../../../components/ui/separator';
 import Spinner from '../../../../components/ui/spinner';
 import { Textarea } from '../../../../components/ui/textarea';
 import {
@@ -182,8 +181,8 @@ const QuestionRow = ({
                 key={`tf-${qIndex}-${oIndex}`}
                 onClick={() => setCorrectOption(qIndex, oIndex)}
                 className={`flex cursor-pointer items-center gap-3 rounded-lg border-2 p-3 transition-all ${opt.isCorrect
-                    ? 'border-primary bg-primary/10'
-                    : 'border-border hover:border-primary/50'
+                  ? 'border-primary bg-primary/10'
+                  : 'border-border hover:border-primary/50'
                   }`}
               >
                 <div
@@ -513,7 +512,7 @@ export const QuizCreationForm = (props: QuizCreationFormProps) => {
       <div className='flex items-center justify-between gap-4 border-b pb-4'>
         <div className='space-y-1'>
           <h3 className='text-foreground text-lg font-bold uppercase'>
-            QUIZ: {selectedLesson?.title || 'Selected lesson'}
+            {selectedLesson?.title || 'Selected lesson'}
           </h3>
           <p className='text-muted-foreground text-xs'>
             {quizUuid && quizUuid !== '' ? 'Editing an existing quiz' : 'Create a new quiz for this lesson'}
@@ -525,7 +524,6 @@ export const QuizCreationForm = (props: QuizCreationFormProps) => {
       </div>
 
       <div className='flex flex-col gap-6'>
-        <Separator />
         {selectedQuizData.title && selectedQuizData?.status !== 'published' && (
           <div className='border-destructive/20 bg-destructive/5 text-destructive rounded-md border p-3 text-sm'>
             This quiz is in draft mode and is not visible to instructors until it is published.

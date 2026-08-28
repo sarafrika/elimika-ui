@@ -1217,8 +1217,8 @@ export default function CreateCoursePage() {
                                                 side='right'
                                                 className='flex h-full w-full max-w-4xl flex-col overflow-hidden p-0 sm:max-w-4xl'
                                             >
-                                                <SheetHeader className='space-y-2 px-6 pt-6'>
-                                                    <SheetTitle>
+                                                <SheetHeader className='px-6 pt-6'>
+                                                    <SheetTitle className='font-semibold text-xl' >
                                                         {assessmentMode === 'Quiz' ? 'Quiz Builder' : 'Assignment Builder'}
                                                     </SheetTitle>
                                                     <SheetDescription>
@@ -1228,7 +1228,7 @@ export default function CreateCoursePage() {
                                                     </SheetDescription>
                                                 </SheetHeader>
 
-                                                <div className='mt-6 overflow-y-auto px-6 pb-6'>
+                                                <div className='overflow-y-auto px-6 pb-6'>
                                                     <AssessmentCreation
                                                         key={`${assessmentMode}-${selectedQuizUuid ?? selectedAssignmentUuid ?? 'new'}-${selectedAssessmentLessonId || 'lesson'}`}
                                                         course={courseApiResponse}
