@@ -67,7 +67,7 @@ export function OverviewClassInvitesPanel({
           className="mx-auto bg-primary flex max-w-fit self-center items-center justify-center gap-3 rounded-md px-4 py-3 text-[0.96rem] font-medium transition hover:bg-primary/90"
         >
           <CalendarDays className="size-4 shrink-0" />
-          <span className="truncate">Invite Past Students</span>
+          <span className="truncate">Invite Students</span>
           <span aria-hidden="true">›</span>
         </Button>
       </div>

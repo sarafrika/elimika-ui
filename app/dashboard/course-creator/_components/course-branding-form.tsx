@@ -15,7 +15,6 @@ import { toast } from 'sonner';
 import * as z from 'zod';
 import { Button } from '../../../../components/ui/button';
 import Spinner from '../../../../components/ui/spinner';
-import { useStepper } from '../../../../components/ui/stepper';
 import {
   getCourseByUuidQueryKey,
   updateCourseMutation,
@@ -24,6 +23,7 @@ import {
   uploadCourseThumbnailMutation,
 } from '../../../../services/client/@tanstack/react-query.gen';
 import DragDropUpload from '../../student/assignment/drag-drop';
+import { useOptionalStepper } from '../courses/create-course/stepper';
 import { FormSection } from './course-creation-form';
 import {
   type CourseCreationFormValues,
@@ -73,6 +73,7 @@ export type CourseFormProps = {
   editingCourseId?: string;
   courseId?: string;
   successResponse?: (data: unknown) => void;
+  nextStepAfterSave?: number;
 };
 
 export type CourseFormRef = {
@@ -155,7 +156,7 @@ export const brandingSchema = courseCreationSchema.pick({
 type BrandingFormValues = z.infer<typeof brandingSchema>;
 
 export const CourseBrandingForm = forwardRef<CourseFormRef, CourseFormProps>(
-  ({ showSubmitButton, initialValues, editingCourseId, successResponse }, _ref) => {
+  ({ showSubmitButton, initialValues, editingCourseId, successResponse, nextStepAfterSave = 7 }, _ref) => {
     const form = useForm<BrandingFormValues>({
       resolver: zodResolver(brandingSchema),
       defaultValues: {
@@ -171,7 +172,8 @@ export const CourseBrandingForm = forwardRef<CourseFormRef, CourseFormProps>(
     const courseCreatorContext = useOptionalCourseCreator();
     const courseCreatorProfile = courseCreatorContext?.profile;
     const authorUuid = courseCreatorProfile?.uuid ?? instructor?.uuid ?? '';
-    const { setActiveStep } = useStepper();
+    const stepper = useOptionalStepper();
+    const setActiveStep = stepper?.setActiveStep ?? (() => undefined);
 
     const [thumbnailPreview, setThumbnailPreview] = useState<string | null>(null);
     const [bannerPreview, setBannerPreview] = useState<string | null>(null);
@@ -268,7 +270,7 @@ export const CourseBrandingForm = forwardRef<CourseFormRef, CourseFormProps>(
                 queryClient.invalidateQueries({
                   queryKey: getCourseByUuidQueryKey({ path: { uuid: editingCourseId as string } }),
                 });
-                setActiveStep(7);
+                setActiveStep(nextStepAfterSave);
                 return;
               }
 

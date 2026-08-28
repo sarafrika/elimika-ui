@@ -20,11 +20,10 @@ import {
 import {
   Form,
   FormControl,
-  FormDescription,
   FormField,
   FormItem,
   FormLabel,
-  FormMessage,
+  FormMessage
 } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { ScrollArea } from '@/components/ui/scroll-area';
@@ -35,12 +34,19 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
+import {
+  Sheet,
+  SheetContent,
+  SheetDescription,
+  SheetHeader,
+  SheetTitle,
+} from '@/components/ui/sheet';
 import Spinner from '@/components/ui/spinner';
 import { Textarea } from '@/components/ui/textarea';
 import {
+  addCourseAssessmentMutation,
   addCourseLessonMutation,
   addLessonContentMutation,
-  addCourseAssessmentMutation,
   deleteCourseAssessmentMutation,
   getAllContentTypesOptions,
   getCourseAssessmentsQueryKey,
@@ -53,8 +59,7 @@ import {
   updateLessonContentMutation,
   uploadLessonMediaMutation,
 } from '@/services/client/@tanstack/react-query.gen';
-import type { AddCourseAssessmentData } from '@/services/client/types.gen';
-import type { CourseAssessment, Lesson, LessonContent } from '@/services/client/types.gen';
+import type { AddCourseAssessmentData, CourseAssessment, Lesson, LessonContent } from '@/services/client/types.gen';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import clsx from 'clsx';
@@ -72,6 +77,8 @@ import {
   FileText,
   FileVideo,
   Grip,
+  Headphones,
+  ImageIcon,
   LinkIcon,
   MoreVertical,
   PenLine,
@@ -206,10 +213,14 @@ export type ContentType = keyof typeof CONTENT_TYPES;
 
 export const getContentTypeIcon = (type: ContentType) => {
   switch (type) {
+    case 'AUDIO':
+      return <Headphones className='h-4 w-4' />;
     case 'VIDEO':
       return <VideoIcon className='h-4 w-4' />;
     case 'TEXT':
       return <FileText className='h-4 w-4' />;
+    case 'IMAGE':
+      return <ImageIcon className='h-4 w-4' />;
     case 'LINK':
       return <LinkIcon className='h-4 w-4' />;
     case 'PDF':
@@ -248,13 +259,14 @@ const ACCEPTED_FILE_TYPES = {
   [CONTENT_TYPES.AUDIO]: '.mp3,.wav,audio/*',
   [CONTENT_TYPES.VIDEO]: '.mp4,.webm,video/*',
   [CONTENT_TYPES.PDF]: '.pdf',
+  [CONTENT_TYPES.IMAGE]: 'image/*',
 };
 
 const ContentTypeIcons = {
   AUDIO: FileAudio,
   VIDEO: FileVideo,
   TEXT: FileText,
-  IMAGE: FileText,
+  IMAGE: ImageIcon,
   LINK: LinkIcon,
   PDF: FileIcon,
   YOUTUBE: Youtube,
@@ -614,18 +626,54 @@ function LessonCreationForm({
   onCancel,
   className,
   courseId,
+  lessonId,
+  initialValues,
   refetch,
 }: AppLessonCreationFormProps) {
+  const normalizedInitialValues = React.useMemo<Partial<LessonFormValues> | undefined>(() => {
+    if (!initialValues) return undefined;
+
+    return {
+      number: initialValues.number ?? 0,
+      title: initialValues.title ?? '',
+      description: initialValues.description ?? '',
+      objectives: initialValues.objectives ?? '',
+      resources: initialValues.resources ?? [],
+      duration_hours: initialValues.duration_hours ?? 0,
+      duration_minutes: initialValues.duration_minutes ?? 0,
+      uuid: initialValues.uuid,
+    };
+  }, [initialValues]);
+
   const form = useForm<LessonFormValues>({
     resolver: zodResolver(lessonFormSchema),
     defaultValues: {
-      number: 0,
-      title: '',
-      description: '',
-      objectives: '',
-      resources: [],
+      number: normalizedInitialValues?.number ?? 0,
+      title: normalizedInitialValues?.title ?? '',
+      description: normalizedInitialValues?.description ?? '',
+      objectives: normalizedInitialValues?.objectives ?? '',
+      resources: normalizedInitialValues?.resources ?? [],
+      duration_hours: normalizedInitialValues?.duration_hours ?? 0,
+      duration_minutes: normalizedInitialValues?.duration_minutes ?? 0,
+      uuid: normalizedInitialValues?.uuid,
+      ...normalizedInitialValues,
     },
   });
+
+  React.useEffect(() => {
+    if (!normalizedInitialValues) return;
+
+    form.reset({
+      number: normalizedInitialValues.number ?? 0,
+      title: normalizedInitialValues.title ?? '',
+      description: normalizedInitialValues.description ?? '',
+      objectives: normalizedInitialValues.objectives ?? '',
+      resources: normalizedInitialValues.resources ?? [],
+      duration_hours: normalizedInitialValues.duration_hours ?? 0,
+      duration_minutes: normalizedInitialValues.duration_minutes ?? 0,
+      uuid: normalizedInitialValues.uuid,
+    });
+  }, [form, normalizedInitialValues]);
 
   const handleSubmitError = (errors: FieldErrors<LessonFormValues>) => {
     const firstFieldWithError = Object.keys(errors)[0] as keyof LessonFormValues;
@@ -659,6 +707,9 @@ function LessonCreationForm({
 
   // MUTATION
   const createLessonMutation = useMutation(addCourseLessonMutation());
+  const updateLessonMutation = useMutation(updateCourseLessonMutation());
+
+  const isEditMode = Boolean(lessonId && normalizedInitialValues?.uuid);
 
   const onSubmitCreateLesson: SubmitHandler<LessonFormValues> = values => {
     const createLessonBody = {
@@ -674,22 +725,63 @@ function LessonCreationForm({
       lesson_sequence: `Lesson ${values?.number}`,
     };
 
+    const handleSuccess = (message?: string) => {
+      qc.invalidateQueries({
+        queryKey: getCourseLessonsQueryKey({
+          path: { courseUuid: courseId as string },
+          query: { pageable: { page: 0, size: 100 } },
+        }),
+      });
+
+      if (lessonId) {
+        qc.invalidateQueries({
+          queryKey: getCourseLessonQueryKey({
+            path: { courseUuid: courseId as string, lessonUuid: lessonId as string },
+          }),
+        });
+      }
+
+      refetch?.();
+      toast.success(message);
+      onCancel();
+    };
+
+    if (isEditMode && lessonId) {
+      updateLessonMutation.mutate(
+        {
+          body: createLessonBody as UpdateCourseLessonVariables['body'],
+          path: { courseUuid: courseId as string, lessonUuid: lessonId as string },
+        },
+        {
+          onSuccess: data => handleSuccess(data?.message),
+          onError: data => {
+            // @ts-expect-error
+            if (data?.error) {
+              // @ts-expect-error
+              const errorMessage = (data.error as string) || data?.message;
+
+              if (
+                typeof errorMessage === 'string' &&
+                errorMessage.includes('lessons_course_uuid_lesson_number_key')
+              ) {
+                toast.error('Duplicate lesson number found.');
+              } else {
+                toast.error('An unexpected error occurred.');
+              }
+            }
+          },
+        }
+      );
+      return;
+    }
+
     createLessonMutation.mutate(
       {
         body: createLessonBody as AddCourseLessonVariables['body'],
         path: { courseUuid: courseId as string },
       },
       {
-        onSuccess: data => {
-          qc.invalidateQueries({
-            queryKey: getCourseLessonsQueryKey({
-              path: { courseUuid: courseId as string },
-              query: { pageable: { page: 0, size: 100 } },
-            }),
-          });
-          toast.success(data?.message);
-          onCancel();
-        },
+        onSuccess: data => handleSuccess(data?.message),
         onError: data => {
           // @ts-expect-error
           if (data?.error) {
@@ -776,69 +868,18 @@ function LessonCreationForm({
           />
         </div>
 
-        <div className='space-y-4'>
-          <h3 className='text-lg font-medium'>Resources</h3>
-          {resourceFields.map((field, index) => (
-            <div key={field.id} className='space-y-4 rounded-lg border p-4'>
-              <div className='flex items-center justify-between'>
-                <h4 className='font-medium'>Resource {index + 1}</h4>
-                <Button
-                  type='button'
-                  variant='ghost'
-                  size='sm'
-                  onClick={() => removeResource(index)}
-                >
-                  <X className='text-destructive h-4 w-4' />
-                </Button>
-              </div>
-
-              <FormField
-                control={form.control}
-                name={`resources.${index}.title`}
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Resource Title</FormLabel>
-                    <FormControl>
-                      <Input placeholder='Enter resource title' {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-
-              <FormField
-                control={form.control}
-                name={`resources.${index}.url`}
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Resource URL</FormLabel>
-                    <FormControl>
-                      <Input type='url' placeholder='Enter resource URL' {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-            </div>
-          ))}
-
-          <Button
-            type='button'
-            variant='outline'
-            // onClick={() => appendResource({ title: "", url: "" })}
-            onClick={() => toast.message('Cannot add resource at the moment')}
-          >
-            <PlusCircle className='mr-2 h-4 w-4' />
-            Add Resource
-          </Button>
-        </div>
-
         <div className='flex justify-end gap-2 pt-6'>
           <Button type='button' variant='outline' onClick={onCancel}>
             Cancel
           </Button>
           <Button type='submit' className='w-[120px]'>
-            {createLessonMutation.isPending ? <Spinner /> : 'Create Skill'}
+            {isEditMode
+              ? updateLessonMutation.isPending
+                ? <Spinner />
+                : 'Update Skill'
+              : createLessonMutation.isPending
+                ? <Spinner />
+                : 'Create Skill'}
           </Button>
         </div>
       </form>
@@ -1091,6 +1132,7 @@ function LessonEditingForm({
 }
 
 interface LessonContentFormProps {
+  isOpen: boolean; // parent Sheet/Dialog's open state — drives reset-on-close behavior
   onCancel: () => void;
   onSuccess?: () => void;
   className?: string;
@@ -1101,7 +1143,7 @@ interface LessonContentFormProps {
 }
 
 const lessonContentSchema = z.object({
-  content_type: z.enum(['AUDIO', 'VIDEO', 'TEXT', 'LINK', 'PDF', 'YOUTUBE'], {
+  content_type: z.enum(['AUDIO', 'VIDEO', 'TEXT', 'LINK', 'PDF', 'YOUTUBE', 'IMAGE'], {
     required_error: 'Content type is required',
   }),
   content_type_uuid: z.string().min(1, 'Content type UUID is required'),
@@ -1109,15 +1151,28 @@ const lessonContentSchema = z.object({
   content_category: z.string().min(1, 'Content category is required'),
   title: z.string().min(1, 'Title is required'),
   description: z.string().optional(),
-  value: z.unknown().optional(),
-  display_order: z.coerce.number().min(0, 'Order number must be positive'),
+  value: z.string().max(499, 'Value must be less than 500 characters').optional(), display_order: z.coerce.number().min(0, 'Order number must be positive'),
   uuid: z.string().optional(),
 });
 
 export type ContentFormValues = z.infer<typeof lessonContentSchema>;
 
+// Blank slate the form returns to whenever the sheet closes, or opens fresh (not editing).
+const getFreshDefaults = (): ContentFormValues => ({
+  content_type: 'TEXT',
+  content_type_uuid: '',
+  content_category: '',
+  title: '',
+  description: '',
+  value: '',
+  display_order: 0,
+  uuid: undefined,
+});
+
 function LessonContentForm({
+  isOpen,
   onCancel,
+  onSuccess,
   className,
   courseId,
   contentId,
@@ -1128,9 +1183,12 @@ function LessonContentForm({
     if (!initialValues) return undefined;
     return {
       ...initialValues,
-      value: initialValues?.content_text || '',
+      // Text content lives in content_text; media/link content lives in value/file_url.
+      value: initialValues?.content_text || initialValues?.value || '',
     };
   }, [initialValues]);
+
+  const isEditMode = !!initialValues?.uuid;
 
   const draftKey = React.useMemo(
     () => `lesson-content-draft:${courseId}:${lessonId}:${contentId ?? 'new'}`,
@@ -1140,61 +1198,55 @@ function LessonContentForm({
   const form = useForm<ContentFormValues>({
     resolver: zodResolver(lessonContentSchema),
     defaultValues: {
-      content_type: 'TEXT',
-      content_type_uuid: '',
-      content_category: '',
-      title: '',
-      description: '',
-      value: '',
-      display_order: 0,
+      ...getFreshDefaults(),
       ...mappedInitialValues,
     },
   });
 
-  React.useEffect(() => {
-    if (mappedInitialValues) {
-      form.reset({
-        content_type: 'TEXT',
-        content_type_uuid: '',
-        content_category: '',
-        title: '',
-        description: '',
-        display_order: 0,
-        ...mappedInitialValues,
-      });
-    }
-  }, [mappedInitialValues, form]);
-
-  React.useEffect(() => {
-    const savedDraft = localStorage.getItem(draftKey);
-
-    if (savedDraft) {
-      try {
-        const parsed = JSON.parse(savedDraft);
-        form.reset({
-          ...form.getValues(),
-          ...parsed,
-        });
-      } catch {
-        // ignore invalid drafts
-      }
-    }
-  }, [draftKey]);
-
   const { setValue } = form;
   const watchedValues = useWatch({ control: form.control });
+  const watchedContentType = useWatch({ control: form.control, name: 'content_type' });
+  const watchedValue = useWatch({ control: form.control, name: 'value' });
 
   const [draftSaved, setDraftSaved] = useState(false);
 
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const [isDragging, setIsDragging] = useState(false);
+  const [mediaFile, setMediaFile] = React.useState<File | null>(null);
+
+  // Reset the form whenever the sheet opens or closes.
+  // - Opens for edit -> hydrate with the editing content's values.
+  // - Opens fresh (e.g. "Add Image") -> blank form, but keep the preselected content_type.
+  // - Closes (isOpen === false, explicitly) -> wipe everything so the next open never
+  //   shows stale input. We check `=== false` rather than falsy so that if the parent
+  //   hasn't wired the isOpen prop through yet, this never fights with edit-mode
+  //   population — `undefined` is treated the same as "open".
+  React.useEffect(() => {
+    if (isOpen === false) {
+      form.reset(getFreshDefaults());
+      setMediaFile(null);
+      if (!isEditMode) {
+        localStorage.removeItem(draftKey);
+      }
+      return;
+    }
+
+    form.reset({
+      ...getFreshDefaults(),
+      ...mappedInitialValues,
+    });
+    setMediaFile(null);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isOpen, mappedInitialValues]);
+
   useEffect(() => {
+    if (!isOpen) return;
     const timeout = setTimeout(() => {
       localStorage.setItem(draftKey, JSON.stringify(watchedValues ?? {}));
     }, 600); // debounce
 
     return () => clearTimeout(timeout);
-  }, [watchedValues, draftKey]);
-
-  const isEditMode = !!initialValues?.uuid;
+  }, [watchedValues, draftKey, isOpen]);
 
   const contentTypeUuid = useWatch({ control: form.control, name: 'content_type_uuid' });
 
@@ -1208,12 +1260,53 @@ function LessonContentForm({
     return Array.isArray(content) ? content : [];
   }, [contentTypeList]);
 
+  // Resolve the active content-type record. Falls back to matching by name
+  // (content_type) so the correct option is highlighted even before
+  // content_type_uuid has been resolved — e.g. the instant the sheet opens
+  // for "Add Video", before the uuid-sync effect below has run.
   const selectedTypeObj = React.useMemo(() => {
-    if (!contentTypeUuid) return undefined;
-    return contentTypeData.find(item => item.uuid === contentTypeUuid);
-  }, [contentTypeUuid, contentTypeData]);
+    if (contentTypeUuid) {
+      const selectedByUuid = contentTypeData.find(item => item.uuid === contentTypeUuid);
+      if (selectedByUuid) return selectedByUuid;
+    }
 
-  const selectedTypeKey = selectedTypeObj?.name?.toUpperCase() || undefined;
+    const normalizedType = watchedContentType?.toUpperCase();
+    if (!normalizedType) return undefined;
+
+    return contentTypeData.find(item => item.name?.toUpperCase() === normalizedType);
+  }, [contentTypeUuid, contentTypeData, watchedContentType]);
+
+  const selectedTypeKey =
+    selectedTypeObj?.name?.toUpperCase() || watchedContentType?.toUpperCase() || undefined;
+
+  const isMediaUploadType = ['IMAGE', 'VIDEO', 'AUDIO', 'PDF'].includes(selectedTypeKey || '');
+  const isLocalMediaSelected = isMediaUploadType && !!mediaFile;
+  const hasUrlValue =
+    isMediaUploadType && typeof watchedValue === 'string' && watchedValue.trim().length > 0;
+
+  useEffect(() => {
+    if (!selectedTypeKey || !contentTypeData.length) return;
+
+    const matchedType = contentTypeData.find(item => item.name?.toUpperCase() === selectedTypeKey);
+    if (!matchedType) return;
+
+    if (contentTypeUuid !== matchedType.uuid) {
+      setValue('content_type_uuid', matchedType.uuid ?? '');
+    }
+
+    if (
+      matchedType.upload_category &&
+      form.getValues('content_category') !== matchedType.upload_category
+    ) {
+      setValue('content_category', matchedType.upload_category);
+    }
+  }, [contentTypeData, contentTypeUuid, form, selectedTypeKey, setValue]);
+
+  useEffect(() => {
+    if (selectedTypeKey === 'TEXT' && !form.getValues('title')) {
+      setValue('title', 'Text Content');
+    }
+  }, [form, selectedTypeKey, setValue]);
 
   const handleSubmitError = (errors: FieldErrors<ContentFormValues>) => {
     const firstFieldWithError = Object.keys(errors)[0] as keyof ContentFormValues;
@@ -1229,25 +1322,85 @@ function LessonContentForm({
 
   const createLessonContent = useMutation(addLessonContentMutation());
   const updateLessonContent = useMutation(updateLessonContentMutation());
+  const uploadLessonMedia = useMutation(uploadLessonMediaMutation());
 
+  const invalidateLessonContent = () => {
+    qc.invalidateQueries({
+      queryKey: getLessonContentQueryKey({
+        path: {
+          courseUuid: courseId as string,
+          lessonUuid: lessonId as string,
+        },
+      }),
+    });
+  };
+
+  // Dedicated upload path for a locally-selected media file — never goes through
+  // createLessonContent/updateLessonContent, always uploadLessonMediaMutation.
+  const handleUploadMedia = () => {
+    if (!mediaFile) return;
+
+    const values = form.getValues();
+
+    uploadLessonMedia.mutate(
+      {
+        body: { file: mediaFile },
+        path: {
+          courseUuid: courseId as string,
+          lessonUuid: lessonId as string,
+        },
+        query: {
+          content_type_uuid: values.content_type_uuid,
+          title: values.title || 'Media',
+          description: values.description || 'Description',
+          is_required: false,
+        },
+      },
+      {
+        onSuccess: () => {
+          toast.success('Media uploaded successfully');
+          setMediaFile(null);
+          invalidateLessonContent();
+          localStorage.removeItem(draftKey);
+          onSuccess?.();
+          onCancel();
+        },
+        onError: err => {
+          toast.error(getErrorMessage(err) || 'Media upload failed');
+        },
+      }
+    );
+  };
+
+  // Handles everything that ISN'T a local media upload: TEXT content, or a
+  // media type where the user pasted a URL instead of choosing a file.
   const onSubmit = async (data: ContentFormValues) => {
+    if (isMediaUploadType && mediaFile) {
+      // Shouldn't be reachable — the submit button is hidden while a local file is
+      // staged — but guard anyway rather than silently creating a bad record.
+      toast.error('Use the "Upload Content" button to save the selected file.');
+      return;
+    }
+
+    const contentValue = typeof data.value === 'string' ? data.value.trim() : '';
+
+    if (isMediaUploadType && !contentValue) {
+      toast.error('Enter a URL or choose a file to upload.');
+      return;
+    }
+
     const contentBody = {
       lesson_uuid: lessonId as string,
       content_type_uuid: data?.content_type_uuid,
-      title: data?.title,
+      title: selectedTypeKey === 'TEXT' ? data?.title || 'Text Content' : data?.title,
       description: data?.description,
-      content_text: typeof data.value === 'string' ? data.value : '',
-      file_url: '',
-      // file_size_bytes: 157200,
-      // mime_type: '',
+      content_text: selectedTypeKey === 'TEXT' ? contentValue : '',
+      file_url: selectedTypeKey === 'TEXT' ? '' : contentValue,
       display_order: data?.display_order,
       is_required: true,
       created_by: 'instructor@sarafrika.com',
       updated_by: 'instructor@sarafrika.com',
-      // file_size_display: '',
       content_category: data.content_category,
-      // is_downloadable: true,
-      // estimated_duration: `${values.content[0]?.durationHours} hrs ${values.content[0]?.durationMinutes} minutes`,
     };
 
     try {
@@ -1263,14 +1416,14 @@ function LessonContentForm({
           },
           {
             onSuccess: data => {
-              onCancel(); // ✅ always close modal afterward
-              qc.invalidateQueries({
-                queryKey: getLessonContentQueryKey({
-                  path: { courseUuid: courseId as string, lessonUuid: lessonId as string },
-                }),
-              });
+              invalidateLessonContent();
               toast.success(data?.message);
               localStorage.removeItem(draftKey);
+              onSuccess?.();
+              onCancel();
+            },
+            onError: error => {
+              toast.error(getErrorMessage(error) || 'Failed to update content');
             },
           }
         );
@@ -1282,14 +1435,14 @@ function LessonContentForm({
           },
           {
             onSuccess: data => {
-              qc.invalidateQueries({
-                queryKey: getLessonContentQueryKey({
-                  path: { courseUuid: courseId as string, lessonUuid: lessonId as string },
-                }),
-              });
+              invalidateLessonContent();
               toast.success(data?.message);
               localStorage.removeItem(draftKey);
+              onSuccess?.();
               onCancel();
+            },
+            onError: error => {
+              toast.error(getErrorMessage(error) || 'Failed to create content');
             },
           }
         );
@@ -1300,12 +1453,6 @@ function LessonContentForm({
   };
 
   const isPending = createLessonContent.isPending || updateLessonContent.isPending;
-
-  const fileInputRef = useRef<HTMLInputElement>(null);
-  const [isDragging, setIsDragging] = useState(false);
-  const [mediaFile, setMediaFile] = React.useState<File | null>(null);
-
-  const uploadLessonMedia = useMutation(uploadLessonMediaMutation());
 
   return (
     <Form {...form}>
@@ -1348,37 +1495,6 @@ function LessonContentForm({
             )}
           />
 
-          <FormField
-            name='title'
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Title</FormLabel>
-                <FormControl>
-                  <Input placeholder='Enter content title' {...field} />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-
-          <FormField
-            name='description'
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Description</FormLabel>
-                <FormControl>
-                  <textarea
-                    {...field}
-                    placeholder='Enter a brief description'
-                    rows={4}
-                    className='border-input bg-background placeholder:text-muted-foreground focus:ring-ring w-full rounded-md border px-3 py-2 text-sm shadow-sm focus:ring-2 focus:ring-offset-2 focus:outline-none disabled:cursor-not-allowed disabled:opacity-50'
-                  />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-
           <div className='w-full'>
             <FormField
               name='content_type_uuid'
@@ -1397,8 +1513,13 @@ function LessonContentForm({
                         setValue('content_type_uuid', '');
                         setValue('content_category', '');
                       }
+                      setValue('value', '');
+                      setMediaFile(null);
                     }}
-                    value={contentTypeUuid ? JSON.stringify(selectedTypeObj) : ''}
+                    // Driven by selectedTypeObj (not raw contentTypeUuid) so the right
+                    // option is highlighted immediately on open, even before the
+                    // uuid-sync effect below has had a chance to run.
+                    value={selectedTypeObj ? JSON.stringify(selectedTypeObj) : ''}
                   >
                     <FormControl>
                       <SelectTrigger>
@@ -1407,10 +1528,9 @@ function LessonContentForm({
                     </FormControl>
                     <SelectContent>
                       {contentTypeData.map(value => {
-                        const Icon =
-                          ContentTypeIcons[
-                            value.name.toUpperCase() as keyof typeof ContentTypeIcons
-                          ];
+                        const Icon = ContentTypeIcons[
+                          value.name.toUpperCase() as keyof typeof ContentTypeIcons
+                        ];
                         return (
                           <SelectItem key={value.uuid} value={JSON.stringify(value)}>
                             <div className='flex items-center gap-2'>
@@ -1428,172 +1548,197 @@ function LessonContentForm({
             />
           </div>
 
-          {/* Content or File Upload + URL */}
           {selectedTypeKey === 'TEXT' ? (
-            <FormField
-              name='value'
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Content</FormLabel>
-                  <FormControl>
-                    <SimpleEditor value={field.value} onChange={field.onChange} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-          ) : (
-            <>
-              {['PDF', 'AUDIO', 'IMAGE', 'VIDEO'].includes(selectedTypeKey || '') && (
-                <FormField
-                  name='value'
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>File Upload</FormLabel>
-                      <FormControl>
-                        <Input
-                          type='file'
-                          accept={
-                            ACCEPTED_FILE_TYPES[selectedTypeKey as keyof typeof ACCEPTED_FILE_TYPES]
-                          }
-                          onChange={e => field.onChange(e.target.files?.[0])}
-                        />
-                      </FormControl>
-                      <FormDescription>Upload a file or provide a URL below</FormDescription>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-              )}
-
+            <div className='flex flex-col gap-6'>
               <FormField
-                name='value'
+                name='title'
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>
-                      {['VIDEO', 'AUDIO', 'PDF'].includes(selectedTypeKey || '')
-                        ? 'External URL (optional)'
-                        : 'URL (optional)'}
-                    </FormLabel>
+                    <FormLabel>Title</FormLabel>
                     <FormControl>
-                      <Input
-                        type='url'
-                        placeholder={getContentPlaceholder(selectedTypeKey ?? '')}
-                        {...field}
-                      />
+                      <Input placeholder='Enter content title' {...field} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
                 )}
               />
+
+              <FormField
+                name='value'
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Content</FormLabel>
+                    <FormControl>
+                      <SimpleEditor value={field.value} onChange={field.onChange} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            </div>
+          ) : (
+            <>
+              <FormField
+                name='title'
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Title</FormLabel>
+                    <FormControl>
+                      <Input placeholder='Enter content title' {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              <FormField
+                name='description'
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Description</FormLabel>
+                    <FormControl>
+                      <Input placeholder='Enter content description' {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              {/* URL entry — hidden once a local file is staged, so only one input path is live at a time. */}
+              {!isLocalMediaSelected && (
+                <FormField
+                  name='value'
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>URL</FormLabel>
+
+                      <FormControl>
+                        <Input
+                          type='url'
+                          placeholder={getContentPlaceholder(selectedTypeKey ?? '')}
+                          {...field}
+                        />
+                      </FormControl>
+
+                      {isMediaUploadType && (
+                        <p className='text-muted-foreground text-xs'>
+                          Paste a URL, or clear this and upload a file below — not both.
+                        </p>
+                      )}
+
+                      <FormMessage className='text-xs' />
+                    </FormItem>
+                  )}
+                />
+              )}
+
+              {/* Upload dropzone — hidden as soon as a URL has been typed, and reappears if the URL is cleared. */}
+              {isMediaUploadType && !hasUrlValue ? (
+                <div
+                  className={cn(
+                    'space-y-4 rounded-lg border-2 border-dashed p-6 transition-colors',
+                    isDragging ? 'border-primary bg-primary/5' : 'border-muted-foreground/30'
+                  )}
+                  onDragOver={e => {
+                    e.preventDefault();
+                    setIsDragging(true);
+                  }}
+                  onDragLeave={() => setIsDragging(false)}
+                  onDrop={e => {
+                    e.preventDefault();
+                    setIsDragging(false);
+
+                    const file = e.dataTransfer.files?.[0];
+                    if (file) {
+                      setMediaFile(file);
+                      setValue('value', '');
+                    }
+                  }}
+                >
+                  <h4 className='text-sm font-medium'>
+                    {selectedTypeKey === 'IMAGE' ? 'Attach Image' : 'Attach File'}
+                  </h4>
+
+                  <Input
+                    ref={fileInputRef}
+                    type='file'
+                    accept={
+                      ACCEPTED_FILE_TYPES[selectedTypeKey as keyof typeof ACCEPTED_FILE_TYPES] ??
+                      'image/*,application/pdf,video/*,audio/*'
+                    }
+                    className='hidden'
+                    onChange={e => {
+                      const file = e.target.files?.[0] || null;
+                      setMediaFile(file);
+                      if (file) setValue('value', '');
+                    }}
+                  />
+
+                  {!mediaFile ? (
+                    <div
+                      role='button'
+                      tabIndex={0}
+                      onClick={() => fileInputRef.current?.click()}
+                      onKeyDown={e => e.key === 'Enter' && fileInputRef.current?.click()}
+                      className='bg-muted/40 hover:bg-muted flex cursor-pointer flex-col items-center justify-center gap-2 rounded-md border px-6 py-8 text-center'
+                    >
+                      <p className='text-sm font-medium'>
+                        Drag & drop a file here, or click to browse
+                      </p>
+                      <p className='text-muted-foreground text-[13px]'>
+                        {selectedTypeKey === 'IMAGE'
+                          ? 'Upload an image file'
+                          : 'Upload a media file'}
+                      </p>
+                    </div>
+                  ) : (
+                    <div className='bg-muted/40 flex items-center justify-between gap-3 rounded-md border px-4 py-3'>
+                      <p className='text-primary min-w-0 flex-1 truncate text-[13px]'>
+                        {mediaFile.name}
+                      </p>
+                      <div className='flex shrink-0 items-center gap-2'>
+                        <Button
+                          type='button'
+                          variant='ghost'
+                          size='sm'
+                          onClick={() => fileInputRef.current?.click()}
+                        >
+                          Replace
+                        </Button>
+                        <Button
+                          type='button'
+                          variant='ghost'
+                          size='sm'
+                          onClick={() => setMediaFile(null)}
+                        >
+                          Remove
+                        </Button>
+                      </div>
+                    </div>
+                  )}
+
+                  {mediaFile ? (
+                    <Button
+                      type='button'
+                      variant='secondary'
+                      className='w-full'
+                      disabled={uploadLessonMedia.isPending}
+                      onClick={handleUploadMedia}
+                    >
+                      {uploadLessonMedia.isPending ? (
+                        <>
+                          <Spinner className='mr-2 h-4 w-4' />
+                          Uploading...
+                        </>
+                      ) : (
+                        'Upload Content'
+                      )}
+                    </Button>
+                  ) : null}
+                </div>
+              ) : null}
             </>
           )}
-
-          {/* Lesson Media Upload (Separate Endpoint) */}
-          <div
-            className={cn(
-              'space-y-4 rounded-lg border-2 border-dashed p-6 transition-colors',
-              isDragging ? 'border-primary bg-primary/5' : 'border-muted-foreground/30'
-            )}
-            onDragOver={e => {
-              e.preventDefault();
-              setIsDragging(true);
-            }}
-            onDragLeave={() => setIsDragging(false)}
-            onDrop={e => {
-              e.preventDefault();
-              setIsDragging(false);
-
-              const file = e.dataTransfer.files?.[0];
-              if (file) {
-                setMediaFile(file);
-              }
-            }}
-          >
-            <h4 className='text-sm font-medium'>Lesson Media</h4>
-
-            {/* Hidden file input */}
-            <Input
-              ref={fileInputRef}
-              type='file'
-              accept='image/*,application/pdf,video/*'
-              className='hidden'
-              onChange={e => setMediaFile(e.target.files?.[0] || null)}
-            />
-
-            {/* Clickable drop area */}
-            <div
-              role='button'
-              tabIndex={0}
-              onClick={() => fileInputRef.current?.click()}
-              onKeyDown={e => e.key === 'Enter' && fileInputRef.current?.click()}
-              className='bg-muted/40 hover:bg-muted flex cursor-pointer flex-col items-center justify-center gap-2 rounded-md border px-6 py-8 text-center'
-            >
-              <p className='text-sm font-medium'>Drag & drop a file here, or click to browse</p>
-
-              {mediaFile ? (
-                <p className='text-primary max-w-full truncate text-[13px]'>{mediaFile.name}</p>
-              ) : (
-                <p className='text-muted-foreground text-[13px]'>Audios, PDFs, or Videos</p>
-              )}
-            </div>
-
-            <Button
-              type='button'
-              variant='secondary'
-              disabled={!mediaFile || uploadLessonMedia.isPending}
-              onClick={() => {
-                if (!mediaFile) return;
-
-                uploadLessonMedia.mutate(
-                  {
-                    body: { file: mediaFile },
-                    path: {
-                      courseUuid: courseId as string,
-                      lessonUuid: lessonId as string,
-                    },
-                    query: {
-                      content_type_uuid: contentTypeUuid,
-                      title: 'Media',
-                      description: 'Description',
-                      is_required: false,
-                    },
-                  },
-                  {
-                    onSuccess: () => {
-                      toast.success('Media uploaded successfully');
-                      setMediaFile(null);
-
-                      qc.invalidateQueries({
-                        queryKey: getLessonContentQueryKey({
-                          path: {
-                            courseUuid: courseId as string,
-                            lessonUuid: lessonId as string,
-                          },
-                        }),
-                      });
-                    },
-                    onError: err => {
-                      toast.error(getErrorMessage(err) || 'Media upload failed');
-                    },
-                  }
-                );
-              }}
-            >
-              {uploadLessonMedia.isPending ? (
-                <>
-                  <Spinner className='mr-2 h-4 w-4' />
-                  Uploading...
-                </>
-              ) : (
-                'Upload Media'
-              )}
-            </Button>
-
-            <p className='text-muted-foreground text-xs'>
-              Supported formats: Audios, PDFs, and Videos
-            </p>
-          </div>
         </div>
 
         {/* Form Buttons */}
@@ -1601,18 +1746,22 @@ function LessonContentForm({
           <Button type='button' variant='outline' onClick={onCancel}>
             Cancel
           </Button>
-          <Button type='submit' className='min-w-fit px-3' disabled={isPending}>
-            {isPending ? (
-              <>
-                <Spinner className='mr-2 h-4 w-4' />
-                {isEditMode ? 'Updating...' : 'Creating...'}
-              </>
-            ) : isEditMode ? (
-              'Update Skill Content'
-            ) : (
-              'Create Skill Content'
-            )}
-          </Button>
+          {/* Hidden while a local file is staged — that path is committed exclusively
+              through the "Upload Content" button/mutation above. */}
+          {!isLocalMediaSelected ? (
+            <Button type='submit' className='min-w-fit px-3' disabled={isPending}>
+              {isPending ? (
+                <>
+                  <Spinner className='mr-2 h-4 w-4' />
+                  {isEditMode ? 'Updating...' : 'Creating...'}
+                </>
+              ) : isEditMode ? (
+                'Update Content'
+              ) : (
+                'Create Content'
+              )}
+            </Button>
+          ) : null}
         </div>
       </form>
     </Form>
@@ -1775,7 +1924,7 @@ function AssessmentCreationForm({
           },
         }
       );
-    } catch (_err) {}
+    } catch (_err) { }
   };
 
   return (
@@ -2258,31 +2407,42 @@ function LessonDialog({
   onOpenChange,
   courseId,
   lessonId,
+  initialValues,
   refetch,
   onCancel,
 }: AddLessonDialogProps) {
-  return (
-    <Dialog open={isOpen} onOpenChange={onOpenChange}>
-      <DialogContent className='flex max-w-6xl flex-col p-0'>
-        <DialogHeader className='border-b px-6 py-4'>
-          <DialogTitle className='text-xl'>Create New Skill</DialogTitle>
-          <DialogDescription className='text-muted-foreground text-sm'>
-            Fill in the skill details below. You&apos;ll be able to add assessment rubric, quizzes
-            and assignments after you&apos;ve created the skill.
-          </DialogDescription>
-        </DialogHeader>
+  const isEditMode = Boolean(initialValues?.uuid || lessonId);
 
-        <ScrollArea className='h-[calc(90vh-8rem)]'>
+  return (
+    <Sheet open={isOpen} onOpenChange={onOpenChange}>
+      <SheetContent
+        side='right'
+        className='flex w-full flex-col p-0 sm:max-w-4xl'
+      >
+        <SheetHeader className='border-b px-6 py-4 text-left'>
+          <SheetTitle className='text-xl'>
+            {isEditMode ? 'Edit Skill' : 'Create New Skill'}
+          </SheetTitle>
+
+          <SheetDescription className='text-muted-foreground text-sm'>
+            {isEditMode
+              ? 'Update the skill details below.'
+              : 'Fill in the skill details below. You&apos;ll be able to add assessment rubric, quizzes and assignments after you&apos;ve created the skill.'}
+          </SheetDescription>
+        </SheetHeader>
+
+        <ScrollArea className='min-h-0 flex-1'>
           <LessonCreationForm
             onCancel={onCancel}
             className='px-6 pb-6'
             courseId={courseId}
             lessonId={lessonId}
-            refetch={refetch ?? (() => {})}
+            initialValues={initialValues}
+            refetch={refetch ?? (() => { })}
           />
         </ScrollArea>
-      </DialogContent>
-    </Dialog>
+      </SheetContent>
+    </Sheet>
   );
 }
 
@@ -2299,25 +2459,27 @@ function LessonContentDialog({
   const draftKey = `lesson-content-draft:${courseId}:${lessonId}:${contentId ?? 'new'}`;
 
   return (
-    <Dialog
+    <Sheet
       open={isOpen}
-      onOpenChange={isOpen => {
-        if (!isOpen) onCancel();
+      onOpenChange={open => {
+        if (!open) onCancel();
       }}
     >
-      <DialogContent className='flex max-w-6xl flex-col p-0'>
-        <DialogHeader className='border-b px-6 py-4'>
-          <DialogTitle className='text-xl'>
+      <SheetContent
+        side='right'
+        className='flex h-full w-full max-w-4xl flex-col overflow-hidden p-0 sm:max-w-4xl'      >
+        <SheetHeader className='border-b px-6 py-4 text-left'>
+          <SheetTitle className='text-xl'>
             {isEditMode ? 'Edit Skill Content' : 'Create New Skill Content'}
-          </DialogTitle>
-          <DialogDescription className='text-muted-foreground text-sm'>
+          </SheetTitle>
+          <SheetDescription className='text-muted-foreground text-sm'>
             {isEditMode
               ? 'Update the details of your skill content below.'
               : 'Fill in the contents of your skill below.'}
-          </DialogDescription>
-        </DialogHeader>
+          </SheetDescription>
+        </SheetHeader>
 
-        <ScrollArea className='h-[calc(90vh-4rem)] sm:h-[calc(90vh-8rem)]'>
+        <ScrollArea className='min-h-0 flex-1'>
           <LessonContentForm
             onCancel={onCancel}
             className='px-6 pb-6'
@@ -2327,8 +2489,8 @@ function LessonContentDialog({
             initialValues={initialValues}
           />
         </ScrollArea>
-      </DialogContent>
-    </Dialog>
+      </SheetContent>
+    </Sheet>
   );
 }
 
@@ -2353,13 +2515,13 @@ function EditLessonDialog({
         </DialogHeader>
 
         <ScrollArea className='h-[calc(90vh-8rem)]'>
-          <LessonEditingForm
+          <LessonCreationForm
             className='px-6 pb-6'
             courseId={courseId}
             lessonId={lessonId}
             initialValues={initialValues}
             onCancel={() => onOpenChange(false)}
-            refetch={refetch ?? (() => {})}
+            refetch={refetch ?? (() => { })}
           />
         </ScrollArea>
       </DialogContent>
@@ -2397,5 +2559,5 @@ export {
   EditLessonDialog,
   LessonContentDialog,
   LessonDialog,
-  LessonList,
+  LessonList
 };
