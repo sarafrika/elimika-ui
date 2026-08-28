@@ -30,7 +30,7 @@ import type {
     Quiz,
 } from '@/services/client/types.gen';
 import { useMutation, useQueries, useQuery, useQueryClient } from '@tanstack/react-query';
-import { ArrowLeft, Eye, Pencil, PlusCircle, Sparkles, Trash } from 'lucide-react';
+import { ArrowLeft, ChevronDown, ChevronUp, Pencil, PlusCircle, Sparkles, Trash } from 'lucide-react';
 import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
 import { useCallback, useEffect, useMemo, useState } from 'react';
@@ -319,7 +319,7 @@ function LessonContentStack({
                     </p>
                 </div>
                 <Button type='button' onClick={openCreateLesson}>
-                    Add Lesson
+                    <PlusCircle className="h-4 w-4" />  Add Lesson
                 </Button>
             </div>
 
@@ -766,7 +766,32 @@ export default function CreateCoursePage() {
         });
     }, [assessmentQueries, assignmentQueries, lessonTitlesById, lessonsWithUuid]);
 
-    console.log(assessmentItems, "ASS ITEMS")
+    const [expandedAssessmentLessonIds, setExpandedAssessmentLessonIds] = useState<string[]>([]);
+
+    const assessmentsByLesson = useMemo(() => {
+        const map = new Map<string, AssessmentListItem[]>();
+
+        assessmentItems.forEach(item => {
+            const items = map.get(item.lessonUuid) ?? [];
+            items.push(item);
+            map.set(item.lessonUuid, items);
+        });
+
+        for (const [lessonUuid, items] of map.entries()) {
+            map.set(
+                lessonUuid,
+                items.sort((left, right) => {
+                    if (left.kind !== right.kind) {
+                        return left.kind === 'Quiz' ? -1 : 1;
+                    }
+
+                    return left.title.localeCompare(right.title);
+                })
+            );
+        }
+
+        return map;
+    }, [assessmentItems]);
 
     const isAssessmentsLoading =
         assessmentQueries.some(query => query.isLoading) ||
@@ -803,8 +828,8 @@ export default function CreateCoursePage() {
     }, []);
 
     const openNewAssessment = useCallback(
-        (mode: AssessmentMode) => {
-            openAssessmentSheet(mode);
+        (mode: AssessmentMode, lessonId?: string) => {
+            openAssessmentSheet(mode, lessonId);
         },
         [openAssessmentSheet]
     );
@@ -982,49 +1007,11 @@ export default function CreateCoursePage() {
                                     description='Assessment tasks need at least one lesson before they can be created.'
                                 >
                                     <div className='space-y-6'>
-                                        <div className='flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between'>
-                                            <div className='space-y-1'>
-                                                <p className='text-foreground text-sm font-medium'>Assessment builder</p>
-                                                <p className='text-muted-foreground text-sm'>
-                                                    Create quizzes and assignments, then review every assessment from one combined list.
-                                                </p>
-                                            </div>
-
-                                            <div className='flex flex-wrap items-center gap-2'>
-                                                <Button type='button' onClick={() => openNewAssessment('Quiz')}>
-                                                    <PlusCircle className='mr-2 h-4 w-4' />
-                                                    Add Quiz
-                                                </Button>
-                                                <Button type='button' variant='outline' onClick={() => openNewAssessment('Assignment')}>
-                                                    <PlusCircle className='mr-2 h-4 w-4' />
-                                                    Add Assignment
-                                                </Button>
-                                            </div>
-                                        </div>
-
-                                        <div className='grid gap-3 sm:grid-cols-3'>
-                                            <Card className='rounded-2xl border-border/70 bg-card/80 shadow-sm'>
-                                                <CardContent className='p-4'>
-                                                    <p className='text-muted-foreground text-sm'>Lessons</p>
-                                                    <p className='text-foreground text-2xl font-semibold'>{lessonsWithUuid.length}</p>
-                                                </CardContent>
-                                            </Card>
-                                            <Card className='rounded-2xl border-border/70 bg-card/80 shadow-sm'>
-                                                <CardContent className='p-4'>
-                                                    <p className='text-muted-foreground text-sm'>Quizzes</p>
-                                                    <p className='text-foreground text-2xl font-semibold'>
-                                                        {assessmentItems.filter(item => item.kind === 'Quiz').length}
-                                                    </p>
-                                                </CardContent>
-                                            </Card>
-                                            <Card className='rounded-2xl border-border/70 bg-card/80 shadow-sm'>
-                                                <CardContent className='p-4'>
-                                                    <p className='text-muted-foreground text-sm'>Assignments</p>
-                                                    <p className='text-foreground text-2xl font-semibold'>
-                                                        {assessmentItems.filter(item => item.kind === 'Assignment').length}
-                                                    </p>
-                                                </CardContent>
-                                            </Card>
+                                        <div className='space-y-1'>
+                                            <p className='text-foreground text-sm font-medium'>Assessment builder</p>
+                                            <p className='text-muted-foreground text-sm'>
+                                                Track quizzes and assignments by lesson, then open the sheet to create or edit one.
+                                            </p>
                                         </div>
 
                                         {isAssessmentsLoading && assessmentItems.length === 0 ? (
@@ -1044,62 +1031,185 @@ export default function CreateCoursePage() {
                                                     </Card>
                                                 ))}
                                             </div>
-                                        ) : assessmentItems.length === 0 ? (
-                                            <EmptyState
-                                                title='No assessments yet'
-                                                description='Use the buttons above to add your first quiz or assignment, then manage them from this list.'
-                                            />
                                         ) : (
-                                            <div className='grid gap-4'>
-                                                {assessmentItems.map(item => (
-                                                    <Card
-                                                        key={`${item.kind}-${item.uuid}`}
-                                                        className='overflow-hidden rounded-2xl border-border/70 bg-card/80 shadow-sm transition hover:border-primary/30 hover:shadow-md'
-                                                    >
-                                                        <CardHeader className='flex flex-col gap-4 border-b border-border/70 p-5 lg:flex-row lg:items-start lg:justify-between'>
-                                                            <div className='space-y-3'>
-                                                                <div className='flex flex-wrap items-center gap-2'>
-                                                                    <Badge variant='secondary'>{item.kind}</Badge>
-                                                                    <Badge variant='outline'>{item.lessonTitle}</Badge>
-                                                                    <Badge variant={item.statusTone}>{item.statusLabel}</Badge>
-                                                                </div>
-                                                                <div className='space-y-1'>
-                                                                    <CardTitle className='text-lg'>{item.title}</CardTitle>
-                                                                    <CardDescription className='max-w-3xl'>{item.description}</CardDescription>
-                                                                </div>
-                                                            </div>
+                                            <div className="space-y-4">
+                                                {lessonsWithUuid.map((lesson, index) => {
+                                                    const items = assessmentsByLesson.get(lesson.uuid) ?? [];
+                                                    const isExpanded = expandedAssessmentLessonIds.includes(lesson.uuid);
+                                                    const lessonLabel = lesson.lesson_number ?? index + 1;
 
-                                                            <div className='flex flex-wrap gap-2'>
-                                                                <Button type='button' variant='outline' size='sm' onClick={() => openAssessmentEditor(item)}>
-                                                                    <Eye className='mr-2 h-4 w-4' />
-                                                                    View
-                                                                </Button>
-                                                                <Button type='button' variant='outline' size='sm' onClick={() => openAssessmentEditor(item)}>
-                                                                    <Pencil className='mr-2 h-4 w-4' />
-                                                                    Edit
-                                                                </Button>
-                                                                <Button
-                                                                    type='button'
-                                                                    variant='destructive'
-                                                                    size='sm'
-                                                                    onClick={() => handleDeleteAssessment(item)}
-                                                                >
-                                                                    <Trash className='mr-2 h-4 w-4' />
-                                                                    Delete
-                                                                </Button>
-                                                            </div>
-                                                        </CardHeader>
+                                                    const toggleLesson = () => {
+                                                        setExpandedAssessmentLessonIds(prev =>
+                                                            prev.includes(lesson.uuid)
+                                                                ? prev.filter(id => id !== lesson.uuid)
+                                                                : [...prev, lesson.uuid]
+                                                        );
+                                                    };
 
-                                                        <CardContent className='flex flex-wrap gap-2 p-5'>
-                                                            {item.meta.map(meta => (
-                                                                <Badge key={meta} variant='outline' className='rounded-full'>
-                                                                    {meta}
-                                                                </Badge>
-                                                            ))}
-                                                        </CardContent>
-                                                    </Card>
-                                                ))}
+                                                    return (
+                                                        <Card
+                                                            key={lesson.uuid}
+                                                            className="overflow-hidden rounded-2xl border-border/70 bg-card/80 shadow-sm transition hover:border-primary/30 hover:shadow-md py-0"
+                                                        >
+                                                            <CardHeader
+                                                                className="bg-muted/30 cursor-pointer border-b border-border/70 pt-4 pb-2"
+                                                                onClick={toggleLesson}
+                                                            >
+                                                                <div className="  flex items-center justify-between gap-4">
+                                                                    {/* Lesson info */}
+                                                                    <div className="min-w-0 flex-1 space-y-2">
+                                                                        <div className="flex flex-wrap items-center gap-2 justify-between">
+                                                                            <div className='flex flex-wrap items-center gap-2'>
+                                                                                <Badge variant="secondary">
+                                                                                    Lesson {lessonLabel}
+                                                                                </Badge>
+
+                                                                                <CardTitle className="text-lg">
+                                                                                    {lesson.title || 'Untitled lesson'}
+                                                                                </CardTitle>
+                                                                            </div>
+
+                                                                            {/* Expand indicator */}
+                                                                            <div className="shrink-0">
+                                                                                {isExpanded ? (
+                                                                                    <ChevronUp className="h-5 w-5" />
+                                                                                ) : (
+                                                                                    <ChevronDown className="h-5 w-5" />
+                                                                                )}
+                                                                            </div>
+                                                                        </div>
+
+                                                                        <div className="w-full min-w-0 line-clamp-2 text-sm text-muted-foreground">
+                                                                            {getAssessmentDescription(lesson.description)}
+                                                                        </div>
+
+
+                                                                        {/* Actions */}
+                                                                        <div className='flex flex-row flex-wrap items-center justify-between mt-2' >
+                                                                            <Badge variant="outline" className='text-[13px]'>
+                                                                                {items.length}{' '}
+                                                                                {items.length === 1
+                                                                                    ? 'assessment added to this lesson'
+                                                                                    : 'assessments added to this lesson'}
+                                                                            </Badge>
+                                                                            <div
+                                                                                className="flex flex-wrap gap-2 sef-end justify-end "
+                                                                                onClick={e => e.stopPropagation()}
+                                                                            >
+                                                                                <Button
+                                                                                    type="button"
+                                                                                    size="sm"
+                                                                                    onClick={() =>
+                                                                                        openNewAssessment('Quiz', lesson.uuid)
+                                                                                    }
+                                                                                >
+                                                                                    <PlusCircle className="h-4 w-4" />
+                                                                                    Quiz
+                                                                                </Button>
+
+                                                                                <Button
+                                                                                    type="button"
+                                                                                    size="sm"
+                                                                                    variant="outline"
+                                                                                    onClick={() =>
+                                                                                        openNewAssessment(
+                                                                                            'Assignment',
+                                                                                            lesson.uuid
+                                                                                        )
+                                                                                    }
+                                                                                >
+                                                                                    <PlusCircle className="h-4 w-4" />
+                                                                                    Assignment
+                                                                                </Button>
+                                                                            </div>
+                                                                        </div>
+                                                                    </div>
+                                                                </div>
+                                                            </CardHeader>
+
+                                                            {isExpanded ? (
+                                                                <CardContent className="space-y-3 p-5">
+                                                                    {items.length === 0 ? (
+                                                                        <div className="rounded-xl border border-dashed border-border px-4 py-8 text-sm text-muted-foreground">
+                                                                            No assessments have been added to this lesson yet.
+                                                                        </div>
+                                                                    ) : (
+                                                                        items.map(item => (
+                                                                            <div
+                                                                                key={`${item.kind}-${item.uuid}`}
+                                                                                className="flex flex-col gap-4 rounded-xl border border-border bg-muted/40 p-4"
+                                                                            >
+                                                                                <div className="space-y-2">
+                                                                                    <div className="flex flex-wrap items-center gap-2">
+                                                                                        <Badge variant="secondary">
+                                                                                            {item.kind}
+                                                                                        </Badge>
+
+                                                                                        <Badge variant={item.statusTone}>
+                                                                                            {item.statusLabel}
+                                                                                        </Badge>
+
+
+                                                                                        <div className="flex flex-wrap gap-2">
+                                                                                            {item.meta.map(meta => (
+                                                                                                <Badge
+                                                                                                    key={meta}
+                                                                                                    variant="outline"
+                                                                                                    className="rounded-full"
+                                                                                                >
+                                                                                                    {meta}
+                                                                                                </Badge>
+                                                                                            ))}
+                                                                                        </div>
+                                                                                    </div>
+
+                                                                                    <div className="space-y-1">
+                                                                                        <p className="font-semibold text-foreground">
+                                                                                            {item.title}
+                                                                                        </p>
+
+                                                                                        <p className="line-clamp-2 text-sm text-muted-foreground">
+                                                                                            {item.description}
+                                                                                        </p>
+                                                                                    </div>
+                                                                                </div>
+
+                                                                                <div
+                                                                                    className="flex flex-row flex-wrap gap-2 items-end justify-end"
+                                                                                    onClick={e => e.stopPropagation()}
+                                                                                >
+                                                                                    <Button
+                                                                                        type="button"
+                                                                                        variant="outline"
+                                                                                        size="sm"
+                                                                                        onClick={() =>
+                                                                                            openAssessmentEditor(item)
+                                                                                        }
+                                                                                    >
+                                                                                        <Pencil className=" h-4 w-4" />
+                                                                                    </Button>
+
+                                                                                    <Button
+                                                                                        type="button"
+                                                                                        variant="destructive"
+                                                                                        size="sm"
+                                                                                        onClick={() =>
+                                                                                            handleDeleteAssessment(item)
+                                                                                        }
+                                                                                    >
+                                                                                        <Trash className="h-4 w-4" />
+                                                                                    </Button>
+                                                                                </div>
+                                                                            </div>
+                                                                        ))
+                                                                    )}
+                                                                </CardContent>
+                                                            ) : null}
+                                                        </Card>
+                                                    );
+                                                })}
                                             </div>
+
                                         )}
 
                                         <Sheet open={assessmentSheetOpen} onOpenChange={open => (!open ? closeAssessmentSheet() : setAssessmentSheetOpen(true))}>

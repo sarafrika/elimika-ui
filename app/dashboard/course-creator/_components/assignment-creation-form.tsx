@@ -7,7 +7,6 @@ import {
   FileSpreadsheet,
   FileText,
   Image,
-  PlusCircle,
   Trash2,
   Video,
   X,
@@ -15,7 +14,6 @@ import {
 import Link from 'next/link';
 import { useRef, useState } from 'react';
 import { toast } from 'sonner';
-import { Badge } from '../../../../components/ui/badge';
 import { Button } from '../../../../components/ui/button';
 import { DeleteConfirmationDialog } from '../../../../components/ui/delete-confirmation-dialog';
 import { Input } from '../../../../components/ui/input';
@@ -36,12 +34,10 @@ import {
   getAssignmentAttachmentsOptions,
   getAssignmentAttachmentsQueryKey,
   searchAssessmentRubricsOptions,
-  searchAssignmentsOptions,
   uploadAssignmentAttachmentMutation,
 } from '../../../../services/client/@tanstack/react-query.gen';
 import type {
   AssessmentRubric,
-  Assignment,
   AssignmentAttachment,
   Lesson,
   PagedDtoLesson,
@@ -116,20 +112,18 @@ const toSubmissionTypes = (
 
 type AssignmentAction = 'save' | 'publish' | 'unpublish' | null;
 
-export const AssignmentCreationForm = ({
-  courseId,
-  lessons,
-  assignmentId,
-  selectedLessonId,
-  selectedLesson,
-  setSelectedLessonId,
-  setSelectedLesson,
-  onSelectAssignment,
-  createAssignmentForLesson,
-  updateAssignmentForLesson,
-  deleteAssignmentForLesson,
-  isPending,
-}: AssignmentCreationFormProps) => {
+export const AssignmentCreationForm = (props: AssignmentCreationFormProps) => {
+  const {
+    courseId,
+    assignmentId,
+    selectedLessonId,
+    selectedLesson,
+    onSelectAssignment,
+    createAssignmentForLesson,
+    updateAssignmentForLesson,
+    deleteAssignmentForLesson,
+    isPending,
+  } = props;
   const qc = useQueryClient();
   const creator = useCourseCreator();
 
@@ -154,13 +148,6 @@ export const AssignmentCreationForm = ({
 
   // Now safe to derive selectedRubric from assignmentData
   const selectedRubric = rubrics.find(r => r.uuid === assignmentData.rubric_uuid);
-
-  const { data: assignments } = useQuery({
-    ...searchAssignmentsOptions({
-      query: { searchParams: { lesson_uuid_eq: selectedLessonId }, pageable: {} },
-    }),
-    enabled: !!selectedLessonId,
-  });
 
   const [selectedAssignmentUuid, setSelectedAssignmentUuid] = useState<string | null>(
     assignmentId ?? null
@@ -192,35 +179,6 @@ export const AssignmentCreationForm = ({
     value: AssignmentFormState[K]
   ) => {
     setAssignmentData(prev => ({ ...prev, [field]: value }));
-  };
-
-  const handleAssignmentSelect = (selectedUuid: string | null) => {
-    if (onSelectAssignment) onSelectAssignment(selectedUuid);
-
-    const selectedAssignment = assignments?.data?.content?.find(
-      (a: Assignment) => a.uuid === selectedUuid
-    );
-
-    if (selectedAssignment) {
-      setAssignmentData({
-        title: selectedAssignment.title || '',
-        description: selectedAssignment.description || '',
-        instructions: selectedAssignment.instructions || '',
-        max_points: selectedAssignment.max_points || 0,
-        rubric_uuid: selectedAssignment.rubric_uuid || '',
-        is_published: selectedAssignment.is_published ?? false,
-        active: false,
-        due_date:
-          selectedAssignment.due_date instanceof Date
-            ? selectedAssignment.due_date.toISOString()
-            : '',
-        assignment_category: selectedAssignment.assignment_category || '',
-        submission_types: toSubmissionTypes(selectedAssignment.submission_types),
-        lesson_uuid: selectedLessonId as string,
-      });
-    } else {
-      setAssignmentData({ ...EMPTY_ASSIGNMENT });
-    }
   };
 
   const uploadAttachmentForAssignment = (targetAssignmentUuid: string, file: File) =>
@@ -428,152 +386,43 @@ export const AssignmentCreationForm = ({
 
   // ── Render ────────────────────────────────────────────────────────────────
   return (
-    <div className='grid grid-cols-4 gap-6'>
-      {/* Lessons sidebar */}
-      <div className='shadow-sm'>
-        <h3 className='text-foreground mb-4 text-lg font-semibold'>Lessons</h3>
-
-        {lessons?.content?.length ? (
-          <ul className='flex flex-col gap-2 space-y-2'>
-            {lessons.content
-              .sort((a: Lesson, b: Lesson) => a.lesson_number - b.lesson_number)
-              .map((lesson: Lesson) => (
-                <li
-                  key={lesson.uuid}
-                  onClick={() => {
-                    if (!lesson.uuid) return;
-                    setSelectedLessonId(lesson.uuid);
-                    setSelectedLesson(lesson);
-                    handleAssignmentSelect(null);
-                    setSelectedAssignmentUuid(null);
-                    setAssignmentData({ ...EMPTY_ASSIGNMENT });
-                  }}
-                  className={cn(
-                    'flex cursor-pointer flex-col items-start gap-2 rounded-lg px-3 py-2.5 text-sm font-medium transition-all duration-200',
-                    selectedLessonId === lesson.uuid
-                      ? 'bg-primary/10 border-primary text-primary border-2 shadow-sm'
-                      : 'hover:bg-muted text-foreground border-2 border-transparent'
-                  )}
-                >
-                  <p className='text-xs'>LESSON {lesson.lesson_number}.</p>
-                  <p className='line-clamp-2'>{lesson.title}</p>
-                </li>
-              ))}
-          </ul>
-        ) : (
-          <div className='text-muted-foreground flex flex-col items-center justify-center rounded-lg border border-dashed py-10 text-center text-sm'>
-            <p>No lessons available yet</p>
-            <p className='mt-1'>Add lessons to start creating assignments</p>
-          </div>
-        )}
+    <div className='bg-card space-y-6 rounded-xl border p-6 shadow-sm'>
+      <div className='flex items-center justify-between gap-4 border-b pb-4'>
+        <div className='space-y-1'>
+          <h3 className='text-foreground text-lg font-bold uppercase'>
+            ASSIGNMENT: {selectedLesson?.title || 'Selected lesson'}
+          </h3>
+          <p className='text-muted-foreground text-xs'>
+            {assignmentUuid
+              ? 'Editing an existing assignment'
+              : 'Create a new assignment for this lesson'}
+          </p>
+        </div>
+        <span className='bg-muted text-muted-foreground rounded-full px-2.5 py-1 text-xs font-medium'>
+          {assignmentUuid ? 'Editing' : 'New'}
+        </span>
       </div>
 
-      {/* Assignment form */}
       {!selectedLessonId ? (
-        <div className='border-border bg-muted col-span-3 flex min-h-[50vh] items-center justify-center rounded-xl border-2 border-dashed'>
+        <div className='border-border bg-muted flex min-h-[50vh] items-center justify-center rounded-xl border-2 border-dashed'>
           <div className='text-center'>
             <p className='text-foreground text-lg font-medium'>Select a lesson</p>
             <p className='text-muted-foreground mt-1 text-sm'>
-              Choose a lesson from the left to create or manage assignments
+              Choose a lesson from the assessment builder to edit this assignment.
             </p>
           </div>
         </div>
       ) : (
-        <div className='bg-card col-span-3 space-y-6 rounded-xl border p-6 shadow-sm'>
-          <div className='flex items-center justify-between gap-4 border-b pb-4'>
-            <h3 className='text-foreground max-w-[70%] truncate text-lg font-bold uppercase'>
-              ASSIGNMENT: {selectedLesson?.title || 'Select a lesson'}
-            </h3>
-            <Button
-              size='sm'
-              onClick={() => {
-                handleAssignmentSelect('');
-                setSelectedAssignmentUuid('');
-              }}
-            >
-              <PlusCircle size={16} /> Create Assignment
-            </Button>
-          </div>
-
-          {/* Existing assignments list */}
-          <div className='flex flex-col gap-2'>
-            <div className='flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between'>
-              <div className='flex flex-col'>
-                <h4 className='text-foreground text-base font-semibold'>Existing Assignments</h4>
-                <p className='text-muted-foreground text-xs'>
-                  Select an assignment to edit or create a new one.
-                </p>
-              </div>
-            </div>
-
-            {assignments?.data?.content?.length ? (
-              <div className='flex flex-col gap-2'>
-                {assignments.data.content
-                  .filter((a: Assignment) => Boolean(a.assignment_category && a.uuid))
-                  .map((assignment: Assignment, idx: number) => {
-                    const isSelected = selectedAssignmentUuid === assignment.uuid;
-                    const isDraft = !assignment.is_published;
-
-                    return (
-                      <div
-                        key={assignment.uuid}
-                        onClick={() => {
-                          if (!assignment.uuid) return;
-                          setSelectedAssignmentUuid(assignment.uuid);
-                          handleAssignmentSelect(assignment.uuid);
-                        }}
-                        className={cn(
-                          'flex cursor-pointer items-center justify-between gap-2 rounded-md border px-4 py-2 text-sm font-medium transition-all',
-                          isSelected
-                            ? 'border-primary bg-primary/20 text-primary'
-                            : 'bg-muted/40 hover:bg-muted border-transparent'
-                        )}
-                        title={assignment.title}
-                      >
-                        <span className='truncate'>
-                          {idx + 1} - {assignment.title}
-                        </span>
-
-                        {isDraft ? (
-                          <Badge variant='destructive' className='text-[10px]'>
-                            Draft
-                          </Badge>
-                        ) : (
-                          <Badge className='bg-success/10 text-success border-success/20 border text-[10px]'>
-                            Published
-                          </Badge>
-                        )}
-                      </div>
-                    );
-                  })}
-              </div>
-            ) : (
-              <div className='text-muted-foreground rounded-lg border border-dashed px-3 py-4 text-center text-sm'>
-                No assignments created yet
-              </div>
-            )}
-          </div>
-
-          {assignmentUuid === null && (
-            <div className='flex flex-col items-center justify-center gap-1 rounded-lg border border-dashed py-6 text-center'>
-              <p className='text-foreground text-sm font-medium'>No assignment selected yet</p>
-              <p className='text-muted-foreground text-xs'>
-                Select an existing assignment or create a new one to continue.
-              </p>
+        <div className='flex flex-col gap-6'>
+          <Separator />
+          {!assignmentData?.is_published && assignmentData?.title && (
+            <div className='border-destructive/20 bg-destructive/5 text-destructive rounded-md border p-3 text-sm'>
+              This assignment is in draft mode and is not visible to instructors until it is
+              published.
             </div>
           )}
 
-          {assignmentUuid !== null && (
-            <div className='flex flex-col gap-6'>
-              <Separator />
-              {!assignmentData?.is_published && assignmentData?.title && (
-                <div className='border-destructive/20 bg-destructive/5 text-destructive rounded-md border p-3 text-sm'>
-                  This assignment is in draft mode and is not visible to instructors until it is
-                  published.
-                </div>
-              )}
-
-              {/* <div className="flex gap-2 self-start items-end justify-end">
+          {/* <div className="flex gap-2 self-start items-end justify-end">
                 <Label className="text-foreground text-sm font-medium">
                   Status {":"}
                 </Label>
@@ -592,415 +441,386 @@ export const AssignmentCreationForm = ({
                 </div>
               </div> */}
 
-              {/* Title */}
-              <div className='flex flex-col gap-2'>
-                <Label className='text-foreground text-sm font-medium'>Assignment Title</Label>
-                <Input
-                  type='text'
-                  placeholder='Enter assignment title'
-                  value={assignmentData.title}
-                  onChange={e => handleAssignmentInputChange('title', e.target.value)}
-                />
+          <div className='flex flex-col gap-2'>
+            <Label className='text-foreground text-sm font-medium'>Assignment Title</Label>
+            <Input
+              type='text'
+              placeholder='Enter assignment title'
+              value={assignmentData.title}
+              onChange={e => handleAssignmentInputChange('title', e.target.value)}
+            />
+          </div>
+
+          <div className='flex flex-col gap-2'>
+            <Label className='text-foreground text-sm font-medium'>
+              Description (optional)
+            </Label>
+            <SimpleEditor
+              value={assignmentData.description}
+              onChange={value => handleAssignmentInputChange('description', value)}
+            />
+          </div>
+
+          <div className='flex flex-col gap-2'>
+            <Label className='text-foreground text-sm font-medium'>
+              Instructions (optional)
+            </Label>
+            <SimpleEditor
+              value={assignmentData.instructions}
+              onChange={value => handleAssignmentInputChange('instructions', value)}
+            />
+          </div>
+
+          <div className='grid grid-cols-2 gap-4'>
+            <div className='flex flex-col gap-2'>
+              <Label className='text-foreground text-sm font-medium'>Max Points</Label>
+              <Input
+                type='number'
+                value={assignmentData.max_points}
+                onChange={e =>
+                  handleAssignmentInputChange('max_points', Number(e.target.value))
+                }
+              />
+            </div>
+            <div className='flex flex-col gap-2'>
+              <Label className='text-foreground text-sm font-medium'>Category (optional)</Label>
+
+              <Select
+                value={assignmentData.assignment_category || '__none__'}
+                onValueChange={value =>
+                  handleAssignmentInputChange(
+                    'assignment_category',
+                    value === '__none__' ? '' : value
+                  )
+                }
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder='Select assignment category' />
+                </SelectTrigger>
+
+                <SelectContent>
+                  <SelectItem value='__none__'>None</SelectItem>
+
+                  {ASSIGNMENT_CATEGORIES.map(category => (
+                    <SelectItem key={category.value} value={category.value}>
+                      {category.label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+
+          <div className='flex flex-col gap-1.5'>
+            <Label className='text-sm font-medium'>Evaluation Criteria</Label>
+            <p className='text-muted-foreground text-xs'>
+              Associate a grading rubric with this assignment
+            </p>
+
+            {isLoadingRubrics ? (
+              <div className='flex items-center gap-2 py-2'>
+                <Spinner className='h-4 w-4' />
+                <span className='text-muted-foreground text-xs'>
+                  Loading evaluation rubrics...
+                </span>
               </div>
-
-              {/* Description */}
-              <div className='flex flex-col gap-2'>
-                <Label className='text-foreground text-sm font-medium'>
-                  Description (optional)
-                </Label>
-                <SimpleEditor
-                  value={assignmentData.description}
-                  onChange={value => handleAssignmentInputChange('description', value)}
-                />
-              </div>
-
-              {/* Instructions */}
-              <div className='flex flex-col gap-2'>
-                <Label className='text-foreground text-sm font-medium'>
-                  Instructions (optional)
-                </Label>
-                <SimpleEditor
-                  value={assignmentData.instructions}
-                  onChange={value => handleAssignmentInputChange('instructions', value)}
-                />
-              </div>
-
-              {/* Max points + Category */}
-              <div className='grid grid-cols-2 gap-4'>
-                <div className='flex flex-col gap-2'>
-                  <Label className='text-foreground text-sm font-medium'>Max Points</Label>
-                  <Input
-                    type='number'
-                    value={assignmentData.max_points}
-                    onChange={e =>
-                      handleAssignmentInputChange('max_points', Number(e.target.value))
-                    }
-                  />
-                </div>
-                <div className='flex flex-col gap-2'>
-                  <Label className='text-foreground text-sm font-medium'>Category (optional)</Label>
-
-                  <Select
-                    value={assignmentData.assignment_category || '__none__'}
-                    onValueChange={value =>
-                      handleAssignmentInputChange(
-                        'assignment_category',
-                        value === '__none__' ? '' : value
-                      )
-                    }
-                  >
-                    <SelectTrigger>
-                      <SelectValue placeholder='Select assignment category' />
-                    </SelectTrigger>
-
-                    <SelectContent>
-                      <SelectItem value='__none__'>None</SelectItem>
-
-                      {ASSIGNMENT_CATEGORIES.map(category => (
-                        <SelectItem key={category.value} value={category.value}>
-                          {category.label}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-              </div>
-
-              {/* ── Rubric ─────────────────────────────────────────────────── */}
-              <div className='flex flex-col gap-1.5'>
-                <Label className='text-sm font-medium'>Evaluation Criteria</Label>
-                <p className='text-muted-foreground text-xs'>
-                  Associate a grading rubric with this assignment
-                </p>
-
-                {isLoadingRubrics ? (
-                  <div className='flex items-center gap-2 py-2'>
-                    <Spinner className='h-4 w-4' />
-                    <span className='text-muted-foreground text-xs'>
-                      Loading evalutaion rubrics...
-                    </span>
-                  </div>
-                ) : (
-                  <>
-                    <Select
-                      value={assignmentData.rubric_uuid || '__none__'}
-                      onValueChange={v =>
-                        handleAssignmentInputChange('rubric_uuid', v === '__none__' ? '' : v)
-                      }
-                    >
-                      <SelectTrigger className='w-full'>
-                        <SelectValue placeholder='Select a rubric (optional)'>
-                          {selectedRubric ? selectedRubric.title : 'None'}
-                        </SelectValue>
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value='__none__'>
-                          <span className='text-muted-foreground'>None</span>
-                        </SelectItem>
-                        {rubrics.map(r => (
-                          <SelectItem key={r.uuid} value={r.uuid ?? ''} textValue={r.title}>
-                            <div className='flex flex-col'>
-                              <span className='font-medium'>{r.title}</span>
-                              {r.description && (
-                                <span className='text-muted-foreground line-clamp-1 text-xs'>
-                                  {r.description}
-                                </span>
-                              )}
-                            </div>
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-
-                    {selectedRubric ? (
-                      <div className='bg-muted/50 mt-1 flex items-start justify-between gap-2 rounded-lg border px-3 py-2'>
-                        <div className='min-w-0'>
-                          <p className='text-foreground truncate text-xs font-semibold'>
-                            {selectedRubric.title}
-                          </p>
-                          {selectedRubric.description && (
-                            <p className='text-muted-foreground mt-0.5 line-clamp-2 text-xs'>
-                              {selectedRubric.description}
-                            </p>
+            ) : (
+              <>
+                <Select
+                  value={assignmentData.rubric_uuid || '__none__'}
+                  onValueChange={v =>
+                    handleAssignmentInputChange('rubric_uuid', v === '__none__' ? '' : v)
+                  }
+                >
+                  <SelectTrigger className='w-full'>
+                    <SelectValue placeholder='Select a rubric (optional)'>
+                      {selectedRubric ? selectedRubric.title : 'None'}
+                    </SelectValue>
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value='__none__'>
+                      <span className='text-muted-foreground'>None</span>
+                    </SelectItem>
+                    {rubrics.map(r => (
+                      <SelectItem key={r.uuid} value={r.uuid ?? ''} textValue={r.title}>
+                        <div className='flex flex-col'>
+                          <span className='font-medium'>{r.title}</span>
+                          {r.description && (
+                            <span className='text-muted-foreground line-clamp-1 text-xs'>
+                              {r.description}
+                            </span>
                           )}
                         </div>
-                        <button
-                          type='button'
-                          onClick={() => handleAssignmentInputChange('rubric_uuid', '')}
-                          className='text-muted-foreground hover:text-foreground hover:bg-muted mt-0.5 shrink-0 rounded p-0.5 transition-colors'
-                          title='Clear rubric'
-                        >
-                          <X size={13} />
-                        </button>
-                      </div>
-                    ) : (
-                      <div className='bg-warning/20 border-warning/40 flex flex-col gap-3 rounded-lg border p-4'>
-                        <div className='flex items-start gap-2'>
-                          <AlertTriangle className='text-warning-foreground mt-0.5 h-4 w-4 shrink-0' />
-                          <div className='text-sm'>
-                            <p className='text-warning-foreground font-medium'>
-                              No rubric selected
-                            </p>
-                            <p className='text-warning-foreground/80 text-xs'>
-                              If none of the available rubrics fit, you can create a new one.
-                            </p>
-                          </div>
-                        </div>
-                        <Link href='/dashboard/course-creator/rubrics' target='_blank'>
-                          <Button
-                            type='button'
-                            variant='outline'
-                            size='sm'
-                            className='border-warning text-warning-foreground hover:bg-warning/100 w-fit self-center'
-                          >
-                            Create New Rubric
-                          </Button>
-                        </Link>
-                      </div>
-                    )}
-                  </>
-                )}
-              </div>
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
 
-              {/* Submission types */}
-              <div className='flex flex-col gap-2'>
-                <Label className='text-foreground text-sm font-medium'>Submission Types</Label>
-                <div className='border-border flex flex-wrap gap-2 rounded-lg border p-2'>
-                  {SUBMISSION_TYPES.map(type => {
-                    const selected = assignmentData.submission_types.includes(type);
-                    return (
-                      <button
-                        key={type}
-                        type='button'
-                        onClick={() => toggleSubmissionType(type)}
-                        className={cn(
-                          'rounded-full border px-3 py-1.5 text-sm font-medium transition-colors',
-                          selected
-                            ? 'bg-primary text-primary-foreground border-primary'
-                            : 'bg-background text-muted-foreground border-border hover:bg-muted'
-                        )}
-                      >
-                        {type}
-                      </button>
-                    );
-                  })}
-                </div>
-                {assignmentData.submission_types.length === 0 && (
-                  <p className='text-muted-foreground text-xs'>
-                    Select one or more submission types
-                  </p>
-                )}
-              </div>
-
-              {/* Active toggle */}
-              {/* <div className='flex items-center gap-3'>
-                <Switch
-                  checked={assignmentData.active}
-                  onCheckedChange={checked => handleAssignmentInputChange('active', checked)}
-                />
-                <Label className='text-foreground text-sm font-medium'>Active</Label>
-              </div> */}
-
-              <Separator />
-
-              {/* Attachments */}
-              <div className='flex flex-col gap-4'>
-                <div className='flex flex-col gap-1'>
-                  <h4 className='text-foreground text-base font-semibold'>
-                    Assignment Attachments
-                  </h4>
-                  <p className='text-muted-foreground text-xs'>
-                    Upload documents, images, audio, or video files for this assignment
-                  </p>
-                </div>
-
-                <div className='space-y-3'>
-                  {attachments?.data?.map((file: AssignmentAttachment) => (
-                    <div
-                      key={file.uuid}
-                      className='border-border hover:border-primary bg-card flex items-start justify-between rounded-lg border p-4 transition'
-                    >
-                      <div className='flex items-start gap-3'>
-                        <span className='flex h-8 w-8 items-center justify-center text-xl'>
-                          {getFileIcon(file.mime_type ?? '')}
-                        </span>
-                        <div>
-                          <p className='text-foreground font-medium'>{file.original_filename}</p>
-                          <p className='text-muted-foreground max-w-xs truncate text-xs'>
-                            {file.file_url}
-                          </p>
-                          <p className='text-muted-foreground text-xs'>
-                            {formatFileSize(Number(file.file_size_bytes))} •{' '}
-                            {file.created_date
-                              ? new Date(file.created_date).toLocaleDateString()
-                              : 'Unknown date'}
-                          </p>
-                        </div>
-                      </div>
-                      <button
-                        onClick={() => file.uuid && handleDeleteAttachment(file.uuid)}
-                        disabled={
-                          deleteAttachmentMut.isPending && deletingAttachmentUuid === file.uuid
-                        }
-                        className='border-destructive/20 text-destructive hover:bg-destructive/5 inline-flex items-center gap-1 rounded-md border px-2.5 py-1.5 text-sm font-medium'
-                      >
-                        <Trash2 className='h-4 w-4' />
-                        {deleteAttachmentMut.isPending && deletingAttachmentUuid === file.uuid
-                          ? 'Deleting...'
-                          : 'Delete'}
-                      </button>
+                {selectedRubric ? (
+                  <div className='bg-muted/50 mt-1 flex items-start justify-between gap-2 rounded-lg border px-3 py-2'>
+                    <div className='min-w-0'>
+                      <p className='text-foreground truncate text-xs font-semibold'>
+                        {selectedRubric.title}
+                      </p>
+                      {selectedRubric.description && (
+                        <p className='text-muted-foreground mt-0.5 line-clamp-2 text-xs'>
+                          {selectedRubric.description}
+                        </p>
+                      )}
                     </div>
-                  ))}
-                </div>
-
-                <div
-                  className={cn(
-                    'space-y-4 rounded-lg border-2 border-dashed p-6 transition-colors',
-                    isDragging ? 'border-primary bg-primary/5' : 'border-muted-foreground/30'
-                  )}
-                  onDragOver={e => {
-                    e.preventDefault();
-                    setIsDragging(true);
-                  }}
-                  onDragLeave={() => setIsDragging(false)}
-                  onDrop={e => {
-                    e.preventDefault();
-                    setIsDragging(false);
-                    const file = e.dataTransfer.files?.[0];
-                    if (file) setMediaFile(file);
-                  }}
-                >
-                  <Input
-                    ref={fileInputRef}
-                    type='file'
-                    accept='image/*,application/pdf,video/*,audio/*,.doc,.docx,.txt'
-                    className='hidden'
-                    onChange={e => setMediaFile(e.target.files?.[0] || null)}
-                  />
-
-                  <div
-                    role='button'
-                    tabIndex={0}
-                    onClick={() => fileInputRef.current?.click()}
-                    onKeyDown={e => e.key === 'Enter' && fileInputRef.current?.click()}
-                    className='bg-muted/40 hover:bg-muted flex cursor-pointer flex-col items-center justify-center gap-2 rounded-md border px-6 py-8 text-center transition-colors'
-                  >
-                    <p className='text-foreground text-sm font-medium'>
-                      Drag & drop a file here, or click to browse
-                    </p>
-                    {mediaFile ? (
-                      <p className='text-primary max-w-full truncate text-[13px]'>
-                        {mediaFile.name}
-                      </p>
-                    ) : (
-                      <p className='text-muted-foreground text-[13px]'>
-                        Documents, Images, Audio, or Video files
-                      </p>
-                    )}
-                  </div>
-
-                  <div className='flex justify-center'>
-                    <Button
+                    <button
                       type='button'
-                      variant='secondary'
-                      disabled={
-                        !mediaFile || uploadAssignmentMut.isPending || isCreatingNewAssignment
-                      }
-                      onClick={handleAttachmentUpload}
-                      className='bg-primary w-full max-w-fit text-white'
+                      onClick={() => handleAssignmentInputChange('rubric_uuid', '')}
+                      className='text-muted-foreground hover:text-foreground hover:bg-muted mt-0.5 shrink-0 rounded p-0.5 transition-colors'
+                      title='Clear rubric'
                     >
-                      {uploadAssignmentMut.isPending ? (
-                        <>
-                          <Spinner className='mr-2 h-4 w-4' />
-                          Uploading...
-                        </>
-                      ) : (
-                        'Upload Assignment Attachment'
-                      )}
-                    </Button>
+                      <X size={13} />
+                    </button>
                   </div>
+                ) : (
+                  <div className='bg-warning/20 border-warning/40 flex flex-col gap-3 rounded-lg border p-4'>
+                    <div className='flex items-start gap-2'>
+                      <AlertTriangle className='text-warning-foreground mt-0.5 h-4 w-4 shrink-0' />
+                      <div className='text-sm'>
+                        <p className='text-warning-foreground font-medium'>No rubric selected</p>
+                        <p className='text-warning-foreground/80 text-xs'>
+                          If none of the available rubrics fit, you can create a new one.
+                        </p>
+                      </div>
+                    </div>
+                    <Link href='/dashboard/course-creator/rubrics' target='_blank'>
+                      <Button
+                        type='button'
+                        variant='outline'
+                        size='sm'
+                        className='border-warning text-warning-foreground hover:bg-warning/100 w-fit self-center'
+                      >
+                        Create New Rubric
+                      </Button>
+                    </Link>
+                  </div>
+                )}
+              </>
+            )}
+          </div>
 
-                  {isCreatingNewAssignment && mediaFile ? (
-                    <p className='text-muted-foreground text-center text-xs'>
-                      Save the assignment first to upload this file automatically.
-                    </p>
-                  ) : null}
+          <div className='flex flex-col gap-2'>
+            <Label className='text-foreground text-sm font-medium'>Submission Types</Label>
+            <div className='border-border flex flex-wrap gap-2 rounded-lg border p-2'>
+              {SUBMISSION_TYPES.map(type => {
+                const selected = assignmentData.submission_types.includes(type);
+                return (
+                  <button
+                    key={type}
+                    type='button'
+                    onClick={() => toggleSubmissionType(type)}
+                    className={cn(
+                      'rounded-full border px-3 py-1.5 text-sm font-medium transition-colors',
+                      selected
+                        ? 'bg-primary text-primary-foreground border-primary'
+                        : 'bg-background text-muted-foreground border-border hover:bg-muted'
+                    )}
+                  >
+                    {type}
+                  </button>
+                );
+              })}
+            </div>
+            {assignmentData.submission_types.length === 0 && (
+              <p className='text-muted-foreground text-xs'>
+                Select one or more submission types
+              </p>
+            )}
+          </div>
 
-                  <p className='text-muted-foreground text-xs'>
-                    Supported formats: PDF, Images (JPG, PNG), Audio (MP3, WAV), Video (MP4),
-                    Documents
-                  </p>
+          <Separator />
+
+          <div className='flex flex-col gap-4'>
+            <div className='flex flex-col gap-1'>
+              <h4 className='text-foreground text-base font-semibold'>Assignment Attachments</h4>
+              <p className='text-muted-foreground text-xs'>
+                Upload documents, images, audio, or video files for this assignment
+              </p>
+            </div>
+
+            <div className='space-y-3'>
+              {attachments?.data?.map((file: AssignmentAttachment) => (
+                <div
+                  key={file.uuid}
+                  className='border-border hover:border-primary bg-card flex items-start justify-between rounded-lg border p-4 transition'
+                >
+                  <div className='flex items-start gap-3'>
+                    <span className='flex h-8 w-8 items-center justify-center text-xl'>
+                      {getFileIcon(file.mime_type ?? '')}
+                    </span>
+                    <div>
+                      <p className='text-foreground font-medium'>{file.original_filename}</p>
+                      <p className='text-muted-foreground max-w-xs truncate text-xs'>
+                        {file.file_url}
+                      </p>
+                      <p className='text-muted-foreground text-xs'>
+                        {formatFileSize(Number(file.file_size_bytes))} •{' '}
+                        {file.created_date
+                          ? new Date(file.created_date).toLocaleDateString()
+                          : 'Unknown date'}
+                      </p>
+                    </div>
+                  </div>
+                  <button
+                    onClick={() => file.uuid && handleDeleteAttachment(file.uuid)}
+                    disabled={deleteAttachmentMut.isPending && deletingAttachmentUuid === file.uuid}
+                    className='border-destructive/20 text-destructive hover:bg-destructive/5 inline-flex items-center gap-1 rounded-md border px-2.5 py-1.5 text-sm font-medium'
+                  >
+                    <Trash2 className='h-4 w-4' />
+                    {deleteAttachmentMut.isPending && deletingAttachmentUuid === file.uuid
+                      ? 'Deleting...'
+                      : 'Delete'}
+                  </button>
                 </div>
+              ))}
+            </div>
+
+            <div
+              className={cn(
+                'space-y-4 rounded-lg border-2 border-dashed p-6 transition-colors',
+                isDragging ? 'border-primary bg-primary/5' : 'border-muted-foreground/30'
+              )}
+              onDragOver={e => {
+                e.preventDefault();
+                setIsDragging(true);
+              }}
+              onDragLeave={() => setIsDragging(false)}
+              onDrop={e => {
+                e.preventDefault();
+                setIsDragging(false);
+                const file = e.dataTransfer.files?.[0];
+                if (file) setMediaFile(file);
+              }}
+            >
+              <Input
+                ref={fileInputRef}
+                type='file'
+                accept='image/*,application/pdf,video/*,audio/*,.doc,.docx,.txt'
+                className='hidden'
+                onChange={e => setMediaFile(e.target.files?.[0] || null)}
+              />
+
+              <div
+                role='button'
+                tabIndex={0}
+                onClick={() => fileInputRef.current?.click()}
+                onKeyDown={e => e.key === 'Enter' && fileInputRef.current?.click()}
+                className='bg-muted/40 hover:bg-muted flex cursor-pointer flex-col items-center justify-center gap-2 rounded-md border px-6 py-8 text-center transition-colors'
+              >
+                <p className='text-foreground text-sm font-medium'>
+                  Drag & drop a file here, or click to browse
+                </p>
+                {mediaFile ? (
+                  <p className='text-primary max-w-full truncate text-[13px]'>{mediaFile.name}</p>
+                ) : (
+                  <p className='text-muted-foreground text-[13px]'>
+                    Documents, Images, Audio, or Video files
+                  </p>
+                )}
               </div>
 
-              {/* Save / delete */}
-              <div className='flex items-end justify-end gap-4 pt-2'>
-                {assignmentUuid && (
-                  <Button
-                    size='sm'
-                    variant='destructive'
-                    onClick={handleDeleteAssignment}
-                    disabled={isDeletingAssignment}
-                  >
-                    {isDeletingAssignment ? <Spinner /> : <Trash2 />}
-                  </Button>
-                )}
-
-                {assignmentUuid &&
-                  (assignmentData.is_published ? (
-                    <Button
-                      size='sm'
-                      variant='outline'
-                      className='min-w-[100px]'
-                      onClick={handleUnpublishAssignment}
-                      disabled={isPending}
-                    >
-                      {isUnpublishing ? (
-                        <>
-                          <Spinner className='mr-2 h-4 w-4' />
-                        </>
-                      ) : (
-                        'Unpublish'
-                      )}
-                    </Button>
-                  ) : (
-                    <Button
-                      size='sm'
-                      className='min-w-[100px]'
-                      onClick={handlePublishAssignment}
-                      disabled={isPending}
-                    >
-                      {isPublishing ? (
-                        <>
-                          <Spinner className='mr-2 h-4 w-4' />
-                        </>
-                      ) : (
-                        'Publish'
-                      )}
-                    </Button>
-                  ))}
-
+              <div className='flex justify-center'>
                 <Button
-                  size='sm'
-                  onClick={handleSaveAssignment}
-                  disabled={isPending || uploadAssignmentMut.isPending}
+                  type='button'
+                  variant='secondary'
+                  disabled={!mediaFile || uploadAssignmentMut.isPending || isCreatingNewAssignment}
+                  onClick={handleAttachmentUpload}
+                  className='bg-primary w-full max-w-fit text-white'
                 >
-                  {isSaving ? (
+                  {uploadAssignmentMut.isPending ? (
                     <>
                       <Spinner className='mr-2 h-4 w-4' />
-                      {isSavingWithAttachment ? 'Saving and uploading...' : 'Saving...'}
+                      Uploading...
                     </>
-                  ) : assignmentUuid ? (
-                    'Update Assignment'
-                  ) : isSavingWithAttachment ? (
-                    'Save Assignment and Upload Attachment'
                   ) : (
-                    'Save Assignment'
+                    'Upload Assignment Attachment'
                   )}
                 </Button>
               </div>
+
+              {isCreatingNewAssignment && mediaFile ? (
+                <p className='text-muted-foreground text-center text-xs'>
+                  Save the assignment first to upload this file automatically.
+                </p>
+              ) : null}
+
+              <p className='text-muted-foreground text-xs'>
+                Supported formats: PDF, Images (JPG, PNG), Audio (MP3, WAV), Video (MP4),
+                Documents
+              </p>
             </div>
-          )}
+          </div>
+
+          <div className='flex items-end justify-end gap-4 pt-2'>
+            {assignmentUuid && (
+              <Button
+                size='sm'
+                variant='destructive'
+                onClick={handleDeleteAssignment}
+                disabled={isDeletingAssignment}
+              >
+                {isDeletingAssignment ? <Spinner /> : <Trash2 />}
+              </Button>
+            )}
+
+            {assignmentUuid &&
+              (assignmentData.is_published ? (
+                <Button
+                  size='sm'
+                  variant='outline'
+                  className='min-w-[100px]'
+                  onClick={handleUnpublishAssignment}
+                  disabled={isPending}
+                >
+                  {isUnpublishing ? (
+                    <>
+                      <Spinner className='mr-2 h-4 w-4' />
+                    </>
+                  ) : (
+                    'Unpublish'
+                  )}
+                </Button>
+              ) : (
+                <Button
+                  size='sm'
+                  className='min-w-[100px]'
+                  onClick={handlePublishAssignment}
+                  disabled={isPending}
+                >
+                  {isPublishing ? (
+                    <>
+                      <Spinner className='mr-2 h-4 w-4' />
+                    </>
+                  ) : (
+                    'Publish'
+                  )}
+                </Button>
+              ))}
+
+            <Button
+              size='sm'
+              onClick={handleSaveAssignment}
+              disabled={isPending || uploadAssignmentMut.isPending}
+            >
+              {isSaving ? (
+                <>
+                  <Spinner className='mr-2 h-4 w-4' />
+                  {isSavingWithAttachment ? 'Saving and uploading...' : 'Saving...'}
+                </>
+              ) : assignmentUuid ? (
+                'Update Assignment'
+              ) : isSavingWithAttachment ? (
+                'Save Assignment and Upload Attachment'
+              ) : (
+                'Save Assignment'
+              )}
+            </Button>
+          </div>
         </div>
       )}
       <DeleteConfirmationDialog
