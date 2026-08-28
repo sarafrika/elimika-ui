@@ -20,7 +20,6 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import Spinner from '@/components/ui/spinner';
-import { useStepper } from '@/components/ui/stepper';
 import { Textarea } from '@/components/ui/textarea';
 import { useOptionalCourseCreator } from '@/context/course-creator-context';
 import { useInstructor } from '@/context/instructor-context';
@@ -150,7 +149,6 @@ export const CoursePricingForm = forwardRef<CourseFormRef, CourseFormProps>(
     const courseCreatorProfile = courseCreatorContext?.profile;
 
     const authorUuid = courseCreatorProfile?.uuid ?? instructor?.uuid ?? '';
-    const { setActiveStep } = useStepper();
 
 
     const { mutate: updateCourseMutation, isPending: updateCourseIsPending } = useMutation({

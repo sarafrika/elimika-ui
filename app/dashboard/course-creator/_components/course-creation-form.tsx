@@ -32,7 +32,6 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import Spinner from '@/components/ui/spinner';
-import { useStepper } from '@/components/ui/stepper';
 import { useOptionalCourseCreator } from '@/context/course-creator-context';
 import { useInstructor } from '@/context/instructor-context';
 import { useDifficultyLevels } from '@/hooks/use-difficultyLevels';
@@ -65,6 +64,7 @@ import {
 } from 'react';
 import { useForm, useWatch } from 'react-hook-form';
 import { toast } from 'sonner';
+import { useOptionalStepper } from '../courses/create-course/stepper';
 import {
   type CourseCreationFormValues,
   courseCreationSchema,
@@ -116,6 +116,7 @@ export type CourseFormProps = {
   activeRequirementProvider?: Provider | null;
   setActiveRequirementProvider?: Dispatch<SetStateAction<Provider | null>>;
   successResponse?: (data: Course) => void;
+  postCreateRedirectHref?: string | null;
 };
 
 export type CourseFormRef = {
@@ -151,9 +152,8 @@ function SavingOverlay({ stage }: { stage: SaveStage }) {
             return (
               <div
                 key={step.key}
-                className={`flex items-center gap-3 transition-opacity duration-300 ${
-                  isActive ? 'opacity-100' : isDone ? 'opacity-60' : 'opacity-25'
-                }`}
+                className={`flex items-center gap-3 transition-opacity duration-300 ${isActive ? 'opacity-100' : isDone ? 'opacity-60' : 'opacity-25'
+                  }`}
               >
                 {isDone ? (
                   <CheckCircle2 className='text-success h-4 w-4 shrink-0' />
@@ -194,6 +194,7 @@ export const CourseCreationForm = forwardRef<CourseFormRef, CourseFormProps>(
       activeRequirementProvider,
       setActiveRequirementProvider,
       successResponse,
+      postCreateRedirectHref = '/dashboard/course-creator/course-management/create-new-course',
     },
     ref
   ) {
@@ -296,7 +297,8 @@ export const CourseCreationForm = forwardRef<CourseFormRef, CourseFormProps>(
 
     const authorName = courseCreatorProfile?.full_name ?? instructor?.full_name ?? '';
     const authorUuid = courseCreatorProfile?.uuid ?? instructor?.uuid ?? '';
-    const { setActiveStep } = useStepper();
+    const stepper = useOptionalStepper();
+    const setActiveStep = stepper?.setActiveStep ?? (() => undefined);
     const { difficultyLevels, isLoading: difficultyIsLoading } = useDifficultyLevels();
 
     const [categoryInput, setCategoryInput] = useState('');
@@ -518,9 +520,16 @@ export const CourseCreationForm = forwardRef<CourseFormRef, CourseFormProps>(
 
             setSaveStage('redirecting');
             setTimeout(() => {
-              router.replace(
-                `/dashboard/course-creator/course-management/create-new-course?id=${newCourseUuid}`
-              );
+              if (postCreateRedirectHref === null) {
+                setActiveStep(1);
+                setSaveStage(null);
+                return;
+              }
+
+              const redirectHref = postCreateRedirectHref.includes('?')
+                ? `${postCreateRedirectHref}&id=${newCourseUuid}`
+                : `${postCreateRedirectHref}?id=${newCourseUuid}`;
+              router.replace(redirectHref);
             }, 600);
           },
         }
@@ -557,7 +566,7 @@ export const CourseCreationForm = forwardRef<CourseFormRef, CourseFormProps>(
         <Form {...form}>
           <form
             onSubmit={form.handleSubmit(onSubmit, onError)}
-            className='bg-card max-w-4xl space-y-6 rounded-[32px] transition'
+            className='bg-card space-y-6 rounded-[32px] transition'
           >
             {/* Course Name */}
             <FormSection
