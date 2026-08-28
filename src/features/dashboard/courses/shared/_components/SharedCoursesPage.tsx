@@ -42,12 +42,11 @@ import {
   getPublishedCoursesOptions,
   searchCourseCreatorsOptions,
   searchProgramTrainingApplicationsOptions,
-  searchProgramTrainingApplicationsQueryKey,
   searchTrainingApplicationsOptions,
-  searchTrainingApplicationsQueryKey,
   submitProgramTrainingApplicationMutation,
   submitTrainingApplicationMutation,
 } from '@/services/client/@tanstack/react-query.gen';
+import { invalidateTrainingApplicationWorkflowQueries } from '@/src/features/dashboard/workflow-query-invalidation';
 import type { Category, CourseReview } from '@/services/client/types.gen';
 import {
   type CatalogTrainingApplicationData,
@@ -1388,18 +1387,8 @@ export function SharedCoursesPage({ domain }: SharedCoursesPageProps) {
           path: { programUuid: selectedApplicationCard.id },
         },
         {
-          onSuccess: response => {
-            qc.invalidateQueries({
-              queryKey: searchProgramTrainingApplicationsQueryKey({
-                query: {
-                  pageable: {},
-                  searchParams: {
-                    applicant_uuid_eq: applicantUuid,
-                    applicant_type_eq: applicantType,
-                  },
-                },
-              }),
-            });
+          onSuccess: async response => {
+            await invalidateTrainingApplicationWorkflowQueries(qc);
             toast.success(response?.message);
             setApplyModalOpen(false);
             setSelectedApplicationCard(null);
@@ -1418,18 +1407,8 @@ export function SharedCoursesPage({ domain }: SharedCoursesPageProps) {
         path: { courseUuid: selectedApplicationCard.id },
       },
       {
-        onSuccess: response => {
-          qc.invalidateQueries({
-            queryKey: searchTrainingApplicationsQueryKey({
-              query: {
-                pageable: {},
-                searchParams: {
-                  applicant_uuid_eq: applicantUuid,
-                  applicant_type_eq: applicantType,
-                },
-              },
-            }),
-          });
+        onSuccess: async response => {
+          await invalidateTrainingApplicationWorkflowQueries(qc);
           toast.success(response?.message);
           setApplyModalOpen(false);
           setSelectedApplicationCard(null);

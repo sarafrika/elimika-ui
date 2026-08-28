@@ -26,11 +26,10 @@ import {
   assignInstructorMutation,
   getJobOptions,
   listJobApplicationsOptions,
-  listJobApplicationsQueryKey,
-  listJobsQueryKey,
   reviewApplicationMutation,
 } from '@/services/client/@tanstack/react-query.gen';
 import { useUserDomain } from '@/src/features/dashboard/context/user-domain-context';
+import { invalidateJobApplicationWorkflowQueries } from '@/src/features/dashboard/workflow-query-invalidation';
 import { buildWorkspaceAliasPath } from '@/src/features/dashboard/lib/active-domain-storage';
 
 function formatLabel(value?: string | null) {
@@ -85,15 +84,7 @@ export function JobApplicantReviewPage({
   const instructor = instructorUuid ? (instructorMap[instructorUuid] ?? null) : null;
 
   const invalidate = async () => {
-    await queryClient.invalidateQueries({
-      queryKey: listJobApplicationsQueryKey({
-        path: { jobUuid },
-        query: { pageable: { page: 0, size: 100 } },
-      }),
-    });
-    await queryClient.invalidateQueries({
-      queryKey: listJobsQueryKey({ query: { pageable: {} } }),
-    });
+    await invalidateJobApplicationWorkflowQueries(queryClient);
   };
 
   const reviewMutation = useMutation({

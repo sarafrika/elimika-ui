@@ -15,6 +15,7 @@ import {
   getPendingEditOptions,
   moderateCourseMutation,
 } from '@/services/client/@tanstack/react-query.gen';
+import { invalidateContentModerationWorkflowQueries } from '@/src/features/dashboard/workflow-query-invalidation';
 import { adminTheme } from '../../../_components/ui/admin-theme';
 import { SectionCard, SectionCardSkeleton } from '../../../_components/ui/SectionCard';
 import { AssessmentsSection } from './AssessmentsSection';
@@ -26,18 +27,6 @@ import { RequirementsSection } from './RequirementsSection';
 import { ReviewHero } from './ReviewHero';
 import { ReviewSidebar } from './ReviewSidebar';
 import { RubricsSection } from './RubricsSection';
-
-/** Query ids refreshed after a moderation decision. */
-const MODERATION_QUERY_IDS = new Set([
-  'getCourseByUuid',
-  'getAllCourses',
-  'listPendingCourses',
-  'listPendingCourseEdits',
-  'getCourseEditDiff',
-  'getCourseModerationHistory',
-  'getCourseApprovalStatus',
-  'searchCourses',
-]);
 
 /** The API takes `approved` / `rejected` / `revoked`; the UI speaks in verbs. */
 const MODERATION_ACTIONS = {
@@ -88,12 +77,7 @@ export function CourseReviewPage({ uuid }: { uuid: string }) {
             : 'Approval revoked'
       );
       setSheetOpen(false);
-      queryClient.invalidateQueries({
-        predicate: query => {
-          const id = (query.queryKey?.[0] as { _id?: string } | undefined)?._id;
-          return !!id && MODERATION_QUERY_IDS.has(id);
-        },
-      });
+      await invalidateContentModerationWorkflowQueries(queryClient);
     } catch (error) {
       toast.error(error instanceof Error ? error.message : 'Moderation failed');
     }

@@ -43,6 +43,7 @@ import {
     type SchemaEnum4,
     type TrainingProgram,
 } from '@/services/client/types.gen';
+import { invalidateContentModerationWorkflowQueries } from '@/src/features/dashboard/workflow-query-invalidation';
 import { toAuthenticatedMediaUrl } from '@/src/lib/media-url';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import {
@@ -887,6 +888,7 @@ export default function CreateProgramPage() {
 
             const response = await publishProgramMut.mutateAsync({ path: { uuid } });
             invalidateProgramQueries();
+            await invalidateContentModerationWorkflowQueries(qc);
             setFormState(prev => ({
                 ...prev,
                 status: 'published',

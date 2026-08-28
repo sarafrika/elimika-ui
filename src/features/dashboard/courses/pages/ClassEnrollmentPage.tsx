@@ -14,15 +14,13 @@ import {
   createCartMutation,
   enrollStudentMutation,
   getCartQueryKey,
-  getClassEnrollmentsForStudentQueryKey,
   getClassEnrolmentEligibilityOptions,
   getCourseTrainingRequirementsOptions,
   getEnrollmentsForClassOptions,
-  getEnrollmentsForClassQueryKey,
-  getStudentScheduleQueryKey,
   joinWaitlistMutation,
 } from '@/services/client/@tanstack/react-query.gen';
 import { useUserDomain } from '@/src/features/dashboard/context/user-domain-context';
+import { invalidateEnrollmentSuccessQueries } from '@/src/features/dashboard/courses/shared/enrollment-query-invalidation';
 import { buildWorkspaceAliasPath } from '@/src/features/dashboard/lib/active-domain-storage';
 import { useCartStore } from '@/store/cart-store';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
@@ -53,8 +51,6 @@ import { EnrollmentLoadingState } from '../components/EnrollmentLoadingState';
 import { type BundledClass, getErrorMessage } from '../types';
 import PaymentMethodPicker, { formatKES } from './PaymentMethodPicker';
 
-const STUDENT_SCHEDULE_START = new Date('2024-10-10');
-const STUDENT_SCHEDULE_END = new Date('2030-10-10');
 const ACTIVE_ENROLLMENT_STATUSES = new Set(['ENROLLED', 'ATTENDED', 'ABSENT']);
 
 // Renders a field's value, or a muted "Not available" note when the current
@@ -354,25 +350,14 @@ export default function ClassEnrollmentPage({
 
   const invalidateStudentEnrollmentData = () => {
     if (!student?.uuid) return;
-    qc.invalidateQueries({
-      queryKey: getStudentScheduleQueryKey({
-        path: { studentUuid: student.uuid as string },
-        query: { start: STUDENT_SCHEDULE_START, end: STUDENT_SCHEDULE_END },
-      }),
-    });
-    qc.invalidateQueries({
-      queryKey: getClassEnrollmentsForStudentQueryKey({
-        path: { studentUuid: student.uuid as string },
-        query: { pageable: {} },
-      }),
-    });
-    qc.invalidateQueries({
-      queryKey: getEnrollmentsForClassQueryKey({ path: { uuid: classId } }),
-    });
+    return invalidateEnrollmentSuccessQueries(qc);
   };
 
-  const handleEnrollmentSuccess = (data: { message?: string } | undefined, successText: string) => {
-    invalidateStudentEnrollmentData();
+  const handleEnrollmentSuccess = async (
+    data: { message?: string } | undefined,
+    successText: string
+  ) => {
+    await invalidateStudentEnrollmentData();
     toast.success(data?.message || successText);
     router.push('/dashboard/courses');
   };

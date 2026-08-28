@@ -10,7 +10,8 @@ import {
   getTrainingProgramByUuidOptions,
   publishProgramMutation,
 } from '@/services/client/@tanstack/react-query.gen';
-import { useMutation, useQuery } from '@tanstack/react-query';
+import { invalidateContentModerationWorkflowQueries } from '@/src/features/dashboard/workflow-query-invalidation';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { Users } from 'lucide-react';
 import { useParams, useRouter } from 'next/navigation';
 import { useEffect, useMemo, useState } from 'react';
@@ -39,6 +40,7 @@ type ProgramPreviewProps = {
 
 const ProgramPreview = ({ onEdit: _onEdit }: ProgramPreviewProps) => {
   const router = useRouter();
+  const queryClient = useQueryClient();
   const params = useParams();
   const programUuid = typeof params?.id === 'string' ? params.id : undefined;
 
@@ -88,8 +90,9 @@ const ProgramPreview = ({ onEdit: _onEdit }: ProgramPreviewProps) => {
     publishProgramMut.mutate(
       { path: { uuid: programUuid as string } },
       {
-        onSuccess: data => {
+        async onSuccess(data) {
           toast.success(data?.message);
+          await invalidateContentModerationWorkflowQueries(queryClient);
         },
       }
     );

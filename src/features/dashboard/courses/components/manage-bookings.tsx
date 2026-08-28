@@ -1,6 +1,6 @@
 'use client';
 
-import { useMutation, useQuery } from '@tanstack/react-query';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { Calendar, Clock, Eye, Star, X } from 'lucide-react';
 import type React from 'react';
 import { useState } from 'react';
@@ -28,6 +28,7 @@ import {
   submitInstructorReviewMutation,
 } from '@/services/client/@tanstack/react-query.gen';
 import { type BookingRecord, getErrorMessage, type SearchInstructor } from '../types';
+import { invalidateReviewWorkflowQueries } from '@/src/features/dashboard/workflow-query-invalidation';
 import { BookingDetailsModal } from './booking-details-modal';
 import { FeedbackDialog } from './review-instructor-modal';
 
@@ -62,6 +63,7 @@ export const ManageBookings: React.FC<Props> = ({
   onBookingUpdate,
   refetchBookings,
 }) => {
+  const qc = useQueryClient();
   const [selectedBooking, setSelectedBooking] = useState<BookingRecord | null>(null);
   const [showCancelDialog, setShowCancelDialog] = useState(false);
   const [showFeedbackDialog, setShowFeedbackDialog] = useState(false);
@@ -143,11 +145,12 @@ export const ManageBookings: React.FC<Props> = ({
         path: { instructorUuid: selectedBooking?.instructor_uuid },
       },
       {
-        onSuccess: data => {
+        async onSuccess(data) {
           toast.success(data?.message);
           setShowFeedbackDialog(false);
           setSelectedBooking(null);
           setFeedbackComment('');
+          await invalidateReviewWorkflowQueries(qc);
         },
         onError: data => {
           toast.error(data?.message);

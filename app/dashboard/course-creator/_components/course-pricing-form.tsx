@@ -34,6 +34,7 @@ import {
   unpublishCourseMutation,
   unpublishCourseQueryKey
 } from '@/services/client/@tanstack/react-query.gen';
+import { invalidateContentModerationWorkflowQueries } from '@/src/features/dashboard/workflow-query-invalidation';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { BookCheck, Undo2 } from 'lucide-react';
@@ -171,7 +172,7 @@ export const CoursePricingForm = forwardRef<CourseFormRef, CourseFormProps>(
         await PublishCourse.mutateAsync(
           { path: { uuid: targetCourseId } },
           {
-            onSuccess(data) {
+            async onSuccess(data) {
               toast.success(data?.message || 'Course published successfully');
               queryClient.invalidateQueries({
                 queryKey: publishCourseQueryKey({ path: { uuid: targetCourseId } }),
@@ -187,6 +188,7 @@ export const CoursePricingForm = forwardRef<CourseFormRef, CourseFormProps>(
                   },
                 }),
               });
+              await invalidateContentModerationWorkflowQueries(queryClient);
               router.push('/dashboard/course-creator/course-management/all');
             },
             onError: error => {
@@ -206,7 +208,7 @@ export const CoursePricingForm = forwardRef<CourseFormRef, CourseFormProps>(
         await UnpublishCourse.mutateAsync(
           { path: { uuid: targetCourseId } },
           {
-            onSuccess(data) {
+            async onSuccess(data) {
               toast.success(data?.message || 'Course unpublished successfully');
               queryClient.invalidateQueries({
                 queryKey: unpublishCourseQueryKey({ path: { uuid: targetCourseId } }),
@@ -225,6 +227,7 @@ export const CoursePricingForm = forwardRef<CourseFormRef, CourseFormProps>(
                   },
                 }),
               });
+              await invalidateContentModerationWorkflowQueries(queryClient);
             },
             onError: error => {
               toast.error(getErrorMessage(error) || 'Failed to unpublish course');

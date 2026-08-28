@@ -3,7 +3,7 @@
 
 import RichTextRenderer from '@/components/editors/richTextRenders';
 import type { Course } from '@/services/client';
-import { useMutation, useQuery } from '@tanstack/react-query';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { CheckCircle2, ChevronDown, ChevronUp, Star, User2 } from 'lucide-react';
 import { useMemo, useState } from 'react';
 import { toast } from 'sonner';
@@ -18,6 +18,7 @@ import {
   submitInstructorReviewMutation,
 } from '@/services/client/@tanstack/react-query.gen';
 import { FeedbackDialog } from '@/app/dashboard/_components/review-instructor-modal';
+import { invalidateReviewWorkflowQueries } from '@/src/features/dashboard/workflow-query-invalidation';
 
 type LessonContentItem = {
   lesson: {
@@ -184,6 +185,7 @@ export default function CourseOverview({
   reviewCount,
   averageRating,
 }: Props) {
+  const qc = useQueryClient();
   const userProfile = useUserProfile();
   const [expanded, setExpanded] = useState(false);
   const [openModules, setOpenModules] = useState<number[]>([]);
@@ -301,7 +303,7 @@ export default function CourseOverview({
         path: { instructorUuid },
       },
       {
-        onSuccess: data => {
+        async onSuccess(data) {
           toast.success(data?.message);
           setShowFeedbackDialog(false);
           setFeedbackComment('');
@@ -310,6 +312,7 @@ export default function CourseOverview({
           setClarityRating(0);
           setEngagementRating(0);
           setPunctualityRating(0);
+          await invalidateReviewWorkflowQueries(qc);
         },
         onError: data => {
           toast.error(data?.message);

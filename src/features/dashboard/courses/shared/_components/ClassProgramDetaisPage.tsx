@@ -16,7 +16,6 @@ import {
   getInstructorRatingSummaryOptions,
   getProgramCoursesOptions,
   getProgramReviewsOptions,
-  getProgramReviewsQueryKey,
   getTrainingProgramByUuidOptions,
   submitInstructorReviewMutation,
   submitProgramReviewMutation,
@@ -24,6 +23,7 @@ import {
 import { useUserDomain } from '@/src/features/dashboard/context/user-domain-context';
 import { EnrollmentLoadingState } from '@/src/features/dashboard/courses/components/EnrollmentLoadingState';
 import { buildWorkspaceAliasPath } from '@/src/features/dashboard/lib/active-domain-storage';
+import { invalidateReviewWorkflowQueries } from '@/src/features/dashboard/workflow-query-invalidation';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import {
   Award,
@@ -680,7 +680,7 @@ function ProgramOverview({
         path: { instructorUuid },
       },
       {
-        onSuccess: data => {
+        async onSuccess(data) {
           toast.success(data?.message);
           setShowFeedbackDialog(false);
           setFeedbackComment('');
@@ -689,6 +689,7 @@ function ProgramOverview({
           setClarityRating(0);
           setEngagementRating(0);
           setPunctualityRating(0);
+          await invalidateReviewWorkflowQueries(qc);
         },
         onError: data => {
           toast.error(data?.message);
@@ -1329,17 +1330,12 @@ function ProgramRating({
         },
       },
       {
-        onSuccess: data => {
+        async onSuccess() {
           toast.success('Review added successfully');
 
           setShowFeedbackDialog(false);
 
-          qc.invalidateQueries({
-            queryKey: getProgramReviewsQueryKey({
-              path: { programUuid: programId as string },
-              query: { pageable: {} },
-            }),
-          });
+          await invalidateReviewWorkflowQueries(qc);
         },
         onError: error => {
           toast.error(error?.message);
@@ -1543,15 +1539,10 @@ export default function ClassProgramDetailsPage({
         path: { programUuid: resolvedProgramId },
       },
       {
-        onSuccess: () => {
+        async onSuccess() {
           toast.success('Review submitted successfully');
           setShowFeedbackDialog(false);
-          qc.invalidateQueries({
-            queryKey: getProgramReviewsQueryKey({
-              path: { programUuid: resolvedProgramId },
-              query: { pageable: {} },
-            }),
-          });
+          await invalidateReviewWorkflowQueries(qc);
         },
         onError: () => {
           toast.error('An error occurred. Contact support');

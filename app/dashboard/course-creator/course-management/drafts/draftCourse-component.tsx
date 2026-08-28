@@ -25,10 +25,10 @@ import { formatCourseDate } from '@/lib/format-course-date';
 import {
   deleteCourseMutation,
   publishCourseMutation,
-  publishCourseQueryKey,
   searchCoursesOptions,
   searchCoursesQueryKey,
 } from '@/services/client/@tanstack/react-query.gen';
+import { invalidateContentModerationWorkflowQueries } from '@/src/features/dashboard/workflow-query-invalidation';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { BookCheck, EyeIcon, MoreVertical, PenIcon, PlusCircle, TrashIcon } from 'lucide-react';
 import Image from 'next/image';
@@ -120,7 +120,7 @@ export default function DraftCoursesComponent({ courseCreatorId }: { courseCreat
           path: { uuid: courseId },
         },
         {
-          onSuccess(data) {
+          async onSuccess(data) {
             if (!data?.success) {
               toast.error(
                 typeof data?.error === 'string'
@@ -132,9 +132,6 @@ export default function DraftCoursesComponent({ courseCreatorId }: { courseCreat
 
             toast.success(data?.message || 'Course published successfully');
             queryClient.invalidateQueries({
-              queryKey: publishCourseQueryKey({ path: { uuid: courseId } }),
-            });
-            queryClient.invalidateQueries({
               queryKey: searchCoursesQueryKey({
                 query: {
                   searchParams: { course_creator_uuid_eq: courseCreatorId },
@@ -142,6 +139,7 @@ export default function DraftCoursesComponent({ courseCreatorId }: { courseCreat
                 },
               }),
             });
+            await invalidateContentModerationWorkflowQueries(queryClient);
           },
           onError(error) {
             toast.error(error?.message || 'Failed to publish course');

@@ -5,11 +5,10 @@ import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
 import { useUserProfile } from '@/context/profile-context';
 import {
-  getClassReviewsQueryKey,
-  getCourseReviewsQueryKey,
   submitClassReviewMutation,
   submitCourseReviewMutation,
 } from '@/services/client/@tanstack/react-query.gen';
+import { invalidateReviewWorkflowQueries } from '@/src/features/dashboard/workflow-query-invalidation';
 import { FeedbackDialog } from '@/app/dashboard/_components/review-instructor-modal';
 import StarRating from '@/src/features/dashboard/courses/shared/_components/StarRating';
 
@@ -64,12 +63,10 @@ export default function CourseRating({ reviewCount, averageRating, reviews, cour
         path: { courseUuid: courseId as string },
       },
       {
-        onSuccess: data => {
+        async onSuccess(data) {
           toast.success(data?.message);
           setShowFeedbackDialog(false);
-          qc.invalidateQueries({
-            queryKey: getCourseReviewsQueryKey({ path: { courseUuid: courseId as string } }),
-          });
+          await invalidateReviewWorkflowQueries(qc);
         },
         onError: error => {
           toast.error(error?.message);
@@ -178,15 +175,10 @@ export function ClassRating({ reviewCount, averageRating, reviews, courseId, cla
         path: { uuid: classId as string },
       },
       {
-        onSuccess: data => {
+        async onSuccess(data) {
           toast.success(data?.message);
           setShowFeedbackDialog(false);
-          qc.invalidateQueries({
-            queryKey: getClassReviewsQueryKey({
-              path: { uuid: classId as string },
-              query: { pageable: {} },
-            }),
-          });
+          await invalidateReviewWorkflowQueries(qc);
         },
         onError: error => {
           toast.error(error?.message);

@@ -48,6 +48,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { extractEntity, extractList } from '@/lib/api-helpers';
 import { cn } from '@/lib/utils';
 import type { ClassMarketplaceJobApplication, Instructor } from '@/services/client';
+import { invalidateJobApplicationWorkflowQueries } from '@/src/features/dashboard/workflow-query-invalidation';
 import {
   assignInstructorMutation,
   getInstructorByUuidOptions,
@@ -223,8 +224,9 @@ export default function CandidateDetailPage() {
   // "Hire" used to stop at approve, which left all three undone.
   const assignMutation = useMutation({
     ...assignInstructorMutation(),
-    onSuccess: () => {
-      applicationsQuery.refetch();
+    onSuccess: async () => {
+      await invalidateJobApplicationWorkflowQueries(queryClient);
+      await applicationsQuery.refetch();
       toast.success('Candidate hired', {
         description: 'They now belong to your organisation. Create the class to schedule it.',
       });
@@ -235,8 +237,9 @@ export default function CandidateDetailPage() {
 
   const moveMutation = useMutation({
     ...reviewApplicationMutation(),
-    onSuccess: (_d, vars) => {
-      applicationsQuery.refetch();
+    onSuccess: async (_d, vars) => {
+      await invalidateJobApplicationWorkflowQueries(queryClient);
+      await applicationsQuery.refetch();
       if (vars?.query?.action === 'approve' && app?.uuid) {
         assignMutation.mutate({
           path: { jobUuid },

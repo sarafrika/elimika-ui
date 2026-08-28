@@ -17,8 +17,8 @@ import {
   getCourseLessonsOptions,
   getLessonContentOptions,
   publishCourseMutation,
-  publishCourseQueryKey
 } from '@/services/client/@tanstack/react-query.gen';
+import { invalidateContentModerationWorkflowQueries } from '@/src/features/dashboard/workflow-query-invalidation';
 import type { Lesson } from '@/services/client/types.gen';
 import { isAuthenticatedMediaUrl, toAuthenticatedMediaUrl } from '@/src/lib/media-url';
 import { useMutation, useQueries, useQuery, useQueryClient } from '@tanstack/react-query';
@@ -197,11 +197,9 @@ export default function CourseBuilderPage() {
           path: { uuid: course?.data?.uuid as string },
         },
         {
-          onSuccess(data, _variables, _context) {
+          async onSuccess(data, _variables, _context) {
             toast.success(data?.message);
-            queryClient.invalidateQueries({
-              queryKey: publishCourseQueryKey({ path: { uuid: course?.data?.uuid as string } }),
-            });
+            await invalidateContentModerationWorkflowQueries(queryClient);
             router.push('/dashboard/course-creator/course-management');
           },
         }

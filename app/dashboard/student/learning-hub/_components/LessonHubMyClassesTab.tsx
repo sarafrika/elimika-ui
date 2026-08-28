@@ -17,7 +17,8 @@ import { toast } from 'sonner';
 import { useUserProfile } from '../../../../../context/profile-context';
 import { useClassesByIds } from '../../../../../hooks/use-batched-lookups';
 import { ClassDefinition } from '../../../../../services/client';
-import { getClassReviewsQueryKey, submitClassReviewMutation } from '../../../../../services/client/@tanstack/react-query.gen';
+import { submitClassReviewMutation } from '../../../../../services/client/@tanstack/react-query.gen';
+import { invalidateReviewWorkflowQueries } from '../../../../../src/features/dashboard/workflow-query-invalidation';
 import { formatSessionSchedule } from '../../../../../src/features/dashboard/courses/components/availability-listing-layout';
 import { stripHtml } from '../../../../../src/features/dashboard/courses/shared/_components/courses-data';
 import { toAuthenticatedMediaUrl } from '../../../../../src/lib/media-url';
@@ -219,15 +220,10 @@ function ClassCard({
         path: { uuid: classObj?.uuid as string },
       },
       {
-        onSuccess: data => {
+        async onSuccess(data) {
           toast.success(data?.message);
           setIsReviewModalOpen(false);
-          qc.invalidateQueries({
-            queryKey: getClassReviewsQueryKey({
-              path: { uuid: classObj?.uuid as string },
-              query: { pageable: {} },
-            }),
-          });
+          await invalidateReviewWorkflowQueries(qc);
         },
         onError: error => {
           toast.error(error?.message);

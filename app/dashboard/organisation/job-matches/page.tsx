@@ -67,6 +67,7 @@ import type {
   ClassMarketplaceJobApplication,
   Instructor,
 } from '@/services/client';
+import { invalidateJobApplicationWorkflowQueries } from '@/src/features/dashboard/workflow-query-invalidation';
 import {
   assignInstructorMutation,
   getInstructorByUuidOptions,
@@ -389,9 +390,9 @@ export default function JobMatchesPage() {
 
   const assignMutation = useMutation({
     ...assignInstructorMutation(),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['listJobApplications'] });
-      applicationsQuery.refetch();
+    onSuccess: async () => {
+      await invalidateJobApplicationWorkflowQueries(queryClient);
+      await applicationsQuery.refetch();
       toast.success('Candidate hired', {
         description: 'They now belong to your organisation. Create the class to schedule it.',
       });
@@ -402,9 +403,9 @@ export default function JobMatchesPage() {
 
   const moveMutation = useMutation({
     ...reviewApplicationMutation(),
-    onSuccess: (_d, vars) => {
-      queryClient.invalidateQueries({ queryKey: ['listJobApplications'] });
-      applicationsQuery.refetch();
+    onSuccess: async (_d, vars) => {
+      await invalidateJobApplicationWorkflowQueries(queryClient);
+      await applicationsQuery.refetch();
       // Approve marks the choice; the assignment is the hire — it affiliates the instructor
       // with the organisation, opens class creation and sends the hired notice.
       if (vars?.query?.action === 'approve' && vars?.path?.applicationUuid) {

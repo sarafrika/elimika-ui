@@ -20,6 +20,7 @@ import {
   publishProgramMutation,
   removeProgramCourseMutation,
 } from '@/services/client/@tanstack/react-query.gen';
+import { invalidateContentModerationWorkflowQueries } from '@/src/features/dashboard/workflow-query-invalidation';
 import type { Course } from '@/services/client/types.gen';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { BookOpen, Check, CheckCheck, Clock, CoinsIcon, Trash, Users } from 'lucide-react';
@@ -135,8 +136,9 @@ export default function ProgramPreviewPage() {
     publishProgram.mutate(
       { path: { uuid: programId } },
       {
-        onSuccess: data => {
+        async onSuccess(data) {
           toast.success(data?.message);
+          await invalidateContentModerationWorkflowQueries(qc);
         },
         onError: error => {
           toast.error(error?.message);

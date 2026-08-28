@@ -34,6 +34,7 @@ import {
   searchProgramTrainingApplicationsOptions,
   searchTrainingApplicationsOptions,
 } from '@/services/client/@tanstack/react-query.gen';
+import { invalidateTrainingApplicationWorkflowQueries } from '@/src/features/dashboard/workflow-query-invalidation';
 import { toAuthenticatedMediaUrl } from '@/src/lib/media-url';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import {
@@ -686,12 +687,7 @@ export default function ManageApplicantPage({ uuid }: { uuid: string }) {
       toast.success(`Application ${reviewAction}d successfully`);
       setReviewOpen(false);
       setSelectedApplication(null);
-      queryClient.invalidateQueries({
-        predicate: query => {
-          const id = (query.queryKey?.[0] as { _id?: string } | undefined)?._id;
-          return !!id && ['searchTrainingApplications', 'searchProgramTrainingApplications'].includes(id);
-        },
-      });
+      await invalidateTrainingApplicationWorkflowQueries(queryClient);
     } catch (error) {
       toast.error(getErrorMessage(error) || `Failed to ${reviewAction} application`);
     }

@@ -69,6 +69,7 @@ import {
   withdrawProgramTrainingApplicationMutation,
   withdrawTrainingApplicationMutation,
 } from '@/services/client/@tanstack/react-query.gen';
+import { invalidateTrainingApplicationWorkflowQueries } from '@/src/features/dashboard/workflow-query-invalidation';
 import { OrgPage } from '../_components/org-page';
 
 type OfferingKind = 'course' | 'program';
@@ -313,9 +314,8 @@ export default function OrganisationApprovalsPage() {
 
   const isLoading = coursesQuery.isLoading || programsQuery.isLoading;
 
-  const invalidate = () => {
-    qc.invalidateQueries({ queryKey: courseOptions.queryKey });
-    qc.invalidateQueries({ queryKey: programOptions.queryKey });
+  const invalidate = async () => {
+    await invalidateTrainingApplicationWorkflowQueries(qc);
   };
 
   const [viewRow, setViewRow] = useState<RequestRow | null>(null);
@@ -378,9 +378,9 @@ export default function OrganisationApprovalsPage() {
       application_notes: form.notes.trim() || undefined,
     };
 
-    const onSuccess = () => {
+    const onSuccess = async () => {
       toast.success('Training request updated.');
-      invalidate();
+      await invalidate();
       closeEdit();
     };
     const onError = (error: unknown) =>
@@ -408,9 +408,9 @@ export default function OrganisationApprovalsPage() {
   const handleWithdraw = () => {
     if (!withdrawRow) return;
 
-    const onSuccess = () => {
+    const onSuccess = async () => {
       toast.success('Training request withdrawn.');
-      invalidate();
+      await invalidate();
       setWithdrawRow(null);
     };
     const onError = (error: unknown) =>

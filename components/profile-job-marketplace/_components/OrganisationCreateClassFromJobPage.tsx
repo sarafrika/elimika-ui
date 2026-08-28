@@ -41,10 +41,10 @@ import type { ClassMarketplaceJob } from '@/services/client';
 import {
   createClassForJobMutation,
   getJobOptions,
-  getJobQueryKey,
 } from '@/services/client/@tanstack/react-query.gen';
 import { useUserDomain } from '@/src/features/dashboard/context/user-domain-context';
 import { buildWorkspaceAliasPath } from '@/src/features/dashboard/lib/active-domain-storage';
+import { invalidateJobApplicationWorkflowQueries } from '@/src/features/dashboard/workflow-query-invalidation';
 
 type CreateClassFromJobPageProps = {
   jobUuid: string;
@@ -109,8 +109,7 @@ export function OrganisationCreateClassFromJobPage({ jobUuid }: CreateClassFromJ
     ...createClassForJobMutation(),
     onSuccess: async response => {
       toast.success('Class created. The reserved venue and equipment are now booked.');
-      await queryClient.invalidateQueries({ queryKey: getJobQueryKey(jobOptions) });
-      await queryClient.invalidateQueries({ queryKey: [{ _id: 'listJobs' }] });
+      await invalidateJobApplicationWorkflowQueries(queryClient);
       const classUuid = response?.data?.uuid;
       router.push(
         buildWorkspaceAliasPath(
@@ -353,6 +352,7 @@ function MoneyRow({
   value,
   accent,
   emphasis,
+  rateBasis,
 }: {
   label: string;
   value: number | null;

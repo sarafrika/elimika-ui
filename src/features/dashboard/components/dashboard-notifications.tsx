@@ -12,6 +12,7 @@ import {
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { absoluteDateTime, relativeTimeFromNow } from '@/lib/date';
 import { cn } from '@/lib/utils';
+import { invalidateWorkflowQueriesForNotification } from '@/src/features/dashboard/workflow-query-invalidation';
 import {
   useMarkAllNotificationsRead,
   useNotificationAction,
@@ -34,6 +35,7 @@ import {
 import Link from 'next/link';
 import { useEffect, useRef, useState } from 'react';
 import { toast } from 'sonner';
+import { useQueryClient } from '@tanstack/react-query';
 
 type DashboardNotificationsProps = {
   notificationHref: string;
@@ -242,6 +244,8 @@ export function DashboardNotifications({
 }: DashboardNotificationsProps) {
   const [open, setOpen] = useState(false);
   const shownPopupIds = useRef<Set<string>>(new Set());
+  const invalidatedWorkflowNotificationIds = useRef<Set<string>>(new Set());
+  const queryClient = useQueryClient();
   const domain = activeDomain ?? undefined;
   const actionMutation = useNotificationAction();
   const markAllMutation = useMarkAllNotificationsRead(domain);
@@ -307,6 +311,17 @@ export function DashboardNotifications({
       actionMutation.mutate({ uuid: notification.uuid, action: 'popup_seen' });
     }
   }, [actionMutation, notificationHref, popupNotifications]);
+
+  useEffect(() => {
+    for (const notification of [...popupNotifications, ...recentNotifications]) {
+      if (invalidatedWorkflowNotificationIds.current.has(notification.uuid)) {
+        continue;
+      }
+
+      invalidatedWorkflowNotificationIds.current.add(notification.uuid);
+      void invalidateWorkflowQueriesForNotification(queryClient, notification);
+    }
+  }, [popupNotifications, queryClient, recentNotifications]);
 
   const handleRead = (notification: UserNotification) => {
     if (notification.status === 'UNREAD') {

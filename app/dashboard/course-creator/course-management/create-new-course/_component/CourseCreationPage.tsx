@@ -17,6 +17,7 @@ import {
   unpublishCourseMutation,
   unpublishCourseQueryKey,
 } from '../../../../../../services/client/@tanstack/react-query.gen';
+import { invalidateContentModerationWorkflowQueries } from '../../../../../../src/features/dashboard/workflow-query-invalidation';
 import { PendingEditBanner } from '../../../_components/pending-edit-banner';
 import CourseBuilderPage from './CourseBuilderPage';
 import CoursePreviewPage from './CoursePreviewPage';
@@ -51,19 +52,9 @@ const CourseCreationPage = () => {
           path: { uuid: courseId as string },
         },
         {
-          onSuccess(data, _variables, _context) {
+          async onSuccess(data, _variables, _context) {
             toast.success(data?.message);
-            queryClient.invalidateQueries({
-              queryKey: publishCourseQueryKey({ path: { uuid: courseId as string } }),
-            });
-            queryClient.invalidateQueries({
-              queryKey: searchCoursesQueryKey({
-                query: {
-                  searchParams: { course_creator_uuid_eq: creator?.profile?.uuid },
-                  pageable: {},
-                },
-              }),
-            });
+            await invalidateContentModerationWorkflowQueries(queryClient);
             router.push('/dashboard/course-creator/course-management/all');
           },
           onError: error => {
@@ -83,7 +74,7 @@ const CourseCreationPage = () => {
           path: { uuid: courseId as string },
         },
         {
-          onSuccess(data) {
+          async onSuccess(data) {
             toast.success(data?.message || 'Course unpublished successfully');
             queryClient.invalidateQueries({
               queryKey: unpublishCourseQueryKey({ path: { uuid: courseId as string } }),
@@ -102,6 +93,7 @@ const CourseCreationPage = () => {
                 },
               }),
             });
+            await invalidateContentModerationWorkflowQueries(queryClient);
           },
           onError: error => {
             toast.error(getErrorMessage(error) || 'Failed to unpublish course');
