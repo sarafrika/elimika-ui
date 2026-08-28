@@ -2,7 +2,7 @@
 'use client';
 
 import { zodResolver } from '@hookform/resolvers/zod';
-import { useMutation, useQueries, useQuery } from '@tanstack/react-query';
+import { useMutation, useQueries, useQuery, useQueryClient } from '@tanstack/react-query';
 import {
   AlertCircle,
   ArrowLeft,
@@ -20,7 +20,7 @@ import {
 } from 'lucide-react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { useForm, useWatch } from 'react-hook-form';
 import { toast } from 'sonner';
 import { z } from 'zod';
@@ -46,6 +46,7 @@ import {
   payWithMpesaMutation,
   selectPaymentSessionMutation,
 } from '@/services/client/@tanstack/react-query.gen';
+import { invalidateEnrollmentSuccessQueries } from '@/src/features/dashboard/courses/shared/enrollment-query-invalidation';
 import { useCartStore } from '@/store/cart-store';
 
 const DEFAULT_CURRENCY = 'KES';
@@ -125,6 +126,7 @@ type MpesaStatus = 'idle' | 'initiating' | 'waiting' | 'success' | 'failed' | 't
 export default function CheckoutPage() {
   const router = useRouter();
   const { cartId, clearCart } = useCartStore();
+  const queryClient = useQueryClient();
   const profile = useUserProfile();
   const { paymentRequired } = usePaymentMode();
   const [isProcessing, setIsProcessing] = useState(false);
@@ -134,6 +136,7 @@ export default function CheckoutPage() {
   const [orderId, setOrderId] = useState<string | null>(null);
   const [mpesaPhoneDisplay, setMpesaPhoneDisplay] = useState('');
   const [waitStartedAt, setWaitStartedAt] = useState<number | null>(null);
+  const successHandledRef = useRef(false);
 
   const form = useForm<CheckoutFormValues>({
     resolver: zodResolver(checkoutFormSchema),
@@ -262,12 +265,14 @@ export default function CheckoutPage() {
 
   // Handle a confirmed payment: clear the cart and move to the learner dashboard.
   useEffect(() => {
-    if (mpesaStatus !== 'success') return;
+    if (mpesaStatus !== 'success' || successHandledRef.current) return;
+    successHandledRef.current = true;
+    void invalidateEnrollmentSuccessQueries(queryClient, { cartId });
     toast.success('Payment received! Your courses are unlocked.');
     clearCart();
     const timer = setTimeout(() => router.push('/dashboard/student/learning-hub'), 1500);
     return () => clearTimeout(timer);
-  }, [mpesaStatus, clearCart, router]);
+  }, [mpesaStatus, queryClient, cartId, clearCart, router]);
 
   const startMpesaPayment = async (values: CheckoutFormValues) => {
     if (!cartId) {

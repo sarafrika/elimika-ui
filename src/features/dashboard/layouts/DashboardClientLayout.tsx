@@ -1,7 +1,6 @@
 'use client';
 
 import CustomLoader from '@/components/custom-loader';
-import { FloatingCartButton } from '@/components/layout/FloatingCartButton';
 import { SidebarProvider } from '@/components/ui/sidebar';
 import { BreadcrumbProvider } from '@/context/breadcrumb-provider';
 import { DashboardProviders } from '@/context/profile-providers';
@@ -117,7 +116,6 @@ function DashboardLayoutContent({ children }: { children: ReactNode }) {
               <DashboardMainContent>{children}</DashboardMainContent>
             </div>
           </div>
-          <FloatingCartButton />
         </BreadcrumbProvider>
       </DashboardViewProvider>
     </SidebarProvider>

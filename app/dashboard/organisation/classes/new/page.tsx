@@ -437,9 +437,21 @@ export default function OrganisationCreateClassPage() {
   const [resourceConflicts, setResourceConflicts] = useState<ConflictItem[]>([]);
   const createClass = useMutation({
     ...createClassDefinitionMultipartMutation(),
-    onSuccess: () => {
-      toast.success('Class created and scheduled.');
-      router.push('/dashboard/organisation/classes');
+    onSuccess: response => {
+      const createdClass = response?.data?.class_definition;
+      const inviteParams = new URLSearchParams();
+      if (createdClass?.uuid) inviteParams.set('classUuid', createdClass.uuid);
+      if (createdClass?.program_uuid) {
+        inviteParams.set('programUuid', createdClass.program_uuid);
+      } else if (createdClass?.course_uuid) {
+        inviteParams.set('courseUuid', createdClass.course_uuid);
+      }
+      const query = inviteParams.toString();
+      const invitePath = '/dashboard/organisation/invite-students';
+      toast.success('Class created and scheduled.', {
+        description: 'Add recipients to share it with students.',
+      });
+      router.push(query ? `${invitePath}?${query}` : invitePath);
     },
     onError: error => {
       const report = parseConflictError(error);

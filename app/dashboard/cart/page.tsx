@@ -4,6 +4,7 @@
 import { AsyncSection } from '@/components/data/async-section';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { EmptyState } from '@/components/ui/empty-state';
 import { Separator } from '@/components/ui/separator';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useUserProfile } from '@/context/profile-context';
@@ -15,6 +16,7 @@ import {
   getCartQueryKey,
   removeItemMutation,
 } from '@/services/client/@tanstack/react-query.gen';
+import { invalidateEnrollmentSuccessQueries } from '@/src/features/dashboard/courses/shared/enrollment-query-invalidation';
 import { buildWorkspaceAliasPath } from '@/src/features/dashboard/lib/active-domain-storage';
 import { useCartStore } from '@/store/cart-store';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
@@ -29,10 +31,9 @@ import {
 } from 'lucide-react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { toast } from 'sonner';
 import { useUserDomain } from '../../../context/user-domain-context';
-
 
 const DEFAULT_CURRENCY = 'KES';
 
@@ -52,19 +53,27 @@ const formatMoney = (amount: number | string | undefined, currency = DEFAULT_CUR
 export default function CartPage() {
   const { cartId, clearCart } = useCartStore();
   const queryClient = useQueryClient();
-  const { activeDomain } = useUserDomain()
+  const { activeDomain } = useUserDomain();
   const router = useRouter();
   const profile = useUserProfile();
   const removeItemMut = useMutation(removeItemMutation());
   const completeCheckout = useMutation(completeCheckoutMutation());
   const { paymentRequired } = usePaymentMode();
   const [enrolling, setEnrolling] = useState(false);
+  const canUseStudentCart = activeDomain === 'student' && Boolean(profile?.student?.uuid);
+  const dashboardFallbackHref = buildWorkspaceAliasPath(activeDomain, '/dashboard/overview');
 
-  // HeyAPI's path serializer leaves `{cartId}` literal in the URL when path value is null/empty.
-  // Use a sentinel string when no cartId; `enabled: false` blocks the actual fetch.
+  const cartOptions =
+    canUseStudentCart && cartId
+      ? getCartOptions({ path: { cartId } })
+      : {
+          queryKey: ['getCart', 'disabled'],
+          queryFn: async () => null,
+          enabled: false,
+        };
   const cartQuery = useQuery({
-    ...getCartOptions({ path: { cartId: cartId ?? 'unset' } }),
-    enabled: !!cartId,
+    ...cartOptions,
+    enabled: canUseStudentCart && !!cartId,
     retry: 1,
   });
 
@@ -89,6 +98,33 @@ export default function CartPage() {
 
   const currency = cart?.currency_code ?? DEFAULT_CURRENCY;
 
+  useEffect(() => {
+    if (profile?.isLoading || !activeDomain || canUseStudentCart) {
+      return;
+    }
+
+    router.replace(dashboardFallbackHref);
+  }, [canUseStudentCart, dashboardFallbackHref, profile?.isLoading, router]);
+
+  if (!canUseStudentCart) {
+    return (
+      <div className='bg-background text-foreground h-auto'>
+        <div className='mx-auto flex w-full max-w-4xl flex-col gap-8 px-6 py-12 lg:py-16'>
+          <EmptyState
+            icon={ShoppingCart}
+            title='Student cart only'
+            description='Switch to your student profile to view enrolment cart items.'
+            action={
+              <Button asChild>
+                <Link href={dashboardFallbackHref}>Back to dashboard</Link>
+              </Button>
+            }
+          />
+        </div>
+      </div>
+    );
+  }
+
   // On an environment that captures orders without a gateway there is nothing to pay, so the
   // payment page is skipped entirely rather than shown and instantly dismissed: completing the
   // cart is what enrols the learner, and asking to pay for an already-captured order is rejected.
@@ -108,9 +144,10 @@ export default function CartPage() {
       await completeCheckout.mutateAsync({
         body: { cart_id: cartId, customer_email: email, payment_provider_id: 'manual' },
       });
+      await invalidateEnrollmentSuccessQueries(queryClient, { cartId });
       toast.success('You are enrolled! Your courses are unlocked.');
       clearCart();
-      router.push('/dashboard/student/learning-hub');
+      router.push(buildWorkspaceAliasPath('student', '/dashboard/learning-hub'));
     } catch (_error) {
       toast.error('Could not complete your enrolment. Please try again.');
     } finally {
@@ -203,7 +240,10 @@ export default function CartPage() {
                   Looks like you haven't added any courses yet. Start exploring our catalogue to
                   find courses that match your goals.
                 </CardDescription>
-                <Link href={buildWorkspaceAliasPath(activeDomain, '/dashboard/courses')} className='inline-block pt-4'>
+                <Link
+                  href={buildWorkspaceAliasPath(activeDomain, '/dashboard/courses')}
+                  className='inline-block pt-4'
+                >
                   <Button
                     size='lg'
                     className='bg-primary hover:bg-primary/90 rounded-full px-8 shadow-lg transition'
