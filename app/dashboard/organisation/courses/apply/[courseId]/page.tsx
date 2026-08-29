@@ -21,7 +21,7 @@ import {
   Video,
 } from 'lucide-react';
 import Link from 'next/link';
-import { useParams, useRouter } from 'next/navigation';
+import { useParams, useRouter, useSearchParams } from 'next/navigation';
 import { useEffect, useMemo, useReducer, useRef, useState } from 'react';
 import { toast } from 'sonner';
 
@@ -50,10 +50,13 @@ import { useInstructor } from '@/context/instructor-context';
 import { useOrganisation } from '@/context/organisation-context';
 import { extractEntity } from '@/lib/api-helpers';
 import { cn } from '@/lib/utils';
-import type { Course, CourseTrainingRequirement } from '@/services/client';
+import type { Course, CourseTrainingRequirement, ProgramRequirement, TrainingProgram } from '@/services/client';
 import {
   getCourseByUuidOptions,
   getCourseTrainingRequirementsOptions,
+  getProgramRequirementsOptions,
+  getTrainingProgramByUuidOptions,
+  submitProgramTrainingApplicationMutation,
   submitTrainingApplicationMutation,
 } from '@/services/client/@tanstack/react-query.gen';
 import { useUserDomain } from '@/src/features/dashboard/context/user-domain-context';
@@ -88,6 +91,8 @@ type PriceTier = {
   amount: string;
   basis: RateBasis;
 };
+
+type TrainingContentKind = 'course' | 'program';
 
 type State = {
   step: number;
@@ -358,7 +363,7 @@ function isOrganisationTrainingRequirement(requirement: CourseTrainingRequiremen
 
 // ---------- component ----------
 
-const STEPS = ['Training method', 'Classrooms & labs', 'Equipment', 'Pricing', 'Review'] as const;
+const STEPS = ['Training method', 'Classrooms & labs', 'Requirements', 'Pricing', 'Review'] as const;
 
 const METHOD_OPTIONS: {
   value: TrainingMethod;
@@ -428,8 +433,12 @@ function buildRateCard(pricing: PriceTier[]) {
 
 export default function ApplyPage() {
   const params = useParams<{ courseId?: string; id?: string }>();
-  const courseId = params?.courseId ?? params?.id ?? '';
-  // const programId = params?.programId
+  const searchParams = useSearchParams();
+
+  const trainingId = params?.courseId ?? params?.id ?? '';
+  const contentKind = searchParams.get('kind') === 'program' ? 'program' : 'course';
+  const isProgram = contentKind === 'program';
+
   const router = useRouter();
   const queryClient = useQueryClient();
   const { activeDomain } = useUserDomain();
@@ -443,24 +452,40 @@ export default function ApplyPage() {
     ? '/dashboard/instructor/courses'
     : '/dashboard/organisation/courses/catalog';
   const successHref = isInstructorDomain
-    ? '/dashboard/instructor/opportunities/my-applications'
+    ? '/dashboard/instructor/courses'
     : '/dashboard/organisation/my-applications';
 
   const courseQuery = useQuery({
-    ...getCourseByUuidOptions({ path: { uuid: courseId } }),
-    enabled: Boolean(courseId),
+    ...getCourseByUuidOptions({ path: { uuid: trainingId } }),
+    enabled: Boolean(trainingId) && !isProgram,
   });
   const courseRequirementsQuery = useQuery({
     ...getCourseTrainingRequirementsOptions({
-      path: { courseUuid: courseId },
+      path: { courseUuid: trainingId },
       query: { pageable: { page: 0, size: 200 } },
     }),
-    enabled: Boolean(courseId),
+    enabled: Boolean(trainingId) && !isProgram,
+  });
+  const programQuery = useQuery({
+    ...getTrainingProgramByUuidOptions({ path: { uuid: trainingId } }),
+    enabled: Boolean(trainingId) && isProgram,
+  });
+  const programRequirementsQuery = useQuery({
+    ...getProgramRequirementsOptions({
+      path: { programUuid: trainingId },
+      query: { pageable: { page: 0, size: 200 } },
+    }),
+    enabled: Boolean(trainingId) && isProgram,
   });
   const course = extractEntity<Course>(courseQuery.data);
+  const program = extractEntity<TrainingProgram>(programQuery.data);
   const courseRequirements = useMemo(
     () => courseRequirementsQuery.data?.data?.content ?? course?.training_requirements ?? [],
     [course?.training_requirements, courseRequirementsQuery.data?.data?.content]
+  );
+  const programRequirements = useMemo(
+    () => programRequirementsQuery.data?.data?.content ?? [],
+    [programRequirementsQuery.data?.data?.content]
   );
   const requirements = useMemo(
     () => courseRequirements.filter(isOrganisationTrainingRequirement),
@@ -479,14 +504,17 @@ export default function ApplyPage() {
   // Seed equipment answers from the course creator's real requirements once loaded.
   const reqKey = requirements.map(r => r.uuid ?? r.name).join('|');
   useEffect(() => {
-    dispatch({
-      type: 'initEquipment',
-      requirements: requirements.map(r => ({ uuid: (r.uuid ?? r.name) as string, name: r.name })),
-    });
+    if (!isProgram) {
+      dispatch({
+        type: 'initEquipment',
+        requirements: requirements.map(r => ({ uuid: (r.uuid ?? r.name) as string, name: r.name })),
+      });
+    }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [reqKey]);
+  }, [isProgram, reqKey]);
 
-  const submitMutation = useMutation(submitTrainingApplicationMutation());
+  const courseSubmitMutation = useMutation(submitTrainingApplicationMutation());
+  const programSubmitMutation = useMutation(submitProgramTrainingApplicationMutation());
 
   const missing = useMemo(() => {
     const errors: string[] = [];
@@ -495,17 +523,21 @@ export default function ApplyPage() {
     } else if (state.step === 1) {
       errors.push(...validateClassrooms(state.classrooms));
     } else if (state.step === 2) {
-      errors.push(...validateEquipment(state.equipment));
+      if (!isProgram) {
+        errors.push(...validateEquipment(state.equipment));
+      }
     } else if (state.step === 3) {
       errors.push(...validatePricing(state.pricing, state.methods));
     } else if (state.step === 4) {
       if (state.methods.length === 0) errors.push('Select at least one preferred training method.');
       errors.push(...validateClassrooms(state.classrooms));
-      errors.push(...validateEquipment(state.equipment));
+      if (!isProgram) {
+        errors.push(...validateEquipment(state.equipment));
+      }
       errors.push(...validatePricing(state.pricing, state.methods));
     }
     return errors;
-  }, [state]);
+  }, [isProgram, state]);
 
   const canNext = missing.length === 0;
   const goNext = () => {
@@ -515,7 +547,8 @@ export default function ApplyPage() {
   const goBack = () => dispatch({ type: 'step', step: Math.max(0, state.step - 1) });
 
   const submit = () => {
-    if (!course || !applicantUuid) return;
+    if ((!course && !program) || !applicantUuid) return;
+    const trainingName = isProgram ? program?.title ?? 'this program' : course?.name ?? 'this course';
     const methodTitles = state.methods
       .map(v => METHOD_OPTIONS.find(m => m.value === v)?.title)
       .filter(Boolean)
@@ -523,24 +556,27 @@ export default function ApplyPage() {
     const notes = [
       `Methods: ${methodTitles}`,
       `Classrooms: ${state.classrooms.map(c => c.name || '(unnamed)').join(', ')}`,
-      `Equipment ready: ${state.equipment.filter(e => e.has === 'yes').length}/${requirements.length}`,
+      isProgram
+        ? `Program requirements reviewed: ${programRequirements.length}`
+        : `Equipment ready: ${state.equipment.filter(e => e.has === 'yes').length}/${requirements.length}`,
     ].join(' · ');
 
-    submitMutation.mutate(
+    const mutate = isProgram ? programSubmitMutation : courseSubmitMutation;
+    mutate.mutate(
       {
-        path: { courseUuid: courseId },
+        path: isProgram ? { programUuid: trainingId } : { courseUuid: trainingId },
         body: {
           applicant_type: applicantType,
           applicant_uuid: applicantUuid,
           rate_card: buildRateCard(state.pricing),
           application_notes: notes,
         },
-      },
+      } as never,
       {
         onSuccess: async () => {
           await invalidateTrainingApplicationWorkflowQueries(queryClient);
           toast.success('Application submitted', {
-            description: `Your application to train ${course.name} is under review.`,
+            description: `Your application to train ${trainingName} is under review.`,
           });
           router.push(successHref);
         },
@@ -553,7 +589,10 @@ export default function ApplyPage() {
     );
   };
 
-  if (courseQuery.isLoading) {
+  const contentTitle = isProgram ? program?.title ?? '' : course?.name ?? '';
+  const isLoading = isProgram ? programQuery.isLoading : courseQuery.isLoading;
+
+  if (isLoading) {
     return (
       <div className='mx-auto w-full max-w-[1600px] space-y-6 px-3 py-4 sm:px-5 lg:px-6'>
         <Skeleton className='h-16 w-full' />
@@ -562,10 +601,10 @@ export default function ApplyPage() {
     );
   }
 
-  if (!course) {
+  if (!contentTitle) {
     return (
       <div className='text-muted-foreground p-8 text-center text-sm'>
-        Course not found.{' '}
+        {isProgram ? 'Program' : 'Course'} not found.{' '}
         <Link href={backHref} className='text-primary hover:underline'>
           Back to {isInstructorDomain ? 'courses' : 'catalog'}
         </Link>
@@ -576,8 +615,12 @@ export default function ApplyPage() {
   return (
     <div className='mx-auto w-full max-w-[1600px] space-y-6 px-3 py-4 sm:px-5 lg:px-6 2xl:max-w-[1840px]'>
       <PageHeader
-        title={`Apply to train: ${course.name}`}
-        description={`${course.category_names?.[0] ?? 'General'} · ${course.total_duration_display ?? '—'}`}
+        title={`Apply to train: ${contentTitle || 'Untitled'}`}
+        description={
+          isProgram
+            ? `${program?.program_type ?? 'Program'} · ${program?.total_duration_display ?? '—'}`
+            : `${course?.category_names?.[0] ?? 'General'} · ${course?.total_duration_display ?? '—'}`
+        }
         action={
           <Button asChild variant='ghost' size='sm'>
             <Link href={backHref}>
@@ -595,9 +638,12 @@ export default function ApplyPage() {
             {STEPS[state.step]}
           </CardTitle>
           <CardDescription>
-            {state.step === 0 && "Choose how you'd like to deliver this course."}
+            {state.step === 0 && `Choose how you'd like to deliver this ${isProgram ? 'program' : 'course'}.`}
             {state.step === 1 && 'Tell us about the classrooms or labs you can provide.'}
-            {state.step === 2 && 'Confirm the equipment required to run this course.'}
+            {state.step === 2 &&
+              (isProgram
+                ? 'Review the published requirements for this program.'
+                : 'Confirm the equipment required to run this course.')}
             {state.step === 3 &&
               "Propose your fee per student for each training method you'd offer."}
             {state.step === 4 && 'Review your answers, then submit for approval.'}
@@ -610,13 +656,21 @@ export default function ApplyPage() {
             <StepEquipment
               state={state}
               dispatch={dispatch}
-              requirements={requirements}
+              contentKind={contentKind}
+              requirements={courseRequirements}
+              programRequirements={programRequirements}
               course={course}
             />
           )}
           {state.step === 3 && <StepPricing state={state} dispatch={dispatch} />}
           {state.step === 4 && (
-            <StepReview state={state} requirements={requirements} dispatch={dispatch} />
+            <StepReview
+              state={state}
+              contentKind={contentKind}
+              requirements={courseRequirements}
+              programRequirements={programRequirements}
+              dispatch={dispatch}
+            />
           )}
 
           {missing.length > 0 && (
@@ -647,9 +701,15 @@ export default function ApplyPage() {
                 Next <ArrowRight className='ml-2 h-4 w-4' />
               </Button>
             ) : (
-              <Button type='button' onClick={submit} disabled={!canNext || submitMutation.isPending}>
+              <Button
+                type='button'
+                onClick={submit}
+                disabled={!canNext || courseSubmitMutation.isPending || programSubmitMutation.isPending}
+              >
                 <Check className='mr-2 h-4 w-4' />{' '}
-                {submitMutation.isPending ? 'Submitting…' : 'Submit application'}
+                {courseSubmitMutation.isPending || programSubmitMutation.isPending
+                  ? 'Submitting…'
+                  : 'Submit application'}
               </Button>
             )}
           </div>
@@ -1115,14 +1175,66 @@ function ClassroomRow({
 function StepEquipment({
   state,
   dispatch,
+  contentKind,
   requirements,
+  programRequirements,
   course,
 }: {
   state: State;
   dispatch: React.Dispatch<Action>;
+  contentKind: TrainingContentKind;
   requirements: CourseTrainingRequirement[];
+  programRequirements: ProgramRequirement[];
   course: Course;
 }) {
+  if (contentKind === 'program') {
+    if (programRequirements.length === 0) {
+      return (
+        <div className='bg-muted/30 text-muted-foreground rounded-md border border-dashed p-6 text-center text-sm'>
+          The program creator has not listed any requirements for this program yet. You can
+          continue to the next step.
+        </div>
+      );
+    }
+
+    return (
+      <div className='space-y-4'>
+        <div className='bg-muted/30 flex flex-wrap items-center justify-between gap-2 rounded-md border border-dashed p-3'>
+          <p className='text-muted-foreground text-sm'>
+            These are the program requirements published by the creator. Review them before
+            submitting your application.
+          </p>
+          <Badge variant='secondary'>{programRequirements.length} listed</Badge>
+        </div>
+        <div className='space-y-3'>
+          {programRequirements.map(req => (
+            <div key={req.uuid ?? req.requirement_text} className='rounded-md border p-4'>
+              <div className='flex flex-wrap items-center justify-between gap-2'>
+                <div className='space-y-1'>
+                  <p className='font-medium'>{req.requirement_text}</p>
+                  <p className='text-muted-foreground text-sm'>
+                    {req.requirement_category ?? req.requirement_type}
+                  </p>
+                </div>
+                <div className='flex flex-wrap gap-2'>
+                  {req.is_mandatory ? (
+                    <Badge variant='destructive' className='text-[10px]'>
+                      Mandatory
+                    </Badge>
+                  ) : (
+                    <Badge variant='outline' className='text-[10px]'>
+                      Optional
+                    </Badge>
+                  )}
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+    );
+  }
+
   if (requirements.length === 0) {
     return (
       <div className='bg-muted/30 text-muted-foreground rounded-md border border-dashed p-6 text-center text-sm'>
@@ -1597,11 +1709,15 @@ function StepPricing({ state, dispatch }: { state: State; dispatch: React.Dispat
 
 function StepReview({
   state,
+  contentKind,
   requirements,
+  programRequirements,
   dispatch,
 }: {
   state: State;
+  contentKind: TrainingContentKind;
   requirements: CourseTrainingRequirement[];
+  programRequirements: ProgramRequirement[];
   dispatch: React.Dispatch<Action>;
 }) {
   const selectedMethods = state.methods
@@ -1614,6 +1730,7 @@ function StepReview({
     (n, e) => n + (e.has === 'yes' ? e.items.length : 0),
     0
   );
+  const requirementCount = contentKind === 'program' ? programRequirements.length : requirements.length;
 
   const goToStep = (step: number) => dispatch({ type: 'step', step });
 
@@ -1629,8 +1746,15 @@ function StepReview({
       <div className='bg-muted/30 grid gap-3 rounded-md border p-3 sm:grid-cols-4'>
         <SummaryStat label='Methods' value={methodSummary} />
         <SummaryStat label='Classrooms' value={String(state.classrooms.length)} />
-        <SummaryStat label='Equipment on hand' value={`${haveCount}/${requirements.length}`} />
-        <SummaryStat label='Items catalogued' value={String(totalItems)} />
+        {contentKind === 'program' ? (
+          <SummaryStat label='Requirements' value={String(requirementCount)} />
+        ) : (
+          <SummaryStat label='Equipment on hand' value={`${haveCount}/${requirementCount}`} />
+        )}
+        <SummaryStat
+          label={contentKind === 'program' ? 'Reviewed' : 'Items catalogued'}
+          value={contentKind === 'program' ? 'Yes' : String(totalItems)}
+        />
       </div>
 
       <section className='space-y-2'>
@@ -1703,56 +1827,90 @@ function StepReview({
 
       <section className='space-y-2'>
         <SectionHeader
-          title={`Equipment (${haveCount} ready · ${needCount} to source)`}
+          title={
+            contentKind === 'program'
+              ? `Program requirements (${requirementCount})`
+              : `Equipment (${haveCount} ready · ${needCount} to source)`
+          }
           onEdit={() => goToStep(2)}
         />
-        <ul className='space-y-2'>
-          {requirements.map(req => {
-            const requirementUuid = (req.uuid ?? req.name) as string;
-            const a = state.equipment.find(e => e.requirementUuid === requirementUuid);
-            if (!a) return null;
-            return (
-              <li key={requirementUuid} className='rounded-md border p-3'>
-                <div className='flex flex-wrap items-center justify-between gap-2'>
-                  <span className='font-medium'>{req.name}</span>
-                  {a.has === 'yes' && (
-                    <Badge variant='secondary'>
-                      Ready · {a.items.length} item{a.items.length === 1 ? '' : 's'}
-                    </Badge>
-                  )}
-                  {a.has === 'no' && a.acquisition && (
-                    <Badge variant='outline'>
-                      {a.acquisition === 'lease' ? 'Lease to own' : 'Hire'} via Sarafrika
-                    </Badge>
-                  )}
-                  {a.has === null && <Badge variant='outline'>Not answered</Badge>}
-                </div>
-                {a.has === 'yes' && a.items.length > 0 && (
-                  <div className='mt-3 overflow-hidden rounded-md border'>
-                    <table className='w-full text-xs'>
-                      <thead className='bg-muted/50 text-muted-foreground'>
-                        <tr>
-                          <th className='px-2 py-1.5 text-left font-medium'>Name / Model</th>
-                          <th className='px-2 py-1.5 text-left font-medium'>Brand</th>
-                          <th className='px-2 py-1.5 text-left font-medium'>Serial</th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {a.items.map(it => (
-                          <tr key={it.id} className='border-t'>
-                            <td className='px-2 py-1.5'>{it.name || '—'}</td>
-                            <td className='px-2 py-1.5'>{it.brand || '—'}</td>
-                            <td className='px-2 py-1.5 font-mono'>{it.serial || '—'}</td>
-                          </tr>
-                        ))}
-                      </tbody>
-                    </table>
+        {contentKind === 'program' ? (
+          programRequirements.length === 0 ? (
+            <p className='text-muted-foreground rounded-md border border-dashed p-3'>
+              No program requirements were published yet.
+            </p>
+          ) : (
+            <ul className='space-y-2'>
+              {programRequirements.map(req => (
+                <li key={req.uuid ?? req.requirement_text} className='rounded-md border p-3'>
+                  <div className='flex flex-wrap items-center justify-between gap-2'>
+                    <span className='font-medium'>{req.requirement_text}</span>
+                    {req.is_mandatory ? (
+                      <Badge variant='destructive' className='text-[10px]'>
+                        Mandatory
+                      </Badge>
+                    ) : (
+                      <Badge variant='outline' className='text-[10px]'>
+                        Optional
+                      </Badge>
+                    )}
                   </div>
-                )}
-              </li>
-            );
-          })}
-        </ul>
+                  <p className='text-muted-foreground mt-1 text-sm'>
+                    {req.requirement_category ?? req.requirement_type}
+                  </p>
+                </li>
+              ))}
+            </ul>
+          )
+        ) : (
+          <ul className='space-y-2'>
+            {requirements.map(req => {
+              const requirementUuid = (req.uuid ?? req.name) as string;
+              const a = state.equipment.find(e => e.requirementUuid === requirementUuid);
+              if (!a) return null;
+              return (
+                <li key={requirementUuid} className='rounded-md border p-3'>
+                  <div className='flex flex-wrap items-center justify-between gap-2'>
+                    <span className='font-medium'>{req.name}</span>
+                    {a.has === 'yes' && (
+                      <Badge variant='secondary'>
+                        Ready · {a.items.length} item{a.items.length === 1 ? '' : 's'}
+                      </Badge>
+                    )}
+                    {a.has === 'no' && a.acquisition && (
+                      <Badge variant='outline'>
+                        {a.acquisition === 'lease' ? 'Lease to own' : 'Hire'} via Sarafrika
+                      </Badge>
+                    )}
+                    {a.has === null && <Badge variant='outline'>Not answered</Badge>}
+                  </div>
+                  {a.has === 'yes' && a.items.length > 0 && (
+                    <div className='mt-3 overflow-hidden rounded-md border'>
+                      <table className='w-full text-xs'>
+                        <thead className='bg-muted/50 text-muted-foreground'>
+                          <tr>
+                            <th className='px-2 py-1.5 text-left font-medium'>Name / Model</th>
+                            <th className='px-2 py-1.5 text-left font-medium'>Brand</th>
+                            <th className='px-2 py-1.5 text-left font-medium'>Serial</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {a.items.map(it => (
+                            <tr key={it.id} className='border-t'>
+                              <td className='px-2 py-1.5'>{it.name || '—'}</td>
+                              <td className='px-2 py-1.5'>{it.brand || '—'}</td>
+                              <td className='px-2 py-1.5 font-mono'>{it.serial || '—'}</td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+                  )}
+                </li>
+              );
+            })}
+          </ul>
+        )}
       </section>
 
       <section className='space-y-2'>

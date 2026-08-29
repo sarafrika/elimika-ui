@@ -292,7 +292,7 @@ const createCatalogCards = (
       detailsHref: buildWorkspaceAliasPath(domain, item.href),
 
       enrollHref: isInstructorApplyCard
-        ? getApplyToTrainHref(item.id)
+        ? getApplyToTrainHref(item.kind, item.id)
         : buildWorkspaceAliasPath(domain, getEnrollHref(domain, item.kind, item.id)),
 
       instructorHref: buildWorkspaceAliasPath(domain, getInstructorHref(domain, item.id)),
@@ -345,7 +345,7 @@ const createRecommendationCards = (
       minimumRate: item.minimumRate,
       ctaLabel: shouldApplyToTrain ? 'Apply to Train' : 'Enroll',
       ctaHref: shouldApplyToTrain
-        ? getApplyToTrainHref(item.id)
+        ? getApplyToTrainHref(item.kind, item.id)
         : buildWorkspaceAliasPath(domain, getEnrollHref(domain, item.kind, item.id)),
       ctaKind: shouldApplyToTrain ? 'apply-to-train' : 'enroll',
       detailsHref: buildWorkspaceAliasPath(domain, item.href),

@@ -15,7 +15,7 @@ import {
 } from 'lucide-react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { toast } from 'sonner';
 
 import { CategoryTabs, filterByCategoryTabs } from '@/components/category-tabs';
@@ -32,14 +32,23 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { useOrganisation } from '@/context/organisation-context';
 import { extractList, extractPage, getTotalFromMetadata } from '@/lib/api-helpers';
 import { cn } from '@/lib/utils';
-import type { Course, CourseCreator, CourseReview, DifficultyLevel } from '@/services/client';
+import type {
+  Course,
+  CourseCreator,
+  CourseReview,
+  DifficultyLevel,
+  TrainingProgram,
+} from '@/services/client';
 import {
+  getAllCategoriesOptions,
   getAllCourseCreatorsOptions,
   getAllDifficultyLevelsOptions,
+  getAllTrainingProgramsOptions,
   getCourseEnrollmentsOptions,
   getCourseLessonsOptions,
   getCourseReviewsOptions,
   getPublishedCoursesOptions,
+  searchProgramTrainingApplicationsOptions,
   searchTrainingApplicationsOptions,
 } from '@/services/client/@tanstack/react-query.gen';
 import { toAuthenticatedMediaUrl } from '@/src/lib/media-url';
@@ -147,6 +156,7 @@ function CourseStats({ courseUuid }: { courseUuid: string }) {
 }
 
 const PAGE_SIZES = ['8', '12', '24', '48'];
+const CATALOG_FETCH_SIZE = 200;
 
 const PROGRAM_TYPES = [
   'Short courses',
@@ -157,6 +167,22 @@ const PROGRAM_TYPES = [
   'Postgraduate programs',
   'Degree programs',
 ];
+
+type CatalogItem = {
+  id: string;
+  kind: 'course' | 'program';
+  name: string;
+  description: string;
+  image: string | null;
+  category: string;
+  subject: string | null;
+  programType: string | null;
+  level: string | null;
+  instructor: string;
+  price?: number | null;
+  durationLabel?: string;
+  createdAt: number;
+};
 
 export default function CatalogPage() {
   const router = useRouter();
@@ -171,7 +197,19 @@ export default function CatalogPage() {
   const [activeProgramType, setActiveProgramType] = useState<string | null>(null);
 
   const coursesQuery = useQuery({
-    ...getPublishedCoursesOptions({ query: { pageable: { page, size: Number(pageSize) } } }),
+    ...getPublishedCoursesOptions({
+      query: { pageable: { page: 0, size: CATALOG_FETCH_SIZE } },
+    }),
+  });
+  const programsQuery = useQuery({
+    ...getAllTrainingProgramsOptions({
+      query: { pageable: { page: 0, size: CATALOG_FETCH_SIZE } },
+    }),
+  });
+  const categoriesQuery = useQuery({
+    ...getAllCategoriesOptions({
+      query: { pageable: { page: 0, size: CATALOG_FETCH_SIZE } },
+    }),
   });
   const creatorsQuery = useQuery({
     ...getAllCourseCreatorsOptions({ query: { pageable: { page: 0, size: 200 } } }),
@@ -191,6 +229,18 @@ export default function CatalogPage() {
     refetchOnMount: 'always',
     refetchOnWindowFocus: true,
   });
+  const programApplicationsQuery = useQuery({
+    ...searchProgramTrainingApplicationsOptions({
+      query: {
+        searchParams: { applicant_uuid_eq: organisationUuid, applicant_type_eq: 'organisation' },
+        pageable: { page: 0, size: 100 },
+      },
+    }),
+    enabled: Boolean(organisationUuid),
+    staleTime: 0,
+    refetchOnMount: 'always',
+    refetchOnWindowFocus: true,
+  });
   const approvedCourseUuids = useMemo(() => {
     const set = new Set<string>();
     for (const app of applicationsQuery.data?.data?.content ?? []) {
@@ -199,6 +249,14 @@ export default function CatalogPage() {
     }
     return set;
   }, [applicationsQuery.data]);
+  const approvedProgramUuids = useMemo(() => {
+    const set = new Set<string>();
+    for (const app of programApplicationsQuery.data?.data?.content ?? []) {
+      const s = (app.status ?? '').toLowerCase();
+      if ((s === 'approved' || s === 'accepted') && app.program_uuid) set.add(app.program_uuid);
+    }
+    return set;
+  }, [programApplicationsQuery.data]);
 
   const creatorsByUuid = useMemo(() => {
     const map = new Map<string, CourseCreator>();
@@ -216,39 +274,101 @@ export default function CatalogPage() {
     return map;
   }, [difficultyQuery.data]);
 
-  const { items: courseItems, metadata } = extractPage<Course>(coursesQuery.data);
-  const totalPages = Math.max(1, metadata.totalPages ?? 1);
+  const categoryByUuid = useMemo(() => {
+    const map = new Map<string, string>();
+    for (const category of extractPage(categoriesQuery.data).items) {
+      if (category.uuid && category.name) map.set(category.uuid, category.name);
+    }
+    return map;
+  }, [categoriesQuery.data]);
 
-  const catalogCourses = useMemo(
-    () =>
-      courseItems
-        .filter(course => !(course.uuid && approvedCourseUuids.has(course.uuid)))
+  const courses = useMemo(() => extractPage<Course>(coursesQuery.data).items, [coursesQuery.data]);
+  const programs = useMemo(
+    () => extractPage<TrainingProgram>(programsQuery.data).items,
+    [programsQuery.data]
+  );
+
+  const catalogItems = useMemo<CatalogItem[]>(
+    () => [
+      ...programs
+        .filter(
+          program =>
+            program.admin_approved === true &&
+            !(program.uuid && approvedProgramUuids.has(program.uuid))
+        )
+        .map(program => ({
+          id: program.uuid as string,
+          kind: 'program',
+          name: program.title,
+          description: stripHtml(program.description),
+          image: null,
+          category: program.category_uuid
+            ? categoryByUuid.get(program.category_uuid) ?? 'General'
+            : 'General',
+          subject: null,
+          programType: program.program_type ?? null,
+          level: null,
+          instructor:
+            creatorsByUuid.get(program.course_creator_uuid ?? '')?.full_name ??
+            'Course creator',
+          price: program.price ?? null,
+          durationLabel: program.total_duration_display ?? undefined,
+          createdAt: program.created_date
+            ? new Date(program.created_date).getTime()
+            : 0,
+        })),
+
+      ...courses
+        .filter(
+          course =>
+            course.admin_approved === true &&
+            !(course.uuid && approvedCourseUuids.has(course.uuid))
+        )
         .map(course => ({
           id: course.uuid as string,
+          kind: 'course',
           name: course.name,
           description: stripHtml(course.description),
-          image: toAuthenticatedMediaUrl(course.banner_url ?? course.thumbnail_url) ?? null,
+          image:
+            toAuthenticatedMediaUrl(
+              course.banner_url ?? course.thumbnail_url
+            ) ?? null,
           category: course.category_names?.[0] ?? 'General',
           subject: course.category_names?.[1] ?? null,
-          programType: null as string | null,
+          programType: null,
           level:
-            (course.difficulty_uuid && difficultyByUuid.get(course.difficulty_uuid)) ||
+            (course.difficulty_uuid &&
+              difficultyByUuid.get(course.difficulty_uuid)) ||
             'All Levels',
           instructor:
-            creatorsByUuid.get(course.course_creator_uuid ?? '')?.full_name ?? 'Course creator',
+            creatorsByUuid.get(course.course_creator_uuid ?? '')?.full_name ??
+            'Course creator',
+          price: course.price ?? null,
+          durationLabel: course.total_duration_display ?? undefined,
+          createdAt: course.created_date
+            ? new Date(course.created_date).getTime()
+            : 0,
         })),
-    [courseItems, creatorsByUuid, difficultyByUuid, approvedCourseUuids]
+    ],
+    [
+      approvedCourseUuids,
+      approvedProgramUuids,
+      categoryByUuid,
+      courses,
+      creatorsByUuid,
+      difficultyByUuid,
+      programs,
+    ]
   );
 
   const courseById = useMemo(
-    () => Object.fromEntries(catalogCourses.map(c => [c.id, c])),
-    [catalogCourses]
+    () => Object.fromEntries(catalogItems.map(c => [c.id, c])),
+    [catalogItems]
   );
 
-  const filteredCourses = useMemo(
-    () =>
-      filterByCategoryTabs(catalogCourses, activeCategory, subjectByCategory, activeProgramType),
-    [catalogCourses, activeCategory, subjectByCategory, activeProgramType]
+  const filteredItems = useMemo(
+    () => filterByCategoryTabs(catalogItems, activeCategory, subjectByCategory, activeProgramType),
+    [activeCategory, activeProgramType, catalogItems, subjectByCategory]
   );
 
   const selectionSubject = selectedIds.length
@@ -258,9 +378,9 @@ export default function CatalogPage() {
   const toggleSelect = (id: string) => {
     setSelectedIds(prev => {
       if (prev.includes(id)) return prev.filter(x => x !== id);
-      const course = courseById[id];
-      if (!course) return prev;
-      if (selectionSubject && course.subject !== selectionSubject) {
+      const item = courseById[id];
+      if (!item) return prev;
+      if (selectionSubject && item.subject !== selectionSubject) {
         toast.error('Selection limited to one subject', {
           description: `You can only combine courses in ${selectionSubject}. Clear your selection to start over.`,
         });
@@ -274,34 +394,67 @@ export default function CatalogPage() {
 
   const applySelected = () => {
     if (selectedIds.length === 0) return;
-    const [first] = selectedIds;
+    const firstId = selectedIds[0];
+    const firstItem = courseById[firstId];
+    if (!firstItem) return;
     try {
       sessionStorage.setItem(
         'elimika:multi-apply',
-        JSON.stringify({ ids: selectedIds, subject: selectionSubject })
+        JSON.stringify({
+          items: selectedIds
+            .map(id => courseById[id])
+            .filter(Boolean)
+            .map(item => ({ id: item.id, kind: item.kind })),
+          subject: selectionSubject,
+        })
       );
     } catch {
       // ignore storage errors
     }
-    router.push(`/dashboard/organisation/courses/apply/${first}`);
+    router.push(
+      firstItem.kind === 'program'
+        ? `/dashboard/apply-to-train/${firstItem.id}?kind=program`
+        : `/dashboard/organisation/courses/apply/${firstItem.id}`
+    );
   };
 
-  const loading = coursesQuery.isLoading;
+  const loading =
+    coursesQuery.isLoading ||
+    programsQuery.isLoading ||
+    categoriesQuery.isLoading ||
+    creatorsQuery.isLoading ||
+    difficultyQuery.isLoading ||
+    applicationsQuery.isLoading ||
+    programApplicationsQuery.isLoading;
+  const pageSizeNumber = Number(pageSize);
+  const totalPages = Math.max(1, Math.ceil(filteredItems.length / pageSizeNumber));
+  const paginatedItems = filteredItems.slice(
+    page * pageSizeNumber,
+    page * pageSizeNumber + pageSizeNumber
+  );
+
+  useEffect(() => {
+    setPage(current => Math.min(current, totalPages - 1));
+  }, [totalPages]);
+
+  useEffect(() => {
+    setPage(0);
+  }, [activeCategory, activeProgramType, pageSize, subjectByCategory]);
 
   return (
     <div className='mx-auto w-full max-w-[1600px] space-y-5 px-3 py-4 sm:px-5 lg:px-6 2xl:max-w-[1840px]'>
       {/* Header */}
       <div>
         <h1 className='text-foreground text-2xl font-semibold tracking-tight sm:text-3xl'>
-          Course Catalogue
+          Training Catalogue
         </h1>
         <p className='text-muted-foreground mt-1 text-sm'>
-          Explore courses across multiple categories and build skills for your future.
+          Explore courses and programs across multiple categories and build skills for your future.
         </p>
       </div>
 
       <CategoryTabs
-        items={catalogCourses}
+        items={catalogItems}
         activeCategory={activeCategory}
         onCategoryChange={setActiveCategory}
         subjectByCategory={subjectByCategory}
@@ -314,20 +467,20 @@ export default function CatalogPage() {
       {/* Grid */}
       {loading ? (
         <div className='grid gap-4 sm:grid-cols-2 sm:gap-5 lg:grid-cols-3 xl:grid-cols-4'>
-          {[...Array(Number(pageSize) > 8 ? 8 : Number(pageSize))].map((_, i) => (
+          {[...Array(pageSizeNumber > 8 ? 8 : pageSizeNumber)].map((_, i) => (
             <Skeleton key={i} className='h-80 w-full rounded-2xl' />
           ))}
         </div>
       ) : (
         <div className='grid gap-4 sm:grid-cols-2 sm:gap-5 lg:grid-cols-3 xl:grid-cols-4'>
-          {filteredCourses.map(course => {
-            const isFav = !!favorites[course.id];
-            const isSelected = selectedIds.includes(course.id);
+          {paginatedItems.map(item => {
+            const isFav = !!favorites[item.id];
+            const isSelected = selectedIds.includes(item.id);
             const isDisabled =
-              !isSelected && selectionSubject !== null && course.subject !== selectionSubject;
+              !isSelected && selectionSubject !== null && item.subject !== selectionSubject;
             return (
               <article
-                key={course.id}
+                key={item.id}
                 aria-selected={isSelected}
                 className={cn(
                   'group bg-card flex flex-col overflow-hidden rounded-2xl border shadow-sm transition-all hover:-translate-y-0.5 hover:shadow-md',
@@ -337,11 +490,11 @@ export default function CatalogPage() {
               >
                 {/* Image */}
                 <div className='bg-muted relative aspect-[16/10] w-full overflow-hidden'>
-                  <CourseImage src={course.image} alt={course.name} />
+                  <CourseImage src={item.image} alt={item.name} />
                   <button
                     type='button'
                     aria-label={isFav ? 'Remove from favourites' : 'Save to favourites'}
-                    onClick={() => setFavorites(f => ({ ...f, [course.id]: !f[course.id] }))}
+                    onClick={() => setFavorites(f => ({ ...f, [item.id]: !f[item.id] }))}
                     className='bg-card text-foreground hover:bg-card/90 absolute top-3 right-3 flex h-8 w-8 items-center justify-center rounded-full shadow-sm transition-colors'
                   >
                     <Heart
@@ -352,21 +505,36 @@ export default function CatalogPage() {
                     />
                   </button>
                   <div className='ring-card absolute -bottom-5 left-4 flex h-11 w-11 items-center justify-center rounded-full bg-teal-600 text-white shadow-md ring-4'>
-                    <BookOpen className='h-5 w-5' />
+                    {item.kind === 'program' ? (
+                      <GraduationCap className='h-5 w-5' />
+                    ) : (
+                      <BookOpen className='h-5 w-5' />
+                    )}
                   </div>
                 </div>
 
                 {/* Body */}
                 <div className='flex flex-1 flex-col gap-3 p-3.5 pt-6 sm:p-4'>
                   <div className='min-w-0'>
-                    <Link
-                      href={`/dashboard/organisation/courses/catalog/${course.id}`}
-                      className='text-foreground line-clamp-2 text-base leading-snug font-semibold hover:text-teal-700 hover:underline'
-                    >
-                      {course.name}
-                    </Link>
+                    <div className='flex items-start justify-between gap-2'>
+                      <Link
+                        href={
+                          item.kind === 'program'
+                            ? `/dashboard/organisation/courses/available-programs/${item.id}`
+                            : `/dashboard/organisation/courses/catalog/${item.id}`
+                        }
+                        className='text-foreground line-clamp-2 text-base leading-snug font-semibold hover:text-teal-700 hover:underline'
+                      >
+                        {item.name}
+                      </Link>
+                      {item.kind === 'program' && (
+                        <span className='bg-primary/10 text-primary rounded-full px-2 py-0.5 text-[10px] font-medium uppercase tracking-wide'>
+                          Program
+                        </span>
+                      )}
+                    </div>
                     <p className='text-muted-foreground mt-1 line-clamp-2 text-xs'>
-                      {course.description}
+                      {item.description}
                     </p>
                   </div>
 
@@ -374,23 +542,38 @@ export default function CatalogPage() {
                   <div className='flex min-w-0 items-center gap-2'>
                     <Avatar className='h-6 w-6 shrink-0'>
                       <AvatarFallback className='bg-primary/10 text-primary text-[10px]'>
-                        {course.instructor.slice(0, 1)}
+                        {item.instructor.slice(0, 1)}
                       </AvatarFallback>
                     </Avatar>
                     <span className='text-foreground min-w-0 truncate text-xs font-medium'>
-                      {course.instructor}
+                      {item.instructor}
                     </span>
                     <BadgeCheck className='h-3.5 w-3.5 shrink-0 fill-teal-600 text-white' />
                     <span className='text-muted-foreground ml-auto flex shrink-0 items-center gap-1 text-xs'>
                       <Star className='fill-warning text-warning h-3 w-3' />
-                      {course.level}
+                      {item.kind === 'program' ? item.programType ?? 'Program' : item.level}
                     </span>
                   </div>
 
-                  <CourseStats courseUuid={course.id} />
+                  {item.kind === 'course' ? (
+                    <CourseStats courseUuid={item.id} />
+                  ) : (
+                    <div className='border-border/60 text-muted-foreground flex flex-wrap items-center justify-between gap-2 border-t pt-3 text-xs'>
+                      <span className='flex shrink-0 items-center gap-1.5'>
+                        <GraduationCap className='h-3.5 w-3.5' />
+                        {item.durationLabel ?? 'Program'}
+                      </span>
+                      <span className='flex shrink-0 items-center gap-1.5'>
+                        <BookOpen className='h-3.5 w-3.5' />
+                        {typeof item.price === 'number' && item.price > 0
+                          ? `KES ${item.price.toLocaleString()}`
+                          : 'Free'}
+                      </span>
+                    </div>
+                  )}
 
                   <Button
-                    onClick={() => toggleSelect(course.id)}
+                    onClick={() => toggleSelect(item.id)}
                     disabled={isDisabled}
                     variant={isSelected ? 'default' : 'outline'}
                     className={cn(
@@ -405,7 +588,7 @@ export default function CatalogPage() {
                         <Check className='h-4 w-4' /> Selected
                       </>
                     ) : (
-                      'Select Course'
+                      `Select ${item.kind === 'program' ? 'Program' : 'Course'}`
                     )}
                   </Button>
                 </div>
@@ -415,18 +598,18 @@ export default function CatalogPage() {
         </div>
       )}
 
-      {!loading && filteredCourses.length === 0 && (
+      {!loading && filteredItems.length === 0 && (
         <p className='text-muted-foreground rounded-md border border-dashed p-8 text-center text-sm'>
-          No courses match this filter.
+          No courses or programs match this filter.
         </p>
       )}
 
       {/* Pagination */}
       <div className='flex flex-col items-center justify-between gap-4 pt-2 md:flex-row'>
         <p className='text-muted-foreground text-sm'>
-          Showing {filteredCourses.length ? page * Number(pageSize) + 1 : 0}–
-          {page * Number(pageSize) + filteredCourses.length} of{' '}
-          {getTotalFromMetadata(metadata).toLocaleString()} courses
+          Showing {paginatedItems.length ? page * pageSizeNumber + 1 : 0}–
+          {page * pageSizeNumber + paginatedItems.length} of {filteredItems.length.toLocaleString()}{' '}
+          items
         </p>
 
         <div className='flex items-center gap-1'>

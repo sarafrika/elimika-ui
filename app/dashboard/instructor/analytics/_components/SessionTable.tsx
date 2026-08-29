@@ -21,9 +21,8 @@ function StatusBadge({ status }: { status: string }) {
   };
   return (
     <span
-      className={`inline-block rounded-md px-2 py-0.5 text-center text-xs font-medium ${
-        styles[status] ?? styles['Upcoming']
-      }`}
+      className={`inline-block rounded-md px-2 py-0.5 text-center text-xs font-medium ${styles[status] ?? styles['Upcoming']
+        }`}
     >
       {status}
     </span>
@@ -40,7 +39,7 @@ function CompletionBar({ pct }: { pct: number }) {
           ? 'bg-warning'
           : 'bg-destructive';
   return (
-    <div className='flex items-center gap-1.5'>
+    <div className='flex flex-col items-center gap-1.5'>
       <div className='bg-muted/20 h-1.5 w-16 rounded-full'>
         <div className={`${color} h-1.5 rounded-full`} style={{ width: `${pct}%` }} />
       </div>
@@ -326,17 +325,12 @@ export function SessionTable() {
                     </td>
 
                     <td className='text-muted-foreground w-[120px] px-2 py-2.5'>
-                      {/* {(() => {
-                        const [startDate, endDate] = s.dateRange.split(" - ");
-
-                        return (
-                          <>
-                            <div>{startDate}</div>
-                            {endDate && <div>{endDate}</div>}
-                          </>
-                        );
-                      })()} */}
-                      sdflsdf
+                      <div className='flex flex-col'>
+                        <span>{s.date}</span>
+                        <span className='text-muted-foreground/70 text-xs'>
+                          ({s.totalHours} hours)
+                        </span>
+                      </div>
                     </td>
 
                     {visibleColumns.location && (
@@ -366,7 +360,7 @@ export function SessionTable() {
                     )}
 
                     {visibleColumns.trainingHours && (
-                      <td className='px-2 py-2.5 text-center'>{s.totalHours}</td>
+                      <td className='px-2 py-2.5 text-center'>{s.trainingHours}</td>
                     )}
 
                     {visibleColumns.status && (
@@ -632,17 +626,12 @@ export function SessionTableSummary() {
                     </td>
 
                     <td className='text-muted-foreground w-[120px] px-2 py-2.5'>
-                      {/* {(() => {
-                        const [startDate, endDate] = s.dateRange.split(" - ");
-
-                        return (
-                          <>
-                            <div>{startDate}</div>
-                            {endDate && <div>{endDate}</div>}
-                          </>
-                        );
-                      })()} */}
-                      sfd
+                      <div className='flex flex-col'>
+                        <span>{s.date}</span>
+                        <span className='text-muted-foreground/70 text-xs'>
+                          ({s.totalHours} hours)
+                        </span>
+                      </div>
                     </td>
 
                     {visibleColumns.location && (
@@ -672,7 +661,7 @@ export function SessionTableSummary() {
                     )}
 
                     {visibleColumns.trainingHours && (
-                      <td className='px-2 py-2.5 text-center'>{s.totalHours}</td>
+                      <td className='px-2 py-2.5 text-center'>{s.trainingHours} ({s.actualTrainingHours})</td>
                     )}
 
                     {visibleColumns.status && (
@@ -733,13 +722,12 @@ function PagBtn({
   return (
     <button
       disabled={disabled}
-      className={`flex h-6 w-6 items-center justify-center rounded text-xs transition-colors ${
-        active
-          ? 'bg-primary/20 text-card-foreground'
-          : disabled
-            ? 'text-muted-foreground cursor-default'
-            : 'text-foreground hover:bg-muted/10'
-      }`}
+      className={`flex h-6 w-6 items-center justify-center rounded text-xs transition-colors ${active
+        ? 'bg-primary/20 text-card-foreground'
+        : disabled
+          ? 'text-muted-foreground cursor-default'
+          : 'text-foreground hover:bg-muted/10'
+        }`}
     >
       {label}
     </button>

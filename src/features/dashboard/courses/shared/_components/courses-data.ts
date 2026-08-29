@@ -205,8 +205,8 @@ export function getInstructorHref(domain: UserDomain, uuid: string) {
   return `${domainBasePaths[domain]}/instructor?courseId=${uuid}`;
 }
 
-export function getApplyToTrainHref(uuid: string) {
-  return `/dashboard/apply-to-train/${uuid}`;
+export function getApplyToTrainHref(kind: 'course' | 'program', uuid: string) {
+  return `/dashboard/apply-to-train/${uuid}?kind=${kind}`;
 }
 
 export function getDurationBucket(totalMinutes: number) {

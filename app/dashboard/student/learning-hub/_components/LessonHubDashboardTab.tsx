@@ -66,7 +66,22 @@ interface LearningHubDataProps {
     learningHubData: LearningHubData;
 }
 
+function isClassJoinable(item: {
+    startTime: string | Date
+}) {
+    const startMs = new Date(item.startTime).getTime()
+
+    if (Number.isNaN(startMs)) {
+        return false
+    }
+
+    const joinTime = startMs - 15 * 60 * 1000
+
+    return Date.now() >= joinTime
+}
+
 export function LessonHubDashboardTab({ learningHubData }: LearningHubDataProps) {
+    const router = useRouter()
     const { assignmentRows, isLoading: assignmentsLoading } = useStudentAssignmentData();
     const { activeDomain } = useUserDomain();
     const { studyStreakDays, weeklyStudyMinutes } = useLearningHubStudyMetrics();
@@ -293,25 +308,42 @@ export function LessonHubDashboardTab({ learningHubData }: LearningHubDataProps)
                     <CardContent className='space-y-3'>
                         {nextClass ? (
                             <div
-                                className='block rounded-md px-3 py-2 transition-colors hover:bg-muted/50'
+                                className={cn(
+                                    'block rounded-md px-3 py-2 transition-colors',
+                                    !isClassJoinable(nextClass)
+                                        ? 'pointer-events-none cursor-not-allowed opacity-50'
+                                        : 'hover:bg-muted/50'
+                                )}
+                                aria-disabled={!isClassJoinable(nextClass)}
                             >
                                 <Link
-                                    href={nextClass.href}
+                                    href={!isClassJoinable(nextClass) ? '#' : nextClass.href}
                                     className='space-y-1'
+                                    tabIndex={!isClassJoinable(nextClass) ? -1 : 0}
                                 >
                                     <p className='text-sm font-medium'>{nextClass.title}</p>
-                                    <p className='text-muted-foreground text-xs'>{nextClass.courseName}</p>
+                                    <p className='text-muted-foreground text-xs'>
+                                        {nextClass.courseName}
+                                    </p>
                                     <p className='text-muted-foreground text-xs'>
                                         {nextClass.dateLabel} · {nextClass.timeLabel}
                                     </p>
                                 </Link>
 
-                                <Button asChild size='sm' variant='success' className='mt-1 w-full rounded'>
-                                    <Link href={nextClass.href}>Join Class</Link>
+                                <Button
+                                    asChild
+                                    size='sm'
+                                    variant='success'
+                                    disabled={!isClassJoinable(nextClass)}
+                                    className='mt-1 w-full rounded disabled:cursor-not-allowed'
+                                >
+                                    <p>Join Class</p>
                                 </Button>
                             </div>
                         ) : (
-                            <p className='text-sm text-muted-foreground'>No upcoming classes scheduled.</p>
+                            <p className='text-sm text-muted-foreground'>
+                                No upcoming classes scheduled.
+                            </p>
                         )}
                     </CardContent>
                 </Card>
@@ -452,35 +484,52 @@ export function LessonHubDashboardTab({ learningHubData }: LearningHubDataProps)
                             </Select>
                         </div>
                     )}
+
                     <CardContent className='space-y-2'>
                         {upcomingClasses.length === 0 ? (
                             <p className='text-sm text-muted-foreground'>No upcoming classes.</p>
                         ) : upcomingView.length === 0 ? (
-                            <p className='text-sm text-muted-foreground'>No classes match the current filters.</p>
+                            <p className='text-sm text-muted-foreground'>
+                                No classes match the current filters.
+                            </p>
                         ) : (
                             upcomingView.slice(0, 5).map(item => (
                                 <div
                                     key={item.id}
-                                    className='flex items-center justify-between gap-3 rounded-md border p-3 transition-colors hover:border-primary'
+                                    className={cn(
+                                        'flex items-center justify-between gap-3 rounded-md border p-3 transition-colors',
+                                        !isClassJoinable(item)
+                                            ? 'pointer-events-none cursor-not-allowed opacity-50'
+                                            : 'hover:border-primary'
+                                    )}
+                                    aria-disabled={!isClassJoinable(item)}
                                 >
                                     <Link
                                         href={item.href}
-                                        className="group min-w-0 flex-1 space-y-1"
+                                        className='group min-w-0 flex-1 space-y-1'
                                     >
-                                        <p className="text-foreground truncate text-sm font-semibold leading-tight group-hover:text-primary">
+                                        <p className='text-foreground truncate text-sm font-semibold leading-tight group-hover:text-primary'>
                                             {item.title}
                                         </p>
-                                        <p className="text-muted-foreground truncate text-xs leading-tight">
+
+                                        <p className='text-muted-foreground truncate text-xs leading-tight'>
                                             {item.courseName}
                                         </p>
-                                        <p className="text-muted-foreground/80 text-xs leading-tight">
+
+                                        <p className='text-muted-foreground/80 text-xs leading-tight'>
                                             {item.dateLabel}
-                                            <span className="mx-1">·</span>
+                                            <span className='mx-1'>·</span>
                                             {item.timeLabel}
                                         </p>
                                     </Link>
-                                    <Button asChild size='sm' variant='outline'>
-                                        <Link href={item.href}>Join</Link>
+
+                                    <Button
+                                        asChild
+                                        size='sm'
+                                        variant='outline'
+                                        disabled={!isClassJoinable(item)}
+                                    >
+                                        <p>Join</p>
                                     </Button>
                                 </div>
                             ))
@@ -758,6 +807,7 @@ function RemindersWidget({
                                         <CheckCircle2 className='mr-1 h-3.5 w-3.5' />
                                         Acknowledge
                                     </Button>
+
                                     <Button asChild size='sm' variant={state.openVariant}>
                                         <Link href={item.href}>Open</Link>
                                     </Button>
@@ -875,8 +925,10 @@ function SummaryCard({
 
 
 
+import { useRouter } from 'next/navigation';
 import { Skeleton } from '../../../../../components/ui/skeleton';
 import { UserDomain } from '../../../../../lib/types';
+import { cn } from '../../../../../lib/utils';
 
 function LessonHubDashboardSkeleton() {
     return (
