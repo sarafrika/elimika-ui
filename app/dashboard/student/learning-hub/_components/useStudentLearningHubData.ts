@@ -71,6 +71,7 @@ export type LearningHubLiveClass = {
   contentId?: string;
   lastLessonId?: string;
   nextLessonId?: string;
+  startTime: string | Date
 };
 
 export type LearningHubNextClass = LearningHubUpcomingClass & {
@@ -90,6 +91,7 @@ export type LearningHubUpcomingClass = {
   contentId?: string;
   lastLessonId?: string;
   nextLessonId?: string;
+  startTime: string | Date
 };
 
 export type LearningHubAssignment = {
@@ -760,6 +762,7 @@ export function useStudentLearningHubData(): LearningHubData {
       href: item.href,
       instructor: instructor?.full_name ?? 'Instructor',
       startMs: start?.getTime(),
+      startTime: item.start_time
     };
   }, [instructorMap, upcomingClasses]);
 
@@ -828,6 +831,7 @@ export function useStudentLearningHubData(): LearningHubData {
             contentId: route?.contentId,
             lastLessonId: route?.lastLessonId,
             nextLessonId: route?.nextLessonId,
+            startTime: item.start_time
           };
         }),
     [classLearningRoutes, upcomingClasses]

@@ -29,9 +29,11 @@ export type AnalyticsSession = {
   completionRate: number;
   satisfaction: number | null;
   totalHours: number;
+  trainingHours: number;
   avgHours: number;
   instanceCount: number;
   status: string;
+  date: string;
   startDate: Date | null;
   endDate: Date | null;
   instances: Array<{
@@ -328,28 +330,50 @@ export function useInstructorAnalyticsData(filters?: Partial<InstructorAnalytics
         const enrolled = enrollments.filter(enrollment =>
           ACTIVE_ENROLLMENT_STATUSES.has(enrollment.status ?? '')
         ).length;
+
         const attended = enrollments.filter(enrollment =>
           ATTENDED_STATUSES.has(enrollment.status ?? '')
         ).length;
 
         return (classItem.schedule ?? []).map(instance => {
           const durationMinutes = getDurationMinutes(instance);
-          const startTime = instance.start_time ? new Date(instance.start_time) : new Date(0);
+          const startTime = instance.start_time
+            ? new Date(instance.start_time)
+            : new Date(0);
+
+          const startedAt = instance.started_at
+            ? new Date(instance.started_at)
+            : undefined;
+
+          const concludedAt = instance.concluded_at
+            ? new Date(instance.concluded_at)
+            : undefined;
+
+          const trainingHours =
+            startedAt && concludedAt
+              ? (concludedAt.getTime() - startedAt.getTime()) / (1000 * 60 * 60)
+              : 0;
+
           const session: AnalyticsSession = {
             id: instance.uuid ?? `${classItem.uuid}-${startTime.toISOString()}`,
             classUuid: classItem.uuid,
-            program: classItem.course?.name ?? classItem.title ?? 'Untitled session',
+            program:
+              classItem.course?.name ?? classItem.title ?? 'Untitled session',
             session: classItem.title ?? 'Untitled session',
             date: formatDate(instance.start_time),
             location: formatLocation(instance),
             instructor: instructorName || 'You',
             enrolled,
             attended,
-            completionRate: enrolled > 0 ? Math.round((attended / enrolled) * 100) : 0,
+            completionRate:
+              enrolled > 0 ? Math.round((attended / enrolled) * 100) : 0,
             satisfaction: ratingsByClass.get(classItem.uuid) ?? null,
-            hours: formatHours(durationMinutes),
+            totalHours: formatHours(durationMinutes),
+            trainingHours: formatHours(trainingHours * 60),
             status: formatStatusLabel(instance.status),
             startTime,
+            startedAt,
+            concludedAt,
           };
 
           return session;
@@ -568,13 +592,13 @@ export function useInstructorAnalyticsData(filters?: Partial<InstructorAnalytics
     const averageSatisfaction =
       filteredReviewItems.length > 0
         ? Math.round(
-            (filteredReviewItems.reduce(
-              (sum, review) => sum + Number((review as InstructorReview).rating ?? 0),
-              0
-            ) /
-              filteredReviewItems.length) *
-              10
-          ) / 10
+          (filteredReviewItems.reduce(
+            (sum, review) => sum + Number((review as InstructorReview).rating ?? 0),
+            0
+          ) /
+            filteredReviewItems.length) *
+          10
+        ) / 10
         : (ratingSummaryQuery.data?.data?.average_rating ?? null);
 
     return {

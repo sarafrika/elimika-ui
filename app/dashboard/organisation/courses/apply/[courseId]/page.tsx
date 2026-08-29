@@ -56,8 +56,8 @@ import {
   getCourseTrainingRequirementsOptions,
   getProgramRequirementsOptions,
   getTrainingProgramByUuidOptions,
-  submitTrainingApplicationMutation,
   submitProgramTrainingApplicationMutation,
+  submitTrainingApplicationMutation,
 } from '@/services/client/@tanstack/react-query.gen';
 import { useUserDomain } from '@/src/features/dashboard/context/user-domain-context';
 import { invalidateTrainingApplicationWorkflowQueries } from '@/src/features/dashboard/workflow-query-invalidation';
@@ -452,7 +452,7 @@ export default function ApplyPage() {
     ? '/dashboard/instructor/courses'
     : '/dashboard/organisation/courses/catalog';
   const successHref = isInstructorDomain
-    ? '/dashboard/instructor/opportunities/my-applications'
+    ? '/dashboard/instructor/courses'
     : '/dashboard/organisation/my-applications';
 
   const courseQuery = useQuery({

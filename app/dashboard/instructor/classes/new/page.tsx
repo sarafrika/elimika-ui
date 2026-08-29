@@ -1862,34 +1862,6 @@ const ClassCreationPage = () => {
         </div>
       ) : null}
 
-      {preset === 'standard' ? (
-        <FieldGroup label='Start Date *'>
-          <Input
-            type='date'
-            value={scheduleSettings.startClass.date}
-            onChange={e =>
-              setScheduleSettings(prev => ({
-                ...prev,
-                startClass: { ...prev.startClass, date: e.target.value },
-                endRepeat: prev.endRepeat || e.target.value,
-              }))
-            }
-          />
-        </FieldGroup>
-      ) : (
-        <FieldGroup label='Period Start *'>
-          <Input
-            type='date'
-            value={scheduleSettings.academicPeriod.start}
-            onChange={e =>
-              setScheduleSettings(prev => ({
-                ...prev,
-                academicPeriod: { ...prev.academicPeriod, start: e.target.value },
-              }))
-            }
-          />
-        </FieldGroup>
-      )}
 
       {preset === 'standard' ? (
         <div className='grid grid-cols-2 gap-2'>
@@ -1921,6 +1893,36 @@ const ClassCreationPage = () => {
           </FieldGroup>
         </div>
       ) : null}
+
+      {preset === 'standard' ? (
+        <FieldGroup label='Start Date *'>
+          <Input
+            type='date'
+            value={scheduleSettings.startClass.date}
+            onChange={e =>
+              setScheduleSettings(prev => ({
+                ...prev,
+                startClass: { ...prev.startClass, date: e.target.value },
+                endRepeat: prev.endRepeat || e.target.value,
+              }))
+            }
+          />
+        </FieldGroup>
+      ) : (
+        <FieldGroup label='Period Start *'>
+          <Input
+            type='date'
+            value={scheduleSettings.academicPeriod.start}
+            onChange={e =>
+              setScheduleSettings(prev => ({
+                ...prev,
+                academicPeriod: { ...prev.academicPeriod, start: e.target.value },
+              }))
+            }
+          />
+        </FieldGroup>
+      )}
+
 
       {preset === 'academic-period' ? (
         <FieldGroup label='Period End *'>
@@ -2319,6 +2321,7 @@ const ClassCreationPage = () => {
                             />
                           </FieldGroup>
                         </div>
+
                         <div className='flex-1'>
                           <FieldGroup label='End Date *'>
                             <Input
