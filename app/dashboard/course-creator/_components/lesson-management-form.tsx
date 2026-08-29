@@ -60,6 +60,7 @@ import {
   uploadLessonMediaMutation,
 } from '@/services/client/@tanstack/react-query.gen';
 import type { AddCourseAssessmentData, CourseAssessment, Lesson, LessonContent } from '@/services/client/types.gen';
+import { toAuthenticatedMediaUrl } from '@/src/lib/media-url';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import clsx from 'clsx';
@@ -104,6 +105,9 @@ import * as z from 'zod';
 import { useUserProfile } from '../../../../context/profile-context';
 import { cn } from '../../../../lib/utils';
 import { useRubricsWithCriteriaAndScoring } from '../rubrics/rubric-chaining';
+
+const MEDIA_HOST_ROUTE =
+  process.env.NEXT_PUBLIC_MEDIA_HOST_ROUTE ?? process.env.NEXT_PUBLIC_SITE_URL ?? '';
 
 export const CONTENT_TYPES = {
   AUDIO: 'Audio',
@@ -1179,12 +1183,25 @@ function LessonContentForm({
   lessonId,
   initialValues,
 }: LessonContentFormProps) {
+
+  const normalizeEditMediaUrl = (candidate?: string | null) => {
+    const resolved = toAuthenticatedMediaUrl(candidate) || candidate || '';
+
+    if (!resolved) return '';
+    if (resolved.startsWith('/')) {
+      return `${MEDIA_HOST_ROUTE}${resolved}`;
+    }
+
+    return resolved;
+  };
+
   const mappedInitialValues = React.useMemo(() => {
     if (!initialValues) return undefined;
+    const rawValue = initialValues?.content_text || initialValues?.value || '';
     return {
       ...initialValues,
       // Text content lives in content_text; media/link content lives in value/file_url.
-      value: initialValues?.content_text || initialValues?.value || '',
+      value: normalizeEditMediaUrl(rawValue),
     };
   }, [initialValues]);
 
@@ -1213,6 +1230,7 @@ function LessonContentForm({
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [isDragging, setIsDragging] = useState(false);
   const [mediaFile, setMediaFile] = React.useState<File | null>(null);
+  const [mediaPreviewUrl, setMediaPreviewUrl] = useState<string | null>(null);
 
   // Reset the form whenever the sheet opens or closes.
   // - Opens for edit -> hydrate with the editing content's values.
@@ -1225,6 +1243,10 @@ function LessonContentForm({
     if (isOpen === false) {
       form.reset(getFreshDefaults());
       setMediaFile(null);
+      if (mediaPreviewUrl?.startsWith('blob:')) {
+        URL.revokeObjectURL(mediaPreviewUrl);
+      }
+      setMediaPreviewUrl(null);
       if (!isEditMode) {
         localStorage.removeItem(draftKey);
       }
@@ -1236,6 +1258,10 @@ function LessonContentForm({
       ...mappedInitialValues,
     });
     setMediaFile(null);
+    if (mediaPreviewUrl?.startsWith('blob:')) {
+      URL.revokeObjectURL(mediaPreviewUrl);
+    }
+    setMediaPreviewUrl(null);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isOpen, mappedInitialValues]);
 
@@ -1247,6 +1273,15 @@ function LessonContentForm({
 
     return () => clearTimeout(timeout);
   }, [watchedValues, draftKey, isOpen]);
+
+  useEffect(
+    () => () => {
+      if (mediaPreviewUrl?.startsWith('blob:')) {
+        URL.revokeObjectURL(mediaPreviewUrl);
+      }
+    },
+    [mediaPreviewUrl]
+  );
 
   const contentTypeUuid = useWatch({ control: form.control, name: 'content_type_uuid' });
 
@@ -1360,6 +1395,10 @@ function LessonContentForm({
         onSuccess: () => {
           toast.success('Media uploaded successfully');
           setMediaFile(null);
+          if (mediaPreviewUrl?.startsWith('blob:')) {
+            URL.revokeObjectURL(mediaPreviewUrl);
+          }
+          setMediaPreviewUrl(null);
           invalidateLessonContent();
           localStorage.removeItem(draftKey);
           onSuccess?.();
@@ -1407,7 +1446,17 @@ function LessonContentForm({
       if (isEditMode) {
         updateLessonContent.mutate(
           {
-            body: contentBody as UpdateLessonContentVariables['body'],
+            body: {
+              lesson_uuid: lessonId as string,
+              content_type_uuid: data?.content_type_uuid,
+              title: initialValues?.title!,
+              description: initialValues?.description,
+              content_text: initialValues?.content_text,
+              file_url: `${MEDIA_HOST_ROUTE}/api/proxy/${initialValues?.file_url}`,
+              display_order: initialValues?.display_order,
+              is_required: true,
+              content_category: initialValues.content_category,
+            },
             path: {
               courseUuid: courseId as string,
               lessonUuid: lessonId as string,
@@ -1514,6 +1563,10 @@ function LessonContentForm({
                         setValue('content_category', '');
                       }
                       setValue('value', '');
+                      if (mediaPreviewUrl?.startsWith('blob:')) {
+                        URL.revokeObjectURL(mediaPreviewUrl);
+                      }
+                      setMediaPreviewUrl(null);
                       setMediaFile(null);
                     }}
                     // Driven by selectedTypeObj (not raw contentTypeUuid) so the right
@@ -1650,7 +1703,11 @@ function LessonContentForm({
 
                     const file = e.dataTransfer.files?.[0];
                     if (file) {
+                      if (mediaPreviewUrl?.startsWith('blob:')) {
+                        URL.revokeObjectURL(mediaPreviewUrl);
+                      }
                       setMediaFile(file);
+                      setMediaPreviewUrl(URL.createObjectURL(file));
                       setValue('value', '');
                     }
                   }}
@@ -1669,7 +1726,11 @@ function LessonContentForm({
                     className='hidden'
                     onChange={e => {
                       const file = e.target.files?.[0] || null;
+                      if (mediaPreviewUrl?.startsWith('blob:')) {
+                        URL.revokeObjectURL(mediaPreviewUrl);
+                      }
                       setMediaFile(file);
+                      setMediaPreviewUrl(file ? URL.createObjectURL(file) : null);
                       if (file) setValue('value', '');
                     }}
                   />
@@ -1692,27 +1753,70 @@ function LessonContentForm({
                       </p>
                     </div>
                   ) : (
-                    <div className='bg-muted/40 flex items-center justify-between gap-3 rounded-md border px-4 py-3'>
-                      <p className='text-primary min-w-0 flex-1 truncate text-[13px]'>
-                        {mediaFile.name}
-                      </p>
-                      <div className='flex shrink-0 items-center gap-2'>
-                        <Button
-                          type='button'
-                          variant='ghost'
-                          size='sm'
-                          onClick={() => fileInputRef.current?.click()}
-                        >
-                          Replace
-                        </Button>
-                        <Button
-                          type='button'
-                          variant='ghost'
-                          size='sm'
-                          onClick={() => setMediaFile(null)}
-                        >
-                          Remove
-                        </Button>
+                    <div className='bg-muted/40 space-y-4 rounded-md border px-4 py-3'>
+                      <div className='flex items-center justify-between gap-3'>
+                        <p className='text-primary min-w-0 flex-1 truncate text-[13px]'>
+                          {mediaFile.name}
+                        </p>
+                        <div className='flex shrink-0 items-center gap-2'>
+                          <Button
+                            type='button'
+                            variant='ghost'
+                            size='sm'
+                            onClick={() => fileInputRef.current?.click()}
+                          >
+                            Replace
+                          </Button>
+                          <Button
+                            type='button'
+                            variant='ghost'
+                            size='sm'
+                            onClick={() => {
+                              if (mediaPreviewUrl?.startsWith('blob:')) {
+                                URL.revokeObjectURL(mediaPreviewUrl);
+                              }
+                              setMediaFile(null);
+                              setMediaPreviewUrl(null);
+                            }}
+                          >
+                            Remove
+                          </Button>
+                        </div>
+                      </div>
+
+                      <div className='border-border overflow-hidden rounded-md border'>
+                        {mediaFile.type.startsWith('image/') ? (
+                          // eslint-disable-next-line @next/next/no-img-element
+                          <img
+                            src={mediaPreviewUrl ?? ''}
+                            alt={mediaFile.name}
+                            className='h-56 w-full object-cover'
+                          />
+                        ) : mediaFile.type.startsWith('video/') ? (
+                          <video controls className='h-56 w-full bg-black object-contain'>
+                            <source src={mediaPreviewUrl ?? ''} />
+                          </video>
+                        ) : mediaFile.type.startsWith('audio/') ? (
+                          <div className='bg-background p-4'>
+                            <audio controls className='w-full'>
+                              <source src={mediaPreviewUrl ?? ''} />
+                            </audio>
+                          </div>
+                        ) : mediaFile.type.includes('pdf') ? (
+                          <iframe
+                            title={mediaFile.name}
+                            src={mediaPreviewUrl ?? ''}
+                            className='h-56 w-full'
+                          />
+                        ) : (
+                          <div className='bg-background flex h-56 flex-col items-center justify-center gap-2 p-4 text-center'>
+                            <FileText className='text-muted-foreground h-8 w-8' />
+                            <p className='text-sm font-medium'>Preview unavailable</p>
+                            <p className='text-muted-foreground text-xs'>
+                              {mediaFile.type || 'File'}
+                            </p>
+                          </div>
+                        )}
                       </div>
                     </div>
                   )}
@@ -1721,7 +1825,7 @@ function LessonContentForm({
                     <Button
                       type='button'
                       variant='secondary'
-                      className='w-full'
+                      className='w-full hover:bg-primary'
                       disabled={uploadLessonMedia.isPending}
                       onClick={handleUploadMedia}
                     >

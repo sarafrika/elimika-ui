@@ -33,7 +33,7 @@ import { useMutation, useQueries, useQuery, useQueryClient } from '@tanstack/rea
 import { ArrowLeft, ChevronDown, ChevronUp, Pencil, PlusCircle, Sparkles, Trash } from 'lucide-react';
 import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { toast } from 'sonner';
 import DeleteModal from '../../../../../components/custom-modals/delete-modal';
 import { stripHtml } from '../../../../../src/features/dashboard/courses/shared/_components/courses-data';
@@ -62,6 +62,10 @@ import {
 } from '../../_components/training-requirement-section';
 import AssessmentCreation from './assessment-creation';
 import { Stepper } from './stepper';
+
+type SaveableCourseFormRef = {
+    submit: () => Promise<boolean>;
+};
 
 
 type CourseLesson = Lesson & { uuid: string };
@@ -539,6 +543,7 @@ export default function CreateCoursePage() {
     const creator = useCourseCreator();
     const [step, setStep] = useState(0);
     const [createdCourseId, setCreatedCourseId] = useState<string | null>(null);
+    const [isSavingBrandingPricing, setIsSavingBrandingPricing] = useState(false);
     const [requirementDrafts, setRequirementDrafts] = useState(createEmptyDraftsByProvider());
     const [activeRequirementProvider, setActiveRequirementProvider] =
         useState<Provider | null>(null);
@@ -550,6 +555,8 @@ export default function CreateCoursePage() {
     const [selectedQuizUuid, setSelectedQuizUuid] = useState<string | null>(null);
     const [selectedAssignmentUuid, setSelectedAssignmentUuid] = useState<string | null>(null);
     const [assessmentToDelete, setAssessmentToDelete] = useState<AssessmentListItem | null>(null);
+    const brandingFormRef = useRef<SaveableCourseFormRef>(null);
+    const pricingFormRef = useRef<SaveableCourseFormRef>(null);
     const searchParams = useSearchParams();
     const queryCourseId = searchParams.get('id');
 
@@ -570,6 +577,21 @@ export default function CreateCoursePage() {
     const course = (courseResponse?.data ?? null) as Course | null;
     const courseInitialValues = useMemo(() => mapCourseValues(course), [course]);
     const courseApiResponse = courseResponse as ApiResponseCourse | undefined;
+    const handleSaveBrandingAndPricing = useCallback(async () => {
+        if (isSavingBrandingPricing) return;
+
+        setIsSavingBrandingPricing(true);
+
+        try {
+            const brandingSaved = await brandingFormRef.current?.submit();
+            if (brandingSaved === false) return;
+
+            const pricingSaved = await pricingFormRef.current?.submit();
+            if (pricingSaved === false) return;
+        } finally {
+            setIsSavingBrandingPricing(false);
+        }
+    }, [isSavingBrandingPricing]);
 
     const lessonsQuery = resolvedCourseId
         ? getCourseLessonsOptions({
@@ -1013,7 +1035,7 @@ export default function CreateCoursePage() {
                                 >
                                     <div className='space-y-6'>
                                         <div className='space-y-1'>
-                                            <p className='text-foreground text-sm font-medium'>Assessment builder</p>
+                                            <p className='text-foreground text-md font-bold'>Assessment builder</p>
                                             <p className='text-muted-foreground text-sm'>
                                                 Track quizzes and assignments by lesson, then open the sheet to create or edit one.
                                             </p>
@@ -1291,18 +1313,30 @@ export default function CreateCoursePage() {
                                 >
                                     <div className='space-y-10'>
                                         <CourseBrandingForm
-                                            showSubmitButton
+                                            ref={brandingFormRef}
+                                            showSubmitButton={false}
                                             courseId={resolvedCourseId || undefined}
                                             editingCourseId={resolvedCourseId || undefined}
                                             initialValues={courseInitialValues}
                                             nextStepAfterSave={5}
                                         />
                                         <CoursePricingForm
-                                            showSubmitButton
+                                            ref={pricingFormRef}
+                                            showSubmitButton={false}
                                             courseId={resolvedCourseId || undefined}
                                             editingCourseId={resolvedCourseId || undefined}
                                             initialValues={courseInitialValues}
                                         />
+                                        <div className='flex justify-end pt-2'>
+                                            <Button
+                                                type='button'
+                                                onClick={() => void handleSaveBrandingAndPricing()}
+                                                disabled={isSavingBrandingPricing}
+                                                className='min-w-40'
+                                            >
+                                                {isSavingBrandingPricing ? 'Saving...' : 'Save Branding and Pricing'}
+                                            </Button>
+                                        </div>
                                     </div>
                                 </SectionGuard>
                             )}

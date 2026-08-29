@@ -11,9 +11,8 @@ import { ArrowLeft, BookOpen, CalendarRange } from 'lucide-react';
 import Link from 'next/link';
 import { useState } from 'react';
 import { DateRange } from 'react-day-picker';
-import { Calendar } from 'react-multi-date-picker';
 import { Button } from '../../../../../components/ui/button';
-import { Popover, PopoverContent, PopoverTrigger } from '../../../../../components/ui/popover';
+import { Popover, PopoverTrigger } from '../../../../../components/ui/popover';
 import {
   Sheet,
   SheetContent,
@@ -133,7 +132,7 @@ export default function AvailableProgramsPage({
               </Button>
             </PopoverTrigger>
 
-            <PopoverContent className='w-auto p-0' align='end'>
+            {/* <PopoverContent className='w-auto p-0' align='end'>
               <Calendar
                 mode='range'
                 numberOfMonths={12}
@@ -152,7 +151,7 @@ export default function AvailableProgramsPage({
                   }
                 }}
               />
-            </PopoverContent>
+            </PopoverContent> */}
           </Popover>
         </div>
       </div>

@@ -17,7 +17,7 @@ import {
   getClassEnrolmentEligibilityOptions,
   getCourseTrainingRequirementsOptions,
   getEnrollmentsForClassOptions,
-  joinWaitlistMutation,
+  joinWaitlistMutation
 } from '@/services/client/@tanstack/react-query.gen';
 import { useUserDomain } from '@/src/features/dashboard/context/user-domain-context';
 import { invalidateEnrollmentSuccessQueries } from '@/src/features/dashboard/courses/shared/enrollment-query-invalidation';
@@ -446,6 +446,16 @@ export default function ClassEnrollmentPage({
       </div>
     );
   }
+
+  // console.log(enrollingClass?.schedule, "ENROLLING CLASS")
+  // // check enrolling class schedule against students current schedule
+  // const { data: studentScheduleResp } = useQuery({
+  //   ...getStudentScheduleOptions({
+  //     path: { studentUuid: student?.uuid as string }
+  //   })
+  // })
+  // console.log(studentScheduleResp?.data, "SCHED")
+
 
   const isPending = enrollStudent.isPending || waitlistStudent.isPending;
   const canSubmit =
