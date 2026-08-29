@@ -103,7 +103,13 @@ export const SERVICE_TYPE_ENUM: Record<
 // ─── Days ─────────────────────────────────────────────────────────────────────
 export const DAYS = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'] as const;
 export type DayKey = (typeof DAYS)[number];
-export type DayRow = { active: boolean; start: string; end: string; allDay: boolean };
+export type DayRow = {
+  active: boolean;
+  start: string;
+  end: string;
+  durationMinutes: string;
+  allDay: boolean;
+};
 
 export const DAY_TO_ISO: Record<DayKey, number> = {
   Mon: 1,
@@ -133,14 +139,16 @@ export const DAY_FULL: Record<DayKey, string> = {
   Sun: 'Sunday',
 };
 
+export const DEFAULT_SESSION_DURATION_MINUTES = 120;
+
 export const DEFAULT_DAYS: Record<DayKey, DayRow> = {
-  Mon: { active: false, start: '09:00', end: '11:00', allDay: false },
-  Tue: { active: false, start: '09:00', end: '11:00', allDay: false },
-  Wed: { active: true, start: '09:00', end: '11:00', allDay: false },
-  Thu: { active: false, start: '09:00', end: '11:00', allDay: false },
-  Fri: { active: true, start: '11:00', end: '12:00', allDay: false },
-  Sat: { active: false, start: '09:00', end: '11:00', allDay: false },
-  Sun: { active: false, start: '09:00', end: '11:00', allDay: false },
+  Mon: { active: false, start: '09:00', end: '11:00', durationMinutes: '120', allDay: false },
+  Tue: { active: false, start: '09:00', end: '11:00', durationMinutes: '120', allDay: false },
+  Wed: { active: true, start: '09:00', end: '11:00', durationMinutes: '120', allDay: false },
+  Thu: { active: false, start: '09:00', end: '11:00', durationMinutes: '120', allDay: false },
+  Fri: { active: true, start: '11:00', end: '12:00', durationMinutes: '60', allDay: false },
+  Sat: { active: false, start: '09:00', end: '11:00', durationMinutes: '120', allDay: false },
+  Sun: { active: false, start: '09:00', end: '11:00', durationMinutes: '120', allDay: false },
 };
 
 // Target groups are not yet backed — held in state only, ready for the group taxonomy endpoint.
@@ -154,7 +162,7 @@ export const REMINDER_MINUTES: Record<string, number> = {
 export const TIMEZONES = ['EAT East Africa Time', 'UTC', 'GMT', 'CAT Central Africa Time'];
 
 export type ScheduleMode = 'standard' | 'pick' | 'academic';
-export type PeriodSlot = { day: DayKey; start: string; end: string };
+export type PeriodSlot = { day: DayKey; start: string; end: string; durationMinutes: string };
 export type AcademicPeriod = {
   id: string;
   name: string;
@@ -210,6 +218,30 @@ export const num = (value: string): number | undefined => {
   return Number.isNaN(parsed) ? undefined : parsed;
 };
 
+const DURATION_TOKEN_MINUTES: Record<string, number> = {
+  '30m': 30,
+  '1h': 60,
+  '1.5h': 90,
+  '2h': 120,
+  '3h': 180,
+  '4h': 240,
+};
+
+export const parseDurationMinutes = (value?: string | number | null): number | undefined => {
+  if (typeof value === 'number') {
+    return Number.isInteger(value) && value > 0 ? value : undefined;
+  }
+  const trimmed = value?.trim();
+  if (!trimmed) return undefined;
+  const tokenValue = DURATION_TOKEN_MINUTES[trimmed];
+  if (tokenValue) return tokenValue;
+  const parsed = Number(trimmed);
+  return Number.isInteger(parsed) && parsed > 0 ? parsed : undefined;
+};
+
+export const durationMinutesOrDefault = (value?: string | number | null) =>
+  parseDurationMinutes(value) ?? DEFAULT_SESSION_DURATION_MINUTES;
+
 
 /** Length of a HH:mm–HH:mm window, used to price per-hour rates. */
 function minutesBetween(start: string, end: string): number {
@@ -236,6 +268,10 @@ export function computeUpcomingSessions(
       const row = days[d];
       if (!row?.active) continue;
       const timeStr = row.allDay ? '09:00' : row.start;
+      const durationMinutes = row.allDay
+        ? 24 * 60
+        : (parseDurationMinutes(row.durationMinutes) ?? minutesBetween(row.start, row.end));
+      const endTime = sessionEndFor(row.start, durationMinutes);
       const [h, m] = timeStr.split(':').map(Number);
       const meetingAt = new Date(cursor);
       meetingAt.setHours(h || 0, m || 0, 0, 0);
@@ -246,8 +282,8 @@ export function computeUpcomingSessions(
           month: 'short',
           day: 'numeric',
         }),
-        time: row.allDay ? 'All day' : `${row.start}–${row.end}`,
-        minutes: row.allDay ? 0 : minutesBetween(row.start, row.end),
+        time: row.allDay ? 'All day' : `${row.start}–${endTime}`,
+        minutes: row.allDay ? 24 * 60 : durationMinutes,
       });
     }
     cursor.setDate(cursor.getDate() + 1);
@@ -276,7 +312,11 @@ export function computeSessionWindows(
       const row = days[d];
       if (!row?.active) continue;
       const [sh, sm] = (row.allDay ? '00:00' : row.start).split(':').map(Number);
-      const [eh, em] = (row.allDay ? '23:59' : row.end).split(':').map(Number);
+      const durationMinutes = row.allDay
+        ? 24 * 60
+        : (parseDurationMinutes(row.durationMinutes) ?? minutesBetween(row.start, row.end));
+      const derivedEnd = row.allDay ? '23:59' : sessionEndFor(row.start, durationMinutes);
+      const [eh, em] = derivedEnd.split(':').map(Number);
       const windowStart = new Date(cursor);
       windowStart.setHours(sh || 0, sm || 0, 0, 0);
       const windowEnd = new Date(cursor);
@@ -296,17 +336,9 @@ export function fmtTime12(hhmm: string) {
   return `${h12}:${String(m || 0).padStart(2, '0')} ${period}`;
 }
 
-export function sessionEndFor(sessionStart: string, sessionDuration: string): string {
+export function sessionEndFor(sessionStart: string, sessionDuration: string | number): string {
   const [h, m] = sessionStart.split(':').map(Number);
-  const mins: Record<string, number> = {
-    '30m': 30,
-    '1h': 60,
-    '1.5h': 90,
-    '2h': 120,
-    '3h': 180,
-    '4h': 240,
-  };
-  const total = (h || 0) * 60 + (m || 0) + (mins[sessionDuration] ?? 120);
+  const total = (h || 0) * 60 + (m || 0) + durationMinutesOrDefault(sessionDuration);
   return `${String(Math.floor((total / 60) % 24)).padStart(2, '0')}:${String(total % 60).padStart(2, '0')}`;
 }
 

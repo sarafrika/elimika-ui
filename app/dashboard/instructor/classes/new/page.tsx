@@ -92,6 +92,7 @@ import { type ServiceType, ServiceTypeSelector } from './_components/service-typ
 const LOCAL_CLASS_DRAFT_KEY = 'training-class-create-draft:new-class-creation';
 const DAY_NAMES = ['MONDAY', 'TUESDAY', 'WEDNESDAY', 'THURSDAY', 'FRIDAY', 'SATURDAY', 'SUNDAY'];
 const DAY_SHORT = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
+const DEFAULT_CLASS_DURATION_MINUTES = 60;
 
 const CLASS_TYPE_OPTIONS = [
   { label: 'Group Class', value: 'PUBLIC', icon: Users },
@@ -133,7 +134,7 @@ type CatalogItem = {
   thumbnailUrl: string;
 };
 
-type ScheduledSession = { date: string; startTime: string; endTime: string };
+type ScheduledSession = { date: string; startTime: string; endTime: string; durationMinutes?: string };
 
 type ScheduleConflict = {
   proposed: ScheduledSession;
@@ -186,7 +187,12 @@ const createInitialClassDetails = (instructorName?: string): ClassDetails => ({
 const createInitialScheduleSettings = (): ScheduleSettings => ({
   academicPeriod: { start: '', end: '' },
   registrationPeriod: { start: '', end: '', continuous: false },
-  startClass: { date: '', startTime: '', endTime: '' },
+  startClass: {
+    date: '',
+    startTime: '',
+    endTime: '',
+    durationMinutes: String(DEFAULT_CLASS_DURATION_MINUTES),
+  },
   weeklyDayTimes: {},
   allDay: false,
   repeat: { interval: 1, unit: 'week', days: [] },
@@ -246,26 +252,43 @@ const reminderFromMinutes = (minutes?: number | null) => {
   }
 };
 
-const calculateSessionHours = (start?: string, end?: string, allDay?: boolean) => {
-  if (allDay) return 24;
-  if (!start || !end) return 0;
+const sanitizeDurationMinutesInput = (value: string) => value.replace(/\D/g, '');
 
+const parsePositiveDurationMinutes = (value?: string | number | null) => {
+  if (typeof value === 'number') {
+    return Number.isInteger(value) && value > 0 ? value : undefined;
+  }
+  const trimmed = value == null ? undefined : String(value).trim();
+  if (!trimmed) return undefined;
+  const parsed = Number(trimmed);
+  return Number.isInteger(parsed) && parsed > 0 ? parsed : undefined;
+};
+
+const durationMinutesOrDefault = (value?: string | number | null) =>
+  parsePositiveDurationMinutes(value) ?? DEFAULT_CLASS_DURATION_MINUTES;
+
+const timeAfterDuration = (startTime: string, durationMinutes: string | number) => {
+  const [hour = 0, minute = 0] = startTime.split(':').map(Number);
+  const duration = durationMinutesOrDefault(durationMinutes);
+  const total = (hour || 0) * 60 + (minute || 0) + duration;
+  return `${String(Math.floor((total / 60) % 24)).padStart(2, '0')}:${String(total % 60).padStart(2, '0')}`;
+};
+
+const durationMinutesFromTimes = (start?: string, end?: string, allDay?: boolean) => {
+  if (allDay) return 24 * 60;
+  if (!start || !end) return DEFAULT_CLASS_DURATION_MINUTES;
   const [startHour = 0, startMinute = 0] = start.split(':').map(Number);
   const [endHour = 0, endMinute = 0] = end.split(':').map(Number);
-
-  if (
-    Number.isNaN(startHour) ||
-    Number.isNaN(startMinute) ||
-    Number.isNaN(endHour) ||
-    Number.isNaN(endMinute)
-  ) {
-    return 0;
+  if ([startHour, startMinute, endHour, endMinute].some(value => Number.isNaN(value))) {
+    return DEFAULT_CLASS_DURATION_MINUTES;
   }
+  const diff = endHour * 60 + endMinute - (startHour * 60 + startMinute);
+  return Number.isInteger(diff) && diff > 0 ? diff : DEFAULT_CLASS_DURATION_MINUTES;
+};
 
-  const startValue = startHour + startMinute / 60;
-  const endValue = endHour + endMinute / 60;
-
-  return Number(Math.max(endValue - startValue, 0).toFixed(2));
+const durationMinutesFromDates = (start: Date, end: Date) => {
+  const diff = Math.round((end.getTime() - start.getTime()) / 60000);
+  return Number.isInteger(diff) && diff > 0 ? diff : DEFAULT_CLASS_DURATION_MINUTES;
 };
 
 const buildDateFromInput = (date: string) => {
@@ -481,13 +504,16 @@ const findScheduleConflicts = (
 const expandSessionsForConflictCheck = (
   schedulePreset: SchedulePreset,
   scheduleSettings: ScheduleSettings,
-  pickedDates: { date: string; startTime: string; endTime: string }[]
+  pickedDates: { date: string; startTime: string; endTime: string; durationMinutes?: string }[]
 ): ScheduledSession[] => {
   if (schedulePreset === 'pick-dates') {
     return pickedDates.map(item => ({
       date: item.date,
       startTime: scheduleSettings.allDay ? '00:00' : item.startTime,
       endTime: scheduleSettings.allDay ? '23:59' : item.endTime,
+      durationMinutes: scheduleSettings.allDay
+        ? String(24 * 60)
+        : item.durationMinutes ?? String(durationMinutesFromTimes(item.startTime, item.endTime)),
     }));
   }
 
@@ -517,9 +543,14 @@ const expandSessionsForConflictCheck = (
       const startTime = scheduleSettings.allDay
         ? '00:00'
         : override?.startTime || scheduleSettings.startClass.startTime || '00:00';
+      const durationMinutes = scheduleSettings.allDay
+        ? String(24 * 60)
+        : override?.durationMinutes ||
+          scheduleSettings.startClass.durationMinutes ||
+          String(durationMinutesFromTimes(startTime, override?.endTime || scheduleSettings.startClass.endTime));
       const endTime = scheduleSettings.allDay
         ? '23:59'
-        : override?.endTime || scheduleSettings.startClass.endTime || '23:59';
+        : timeAfterDuration(startTime, durationMinutes);
 
       const cursor = new Date(referenceDate);
       const cursorDow = (cursor.getDay() + 6) % 7;
@@ -531,6 +562,7 @@ const expandSessionsForConflictCheck = (
           date: cursor.toISOString().split('T')[0]!,
           startTime,
           endTime,
+          durationMinutes,
         });
         cursor.setDate(cursor.getDate() + interval * 7);
       }
@@ -539,9 +571,13 @@ const expandSessionsForConflictCheck = (
     const startTime = scheduleSettings.allDay
       ? '00:00'
       : scheduleSettings.startClass.startTime || '00:00';
+    const durationMinutes = scheduleSettings.allDay
+      ? String(24 * 60)
+      : scheduleSettings.startClass.durationMinutes ||
+        String(durationMinutesFromTimes(startTime, scheduleSettings.startClass.endTime));
     const endTime = scheduleSettings.allDay
       ? '23:59'
-      : scheduleSettings.startClass.endTime || '23:59';
+      : timeAfterDuration(startTime, durationMinutes);
 
     const cursor = new Date(referenceDate);
     while (cursor <= end) {
@@ -549,6 +585,7 @@ const expandSessionsForConflictCheck = (
         date: cursor.toISOString().split('T')[0]!,
         startTime,
         endTime,
+        durationMinutes,
       });
       if (unit === 'day') cursor.setDate(cursor.getDate() + interval);
       else if (unit === 'month') cursor.setMonth(cursor.getMonth() + interval);
@@ -614,7 +651,7 @@ const ClassCreationPage = () => {
   const [locationLatitude, setLocationLatitude] = useState('');
   const [locationLongitude, setLocationLongitude] = useState('');
   const [pickedDates, setPickedDates] = useState<
-    { date: string; startTime: string; endTime: string }[]
+    { date: string; startTime: string; endTime: string; durationMinutes: string }[]
   >([]);
 
   const [perDayOccurrences, setPerDayOccurrences] = useState<Record<number, PerDayOccurrence>>({});
@@ -808,7 +845,10 @@ const ClassCreationPage = () => {
 
     return sessionsForConflictCheck.reduce(
       (sum, session) =>
-        sum + calculateSessionHours(session.startTime, session.endTime, scheduleSettings.allDay),
+        sum +
+        (scheduleSettings.allDay
+          ? 24
+          : durationMinutesOrDefault(session.durationMinutes) / 60),
       0
     );
   }, [
@@ -819,8 +859,6 @@ const ClassCreationPage = () => {
     scheduleSettings.repeat.unit,
     sessionsForConflictCheck,
   ]);
-
-  const totalHoursInMinutes = BigInt(Math.round(totalHours * 60));
 
   /** Distinct calendar days holding a session — two sessions in one day bill once on a daily rate. */
   const totalDays = useMemo(
@@ -842,14 +880,20 @@ const ClassCreationPage = () => {
     if (schedulePreset === 'pick-dates') {
       if (pickedDates.length === 0) return '';
       const first = pickedDates[0];
-      return formatScheduleTime(first?.startTime, first?.endTime, false);
+      const endTime =
+        first?.startTime && first?.durationMinutes
+          ? timeAfterDuration(first.startTime, first.durationMinutes)
+          : first?.endTime;
+      return formatScheduleTime(first?.startTime, endTime, false);
     }
     const sortedDays = [...(scheduleSettings.repeat.days || [])].sort((a, b) => a - b);
     if (sortedDays.length === 0) return '';
     const firstDayIdx = sortedDays[0]!;
     const override = scheduleSettings.weeklyDayTimes[firstDayIdx];
     const startTime = override?.startTime || scheduleSettings.startClass.startTime || '';
-    const endTime = override?.endTime || scheduleSettings.startClass.endTime || '';
+    const durationMinutes =
+      override?.durationMinutes || scheduleSettings.startClass.durationMinutes || '';
+    const endTime = startTime && durationMinutes ? timeAfterDuration(startTime, durationMinutes) : '';
     return formatScheduleTime(startTime, endTime, false);
   }, [schedulePreset, scheduleSettings, pickedDates]);
 
@@ -877,7 +921,7 @@ const ClassCreationPage = () => {
         allowWaitlist?: boolean;
         locationLatitude?: string;
         locationLongitude?: string;
-        pickedDates?: { date: string; startTime: string; endTime: string }[];
+        pickedDates?: { date: string; startTime: string; endTime: string; durationMinutes?: string }[];
       };
       if (parsed.classDetails) {
         const saved = parsed.classDetails;
@@ -912,7 +956,21 @@ const ClassCreationPage = () => {
       if (typeof parsed.locationLatitude === 'string') setLocationLatitude(parsed.locationLatitude);
       if (typeof parsed.locationLongitude === 'string')
         setLocationLongitude(parsed.locationLongitude);
-      if (Array.isArray(parsed.pickedDates)) setPickedDates(parsed.pickedDates);
+      if (Array.isArray(parsed.pickedDates)) {
+        setPickedDates(
+          parsed.pickedDates.map(item => ({
+            ...item,
+            durationMinutes:
+              item.durationMinutes ?? String(durationMinutesFromTimes(item.startTime, item.endTime)),
+            endTime:
+              item.endTime ??
+              timeAfterDuration(
+                item.startTime,
+                item.durationMinutes ?? String(DEFAULT_CLASS_DURATION_MINUTES)
+              ),
+          }))
+        );
+      }
     } catch {
       window.localStorage.removeItem(LOCAL_CLASS_DRAFT_KEY);
     } finally {
@@ -970,7 +1028,8 @@ const ClassCreationPage = () => {
       promotional_video_url?: string | null;
       session_templates?: Array<{
         start_time: string | Date;
-        end_time: string | Date;
+        end_time?: string | Date;
+        duration_minutes?: number | string | bigint | null;
         recurrence?: {
           recurrence_type?: string;
           interval_value?: number;
@@ -1066,10 +1125,16 @@ const ClassCreationPage = () => {
       }
 
       const firstStart = new Date(firstTemplate.start_time);
-      const firstEnd = new Date(firstTemplate.end_time);
+      const firstEnd = firstTemplate.end_time
+        ? new Date(firstTemplate.end_time)
+        : new Date(
+            firstStart.getTime() +
+              durationMinutesOrDefault(firstTemplate.duration_minutes) * 60000
+          );
       const firstDate = firstStart.toISOString().slice(0, 10);
       const startTime = firstStart.toTimeString().slice(0, 5);
       const endTime = firstEnd.toTimeString().slice(0, 5);
+      const durationMinutes = durationMinutesFromDates(firstStart, firstEnd);
 
       const isAllDay = startTime === '00:00' && endTime === '23:59';
 
@@ -1088,18 +1153,25 @@ const ClassCreationPage = () => {
         setSchedulePreset('pick-dates');
         const picked = templates.map(t => {
           const tStart = new Date(t.start_time);
-          const tEnd = new Date(t.end_time);
+          const tEnd = t.end_time
+            ? new Date(t.end_time)
+            : new Date(tStart.getTime() + durationMinutesOrDefault(t.duration_minutes) * 60000);
+          const tDurationMinutes = durationMinutesFromDates(tStart, tEnd);
           return {
             date: tStart.toISOString().slice(0, 10),
             startTime: isAllDay ? '00:00' : tStart.toTimeString().slice(0, 5),
             endTime: isAllDay ? '23:59' : tEnd.toTimeString().slice(0, 5),
+            durationMinutes: String(tDurationMinutes),
           };
         });
         setPickedDates(picked);
       } else if (recurrenceType === 'WEEKLY') {
         setSchedulePreset('standard');
 
-        const weeklyDayTimes: Record<number, { startTime: string; endTime: string }> = {};
+        const weeklyDayTimes: Record<
+          number,
+          { startTime: string; endTime: string; durationMinutes: string }
+        > = {};
         const allDaysSet = new Set<number>();
         const nextPerDayOccurrences: Record<number, PerDayOccurrence> = {};
 
@@ -1107,14 +1179,19 @@ const ClassCreationPage = () => {
           t => t.recurrence?.recurrence_type?.toUpperCase() === 'WEEKLY'
         );
 
-        const firstTemplateEnd = new Date(firstTemplate.end_time);
+        const firstTemplateEnd = firstTemplate.end_time
+          ? new Date(firstTemplate.end_time)
+          : firstEnd;
 
         const recurrenceEndDate = firstTemplate.recurrence?.end_date
           ? new Date(firstTemplate.recurrence.end_date)
           : null;
 
         const maxEndDate = templates.reduce((max, t) => {
-          const d = new Date(t.end_time);
+          const start = new Date(t.start_time);
+          const d = t.end_time
+            ? new Date(t.end_time)
+            : new Date(start.getTime() + durationMinutesOrDefault(t.duration_minutes) * 60000);
           return d > max ? d : max;
         }, firstTemplateEnd);
 
@@ -1126,18 +1203,25 @@ const ClassCreationPage = () => {
           if (!templateDaysStr) return;
 
           const tStart = new Date(template.start_time);
-          const tEnd = new Date(template.end_time);
+          const tEnd = template.end_time
+            ? new Date(template.end_time)
+            : new Date(tStart.getTime() + durationMinutesOrDefault(template.duration_minutes) * 60000);
           const tStartTime = isAllDay ? '00:00' : tStart.toTimeString().slice(0, 5);
           const tEndTime = isAllDay ? '23:59' : tEnd.toTimeString().slice(0, 5);
           const tOccurrenceCount = template.recurrence?.occurrence_count ?? 1;
-          const tDurationHours = calculateSessionHours(tStartTime, tEndTime, isAllDay);
+          const tDurationMinutes = durationMinutesFromDates(tStart, tEnd);
+          const tDurationHours = isAllDay ? 24 : tDurationMinutes / 60;
 
           templateDaysStr.split(',').forEach(rawDay => {
             const dayIndex = DAY_NAMES.indexOf(rawDay.trim());
             if (dayIndex < 0) return;
 
             allDaysSet.add(dayIndex);
-            weeklyDayTimes[dayIndex] = { startTime: tStartTime, endTime: tEndTime };
+            weeklyDayTimes[dayIndex] = {
+              startTime: tStartTime,
+              endTime: tEndTime,
+              durationMinutes: String(tDurationMinutes),
+            };
             nextPerDayOccurrences[dayIndex] = {
               durationHours: tDurationHours,
               occurrenceCount: tOccurrenceCount,
@@ -1150,7 +1234,7 @@ const ClassCreationPage = () => {
         setScheduleSettings(prev => ({
           ...prev,
           allDay: isAllDay,
-          startClass: { date: firstDate, startTime, endTime },
+          startClass: { date: firstDate, startTime, endTime, durationMinutes: String(durationMinutes) },
           repeat: { interval: intervalValue, unit: 'week', days: daysArray },
           weeklyDayTimes,
           endRepeat: endRepeatDate,
@@ -1169,7 +1253,7 @@ const ClassCreationPage = () => {
         setScheduleSettings(prev => ({
           ...prev,
           allDay: isAllDay,
-          startClass: { date: firstDate, startTime, endTime },
+          startClass: { date: firstDate, startTime, endTime, durationMinutes: String(durationMinutes) },
           repeat: {
             interval: intervalValue,
             unit: repeatUnit as 'day' | 'week' | 'month' | 'year',
@@ -1218,6 +1302,7 @@ const ClassCreationPage = () => {
           date: startDate.toISOString().slice(0, 10),
           startTime: startDate.toTimeString().slice(0, 5),
           endTime: endDate.toTimeString().slice(0, 5),
+          durationMinutes: String(durationMinutesFromDates(startDate, endDate)),
         },
         endRepeat: prev.endRepeat ?? startDate.toISOString().slice(0, 10),
       }));
@@ -1273,6 +1358,27 @@ const ClassCreationPage = () => {
       toast.error('Please select at least one date');
       return false;
     }
+    if (
+      schedulePreset === 'pick-dates' &&
+      !scheduleSettings.allDay &&
+      pickedDates.some(item => !parsePositiveDurationMinutes(item.durationMinutes))
+    ) {
+      toast.error('Each picked session needs a positive whole-minute duration');
+      return false;
+    }
+    if (schedulePreset !== 'pick-dates' && !scheduleSettings.allDay) {
+      const days = scheduleSettings.repeat.days || [];
+      const durations = days.length > 0
+        ? days.map(dayIndex =>
+            scheduleSettings.weeklyDayTimes[dayIndex]?.durationMinutes ||
+            scheduleSettings.startClass.durationMinutes
+          )
+        : [scheduleSettings.startClass.durationMinutes];
+      if (durations.some(duration => !parsePositiveDurationMinutes(duration))) {
+        toast.error('Each class session needs a positive whole-minute duration');
+        return false;
+      }
+    }
     if (schedulePreset === 'academic-period') {
       if (!scheduleSettings.academicPeriod.start || !scheduleSettings.academicPeriod.end) {
         toast.error('Please set the academic period dates');
@@ -1306,23 +1412,34 @@ const ClassCreationPage = () => {
     if (schedulePreset === 'academic-period') referenceDate = scheduleSettings.academicPeriod.start;
 
     const getDefaultTimes = () => {
-      if (scheduleSettings.allDay) return { startTime: '00:00', endTime: '23:59' };
+      if (scheduleSettings.allDay) {
+        return { startTime: '00:00', endTime: '23:59', durationMinutes: 24 * 60 };
+      }
       const sortedDays = [...(scheduleSettings.repeat.days || [])].sort((a, b) => a - b);
       if (sortedDays.length > 0) {
         const firstIdx = sortedDays[0]!;
         const override = scheduleSettings.weeklyDayTimes[firstIdx];
+        const startTime = override?.startTime || scheduleSettings.startClass.startTime || '00:00';
+        const durationMinutes = durationMinutesOrDefault(
+          override?.durationMinutes || scheduleSettings.startClass.durationMinutes
+        );
         return {
-          startTime: override?.startTime || scheduleSettings.startClass.startTime || '00:00',
-          endTime: override?.endTime || scheduleSettings.startClass.endTime || '23:59',
+          startTime,
+          endTime: timeAfterDuration(startTime, durationMinutes),
+          durationMinutes,
         };
       }
+      const startTime = scheduleSettings.startClass.startTime || '00:00';
+      const durationMinutes = durationMinutesOrDefault(scheduleSettings.startClass.durationMinutes);
       return {
-        startTime: scheduleSettings.startClass.startTime || '00:00',
-        endTime: scheduleSettings.startClass.endTime || '23:59',
+        startTime,
+        endTime: timeAfterDuration(startTime, durationMinutes),
+        durationMinutes,
       };
     };
 
-    const { startTime: defaultStart, endTime: defaultEnd } = getDefaultTimes();
+    const { startTime: defaultStart, endTime: defaultEnd, durationMinutes: defaultDurationMinutes } =
+      getDefaultTimes();
     const defaultRange = getSessionTimeRange(referenceDate, defaultStart, defaultEnd);
 
     if (!defaultRange) {
@@ -1355,9 +1472,15 @@ const ClassCreationPage = () => {
           const effectiveStartTime = scheduleSettings.allDay
             ? '00:00'
             : (item.startTime ?? '00:00');
-          const effectiveEndTime = scheduleSettings.allDay ? '23:59' : (item.endTime ?? '23:59');
+          const effectiveDurationMinutes = scheduleSettings.allDay
+            ? 24 * 60
+            : durationMinutesOrDefault(item.durationMinutes);
+          const effectiveEndTime = scheduleSettings.allDay
+            ? '23:59'
+            : timeAfterDuration(effectiveStartTime, effectiveDurationMinutes);
           return {
             start_time: new Date(buildUtcIsoDateTime(item.date, effectiveStartTime)),
+            duration_minutes: effectiveDurationMinutes,
             end_time: new Date(buildUtcIsoDateTime(item.date, effectiveEndTime)),
             recurrence: {
               recurrence_type: RecurrenceTypeEnum.DAILY,
@@ -1377,6 +1500,7 @@ const ClassCreationPage = () => {
       session_templates = [
         {
           start_time: new Date(startTimeIso),
+          duration_minutes: defaultDurationMinutes,
           end_time: new Date(endTimeIso),
           ...(recurrenceRule ? { recurrence: recurrenceRule } : {}),
           conflict_resolution: ConflictResolutionEnum.FAIL,
@@ -1398,9 +1522,14 @@ const ClassCreationPage = () => {
           const effectiveStartTime = scheduleSettings.allDay
             ? '00:00'
             : override?.startTime || scheduleSettings.startClass.startTime || '00:00';
+          const effectiveDurationMinutes = scheduleSettings.allDay
+            ? 24 * 60
+            : durationMinutesOrDefault(
+                override?.durationMinutes || scheduleSettings.startClass.durationMinutes
+              );
           const effectiveEndTime = scheduleSettings.allDay
             ? '23:59'
-            : override?.endTime || scheduleSettings.startClass.endTime || '23:59';
+            : timeAfterDuration(effectiveStartTime, effectiveDurationMinutes);
 
           const firstOccurrence = new Date(referenceDate);
           while ((firstOccurrence.getDay() + 6) % 7 !== dayIndex) {
@@ -1428,6 +1557,7 @@ const ClassCreationPage = () => {
 
           return {
             start_time: new Date(buildUtcIsoDateTime(firstSessionDate, effectiveStartTime)),
+            duration_minutes: effectiveDurationMinutes,
             end_time: new Date(buildUtcIsoDateTime(lastSessionDate, effectiveEndTime)),
             recurrence: {
               recurrence_type: RecurrenceTypeEnum.WEEKLY,
@@ -1451,6 +1581,7 @@ const ClassCreationPage = () => {
         session_templates = [
           {
             start_time: new Date(startTimeIso),
+            duration_minutes: defaultDurationMinutes,
             end_time: new Date(endTimeIso),
             recurrence: {
               recurrence_type: recurrenceType,
@@ -1474,11 +1605,17 @@ const ClassCreationPage = () => {
           ? '00:00'
           : pickedDates[0]!.startTime || '00:00'
         : defaultStart;
+    const payloadDurationMinutes =
+      schedulePreset === 'pick-dates' && pickedDates.length > 0
+        ? scheduleSettings.allDay
+          ? 24 * 60
+          : durationMinutesOrDefault(pickedDates[0]!.durationMinutes)
+        : defaultDurationMinutes;
     const payloadEndTime =
       schedulePreset === 'pick-dates' && pickedDates.length > 0
         ? scheduleSettings.allDay
           ? '23:59'
-          : pickedDates[0]!.endTime || '23:59'
+          : timeAfterDuration(payloadStartTime, payloadDurationMinutes)
         : defaultEnd;
 
     const payload: CreateClassDefinitionMultipartData['body'] = {
@@ -1508,7 +1645,7 @@ const ClassCreationPage = () => {
       registration_period_end_date: registrationPeriodEnd,
       scheduled_session_count: totalSessions,
       class_reminder_minutes: reminderToMinutes(notificationSettings.reminder),
-      duration_minutes: totalHoursInMinutes,
+      duration_minutes: payloadDurationMinutes,
       sale_price: approvedRate,
       instructor_pay: approvedRate,
       rate_basis: rateBasis,
@@ -1719,7 +1856,10 @@ const ClassCreationPage = () => {
         const override = scheduleSettings.weeklyDayTimes[index];
         const effectiveStartTime =
           override?.startTime || scheduleSettings.startClass.startTime || '';
-        const effectiveEndTime = override?.endTime || scheduleSettings.startClass.endTime || '';
+        const effectiveDurationMinutes =
+          override?.durationMinutes ||
+          scheduleSettings.startClass.durationMinutes ||
+          String(DEFAULT_CLASS_DURATION_MINUTES);
 
         const toggleDay = () =>
           setScheduleSettings(prev => {
@@ -1771,43 +1911,61 @@ const ClassCreationPage = () => {
                 onClick={e => e.stopPropagation()}
                 disabled={!active || scheduleSettings.allDay}
                 value={normalizeTime(effectiveStartTime)}
-                onChange={e =>
-                  setScheduleSettings(prev => ({
-                    ...prev,
-                    weeklyDayTimes: {
-                      ...prev.weeklyDayTimes,
-                      [index]: {
-                        startTime: normalizeTime(e.target.value),
-                        endTime:
-                          prev.weeklyDayTimes[index]?.endTime || prev.startClass.endTime || '',
+                onChange={e => {
+                  const startTime = normalizeTime(e.target.value);
+                  setScheduleSettings(prev => {
+                    const durationMinutes =
+                      prev.weeklyDayTimes[index]?.durationMinutes ||
+                      prev.startClass.durationMinutes ||
+                      String(DEFAULT_CLASS_DURATION_MINUTES);
+                    return {
+                      ...prev,
+                      weeklyDayTimes: {
+                        ...prev.weeklyDayTimes,
+                        [index]: {
+                          startTime,
+                          durationMinutes,
+                          endTime: startTime ? timeAfterDuration(startTime, durationMinutes) : '',
+                        },
                       },
-                    },
-                  }))
-                }
+                    };
+                  });
+                }}
                 className='h-8 text-xs'
               />
             </div>
 
             <div className='flex flex-1 flex-col gap-0.5'>
-              <span className='text-muted-foreground text-[10px] font-medium'>End Time</span>
+              <span className='text-muted-foreground text-[10px] font-medium'>Minutes</span>
               <Input
-                type='time'
+                type='number'
+                min={1}
+                step={1}
+                inputMode='numeric'
                 disabled={!active || scheduleSettings.allDay}
-                value={normalizeTime(effectiveEndTime)}
+                value={effectiveDurationMinutes}
                 onClick={e => e.stopPropagation()}
-                onChange={e =>
-                  setScheduleSettings(prev => ({
-                    ...prev,
-                    weeklyDayTimes: {
-                      ...prev.weeklyDayTimes,
-                      [index]: {
-                        startTime:
-                          prev.weeklyDayTimes[index]?.startTime || prev.startClass.startTime || '',
-                        endTime: normalizeTime(e.target.value),
+                onChange={e => {
+                  const durationMinutes = sanitizeDurationMinutesInput(e.target.value);
+                  setScheduleSettings(prev => {
+                    const startTime =
+                      prev.weeklyDayTimes[index]?.startTime || prev.startClass.startTime || '';
+                    return {
+                      ...prev,
+                      weeklyDayTimes: {
+                        ...prev.weeklyDayTimes,
+                        [index]: {
+                          startTime,
+                          durationMinutes,
+                          endTime:
+                            startTime && durationMinutes
+                              ? timeAfterDuration(startTime, durationMinutes)
+                              : '',
+                        },
                       },
-                    },
-                  }))
-                }
+                    };
+                  });
+                }}
                 className='h-8 text-xs'
               />
             </div>
@@ -1870,25 +2028,48 @@ const ClassCreationPage = () => {
               type='time'
               disabled={scheduleSettings.allDay}
               value={scheduleSettings.startClass.startTime || ''}
-              onChange={e =>
-                setScheduleSettings(prev => ({
-                  ...prev,
-                  startClass: { ...prev.startClass, startTime: e.target.value },
-                }))
-              }
+              onChange={e => {
+                const startTime = e.target.value;
+                setScheduleSettings(prev => {
+                  const durationMinutes =
+                    prev.startClass.durationMinutes || String(DEFAULT_CLASS_DURATION_MINUTES);
+                  return {
+                    ...prev,
+                    startClass: {
+                      ...prev.startClass,
+                      startTime,
+                      durationMinutes,
+                      endTime: startTime ? timeAfterDuration(startTime, durationMinutes) : '',
+                    },
+                  };
+                });
+              }}
             />
           </FieldGroup>
-          <FieldGroup label='End Time'>
+          <FieldGroup label='Duration (min)'>
             <Input
-              type='time'
+              type='number'
+              min={1}
+              step={1}
+              inputMode='numeric'
               disabled={scheduleSettings.allDay}
-              value={scheduleSettings.startClass.endTime || ''}
-              onChange={e =>
+              value={
+                scheduleSettings.startClass.durationMinutes || String(DEFAULT_CLASS_DURATION_MINUTES)
+              }
+              onChange={e => {
+                const durationMinutes = sanitizeDurationMinutesInput(e.target.value);
                 setScheduleSettings(prev => ({
                   ...prev,
-                  startClass: { ...prev.startClass, endTime: e.target.value },
-                }))
-              }
+                  startClass: {
+                    ...prev.startClass,
+                    durationMinutes,
+                    endTime:
+                      prev.startClass.startTime && durationMinutes
+                        ? timeAfterDuration(prev.startClass.startTime, durationMinutes)
+                        : '',
+                  },
+                }));
+              }}
             />
           </FieldGroup>
         </div>
@@ -2294,7 +2475,15 @@ const ClassCreationPage = () => {
                             const formatted = format(date, 'yyyy-MM-dd');
                             const existing = pickedDates.find(item => item.date === formatted);
                             return (
-                              existing || { date: formatted, startTime: '09:00', endTime: '10:00' }
+                              existing || {
+                                date: formatted,
+                                startTime: '09:00',
+                                durationMinutes: String(DEFAULT_CLASS_DURATION_MINUTES),
+                                endTime: timeAfterDuration(
+                                  '09:00',
+                                  String(DEFAULT_CLASS_DURATION_MINUTES)
+                                ),
+                              }
                             );
                           });
                           setPickedDates(next);
@@ -2410,30 +2599,59 @@ const ClassCreationPage = () => {
                                           value={normalizeTime(item.startTime)}
                                           onChange={e => {
                                             const next = [...pickedDates];
-                                            if (next[origIdx])
+                                            if (next[origIdx]) {
+                                              const startTime = normalizeTime(e.target.value);
+                                              const durationMinutes =
+                                                next[origIdx]!.durationMinutes ||
+                                                String(DEFAULT_CLASS_DURATION_MINUTES);
                                               next[origIdx] = {
                                                 ...next[origIdx]!,
-                                                startTime: normalizeTime(e.target.value),
+                                                startTime,
+                                                durationMinutes,
+                                                endTime: startTime
+                                                  ? timeAfterDuration(startTime, durationMinutes)
+                                                  : '',
                                               };
+                                            }
                                             setPickedDates(next);
                                           }}
                                           className='h-7 w-[92px] px-2 text-[11px]'
                                         />
                                         <span className='text-muted-foreground text-[10px]'>→</span>
                                         <Input
-                                          type='time'
-                                          value={normalizeTime(item.endTime)}
+                                          type='number'
+                                          min={1}
+                                          step={1}
+                                          inputMode='numeric'
+                                          value={
+                                            item.durationMinutes ||
+                                            String(durationMinutesFromTimes(item.startTime, item.endTime))
+                                          }
                                           onChange={e => {
+                                            const durationMinutes = sanitizeDurationMinutesInput(
+                                              e.target.value
+                                            );
                                             const next = [...pickedDates];
-                                            if (next[origIdx])
+                                            if (next[origIdx]) {
+                                              const startTime = next[origIdx]!.startTime;
                                               next[origIdx] = {
                                                 ...next[origIdx]!,
-                                                endTime: normalizeTime(e.target.value),
+                                                durationMinutes,
+                                                endTime:
+                                                  startTime && durationMinutes
+                                                    ? timeAfterDuration(startTime, durationMinutes)
+                                                    : '',
                                               };
+                                            }
                                             setPickedDates(next);
                                           }}
-                                          className='h-7 w-[92px] px-2 text-[11px]'
+                                          className='h-7 w-[74px] px-2 text-[11px]'
                                         />
+                                        <span className='text-muted-foreground min-w-[38px] text-[10px]'>
+                                          {item.startTime && item.durationMinutes
+                                            ? timeAfterDuration(item.startTime, item.durationMinutes)
+                                            : normalizeTime(item.endTime)}
+                                        </span>
                                       </div>
                                     )}
                                     <button
