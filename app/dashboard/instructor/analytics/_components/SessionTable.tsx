@@ -661,7 +661,7 @@ export function SessionTableSummary() {
                     )}
 
                     {visibleColumns.trainingHours && (
-                      <td className='px-2 py-2.5 text-center'>{s.trainingHours}</td>
+                      <td className='px-2 py-2.5 text-center'>{s.trainingHours} ({s.actualTrainingHours})</td>
                     )}
 
                     {visibleColumns.status && (

@@ -9,7 +9,7 @@ import {
   getInstructorRatingSummaryOptions,
   getInstructorReviewsOptions,
 } from '@/services/client/@tanstack/react-query.gen';
-import type { Enrollment, InstructorReview } from '@/services/client/types.gen';
+import type { Enrollment } from '@/services/client/types.gen';
 import { useQueries, useQuery } from '@tanstack/react-query';
 import { useMemo } from 'react';
 
@@ -30,6 +30,7 @@ export type AnalyticsSession = {
   satisfaction: number | null;
   totalHours: number;
   trainingHours: number;
+  actualTrainingHours: number;
   avgHours: number;
   instanceCount: number;
   status: string;
@@ -93,6 +94,11 @@ export type AnalyticsMetrics = {
   assessmentsConducted: number;
   certificatesIssues: number;
   surveysCompleted: number;
+};
+
+type ClassRatingSummary = {
+  averageRating: number | null;
+  reviewCount: number;
 };
 
 const ACTIVE_ENROLLMENT_STATUSES = new Set(['ENROLLED', 'ATTENDED', 'ABSENT']);
@@ -298,16 +304,21 @@ export function useInstructorAnalyticsData(filters?: Partial<InstructorAnalytics
     })),
   });
 
-  const ratingsByClass = useMemo(
-    () =>
-      new Map(
-        classes.map((classItem, index) => [
-          classItem.uuid,
-          classRatingQueries[index]?.data?.data?.average_rating ?? 0,
-        ])
-      ),
-    [classes, classRatingQueries]
-  );
+  const classRatingsByClass = useMemo(() => {
+    const map = new Map<string, ClassRatingSummary>();
+
+    classes.forEach((classItem, index) => {
+      if (!classItem.uuid) return;
+
+      const ratingData = classRatingQueries[index]?.data?.data;
+      map.set(classItem.uuid, {
+        averageRating: ratingData?.average_rating ?? null,
+        reviewCount: Number(ratingData?.review_count ?? 0n),
+      });
+    });
+
+    return map;
+  }, [classes, classRatingQueries]);
 
   const classSessionBundle = useMemo(() => {
     if (!classes.length) {
@@ -337,6 +348,7 @@ export function useInstructorAnalyticsData(filters?: Partial<InstructorAnalytics
 
         return (classItem.schedule ?? []).map(instance => {
           const durationMinutes = getDurationMinutes(instance);
+          const allocatedHours = formatHours(durationMinutes);
           const startTime = instance.start_time
             ? new Date(instance.start_time)
             : new Date(0);
@@ -349,10 +361,28 @@ export function useInstructorAnalyticsData(filters?: Partial<InstructorAnalytics
             ? new Date(instance.concluded_at)
             : undefined;
 
-          const trainingHours =
+          // Cap actual time spent to the scheduled slot so an open session cannot exceed allocation.
+          const trainingHours = Math.max(
+            0,
+            Math.min(
+              startedAt && concludedAt
+                ? (concludedAt.getTime() - startedAt.getTime()) / (1000 * 60 * 60)
+                : 0,
+              allocatedHours
+            )
+          );
+
+          const actualTrainingHours =
             startedAt && concludedAt
-              ? (concludedAt.getTime() - startedAt.getTime()) / (1000 * 60 * 60)
+              ? Number(
+                (
+                  (concludedAt.getTime() - startedAt.getTime()) /
+                  (1000 * 60 * 60)
+                ).toFixed(2)
+              )
               : 0;
+
+          const ratingSummary = classRatingsByClass.get(classItem.uuid ?? '');
 
           const session: AnalyticsSession = {
             id: instance.uuid ?? `${classItem.uuid}-${startTime.toISOString()}`,
@@ -367,9 +397,11 @@ export function useInstructorAnalyticsData(filters?: Partial<InstructorAnalytics
             attended,
             completionRate:
               enrolled > 0 ? Math.round((attended / enrolled) * 100) : 0,
-            satisfaction: ratingsByClass.get(classItem.uuid) ?? null,
-            totalHours: formatHours(durationMinutes),
-            trainingHours: formatHours(trainingHours * 60),
+            satisfaction:
+              ratingSummary && ratingSummary.reviewCount > 0 ? ratingSummary.averageRating : null,
+            totalHours: allocatedHours, // Scheduled class duration for auditability.
+            trainingHours, // Actual training time, capped to the allocated class duration.
+            actualTrainingHours,
             status: formatStatusLabel(instance.status),
             startTime,
             startedAt,
@@ -401,7 +433,7 @@ export function useInstructorAnalyticsData(filters?: Partial<InstructorAnalytics
     });
 
     return { sessions, sessionByClassId };
-  }, [classes, instructor?.full_name, ratingsByClass]);
+  }, [classes, instructor?.full_name, classRatingsByClass]);
 
   const fullSessions = classSessionBundle.sessions;
 
@@ -423,11 +455,12 @@ export function useInstructorAnalyticsData(filters?: Partial<InstructorAnalytics
       const instances = (classItem.schedule ?? []).map(instance => {
         const startTime = instance.start_time ? new Date(instance.start_time) : new Date(0);
         const endTime = instance.end_time ? new Date(instance.end_time) : null;
+        const allocatedHours = formatHours(getDurationMinutes(instance));
         return {
           id: instance.uuid ?? `${classItem.uuid}-${startTime.toISOString()}`,
           date: formatDate(instance.start_time),
           location: formatLocation(instance),
-          hours: formatHours(getDurationMinutes(instance)),
+          hours: allocatedHours, // Scheduled class duration for traceability and downstream reporting.
           status: formatStatusLabel(instance.status),
           startTime,
           endTime,
@@ -457,7 +490,10 @@ export function useInstructorAnalyticsData(filters?: Partial<InstructorAnalytics
         enrolled,
         attended,
         completionRate: enrolled > 0 ? Math.round((attended / enrolled) * 100) : 0,
-        satisfaction: ratingsByClass.get(classItem.uuid) ?? null,
+        satisfaction:
+          classItem.uuid && classRatingsByClass.get(classItem.uuid)?.reviewCount
+            ? classRatingsByClass.get(classItem.uuid)?.averageRating ?? null
+            : null,
         totalHours,
         avgHours,
         instanceCount: instances.length,
@@ -473,7 +509,7 @@ export function useInstructorAnalyticsData(filters?: Partial<InstructorAnalytics
       const rightTime = right.startDate?.getTime() ?? 0;
       return rightTime - leftTime;
     });
-  }, [classes, instructor, ratingSummaryQuery.data]);
+  }, [classes, instructor?.full_name, classRatingsByClass]);
 
   // FILTERING WITH FULL SESSIONS
   const filteredSessions = useMemo(() => {
@@ -568,9 +604,11 @@ export function useInstructorAnalyticsData(filters?: Partial<InstructorAnalytics
     const completedSessions = filteredSessions.filter(
       session => session.status === 'Completed'
     ).length;
-    const trainingHours = filteredSessions
-      .filter(session => session.status === 'Completed')
-      .reduce((sum, session) => sum + session.hours, 0);
+    const trainingHours = Number(
+      filteredSessions
+        .reduce((sum, session) => sum + session.trainingHours, 0)
+        .toFixed(2)
+    );
 
     const numberOfPrograms = new Set(
       filteredSessions.map(session => session.program).filter(Boolean)
@@ -589,17 +627,21 @@ export function useInstructorAnalyticsData(filters?: Partial<InstructorAnalytics
       });
     });
 
+    const reviewedClassRatings = filteredClasses
+      .map(classItem => (classItem.uuid ? classRatingsByClass.get(classItem.uuid) ?? null : null))
+      .filter(
+        (rating): rating is ClassRatingSummary =>
+          Boolean(rating && rating.reviewCount > 0 && rating.averageRating !== null)
+      );
+
     const averageSatisfaction =
-      filteredReviewItems.length > 0
+      reviewedClassRatings.length > 0
         ? Math.round(
-          (filteredReviewItems.reduce(
-            (sum, review) => sum + Number((review as InstructorReview).rating ?? 0),
-            0
-          ) /
-            filteredReviewItems.length) *
+          (reviewedClassRatings.reduce((sum, rating) => sum + Number(rating.averageRating), 0) /
+            reviewedClassRatings.length) *
           10
         ) / 10
-        : (ratingSummaryQuery.data?.data?.average_rating ?? null);
+        : ratingSummaryQuery.data?.data?.average_rating ?? null;
 
     return {
       totalSessions,
@@ -616,7 +658,13 @@ export function useInstructorAnalyticsData(filters?: Partial<InstructorAnalytics
       certificatesIssues: 0,
       surveysCompleted: 0,
     };
-  }, [filteredClasses, filteredReviewItems, filteredSessions, ratingSummaryQuery.data]);
+  }, [
+    classRatingsByClass,
+    filteredClasses,
+    filteredReviewItems,
+    filteredSessions,
+    ratingSummaryQuery.data,
+  ]);
 
   const performance = useMemo(() => {
     const weeks = getWeekBuckets();
