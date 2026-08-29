@@ -211,8 +211,9 @@ const proxyRequest = async (request: NextRequest, path: string[]) => {
       headers,
       redirect: 'manual',
     };
+    const isMutatingRequest = request.method !== 'GET' && request.method !== 'HEAD';
 
-    if (request.method !== 'GET' && request.method !== 'HEAD') {
+    if (isMutatingRequest) {
       init.body = request.body;
       init.duplex = 'half';
     }
@@ -231,12 +232,7 @@ const proxyRequest = async (request: NextRequest, path: string[]) => {
       );
     }
 
-    if (
-      request.method !== 'GET' &&
-      request.method !== 'HEAD' &&
-      upstreamResponse.ok &&
-      cacheUserId
-    ) {
+    if (isMutatingRequest && cacheUserId) {
       clearPrivateBffCacheForUser(cacheUserId);
     }
 
