@@ -212,7 +212,7 @@ export function CoursesCatalogCard({ card, type, onPrimaryAction }: CoursesCatal
                 ctaToneClasses[card.ctaTone ?? 'default']
               )}
               disabled={card.ctaDisabled}
-              onClick={() => router.push(`/dashboard/instructor/courses/apply/${card.id}`)}
+              onClick={() => router.push(card.enrollHref)}
             >
               <BookOpen className='size-4' />
               {card.ctaLabel}
