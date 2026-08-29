@@ -74,7 +74,7 @@ export type CourseFormProps = {
 };
 
 export type CourseFormRef = {
-  submit: () => void;
+  submit: () => Promise<boolean>;
 };
 
 export const coursePricingSchema = z.object({
@@ -282,7 +282,7 @@ export const CoursePricingForm = forwardRef<CourseFormRef, CourseFormProps>(
 
       if (!resolvedCourseCreatorUuid) {
         toast.error('Course creator profile is missing.');
-        return;
+        return Promise.resolve(false);
       }
 
       const totalShare =
@@ -291,69 +291,80 @@ export const CoursePricingForm = forwardRef<CourseFormRef, CourseFormProps>(
 
       if (Math.abs(totalShare - 100) > 0.01) {
         toast.error('Creator and instructor shares must add up to 100%.');
-        return;
+        return Promise.resolve(false);
       }
       if (editingCourseId) {
-        const editBody = {
-          course_creator_uuid: authorUuid,
-          status: 'draft',
-          ...initialValues,
-          is_free: data?.is_free,
-          currency: data?.currency,
-          minimum_training_fee: data?.minimum_training_fee,
-          creator_share_percentage: data?.creator_share_percentage,
-          instructor_share_percentage: data?.instructor_share_percentage,
-          revenue_share_notes: data?.revenue_share_notes,
-          coupon_code: data?.coupon_code,
-          access_duration: data?.access_duration,
-          org_access: {
-            educational: data?.org_access?.educational,
-            corporate: data?.org_access?.corporate,
-            non_profit: data?.org_access?.non_profit,
-            individual: data?.org_access?.individual,
-          },
-        };
-
-        updateCourseMutation(
-          { body: editBody as MutationPayload, uuid: editingCourseId },
-          {
-            onSuccess(data, _variables, _context) {
-              const respObj = data?.data;
-              const errorObj = data?.error;
-
-              if (respObj) {
-                toast.success(data?.data?.message || 'Course updated successfully');
-                // if (typeof successResponse === "function") {
-                //   // @ts-expect-error
-                //   successResponse(data?.data)
-                // }
-
-                // setActiveStep(6);
-                queryClient.invalidateQueries({
-                  queryKey: getCourseByUuidQueryKey({ path: { uuid: editingCourseId as string } }),
-                });
-                return;
-              }
-
-              if (errorObj && typeof errorObj === 'object') {
-                Object.values(errorObj).forEach(errorMsg => {
-                  const message = getFormErrorMessage(errorMsg);
-                  if (message) {
-                    toast.error(message);
-                  }
-                });
-                return;
-              } else if ('message' in data && typeof data.message === 'string') {
-                toast.error(data.message);
-                return;
-              } else {
-                toast.error('An unknown error occurred.');
-                return;
-              }
+        return new Promise<boolean>(resolve => {
+          const editBody = {
+            course_creator_uuid: authorUuid,
+            status: 'draft',
+            ...initialValues,
+            is_free: data?.is_free,
+            currency: data?.currency,
+            minimum_training_fee: data?.minimum_training_fee,
+            creator_share_percentage: data?.creator_share_percentage,
+            instructor_share_percentage: data?.instructor_share_percentage,
+            revenue_share_notes: data?.revenue_share_notes,
+            coupon_code: data?.coupon_code,
+            access_duration: data?.access_duration,
+            org_access: {
+              educational: data?.org_access?.educational,
+              corporate: data?.org_access?.corporate,
+              non_profit: data?.org_access?.non_profit,
+              individual: data?.org_access?.individual,
             },
-          }
-        );
+          };
+
+          updateCourseMutation(
+            { body: editBody as MutationPayload, uuid: editingCourseId },
+            {
+              onSuccess(data, _variables, _context) {
+                const respObj = data?.data;
+                const errorObj = data?.error;
+
+                if (respObj) {
+                  toast.success(data?.data?.message || 'Course updated successfully');
+                  // if (typeof successResponse === "function") {
+                  //   // @ts-expect-error
+                  //   successResponse(data?.data)
+                  // }
+
+                  // setActiveStep(6);
+                  queryClient.invalidateQueries({
+                    queryKey: getCourseByUuidQueryKey({ path: { uuid: editingCourseId as string } }),
+                  });
+                  resolve(true);
+                  return;
+                }
+
+                if (errorObj && typeof errorObj === 'object') {
+                  Object.values(errorObj).forEach(errorMsg => {
+                    const message = getFormErrorMessage(errorMsg);
+                    if (message) {
+                      toast.error(message);
+                    }
+                  });
+                  resolve(false);
+                  return;
+                } else if ('message' in data && typeof data.message === 'string') {
+                  toast.error(data.message);
+                  resolve(false);
+                  return;
+                } else {
+                  toast.error('An unknown error occurred.');
+                  resolve(false);
+                  return;
+                }
+              },
+              onError() {
+                resolve(false);
+              },
+            }
+          );
+        });
       }
+
+      return Promise.resolve(false);
     };
 
     const onError = () => {

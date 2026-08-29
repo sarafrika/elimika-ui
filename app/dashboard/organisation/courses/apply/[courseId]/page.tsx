@@ -50,14 +50,14 @@ import { useInstructor } from '@/context/instructor-context';
 import { useOrganisation } from '@/context/organisation-context';
 import { extractEntity } from '@/lib/api-helpers';
 import { cn } from '@/lib/utils';
-import { useUserDomain } from '@/src/features/dashboard/context/user-domain-context';
-import { invalidateTrainingApplicationWorkflowQueries } from '@/src/features/dashboard/workflow-query-invalidation';
 import type { Course, CourseTrainingRequirement } from '@/services/client';
 import {
   getCourseByUuidOptions,
   getCourseTrainingRequirementsOptions,
   submitTrainingApplicationMutation,
 } from '@/services/client/@tanstack/react-query.gen';
+import { useUserDomain } from '@/src/features/dashboard/context/user-domain-context';
+import { invalidateTrainingApplicationWorkflowQueries } from '@/src/features/dashboard/workflow-query-invalidation';
 
 // ---------- types & state ----------
 
@@ -154,15 +154,15 @@ function reducer(state: State, action: Action): State {
         : state.pricing.some(p => p.method === action.method)
           ? state.pricing
           : [
-              ...state.pricing,
-              {
-                id: uid(),
-                method: action.method,
-                duration: '',
-                amount: '',
-                basis: DEFAULT_RATE_BASIS,
-              },
-            ];
+            ...state.pricing,
+            {
+              id: uid(),
+              method: action.method,
+              duration: '',
+              amount: '',
+              basis: DEFAULT_RATE_BASIS,
+            },
+          ];
       return { ...state, methods, pricing };
     }
     case 'classroomCount': {
@@ -212,14 +212,14 @@ function reducer(state: State, action: Action): State {
         equipment: state.equipment.map(e =>
           e.requirementUuid === action.uuid
             ? {
-                ...e,
-                has: action.has,
-                items:
-                  action.has === 'yes' && e.items.length === 0
-                    ? [{ id: uid(), name: e.requirementName, brand: '', serial: '' }]
-                    : e.items,
-                acquisition: action.has === 'yes' ? undefined : e.acquisition,
-              }
+              ...e,
+              has: action.has,
+              items:
+                action.has === 'yes' && e.items.length === 0
+                  ? [{ id: uid(), name: e.requirementName, brand: '', serial: '' }]
+                  : e.items,
+              acquisition: action.has === 'yes' ? undefined : e.acquisition,
+            }
             : e
         ),
       };
@@ -254,11 +254,11 @@ function reducer(state: State, action: Action): State {
         equipment: state.equipment.map(e =>
           e.requirementUuid === action.uuid
             ? {
-                ...e,
-                items: e.items.map(it =>
-                  it.id === action.itemId ? { ...it, ...action.patch } : it
-                ),
-              }
+              ...e,
+              items: e.items.map(it =>
+                it.id === action.itemId ? { ...it, ...action.patch } : it
+              ),
+            }
             : e
         ),
       };
@@ -366,32 +366,32 @@ const METHOD_OPTIONS: {
   description: string;
   icon: React.ElementType;
 }[] = [
-  {
-    value: 'private-in-person',
-    title: 'Private in-person (live)',
-    description: 'One-on-one on-site sessions.',
-    icon: Users,
-  },
-  {
-    value: 'private-virtual',
-    title: 'Private virtual',
-    description: 'One-on-one online sessions.',
-    icon: Monitor,
-  },
-  {
-    value: 'group-in-person',
-    title: 'Group in-person (live)',
-    description: 'Cohort on-site at your venue.',
-    icon: Building2,
-  },
-  {
-    value: 'group-virtual',
-    title: 'Group virtual',
-    description: 'Cohort delivered online.',
-    icon: Video,
-  },
-  { value: 'hybrid', title: 'Hybrid', description: 'Mix of in-person and virtual.', icon: Layers },
-];
+    {
+      value: 'private-in-person',
+      title: 'Private in-person (live)',
+      description: 'One-on-one on-site sessions.',
+      icon: Users,
+    },
+    {
+      value: 'private-virtual',
+      title: 'Private virtual',
+      description: 'One-on-one online sessions.',
+      icon: Monitor,
+    },
+    {
+      value: 'group-in-person',
+      title: 'Group in-person (live)',
+      description: 'Cohort on-site at your venue.',
+      icon: Building2,
+    },
+    {
+      value: 'group-virtual',
+      title: 'Group virtual',
+      description: 'Cohort delivered online.',
+      icon: Video,
+    },
+    { value: 'hybrid', title: 'Hybrid', description: 'Mix of in-person and virtual.', icon: Layers },
+  ];
 
 /**
  * Maps the wizard's method pricing into the backend's 4 modalities × 3 bases rate card. A tier
@@ -429,6 +429,7 @@ function buildRateCard(pricing: PriceTier[]) {
 export default function ApplyPage() {
   const params = useParams<{ courseId?: string; id?: string }>();
   const courseId = params?.courseId ?? params?.id ?? '';
+  // const programId = params?.programId
   const router = useRouter();
   const queryClient = useQueryClient();
   const { activeDomain } = useUserDomain();

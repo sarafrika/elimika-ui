@@ -9,7 +9,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { Upload } from 'lucide-react';
 import Image from 'next/image';
-import { forwardRef, useEffect, useState } from 'react';
+import { forwardRef, useEffect, useImperativeHandle, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { toast } from 'sonner';
 import * as z from 'zod';
@@ -77,22 +77,13 @@ export type CourseFormProps = {
 };
 
 export type CourseFormRef = {
-  submit: () => void;
+  submit: () => Promise<boolean>;
 };
 
 type UploadKey = 'thumbnail' | 'banner' | 'intro_video';
-
-type UploadOptions = {
-  key: UploadKey;
-  setPreview: (val: string) => void;
-  upload: (
-    file: File,
-    callbacks: {
-      onSuccess?: (data: UploadResponse) => void;
-      onError?: (error: UploadError) => void;
-    }
-  ) => void;
-  onChange: (val: string) => void;
+type PendingMediaState = {
+  file: File | null;
+  previewUrl: string | null;
 };
 
 function UploadIndicator({ isUploading }: { isUploading: boolean }) {
@@ -156,7 +147,7 @@ export const brandingSchema = courseCreationSchema.pick({
 type BrandingFormValues = z.infer<typeof brandingSchema>;
 
 export const CourseBrandingForm = forwardRef<CourseFormRef, CourseFormProps>(
-  ({ showSubmitButton, initialValues, editingCourseId, successResponse, nextStepAfterSave = 7 }, _ref) => {
+  ({ showSubmitButton, initialValues, editingCourseId, successResponse, nextStepAfterSave = 7 }, ref) => {
     const form = useForm<BrandingFormValues>({
       resolver: zodResolver(brandingSchema),
       defaultValues: {
@@ -178,38 +169,138 @@ export const CourseBrandingForm = forwardRef<CourseFormRef, CourseFormProps>(
     const [thumbnailPreview, setThumbnailPreview] = useState<string | null>(null);
     const [bannerPreview, setBannerPreview] = useState<string | null>(null);
     const [videoPreview, setVideoPreview] = useState<string | null>(null);
+    const [pendingThumbnail, setPendingThumbnail] = useState<PendingMediaState>({
+      file: null,
+      previewUrl: null,
+    });
+    const [pendingBanner, setPendingBanner] = useState<PendingMediaState>({
+      file: null,
+      previewUrl: null,
+    });
+    const [pendingVideo, setPendingVideo] = useState<PendingMediaState>({
+      file: null,
+      previewUrl: null,
+    });
 
     const courseBannerMutation = useMutation(uploadCourseBannerMutation());
     const courseThumbnailMutation = useMutation(uploadCourseThumbnailMutation());
     const courseIntroVideoMutation = useMutation(uploadCourseIntroVideoMutation());
 
-    const handleFileUpload = async (
-      file: File,
-      { key, setPreview, upload, onChange }: UploadOptions
-    ) => {
+    const revokePendingPreview = (previewUrl: string | null) => {
+      if (previewUrl?.startsWith('blob:')) {
+        URL.revokeObjectURL(previewUrl);
+      }
+    };
+
+    const stageThumbnailSelection = (file: File) => {
       if (!editingCourseId) {
         toast.error('Save the course before uploading media.');
         return;
       }
-      if (key === 'intro_video' && file.size > MAX_VIDEO_SIZE_BYTES) {
-        toast.error(`Video too large. Max size: ${MAX_VIDEO_SIZE_MB}MB.`);
-        return;
-      }
 
       try {
-        const schema = z.object({ [key]: z.instanceof(File) });
-        schema.parse({ [key]: file });
+        z.object({ thumbnail: z.instanceof(File) }).parse({ thumbnail: file });
       } catch {
         toast.error('Invalid file type.');
         return;
       }
 
       const previewUrl = URL.createObjectURL(file);
-      setPreview(previewUrl);
+      setPendingThumbnail(current => {
+        revokePendingPreview(current.previewUrl);
+        return { file, previewUrl };
+      });
+      setThumbnailPreview(previewUrl);
+    };
 
-      upload(file, {
-        onSuccess: (data: UploadResponse) => {
-          const urlKey = `${key}_url` as const;
+    const stageBannerSelection = (file: File) => {
+      if (!editingCourseId) {
+        toast.error('Save the course before uploading media.');
+        return;
+      }
+
+      try {
+        z.object({ banner: z.instanceof(File) }).parse({ banner: file });
+      } catch {
+        toast.error('Invalid file type.');
+        return;
+      }
+
+      const previewUrl = URL.createObjectURL(file);
+      setPendingBanner(current => {
+        revokePendingPreview(current.previewUrl);
+        return { file, previewUrl };
+      });
+      setBannerPreview(previewUrl);
+    };
+
+    const stageVideoSelection = (file: File) => {
+      if (!editingCourseId) {
+        toast.error('Save the course before uploading media.');
+        return;
+      }
+      if (file.size > MAX_VIDEO_SIZE_BYTES) {
+        toast.error(`Video too large. Max size: ${MAX_VIDEO_SIZE_MB}MB.`);
+        return;
+      }
+
+      try {
+        z.object({ intro_video: z.instanceof(File) }).parse({ intro_video: file });
+      } catch {
+        toast.error('Invalid file type.');
+        return;
+      }
+
+      const previewUrl = URL.createObjectURL(file);
+      setPendingVideo(current => {
+        revokePendingPreview(current.previewUrl);
+        return { file, previewUrl };
+      });
+      setVideoPreview(previewUrl);
+    };
+
+    const clearPendingThumbnail = () => {
+      setPendingThumbnail(current => {
+        revokePendingPreview(current.previewUrl);
+        return { file: null, previewUrl: null };
+      });
+    };
+
+    const clearPendingBanner = () => {
+      setPendingBanner(current => {
+        revokePendingPreview(current.previewUrl);
+        return { file: null, previewUrl: null };
+      });
+    };
+
+    const clearPendingVideo = () => {
+      setPendingVideo(current => {
+        revokePendingPreview(current.previewUrl);
+        return { file: null, previewUrl: null };
+      });
+    };
+
+    const uploadSelectedMedia = (
+      key: UploadKey,
+      pending: PendingMediaState,
+      upload: (
+        file: File,
+        callbacks: {
+          onSuccess?: (data: UploadResponse) => void;
+          onError?: (error: UploadError) => void;
+        }
+      ) => void,
+      onChange: (val: string) => void,
+      clearPending: () => void
+    ) => {
+      if (!pending.file) {
+        toast.error('Choose a file first.');
+        return;
+        }
+
+        upload(pending.file, {
+          onSuccess: (data: UploadResponse) => {
+            const urlKey = `${key}_url` as const;
           // @ts-ignore
           const uploadedUrl = getUploadedUrl(data?.data, urlKey);
 
@@ -219,7 +310,15 @@ export const CourseBrandingForm = forwardRef<CourseFormRef, CourseFormProps>(
           }
 
           onChange(uploadedUrl);
+          if (key === 'thumbnail') {
+            setThumbnailPreview(uploadedUrl);
+          } else if (key === 'banner') {
+            setBannerPreview(uploadedUrl);
+          } else {
+            setVideoPreview(uploadedUrl);
+          }
           toast.success('Upload successful');
+          clearPending();
 
           queryClient.invalidateQueries({
             queryKey: getCourseByUuidQueryKey({ path: { uuid: editingCourseId as string } }),
@@ -241,7 +340,7 @@ export const CourseBrandingForm = forwardRef<CourseFormRef, CourseFormProps>(
     const onSubmit = (data: BrandingFormValues) => {
       if (!editingCourseId) return;
 
-      if (editingCourseId) {
+      return new Promise<boolean>(resolve => {
         const editBody: CourseUpdatePayload = {
           course_creator_uuid: authorUuid,
           // No status here: branding is cosmetic and must never change whether the course
@@ -271,6 +370,7 @@ export const CourseBrandingForm = forwardRef<CourseFormRef, CourseFormProps>(
                   queryKey: getCourseByUuidQueryKey({ path: { uuid: editingCourseId as string } }),
                 });
                 setActiveStep(nextStepAfterSave);
+                resolve(true);
                 return;
               }
 
@@ -281,23 +381,44 @@ export const CourseBrandingForm = forwardRef<CourseFormRef, CourseFormProps>(
                     toast.error(message);
                   }
                 });
+                resolve(false);
                 return;
               } else if (data?.message) {
                 toast.error(data.message || 'Failed to update course');
+                resolve(false);
                 return;
               } else {
                 toast.error('An unknown error occurred.');
+                resolve(false);
                 return;
               }
             },
+            onError() {
+              resolve(false);
+            },
           }
         );
-      }
+      });
     };
 
     const onError = () => {
       toast.error('Please review the branding fields and try again.');
     };
+
+    useImperativeHandle(ref, () => ({
+      submit: () =>
+        new Promise<boolean>(resolve => {
+          void form.handleSubmit(
+            async data => {
+              resolve((await onSubmit(data)) ?? false);
+            },
+            () => {
+              onError();
+              resolve(false);
+            }
+          )();
+        }),
+    }));
 
     useEffect(() => {
       const thumbnail = initialValues?.thumbnail_url || form.getValues('thumbnail_url');
@@ -316,6 +437,19 @@ export const CourseBrandingForm = forwardRef<CourseFormRef, CourseFormProps>(
         setVideoPreview(video);
       }
     }, [form, thumbnailPreview, bannerPreview, videoPreview, initialValues]);
+
+    useEffect(
+      () => () => {
+        revokePendingPreview(pendingThumbnail.previewUrl);
+        revokePendingPreview(pendingBanner.previewUrl);
+        revokePendingPreview(pendingVideo.previewUrl);
+      },
+      [pendingBanner.previewUrl, pendingThumbnail.previewUrl, pendingVideo.previewUrl]
+    );
+
+    const thumbnailSource = pendingThumbnail.previewUrl || thumbnailPreview;
+    const bannerSource = pendingBanner.previewUrl || bannerPreview;
+    const videoSource = pendingVideo.previewUrl || videoPreview;
 
     return (
       <Form {...form}>
@@ -361,8 +495,7 @@ export const CourseBrandingForm = forwardRef<CourseFormRef, CourseFormProps>(
           </FormSection> */}
 
           {/* Intro Video Upload */}
-          <FormSection
-            title='Promotional Video'
+          <FormSection title='Promotional Video'
             description='Upload a short promotional video or provide a video link.'
           >
             <FormField
@@ -372,7 +505,7 @@ export const CourseBrandingForm = forwardRef<CourseFormRef, CourseFormProps>(
                 <FormItem>
                   <FormControl>
                     <div className='flex flex-col gap-4'>
-                      {!videoPreview ? (
+                      {!videoSource ? (
                         <DragDropUpload
                           accept='video/*'
                           multiple={false}
@@ -380,19 +513,7 @@ export const CourseBrandingForm = forwardRef<CourseFormRef, CourseFormProps>(
                             const file = files[0];
                             if (!file) return;
 
-                            handleFileUpload(file, {
-                              key: 'intro_video',
-                              setPreview: setVideoPreview,
-                              upload: (file, callbacks) =>
-                                courseIntroVideoMutation.mutate(
-                                  {
-                                    body: { intro_video: file },
-                                    path: { uuid: editingCourseId as string },
-                                  },
-                                  callbacks
-                                ),
-                              onChange: field.onChange,
-                            });
+                            stageVideoSelection(file);
                           }}
                         >
                           <div className='flex flex-col items-center gap-2'>
@@ -406,7 +527,9 @@ export const CourseBrandingForm = forwardRef<CourseFormRef, CourseFormProps>(
                       ) : (
                         <div className='space-y-3'>
                           <div className='flex items-center justify-between'>
-                            <span className='text-sm font-medium'>Current promotional video</span>
+                            <span className='text-sm font-medium'>
+                              {pendingVideo.file ? 'Selected promotional video' : 'Current promotional video'}
+                            </span>
 
                             <Button
                               type='button'
@@ -423,11 +546,44 @@ export const CourseBrandingForm = forwardRef<CourseFormRef, CourseFormProps>(
 
                           <video controls className='w-full max-w-md rounded shadow'>
                             <source
-                              src={toAuthenticatedMediaUrl(videoPreview) || videoPreview}
+                              src={toAuthenticatedMediaUrl(videoSource) || videoSource}
                               type='video/mp4'
                             />
                             Your browser does not support the video tag.
                           </video>
+                          {pendingVideo.file && (
+                            <div className='flex justify-end'>
+                              <Button
+                                type='button'
+                                onClick={() =>
+                                  uploadSelectedMedia(
+                                    'intro_video',
+                                    pendingVideo,
+                                    (file, callbacks) =>
+                                      courseIntroVideoMutation.mutate(
+                                        {
+                                          body: { intro_video: file },
+                                          path: { uuid: editingCourseId as string },
+                                        },
+                                        callbacks
+                                      ),
+                                    field.onChange,
+                                    clearPendingVideo
+                                  )
+                                }
+                                disabled={courseIntroVideoMutation.isPending}
+                              >
+                                {courseIntroVideoMutation.isPending ? (
+                                  <>
+                                    <Spinner className='mr-2 h-4 w-4' />
+                                    Uploading...
+                                  </>
+                                ) : (
+                                  'Upload Selected Video'
+                                )}
+                              </Button>
+                            </div>
+                          )}
                         </div>
                       )}
 
@@ -439,20 +595,7 @@ export const CourseBrandingForm = forwardRef<CourseFormRef, CourseFormProps>(
                         onChange={e => {
                           const file = e.target.files?.[0];
                           if (!file) return;
-
-                          handleFileUpload(file, {
-                            key: 'intro_video',
-                            setPreview: setVideoPreview,
-                            upload: (file, callbacks) =>
-                              courseIntroVideoMutation.mutate(
-                                {
-                                  body: { intro_video: file },
-                                  path: { uuid: editingCourseId as string },
-                                },
-                                callbacks
-                              ),
-                            onChange: field.onChange,
-                          });
+                          stageVideoSelection(file);
                         }}
                       />
 
@@ -479,7 +622,7 @@ export const CourseBrandingForm = forwardRef<CourseFormRef, CourseFormProps>(
                 <FormItem>
                   <FormControl>
                     <div className='flex flex-col gap-4'>
-                      {!bannerPreview ? (
+                      {!bannerSource ? (
                         <DragDropUpload
                           accept='image/*'
                           multiple={false}
@@ -487,19 +630,7 @@ export const CourseBrandingForm = forwardRef<CourseFormRef, CourseFormProps>(
                             const file = files[0];
                             if (!file) return;
 
-                            handleFileUpload(file, {
-                              key: 'banner',
-                              setPreview: setBannerPreview,
-                              upload: (file, callbacks) =>
-                                courseBannerMutation.mutate(
-                                  {
-                                    body: { banner: file },
-                                    path: { uuid: editingCourseId as string },
-                                  },
-                                  callbacks
-                                ),
-                              onChange: field.onChange,
-                            });
+                            stageBannerSelection(file);
                           }}
                         >
                           <div className='flex flex-col items-center gap-2'>
@@ -511,7 +642,9 @@ export const CourseBrandingForm = forwardRef<CourseFormRef, CourseFormProps>(
                       ) : (
                         <div className='space-y-3'>
                           <div className='flex items-center justify-between'>
-                            <span className='text-sm font-medium'>Current banner</span>
+                            <span className='text-sm font-medium'>
+                              {pendingBanner.file ? 'Selected banner' : 'Current banner'}
+                            </span>
 
                             <Button
                               type='button'
@@ -527,16 +660,47 @@ export const CourseBrandingForm = forwardRef<CourseFormRef, CourseFormProps>(
 
                           <div className='h-24 w-full max-w-3xl overflow-hidden rounded border'>
                             <Image
-                              src={toAuthenticatedMediaUrl(bannerPreview) || bannerPreview}
+                              src={toAuthenticatedMediaUrl(bannerSource) || bannerSource}
                               alt='Banner Preview'
                               width={1200}
                               height={300}
                               className='h-full w-full object-contain'
-                              unoptimized={isAuthenticatedMediaUrl(
-                                toAuthenticatedMediaUrl(bannerPreview)
-                              )}
+                              unoptimized={isAuthenticatedMediaUrl(toAuthenticatedMediaUrl(bannerSource))}
                             />
                           </div>
+                          {pendingBanner.file && (
+                            <div className='flex justify-end'>
+                              <Button
+                                type='button'
+                                onClick={() =>
+                                  uploadSelectedMedia(
+                                    'banner',
+                                    pendingBanner,
+                                    (file, callbacks) =>
+                                      courseBannerMutation.mutate(
+                                        {
+                                          body: { banner: file },
+                                          path: { uuid: editingCourseId as string },
+                                        },
+                                        callbacks
+                                      ),
+                                    field.onChange,
+                                    clearPendingBanner
+                                  )
+                                }
+                                disabled={courseBannerMutation.isPending}
+                              >
+                                {courseBannerMutation.isPending ? (
+                                  <>
+                                    <Spinner className='mr-2 h-4 w-4' />
+                                    Uploading...
+                                  </>
+                                ) : (
+                                  'Upload Selected Banner'
+                                )}
+                              </Button>
+                            </div>
+                          )}
                         </div>
                       )}
 
@@ -548,20 +712,7 @@ export const CourseBrandingForm = forwardRef<CourseFormRef, CourseFormProps>(
                         onChange={e => {
                           const file = e.target.files?.[0];
                           if (!file) return;
-
-                          handleFileUpload(file, {
-                            key: 'banner',
-                            setPreview: setBannerPreview,
-                            upload: (file, callbacks) =>
-                              courseBannerMutation.mutate(
-                                {
-                                  body: { banner: file },
-                                  path: { uuid: editingCourseId as string },
-                                },
-                                callbacks
-                              ),
-                            onChange: field.onChange,
-                          });
+                          stageBannerSelection(file);
                         }}
                       />
                     </div>
@@ -581,7 +732,7 @@ export const CourseBrandingForm = forwardRef<CourseFormRef, CourseFormProps>(
                 <FormItem>
                   <FormControl>
                     <div className='flex flex-col gap-4'>
-                      {!thumbnailPreview ? (
+                      {!thumbnailSource ? (
                         <DragDropUpload
                           accept='image/*'
                           multiple={false}
@@ -589,19 +740,7 @@ export const CourseBrandingForm = forwardRef<CourseFormRef, CourseFormProps>(
                             const file = files[0];
                             if (!file) return;
 
-                            handleFileUpload(file, {
-                              key: 'thumbnail',
-                              setPreview: setThumbnailPreview,
-                              upload: (file, callbacks) =>
-                                courseThumbnailMutation.mutate(
-                                  {
-                                    body: { thumbnail: file },
-                                    path: { uuid: editingCourseId as string },
-                                  },
-                                  callbacks
-                                ),
-                              onChange: field.onChange,
-                            });
+                            stageThumbnailSelection(file);
                           }}
                         >
                           <div className='flex flex-col items-center gap-2'>
@@ -613,7 +752,9 @@ export const CourseBrandingForm = forwardRef<CourseFormRef, CourseFormProps>(
                       ) : (
                         <div className='space-y-3'>
                           <div className='flex items-center justify-between'>
-                            <span className='text-sm font-medium'>Current thumbnail</span>
+                            <span className='text-sm font-medium'>
+                              {pendingThumbnail.file ? 'Selected thumbnail' : 'Current thumbnail'}
+                            </span>
 
                             <Button
                               type='button'
@@ -630,16 +771,49 @@ export const CourseBrandingForm = forwardRef<CourseFormRef, CourseFormProps>(
 
                           <div className='h-32 w-48 overflow-hidden rounded border'>
                             <Image
-                              src={toAuthenticatedMediaUrl(thumbnailPreview) || thumbnailPreview}
+                              src={toAuthenticatedMediaUrl(thumbnailSource) || thumbnailSource}
                               width={192}
                               height={128}
                               alt='Thumbnail Preview'
                               className='h-full w-full object-cover'
                               unoptimized={isAuthenticatedMediaUrl(
-                                toAuthenticatedMediaUrl(thumbnailPreview)
+                                toAuthenticatedMediaUrl(thumbnailSource)
                               )}
                             />
                           </div>
+                          {pendingThumbnail.file && (
+                            <div className='flex justify-end'>
+                              <Button
+                                type='button'
+                                onClick={() =>
+                                  uploadSelectedMedia(
+                                    'thumbnail',
+                                    pendingThumbnail,
+                                    (file, callbacks) =>
+                                      courseThumbnailMutation.mutate(
+                                        {
+                                          body: { thumbnail: file },
+                                          path: { uuid: editingCourseId as string },
+                                        },
+                                        callbacks
+                                      ),
+                                    field.onChange,
+                                    clearPendingThumbnail
+                                  )
+                                }
+                                disabled={courseThumbnailMutation.isPending}
+                              >
+                                {courseThumbnailMutation.isPending ? (
+                                  <>
+                                    <Spinner className='mr-2 h-4 w-4' />
+                                    Uploading...
+                                  </>
+                                ) : (
+                                  'Upload Selected Thumbnail'
+                                )}
+                              </Button>
+                            </div>
+                          )}
                         </div>
                       )}
 
@@ -651,20 +825,7 @@ export const CourseBrandingForm = forwardRef<CourseFormRef, CourseFormProps>(
                         onChange={e => {
                           const file = e.target.files?.[0];
                           if (!file) return;
-
-                          handleFileUpload(file, {
-                            key: 'thumbnail',
-                            setPreview: setThumbnailPreview,
-                            upload: (file, callbacks) =>
-                              courseThumbnailMutation.mutate(
-                                {
-                                  body: { thumbnail: file },
-                                  path: { uuid: editingCourseId as string },
-                                },
-                                callbacks
-                              ),
-                            onChange: field.onChange,
-                          });
+                          stageThumbnailSelection(file);
                         }}
                       />
                     </div>

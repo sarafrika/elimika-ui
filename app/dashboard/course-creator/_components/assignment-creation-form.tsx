@@ -12,7 +12,7 @@ import {
   X,
 } from 'lucide-react';
 import Link from 'next/link';
-import { useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { toast } from 'sonner';
 import { Button } from '../../../../components/ui/button';
 import { DeleteConfirmationDialog } from '../../../../components/ui/delete-confirmation-dialog';
@@ -33,11 +33,13 @@ import {
   deleteAssignmentAttachmentMutation,
   getAssignmentAttachmentsOptions,
   getAssignmentAttachmentsQueryKey,
+  getAssignmentByUuidOptions,
   searchAssessmentRubricsOptions,
   uploadAssignmentAttachmentMutation,
 } from '../../../../services/client/@tanstack/react-query.gen';
 import type {
   AssessmentRubric,
+  Assignment,
   AssignmentAttachment,
   Lesson,
   PagedDtoLesson,
@@ -110,6 +112,26 @@ const toSubmissionTypes = (
   value: SubmissionTypesEnum | SubmissionTypesEnum[] | undefined
 ): string[] => (Array.isArray(value) ? value : value ? [value] : []);
 
+const formatAssignmentDate = (value?: Date | string | null) => {
+  if (!value) return '';
+  const date = value instanceof Date ? value : new Date(value);
+  return Number.isNaN(date.getTime()) ? '' : date.toISOString();
+};
+
+const mapAssignmentToFormState = (assignment?: Assignment | null): AssignmentFormState => ({
+  title: assignment?.title ?? '',
+  description: assignment?.description ?? '',
+  instructions: assignment?.instructions ?? '',
+  max_points: assignment?.max_points ?? 0,
+  rubric_uuid: assignment?.rubric_uuid ?? '',
+  is_published: assignment?.is_published ?? false,
+  active: false,
+  due_date: formatAssignmentDate(assignment?.due_date),
+  assignment_category: assignment?.assignment_category ?? '',
+  submission_types: toSubmissionTypes(assignment?.submission_types),
+  lesson_uuid: assignment?.lesson_uuid ?? '',
+});
+
 type AssignmentAction = 'save' | 'publish' | 'unpublish' | null;
 
 export const AssignmentCreationForm = (props: AssignmentCreationFormProps) => {
@@ -153,6 +175,27 @@ export const AssignmentCreationForm = (props: AssignmentCreationFormProps) => {
     assignmentId ?? null
   );
   const assignmentUuid = selectedAssignmentUuid;
+
+  useEffect(() => {
+    setSelectedAssignmentUuid(assignmentId ?? null);
+  }, [assignmentId]);
+
+  const { data: selectedAssignment } = useQuery({
+    ...getAssignmentByUuidOptions({ path: { uuid: assignmentUuid as string } }),
+    enabled: !!assignmentUuid,
+  });
+
+  useEffect(() => {
+    if (!assignmentUuid) {
+      setAssignmentData({ ...EMPTY_ASSIGNMENT });
+      return;
+    }
+
+    const assignment = selectedAssignment?.data;
+    if (!assignment) return;
+
+    setAssignmentData(mapAssignmentToFormState(assignment));
+  }, [assignmentUuid, selectedAssignment?.data]);
 
   const { data: attachments } = useQuery({
     ...getAssignmentAttachmentsOptions({ path: { assignmentUuid: assignmentUuid as string } }),

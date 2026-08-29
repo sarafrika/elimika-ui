@@ -1,6 +1,6 @@
 'use client';
 
-import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { Popover, PopoverTrigger } from '@/components/ui/popover';
 import useBundledClassInfo from '@/hooks/use-course-classes';
 import { listCatalogItemsOptions } from '@/services/client/@tanstack/react-query.gen';
 import { useUserDomain } from '@/src/features/dashboard/context/user-domain-context';
@@ -12,7 +12,6 @@ import { ArrowLeft, BookOpen, CalendarRange } from 'lucide-react';
 import Link from 'next/link';
 import { useState } from 'react';
 import { DateRange } from 'react-day-picker';
-import { Calendar } from 'react-multi-date-picker';
 import { Button } from '../../../../../components/ui/button';
 import {
   Sheet,
@@ -149,7 +148,7 @@ export default function AvailableClassesPage({
               </Button>
             </PopoverTrigger>
 
-            <PopoverContent className='w-auto p-0' align='end'>
+            {/* <PopoverContent className='w-auto p-0' align='end'>
               <Calendar
                 mode='range'
                 numberOfMonths={12}
@@ -168,7 +167,7 @@ export default function AvailableClassesPage({
                   }
                 }}
               />
-            </PopoverContent>
+            </PopoverContent> */}
           </Popover>
         </div>
       </div>
