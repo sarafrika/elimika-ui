@@ -1,4 +1,3 @@
-// @ts-nocheck -- 1:1 port from Lovable template
 import { Check, ChevronDown, ChevronLeft, ChevronRight } from 'lucide-react';
 import { useEffect, useMemo, useRef, useState } from 'react';
 
@@ -168,7 +167,7 @@ export function CategoryTabs({
                   className={cn(
                     'flex shrink-0 items-stretch rounded-full border transition-colors',
                     isActive
-                      ? 'border-teal-600 bg-teal-600 text-white shadow-sm'
+                      ? 'border-primary bg-primary text-primary-foreground shadow-sm'
                       : 'border-border bg-card text-foreground hover:bg-muted'
                   )}
                 >
@@ -210,7 +209,7 @@ export function CategoryTabs({
                           className={cn(
                             'flex items-center rounded-r-full border-l px-2',
                             isActive
-                              ? 'border-white/30 hover:bg-teal-700'
+                              ? 'border-primary-foreground/30 hover:bg-primary/90'
                               : 'border-border hover:bg-muted'
                           )}
                         >

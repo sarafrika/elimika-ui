@@ -17,8 +17,10 @@ import {
   revokeOrganisationInvitationMutation,
 } from '@/services/client/@tanstack/react-query.gen';
 
-/** Offers still awaiting a decision — these people are not members yet. */
+/** Offers still awaiting a decision; these people are not members yet. */
 const LIVE_STATUSES = ['PENDING', 'AWAITING_GUARDIAN_CONSENT'];
+const isStudentInvite = (domainName: unknown) =>
+  String(domainName ?? 'student').toLowerCase() === 'student';
 
 export function PendingInvitations({ organisationUuid }: { organisationUuid: string }) {
   const queryClient = useQueryClient();
@@ -29,8 +31,8 @@ export function PendingInvitations({ organisationUuid }: { organisationUuid: str
     enabled: Boolean(organisationUuid),
   });
 
-  const pending = (invitationsQuery.data?.data ?? []).filter(i =>
-    LIVE_STATUSES.includes(String(i.status))
+  const pending = (invitationsQuery.data?.data ?? []).filter(
+    i => isStudentInvite(i.domain_name) && LIVE_STATUSES.includes(String(i.status))
   );
 
   const revoke = useMutation(revokeOrganisationInvitationMutation());
@@ -86,7 +88,7 @@ export function PendingInvitations({ organisationUuid }: { organisationUuid: str
               ))}
             </div>
           }
-          errorTitle='Couldn’t load pending invitations'
+          errorTitle="Couldn't load pending invitations"
           onRetry={invitationsQuery.refetch}
         >
           <div className='space-y-2'>
@@ -105,7 +107,7 @@ export function PendingInvitations({ organisationUuid }: { organisationUuid: str
                     <p className='text-muted-foreground truncate text-xs'>
                       {invite.recipient_email}
                       {invite.expires_at
-                        ? ` · expires ${new Date(invite.expires_at).toLocaleDateString()}`
+                        ? ` - expires ${new Date(invite.expires_at).toLocaleDateString()}`
                         : ''}
                     </p>
                   </div>
