@@ -19,6 +19,7 @@ import {
   X,
   XCircle,
 } from 'lucide-react';
+import type { ClipboardEvent, KeyboardEvent } from 'react';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { toast } from 'sonner';
 
@@ -29,6 +30,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Checkbox } from '@/components/ui/checkbox';
 import { EmptyState } from '@/components/ui/empty-state';
+import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import {
@@ -97,6 +99,7 @@ type RecipientParse = { recipients: Recipient[]; invalid: string[] };
 
 const LIVE_STATUSES = ['PENDING', 'AWAITING_GUARDIAN_CONSENT'];
 const ACCEPTED_STATUSES = ['ACCEPTED'];
+const EMAIL_SEPARATOR_PATTERN = /[,;\n\r]/;
 
 /** Parses "Name <email>", "Name, email" or bare emails from free text. */
 function parseRecipientInput(raw: string): RecipientParse {
@@ -141,17 +144,33 @@ const toggle = (arr: string[], id: string) =>
 
 const uniqueStrings = (items: string[]) => Array.from(new Set(items.filter(Boolean)));
 
+const mergeRecipients = (current: Recipient[], additions: Recipient[]) => {
+  const seen = new Set(current.map(recipient => recipient.email));
+  const next = [...current];
+
+  for (const recipient of additions) {
+    if (seen.has(recipient.email)) continue;
+    seen.add(recipient.email);
+    next.push(recipient);
+  }
+
+  return next;
+};
+
 export default function InviteStudentsPage() {
   const organisation = useOrganisation();
   const organisationUuid = organisation?.uuid ?? '';
   const queryClient = useQueryClient();
   const preselectKeyRef = useRef('');
+  const emailInputRef = useRef<HTMLInputElement>(null);
 
   const [step, setStep] = useState<1 | 2 | 3>(1);
   const [showHistory, setShowHistory] = useState(false);
   const [selectedClasses, setSelectedClasses] = useState<string[]>([]);
   const [selectedGroups, setSelectedGroups] = useState<string[]>([]);
-  const [emails, setEmails] = useState('');
+  const [emailDraft, setEmailDraft] = useState('');
+  const [emailRecipients, setEmailRecipients] = useState<Recipient[]>([]);
+  const [invalidRecipients, setInvalidRecipients] = useState<string[]>([]);
   const [templateId, setTemplateId] = useState<string>(DEFAULT_TEMPLATE.id);
   const [message, setMessage] = useState<string>(DEFAULT_TEMPLATE.body);
   const [activeCategory, setActiveCategory] = useState('All');
@@ -222,9 +241,75 @@ export default function InviteStudentsPage() {
   const revokeInvitation = useMutation(revokeOrganisationInvitationMutation());
   const resendInvitation = useMutation(resendOrganisationInvitationMutation());
 
-  const recipientInput = useMemo(() => parseRecipientInput(emails), [emails]);
-  const recipients = recipientInput.recipients;
-  const invalidRecipients = recipientInput.invalid;
+  const recipients = emailRecipients;
+  const addRecipientsFromText = useCallback((raw: string) => {
+    const parsed = parseRecipientInput(raw);
+
+    if (parsed.recipients.length > 0) {
+      setEmailRecipients(current => mergeRecipients(current, parsed.recipients));
+    }
+
+    if (parsed.invalid.length > 0) {
+      setInvalidRecipients(current => uniqueStrings([...current, ...parsed.invalid]));
+    }
+
+    return parsed;
+  }, []);
+  const commitEmailDraft = useCallback(() => {
+    const draft = emailDraft.trim();
+    if (!draft) return;
+
+    addRecipientsFromText(draft);
+    setEmailDraft('');
+  }, [addRecipientsFromText, emailDraft]);
+  const handleEmailDraftChange = useCallback(
+    (value: string) => {
+      if (EMAIL_SEPARATOR_PATTERN.test(value)) {
+        addRecipientsFromText(value);
+        setEmailDraft('');
+        return;
+      }
+
+      setEmailDraft(value);
+    },
+    [addRecipientsFromText]
+  );
+  const handleEmailKeyDown = useCallback(
+    (event: KeyboardEvent<HTMLInputElement>) => {
+      const hasDraft = emailDraft.trim().length > 0;
+      const shouldCommit =
+        event.key === 'Enter' ||
+        event.key === 'Tab' ||
+        event.key === ',' ||
+        event.key === ';' ||
+        (event.key === ' ' && parseRecipientInput(emailDraft).recipients.length > 0);
+
+      if (hasDraft && shouldCommit) {
+        event.preventDefault();
+        commitEmailDraft();
+        return;
+      }
+
+      if (!hasDraft && event.key === 'Backspace') {
+        setEmailRecipients(current => current.slice(0, -1));
+      }
+    },
+    [commitEmailDraft, emailDraft]
+  );
+  const handleEmailPaste = useCallback(
+    (event: ClipboardEvent<HTMLInputElement>) => {
+      const pasted = event.clipboardData.getData('text').trim();
+      if (!pasted) return;
+
+      event.preventDefault();
+      addRecipientsFromText(`${emailDraft} ${pasted}`.trim());
+      setEmailDraft('');
+    },
+    [addRecipientsFromText, emailDraft]
+  );
+  const removeEmailRecipient = useCallback((email: string) => {
+    setEmailRecipients(current => current.filter(recipient => recipient.email !== email));
+  }, []);
 
   /** Students reached via a group, on top of any addresses pasted in. */
   const groupReach = useMemo(
@@ -421,7 +506,9 @@ export default function InviteStudentsPage() {
 
   const reset = () => {
     setResults(null);
-    setEmails('');
+    setEmailDraft('');
+    setEmailRecipients([]);
+    setInvalidRecipients([]);
     setStep(1);
     setSelectedClasses([]);
     setSelectedGroups([]);
@@ -730,34 +817,89 @@ export default function InviteStudentsPage() {
 
                 <div>
                   <Label
-                    htmlFor='emails'
+                    htmlFor='recipient-email-input'
                     className='text-muted-foreground mb-2 block text-xs uppercase'
                   >
                     Recipient emails
                   </Label>
-                  <Textarea
-                    id='emails'
-                    placeholder='student1@example.com, student2@example.com'
-                    value={emails}
-                    onChange={e => setEmails(e.target.value)}
-                    rows={2}
-                  />
+                  <div
+                    className={cn(
+                      'border-input bg-background focus-within:border-ring focus-within:ring-ring/50 flex min-h-11 cursor-text flex-wrap items-center gap-2 rounded-md border px-2 py-2 shadow-xs transition-[border-color,box-shadow] focus-within:ring-[3px]',
+                      invalidRecipients.length > 0 &&
+                        'border-destructive focus-within:ring-destructive/20'
+                    )}
+                    onClick={() => emailInputRef.current?.focus()}
+                  >
+                    {recipients.map(recipient => (
+                      <span
+                        key={recipient.email}
+                        className='bg-primary/10 text-primary border-primary/20 inline-flex max-w-full items-center gap-1 rounded-full border px-2 py-1 text-xs font-medium'
+                      >
+                        <span className='max-w-[220px] truncate'>{recipient.email}</span>
+                        <button
+                          type='button'
+                          className='hover:bg-primary/10 focus-visible:ring-ring/50 -mr-1 inline-flex h-5 w-5 items-center justify-center rounded-full outline-none focus-visible:ring-[3px]'
+                          aria-label={`Remove ${recipient.email}`}
+                          onClick={event => {
+                            event.stopPropagation();
+                            removeEmailRecipient(recipient.email);
+                          }}
+                        >
+                          <X className='h-3 w-3' />
+                        </button>
+                      </span>
+                    ))}
+                    <Input
+                      ref={emailInputRef}
+                      id='recipient-email-input'
+                      type='text'
+                      inputMode='email'
+                      autoComplete='email'
+                      placeholder={
+                        recipients.length === 0
+                          ? 'student1@example.com, student2@example.com'
+                          : 'Add another email'
+                      }
+                      value={emailDraft}
+                      onChange={event => handleEmailDraftChange(event.target.value)}
+                      onKeyDown={handleEmailKeyDown}
+                      onPaste={handleEmailPaste}
+                      onBlur={commitEmailDraft}
+                      aria-describedby='recipient-email-help recipient-email-errors'
+                      aria-invalid={invalidRecipients.length > 0}
+                      className='h-7 min-w-[14rem] flex-1 border-0 bg-transparent px-1 py-0 shadow-none focus-visible:ring-0 focus-visible:ring-offset-0 md:text-sm'
+                    />
+                  </div>
                   <div className='text-muted-foreground mt-2 flex flex-wrap items-center gap-2 text-xs'>
                     <Badge variant='outline'>{recipients.length} valid</Badge>
                     {invalidRecipients.length > 0 && (
                       <Badge variant='destructive'>{invalidRecipients.length} invalid</Badge>
                     )}
-                    <span className='sm:ml-auto'>
-                      Separate with commas, semicolons, spaces, or new lines.
+                    <span id='recipient-email-help' className='sm:ml-auto'>
+                      Press Enter, Tab, comma, or paste a list to add people.
                     </span>
                   </div>
                   {invalidRecipients.length > 0 && (
-                    <p className='text-destructive mt-1 text-xs'>
-                      Ignored: {invalidRecipients.slice(0, 3).join(', ')}
-                      {invalidRecipients.length > 3
-                        ? `, +${invalidRecipients.length - 3} more`
-                        : ''}
-                    </p>
+                    <div
+                      id='recipient-email-errors'
+                      className='text-destructive mt-1 flex flex-wrap items-center gap-2 text-xs'
+                    >
+                      <span>
+                        Ignored: {invalidRecipients.slice(0, 3).join(', ')}
+                        {invalidRecipients.length > 3
+                          ? `, +${invalidRecipients.length - 3} more`
+                          : ''}
+                      </span>
+                      <Button
+                        type='button'
+                        variant='link'
+                        size='sm'
+                        className='text-destructive h-auto px-0 py-0 text-xs'
+                        onClick={() => setInvalidRecipients([])}
+                      >
+                        Clear
+                      </Button>
+                    </div>
                   )}
                 </div>
                 <div className='bg-muted/50 space-y-1.5 rounded-md p-3 text-sm'>
