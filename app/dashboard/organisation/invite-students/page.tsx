@@ -7,13 +7,20 @@ import {
   Check,
   CheckCircle2,
   Clock3,
+  Copy,
+  Facebook,
   History,
+  Linkedin,
   Loader2,
   Mail,
   MailCheck,
+  MessageCircle,
   RotateCw,
   Send,
   ShieldCheck,
+  Smartphone,
+  Share2,
+  Twitter,
   Users,
   UsersRound,
   X,
@@ -92,6 +99,58 @@ const TEMPLATES = [
 ] as const;
 
 const DEFAULT_TEMPLATE = TEMPLATES[0];
+
+const INVITE_CHANNELS = [
+  {
+    id: 'email',
+    label: 'Email',
+    status: 'Live',
+    available: true,
+    icon: Mail,
+  },
+  {
+    id: 'sms',
+    label: 'SMS',
+    status: 'Pending API',
+    available: false,
+    icon: Smartphone,
+  },
+  {
+    id: 'whatsapp',
+    label: 'WhatsApp',
+    status: 'Pending link',
+    available: false,
+    icon: MessageCircle,
+  },
+  {
+    id: 'facebook',
+    label: 'Facebook',
+    status: 'Pending link',
+    available: false,
+    icon: Facebook,
+  },
+  {
+    id: 'x',
+    label: 'X',
+    status: 'Pending link',
+    available: false,
+    icon: Twitter,
+  },
+  {
+    id: 'linkedin',
+    label: 'LinkedIn',
+    status: 'Pending link',
+    available: false,
+    icon: Linkedin,
+  },
+  {
+    id: 'copy-link',
+    label: 'Copy link',
+    status: 'Pending link',
+    available: false,
+    icon: Copy,
+  },
+] as const;
 
 type Recipient = { name: string; email: string };
 type SendResult = { email: string; ok: boolean; message?: string };
@@ -517,7 +576,7 @@ export default function InviteStudentsPage() {
   const canNext = step === 1 ? selectedClasses.length > 0 : step === 2 ? canSend : true;
 
   return (
-    <div className='mx-auto w-full max-w-3xl space-y-6 px-3 py-4 sm:px-5 lg:px-6'>
+    <div className='mx-auto w-full max-w-[1600px] space-y-6 px-3 py-4 min-[2000px]:max-w-[2200px] sm:px-5 lg:px-6 2xl:max-w-[1840px]'>
       <PageHeader
         title='Invite students'
         description="Follow the steps to invite students to enrol in your organisation's classes."
@@ -648,7 +707,7 @@ export default function InviteStudentsPage() {
                   Pick the classes students will be invited to enrol in.
                 </CardDescription>
               </CardHeader>
-              <CardContent className='space-y-4'>
+              <CardContent className='space-y-4 xl:space-y-5'>
                 {classes.length > 0 && (
                   <CategoryTabs
                     items={classTabItems}
@@ -658,9 +717,9 @@ export default function InviteStudentsPage() {
                     onSubjectChange={setSubjectByCategory}
                   />
                 )}
-                <ScrollArea className='h-[340px] pr-3'>
+                <ScrollArea className='max-h-[360px] pr-3 xl:max-h-[540px] 2xl:max-h-[620px]'>
                   {classesQuery.isLoading ? (
-                    <div className='grid gap-2 sm:grid-cols-2'>
+                    <div className='grid gap-2 sm:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4'>
                       {[...Array(8)].map((_, index) => (
                         <Skeleton key={index} className='h-[62px] rounded-md' />
                       ))}
@@ -685,7 +744,7 @@ export default function InviteStudentsPage() {
                       description='Create a class first, then return here to invite students.'
                     />
                   ) : (
-                    <div className='grid gap-2 sm:grid-cols-2'>
+                    <div className='grid gap-2 sm:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4'>
                       {filteredClasses.map(item => {
                         const checked = selectedClasses.includes(item.id);
                         return (
@@ -746,13 +805,13 @@ export default function InviteStudentsPage() {
                   Send to student groups or paste specific emails. Everyone is invited individually.
                 </CardDescription>
               </CardHeader>
-              <CardContent className='space-y-4'>
-                <div>
+              <CardContent className='space-y-4 xl:grid xl:grid-cols-[minmax(0,1.15fr)_minmax(380px,0.85fr)] xl:gap-5 xl:space-y-0 2xl:grid-cols-[minmax(0,1.25fr)_minmax(440px,0.75fr)]'>
+                <div className='space-y-3'>
                   <Label className='text-muted-foreground mb-2 block text-xs uppercase'>
                     Groups
                   </Label>
                   {groupsQuery.isLoading ? (
-                    <div className='grid gap-2 sm:grid-cols-2'>
+                    <div className='grid gap-2 sm:grid-cols-2 2xl:grid-cols-3'>
                       {[...Array(4)].map((_, index) => (
                         <Skeleton key={index} className='h-[62px] rounded-md' />
                       ))}
@@ -777,7 +836,7 @@ export default function InviteStudentsPage() {
                       description='Paste recipient emails below to invite students directly.'
                     />
                   ) : (
-                    <div className='grid gap-2 sm:grid-cols-2'>
+                    <div className='grid gap-2 sm:grid-cols-2 2xl:grid-cols-3'>
                       {groups.map(group => {
                         const checked = selectedGroups.includes(group.uuid);
                         const memberCount = toNumber(group.member_count);
@@ -815,111 +874,115 @@ export default function InviteStudentsPage() {
                   )}
                 </div>
 
-                <div>
-                  <Label
-                    htmlFor='recipient-email-input'
-                    className='text-muted-foreground mb-2 block text-xs uppercase'
-                  >
-                    Recipient emails
-                  </Label>
-                  <div
-                    className={cn(
-                      'border-input bg-background focus-within:border-ring focus-within:ring-ring/50 flex min-h-11 cursor-text flex-wrap items-center gap-2 rounded-md border px-2 py-2 shadow-xs transition-[border-color,box-shadow] focus-within:ring-[3px]',
-                      invalidRecipients.length > 0 &&
-                        'border-destructive focus-within:ring-destructive/20'
-                    )}
-                    onClick={() => emailInputRef.current?.focus()}
-                  >
-                    {recipients.map(recipient => (
-                      <span
-                        key={recipient.email}
-                        className='bg-primary/10 text-primary border-primary/20 inline-flex max-w-full items-center gap-1 rounded-full border px-2 py-1 text-xs font-medium'
-                      >
-                        <span className='max-w-[220px] truncate'>{recipient.email}</span>
-                        <button
-                          type='button'
-                          className='hover:bg-primary/10 focus-visible:ring-ring/50 -mr-1 inline-flex h-5 w-5 items-center justify-center rounded-full outline-none focus-visible:ring-[3px]'
-                          aria-label={`Remove ${recipient.email}`}
-                          onClick={event => {
-                            event.stopPropagation();
-                            removeEmailRecipient(recipient.email);
-                          }}
-                        >
-                          <X className='h-3 w-3' />
-                        </button>
-                      </span>
-                    ))}
-                    <Input
-                      ref={emailInputRef}
-                      id='recipient-email-input'
-                      type='text'
-                      inputMode='email'
-                      autoComplete='email'
-                      placeholder={
-                        recipients.length === 0
-                          ? 'student1@example.com, student2@example.com'
-                          : 'Add another email'
-                      }
-                      value={emailDraft}
-                      onChange={event => handleEmailDraftChange(event.target.value)}
-                      onKeyDown={handleEmailKeyDown}
-                      onPaste={handleEmailPaste}
-                      onBlur={commitEmailDraft}
-                      aria-describedby='recipient-email-help recipient-email-errors'
-                      aria-invalid={invalidRecipients.length > 0}
-                      className='h-7 min-w-[14rem] flex-1 border-0 bg-transparent px-1 py-0 shadow-none focus-visible:ring-0 focus-visible:ring-offset-0 md:text-sm'
-                    />
-                  </div>
-                  <div className='text-muted-foreground mt-2 flex flex-wrap items-center gap-2 text-xs'>
-                    <Badge variant='outline'>{recipients.length} valid</Badge>
-                    {invalidRecipients.length > 0 && (
-                      <Badge variant='destructive'>{invalidRecipients.length} invalid</Badge>
-                    )}
-                    <span id='recipient-email-help' className='sm:ml-auto'>
-                      Press Enter, Tab, comma, or paste a list to add people.
-                    </span>
-                  </div>
-                  {invalidRecipients.length > 0 && (
-                    <div
-                      id='recipient-email-errors'
-                      className='text-destructive mt-1 flex flex-wrap items-center gap-2 text-xs'
+                <div className='space-y-4'>
+                  <div>
+                    <Label
+                      htmlFor='recipient-email-input'
+                      className='text-muted-foreground mb-2 block text-xs uppercase'
                     >
-                      <span>
-                        Ignored: {invalidRecipients.slice(0, 3).join(', ')}
-                        {invalidRecipients.length > 3
-                          ? `, +${invalidRecipients.length - 3} more`
-                          : ''}
-                      </span>
-                      <Button
-                        type='button'
-                        variant='link'
-                        size='sm'
-                        className='text-destructive h-auto px-0 py-0 text-xs'
-                        onClick={() => setInvalidRecipients([])}
-                      >
-                        Clear
-                      </Button>
+                      Recipient emails
+                    </Label>
+                    <div
+                      className={cn(
+                        'border-input bg-background focus-within:border-ring focus-within:ring-ring/50 flex min-h-11 cursor-text flex-wrap items-center gap-2 rounded-md border px-2 py-2 shadow-xs transition-[border-color,box-shadow] focus-within:ring-[3px]',
+                        invalidRecipients.length > 0 &&
+                          'border-destructive focus-within:ring-destructive/20'
+                      )}
+                      onClick={() => emailInputRef.current?.focus()}
+                    >
+                      {recipients.map(recipient => (
+                        <span
+                          key={recipient.email}
+                          className='bg-primary/10 text-primary border-primary/20 inline-flex max-w-full items-center gap-1 rounded-full border px-2 py-1 text-xs font-medium'
+                        >
+                          <span className='max-w-[220px] truncate 2xl:max-w-[300px]'>
+                            {recipient.email}
+                          </span>
+                          <button
+                            type='button'
+                            className='hover:bg-primary/10 focus-visible:ring-ring/50 -mr-1 inline-flex h-5 w-5 items-center justify-center rounded-full outline-none focus-visible:ring-[3px]'
+                            aria-label={`Remove ${recipient.email}`}
+                            onClick={event => {
+                              event.stopPropagation();
+                              removeEmailRecipient(recipient.email);
+                            }}
+                          >
+                            <X className='h-3 w-3' />
+                          </button>
+                        </span>
+                      ))}
+                      <Input
+                        ref={emailInputRef}
+                        id='recipient-email-input'
+                        type='text'
+                        inputMode='email'
+                        autoComplete='email'
+                        placeholder={
+                          recipients.length === 0
+                            ? 'student1@example.com, student2@example.com'
+                            : 'Add another email'
+                        }
+                        value={emailDraft}
+                        onChange={event => handleEmailDraftChange(event.target.value)}
+                        onKeyDown={handleEmailKeyDown}
+                        onPaste={handleEmailPaste}
+                        onBlur={commitEmailDraft}
+                        aria-describedby='recipient-email-help recipient-email-errors'
+                        aria-invalid={invalidRecipients.length > 0}
+                        className='h-7 min-w-[14rem] flex-1 border-0 bg-transparent px-1 py-0 shadow-none focus-visible:ring-0 focus-visible:ring-offset-0 md:text-sm'
+                      />
                     </div>
-                  )}
-                </div>
-                <div className='bg-muted/50 space-y-1.5 rounded-md p-3 text-sm'>
-                  <div className='flex items-center justify-between'>
-                    <span className='text-muted-foreground'>Estimated reach</span>
-                    <span className='font-semibold tabular-nums'>
-                      {formatCount(recipients.length + groupReach, '0')} student
-                      {recipients.length + groupReach === 1 ? '' : 's'}
-                    </span>
+                    <div className='text-muted-foreground mt-2 flex flex-wrap items-center gap-2 text-xs'>
+                      <Badge variant='outline'>{recipients.length} valid</Badge>
+                      {invalidRecipients.length > 0 && (
+                        <Badge variant='destructive'>{invalidRecipients.length} invalid</Badge>
+                      )}
+                      <span id='recipient-email-help' className='sm:ml-auto'>
+                        Press Enter, Tab, comma, or paste a list to add people.
+                      </span>
+                    </div>
+                    {invalidRecipients.length > 0 && (
+                      <div
+                        id='recipient-email-errors'
+                        className='text-destructive mt-1 flex flex-wrap items-center gap-2 text-xs'
+                      >
+                        <span>
+                          Ignored: {invalidRecipients.slice(0, 3).join(', ')}
+                          {invalidRecipients.length > 3
+                            ? `, +${invalidRecipients.length - 3} more`
+                            : ''}
+                        </span>
+                        <Button
+                          type='button'
+                          variant='link'
+                          size='sm'
+                          className='text-destructive h-auto px-0 py-0 text-xs'
+                          onClick={() => setInvalidRecipients([])}
+                        >
+                          Clear
+                        </Button>
+                      </div>
+                    )}
                   </div>
-                  {selectedGroups.length > 0 && recipients.length > 0 && (
-                    <p className='text-muted-foreground text-xs'>
-                      Anyone appearing in both is invited once.
-                    </p>
-                  )}
-                  {invalidRecipients.length > 0 && (
-                    <p className='text-muted-foreground text-xs'>
-                      Invalid entries stay out of the send batch until corrected.
-                    </p>
-                  )}
+                  <div className='bg-muted/50 space-y-1.5 rounded-md p-3 text-sm'>
+                    <div className='flex items-center justify-between'>
+                      <span className='text-muted-foreground'>Estimated reach</span>
+                      <span className='font-semibold tabular-nums'>
+                        {formatCount(recipients.length + groupReach, '0')} student
+                        {recipients.length + groupReach === 1 ? '' : 's'}
+                      </span>
+                    </div>
+                    {selectedGroups.length > 0 && recipients.length > 0 && (
+                      <p className='text-muted-foreground text-xs'>
+                        Anyone appearing in both is invited once.
+                      </p>
+                    )}
+                    {invalidRecipients.length > 0 && (
+                      <p className='text-muted-foreground text-xs'>
+                        Invalid entries stay out of the send batch until corrected.
+                      </p>
+                    )}
+                  </div>
                 </div>
               </CardContent>
             </Card>
@@ -934,98 +997,153 @@ export default function InviteStudentsPage() {
                 </CardTitle>
                 <CardDescription>Pick a template, review the audience, and send.</CardDescription>
               </CardHeader>
-              <CardContent className='space-y-4'>
-                <div>
-                  <Label className='text-muted-foreground mb-2 block text-xs uppercase'>
-                    Template
-                  </Label>
-                  <Select
-                    value={templateId}
-                    onValueChange={nextTemplateId => {
-                      const nextTemplate =
-                        TEMPLATES.find(template => template.id === nextTemplateId) ??
-                        DEFAULT_TEMPLATE;
-                      setTemplateId(nextTemplate.id);
-                      setMessage(nextTemplate.body);
-                    }}
-                  >
-                    <SelectTrigger className='w-full'>
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {TEMPLATES.map(template => (
-                        <SelectItem key={template.id} value={template.id}>
-                          {template.name}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-
-                <div>
-                  <div className='mb-2 flex items-center justify-between gap-2'>
-                    <Label htmlFor='message' className='text-muted-foreground text-xs uppercase'>
-                      Message body
+              <CardContent className='space-y-4 xl:grid xl:grid-cols-[minmax(0,1.08fr)_minmax(400px,0.92fr)] xl:gap-5 xl:space-y-0 2xl:grid-cols-[minmax(0,1.15fr)_minmax(480px,0.85fr)]'>
+                <div className='space-y-3 xl:col-span-2'>
+                  <div className='flex flex-wrap items-center justify-between gap-2'>
+                    <Label className='text-muted-foreground flex items-center gap-2 text-xs uppercase'>
+                      <Share2 className='h-3.5 w-3.5' /> Invite channels
                     </Label>
-                    <span className='text-muted-foreground text-[10px]'>
-                      Variables: {'{{schoolName}} {{className}} {{studentName}} {{senderName}}'}
+                    <span className='text-muted-foreground text-xs'>
+                      Email sends now; social sharing needs reusable invite links from the API.
                     </span>
                   </div>
-                  <Textarea
-                    id='message'
-                    value={message}
-                    onChange={e => setMessage(e.target.value)}
-                    rows={6}
-                    maxLength={2000}
-                  />
+                  <div className='grid gap-2 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-7'>
+                    {INVITE_CHANNELS.map(channel => {
+                      const Icon = channel.icon;
+                      return (
+                        <button
+                          key={channel.id}
+                          type='button'
+                          disabled={!channel.available}
+                          className={cn(
+                            'flex min-h-14 items-center gap-3 rounded-md border px-3 py-2 text-left text-sm transition-colors',
+                            channel.available
+                              ? 'border-primary bg-primary/5 text-foreground shadow-xs'
+                              : 'border-border bg-muted/40 text-muted-foreground opacity-75'
+                          )}
+                          title={
+                            channel.available
+                              ? `${channel.label} selected`
+                              : `${channel.label} requires backend channel/link support`
+                          }
+                        >
+                          <Icon
+                            className={cn(
+                              'h-4 w-4 shrink-0',
+                              channel.available ? 'text-primary' : 'text-muted-foreground'
+                            )}
+                          />
+                          <span className='min-w-0 flex-1'>
+                            <span className='block truncate font-medium'>{channel.label}</span>
+                            <span className='block truncate text-[11px]'>{channel.status}</span>
+                          </span>
+                          {channel.available && <Check className='text-primary h-4 w-4 shrink-0' />}
+                        </button>
+                      );
+                    })}
+                  </div>
                 </div>
 
-                <div className='space-y-3 rounded-md border p-3 text-sm'>
+                <div className='space-y-4'>
                   <div>
-                    <div className='text-muted-foreground mb-1 text-xs uppercase'>
-                      Subject preview
-                    </div>
-                    <div className='font-medium'>{renderedSubject}</div>
+                    <Label className='text-muted-foreground mb-2 block text-xs uppercase'>
+                      Template
+                    </Label>
+                    <Select
+                      value={templateId}
+                      onValueChange={nextTemplateId => {
+                        const nextTemplate =
+                          TEMPLATES.find(template => template.id === nextTemplateId) ??
+                          DEFAULT_TEMPLATE;
+                        setTemplateId(nextTemplate.id);
+                        setMessage(nextTemplate.body);
+                      }}
+                    >
+                      <SelectTrigger className='w-full'>
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {TEMPLATES.map(template => (
+                          <SelectItem key={template.id} value={template.id}>
+                            {template.name}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
                   </div>
-                  <div className='border-t pt-3'>
-                    <div className='text-muted-foreground mb-1 text-xs uppercase'>
-                      Message preview
-                    </div>
-                    <pre className='text-foreground font-sans text-sm break-words whitespace-pre-wrap'>
-                      {renderedMessage}
-                    </pre>
-                  </div>
-                </div>
 
-                <div className='bg-muted/50 space-y-1.5 rounded-md p-3 text-sm'>
-                  <div className='flex items-center justify-between'>
-                    <span className='text-muted-foreground'>Recipients</span>
-                    <span className='font-semibold tabular-nums'>
-                      {formatCount(recipients.length + groupReach, '0')}
-                    </span>
+                  <div>
+                    <div className='mb-2 flex flex-wrap items-center justify-between gap-2'>
+                      <Label htmlFor='message' className='text-muted-foreground text-xs uppercase'>
+                        Message body
+                      </Label>
+                      <span className='text-muted-foreground text-[10px]'>
+                        Variables: {'{{schoolName}} {{className}} {{studentName}} {{senderName}}'}
+                      </span>
+                    </div>
+                    <Textarea
+                      id='message'
+                      value={message}
+                      onChange={e => setMessage(e.target.value)}
+                      rows={8}
+                      maxLength={2000}
+                      className='min-h-[220px] xl:min-h-[320px] 2xl:min-h-[380px]'
+                    />
                   </div>
-                  <div className='flex items-center justify-between'>
-                    <span className='text-muted-foreground'>Classes</span>
-                    <span className='font-semibold tabular-nums'>
-                      {formatCount(selectedClasses.length, '0')}
-                    </span>
-                  </div>
-                  {selectedGroups.length > 0 && (
-                    <p className='text-muted-foreground mt-1 text-xs'>
-                      Student groups currently reach about {formatCount(groupReach, '0')} member
-                      {groupReach === 1 ? '' : 's'} before server-side de-duplication.
+
+                  <div className='border-primary/30 bg-primary/5 text-muted-foreground flex items-start gap-2 rounded-md border p-3 text-xs'>
+                    <ShieldCheck className='text-primary mt-0.5 h-4 w-4 shrink-0' />
+                    <p>
+                      Each student gets their own private link and chooses whether to join. Nothing
+                      is created for them until they accept, and invitations lapse after{' '}
+                      {EXPIRES_IN_DAYS} days. Students under the age we can accept consent from will
+                      be asked for a parent or guardian instead.
                     </p>
-                  )}
+                  </div>
                 </div>
 
-                <div className='border-primary/30 bg-primary/5 text-muted-foreground flex items-start gap-2 rounded-md border p-3 text-xs'>
-                  <ShieldCheck className='text-primary mt-0.5 h-4 w-4 shrink-0' />
-                  <p>
-                    Each student gets their own private link and chooses whether to join. Nothing is
-                    created for them until they accept, and invitations lapse after{' '}
-                    {EXPIRES_IN_DAYS} days. Students under the age we can accept consent from will
-                    be asked for a parent or guardian instead.
-                  </p>
+                <div className='space-y-4 xl:sticky xl:top-24 xl:self-start'>
+                  <div className='space-y-3 rounded-md border p-3 text-sm'>
+                    <div>
+                      <div className='text-muted-foreground mb-1 text-xs uppercase'>
+                        Subject preview
+                      </div>
+                      <div className='font-medium'>{renderedSubject}</div>
+                    </div>
+                    <div className='border-t pt-3'>
+                      <div className='text-muted-foreground mb-1 text-xs uppercase'>
+                        Message preview
+                      </div>
+                      <pre className='text-foreground max-h-[360px] overflow-auto font-sans text-sm break-words whitespace-pre-wrap 2xl:max-h-[440px]'>
+                        {renderedMessage}
+                      </pre>
+                    </div>
+                  </div>
+
+                  <div className='bg-muted/50 space-y-1.5 rounded-md p-3 text-sm'>
+                    <div className='flex items-center justify-between'>
+                      <span className='text-muted-foreground'>Recipients</span>
+                      <span className='font-semibold tabular-nums'>
+                        {formatCount(recipients.length + groupReach, '0')}
+                      </span>
+                    </div>
+                    <div className='flex items-center justify-between'>
+                      <span className='text-muted-foreground'>Classes</span>
+                      <span className='font-semibold tabular-nums'>
+                        {formatCount(selectedClasses.length, '0')}
+                      </span>
+                    </div>
+                    <div className='flex items-center justify-between'>
+                      <span className='text-muted-foreground'>Channels</span>
+                      <span className='font-semibold'>Email</span>
+                    </div>
+                    {selectedGroups.length > 0 && (
+                      <p className='text-muted-foreground mt-1 text-xs'>
+                        Student groups currently reach about {formatCount(groupReach, '0')} member
+                        {groupReach === 1 ? '' : 's'} before server-side de-duplication.
+                      </p>
+                    )}
+                  </div>
                 </div>
               </CardContent>
             </Card>
