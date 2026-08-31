@@ -17,6 +17,9 @@ export type SchedulerEvent = {
   location: string;
   meetingLink?: string;
   locationType?: string;
+  /** Set when the session belongs to an organisation the instructor delivers for. */
+  organisationUuid?: string;
+  organisationName?: string;
   startTime: Date;
   endTime: Date;
   status?: string;

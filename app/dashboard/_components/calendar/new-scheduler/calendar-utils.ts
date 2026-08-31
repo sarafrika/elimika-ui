@@ -62,12 +62,17 @@ export type ClassScheduleInput = {
   location_type?: string | null;
   max_participants?: number | null;
   status?: string | null;
+  organisation_uuid?: string | null;
+  organisation_name?: string | null;
 };
 
 export type ClassWithScheduleInput = {
   uuid?: string | null;
   title?: string | null;
   course_uuid?: string | null;
+  /** Set when an organisation owns the class - i.e. the instructor delivers it on its behalf. */
+  organisation_uuid?: string | null;
+  organisation_name?: string | null;
   course?: { uuid?: string | null; name?: string | null } | null;
   instructor?: {
     full_name?: string | null;
@@ -273,6 +278,8 @@ export const mapScheduledInstance = (
     location: locationName,
     meetingLink: classDetails?.meeting_link || undefined,
     locationType: instance.location_type || undefined,
+    organisationUuid: instance.organisation_uuid || classDetails?.organisation_uuid || undefined,
+    organisationName: instance.organisation_name || classDetails?.organisation_name || undefined,
     startTime: new Date(instance.start_time),
     endTime: new Date(instance.end_time),
     status: formatStatus(instance.status),
@@ -358,6 +365,8 @@ export const mapClassSchedule = (
         location: locationName,
         meetingLink: classDef.meeting_link || undefined,
         locationType: schedule.location_type || undefined,
+        organisationUuid: schedule.organisation_uuid || classDef.organisation_uuid || undefined,
+        organisationName: schedule.organisation_name || classDef.organisation_name || undefined,
         startTime: new Date(schedule.start_time as Date | string),
         endTime: new Date(schedule.end_time as Date | string),
         status: formatStatus(schedule.status),

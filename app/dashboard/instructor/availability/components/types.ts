@@ -24,6 +24,8 @@ export type CalendarEvent = {
   reminders?: number[];
   notes?: string;
   is_available?: boolean;
+  /** Organisation that engaged the instructor for this session, when the class is org-owned. */
+  organisation?: string;
 };
 
 export type AvailabilityData = {
@@ -50,6 +52,8 @@ export type ClassScheduleItem = {
   cancellation_reason?: string | null;
   entry_type?: EntryTypeEnum;
   is_available?: boolean;
+  organisation_uuid?: string | null;
+  organisation_name?: string | null;
 };
 
 export type AvailabilityClassData = {
@@ -145,6 +149,7 @@ export function convertToCalendarEvents(classes: ClassScheduleItem[]): CalendarE
       color: colorMap[statusKey] || defaultEventColor,
       reminders: [15],
       notes: item.cancellation_reason || '',
+      organisation: item.organisation_name || undefined,
     };
   });
 }

@@ -357,6 +357,8 @@ function InstructorCalendarPage() {
     () =>
       (instructorClassesQuery.classes ?? []) as Array<{
         default_instructor_uuid?: string | null;
+        organisation_uuid?: string | null;
+        organisation_name?: string | null;
         instructor?: {
           full_name?: string | null;
           professional_headline?: string | null;
@@ -423,24 +425,36 @@ function InstructorCalendarPage() {
     const reservedEvents: SchedulerEvent[] = (instructorClassesQuery.schedule ?? [])
       .filter(instance => instance?.uuid && !coveredInstanceUuids.has(instance.uuid))
       .filter(instance => (instance.status ?? '').toUpperCase() !== 'CANCELLED')
-      .map(instance => ({
-        id: `reserved-${instance.uuid}`,
-        instanceUuid: instance.uuid ?? undefined,
-        classDefinitionUuid: instance.class_definition_uuid ?? undefined,
-        eventType: instance.class_definition_uuid ? 'class' : 'resource_reservation',
-        title: instance.title || 'Reserved time',
-        course: instance.class_definition_uuid ? 'Assigned class' : 'Blocked time',
-        instructor: name,
-        instructorUuid: instructorUuid,
-        location: instance.location_name ?? '',
-        locationType: instance.location_type ?? undefined,
-        startTime: new Date(instance.start_time as unknown as string),
-        endTime: new Date(instance.end_time as unknown as string),
-        status: instance.status ?? 'Reserved',
-        category: 'TVET / Vocational',
-        students: [],
-        classCode: '',
-      }));
+      .map(instance => {
+        const engagingOrganisation = instance.organisation_name ?? undefined;
+
+        return {
+          id: `reserved-${instance.uuid}`,
+          instanceUuid: instance.uuid ?? undefined,
+          classDefinitionUuid: instance.class_definition_uuid ?? undefined,
+          eventType: instance.class_definition_uuid ? 'class' : 'resource_reservation',
+          title: instance.title || 'Reserved time',
+          // Say who the work is for. An instructor looking at a session they never scheduled
+          // needs to see the organisation that engaged them, not the word "Assigned".
+          course: instance.class_definition_uuid
+            ? engagingOrganisation
+              ? `Work for ${engagingOrganisation}`
+              : 'Assigned class'
+            : 'Blocked time',
+          instructor: name,
+          instructorUuid: instructorUuid,
+          location: instance.location_name ?? '',
+          locationType: instance.location_type ?? undefined,
+          organisationUuid: instance.organisation_uuid ?? undefined,
+          organisationName: engagingOrganisation,
+          startTime: new Date(instance.start_time as unknown as string),
+          endTime: new Date(instance.end_time as unknown as string),
+          status: instance.status ?? 'Reserved',
+          category: 'TVET / Vocational',
+          students: [],
+          classCode: '',
+        } satisfies SchedulerEvent;
+      });
 
     return [...classEvents, ...reservedEvents].sort(
       (a, b) => a.startTime.getTime() - b.startTime.getTime()

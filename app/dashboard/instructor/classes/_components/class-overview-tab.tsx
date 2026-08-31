@@ -267,6 +267,17 @@ export function ClassHero({
               <UserRound className='h-4 w-4' />
               {instructorName || roleLabel}
             </span>
+            {/* Work an organisation issued: the instructor delivers it on that organisation's
+                behalf, and the class page is where they confirm whose engagement it is. */}
+            {selectedClass?.organisation_name ? (
+              <>
+                <span className='bg-border hidden h-4 w-px sm:block' />
+                <span className='inline-flex items-center gap-1.5'>
+                  <Building2 className='h-4 w-4' />
+                  For {selectedClass.organisation_name}
+                </span>
+              </>
+            ) : null}
           </div>
 
           {roleLabel === 'Instructor View' && (

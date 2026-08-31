@@ -524,6 +524,13 @@ export function WeeklyAvailabilityGrid({
                               <strong className='text-foreground'>Event:</strong>{' '}
                               {eventInSlot.title}
                               <br />
+                              {eventInSlot.organisation && (
+                                <>
+                                  <strong className='text-foreground'>For:</strong>{' '}
+                                  {eventInSlot.organisation}
+                                  <br />
+                                </>
+                              )}
                               <strong className='text-foreground'>Duration:</strong>{' '}
                               {eventInSlot.startTime} - {eventInSlot.endTime}
                             </div>

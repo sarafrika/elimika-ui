@@ -409,6 +409,12 @@ export function DailyAvailabilityGrid({
                             <div className='text-muted-foreground text-xs'>
                               <strong className='text-foreground'>Event:</strong> {event.title}
                             </div>
+                            {event.organisation && (
+                              <div className='text-muted-foreground text-xs'>
+                                <strong className='text-foreground'>For:</strong>{' '}
+                                {event.organisation}
+                              </div>
+                            )}
                             <div className='text-muted-foreground text-xs'>
                               <strong className='text-foreground'>Duration:</strong>{' '}
                               {event.startTime} - {event.endTime}

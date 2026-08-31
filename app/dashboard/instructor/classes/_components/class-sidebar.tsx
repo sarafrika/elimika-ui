@@ -11,7 +11,7 @@ import {
 import { Skeleton } from '@/components/ui/skeleton';
 import type { InstructorClassWithSchedule } from '@/hooks/use-instructor-classes-with-schedules';
 import { toAuthenticatedMediaUrl } from '@/src/lib/media-url';
-import { CalendarDays, ChevronLeft, ChevronRight, Search, Users } from 'lucide-react';
+import { Building2, CalendarDays, ChevronLeft, ChevronRight, Search, Users } from 'lucide-react';
 import { useEffect, useMemo, useState } from 'react';
 import { formatPreferredScheduleLabel, type DateFilter } from './new-class-page.utils';
 
@@ -186,6 +186,15 @@ export function ClassSidebar({
                     <p className='text-muted-foreground line-clamp-2 text-xs'>
                       {classItem.course?.name || 'Linked course not available'}
                     </p>
+
+                    {/* An organisation-owned class is work the instructor was engaged for, so the
+                        list has to name who engaged them alongside their own classes. */}
+                    {classItem.organisation_name ? (
+                      <p className='text-muted-foreground mt-1 flex items-center gap-1.5 text-xs'>
+                        <Building2 className='size-3.5 shrink-0' />
+                        <span className='truncate'>For {classItem.organisation_name}</span>
+                      </p>
+                    ) : null}
 
                     {instructorView && (
                       <div className='text-muted-foreground mt-2 grid gap-2 text-xs sm:grid-cols-2'>

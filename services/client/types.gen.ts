@@ -4836,6 +4836,14 @@ export type ScheduledInstance = {
    * **[OPTIONAL]** Maximum number of participants for this session (cached from class definition).
    */
   max_participants?: number;
+  /**
+   * **[READ-ONLY]** Organisation that owns the class behind this session, when the instructor is delivering it on an organisation's behalf. Null for an instructor's own class.
+   */
+  readonly organisation_uuid?: string | null;
+  /**
+   * **[READ-ONLY]** Display name of the owning organisation, so a calendar can say whose work the session is without a second lookup.
+   */
+  readonly organisation_name?: string | null;
   status?: StatusEnum9;
   /**
    * **[OPTIONAL]** Reason for cancellation if status is CANCELLED.
@@ -8992,6 +9000,14 @@ export type InstructorCalendarEntry = {
    * Optional source/reason for blocked entries
    */
   source?: string;
+  /**
+   * Organisation the instructor is delivering this session for, when the class behind it is organisation-owned. Null for the instructor's own classes and for availability entries.
+   */
+  organisation_uuid?: string;
+  /**
+   * Display name of the owning organisation
+   */
+  organisation_name?: string;
 };
 
 export type ApiResponseInstructorStatement = {

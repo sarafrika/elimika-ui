@@ -2,7 +2,7 @@ import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/tiptap-ui-primitive/popover';
 import { cn } from '@/lib/utils';
-import { Video, MapPin, CalendarDays } from 'lucide-react';
+import { Video, MapPin, CalendarDays, Building2 } from 'lucide-react';
 import { useEffect, useMemo, useState, type CSSProperties, type ReactElement } from 'react';
 import { CreateClassDialog } from '../create-class-dialog';
 import { categoryStyles, schedulerHours } from './data';
@@ -459,6 +459,12 @@ function SchedulerEventDisclosure({
               <CalendarDays className='text-muted-foreground h-4 w-4 shrink-0' />
               <span className='min-w-0 truncate'>{event.course}</span>
             </div>
+            {event.organisationName ? (
+              <div className='flex items-center gap-2 text-sm'>
+                <Building2 className='text-muted-foreground h-4 w-4 shrink-0' />
+                <span className='min-w-0 truncate'>{event.organisationName}</span>
+              </div>
+            ) : null}
             <div className='flex items-center gap-2 text-sm'>
               <MapPin className='text-muted-foreground h-4 w-4 shrink-0' />
               <span className='min-w-0 truncate'>{event.location}</span>

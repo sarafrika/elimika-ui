@@ -196,7 +196,7 @@ export function SchedulerRightRail({
                   </div>
 
                   <div className='text-muted-foreground truncate text-[11px]'>
-                    {joinParts([event.instructor, event.location])}
+                    {joinParts([event.organisationName, event.instructor, event.location])}
                   </div>
                 </div>
 

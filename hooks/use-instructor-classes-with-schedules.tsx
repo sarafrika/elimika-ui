@@ -12,7 +12,7 @@ import type {
 } from '@/services/client/types.gen';
 import { useQueries, useQuery } from '@tanstack/react-query';
 import { useMemo } from 'react';
-import { useCoursesByIds } from './use-batched-lookups';
+import { useCoursesByIds, useOrganisationsByIds } from './use-batched-lookups';
 import type { ProgramCourseLike } from './use-programlessonwithcontent';
 
 type InstructorClass = NonNullable<
@@ -30,6 +30,11 @@ export type InstructorClassWithSchedule = InstructorClass & {
   programCourses?: ProgramCourseLike[];
   schedule: InstructorSchedule[];
   enrollments: unknown[];
+  /**
+   * Name of the organisation that owns the class, when one does. A class definition carries only
+   * the organisation's id, but every instructor-facing surface needs to say whose work it is.
+   */
+  organisation_name?: string;
 };
 
 export function useInstructorClassesWithSchedules(instructorUuid?: string) {
@@ -175,6 +180,22 @@ export function useInstructorClassesWithSchedules(instructorUuid?: string) {
     return map;
   }, [instructorScheduleQuery.data]);
 
+  // Work an organisation issued the instructor has to be labelled with that organisation, on the
+  // calendar and everywhere else in their portal. Both the class list and the raw schedule can
+  // introduce an organisation - a class the instructor was hired onto may be absent from the
+  // former - so names are resolved once, over the union.
+  const engagedOrganisationUuids = useMemo(
+    () =>
+      [
+        ...uniqueClasses.map(classItem => classItem.organisation_uuid),
+        ...(instructorScheduleQuery.data?.data ?? []).map(instance => instance.organisation_uuid),
+      ].filter((uuid): uuid is string => Boolean(uuid)),
+    [uniqueClasses, instructorScheduleQuery.data]
+  );
+
+  const { organisationMap, isLoading: organisationsLoading } =
+    useOrganisationsByIds(engagedOrganisationUuids);
+
   const data = useMemo<InstructorClassWithSchedule[]>(
     () =>
       uniqueClasses.map((classItem, index) => ({
@@ -189,8 +210,32 @@ export function useInstructorClassesWithSchedules(instructorUuid?: string) {
         schedule: schedulesByClass.get(classItem.uuid ?? '') ?? [],
 
         enrollments: enrollmentQueries[index]?.data?.data ?? [],
+
+        organisation_name: classItem.organisation_uuid
+          ? organisationMap[classItem.organisation_uuid]?.name
+          : undefined,
       })),
-    [uniqueClasses, courseMap, programCoursesMap, schedulesByClass, enrollmentQueries]
+    [
+      uniqueClasses,
+      courseMap,
+      programCoursesMap,
+      schedulesByClass,
+      enrollmentQueries,
+      organisationMap,
+    ]
+  );
+
+  const schedule = useMemo(
+    () =>
+      (instructorScheduleQuery.data?.data ?? []).map(instance =>
+        instance.organisation_uuid && !instance.organisation_name
+          ? {
+              ...instance,
+              organisation_name: organisationMap[instance.organisation_uuid]?.name,
+            }
+          : instance
+      ),
+    [instructorScheduleQuery.data, organisationMap]
   );
 
   const isLoading =
@@ -198,7 +243,8 @@ export function useInstructorClassesWithSchedules(instructorUuid?: string) {
     coursesLoading ||
     programCoursesQueries.some(query => query.isLoading) ||
     enrollmentQueries.some(query => query.isLoading) ||
-    instructorScheduleQuery.isLoading;
+    instructorScheduleQuery.isLoading ||
+    organisationsLoading;
 
   const isPending =
     classesQuery.isPending ||
@@ -219,7 +265,7 @@ export function useInstructorClassesWithSchedules(instructorUuid?: string) {
      * approved content, so an organisation-owned class the instructor was hired onto can
      * be missing from it while the instructor's time is very much reserved.
      */
-    schedule: instructorScheduleQuery.data?.data ?? [],
+    schedule,
     isLoading,
     isPending,
     isError,
