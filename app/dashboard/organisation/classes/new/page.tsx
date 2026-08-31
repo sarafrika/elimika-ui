@@ -21,7 +21,6 @@ import {
   DEFAULT_DAYS,
   DEFAULT_RATE_BASIS,
   type Delivery,
-  durationMinutesOrDefault,
   firstOccurrenceOnOrAfter,
   fmtDate,
   type InstructorOption,
@@ -30,7 +29,6 @@ import {
   type Offering,
   OfferingPicker,
   PickDatesPanel,
-  parseDurationMinutes,
   PricingCapacity,
   type RateBasis,
   REMINDER_MINUTES,
@@ -44,7 +42,7 @@ import {
   type ServiceKey,
   StandardSchedule,
   serviceFormat,
-  sessionEndFor,
+  sessionMinutesFor,
   toDateTime,
   UpcomingSessions,
 } from '@/components/class-form';
@@ -353,9 +351,8 @@ export default function OrganisationCreateClassPage() {
 
   const [pickedDates, setPickedDates] = useState<Date[]>([]);
   const [pickMonth, setPickMonth] = useState<Date>(new Date());
-  const [sessionDuration, setSessionDuration] = useState('120');
   const [sessionStart, setSessionStart] = useState('10:00');
-  const sessionEnd = sessionEndFor(sessionStart, sessionDuration);
+  const [sessionEnd, setSessionEnd] = useState('12:00');
   const sortedPickedDates = useMemo(
     () => [...pickedDates].sort((a, b) => a.getTime() - b.getTime()),
     [pickedDates]
@@ -367,7 +364,7 @@ export default function OrganisationCreateClassPage() {
       name: 'Academic Period 1',
       startDate: fmtDate(today),
       endDate: fmtDate(addDays(today, 77)),
-      slots: [{ day: 'Wed', start: '09:00', end: '11:00', durationMinutes: '120' }],
+      slots: [{ day: 'Wed', start: '09:00', end: '11:00' }],
     },
   ]);
 
@@ -390,7 +387,6 @@ export default function OrganisationCreateClassPage() {
         active: false,
         start: sessionStart,
         end: sessionEnd,
-        durationMinutes: sessionDuration,
         allDay: false,
       };
     for (const d of sorted)
@@ -398,13 +394,12 @@ export default function OrganisationCreateClassPage() {
         active: true,
         start: sessionStart,
         end: sessionEnd,
-        durationMinutes: sessionDuration,
         allDay: false,
       };
     setDays(next);
     setStartDate(fmtDate(sorted[0]));
     setEndDate(fmtDate(sorted[sorted.length - 1]));
-  }, [mode, pickedDates, sessionStart, sessionDuration, sessionEnd]);
+  }, [mode, pickedDates, sessionStart, sessionEnd]);
 
   useEffect(() => {
     if (mode !== 'academic' || academicPeriods.length === 0) return;
@@ -414,7 +409,6 @@ export default function OrganisationCreateClassPage() {
         active: false,
         start: '09:00',
         end: '10:00',
-        durationMinutes: '60',
         allDay: false,
       };
     for (const p of academicPeriods) {
@@ -423,7 +417,6 @@ export default function OrganisationCreateClassPage() {
           active: true,
           start: s.start,
           end: s.end,
-          durationMinutes: s.durationMinutes,
           allDay: false,
         };
     }
@@ -488,11 +481,9 @@ export default function OrganisationCreateClassPage() {
 
   const buildSessionTemplates = (): ClassSessionTemplate[] => {
     const interval = Math.max(1, Math.trunc(Number(repeatEvery) || 1));
-    const defaultDurationMinutes = durationMinutesOrDefault(sessionDuration);
     if (mode === 'pick') {
       return sortedPickedDates.map(d => ({
         start_time: toDateTime(fmtDate(d), sessionStart),
-        duration_minutes: defaultDurationMinutes,
         end_time: toDateTime(fmtDate(d), sessionEnd),
         conflict_resolution: 'FAIL' as const,
       }));
@@ -504,12 +495,9 @@ export default function OrganisationCreateClassPage() {
         for (const slot of p.slots) {
           const first = firstOccurrenceOnOrAfter(p.startDate, slot.day);
           if (!first || (!Number.isNaN(periodEnd.getTime()) && first > periodEnd)) continue;
-          const durationMinutes = durationMinutesOrDefault(slot.durationMinutes);
-          const endTime = sessionEndFor(slot.start, durationMinutes);
           templates.push({
             start_time: toDateTime(fmtDate(first), slot.start),
-            duration_minutes: durationMinutes,
-            end_time: toDateTime(fmtDate(first), endTime),
+            end_time: toDateTime(fmtDate(first), slot.end),
             recurrence: {
               recurrence_type: RecurrenceTypeEnum.WEEKLY,
               interval_value: interval,
@@ -530,11 +518,9 @@ export default function OrganisationCreateClassPage() {
       const first = firstOccurrenceOnOrAfter(startDate, d);
       if (!first || first > endBoundary) continue;
       const startT = row.allDay ? '00:00' : row.start;
-      const durationMinutes = row.allDay ? 24 * 60 : durationMinutesOrDefault(row.durationMinutes);
-      const endT = row.allDay ? '23:59' : sessionEndFor(startT, durationMinutes);
+      const endT = row.allDay ? '23:59' : row.end;
       templates.push({
         start_time: toDateTime(fmtDate(first), startT),
-        duration_minutes: durationMinutes,
         end_time: toDateTime(fmtDate(first), endT),
         recurrence: {
           recurrence_type: RecurrenceTypeEnum.WEEKLY,
@@ -585,22 +571,24 @@ export default function OrganisationCreateClassPage() {
     if (requiresPhysical && !locationName.trim() && !venueUuid) {
       return toast.error('Add a location name or pick a venue for in-person / hybrid classes.');
     }
-    if (mode === 'pick' && !parseDurationMinutes(sessionDuration)) {
-      return toast.error('Enter a positive whole-minute session duration.');
+    if (mode === 'pick' && sessionMinutesFor(sessionStart, sessionEnd) === undefined) {
+      return toast.error('The session end time must be after the start time.');
     }
     if (
       mode === 'standard' &&
-      activeDays.some(day => !days[day].allDay && !parseDurationMinutes(days[day].durationMinutes))
+      activeDays.some(
+        day => !days[day].allDay && sessionMinutesFor(days[day].start, days[day].end) === undefined
+      )
     ) {
-      return toast.error('Every active class day needs a positive whole-minute duration.');
+      return toast.error('Every active class day must end after it starts.');
     }
     if (
       mode === 'academic' &&
       academicPeriods.some(period =>
-        period.slots.some(slot => !parseDurationMinutes(slot.durationMinutes))
+        period.slots.some(slot => sessionMinutesFor(slot.start, slot.end) === undefined)
       )
     ) {
-      return toast.error('Every academic slot needs a positive whole-minute duration.');
+      return toast.error('Every academic slot must end after it starts.');
     }
 
     const sessionTemplates = buildSessionTemplates();
@@ -608,9 +596,6 @@ export default function OrganisationCreateClassPage() {
       return toast.error('Add at least one session — pick a day, a date, or an academic slot.');
     }
     const earliest = sessionTemplates.reduce((a, b) => (a.start_time <= b.start_time ? a : b));
-    const defaultDurationMinutes = Number(
-      earliest.duration_minutes ?? durationMinutesOrDefault(sessionDuration)
-    );
 
     setResourceConflicts([]);
 
@@ -641,7 +626,6 @@ export default function OrganisationCreateClassPage() {
       session_format: sessionFormat,
       default_start_time: earliest.start_time,
       default_end_time: earliest.end_time,
-      duration_minutes: defaultDurationMinutes,
       location_type: delivery,
       location_name: requiresPhysical ? locationName.trim() || undefined : undefined,
       location_latitude: requiresPhysical ? toCoordinate(locationLatitude) : undefined,
@@ -749,11 +733,10 @@ export default function OrganisationCreateClassPage() {
             sortedPickedDates={sortedPickedDates}
             pickMonth={pickMonth}
             onPickMonthChange={setPickMonth}
-            sessionDuration={sessionDuration}
-            onSessionDurationChange={setSessionDuration}
             sessionStart={sessionStart}
             onSessionStartChange={setSessionStart}
             sessionEnd={sessionEnd}
+            onSessionEndChange={setSessionEnd}
             timezone={timezone}
             onTimezoneChange={setTimezone}
           />

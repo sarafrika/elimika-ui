@@ -11,10 +11,10 @@ import {
   DAY_FULL,
   DAYS,
   fmtShortDate,
-  parseDurationMinutes,
+  formatDuration,
   type PeriodSlot,
   periodStatus,
-  sessionEndFor,
+  sessionMinutesFor,
 } from './class-form-shared';
 
 const statusStyles: Record<string, string> = {
@@ -58,10 +58,7 @@ export function AcademicPeriodsPanel({
     const p = periods.find(x => x.id === id);
     if (!p) return;
     updatePeriod(id, {
-      slots: [
-        ...p.slots,
-        { day: 'Mon', start: '09:00', end: sessionEndFor('09:00', 60), durationMinutes: '60' },
-      ],
+      slots: [...p.slots, { day: 'Mon', start: '09:00', end: '10:00' }],
     });
   };
   const updateSlot = (id: string, idx: number, patch: Partial<PeriodSlot>) => {
@@ -132,30 +129,20 @@ export function AcademicPeriodsPanel({
                           <Input
                             type='time'
                             value={slot.start}
-                            onChange={e =>
-                              updateSlot(p.id, idx, {
-                                start: e.target.value,
-                                end: sessionEndFor(e.target.value, slot.durationMinutes || 60),
-                              })
-                            }
+                            onChange={e => updateSlot(p.id, idx, { start: e.target.value })}
                             className='h-5 w-[80px] border-0 p-0 text-[11px] shadow-none focus-visible:ring-0'
                           />
+                          <span className='text-muted-foreground'>-</span>
                           <Input
-                            type='number'
-                            min={1}
-                            step={1}
-                            inputMode='numeric'
-                            value={slot.durationMinutes ?? ''}
-                            onChange={e => {
-                              const durationMinutes = e.target.value.replace(/\D/g, '');
-                              updateSlot(p.id, idx, {
-                                durationMinutes,
-                                end: sessionEndFor(slot.start, durationMinutes || 1),
-                              });
-                            }}
-                            className='h-5 w-[76px] border-0 p-0 text-[11px] shadow-none focus-visible:ring-0'
+                            type='time'
+                            value={slot.end}
+                            aria-invalid={sessionMinutesFor(slot.start, slot.end) === undefined}
+                            onChange={e => updateSlot(p.id, idx, { end: e.target.value })}
+                            className='h-5 w-[80px] border-0 p-0 text-[11px] shadow-none focus-visible:ring-0'
                           />
-                          <span className='text-muted-foreground'>min</span>
+                          <span className='text-muted-foreground w-[52px] text-right tabular-nums'>
+                            {formatDuration(sessionMinutesFor(slot.start, slot.end))}
+                          </span>
                         </div>
                         <button
                           type='button'
@@ -242,9 +229,9 @@ export function AcademicPeriodsPanel({
               </div>
             </div>
 
-            {p.slots.some(s => !parseDurationMinutes(s.durationMinutes)) && (
+            {p.slots.some(s => sessionMinutesFor(s.start, s.end) === undefined) && (
               <div className='bg-destructive/10 text-destructive mt-3 rounded-md px-3 py-1.5 text-[11px]'>
-                One or more slots need a positive whole-minute duration.
+                One or more slots end at or before they start.
               </div>
             )}
           </div>
