@@ -1,10 +1,11 @@
 'use client';
 
 import { useQuery } from '@tanstack/react-query';
-import { Eye, Mail, MoreHorizontal, Plus, Trash2, Users } from 'lucide-react';
+import { Eye, Mail, MoreHorizontal, Plus, Users } from 'lucide-react';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
+import type { KeyboardEvent } from 'react';
 import { useMemo, useState } from 'react';
-import { toast } from 'sonner';
 
 import { AvatarWithSkeleton } from '@/components/avatar-with-skeleton';
 import { ALL_CATEGORIES, CategoryTabs, filterByCategoryTabs } from '@/components/category-tabs';
@@ -17,7 +18,6 @@ import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
-  DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { Progress } from '@/components/ui/progress';
@@ -32,14 +32,16 @@ import {
   TableRow,
 } from '@/components/ui/table';
 import { useOrganisation } from '@/context/organisation-context';
-import { extractPage, getTotalFromMetadata } from '@/lib/api-helpers';
+import { extractList, extractPage, getTotalFromMetadata } from '@/lib/api-helpers';
 import { getErrorMessage } from '@/lib/error-utils';
 import { formatCount, toNumber } from '@/lib/metrics';
-import type { StudentEnrolmentSummaryDto, StudentGroupRosterEntry } from '@/services/client';
+import type { Student, StudentEnrolmentSummaryDto, StudentGroupRosterEntry } from '@/services/client';
 import {
   getStudentSummariesOptions,
   listRosterOptions,
+  searchStudentsOptions,
 } from '@/services/client/@tanstack/react-query.gen';
+import { toAuthenticatedMediaUrl } from '@/src/lib/media-url';
 import { generateWalletId, institutionRef } from '@/src/lib/wallet-id';
 
 import { PendingInvitations } from './_components/pending-invitations';
@@ -70,6 +72,8 @@ type StudentRow = {
   programType: null;
 };
 
+const studentHref = (id: string) => `/dashboard/organisation/students/${encodeURIComponent(id)}`;
+
 const asSummaryMap = (summaries: StudentEnrolmentSummaryDto[] | undefined) => {
   const map = new Map<string, { total: number; completed: number }>();
   for (const summary of summaries ?? []) {
@@ -83,6 +87,7 @@ const asSummaryMap = (summaries: StudentEnrolmentSummaryDto[] | undefined) => {
 };
 
 export default function StudentsPage() {
+  const router = useRouter();
   const organisation = useOrganisation();
   const organisationUuid = organisation?.uuid ?? '';
 
@@ -99,7 +104,7 @@ export default function StudentsPage() {
   });
 
   const summaryByStudent = useMemo(() => {
-    return asSummaryMap(summariesQuery.data?.data);
+    return asSummaryMap(extractList<StudentEnrolmentSummaryDto>(summariesQuery.data));
   }, [summariesQuery.data]);
 
   const rosterPage = useMemo(
@@ -108,12 +113,43 @@ export default function StudentsPage() {
   );
   const roster = rosterPage.items;
   const totalRosterStudents = getTotalFromMetadata(rosterPage.metadata) || roster.length;
+  const rosterUserUuids = useMemo(
+    () =>
+      Array.from(
+        new Set(roster.map(student => student.student_uuid).filter((uuid): uuid is string => !!uuid))
+      ).sort((a, b) => a.localeCompare(b)),
+    [roster]
+  );
+  const studentProfilesQuery = useQuery({
+    ...searchStudentsOptions({
+      query: {
+        searchParams: {
+          user_uuid_in: rosterUserUuids.join(',') || '00000000-0000-0000-0000-000000000000',
+        },
+        pageable: { page: 0, size: Math.max(rosterUserUuids.length, 1) },
+      },
+    }),
+    enabled: rosterUserUuids.length > 0,
+    retry: false,
+  });
+  const studentProfileByUserUuid = useMemo(() => {
+    const map = new Map<string, Student>();
+    for (const profile of extractPage<Student>(studentProfilesQuery.data).items) {
+      if (profile.user_uuid) {
+        map.set(profile.user_uuid, profile);
+      }
+    }
+    return map;
+  }, [studentProfilesQuery.data]);
 
   const students = useMemo(
     () =>
       roster.flatMap<StudentRow>(student => {
         if (!student.student_uuid) return [];
-        const summary = summaryByStudent.get(student.student_uuid);
+        const profile = studentProfileByUserUuid.get(student.student_uuid);
+        const summary =
+          (profile?.uuid ? summaryByStudent.get(profile.uuid) : undefined) ??
+          summaryByStudent.get(student.student_uuid);
         const pct =
           summary && summary.total > 0 ? Math.round((summary.completed / summary.total) * 100) : 0;
         const status =
@@ -123,7 +159,7 @@ export default function StudentsPage() {
             id: student.student_uuid,
             name: fullName(student),
             email: student.email ?? null,
-            image: student.profile_image_url ?? null,
+            image: toAuthenticatedMediaUrl(student.profile_image_url) ?? null,
             groupName: student.group_name ?? null,
             tier: student.tier ?? null,
             status,
@@ -136,7 +172,7 @@ export default function StudentsPage() {
           },
         ];
       }),
-    [roster, summaryByStudent]
+    [roster, studentProfileByUserUuid, summaryByStudent]
   );
 
   const [activeCategory, setActiveCategory] = useState<string>(ALL_CATEGORIES);
@@ -154,11 +190,19 @@ export default function StudentsPage() {
     }),
     [students, totalRosterStudents]
   );
-  const loadError = rosterQuery.error;
+  const studentsLoading =
+    rosterQuery.isLoading || summariesQuery.isLoading || studentProfilesQuery.isLoading;
+  const loadError = rosterQuery.error ?? summariesQuery.error ?? studentProfilesQuery.error;
   const errorDescription = getErrorMessage(loadError, 'Refresh the page or try again in a moment.');
+  const openStudent = (id: string) => router.push(studentHref(id));
+  const handleRowKeyDown = (event: KeyboardEvent<HTMLTableRowElement>, id: string) => {
+    if (event.key !== 'Enter' && event.key !== ' ') return;
+    event.preventDefault();
+    openStudent(id);
+  };
 
   return (
-    <div className='mx-auto w-full max-w-[1600px] space-y-6 px-3 py-4 sm:px-5 lg:px-6 2xl:max-w-[1840px]'>
+    <div className='mx-auto w-full max-w-[2200px] space-y-6 px-3 py-4 sm:px-5 lg:px-6 2xl:max-w-[2400px]'>
       <PageHeader
         title='Students'
         description='Invite, onboard and manage students across your programs.'
@@ -211,7 +255,7 @@ export default function StudentsPage() {
       )}
 
       <div className='space-y-4'>
-        {rosterQuery.isLoading ? (
+        {studentsLoading ? (
           <div className='space-y-2'>
             {[...Array(6)].map((_, i) => (
               <Skeleton key={i} className='h-14 w-full' />
@@ -229,6 +273,7 @@ export default function StudentsPage() {
                 onClick={() => {
                   rosterQuery.refetch();
                   summariesQuery.refetch();
+                  studentProfilesQuery.refetch();
                 }}
               >
                 Retry
@@ -264,13 +309,20 @@ export default function StudentsPage() {
                   <TableHead className='whitespace-nowrap'>Institution Ref</TableHead>
                   <TableHead className='whitespace-nowrap'>Group</TableHead>
                   <TableHead className='whitespace-nowrap'>Status</TableHead>
-                  <TableHead className='whitespace-nowrap'>Course Completion</TableHead>
+                  <TableHead className='whitespace-nowrap'>Attendance</TableHead>
                   <TableHead className='text-right whitespace-nowrap'>Actions</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
                 {visibleStudents.map(student => (
-                  <TableRow key={student.id}>
+                  <TableRow
+                    key={student.id}
+                    role='link'
+                    tabIndex={0}
+                    className='hover:bg-muted/40 cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2'
+                    onClick={() => openStudent(student.id)}
+                    onKeyDown={event => handleRowKeyDown(event, student.id)}
+                  >
                     <TableCell className='whitespace-nowrap'>
                       <div className='flex items-center gap-3'>
                         <AvatarWithSkeleton
@@ -336,40 +388,29 @@ export default function StudentsPage() {
                     <TableCell className='text-right whitespace-nowrap'>
                       <DropdownMenu>
                         <DropdownMenuTrigger asChild>
-                          <Button variant='ghost' size='icon' className='h-8 w-8'>
+                          <Button
+                            variant='ghost'
+                            size='icon'
+                            className='h-8 w-8'
+                            aria-label={`Open actions for ${student.name}`}
+                            onClick={event => event.stopPropagation()}
+                          >
                             <MoreHorizontal className='h-4 w-4' />
                           </Button>
                         </DropdownMenuTrigger>
                         <DropdownMenuContent align='end'>
-                          <DropdownMenuItem
-                            onClick={() =>
-                              toast.info('View student', {
-                                description: `Opening ${student.name}'s profile.`,
-                              })
-                            }
-                          >
-                            <Eye className='mr-2 h-4 w-4' /> View
+                          <DropdownMenuItem asChild>
+                            <Link href={studentHref(student.id)}>
+                              <Eye className='mr-2 h-4 w-4' /> View profile
+                            </Link>
                           </DropdownMenuItem>
-                          <DropdownMenuItem
-                            onClick={() =>
-                              toast.info('Message student', {
-                                description: `Opening conversation with ${student.name}.`,
-                              })
-                            }
-                          >
-                            <Mail className='mr-2 h-4 w-4' /> Message
-                          </DropdownMenuItem>
-                          <DropdownMenuSeparator />
-                          <DropdownMenuItem
-                            className='text-destructive focus:text-destructive'
-                            onClick={() =>
-                              toast.error('Student removed', {
-                                description: `${student.name} has been removed.`,
-                              })
-                            }
-                          >
-                            <Trash2 className='mr-2 h-4 w-4' /> Remove
-                          </DropdownMenuItem>
+                          {student.email ? (
+                            <DropdownMenuItem asChild>
+                              <a href={`mailto:${student.email}`}>
+                                <Mail className='mr-2 h-4 w-4' /> Email student
+                              </a>
+                            </DropdownMenuItem>
+                          ) : null}
                         </DropdownMenuContent>
                       </DropdownMenu>
                     </TableCell>

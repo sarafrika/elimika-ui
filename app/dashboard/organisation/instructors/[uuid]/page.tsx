@@ -18,6 +18,7 @@ import {
   Phone,
   Star,
   UserRound,
+  Users,
 } from 'lucide-react';
 import Link from 'next/link';
 import { useParams } from 'next/navigation';
@@ -39,6 +40,7 @@ import { StatusBadge } from '@/app/dashboard/admin/_components/ui';
 import { statusToneClass, type StatusTone } from '@/app/dashboard/admin/_components/ui';
 import type {
   ClassDefinition,
+  ClassEnrolmentCountDto,
   Instructor,
   InstructorDocument,
   InstructorEducation,
@@ -52,6 +54,7 @@ import type {
 } from '@/services/client';
 import {
   getClassDefinitionsForOrganisationOptions,
+  getClassEnrolmentCountsOptions,
   getInstructorByUuidOptions,
   getInstructorDocumentsOptions,
   getInstructorEducationOptions,
@@ -345,6 +348,11 @@ export default function OrganisationInstructorDetailPage() {
     enabled: Boolean(organisationUuid),
     retry: false,
   });
+  const enrolmentCountsQuery = useQuery({
+    ...getClassEnrolmentCountsOptions({ path: { organisationUuid } }),
+    enabled: Boolean(organisationUuid),
+    retry: false,
+  });
   const payablesQuery = useQuery({
     ...getInstructorPayablesForOrganisationOptions({ path: { organisationUuid } }),
     enabled: Boolean(organisationUuid),
@@ -358,6 +366,16 @@ export default function OrganisationInstructorDetailPage() {
   const documents = extractList<InstructorDocument>(documentsQuery.data);
   const reviews = extractList<InstructorReview>(reviewsQuery.data);
   const rating = ratingQuery.data?.data;
+  const enrolmentCounts = extractList<ClassEnrolmentCountDto>(enrolmentCountsQuery.data);
+  const enrolledByClass = useMemo(() => {
+    const map = new Map<string, number>();
+    for (const item of enrolmentCounts) {
+      if (item.class_definition_uuid) {
+        map.set(item.class_definition_uuid, toNumber(item.enrolled));
+      }
+    }
+    return map;
+  }, [enrolmentCounts]);
   const classDefinitions = useMemo(
     () =>
       (classesQuery.data?.data ?? [])
@@ -380,6 +398,10 @@ export default function OrganisationInstructorDetailPage() {
   const reviewCount = rating?.review_count ?? summary?.review_count ?? reviews.length;
   const classCount = assignedClasses.length || toNumber(summary?.class_count);
   const activeClassCount = assignedClasses.filter(item => item.is_active !== false).length;
+  const assignedStudentCount = assignedClasses.reduce(
+    (total, item) => total + (item.uuid ? (enrolledByClass.get(item.uuid) ?? 0) : 0),
+    0
+  );
   const completedSessions = assignedClasses.reduce(
     (total, item) => total + toNumber(item.completed_session_count),
     0
@@ -396,8 +418,8 @@ export default function OrganisationInstructorDetailPage() {
       <main className='mx-auto w-full max-w-[2200px] space-y-6 px-3 py-4 sm:px-5 lg:px-6 2xl:max-w-[2400px]'>
         <Skeleton className='h-8 w-48 rounded-md' />
         <Skeleton className='h-36 w-full rounded-md' />
-        <div className='grid gap-3 sm:grid-cols-2 xl:grid-cols-5'>
-          {Array.from({ length: 5 }).map((_, index) => (
+        <div className='grid gap-3 sm:grid-cols-2 xl:grid-cols-6'>
+          {Array.from({ length: 6 }).map((_, index) => (
             <Skeleton key={index} className='h-[88px] rounded-md' />
           ))}
         </div>
@@ -513,13 +535,20 @@ export default function OrganisationInstructorDetailPage() {
         </div>
       </header>
 
-      <div className='grid gap-3 sm:grid-cols-2 xl:grid-cols-5'>
+      <div className='grid gap-3 sm:grid-cols-2 xl:grid-cols-6'>
         <MetricTile
           label='Assigned classes'
           value={formatCount(classCount, '0')}
           hint={`${formatCount(activeClassCount, '0')} active`}
           icon={BookOpen}
           tone='info'
+        />
+        <MetricTile
+          label='Students'
+          value={formatCount(assignedStudentCount, '0')}
+          hint='active enrolments'
+          icon={Users}
+          tone='success'
         />
         <MetricTile
           label='Rating'
@@ -568,6 +597,10 @@ export default function OrganisationInstructorDetailPage() {
           <TabsTrigger value='classes' className={tabTriggerClass}>
             <BookOpen className='size-4' />
             Classes
+          </TabsTrigger>
+          <TabsTrigger value='students' className={tabTriggerClass}>
+            <Users className='size-4' />
+            Students
           </TabsTrigger>
           <TabsTrigger value='credentials' className={tabTriggerClass}>
             <GraduationCap className='size-4' />
@@ -825,6 +858,119 @@ export default function OrganisationInstructorDetailPage() {
                         </td>
                       </tr>
                     ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
+          </SectionPanel>
+        </TabsContent>
+
+        <TabsContent value='students' className='mt-0'>
+          <SectionPanel
+            title='Student coverage'
+            description='Active learner counts for classes assigned to this instructor.'
+            actions={
+              <>
+                <Button asChild size='sm' variant='outline'>
+                  <Link href='/dashboard/organisation/students'>
+                    <Users className='size-4' />
+                    Open students
+                  </Link>
+                </Button>
+                <Button asChild size='sm'>
+                  <Link href='/dashboard/organisation/invite-students'>
+                    <Mail className='size-4' />
+                    Invite students
+                  </Link>
+                </Button>
+              </>
+            }
+          >
+            {classesQuery.isLoading || enrolmentCountsQuery.isLoading ? (
+              <div className='space-y-2'>
+                {Array.from({ length: 5 }).map((_, index) => (
+                  <Skeleton key={index} className='h-14 w-full rounded-md' />
+                ))}
+              </div>
+            ) : assignedClasses.length === 0 ? (
+              <EmptyPanel
+                icon={Users}
+                title='No assigned class roster'
+                description='Students will appear here after this instructor is assigned to organisation classes.'
+              />
+            ) : (
+              <div className='overflow-x-auto'>
+                <table className='w-full min-w-[1040px] text-sm'>
+                  <thead>
+                    <tr className='border-border/70 border-b text-left'>
+                      <th className='text-muted-foreground px-3 py-2 font-medium'>Class</th>
+                      <th className='text-muted-foreground px-3 py-2 font-medium'>Active students</th>
+                      <th className='text-muted-foreground px-3 py-2 font-medium'>Capacity</th>
+                      <th className='text-muted-foreground px-3 py-2 font-medium'>Fill rate</th>
+                      <th className='text-muted-foreground px-3 py-2 font-medium'>Sessions</th>
+                      <th className='text-muted-foreground px-3 py-2 font-medium'>Status</th>
+                      <th className='text-muted-foreground px-3 py-2 font-medium'>Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {assignedClasses.map(item => {
+                      const enrolled = item.uuid ? (enrolledByClass.get(item.uuid) ?? 0) : 0;
+                      const capacity = toNumber(item.max_participants);
+                      const fillRate = capacity > 0 ? Math.round((enrolled / capacity) * 100) : 0;
+                      return (
+                        <tr key={item.uuid} className='border-border/60 border-b last:border-0'>
+                          <td className='px-3 py-3'>
+                            <p className='text-foreground font-medium'>{item.title}</p>
+                            <p className='text-muted-foreground text-xs'>
+                              {item.course_uuid ? `Course ${item.course_uuid}` : 'Standalone class'}
+                            </p>
+                          </td>
+                          <td className='px-3 py-3'>{formatCount(enrolled, '0')}</td>
+                          <td className='px-3 py-3'>{formatCount(item.max_participants, '0')}</td>
+                          <td className='px-3 py-3'>
+                            <div className='flex w-44 items-center gap-3'>
+                              <div className='bg-muted h-2 flex-1 overflow-hidden rounded-full'>
+                                <div
+                                  className='bg-primary h-full rounded-full'
+                                  style={{ width: `${Math.min(fillRate, 100)}%` }}
+                                />
+                              </div>
+                              <span className='text-muted-foreground w-10 text-right text-xs'>
+                                {fillRate}%
+                              </span>
+                            </div>
+                          </td>
+                          <td className='px-3 py-3'>
+                            {formatCount(item.completed_session_count, '0')}/
+                            {formatCount(item.scheduled_session_count, '0')}
+                          </td>
+                          <td className='px-3 py-3'>
+                            <StatusBadge
+                              status={item.is_active === false ? 'inactive' : 'active'}
+                              label={item.is_active === false ? 'Inactive' : 'Active'}
+                            />
+                          </td>
+                          <td className='px-3 py-3'>
+                            <div className='flex flex-wrap gap-2'>
+                              <Button asChild size='sm' variant='outline'>
+                                <Link href='/dashboard/organisation/students'>Roster</Link>
+                              </Button>
+                              {item.uuid ? (
+                                <Button asChild size='sm' variant='secondary'>
+                                  <Link
+                                    href={`/dashboard/organisation/invite-students?classUuid=${encodeURIComponent(
+                                      item.uuid
+                                    )}`}
+                                  >
+                                    Invite
+                                  </Link>
+                                </Button>
+                              ) : null}
+                            </div>
+                          </td>
+                        </tr>
+                      );
+                    })}
                   </tbody>
                 </table>
               </div>
