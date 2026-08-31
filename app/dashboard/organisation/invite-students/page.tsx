@@ -39,7 +39,6 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { EmptyState } from '@/components/ui/empty-state';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { ScrollArea } from '@/components/ui/scroll-area';
 import {
   Select,
   SelectContent,
@@ -717,7 +716,7 @@ export default function InviteStudentsPage() {
                     onSubjectChange={setSubjectByCategory}
                   />
                 )}
-                <ScrollArea className='max-h-[360px] pr-3 xl:max-h-[540px] 2xl:max-h-[620px]'>
+                <div className='max-h-[360px] overflow-y-auto pr-3 xl:max-h-[540px] 2xl:max-h-[620px]'>
                   {classesQuery.isLoading ? (
                     <div className='grid gap-2 sm:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4'>
                       {[...Array(8)].map((_, index) => (
@@ -772,7 +771,7 @@ export default function InviteStudentsPage() {
                       })}
                     </div>
                   )}
-                </ScrollArea>
+                </div>
                 <div className='text-muted-foreground flex items-center justify-between text-xs'>
                   <span>
                     {selectedClasses.length} of {filteredClasses.length} selected
