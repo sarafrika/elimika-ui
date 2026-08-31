@@ -6,14 +6,15 @@ import {
   ArrowUp,
   ArrowUpDown,
   Briefcase,
+  Eye,
   GraduationCap,
-  MessageSquare,
+  Mail,
   MoreHorizontal,
+  Plus,
   Star,
-  Trash2,
-  UserX,
 } from 'lucide-react';
 import { useRouter } from 'next/navigation';
+import type { KeyboardEvent } from 'react';
 import { useMemo, useState } from 'react';
 import { toast } from 'sonner';
 
@@ -28,16 +29,8 @@ import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
-  DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import {
-  Sheet,
-  SheetContent,
-  SheetDescription,
-  SheetHeader,
-  SheetTitle,
-} from '@/components/ui/sheet';
 import { Skeleton } from '@/components/ui/skeleton';
 import {
   Table,
@@ -87,6 +80,9 @@ const isPendingInstructorInvite = (invite: OrganisationInvitation) =>
   String(invite.domain_name ?? '').toLowerCase() === 'instructor' &&
   ['PENDING', 'AWAITING_GUARDIAN_CONSENT'].includes(String(invite.status ?? ''));
 
+const instructorHref = (id: string) =>
+  `/dashboard/organisation/instructors/${encodeURIComponent(id)}`;
+
 export default function InstructorsPage() {
   const router = useRouter();
   const organisation = useOrganisation();
@@ -124,9 +120,15 @@ export default function InstructorsPage() {
   );
 
   const [levelSort, setLevelSort] = useState<'asc' | 'desc' | null>(null);
-  const [selectedUuid, setSelectedUuid] = useState<string | null>(null);
   const [activeCategory, setActiveCategory] = useState<string>(ALL_CATEGORIES);
   const [subjectByCategory, setSubjectByCategory] = useState<Record<string, string>>({});
+
+  const openInstructor = (id: string) => router.push(instructorHref(id));
+  const handleRowKeyDown = (event: KeyboardEvent<HTMLTableRowElement>, id: string) => {
+    if (event.key !== 'Enter' && event.key !== ' ') return;
+    event.preventDefault();
+    openInstructor(id);
+  };
 
   const filtered = useMemo(
     () => filterByCategoryTabs(items, activeCategory, subjectByCategory, null),
@@ -153,14 +155,13 @@ export default function InstructorsPage() {
     };
   }, [invitations, items]);
 
-  const selected = items.find(i => i.id === selectedUuid);
   const errorDescription = getErrorMessage(
     summariesQuery.error,
     'Refresh the page or try again in a moment.'
   );
 
   return (
-    <div className='mx-auto w-full max-w-[1600px] space-y-6 px-3 py-4 sm:px-5 lg:px-6 2xl:max-w-[1840px]'>
+    <div className='mx-auto w-full max-w-[2200px] space-y-6 px-3 py-4 sm:px-5 lg:px-6 2xl:max-w-[2400px]'>
       <PageHeader
         title='Instructors & Staff'
         description='Onboard instructors, assign courses, and track performance.'
@@ -270,152 +271,113 @@ export default function InstructorsPage() {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {sorted.map(i => (
-                <TableRow
-                  key={i.id}
-                  className='hover:bg-muted/50 cursor-pointer'
-                  onClick={() => setSelectedUuid(i.id)}
-                >
-                  <TableCell className='whitespace-nowrap'>
-                    <div className='flex items-center gap-3'>
-                      <Avatar className='h-8 w-8 shrink-0'>
-                        <AvatarFallback className='bg-primary/10 text-primary text-xs font-semibold'>
-                          {initials(i.name)}
-                        </AvatarFallback>
-                      </Avatar>
-                      <span className='font-medium'>{i.name}</span>
-                    </div>
-                  </TableCell>
-                  <TableCell className='min-w-[120px] whitespace-nowrap'>
-                    {i.highest_qualification ? (
-                      <Badge variant='secondary'>{i.highest_qualification}</Badge>
-                    ) : (
-                      <span className='text-muted-foreground'>-</span>
-                    )}
-                  </TableCell>
-                  <TableCell className='text-muted-foreground min-w-[120px] whitespace-nowrap'>
-                    {i.top_skill ?? i.field_of_study ?? '-'}
-                  </TableCell>
-                  <TableCell className='whitespace-nowrap'>
-                    <Badge variant='default'>Active</Badge>
-                  </TableCell>
-                  <TableCell className='text-center whitespace-nowrap'>
-                    {formatCount(i.classCount, '0')}
-                  </TableCell>
-                  <TableCell className='font-medium whitespace-nowrap'>
-                    {i.rating != null ? (
-                      <span className='inline-flex items-center gap-1'>
-                        <Star className='fill-warning text-warning h-3.5 w-3.5' />
-                        {i.rating.toFixed(1)}
-                        <span className='text-muted-foreground text-xs font-normal'>
-                          ({formatCount(i.reviewCount, '0')})
+              {sorted.map(i => {
+                const href = instructorHref(i.id);
+                return (
+                  <TableRow
+                    key={i.id}
+                    aria-label={`View ${i.name} profile`}
+                    className='hover:bg-muted/50 cursor-pointer'
+                    role='link'
+                    tabIndex={0}
+                    onClick={() => openInstructor(i.id)}
+                    onKeyDown={event => handleRowKeyDown(event, i.id)}
+                  >
+                    <TableCell className='whitespace-nowrap'>
+                      <div className='flex items-center gap-3'>
+                        <Avatar className='h-8 w-8 shrink-0'>
+                          <AvatarFallback className='bg-primary/10 text-primary text-xs font-semibold'>
+                            {initials(i.name)}
+                          </AvatarFallback>
+                        </Avatar>
+                        <span className='font-medium'>{i.name}</span>
+                      </div>
+                    </TableCell>
+                    <TableCell className='min-w-[120px] whitespace-nowrap'>
+                      {i.highest_qualification ? (
+                        <Badge variant='secondary'>{i.highest_qualification}</Badge>
+                      ) : (
+                        <span className='text-muted-foreground'>-</span>
+                      )}
+                    </TableCell>
+                    <TableCell className='text-muted-foreground min-w-[120px] whitespace-nowrap'>
+                      {i.top_skill ?? i.field_of_study ?? '-'}
+                    </TableCell>
+                    <TableCell className='whitespace-nowrap'>
+                      <Badge variant='default'>Active</Badge>
+                    </TableCell>
+                    <TableCell className='text-center whitespace-nowrap'>
+                      {formatCount(i.classCount, '0')}
+                    </TableCell>
+                    <TableCell className='font-medium whitespace-nowrap'>
+                      {i.rating != null ? (
+                        <span className='inline-flex items-center gap-1'>
+                          <Star className='fill-warning text-warning h-3.5 w-3.5' />
+                          {i.rating.toFixed(1)}
+                          <span className='text-muted-foreground text-xs font-normal'>
+                            ({formatCount(i.reviewCount, '0')})
+                          </span>
                         </span>
-                      </span>
-                    ) : (
-                      '-'
-                    )}
-                  </TableCell>
-                  <TableCell className='text-right whitespace-nowrap'>
-                    <DropdownMenu>
-                      <DropdownMenuTrigger asChild>
-                        <Button
-                          variant='ghost'
-                          size='icon'
-                          className='h-8 w-8'
-                          onClick={e => e.stopPropagation()}
-                        >
-                          <MoreHorizontal className='h-4 w-4' />
-                        </Button>
-                      </DropdownMenuTrigger>
-                      <DropdownMenuContent align='end'>
-                        <DropdownMenuItem
-                          onClick={e => {
-                            e.stopPropagation();
-                            toast.info('Message', { description: `Messaging ${i.name}.` });
-                          }}
-                        >
-                          <MessageSquare className='mr-2 h-4 w-4' /> Message
-                        </DropdownMenuItem>
-                        <DropdownMenuItem
-                          onClick={e => {
-                            e.stopPropagation();
-                            toast.warning('Suspend', { description: `${i.name} suspended.` });
-                          }}
-                        >
-                          <UserX className='mr-2 h-4 w-4' /> Suspend
-                        </DropdownMenuItem>
-                        <DropdownMenuSeparator />
-                        <DropdownMenuItem
-                          className='text-destructive focus:text-destructive'
-                          onClick={e => {
-                            e.stopPropagation();
-                            toast.error('Remove', { description: `${i.name} removed.` });
-                          }}
-                        >
-                          <Trash2 className='mr-2 h-4 w-4' /> Remove
-                        </DropdownMenuItem>
-                      </DropdownMenuContent>
-                    </DropdownMenu>
-                  </TableCell>
-                </TableRow>
-              ))}
+                      ) : (
+                        '-'
+                      )}
+                    </TableCell>
+                    <TableCell className='text-right whitespace-nowrap'>
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                          <Button
+                            variant='ghost'
+                            size='icon'
+                            className='h-8 w-8'
+                            onClick={e => e.stopPropagation()}
+                          >
+                            <MoreHorizontal className='h-4 w-4' />
+                          </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align='end'>
+                          <DropdownMenuItem
+                            onClick={e => {
+                              e.stopPropagation();
+                              router.push(href);
+                            }}
+                          >
+                            <Eye className='mr-2 h-4 w-4' /> View profile
+                          </DropdownMenuItem>
+                          <DropdownMenuItem
+                            disabled={!i.email}
+                            onClick={e => {
+                              e.stopPropagation();
+                              if (!i.email) {
+                                toast.error('Email unavailable');
+                                return;
+                              }
+                              window.location.href = `mailto:${i.email}`;
+                            }}
+                          >
+                            <Mail className='mr-2 h-4 w-4' /> Email instructor
+                          </DropdownMenuItem>
+                          <DropdownMenuItem
+                            onClick={e => {
+                              e.stopPropagation();
+                              router.push(
+                                `/dashboard/organisation/classes/new?instructorUuid=${encodeURIComponent(
+                                  i.instructor_uuid ?? i.id
+                                )}`
+                              );
+                            }}
+                          >
+                            <Plus className='mr-2 h-4 w-4' /> Assign class
+                          </DropdownMenuItem>
+                        </DropdownMenuContent>
+                      </DropdownMenu>
+                    </TableCell>
+                  </TableRow>
+                );
+              })}
             </TableBody>
           </Table>
         </div>
       )}
-
-      <Sheet open={selected != null} onOpenChange={o => !o && setSelectedUuid(null)}>
-        <SheetContent className='w-full overflow-y-auto sm:max-w-md'>
-          {selected ? (
-            <>
-              <SheetHeader>
-                <div className='flex items-center gap-4'>
-                  <Avatar className='h-14 w-14'>
-                    <AvatarFallback className='bg-primary/10 text-primary font-semibold'>
-                      {initials(selected.name)}
-                    </AvatarFallback>
-                  </Avatar>
-                  <div className='min-w-0'>
-                    <SheetTitle className='truncate'>{selected.name}</SheetTitle>
-                    <SheetDescription>
-                      {selected.top_skill ?? selected.field_of_study ?? 'Instructor'}
-                    </SheetDescription>
-                    <div className='mt-2'>
-                      <Badge variant='default'>Active</Badge>
-                    </div>
-                  </div>
-                </div>
-              </SheetHeader>
-              <div className='mt-6 space-y-4 text-sm'>
-                <Detail label='Email' value={selected.email ?? '-'} />
-                <Detail
-                  label='Highest qualification'
-                  value={selected.highest_qualification ?? '-'}
-                />
-                <Detail label='Field of study' value={selected.field_of_study ?? '-'} />
-                <Detail label='Assigned classes' value={formatCount(selected.classCount, '0')} />
-                <Detail
-                  label='Rating'
-                  value={
-                    selected.rating != null
-                      ? `${selected.rating.toFixed(1)} (${formatCount(selected.reviewCount, '0')} reviews)`
-                      : 'No reviews yet'
-                  }
-                />
-              </div>
-            </>
-          ) : null}
-        </SheetContent>
-      </Sheet>
-    </div>
-  );
-}
-
-function Detail({ label, value }: { label: string; value: string }) {
-  return (
-    <div className='flex items-start justify-between gap-4 border-b pb-3'>
-      <span className='text-muted-foreground'>{label}</span>
-      <span className='text-right font-medium'>{value}</span>
     </div>
   );
 }
