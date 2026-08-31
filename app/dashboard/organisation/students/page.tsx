@@ -32,10 +32,16 @@ import {
   TableRow,
 } from '@/components/ui/table';
 import { useOrganisation } from '@/context/organisation-context';
+import { useUsersByIds } from '@/hooks/use-batched-lookups';
 import { extractList, extractPage, getTotalFromMetadata } from '@/lib/api-helpers';
 import { getErrorMessage } from '@/lib/error-utils';
 import { formatCount, toNumber } from '@/lib/metrics';
-import type { Student, StudentEnrolmentSummaryDto, StudentGroupRosterEntry } from '@/services/client';
+import type {
+  Student,
+  StudentEnrolmentSummaryDto,
+  StudentGroupRosterEntry,
+  User,
+} from '@/services/client';
 import {
   getStudentSummariesOptions,
   listRosterOptions,
@@ -47,7 +53,7 @@ import { generateWalletId, institutionRef } from '@/src/lib/wallet-id';
 import { PendingInvitations } from './_components/pending-invitations';
 
 const fullName = (student: StudentGroupRosterEntry) =>
-  student.full_name?.trim() || student.email || 'Unnamed student';
+  student.full_name?.trim() || student.email || null;
 
 function statusVariant(status: string) {
   if (status === 'Active') return 'default' as const;
@@ -72,7 +78,19 @@ type StudentRow = {
   programType: null;
 };
 
+const EMPTY_UUID = '00000000-0000-0000-0000-000000000000';
 const studentHref = (id: string) => `/dashboard/organisation/students/${encodeURIComponent(id)}`;
+
+const statusFromSummary = (summary?: { total: number; completed: number }) => {
+  if (!summary || summary.total === 0) return 'No classes yet';
+  return summary.completed >= summary.total ? 'Completed' : 'Active';
+};
+
+const displayNameFromUser = (user?: User, profile?: Student) =>
+  user?.full_name?.trim() ||
+  user?.display_name?.trim() ||
+  profile?.full_name?.trim() ||
+  (profile?.uuid ? `Student ${profile.uuid.slice(0, 8)}` : 'Student');
 
 const asSummaryMap = (summaries: StudentEnrolmentSummaryDto[] | undefined) => {
   const map = new Map<string, { total: number; completed: number }>();
@@ -103,9 +121,13 @@ export default function StudentsPage() {
     enabled: Boolean(organisationUuid),
   });
 
+  const summaries = useMemo(
+    () => extractList<StudentEnrolmentSummaryDto>(summariesQuery.data),
+    [summariesQuery.data]
+  );
   const summaryByStudent = useMemo(() => {
-    return asSummaryMap(extractList<StudentEnrolmentSummaryDto>(summariesQuery.data));
-  }, [summariesQuery.data]);
+    return asSummaryMap(summaries);
+  }, [summaries]);
 
   const rosterPage = useMemo(
     () => extractPage<StudentGroupRosterEntry>(rosterQuery.data),
@@ -124,7 +146,7 @@ export default function StudentsPage() {
     ...searchStudentsOptions({
       query: {
         searchParams: {
-          user_uuid_in: rosterUserUuids.join(',') || '00000000-0000-0000-0000-000000000000',
+          user_uuid_in: rosterUserUuids.join(',') || EMPTY_UUID,
         },
         pageable: { page: 0, size: Math.max(rosterUserUuids.length, 1) },
       },
@@ -141,39 +163,113 @@ export default function StudentsPage() {
     }
     return map;
   }, [studentProfilesQuery.data]);
-
-  const students = useMemo(
+  const summaryStudentUuids = useMemo(
     () =>
-      roster.flatMap<StudentRow>(student => {
-        if (!student.student_uuid) return [];
-        const profile = studentProfileByUserUuid.get(student.student_uuid);
-        const summary =
-          (profile?.uuid ? summaryByStudent.get(profile.uuid) : undefined) ??
-          summaryByStudent.get(student.student_uuid);
-        const pct =
-          summary && summary.total > 0 ? Math.round((summary.completed / summary.total) * 100) : 0;
-        const status =
-          !summary || summary.total === 0 ? 'No classes yet' : pct >= 100 ? 'Completed' : 'Active';
-        return [
-          {
-            id: student.student_uuid,
-            name: fullName(student),
-            email: student.email ?? null,
-            image: toAuthenticatedMediaUrl(student.profile_image_url) ?? null,
-            groupName: student.group_name ?? null,
-            tier: student.tier ?? null,
-            status,
-            completedCourses: summary?.completed ?? 0,
-            totalCourses: summary?.total ?? 0,
-            pct,
-            category: student.tier ?? student.group_name ?? 'Uncategorised',
-            subject: student.stream_label ?? student.group_name ?? null,
-            programType: null,
-          },
-        ];
-      }),
-    [roster, studentProfileByUserUuid, summaryByStudent]
+      Array.from(
+        new Set(
+          summaries.map(summary => summary.student_uuid).filter((uuid): uuid is string => !!uuid)
+        )
+      ).sort((a, b) => a.localeCompare(b)),
+    [summaries]
   );
+  const summaryStudentProfilesQuery = useQuery({
+    ...searchStudentsOptions({
+      query: {
+        searchParams: {
+          uuid_in: summaryStudentUuids.join(',') || EMPTY_UUID,
+        },
+        pageable: { page: 0, size: Math.max(summaryStudentUuids.length, 1) },
+      },
+    }),
+    enabled: summaryStudentUuids.length > 0,
+    retry: false,
+  });
+  const studentProfileByUuid = useMemo(() => {
+    const map = new Map<string, Student>();
+    for (const profile of extractPage<Student>(summaryStudentProfilesQuery.data).items) {
+      if (profile.uuid) {
+        map.set(profile.uuid, profile);
+      }
+    }
+    return map;
+  }, [summaryStudentProfilesQuery.data]);
+  const profileUserUuids = useMemo(
+    () =>
+      Array.from(
+        new Set(
+          [...studentProfileByUserUuid.values(), ...studentProfileByUuid.values()]
+            .map(profile => profile.user_uuid)
+            .filter((uuid): uuid is string => !!uuid)
+        )
+      ).sort((a, b) => a.localeCompare(b)),
+    [studentProfileByUserUuid, studentProfileByUuid]
+  );
+  const { userMap, isLoading: usersLoading } = useUsersByIds(profileUserUuids);
+
+  const students = useMemo(() => {
+    const rows: StudentRow[] = [];
+    const representedStudentUuids = new Set<string>();
+
+    for (const student of roster) {
+      if (!student.student_uuid) continue;
+      const profile = studentProfileByUserUuid.get(student.student_uuid);
+      if (profile?.uuid) {
+        representedStudentUuids.add(profile.uuid);
+      }
+      const user = profile?.user_uuid ? userMap[profile.user_uuid] : undefined;
+      const summary =
+        (profile?.uuid ? summaryByStudent.get(profile.uuid) : undefined) ??
+        summaryByStudent.get(student.student_uuid);
+      const pct =
+        summary && summary.total > 0 ? Math.round((summary.completed / summary.total) * 100) : 0;
+      rows.push({
+        id: student.student_uuid,
+        name: fullName(student) ?? displayNameFromUser(user, profile),
+        email: student.email ?? user?.email ?? null,
+        image: toAuthenticatedMediaUrl(user?.profile_image_url ?? student.profile_image_url) ?? null,
+        groupName: student.group_name ?? null,
+        tier: student.tier ?? null,
+        status: statusFromSummary(summary),
+        completedCourses: summary?.completed ?? 0,
+        totalCourses: summary?.total ?? 0,
+        pct,
+        category: student.tier ?? student.group_name ?? 'Uncategorised',
+        subject: student.stream_label ?? student.group_name ?? null,
+        programType: null,
+      });
+    }
+
+    for (const summary of summaries) {
+      if (!summary.student_uuid || representedStudentUuids.has(summary.student_uuid)) continue;
+      const profile = studentProfileByUuid.get(summary.student_uuid);
+      const user = profile?.user_uuid ? userMap[profile.user_uuid] : undefined;
+      const normalizedSummary = {
+        total: toNumber(summary.total),
+        completed: toNumber(summary.completed),
+      };
+      const pct =
+        normalizedSummary.total > 0
+          ? Math.round((normalizedSummary.completed / normalizedSummary.total) * 100)
+          : 0;
+      rows.push({
+        id: summary.student_uuid,
+        name: displayNameFromUser(user, profile),
+        email: user?.email ?? null,
+        image: toAuthenticatedMediaUrl(user?.profile_image_url) ?? null,
+        groupName: 'Ungrouped',
+        tier: null,
+        status: statusFromSummary(normalizedSummary),
+        completedCourses: normalizedSummary.completed,
+        totalCourses: normalizedSummary.total,
+        pct,
+        category: 'Enrolled students',
+        subject: null,
+        programType: null,
+      });
+    }
+
+    return rows;
+  }, [roster, studentProfileByUserUuid, studentProfileByUuid, summaries, summaryByStudent, userMap]);
 
   const [activeCategory, setActiveCategory] = useState<string>(ALL_CATEGORIES);
   const [subjectByCategory, setSubjectByCategory] = useState<Record<string, string>>({});
@@ -183,7 +279,7 @@ export default function StudentsPage() {
   );
   const kpis = useMemo(
     () => ({
-      total: totalRosterStudents,
+      total: Math.max(totalRosterStudents, students.length),
       active: students.filter(student => student.status === 'Active').length,
       completed: students.filter(student => student.status === 'Completed').length,
       noClasses: students.filter(student => student.status === 'No classes yet').length,
@@ -191,8 +287,16 @@ export default function StudentsPage() {
     [students, totalRosterStudents]
   );
   const studentsLoading =
-    rosterQuery.isLoading || summariesQuery.isLoading || studentProfilesQuery.isLoading;
-  const loadError = rosterQuery.error ?? summariesQuery.error ?? studentProfilesQuery.error;
+    rosterQuery.isLoading ||
+    summariesQuery.isLoading ||
+    studentProfilesQuery.isLoading ||
+    summaryStudentProfilesQuery.isLoading ||
+    usersLoading;
+  const loadError =
+    rosterQuery.error ??
+    summariesQuery.error ??
+    studentProfilesQuery.error ??
+    summaryStudentProfilesQuery.error;
   const errorDescription = getErrorMessage(loadError, 'Refresh the page or try again in a moment.');
   const openStudent = (id: string) => router.push(studentHref(id));
   const handleRowKeyDown = (event: KeyboardEvent<HTMLTableRowElement>, id: string) => {
@@ -274,6 +378,7 @@ export default function StudentsPage() {
                   rosterQuery.refetch();
                   summariesQuery.refetch();
                   studentProfilesQuery.refetch();
+                  summaryStudentProfilesQuery.refetch();
                 }}
               >
                 Retry
