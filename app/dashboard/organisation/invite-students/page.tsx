@@ -575,7 +575,7 @@ export default function InviteStudentsPage() {
   const canNext = step === 1 ? selectedClasses.length > 0 : step === 2 ? canSend : true;
 
   return (
-    <div className='mx-auto w-full max-w-[1600px] space-y-6 px-3 py-4 min-[2000px]:max-w-[2200px] sm:px-5 lg:px-6 2xl:max-w-[1840px]'>
+    <div className='mx-auto w-full max-w-[2200px] space-y-6 px-3 py-4 sm:px-5 lg:px-6'>
       <PageHeader
         title='Invite students'
         description="Follow the steps to invite students to enrol in your organisation's classes."
