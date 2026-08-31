@@ -1,11 +1,13 @@
+import { toNumber } from '@/lib/metrics';
+
 export type PageMetadataLike = {
-  totalElements?: number;
+  totalElements?: number | bigint;
   totalPages?: number;
   pageNumber?: number;
   pageSize?: number;
   hasNext?: boolean;
   hasPrevious?: boolean;
-  total_elements?: number;
+  total_elements?: number | bigint;
 } & Record<string, unknown>;
 
 function getObjectValue<T>(value: unknown, key: string): T | undefined {
@@ -67,5 +69,5 @@ export function getTotalFromMetadata(metadata?: PageMetadataLike): number {
 
   const total = metadata.totalElements ?? metadata.total_elements ?? 0;
 
-  return typeof total === 'number' ? total : 0;
+  return toNumber(total);
 }

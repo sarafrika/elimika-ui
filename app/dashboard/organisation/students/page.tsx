@@ -2,15 +2,17 @@
 
 import { useQuery } from '@tanstack/react-query';
 import { Eye, Mail, MoreHorizontal, Plus, Trash2, Users } from 'lucide-react';
+import Link from 'next/link';
 import { useMemo, useState } from 'react';
 import { toast } from 'sonner';
 
 import { AvatarWithSkeleton } from '@/components/avatar-with-skeleton';
 import { ALL_CATEGORIES, CategoryTabs, filterByCategoryTabs } from '@/components/category-tabs';
-import { EmptyState } from '@/components/empty-state';
-import { PageHeader } from '@/components/page-header';
+import { PageHeader } from '@/components/dashboard/page-header';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
+import { Card, CardContent } from '@/components/ui/card';
+import { EmptyState } from '@/components/ui/empty-state';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -20,6 +22,7 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { Progress } from '@/components/ui/progress';
 import { Skeleton } from '@/components/ui/skeleton';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import {
   Table,
   TableBody,
@@ -28,21 +31,21 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
-import { generateWalletId, institutionRef } from '@/src/lib/wallet-id';
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
-import Link from 'next/link';
-
 import { useOrganisation } from '@/context/organisation-context';
-import { PendingInvitations } from './_components/pending-invitations';
-import { extractPage } from '@/lib/api-helpers';
-import type { User } from '@/services/client';
+import { extractPage, getTotalFromMetadata } from '@/lib/api-helpers';
+import { getErrorMessage } from '@/lib/error-utils';
+import { formatCount, toNumber } from '@/lib/metrics';
+import type { StudentEnrolmentSummaryDto, StudentGroupRosterEntry } from '@/services/client';
 import {
   getStudentSummariesOptions,
-  getUsersByOrganisationAndDomainOptions,
+  listRosterOptions,
 } from '@/services/client/@tanstack/react-query.gen';
+import { generateWalletId, institutionRef } from '@/src/lib/wallet-id';
 
-const fullName = (u: User) =>
-  `${u.first_name ?? ''} ${u.last_name ?? ''}`.trim() || u.email || 'Unnamed';
+import { PendingInvitations } from './_components/pending-invitations';
+
+const fullName = (student: StudentGroupRosterEntry) =>
+  student.full_name?.trim() || student.email || 'Unnamed student';
 
 function statusVariant(status: string) {
   if (status === 'Active') return 'default' as const;
@@ -51,13 +54,42 @@ function statusVariant(status: string) {
   return 'destructive' as const;
 }
 
+type StudentRow = {
+  id: string;
+  name: string;
+  email: string | null;
+  image: string | null;
+  groupName: string | null;
+  tier: string | null;
+  status: 'Active' | 'Completed' | 'No classes yet';
+  completedCourses: number;
+  totalCourses: number;
+  pct: number;
+  category: string;
+  subject: string | null;
+  programType: null;
+};
+
+const asSummaryMap = (summaries: StudentEnrolmentSummaryDto[] | undefined) => {
+  const map = new Map<string, { total: number; completed: number }>();
+  for (const summary of summaries ?? []) {
+    if (!summary.student_uuid) continue;
+    map.set(summary.student_uuid, {
+      total: toNumber(summary.total),
+      completed: toNumber(summary.completed),
+    });
+  }
+  return map;
+};
+
 export default function StudentsPage() {
   const organisation = useOrganisation();
   const organisationUuid = organisation?.uuid ?? '';
 
-  const studentsQuery = useQuery({
-    ...getUsersByOrganisationAndDomainOptions({
-      path: { uuid: organisationUuid, domainName: 'student' },
+  const rosterQuery = useQuery({
+    ...listRosterOptions({
+      path: { organisationUuid },
+      query: { pageable: { page: 0, size: 100 } },
     }),
     enabled: Boolean(organisationUuid),
   });
@@ -67,38 +99,45 @@ export default function StudentsPage() {
   });
 
   const summaryByStudent = useMemo(() => {
-    const map = new Map<string, { total: number; completed: number }>();
-    for (const s of summariesQuery.data?.data ?? []) {
-      if (s.student_uuid)
-        map.set(s.student_uuid, {
-          total: Number(s.total ?? 0),
-          completed: Number(s.completed ?? 0),
-        });
-    }
-    return map;
+    return asSummaryMap(summariesQuery.data?.data);
   }, [summariesQuery.data]);
 
-  // Members without a resolvable uuid cannot be rendered or acted on, so they are dropped
-  // rather than carried through as partially-undefined rows.
-  const students = extractPage<User>(studentsQuery.data).items.flatMap(u => {
-    if (!u.uuid) return [];
-    const summary = summaryByStudent.get(u.uuid);
-    const pct =
-      summary && summary.total > 0 ? Math.round((summary.completed / summary.total) * 100) : 0;
-    const status =
-      !summary || summary.total === 0 ? 'No classes yet' : pct >= 100 ? 'Completed' : 'Active';
-    return [
-      {
-        id: u.uuid,
-        name: fullName(u),
-        status,
-        completedCourses: summary?.completed ?? 0,
-        totalCourses: summary?.total ?? 0,
-        pct,
-        category: 'Uncategorised',
-      },
-    ];
-  });
+  const rosterPage = useMemo(
+    () => extractPage<StudentGroupRosterEntry>(rosterQuery.data),
+    [rosterQuery.data]
+  );
+  const roster = rosterPage.items;
+  const totalRosterStudents = getTotalFromMetadata(rosterPage.metadata) || roster.length;
+
+  const students = useMemo(
+    () =>
+      roster.flatMap<StudentRow>(student => {
+        if (!student.student_uuid) return [];
+        const summary = summaryByStudent.get(student.student_uuid);
+        const pct =
+          summary && summary.total > 0 ? Math.round((summary.completed / summary.total) * 100) : 0;
+        const status =
+          !summary || summary.total === 0 ? 'No classes yet' : pct >= 100 ? 'Completed' : 'Active';
+        return [
+          {
+            id: student.student_uuid,
+            name: fullName(student),
+            email: student.email ?? null,
+            image: student.profile_image_url ?? null,
+            groupName: student.group_name ?? null,
+            tier: student.tier ?? null,
+            status,
+            completedCourses: summary?.completed ?? 0,
+            totalCourses: summary?.total ?? 0,
+            pct,
+            category: student.tier ?? student.group_name ?? 'Uncategorised',
+            subject: student.stream_label ?? student.group_name ?? null,
+            programType: null,
+          },
+        ];
+      }),
+    [roster, summaryByStudent]
+  );
 
   const [activeCategory, setActiveCategory] = useState<string>(ALL_CATEGORIES);
   const [subjectByCategory, setSubjectByCategory] = useState<Record<string, string>>({});
@@ -106,13 +145,24 @@ export default function StudentsPage() {
     () => filterByCategoryTabs(students, activeCategory, subjectByCategory),
     [students, activeCategory, subjectByCategory]
   );
+  const kpis = useMemo(
+    () => ({
+      total: totalRosterStudents,
+      active: students.filter(student => student.status === 'Active').length,
+      completed: students.filter(student => student.status === 'Completed').length,
+      noClasses: students.filter(student => student.status === 'No classes yet').length,
+    }),
+    [students, totalRosterStudents]
+  );
+  const loadError = rosterQuery.error;
+  const errorDescription = getErrorMessage(loadError, 'Refresh the page or try again in a moment.');
 
   return (
     <div className='mx-auto w-full max-w-[1600px] space-y-6 px-3 py-4 sm:px-5 lg:px-6 2xl:max-w-[1840px]'>
       <PageHeader
         title='Students'
         description='Invite, onboard and manage students across your programs.'
-        action={
+        actions={
           <Button asChild size='sm'>
             <Link href='/dashboard/organisation/invite-students'>
               <Plus className='mr-2 h-4 w-4' /> Invite students
@@ -121,24 +171,71 @@ export default function StudentsPage() {
         }
       />
 
+      <div className='grid gap-4 sm:grid-cols-2 lg:grid-cols-4'>
+        <Card className='border-l-primary border-l-4'>
+          <CardContent className='p-6'>
+            <div className='text-2xl font-bold'>{formatCount(kpis.total, '0')}</div>
+            <div className='text-muted-foreground text-xs'>Students</div>
+          </CardContent>
+        </Card>
+        <Card className='border-l-success border-l-4'>
+          <CardContent className='p-6'>
+            <div className='text-2xl font-bold'>{formatCount(kpis.active, '0')}</div>
+            <div className='text-muted-foreground text-xs'>Active</div>
+          </CardContent>
+        </Card>
+        <Card className='border-l-accent border-l-4'>
+          <CardContent className='p-6'>
+            <div className='text-2xl font-bold'>{formatCount(kpis.completed, '0')}</div>
+            <div className='text-muted-foreground text-xs'>Completed</div>
+          </CardContent>
+        </Card>
+        <Card className='border-l-warning border-l-4'>
+          <CardContent className='p-6'>
+            <div className='text-2xl font-bold'>{formatCount(kpis.noClasses, '0')}</div>
+            <div className='text-muted-foreground text-xs'>No classes yet</div>
+          </CardContent>
+        </Card>
+      </div>
+
       <PendingInvitations organisationUuid={organisationUuid} />
 
-      <CategoryTabs
-        items={students}
-        activeCategory={activeCategory}
-        onCategoryChange={setActiveCategory}
-        subjectByCategory={subjectByCategory}
-        onSubjectChange={setSubjectByCategory}
-      />
+      {students.length > 0 && (
+        <CategoryTabs
+          items={students}
+          activeCategory={activeCategory}
+          onCategoryChange={setActiveCategory}
+          subjectByCategory={subjectByCategory}
+          onSubjectChange={setSubjectByCategory}
+        />
+      )}
 
       <div className='space-y-4'>
-        {studentsQuery.isLoading ? (
+        {rosterQuery.isLoading ? (
           <div className='space-y-2'>
             {[...Array(6)].map((_, i) => (
               <Skeleton key={i} className='h-14 w-full' />
             ))}
           </div>
-        ) : visibleStudents.length === 0 ? (
+        ) : loadError ? (
+          <EmptyState
+            icon={Users}
+            title='Could not load students'
+            description={errorDescription}
+            action={
+              <Button
+                variant='outline'
+                size='sm'
+                onClick={() => {
+                  rosterQuery.refetch();
+                  summariesQuery.refetch();
+                }}
+              >
+                Retry
+              </Button>
+            }
+          />
+        ) : students.length === 0 ? (
           <EmptyState
             icon={Users}
             title='No students yet'
@@ -151,14 +248,21 @@ export default function StudentsPage() {
               </Button>
             }
           />
+        ) : visibleStudents.length === 0 ? (
+          <EmptyState
+            icon={Users}
+            title='No students match this filter'
+            description='Choose another category or subject to widen the list.'
+          />
         ) : (
           <div className='overflow-x-auto rounded-lg border'>
-            <Table className='min-w-[1040px]'>
+            <Table className='min-w-[1080px]'>
               <TableHeader>
                 <TableRow>
                   <TableHead className='whitespace-nowrap'>Student</TableHead>
                   <TableHead className='whitespace-nowrap'>Wallet ID</TableHead>
                   <TableHead className='whitespace-nowrap'>Institution Ref</TableHead>
+                  <TableHead className='whitespace-nowrap'>Group</TableHead>
                   <TableHead className='whitespace-nowrap'>Status</TableHead>
                   <TableHead className='whitespace-nowrap'>Course Completion</TableHead>
                   <TableHead className='text-right whitespace-nowrap'>Actions</TableHead>
@@ -169,8 +273,19 @@ export default function StudentsPage() {
                   <TableRow key={student.id}>
                     <TableCell className='whitespace-nowrap'>
                       <div className='flex items-center gap-3'>
-                        <AvatarWithSkeleton src='' name={student.name} className='h-8 w-8' />
-                        <span className='font-medium'>{student.name}</span>
+                        <AvatarWithSkeleton
+                          src={student.image}
+                          name={student.name}
+                          className='h-8 w-8'
+                        />
+                        <div className='min-w-0'>
+                          <div className='truncate font-medium'>{student.name}</div>
+                          {student.email && (
+                            <div className='text-muted-foreground truncate text-xs'>
+                              {student.email}
+                            </div>
+                          )}
+                        </div>
                       </div>
                     </TableCell>
                     <TableCell className='whitespace-nowrap'>
@@ -182,11 +297,21 @@ export default function StudentsPage() {
                       </span>
                     </TableCell>
                     <TableCell className='whitespace-nowrap'>
+                      <div className='min-w-0'>
+                        <div className='truncate text-sm'>{student.groupName ?? 'Ungrouped'}</div>
+                        {student.tier && (
+                          <div className='text-muted-foreground truncate text-xs'>
+                            {student.tier}
+                          </div>
+                        )}
+                      </div>
+                    </TableCell>
+                    <TableCell className='whitespace-nowrap'>
                       <Badge variant={statusVariant(student.status)}>{student.status}</Badge>
                     </TableCell>
                     <TableCell className='whitespace-nowrap'>
                       {student.totalCourses === 0 ? (
-                        <span className='text-muted-foreground text-sm'>—</span>
+                        <span className='text-muted-foreground text-sm'>-</span>
                       ) : (
                         <TooltipProvider delayDuration={100}>
                           <Tooltip>
@@ -200,7 +325,8 @@ export default function StudentsPage() {
                             </TooltipTrigger>
                             <TooltipContent side='top'>
                               <p>
-                                {student.completedCourses} of {student.totalCourses} attended
+                                {formatCount(student.completedCourses, '0')} of{' '}
+                                {formatCount(student.totalCourses, '0')} attended
                               </p>
                             </TooltipContent>
                           </Tooltip>

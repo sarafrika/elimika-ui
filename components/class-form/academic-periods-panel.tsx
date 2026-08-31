@@ -11,8 +11,10 @@ import {
   DAY_FULL,
   DAYS,
   fmtShortDate,
+  parseDurationMinutes,
   type PeriodSlot,
   periodStatus,
+  sessionEndFor,
 } from './class-form-shared';
 
 const statusStyles: Record<string, string> = {
@@ -55,7 +57,12 @@ export function AcademicPeriodsPanel({
   const addSlot = (id: string) => {
     const p = periods.find(x => x.id === id);
     if (!p) return;
-    updatePeriod(id, { slots: [...p.slots, { day: 'Mon', start: '09:00', end: '10:00' }] });
+    updatePeriod(id, {
+      slots: [
+        ...p.slots,
+        { day: 'Mon', start: '09:00', end: sessionEndFor('09:00', 60), durationMinutes: '60' },
+      ],
+    });
   };
   const updateSlot = (id: string, idx: number, patch: Partial<PeriodSlot>) => {
     const p = periods.find(x => x.id === id);
@@ -125,16 +132,30 @@ export function AcademicPeriodsPanel({
                           <Input
                             type='time'
                             value={slot.start}
-                            onChange={e => updateSlot(p.id, idx, { start: e.target.value })}
+                            onChange={e =>
+                              updateSlot(p.id, idx, {
+                                start: e.target.value,
+                                end: sessionEndFor(e.target.value, slot.durationMinutes || 60),
+                              })
+                            }
                             className='h-5 w-[80px] border-0 p-0 text-[11px] shadow-none focus-visible:ring-0'
                           />
-                          <span className='text-muted-foreground'>–</span>
                           <Input
-                            type='time'
-                            value={slot.end}
-                            onChange={e => updateSlot(p.id, idx, { end: e.target.value })}
-                            className='h-5 w-[80px] border-0 p-0 text-[11px] shadow-none focus-visible:ring-0'
+                            type='number'
+                            min={1}
+                            step={1}
+                            inputMode='numeric'
+                            value={slot.durationMinutes ?? ''}
+                            onChange={e => {
+                              const durationMinutes = e.target.value.replace(/\D/g, '');
+                              updateSlot(p.id, idx, {
+                                durationMinutes,
+                                end: sessionEndFor(slot.start, durationMinutes || 1),
+                              });
+                            }}
+                            className='h-5 w-[76px] border-0 p-0 text-[11px] shadow-none focus-visible:ring-0'
                           />
+                          <span className='text-muted-foreground'>min</span>
                         </div>
                         <button
                           type='button'
@@ -221,9 +242,9 @@ export function AcademicPeriodsPanel({
               </div>
             </div>
 
-            {p.slots.some(s => s.start >= s.end) && (
+            {p.slots.some(s => !parseDurationMinutes(s.durationMinutes)) && (
               <div className='bg-destructive/10 text-destructive mt-3 rounded-md px-3 py-1.5 text-[11px]'>
-                One or more slots have an end time before the start time.
+                One or more slots need a positive whole-minute duration.
               </div>
             )}
           </div>

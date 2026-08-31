@@ -10,6 +10,7 @@ import { Separator } from '@/components/ui/separator';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useUserProfile } from '@/context/profile-context';
 import { usePaymentMode } from '@/hooks/use-payment-mode';
+import { getErrorMessage } from '@/lib/error-utils';
 import type { CartItemResponse } from '@/services/client';
 import {
   completeCheckoutMutation,
@@ -77,6 +78,7 @@ export default function CartPage() {
   const cart = cartQuery?.data?.data ?? null;
   const cartItems = useMemo(() => cart?.items ?? [], [cart?.items]);
   const isEmpty = cartItems.length === 0;
+  const isOpenCart = (cart?.status ?? 'OPEN').toUpperCase() === 'OPEN';
   const studentUuid = profile?.student?.uuid;
   const classCartItems = useMemo(
     () =>
@@ -180,8 +182,14 @@ export default function CartPage() {
       toast.success('You are enrolled! Your courses are unlocked.');
       clearCart();
       router.push('/dashboard/student/learning-hub');
-    } catch (_error) {
-      toast.error('Could not complete your enrolment. Please try again.');
+    } catch (error) {
+      await Promise.all([
+        queryClient.invalidateQueries({
+          queryKey: getCartQueryKey({ path: { cartId } }),
+        }),
+        invalidateEnrollmentSuccessQueries(queryClient, { cartId }),
+      ]);
+      toast.error(getErrorMessage(error, 'Could not complete your enrolment. Please try again.'));
     } finally {
       setEnrolling(false);
     }
@@ -302,17 +310,28 @@ export default function CartPage() {
                     <div key={item.id}>
                       <CartItem
                         item={item}
+                        disableRemove={!isOpenCart || removeItemMut.isPending}
                         handleRemoveItem={id => {
+                          if (!isOpenCart) {
+                            toast.error('This cart is no longer editable.');
+                            return;
+                          }
                           removeItemMut.mutate(
                             {
                               path: { cartId: cartId as string, itemId: id },
                             },
                             {
-                              onSuccess: data => {
+                              onSuccess: () => {
                                 queryClient.invalidateQueries({
                                   queryKey: getCartQueryKey({ path: { cartId: cartId as string } }),
                                 });
                                 toast.success('Cart Item removed successfully');
+                              },
+                              onError: error => {
+                                queryClient.invalidateQueries({
+                                  queryKey: getCartQueryKey({ path: { cartId: cartId as string } }),
+                                });
+                                toast.error(getErrorMessage(error, 'Unable to remove this item.'));
                               },
                             }
                           );
@@ -426,7 +445,7 @@ export default function CartPage() {
                         size='lg'
                         className='bg-primary hover:bg-primary/90 w-full rounded-full text-base font-semibold shadow-lg transition'
                         onClick={enrolWithoutPayment}
-                        disabled={enrolling || checkoutBlocked}
+                        disabled={enrolling || checkoutBlocked || !isOpenCart}
                       >
                         {eligibilityLoading
                           ? 'Checking eligibility...'
@@ -476,9 +495,11 @@ export default function CartPage() {
 
 function CartItem({
   item,
+  disableRemove = false,
   handleRemoveItem,
 }: {
   item: CartItemResponse;
+  disableRemove?: boolean;
   handleRemoveItem: (id: string) => void;
 }) {
   const title = item.title ?? 'Course';
@@ -521,6 +542,7 @@ function CartItem({
               onClick={() => handleRemoveItem(item?.id as string)}
               variant='ghost'
               size='icon'
+              disabled={disableRemove}
               className='text-destructive hover:bg-destructive/10 hover:text-destructive h-8 w-8'
             >
               <Trash2 className='h-4 w-4' />

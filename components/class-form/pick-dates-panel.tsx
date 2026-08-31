@@ -106,26 +106,16 @@ export function PickDatesPanel({
           <div className='text-sm font-semibold'>Session Settings</div>
           <div className='space-y-1'>
             <Label className='text-xs'>
-              Session Duration <span className='text-destructive'>*</span>
+              Session Duration (minutes) <span className='text-destructive'>*</span>
             </Label>
-            <Select value={sessionDuration} onValueChange={onSessionDurationChange}>
-              <SelectTrigger>
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                {['30m', '1h', '1.5h', '2h', '3h', '4h'].map(d => (
-                  <SelectItem key={d} value={d}>
-                    {d === '30m'
-                      ? '30 Minutes'
-                      : d === '1h'
-                        ? '1 Hour'
-                        : d === '1.5h'
-                          ? '1.5 Hours'
-                          : `${d.replace('h', '')} Hours`}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+            <Input
+              type='number'
+              min={1}
+              step={1}
+              inputMode='numeric'
+              value={sessionDuration}
+              onChange={e => onSessionDurationChange(e.target.value.replace(/\D/g, ''))}
+            />
           </div>
           <div className='grid gap-3 sm:grid-cols-2'>
             <div className='space-y-1'>
@@ -139,8 +129,10 @@ export function PickDatesPanel({
               />
             </div>
             <div className='space-y-1'>
-              <Label className='text-xs'>End Time</Label>
-              <Input type='time' value={sessionEnd} readOnly className='bg-muted/50' />
+              <Label className='text-xs'>Derived End Time</Label>
+              <div className='bg-muted/50 text-muted-foreground flex h-10 items-center rounded-md border px-3 text-sm'>
+                {fmtTime12(sessionEnd)}
+              </div>
             </div>
           </div>
           <div className='space-y-1'>

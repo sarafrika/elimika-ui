@@ -4,45 +4,63 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import {
   ArrowLeft,
   ArrowRight,
-  BookOpenCheck,
   Check,
   CheckCircle2,
   Clock3,
-  Layers3,
-  ListChecks,
+  Copy,
+  Facebook,
+  History,
+  Linkedin,
   Loader2,
   Mail,
   MailCheck,
+  MessageCircle,
   RotateCw,
   Send,
   ShieldCheck,
+  Smartphone,
+  Share2,
+  Twitter,
   Users,
   UsersRound,
   X,
   XCircle,
 } from 'lucide-react';
-import { useEffect, useMemo, useRef, useState } from 'react';
+import type { ClipboardEvent, KeyboardEvent } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { toast } from 'sonner';
 
 import { CategoryTabs, filterByCategoryTabs } from '@/components/category-tabs';
-import { PageHeader } from '@/components/page-header';
+import { PageHeader } from '@/components/dashboard/page-header';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Checkbox } from '@/components/ui/checkbox';
+import { EmptyState } from '@/components/ui/empty-state';
+import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { ScrollArea } from '@/components/ui/scroll-area';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
+import { Skeleton } from '@/components/ui/skeleton';
 import { Textarea } from '@/components/ui/textarea';
-import { cn } from '@/lib/utils';
 import { useOrganisation } from '@/context/organisation-context';
-import { useCoursesByIds, useProgramsByIds } from '@/hooks/use-batched-lookups';
+import { getErrorMessage } from '@/lib/error-utils';
+import { formatCount, toNumber } from '@/lib/metrics';
+import { cn } from '@/lib/utils';
 import type { ClassDefinition, StudentGroup } from '@/services/client';
 import {
   getClassDefinitionsForOrganisationOptions,
+  getStudentSummariesQueryKey,
+  getUsersByOrganisationAndDomainQueryKey,
   listGroupsOptions,
   listOrganisationInvitationsOptions,
   listOrganisationInvitationsQueryKey,
+  listRosterQueryKey,
   resendOrganisationInvitationMutation,
   revokeOrganisationInvitationMutation,
   sendOrganisationInvitationsMutation,
@@ -60,43 +78,86 @@ const EXPIRES_IN_DAYS = 14;
 
 const TEMPLATES = [
   {
-    id: 'welcome',
+    id: 'warm-welcome',
     name: 'Warm welcome',
-    subject: "You're invited to join {{school}}",
-    body: "Hi {{student}},\n\nYou've been invited to enroll with {{school}}. Click the link below to accept your invitation and get started.\n\nSee you in class,\n{{sender}}",
+    subject: "You're invited to join {{className}} at {{schoolName}}",
+    body: "Hi {{studentName}},\n\nYou're invited to join {{className}} at {{schoolName}}. We'd love to have you enroll. Use the secure link in this email to confirm your spot.\n\nSee you in class,\n{{senderName}}",
   },
   {
     id: 'cohort',
     name: 'New cohort',
     subject: 'Your seat in the new cohort is ready',
-    body: 'Hello {{student}},\n\nA new cohort is opening at {{school}} and we saved you a spot. Accept your invite to secure your place.\n\n{{sender}}',
+    body: 'Hello {{studentName}},\n\nA new cohort is opening at {{schoolName}} and we saved you a spot in {{className}}. Use the secure link in this email to confirm your place.\n\n{{senderName}}',
   },
   {
     id: 'reminder',
     name: 'Gentle reminder',
-    subject: 'A quick reminder to join {{school}}',
-    body: "Hi {{student}},\n\nJust a friendly nudge — your invitation to {{school}} is still open. Accept it whenever you're ready.\n\n{{sender}}",
+    subject: 'A quick reminder to join {{className}}',
+    body: "Hi {{studentName}},\n\nJust a friendly nudge: your invitation to {{className}} at {{schoolName}} is still open. Use the secure link in this email whenever you're ready.\n\n{{senderName}}",
   },
 ] as const;
 
 const DEFAULT_TEMPLATE = TEMPLATES[0];
 
+const INVITE_CHANNELS = [
+  {
+    id: 'email',
+    label: 'Email',
+    status: 'Live',
+    available: true,
+    icon: Mail,
+  },
+  {
+    id: 'sms',
+    label: 'SMS',
+    status: 'Pending API',
+    available: false,
+    icon: Smartphone,
+  },
+  {
+    id: 'whatsapp',
+    label: 'WhatsApp',
+    status: 'Pending link',
+    available: false,
+    icon: MessageCircle,
+  },
+  {
+    id: 'facebook',
+    label: 'Facebook',
+    status: 'Pending link',
+    available: false,
+    icon: Facebook,
+  },
+  {
+    id: 'x',
+    label: 'X',
+    status: 'Pending link',
+    available: false,
+    icon: Twitter,
+  },
+  {
+    id: 'linkedin',
+    label: 'LinkedIn',
+    status: 'Pending link',
+    available: false,
+    icon: Linkedin,
+  },
+  {
+    id: 'copy-link',
+    label: 'Copy link',
+    status: 'Pending link',
+    available: false,
+    icon: Copy,
+  },
+] as const;
+
 type Recipient = { name: string; email: string };
 type SendResult = { email: string; ok: boolean; message?: string };
 type RecipientParse = { recipients: Recipient[]; invalid: string[] };
-type SelectionMode = 'offerings' | 'classes';
-type OfferingGroup = {
-  key: string;
-  kind: 'course' | 'program' | 'standalone';
-  title: string;
-  subtitle: string;
-  classIds: string[];
-  classes: ClassDefinition[];
-  deliveryLabels: string[];
-};
 
 const LIVE_STATUSES = ['PENDING', 'AWAITING_GUARDIAN_CONSENT'];
 const ACCEPTED_STATUSES = ['ACCEPTED'];
+const EMAIL_SEPARATOR_PATTERN = /[,;\n\r]/;
 
 /** Parses "Name <email>", "Name, email" or bare emails from free text. */
 function parseRecipientInput(raw: string): RecipientParse {
@@ -131,8 +192,8 @@ function parseRecipientInput(raw: string): RecipientParse {
 }
 
 const STEPS = [
-  { n: 1, label: 'Classes', icon: Users },
-  { n: 2, label: 'Recipients', icon: UsersRound },
+  { n: 1, label: 'Select classes', icon: Users },
+  { n: 2, label: 'Select recipients', icon: UsersRound },
   { n: 3, label: 'Message & send', icon: Mail },
 ] as const;
 
@@ -141,19 +202,33 @@ const toggle = (arr: string[], id: string) =>
 
 const uniqueStrings = (items: string[]) => Array.from(new Set(items.filter(Boolean)));
 
-const shortId = (uuid: string) => uuid.slice(0, 8);
+const mergeRecipients = (current: Recipient[], additions: Recipient[]) => {
+  const seen = new Set(current.map(recipient => recipient.email));
+  const next = [...current];
+
+  for (const recipient of additions) {
+    if (seen.has(recipient.email)) continue;
+    seen.add(recipient.email);
+    next.push(recipient);
+  }
+
+  return next;
+};
 
 export default function InviteStudentsPage() {
   const organisation = useOrganisation();
   const organisationUuid = organisation?.uuid ?? '';
   const queryClient = useQueryClient();
   const preselectKeyRef = useRef('');
+  const emailInputRef = useRef<HTMLInputElement>(null);
 
   const [step, setStep] = useState<1 | 2 | 3>(1);
-  const [selectionMode, setSelectionMode] = useState<SelectionMode>('offerings');
+  const [showHistory, setShowHistory] = useState(false);
   const [selectedClasses, setSelectedClasses] = useState<string[]>([]);
   const [selectedGroups, setSelectedGroups] = useState<string[]>([]);
-  const [emails, setEmails] = useState('');
+  const [emailDraft, setEmailDraft] = useState('');
+  const [emailRecipients, setEmailRecipients] = useState<Recipient[]>([]);
+  const [invalidRecipients, setInvalidRecipients] = useState<string[]>([]);
   const [templateId, setTemplateId] = useState<string>(DEFAULT_TEMPLATE.id);
   const [message, setMessage] = useState<string>(DEFAULT_TEMPLATE.body);
   const [activeCategory, setActiveCategory] = useState('All');
@@ -173,74 +248,6 @@ export default function InviteStudentsPage() {
         .filter((c): c is ClassDefinition => Boolean(c?.uuid)),
     [classesQuery.data]
   );
-  const courseIds = useMemo(() => uniqueStrings(classes.map(c => c.course_uuid ?? '')), [classes]);
-  const programIds = useMemo(
-    () => uniqueStrings(classes.map(c => c.program_uuid ?? '')),
-    [classes]
-  );
-  const { courseMap } = useCoursesByIds(courseIds);
-  const { programMap } = useProgramsByIds(programIds);
-  const offeringGroups: OfferingGroup[] = useMemo(() => {
-    const grouped = new Map<
-      string,
-      {
-        kind: OfferingGroup['kind'];
-        uuid: string;
-        classes: ClassDefinition[];
-      }
-    >();
-
-    for (const klass of classes) {
-      const classUuid = klass.uuid;
-      if (!classUuid) continue;
-      const kind: OfferingGroup['kind'] = klass.program_uuid
-        ? 'program'
-        : klass.course_uuid
-          ? 'course'
-          : 'standalone';
-      const uuid = klass.program_uuid ?? klass.course_uuid ?? classUuid;
-      const key = `${kind}:${uuid}`;
-      const current = grouped.get(key);
-      if (current) {
-        current.classes.push(klass);
-      } else {
-        grouped.set(key, { kind, uuid, classes: [klass] });
-      }
-    }
-
-    return Array.from(grouped.entries())
-      .map(([key, group]) => {
-        const sortedClasses = [...group.classes].sort((a, b) => a.title.localeCompare(b.title));
-        const classIds = sortedClasses
-          .map(klass => klass.uuid)
-          .filter((uuid): uuid is string => Boolean(uuid));
-        const deliveryLabels = uniqueStrings(sortedClasses.map(categoryLabel));
-        const fallbackTitle = sortedClasses[0]?.title ?? 'Class';
-        const title =
-          group.kind === 'program'
-            ? (programMap[group.uuid]?.title ?? `Program ${shortId(group.uuid)}`)
-            : group.kind === 'course'
-              ? (courseMap[group.uuid]?.name ?? `Course ${shortId(group.uuid)}`)
-              : fallbackTitle;
-        const offeringLabel =
-          group.kind === 'program'
-            ? 'Program bundle'
-            : group.kind === 'course'
-              ? 'Course'
-              : 'Standalone class';
-        const classLabel = `${classIds.length} class${classIds.length === 1 ? '' : 'es'}`;
-        return {
-          key,
-          kind: group.kind,
-          title,
-          subtitle: `${offeringLabel} · ${classLabel}`,
-          classIds,
-          classes: sortedClasses,
-          deliveryLabels,
-        };
-      })
-      .sort((a, b) => a.title.localeCompare(b.title));
-  }, [classes, courseMap, programMap]);
 
   const classTabItems = useMemo(
     () =>
@@ -292,22 +299,122 @@ export default function InviteStudentsPage() {
   const revokeInvitation = useMutation(revokeOrganisationInvitationMutation());
   const resendInvitation = useMutation(resendOrganisationInvitationMutation());
 
-  const recipientInput = useMemo(() => parseRecipientInput(emails), [emails]);
-  const recipients = recipientInput.recipients;
-  const invalidRecipients = recipientInput.invalid;
+  const recipients = emailRecipients;
+  const addRecipientsFromText = useCallback((raw: string) => {
+    const parsed = parseRecipientInput(raw);
+
+    if (parsed.recipients.length > 0) {
+      setEmailRecipients(current => mergeRecipients(current, parsed.recipients));
+    }
+
+    if (parsed.invalid.length > 0) {
+      setInvalidRecipients(current => uniqueStrings([...current, ...parsed.invalid]));
+    }
+
+    return parsed;
+  }, []);
+  const commitEmailDraft = useCallback(() => {
+    const draft = emailDraft.trim();
+    if (!draft) return;
+
+    addRecipientsFromText(draft);
+    setEmailDraft('');
+  }, [addRecipientsFromText, emailDraft]);
+  const handleEmailDraftChange = useCallback(
+    (value: string) => {
+      if (EMAIL_SEPARATOR_PATTERN.test(value)) {
+        addRecipientsFromText(value);
+        setEmailDraft('');
+        return;
+      }
+
+      setEmailDraft(value);
+    },
+    [addRecipientsFromText]
+  );
+  const handleEmailKeyDown = useCallback(
+    (event: KeyboardEvent<HTMLInputElement>) => {
+      const hasDraft = emailDraft.trim().length > 0;
+      const shouldCommit =
+        event.key === 'Enter' ||
+        event.key === 'Tab' ||
+        event.key === ',' ||
+        event.key === ';' ||
+        (event.key === ' ' && parseRecipientInput(emailDraft).recipients.length > 0);
+
+      if (hasDraft && shouldCommit) {
+        event.preventDefault();
+        commitEmailDraft();
+        return;
+      }
+
+      if (!hasDraft && event.key === 'Backspace') {
+        setEmailRecipients(current => current.slice(0, -1));
+      }
+    },
+    [commitEmailDraft, emailDraft]
+  );
+  const handleEmailPaste = useCallback(
+    (event: ClipboardEvent<HTMLInputElement>) => {
+      const pasted = event.clipboardData.getData('text').trim();
+      if (!pasted) return;
+
+      event.preventDefault();
+      addRecipientsFromText(`${emailDraft} ${pasted}`.trim());
+      setEmailDraft('');
+    },
+    [addRecipientsFromText, emailDraft]
+  );
+  const removeEmailRecipient = useCallback((email: string) => {
+    setEmailRecipients(current => current.filter(recipient => recipient.email !== email));
+  }, []);
 
   /** Students reached via a group, on top of any addresses pasted in. */
   const groupReach = useMemo(
     () =>
       groups
         .filter(g => selectedGroups.includes(g.uuid))
-        .reduce((total, g) => total + Number(g.member_count ?? 0), 0),
+        .reduce((total, g) => total + toNumber(g.member_count), 0),
     [groups, selectedGroups]
   );
 
   const sendInvitations = useMutation(sendOrganisationInvitationsMutation());
   const sending = sendInvitations.isPending;
   const canSend = recipients.length > 0 || selectedGroups.length > 0;
+  const selectedClassTitles = useMemo(
+    () =>
+      selectedClasses
+        .map(id => classes.find(klass => klass.uuid === id)?.title)
+        .filter((title): title is string => Boolean(title)),
+    [classes, selectedClasses]
+  );
+  const classNamesJoined = useMemo(() => {
+    if (selectedClassTitles.length === 0) return 'your selected classes';
+    if (selectedClassTitles.length === 1) return selectedClassTitles[0] ?? 'your selected classes';
+    if (selectedClassTitles.length === 2) return selectedClassTitles.join(' and ');
+    const lastTitle = selectedClassTitles.at(-1) ?? 'your selected classes';
+    return `${selectedClassTitles.slice(0, -1).join(', ')}, and ${lastTitle}`;
+  }, [selectedClassTitles]);
+  const organisationName = organisation?.name ?? 'your organisation';
+  const currentTemplate =
+    TEMPLATES.find(template => template.id === templateId) ?? DEFAULT_TEMPLATE;
+  const renderedMessage = useMemo(
+    () =>
+      message
+        .replaceAll('{{studentName}}', 'Student')
+        .replaceAll('{{schoolName}}', organisationName)
+        .replaceAll('{{className}}', classNamesJoined)
+        .replaceAll('{{senderName}}', organisationName),
+    [classNamesJoined, message, organisationName]
+  );
+  const renderedSubject = useMemo(
+    () =>
+      currentTemplate.subject
+        .replaceAll('{{schoolName}}', organisationName)
+        .replaceAll('{{className}}', classNamesJoined)
+        .trim(),
+    [classNamesJoined, currentTemplate.subject, organisationName]
+  );
 
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
@@ -346,25 +453,33 @@ export default function InviteStudentsPage() {
     setStep(2);
   }, [classes, preselectKey]);
 
-  const toggleClassSet = (classIds: string[]) => {
-    setSelectedClasses(prev => {
-      const selected = new Set(prev);
-      const everySelected = classIds.every(id => selected.has(id));
-      for (const id of classIds) {
-        if (everySelected) {
-          selected.delete(id);
-        } else {
-          selected.add(id);
-        }
-      }
-      return Array.from(selected);
+  const rosterKeyPrefix = useMemo(() => {
+    const [root] = listRosterQueryKey({
+      path: { organisationUuid },
+      query: { pageable: { page: 0, size: 100 } },
     });
-  };
+    const { query, ...prefix } = root;
+    return [prefix];
+  }, [organisationUuid]);
 
-  const refreshInvitations = () =>
-    queryClient.invalidateQueries({
-      queryKey: listOrganisationInvitationsQueryKey({ path: { organisationUuid } }),
-    });
+  const refreshInviteCaches = useCallback(
+    () =>
+      Promise.all([
+        queryClient.invalidateQueries({
+          queryKey: listOrganisationInvitationsQueryKey({ path: { organisationUuid } }),
+        }),
+        queryClient.invalidateQueries({ queryKey: rosterKeyPrefix }),
+        queryClient.invalidateQueries({
+          queryKey: getStudentSummariesQueryKey({ path: { organisationUuid } }),
+        }),
+        queryClient.invalidateQueries({
+          queryKey: getUsersByOrganisationAndDomainQueryKey({
+            path: { uuid: organisationUuid, domainName: 'student' },
+          }),
+        }),
+      ]),
+    [organisationUuid, queryClient, rosterKeyPrefix]
+  );
 
   const actOnInvitation = async (
     invitationUuid: string,
@@ -375,12 +490,12 @@ export default function InviteStudentsPage() {
     try {
       await run();
       toast.success(kind === 'resend' ? 'Invitation resent' : 'Invitation revoked');
-      await refreshInvitations();
+      await refreshInviteCaches();
     } catch (err) {
       toast.error(
         kind === 'resend' ? 'Could not resend invitation' : 'Could not revoke invitation',
         {
-          description: err instanceof Error ? err.message : 'Please try again.',
+          description: getErrorMessage(err, 'Please try again.'),
         }
       );
     } finally {
@@ -393,8 +508,15 @@ export default function InviteStudentsPage() {
    * offer can be created, so a single bad address never costs the rest of the batch.
    */
   const send = async () => {
+    if (selectedClasses.length === 0) {
+      toast.error('Select at least one class to invite students to.');
+      setStep(1);
+      return;
+    }
+
     if (!canSend) {
       toast.error('Add at least one recipient email, or pick a student group.');
+      setStep(2);
       return;
     }
 
@@ -406,7 +528,7 @@ export default function InviteStudentsPage() {
           student_group_uuids: selectedGroups.length ? selectedGroups : null,
           domain_name: 'student',
           class_uuids: selectedClasses.length ? selectedClasses : null,
-          message: message.trim() || null,
+          message: renderedMessage.trim() || null,
           expires_in_days: EXPIRES_IN_DAYS,
         },
       });
@@ -427,9 +549,7 @@ export default function InviteStudentsPage() {
         toast.success(`${ok} invitation${ok === 1 ? '' : 's'} sent`, {
           description: out.length - ok ? `${out.length - ok} could not be invited.` : undefined,
         });
-        await queryClient.invalidateQueries({
-          queryKey: listOrganisationInvitationsQueryKey({ path: { organisationUuid } }),
-        });
+        await refreshInviteCaches();
       } else {
         toast.error('No invitations could be sent', {
           description: out[0]?.message ?? 'Check the addresses and try again.',
@@ -437,36 +557,41 @@ export default function InviteStudentsPage() {
       }
     } catch (err) {
       toast.error('Could not send invitations', {
-        description: err instanceof Error ? err.message : 'Please try again.',
+        description: getErrorMessage(err, 'Please try again.'),
       });
     }
   };
 
   const reset = () => {
     setResults(null);
-    setEmails('');
+    setEmailDraft('');
+    setEmailRecipients([]);
+    setInvalidRecipients([]);
     setStep(1);
     setSelectedClasses([]);
     setSelectedGroups([]);
   };
 
-  const canNext = step === 1 ? true : step === 2 ? canSend : true;
+  const canNext = step === 1 ? selectedClasses.length > 0 : step === 2 ? canSend : true;
 
   return (
-    <div className='mx-auto w-full max-w-[1600px] space-y-6 px-3 py-4 sm:px-5 lg:px-6 2xl:max-w-[1840px]'>
+    <div className='mx-auto w-full max-w-[2200px] space-y-6 px-3 py-4 sm:px-5 lg:px-6'>
       <PageHeader
-        title='Invite Students'
-        description='Invite new students to your organisation and classes.'
+        title='Invite students'
+        description="Follow the steps to invite students to enrol in your organisation's classes."
       />
 
-      {/* Stepper */}
-      <div>
+      <div className='bg-card rounded-lg border p-3'>
         <ol className='flex items-center gap-2'>
           {STEPS.map((s, i) => {
             const Icon = s.icon;
             const active = step === s.n;
             const done = step > s.n;
-            const clickable = s.n <= step || done;
+            const clickable =
+              s.n < step ||
+              s.n === step ||
+              (s.n === 2 && selectedClasses.length > 0) ||
+              (s.n === 3 && selectedClasses.length > 0 && canSend);
             return (
               <li key={s.n} className='flex flex-1 items-center gap-2'>
                 <button
@@ -518,9 +643,19 @@ export default function InviteStudentsPage() {
             <Badge variant='secondary' className='gap-1'>
               <Users className='h-3 w-3' /> {selectedGroups.length} group
               {selectedGroups.length === 1 ? '' : 's'}
-              {groupReach > 0 ? ` · ${groupReach}` : ''}
+              {groupReach > 0 ? ` - ${formatCount(groupReach, '0')}` : ''}
             </Badge>
           )}
+          <Button
+            type='button'
+            variant='ghost'
+            size='sm'
+            className='ml-auto h-7 px-2 text-xs'
+            onClick={() => setShowHistory(value => !value)}
+          >
+            <History className='mr-1 h-3.5 w-3.5' />
+            {showHistory ? 'Hide' : 'View'} history
+          </Button>
         </div>
       </div>
 
@@ -560,231 +695,60 @@ export default function InviteStudentsPage() {
         </Card>
       ) : (
         <>
-          {/* Step 1 — Classes */}
+          {/* Step 1 - Classes */}
           {step === 1 && (
             <Card>
               <CardHeader>
                 <CardTitle className='flex items-center gap-2 text-base'>
-                  <BookOpenCheck className='h-4 w-4' /> Select what to share
+                  <Users className='h-4 w-4' /> Select classes
                 </CardTitle>
                 <CardDescription>
-                  Share a single course, a program bundle, or the exact classes students should see
-                  after accepting.
+                  Pick the classes students will be invited to enrol in.
                 </CardDescription>
               </CardHeader>
-              <CardContent className='space-y-4'>
-                <Tabs
-                  value={selectionMode}
-                  onValueChange={value => setSelectionMode(value as SelectionMode)}
-                  className='gap-4'
-                >
-                  <TabsList className='w-full sm:w-fit'>
-                    <TabsTrigger value='offerings' className='flex-1 sm:flex-none'>
-                      <Layers3 className='h-4 w-4' /> Courses &amp; bundles
-                    </TabsTrigger>
-                    <TabsTrigger value='classes' className='flex-1 sm:flex-none'>
-                      <ListChecks className='h-4 w-4' /> Class list
-                    </TabsTrigger>
-                  </TabsList>
-
-                  <TabsContent value='offerings' className='space-y-4'>
-                    <ScrollArea className='h-[360px] pr-3'>
-                      {offeringGroups.length === 0 ? (
-                        <p className='text-muted-foreground py-12 text-center text-sm'>
-                          No classes to share yet.
-                        </p>
-                      ) : (
-                        <div className='grid gap-2 lg:grid-cols-2'>
-                          {offeringGroups.map(group => {
-                            const selectedCount = group.classIds.filter(id =>
-                              selectedClasses.includes(id)
-                            ).length;
-                            const checked =
-                              selectedCount === group.classIds.length
-                                ? true
-                                : selectedCount > 0
-                                  ? 'indeterminate'
-                                  : false;
-                            return (
-                              <label
-                                key={group.key}
-                                className={cn(
-                                  'flex cursor-pointer items-start gap-3 rounded-md border p-3 transition-colors',
-                                  selectedCount > 0
-                                    ? 'border-primary bg-primary/5'
-                                    : 'hover:bg-muted/50'
-                                )}
-                              >
-                                <Checkbox
-                                  checked={checked}
-                                  onCheckedChange={() => toggleClassSet(group.classIds)}
-                                  className='mt-0.5'
-                                  aria-label={`Select ${group.title}`}
-                                />
-                                <div className='min-w-0 flex-1 space-y-2'>
-                                  <div className='flex flex-wrap items-center gap-2'>
-                                    <span className='min-w-0 flex-1 truncate text-sm font-medium'>
-                                      {group.title}
-                                    </span>
-                                    <Badge variant='secondary' className='capitalize'>
-                                      {group.kind === 'program'
-                                        ? 'Bundle'
-                                        : group.kind === 'course'
-                                          ? 'Course'
-                                          : 'Class'}
-                                    </Badge>
-                                  </div>
-                                  <p className='text-muted-foreground text-xs'>{group.subtitle}</p>
-                                  <div className='text-muted-foreground flex flex-wrap gap-1.5 text-xs'>
-                                    {group.deliveryLabels.map(label => (
-                                      <Badge key={label} variant='outline'>
-                                        {label}
-                                      </Badge>
-                                    ))}
-                                  </div>
-                                  <div className='text-muted-foreground flex flex-wrap gap-1.5 text-xs'>
-                                    {group.classes.slice(0, 3).map(klass => (
-                                      <span
-                                        key={klass.uuid}
-                                        className='bg-muted rounded px-1.5 py-0.5'
-                                      >
-                                        {klass.title}
-                                      </span>
-                                    ))}
-                                    {group.classes.length > 3 && (
-                                      <span className='bg-muted rounded px-1.5 py-0.5'>
-                                        +{group.classes.length - 3} more
-                                      </span>
-                                    )}
-                                  </div>
-                                </div>
-                              </label>
-                            );
-                          })}
-                        </div>
-                      )}
-                    </ScrollArea>
-                    <div className='text-muted-foreground flex flex-wrap items-center justify-between gap-2 text-xs'>
-                      <span>
-                        {selectedClasses.length} of {classes.length} class
-                        {classes.length === 1 ? '' : 'es'} selected
-                      </span>
-                      <div className='flex gap-2'>
-                        <Button
-                          variant='ghost'
-                          size='sm'
-                          onClick={() =>
-                            setSelectedClasses(classes.flatMap(c => (c.uuid ? [c.uuid] : [])))
-                          }
-                        >
-                          Select all
-                        </Button>
-                        <Button variant='ghost' size='sm' onClick={() => setSelectedClasses([])}>
-                          Clear
-                        </Button>
-                      </div>
+              <CardContent className='space-y-4 xl:space-y-5'>
+                {classes.length > 0 && (
+                  <CategoryTabs
+                    items={classTabItems}
+                    activeCategory={activeCategory}
+                    onCategoryChange={setActiveCategory}
+                    subjectByCategory={subjectByCategory}
+                    onSubjectChange={setSubjectByCategory}
+                  />
+                )}
+                <div className='max-h-[360px] overflow-y-auto pr-3 xl:max-h-[540px] 2xl:max-h-[620px]'>
+                  {classesQuery.isLoading ? (
+                    <div className='grid gap-2 sm:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4'>
+                      {[...Array(8)].map((_, index) => (
+                        <Skeleton key={index} className='h-[62px] rounded-md' />
+                      ))}
                     </div>
-                  </TabsContent>
-
-                  <TabsContent value='classes' className='space-y-4'>
-                    {classes.length > 0 && (
-                      <CategoryTabs
-                        items={classTabItems}
-                        activeCategory={activeCategory}
-                        onCategoryChange={setActiveCategory}
-                        subjectByCategory={subjectByCategory}
-                        onSubjectChange={setSubjectByCategory}
-                      />
-                    )}
-                    <ScrollArea className='h-[340px] pr-3'>
-                      {filteredClasses.length === 0 ? (
-                        <p className='text-muted-foreground py-12 text-center text-sm'>
-                          No classes to select.
-                        </p>
-                      ) : (
-                        <div className='grid gap-2 sm:grid-cols-2'>
-                          {filteredClasses.map(item => {
-                            const checked = selectedClasses.includes(item.id);
-                            return (
-                              <label
-                                key={item.id}
-                                className={cn(
-                                  'flex cursor-pointer items-start gap-3 rounded-md border p-3 transition-colors',
-                                  checked ? 'border-primary bg-primary/5' : 'hover:bg-muted/50'
-                                )}
-                              >
-                                <Checkbox
-                                  checked={checked}
-                                  onCheckedChange={() =>
-                                    setSelectedClasses(s => toggle(s, item.id))
-                                  }
-                                  className='mt-0.5'
-                                  aria-label={`Select ${item.title}`}
-                                />
-                                <div className='min-w-0 flex-1'>
-                                  <div className='truncate text-sm font-medium'>{item.title}</div>
-                                  <div className='text-muted-foreground truncate text-xs'>
-                                    {item.category}
-                                  </div>
-                                </div>
-                              </label>
-                            );
-                          })}
-                        </div>
-                      )}
-                    </ScrollArea>
-                    <div className='text-muted-foreground flex items-center justify-between text-xs'>
-                      <span>
-                        {selectedClasses.length} of {filteredClasses.length} selected
-                      </span>
-                      <div className='flex gap-2'>
-                        <Button
-                          variant='ghost'
-                          size='sm'
-                          onClick={() => setSelectedClasses(filteredClasses.map(c => c.id))}
-                        >
-                          Select all
+                  ) : classesQuery.isError ? (
+                    <EmptyState
+                      variant='compact'
+                      icon={Users}
+                      title='Could not load classes'
+                      description={getErrorMessage(classesQuery.error, 'Please try again.')}
+                      action={
+                        <Button variant='outline' size='sm' onClick={() => classesQuery.refetch()}>
+                          Retry
                         </Button>
-                        <Button variant='ghost' size='sm' onClick={() => setSelectedClasses([])}>
-                          Clear
-                        </Button>
-                      </div>
-                    </div>
-                  </TabsContent>
-                </Tabs>
-                <div className='text-muted-foreground flex items-center justify-between text-xs'>
-                  <span>
-                    Leaving this empty sends an organisation invite without surfacing a class.
-                  </span>
-                </div>
-              </CardContent>
-            </Card>
-          )}
-
-          {/* Step 2 — Recipients */}
-          {step === 2 && (
-            <Card>
-              <CardHeader>
-                <CardTitle className='flex items-center gap-2 text-base'>
-                  <UsersRound className='h-4 w-4' /> Add recipients
-                </CardTitle>
-                <CardDescription>
-                  Pick a student group, paste addresses, or both. Everyone is invited individually
-                  and decides for themselves.
-                </CardDescription>
-              </CardHeader>
-              <CardContent className='space-y-4'>
-                {groups.length > 0 && (
-                  <div>
-                    <Label className='text-muted-foreground mb-2 block text-xs uppercase'>
-                      Student groups
-                    </Label>
-                    <div className='grid gap-2 sm:grid-cols-2'>
-                      {groups.map(group => {
-                        const checked = selectedGroups.includes(group.uuid);
+                      }
+                    />
+                  ) : filteredClasses.length === 0 ? (
+                    <EmptyState
+                      variant='compact'
+                      icon={Users}
+                      title='No classes to select'
+                      description='Create a class first, then return here to invite students.'
+                    />
+                  ) : (
+                    <div className='grid gap-2 sm:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4'>
+                      {filteredClasses.map(item => {
+                        const checked = selectedClasses.includes(item.id);
                         return (
                           <label
-                            key={group.uuid}
+                            key={item.id}
                             className={cn(
                               'flex cursor-pointer items-start gap-3 rounded-md border p-3 transition-colors',
                               checked ? 'border-primary bg-primary/5' : 'hover:bg-muted/50'
@@ -792,180 +756,399 @@ export default function InviteStudentsPage() {
                           >
                             <Checkbox
                               checked={checked}
-                              onCheckedChange={() => setSelectedGroups(g => toggle(g, group.uuid))}
+                              onCheckedChange={() => setSelectedClasses(s => toggle(s, item.id))}
                               className='mt-0.5'
+                              aria-label={`Select ${item.title}`}
                             />
                             <div className='min-w-0 flex-1'>
-                              <div className='truncate text-sm font-medium'>{group.name}</div>
+                              <div className='truncate text-sm font-medium'>{item.title}</div>
                               <div className='text-muted-foreground truncate text-xs'>
-                                {Number(group.member_count ?? 0)} member
-                                {Number(group.member_count ?? 0) === 1 ? '' : 's'}
-                                {group.group_type ? ` · ${group.group_type}` : ''}
+                                {item.category}
                               </div>
                             </div>
                           </label>
                         );
                       })}
                     </div>
-                  </div>
-                )}
-
-                <div>
-                  <Label
-                    htmlFor='emails'
-                    className='text-muted-foreground mb-2 block text-xs uppercase'
-                  >
-                    Recipient emails
-                  </Label>
-                  <Textarea
-                    id='emails'
-                    placeholder='Jane Doe <jane@example.com>, sam@example.com'
-                    value={emails}
-                    onChange={e => setEmails(e.target.value)}
-                    rows={6}
-                  />
-                  <div className='text-muted-foreground mt-2 flex flex-wrap items-center gap-2 text-xs'>
-                    <Badge variant='outline'>{recipients.length} valid</Badge>
-                    {invalidRecipients.length > 0 && (
-                      <Badge variant='destructive'>{invalidRecipients.length} invalid</Badge>
-                    )}
-                    <span className='sm:ml-auto'>
-                      Separate with commas, semicolons, spaces, or new lines.
-                    </span>
-                  </div>
-                  {invalidRecipients.length > 0 && (
-                    <p className='text-destructive mt-1 text-xs'>
-                      Ignored: {invalidRecipients.slice(0, 3).join(', ')}
-                      {invalidRecipients.length > 3
-                        ? `, +${invalidRecipients.length - 3} more`
-                        : ''}
-                    </p>
                   )}
                 </div>
-                <div className='bg-muted/50 space-y-1.5 rounded-md p-3 text-sm'>
-                  <div className='flex items-center justify-between'>
-                    <span className='text-muted-foreground'>Valid addresses parsed</span>
-                    <span className='font-semibold tabular-nums'>
-                      {recipients.length} student{recipients.length === 1 ? '' : 's'}
-                    </span>
+                <div className='text-muted-foreground flex items-center justify-between text-xs'>
+                  <span>
+                    {selectedClasses.length} of {filteredClasses.length} selected
+                  </span>
+                  <div className='flex gap-2'>
+                    <Button
+                      variant='ghost'
+                      size='sm'
+                      onClick={() => setSelectedClasses(filteredClasses.map(item => item.id))}
+                    >
+                      Select all
+                    </Button>
+                    <Button variant='ghost' size='sm' onClick={() => setSelectedClasses([])}>
+                      Clear
+                    </Button>
                   </div>
-                  {selectedGroups.length > 0 && (
-                    <div className='flex items-center justify-between'>
-                      <span className='text-muted-foreground'>
-                        From {selectedGroups.length} group{selectedGroups.length === 1 ? '' : 's'}
-                      </span>
-                      <span className='font-semibold tabular-nums'>
-                        {groupReach} student{groupReach === 1 ? '' : 's'}
-                      </span>
-                    </div>
-                  )}
-                  {selectedGroups.length > 0 && recipients.length > 0 && (
-                    <p className='text-muted-foreground text-xs'>
-                      Anyone appearing in both is invited once.
-                    </p>
-                  )}
-                  {invalidRecipients.length > 0 && (
-                    <p className='text-muted-foreground text-xs'>
-                      Invalid entries stay out of the send batch until corrected.
-                    </p>
-                  )}
                 </div>
               </CardContent>
             </Card>
           )}
 
-          {/* Step 3 — Message & send */}
+          {/* Step 2 - Recipients */}
+          {step === 2 && (
+            <Card>
+              <CardHeader>
+                <CardTitle className='flex items-center gap-2 text-base'>
+                  <UsersRound className='h-4 w-4' /> Select recipients
+                </CardTitle>
+                <CardDescription>
+                  Send to student groups or paste specific emails. Everyone is invited individually.
+                </CardDescription>
+              </CardHeader>
+              <CardContent className='space-y-4 xl:grid xl:grid-cols-[minmax(0,1.15fr)_minmax(380px,0.85fr)] xl:gap-5 xl:space-y-0 2xl:grid-cols-[minmax(0,1.25fr)_minmax(440px,0.75fr)]'>
+                <div className='space-y-3'>
+                  <Label className='text-muted-foreground mb-2 block text-xs uppercase'>
+                    Groups
+                  </Label>
+                  {groupsQuery.isLoading ? (
+                    <div className='grid gap-2 sm:grid-cols-2 2xl:grid-cols-3'>
+                      {[...Array(4)].map((_, index) => (
+                        <Skeleton key={index} className='h-[62px] rounded-md' />
+                      ))}
+                    </div>
+                  ) : groupsQuery.isError ? (
+                    <EmptyState
+                      variant='compact'
+                      icon={UsersRound}
+                      title='Could not load groups'
+                      description={getErrorMessage(groupsQuery.error, 'Please try again.')}
+                      action={
+                        <Button variant='outline' size='sm' onClick={() => groupsQuery.refetch()}>
+                          Retry
+                        </Button>
+                      }
+                    />
+                  ) : groups.length === 0 ? (
+                    <EmptyState
+                      variant='compact'
+                      icon={UsersRound}
+                      title='No groups yet'
+                      description='Paste recipient emails below to invite students directly.'
+                    />
+                  ) : (
+                    <div className='grid gap-2 sm:grid-cols-2 2xl:grid-cols-3'>
+                      {groups.map(group => {
+                        const checked = selectedGroups.includes(group.uuid);
+                        const memberCount = toNumber(group.member_count);
+                        return (
+                          <label
+                            key={group.uuid}
+                            className={cn(
+                              'flex cursor-pointer items-center justify-between gap-3 rounded-md border p-3 transition-colors',
+                              checked ? 'border-primary bg-primary/5' : 'hover:bg-muted/50'
+                            )}
+                          >
+                            <div className='flex min-w-0 items-center gap-3'>
+                              <Checkbox
+                                checked={checked}
+                                onCheckedChange={() =>
+                                  setSelectedGroups(current => toggle(current, group.uuid))
+                                }
+                              />
+                              <div className='min-w-0'>
+                                <div className='truncate text-sm font-medium'>{group.name}</div>
+                                {group.group_type && (
+                                  <div className='text-muted-foreground truncate text-xs'>
+                                    {group.group_type}
+                                  </div>
+                                )}
+                              </div>
+                            </div>
+                            <Badge variant='secondary' className='shrink-0'>
+                              {formatCount(memberCount, '0')}
+                            </Badge>
+                          </label>
+                        );
+                      })}
+                    </div>
+                  )}
+                </div>
+
+                <div className='space-y-4'>
+                  <div>
+                    <Label
+                      htmlFor='recipient-email-input'
+                      className='text-muted-foreground mb-2 block text-xs uppercase'
+                    >
+                      Recipient emails
+                    </Label>
+                    <div
+                      className={cn(
+                        'border-input bg-background focus-within:border-ring focus-within:ring-ring/50 flex min-h-11 cursor-text flex-wrap items-center gap-2 rounded-md border px-2 py-2 shadow-xs transition-[border-color,box-shadow] focus-within:ring-[3px]',
+                        invalidRecipients.length > 0 &&
+                          'border-destructive focus-within:ring-destructive/20'
+                      )}
+                      onClick={() => emailInputRef.current?.focus()}
+                    >
+                      {recipients.map(recipient => (
+                        <span
+                          key={recipient.email}
+                          className='bg-primary/10 text-primary border-primary/20 inline-flex max-w-full items-center gap-1 rounded-full border px-2 py-1 text-xs font-medium'
+                        >
+                          <span className='max-w-[220px] truncate 2xl:max-w-[300px]'>
+                            {recipient.email}
+                          </span>
+                          <button
+                            type='button'
+                            className='hover:bg-primary/10 focus-visible:ring-ring/50 -mr-1 inline-flex h-5 w-5 items-center justify-center rounded-full outline-none focus-visible:ring-[3px]'
+                            aria-label={`Remove ${recipient.email}`}
+                            onClick={event => {
+                              event.stopPropagation();
+                              removeEmailRecipient(recipient.email);
+                            }}
+                          >
+                            <X className='h-3 w-3' />
+                          </button>
+                        </span>
+                      ))}
+                      <Input
+                        ref={emailInputRef}
+                        id='recipient-email-input'
+                        type='text'
+                        inputMode='email'
+                        autoComplete='email'
+                        placeholder={
+                          recipients.length === 0
+                            ? 'student1@example.com, student2@example.com'
+                            : 'Add another email'
+                        }
+                        value={emailDraft}
+                        onChange={event => handleEmailDraftChange(event.target.value)}
+                        onKeyDown={handleEmailKeyDown}
+                        onPaste={handleEmailPaste}
+                        onBlur={commitEmailDraft}
+                        aria-describedby='recipient-email-help recipient-email-errors'
+                        aria-invalid={invalidRecipients.length > 0}
+                        className='h-7 min-w-[14rem] flex-1 border-0 bg-transparent px-1 py-0 shadow-none focus-visible:ring-0 focus-visible:ring-offset-0 md:text-sm'
+                      />
+                    </div>
+                    <div className='text-muted-foreground mt-2 flex flex-wrap items-center gap-2 text-xs'>
+                      <Badge variant='outline'>{recipients.length} valid</Badge>
+                      {invalidRecipients.length > 0 && (
+                        <Badge variant='destructive'>{invalidRecipients.length} invalid</Badge>
+                      )}
+                      <span id='recipient-email-help' className='sm:ml-auto'>
+                        Press Enter, Tab, comma, or paste a list to add people.
+                      </span>
+                    </div>
+                    {invalidRecipients.length > 0 && (
+                      <div
+                        id='recipient-email-errors'
+                        className='text-destructive mt-1 flex flex-wrap items-center gap-2 text-xs'
+                      >
+                        <span>
+                          Ignored: {invalidRecipients.slice(0, 3).join(', ')}
+                          {invalidRecipients.length > 3
+                            ? `, +${invalidRecipients.length - 3} more`
+                            : ''}
+                        </span>
+                        <Button
+                          type='button'
+                          variant='link'
+                          size='sm'
+                          className='text-destructive h-auto px-0 py-0 text-xs'
+                          onClick={() => setInvalidRecipients([])}
+                        >
+                          Clear
+                        </Button>
+                      </div>
+                    )}
+                  </div>
+                  <div className='bg-muted/50 space-y-1.5 rounded-md p-3 text-sm'>
+                    <div className='flex items-center justify-between'>
+                      <span className='text-muted-foreground'>Estimated reach</span>
+                      <span className='font-semibold tabular-nums'>
+                        {formatCount(recipients.length + groupReach, '0')} student
+                        {recipients.length + groupReach === 1 ? '' : 's'}
+                      </span>
+                    </div>
+                    {selectedGroups.length > 0 && recipients.length > 0 && (
+                      <p className='text-muted-foreground text-xs'>
+                        Anyone appearing in both is invited once.
+                      </p>
+                    )}
+                    {invalidRecipients.length > 0 && (
+                      <p className='text-muted-foreground text-xs'>
+                        Invalid entries stay out of the send batch until corrected.
+                      </p>
+                    )}
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          )}
+
+          {/* Step 3 - Message & send */}
           {step === 3 && (
             <Card>
               <CardHeader>
                 <CardTitle className='flex items-center gap-2 text-base'>
                   <Mail className='h-4 w-4' /> Message &amp; send
                 </CardTitle>
-                <CardDescription>
-                  Pick a template, review the audience, and send the invitations.
-                </CardDescription>
+                <CardDescription>Pick a template, review the audience, and send.</CardDescription>
               </CardHeader>
-              <CardContent className='space-y-4'>
-                <div>
-                  <Label className='text-muted-foreground mb-2 block text-xs uppercase'>
-                    Template
-                  </Label>
-                  <div className='flex flex-wrap gap-2'>
-                    {TEMPLATES.map(t => (
-                      <Button
-                        key={t.id}
-                        type='button'
-                        size='sm'
-                        variant={templateId === t.id ? 'default' : 'outline'}
-                        onClick={() => {
-                          setTemplateId(t.id);
-                          setMessage(t.body);
-                        }}
-                      >
-                        {t.name}
-                      </Button>
-                    ))}
-                  </div>
-                </div>
-
-                <div>
-                  <Label
-                    htmlFor='message'
-                    className='text-muted-foreground mb-2 block text-xs uppercase'
-                  >
-                    Message
-                  </Label>
-                  <Textarea
-                    id='message'
-                    value={message}
-                    onChange={e => setMessage(e.target.value)}
-                    rows={7}
-                  />
-                  <p className='text-muted-foreground mt-1 text-xs'>
-                    Placeholders <code>{'{{student}}'}</code>, <code>{'{{school}}'}</code>,{' '}
-                    <code>{'{{sender}}'}</code> are filled per recipient.
-                  </p>
-                </div>
-
-                <div className='bg-muted/30 rounded-md border p-3 text-sm'>
-                  <div className='flex items-center justify-between'>
-                    <span className='text-muted-foreground'>Ready to invite</span>
-                    <span className='font-semibold'>
-                      {recipients.length} address{recipients.length === 1 ? '' : 'es'}
-                      {selectedGroups.length > 0
-                        ? ` + ${selectedGroups.length} group${selectedGroups.length === 1 ? '' : 's'}`
-                        : ''}
+              <CardContent className='space-y-4 xl:grid xl:grid-cols-[minmax(0,1.08fr)_minmax(400px,0.92fr)] xl:gap-5 xl:space-y-0 2xl:grid-cols-[minmax(0,1.15fr)_minmax(480px,0.85fr)]'>
+                <div className='space-y-3 xl:col-span-2'>
+                  <div className='flex flex-wrap items-center justify-between gap-2'>
+                    <Label className='text-muted-foreground flex items-center gap-2 text-xs uppercase'>
+                      <Share2 className='h-3.5 w-3.5' /> Invite channels
+                    </Label>
+                    <span className='text-muted-foreground text-xs'>
+                      Email sends now; social sharing needs reusable invite links from the API.
                     </span>
                   </div>
-                  {selectedGroups.length > 0 && (
-                    <p className='text-muted-foreground mt-1 text-xs'>
-                      Student groups currently reach about {groupReach} member
-                      {groupReach === 1 ? '' : 's'} before server-side de-duplication.
-                    </p>
-                  )}
-                  {selectedClasses.length > 0 && (
-                    <p className='text-muted-foreground mt-1 text-xs'>
-                      {selectedClasses.length} class{selectedClasses.length === 1 ? '' : 'es'} will
-                      be shown to each student once they accept — they still enrol themselves.
-                    </p>
-                  )}
+                  <div className='grid gap-2 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-7'>
+                    {INVITE_CHANNELS.map(channel => {
+                      const Icon = channel.icon;
+                      return (
+                        <button
+                          key={channel.id}
+                          type='button'
+                          disabled={!channel.available}
+                          className={cn(
+                            'flex min-h-14 items-center gap-3 rounded-md border px-3 py-2 text-left text-sm transition-colors',
+                            channel.available
+                              ? 'border-primary bg-primary/5 text-foreground shadow-xs'
+                              : 'border-border bg-muted/40 text-muted-foreground opacity-75'
+                          )}
+                          title={
+                            channel.available
+                              ? `${channel.label} selected`
+                              : `${channel.label} requires backend channel/link support`
+                          }
+                        >
+                          <Icon
+                            className={cn(
+                              'h-4 w-4 shrink-0',
+                              channel.available ? 'text-primary' : 'text-muted-foreground'
+                            )}
+                          />
+                          <span className='min-w-0 flex-1'>
+                            <span className='block truncate font-medium'>{channel.label}</span>
+                            <span className='block truncate text-[11px]'>{channel.status}</span>
+                          </span>
+                          {channel.available && <Check className='text-primary h-4 w-4 shrink-0' />}
+                        </button>
+                      );
+                    })}
+                  </div>
                 </div>
 
-                <div className='border-primary/30 bg-primary/5 text-muted-foreground flex items-start gap-2 rounded-md border p-3 text-xs'>
-                  <ShieldCheck className='text-primary mt-0.5 h-4 w-4 shrink-0' />
-                  <p>
-                    Each student gets their own private link and chooses whether to join. Nothing is
-                    created for them until they accept, and invitations lapse after{' '}
-                    {EXPIRES_IN_DAYS} days. Students under the age we can accept consent from will
-                    be asked for a parent or guardian instead.
-                  </p>
+                <div className='space-y-4'>
+                  <div>
+                    <Label className='text-muted-foreground mb-2 block text-xs uppercase'>
+                      Template
+                    </Label>
+                    <Select
+                      value={templateId}
+                      onValueChange={nextTemplateId => {
+                        const nextTemplate =
+                          TEMPLATES.find(template => template.id === nextTemplateId) ??
+                          DEFAULT_TEMPLATE;
+                        setTemplateId(nextTemplate.id);
+                        setMessage(nextTemplate.body);
+                      }}
+                    >
+                      <SelectTrigger className='w-full'>
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {TEMPLATES.map(template => (
+                          <SelectItem key={template.id} value={template.id}>
+                            {template.name}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+
+                  <div>
+                    <div className='mb-2 flex flex-wrap items-center justify-between gap-2'>
+                      <Label htmlFor='message' className='text-muted-foreground text-xs uppercase'>
+                        Message body
+                      </Label>
+                      <span className='text-muted-foreground text-[10px]'>
+                        Variables: {'{{schoolName}} {{className}} {{studentName}} {{senderName}}'}
+                      </span>
+                    </div>
+                    <Textarea
+                      id='message'
+                      value={message}
+                      onChange={e => setMessage(e.target.value)}
+                      rows={8}
+                      maxLength={2000}
+                      className='min-h-[220px] xl:min-h-[320px] 2xl:min-h-[380px]'
+                    />
+                  </div>
+
+                  <div className='border-primary/30 bg-primary/5 text-muted-foreground flex items-start gap-2 rounded-md border p-3 text-xs'>
+                    <ShieldCheck className='text-primary mt-0.5 h-4 w-4 shrink-0' />
+                    <p>
+                      Each student gets their own private link and chooses whether to join. Nothing
+                      is created for them until they accept, and invitations lapse after{' '}
+                      {EXPIRES_IN_DAYS} days. Students under the age we can accept consent from will
+                      be asked for a parent or guardian instead.
+                    </p>
+                  </div>
+                </div>
+
+                <div className='space-y-4 xl:sticky xl:top-24 xl:self-start'>
+                  <div className='space-y-3 rounded-md border p-3 text-sm'>
+                    <div>
+                      <div className='text-muted-foreground mb-1 text-xs uppercase'>
+                        Subject preview
+                      </div>
+                      <div className='font-medium'>{renderedSubject}</div>
+                    </div>
+                    <div className='border-t pt-3'>
+                      <div className='text-muted-foreground mb-1 text-xs uppercase'>
+                        Message preview
+                      </div>
+                      <pre className='text-foreground max-h-[360px] overflow-auto font-sans text-sm break-words whitespace-pre-wrap 2xl:max-h-[440px]'>
+                        {renderedMessage}
+                      </pre>
+                    </div>
+                  </div>
+
+                  <div className='bg-muted/50 space-y-1.5 rounded-md p-3 text-sm'>
+                    <div className='flex items-center justify-between'>
+                      <span className='text-muted-foreground'>Recipients</span>
+                      <span className='font-semibold tabular-nums'>
+                        {formatCount(recipients.length + groupReach, '0')}
+                      </span>
+                    </div>
+                    <div className='flex items-center justify-between'>
+                      <span className='text-muted-foreground'>Classes</span>
+                      <span className='font-semibold tabular-nums'>
+                        {formatCount(selectedClasses.length, '0')}
+                      </span>
+                    </div>
+                    <div className='flex items-center justify-between'>
+                      <span className='text-muted-foreground'>Channels</span>
+                      <span className='font-semibold'>Email</span>
+                    </div>
+                    {selectedGroups.length > 0 && (
+                      <p className='text-muted-foreground mt-1 text-xs'>
+                        Student groups currently reach about {formatCount(groupReach, '0')} member
+                        {groupReach === 1 ? '' : 's'} before server-side de-duplication.
+                      </p>
+                    )}
+                  </div>
                 </div>
               </CardContent>
             </Card>
           )}
 
-          {/* Nav */}
-          <div className='flex flex-col-reverse gap-2 border-t pt-4 sm:flex-row sm:justify-between'>
+          <div className='bg-background/95 sticky bottom-0 z-20 -mx-3 flex flex-col-reverse gap-2 border-t px-3 py-3 backdrop-blur sm:-mx-5 sm:flex-row sm:items-center sm:justify-between sm:px-5 lg:-mx-6 lg:px-6'>
             <Button
               type='button'
               variant='outline'
@@ -974,6 +1157,7 @@ export default function InviteStudentsPage() {
             >
               <ArrowLeft className='mr-2 h-4 w-4' /> Back
             </Button>
+            <div className='text-muted-foreground text-center text-xs'>Step {step} of 3</div>
             {step < 3 ? (
               <Button
                 type='button'
@@ -983,10 +1167,18 @@ export default function InviteStudentsPage() {
                 Next <ArrowRight className='ml-2 h-4 w-4' />
               </Button>
             ) : (
-              <Button type='button' onClick={send} disabled={sending || !canSend}>
-                <Send className='mr-2 h-4 w-4' />{' '}
+              <Button
+                type='button'
+                onClick={send}
+                disabled={sending || !canSend || selectedClasses.length === 0}
+              >
+                {sending ? (
+                  <Loader2 className='mr-2 h-4 w-4 animate-spin' />
+                ) : (
+                  <Send className='mr-2 h-4 w-4' />
+                )}
                 {sending
-                  ? 'Sending…'
+                  ? 'Sending...'
                   : `Send invitation${recipients.length + selectedGroups.length === 1 ? '' : 's'}`}
               </Button>
             )}
@@ -994,128 +1186,130 @@ export default function InviteStudentsPage() {
         </>
       )}
 
-      <Card>
-        <CardHeader>
-          <CardTitle className='flex items-center gap-2 text-base'>
-            <MailCheck className='h-4 w-4' /> Invitation status
-          </CardTitle>
-          <CardDescription>
-            Track recent invites and follow up while students decide whether to join.
-          </CardDescription>
-        </CardHeader>
-        <CardContent className='space-y-4'>
-          <div className='flex flex-wrap gap-2 text-xs'>
-            <Badge variant='secondary' className='gap-1'>
-              <Clock3 className='h-3 w-3' /> {invitationCounts.live} pending
-            </Badge>
-            <Badge variant='secondary' className='bg-success/10 text-success gap-1'>
-              <CheckCircle2 className='h-3 w-3' /> {invitationCounts.accepted} accepted
-            </Badge>
-          </div>
+      {showHistory && (
+        <Card>
+          <CardHeader>
+            <CardTitle className='flex items-center gap-2 text-base'>
+              <MailCheck className='h-4 w-4' /> Invitation status
+            </CardTitle>
+            <CardDescription>
+              Track recent invites and follow up while students decide whether to join.
+            </CardDescription>
+          </CardHeader>
+          <CardContent className='space-y-4'>
+            <div className='flex flex-wrap gap-2 text-xs'>
+              <Badge variant='secondary' className='gap-1'>
+                <Clock3 className='h-3 w-3' /> {invitationCounts.live} pending
+              </Badge>
+              <Badge variant='secondary' className='bg-success/10 text-success gap-1'>
+                <CheckCircle2 className='h-3 w-3' /> {invitationCounts.accepted} accepted
+              </Badge>
+            </div>
 
-          {invitationsQuery.isLoading && !invitationsQuery.data ? (
-            <div className='text-muted-foreground flex items-center gap-2 text-sm'>
-              <Loader2 className='h-4 w-4 animate-spin' /> Loading invitations…
-            </div>
-          ) : recentInvitations.length === 0 ? (
-            <div className='text-muted-foreground flex flex-col items-center justify-center gap-2 rounded-md border border-dashed p-6 text-center text-sm'>
-              <Mail className='h-5 w-5' />
-              No invitations sent yet.
-            </div>
-          ) : (
-            <div className='space-y-2'>
-              {recentInvitations.map(invite => {
-                const invitationUuid = invite.uuid;
-                const status = String(invite.status ?? '');
-                const live = LIVE_STATUSES.includes(status);
-                const accepted = ACCEPTED_STATUSES.includes(status);
-                const resendBusy =
-                  invitationUuid && actingOnInvitation === `resend:${invitationUuid}`;
-                const revokeBusy =
-                  invitationUuid && actingOnInvitation === `revoke:${invitationUuid}`;
-                return (
-                  <div
-                    key={invitationUuid ?? invite.recipient_email}
-                    className='flex flex-wrap items-center justify-between gap-3 rounded-md border p-3 text-sm'
-                    aria-busy={Boolean(resendBusy || revokeBusy)}
-                  >
-                    <div className='min-w-0 flex-1'>
-                      <p className='truncate font-medium'>
-                        {invite.recipient_name || invite.recipient_email}
-                      </p>
-                      <p className='text-muted-foreground truncate text-xs'>
-                        {invite.recipient_email}
-                        {invite.expires_at
-                          ? ` · expires ${new Date(invite.expires_at).toLocaleDateString()}`
-                          : ''}
-                        {invite.accepted_at
-                          ? ` · accepted ${new Date(invite.accepted_at).toLocaleDateString()}`
-                          : ''}
-                      </p>
+            {invitationsQuery.isLoading && !invitationsQuery.data ? (
+              <div className='text-muted-foreground flex items-center gap-2 text-sm'>
+                <Loader2 className='h-4 w-4 animate-spin' /> Loading invitations...
+              </div>
+            ) : recentInvitations.length === 0 ? (
+              <div className='text-muted-foreground flex flex-col items-center justify-center gap-2 rounded-md border border-dashed p-6 text-center text-sm'>
+                <Mail className='h-5 w-5' />
+                No invitations sent yet.
+              </div>
+            ) : (
+              <div className='space-y-2'>
+                {recentInvitations.map(invite => {
+                  const invitationUuid = invite.uuid;
+                  const status = String(invite.status ?? '');
+                  const live = LIVE_STATUSES.includes(status);
+                  const accepted = ACCEPTED_STATUSES.includes(status);
+                  const resendBusy =
+                    invitationUuid && actingOnInvitation === `resend:${invitationUuid}`;
+                  const revokeBusy =
+                    invitationUuid && actingOnInvitation === `revoke:${invitationUuid}`;
+                  return (
+                    <div
+                      key={invitationUuid ?? invite.recipient_email}
+                      className='flex flex-wrap items-center justify-between gap-3 rounded-md border p-3 text-sm'
+                      aria-busy={Boolean(resendBusy || revokeBusy)}
+                    >
+                      <div className='min-w-0 flex-1'>
+                        <p className='truncate font-medium'>
+                          {invite.recipient_name || invite.recipient_email}
+                        </p>
+                        <p className='text-muted-foreground truncate text-xs'>
+                          {invite.recipient_email}
+                          {invite.expires_at
+                            ? ` - expires ${new Date(invite.expires_at).toLocaleDateString()}`
+                            : ''}
+                          {invite.accepted_at
+                            ? ` - accepted ${new Date(invite.accepted_at).toLocaleDateString()}`
+                            : ''}
+                        </p>
+                      </div>
+                      <div className='flex flex-wrap items-center gap-2'>
+                        <Badge
+                          variant='secondary'
+                          className={accepted ? 'bg-success/10 text-success' : undefined}
+                        >
+                          {status === 'AWAITING_GUARDIAN_CONSENT'
+                            ? 'Awaiting guardian'
+                            : accepted
+                              ? 'Accepted'
+                              : status || 'Pending'}
+                        </Badge>
+                        {live && invitationUuid && (
+                          <>
+                            <Button
+                              type='button'
+                              variant='ghost'
+                              size='sm'
+                              disabled={Boolean(resendBusy || revokeBusy)}
+                              onClick={() =>
+                                actOnInvitation(invitationUuid, 'resend', () =>
+                                  resendInvitation.mutateAsync({
+                                    path: { organisationUuid, invitationUuid },
+                                  })
+                                )
+                              }
+                            >
+                              {resendBusy ? (
+                                <Loader2 className='mr-1.5 h-3.5 w-3.5 animate-spin' />
+                              ) : (
+                                <RotateCw className='mr-1.5 h-3.5 w-3.5' />
+                              )}
+                              Resend
+                            </Button>
+                            <Button
+                              type='button'
+                              variant='ghost'
+                              size='sm'
+                              disabled={Boolean(resendBusy || revokeBusy)}
+                              onClick={() =>
+                                actOnInvitation(invitationUuid, 'revoke', () =>
+                                  revokeInvitation.mutateAsync({
+                                    path: { organisationUuid, invitationUuid },
+                                  })
+                                )
+                              }
+                            >
+                              {revokeBusy ? (
+                                <Loader2 className='mr-1.5 h-3.5 w-3.5 animate-spin' />
+                              ) : (
+                                <X className='mr-1.5 h-3.5 w-3.5' />
+                              )}
+                              Revoke
+                            </Button>
+                          </>
+                        )}
+                      </div>
                     </div>
-                    <div className='flex flex-wrap items-center gap-2'>
-                      <Badge
-                        variant='secondary'
-                        className={accepted ? 'bg-success/10 text-success' : undefined}
-                      >
-                        {status === 'AWAITING_GUARDIAN_CONSENT'
-                          ? 'Awaiting guardian'
-                          : accepted
-                            ? 'Accepted'
-                            : status || 'Pending'}
-                      </Badge>
-                      {live && invitationUuid && (
-                        <>
-                          <Button
-                            type='button'
-                            variant='ghost'
-                            size='sm'
-                            disabled={Boolean(resendBusy || revokeBusy)}
-                            onClick={() =>
-                              actOnInvitation(invitationUuid, 'resend', () =>
-                                resendInvitation.mutateAsync({
-                                  path: { organisationUuid, invitationUuid },
-                                })
-                              )
-                            }
-                          >
-                            {resendBusy ? (
-                              <Loader2 className='mr-1.5 h-3.5 w-3.5 animate-spin' />
-                            ) : (
-                              <RotateCw className='mr-1.5 h-3.5 w-3.5' />
-                            )}
-                            Resend
-                          </Button>
-                          <Button
-                            type='button'
-                            variant='ghost'
-                            size='sm'
-                            disabled={Boolean(resendBusy || revokeBusy)}
-                            onClick={() =>
-                              actOnInvitation(invitationUuid, 'revoke', () =>
-                                revokeInvitation.mutateAsync({
-                                  path: { organisationUuid, invitationUuid },
-                                })
-                              )
-                            }
-                          >
-                            {revokeBusy ? (
-                              <Loader2 className='mr-1.5 h-3.5 w-3.5 animate-spin' />
-                            ) : (
-                              <X className='mr-1.5 h-3.5 w-3.5' />
-                            )}
-                            Revoke
-                          </Button>
-                        </>
-                      )}
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
-          )}
-        </CardContent>
-      </Card>
+                  );
+                })}
+              </div>
+            )}
+          </CardContent>
+        </Card>
+      )}
     </div>
   );
 }

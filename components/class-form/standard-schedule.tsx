@@ -11,7 +11,7 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { cn } from '@/lib/utils';
-import { DAYS, type DayKey, type DayRow, TIMEZONES } from './class-form-shared';
+import { DAYS, type DayKey, type DayRow, sessionEndFor, TIMEZONES } from './class-form-shared';
 
 export function StandardSchedule({
   days,
@@ -63,7 +63,7 @@ export function StandardSchedule({
           <div className='bg-muted/50 text-muted-foreground hidden grid-cols-[64px_1fr_1fr_56px] gap-1 px-2 py-1.5 text-xs sm:grid'>
             <div>Day</div>
             <div>Start</div>
-            <div>End</div>
+            <div>Minutes</div>
             <div className='text-center leading-none'>All Day</div>
           </div>
           {DAYS.map(d => {
@@ -87,14 +87,28 @@ export function StandardSchedule({
                     type='time'
                     value={row.start}
                     disabled={!row.active || row.allDay}
-                    onChange={e => onDayChange(d, { start: e.target.value })}
+                    onChange={e =>
+                      onDayChange(d, {
+                        start: e.target.value,
+                        end: sessionEndFor(e.target.value, row.durationMinutes || 120),
+                      })
+                    }
                     className='h-8 w-full min-w-0 px-1 text-xs'
                   />
                   <Input
-                    type='time'
-                    value={row.end}
+                    type='number'
+                    min={1}
+                    step={1}
+                    inputMode='numeric'
+                    value={row.durationMinutes ?? ''}
                     disabled={!row.active || row.allDay}
-                    onChange={e => onDayChange(d, { end: e.target.value })}
+                    onChange={e => {
+                      const durationMinutes = e.target.value.replace(/\D/g, '');
+                      onDayChange(d, {
+                        durationMinutes,
+                        end: sessionEndFor(row.start, durationMinutes || 1),
+                      });
+                    }}
                     className='h-8 w-full min-w-0 px-1 text-xs'
                   />
                   <div className='flex justify-center'>
@@ -138,18 +152,32 @@ export function StandardSchedule({
                         <Input
                           type='time'
                           value={row.start}
-                          onChange={e => onDayChange(d, { start: e.target.value })}
+                          onChange={e =>
+                            onDayChange(d, {
+                              start: e.target.value,
+                              end: sessionEndFor(e.target.value, row.durationMinutes || 120),
+                            })
+                          }
                           className='h-10 w-full text-sm'
                         />
                       </div>
                       <div className='space-y-1'>
                         <div className='text-muted-foreground text-[10px] tracking-wide uppercase'>
-                          End
+                          Minutes
                         </div>
                         <Input
-                          type='time'
-                          value={row.end}
-                          onChange={e => onDayChange(d, { end: e.target.value })}
+                          type='number'
+                          min={1}
+                          step={1}
+                          inputMode='numeric'
+                          value={row.durationMinutes ?? ''}
+                          onChange={e => {
+                            const durationMinutes = e.target.value.replace(/\D/g, '');
+                            onDayChange(d, {
+                              durationMinutes,
+                              end: sessionEndFor(row.start, durationMinutes || 1),
+                            });
+                          }}
                           className='h-10 w-full text-sm'
                         />
                       </div>
