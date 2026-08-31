@@ -52,7 +52,7 @@ export function DashboardTab({ onNavigate, wallet, transactions }: WalletDashboa
                     </CardHeader>
                     <CardContent className="divide-y">
                         {transactions?.slice(0, 6).map((t) => (
-                            <TxnRow key={t.uuid} txn={t} />
+                            <TxnRow key={t.uuid} txn={t} tab="dashboard" />
                         ))}
 
                         {transactions?.length === 0 && (

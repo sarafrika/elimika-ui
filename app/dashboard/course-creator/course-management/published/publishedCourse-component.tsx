@@ -29,6 +29,7 @@ import {
   unpublishCourseQueryKey,
 } from '@/services/client/@tanstack/react-query.gen';
 import { invalidateContentModerationWorkflowQueries } from '@/src/features/dashboard/workflow-query-invalidation';
+import { isAuthenticatedMediaUrl, toAuthenticatedMediaUrl } from '@/src/lib/media-url';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { EyeIcon, FilePenIcon, MoreVertical, PlusCircle, TrashIcon } from 'lucide-react';
 import Image from 'next/image';
@@ -36,7 +37,6 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import { toast } from 'sonner';
-import { isAuthenticatedMediaUrl, toAuthenticatedMediaUrl } from '@/src/lib/media-url';
 
 type PublishedCourseItem = {
   uuid?: string;
@@ -141,7 +141,9 @@ export default function PublishedCoursesComponent({
           </p>
         </div>
         <Button asChild>
-          <Link prefetch href='/dashboard/course-creator/course-management/create-new-course'>
+          {/* <Link prefetch href='/dashboard/course-creator/course-management/create-new-course'> */}
+          <Link prefetch href='/dashboard/course-creator/courses/create-course'>
+
             <PlusCircle className='mr-2 h-4 w-4' />
             Create course
           </Link>

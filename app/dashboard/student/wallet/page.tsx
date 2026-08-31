@@ -33,7 +33,7 @@ import { getWalletOptions, listTransactions1Options } from "../../../../services
 import { AccountsTab } from "./_components/AccountsTab";
 import { AuditTab } from "./_components/AuditTab";
 import { DashboardTab } from "./_components/DashboardTab";
-import { BUCKET_META, BUCKET_RULES } from "./_components/data";
+import { BUCKET_RULES } from "./_components/data";
 import { PaymentsTab } from "./_components/PaymentsTab";
 import { RefundsTab } from "./_components/RefundsTab";
 import { RewardsTab } from "./_components/RewardsTab";
@@ -54,6 +54,7 @@ export interface WalletAccount {
     bucket: Bucket;
     label: string;
     balance_kes: number;
+    currency_code?: string;
     funder?: string;
     expires_at?: string | null;
     permitted_purpose?: string;
@@ -143,14 +144,20 @@ export type WalletTabId = (typeof TABS)[number]["id"];
    ========================================================================= */
 
 export function fmtKES(value: number | string) {
-    const n = Number(value ?? 0);
-    return new Intl.NumberFormat("en-KE", { style: "currency", currency: "KES", maximumFractionDigits: 0 }).format(n);
+    return fmtMoney(value, "KES");
 }
-export function fmtDate(iso?: string | null) {
+
+export function fmtMoney(value: number | string, currency = "KES") {
+    const n = Number(value ?? 0);
+    return new Intl.NumberFormat("en-KE", { style: "currency", currency, maximumFractionDigits: 0 }).format(n);
+}
+
+export function fmtDate(iso?: string | Date | null) {
     if (!iso) return "—";
     return new Date(iso).toLocaleDateString("en-KE", { day: "numeric", month: "short", year: "numeric" });
 }
-export function fmtDateTime(iso?: string | null) {
+
+export function fmtDateTime(iso?: string | Date | null) {
     if (!iso) return "—";
     return new Date(iso).toLocaleString("en-KE", {
         day: "numeric",
@@ -267,7 +274,7 @@ interface Toast {
 }
 
 interface WalletState {
-    wallet: Wallet,
+    wallet: Wallet | undefined;
     accounts: WalletAccount[];
     transactions: WalletTransaction[];
     payments: WalletPayment[];
@@ -289,23 +296,40 @@ export function useWallet() {
 
 export function WalletProvider({ children }: { children: ReactNode }) {
     const user = useUserProfile()
-    const { data: walletResp } = useQuery({
-        ...getWalletOptions({ path: { userUuid: user?.uuid as string } })
-    })
-    const wallet = walletResp?.data!
+    const { data: walletResp } = useQuery(
+        user?.uuid
+            ? {
+                ...getWalletOptions({ path: { userUuid: user.uuid } }),
+                enabled: true,
+            }
+            : {
+                queryKey: ["wallet", "disabled"] as const,
+                queryFn: async () => undefined,
+                enabled: false,
+            },
+    )
+    const wallet = walletResp?.data
 
-    const { data: transactionsResp } = useQuery({
-        ...listTransactions1Options({
-            path: { userUuid: user?.uuid as string },
-            query: { pageable: {} }
-        })
-    })
-    const transactionsData = transactionsResp?.data?.content
+    const { data: transactionsResp } = useQuery(
+        user?.uuid
+            ? {
+                ...listTransactions1Options({
+                    path: { userUuid: user.uuid },
+                    query: { pageable: { size: 20 }, currency_code: "KES" }
+                }),
+                enabled: true,
+            }
+            : {
+                queryKey: ["wallet-transactions", "disabled"] as const,
+                queryFn: async () => undefined,
+                enabled: false,
+            },
+    )
+    const transactions = transactionsResp?.data?.content ?? []
 
 
     const accounts = useMemo<WalletAccount[]>(() => buildWalletAccounts(wallet), [wallet]);  // seedAccounts
 
-    const [transactions, setTransactions] = useState<WalletTransaction[]>(transactionsData || []); // seedTransactions
     const [payments, setPayments] = useState<WalletPayment[]>([]); // seedPayments
     const [rewards] = useState<WalletReward[]>([]); // seedRewards
     const [statements] = useState<WalletStatement[]>([]); //seedStatements
@@ -323,56 +347,18 @@ export function WalletProvider({ children }: { children: ReactNode }) {
     }
 
     function topUp(amount: number, method: PaymentMethod) {
-        const ref = `TXN-${Math.floor(Math.random() * 90000 + 10000)}`;
-        setTransactions((prev) => [
-            {
-                id: uid("txn"),
-                description: `Top-up via ${METHOD_LABEL[method]}`,
-                amount_kes: amount,
-                direction: "credit",
-                transaction_type: "TRANSFER_IN",
-                bucket: "personal",
-                status: "completed",
-                occurred_at: new Date().toISOString(),
-                reference: ref,
-                destination: "Personal Wallet",
-                funding_source: METHOD_LABEL[method],
-                method,
-            },
-            ...prev,
-        ]);
         pushAudit({
             event_type: "top_up",
             entity_type: "wallet_transaction",
             reason: `Top-up of ${fmtKES(amount)} via ${METHOD_LABEL[method]}`,
             updated_values: { amount_kes: amount, method },
         });
-        notify({ type: "success", message: `Top-up received — ${ref}` });
+        notify({ type: "success", message: "Top-up received", description: `${fmtKES(amount)} via ${METHOD_LABEL[method]}` });
     }
 
     function pay(opts: { paymentId: string | null; itemType: string; itemName: string; amount: number; method: PaymentMethod; accountId: string; total?: number; alreadyPaid: number }) {
         const account = accounts.find((a) => a.id === opts.accountId);
         if (!account) return;
-        const ref = `TXN-${Math.floor(Math.random() * 90000 + 10000)}`;
-
-        setTransactions((prev) => [
-            {
-                id: uid("txn"),
-                description: `${opts.itemName} — ${opts.itemType.toLowerCase()} fee`,
-                amount_kes: opts.amount,
-                direction: "debit",
-                bucket: account.bucket,
-                status: "completed",
-                occurred_at: new Date().toISOString(),
-                reference: ref,
-                source: account.label,
-                destination: "Elimika",
-                funding_source: account.label,
-                method: opts.method,
-                item_type: opts.itemType,
-            },
-            ...prev,
-        ]);
 
         if (opts.paymentId) {
             setPayments((prev) =>
@@ -408,45 +394,26 @@ export function WalletProvider({ children }: { children: ReactNode }) {
             event_type: "payment_completed",
             entity_type: "wallet_payment",
             reason: `Paid ${fmtKES(opts.amount)} for ${opts.itemName} from ${account.label}`,
-            updated_values: { amount_kes: opts.amount, account: account.label, reference: ref },
+            updated_values: { amount_kes: opts.amount, account: account.label, method: opts.method },
         });
-        notify({ type: "success", message: `Payment confirmed — ${ref}` });
+        notify({ type: "success", message: "Payment confirmed", description: `${fmtKES(opts.amount)} from ${account.label}` });
     }
 
     function refund(txn: WalletTransaction) {
-        const originAccount = accounts.find((a) => a.label === txn.source || a.bucket === txn.bucket);
-        const isExpired = !!originAccount?.expires_at && new Date(originAccount.expires_at).getTime() < Date.now();
-        const routeAccount = isExpired ? accounts.find((a) => a.bucket === "refunds") : originAccount;
-        if (!routeAccount) return;
-        const ref = `RFD-${Math.floor(Math.random() * 90000 + 10000)}`;
-        const restricted = !!BUCKET_RULES[routeAccount.bucket]?.restricted;
-
-        setTransactions((prev) => [
-            {
-                id: uid("txn"),
-                description: `Refund — ${txn.description}`,
-                amount_kes: txn.amount_kes,
-                direction: "credit",
-                bucket: routeAccount.bucket,
-                status: "refunded",
-                occurred_at: new Date().toISOString(),
-                reference: ref,
-                destination: routeAccount.label,
-                funding_source: routeAccount.label,
-            },
-            ...prev.map((t) => (t.id === txn.id ? { ...t, status: "refunded" as TxnStatus } : t)),
-        ]);
-
         pushAudit({
             event_type: "refund_issued",
             entity_type: "wallet_transaction",
-            reason: `Refunded ${fmtKES(txn.amount_kes)} to ${routeAccount.label}${isExpired ? " (re-routed — original allocation expired)" : ""}`,
-            updated_values: { reference: ref, to_bucket: routeAccount.bucket, restricted },
+            reason: `Refund requested for ${txn.description ?? txn.reference ?? txn.uuid ?? "wallet transaction"}`,
+            updated_values: {
+                transaction_uuid: txn.uuid,
+                transaction_type: txn.transaction_type,
+                reference: txn.reference,
+            },
         });
         notify({
             type: "success",
-            message: `Refunded ${fmtKES(txn.amount_kes)} to ${routeAccount.label}`,
-            description: isExpired ? "Original allocation had expired, so funds were re-routed." : undefined,
+            message: "Refund recorded",
+            description: txn.reference ? `Linked to ${txn.reference}` : undefined,
         });
     }
 
@@ -495,8 +462,9 @@ function StatusBadge({ status }: { status: string }) {
     );
 }
 
-export function TxnRow({ txn, action }: { txn: WalletTransaction; action?: ReactNode }) {
-    const credit = txn.transaction_type === "TRANSFER_IN";
+export function TxnRow({ txn, action, tab }: { txn: WalletTransaction; action?: ReactNode, tab?: string }) {
+    const transactionType = txn.transaction_type ?? "UNKNOWN";
+    const credit = ["DEPOSIT", "PAYMENT", "SALE", "TRANSFER_IN"].includes(transactionType);
 
     return (
         <div className="flex items-center justify-between gap-3 py-3">
@@ -508,18 +476,19 @@ export function TxnRow({ txn, action }: { txn: WalletTransaction; action?: React
                     {credit ? <ArrowDownLeft className="h-4 w-4" /> : <ArrowUpRight className="h-4 w-4" />}
                 </span>
                 <div className="flex flex-col min-w-0 gap-1.5">
-                    <p className="text-sm font-medium truncate">{txn.description}</p>
+                    <p className="text-sm font-medium truncate">{txn.description ?? transactionType}</p>
                     <p className="text-xs text-muted-foreground truncate">
-                        {fmtDate(txn.occurred_at)} · {BUCKET_META[txn.bucket]?.label} · {txn.reference}
+                        {fmtDateTime(txn.created_date)} · {transactionType.replace(/_/g, " ").toLowerCase()} · {txn.reference ?? "—"}
                     </p>
                 </div>
             </div>
+
             <div className="flex items-center gap-2 shrink-0">
                 <div className="flex flex-col gap-1.5 text-right">
                     <p className={`text-sm font-semibold ${credit ? "text-success" : ""}`}>
-                        {credit ? "+" : "−"} {fmtKES(txn.amount_kes)}
+                        {credit ? "+" : "−"} {fmtMoney(txn.amount ?? 0, txn.currency_code ?? "KES")}
                     </p>
-                    <StatusBadge status={txn.status} />
+                    <StatusBadge status={transactionType} />
                 </div>
                 {action}
             </div>
