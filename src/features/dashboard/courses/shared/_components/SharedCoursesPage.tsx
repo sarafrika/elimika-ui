@@ -46,7 +46,6 @@ import {
   submitProgramTrainingApplicationMutation,
   submitTrainingApplicationMutation,
 } from '@/services/client/@tanstack/react-query.gen';
-import { invalidateTrainingApplicationWorkflowQueries } from '@/src/features/dashboard/workflow-query-invalidation';
 import type { Category, CourseReview } from '@/services/client/types.gen';
 import {
   type CatalogTrainingApplicationData,
@@ -71,6 +70,7 @@ import { CoursesCategoryTabs } from '@/src/features/dashboard/courses/shared/_co
 import { CoursesRecommendationCard } from '@/src/features/dashboard/courses/shared/_components/CoursesRecommendationCard';
 import { StudentCoursesCard } from '@/src/features/dashboard/courses/shared/_components/StudentCoursesCard';
 import { buildWorkspaceAliasPath } from '@/src/features/dashboard/lib/active-domain-storage';
+import { invalidateTrainingApplicationWorkflowQueries } from '@/src/features/dashboard/workflow-query-invalidation';
 import { useMutation, useQueries, useQuery, useQueryClient } from '@tanstack/react-query';
 import {
   ArrowRight,
