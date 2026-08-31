@@ -117,6 +117,7 @@ export type CourseFormProps = {
   setActiveRequirementProvider?: Dispatch<SetStateAction<Provider | null>>;
   successResponse?: (data: Course) => void;
   postCreateRedirectHref?: string | null;
+  onSaveSuccess?: () => void;
 };
 
 export type CourseFormRef = {
@@ -195,6 +196,7 @@ export const CourseCreationForm = forwardRef<CourseFormRef, CourseFormProps>(
       setActiveRequirementProvider,
       successResponse,
       postCreateRedirectHref = '/dashboard/course-creator/course-management/create-new-course',
+      onSaveSuccess,
     },
     ref
   ) {
@@ -409,6 +411,7 @@ export const CourseCreationForm = forwardRef<CourseFormRef, CourseFormProps>(
           duration_hours: data?.duration_hours,
           duration_minutes: data?.duration_minutes,
           class_limit: data?.class_limit,
+          status: data?.status || 'draft',
           minimum_training_fee: data?.minimum_training_fee,
           creator_share_percentage: data?.creator_share_percentage,
           instructor_share_percentage: data?.instructor_share_percentage,
@@ -438,6 +441,7 @@ export const CourseCreationForm = forwardRef<CourseFormRef, CourseFormProps>(
                 queryClient.invalidateQueries({
                   queryKey: getCourseByUuidQueryKey({ path: { uuid: courseId as string } }),
                 });
+                onSaveSuccess?.();
                 return;
               }
 
@@ -502,6 +506,8 @@ export const CourseCreationForm = forwardRef<CourseFormRef, CourseFormProps>(
           onSuccess: courseResponse => {
             const newCourseUuid = courseResponse?.data?.uuid as string;
 
+            router.replace(`/dashboard/course-creator/courses/create-course?id=${newCourseUuid}`)
+
             queryClient.invalidateQueries({
               queryKey: getCourseByUuidQueryKey({ path: { uuid: newCourseUuid } }),
             });
@@ -517,6 +523,7 @@ export const CourseCreationForm = forwardRef<CourseFormRef, CourseFormProps>(
             if (typeof successResponse === 'function') {
               successResponse(courseResponse);
             }
+            onSaveSuccess?.();
 
             setSaveStage('redirecting');
             setTimeout(() => {
@@ -914,14 +921,6 @@ export const CourseCreationForm = forwardRef<CourseFormRef, CourseFormProps>(
                   ) : (
                     'Save Course'
                   )}
-                </Button>
-
-                <Button
-                  disabled={!editingCourseId}
-                  onClick={() => setActiveStep(1)}
-                  className='min-w-32'
-                >
-                  Continue →
                 </Button>
               </div>
             )}

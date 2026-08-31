@@ -1339,7 +1339,7 @@ function LessonContentForm({
 
   useEffect(() => {
     if (selectedTypeKey === 'TEXT' && !form.getValues('title')) {
-      setValue('title', 'Text Content');
+      setValue('title', '');
     }
   }, [form, selectedTypeKey, setValue]);
 
@@ -1431,7 +1431,7 @@ function LessonContentForm({
     const contentBody = {
       lesson_uuid: lessonId as string,
       content_type_uuid: data?.content_type_uuid,
-      title: selectedTypeKey === 'TEXT' ? data?.title || 'Text Content' : data?.title,
+      title: selectedTypeKey === 'TEXT' ? data?.title || '' : data?.title,
       description: data?.description,
       content_text: selectedTypeKey === 'TEXT' ? contentValue : '',
       file_url: selectedTypeKey === 'TEXT' ? '' : contentValue,

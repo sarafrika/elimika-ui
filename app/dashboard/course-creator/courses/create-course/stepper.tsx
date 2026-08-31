@@ -20,7 +20,7 @@ const STEPS = [
 export function Stepper({ step, onStep }: StepperProps) {
     return (
         <div className="-mx-4 overflow-x-auto px-4 sm:mx-0 sm:px-0">
-            <ol className="flex min-w-max items-center gap-3">
+            <ol className="flex min-w-max items-center gap-1.5">
                 {STEPS.map((title, index) => {
                     const isCurrent = index === step;
                     const isCompleted = index < step;
@@ -28,13 +28,13 @@ export function Stepper({ step, onStep }: StepperProps) {
                     return (
                         <li
                             key={title}
-                            className="flex shrink-0 items-center gap-3"
+                            className="flex shrink-0 items-center gap-1.5"
                         >
                             <button
                                 type="button"
                                 onClick={() => onStep(index)}
                                 className={cn(
-                                    'flex items-center gap-2 rounded-full border px-3 py-1.5 text-sm font-medium transition-all',
+                                    'flex items-center gap-1.5 rounded-full border px-2 py-1 text-xs font-medium transition-all',
                                     'hover:bg-muted/50',
                                     isCurrent &&
                                     'border-primary bg-primary text-primary-foreground hover:bg-primary',
@@ -47,7 +47,7 @@ export function Stepper({ step, onStep }: StepperProps) {
                             >
                                 <span
                                     className={cn(
-                                        'flex h-5 w-5 shrink-0 items-center justify-center rounded-full text-xs font-semibold',
+                                        'flex h-4 w-4 shrink-0 items-center justify-center rounded-full text-[10px] font-semibold',
                                         isCurrent &&
                                         'bg-primary-foreground/20 text-primary-foreground',
                                         isCompleted &&
@@ -58,7 +58,7 @@ export function Stepper({ step, onStep }: StepperProps) {
                                     )}
                                 >
                                     {isCompleted ? (
-                                        <Check className="h-3 w-3" />
+                                        <Check className="h-2.5 w-2.5" />
                                     ) : (
                                         index + 1
                                     )}
@@ -68,7 +68,7 @@ export function Stepper({ step, onStep }: StepperProps) {
                             </button>
 
                             {index < STEPS.length - 1 && (
-                                <span className="h-px w-6 shrink-0 bg-border" />
+                                <span className="h-px w-3 shrink-0 bg-border" />
                             )}
                         </li>
                     );
@@ -77,5 +77,6 @@ export function Stepper({ step, onStep }: StepperProps) {
         </div>
     );
 }
+
 
 export const useOptionalStepper = () => null;

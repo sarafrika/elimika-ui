@@ -51,8 +51,8 @@ import {
   MoonStar,
   Search,
   Send,
-  Sparkles,
   ShoppingCart,
+  Sparkles,
   SunMedium,
   Upload,
   Wallet,
@@ -204,7 +204,8 @@ export default function DashboardTopBar() {
   const notificationHref = buildWorkspaceAliasPath(activeDomain, '/dashboard/notifications');
   const createCourseHref = buildWorkspaceAliasPath(
     activeDomain,
-    '/dashboard/course-management/create-new-course'
+    // '/dashboard/course-management/create-new-course'
+    '/dashboard/courses/create-course'
   );
   const createClassHref = buildWorkspaceAliasPath(activeDomain, '/dashboard/classes/new');
   const walletHref = buildWorkspaceAliasPath(activeDomain, '/dashboard/wallet');

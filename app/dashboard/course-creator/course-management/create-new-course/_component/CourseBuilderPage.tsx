@@ -18,8 +18,8 @@ import {
   getLessonContentOptions,
   publishCourseMutation,
 } from '@/services/client/@tanstack/react-query.gen';
-import { invalidateContentModerationWorkflowQueries } from '@/src/features/dashboard/workflow-query-invalidation';
 import type { Lesson } from '@/services/client/types.gen';
+import { invalidateContentModerationWorkflowQueries } from '@/src/features/dashboard/workflow-query-invalidation';
 import { isAuthenticatedMediaUrl, toAuthenticatedMediaUrl } from '@/src/lib/media-url';
 import { useMutation, useQueries, useQuery, useQueryClient } from '@tanstack/react-query';
 import {
@@ -216,7 +216,7 @@ export default function CourseBuilderPage() {
   }
 
   if (courseId && !courseInitialValues) {
-    return <CourseCreatorLoadingState headline='Loading existing course details…' />;
+    return <CourseCreatorLoadingState headline='Loading your course details…' />;
   }
 
   return (
@@ -306,7 +306,7 @@ export default function CourseBuilderPage() {
               description='Enter the fundamental details of your course. You can edit the details later, upload a thumbnail, banner and intro video for the course.'
               showNavigation
               nextButtonText={'Continue to Lesson Creation'}
-              hideNextButton={true}
+              hideNextButton={false}
               hidePreviousButton={true}
             >
               <CourseCreationForm

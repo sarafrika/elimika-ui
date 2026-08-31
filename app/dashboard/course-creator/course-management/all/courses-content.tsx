@@ -152,20 +152,13 @@ export default function CourseCreatorCoursesContent() {
               </p>
             </div>
 
-            <Button asChild>
-              <Link prefetch href='/dashboard/course-creator/courses/create-course'>
-                <PlusCircle className='mr-2 h-4 w-4' />
-                Create
-              </Link>
-            </Button>
-
             <div className='flex flex-row items-center gap-4'>
               <Button variant={'ghost'} onClick={() => setOpen(!open)}>
                 View catalogues
               </Button>
 
               <Button asChild>
-                <Link prefetch href='/dashboard/course-creator/course-management/create-new-course'>
+                <Link prefetch href='/dashboard/course-creator/courses/create-course'>
                   <PlusCircle className='mr-2 h-4 w-4' />
                   Create course
                 </Link>
@@ -255,7 +248,7 @@ export default function CourseCreatorCoursesContent() {
                         this view.
                       </p>
                       <Button variant='outline' asChild>
-                        <Link prefetch href='/dashboard/course-creator/course-management'>
+                        <Link prefetch href='/dashboard/course-creator/courses/create-course'>
                           Create course
                         </Link>
                       </Button>
@@ -405,16 +398,16 @@ function CourseRow({ course }: { course: Course }) {
       {/* Actions */}
       <TableCell className='text-muted-foreground text-sm' onClick={e => e.stopPropagation()}>
         <div className='flex flex-row items-center justify-center gap-3'>
-          <Link
+          {/* <Link
             href={`/dashboard/course-creator/course-management/create-new-course?id=${course?.uuid}`}
           >
             <Edit size={18} />
-          </Link>
+          </Link> */}
 
           <Link
             href={`/dashboard/course-creator/courses/create-course?id=${course?.uuid}`}
           >
-            New
+            <Edit size={18} />
           </Link>
 
           <AlertDialog>

@@ -38,7 +38,7 @@ import { toast } from 'sonner';
 import DeleteModal from '../../../../../components/custom-modals/delete-modal';
 import { stripHtml } from '../../../../../src/features/dashboard/courses/shared/_components/courses-data';
 import CourseBrandingForm from '../../_components/course-branding-form';
-import { CourseCreationForm } from '../../_components/course-creation-form';
+import { CourseCreationForm, type CourseFormRef } from '../../_components/course-creation-form';
 import type { CourseCreationFormValues } from '../../_components/course-creation-types';
 import CourseGradingSection from '../../_components/course-grading-section';
 import { CoursePricingForm } from '../../_components/course-pricing-form';
@@ -66,6 +66,37 @@ import { Stepper } from './stepper';
 type SaveableCourseFormRef = {
     submit: () => Promise<boolean>;
 };
+
+type StepNavProps = {
+    previousLabel: string;
+    nextLabel: string;
+    onPrevious?: () => void;
+    onNext?: () => void;
+    previousDisabled?: boolean;
+    nextDisabled?: boolean;
+    nextLoading?: boolean;
+};
+
+function StepNav({
+    previousLabel,
+    nextLabel,
+    onPrevious,
+    onNext,
+    previousDisabled,
+    nextDisabled,
+    nextLoading,
+}: StepNavProps) {
+    return (
+        <div className='flex flex-wrap items-center justify-between gap-3 pt-6'>
+            <Button type='button' variant='outline' onClick={onPrevious} disabled={previousDisabled}>
+                {previousLabel}
+            </Button>
+            <Button type='button' onClick={onNext} disabled={nextDisabled}>
+                {nextLoading ? 'Saving...' : nextLabel}
+            </Button>
+        </div>
+    );
+}
 
 
 type CourseLesson = Lesson & { uuid: string };
@@ -555,6 +586,7 @@ export default function CreateCoursePage() {
     const [selectedQuizUuid, setSelectedQuizUuid] = useState<string | null>(null);
     const [selectedAssignmentUuid, setSelectedAssignmentUuid] = useState<string | null>(null);
     const [assessmentToDelete, setAssessmentToDelete] = useState<AssessmentListItem | null>(null);
+    const courseFormRef = useRef<CourseFormRef>(null);
     const brandingFormRef = useRef<SaveableCourseFormRef>(null);
     const pricingFormRef = useRef<SaveableCourseFormRef>(null);
     const searchParams = useSearchParams();
@@ -954,23 +986,37 @@ export default function CreateCoursePage() {
                     <CardContent className='flex flex-col gap-10'>
                         <div className='grow'>
                             {step === 0 ? (
-                                <CourseCreationForm
-                                    showSubmitButton
-                                    courseId={resolvedCourseId || undefined}
-                                    editingCourseId={resolvedCourseId || undefined}
-                                    initialValues={courseInitialValues}
-                                    requirementDrafts={requirementDrafts}
-                                    setRequirementDrafts={setRequirementDrafts}
-                                    activeRequirementProvider={activeRequirementProvider}
-                                    setActiveRequirementProvider={setActiveRequirementProvider}
-                                    postCreateRedirectHref={null}
-                                    successResponse={data => {
-                                        if (data?.uuid) {
-                                            setCreatedCourseId(data.uuid);
-                                            setStep(1);
-                                        }
-                                    }}
-                                />
+                                resolvedCourseId && courseLoading ? (
+                                    <CourseCreatorLoadingState headline='Loading your course details…' />
+                                ) : (
+                                    <div className='space-y-6'>
+                                        <CourseCreationForm
+                                            ref={courseFormRef}
+                                            showSubmitButton
+                                            courseId={resolvedCourseId || undefined}
+                                            editingCourseId={resolvedCourseId || undefined}
+                                            initialValues={courseInitialValues}
+                                            requirementDrafts={requirementDrafts}
+                                            setRequirementDrafts={setRequirementDrafts}
+                                            activeRequirementProvider={activeRequirementProvider}
+                                            setActiveRequirementProvider={setActiveRequirementProvider}
+                                            postCreateRedirectHref={null}
+                                            successResponse={data => {
+                                                if (data?.uuid) {
+                                                    setCreatedCourseId(data.uuid);
+                                                    setStep(1);
+                                                }
+                                            }}
+                                        />
+
+                                        <StepNav
+                                            previousLabel='Previous step'
+                                            nextLabel='Next step'
+                                            previousDisabled
+                                            onNext={() => setStep(step + 1)}
+                                        />
+                                    </div>
+                                )
                             ) : step === 1 ? (
                                 <SectionGuard
                                     isReady={canRenderCourseSections}
@@ -978,12 +1024,21 @@ export default function CreateCoursePage() {
                                     title='Save the course first'
                                     description='Lesson creation becomes available once the course has been saved.'
                                 >
-                                    <LessonContentStack
-                                        courseId={resolvedCourseId}
-                                        lessons={lessonsWithUuid}
-                                        lessonContentsMap={lessonContentMap}
-                                        isLoading={Boolean(resolvedCourseId) && courseLoading}
-                                    />
+                                    <div className='space-y-6'>
+                                        <LessonContentStack
+                                            courseId={resolvedCourseId}
+                                            lessons={lessonsWithUuid}
+                                            lessonContentsMap={lessonContentMap}
+                                            isLoading={Boolean(resolvedCourseId) && courseLoading}
+                                        />
+
+                                        <StepNav
+                                            previousLabel='Previous step'
+                                            nextLabel='Next step'
+                                            onPrevious={() => setStep(0)}
+                                            onNext={() => setStep(step + 1)}
+                                        />
+                                    </div>
                                 </SectionGuard>
                             ) : step === 2 ? (
                                 <SectionGuard
@@ -1024,6 +1079,12 @@ export default function CreateCoursePage() {
                                                 </section>
                                             ))}
                                         </div>
+                                        <StepNav
+                                            previousLabel='Previous step'
+                                            nextLabel='Next step'
+                                            onPrevious={() => setStep(1)}
+                                            onNext={() => setStep(step + 1)}
+                                        />
                                     </div>
                                 </SectionGuard>
                             ) : step === 3 ? (
@@ -1290,6 +1351,12 @@ export default function CreateCoursePage() {
                                                 </div>
                                             </SheetContent>
                                         </Sheet>
+                                        <StepNav
+                                            previousLabel='Previous step'
+                                            nextLabel='Next step'
+                                            onPrevious={() => setStep(2)}
+                                            onNext={() => setStep(4)}
+                                        />
                                     </div>
                                 </SectionGuard>
                             ) : step === 4 ? (
@@ -1303,6 +1370,12 @@ export default function CreateCoursePage() {
                                         <CriteriaCreationForm course={courseApiResponse} />
                                         <CourseGradingSection course={courseApiResponse} />
                                     </div>
+                                    <StepNav
+                                        previousLabel='Previous step'
+                                        nextLabel='Next step'
+                                        onPrevious={() => setStep(3)}
+                                        onNext={() => setStep(5)}
+                                    />
                                 </SectionGuard>
                             ) : (
                                 <SectionGuard
@@ -1327,17 +1400,15 @@ export default function CreateCoursePage() {
                                             editingCourseId={resolvedCourseId || undefined}
                                             initialValues={courseInitialValues}
                                         />
-                                        <div className='flex justify-end pt-2'>
-                                            <Button
-                                                type='button'
-                                                onClick={() => void handleSaveBrandingAndPricing()}
-                                                disabled={isSavingBrandingPricing}
-                                                className='min-w-40'
-                                            >
-                                                {isSavingBrandingPricing ? 'Saving...' : 'Save Branding and Pricing'}
-                                            </Button>
-                                        </div>
                                     </div>
+                                    <StepNav
+                                        previousLabel='Previous step'
+                                        nextLabel='Save and finish'
+                                        onPrevious={() => setStep(4)}
+                                        onNext={() => void handleSaveBrandingAndPricing()}
+                                        nextDisabled={isSavingBrandingPricing}
+                                        nextLoading={isSavingBrandingPricing}
+                                    />
                                 </SectionGuard>
                             )}
                         </div>
