@@ -11,7 +11,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { fmtTime12, TIMEZONES } from './class-form-shared';
+import { fmtTime12, formatDuration, sessionMinutesFor, TIMEZONES } from './class-form-shared';
 
 export function PickDatesPanel({
   pickedDates,
@@ -19,11 +19,10 @@ export function PickDatesPanel({
   sortedPickedDates,
   pickMonth,
   onPickMonthChange,
-  sessionDuration,
-  onSessionDurationChange,
   sessionStart,
   onSessionStartChange,
   sessionEnd,
+  onSessionEndChange,
   timezone,
   onTimezoneChange,
 }: {
@@ -32,16 +31,16 @@ export function PickDatesPanel({
   sortedPickedDates: Date[];
   pickMonth: Date;
   onPickMonthChange: (d: Date) => void;
-  sessionDuration: string;
-  onSessionDurationChange: (v: string) => void;
   sessionStart: string;
   onSessionStartChange: (v: string) => void;
   sessionEnd: string;
+  onSessionEndChange: (v: string) => void;
   timezone: string;
   onTimezoneChange: (v: string) => void;
 }) {
   const removeDate = (d: Date) =>
     onPickedDatesChange(pickedDates.filter(x => x.getTime() !== d.getTime()));
+  const sessionMinutes = sessionMinutesFor(sessionStart, sessionEnd);
 
   return (
     <div className='space-y-4'>
@@ -86,7 +85,7 @@ export function PickDatesPanel({
                     })}
                   </div>
                   <div className='text-muted-foreground flex-1 text-sm'>
-                    {fmtTime12(sessionStart)} – {fmtTime12(sessionEnd)}
+                    {fmtTime12(sessionStart)} - {fmtTime12(sessionEnd)}
                   </div>
                   <button
                     type='button'
@@ -104,19 +103,6 @@ export function PickDatesPanel({
 
         <div className='space-y-3'>
           <div className='text-sm font-semibold'>Session Settings</div>
-          <div className='space-y-1'>
-            <Label className='text-xs'>
-              Session Duration (minutes) <span className='text-destructive'>*</span>
-            </Label>
-            <Input
-              type='number'
-              min={1}
-              step={1}
-              inputMode='numeric'
-              value={sessionDuration}
-              onChange={e => onSessionDurationChange(e.target.value.replace(/\D/g, ''))}
-            />
-          </div>
           <div className='grid gap-3 sm:grid-cols-2'>
             <div className='space-y-1'>
               <Label className='text-xs'>
@@ -129,10 +115,23 @@ export function PickDatesPanel({
               />
             </div>
             <div className='space-y-1'>
-              <Label className='text-xs'>Derived End Time</Label>
-              <div className='bg-muted/50 text-muted-foreground flex h-10 items-center rounded-md border px-3 text-sm'>
-                {fmtTime12(sessionEnd)}
-              </div>
+              <Label className='text-xs'>
+                End Time <span className='text-destructive'>*</span>
+              </Label>
+              <Input
+                type='time'
+                value={sessionEnd}
+                aria-invalid={sessionMinutes === undefined}
+                onChange={e => onSessionEndChange(e.target.value)}
+              />
+            </div>
+          </div>
+          <div className='space-y-1'>
+            <Label className='text-xs'>Duration</Label>
+            <div className='bg-muted/50 text-muted-foreground flex h-10 items-center rounded-md border px-3 text-sm'>
+              {sessionMinutes === undefined
+                ? 'End time must be after the start time'
+                : formatDuration(sessionMinutes)}
             </div>
           </div>
           <div className='space-y-1'>

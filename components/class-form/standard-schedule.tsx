@@ -11,7 +11,14 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { cn } from '@/lib/utils';
-import { DAYS, type DayKey, type DayRow, sessionEndFor, TIMEZONES } from './class-form-shared';
+import {
+  DAYS,
+  type DayKey,
+  type DayRow,
+  formatDuration,
+  sessionMinutesFor,
+  TIMEZONES,
+} from './class-form-shared';
 
 export function StandardSchedule({
   days,
@@ -60,17 +67,20 @@ export function StandardSchedule({
         <div className='text-sm font-semibold'>Schedule</div>
         <div className='text-muted-foreground mb-2 text-xs'>Set class days and times.</div>
         <div className='min-w-0 overflow-hidden rounded-lg border'>
-          <div className='bg-muted/50 text-muted-foreground hidden grid-cols-[64px_1fr_1fr_56px] gap-1 px-2 py-1.5 text-xs sm:grid'>
+          <div className='bg-muted/50 text-muted-foreground hidden grid-cols-[56px_1fr_1fr_64px_52px] gap-1 px-2 py-1.5 text-xs sm:grid'>
             <div>Day</div>
             <div>Start</div>
-            <div>Minutes</div>
+            <div>End</div>
+            <div className='text-center'>Duration</div>
             <div className='text-center leading-none'>All Day</div>
           </div>
           {DAYS.map(d => {
             const row = days[d];
+            const minutes = sessionMinutesFor(row.start, row.end);
+            const invalid = row.active && !row.allDay && minutes === undefined;
             return (
               <div key={d} className={cn('min-w-0 border-t', row.active && 'bg-primary/5')}>
-                <div className='hidden grid-cols-[64px_1fr_1fr_56px] items-center gap-1 px-2 py-1.5 sm:grid'>
+                <div className='hidden grid-cols-[56px_1fr_1fr_64px_52px] items-center gap-1 px-2 py-1.5 sm:grid'>
                   <button
                     type='button'
                     onClick={() => onDayChange(d, { active: !row.active })}
@@ -87,30 +97,25 @@ export function StandardSchedule({
                     type='time'
                     value={row.start}
                     disabled={!row.active || row.allDay}
-                    onChange={e =>
-                      onDayChange(d, {
-                        start: e.target.value,
-                        end: sessionEndFor(e.target.value, row.durationMinutes || 120),
-                      })
-                    }
+                    onChange={e => onDayChange(d, { start: e.target.value })}
                     className='h-8 w-full min-w-0 px-1 text-xs'
                   />
                   <Input
-                    type='number'
-                    min={1}
-                    step={1}
-                    inputMode='numeric'
-                    value={row.durationMinutes ?? ''}
+                    type='time'
+                    value={row.end}
                     disabled={!row.active || row.allDay}
-                    onChange={e => {
-                      const durationMinutes = e.target.value.replace(/\D/g, '');
-                      onDayChange(d, {
-                        durationMinutes,
-                        end: sessionEndFor(row.start, durationMinutes || 1),
-                      });
-                    }}
+                    aria-invalid={row.active && !row.allDay && minutes === undefined}
+                    onChange={e => onDayChange(d, { end: e.target.value })}
                     className='h-8 w-full min-w-0 px-1 text-xs'
                   />
+                  <div
+                    className={cn(
+                      'text-center text-xs tabular-nums',
+                      invalid ? 'text-destructive' : 'text-muted-foreground'
+                    )}
+                  >
+                    {row.allDay ? '24h' : invalid ? 'Invalid' : formatDuration(minutes)}
+                  </div>
                   <div className='flex justify-center'>
                     <Checkbox
                       checked={row.allDay}
@@ -144,42 +149,41 @@ export function StandardSchedule({
                     </label>
                   </div>
                   {row.active && !row.allDay && (
-                    <div className='grid grid-cols-2 gap-2'>
-                      <div className='space-y-1'>
-                        <div className='text-muted-foreground text-[10px] tracking-wide uppercase'>
-                          Start
+                    <div className='space-y-1'>
+                      <div className='grid grid-cols-2 gap-2'>
+                        <div className='space-y-1'>
+                          <div className='text-muted-foreground text-[10px] tracking-wide uppercase'>
+                            Start
+                          </div>
+                          <Input
+                            type='time'
+                            value={row.start}
+                            onChange={e => onDayChange(d, { start: e.target.value })}
+                            className='h-10 w-full text-sm'
+                          />
                         </div>
-                        <Input
-                          type='time'
-                          value={row.start}
-                          onChange={e =>
-                            onDayChange(d, {
-                              start: e.target.value,
-                              end: sessionEndFor(e.target.value, row.durationMinutes || 120),
-                            })
-                          }
-                          className='h-10 w-full text-sm'
-                        />
+                        <div className='space-y-1'>
+                          <div className='text-muted-foreground text-[10px] tracking-wide uppercase'>
+                            End
+                          </div>
+                          <Input
+                            type='time'
+                            value={row.end}
+                            aria-invalid={invalid}
+                            onChange={e => onDayChange(d, { end: e.target.value })}
+                            className='h-10 w-full text-sm'
+                          />
+                        </div>
                       </div>
-                      <div className='space-y-1'>
-                        <div className='text-muted-foreground text-[10px] tracking-wide uppercase'>
-                          Minutes
-                        </div>
-                        <Input
-                          type='number'
-                          min={1}
-                          step={1}
-                          inputMode='numeric'
-                          value={row.durationMinutes ?? ''}
-                          onChange={e => {
-                            const durationMinutes = e.target.value.replace(/\D/g, '');
-                            onDayChange(d, {
-                              durationMinutes,
-                              end: sessionEndFor(row.start, durationMinutes || 1),
-                            });
-                          }}
-                          className='h-10 w-full text-sm'
-                        />
+                      <div
+                        className={cn(
+                          'text-[10px]',
+                          invalid ? 'text-destructive' : 'text-muted-foreground'
+                        )}
+                      >
+                        {invalid
+                          ? 'End time must be after the start time.'
+                          : `Duration: ${formatDuration(minutes)}`}
                       </div>
                     </div>
                   )}

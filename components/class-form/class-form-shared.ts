@@ -34,9 +34,10 @@ export const RATE_BASES: { value: RateBasis; label: string; unit: string; short:
 ];
 
 export const DEFAULT_RATE_BASIS: RateBasis = 'per_hour';
+const DEFAULT_RATE_BASIS_ENTRY = RATE_BASES[0]!;
 
 const basisEntry = (basis?: RateBasis | null) =>
-  RATE_BASES.find(b => b.value === basis) ?? RATE_BASES[0];
+  RATE_BASES.find(b => b.value === basis) ?? DEFAULT_RATE_BASIS_ENTRY;
 
 export const rateBasisUnit = (basis?: RateBasis | null) => basisEntry(basis).unit;
 export const rateBasisShort = (basis?: RateBasis | null) => basisEntry(basis).short;
@@ -107,7 +108,6 @@ export type DayRow = {
   active: boolean;
   start: string;
   end: string;
-  durationMinutes: string;
   allDay: boolean;
 };
 
@@ -139,16 +139,14 @@ export const DAY_FULL: Record<DayKey, string> = {
   Sun: 'Sunday',
 };
 
-export const DEFAULT_SESSION_DURATION_MINUTES = 120;
-
 export const DEFAULT_DAYS: Record<DayKey, DayRow> = {
-  Mon: { active: false, start: '09:00', end: '11:00', durationMinutes: '120', allDay: false },
-  Tue: { active: false, start: '09:00', end: '11:00', durationMinutes: '120', allDay: false },
-  Wed: { active: true, start: '09:00', end: '11:00', durationMinutes: '120', allDay: false },
-  Thu: { active: false, start: '09:00', end: '11:00', durationMinutes: '120', allDay: false },
-  Fri: { active: true, start: '11:00', end: '12:00', durationMinutes: '60', allDay: false },
-  Sat: { active: false, start: '09:00', end: '11:00', durationMinutes: '120', allDay: false },
-  Sun: { active: false, start: '09:00', end: '11:00', durationMinutes: '120', allDay: false },
+  Mon: { active: false, start: '09:00', end: '11:00', allDay: false },
+  Tue: { active: false, start: '09:00', end: '11:00', allDay: false },
+  Wed: { active: true, start: '09:00', end: '11:00', allDay: false },
+  Thu: { active: false, start: '09:00', end: '11:00', allDay: false },
+  Fri: { active: true, start: '11:00', end: '12:00', allDay: false },
+  Sat: { active: false, start: '09:00', end: '11:00', allDay: false },
+  Sun: { active: false, start: '09:00', end: '11:00', allDay: false },
 };
 
 // Target groups are not yet backed — held in state only, ready for the group taxonomy endpoint.
@@ -162,7 +160,7 @@ export const REMINDER_MINUTES: Record<string, number> = {
 export const TIMEZONES = ['EAT East Africa Time', 'UTC', 'GMT', 'CAT Central Africa Time'];
 
 export type ScheduleMode = 'standard' | 'pick' | 'academic';
-export type PeriodSlot = { day: DayKey; start: string; end: string; durationMinutes: string };
+export type PeriodSlot = { day: DayKey; start: string; end: string };
 export type AcademicPeriod = {
   id: string;
   name: string;
@@ -217,38 +215,29 @@ export const num = (value: string): number | undefined => {
   const parsed = Number(trimmed);
   return Number.isNaN(parsed) ? undefined : parsed;
 };
-
-const DURATION_TOKEN_MINUTES: Record<string, number> = {
-  '30m': 30,
-  '1h': 60,
-  '1.5h': 90,
-  '2h': 120,
-  '3h': 180,
-  '4h': 240,
-};
-
-export const parseDurationMinutes = (value?: string | number | null): number | undefined => {
-  if (typeof value === 'number') {
-    return Number.isInteger(value) && value > 0 ? value : undefined;
-  }
-  const trimmed = value?.trim();
-  if (!trimmed) return undefined;
-  const tokenValue = DURATION_TOKEN_MINUTES[trimmed];
-  if (tokenValue) return tokenValue;
-  const parsed = Number(trimmed);
-  return Number.isInteger(parsed) && parsed > 0 ? parsed : undefined;
-};
-
-export const durationMinutesOrDefault = (value?: string | number | null) =>
-  parseDurationMinutes(value) ?? DEFAULT_SESSION_DURATION_MINUTES;
-
-
-/** Length of a HH:mm–HH:mm window, used to price per-hour rates. */
-function minutesBetween(start: string, end: string): number {
+/**
+ * Length of a HH:mm-HH:mm window, in minutes.
+ *
+ * The single way to get a session's length anywhere in the form: the user sets a start and an end,
+ * and the duration is read back off them. Returns undefined for a window that does not run forwards
+ * so callers can separate mid-edit values from a valid class length.
+ */
+export function sessionMinutesFor(start: string, end: string): number | undefined {
   const [sh = NaN, sm = NaN] = start.split(':').map(Number);
   const [eh = NaN, em = NaN] = end.split(':').map(Number);
-  if ([sh, sm, eh, em].some(value => Number.isNaN(value))) return 0;
-  return Math.max(0, eh * 60 + em - (sh * 60 + sm));
+  if ([sh, sm, eh, em].some(value => Number.isNaN(value))) return undefined;
+  const minutes = eh * 60 + em - (sh * 60 + sm);
+  return minutes > 0 ? minutes : undefined;
+}
+
+/** Renders a session length the way the form shows it back to the user. */
+export function formatDuration(minutes?: number): string {
+  if (minutes === undefined) return 'Invalid';
+  const hours = Math.floor(minutes / 60);
+  const mins = minutes % 60;
+  if (hours > 0 && mins > 0) return `${hours}h ${mins}m`;
+  if (hours > 0) return `${hours}h`;
+  return `${mins}m`;
 }
 
 export function computeUpcomingSessions(
@@ -268,10 +257,8 @@ export function computeUpcomingSessions(
       const row = days[d];
       if (!row?.active) continue;
       const timeStr = row.allDay ? '09:00' : row.start;
-      const durationMinutes = row.allDay
-        ? 24 * 60
-        : (parseDurationMinutes(row.durationMinutes) ?? minutesBetween(row.start, row.end));
-      const endTime = sessionEndFor(row.start, durationMinutes);
+      const durationMinutes = row.allDay ? 24 * 60 : sessionMinutesFor(row.start, row.end);
+      if (durationMinutes === undefined) continue;
       const [h, m] = timeStr.split(':').map(Number);
       const meetingAt = new Date(cursor);
       meetingAt.setHours(h || 0, m || 0, 0, 0);
@@ -282,8 +269,8 @@ export function computeUpcomingSessions(
           month: 'short',
           day: 'numeric',
         }),
-        time: row.allDay ? 'All day' : `${row.start}–${endTime}`,
-        minutes: row.allDay ? 24 * 60 : durationMinutes,
+        time: row.allDay ? 'All day' : `${row.start}–${row.end}`,
+        minutes: durationMinutes,
       });
     }
     cursor.setDate(cursor.getDate() + 1);
@@ -312,11 +299,7 @@ export function computeSessionWindows(
       const row = days[d];
       if (!row?.active) continue;
       const [sh, sm] = (row.allDay ? '00:00' : row.start).split(':').map(Number);
-      const durationMinutes = row.allDay
-        ? 24 * 60
-        : (parseDurationMinutes(row.durationMinutes) ?? minutesBetween(row.start, row.end));
-      const derivedEnd = row.allDay ? '23:59' : sessionEndFor(row.start, durationMinutes);
-      const [eh, em] = derivedEnd.split(':').map(Number);
+      const [eh, em] = (row.allDay ? '23:59' : row.end).split(':').map(Number);
       const windowStart = new Date(cursor);
       windowStart.setHours(sh || 0, sm || 0, 0, 0);
       const windowEnd = new Date(cursor);
@@ -334,12 +317,6 @@ export function fmtTime12(hhmm: string) {
   const period = (h || 0) >= 12 ? 'PM' : 'AM';
   const h12 = (h || 0) % 12 || 12;
   return `${h12}:${String(m || 0).padStart(2, '0')} ${period}`;
-}
-
-export function sessionEndFor(sessionStart: string, sessionDuration: string | number): string {
-  const [h, m] = sessionStart.split(':').map(Number);
-  const total = (h || 0) * 60 + (m || 0) + durationMinutesOrDefault(sessionDuration);
-  return `${String(Math.floor((total / 60) % 24)).padStart(2, '0')}:${String(total % 60).padStart(2, '0')}`;
 }
 
 export function periodStatus(p: AcademicPeriod): 'active' | 'upcoming' | 'ended' {

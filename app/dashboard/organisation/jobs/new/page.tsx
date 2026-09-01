@@ -22,7 +22,6 @@ import {
   DEFAULT_DAYS,
   DEFAULT_RATE_BASIS,
   type Delivery,
-  durationMinutesOrDefault,
   EquipmentTarget,
   firstOccurrenceOnOrAfter,
   fmtDate,
@@ -31,7 +30,6 @@ import {
   type Offering,
   OfferingPicker,
   PickDatesPanel,
-  parseDurationMinutes,
   type PreviewWindow,
   PricingCapacity,
   type RateBasis,
@@ -48,7 +46,7 @@ import {
   type ServiceKey,
   StandardSchedule,
   serviceFormat,
-  sessionEndFor,
+  sessionMinutesFor,
   toDateTime,
   UpcomingSessions,
 } from '@/components/class-form';
@@ -304,9 +302,8 @@ export default function OrganisationPostJobPage() {
 
   const [pickedDates, setPickedDates] = useState<Date[]>([]);
   const [pickMonth, setPickMonth] = useState<Date>(new Date());
-  const [sessionDuration, setSessionDuration] = useState('120');
   const [sessionStart, setSessionStart] = useState('10:00');
-  const sessionEnd = sessionEndFor(sessionStart, sessionDuration);
+  const [sessionEnd, setSessionEnd] = useState('12:00');
   const sortedPickedDates = useMemo(
     () => [...pickedDates].sort((a, b) => a.getTime() - b.getTime()),
     [pickedDates]
@@ -318,7 +315,7 @@ export default function OrganisationPostJobPage() {
       name: 'Academic Period 1',
       startDate: fmtDate(today),
       endDate: fmtDate(addDays(today, 77)),
-      slots: [{ day: 'Wed', start: '09:00', end: '11:00', durationMinutes: '120' }],
+      slots: [{ day: 'Wed', start: '09:00', end: '11:00' }],
     },
   ]);
 
@@ -340,7 +337,6 @@ export default function OrganisationPostJobPage() {
         active: false,
         start: sessionStart,
         end: sessionEnd,
-        durationMinutes: sessionDuration,
         allDay: false,
       };
     for (const d of sorted)
@@ -348,13 +344,12 @@ export default function OrganisationPostJobPage() {
         active: true,
         start: sessionStart,
         end: sessionEnd,
-        durationMinutes: sessionDuration,
         allDay: false,
       };
     setDays(next);
     setStartDate(fmtDate(sorted[0]));
     setEndDate(fmtDate(sorted[sorted.length - 1]));
-  }, [mode, pickedDates, sessionStart, sessionDuration, sessionEnd]);
+  }, [mode, pickedDates, sessionStart, sessionEnd]);
 
   useEffect(() => {
     if (mode !== 'academic' || academicPeriods.length === 0) return;
@@ -364,7 +359,6 @@ export default function OrganisationPostJobPage() {
         active: false,
         start: '09:00',
         end: '10:00',
-        durationMinutes: '60',
         allDay: false,
       };
     for (const p of academicPeriods) {
@@ -373,7 +367,6 @@ export default function OrganisationPostJobPage() {
           active: true,
           start: s.start,
           end: s.end,
-          durationMinutes: s.durationMinutes,
           allDay: false,
         };
     }
@@ -421,16 +414,13 @@ export default function OrganisationPostJobPage() {
     }
 
     const jobResources = editingJob.resources ?? [];
-    const venue = jobResources.find(r =>
-      venueResources.some(v => v.uuid === r.resource_uuid)
-    );
+    const venue = jobResources.find(r => venueResources.some(v => v.uuid === r.resource_uuid));
     if (venue?.resource_uuid) setVenueUuid(venue.resource_uuid);
     setEquipmentUuids(
       jobResources
         .map(r => r.resource_uuid)
         .filter(
-          (uuid): uuid is string =>
-            Boolean(uuid) && equipmentResources.some(e => e.uuid === uuid)
+          (uuid): uuid is string => Boolean(uuid) && equipmentResources.some(e => e.uuid === uuid)
         )
     );
 
@@ -438,13 +428,15 @@ export default function OrganisationPostJobPage() {
     const recurring = templates.filter(t => t.recurrence?.recurrence_type);
     const oneOff = templates.filter(t => !t.recurrence?.recurrence_type);
     const durationFromTemplate = (template: ClassSessionTemplate) => {
+      if (template.start_time && template.end_time) {
+        const start = new Date(template.start_time);
+        const end = new Date(template.end_time);
+        const diff = Math.round((end.getTime() - start.getTime()) / 60000);
+        if (Number.isInteger(diff) && diff > 0) return diff;
+      }
+      // Older rows predate end_time being required; fall back to what they stored.
       const explicitMinutes = Number(template.duration_minutes);
-      if (Number.isInteger(explicitMinutes) && explicitMinutes > 0) return explicitMinutes;
-      if (!template.start_time || !template.end_time) return 120;
-      const start = new Date(template.start_time);
-      const end = new Date(template.end_time);
-      const diff = Math.round((end.getTime() - start.getTime()) / 60000);
-      return Number.isInteger(diff) && diff > 0 ? diff : 120;
+      return Number.isInteger(explicitMinutes) && explicitMinutes > 0 ? explicitMinutes : 120;
     };
 
     if (recurring.length > 0) {
@@ -464,7 +456,6 @@ export default function OrganisationPostJobPage() {
           active: true,
           start: `${String(start.getHours()).padStart(2, '0')}:${String(start.getMinutes()).padStart(2, '0')}`,
           end: `${String(end.getHours()).padStart(2, '0')}:${String(end.getMinutes()).padStart(2, '0')}`,
-          durationMinutes: String(durationMinutes),
           allDay: false,
         };
       }
@@ -491,7 +482,12 @@ export default function OrganisationPostJobPage() {
         setSessionStart(
           `${String(start.getHours()).padStart(2, '0')}:${String(start.getMinutes()).padStart(2, '0')}`
         );
-        setSessionDuration(String(durationFromTemplate(first)));
+        const firstEnd = first.end_time
+          ? new Date(first.end_time)
+          : new Date(start.getTime() + durationFromTemplate(first) * 60000);
+        setSessionEnd(
+          `${String(firstEnd.getHours()).padStart(2, '0')}:${String(firstEnd.getMinutes()).padStart(2, '0')}`
+        );
       }
     }
 
@@ -542,8 +538,7 @@ export default function OrganisationPostJobPage() {
     [startDate, endDate, days]
   );
   const selectedResources = useMemo(
-    () =>
-      orgResources.filter(r => r.uuid === venueUuid || equipmentUuids.includes(r.uuid ?? '')),
+    () => orgResources.filter(r => r.uuid === venueUuid || equipmentUuids.includes(r.uuid ?? '')),
     [orgResources, venueUuid, equipmentUuids]
   );
 
@@ -580,11 +575,9 @@ export default function OrganisationPostJobPage() {
 
   const buildSessionTemplates = (): ClassSessionTemplate[] => {
     const interval = Math.max(1, Math.trunc(Number(repeatEvery) || 1));
-    const defaultDurationMinutes = durationMinutesOrDefault(sessionDuration);
     if (mode === 'pick') {
       return sortedPickedDates.map(d => ({
         start_time: toDateTime(fmtDate(d), sessionStart),
-        duration_minutes: defaultDurationMinutes,
         end_time: toDateTime(fmtDate(d), sessionEnd),
         conflict_resolution: 'FAIL' as const,
       }));
@@ -596,12 +589,9 @@ export default function OrganisationPostJobPage() {
         for (const slot of p.slots) {
           const first = firstOccurrenceOnOrAfter(p.startDate, slot.day);
           if (!first || (!Number.isNaN(periodEnd.getTime()) && first > periodEnd)) continue;
-          const durationMinutes = durationMinutesOrDefault(slot.durationMinutes);
-          const endTime = sessionEndFor(slot.start, durationMinutes);
           templates.push({
             start_time: toDateTime(fmtDate(first), slot.start),
-            duration_minutes: durationMinutes,
-            end_time: toDateTime(fmtDate(first), endTime),
+            end_time: toDateTime(fmtDate(first), slot.end),
             recurrence: {
               recurrence_type: RecurrenceTypeEnum.WEEKLY,
               interval_value: interval,
@@ -621,11 +611,9 @@ export default function OrganisationPostJobPage() {
       const first = firstOccurrenceOnOrAfter(startDate, d);
       if (!first || first > endBoundary) continue;
       const startT = row.allDay ? '00:00' : row.start;
-      const durationMinutes = row.allDay ? 24 * 60 : durationMinutesOrDefault(row.durationMinutes);
-      const endT = row.allDay ? '23:59' : sessionEndFor(startT, durationMinutes);
+      const endT = row.allDay ? '23:59' : row.end;
       templates.push({
         start_time: toDateTime(fmtDate(first), startT),
-        duration_minutes: durationMinutes,
         end_time: toDateTime(fmtDate(first), endT),
         recurrence: {
           recurrence_type: RecurrenceTypeEnum.WEEKLY,
@@ -683,22 +671,24 @@ export default function OrganisationPostJobPage() {
         return toast.error('Longitude must be between -180 and 180 degrees.');
       }
     }
-    if (mode === 'pick' && !parseDurationMinutes(sessionDuration)) {
-      return toast.error('Enter a positive whole-minute session duration.');
+    if (mode === 'pick' && sessionMinutesFor(sessionStart, sessionEnd) === undefined) {
+      return toast.error('The session end time must be after the start time.');
     }
     if (
       mode === 'standard' &&
-      activeDays.some(day => !days[day].allDay && !parseDurationMinutes(days[day].durationMinutes))
+      activeDays.some(
+        day => !days[day].allDay && sessionMinutesFor(days[day].start, days[day].end) === undefined
+      )
     ) {
-      return toast.error('Every active class day needs a positive whole-minute duration.');
+      return toast.error('Every active class day must end after it starts.');
     }
     if (
       mode === 'academic' &&
       academicPeriods.some(period =>
-        period.slots.some(slot => !parseDurationMinutes(slot.durationMinutes))
+        period.slots.some(slot => sessionMinutesFor(slot.start, slot.end) === undefined)
       )
     ) {
-      return toast.error('Every academic slot needs a positive whole-minute duration.');
+      return toast.error('Every academic slot must end after it starts.');
     }
 
     const sessionTemplates = buildSessionTemplates();
@@ -706,9 +696,6 @@ export default function OrganisationPostJobPage() {
       return toast.error('Add at least one session — pick a day, a date, or an academic slot.');
     }
     const earliest = sessionTemplates.reduce((a, b) => (a.start_time <= b.start_time ? a : b));
-    const defaultDurationMinutes = Number(
-      earliest.duration_minutes ?? durationMinutesOrDefault(sessionDuration)
-    );
 
     setResourceConflicts([]);
     const [offeringKind, offeringUuid] = offering.split(':');
@@ -743,7 +730,6 @@ export default function OrganisationPostJobPage() {
       session_format: sessionFormat,
       default_start_time: earliest.start_time,
       default_end_time: earliest.end_time,
-      duration_minutes: defaultDurationMinutes,
       location_type: delivery,
       location_name: requiresPhysical ? locationName.trim() || undefined : undefined,
       location_latitude: requiresPhysical ? num(locationLatitude) : undefined,
@@ -883,11 +869,10 @@ export default function OrganisationPostJobPage() {
             sortedPickedDates={sortedPickedDates}
             pickMonth={pickMonth}
             onPickMonthChange={setPickMonth}
-            sessionDuration={sessionDuration}
-            onSessionDurationChange={setSessionDuration}
             sessionStart={sessionStart}
             onSessionStartChange={setSessionStart}
             sessionEnd={sessionEnd}
+            onSessionEndChange={setSessionEnd}
             timezone={timezone}
             onTimezoneChange={setTimezone}
           />
