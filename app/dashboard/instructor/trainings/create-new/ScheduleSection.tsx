@@ -15,6 +15,7 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { Table, TableBody, TableCell, TableRow } from '@/components/ui/table';
+import { formatScheduleClockTime } from '@/lib/date';
 import { AlertTriangle } from 'lucide-react';
 import { useEffect, useMemo, useState } from 'react';
 import { cn } from '../../../../../lib/utils';
@@ -118,13 +119,33 @@ export const ScheduleSection = ({
     setSelectedDates(customSessions.map(session => new Date(`${session.date}T00:00:00`)));
   }, [customSessions]);
 
+  useEffect(() => {
+    if (customSessions.length === 0) {
+      return;
+    }
+
+    if (customSessions.every(session => session.timezone === data.timezone)) {
+      return;
+    }
+
+    onCustomSessionsChange(
+      customSessions.map(session => ({
+        ...session,
+        timezone: data.timezone,
+      }))
+    );
+  }, [customSessions, data.timezone, onCustomSessionsChange]);
+
   const syncSessionsForDates = (dates: Date[]) => {
     const nextSessions = dates.map(date => {
       const dateKey = toDateKey(date);
       const existingSession = customSessions.find(session => session.date === dateKey);
 
       if (existingSession) {
-        return existingSession;
+        return {
+          ...existingSession,
+          timezone: data.timezone,
+        };
       }
 
       const startTime = allDay ? '00:00' : defaultStartTime;
@@ -135,6 +156,7 @@ export const ScheduleSection = ({
         startTime,
         endTime,
         hours: allDay ? 24 : calculateSessionHours(startTime, endTime),
+        timezone: data.timezone,
       };
     });
 
@@ -158,6 +180,7 @@ export const ScheduleSection = ({
         startTime: nextAllDay ? '00:00' : startTime,
         endTime: nextAllDay ? '23:59' : endTime,
         hours: nextAllDay ? 24 : calculateSessionHours(startTime, endTime),
+        timezone: data.timezone,
       }))
     );
   };
@@ -190,6 +213,7 @@ export const ScheduleSection = ({
       startTime: editStartTime,
       endTime: editEndTime,
       hours: calculateSessionHours(editStartTime, editEndTime),
+      timezone: data.timezone,
     };
 
     onCustomSessionsChange(nextSessions);
@@ -284,15 +308,15 @@ export const ScheduleSection = ({
                   >
                     {formatSessionDate(conflict.proposed.date)} {conflict.proposed.startTime} -{' '}
                     {conflict.proposed.endTime} overlaps with {conflict.existing.classTitle} (
-                    {new Date(conflict.existing.startTime).toLocaleTimeString('en-US', {
-                      hour: 'numeric',
-                      minute: '2-digit',
-                    })}{' '}
+                    {formatScheduleClockTime(
+                      conflict.existing.startTime,
+                      conflict.proposed.timezone ?? data.timezone
+                    )}{' '}
                     -{' '}
-                    {new Date(conflict.existing.endTime).toLocaleTimeString('en-US', {
-                      hour: 'numeric',
-                      minute: '2-digit',
-                    })}
+                    {formatScheduleClockTime(
+                      conflict.existing.endTime,
+                      conflict.proposed.timezone ?? data.timezone
+                    )}
                     ).
                   </li>
                 ))}

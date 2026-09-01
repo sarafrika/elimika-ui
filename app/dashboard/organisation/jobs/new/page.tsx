@@ -55,8 +55,10 @@ import { type ConflictItem, parseConflictError } from '@/components/resourcing/c
 import { ResourceConflictAlert } from '@/components/resourcing/ResourceConflictAlert';
 import { Button } from '@/components/ui/button';
 import { useOrganisation } from '@/context/organisation-context';
+import { useTimeZone } from '@/context/timezone-context';
 import { useCoursesByIds, useProgramsByIds } from '@/hooks/use-batched-lookups';
 import { extractPage } from '@/lib/api-helpers';
+import { normalizeScheduleTimeZone } from '@/lib/date';
 import { STALE_TIMES } from '@/lib/query-client';
 import type {
   Category,
@@ -82,6 +84,10 @@ export default function OrganisationPostJobPage() {
   const organisation = useOrganisation();
   const organisationUuid = organisation?.uuid ?? '';
   const isOrgVerified = Boolean(organisation?.admin_verified);
+  const { zone: preferredTimeZone, source: preferredTimeZoneSource } = useTimeZone();
+  const activeScheduleTimeZone = normalizeScheduleTimeZone(
+    preferredTimeZoneSource === 'default' ? undefined : preferredTimeZone
+  );
 
   const approvedSearchParams = {
     applicant_uuid_eq: organisationUuid,
@@ -288,7 +294,23 @@ export default function OrganisationPostJobPage() {
   const [regStart, setRegStart] = useState(fmtDate(today));
   const [regEnd, setRegEnd] = useState(fmtDate(addDays(today, 7)));
   const [continuousReg, setContinuousReg] = useState(false);
-  const [timezone, setTimezone] = useState('EAT East Africa Time');
+  const [timezone, setTimezone] = useState(activeScheduleTimeZone);
+  const [timezoneTouched, setTimezoneTouched] = useState(false);
+
+  useEffect(() => {
+    if (timezoneTouched) return;
+
+    setTimezone(current =>
+      normalizeScheduleTimeZone(current) === activeScheduleTimeZone
+        ? current
+        : activeScheduleTimeZone
+    );
+  }, [activeScheduleTimeZone, timezoneTouched]);
+
+  const handleTimezoneChange = (value: string) => {
+    setTimezoneTouched(true);
+    setTimezone(normalizeScheduleTimeZone(value));
+  };
 
   const [reminder, setReminder] = useState<ReminderState>({
     window: '24h',
@@ -577,8 +599,9 @@ export default function OrganisationPostJobPage() {
     const interval = Math.max(1, Math.trunc(Number(repeatEvery) || 1));
     if (mode === 'pick') {
       return sortedPickedDates.map(d => ({
-        start_time: toDateTime(fmtDate(d), sessionStart),
-        end_time: toDateTime(fmtDate(d), sessionEnd),
+        start_time: toDateTime(fmtDate(d), sessionStart, timezone),
+        end_time: toDateTime(fmtDate(d), sessionEnd, timezone),
+        timezone,
         conflict_resolution: 'FAIL' as const,
       }));
     }
@@ -590,8 +613,9 @@ export default function OrganisationPostJobPage() {
           const first = firstOccurrenceOnOrAfter(p.startDate, slot.day);
           if (!first || (!Number.isNaN(periodEnd.getTime()) && first > periodEnd)) continue;
           templates.push({
-            start_time: toDateTime(fmtDate(first), slot.start),
-            end_time: toDateTime(fmtDate(first), slot.end),
+            start_time: toDateTime(fmtDate(first), slot.start, timezone),
+            end_time: toDateTime(fmtDate(first), slot.end, timezone),
+            timezone,
             recurrence: {
               recurrence_type: RecurrenceTypeEnum.WEEKLY,
               interval_value: interval,
@@ -613,8 +637,9 @@ export default function OrganisationPostJobPage() {
       const startT = row.allDay ? '00:00' : row.start;
       const endT = row.allDay ? '23:59' : row.end;
       templates.push({
-        start_time: toDateTime(fmtDate(first), startT),
-        end_time: toDateTime(fmtDate(first), endT),
+        start_time: toDateTime(fmtDate(first), startT, timezone),
+        end_time: toDateTime(fmtDate(first), endT, timezone),
+        timezone,
         recurrence: {
           recurrence_type: RecurrenceTypeEnum.WEEKLY,
           interval_value: interval,
@@ -874,7 +899,7 @@ export default function OrganisationPostJobPage() {
             sessionEnd={sessionEnd}
             onSessionEndChange={setSessionEnd}
             timezone={timezone}
-            onTimezoneChange={setTimezone}
+            onTimezoneChange={handleTimezoneChange}
           />
         ) : mode === 'academic' ? (
           <AcademicPeriodsPanel periods={academicPeriods} onChange={setAcademicPeriods} />
@@ -897,7 +922,7 @@ export default function OrganisationPostJobPage() {
             continuousReg={continuousReg}
             onContinuousRegChange={setContinuousReg}
             timezone={timezone}
-            onTimezoneChange={setTimezone}
+            onTimezoneChange={handleTimezoneChange}
             totalSessions={totalSessions}
           />
         )}

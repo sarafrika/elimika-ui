@@ -26,6 +26,7 @@ import {
 import { Skeleton } from '@/components/ui/skeleton';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useUserProfile } from '@/context/profile-context';
+import { useTimeZone } from '@/context/timezone-context';
 import { type ClassDetailsScheduleItem, useClassDetails } from '@/hooks/use-class-details';
 import { useClassLessonContent } from '@/hooks/use-class-lesson-content';
 import { type RosterEntry, useClassRoster } from '@/hooks/use-class-roster';
@@ -33,7 +34,7 @@ import {
   type CourseLessonContent,
   type CourseLessonWithContent,
 } from '@/hooks/use-courselessonwithcontent';
-import { dayjs } from '@/lib/date';
+import { dayjs, normalizeTimeZone } from '@/lib/date';
 import {
   createAssignmentScheduleMutation,
   createQuizScheduleMutation,
@@ -314,7 +315,7 @@ function getYouTubeEmbedUrl(source: string) {
       const videoId = url.searchParams.get('v');
       return videoId ? `https://www.youtube.com/embed/${videoId}` : '';
     }
-  } catch { }
+  } catch {}
 
   return '';
 }
@@ -748,10 +749,11 @@ function SubmissionPanel({
                 key={tab.value}
                 type='button'
                 onClick={() => setActivePanel(tab.value)}
-                className={`flex h-8 min-w-0 items-center justify-center gap-1.5 overflow-hidden rounded px-1 text-[11px] font-medium transition-colors ${isActive
-                  ? 'bg-background text-foreground shadow-sm'
-                  : 'text-muted-foreground hover:text-foreground'
-                  }`}
+                className={`flex h-8 min-w-0 items-center justify-center gap-1.5 overflow-hidden rounded px-1 text-[11px] font-medium transition-colors ${
+                  isActive
+                    ? 'bg-background text-foreground shadow-sm'
+                    : 'text-muted-foreground hover:text-foreground'
+                }`}
               >
                 <Icon className='h-3.5 w-3.5 shrink-0' />
                 <span className='truncate'>{tab.label}</span>
@@ -866,10 +868,10 @@ function SubmissionPanel({
                       <p className='text-muted-foreground mt-2 text-xs'>
                         {item.submission
                           ? item.submission.grade_display ||
-                          item.submission.submission_status_display ||
-                          (item.submission.percentage != null
-                            ? `${item.submission.percentage}% recorded`
-                            : 'Submission received')
+                            item.submission.submission_status_display ||
+                            (item.submission.percentage != null
+                              ? `${item.submission.percentage}% recorded`
+                              : 'Submission received')
                           : 'No submission recorded for this assignment yet.'}
                       </p>
                       {item.submission?.submitted_at ? (
@@ -937,6 +939,7 @@ export default function StudentClassTrainingPage({
   const requestedContentId = searchParams.get('content') ?? '';
   const requestedCourseId = searchParams.get('course') ?? '';
   const userProfile = useUserProfile();
+  const { zone: preferredTimeZone, source: preferredTimeZoneSource } = useTimeZone();
   const { data, isLoading, isError } = useClassDetails(classId);
   const { rosterAllEnrollments, isLoading: rosterLoading } = useClassRoster(classId);
   const [studentSearch, setStudentSearch] = useState('');
@@ -944,6 +947,10 @@ export default function StudentClassTrainingPage({
   const [selectedLessonId, setSelectedLessonId] = useState('');
   const [selectedContentId, setSelectedContentId] = useState('');
   const [activeScheduleId, setActiveScheduleId] = useState('');
+  const resolvePayloadTimeZone = (schedule?: TrainingSchedule | null) =>
+    normalizeTimeZone(
+      preferredTimeZoneSource === 'default' ? schedule?.timezone : preferredTimeZone
+    );
 
   const selectedStudentId = userProfile?.student?.uuid;
 
@@ -1418,7 +1425,7 @@ export default function StudentClassTrainingPage({
       visible_at: activeSchedule.start_time ? new Date(activeSchedule.start_time) : undefined,
       due_at: assignmentDueDate,
       grading_due_at: assignmentGradingDueDate,
-      timezone: Intl.DateTimeFormat().resolvedOptions().timeZone || 'Africa/Nairobi',
+      timezone: resolvePayloadTimeZone(activeSchedule),
       release_strategy: 'CUSTOM',
       max_attempts: 1,
       instructor_uuid: userProfile?.instructor?.uuid as string,
@@ -1476,7 +1483,7 @@ export default function StudentClassTrainingPage({
       visible_at: activeSchedule.start_time ? new Date(activeSchedule.start_time) : undefined,
       due_at: quizDueDate,
       grading_due_at: quizGradingDueDate,
-      timezone: Intl.DateTimeFormat().resolvedOptions().timeZone || 'Africa/Nairobi',
+      timezone: resolvePayloadTimeZone(activeSchedule),
       release_strategy: 'CUSTOM',
       instructor_uuid: userProfile?.instructor?.uuid as string,
     };
@@ -1627,7 +1634,7 @@ export default function StudentClassTrainingPage({
         <section className='min-h-0 overflow-hidden bg-[color-mix(in_oklch,var(--el-brand-50)_35%,var(--background))]'>
           <div className='border-border/70 bg-card/95 border-b px-4 py-3'>
             <div className='flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between'>
-              <div className='min-w-0 w-full'>
+              <div className='w-full min-w-0'>
                 <h2 className='truncate text-lg font-semibold'>
                   {selectedContent?.title || activeLesson?.title || 'No lesson selected'}
                 </h2>
@@ -1643,7 +1650,7 @@ export default function StudentClassTrainingPage({
                         <TabsTrigger
                           key={tab.value}
                           value={tab.value}
-                          className='truncate text-xs sm:text-sm px-4'
+                          className='truncate px-4 text-xs sm:text-sm'
                         >
                           {tab.label}
                         </TabsTrigger>
@@ -1651,7 +1658,7 @@ export default function StudentClassTrainingPage({
                     </TabsList>
                   </Tabs>
 
-                  <div className='grid min-w-0 w-full grid-cols-1 gap-3 sm:grid-cols-2 lg:flex lg:w-[34rem] lg:flex-row lg:items-end lg:justify-end'>
+                  <div className='grid w-full min-w-0 grid-cols-1 gap-3 sm:grid-cols-2 lg:flex lg:w-[34rem] lg:flex-row lg:items-end lg:justify-end'>
                     <div className='flex min-w-0 flex-1 flex-col gap-2'>
                       <p className='text-muted-foreground text-sm'>Lesson</p>
                       <Select
@@ -1844,10 +1851,10 @@ export default function StudentClassTrainingPage({
                         isAssigningAssignment={addAssignmentScheduleMut.isPending}
                         isAssigningQuiz={addQuizScheduleMut.isPending}
                         classId={classId}
-                      // assignmentVisibleAt={''}
-                      // quizVisibleAt={''}
-                      // onAssignmentVisibleAtChange={() => { }}
-                      // onQuizVisibleAtChange={() => { }}
+                        // assignmentVisibleAt={''}
+                        // quizVisibleAt={''}
+                        // onAssignmentVisibleAtChange={() => { }}
+                        // onQuizVisibleAtChange={() => { }}
                       />
                     </div>
                   </article>

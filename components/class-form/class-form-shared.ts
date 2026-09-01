@@ -1,5 +1,6 @@
 // Shared types, catalogues, and pure helpers for the organisation create-class form.
 // Kept UI-free so every section component and the container page import from one place.
+import { scheduleTimeZoneOptions, toUtcIsoDateTime } from '@/lib/date';
 import type { User } from '@/services/client';
 
 // ─── Services (drive the session format; prices are display-only) ────────────
@@ -157,7 +158,8 @@ export const REMINDER_MINUTES: Record<string, number> = {
   '24h': 1440,
   '48h': 2880,
 };
-export const TIMEZONES = ['EAT East Africa Time', 'UTC', 'GMT', 'CAT Central Africa Time'];
+export { scheduleTimeZoneLabel, scheduleTimeZoneOptions } from '@/lib/date';
+export const TIMEZONES = scheduleTimeZoneOptions();
 
 export type ScheduleMode = 'standard' | 'pick' | 'academic';
 export type PeriodSlot = { day: DayKey; start: string; end: string };
@@ -206,8 +208,8 @@ export const firstOccurrenceOnOrAfter = (startDate: string, dayKey: DayKey): Dat
   return cursor;
 };
 
-export const toDateTime = (dateISO: string, hhmm: string): Date =>
-  new Date(`${dateISO}T${hhmm}:00`);
+export const toDateTime = (dateISO: string, hhmm: string, timezone?: string | null): Date =>
+  toUtcIsoDateTime(dateISO, hhmm, timezone) as unknown as Date;
 
 export const num = (value: string): number | undefined => {
   const trimmed = value.trim();

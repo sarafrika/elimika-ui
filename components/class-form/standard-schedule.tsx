@@ -16,8 +16,9 @@ import {
   type DayKey,
   type DayRow,
   formatDuration,
+  scheduleTimeZoneLabel,
+  scheduleTimeZoneOptions,
   sessionMinutesFor,
-  TIMEZONES,
 } from './class-form-shared';
 
 export function StandardSchedule({
@@ -259,9 +260,9 @@ export function StandardSchedule({
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
-              {TIMEZONES.map(tz => (
+              {scheduleTimeZoneOptions(timezone).map(tz => (
                 <SelectItem key={tz} value={tz}>
-                  {tz}
+                  {scheduleTimeZoneLabel(tz)}
                 </SelectItem>
               ))}
             </SelectContent>
