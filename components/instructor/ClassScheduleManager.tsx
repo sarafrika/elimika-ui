@@ -32,6 +32,7 @@ import {
 } from '@/components/ui/table';
 import { Textarea } from '@/components/ui/textarea';
 import { useInstructor } from '@/context/instructor-context';
+import { useTimeZone } from '@/context/timezone-context';
 import { useClassRoster, type RosterEntry } from '@/hooks/use-class-roster';
 import { cx, getCardClasses, getEmptyStateClasses } from '@/lib/design-system';
 import { getErrorMessage } from '@/lib/error-utils';
@@ -88,7 +89,7 @@ import {
   Video,
   XCircle,
 } from 'lucide-react';
-import { dayjs } from '@/lib/date';
+import { dayjs, normalizeTimeZone } from '@/lib/date';
 import { useMemo, useState } from 'react';
 import { toast } from 'sonner';
 import { LessonContentViewerDialog } from '../content-preview/LessonContentPreview';
@@ -105,6 +106,7 @@ export type ManagedScheduleItem = {
   location_type?: string;
   session_format?: string;
   meeting_url?: string;
+  timezone?: string | null;
   status?: string;
   started_at?: string | Date;
   concluded_at?: string | Date;
@@ -226,6 +228,11 @@ export function ClassScheduleManager({
 }: Props) {
   const queryClient = useQueryClient();
   const instructor = useInstructor();
+  const { zone: preferredTimeZone, source: preferredTimeZoneSource } = useTimeZone();
+  const resolvePayloadTimeZone = (schedule?: ManagedScheduleItem | null) =>
+    normalizeTimeZone(
+      preferredTimeZoneSource === 'default' ? schedule?.timezone : preferredTimeZone
+    );
   const [selectedSchedule, setSelectedSchedule] = useState<ManagedScheduleItem | null>(null);
   const [attendanceSearch, setAttendanceSearch] = useState('');
   const [isAttendanceOpen, setIsAttendanceOpen] = useState(false);
@@ -590,7 +597,7 @@ export function ClassScheduleManager({
           visible_at: visibleAtDate,
           due_at: assignmentDueDateValue,
           grading_due_at: gradingDueAtDate,
-          timezone: 'Africa/Nairobi',
+          timezone: resolvePayloadTimeZone(selectedSchedule),
           release_strategy: 'CUSTOM',
           max_attempts: Number(maxAttempts),
           instructor_uuid: instructor?.uuid,
@@ -627,7 +634,7 @@ export function ClassScheduleManager({
           class_lesson_plan_uuid: selectedSchedule.uuid,
           visible_at: quizVisibleAtDate,
           due_at: quizDueDateValue,
-          timezone: 'Africa/Nairobi',
+          timezone: resolvePayloadTimeZone(selectedSchedule),
           release_strategy: 'CUSTOM',
           time_limit_override: timeLimitOverride ? Number(timeLimitOverride) : undefined,
           attempt_limit_override: attemptLimitOverride ? Number(attemptLimitOverride) : undefined,

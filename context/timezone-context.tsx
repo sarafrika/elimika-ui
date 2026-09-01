@@ -51,7 +51,9 @@ interface TimeZoneProviderProps {
  * inside a `<time suppressHydrationWarning>` to absorb the post-mount refinement.
  */
 export function TimeZoneProvider({ children, initialPreferredZone = null }: TimeZoneProviderProps) {
-  const [preferredZone, setPreferredZoneState] = useState<string | null>(initialPreferredZone);
+  const [preferredZone, setPreferredZoneState] = useState<string | null>(() =>
+    initialPreferredZone ? resolveDisplayZone(initialPreferredZone) : null
+  );
   const [detectedZone, setDetectedZone] = useState<string | null>(null);
 
   useEffect(() => {
@@ -61,7 +63,7 @@ export function TimeZoneProvider({ children, initialPreferredZone = null }: Time
       try {
         const stored = window.localStorage.getItem(STORAGE_KEY);
         if (stored) {
-          setPreferredZoneState(stored);
+          setPreferredZoneState(resolveDisplayZone(stored));
         }
       } catch {
         // Ignore storage access errors (private mode, SSR).
@@ -70,10 +72,11 @@ export function TimeZoneProvider({ children, initialPreferredZone = null }: Time
   }, [initialPreferredZone]);
 
   const setPreferredZone = useCallback((zone: string | null) => {
-    setPreferredZoneState(zone);
+    const normalizedZone = zone ? resolveDisplayZone(zone) : null;
+    setPreferredZoneState(normalizedZone);
     try {
-      if (zone) {
-        window.localStorage.setItem(STORAGE_KEY, zone);
+      if (normalizedZone) {
+        window.localStorage.setItem(STORAGE_KEY, normalizedZone);
       } else {
         window.localStorage.removeItem(STORAGE_KEY);
       }

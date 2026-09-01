@@ -45,6 +45,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useBreadcrumb } from '@/context/breadcrumb-provider';
 import { useInstructor } from '@/context/instructor-context';
+import { useTimeZone } from '@/context/timezone-context';
 import { type ClassDetailsScheduleItem, useClassDetails } from '@/hooks/use-class-details';
 import { type RosterEntry, useClassRoster } from '@/hooks/use-class-roster';
 import {
@@ -53,7 +54,7 @@ import {
   type CourseLessonWithContent,
   useCourseLessonsWithContent,
 } from '@/hooks/use-courselessonwithcontent';
-import { dayjs } from '@/lib/date';
+import { dayjs, normalizeTimeZone } from '@/lib/date';
 import {
   cx,
   elimikaDesignSystem,
@@ -354,6 +355,7 @@ export default function InstructorTrainingConsole() {
   const classId = params?.id as string;
   const queryClient = useQueryClient();
   const instructor = useInstructor();
+  const { zone: preferredTimeZone, source: preferredTimeZoneSource } = useTimeZone();
   const { replaceBreadcrumbs } = useBreadcrumb();
   const { data, isLoading, isError } = useClassDetails(classId);
   const { roster, rosterAllEnrollments, isLoading: rosterLoading } = useClassRoster(classId);
@@ -366,6 +368,10 @@ export default function InstructorTrainingConsole() {
   const [selectedQuizUuid, setSelectedQuizUuid] = useState('');
   const [assignmentDueAt, setAssignmentDueAt] = useState('');
   const [quizDueAt, setQuizDueAt] = useState('');
+  const resolvePayloadTimeZone = (schedule?: TrainingSchedule | null) =>
+    normalizeTimeZone(
+      preferredTimeZoneSource === 'default' ? schedule?.timezone : preferredTimeZone
+    );
 
   useEffect(() => {
     if (!classId) return;
@@ -671,7 +677,7 @@ export default function InstructorTrainingConsole() {
       visible_at: activeSchedule.start_time,
       due_at: assignmentDueAt ? new Date(assignmentDueAt) : activeSchedule.end_time,
       grading_due_at: assignmentDueAt ? new Date(assignmentDueAt) : activeSchedule.end_time,
-      timezone: 'Africa/Nairobi',
+      timezone: resolvePayloadTimeZone(activeSchedule),
       release_strategy: 'CUSTOM',
       max_attempts: 1,
       instructor_uuid: instructor?.uuid as string,
@@ -707,7 +713,7 @@ export default function InstructorTrainingConsole() {
       class_lesson_plan_uuid: activeSchedule.uuid,
       visible_at: activeSchedule.start_time,
       due_at: quizDueAt ? new Date(quizDueAt) : activeSchedule.end_time,
-      timezone: 'Africa/Nairobi',
+      timezone: resolvePayloadTimeZone(activeSchedule),
       release_strategy: 'CUSTOM',
       instructor_uuid: instructor?.uuid as string,
     };

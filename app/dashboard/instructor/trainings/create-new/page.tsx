@@ -8,6 +8,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
+import { useTimeZone } from '@/context/timezone-context';
 import {
   type InstructorClassWithSchedule,
   useInstructorClassesWithSchedules,
@@ -18,6 +19,7 @@ import {
   toCoordinate,
   trimToUndefined,
 } from '@/lib/location-types';
+import { DEFAULT_CLASS_TIME_ZONE, normalizeScheduleTimeZone, parseApiDate } from '@/lib/date';
 import type { CreateClassDefinitionMultipartData } from '@/services/client/types.gen';
 import { useInstructor } from '../../../../../context/instructor-context';
 import { useClassDetails } from '../../../../../hooks/use-class-details';
@@ -158,17 +160,7 @@ type ScheduleConflict = {
 };
 
 const normalizeDateTimeValue = (value: string | Date | undefined | null) => {
-  if (!value) {
-    return null;
-  }
-
-  const parsedValue = value instanceof Date ? value : new Date(value);
-
-  if (Number.isNaN(parsedValue.getTime())) {
-    return null;
-  }
-
-  return parsedValue;
+  return parseApiDate(value)?.toDate() ?? null;
 };
 
 const findScheduleConflicts = (
@@ -208,8 +200,12 @@ const findScheduleConflicts = (
     .filter(Boolean);
 
   return sessions.flatMap(session => {
-    const proposedStart = new Date(buildUtcIsoDateTime(session.date, session.startTime)).getTime();
-    const proposedEnd = new Date(buildUtcIsoDateTime(session.date, session.endTime)).getTime();
+    const proposedStart = new Date(
+      buildUtcIsoDateTime(session.date, session.startTime, session.timezone)
+    ).getTime();
+    const proposedEnd = new Date(
+      buildUtcIsoDateTime(session.date, session.endTime, session.timezone)
+    ).getTime();
 
     if (Number.isNaN(proposedStart) || Number.isNaN(proposedEnd) || proposedStart >= proposedEnd) {
       return [];
@@ -322,12 +318,17 @@ const ClassBuilderPage = ({
   const qc = useQueryClient();
   const router = useRouter();
   const instructor = useInstructor();
+  const { zone: preferredTimeZone, source: preferredTimeZoneSource } = useTimeZone();
+  const activeScheduleTimeZone = normalizeScheduleTimeZone(
+    preferredTimeZoneSource === 'default' ? DEFAULT_CLASS_TIME_ZONE : preferredTimeZone
+  );
 
   const [savedClassUuid, setSavedClassUuid] = useState<string | null>(null);
   const [isPreviewMode, setIsPreviewMode] = useState(false);
   const [isDataInitialized, setIsDataInitialized] = useState(false);
   const [scheduleMode, setScheduleMode] = useState<ScheduleMode>('class');
   const [customSessions, setCustomSessions] = useState<ScheduledSessionInstance[]>([]);
+  const [scheduleTimezoneOverridden, setScheduleTimezoneOverridden] = useState(false);
 
   const resolveId = classId || savedClassUuid;
   const { data: combinedClass, isLoading } = useClassDetails(resolveId as string);
@@ -383,7 +384,7 @@ const ClassBuilderPage = ({
       time: { duration: '' },
     },
     recurringOptions: '',
-    timezone: '',
+    timezone: activeScheduleTimeZone,
     classType: '',
     location: '',
     pin: '',
@@ -442,6 +443,17 @@ const ClassBuilderPage = ({
   }, [initialSlot, resolveId]);
 
   useEffect(() => {
+    if (resolveId || !isDataInitialized || scheduleTimezoneOverridden) return;
+
+    setScheduleSettings(prev => {
+      if (normalizeScheduleTimeZone(prev.timezone) === activeScheduleTimeZone) {
+        return prev;
+      }
+      return { ...prev, timezone: activeScheduleTimeZone };
+    });
+  }, [activeScheduleTimeZone, resolveId, isDataInitialized, scheduleTimezoneOverridden]);
+
+  useEffect(() => {
     if (resolveId || isDataInitialized || typeof window === 'undefined') return;
 
     const savedDraft = window.localStorage.getItem(LOCAL_CLASS_DRAFT_KEY);
@@ -468,9 +480,16 @@ const ClassBuilderPage = ({
       }
 
       if (parsed.scheduleSettings) {
+        const restoredTimeZone = normalizeScheduleTimeZone(
+          parsed.scheduleSettings.timezone ?? activeScheduleTimeZone
+        );
+        if (parsed.scheduleSettings.timezone) {
+          setScheduleTimezoneOverridden(true);
+        }
         setScheduleSettings(prev => ({
           ...prev,
           ...parsed.scheduleSettings,
+          timezone: restoredTimeZone,
           academicPeriod: {
             ...prev.academicPeriod,
             ...parsed.scheduleSettings?.academicPeriod,
@@ -507,14 +526,19 @@ const ClassBuilderPage = ({
       }
 
       if (Array.isArray(parsed.customSessions)) {
-        setCustomSessions(parsed.customSessions);
+        setCustomSessions(
+          parsed.customSessions.map(session => ({
+            ...session,
+            timezone: normalizeScheduleTimeZone(session.timezone ?? activeScheduleTimeZone),
+          }))
+        );
       }
     } catch {
       window.localStorage.removeItem(LOCAL_CLASS_DRAFT_KEY);
     } finally {
       setIsDataInitialized(true);
     }
-  }, [resolveId, isDataInitialized]);
+  }, [resolveId, isDataInitialized, activeScheduleTimeZone]);
 
   // Sync fetched data to state
   useEffect(() => {
@@ -549,16 +573,28 @@ const ClassBuilderPage = ({
       });
 
       if (classData.default_start_time) {
+        const templateTimeZone = classData.session_templates?.[0]?.timezone;
+        const hydratedTimeZone = normalizeScheduleTimeZone(
+          templateTimeZone ?? activeScheduleTimeZone
+        );
         const startDate = new Date(classData.default_start_time);
         const endDate = new Date(classData.default_end_time);
+        const startDisplay = parseApiDate(classData.default_start_time)?.tz(hydratedTimeZone);
+        const endDisplay = parseApiDate(classData.default_end_time)?.tz(hydratedTimeZone);
+
+        if (templateTimeZone) {
+          setScheduleTimezoneOverridden(true);
+        }
 
         setScheduleSettings(prev => ({
           ...prev,
           startClass: {
-            date: startDate.toISOString().split('T')[0] as string,
-            startTime: startDate.toTimeString().slice(0, 5),
-            endTime: endDate.toTimeString().slice(0, 5),
+            date: (startDisplay?.format('YYYY-MM-DD') ??
+              startDate.toISOString().split('T')[0]) as string,
+            startTime: startDisplay?.format('HH:mm') ?? startDate.toTimeString().slice(0, 5),
+            endTime: endDisplay?.format('HH:mm') ?? endDate.toTimeString().slice(0, 5),
           },
+          timezone: hydratedTimeZone,
         }));
       }
 
@@ -566,7 +602,15 @@ const ClassBuilderPage = ({
     } else if (!resolveId && !isDataInitialized) {
       setIsDataInitialized(true);
     }
-  }, [classData, isLoading, courseDetail, resolveId, isDataInitialized, instructor?.full_name]);
+  }, [
+    classData,
+    isLoading,
+    courseDetail,
+    resolveId,
+    isDataInitialized,
+    instructor?.full_name,
+    activeScheduleTimeZone,
+  ]);
 
   useEffect(() => {
     if (resolveId || !isDataInitialized || typeof window === 'undefined') return;
@@ -708,8 +752,17 @@ const ClassBuilderPage = ({
       const sessionTemplates: CreateClassDefinitionMultipartData['body']['session_templates'] =
         scheduleMode === 'custom'
           ? sortedCustomSessions.map(session => ({
-              start_time: new Date(buildUtcIsoDateTime(session.date, session.startTime)),
-              end_time: new Date(buildUtcIsoDateTime(session.date, session.endTime)),
+              start_time: buildUtcIsoDateTime(
+                session.date,
+                session.startTime,
+                scheduleSettings.timezone
+              ) as unknown as Date,
+              end_time: buildUtcIsoDateTime(
+                session.date,
+                session.endTime,
+                scheduleSettings.timezone
+              ) as unknown as Date,
+              timezone: scheduleSettings.timezone,
               conflict_resolution: 'FAIL',
             }))
           : (() => {
@@ -719,8 +772,16 @@ const ClassBuilderPage = ({
               const endTime = scheduleSettings.allDay
                 ? '23:59'
                 : (scheduleSettings.startClass.endTime as string);
-              const startTimeIso = buildUtcIsoDateTime(scheduleSettings.startClass.date, startTime);
-              const endTimeIso = buildUtcIsoDateTime(scheduleSettings.startClass.date, endTime);
+              const startTimeIso = buildUtcIsoDateTime(
+                scheduleSettings.startClass.date,
+                startTime,
+                scheduleSettings.timezone
+              );
+              const endTimeIso = buildUtcIsoDateTime(
+                scheduleSettings.startClass.date,
+                endTime,
+                scheduleSettings.timezone
+              );
               const selectedDays = scheduleSettings.repeat.days || [];
               const days_of_week = selectedDays
                 .sort()
@@ -729,14 +790,15 @@ const ClassBuilderPage = ({
 
               return [
                 {
-                  start_time: new Date(startTimeIso),
-                  end_time: new Date(endTimeIso),
+                  start_time: startTimeIso as unknown as Date,
+                  end_time: endTimeIso as unknown as Date,
                   recurrence: {
                     recurrence_type: RECURRENCE_TYPE_MAP[scheduleSettings.repeat.unit],
                     interval_value: scheduleSettings.repeat.interval,
                     days_of_week: days_of_week || undefined,
                     occurrence_count: occurrenceCount,
                   },
+                  timezone: scheduleSettings.timezone,
                   conflict_resolution: 'FAIL',
                 },
               ];
@@ -771,30 +833,30 @@ const ClassBuilderPage = ({
         is_active: !isDraft,
         default_start_time:
           scheduleMode === 'custom'
-            ? new Date(
-                buildUtcIsoDateTime(sortedCustomSessions[0].date, sortedCustomSessions[0].startTime)
-              )
-            : new Date(
-                buildUtcIsoDateTime(
-                  scheduleSettings.startClass.date,
-                  scheduleSettings.allDay
-                    ? '00:00'
-                    : (scheduleSettings.startClass.startTime as string)
-                )
-              ),
+            ? (buildUtcIsoDateTime(
+                sortedCustomSessions[0].date,
+                sortedCustomSessions[0].startTime,
+                scheduleSettings.timezone
+              ) as unknown as Date)
+            : (buildUtcIsoDateTime(
+                scheduleSettings.startClass.date,
+                scheduleSettings.allDay
+                  ? '00:00'
+                  : (scheduleSettings.startClass.startTime as string),
+                scheduleSettings.timezone
+              ) as unknown as Date),
         default_end_time:
           scheduleMode === 'custom'
-            ? new Date(
-                buildUtcIsoDateTime(sortedCustomSessions[0].date, sortedCustomSessions[0].endTime)
-              )
-            : new Date(
-                buildUtcIsoDateTime(
-                  scheduleSettings.startClass.date,
-                  scheduleSettings.allDay
-                    ? '23:59'
-                    : (scheduleSettings.startClass.endTime as string)
-                )
-              ),
+            ? (buildUtcIsoDateTime(
+                sortedCustomSessions[0].date,
+                sortedCustomSessions[0].endTime,
+                scheduleSettings.timezone
+              ) as unknown as Date)
+            : (buildUtcIsoDateTime(
+                scheduleSettings.startClass.date,
+                scheduleSettings.allDay ? '23:59' : (scheduleSettings.startClass.endTime as string),
+                scheduleSettings.timezone
+              ) as unknown as Date),
         meeting_link: meetingLinkAllowed ? trimToUndefined(classDetails.meeting_link) : undefined,
         session_templates: sessionTemplates,
       };

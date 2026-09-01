@@ -30,6 +30,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Textarea } from '@/components/ui/textarea';
 import { useUserProfile } from '@/context/profile-context';
+import { useTimeZone } from '@/context/timezone-context';
 import { type ClassDetailsScheduleItem, useClassDetails } from '@/hooks/use-class-details';
 import { useClassLessonContent } from '@/hooks/use-class-lesson-content';
 import { type RosterEntry, useClassRoster } from '@/hooks/use-class-roster';
@@ -37,7 +38,7 @@ import {
   type CourseLessonContent,
   type CourseLessonWithContent,
 } from '@/hooks/use-courselessonwithcontent';
-import { dayjs } from '@/lib/date';
+import { dayjs, normalizeTimeZone } from '@/lib/date';
 import {
   createAssignmentScheduleMutation,
   createQuizScheduleMutation,
@@ -390,7 +391,7 @@ function getYouTubeEmbedUrl(source: string) {
       const videoId = url.searchParams.get('v');
       return videoId ? `https://www.youtube.com/embed/${videoId}` : '';
     }
-  } catch { }
+  } catch {}
 
   return '';
 }
@@ -550,10 +551,11 @@ function AssessmentTasksSection({
         <button
           type='button'
           onClick={() => setActiveTab('assigned')}
-          className={`flex flex-1 items-center justify-center gap-2 rounded-md px-3 py-2 text-xs font-medium transition-all ${activeTab === 'assigned'
-            ? 'bg-background text-foreground shadow-sm'
-            : 'text-muted-foreground hover:text-foreground'
-            }`}
+          className={`flex flex-1 items-center justify-center gap-2 rounded-md px-3 py-2 text-xs font-medium transition-all ${
+            activeTab === 'assigned'
+              ? 'bg-background text-foreground shadow-sm'
+              : 'text-muted-foreground hover:text-foreground'
+          }`}
         >
           <ListChecks className='size-3.5' />
           Assigned Tasks
@@ -566,10 +568,11 @@ function AssessmentTasksSection({
         <button
           type='button'
           onClick={() => setActiveTab('add')}
-          className={`flex flex-1 items-center justify-center gap-2 rounded-md px-3 py-2 text-xs font-medium transition-all ${activeTab === 'add'
-            ? 'bg-background text-foreground shadow-sm'
-            : 'text-muted-foreground hover:text-foreground'
-            }`}
+          className={`flex flex-1 items-center justify-center gap-2 rounded-md px-3 py-2 text-xs font-medium transition-all ${
+            activeTab === 'add'
+              ? 'bg-background text-foreground shadow-sm'
+              : 'text-muted-foreground hover:text-foreground'
+          }`}
         >
           <Plus className='size-3.5' />
           Issue a new task
@@ -584,10 +587,11 @@ function AssessmentTasksSection({
             <button
               type='button'
               onClick={() => setAddType('assignment')}
-              className={`flex items-center justify-center gap-2 rounded-md py-2 text-xs font-medium transition-all ${addType === 'assignment'
-                ? 'bg-primary text-primary-foreground shadow-sm'
-                : 'text-muted-foreground hover:text-foreground'
-                }`}
+              className={`flex items-center justify-center gap-2 rounded-md py-2 text-xs font-medium transition-all ${
+                addType === 'assignment'
+                  ? 'bg-primary text-primary-foreground shadow-sm'
+                  : 'text-muted-foreground hover:text-foreground'
+              }`}
             >
               <SquarePen className='size-3.5' />
               Assignment
@@ -595,10 +599,11 @@ function AssessmentTasksSection({
             <button
               type='button'
               onClick={() => setAddType('quiz')}
-              className={`flex items-center justify-center gap-2 rounded-md py-2 text-xs font-medium transition-all ${addType === 'quiz'
-                ? 'bg-primary text-primary-foreground shadow-sm'
-                : 'text-muted-foreground hover:text-foreground'
-                }`}
+              className={`flex items-center justify-center gap-2 rounded-md py-2 text-xs font-medium transition-all ${
+                addType === 'quiz'
+                  ? 'bg-primary text-primary-foreground shadow-sm'
+                  : 'text-muted-foreground hover:text-foreground'
+              }`}
             >
               <ClipboardList className='size-3.5' />
               Quiz
@@ -634,12 +639,13 @@ function AssessmentTasksSection({
                       return (
                         <div
                           key={assignment.uuid}
-                          className={`rounded-lg border transition-all ${isDraft
-                            ? 'opacity-60'
-                            : isSelected
-                              ? 'border-primary bg-primary/5'
-                              : 'border-border'
-                            }`}
+                          className={`rounded-lg border transition-all ${
+                            isDraft
+                              ? 'opacity-60'
+                              : isSelected
+                                ? 'border-primary bg-primary/5'
+                                : 'border-border'
+                          }`}
                         >
                           <div className='p-3'>
                             <div className='flex items-start justify-between gap-3'>
@@ -686,12 +692,12 @@ function AssessmentTasksSection({
 
                                   {((assignment.submission_types as unknown as string[] | undefined)
                                     ?.length ?? 0) > 0 && (
-                                      <Badge variant='outline'>
-                                        📤{' '}
-                                        {assignment.submission_summary ??
-                                          `${(assignment.submission_types as unknown as string[] | undefined)?.length ?? 0} submission types`}
-                                      </Badge>
-                                    )}
+                                    <Badge variant='outline'>
+                                      📤{' '}
+                                      {assignment.submission_summary ??
+                                        `${(assignment.submission_types as unknown as string[] | undefined)?.length ?? 0} submission types`}
+                                    </Badge>
+                                  )}
 
                                   {assignment.assignment_category && (
                                     <Badge variant='outline'>
@@ -702,20 +708,20 @@ function AssessmentTasksSection({
 
                                 {((assignment.submission_types as unknown as string[] | undefined)
                                   ?.length ?? 0) > 0 && (
-                                    <div className='mt-2 flex flex-wrap gap-1'>
-                                      <p className='text-muted-foreground text-xs'>
-                                        Accepted Submissions:
-                                      </p>
+                                  <div className='mt-2 flex flex-wrap gap-1'>
+                                    <p className='text-muted-foreground text-xs'>
+                                      Accepted Submissions:
+                                    </p>
 
-                                      {(
-                                        assignment.submission_types as unknown as string[] | undefined
-                                      )?.map(type => (
-                                        <Badge key={type} variant='secondary' className='text-[10px]'>
-                                          {type}
-                                        </Badge>
-                                      ))}
-                                    </div>
-                                  )}
+                                    {(
+                                      assignment.submission_types as unknown as string[] | undefined
+                                    )?.map(type => (
+                                      <Badge key={type} variant='secondary' className='text-[10px]'>
+                                        {type}
+                                      </Badge>
+                                    ))}
+                                  </div>
+                                )}
                               </div>
 
                               <div className='flex items-center gap-2'>
@@ -772,8 +778,9 @@ function AssessmentTasksSection({
                       return (
                         <div
                           key={quiz.uuid}
-                          className={`rounded-lg border transition-all ${isSelected ? 'border-primary bg-primary/5' : 'border-border'
-                            }`}
+                          className={`rounded-lg border transition-all ${
+                            isSelected ? 'border-primary bg-primary/5' : 'border-border'
+                          }`}
                         >
                           <div className='p-3'>
                             <div className='flex items-start justify-between gap-3'>
@@ -1152,6 +1159,10 @@ function AssignedTaskRow({
   onViewQuiz?: (quiz: Quiz) => void;
 }) {
   const qc = useQueryClient();
+  const { zone: preferredTimeZone, source: preferredTimeZoneSource } = useTimeZone();
+  const payloadTimeZone = normalizeTimeZone(
+    preferredTimeZoneSource === 'default' ? activeSchedule?.timezone : preferredTimeZone
+  );
   const [expanded, setExpanded] = React.useState(false);
   const [showDeleteDialog, setShowDeleteDialog] = React.useState(false);
 
@@ -1222,8 +1233,9 @@ function AssignedTaskRow({
       {/* Row header */}
       <div className='flex items-center gap-3 p-3'>
         <div
-          className={`grid size-7 shrink-0 place-items-center rounded-md ${type === 'assignment' ? 'bg-primary/10 text-primary' : 'bg-muted text-muted-foreground'
-            }`}
+          className={`grid size-7 shrink-0 place-items-center rounded-md ${
+            type === 'assignment' ? 'bg-primary/10 text-primary' : 'bg-muted text-muted-foreground'
+          }`}
         >
           {type === 'assignment' ? (
             <SquarePen className='size-3.5' />
@@ -1364,7 +1376,7 @@ function AssignedTaskRow({
                         visible_at: visibleAtDate,
                         due_at: dueAtDate,
                         grading_due_at: gradingDueAtDate,
-                        timezone: activeSchedule?.timezone ?? 'Africa/Nairobi',
+                        timezone: payloadTimeZone,
                         release_strategy: activeSchedule?.release_strategy,
                         max_attempts: (activeSchedule as { max_attempts?: number })?.max_attempts,
                         instructor_uuid: activeSchedule?.instructor_uuid,
@@ -1411,7 +1423,7 @@ function AssignedTaskRow({
                         visible_at: visibleAtDate,
                         due_at: dueAtDate,
                         grading_due_at: gradingDueAtDate,
-                        timezone: activeSchedule?.timezone ?? 'Africa/Nairobi',
+                        timezone: payloadTimeZone,
                         release_strategy: activeSchedule?.release_strategy,
                         instructor_uuid: activeSchedule?.instructor_uuid,
                         notes: activeSchedule?.notes,
@@ -1628,8 +1640,9 @@ export function RosterPanel({
 
         {/* STATUS MESSAGE (NEW UX) */}
         <div
-          className={`text-center text-xs leading-snug ${isSessionExpired ? 'text-destructive' : 'text-muted-foreground'
-            }`}
+          className={`text-center text-xs leading-snug ${
+            isSessionExpired ? 'text-destructive' : 'text-muted-foreground'
+          }`}
         >
           {isSessionExpired && (
             <span>Attendance window closed. This session has exceeded its scheduled end time.</span>
@@ -1669,10 +1682,11 @@ export function RosterPanel({
                   type='button'
                   key={entry.enrollment?.uuid ?? entry.user?.uuid ?? entry.student?.uuid}
                   onClick={() => onSelectStudent(entry)}
-                  className={`w-full rounded-md border p-2.5 text-left transition-colors ${isSelected
-                    ? 'border-primary/30 bg-primary/8'
-                    : 'hover:bg-primary/5 border-transparent'
-                    }`}
+                  className={`w-full rounded-md border p-2.5 text-left transition-colors ${
+                    isSelected
+                      ? 'border-primary/30 bg-primary/8'
+                      : 'hover:bg-primary/5 border-transparent'
+                  }`}
                 >
                   <div className='flex items-start gap-2.5'>
                     <Avatar className='border-border/60 size-8 border'>
@@ -2008,10 +2022,11 @@ function SubmissionPanel({
                 type='button'
                 variant='ghost'
                 onClick={() => setActivePanel(tab.value)}
-                className={`flex h-8 min-w-0 items-center justify-center gap-1.5 overflow-hidden rounded-md px-2 py-1.5 text-[11px] font-medium transition-all ${isActive
-                  ? `bg-background text-foreground dark:bg-primary dark:text-primary-foreground shadow-sm dark:shadow-md`
-                  : `text-muted-foreground hover:bg-background/80 hover:text-foreground dark:text-muted-foreground/70 dark:hover:bg-muted/50 dark:hover:text-foreground`
-                  } `}
+                className={`flex h-8 min-w-0 items-center justify-center gap-1.5 overflow-hidden rounded-md px-2 py-1.5 text-[11px] font-medium transition-all ${
+                  isActive
+                    ? `bg-background text-foreground dark:bg-primary dark:text-primary-foreground shadow-sm dark:shadow-md`
+                    : `text-muted-foreground hover:bg-background/80 hover:text-foreground dark:text-muted-foreground/70 dark:hover:bg-muted/50 dark:hover:text-foreground`
+                } `}
               >
                 <Icon className='h-3.5 w-3.5 shrink-0' />
                 <span className='truncate'>{tab.label}</span>
@@ -2159,10 +2174,10 @@ function SubmissionPanel({
                       <p className='text-muted-foreground mt-2 text-xs'>
                         {item.submission
                           ? item.submission.grade_display ||
-                          item.submission.submission_status_display ||
-                          (item.submission.percentage != null
-                            ? `${item.submission.percentage}% recorded`
-                            : 'Submission received')
+                            item.submission.submission_status_display ||
+                            (item.submission.percentage != null
+                              ? `${item.submission.percentage}% recorded`
+                              : 'Submission received')
                           : 'No submission recorded for this assignment yet.'}
                       </p>
 
@@ -2199,10 +2214,10 @@ function SubmissionPanel({
           ) : null}
 
           {activePanel === 'trackers' ? (
-            <div className='w-full min-w-0 max-w-full space-y-3 overflow-hidden'>
+            <div className='w-full max-w-full min-w-0 space-y-3 overflow-hidden'>
               {classAssessments.length > 0 ? (
-                <div className='w-full min-w-0 max-w-full'>
-                  <div className='w-full min-w-0 max-w-full overflow-x-auto'>
+                <div className='w-full max-w-full min-w-0'>
+                  <div className='w-full max-w-full min-w-0 overflow-x-auto'>
                     <div className='w-max min-w-full space-y-4'>
                       {classAssessments.map(assessment => {
                         const rubric = assessment.rubric_uuid
@@ -2268,8 +2283,6 @@ function SubmissionPanel({
     ) : null} */}
             </div>
           ) : null}
-
-
 
           {activePanel === 'notes' ? (
             <div className='space-y-3'>
@@ -2438,6 +2451,7 @@ export default function ClassTrainingPage({
   const requestedContentId = searchParams.get('content') ?? '';
   const requestedCourseId = searchParams.get('course') ?? '';
   const userProfile = useUserProfile();
+  const { zone: preferredTimeZone, source: preferredTimeZoneSource } = useTimeZone();
   const { data, isLoading, isError } = useClassDetails(classId);
   const { rosterAllEnrollments, isLoading: rosterLoading } = useClassRoster(classId);
   const [studentSearch, setStudentSearch] = useState('');
@@ -2453,6 +2467,10 @@ export default function ClassTrainingPage({
   const [quizVisibleAt, setQuizVisibleAt] = useState('');
   const [quizDueAt, setQuizDueAt] = useState('');
   const [quizGradingDueAt, setQuizGradingDueAt] = useState('');
+  const resolvePayloadTimeZone = (schedule?: TrainingSchedule | null) =>
+    normalizeTimeZone(
+      preferredTimeZoneSource === 'default' ? schedule?.timezone : preferredTimeZone
+    );
   const [noteDraft, setNoteDraft] = useState('');
   const [sentNotes, setSentNotes] = useState<NoteEntry[]>([]);
   const [isEndClassConfirmOpen, setIsEndClassConfirmOpen] = useState(false);
@@ -2935,9 +2953,9 @@ export default function ClassTrainingPage({
         dueAt: assignment.due_at,
         submission: submission
           ? {
-            ...submission,
-            attachments: submissionAttachmentQueries[index]?.data?.data ?? [],
-          }
+              ...submission,
+              attachments: submissionAttachmentQueries[index]?.data?.data ?? [],
+            }
           : null,
       })),
     [studentSubmissions, submissionAttachmentQueries]
@@ -3070,7 +3088,7 @@ export default function ClassTrainingPage({
       visible_at: activeSchedule.start_time ? new Date(activeSchedule.start_time) : undefined,
       due_at: assignmentDueDate,
       grading_due_at: assignmentGradingDueDate,
-      timezone: Intl.DateTimeFormat().resolvedOptions().timeZone || 'Africa/Nairobi',
+      timezone: resolvePayloadTimeZone(activeSchedule),
       release_strategy: 'CUSTOM',
       max_attempts: 1,
       instructor_uuid: userProfile?.instructor?.uuid as string,
@@ -3128,7 +3146,7 @@ export default function ClassTrainingPage({
       visible_at: activeSchedule.start_time ? new Date(activeSchedule.start_time) : undefined,
       due_at: quizDueDate,
       grading_due_at: quizGradingDueDate,
-      timezone: Intl.DateTimeFormat().resolvedOptions().timeZone || 'Africa/Nairobi',
+      timezone: resolvePayloadTimeZone(activeSchedule),
       release_strategy: 'CUSTOM',
       instructor_uuid: userProfile?.instructor?.uuid as string,
     };

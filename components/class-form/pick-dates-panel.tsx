@@ -11,7 +11,13 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { fmtTime12, formatDuration, sessionMinutesFor, TIMEZONES } from './class-form-shared';
+import {
+  fmtTime12,
+  formatDuration,
+  scheduleTimeZoneLabel,
+  scheduleTimeZoneOptions,
+  sessionMinutesFor,
+} from './class-form-shared';
 
 export function PickDatesPanel({
   pickedDates,
@@ -141,9 +147,9 @@ export function PickDatesPanel({
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
-                {TIMEZONES.map(tz => (
+                {scheduleTimeZoneOptions(timezone).map(tz => (
                   <SelectItem key={tz} value={tz}>
-                    {tz}
+                    {scheduleTimeZoneLabel(tz)}
                   </SelectItem>
                 ))}
               </SelectContent>
@@ -151,7 +157,7 @@ export function PickDatesPanel({
           </div>
           <div className='bg-primary/10 text-primary flex items-center gap-2 rounded-md px-3 py-2 text-xs'>
             <Info className='h-3.5 w-3.5 shrink-0' />
-            <span>All times are in ({timezone})</span>
+            <span>All times are in {scheduleTimeZoneLabel(timezone)}</span>
           </div>
           <div className='bg-muted rounded-md px-3 py-2 text-center text-xs font-medium'>
             Total sessions: {sortedPickedDates.length}

@@ -1,6 +1,7 @@
 // @ts-nocheck -- pre-existing @hey-api generated-client type drift (see memory: elimika-ui-typecheck)
 'use client';
 
+import { toUtcIsoDateTime } from '@/lib/date';
 import { ScheduleSettings } from './page';
 
 export type ScheduleMode = 'class' | 'custom';
@@ -10,6 +11,7 @@ export interface ScheduledSessionInstance {
   startTime: string;
   endTime: string;
   hours: number;
+  timezone?: string;
 }
 
 const padNumber = (value: number) => String(value).padStart(2, '0');
@@ -46,8 +48,8 @@ export const formatSessionDate = (date: string) =>
     day: 'numeric',
   });
 
-export const buildUtcIsoDateTime = (date: string, time: string) =>
-  new Date(`${date}T${time}:00Z`).toISOString();
+export const buildUtcIsoDateTime = (date: string, time: string, timezone?: string | null) =>
+  toUtcIsoDateTime(date, time, timezone);
 
 export const generateScheduleInstances = (
   scheduleSettings: ScheduleSettings
@@ -83,6 +85,7 @@ export const generateScheduleInstances = (
       startTime,
       endTime,
       hours,
+      timezone: scheduleSettings.timezone,
     });
   };
 

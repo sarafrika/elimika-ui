@@ -18,6 +18,8 @@ import {
   SheetTitle,
 } from '@/components/ui/sheet';
 import { Switch } from '@/components/ui/switch';
+import { useTimeZone } from '@/context/timezone-context';
+import { normalizeTimeZone, scheduleTimeZoneLabel, scheduleTimeZoneOptions } from '@/lib/date';
 import { CalendarDays, ChevronLeft, ChevronRight, Info, Settings } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { useEffect, useMemo, useState } from 'react';
@@ -71,6 +73,8 @@ const isClassroomLocation = (value?: string | null) => {
 export function SchedulerCalendarView({ profile, data }: Props) {
   const router = useRouter();
   const { activeDomain } = useUserDomain();
+  const { zone: preferredTimeZone } = useTimeZone();
+  const activeCalendarTimeZone = normalizeTimeZone(preferredTimeZone);
 
   const [filtersOpen, setFiltersOpen] = useState(false);
   const [detailsOpen, setDetailsOpen] = useState(false);
@@ -80,7 +84,25 @@ export function SchedulerCalendarView({ profile, data }: Props) {
   const [showAllInstructors, setShowAllInstructors] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedFilter, setSelectedFilter] = useState<FilterSelection>({ id: 'all', kind: 'all' });
-  const [preferences, setPreferences] = useState(DEFAULT_PREFERENCES);
+  const [preferences, setPreferences] = useState(() => ({
+    ...DEFAULT_PREFERENCES,
+    timezone: activeCalendarTimeZone,
+  }));
+  const [timezoneTouched, setTimezoneTouched] = useState(false);
+
+  useEffect(() => {
+    if (timezoneTouched) return;
+    setPreferences(prev =>
+      prev.timezone === activeCalendarTimeZone
+        ? prev
+        : { ...prev, timezone: activeCalendarTimeZone }
+    );
+  }, [activeCalendarTimeZone, timezoneTouched]);
+
+  const handleCalendarTimeZoneChange = (value: string) => {
+    setTimezoneTouched(true);
+    setPreferences(prev => ({ ...prev, timezone: normalizeTimeZone(value) }));
+  };
 
   const events = data.events;
   const allInstructorSummaries =
@@ -300,7 +322,7 @@ export function SchedulerCalendarView({ profile, data }: Props) {
           setSelectedFilter({ id, kind: 'class' });
           setFiltersOpen(false);
         },
-        onToggle: () => { },
+        onToggle: () => {},
         selectedId: selectedFilter.kind === 'class' ? selectedFilter.id : null,
       },
 
@@ -314,7 +336,7 @@ export function SchedulerCalendarView({ profile, data }: Props) {
           setSelectedFilter({ id, kind: 'venue' });
           setFiltersOpen(false);
         },
-        onToggle: () => { },
+        onToggle: () => {},
         selectedId: selectedFilter.kind === 'venue' ? selectedFilter.id : null,
       },
       // {
@@ -347,7 +369,7 @@ export function SchedulerCalendarView({ profile, data }: Props) {
           setSelectedFilter({ id, kind: 'instructor' });
           setFiltersOpen(false);
         },
-        onToggle: () => { },
+        onToggle: () => {},
         selectedId: selectedFilter.kind === 'instructor' ? selectedFilter.id : null,
       });
     }
@@ -502,7 +524,7 @@ export function SchedulerCalendarView({ profile, data }: Props) {
                 canCreateClass={
                   activeDomain === 'instructor' || activeDomain === 'organisation_user'
                 }
-                onClassCreated={() => { }}
+                onClassCreated={() => {}}
                 onSelectDate={handleSelectDate}
               />
             )}
@@ -612,18 +634,16 @@ export function SchedulerCalendarView({ profile, data }: Props) {
             <section className='grid gap-4 sm:grid-cols-2'>
               <div className='space-y-2'>
                 <Label htmlFor='calendar-timezone'>Timezone</Label>
-                <Select
-                  value={preferences.timezone}
-                  onValueChange={value => setPreferences(prev => ({ ...prev, timezone: value }))}
-                >
+                <Select value={preferences.timezone} onValueChange={handleCalendarTimeZoneChange}>
                   <SelectTrigger id='calendar-timezone'>
                     <SelectValue placeholder='Choose timezone' />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value='Africa/Nairobi'>Africa/Nairobi</SelectItem>
-                    <SelectItem value='Africa/Nairobi'>Africa/Nairobi</SelectItem>
-                    <SelectItem value='Europe/London'>Europe/London</SelectItem>
-                    <SelectItem value='America/New_York'>America/New_York</SelectItem>
+                    {scheduleTimeZoneOptions(preferences.timezone).map(zone => (
+                      <SelectItem key={zone} value={zone}>
+                        {scheduleTimeZoneLabel(zone)}
+                      </SelectItem>
+                    ))}
                   </SelectContent>
                 </Select>
               </div>

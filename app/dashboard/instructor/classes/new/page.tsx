@@ -45,10 +45,20 @@ import { toast } from 'sonner';
 import { Button } from '../../../../../components/ui/button';
 import { Calendar } from '../../../../../components/ui/calendar';
 import { Checkbox } from '../../../../../components/ui/checkbox';
+import { useTimeZone } from '../../../../../context/timezone-context';
 import { useUserProfile } from '../../../../../context/profile-context';
 import { useUserDomain } from '../../../../../context/user-domain-context';
 import { useCoursesByIds, useProgramsByIds } from '../../../../../hooks/use-batched-lookups';
 import { useClassDetails } from '../../../../../hooks/use-class-details';
+import {
+  DEFAULT_CLASS_TIME_ZONE,
+  formatScheduleClockTime,
+  normalizeScheduleTimeZone,
+  parseApiDate,
+  scheduleTimeZoneLabel,
+  scheduleTimeZoneOptions,
+  toUtcIsoDateTime,
+} from '../../../../../lib/date';
 import {
   coordinatesFromPlace,
   normalizeLocationType,
@@ -139,6 +149,7 @@ type ScheduledSession = {
   startTime: string;
   endTime: string;
   durationMinutes?: string;
+  timezone?: string;
 };
 
 type ScheduleConflict = {
@@ -160,9 +171,7 @@ const isRecord = (value: unknown): value is Record<string, unknown> =>
   typeof value === 'object' && value !== null && !Array.isArray(value);
 
 const normalizeDateTimeValue = (value: string | Date | undefined | null) => {
-  if (!value) return null;
-  const parsed = value instanceof Date ? value : new Date(value);
-  return Number.isNaN(parsed.getTime()) ? null : parsed;
+  return parseApiDate(value)?.toDate() ?? null;
 };
 
 const createInitialClassDetails = (instructorName?: string): ClassDetails => ({
@@ -189,7 +198,9 @@ const createInitialClassDetails = (instructorName?: string): ClassDetails => ({
   reminder: '',
 });
 
-const createInitialScheduleSettings = (): ScheduleSettings => ({
+const createInitialScheduleSettings = (
+  timezone: string = DEFAULT_CLASS_TIME_ZONE
+): ScheduleSettings => ({
   academicPeriod: { start: '', end: '' },
   registrationPeriod: { start: '', end: '', continuous: false },
   startClass: {
@@ -205,7 +216,7 @@ const createInitialScheduleSettings = (): ScheduleSettings => ({
   alertAttendee: false,
   timetable: { days: [], time: { duration: '' } },
   recurringOptions: '',
-  timezone: 'EAT East Africa Time',
+  timezone: normalizeScheduleTimeZone(timezone),
   classType: '',
   location: '',
   pin: '',
@@ -312,20 +323,18 @@ const buildDateFromInput = (date: string) => {
   return Number.isNaN(parsedDate.getTime()) ? undefined : parsedDate;
 };
 
-const buildUtcIsoDateTime = (date?: string, time?: string) => {
-  if (!date) throw new Error('Missing date');
-  if (!time) throw new Error(`Missing time for date: ${date}`);
-  const normalizedTime = time.length === 5 ? `${time}:00` : time;
-  const isoString = `${date}T${normalizedTime}Z`;
-  const parsed = new Date(isoString);
-  if (Number.isNaN(parsed.getTime())) throw new Error(`Invalid datetime: ${isoString}`);
-  return parsed.toISOString();
-};
+const buildUtcIsoDateTime = (date?: string, time?: string, timezone?: string | null) =>
+  toUtcIsoDateTime(date, time, timezone);
 
-const getSessionTimeRange = (date?: string, startTime?: string, endTime?: string) => {
+const getSessionTimeRange = (
+  date?: string,
+  startTime?: string,
+  endTime?: string,
+  timezone?: string | null
+) => {
   try {
-    const start = new Date(buildUtcIsoDateTime(date, startTime));
-    const end = new Date(buildUtcIsoDateTime(date, endTime));
+    const start = new Date(buildUtcIsoDateTime(date, startTime, timezone));
+    const end = new Date(buildUtcIsoDateTime(date, endTime, timezone));
     if (Number.isNaN(start.getTime()) || Number.isNaN(end.getTime())) return null;
     return { start, end };
   } catch {
@@ -334,7 +343,12 @@ const getSessionTimeRange = (date?: string, startTime?: string, endTime?: string
 };
 
 const hasValidSessionTimeRange = (session: ScheduledSession) => {
-  const range = getSessionTimeRange(session.date, session.startTime, session.endTime);
+  const range = getSessionTimeRange(
+    session.date,
+    session.startTime,
+    session.endTime,
+    session.timezone
+  );
   return Boolean(range && range.start < range.end);
 };
 
@@ -510,8 +524,12 @@ const findScheduleConflicts = (
     .filter(Boolean) as (ScheduleConflict['existing'] & { startTime: string; endTime: string })[];
 
   return sessions.flatMap(session => {
-    const proposedStart = new Date(buildUtcIsoDateTime(session.date, session.startTime)).getTime();
-    const proposedEnd = new Date(buildUtcIsoDateTime(session.date, session.endTime)).getTime();
+    const proposedStart = new Date(
+      buildUtcIsoDateTime(session.date, session.startTime, session.timezone)
+    ).getTime();
+    const proposedEnd = new Date(
+      buildUtcIsoDateTime(session.date, session.endTime, session.timezone)
+    ).getTime();
     if (Number.isNaN(proposedStart) || Number.isNaN(proposedEnd) || proposedStart >= proposedEnd)
       return [];
 
@@ -536,6 +554,7 @@ const expandSessionsForConflictCheck = (
       date: item.date,
       startTime: scheduleSettings.allDay ? '00:00' : item.startTime,
       endTime: scheduleSettings.allDay ? '23:59' : item.endTime,
+      timezone: scheduleSettings.timezone,
       durationMinutes: scheduleSettings.allDay
         ? String(24 * 60)
         : String(durationMinutesFromTimes(item.startTime, item.endTime)),
@@ -587,6 +606,7 @@ const expandSessionsForConflictCheck = (
           date: cursor.toISOString().split('T')[0]!,
           startTime,
           endTime,
+          timezone: scheduleSettings.timezone,
           durationMinutes,
         });
         cursor.setDate(cursor.getDate() + interval * 7);
@@ -610,6 +630,7 @@ const expandSessionsForConflictCheck = (
         date: cursor.toISOString().split('T')[0]!,
         startTime,
         endTime,
+        timezone: scheduleSettings.timezone,
         durationMinutes,
       });
       if (unit === 'day') cursor.setDate(cursor.getDate() + interval);
@@ -630,6 +651,10 @@ const ClassCreationPage = () => {
   const profile = useUserProfile();
   const instructor = profile?.instructor;
   const organisation = profile?.organisation_affiliations?.[0];
+  const { zone: preferredTimeZone, source: preferredTimeZoneSource } = useTimeZone();
+  const activeScheduleTimeZone = normalizeScheduleTimeZone(
+    preferredTimeZoneSource === 'default' ? undefined : preferredTimeZone
+  );
 
   const [classId, setClassId] = useState<string | null>(null);
   const [isClientReady, setIsClientReady] = useState(false);
@@ -665,8 +690,9 @@ const ClassCreationPage = () => {
     createInitialClassDetails(instructor?.full_name)
   );
   const [scheduleSettings, setScheduleSettings] = useState<ScheduleSettings>(() =>
-    createInitialScheduleSettings()
+    createInitialScheduleSettings(activeScheduleTimeZone)
   );
+  const [scheduleTimezoneOverridden, setScheduleTimezoneOverridden] = useState(false);
   const [notificationSettings, setNotificationSettings] = useState<NotificationSettings>(() =>
     createInitialNotificationSettings()
   );
@@ -923,6 +949,17 @@ const ClassCreationPage = () => {
     }
   }, [resolvedId]);
 
+  useEffect(() => {
+    if (resolvedId || !isDataInitialized || scheduleTimezoneOverridden) return;
+
+    setScheduleSettings(prev => {
+      if (normalizeScheduleTimeZone(prev.timezone) === activeScheduleTimeZone) {
+        return prev;
+      }
+      return { ...prev, timezone: activeScheduleTimeZone };
+    });
+  }, [activeScheduleTimeZone, resolvedId, isDataInitialized, scheduleTimezoneOverridden]);
+
   // ── Draft restore (new-class path only) ───────────────────────────────────
   useEffect(() => {
     if (!isClientReady || resolvedId || isDataInitialized || typeof window === 'undefined') return;
@@ -957,9 +994,16 @@ const ClassCreationPage = () => {
         }));
       }
       if (parsed.scheduleSettings) {
+        const restoredTimeZone = normalizeScheduleTimeZone(
+          parsed.scheduleSettings.timezone ?? activeScheduleTimeZone
+        );
+        if (parsed.scheduleSettings.timezone) {
+          setScheduleTimezoneOverridden(true);
+        }
         setScheduleSettings(prev => ({
           ...prev,
           ...parsed.scheduleSettings,
+          timezone: restoredTimeZone,
           academicPeriod: { ...prev.academicPeriod, ...parsed.scheduleSettings?.academicPeriod },
           registrationPeriod: {
             ...prev.registrationPeriod,
@@ -1003,7 +1047,7 @@ const ClassCreationPage = () => {
     } finally {
       setIsDataInitialized(true);
     }
-  }, [resolvedId, isDataInitialized, isClientReady]);
+  }, [resolvedId, isDataInitialized, isClientReady, activeScheduleTimeZone]);
 
   // ── Draft save ─────────────────────────────────────────────────────────────
   useEffect(() => {
@@ -1057,6 +1101,7 @@ const ClassCreationPage = () => {
         start_time: string | Date;
         end_time?: string | Date;
         duration_minutes?: number | string | bigint | null;
+        timezone?: string | null;
         recurrence?: {
           recurrence_type?: string;
           interval_value?: number;
@@ -1151,16 +1196,29 @@ const ClassCreationPage = () => {
         return;
       }
 
+      const hydratedTimeZone = normalizeScheduleTimeZone(
+        firstTemplate.timezone ?? activeScheduleTimeZone
+      );
       const firstStart = new Date(firstTemplate.start_time);
       const firstEnd = firstTemplate.end_time
         ? new Date(firstTemplate.end_time)
         : new Date(
             firstStart.getTime() + durationMinutesOrDefault(firstTemplate.duration_minutes) * 60000
           );
-      const firstDate = firstStart.toISOString().slice(0, 10);
-      const startTime = firstStart.toTimeString().slice(0, 5);
-      const endTime = firstEnd.toTimeString().slice(0, 5);
+      const firstStartDisplay = parseApiDate(firstTemplate.start_time)?.tz(hydratedTimeZone);
+      const firstEndDisplay = firstTemplate.end_time
+        ? parseApiDate(firstTemplate.end_time)?.tz(hydratedTimeZone)
+        : null;
+      const firstDate =
+        firstStartDisplay?.format('YYYY-MM-DD') ?? firstStart.toISOString().slice(0, 10);
+      const startTime = firstStartDisplay?.format('HH:mm') ?? firstStart.toTimeString().slice(0, 5);
+      const endTime = firstEndDisplay?.format('HH:mm') ?? firstEnd.toTimeString().slice(0, 5);
       const durationMinutes = durationMinutesFromDates(firstStart, firstEnd);
+
+      if (firstTemplate.timezone) {
+        setScheduleTimezoneOverridden(true);
+      }
+      setScheduleSettings(prev => ({ ...prev, timezone: hydratedTimeZone }));
 
       const isAllDay = startTime === '00:00' && endTime === '23:59';
 
@@ -1178,15 +1236,22 @@ const ClassCreationPage = () => {
       if (likelyPickDates) {
         setSchedulePreset('pick-dates');
         const picked = templates.map(t => {
+          const templateTimeZone = normalizeScheduleTimeZone(t.timezone ?? hydratedTimeZone);
           const tStart = new Date(t.start_time);
           const tEnd = t.end_time
             ? new Date(t.end_time)
             : new Date(tStart.getTime() + durationMinutesOrDefault(t.duration_minutes) * 60000);
+          const tStartDisplay = parseApiDate(t.start_time)?.tz(templateTimeZone);
+          const tEndDisplay = t.end_time ? parseApiDate(t.end_time)?.tz(templateTimeZone) : null;
           const tDurationMinutes = durationMinutesFromDates(tStart, tEnd);
           return {
-            date: tStart.toISOString().slice(0, 10),
-            startTime: isAllDay ? '00:00' : tStart.toTimeString().slice(0, 5),
-            endTime: isAllDay ? '23:59' : tEnd.toTimeString().slice(0, 5),
+            date: tStartDisplay?.format('YYYY-MM-DD') ?? tStart.toISOString().slice(0, 10),
+            startTime: isAllDay
+              ? '00:00'
+              : (tStartDisplay?.format('HH:mm') ?? tStart.toTimeString().slice(0, 5)),
+            endTime: isAllDay
+              ? '23:59'
+              : (tEndDisplay?.format('HH:mm') ?? tEnd.toTimeString().slice(0, 5)),
             durationMinutes: String(tDurationMinutes),
           };
         });
@@ -1234,8 +1299,16 @@ const ClassCreationPage = () => {
             : new Date(
                 tStart.getTime() + durationMinutesOrDefault(template.duration_minutes) * 60000
               );
-          const tStartTime = isAllDay ? '00:00' : tStart.toTimeString().slice(0, 5);
-          const tEndTime = isAllDay ? '23:59' : tEnd.toTimeString().slice(0, 5);
+          const tStartDisplay = parseApiDate(template.start_time)?.tz(hydratedTimeZone);
+          const tEndDisplay = template.end_time
+            ? parseApiDate(template.end_time)?.tz(hydratedTimeZone)
+            : null;
+          const tStartTime = isAllDay
+            ? '00:00'
+            : (tStartDisplay?.format('HH:mm') ?? tStart.toTimeString().slice(0, 5));
+          const tEndTime = isAllDay
+            ? '23:59'
+            : (tEndDisplay?.format('HH:mm') ?? tEnd.toTimeString().slice(0, 5));
           const tOccurrenceCount = template.recurrence?.occurrence_count ?? 1;
           const tDurationMinutes = durationMinutesFromDates(tStart, tEnd);
           const tDurationHours = isAllDay ? 24 : tDurationMinutes / 60;
@@ -1271,6 +1344,7 @@ const ClassCreationPage = () => {
           repeat: { interval: intervalValue, unit: 'week', days: daysArray },
           weeklyDayTimes,
           endRepeat: endRepeatDate,
+          timezone: hydratedTimeZone,
         }));
 
         setPerDayOccurrences(nextPerDayOccurrences);
@@ -1298,6 +1372,7 @@ const ClassCreationPage = () => {
             days: [],
           },
           endRepeat: firstDate,
+          timezone: hydratedTimeZone,
         }));
       }
     }
@@ -1348,7 +1423,15 @@ const ClassCreationPage = () => {
 
     setIsEditHydrated(true);
     setIsDataInitialized(true);
-  }, [classData, isLoading, resolvedId, isEditHydrated, instructor?.full_name, isClientReady]);
+  }, [
+    classData,
+    isLoading,
+    resolvedId,
+    isEditHydrated,
+    instructor?.full_name,
+    isClientReady,
+    activeScheduleTimeZone,
+  ]);
 
   // ── Validation ─────────────────────────────────────────────────────────────
   const isFormValid = () => {
@@ -1483,7 +1566,12 @@ const ClassCreationPage = () => {
     };
 
     const { startTime: defaultStart, endTime: defaultEnd } = getDefaultTimes();
-    const defaultRange = getSessionTimeRange(referenceDate, defaultStart, defaultEnd);
+    const defaultRange = getSessionTimeRange(
+      referenceDate,
+      defaultStart,
+      defaultEnd,
+      scheduleSettings.timezone
+    );
 
     if (!defaultRange) {
       toast.error('Please set a valid class date, start time, and end time');
@@ -1522,8 +1610,17 @@ const ClassCreationPage = () => {
             : (item.endTime ??
               timeAfterDuration(effectiveStartTime, DEFAULT_CLASS_DURATION_MINUTES));
           return {
-            start_time: new Date(buildUtcIsoDateTime(item.date, effectiveStartTime)),
-            end_time: new Date(buildUtcIsoDateTime(item.date, effectiveEndTime)),
+            start_time: buildUtcIsoDateTime(
+              item.date,
+              effectiveStartTime,
+              scheduleSettings.timezone
+            ) as unknown as Date,
+            end_time: buildUtcIsoDateTime(
+              item.date,
+              effectiveEndTime,
+              scheduleSettings.timezone
+            ) as unknown as Date,
+            timezone: scheduleSettings.timezone,
             recurrence: {
               recurrence_type: RecurrenceTypeEnum.DAILY,
               interval_value: 1,
@@ -1536,13 +1633,18 @@ const ClassCreationPage = () => {
     } else if (schedulePreset === 'standard') {
       // Standard preset uses the Google-style recurrence editor: a single session template whose
       // recurrence rule carries the frequency, interval, weekdays and end condition.
-      const startTimeIso = buildUtcIsoDateTime(referenceDate, defaultStart);
-      const endTimeIso = buildUtcIsoDateTime(referenceDate, defaultEnd);
+      const startTimeIso = buildUtcIsoDateTime(
+        referenceDate,
+        defaultStart,
+        scheduleSettings.timezone
+      );
+      const endTimeIso = buildUtcIsoDateTime(referenceDate, defaultEnd, scheduleSettings.timezone);
       const recurrenceRule = toClassRecurrence(recurrence);
       session_templates = [
         {
-          start_time: new Date(startTimeIso),
-          end_time: new Date(endTimeIso),
+          start_time: startTimeIso as unknown as Date,
+          end_time: endTimeIso as unknown as Date,
+          timezone: scheduleSettings.timezone,
           ...(recurrenceRule ? { recurrence: recurrenceRule } : {}),
           conflict_resolution: ConflictResolutionEnum.FAIL,
         },
@@ -1594,21 +1696,40 @@ const ClassCreationPage = () => {
           const lastSessionDate = lastOccurrence.toISOString().split('T')[0]!;
 
           return {
-            start_time: new Date(buildUtcIsoDateTime(firstSessionDate, effectiveStartTime)),
-            end_time: new Date(buildUtcIsoDateTime(lastSessionDate, effectiveEndTime)),
+            start_time: buildUtcIsoDateTime(
+              firstSessionDate,
+              effectiveStartTime,
+              scheduleSettings.timezone
+            ) as unknown as Date,
+            end_time: buildUtcIsoDateTime(
+              lastSessionDate,
+              effectiveEndTime,
+              scheduleSettings.timezone
+            ) as unknown as Date,
+            timezone: scheduleSettings.timezone,
             recurrence: {
               recurrence_type: RecurrenceTypeEnum.WEEKLY,
               interval_value: scheduleSettings.repeat.interval,
               days_of_week: DAY_NAMES[dayIndex],
               occurrence_count: occurrenceCountForDay,
-              end_date: new Date(buildUtcIsoDateTime(lastSessionDate, effectiveEndTime)),
+              end_date: new Date(
+                buildUtcIsoDateTime(lastSessionDate, effectiveEndTime, scheduleSettings.timezone)
+              ),
             },
             conflict_resolution: ConflictResolutionEnum.FAIL,
           };
         });
       } else {
-        const startTimeIso = buildUtcIsoDateTime(referenceDate, defaultStart);
-        const endTimeIso = buildUtcIsoDateTime(referenceDate, defaultEnd);
+        const startTimeIso = buildUtcIsoDateTime(
+          referenceDate,
+          defaultStart,
+          scheduleSettings.timezone
+        );
+        const endTimeIso = buildUtcIsoDateTime(
+          referenceDate,
+          defaultEnd,
+          scheduleSettings.timezone
+        );
         const daysOfWeekString =
           (scheduleSettings.repeat.days || [])
             .slice()
@@ -1617,8 +1738,9 @@ const ClassCreationPage = () => {
             .join(',') || undefined;
         session_templates = [
           {
-            start_time: new Date(startTimeIso),
-            end_time: new Date(endTimeIso),
+            start_time: startTimeIso as unknown as Date,
+            end_time: endTimeIso as unknown as Date,
+            timezone: scheduleSettings.timezone,
             recurrence: {
               recurrence_type: recurrenceType,
               interval_value: scheduleSettings.repeat.interval,
@@ -1681,8 +1803,16 @@ const ClassCreationPage = () => {
       rate_basis: rateBasis,
       allow_waitlist: allowWaitlist,
       is_active: !isDraft,
-      default_start_time: new Date(buildUtcIsoDateTime(payloadRefDate, payloadStartTime)),
-      default_end_time: new Date(buildUtcIsoDateTime(payloadRefDate, payloadEndTime)),
+      default_start_time: buildUtcIsoDateTime(
+        payloadRefDate,
+        payloadStartTime,
+        scheduleSettings.timezone
+      ) as unknown as Date,
+      default_end_time: buildUtcIsoDateTime(
+        payloadRefDate,
+        payloadEndTime,
+        scheduleSettings.timezone
+      ) as unknown as Date,
       meeting_link: meetingLink,
       session_templates,
     };
@@ -1815,7 +1945,8 @@ const ClassCreationPage = () => {
   const clearDraft = () => {
     if (typeof window !== 'undefined') window.localStorage.removeItem(LOCAL_CLASS_DRAFT_KEY);
     setClassDetails(createInitialClassDetails(instructor?.full_name));
-    setScheduleSettings(createInitialScheduleSettings());
+    setScheduleSettings(createInitialScheduleSettings(activeScheduleTimeZone));
+    setScheduleTimezoneOverridden(false);
     setNotificationSettings(createInitialNotificationSettings());
     setSchedulePreset('standard');
     setAllowWaitlist(true);
@@ -1826,6 +1957,11 @@ const ClassCreationPage = () => {
     setSavedClassUuid(null);
     setIsDataInitialized(true);
     toast.success('Draft cleared');
+  };
+
+  const handleScheduleTimeZoneChange = (value: string) => {
+    setScheduleTimezoneOverridden(true);
+    setScheduleSettings(prev => ({ ...prev, timezone: normalizeScheduleTimeZone(value) }));
   };
 
   // ── Derived UI values ──────────────────────────────────────────────────────
@@ -1869,7 +2005,7 @@ const ClassCreationPage = () => {
       {
         icon: MapPin,
         label: 'Timezone',
-        value: scheduleSettings.timezone || 'EAT East Africa Time',
+        value: scheduleTimeZoneLabel(scheduleSettings.timezone),
       },
     ],
   };
@@ -2242,19 +2378,16 @@ const ClassCreationPage = () => {
         </label>
 
         <FieldGroup label='Timezone'>
-          <Select
-            value={scheduleSettings.timezone}
-            onValueChange={value => setScheduleSettings(prev => ({ ...prev, timezone: value }))}
-          >
+          <Select value={scheduleSettings.timezone} onValueChange={handleScheduleTimeZoneChange}>
             <SelectTrigger>
               <SelectValue placeholder='Select timezone' />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value='EAT East Africa Time'>EAT East Africa Time</SelectItem>
-              <SelectItem value='UTC Coordinated Universal Time'>
-                UTC Coordinated Universal Time
-              </SelectItem>
-              <SelectItem value='WAT West Africa Time'>WAT West Africa Time</SelectItem>
+              {scheduleTimeZoneOptions(scheduleSettings.timezone).map(zone => (
+                <SelectItem key={zone} value={zone}>
+                  {scheduleTimeZoneLabel(zone)}
+                </SelectItem>
+              ))}
             </SelectContent>
           </Select>
         </FieldGroup>
@@ -2609,23 +2742,17 @@ const ClassCreationPage = () => {
                       <FieldGroup label='Timezone'>
                         <Select
                           value={scheduleSettings.timezone}
-                          onValueChange={value =>
-                            setScheduleSettings(prev => ({ ...prev, timezone: value }))
-                          }
+                          onValueChange={handleScheduleTimeZoneChange}
                         >
                           <SelectTrigger className='h-11 w-full'>
                             <SelectValue placeholder='Select timezone' />
                           </SelectTrigger>
                           <SelectContent>
-                            <SelectItem value='EAT East Africa Time'>
-                              EAT East Africa Time
-                            </SelectItem>
-                            <SelectItem value='UTC Coordinated Universal Time'>
-                              UTC Coordinated Universal Time
-                            </SelectItem>
-                            <SelectItem value='WAT West Africa Time'>
-                              WAT West Africa Time
-                            </SelectItem>
+                            {scheduleTimeZoneOptions(scheduleSettings.timezone).map(zone => (
+                              <SelectItem key={zone} value={zone}>
+                                {scheduleTimeZoneLabel(zone)}
+                              </SelectItem>
+                            ))}
                           </SelectContent>
                         </Select>
                       </FieldGroup>
@@ -2794,15 +2921,15 @@ const ClassCreationPage = () => {
                               {conflict.existing.classTitle}
                             </span>{' '}
                             (
-                            {new Date(conflict.existing.startTime).toLocaleTimeString('en-US', {
-                              hour: 'numeric',
-                              minute: '2-digit',
-                            })}{' '}
+                            {formatScheduleClockTime(
+                              conflict.existing.startTime,
+                              conflict.proposed.timezone
+                            )}{' '}
                             –{' '}
-                            {new Date(conflict.existing.endTime).toLocaleTimeString('en-US', {
-                              hour: 'numeric',
-                              minute: '2-digit',
-                            })}
+                            {formatScheduleClockTime(
+                              conflict.existing.endTime,
+                              conflict.proposed.timezone
+                            )}
                             )
                           </li>
                         ))}
