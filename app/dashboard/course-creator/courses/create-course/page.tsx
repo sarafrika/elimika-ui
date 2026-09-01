@@ -36,6 +36,7 @@ import { useSearchParams } from 'next/navigation';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { toast } from 'sonner';
 import DeleteModal from '../../../../../components/custom-modals/delete-modal';
+import { useCourseLessonsWithContent } from '../../../../../hooks/use-courselessonwithcontent';
 import { stripHtml } from '../../../../../src/features/dashboard/courses/shared/_components/courses-data';
 import CourseBrandingForm from '../../_components/course-branding-form';
 import { CourseCreationForm, type CourseFormRef } from '../../_components/course-creation-form';
@@ -256,6 +257,10 @@ function LessonContentStack({
     const [selectedContentType, setSelectedContentType] = useState<ContentType | null>(null);
     const [viewingContent, setViewingContent] = useState<InlineLessonContent | null>(null);
     const [contentViewerOpen, setContentViewerOpen] = useState(false);
+
+    const {
+        contentTypeMap,
+    } = useCourseLessonsWithContent({ courseUuid: courseId as string });
 
     // ---- delete confirmation state ----
     const [deleteModal, setDeleteModal] = useState(false);
@@ -513,7 +518,7 @@ function LessonContentStack({
                             editingContent
                                 ? ({
                                     ...editingContent,
-                                    content_type: (editingContent.content_type_key ?? 'TEXT').toUpperCase(),
+                                    content_type: contentTypeMap[editingContent.content_type_uuid ?? ''] ?? '',
                                     content_type_uuid: editingContent.content_type_uuid ?? '',
                                     content_category: editingContent.content_category ?? '',
                                     title: editingContent.title ?? '',
@@ -549,6 +554,7 @@ function LessonContentStack({
                             }
                         }}
                         content={viewingContent}
+                        contentTypeMap={contentTypeMap}
                         contentType={viewingContent?.content_type_key ?? null}
                     />
 

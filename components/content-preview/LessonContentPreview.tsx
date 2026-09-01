@@ -419,7 +419,7 @@ function getYouTubeEmbedUrl(source: string) {
       const videoId = url.searchParams.get('v');
       return videoId ? `https://www.youtube.com/embed/${videoId}` : '';
     }
-  } catch {}
+  } catch { }
 
   return '';
 }
@@ -448,10 +448,12 @@ export function LessonContentPreview({
   content,
   contentType,
   contentTypeDetailsMap,
+  contentTypeMap,
 }: {
   content: LessonContentPreviewItem | null;
   contentType?: string | null;
   contentTypeDetailsMap?: ContentTypeDetailsMap;
+  contentTypeMap?: Record<string, string>;
 }) {
   if (!content) {
     return (
@@ -461,14 +463,73 @@ export function LessonContentPreview({
     );
   }
 
-  const explicitType = contentType?.toLowerCase() || '';
-  const resolvedType =
-    explicitType && explicitType !== 'file'
-      ? explicitType
-      : getContentTypeName(content, contentTypeDetailsMap);
-  const resolvedSource = resolveLessonContentSource(content, resolvedType);
-  const normalizedTextContent = normalizeLessonTextContent(content.content_text);
+  /**
+   * Normalize content type names so values such as:
+   * "Text", "TEXT", "text content", etc.
+   * can still resolve to the renderer we expect.
+   */
+  const normalizeContentType = (value?: string | null) => {
+    const normalized = value?.trim().toLowerCase() || '';
 
+    if (normalized.includes('text')) return 'text';
+    if (normalized.includes('pdf')) return 'pdf';
+    if (normalized.includes('video')) return 'video';
+    if (normalized.includes('audio')) return 'audio';
+    if (normalized.includes('image')) return 'image';
+    if (normalized.includes('spreadsheet')) return 'spreadsheet';
+    if (normalized.includes('presentation')) return 'presentation';
+    if (normalized.includes('document')) return 'document';
+    if (normalized.includes('office')) return 'office';
+
+    return normalized;
+  };
+
+  /**
+   * Primary source:
+   * content.content_type_uuid -> contentTypeMap
+   */
+  const contentTypeUuid = content.content_type_uuid;
+
+  const typeFromUuid = normalizeContentType(
+    contentTypeUuid ? contentTypeMap?.[contentTypeUuid] : null
+  );
+
+  /**
+   * Secondary fallback:
+   * Explicit contentType prop
+   */
+  const explicitType = normalizeContentType(contentType);
+
+  /**
+   * Final fallback:
+   * Resolve from the content type details map / existing helper.
+   */
+  const fallbackType = normalizeContentType(
+    getContentTypeName(content, contentTypeDetailsMap)
+  );
+
+  /**
+   * Priority:
+   *
+   * 1. content.content_type_uuid -> contentTypeMap
+   * 2. contentType prop
+   * 3. getContentTypeName(...)
+   */
+  const resolvedType =
+    typeFromUuid || explicitType || fallbackType || 'file';
+
+  const resolvedSource = resolveLessonContentSource(
+    content,
+    resolvedType
+  );
+
+  const normalizedTextContent = normalizeLessonTextContent(
+    content.content_text
+  );
+
+  /*
+   * TEXT
+   */
   if (resolvedType === 'text') {
     return (
       <div className='bg-background mb-10 w-full max-w-full min-w-0 overflow-hidden p-6'>
@@ -483,6 +544,9 @@ export function LessonContentPreview({
     );
   }
 
+  /*
+   * PDF
+   */
   if (resolvedType === 'pdf') {
     return resolvedSource ? (
       <div className='bg-background mb-20 w-full max-w-full min-w-0 overflow-hidden p-4'>
@@ -495,6 +559,9 @@ export function LessonContentPreview({
     );
   }
 
+  /*
+   * DOCUMENT / SPREADSHEET / PRESENTATION / OFFICE
+   */
   if (
     resolvedType === 'document' ||
     resolvedType === 'spreadsheet' ||
@@ -514,6 +581,9 @@ export function LessonContentPreview({
     );
   }
 
+  /*
+   * VIDEO
+   */
   if (resolvedType === 'video') {
     const youtubeUrl = getYouTubeEmbedUrl(resolvedSource);
     const vimeoUrl = getVimeoEmbedUrl(resolvedSource);
@@ -548,6 +618,9 @@ export function LessonContentPreview({
     );
   }
 
+  /*
+   * AUDIO
+   */
   if (resolvedType === 'audio') {
     return resolvedSource ? (
       <div className='bg-background mb-20 w-full max-w-full min-w-0 p-6'>
@@ -560,6 +633,9 @@ export function LessonContentPreview({
     );
   }
 
+  /*
+   * IMAGE
+   */
   if (resolvedType === 'image') {
     return resolvedSource ? (
       <div className='bg-background mb-20 w-full max-w-full min-w-0 overflow-hidden p-4'>
@@ -576,25 +652,39 @@ export function LessonContentPreview({
     );
   }
 
+  /*
+   * UNKNOWN / UNSUPPORTED TYPE
+   */
   return (
     <div className='border-border/60 bg-background mb-20 flex min-h-[360px] w-full max-w-full min-w-0 items-center justify-center overflow-hidden rounded-[28px] border p-6 text-center'>
       <div className='max-w-lg space-y-3'>
         <div className='flex items-center justify-center gap-2'>
           <p className='text-sm font-semibold'>Preview unavailable</p>
-          <Badge variant='secondary' className='rounded-full'>
+
+          <Badge
+            variant='secondary'
+            className='rounded-full'
+          >
             {resolvedType.toUpperCase()}
           </Badge>
         </div>
+
         <p className='text-muted-foreground text-sm'>
-          This file type cannot be rendered inline yet. If this is a Word, Excel, or PowerPoint
-          file, please make sure its extension and MIME type are recognized by the preview pipeline.
+          This file type cannot be rendered inline yet. If this is a
+          Word, Excel, or PowerPoint file, please make sure its
+          extension and MIME type are recognized by the preview
+          pipeline.
         </p>
+
         {resolvedSource ? (
           <p className='text-muted-foreground text-xs'>
-            File source was detected, but no inline preview could be generated.
+            File source was detected, but no inline preview could be
+            generated.
           </p>
         ) : (
-          <p className='text-muted-foreground text-xs'>No file source is available yet.</p>
+          <p className='text-muted-foreground text-xs'>
+            No file source is available yet.
+          </p>
         )}
       </div>
     </div>
@@ -607,12 +697,14 @@ export function LessonContentViewerDialog({
   content,
   contentType,
   contentTypeDetailsMap,
+  contentTypeMap,
 }: {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   content: LessonContentPreviewItem | null;
   contentType?: string | null;
   contentTypeDetailsMap?: ContentTypeDetailsMap;
+  contentTypeMap?: Record<string, string>;
 }) {
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
@@ -629,6 +721,7 @@ export function LessonContentViewerDialog({
             content={content}
             contentType={contentType}
             contentTypeDetailsMap={contentTypeDetailsMap}
+            contentTypeMap={contentTypeMap}
           />
         </div>
       </SheetContent>
