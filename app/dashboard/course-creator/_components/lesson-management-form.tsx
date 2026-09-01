@@ -819,9 +819,9 @@ function LessonCreationForm({
             render={({ field }) => (
               <FormItem>
                 <div className='mb-2 flex flex-col gap-2'>
-                  <FormLabel>Skill Number #</FormLabel>
+                  <FormLabel>Lesson Number #</FormLabel>
                   <FormControl>
-                    <Input placeholder='Enter an order number for your skill' {...field} />
+                    <Input placeholder='Enter an order number for your lesson' {...field} />
                   </FormControl>
                   <FormMessage />
                 </div>
@@ -834,9 +834,9 @@ function LessonCreationForm({
             name='title'
             render={({ field }) => (
               <FormItem>
-                <FormLabel>Skill Title</FormLabel>
+                <FormLabel>Lesson Title</FormLabel>
                 <FormControl>
-                  <Input placeholder='Enter skill title' {...field} />
+                  <Input placeholder='Enter lesson title' {...field} />
                 </FormControl>
                 <FormMessage />
               </FormItem>
@@ -848,7 +848,7 @@ function LessonCreationForm({
             name='description'
             render={({ field }) => (
               <FormItem>
-                <FormLabel>Skill Description</FormLabel>
+                <FormLabel>Lesson Description</FormLabel>
                 <FormControl>
                   <SimpleEditor value={field.value} onChange={field.onChange} />
                 </FormControl>
@@ -862,7 +862,7 @@ function LessonCreationForm({
             name='objectives'
             render={({ field }) => (
               <FormItem>
-                <FormLabel>Skill Objectives</FormLabel>
+                <FormLabel>Lesson Objectives</FormLabel>
                 <FormControl>
                   <SimpleEditor value={field.value} onChange={field.onChange} />
                 </FormControl>
@@ -880,10 +880,10 @@ function LessonCreationForm({
             {isEditMode
               ? updateLessonMutation.isPending
                 ? <Spinner />
-                : 'Update Skill'
+                : 'Update Lesson'
               : createLessonMutation.isPending
                 ? <Spinner />
-                : 'Create Skill'}
+                : 'Create Lesson'}
           </Button>
         </div>
       </form>
@@ -998,9 +998,9 @@ function LessonEditingForm({
             render={({ field }) => (
               <FormItem>
                 <div className='mb-2 flex flex-col gap-2'>
-                  <FormLabel>Skill Number #</FormLabel>
+                  <FormLabel>Lesson Number #</FormLabel>
                   <FormControl>
-                    <Input placeholder='Enter an order number for your skill' {...field} />
+                    <Input placeholder='Enter an order number for your lesson' {...field} />
                   </FormControl>
                   <FormMessage />
                 </div>
@@ -1013,9 +1013,9 @@ function LessonEditingForm({
             name='title'
             render={({ field }) => (
               <FormItem>
-                <FormLabel>Skill Title</FormLabel>
+                <FormLabel>Lesson Title</FormLabel>
                 <FormControl>
-                  <Input placeholder='Enter skill title' {...field} />
+                  <Input placeholder='Enter lesson title' {...field} />
                 </FormControl>
                 <FormMessage />
               </FormItem>
@@ -1127,7 +1127,7 @@ function LessonEditingForm({
             Cancel
           </Button>
           <Button type='submit' className='w-[120px]'>
-            {updateLessonMutation.isPending ? <Spinner /> : 'Edit Skill'}
+            {updateLessonMutation.isPending ? <Spinner /> : 'Edit Lesson'}
           </Button>
         </div>
       </form>
@@ -2525,13 +2525,13 @@ function LessonDialog({
       >
         <SheetHeader className='border-b px-6 py-4 text-left'>
           <SheetTitle className='text-xl'>
-            {isEditMode ? 'Edit Skill' : 'Create New Skill'}
+            {isEditMode ? 'Edit Lesson' : 'Create New Lesson'}
           </SheetTitle>
 
           <SheetDescription className='text-muted-foreground text-sm'>
             {isEditMode
-              ? 'Update the skill details below.'
-              : 'Fill in the skill details below. You&apos;ll be able to add assessment rubric, quizzes and assignments after you&apos;ve created the skill.'}
+              ? 'Update the lesson details below.'
+              : 'Fill in the lesson details below. You&apos;ll be able to add assessment rubric, quizzes and assignments after you&apos;ve created the lesson.'}
           </SheetDescription>
         </SheetHeader>
 
