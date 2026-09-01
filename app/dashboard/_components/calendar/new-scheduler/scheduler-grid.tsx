@@ -1,9 +1,10 @@
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/tiptap-ui-primitive/popover';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
-import { Popover, PopoverContent, PopoverTrigger } from '@/components/tiptap-ui-primitive/popover';
 import { cn } from '@/lib/utils';
-import { Video, MapPin, CalendarDays, Building2 } from 'lucide-react';
+import { Building2, CalendarDays, MapPin, Plus, Video, X } from 'lucide-react';
 import { useEffect, useMemo, useState, type CSSProperties, type ReactElement } from 'react';
+import { useUserDomain } from '../../../../../context/user-domain-context';
 import { CreateClassDialog } from '../create-class-dialog';
 import { categoryStyles, schedulerHours } from './data';
 import type { SchedulerEvent, SchedulerView } from './types';
@@ -343,15 +344,18 @@ function WeekEventBlock({ event }: { event: SchedulerEvent }) {
 function CompactEvent({ event }: { event: SchedulerEvent }) {
   return (
     <button
-      type='button'
+      type="button"
       className={cn(
-        'min-w-0 rounded border border-l-[3px] px-2 py-1 text-left text-[10px] font-semibold transition hover:shadow-sm',
+        'w-full min-w-0 max-w-full overflow-hidden rounded border border-l-[3px] px-2 py-1 text-left text-[10px] font-semibold transition hover:shadow-sm',
         getEventStyles(event)
       )}
     >
-      <p className='truncate'>{event.title}</p>
-      <p className='truncate opacity-75'>
-        {event.startTime.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' })}
+      <p className="min-w-0 truncate">{event.title}</p>
+      <p className="min-w-0 truncate opacity-75">
+        {event.startTime.toLocaleTimeString('en-US', {
+          hour: 'numeric',
+          minute: '2-digit',
+        })}
       </p>
     </button>
   );
@@ -368,56 +372,45 @@ function SchedulerEventDisclosure({
   onViewDetails?: (event: SchedulerEvent) => void;
   children: ReactElement;
 }) {
-  const hasOverlapPreview = overlapEvents.length > 1;
-  const previewEvents = overlapEvents.slice(0, 2);
-  const extraPreviewCount = Math.max(overlapEvents.length - previewEvents.length, 0);
+  const hasOverlap = overlapEvents.length > 1;
   const joinHref = event.meetingLink?.trim() || '';
 
   return (
     <Popover>
       <div className='group relative'>
-        {hasOverlapPreview ? (
-          <div className='pointer-events-none absolute bottom-full left-0 z-40 mb-2 hidden w-[min(18rem,calc(100vw-1rem))] rounded-xl border border-border/60 bg-card/95 p-2 text-left shadow-2xl backdrop-blur group-hover:block group-focus-within:block'>
-            <div className='mb-2 flex items-center justify-between gap-2'>
-              <p className='text-muted-foreground text-[10px] font-semibold uppercase tracking-wide'>
-                Overlapping events
+        {/* Hover preview — only the currently hovered event */}
+        <div className='pointer-events-none absolute bottom-full left-0 z-40 mb-2 hidden w-[min(18rem,calc(100vw-1rem))] rounded-xl border border-border/60 bg-card/95 p-3 text-left shadow-2xl backdrop-blur group-hover:block group-focus-within:block'>
+          <div className='flex items-start justify-between gap-3'>
+            <div className='min-w-0'>
+              <p className='truncate text-xs font-semibold text-foreground'>
+                {event.title}
               </p>
-              <span className='text-muted-foreground text-[10px]'>
-                {overlapEvents.length} total
+
+              <p className='mt-0.5 truncate text-[10px] text-muted-foreground'>
+                {event.startTime.toLocaleTimeString('en-US', {
+                  hour: 'numeric',
+                  minute: '2-digit',
+                })}
+                {' - '}
+                {event.endTime.toLocaleTimeString('en-US', {
+                  hour: 'numeric',
+                  minute: '2-digit',
+                })}
+              </p>
+            </div>
+
+            {hasOverlap ? (
+              <span className='shrink-0 rounded-full bg-muted px-2 py-0.5 text-[10px] font-medium text-muted-foreground'>
+                +{overlapEvents.length - 1} overlapping
               </span>
-            </div>
-
-            <div className='space-y-1.5'>
-              {previewEvents.map(peer => (
-                <div key={peer.id} className='rounded-lg border border-border/60 bg-muted/35 px-2 py-1.5'>
-                  <p className='truncate text-[11px] font-semibold text-foreground'>{peer.title}</p>
-                  <p className='truncate text-[10px] text-muted-foreground'>
-                    {peer.startTime.toLocaleTimeString('en-US', {
-                      hour: 'numeric',
-                      minute: '2-digit',
-                    })}
-                    {' - '}
-                    {peer.endTime.toLocaleTimeString('en-US', {
-                      hour: 'numeric',
-                      minute: '2-digit',
-                    })}
-                  </p>
-                </div>
-              ))}
-            </div>
-
-            {extraPreviewCount > 0 ? (
-              <p className='text-muted-foreground mt-2 text-[10px] font-medium'>
-                +{extraPreviewCount} more overlapping event
-                {extraPreviewCount === 1 ? '' : 's'}
-              </p>
             ) : null}
           </div>
-        ) : null}
+        </div>
 
         <PopoverTrigger asChild>{children}</PopoverTrigger>
       </div>
 
+      {/* Full event details */}
       <PopoverContent
         align='start'
         side='top'
@@ -427,7 +420,10 @@ function SchedulerEventDisclosure({
         <div className='border-b border-border/60 px-4 py-3'>
           <div className='flex items-start justify-between gap-3'>
             <div className='min-w-0'>
-              <p className='text-foreground truncate text-sm font-semibold'>{event.title}</p>
+              <p className='text-foreground truncate text-sm font-semibold'>
+                {event.title}
+              </p>
+
               <p className='text-muted-foreground mt-0.5 text-xs'>
                 {event.startTime.toLocaleString('en-US', {
                   weekday: 'short',
@@ -446,10 +442,6 @@ function SchedulerEventDisclosure({
                 })}
               </p>
             </div>
-
-            <span className='bg-primary/10 text-primary rounded-full px-2 py-1 text-[10px] font-semibold'>
-              {event.category}
-            </span>
           </div>
         </div>
 
@@ -459,28 +451,46 @@ function SchedulerEventDisclosure({
               <CalendarDays className='text-muted-foreground h-4 w-4 shrink-0' />
               <span className='min-w-0 truncate'>{event.course}</span>
             </div>
+
             {event.organisationName ? (
               <div className='flex items-center gap-2 text-sm'>
                 <Building2 className='text-muted-foreground h-4 w-4 shrink-0' />
                 <span className='min-w-0 truncate'>{event.organisationName}</span>
               </div>
             ) : null}
+
             <div className='flex items-center gap-2 text-sm'>
               <MapPin className='text-muted-foreground h-4 w-4 shrink-0' />
               <span className='min-w-0 truncate'>{event.location}</span>
             </div>
+
             <div className='flex items-center gap-2 text-sm'>
               <Video className='text-muted-foreground h-4 w-4 shrink-0' />
               <span className='min-w-0 truncate'>
-                {event.meetingLink ? 'Meeting link available' : 'No meeting link available'}
+                {event.meetingLink
+                  ? 'Meeting link available'
+                  : 'No meeting link available'}
               </span>
             </div>
           </div>
 
+          {hasOverlap ? (
+            <div className='rounded-lg border border-border/60 bg-muted/30 px-3 py-2'>
+              <p className='text-[10px] font-medium text-muted-foreground'>
+                This event overlaps with {overlapEvents.length - 1} other{' '}
+                {overlapEvents.length - 1 === 1 ? 'event' : 'events'}.
+              </p>
+            </div>
+          ) : null}
+
           <div className='grid gap-2'>
             {joinHref ? (
               <Button asChild className='w-full'>
-                <a href={joinHref} target='_blank' rel='noreferrer noopener'>
+                <a
+                  href={joinHref}
+                  target='_blank'
+                  rel='noreferrer noopener'
+                >
                   Join Class
                 </a>
               </Button>
@@ -612,9 +622,6 @@ function DayGrid({
                   </div>
                 ))}
 
-                {/* EVENTS — pointer-events-none on the wrapper lets clicks on
-                    empty space pass through to the hour slots underneath;
-                    each event re-enables pointer events for itself. */}
                 <div className='pointer-events-none absolute inset-0 left-[72px]'>
                   {dayEvents.map(event => {
                     const layout = dayEventLayouts.positions.get(event.id);
@@ -627,13 +634,7 @@ function DayGrid({
                         className='pointer-events-auto absolute px-0.5'
                         style={getEventWrapperStyle(layout)}
                       >
-                        <SchedulerEventDisclosure
-                          event={event}
-                          overlapEvents={overlapEvents}
-                          onViewDetails={onEventClick}
-                        >
-                          <EventBlock event={event} />
-                        </SchedulerEventDisclosure>
+                        <EventBlock event={event} />
                       </div>
                     );
                   })}
@@ -726,7 +727,8 @@ function WeekGrid({
   onEventClick,
   onEmptySlotClick,
   canCreateClass = false,
-  onClassCreated,
+  onCreateClass,
+  onBlockTime,
 }: {
   currentDate: Date;
   currentTime: Date;
@@ -734,9 +736,13 @@ function WeekGrid({
   onEventClick?: (event: SchedulerEvent) => void;
   onEmptySlotClick?: (slot: EmptySlot) => void;
   canCreateClass?: boolean;
-  onClassCreated?: () => void;
+  onCreateClass?: (slot: EmptySlot) => void;
+  onBlockTime?: (slot: EmptySlot) => void;
 }) {
+  const { activeDomain } = useUserDomain()
+
   const schedulerDays = getWeekDays(currentDate);
+
   const weekEventLayouts = useMemo(() => {
     const map = new Map<string, Map<string, PositionedEvent>>();
 
@@ -748,170 +754,282 @@ function WeekGrid({
     return map;
   }, [events, schedulerDays]);
 
-  // Same click-to-create wiring as DayGrid — gated to instructor / organisation profiles.
-  const [createSlot, setCreateSlot] = useState<EmptySlot | null>(null);
+  const [selectedSlot, setSelectedSlot] = useState<EmptySlot | null>(null);
 
   function handleSlotClick(slot: EmptySlot) {
-    // See DayGrid's handleSlotClick for why onEmptySlotClick is skipped here
-    // when canCreateClass is true.
     if (canCreateClass) {
-      setCreateSlot(slot);
+      setSelectedSlot(prev => {
+        if (
+          prev?.startTime.getTime() === slot.startTime.getTime() &&
+          prev?.date.getTime() === slot.date.getTime()
+        ) {
+          return null;
+        }
+
+        return slot;
+      });
+
       return;
     }
+
     onEmptySlotClick?.(slot);
   }
 
+  function handleCreateClass() {
+    if (!selectedSlot) return;
+
+    onCreateClass?.(selectedSlot);
+    setSelectedSlot(null);
+  }
+
+  function handleBlockTime() {
+    if (!selectedSlot) return;
+
+    onBlockTime?.(selectedSlot);
+    setSelectedSlot(null);
+  }
+
+  useEffect(() => {
+    if (!selectedSlot) return;
+
+    const handleOutsideClick = (event: MouseEvent) => {
+      const target = event.target as HTMLElement;
+
+      if (!target.closest('[data-slot-actions]')) {
+        setSelectedSlot(null);
+      }
+    };
+
+    const handleEscape = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') {
+        setSelectedSlot(null);
+      }
+    };
+
+    document.addEventListener('mousedown', handleOutsideClick);
+    document.addEventListener('keydown', handleEscape);
+
+    return () => {
+      document.removeEventListener('mousedown', handleOutsideClick);
+      document.removeEventListener('keydown', handleEscape);
+    };
+  }, [selectedSlot]);
+
   return (
-    <>
-      <section className='bg-card ring-border/60 flex w-full min-w-0 flex-col overflow-visible rounded-md shadow-sm ring-1'>
-        <div className='bg-background relative w-full min-w-0'>
-          {/* HEADER */}
-          <div className='bg-background/95 sticky top-0 z-30 rounded-t-md border border-b-0 border-border/60 shadow-sm backdrop-blur supports-[backdrop-filter]:bg-background/90'>
-            <div className={cn('grid border-b border-border/60', weekColumnClass)}>
-              <div className='px-2 py-2 text-center text-xs font-semibold'>Time</div>
-
-              {schedulerDays.map(day => (
-                <div
-                  key={day.toISOString()}
-                  className='border-l px-2 py-2 text-center text-xs font-semibold'
-                >
-                  {day.toLocaleDateString('en-US', {
-                    weekday: 'short',
-                  })}{' '}
-                  {day.getDate()}
-                </div>
-              ))}
+    <section className='bg-card ring-border/60 flex w-full min-w-0 flex-col overflow-visible rounded-md shadow-sm ring-1'>
+      <div className='bg-background relative w-full min-w-0'>
+        {/* HEADER */}
+        <div className='bg-background/95 sticky top-0 z-30 rounded-t-md border border-b-0 border-border/60 shadow-sm backdrop-blur supports-[backdrop-filter]:bg-background/90'>
+          <div className={cn('grid border-b border-border/60', weekColumnClass)}>
+            <div className='px-2 py-2 text-center text-xs font-semibold'>
+              Time
             </div>
+
+            {schedulerDays.map(day => (
+              <div
+                key={day.toISOString()}
+                className='border-l px-2 py-2 text-center text-xs font-semibold'
+              >
+                {day.toLocaleDateString('en-US', {
+                  weekday: 'short',
+                })}{' '}
+                {day.getDate()}
+              </div>
+            ))}
           </div>
+        </div>
 
-          {/* GRID */}
-          <div className='bg-background rounded-b-md border border-t-0'>
-            <div
-              className='relative'
-              style={{
-                height: `${schedulerHours.length * rowHeight}px`,
-              }}
-            >
-              {schedulerHours.map(hour => (
-                <div
-                  key={hour}
-                  className={cn('grid border-b last:border-b-0', weekColumnClass)}
-                  style={{
-                    height: `${rowHeight}px`,
-                  }}
-                >
-                  <div className='text-muted-foreground px-2 py-2 text-right text-[9px] font-semibold'>
-                    {formatHour(hour)}
-                  </div>
+        {/* GRID */}
+        <div className='bg-background rounded-b-md border border-t-0'>
+          <div
+            className='relative'
+            style={{
+              height: `${schedulerHours.length * rowHeight}px`,
+            }}
+          >
+            {schedulerHours.map(hour => (
+              <div
+                key={hour}
+                className={cn(
+                  'grid border-b last:border-b-0',
+                  weekColumnClass
+                )}
+                style={{
+                  height: `${rowHeight}px`,
+                }}
+              >
+                <div className='text-muted-foreground px-2 py-2 text-right text-[9px] font-semibold'>
+                  {formatHour(hour)}
+                </div>
 
-                  {schedulerDays.map(day => (
+                {schedulerDays.map(day => {
+                  const slot: EmptySlot = {
+                    date: day,
+                    startTime: new Date(
+                      day.getFullYear(),
+                      day.getMonth(),
+                      day.getDate(),
+                      hour,
+                      0,
+                      0,
+                      0
+                    ),
+                    endTime: new Date(
+                      day.getFullYear(),
+                      day.getMonth(),
+                      day.getDate(),
+                      hour + 1,
+                      0,
+                      0,
+                      0
+                    ),
+                    view: 'week',
+                  };
+
+                  const isSelected =
+                    selectedSlot?.startTime.getTime() ===
+                    slot.startTime.getTime() &&
+                    selectedSlot?.date.getTime() === slot.date.getTime();
+
+                  return (
                     <div
                       key={`${day.toISOString()}-${hour}`}
                       className={cn(
                         'relative border-l select-none',
-                        canCreateClass || onEmptySlotClick ? 'cursor-pointer' : 'cursor-default'
+                        canCreateClass || onEmptySlotClick
+                          ? 'cursor-pointer'
+                          : 'cursor-default',
+                        isSelected && 'bg-muted/50'
                       )}
-                      onClick={() =>
-                        handleSlotClick({
-                          date: day,
-                          startTime: new Date(
-                            day.getFullYear(),
-                            day.getMonth(),
-                            day.getDate(),
-                            hour,
-                            0,
-                            0,
-                            0
-                          ),
-                          endTime: new Date(
-                            day.getFullYear(),
-                            day.getMonth(),
-                            day.getDate(),
-                            hour + 1,
-                            0,
-                            0,
-                            0
-                          ),
-                          view: 'week',
-                        })
-                      }
+                      onClick={() => handleSlotClick(slot)}
                     >
-                      {isSameCalendarDay(day, currentTime) && currentTime.getHours() === hour ? (
+                      {isSameCalendarDay(day, currentTime) &&
+                        currentTime.getHours() === hour ? (
                         <CurrentTimeIndicator currentTime={currentTime} />
                       ) : null}
-                    </div>
-                  ))}
-                </div>
-              ))}
 
-              {/* EVENTS OVERLAY — pointer-events-none on the wrapper and each
-                  day column lets clicks on empty space pass through to the
-                  hour-slot handlers underneath; each event block re-enables
-                  pointer events for itself. */}
-              <div className={cn('pointer-events-none absolute inset-0 grid', weekColumnClass)}>
-                <div />
+                      {/* ACTION TOOLTIP */}
+                      {isSelected && canCreateClass && (
+                        <div
+                          className='absolute left-1/2 top-1/2 z-50 w-48 -translate-x-1/2 -translate-y-1/2 rounded-lg border bg-popover p-2 shadow-lg'
+                          onClick={event => event.stopPropagation()}
+                        >
+                          {/* Header */}
+                          <div className='relative mb-2 px-2 py-1 pr-7'>
+                            <p className='text-xs font-medium'>
+                              {slot.startTime.toLocaleTimeString('en-US', {
+                                hour: 'numeric',
+                                minute: '2-digit',
+                              })}
+                            </p>
 
-                {schedulerDays.map(day => {
-                  const dayEvents = events.filter(event => isSameCalendarDay(event.startTime, day));
-                  const dayEventLayouts = weekEventLayouts.get(getCalendarKey(day)) ?? {
-                    groups: new Map<string, SchedulerEvent[]>(),
-                    positions: new Map<string, PositionedEvent>(),
-                  };
+                            <p className='text-muted-foreground text-[11px]'>
+                              What would you like to do?
+                            </p>
 
-                  return (
-                    <div key={day.toISOString()} className='pointer-events-none relative'>
-                      {dayEvents.map(event => {
-                        const layout = dayEventLayouts.positions.get(event.id);
-                        const overlapEvents = dayEventLayouts.groups.get(event.id) ?? [event];
-                        if (!layout) return null;
-
-                        return (
-                          <div
-                            key={event.id}
-                            className='pointer-events-auto absolute px-0.5'
-                            style={getEventWrapperStyle(layout)}
-                          >
-                            <SchedulerEventDisclosure
-                              event={event}
-                              overlapEvents={overlapEvents}
-                              onViewDetails={onEventClick}
+                            {/* Close */}
+                            <button
+                              type='button'
+                              aria-label='Close'
+                              onClick={() => setSelectedSlot(null)}
+                              className='text-muted-foreground hover:text-foreground hover:bg-muted absolute right-0 top-0 flex h-6 w-6 items-center justify-center rounded-md transition-colors'
                             >
-                              <WeekEventBlock event={event} />
-                            </SchedulerEventDisclosure>
+                              <X className='h-3.5 w-3.5' />
+                            </button>
                           </div>
-                        );
-                      })}
+
+                          {/* Actions */}
+                          <div className='flex flex-col gap-1'>
+                            {activeDomain === "instructor" && <Button
+                              onClick={handleCreateClass}
+                              className='flex w-full items-center justify-start rounded-md py-2 text-xs font-medium transition-colors'
+                            >
+                              <Plus className='h-4 w-4' />
+                              Create new class
+                            </Button>}
+
+                            {(activeDomain === "organisation_user" || activeDomain === "organisation") &&
+                              <Button
+                                onClick={handleCreateClass}
+                                className='flex w-full items-center justify-start rounded-md py-2 text-xs font-medium transition-colors'
+                              >
+                                <Plus className='h-4 w-4' />
+                                Post new job
+                              </Button>}
+
+
+                            <Button
+                              onClick={handleBlockTime}
+                              className='flex w-full items-center justify-start rounded-md py-2 text-xs font-medium transition-colors'
+                            >
+                              <Plus className='h-4 w-4' />
+                              Block time
+                            </Button>
+                          </div>
+                        </div>
+                      )}
                     </div>
                   );
                 })}
               </div>
+            ))}
+
+            {/* EVENTS OVERLAY */}
+            <div
+              className={cn(
+                'pointer-events-none absolute inset-0 grid',
+                weekColumnClass
+              )}
+            >
+              <div />
+
+              {schedulerDays.map(day => {
+                const dayEvents = events.filter(event =>
+                  isSameCalendarDay(event.startTime, day)
+                );
+
+                const dayEventLayouts =
+                  weekEventLayouts.get(getCalendarKey(day)) ?? {
+                    groups: new Map<string, SchedulerEvent[]>(),
+                    positions: new Map<string, PositionedEvent>(),
+                  };
+
+                return (
+                  <div
+                    key={day.toISOString()}
+                    className='pointer-events-none relative'
+                  >
+                    {dayEvents.map(event => {
+                      const layout = dayEventLayouts.positions.get(event.id);
+                      const overlapEvents =
+                        dayEventLayouts.groups.get(event.id) ?? [event];
+
+                      if (!layout) return null;
+
+                      return (
+                        <div
+                          key={event.id}
+                          className='pointer-events-auto absolute px-0.5'
+                          style={getEventWrapperStyle(layout)}
+                        >
+                          <SchedulerEventDisclosure
+                            event={event}
+                            overlapEvents={overlapEvents}
+                            onViewDetails={onEventClick}
+                          >
+                            <WeekEventBlock event={event} />
+                          </SchedulerEventDisclosure>
+                        </div>
+                      );
+                    })}
+                  </div>
+                );
+              })}
             </div>
           </div>
         </div>
-      </section>
-
-      {canCreateClass && (
-        <CreateClassDialog
-          open={!!createSlot}
-          onOpenChange={open => {
-            if (!open) setCreateSlot(null);
-          }}
-          prefill={
-            createSlot
-              ? {
-                date: createSlot.date,
-                startTime: createSlot.startTime,
-                endTime: createSlot.endTime,
-              }
-              : null
-          }
-          onCreated={() => {
-            setCreateSlot(null);
-            onClassCreated?.();
-          }}
-        />
-      )}
-    </>
+      </div>
+    </section>
   );
 }
 
@@ -1232,7 +1350,16 @@ export function SchedulerGrid({
       onEventClick={onEventClick}
       onEmptySlotClick={onEmptySlotClick}
       canCreateClass={canCreateClass}
-      onClassCreated={onClassCreated}
+      // onClassCreated={onClassCreated}
+      onCreateClass={slot => {
+        // Open your create class dialog/page
+        console.log('Create class:', slot);
+      }}
+      onBlockTime={slot => {
+        // Open block-time dialog/page
+        console.log('Block time:', slot);
+      }}
+
     />
   );
 }

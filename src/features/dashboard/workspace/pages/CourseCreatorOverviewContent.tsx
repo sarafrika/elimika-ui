@@ -54,7 +54,7 @@ export default function CourseCreatorOverviewContent() {
       }}
       actions={
         <Button asChild>
-          <Link prefetch href={buildWorkspaceAliasPath(activeDomain, '/dashboard/course-management/create-new-course')}>
+          <Link prefetch href={buildWorkspaceAliasPath(activeDomain, '/dashboard/courses/create-course')}>
             Launch new course
           </Link>
         </Button>
