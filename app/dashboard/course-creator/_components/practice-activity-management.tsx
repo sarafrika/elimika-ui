@@ -333,16 +333,20 @@ function PracticeActivityDialog({
               </Select>
             </div>
 
-            <div className='flex items-center justify-between gap-4 rounded-md border px-3 py-2'>
-              <Label htmlFor='practice-active' className='text-sm font-medium'>
-                Visible
-              </Label>
-              <Switch
-                id='practice-active'
-                checked={isPublished && values.active}
-                disabled={!isPublished}
-                onCheckedChange={checked => setValue('active', checked)}
-              />
+            <div className='flex flex-col rounded-md border px-3 py-2'>
+              <div className='flex items-center justify-between gap-2'>
+                <Label htmlFor='practice-active' className='text-sm font-medium'>
+                  Visible
+                </Label>
+                <Switch
+                  id='practice-active'
+                  checked={isPublished && values.active}
+                  disabled={!isPublished}
+                  onCheckedChange={checked => setValue('active', checked)}
+                />
+              </div>
+
+              <p>Publish this activity to allow users to see it.</p>
             </div>
 
             <div className='space-y-2 md:col-span-2'>
