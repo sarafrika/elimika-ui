@@ -4,7 +4,7 @@ import { OrgPage, orgStack } from '../_components/org-page';
 import { OverviewAlerts } from './_components/overview-alerts';
 import { OverviewCourseRail } from './_components/overview-course-rail';
 import { OverviewEnrolmentTrends } from './_components/overview-enrolment-trends';
-import { OverviewTodayGrowth } from './_components/overview-today-growth';
+import { OverviewWeeklyGrowth } from './_components/overview-weekly-growth';
 import { OverviewGettingStarted } from './_components/overview-getting-started';
 import { OverviewKpis } from './_components/overview-kpis';
 import { OverviewWelcome } from './_components/overview-welcome';
@@ -46,10 +46,10 @@ export default function OrganizationOverviewPage() {
 
           <Card className='lg:col-span-2'>
             <CardHeader className='pb-2'>
-              <CardTitle className='text-base font-semibold'>Today&apos;s Growth</CardTitle>
+              <CardTitle className='text-base font-semibold'>Weekly Growth</CardTitle>
             </CardHeader>
             <CardContent>
-              <OverviewTodayGrowth />
+              <OverviewWeeklyGrowth />
             </CardContent>
           </Card>
         </div>

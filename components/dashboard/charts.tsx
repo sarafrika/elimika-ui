@@ -138,30 +138,30 @@ export function EnrollmentTrendsChart({
   );
 }
 
-export interface TodayGrowthSeries {
+export interface WeeklyGrowthSeries {
   key: string;
   name: string;
   color: string;
 }
 
-const defaultTodayGrowthSeries: TodayGrowthSeries[] = [
+const defaultWeeklyGrowthSeries: WeeklyGrowthSeries[] = [
   { key: 'enrolments', name: 'Enrolments', color: 'var(--color-chart-1)' },
 ];
 
-export function TodayGrowthChart({
+export function WeeklyGrowthChart({
   data,
-  series = defaultTodayGrowthSeries,
+  series = defaultWeeklyGrowthSeries,
 }: {
   data: Array<Record<string, string | number>>;
-  series?: TodayGrowthSeries[];
+  series?: WeeklyGrowthSeries[];
 }) {
-  if (!data.length) return <ChartEmpty label='No activity recorded today' />;
+  if (!data.length) return <ChartEmpty label='No enrolments in this period' />;
   return (
     <div className={cn(chartHeight, 'sm:h-[210px] 2xl:h-[250px]')}>
       <ResponsiveContainer width='100%' height='100%'>
         <BarChart data={data} margin={{ top: 8, right: 8, bottom: 8, left: -8 }}>
           <CartesianGrid strokeDasharray='3 3' vertical={false} stroke='var(--color-border)' />
-          <XAxis dataKey='hour' axisLine={false} tickLine={false} tick={axisTick} />
+          <XAxis dataKey='week' axisLine={false} tickLine={false} tick={axisTick} />
           <YAxis axisLine={false} tickLine={false} tick={axisTick} />
           <Tooltip contentStyle={tooltipContentStyle} cursor={{ fill: 'var(--color-muted)' }} />
           <Legend iconType='circle' wrapperStyle={{ fontSize: 12, paddingTop: 8 }} />
