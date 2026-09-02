@@ -459,6 +459,7 @@ import {
   getCalendar,
   listBookings,
   listObligations,
+  getMonthlySettlements,
   search2,
   getCounts,
   getInvitationByToken,
@@ -1798,6 +1799,7 @@ import type {
   ListObligationsData,
   ListObligationsError,
   ListObligationsResponse,
+  GetMonthlySettlementsData,
   Search2Data,
   Search2Error,
   Search2Response,
@@ -21744,6 +21746,28 @@ export const listObligationsInfiniteOptions = (options: Options<ListObligationsD
       queryKey: listObligationsInfiniteQueryKey(options),
     }
   );
+};
+
+export const getMonthlySettlementsQueryKey = (options: Options<GetMonthlySettlementsData>) =>
+  createQueryKey('getMonthlySettlements', options);
+
+/**
+ * Monthly settled payouts for an organisation
+ * Money the organisation has actually paid out to instructors, one figure per calendar month over the trailing window (inclusive of the current month), oldest first.
+ */
+export const getMonthlySettlementsOptions = (options: Options<GetMonthlySettlementsData>) => {
+  return queryOptions({
+    queryFn: async ({ queryKey, signal }) => {
+      const { data } = await getMonthlySettlements({
+        ...options,
+        ...queryKey[0],
+        signal,
+        throwOnError: true,
+      });
+      return data;
+    },
+    queryKey: getMonthlySettlementsQueryKey(options),
+  });
 };
 
 export const search2QueryKey = (options: Options<Search2Data>) =>

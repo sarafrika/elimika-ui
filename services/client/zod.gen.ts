@@ -590,6 +590,11 @@ export const zAssessmentRubric = z
       )
       .readonly()
       .optional(),
+    is_published: z
+      .boolean()
+      .describe('**[READ-ONLY]** Indicates if the rubric is published and available for use.')
+      .readonly()
+      .optional(),
     rubric_category: z
       .string()
       .describe('**[READ-ONLY]** Formatted category of the rubric based on its type.')
@@ -605,11 +610,6 @@ export const zAssessmentRubric = z
     usage_status: z
       .string()
       .describe('**[READ-ONLY]** Comprehensive status indicating usage and accessibility.')
-      .readonly()
-      .optional(),
-    is_published: z
-      .boolean()
-      .describe('**[READ-ONLY]** Indicates if the rubric is published and available for use.')
       .readonly()
       .optional(),
   })
@@ -825,16 +825,6 @@ export const zRubricCriteria = z
       )
       .readonly()
       .optional(),
-    weight_suggestion: z
-      .string()
-      .describe('**[READ-ONLY]** Suggested weight or priority level for this criteria.')
-      .readonly()
-      .optional(),
-    criteria_number: z
-      .string()
-      .describe('**[READ-ONLY]** Formatted criteria number for display in assessment interface.')
-      .readonly()
-      .optional(),
     is_primary_criteria: z
       .boolean()
       .describe('**[READ-ONLY]** Indicates if this is a primary assessment criteria.')
@@ -843,6 +833,16 @@ export const zRubricCriteria = z
     criteria_category: z
       .string()
       .describe('**[READ-ONLY]** Category classification of the assessment criteria.')
+      .readonly()
+      .optional(),
+    weight_suggestion: z
+      .string()
+      .describe('**[READ-ONLY]** Suggested weight or priority level for this criteria.')
+      .readonly()
+      .optional(),
+    criteria_number: z
+      .string()
+      .describe('**[READ-ONLY]** Formatted criteria number for display in assessment interface.')
       .readonly()
       .optional(),
   })
@@ -897,17 +897,17 @@ export const zRubricMatrix = z
         "**[REQUIRED]** Matrix cells mapping criteria to scoring levels with descriptions. Key format: 'criteriaUuid_scoringLevelUuid'."
       ),
     matrix_statistics: zMatrixStatistics.optional(),
+    is_complete: z
+      .boolean()
+      .describe('**[READ-ONLY]** Whether all matrix cells have been completed with descriptions.')
+      .readonly()
+      .optional(),
     expected_cell_count: z
       .number()
       .int()
       .describe(
         '**[READ-ONLY]** Expected number of matrix cells (criteria count × scoring levels count).'
       )
-      .readonly()
-      .optional(),
-    is_complete: z
-      .boolean()
-      .describe('**[READ-ONLY]** Whether all matrix cells have been completed with descriptions.')
       .readonly()
       .optional(),
   })
@@ -2238,6 +2238,7 @@ export const zInstructor = z
       )
       .readonly()
       .optional(),
+    formatted_location: z.union([z.string().readonly(), z.null()]).readonly().optional(),
     is_profile_complete: z
       .boolean()
       .describe(
@@ -2252,7 +2253,6 @@ export const zInstructor = z
       )
       .readonly()
       .optional(),
-    formatted_location: z.union([z.string().readonly(), z.null()]).readonly().optional(),
   })
   .describe('Instructor profile including location data for educational service delivery');
 
@@ -2441,8 +2441,8 @@ export const zInstructorProfessionalMembership = z
       .describe('**[READ-ONLY]** Indicates if the membership record has all essential information.')
       .readonly()
       .optional(),
-    formatted_duration: z.union([z.string().readonly(), z.null()]).readonly().optional(),
     membership_status: zMembershipStatusEnum.optional(),
+    formatted_duration: z.union([z.string().readonly(), z.null()]).readonly().optional(),
     membership_period: z.union([z.string().readonly(), z.null()]).readonly().optional(),
     is_long_standing_member: z
       .boolean()
@@ -3934,6 +3934,16 @@ export const zCourseAssessment = z
       )
       .readonly()
       .optional(),
+    assessment_category: z
+      .string()
+      .describe('**[READ-ONLY]** Category classification of the assessment type.')
+      .readonly()
+      .optional(),
+    weight_display: z
+      .string()
+      .describe('**[READ-ONLY]** Human-readable format of the weight percentage.')
+      .readonly()
+      .optional(),
     is_major_assessment: z
       .boolean()
       .describe('**[READ-ONLY]** Indicates if this is a major assessment component.')
@@ -3949,16 +3959,6 @@ export const zCourseAssessment = z
       .describe(
         '**[READ-ONLY]** Human-readable description of how line items are combined for this component.'
       )
-      .readonly()
-      .optional(),
-    assessment_category: z
-      .string()
-      .describe('**[READ-ONLY]** Category classification of the assessment type.')
-      .readonly()
-      .optional(),
-    weight_display: z
-      .string()
-      .describe('**[READ-ONLY]** Human-readable format of the weight percentage.')
       .readonly()
       .optional(),
   })
@@ -5673,6 +5673,11 @@ export const zAssignment = z
       )
       .readonly()
       .optional(),
+    points_display: z
+      .string()
+      .describe('**[READ-ONLY]** Formatted display of the maximum points for this assignment.')
+      .readonly()
+      .optional(),
     assignment_scope: z
       .string()
       .describe('**[READ-ONLY]** Scope of the assignment - lesson-specific or standalone.')
@@ -5681,11 +5686,6 @@ export const zAssignment = z
     submission_summary: z
       .string()
       .describe('**[READ-ONLY]** Summary of accepted submission types for this assignment.')
-      .readonly()
-      .optional(),
-    points_display: z
-      .string()
-      .describe('**[READ-ONLY]** Formatted display of the maximum points for this assignment.')
       .readonly()
       .optional(),
   })
@@ -7148,6 +7148,11 @@ export const zEnrollment = z
       .describe('**[READ-ONLY]** Indicates if the enrollment is still active (not cancelled).')
       .readonly()
       .optional(),
+    is_attendance_marked: z
+      .boolean()
+      .describe('**[READ-ONLY]** Indicates if attendance has been marked for this enrollment.')
+      .readonly()
+      .optional(),
     did_attend: z
       .boolean()
       .describe('**[READ-ONLY]** Indicates if the student attended the class.')
@@ -7156,11 +7161,6 @@ export const zEnrollment = z
     status_description: z
       .string()
       .describe('**[READ-ONLY]** Human-readable description of the enrollment status.')
-      .readonly()
-      .optional(),
-    is_attendance_marked: z
-      .boolean()
-      .describe('**[READ-ONLY]** Indicates if attendance has been marked for this enrollment.')
       .readonly()
       .optional(),
     can_be_cancelled: z
@@ -9927,6 +9927,24 @@ export const zPagedDtoInstructorObligation = z.object({
 export const zApiResponsePagedDtoInstructorObligation = z.object({
   success: z.boolean().optional(),
   data: zPagedDtoInstructorObligation.optional(),
+  message: z.string().optional(),
+  error: z.unknown().optional(),
+});
+
+/**
+ * A month's settled instructor payouts for an organisation
+ */
+export const zMonthlyPayoutPoint = z
+  .object({
+    month: z.string().describe('Calendar month in YYYY-MM form').optional(),
+    amount: z.number().describe('Total settled payout for the month').optional(),
+    currency_code: z.string().describe('ISO-4217 currency the amount is denominated in').optional(),
+  })
+  .describe("A month's settled instructor payouts for an organisation");
+
+export const zApiResponseListMonthlyPayoutPoint = z.object({
+  success: z.boolean().optional(),
+  data: z.array(zMonthlyPayoutPoint).optional(),
   message: z.string().optional(),
   error: z.unknown().optional(),
 });
@@ -19504,6 +19522,28 @@ export const zListObligationsData = z.object({
  * OK
  */
 export const zListObligationsResponse = zApiResponsePagedDtoInstructorObligation;
+
+export const zGetMonthlySettlementsData = z.object({
+  body: z.never().optional(),
+  path: z.object({
+    organisationUuid: z.string().uuid().describe('UUID of the organisation'),
+  }),
+  query: z
+    .object({
+      months: z
+        .number()
+        .int()
+        .describe('Number of months to include (inclusive of the current month)')
+        .optional()
+        .default(6),
+    })
+    .optional(),
+});
+
+/**
+ * OK
+ */
+export const zGetMonthlySettlementsResponse = zApiResponseListMonthlyPayoutPoint;
 
 export const zSearch2Data = z.object({
   body: z.never().optional(),

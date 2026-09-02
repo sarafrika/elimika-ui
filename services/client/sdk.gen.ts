@@ -1375,6 +1375,9 @@ import type {
   ListObligationsData,
   ListObligationsResponses,
   ListObligationsErrors,
+  GetMonthlySettlementsData,
+  GetMonthlySettlementsResponses,
+  GetMonthlySettlementsErrors,
   Search2Data,
   Search2Responses,
   Search2Errors,
@@ -15861,6 +15864,33 @@ export const listObligations = <ThrowOnError extends boolean = false>(
       },
     ],
     url: '/api/v1/organisations/{organisationUuid}/instructor-obligations',
+    ...options,
+  });
+};
+
+/**
+ * Monthly settled payouts for an organisation
+ * Money the organisation has actually paid out to instructors, one figure per calendar month over the trailing window (inclusive of the current month), oldest first.
+ */
+export const getMonthlySettlements = <ThrowOnError extends boolean = false>(
+  options: Options<GetMonthlySettlementsData, ThrowOnError>
+) => {
+  return (options.client ?? _heyApiClient).get<
+    GetMonthlySettlementsResponses,
+    GetMonthlySettlementsErrors,
+    ThrowOnError
+  >({
+    security: [
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+    ],
+    url: '/api/v1/organisations/{organisationUuid}/instructor-obligations/monthly-settlements',
     ...options,
   });
 };

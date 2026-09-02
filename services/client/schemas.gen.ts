@@ -946,6 +946,12 @@ export const AssessmentRubricSchema = {
       example: 'creator@sarafrika.com',
       readOnly: true,
     },
+    is_published: {
+      type: 'boolean',
+      description: '**[READ-ONLY]** Indicates if the rubric is published and available for use.',
+      example: true,
+      readOnly: true,
+    },
     rubric_category: {
       type: 'string',
       description: '**[READ-ONLY]** Formatted category of the rubric based on its type.',
@@ -963,12 +969,6 @@ export const AssessmentRubricSchema = {
       type: 'string',
       description: '**[READ-ONLY]** Comprehensive status indicating usage and accessibility.',
       example: 'Active Public Rubric',
-      readOnly: true,
-    },
-    is_published: {
-      type: 'boolean',
-      description: '**[READ-ONLY]** Indicates if the rubric is published and available for use.',
-      example: true,
       readOnly: true,
     },
   },
@@ -1325,18 +1325,6 @@ export const RubricCriteriaSchema = {
       example: 'instructor@sarafrika.com',
       readOnly: true,
     },
-    weight_suggestion: {
-      type: 'string',
-      description: '**[READ-ONLY]** Suggested weight or priority level for this criteria.',
-      example: 'High Priority',
-      readOnly: true,
-    },
-    criteria_number: {
-      type: 'string',
-      description: '**[READ-ONLY]** Formatted criteria number for display in assessment interface.',
-      example: 'Criteria 1',
-      readOnly: true,
-    },
     is_primary_criteria: {
       type: 'boolean',
       description: '**[READ-ONLY]** Indicates if this is a primary assessment criteria.',
@@ -1347,6 +1335,18 @@ export const RubricCriteriaSchema = {
       type: 'string',
       description: '**[READ-ONLY]** Category classification of the assessment criteria.',
       example: 'Performance Component',
+      readOnly: true,
+    },
+    weight_suggestion: {
+      type: 'string',
+      description: '**[READ-ONLY]** Suggested weight or priority level for this criteria.',
+      example: 'High Priority',
+      readOnly: true,
+    },
+    criteria_number: {
+      type: 'string',
+      description: '**[READ-ONLY]** Formatted criteria number for display in assessment interface.',
+      example: 'Criteria 1',
       readOnly: true,
     },
   },
@@ -1432,19 +1432,19 @@ export const RubricMatrixSchema = {
         '**[READ-ONLY]** Statistical information about the matrix completion and scoring.',
       readOnly: true,
     },
+    is_complete: {
+      type: 'boolean',
+      description:
+        '**[READ-ONLY]** Whether all matrix cells have been completed with descriptions.',
+      example: true,
+      readOnly: true,
+    },
     expected_cell_count: {
       type: 'integer',
       format: 'int32',
       description:
         '**[READ-ONLY]** Expected number of matrix cells (criteria count × scoring levels count).',
       example: 20,
-      readOnly: true,
-    },
-    is_complete: {
-      type: 'boolean',
-      description:
-        '**[READ-ONLY]** Whether all matrix cells have been completed with descriptions.',
-      example: true,
       readOnly: true,
     },
   },
@@ -3474,6 +3474,13 @@ export const InstructorSchema = {
       example: 'admin@sarafrika.com',
       readOnly: true,
     },
+    formatted_location: {
+      type: ['string', 'null'],
+      description:
+        '**[READ-ONLY]** Formatted location coordinates as a string. Returns null if location coordinates are not available.',
+      example: '-1.292100, 36.821900',
+      readOnly: true,
+    },
     is_profile_complete: {
       type: 'boolean',
       description:
@@ -3486,13 +3493,6 @@ export const InstructorSchema = {
       description:
         '**[READ-ONLY]** Indicates if the instructor has both latitude and longitude coordinates configured.',
       example: true,
-      readOnly: true,
-    },
-    formatted_location: {
-      type: ['string', 'null'],
-      description:
-        '**[READ-ONLY]** Formatted location coordinates as a string. Returns null if location coordinates are not available.',
-      example: '-1.292100, 36.821900',
       readOnly: true,
     },
   },
@@ -3741,14 +3741,14 @@ export const InstructorProfessionalMembershipSchema = {
       example: true,
       readOnly: true,
     },
+    membership_status: {
+      $ref: '#/components/schemas/MembershipStatusEnum',
+    },
     formatted_duration: {
       type: ['string', 'null'],
       description: '**[READ-ONLY]** Human-readable formatted duration of membership.',
       example: '4 years, 3 months',
       readOnly: true,
-    },
-    membership_status: {
-      $ref: '#/components/schemas/MembershipStatusEnum',
     },
     membership_period: {
       type: ['string', 'null'],
@@ -6087,6 +6087,18 @@ export const CourseAssessmentSchema = {
       example: 'instructor@sarafrika.com',
       readOnly: true,
     },
+    assessment_category: {
+      type: 'string',
+      description: '**[READ-ONLY]** Category classification of the assessment type.',
+      example: 'Participation Component',
+      readOnly: true,
+    },
+    weight_display: {
+      type: 'string',
+      description: '**[READ-ONLY]** Human-readable format of the weight percentage.',
+      example: '20% of final grade',
+      readOnly: true,
+    },
     is_major_assessment: {
       type: 'boolean',
       description: '**[READ-ONLY]** Indicates if this is a major assessment component.',
@@ -6104,18 +6116,6 @@ export const CourseAssessmentSchema = {
       description:
         '**[READ-ONLY]** Human-readable description of how line items are combined for this component.',
       example: 'Weighted line items',
-      readOnly: true,
-    },
-    assessment_category: {
-      type: 'string',
-      description: '**[READ-ONLY]** Category classification of the assessment type.',
-      example: 'Participation Component',
-      readOnly: true,
-    },
-    weight_display: {
-      type: 'string',
-      description: '**[READ-ONLY]** Human-readable format of the weight percentage.',
-      example: '20% of final grade',
       readOnly: true,
     },
   },
@@ -9457,6 +9457,12 @@ export const AssignmentSchema = {
       example: 'Theory Assignment',
       readOnly: true,
     },
+    points_display: {
+      type: 'string',
+      description: '**[READ-ONLY]** Formatted display of the maximum points for this assignment.',
+      example: '100.00 points',
+      readOnly: true,
+    },
     assignment_scope: {
       type: 'string',
       description: '**[READ-ONLY]** Scope of the assignment - lesson-specific or standalone.',
@@ -9467,12 +9473,6 @@ export const AssignmentSchema = {
       type: 'string',
       description: '**[READ-ONLY]** Summary of accepted submission types for this assignment.',
       example: '3 submission types accepted',
-      readOnly: true,
-    },
-    points_display: {
-      type: 'string',
-      description: '**[READ-ONLY]** Formatted display of the maximum points for this assignment.',
-      example: '100.00 points',
       readOnly: true,
     },
   },
@@ -12008,6 +12008,12 @@ export const EnrollmentSchema = {
       example: true,
       readOnly: true,
     },
+    is_attendance_marked: {
+      type: 'boolean',
+      description: '**[READ-ONLY]** Indicates if attendance has been marked for this enrollment.',
+      example: false,
+      readOnly: true,
+    },
     did_attend: {
       type: 'boolean',
       description: '**[READ-ONLY]** Indicates if the student attended the class.',
@@ -12018,12 +12024,6 @@ export const EnrollmentSchema = {
       type: 'string',
       description: '**[READ-ONLY]** Human-readable description of the enrollment status.',
       example: 'Student is enrolled in the class',
-      readOnly: true,
-    },
-    is_attendance_marked: {
-      type: 'boolean',
-      description: '**[READ-ONLY]** Indicates if attendance has been marked for this enrollment.',
-      example: false,
       readOnly: true,
     },
     can_be_cancelled: {
@@ -17298,6 +17298,47 @@ export const PagedDTOInstructorObligationSchema = {
     },
     links: {
       $ref: '#/components/schemas/PageLinks',
+    },
+  },
+} as const;
+
+export const ApiResponseListMonthlyPayoutPointSchema = {
+  type: 'object',
+  properties: {
+    success: {
+      type: 'boolean',
+    },
+    data: {
+      type: 'array',
+      items: {
+        $ref: '#/components/schemas/MonthlyPayoutPoint',
+      },
+    },
+    message: {
+      type: 'string',
+    },
+    error: {},
+  },
+} as const;
+
+export const MonthlyPayoutPointSchema = {
+  type: 'object',
+  description: "A month's settled instructor payouts for an organisation",
+  properties: {
+    month: {
+      type: 'string',
+      description: 'Calendar month in YYYY-MM form',
+      example: '2026-07',
+    },
+    amount: {
+      type: 'number',
+      description: 'Total settled payout for the month',
+      example: 125000,
+    },
+    currency_code: {
+      type: 'string',
+      description: 'ISO-4217 currency the amount is denominated in',
+      example: 'KES',
     },
   },
 } as const;

@@ -468,6 +468,10 @@ export type AssessmentRubric = {
    */
   readonly updated_by?: string;
   /**
+   * **[READ-ONLY]** Indicates if the rubric is published and available for use.
+   */
+  readonly is_published?: boolean;
+  /**
    * **[READ-ONLY]** Formatted category of the rubric based on its type.
    */
   readonly rubric_category?: string;
@@ -479,10 +483,6 @@ export type AssessmentRubric = {
    * **[READ-ONLY]** Comprehensive status indicating usage and accessibility.
    */
   readonly usage_status?: string;
-  /**
-   * **[READ-ONLY]** Indicates if the rubric is published and available for use.
-   */
-  readonly is_published?: boolean;
 };
 
 export type ApiResponseAssessmentRubric = {
@@ -673,14 +673,6 @@ export type RubricCriteria = {
    */
   readonly updated_by?: string;
   /**
-   * **[READ-ONLY]** Suggested weight or priority level for this criteria.
-   */
-  readonly weight_suggestion?: string;
-  /**
-   * **[READ-ONLY]** Formatted criteria number for display in assessment interface.
-   */
-  readonly criteria_number?: string;
-  /**
    * **[READ-ONLY]** Indicates if this is a primary assessment criteria.
    */
   readonly is_primary_criteria?: boolean;
@@ -688,6 +680,14 @@ export type RubricCriteria = {
    * **[READ-ONLY]** Category classification of the assessment criteria.
    */
   readonly criteria_category?: string;
+  /**
+   * **[READ-ONLY]** Suggested weight or priority level for this criteria.
+   */
+  readonly weight_suggestion?: string;
+  /**
+   * **[READ-ONLY]** Formatted criteria number for display in assessment interface.
+   */
+  readonly criteria_number?: string;
 };
 
 /**
@@ -717,13 +717,13 @@ export type RubricMatrix = {
    */
   matrix_statistics?: MatrixStatistics;
   /**
-   * **[READ-ONLY]** Expected number of matrix cells (criteria count × scoring levels count).
-   */
-  readonly expected_cell_count?: number;
-  /**
    * **[READ-ONLY]** Whether all matrix cells have been completed with descriptions.
    */
   readonly is_complete?: boolean;
+  /**
+   * **[READ-ONLY]** Expected number of matrix cells (criteria count × scoring levels count).
+   */
+  readonly expected_cell_count?: number;
 };
 
 export type ApiResponseRubricCriteria = {
@@ -1772,6 +1772,10 @@ export type Instructor = {
    */
   readonly updated_by?: string;
   /**
+   * **[READ-ONLY]** Formatted location coordinates as a string. Returns null if location coordinates are not available.
+   */
+  readonly formatted_location?: string | null;
+  /**
    * **[READ-ONLY]** Indicates if the instructor profile is considered complete. Requires bio and professional headline.
    */
   readonly is_profile_complete?: boolean;
@@ -1779,10 +1783,6 @@ export type Instructor = {
    * **[READ-ONLY]** Indicates if the instructor has both latitude and longitude coordinates configured.
    */
   readonly has_location_coordinates?: boolean;
-  /**
-   * **[READ-ONLY]** Formatted location coordinates as a string. Returns null if location coordinates are not available.
-   */
-  readonly formatted_location?: string | null;
 };
 
 /**
@@ -1899,11 +1899,11 @@ export type InstructorProfessionalMembership = {
    * **[READ-ONLY]** Indicates if the membership record has all essential information.
    */
   readonly is_complete?: boolean;
+  membership_status?: MembershipStatusEnum;
   /**
    * **[READ-ONLY]** Human-readable formatted duration of membership.
    */
   readonly formatted_duration?: string | null;
-  membership_status?: MembershipStatusEnum;
   /**
    * **[READ-ONLY]** Formatted membership period showing start and end dates.
    */
@@ -3045,6 +3045,14 @@ export type CourseAssessment = {
    */
   readonly updated_by?: string;
   /**
+   * **[READ-ONLY]** Category classification of the assessment type.
+   */
+  readonly assessment_category?: string;
+  /**
+   * **[READ-ONLY]** Human-readable format of the weight percentage.
+   */
+  readonly weight_display?: string;
+  /**
    * **[READ-ONLY]** Indicates if this is a major assessment component.
    */
   readonly is_major_assessment?: boolean;
@@ -3056,14 +3064,6 @@ export type CourseAssessment = {
    * **[READ-ONLY]** Human-readable description of how line items are combined for this component.
    */
   readonly aggregation_strategy_display?: string;
-  /**
-   * **[READ-ONLY]** Category classification of the assessment type.
-   */
-  readonly assessment_category?: string;
-  /**
-   * **[READ-ONLY]** Human-readable format of the weight percentage.
-   */
-  readonly weight_display?: string;
 };
 
 export type ApiResponseCourseAssessment = {
@@ -4558,6 +4558,10 @@ export type Assignment = {
    */
   readonly assignment_category?: string;
   /**
+   * **[READ-ONLY]** Formatted display of the maximum points for this assignment.
+   */
+  readonly points_display?: string;
+  /**
    * **[READ-ONLY]** Scope of the assignment - lesson-specific or standalone.
    */
   readonly assignment_scope?: string;
@@ -4565,10 +4569,6 @@ export type Assignment = {
    * **[READ-ONLY]** Summary of accepted submission types for this assignment.
    */
   readonly submission_summary?: string;
-  /**
-   * **[READ-ONLY]** Formatted display of the maximum points for this assignment.
-   */
-  readonly points_display?: string;
 };
 
 export type ApiResponseAssignment = {
@@ -6060,6 +6060,10 @@ export type Enrollment = {
    */
   readonly is_active?: boolean;
   /**
+   * **[READ-ONLY]** Indicates if attendance has been marked for this enrollment.
+   */
+  readonly is_attendance_marked?: boolean;
+  /**
    * **[READ-ONLY]** Indicates if the student attended the class.
    */
   readonly did_attend?: boolean;
@@ -6067,10 +6071,6 @@ export type Enrollment = {
    * **[READ-ONLY]** Human-readable description of the enrollment status.
    */
   readonly status_description?: string;
-  /**
-   * **[READ-ONLY]** Indicates if attendance has been marked for this enrollment.
-   */
-  readonly is_attendance_marked?: boolean;
   /**
    * **[READ-ONLY]** Indicates if the enrollment can be cancelled.
    */
@@ -8774,6 +8774,31 @@ export type PagedDtoInstructorObligation = {
   content?: Array<InstructorObligation>;
   metadata?: PageMetadata;
   links?: PageLinks;
+};
+
+export type ApiResponseListMonthlyPayoutPoint = {
+  success?: boolean;
+  data?: Array<MonthlyPayoutPoint>;
+  message?: string;
+  error?: unknown;
+};
+
+/**
+ * A month's settled instructor payouts for an organisation
+ */
+export type MonthlyPayoutPoint = {
+  /**
+   * Calendar month in YYYY-MM form
+   */
+  month?: string;
+  /**
+   * Total settled payout for the month
+   */
+  amount?: number;
+  /**
+   * ISO-4217 currency the amount is denominated in
+   */
+  currency_code?: string;
 };
 
 export type ApiResponseListCompetition = {
@@ -29425,6 +29450,47 @@ export type ListObligationsResponses = {
 };
 
 export type ListObligationsResponse = ListObligationsResponses[keyof ListObligationsResponses];
+
+export type GetMonthlySettlementsData = {
+  body?: never;
+  path: {
+    /**
+     * UUID of the organisation
+     */
+    organisationUuid: string;
+  };
+  query?: {
+    /**
+     * Number of months to include (inclusive of the current month)
+     */
+    months?: number;
+  };
+  url: '/api/v1/organisations/{organisationUuid}/instructor-obligations/monthly-settlements';
+};
+
+export type GetMonthlySettlementsErrors = {
+  /**
+   * Not Found
+   */
+  404: ResponseDtoVoid;
+  /**
+   * Internal Server Error
+   */
+  500: ResponseDtoVoid;
+};
+
+export type GetMonthlySettlementsError =
+  GetMonthlySettlementsErrors[keyof GetMonthlySettlementsErrors];
+
+export type GetMonthlySettlementsResponses = {
+  /**
+   * OK
+   */
+  200: ApiResponseListMonthlyPayoutPoint;
+};
+
+export type GetMonthlySettlementsResponse =
+  GetMonthlySettlementsResponses[keyof GetMonthlySettlementsResponses];
 
 export type Search2Data = {
   body?: never;
