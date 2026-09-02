@@ -2580,12 +2580,12 @@ function LessonContentDialog({
         className='flex h-full w-full max-w-4xl flex-col overflow-hidden p-0 sm:max-w-4xl'      >
         <SheetHeader className='border-b px-6 py-4 text-left'>
           <SheetTitle className='text-xl'>
-            {isEditMode ? 'Edit Skill Content' : 'Create New Skill Content'}
+            {isEditMode ? 'Edit Lesson Content' : 'Create New Lesson Content'}
           </SheetTitle>
           <SheetDescription className='text-muted-foreground text-sm'>
             {isEditMode
-              ? 'Update the details of your skill content below.'
-              : 'Fill in the contents of your skill below.'}
+              ? 'Update the details of your lesson content below.'
+              : 'Fill in the contents of your lesson below.'}
           </SheetDescription>
         </SheetHeader>
 

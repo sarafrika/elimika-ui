@@ -2,7 +2,7 @@
 
 import { Card } from '@/components/ui/card';
 import { FileVideo, Image, X } from 'lucide-react';
-import { useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { toAuthenticatedMediaUrl } from '../../src/lib/media-url';
 import { Button } from '../ui/button';
 
@@ -38,6 +38,12 @@ export function ClassMediaUpload({
   const [thumbnailPreview, setThumbnailPreview] = useState<string | null>(null);
   const [videoPreview, setVideoPreview] = useState<string | null>(null);
 
+  const revokePreviewUrl = (url: string | null) => {
+    if (url?.startsWith('blob:')) {
+      URL.revokeObjectURL(url);
+    }
+  };
+
   const handleThumbnailSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
@@ -54,12 +60,11 @@ export function ClassMediaUpload({
   const handleVideoSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
-      const reader = new FileReader();
-      reader.onload = event => {
-        const preview = event.target?.result as string;
-        setVideoPreview(preview);
-      };
-      reader.readAsDataURL(file);
+      const preview = URL.createObjectURL(file);
+      setVideoPreview(current => {
+        revokePreviewUrl(current);
+        return preview;
+      });
       onMediaSelect({ type: 'video', file });
     }
   };
@@ -71,10 +76,20 @@ export function ClassMediaUpload({
   };
 
   const handleRemoveVideo = () => {
-    setVideoPreview(null);
+    setVideoPreview(current => {
+      revokePreviewUrl(current);
+      return null;
+    });
     if (videoInputRef.current) videoInputRef.current.value = '';
     onRemoveVideo?.();
   };
+
+  useEffect(
+    () => () => {
+      revokePreviewUrl(videoPreview);
+    },
+    [videoPreview]
+  );
 
   return (
     <Card className='overflow-hidden rounded-md border pt-0 shadow-sm'>

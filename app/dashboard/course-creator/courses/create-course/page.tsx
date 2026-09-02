@@ -13,10 +13,13 @@ import {
     deleteAssignmentMutation,
     deleteLessonContentMutation,
     deleteQuizMutation,
+    getCourseAssessmentsOptions,
     getCourseByUuidOptions,
+    getCourseByUuidQueryKey,
     getCourseLessonsOptions,
     getLessonContentOptions,
     getLessonContentQueryKey,
+    publishCourseMutation,
     searchAssignmentsOptions,
     searchQuizzesOptions,
 } from '@/services/client/@tanstack/react-query.gen';
@@ -24,6 +27,7 @@ import type {
     ApiResponseCourse,
     Assignment,
     Course,
+    CourseAssessment,
     Lesson,
     LessonContent,
     PagedDtoLesson,
@@ -39,10 +43,16 @@ import DeleteModal from '../../../../../components/custom-modals/delete-modal';
 import { useCourseLessonsWithContent } from '../../../../../hooks/use-courselessonwithcontent';
 import { stripHtml } from '../../../../../src/features/dashboard/courses/shared/_components/courses-data';
 import CourseBrandingForm from '../../_components/course-branding-form';
-import { CourseCreationForm, type CourseFormRef } from '../../_components/course-creation-form';
+import {
+    CourseCreationForm,
+    type CourseFormRef,
+} from '../../_components/course-creation-form';
 import type { CourseCreationFormValues } from '../../_components/course-creation-types';
 import CourseGradingSection from '../../_components/course-grading-section';
 import { CoursePricingForm } from '../../_components/course-pricing-form';
+import {
+    getCoursePublishReadiness,
+} from '../../_components/course-publish-readiness';
 import CriteriaCreationForm from '../../_components/criteria-creation-form';
 import {
     CONTENT_TYPES,
@@ -576,6 +586,7 @@ function LessonContentStack({
 
 export default function CreateCoursePage() {
     const creator = useCourseCreator();
+    const queryClient = useQueryClient();
     const [step, setStep] = useState(0);
     const [createdCourseId, setCreatedCourseId] = useState<string | null>(null);
     const [isSavingBrandingPricing, setIsSavingBrandingPricing] = useState(false);
@@ -613,6 +624,7 @@ export default function CreateCoursePage() {
     const course = (courseResponse?.data ?? null) as Course | null;
     const courseInitialValues = useMemo(() => mapCourseValues(course), [course]);
     const courseApiResponse = courseResponse as ApiResponseCourse | undefined;
+
     const handleSaveBrandingAndPricing = useCallback(async () => {
         if (isSavingBrandingPricing) return;
 
@@ -651,6 +663,28 @@ export default function CreateCoursePage() {
                 (lesson): lesson is CourseLesson => Boolean(lesson?.uuid)
             ),
         [lessons]
+    );
+
+    const courseAssessmentsQuery = resolvedCourseId
+        ? getCourseAssessmentsOptions({
+            path: { courseUuid: resolvedCourseId },
+            query: { pageable: {} },
+        })
+        : null;
+    const { data: courseAssessmentsResponse } = useQuery({
+        ...(courseAssessmentsQuery ?? {
+            queryKey: ['create-course', 'assessments-placeholder'],
+            queryFn: async () => null,
+        }),
+        enabled: Boolean(resolvedCourseId),
+        staleTime: 60_000,
+    });
+    const courseAssessments = useMemo(
+        () =>
+            (courseAssessmentsResponse?.data?.content ?? []).filter(
+                (assessment): assessment is CourseAssessment => Boolean(assessment?.uuid)
+            ),
+        [courseAssessmentsResponse]
     );
 
     const lessonContentQueries = useQueries({
@@ -855,6 +889,28 @@ export default function CreateCoursePage() {
         assessmentQueries.some(query => query.isLoading) ||
         assignmentQueries.some(query => query.isLoading);
 
+    const lessonAssessmentCounts = useMemo(() => {
+        const counts = new Map<string, number>();
+
+        lessonsWithUuid.forEach((lesson, index) => {
+            const quizCount = assessmentQueries[index]?.data?.data?.content?.length ?? 0;
+            const assignmentCount = assignmentQueries[index]?.data?.data?.content?.length ?? 0;
+            counts.set(lesson.uuid, quizCount + assignmentCount);
+        });
+
+        return counts;
+    }, [assessmentQueries, assignmentQueries, lessonsWithUuid]);
+
+    const publishReadiness = getCoursePublishReadiness({
+        course,
+        structure: {
+            lessons: lessonsWithUuid,
+            lessonContentMap,
+            lessonAssessmentCounts,
+            assessments: courseAssessments,
+        },
+    });
+
     const refreshAssessmentLists = useCallback(async () => {
         await Promise.all([
             ...assessmentQueries.map(query => query.refetch()),
@@ -931,6 +987,39 @@ export default function CreateCoursePage() {
 
     const canRenderCourseSections = Boolean(resolvedCourseId && courseApiResponse);
 
+    const PublishCourse = useMutation(publishCourseMutation());
+    const handleSaveDraft = useCallback(() => {
+        courseFormRef.current?.submit();
+    }, []);
+
+    const handlePublishCourse = useCallback(async () => {
+        if (!resolvedCourseId) {
+            toast.error('Save the draft before publishing.');
+            return;
+        }
+
+        if (!publishReadiness.canPublish) {
+            publishReadiness.missingFields.forEach(message => {
+                toast.error(message);
+            });
+            return;
+        }
+
+        try {
+            const data = await PublishCourse.mutateAsync({
+                path: { uuid: resolvedCourseId },
+            });
+
+            toast.success(data?.message || 'Course published successfully.');
+            await queryClient.invalidateQueries({
+                queryKey: getCourseByUuidQueryKey({ path: { uuid: resolvedCourseId } }),
+            });
+        } catch (err) {
+            toast.error(err instanceof Error ? err.message : 'Failed to publish course.');
+        }
+    }, [PublishCourse, publishReadiness, queryClient, resolvedCourseId]);
+
+
     if (creator.isLoading) {
         return <CourseCreatorLoadingState headline='Preparing the standalone course workspace…' />;
     }
@@ -953,21 +1042,24 @@ export default function CreateCoursePage() {
                     <Button
                         type='button'
                         variant='outline'
-                    // onClick={() => saveProgramAndAdvance(undefined)}
-                    // disabled={createProgramMut.isPending || updateProgramMut.isPending || !creatorUuid}
+                        onClick={handleSaveDraft}
                     >
                         Save Draft
                     </Button>
                     <Button
                         type='button'
-                    // onClick={handlePublish}
-                    // disabled={publishProgramMut.isPending || !creatorUuid || !canPublish}
+                        onClick={handlePublishCourse}
+                        disabled={PublishCourse.isPending || !resolvedCourseId}
+                        title={
+                            !resolvedCourseId
+                                ? 'Save the draft before publishing.'
+                                : publishReadiness.missingFields.join(' • ')
+                        }
                     >
                         <Sparkles className='mr-2 h-4 w-4' />
                         Publish
                     </Button>
                 </div>
-
             </div>
 
             <PageHeader
@@ -1052,6 +1144,14 @@ export default function CreateCoursePage() {
                                     description='Practice activities are available after at least one lesson exists.'
                                 >
                                     <div className='space-y-6'>
+
+                                        <div>
+                                            <p className='text-[15px] font-semibold'>Class Practice Activities</p>
+                                            <p className='text-muted-foreground text-xs'>
+                                                Manage reusable class practice activities tied to this skill.
+                                            </p>
+                                        </div>
+
                                         <div className='space-y-8'>
                                             {lessonsWithUuid.map((lesson, index) => (
                                                 <section key={lesson.uuid} className='relative'>
