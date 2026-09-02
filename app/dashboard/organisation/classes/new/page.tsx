@@ -71,6 +71,7 @@ import {
   createClassDefinitionMultipartMutation,
   getAllCategoriesOptions,
   getOrganisationInstructorSummariesOptions,
+  getTrainingBranchesByOrganisationOptions,
   listResourcesOptions,
   searchProgramTrainingApplicationsOptions,
   searchTrainingApplicationsOptions,
@@ -300,6 +301,18 @@ export default function OrganisationCreateClassPage() {
     [orgResources]
   );
 
+  const branchesQuery = useQuery({
+    ...getTrainingBranchesByOrganisationOptions({
+      path: { uuid: organisationUuid },
+      query: { pageable: { page: 0, size: 100 } },
+    }),
+    enabled: Boolean(organisationUuid),
+  });
+  const branches = useMemo(
+    () => extractPage(branchesQuery.data).items,
+    [branchesQuery.data]
+  );
+
   // ── Form state ──────────────────────────────────────────────────────────────
   const [service, setService] = useState<ServiceKey>('group');
   const sessionFormat = serviceFormat(service);
@@ -310,6 +323,7 @@ export default function OrganisationCreateClassPage() {
   const [locationLongitude, setLocationLongitude] = useState('');
   const [meetingLink, setMeetingLink] = useState('');
   const [venueUuid, setVenueUuid] = useState('');
+  const [branchUuid, setBranchUuid] = useState('');
 
   const [rateBasis, setRateBasis] = useState<RateBasis>(DEFAULT_RATE_BASIS);
   const approvedFee = useMemo(
@@ -595,6 +609,7 @@ export default function OrganisationCreateClassPage() {
   const handleSubmit = (event: FormEvent) => {
     event.preventDefault();
     if (!organisationUuid) return toast.error('No active organisation.');
+    if (!branchUuid) return toast.error('Select the training branch this class belongs to.');
     if (!offering) return toast.error('Select an approved course or program.');
     if (!instructorUuid) {
       return toast.error(
@@ -675,6 +690,8 @@ export default function OrganisationCreateClassPage() {
 
     const payload: ClassDefinitionCreateRequest = {
       organisation_uuid: organisationUuid,
+      branch_uuid: branchUuid,
+      venue_resource_uuid: venueUuid || undefined,
       default_instructor_uuid: instructorUuid,
       ...(offeringKind === 'program'
         ? { program_uuid: offeringUuid }
@@ -779,7 +796,11 @@ export default function OrganisationCreateClassPage() {
           venueResources={venueResources}
           onlyAvailable={onlyAvailable}
           onOnlyAvailableChange={setOnlyAvailable}
-          showVenue={false}
+          showVenue
+          branches={branches}
+          branchUuid={branchUuid}
+          onBranchChange={setBranchUuid}
+          showBranch
         />
 
         <ScheduleModeCards value={mode} onChange={setMode} />
