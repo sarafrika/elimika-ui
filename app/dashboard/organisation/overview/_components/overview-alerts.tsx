@@ -1,7 +1,7 @@
 'use client';
 
 import { useQuery } from '@tanstack/react-query';
-import { AlertTriangle, Bell, BellRing, ClipboardCheck, Info, ShieldAlert } from 'lucide-react';
+import { AlertTriangle, Bell, BellRing, ClipboardCheck, Info, Send, ShieldAlert } from 'lucide-react';
 
 import { AlertPanel, type AlertItem, type AlertSeverity } from '@/components/dashboard';
 import { useOrganisation } from '@/context/organisation-context';
@@ -9,6 +9,7 @@ import { extractPage } from '@/lib/api-helpers';
 import type { NotificationDto } from '@/services/client';
 import {
   listNotificationsOptions,
+  listSentOptions,
   searchTrainingApplicationsOptions,
 } from '@/services/client/@tanstack/react-query.gen';
 
@@ -60,6 +61,11 @@ export function OverviewAlerts() {
     enabled: Boolean(organisationUuid),
   });
 
+  const sentQuery = useQuery({
+    ...listSentOptions({ path: { organisationUuid }, query: { limit: 2 } }),
+    enabled: Boolean(organisationUuid),
+  });
+
   const applications = (applicationsQuery.data?.data?.content ?? []) as TrainingApplicationLike[];
   const pendingApplications = applications.filter(application =>
     isPending(application.status)
@@ -92,6 +98,19 @@ export function OverviewAlerts() {
       icon: ClipboardCheck,
       actionLabel: 'View',
       href: '/dashboard/organisation/approvals',
+    });
+  }
+
+  for (const d of sentQuery.data?.data ?? []) {
+    const count = d.recipient_count ?? 0;
+    alerts.push({
+      id: `sent-${d.uuid}`,
+      severity: 'low',
+      title: `Sent: ${d.title}`,
+      description: `To ${d.audience} · ${count} recipient${count === 1 ? '' : 's'}`,
+      icon: Send,
+      actionLabel: 'View',
+      href: '/dashboard/organisation/notifications',
     });
   }
 
