@@ -2,65 +2,57 @@
 'use client';
 
 import {
+  type AcademicPeriod,
   type ApprovedRateCard,
   approvedRateFor,
+  type DayKey,
+  type DayRow,
   DEFAULT_RATE_BASIS,
-  RATE_BASES,
   type RateBasis,
-  rateBasisUnit,
+  type ReminderState,
 } from '@/components/class-form/class-form-shared';
-import LocationInput from '@/components/locationInput';
-import { RecurrenceEditor } from '@/components/scheduling/recurrence-editor';
-import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
-import { Card } from '@/components/ui/card';
-import { Input } from '@/components/ui/input';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
 import {
   type InstructorClassWithSchedule,
   useInstructorClassesWithSchedules,
 } from '@/hooks/use-instructor-classes-with-schedules';
-import { defaultRecurrenceValue, type RecurrenceValue, toClassRecurrence } from '@/lib/recurrence';
+import { type RecurrenceValue, toClassRecurrence } from '@/lib/recurrence';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { format } from 'date-fns';
-import {
-  AlertTriangle,
-  BellRing,
-  Building2,
-  CalendarDays,
-  Globe,
-  Loader2,
-  LockKeyhole,
-  MapPin,
-  Users,
-} from 'lucide-react';
+import { Loader2 } from 'lucide-react';
 import { useRouter } from 'next/navigation';
-import { type FormEvent, useEffect, useMemo, useRef, useState } from 'react';
+import { type FormEvent, useEffect, useMemo, useState } from 'react';
 import { toast } from 'sonner';
+import {
+  AcademicPeriodsPanel,
+  ClassMediaUpload,
+  LocationVenue,
+  type MediaFile,
+  type Offering,
+  OfferingPicker,
+  PickDatesPanel,
+  PricingCapacity,
+  ReminderOptions,
+  ScheduleModeCards,
+  ServiceCards,
+  type ServiceKey,
+  StandardSchedule,
+  UpcomingSessions,
+} from '../../../../../components/class-form';
+import { PageHeader } from '../../../../../components/page-header';
+import { ResourceConflictAlert } from '../../../../../components/resourcing/ResourceConflictAlert';
 import { Button } from '../../../../../components/ui/button';
-import { Calendar } from '../../../../../components/ui/calendar';
-import { Checkbox } from '../../../../../components/ui/checkbox';
-import { useTimeZone } from '../../../../../context/timezone-context';
 import { useUserProfile } from '../../../../../context/profile-context';
+import { useTimeZone } from '../../../../../context/timezone-context';
 import { useUserDomain } from '../../../../../context/user-domain-context';
 import { useCoursesByIds, useProgramsByIds } from '../../../../../hooks/use-batched-lookups';
 import { useClassDetails } from '../../../../../hooks/use-class-details';
 import {
   DEFAULT_CLASS_TIME_ZONE,
-  formatScheduleClockTime,
   normalizeScheduleTimeZone,
   parseApiDate,
-  scheduleTimeZoneLabel,
-  scheduleTimeZoneOptions,
   toUtcIsoDateTime,
 } from '../../../../../lib/date';
 import {
-  coordinatesFromPlace,
   normalizeLocationType,
   requiresPhysicalLocation,
   toCoordinate,
@@ -84,42 +76,18 @@ import {
   RecurrenceTypeEnum,
   SessionFormatEnum,
 } from '../../../../../services/client/types.gen';
-import { toAuthenticatedMediaUrl } from '../../../../../src/lib/media-url';
 import { TOKEN } from '../../../_components/color-charts';
 import {
   ClassDetails,
   NotificationSettings,
   ScheduleSettings,
 } from '../../trainings/create-new/page';
-import { ClassCreationHeader } from './_components/class-creation-header';
-import {
-  type ClassCreationPreviewData,
-  ClassCreationPreviewRail,
-} from './_components/class-creation-preview-rail';
-import { ClassMediaUpload, type MediaFile } from './_components/class-media-upload';
-import { type ServiceType, ServiceTypeSelector } from './_components/service-type-selector';
+import { type ServiceType } from './_components/service-type-selector';
 
 const LOCAL_CLASS_DRAFT_KEY = 'training-class-create-draft:new-class-creation';
 const DAY_NAMES = ['MONDAY', 'TUESDAY', 'WEDNESDAY', 'THURSDAY', 'FRIDAY', 'SATURDAY', 'SUNDAY'];
 const DAY_SHORT = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
 const DEFAULT_CLASS_DURATION_MINUTES = 60;
-
-const CLASS_TYPE_OPTIONS = [
-  { label: 'Group Class', value: 'PUBLIC', icon: Users },
-  { label: 'Private Class', value: 'PRIVATE', icon: LockKeyhole },
-];
-
-const LECTURE_TYPE_OPTIONS = [
-  { label: 'Online', value: 'ONLINE', icon: Globe },
-  { label: 'In-Person', value: 'IN_PERSON', icon: MapPin },
-  { label: 'Hybrid', value: 'HYBRID', icon: Building2 },
-];
-
-const REMINDER_OPTIONS = [
-  { label: '24 hours before class', value: '24h' },
-  { label: '1 hour before class', value: '1h' },
-  { label: '30 minutes before class', value: '30m' },
-];
 
 const schedulePresetOptions = [
   { key: 'standard', title: 'Standard Schedule', description: 'Set recurring days and times' },
@@ -369,25 +337,6 @@ const isValidMeetingLink = (value: string) => {
   }
 };
 
-export const formatClassType = (value?: string | null) => {
-  if (!value) return 'Group Class';
-  return value.toUpperCase() === 'PRIVATE' ? 'Private Class' : 'Group Class';
-};
-
-export const formatLectureType = (value?: string | null) => {
-  const normalized = value?.toUpperCase() ?? '';
-  if (normalized === 'ONLINE') return 'Online';
-  if (normalized === 'IN_PERSON') return 'In-Person';
-  if (normalized === 'HYBRID') return 'Hybrid';
-  return 'In-Person';
-};
-
-const formatScheduleTime = (start?: string, end?: string, allDay?: boolean) => {
-  if (allDay) return 'All Day';
-  if (!start || !end) return '';
-  return `${start} - ${end}`;
-};
-
 const getStringValue = (value: unknown) =>
   typeof value === 'string' && value.trim().length > 0 ? value.trim() : undefined;
 
@@ -480,21 +429,6 @@ const showMutationError = (error: unknown, fallback: string) => {
   }
 
   toast.error(message);
-};
-
-const getRepeatSummary = (scheduleSettings: ScheduleSettings) => {
-  const days = scheduleSettings.repeat.days || [];
-  const interval = scheduleSettings.repeat.interval || 1;
-
-  if (scheduleSettings.repeat.unit === 'week') {
-    const intervalLabel = interval > 1 ? `Every ${interval} weeks` : 'Weekly';
-    if (days.length > 0) {
-      return `${intervalLabel}\n${days.map(d => DAY_SHORT[d] ?? 'Mon').join(', ')}`;
-    }
-    return intervalLabel;
-  }
-
-  return `Every ${interval}\n${scheduleSettings.repeat.unit}(s)`;
 };
 
 const findScheduleConflicts = (
@@ -590,8 +524,8 @@ const expandSessionsForConflictCheck = (
       const endTime = scheduleSettings.allDay
         ? '23:59'
         : override?.endTime ||
-          scheduleSettings.startClass.endTime ||
-          timeAfterDuration(startTime, DEFAULT_CLASS_DURATION_MINUTES);
+        scheduleSettings.startClass.endTime ||
+        timeAfterDuration(startTime, DEFAULT_CLASS_DURATION_MINUTES);
       const durationMinutes = String(
         durationMinutesFromTimes(startTime, endTime, scheduleSettings.allDay)
       );
@@ -619,7 +553,7 @@ const expandSessionsForConflictCheck = (
     const endTime = scheduleSettings.allDay
       ? '23:59'
       : scheduleSettings.startClass.endTime ||
-        timeAfterDuration(startTime, DEFAULT_CLASS_DURATION_MINUTES);
+      timeAfterDuration(startTime, DEFAULT_CLASS_DURATION_MINUTES);
     const durationMinutes = String(
       durationMinutesFromTimes(startTime, endTime, scheduleSettings.allDay)
     );
@@ -644,7 +578,7 @@ const expandSessionsForConflictCheck = (
 };
 
 // correct mobile screen layout issue
-const ClassCreationPage = () => {
+const InstructorClassCreationPage = () => {
   const router = useRouter();
   const qc = useQueryClient();
   const { activeDomain } = useUserDomain();
@@ -675,17 +609,12 @@ const ClassCreationPage = () => {
   // never share the same boolean and can't block each other.
   const [isEditHydrated, setIsEditHydrated] = useState(false);
 
-  const [catalogSearch, setCatalogSearch] = useState('');
   const [schedulePreset, setSchedulePreset] = useState<SchedulePreset>('standard');
   const [serviceType, setServiceType] = useState<ServiceType | undefined>(undefined);
   // The unit the approved rate is quoted in. It decides both which rate-card column is read and
   // how many units the class bills for, so it has to be an explicit choice rather than a default
   // nobody sees — an hourly figure billed per session is a different contract entirely.
   const [rateBasis, setRateBasis] = useState<RateBasis>(DEFAULT_RATE_BASIS);
-  const [selectedThumbnail, setSelectedThumbnail] = useState<File | null>(null);
-  const [selectedVideo, setSelectedVideo] = useState<File | null>(null);
-  const [existingThumbnailUrl, setExistingThumbnailUrl] = useState<string | null>(null);
-  const [existingVideoUrl, setExistingVideoUrl] = useState<string | null>(null);
   const [classDetails, setClassDetails] = useState<ClassDetails>(() =>
     createInitialClassDetails(instructor?.full_name)
   );
@@ -696,38 +625,32 @@ const ClassCreationPage = () => {
   const [notificationSettings, setNotificationSettings] = useState<NotificationSettings>(() =>
     createInitialNotificationSettings()
   );
-  const [showOptionalSettings, setShowOptionalSettings] = useState(true);
+  const [reminderOptions, setReminderOptions] = useState<ReminderState>(() => ({
+    window: '24h',
+    sendStudents: true,
+    sendInstructor: true,
+    email: true,
+    sms: false,
+    push: true,
+  }));
   const [allowWaitlist, setAllowWaitlist] = useState(true);
   const [locationLatitude, setLocationLatitude] = useState('');
   const [locationLongitude, setLocationLongitude] = useState('');
   const [pickedDates, setPickedDates] = useState<
     { date: string; startTime: string; endTime: string; durationMinutes: string }[]
   >([]);
+  const [pickMonth, setPickMonth] = useState(() => new Date());
+  const [academicPeriods, setAcademicPeriods] = useState<AcademicPeriod[]>([
+    {
+      id: 'academic-period-1',
+      name: 'Academic Period 1',
+      startDate: '',
+      endDate: '',
+      slots: [],
+    },
+  ]);
 
   const [perDayOccurrences, setPerDayOccurrences] = useState<Record<number, PerDayOccurrence>>({});
-
-  // Google Calendar–style recurrence for the "Standard Schedule" preset. Source of truth for the
-  // submitted payload; also mirrored into scheduleSettings.repeat so the live session preview and
-  // conflict detection (which read scheduleSettings) keep reflecting the selection.
-  const [recurrence, setRecurrence] = useState<RecurrenceValue>(() => defaultRecurrenceValue());
-  const applyRecurrence = (value: RecurrenceValue) => {
-    setRecurrence(value);
-    setScheduleSettings(prev => ({
-      ...prev,
-      repeat: {
-        interval: value.interval,
-        unit:
-          value.frequency === 'DAILY' ? 'day' : value.frequency === 'MONTHLY' ? 'month' : 'week',
-        days:
-          value.frequency === 'WEEKLY'
-            ? value.daysOfWeek.map(day => DAY_NAMES.indexOf(day)).filter(index => index >= 0)
-            : [],
-      },
-      endRepeat: value.end.mode === 'on' && value.end.date ? value.end.date : prev.endRepeat,
-    }));
-  };
-
-  const classDetailsCardRef = useRef<HTMLDivElement | null>(null);
 
   const resolvedId = classId || savedClassUuid;
   const { data: combinedClass, isLoading } = useClassDetails(
@@ -754,9 +677,32 @@ const ClassCreationPage = () => {
 
   const createClassDefinition = useMutation(createClassDefinitionMultipartMutation());
   const updateClassDefinition = useMutation(updateClassDefinitionMutation());
-  const addClassThumbnailMut = useMutation(uploadClassThumbnailMutation());
-  const addClassIntroVideoMut = useMutation(uploadClassPromotionalVideoMutation());
-  const isSubmitting = createClassDefinition.isPending || updateClassDefinition.isPending;
+  const uploadThumbnail = useMutation(uploadClassThumbnailMutation());
+  const uploadPromotionalVideo = useMutation(uploadClassPromotionalVideoMutation());
+  const [selectedThumbnail, setSelectedThumbnail] = useState<File | null>(null);
+  const [selectedPromotionalVideo, setSelectedPromotionalVideo] = useState<File | null>(null);
+  const isSubmitting =
+    createClassDefinition.isPending ||
+    updateClassDefinition.isPending ||
+    uploadThumbnail.isPending ||
+    uploadPromotionalVideo.isPending;
+
+  const uploadClassMedia = async (classUuid: string) => {
+    await Promise.all([
+      selectedThumbnail
+        ? uploadThumbnail.mutateAsync({
+          path: { uuid: classUuid },
+          body: { thumbnail: selectedThumbnail },
+        })
+        : Promise.resolve(),
+      selectedPromotionalVideo
+        ? uploadPromotionalVideo.mutateAsync({
+          path: { uuid: classUuid },
+          body: { promotional_video: selectedPromotionalVideo },
+        })
+        : Promise.resolve(),
+    ]);
+  };
 
   const handleServiceTypeChange = (
     newServiceType: ServiceType,
@@ -917,31 +863,6 @@ const ClassCreationPage = () => {
     () => new Set(sessionsForConflictCheck.map(session => session.date)).size,
     [sessionsForConflictCheck]
   );
-
-  /** How many units of the contracted basis this schedule adds up to. */
-  const billableUnits = useMemo(() => {
-    if (rateBasis === 'per_session') return totalSessions || 0;
-    if (rateBasis === 'per_day') return totalDays;
-    return totalHours || 0;
-  }, [rateBasis, totalSessions, totalDays, totalHours]);
-
-  const totalAmount = Math.max(approvedRate * billableUnits, 0);
-
-  const firstSessionTimeLabel = useMemo(() => {
-    if (scheduleSettings.allDay) return 'All Day';
-    if (schedulePreset === 'pick-dates') {
-      if (pickedDates.length === 0) return '';
-      const first = pickedDates[0];
-      return formatScheduleTime(first?.startTime, first?.endTime, false);
-    }
-    const sortedDays = [...(scheduleSettings.repeat.days || [])].sort((a, b) => a - b);
-    if (sortedDays.length === 0) return '';
-    const firstDayIdx = sortedDays[0]!;
-    const override = scheduleSettings.weeklyDayTimes[firstDayIdx];
-    const startTime = override?.startTime || scheduleSettings.startClass.startTime || '';
-    const endTime = override?.endTime || scheduleSettings.startClass.endTime || '';
-    return formatScheduleTime(startTime, endTime, false);
-  }, [schedulePreset, scheduleSettings, pickedDates]);
 
   useEffect(() => {
     if (resolvedId) {
@@ -1156,16 +1077,6 @@ const ClassCreationPage = () => {
         : ''
     );
 
-    const thumbnailUrl = toAuthenticatedMediaUrl(classRecord?.thumbnail_url);
-    if (thumbnailUrl) {
-      setExistingThumbnailUrl(thumbnailUrl);
-    }
-
-    const videoUrl = toAuthenticatedMediaUrl(classRecord?.promotional_video_url);
-    if (videoUrl) {
-      setExistingVideoUrl(videoUrl);
-    }
-
     const loadedLocationType = normalizeLocationType(classRecord.location_type);
     const classTypeValue = classRecord.class_visibility === 'PRIVATE' ? 'PRIVATE' : 'GROUP';
     let computedServiceType: ServiceType | undefined;
@@ -1203,8 +1114,8 @@ const ClassCreationPage = () => {
       const firstEnd = firstTemplate.end_time
         ? new Date(firstTemplate.end_time)
         : new Date(
-            firstStart.getTime() + durationMinutesOrDefault(firstTemplate.duration_minutes) * 60000
-          );
+          firstStart.getTime() + durationMinutesOrDefault(firstTemplate.duration_minutes) * 60000
+        );
       const firstStartDisplay = parseApiDate(firstTemplate.start_time)?.tz(hydratedTimeZone);
       const firstEndDisplay = firstTemplate.end_time
         ? parseApiDate(firstTemplate.end_time)?.tz(hydratedTimeZone)
@@ -1297,8 +1208,8 @@ const ClassCreationPage = () => {
           const tEnd = template.end_time
             ? new Date(template.end_time)
             : new Date(
-                tStart.getTime() + durationMinutesOrDefault(template.duration_minutes) * 60000
-              );
+              tStart.getTime() + durationMinutesOrDefault(template.duration_minutes) * 60000
+            );
           const tStartDisplay = parseApiDate(template.start_time)?.tz(hydratedTimeZone);
           const tEndDisplay = template.end_time
             ? parseApiDate(template.end_time)?.tz(hydratedTimeZone)
@@ -1432,6 +1343,16 @@ const ClassCreationPage = () => {
     isClientReady,
     activeScheduleTimeZone,
   ]);
+
+  useEffect(() => {
+    if (!draftSavedTick) return;
+
+    const timeout = window.setTimeout(() => {
+      toast.success('Draft saved');
+    }, 5000);
+
+    return () => window.clearTimeout(timeout);
+  }, [draftSavedTick]);
 
   // ── Validation ─────────────────────────────────────────────────────────────
   const isFormValid = () => {
@@ -1639,7 +1560,21 @@ const ClassCreationPage = () => {
         scheduleSettings.timezone
       );
       const endTimeIso = buildUtcIsoDateTime(referenceDate, defaultEnd, scheduleSettings.timezone);
-      const recurrenceRule = toClassRecurrence(recurrence);
+      const recurrenceRule = toClassRecurrence({
+        frequency:
+          scheduleSettings.repeat.unit === 'day'
+            ? 'DAILY'
+            : scheduleSettings.repeat.unit === 'month'
+              ? 'MONTHLY'
+              : 'WEEKLY',
+        interval: scheduleSettings.repeat.interval || 1,
+        daysOfWeek: (scheduleSettings.repeat.days || [])
+          .map(day => DAY_NAMES[day])
+          .filter(Boolean),
+        end: scheduleSettings.endRepeat
+          ? { mode: 'on', date: scheduleSettings.endRepeat }
+          : { mode: 'never' },
+      } as RecurrenceValue);
       session_templates = [
         {
           start_time: startTimeIso as unknown as Date,
@@ -1668,8 +1603,8 @@ const ClassCreationPage = () => {
           const effectiveEndTime = scheduleSettings.allDay
             ? '23:59'
             : override?.endTime ||
-              scheduleSettings.startClass.endTime ||
-              timeAfterDuration(effectiveStartTime, DEFAULT_CLASS_DURATION_MINUTES);
+            scheduleSettings.startClass.endTime ||
+            timeAfterDuration(effectiveStartTime, DEFAULT_CLASS_DURATION_MINUTES);
 
           const firstOccurrence = new Date(referenceDate);
           while ((firstOccurrence.getDay() + 6) % 7 !== dayIndex) {
@@ -1768,7 +1703,7 @@ const ClassCreationPage = () => {
         ? scheduleSettings.allDay
           ? '23:59'
           : pickedDates[0]!.endTime ||
-            timeAfterDuration(payloadStartTime, DEFAULT_CLASS_DURATION_MINUTES)
+          timeAfterDuration(payloadStartTime, DEFAULT_CLASS_DURATION_MINUTES)
         : defaultEnd;
 
     const payload: CreateClassDefinitionMultipartData['body'] = {
@@ -1777,7 +1712,7 @@ const ClassCreationPage = () => {
       course_uuid: selectedSource === 'course' ? classDetails.course_uuid || undefined : undefined,
       program_uuid:
         selectedSource === 'program' ? classDetails.program_uuid || undefined : undefined,
-      title: classDetails.title,
+      title: classDetails.title.trim(),
       description: classDetails.description || undefined,
       class_visibility: classDetails.class_type === 'PRIVATE' ? 'PRIVATE' : 'PUBLIC',
       session_format:
@@ -1817,45 +1752,7 @@ const ClassCreationPage = () => {
       session_templates,
     };
 
-    const onSuccess = async (createdUuid?: string) => {
-      const finalUuid = createdUuid || resolvedId;
-
-      if (finalUuid && !isDraft) {
-        const uploads: Promise<unknown>[] = [];
-
-        if (selectedThumbnail) {
-          uploads.push(
-            addClassThumbnailMut.mutateAsync({
-              path: { uuid: finalUuid },
-              body: { thumbnail: selectedThumbnail },
-            })
-          );
-        }
-
-        if (selectedVideo) {
-          uploads.push(
-            addClassIntroVideoMut.mutateAsync({
-              path: { uuid: finalUuid },
-              body: { promotional_video: selectedVideo },
-            })
-          );
-        }
-
-        try {
-          await Promise.all(uploads);
-
-          if (selectedThumbnail) {
-            toast.success('Thumbnail uploaded');
-          }
-
-          if (selectedVideo) {
-            toast.success('Video uploaded');
-          }
-        } catch (error) {
-          showMutationError(error, 'Failed to upload class media');
-        }
-      }
-
+    const onSuccess = async () => {
       await Promise.all([
         qc.invalidateQueries({
           queryKey: getClassDefinitionsForInstructorQueryKey({
@@ -1892,10 +1789,10 @@ const ClassCreationPage = () => {
         }),
         resolvedId
           ? qc.invalidateQueries({
-              queryKey: getClassDefinitionQueryKey({
-                path: { uuid: resolvedId },
-              }),
-            })
+            queryKey: getClassDefinitionQueryKey({
+              path: { uuid: resolvedId },
+            }),
+          })
           : Promise.resolve(),
       ]);
 
@@ -1914,7 +1811,14 @@ const ClassCreationPage = () => {
       updateClassDefinition.mutate(
         { path: { uuid: resolvedId }, body: payload },
         {
-          onSuccess: () => onSuccess(resolvedId),
+          onSuccess: async () => {
+            try {
+              await uploadClassMedia(resolvedId);
+            } catch (error) {
+              toast.error(error instanceof Error ? error.message : 'Class media upload failed.');
+            }
+            onSuccess();
+          },
           onError: error => showMutationError(error, 'Failed to update class'),
         }
       );
@@ -1922,14 +1826,17 @@ const ClassCreationPage = () => {
       createClassDefinition.mutate(
         { body: payload, query: { formFields: {} } },
         {
-          onSuccess: response => {
+          onSuccess: async response => {
             const savedUuid = response?.data?.class_definition?.uuid;
             if (savedUuid) {
               setSavedClassUuid(savedUuid);
-              onSuccess(savedUuid);
-            } else {
-              onSuccess();
+              try {
+                await uploadClassMedia(savedUuid);
+              } catch (error) {
+                toast.error(error instanceof Error ? error.message : 'Class media upload failed.');
+              }
             }
+            onSuccess();
           },
           onError: error => showMutationError(error, 'Failed to create class'),
         }
@@ -1948,6 +1855,14 @@ const ClassCreationPage = () => {
     setScheduleSettings(createInitialScheduleSettings(activeScheduleTimeZone));
     setScheduleTimezoneOverridden(false);
     setNotificationSettings(createInitialNotificationSettings());
+    setReminderOptions({
+      window: '24h',
+      sendStudents: true,
+      sendInstructor: true,
+      email: true,
+      sms: false,
+      push: true,
+    });
     setSchedulePreset('standard');
     setAllowWaitlist(true);
     setLocationLatitude('');
@@ -1964,442 +1879,235 @@ const ClassCreationPage = () => {
     setScheduleSettings(prev => ({ ...prev, timezone: normalizeScheduleTimeZone(value) }));
   };
 
-  // ── Derived UI values ──────────────────────────────────────────────────────
-  const origin = typeof window !== 'undefined' ? window.location.origin : '';
-  const inviteLink = resolvedId ? `${origin}/class-invite?id=${resolvedId}` : '';
-  const meetingLink = classDetails.meeting_link || 'Enter your meeting link.';
-  const normalizedLocationType = normalizeLocationType(classDetails.location_type);
-  const showMeetingLink =
-    normalizedLocationType === 'ONLINE' || normalizedLocationType === 'HYBRID';
-
-  const previewData: ClassCreationPreviewData = {
-    thumbnailUrl: selectedCatalogItem?.thumbnailUrl as string,
-    classTitle: classDetails.title || selectedCatalogItem?.label || 'Class title',
-    classTypeLabel: formatClassType(classDetails.class_type),
-    instructorName: classDetails.instructorName || instructor?.full_name || 'John Doe',
-    lectureTypeLabel: formatLectureType(classDetails.location_type),
-    locationName: classDetails.location_name || 'Nairobi, Kenya',
-    scheduleLabel:
-      schedulePreset === 'pick-dates'
-        ? `${pickedDates.length} selected date${pickedDates.length === 1 ? '' : 's'}`
-        : schedulePreset === 'standard' && scheduleSettings.startClass.date
-          ? `Start ${new Date(`${scheduleSettings.startClass.date}T00:00:00`).toLocaleDateString('en-US', { weekday: 'long' })}`
-          : '',
-    timeLabel: firstSessionTimeLabel,
-    classroom: classDetails.classroom,
-    totalHoursLabel: `${totalHours || 0} ${totalHours === 1 ? 'Hour' : 'Hours'}`,
-    priceUnitLabel: `Price per ${rateBasisUnit(rateBasis)}`,
-    pricePerHourLabel: `${rateCard?.currency || 'KES'} ${approvedRate.toLocaleString()}`,
-    billingBasisLabel: `${billableUnits.toLocaleString()} ${rateBasisUnit(rateBasis)}${billableUnits === 1 ? '' : 's'} × ${rateCard?.currency || 'KES'} ${approvedRate.toLocaleString()}`,
-    totalSessionsLabel: `${totalSessions || 0} Class${totalSessions === 1 ? '' : 'es'}`,
-    totalAmountLabel: `${rateCard?.currency || 'KES'} ${totalAmount.toLocaleString() || '0'}`,
-    meetingLink,
-    inviteLink,
-    summaryItems: [
-      { icon: CalendarDays, label: 'Repeat', value: getRepeatSummary(scheduleSettings) },
-      {
-        icon: BellRing,
-        label: 'Reminder',
-        value: notificationSettings.reminder || '24 hours before class',
-      },
-      {
-        icon: MapPin,
-        label: 'Timezone',
-        value: scheduleTimeZoneLabel(scheduleSettings.timezone),
-      },
-    ],
-  };
-
-  const normalizeTime = (time?: string) => {
-    if (!time) return '';
-    const [hour = '00', minute = '00'] = time.split(':');
-    return `${hour.padStart(2, '0')}:${minute.padStart(2, '0')}`;
-  };
-
-  // ── Day-time grid ──────────────────────────────────────────────────────────
-  const DayTimeGrid = (
-    <div className='space-y-2'>
-      {DAY_NAMES.map((day, index) => {
-        const active = scheduleSettings.repeat.days?.includes(index);
-        const override = scheduleSettings.weeklyDayTimes[index];
-        const effectiveStartTime =
-          override?.startTime || scheduleSettings.startClass.startTime || '';
-        const effectiveEndTime =
-          override?.endTime ||
-          scheduleSettings.startClass.endTime ||
-          (effectiveStartTime
-            ? timeAfterDuration(effectiveStartTime, DEFAULT_CLASS_DURATION_MINUTES)
-            : '');
-        const effectiveMinutes = sessionMinutesFromTimes(effectiveStartTime, effectiveEndTime);
-        const isInvalidTime = Boolean(
-          active && !scheduleSettings.allDay && effectiveMinutes === undefined
-        );
-
-        const toggleDay = () =>
-          setScheduleSettings(prev => {
-            const currentDays = prev.repeat.days || [];
-            const nextDays = active
-              ? currentDays.filter(d => d !== index)
-              : [...currentDays, index].sort();
-
-            return {
-              ...prev,
-              repeat: {
-                ...prev.repeat,
-                days: nextDays,
-                unit: 'week',
-              },
-            };
-          });
-
-        return (
-          <div
-            key={day}
-            onClick={toggleDay}
-            className={`flex flex-row items-center gap-2 rounded-md border px-3 py-2 transition ${
-              active ? 'border-primary bg-primary/5' : 'border-border bg-background'
-            }`}
-          >
-            <button
-              type='button'
-              // onClick={() =>
-              //   setScheduleSettings(prev => {
-              //     const currentDays = prev.repeat.days || [];
-              //     const nextDays = active
-              //       ? currentDays.filter(d => d !== index)
-              //       : [...currentDays, index].sort();
-              //     return { ...prev, repeat: { ...prev.repeat, days: nextDays, unit: 'week' } };
-              //   })
-              // }
-              className={`w-14 shrink-0 rounded-md border px-2 py-1.5 text-xs font-semibold transition ${
-                active
-                  ? 'border-primary bg-primary text-primary-foreground'
-                  : 'border-border bg-muted text-muted-foreground hover:border-primary/50'
-              }`}
-            >
-              {DAY_SHORT[index]}
-            </button>
-
-            <div className='flex flex-1 flex-col gap-0.5'>
-              <span className='text-muted-foreground text-[10px] font-medium'>Start Time</span>
-              <Input
-                type='time'
-                onClick={e => e.stopPropagation()}
-                disabled={!active || scheduleSettings.allDay}
-                value={normalizeTime(effectiveStartTime)}
-                onChange={e => {
-                  const startTime = normalizeTime(e.target.value);
-                  setScheduleSettings(prev => ({
-                    ...prev,
-                    weeklyDayTimes: {
-                      ...prev.weeklyDayTimes,
-                      [index]: {
-                        startTime,
-                        endTime:
-                          prev.weeklyDayTimes[index]?.endTime ||
-                          prev.startClass.endTime ||
-                          (startTime
-                            ? timeAfterDuration(startTime, DEFAULT_CLASS_DURATION_MINUTES)
-                            : ''),
-                        durationMinutes: String(
-                          durationMinutesFromTimes(
-                            startTime,
-                            prev.weeklyDayTimes[index]?.endTime || prev.startClass.endTime
-                          )
-                        ),
-                      },
-                    },
-                  }));
-                }}
-                className='h-8 text-xs'
-              />
-            </div>
-
-            <div className='flex flex-1 flex-col gap-0.5'>
-              <span className='text-muted-foreground text-[10px] font-medium'>End Time</span>
-              <Input
-                type='time'
-                disabled={!active || scheduleSettings.allDay}
-                value={normalizeTime(effectiveEndTime)}
-                aria-invalid={isInvalidTime}
-                onClick={e => e.stopPropagation()}
-                onChange={e => {
-                  const endTime = normalizeTime(e.target.value);
-                  setScheduleSettings(prev => {
-                    const startTime =
-                      prev.weeklyDayTimes[index]?.startTime || prev.startClass.startTime || '';
-                    return {
-                      ...prev,
-                      weeklyDayTimes: {
-                        ...prev.weeklyDayTimes,
-                        [index]: {
-                          startTime,
-                          endTime,
-                          durationMinutes: String(durationMinutesFromTimes(startTime, endTime)),
-                        },
-                      },
-                    };
-                  });
-                }}
-                className='h-8 text-xs'
-              />
-            </div>
-            <div className='text-muted-foreground w-16 shrink-0 text-right text-[10px] font-medium tabular-nums'>
-              {scheduleSettings.allDay ? '24h' : formatDurationMinutes(effectiveMinutes)}
-            </div>
-          </div>
-        );
-      })}
-    </div>
+  const instructorOfferings = useMemo<Offering[]>(
+    () =>
+      catalogItems.map(item => ({
+        value: `${item.source}:${item.uuid}`,
+        label: item.label ?? 'Untitled offering',
+        kind: item.source === 'course' ? 'Course' : 'Program',
+        categoryNames: [],
+        rateCard: item.rateCard as ApprovedRateCard | undefined,
+      })),
+    [catalogItems]
   );
 
-  // ── Right-column fields ────────────────────────────────────────────────────
-  const buildRightColumnFields = (preset: 'standard' | 'academic-period') => {
-    const defaultSessionMinutes = sessionMinutesFromTimes(
-      scheduleSettings.startClass.startTime,
-      scheduleSettings.startClass.endTime,
-      scheduleSettings.allDay
+  const selectedOfferingValue = selectedCatalogItem
+    ? `${selectedCatalogItem.source}:${selectedCatalogItem.uuid}`
+    : '';
+
+  const handleOfferingChange = (value: string) => {
+    const [source, uuid] = value.split(':');
+    const item = catalogItems.find(candidate => candidate.source === source && candidate.uuid === uuid);
+    if (!item) return;
+
+    setClassDetails(prev => ({
+      ...prev,
+      course_uuid: item.source === 'course' ? item.uuid : '',
+      program_uuid: item.source === 'program' ? item.uuid : null,
+      class_limit: item.classLimit,
+      title: item.label || prev.title || '',
+    }));
+  };
+
+  const serviceKey = useMemo<ServiceKey>(() => {
+    const privateClass = classDetails.class_type === 'PRIVATE';
+    const online = classDetails.location_type === 'ONLINE';
+    if (privateClass) return online ? 'private-online' : '1on1';
+    return online ? 'online' : 'group';
+  }, [classDetails.class_type, classDetails.location_type]);
+
+  const handleServiceChange = (value: ServiceKey) => {
+    const serviceMap: Record<
+      ServiceKey,
+      { serviceType: ServiceType; classType: 'PRIVATE' | 'GROUP'; locationType: 'ONLINE' | 'IN_PERSON' }
+    > = {
+      '1on1': { serviceType: 'PRIVATE_INPERSON', classType: 'PRIVATE', locationType: 'IN_PERSON' },
+      group: { serviceType: 'GROUP_INPERSON', classType: 'GROUP', locationType: 'IN_PERSON' },
+      online: { serviceType: 'GROUP_ONLINE', classType: 'GROUP', locationType: 'ONLINE' },
+      'private-online': {
+        serviceType: 'PRIVATE_ONLINE',
+        classType: 'PRIVATE',
+        locationType: 'ONLINE',
+      },
+    };
+    const selected = serviceMap[value];
+    const format = selected.classType === 'PRIVATE' ? 'INDIVIDUAL' : 'GROUP';
+    const price = approvedRateFor(
+      rateCard as ApprovedRateCard | undefined,
+      format,
+      selected.locationType,
+      rateBasis
     );
-    const hasDefaultTimes = Boolean(
-      scheduleSettings.allDay ||
-        (scheduleSettings.startClass.startTime && scheduleSettings.startClass.endTime)
-    );
-    const defaultTimeInvalid = Boolean(
-      !scheduleSettings.allDay &&
-        scheduleSettings.startClass.startTime &&
-        scheduleSettings.startClass.endTime &&
-        defaultSessionMinutes === undefined
-    );
-
-    return (
-      <div className='space-y-4'>
-        {preset === 'academic-period' ? (
-          <div className='space-y-2'>
-            <span className='text-foreground text-sm font-semibold'>Repeat Every</span>
-            <div className='flex gap-2'>
-              <Input
-                type='number'
-                min={1}
-                value={scheduleSettings.repeat.interval}
-                onChange={e =>
-                  setScheduleSettings(prev => ({
-                    ...prev,
-                    repeat: { ...prev.repeat, interval: parseInt(e.target.value, 10) || 1 },
-                  }))
-                }
-                className='w-20'
-              />
-              <Select
-                value={scheduleSettings.repeat.unit}
-                onValueChange={value =>
-                  setScheduleSettings(prev => ({
-                    ...prev,
-                    repeat: {
-                      ...prev.repeat,
-                      unit: value as 'day' | 'week' | 'month' | 'year',
-                      days: value !== 'week' ? [] : prev.repeat.days,
-                    },
-                  }))
-                }
-              >
-                <SelectTrigger className='flex-1'>
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value='day'>Day</SelectItem>
-                  <SelectItem value='week'>Week</SelectItem>
-                  <SelectItem value='month'>Month</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-          </div>
-        ) : null}
-
-        {preset === 'standard' ? (
-          <div className='grid grid-cols-2 gap-2'>
-            <FieldGroup label='Start Time'>
-              <Input
-                type='time'
-                disabled={scheduleSettings.allDay}
-                value={scheduleSettings.startClass.startTime || ''}
-                onChange={e => {
-                  const startTime = e.target.value;
-                  setScheduleSettings(prev => ({
-                    ...prev,
-                    startClass: {
-                      ...prev.startClass,
-                      startTime,
-                      endTime:
-                        prev.startClass.endTime ||
-                        (startTime
-                          ? timeAfterDuration(startTime, DEFAULT_CLASS_DURATION_MINUTES)
-                          : ''),
-                      durationMinutes: String(
-                        durationMinutesFromTimes(startTime, prev.startClass.endTime)
-                      ),
-                    },
-                  }));
-                }}
-              />
-            </FieldGroup>
-            <FieldGroup label='End Time'>
-              <Input
-                type='time'
-                disabled={scheduleSettings.allDay}
-                value={scheduleSettings.startClass.endTime || ''}
-                aria-invalid={defaultTimeInvalid}
-                onChange={e => {
-                  const endTime = e.target.value;
-                  setScheduleSettings(prev => ({
-                    ...prev,
-                    startClass: {
-                      ...prev.startClass,
-                      endTime,
-                      durationMinutes: String(
-                        durationMinutesFromTimes(prev.startClass.startTime, endTime)
-                      ),
-                    },
-                  }));
-                }}
-              />
-            </FieldGroup>
-          </div>
-        ) : null}
-        {preset === 'standard' ? (
-          <div
-            className={`text-xs ${defaultTimeInvalid ? 'text-destructive' : 'text-muted-foreground'}`}
-          >
-            {defaultTimeInvalid
-              ? 'End time must be after the start time.'
-              : hasDefaultTimes
-                ? `Duration: ${formatDurationMinutes(defaultSessionMinutes)}`
-                : 'Set start and end times to preview duration.'}
-          </div>
-        ) : null}
-
-        {preset === 'standard' ? (
-          <FieldGroup label='Start Date *'>
-            <Input
-              type='date'
-              value={scheduleSettings.startClass.date}
-              onChange={e =>
-                setScheduleSettings(prev => ({
-                  ...prev,
-                  startClass: { ...prev.startClass, date: e.target.value },
-                  endRepeat: prev.endRepeat || e.target.value,
-                }))
-              }
-            />
-          </FieldGroup>
-        ) : (
-          <FieldGroup label='Period Start *'>
-            <Input
-              type='date'
-              value={scheduleSettings.academicPeriod.start}
-              onChange={e =>
-                setScheduleSettings(prev => ({
-                  ...prev,
-                  academicPeriod: { ...prev.academicPeriod, start: e.target.value },
-                }))
-              }
-            />
-          </FieldGroup>
-        )}
-
-        {preset === 'academic-period' ? (
-          <FieldGroup label='Period End *'>
-            <Input
-              type='date'
-              value={scheduleSettings.academicPeriod.end}
-              onChange={e =>
-                setScheduleSettings(prev => ({
-                  ...prev,
-                  academicPeriod: { ...prev.academicPeriod, end: e.target.value },
-                }))
-              }
-            />
-          </FieldGroup>
-        ) : null}
-
-        <FieldGroup label='Registration Start'>
-          <Input
-            type='date'
-            value={scheduleSettings.registrationPeriod.start}
-            onChange={e =>
-              setScheduleSettings(prev => ({
-                ...prev,
-                registrationPeriod: { ...prev.registrationPeriod, start: e.target.value },
-              }))
-            }
-          />
-        </FieldGroup>
-
-        <FieldGroup label='Registration End'>
-          <Input
-            type='date'
-            value={scheduleSettings.registrationPeriod.end}
-            disabled={scheduleSettings.registrationPeriod.continuous}
-            onChange={e =>
-              setScheduleSettings(prev => ({
-                ...prev,
-                registrationPeriod: { ...prev.registrationPeriod, end: e.target.value },
-              }))
-            }
-          />
-        </FieldGroup>
-
-        <label className='flex cursor-pointer items-center gap-2 text-xs font-medium'>
-          <input
-            type='checkbox'
-            checked={scheduleSettings.registrationPeriod.continuous || false}
-            onChange={e =>
-              setScheduleSettings(prev => ({
-                ...prev,
-                registrationPeriod: {
-                  ...prev.registrationPeriod,
-                  continuous: e.target.checked,
-                  end: e.target.checked ? '' : prev.registrationPeriod.end,
-                },
-              }))
-            }
-            className='h-4 w-4 rounded'
-          />
-          Continuous Registration (no closing date)
-        </label>
-
-        <label className='flex cursor-pointer items-center gap-2 text-sm font-medium'>
-          <input
-            type='checkbox'
-            checked={scheduleSettings.allDay}
-            onChange={e => setScheduleSettings(prev => ({ ...prev, allDay: e.target.checked }))}
-            className='h-4 w-4 rounded'
-          />
-          All Day
-        </label>
-
-        <FieldGroup label='Timezone'>
-          <Select value={scheduleSettings.timezone} onValueChange={handleScheduleTimeZoneChange}>
-            <SelectTrigger>
-              <SelectValue placeholder='Select timezone' />
-            </SelectTrigger>
-            <SelectContent>
-              {scheduleTimeZoneOptions(scheduleSettings.timezone).map(zone => (
-                <SelectItem key={zone} value={zone}>
-                  {scheduleTimeZoneLabel(zone)}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </FieldGroup>
-
-        {totalSessions > 0 && (
-          <div className='bg-primary/10 text-primary border-primary/20 rounded-lg border px-4 py-2.5 text-sm font-medium'>
-            Total sessions: <span className='font-bold'>{totalSessions}</span>
-          </div>
-        )}
-      </div>
+    handleServiceTypeChange(
+      selected.serviceType,
+      selected.classType,
+      selected.locationType,
+      price
     );
   };
+
+  const sharedDays = useMemo<Record<DayKey, DayRow>>(() => {
+    const days = {} as Record<DayKey, DayRow>;
+    DAY_SHORT.forEach((day, index) => {
+      const override = scheduleSettings.weeklyDayTimes[index];
+      days[day as DayKey] = {
+        active: scheduleSettings.repeat.days?.includes(index) ?? false,
+        start: override?.startTime || scheduleSettings.startClass.startTime || '09:00',
+        end:
+          override?.endTime ||
+          scheduleSettings.startClass.endTime ||
+          timeAfterDuration(override?.startTime || scheduleSettings.startClass.startTime || '09:00', DEFAULT_CLASS_DURATION_MINUTES),
+        allDay: scheduleSettings.allDay,
+      };
+    });
+    return days;
+  }, [scheduleSettings]);
+
+  const updateSharedDay = (day: DayKey, patch: Partial<DayRow>) => {
+    const index = DAY_SHORT.indexOf(day);
+    if (index < 0) return;
+    setScheduleSettings(prev => {
+      const currentDays = prev.repeat.days || [];
+      const active = patch.active ?? currentDays.includes(index);
+      const nextDays = active
+        ? [...new Set([...currentDays, index])].sort((a, b) => a - b)
+        : currentDays.filter(value => value !== index);
+      const currentOverride = prev.weeklyDayTimes[index] || {};
+      const startTime =
+        patch.start ?? currentOverride.startTime ?? prev.startClass.startTime ?? '09:00';
+      const endTime = patch.end ?? currentOverride.endTime ?? prev.startClass.endTime ?? '11:00';
+
+      return {
+        ...prev,
+        allDay: patch.allDay ?? prev.allDay,
+        repeat: { ...prev.repeat, unit: 'week', days: nextDays },
+        weeklyDayTimes: {
+          ...prev.weeklyDayTimes,
+          [index]: { ...currentOverride, startTime, endTime },
+        },
+        startClass: {
+          ...prev.startClass,
+          startTime: prev.startClass.startTime || startTime,
+          endTime: prev.startClass.endTime || endTime,
+        },
+      };
+    });
+  };
+
+  const scheduleMode = schedulePreset === 'pick-dates' ? 'pick' : schedulePreset === 'academic-period' ? 'academic' : 'standard';
+  const sharedPickedDates = useMemo(
+    () => pickedDates.map(item => buildDateFromInput(item.date)).filter(Boolean) as Date[],
+    [pickedDates]
+  );
+  const sortedSharedPickedDates = useMemo(
+    () => [...sharedPickedDates].sort((a, b) => a.getTime() - b.getTime()),
+    [sharedPickedDates]
+  );
+  const sharedSessionStart = pickedDates[0]?.startTime || scheduleSettings.startClass.startTime || '10:00';
+  const sharedSessionEnd = pickedDates[0]?.endTime || scheduleSettings.startClass.endTime || '12:00';
+
+  const updatePickedDates = (dates: Date[]) => {
+    setPickedDates(
+      dates.map(date => {
+        const dateValue = date.toISOString().split('T')[0]!;
+        const existing = pickedDates.find(item => item.date === dateValue);
+        const startTime = existing?.startTime || sharedSessionStart;
+        const endTime = existing?.endTime || sharedSessionEnd;
+        return {
+          date: dateValue,
+          startTime,
+          endTime,
+          durationMinutes: String(durationMinutesFromTimes(startTime, endTime)),
+        };
+      })
+    );
+  };
+
+  const updatePickedSessionTime = (field: 'startTime' | 'endTime', value: string) => {
+    setPickedDates(prev =>
+      prev.map(item => {
+        const startTime = field === 'startTime' ? value : item.startTime;
+        const endTime = field === 'endTime' ? value : item.endTime;
+        return {
+          ...item,
+          startTime,
+          endTime,
+          durationMinutes: String(durationMinutesFromTimes(startTime, endTime)),
+        };
+      })
+    );
+    setScheduleSettings(prev => ({
+      ...prev,
+      startClass: { ...prev.startClass, [field]: value },
+    }));
+  };
+
+  const handleAcademicPeriodsChange = (periods: AcademicPeriod[]) => {
+    setAcademicPeriods(periods);
+    const slots = periods.flatMap(period => period.slots);
+    const dayIndexes = [...new Set(slots.map(slot => DAY_SHORT.indexOf(slot.day)))].filter(
+      index => index >= 0
+    );
+    const weeklyDayTimes = slots.reduce<Record<number, { startTime: string; endTime: string }>>(
+      (map, slot) => {
+        const index = DAY_SHORT.indexOf(slot.day);
+        if (index >= 0) map[index] = { startTime: slot.start, endTime: slot.end };
+        return map;
+      },
+      {}
+    );
+    const starts = periods.map(period => period.startDate).filter(Boolean).sort();
+    const ends = periods.map(period => period.endDate).filter(Boolean).sort();
+    setScheduleSettings(prev => ({
+      ...prev,
+      academicPeriod: {
+        start: starts[0] || '',
+        end: ends[ends.length - 1] || '',
+      },
+      endRepeat: ends[ends.length - 1] || prev.endRepeat,
+      repeat: { ...prev.repeat, unit: 'week', days: dayIndexes },
+      weeklyDayTimes,
+    }));
+  };
+
+  const sharedReminder: ReminderState = {
+    ...reminderOptions,
+    window: notificationSettings.reminder || reminderOptions.window,
+  };
+
+  const handleReminderChange = (patch: Partial<ReminderState>) => {
+    setReminderOptions(prev => ({ ...prev, ...patch }));
+    if (patch.window) {
+      setNotificationSettings(prev => ({ ...prev, reminder: patch.window ?? prev.reminder }));
+    }
+  };
+
+  // ── Derived UI values ──────────────────────────────────────────────────────
+
+  const sharedUpcomingSessions = useMemo(
+    () =>
+      sessionsForConflictCheck.map(session => ({
+        date: new Date(`${session.date}T00:00:00`),
+        label: format(new Date(`${session.date}T00:00:00`), 'EEE, MMM d, yyyy'),
+        time: scheduleSettings.allDay ? 'All day' : `${session.startTime} - ${session.endTime}`,
+        minutes: durationMinutesFromTimes(
+          session.startTime,
+          session.endTime,
+          scheduleSettings.allDay
+        ),
+      })),
+    [scheduleSettings.allDay, sessionsForConflictCheck]
+  );
+
+  const sharedConflicts = useMemo(
+    () =>
+      scheduleConflicts.map(conflict => ({
+        start: `${conflict.proposed.date} ${conflict.proposed.startTime}`,
+        end: conflict.proposed.endTime,
+        reasons: [`Overlaps with ${conflict.existing.classTitle}`],
+      })),
+    [scheduleConflicts]
+  );
 
   if (isLoading) {
     return (
@@ -2422,648 +2130,220 @@ const ClassCreationPage = () => {
   }
 
   return (
-    <div className='overflow-x-hidden px-2 py-4 pb-8 sm:px-3 sm:py-6 lg:px-6'>
+    <div className='mx-auto w-full max-w-[1200px] space-y-6 px-3 py-4 sm:px-5 lg:px-6'>
       <form onSubmit={handleSubmit} className='space-y-6'>
-        <ClassCreationHeader
-          isSubmitting={createClassDefinition.isPending || updateClassDefinition.isPending}
-          onSaveDraft={() => submitClass(true)}
-          onPublish={() => submitClass(false)}
-          onClearDraft={clearDraft}
-          hasDraft={
-            isDataInitialized &&
-            typeof window !== 'undefined' &&
-            !!window.localStorage.getItem(LOCAL_CLASS_DRAFT_KEY)
-          }
-          draftSavedTick={draftSavedTick}
+        <PageHeader
+          title='Create a class'
+          description='For an approved offering you can deliver. The class is scheduled immediately on your calendar and can be published for learners to join.'
         />
 
-        <div className='flex w-full min-w-0 flex-col gap-4 xl:flex-row xl:items-start'>
-          <div className='min-w-0 flex-1 space-y-4'>
-            {/* ── Class Details Card ─────────────────────────────────────── */}
-            <div ref={classDetailsCardRef} className='scroll-mt-24'>
-              <Card className='overflow-hidden rounded-md border pt-0 shadow-sm'>
-                <div className='px-2 pt-4 sm:px-4'>
-                  <Input
-                    value={classDetails.title}
-                    onChange={e =>
-                      setClassDetails(prev => ({
-                        ...prev,
-                        title: e.target.value,
-                      }))
-                    }
-                    placeholder='Class Title'
-                    className='text-md border-muted-foreground/30 focus-visible:border-primary rounded-none border-0 border-b px-0 py-2.5 focus-visible:ring-0'
-                  />
-                </div>
+        <OfferingPicker
+          loading={!instructor}
+          offerings={instructorOfferings}
+          offering={selectedOfferingValue}
+          onOfferingChange={handleOfferingChange}
+          selectedOffering={instructorOfferings.find(item => item.value === selectedOfferingValue)}
+          categories={[]}
+          categoriesLoading={false}
+          programCategoryUuid=''
+          onProgramCategoryChange={() => undefined}
+          title={classDetails.title}
+          onTitleChange={value => setClassDetails(prev => ({ ...prev, title: value }))}
+          showInstructor={false}
+          showCategory={false}
+          titleLabel='Class title'
+          titleHint='This is the title learners will see on the class.'
+          titlePlaceholder='Enter a class title'
+        />
 
-                <div className='flex flex-col gap-4 px-2 sm:px-3 lg:flex-row'>
-                  <div className='min-w-0 flex-1 space-y-4'>
-                    <FieldGroup label='Select Course *'>
-                      <Select
-                        value={selectedCatalogItem?.uuid || ''}
-                        onValueChange={value => {
-                          const item = catalogItems.find(c => c.uuid === value);
-                          if (!item) return;
-                          if (item.source === 'course') {
-                            setClassDetails(prev => ({
-                              ...prev,
-                              course_uuid: item.uuid,
-                              program_uuid: null,
-                              class_limit: item.classLimit,
-                            }));
-                          } else {
-                            setClassDetails(prev => ({
-                              ...prev,
-                              program_uuid: item.uuid,
-                              course_uuid: '',
-                              class_limit: item.classLimit,
-                            }));
-                          }
-                        }}
-                      >
-                        <SelectTrigger className='h-10 w-full rounded-md'>
-                          <SelectValue placeholder='Select a course or program' />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {catalogItems.filter(item =>
-                            `${item.source} ${item.label}`
-                              .toLowerCase()
-                              .includes(catalogSearch.toLowerCase())
-                          ).length === 0 ? (
-                            <div className='text-muted-foreground p-4 text-center text-sm'>
-                              No matching classes found
-                            </div>
-                          ) : (
-                            catalogItems
-                              .filter(item =>
-                                `${item.source} ${item.label}`
-                                  .toLowerCase()
-                                  .includes(catalogSearch.toLowerCase())
-                              )
-                              .map(item => (
-                                <SelectItem key={`${item.source}-${item.uuid}`} value={item.uuid}>
-                                  {item.label}
-                                  <span className='text-muted-foreground ml-2 text-xs'>
-                                    {item.source === 'course' ? 'Course' : 'Program'}
-                                  </span>
-                                </SelectItem>
-                              ))
-                          )}
-                        </SelectContent>
-                      </Select>
-                    </FieldGroup>
-                  </div>
-                </div>
+        <ServiceCards
+          value={serviceKey}
+          onChange={handleServiceChange}
+          rateCard={rateCard as ApprovedRateCard | undefined}
+          delivery={normalizeLocationType(classDetails.location_type) as 'ONLINE' | 'IN_PERSON' | 'HYBRID'}
+          rateBasis={rateBasis}
+        />
 
-                <div className='border-border/60 border-t px-2 py-4 sm:px-3'>
-                  <div className='mb-4 flex flex-col gap-1.5'>
-                    <FieldGroup label='Billing basis *'>
-                      <Select
-                        value={rateBasis}
-                        onValueChange={value => setRateBasis(value as RateBasis)}
-                      >
-                        <SelectTrigger className='w-full sm:w-64'>
-                          <SelectValue />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {RATE_BASES.map(basis => (
-                            <SelectItem key={basis.value} value={basis.value}>
-                              {basis.label}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                    </FieldGroup>
-                    <p className='text-muted-foreground text-xs'>
-                      The unit this class is contracted and paid in. It picks which approved rate
-                      applies and how many units are billed — {billableUnits.toLocaleString()}{' '}
-                      {rateBasisUnit(rateBasis)}
-                      {billableUnits === 1 ? '' : 's'} on the current schedule.
-                    </p>
-                  </div>
+        <PricingCapacity
+          approvedFee={approvedRate}
+          currency={rateCard?.currency}
+          salePrice={String(approvedRate || '')}
+          onSalePriceChange={() => undefined}
+          instructorPay={String(approvedRate || '')}
+          onInstructorPayChange={() => undefined}
+          maxParticipants={String(classDetails.class_limit || '')}
+          onMaxChange={value =>
+            setClassDetails(prev => ({ ...prev, class_limit: Number(value) || 0 }))
+          }
+          allowWaitlist={allowWaitlist}
+          onAllowWaitlistChange={setAllowWaitlist}
+          totalSessions={sessionsForConflictCheck.length}
+          totalMinutes={totalHours * 60}
+          totalDays={totalDays}
+          rateBasis={rateBasis}
+          onRateBasisChange={setRateBasis}
+          readOnly
+        />
 
-                  <ServiceTypeSelector
-                    value={serviceType}
-                    onChange={handleServiceTypeChange}
-                    rateBasis={rateBasis}
-                    rateCard={
-                      rateCard as Record<string, number | string | null | undefined> | undefined
-                    }
-                  />
+        <LocationVenue
+          delivery={normalizeLocationType(classDetails.location_type) as 'ONLINE' | 'IN_PERSON' | 'HYBRID'}
+          onDeliveryChange={value =>
+            setClassDetails(prev => ({ ...prev, location_type: value }))
+          }
+          meetingLink={classDetails.meeting_link}
+          onMeetingLinkChange={value =>
+            setClassDetails(prev => ({ ...prev, meeting_link: value }))
+          }
+          locationName={classDetails.location_name}
+          onLocationNameChange={value =>
+            setClassDetails(prev => ({ ...prev, location_name: value }))
+          }
+          locationLatitude={locationLatitude}
+          onLocationLatitudeChange={setLocationLatitude}
+          locationLongitude={locationLongitude}
+          onLocationLongitudeChange={setLocationLongitude}
+          venueUuid=''
+          onVenueChange={() => undefined}
+          venueResources={[]}
+          onlyAvailable
+          onOnlyAvailableChange={() => undefined}
+          showVenue={false}
+        />
 
-                  <div className='mt-4 flex flex-col gap-4 md:flex-row'>
-                    <div className='flex-1'>
-                      <FieldGroup label='Location *'>
-                        <LocationInput
-                          value={classDetails.location_name}
-                          onChange={value =>
-                            setClassDetails(prev => ({ ...prev, location_name: value }))
-                          }
-                          placeholder='Search for the venue — e.g. Sarit Centre, Nairobi'
-                          coordinates={{
-                            latitude: locationLatitude,
-                            longitude: locationLongitude,
-                          }}
-                          onSuggest={response => {
-                            const { latitude, longitude } = coordinatesFromPlace(response);
-                            if (latitude !== undefined) setLocationLatitude(String(latitude));
-                            if (longitude !== undefined) setLocationLongitude(String(longitude));
-                            return response;
-                          }}
-                        />
-                      </FieldGroup>
-                    </div>
-                    <div className='flex-1'>
-                      <FieldGroup label='Classroom *'>
-                        <Input
-                          value={classDetails.classroom}
-                          onChange={e =>
-                            setClassDetails(prev => ({ ...prev, classroom: e.target.value }))
-                          }
-                          placeholder='Room 101'
-                        />
-                      </FieldGroup>
-                    </div>
-                  </div>
+        <ScheduleModeCards
+          value={scheduleMode}
+          onChange={value =>
+            setSchedulePreset(
+              value === 'pick' ? 'pick-dates' : value === 'academic' ? 'academic-period' : 'standard'
+            )
+          }
+        />
 
-                  {showMeetingLink && (
-                    <div className='mt-4'>
-                      <FieldGroup label='Class Meeting Link *'>
-                        <Input
-                          type='url'
-                          value={classDetails.meeting_link}
-                          onChange={e =>
-                            setClassDetails(prev => ({ ...prev, meeting_link: e.target.value }))
-                          }
-                          onBlur={() =>
-                            setClassDetails(prev => ({
-                              ...prev,
-                              meeting_link: normalizeMeetingLink(prev.meeting_link) ?? '',
-                            }))
-                          }
-                          placeholder='https://meet.google.com/abc-defg-hij'
-                        />
-                      </FieldGroup>
-                    </div>
-                  )}
-                </div>
-              </Card>
-            </div>
+        {scheduleMode === 'pick' ? (
+          <PickDatesPanel
+            pickedDates={sharedPickedDates}
+            onPickedDatesChange={updatePickedDates}
+            sortedPickedDates={sortedSharedPickedDates}
+            pickMonth={pickMonth}
+            onPickMonthChange={setPickMonth}
+            sessionStart={sharedSessionStart}
+            onSessionStartChange={value => updatePickedSessionTime('startTime', value)}
+            sessionEnd={sharedSessionEnd}
+            onSessionEndChange={value => updatePickedSessionTime('endTime', value)}
+            timezone={scheduleSettings.timezone}
+            onTimezoneChange={handleScheduleTimeZoneChange}
+          />
+        ) : scheduleMode === 'academic' ? (
+          <AcademicPeriodsPanel periods={academicPeriods} onChange={handleAcademicPeriodsChange} />
+        ) : (
+          <StandardSchedule
+            days={sharedDays}
+            onDayChange={updateSharedDay}
+            repeatEvery={String(scheduleSettings.repeat.interval || 1)}
+            onRepeatEveryChange={value =>
+              setScheduleSettings(prev => ({
+                ...prev,
+                repeat: { ...prev.repeat, interval: Number(value) || 1 },
+              }))
+            }
+            repeatUnit={
+              scheduleSettings.repeat.unit === 'day'
+                ? 'Day'
+                : scheduleSettings.repeat.unit === 'month'
+                  ? 'Month'
+                  : 'Week'
+            }
+            onRepeatUnitChange={value =>
+              setScheduleSettings(prev => ({
+                ...prev,
+                repeat: {
+                  ...prev.repeat,
+                  unit: value.toLowerCase() as 'day' | 'week' | 'month',
+                  days: value === 'Week' ? prev.repeat.days : [],
+                },
+              }))
+            }
+            startDate={scheduleSettings.startClass.date}
+            onStartDateChange={value =>
+              setScheduleSettings(prev => ({
+                ...prev,
+                startClass: { ...prev.startClass, date: value },
+                endRepeat: prev.endRepeat || value,
+              }))
+            }
+            endDate={scheduleSettings.endRepeat}
+            onEndDateChange={value => setScheduleSettings(prev => ({ ...prev, endRepeat: value }))}
+            regStart={scheduleSettings.registrationPeriod.start}
+            onRegStartChange={value =>
+              setScheduleSettings(prev => ({
+                ...prev,
+                registrationPeriod: { ...prev.registrationPeriod, start: value },
+              }))
+            }
+            regEnd={scheduleSettings.registrationPeriod.end}
+            onRegEndChange={value =>
+              setScheduleSettings(prev => ({
+                ...prev,
+                registrationPeriod: { ...prev.registrationPeriod, end: value },
+              }))
+            }
+            continuousReg={scheduleSettings.registrationPeriod.continuous ?? false}
+            onContinuousRegChange={value =>
+              setScheduleSettings(prev => ({
+                ...prev,
+                registrationPeriod: {
+                  ...prev.registrationPeriod,
+                  continuous: value,
+                  end: value ? '' : prev.registrationPeriod.end,
+                },
+              }))
+            }
+            timezone={scheduleSettings.timezone}
+            onTimezoneChange={handleScheduleTimeZoneChange}
+            totalSessions={sessionsForConflictCheck.length}
+          />
+        )}
 
-            {/* ── Schedule Options Card ──────────────────────────────────── */}
-            <Card className='overflow-hidden rounded-md border pt-0 shadow-sm'>
-              <div className='flex items-center justify-between gap-3 px-2 pt-4 sm:px-3'>
-                <h3 className='text-foreground text-lg font-semibold'>Schedule Options</h3>
-              </div>
+        <ClassMediaUpload
+          selectedThumbnail={selectedThumbnail}
+          selectedVideo={selectedPromotionalVideo}
+          onMediaSelect={(media: MediaFile) =>
+            media.type === 'thumbnail'
+              ? setSelectedThumbnail(media.file)
+              : setSelectedPromotionalVideo(media.file)
+          }
+          onRemoveThumbnail={() => setSelectedThumbnail(null)}
+          onRemoveVideo={() => setSelectedPromotionalVideo(null)}
+        />
 
-              <div className='space-y-4 px-2 pb-4 sm:px-3 sm:pb-6'>
-                <div className='flex flex-col gap-3 md:flex-row'>
-                  {schedulePresetOptions.map(option => (
-                    <button
-                      key={option.key}
-                      type='button'
-                      onClick={() => setSchedulePreset(option.key)}
-                      className={`flex-1 rounded-md border px-4 py-3 text-left transition ${
-                        schedulePreset === option.key
-                          ? 'border-primary bg-primary/5'
-                          : 'border-border hover:border-primary/40'
-                      }`}
-                    >
-                      <div className='text-sm font-semibold'>{option.title}</div>
-                      <div className='text-muted-foreground mt-1 text-xs'>{option.description}</div>
-                    </button>
-                  ))}
-                </div>
+        <ReminderOptions value={sharedReminder} onChange={handleReminderChange} />
 
-                {/* ── STANDARD SCHEDULE ─────────────────────────────────── */}
-                {schedulePreset === 'standard' && (
-                  <div className='border-border/60 rounded-md border p-4'>
-                    <div className='mb-4'>
-                      <p className='text-foreground text-sm font-semibold'>Standard Schedule</p>
-                      <p className='text-muted-foreground mt-1 text-xs'>
-                        Set how sessions repeat and when they start. Times apply to every session.
-                      </p>
-                    </div>
-                    <div className='flex flex-wrap gap-6'>
-                      <div className='min-w-[320px] flex-1'>
-                        <RecurrenceEditor
-                          value={recurrence}
-                          onChange={applyRecurrence}
-                          startDate={scheduleSettings.startClass.date}
-                        />
-                      </div>
-                      <div className='w-full min-w-[260px] flex-1 xl:max-w-[280px] xl:flex-none'>
-                        {buildRightColumnFields('standard')}
-                      </div>
-                    </div>
-                  </div>
-                )}
+        <UpcomingSessions sessions={sharedUpcomingSessions} />
 
-                {/* ── PICK DATES ────────────────────────────────────────── */}
-                {schedulePreset === 'pick-dates' && (
-                  <div className='flex flex-col gap-4 min-[1110px]:flex-row min-[1280px]:flex-col min-[1440px]:flex-row'>
-                    <div className='border-border/60 min-w-0 flex-[1.2] space-y-4 rounded-md border p-4'>
-                      <Calendar
-                        mode='multiple'
-                        selected={pickedDates.map(item => new Date(item.date))}
-                        onSelect={dates => {
-                          if (!dates) {
-                            setPickedDates([]);
-                            return;
-                          }
-                          const next = dates.map(date => {
-                            const formatted = format(date, 'yyyy-MM-dd');
-                            const existing = pickedDates.find(item => item.date === formatted);
-                            return (
-                              existing || {
-                                date: formatted,
-                                startTime: '09:00',
-                                durationMinutes: String(DEFAULT_CLASS_DURATION_MINUTES),
-                                endTime: timeAfterDuration(
-                                  '09:00',
-                                  String(DEFAULT_CLASS_DURATION_MINUTES)
-                                ),
-                              }
-                            );
-                          });
-                          setPickedDates(next);
-                        }}
-                        className='w-full'
-                        classNames={{
-                          day: 'mx-auto flex h-7 w-7 items-center justify-center rounded-md text-[11px] transition',
-                        }}
-                      />
+        <ResourceConflictAlert
+          title='These sessions conflict with existing instructor classes'
+          conflicts={sharedConflicts}
+        />
 
-                      <div className='flex flex-col gap-4 sm:flex-row'>
-                        <div className='flex-1'>
-                          <FieldGroup label='Start Date *'>
-                            <Input
-                              type='date'
-                              value={scheduleSettings.startClass.date}
-                              onChange={e =>
-                                setScheduleSettings(prev => ({
-                                  ...prev,
-                                  startClass: { ...prev.startClass, date: e.target.value },
-                                  endRepeat: prev.endRepeat || e.target.value,
-                                }))
-                              }
-                            />
-                          </FieldGroup>
-                        </div>
-
-                        <div className='flex-1'>
-                          <FieldGroup label='End Date *'>
-                            <Input
-                              type='date'
-                              value={scheduleSettings.endRepeat}
-                              onChange={e =>
-                                setScheduleSettings(prev => ({
-                                  ...prev,
-                                  endRepeat: e.target.value,
-                                }))
-                              }
-                            />
-                          </FieldGroup>
-                        </div>
-                      </div>
-
-                      <label className='flex cursor-pointer items-center gap-2 text-sm font-medium'>
-                        <input
-                          type='checkbox'
-                          checked={scheduleSettings.allDay}
-                          onChange={e =>
-                            setScheduleSettings(prev => ({ ...prev, allDay: e.target.checked }))
-                          }
-                          className='h-4 w-4 rounded'
-                        />
-                        All Day
-                      </label>
-
-                      <FieldGroup label='Timezone'>
-                        <Select
-                          value={scheduleSettings.timezone}
-                          onValueChange={handleScheduleTimeZoneChange}
-                        >
-                          <SelectTrigger className='h-11 w-full'>
-                            <SelectValue placeholder='Select timezone' />
-                          </SelectTrigger>
-                          <SelectContent>
-                            {scheduleTimeZoneOptions(scheduleSettings.timezone).map(zone => (
-                              <SelectItem key={zone} value={zone}>
-                                {scheduleTimeZoneLabel(zone)}
-                              </SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
-                      </FieldGroup>
-                    </div>
-
-                    <div className='border-border/60 flex-[1.5] space-y-2 rounded-md border p-3'>
-                      {pickedDates.length > 0 && (
-                        <div className='space-y-2'>
-                          <div className='flex items-center justify-between'>
-                            <p className='text-foreground text-xs font-semibold'>
-                              Selected Sessions
-                            </p>
-                            <div className='bg-primary/10 text-primary border-primary/20 rounded border px-2 py-0.5 text-[10px] font-semibold'>
-                              {pickedDates.length}{' '}
-                              {pickedDates.length === 1 ? 'Session' : 'Sessions'}
-                            </div>
-                          </div>
-                          <div className='space-y-1.5'>
-                            {pickedDates
-                              .slice()
-                              .sort((a, b) => a.date.localeCompare(b.date))
-                              .map(item => {
-                                const origIdx = pickedDates.findIndex(d => d.date === item.date);
-                                const sessionMinutes = sessionMinutesFromTimes(
-                                  item.startTime,
-                                  item.endTime
-                                );
-                                return (
-                                  <div
-                                    key={item.date}
-                                    className='border-border/50 flex flex-col gap-2 rounded-md border px-2.5 py-2 sm:flex-row sm:items-center sm:justify-between'
-                                  >
-                                    <div className='min-w-0 flex-1'>
-                                      <p className='text-foreground truncate text-[11px] font-medium'>
-                                        {format(new Date(item.date), 'EEE, MMM d, yyyy')}
-                                      </p>
-                                    </div>
-                                    {!scheduleSettings.allDay && (
-                                      <div className='flex items-center gap-1.5'>
-                                        <Input
-                                          type='time'
-                                          value={normalizeTime(item.startTime)}
-                                          aria-invalid={sessionMinutes === undefined}
-                                          onChange={e => {
-                                            const next = [...pickedDates];
-                                            if (next[origIdx]) {
-                                              const startTime = normalizeTime(e.target.value);
-                                              next[origIdx] = {
-                                                ...next[origIdx]!,
-                                                startTime,
-                                                durationMinutes: String(
-                                                  durationMinutesFromTimes(
-                                                    startTime,
-                                                    next[origIdx]!.endTime
-                                                  )
-                                                ),
-                                              };
-                                            }
-                                            setPickedDates(next);
-                                          }}
-                                          className='h-7 w-[92px] px-2 text-[11px]'
-                                        />
-                                        <span className='text-muted-foreground text-[10px]'>→</span>
-                                        <Input
-                                          type='time'
-                                          value={normalizeTime(item.endTime)}
-                                          aria-invalid={sessionMinutes === undefined}
-                                          onChange={e => {
-                                            const endTime = normalizeTime(e.target.value);
-                                            const next = [...pickedDates];
-                                            if (next[origIdx]) {
-                                              next[origIdx] = {
-                                                ...next[origIdx]!,
-                                                endTime,
-                                                durationMinutes: String(
-                                                  durationMinutesFromTimes(
-                                                    next[origIdx]!.startTime,
-                                                    endTime
-                                                  )
-                                                ),
-                                              };
-                                            }
-                                            setPickedDates(next);
-                                          }}
-                                          className='h-7 w-[92px] px-2 text-[11px]'
-                                        />
-                                        <span
-                                          className={`min-w-[58px] text-right text-[10px] ${sessionMinutes === undefined ? 'text-destructive' : 'text-muted-foreground'}`}
-                                        >
-                                          {formatDurationMinutes(sessionMinutes)}
-                                        </span>
-                                      </div>
-                                    )}
-                                    <button
-                                      type='button'
-                                      onClick={() =>
-                                        setPickedDates(prev => prev.filter((_, i) => i !== origIdx))
-                                      }
-                                      className='text-muted-foreground hover:text-destructive text-[11px] font-medium transition'
-                                    >
-                                      Remove
-                                    </button>
-                                  </div>
-                                );
-                              })}
-                          </div>
-                        </div>
-                      )}
-                    </div>
-                  </div>
-                )}
-
-                {/* ── ACADEMIC PERIOD ───────────────────────────────────── */}
-                {schedulePreset === 'academic-period' && (
-                  <div className='border-border/60 rounded-md border p-4'>
-                    <div className='mb-4'>
-                      <p className='text-foreground text-sm font-semibold'>Academic Period</p>
-                      <p className='text-muted-foreground mt-1 text-xs'>
-                        Toggle days and set times. Configure the academic term and recurrence on the
-                        right.
-                      </p>
-                    </div>
-                    <div className='flex flex-wrap gap-6'>
-                      <div className='min-w-[320px] flex-1'>{DayTimeGrid}</div>
-                      <div className='w-full min-w-[260px] flex-1 xl:max-w-[280px] xl:flex-none'>
-                        {buildRightColumnFields('academic-period')}
-                      </div>
-                    </div>
-                  </div>
-                )}
-
-                {scheduleConflicts.length > 0 && (
-                  <Alert
-                    variant='destructive'
-                    className='border-destructive/30 bg-destructive/8 text-foreground rounded-xl border shadow-sm'
-                  >
-                    <AlertTriangle className='text-destructive mt-0.5' />
-                    <AlertTitle className='text-destructive text-base font-semibold'>
-                      Schedule conflict detected
-                    </AlertTitle>
-                    <AlertDescription className='space-y-2'>
-                      <p className='text-muted-foreground text-sm'>
-                        One or more sessions overlap with this instructor&apos;s existing classes.
-                        Adjust the times below before publishing.
-                      </p>
-                      <ul className='marker:text-destructive text-muted-foreground list-disc space-y-1.5 pl-5 text-sm'>
-                        {scheduleConflicts.slice(0, 5).map(conflict => (
-                          <li
-                            key={`${conflict.proposed.date}-${conflict.proposed.startTime}-${conflict.existing.classTitle}-${conflict.existing.startTime}`}
-                            className='leading-relaxed'
-                          >
-                            <span className='text-foreground font-medium'>
-                              {new Date(`${conflict.proposed.date}T00:00:00`).toLocaleDateString(
-                                'en-US',
-                                {
-                                  weekday: 'short',
-                                  month: 'short',
-                                  day: 'numeric',
-                                  year: 'numeric',
-                                }
-                              )}{' '}
-                              {conflict.proposed.startTime}–{conflict.proposed.endTime}
-                            </span>{' '}
-                            overlaps with{' '}
-                            <span className='text-foreground font-medium'>
-                              {conflict.existing.classTitle}
-                            </span>{' '}
-                            (
-                            {formatScheduleClockTime(
-                              conflict.existing.startTime,
-                              conflict.proposed.timezone
-                            )}{' '}
-                            –{' '}
-                            {formatScheduleClockTime(
-                              conflict.existing.endTime,
-                              conflict.proposed.timezone
-                            )}
-                            )
-                          </li>
-                        ))}
-                        {scheduleConflicts.length > 5 && (
-                          <li className='font-medium'>
-                            …and {scheduleConflicts.length - 5} more conflict
-                            {scheduleConflicts.length - 5 > 1 ? 's' : ''}.
-                          </li>
-                        )}
-                      </ul>
-                    </AlertDescription>
-                  </Alert>
-                )}
-              </div>
-            </Card>
-
-            {/* ── Class Media Upload Card ───────────────────────────────── */}
-            <ClassMediaUpload
-              onMediaSelect={(media: MediaFile) => {
-                if (media.type === 'thumbnail') {
-                  setSelectedThumbnail(media.file);
-                } else if (media.type === 'video') {
-                  setSelectedVideo(media.file);
-                }
-              }}
-              selectedThumbnail={selectedThumbnail}
-              selectedVideo={selectedVideo}
-              onRemoveThumbnail={() => setSelectedThumbnail(null)}
-              onRemoveVideo={() => setSelectedVideo(null)}
-              existingThumbnailUrl={existingThumbnailUrl}
-              existingVideoUrl={existingVideoUrl}
-              classId={classId}
-            />
-
-            {/* ── Reminder Options Card ──────────────────────────────────── */}
-            <Card className='overflow-hidden rounded-md border pt-0 shadow-sm'>
-              <div className='flex items-center justify-between gap-3 px-2 pt-4 sm:px-4'>
-                <h3 className='text-foreground text-lg font-semibold'>Reminder Options</h3>
-              </div>
-
-              <div className='space-y-5 px-2 pb-4 sm:px-4 sm:pb-6'>
-                <div className='flex items-center gap-4'>
-                  <label className='text-foreground w-[80px] text-xs font-semibold'>Reminder</label>
-
-                  <Select
-                    value={notificationSettings.reminder}
-                    onValueChange={value =>
-                      setNotificationSettings(prev => ({
-                        ...prev,
-                        reminder: value,
-                      }))
-                    }
-                  >
-                    <SelectTrigger className='h-9 w-[120px]'>
-                      <SelectValue placeholder='Select' />
-                    </SelectTrigger>
-
-                    <SelectContent>
-                      {REMINDER_OPTIONS.map(item => (
-                        <SelectItem key={item.value} value={item.value}>
-                          {item.label}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-
-                <div className='flex flex-row items-start justify-between'>
-                  <div className='flex flex-col items-start gap-4'>
-                    <label className='text-foreground w-[80px] text-xs font-semibold'>
-                      Send To
-                    </label>
-
-                    <div className='flex items-center gap-4'>
-                      <label className='flex items-center gap-2 text-xs'>
-                        <Checkbox />
-                        Students
-                      </label>
-
-                      <label className='flex items-center gap-2 text-xs'>
-                        <Checkbox />
-                        Instructor
-                      </label>
-                    </div>
-                  </div>
-
-                  <div className='flex flex-col items-start gap-4'>
-                    <label className='text-foreground w-[80px] text-xs font-semibold'>
-                      Send Via
-                    </label>
-
-                    <div className='flex flex-wrap items-center gap-4'>
-                      <label className='flex items-center gap-2 text-xs'>
-                        <Checkbox />
-                        Email
-                      </label>
-
-                      <label className='flex items-center gap-2 text-xs'>
-                        <Checkbox />
-                        SMS
-                      </label>
-
-                      <label className='flex items-center gap-2 text-xs'>
-                        <Checkbox />
-                        Push Notification
-                      </label>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </Card>
-
-            <div className='flex w-full justify-end self-end'>
-              <Button
-                type='button'
-                className='bg-primary h-10 rounded-md px-5 text-sm font-medium shadow-sm sm:w-auto'
-                onClick={() => submitClass(false)}
-                disabled={isSubmitting}
-              >
-                {isSubmitting ? 'Publishing...' : 'Publish Class'}
-              </Button>
-            </div>
-          </div>
-
-          <div className='w-full min-w-0 xl:sticky xl:top-4 xl:w-[360px] xl:shrink-0 xl:self-start'>
-            <ClassCreationPreviewRail data={previewData} />
-          </div>
+        <div className='border-border/70 flex flex-wrap justify-end gap-2 border-t pt-4'>
+          <Button
+            type='button'
+            variant='outline'
+            onClick={() => router.push('/dashboard/instructor/classes')}
+          >
+            Cancel
+          </Button>
+          <Button type='submit' disabled={isSubmitting}>
+            {isSubmitting ? <Loader2 className='mr-2 size-4 animate-spin' /> : null}
+            {isSubmitting ? 'Publishing...' : 'Publish Class'}
+          </Button>
         </div>
       </form>
     </div>
   );
 };
 
-export default ClassCreationPage;
+export default InstructorClassCreationPage;
 
 const FieldGroup = ({ label, children }: { label: string; children: React.ReactNode }) => (
   <div className='space-y-2'>

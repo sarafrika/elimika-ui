@@ -4,6 +4,7 @@
 import { AvatarWithSkeleton } from '@/components/avatar-with-skeleton';
 import { Badge } from '@/components/ui/badge';
 import { Checkbox } from '@/components/ui/checkbox';
+import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import {
   Select,
@@ -136,8 +137,11 @@ export function OfferingPicker({
   instructorsLoading = false,
   instructorEmptyHint,
   showInstructor = true,
+  showCategory = true,
   titleLabel = 'Class title',
   titleHint = 'Auto-generated from the approved offering. This is what appears on the classes list.',
+  titlePlaceholder = 'Enter a class title',
+  onTitleChange,
 }: {
   loading: boolean;
   offerings: Offering[];
@@ -158,8 +162,11 @@ export function OfferingPicker({
   onlyAvailable?: boolean;
   onOnlyAvailableChange?: (v: boolean) => void;
   showInstructor?: boolean;
+  showCategory?: boolean;
   titleLabel?: string;
   titleHint?: string;
+  titlePlaceholder?: string;
+  onTitleChange?: (v: string) => void;
 }) {
   return (
     <>
@@ -273,22 +280,43 @@ export function OfferingPicker({
       </div>
 
       {/* Category — auto for courses, chosen for programs */}
-      <CategoryField
-        selectedOffering={selectedOffering}
-        categories={categories}
-        categoriesLoading={categoriesLoading}
-        programCategoryUuid={programCategoryUuid}
-        onProgramCategoryChange={onProgramCategoryChange}
-      />
+      {showCategory ? (
+        <CategoryField
+          selectedOffering={selectedOffering}
+          categories={categories}
+          categoriesLoading={categoriesLoading}
+          programCategoryUuid={programCategoryUuid}
+          onProgramCategoryChange={onProgramCategoryChange}
+        />
+      ) : null}
 
-      {/* Derived class title preview */}
-      <div className='rounded-lg border border-dashed border-teal-600/40 bg-teal-50/60 px-3 py-2.5 dark:bg-teal-950/20'>
-        <div className='text-[11px] font-medium tracking-wide text-teal-700 uppercase dark:text-teal-400'>
-          {titleLabel}
+      {/* Title preview or editor */}
+      {onTitleChange ? (
+        <div className='space-y-2 rounded-lg border border-dashed border-teal-600/40 bg-teal-50/60 px-3 py-2.5 dark:bg-teal-950/20'>
+          <Label htmlFor='class-title' className='text-[11px] font-medium tracking-wide uppercase'>
+            {titleLabel}
+          </Label>
+          <Input
+            id='class-title'
+            value={title}
+            onChange={event => onTitleChange(event.target.value)}
+            placeholder={titlePlaceholder}
+          />
+          {titleHint?.trim() ? (
+            <div className='text-muted-foreground text-[11px]'>{titleHint}</div>
+          ) : null}
         </div>
-        <div className='text-foreground mt-0.5 truncate text-sm font-semibold'>{title}</div>
-        <div className='text-muted-foreground text-[11px]'>{titleHint}</div>
-      </div>
+      ) : (
+        <div className='rounded-lg border border-dashed border-teal-600/40 bg-teal-50/60 px-3 py-2.5 dark:bg-teal-950/20'>
+          <div className='text-[11px] font-medium tracking-wide text-teal-700 uppercase dark:text-teal-400'>
+            {titleLabel}
+          </div>
+          <div className='text-foreground mt-0.5 truncate text-sm font-semibold'>{title}</div>
+          {titleHint?.trim() ? (
+            <div className='text-muted-foreground text-[11px]'>{titleHint}</div>
+          ) : null}
+        </div>
+      )}
     </>
   );
 }

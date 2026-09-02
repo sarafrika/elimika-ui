@@ -78,6 +78,7 @@ import {
 } from 'lucide-react';
 import { type FormEvent, useEffect, useState } from 'react';
 import { toast } from 'sonner';
+import { Tooltip, TooltipContent, TooltipTrigger } from '../../../../components/ui/tooltip';
 
 const PRACTICE_ACTIVITY_PAGE_SIZE = 10;
 
@@ -312,42 +313,77 @@ function PracticeActivityDialog({
               />
             </div>
 
-            <div className='space-y-2'>
-              <Label htmlFor='practice-status'>Status</Label>
-              <Select
-                value={values.status}
-                onValueChange={value =>
-                  setValue('status', value as LessonPracticeActivity['status'])
-                }
-              >
-                <SelectTrigger id='practice-status' className='w-full'>
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  {Object.values(SchemaEnum4).map(option => (
-                    <SelectItem key={option} value={option}>
-                      {getDisplayLabel(option)}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <div className='space-y-2'>
+                  <div className='flex items-center gap-2'>
+                    <Label htmlFor='practice-status'>Status</Label>
 
-            <div className='flex flex-col rounded-md border px-3 py-2'>
-              <div className='flex items-center justify-between gap-2'>
-                <Label htmlFor='practice-active' className='text-sm font-medium'>
-                  Visible
-                </Label>
-                <Switch
-                  id='practice-active'
-                  checked={isPublished && values.active}
-                  disabled={!isPublished}
-                  onCheckedChange={checked => setValue('active', checked)}
-                />
-              </div>
+                    {values.status === 'draft' && (
+                      <span className='text-xs text-destructive'>
+                        (This activity is not visible to users)
+                      </span>
+                    )}
+                  </div>
 
-              <p>Publish this activity to allow users to see it.</p>
-            </div>
+                  <Select
+                    value={values.status}
+                    onValueChange={value =>
+                      setValue(
+                        'status',
+                        value as LessonPracticeActivity['status']
+                      )
+                    }
+                  >
+                    <SelectTrigger id='practice-status' className='w-full'>
+                      <SelectValue />
+                    </SelectTrigger>
+
+                    <SelectContent>
+                      {Object.values(SchemaEnum4).map(option => (
+                        <SelectItem key={option} value={option}>
+                          {getDisplayLabel(option)}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+              </TooltipTrigger>
+
+              <TooltipContent>
+                Publish this activity to make it available to course users.
+              </TooltipContent>
+            </Tooltip>
+
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <div className='flex flex-col rounded-md border px-3 py-2'>
+                  <div className='flex items-center justify-between gap-2'>
+                    <Label
+                      htmlFor='practice-active'
+                      className='text-sm font-medium'
+                    >
+                      Visible
+                    </Label>
+
+                    <Switch
+                      id='practice-active'
+                      checked={isPublished && values.active}
+                      disabled={!isPublished}
+                      onCheckedChange={checked => setValue('active', checked)}
+                    />
+                  </div>
+
+                  <p className='mt-1 text-xs text-muted-foreground'>
+                    Publish this activity to allow users to see it.
+                  </p>
+                </div>
+              </TooltipTrigger>
+
+              <TooltipContent>
+                Publish this activity to allow users to see it.
+              </TooltipContent>
+            </Tooltip>
 
             <div className='space-y-2 md:col-span-2'>
               <Label htmlFor='practice-instructions'>Instructions</Label>

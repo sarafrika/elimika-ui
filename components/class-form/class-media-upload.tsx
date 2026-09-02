@@ -3,8 +3,8 @@
 import { Card } from '@/components/ui/card';
 import { FileVideo, Image, X } from 'lucide-react';
 import { useRef, useState } from 'react';
-import { Button } from '../../../../../../components/ui/button';
-import { toAuthenticatedMediaUrl } from '../../../../../../src/lib/media-url';
+import { toAuthenticatedMediaUrl } from '../../src/lib/media-url';
+import { Button } from '../ui/button';
 
 export interface MediaFile {
   type: 'thumbnail' | 'video';
@@ -79,7 +79,7 @@ export function ClassMediaUpload({
   return (
     <Card className='overflow-hidden rounded-md border pt-0 shadow-sm'>
       <div className='flex items-center justify-between gap-3 px-2 pt-4 sm:px-4'>
-        <h3 className='text-foreground text-lg font-semibold'>Class Media</h3>
+        <h3 className='text-foreground text-sm font-semibold'>Class Media</h3>
         <p className='text-muted-foreground text-xs sm:text-sm'>
           Optional - Upload before publishing
         </p>
@@ -87,8 +87,7 @@ export function ClassMediaUpload({
 
       <div className='space-y-4 px-2 pb-4 sm:px-4 sm:pb-6'>
         <p className='text-muted-foreground text-xs'>
-          Add a class thumbnail and promotional video. You can upload these before or after creating
-          the class.
+          Add a class thumbnail and promotional video. You can upload these before or after creating the class.
         </p>
 
         <div className="grid w-full gap-4 md:grid-cols-2">

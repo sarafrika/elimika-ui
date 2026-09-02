@@ -43,6 +43,7 @@ export function PricingCapacity({
   totalDays,
   rateBasis = DEFAULT_RATE_BASIS,
   onRateBasisChange,
+  readOnly = false,
 }: {
   approvedFee?: number;
   currency?: string | null;
@@ -59,6 +60,7 @@ export function PricingCapacity({
   totalDays?: number;
   rateBasis?: RateBasis;
   onRateBasisChange?: (v: RateBasis) => void;
+  readOnly?: boolean;
 }) {
   const sale = parseAmount(salePrice);
   const pay = parseAmount(instructorPay);
@@ -114,6 +116,7 @@ export function PricingCapacity({
             min={0}
             step='0.01'
             value={salePrice}
+            readOnly={readOnly}
             onChange={e => onSalePriceChange(e.target.value)}
           />
           <p className='text-muted-foreground text-[11px]'>
@@ -133,6 +136,7 @@ export function PricingCapacity({
             min={0}
             step='0.01'
             value={instructorPay}
+            readOnly={readOnly}
             onChange={e => onInstructorPayChange(e.target.value)}
           />
           <p className='text-muted-foreground text-[11px]'>
