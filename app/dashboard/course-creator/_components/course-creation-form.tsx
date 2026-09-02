@@ -550,12 +550,11 @@ export const CourseCreationForm = forwardRef<CourseFormRef, CourseFormProps>(
     };
 
     useImperativeHandle(ref, () => ({
-      submit: () => form.handleSubmit(onSubmit)(),
+      submit: () => form.handleSubmit(onSubmit, onError)(),
     }));
 
     const isFree = useWatch({ control: form.control, name: 'is_free' }) ?? [];
     const categoriesSelected = useWatch({ control: form.control, name: 'categories' }) ?? [];
-
     useEffect(() => {
       if (isFree) {
         form.setValue('price', 0);

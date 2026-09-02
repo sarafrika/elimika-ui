@@ -448,34 +448,49 @@ function ActivityCardBody({ activity, hideStatusBadges }: ActivityCardBodyProps)
     <div className='min-w-0 space-y-3'>
       <div className='space-y-1'>
         <div className='flex flex-wrap items-center gap-2'>
-          <h3 className='text-foreground text-base font-semibold'>{activity.title}</h3>
+          <h3 className='text-foreground text-sm font-semibold'>
+            {activity.title}
+          </h3>
+
           {!hideStatusBadges && (
             <>
-              <Badge variant={activity.active ? 'success' : 'outline'}>
+              <Badge
+                variant={activity.active ? 'success' : 'outline'}
+                className='text-[10px]'
+              >
                 {activity.active ? 'Visible' : 'Hidden'}
               </Badge>
-              <Badge variant='secondary'>{getDisplayLabel(activity.status)}</Badge>
+
+              <Badge variant='secondary' className='text-[10px]'>
+                {getDisplayLabel(activity.status)}
+              </Badge>
             </>
           )}
         </div>
-        <p className='text-muted-foreground line-clamp-3 text-sm'>{activity.instructions}</p>
+
+        <p className='text-muted-foreground line-clamp-3 text-xs'>
+          {activity.instructions}
+        </p>
       </div>
 
-      <div className='text-muted-foreground flex flex-wrap gap-3 text-sm'>
+      <div className='text-muted-foreground flex flex-wrap gap-3 text-xs'>
         <span className='flex items-center gap-1'>
-          <ClipboardList className='h-4 w-4' />
+          <ClipboardList className='h-3.5 w-3.5' />
           {getDisplayLabel(activity.activity_type)}
         </span>
+
         <span className='flex items-center gap-1'>
-          <Users className='h-4 w-4' />
+          <Users className='h-3.5 w-3.5' />
           {getDisplayLabel(activity.grouping)}
         </span>
+
         <span className='flex items-center gap-1'>
-          <Clock className='h-4 w-4' />
+          <Clock className='h-3.5 w-3.5' />
           {activity.estimated_duration ?? 'Duration not set'}
         </span>
+
         <span className='flex items-center gap-1'>
-          <ListOrdered className='h-4 w-4' />
+          <ListOrdered className='h-3.5 w-3.5' />
           Order {activity.display_order ?? '-'}
         </span>
       </div>
@@ -483,7 +498,11 @@ function ActivityCardBody({ activity, hideStatusBadges }: ActivityCardBodyProps)
       {activity.materials && activity.materials.length > 0 && (
         <div className='flex flex-wrap gap-2'>
           {activity.materials.map(material => (
-            <Badge key={material} variant='outline'>
+            <Badge
+              key={material}
+              variant='outline'
+              className='text-[10px]'
+            >
               {material}
             </Badge>
           ))}
@@ -491,8 +510,9 @@ function ActivityCardBody({ activity, hideStatusBadges }: ActivityCardBodyProps)
       )}
 
       {activity.expected_output && (
-        <p className='text-muted-foreground text-sm'>
-          <span className='text-foreground font-medium'>Output:</span> {activity.expected_output}
+        <p className='text-muted-foreground text-xs'>
+          <span className='text-foreground font-medium'>Output:</span>{' '}
+          {activity.expected_output}
         </p>
       )}
     </div>
@@ -752,14 +772,7 @@ export function PracticeActivityManager({
   return (
     <div className='space-y-4'>
       {showHeader && (
-        <div className='flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between'>
-          <div>
-            <p className='text-[15px] font-semibold'>Class Practice Activities</p>
-            <p className='text-muted-foreground text-xs'>
-              Manage reusable class practice activities tied to this skill.
-            </p>
-          </div>
-
+        <div className='flex flex-col items-end gap-1 self-end'>
           <Button
             onClick={handleAddPracticeActivity}
             variant='secondary'

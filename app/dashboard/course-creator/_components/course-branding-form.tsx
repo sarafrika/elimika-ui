@@ -544,11 +544,14 @@ export const CourseBrandingForm = forwardRef<CourseFormRef, CourseFormProps>(
                             <UploadIndicator isUploading={courseIntroVideoMutation.isPending} />
                           </div>
 
-                          <video controls className='w-full max-w-md rounded shadow'>
-                            <source
-                              src={toAuthenticatedMediaUrl(videoSource) || videoSource}
-                              type='video/mp4'
-                            />
+                          <video
+                            key={videoSource}
+                            controls
+                            preload='metadata'
+                            playsInline
+                            className='w-full max-w-md rounded shadow'
+                          >
+                            <source src={toAuthenticatedMediaUrl(videoSource) || videoSource} />
                             Your browser does not support the video tag.
                           </video>
                           {pendingVideo.file && (
