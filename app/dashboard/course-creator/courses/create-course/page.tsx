@@ -524,7 +524,6 @@ function LessonContentStack({
                                     title: editingContent.title ?? '',
                                     description: editingContent.description ?? '',
                                     content_text: editingContent.content_text ?? '',
-                                    value: editingContent.file_url ?? '',
                                     file_url: editingContent.file_url ?? '',
                                     display_order: editingContent.display_order ?? 1,
                                     uuid: editingContent.uuid,
@@ -537,7 +536,6 @@ function LessonContentStack({
                                         content_type_uuid: '',
                                         content_category: '',
                                         content_text: '',
-                                        value: '',
                                         // Auto-filled from the lesson's current content count, not hardcoded.
                                         display_order: nextDisplayOrder,
                                     } as never)

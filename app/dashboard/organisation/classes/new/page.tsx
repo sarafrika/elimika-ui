@@ -10,14 +10,15 @@ import { toast } from 'sonner';
 import {
   type AcademicPeriod,
   AcademicPeriodsPanel,
-  type ApprovedRateCard,
   addDays,
+  type ApprovedRateCard,
   approvedRateFor,
+  ClassMediaUpload,
   computeUpcomingSessions,
   DAY_TOKEN,
-  DAYS,
   type DayKey,
   type DayRow,
+  DAYS,
   DEFAULT_DAYS,
   DEFAULT_RATE_BASIS,
   type Delivery,
@@ -25,24 +26,25 @@ import {
   fmtDate,
   type InstructorOption,
   LocationVenue,
+  type MediaFile,
   num,
   type Offering,
   OfferingPicker,
   PickDatesPanel,
   PricingCapacity,
   type RateBasis,
+  rateBasisLabel,
+  rateBasisUnit,
   REMINDER_MINUTES,
   ReminderOptions,
   type ReminderState,
-  rateBasisLabel,
-  rateBasisUnit,
   type ScheduleMode,
   ScheduleModeCards,
   ServiceCards,
-  type ServiceKey,
-  StandardSchedule,
   serviceFormat,
+  type ServiceKey,
   sessionMinutesFor,
+  StandardSchedule,
   toDateTime,
   UpcomingSessions,
 } from '@/components/class-form';
@@ -72,6 +74,8 @@ import {
   listResourcesOptions,
   searchProgramTrainingApplicationsOptions,
   searchTrainingApplicationsOptions,
+  uploadClassPromotionalVideoMutation,
+  uploadClassThumbnailMutation,
 } from '@/services/client/@tanstack/react-query.gen';
 
 export default function OrganisationCreateClassPage() {
@@ -472,10 +476,39 @@ export default function OrganisationCreateClassPage() {
 
   // ── Submit ────────────────────────────────────────────────────────────────
   const [resourceConflicts, setResourceConflicts] = useState<ConflictItem[]>([]);
+  const [selectedThumbnail, setSelectedThumbnail] = useState<File | null>(null);
+  const [selectedPromotionalVideo, setSelectedPromotionalVideo] = useState<File | null>(null);
+  const uploadThumbnail = useMutation(uploadClassThumbnailMutation());
+  const uploadPromotionalVideo = useMutation(uploadClassPromotionalVideoMutation());
+
+  const uploadClassMedia = async (classUuid: string) => {
+    await Promise.all([
+      selectedThumbnail
+        ? uploadThumbnail.mutateAsync({
+          path: { uuid: classUuid },
+          body: { thumbnail: selectedThumbnail },
+        })
+        : Promise.resolve(),
+      selectedPromotionalVideo
+        ? uploadPromotionalVideo.mutateAsync({
+          path: { uuid: classUuid },
+          body: { promotional_video: selectedPromotionalVideo },
+        })
+        : Promise.resolve(),
+    ]);
+  };
+
   const createClass = useMutation({
     ...createClassDefinitionMultipartMutation(),
-    onSuccess: response => {
+    onSuccess: async response => {
       const createdClass = response?.data?.class_definition;
+      if (createdClass?.uuid) {
+        try {
+          await uploadClassMedia(createdClass.uuid);
+        } catch (error) {
+          toast.error(error instanceof Error ? error.message : 'Class media upload failed.');
+        }
+      }
       const inviteParams = new URLSearchParams();
       if (createdClass?.uuid) inviteParams.set('classUuid', createdClass.uuid);
       if (createdClass?.program_uuid) {
@@ -635,9 +668,9 @@ export default function OrganisationCreateClassPage() {
     const academicBounds =
       mode === 'academic' && apStarts.length > 0 && apEnds.length > 0
         ? {
-            academic_period_start_date: new Date(`${apStarts[0]}T00:00:00`),
-            academic_period_end_date: new Date(`${apEnds[apEnds.length - 1]}T23:59:59`),
-          }
+          academic_period_start_date: new Date(`${apStarts[0]}T00:00:00`),
+          academic_period_end_date: new Date(`${apEnds[apEnds.length - 1]}T23:59:59`),
+        }
         : {};
 
     const payload: ClassDefinitionCreateRequest = {
@@ -665,9 +698,9 @@ export default function OrganisationCreateClassPage() {
       ...(continuousReg
         ? {}
         : {
-            registration_period_start_date: new Date(`${regStart}T00:00:00`),
-            registration_period_end_date: new Date(`${regEnd}T23:59:59`),
-          }),
+          registration_period_start_date: new Date(`${regStart}T00:00:00`),
+          registration_period_end_date: new Date(`${regEnd}T23:59:59`),
+        }),
       ...academicBounds,
       session_templates: sessionTemplates,
     };
@@ -790,6 +823,18 @@ export default function OrganisationCreateClassPage() {
             totalSessions={totalSessions}
           />
         )}
+
+        <ClassMediaUpload
+          selectedThumbnail={selectedThumbnail}
+          selectedVideo={selectedPromotionalVideo}
+          onMediaSelect={(media: MediaFile) =>
+            media.type === 'thumbnail'
+              ? setSelectedThumbnail(media.file)
+              : setSelectedPromotionalVideo(media.file)
+          }
+          onRemoveThumbnail={() => setSelectedThumbnail(null)}
+          onRemoveVideo={() => setSelectedPromotionalVideo(null)}
+        />
 
         <ReminderOptions value={reminder} onChange={patchReminder} />
 

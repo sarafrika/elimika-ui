@@ -60,7 +60,6 @@ import {
   uploadLessonMediaMutation,
 } from '@/services/client/@tanstack/react-query.gen';
 import type { AddCourseAssessmentData, CourseAssessment, Lesson, LessonContent } from '@/services/client/types.gen';
-import { toAuthenticatedMediaUrl } from '@/src/lib/media-url';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import clsx from 'clsx';
@@ -106,9 +105,6 @@ import { useUserProfile } from '../../../../context/profile-context';
 import { cn } from '../../../../lib/utils';
 import { useRubricsWithCriteriaAndScoring } from '../rubrics/rubric-chaining';
 
-const MEDIA_HOST_ROUTE =
-  process.env.NEXT_PUBLIC_MEDIA_HOST_ROUTE ?? process.env.NEXT_PUBLIC_SITE_URL ?? '';
-
 export const CONTENT_TYPES = {
   AUDIO: 'Audio',
   VIDEO: 'Video',
@@ -141,10 +137,6 @@ type MutationVariables<T> = T extends {
   : never;
 type AddCourseLessonVariables = MutationVariables<ReturnType<typeof addCourseLessonMutation>>;
 type UpdateCourseLessonVariables = MutationVariables<ReturnType<typeof updateCourseLessonMutation>>;
-type AddLessonContentVariables = MutationVariables<ReturnType<typeof addLessonContentMutation>>;
-type UpdateLessonContentVariables = MutationVariables<
-  ReturnType<typeof updateLessonContentMutation>
->;
 type ErrorLike = { message?: string; error?: unknown };
 
 const getErrorMessage = (value: unknown) => {
@@ -1143,7 +1135,7 @@ interface LessonContentFormProps {
   courseId?: string | number;
   lessonId?: string | number;
   contentId?: string | number;
-  initialValues?: Partial<ContentFormValues>;
+  initialValues?: LessonContentInitialValues;
 }
 
 const lessonContentSchema = z.object({
@@ -1155,11 +1147,16 @@ const lessonContentSchema = z.object({
   content_category: z.string().min(1, 'Content category is required'),
   title: z.string().min(1, 'Title is required'),
   description: z.string().optional(),
-  value: z.string().max(499, 'Value must be less than 500 characters').optional(), display_order: z.coerce.number().min(0, 'Order number must be positive'),
+  display_order: z.coerce.number().min(0, 'Order number must be positive'),
   uuid: z.string().optional(),
+  file_url: z.string().max(499, 'Value must be less than 500 characters').optional(),
 });
 
 export type ContentFormValues = z.infer<typeof lessonContentSchema>;
+
+type LessonContentInitialValues = Omit<Partial<ContentFormValues>, 'file_url'> & {
+  file_url?: string | null;
+};
 
 // Blank slate the form returns to whenever the sheet closes, or opens fresh (not editing).
 const getFreshDefaults = (): ContentFormValues => ({
@@ -1168,7 +1165,8 @@ const getFreshDefaults = (): ContentFormValues => ({
   content_category: '',
   title: '',
   description: '',
-  value: '',
+  content_text: '',
+  file_url: '',
   display_order: 0,
   uuid: undefined,
 });
@@ -1184,26 +1182,35 @@ function LessonContentForm({
   initialValues,
 }: LessonContentFormProps) {
 
-  const normalizeEditMediaUrl = (candidate?: string | null) => {
-    const resolved = toAuthenticatedMediaUrl(candidate) || candidate || '';
-
-    if (!resolved) return '';
-    if (resolved.startsWith('/')) {
-      return `${MEDIA_HOST_ROUTE}${resolved}`;
-    }
-
-    return resolved;
-  };
-
   const mappedInitialValues = React.useMemo(() => {
     if (!initialValues) return undefined;
-    const rawValue = initialValues?.content_text || initialValues?.value || '';
+
+    const isTextContent =
+      initialValues.content_type?.toUpperCase() === 'TEXT' ||
+      (!initialValues.content_type && initialValues.content_text != null);
     return {
-      ...initialValues,
-      // Text content lives in content_text; media/link content lives in value/file_url.
-      value: normalizeEditMediaUrl(rawValue),
+      ...getFreshDefaults(),
+      content_type: initialValues.content_type ?? 'TEXT',
+      content_type_uuid: initialValues.content_type_uuid ?? '',
+      content_category: initialValues.content_category ?? '',
+      title: initialValues.title ?? '',
+      description: initialValues.description ?? '',
+      content_text: isTextContent ? initialValues.content_text ?? '' : '',
+      file_url: isTextContent ? '' : initialValues.file_url ?? '',
+      display_order: initialValues.display_order ?? 0,
+      uuid: initialValues.uuid,
     };
-  }, [initialValues]);
+  }, [
+    initialValues?.content_category,
+    initialValues?.content_text,
+    initialValues?.content_type,
+    initialValues?.content_type_uuid,
+    initialValues?.description,
+    initialValues?.display_order,
+    initialValues?.file_url,
+    initialValues?.title,
+    initialValues?.uuid,
+  ]);
 
   const isEditMode = !!initialValues?.uuid;
 
@@ -1214,16 +1221,13 @@ function LessonContentForm({
 
   const form = useForm<ContentFormValues>({
     resolver: zodResolver(lessonContentSchema),
-    defaultValues: {
-      ...getFreshDefaults(),
-      ...mappedInitialValues,
-    },
+    defaultValues: mappedInitialValues ?? getFreshDefaults(),
   });
 
   const { setValue } = form;
   const watchedValues = useWatch({ control: form.control });
   const watchedContentType = useWatch({ control: form.control, name: 'content_type' });
-  const watchedValue = useWatch({ control: form.control, name: 'value' });
+  const watchedFileUrl = useWatch({ control: form.control, name: 'file_url' });
 
   const [draftSaved, setDraftSaved] = useState(false);
 
@@ -1253,17 +1257,14 @@ function LessonContentForm({
       return;
     }
 
-    form.reset({
-      ...getFreshDefaults(),
-      ...mappedInitialValues,
-    });
+    form.reset(mappedInitialValues ?? getFreshDefaults());
     setMediaFile(null);
     if (mediaPreviewUrl?.startsWith('blob:')) {
       URL.revokeObjectURL(mediaPreviewUrl);
     }
     setMediaPreviewUrl(null);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [isOpen, mappedInitialValues]);
+  }, [isOpen, mappedInitialValues, form, draftKey, isEditMode]);
 
   useEffect(() => {
     if (!isOpen) return;
@@ -1317,7 +1318,7 @@ function LessonContentForm({
   const isMediaUploadType = ['IMAGE', 'VIDEO', 'AUDIO', 'PDF'].includes(selectedTypeKey || '');
   const isLocalMediaSelected = isMediaUploadType && !!mediaFile;
   const hasUrlValue =
-    isMediaUploadType && typeof watchedValue === 'string' && watchedValue.trim().length > 0;
+    isMediaUploadType && typeof watchedFileUrl === 'string' && watchedFileUrl.trim().length > 0;
 
   useEffect(() => {
     if (!selectedTypeKey || !contentTypeData.length) return;
@@ -1327,6 +1328,10 @@ function LessonContentForm({
 
     if (contentTypeUuid !== matchedType.uuid) {
       setValue('content_type_uuid', matchedType.uuid ?? '');
+    }
+
+    if (form.getValues('content_type') !== matchedType.name?.toUpperCase()) {
+      setValue('content_type', matchedType.name?.toUpperCase() as ContentFormValues['content_type']);
     }
 
     if (
@@ -1421,46 +1426,41 @@ function LessonContentForm({
       return;
     }
 
-    const contentValue = typeof data.value === 'string' ? data.value.trim() : '';
+    const isTextContent = data.content_type === 'TEXT';
+    const contentValue = isTextContent
+      ? data.content_text ?? ''
+      : typeof data.file_url === 'string'
+        ? data.file_url.trim()
+        : '';
 
     if (isMediaUploadType && !contentValue) {
       toast.error('Enter a URL or choose a file to upload.');
       return;
     }
 
-    const contentBody = {
+    const contentBody: LessonContent = {
       lesson_uuid: lessonId as string,
-      content_type_uuid: data?.content_type_uuid,
-      title: selectedTypeKey === 'TEXT' ? data?.title || '' : data?.title,
-      description: data?.description,
-      content_text: selectedTypeKey === 'TEXT' ? contentValue : '',
-      file_url: selectedTypeKey === 'TEXT' ? '' : contentValue,
-      display_order: data?.display_order,
+      content_type_uuid: data.content_type_uuid,
+      title: data.title,
+      description: data.description,
+      content_text: isTextContent ? contentValue : null,
+      file_url: isTextContent ? null : contentValue,
+      display_order: data.display_order,
       is_required: true,
-      created_by: 'instructor@sarafrika.com',
-      updated_by: 'instructor@sarafrika.com',
       content_category: data.content_category,
     };
 
     try {
       if (isEditMode) {
+        const contentUuid = data.uuid ?? initialValues?.uuid;
+
         updateLessonContent.mutate(
           {
-            body: {
-              lesson_uuid: lessonId as string,
-              content_type_uuid: data?.content_type_uuid,
-              title: initialValues?.title!,
-              description: initialValues?.description,
-              content_text: initialValues?.content_text,
-              file_url: `${MEDIA_HOST_ROUTE}/api/proxy/${initialValues?.file_url}`,
-              display_order: initialValues?.display_order,
-              is_required: true,
-              content_category: initialValues.content_category,
-            },
+            body: { ...contentBody, uuid: contentUuid },
             path: {
               courseUuid: courseId as string,
               lessonUuid: lessonId as string,
-              contentUuid: initialValues?.uuid as string,
+              contentUuid: contentUuid as string,
             },
           },
           {
@@ -1479,7 +1479,7 @@ function LessonContentForm({
       } else {
         createLessonContent.mutate(
           {
-            body: contentBody as AddLessonContentVariables['body'],
+            body: contentBody,
             path: { courseUuid: courseId as string, lessonUuid: lessonId as string },
           },
           {
@@ -1562,7 +1562,8 @@ function LessonContentForm({
                         setValue('content_type_uuid', '');
                         setValue('content_category', '');
                       }
-                      setValue('value', '');
+                      setValue('content_text', '');
+                      setValue('file_url', '');
                       if (mediaPreviewUrl?.startsWith('blob:')) {
                         URL.revokeObjectURL(mediaPreviewUrl);
                       }
@@ -1617,7 +1618,7 @@ function LessonContentForm({
               />
 
               <FormField
-                name='value'
+                name='content_text'
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel>Content</FormLabel>
@@ -1660,14 +1661,14 @@ function LessonContentForm({
               {/* URL entry — hidden once a local file is staged, so only one input path is live at a time. */}
               {!isLocalMediaSelected && (
                 <FormField
-                  name='value'
+                  name='file_url'
                   render={({ field }) => (
                     <FormItem>
                       <FormLabel>URL</FormLabel>
 
                       <FormControl>
                         <Input
-                          type='url'
+                          type='text'
                           placeholder={getContentPlaceholder(selectedTypeKey ?? '')}
                           {...field}
                         />
@@ -1708,7 +1709,7 @@ function LessonContentForm({
                       }
                       setMediaFile(file);
                       setMediaPreviewUrl(URL.createObjectURL(file));
-                      setValue('value', '');
+                      setValue('file_url', '');
                     }
                   }}
                 >
@@ -1731,7 +1732,7 @@ function LessonContentForm({
                       }
                       setMediaFile(file);
                       setMediaPreviewUrl(file ? URL.createObjectURL(file) : null);
-                      if (file) setValue('value', '');
+                      if (file) setValue('file_url', '');
                     }}
                   />
 
@@ -2506,6 +2507,11 @@ interface AddLessonDialogProps {
   onCancel: () => void;
 }
 
+interface LessonContentDialogProps
+  extends Omit<AddLessonDialogProps, 'initialValues' | 'refetch' | 'onSuccess'> {
+  initialValues?: LessonContentInitialValues;
+}
+
 function LessonDialog({
   isOpen,
   onOpenChange,
@@ -2558,14 +2564,14 @@ function LessonContentDialog({
   contentId,
   onCancel,
   initialValues,
-}: AddLessonDialogProps) {
+}: LessonContentDialogProps) {
   const isEditMode = initialValues?.uuid ?? '';
-  const draftKey = `lesson-content-draft:${courseId}:${lessonId}:${contentId ?? 'new'}`;
 
   return (
     <Sheet
       open={isOpen}
       onOpenChange={open => {
+        onOpenChange(open);
         if (!open) onCancel();
       }}
     >
@@ -2585,6 +2591,7 @@ function LessonContentDialog({
 
         <ScrollArea className='min-h-0 flex-1'>
           <LessonContentForm
+            isOpen={isOpen}
             onCancel={onCancel}
             className='px-6 pb-6'
             courseId={courseId}
