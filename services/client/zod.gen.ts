@@ -378,8 +378,8 @@ export const zStudent = z
       .optional(),
     bio: z.union([z.string().min(0).max(2000), z.null()]).optional(),
     primaryGuardianContact: z.string().optional(),
-    allGuardianContacts: z.array(z.string()).optional(),
     secondaryGuardianContact: z.string().optional(),
+    allGuardianContacts: z.array(z.string()).optional(),
     full_name: z
       .string()
       .describe(
@@ -590,11 +590,6 @@ export const zAssessmentRubric = z
       )
       .readonly()
       .optional(),
-    is_published: z
-      .boolean()
-      .describe('**[READ-ONLY]** Indicates if the rubric is published and available for use.')
-      .readonly()
-      .optional(),
     rubric_category: z
       .string()
       .describe('**[READ-ONLY]** Formatted category of the rubric based on its type.')
@@ -610,6 +605,11 @@ export const zAssessmentRubric = z
     usage_status: z
       .string()
       .describe('**[READ-ONLY]** Comprehensive status indicating usage and accessibility.')
+      .readonly()
+      .optional(),
+    is_published: z
+      .boolean()
+      .describe('**[READ-ONLY]** Indicates if the rubric is published and available for use.')
       .readonly()
       .optional(),
   })
@@ -705,16 +705,16 @@ export const zRubricScoringLevel = z
       .describe('**[READ-ONLY]** Formatted display name combining level name and points for UI.')
       .readonly()
       .optional(),
-    css_color_class: z
-      .string()
-      .describe('**[READ-ONLY]** CSS-safe color class name derived from the color code.')
-      .readonly()
-      .optional(),
     performance_indicator: z
       .string()
       .describe(
         '**[READ-ONLY]** Performance classification based on level order and passing status.'
       )
+      .readonly()
+      .optional(),
+    css_color_class: z
+      .string()
+      .describe('**[READ-ONLY]** CSS-safe color class name derived from the color code.')
       .readonly()
       .optional(),
     is_highest_level: z
@@ -825,16 +825,6 @@ export const zRubricCriteria = z
       )
       .readonly()
       .optional(),
-    is_primary_criteria: z
-      .boolean()
-      .describe('**[READ-ONLY]** Indicates if this is a primary assessment criteria.')
-      .readonly()
-      .optional(),
-    criteria_category: z
-      .string()
-      .describe('**[READ-ONLY]** Category classification of the assessment criteria.')
-      .readonly()
-      .optional(),
     weight_suggestion: z
       .string()
       .describe('**[READ-ONLY]** Suggested weight or priority level for this criteria.')
@@ -843,6 +833,16 @@ export const zRubricCriteria = z
     criteria_number: z
       .string()
       .describe('**[READ-ONLY]** Formatted criteria number for display in assessment interface.')
+      .readonly()
+      .optional(),
+    is_primary_criteria: z
+      .boolean()
+      .describe('**[READ-ONLY]** Indicates if this is a primary assessment criteria.')
+      .readonly()
+      .optional(),
+    criteria_category: z
+      .string()
+      .describe('**[READ-ONLY]** Category classification of the assessment criteria.')
       .readonly()
       .optional(),
   })
@@ -1627,14 +1627,14 @@ export const zTrainingProgram = z
       )
       .readonly()
       .optional(),
-    total_duration_display: z
-      .string()
-      .describe('**[READ-ONLY]** Human-readable format of total program duration.')
-      .readonly()
-      .optional(),
     program_type: z
       .string()
       .describe('**[READ-ONLY]** Classification of program type based on duration and content.')
+      .readonly()
+      .optional(),
+    total_duration_display: z
+      .string()
+      .describe('**[READ-ONLY]** Human-readable format of total program duration.')
       .readonly()
       .optional(),
   })
@@ -2633,6 +2633,7 @@ export const zInstructorEducation = z
       .describe(
         '**[REQUIRED]** Full name of the educational institution, university, college, or training organization.'
       ),
+    start_year: z.union([z.number().int().gte(1950).lte(2030), z.null()]).optional(),
     year_completed: z.union([z.number().int().gte(1950).lte(2030), z.null()]).optional(),
     certificate_number: z.union([z.string().min(0).max(100), z.null()]).optional(),
     created_date: z
@@ -2965,6 +2966,11 @@ export const zAvailabilitySlot = z
       )
       .readonly()
       .optional(),
+    duration_minutes: z.coerce
+      .bigint()
+      .describe('**[READ-ONLY]** Duration of the availability slot in minutes.')
+      .readonly()
+      .optional(),
     duration_formatted: z
       .string()
       .describe('**[READ-ONLY]** Human-readable formatted duration.')
@@ -2985,11 +2991,6 @@ export const zAvailabilitySlot = z
     availability_description: z
       .string()
       .describe('**[READ-ONLY]** Human-readable description of the availability pattern.')
-      .readonly()
-      .optional(),
-    duration_minutes: z.coerce
-      .bigint()
-      .describe('**[READ-ONLY]** Duration of the availability slot in minutes.')
       .readonly()
       .optional(),
   })
@@ -3231,29 +3232,6 @@ export const zCourse = z
       )
       .readonly()
       .optional(),
-    total_duration_display: z
-      .string()
-      .describe('**[READ-ONLY]** Human-readable format of total course duration.')
-      .readonly()
-      .optional(),
-    has_multiple_categories: z
-      .boolean()
-      .describe('**[READ-ONLY]** Indicates if the course belongs to multiple categories.')
-      .readonly()
-      .optional(),
-    category_count: z
-      .number()
-      .int()
-      .describe('**[READ-ONLY]** Number of categories this course belongs to.')
-      .readonly()
-      .optional(),
-    lifecycle_stage: z
-      .string()
-      .describe(
-        "**[READ-ONLY]** Human-readable description of the course's current lifecycle stage."
-      )
-      .readonly()
-      .optional(),
     is_published: z
       .boolean()
       .describe('**[READ-ONLY]** Indicates if the course is published and discoverable.')
@@ -3279,6 +3257,29 @@ export const zCourse = z
     is_in_review: z
       .boolean()
       .describe('**[READ-ONLY]** Indicates if the course is currently under review.')
+      .readonly()
+      .optional(),
+    total_duration_display: z
+      .string()
+      .describe('**[READ-ONLY]** Human-readable format of total course duration.')
+      .readonly()
+      .optional(),
+    has_multiple_categories: z
+      .boolean()
+      .describe('**[READ-ONLY]** Indicates if the course belongs to multiple categories.')
+      .readonly()
+      .optional(),
+    category_count: z
+      .number()
+      .int()
+      .describe('**[READ-ONLY]** Number of categories this course belongs to.')
+      .readonly()
+      .optional(),
+    lifecycle_stage: z
+      .string()
+      .describe(
+        "**[READ-ONLY]** Human-readable description of the course's current lifecycle stage."
+      )
       .readonly()
       .optional(),
   })
@@ -3590,14 +3591,14 @@ export const zLesson = z
       )
       .readonly()
       .optional(),
-    lesson_sequence: z
-      .string()
-      .describe('**[READ-ONLY]** Formatted lesson sequence for display purposes.')
-      .readonly()
-      .optional(),
     is_published: z
       .boolean()
       .describe('**[READ-ONLY]** Indicates if the lesson is published and accessible to students.')
+      .readonly()
+      .optional(),
+    lesson_sequence: z
+      .string()
+      .describe('**[READ-ONLY]** Formatted lesson sequence for display purposes.')
       .readonly()
       .optional(),
   })
@@ -3820,14 +3821,14 @@ export const zLessonContent = z
       )
       .readonly()
       .optional(),
-    file_size_display: z
-      .string()
-      .describe('**[READ-ONLY]** Human-readable format of file size.')
-      .readonly()
-      .optional(),
     content_category: z
       .string()
       .describe('**[READ-ONLY]** Category of content based on its type and format.')
+      .readonly()
+      .optional(),
+    file_size_display: z
+      .string()
+      .describe('**[READ-ONLY]** Human-readable format of file size.')
       .readonly()
       .optional(),
   })
@@ -3933,16 +3934,6 @@ export const zCourseAssessment = z
       )
       .readonly()
       .optional(),
-    assessment_category: z
-      .string()
-      .describe('**[READ-ONLY]** Category classification of the assessment type.')
-      .readonly()
-      .optional(),
-    weight_display: z
-      .string()
-      .describe('**[READ-ONLY]** Human-readable format of the weight percentage.')
-      .readonly()
-      .optional(),
     is_major_assessment: z
       .boolean()
       .describe('**[READ-ONLY]** Indicates if this is a major assessment component.')
@@ -3958,6 +3949,16 @@ export const zCourseAssessment = z
       .describe(
         '**[READ-ONLY]** Human-readable description of how line items are combined for this component.'
       )
+      .readonly()
+      .optional(),
+    assessment_category: z
+      .string()
+      .describe('**[READ-ONLY]** Category classification of the assessment type.')
+      .readonly()
+      .optional(),
+    weight_display: z
+      .string()
+      .describe('**[READ-ONLY]** Human-readable format of the weight percentage.')
       .readonly()
       .optional(),
   })
@@ -4270,6 +4271,7 @@ export const zCourseCreatorEducation = z
     qualification: z.string().min(0).max(255),
     field_of_study: z.string().min(0).max(255).optional(),
     school_name: z.string().min(0).max(255),
+    start_year: z.number().int().gte(1950).lte(2100).optional(),
     year_completed: z.number().int().gte(1950).lte(2100).optional(),
     certificate_number: z.string().min(0).max(100).optional(),
     created_date: z.string().datetime().readonly().optional(),
@@ -4867,7 +4869,9 @@ export const zClassDefinitionUpdateRequest = z
     default_end_time: z
       .string()
       .datetime()
-      .describe('**[REQUIRED]** Default end date-time for the class.'),
+      .describe(
+        '**[REQUIRED]** Default end date-time for the class. Together with default_start_time this fixes the class length.'
+      ),
     academic_period_start_date: z
       .string()
       .date()
@@ -4984,10 +4988,33 @@ export const zClassSessionTemplate = z
       .describe('**[READ-ONLY]** Unique identifier for this persisted class session template.')
       .readonly()
       .optional(),
-    start_time: z.string().datetime().describe('Start time for the first occurrence (UTC)'),
-    end_time: z.string().datetime().describe('End time for the first occurrence (UTC)'),
+    start_time: z
+      .string()
+      .datetime()
+      .describe('**[REQUIRED]** Start time for the first occurrence (UTC)'),
+    end_time: z
+      .string()
+      .datetime()
+      .describe(
+        '**[REQUIRED]** End time for the first occurrence (UTC). Together with start_time this fixes the session length.'
+      ),
     recurrence: zClassRecurrence.optional(),
+    timezone: z
+      .string()
+      .min(0)
+      .max(64)
+      .describe(
+        '**[OPTIONAL]** IANA timezone identifier used when displaying generated scheduled sessions.'
+      )
+      .optional(),
     conflict_resolution: zConflictResolutionEnum.optional(),
+    duration_minutes: z.coerce
+      .bigint()
+      .describe(
+        '**[READ-ONLY]** Computed session length in minutes, derived from start_time and end_time.'
+      )
+      .readonly()
+      .optional(),
   })
   .describe(
     'Time slot template used during class creation to generate scheduled instances with optional recurrence'
@@ -5130,10 +5157,10 @@ export const zClassDefinition = z
       )
       .readonly()
       .optional(),
-    capacity_info: z
-      .string()
+    duration_minutes: z.coerce
+      .bigint()
       .describe(
-        '**[READ-ONLY]** Human-readable capacity information including waitlist availability.'
+        '**[READ-ONLY]** Computed duration of the class in minutes based on start and end times.'
       )
       .readonly()
       .optional(),
@@ -5142,10 +5169,10 @@ export const zClassDefinition = z
       .describe('**[READ-ONLY]** Human-readable formatted duration.')
       .readonly()
       .optional(),
-    duration_minutes: z.coerce
-      .bigint()
+    capacity_info: z
+      .string()
       .describe(
-        '**[READ-ONLY]** Computed duration of the class in minutes based on start and end times.'
+        '**[READ-ONLY]** Human-readable capacity information including waitlist availability.'
       )
       .readonly()
       .optional(),
@@ -5211,7 +5238,9 @@ export const zClassMarketplaceJobRequest = z
     default_end_time: z
       .string()
       .datetime()
-      .describe('**[REQUIRED]** Default end date-time for the advertised class (UTC).'),
+      .describe(
+        '**[REQUIRED]** Default end date-time for the advertised class (UTC). Together with default_start_time this fixes the class length.'
+      ),
     academic_period_start_date: z.union([z.string().date(), z.null()]).optional(),
     academic_period_end_date: z.union([z.string().date(), z.null()]).optional(),
     registration_period_start_date: z.union([z.string().date(), z.null()]).optional(),
@@ -5644,11 +5673,6 @@ export const zAssignment = z
       )
       .readonly()
       .optional(),
-    points_display: z
-      .string()
-      .describe('**[READ-ONLY]** Formatted display of the maximum points for this assignment.')
-      .readonly()
-      .optional(),
     assignment_scope: z
       .string()
       .describe('**[READ-ONLY]** Scope of the assignment - lesson-specific or standalone.')
@@ -5657,6 +5681,11 @@ export const zAssignment = z
     submission_summary: z
       .string()
       .describe('**[READ-ONLY]** Summary of accepted submission types for this assignment.')
+      .readonly()
+      .optional(),
+    points_display: z
+      .string()
+      .describe('**[READ-ONLY]** Formatted display of the maximum points for this assignment.')
       .readonly()
       .optional(),
   })
@@ -5931,6 +5960,8 @@ export const zScheduledInstance = z
       .optional(),
     status: zStatusEnum9.optional(),
     cancellation_reason: z.union([z.string(), z.null()]).optional(),
+    organisation_uuid: z.union([z.string().uuid().readonly(), z.null()]).readonly().optional(),
+    organisation_name: z.union([z.string().readonly(), z.null()]).readonly().optional(),
     started_at: z.union([z.string().datetime().readonly(), z.null()]).readonly().optional(),
     concluded_at: z.union([z.string().datetime().readonly(), z.null()]).readonly().optional(),
     created_date: z
@@ -5963,6 +5994,11 @@ export const zScheduledInstance = z
       )
       .readonly()
       .optional(),
+    duration_minutes: z.coerce
+      .bigint()
+      .describe('**[READ-ONLY]** Duration of the scheduled instance in minutes.')
+      .readonly()
+      .optional(),
     duration_formatted: z
       .string()
       .describe('**[READ-ONLY]** Human-readable formatted duration.')
@@ -5978,11 +6014,6 @@ export const zScheduledInstance = z
       .describe(
         '**[READ-ONLY]** Indicates if the scheduled instance is currently active (ongoing).'
       )
-      .readonly()
-      .optional(),
-    duration_minutes: z.coerce
-      .bigint()
-      .describe('**[READ-ONLY]** Duration of the scheduled instance in minutes.')
       .readonly()
       .optional(),
     can_be_cancelled: z
@@ -6677,12 +6708,22 @@ export const zTypeEnum = z.enum([
   'INSTRUCTOR_CLASS_ENROLLMENT_MILESTONE',
   'INSTRUCTOR_CLASS_ENROLLMENT_NOTICE',
   'UPCOMING_CLASS_REMINDER',
+  'COURSE_REVIEW_SUBMITTED',
+  'PROGRAM_REVIEW_SUBMITTED',
+  'CLASS_REVIEW_SUBMITTED',
+  'INSTRUCTOR_REVIEW_SUBMITTED',
   'ACCOUNT_CREATED',
   'PASSWORD_RESET_REQUEST',
   'SECURITY_ALERT',
   'ORDER_PAYMENT_RECEIPT',
   'LEARNING_CERTIFICATE_ISSUED',
   'PROFILE_DOCUMENT_VERIFIED',
+  'INSTRUCTOR_VERIFICATION_APPROVED',
+  'INSTRUCTOR_VERIFICATION_REVOKED',
+  'COURSE_CREATOR_VERIFICATION_APPROVED',
+  'COURSE_CREATOR_VERIFICATION_REVOKED',
+  'ORGANISATION_VERIFICATION_APPROVED',
+  'ORGANISATION_VERIFICATION_REVOKED',
   'PROFILE_COMPLETION_REMINDER',
   'ORGANISATION_INVITATION',
   'GUARDIAN_CONSENT_REQUEST',
@@ -7107,11 +7148,6 @@ export const zEnrollment = z
       .describe('**[READ-ONLY]** Indicates if the enrollment is still active (not cancelled).')
       .readonly()
       .optional(),
-    is_attendance_marked: z
-      .boolean()
-      .describe('**[READ-ONLY]** Indicates if attendance has been marked for this enrollment.')
-      .readonly()
-      .optional(),
     did_attend: z
       .boolean()
       .describe('**[READ-ONLY]** Indicates if the student attended the class.')
@@ -7120,6 +7156,11 @@ export const zEnrollment = z
     status_description: z
       .string()
       .describe('**[READ-ONLY]** Human-readable description of the enrollment status.')
+      .readonly()
+      .optional(),
+    is_attendance_marked: z
+      .boolean()
+      .describe('**[READ-ONLY]** Indicates if attendance has been marked for this enrollment.')
       .readonly()
       .optional(),
     can_be_cancelled: z
@@ -7512,7 +7553,9 @@ export const zClassDefinitionCreateRequest = z
     default_end_time: z
       .string()
       .datetime()
-      .describe('**[REQUIRED]** Default end date-time for the class.'),
+      .describe(
+        '**[REQUIRED]** Default end date-time for the class. Together with default_start_time this fixes the class length.'
+      ),
     academic_period_start_date: z
       .string()
       .date()
@@ -7993,7 +8036,7 @@ export const zApiResponseClassMarketplaceJobApplication = z.object({
 });
 
 /**
- * Organisation review notes when approving or rejecting an instructor application
+ * Organisation review notes and optional interview scheduling details for an instructor application
  */
 export const zClassMarketplaceJobDecisionRequest = z
   .object({
@@ -8893,14 +8936,14 @@ export const zStudentSchedule = z
       .union([z.string().datetime().readonly(), z.null()])
       .readonly()
       .optional(),
-    did_attend: z
-      .boolean()
-      .describe('**[READ-ONLY]** Indicates if the student attended this class.')
-      .readonly()
-      .optional(),
     duration_minutes: z.coerce
       .bigint()
       .describe('**[READ-ONLY]** Duration of the scheduled class in minutes.')
+      .readonly()
+      .optional(),
+    did_attend: z
+      .boolean()
+      .describe('**[READ-ONLY]** Indicates if the student attended this class.')
       .readonly()
       .optional(),
     is_upcoming: z
@@ -10096,6 +10139,14 @@ export const zInstructorCalendarEntry = z
       .optional(),
     location_type: z.string().describe('Location type for scheduled instances').optional(),
     source: z.string().describe('Optional source/reason for blocked entries').optional(),
+    organisation_uuid: z
+      .string()
+      .uuid()
+      .describe(
+        "Organisation the instructor is delivering this session for, when the class behind it is organisation-owned. Null for the instructor's own classes and for availability entries."
+      )
+      .optional(),
+    organisation_name: z.string().describe('Display name of the owning organisation').optional(),
   })
   .describe('Unified calendar entry combining availability slots and scheduled instances');
 
@@ -10407,6 +10458,26 @@ export const zApiResponsePagedDtoStudentCourseEnrollmentSummary = z.object({
 export const zApiResponsePagedDtoStudentClassEnrollmentSummary = z.object({
   success: z.boolean().optional(),
   data: zPagedDtoStudentClassEnrollmentSummary.optional(),
+  message: z.string().optional(),
+  error: z.unknown().optional(),
+});
+
+/**
+ * A weekly bucket of enrolment activity for an organisation
+ */
+export const zWeeklyGrowthPointDto = z
+  .object({
+    week: z.string().describe('ISO week bucket in IYYY-WIW form').optional(),
+    enrolments: z.coerce
+      .bigint()
+      .describe('Distinct student/course enrolments recorded during the week')
+      .optional(),
+  })
+  .describe('A weekly bucket of enrolment activity for an organisation');
+
+export const zApiResponseListWeeklyGrowthPointDto = z.object({
+  success: z.boolean().optional(),
+  data: z.array(zWeeklyGrowthPointDto).optional(),
   message: z.string().optional(),
   error: z.unknown().optional(),
 });
@@ -11469,6 +11540,27 @@ export const zApiResponseListCategory = z.object({
 export const zApiResponseListCompetitionTeam = z.object({
   success: z.boolean().optional(),
   data: z.array(zCompetitionTeam).optional(),
+  message: z.string().optional(),
+  error: z.unknown().optional(),
+});
+
+/**
+ * Whether checkout requires a payment on this environment
+ */
+export const zPaymentModeResponse = z
+  .object({
+    payment_required: z
+      .boolean()
+      .describe(
+        'False on an environment that captures orders without a gateway, in which case the client must not send the learner to the payment page and no STK Push is ever initiated. True wherever money is actually collected.'
+      )
+      .optional(),
+  })
+  .describe('Whether checkout requires a payment on this environment');
+
+export const zApiResponsePaymentModeResponse = z.object({
+  success: z.boolean().optional(),
+  data: zPaymentModeResponse.optional(),
   message: z.string().optional(),
   error: z.unknown().optional(),
 });
@@ -12794,12 +12886,22 @@ export const zTypeEnumWritable = z.enum([
   'INSTRUCTOR_CLASS_ENROLLMENT_MILESTONE',
   'INSTRUCTOR_CLASS_ENROLLMENT_NOTICE',
   'UPCOMING_CLASS_REMINDER',
+  'COURSE_REVIEW_SUBMITTED',
+  'PROGRAM_REVIEW_SUBMITTED',
+  'CLASS_REVIEW_SUBMITTED',
+  'INSTRUCTOR_REVIEW_SUBMITTED',
   'ACCOUNT_CREATED',
   'PASSWORD_RESET_REQUEST',
   'SECURITY_ALERT',
   'ORDER_PAYMENT_RECEIPT',
   'LEARNING_CERTIFICATE_ISSUED',
   'PROFILE_DOCUMENT_VERIFIED',
+  'INSTRUCTOR_VERIFICATION_APPROVED',
+  'INSTRUCTOR_VERIFICATION_REVOKED',
+  'COURSE_CREATOR_VERIFICATION_APPROVED',
+  'COURSE_CREATOR_VERIFICATION_REVOKED',
+  'ORGANISATION_VERIFICATION_APPROVED',
+  'ORGANISATION_VERIFICATION_REVOKED',
   'PROFILE_COMPLETION_REMINDER',
   'ORGANISATION_INVITATION',
   'GUARDIAN_CONSENT_REQUEST',
@@ -19813,6 +19915,28 @@ export const zSearchEnrollmentsData = z.object({
  */
 export const zSearchEnrollmentsResponse = zApiResponsePagedDtoEnrollment;
 
+export const zGetWeeklyGrowthData = z.object({
+  body: z.never().optional(),
+  path: z.object({
+    organisationUuid: z.string().uuid().describe('UUID of the organisation to scope to'),
+  }),
+  query: z
+    .object({
+      weeks: z
+        .number()
+        .int()
+        .describe('Number of ISO weeks to include (inclusive of the current week)')
+        .optional()
+        .default(8),
+    })
+    .optional(),
+});
+
+/**
+ * Weekly growth retrieved successfully
+ */
+export const zGetWeeklyGrowthResponse = zApiResponseListWeeklyGrowthPointDto;
+
 export const zGetTodayGrowthData = z.object({
   body: z.never().optional(),
   path: z.object({
@@ -20517,6 +20641,17 @@ export const zGetRootCategoriesData = z.object({
  * OK
  */
 export const zGetRootCategoriesResponse = zApiResponseListCategory;
+
+export const zGetPaymentModeData = z.object({
+  body: z.never().optional(),
+  path: z.never().optional(),
+  query: z.never().optional(),
+});
+
+/**
+ * OK
+ */
+export const zGetPaymentModeResponse = zApiResponsePaymentModeResponse;
 
 export const zGetOrderData = z.object({
   body: z.never().optional(),

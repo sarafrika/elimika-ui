@@ -1462,6 +1462,9 @@ import type {
   SearchEnrollmentsData,
   SearchEnrollmentsResponses,
   SearchEnrollmentsErrors,
+  GetWeeklyGrowthData,
+  GetWeeklyGrowthResponses,
+  GetWeeklyGrowthErrors,
   GetTodayGrowthData,
   GetTodayGrowthResponses,
   GetTodayGrowthErrors,
@@ -1615,6 +1618,9 @@ import type {
   GetRootCategoriesData,
   GetRootCategoriesResponses,
   GetRootCategoriesErrors,
+  GetPaymentModeData,
+  GetPaymentModeResponses,
+  GetPaymentModeErrors,
   GetOrderData,
   GetOrderResponses,
   GetOrderErrors,
@@ -2221,6 +2227,7 @@ import {
   getCourseEnrollmentsForStudentResponseTransformer,
   getClassEnrollmentsForStudentResponseTransformer,
   searchEnrollmentsResponseTransformer,
+  getWeeklyGrowthResponseTransformer,
   getTodayGrowthResponseTransformer,
   getStudentPerformanceResponseTransformer,
   getStudentSummariesResponseTransformer,
@@ -9264,14 +9271,14 @@ export const verifyDocument = <ThrowOnError extends boolean = false>(
 
 /**
  * Upload instructor document file
- * Uploads a PDF document for an instructor and creates a document record.
+ * Uploads a credential document for an instructor and creates a document record.
  *
  * **Use cases:**
  * - Uploading certificates, licenses, and other professional credentials.
  * - Attaching supporting documents to education, experience, or membership records.
  *
  * **File requirements:**
- * - Must be a PDF file (`application/pdf`).
+ * - Must match the selected document type's configured file extensions and size limit.
  * - Stored via the platform StorageService under the `profile_documents` folder, partitioned by instructor UUID.
  *
  */
@@ -11074,14 +11081,14 @@ export const verifyCourseCreatorDocument = <ThrowOnError extends boolean = false
 
 /**
  * Upload course creator document file
- * Uploads a PDF document for a course creator and creates a document record.
+ * Uploads a credential document for a course creator and creates a document record.
  *
  * **Use cases:**
  * - Uploading certificates, credentials, and other creator verification documents.
  * - Attaching supporting documents to education, experience, or membership records.
  *
  * **File requirements:**
- * - Must be a PDF file (`application/pdf`).
+ * - Must match the selected document type's configured file extensions and size limit.
  * - Stored via the platform StorageService under the `profile_documents` folder, partitioned by course creator UUID.
  *
  */
@@ -16411,6 +16418,7 @@ export const searchExperience = <ThrowOnError extends boolean = false>(
  * - `instructorUuid=uuid` - All education for specific instructor
  * - `qualification_like=degree` - Qualifications containing "degree"
  * - `schoolName_startswith=University` - Schools starting with "University"
+ * - `startYear_gte=2015` - Started in 2015 or later
  * - `yearCompleted_gte=2020` - Completed in 2020 or later
  * - `yearCompleted_between=2015,2020` - Completed between 2015-2020
  * - `certificateNumber_noteq=null` - Has certificate number
@@ -16779,6 +16787,34 @@ export const searchEnrollments = <ThrowOnError extends boolean = false>(
       },
     ],
     url: '/api/v1/enrollment/search',
+    ...options,
+  });
+};
+
+/**
+ * Get organisation weekly-growth
+ * Distinct students-per-course enrolled in each ISO week over the requested span, across all classes owned by the organisation, oldest week first.
+ */
+export const getWeeklyGrowth = <ThrowOnError extends boolean = false>(
+  options: Options<GetWeeklyGrowthData, ThrowOnError>
+) => {
+  return (options.client ?? _heyApiClient).get<
+    GetWeeklyGrowthResponses,
+    GetWeeklyGrowthErrors,
+    ThrowOnError
+  >({
+    responseTransformer: getWeeklyGrowthResponseTransformer,
+    security: [
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+    ],
+    url: '/api/v1/enrollment/organisations/{organisationUuid}/weekly-growth',
     ...options,
   });
 };
@@ -18310,6 +18346,33 @@ export const getRootCategories = <ThrowOnError extends boolean = false>(
       },
     ],
     url: '/api/v1/config/categories/root',
+    ...options,
+  });
+};
+
+/**
+ * Is a payment required to check out?
+ * Returns payment_required=false on an environment that captures orders on checkout completion. Clients must skip the payment page and initiate no STK Push when this is false, because the order is already settled by then and asking to pay for it is rejected.
+ */
+export const getPaymentMode = <ThrowOnError extends boolean = false>(
+  options?: Options<GetPaymentModeData, ThrowOnError>
+) => {
+  return (options?.client ?? _heyApiClient).get<
+    GetPaymentModeResponses,
+    GetPaymentModeErrors,
+    ThrowOnError
+  >({
+    security: [
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+    ],
+    url: '/api/v1/commerce/payment-mode',
     ...options,
   });
 };

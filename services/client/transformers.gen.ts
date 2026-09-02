@@ -382,6 +382,7 @@ import type {
   GetCourseEnrollmentsForStudentResponse,
   GetClassEnrollmentsForStudentResponse,
   SearchEnrollmentsResponse,
+  GetWeeklyGrowthResponse,
   GetTodayGrowthResponse,
   GetStudentPerformanceResponse,
   GetStudentSummariesResponse,
@@ -1998,6 +1999,9 @@ const classSessionTemplateSchemaResponseTransformer = (data: any) => {
   data.end_time = new Date(data.end_time);
   if (data.recurrence) {
     data.recurrence = classRecurrenceSchemaResponseTransformer(data.recurrence);
+  }
+  if (data.duration_minutes) {
+    data.duration_minutes = BigInt(data.duration_minutes.toString());
   }
   return data;
 };
@@ -6627,6 +6631,29 @@ export const searchEnrollmentsResponseTransformer = async (
   data: any
 ): Promise<SearchEnrollmentsResponse> => {
   data = apiResponsePagedDtoEnrollmentSchemaResponseTransformer(data);
+  return data;
+};
+
+const weeklyGrowthPointDtoSchemaResponseTransformer = (data: any) => {
+  if (data.enrolments) {
+    data.enrolments = BigInt(data.enrolments.toString());
+  }
+  return data;
+};
+
+const apiResponseListWeeklyGrowthPointDtoSchemaResponseTransformer = (data: any) => {
+  if (data.data) {
+    data.data = data.data.map((item: any) => {
+      return weeklyGrowthPointDtoSchemaResponseTransformer(item);
+    });
+  }
+  return data;
+};
+
+export const getWeeklyGrowthResponseTransformer = async (
+  data: any
+): Promise<GetWeeklyGrowthResponse> => {
+  data = apiResponseListWeeklyGrowthPointDtoSchemaResponseTransformer(data);
   return data;
 };
 
