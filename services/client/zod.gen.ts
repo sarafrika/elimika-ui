@@ -219,8 +219,6 @@ export const zTrainingBranch = z
     active: z
       .boolean()
       .describe('**[REQUIRED]** Indicates whether the training branch is active and operational.'),
-    capacity: z.union([z.number().int(), z.null()]).optional(),
-    venue_type: z.union([z.string().min(0).max(50), z.null()]).optional(),
     created_date: z
       .string()
       .datetime()
@@ -897,17 +895,17 @@ export const zRubricMatrix = z
         "**[REQUIRED]** Matrix cells mapping criteria to scoring levels with descriptions. Key format: 'criteriaUuid_scoringLevelUuid'."
       ),
     matrix_statistics: zMatrixStatistics.optional(),
-    is_complete: z
-      .boolean()
-      .describe('**[READ-ONLY]** Whether all matrix cells have been completed with descriptions.')
-      .readonly()
-      .optional(),
     expected_cell_count: z
       .number()
       .int()
       .describe(
         '**[READ-ONLY]** Expected number of matrix cells (criteria count × scoring levels count).'
       )
+      .readonly()
+      .optional(),
+    is_complete: z
+      .boolean()
+      .describe('**[READ-ONLY]** Whether all matrix cells have been completed with descriptions.')
       .readonly()
       .optional(),
   })
@@ -2097,8 +2095,6 @@ export const zOrganisationResource = z
     seat_capacity: z.union([z.number().int(), z.null()]).optional(),
     total_quantity: z.union([z.number().int(), z.null()]).optional(),
     location_name: z.union([z.string(), z.null()]).optional(),
-    location_latitude: z.union([z.number(), z.null()]).optional(),
-    location_longitude: z.union([z.number(), z.null()]).optional(),
     is_active: z.boolean().describe('Whether the resource can currently be booked').optional(),
     organisation_uuid: z
       .string()

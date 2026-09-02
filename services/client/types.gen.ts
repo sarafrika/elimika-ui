@@ -158,14 +158,6 @@ export type TrainingBranch = {
    */
   active: boolean;
   /**
-   * **[OPTIONAL]** Seating/attendee capacity of the venue.
-   */
-  capacity?: number | null;
-  /**
-   * **[OPTIONAL]** Free-form venue/room type (e.g. Lab, Workshop, Auditorium).
-   */
-  venue_type?: string | null;
-  /**
    * **[READ-ONLY]** Timestamp when the training branch was first created. Automatically set by the system and cannot be modified.
    */
   readonly created_date?: Date;
@@ -717,13 +709,13 @@ export type RubricMatrix = {
    */
   matrix_statistics?: MatrixStatistics;
   /**
-   * **[READ-ONLY]** Whether all matrix cells have been completed with descriptions.
-   */
-  readonly is_complete?: boolean;
-  /**
    * **[READ-ONLY]** Expected number of matrix cells (criteria count × scoring levels count).
    */
   readonly expected_cell_count?: number;
+  /**
+   * **[READ-ONLY]** Whether all matrix cells have been completed with descriptions.
+   */
+  readonly is_complete?: boolean;
 };
 
 export type ApiResponseRubricCriteria = {
@@ -1619,17 +1611,9 @@ export type OrganisationResource = {
    */
   total_quantity?: number | null;
   /**
-   * Human readable location
+   * Optional within-branch location label, e.g. 'Main Hall, 2nd floor'
    */
   location_name?: string | null;
-  /**
-   * Latitude of the resource location
-   */
-  location_latitude?: number | null;
-  /**
-   * Longitude of the resource location
-   */
-  location_longitude?: number | null;
   /**
    * Whether the resource can currently be booked
    */

@@ -352,19 +352,6 @@ export const TrainingBranchSchema = {
         '**[REQUIRED]** Indicates whether the training branch is active and operational.',
       example: true,
     },
-    capacity: {
-      type: ['integer', 'null'],
-      format: 'int32',
-      description: '**[OPTIONAL]** Seating/attendee capacity of the venue.',
-      example: 30,
-    },
-    venue_type: {
-      type: ['string', 'null'],
-      description: '**[OPTIONAL]** Free-form venue/room type (e.g. Lab, Workshop, Auditorium).',
-      example: 'Lab',
-      maxLength: 50,
-      minLength: 0,
-    },
     created_date: {
       type: 'string',
       format: 'date-time',
@@ -1432,19 +1419,19 @@ export const RubricMatrixSchema = {
         '**[READ-ONLY]** Statistical information about the matrix completion and scoring.',
       readOnly: true,
     },
-    is_complete: {
-      type: 'boolean',
-      description:
-        '**[READ-ONLY]** Whether all matrix cells have been completed with descriptions.',
-      example: true,
-      readOnly: true,
-    },
     expected_cell_count: {
       type: 'integer',
       format: 'int32',
       description:
         '**[READ-ONLY]** Expected number of matrix cells (criteria count × scoring levels count).',
       example: 20,
+      readOnly: true,
+    },
+    is_complete: {
+      type: 'boolean',
+      description:
+        '**[READ-ONLY]** Whether all matrix cells have been completed with descriptions.',
+      example: true,
       readOnly: true,
     },
   },
@@ -3213,15 +3200,7 @@ export const OrganisationResourceSchema = {
     },
     location_name: {
       type: ['string', 'null'],
-      description: 'Human readable location',
-    },
-    location_latitude: {
-      type: ['number', 'null'],
-      description: 'Latitude of the resource location',
-    },
-    location_longitude: {
-      type: ['number', 'null'],
-      description: 'Longitude of the resource location',
+      description: "Optional within-branch location label, e.g. 'Main Hall, 2nd floor'",
     },
     is_active: {
       type: 'boolean',
