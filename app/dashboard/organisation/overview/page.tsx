@@ -1,6 +1,7 @@
-import { ActivityFeed, FundUtilizationChart } from '@/components/dashboard';
+import { ActivityFeed } from '@/components/dashboard';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { OrgPage, orgStack } from '../_components/org-page';
+import { OverviewFundUtilisation } from './_components/overview-fund-utilisation';
 import { OverviewAlerts } from './_components/overview-alerts';
 import { OverviewCourseRail } from './_components/overview-course-rail';
 import { OverviewEnrolmentTrends } from './_components/overview-enrolment-trends';
@@ -25,7 +26,7 @@ export default function OrganizationOverviewPage() {
               <CardTitle className='text-base font-semibold'>Fund Utilisation</CardTitle>
             </CardHeader>
             <CardContent>
-              <FundUtilizationChart data={[]} currencyPrefix='KSh ' />
+              <OverviewFundUtilisation />
             </CardContent>
           </Card>
 

@@ -83,9 +83,9 @@ export function FundUtilizationChart({
             dataKey='allocated'
             fill='var(--color-chart-1)'
             radius={[4, 4, 0, 0]}
-            name='Allocated'
+            name='Money in'
           />
-          <Bar dataKey='spent' fill='var(--color-chart-2)' radius={[4, 4, 0, 0]} name='Spent' />
+          <Bar dataKey='spent' fill='var(--color-chart-2)' radius={[4, 4, 0, 0]} name='Money out' />
         </BarChart>
       </ResponsiveContainer>
     </div>
