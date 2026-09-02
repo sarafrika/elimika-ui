@@ -1483,6 +1483,9 @@ import type {
   GetClassEnrolmentCountsData,
   GetClassEnrolmentCountsResponses,
   GetClassEnrolmentCountsErrors,
+  GetActivityFeedData,
+  GetActivityFeedResponses,
+  GetActivityFeedErrors,
   GetEnrollmentsForInstanceData,
   GetEnrollmentsForInstanceResponses,
   GetEnrollmentsForInstanceErrors,
@@ -2236,6 +2239,7 @@ import {
   getStudentSummariesResponseTransformer,
   getEnrolmentTrendsResponseTransformer,
   getClassEnrolmentCountsResponseTransformer,
+  getActivityFeedResponseTransformer,
   getEnrollmentsForInstanceResponseTransformer,
   getEnrollmentCountResponseTransformer,
   listCurrenciesResponseTransformer,
@@ -16985,6 +16989,34 @@ export const getClassEnrolmentCounts = <ThrowOnError extends boolean = false>(
       },
     ],
     url: '/api/v1/enrollment/organisations/{organisationUuid}/class-enrolment-counts',
+    ...options,
+  });
+};
+
+/**
+ * Get an organisation's activity feed
+ * Recent, human-meaningful events across the organisation — students enrolling, classes being opened and instructors being paid — newest first.
+ */
+export const getActivityFeed = <ThrowOnError extends boolean = false>(
+  options: Options<GetActivityFeedData, ThrowOnError>
+) => {
+  return (options.client ?? _heyApiClient).get<
+    GetActivityFeedResponses,
+    GetActivityFeedErrors,
+    ThrowOnError
+  >({
+    responseTransformer: getActivityFeedResponseTransformer,
+    security: [
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+    ],
+    url: '/api/v1/enrollment/organisations/{organisationUuid}/activity-feed',
     ...options,
   });
 };

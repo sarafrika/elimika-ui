@@ -3474,13 +3474,6 @@ export const InstructorSchema = {
       example: 'admin@sarafrika.com',
       readOnly: true,
     },
-    formatted_location: {
-      type: ['string', 'null'],
-      description:
-        '**[READ-ONLY]** Formatted location coordinates as a string. Returns null if location coordinates are not available.',
-      example: '-1.292100, 36.821900',
-      readOnly: true,
-    },
     is_profile_complete: {
       type: 'boolean',
       description:
@@ -3493,6 +3486,13 @@ export const InstructorSchema = {
       description:
         '**[READ-ONLY]** Indicates if the instructor has both latitude and longitude coordinates configured.',
       example: true,
+      readOnly: true,
+    },
+    formatted_location: {
+      type: ['string', 'null'],
+      description:
+        '**[READ-ONLY]** Formatted location coordinates as a string. Returns null if location coordinates are not available.',
+      example: '-1.292100, 36.821900',
       readOnly: true,
     },
   },
@@ -3741,14 +3741,14 @@ export const InstructorProfessionalMembershipSchema = {
       example: true,
       readOnly: true,
     },
-    membership_status: {
-      $ref: '#/components/schemas/MembershipStatusEnum',
-    },
     formatted_duration: {
       type: ['string', 'null'],
       description: '**[READ-ONLY]** Human-readable formatted duration of membership.',
       example: '4 years, 3 months',
       readOnly: true,
+    },
+    membership_status: {
+      $ref: '#/components/schemas/MembershipStatusEnum',
     },
     membership_period: {
       type: ['string', 'null'],
@@ -6087,18 +6087,6 @@ export const CourseAssessmentSchema = {
       example: 'instructor@sarafrika.com',
       readOnly: true,
     },
-    assessment_category: {
-      type: 'string',
-      description: '**[READ-ONLY]** Category classification of the assessment type.',
-      example: 'Participation Component',
-      readOnly: true,
-    },
-    weight_display: {
-      type: 'string',
-      description: '**[READ-ONLY]** Human-readable format of the weight percentage.',
-      example: '20% of final grade',
-      readOnly: true,
-    },
     is_major_assessment: {
       type: 'boolean',
       description: '**[READ-ONLY]** Indicates if this is a major assessment component.',
@@ -6116,6 +6104,18 @@ export const CourseAssessmentSchema = {
       description:
         '**[READ-ONLY]** Human-readable description of how line items are combined for this component.',
       example: 'Weighted line items',
+      readOnly: true,
+    },
+    assessment_category: {
+      type: 'string',
+      description: '**[READ-ONLY]** Category classification of the assessment type.',
+      example: 'Participation Component',
+      readOnly: true,
+    },
+    weight_display: {
+      type: 'string',
+      description: '**[READ-ONLY]** Human-readable format of the weight percentage.',
+      example: '20% of final grade',
       readOnly: true,
     },
   },
@@ -8351,17 +8351,17 @@ conflict_resolution per template:
       example: 90,
       readOnly: true,
     },
-    duration_formatted: {
-      type: 'string',
-      description: '**[READ-ONLY]** Human-readable formatted duration.',
-      example: '1h 30m',
-      readOnly: true,
-    },
     capacity_info: {
       type: 'string',
       description:
         '**[READ-ONLY]** Human-readable capacity information including waitlist availability.',
       example: 'Max 25 participants (waitlist enabled)',
+      readOnly: true,
+    },
+    duration_formatted: {
+      type: 'string',
+      description: '**[READ-ONLY]** Human-readable formatted duration.',
+      example: '1h 30m',
       readOnly: true,
     },
   },
@@ -12008,6 +12008,12 @@ export const EnrollmentSchema = {
       example: true,
       readOnly: true,
     },
+    can_be_cancelled: {
+      type: 'boolean',
+      description: '**[READ-ONLY]** Indicates if the enrollment can be cancelled.',
+      example: true,
+      readOnly: true,
+    },
     is_attendance_marked: {
       type: 'boolean',
       description: '**[READ-ONLY]** Indicates if attendance has been marked for this enrollment.',
@@ -12024,12 +12030,6 @@ export const EnrollmentSchema = {
       type: 'string',
       description: '**[READ-ONLY]** Human-readable description of the enrollment status.',
       example: 'Student is enrolled in the class',
-      readOnly: true,
-    },
-    can_be_cancelled: {
-      type: 'boolean',
-      description: '**[READ-ONLY]** Indicates if the enrollment can be cancelled.',
-      example: true,
       readOnly: true,
     },
   },
@@ -18766,6 +18766,59 @@ export const ClassEnrolmentCountDTOSchema = {
       format: 'int64',
       description: 'Distinct actively-enrolled students',
       example: 18,
+    },
+  },
+} as const;
+
+export const ApiResponseListOrganisationActivityEventDTOSchema = {
+  type: 'object',
+  properties: {
+    success: {
+      type: 'boolean',
+    },
+    data: {
+      type: 'array',
+      items: {
+        $ref: '#/components/schemas/OrganisationActivityEventDTO',
+      },
+    },
+    message: {
+      type: 'string',
+    },
+    error: {},
+  },
+} as const;
+
+export const OrganisationActivityEventDTOSchema = {
+  type: 'object',
+  description: 'A recent activity event within an organisation',
+  properties: {
+    event_type: {
+      type: 'string',
+      description: 'Event type: ENROLMENT, CLASS_OPENED or PAYOUT',
+      example: 'ENROLMENT',
+    },
+    occurred_at: {
+      type: 'string',
+      format: 'date-time',
+      description: 'When the event occurred',
+    },
+    class_title: {
+      type: ['string', 'null'],
+      description: 'Class the event relates to, if any',
+    },
+    subject_uuid: {
+      type: ['string', 'null'],
+      format: 'uuid',
+      description: 'Student (ENROLMENT) or instructor user (PAYOUT) the event is about',
+    },
+    amount: {
+      type: ['number', 'null'],
+      description: 'Amount paid, for PAYOUT events',
+    },
+    currency_code: {
+      type: ['string', 'null'],
+      description: 'Currency of the amount, for PAYOUT events',
     },
   },
 } as const;

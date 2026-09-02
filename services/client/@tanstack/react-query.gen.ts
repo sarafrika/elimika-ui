@@ -495,6 +495,7 @@ import {
   getStudentSummaries,
   getEnrolmentTrends,
   getClassEnrolmentCounts,
+  getActivityFeed,
   getEnrollmentsForInstance,
   getEnrollmentCount,
   hasCapacityForEnrollment,
@@ -1867,6 +1868,7 @@ import type {
   GetStudentSummariesData,
   GetEnrolmentTrendsData,
   GetClassEnrolmentCountsData,
+  GetActivityFeedData,
   GetEnrollmentsForInstanceData,
   GetEnrollmentCountData,
   HasCapacityForEnrollmentData,
@@ -23521,6 +23523,28 @@ export const getClassEnrolmentCountsOptions = (options: Options<GetClassEnrolmen
       return data;
     },
     queryKey: getClassEnrolmentCountsQueryKey(options),
+  });
+};
+
+export const getActivityFeedQueryKey = (options: Options<GetActivityFeedData>) =>
+  createQueryKey('getActivityFeed', options);
+
+/**
+ * Get an organisation's activity feed
+ * Recent, human-meaningful events across the organisation — students enrolling, classes being opened and instructors being paid — newest first.
+ */
+export const getActivityFeedOptions = (options: Options<GetActivityFeedData>) => {
+  return queryOptions({
+    queryFn: async ({ queryKey, signal }) => {
+      const { data } = await getActivityFeed({
+        ...options,
+        ...queryKey[0],
+        signal,
+        throwOnError: true,
+      });
+      return data;
+    },
+    queryKey: getActivityFeedQueryKey(options),
   });
 };
 

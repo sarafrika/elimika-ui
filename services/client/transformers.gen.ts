@@ -388,6 +388,7 @@ import type {
   GetStudentSummariesResponse,
   GetEnrolmentTrendsResponse,
   GetClassEnrolmentCountsResponse,
+  GetActivityFeedResponse,
   GetEnrollmentsForInstanceResponse,
   GetEnrollmentCountResponse,
   ListCurrenciesResponse,
@@ -6781,6 +6782,29 @@ export const getClassEnrolmentCountsResponseTransformer = async (
   data: any
 ): Promise<GetClassEnrolmentCountsResponse> => {
   data = apiResponseListClassEnrolmentCountDtoSchemaResponseTransformer(data);
+  return data;
+};
+
+const organisationActivityEventDtoSchemaResponseTransformer = (data: any) => {
+  if (data.occurred_at) {
+    data.occurred_at = new Date(data.occurred_at);
+  }
+  return data;
+};
+
+const apiResponseListOrganisationActivityEventDtoSchemaResponseTransformer = (data: any) => {
+  if (data.data) {
+    data.data = data.data.map((item: any) => {
+      return organisationActivityEventDtoSchemaResponseTransformer(item);
+    });
+  }
+  return data;
+};
+
+export const getActivityFeedResponseTransformer = async (
+  data: any
+): Promise<GetActivityFeedResponse> => {
+  data = apiResponseListOrganisationActivityEventDtoSchemaResponseTransformer(data);
   return data;
 };
 

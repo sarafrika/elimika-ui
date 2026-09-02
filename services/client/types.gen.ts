@@ -1772,10 +1772,6 @@ export type Instructor = {
    */
   readonly updated_by?: string;
   /**
-   * **[READ-ONLY]** Formatted location coordinates as a string. Returns null if location coordinates are not available.
-   */
-  readonly formatted_location?: string | null;
-  /**
    * **[READ-ONLY]** Indicates if the instructor profile is considered complete. Requires bio and professional headline.
    */
   readonly is_profile_complete?: boolean;
@@ -1783,6 +1779,10 @@ export type Instructor = {
    * **[READ-ONLY]** Indicates if the instructor has both latitude and longitude coordinates configured.
    */
   readonly has_location_coordinates?: boolean;
+  /**
+   * **[READ-ONLY]** Formatted location coordinates as a string. Returns null if location coordinates are not available.
+   */
+  readonly formatted_location?: string | null;
 };
 
 /**
@@ -1899,11 +1899,11 @@ export type InstructorProfessionalMembership = {
    * **[READ-ONLY]** Indicates if the membership record has all essential information.
    */
   readonly is_complete?: boolean;
-  membership_status?: MembershipStatusEnum;
   /**
    * **[READ-ONLY]** Human-readable formatted duration of membership.
    */
   readonly formatted_duration?: string | null;
+  membership_status?: MembershipStatusEnum;
   /**
    * **[READ-ONLY]** Formatted membership period showing start and end dates.
    */
@@ -3045,14 +3045,6 @@ export type CourseAssessment = {
    */
   readonly updated_by?: string;
   /**
-   * **[READ-ONLY]** Category classification of the assessment type.
-   */
-  readonly assessment_category?: string;
-  /**
-   * **[READ-ONLY]** Human-readable format of the weight percentage.
-   */
-  readonly weight_display?: string;
-  /**
    * **[READ-ONLY]** Indicates if this is a major assessment component.
    */
   readonly is_major_assessment?: boolean;
@@ -3064,6 +3056,14 @@ export type CourseAssessment = {
    * **[READ-ONLY]** Human-readable description of how line items are combined for this component.
    */
   readonly aggregation_strategy_display?: string;
+  /**
+   * **[READ-ONLY]** Category classification of the assessment type.
+   */
+  readonly assessment_category?: string;
+  /**
+   * **[READ-ONLY]** Human-readable format of the weight percentage.
+   */
+  readonly weight_display?: string;
 };
 
 export type ApiResponseCourseAssessment = {
@@ -4034,13 +4034,13 @@ export type ClassDefinition = {
    */
   readonly duration_minutes?: bigint;
   /**
-   * **[READ-ONLY]** Human-readable formatted duration.
-   */
-  readonly duration_formatted?: string;
-  /**
    * **[READ-ONLY]** Human-readable capacity information including waitlist availability.
    */
   readonly capacity_info?: string;
+  /**
+   * **[READ-ONLY]** Human-readable formatted duration.
+   */
+  readonly duration_formatted?: string;
 };
 
 /**
@@ -6060,6 +6060,10 @@ export type Enrollment = {
    */
   readonly is_active?: boolean;
   /**
+   * **[READ-ONLY]** Indicates if the enrollment can be cancelled.
+   */
+  readonly can_be_cancelled?: boolean;
+  /**
    * **[READ-ONLY]** Indicates if attendance has been marked for this enrollment.
    */
   readonly is_attendance_marked?: boolean;
@@ -6071,10 +6075,6 @@ export type Enrollment = {
    * **[READ-ONLY]** Human-readable description of the enrollment status.
    */
   readonly status_description?: string;
-  /**
-   * **[READ-ONLY]** Indicates if the enrollment can be cancelled.
-   */
-  readonly can_be_cancelled?: boolean;
 };
 
 export type ApiResponse = {
@@ -9560,6 +9560,43 @@ export type ClassEnrolmentCountDto = {
    * Distinct actively-enrolled students
    */
   enrolled?: bigint;
+};
+
+export type ApiResponseListOrganisationActivityEventDto = {
+  success?: boolean;
+  data?: Array<OrganisationActivityEventDto>;
+  message?: string;
+  error?: unknown;
+};
+
+/**
+ * A recent activity event within an organisation
+ */
+export type OrganisationActivityEventDto = {
+  /**
+   * Event type: ENROLMENT, CLASS_OPENED or PAYOUT
+   */
+  event_type?: string;
+  /**
+   * When the event occurred
+   */
+  occurred_at?: Date;
+  /**
+   * Class the event relates to, if any
+   */
+  class_title?: string | null;
+  /**
+   * Student (ENROLMENT) or instructor user (PAYOUT) the event is about
+   */
+  subject_uuid?: string | null;
+  /**
+   * Amount paid, for PAYOUT events
+   */
+  amount?: number | null;
+  /**
+   * Currency of the amount, for PAYOUT events
+   */
+  currency_code?: string | null;
 };
 
 export type ApiResponseLong = {
@@ -30779,6 +30816,45 @@ export type GetClassEnrolmentCountsResponses = {
 
 export type GetClassEnrolmentCountsResponse =
   GetClassEnrolmentCountsResponses[keyof GetClassEnrolmentCountsResponses];
+
+export type GetActivityFeedData = {
+  body?: never;
+  path: {
+    /**
+     * UUID of the organisation to scope to
+     */
+    organisationUuid: string;
+  };
+  query?: {
+    /**
+     * Maximum number of events to return (1-100)
+     */
+    limit?: number;
+  };
+  url: '/api/v1/enrollment/organisations/{organisationUuid}/activity-feed';
+};
+
+export type GetActivityFeedErrors = {
+  /**
+   * Not Found
+   */
+  404: ResponseDtoVoid;
+  /**
+   * Internal Server Error
+   */
+  500: ResponseDtoVoid;
+};
+
+export type GetActivityFeedError = GetActivityFeedErrors[keyof GetActivityFeedErrors];
+
+export type GetActivityFeedResponses = {
+  /**
+   * Activity feed retrieved successfully
+   */
+  200: ApiResponseListOrganisationActivityEventDto;
+};
+
+export type GetActivityFeedResponse = GetActivityFeedResponses[keyof GetActivityFeedResponses];
 
 export type GetEnrollmentsForInstanceData = {
   body?: never;

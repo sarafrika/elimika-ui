@@ -2238,7 +2238,6 @@ export const zInstructor = z
       )
       .readonly()
       .optional(),
-    formatted_location: z.union([z.string().readonly(), z.null()]).readonly().optional(),
     is_profile_complete: z
       .boolean()
       .describe(
@@ -2253,6 +2252,7 @@ export const zInstructor = z
       )
       .readonly()
       .optional(),
+    formatted_location: z.union([z.string().readonly(), z.null()]).readonly().optional(),
   })
   .describe('Instructor profile including location data for educational service delivery');
 
@@ -2441,8 +2441,8 @@ export const zInstructorProfessionalMembership = z
       .describe('**[READ-ONLY]** Indicates if the membership record has all essential information.')
       .readonly()
       .optional(),
-    membership_status: zMembershipStatusEnum.optional(),
     formatted_duration: z.union([z.string().readonly(), z.null()]).readonly().optional(),
+    membership_status: zMembershipStatusEnum.optional(),
     membership_period: z.union([z.string().readonly(), z.null()]).readonly().optional(),
     is_long_standing_member: z
       .boolean()
@@ -3934,16 +3934,6 @@ export const zCourseAssessment = z
       )
       .readonly()
       .optional(),
-    assessment_category: z
-      .string()
-      .describe('**[READ-ONLY]** Category classification of the assessment type.')
-      .readonly()
-      .optional(),
-    weight_display: z
-      .string()
-      .describe('**[READ-ONLY]** Human-readable format of the weight percentage.')
-      .readonly()
-      .optional(),
     is_major_assessment: z
       .boolean()
       .describe('**[READ-ONLY]** Indicates if this is a major assessment component.')
@@ -3959,6 +3949,16 @@ export const zCourseAssessment = z
       .describe(
         '**[READ-ONLY]** Human-readable description of how line items are combined for this component.'
       )
+      .readonly()
+      .optional(),
+    assessment_category: z
+      .string()
+      .describe('**[READ-ONLY]** Category classification of the assessment type.')
+      .readonly()
+      .optional(),
+    weight_display: z
+      .string()
+      .describe('**[READ-ONLY]** Human-readable format of the weight percentage.')
       .readonly()
       .optional(),
   })
@@ -5164,16 +5164,16 @@ export const zClassDefinition = z
       )
       .readonly()
       .optional(),
-    duration_formatted: z
-      .string()
-      .describe('**[READ-ONLY]** Human-readable formatted duration.')
-      .readonly()
-      .optional(),
     capacity_info: z
       .string()
       .describe(
         '**[READ-ONLY]** Human-readable capacity information including waitlist availability.'
       )
+      .readonly()
+      .optional(),
+    duration_formatted: z
+      .string()
+      .describe('**[READ-ONLY]** Human-readable formatted duration.')
       .readonly()
       .optional(),
   })
@@ -7148,6 +7148,11 @@ export const zEnrollment = z
       .describe('**[READ-ONLY]** Indicates if the enrollment is still active (not cancelled).')
       .readonly()
       .optional(),
+    can_be_cancelled: z
+      .boolean()
+      .describe('**[READ-ONLY]** Indicates if the enrollment can be cancelled.')
+      .readonly()
+      .optional(),
     is_attendance_marked: z
       .boolean()
       .describe('**[READ-ONLY]** Indicates if attendance has been marked for this enrollment.')
@@ -7161,11 +7166,6 @@ export const zEnrollment = z
     status_description: z
       .string()
       .describe('**[READ-ONLY]** Human-readable description of the enrollment status.')
-      .readonly()
-      .optional(),
-    can_be_cancelled: z
-      .boolean()
-      .describe('**[READ-ONLY]** Indicates if the enrollment can be cancelled.')
       .readonly()
       .optional(),
   })
@@ -10593,6 +10593,27 @@ export const zClassEnrolmentCountDto = z
 export const zApiResponseListClassEnrolmentCountDto = z.object({
   success: z.boolean().optional(),
   data: z.array(zClassEnrolmentCountDto).optional(),
+  message: z.string().optional(),
+  error: z.unknown().optional(),
+});
+
+/**
+ * A recent activity event within an organisation
+ */
+export const zOrganisationActivityEventDto = z
+  .object({
+    event_type: z.string().describe('Event type: ENROLMENT, CLASS_OPENED or PAYOUT').optional(),
+    occurred_at: z.string().datetime().describe('When the event occurred').optional(),
+    class_title: z.union([z.string(), z.null()]).optional(),
+    subject_uuid: z.union([z.string().uuid(), z.null()]).optional(),
+    amount: z.union([z.number(), z.null()]).optional(),
+    currency_code: z.union([z.string(), z.null()]).optional(),
+  })
+  .describe('A recent activity event within an organisation');
+
+export const zApiResponseListOrganisationActivityEventDto = z.object({
+  success: z.boolean().optional(),
+  data: z.array(zOrganisationActivityEventDto).optional(),
   message: z.string().optional(),
   error: z.unknown().optional(),
 });
@@ -20051,6 +20072,28 @@ export const zGetClassEnrolmentCountsData = z.object({
  * Class enrolment counts retrieved successfully
  */
 export const zGetClassEnrolmentCountsResponse = zApiResponseListClassEnrolmentCountDto;
+
+export const zGetActivityFeedData = z.object({
+  body: z.never().optional(),
+  path: z.object({
+    organisationUuid: z.string().uuid().describe('UUID of the organisation to scope to'),
+  }),
+  query: z
+    .object({
+      limit: z
+        .number()
+        .int()
+        .describe('Maximum number of events to return (1-100)')
+        .optional()
+        .default(20),
+    })
+    .optional(),
+});
+
+/**
+ * Activity feed retrieved successfully
+ */
+export const zGetActivityFeedResponse = zApiResponseListOrganisationActivityEventDto;
 
 export const zGetEnrollmentsForInstanceData = z.object({
   body: z.never().optional(),
