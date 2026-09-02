@@ -1,7 +1,7 @@
 'use client';
 
 import { useQuery } from '@tanstack/react-query';
-import { Eye, Mail, MoreHorizontal, Plus, Users } from 'lucide-react';
+import { Eye, Mail, MapPin, MoreHorizontal, Plus, Users } from 'lucide-react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import type { KeyboardEvent } from 'react';
@@ -44,6 +44,7 @@ import type {
 } from '@/services/client';
 import {
   getStudentSummariesOptions,
+  getUsersByOrganisationAndDomainOptions,
   listRosterOptions,
   searchStudentsOptions,
 } from '@/services/client/@tanstack/react-query.gen';
@@ -68,6 +69,7 @@ type StudentRow = {
   email: string | null;
   image: string | null;
   groupName: string | null;
+  branch: string | null;
   tier: string | null;
   status: 'Active' | 'Completed' | 'No classes yet';
   completedCourses: number;
@@ -120,6 +122,25 @@ export default function StudentsPage() {
     ...getStudentSummariesOptions({ path: { organisationUuid } }),
     enabled: Boolean(organisationUuid),
   });
+
+  // Branch each student is affiliated to (this org's student affiliation), keyed by user uuid.
+  const orgStudentsQuery = useQuery({
+    ...getUsersByOrganisationAndDomainOptions({
+      path: { uuid: organisationUuid, domainName: 'student' },
+    }),
+    enabled: Boolean(organisationUuid),
+  });
+  const branchByUserUuid = useMemo(() => {
+    const map = new Map<string, string>();
+    for (const u of extractList<User>(orgStudentsQuery.data)) {
+      if (!u.uuid) continue;
+      const affiliation = (u.organisation_affiliations ?? []).find(
+        a => a.organisation_uuid === organisationUuid
+      );
+      if (affiliation?.branch_name) map.set(u.uuid, affiliation.branch_name);
+    }
+    return map;
+  }, [orgStudentsQuery.data, organisationUuid]);
 
   const summaries = useMemo(
     () => extractList<StudentEnrolmentSummaryDto>(summariesQuery.data),
@@ -228,6 +249,7 @@ export default function StudentsPage() {
         email: student.email ?? user?.email ?? null,
         image: toAuthenticatedMediaUrl(user?.profile_image_url ?? student.profile_image_url) ?? null,
         groupName: student.group_name ?? null,
+        branch: branchByUserUuid.get(profile?.user_uuid ?? '') ?? null,
         tier: student.tier ?? null,
         status: statusFromSummary(summary),
         completedCourses: summary?.completed ?? 0,
@@ -257,6 +279,7 @@ export default function StudentsPage() {
         email: user?.email ?? null,
         image: toAuthenticatedMediaUrl(user?.profile_image_url) ?? null,
         groupName: 'Ungrouped',
+        branch: branchByUserUuid.get(profile?.user_uuid ?? '') ?? null,
         tier: null,
         status: statusFromSummary(normalizedSummary),
         completedCourses: normalizedSummary.completed,
@@ -269,7 +292,15 @@ export default function StudentsPage() {
     }
 
     return rows;
-  }, [roster, studentProfileByUserUuid, studentProfileByUuid, summaries, summaryByStudent, userMap]);
+  }, [
+    roster,
+    studentProfileByUserUuid,
+    studentProfileByUuid,
+    summaries,
+    summaryByStudent,
+    userMap,
+    branchByUserUuid,
+  ]);
 
   const [activeCategory, setActiveCategory] = useState<string>(ALL_CATEGORIES);
   const [subjectByCategory, setSubjectByCategory] = useState<Record<string, string>>({});
@@ -413,6 +444,7 @@ export default function StudentsPage() {
                   <TableHead className='whitespace-nowrap'>Wallet ID</TableHead>
                   <TableHead className='whitespace-nowrap'>Institution Ref</TableHead>
                   <TableHead className='whitespace-nowrap'>Group</TableHead>
+                  <TableHead className='whitespace-nowrap'>Branch</TableHead>
                   <TableHead className='whitespace-nowrap'>Status</TableHead>
                   <TableHead className='whitespace-nowrap'>Attendance</TableHead>
                   <TableHead className='text-right whitespace-nowrap'>Actions</TableHead>
@@ -462,6 +494,16 @@ export default function StudentsPage() {
                           </div>
                         )}
                       </div>
+                    </TableCell>
+                    <TableCell className='whitespace-nowrap'>
+                      {student.branch ? (
+                        <Badge variant='outline' className='gap-1'>
+                          <MapPin className='h-3 w-3' />
+                          {student.branch}
+                        </Badge>
+                      ) : (
+                        <span className='text-muted-foreground text-xs'>Org-wide</span>
+                      )}
                     </TableCell>
                     <TableCell className='whitespace-nowrap'>
                       <Badge variant={statusVariant(student.status)}>{student.status}</Badge>
