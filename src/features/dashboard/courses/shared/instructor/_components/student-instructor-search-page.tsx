@@ -23,7 +23,6 @@ import {
   searchTrainingApplicationsOptions,
 } from '@/services/client/@tanstack/react-query.gen';
 import { useUserDomain } from '@/src/features/dashboard/context/user-domain-context';
-import { InstructorHireModal } from '@/src/features/dashboard/courses/shared/instructor/_components/instructor-hire-modal';
 import type { SearchInstructor } from '@/src/features/dashboard/courses/types';
 import { buildWorkspaceAliasPath } from '@/src/features/dashboard/lib/active-domain-storage';
 import { useQuery } from '@tanstack/react-query';
@@ -46,7 +45,7 @@ import {
   Wallet
 } from 'lucide-react';
 import Link from 'next/link';
-import { useSearchParams } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { useEffect, useMemo, useState } from 'react';
 import { Skeleton } from '../../../../../../../components/ui/skeleton';
 import { toAuthenticatedMediaUrl } from '../../../../../../lib/media-url';
@@ -221,13 +220,13 @@ function InstructorSearchPageSkeleton() {
 export default function StudentInstructorSearchPage() {
   const searchParams = useSearchParams();
   const courseId = searchParams.get('courseId');
+  const router = useRouter();
   const { activeDomain } = useUserDomain();
   const { data: trainingInstructors = [], loading } = useSearchTrainingInstructors();
   const [activeView, setActiveView] = useState<ActiveView>('search');
   const [sortBy, setSortBy] = useState<SortBy>('relevance');
   const [selectedInstructorUuid, setSelectedInstructorUuid] = useState<string | null>(null);
   const [profileOpen, setProfileOpen] = useState(false);
-  const [hireModalInstructorUuid, setHireModalInstructorUuid] = useState<string | null>(null);
   const [filters, setFilters] = useState<InstructorSearchFiltersState>(
     searchInstructorFiltersDefaults
   );
@@ -501,9 +500,6 @@ export default function StudentInstructorSearchPage() {
 
   const selectedInstructor =
     filteredInstructors.find(instructor => instructor.uuid === selectedInstructorUuid) ?? null;
-
-  const hireModalInstructor =
-    filteredInstructors.find(instructor => instructor.uuid === hireModalInstructorUuid) ?? null;
 
   const updateFilter = <K extends keyof InstructorSearchFiltersState>(
     key: K,
@@ -932,7 +928,14 @@ export default function StudentInstructorSearchPage() {
                           <Button
                             size="sm"
                             className="bg-primary hover:bg-primary/90"
-                            onClick={() => setHireModalInstructorUuid(instructor.uuid as string)}
+                            onClick={() =>
+                              router.push(
+                                buildWorkspaceAliasPath(
+                                  activeDomain,
+                                  `/dashboard/courses/instructor?courseId=${courseId ?? ''}&id=${instructor.uuid}`
+                                )
+                              )
+                            }
                           >
                             Hire Now
                           </Button>
@@ -1126,15 +1129,6 @@ export default function StudentInstructorSearchPage() {
         </SheetContent>
       </Sheet>
 
-      <InstructorHireModal
-        instructor={hireModalInstructor}
-        open={Boolean(hireModalInstructor)}
-        onOpenChange={open => {
-          if (!open) {
-            setHireModalInstructorUuid(null);
-          }
-        }}
-      />
     </div>
   );
 }
