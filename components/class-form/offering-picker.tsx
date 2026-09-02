@@ -223,59 +223,59 @@ export function OfferingPicker({
           ) : null}
         </div>
         {showInstructor ? (
-        <div className='space-y-2'>
-          <div className='flex items-center justify-between gap-2'>
-            <Label>Instructor</Label>
-            <label className='text-muted-foreground flex cursor-pointer items-center gap-1.5 text-[11px]'>
-              <Checkbox
-                checked={onlyAvailable}
-                onCheckedChange={v => onOnlyAvailableChange?.(v === true)}
-                className='h-3.5 w-3.5'
-              />
-              Only available
-            </label>
-          </div>
-          <Select value={instructorUuid} onValueChange={onInstructorChange}>
-            <SelectTrigger>
-              <div className='flex min-w-0 items-center gap-2'>
-                {selectedInstructor ? (
-                  <AvatarWithSkeleton
-                    src={selectedInstructor.avatarUrl ?? ''}
-                    name={selectedInstructor.name}
-                    className='h-6 w-6 shrink-0'
-                  />
-                ) : null}
-                <span className='truncate'>
-                  <SelectValue
-                    placeholder={
-                      instructorsLoading ? 'Loading instructors…' : 'Select an instructor'
-                    }
-                  />
-                </span>
-              </div>
-            </SelectTrigger>
-            <SelectContent>
-              {(instructors ?? []).length === 0 ? (
-                <div className='text-muted-foreground px-2 py-1.5 text-xs'>
-                  {instructorsLoading
-                    ? 'Loading instructors…'
-                    : (instructorEmptyHint ?? 'No instructors in your organisation yet')}
+          <div className='space-y-2'>
+            <div className='flex items-center justify-between gap-2'>
+              <Label>Instructor</Label>
+              <label className='text-muted-foreground flex cursor-pointer items-center gap-1.5 text-[11px]'>
+                <Checkbox
+                  checked={onlyAvailable}
+                  onCheckedChange={v => onOnlyAvailableChange?.(v === true)}
+                  className='h-3.5 w-3.5'
+                />
+                Only available
+              </label>
+            </div>
+            <Select value={instructorUuid} onValueChange={onInstructorChange}>
+              <SelectTrigger>
+                <div className='flex min-w-0 items-center gap-2'>
+                  {selectedInstructor ? (
+                    <AvatarWithSkeleton
+                      src={selectedInstructor.avatarUrl ?? ''}
+                      name={selectedInstructor.name}
+                      className='h-6 w-6 shrink-0'
+                    />
+                  ) : null}
+                  <span className='truncate'>
+                    <SelectValue
+                      placeholder={
+                        instructorsLoading ? 'Loading instructors…' : 'Select an instructor'
+                      }
+                    />
+                  </span>
                 </div>
-              ) : (
-                (instructors ?? []).map(i => (
-                  <SelectItem key={i.uuid} value={i.uuid}>
-                    {i.name}
-                  </SelectItem>
-                ))
-              )}
-            </SelectContent>
-          </Select>
-          <p className='text-muted-foreground text-[11px]'>
-            Only instructors your organisation has hired <em>and</em> who are approved to deliver
-            this offering can be assigned. On publish the class is scheduled on their calendar and
-            the organisation calendar. To reach instructors you have not hired yet, post a job.
-          </p>
-        </div>
+              </SelectTrigger>
+              <SelectContent>
+                {(instructors ?? []).length === 0 ? (
+                  <div className='text-muted-foreground px-2 py-1.5 text-xs'>
+                    {instructorsLoading
+                      ? 'Loading instructors…'
+                      : (instructorEmptyHint ?? 'No instructors in your organisation yet')}
+                  </div>
+                ) : (
+                  (instructors ?? []).map(i => (
+                    <SelectItem key={i.uuid} value={i.uuid}>
+                      {i.name}
+                    </SelectItem>
+                  ))
+                )}
+              </SelectContent>
+            </Select>
+            <p className='text-muted-foreground text-[11px]'>
+              Only instructors your organisation has hired <em>and</em> who are approved to deliver
+              this offering can be assigned. On publish the class is scheduled on their calendar and
+              the organisation calendar. To reach instructors you have not hired yet, post a job.
+            </p>
+          </div>
         ) : null}
       </div>
 
@@ -291,32 +291,35 @@ export function OfferingPicker({
       ) : null}
 
       {/* Title preview or editor */}
-      {onTitleChange ? (
-        <div className='space-y-2 rounded-lg border border-dashed border-teal-600/40 bg-teal-50/60 px-3 py-2.5 dark:bg-teal-950/20'>
-          <Label htmlFor='class-title' className='text-[11px] font-medium tracking-wide uppercase'>
-            {titleLabel}
-          </Label>
-          <Input
-            id='class-title'
-            value={title}
-            onChange={event => onTitleChange(event.target.value)}
-            placeholder={titlePlaceholder}
-          />
-          {titleHint?.trim() ? (
-            <div className='text-muted-foreground text-[11px]'>{titleHint}</div>
-          ) : null}
-        </div>
-      ) : (
-        <div className='rounded-lg border border-dashed border-teal-600/40 bg-teal-50/60 px-3 py-2.5 dark:bg-teal-950/20'>
-          <div className='text-[11px] font-medium tracking-wide text-teal-700 uppercase dark:text-teal-400'>
-            {titleLabel}
-          </div>
-          <div className='text-foreground mt-0.5 truncate text-sm font-semibold'>{title}</div>
-          {titleHint?.trim() ? (
-            <div className='text-muted-foreground text-[11px]'>{titleHint}</div>
-          ) : null}
-        </div>
-      )}
+      {titleLabel &&
+        <>
+          {onTitleChange ? (
+            <div className='space-y-2 rounded-lg border border-dashed border-teal-600/40 bg-teal-50/60 px-3 py-2.5 dark:bg-teal-950/20'>
+              <Label htmlFor='class-title' className='text-[11px] font-medium tracking-wide uppercase'>
+                {titleLabel}
+              </Label>
+              <Input
+                id='class-title'
+                value={title}
+                onChange={event => onTitleChange(event.target.value)}
+                placeholder={titlePlaceholder}
+              />
+              {titleHint?.trim() ? (
+                <div className='text-muted-foreground text-[11px]'>{titleHint}</div>
+              ) : null}
+            </div>
+          ) : (
+            <div className='rounded-lg border border-dashed border-teal-600/40 bg-teal-50/60 px-3 py-2.5 dark:bg-teal-950/20'>
+              <div className='text-[11px] font-medium tracking-wide text-teal-700 uppercase dark:text-teal-400'>
+                {titleLabel}
+              </div>
+              <div className='text-foreground mt-0.5 truncate text-sm font-semibold'>{title}</div>
+              {titleHint?.trim() ? (
+                <div className='text-muted-foreground text-[11px]'>{titleHint}</div>
+              ) : null}
+            </div>
+          )}</>}
+
     </>
   );
 }
