@@ -619,6 +619,9 @@ import type {
   AddAvailabilityRuleData,
   AddAvailabilityRuleResponses,
   AddAvailabilityRuleErrors,
+  SendData,
+  SendResponses,
+  SendErrors,
   ListOrganisationInvitationsData,
   ListOrganisationInvitationsResponses,
   ListOrganisationInvitationsErrors,
@@ -1372,6 +1375,9 @@ import type {
   ListBookingsData,
   ListBookingsResponses,
   ListBookingsErrors,
+  ListSentData,
+  ListSentResponses,
+  ListSentErrors,
   ListObligationsData,
   ListObligationsResponses,
   ListObligationsErrors,
@@ -1999,6 +2005,7 @@ import {
   createResourceResponseTransformer,
   listAvailabilityRulesResponseTransformer,
   addAvailabilityRuleResponseTransformer,
+  sendResponseTransformer,
   listOrganisationInvitationsResponseTransformer,
   sendOrganisationInvitationsResponseTransformer,
   revokeOrganisationInvitationResponseTransformer,
@@ -2208,6 +2215,7 @@ import {
   listRosterResponseTransformer,
   getCalendarResponseTransformer,
   listBookingsResponseTransformer,
+  listSentResponseTransformer,
   listObligationsResponseTransformer,
   search2ResponseTransformer,
   getCountsResponseTransformer,
@@ -8351,6 +8359,34 @@ export const addAvailabilityRule = <ThrowOnError extends boolean = false>(
       },
     ],
     url: '/api/v1/organisations/{organisationUuid}/resources/{resourceUuid}/availability-rules',
+    ...options,
+    headers: {
+      'Content-Type': 'application/json',
+      ...options.headers,
+    },
+  });
+};
+
+/**
+ * Broadcast a notification to an organisation's members
+ * Sends an in-app notification (and an email when the channel is email) to the requested audience, and records the send.
+ */
+export const send = <ThrowOnError extends boolean = false>(
+  options: Options<SendData, ThrowOnError>
+) => {
+  return (options.client ?? _heyApiClient).post<SendResponses, SendErrors, ThrowOnError>({
+    responseTransformer: sendResponseTransformer,
+    security: [
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+    ],
+    url: '/api/v1/organisations/{organisationUuid}/notifications',
     ...options,
     headers: {
       'Content-Type': 'application/json',
@@ -15840,6 +15876,30 @@ export const listBookings = <ThrowOnError extends boolean = false>(
       },
     ],
     url: '/api/v1/organisations/{organisationUuid}/resources/{resourceUuid}/bookings',
+    ...options,
+  });
+};
+
+/**
+ * List an organisation's sent notifications
+ * The organisation's outgoing broadcasts, newest first.
+ */
+export const listSent = <ThrowOnError extends boolean = false>(
+  options: Options<ListSentData, ThrowOnError>
+) => {
+  return (options.client ?? _heyApiClient).get<ListSentResponses, ListSentErrors, ThrowOnError>({
+    responseTransformer: listSentResponseTransformer,
+    security: [
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+    ],
+    url: '/api/v1/organisations/{organisationUuid}/notifications/sent',
     ...options,
   });
 };

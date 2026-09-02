@@ -4034,13 +4034,13 @@ export type ClassDefinition = {
    */
   readonly duration_minutes?: bigint;
   /**
-   * **[READ-ONLY]** Human-readable capacity information including waitlist availability.
-   */
-  readonly capacity_info?: string;
-  /**
    * **[READ-ONLY]** Human-readable formatted duration.
    */
   readonly duration_formatted?: string;
+  /**
+   * **[READ-ONLY]** Human-readable capacity information including waitlist availability.
+   */
+  readonly capacity_info?: string;
 };
 
 /**
@@ -5302,6 +5302,61 @@ export type SkillsFundSource = {
    * ISO-4217 currency the amount is denominated in, e.g. KES.
    */
   currency_code?: string;
+  readonly created_date?: Date;
+};
+
+/**
+ * Compose an organisation notification to an audience of members
+ */
+export type SendOrganisationNotificationRequest = {
+  /**
+   * Audience: all, students, instructors, parents or staff.
+   */
+  audience: string;
+  /**
+   * Channel: in-app or email. Email deliveries also land in the in-app inbox.
+   */
+  channel: string;
+  title: string;
+  message: string;
+  /**
+   * Optional time to associate with the send.
+   */
+  scheduled_at?: Date | null;
+};
+
+export type ApiResponseNotificationDispatch = {
+  success?: boolean;
+  data?: NotificationDispatch;
+  message?: string;
+  error?: unknown;
+};
+
+/**
+ * A notification an organisation has sent to an audience of its members
+ */
+export type NotificationDispatch = {
+  readonly uuid?: string;
+  organisation_uuid?: string;
+  /**
+   * The user who sent it.
+   */
+  sender_user_uuid?: string | null;
+  /**
+   * Audience the message went to: all, students, instructors, parents or staff.
+   */
+  audience?: string;
+  /**
+   * Channel: in-app or email.
+   */
+  channel?: string;
+  title?: string;
+  body?: string;
+  /**
+   * How many recipients the broadcast reached.
+   */
+  recipient_count?: number;
+  scheduled_at?: Date | null;
   readonly created_date?: Date;
 };
 
@@ -8756,6 +8811,13 @@ export type ApiResponseListResourceAvailabilityRule = {
   error?: unknown;
 };
 
+export type ApiResponseListNotificationDispatch = {
+  success?: boolean;
+  data?: Array<NotificationDispatch>;
+  message?: string;
+  error?: unknown;
+};
+
 export type ApiResponseListOrganisationInvitation = {
   success?: boolean;
   data?: Array<OrganisationInvitation>;
@@ -12181,6 +12243,7 @@ export const TypeEnum = {
   ORGANISATION_INVITATION: 'ORGANISATION_INVITATION',
   GUARDIAN_CONSENT_REQUEST: 'GUARDIAN_CONSENT_REQUEST',
   ORGANISATION_INVITATION_ACCEPTED: 'ORGANISATION_INVITATION_ACCEPTED',
+  ORGANISATION_ANNOUNCEMENT: 'ORGANISATION_ANNOUNCEMENT',
   WEEKLY_PROGRESS_SUMMARY: 'WEEKLY_PROGRESS_SUMMARY',
   LEARNING_STREAK_ACHIEVEMENT: 'LEARNING_STREAK_ACHIEVEMENT',
   PEER_ACHIEVEMENT_CELEBRATION: 'PEER_ACHIEVEMENT_CELEBRATION',
@@ -13310,6 +13373,7 @@ export const TypeEnumWritable = {
   ORGANISATION_INVITATION: 'ORGANISATION_INVITATION',
   GUARDIAN_CONSENT_REQUEST: 'GUARDIAN_CONSENT_REQUEST',
   ORGANISATION_INVITATION_ACCEPTED: 'ORGANISATION_INVITATION_ACCEPTED',
+  ORGANISATION_ANNOUNCEMENT: 'ORGANISATION_ANNOUNCEMENT',
   WEEKLY_PROGRESS_SUMMARY: 'WEEKLY_PROGRESS_SUMMARY',
   LEARNING_STREAK_ACHIEVEMENT: 'LEARNING_STREAK_ACHIEVEMENT',
   PEER_ACHIEVEMENT_CELEBRATION: 'PEER_ACHIEVEMENT_CELEBRATION',
@@ -20567,6 +20631,40 @@ export type AddAvailabilityRuleResponses = {
 
 export type AddAvailabilityRuleResponse =
   AddAvailabilityRuleResponses[keyof AddAvailabilityRuleResponses];
+
+export type SendData = {
+  body: SendOrganisationNotificationRequest;
+  path: {
+    /**
+     * UUID of the organisation sending the notification
+     */
+    organisationUuid: string;
+  };
+  query?: never;
+  url: '/api/v1/organisations/{organisationUuid}/notifications';
+};
+
+export type SendErrors = {
+  /**
+   * Not Found
+   */
+  404: ResponseDtoVoid;
+  /**
+   * Internal Server Error
+   */
+  500: ResponseDtoVoid;
+};
+
+export type SendError = SendErrors[keyof SendErrors];
+
+export type SendResponses = {
+  /**
+   * OK
+   */
+  200: ApiResponseNotificationDispatch;
+};
+
+export type SendResponse = SendResponses[keyof SendResponses];
 
 export type ListOrganisationInvitationsData = {
   body?: never;
@@ -29443,6 +29541,45 @@ export type ListBookingsResponses = {
 };
 
 export type ListBookingsResponse = ListBookingsResponses[keyof ListBookingsResponses];
+
+export type ListSentData = {
+  body?: never;
+  path: {
+    /**
+     * UUID of the organisation
+     */
+    organisationUuid: string;
+  };
+  query?: {
+    /**
+     * Maximum number of dispatches to return (1-100)
+     */
+    limit?: number;
+  };
+  url: '/api/v1/organisations/{organisationUuid}/notifications/sent';
+};
+
+export type ListSentErrors = {
+  /**
+   * Not Found
+   */
+  404: ResponseDtoVoid;
+  /**
+   * Internal Server Error
+   */
+  500: ResponseDtoVoid;
+};
+
+export type ListSentError = ListSentErrors[keyof ListSentErrors];
+
+export type ListSentResponses = {
+  /**
+   * OK
+   */
+  200: ApiResponseListNotificationDispatch;
+};
+
+export type ListSentResponse = ListSentResponses[keyof ListSentResponses];
 
 export type ListObligationsData = {
   body?: never;

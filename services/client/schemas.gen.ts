@@ -8351,17 +8351,17 @@ conflict_resolution per template:
       example: 90,
       readOnly: true,
     },
+    duration_formatted: {
+      type: 'string',
+      description: '**[READ-ONLY]** Human-readable formatted duration.',
+      example: '1h 30m',
+      readOnly: true,
+    },
     capacity_info: {
       type: 'string',
       description:
         '**[READ-ONLY]** Human-readable capacity information including waitlist availability.',
       example: 'Max 25 participants (waitlist enabled)',
-      readOnly: true,
-    },
-    duration_formatted: {
-      type: 'string',
-      description: '**[READ-ONLY]** Human-readable formatted duration.',
-      example: '1h 30m',
       readOnly: true,
     },
   },
@@ -10720,6 +10720,105 @@ export const SkillsFundSourceSchema = {
     currency_code: {
       type: 'string',
       description: 'ISO-4217 currency the amount is denominated in, e.g. KES.',
+    },
+    created_date: {
+      type: 'string',
+      format: 'date-time',
+      readOnly: true,
+    },
+  },
+} as const;
+
+export const SendOrganisationNotificationRequestSchema = {
+  type: 'object',
+  description: 'Compose an organisation notification to an audience of members',
+  properties: {
+    audience: {
+      type: 'string',
+      description: 'Audience: all, students, instructors, parents or staff.',
+      example: 'students',
+      minLength: 1,
+    },
+    channel: {
+      type: 'string',
+      description: 'Channel: in-app or email. Email deliveries also land in the in-app inbox.',
+      example: 'in-app',
+      minLength: 1,
+    },
+    title: {
+      type: 'string',
+      maxLength: 200,
+      minLength: 0,
+    },
+    message: {
+      type: 'string',
+      minLength: 1,
+    },
+    scheduled_at: {
+      type: ['string', 'null'],
+      format: 'date-time',
+      description: 'Optional time to associate with the send.',
+    },
+  },
+  required: ['audience', 'channel', 'message', 'title'],
+} as const;
+
+export const ApiResponseNotificationDispatchSchema = {
+  type: 'object',
+  properties: {
+    success: {
+      type: 'boolean',
+    },
+    data: {
+      $ref: '#/components/schemas/NotificationDispatch',
+    },
+    message: {
+      type: 'string',
+    },
+    error: {},
+  },
+} as const;
+
+export const NotificationDispatchSchema = {
+  type: 'object',
+  description: 'A notification an organisation has sent to an audience of its members',
+  properties: {
+    uuid: {
+      type: 'string',
+      format: 'uuid',
+      readOnly: true,
+    },
+    organisation_uuid: {
+      type: 'string',
+      format: 'uuid',
+    },
+    sender_user_uuid: {
+      type: ['string', 'null'],
+      format: 'uuid',
+      description: 'The user who sent it.',
+    },
+    audience: {
+      type: 'string',
+      description: 'Audience the message went to: all, students, instructors, parents or staff.',
+    },
+    channel: {
+      type: 'string',
+      description: 'Channel: in-app or email.',
+    },
+    title: {
+      type: 'string',
+    },
+    body: {
+      type: 'string',
+    },
+    recipient_count: {
+      type: 'integer',
+      format: 'int32',
+      description: 'How many recipients the broadcast reached.',
+    },
+    scheduled_at: {
+      type: ['string', 'null'],
+      format: 'date-time',
     },
     created_date: {
       type: 'string',
@@ -17249,6 +17348,25 @@ export const ApiResponseListResourceAvailabilityRuleSchema = {
   },
 } as const;
 
+export const ApiResponseListNotificationDispatchSchema = {
+  type: 'object',
+  properties: {
+    success: {
+      type: 'boolean',
+    },
+    data: {
+      type: 'array',
+      items: {
+        $ref: '#/components/schemas/NotificationDispatch',
+      },
+    },
+    message: {
+      type: 'string',
+    },
+    error: {},
+  },
+} as const;
+
 export const ApiResponseListOrganisationInvitationSchema = {
   type: 'object',
   properties: {
@@ -22873,6 +22991,7 @@ export const TypeEnumSchema = {
     'ORGANISATION_INVITATION',
     'GUARDIAN_CONSENT_REQUEST',
     'ORGANISATION_INVITATION_ACCEPTED',
+    'ORGANISATION_ANNOUNCEMENT',
     'WEEKLY_PROGRESS_SUMMARY',
     'LEARNING_STREAK_ACHIEVEMENT',
     'PEER_ACHIEVEMENT_CELEBRATION',
@@ -23573,6 +23692,7 @@ export const TypeEnumWritableSchema = {
     'ORGANISATION_INVITATION',
     'GUARDIAN_CONSENT_REQUEST',
     'ORGANISATION_INVITATION_ACCEPTED',
+    'ORGANISATION_ANNOUNCEMENT',
     'WEEKLY_PROGRESS_SUMMARY',
     'LEARNING_STREAK_ACHIEVEMENT',
     'PEER_ACHIEVEMENT_CELEBRATION',
