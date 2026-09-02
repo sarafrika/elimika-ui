@@ -1,6 +1,6 @@
-import { ActivityFeed } from '@/components/dashboard';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { OrgPage, orgStack } from '../_components/org-page';
+import { OverviewActivityFeed } from './_components/overview-activity-feed';
 import { OverviewFundUtilisation } from './_components/overview-fund-utilisation';
 import { OverviewAlerts } from './_components/overview-alerts';
 import { OverviewCourseRail } from './_components/overview-course-rail';
@@ -57,7 +57,7 @@ export default function OrganizationOverviewPage() {
 
         <div className='grid gap-4 lg:grid-cols-2'>
           <OverviewAlerts />
-          <ActivityFeed items={[]} />
+          <OverviewActivityFeed />
         </div>
       </div>
     </OrgPage>
