@@ -709,13 +709,13 @@ export type RubricMatrix = {
    */
   matrix_statistics?: MatrixStatistics;
   /**
-   * **[READ-ONLY]** Expected number of matrix cells (criteria count × scoring levels count).
-   */
-  readonly expected_cell_count?: number;
-  /**
    * **[READ-ONLY]** Whether all matrix cells have been completed with descriptions.
    */
   readonly is_complete?: boolean;
+  /**
+   * **[READ-ONLY]** Expected number of matrix cells (criteria count × scoring levels count).
+   */
+  readonly expected_cell_count?: number;
 };
 
 export type ApiResponseRubricCriteria = {
@@ -3760,6 +3760,10 @@ export type ClassDefinitionUpdateRequest = {
    */
   organisation_uuid?: string;
   /**
+   * **[OPTIONAL]** Training branch (location) this class is delivered at.
+   */
+  branch_uuid?: string;
+  /**
    * **[OPTIONAL]** Course UUID for course-scoped classes.
    */
   course_uuid?: string;
@@ -3879,6 +3883,10 @@ export type ClassDefinition = {
    * **[OPTIONAL]** Reference to the organisation UUID that owns this class definition.
    */
   organisation_uuid?: string | null;
+  /**
+   * **[OPTIONAL]** Training branch (location) this class belongs to.
+   */
+  branch_uuid?: string | null;
   /**
    * **[OPTIONAL]** Reference to the course UUID if this class is part of a structured course.
    */
@@ -6568,6 +6576,10 @@ export type ClassDefinitionCreateRequest = {
    * **[OPTIONAL]** Organisation UUID that owns the class.
    */
   organisation_uuid?: string;
+  /**
+   * **[OPTIONAL]** Training branch (location) this class is delivered at.
+   */
+  branch_uuid?: string;
   /**
    * **[OPTIONAL]** Course UUID for course-scoped classes.
    */

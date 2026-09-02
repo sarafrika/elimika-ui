@@ -895,17 +895,17 @@ export const zRubricMatrix = z
         "**[REQUIRED]** Matrix cells mapping criteria to scoring levels with descriptions. Key format: 'criteriaUuid_scoringLevelUuid'."
       ),
     matrix_statistics: zMatrixStatistics.optional(),
+    is_complete: z
+      .boolean()
+      .describe('**[READ-ONLY]** Whether all matrix cells have been completed with descriptions.')
+      .readonly()
+      .optional(),
     expected_cell_count: z
       .number()
       .int()
       .describe(
         '**[READ-ONLY]** Expected number of matrix cells (criteria count × scoring levels count).'
       )
-      .readonly()
-      .optional(),
-    is_complete: z
-      .boolean()
-      .describe('**[READ-ONLY]** Whether all matrix cells have been completed with descriptions.')
       .readonly()
       .optional(),
   })
@@ -4840,6 +4840,11 @@ export const zClassDefinitionUpdateRequest = z
       .uuid()
       .describe('**[OPTIONAL]** Organisation UUID that owns the class.')
       .optional(),
+    branch_uuid: z
+      .string()
+      .uuid()
+      .describe('**[OPTIONAL]** Training branch (location) this class is delivered at.')
+      .optional(),
     course_uuid: z
       .string()
       .uuid()
@@ -5046,6 +5051,7 @@ export const zClassDefinition = z
         '**[REQUIRED]** Reference to the default instructor UUID for this class definition.'
       ),
     organisation_uuid: z.union([z.string().uuid(), z.null()]).optional(),
+    branch_uuid: z.union([z.string().uuid(), z.null()]).optional(),
     course_uuid: z.union([z.string().uuid(), z.null()]).optional(),
     program_uuid: z.union([z.string().uuid(), z.null()]).optional(),
     sale_price: z.union([z.number().gte(0), z.null()]).optional(),
@@ -7571,6 +7577,11 @@ export const zClassDefinitionCreateRequest = z
       .string()
       .uuid()
       .describe('**[OPTIONAL]** Organisation UUID that owns the class.')
+      .optional(),
+    branch_uuid: z
+      .string()
+      .uuid()
+      .describe('**[OPTIONAL]** Training branch (location) this class is delivered at.')
       .optional(),
     course_uuid: z
       .string()

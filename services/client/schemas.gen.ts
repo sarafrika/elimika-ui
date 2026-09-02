@@ -1419,19 +1419,19 @@ export const RubricMatrixSchema = {
         '**[READ-ONLY]** Statistical information about the matrix completion and scoring.',
       readOnly: true,
     },
+    is_complete: {
+      type: 'boolean',
+      description:
+        '**[READ-ONLY]** Whether all matrix cells have been completed with descriptions.',
+      example: true,
+      readOnly: true,
+    },
     expected_cell_count: {
       type: 'integer',
       format: 'int32',
       description:
         '**[READ-ONLY]** Expected number of matrix cells (criteria count × scoring levels count).',
       example: 20,
-      readOnly: true,
-    },
-    is_complete: {
-      type: 'boolean',
-      description:
-        '**[READ-ONLY]** Whether all matrix cells have been completed with descriptions.',
-      example: true,
       readOnly: true,
     },
   },
@@ -7847,6 +7847,11 @@ export const ClassDefinitionUpdateRequestSchema = {
       format: 'uuid',
       description: '**[OPTIONAL]** Organisation UUID that owns the class.',
     },
+    branch_uuid: {
+      type: 'string',
+      format: 'uuid',
+      description: '**[OPTIONAL]** Training branch (location) this class is delivered at.',
+    },
     course_uuid: {
       type: 'string',
       format: 'uuid',
@@ -8092,6 +8097,12 @@ export const ClassDefinitionSchema = {
       description:
         '**[OPTIONAL]** Reference to the organisation UUID that owns this class definition.',
       example: 'org12345-6789-abcd-ef01-234567890abc',
+    },
+    branch_uuid: {
+      type: ['string', 'null'],
+      format: 'uuid',
+      description: '**[OPTIONAL]** Training branch (location) this class belongs to.',
+      example: 'branch12-3456-789a-bcde-f0123456789a',
     },
     course_uuid: {
       type: ['string', 'null'],
@@ -12809,6 +12820,11 @@ export const ClassDefinitionCreateRequestSchema = {
       type: 'string',
       format: 'uuid',
       description: '**[OPTIONAL]** Organisation UUID that owns the class.',
+    },
+    branch_uuid: {
+      type: 'string',
+      format: 'uuid',
+      description: '**[OPTIONAL]** Training branch (location) this class is delivered at.',
     },
     course_uuid: {
       type: 'string',
