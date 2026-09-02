@@ -1375,6 +1375,9 @@ import type {
   ListObligationsData,
   ListObligationsResponses,
   ListObligationsErrors,
+  GetMonthlySettlementsData,
+  GetMonthlySettlementsResponses,
+  GetMonthlySettlementsErrors,
   Search2Data,
   Search2Responses,
   Search2Errors,
@@ -1462,6 +1465,9 @@ import type {
   SearchEnrollmentsData,
   SearchEnrollmentsResponses,
   SearchEnrollmentsErrors,
+  GetWeeklyGrowthData,
+  GetWeeklyGrowthResponses,
+  GetWeeklyGrowthErrors,
   GetTodayGrowthData,
   GetTodayGrowthResponses,
   GetTodayGrowthErrors,
@@ -1477,6 +1483,9 @@ import type {
   GetClassEnrolmentCountsData,
   GetClassEnrolmentCountsResponses,
   GetClassEnrolmentCountsErrors,
+  GetActivityFeedData,
+  GetActivityFeedResponses,
+  GetActivityFeedErrors,
   GetEnrollmentsForInstanceData,
   GetEnrollmentsForInstanceResponses,
   GetEnrollmentsForInstanceErrors,
@@ -1615,6 +1624,9 @@ import type {
   GetRootCategoriesData,
   GetRootCategoriesResponses,
   GetRootCategoriesErrors,
+  GetPaymentModeData,
+  GetPaymentModeResponses,
+  GetPaymentModeErrors,
   GetOrderData,
   GetOrderResponses,
   GetOrderErrors,
@@ -2221,11 +2233,13 @@ import {
   getCourseEnrollmentsForStudentResponseTransformer,
   getClassEnrollmentsForStudentResponseTransformer,
   searchEnrollmentsResponseTransformer,
+  getWeeklyGrowthResponseTransformer,
   getTodayGrowthResponseTransformer,
   getStudentPerformanceResponseTransformer,
   getStudentSummariesResponseTransformer,
   getEnrolmentTrendsResponseTransformer,
   getClassEnrolmentCountsResponseTransformer,
+  getActivityFeedResponseTransformer,
   getEnrollmentsForInstanceResponseTransformer,
   getEnrollmentCountResponseTransformer,
   listCurrenciesResponseTransformer,
@@ -9264,14 +9278,14 @@ export const verifyDocument = <ThrowOnError extends boolean = false>(
 
 /**
  * Upload instructor document file
- * Uploads a PDF document for an instructor and creates a document record.
+ * Uploads a credential document for an instructor and creates a document record.
  *
  * **Use cases:**
  * - Uploading certificates, licenses, and other professional credentials.
  * - Attaching supporting documents to education, experience, or membership records.
  *
  * **File requirements:**
- * - Must be a PDF file (`application/pdf`).
+ * - Must match the selected document type's configured file extensions and size limit.
  * - Stored via the platform StorageService under the `profile_documents` folder, partitioned by instructor UUID.
  *
  */
@@ -11074,14 +11088,14 @@ export const verifyCourseCreatorDocument = <ThrowOnError extends boolean = false
 
 /**
  * Upload course creator document file
- * Uploads a PDF document for a course creator and creates a document record.
+ * Uploads a credential document for a course creator and creates a document record.
  *
  * **Use cases:**
  * - Uploading certificates, credentials, and other creator verification documents.
  * - Attaching supporting documents to education, experience, or membership records.
  *
  * **File requirements:**
- * - Must be a PDF file (`application/pdf`).
+ * - Must match the selected document type's configured file extensions and size limit.
  * - Stored via the platform StorageService under the `profile_documents` folder, partitioned by course creator UUID.
  *
  */
@@ -15859,6 +15873,33 @@ export const listObligations = <ThrowOnError extends boolean = false>(
 };
 
 /**
+ * Monthly settled payouts for an organisation
+ * Money the organisation has actually paid out to instructors, one figure per calendar month over the trailing window (inclusive of the current month), oldest first.
+ */
+export const getMonthlySettlements = <ThrowOnError extends boolean = false>(
+  options: Options<GetMonthlySettlementsData, ThrowOnError>
+) => {
+  return (options.client ?? _heyApiClient).get<
+    GetMonthlySettlementsResponses,
+    GetMonthlySettlementsErrors,
+    ThrowOnError
+  >({
+    security: [
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+    ],
+    url: '/api/v1/organisations/{organisationUuid}/instructor-obligations/monthly-settlements',
+    ...options,
+  });
+};
+
+/**
  * Search organisations
  * Fetches a paginated list of organisations based on optional filters. Supports pagination and sorting. Available filters include:
  * - `name` - Filter by organisation name (partial match)
@@ -16411,6 +16452,7 @@ export const searchExperience = <ThrowOnError extends boolean = false>(
  * - `instructorUuid=uuid` - All education for specific instructor
  * - `qualification_like=degree` - Qualifications containing "degree"
  * - `schoolName_startswith=University` - Schools starting with "University"
+ * - `startYear_gte=2015` - Started in 2015 or later
  * - `yearCompleted_gte=2020` - Completed in 2020 or later
  * - `yearCompleted_between=2015,2020` - Completed between 2015-2020
  * - `certificateNumber_noteq=null` - Has certificate number
@@ -16784,6 +16826,34 @@ export const searchEnrollments = <ThrowOnError extends boolean = false>(
 };
 
 /**
+ * Get organisation weekly-growth
+ * Distinct students-per-course enrolled in each ISO week over the requested span, across all classes owned by the organisation, oldest week first.
+ */
+export const getWeeklyGrowth = <ThrowOnError extends boolean = false>(
+  options: Options<GetWeeklyGrowthData, ThrowOnError>
+) => {
+  return (options.client ?? _heyApiClient).get<
+    GetWeeklyGrowthResponses,
+    GetWeeklyGrowthErrors,
+    ThrowOnError
+  >({
+    responseTransformer: getWeeklyGrowthResponseTransformer,
+    security: [
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+    ],
+    url: '/api/v1/enrollment/organisations/{organisationUuid}/weekly-growth',
+    ...options,
+  });
+};
+
+/**
  * Get organisation today's-growth
  * Hourly enrolment counts for the current day across all classes owned by the organisation.
  */
@@ -16919,6 +16989,34 @@ export const getClassEnrolmentCounts = <ThrowOnError extends boolean = false>(
       },
     ],
     url: '/api/v1/enrollment/organisations/{organisationUuid}/class-enrolment-counts',
+    ...options,
+  });
+};
+
+/**
+ * Get an organisation's activity feed
+ * Recent, human-meaningful events across the organisation — students enrolling, classes being opened and instructors being paid — newest first.
+ */
+export const getActivityFeed = <ThrowOnError extends boolean = false>(
+  options: Options<GetActivityFeedData, ThrowOnError>
+) => {
+  return (options.client ?? _heyApiClient).get<
+    GetActivityFeedResponses,
+    GetActivityFeedErrors,
+    ThrowOnError
+  >({
+    responseTransformer: getActivityFeedResponseTransformer,
+    security: [
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+    ],
+    url: '/api/v1/enrollment/organisations/{organisationUuid}/activity-feed',
     ...options,
   });
 };
@@ -18310,6 +18408,33 @@ export const getRootCategories = <ThrowOnError extends boolean = false>(
       },
     ],
     url: '/api/v1/config/categories/root',
+    ...options,
+  });
+};
+
+/**
+ * Is a payment required to check out?
+ * Returns payment_required=false on an environment that captures orders on checkout completion. Clients must skip the payment page and initiate no STK Push when this is false, because the order is already settled by then and asking to pay for it is rejected.
+ */
+export const getPaymentMode = <ThrowOnError extends boolean = false>(
+  options?: Options<GetPaymentModeData, ThrowOnError>
+) => {
+  return (options?.client ?? _heyApiClient).get<
+    GetPaymentModeResponses,
+    GetPaymentModeErrors,
+    ThrowOnError
+  >({
+    security: [
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+    ],
+    url: '/api/v1/commerce/payment-mode',
     ...options,
   });
 };

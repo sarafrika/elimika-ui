@@ -382,11 +382,13 @@ import type {
   GetCourseEnrollmentsForStudentResponse,
   GetClassEnrollmentsForStudentResponse,
   SearchEnrollmentsResponse,
+  GetWeeklyGrowthResponse,
   GetTodayGrowthResponse,
   GetStudentPerformanceResponse,
   GetStudentSummariesResponse,
   GetEnrolmentTrendsResponse,
   GetClassEnrolmentCountsResponse,
+  GetActivityFeedResponse,
   GetEnrollmentsForInstanceResponse,
   GetEnrollmentCountResponse,
   ListCurrenciesResponse,
@@ -1998,6 +2000,9 @@ const classSessionTemplateSchemaResponseTransformer = (data: any) => {
   data.end_time = new Date(data.end_time);
   if (data.recurrence) {
     data.recurrence = classRecurrenceSchemaResponseTransformer(data.recurrence);
+  }
+  if (data.duration_minutes) {
+    data.duration_minutes = BigInt(data.duration_minutes.toString());
   }
   return data;
 };
@@ -6630,6 +6635,29 @@ export const searchEnrollmentsResponseTransformer = async (
   return data;
 };
 
+const weeklyGrowthPointDtoSchemaResponseTransformer = (data: any) => {
+  if (data.enrolments) {
+    data.enrolments = BigInt(data.enrolments.toString());
+  }
+  return data;
+};
+
+const apiResponseListWeeklyGrowthPointDtoSchemaResponseTransformer = (data: any) => {
+  if (data.data) {
+    data.data = data.data.map((item: any) => {
+      return weeklyGrowthPointDtoSchemaResponseTransformer(item);
+    });
+  }
+  return data;
+};
+
+export const getWeeklyGrowthResponseTransformer = async (
+  data: any
+): Promise<GetWeeklyGrowthResponse> => {
+  data = apiResponseListWeeklyGrowthPointDtoSchemaResponseTransformer(data);
+  return data;
+};
+
 const todayGrowthPointDtoSchemaResponseTransformer = (data: any) => {
   if (data.enrolments) {
     data.enrolments = BigInt(data.enrolments.toString());
@@ -6754,6 +6782,29 @@ export const getClassEnrolmentCountsResponseTransformer = async (
   data: any
 ): Promise<GetClassEnrolmentCountsResponse> => {
   data = apiResponseListClassEnrolmentCountDtoSchemaResponseTransformer(data);
+  return data;
+};
+
+const organisationActivityEventDtoSchemaResponseTransformer = (data: any) => {
+  if (data.occurred_at) {
+    data.occurred_at = new Date(data.occurred_at);
+  }
+  return data;
+};
+
+const apiResponseListOrganisationActivityEventDtoSchemaResponseTransformer = (data: any) => {
+  if (data.data) {
+    data.data = data.data.map((item: any) => {
+      return organisationActivityEventDtoSchemaResponseTransformer(item);
+    });
+  }
+  return data;
+};
+
+export const getActivityFeedResponseTransformer = async (
+  data: any
+): Promise<GetActivityFeedResponse> => {
+  data = apiResponseListOrganisationActivityEventDtoSchemaResponseTransformer(data);
   return data;
 };
 

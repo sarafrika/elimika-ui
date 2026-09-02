@@ -459,6 +459,7 @@ import {
   getCalendar,
   listBookings,
   listObligations,
+  getMonthlySettlements,
   search2,
   getCounts,
   getInvitationByToken,
@@ -488,11 +489,13 @@ import {
   getCourseEnrollmentsForStudent,
   getClassEnrollmentsForStudent,
   searchEnrollments,
+  getWeeklyGrowth,
   getTodayGrowth,
   getStudentPerformance,
   getStudentSummaries,
   getEnrolmentTrends,
   getClassEnrolmentCounts,
+  getActivityFeed,
   getEnrollmentsForInstance,
   getEnrollmentCount,
   hasCapacityForEnrollment,
@@ -539,6 +542,7 @@ import {
   getSubCategories,
   searchCategories,
   getRootCategories,
+  getPaymentMode,
   getOrder,
   getPaymentStatus,
   searchCatalogue,
@@ -1796,6 +1800,7 @@ import type {
   ListObligationsData,
   ListObligationsError,
   ListObligationsResponse,
+  GetMonthlySettlementsData,
   Search2Data,
   Search2Error,
   Search2Response,
@@ -1857,11 +1862,13 @@ import type {
   SearchEnrollmentsData,
   SearchEnrollmentsError,
   SearchEnrollmentsResponse,
+  GetWeeklyGrowthData,
   GetTodayGrowthData,
   GetStudentPerformanceData,
   GetStudentSummariesData,
   GetEnrolmentTrendsData,
   GetClassEnrolmentCountsData,
+  GetActivityFeedData,
   GetEnrollmentsForInstanceData,
   GetEnrollmentCountData,
   HasCapacityForEnrollmentData,
@@ -1952,6 +1959,7 @@ import type {
   SearchCategoriesError,
   SearchCategoriesResponse,
   GetRootCategoriesData,
+  GetPaymentModeData,
   GetOrderData,
   GetPaymentStatusData,
   SearchCatalogueData,
@@ -10730,14 +10738,14 @@ export const uploadInstructorDocumentQueryKey = (options: Options<UploadInstruct
 
 /**
  * Upload instructor document file
- * Uploads a PDF document for an instructor and creates a document record.
+ * Uploads a credential document for an instructor and creates a document record.
  *
  * **Use cases:**
  * - Uploading certificates, licenses, and other professional credentials.
  * - Attaching supporting documents to education, experience, or membership records.
  *
  * **File requirements:**
- * - Must be a PDF file (`application/pdf`).
+ * - Must match the selected document type's configured file extensions and size limit.
  * - Stored via the platform StorageService under the `profile_documents` folder, partitioned by instructor UUID.
  *
  */
@@ -10758,14 +10766,14 @@ export const uploadInstructorDocumentOptions = (options: Options<UploadInstructo
 
 /**
  * Upload instructor document file
- * Uploads a PDF document for an instructor and creates a document record.
+ * Uploads a credential document for an instructor and creates a document record.
  *
  * **Use cases:**
  * - Uploading certificates, licenses, and other professional credentials.
  * - Attaching supporting documents to education, experience, or membership records.
  *
  * **File requirements:**
- * - Must be a PDF file (`application/pdf`).
+ * - Must match the selected document type's configured file extensions and size limit.
  * - Stored via the platform StorageService under the `profile_documents` folder, partitioned by instructor UUID.
  *
  */
@@ -13893,14 +13901,14 @@ export const uploadCourseCreatorDocumentQueryKey = (
 
 /**
  * Upload course creator document file
- * Uploads a PDF document for a course creator and creates a document record.
+ * Uploads a credential document for a course creator and creates a document record.
  *
  * **Use cases:**
  * - Uploading certificates, credentials, and other creator verification documents.
  * - Attaching supporting documents to education, experience, or membership records.
  *
  * **File requirements:**
- * - Must be a PDF file (`application/pdf`).
+ * - Must match the selected document type's configured file extensions and size limit.
  * - Stored via the platform StorageService under the `profile_documents` folder, partitioned by course creator UUID.
  *
  */
@@ -13923,14 +13931,14 @@ export const uploadCourseCreatorDocumentOptions = (
 
 /**
  * Upload course creator document file
- * Uploads a PDF document for a course creator and creates a document record.
+ * Uploads a credential document for a course creator and creates a document record.
  *
  * **Use cases:**
  * - Uploading certificates, credentials, and other creator verification documents.
  * - Attaching supporting documents to education, experience, or membership records.
  *
  * **File requirements:**
- * - Must be a PDF file (`application/pdf`).
+ * - Must match the selected document type's configured file extensions and size limit.
  * - Stored via the platform StorageService under the `profile_documents` folder, partitioned by course creator UUID.
  *
  */
@@ -21742,6 +21750,28 @@ export const listObligationsInfiniteOptions = (options: Options<ListObligationsD
   );
 };
 
+export const getMonthlySettlementsQueryKey = (options: Options<GetMonthlySettlementsData>) =>
+  createQueryKey('getMonthlySettlements', options);
+
+/**
+ * Monthly settled payouts for an organisation
+ * Money the organisation has actually paid out to instructors, one figure per calendar month over the trailing window (inclusive of the current month), oldest first.
+ */
+export const getMonthlySettlementsOptions = (options: Options<GetMonthlySettlementsData>) => {
+  return queryOptions({
+    queryFn: async ({ queryKey, signal }) => {
+      const { data } = await getMonthlySettlements({
+        ...options,
+        ...queryKey[0],
+        signal,
+        throwOnError: true,
+      });
+      return data;
+    },
+    queryKey: getMonthlySettlementsQueryKey(options),
+  });
+};
+
 export const search2QueryKey = (options: Options<Search2Data>) =>
   createQueryKey('search2', options);
 
@@ -22686,6 +22716,7 @@ export const searchEducationQueryKey = (options: Options<SearchEducationData>) =
  * - `instructorUuid=uuid` - All education for specific instructor
  * - `qualification_like=degree` - Qualifications containing "degree"
  * - `schoolName_startswith=University` - Schools starting with "University"
+ * - `startYear_gte=2015` - Started in 2015 or later
  * - `yearCompleted_gte=2020` - Completed in 2020 or later
  * - `yearCompleted_between=2015,2020` - Completed between 2015-2020
  * - `certificateNumber_noteq=null` - Has certificate number
@@ -22720,6 +22751,7 @@ export const searchEducationInfiniteQueryKey = (
  * - `instructorUuid=uuid` - All education for specific instructor
  * - `qualification_like=degree` - Qualifications containing "degree"
  * - `schoolName_startswith=University` - Schools starting with "University"
+ * - `startYear_gte=2015` - Started in 2015 or later
  * - `yearCompleted_gte=2020` - Completed in 2020 or later
  * - `yearCompleted_between=2015,2020` - Completed between 2015-2020
  * - `certificateNumber_noteq=null` - Has certificate number
@@ -23362,6 +23394,28 @@ export const searchEnrollmentsInfiniteOptions = (options: Options<SearchEnrollme
   );
 };
 
+export const getWeeklyGrowthQueryKey = (options: Options<GetWeeklyGrowthData>) =>
+  createQueryKey('getWeeklyGrowth', options);
+
+/**
+ * Get organisation weekly-growth
+ * Distinct students-per-course enrolled in each ISO week over the requested span, across all classes owned by the organisation, oldest week first.
+ */
+export const getWeeklyGrowthOptions = (options: Options<GetWeeklyGrowthData>) => {
+  return queryOptions({
+    queryFn: async ({ queryKey, signal }) => {
+      const { data } = await getWeeklyGrowth({
+        ...options,
+        ...queryKey[0],
+        signal,
+        throwOnError: true,
+      });
+      return data;
+    },
+    queryKey: getWeeklyGrowthQueryKey(options),
+  });
+};
+
 export const getTodayGrowthQueryKey = (options: Options<GetTodayGrowthData>) =>
   createQueryKey('getTodayGrowth', options);
 
@@ -23469,6 +23523,28 @@ export const getClassEnrolmentCountsOptions = (options: Options<GetClassEnrolmen
       return data;
     },
     queryKey: getClassEnrolmentCountsQueryKey(options),
+  });
+};
+
+export const getActivityFeedQueryKey = (options: Options<GetActivityFeedData>) =>
+  createQueryKey('getActivityFeed', options);
+
+/**
+ * Get an organisation's activity feed
+ * Recent, human-meaningful events across the organisation — students enrolling, classes being opened and instructors being paid — newest first.
+ */
+export const getActivityFeedOptions = (options: Options<GetActivityFeedData>) => {
+  return queryOptions({
+    queryFn: async ({ queryKey, signal }) => {
+      const { data } = await getActivityFeed({
+        ...options,
+        ...queryKey[0],
+        signal,
+        throwOnError: true,
+      });
+      return data;
+    },
+    queryKey: getActivityFeedQueryKey(options),
   });
 };
 
@@ -25654,6 +25730,28 @@ export const getRootCategoriesOptions = (options?: Options<GetRootCategoriesData
       return data;
     },
     queryKey: getRootCategoriesQueryKey(options),
+  });
+};
+
+export const getPaymentModeQueryKey = (options?: Options<GetPaymentModeData>) =>
+  createQueryKey('getPaymentMode', options);
+
+/**
+ * Is a payment required to check out?
+ * Returns payment_required=false on an environment that captures orders on checkout completion. Clients must skip the payment page and initiate no STK Push when this is false, because the order is already settled by then and asking to pay for it is rejected.
+ */
+export const getPaymentModeOptions = (options?: Options<GetPaymentModeData>) => {
+  return queryOptions({
+    queryFn: async ({ queryKey, signal }) => {
+      const { data } = await getPaymentMode({
+        ...options,
+        ...queryKey[0],
+        signal,
+        throwOnError: true,
+      });
+      return data;
+    },
+    queryKey: getPaymentModeQueryKey(options),
   });
 };
 

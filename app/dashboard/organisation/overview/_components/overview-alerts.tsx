@@ -1,20 +1,40 @@
 'use client';
 
 import { useQuery } from '@tanstack/react-query';
-import { ClipboardCheck, ShieldAlert } from 'lucide-react';
+import { AlertTriangle, Bell, BellRing, ClipboardCheck, Info, ShieldAlert } from 'lucide-react';
 
-import { AlertPanel, type AlertItem } from '@/components/dashboard';
+import { AlertPanel, type AlertItem, type AlertSeverity } from '@/components/dashboard';
 import { useOrganisation } from '@/context/organisation-context';
-import { searchTrainingApplicationsOptions } from '@/services/client/@tanstack/react-query.gen';
+import { extractPage } from '@/lib/api-helpers';
+import type { NotificationDto } from '@/services/client';
+import {
+  listNotificationsOptions,
+  searchTrainingApplicationsOptions,
+} from '@/services/client/@tanstack/react-query.gen';
 
 type TrainingApplicationLike = { status?: string | null };
 
 const isPending = (status?: string | null) => (status ?? '').toLowerCase() === 'pending';
 
+const severityFor = (n: NotificationDto): AlertSeverity => {
+  const p = (n.priority ?? '').toLowerCase();
+  if (p.includes('high') || p.includes('urgent') || p.includes('critical')) return 'high';
+  if (p.includes('low')) return 'low';
+  return 'medium';
+};
+
+const iconFor = (n: NotificationDto) => {
+  const p = (n.priority ?? '').toLowerCase();
+  if (p.includes('high') || p.includes('urgent') || p.includes('critical')) return AlertTriangle;
+  if ((n.category ?? '').toLowerCase().includes('info')) return Info;
+  return n.read_at ? Bell : BellRing;
+};
+
 /**
- * Org-scoped alerts. Container that surfaces real signals (verification status,
- * pending training applications the org submitted) into the presentational
- * AlertPanel. Renders a graceful "all caught up" state when nothing is pending.
+ * Org-scoped alerts. Surfaces the organisation's own operational signals (verification status,
+ * pending training applications) together with the most recent incoming notifications from its
+ * inbox — a compact mirror of the notifications section. Renders a graceful "all caught up" state
+ * when there is nothing to show.
  */
 export function OverviewAlerts() {
   const organisation = useOrganisation();
@@ -32,6 +52,11 @@ export function OverviewAlerts() {
         pageable: { page: 0, size: 100 },
       },
     }),
+    enabled: Boolean(organisationUuid),
+  });
+
+  const notificationsQuery = useQuery({
+    ...listNotificationsOptions({ query: { pageable: { page: 0, size: 5 } } }),
     enabled: Boolean(organisationUuid),
   });
 
@@ -67,6 +92,18 @@ export function OverviewAlerts() {
       icon: ClipboardCheck,
       actionLabel: 'View',
       href: '/dashboard/organisation/approvals',
+    });
+  }
+
+  for (const n of extractPage<NotificationDto>(notificationsQuery.data).items) {
+    alerts.push({
+      id: n.uuid ?? n.notification_id ?? `${n.title}-${n.created_at}`,
+      severity: severityFor(n),
+      title: n.title ?? 'Notification',
+      description: n.body ?? '',
+      icon: iconFor(n),
+      actionLabel: n.action_url ? 'View' : undefined,
+      href: n.action_url ?? undefined,
     });
   }
 

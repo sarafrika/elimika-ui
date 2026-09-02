@@ -282,8 +282,8 @@ export type Student = {
    */
   bio?: string | null;
   primaryGuardianContact?: string;
-  allGuardianContacts?: Array<string>;
   secondaryGuardianContact?: string;
+  allGuardianContacts?: Array<string>;
   /**
    * **[READ-ONLY]** Complete name of the student. Automatically derived from the linked user profile.
    */
@@ -549,13 +549,13 @@ export type RubricScoringLevel = {
    */
   readonly display_name?: string;
   /**
-   * **[READ-ONLY]** CSS-safe color class name derived from the color code.
-   */
-  readonly css_color_class?: string;
-  /**
    * **[READ-ONLY]** Performance classification based on level order and passing status.
    */
   readonly performance_indicator?: string;
+  /**
+   * **[READ-ONLY]** CSS-safe color class name derived from the color code.
+   */
+  readonly css_color_class?: string;
   /**
    * **[READ-ONLY]** Indicates if this is the highest performance level (level_order = 1).
    */
@@ -717,13 +717,13 @@ export type RubricMatrix = {
    */
   matrix_statistics?: MatrixStatistics;
   /**
-   * **[READ-ONLY]** Expected number of matrix cells (criteria count × scoring levels count).
-   */
-  readonly expected_cell_count?: number;
-  /**
    * **[READ-ONLY]** Whether all matrix cells have been completed with descriptions.
    */
   readonly is_complete?: boolean;
+  /**
+   * **[READ-ONLY]** Expected number of matrix cells (criteria count × scoring levels count).
+   */
+  readonly expected_cell_count?: number;
 };
 
 export type ApiResponseRubricCriteria = {
@@ -1222,13 +1222,13 @@ export type TrainingProgram = {
    */
   readonly updated_by?: string;
   /**
-   * **[READ-ONLY]** Human-readable format of total program duration.
-   */
-  readonly total_duration_display?: string;
-  /**
    * **[READ-ONLY]** Classification of program type based on duration and content.
    */
   readonly program_type?: string;
+  /**
+   * **[READ-ONLY]** Human-readable format of total program duration.
+   */
+  readonly total_duration_display?: string;
 };
 
 export type ApiResponseTrainingProgram = {
@@ -2065,6 +2065,10 @@ export type InstructorEducation = {
    */
   school_name: string;
   /**
+   * **[OPTIONAL]** Year when the qualification program started. Must be a valid year not before 1950.
+   */
+  start_year?: number | null;
+  /**
    * **[OPTIONAL]** Year when the qualification was completed or awarded. Must be a valid year not in the future.
    */
   year_completed?: number | null;
@@ -2331,6 +2335,10 @@ export type AvailabilitySlot = {
    */
   readonly updated_by?: string;
   /**
+   * **[READ-ONLY]** Duration of the availability slot in minutes.
+   */
+  readonly duration_minutes?: bigint;
+  /**
    * **[READ-ONLY]** Human-readable formatted duration.
    */
   readonly duration_formatted?: string;
@@ -2346,10 +2354,6 @@ export type AvailabilitySlot = {
    * **[READ-ONLY]** Human-readable description of the availability pattern.
    */
   readonly availability_description?: string;
-  /**
-   * **[READ-ONLY]** Duration of the availability slot in minutes.
-   */
-  readonly duration_minutes?: bigint;
 };
 
 export type ApiResponseAvailabilitySlot = {
@@ -2481,22 +2485,6 @@ export type Course = {
    */
   readonly updated_by?: string;
   /**
-   * **[READ-ONLY]** Human-readable format of total course duration.
-   */
-  readonly total_duration_display?: string;
-  /**
-   * **[READ-ONLY]** Indicates if the course belongs to multiple categories.
-   */
-  readonly has_multiple_categories?: boolean;
-  /**
-   * **[READ-ONLY]** Number of categories this course belongs to.
-   */
-  readonly category_count?: number;
-  /**
-   * **[READ-ONLY]** Human-readable description of the course's current lifecycle stage.
-   */
-  readonly lifecycle_stage?: string;
-  /**
    * **[READ-ONLY]** Indicates if the course is published and discoverable.
    */
   readonly is_published?: boolean;
@@ -2516,6 +2504,22 @@ export type Course = {
    * **[READ-ONLY]** Indicates if the course is currently under review.
    */
   readonly is_in_review?: boolean;
+  /**
+   * **[READ-ONLY]** Human-readable format of total course duration.
+   */
+  readonly total_duration_display?: string;
+  /**
+   * **[READ-ONLY]** Indicates if the course belongs to multiple categories.
+   */
+  readonly has_multiple_categories?: boolean;
+  /**
+   * **[READ-ONLY]** Number of categories this course belongs to.
+   */
+  readonly category_count?: number;
+  /**
+   * **[READ-ONLY]** Human-readable description of the course's current lifecycle stage.
+   */
+  readonly lifecycle_stage?: string;
 };
 
 /**
@@ -2810,13 +2814,13 @@ export type Lesson = {
    */
   readonly updated_by?: string;
   /**
-   * **[READ-ONLY]** Formatted lesson sequence for display purposes.
-   */
-  readonly lesson_sequence?: string;
-  /**
    * **[READ-ONLY]** Indicates if the lesson is published and accessible to students.
    */
   readonly is_published?: boolean;
+  /**
+   * **[READ-ONLY]** Formatted lesson sequence for display purposes.
+   */
+  readonly lesson_sequence?: string;
 };
 
 export type ApiResponseLesson = {
@@ -2967,13 +2971,13 @@ export type LessonContent = {
    */
   readonly updated_by?: string;
   /**
-   * **[READ-ONLY]** Human-readable format of file size.
-   */
-  readonly file_size_display?: string;
-  /**
    * **[READ-ONLY]** Category of content based on its type and format.
    */
   readonly content_category?: string;
+  /**
+   * **[READ-ONLY]** Human-readable format of file size.
+   */
+  readonly file_size_display?: string;
 };
 
 export type ApiResponseLessonContent = {
@@ -3041,14 +3045,6 @@ export type CourseAssessment = {
    */
   readonly updated_by?: string;
   /**
-   * **[READ-ONLY]** Category classification of the assessment type.
-   */
-  readonly assessment_category?: string;
-  /**
-   * **[READ-ONLY]** Human-readable format of the weight percentage.
-   */
-  readonly weight_display?: string;
-  /**
    * **[READ-ONLY]** Indicates if this is a major assessment component.
    */
   readonly is_major_assessment?: boolean;
@@ -3060,6 +3056,14 @@ export type CourseAssessment = {
    * **[READ-ONLY]** Human-readable description of how line items are combined for this component.
    */
   readonly aggregation_strategy_display?: string;
+  /**
+   * **[READ-ONLY]** Category classification of the assessment type.
+   */
+  readonly assessment_category?: string;
+  /**
+   * **[READ-ONLY]** Human-readable format of the weight percentage.
+   */
+  readonly weight_display?: string;
 };
 
 export type ApiResponseCourseAssessment = {
@@ -3318,6 +3322,7 @@ export type CourseCreatorEducation = {
   qualification: string;
   field_of_study?: string;
   school_name: string;
+  start_year?: number;
   year_completed?: number;
   certificate_number?: string;
   readonly created_date?: Date;
@@ -3793,7 +3798,7 @@ export type ClassDefinitionUpdateRequest = {
    */
   default_start_time: Date;
   /**
-   * **[REQUIRED]** Default end date-time for the class.
+   * **[REQUIRED]** Default end date-time for the class. Together with default_start_time this fixes the class length.
    */
   default_end_time: Date;
   /**
@@ -4025,6 +4030,10 @@ export type ClassDefinition = {
    */
   readonly is_standalone?: boolean;
   /**
+   * **[READ-ONLY]** Computed duration of the class in minutes based on start and end times.
+   */
+  readonly duration_minutes?: bigint;
+  /**
    * **[READ-ONLY]** Human-readable capacity information including waitlist availability.
    */
   readonly capacity_info?: string;
@@ -4032,10 +4041,6 @@ export type ClassDefinition = {
    * **[READ-ONLY]** Human-readable formatted duration.
    */
   readonly duration_formatted?: string;
-  /**
-   * **[READ-ONLY]** Computed duration of the class in minutes based on start and end times.
-   */
-  readonly duration_minutes?: bigint;
 };
 
 /**
@@ -4084,18 +4089,26 @@ export type ClassSessionTemplate = {
    */
   readonly uuid?: string;
   /**
-   * Start time for the first occurrence (UTC)
+   * **[REQUIRED]** Start time for the first occurrence (UTC)
    */
   start_time: Date;
   /**
-   * End time for the first occurrence (UTC)
+   * **[REQUIRED]** End time for the first occurrence (UTC). Together with start_time this fixes the session length.
    */
   end_time: Date;
   /**
    * Inline recurrence rule for this session template
    */
   recurrence?: ClassRecurrence;
+  /**
+   * **[OPTIONAL]** IANA timezone identifier used when displaying generated scheduled sessions.
+   */
+  timezone?: string;
   conflict_resolution?: ConflictResolutionEnum;
+  /**
+   * **[READ-ONLY]** Computed session length in minutes, derived from start_time and end_time.
+   */
+  readonly duration_minutes?: bigint;
 };
 
 /**
@@ -4129,7 +4142,7 @@ export type ClassMarketplaceJobRequest = {
    */
   default_start_time: Date;
   /**
-   * **[REQUIRED]** Default end date-time for the advertised class (UTC).
+   * **[REQUIRED]** Default end date-time for the advertised class (UTC). Together with default_start_time this fixes the class length.
    */
   default_end_time: Date;
   /**
@@ -4836,6 +4849,11 @@ export type ScheduledInstance = {
    * **[OPTIONAL]** Maximum number of participants for this session (cached from class definition).
    */
   max_participants?: number;
+  status?: StatusEnum9;
+  /**
+   * **[OPTIONAL]** Reason for cancellation if status is CANCELLED.
+   */
+  cancellation_reason?: string | null;
   /**
    * **[READ-ONLY]** Organisation that owns the class behind this session, when the instructor is delivering it on an organisation's behalf. Null for an instructor's own class.
    */
@@ -4844,11 +4862,6 @@ export type ScheduledInstance = {
    * **[READ-ONLY]** Display name of the owning organisation, so a calendar can say whose work the session is without a second lookup.
    */
   readonly organisation_name?: string | null;
-  status?: StatusEnum9;
-  /**
-   * **[OPTIONAL]** Reason for cancellation if status is CANCELLED.
-   */
-  cancellation_reason?: string | null;
   /**
    * **[READ-ONLY]** Actual UTC timestamp when the instructor explicitly started the class session.
    */
@@ -4874,6 +4887,10 @@ export type ScheduledInstance = {
    */
   readonly updated_by?: string;
   /**
+   * **[READ-ONLY]** Duration of the scheduled instance in minutes.
+   */
+  readonly duration_minutes?: bigint;
+  /**
    * **[READ-ONLY]** Human-readable formatted duration.
    */
   readonly duration_formatted?: string;
@@ -4885,10 +4902,6 @@ export type ScheduledInstance = {
    * **[READ-ONLY]** Indicates if the scheduled instance is currently active (ongoing).
    */
   readonly is_currently_active?: boolean;
-  /**
-   * **[READ-ONLY]** Duration of the scheduled instance in minutes.
-   */
-  readonly duration_minutes?: bigint;
   /**
    * **[READ-ONLY]** Indicates if the scheduled instance can be cancelled.
    */
@@ -6047,6 +6060,10 @@ export type Enrollment = {
    */
   readonly is_active?: boolean;
   /**
+   * **[READ-ONLY]** Indicates if the enrollment can be cancelled.
+   */
+  readonly can_be_cancelled?: boolean;
+  /**
    * **[READ-ONLY]** Indicates if attendance has been marked for this enrollment.
    */
   readonly is_attendance_marked?: boolean;
@@ -6058,10 +6075,6 @@ export type Enrollment = {
    * **[READ-ONLY]** Human-readable description of the enrollment status.
    */
   readonly status_description?: string;
-  /**
-   * **[READ-ONLY]** Indicates if the enrollment can be cancelled.
-   */
-  readonly can_be_cancelled?: boolean;
 };
 
 export type ApiResponse = {
@@ -6540,7 +6553,7 @@ export type ClassDefinitionCreateRequest = {
    */
   default_start_time: Date;
   /**
-   * **[REQUIRED]** Default end date-time for the class.
+   * **[REQUIRED]** Default end date-time for the class. Together with default_start_time this fixes the class length.
    */
   default_end_time: Date;
   /**
@@ -6961,11 +6974,11 @@ export type ClassMarketplaceJobApplication = {
 };
 
 /**
- * Organisation review notes when approving or rejecting an instructor application
+ * Organisation review notes and optional interview scheduling details for an instructor application
  */
 export type ClassMarketplaceJobDecisionRequest = {
   review_notes?: string;
-  interview_at?: string;
+  interview_at?: Date;
 };
 
 /**
@@ -7765,13 +7778,13 @@ export type StudentSchedule = {
    */
   readonly attendance_marked_at?: Date | null;
   /**
-   * **[READ-ONLY]** Indicates if the student attended this class.
-   */
-  readonly did_attend?: boolean;
-  /**
    * **[READ-ONLY]** Duration of the scheduled class in minutes.
    */
   readonly duration_minutes?: bigint;
+  /**
+   * **[READ-ONLY]** Indicates if the student attended this class.
+   */
+  readonly did_attend?: boolean;
   /**
    * **[READ-ONLY]** Indicates if this class is upcoming.
    */
@@ -8763,6 +8776,31 @@ export type PagedDtoInstructorObligation = {
   links?: PageLinks;
 };
 
+export type ApiResponseListMonthlyPayoutPoint = {
+  success?: boolean;
+  data?: Array<MonthlyPayoutPoint>;
+  message?: string;
+  error?: unknown;
+};
+
+/**
+ * A month's settled instructor payouts for an organisation
+ */
+export type MonthlyPayoutPoint = {
+  /**
+   * Calendar month in YYYY-MM form
+   */
+  month?: string;
+  /**
+   * Total settled payout for the month
+   */
+  amount?: number;
+  /**
+   * ISO-4217 currency the amount is denominated in
+   */
+  currency_code?: string;
+};
+
 export type ApiResponseListCompetition = {
   success?: boolean;
   data?: Array<Competition>;
@@ -9374,6 +9412,27 @@ export type ApiResponsePagedDtoStudentClassEnrollmentSummary = {
   error?: unknown;
 };
 
+export type ApiResponseListWeeklyGrowthPointDto = {
+  success?: boolean;
+  data?: Array<WeeklyGrowthPointDto>;
+  message?: string;
+  error?: unknown;
+};
+
+/**
+ * A weekly bucket of enrolment activity for an organisation
+ */
+export type WeeklyGrowthPointDto = {
+  /**
+   * ISO week bucket in IYYY-WIW form
+   */
+  week?: string;
+  /**
+   * Distinct student/course enrolments recorded during the week
+   */
+  enrolments?: bigint;
+};
+
 export type ApiResponseListTodayGrowthPointDto = {
   success?: boolean;
   data?: Array<TodayGrowthPointDto>;
@@ -9501,6 +9560,43 @@ export type ClassEnrolmentCountDto = {
    * Distinct actively-enrolled students
    */
   enrolled?: bigint;
+};
+
+export type ApiResponseListOrganisationActivityEventDto = {
+  success?: boolean;
+  data?: Array<OrganisationActivityEventDto>;
+  message?: string;
+  error?: unknown;
+};
+
+/**
+ * A recent activity event within an organisation
+ */
+export type OrganisationActivityEventDto = {
+  /**
+   * Event type: ENROLMENT, CLASS_OPENED or PAYOUT
+   */
+  event_type?: string;
+  /**
+   * When the event occurred
+   */
+  occurred_at?: Date;
+  /**
+   * Class the event relates to, if any
+   */
+  class_title?: string | null;
+  /**
+   * Student (ENROLMENT) or instructor user (PAYOUT) the event is about
+   */
+  subject_uuid?: string | null;
+  /**
+   * Amount paid, for PAYOUT events
+   */
+  amount?: number | null;
+  /**
+   * Currency of the amount, for PAYOUT events
+   */
+  currency_code?: string | null;
 };
 
 export type ApiResponseLong = {
@@ -10350,6 +10446,23 @@ export type ApiResponseListCompetitionTeam = {
   data?: Array<CompetitionTeam>;
   message?: string;
   error?: unknown;
+};
+
+export type ApiResponsePaymentModeResponse = {
+  success?: boolean;
+  data?: PaymentModeResponse;
+  message?: string;
+  error?: unknown;
+};
+
+/**
+ * Whether checkout requires a payment on this environment
+ */
+export type PaymentModeResponse = {
+  /**
+   * False on an environment that captures orders without a gateway, in which case the client must not send the learner to the payment page and no STK Push is ever initiated. True wherever money is actually collected.
+   */
+  payment_required?: boolean;
 };
 
 export type ApiResponseListCommerceCatalogueItem = {
@@ -12048,12 +12161,22 @@ export const TypeEnum = {
   INSTRUCTOR_CLASS_ENROLLMENT_MILESTONE: 'INSTRUCTOR_CLASS_ENROLLMENT_MILESTONE',
   INSTRUCTOR_CLASS_ENROLLMENT_NOTICE: 'INSTRUCTOR_CLASS_ENROLLMENT_NOTICE',
   UPCOMING_CLASS_REMINDER: 'UPCOMING_CLASS_REMINDER',
+  COURSE_REVIEW_SUBMITTED: 'COURSE_REVIEW_SUBMITTED',
+  PROGRAM_REVIEW_SUBMITTED: 'PROGRAM_REVIEW_SUBMITTED',
+  CLASS_REVIEW_SUBMITTED: 'CLASS_REVIEW_SUBMITTED',
+  INSTRUCTOR_REVIEW_SUBMITTED: 'INSTRUCTOR_REVIEW_SUBMITTED',
   ACCOUNT_CREATED: 'ACCOUNT_CREATED',
   PASSWORD_RESET_REQUEST: 'PASSWORD_RESET_REQUEST',
   SECURITY_ALERT: 'SECURITY_ALERT',
   ORDER_PAYMENT_RECEIPT: 'ORDER_PAYMENT_RECEIPT',
   LEARNING_CERTIFICATE_ISSUED: 'LEARNING_CERTIFICATE_ISSUED',
   PROFILE_DOCUMENT_VERIFIED: 'PROFILE_DOCUMENT_VERIFIED',
+  INSTRUCTOR_VERIFICATION_APPROVED: 'INSTRUCTOR_VERIFICATION_APPROVED',
+  INSTRUCTOR_VERIFICATION_REVOKED: 'INSTRUCTOR_VERIFICATION_REVOKED',
+  COURSE_CREATOR_VERIFICATION_APPROVED: 'COURSE_CREATOR_VERIFICATION_APPROVED',
+  COURSE_CREATOR_VERIFICATION_REVOKED: 'COURSE_CREATOR_VERIFICATION_REVOKED',
+  ORGANISATION_VERIFICATION_APPROVED: 'ORGANISATION_VERIFICATION_APPROVED',
+  ORGANISATION_VERIFICATION_REVOKED: 'ORGANISATION_VERIFICATION_REVOKED',
   PROFILE_COMPLETION_REMINDER: 'PROFILE_COMPLETION_REMINDER',
   ORGANISATION_INVITATION: 'ORGANISATION_INVITATION',
   GUARDIAN_CONSENT_REQUEST: 'GUARDIAN_CONSENT_REQUEST',
@@ -13167,12 +13290,22 @@ export const TypeEnumWritable = {
   INSTRUCTOR_CLASS_ENROLLMENT_MILESTONE: 'INSTRUCTOR_CLASS_ENROLLMENT_MILESTONE',
   INSTRUCTOR_CLASS_ENROLLMENT_NOTICE: 'INSTRUCTOR_CLASS_ENROLLMENT_NOTICE',
   UPCOMING_CLASS_REMINDER: 'UPCOMING_CLASS_REMINDER',
+  COURSE_REVIEW_SUBMITTED: 'COURSE_REVIEW_SUBMITTED',
+  PROGRAM_REVIEW_SUBMITTED: 'PROGRAM_REVIEW_SUBMITTED',
+  CLASS_REVIEW_SUBMITTED: 'CLASS_REVIEW_SUBMITTED',
+  INSTRUCTOR_REVIEW_SUBMITTED: 'INSTRUCTOR_REVIEW_SUBMITTED',
   ACCOUNT_CREATED: 'ACCOUNT_CREATED',
   PASSWORD_RESET_REQUEST: 'PASSWORD_RESET_REQUEST',
   SECURITY_ALERT: 'SECURITY_ALERT',
   ORDER_PAYMENT_RECEIPT: 'ORDER_PAYMENT_RECEIPT',
   LEARNING_CERTIFICATE_ISSUED: 'LEARNING_CERTIFICATE_ISSUED',
   PROFILE_DOCUMENT_VERIFIED: 'PROFILE_DOCUMENT_VERIFIED',
+  INSTRUCTOR_VERIFICATION_APPROVED: 'INSTRUCTOR_VERIFICATION_APPROVED',
+  INSTRUCTOR_VERIFICATION_REVOKED: 'INSTRUCTOR_VERIFICATION_REVOKED',
+  COURSE_CREATOR_VERIFICATION_APPROVED: 'COURSE_CREATOR_VERIFICATION_APPROVED',
+  COURSE_CREATOR_VERIFICATION_REVOKED: 'COURSE_CREATOR_VERIFICATION_REVOKED',
+  ORGANISATION_VERIFICATION_APPROVED: 'ORGANISATION_VERIFICATION_APPROVED',
+  ORGANISATION_VERIFICATION_REVOKED: 'ORGANISATION_VERIFICATION_REVOKED',
   PROFILE_COMPLETION_REMINDER: 'PROFILE_COMPLETION_REMINDER',
   ORGANISATION_INVITATION: 'ORGANISATION_INVITATION',
   GUARDIAN_CONSENT_REQUEST: 'GUARDIAN_CONSENT_REQUEST',
@@ -29355,6 +29488,47 @@ export type ListObligationsResponses = {
 
 export type ListObligationsResponse = ListObligationsResponses[keyof ListObligationsResponses];
 
+export type GetMonthlySettlementsData = {
+  body?: never;
+  path: {
+    /**
+     * UUID of the organisation
+     */
+    organisationUuid: string;
+  };
+  query?: {
+    /**
+     * Number of months to include (inclusive of the current month)
+     */
+    months?: number;
+  };
+  url: '/api/v1/organisations/{organisationUuid}/instructor-obligations/monthly-settlements';
+};
+
+export type GetMonthlySettlementsErrors = {
+  /**
+   * Not Found
+   */
+  404: ResponseDtoVoid;
+  /**
+   * Internal Server Error
+   */
+  500: ResponseDtoVoid;
+};
+
+export type GetMonthlySettlementsError =
+  GetMonthlySettlementsErrors[keyof GetMonthlySettlementsErrors];
+
+export type GetMonthlySettlementsResponses = {
+  /**
+   * OK
+   */
+  200: ApiResponseListMonthlyPayoutPoint;
+};
+
+export type GetMonthlySettlementsResponse =
+  GetMonthlySettlementsResponses[keyof GetMonthlySettlementsResponses];
+
 export type Search2Data = {
   body?: never;
   path?: never;
@@ -30415,6 +30589,45 @@ export type SearchEnrollmentsResponses = {
 export type SearchEnrollmentsResponse =
   SearchEnrollmentsResponses[keyof SearchEnrollmentsResponses];
 
+export type GetWeeklyGrowthData = {
+  body?: never;
+  path: {
+    /**
+     * UUID of the organisation to scope to
+     */
+    organisationUuid: string;
+  };
+  query?: {
+    /**
+     * Number of ISO weeks to include (inclusive of the current week)
+     */
+    weeks?: number;
+  };
+  url: '/api/v1/enrollment/organisations/{organisationUuid}/weekly-growth';
+};
+
+export type GetWeeklyGrowthErrors = {
+  /**
+   * Not Found
+   */
+  404: ResponseDtoVoid;
+  /**
+   * Internal Server Error
+   */
+  500: ResponseDtoVoid;
+};
+
+export type GetWeeklyGrowthError = GetWeeklyGrowthErrors[keyof GetWeeklyGrowthErrors];
+
+export type GetWeeklyGrowthResponses = {
+  /**
+   * Weekly growth retrieved successfully
+   */
+  200: ApiResponseListWeeklyGrowthPointDto;
+};
+
+export type GetWeeklyGrowthResponse = GetWeeklyGrowthResponses[keyof GetWeeklyGrowthResponses];
+
 export type GetTodayGrowthData = {
   body?: never;
   path: {
@@ -30603,6 +30816,45 @@ export type GetClassEnrolmentCountsResponses = {
 
 export type GetClassEnrolmentCountsResponse =
   GetClassEnrolmentCountsResponses[keyof GetClassEnrolmentCountsResponses];
+
+export type GetActivityFeedData = {
+  body?: never;
+  path: {
+    /**
+     * UUID of the organisation to scope to
+     */
+    organisationUuid: string;
+  };
+  query?: {
+    /**
+     * Maximum number of events to return (1-100)
+     */
+    limit?: number;
+  };
+  url: '/api/v1/enrollment/organisations/{organisationUuid}/activity-feed';
+};
+
+export type GetActivityFeedErrors = {
+  /**
+   * Not Found
+   */
+  404: ResponseDtoVoid;
+  /**
+   * Internal Server Error
+   */
+  500: ResponseDtoVoid;
+};
+
+export type GetActivityFeedError = GetActivityFeedErrors[keyof GetActivityFeedErrors];
+
+export type GetActivityFeedResponses = {
+  /**
+   * Activity feed retrieved successfully
+   */
+  200: ApiResponseListOrganisationActivityEventDto;
+};
+
+export type GetActivityFeedResponse = GetActivityFeedResponses[keyof GetActivityFeedResponses];
 
 export type GetEnrollmentsForInstanceData = {
   body?: never;
@@ -32210,6 +32462,35 @@ export type GetRootCategoriesResponses = {
 
 export type GetRootCategoriesResponse =
   GetRootCategoriesResponses[keyof GetRootCategoriesResponses];
+
+export type GetPaymentModeData = {
+  body?: never;
+  path?: never;
+  query?: never;
+  url: '/api/v1/commerce/payment-mode';
+};
+
+export type GetPaymentModeErrors = {
+  /**
+   * Not Found
+   */
+  404: ResponseDtoVoid;
+  /**
+   * Internal Server Error
+   */
+  500: ResponseDtoVoid;
+};
+
+export type GetPaymentModeError = GetPaymentModeErrors[keyof GetPaymentModeErrors];
+
+export type GetPaymentModeResponses = {
+  /**
+   * OK
+   */
+  200: ApiResponsePaymentModeResponse;
+};
+
+export type GetPaymentModeResponse = GetPaymentModeResponses[keyof GetPaymentModeResponses];
 
 export type GetOrderData = {
   body?: never;
