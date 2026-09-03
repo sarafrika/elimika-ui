@@ -1,7 +1,7 @@
 'use client';
 
 import { useQuery } from '@tanstack/react-query';
-import { Building, GraduationCap, Presentation, Users } from 'lucide-react';
+import { Building, GraduationCap, MapPin, Presentation, Users } from 'lucide-react';
 
 import { KpiCard, KpiCardSkeleton, type KpiCardVariant } from '@/components/dashboard';
 import { useOrganisation } from '@/context/organisation-context';
@@ -10,6 +10,7 @@ import {
   getTrainingBranchesByOrganisationOptions,
   getUsersByOrganisationAndDomainOptions,
   getUsersByOrganisationOptions,
+  listResourcesOptions,
 } from '@/services/client/@tanstack/react-query.gen';
 
 /**
@@ -47,6 +48,14 @@ export function OverviewKpis() {
     ...getTrainingBranchesByOrganisationOptions({
       path: { uuid: organisationUuid },
       query: { pageable: { page: 0, size: 1 } },
+    }),
+    enabled,
+  });
+
+  const venuesQuery = useQuery({
+    ...listResourcesOptions({
+      path: { organisationUuid },
+      query: { resource_type: 'VENUE', pageable: { page: 0, size: 1 } },
     }),
     enabled,
   });
@@ -91,18 +100,27 @@ export function OverviewKpis() {
       loading: instructorsQuery.isLoading,
     },
     {
-      label: 'Venues',
+      label: 'Branches',
       value: getTotalFromMetadata(extractPage(branchesQuery.data).metadata),
-      hint: 'Training branches & facilities',
+      hint: 'Locations / campuses',
       icon: Building,
       variant: 'coral',
       href: '/dashboard/organisation/settings?tab=branches',
       loading: branchesQuery.isLoading,
     },
+    {
+      label: 'Venues',
+      value: getTotalFromMetadata(extractPage(venuesQuery.data).metadata),
+      hint: 'Rooms, labs & halls',
+      icon: MapPin,
+      variant: 'indigo',
+      href: '/dashboard/organisation/venues',
+      loading: venuesQuery.isLoading,
+    },
   ];
 
   return (
-    <div className='grid gap-4 sm:grid-cols-2 xl:grid-cols-4 2xl:gap-5'>
+    <div className='grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 2xl:gap-5'>
       {tiles.map(tile =>
         tile.loading ? (
           <KpiCardSkeleton key={tile.label} />

@@ -34,6 +34,10 @@ export function LocationVenue({
   locationLongitude,
   onLocationLongitudeChange,
   showVenue = true,
+  branches = [],
+  branchUuid = '',
+  onBranchChange,
+  showBranch = false,
 }: {
   delivery: Delivery;
   onDeliveryChange: (v: Delivery) => void;
@@ -51,11 +55,18 @@ export function LocationVenue({
   locationLongitude?: string;
   onLocationLongitudeChange?: (v: string) => void;
   showVenue?: boolean;
+  branches?: Array<{ uuid?: string; branch_name?: string }>;
+  branchUuid?: string;
+  onBranchChange?: (v: string) => void;
+  showBranch?: boolean;
 }) {
   const requiresPhysical = delivery === 'IN_PERSON' || delivery === 'HYBRID';
   const requiresLink = delivery === 'ONLINE' || delivery === 'HYBRID';
+  const filteredVenues = branchUuid
+    ? venueResources.filter(v => (v.branch_uuid ?? '') === branchUuid)
+    : venueResources;
   return (
-    <div className={showVenue ? 'grid gap-4 sm:grid-cols-2' : 'grid gap-4'}>
+    <div className={showVenue || showBranch ? 'grid gap-4 sm:grid-cols-2' : 'grid gap-4'}>
       <div className='space-y-2'>
         <Label>
           Location <span className='text-destructive'>*</span>
@@ -113,40 +124,68 @@ export function LocationVenue({
           />
         ) : null}
       </div>
-      {showVenue ? (
-      <div className='space-y-2'>
-        <div className='flex items-center justify-between gap-2'>
-          <Label>Classroom / Venue</Label>
-          <label className='text-muted-foreground flex cursor-pointer items-center gap-1.5 text-[11px]'>
-            <Checkbox
-              checked={onlyAvailable}
-              onCheckedChange={v => onOnlyAvailableChange(v === true)}
-              className='h-3.5 w-3.5'
-            />
-            Only available
-          </label>
-        </div>
-        <Select
-          value={venueUuid || 'none'}
-          onValueChange={v => onVenueChange(v === 'none' ? '' : v)}
-        >
-          <SelectTrigger>
-            <div className='flex items-center gap-2'>
-              <Presentation className='text-muted-foreground h-4 w-4' />
-              <SelectValue placeholder='No venue' />
+      {showBranch || showVenue ? (
+        <div className='space-y-4'>
+          {showBranch ? (
+            <div className='space-y-2'>
+              <Label>
+                Branch <span className='text-destructive'>*</span>
+              </Label>
+              <Select value={branchUuid || 'none'} onValueChange={v => onBranchChange?.(v === 'none' ? '' : v)}>
+                <SelectTrigger>
+                  <div className='flex items-center gap-2'>
+                    <MapPin className='text-muted-foreground h-4 w-4' />
+                    <SelectValue placeholder='Select branch' />
+                  </div>
+                </SelectTrigger>
+                <SelectContent>
+                  {branches.map(b => (
+                    <SelectItem key={b.uuid} value={b.uuid ?? ''}>
+                      {b.branch_name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value='none'>No venue</SelectItem>
-            {venueResources.map(v => (
-              <SelectItem key={v.uuid} value={v.uuid ?? ''}>
-                {v.name}
-                {v.seat_capacity != null ? ` · ${v.seat_capacity} seats` : ''}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-      </div>
+          ) : null}
+
+          {showVenue ? (
+            <div className='space-y-2'>
+              <div className='flex items-center justify-between gap-2'>
+                <Label>Classroom / Venue</Label>
+                <label className='text-muted-foreground flex cursor-pointer items-center gap-1.5 text-[11px]'>
+                  <Checkbox
+                    checked={onlyAvailable}
+                    onCheckedChange={v => onOnlyAvailableChange(v === true)}
+                    className='h-3.5 w-3.5'
+                  />
+                  Only available
+                </label>
+              </div>
+              <Select
+                value={venueUuid || 'none'}
+                onValueChange={v => onVenueChange(v === 'none' ? '' : v)}
+                disabled={showBranch && !branchUuid}
+              >
+                <SelectTrigger>
+                  <div className='flex items-center gap-2'>
+                    <Presentation className='text-muted-foreground h-4 w-4' />
+                    <SelectValue placeholder={showBranch && !branchUuid ? 'Pick a branch first' : 'No venue'} />
+                  </div>
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value='none'>No venue</SelectItem>
+                  {filteredVenues.map(v => (
+                    <SelectItem key={v.uuid} value={v.uuid ?? ''}>
+                      {v.name}
+                      {v.seat_capacity != null ? ` · ${v.seat_capacity} seats` : ''}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          ) : null}
+        </div>
       ) : null}
     </div>
   );

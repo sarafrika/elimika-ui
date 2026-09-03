@@ -53,12 +53,6 @@ const branchFormSchema = z.object({
   poc_name: z.string().trim().min(1, 'Point of contact name is required').max(200),
   poc_email: z.string().trim().email('Enter a valid email address').max(320),
   poc_telephone: z.string().trim().min(1, 'Point of contact phone is required').max(50),
-  capacity: z
-    .string()
-    .trim()
-    .optional()
-    .refine(value => !value || /^\d+$/.test(value), 'Capacity must be a whole number'),
-  venue_type: z.string().trim().max(50).optional(),
   active: z.boolean(),
 });
 
@@ -73,8 +67,6 @@ function toFormValues(branch?: TrainingBranch): BranchFormValues {
     poc_name: branch?.poc_name ?? '',
     poc_email: branch?.poc_email ?? '',
     poc_telephone: branch?.poc_telephone ?? '',
-    capacity: branch?.capacity == null ? '' : String(branch.capacity),
-    venue_type: branch?.venue_type ?? '',
     active: branch?.active ?? true,
   };
 }
@@ -130,8 +122,6 @@ export default function CreateEditBranchform({
       poc_name: values.poc_name,
       poc_email: values.poc_email,
       poc_telephone: values.poc_telephone,
-      capacity: values.capacity ? Number(values.capacity) : null,
-      venue_type: values.venue_type || null,
       active: values.active,
     };
 
@@ -251,35 +241,6 @@ export default function CreateEditBranchform({
               <FormLabel>Point of contact phone</FormLabel>
               <FormControl>
                 <PhoneInput {...field} placeholder='+254 700 000 000' />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-
-        <FormField
-          control={form.control}
-          name='capacity'
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Capacity</FormLabel>
-              <FormControl>
-                <Input inputMode='numeric' placeholder='30' {...field} />
-              </FormControl>
-              <FormDescription>Seats available at this location.</FormDescription>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-
-        <FormField
-          control={form.control}
-          name='venue_type'
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Venue type</FormLabel>
-              <FormControl>
-                <Input placeholder='Lab, Workshop, Auditorium…' {...field} />
               </FormControl>
               <FormMessage />
             </FormItem>

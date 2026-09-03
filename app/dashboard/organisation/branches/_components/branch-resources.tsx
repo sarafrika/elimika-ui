@@ -14,7 +14,6 @@ import {
 } from 'lucide-react';
 import { useMemo, useState } from 'react';
 import { toast } from 'sonner';
-import LocationInput from '@/components/locationInput';
 import { apiErrorMessage } from '@/components/resourcing/conflicts';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -38,7 +37,6 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { Switch } from '@/components/ui/switch';
 import { Textarea } from '@/components/ui/textarea';
 import { extractPage } from '@/lib/api-helpers';
-import { coordinatesFromPlace, toCoordinate } from '@/lib/location-types';
 import type { OrganisationResource } from '@/services/client';
 import { ResourceTypeEnum } from '@/services/client';
 import {
@@ -62,8 +60,6 @@ type ResourceFormState = {
   seat_capacity: string;
   total_quantity: string;
   location_name: string;
-  location_latitude: string;
-  location_longitude: string;
   description: string;
   is_active: boolean;
 };
@@ -74,8 +70,6 @@ function emptyForm(): ResourceFormState {
     seat_capacity: '',
     total_quantity: '',
     location_name: '',
-    location_latitude: '',
-    location_longitude: '',
     description: '',
     is_active: true,
   };
@@ -87,10 +81,6 @@ function formFromResource(resource: OrganisationResource): ResourceFormState {
     seat_capacity: resource.seat_capacity != null ? String(resource.seat_capacity) : '',
     total_quantity: resource.total_quantity != null ? String(resource.total_quantity) : '',
     location_name: resource.location_name ?? '',
-    location_latitude:
-      resource.location_latitude != null ? String(resource.location_latitude) : '',
-    location_longitude:
-      resource.location_longitude != null ? String(resource.location_longitude) : '',
     description: resource.description ?? '',
     is_active: resource.is_active !== false,
   };
@@ -236,8 +226,6 @@ export default function BranchResources({
       total_quantity: isVenue ? null : totalQuantity,
       branch_uuid: branchUuid,
       location_name: form.location_name.trim() || null,
-      location_latitude: toCoordinate(form.location_latitude) ?? null,
-      location_longitude: toCoordinate(form.location_longitude) ?? null,
       description: form.description.trim() || null,
       is_active: form.is_active,
     };
@@ -415,23 +403,11 @@ export default function BranchResources({
             )}
 
             <div className='grid gap-2'>
-              <Label>Location</Label>
-              <LocationInput
+              <Label>Location label</Label>
+              <Input
                 value={form.location_name}
-                placeholder='Search for the venue — e.g. Main campus, Block C'
-                onChange={value => updateField('location_name', value)}
-                coordinates={{
-                  latitude: form.location_latitude,
-                  longitude: form.location_longitude,
-                }}
-                onSuggest={response => {
-                  const { latitude, longitude } = coordinatesFromPlace(response);
-                  if (latitude !== undefined)
-                    updateField('location_latitude', String(latitude));
-                  if (longitude !== undefined)
-                    updateField('location_longitude', String(longitude));
-                  return response;
-                }}
+                placeholder='Within the branch — e.g. Block C, 2nd floor'
+                onChange={event => updateField('location_name', event.target.value)}
               />
             </div>
 

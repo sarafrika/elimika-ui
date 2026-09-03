@@ -352,19 +352,6 @@ export const TrainingBranchSchema = {
         '**[REQUIRED]** Indicates whether the training branch is active and operational.',
       example: true,
     },
-    capacity: {
-      type: ['integer', 'null'],
-      format: 'int32',
-      description: '**[OPTIONAL]** Seating/attendee capacity of the venue.',
-      example: 30,
-    },
-    venue_type: {
-      type: ['string', 'null'],
-      description: '**[OPTIONAL]** Free-form venue/room type (e.g. Lab, Workshop, Auditorium).',
-      example: 'Lab',
-      maxLength: 50,
-      minLength: 0,
-    },
     created_date: {
       type: 'string',
       format: 'date-time',
@@ -3213,15 +3200,7 @@ export const OrganisationResourceSchema = {
     },
     location_name: {
       type: ['string', 'null'],
-      description: 'Human readable location',
-    },
-    location_latitude: {
-      type: ['number', 'null'],
-      description: 'Latitude of the resource location',
-    },
-    location_longitude: {
-      type: ['number', 'null'],
-      description: 'Longitude of the resource location',
+      description: "Optional within-branch location label, e.g. 'Main Hall, 2nd floor'",
     },
     is_active: {
       type: 'boolean',
@@ -7868,6 +7847,11 @@ export const ClassDefinitionUpdateRequestSchema = {
       format: 'uuid',
       description: '**[OPTIONAL]** Organisation UUID that owns the class.',
     },
+    branch_uuid: {
+      type: 'string',
+      format: 'uuid',
+      description: '**[OPTIONAL]** Training branch (location) this class is delivered at.',
+    },
     course_uuid: {
       type: 'string',
       format: 'uuid',
@@ -8114,6 +8098,12 @@ export const ClassDefinitionSchema = {
         '**[OPTIONAL]** Reference to the organisation UUID that owns this class definition.',
       example: 'org12345-6789-abcd-ef01-234567890abc',
     },
+    branch_uuid: {
+      type: ['string', 'null'],
+      format: 'uuid',
+      description: '**[OPTIONAL]** Training branch (location) this class belongs to.',
+      example: 'branch12-3456-789a-bcde-f0123456789a',
+    },
     course_uuid: {
       type: ['string', 'null'],
       format: 'uuid',
@@ -8351,17 +8341,17 @@ conflict_resolution per template:
       example: 90,
       readOnly: true,
     },
+    duration_formatted: {
+      type: 'string',
+      description: '**[READ-ONLY]** Human-readable formatted duration.',
+      example: '1h 30m',
+      readOnly: true,
+    },
     capacity_info: {
       type: 'string',
       description:
         '**[READ-ONLY]** Human-readable capacity information including waitlist availability.',
       example: 'Max 25 participants (waitlist enabled)',
-      readOnly: true,
-    },
-    duration_formatted: {
-      type: 'string',
-      description: '**[READ-ONLY]** Human-readable formatted duration.',
-      example: '1h 30m',
       readOnly: true,
     },
   },
@@ -10729,6 +10719,105 @@ export const SkillsFundSourceSchema = {
   },
 } as const;
 
+export const SendOrganisationNotificationRequestSchema = {
+  type: 'object',
+  description: 'Compose an organisation notification to an audience of members',
+  properties: {
+    audience: {
+      type: 'string',
+      description: 'Audience: all, students, instructors, parents or staff.',
+      example: 'students',
+      minLength: 1,
+    },
+    channel: {
+      type: 'string',
+      description: 'Channel: in-app or email. Email deliveries also land in the in-app inbox.',
+      example: 'in-app',
+      minLength: 1,
+    },
+    title: {
+      type: 'string',
+      maxLength: 200,
+      minLength: 0,
+    },
+    message: {
+      type: 'string',
+      minLength: 1,
+    },
+    scheduled_at: {
+      type: ['string', 'null'],
+      format: 'date-time',
+      description: 'Optional time to associate with the send.',
+    },
+  },
+  required: ['audience', 'channel', 'message', 'title'],
+} as const;
+
+export const ApiResponseNotificationDispatchSchema = {
+  type: 'object',
+  properties: {
+    success: {
+      type: 'boolean',
+    },
+    data: {
+      $ref: '#/components/schemas/NotificationDispatch',
+    },
+    message: {
+      type: 'string',
+    },
+    error: {},
+  },
+} as const;
+
+export const NotificationDispatchSchema = {
+  type: 'object',
+  description: 'A notification an organisation has sent to an audience of its members',
+  properties: {
+    uuid: {
+      type: 'string',
+      format: 'uuid',
+      readOnly: true,
+    },
+    organisation_uuid: {
+      type: 'string',
+      format: 'uuid',
+    },
+    sender_user_uuid: {
+      type: ['string', 'null'],
+      format: 'uuid',
+      description: 'The user who sent it.',
+    },
+    audience: {
+      type: 'string',
+      description: 'Audience the message went to: all, students, instructors, parents or staff.',
+    },
+    channel: {
+      type: 'string',
+      description: 'Channel: in-app or email.',
+    },
+    title: {
+      type: 'string',
+    },
+    body: {
+      type: 'string',
+    },
+    recipient_count: {
+      type: 'integer',
+      format: 'int32',
+      description: 'How many recipients the broadcast reached.',
+    },
+    scheduled_at: {
+      type: ['string', 'null'],
+      format: 'date-time',
+    },
+    created_date: {
+      type: 'string',
+      format: 'date-time',
+      readOnly: true,
+    },
+  },
+} as const;
+
 export const OrganisationInvitationRecipientSchema = {
   type: 'object',
   description: 'A single invitee.',
@@ -12731,6 +12820,11 @@ export const ClassDefinitionCreateRequestSchema = {
       type: 'string',
       format: 'uuid',
       description: '**[OPTIONAL]** Organisation UUID that owns the class.',
+    },
+    branch_uuid: {
+      type: 'string',
+      format: 'uuid',
+      description: '**[OPTIONAL]** Training branch (location) this class is delivered at.',
     },
     course_uuid: {
       type: 'string',
@@ -17240,6 +17334,25 @@ export const ApiResponseListResourceAvailabilityRuleSchema = {
       type: 'array',
       items: {
         $ref: '#/components/schemas/ResourceAvailabilityRule',
+      },
+    },
+    message: {
+      type: 'string',
+    },
+    error: {},
+  },
+} as const;
+
+export const ApiResponseListNotificationDispatchSchema = {
+  type: 'object',
+  properties: {
+    success: {
+      type: 'boolean',
+    },
+    data: {
+      type: 'array',
+      items: {
+        $ref: '#/components/schemas/NotificationDispatch',
       },
     },
     message: {
@@ -22873,6 +22986,7 @@ export const TypeEnumSchema = {
     'ORGANISATION_INVITATION',
     'GUARDIAN_CONSENT_REQUEST',
     'ORGANISATION_INVITATION_ACCEPTED',
+    'ORGANISATION_ANNOUNCEMENT',
     'WEEKLY_PROGRESS_SUMMARY',
     'LEARNING_STREAK_ACHIEVEMENT',
     'PEER_ACHIEVEMENT_CELEBRATION',
@@ -23573,6 +23687,7 @@ export const TypeEnumWritableSchema = {
     'ORGANISATION_INVITATION',
     'GUARDIAN_CONSENT_REQUEST',
     'ORGANISATION_INVITATION_ACCEPTED',
+    'ORGANISATION_ANNOUNCEMENT',
     'WEEKLY_PROGRESS_SUMMARY',
     'LEARNING_STREAK_ACHIEVEMENT',
     'PEER_ACHIEVEMENT_CELEBRATION',

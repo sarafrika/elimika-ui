@@ -14,6 +14,7 @@ import {
   Loader2,
   Mail,
   MailCheck,
+  MapPin,
   MessageCircle,
   RotateCw,
   Send,
@@ -49,13 +50,15 @@ import {
 import { Skeleton } from '@/components/ui/skeleton';
 import { Textarea } from '@/components/ui/textarea';
 import { useOrganisation } from '@/context/organisation-context';
+import { extractPage } from '@/lib/api-helpers';
 import { getErrorMessage } from '@/lib/error-utils';
 import { formatCount, toNumber } from '@/lib/metrics';
 import { cn } from '@/lib/utils';
-import type { ClassDefinition, StudentGroup } from '@/services/client';
+import type { ClassDefinition, StudentGroup, TrainingBranch } from '@/services/client';
 import {
   getClassDefinitionsForOrganisationOptions,
   getStudentSummariesQueryKey,
+  getTrainingBranchesByOrganisationOptions,
   getUsersByOrganisationAndDomainQueryKey,
   listGroupsOptions,
   listOrganisationInvitationsOptions,
@@ -226,6 +229,7 @@ export default function InviteStudentsPage() {
   const [showHistory, setShowHistory] = useState(false);
   const [selectedClasses, setSelectedClasses] = useState<string[]>([]);
   const [selectedGroups, setSelectedGroups] = useState<string[]>([]);
+  const [selectedBranch, setSelectedBranch] = useState<string>('');
   const [emailDraft, setEmailDraft] = useState('');
   const [emailRecipients, setEmailRecipients] = useState<Recipient[]>([]);
   const [invalidRecipients, setInvalidRecipients] = useState<string[]>([]);
@@ -241,6 +245,18 @@ export default function InviteStudentsPage() {
     ...getClassDefinitionsForOrganisationOptions({ path: { organisationUuid } }),
     enabled: Boolean(organisationUuid),
   });
+
+  const branchesQuery = useQuery({
+    ...getTrainingBranchesByOrganisationOptions({
+      path: { uuid: organisationUuid },
+      query: { pageable: { page: 0, size: 100 } },
+    }),
+    enabled: Boolean(organisationUuid),
+  });
+  const branches = useMemo(
+    () => extractPage<TrainingBranch>(branchesQuery.data).items,
+    [branchesQuery.data]
+  );
   const classes: ClassDefinition[] = useMemo(
     () =>
       (classesQuery.data?.data ?? [])
@@ -527,6 +543,7 @@ export default function InviteStudentsPage() {
           recipients: recipients.map(r => ({ email: r.email, name: r.name || null })),
           student_group_uuids: selectedGroups.length ? selectedGroups : null,
           domain_name: 'student',
+          branch_uuid: selectedBranch || null,
           class_uuids: selectedClasses.length ? selectedClasses : null,
           message: renderedMessage.trim() || null,
           expires_in_days: EXPIRES_IN_DAYS,
@@ -570,6 +587,7 @@ export default function InviteStudentsPage() {
     setStep(1);
     setSelectedClasses([]);
     setSelectedGroups([]);
+    setSelectedBranch('');
   };
 
   const canNext = step === 1 ? selectedClasses.length > 0 : step === 2 ? canSend : true;
@@ -697,6 +715,7 @@ export default function InviteStudentsPage() {
         <>
           {/* Step 1 - Classes */}
           {step === 1 && (
+            <>
             <Card>
               <CardHeader>
                 <CardTitle className='flex items-center gap-2 text-base'>
@@ -791,6 +810,37 @@ export default function InviteStudentsPage() {
                 </div>
               </CardContent>
             </Card>
+
+            <Card>
+                <CardHeader>
+                  <CardTitle className='flex items-center gap-2 text-base'>
+                    <MapPin className='h-4 w-4' /> Branch
+                    <span className='text-muted-foreground text-xs font-normal'>(optional)</span>
+                  </CardTitle>
+                  <CardDescription>
+                    Assign the invited students to a training branch, or leave them organisation-wide.
+                  </CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <Select
+                    value={selectedBranch || 'none'}
+                    onValueChange={v => setSelectedBranch(v === 'none' ? '' : v)}
+                  >
+                    <SelectTrigger className='sm:max-w-sm'>
+                      <SelectValue placeholder='No specific branch' />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value='none'>No specific branch (organisation-wide)</SelectItem>
+                      {branches.map(b => (
+                        <SelectItem key={b.uuid} value={b.uuid ?? ''}>
+                          {b.branch_name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </CardContent>
+              </Card>
+            </>
           )}
 
           {/* Step 2 - Recipients */}

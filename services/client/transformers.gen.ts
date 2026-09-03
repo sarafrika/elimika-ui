@@ -148,6 +148,7 @@ import type {
   CreateResourceResponse,
   ListAvailabilityRulesResponse,
   AddAvailabilityRuleResponse,
+  SendResponse,
   ListOrganisationInvitationsResponse,
   SendOrganisationInvitationsResponse,
   RevokeOrganisationInvitationResponse,
@@ -357,6 +358,7 @@ import type {
   ListRosterResponse,
   GetCalendarResponse,
   ListBookingsResponse,
+  ListSentResponse,
   ListObligationsResponse,
   Search2Response,
   GetCountsResponse,
@@ -3106,6 +3108,28 @@ export const addAvailabilityRuleResponseTransformer = async (
   data: any
 ): Promise<AddAvailabilityRuleResponse> => {
   data = apiResponseResourceAvailabilityRuleSchemaResponseTransformer(data);
+  return data;
+};
+
+const notificationDispatchSchemaResponseTransformer = (data: any) => {
+  if (data.scheduled_at) {
+    data.scheduled_at = new Date(data.scheduled_at);
+  }
+  if (data.created_date) {
+    data.created_date = new Date(data.created_date);
+  }
+  return data;
+};
+
+const apiResponseNotificationDispatchSchemaResponseTransformer = (data: any) => {
+  if (data.data) {
+    data.data = notificationDispatchSchemaResponseTransformer(data.data);
+  }
+  return data;
+};
+
+export const sendResponseTransformer = async (data: any): Promise<SendResponse> => {
+  data = apiResponseNotificationDispatchSchemaResponseTransformer(data);
   return data;
 };
 
@@ -6150,6 +6174,20 @@ const apiResponsePagedDtoResourceBookingSchemaResponseTransformer = (data: any) 
 
 export const listBookingsResponseTransformer = async (data: any): Promise<ListBookingsResponse> => {
   data = apiResponsePagedDtoResourceBookingSchemaResponseTransformer(data);
+  return data;
+};
+
+const apiResponseListNotificationDispatchSchemaResponseTransformer = (data: any) => {
+  if (data.data) {
+    data.data = data.data.map((item: any) => {
+      return notificationDispatchSchemaResponseTransformer(item);
+    });
+  }
+  return data;
+};
+
+export const listSentResponseTransformer = async (data: any): Promise<ListSentResponse> => {
+  data = apiResponseListNotificationDispatchSchemaResponseTransformer(data);
   return data;
 };
 

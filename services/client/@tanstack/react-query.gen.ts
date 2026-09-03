@@ -207,6 +207,7 @@ import {
   createResource,
   listAvailabilityRules,
   addAvailabilityRule,
+  send,
   listOrganisationInvitations,
   sendOrganisationInvitations,
   revokeOrganisationInvitation,
@@ -458,6 +459,7 @@ import {
   getSummary,
   getCalendar,
   listBookings,
+  listSent,
   listObligations,
   getMonthlySettlements,
   search2,
@@ -1146,6 +1148,9 @@ import type {
   AddAvailabilityRuleData,
   AddAvailabilityRuleError,
   AddAvailabilityRuleResponse,
+  SendData,
+  SendError,
+  SendResponse,
   ListOrganisationInvitationsData,
   SendOrganisationInvitationsData,
   SendOrganisationInvitationsError,
@@ -1797,6 +1802,7 @@ import type {
   ListBookingsData,
   ListBookingsError,
   ListBookingsResponse,
+  ListSentData,
   ListObligationsData,
   ListObligationsError,
   ListObligationsResponse,
@@ -9217,6 +9223,47 @@ export const addAvailabilityRuleMutation = (
   > = {
     mutationFn: async localOptions => {
       const { data } = await addAvailabilityRule({
+        ...options,
+        ...localOptions,
+        throwOnError: true,
+      });
+      return data;
+    },
+  };
+  return mutationOptions;
+};
+
+export const sendQueryKey = (options: Options<SendData>) => createQueryKey('send', options);
+
+/**
+ * Broadcast a notification to an organisation's members
+ * Sends an in-app notification (and an email when the channel is email) to the requested audience, and records the send.
+ */
+export const sendOptions = (options: Options<SendData>) => {
+  return queryOptions({
+    queryFn: async ({ queryKey, signal }) => {
+      const { data } = await send({
+        ...options,
+        ...queryKey[0],
+        signal,
+        throwOnError: true,
+      });
+      return data;
+    },
+    queryKey: sendQueryKey(options),
+  });
+};
+
+/**
+ * Broadcast a notification to an organisation's members
+ * Sends an in-app notification (and an email when the channel is email) to the requested audience, and records the send.
+ */
+export const sendMutation = (
+  options?: Partial<Options<SendData>>
+): UseMutationOptions<SendResponse, SendError, Options<SendData>> => {
+  const mutationOptions: UseMutationOptions<SendResponse, SendError, Options<SendData>> = {
+    mutationFn: async localOptions => {
+      const { data } = await send({
         ...options,
         ...localOptions,
         throwOnError: true,
@@ -21683,6 +21730,28 @@ export const listBookingsInfiniteOptions = (options: Options<ListBookingsData>) 
       queryKey: listBookingsInfiniteQueryKey(options),
     }
   );
+};
+
+export const listSentQueryKey = (options: Options<ListSentData>) =>
+  createQueryKey('listSent', options);
+
+/**
+ * List an organisation's sent notifications
+ * The organisation's outgoing broadcasts, newest first.
+ */
+export const listSentOptions = (options: Options<ListSentData>) => {
+  return queryOptions({
+    queryFn: async ({ queryKey, signal }) => {
+      const { data } = await listSent({
+        ...options,
+        ...queryKey[0],
+        signal,
+        throwOnError: true,
+      });
+      return data;
+    },
+    queryKey: listSentQueryKey(options),
+  });
 };
 
 export const listObligationsQueryKey = (options: Options<ListObligationsData>) =>

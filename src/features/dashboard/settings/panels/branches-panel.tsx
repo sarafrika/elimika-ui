@@ -179,11 +179,6 @@ export function BranchesPanel() {
                     <Badge variant={branch.active ? 'success' : 'outline'} className='shrink-0'>
                       {branch.active ? 'Active' : 'Inactive'}
                     </Badge>
-                    {branch.venue_type ? (
-                      <Badge variant='outline' className='shrink-0 text-[10px]'>
-                        {branch.venue_type}
-                      </Badge>
-                    ) : null}
                   </div>
 
                   <div className='flex shrink-0 items-center gap-1'>

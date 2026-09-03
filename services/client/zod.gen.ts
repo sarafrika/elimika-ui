@@ -219,8 +219,6 @@ export const zTrainingBranch = z
     active: z
       .boolean()
       .describe('**[REQUIRED]** Indicates whether the training branch is active and operational.'),
-    capacity: z.union([z.number().int(), z.null()]).optional(),
-    venue_type: z.union([z.string().min(0).max(50), z.null()]).optional(),
     created_date: z
       .string()
       .datetime()
@@ -2097,8 +2095,6 @@ export const zOrganisationResource = z
     seat_capacity: z.union([z.number().int(), z.null()]).optional(),
     total_quantity: z.union([z.number().int(), z.null()]).optional(),
     location_name: z.union([z.string(), z.null()]).optional(),
-    location_latitude: z.union([z.number(), z.null()]).optional(),
-    location_longitude: z.union([z.number(), z.null()]).optional(),
     is_active: z.boolean().describe('Whether the resource can currently be booked').optional(),
     organisation_uuid: z
       .string()
@@ -4844,6 +4840,11 @@ export const zClassDefinitionUpdateRequest = z
       .uuid()
       .describe('**[OPTIONAL]** Organisation UUID that owns the class.')
       .optional(),
+    branch_uuid: z
+      .string()
+      .uuid()
+      .describe('**[OPTIONAL]** Training branch (location) this class is delivered at.')
+      .optional(),
     course_uuid: z
       .string()
       .uuid()
@@ -5050,6 +5051,7 @@ export const zClassDefinition = z
         '**[REQUIRED]** Reference to the default instructor UUID for this class definition.'
       ),
     organisation_uuid: z.union([z.string().uuid(), z.null()]).optional(),
+    branch_uuid: z.union([z.string().uuid(), z.null()]).optional(),
     course_uuid: z.union([z.string().uuid(), z.null()]).optional(),
     program_uuid: z.union([z.string().uuid(), z.null()]).optional(),
     sale_price: z.union([z.number().gte(0), z.null()]).optional(),
@@ -5164,16 +5166,16 @@ export const zClassDefinition = z
       )
       .readonly()
       .optional(),
+    duration_formatted: z
+      .string()
+      .describe('**[READ-ONLY]** Human-readable formatted duration.')
+      .readonly()
+      .optional(),
     capacity_info: z
       .string()
       .describe(
         '**[READ-ONLY]** Human-readable capacity information including waitlist availability.'
       )
-      .readonly()
-      .optional(),
-    duration_formatted: z
-      .string()
-      .describe('**[READ-ONLY]** Human-readable formatted duration.')
       .readonly()
       .optional(),
   })
@@ -6400,6 +6402,54 @@ export const zApiResponseSkillsFundSource = z.object({
 });
 
 /**
+ * Compose an organisation notification to an audience of members
+ */
+export const zSendOrganisationNotificationRequest = z
+  .object({
+    audience: z.string().min(1).describe('Audience: all, students, instructors, parents or staff.'),
+    channel: z
+      .string()
+      .min(1)
+      .describe('Channel: in-app or email. Email deliveries also land in the in-app inbox.'),
+    title: z.string().min(0).max(200),
+    message: z.string().min(1),
+    scheduled_at: z.union([z.string().datetime(), z.null()]).optional(),
+  })
+  .describe('Compose an organisation notification to an audience of members');
+
+/**
+ * A notification an organisation has sent to an audience of its members
+ */
+export const zNotificationDispatch = z
+  .object({
+    uuid: z.string().uuid().readonly().optional(),
+    organisation_uuid: z.string().uuid().optional(),
+    sender_user_uuid: z.union([z.string().uuid(), z.null()]).optional(),
+    audience: z
+      .string()
+      .describe('Audience the message went to: all, students, instructors, parents or staff.')
+      .optional(),
+    channel: z.string().describe('Channel: in-app or email.').optional(),
+    title: z.string().optional(),
+    body: z.string().optional(),
+    recipient_count: z
+      .number()
+      .int()
+      .describe('How many recipients the broadcast reached.')
+      .optional(),
+    scheduled_at: z.union([z.string().datetime(), z.null()]).optional(),
+    created_date: z.string().datetime().readonly().optional(),
+  })
+  .describe('A notification an organisation has sent to an audience of its members');
+
+export const zApiResponseNotificationDispatch = z.object({
+  success: z.boolean().optional(),
+  data: zNotificationDispatch.optional(),
+  message: z.string().optional(),
+  error: z.unknown().optional(),
+});
+
+/**
  * A single invitee.
  */
 export const zOrganisationInvitationRecipient = z
@@ -6728,6 +6778,7 @@ export const zTypeEnum = z.enum([
   'ORGANISATION_INVITATION',
   'GUARDIAN_CONSENT_REQUEST',
   'ORGANISATION_INVITATION_ACCEPTED',
+  'ORGANISATION_ANNOUNCEMENT',
   'WEEKLY_PROGRESS_SUMMARY',
   'LEARNING_STREAK_ACHIEVEMENT',
   'PEER_ACHIEVEMENT_CELEBRATION',
@@ -7526,6 +7577,11 @@ export const zClassDefinitionCreateRequest = z
       .string()
       .uuid()
       .describe('**[OPTIONAL]** Organisation UUID that owns the class.')
+      .optional(),
+    branch_uuid: z
+      .string()
+      .uuid()
+      .describe('**[OPTIONAL]** Training branch (location) this class is delivered at.')
       .optional(),
     course_uuid: z
       .string()
@@ -9907,6 +9963,13 @@ export const zApiResponsePagedDtoResourceBooking = z.object({
 export const zApiResponseListResourceAvailabilityRule = z.object({
   success: z.boolean().optional(),
   data: z.array(zResourceAvailabilityRule).optional(),
+  message: z.string().optional(),
+  error: z.unknown().optional(),
+});
+
+export const zApiResponseListNotificationDispatch = z.object({
+  success: z.boolean().optional(),
+  data: z.array(zNotificationDispatch).optional(),
   message: z.string().optional(),
   error: z.unknown().optional(),
 });
@@ -12945,6 +13008,7 @@ export const zTypeEnumWritable = z.enum([
   'ORGANISATION_INVITATION',
   'GUARDIAN_CONSENT_REQUEST',
   'ORGANISATION_INVITATION_ACCEPTED',
+  'ORGANISATION_ANNOUNCEMENT',
   'WEEKLY_PROGRESS_SUMMARY',
   'LEARNING_STREAK_ACHIEVEMENT',
   'PEER_ACHIEVEMENT_CELEBRATION',
@@ -15879,6 +15943,22 @@ export const zAddAvailabilityRuleData = z.object({
  * OK
  */
 export const zAddAvailabilityRuleResponse = zApiResponseResourceAvailabilityRule;
+
+export const zSendData = z.object({
+  body: zSendOrganisationNotificationRequest,
+  path: z.object({
+    organisationUuid: z
+      .string()
+      .uuid()
+      .describe('UUID of the organisation sending the notification'),
+  }),
+  query: z.never().optional(),
+});
+
+/**
+ * OK
+ */
+export const zSendResponse = zApiResponseNotificationDispatch;
 
 export const zListOrganisationInvitationsData = z.object({
   body: z.never().optional(),
@@ -19526,6 +19606,28 @@ export const zListBookingsData = z.object({
  * OK
  */
 export const zListBookingsResponse = zApiResponsePagedDtoResourceBooking;
+
+export const zListSentData = z.object({
+  body: z.never().optional(),
+  path: z.object({
+    organisationUuid: z.string().uuid().describe('UUID of the organisation'),
+  }),
+  query: z
+    .object({
+      limit: z
+        .number()
+        .int()
+        .describe('Maximum number of dispatches to return (1-100)')
+        .optional()
+        .default(20),
+    })
+    .optional(),
+});
+
+/**
+ * OK
+ */
+export const zListSentResponse = zApiResponseListNotificationDispatch;
 
 export const zListObligationsData = z.object({
   body: z.never().optional(),

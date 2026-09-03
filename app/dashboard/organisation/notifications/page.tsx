@@ -1,7 +1,7 @@
 // @ts-nocheck -- 1:1 Lovable port; @hey-api generated-client type drift
 'use client';
 
-import { useQuery } from '@tanstack/react-query';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { format } from 'date-fns';
 import dayjs from 'dayjs';
 import relativeTime from 'dayjs/plugin/relativeTime';
@@ -19,6 +19,8 @@ import {
 import Link from 'next/link';
 import { useMemo, useState } from 'react';
 import { toast } from 'sonner';
+
+import Spinner from '@/components/ui/spinner';
 import { z } from 'zod';
 
 import { EmptyState } from '@/components/empty-state';
@@ -52,7 +54,13 @@ import { Textarea } from '@/components/ui/textarea';
 import { extractPage } from '@/lib/api-helpers';
 import { cn } from '@/lib/utils';
 import type { NotificationDto } from '@/services/client';
-import { listNotificationsOptions } from '@/services/client/@tanstack/react-query.gen';
+import { useOrganisation } from '@/context/organisation-context';
+import {
+  listNotificationsOptions,
+  listSentOptions,
+  listSentQueryKey,
+  sendMutation,
+} from '@/services/client/@tanstack/react-query.gen';
 
 dayjs.extend(relativeTime);
 
@@ -132,6 +140,11 @@ function ComposeNotificationDialog() {
     setErrors({});
   };
 
+  const organisation = useOrganisation();
+  const organisationUuid = organisation?.uuid ?? '';
+  const qc = useQueryClient();
+  const sendM = useMutation({ ...sendMutation() });
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     const parsed = composerSchema.safeParse({
@@ -152,14 +165,33 @@ function ComposeNotificationDialog() {
       setErrors({ scheduledAt: 'Pick a date' });
       return;
     }
+    if (!organisationUuid) {
+      toast.error('No organisation in context');
+      return;
+    }
     const audienceLabel = AUDIENCES.find(a => a.value === audience)?.label ?? audience;
-    toast.success(
-      parsed.data.scheduledAt
-        ? `Scheduled for ${audienceLabel} on ${format(parsed.data.scheduledAt, 'PPP')}`
-        : `Sent to ${audienceLabel}`
+    sendM.mutate(
+      {
+        path: { organisationUuid },
+        body: {
+          audience: parsed.data.audience,
+          channel: parsed.data.channel,
+          title: parsed.data.title,
+          message: parsed.data.message,
+          scheduled_at: parsed.data.scheduledAt ?? undefined,
+        },
+      },
+      {
+        onSuccess: res => {
+          const count = res?.data?.recipient_count ?? 0;
+          toast.success(`Sent to ${audienceLabel} — ${count} recipient${count === 1 ? '' : 's'}`);
+          qc.invalidateQueries({ queryKey: listSentQueryKey({ path: { organisationUuid } }) });
+          reset();
+          setOpen(false);
+        },
+        onError: () => toast.error('Could not send the notification. Please try again.'),
+      }
     );
-    reset();
-    setOpen(false);
   };
 
   return (
@@ -303,8 +335,12 @@ function ComposeNotificationDialog() {
             <Button type='button' variant='ghost' onClick={() => setOpen(false)}>
               Cancel
             </Button>
-            <Button type='submit' className='gap-2'>
-              <Send className='h-4 w-4' />
+            <Button type='submit' className='gap-2' disabled={sendM.isPending}>
+              {sendM.isPending ? (
+                <Spinner className='h-4 w-4' />
+              ) : (
+                <Send className='h-4 w-4' />
+              )}
               {schedule ? 'Schedule' : 'Send now'}
             </Button>
           </DialogFooter>
@@ -361,9 +397,18 @@ function NotificationCard({ n }: { n: NotificationDto }) {
 export default function NotificationsPage() {
   const [tab, setTab] = useState<'all' | 'alerts' | 'reminders'>('all');
 
+  const organisation = useOrganisation();
+  const organisationUuid = organisation?.uuid ?? '';
+
   const notificationsQuery = useQuery({
     ...listNotificationsOptions({ query: { pageable: { page: 0, size: 100 } } }),
   });
+
+  const sentQuery = useQuery({
+    ...listSentOptions({ path: { organisationUuid }, query: { limit: 5 } }),
+    enabled: Boolean(organisationUuid),
+  });
+  const sent = sentQuery.data?.data ?? [];
   const notifications = extractPage<NotificationDto>(notificationsQuery.data).items;
 
   const alertsCount = notifications.filter(n => !isReminder(n)).length;
@@ -452,6 +497,39 @@ export default function NotificationsPage() {
                 </span>
                 <span className='font-semibold'>{unreadCount}</span>
               </div>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader className='pb-3'>
+              <CardTitle className='flex items-center gap-2 text-sm'>
+                <Send className='h-4 w-4' /> Recently sent
+              </CardTitle>
+            </CardHeader>
+            <CardContent className='space-y-2'>
+              {sentQuery.isLoading ? (
+                [...Array(3)].map((_, i) => <Skeleton key={i} className='h-14 w-full rounded-lg' />)
+              ) : sent.length === 0 ? (
+                <p className='text-muted-foreground text-sm'>
+                  Notifications you send to members will appear here.
+                </p>
+              ) : (
+                sent.map(d => (
+                  <div key={d.uuid} className='rounded-lg border p-3'>
+                    <p className='text-sm font-medium'>{d.title}</p>
+                    <p className='text-muted-foreground mt-0.5 line-clamp-2 text-xs'>{d.body}</p>
+                    <div className='mt-2 flex items-center gap-2'>
+                      <Badge variant='outline' className='text-[10px] capitalize'>
+                        {d.audience}
+                      </Badge>
+                      <span className='text-muted-foreground text-[11px]'>
+                        {d.recipient_count} recipient{d.recipient_count === 1 ? '' : 's'}
+                        {d.created_date ? ` · ${dayjs(d.created_date).fromNow()}` : ''}
+                      </span>
+                    </div>
+                  </div>
+                ))
+              )}
             </CardContent>
           </Card>
         </div>
