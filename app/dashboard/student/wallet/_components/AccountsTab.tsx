@@ -23,16 +23,16 @@ export function AccountsTab({ wallet }: WalletTabProps) {
                         <CardDescription>Available to spend</CardDescription>
                     </CardHeader>
                     <CardContent>
-                        <p className="text-2xl font-semibold text-success">{formatKES(breakdown.available)}</p>
+                        <p className="text-2xl font-semibold text-success">{formatKES(breakdown.restricted)}</p>
                         <p className="text-xs text-muted-foreground">No purpose restrictions</p>
                     </CardContent>
                 </Card>
                 <Card>
                     <CardHeader className="-mb-2">
-                        <CardDescription>Restricted</CardDescription>
+                        <CardDescription>Total</CardDescription>
                     </CardHeader>
                     <CardContent>
-                        <p className="text-2xl font-semibold text-warning">{formatKES(breakdown.restricted)}</p>
+                        <p className="text-2xl font-semibold text-warning">{formatKES(breakdown.total)}</p>
                         <p className="text-xs text-muted-foreground">Usable only for permitted purposes</p>
                     </CardContent>
                 </Card>

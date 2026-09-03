@@ -212,6 +212,11 @@ export default {
           icon: BookOpen,
         },
         {
+          title: 'My Bookings',
+          url: '/dashboard/my-bookings',
+          icon: CalendarClock,
+        },
+        {
           title: 'Schedule',
           url: '/dashboard/calendar',
           icon: Calendar,
@@ -294,6 +299,11 @@ export default {
           url: '/dashboard/skills-wallet',
           icon: BadgeCheck,
         },
+        {
+          title: 'Schedule',
+          url: '/dashboard/calendar',
+          icon: CalendarClock,
+        },
         // {
         //   title: 'Profile',
         //   url: '/dashboard/profile',
@@ -309,6 +319,11 @@ export default {
           title: 'Jobs',
           url: '/dashboard/opportunities',
           icon: Handshake,
+        },
+        {
+          title: 'Booking Requests',
+          url: '/dashboard/booking-requests',
+          icon: CalendarClock,
         },
         // {
         //   title: 'Enrollments',
@@ -341,16 +356,22 @@ export default {
           url: '/dashboard/students',
           icon: Users,
         },
+        {
+          title: 'Assignments',
+          url: '/dashboard/assignment',
+          icon: FileText,
+        },
+        {
+          title: 'Assessment',
+          url: '/dashboard/assessment',
+          icon: BarChart3,
+        },
         // {
         //   title: 'Classes',
         //   url: '/dashboard/classes',
         //   icon: School,
         // },
-        {
-          title: 'Schedule',
-          url: '/dashboard/calendar',
-          icon: CalendarClock,
-        },
+
         // {
         //   title: 'Portfolio',
         //   url: '/dashboard/portfolio',
@@ -366,22 +387,6 @@ export default {
         //   url: '/dashboard/library',
         //   icon: LucideBookUser,
         // },
-      ],
-    },
-    {
-      title: 'Assessment',
-      icon: ClipboardList,
-      items: [
-        {
-          title: 'Assignments',
-          url: '/dashboard/assignment',
-          icon: FileText,
-        },
-        {
-          title: 'Assessment',
-          url: '/dashboard/assessment',
-          icon: BarChart3,
-        },
         // {
         //   title: 'Credentials Vault',
         //   url: '/dashboard/credentials',
@@ -394,6 +399,7 @@ export default {
         // },
       ],
     },
+
     {
       title: 'Finance',
       icon: '',

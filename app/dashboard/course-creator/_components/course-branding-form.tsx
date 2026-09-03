@@ -296,11 +296,11 @@ export const CourseBrandingForm = forwardRef<CourseFormRef, CourseFormProps>(
       if (!pending.file) {
         toast.error('Choose a file first.');
         return;
-        }
+      }
 
-        upload(pending.file, {
-          onSuccess: (data: UploadResponse) => {
-            const urlKey = `${key}_url` as const;
+      upload(pending.file, {
+        onSuccess: (data: UploadResponse) => {
+          const urlKey = `${key}_url` as const;
           // @ts-ignore
           const uploadedUrl = getUploadedUrl(data?.data, urlKey);
 
@@ -453,7 +453,7 @@ export const CourseBrandingForm = forwardRef<CourseFormRef, CourseFormProps>(
 
     return (
       <Form {...form}>
-        <form onSubmit={form.handleSubmit(onSubmit, onError)} className='space-y-6'>
+        <form onSubmit={form.handleSubmit(onSubmit, onError)}>
           {/* Welcome Message */}
           {/* <FormSection
             title='Welcome message'

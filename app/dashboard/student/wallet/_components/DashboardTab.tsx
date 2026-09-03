@@ -17,8 +17,8 @@ export function DashboardTab({ onNavigate, wallet, transactions }: WalletDashboa
     const lowBalance = wallet?.balance_amount! < 5000;
 
     const stats = [
-        { label: "Available balance", value: formatKES(wallet?.balance_amount!), hint: "Spendable on anything", tone: "primary" },
-        { label: "Restricted balance", value: formatKES(0), hint: "Skills Fund & marketplace credits — permitted purposes only", tone: "muted" },
+        { label: "Available balance", value: formatKES(0), hint: "Skills Fund & marketplace credits — permitted purposes only", tone: "primary" },
+        { label: "Total balance", value: formatKES(wallet?.balance_amount!), hint: "Spendable on anything", tone: "muted" },
         { label: "Rewards", value: formatKES(0), hint: "Earned credits", tone: "muted" },
         { label: "Pending payments", value: formatKES(pendingTotal), hint: `${pendingPayments.length} awaiting settlement`, tone: "muted" },
     ];
