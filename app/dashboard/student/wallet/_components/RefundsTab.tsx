@@ -26,7 +26,7 @@ export function RefundsTab() {
                 <Card>
                     <CardHeader>
                         <CardDescription>Available balance</CardDescription>
-                        <CardTitle className="text-xl text-success">{fmtMoney(breakdown.available)}</CardTitle>
+                        <CardTitle className="text-xl text-success">{fmtMoney(breakdown.restricted)}</CardTitle>
                     </CardHeader>
                     <CardContent className="pt-0 text-xs text-muted-foreground">
                         Refunds of unrestricted spend land here
@@ -34,8 +34,8 @@ export function RefundsTab() {
                 </Card>
                 <Card>
                     <CardHeader>
-                        <CardDescription>Restricted balance</CardDescription>
-                        <CardTitle className="text-xl text-warning">{fmtMoney(breakdown.restricted)}</CardTitle>
+                        <CardDescription>Total balance</CardDescription>
+                        <CardTitle className="text-xl text-warning">{fmtMoney(breakdown.total)}</CardTitle>
                     </CardHeader>
                     <CardContent className="pt-0 text-xs text-muted-foreground">
                         Skills Fund and marketplace credits keep their rules after a refund

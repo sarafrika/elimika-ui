@@ -1,15 +1,25 @@
 'use client';
 
 import { EmptyState } from '@/components/ui/empty-state';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 import { Calendar, ChevronLeft, ChevronRight } from 'lucide-react';
-import { useMemo, useState } from 'react';
-import { Button } from '../../../../../components/ui/button';
+import { useEffect, useMemo, useState } from 'react';
+
+import { Button } from '@/components/ui/button';
 import {
   DropdownMenu,
   DropdownMenuCheckboxItem,
   DropdownMenuContent,
   DropdownMenuTrigger,
 } from '../../../../../components/ui/dropdown-menu';
+
+import { ANALYTICS_STATUS_OPTIONS } from './analytics-filters';
 import { useInstructorAnalyticsData } from './useInstructorAnalyticsData';
 
 function StatusBadge({ status }: { status: string }) {
@@ -63,43 +73,136 @@ function StarRating({ value }: { value: number | null }) {
 
 const PAGE_SIZE = 25;
 
+type SessionPerformanceFilters = {
+  sessionName: string;
+  programName: string;
+  status: string;
+};
+
+const DEFAULT_SESSION_PERFORMANCE_FILTERS: SessionPerformanceFilters = {
+  sessionName: 'all',
+  programName: 'all',
+  status: 'all',
+};
+
+function SessionPerformanceFilterBar({
+  filters,
+  programNames,
+  sessionNames,
+  onChange,
+  onReset,
+}: {
+  filters: SessionPerformanceFilters;
+  programNames: string[];
+  sessionNames: string[];
+  onChange: (updates: Partial<SessionPerformanceFilters>) => void;
+  onReset: () => void;
+}) {
+  const hasActiveFilters =
+    filters.sessionName !== 'all' ||
+    filters.programName !== 'all' ||
+    filters.status !== 'all';
+
+  return (
+    <div className='mb-3 grid gap-2 sm:grid-cols-2 xl:grid-cols-4'>
+
+      <Select value={filters.programName} onValueChange={value => onChange({ programName: value })}>
+        <SelectTrigger className='w-full'>
+          <SelectValue placeholder='All programs' />
+        </SelectTrigger>
+        <SelectContent>
+          <SelectItem value='all'>All programs</SelectItem>
+          {programNames.map(programName => (
+            <SelectItem key={programName} value={programName}>
+              {programName}
+            </SelectItem>
+          ))}
+        </SelectContent>
+      </Select>
+
+      <Select value={filters.sessionName} onValueChange={value => onChange({ sessionName: value })}>
+        <SelectTrigger className='w-full'>
+          <SelectValue placeholder='All sessions' />
+        </SelectTrigger>
+        <SelectContent>
+          <SelectItem value='all'>All sessions</SelectItem>
+          {sessionNames.map(sessionName => (
+            <SelectItem key={sessionName} value={sessionName}>
+              {sessionName}
+            </SelectItem>
+          ))}
+        </SelectContent>
+      </Select>
+
+      <Select value={filters.status} onValueChange={value => onChange({ status: value })}>
+        <SelectTrigger className='w-full'>
+          <SelectValue placeholder='All statuses' />
+        </SelectTrigger>
+        <SelectContent>
+          <SelectItem value='all'>All statuses</SelectItem>
+          {ANALYTICS_STATUS_OPTIONS.map(status => (
+            <SelectItem key={status} value={status}>
+              {status}
+            </SelectItem>
+          ))}
+        </SelectContent>
+      </Select>
+
+      <Button
+        type='button'
+        variant='ghost'
+        size='sm'
+        onClick={onReset}
+        disabled={!hasActiveFilters}
+        className='w-full justify-center'
+      >
+        Reset filters
+      </Button>
+    </div>
+  );
+}
+
 export function SessionTable() {
   const { sessions, isLoading } = useInstructorAnalyticsData();
+  const sessionNames = useMemo(() => [...new Set(sessions.map(s => s.session))].sort(), [sessions]);
+  const programNames = useMemo(() => [...new Set(sessions.map(s => s.program))].sort(), [sessions]);
 
-  const [search, setSearch] = useState('');
-  const [selectedInstructor, setSelectedInstructor] = useState('all');
-
-  const instructors = useMemo(() => {
-    return [...new Set(sessions.map(s => s.instructor))];
-  }, [sessions]);
+  const [filters, setFilters] = useState<SessionPerformanceFilters>(
+    DEFAULT_SESSION_PERFORMANCE_FILTERS
+  );
 
   const filteredSessions = useMemo(() => {
     return sessions.filter(s => {
-      const matchesSearch =
-        s.session.toLowerCase().includes(search.toLowerCase()) ||
-        s.program.toLowerCase().includes(search.toLowerCase()) ||
-        s.instructor.toLowerCase().includes(search.toLowerCase());
+      const matchesSessionName = filters.sessionName === 'all' || s.session === filters.sessionName;
+      const matchesProgramName = filters.programName === 'all' || s.program === filters.programName;
+      const matchesStatus = filters.status === 'all' || s.status === filters.status;
 
-      const matchesInstructor = selectedInstructor === 'all' || s.instructor === selectedInstructor;
-
-      return matchesSearch && matchesInstructor;
+      return matchesSessionName && matchesProgramName && matchesStatus;
     });
-  }, [sessions, search, selectedInstructor]);
+  }, [filters.programName, filters.sessionName, filters.status, sessions]);
 
   const [page, setPage] = useState(1);
 
-  const totalPages = Math.ceil(sessions.length / PAGE_SIZE);
+  const totalPages = Math.ceil(filteredSessions.length / PAGE_SIZE);
+
+  useEffect(() => {
+    setPage(1);
+  }, [filters.programName, filters.sessionName, filters.status]);
+
+  useEffect(() => {
+    setPage(currentPage => Math.min(currentPage, Math.max(1, totalPages)));
+  }, [totalPages]);
 
   const paginatedSessions = useMemo(() => {
     const start = (page - 1) * PAGE_SIZE;
     const end = start + PAGE_SIZE;
 
     return filteredSessions.slice(start, end);
-  }, [sessions, page]);
+  }, [filteredSessions, page]);
 
-  const startItem = sessions.length === 0 ? 0 : (page - 1) * PAGE_SIZE + 1;
+  const startItem = filteredSessions.length === 0 ? 0 : (page - 1) * PAGE_SIZE + 1;
 
-  const endItem = Math.min(page * PAGE_SIZE, sessions.length);
+  const endItem = Math.min(page * PAGE_SIZE, filteredSessions.length);
 
   const [visibleColumns, setVisibleColumns] = useState({
     program: true,
@@ -133,29 +236,20 @@ export function SessionTable() {
         Session Performance Summary
       </h3>
 
-      <div className='mb-3 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between'>
-        {/* Search */}
-        <input
-          value={search}
-          onChange={e => setSearch(e.target.value)}
-          placeholder='Search sessions, programs, instructors...'
-          className='border-border bg-background text-foreground placeholder:text-muted-foreground w-full rounded-md border px-3 py-2 text-xs sm:w-1/2'
-        />
-
-        {/* Instructor filter */}
-        <select
-          value={selectedInstructor}
-          onChange={e => setSelectedInstructor(e.target.value)}
-          className='border-border bg-background text-foreground w-full rounded-md border px-3 py-2 text-xs sm:w-48'
-        >
-          <option value='all'>All Instructors</option>
-          {instructors.map(ins => (
-            <option key={ins} value={ins}>
-              {ins}
-            </option>
-          ))}
-        </select>
-      </div>
+      <SessionPerformanceFilterBar
+        filters={filters}
+        programNames={programNames}
+        sessionNames={sessionNames}
+        onChange={updates =>
+          setFilters(current => ({
+            ...current,
+            ...updates,
+          }))
+        }
+        onReset={() =>
+          setFilters(DEFAULT_SESSION_PERFORMANCE_FILTERS)
+        }
+      />
 
       {isLoading ? (
         <div className='border-border/50 bg-muted/40 text-muted-foreground rounded-xl border p-8 text-center text-sm'>
@@ -171,21 +265,6 @@ export function SessionTable() {
       ) : (
         <>
           <div className='overflow-x-auto'>
-            <div className='border-border bg-muted/20 mb-4 flex flex-wrap items-center gap-2 rounded-lg border px-3 py-2'>
-              <span className='text-muted-foreground text-xs font-medium tracking-wide uppercase'>
-                Instructors:
-              </span>
-
-              {[...new Set(filteredSessions.map(s => s.instructor))].map(instructor => (
-                <span
-                  key={instructor}
-                  className='bg-background text-foreground ring-border rounded-full px-2.5 py-1 text-xs font-medium shadow-sm ring-1'
-                >
-                  {instructor}
-                </span>
-              ))}
-            </div>
-
             <div className='mb-4 flex justify-end'>
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
@@ -376,7 +455,7 @@ export function SessionTable() {
 
           <div className='mt-3 flex flex-wrap items-center justify-between gap-2'>
             <span className='text-muted-foreground text-xs'>
-              Showing {startItem} to {endItem} of {sessions.length} sessions
+              Showing {startItem} to {endItem} of {filteredSessions.length} sessions
             </span>
             <div className='flex items-center gap-1'>
               <Button disabled={page === 1} onClick={() => setPage(p => Math.max(1, p - 1))}>
@@ -411,20 +490,43 @@ export function SessionTable() {
 
 export function SessionTableSummary() {
   const { sessions, isLoading } = useInstructorAnalyticsData();
+  const sessionNames = useMemo(() => [...new Set(sessions.map(s => s.session))].sort(), [sessions]);
+  const programNames = useMemo(() => [...new Set(sessions.map(s => s.program))].sort(), [sessions]);
+  const [filters, setFilters] = useState<SessionPerformanceFilters>(
+    DEFAULT_SESSION_PERFORMANCE_FILTERS
+  );
   const [page, setPage] = useState(1);
 
-  const totalPages = Math.ceil(sessions.length / PAGE_SIZE);
+  const filteredSessions = useMemo(() => {
+    return sessions.filter(s => {
+      const matchesSessionName = filters.sessionName === 'all' || s.session === filters.sessionName;
+      const matchesProgramName = filters.programName === 'all' || s.program === filters.programName;
+      const matchesStatus = filters.status === 'all' || s.status === filters.status;
+
+      return matchesSessionName && matchesProgramName && matchesStatus;
+    });
+  }, [filters.programName, filters.sessionName, filters.status, sessions]);
+
+  const totalPages = Math.ceil(filteredSessions.length / PAGE_SIZE);
+
+  useEffect(() => {
+    setPage(1);
+  }, [filters.programName, filters.sessionName, filters.status]);
+
+  useEffect(() => {
+    setPage(currentPage => Math.min(currentPage, Math.max(1, totalPages)));
+  }, [totalPages]);
 
   const paginatedSessions = useMemo(() => {
     const start = (page - 1) * PAGE_SIZE;
     const end = start + PAGE_SIZE;
 
-    return sessions.slice(start, end);
-  }, [sessions, page]);
+    return filteredSessions.slice(start, end);
+  }, [filteredSessions, page]);
 
-  const startItem = sessions.length === 0 ? 0 : (page - 1) * PAGE_SIZE + 1;
+  const startItem = filteredSessions.length === 0 ? 0 : (page - 1) * PAGE_SIZE + 1;
 
-  const endItem = Math.min(page * PAGE_SIZE, sessions.length);
+  const endItem = Math.min(page * PAGE_SIZE, filteredSessions.length);
 
   const [visibleColumns, setVisibleColumns] = useState({
     program: true,
@@ -458,11 +560,26 @@ export function SessionTableSummary() {
         Session Performance Summary
       </h3>
 
+      <SessionPerformanceFilterBar
+        filters={filters}
+        programNames={programNames}
+        sessionNames={sessionNames}
+        onChange={updates =>
+          setFilters(current => ({
+            ...current,
+            ...updates,
+          }))
+        }
+        onReset={() =>
+          setFilters(DEFAULT_SESSION_PERFORMANCE_FILTERS)
+        }
+      />
+
       {isLoading ? (
         <div className='border-border/50 bg-muted/40 text-muted-foreground rounded-xl border p-8 text-center text-sm'>
           Loading session analytics...
         </div>
-      ) : sessions.length === 0 ? (
+      ) : filteredSessions.length === 0 ? (
         <EmptyState
           icon={Calendar}
           title='No sessions found'
@@ -472,21 +589,6 @@ export function SessionTableSummary() {
       ) : (
         <>
           <div className='overflow-x-auto'>
-            <div className='border-border bg-muted/20 mb-4 flex flex-wrap items-center gap-2 rounded-lg border px-3 py-2'>
-              <span className='text-muted-foreground text-xs font-medium tracking-wide uppercase'>
-                Instructors:
-              </span>
-
-              {[...new Set(sessions.map(s => s.instructor))].map(instructor => (
-                <span
-                  key={instructor}
-                  className='bg-background text-foreground ring-border rounded-full px-2.5 py-1 text-xs font-medium shadow-sm ring-1'
-                >
-                  {instructor}
-                </span>
-              ))}
-            </div>
-
             <div className='mb-4 flex justify-end'>
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
@@ -677,7 +779,7 @@ export function SessionTableSummary() {
 
           <div className='mt-3 flex flex-wrap items-center justify-between gap-2'>
             <span className='text-muted-foreground text-xs'>
-              Showing {startItem} to {endItem} of {sessions.length} sessions
+              Showing {startItem} to {endItem} of {filteredSessions.length} sessions
             </span>
             <div className='flex items-center gap-1'>
               <Button disabled={page === 1} onClick={() => setPage(p => Math.max(1, p - 1))}>

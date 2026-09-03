@@ -41,7 +41,6 @@ import {
   getCourseTrainingRequirementsOptions,
   getInstructorScheduleOptions,
   getStudentBookingsQueryKey,
-  requestPaymentMutation,
   searchTrainingApplicationsOptions,
 } from '@/services/client/@tanstack/react-query.gen';
 import type { Course, ScheduledInstance } from '@/services/client/types.gen';
@@ -53,7 +52,6 @@ import {
   CheckCircle2,
   MapPin,
   ShieldCheck,
-  Smartphone,
   Star
 } from 'lucide-react';
 import { useRouter } from 'next/navigation';
@@ -180,38 +178,6 @@ function InstructorSummary({ instructor }: { instructor: SearchInstructor }) {
         </div>
       </CardContent>
     </Card>
-  );
-}
-
-function PaymentMethodCard() {
-  return (
-    <div className='space-y-3'>
-      <div className='border-primary bg-primary/5 flex items-start gap-3 rounded-lg border-2 p-4'>
-        <Smartphone className='text-primary mt-0.5 size-5 shrink-0' />
-        <div>
-          <p className='text-foreground text-sm font-semibold'>M-Pesa</p>
-          <p className='text-muted-foreground mt-1 text-xs'>
-            The payment prompt will be sent to the phone number on your student profile.
-          </p>
-        </div>
-      </div>
-      {/* <div className='grid gap-2 sm:grid-cols-2'>
-        <div
-          aria-disabled='true'
-          className='text-muted-foreground bg-muted/30 flex cursor-not-allowed items-center gap-3 rounded-lg border p-3 opacity-60'
-        >
-          <CreditCard className='size-4' />
-          <span className='text-xs'>Card unavailable</span>
-        </div>
-        <div
-          aria-disabled='true'
-          className='text-muted-foreground bg-muted/30 flex cursor-not-allowed items-center gap-3 rounded-lg border p-3 opacity-60'
-        >
-          <Wallet className='size-4' />
-          <span className='text-xs'>Wallet and Skills Fund unavailable</span>
-        </div>
-      </div> */}
-    </div>
   );
 }
 
@@ -401,8 +367,7 @@ export default function InstructorHirePage({ courseId, instructorId }: Props) {
   const totalHours = upcomingSessions.reduce((sum, session) => sum + session.minutes / 60, 0);
   const totalAmount = totalHours * rate;
   const createBooking = useMutation(createBookingMutation());
-  const requestPayment = useMutation(requestPaymentMutation());
-  const isSubmitting = createBooking.isPending || requestPayment.isPending;
+  const isSubmitting = createBooking.isPending;
 
   const handleBack = () =>
     router.push(
@@ -434,7 +399,7 @@ export default function InstructorHirePage({ courseId, instructorId }: Props) {
       return toast.error('Complete the required course materials checklist.');
     if (!termsOk) return toast.error('Confirm that you agree to the schedule and booking terms.');
     try {
-      const createdBookings = [];
+      const createdBookings: Array<{ uuid: string }> = [];
       for (const session of upcomingSessions) {
         const [startText, endText] =
           session.time === 'All day'
@@ -466,32 +431,22 @@ export default function InstructorHirePage({ courseId, instructorId }: Props) {
         createdBookings.push(created.data);
       }
 
-      const paymentSessions = [];
-      for (const booking of createdBookings) {
-        const payment = await requestPayment.mutateAsync({
-          path: { bookingUuid: booking.uuid },
-          body: { payment_engine: 'mpesa' },
-        });
-        paymentSessions.push(payment?.data);
-      }
-
       await queryClient.invalidateQueries({
         queryKey: getStudentBookingsQueryKey({
           path: { studentUuid: student.uuid },
           query: { pageable: {}, status: '' },
         }),
       });
-      const paymentUrl = paymentSessions.find(session => session?.payment_url)?.payment_url;
-      if (paymentUrl) {
-        window.location.assign(paymentUrl);
-        return;
-      }
-      toast.success(
-        `Booking confirmed and M-Pesa payment initiated for ${formatMoney(totalAmount, rateCard?.currency)}.`
+      const firstBookingUuid = createdBookings[0]?.uuid;
+      toast.success('Booking request sent successfully.');
+      router.push(
+        buildWorkspaceAliasPath(
+          activeDomain,
+          `/dashboard/student/my-bookings${firstBookingUuid ? `?bookingUuid=${firstBookingUuid}` : ''}`
+        )
       );
-      handleBack();
     } catch (error) {
-      toast.error(getErrorMessage(error, 'Could not create the booking or start M-Pesa payment.'));
+      toast.error(getErrorMessage(error, 'Could not create the booking request.'));
     }
   };
 
@@ -740,7 +695,7 @@ export default function InstructorHirePage({ courseId, instructorId }: Props) {
         <aside className='pt-1'>
           <Card>
             <CardHeader>
-              <CardTitle>Confirm and pay</CardTitle>
+              <CardTitle>Send booking request</CardTitle>
             </CardHeader>
             <CardContent className='space-y-5'>
               <div className='space-y-2 text-sm'>
@@ -768,19 +723,18 @@ export default function InstructorHirePage({ courseId, instructorId }: Props) {
                     {formatMoney(rate, rateCard?.currency)} / hour
                   </span>
                 </div>
+                <div className='flex justify-between'>
+                  <span className='text-muted-foreground'>Estimated total</span>
+                  <span className='font-semibold'>
+                    {formatMoney(totalAmount, rateCard?.currency ?? 'KES')}
+                  </span>
+                </div>
               </div>
               <Separator />
-              <div className='flex items-center justify-between text-lg font-bold'>
-                <span>Total</span>
-                <span className='text-primary'>
-                  {formatMoney(totalAmount, rateCard?.currency ?? 'KES')}
-                </span>
-              </div>
-
-              <PaymentMethodCard />
 
               <p className='text-muted-foreground text-xs'>
-                The M-Pesa prompt will use the phone number saved on your student profile.
+                A booking request will be sent to the instructor. Payment is only requested after
+                the booking is accepted.
               </p>
               <Button
                 type='button'
@@ -796,11 +750,11 @@ export default function InstructorHirePage({ courseId, instructorId }: Props) {
                 onClick={handleSubmit}
               >
                 {isSubmitting ? (
-                  'Starting payment…'
+                  'Sending request…'
                 ) : (
                   <>
-                    <Smartphone className='mr-2 size-4' />
-                    Confirm and pay with M-Pesa
+                    <CalendarDays className='mr-2 size-4' />
+                    Send booking request
                   </>
                 )}
               </Button>
