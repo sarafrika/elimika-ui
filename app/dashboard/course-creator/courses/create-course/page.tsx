@@ -802,22 +802,29 @@ export default function CreateCoursePage() {
             const lessonMeta = lessonTitlesById.get(lesson.uuid);
             const quizzes = query.data?.data?.content ?? [];
 
-            return quizzes.map((quiz: Quiz) => ({
-                kind: 'Quiz' as const,
-                uuid: quiz.uuid ?? '',
-                lessonUuid: lesson.uuid,
-                lessonTitle: lessonMeta?.title ?? lesson.title ?? 'Untitled lesson',
-                lessonOrder: lessonMeta?.order ?? index,
-                title: quiz.title || 'Untitled quiz',
-                description: getAssessmentDescription(quiz.description ?? quiz.instructions ?? ''),
-                statusLabel: quiz.active ? 'Active' : 'Draft',
-                statusTone: getAssessmentStatusTone(quiz.active),
-                meta: [
-                    `Pass ${quiz.passing_score ?? 0}%`,
-                    `Attempts ${quiz.attempts_allowed ?? 1}`,
-                    quiz.time_limit_minutes ? `${quiz.time_limit_minutes} min` : 'No time limit',
-                ],
-            }));
+            return quizzes.map((quiz: Quiz) => {
+                const isQuizPublished =
+                    quiz.is_published === true || quiz.status === 'PUBLISHED';
+
+                return {
+                    kind: 'Quiz' as const,
+                    uuid: quiz.uuid ?? '',
+                    lessonUuid: lesson.uuid,
+                    lessonTitle: lessonMeta?.title ?? lesson.title ?? 'Untitled lesson',
+                    lessonOrder: lessonMeta?.order ?? index,
+                    title: quiz.title || 'Untitled quiz',
+                    description: getAssessmentDescription(
+                        quiz.description ?? quiz.instructions ?? ''
+                    ),
+                    statusLabel: quiz.active ? 'Active' : isQuizPublished ? 'Published' : 'Draft',
+                    statusTone: getAssessmentStatusTone(quiz.active, isQuizPublished),
+                    meta: [
+                        `Pass ${quiz.passing_score ?? 0}%`,
+                        `Attempts ${quiz.attempts_allowed ?? 1}`,
+                        quiz.time_limit_minutes ? `${quiz.time_limit_minutes} min` : 'No time limit',
+                    ],
+                };
+            });
         });
 
         const assignmentItems = assignmentQueries.flatMap((query, index) => {

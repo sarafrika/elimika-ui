@@ -1,3 +1,5 @@
+ 'use client';
+
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -16,6 +18,7 @@ import {
   MapPin,
   MessageSquareDot,
   PiggyBank,
+  Play,
   Star,
   Timer,
   Users,
@@ -28,6 +31,7 @@ import { ClassSessionTemplate } from '../../../../../services/client';
 import { toAuthenticatedMediaUrl } from '../../../../lib/media-url';
 import { useUserProfile } from '../../../profile/context/profile-context';
 import { ClassDetailSheet } from '../shared/_components/ClassDetailsSheet';
+import { VideoPreviewModal } from '@/components/ui/video-preview-modal';
 import { BundledClass } from '../types';
 
 type Props = {
@@ -149,6 +153,7 @@ export default function AvailabilityClassCard({ cls, onEnroll, onViewCourse, onV
   const student = profile?.student;
 
   const [detail, setDetail] = useState<BundledClass | null>(null);
+  const [isPromoVideoOpen, setIsPromoVideoOpen] = useState(false);
   const [isRegistrationOngoing, setIsRegistrationOngoing] = useState(false);
   const [isRegistrationPeriodUndefined, setIsRegistrationPeriodUndefined] =
     useState(false);
@@ -171,6 +176,8 @@ export default function AvailabilityClassCard({ cls, onEnroll, onViewCourse, onV
     () => (lessonsWithContent ?? []).map(item => item.lesson).filter(Boolean),
     [lessonsWithContent]
   );
+
+  const promotionalVideoUrl = toAuthenticatedMediaUrl(cls.promotional_video_url);
 
   // CLASS SCHEDULES
   const schedules = cls.schedule ?? [];
@@ -259,7 +266,7 @@ export default function AvailabilityClassCard({ cls, onEnroll, onViewCourse, onV
   return (
     <div>
       <Card className='hover:border-primary/50 cursor-pointer transition hover:shadow-md'>
-        <CardHeader className='pb-3'>
+        <CardHeader className='flex flex-col gap-3 pb-3 sm:flex-row sm:items-start sm:justify-between'>
           <div className='flex items-start gap-3'>
             {/* Add checkbox later if comparison is enabled */}
             <Checkbox
@@ -316,6 +323,21 @@ export default function AvailabilityClassCard({ cls, onEnroll, onViewCourse, onV
 
             </div>
           </div>
+
+          {promotionalVideoUrl ? (
+            <div className='flex shrink-0 items-start'>
+              <Button
+                type='button'
+                variant='outline'
+                size='sm'
+                className='shrink-0 gap-2 whitespace-nowrap'
+                onClick={() => setIsPromoVideoOpen(true)}
+              >
+                <Play className='h-4 w-4' />
+                Watch promo video
+              </Button>
+            </div>
+          ) : null}
         </CardHeader>
 
         <CardContent className="px-6 -mt-4 text-sm">
@@ -469,6 +491,15 @@ export default function AvailabilityClassCard({ cls, onEnroll, onViewCourse, onV
         </CardContent>
       </Card>
 
+      <VideoPreviewModal
+        open={isPromoVideoOpen}
+        onOpenChange={setIsPromoVideoOpen}
+        title={cls.title}
+        description={`Preview ${cls.title} before you enroll.`}
+        videoUrl={promotionalVideoUrl}
+        emptyMessage='Promotional video is not available.'
+      />
+
       <ClassDetailSheet
         open={!!detail}
         detail={detail}
@@ -503,4 +534,3 @@ function formatTimeInZone(date: string, arg1: { fallback: string; }) {
     minute: '2-digit',
   });
 }
-

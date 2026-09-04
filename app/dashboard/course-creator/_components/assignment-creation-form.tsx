@@ -571,24 +571,43 @@ export const AssignmentCreationForm = (props: AssignmentCreationFormProps) => {
                 <Select
                   value={assignmentData.rubric_uuid || '__none__'}
                   onValueChange={v =>
-                    handleAssignmentInputChange('rubric_uuid', v === '__none__' ? '' : v)
+                    handleAssignmentInputChange(
+                      'rubric_uuid',
+                      v === '__none__' ? '' : v
+                    )
                   }
                 >
-                  <SelectTrigger className='w-full'>
-                    <SelectValue placeholder='Select a rubric (optional)'>
+                  <SelectTrigger className='w-full min-w-0 overflow-hidden'>
+                    <SelectValue
+                      placeholder='Select a rubric (optional)'
+                      className='truncate'
+                    >
                       {selectedRubric ? selectedRubric.title : 'None'}
                     </SelectValue>
                   </SelectTrigger>
-                  <SelectContent>
+
+                  <SelectContent
+                    position='popper'
+                    className='w-[var(--radix-select-trigger-width)] max-w-[calc(100vw-2rem)]'
+                  >
                     <SelectItem value='__none__'>
                       <span className='text-muted-foreground'>None</span>
                     </SelectItem>
+
                     {rubrics.map(r => (
-                      <SelectItem key={r.uuid} value={r.uuid ?? ''} textValue={r.title}>
-                        <div className='flex flex-col'>
-                          <span className='font-medium'>{r.title}</span>
+                      <SelectItem
+                        key={r.uuid}
+                        value={r.uuid ?? ''}
+                        textValue={r.title}
+                        className='max-w-full'
+                      >
+                        <div className='min-w-0 max-w-full'>
+                          <span className='block truncate font-medium'>
+                            {r.title}
+                          </span>
+
                           {r.description && (
-                            <span className='text-muted-foreground line-clamp-1 text-xs'>
+                            <span className='text-muted-foreground block truncate text-xs'>
                               {r.description}
                             </span>
                           )}
@@ -604,15 +623,19 @@ export const AssignmentCreationForm = (props: AssignmentCreationFormProps) => {
                       <p className='text-foreground truncate text-xs font-semibold'>
                         {selectedRubric.title}
                       </p>
+
                       {selectedRubric.description && (
                         <p className='text-muted-foreground mt-0.5 line-clamp-2 text-xs'>
                           {selectedRubric.description}
                         </p>
                       )}
                     </div>
+
                     <button
                       type='button'
-                      onClick={() => handleAssignmentInputChange('rubric_uuid', '')}
+                      onClick={() =>
+                        handleAssignmentInputChange('rubric_uuid', '')
+                      }
                       className='text-muted-foreground hover:text-foreground hover:bg-muted mt-0.5 shrink-0 rounded p-0.5 transition-colors'
                       title='Clear rubric'
                     >
@@ -623,14 +646,22 @@ export const AssignmentCreationForm = (props: AssignmentCreationFormProps) => {
                   <div className='bg-warning/20 border-warning/40 flex flex-col gap-3 rounded-lg border p-4'>
                     <div className='flex items-start gap-2'>
                       <AlertTriangle className='text-warning-foreground mt-0.5 h-4 w-4 shrink-0' />
+
                       <div className='text-sm'>
-                        <p className='text-warning-foreground font-medium'>No rubric selected</p>
+                        <p className='text-warning-foreground font-medium'>
+                          No rubric selected
+                        </p>
+
                         <p className='text-warning-foreground/80 text-xs'>
                           If none of the available rubrics fit, you can create a new one.
                         </p>
                       </div>
                     </div>
-                    <Link href='/dashboard/course-creator/rubrics' target='_blank'>
+
+                    <Link
+                      href='/dashboard/course-creator/rubrics'
+                      target='_blank'
+                    >
                       <Button
                         type='button'
                         variant='outline'

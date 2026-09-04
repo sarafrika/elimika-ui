@@ -140,7 +140,7 @@ export default function CourseCreatorCoursesContent() {
   };
 
   return (
-    <div className='mx-auto w-full max-w-6xl space-y-6 py-10'>
+    <div className='mx-auto w-full px-4 sm:px-6 space-y-6 py-10'>
       {isCourses && (
         <>
           <header className='flex flex-col items-start justify-between gap-4 md:flex-row md:items-center'>
