@@ -643,7 +643,7 @@ export default function ClassEnrollmentPage({
               <div className='text-sm font-medium'>Tuition &amp; terms</div>
               <div className='text-muted-foreground text-xs'>Training fee: {feeDisplay}</div>
               <label className='mt-2 flex items-center gap-2 text-sm'>
-                <Checkbox checked={termsOk} onCheckedChange={v => setTermsOk(!!v)} />
+                <Checkbox className='border-black/70' checked={termsOk} onCheckedChange={v => setTermsOk(!!v)} />
                 I agree to the class schedule and tuition terms.
               </label>
             </div>

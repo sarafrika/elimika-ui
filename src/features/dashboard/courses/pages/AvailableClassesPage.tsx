@@ -94,6 +94,8 @@ export default function AvailableClassesPage({
     setSelected(s => (s.includes(id) ? s.filter(x => x !== id) : [...s, id]));
   }
 
+  console.log(filteredClasses, 'filteredClasses');
+
   return (
     <div className='space-y-4 p-4'>
       <Link

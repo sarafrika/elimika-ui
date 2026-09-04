@@ -18,6 +18,7 @@ import {
   SelectValue,
 } from '../../../../components/ui/select';
 import Spinner from '../../../../components/ui/spinner';
+import { Switch } from '../../../../components/ui/switch';
 import { Textarea } from '../../../../components/ui/textarea';
 import {
   Tooltip,
@@ -52,6 +53,7 @@ type QuizSummary = Pick<
   | 'status'
   | 'rubric_uuid'
 >;
+type QuizStatus = 'DRAFT' | 'IN_REVIEW' | 'PUBLISHED' | 'ARCHIVED';
 export type QuizPayload = {
   title: string;
   instructions: string;
@@ -59,9 +61,22 @@ export type QuizPayload = {
   attempts_allowed: number;
   passing_score: number;
   active: boolean;
-  status: string;
+  status: QuizStatus;
   rubric_uuid: string;
   lesson_uuid?: string;
+};
+
+const normalizeQuizStatus = (status?: string | null): QuizStatus => {
+  switch (status?.toUpperCase()) {
+    case 'IN_REVIEW':
+      return 'IN_REVIEW';
+    case 'PUBLISHED':
+      return 'PUBLISHED';
+    case 'ARCHIVED':
+      return 'ARCHIVED';
+    default:
+      return 'DRAFT';
+  }
 };
 
 export type QuizCreationFormProps = {
@@ -358,7 +373,7 @@ const EMPTY_QUIZ = {
   attempts_allowed: 1,
   passing_score: 0,
   active: false,
-  status: 'PUBLISHED',
+  status: 'DRAFT' as QuizStatus,
   rubric_uuid: '',
 };
 
@@ -406,6 +421,7 @@ export const QuizCreationForm = (props: QuizCreationFormProps) => {
   const [localQuizData, setLocalQuizData] = useState({ ...EMPTY_QUIZ });
   const [showDeleteQuizDialog, setShowDeleteQuizDialog] = useState(false);
   const [isDeletingQuiz, setIsDeletingQuiz] = useState(false);
+  const [quizAction, setQuizAction] = useState<'save' | 'publish' | 'unpublish' | null>(null);
 
   const selectedRubric = rubrics.find(r => r.uuid === localQuizData.rubric_uuid);
 
@@ -440,14 +456,15 @@ export const QuizCreationForm = (props: QuizCreationFormProps) => {
     } else {
       const selected = quizzes?.data?.content?.find(q => q.uuid === quizUuid);
       if (selected) {
+        const normalizedStatus = normalizeQuizStatus(selected.status);
         setLocalQuizData({
           title: selected.title || '',
           instructions: selected.instructions || '',
           time_limit_minutes: selected.time_limit_minutes || 0,
           attempts_allowed: selected.attempts_allowed || 1,
           passing_score: selected.passing_score || 0,
-          active: selected.active || false,
-          status: selected.status || 'PUBLISHED',
+          active: normalizedStatus === 'PUBLISHED' ? Boolean(selected.active) : false,
+          status: normalizedStatus,
           rubric_uuid: selected.rubric_uuid || '',
         });
       }
@@ -461,32 +478,97 @@ export const QuizCreationForm = (props: QuizCreationFormProps) => {
     [onSelectQuiz]
   );
 
-  const handleSaveQuiz = useCallback(async () => {
-    if (!selectedLessonId || !selectedQuizData.title.trim()) {
-      toast.error('Please select a lesson and enter a quiz title');
-      return;
-    }
-
-    try {
-      if (quizUuid && quizUuid !== '') {
-        await updateQuizForLesson(quizUuid, selectedQuizData);
-        toast.success('Quiz updated successfully!');
-      } else {
-        const createdQuizUuid = await createQuizForLesson(selectedLessonId, selectedQuizData);
-        onSelectQuiz?.(createdQuizUuid);
-        toast.success('Quiz created successfully! You can now add questions.');
+  const commitQuiz = useCallback(
+    async (payload: QuizPayload) => {
+      if (!selectedLessonId || !payload.title.trim()) {
+        toast.error('Please select a lesson and enter a quiz title');
+        return null;
       }
+
+      if (quizUuid && quizUuid !== '') {
+        await updateQuizForLesson(quizUuid, payload);
+        return quizUuid;
+      }
+
+      return createQuizForLesson(selectedLessonId, payload);
+    },
+    [createQuizForLesson, quizUuid, selectedLessonId, updateQuizForLesson]
+  );
+
+  const handleSaveQuiz = useCallback(async () => {
+    try {
+      setQuizAction('save');
+      const savedQuizUuid = await commitQuiz(selectedQuizData);
+      if (!savedQuizUuid) return;
+
+      handleQuizSelect(savedQuizUuid);
+
+      toast.success(quizUuid ? 'Quiz updated successfully!' : 'Quiz created successfully!');
     } catch (err) {
       toast.error(`Failed to ${quizUuid ? 'update' : 'create'} quiz.`);
+    } finally {
+      setQuizAction(null);
     }
-  }, [
-    selectedLessonId,
-    selectedQuizData,
-    quizUuid,
-    updateQuizForLesson,
-    createQuizForLesson,
-    onSelectQuiz,
-  ]);
+  }, [commitQuiz, handleQuizSelect, quizUuid, selectedQuizData]);
+
+  const handlePublishQuiz = useCallback(async () => {
+    const payload = {
+      ...selectedQuizData,
+      status: 'PUBLISHED' as QuizStatus,
+      active: true,
+    };
+
+    try {
+      setQuizAction('publish');
+      const savedQuizUuid = await commitQuiz(payload);
+      if (!savedQuizUuid) return;
+
+      handleQuizSelect(savedQuizUuid);
+
+      setLocalQuizData(prev => ({
+        ...prev,
+        status: 'PUBLISHED',
+        active: true,
+      }));
+
+      toast.success(quizUuid ? 'Quiz published successfully!' : 'Quiz created and published successfully!');
+    } catch (err) {
+      toast.error(`Failed to ${quizUuid ? 'publish' : 'create and publish'} quiz.`);
+    } finally {
+      setQuizAction(null);
+    }
+  }, [commitQuiz, handleQuizSelect, quizUuid, selectedQuizData]);
+
+  const handleUnpublishQuiz = useCallback(async () => {
+    if (!quizUuid) return;
+
+    const payload = {
+      ...selectedQuizData,
+      status: 'DRAFT' as QuizStatus,
+      active: false,
+    };
+
+    try {
+      setQuizAction('unpublish');
+      const savedQuizUuid = await commitQuiz(payload);
+      if (!savedQuizUuid) return;
+      setLocalQuizData(prev => ({
+        ...prev,
+        status: 'DRAFT',
+        active: false,
+      }));
+      toast.success('Quiz unpublished successfully!');
+    } catch (err) {
+      toast.error('Failed to unpublish quiz.');
+    } finally {
+      setQuizAction(null);
+    }
+  }, [commitQuiz, quizUuid, selectedQuizData]);
+
+  const isPublished = selectedQuizData.status === 'PUBLISHED';
+  const isSavingQuiz = quizAction === 'save' && isPending;
+  const isPublishingQuiz = quizAction === 'publish' && isPending;
+  const isUnpublishingQuiz = quizAction === 'unpublish' && isPending;
 
   const handleDeleteQuiz = useCallback(() => {
     if (!quizUuid) return;
@@ -524,7 +606,7 @@ export const QuizCreationForm = (props: QuizCreationFormProps) => {
       </div>
 
       <div className='flex flex-col gap-6'>
-        {selectedQuizData.title && selectedQuizData?.status !== 'published' && (
+        {selectedQuizData.title && !isPublished && (
           <div className='border-destructive/20 bg-destructive/5 text-destructive rounded-md border p-3 text-sm'>
             This quiz is in draft mode and is not visible to instructors until it is published.
           </div>
@@ -596,24 +678,44 @@ export const QuizCreationForm = (props: QuizCreationFormProps) => {
               <Select
                 value={localQuizData.rubric_uuid || '__none__'}
                 onValueChange={v =>
-                  handleQuizInputChange('rubric_uuid', v === '__none__' ? '' : v)
+                  handleQuizInputChange(
+                    'rubric_uuid',
+                    v === '__none__' ? '' : v
+                  )
                 }
               >
-                <SelectTrigger className='w-full'>
-                  <SelectValue placeholder='Select a rubric (optional)' />
+                <SelectTrigger className='w-full min-w-0 text-start min-h-12 rounded-sm overflow-hidden'>
+                  <SelectValue
+                    placeholder='Select a rubric (optional)'
+                    className='truncate'
+                  />
                 </SelectTrigger>
-                <SelectContent>
+
+                <SelectContent
+                  position='popper'
+                  className='w-[var(--radix-select-trigger-width)] max-w-[calc(100vw-2rem)]'
+                >
                   <SelectItem value='__none__'>
                     <span className='text-muted-foreground'>None</span>
                   </SelectItem>
+
                   {rubrics
-                    .filter((r): r is RubricItem & { uuid: string } => Boolean(r.uuid))
+                    .filter(
+                      (r): r is RubricItem & { uuid: string } => Boolean(r.uuid)
+                    )
                     .map(r => (
-                      <SelectItem key={r.uuid} value={r.uuid}>
-                        <div className='flex flex-col'>
-                          <span className='font-medium'>{r.title}</span>
+                      <SelectItem
+                        key={r.uuid}
+                        value={r.uuid}
+                        className='max-w-full'
+                      >
+                        <div className='min-w-0 max-w-full'>
+                          <span className='block truncate font-medium'>
+                            {r.title}
+                          </span>
+
                           {r.description && (
-                            <span className='text-muted-foreground line-clamp-1 text-xs'>
+                            <span className='text-muted-foreground block truncate text-xs'>
                               {r.description}
                             </span>
                           )}
@@ -672,13 +774,25 @@ export const QuizCreationForm = (props: QuizCreationFormProps) => {
         </div>
 
         {/* Active toggle */}
-        <Label className='flex cursor-pointer items-center gap-3'>
-          <Checkbox
-            checked={selectedQuizData.active}
-            onCheckedChange={checked => handleQuizInputChange('active', Boolean(checked))}
+        <div className='items-center gap-3 hidden'>
+          <Label htmlFor='active' className='cursor-pointer'>
+            Active
+          </Label>
+          <Switch
+            id='active'
+            checked={isPublished ? selectedQuizData.active : false}
+            disabled={!isPublished}
+            onCheckedChange={checked =>
+              handleQuizInputChange('active', checked)
+            }
           />
-          <span>Active</span>
-        </Label>
+        </div>
+
+        {!isPublished && (
+          <p className='text-muted-foreground text-xs'>
+            Publish the quiz before enabling the active state for students.
+          </p>
+        )}
 
         {/* Save / delete */}
         <div className='flex flex-row items-end justify-end gap-6 pt-2'>
@@ -687,7 +801,31 @@ export const QuizCreationForm = (props: QuizCreationFormProps) => {
               <Trash2 />
             </Button>
           )}
+          {quizUuid && quizUuid !== '' ? (
+            isPublished ? (
+              <Button
+                size='sm'
+                variant='outline'
+                onClick={handleUnpublishQuiz}
+                disabled={isPending}
+              >
+                {isUnpublishingQuiz ? <Spinner className='mr-2 h-4 w-4' /> : null}
+                Unpublish Quiz
+              </Button>
+            ) : (
+              <Button size='sm' onClick={handlePublishQuiz} disabled={isPending}>
+                {isPublishingQuiz ? <Spinner className='mr-2 h-4 w-4' /> : null}
+                Publish Quiz
+              </Button>
+            )
+          ) : (
+            <Button size='sm' onClick={handlePublishQuiz} disabled={isPending}>
+              {isPublishingQuiz ? <Spinner className='mr-2 h-4 w-4' /> : null}
+              Create & Publish
+            </Button>
+          )}
           <Button size='sm' onClick={handleSaveQuiz} disabled={isPending}>
+            {isSavingQuiz ? <Spinner className='mr-2 h-4 w-4' /> : null}
             {isPending ? 'Saving...' : <>{quizUuid && quizUuid !== '' ? 'Update Quiz' : 'Save Quiz'}</>}
           </Button>
         </div>

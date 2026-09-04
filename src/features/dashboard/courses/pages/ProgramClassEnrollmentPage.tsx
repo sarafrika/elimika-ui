@@ -628,7 +628,7 @@ export default function ProgramClassEnrollmentPage({
               </div>
 
               <label className='mt-2 flex items-center gap-2 text-sm'>
-                <Checkbox checked={ageOk} onCheckedChange={v => setAgeOk(!!v)} />
+                <Checkbox className='border-black/70' checked={ageOk} onCheckedChange={v => setAgeOk(!!v)} />
                 I confirm I meet the age requirement for this program.
               </label>
             </div>

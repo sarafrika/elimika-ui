@@ -476,27 +476,6 @@ export default {
       ],
     },
     {
-      title: 'Onboarding',
-      icon: Handshake,
-      items: [
-        {
-          title: 'Enrollments',
-          url: '/dashboard/enrollments',
-          icon: BookOpen,
-        },
-        // {
-        //   title: 'Opportunities',
-        //   url: '/dashboard/opportunities',
-        //   icon: Handshake,
-        // },
-        // {
-        //   title: 'Verification',
-        //   url: '/dashboard/verification',
-        //   icon: ShieldCheck,
-        // },
-      ],
-    },
-    {
       title: 'Operations',
       icon: Users,
       items: [
@@ -520,6 +499,11 @@ export default {
           url: '/dashboard/pending-approvals',
           icon: Users,
         },
+        // {
+        //   title: 'Students',
+        //   url: '/dashboard/enrollments',
+        //   icon: BookOpen,
+        // },
         // {
         //   title: 'Library',
         //   url: '/dashboard/library',

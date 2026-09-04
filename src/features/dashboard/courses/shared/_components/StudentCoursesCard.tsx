@@ -11,6 +11,7 @@ import {
   GraduationCap,
   Layers,
   PiggyBank,
+  Play,
   Search,
   Star,
   UserCheck,
@@ -22,11 +23,10 @@ import { Badge } from '../../../../../../components/ui/badge';
 import {
   Card,
   CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
+  CardHeader
 } from '../../../../../../components/ui/card';
 import { CourseDetailsSheet } from './CourseDetailsSheet';
+import { CourseVideoPreviewModal } from './CourseVideoPreviewModal';
 
 type StudentCoursesCardProps = {
   card: CoursesCatalogCardData;
@@ -65,10 +65,13 @@ export function StudentCoursesCard({
   onPrimaryAction,
 }: StudentCoursesCardProps) {
   const imageUrl = toAuthenticatedMediaUrl(card.imageUrl);
+  const resolvedVideoUrl = toAuthenticatedMediaUrl(card.videoUrl);
   const isLoading = !card.provider;
 
   const [open, setOpen] = useState(false);
   const [selectedId, setSelectedId] = useState<string | null>(null);
+  const [videoPreviewOpen, setVideoPreviewOpen] = useState(false);
+  const hasVideoPreview = Boolean(resolvedVideoUrl);
 
   return (
     <div className="h-full">
@@ -99,25 +102,37 @@ export function StudentCoursesCard({
               </div>
             }
           />
+          {hasVideoPreview ? (
+            <Button
+              type="button"
+              size="icon"
+              variant="secondary"
+              aria-label={`Preview ${card.title || 'course'}`}
+              className='border-border bg-background/90 text-foreground hover:bg-background absolute right-3 bottom-3 z-10 h-10 w-10 rounded-full border shadow-md backdrop-blur-md'
+              onClick={e => {
+                e.stopPropagation();
+                setVideoPreviewOpen(true);
+              }}
+            >
+              <Play className='size-4' />
+            </Button>
+          ) : null}
         </div>
 
         {/* Header */}
-        <CardHeader className="flex min-h-[168px] pt-4 flex-col -gap-4">
+        <CardHeader className='flex min-h-[168px] flex-col gap-0 pt-4'>
           {/* Badges */}
-          <div className="min-h-[28px]">
-            <div className="flex max-h-[52px] flex-wrap content-start gap-1 overflow-hidden">
-              {card?.categoryNames?.length! > 0 && (
-                <>
-                  {card?.categoryNames?.map(category => (
-                    <Badge key={category} variant="secondary">
-                      {category}
-                    </Badge>
-                  ))}
-                </>
-              )}
+          <div className='min-h-[28px]'>
+            <div className='flex max-h-[52px] flex-wrap content-start gap-1 overflow-hidden'>
+              {card?.categoryNames?.length! > 0 &&
+                card?.categoryNames?.map(category => (
+                  <Badge key={category} variant='secondary'>
+                    {category}
+                  </Badge>
+                ))}
 
               <Badge
-                variant="outline"
+                variant='outline'
                 className={cn(
                   levelStyles[card.secondaryMeta?.toLowerCase()] ??
                   'bg-muted text-muted-foreground'
@@ -127,8 +142,8 @@ export function StudentCoursesCard({
               </Badge>
 
               {card.skillsFundEligible && (
-                <Badge className="bg-success/90 hover:bg-success/70">
-                  <PiggyBank className="mr-1 h-3 w-3" />
+                <Badge className='bg-success/90 hover:bg-success/70'>
+                  <PiggyBank className='mr-1 h-3 w-3' />
                   Skills Fund
                 </Badge>
               )}
@@ -136,18 +151,22 @@ export function StudentCoursesCard({
           </div>
 
           {/* Title */}
-          <CardTitle className="py-2 line-clamp-2 min-h-[56px]  text-lg leading-7">
-            {card.title || 'Untitled Course'}
-          </CardTitle>
+          <div className='mt-3 min-h-[56px]'>
+            <div className='line-clamp-2 text-lg font-semibold leading-7 tracking-tight text-foreground'>
+              {card.title || 'Untitled Course'}
+            </div>
+          </div>
 
           {/* Description */}
-          <CardDescription className="line-clamp-2 min-h-[40px]">
-            {card?.description ?? ''}
-          </CardDescription>
+          <div className='mt-1 min-h-[40px]'>
+            <div className='line-clamp-2 text-sm leading-5 text-muted-foreground'>
+              {card.description || 'No description available.'}
+            </div>
+          </div>
         </CardHeader>
 
         {/* Content */}
-        <CardContent className="mt-auto flex flex-1 flex-col py-3">
+        <CardContent className="mt-auto flex flex-1 flex-col pb-3">
           {/* Metadata */}
           <div className="grid min-h-[60px] grid-cols-2 gap-x-3 gap-y-1.5 text-xs text-muted-foreground">
             <div className="flex min-w-0 items-center gap-1">
@@ -234,6 +253,13 @@ export function StudentCoursesCard({
             setTimeout(() => setSelectedId(null), 200);
           }
         }}
+      />
+
+      <CourseVideoPreviewModal
+        open={videoPreviewOpen}
+        onOpenChange={setVideoPreviewOpen}
+        title={card.title}
+        videoUrl={resolvedVideoUrl}
       />
     </div>
   );

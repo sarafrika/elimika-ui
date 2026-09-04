@@ -300,6 +300,7 @@ const createCatalogCards = (
       icon: presentation.icon,
       imageTone: presentation.imageTone,
       imageUrl: item.imageUrl,
+      videoUrl: item.kind === 'program' ? undefined : item.videoUrl,
 
       rating: item.rating,
       reviewCount: item.reviewCount,
@@ -551,6 +552,7 @@ export function SharedCoursesPage({ domain }: SharedCoursesPageProps) {
           price: program.price ?? undefined,
           minimumRate: program.price ?? undefined,
           imageUrl: undefined,
+          videoUrl: undefined,
           href: getContentHref(domain, 'program', program.uuid ?? ''),
           enrolledClasses: 1,
           secondaryMeta:
@@ -598,6 +600,7 @@ export function SharedCoursesPage({ domain }: SharedCoursesPageProps) {
           price: course.price ?? undefined,
           minimumRate: course.minimum_training_fee ?? course.price ?? undefined,
           imageUrl: course.banner_url ?? course.thumbnail_url ?? undefined,
+          videoUrl: course.intro_video_url ?? undefined,
           href: getContentHref(domain, 'course', course.uuid ?? ''),
           enrolledClasses: 1,
           secondaryMeta:

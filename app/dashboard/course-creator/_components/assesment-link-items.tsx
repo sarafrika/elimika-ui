@@ -190,17 +190,24 @@ function TaskCard({
   const Icon = meta.icon;
 
   return (
-    <button
-      type='button'
-      disabled={alreadyLinked}
+    <div
+      role='button'
+      tabIndex={0}
+      aria-disabled={alreadyLinked}
       onClick={onToggle}
+      onKeyDown={event => {
+        if (event.key === 'Enter' || event.key === ' ') {
+          event.preventDefault();
+          onToggle();
+        }
+      }}
       className={[
         'group relative flex w-full flex-col gap-2 rounded-xl border p-3.5 text-left transition-all duration-150',
         alreadyLinked
-          ? 'border-border/40 bg-muted/30 cursor-not-allowed opacity-60'
+          ? 'border-border/40 bg-muted/30 opacity-60'
           : selected
-            ? 'border-primary bg-primary/5 ring-primary/30 shadow-sm ring-1'
-            : 'border-border bg-card hover:border-primary/40 hover:bg-muted/40 hover:shadow-sm',
+            ? 'cursor-pointer border-primary bg-primary/5 ring-primary/30 shadow-sm ring-1'
+            : 'cursor-pointer border-border bg-card hover:border-primary/40 hover:bg-muted/40 hover:shadow-sm',
       ].join(' ')}
     >
       {/* Check circle */}
@@ -247,13 +254,13 @@ function TaskCard({
               e.stopPropagation();
               onUnlink(lineItemUuid);
             }}
-            className='text-destructive hover:bg-destructive/10 z-10 rounded px-1.5 py-0.5 text-[10px] font-medium transition-colors'
+            className='cursor-pointer text-destructive hover:bg-destructive/50 z-10 rounded px-2.5 py-1 text-[11px] bg-destructive/30 font-medium transition-colors'
           >
             Unlink
           </button>
         )}
       </div>
-    </button>
+    </div>
   );
 }
 

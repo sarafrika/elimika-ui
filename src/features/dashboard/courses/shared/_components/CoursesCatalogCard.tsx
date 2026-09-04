@@ -6,11 +6,12 @@ import { cn } from '@/lib/utils';
 import type { CoursesCatalogCardData } from '@/src/features/dashboard/courses/shared/_components/courses-data';
 import { StarRatingSummary } from '@/src/features/dashboard/courses/shared/_components/StarRating';
 import { isAuthenticatedMediaUrl, toAuthenticatedMediaUrl } from '@/src/lib/media-url';
-import { Award, BookOpen, Calendar, Search } from 'lucide-react';
+import { Award, BookOpen, Calendar, Play, Search } from 'lucide-react';
 import Link from 'next/link';
 import { useState } from 'react';
 
 import { useRouter } from 'next/navigation';
+import { CourseVideoPreviewModal } from './CourseVideoPreviewModal';
 import { CourseDetailsSheet } from './CourseDetailsSheet';
 
 const imageToneClasses = {
@@ -45,18 +46,21 @@ const levelStyles: Record<string, string> = {
 export function CoursesCatalogCard({ card, type, onPrimaryAction }: CoursesCatalogCardProps) {
   const router = useRouter()
   const imageUrl = toAuthenticatedMediaUrl(card.imageUrl);
+  const resolvedVideoUrl = toAuthenticatedMediaUrl(card.videoUrl);
   const level = card.secondaryMeta.toLowerCase();
 
   const isLoading = !card.provider;
   const [open, setOpen] = useState(false);
   const [selectedId, setSelectedId] = useState<string | null>(null);
+  const [videoPreviewOpen, setVideoPreviewOpen] = useState(false);
+  const hasVideoPreview = Boolean(resolvedVideoUrl);
 
   return (
     <article
       className='border-border bg-card group cursor-pointer overflow-hidden rounded-sm border transition hover:border-primary/40 hover:shadow-md'
       onClick={() => {
         setSelectedId(card.id);
-        setOpen(!open);
+        setOpen(true);
       }}
     >
       <div className='block'>
@@ -107,6 +111,22 @@ export function CoursesCatalogCard({ card, type, onPrimaryAction }: CoursesCatal
             }
           />
           <div className='from-overlay/20 absolute inset-0 bg-gradient-to-t via-transparent to-transparent' />
+
+          {hasVideoPreview ? (
+            <Button
+              type='button'
+              size='icon'
+              variant='secondary'
+              aria-label={`Preview ${card.title}`}
+              className='border-border bg-background/90 text-foreground hover:bg-background absolute right-3 bottom-3 z-10 h-10 w-10 rounded-full border shadow-md backdrop-blur-md'
+              onClick={e => {
+                e.stopPropagation();
+                setVideoPreviewOpen(true);
+              }}
+            >
+              <Play className='size-4' />
+            </Button>
+          ) : null}
         </div>
       </div>
 
@@ -165,6 +185,7 @@ export function CoursesCatalogCard({ card, type, onPrimaryAction }: CoursesCatal
             {card.secondaryMeta}
           </span>
         </div>
+
 
         <div
           className={cn('grid gap-2', card.showInstructorCta !== false && 'sm:grid-cols-2')}
@@ -249,12 +270,19 @@ export function CoursesCatalogCard({ card, type, onPrimaryAction }: CoursesCatal
         type={card.contentKind}
         open={open}
         onOpenChange={value => {
-          setOpen(!value);
+          setOpen(value);
 
           if (!value) {
             setTimeout(() => setSelectedId(null), 200);
           }
         }}
+      />
+
+      <CourseVideoPreviewModal
+        open={videoPreviewOpen}
+        onOpenChange={setVideoPreviewOpen}
+        title={card.title}
+        videoUrl={resolvedVideoUrl}
       />
     </article>
   );
