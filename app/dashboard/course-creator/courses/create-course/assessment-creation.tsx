@@ -10,7 +10,7 @@ import { DeleteConfirmationDialog } from '../../../../../components/ui/delete-co
 import { Sheet, SheetContent, SheetDescription, SheetFooter, SheetHeader, SheetTitle } from '../../../../../components/ui/sheet';
 import { Textarea } from '../../../../../components/ui/textarea';
 import {
-    Assignment, getQuestionOptions, Lesson,
+    Assignment, Lesson,
     Quiz,
     QuizQuestion,
     QuizQuestionOption,
@@ -24,6 +24,7 @@ import {
     deleteQuizMutation,
     deleteQuizQuestionMutation,
     getQuestionOptionsQueryKey,
+    getQuestionOptionsOptions,
     getQuizQuestionsOptions,
     getQuizQuestionsQueryKey,
     searchAssignmentsQueryKey,
@@ -125,6 +126,29 @@ type CreateAssignmentVariables = MutationVariables<ReturnType<typeof createAssig
 type UpdateAssignmentVariables = MutationVariables<ReturnType<typeof updateAssignmentMutation>>;
 type CreateQuizVariables = MutationVariables<ReturnType<typeof createQuizMutation>>;
 
+const getApiErrorMessage = (error: unknown): string => {
+    if (typeof error === 'string') return error;
+    if (!error || typeof error !== 'object') return 'Unknown error';
+
+    const response = error as Record<string, unknown>;
+    const nestedError = response.error;
+    if (nestedError && typeof nestedError === 'object') {
+        const nestedMessage = getApiErrorMessage(nestedError);
+        if (nestedMessage !== 'Request failed' && nestedMessage !== 'Unknown error') {
+            return nestedMessage;
+        }
+    }
+
+    if (typeof response.message === 'string' && response.message !== 'Validation failed') {
+        return response.message;
+    }
+
+    return Object.values(response).find(
+        (value): value is string =>
+            typeof value === 'string' && Boolean(value.trim()) && value !== 'Validation failed'
+    ) ?? 'Request failed';
+};
+
 export type QuizState = Record<string, Question[]>;
 
 // NOTE: `mode` replaces the old internal tab state — the parent (AssessmentTasksSection)
@@ -216,7 +240,6 @@ const AssessmentCreation = ({
                             });
 
                             if (quizUuid) {
-                                onQuizSaved?.(quizUuid);
                                 resolve(quizUuid);
                                 return;
                             }
@@ -230,7 +253,7 @@ const AssessmentCreation = ({
                 );
             });
         },
-        [createQuiz, qc, onQuizSaved]
+        [createQuiz, qc]
     );
 
     const buildQuestionPayload = useCallback(
@@ -275,15 +298,10 @@ const AssessmentCreation = ({
     const questionOptionsQueries = useQueries({
         queries:
             quizquestions?.data?.map((q: QuestionApi) => ({
-                queryKey: ['questionOptions', activeQuizUuid, q.uuid ?? ''],
-                queryFn: () =>
-                    getQuestionOptions({
-                        path: {
-                            quizUuid: activeQuizUuid!,
-                            questionUuid: q.uuid ?? '',
-                        },
-                        query: { pageable: {} },
-                    }),
+                ...getQuestionOptionsOptions({
+                    path: { quizUuid: activeQuizUuid!, questionUuid: q.uuid ?? '' },
+                    query: { pageable: {} },
+                }),
                 enabled: !!activeQuizUuid && !!q.uuid,
             })) ?? [],
     });
@@ -298,7 +316,7 @@ const AssessmentCreation = ({
 
     // CRUD Handlers
     const handleUpdateQuiz = useCallback(
-        async (quizUuid: string, payload: QuizPayload) => {
+        async (quizUuid: string, payload: QuizPayload, notify = true) => {
             try {
                 await updateQuiz.mutateAsync({
                     path: { uuid: quizUuid },
@@ -311,7 +329,7 @@ const AssessmentCreation = ({
                     }),
                 });
 
-                onQuizSaved?.(quizUuid);
+                if (notify) onQuizSaved?.(quizUuid);
                 toast.success('Quiz updated successfully!');
             } catch (err) {
                 toast.error('Failed to update quiz.');
@@ -423,7 +441,7 @@ const AssessmentCreation = ({
         const questionsWithOptions: Question[] = quizquestions.data.map(
             (q: QuestionApi, index: number) => {
                 const optionsData =
-                    (questionOptionsQueries[index]?.data?.data?.data?.content as
+                    (questionOptionsQueries[index]?.data?.data?.content as
                         | QuestionOptionApi[]
                         | undefined) ?? [];
 
@@ -717,16 +735,16 @@ const AssessmentCreation = ({
     /////
 
     const saveQuizQuestionsForQuiz = useCallback(
-        async (quizUuid: string) => {
+        async (quizUuid: string, notify = true): Promise<boolean> => {
             if (!selectedLessonId) {
                 toast.error('Please select a lesson first');
-                return;
+                return false;
             }
 
             const questions = quizData[selectedLessonId] ?? [];
             if (!questions.length) {
                 toast.error('No questions to save');
-                return;
+                return false;
             }
 
             let savedCount = 0;
@@ -878,7 +896,9 @@ const AssessmentCreation = ({
                                             ),
                                         });
                                     }
-                                } catch (optionErr) { }
+                                } catch (optionErr) {
+                                    throw optionErr;
+                                }
                             }
 
                             qc.invalidateQueries({
@@ -892,7 +912,7 @@ const AssessmentCreation = ({
                         savedCount++;
                     } catch (qErr) {
                         failedCount++;
-                        toast.error(`Failed to save question ${qIndex + 1}`);
+                        toast.error(`Failed to save question ${qIndex + 1}: ${getApiErrorMessage(qErr)}`);
                     }
                 }
 
@@ -924,11 +944,11 @@ const AssessmentCreation = ({
                     toast.error('Failed to save all questions. Please try again.');
                 }
 
-                onQuizSaved?.(quizUuid);
+                if (notify && failedCount === 0) onQuizSaved?.(quizUuid);
+                return failedCount === 0;
             } catch (err) {
-                toast.error(
-                    `Failed to save quiz questions: ${err instanceof Error ? err.message : 'Unknown error'}`
-                );
+                toast.error(`Failed to save quiz questions: ${getApiErrorMessage(err)}`);
+                return false;
             }
         },
         [
@@ -951,16 +971,16 @@ const AssessmentCreation = ({
         ]
     );
 
-    const handleSaveQuizQuestions = useCallback(async (draft: QuizPayload) => {
+    const handleSaveQuizQuestions = useCallback(async (draft: QuizPayload, notify = true) => {
         if (!selectedLessonId) {
             toast.error('Please select a lesson first');
-            return;
+            return null;
         }
 
         const questions = quizData[selectedLessonId] ?? [];
         if (!questions.length) {
             toast.error('No questions to save');
-            return;
+            return null;
         }
 
         let quizUuidToUse = activeQuizUuid;
@@ -968,24 +988,25 @@ const AssessmentCreation = ({
         if (!quizUuidToUse) {
             if (!draft.title.trim()) {
                 toast.error('Enter a quiz title before saving questions');
-                return;
+                return null;
             }
 
             try {
                 quizUuidToUse = await createQuizForLesson(selectedLessonId, draft);
             } catch (err) {
-                toast.error(
-                    `Failed to create quiz: ${err instanceof Error ? err.message : 'Unknown error'}`
-                );
-                return;
+                toast.error(`Failed to create quiz: ${getApiErrorMessage(err)}`);
+                return null;
             }
         }
 
-        await saveQuizQuestionsForQuiz(quizUuidToUse);
+        const saved = await saveQuizQuestionsForQuiz(quizUuidToUse, notify);
+        if (!saved) return null;
 
         if (!activeQuizUuid) {
             setActiveQuizUuid(quizUuidToUse);
         }
+
+        return quizUuidToUse;
     }, [
         activeQuizUuid,
         createQuizForLesson,
@@ -1132,7 +1153,10 @@ const AssessmentCreation = ({
                     });
 
                     qc.invalidateQueries({
-                        queryKey: ['questionOptions', activeQuizUuid, question.uuid],
+                        queryKey: getQuestionOptionsQueryKey({
+                            path: { quizUuid: activeQuizUuid!, questionUuid: question.uuid },
+                            query: { pageable: {} },
+                        }),
                     });
 
                     toast.success('Option deleted!');

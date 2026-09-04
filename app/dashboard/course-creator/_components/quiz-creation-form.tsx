@@ -54,6 +54,27 @@ type QuizSummary = Pick<
   | 'rubric_uuid'
 >;
 type QuizStatus = 'DRAFT' | 'IN_REVIEW' | 'PUBLISHED' | 'ARCHIVED';
+
+const getApiErrorMessage = (error: unknown): string => {
+  if (typeof error === 'string') return error;
+  if (!error || typeof error !== 'object') return 'Unknown error';
+
+  const response = error as Record<string, unknown>;
+  if (response.error && typeof response.error === 'object') {
+    const nestedMessage = getApiErrorMessage(response.error);
+    if (nestedMessage !== 'Request failed' && nestedMessage !== 'Unknown error') {
+      return nestedMessage;
+    }
+  }
+
+  return typeof response.message === 'string' && response.message !== 'Validation failed'
+    ? response.message
+    : (Object.values(response).find(
+      (value): value is string =>
+        typeof value === 'string' && Boolean(value.trim()) && value !== 'Validation failed'
+    ) ?? 'Request failed');
+};
+
 export type QuizPayload = {
   title: string;
   instructions: string;
@@ -105,11 +126,11 @@ export type QuizCreationFormProps = {
 
   // API callbacks
   createQuizForLesson: (lessonId: string, payload: QuizPayload) => Promise<string>;
-  updateQuizForLesson: (quizUuid: string, payload: QuizPayload) => Promise<void>;
+  updateQuizForLesson: (quizUuid: string, payload: QuizPayload, notify?: boolean) => Promise<void>;
   deleteQuizForLesson: (quizUuid: string) => Promise<void>;
   addQuizQuestion: (payload: unknown) => Promise<unknown>;
   addQuestionOption: (payload: unknown) => Promise<unknown>;
-  saveQuizQuestions: (quizDraft: QuizPayload) => Promise<void>;
+  saveQuizQuestions: (quizDraft: QuizPayload, notify?: boolean) => Promise<string | null>;
   isSavingQuestions: boolean;
 
   openBulkUploadSheet: () => void;
@@ -123,6 +144,7 @@ export type QuizCreationFormProps = {
 const QuestionRow = ({
   question,
   qIndex,
+  validationErrors,
   updateQuestionText,
   updateQuestionPoint,
   updateOptionText,
@@ -137,6 +159,7 @@ const QuestionRow = ({
 }: {
   question: Question;
   qIndex: number;
+  validationErrors: ValidationErrors;
   updateQuestionText: (qIndex: number, value: string) => void;
   updateQuestionPoint: (qIndex: number, points: number) => void;
   updateOptionText: (qIndex: number, oIndex: number, value: string) => void;
@@ -166,8 +189,12 @@ const QuestionRow = ({
                   value={opt.text || ''}
                   onChange={e => updateOptionText(qIndex, oIndex, e.target.value)}
                   placeholder={`Option ${oIndex + 1}`}
-                  className='border-input bg-background focus:border-primary focus:ring-primary/20 flex-1 rounded-md border px-3 py-1.5 text-sm transition-all outline-none focus:ring-2'
+                  aria-invalid={Boolean(validationErrors[`option-${qIndex}-${oIndex}`])}
+                  className={`border-input bg-background focus:border-primary focus:ring-primary/20 flex-1 rounded-md border px-3 py-1.5 text-sm transition-all outline-none focus:ring-2 ${validationErrors[`option-${qIndex}-${oIndex}`] ? 'border-destructive' : ''}`}
                 />
+                {validationErrors[`option-${qIndex}-${oIndex}`] && (
+                  <p className='text-destructive text-xs'>{validationErrors[`option-${qIndex}-${oIndex}`]}</p>
+                )}
                 {question.options && question.options.length > 2 && (
                   <Button
                     variant='ghost'
@@ -187,6 +214,9 @@ const QuestionRow = ({
             <p className='text-muted-foreground mt-2 text-xs'>
               ✓ Check one or more correct answers
             </p>
+            {validationErrors[`correct-${qIndex}`] && (
+              <p className='text-destructive text-xs'>{validationErrors[`correct-${qIndex}`]}</p>
+            )}
           </div>
         );
 
@@ -230,8 +260,12 @@ const QuestionRow = ({
                 onChange={e => updateOptionText(qIndex, 0, e.target.value)}
                 placeholder='Enter the expected answer...'
                 rows={4}
-                className='border-input bg-background focus:border-primary focus:ring-primary/20 w-full rounded-md border px-3 py-2 text-sm outline-none focus:ring-2'
+                aria-invalid={Boolean(validationErrors[`option-${qIndex}-0`])}
+                className={`border-input bg-background focus:border-primary focus:ring-primary/20 w-full rounded-md border px-3 py-2 text-sm outline-none focus:ring-2 ${validationErrors[`option-${qIndex}-0`] ? 'border-destructive' : ''}`}
               />
+              {validationErrors[`option-${qIndex}-0`] && (
+                <p className='text-destructive text-xs'>{validationErrors[`option-${qIndex}-0`]}</p>
+              )}
             </div>
             <p className='text-muted-foreground text-xs'>
               Students will submit a long-form response. This answer will be used as the reference.
@@ -249,8 +283,12 @@ const QuestionRow = ({
                 value={question.options?.[0]?.text || ''}
                 onChange={e => updateOptionText(qIndex, 0, e.target.value)}
                 placeholder='Enter the correct short answer...'
-                className='border-input bg-background focus:border-primary focus:ring-primary/20 w-full rounded-md border px-3 py-2 text-sm outline-none focus:ring-2'
+                aria-invalid={Boolean(validationErrors[`option-${qIndex}-0`])}
+                className={`border-input bg-background focus:border-primary focus:ring-primary/20 w-full rounded-md border px-3 py-2 text-sm outline-none focus:ring-2 ${validationErrors[`option-${qIndex}-0`] ? 'border-destructive' : ''}`}
               />
+              {validationErrors[`option-${qIndex}-0`] && (
+                <p className='text-destructive text-xs'>{validationErrors[`option-${qIndex}-0`]}</p>
+              )}
             </div>
             <p className='text-muted-foreground text-xs'>
               Students must match this exact answer (or apply keyword matching logic).
@@ -311,6 +349,7 @@ const QuestionRow = ({
     updatePairText,
     deletePair,
     addPair,
+    validationErrors,
   ]);
 
   return (
@@ -327,8 +366,12 @@ const QuestionRow = ({
             rows={4}
             onChange={e => updateQuestionText(qIndex, e.target.value)}
             placeholder='Enter question text here'
-            className='border-input bg-background focus:border-primary focus:ring-primary/20 w-full resize-none rounded-lg border px-3 py-2 pr-10 text-sm transition-all outline-none focus:ring-2'
+            aria-invalid={Boolean(validationErrors[`question-${qIndex}`])}
+            className={`border-input bg-background focus:border-primary focus:ring-primary/20 w-full resize-none rounded-lg border px-3 py-2 pr-10 text-sm transition-all outline-none focus:ring-2 ${validationErrors[`question-${qIndex}`] ? 'border-destructive' : ''}`}
           />
+          {validationErrors[`question-${qIndex}`] && (
+            <p className='text-destructive mt-1 text-xs'>{validationErrors[`question-${qIndex}`]}</p>
+          )}
           <Tooltip>
             <TooltipTrigger asChild>
               <Button
@@ -351,8 +394,12 @@ const QuestionRow = ({
           min={0}
           value={question.points ?? 1}
           onChange={e => updateQuestionPoint(qIndex, Number(e.target.value))}
-          className='border-input bg-background focus:border-primary focus:ring-primary/20 w-16 rounded-lg border px-2 py-1.5 text-sm transition-all outline-none focus:ring-2'
+          aria-invalid={Boolean(validationErrors[`points-${qIndex}`])}
+          className={`border-input bg-background focus:border-primary focus:ring-primary/20 w-16 rounded-lg border px-2 py-1.5 text-sm transition-all outline-none focus:ring-2 ${validationErrors[`points-${qIndex}`] ? 'border-destructive' : ''}`}
         />
+        {validationErrors[`points-${qIndex}`] && (
+          <p className='text-destructive mt-1 text-xs'>{validationErrors[`points-${qIndex}`]}</p>
+        )}
       </td>
     </tr>
   );
@@ -378,6 +425,8 @@ const EMPTY_QUIZ = {
   status: 'DRAFT' as QuizStatus,
   rubric_uuid: '',
 };
+
+type ValidationErrors = Record<string, string>;
 
 export const QuizCreationForm = (props: QuizCreationFormProps) => {
   const {
@@ -426,6 +475,7 @@ export const QuizCreationForm = (props: QuizCreationFormProps) => {
   const [showDeleteQuizDialog, setShowDeleteQuizDialog] = useState(false);
   const [isDeletingQuiz, setIsDeletingQuiz] = useState(false);
   const [quizAction, setQuizAction] = useState<'save' | 'publish' | 'unpublish' | null>(null);
+  const [validationErrors, setValidationErrors] = useState<ValidationErrors>({});
 
   const selectedRubric = rubrics.find(r => r.uuid === localQuizData.rubric_uuid);
 
@@ -453,6 +503,41 @@ export const QuizCreationForm = (props: QuizCreationFormProps) => {
     },
     []
   );
+
+  const validateQuestions = useCallback(() => {
+    const errors: ValidationErrors = {};
+
+    questions.forEach((question, qIndex) => {
+      if (!question.text.trim()) {
+        errors[`question-${qIndex}`] = 'Question text is required.';
+      }
+
+      if (!Number.isFinite(question.points) || (question.points ?? 0) < 0.01) {
+        errors[`points-${qIndex}`] = 'Points must be at least 0.01.';
+      }
+
+      if (question.type === 'MATCHING') {
+        question.pairs?.forEach((pair, pIndex) => {
+          if (!pair.left.trim()) errors[`pair-left-${qIndex}-${pIndex}`] = 'Left value is required.';
+          if (!pair.right.trim()) errors[`pair-right-${qIndex}-${pIndex}`] = 'Right value is required.';
+        });
+        return;
+      }
+
+      question.options?.forEach((option, oIndex) => {
+        if (!option.text.trim()) {
+          errors[`option-${qIndex}-${oIndex}`] = 'Option text is required.';
+        }
+      });
+
+      if (question.type === 'MULTIPLE_CHOICE' && !question.options?.some(option => option.isCorrect)) {
+        errors[`correct-${qIndex}`] = 'Select at least one correct option.';
+      }
+    });
+
+    setValidationErrors(errors);
+    return Object.keys(errors).length === 0;
+  }, [questions]);
 
   useEffect(() => {
     if (!quizUuid || quizUuid === '') {
@@ -509,23 +594,44 @@ export const QuizCreationForm = (props: QuizCreationFormProps) => {
 
       toast.success(quizUuid ? 'Quiz updated successfully!' : 'Quiz created successfully!');
     } catch (err) {
-      toast.error(`Failed to ${quizUuid ? 'update' : 'create'} quiz.`);
+      toast.error(`Failed to ${quizUuid ? 'update' : 'create'} quiz: ${getApiErrorMessage(err)}`);
     } finally {
       setQuizAction(null);
     }
   }, [commitQuiz, handleQuizSelect, quizUuid, selectedQuizData]);
 
   const handlePublishQuiz = useCallback(async () => {
-    const payload = {
+    if (questions.length > 0 && !validateQuestions()) return;
+
+    const draftPayload = {
       ...selectedQuizData,
-      status: 'PUBLISHED' as QuizStatus,
-      active: true,
+      status: 'DRAFT' as QuizStatus,
+      active: false,
     };
 
     try {
       setQuizAction('publish');
-      const savedQuizUuid = await commitQuiz(payload);
+      let savedQuizUuid = quizUuid;
+
+      if (savedQuizUuid) {
+        await updateQuizForLesson(savedQuizUuid, draftPayload, false);
+      } else if (questions.length > 0) {
+        savedQuizUuid = await saveQuizQuestions(draftPayload, false);
+      } else {
+        savedQuizUuid = await commitQuiz(draftPayload);
+      }
+
       if (!savedQuizUuid) return;
+
+      if (questions.length > 0 && quizUuid) {
+        await saveQuizQuestions(draftPayload, false);
+      }
+
+      await updateQuizForLesson(savedQuizUuid, {
+        ...selectedQuizData,
+        status: 'PUBLISHED',
+        active: true,
+      }, true);
 
       handleQuizSelect(savedQuizUuid);
 
@@ -537,11 +643,13 @@ export const QuizCreationForm = (props: QuizCreationFormProps) => {
 
       toast.success(quizUuid ? 'Quiz published successfully!' : 'Quiz created and published successfully!');
     } catch (err) {
-      toast.error(`Failed to ${quizUuid ? 'publish' : 'create and publish'} quiz.`);
+      toast.error(
+        `Failed to ${quizUuid ? 'publish' : 'create and publish'} quiz: ${getApiErrorMessage(err)}`
+      );
     } finally {
       setQuizAction(null);
     }
-  }, [commitQuiz, handleQuizSelect, quizUuid, selectedQuizData]);
+  }, [commitQuiz, handleQuizSelect, questions.length, quizUuid, saveQuizQuestions, selectedQuizData, updateQuizForLesson, validateQuestions]);
 
   const handleUnpublishQuiz = useCallback(async () => {
     if (!quizUuid) return;
@@ -563,7 +671,7 @@ export const QuizCreationForm = (props: QuizCreationFormProps) => {
       }));
       toast.success('Quiz unpublished successfully!');
     } catch (err) {
-      toast.error('Failed to unpublish quiz.');
+      toast.error(`Failed to unpublish quiz: ${getApiErrorMessage(err)}`);
     } finally {
       setQuizAction(null);
     }
@@ -846,6 +954,7 @@ export const QuizCreationForm = (props: QuizCreationFormProps) => {
                       key={`question-${qIndex}`}
                       question={q}
                       qIndex={qIndex}
+                      validationErrors={validationErrors}
                       updateQuestionText={updateQuestionText}
                       updateQuestionPoint={updateQuestionPoint}
                       updateOptionText={updateOptionText}
@@ -876,7 +985,6 @@ export const QuizCreationForm = (props: QuizCreationFormProps) => {
 
       <div className='flex flex-col gap-4 border-t pt-6 sm:flex-row sm:items-center sm:justify-between'>
         <div>
-
           {quizUuid && quizUuid !== '' && (
             <Button size='sm' variant='destructive' onClick={handleDeleteQuiz} className='mt-2'>
               <Trash2 className='mr-2 h-4 w-4' />
@@ -884,38 +992,33 @@ export const QuizCreationForm = (props: QuizCreationFormProps) => {
             </Button>
           )}
         </div>
+
         <div className='flex flex-wrap justify-end gap-2'>
-          <Button
-            size='sm'
-            variant='outline'
-            onClick={() => saveQuizQuestions(selectedQuizData)}
-            disabled={isPending || isSavingQuestions || !questions.length}
-          >
-            {isSavingQuestions ? <Spinner className='mr-2 h-4 w-4' /> : null}
-            {quizUuid ? 'Save Questions' : 'Create Quiz & Save Questions'}
-          </Button>
-          {quizUuid ? (
-            isPublished ? (
-              <Button size='sm' variant='outline' onClick={handleUnpublishQuiz} disabled={isPending}>
-                {isUnpublishingQuiz ? <Spinner className='mr-2 h-4 w-4' /> : null}
-                Unpublish Quiz
-              </Button>
-            ) : (
-              <Button size='sm' onClick={handlePublishQuiz} disabled={isPending}>
-                {isPublishingQuiz ? <Spinner className='mr-2 h-4 w-4' /> : null}
-                Publish Quiz
-              </Button>
-            )
-          ) : (
-            <Button size='sm' onClick={handlePublishQuiz} disabled={isPending}>
+          {quizUuid &&
+            <Button
+              size='sm'
+              variant='outline'
+              onClick={() => {
+                if (validateQuestions()) void saveQuizQuestions(selectedQuizData, true);
+              }}
+              disabled={isPending || isSavingQuestions}
+            >
+              {isSavingQuestions ? <Spinner className='mr-2 h-4 w-4' /> : null}
+              {'Save Questions'}
+            </Button>}
+
+
+          {!quizUuid && (
+            <Button size='sm' onClick={handlePublishQuiz} disabled={isPending || isSavingQuestions}>
               {isPublishingQuiz ? <Spinner className='mr-2 h-4 w-4' /> : null}
               Create & Publish
             </Button>
           )}
-          <Button size='sm' onClick={handleSaveQuiz} disabled={isPending}>
+
+          {quizUuid && <Button size='sm' onClick={handleSaveQuiz} disabled={isPending}>
             {isSavingQuiz ? <Spinner className='mr-2 h-4 w-4' /> : null}
-            {quizUuid ? 'Update Quiz Details' : 'Save Quiz Details'}
-          </Button>
+            {'Update Quiz Details'}
+          </Button>}
         </div>
       </div>
 

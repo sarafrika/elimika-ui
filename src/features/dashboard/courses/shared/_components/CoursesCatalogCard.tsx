@@ -59,6 +59,10 @@ export function CoursesCatalogCard({ card, type, onPrimaryAction }: CoursesCatal
     <article
       className='border-border bg-card group cursor-pointer overflow-hidden rounded-sm border transition hover:border-primary/40 hover:shadow-md'
       onClick={() => {
+        if (open) {
+          return;
+        }
+
         setSelectedId(card.id);
         setOpen(true);
       }}
