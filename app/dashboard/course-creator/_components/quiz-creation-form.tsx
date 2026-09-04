@@ -984,12 +984,26 @@ export const QuizCreationForm = (props: QuizCreationFormProps) => {
       </div>
 
       <div className='flex flex-col gap-4 border-t pt-6 sm:flex-row sm:items-center sm:justify-between'>
-        <div>
+        <div className='flex flex-wrap items-center gap-2'>
           {quizUuid && quizUuid !== '' && (
-            <Button size='sm' variant='destructive' onClick={handleDeleteQuiz} className='mt-2'>
-              <Trash2 className='mr-2 h-4 w-4' />
-              Delete Quiz
-            </Button>
+            <>
+              <Button size='sm' variant='destructive' onClick={handleDeleteQuiz}>
+                <Trash2 className='mr-2 h-4 w-4' />
+                Delete Quiz
+              </Button>
+
+              {isPublished && (
+                <Button
+                  size='sm'
+                  variant='outline'
+                  onClick={handleUnpublishQuiz}
+                  disabled={isPending || isUnpublishingQuiz}
+                >
+                  {isUnpublishingQuiz ? <Spinner className='mr-2 h-4 w-4' /> : null}
+                  Unpublish Quiz
+                </Button>
+              )}
+            </>
           )}
         </div>
 
