@@ -109,6 +109,8 @@ export type QuizCreationFormProps = {
   deleteQuizForLesson: (quizUuid: string) => Promise<void>;
   addQuizQuestion: (payload: unknown) => Promise<unknown>;
   addQuestionOption: (payload: unknown) => Promise<unknown>;
+  saveQuizQuestions: (quizDraft: QuizPayload) => Promise<void>;
+  isSavingQuestions: boolean;
 
   openBulkUploadSheet: () => void;
   onDraftChange?: (payload: QuizPayload) => void;
@@ -399,6 +401,8 @@ export const QuizCreationForm = (props: QuizCreationFormProps) => {
     createQuizForLesson,
     updateQuizForLesson,
     deleteQuizForLesson,
+    saveQuizQuestions,
+    isSavingQuestions,
     isPending,
     openBulkUploadSheet,
     onDraftChange,
@@ -463,7 +467,7 @@ export const QuizCreationForm = (props: QuizCreationFormProps) => {
           time_limit_minutes: selected.time_limit_minutes || 0,
           attempts_allowed: selected.attempts_allowed || 1,
           passing_score: selected.passing_score || 0,
-          active: normalizedStatus === 'PUBLISHED' ? Boolean(selected.active) : false,
+          active: Boolean(selected.active),
           status: normalizedStatus,
           rubric_uuid: selected.rubric_uuid || '',
         });
@@ -774,14 +778,13 @@ export const QuizCreationForm = (props: QuizCreationFormProps) => {
         </div>
 
         {/* Active toggle */}
-        <div className='items-center gap-3 hidden'>
+        <div className='flex items-center gap-3'>
           <Label htmlFor='active' className='cursor-pointer'>
             Active
           </Label>
           <Switch
             id='active'
-            checked={isPublished ? selectedQuizData.active : false}
-            disabled={!isPublished}
+            checked={selectedQuizData.active}
             onCheckedChange={checked =>
               handleQuizInputChange('active', checked)
             }
@@ -790,50 +793,14 @@ export const QuizCreationForm = (props: QuizCreationFormProps) => {
 
         {!isPublished && (
           <p className='text-muted-foreground text-xs'>
-            Publish the quiz before enabling the active state for students.
+            Active controls whether the quiz can be taken. Publish the quiz when it is ready for students.
           </p>
         )}
-
-        {/* Save / delete */}
-        <div className='flex flex-row items-end justify-end gap-6 pt-2'>
-          {quizUuid && quizUuid !== '' && (
-            <Button size='sm' variant='destructive' onClick={handleDeleteQuiz}>
-              <Trash2 />
-            </Button>
-          )}
-          {quizUuid && quizUuid !== '' ? (
-            isPublished ? (
-              <Button
-                size='sm'
-                variant='outline'
-                onClick={handleUnpublishQuiz}
-                disabled={isPending}
-              >
-                {isUnpublishingQuiz ? <Spinner className='mr-2 h-4 w-4' /> : null}
-                Unpublish Quiz
-              </Button>
-            ) : (
-              <Button size='sm' onClick={handlePublishQuiz} disabled={isPending}>
-                {isPublishingQuiz ? <Spinner className='mr-2 h-4 w-4' /> : null}
-                Publish Quiz
-              </Button>
-            )
-          ) : (
-            <Button size='sm' onClick={handlePublishQuiz} disabled={isPending}>
-              {isPublishingQuiz ? <Spinner className='mr-2 h-4 w-4' /> : null}
-              Create & Publish
-            </Button>
-          )}
-          <Button size='sm' onClick={handleSaveQuiz} disabled={isPending}>
-            {isSavingQuiz ? <Spinner className='mr-2 h-4 w-4' /> : null}
-            {isPending ? 'Saving...' : <>{quizUuid && quizUuid !== '' ? 'Update Quiz' : 'Save Quiz'}</>}
-          </Button>
-        </div>
       </div>
 
       {/* Questions section */}
       <div className='mt-8 border-t pt-6'>
-        <div className='mb-6'>
+        <div>
           <div className='mb-3 flex items-center justify-between gap-3'>
             <h4 className='text-foreground text-lg font-semibold'>Questions</h4>
             {!quizUuid && (
@@ -842,21 +809,18 @@ export const QuizCreationForm = (props: QuizCreationFormProps) => {
               </span>
             )}
           </div>
+        </div>
 
-          <div className='flex w-full flex-row flex-wrap items-center justify-between gap-3'>
-            <div className='flex flex-wrap gap-2'>
-              {QUESTION_TYPES.map(type => (
-                <Button key={type.value} size='sm' variant='outline' onClick={() => addQuestion(type.value)}>
-                  + {type.label}
-                </Button>
-              ))}
-            </div>
-
-            <Button variant='outline' onClick={openBulkUploadSheet}>
-              <FileText className='mr-2 h-4 w-4' />
-              Paste Bulk Questions
+        <div className='flex flex-wrap gap-2 mb-6'>
+          {QUESTION_TYPES.map(type => (
+            <Button key={type.value} size='sm' variant='outline' onClick={() => addQuestion(type.value)}>
+              + {type.label}
             </Button>
-          </div>
+          ))}
+          <Button variant='outline' size='sm' onClick={openBulkUploadSheet}>
+            <FileText className='mr-2 h-4 w-4' />
+            Paste Bulk Questions
+          </Button>
         </div>
 
         <TooltipProvider>
@@ -908,6 +872,51 @@ export const QuizCreationForm = (props: QuizCreationFormProps) => {
             </table>
           </div>
         </TooltipProvider>
+      </div>
+
+      <div className='flex flex-col gap-4 border-t pt-6 sm:flex-row sm:items-center sm:justify-between'>
+        <div>
+
+          {quizUuid && quizUuid !== '' && (
+            <Button size='sm' variant='destructive' onClick={handleDeleteQuiz} className='mt-2'>
+              <Trash2 className='mr-2 h-4 w-4' />
+              Delete Quiz
+            </Button>
+          )}
+        </div>
+        <div className='flex flex-wrap justify-end gap-2'>
+          <Button
+            size='sm'
+            variant='outline'
+            onClick={() => saveQuizQuestions(selectedQuizData)}
+            disabled={isPending || isSavingQuestions || !questions.length}
+          >
+            {isSavingQuestions ? <Spinner className='mr-2 h-4 w-4' /> : null}
+            {quizUuid ? 'Save Questions' : 'Create Quiz & Save Questions'}
+          </Button>
+          {quizUuid ? (
+            isPublished ? (
+              <Button size='sm' variant='outline' onClick={handleUnpublishQuiz} disabled={isPending}>
+                {isUnpublishingQuiz ? <Spinner className='mr-2 h-4 w-4' /> : null}
+                Unpublish Quiz
+              </Button>
+            ) : (
+              <Button size='sm' onClick={handlePublishQuiz} disabled={isPending}>
+                {isPublishingQuiz ? <Spinner className='mr-2 h-4 w-4' /> : null}
+                Publish Quiz
+              </Button>
+            )
+          ) : (
+            <Button size='sm' onClick={handlePublishQuiz} disabled={isPending}>
+              {isPublishingQuiz ? <Spinner className='mr-2 h-4 w-4' /> : null}
+              Create & Publish
+            </Button>
+          )}
+          <Button size='sm' onClick={handleSaveQuiz} disabled={isPending}>
+            {isSavingQuiz ? <Spinner className='mr-2 h-4 w-4' /> : null}
+            {quizUuid ? 'Update Quiz Details' : 'Save Quiz Details'}
+          </Button>
+        </div>
       </div>
 
       <DeleteConfirmationDialog

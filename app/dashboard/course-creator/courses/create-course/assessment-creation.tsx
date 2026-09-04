@@ -2,7 +2,6 @@
 'use client';
 
 import { useMutation, useQueries, useQuery, useQueryClient } from '@tanstack/react-query';
-import { Disc } from 'lucide-react';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { toast } from 'sonner';
 
@@ -316,6 +315,7 @@ const AssessmentCreation = ({
                 toast.success('Quiz updated successfully!');
             } catch (err) {
                 toast.error('Failed to update quiz.');
+                throw err;
             }
         },
         [updateQuiz, qc, selectedLessonId, onQuizSaved]
@@ -699,7 +699,10 @@ const AssessmentCreation = ({
             // Wait for React to update state
             await new Promise(resolve => setTimeout(resolve, 0));
 
-            await handleSaveQuizQuestions();
+            if (!quizDraft) {
+                throw new Error('Enter quiz details before saving questions');
+            }
+            await handleSaveQuizQuestions(quizDraft);
 
             setBulkText('');
             setBulkSheetOpen(false);
@@ -948,7 +951,7 @@ const AssessmentCreation = ({
         ]
     );
 
-    const handleSaveQuizQuestions = useCallback(async () => {
+    const handleSaveQuizQuestions = useCallback(async (draft: QuizPayload) => {
         if (!selectedLessonId) {
             toast.error('Please select a lesson first');
             return;
@@ -963,13 +966,13 @@ const AssessmentCreation = ({
         let quizUuidToUse = activeQuizUuid;
 
         if (!quizUuidToUse) {
-            if (!quizDraft?.title.trim()) {
+            if (!draft.title.trim()) {
                 toast.error('Enter a quiz title before saving questions');
                 return;
             }
 
             try {
-                quizUuidToUse = await createQuizForLesson(selectedLessonId, quizDraft);
+                quizUuidToUse = await createQuizForLesson(selectedLessonId, draft);
             } catch (err) {
                 toast.error(
                     `Failed to create quiz: ${err instanceof Error ? err.message : 'Unknown error'}`
@@ -1172,8 +1175,17 @@ const AssessmentCreation = ({
 
                 return { ...prev, [selectedLessonId]: updated };
             });
+
+            setModifiedOptions(prev => {
+                const newMap = new Map(prev);
+                const optionSet = new Set(newMap.get(qIndex) || []);
+                const optionCount = quizData[selectedLessonId]?.[qIndex]?.options?.length ?? 0;
+                for (let index = 0; index < optionCount; index++) optionSet.add(index);
+                newMap.set(qIndex, optionSet);
+                return newMap;
+            });
         },
-        [selectedLessonId]
+        [quizData, selectedLessonId]
     );
 
     const addOption = useCallback(
@@ -1212,6 +1224,8 @@ const AssessmentCreation = ({
 
                 return { ...prev, [selectedLessonId]: updated };
             });
+
+            setModifiedQuestions(prev => new Set(prev).add(qIndex));
         },
         [selectedLessonId]
     );
@@ -1235,6 +1249,8 @@ const AssessmentCreation = ({
 
                 return { ...prev, [selectedLessonId]: updated };
             });
+
+            setModifiedQuestions(prev => new Set(prev).add(qIndex));
         },
         [selectedLessonId]
     );
@@ -1254,6 +1270,8 @@ const AssessmentCreation = ({
 
                 return { ...prev, [selectedLessonId]: updated };
             });
+
+            setModifiedQuestions(prev => new Set(prev).add(qIndex));
         },
         [selectedLessonId]
     );
@@ -1385,35 +1403,17 @@ const AssessmentCreation = ({
                             deleteQuizForLesson={handleDeleteQuiz}
                             addQuizQuestion={async payload => { }}
                             addQuestionOption={async payload => { }}
+                            saveQuizQuestions={handleSaveQuizQuestions}
+                            isSavingQuestions={
+                                addQuizQuestion.isPending ||
+                                addQuestionOption.isPending ||
+                                updateQuizQuestion.isPending ||
+                                updateQuestionOption.isPending ||
+                                createQuiz.isPending
+                            }
                             isPending={createQuiz.isPending || updateQuiz.isPending}
                             openBulkUploadSheet={() => setBulkSheetOpen(true)}
                         />
-
-                        <div className='mt-4 flex justify-end self-end'>
-                            <Button
-                                onClick={handleSaveQuizQuestions}
-                                disabled={
-                                    addQuizQuestion.isPending ||
-                                    addQuestionOption.isPending ||
-                                    updateQuizQuestion.isPending ||
-                                    updateQuestionOption.isPending ||
-                                    createQuiz.isPending ||
-                                    !selectedLessonId ||
-                                    (quizData[selectedLessonId]?.length ?? 0) === 0
-                                }
-                            >
-                                <Disc className='mr-2 h-4 w-4' />
-                                {addQuizQuestion.isPending ||
-                                    addQuestionOption.isPending ||
-                                    updateQuizQuestion.isPending ||
-                                    updateQuestionOption.isPending ||
-                                    createQuiz.isPending
-                                    ? 'Saving...'
-                                    : activeQuizUuid
-                                        ? 'Save Questions'
-                                        : 'Create Quiz & Save Questions'}
-                            </Button>
-                        </div>
 
                         <Sheet open={bulkSheetOpen} onOpenChange={setBulkSheetOpen}>
                             <SheetContent className='overflow-y-auto sm:max-w-2xl'>
