@@ -106,8 +106,6 @@ const deriveContributionLevel = (weight: number | ''): string => {
   return 'Minor Contribution';
 };
 
-const isMajorAssessment = (weight: number | ''): boolean => weight !== '' && weight >= 25;
-
 const getErrorMessage = (error: unknown, fallback: string) =>
   (error as ResponseDtoVoid | undefined)?.message ||
   (error instanceof Error ? error.message : fallback);
@@ -259,6 +257,7 @@ function AssessmentSheet({
       rubric_uuid: assessment.rubric_uuid ?? '',
       weight_percentage: assessment.weight_percentage,
       is_required: assessment.is_required ?? false,
+      is_major_assessment: assessment.is_major_assessment ?? false,
       assessment_type: assessment.assessment_type ?? '',
     };
   };
@@ -266,39 +265,61 @@ function AssessmentSheet({
   const [form, setForm] = useState<AssessmentFormValues>(() => toFormValues(initial));
 
   const [prevInitial, setPrevInitial] = useState(initial);
+
   if (initial !== prevInitial) {
     setPrevInitial(initial);
     setForm(toFormValues(initial));
   }
 
-  const [errors, setErrors] = useState<Partial<Record<keyof AssessmentFormValues, string>>>({});
+  const [errors, setErrors] = useState<
+    Partial<Record<keyof AssessmentFormValues, string>>
+  >({});
+
   const creator = useCourseCreator();
 
   const { data: searchRubs, isLoading: isLoadingRubrics } = useQuery({
     ...searchAssessmentRubricsOptions({
       query: {
         pageable: {},
-        searchParams: { course_creator_uuid_eq: creator?.profile?.uuid as string },
+        searchParams: {
+          course_creator_uuid_eq: creator?.profile?.uuid as string,
+        },
       },
     }),
     enabled: !!creator?.profile?.uuid,
   });
 
   const rubrics: AssessmentRubric[] = searchRubs?.data?.content ?? [];
+
   const selectedRubric = rubrics.find(r => r.uuid === form.rubric_uuid);
 
   const createMut = useMutation(addCourseAssessmentMutation());
   const updateMut = useMutation(updateCourseAssessmentMutation());
+
   const isSaving = createMut.isPending || updateMut.isPending;
 
-  function set<K extends keyof AssessmentFormValues>(key: K, value: AssessmentFormValues[K]) {
-    setForm(prev => ({ ...prev, [key]: value }));
-    setErrors(prev => ({ ...prev, [key]: undefined }));
+  function set<K extends keyof AssessmentFormValues>(
+    key: K,
+    value: AssessmentFormValues[K]
+  ) {
+    setForm(prev => ({
+      ...prev,
+      [key]: value,
+    }));
+
+    setErrors(prev => ({
+      ...prev,
+      [key]: undefined,
+    }));
   }
 
   function validate(): boolean {
     const newErrors: typeof errors = {};
-    if (!form.title.trim()) newErrors.title = 'Title is required';
+
+    if (!form.title.trim()) {
+      newErrors.title = 'Title is required';
+    }
+
     if (
       form.weight_percentage === '' ||
       Number(form.weight_percentage) < 0 ||
@@ -306,7 +327,9 @@ function AssessmentSheet({
     ) {
       newErrors.weight_percentage = 'Weight must be between 0 and 100';
     }
+
     setErrors(newErrors);
+
     return Object.keys(newErrors).length === 0;
   }
 
@@ -319,6 +342,7 @@ function AssessmentSheet({
       rubric_uuid: form.rubric_uuid || null,
       weight_percentage: Number(form.weight_percentage),
       is_required: form.is_required,
+      is_major_assessment: form.is_major_assessment,
       assessment_type: form.assessment_type,
       // aggregation_strategy: 'points_sum',
       // sync_class_attendance: true,
@@ -328,8 +352,13 @@ function AssessmentSheet({
     if (mode === 'add') {
       createMut.mutate(
         {
-          path: { courseUuid },
-          body: { ...body, course_uuid: courseUuid } as never,
+          path: {
+            courseUuid,
+          },
+          body: {
+            ...body,
+            course_uuid: courseUuid,
+          } as never,
         },
         {
           onSuccess: () => {
@@ -340,13 +369,19 @@ function AssessmentSheet({
 
             onSuccess();
           },
-          onError: err => toast.error(getErrorMessage(err, 'Failed to create assessment')),
+          onError: err =>
+            toast.error(
+              getErrorMessage(err, 'Failed to create assessment')
+            ),
         }
       );
     } else if (initial) {
       updateMut.mutate(
         {
-          path: { courseUuid, assessmentUuid: initial.uuid },
+          path: {
+            courseUuid,
+            assessmentUuid: initial.uuid,
+          },
           body: {
             ...body,
             uuid: initial.uuid,
@@ -359,17 +394,29 @@ function AssessmentSheet({
             toast.success('Assessment updated successfully!');
             onSuccess();
           },
-          onError: err => toast.error(getErrorMessage(err, 'Failed to update assessment')),
+          onError: err =>
+            toast.error(
+              getErrorMessage(err, 'Failed to update assessment')
+            ),
         }
       );
     }
   }
 
   return (
-    <Sheet open={open} onOpenChange={isOpen => !isOpen && onClose()}>
-      <SheetContent className='flex w-full flex-col gap-0 p-0 sm:max-w-[650px]' side='right'>
+    <Sheet
+      open={open}
+      onOpenChange={isOpen => !isOpen && onClose()}
+    >
+      <SheetContent
+        className='flex w-full flex-col gap-0 p-0 sm:max-w-[650px]'
+        side='right'
+      >
         <SheetHeader className='border-b px-6 py-5'>
-          <SheetTitle>{mode === 'add' ? 'Add Assessment' : 'Edit Assessment'}</SheetTitle>
+          <SheetTitle>
+            {mode === 'add' ? 'Add Assessment' : 'Edit Assessment'}
+          </SheetTitle>
+
           <SheetDescription>
             {mode === 'add'
               ? 'Define a new assessment component for this course'
@@ -382,20 +429,30 @@ function AssessmentSheet({
             {/* Title */}
             <div className='flex flex-col gap-1.5'>
               <Label className='text-sm font-medium'>
-                Component Title <span className='text-destructive'>*</span>
+                Component Title{' '}
+                <span className='text-destructive'>*</span>
               </Label>
+
               <Input
                 placeholder='e.g. Weekly Quizzes'
                 value={form.title}
                 onChange={e => set('title', e.target.value)}
                 className={errors.title ? 'border-destructive' : ''}
               />
-              {errors.title && <p className='text-destructive text-xs'>{errors.title}</p>}
+
+              {errors.title && (
+                <p className='text-destructive text-xs'>
+                  {errors.title}
+                </p>
+              )}
             </div>
 
             {/* Description */}
             <div className='flex flex-col gap-1.5'>
-              <Label className='text-sm font-medium'>Description</Label>
+              <Label className='text-sm font-medium'>
+                Description
+              </Label>
+
               <textarea
                 placeholder='Brief description of the assessment component...'
                 value={form.description}
@@ -408,39 +465,56 @@ function AssessmentSheet({
             {/* Type + Weight */}
             <div className='flex w-full gap-4'>
               <div className='flex w-full gap-4'>
+                {/* Assessment Type */}
                 <div className='flex flex-1 flex-col gap-1.5'>
                   <Label className='flex items-center gap-1 text-sm font-medium'>
                     Assessment Type
                     <span className='text-destructive'>*</span>
-                    <LabelInfo text='Select the type of assessment, such as Quiz, Exam, Assignment, or Project. This helps instructors organize and manage their assessments.' />
+
+                    <LabelInfo
+                      text='Select the type of assessment, such as Quiz, Exam, Assignment, or Project. This helps instructors organize and manage their assessments.'
+                    />
                   </Label>
 
                   <Select
                     value={form.assessment_type}
-                    onValueChange={v => set('assessment_type', v)}
+                    onValueChange={v =>
+                      set('assessment_type', v)
+                    }
                   >
                     <SelectTrigger
-                      className={`w-full ${errors.assessment_type ? 'border-destructive' : ''}`}
+                      className={`w-full ${errors.assessment_type
+                        ? 'border-destructive'
+                        : ''
+                        }`}
                     >
                       <SelectValue placeholder='Select type' />
                     </SelectTrigger>
+
                     <SelectContent>
-                      {ASSESSMENT_TYPES.map(t => (
-                        <SelectItem key={t} value={t}>
-                          {t}
+                      {ASSESSMENT_TYPES.map(type => (
+                        <SelectItem key={type} value={type}>
+                          {type}
                         </SelectItem>
                       ))}
                     </SelectContent>
                   </Select>
+
                   {errors.assessment_type && (
-                    <p className='text-destructive text-xs'>{errors.assessment_type}</p>
+                    <p className='text-destructive text-xs'>
+                      {errors.assessment_type}
+                    </p>
                   )}
                 </div>
 
+                {/* Assessment Category */}
                 <div className='flex flex-1 flex-col gap-1.5'>
                   <Label className='flex items-center gap-1 text-sm font-medium'>
                     Assessment Category
-                    <LabelInfo text='Derived from the assessment type — the platform categorises assessments consistently across every course, so this is shown rather than chosen.' />
+
+                    <LabelInfo
+                      text='Derived from the assessment type — the platform categorises assessments consistently across every course, so this is shown rather than chosen.'
+                    />
                   </Label>
 
                   <div className='bg-muted/50 flex h-9 items-center rounded-md border px-3'>
@@ -460,10 +534,12 @@ function AssessmentSheet({
               </div>
             </div>
 
+            {/* Weight */}
             <div className='flex flex-1 flex-col gap-1.5'>
               <Label className='text-sm font-medium'>
                 Weight (%) <span className='text-destructive'>*</span>
               </Label>
+
               <Input
                 type='number'
                 min={0}
@@ -471,18 +547,32 @@ function AssessmentSheet({
                 placeholder='e.g. 25'
                 value={form.weight_percentage}
                 onChange={e =>
-                  set('weight_percentage', e.target.value === '' ? '' : Number(e.target.value))
+                  set(
+                    'weight_percentage',
+                    e.target.value === ''
+                      ? ''
+                      : Number(e.target.value)
+                  )
                 }
-                className={errors.weight_percentage ? 'border-destructive' : ''}
+                className={
+                  errors.weight_percentage
+                    ? 'border-destructive'
+                    : ''
+                }
               />
+
               {errors.weight_percentage ? (
-                <p className='text-destructive text-xs'>{errors.weight_percentage}</p>
+                <p className='text-destructive text-xs'>
+                  {errors.weight_percentage}
+                </p>
               ) : (
                 form.weight_percentage !== '' && (
                   <p className='text-muted-foreground text-xs'>
                     {form.weight_percentage}% of the final grade —{' '}
-                    {deriveContributionLevel(form.weight_percentage)}
-                    {isMajorAssessment(form.weight_percentage)
+                    {deriveContributionLevel(
+                      form.weight_percentage
+                    )}
+                    {form.is_major_assessment
                       ? ', counted as a major assessment'
                       : ''}
                   </p>
@@ -494,41 +584,55 @@ function AssessmentSheet({
             <div className='flex flex-col gap-1.5'>
               <Label className='flex items-center gap-1 text-sm font-medium'>
                 Rubric
-                <LabelInfo text='Attach a grading rubric to define the assessment criteria and scoring to be used for this assessment evaluation. This helps ensure consistent and transparent evaluation of submissions for all students.' />
+
+                <LabelInfo
+                  text='Attach a grading rubric to define the assessment criteria and scoring to be used for this assessment evaluation. This helps ensure consistent and transparent evaluation of submissions for all students.'
+                />
               </Label>
 
               <p className='text-muted-foreground text-xs'>
                 Associate a grading rubric with this assessment
               </p>
+
               {isLoadingRubrics ? (
                 <div className='flex items-center gap-2 py-2'>
                   <Spinner className='h-4 w-4' />
-                  <span className='text-muted-foreground text-xs'>Loading rubrics...</span>
+
+                  <span className='text-muted-foreground text-xs'>
+                    Loading rubrics...
+                  </span>
                 </div>
               ) : (
                 <>
                   <Select
                     value={form.rubric_uuid || '__none__'}
-                    onValueChange={v => set('rubric_uuid', v === '__none__' ? '' : v)}
+                    onValueChange={v =>
+                      set(
+                        'rubric_uuid',
+                        v === '__none__' ? '' : v
+                      )
+                    }
                   >
-                    <SelectTrigger className="w-full sm:max-w-[650px]">
-                      <SelectValue placeholder="Select a rubric (optional)" />
+                    <SelectTrigger className='w-full sm:max-w-[650px]'>
+                      <SelectValue placeholder='Select a rubric (optional)' />
                     </SelectTrigger>
 
-                    <SelectContent className="w-full sm:max-w-[600px]">
-                      <SelectItem value="__none__">
-                        <span className="text-muted-foreground">None</span>
+                    <SelectContent className='w-full sm:max-w-[600px]'>
+                      <SelectItem value='__none__'>
+                        <span className='text-muted-foreground'>
+                          None
+                        </span>
                       </SelectItem>
 
                       {rubrics.map((r: AssessmentRubric) => (
                         <SelectItem key={r.uuid} value={r.uuid}>
-                          <div className="flex min-w-0 flex-col text-start">
-                            <span className="font-medium">
+                          <div className='flex min-w-0 flex-col text-start'>
+                            <span className='font-medium'>
                               {r.title}
                             </span>
 
                             {r.description && (
-                              <span className="line-clamp-1 text-xs text-muted-foreground group-hover:text-muted-foreground">
+                              <span className='text-muted-foreground line-clamp-1 text-xs'>
                                 {r.description}
                               </span>
                             )}
@@ -544,12 +648,14 @@ function AssessmentSheet({
                         <p className='text-foreground truncate text-xs font-semibold'>
                           {selectedRubric.title}
                         </p>
+
                         {selectedRubric.description && (
                           <p className='text-muted-foreground mt-0.5 line-clamp-5 text-xs'>
                             {selectedRubric.description}
                           </p>
                         )}
                       </div>
+
                       <button
                         type='button'
                         onClick={() => set('rubric_uuid', '')}
@@ -563,14 +669,23 @@ function AssessmentSheet({
                     <div className='bg-warning/20 border-warning/40 flex flex-col gap-3 rounded-lg border p-4'>
                       <div className='flex items-start gap-2'>
                         <AlertTriangle className='text-warning-foreground mt-0.5 h-4 w-4 shrink-0' />
+
                         <div className='text-sm'>
-                          <p className='text-warning-foreground font-medium'>No rubric selected</p>
+                          <p className='text-warning-foreground font-medium'>
+                            No rubric selected
+                          </p>
+
                           <p className='text-warning-foreground/80 text-xs'>
-                            If none of the available rubrics fit, you can create a new one.
+                            If none of the available rubrics fit,
+                            you can create a new one.
                           </p>
                         </div>
                       </div>
-                      <Link href='/dashboard/course-creator/rubrics' target='_blank'>
+
+                      <Link
+                        href='/dashboard/course-creator/rubrics'
+                        target='_blank'
+                      >
                         <Button
                           type='button'
                           variant='outline'
@@ -589,40 +704,65 @@ function AssessmentSheet({
 
             {/* Toggles */}
             <div className='bg-muted/40 flex flex-col gap-4 rounded-xl border p-4'>
+              {/* Required Assessment */}
               <div className='flex items-center justify-between'>
                 <div>
-                  <p className='text-foreground text-sm font-medium'>Required Assessment</p>
+                  <p className='text-foreground text-sm font-medium'>
+                    Required Assessment
+                  </p>
+
                   <p className='text-muted-foreground text-xs'>
                     Students must complete this assessment
                   </p>
                 </div>
-                <Switch checked={form.is_required} onCheckedChange={v => set('is_required', v)} />
+
+                <Switch
+                  checked={form.is_required}
+                  onCheckedChange={checked =>
+                    set('is_required', checked)
+                  }
+                />
               </div>
+
+              {/* Major Assessment */}
               <div className='flex items-center justify-between border-t pt-4'>
                 <div>
-                  <p className='text-foreground text-sm font-medium'>Major Assessment</p>
+                  <p className='text-foreground text-sm font-medium'>
+                    Major Assessment
+                  </p>
+
                   <p className='text-muted-foreground text-xs'>
-                    Set automatically once the weight reaches 25%
+                    Mark this assessment as a major assessment
                   </p>
                 </div>
-                <span
-                  className={`rounded-full px-2.5 py-1 text-xs font-medium ${isMajorAssessment(form.weight_percentage)
-                    ? 'bg-primary/10 text-primary'
-                    : 'bg-muted text-muted-foreground'
-                    }`}
-                >
-                  {isMajorAssessment(form.weight_percentage) ? 'Yes' : 'No'}
-                </span>
+
+                <Switch
+                  checked={form.is_major_assessment}
+                  onCheckedChange={checked =>
+                    set('is_major_assessment', checked)
+                  }
+                  aria-label='Major Assessment'
+                />
               </div>
             </div>
           </div>
         </div>
 
+        {/* Footer */}
         <SheetFooter className='border-t px-6 py-4'>
-          <Button variant='outline' onClick={onClose} disabled={isSaving}>
+          <Button
+            variant='outline'
+            onClick={onClose}
+            disabled={isSaving}
+          >
             Cancel
           </Button>
-          <Button onClick={handleSubmit} disabled={isSaving} className='min-w-[120px]'>
+
+          <Button
+            onClick={handleSubmit}
+            disabled={isSaving}
+            className='min-w-[120px]'
+          >
             {isSaving ? (
               <>
                 <Spinner className='mr-2 h-4 w-4' />
@@ -631,7 +771,9 @@ function AssessmentSheet({
             ) : (
               <>
                 <Save size={15} className='mr-2' />
-                {mode === 'add' ? 'Add Assessment' : 'Save Changes'}
+                {mode === 'add'
+                  ? 'Add Assessment'
+                  : 'Save Changes'}
               </>
             )}
           </Button>

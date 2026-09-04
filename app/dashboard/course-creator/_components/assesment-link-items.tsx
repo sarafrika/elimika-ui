@@ -462,22 +462,38 @@ export function LinkItemsModal({
         )
       );
 
-      const failed = results.filter(r => r.status === 'rejected').length;
-      const succeeded = results.length - failed;
+      const failed = results.filter(r => r.status === 'rejected');
+      const succeeded = results.length - failed.length;
 
       if (succeeded > 0) {
-        toast.success(`${succeeded} item${succeeded > 1 ? 's' : ''} linked successfully.`);
+        toast.success(
+          `${succeeded} item${succeeded > 1 ? 's' : ''} linked successfully.`
+        );
       }
 
-      if (failed > 0) {
-        toast.error(`${failed} item${failed > 1 ? 's' : ''} failed to link.`);
+      if (failed.length > 0) {
+        failed.forEach((result, index) => {
+          const error = result.reason;
+
+          // Handle API validation errors
+          const validationErrors = error?.error;
+
+          if (validationErrors && typeof validationErrors === 'object') {
+            Object.values(validationErrors).forEach(message => {
+              toast.error(String(message));
+            });
+          } else {
+            toast.error(
+              error?.message || 'Failed to link item.'
+            );
+          }
+        });
       }
 
       invalidateLineItems();
-
       setSelected(new Set());
 
-      if (failed === 0) {
+      if (failed.length === 0) {
         onSuccess?.();
         onClose();
       }

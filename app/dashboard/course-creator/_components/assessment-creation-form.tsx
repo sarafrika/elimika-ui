@@ -16,7 +16,6 @@ import {
   SheetTitle,
 } from '../../../../components/ui/sheet';
 import { Textarea } from '../../../../components/ui/textarea';
-import { getQuestionOptions } from '../../../../services/client';
 import {
   addQuestionOptionMutation,
   addQuizQuestionMutation,
@@ -27,6 +26,7 @@ import {
   deleteQuizMutation,
   deleteQuizQuestionMutation,
   getQuestionOptionsQueryKey,
+  getQuestionOptionsOptions,
   getQuizQuestionsOptions,
   getQuizQuestionsQueryKey,
   searchAssignmentsQueryKey,
@@ -143,6 +143,28 @@ type UpdateQuestionOptionVariables = MutationVariables<
 type CreateAssignmentVariables = MutationVariables<ReturnType<typeof createAssignmentMutation>>;
 type UpdateAssignmentVariables = MutationVariables<ReturnType<typeof updateAssignmentMutation>>;
 type CreateQuizVariables = MutationVariables<ReturnType<typeof createQuizMutation>>;
+
+const getApiErrorMessage = (error: unknown): string => {
+  if (typeof error === 'string') return error;
+  if (!error || typeof error !== 'object') return 'Unknown error';
+
+  const response = error as Record<string, unknown>;
+  if (response.error && typeof response.error === 'object') {
+    const nestedMessage = getApiErrorMessage(response.error);
+    if (nestedMessage !== 'Request failed' && nestedMessage !== 'Unknown error') {
+      return nestedMessage;
+    }
+  }
+
+  if (typeof response.message === 'string' && response.message !== 'Validation failed') {
+    return response.message;
+  }
+
+  return Object.values(response).find(
+    (value): value is string =>
+      typeof value === 'string' && Boolean(value.trim()) && value !== 'Validation failed'
+  ) ?? 'Request failed';
+};
 
 export type QuizState = Record<string, Question[]>;
 
@@ -265,19 +287,14 @@ const AssessmentCreationForm = ({
 
   // Fetch options for each question
   const questionOptionsQueries = useQueries({
-    queries:
-      quizquestions?.data?.map((q: QuestionApi) => ({
-        queryKey: ['questionOptions', activeQuizUuid, q.uuid ?? ''],
-        queryFn: () =>
-          getQuestionOptions({
-            path: {
-              quizUuid: activeQuizUuid!,
-              questionUuid: q.uuid ?? '',
-            },
-            query: { pageable: {} },
-          }),
-        enabled: !!activeQuizUuid && !!q.uuid,
-      })) ?? [],
+          queries:
+            quizquestions?.data?.map((q: QuestionApi) => ({
+            ...getQuestionOptionsOptions({
+              path: { quizUuid: activeQuizUuid!, questionUuid: q.uuid ?? '' },
+              query: { pageable: {} },
+            }),
+            enabled: !!activeQuizUuid && !!q.uuid,
+          })) ?? [],
   });
 
   // Track if data has been loaded to prevent infinite loops
@@ -412,7 +429,7 @@ const AssessmentCreationForm = ({
     const questionsWithOptions: Question[] = quizquestions.data.map(
       (q: QuestionApi, index: number) => {
         const optionsData =
-          (questionOptionsQueries[index]?.data?.data?.data?.content as
+                (questionOptionsQueries[index]?.data?.data?.content as
             | QuestionOptionApi[]
             | undefined) ?? [];
 
@@ -703,16 +720,16 @@ const AssessmentCreationForm = ({
   /////
 
   const saveQuizQuestionsForQuiz = useCallback(
-    async (quizUuid: string) => {
+    async (quizUuid: string): Promise<boolean> => {
       if (!selectedLessonId) {
         toast.error('Please select a lesson first');
-        return;
+        return false;
       }
 
       const questions = quizData[selectedLessonId] ?? [];
       if (!questions.length) {
         toast.error('No questions to save');
-        return;
+        return false;
       }
 
       let savedCount = 0;
@@ -864,7 +881,9 @@ const AssessmentCreationForm = ({
                       ),
                     });
                   }
-                } catch (optionErr) { }
+                } catch (optionErr) {
+                  throw optionErr;
+                }
               }
 
               qc.invalidateQueries({
@@ -878,7 +897,7 @@ const AssessmentCreationForm = ({
             savedCount++;
           } catch (qErr) {
             failedCount++;
-            toast.error(`Failed to save question ${qIndex + 1}`);
+            toast.error(`Failed to save question ${qIndex + 1}: ${getApiErrorMessage(qErr)}`);
           }
         }
 
@@ -909,10 +928,10 @@ const AssessmentCreationForm = ({
         } else {
           toast.error('Failed to save all questions. Please try again.');
         }
+        return failedCount === 0;
       } catch (err) {
-        toast.error(
-          `Failed to save quiz questions: ${err instanceof Error ? err.message : 'Unknown error'}`
-        );
+        toast.error(`Failed to save quiz questions: ${getApiErrorMessage(err)}`);
+        return false;
       }
     },
     [
@@ -937,13 +956,13 @@ const AssessmentCreationForm = ({
   const handleSaveQuizQuestions = useCallback(async () => {
     if (!selectedLessonId) {
       toast.error('Please select a lesson first');
-      return;
+      return null;
     }
 
     const questions = quizData[selectedLessonId] ?? [];
     if (!questions.length) {
       toast.error('No questions to save');
-      return;
+      return null;
     }
 
     let quizUuidToUse = activeQuizUuid;
@@ -951,7 +970,7 @@ const AssessmentCreationForm = ({
     if (!quizUuidToUse) {
       if (!quizDraft?.title.trim()) {
         toast.error('Enter a quiz title before saving questions');
-        return;
+        return null;
       }
 
       try {
@@ -960,15 +979,18 @@ const AssessmentCreationForm = ({
         toast.error(
           `Failed to create quiz: ${err instanceof Error ? err.message : 'Unknown error'}`
         );
-        return;
+        return null;
       }
     }
 
-    await saveQuizQuestionsForQuiz(quizUuidToUse);
+    const saved = await saveQuizQuestionsForQuiz(quizUuidToUse);
+    if (!saved) return null;
 
     if (!activeQuizUuid) {
       setActiveQuizUuid(quizUuidToUse);
     }
+
+    return quizUuidToUse;
   }, [
     activeQuizUuid,
     createQuizForLesson,
@@ -1115,7 +1137,10 @@ const AssessmentCreationForm = ({
           });
 
           qc.invalidateQueries({
-            queryKey: ['questionOptions', activeQuizUuid, question.uuid],
+            queryKey: getQuestionOptionsQueryKey({
+              path: { quizUuid: activeQuizUuid!, questionUuid: question.uuid },
+              query: { pageable: {} },
+            }),
           });
 
           toast.success('Option deleted!');
@@ -1383,6 +1408,14 @@ const AssessmentCreationForm = ({
               deleteQuizForLesson={handleDeleteQuiz}
               addQuizQuestion={async payload => { }}
               addQuestionOption={async payload => { }}
+              saveQuizQuestions={async () => handleSaveQuizQuestions()}
+              isSavingQuestions={
+                addQuizQuestion.isPending ||
+                addQuestionOption.isPending ||
+                updateQuizQuestion.isPending ||
+                updateQuestionOption.isPending ||
+                createQuiz.isPending
+              }
               isPending={createQuiz.isPending || updateQuiz.isPending}
               openBulkUploadSheet={() => setBulkSheetOpen(true)}
             // createQuizForLesson={async (lessonId, payload) => {

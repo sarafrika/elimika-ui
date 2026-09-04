@@ -804,7 +804,9 @@ export default function CreateCoursePage() {
 
             return quizzes.map((quiz: Quiz) => {
                 const isQuizPublished =
-                    quiz.is_published === true || quiz.status === 'PUBLISHED';
+                    quiz.is_published === true ||
+                    quiz.active === true ||
+                    String(quiz.status).toUpperCase() === 'PUBLISHED';
 
                 return {
                     kind: 'Quiz' as const,
@@ -816,8 +818,8 @@ export default function CreateCoursePage() {
                     description: getAssessmentDescription(
                         quiz.description ?? quiz.instructions ?? ''
                     ),
-                    statusLabel: quiz.active ? 'Active' : isQuizPublished ? 'Published' : 'Draft',
-                    statusTone: getAssessmentStatusTone(quiz.active, isQuizPublished),
+                    statusLabel: isQuizPublished ? 'Published' : 'Draft',
+                    statusTone: getAssessmentStatusTone(undefined, isQuizPublished),
                     meta: [
                         `Pass ${quiz.passing_score ?? 0}%`,
                         `Attempts ${quiz.attempts_allowed ?? 1}`,

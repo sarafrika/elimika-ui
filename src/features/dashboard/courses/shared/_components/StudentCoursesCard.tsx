@@ -77,6 +77,10 @@ export function StudentCoursesCard({
     <div className="h-full">
       <Card
         onClick={() => {
+          if (open) {
+            return;
+          }
+
           setSelectedId(card.id);
           setOpen(true);
           onOpenDetails(card);
