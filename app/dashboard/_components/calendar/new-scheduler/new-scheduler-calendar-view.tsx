@@ -24,7 +24,7 @@ import { CalendarDays, ChevronLeft, ChevronRight, Info, Settings } from 'lucide-
 import { useRouter } from 'next/navigation';
 import { useEffect, useMemo, useState } from 'react';
 import { useUserDomain } from '../../../../../context/user-domain-context';
-import { buildWorkspaceAliasPath } from '../../../../../src/features/dashboard/lib/active-domain-storage';
+import { roleScopedDashboardPath } from '../../../../../src/features/dashboard/lib/active-domain-storage';
 import type { SchedulerCalendarData } from './calendar-utils';
 import {
   DEFAULT_PREFERENCES,
@@ -265,7 +265,7 @@ export function SchedulerCalendarView({ profile, data }: Props) {
     const instanceUuid = event.instanceUuid || event.id;
     if (!instanceUuid) return;
 
-    router.push(buildWorkspaceAliasPath(activeDomain, `/dashboard/class-instance/${instanceUuid}`));
+    router.push(roleScopedDashboardPath(activeDomain, `/dashboard/class-instance/${instanceUuid}`));
   };
 
   const handleCreateSession = (slot?: { date: Date; startTime: Date; endTime: Date }) => {
@@ -283,7 +283,7 @@ export function SchedulerCalendarView({ profile, data }: Props) {
     }
 
     router.push(
-      buildWorkspaceAliasPath(
+      roleScopedDashboardPath(
         activeDomain,
         `/dashboard/classes/new${params.toString() ? `?${params.toString()}` : ''}`
       )

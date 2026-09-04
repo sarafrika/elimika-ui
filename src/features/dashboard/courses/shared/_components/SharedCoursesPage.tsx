@@ -69,7 +69,7 @@ import { CoursesCategoryFilters } from '@/src/features/dashboard/courses/shared/
 import { CoursesCategoryTabs } from '@/src/features/dashboard/courses/shared/_components/CoursesCategoryTabs';
 import { CoursesRecommendationCard } from '@/src/features/dashboard/courses/shared/_components/CoursesRecommendationCard';
 import { StudentCoursesCard } from '@/src/features/dashboard/courses/shared/_components/StudentCoursesCard';
-import { buildWorkspaceAliasPath } from '@/src/features/dashboard/lib/active-domain-storage';
+import { roleScopedDashboardPath } from '@/src/features/dashboard/lib/active-domain-storage';
 import { invalidateTrainingApplicationWorkflowQueries } from '@/src/features/dashboard/workflow-query-invalidation';
 import { useMutation, useQueries, useQuery, useQueryClient } from '@tanstack/react-query';
 import {
@@ -289,13 +289,13 @@ const createCatalogCards = (
 
       showInstructorCta: !isInstructorApplyCard,
 
-      detailsHref: buildWorkspaceAliasPath(domain, item.href),
+      detailsHref: roleScopedDashboardPath(domain, item.href),
 
       enrollHref: isInstructorApplyCard
         ? getApplyToTrainHref(item.kind, item.id)
-        : buildWorkspaceAliasPath(domain, getEnrollHref(domain, item.kind, item.id)),
+        : roleScopedDashboardPath(domain, getEnrollHref(domain, item.kind, item.id)),
 
-      instructorHref: buildWorkspaceAliasPath(domain, getInstructorHref(domain, item.id)),
+      instructorHref: roleScopedDashboardPath(domain, getInstructorHref(domain, item.id)),
 
       icon: presentation.icon,
       imageTone: presentation.imageTone,
@@ -347,9 +347,9 @@ const createRecommendationCards = (
       ctaLabel: shouldApplyToTrain ? 'Apply to Train' : 'Enroll',
       ctaHref: shouldApplyToTrain
         ? getApplyToTrainHref(item.kind, item.id)
-        : buildWorkspaceAliasPath(domain, getEnrollHref(domain, item.kind, item.id)),
+        : roleScopedDashboardPath(domain, getEnrollHref(domain, item.kind, item.id)),
       ctaKind: shouldApplyToTrain ? 'apply-to-train' : 'enroll',
-      detailsHref: buildWorkspaceAliasPath(domain, item.href),
+      detailsHref: roleScopedDashboardPath(domain, item.href),
       icon: presentation.icon,
       imageTone: presentation.imageTone,
       imageUrl: item.imageUrl,
@@ -1737,7 +1737,7 @@ export function SharedCoursesPage({ domain }: SharedCoursesPageProps) {
                 Recommended for You
               </h2>
               <Link
-                href={buildWorkspaceAliasPath(domain, '/dashboard/courses')}
+                href={roleScopedDashboardPath(domain, '/dashboard/courses')}
                 className='text-muted-foreground hover:text-foreground inline-flex items-center gap-1.5 text-xs font-semibold sm:text-sm'
               >
                 View All
@@ -1795,7 +1795,7 @@ export function SharedCoursesPage({ domain }: SharedCoursesPageProps) {
               variant='warning'
               className='h-10 w-full rounded-xl px-5 text-sm font-semibold shadow-none sm:w-auto'
             >
-              <Link href={buildWorkspaceAliasPath(domain, '/dashboard/skills-fund')}>
+              <Link href={roleScopedDashboardPath(domain, '/dashboard/skills-fund')}>
                 Apply Now
               </Link>
             </Button>

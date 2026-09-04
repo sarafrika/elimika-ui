@@ -13,7 +13,7 @@ import {
   getCardPresentation,
   type CoursesCatalogCardData,
 } from '@/src/features/dashboard/courses/shared/_components/courses-data';
-import { buildWorkspaceAliasPath } from '@/src/features/dashboard/lib/active-domain-storage';
+import { roleScopedDashboardPath } from '@/src/features/dashboard/lib/active-domain-storage';
 import { useQueries } from '@tanstack/react-query';
 import {
   ArrowRight,
@@ -258,14 +258,14 @@ export function StudentMyCoursesPage() {
         ctaLabel: isCompleted ? 'View Certificate' : 'Continue',
         ctaKind: 'link',
         showInstructorCta: false,
-        detailsHref: buildWorkspaceAliasPath('student', `/dashboard/courses/${course.uuid}`),
-        certificateHref: buildWorkspaceAliasPath(
+        detailsHref: roleScopedDashboardPath('student', `/dashboard/courses/${course.uuid}`),
+        certificateHref: roleScopedDashboardPath(
           'student',
           `/dashboard/credentials/certificate?csid=${student?.uuid}&ccid=${course?.uuid}&clid=${classDetails?.uuid}`
         ),
-        // enrollHref: buildWorkspaceAliasPath('student', `/dashboard/learning-hub/classes/${classId}`),
-        enrollHref: buildWorkspaceAliasPath('student', `/dashboard/learning-hub/classes`),
-        instructorHref: buildWorkspaceAliasPath(
+        // enrollHref: roleScopedDashboardPath('student', `/dashboard/learning-hub/classes/${classId}`),
+        enrollHref: roleScopedDashboardPath('student', `/dashboard/learning-hub/classes`),
+        instructorHref: roleScopedDashboardPath(
           'student',
           `/dashboard/courses/instructor?courseId=${course.uuid}`
         ),

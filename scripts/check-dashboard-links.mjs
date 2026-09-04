@@ -13,7 +13,7 @@ const ROLE_SEGMENTS = new Set([
   'organisation',
 ]);
 
-const ALIAS_HELPERS = ['buildWorkspaceAliasPath', 'dashboardUrl', 'buildDashboardSwitchPath'];
+const ALIAS_HELPERS = ['roleScopedDashboardPath', 'dashboardUrl', 'buildDashboardSwitchPath'];
 
 const EXCLUDED_PREFIXES = [
   'node_modules',

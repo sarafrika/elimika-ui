@@ -18,7 +18,7 @@ import {
   removeItemMutation,
 } from '@/services/client/@tanstack/react-query.gen';
 import { invalidateEnrollmentSuccessQueries } from '@/src/features/dashboard/courses/shared/enrollment-query-invalidation';
-import { buildWorkspaceAliasPath } from '@/src/features/dashboard/lib/active-domain-storage';
+import { roleScopedDashboardPath } from '@/src/features/dashboard/lib/active-domain-storage';
 import { useCartStore } from '@/store/cart-store';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import {
@@ -62,7 +62,7 @@ export default function CartPage() {
   const { paymentRequired } = usePaymentMode();
   const [enrolling, setEnrolling] = useState(false);
   const canUseStudentCart = activeDomain === 'student' && Boolean(profile?.student?.uuid);
-  const dashboardFallbackHref = buildWorkspaceAliasPath(activeDomain, '/dashboard/overview');
+  const dashboardFallbackHref = roleScopedDashboardPath(activeDomain, '/dashboard/overview');
 
   const cartOptions =
     canUseStudentCart && cartId
@@ -149,7 +149,7 @@ export default function CartPage() {
       await invalidateEnrollmentSuccessQueries(queryClient, { cartId });
       toast.success('You are enrolled! Your courses are unlocked.');
       clearCart();
-      router.push(buildWorkspaceAliasPath('student', '/dashboard/learning-hub'));
+      router.push(roleScopedDashboardPath('student', '/dashboard/learning-hub'));
     } catch (error) {
       await Promise.all([
         queryClient.invalidateQueries({
@@ -182,7 +182,7 @@ export default function CartPage() {
             </p>
           </div>
           <Link
-            href={buildWorkspaceAliasPath(activeDomain, '/dashboard/courses')}
+            href={roleScopedDashboardPath(activeDomain, '/dashboard/courses')}
             className='text-primary inline-flex items-center gap-2 text-sm font-medium hover:underline'
           >
             <ArrowLeft className='h-4 w-4' />
@@ -249,7 +249,7 @@ export default function CartPage() {
                   find courses that match your goals.
                 </CardDescription>
                 <Link
-                  href={buildWorkspaceAliasPath(activeDomain, '/dashboard/courses')}
+                  href={roleScopedDashboardPath(activeDomain, '/dashboard/courses')}
                   className='inline-block pt-4'
                 >
                   <Button

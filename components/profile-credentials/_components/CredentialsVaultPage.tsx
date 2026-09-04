@@ -53,7 +53,7 @@ import { ProfileOverviewCard } from './ProfileOverviewCard';
 import { VaultHighlights } from './VaultHighlights';
 import { useCoursesByIds, useProgramsByIds } from '../../../hooks/use-batched-lookups';
 import { useUserDomain } from '@/src/features/dashboard/context/user-domain-context';
-import { buildWorkspaceAliasPath } from '@/src/features/dashboard/lib/active-domain-storage';
+import { roleScopedDashboardPath } from '@/src/features/dashboard/lib/active-domain-storage';
 
 type CredentialsVaultPageProps = {
   role: CredentialsRole;
@@ -384,7 +384,7 @@ export function CredentialsVaultPage({ role }: CredentialsVaultPageProps) {
   return (
     <main className='min-h-screen bg-[linear-gradient(180deg,color-mix(in_srgb,var(--background)_96%,var(--el-accent-azure)_4%),color-mix(in_srgb,var(--background)_94%,white_6%))] px-3 py-4 sm:px-5 lg:px-7'>
       <div className='mx-auto flex w-full max-w-[1520px] flex-col gap-4'>
-        <Link href={buildWorkspaceAliasPath(activeDomain, '/dashboard/credentials/certificate')}>
+        <Link href={roleScopedDashboardPath(activeDomain, '/dashboard/credentials/certificate')}>
           View sample certificate
         </Link>
 

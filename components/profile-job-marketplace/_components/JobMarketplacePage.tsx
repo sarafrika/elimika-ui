@@ -91,7 +91,7 @@ import type {
   TrainingProgram
 } from '@/services/client/types.gen';
 import { useUserDomain } from '@/src/features/dashboard/context/user-domain-context';
-import { buildWorkspaceAliasPath } from '@/src/features/dashboard/lib/active-domain-storage';
+import { roleScopedDashboardPath } from '@/src/features/dashboard/lib/active-domain-storage';
 import { useOrganisation } from '@/src/features/organisation/context/organisation-context';
 import { useUserProfile } from '@/src/features/profile/context/profile-context';
 
@@ -699,7 +699,7 @@ function JobDetailsSheet({
                   {eligibility && !eligibility.training_approved && job.course_uuid ? (
                     <Button asChild variant='outline' size='sm'>
                       <Link
-                        href={buildWorkspaceAliasPath(
+                        href={roleScopedDashboardPath(
                           activeDomain,
                           `/dashboard/courses`
                         )}
@@ -1179,7 +1179,7 @@ export function JobMarketplacePage({ role }: { role: JobMarketplaceRole }) {
             <>
               {!isOrganizationView ? (
                 <Button variant='outline' asChild>
-                  <Link href={buildWorkspaceAliasPath(activeDomain, '/dashboard/opportunities/my-applications')}>
+                  <Link href={roleScopedDashboardPath(activeDomain, '/dashboard/opportunities/my-applications')}>
                     My applications
                   </Link>
                 </Button>
@@ -1225,7 +1225,7 @@ export function JobMarketplacePage({ role }: { role: JobMarketplaceRole }) {
                   !isOrganizationView
                     ? () =>
                       router.push(
-                        buildWorkspaceAliasPath(
+                        roleScopedDashboardPath(
                           activeDomain,
                           '/dashboard/opportunities/my-applications'
                         )
@@ -1270,7 +1270,7 @@ export function JobMarketplacePage({ role }: { role: JobMarketplaceRole }) {
                           !isOrganizationView
                             ? () =>
                               router.push(
-                                buildWorkspaceAliasPath(
+                                roleScopedDashboardPath(
                                   activeDomain,
                                   '/dashboard/opportunities/my-applications'
                                 )
@@ -1454,7 +1454,7 @@ export function JobMarketplacePage({ role }: { role: JobMarketplaceRole }) {
                               canReapply={statusAllowsReapply(application?.status)}
                               applicationsHref={
                                 isOrganizationView && job.uuid
-                                  ? buildWorkspaceAliasPath(
+                                  ? roleScopedDashboardPath(
                                     activeDomain,
                                     `/dashboard/opportunities/${job.uuid}`
                                   )
@@ -1462,7 +1462,7 @@ export function JobMarketplacePage({ role }: { role: JobMarketplaceRole }) {
                               }
                               createClassHref={
                                 isOrganizationView && job.uuid
-                                  ? buildWorkspaceAliasPath(
+                                  ? roleScopedDashboardPath(
                                     activeDomain,
                                     `/dashboard/opportunities/${job.uuid}/create-class`
                                   )
@@ -1502,7 +1502,7 @@ export function JobMarketplacePage({ role }: { role: JobMarketplaceRole }) {
         }
         myApplicationsHref={
           !isOrganizationView
-            ? buildWorkspaceAliasPath(activeDomain, '/dashboard/opportunities/my-applications')
+            ? roleScopedDashboardPath(activeDomain, '/dashboard/opportunities/my-applications')
             : undefined
         }
       />

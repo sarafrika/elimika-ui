@@ -5,7 +5,7 @@ import { useState } from 'react';
 import { Button } from './ui/button';
 import Spinner from './ui/spinner';
 
-const DASHBOARD_OVERVIEW_PATH = '/dashboard/overview';
+const DASHBOARD_ENTRY_PATH = '/dashboard';
 
 export default function LoginButton() {
   const { data: session } = useSession();
@@ -13,7 +13,7 @@ export default function LoginButton() {
   const [isSigningIn, setIsSigningIn] = useState(false);
 
   if (session?.user?.email) {
-    return <Button onClick={() => router.push(DASHBOARD_OVERVIEW_PATH)}>Go to Dashboard</Button>;
+    return <Button onClick={() => router.push(DASHBOARD_ENTRY_PATH)}>Go to Dashboard</Button>;
   }
 
   // status === "unauthenticated"
@@ -23,7 +23,7 @@ export default function LoginButton() {
         evt.currentTarget.disabled = true;
         setIsSigningIn(true);
         await signIn('keycloak', {
-          redirectTo: `${window.location.origin}${DASHBOARD_OVERVIEW_PATH}`,
+          redirectTo: `${window.location.origin}${DASHBOARD_ENTRY_PATH}`,
         });
       }}
     >

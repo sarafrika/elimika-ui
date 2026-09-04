@@ -10,7 +10,7 @@ import {
 } from '@/components/ui/sidebar';
 import { getMenuWithActivePath, type MenuItem } from '@/src/features/dashboard/config/menu';
 import { useUserDomain } from '@/src/features/dashboard/context/user-domain-context';
-import { buildWorkspaceAliasPath } from '@/src/features/dashboard/lib/active-domain-storage';
+import { roleScopedDashboardPath } from '@/src/features/dashboard/lib/active-domain-storage';
 
 interface NavSecondaryProps {
   items: MenuItem[];
@@ -38,7 +38,7 @@ export function NavSecondary({
                   href={
                     item.launchInNewTab
                       ? item.url || '#'
-                      : buildWorkspaceAliasPath(activeDomain, item.url || '#')
+                      : roleScopedDashboardPath(activeDomain, item.url || '#')
                   }
                   target={item.launchInNewTab ? '_blank' : '_self'}
                   rel={item.launchInNewTab ? 'noopener noreferrer' : ''}

@@ -2,7 +2,7 @@
 
 import type { ReactNode } from 'react';
 import { useUserDomain } from '@/src/features/dashboard/context/user-domain-context';
-import { buildWorkspaceAliasPath } from '@/src/features/dashboard/lib/active-domain-storage';
+import { roleScopedDashboardPath } from '@/src/features/dashboard/lib/active-domain-storage';
 import { ProfileSectionNav } from '@/src/features/profile/components/profile-section-nav';
 
 const sections = [
@@ -16,7 +16,7 @@ export default function ProfileLayout({ children }: { children: ReactNode }) {
   const { activeDomain } = useUserDomain();
   const items = sections.map(section => ({
     ...section,
-    href: buildWorkspaceAliasPath(activeDomain, section.href),
+    href: roleScopedDashboardPath(activeDomain, section.href),
   }));
 
   return (

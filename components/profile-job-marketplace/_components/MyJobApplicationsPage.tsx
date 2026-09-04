@@ -38,7 +38,7 @@ import {
 } from '@/services/client/@tanstack/react-query.gen';
 import { useUserDomain } from '@/src/features/dashboard/context/user-domain-context';
 import { invalidateJobApplicationWorkflowQueries } from '@/src/features/dashboard/workflow-query-invalidation';
-import { buildWorkspaceAliasPath } from '@/src/features/dashboard/lib/active-domain-storage';
+import { roleScopedDashboardPath } from '@/src/features/dashboard/lib/active-domain-storage';
 import { useUserProfile } from '@/src/features/profile/context/profile-context';
 import { useBreadcrumb } from '../../../context/breadcrumb-provider';
 import {
@@ -78,7 +78,7 @@ export function MyJobApplicationsPage() {
 
   useEffect(() => {
     replaceBreadcrumbs([
-      { id: 'dashboard', title: 'Dashboard', url: '/dashboard/overview' },
+      { id: 'dashboard', title: 'Dashboard', url: '/dashboard' },
       {
         id: 'opportunities',
         title: 'Opportunities',
@@ -364,7 +364,7 @@ export function MyJobApplicationsPage() {
                         ) : null}
 
                         <Button asChild variant='outline' size='sm'>
-                          <Link href={buildWorkspaceAliasPath(activeDomain, '/dashboard/opportunities')}>
+                          <Link href={roleScopedDashboardPath(activeDomain, '/dashboard/opportunities')}>
                             View opportunities
                             <ArrowRight className='ml-2 size-4' />
                           </Link>

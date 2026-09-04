@@ -5,7 +5,7 @@ import { useOptionalCourseCreator } from '@/context/course-creator-context';
 import { cn } from '@/lib/utils';
 import type { Organisation } from '@/services/client';
 import { useUserDomain } from '@/src/features/dashboard/context/user-domain-context';
-import { buildWorkspaceAliasPath } from '@/src/features/dashboard/lib/active-domain-storage';
+import { roleScopedDashboardPath } from '@/src/features/dashboard/lib/active-domain-storage';
 import { useOrganisation } from '@/src/features/organisation/context/organisation-context';
 import { useUserProfile } from '@/src/features/profile/context/profile-context';
 import { ShieldAlert } from 'lucide-react';
@@ -57,10 +57,10 @@ export default function DomainAccessGate({ children }: { children: ReactNode }) 
       return { renderChildren: true };
     }
 
-    const profilePrefix = buildWorkspaceAliasPath(domain, PROFILE_PREFIX);
-    const accountPrefix = buildWorkspaceAliasPath(domain, ACCOUNT_PREFIX);
-    const organisationProfilePrefix = buildWorkspaceAliasPath(domain, ORGANISATION_PROFILE_PREFIX);
-    const settingsPrefix = buildWorkspaceAliasPath(domain, SETTINGS_PREFIX);
+    const profilePrefix = roleScopedDashboardPath(domain, PROFILE_PREFIX);
+    const accountPrefix = roleScopedDashboardPath(domain, ACCOUNT_PREFIX);
+    const organisationProfilePrefix = roleScopedDashboardPath(domain, ORGANISATION_PROFILE_PREFIX);
+    const settingsPrefix = roleScopedDashboardPath(domain, SETTINGS_PREFIX);
 
     const shared = {
       instructor: {

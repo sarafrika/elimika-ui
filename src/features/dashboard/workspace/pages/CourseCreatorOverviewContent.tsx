@@ -12,7 +12,7 @@ import type {
 } from '@/lib/types/course-creator';
 import PurchasableCatalogue from '@/src/features/dashboard/components/PurchasableCatalogue';
 import { useUserDomain } from '@/src/features/dashboard/context/user-domain-context';
-import { buildWorkspaceAliasPath } from '@/src/features/dashboard/lib/active-domain-storage';
+import { roleScopedDashboardPath } from '@/src/features/dashboard/lib/active-domain-storage';
 import { format } from 'date-fns';
 import {
   ArrowRight,
@@ -54,7 +54,7 @@ export default function CourseCreatorOverviewContent() {
       }}
       actions={
         <Button asChild>
-          <Link prefetch href={buildWorkspaceAliasPath(activeDomain, '/dashboard/courses/create-course')}>
+          <Link prefetch href={roleScopedDashboardPath(activeDomain, '/dashboard/courses/create-course')}>
             Launch new course
           </Link>
         </Button>
@@ -173,7 +173,7 @@ function MonetizationCard({ monetization, activeDomain }: { monetization: Course
           </div>
         </div>
         <Button variant='outline' size='sm' asChild>
-          <Link prefetch href={buildWorkspaceAliasPath(activeDomain, '/dashboard/course-management')}>
+          <Link prefetch href={roleScopedDashboardPath(activeDomain, '/dashboard/course-management')}>
             Update pricing controls
             <ArrowRight className='ml-2 h-4 w-4' />
           </Link>
@@ -208,7 +208,7 @@ function TrainingRequirementsCard({
           <RequirementStat label='Optional' value={trainingRequirements.optionalRequirements} />
         </div>
         <Button variant='outline' size='sm' asChild>
-          <Link prefetch href={buildWorkspaceAliasPath(activeDomain, '/dashboard/course-management')}>
+          <Link prefetch href={roleScopedDashboardPath(activeDomain, '/dashboard/course-management')}>
             Manage requirements
             <ArrowRight className='ml-2 h-4 w-4' />
           </Link>
@@ -277,23 +277,23 @@ function QuickActionsCard({ activeDomain }: { activeDomain: UserDomain | null })
         {/* <ActionTile
           title='Provision instructors'
           description='Invite mentors and outline their revenue share.'
-          href={buildWorkspaceAliasPath(activeDomain, '/dashboard/instructors')}
+          href={roleScopedDashboardPath(activeDomain, '/dashboard/instructors')}
         /> */}
         {/* <ActionTile
           title='Share assets'
           description='Upload brand kits and curriculum collateral.'
-          // href={buildWorkspaceAliasPath(activeDomain, '/dashboard/library')}
+          // href={roleScopedDashboardPath(activeDomain, '/dashboard/library')}
           href='#'
         /> */}
         <ActionTile
           title='Create syllabus'
           description='Use guided steps to structure lessons and assessments.'
-          href={buildWorkspaceAliasPath(activeDomain, '/dashboard/course-management/create-new-course')}
+          href={roleScopedDashboardPath(activeDomain, '/dashboard/course-management/create-new-course')}
         />
         <ActionTile
           title='Check analytics'
           description='Monitor engagement, throughput, and monetisation.'
-          href={buildWorkspaceAliasPath(activeDomain, '/dashboard/analytics')}
+          href={roleScopedDashboardPath(activeDomain, '/dashboard/analytics')}
         />
       </CardContent>
     </Card>

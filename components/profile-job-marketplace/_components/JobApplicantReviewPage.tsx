@@ -30,7 +30,7 @@ import {
 } from '@/services/client/@tanstack/react-query.gen';
 import { useUserDomain } from '@/src/features/dashboard/context/user-domain-context';
 import { invalidateJobApplicationWorkflowQueries } from '@/src/features/dashboard/workflow-query-invalidation';
-import { buildWorkspaceAliasPath } from '@/src/features/dashboard/lib/active-domain-storage';
+import { roleScopedDashboardPath } from '@/src/features/dashboard/lib/active-domain-storage';
 
 function formatLabel(value?: string | null) {
   if (!value) return 'Not provided';
@@ -105,7 +105,7 @@ export function JobApplicantReviewPage({
       toast.success('Instructor assigned. Create the class to confirm the reserved bookings.');
       await invalidate();
       router.push(
-        buildWorkspaceAliasPath(activeDomain, `/dashboard/opportunities/${jobUuid}/create-class`)
+        roleScopedDashboardPath(activeDomain, `/dashboard/opportunities/${jobUuid}/create-class`)
       );
     },
     onError: error => {

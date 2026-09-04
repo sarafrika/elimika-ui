@@ -10,7 +10,7 @@ import {
 } from '@/components/ui/sidebar';
 import type { UserDomain } from '@/lib/types';
 import { type MenuItem, markActiveMenuItem } from '@/src/features/dashboard/config/menu';
-import { buildWorkspaceAliasPath } from '@/src/features/dashboard/lib/active-domain-storage';
+import { roleScopedDashboardPath } from '@/src/features/dashboard/lib/active-domain-storage';
 import { toBareDashboardPath } from '@/src/features/dashboard/lib/dashboard-url';
 import Link from 'next/link';
 import { useState } from 'react';
@@ -126,7 +126,7 @@ function MenuItemWithAccordion({
         </>
       ) : (
         <SidebarMenuButton isActive={item.isActive} asChild tooltip={item.title}>
-          <Link href={buildWorkspaceAliasPath(activeDomain, item.url!)}>
+          <Link href={roleScopedDashboardPath(activeDomain, item.url!)}>
             {item.icon && <item.icon />}
             <span>{item.title}</span>
           </Link>

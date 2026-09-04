@@ -22,7 +22,7 @@ import {
 } from '@/services/client/@tanstack/react-query.gen';
 import { useUserDomain } from '@/src/features/dashboard/context/user-domain-context';
 import { invalidateEnrollmentSuccessQueries } from '@/src/features/dashboard/courses/shared/enrollment-query-invalidation';
-import { buildWorkspaceAliasPath } from '@/src/features/dashboard/lib/active-domain-storage';
+import { roleScopedDashboardPath } from '@/src/features/dashboard/lib/active-domain-storage';
 import { useCartStore } from '@/store/cart-store';
 import { useMutation, useQueries, useQuery, useQueryClient } from '@tanstack/react-query';
 import { format } from 'date-fns';
@@ -456,7 +456,7 @@ export default function ProgramClassEnrollmentPage({
 
   const handleCancel = () => {
     window.location.assign(
-      buildWorkspaceAliasPath(activeDomain, `/dashboard/courses/available-programs/${programId}`)
+      roleScopedDashboardPath(activeDomain, `/dashboard/courses/available-programs/${programId}`)
     );
   };
 

@@ -1,5 +1,5 @@
 import type { UserDomain } from '@/lib/types';
-import { dashboardUrl } from '@/src/features/dashboard/lib/dashboard-url';
+import { dashboardUrl, domainFromPath } from '@/src/features/dashboard/lib/dashboard-url';
 
 export const ACTIVE_DASHBOARD_COOKIE = 'elimika-active-dashboard';
 export const ACTIVE_DASHBOARD_COOKIE_MAX_AGE = 60 * 60 * 24 * 365;
@@ -102,27 +102,18 @@ export function normalizeRequestedDashboardPath(path?: string | null) {
 
   const { pathname, search } = splitDashboardPath(path);
 
-  if (pathname.startsWith('/dashboard/workspace/')) {
-    const segments = pathname.split('/');
-    const remainder = segments.slice(4).filter(Boolean);
-    const workspacePath = remainder.length
-      ? `/dashboard/${remainder.join('/')}`
-      : '/dashboard/overview';
-    return `${workspacePath}${search}`;
-  }
-
   return `${pathname}${search}`;
 }
 
 /**
- * Build a role-scoped dashboard URL for `domain`. Formerly this produced
- * `/dashboard/workspace/<domain>/...`; now every role has a real URL segment, so
- * it delegates to the canonical `dashboardUrl` helper. Kept under the old name so
- * the ~85 existing call sites (sidebar nav, breadcrumbs, shared course pages) all
- * emit segment URLs without edits.
+ * Build a role-scoped dashboard URL for `domain` (e.g. `/dashboard/organisation/overview`).
+ * Every role is a real URL segment, so this delegates to the canonical `dashboardUrl`
+ * helper. A non-role-scoped dashboard path (`/dashboard/add-profile`) is returned as-is;
+ * a path with no known role falls back to `/dashboard` (the entry redirect) rather than a
+ * bare `/dashboard/<sub>`, which is no longer a real route.
  */
-export function buildWorkspaceAliasPath(domain: UserDomain | null, path = '/dashboard/overview') {
-  if (!domain || !isInternalDashboardPath(path)) {
+export function roleScopedDashboardPath(domain: UserDomain | null, path = '/dashboard/overview') {
+  if (!isInternalDashboardPath(path)) {
     return path;
   }
 
@@ -131,6 +122,14 @@ export function buildWorkspaceAliasPath(domain: UserDomain | null, path = '/dash
 
   if (isNonRoleScopedDashboardPath(pathname)) {
     return normalizedPath;
+  }
+
+  // A dashboard path with no known role can't be role-scoped. Send it to the
+  // /dashboard entry, which resolves the caller's domain server-side and
+  // redirects to the role overview. Never emit a bare /dashboard/<sub> — those
+  // are no longer real routes and would 404.
+  if (!domain) {
+    return '/dashboard';
   }
 
   return dashboardUrl(domain, normalizedPath);
@@ -143,7 +142,9 @@ export function resolveWorkspaceSwitchPath(
   const normalizedRequestedPath = normalizeRequestedDashboardPath(requestedPath);
 
   if (!domain) {
-    return normalizedRequestedPath;
+    // With no role to scope, keep an already role-scoped path; otherwise hand off to
+    // the /dashboard entry (which redirects) rather than emit a bare, non-existent route.
+    return domainFromPath(normalizedRequestedPath) ? normalizedRequestedPath : '/dashboard';
   }
 
   return dashboardUrl(domain, normalizedRequestedPath);

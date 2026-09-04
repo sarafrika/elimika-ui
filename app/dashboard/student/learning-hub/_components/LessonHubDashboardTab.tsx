@@ -20,7 +20,7 @@ import Link from 'next/link';
 import { useMemo, useState, type ComponentType, type ReactNode } from 'react';
 
 import { useUserDomain } from '@/src/features/dashboard/context/user-domain-context';
-import { buildWorkspaceAliasPath } from '@/src/features/dashboard/lib/active-domain-storage';
+import { roleScopedDashboardPath } from '@/src/features/dashboard/lib/active-domain-storage';
 import {
     getDueSummary,
     getStudentAssignmentSubmissionState,
@@ -864,7 +864,7 @@ function EmptyBrowse({ activeDomain }: { activeDomain: UserDomain | null }) {
         <div className='flex flex-col items-center gap-3 py-8 text-center'>
             <p className='text-sm text-muted-foreground'>You aren't enrolled in any courses yet.</p>
             <Button asChild>
-                <Link href={buildWorkspaceAliasPath(activeDomain, '/dashboard/courses')}>Browse courses</Link>
+                <Link href={roleScopedDashboardPath(activeDomain, '/dashboard/courses')}>Browse courses</Link>
             </Button>
         </div>
     );

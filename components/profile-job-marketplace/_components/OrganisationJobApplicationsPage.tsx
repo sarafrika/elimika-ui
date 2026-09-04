@@ -37,7 +37,7 @@ import {
 } from '@/services/client/@tanstack/react-query.gen';
 import { useUserDomain } from '@/src/features/dashboard/context/user-domain-context';
 import { invalidateJobApplicationWorkflowQueries } from '@/src/features/dashboard/workflow-query-invalidation';
-import { buildWorkspaceAliasPath } from '@/src/features/dashboard/lib/active-domain-storage';
+import { roleScopedDashboardPath } from '@/src/features/dashboard/lib/active-domain-storage';
 import { useOrganisation } from '@/src/features/organisation/context/organisation-context';
 import {
   ApplicationListSkeleton,
@@ -182,7 +182,7 @@ export function OrganisationJobApplicationsPage({ jobUuid }: JobApplicationsPage
     },
   });
 
-  const createClassHref = buildWorkspaceAliasPath(
+  const createClassHref = roleScopedDashboardPath(
     activeDomain,
     `/dashboard/opportunities/${jobUuid}/create-class`
   );
@@ -310,7 +310,7 @@ export function OrganisationJobApplicationsPage({ jobUuid }: JobApplicationsPage
           description='An active organisation profile is required before class job applications can be reviewed.'
           action={
             <Button asChild variant='outline'>
-              <Link href={buildWorkspaceAliasPath(activeDomain, '/dashboard/opportunities')}>
+              <Link href={roleScopedDashboardPath(activeDomain, '/dashboard/opportunities')}>
                 View class jobs
               </Link>
             </Button>
@@ -390,7 +390,7 @@ export function OrganisationJobApplicationsPage({ jobUuid }: JobApplicationsPage
                 onViewProfile={application => {
                   if (application.uuid) {
                     router.push(
-                      buildWorkspaceAliasPath(
+                      roleScopedDashboardPath(
                         activeDomain,
                         `/dashboard/opportunities/${jobUuid}/applications/${application.uuid}`
                       )

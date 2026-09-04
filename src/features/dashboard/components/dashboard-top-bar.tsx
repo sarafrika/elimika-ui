@@ -33,7 +33,7 @@ import {
 import { useUserDomain } from '@/src/features/dashboard/context/user-domain-context';
 import {
   buildDashboardSwitchPath,
-  buildWorkspaceAliasPath,
+  roleScopedDashboardPath,
 } from '@/src/features/dashboard/lib/active-domain-storage';
 import { useUserProfile } from '@/src/features/profile/context/profile-context';
 import { toAuthenticatedMediaUrl } from '@/src/lib/media-url';
@@ -201,14 +201,14 @@ export default function DashboardTopBar() {
     router.push(buildDashboardSwitchPath(nextDomain, '/dashboard/overview'));
   };
 
-  const notificationHref = buildWorkspaceAliasPath(activeDomain, '/dashboard/notifications');
-  const createCourseHref = buildWorkspaceAliasPath(
+  const notificationHref = roleScopedDashboardPath(activeDomain, '/dashboard/notifications');
+  const createCourseHref = roleScopedDashboardPath(
     activeDomain,
     // '/dashboard/course-management/create-new-course'
     '/dashboard/courses/create-course'
   );
-  const createClassHref = buildWorkspaceAliasPath(activeDomain, '/dashboard/classes/new');
-  const walletHref = buildWorkspaceAliasPath(activeDomain, '/dashboard/wallet');
+  const createClassHref = roleScopedDashboardPath(activeDomain, '/dashboard/classes/new');
+  const walletHref = roleScopedDashboardPath(activeDomain, '/dashboard/wallet');
   const withdrawHref = `${walletHref}/withdraw`;
 
   return (

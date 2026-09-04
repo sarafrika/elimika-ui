@@ -24,7 +24,7 @@ import {
 } from '@/services/client/@tanstack/react-query.gen';
 import { useUserDomain } from '@/src/features/dashboard/context/user-domain-context';
 import type { SearchInstructor } from '@/src/features/dashboard/courses/types';
-import { buildWorkspaceAliasPath } from '@/src/features/dashboard/lib/active-domain-storage';
+import { roleScopedDashboardPath } from '@/src/features/dashboard/lib/active-domain-storage';
 import { useQuery } from '@tanstack/react-query';
 import {
   ArrowLeft,
@@ -541,7 +541,7 @@ export default function StudentInstructorSearchPage() {
   return (
     <div className="px-4 py-6">
       <Link
-        href={buildWorkspaceAliasPath(activeDomain, '/dashboard/courses')}
+        href={roleScopedDashboardPath(activeDomain, '/dashboard/courses')}
         className="inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground"
       >
         <ArrowLeft className="h-4 w-4" /> Back to Browse Courses
@@ -930,7 +930,7 @@ export default function StudentInstructorSearchPage() {
                             className="bg-primary hover:bg-primary/90"
                             onClick={() =>
                               router.push(
-                                buildWorkspaceAliasPath(
+                                roleScopedDashboardPath(
                                   activeDomain,
                                   `/dashboard/courses/instructor?courseId=${courseId ?? ''}&id=${instructor.uuid}`
                                 )

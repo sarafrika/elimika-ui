@@ -60,7 +60,7 @@ export function CataloguePreviewSummary({
     () =>
       routeId
         ? [
-            { id: 'dashboard', title: 'Dashboard', url: '/dashboard/overview' },
+            { id: 'dashboard', title: 'Dashboard', url: '/dashboard' },
             { id: 'catalogue', title: breadcrumbBase.title, url: breadcrumbBase.href },
             {
               id: 'preview',

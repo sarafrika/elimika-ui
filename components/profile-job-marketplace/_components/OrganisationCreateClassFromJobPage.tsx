@@ -43,7 +43,7 @@ import {
   getJobOptions,
 } from '@/services/client/@tanstack/react-query.gen';
 import { useUserDomain } from '@/src/features/dashboard/context/user-domain-context';
-import { buildWorkspaceAliasPath } from '@/src/features/dashboard/lib/active-domain-storage';
+import { roleScopedDashboardPath } from '@/src/features/dashboard/lib/active-domain-storage';
 import { invalidateJobApplicationWorkflowQueries } from '@/src/features/dashboard/workflow-query-invalidation';
 
 type CreateClassFromJobPageProps = {
@@ -92,7 +92,7 @@ export function OrganisationCreateClassFromJobPage({ jobUuid }: CreateClassFromJ
       ? (courseMap[job.course_uuid]?.name ?? `Course ${shortId(job.course_uuid)}`)
       : 'Course or program';
 
-  const applicationsHref = buildWorkspaceAliasPath(
+  const applicationsHref = roleScopedDashboardPath(
     activeDomain,
     `/dashboard/opportunities/${jobUuid}`
   );
@@ -112,7 +112,7 @@ export function OrganisationCreateClassFromJobPage({ jobUuid }: CreateClassFromJ
       await invalidateJobApplicationWorkflowQueries(queryClient);
       const classUuid = response?.data?.uuid;
       router.push(
-        buildWorkspaceAliasPath(
+        roleScopedDashboardPath(
           activeDomain,
           classUuid ? `/dashboard/classes?highlight=${classUuid}` : '/dashboard/classes'
         )
@@ -173,7 +173,7 @@ export function OrganisationCreateClassFromJobPage({ jobUuid }: CreateClassFromJ
               description='The class was created and the reserved venue and equipment are booked.'
               action={
                 <Button asChild variant='outline'>
-                  <Link href={buildWorkspaceAliasPath(activeDomain, '/dashboard/classes')}>
+                  <Link href={roleScopedDashboardPath(activeDomain, '/dashboard/classes')}>
                     View classes
                   </Link>
                 </Button>

@@ -47,7 +47,7 @@ import {
 import type { BookingResponse, Student, User } from '@/services/client/types.gen';
 import { useUserDomain } from '@/src/features/dashboard/context/user-domain-context';
 import { getErrorMessage } from '@/src/features/dashboard/courses/types';
-import { buildWorkspaceAliasPath } from '@/src/features/dashboard/lib/active-domain-storage';
+import { roleScopedDashboardPath } from '@/src/features/dashboard/lib/active-domain-storage';
 import { toAuthenticatedMediaUrl } from '@/src/lib/media-url';
 
 const PAGE_SIZE = 15;
@@ -145,12 +145,12 @@ function InstructorBookingRequestsPage() {
       {
         id: 'dashboard',
         title: 'Dashboard',
-        url: buildWorkspaceAliasPath(activeDomain, '/dashboard/overview'),
+        url: roleScopedDashboardPath(activeDomain, '/dashboard/overview'),
       },
       {
         id: 'booking-requests',
         title: 'Booking Requests',
-        url: buildWorkspaceAliasPath(activeDomain, '/dashboard/instructor/booking-requests'),
+        url: roleScopedDashboardPath(activeDomain, '/dashboard/instructor/booking-requests'),
         isLast: true,
       },
     ]);

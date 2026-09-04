@@ -15,7 +15,7 @@ import {
 import type { Course, TrainingProgram } from '@/services/client/types.gen';
 import { useUserDomain } from '@/src/features/dashboard/context/user-domain-context';
 import { CourseCard } from '@/src/features/dashboard/courses/components/CourseCard';
-import { buildWorkspaceAliasPath } from '@/src/features/dashboard/lib/active-domain-storage';
+import { roleScopedDashboardPath } from '@/src/features/dashboard/lib/active-domain-storage';
 import { useQuery } from '@tanstack/react-query';
 import { BookOpen, Filter, Layers, Search } from 'lucide-react';
 import { useRouter } from 'next/navigation';
@@ -226,7 +226,7 @@ export default function AllCoursesPage() {
                   isStudentView={true}
                   handleEnroll={() =>
                     router.push(
-                      buildWorkspaceAliasPath(
+                      roleScopedDashboardPath(
                         activeDomain,
                         `/dashboard/courses/available-classes/${course.uuid}`
                       )
@@ -234,7 +234,7 @@ export default function AllCoursesPage() {
                   }
                   handleSearchInstructor={() =>
                     router.push(
-                      buildWorkspaceAliasPath(
+                      roleScopedDashboardPath(
                         activeDomain,
                         `/dashboard/courses/instructor?courseId=${course.uuid}`
                       )
@@ -242,7 +242,7 @@ export default function AllCoursesPage() {
                   }
                   handleClick={() =>
                     router.push(
-                      buildWorkspaceAliasPath(activeDomain, `/dashboard/courses/${course.uuid}`)
+                      roleScopedDashboardPath(activeDomain, `/dashboard/courses/${course.uuid}`)
                     )
                   }
                 />
@@ -297,7 +297,7 @@ export default function AllCoursesPage() {
                   isStudentView={true}
                   handleEnroll={() =>
                     router.push(
-                      buildWorkspaceAliasPath(
+                      roleScopedDashboardPath(
                         activeDomain,
                         `/dashboard/courses/available-programs/${program.uuid}`
                       )
@@ -305,7 +305,7 @@ export default function AllCoursesPage() {
                   }
                   handleSearchInstructor={() =>
                     router.push(
-                      buildWorkspaceAliasPath(
+                      roleScopedDashboardPath(
                         activeDomain,
                         `/dashboard/courses/instructor?courseId=${program.uuid}`
                       )
@@ -313,7 +313,7 @@ export default function AllCoursesPage() {
                   }
                   handleClick={() =>
                     router.push(
-                      buildWorkspaceAliasPath(
+                      roleScopedDashboardPath(
                         activeDomain,
                         `/dashboard/courses/programs/${program.uuid}`
                       )

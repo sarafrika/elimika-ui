@@ -22,7 +22,7 @@ import {
 } from '@/services/client/@tanstack/react-query.gen';
 import { useUserDomain } from '@/src/features/dashboard/context/user-domain-context';
 import { EnrollmentLoadingState } from '@/src/features/dashboard/courses/components/EnrollmentLoadingState';
-import { buildWorkspaceAliasPath } from '@/src/features/dashboard/lib/active-domain-storage';
+import { roleScopedDashboardPath } from '@/src/features/dashboard/lib/active-domain-storage';
 import { invalidateReviewWorkflowQueries } from '@/src/features/dashboard/workflow-query-invalidation';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import {
@@ -351,7 +351,7 @@ export default function ReusableCourseDetailsPage({
                     <Button
                       onClick={() =>
                         router.push(
-                          buildWorkspaceAliasPath(
+                          roleScopedDashboardPath(
                             activeDomain,
                             `/dashboard/courses/available-classes/${courseData?.uuid}`
                           )
@@ -367,7 +367,7 @@ export default function ReusableCourseDetailsPage({
                   <Button
                     onClick={() =>
                       router.push(
-                        buildWorkspaceAliasPath(
+                        roleScopedDashboardPath(
                           activeDomain,
                           `/dashboard/courses/instructor?courseId=${courseData?.uuid}`
                         )

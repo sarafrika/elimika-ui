@@ -16,7 +16,7 @@ import {
 } from '@/services/client/@tanstack/react-query.gen';
 import { InstructorDirectory } from '@/src/features/dashboard/courses/components/instructor-directory';
 import { useUserDomain } from '@/src/features/dashboard/context/user-domain-context';
-import { buildWorkspaceAliasPath } from '@/src/features/dashboard/lib/active-domain-storage';
+import { roleScopedDashboardPath } from '@/src/features/dashboard/lib/active-domain-storage';
 import { ManageBookings } from '@/src/features/dashboard/courses/components/manage-bookings';
 import type { BookingRecord, BundledClass, SearchInstructor } from '../types';
 
@@ -150,17 +150,17 @@ const InstructorBookingDashboard: React.FC<Props> = ({ classes }) => {
       {
         id: 'dashboard',
         title: 'Dashboard',
-        url: buildWorkspaceAliasPath(activeDomain, '/dashboard/overview'),
+        url: roleScopedDashboardPath(activeDomain, '/dashboard/overview'),
       },
       {
         id: 'courses',
         title: 'Browse Courses',
-        url: buildWorkspaceAliasPath(activeDomain, '/dashboard/courses'),
+        url: roleScopedDashboardPath(activeDomain, '/dashboard/courses'),
       },
       {
         id: 'book-instructor',
         title: `Book Instructor`,
-        url: buildWorkspaceAliasPath(
+        url: roleScopedDashboardPath(
           activeDomain,
           `/dashboard/courses/instructor${courseId ? `?courseId=${courseId}` : ''}`
         ),

@@ -2,7 +2,7 @@ import type { UserDomain } from '@/lib/types';
 import { BookOpen, Briefcase, CalendarPlus, FileCheck, GraduationCap, type LucideIcon, MapPin, Shield, Sparkles, Users } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { useMemo } from 'react';
-import { buildWorkspaceAliasPath } from '../lib/active-domain-storage';
+import { roleScopedDashboardPath } from '../lib/active-domain-storage';
 
 type DashboardDomainDisplay = {
   icon: LucideIcon;
@@ -82,11 +82,11 @@ export type CreateAction = {
 export function useCreateMenuActions(activeDomain: UserDomain | null): CreateAction[] {
   const router = useRouter();
 
-  const createCourseHref = buildWorkspaceAliasPath(
+  const createCourseHref = roleScopedDashboardPath(
     activeDomain,
     '/dashboard/course-management/create-new-course'
   );
-  const createClassHref = buildWorkspaceAliasPath(activeDomain, '/dashboard/classes/new');
+  const createClassHref = roleScopedDashboardPath(activeDomain, '/dashboard/classes/new');
 
   return useMemo(() => {
     switch (activeDomain) {
@@ -104,7 +104,7 @@ export function useCreateMenuActions(activeDomain: UserDomain | null): CreateAct
             icon: FileCheck,
             onSelect: () =>
               router.push(
-                buildWorkspaceAliasPath(
+                roleScopedDashboardPath(
                   activeDomain,
                   '/dashboard/course-management/certificates'
                 )
@@ -134,14 +134,14 @@ export function useCreateMenuActions(activeDomain: UserDomain | null): CreateAct
             label: 'Post a Job',
             description: 'Advertise an instructor opening',
             icon: Briefcase,
-            onSelect: () => router.push(buildWorkspaceAliasPath(activeDomain, '/dashboard/jobs/new')),
+            onSelect: () => router.push(roleScopedDashboardPath(activeDomain, '/dashboard/jobs/new')),
           },
           {
             label: 'Add Classroom',
             description: 'Register a venue or online room',
             icon: MapPin,
             onSelect: () =>
-              router.push(buildWorkspaceAliasPath(activeDomain, '/dashboard/venues/new')),
+              router.push(roleScopedDashboardPath(activeDomain, '/dashboard/venues/new')),
           },
         ];
 

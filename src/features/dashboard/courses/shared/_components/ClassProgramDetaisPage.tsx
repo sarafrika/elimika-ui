@@ -22,7 +22,7 @@ import {
 } from '@/services/client/@tanstack/react-query.gen';
 import { useUserDomain } from '@/src/features/dashboard/context/user-domain-context';
 import { EnrollmentLoadingState } from '@/src/features/dashboard/courses/components/EnrollmentLoadingState';
-import { buildWorkspaceAliasPath } from '@/src/features/dashboard/lib/active-domain-storage';
+import { roleScopedDashboardPath } from '@/src/features/dashboard/lib/active-domain-storage';
 import { invalidateReviewWorkflowQueries } from '@/src/features/dashboard/workflow-query-invalidation';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import {
@@ -1574,7 +1574,7 @@ export default function ClassProgramDetailsPage({
 
   const programShareLink = useMemo(() => {
     if (!siteOrigin) return '';
-    return `${siteOrigin}${buildWorkspaceAliasPath(
+    return `${siteOrigin}${roleScopedDashboardPath(
       activeDomain,
       `/dashboard/courses/available-programs/${resolvedProgramId}`
     )}`;
@@ -1755,7 +1755,7 @@ export default function ClassProgramDetailsPage({
                     assessmentCount={filteredAssignments.length + filteredQuizzes.length}
                     onEnroll={() =>
                       router.push(
-                        buildWorkspaceAliasPath(
+                        roleScopedDashboardPath(
                           activeDomain,
                           `/dashboard/courses/available-programs/${resolvedProgramId}`
                         )
@@ -1775,7 +1775,7 @@ export default function ClassProgramDetailsPage({
                   {type === 'program' ? (
                     <ShareClassCourse
                       courseTitle={program?.title ?? ''}
-                      courseUrl={`${window.location.origin}${buildWorkspaceAliasPath(
+                      courseUrl={`${window.location.origin}${roleScopedDashboardPath(
                         activeDomain,
                         `/dashboard/courses/programs/${program?.uuid}`
                       )}`}

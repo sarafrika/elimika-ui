@@ -3,7 +3,7 @@
 import { useEffect } from 'react';
 import { useBreadcrumb } from '@/context/breadcrumb-provider';
 import { useUserDomain } from '@/src/features/dashboard/context/user-domain-context';
-import { buildWorkspaceAliasPath } from '@/src/features/dashboard/lib/active-domain-storage';
+import { roleScopedDashboardPath } from '@/src/features/dashboard/lib/active-domain-storage';
 
 export function useOrganisationAccountBreadcrumb(id: string, title: string, url: string) {
   const { replaceBreadcrumbs } = useBreadcrumb();
@@ -14,9 +14,9 @@ export function useOrganisationAccountBreadcrumb(id: string, title: string, url:
       {
         id: 'account',
         title: 'Account',
-        url: buildWorkspaceAliasPath(activeDomain, '/dashboard/account'),
+        url: roleScopedDashboardPath(activeDomain, '/dashboard/account'),
       },
-      { id, title, url: buildWorkspaceAliasPath(activeDomain, url), isLast: true },
+      { id, title, url: roleScopedDashboardPath(activeDomain, url), isLast: true },
     ]);
   }, [activeDomain, id, title, url, replaceBreadcrumbs]);
 }

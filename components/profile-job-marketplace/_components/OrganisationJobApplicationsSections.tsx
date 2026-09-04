@@ -40,7 +40,7 @@ import type {
   Instructor,
 } from '@/services/client';
 import { useUserDomain } from '@/src/features/dashboard/context/user-domain-context';
-import { buildWorkspaceAliasPath } from '@/src/features/dashboard/lib/active-domain-storage';
+import { roleScopedDashboardPath } from '@/src/features/dashboard/lib/active-domain-storage';
 import {
   APPLICATION_STATUSES,
   type ApplicationStatus,
@@ -480,7 +480,7 @@ export function JobOverviewPanel({
 
       <div className='mt-4 flex flex-wrap gap-2'>
         <Button variant='outline' size='sm' asChild>
-          <Link href={buildWorkspaceAliasPath(activeDomain, '/dashboard/opportunities')}>
+          <Link href={roleScopedDashboardPath(activeDomain, '/dashboard/opportunities')}>
             Back to opportunities
           </Link>
         </Button>

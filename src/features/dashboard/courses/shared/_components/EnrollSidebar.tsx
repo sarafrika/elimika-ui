@@ -41,7 +41,7 @@ import {
 } from '@/services/client/@tanstack/react-query.gen';
 import { PreviewRow } from '@/app/dashboard/instructor/classes/new/_components/class-creation-preview-rail';
 import { useUserDomain } from '@/src/features/dashboard/context/user-domain-context';
-import { buildWorkspaceAliasPath } from '@/src/features/dashboard/lib/active-domain-storage';
+import { roleScopedDashboardPath } from '@/src/features/dashboard/lib/active-domain-storage';
 
 type Props = {
   course: Course;
@@ -120,7 +120,7 @@ export default function EnrollSidebar({
             }),
           });
 
-          router.push(buildWorkspaceAliasPath(activeDomain, '/dashboard/training-hub'));
+          router.push(roleScopedDashboardPath(activeDomain, '/dashboard/training-hub'));
         },
         onError: error => {
           toast.error('Failed to delete class');
@@ -331,7 +331,7 @@ export default function EnrollSidebar({
                 size='sm'
                 className='h-9 w-full rounded-md'
                 onClick={() => {
-                  router.push(buildWorkspaceAliasPath(
+                  router.push(roleScopedDashboardPath(
               activeDomain,
               `/dashboard/classes/new?id=${classData?.class?.uuid}`
             ));

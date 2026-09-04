@@ -123,7 +123,7 @@ export function getSettingsVariantConfig(
   };
 
   // Admin help lives under the admin role segment; the bare `/dashboard/support`
-  // path bypasses `buildWorkspaceAliasPath` and 404s.
+  // path bypasses `roleScopedDashboardPath` and 404s.
   const supportHref = variant === 'admin' ? '/dashboard/admin/support' : '/help';
   const roleLabel = formatDomain(normalizeUserDomainValue(profile?.user_domain) ?? variant);
 

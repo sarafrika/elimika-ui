@@ -32,7 +32,7 @@ import {
 import type { BookingResponse } from '@/services/client/types.gen';
 import { useUserDomain } from '@/src/features/dashboard/context/user-domain-context';
 import { getErrorMessage } from '@/src/features/dashboard/courses/types';
-import { buildWorkspaceAliasPath } from '@/src/features/dashboard/lib/active-domain-storage';
+import { roleScopedDashboardPath } from '@/src/features/dashboard/lib/active-domain-storage';
 
 const PAGE_SIZE = 15;
 
@@ -117,12 +117,12 @@ function StudentBookingPage() {
       {
         id: 'dashboard',
         title: 'Dashboard',
-        url: buildWorkspaceAliasPath(activeDomain, '/dashboard/overview'),
+        url: roleScopedDashboardPath(activeDomain, '/dashboard/overview'),
       },
       {
         id: 'student-bookings',
         title: 'My Bookings',
-        url: buildWorkspaceAliasPath(activeDomain, '/dashboard/student/my-bookings'),
+        url: roleScopedDashboardPath(activeDomain, '/dashboard/student/my-bookings'),
         isLast: true,
       },
     ]);
@@ -233,7 +233,7 @@ function StudentBookingPage() {
         action={
           <Button
             onClick={() =>
-              router.push(buildWorkspaceAliasPath(activeDomain, '/dashboard/student/courses'))
+              router.push(roleScopedDashboardPath(activeDomain, '/dashboard/student/courses'))
             }
           >
             Search instructors
@@ -272,7 +272,7 @@ function StudentBookingPage() {
           action={
             <Button
               onClick={() =>
-                router.push(buildWorkspaceAliasPath(activeDomain, '/dashboard/student/courses'))
+                router.push(roleScopedDashboardPath(activeDomain, '/dashboard/student/courses'))
               }
             >
               Search instructors

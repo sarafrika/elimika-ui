@@ -95,7 +95,7 @@ export async function resolveDashboardEntryTarget(
 
   if (!activeDomain) {
     return {
-      redirectTo: '/dashboard/overview',
+      redirectTo: '/dashboard',
       activeDomain: null,
     };
   }

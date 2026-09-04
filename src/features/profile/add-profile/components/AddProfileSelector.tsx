@@ -8,7 +8,7 @@ import { ArrowLeft, ArrowRight, BookOpen, Building2, GraduationCap, Users } from
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useUserDomain } from '../../../dashboard/context/user-domain-context';
-import { buildWorkspaceAliasPath } from '../../../dashboard/lib/active-domain-storage';
+import { roleScopedDashboardPath } from '../../../dashboard/lib/active-domain-storage';
 
 type ProfileAccent = {
   icon: string;
@@ -130,7 +130,7 @@ export default function AddProfileSelector() {
             dashboard switcher.
           </p>
           <Button
-            onClick={() => router.push(buildWorkspaceAliasPath(activeDomain, '/dashboard/overview'))}
+            onClick={() => router.push(roleScopedDashboardPath(activeDomain, '/dashboard/overview'))}
             variant="default"
           >
             <ArrowLeft className="mr-2 h-4 w-4" />

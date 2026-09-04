@@ -20,7 +20,7 @@ import menu, {
   type MenuGroup,
   type MenuItem,
 } from '@/src/features/dashboard/config/menu';
-import { buildWorkspaceAliasPath } from '@/src/features/dashboard/lib/active-domain-storage';
+import { roleScopedDashboardPath } from '@/src/features/dashboard/lib/active-domain-storage';
 import { SettingsSupportWidget } from '@/src/features/dashboard/settings/_components/settings-support-widget';
 import { useOrganisation } from '@/src/features/organisation/context/organisation-context';
 import { useUserProfile } from '@/src/features/profile/context/profile-context';
@@ -88,7 +88,7 @@ export function AppSidebar({
           <Link
             className='hover:bg-sidebar-accent flex min-w-0 flex-1 items-center gap-2 rounded-md px-2 py-1.5 transition-colors group-data-[collapsible=icon]:hidden'
             prefetch
-            href={buildWorkspaceAliasPath(activeDomain, '/dashboard/overview')}
+            href={roleScopedDashboardPath(activeDomain, '/dashboard/overview')}
           >
             <div className='bg-sidebar-primary text-sidebar-primary-foreground flex aspect-square size-8 items-center justify-center rounded-lg'>
               <Image

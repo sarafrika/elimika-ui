@@ -81,7 +81,7 @@ import ShareClassCourse, {
 } from '@/src/features/dashboard/courses/shared/_components/ShareClassCourse';
 import { UnifiedContentItem } from '@/src/features/dashboard/courses/shared/_components/SharedCoursesPage';
 import StudentsAlsoBought from '@/src/features/dashboard/courses/shared/_components/StudentsAlsoBought';
-import { buildWorkspaceAliasPath } from '@/src/features/dashboard/lib/active-domain-storage';
+import { roleScopedDashboardPath } from '@/src/features/dashboard/lib/active-domain-storage';
 import { useUserProfile } from '@/src/features/profile/context/profile-context';
 
 const trainingApplicationStatusQueryOptions = {
@@ -261,7 +261,7 @@ export default function ClassCourseDetailsPage({
 
   const courseShareLink =
     typeof window !== 'undefined'
-      ? `${window.location.origin}${buildWorkspaceAliasPath(
+      ? `${window.location.origin}${roleScopedDashboardPath(
           activeDomain,
           `/dashboard/courses/${course?.uuid}`
         )}`
@@ -689,7 +689,7 @@ export default function ClassCourseDetailsPage({
               }}
               onEnroll={() =>
                 router.push(
-                  buildWorkspaceAliasPath(
+                  roleScopedDashboardPath(
                     activeDomain,
                     getEnrollHref(activeDomain!, 'course', course?.uuid as string)
                   )
@@ -697,7 +697,7 @@ export default function ClassCourseDetailsPage({
               }
               onSearchInstructor={() =>
                 router.push(
-                  buildWorkspaceAliasPath(
+                  roleScopedDashboardPath(
                     activeDomain,
                     `/dashboard/courses/instructor?courseId=${course?.uuid}`
                   )
@@ -705,7 +705,7 @@ export default function ClassCourseDetailsPage({
               }
               onInviteStudents={() => setInviteOpen(true)}
               onApplyForFunding={() => {
-                router.push(buildWorkspaceAliasPath(activeDomain, '/dashboard/skills-fund'));
+                router.push(roleScopedDashboardPath(activeDomain, '/dashboard/skills-fund'));
               }}
             />
 
@@ -729,7 +729,7 @@ export default function ClassCourseDetailsPage({
             {type === 'course' ? (
               <ShareClassCourse
                 courseTitle={course?.name ?? ''}
-                courseUrl={`${window.location.origin}${buildWorkspaceAliasPath(
+                courseUrl={`${window.location.origin}${roleScopedDashboardPath(
                   activeDomain,
                   `/dashboard/courses/${course?.uuid}`
                 )}`}

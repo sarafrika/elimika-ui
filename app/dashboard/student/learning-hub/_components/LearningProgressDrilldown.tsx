@@ -4,7 +4,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Progress } from "@/components/ui/progress";
 import { useCourseLessonsWithContent, type CourseLessonWithContent } from "@/hooks/use-courselessonwithcontent";
 import { useUserDomain } from "@/src/features/dashboard/context/user-domain-context";
-import { buildWorkspaceAliasPath } from "@/src/features/dashboard/lib/active-domain-storage";
+import { roleScopedDashboardPath } from "@/src/features/dashboard/lib/active-domain-storage";
 import type { LucideIcon } from "lucide-react";
 import { ArrowRight, BookOpen, CheckCircle2, Circle, PlayCircle, Sparkles } from "lucide-react";
 import Link from "next/link";
@@ -198,7 +198,7 @@ export function LearningProgressDrilldown({ enrollments }: { enrollments: EnrolC
                     key: "browse-catalog",
                     label: "Browse the course catalog",
                     icon: Sparkles,
-                    href: buildWorkspaceAliasPath(activeDomain, "/dashboard/courses"),
+                    href: roleScopedDashboardPath(activeDomain, "/dashboard/courses"),
                 });
 
                 return (
@@ -372,12 +372,12 @@ export function LearningProgressDrilldown({ enrollments }: { enrollments: EnrolC
 
                                 <div className="flex flex-wrap gap-2 pt-1">
                                     <Button asChild size="sm" variant="outline">
-                                        <Link href={buildWorkspaceAliasPath(activeDomain, '/dashboard/student/learning-hub')}>
+                                        <Link href={roleScopedDashboardPath(activeDomain, '/dashboard/student/learning-hub')}>
                                             Open learning hub
                                         </Link>
                                     </Button>
                                     <Button asChild size="sm" variant="outline">
-                                        <Link href={buildWorkspaceAliasPath(activeDomain, '/dashboard/student/learning-hub?tab=my-courses')}>
+                                        <Link href={roleScopedDashboardPath(activeDomain, '/dashboard/student/learning-hub?tab=my-courses')}>
                                             My courses
                                         </Link>
                                     </Button>

@@ -44,7 +44,7 @@ import {
   searchTrainingApplicationsOptions,
 } from '@/services/client/@tanstack/react-query.gen';
 import type { Course, ScheduledInstance } from '@/services/client/types.gen';
-import { buildWorkspaceAliasPath } from '@/src/features/dashboard/lib/active-domain-storage';
+import { roleScopedDashboardPath } from '@/src/features/dashboard/lib/active-domain-storage';
 import { useMutation, useQueries, useQuery, useQueryClient } from '@tanstack/react-query';
 import {
   ArrowLeft,
@@ -371,7 +371,7 @@ export default function InstructorHirePage({ courseId, instructorId }: Props) {
 
   const handleBack = () =>
     router.push(
-      buildWorkspaceAliasPath(
+      roleScopedDashboardPath(
         activeDomain,
         `/dashboard/courses/instructor${courseId ? `?courseId=${courseId}` : ''}`
       )
@@ -440,7 +440,7 @@ export default function InstructorHirePage({ courseId, instructorId }: Props) {
       const firstBookingUuid = createdBookings[0]?.uuid;
       toast.success('Booking request sent successfully.');
       router.push(
-        buildWorkspaceAliasPath(
+        roleScopedDashboardPath(
           activeDomain,
           `/dashboard/student/my-bookings${firstBookingUuid ? `?bookingUuid=${firstBookingUuid}` : ''}`
         )

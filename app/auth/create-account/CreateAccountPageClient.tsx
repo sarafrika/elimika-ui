@@ -42,7 +42,7 @@ import Image from 'next/image';
 import { useCallback, useEffect, useState } from 'react';
 import { toast } from 'sonner';
 
-const DASHBOARD_OVERVIEW_PATH = '/dashboard/overview';
+const DASHBOARD_ENTRY_PATH = '/dashboard';
 
 type AccountCreationStatus = 'idle' | 'submitting' | 'success' | 'error';
 
@@ -332,7 +332,7 @@ export default function CreateAccountPageClient({ authRealm }: CreateAccountPage
           <Button
             onClick={() =>
               signIn('keycloak', {
-                redirectTo: `${window.location.origin}${DASHBOARD_OVERVIEW_PATH}`,
+                redirectTo: `${window.location.origin}${DASHBOARD_ENTRY_PATH}`,
               })
             }
             className='bg-primary hover:bg-primary/90 gap-2'
@@ -452,7 +452,7 @@ export default function CreateAccountPageClient({ authRealm }: CreateAccountPage
                   className='text-primary cursor-pointer hover:underline'
                   onClick={() =>
                     signIn('keycloak', {
-                      redirectTo: `${window.location.origin}${DASHBOARD_OVERVIEW_PATH}`,
+                      redirectTo: `${window.location.origin}${DASHBOARD_ENTRY_PATH}`,
                     })
                   }
                 >

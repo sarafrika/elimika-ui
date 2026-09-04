@@ -27,7 +27,7 @@ import {
   requestOrganisationVerificationMutation,
 } from '@/services/client/@tanstack/react-query.gen';
 import { useUserDomain } from '@/src/features/dashboard/context/user-domain-context';
-import { buildWorkspaceAliasPath } from '@/src/features/dashboard/lib/active-domain-storage';
+import { roleScopedDashboardPath } from '@/src/features/dashboard/lib/active-domain-storage';
 
 const num = (value?: bigint | number | null): string =>
   value === undefined || value === null ? '—' : Number(value).toLocaleString();
@@ -246,7 +246,7 @@ export default function OrganisationOverviewPage() {
           description='Registered organisation details'
           action={
             <Button asChild size='sm' variant='outline'>
-              <Link href={buildWorkspaceAliasPath(activeDomain, '/dashboard/account/training-center')}>Edit</Link>
+              <Link href={roleScopedDashboardPath(activeDomain, '/dashboard/account/training-center')}>Edit</Link>
             </Button>
           }
         >
@@ -274,7 +274,7 @@ export default function OrganisationOverviewPage() {
           description='Per-session fees across your classes'
           action={
             <Button asChild size='sm' variant='outline'>
-              <Link href={buildWorkspaceAliasPath(activeDomain, '/dashboard/account/fees-scheduling')}>Manage</Link>
+              <Link href={roleScopedDashboardPath(activeDomain, '/dashboard/account/fees-scheduling')}>Manage</Link>
             </Button>
           }
         >
@@ -292,7 +292,7 @@ export default function OrganisationOverviewPage() {
         description='People who manage this organisation'
         action={
           <Button asChild size='sm' variant='outline'>
-            <Link href={buildWorkspaceAliasPath(activeDomain, '/dashboard/account/admin')}>Manage</Link>
+            <Link href={roleScopedDashboardPath(activeDomain, '/dashboard/account/admin')}>Manage</Link>
           </Button>
         }
       >

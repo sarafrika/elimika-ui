@@ -23,7 +23,7 @@ import {
 import { Skeleton } from '../../../../../components/ui/skeleton';
 import Spinner from '../../../../../components/ui/spinner';
 import { useUserProfile } from '../../../profile/context/profile-context';
-import { buildWorkspaceAliasPath } from '../../lib/active-domain-storage';
+import { roleScopedDashboardPath } from '../../lib/active-domain-storage';
 import { CourseDetailsSheet } from '../shared/_components/CourseDetailsSheet';
 import { BundledClass } from '../types';
 
@@ -194,7 +194,7 @@ export default function AvailableClassesPage({
               onViewCourse={() => setCourseDetailsOpen(true)}
               onViewClass={() => setClassDetailsOpen(true)}
               onEnroll={selectedClass => {
-                window.location.href = buildWorkspaceAliasPath(
+                window.location.href = roleScopedDashboardPath(
                   activeDomain,
                   `/dashboard/courses/available-classes/${courseId}/enroll?id=${selectedClass.uuid}`
                 );
