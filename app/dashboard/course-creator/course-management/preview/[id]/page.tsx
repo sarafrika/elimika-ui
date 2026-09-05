@@ -1,20 +1,44 @@
 'use client';
 
+import { useBreadcrumb } from '@/context/breadcrumb-provider';
 import { useCourseCreator } from '@/context/course-creator-context';
+import { CourseRecordPage } from '@/src/features/course-record';
+import { useParams } from 'next/navigation';
+import { useEffect } from 'react';
 import { CourseCreatorEmptyState } from '../../../_components/loading-state';
-import CoursePreviewComponent from './coursePreview-component';
+
+const COURSE_MANAGEMENT_HREF = '/dashboard/course-creator/course-management/drafts';
 
 function Page() {
+  const params = useParams();
+  const courseUuid = typeof params?.id === 'string' ? params.id : (params?.id?.[0] ?? '');
   const { profile, isLoading } = useCourseCreator();
+  const { replaceBreadcrumbs } = useBreadcrumb();
 
-  // Don't gate the whole preview on the profile query — the preview component fetches
-  // the course itself and resolves its own loading state. The author name simply fills
-  // in once the profile arrives (it has an in-component fallback until then).
+  useEffect(() => {
+    replaceBreadcrumbs([
+      { id: 'dashboard', title: 'Dashboard', url: '/dashboard/course-creator/overview' },
+      {
+        id: 'course-management',
+        title: 'Course Management',
+        url: COURSE_MANAGEMENT_HREF,
+      },
+      {
+        id: 'preview',
+        title: 'Preview',
+        url: `/dashboard/course-creator/course-management/preview/${courseUuid}`,
+        isLast: true,
+      },
+    ]);
+  }, [replaceBreadcrumbs, courseUuid]);
+
+  // Don't gate the record on the profile query — every region resolves itself.
+  // Only a resolved "no course-creator profile" is a reason not to render.
   if (!profile && !isLoading) {
     return <CourseCreatorEmptyState />;
   }
 
-  return <CoursePreviewComponent authorName={profile?.full_name ?? ''} />;
+  return <CourseRecordPage courseUuid={courseUuid} backHref={COURSE_MANAGEMENT_HREF} />;
 }
 
 export default Page;
