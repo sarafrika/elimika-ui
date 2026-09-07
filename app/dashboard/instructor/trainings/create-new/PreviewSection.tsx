@@ -1,4 +1,3 @@
-// @ts-nocheck -- pre-existing @hey-api generated-client type drift (see memory: elimika-ui-typecheck)
 'use client';
 
 import { Card } from '@/components/ui/card';
@@ -10,6 +9,7 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
+import { formatDateOnly } from '@/lib/date';
 import { Calendar, Clock, Users } from 'lucide-react';
 import { useMemo } from 'react';
 import type { ClassDetailsCourse, ClassDetailsLesson } from '@/hooks/use-class-details';
@@ -54,6 +54,19 @@ export const PreviewSection = ({
 
     return Number(diff.toFixed(2));
   }, [customSessions, scheduleMode, scheduleSettings]);
+
+  /** "Opens Mar 12, 2026 · closes Mar 30, 2026", or undefined while either date is unset. */
+  const registrationWindow = useMemo(() => {
+    const { start, end } = scheduleSettings.registrationPeriod;
+    if (!start || !end) return undefined;
+
+    // formatDateOnly is the repo's helper for a calendar day that is not an instant:
+    // it reads in UTC, so a bare YYYY-MM-DD renders as the day it names in every zone.
+    // These two values are typed by hand into date inputs, so the hand-rolled parse and
+    // locale format this replaces was not actually wrong — but it was the shape
+    // scripts/check-datetime.mjs exists to stop, and the helper is shorter anyway.
+    return `Opens ${formatDateOnly(start)} · closes ${formatDateOnly(end)}`;
+  }, [scheduleSettings.registrationPeriod]);
 
   const ratePerLesson = parseFloat(classDetails.rate_card || '0') * totalHours || 0;
   const lessonsCount = courseLessons?.length || 0;
@@ -141,11 +154,20 @@ export const PreviewSection = ({
           </TableRow>
 
           <TableRow className='hover:bg-transparent'>
+            <TableCell className='bg-muted/30 py-4 font-semibold'>Registration</TableCell>
+            <TableCell className='bg-card py-4'>
+              {registrationWindow ?? (
+                <span className='text-destructive'>Not set — required before publishing</span>
+              )}
+            </TableCell>
+          </TableRow>
+
+          <TableRow className='hover:bg-transparent'>
             <TableCell className='bg-muted/30 py-4 font-semibold'>Time</TableCell>
             <TableCell className='bg-card py-4'>
               {scheduleMode === 'custom'
                 ? customSessions.length > 0
-                  ? `${customSessions[0].startTime} - ${customSessions[0].endTime}`
+                  ? `${customSessions[0]?.startTime} - ${customSessions[0]?.endTime}`
                   : '—'
                 : scheduleSettings.allDay
                   ? 'All Day'

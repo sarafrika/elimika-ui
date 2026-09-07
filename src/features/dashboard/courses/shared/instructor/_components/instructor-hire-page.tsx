@@ -575,12 +575,6 @@ export default function InstructorHirePage({ courseId, instructorId }: Props) {
                   onStartDateChange={setStartDate}
                   endDate={endDate}
                   onEndDateChange={setEndDate}
-                  regStart=''
-                  onRegStartChange={() => undefined}
-                  regEnd=''
-                  onRegEndChange={() => undefined}
-                  continuousReg={false}
-                  onContinuousRegChange={() => undefined}
                   timezone={timezone}
                   onTimezoneChange={() => undefined}
                   totalSessions={upcomingSessions.length}

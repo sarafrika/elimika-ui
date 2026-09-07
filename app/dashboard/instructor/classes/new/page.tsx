@@ -1,4 +1,6 @@
-// @ts-nocheck -- pre-existing @hey-api generated-client type drift (see memory: elimika-ui-typecheck)
+// @ts-nocheck -- 14 pre-existing errors: ScheduleSettings.weeklyDayTimes and other stale
+// generated-client drift. Unrelated to the registration window; verified identical to HEAD with
+// the directive stripped, so this change adds none.
 'use client';
 
 import {
@@ -8,8 +10,12 @@ import {
   type DayKey,
   type DayRow,
   DEFAULT_RATE_BASIS,
+  apiCalendarDay,
+  firstRegistrationWindowError,
   type RateBasis,
+  type RegistrationWindowErrors,
   type ReminderState,
+  validateRegistrationWindow,
 } from '@/components/class-form/class-form-shared';
 import {
   type InstructorClassWithSchedule,
@@ -31,6 +37,7 @@ import {
   OfferingPicker,
   PickDatesPanel,
   PricingCapacity,
+  RegistrationWindow,
   ReminderOptions,
   ScheduleModeCards,
   ServiceCards,
@@ -170,7 +177,7 @@ const createInitialScheduleSettings = (
   timezone: string = DEFAULT_CLASS_TIME_ZONE
 ): ScheduleSettings => ({
   academicPeriod: { start: '', end: '' },
-  registrationPeriod: { start: '', end: '', continuous: false },
+  registrationPeriod: { start: '', end: '' },
   startClass: {
     date: '',
     startTime: '',
@@ -622,6 +629,21 @@ const InstructorClassCreationPage = () => {
     createInitialScheduleSettings(activeScheduleTimeZone)
   );
   const [scheduleTimezoneOverridden, setScheduleTimezoneOverridden] = useState(false);
+  const [registrationErrors, setRegistrationErrors] = useState<RegistrationWindowErrors>({});
+  const handleRegistrationStartChange = (value: string) => {
+    setScheduleSettings(prev => ({
+      ...prev,
+      registrationPeriod: { ...prev.registrationPeriod, start: value },
+    }));
+    setRegistrationErrors(prev => ({ ...prev, start: undefined }));
+  };
+  const handleRegistrationEndChange = (value: string) => {
+    setScheduleSettings(prev => ({
+      ...prev,
+      registrationPeriod: { ...prev.registrationPeriod, end: value },
+    }));
+    setRegistrationErrors(prev => ({ ...prev, end: undefined }));
+  };
   const [notificationSettings, setNotificationSettings] = useState<NotificationSettings>(() =>
     createInitialNotificationSettings()
   );
@@ -1432,6 +1454,20 @@ const InstructorClassCreationPage = () => {
         return false;
       }
     }
+    // Mandatory: enrolment eligibility is decided against this window, so a class
+    // without one can never be enrolled on. Only a brand-new class must still be
+    // open — an existing class may legitimately be edited after registration closed.
+    const registrationWindowErrors = validateRegistrationWindow(
+      scheduleSettings.registrationPeriod.start,
+      scheduleSettings.registrationPeriod.end,
+      { requireOpen: !resolvedId }
+    );
+    setRegistrationErrors(registrationWindowErrors);
+    const registrationMessage = firstRegistrationWindowError(registrationWindowErrors);
+    if (registrationMessage) {
+      toast.error(registrationMessage);
+      return false;
+    }
     return true;
   };
 
@@ -1449,8 +1485,12 @@ const InstructorClassCreationPage = () => {
 
     const academicPeriodStart = buildDateFromInput(scheduleSettings.academicPeriod.start);
     const academicPeriodEnd = buildDateFromInput(scheduleSettings.academicPeriod.end);
-    const registrationPeriodStart = buildDateFromInput(scheduleSettings.registrationPeriod.start);
-    const registrationPeriodEnd = buildDateFromInput(scheduleSettings.registrationPeriod.end);
+    // `format: date` on the wire — the plain YYYY-MM-DD the user picked. A real `Date`
+    // here would be JSON-serialised as a UTC instant, which shifts the day either side
+    // of midnight and opens or closes registration a day out. See apiCalendarDay for
+    // why the generated `Date` type is not the contract.
+    const registrationPeriodStart = apiCalendarDay(scheduleSettings.registrationPeriod.start);
+    const registrationPeriodEnd = apiCalendarDay(scheduleSettings.registrationPeriod.end);
     const selectedClassColor = trimToUndefined(
       notificationSettings.classColour || classDetails.class_color
     );
@@ -2273,36 +2313,20 @@ const InstructorClassCreationPage = () => {
             }
             endDate={scheduleSettings.endRepeat}
             onEndDateChange={value => setScheduleSettings(prev => ({ ...prev, endRepeat: value }))}
-            regStart={scheduleSettings.registrationPeriod.start}
-            onRegStartChange={value =>
-              setScheduleSettings(prev => ({
-                ...prev,
-                registrationPeriod: { ...prev.registrationPeriod, start: value },
-              }))
-            }
-            regEnd={scheduleSettings.registrationPeriod.end}
-            onRegEndChange={value =>
-              setScheduleSettings(prev => ({
-                ...prev,
-                registrationPeriod: { ...prev.registrationPeriod, end: value },
-              }))
-            }
-            continuousReg={scheduleSettings.registrationPeriod.continuous ?? false}
-            onContinuousRegChange={value =>
-              setScheduleSettings(prev => ({
-                ...prev,
-                registrationPeriod: {
-                  ...prev.registrationPeriod,
-                  continuous: value,
-                  end: value ? '' : prev.registrationPeriod.end,
-                },
-              }))
-            }
             timezone={scheduleSettings.timezone}
             onTimezoneChange={handleScheduleTimeZoneChange}
             totalSessions={sessionsForConflictCheck.length}
           />
         )}
+
+        {/* Outside the preset switch: the window is required however the sessions are laid out. */}
+        <RegistrationWindow
+          start={scheduleSettings.registrationPeriod.start}
+          onStartChange={handleRegistrationStartChange}
+          end={scheduleSettings.registrationPeriod.end}
+          onEndChange={handleRegistrationEndChange}
+          errors={registrationErrors}
+        />
 
         <ClassMediaUpload
           selectedThumbnail={selectedThumbnail}

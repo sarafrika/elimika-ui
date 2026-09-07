@@ -10,6 +10,7 @@ export { type Delivery, LocationVenue } from './location-venue';
 export { type Offering, OfferingPicker } from './offering-picker';
 export { PickDatesPanel } from './pick-dates-panel';
 export { PricingCapacity } from './pricing-capacity';
+export { RegistrationWindow } from './registration-window';
 export { ReminderOptions } from './reminder-options';
 export { type PreviewWindow, ResourceAvailabilityPreview } from './resource-availability-preview';
 export { ScheduleModeCards } from './schedule-mode-cards';

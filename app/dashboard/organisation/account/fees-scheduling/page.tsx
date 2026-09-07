@@ -5,6 +5,7 @@ import { Loader2 } from 'lucide-react';
 import { useMemo, useState } from 'react';
 import { toast } from 'sonner';
 
+import { toApiCalendarDay } from '@/components/class-form/class-form-shared';
 import { PageHeader } from '@/components/page-header';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
@@ -66,6 +67,20 @@ function buildUpdateBody(
     is_active: c.is_active ?? undefined,
     class_color: c.class_color ?? undefined,
     class_reminder_minutes: c.class_reminder_minutes ?? undefined,
+    // Carried through, not dropped: this screen edits fees, and the update replaces the
+    // whole class. The registration window is mandatory and enforced at enrolment, so
+    // omitting it here would clear it and lock every learner out. The academic period
+    // goes back for the same reason — the update would otherwise blank the class's own
+    // lifecycle dates as the price of changing its fee.
+    //
+    // toApiCalendarDay, not the value as it arrives: these are `format: date` fields,
+    // and the response transformer has already parsed them into UTC-midnight Dates.
+    // JSON.stringify would put "2026-09-05T00:00:00.000Z" on the wire against a schema
+    // that declares `format: date` and a request validator of `z.string().date()`.
+    academic_period_start_date: toApiCalendarDay(c.academic_period_start_date),
+    academic_period_end_date: toApiCalendarDay(c.academic_period_end_date),
+    registration_period_start_date: toApiCalendarDay(c.registration_period_start_date),
+    registration_period_end_date: toApiCalendarDay(c.registration_period_end_date),
     ...patch,
   };
 }

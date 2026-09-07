@@ -217,6 +217,97 @@ export const num = (value: string): number | undefined => {
   const parsed = Number(trimmed);
   return Number.isNaN(parsed) ? undefined : parsed;
 };
+
+// ─── Registration window ──────────────────────────────────────────────────────
+/** Per-field messages for the registration window; empty object means valid. */
+export type RegistrationWindowErrors = { start?: string; end?: string };
+
+export const REGISTRATION_WINDOW_HINT =
+  'When students may enrol. Enrolment is refused before it opens and after it closes.';
+
+/**
+ * The registration window is mandatory on every class — a class with no window is a
+ * class nobody can be enrolled on, since enrolment eligibility is decided against it.
+ *
+ * Both dates are required, the window may not close before it opens, and a window
+ * being set on a class that does not exist yet may not already be over. Dates are
+ * compared as `YYYY-MM-DD` strings, which sort chronologically, so no timezone can
+ * shift a day boundary between the input and the check.
+ *
+ * @param options.requireOpen set when creating: refuses a window that has already closed.
+ */
+export function validateRegistrationWindow(
+  start: string,
+  end: string,
+  options: { requireOpen?: boolean; today?: Date } = {}
+): RegistrationWindowErrors {
+  const errors: RegistrationWindowErrors = {};
+  const from = start.trim();
+  const to = end.trim();
+
+  if (!from) errors.start = 'Set the date registration opens.';
+  if (!to) errors.end = 'Set the date registration closes.';
+  if (errors.start || errors.end) return errors;
+
+  if (to < from) {
+    errors.end = 'Registration must close on or after it opens.';
+    return errors;
+  }
+
+  if (options.requireOpen && to < fmtDate(options.today ?? new Date())) {
+    errors.end = 'This window has already closed — pick a closing date from today onwards.';
+  }
+
+  return errors;
+}
+
+/** The first message to put in front of the user, for forms that also toast. */
+export const firstRegistrationWindowError = (
+  errors: RegistrationWindowErrors
+): string | undefined => errors.start ?? errors.end;
+
+/**
+ * A `format: date` field, in the shape the API actually contracts for: a bare
+ * `YYYY-MM-DD` calendar day.
+ *
+ * The OpenAPI document is unambiguous — `registration_period_start_date` is
+ * `{ type: ['string','null'], format: 'date' }` (schemas.gen.ts) and the generated
+ * request validator is `z.union([z.string().date(), z.null()])` (zod.gen.ts), which
+ * an ISO date-time string fails. The backing column is a Postgres `DATE` and the
+ * Java field a `LocalDate`. A calendar day has no instant, so sending one as a
+ * `Date` is what produced the original bug: `new Date('2026-09-05T00:00:00')` is
+ * local midnight, which serialises to `2026-09-04T21:00:00Z` in UTC+3 and stores
+ * the day before.
+ *
+ * @hey-api nevertheless types the field as `Date` — it applies its date transform
+ * to every `format: date*` field without distinguishing days from instants — so the
+ * assignment needs a cast. It is written here once, with this note, rather than left
+ * to look like an oversight at each call site. Remove it if the client is ever
+ * regenerated with `format: date` mapped to `string`.
+ */
+export const apiCalendarDay = (value: string): Date => value.trim() as unknown as Date;
+
+/**
+ * The calendar day a `format: date` response field names, as `YYYY-MM-DD` — the value
+ * a `<input type="date">` wants, and the one to send back.
+ *
+ * The generated response transformer parses the bare `YYYY-MM-DD` it receives with
+ * `new Date(...)`, which reads a date-only string as **UTC** midnight. The UTC half of
+ * that instant is therefore the day that was stored, and local getters would hand back
+ * the previous day for every viewer west of Greenwich. Empty string for anything absent
+ * or unparseable, so a caller can `|| fallback`.
+ */
+export const calendarDayInput = (value: Date | string | null | undefined): string => {
+  if (value === null || value === undefined || value === '') return '';
+  if (typeof value === 'string') return value.slice(0, 10);
+  return Number.isNaN(value.getTime()) ? '' : value.toISOString().slice(0, 10);
+};
+
+/** {@link calendarDayInput} in the shape a request body wants; undefined when absent. */
+export const toApiCalendarDay = (value: Date | string | null | undefined): Date | undefined => {
+  const day = calendarDayInput(value);
+  return day === '' ? undefined : apiCalendarDay(day);
+};
 /**
  * Length of a HH:mm-HH:mm window, in minutes.
  *

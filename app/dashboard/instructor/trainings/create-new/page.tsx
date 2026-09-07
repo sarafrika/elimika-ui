@@ -1,4 +1,6 @@
-// @ts-nocheck -- pre-existing @hey-api generated-client type drift (see memory: elimika-ui-typecheck)
+// @ts-nocheck -- 17 pre-existing errors: ClassDefinition.categories / rate_card / targetAudience
+// and other stale generated-client drift. Unrelated to the registration window; verified identical
+// to HEAD with the directive stripped, so this change adds none.
 'use client';
 
 import { useMutation, useQueryClient } from '@tanstack/react-query';
@@ -6,6 +8,12 @@ import { ArrowLeft, Save } from 'lucide-react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useEffect, useMemo, useState } from 'react';
 import { toast } from 'sonner';
+import {
+  apiCalendarDay,
+  firstRegistrationWindowError,
+  type RegistrationWindowErrors,
+  validateRegistrationWindow,
+} from '@/components/class-form/class-form-shared';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { useTimeZone } from '@/context/timezone-context';
@@ -78,10 +86,10 @@ export interface ScheduleSettings {
     start: string;
     end: string;
   };
+  /** Mandatory on every class — enrolment is refused outside it. */
   registrationPeriod: {
     start: string;
     end: string;
-    continuous?: boolean;
   };
   startClass: {
     date: string;
@@ -369,7 +377,7 @@ const ClassBuilderPage = ({
   // Schedule Settings State
   const [scheduleSettings, setScheduleSettings] = useState<ScheduleSettings>({
     academicPeriod: { start: '', end: '' },
-    registrationPeriod: { start: '', end: '', continuous: false },
+    registrationPeriod: { start: '', end: '' },
     startClass: { date: '', startTime: '', endTime: '' },
     allDay: false,
     repeat: {
@@ -392,6 +400,8 @@ const ClassBuilderPage = ({
     totalSlots: 0,
     weekly: false,
   });
+
+  const [registrationErrors, setRegistrationErrors] = useState<RegistrationWindowErrors>({});
 
   // Notification Settings State
   const [notificationSettings, setNotificationSettings] = useState<NotificationSettings>({
@@ -572,6 +582,20 @@ const ClassBuilderPage = ({
         reminder: '',
       });
 
+      const toDateInput = (value?: string | Date | null) => {
+        if (!value) return '';
+        const parsed = value instanceof Date ? value : new Date(value);
+        return Number.isNaN(parsed.getTime()) ? '' : parsed.toISOString().slice(0, 10);
+      };
+      setScheduleSettings(prev => ({
+        ...prev,
+        registrationPeriod: {
+          start:
+            toDateInput(classData.registration_period_start_date) || prev.registrationPeriod.start,
+          end: toDateInput(classData.registration_period_end_date) || prev.registrationPeriod.end,
+        },
+      }));
+
       if (classData.default_start_time) {
         const templateTimeZone = classData.session_templates?.[0]?.timezone;
         const hydratedTimeZone = normalizeScheduleTimeZone(
@@ -683,6 +707,20 @@ const ClassBuilderPage = ({
 
     if (requiresPhysicalLocation(locationType) && !trimToUndefined(classDetails.location_name)) {
       toast.error('Please enter a class location');
+      return false;
+    }
+
+    // Checked before the schedule-mode branch below: the window is mandatory whichever
+    // way the sessions are laid out, because enrolment eligibility is decided against it.
+    const registrationWindowErrors = validateRegistrationWindow(
+      scheduleSettings.registrationPeriod.start,
+      scheduleSettings.registrationPeriod.end,
+      { requireOpen: !resolveId }
+    );
+    setRegistrationErrors(registrationWindowErrors);
+    const registrationMessage = firstRegistrationWindowError(registrationWindowErrors);
+    if (registrationMessage) {
+      toast.error(registrationMessage);
       return false;
     }
 
@@ -829,6 +867,12 @@ const ClassBuilderPage = ({
         academic_period_end_date: scheduleSettings.academicPeriod.end
           ? new Date(`${scheduleSettings.academicPeriod.end}T00:00:00`)
           : undefined,
+        // `format: date` on the wire — the plain YYYY-MM-DD the user picked. A `Date`
+        // here would be JSON-serialised as a UTC instant, which shifts the day either
+        // side of midnight and would open or close registration a day out. See
+        // apiCalendarDay for why the generated `Date` type is not the contract.
+        registration_period_start_date: apiCalendarDay(scheduleSettings.registrationPeriod.start),
+        registration_period_end_date: apiCalendarDay(scheduleSettings.registrationPeriod.end),
         allow_waitlist: true,
         is_active: !isDraft,
         default_start_time:
@@ -1023,7 +1067,11 @@ const ClassBuilderPage = ({
               {/* Schedule Section */}
               <ScheduleSection
                 data={scheduleSettings}
-                onChange={updates => setScheduleSettings(prev => ({ ...prev, ...updates }))}
+                onChange={updates => {
+                  if (updates.registrationPeriod) setRegistrationErrors({});
+                  setScheduleSettings(prev => ({ ...prev, ...updates }));
+                }}
+                registrationErrors={registrationErrors}
                 occurrenceCount={occurrenceCount}
                 scheduleMode={scheduleMode}
                 onScheduleModeChange={setScheduleMode}

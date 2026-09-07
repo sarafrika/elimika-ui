@@ -32,12 +32,6 @@ export function StandardSchedule({
   onStartDateChange,
   endDate,
   onEndDateChange,
-  regStart,
-  onRegStartChange,
-  regEnd,
-  onRegEndChange,
-  continuousReg,
-  onContinuousRegChange,
   timezone,
   onTimezoneChange,
   totalSessions,
@@ -52,12 +46,6 @@ export function StandardSchedule({
   onStartDateChange: (v: string) => void;
   endDate: string;
   onEndDateChange: (v: string) => void;
-  regStart: string;
-  onRegStartChange: (v: string) => void;
-  regEnd: string;
-  onRegEndChange: (v: string) => void;
-  continuousReg: boolean;
-  onContinuousRegChange: (v: boolean) => void;
   timezone: string;
   onTimezoneChange: (v: string) => void;
   totalSessions: number;
@@ -227,32 +215,7 @@ export function StandardSchedule({
             <Label className='text-xs'>End Repeat *</Label>
             <Input type='date' value={endDate} onChange={e => onEndDateChange(e.target.value)} />
           </div>
-          <div className='space-y-1'>
-            <Label className='text-xs'>Registration Start</Label>
-            <Input
-              type='date'
-              value={regStart}
-              onChange={e => onRegStartChange(e.target.value)}
-              disabled={continuousReg}
-            />
-          </div>
-          <div className='space-y-1'>
-            <Label className='text-xs'>Registration End</Label>
-            <Input
-              type='date'
-              value={regEnd}
-              onChange={e => onRegEndChange(e.target.value)}
-              disabled={continuousReg}
-            />
-          </div>
         </div>
-        <label className='flex items-center gap-2 text-xs'>
-          <Checkbox
-            checked={continuousReg}
-            onCheckedChange={v => onContinuousRegChange(v === true)}
-          />
-          Continuous Registration (no closing date)
-        </label>
         <div className='space-y-1'>
           <Label className='text-xs'>Timezone</Label>
           <Select value={timezone} onValueChange={onTimezoneChange}>

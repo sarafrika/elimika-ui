@@ -1,4 +1,3 @@
-// @ts-nocheck -- 1:1 Lovable port; @hey-api generated-client type drift
 'use client';
 
 import { useMutation, useQuery } from '@tanstack/react-query';
@@ -12,6 +11,8 @@ import {
   AcademicPeriodsPanel,
   type ApprovedRateCard,
   addDays,
+  apiCalendarDay,
+  calendarDayInput,
   approvedRateFor,
   computeSessionWindows,
   computeUpcomingSessions,
@@ -24,6 +25,7 @@ import {
   type Delivery,
   EquipmentTarget,
   firstOccurrenceOnOrAfter,
+  firstRegistrationWindowError,
   fmtDate,
   LocationVenue,
   num,
@@ -33,6 +35,8 @@ import {
   type PreviewWindow,
   PricingCapacity,
   type RateBasis,
+  RegistrationWindow,
+  type RegistrationWindowErrors,
   REMINDER_MINUTES,
   ReminderOptions,
   type ReminderState,
@@ -49,6 +53,7 @@ import {
   sessionMinutesFor,
   toDateTime,
   UpcomingSessions,
+  validateRegistrationWindow,
 } from '@/components/class-form';
 import { PageHeader } from '@/components/page-header';
 import { type ConflictItem, parseConflictError } from '@/components/resourcing/conflicts';
@@ -194,7 +199,10 @@ export default function OrganisationPostJobPage() {
       setPrefillApplied(true);
       return;
     }
-    if (!offerings.some(o => o.value === offering)) setOffering(offerings[0].value);
+    const firstOffering = offerings[0];
+    if (firstOffering && !offerings.some(o => o.value === offering)) {
+      setOffering(firstOffering.value);
+    }
   }, [offerings, offering, prefillValue, prefillApplied, isEditMode]);
 
   const selectedOffering = useMemo(
@@ -219,7 +227,7 @@ export default function OrganisationPostJobPage() {
       return;
     }
     if (categories.length > 0 && !categories.some(c => c.uuid === programCategoryUuid)) {
-      setProgramCategoryUuid(categories[0].uuid ?? '');
+      setProgramCategoryUuid(categories[0]?.uuid ?? '');
     }
   }, [selectedOffering, categories, programCategoryUuid]);
 
@@ -291,9 +299,21 @@ export default function OrganisationPostJobPage() {
   const today = useMemo(() => new Date(), []);
   const [startDate, setStartDate] = useState(fmtDate(today));
   const [endDate, setEndDate] = useState(fmtDate(addDays(today, 42)));
-  const [regStart, setRegStart] = useState(fmtDate(today));
-  const [regEnd, setRegEnd] = useState(fmtDate(addDays(today, 7)));
-  const [continuousReg, setContinuousReg] = useState(false);
+  // Required, and deliberately not pre-filled. A filled job is provisioned straight
+  // into a class definition — ClassMarketplaceJobServiceImpl.buildClassDefinitionRequest
+  // copies these two fields across verbatim and derives nothing — so a job posted with
+  // no window creates exactly the windowless class this change exists to eliminate.
+  const [regStart, setRegStart] = useState('');
+  const [regEnd, setRegEnd] = useState('');
+  const [regErrors, setRegErrors] = useState<RegistrationWindowErrors>({});
+  const handleRegStartChange = (value: string) => {
+    setRegStart(value);
+    setRegErrors(prev => ({ ...prev, start: undefined }));
+  };
+  const handleRegEndChange = (value: string) => {
+    setRegEnd(value);
+    setRegErrors(prev => ({ ...prev, end: undefined }));
+  };
   const [timezone, setTimezone] = useState(activeScheduleTimeZone);
   const [timezoneTouched, setTimezoneTouched] = useState(false);
 
@@ -361,16 +381,21 @@ export default function OrganisationPostJobPage() {
         end: sessionEnd,
         allDay: false,
       };
-    for (const d of sorted)
-      next[isoToKey[d.getDay()]] = {
+    for (const d of sorted) {
+      const key = isoToKey[d.getDay()];
+      if (!key) continue;
+      next[key] = {
         active: true,
         start: sessionStart,
         end: sessionEnd,
         allDay: false,
       };
+    }
     setDays(next);
-    setStartDate(fmtDate(sorted[0]));
-    setEndDate(fmtDate(sorted[sorted.length - 1]));
+    const earliestPick = sorted[0];
+    const latestPick = sorted[sorted.length - 1];
+    if (earliestPick) setStartDate(fmtDate(earliestPick));
+    if (latestPick) setEndDate(fmtDate(latestPick));
   }, [mode, pickedDates, sessionStart, sessionEnd]);
 
   useEffect(() => {
@@ -401,8 +426,10 @@ export default function OrganisationPostJobPage() {
       .map(p => p.endDate)
       .filter(Boolean)
       .sort();
-    if (starts.length) setStartDate(starts[0]);
-    if (ends.length) setEndDate(ends[ends.length - 1]);
+    const earliestStart = starts[0];
+    const latestEnd = ends[ends.length - 1];
+    if (earliestStart) setStartDate(earliestStart);
+    if (latestEnd) setEndDate(latestEnd);
   }, [mode, academicPeriods]);
 
   const [hydrated, setHydrated] = useState(false);
@@ -513,13 +540,12 @@ export default function OrganisationPostJobPage() {
       }
     }
 
-    if (editingJob.registration_period_start_date && editingJob.registration_period_end_date) {
-      setContinuousReg(false);
-      setRegStart(fmtDate(new Date(editingJob.registration_period_start_date)));
-      setRegEnd(fmtDate(new Date(editingJob.registration_period_end_date)));
-    } else {
-      setContinuousReg(true);
-    }
+    // A `format: date` field arrives parsed to UTC midnight, so the UTC half is the
+    // calendar day that was stored; fmtDate's local getters would show the day before
+    // for any viewer west of Greenwich. Legacy jobs may carry neither date — the form
+    // then asks for one, which is the point.
+    setRegStart(calendarDayInput(editingJob.registration_period_start_date));
+    setRegEnd(calendarDayInput(editingJob.registration_period_end_date));
 
     setReminder(r => ({
       ...r,
@@ -681,6 +707,16 @@ export default function OrganisationPostJobPage() {
       return toast.error('Instructor pay cannot exceed the sale price.');
     }
 
+    // requireOpen only when posting: an existing job may legitimately be edited after
+    // its window has closed, but a new one whose window is already over could never be
+    // enrolled on once it is filled.
+    const registrationErrors = validateRegistrationWindow(regStart, regEnd, {
+      requireOpen: !isEditMode,
+    });
+    setRegErrors(registrationErrors);
+    const registrationMessage = firstRegistrationWindowError(registrationErrors);
+    if (registrationMessage) return toast.error(registrationMessage);
+
     const requiresPhysical = delivery === 'IN_PERSON' || delivery === 'HYBRID';
     const requiresLink = delivery === 'ONLINE' || delivery === 'HYBRID';
     if (requiresPhysical) {
@@ -776,12 +812,10 @@ export default function OrganisationPostJobPage() {
       remind_via_sms: reminder.sms,
       remind_via_push: reminder.push,
       class_reminder_minutes: REMINDER_MINUTES[reminder.window],
-      ...(continuousReg
-        ? {}
-        : {
-            registration_period_start_date: new Date(`${regStart}T00:00:00`),
-            registration_period_end_date: new Date(`${regEnd}T23:59:59`),
-          }),
+      // `format: date` on the wire — the plain YYYY-MM-DD the user picked. See
+      // apiCalendarDay for why the generated `Date` type is not the contract.
+      registration_period_start_date: apiCalendarDay(regStart),
+      registration_period_end_date: apiCalendarDay(regEnd),
       ...academicBounds,
       session_templates: sessionTemplates,
       ...(resources.length > 0 ? { resources } : {}),
@@ -915,24 +949,21 @@ export default function OrganisationPostJobPage() {
             onStartDateChange={setStartDate}
             endDate={endDate}
             onEndDateChange={setEndDate}
-            regStart={regStart}
-            onRegStartChange={setRegStart}
-            regEnd={regEnd}
-            onRegEndChange={setRegEnd}
-            continuousReg={continuousReg}
-            onContinuousRegChange={setContinuousReg}
             timezone={timezone}
             onTimezoneChange={handleTimezoneChange}
             totalSessions={totalSessions}
           />
         )}
 
-        {continuousReg ? (
-          <p className='text-muted-foreground text-xs'>
-            Continuous registration leaves no closing date, so this job will never auto-expire and
-            its resource holds stay in place until it is filled or cancelled.
-          </p>
-        ) : null}
+        {/* Outside the mode switch: the window is required however the sessions are laid out. */}
+        <RegistrationWindow
+          idPrefix='job-registration'
+          start={regStart}
+          onStartChange={handleRegStartChange}
+          end={regEnd}
+          onEndChange={handleRegEndChange}
+          errors={regErrors}
+        />
 
         <ReminderOptions value={reminder} onChange={patchReminder} />
 

@@ -1,4 +1,6 @@
-// @ts-nocheck -- 1:1 Lovable port of create-class; @hey-api generated-client type drift
+// @ts-nocheck -- 10 pre-existing errors: stale generated client (venue_resource_uuid missing from
+// ClassDefinitionCreateRequest) + noUncheckedIndexedAccess drift. Unrelated to the registration
+// window; verified identical to HEAD with the directive stripped, so this change adds none.
 'use client';
 
 import { useMutation, useQuery } from '@tanstack/react-query';
@@ -11,6 +13,7 @@ import {
   type AcademicPeriod,
   AcademicPeriodsPanel,
   addDays,
+  apiCalendarDay,
   type ApprovedRateCard,
   approvedRateFor,
   ClassMediaUpload,
@@ -23,6 +26,7 @@ import {
   DEFAULT_RATE_BASIS,
   type Delivery,
   firstOccurrenceOnOrAfter,
+  firstRegistrationWindowError,
   fmtDate,
   type InstructorOption,
   LocationVenue,
@@ -35,6 +39,8 @@ import {
   type RateBasis,
   rateBasisLabel,
   rateBasisUnit,
+  RegistrationWindow,
+  type RegistrationWindowErrors,
   REMINDER_MINUTES,
   ReminderOptions,
   type ReminderState,
@@ -47,6 +53,7 @@ import {
   StandardSchedule,
   toDateTime,
   UpcomingSessions,
+  validateRegistrationWindow,
 } from '@/components/class-form';
 import { PageHeader } from '@/components/page-header';
 import { type ConflictItem, parseConflictError } from '@/components/resourcing/conflicts';
@@ -358,9 +365,19 @@ export default function OrganisationCreateClassPage() {
   const today = useMemo(() => new Date(), []);
   const [startDate, setStartDate] = useState(fmtDate(today));
   const [endDate, setEndDate] = useState(fmtDate(addDays(today, 42)));
-  const [regStart, setRegStart] = useState(fmtDate(today));
-  const [regEnd, setRegEnd] = useState(fmtDate(addDays(today, 7)));
-  const [continuousReg, setContinuousReg] = useState(true);
+  // Required, and deliberately not pre-filled: the window decides who may enrol and
+  // when, so it is a decision the organisation makes rather than a default it inherits.
+  const [regStart, setRegStart] = useState('');
+  const [regEnd, setRegEnd] = useState('');
+  const [regErrors, setRegErrors] = useState<RegistrationWindowErrors>({});
+  const handleRegStartChange = (value: string) => {
+    setRegStart(value);
+    setRegErrors(prev => ({ ...prev, start: undefined }));
+  };
+  const handleRegEndChange = (value: string) => {
+    setRegEnd(value);
+    setRegErrors(prev => ({ ...prev, end: undefined }));
+  };
   const [timezone, setTimezone] = useState(activeScheduleTimeZone);
   const [timezoneTouched, setTimezoneTouched] = useState(false);
 
@@ -644,6 +661,10 @@ export default function OrganisationCreateClassPage() {
     if (requiresPhysical && !locationName.trim() && !venueUuid) {
       return toast.error('Add a location name or pick a venue for in-person / hybrid classes.');
     }
+    const registrationErrors = validateRegistrationWindow(regStart, regEnd, { requireOpen: true });
+    setRegErrors(registrationErrors);
+    const registrationMessage = firstRegistrationWindowError(registrationErrors);
+    if (registrationMessage) return toast.error(registrationMessage);
     if (mode === 'pick' && sessionMinutesFor(sessionStart, sessionEnd) === undefined) {
       return toast.error('The session end time must be after the start time.');
     }
@@ -712,12 +733,12 @@ export default function OrganisationCreateClassPage() {
       instructor_pay: payValue,
       rate_basis: rateBasis,
       class_reminder_minutes: REMINDER_MINUTES[reminder.window],
-      ...(continuousReg
-        ? {}
-        : {
-          registration_period_start_date: new Date(`${regStart}T00:00:00`),
-          registration_period_end_date: new Date(`${regEnd}T23:59:59`),
-        }),
+      // `format: date` on the wire — the plain YYYY-MM-DD the user picked. A real
+      // `Date` here would be JSON-serialised as a UTC instant, which shifts the day
+      // either side of midnight and opens or closes registration a day out. See
+      // apiCalendarDay for why the generated `Date` type is not the contract.
+      registration_period_start_date: apiCalendarDay(regStart),
+      registration_period_end_date: apiCalendarDay(regEnd),
       ...academicBounds,
       session_templates: sessionTemplates,
     };
@@ -833,17 +854,20 @@ export default function OrganisationCreateClassPage() {
             onStartDateChange={setStartDate}
             endDate={endDate}
             onEndDateChange={setEndDate}
-            regStart={regStart}
-            onRegStartChange={setRegStart}
-            regEnd={regEnd}
-            onRegEndChange={setRegEnd}
-            continuousReg={continuousReg}
-            onContinuousRegChange={setContinuousReg}
             timezone={timezone}
             onTimezoneChange={handleTimezoneChange}
             totalSessions={totalSessions}
           />
         )}
+
+        {/* Outside the mode switch: the window is required however the sessions are laid out. */}
+        <RegistrationWindow
+          start={regStart}
+          onStartChange={handleRegStartChange}
+          end={regEnd}
+          onEndChange={handleRegEndChange}
+          errors={regErrors}
+        />
 
         <ClassMediaUpload
           selectedThumbnail={selectedThumbnail}

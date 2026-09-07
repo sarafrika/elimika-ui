@@ -1,6 +1,9 @@
-// @ts-nocheck -- pre-existing @hey-api generated-client type drift (see memory: elimika-ui-typecheck)
 'use client';
 
+import {
+  REGISTRATION_WINDOW_HINT,
+  validateRegistrationWindow,
+} from '@/components/class-form/class-form-shared';
 import { RecurrenceEditor } from '@/components/scheduling/recurrence-editor';
 import { SimpleEditor } from '@/components/tiptap-templates/simple/simple-editor-lazy';
 import { Button } from '@/components/ui/button';
@@ -14,6 +17,7 @@ import {
 import {
   Form,
   FormControl,
+  FormDescription,
   FormField,
   FormItem,
   FormLabel,
@@ -32,6 +36,7 @@ import Spinner from '@/components/ui/spinner';
 import { useInstructor } from '@/context/instructor-context';
 import { useUserProfile } from '@/context/profile-context';
 import {
+  createClassDefinitionMultipartMutation,
   getAllActiveClassDefinitionsQueryKey,
   getAllCoursesOptions,
   scheduleClassMutation,
@@ -126,7 +131,40 @@ export const classSchema = z.object({
   class_visibility: z.string().min(1, 'class_visibility is required'),
   session_format: z.string().min(1, 'session_format is required'),
   is_active: z.boolean().default(false),
+  // Mandatory: enrolment eligibility is decided against this window, so a class
+  // without one can never be enrolled on.
+  registration_period_start_date: z.string().default(''),
+  registration_period_end_date: z.string().default(''),
 });
+
+/**
+ * The window rules, from the one helper every class form shares. Only a class being
+ * created must still be open for registration — an existing class may legitimately
+ * be edited after its window has closed.
+ */
+const classSchemaFor = (isEdit: boolean) =>
+  classSchema.superRefine((values, ctx) => {
+    const errors = validateRegistrationWindow(
+      values.registration_period_start_date,
+      values.registration_period_end_date,
+      { requireOpen: !isEdit }
+    );
+
+    if (errors.start) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ['registration_period_start_date'],
+        message: errors.start,
+      });
+    }
+    if (errors.end) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ['registration_period_end_date'],
+        message: errors.end,
+      });
+    }
+  });
 
 export type ClassFormValues = z.infer<typeof classSchema>;
 
@@ -144,8 +182,10 @@ function ClassForm({
   className?: OptionalClassName;
 }) {
   const form = useForm<ClassFormValues>({
-    resolver: zodResolver(classSchema),
+    resolver: zodResolver(classSchemaFor(Boolean(classId))),
     defaultValues: {
+      registration_period_start_date: '',
+      registration_period_end_date: '',
       ...initialValues,
     },
   });
@@ -162,6 +202,9 @@ function ClassForm({
 
   const handleSubmit = async (values: ClassFormValues) => {
     const payload = {
+      // `registration_period_*` ride along from `values` as the bare YYYY-MM-DD the
+      // date inputs hold, which is what the `format: date` fields contract for — see
+      // apiCalendarDay in class-form-shared for why that is not the generated `Date`.
       ...values,
       // updated_by: user?.email,
       // additional class info
@@ -313,6 +356,39 @@ function ClassForm({
                     {...field}
                     onChange={e => field.onChange(e.target.value)}
                   />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+        </div>
+
+        <div className='flex flex-col items-start gap-6 sm:flex-row'>
+          <FormField
+            control={form.control}
+            name='registration_period_start_date'
+            render={({ field }) => (
+              <FormItem className='w-full'>
+                <FormLabel>Registration opens *</FormLabel>
+                <FormControl>
+                  <Input type='date' {...field} value={field.value ?? ''} aria-required />
+                </FormControl>
+                <FormDescription>{REGISTRATION_WINDOW_HINT}</FormDescription>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+
+          <FormField
+            control={form.control}
+            name='registration_period_end_date'
+            render={({ field }) => (
+              <FormItem className='w-full'>
+                <FormLabel>Registration closes *</FormLabel>
+                {/* No `min`: a native range bubble would fire before the resolver and
+                    pre-empt the schema's own "must close on or after it opens". */}
+                <FormControl>
+                  <Input type='date' {...field} value={field.value ?? ''} aria-required />
                 </FormControl>
                 <FormMessage />
               </FormItem>

@@ -1,6 +1,9 @@
-// @ts-nocheck -- pre-existing @hey-api generated-client type drift (see memory: elimika-ui-typecheck)
 'use client';
 
+import {
+  REGISTRATION_WINDOW_HINT,
+  type RegistrationWindowErrors,
+} from '@/components/class-form/class-form-shared';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Calendar } from '@/components/ui/calendar';
 import { Card } from '@/components/ui/card';
@@ -40,6 +43,7 @@ const toDateKey = (date: Date) => {
 export const ScheduleSection = ({
   data,
   onChange,
+  registrationErrors,
   occurrenceCount,
   scheduleMode,
   onScheduleModeChange,
@@ -51,6 +55,7 @@ export const ScheduleSection = ({
 }: {
   data: ScheduleSettings;
   onChange: (updates: Partial<ScheduleSettings>) => void;
+  registrationErrors?: RegistrationWindowErrors;
   occurrenceCount: number;
   scheduleMode: ScheduleMode;
   onScheduleModeChange: (value: ScheduleMode) => void;
@@ -201,15 +206,20 @@ export const ScheduleSection = ({
   };
 
   const handleEdit = (index: number) => {
+    const session = customSessions[index];
+    if (!session) return;
     setEditingIndex(index);
-    setEditStartTime(customSessions[index].startTime);
-    setEditEndTime(customSessions[index].endTime);
+    setEditStartTime(session.startTime);
+    setEditEndTime(session.endTime);
   };
 
   const handleSaveEdit = (index: number) => {
+    const session = customSessions[index];
+    if (!session) return;
+
     const nextSessions = [...customSessions];
     nextSessions[index] = {
-      ...nextSessions[index],
+      ...session,
       startTime: editStartTime,
       endTime: editEndTime,
       hours: calculateSessionHours(editStartTime, editEndTime),
@@ -362,74 +372,6 @@ export const ScheduleSection = ({
                       }
                       className='w-44'
                     />
-                  </div>
-                </TableCell>
-              </TableRow>
-
-              <TableRow className='border-b hover:bg-transparent'>
-                <TableCell className='bg-muted/30 py-4 font-semibold'>
-                  Registration Period
-                </TableCell>
-                <TableCell className='bg-card py-4'>
-                  <div className='space-y-3'>
-                    <div className='flex flex-wrap items-end gap-4'>
-                      <div className='flex flex-col gap-2'>
-                        <label className='text-muted-foreground text-xs font-semibold'>
-                          Start Date
-                        </label>
-                        <Input
-                          type='date'
-                          value={data.registrationPeriod.start}
-                          onChange={e =>
-                            onChange({
-                              registrationPeriod: {
-                                ...data.registrationPeriod,
-                                start: e.target.value,
-                              },
-                            })
-                          }
-                          className='w-44'
-                        />
-                      </div>
-
-                      <div className='flex flex-col gap-2'>
-                        <label className='text-muted-foreground text-xs font-semibold'>
-                          End Date
-                        </label>
-                        <Input
-                          type='date'
-                          value={data.registrationPeriod.end || ''}
-                          disabled={data.registrationPeriod.continuous}
-                          onChange={e =>
-                            onChange({
-                              registrationPeriod: {
-                                ...data.registrationPeriod,
-                                end: e.target.value,
-                              },
-                            })
-                          }
-                          className='w-44'
-                        />
-                      </div>
-                    </div>
-
-                    <label className='text-foreground flex w-fit cursor-pointer items-center gap-3 text-sm font-medium'>
-                      <input
-                        type='checkbox'
-                        checked={data.registrationPeriod.continuous || false}
-                        onChange={e =>
-                          onChange({
-                            registrationPeriod: {
-                              ...data.registrationPeriod,
-                              continuous: e.target.checked,
-                              end: e.target.checked ? '' : data.registrationPeriod.end,
-                            },
-                          })
-                        }
-                        className='h-4 w-4 rounded'
-                      />
-                      Continuous Registration (no closing date)
-                    </label>
                   </div>
                 </TableCell>
               </TableRow>
@@ -736,6 +678,76 @@ export const ScheduleSection = ({
           </div>
         </div>
       )}
+
+      {/* Outside the schedule-mode branch above: the window is mandatory either way. */}
+      <div className='border-t px-6 py-5'>
+        <div className='space-y-1'>
+          <p className='text-sm font-semibold'>Registration Period *</p>
+          <p className='text-muted-foreground text-sm'>{REGISTRATION_WINDOW_HINT}</p>
+        </div>
+
+        <div className='mt-4 flex flex-wrap items-start gap-4'>
+          <div className='flex flex-col gap-2'>
+            <label
+              htmlFor='registration-period-start'
+              className='text-muted-foreground text-xs font-semibold'
+            >
+              Start Date *
+            </label>
+            <Input
+              id='registration-period-start'
+              type='date'
+              // aria-required, not `required`, and no `min` on the closing input:
+              // a native bubble fires before handleSubmit and would pre-empt the
+              // inline messages validateRegistrationWindow produces. Matches
+              // components/class-form/registration-window.tsx.
+              aria-required
+              value={data.registrationPeriod.start}
+              aria-invalid={Boolean(registrationErrors?.start)}
+              onChange={e =>
+                onChange({
+                  registrationPeriod: {
+                    ...data.registrationPeriod,
+                    start: e.target.value,
+                  },
+                })
+              }
+              className='w-44'
+            />
+            {registrationErrors?.start ? (
+              <p className='text-destructive text-xs'>{registrationErrors.start}</p>
+            ) : null}
+          </div>
+
+          <div className='flex flex-col gap-2'>
+            <label
+              htmlFor='registration-period-end'
+              className='text-muted-foreground text-xs font-semibold'
+            >
+              End Date *
+            </label>
+            <Input
+              id='registration-period-end'
+              type='date'
+              aria-required
+              value={data.registrationPeriod.end}
+              aria-invalid={Boolean(registrationErrors?.end)}
+              onChange={e =>
+                onChange({
+                  registrationPeriod: {
+                    ...data.registrationPeriod,
+                    end: e.target.value,
+                  },
+                })
+              }
+              className='w-44'
+            />
+            {registrationErrors?.end ? (
+              <p className='text-destructive text-xs'>{registrationErrors.end}</p>
+            ) : null}
+          </div>
+        </div>
+      </div>
     </Card>
   );
 };
