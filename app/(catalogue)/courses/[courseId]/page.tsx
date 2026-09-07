@@ -1,6 +1,6 @@
 import type { Metadata } from 'next';
 import { PublicCourseDetailPage } from '@/src/features/catalogue/components/PublicCourseDetailPage';
-import { getCourseDisplayTitle, sanitizeRichText } from '@/src/features/catalogue/format';
+import { getCourseDisplayTitle, stripRichText } from '@/src/features/catalogue/format';
 import { getPublicCourseDetail } from '@/src/features/catalogue/server';
 import { createPageMetadata } from '@/src/lib/seo';
 
@@ -22,9 +22,11 @@ export async function generateMetadata({ params }: CourseDetailPageProps): Promi
   }
 
   const title = getCourseDisplayTitle(detail.course);
+  // Stripped, not merely sanitised: a meta description is plain text, and the
+  // description field is rich text the creator wrote in the course builder.
   const descriptionSource =
-    sanitizeRichText(detail.course.description) ||
-    sanitizeRichText(detail.course.objectives) ||
+    stripRichText(detail.course.description) ||
+    stripRichText(detail.course.objectives) ||
     `Explore ${title} on Elimika.`;
   const description = descriptionSource.slice(0, 160);
 
