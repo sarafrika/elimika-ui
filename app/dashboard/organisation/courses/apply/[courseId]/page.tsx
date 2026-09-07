@@ -1,1983 +1,419 @@
-// @ts-nocheck -- 1:1 Lovable port; @hey-api generated-client type drift
 'use client';
 
+/**
+ * Apply to train — a trainer's application to deliver a course or a programme.
+ *
+ * The screen is `ApplyToTrainView`: three numbered steps (what the creator
+ * requires, your rate card, why you) with the deal beside them. This file is the
+ * route around it — the params, the applicant's identity, the queries that fill
+ * the view, and the one action the page owns: submitting the application.
+ *
+ * ## One screen, two content kinds
+ *
+ * `?kind=program` swaps the course for a training programme end to end:
+ * `GET /programs/{uuid}` and its requirements, and
+ * `POST /programs/{uuid}/training-applications` on submit. Nothing else changes.
+ *
+ * ## Identical for schools and instructors
+ *
+ * `/dashboard/instructor/courses/apply/[id]` re-exports this page. The only
+ * things the viewer's domain decides are the applicant identity the API is told
+ * about and where "back" goes. Nothing that is *shown* — and in particular
+ * nothing commercial — is decided by it, so a school and an instructor weighing
+ * the same course read the same page.
+ *
+ * ## Confidential by construction
+ *
+ * No call here reads another trainer's rate card, and there is no course-stats
+ * or trainers query to read one from. The only earnings figure on the page is
+ * the applicant's own arithmetic against the rate they just typed, computed in
+ * the browser and sent nowhere. What the creator publishes — the fee floor and
+ * the revenue split — is the creator's own term sheet, which is the thing an
+ * applicant is deciding against.
+ */
+
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import {
-  ArrowLeft,
-  ArrowRight,
-  Building2,
-  Camera,
-  Check,
-  ChevronDown,
-  ChevronUp,
-  GripVertical,
-  Layers,
-  Monitor,
-  Plus,
-  ShoppingBag,
-  Tag,
-  Trash2,
-  Users,
-  Video,
-} from 'lucide-react';
+import { ArrowLeft } from 'lucide-react';
 import Link from 'next/link';
-import { useParams, useRouter, useSearchParams } from 'next/navigation';
-import { useEffect, useMemo, useReducer, useRef, useState } from 'react';
+import { useParams, usePathname, useRouter, useSearchParams } from 'next/navigation';
+import { useEffect, useMemo, useState } from 'react';
 import { toast } from 'sonner';
 
-import {
-  DEFAULT_RATE_BASIS,
-  RATE_BASES,
-  type RateBasis,
-  rateBasisLabel,
-} from '@/components/class-form';
-import { PageHeader } from '@/components/page-header';
-import { Badge } from '@/components/ui/badge';
-import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Checkbox } from '@/components/ui/checkbox';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
-import { Skeleton } from '@/components/ui/skeleton';
+import { useBreadcrumb } from '@/context/breadcrumb-provider';
 import { useInstructor } from '@/context/instructor-context';
 import { useOrganisation } from '@/context/organisation-context';
-import { extractEntity } from '@/lib/api-helpers';
-import { cn } from '@/lib/utils';
-import type { Course, CourseTrainingRequirement, ProgramRequirement, TrainingProgram } from '@/services/client';
+import { STALE_TIMES } from '@/lib/query-client';
+import type { CourseTrainingRateCard, ProgramRequirement } from '@/services/client';
 import {
   getCourseByUuidOptions,
+  getCourseContentOptions,
+  getCourseCreatorByUuidOptions,
   getCourseTrainingRequirementsOptions,
   getProgramRequirementsOptions,
   getTrainingProgramByUuidOptions,
   submitProgramTrainingApplicationMutation,
   submitTrainingApplicationMutation,
 } from '@/services/client/@tanstack/react-query.gen';
+import {
+  COURSE_DEFAULT_CURRENCY,
+  type CourseRecordContent,
+  type CourseTrainerApplicantType,
+} from '@/src/features/course-record';
+import {
+  ApplyToTrainView,
+  COURSE_APPLY_RATE_FIELDS,
+  type CourseApplyRateField,
+  type CourseApplyRates,
+  type CourseApplyRequirementRow,
+  courseApplyRequirementRows,
+} from '@/src/features/course-record/ApplyToTrainView';
 import { useUserDomain } from '@/src/features/dashboard/context/user-domain-context';
 import { invalidateTrainingApplicationWorkflowQueries } from '@/src/features/dashboard/workflow-query-invalidation';
+import { useUserProfile } from '@/src/features/profile/context/profile-context';
 
-// ---------- types & state ----------
-
-type TrainingMethod =
-  | 'private-in-person'
-  | 'private-virtual'
-  | 'group-in-person'
-  | 'group-virtual'
-  | 'hybrid';
-
-type Classroom = { id: string; name: string; photoUrl?: string };
-type EquipmentItem = { id: string; name: string; brand: string; serial: string };
-type EquipmentAnswer = {
-  /** Requirements are keyed by uuid, not name: a course may list the same name twice
-   * (this catalogue has four such pairs) and name-keyed answers made those rows share
-   * one another's state while leaving orphan rows nobody could answer — the wizard could
-   * then never satisfy its own validation. */
-  requirementUuid: string;
-  requirementName: string;
-  has: 'yes' | 'no' | null;
-  items: EquipmentItem[];
-  acquisition?: 'lease' | 'hire';
-};
-type PriceTier = {
-  id: string;
-  method: TrainingMethod | '';
-  duration: string;
-  amount: string;
-  basis: RateBasis;
-};
-
-type TrainingContentKind = 'course' | 'program';
-
-type State = {
-  step: number;
-  methods: TrainingMethod[];
-  classroomCount: number;
-  classrooms: Classroom[];
-  equipment: EquipmentAnswer[];
-  pricing: PriceTier[];
-};
-
-type Action =
-  | { type: 'step'; step: number }
-  | { type: 'toggleMethod'; method: TrainingMethod }
-  | { type: 'classroomCount'; count: number }
-  | { type: 'classroom'; id: string; patch: Partial<Classroom> }
-  | { type: 'addClassroom' }
-  | { type: 'removeClassroom'; id: string }
-  | { type: 'moveClassroom'; id: string; direction: 'up' | 'down' }
-  | { type: 'reorderClassrooms'; fromId: string; toId: string }
-  | { type: 'equipHas'; uuid: string; has: 'yes' | 'no' }
-  | { type: 'equipAcquisition'; uuid: string; acquisition: 'lease' | 'hire' }
-  | { type: 'equipAddItem'; uuid: string; name: string }
-  | { type: 'equipRemoveItem'; uuid: string; itemId: string }
-  | { type: 'equipItem'; uuid: string; itemId: string; patch: Partial<EquipmentItem> }
-  | { type: 'priceAdd' }
-  | { type: 'priceRemove'; id: string }
-  | { type: 'priceUpdate'; id: string; patch: Partial<PriceTier> }
-  | { type: 'initEquipment'; requirements: { uuid: string; name: string }[] };
-
-const uid = () => Math.random().toString(36).slice(2, 9);
-
-function makeClassrooms(count: number, existing: Classroom[]): Classroom[] {
-  if (count <= existing.length) return existing.slice(0, count);
-  const extras = Array.from({ length: count - existing.length }, () => ({ id: uid(), name: '' }));
-  return [...existing, ...extras];
-}
-
-function reducer(state: State, action: Action): State {
-  switch (action.type) {
-    case 'step':
-      return { ...state, step: action.step };
-    case 'initEquipment':
-      return {
-        ...state,
-        equipment: action.requirements.map(req => {
-          const existing = state.equipment.find(e => e.requirementUuid === req.uuid);
-          return (
-            existing ?? {
-              requirementUuid: req.uuid,
-              requirementName: req.name,
-              has: null,
-              items: [],
-            }
-          );
-        }),
-      };
-    case 'toggleMethod': {
-      const exists = state.methods.includes(action.method);
-      const methods = exists
-        ? state.methods.filter(m => m !== action.method)
-        : [...state.methods, action.method];
-      const pricing = exists
-        ? state.pricing.filter(p => p.method !== action.method)
-        : state.pricing.some(p => p.method === action.method)
-          ? state.pricing
-          : [
-            ...state.pricing,
-            {
-              id: uid(),
-              method: action.method,
-              duration: '',
-              amount: '',
-              basis: DEFAULT_RATE_BASIS,
-            },
-          ];
-      return { ...state, methods, pricing };
-    }
-    case 'classroomCount': {
-      if (!Number.isFinite(action.count)) return state;
-      const count = Math.max(0, Math.min(20, action.count));
-      return {
-        ...state,
-        classroomCount: count,
-        classrooms: makeClassrooms(count, state.classrooms),
-      };
-    }
-    case 'classroom':
-      return {
-        ...state,
-        classrooms: state.classrooms.map(c => (c.id === action.id ? { ...c, ...action.patch } : c)),
-      };
-    case 'addClassroom': {
-      const next = [...state.classrooms, { id: uid(), name: '' }];
-      return { ...state, classroomCount: next.length, classrooms: next };
-    }
-    case 'removeClassroom': {
-      const next = state.classrooms.filter(c => c.id !== action.id);
-      return { ...state, classroomCount: next.length, classrooms: next };
-    }
-    case 'moveClassroom': {
-      const idx = state.classrooms.findIndex(c => c.id === action.id);
-      if (idx < 0) return state;
-      const target = action.direction === 'up' ? idx - 1 : idx + 1;
-      if (target < 0 || target >= state.classrooms.length) return state;
-      const next = state.classrooms.slice();
-      [next[idx], next[target]] = [next[target], next[idx]];
-      return { ...state, classrooms: next };
-    }
-    case 'reorderClassrooms': {
-      if (action.fromId === action.toId) return state;
-      const from = state.classrooms.findIndex(c => c.id === action.fromId);
-      const to = state.classrooms.findIndex(c => c.id === action.toId);
-      if (from < 0 || to < 0) return state;
-      const next = state.classrooms.slice();
-      const [moved] = next.splice(from, 1);
-      next.splice(to, 0, moved);
-      return { ...state, classrooms: next };
-    }
-    case 'equipHas':
-      return {
-        ...state,
-        equipment: state.equipment.map(e =>
-          e.requirementUuid === action.uuid
-            ? {
-              ...e,
-              has: action.has,
-              items:
-                action.has === 'yes' && e.items.length === 0
-                  ? [{ id: uid(), name: e.requirementName, brand: '', serial: '' }]
-                  : e.items,
-              acquisition: action.has === 'yes' ? undefined : e.acquisition,
-            }
-            : e
-        ),
-      };
-    case 'equipAcquisition':
-      return {
-        ...state,
-        equipment: state.equipment.map(e =>
-          e.requirementUuid === action.uuid ? { ...e, acquisition: action.acquisition } : e
-        ),
-      };
-    case 'equipAddItem':
-      return {
-        ...state,
-        equipment: state.equipment.map(e =>
-          e.requirementUuid === action.uuid
-            ? { ...e, items: [...e.items, { id: uid(), name: action.name, brand: '', serial: '' }] }
-            : e
-        ),
-      };
-    case 'equipRemoveItem':
-      return {
-        ...state,
-        equipment: state.equipment.map(e =>
-          e.requirementUuid === action.uuid
-            ? { ...e, items: e.items.filter(it => it.id !== action.itemId) }
-            : e
-        ),
-      };
-    case 'equipItem':
-      return {
-        ...state,
-        equipment: state.equipment.map(e =>
-          e.requirementUuid === action.uuid
-            ? {
-              ...e,
-              items: e.items.map(it =>
-                it.id === action.itemId ? { ...it, ...action.patch } : it
-              ),
-            }
-            : e
-        ),
-      };
-    case 'priceAdd':
-      return {
-        ...state,
-        pricing: [
-          ...state.pricing,
-          {
-            id: uid(),
-            method: state.methods[0] ?? '',
-            duration: '',
-            amount: '',
-            basis: DEFAULT_RATE_BASIS,
-          },
-        ],
-      };
-    case 'priceRemove':
-      return { ...state, pricing: state.pricing.filter(p => p.id !== action.id) };
-    case 'priceUpdate':
-      return {
-        ...state,
-        pricing: state.pricing.map(p => (p.id === action.id ? { ...p, ...action.patch } : p)),
-      };
-    default:
-      return state;
-  }
-}
-
-// ---------- validation helpers ----------
-
-function validateClassrooms(classrooms: Classroom[]): string[] {
-  const errors: string[] = [];
-  if (classrooms.length === 0) errors.push('Add at least one classroom or lab.');
-  const blank = classrooms.filter(c => !c.name.trim()).length;
-  if (blank > 0) errors.push(`Name ${blank} classroom${blank > 1 ? 's' : ''}.`);
-  return errors;
-}
-
-function validateEquipment(equipment: EquipmentAnswer[]): string[] {
-  const errors: string[] = [];
-  equipment.forEach(e => {
-    if (e.has === null) {
-      errors.push(`Answer Yes/No for "${e.requirementName}".`);
-    } else if (e.has === 'yes') {
-      if (e.items.length === 0) {
-        errors.push(`Add at least one item for "${e.requirementName}".`);
-      } else if (e.items.some(it => !it.name.trim() || !it.brand.trim() || !it.serial.trim())) {
-        errors.push(`Complete name, brand, and serial for every "${e.requirementName}" item.`);
-      }
-    } else if (e.has === 'no' && !e.acquisition) {
-      errors.push(`Choose lease or hire for "${e.requirementName}".`);
-    }
-  });
-  return errors;
-}
-
-function validatePricing(pricing: PriceTier[], methods: TrainingMethod[]): string[] {
-  const errors: string[] = [];
-  if (pricing.length === 0) errors.push('Add at least one pricing tier.');
-  pricing.forEach((p, idx) => {
-    const label = `pricing tier #${idx + 1}`;
-    if (!p.method) errors.push(`Select a training method for ${label}.`);
-    if (p.method && !methods.includes(p.method))
-      errors.push(`${label} uses a training method that is no longer selected.`);
-    if (!p.duration.trim()) errors.push(`Enter a session duration for ${label}.`);
-    const amt = parseFloat(p.amount);
-    if (!p.amount.trim() || Number.isNaN(amt) || amt <= 0)
-      errors.push(`Enter a valid fee per student for ${label}.`);
-  });
-  return errors;
-}
-
-function normalizeRequirementProvider(provider?: string | null) {
-  switch (provider?.toLowerCase()) {
-    case 'organisation':
-    case 'organization':
-    case 'organisation_user':
-    case 'organization_user':
-    case 'training_center':
-      return 'organisation';
-    case 'instructor':
-      return 'instructor';
-    case 'student':
-      return 'student';
-    case 'course_creator':
-      return 'course_creator';
-    default:
-      return null;
-  }
-}
-
-function isOrganisationTrainingRequirement(requirement: CourseTrainingRequirement) {
-  const provider = normalizeRequirementProvider(requirement.provided_by);
-  return provider === null || provider === 'organisation';
-}
-
-// ---------- component ----------
-
-const STEPS = ['Training method', 'Classrooms & labs', 'Requirements', 'Pricing', 'Review'] as const;
-
-const METHOD_OPTIONS: {
-  value: TrainingMethod;
-  title: string;
-  description: string;
-  icon: React.ElementType;
-}[] = [
-    {
-      value: 'private-in-person',
-      title: 'Private in-person (live)',
-      description: 'One-on-one on-site sessions.',
-      icon: Users,
-    },
-    {
-      value: 'private-virtual',
-      title: 'Private virtual',
-      description: 'One-on-one online sessions.',
-      icon: Monitor,
-    },
-    {
-      value: 'group-in-person',
-      title: 'Group in-person (live)',
-      description: 'Cohort on-site at your venue.',
-      icon: Building2,
-    },
-    {
-      value: 'group-virtual',
-      title: 'Group virtual',
-      description: 'Cohort delivered online.',
-      icon: Video,
-    },
-    { value: 'hybrid', title: 'Hybrid', description: 'Mix of in-person and virtual.', icon: Layers },
-  ];
+/** How many requirement rows the application form ever needs on screen at once. */
+const REQUIREMENT_PAGE_SIZE = 200;
 
 /**
- * Maps the wizard's method pricing into the backend's 4 modalities × 3 bases rate card. A tier
- * prices one modality in the basis it was quoted in; bases nobody quoted stay unset, which makes
- * the organisation ineligible for jobs contracted that way rather than guessing a figure.
+ * Where the outline chip goes — the public course page, for both domains.
+ *
+ * Deliberately not the organisation's in-dashboard catalogue detail: the
+ * instructor dashboard has no equivalent route, and sending a school somewhere
+ * richer than an instructor is exactly the asymmetry this screen exists to
+ * avoid. A programme has no such page at all, so the chip is left inert for one.
  */
-function buildRateCard(pricing: PriceTier[]) {
-  const modality: Record<TrainingMethod, string | null> = {
-    'private-virtual': 'private_online',
-    'private-in-person': 'private_inperson',
-    'group-virtual': 'group_online',
-    'group-in-person': 'group_inperson',
-    hybrid: null,
-  };
-  const suffix: Record<RateBasis, string> = {
-    per_hour: 'hourly_rate',
-    per_session: 'session_rate',
-    per_day: 'daily_rate',
-  };
-  const rate: Record<string, number> = {
-    private_online_hourly_rate: 0,
-    private_inperson_hourly_rate: 0,
-    group_online_hourly_rate: 0,
-    group_inperson_hourly_rate: 0,
-  };
-  for (const tier of pricing) {
-    const cell = tier.method ? modality[tier.method] : null;
-    const amt = parseFloat(tier.amount);
-    if (cell && Number.isFinite(amt))
-      rate[`${cell}_${suffix[tier.basis ?? DEFAULT_RATE_BASIS]}`] = amt;
-  }
-  return { currency: 'KES', ...rate };
-}
+const publicCourseHref = (courseUuid: string) => `/courses/${courseUuid}`;
 
 export default function ApplyPage() {
-  const params = useParams<{ courseId?: string; id?: string }>();
-  const searchParams = useSearchParams();
+  const params = useParams();
+  const rawId = params?.courseId ?? params?.id;
+  const trainingId = typeof rawId === 'string' ? rawId : (rawId?.[0] ?? '');
 
-  const trainingId = params?.courseId ?? params?.id ?? '';
-  const contentKind = searchParams.get('kind') === 'program' ? 'program' : 'course';
-  const isProgram = contentKind === 'program';
+  const searchParams = useSearchParams();
+  const isProgram = searchParams.get('kind') === 'program';
 
   const router = useRouter();
+  const pathname = usePathname();
   const queryClient = useQueryClient();
+  const { replaceBreadcrumbs } = useBreadcrumb();
+
+  /* ── who is applying ────────────────────────────────────────────────── */
+
   const { activeDomain } = useUserDomain();
   const isInstructorDomain = activeDomain === 'instructor';
   const organisation = useOrganisation();
   const instructor = useInstructor();
-  const organisationUuid = organisation?.uuid ?? '';
-  const applicantUuid = isInstructorDomain ? instructor?.uuid ?? '' : organisationUuid;
-  const applicantType = isInstructorDomain ? 'instructor' : 'organisation';
+  const profile = useUserProfile();
+
+  const applicantType: CourseTrainerApplicantType = isInstructorDomain
+    ? 'instructor'
+    : 'organisation';
+
+  /*
+   * `/dashboard/apply-to-train/[id]` re-exports this page too, and sits outside
+   * the organisation layout — so `useOrganisation()` has no provider there and
+   * answers null. The school is still knowable from the signed-in user's own
+   * affiliations, and without this fallback the submit button on that route is
+   * dead for every organisation applicant.
+   */
+  const affiliations = profile?.organisation_affiliations ?? [];
+  const affiliatedOrganisationUuid = (affiliations.find(row => row.active) ?? affiliations[0])
+    ?.organisation_uuid;
+  const applicantUuid =
+    (isInstructorDomain
+      ? instructor?.uuid
+      : (organisation?.uuid ?? affiliatedOrganisationUuid)) ?? '';
+
   const backHref = isInstructorDomain
     ? '/dashboard/instructor/courses'
     : '/dashboard/organisation/courses/catalog';
+  const backLabel = isInstructorDomain ? 'Back to courses' : 'Back to catalogue';
   const successHref = isInstructorDomain
     ? '/dashboard/instructor/courses'
     : '/dashboard/organisation/my-applications';
 
+  /* ── what is being applied for ──────────────────────────────────────── */
+
+  const forCourse = Boolean(trainingId) && !isProgram;
+  const forProgram = Boolean(trainingId) && isProgram;
+
   const courseQuery = useQuery({
     ...getCourseByUuidOptions({ path: { uuid: trainingId } }),
-    enabled: Boolean(trainingId) && !isProgram,
-  });
-  const courseRequirementsQuery = useQuery({
-    ...getCourseTrainingRequirementsOptions({
-      path: { courseUuid: trainingId },
-      query: { pageable: { page: 0, size: 200 } },
-    }),
-    enabled: Boolean(trainingId) && !isProgram,
+    enabled: forCourse,
+    staleTime: STALE_TIMES.entity,
   });
   const programQuery = useQuery({
     ...getTrainingProgramByUuidOptions({ path: { uuid: trainingId } }),
-    enabled: Boolean(trainingId) && isProgram,
+    enabled: forProgram,
+    staleTime: STALE_TIMES.entity,
+  });
+
+  const course = courseQuery.data?.data;
+  const program = programQuery.data?.data;
+
+  const courseRequirementsQuery = useQuery({
+    ...getCourseTrainingRequirementsOptions({
+      path: { courseUuid: trainingId },
+      query: { pageable: { page: 0, size: REQUIREMENT_PAGE_SIZE } },
+    }),
+    enabled: forCourse,
+    staleTime: STALE_TIMES.entity,
   });
   const programRequirementsQuery = useQuery({
     ...getProgramRequirementsOptions({
       path: { programUuid: trainingId },
-      query: { pageable: { page: 0, size: 200 } },
+      query: { pageable: { page: 0, size: REQUIREMENT_PAGE_SIZE } },
     }),
-    enabled: Boolean(trainingId) && isProgram,
+    enabled: forProgram,
+    staleTime: STALE_TIMES.entity,
   });
-  const course = extractEntity<Course>(courseQuery.data);
-  const program = extractEntity<TrainingProgram>(programQuery.data);
-  const courseRequirements = useMemo(
-    () => courseRequirementsQuery.data?.data?.content ?? course?.training_requirements ?? [],
-    [course?.training_requirements, courseRequirementsQuery.data?.data?.content]
+
+  // The curriculum's shape, for the "all N lessons and M content items" line on
+  // the unlock list. This is the outline endpoint — it is what an applicant is
+  // allowed to see, and it carries no lesson bodies.
+  const contentQuery = useQuery({
+    ...getCourseContentOptions({ path: { courseUuid: trainingId } }),
+    enabled: forCourse,
+    staleTime: STALE_TIMES.entity,
+  });
+  const content = contentQuery.data?.data as CourseRecordContent | undefined;
+
+  const creatorUuid = (isProgram ? program : course)?.course_creator_uuid ?? '';
+  const creatorQuery = useQuery({
+    ...getCourseCreatorByUuidOptions({ path: { uuid: creatorUuid } }),
+    enabled: Boolean(creatorUuid),
+    staleTime: STALE_TIMES.entity,
+  });
+
+  /* ── the draft application ──────────────────────────────────────────── */
+
+  const [rates, setRates] = useState<CourseApplyRates>({});
+  const [notes, setNotes] = useState('');
+
+  const setRate = (field: CourseApplyRateField, value: number | undefined) =>
+    setRates(previous => ({ ...previous, [field]: value }));
+
+  /* ── what the creator requires ──────────────────────────────────────── */
+
+  // The paged call is the source; a course that carries its requirements inline
+  // still answers when that call has not resolved (or is not served for it).
+  const courseRequirements =
+    courseRequirementsQuery.data?.data?.content ?? course?.training_requirements ?? undefined;
+  const programRequirements = programRequirementsQuery.data?.data?.content;
+
+  const requirements = useMemo<CourseApplyRequirementRow[]>(
+    () =>
+      isProgram
+        ? programRequirementRows(programRequirements)
+        : courseApplyRequirementRows(courseRequirements),
+    [isProgram, courseRequirements, programRequirements]
   );
-  const programRequirements = useMemo(
-    () => programRequirementsQuery.data?.data?.content ?? [],
-    [programRequirementsQuery.data?.data?.content]
-  );
-  const requirements = useMemo(
-    () => courseRequirements.filter(isOrganisationTrainingRequirement),
-    [courseRequirements]
-  );
 
-  const [state, dispatch] = useReducer(reducer, undefined, () => ({
-    step: 0,
-    methods: [],
-    classroomCount: 1,
-    classrooms: [{ id: uid(), name: '' }],
-    equipment: [],
-    pricing: [],
-  }));
+  const requirementsQuery = isProgram ? programRequirementsQuery : courseRequirementsQuery;
 
-  // Seed equipment answers from the course creator's real requirements once loaded.
-  const reqKey = requirements.map(r => r.uuid ?? r.name).join('|');
-  useEffect(() => {
-    if (!isProgram) {
-      dispatch({
-        type: 'initEquipment',
-        requirements: requirements.map(r => ({ uuid: (r.uuid ?? r.name) as string, name: r.name })),
-      });
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [isProgram, reqKey]);
+  /* ── figures the view interpolates ──────────────────────────────────── */
 
-  const courseSubmitMutation = useMutation(submitTrainingApplicationMutation());
-  const programSubmitMutation = useMutation(submitProgramTrainingApplicationMutation());
+  const title = isProgram ? program?.title : course?.name;
+  // A route with no uuid resolves to "not found" immediately: its queries never
+  // run, so waiting on one of them would leave an empty form on screen forever.
+  const settled = !trainingId || (isProgram ? programQuery.isFetched : courseQuery.isFetched);
 
-  const missing = useMemo(() => {
-    const errors: string[] = [];
-    if (state.step === 0) {
-      if (state.methods.length === 0) errors.push('Select at least one preferred training method.');
-    } else if (state.step === 1) {
-      errors.push(...validateClassrooms(state.classrooms));
-    } else if (state.step === 2) {
-      if (!isProgram) {
-        errors.push(...validateEquipment(state.equipment));
-      }
-    } else if (state.step === 3) {
-      errors.push(...validatePricing(state.pricing, state.methods));
-    } else if (state.step === 4) {
-      if (state.methods.length === 0) errors.push('Select at least one preferred training method.');
-      errors.push(...validateClassrooms(state.classrooms));
-      if (!isProgram) {
-        errors.push(...validateEquipment(state.equipment));
-      }
-      errors.push(...validatePricing(state.pricing, state.methods));
-    }
-    return errors;
-  }, [isProgram, state]);
+  const classHours = isProgram
+    ? totalHours(program?.total_duration_hours, program?.total_duration_minutes)
+    : totalHours(course?.duration_hours, course?.duration_minutes);
+  const classSize = (isProgram ? program?.class_limit : course?.class_limit) ?? undefined;
 
-  const canNext = missing.length === 0;
-  const goNext = () => {
-    if (!canNext) return;
-    dispatch({ type: 'step', step: Math.min(STEPS.length - 1, state.step + 1) });
-  };
-  const goBack = () => dispatch({ type: 'step', step: Math.max(0, state.step - 1) });
+  const lessonCount = content?.total_lessons ?? content?.lessons?.length;
+  // A zero is not a count the unlock line should state — "0 content items, in
+  // full" is worse than dropping the line, which is what an absent token does.
+  const contentItemCount =
+    content?.lessons?.reduce(
+      (total, lesson) => total + (lesson.content_count ?? lesson.contents?.length ?? 0),
+      0
+    ) || undefined;
+
+  /* ── submitting ─────────────────────────────────────────────────────── */
+
+  const courseSubmit = useMutation(submitTrainingApplicationMutation());
+  const programSubmit = useMutation(submitProgramTrainingApplicationMutation());
+  const submitting = courseSubmit.isPending || programSubmit.isPending;
 
   const submit = () => {
-    if ((!course && !program) || !applicantUuid) return;
-    const trainingName = isProgram ? program?.title ?? 'this program' : course?.name ?? 'this course';
-    const methodTitles = state.methods
-      .map(v => METHOD_OPTIONS.find(m => m.value === v)?.title)
-      .filter(Boolean)
-      .join(', ');
-    const notes = [
-      `Methods: ${methodTitles}`,
-      `Classrooms: ${state.classrooms.map(c => c.name || '(unnamed)').join(', ')}`,
-      isProgram
-        ? `Program requirements reviewed: ${programRequirements.length}`
-        : `Equipment ready: ${state.equipment.filter(e => e.has === 'yes').length}/${requirements.length}`,
-    ].join(' · ');
+    const blockers: string[] = [];
 
-    const mutate = isProgram ? programSubmitMutation : courseSubmitMutation;
-    mutate.mutate(
-      {
-        path: isProgram ? { programUuid: trainingId } : { courseUuid: trainingId },
-        body: {
-          applicant_type: applicantType,
-          applicant_uuid: applicantUuid,
-          rate_card: buildRateCard(state.pricing),
-          application_notes: notes,
-        },
-      } as never,
-      {
-        onSuccess: async () => {
-          await invalidateTrainingApplicationWorkflowQueries(queryClient);
-          toast.success('Application submitted', {
-            description: `Your application to train ${trainingName} is under review.`,
-          });
-          router.push(successHref);
-        },
-        onError: () => {
-          toast.error('Could not submit application', {
-            description: 'Please review your answers and try again.',
-          });
-        },
-      }
-    );
+    if (!title) {
+      blockers.push(
+        isProgram ? 'The programme has not loaded yet.' : 'The course has not loaded yet.'
+      );
+    }
+    if (!applicantUuid) {
+      blockers.push(
+        isInstructorDomain
+          ? 'Your instructor profile is still loading.'
+          : 'Your organisation profile is still loading.'
+      );
+    }
+    if (!COURSE_APPLY_RATE_FIELDS.some(({ field }) => (rates[field] ?? 0) > 0)) {
+      blockers.push('Quote at least one hourly rate — the creator decides on your rate card.');
+    }
+
+    if (blockers.length > 0) {
+      toast.error('Not ready to submit', { description: blockers.join(' ') });
+      return;
+    }
+
+    const body = {
+      applicant_type: applicantType,
+      applicant_uuid: applicantUuid,
+      rate_card: buildRateCard(rates),
+      application_notes: notes.trim() || null,
+    };
+
+    const onSuccess = async () => {
+      await invalidateTrainingApplicationWorkflowQueries(queryClient);
+      toast.success('Application submitted', {
+        description: `Your application to train ${title} is under review.`,
+      });
+      router.push(successHref);
+    };
+    const onError = () => {
+      toast.error('Could not submit application', {
+        description: 'Please review your rate card and notes, then try again.',
+      });
+    };
+
+    if (isProgram) {
+      programSubmit.mutate({ path: { programUuid: trainingId }, body }, { onSuccess, onError });
+    } else {
+      courseSubmit.mutate({ path: { courseUuid: trainingId }, body }, { onSuccess, onError });
+    }
   };
 
-  const contentTitle = isProgram ? program?.title ?? '' : course?.name ?? '';
-  const isLoading = isProgram ? programQuery.isLoading : courseQuery.isLoading;
+  /* ── chrome ─────────────────────────────────────────────────────────── */
 
-  if (isLoading) {
-    return (
-      <div className='mx-auto w-full max-w-[1600px] space-y-6 px-3 py-4 sm:px-5 lg:px-6'>
-        <Skeleton className='h-16 w-full' />
-        <Skeleton className='h-96 w-full' />
-      </div>
-    );
-  }
+  /*
+   * A new tab, not a navigation. The draft rate card and the notes live in this
+   * component's state, so following the outline in place and coming back would
+   * throw away everything typed so far — the one click on the page most likely
+   * to be made halfway through filling it in.
+   */
+  const viewOutline = () => {
+    window.open(publicCourseHref(trainingId), '_blank', 'noopener,noreferrer');
+  };
 
-  if (!contentTitle) {
+  useEffect(() => {
+    const dashboard = isInstructorDomain ? 'instructor' : 'organisation';
+    replaceBreadcrumbs([
+      { id: 'dashboard', title: 'Dashboard', url: `/dashboard/${dashboard}/overview` },
+      { id: 'opportunities', title: 'Training opportunities', url: backHref },
+      // Three routes re-export this page; the last crumb is wherever we are.
+      { id: 'apply', title: 'Apply to train', url: pathname, isLast: true },
+    ]);
+  }, [replaceBreadcrumbs, isInstructorDomain, backHref, pathname]);
+
+  // Only a settled query that found nothing is a reason not to render the form.
+  // Everything else fills in as it arrives.
+  if (settled && !title) {
     return (
       <div className='text-muted-foreground p-8 text-center text-sm'>
-        {isProgram ? 'Program' : 'Course'} not found.{' '}
+        {isProgram ? 'Programme' : 'Course'} not found.{' '}
         <Link href={backHref} className='text-primary hover:underline'>
-          Back to {isInstructorDomain ? 'courses' : 'catalog'}
+          {backLabel}
         </Link>
       </div>
     );
   }
 
   return (
-    <div className='mx-auto w-full max-w-[1600px] space-y-6 px-3 py-4 sm:px-5 lg:px-6 2xl:max-w-[1840px]'>
-      <PageHeader
-        title={`Apply to train: ${contentTitle || 'Untitled'}`}
-        description={
-          isProgram
-            ? `${program?.program_type ?? 'Program'} · ${program?.total_duration_display ?? '—'}`
-            : `${course?.category_names?.[0] ?? 'General'} · ${course?.total_duration_display ?? '—'}`
-        }
-        action={
-          <Button asChild variant='ghost' size='sm'>
-            <Link href={backHref}>
-              <ArrowLeft className='mr-2 h-4 w-4' /> Back to {isInstructorDomain ? 'courses' : 'catalog'}
-            </Link>
-          </Button>
-        }
-      />
-
-      <Stepper step={state.step} />
-
-      <Card>
-        <CardHeader>
-          <CardTitle className='text-base' data-testid='apply-step-title'>
-            {STEPS[state.step]}
-          </CardTitle>
-          <CardDescription>
-            {state.step === 0 && `Choose how you'd like to deliver this ${isProgram ? 'program' : 'course'}.`}
-            {state.step === 1 && 'Tell us about the classrooms or labs you can provide.'}
-            {state.step === 2 &&
-              (isProgram
-                ? 'Review the published requirements for this program.'
-                : 'Confirm the equipment required to run this course.')}
-            {state.step === 3 &&
-              "Propose your fee per student for each training method you'd offer."}
-            {state.step === 4 && 'Review your answers, then submit for approval.'}
-          </CardDescription>
-        </CardHeader>
-        <CardContent className='space-y-6'>
-          {state.step === 0 && <StepMethod state={state} dispatch={dispatch} />}
-          {state.step === 1 && <StepClassrooms state={state} dispatch={dispatch} />}
-          {state.step === 2 && (
-            <StepEquipment
-              state={state}
-              dispatch={dispatch}
-              contentKind={contentKind}
-              requirements={courseRequirements}
-              programRequirements={programRequirements}
-              course={course}
-            />
-          )}
-          {state.step === 3 && <StepPricing state={state} dispatch={dispatch} />}
-          {state.step === 4 && (
-            <StepReview
-              state={state}
-              contentKind={contentKind}
-              requirements={courseRequirements}
-              programRequirements={programRequirements}
-              dispatch={dispatch}
-            />
-          )}
-
-          {missing.length > 0 && (
-            <div
-              role='status'
-              aria-live='polite'
-              className='border-warning/40 bg-warning/10 text-warning rounded-md border p-3 text-sm'
-            >
-              <p className='mb-1 font-medium'>
-                {state.step === STEPS.length - 1
-                  ? 'Before submitting, complete the following:'
-                  : 'To continue, complete the following:'}
-              </p>
-              <ul className='list-disc space-y-0.5 pl-5'>
-                {missing.map(m => (
-                  <li key={m}>{m}</li>
-                ))}
-              </ul>
-            </div>
-          )}
-
-          <div className='flex flex-col-reverse gap-2 border-t pt-4 sm:flex-row sm:justify-between'>
-            <Button type='button' variant='outline' onClick={goBack} disabled={state.step === 0}>
-              <ArrowLeft className='mr-2 h-4 w-4' /> Back
-            </Button>
-            {state.step < STEPS.length - 1 ? (
-              <Button type='button' onClick={goNext} disabled={!canNext}>
-                Next <ArrowRight className='ml-2 h-4 w-4' />
-              </Button>
-            ) : (
-              <Button
-                type='button'
-                onClick={submit}
-                disabled={!canNext || courseSubmitMutation.isPending || programSubmitMutation.isPending}
-              >
-                <Check className='mr-2 h-4 w-4' />{' '}
-                {courseSubmitMutation.isPending || programSubmitMutation.isPending
-                  ? 'Submitting…'
-                  : 'Submit application'}
-              </Button>
-            )}
-          </div>
-        </CardContent>
-      </Card>
-    </div>
-  );
-}
-
-// ---------- stepper ----------
-
-function Stepper({ step }: { step: number }) {
-  return (
-    <>
-      <ol className='hidden items-center gap-2 sm:flex'>
-        {STEPS.map((label, i) => {
-          const active = i === step;
-          const done = i < step;
-          return (
-            <li key={label} className='flex flex-1 items-center gap-2'>
-              <div
-                className={cn(
-                  'flex h-7 w-7 shrink-0 items-center justify-center rounded-full border text-xs font-semibold',
-                  done && 'border-primary bg-primary text-primary-foreground',
-                  active && 'border-primary text-primary',
-                  !active && !done && 'border-border text-muted-foreground'
-                )}
-              >
-                {done ? <Check className='h-4 w-4' /> : i + 1}
-              </div>
-              <span
-                className={cn(
-                  'text-sm',
-                  active ? 'text-foreground font-medium' : 'text-muted-foreground'
-                )}
-              >
-                {label}
-              </span>
-              {i < STEPS.length - 1 && <div className='bg-border mx-2 h-px flex-1' />}
-            </li>
-          );
-        })}
-      </ol>
-      <p className='text-muted-foreground text-sm sm:hidden'>
-        Step {step + 1} of {STEPS.length} —{' '}
-        <span className='text-foreground font-medium'>{STEPS[step]}</span>
-      </p>
-    </>
-  );
-}
-
-// ---------- step 1 ----------
-
-function StepMethod({ state, dispatch }: { state: State; dispatch: React.Dispatch<Action> }) {
-  return (
-    <div className='space-y-3'>
-      <p className='text-muted-foreground text-xs'>
-        Select all training methods you can offer — you'll set pricing per method in the Pricing
-        step.
-      </p>
-      <div className='grid gap-3 sm:grid-cols-2'>
-        {METHOD_OPTIONS.map(({ value, title, description, icon: Icon }) => {
-          const selected = state.methods.includes(value);
-          return (
-            <label
-              key={value}
-              htmlFor={`m-${value}`}
-              className={cn(
-                'flex cursor-pointer items-start gap-3 rounded-lg border p-4 transition-colors',
-                selected ? 'border-primary bg-primary/5' : 'border-border hover:bg-muted/40'
-              )}
-            >
-              <Checkbox
-                id={`m-${value}`}
-                checked={selected}
-                onCheckedChange={() => dispatch({ type: 'toggleMethod', method: value })}
-                className='mt-0.5'
-              />
-              <div className='flex-1 space-y-1'>
-                <div className='flex items-center gap-2'>
-                  <Icon className='text-primary h-4 w-4' />
-                  <span className='font-medium'>{title}</span>
-                </div>
-                <p className='text-muted-foreground text-sm'>{description}</p>
-              </div>
-            </label>
-          );
-        })}
-      </div>
-    </div>
-  );
-}
-
-// ---------- step 2 ----------
-
-function StepClassrooms({ state, dispatch }: { state: State; dispatch: React.Dispatch<Action> }) {
-  const [dragId, setDragId] = useState<string | null>(null);
-  const [dragOverId, setDragOverId] = useState<string | null>(null);
-  const [countInput, setCountInput] = useState<string>(String(state.classroomCount));
-
-  useEffect(() => {
-    setCountInput(String(state.classroomCount));
-  }, [state.classroomCount]);
-
-  return (
-    <div className='space-y-4'>
-      <div className='max-w-xs space-y-2'>
-        <Label htmlFor='count'>How many classrooms/labs do you have for this course?</Label>
-        <Input
-          id='count'
-          type='number'
-          min={0}
-          max={20}
-          value={countInput}
-          onChange={e => {
-            const raw = e.target.value;
-            setCountInput(raw);
-            if (raw === '') return;
-            const parsed = parseInt(raw, 10);
-            if (Number.isFinite(parsed)) dispatch({ type: 'classroomCount', count: parsed });
-          }}
-          onBlur={() => {
-            if (countInput === '' || !Number.isFinite(parseInt(countInput, 10))) {
-              setCountInput(String(state.classroomCount));
-            }
-          }}
-        />
-      </div>
-
-      {state.classrooms.length > 1 && (
-        <p className='text-muted-foreground text-xs'>
-          Drag rows or use the arrows to set your preferred order — the first row is your primary
-          space.
-        </p>
-      )}
-
-      <div className='space-y-3'>
-        {state.classrooms.map((c, idx) => (
-          <ClassroomRow
-            key={c.id}
-            index={idx}
-            total={state.classrooms.length}
-            classroom={c}
-            isDragging={dragId === c.id}
-            isDragOver={dragOverId === c.id && dragId !== c.id}
-            onChange={patch => dispatch({ type: 'classroom', id: c.id, patch })}
-            onRemove={() => dispatch({ type: 'removeClassroom', id: c.id })}
-            onMoveUp={() => dispatch({ type: 'moveClassroom', id: c.id, direction: 'up' })}
-            onMoveDown={() => dispatch({ type: 'moveClassroom', id: c.id, direction: 'down' })}
-            onDragStart={() => setDragId(c.id)}
-            onDragEnd={() => {
-              setDragId(null);
-              setDragOverId(null);
-            }}
-            onDragOver={() => setDragOverId(c.id)}
-            onDrop={() => {
-              if (dragId && dragId !== c.id)
-                dispatch({ type: 'reorderClassrooms', fromId: dragId, toId: c.id });
-              setDragId(null);
-              setDragOverId(null);
-            }}
-          />
-        ))}
-      </div>
-
-      <Button
-        type='button'
-        variant='outline'
-        size='sm'
-        onClick={() => dispatch({ type: 'addClassroom' })}
+    <div className='mx-auto w-full max-w-[1600px] px-3 py-4 sm:px-5 lg:px-6 2xl:max-w-[1840px]'>
+      <Link
+        href={backHref}
+        className='text-muted-foreground hover:text-foreground mb-4 inline-flex h-8 items-center gap-2 rounded-[10px] text-sm font-medium transition-colors'
       >
-        <Plus className='mr-2 h-4 w-4' /> Add classroom
-      </Button>
-    </div>
-  );
-}
+        <ArrowLeft className='size-4' />
+        {backLabel}
+      </Link>
 
-function ClassroomRow({
-  index,
-  total,
-  classroom,
-  isDragging,
-  isDragOver,
-  onChange,
-  onRemove,
-  onMoveUp,
-  onMoveDown,
-  onDragStart,
-  onDragEnd,
-  onDragOver,
-  onDrop,
-}: {
-  index: number;
-  total: number;
-  classroom: Classroom;
-  isDragging: boolean;
-  isDragOver: boolean;
-  onChange: (patch: Partial<Classroom>) => void;
-  onRemove: () => void;
-  onMoveUp: () => void;
-  onMoveDown: () => void;
-  onDragStart: () => void;
-  onDragEnd: () => void;
-  onDragOver: () => void;
-  onDrop: () => void;
-}) {
-  const fileRef = useRef<HTMLInputElement>(null);
-  const previousUrl = useRef<string | undefined>(classroom.photoUrl);
-  const progressTimer = useRef<number | null>(null);
-  const [progress, setProgress] = useState<number | null>(null);
-  const [error, setError] = useState<string | null>(null);
-
-  const MAX_MB = 5;
-  const MAX_BYTES = MAX_MB * 1024 * 1024;
-  const ALLOWED = ['image/jpeg', 'image/png', 'image/webp', 'image/gif'];
-
-  useEffect(() => {
-    return () => {
-      if (previousUrl.current?.startsWith('blob:')) URL.revokeObjectURL(previousUrl.current);
-      if (progressTimer.current) window.clearInterval(progressTimer.current);
-    };
-  }, []);
-
-  const clearFileInput = () => {
-    if (fileRef.current) fileRef.current.value = '';
-  };
-
-  const handleFile = (file: File | null) => {
-    setError(null);
-    if (progressTimer.current) {
-      window.clearInterval(progressTimer.current);
-      progressTimer.current = null;
-    }
-    if (!file) {
-      if (previousUrl.current?.startsWith('blob:')) URL.revokeObjectURL(previousUrl.current);
-      previousUrl.current = undefined;
-      setProgress(null);
-      onChange({ photoUrl: undefined });
-      return;
-    }
-    if (!ALLOWED.includes(file.type)) {
-      setError('Unsupported file type. Use JPG, PNG, WEBP, or GIF.');
-      setProgress(null);
-      clearFileInput();
-      return;
-    }
-    if (file.size > MAX_BYTES) {
-      const mb = (file.size / (1024 * 1024)).toFixed(1);
-      setError(`File is ${mb}MB. Maximum allowed is ${MAX_MB}MB.`);
-      setProgress(null);
-      clearFileInput();
-      return;
-    }
-    setProgress(0);
-    progressTimer.current = window.setInterval(() => {
-      setProgress(prev => {
-        const next = (prev ?? 0) + Math.random() * 18 + 8;
-        if (next >= 100) {
-          if (progressTimer.current) {
-            window.clearInterval(progressTimer.current);
-            progressTimer.current = null;
-          }
-          if (previousUrl.current?.startsWith('blob:')) URL.revokeObjectURL(previousUrl.current);
-          const url = URL.createObjectURL(file);
-          previousUrl.current = url;
-          onChange({ photoUrl: url });
-          window.setTimeout(() => setProgress(null), 250);
-          return 100;
-        }
-        return next;
-      });
-    }, 120);
-  };
-
-  const uploading = progress !== null && progress < 100;
-
-  return (
-    <div
-      draggable
-      onDragStart={e => {
-        onDragStart();
-        e.dataTransfer.effectAllowed = 'move';
-        e.dataTransfer.setData('text/plain', classroom.id);
-      }}
-      onDragEnd={onDragEnd}
-      onDragOver={e => {
-        e.preventDefault();
-        e.dataTransfer.dropEffect = 'move';
-        onDragOver();
-      }}
-      onDrop={e => {
-        e.preventDefault();
-        onDrop();
-      }}
-      className={cn(
-        'bg-card grid gap-3 rounded-md border p-3 transition-all sm:grid-cols-[auto_96px_1fr_auto] sm:items-start',
-        isDragging && 'opacity-50',
-        isDragOver && 'border-primary ring-primary/40 ring-2'
-      )}
-    >
-      <div className='flex items-center gap-1 sm:flex-col sm:items-center sm:gap-0.5'>
-        <span
-          className='text-muted-foreground cursor-grab active:cursor-grabbing'
-          aria-hidden
-          title='Drag to reorder'
-        >
-          <GripVertical className='h-4 w-4' />
-        </span>
-        <Badge variant='secondary' className='h-5 min-w-[1.5rem] justify-center px-1.5 text-[10px]'>
-          {index + 1}
-        </Badge>
-        <div className='ml-auto flex gap-0.5 sm:ml-0 sm:flex-col'>
-          <Button
-            type='button'
-            variant='ghost'
-            size='icon'
-            className='h-6 w-6'
-            onClick={onMoveUp}
-            disabled={index === 0}
-            aria-label={`Move classroom ${index + 1} up`}
-          >
-            <ChevronUp className='h-4 w-4' />
-          </Button>
-          <Button
-            type='button'
-            variant='ghost'
-            size='icon'
-            className='h-6 w-6'
-            onClick={onMoveDown}
-            disabled={index === total - 1}
-            aria-label={`Move classroom ${index + 1} down`}
-          >
-            <ChevronDown className='h-4 w-4' />
-          </Button>
-        </div>
-      </div>
-      <div className='space-y-1'>
-        <button
-          type='button'
-          onClick={() => fileRef.current?.click()}
-          disabled={uploading}
-          className={cn(
-            'group text-muted-foreground hover:bg-muted relative flex h-24 w-24 items-center justify-center overflow-hidden rounded-md border border-dashed transition-colors',
-            classroom.photoUrl && !uploading && 'border-border border-solid',
-            error && 'border-destructive text-destructive',
-            uploading && 'cursor-progress'
-          )}
-          aria-label={
-            uploading
-              ? `Uploading, ${Math.round(progress ?? 0)}%`
-              : classroom.photoUrl
-                ? 'Replace classroom photo'
-                : 'Upload classroom photo'
-          }
-        >
-          {classroom.photoUrl && !uploading ? (
-            <>
-              <img
-                src={classroom.photoUrl}
-                alt={classroom.name || `Classroom ${index + 1}`}
-                className='h-full w-full object-cover'
-              />
-              <span className='bg-foreground/60 text-background absolute inset-x-0 bottom-0 py-0.5 text-center text-[10px] font-medium tracking-wide uppercase opacity-0 transition-opacity group-hover:opacity-100'>
-                Replace
-              </span>
-            </>
-          ) : uploading ? (
-            <div className='text-foreground flex w-full flex-col items-center gap-1 px-2'>
-              <span className='text-[10px] font-medium tracking-wide uppercase'>
-                {Math.round(progress ?? 0)}%
-              </span>
-              <div
-                className='bg-muted h-1.5 w-full overflow-hidden rounded-full'
-                role='progressbar'
-                aria-valuemin={0}
-                aria-valuemax={100}
-                aria-valuenow={Math.round(progress ?? 0)}
-              >
-                <div
-                  className='bg-primary h-full transition-all'
-                  style={{ width: `${progress ?? 0}%` }}
-                />
-              </div>
-            </div>
-          ) : (
-            <span className='flex flex-col items-center gap-1'>
-              <Camera className='h-5 w-5' />
-              <span className='text-[10px] font-medium tracking-wide uppercase'>Add photo</span>
-            </span>
-          )}
-        </button>
-        {classroom.photoUrl && !uploading && !error && (
-          <button
-            type='button'
-            onClick={() => handleFile(null)}
-            className='text-muted-foreground hover:text-foreground w-24 text-center text-[11px] underline-offset-2 hover:underline'
-          >
-            Remove
-          </button>
-        )}
-      </div>
-      <input
-        ref={fileRef}
-        type='file'
-        accept='image/jpeg,image/png,image/webp,image/gif'
-        className='hidden'
-        onChange={e => {
-          const file = e.target.files?.[0] ?? null;
-          handleFile(file);
-          if (fileRef.current && !file) fileRef.current.value = '';
+      <ApplyToTrainView
+        courseTitle={title}
+        creatorName={creatorQuery.data?.full_name}
+        applicantType={applicantType}
+        onViewOutline={isProgram ? undefined : viewOutline}
+        requirements={requirements}
+        loading={requirementsQuery.isLoading && requirements.length === 0}
+        error={requirementsQuery.error}
+        onRetry={() => void requirementsQuery.refetch()}
+        rates={rates}
+        onRateChange={setRate}
+        minimumTrainingFee={isProgram ? undefined : (course?.minimum_training_fee ?? undefined)}
+        currency={COURSE_DEFAULT_CURRENCY}
+        notes={notes}
+        onNotesChange={setNotes}
+        onSubmit={submit}
+        submitting={submitting}
+        classHours={classHours}
+        classSize={classSize}
+        creatorSharePercentage={isProgram ? undefined : course?.creator_share_percentage}
+        earningsAsync={{
+          loading: isProgram ? programQuery.isLoading : courseQuery.isLoading,
+          error: isProgram ? programQuery.error : courseQuery.error,
+          onRetry: () => void (isProgram ? programQuery.refetch() : courseQuery.refetch()),
         }}
+        vars={{ lessons: lessonCount, contentItems: contentItemCount }}
       />
-
-      <div className='space-y-1'>
-        <Label htmlFor={`room-${classroom.id}`} className='text-muted-foreground text-xs'>
-          Classroom #{index + 1} name <span className='text-destructive'>*</span>
-        </Label>
-        <Input
-          id={`room-${classroom.id}`}
-          value={classroom.name}
-          onChange={e => onChange({ name: e.target.value })}
-          placeholder='e.g. Room 12A / Lab B'
-          required
-          aria-invalid={!classroom.name.trim()}
-          className={cn(
-            !classroom.name.trim() && 'border-destructive focus-visible:ring-destructive/40'
-          )}
-        />
-        {!classroom.name.trim() ? (
-          <p className='text-destructive text-[11px]'>Classroom name is required.</p>
-        ) : (
-          <p className='text-muted-foreground text-[11px]'>
-            Photo is optional. Max {MAX_MB}MB · JPG, PNG, WEBP, GIF.
-          </p>
-        )}
-        {error && (
-          <p role='alert' className='text-destructive text-[11px] font-medium'>
-            {error}
-          </p>
-        )}
-        {uploading && (
-          <p aria-live='polite' className='text-muted-foreground text-[11px]'>
-            Uploading photo… {Math.round(progress ?? 0)}%
-          </p>
-        )}
-      </div>
-      <Button
-        type='button'
-        variant='ghost'
-        size='icon'
-        onClick={onRemove}
-        aria-label='Remove classroom'
-        className='justify-self-end'
-      >
-        <Trash2 className='text-muted-foreground h-4 w-4' />
-      </Button>
     </div>
   );
 }
 
-// ---------- step 3 ----------
+/* ────────────────────────────────────────────────────────────────────────────
+ * Composing
+ * ────────────────────────────────────────────────────────────────────────── */
 
-function StepEquipment({
-  state,
-  dispatch,
-  contentKind,
-  requirements,
-  programRequirements,
-  course,
-}: {
-  state: State;
-  dispatch: React.Dispatch<Action>;
-  contentKind: TrainingContentKind;
-  requirements: CourseTrainingRequirement[];
-  programRequirements: ProgramRequirement[];
-  course: Course;
-}) {
-  if (contentKind === 'program') {
-    if (programRequirements.length === 0) {
-      return (
-        <div className='bg-muted/30 text-muted-foreground rounded-md border border-dashed p-6 text-center text-sm'>
-          The program creator has not listed any requirements for this program yet. You can
-          continue to the next step.
-        </div>
-      );
-    }
-
-    return (
-      <div className='space-y-4'>
-        <div className='bg-muted/30 flex flex-wrap items-center justify-between gap-2 rounded-md border border-dashed p-3'>
-          <p className='text-muted-foreground text-sm'>
-            These are the program requirements published by the creator. Review them before
-            submitting your application.
-          </p>
-          <Badge variant='secondary'>{programRequirements.length} listed</Badge>
-        </div>
-        <div className='space-y-3'>
-          {programRequirements.map(req => (
-            <div key={req.uuid ?? req.requirement_text} className='rounded-md border p-4'>
-              <div className='flex flex-wrap items-center justify-between gap-2'>
-                <div className='space-y-1'>
-                  <p className='font-medium'>{req.requirement_text}</p>
-                  <p className='text-muted-foreground text-sm'>
-                    {req.requirement_category ?? req.requirement_type}
-                  </p>
-                </div>
-                <div className='flex flex-wrap gap-2'>
-                  {req.is_mandatory ? (
-                    <Badge variant='destructive' className='text-[10px]'>
-                      Mandatory
-                    </Badge>
-                  ) : (
-                    <Badge variant='outline' className='text-[10px]'>
-                      Optional
-                    </Badge>
-                  )}
-                </div>
-              </div>
-            </div>
-          ))}
-        </div>
-      </div>
-    );
-  }
-
-  if (requirements.length === 0) {
-    return (
-      <div className='bg-muted/30 text-muted-foreground rounded-md border border-dashed p-6 text-center text-sm'>
-        The course creator has not listed any organisation equipment requirements for this course.
-        You can continue to the next step.
-      </div>
-    );
-  }
-  return (
-    <div className='space-y-4'>
-      <div className='bg-muted/30 flex flex-wrap items-center justify-between gap-2 rounded-md border border-dashed p-3'>
-        <p className='text-muted-foreground text-sm'>
-          The list below is{' '}
-          <span className='text-foreground font-medium'>
-            prefilled from the course creator's requirements
-          </span>
-          . For each one, tell us if you have it — you can add multiple units per requirement using{' '}
-          <span className='text-foreground font-medium'>Add another</span>.
-        </p>
-        <Badge variant='secondary'>{requirements.length} required</Badge>
-      </div>
-      <div className='space-y-3'>
-        {requirements.map(req => {
-          const requirementUuid = (req.uuid ?? req.name) as string;
-          const answer = state.equipment.find(e => e.requirementUuid === requirementUuid);
-          if (!answer) return null;
-          return (
-            <EquipmentBlock
-              key={requirementUuid}
-              requirement={req}
-              answer={answer}
-              dispatch={dispatch}
-              course={course}
-              state={state}
-            />
-          );
-        })}
-      </div>
-    </div>
-  );
+/**
+ * A programme's requirements as the form's tiles.
+ *
+ * `ProgramRequirement` is a different shape from a course's — one sentence and a
+ * category, with no `provided_by` and no quantity — so it is mapped here rather
+ * than pushed through `courseApplyRequirementRows`. A mandatory one reads as
+ * outstanding for the same reason it does on a course: it is the applicant's to
+ * satisfy and nobody has yet said they do.
+ */
+function programRequirementRows(
+  requirements: readonly ProgramRequirement[] | undefined
+): CourseApplyRequirementRow[] {
+  return (requirements ?? []).map((requirement, index) => ({
+    id: requirement.uuid ?? `${requirement.requirement_text}-${index}`,
+    label: requirement.requirement_text,
+    note: [
+      requirement.is_mandatory === true ? 'Mandatory.' : 'Optional.',
+      requirement.requirement_category ?? requirement.requirement_type,
+    ]
+      .filter(Boolean)
+      .join(' '),
+    met: requirement.is_mandatory !== true,
+  }));
 }
 
-function EquipmentBlock({
-  requirement,
-  answer,
-  dispatch,
-  course,
-  state,
-}: {
-  requirement: CourseTrainingRequirement;
-  answer: EquipmentAnswer;
-  dispatch: React.Dispatch<Action>;
-  course: Course;
-  state: State;
-}) {
-  return (
-    <div className='rounded-md border p-4'>
-      <div className='flex flex-wrap items-start justify-between gap-3'>
-        <div className='min-w-0 flex-1'>
-          <div className='flex flex-wrap items-center gap-2'>
-            <p className='font-medium'>{requirement.name}</p>
-            <Badge variant='outline' className='text-[10px] font-normal'>
-              Set by course creator
-            </Badge>
-            {answer.has === 'yes' && (
-              <Badge variant='secondary' className='text-[10px]'>
-                {answer.items.length} {answer.items.length === 1 ? 'item' : 'items'} added
-              </Badge>
-            )}
-          </div>
-          {requirement.description && (
-            <p className='text-muted-foreground mt-1 text-sm'>{requirement.description}</p>
-          )}
-        </div>
-        <div className='flex gap-2'>
-          <Button
-            type='button'
-            size='sm'
-            variant={answer.has === 'yes' ? 'default' : 'outline'}
-            onClick={() => dispatch({ type: 'equipHas', uuid: answer.requirementUuid, has: 'yes' })}
-          >
-            Yes
-          </Button>
-          <Button
-            type='button'
-            size='sm'
-            variant={answer.has === 'no' ? 'default' : 'outline'}
-            onClick={() => dispatch({ type: 'equipHas', uuid: answer.requirementUuid, has: 'no' })}
-          >
-            No
-          </Button>
-        </div>
-      </div>
-
-      {answer.has === 'yes' && (
-        <div className='mt-4 space-y-3'>
-          {answer.items.map((item, idx) => {
-            const nameInvalid = !item.name.trim();
-            const brandInvalid = !item.brand.trim();
-            const serialInvalid = !item.serial.trim();
-            const rowInvalid = nameInvalid || brandInvalid || serialInvalid;
-            return (
-              <div
-                key={item.id}
-                className={cn(
-                  'bg-muted/40 grid gap-2 rounded-md p-3 sm:grid-cols-[1fr_1fr_1fr_auto]',
-                  rowInvalid && 'ring-destructive/40 ring-1'
-                )}
-              >
-                <div className='space-y-1'>
-                  <Label className='text-muted-foreground text-xs'>
-                    Name / Model <span className='text-destructive'>*</span>
-                  </Label>
-                  <Input
-                    value={item.name}
-                    onChange={e =>
-                      dispatch({
-                        type: 'equipItem',
-                        uuid: answer.requirementUuid,
-                        itemId: item.id,
-                        patch: { name: e.target.value },
-                      })
-                    }
-                    placeholder={`Item ${idx + 1}`}
-                    required
-                    aria-invalid={nameInvalid}
-                    className={cn(
-                      nameInvalid && 'border-destructive focus-visible:ring-destructive/40'
-                    )}
-                  />
-                  {nameInvalid && <p className='text-destructive text-[11px]'>Required.</p>}
-                </div>
-                <div className='space-y-1'>
-                  <Label className='text-muted-foreground text-xs'>
-                    Brand <span className='text-destructive'>*</span>
-                  </Label>
-                  <Input
-                    value={item.brand}
-                    onChange={e =>
-                      dispatch({
-                        type: 'equipItem',
-                        uuid: answer.requirementUuid,
-                        itemId: item.id,
-                        patch: { brand: e.target.value },
-                      })
-                    }
-                    required
-                    aria-invalid={brandInvalid}
-                    className={cn(
-                      brandInvalid && 'border-destructive focus-visible:ring-destructive/40'
-                    )}
-                  />
-                  {brandInvalid && <p className='text-destructive text-[11px]'>Required.</p>}
-                </div>
-                <div className='space-y-1'>
-                  <Label className='text-muted-foreground text-xs'>
-                    Serial number <span className='text-destructive'>*</span>
-                  </Label>
-                  <Input
-                    value={item.serial}
-                    onChange={e =>
-                      dispatch({
-                        type: 'equipItem',
-                        uuid: answer.requirementUuid,
-                        itemId: item.id,
-                        patch: { serial: e.target.value },
-                      })
-                    }
-                    required
-                    aria-invalid={serialInvalid}
-                    className={cn(
-                      serialInvalid && 'border-destructive focus-visible:ring-destructive/40'
-                    )}
-                  />
-                  {serialInvalid && <p className='text-destructive text-[11px]'>Required.</p>}
-                </div>
-                <Button
-                  type='button'
-                  variant='ghost'
-                  size='icon'
-                  onClick={() =>
-                    dispatch({
-                      type: 'equipRemoveItem',
-                      uuid: answer.requirementUuid,
-                      itemId: item.id,
-                    })
-                  }
-                  aria-label='Remove item'
-                  className='self-end'
-                >
-                  <Trash2 className='text-muted-foreground h-4 w-4' />
-                </Button>
-              </div>
-            );
-          })}
-          {answer.items.length === 0 && (
-            <p className='text-destructive text-[11px]'>
-              Add at least one item with name, brand, and serial number.
-            </p>
-          )}
-          <div className='flex flex-wrap items-center justify-between gap-2 pt-1'>
-            <p className='text-muted-foreground text-xs'>
-              Have more than one? Add each unit so we can track serial numbers individually.
-            </p>
-            <Button
-              type='button'
-              variant='outline'
-              size='sm'
-              onClick={() =>
-                dispatch({
-                  type: 'equipAddItem',
-                  uuid: answer.requirementUuid,
-                  name: requirement.name,
-                })
-              }
-            >
-              <Plus className='mr-2 h-4 w-4' /> Add another {requirement.name}
-            </Button>
-          </div>
-        </div>
-      )}
-
-      {answer.has === 'no' && (
-        <div className='bg-muted/30 mt-4 rounded-md border border-dashed p-3'>
-          <p className='text-sm'>No problem — Sarafrika can help you acquire this equipment.</p>
-          <div className='mt-3 flex flex-wrap gap-2'>
-            <Button
-              type='button'
-              size='sm'
-              variant={answer.acquisition === 'lease' ? 'default' : 'outline'}
-              onClick={() =>
-                dispatch({
-                  type: 'equipAcquisition',
-                  uuid: answer.requirementUuid,
-                  acquisition: 'lease',
-                })
-              }
-            >
-              Lease to own
-            </Button>
-            <Button
-              type='button'
-              size='sm'
-              variant={answer.acquisition === 'hire' ? 'default' : 'outline'}
-              onClick={() =>
-                dispatch({
-                  type: 'equipAcquisition',
-                  uuid: answer.requirementUuid,
-                  acquisition: 'hire',
-                })
-              }
-            >
-              Hire
-            </Button>
-            {answer.acquisition && (
-              <Button
-                type='button'
-                size='sm'
-                variant='secondary'
-                onClick={() =>
-                  toast.info('Sarafrika Shop', {
-                    description: `We'll help you ${answer.acquisition === 'lease' ? 'lease to own' : 'hire'} ${requirement.name} for ${course.name}.`,
-                  })
-                }
-              >
-                <ShoppingBag className='mr-2 h-4 w-4' /> Continue to Sarafrika Shop
-              </Button>
-            )}
-          </div>
-        </div>
-      )}
-    </div>
-  );
+/**
+ * The rate card as the API takes it.
+ *
+ * The four hourly rates are required by the schema, so a format the applicant
+ * did not quote is sent as `0` — the same "not offered" the previous wizard
+ * sent, and what makes them ineligible for work contracted that way rather than
+ * quietly priced at a guess.
+ */
+function buildRateCard(rates: CourseApplyRates): CourseTrainingRateCard {
+  return {
+    currency: COURSE_DEFAULT_CURRENCY,
+    private_online_hourly_rate: rates.private_online_hourly_rate ?? 0,
+    private_inperson_hourly_rate: rates.private_inperson_hourly_rate ?? 0,
+    group_online_hourly_rate: rates.group_online_hourly_rate ?? 0,
+    group_inperson_hourly_rate: rates.group_inperson_hourly_rate ?? 0,
+  };
 }
 
-// ---------- step 4 (pricing) ----------
-
-function StepPricing({ state, dispatch }: { state: State; dispatch: React.Dispatch<Action> }) {
-  const selectedTitles = state.methods
-    .map(v => METHOD_OPTIONS.find(m => m.value === v)?.title)
-    .filter(Boolean) as string[];
-  const totalTiers = state.pricing.length;
-
-  return (
-    <div className='space-y-4'>
-      <div className='bg-muted/30 flex flex-wrap items-center justify-between gap-2 rounded-md border border-dashed p-3'>
-        <div className='text-muted-foreground text-sm'>
-          What's your <span className='text-foreground font-medium'>proposed fee per student</span>?
-          {selectedTitles.length > 0 && (
-            <>
-              {' '}
-              A pricing row is auto-created for each selected method. Add extra tiers if you offer
-              different session durations for the same method.
-            </>
-          )}
-          {selectedTitles.length === 0 && (
-            <span className='text-destructive'> Select at least one training method first.</span>
-          )}
-        </div>
-        <Badge variant='secondary'>
-          {totalTiers} {totalTiers === 1 ? 'tier' : 'tiers'}
-        </Badge>
-      </div>
-
-      <div className='space-y-3'>
-        {state.pricing.map((tier, idx) => {
-          const methodOpt = METHOD_OPTIONS.find(m => m.value === tier.method);
-          const methodInvalid = !tier.method;
-          const durationInvalid = !tier.duration.trim();
-          const amt = parseFloat(tier.amount);
-          const amountInvalid = !tier.amount.trim() || Number.isNaN(amt) || amt <= 0;
-          return (
-            <div key={tier.id} className='rounded-md border p-3'>
-              <div className='mb-3 flex items-center justify-between gap-2'>
-                <div className='flex items-center gap-2'>
-                  <Badge variant='outline' className='text-[10px] font-normal'>
-                    Training method {idx + 1}
-                  </Badge>
-                  {methodOpt && (
-                    <span className='text-muted-foreground text-xs'>{methodOpt.title}</span>
-                  )}
-                </div>
-                {state.pricing.length > 1 && (
-                  <Button
-                    type='button'
-                    variant='ghost'
-                    size='icon'
-                    onClick={() => dispatch({ type: 'priceRemove', id: tier.id })}
-                    aria-label={`Remove pricing tier ${idx + 1}`}
-                  >
-                    <Trash2 className='text-muted-foreground h-4 w-4' />
-                  </Button>
-                )}
-              </div>
-
-              <div className='grid gap-3 sm:grid-cols-[1.4fr_1fr_1fr]'>
-                <div className='space-y-1'>
-                  <Label htmlFor={`p-method-${tier.id}`} className='text-muted-foreground text-xs'>
-                    Training method <span className='text-destructive'>*</span>
-                  </Label>
-                  <select
-                    id={`p-method-${tier.id}`}
-                    value={tier.method}
-                    onChange={e =>
-                      dispatch({
-                        type: 'priceUpdate',
-                        id: tier.id,
-                        patch: { method: e.target.value as TrainingMethod | '' },
-                      })
-                    }
-                    aria-invalid={methodInvalid}
-                    className={cn(
-                      'border-input bg-background focus-visible:ring-ring flex h-9 w-full rounded-md border px-3 py-1 text-sm shadow-sm outline-none focus-visible:ring-1',
-                      methodInvalid && 'border-destructive focus-visible:ring-destructive/40'
-                    )}
-                  >
-                    <option value=''>Select method…</option>
-                    {METHOD_OPTIONS.map(m => (
-                      <option key={m.value} value={m.value}>
-                        {m.title}
-                      </option>
-                    ))}
-                  </select>
-                  {methodInvalid && <p className='text-destructive text-[11px]'>Required.</p>}
-                </div>
-
-                <div className='space-y-1'>
-                  <Label
-                    htmlFor={`p-duration-${tier.id}`}
-                    className='text-muted-foreground text-xs'
-                  >
-                    Session duration <span className='text-destructive'>*</span>
-                  </Label>
-                  <Input
-                    id={`p-duration-${tier.id}`}
-                    value={tier.duration}
-                    onChange={e =>
-                      dispatch({
-                        type: 'priceUpdate',
-                        id: tier.id,
-                        patch: { duration: e.target.value },
-                      })
-                    }
-                    placeholder='e.g. 1 hour, 90 min, half-day'
-                    aria-invalid={durationInvalid}
-                    className={cn(
-                      durationInvalid && 'border-destructive focus-visible:ring-destructive/40'
-                    )}
-                  />
-                  {durationInvalid && <p className='text-destructive text-[11px]'>Required.</p>}
-                </div>
-
-                <div className='space-y-1'>
-                  <Label htmlFor={`p-basis-${tier.id}`} className='text-muted-foreground text-xs'>
-                    Charged per
-                  </Label>
-                  <Select
-                    value={tier.basis ?? DEFAULT_RATE_BASIS}
-                    onValueChange={value =>
-                      dispatch({
-                        type: 'priceUpdate',
-                        id: tier.id,
-                        patch: { basis: value as RateBasis },
-                      })
-                    }
-                  >
-                    <SelectTrigger id={`p-basis-${tier.id}`}>
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {RATE_BASES.map(b => (
-                        <SelectItem key={b.value} value={b.value}>
-                          {b.label}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-
-                <div className='space-y-1'>
-                  <Label htmlFor={`p-amount-${tier.id}`} className='text-muted-foreground text-xs'>
-                    Amount (KES / student) <span className='text-destructive'>*</span>
-                  </Label>
-                  <div className='relative'>
-                    <span className='text-muted-foreground pointer-events-none absolute inset-y-0 left-2 flex items-center text-xs font-medium'>
-                      KES
-                    </span>
-                    <Input
-                      id={`p-amount-${tier.id}`}
-                      type='number'
-                      min={0}
-                      inputMode='decimal'
-                      value={tier.amount}
-                      onChange={e =>
-                        dispatch({
-                          type: 'priceUpdate',
-                          id: tier.id,
-                          patch: { amount: e.target.value },
-                        })
-                      }
-                      placeholder='0'
-                      aria-invalid={amountInvalid}
-                      className={cn(
-                        'pl-11',
-                        amountInvalid && 'border-destructive focus-visible:ring-destructive/40'
-                      )}
-                    />
-                  </div>
-                  {amountInvalid && (
-                    <p className='text-destructive text-[11px]'>Enter an amount greater than 0.</p>
-                  )}
-                </div>
-              </div>
-            </div>
-          );
-        })}
-      </div>
-
-      <Button
-        type='button'
-        variant='outline'
-        size='sm'
-        onClick={() => dispatch({ type: 'priceAdd' })}
-      >
-        <Plus className='mr-2 h-4 w-4' /> Add training method pricing
-      </Button>
-    </div>
-  );
-}
-
-// ---------- step 5 (review) ----------
-
-function StepReview({
-  state,
-  contentKind,
-  requirements,
-  programRequirements,
-  dispatch,
-}: {
-  state: State;
-  contentKind: TrainingContentKind;
-  requirements: CourseTrainingRequirement[];
-  programRequirements: ProgramRequirement[];
-  dispatch: React.Dispatch<Action>;
-}) {
-  const selectedMethods = state.methods
-    .map(v => METHOD_OPTIONS.find(m => m.value === v))
-    .filter((m): m is (typeof METHOD_OPTIONS)[number] => Boolean(m));
-
-  const haveCount = state.equipment.filter(e => e.has === 'yes').length;
-  const needCount = state.equipment.filter(e => e.has === 'no').length;
-  const totalItems = state.equipment.reduce(
-    (n, e) => n + (e.has === 'yes' ? e.items.length : 0),
-    0
-  );
-  const requirementCount = contentKind === 'program' ? programRequirements.length : requirements.length;
-
-  const goToStep = (step: number) => dispatch({ type: 'step', step });
-
-  const methodSummary =
-    selectedMethods.length === 0
-      ? '—'
-      : selectedMethods.length === 1
-        ? selectedMethods[0].title.split(' (')[0]
-        : `${selectedMethods.length} selected`;
-
-  return (
-    <div className='space-y-6 text-sm'>
-      <div className='bg-muted/30 grid gap-3 rounded-md border p-3 sm:grid-cols-4'>
-        <SummaryStat label='Methods' value={methodSummary} />
-        <SummaryStat label='Classrooms' value={String(state.classrooms.length)} />
-        {contentKind === 'program' ? (
-          <SummaryStat label='Requirements' value={String(requirementCount)} />
-        ) : (
-          <SummaryStat label='Equipment on hand' value={`${haveCount}/${requirementCount}`} />
-        )}
-        <SummaryStat
-          label={contentKind === 'program' ? 'Reviewed' : 'Items catalogued'}
-          value={contentKind === 'program' ? 'Yes' : String(totalItems)}
-        />
-      </div>
-
-      <section className='space-y-2'>
-        <SectionHeader
-          title={`Training methods (${selectedMethods.length})`}
-          onEdit={() => goToStep(0)}
-        />
-        {selectedMethods.length === 0 ? (
-          <p className='text-muted-foreground rounded-md border border-dashed p-3'>
-            No training methods selected.
-          </p>
-        ) : (
-          <ul className='grid gap-2 sm:grid-cols-2'>
-            {selectedMethods.map(m => {
-              const Icon = m.icon;
-              return (
-                <li key={m.value} className='flex items-start gap-3 rounded-md border p-3'>
-                  <span className='bg-primary/10 text-primary flex h-9 w-9 items-center justify-center rounded-md'>
-                    <Icon className='h-5 w-5' />
-                  </span>
-                  <div className='min-w-0'>
-                    <p className='font-medium'>{m.title}</p>
-                    <p className='text-muted-foreground'>{m.description}</p>
-                  </div>
-                </li>
-              );
-            })}
-          </ul>
-        )}
-      </section>
-
-      <section className='space-y-2'>
-        <SectionHeader
-          title={`Classrooms & labs (${state.classrooms.length})`}
-          onEdit={() => goToStep(1)}
-        />
-        {state.classrooms.length === 0 ? (
-          <p className='text-muted-foreground rounded-md border border-dashed p-3'>
-            No classrooms added.
-          </p>
-        ) : (
-          <ol className='grid gap-2 sm:grid-cols-2'>
-            {state.classrooms.map((c, idx) => (
-              <li key={c.id} className='flex items-center gap-3 rounded-md border p-2'>
-                {c.photoUrl ? (
-                  <img
-                    src={c.photoUrl}
-                    alt={c.name || `Classroom ${idx + 1}`}
-                    className='h-14 w-14 rounded-md object-cover'
-                  />
-                ) : (
-                  <div className='bg-muted text-muted-foreground flex h-14 w-14 items-center justify-center rounded-md'>
-                    <Camera className='h-4 w-4' />
-                  </div>
-                )}
-                <div className='min-w-0 flex-1'>
-                  <p className='truncate font-medium'>
-                    <span className='text-muted-foreground mr-1'>#{idx + 1}</span>
-                    {c.name || '(unnamed)'}
-                  </p>
-                  <p className='text-muted-foreground text-xs'>
-                    {c.photoUrl ? 'Photo attached' : 'No photo'}
-                  </p>
-                </div>
-              </li>
-            ))}
-          </ol>
-        )}
-      </section>
-
-      <section className='space-y-2'>
-        <SectionHeader
-          title={
-            contentKind === 'program'
-              ? `Program requirements (${requirementCount})`
-              : `Equipment (${haveCount} ready · ${needCount} to source)`
-          }
-          onEdit={() => goToStep(2)}
-        />
-        {contentKind === 'program' ? (
-          programRequirements.length === 0 ? (
-            <p className='text-muted-foreground rounded-md border border-dashed p-3'>
-              No program requirements were published yet.
-            </p>
-          ) : (
-            <ul className='space-y-2'>
-              {programRequirements.map(req => (
-                <li key={req.uuid ?? req.requirement_text} className='rounded-md border p-3'>
-                  <div className='flex flex-wrap items-center justify-between gap-2'>
-                    <span className='font-medium'>{req.requirement_text}</span>
-                    {req.is_mandatory ? (
-                      <Badge variant='destructive' className='text-[10px]'>
-                        Mandatory
-                      </Badge>
-                    ) : (
-                      <Badge variant='outline' className='text-[10px]'>
-                        Optional
-                      </Badge>
-                    )}
-                  </div>
-                  <p className='text-muted-foreground mt-1 text-sm'>
-                    {req.requirement_category ?? req.requirement_type}
-                  </p>
-                </li>
-              ))}
-            </ul>
-          )
-        ) : (
-          <ul className='space-y-2'>
-            {requirements.map(req => {
-              const requirementUuid = (req.uuid ?? req.name) as string;
-              const a = state.equipment.find(e => e.requirementUuid === requirementUuid);
-              if (!a) return null;
-              return (
-                <li key={requirementUuid} className='rounded-md border p-3'>
-                  <div className='flex flex-wrap items-center justify-between gap-2'>
-                    <span className='font-medium'>{req.name}</span>
-                    {a.has === 'yes' && (
-                      <Badge variant='secondary'>
-                        Ready · {a.items.length} item{a.items.length === 1 ? '' : 's'}
-                      </Badge>
-                    )}
-                    {a.has === 'no' && a.acquisition && (
-                      <Badge variant='outline'>
-                        {a.acquisition === 'lease' ? 'Lease to own' : 'Hire'} via Sarafrika
-                      </Badge>
-                    )}
-                    {a.has === null && <Badge variant='outline'>Not answered</Badge>}
-                  </div>
-                  {a.has === 'yes' && a.items.length > 0 && (
-                    <div className='mt-3 overflow-hidden rounded-md border'>
-                      <table className='w-full text-xs'>
-                        <thead className='bg-muted/50 text-muted-foreground'>
-                          <tr>
-                            <th className='px-2 py-1.5 text-left font-medium'>Name / Model</th>
-                            <th className='px-2 py-1.5 text-left font-medium'>Brand</th>
-                            <th className='px-2 py-1.5 text-left font-medium'>Serial</th>
-                          </tr>
-                        </thead>
-                        <tbody>
-                          {a.items.map(it => (
-                            <tr key={it.id} className='border-t'>
-                              <td className='px-2 py-1.5'>{it.name || '—'}</td>
-                              <td className='px-2 py-1.5'>{it.brand || '—'}</td>
-                              <td className='px-2 py-1.5 font-mono'>{it.serial || '—'}</td>
-                            </tr>
-                          ))}
-                        </tbody>
-                      </table>
-                    </div>
-                  )}
-                </li>
-              );
-            })}
-          </ul>
-        )}
-      </section>
-
-      <section className='space-y-2'>
-        <SectionHeader
-          title={`Pricing (${state.pricing.length} ${state.pricing.length === 1 ? 'tier' : 'tiers'})`}
-          onEdit={() => goToStep(3)}
-        />
-        {state.pricing.length === 0 ? (
-          <p className='text-muted-foreground rounded-md border border-dashed p-3'>
-            No pricing tiers added.
-          </p>
-        ) : (
-          <div className='overflow-hidden rounded-md border'>
-            <table className='w-full text-xs'>
-              <thead className='bg-muted/50 text-muted-foreground'>
-                <tr>
-                  <th className='px-3 py-2 text-left font-medium'>Training method</th>
-                  <th className='px-3 py-2 text-left font-medium'>Session duration</th>
-                  <th className='px-3 py-2 text-left font-medium'>Charged per</th>
-                  <th className='px-3 py-2 text-right font-medium'>Fee / student (KES)</th>
-                </tr>
-              </thead>
-              <tbody>
-                {state.pricing.map(p => {
-                  const m = METHOD_OPTIONS.find(mo => mo.value === p.method);
-                  const amt = parseFloat(p.amount);
-                  return (
-                    <tr key={p.id} className='border-t'>
-                      <td className='px-3 py-2'>
-                        <span className='inline-flex items-center gap-1.5'>
-                          <Tag className='text-muted-foreground h-3 w-3' />
-                          {m?.title ?? '—'}
-                        </span>
-                      </td>
-                      <td className='px-3 py-2'>{p.duration || '—'}</td>
-                      <td className='px-3 py-2'>{rateBasisLabel(p.basis)}</td>
-                      <td className='px-3 py-2 text-right font-mono'>
-                        {Number.isFinite(amt) ? amt.toLocaleString() : '—'}
-                      </td>
-                    </tr>
-                  );
-                })}
-              </tbody>
-            </table>
-          </div>
-        )}
-      </section>
-    </div>
-  );
-}
-
-function SummaryStat({ label, value }: { label: string; value: string }) {
-  return (
-    <div>
-      <p className='text-muted-foreground text-[11px] tracking-wide uppercase'>{label}</p>
-      <p className='mt-0.5 font-semibold'>{value}</p>
-    </div>
-  );
-}
-
-function SectionHeader({ title, onEdit }: { title: string; onEdit: () => void }) {
-  return (
-    <div className='flex items-center justify-between'>
-      <h3 className='font-semibold'>{title}</h3>
-      <Button type='button' variant='ghost' size='sm' onClick={onEdit} className='h-7 px-2 text-xs'>
-        Edit
-      </Button>
-    </div>
-  );
+/** Teaching hours in one class, or `undefined` when the duration is not published. */
+function totalHours(hours: number | undefined, minutes: number | undefined): number | undefined {
+  const total = (hours ?? 0) + (minutes ?? 0) / 60;
+  return total > 0 ? total : undefined;
 }
