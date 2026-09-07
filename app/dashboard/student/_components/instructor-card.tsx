@@ -11,7 +11,7 @@ import {
   getUserByUuidOptions,
   searchTrainingApplicationsOptions,
 } from '@/services/client/@tanstack/react-query.gen';
-import type { User } from '@/services/client/types.gen';
+import { isFullUser } from '@/services/user/is-full-user';
 import type { SearchInstructor } from '@/src/features/dashboard/courses/types';
 import { InstructorSkillCard } from '../../instructor/profile/skills/_component/instructor-skill-card';
 
@@ -26,7 +26,12 @@ export const InstructorCard = ({ instructor, onViewProfile, courseId }: Props) =
     ...getUserByUuidOptions({ path: { uuid: instructor.user_uuid } }),
     enabled: !!instructor.uuid,
   });
-  const user: User | undefined = data?.data;
+  const user = data?.data;
+  // A learner browsing the instructor catalogue has no relationship with these accounts, so
+  // `/users/{uuid}` answers with the directory summary and organisation affiliations are simply
+  // not part of the payload. The badge is a fact about the record we were given, not about the
+  // instructor, so it only appears when the full record actually came back.
+  const affiliations = isFullUser(user) ? (user.organisation_affiliations ?? []) : [];
 
   const { data: skills } = useQuery({
     ...getInstructorSkillsOptions({
@@ -79,7 +84,7 @@ export const InstructorCard = ({ instructor, onViewProfile, courseId }: Props) =
                   {instructor.professional_headline}
                 </p>
               </div>
-              {(user?.organisation_affiliations?.length ?? 0) > 0 && (
+              {affiliations.length > 0 && (
                 <Building className='text-muted-foreground h-4 w-4 flex-shrink-0' />
               )}
             </div>

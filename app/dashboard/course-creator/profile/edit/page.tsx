@@ -45,6 +45,7 @@ import {
   uploadProfileImageMutation,
 } from '@/services/client/@tanstack/react-query.gen';
 import type { UserDomainEnum } from '@/services/client/types.gen';
+import { isFullUser } from '@/services/user/is-full-user';
 
 const generalProfileSchema = z.object({
   username: z.string().min(1, 'Username is required'),
@@ -97,13 +98,20 @@ export default function CourseCreatorProfile() {
     enabled: !!profile?.user_uuid,
   });
 
+  // `/users/{uuid}` hands back the directory summary — display identity only — to any caller
+  // without a claim on the account's contact details. The account holder is such a claim, so
+  // this page normally receives the full record, but nothing on the page may assume it: the
+  // username, phone number, date of birth, email and domains below exist only on `fullUser`.
+  const userRecord = user?.data;
+  const fullUser = isFullUser(userRecord) ? userRecord : undefined;
+
   /** For handling profile picture preview */
   const fileElmentRef = useRef<HTMLInputElement>(null);
   const [profilePic, setProfilePic] = useState<ImageType>({
     url: user?.data?.profile_image_url || profilePicSvg,
   });
 
-  const rawUserDomains = user?.data?.user_domain;
+  const rawUserDomains = fullUser?.user_domain;
   const domainBadges = (
     Array.isArray(rawUserDomains) ? rawUserDomains : rawUserDomains ? [rawUserDomains] : []
   ).map(formatDomainBadge);
@@ -136,14 +144,14 @@ export default function CourseCreatorProfile() {
     if (!user?.data || !profile) return;
 
     form.reset({
-      username: user.data.username ?? '',
+      username: fullUser?.username ?? '',
       first_name: user.data.first_name ?? '',
       last_name: user.data.last_name ?? '',
       middle_name: user.data.middle_name ?? '',
-      phone_number: user.data.phone_number ?? '',
-      dob: user.data.dob ? new Date(user.data.dob) : new Date(),
+      phone_number: fullUser?.phone_number ?? '',
+      dob: fullUser?.dob ? new Date(fullUser.dob) : new Date(),
       gender: user.data.gender ?? 'MALE',
-      email: user.data.email ?? '',
+      email: fullUser?.email ?? '',
       profile_image_url: user.data.profile_image_url ?? '',
 
       location: '',
@@ -155,7 +163,7 @@ export default function CourseCreatorProfile() {
     setProfilePic({
       url: user.data.profile_image_url || profilePicSvg,
     });
-  }, [form, profile, user?.data]);
+  }, [form, fullUser, profile, user?.data]);
 
   const _updateCourseCreator = useMutation(updateUserMutation());
   const _uploadProfileImage = useMutation(uploadProfileImageMutation());
@@ -201,7 +209,9 @@ export default function CourseCreatorProfile() {
                     <h3 className='text-foreground text-xl font-semibold'>
                       {user?.data?.first_name} {user?.data?.middle_name} {user?.data?.last_name}
                     </h3>
-                    <p className='text-muted-foreground text-sm'>{user?.data?.email}</p>
+                    {fullUser?.email ? (
+                      <p className='text-muted-foreground text-sm'>{fullUser.email}</p>
+                    ) : null}
                   </div>
                 </div>
 
@@ -209,11 +219,15 @@ export default function CourseCreatorProfile() {
                   <ProfileViewField label='First name' value={user?.data?.first_name} />
                   <ProfileViewField label='Last name' value={user?.data?.last_name} />
                   <ProfileViewField label='Middle name' value={user?.data?.middle_name} />
-                  <ProfileViewField label='Phone number' value={user?.data?.phone_number} />
-                  <ProfileViewField
-                    label='Date of birth'
-                    value={user?.data?.dob ? format(new Date(user.data.dob), 'PPP') : undefined}
-                  />
+                  {fullUser ? (
+                    <ProfileViewField label='Phone number' value={fullUser.phone_number} />
+                  ) : null}
+                  {fullUser ? (
+                    <ProfileViewField
+                      label='Date of birth'
+                      value={fullUser.dob ? format(new Date(fullUser.dob), 'PPP') : undefined}
+                    />
+                  ) : null}
                   <ProfileViewField label='Gender' value={formatGender(user?.data?.gender)} />
                 </ProfileViewGrid>
               </div>

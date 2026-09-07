@@ -13,12 +13,13 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useUserProfile } from '@/context/profile-context';
 import { cn } from '@/lib/utils';
 import { resolveUserProfiles } from '@/services/admin/credential-review';
-import type { User } from '@/services/client';
+import type { User, UserSummary } from '@/services/client';
 import {
   getUserByUuidOptions,
   isUserAdminOptions,
   isUserSystemAdminOptions,
 } from '@/services/client/@tanstack/react-query.gen';
+import { isFullUser } from '@/services/user/is-full-user';
 import { toAuthenticatedMediaUrl } from '@/src/lib/media-url';
 import { adminTheme, type StatusTone, statusToneClass } from '../../_components/ui/admin-theme';
 import { DetailGrid } from '../../_components/ui/DetailPanel';
@@ -78,7 +79,7 @@ function domainList(user: User): string[] {
   return domains.map(String);
 }
 
-function initials(user: User): string {
+function initials(user: User | UserSummary): string {
   return `${user.first_name?.[0] ?? ''}${user.last_name?.[0] ?? ''}`.toUpperCase() || 'U';
 }
 
@@ -141,6 +142,11 @@ export function UserDetailView({
 
   const userQuery = useQuery(getUserByUuidOptions({ path: { uuid } }));
   const user = userQuery.data?.data;
+  // `/users/{uuid}` returns the full record to platform admins and the directory summary to
+  // everyone else, so contact details, account state, affiliations and audit stamps are only
+  // there when the server decided this caller may see them. Everything gated on `fullUser`
+  // below is a field the summary does not carry.
+  const fullUser = isFullUser(user) ? user : undefined;
   const userImageUrl = toAuthenticatedMediaUrl(user?.profile_image_url);
 
   // Lightweight resolution drives which tabs appear + profile uuids for the lazy tabs.
@@ -163,24 +169,23 @@ export function UserDetailView({
     ...isUserSystemAdminOptions({ path: { uuid } }),
     enabled: Boolean(user),
   });
-  const userDomains = useMemo(() => (user ? domainList(user) : []), [user]);
+  const userDomains = useMemo(() => (fullUser ? domainList(fullUser) : []), [fullUser]);
+  const affiliations = useMemo(
+    () => fullUser?.organisation_affiliations ?? [],
+    [fullUser?.organisation_affiliations]
+  );
   const targetUuids = useMemo(
     () =>
       [
         profiles?.instructorUuid,
         profiles?.courseCreatorUuid,
         profiles?.studentUuid,
-        ...(user?.organisation_affiliations ?? []).flatMap(affiliation => [
+        ...affiliations.flatMap(affiliation => [
           affiliation.organisation_uuid,
           affiliation.branch_uuid,
         ]),
       ].filter((value): value is string => Boolean(value)),
-    [
-      profiles?.courseCreatorUuid,
-      profiles?.instructorUuid,
-      profiles?.studentUuid,
-      user?.organisation_affiliations,
-    ]
+    [affiliations, profiles?.courseCreatorUuid, profiles?.instructorUuid, profiles?.studentUuid]
   );
 
   if (userQuery.isLoading) {
@@ -235,9 +240,13 @@ export function UserDetailView({
                 <h1 className='text-foreground truncate text-2xl font-semibold tracking-tight'>
                   {user.full_name || `${user.first_name} ${user.last_name}`}
                 </h1>
-                <p className='text-muted-foreground truncate text-sm'>{user.email}</p>
+                {fullUser?.email ? (
+                  <p className='text-muted-foreground truncate text-sm'>{fullUser.email}</p>
+                ) : null}
                 <div className='mt-2 flex flex-wrap items-center gap-1.5'>
-                  <StatusBadge status={user.active ? 'active' : 'inactive'} />
+                  {fullUser ? (
+                    <StatusBadge status={fullUser.active ? 'active' : 'inactive'} />
+                  ) : null}
                   {userDomains.map(domain => (
                     <Badge key={domain} variant='outline' className='text-[10px] uppercase'>
                       {domain.replace(/_/g, ' ')}
@@ -253,9 +262,9 @@ export function UserDetailView({
         <div className='grid grid-cols-2 gap-3 lg:grid-cols-4'>
           <MetricTile
             label='Account'
-            value={user.active ? 'Active' : 'Inactive'}
+            value={fullUser ? (fullUser.active ? 'Active' : 'Inactive') : '—'}
             icon={BadgeCheck}
-            tone={user.active ? 'success' : 'destructive'}
+            tone={fullUser ? (fullUser.active ? 'success' : 'destructive') : 'neutral'}
           />
           <MetricTile
             label='Roles'
@@ -276,7 +285,7 @@ export function UserDetailView({
           />
           <MetricTile
             label='Member since'
-            value={formatDate(user.created_date)}
+            value={formatDate(fullUser?.created_date)}
             icon={CalendarDays}
             tone='neutral'
           />
@@ -341,7 +350,15 @@ export function UserDetailView({
                 title='Identity & contact'
                 description='Edit profile details and toggle access.'
               >
-                <UserIdentityForm user={user} />
+                {fullUser ? (
+                  <UserIdentityForm user={fullUser} />
+                ) : (
+                  <p className='text-muted-foreground text-sm'>
+                    This account&apos;s contact details were withheld by the server, so there is
+                    nothing to edit here. Sign in with a platform administrator account to manage
+                    this record.
+                  </p>
+                )}
               </SectionCard>
 
               <SectionCard
@@ -364,10 +381,10 @@ export function UserDetailView({
                     </div>
                   </div>
 
-                  {user.organisation_affiliations?.length ? (
+                  {affiliations.length ? (
                     <div className='space-y-2'>
                       <p className={adminTheme.sectionLabel}>Organisation affiliations</p>
-                      {user.organisation_affiliations.map((affiliation, index) => (
+                      {affiliations.map((affiliation, index) => (
                         <div
                           key={`${affiliation.organisation_uuid}-${index}`}
                           className='border-border/60 bg-muted/20 flex items-center justify-between rounded-md border px-3 py-2 text-sm'
@@ -409,8 +426,8 @@ export function UserDetailView({
                             ? 'Yes'
                             : 'No',
                       },
-                      { label: 'Joined', value: formatDate(user.created_date) },
-                      { label: 'Last updated', value: formatDate(user.updated_date) },
+                      { label: 'Joined', value: formatDate(fullUser?.created_date) },
+                      { label: 'Last updated', value: formatDate(fullUser?.updated_date) },
                       {
                         label: 'UUID',
                         value: <span className='font-mono text-xs break-all'>{user.uuid}</span>,

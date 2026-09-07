@@ -23,6 +23,7 @@ import {
 } from '@/services/client/@tanstack/react-query.gen';
 import { verifyCertificate } from '@/services/client/sdk.gen';
 import type { Certificate } from '@/services/client/types.gen';
+import { isFullUser } from '@/services/user/is-full-user';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { Award, CheckCircle2, FileText, GraduationCap, Loader2, ShieldCheck } from 'lucide-react';
 import { useParams } from 'next/navigation';
@@ -517,9 +518,15 @@ const AwardCertificatesPage = () => {
                                                         {attendanceState}
                                                     </Badge> */}
                         </div>
-                        <p className='text-muted-foreground mt-1 truncate text-xs'>
-                          {entry.user?.email ?? 'No email on file'}
-                        </p>
+                        {/* The instructor of record may read a learner's contact details, so
+                            `/users/{uuid}` normally answers with the full record here. When it
+                            answers with the directory summary instead the address was withheld,
+                            not missing, so the line is left out rather than claimed empty. */}
+                        {isFullUser(entry.user) ? (
+                          <p className='text-muted-foreground mt-1 truncate text-xs'>
+                            {entry.user.email ?? 'No email on file'}
+                          </p>
+                        ) : null}
                       </div>
                     </div>
                   </button>
