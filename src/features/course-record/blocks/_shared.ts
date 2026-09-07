@@ -7,9 +7,13 @@
  */
 
 import type { CourseTrainingRateCard } from '../types';
+import dayjs from 'dayjs';
+import utc from 'dayjs/plugin/utc';
 
 /** Rendered wherever a figure is genuinely absent. Never a zero. */
 export const COURSE_PLACEHOLDER = '—';
+
+dayjs.extend(utc);
 
 /** Platform currency, used when a rate card or class price carries none. */
 export const COURSE_DEFAULT_CURRENCY = 'KES';
@@ -84,16 +88,18 @@ export function formatCourseMoney(
   return `${currency} ${new Intl.NumberFormat('en-KE', { maximumFractionDigits: 0 }).format(amount)}`;
 }
 
-/** ISO date → "12 Mar 2026". `undefined` for anything unparseable. */
+/**
+ * ISO date → "12 Mar 2026". `undefined` for anything unparseable.
+ *
+ * Parsed with `dayjs.utc` rather than `new Date` + `Intl`, for the reason `lib/date` exists: these
+ * are bare calendar days, and rendering one in the viewer's own zone is how a registration window
+ * that closes on the 12th starts reading as the 11th to anyone west of GMT. The day-first format
+ * is the design's, and differs from `lib/date`'s month-first `formatDate` only in ordering.
+ */
 export function formatCourseDate(value: string | Date | null | undefined): string | undefined {
   if (!value) return undefined;
-  const date = value instanceof Date ? value : new Date(value);
-  if (Number.isNaN(date.getTime())) return undefined;
-  return new Intl.DateTimeFormat('en-KE', {
-    day: 'numeric',
-    month: 'short',
-    year: 'numeric',
-  }).format(date);
+  const date = dayjs.utc(value instanceof Date ? value.toISOString() : value);
+  return date.isValid() ? date.format('D MMM YYYY') : undefined;
 }
 
 export function clampCoursePercent(value: number): number {

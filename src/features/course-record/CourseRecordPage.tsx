@@ -205,7 +205,8 @@ export function CourseRecordPage({
 
   const trainers = record.trainers.data;
   const approvedTrainerCount =
-    stats?.public.approved_trainer_count ?? trainers?.filter(row => row.approved_at).length;
+    stats?.public.approved_trainer_count ??
+    trainers?.trainers.filter(row => row.approved_at).length;
 
   // Until the classes call resolves there is no class count — and a zero on a
   // "classes open now" tile is a claim, not a blank.
@@ -362,7 +363,7 @@ export function CourseRecordPage({
         return (
           <DeliveryTab
             access={access}
-            trainers={trainers}
+            trainers={trainers?.trainers}
             trainersAsync={asyncProps(record.trainers)}
             classes={classRows}
             classesAsync={asyncProps(record.classes)}
@@ -381,7 +382,7 @@ export function CourseRecordPage({
             course={course}
             stats={stats}
             statsAsync={asyncProps(record.stats)}
-            trainers={trainers}
+            trainers={trainers?.trainers}
             trainersAsync={asyncProps(record.trainers)}
             orders={orders}
             ordersAsync={asyncProps(record.enrollments)}
@@ -405,7 +406,7 @@ export function CourseRecordPage({
 
   const tabCounts: Partial<Record<CourseRecordTabId, number>> = {
     curriculum: lessonCount,
-    delivery: trainers?.filter(row => row.approved_at).length,
+    delivery: trainers?.trainers.filter(row => row.approved_at).length,
     classes: record.classes.data?.length,
     reviews: reviews?.length,
   };
@@ -491,21 +492,34 @@ function classFormat(locationType: ClassDefinition['location_type']): {
 }
 
 /**
- * `undefined` — not `true` — when the definition carries no registration window:
- * "we were not told" is not the same answer as "it is open", and the class list
- * treats only an explicit `false` as closed.
+ * Open when today falls inside the registration window, inclusive of both ends —
+ * the same window enrolment is refused outside of, so the badge and the checkout
+ * agree. Compared as `YYYY-MM-DD`, which sorts chronologically, so a class that
+ * opens or closes today counts as open for the whole of that day at whatever hour
+ * the page is rendered and in whatever zone the viewer is sitting.
+ *
+ * Every class created through the forms now carries both dates. A legacy row may
+ * carry one or neither, and each bound still answers what it can:
+ *
+ * - before a known opening day, or after a known closing day, is a definite `false`;
+ * - inside both known bounds is a definite `true`;
+ * - inside the one bound that exists, with the other missing, is genuinely unknown.
+ *
+ * `undefined` is that unknown. It is not `false` — nothing that was joinable
+ * disappears from a list — and it is not `true` either, because "we were not told"
+ * is not the same answer as "come on in".
  */
 function isOpenForEnrolment(definition: ClassDefinition): boolean | undefined {
   if (definition.is_active === false) return false;
 
-  const opens = timeOf(definition.registration_period_start_date);
-  const closes = timeOf(definition.registration_period_end_date);
+  const opens = apiDay(definition.registration_period_start_date);
+  const closes = apiDay(definition.registration_period_end_date);
   if (opens === undefined && closes === undefined) return undefined;
 
-  const now = Date.now();
-  if (opens !== undefined && now < opens) return false;
-  if (closes !== undefined && now > closes) return false;
-  return true;
+  const today = localToday();
+  if (opens !== undefined && today < opens) return false;
+  if (closes !== undefined && today > closes) return false;
+  return opens !== undefined && closes !== undefined ? true : undefined;
 }
 
 /** The start of the soonest class that has not begun, formatted. */
@@ -560,6 +574,40 @@ function timeOf(value: Date | string | null | undefined): number | undefined {
   const date = value instanceof Date ? value : new Date(value);
   const ms = date.getTime();
   return Number.isNaN(ms) ? undefined : ms;
+}
+
+/**
+ * The calendar day an API `format: date` field names, as `YYYY-MM-DD`.
+ *
+ * `registration_period_*` is `format: date` — a day with no time and no zone. The
+ * generated response transformer parses it before this file ever sees it
+ * (`classDefinitionSchemaResponseTransformer` does `new Date(data.…)`), and a
+ * date-only string parses as **UTC** midnight. So the UTC half of that instant is
+ * the day the backend stored, and it must be read back with UTC getters: local ones
+ * return the previous day for every viewer west of Greenwich, which is how
+ * `2026-09-30` became `2026-09-29` in Los Angeles.
+ *
+ * The string branch is not dead code — it covers a response read without the
+ * transformer (a cached or hand-built payload) — but it is not the path the class
+ * list takes.
+ */
+function apiDay(value: Date | string | null | undefined): string | undefined {
+  if (!value) return undefined;
+  if (typeof value === 'string') {
+    return /^\d{4}-\d{2}-\d{2}/.test(value) ? value.slice(0, 10) : undefined;
+  }
+  return Number.isNaN(value.getTime()) ? undefined : value.toISOString().slice(0, 10);
+}
+
+/**
+ * Today as `YYYY-MM-DD` in the viewer's own zone — local getters, deliberately. The
+ * window is a run of calendar days, and the day it is for a person in Nairobi is the
+ * day their device says it is, not the day it is in UTC.
+ */
+function localToday(now: Date = new Date()): string {
+  const month = String(now.getMonth() + 1).padStart(2, '0');
+  const day = String(now.getDate()).padStart(2, '0');
+  return `${now.getFullYear()}-${month}-${day}`;
 }
 
 /** ISO 8601, for the blocks that format a date themselves. */

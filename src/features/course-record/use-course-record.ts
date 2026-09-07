@@ -56,7 +56,9 @@ import {
   courseCapability,
 } from './types';
 import { useCourseAccess } from './use-course-access';
-import { useCourseStats, useCourseTrainers } from './use-course-metrics';
+import { useCourseStats, useCourseTrainers,
+  CourseTrainersEnvelope,
+} from './use-course-metrics';
 
 /** How many rows of a paged collection the record ever needs on screen at once. */
 const PAGE_SIZE = 100;
@@ -104,8 +106,8 @@ export interface CourseRecord {
   content: CourseRecordSection<CourseRecordContent>;
   /** `GET /courses/{uuid}/stats` — dark until the endpoint ships. */
   stats: CourseRecordSection<CourseStats>;
-  /** `GET /courses/{uuid}/trainers` — dark until the endpoint ships. */
-  trainers: CourseRecordSection<CourseTrainerSummary[]>;
+  /** `GET /courses/{uuid}/trainers`. Carries `pending_count` for owner and admin. */
+  trainers: CourseRecordSection<CourseTrainersEnvelope>;
   classes: CourseRecordSection<ClassDefinition[]>;
   reviews: CourseRecordSection<CourseReview[]>;
   assessments: CourseRecordSection<CourseAssessment[]>;

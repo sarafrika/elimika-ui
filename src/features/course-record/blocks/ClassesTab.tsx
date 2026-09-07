@@ -8,11 +8,7 @@ import { Card } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
 import { cn } from '@/lib/utils';
 
-import {
-  type CourseAccess,
-  type CourseBlockAsyncProps,
-  courseCapability,
-} from '../types';
+import { type CourseAccess, type CourseBlockAsyncProps, courseCapability } from '../types';
 import {
   COURSE_PLACEHOLDER,
   type CourseClassFormatTone,
@@ -165,6 +161,7 @@ function ClassPickerRow({
   const fill = courseSeatFill(row.seatsTaken, row.seatsTotal);
   const price = formatCourseMoney(row.price, row.currency);
   const where = [row.host, row.place].filter(Boolean).join(' · ');
+  const enrolment = enrolmentChip(row);
 
   return (
     <button
@@ -196,14 +193,7 @@ function ClassPickerRow({
             {row.format ? (
               <span className={cn(CHIP, formatToneClass(row.formatTone))}>{row.format}</span>
             ) : null}
-            <span
-              className={cn(
-                CHIP,
-                row.enrolled ? 'bg-success/10 text-success' : 'bg-muted text-muted-foreground'
-              )}
-            >
-              {row.enrolled ? 'You are in this one' : 'Open for enrolment'}
-            </span>
+            <span className={cn(CHIP, enrolment.tone)}>{enrolment.label}</span>
           </span>
         </span>
 
@@ -418,6 +408,28 @@ const FORMAT_TONE: Record<CourseClassFormatTone, string> = {
 
 function formatToneClass(tone: CourseClassFormatTone | undefined): string {
   return tone ? FORMAT_TONE[tone] : 'bg-muted text-muted-foreground';
+}
+
+/**
+ * What the row can honestly say about joining this class.
+ *
+ * `openForEnrolment` is undefined when the response left the registration window
+ * incomplete — a legacy class carrying neither date, or one carrying a single date
+ * whose remaining bound cannot settle the question. Both cases share a label,
+ * because both mean the same thing to a reader: nobody has confirmed the window.
+ * Saying "dates not published" would be a lie about the half-populated row, and the
+ * badge this replaced said "Open for enrolment", asserting something nothing had
+ * checked.
+ */
+function enrolmentChip(row: CourseClassRow): { label: string; tone: string } {
+  if (row.enrolled) return { label: 'You are in this one', tone: 'bg-success/10 text-success' };
+  if (row.openForEnrolment === true) {
+    return { label: 'Open for enrolment', tone: 'bg-muted text-muted-foreground' };
+  }
+  if (row.openForEnrolment === false) {
+    return { label: 'Registration closed', tone: 'bg-warning/15 text-warning' };
+  }
+  return { label: 'Enrolment window unconfirmed', tone: 'bg-muted text-muted-foreground' };
 }
 
 function ColumnLabel({ children }: { children: string }) {
