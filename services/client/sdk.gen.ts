@@ -1525,6 +1525,12 @@ import type {
   GetPendingEditData,
   GetPendingEditResponses,
   GetPendingEditErrors,
+  GetCourseTrainersData,
+  GetCourseTrainersResponses,
+  GetCourseTrainersErrors,
+  GetCourseStatsData,
+  GetCourseStatsResponses,
+  GetCourseStatsErrors,
   CheckRubricAssociationData,
   CheckRubricAssociationResponses,
   CheckRubricAssociationErrors,
@@ -1543,6 +1549,9 @@ import type {
   GetCourseEnrollmentsData,
   GetCourseEnrollmentsResponses,
   GetCourseEnrollmentsErrors,
+  GetCourseContentData,
+  GetCourseContentResponses,
+  GetCourseContentErrors,
   GetCourseCompletionRateData,
   GetCourseCompletionRateResponses,
   GetCourseCompletionRateErrors,
@@ -1858,7 +1867,6 @@ import type {
 } from './types.gen';
 import { client as _heyApiClient } from './client.gen';
 import {
-  getUserByUuidResponseTransformer,
   updateUserResponseTransformer,
   getTrainingBranchByUuidResponseTransformer,
   updateTrainingBranchResponseTransformer,
@@ -2250,15 +2258,19 @@ import {
   getActivityFeedResponseTransformer,
   getEnrollmentsForInstanceResponseTransformer,
   getEnrollmentCountResponseTransformer,
+  getClassEnrolmentEligibilityResponseTransformer,
   listCurrenciesResponseTransformer,
   getCourseVersionsResponseTransformer,
   withdrawPendingEditResponseTransformer,
   getPendingEditResponseTransformer,
+  getCourseTrainersResponseTransformer,
+  getCourseStatsResponseTransformer,
   getPrimaryRubricResponseTransformer,
   getRubricsByContextResponseTransformer,
   getOrganisationCourseContentResponseTransformer,
   getEnrollmentGradeBookResponseTransformer,
   getCourseEnrollmentsResponseTransformer,
+  getCourseContentResponseTransformer,
   getCourseCategoriesResponseTransformer,
   searchTrainingApplicationsResponseTransformer,
   searchCoursesResponseTransformer,
@@ -2372,6 +2384,7 @@ export const deleteUser = <ThrowOnError extends boolean = false>(
 
 /**
  * Get a user by UUID
+ * Returns the full User record to the account holder, to platform administrators, to a manager of one of the account's organisations, and to a caller with a working relationship to them - the instructor whose class they are enrolled or waitlisted on, or the course creator whose course or programme they are enrolled on or have applied to teach. Every other authenticated caller receives the UserSummary directory projection: display identity only, with no email, phone number, date of birth or username.
  */
 export const getUserByUuid = <ThrowOnError extends boolean = false>(
   options: Options<GetUserByUuidData, ThrowOnError>
@@ -2381,7 +2394,6 @@ export const getUserByUuid = <ThrowOnError extends boolean = false>(
     GetUserByUuidErrors,
     ThrowOnError
   >({
-    responseTransformer: getUserByUuidResponseTransformer,
     security: [
       {
         scheme: 'bearer',
@@ -2565,7 +2577,7 @@ export const updateRule = <ThrowOnError extends boolean = false>(
 
 /**
  * Delete a student
- * Removes a student record from the system.
+ * Removes a student record from the system. Restricted to the learner themselves or a platform admin, because deletion revokes the student domain platform-wide.
  */
 export const deleteStudent = <ThrowOnError extends boolean = false>(
   options: Options<DeleteStudentData, ThrowOnError>
@@ -2592,7 +2604,7 @@ export const deleteStudent = <ThrowOnError extends boolean = false>(
 
 /**
  * Get student by ID
- * Fetches a student by their UUID.
+ * Fetches a student by their UUID. Guardian contacts, demographic tag and audit fields are returned only to the learner, an active guardian, a manager of one of the learner's organisations, or a platform admin; other callers receive display identity only.
  */
 export const getStudentById = <ThrowOnError extends boolean = false>(
   options: Options<GetStudentByIdData, ThrowOnError>
@@ -2620,7 +2632,7 @@ export const getStudentById = <ThrowOnError extends boolean = false>(
 
 /**
  * Update a student
- * Updates an existing student record.
+ * Updates an existing student record. Restricted to the learner, an active guardian, a manager of one of the learner's organisations, or a platform admin; the record cannot be re-pointed at a different user account.
  */
 export const updateStudent = <ThrowOnError extends boolean = false>(
   options: Options<UpdateStudentData, ThrowOnError>
@@ -3270,7 +3282,7 @@ export const saveQuizResponses = <ThrowOnError extends boolean = false>(
 
 /**
  * Delete training program
- * Permanently removes a training program and its associated data.
+ * Permanently removes a training program and its associated data. Restricted to the program's creator and platform admins.
  */
 export const deleteTrainingProgram = <ThrowOnError extends boolean = false>(
   options: Options<DeleteTrainingProgramData, ThrowOnError>
@@ -3325,7 +3337,7 @@ export const getTrainingProgramByUuid = <ThrowOnError extends boolean = false>(
 
 /**
  * Update training program
- * Updates an existing training program with selective field updates.
+ * Updates an existing training program with selective field updates. Restricted to the program's creator and platform admins.
  */
 export const updateTrainingProgram = <ThrowOnError extends boolean = false>(
   options: Options<UpdateTrainingProgramData, ThrowOnError>
@@ -3386,7 +3398,9 @@ export const withdrawProgramTrainingApplication = <ThrowOnError extends boolean 
 
 /**
  * Get program training application
- * Retrieves a specific training application for a program.
+ * Retrieves a specific training application for a program. Readable by the program creator, the
+ * applicant and platform admins; anyone else receives 404.
+ *
  */
 export const getProgramTrainingApplication = <ThrowOnError extends boolean = false>(
   options: Options<GetProgramTrainingApplicationData, ThrowOnError>
@@ -3416,6 +3430,7 @@ export const getProgramTrainingApplication = <ThrowOnError extends boolean = fal
  * Decide on program training application
  * Applies a decision to an instructor or organisation application to deliver the training program.
  * Use the `action` query parameter with values `approve`, `reject`, or `revoke`.
+ * Restricted to the program creator and platform admins.
  *
  */
 export const decideOnProgramTrainingApplication = <ThrowOnError extends boolean = false>(
@@ -3483,7 +3498,7 @@ export const updateProgramTrainingApplication = <ThrowOnError extends boolean = 
 
 /**
  * Delete program requirement
- * Removes a requirement from a program.
+ * Removes a requirement from a program. Restricted to the program's creator and platform admins.
  */
 export const deleteProgramRequirement = <ThrowOnError extends boolean = false>(
   options: Options<DeleteProgramRequirementData, ThrowOnError>
@@ -3510,7 +3525,7 @@ export const deleteProgramRequirement = <ThrowOnError extends boolean = false>(
 
 /**
  * Update program requirement
- * Updates a specific requirement for a program.
+ * Updates a specific requirement for a program. Restricted to the program's creator and platform admins.
  */
 export const updateProgramRequirement = <ThrowOnError extends boolean = false>(
   options: Options<UpdateProgramRequirementData, ThrowOnError>
@@ -3542,7 +3557,7 @@ export const updateProgramRequirement = <ThrowOnError extends boolean = false>(
 
 /**
  * Remove course from program
- * Removes the association between a course and program.
+ * Removes the association between a course and program. Restricted to the program's creator and platform admins.
  */
 export const removeProgramCourse = <ThrowOnError extends boolean = false>(
   options: Options<RemoveProgramCourseData, ThrowOnError>
@@ -3569,7 +3584,7 @@ export const removeProgramCourse = <ThrowOnError extends boolean = false>(
 
 /**
  * Update program course
- * Updates course association settings within a program.
+ * Updates course association settings within a program. Restricted to the program's creator and platform admins.
  */
 export const updateProgramCourse = <ThrowOnError extends boolean = false>(
   options: Options<UpdateProgramCourseData, ThrowOnError>
@@ -4576,7 +4591,9 @@ export const withdrawTrainingApplication = <ThrowOnError extends boolean = false
 
 /**
  * Get training application
- * Retrieves a specific training application for a course.
+ * Retrieves a specific training application for a course. Readable by the course creator, the
+ * applicant and platform admins; anyone else receives 404.
+ *
  */
 export const getTrainingApplication = <ThrowOnError extends boolean = false>(
   options: Options<GetTrainingApplicationData, ThrowOnError>
@@ -6078,6 +6095,7 @@ export const updateClassDefinition = <ThrowOnError extends boolean = false>(
 
 /**
  * Get a marketplace class job
+ * instructor_pay is included only for admin-verified instructors, managers of the posting organisation and platform admins; other callers receive the advert without it
  */
 export const getJob = <ThrowOnError extends boolean = false>(
   options: Options<GetJobData, ThrowOnError>
@@ -6129,7 +6147,7 @@ export const updateJob = <ThrowOnError extends boolean = false>(
 
 /**
  * Delete certificate
- * Permanently removes a certificate record.
+ * Permanently removes a certificate record. Platform administrators only - course staff withdraw a certificate by revoking it, which leaves the record and its reason behind.
  */
 export const deleteCertificate = <ThrowOnError extends boolean = false>(
   options: Options<DeleteCertificateData, ThrowOnError>
@@ -6184,7 +6202,7 @@ export const getCertificateByUuid = <ThrowOnError extends boolean = false>(
 
 /**
  * Update certificate
- * Updates an existing certificate with selective field updates.
+ * Updates an existing certificate with selective field updates. The student, course and program a certificate attests to are fixed at issue; correct a wrong certificate by revoking it and issuing a new one.
  */
 export const updateCertificate = <ThrowOnError extends boolean = false>(
   options: Options<UpdateCertificateData, ThrowOnError>
@@ -6216,7 +6234,7 @@ export const updateCertificate = <ThrowOnError extends boolean = false>(
 
 /**
  * Delete certificate template
- * Removes a certificate template.
+ * Removes a certificate template. Platform administrators only.
  */
 export const deleteCertificateTemplate = <ThrowOnError extends boolean = false>(
   options: Options<DeleteCertificateTemplateData, ThrowOnError>
@@ -6243,7 +6261,7 @@ export const deleteCertificateTemplate = <ThrowOnError extends boolean = false>(
 
 /**
  * Update certificate template
- * Updates an existing certificate template.
+ * Updates an existing certificate template. Platform administrators only - templates carry no owner, so editing one edits it for every certificate that renders from it.
  */
 export const updateCertificateTemplate = <ThrowOnError extends boolean = false>(
   options: Options<UpdateCertificateTemplateData, ThrowOnError>
@@ -6798,7 +6816,7 @@ export const createRule = <ThrowOnError extends boolean = false>(
 
 /**
  * Get all students
- * Fetches a paginated list of students.
+ * Fetches a paginated list of students. Guardian contacts, demographic tag and audit fields appear only on the records the caller is related to.
  */
 export const getAllStudents = <ThrowOnError extends boolean = false>(
   options: Options<GetAllStudentsData, ThrowOnError>
@@ -7608,7 +7626,7 @@ export const createTrainingProgram = <ThrowOnError extends boolean = false>(
 
 /**
  * Publish training program
- * Publishes a program making it available for enrollment.
+ * Publishes a program making it available for enrollment. Restricted to the program's creator and platform admins.
  */
 export const publishProgram = <ThrowOnError extends boolean = false>(
   options: Options<PublishProgramData, ThrowOnError>
@@ -7637,6 +7655,9 @@ export const publishProgram = <ThrowOnError extends boolean = false>(
 /**
  * List program training applications
  * Retrieves applications for a program. Optionally filter by status using `status=pending|approved|rejected|revoked`.
+ *
+ * Restricted to the program creator and platform admins: every application carries the applicant's
+ * rate card, which is theirs and the program creator's business alone.
  *
  */
 export const listProgramTrainingApplications = <ThrowOnError extends boolean = false>(
@@ -7671,6 +7692,10 @@ export const listProgramTrainingApplications = <ThrowOnError extends boolean = f
  * - Applicants submit once per program. Rejected applications can be resubmitted, which reopens the request.
  * - Duplicate pending or approved submissions are rejected with clear error messages. Revoked applicants must resubmit to regain access.
  * - Program creators review applications using the approval endpoints below.
+ *
+ * The applicant named in the body must be the caller: their own instructor profile, or an
+ * organisation they hold an organisation-scoped `organisation_user` or `admin` role in.
+ * Applying in another party's name is rejected with 403.
  *
  */
 export const submitProgramTrainingApplication = <ThrowOnError extends boolean = false>(
@@ -7793,7 +7818,7 @@ export const getProgramRequirements = <ThrowOnError extends boolean = false>(
 
 /**
  * Add requirement to program
- * Adds a new requirement or prerequisite to a program.
+ * Adds a new requirement or prerequisite to a program. Restricted to the program's creator and platform admins.
  */
 export const addProgramRequirement = <ThrowOnError extends boolean = false>(
   options: Options<AddProgramRequirementData, ThrowOnError>
@@ -7853,7 +7878,7 @@ export const getProgramCourses = <ThrowOnError extends boolean = false>(
 
 /**
  * Add course to program
- * Associates a course with a program, setting sequence and requirement status.
+ * Associates a course with a program, setting sequence and requirement status. Restricted to the program's creator and platform admins.
  */
 export const addProgramCourse = <ThrowOnError extends boolean = false>(
   options: Options<AddProgramCourseData, ThrowOnError>
@@ -9046,7 +9071,7 @@ export const submitInstructorReview = <ThrowOnError extends boolean = false>(
 
 /**
  * Get instructor memberships
- * Retrieves all membership records for a specific instructor
+ * Retrieves all membership records for the instructor named in the path. Membership numbers are credential material, so this is answered to the instructor themselves, a platform admin, staff of an organisation they belong to, and whoever is deciding an application they lodged.
  */
 export const getInstructorMemberships = <ThrowOnError extends boolean = false>(
   options: Options<GetInstructorMembershipsData, ThrowOnError>
@@ -9166,7 +9191,7 @@ export const addInstructorExperience = <ThrowOnError extends boolean = false>(
 
 /**
  * Get instructor education
- * Retrieves all education records for a specific instructor
+ * Retrieves all education records for the instructor named in the path. Education records carry certificate numbers, so this is answered to the instructor themselves, a platform admin, staff of an organisation they belong to, and whoever is deciding an application they lodged.
  */
 export const getInstructorEducation = <ThrowOnError extends boolean = false>(
   options: Options<GetInstructorEducationData, ThrowOnError>
@@ -9356,7 +9381,7 @@ export const uploadInstructorDocument = <ThrowOnError extends boolean = false>(
 
 /**
  * List availability slots for an instructor
- * Returns all availability slots configured for the instructor.
+ * Returns all availability slots configured for the instructor. Restricted to the instructor themselves.
  */
 export const getAvailabilitySlots = <ThrowOnError extends boolean = false>(
   options: Options<GetAvailabilitySlotsData, ThrowOnError>
@@ -9416,7 +9441,7 @@ export const createAvailabilitySlot = <ThrowOnError extends boolean = false>(
 
 /**
  * Link a guardian to a learner
- * Grants a guardian/parent access to monitor a learner using their own credentials.
+ * Grants a guardian/parent access to monitor a learner using their own credentials. Restricted to the learner, a manager of one of the learner's organisations, or a platform admin.
  */
 export const createLink = <ThrowOnError extends boolean = false>(
   options: Options<CreateLinkData, ThrowOnError>
@@ -10023,6 +10048,11 @@ export const addCourseTrainingRequirement = <ThrowOnError extends boolean = fals
 /**
  * List training applications
  * Retrieves applications for a course. Optionally filter by status using `status=pending|approved|rejected|revoked`.
+ *
+ * Scoped like the search endpoint: the course creator and platform admins read every application in
+ * full, an applicant reads its own, and everybody else sees only the *approved* ones - the course's
+ * instructor directory - stripped of the rate card and the review notes, which are the applicant's
+ * and the course creator's business alone.
  *
  */
 export const listTrainingApplications = <ThrowOnError extends boolean = false>(
@@ -11036,7 +11066,10 @@ export const addCourseCreatorEducation = <ThrowOnError extends boolean = false>(
 
 /**
  * Get course creator documents
- * Retrieves all documents for a specific course creator
+ * Retrieves documents for a course creator. The owner and platform admins see every document;
+ * any other authenticated viewer sees only documents an admin has verified, because the public
+ * profile renders a creator's verified credentials.
+ *
  */
 export const getCourseCreatorDocuments = <ThrowOnError extends boolean = false>(
   options: Options<GetCourseCreatorDocumentsData, ThrowOnError>
@@ -12229,6 +12262,7 @@ export const createClassDefinitionForProgramMultipart = <ThrowOnError extends bo
 
 /**
  * List marketplace class jobs
+ * instructor_pay is included only for admin-verified instructors, managers of the posting organisation and platform admins; other callers receive the advert without it
  */
 export const listJobs = <ThrowOnError extends boolean = false>(
   options: Options<ListJobsData, ThrowOnError>
@@ -12394,6 +12428,7 @@ export const assignInstructor = <ThrowOnError extends boolean = false>(
 
 /**
  * List applications for a marketplace class job
+ * Restricted to managers of the organisation that posted the job, and to platform admins
  */
 export const listJobApplications = <ThrowOnError extends boolean = false>(
   options: Options<ListJobApplicationsData, ThrowOnError>
@@ -12516,7 +12551,7 @@ export const withdrawApplication = <ThrowOnError extends boolean = false>(
 
 /**
  * Get all certificates
- * Retrieves paginated list of all certificates with filtering support.
+ * Retrieves paginated list of all certificates with filtering support. Platform administrators only.
  */
 export const getAllCertificates = <ThrowOnError extends boolean = false>(
   options: Options<GetAllCertificatesData, ThrowOnError>
@@ -12544,7 +12579,7 @@ export const getAllCertificates = <ThrowOnError extends boolean = false>(
 
 /**
  * Create a new certificate
- * Manually creates a certificate record with automatic number generation.
+ * Manually creates a certificate record with automatic number generation. The body names either a course or a program - never both, and never neither - and the caller must be entitled to grade whichever one it names.
  */
 export const createCertificate = <ThrowOnError extends boolean = false>(
   options: Options<CreateCertificateData, ThrowOnError>
@@ -12788,6 +12823,7 @@ export const generateCourseCertificate = <ThrowOnError extends boolean = false>(
 
 /**
  * Create a booking for a course/instructor slot
+ * Bookable by the learner themselves, by an administrator of an organisation that learner belongs to, or by a platform admin. The booking commits the named learner to a priced session, so the caller must be able to act for them.
  */
 export const createBooking = <ThrowOnError extends boolean = false>(
   options: Options<CreateBookingData, ThrowOnError>
@@ -12850,6 +12886,7 @@ export const requestPayment = <ThrowOnError extends boolean = false>(
 
 /**
  * Payment callback to update booking status
+ * Settles a booking's payment state, which confirms the booking and finalises the enrolment. The route sits behind an authenticated filter chain, so no gateway reaches it unauthenticated and there is no signature to verify against; until a real engine is wired up (the gateway client is a placeholder) it is restricted to platform admins rather than to any signed-in user.
  */
 export const paymentCallback1 = <ThrowOnError extends boolean = false>(
   options: Options<PaymentCallback1Data, ThrowOnError>
@@ -14243,7 +14280,7 @@ export const getStudentBookings = <ThrowOnError extends boolean = false>(
 
 /**
  * Search students
- * Search for students based on criteria.
+ * Search for students based on criteria. Guardian contacts, demographic tag and audit fields appear only on the records the caller is related to.
  */
 export const searchStudents = <ThrowOnError extends boolean = false>(
   options: Options<SearchStudentsData, ThrowOnError>
@@ -15283,7 +15320,7 @@ export const getProgramCompletionRate = <ThrowOnError extends boolean = false>(
 
 /**
  * Get program certificates
- * Retrieves all certificates issued for program completions.
+ * Retrieves all certificates issued for program completions. Restricted to the program's author and platform administrators, because it returns learners' grades.
  */
 export const getProgramCertificates = <ThrowOnError extends boolean = false>(
   options: Options<GetProgramCertificatesData, ThrowOnError>
@@ -15312,8 +15349,15 @@ export const getProgramCertificates = <ThrowOnError extends boolean = false>(
 /**
  * Search program training applications
  * Advanced search for training applications using flexible operators on any DTO field.
- * Supports filters such as `status`, `applicantType`, `programUuid`, `applicantUuid`,
+ * Supports filters such as `status`, `applicantType`, `programUuid`, `applicantUuid`, `course_creator_uuid`,
  * `createdDate_between`, and more.
+ *
+ * Results are always confined to what the caller is a party to: their own instructor applications,
+ * those of organisations they are staff of, and every application on programs they created. An
+ * organisation additionally sees which instructors are approved on programs it is approved to
+ * train, without their rate cards - and those instructors drop out of the result entirely when the
+ * request filters or sorts on a withheld field, so a rate card cannot be read back a comparison at
+ * a time. Platform admins see everything.
  *
  */
 export const searchProgramTrainingApplications = <ThrowOnError extends boolean = false>(
@@ -16186,7 +16230,14 @@ export const checkAvailability = <ThrowOnError extends boolean = false>(
 
 /**
  * Get merged instructor calendar
- * Returns a merged feed of availability slots, blocked time, and scheduled instances for the instructor within a date range.
+ * Returns a merged feed of availability slots, blocked time, and scheduled instances for
+ * the instructor within a date range.
+ *
+ * Anyone signed in may read it, because choosing when to book an instructor means seeing
+ * which windows are free. Callers other than the instructor themselves get each entry
+ * reduced to its window and whether it is free: titles, the class and organisation behind
+ * a session, its location and any cancellation reason are dropped.
+ *
  */
 export const getInstructorCalendar = <ThrowOnError extends boolean = false>(
   options: Options<GetInstructorCalendarData, ThrowOnError>
@@ -16285,6 +16336,9 @@ export const listInstructorObligations = <ThrowOnError extends boolean = false>(
  * - `createdDate_gte=2024-01-01&proficiencyLevel=EXPERT` - Recently added expert skills
  *
  * **Proficiency Levels:** BEGINNER, INTERMEDIATE, ADVANCED, EXPERT
+ *
+ * Cross-instructor for the same reason as the experience search: this is what the
+ * instructor directory filters on, and a skill is public profile copy.
  *
  * For complete operator documentation, see the main search endpoint.
  *
@@ -16389,7 +16443,7 @@ export const searchInstructors = <ThrowOnError extends boolean = false>(
 
 /**
  * Get organisation instructor directory summaries
- * Returns one aggregated row per active instructor in the organisation — identity, highest qualification, a representative skill, average rating, review count, and the number of class definitions they lead. Scoped strictly to the given organisation.
+ * Returns one aggregated row per active instructor in the organisation — identity, highest qualification, a representative skill, average rating, review count, and the number of class definitions they lead. Scoped strictly to the given organisation, and readable only from inside it: the rows carry members' email addresses, so a caller has to staff this organisation rather than merely hold an organisation role somewhere. Platform administrators pass too.
  */
 export const getOrganisationInstructorSummaries = <ThrowOnError extends boolean = false>(
   options: Options<GetOrganisationInstructorSummariesData, ThrowOnError>
@@ -16431,6 +16485,13 @@ export const getOrganisationInstructorSummaries = <ThrowOnError extends boolean 
  * - `isActive=true&endDate=null` - Currently active ongoing memberships
  * - `isActive=false&endDate_gte=2024-01-01` - Recently expired memberships
  * - `startDate_between=2020-01-01,2023-12-31` - Joined between 2020-2023
+ *
+ * Platform administrators search across every instructor. Any other caller only ever
+ * sees their own memberships: instructor filters they supply are replaced with their
+ * own profile. Somebody else's are read through
+ * `GET /{instructorUuid}/memberships`, which admits only the parties related to that
+ * instructor. Membership numbers travel with these records, so neither route is a
+ * directory.
  *
  * For complete operator documentation, see the main search endpoint.
  *
@@ -16477,6 +16538,12 @@ export const searchMemberships = <ThrowOnError extends boolean = false>(
  * - `isCurrentPosition=false&endDate_gte=2023-01-01` - Recent past positions
  * - `yearsOfExperience_between=3,10` - Mid-level experience (3-10 years)
  *
+ * Deliberately cross-instructor, and the only search here that is. The instructor
+ * directory reads one page of instructors and then one experience query for all of
+ * them, so scoping this to the caller would leave every listing blank. It returns
+ * only what the directory already shows on a public profile - post, employer, dates -
+ * and nothing a credential is proved with.
+ *
  * For complete operator documentation, see the main search endpoint.
  *
  */
@@ -16516,6 +16583,13 @@ export const searchExperience = <ThrowOnError extends boolean = false>(
  * - `yearCompleted_gte=2020` - Completed in 2020 or later
  * - `yearCompleted_between=2015,2020` - Completed between 2015-2020
  * - `certificateNumber_noteq=null` - Has certificate number
+ *
+ * Platform administrators search across every instructor. Any other caller only ever
+ * sees their own education: instructor filters they supply are replaced with their own
+ * profile. Somebody else's qualifications are read through
+ * `GET /{instructorUuid}/education`, which admits only the parties related to that
+ * instructor. Certificate numbers travel with these records, so neither route is a
+ * directory.
  *
  * For complete operator documentation, see the main search endpoint.
  *
@@ -16562,6 +16636,9 @@ export const searchEducation = <ThrowOnError extends boolean = false>(
  * **Special Document Queries:**
  * - `isVerified=false&expiryDate_lte=2025-12-31` - Unverified expiring documents
  * - `status_noteq=EXPIRED&expiryDate_lt=2025-07-02` - Non-expired but overdue docs
+ *
+ * Platform administrators search across every instructor. Any other caller only ever
+ * sees their own documents: instructor filters they supply are replaced with their own profile.
  *
  * For complete operator documentation, see the main search endpoint.
  *
@@ -16776,7 +16853,7 @@ export const getScheduledInstanceEnrollmentsForStudent = <ThrowOnError extends b
 
 /**
  * Get overall student enrollment overview
- * Retrieves overall class and course enrollments for a student without requiring scheduled-instance inspection.
+ * Retrieves overall class and course enrollments for a student without requiring scheduled-instance inspection. Composing two views does not widen either of them: the course-progress half is the platform-wide record, so it is filled in only for the student themselves and platform administrators, exactly as the /courses route allows. Anyone else sees the class half and an empty course half.
  */
 export const getEnrollmentOverviewForStudent = <ThrowOnError extends boolean = false>(
   options: Options<GetEnrollmentOverviewForStudentData, ThrowOnError>
@@ -16859,7 +16936,7 @@ export const getClassEnrollmentsForStudent = <ThrowOnError extends boolean = fal
 
 /**
  * Search enrollments
- * Search enrollments using query parameters such as student_uuid and class_definition_uuid.
+ * Search enrollments using query parameters such as student_uuid and class_definition_uuid. The filter is the caller's to choose, so the result is confined to the rows they are party to: enrolments in a class they run -- their own classes and those of organisations they manage -- and their own enrolments. Platform administrators are unrestricted. Rows in anyone else's class are not returned and are not counted in the total, since a filter answered over withheld rows would disclose them just as plainly.
  */
 export const searchEnrollments = <ThrowOnError extends boolean = false>(
   options: Options<SearchEnrollmentsData, ThrowOnError>
@@ -16943,7 +17020,7 @@ export const getTodayGrowth = <ThrowOnError extends boolean = false>(
 
 /**
  * Get one student's performance within an organisation
- * Per-class attendance and performance for a single student, confined to the organisation's own classes. An organisation may only see how a student is doing at its own institution; their learning elsewhere on the platform is unreachable through this endpoint by construction, not by filtering afterwards.
+ * Per-class attendance and performance for a single student, confined to the organisation's own classes. An organisation may only see how a student is doing at its own institution; their learning elsewhere on the platform is unreachable through this endpoint by construction, not by filtering afterwards. Only those who manage the organisation may ask; being a fellow member of it is not enough.
  */
 export const getStudentPerformance = <ThrowOnError extends boolean = false>(
   options: Options<GetStudentPerformanceData, ThrowOnError>
@@ -17055,7 +17132,7 @@ export const getClassEnrolmentCounts = <ThrowOnError extends boolean = false>(
 
 /**
  * Get an organisation's activity feed
- * Recent, human-meaningful events across the organisation — students enrolling, classes being opened and instructors being paid — newest first.
+ * Recent, human-meaningful events across the organisation — students enrolling, classes being opened and instructors being paid — newest first. The amount and currency on PAYOUT events are disclosed only to those who manage the organisation.
  */
 export const getActivityFeed = <ThrowOnError extends boolean = false>(
   options: Options<GetActivityFeedData, ThrowOnError>
@@ -17083,6 +17160,7 @@ export const getActivityFeed = <ThrowOnError extends boolean = false>(
 
 /**
  * Get all enrollments for a scheduled instance
+ * The learners on one session's roster, with their enrolment status. Reserved for the people who hold that session — the instructor teaching it, the owner of the class, or a manager of the organisation behind it — and platform administrators.
  */
 export const getEnrollmentsForInstance = <ThrowOnError extends boolean = false>(
   options: Options<GetEnrollmentsForInstanceData, ThrowOnError>
@@ -17163,6 +17241,7 @@ export const hasCapacityForEnrollment = <ThrowOnError extends boolean = false>(
 
 /**
  * Check whether a student may join a class before they pay for it
+ * Answers yes or no for one learner against one class. It is asked before the enrolment exists, so a shared session cannot be required; the reach is over the class instead — the learner themselves, or whoever holds the class they are being signed up to.
  */
 export const getClassEnrolmentEligibility = <ThrowOnError extends boolean = false>(
   options: Options<GetClassEnrolmentEligibilityData, ThrowOnError>
@@ -17172,6 +17251,7 @@ export const getClassEnrolmentEligibility = <ThrowOnError extends boolean = fals
     GetClassEnrolmentEligibilityErrors,
     ThrowOnError
   >({
+    responseTransformer: getClassEnrolmentEligibilityResponseTransformer,
     security: [
       {
         scheme: 'bearer',
@@ -17401,6 +17481,92 @@ export const getPendingEdit = <ThrowOnError extends boolean = false>(
 };
 
 /**
+ * List approved trainers
+ * Who is approved to deliver this course: the instructors and organisations a learner,
+ * an organisation or the creator would find on the course record.
+ *
+ * **What each caller gets**
+ * - Everyone sees the approved list — name, where the trainer works, when they were
+ * approved, and how many active classes they run on this course.
+ * - The course creator and platform admins additionally see each trainer's `rate_card`
+ * and the `pending_count` of applications still awaiting a decision. For anyone else
+ * those keys are **absent from the JSON**, not null and not zero: the rates are never
+ * loaded, so there is nothing to redact.
+ *
+ * **Sorting** is limited to `display_name`, `approved_at` and `active_class_count`.
+ * Any other sort property — a rate column above all — is rejected with `400`, because
+ * ordering by a hidden field reads it back one comparison at a time.
+ *
+ * `location` is a place in words, such as the organisation's town or the instructor's
+ * stated locality. It is never coordinates.
+ *
+ */
+export const getCourseTrainers = <ThrowOnError extends boolean = false>(
+  options: Options<GetCourseTrainersData, ThrowOnError>
+) => {
+  return (options.client ?? _heyApiClient).get<
+    GetCourseTrainersResponses,
+    GetCourseTrainersErrors,
+    ThrowOnError
+  >({
+    responseTransformer: getCourseTrainersResponseTransformer,
+    security: [
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+    ],
+    url: '/api/v1/courses/{courseUuid}/trainers',
+    ...options,
+  });
+};
+
+/**
+ * Get course statistics scoped to the caller
+ * Returns up to three blocks, and omits any the caller has not earned.
+ *
+ * - `public` — always present. Learners trained, classes running, mean seat fill,
+ * completion rate, rating and how many trainers are approved to deliver the
+ * course. Seat fill is a percentage rounded to the nearest 5; the filled and
+ * total seat counts behind it are never published, because printed beside a
+ * course's price they make gross revenue a multiplication.
+ * - `scoped` — only for an instructor, or a member of an organisation, holding an
+ * **approved** application to train this course. Covers their own classes alone.
+ * A pending application grants nothing: anybody may lodge one.
+ * - `owner` — only for the course creator and platform admins. Commercial totals.
+ *
+ * An absent block means "not yours to see". It is never a zero to be rendered.
+ *
+ */
+export const getCourseStats = <ThrowOnError extends boolean = false>(
+  options: Options<GetCourseStatsData, ThrowOnError>
+) => {
+  return (options.client ?? _heyApiClient).get<
+    GetCourseStatsResponses,
+    GetCourseStatsErrors,
+    ThrowOnError
+  >({
+    responseTransformer: getCourseStatsResponseTransformer,
+    security: [
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+    ],
+    url: '/api/v1/courses/{courseUuid}/stats',
+    ...options,
+  });
+};
+
+/**
  * Check if rubric is associated with course
  * Checks whether a specific rubric is already associated with the course.
  */
@@ -17484,15 +17650,19 @@ export const getRubricsByContext = <ThrowOnError extends boolean = false>(
 };
 
 /**
- * Get course content for an organisation (approval-gated)
- * Returns course content scoped to what a given organisation is allowed to see.
+ * Get course content for an organisation (deprecated)
+ * **Deprecated — use `GET /api/v1/courses/{courseUuid}/content`.**
  *
- * - **Not approved to train:** a decision-making summary — lesson outline, content
- * counts and rating — with no lesson bodies, so full content never leaks.
- * - **Approved to train:** full read access to every lesson's content.
+ * Superseded because it can only answer for a viewer who has an organisation: a
+ * course creator has none, and held at `prospect` forever. Retained as an alias so
+ * existing clients keep working; it delegates to the same assembly and returns the
+ * same shape, with `access` resolved for the organisation in the path rather than
+ * for the caller.
  *
- * Content is read-only here regardless of access; only the course creator can edit it.
+ * Restricted to members of the organisation named in the path (or a platform admin), so
+ * one organisation's approval can never be used to read content on another's behalf.
  *
+ * @deprecated
  */
 export const getOrganisationCourseContent = <ThrowOnError extends boolean = false>(
   options: Options<GetOrganisationCourseContentData, ThrowOnError>
@@ -17549,6 +17719,12 @@ export const getEnrollmentGradeBook = <ThrowOnError extends boolean = false>(
 /**
  * Get course enrollments
  * Retrieves enrollment data for a specific course with analytics.
+ *
+ * The roster is scoped to the caller by the enrolment service: the course creator, instructors and
+ * organisations approved to deliver the course, and platform admins read every enrolment; a learner
+ * enrolled in the course reads only their own; anybody else browsing the catalogue gets the
+ * enrolment tally alone, with no learner identity, progress or grade on it.
+ *
  */
 export const getCourseEnrollments = <ThrowOnError extends boolean = false>(
   options: Options<GetCourseEnrollmentsData, ThrowOnError>
@@ -17570,6 +17746,55 @@ export const getCourseEnrollments = <ThrowOnError extends boolean = false>(
       },
     ],
     url: '/api/v1/courses/{courseUuid}/enrollments',
+    ...options,
+  });
+};
+
+/**
+ * Get course content scoped to the caller
+ * Returns a course's content on whatever footing the caller stands, and says which
+ * footing that is.
+ *
+ * The response carries an `access` string — one of `creator`, `admin`,
+ * `organisation`, `instructor`, `student`, `pending`, `applicant` or `prospect` —
+ * resolved server-side, first match wins. It is the single input a client needs to
+ * decide what page to render; clients must not re-derive it from the signed-in
+ * user's domain, because only the server knows whether an application was approved
+ * or an approval has since been revoked.
+ *
+ * - **`creator`, `admin`, `organisation`, `instructor`, `student`:** `full_access`
+ * is true and every lesson arrives with its `uuid` and `contents`.
+ * - **`pending`, `applicant`, `prospect`:** `full_access` is false and the lessons
+ * carry an outline only — title, description, objectives and a content count.
+ * Neither the content items nor the lesson `uuid` are transmitted, so there is
+ * nothing to filter client-side and nothing to fetch one lesson at a time.
+ *
+ * Content is read-only here whatever the access; only the course creator can edit it.
+ *
+ * Open to anonymous callers, who resolve to `prospect` and receive the same public
+ * summary the catalogue already shows.
+ *
+ */
+export const getCourseContent = <ThrowOnError extends boolean = false>(
+  options: Options<GetCourseContentData, ThrowOnError>
+) => {
+  return (options.client ?? _heyApiClient).get<
+    GetCourseContentResponses,
+    GetCourseContentErrors,
+    ThrowOnError
+  >({
+    responseTransformer: getCourseContentResponseTransformer,
+    security: [
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+    ],
+    url: '/api/v1/courses/{courseUuid}/content',
     ...options,
   });
 };
@@ -17661,6 +17886,13 @@ export const getCourseCategories = <ThrowOnError extends boolean = false>(
  * Advanced search for training applications using flexible operators on any DTO field.
  * Supports filters such as `status`, `applicantType`, `courseUuid`, `applicantUuid`, `course_creator_uuid`,
  * `createdDate_between`, and more.
+ *
+ * Every caller reads in full only what they are a party to: their own instructor applications,
+ * those of organisations they belong to, and every application on courses they created. Platform
+ * admins read everything. Approved applications are additionally visible to anyone - that is the
+ * course's instructor directory - but with the rate card, the notes and the reviewer stripped off,
+ * and with any filter or sort naming one of those fields ignored so the page cannot be used to
+ * read them back.
  *
  */
 export const searchTrainingApplications = <ThrowOnError extends boolean = false>(
@@ -18699,6 +18931,7 @@ export const getClassRatingSummary = <ThrowOnError extends boolean = false>(
 
 /**
  * List enrollments for a class definition across all scheduled instances
+ * Whoever runs the class - its instructor, a manager of the owning organisation, or a platform admin - receives the roster in full. Any other caller receives only their own enrolment in it, so a learner can still confirm the seat they hold without reading off a directory of their classmates.
  */
 export const getEnrollmentsForClass = <ThrowOnError extends boolean = false>(
   options: Options<GetEnrollmentsForClassData, ThrowOnError>
@@ -18861,6 +19094,7 @@ export const listMyApplications = <ThrowOnError extends boolean = false>(
 
 /**
  * List marketplace class job applications for an instructor
+ * The instructor and platform admins see every application; an organisation manager sees only those made to their organisation's jobs; anyone else receives an empty page
  */
 export const listInstructorApplications = <ThrowOnError extends boolean = false>(
   options: Options<ListInstructorApplicationsData, ThrowOnError>
@@ -18969,7 +19203,7 @@ export const getAllActiveClassDefinitions = <ThrowOnError extends boolean = fals
 
 /**
  * Verify certificate
- * Verifies the authenticity of a certificate using its certificate number.
+ * Verifies the authenticity of a certificate using its certificate number. Returns validity only - use this, not the by-number lookup, for third-party verification.
  */
 export const verifyCertificate = <ThrowOnError extends boolean = false>(
   options: Options<VerifyCertificateData, ThrowOnError>
@@ -19105,6 +19339,10 @@ export const getDownloadableCertificates = <ThrowOnError extends boolean = false
  * - `programUuid_noteq=null&isValid=true` - Valid program certificates
  * - `finalGrade_between=80,100&isValid=true` - High-grade valid certificates
  *
+ * Platform administrators only: the criteria range over every certificate on the platform,
+ * so there is no course or learner to scope the query to. Course staff list a learner's
+ * certificates through `/student/{studentUuid}`.
+ *
  */
 export const searchCertificates = <ThrowOnError extends boolean = false>(
   options: Options<SearchCertificatesData, ThrowOnError>
@@ -19160,7 +19398,7 @@ export const getRevokedCertificates = <ThrowOnError extends boolean = false>(
 
 /**
  * Get program certificates
- * Retrieves all certificates issued for program completions.
+ * Retrieves all certificates issued for program completions. Platform administrators only.
  */
 export const getProgramCertificates1 = <ThrowOnError extends boolean = false>(
   options?: Options<GetProgramCertificates1Data, ThrowOnError>
@@ -19188,7 +19426,7 @@ export const getProgramCertificates1 = <ThrowOnError extends boolean = false>(
 
 /**
  * Get certificate by number
- * Retrieves certificate details using certificate number for public verification.
+ * Retrieves full certificate details using the certificate number. This returns the learner's final grade, so it is guarded like any other read; third parties verifying a printed certificate should use the verification endpoint instead.
  */
 export const getCertificateByNumber = <ThrowOnError extends boolean = false>(
   options: Options<GetCertificateByNumberData, ThrowOnError>
@@ -19216,7 +19454,7 @@ export const getCertificateByNumber = <ThrowOnError extends boolean = false>(
 
 /**
  * Get certificate PDF by file path
- * Retrieves a certificate PDF by its stored relative path.
+ * Retrieves a certificate PDF by its stored relative path. Public, like the platform's other stored media.
  */
 export const getCertificateFile = <ThrowOnError extends boolean = false>(
   options: Options<GetCertificateFileData, ThrowOnError>
@@ -19243,7 +19481,7 @@ export const getCertificateFile = <ThrowOnError extends boolean = false>(
 
 /**
  * Get course certificates
- * Retrieves all certificates issued for course completions.
+ * Retrieves all certificates issued for course completions. Platform administrators only.
  */
 export const getCourseCertificates = <ThrowOnError extends boolean = false>(
   options?: Options<GetCourseCertificatesData, ThrowOnError>
@@ -20305,6 +20543,7 @@ export const clearInstructorAvailability = <ThrowOnError extends boolean = false
 
 /**
  * Revoke guardian access
+ * Restricted to the learner, a manager of one of the learner's organisations, a platform admin, or the guardian giving up their own access.
  */
 export const revokeLink = <ThrowOnError extends boolean = false>(
   options: Options<RevokeLinkData, ThrowOnError>

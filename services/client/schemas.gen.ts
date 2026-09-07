@@ -667,6 +667,22 @@ export const StudentSchema = {
   required: ['user_uuid'],
 } as const;
 
+export const ApiResponseStudentSchema = {
+  type: 'object',
+  properties: {
+    success: {
+      type: 'boolean',
+    },
+    data: {
+      $ref: '#/components/schemas/Student',
+    },
+    message: {
+      type: 'string',
+    },
+    error: {},
+  },
+} as const;
+
 export const UpdateStudentGroupRequestSchema = {
   type: 'object',
   description: "Payload to replace an organisation student group's editable attributes.",
@@ -2250,12 +2266,6 @@ export const QuizAttemptSchema = {
       example: '85.00 / 100.00 (85%)',
       readOnly: true,
     },
-    time_display: {
-      type: 'string',
-      description: '**[READ-ONLY]** Formatted display of the time taken to complete the quiz.',
-      example: '1 hour 15 minutes',
-      readOnly: true,
-    },
     attempt_category: {
       type: 'string',
       description: '**[READ-ONLY]** Formatted category of the attempt based on outcome and status.',
@@ -2266,6 +2276,12 @@ export const QuizAttemptSchema = {
       type: 'string',
       description: '**[READ-ONLY]** Comprehensive summary of the quiz attempt performance.',
       example: 'Passed on attempt 2 with 85% score',
+      readOnly: true,
+    },
+    time_display: {
+      type: 'string',
+      description: '**[READ-ONLY]** Formatted display of the time taken to complete the quiz.',
+      example: '1 hour 15 minutes',
       readOnly: true,
     },
   },
@@ -4617,13 +4633,6 @@ export const AvailabilitySlotSchema = {
       example: 'instructor@sarafrika.com',
       readOnly: true,
     },
-    duration_minutes: {
-      type: 'integer',
-      format: 'int64',
-      description: '**[READ-ONLY]** Duration of the availability slot in minutes.',
-      example: 480,
-      readOnly: true,
-    },
     duration_formatted: {
       type: 'string',
       description: '**[READ-ONLY]** Human-readable formatted duration.',
@@ -4647,6 +4656,13 @@ export const AvailabilitySlotSchema = {
       type: 'string',
       description: '**[READ-ONLY]** Human-readable description of the availability pattern.',
       example: 'Weekly on Monday',
+      readOnly: true,
+    },
+    duration_minutes: {
+      type: 'integer',
+      format: 'int64',
+      description: '**[READ-ONLY]** Duration of the availability slot in minutes.',
+      example: 480,
       readOnly: true,
     },
   },
@@ -6066,6 +6082,18 @@ export const CourseAssessmentSchema = {
       example: 'instructor@sarafrika.com',
       readOnly: true,
     },
+    assessment_category: {
+      type: 'string',
+      description: '**[READ-ONLY]** Category classification of the assessment type.',
+      example: 'Participation Component',
+      readOnly: true,
+    },
+    weight_display: {
+      type: 'string',
+      description: '**[READ-ONLY]** Human-readable format of the weight percentage.',
+      example: '20% of final grade',
+      readOnly: true,
+    },
     is_major_assessment: {
       type: 'boolean',
       description: '**[READ-ONLY]** Indicates if this is a major assessment component.',
@@ -6083,18 +6111,6 @@ export const CourseAssessmentSchema = {
       description:
         '**[READ-ONLY]** Human-readable description of how line items are combined for this component.',
       example: 'Weighted line items',
-      readOnly: true,
-    },
-    assessment_category: {
-      type: 'string',
-      description: '**[READ-ONLY]** Category classification of the assessment type.',
-      example: 'Participation Component',
-      readOnly: true,
-    },
-    weight_display: {
-      type: 'string',
-      description: '**[READ-ONLY]** Human-readable format of the weight percentage.',
-      example: '20% of final grade',
       readOnly: true,
     },
   },
@@ -7902,12 +7918,14 @@ export const ClassDefinitionUpdateRequestSchema = {
     registration_period_start_date: {
       type: 'string',
       format: 'date',
-      description: '**[OPTIONAL]** Registration period start date.',
+      description:
+        '**[OPTIONAL]** First day, inclusive, on which students may enrol. Leave out to keep the current one.',
     },
     registration_period_end_date: {
       type: 'string',
       format: 'date',
-      description: '**[OPTIONAL]** Registration period end date.',
+      description:
+        '**[OPTIONAL]** Last day, inclusive, on which students may enrol. Leave out to keep the current one.',
     },
     class_reminder_minutes: {
       type: 'integer',
@@ -8333,18 +8351,18 @@ conflict_resolution per template:
       example: false,
       readOnly: true,
     },
+    duration_formatted: {
+      type: 'string',
+      description: '**[READ-ONLY]** Human-readable formatted duration.',
+      example: '1h 30m',
+      readOnly: true,
+    },
     duration_minutes: {
       type: 'integer',
       format: 'int64',
       description:
         '**[READ-ONLY]** Computed duration of the class in minutes based on start and end times.',
       example: 90,
-      readOnly: true,
-    },
-    duration_formatted: {
-      type: 'string',
-      description: '**[READ-ONLY]** Human-readable formatted duration.',
-      example: '1h 30m',
       readOnly: true,
     },
     capacity_info: {
@@ -10005,13 +10023,6 @@ export const ScheduledInstanceSchema = {
       example: 'instructor@sarafrika.com',
       readOnly: true,
     },
-    duration_minutes: {
-      type: 'integer',
-      format: 'int64',
-      description: '**[READ-ONLY]** Duration of the scheduled instance in minutes.',
-      example: 90,
-      readOnly: true,
-    },
     duration_formatted: {
       type: 'string',
       description: '**[READ-ONLY]** Human-readable formatted duration.',
@@ -10029,6 +10040,13 @@ export const ScheduledInstanceSchema = {
       description:
         '**[READ-ONLY]** Indicates if the scheduled instance is currently active (ongoing).',
       example: false,
+      readOnly: true,
+    },
+    duration_minutes: {
+      type: 'integer',
+      format: 'int64',
+      description: '**[READ-ONLY]** Duration of the scheduled instance in minutes.',
+      example: 90,
       readOnly: true,
     },
     can_be_cancelled: {
@@ -10095,22 +10113,6 @@ export const PeriodSchema = {
     },
   },
   required: ['end_time', 'start_time'],
-} as const;
-
-export const ApiResponseStudentSchema = {
-  type: 'object',
-  properties: {
-    success: {
-      type: 'boolean',
-    },
-    data: {
-      $ref: '#/components/schemas/Student',
-    },
-    message: {
-      type: 'string',
-    },
-    error: {},
-  },
 } as const;
 
 export const AddGroupMembersRequestSchema = {
@@ -11847,6 +11849,22 @@ export const GuardianStudentLinkRequestSchema = {
   required: ['guardianUserUuid', 'relationshipType', 'shareScope', 'studentUuid'],
 } as const;
 
+export const ApiResponseGuardianStudentLinkSchema = {
+  type: 'object',
+  properties: {
+    success: {
+      type: 'boolean',
+    },
+    data: {
+      $ref: '#/components/schemas/GuardianStudentLink',
+    },
+    message: {
+      type: 'string',
+    },
+    error: {},
+  },
+} as const;
+
 export const GuardianConsentRequestSchema = {
   type: 'object',
   description: "Records a guardian's consent for a minor to join an organisation.",
@@ -12879,12 +12897,12 @@ export const ClassDefinitionCreateRequestSchema = {
     registration_period_start_date: {
       type: 'string',
       format: 'date',
-      description: '**[OPTIONAL]** Registration period start date.',
+      description: '**[REQUIRED]** First day, inclusive, on which students may enrol.',
     },
     registration_period_end_date: {
       type: 'string',
       format: 'date',
-      description: '**[OPTIONAL]** Registration period end date.',
+      description: '**[REQUIRED]** Last day, inclusive, on which students may enrol.',
     },
     class_reminder_minutes: {
       type: 'integer',
@@ -12949,6 +12967,8 @@ export const ClassDefinitionCreateRequestSchema = {
     'default_instructor_uuid',
     'default_start_time',
     'location_type',
+    'registration_period_end_date',
+    'registration_period_start_date',
     'session_format',
     'session_templates',
     'title',
@@ -14826,25 +14846,6 @@ export const PagedDTOUserSchema = {
   },
 } as const;
 
-export const ApiResponseListUserSummarySchema = {
-  type: 'object',
-  properties: {
-    success: {
-      type: 'boolean',
-    },
-    data: {
-      type: 'array',
-      items: {
-        $ref: '#/components/schemas/UserSummary',
-      },
-    },
-    message: {
-      type: 'string',
-    },
-    error: {},
-  },
-} as const;
-
 export const UserSummarySchema = {
   type: 'object',
   description:
@@ -14915,6 +14916,25 @@ export const UserSummarySchema = {
       example: 'Jane A. Doe',
       readOnly: true,
     },
+  },
+} as const;
+
+export const ApiResponseListUserSummarySchema = {
+  type: 'object',
+  properties: {
+    success: {
+      type: 'boolean',
+    },
+    data: {
+      type: 'array',
+      items: {
+        $ref: '#/components/schemas/UserSummary',
+      },
+    },
+    message: {
+      type: 'string',
+    },
+    error: {},
   },
 } as const;
 
@@ -19012,10 +19032,36 @@ export const ClassEnrolmentEligibilitySchema = {
       type: 'boolean',
       description: '**[READ-ONLY]** True when the student already holds a seat in this class.',
     },
+    registration_open: {
+      type: 'boolean',
+      description: "**[READ-ONLY]** True when today falls inside the class's registration window.",
+    },
+    registration_window: {
+      type: 'null',
+      $ref: '#/components/schemas/ClassRegistrationWindow',
+      description: '**[READ-ONLY]** The dates between which this class accepts enrolments.',
+    },
     reason: {
       type: ['string', 'null'],
       description:
         '**[READ-ONLY]** Why the student cannot join, phrased for them to read. Null when eligible.',
+    },
+  },
+} as const;
+
+export const ClassRegistrationWindowSchema = {
+  type: 'object',
+  description: 'The first and last day, both inclusive, on which a class accepts enrolments.',
+  properties: {
+    opens_on: {
+      type: 'string',
+      format: 'date',
+      description: '**[READ-ONLY]** First day enrolment is accepted.',
+    },
+    closes_on: {
+      type: 'string',
+      format: 'date',
+      description: '**[READ-ONLY]** Last day enrolment is accepted.',
     },
   },
 } as const;
@@ -19429,6 +19475,232 @@ export const PagedDTOCourseTrainingApplicationSchema = {
   },
 } as const;
 
+export const ApiResponseCourseTrainerDirectorySchema = {
+  type: 'object',
+  properties: {
+    success: {
+      type: 'boolean',
+    },
+    data: {
+      $ref: '#/components/schemas/CourseTrainerDirectory',
+    },
+    message: {
+      type: 'string',
+    },
+    error: {},
+  },
+} as const;
+
+export const CourseTrainerDirectorySchema = {
+  type: 'object',
+  description: "The approved delivery list for a course, plus the creator's pending queue",
+  properties: {
+    trainers: {
+      type: 'array',
+      description: 'Trainers approved to deliver this course.',
+      items: {
+        $ref: '#/components/schemas/CourseTrainerSummary',
+      },
+    },
+    pending_count: {
+      type: ['integer', 'null'],
+      format: 'int64',
+      description:
+        '**[COURSE OWNER AND PLATFORM ADMIN ONLY]** Applications still awaiting a decision. Absent for every other caller.',
+      example: 2,
+    },
+  },
+} as const;
+
+export const CourseTrainerSummarySchema = {
+  type: 'object',
+  description: 'An instructor or organisation approved to deliver a course',
+  example: {
+    applicant_type: 'organisation',
+    applicant_uuid: 'b7f3c1de-1f4a-4a24-9d55-9c1c2e5c0f11',
+    display_name: 'Westlands Training Institute',
+    location: 'Westlands',
+    approved_at: '2026-02-14T09:30:00',
+    active_class_count: 3,
+  },
+  properties: {
+    applicant_type: {
+      $ref: '#/components/schemas/ApplicantTypeEnum',
+    },
+    applicant_uuid: {
+      type: 'string',
+      format: 'uuid',
+      description: 'Identifier of the approved instructor or organisation.',
+      example: 'b7f3c1de-1f4a-4a24-9d55-9c1c2e5c0f11',
+    },
+    display_name: {
+      type: 'string',
+      description: "The trainer's name as it should be shown.",
+      example: 'Westlands Training Institute',
+    },
+    location: {
+      type: ['string', 'null'],
+      description: 'Where the trainer operates, in words. Absent when they have not said.',
+      example: 'Westlands',
+    },
+    approved_at: {
+      type: ['string', 'null'],
+      format: 'date-time',
+      description:
+        'When the training application was approved. Absent on records approved before this was captured.',
+    },
+    active_class_count: {
+      type: 'integer',
+      format: 'int64',
+      description: 'How many active classes the trainer currently runs on this course.',
+      example: 3,
+    },
+    rate_card: {
+      type: 'null',
+      $ref: '#/components/schemas/CourseTrainingRateCard',
+      description:
+        '**[COURSE OWNER AND PLATFORM ADMIN ONLY]** What the trainer charges. Absent for every other caller.',
+    },
+  },
+} as const;
+
+export const CourseStatsSchema = {
+  type: 'object',
+  description:
+    'Course statistics. The scoped and owner blocks are omitted entirely unless the caller is entitled to them.',
+  properties: {
+    public: {
+      $ref: '#/components/schemas/CourseStatsPublic',
+      description: 'Course-wide figures, present for every signed-in caller.',
+    },
+    scoped: {
+      $ref: '#/components/schemas/CourseStatsScoped',
+      description:
+        "The calling trainer's own delivery. Absent unless they are approved to train the course.",
+    },
+    owner: {
+      $ref: '#/components/schemas/CourseStatsOwner',
+      description:
+        'Commercial totals. Absent unless the caller is the course creator or a platform admin.',
+    },
+  },
+} as const;
+
+export const CourseStatsOwnerSchema = {
+  type: 'object',
+  description:
+    'Commercial totals for the course. Absent unless the caller is the creator or a platform admin.',
+  properties: {
+    total_enrollments: {
+      type: 'integer',
+      format: 'int64',
+      description: 'Every enrolment the course has taken, at any status.',
+      example: 530,
+    },
+    gross_sales: {
+      type: 'number',
+      description: 'Captured line totals for the course.',
+      example: 1420000,
+    },
+    platform_fee: {
+      type: 'number',
+      description: "The platform's share of those captured lines.",
+      example: 142000,
+    },
+    paid_orders: {
+      type: 'integer',
+      format: 'int64',
+      description: 'Distinct captured orders containing the course.',
+      example: 318,
+    },
+    refunded_orders: {
+      type: 'integer',
+      format: 'int64',
+      description: 'Distinct orders containing the course that were refunded, wholly or partly.',
+      example: 4,
+    },
+  },
+} as const;
+
+export const CourseStatsPublicSchema = {
+  type: 'object',
+  description: 'Course-wide performance figures, readable by any signed-in caller.',
+  properties: {
+    learners_trained: {
+      type: 'integer',
+      format: 'int64',
+      description: "Distinct learners who have held a place on any of the course's classes.",
+      example: 412,
+    },
+    classes_running: {
+      type: 'integer',
+      format: 'int64',
+      description: 'Active class definitions currently delivering the course.',
+      example: 7,
+    },
+    average_class_fill: {
+      type: 'integer',
+      format: 'int32',
+      description: `Mean seat fill across the running classes, as a percentage rounded to the nearest 5.
+
+The seat counts behind it are deliberately not published. Filled seats and total
+seats printed beside a course's price make gross revenue a multiplication, so the
+ratio leaves the server already coarsened and the operands never leave at all.
+`,
+      example: 75,
+    },
+    completion_rate: {
+      type: 'number',
+      format: 'double',
+      description: 'Share of enrolments that reached completion, as a percentage.',
+      example: 68.4,
+    },
+    average_rating: {
+      type: 'number',
+      format: 'double',
+      description: 'Mean learner rating out of 5, or 0 when the course has no reviews.',
+      example: 4.6,
+    },
+    total_reviews: {
+      type: 'integer',
+      format: 'int64',
+      description: 'Number of learner reviews.',
+      example: 37,
+    },
+    approved_trainer_count: {
+      type: 'integer',
+      format: 'int64',
+      description: 'Instructors and organisations approved to deliver the course.',
+      example: 5,
+    },
+  },
+} as const;
+
+export const CourseStatsScopedSchema = {
+  type: 'object',
+  description:
+    "The calling trainer's own delivery of the course. Absent unless they are approved to train it.",
+  properties: {
+    your_learners: {
+      type: 'integer',
+      format: 'int64',
+      description: 'Distinct learners the caller has taught on this course.',
+      example: 48,
+    },
+    your_classes: {
+      type: 'integer',
+      format: 'int64',
+      description: "The caller's active classes for this course.",
+      example: 2,
+    },
+    your_earnings: {
+      type: 'number',
+      description: 'Credited to the caller for captured sales of their own classes.',
+      example: 126500,
+    },
+  },
+} as const;
+
 export const ApiResponsePagedDTOCourseRubricAssociationSchema = {
   type: 'object',
   properties: {
@@ -19535,7 +19807,7 @@ export const ApiResponseOrganisationCourseContentSchema = {
 export const OrganisationCourseContentSchema = {
   type: 'object',
   description:
-    'Approval-gated course content for an organisation. Summary when not approved, full content when approved.',
+    "Course content scoped to the caller. Outline only unless the caller's access carries full read rights.",
   properties: {
     course_uuid: {
       type: 'string',
@@ -19543,10 +19815,13 @@ export const OrganisationCourseContentSchema = {
       description: 'The course this content belongs to.',
       readOnly: true,
     },
+    access: {
+      $ref: '#/components/schemas/AccessEnum',
+    },
     full_access: {
       type: 'boolean',
       description:
-        'True when the organisation is approved to train and therefore has full read access.',
+        "True when the caller's access carries full read rights and lesson content is therefore included.",
       example: false,
     },
     total_lessons: {
@@ -19569,7 +19844,7 @@ export const OrganisationCourseContentSchema = {
     },
     lessons: {
       type: 'array',
-      description: 'Lessons. Outline only until approved, then with full content.',
+      description: 'Lessons. Outline only without full access, then with full content.',
       items: {
         $ref: '#/components/schemas/OrganisationCourseLesson',
       },
@@ -19579,13 +19854,12 @@ export const OrganisationCourseContentSchema = {
 
 export const OrganisationCourseLessonSchema = {
   type: 'object',
-  description:
-    'Lesson outline (always) plus content (only when the organisation is approved to train).',
+  description: 'Lesson outline (always) plus content (only when the caller has full read access).',
   properties: {
     uuid: {
       type: 'string',
       format: 'uuid',
-      description: 'Lesson identifier. Only present when the organisation has full read access.',
+      description: 'Lesson identifier. Only present when the caller has full read access.',
       readOnly: true,
     },
     lesson_number: {
@@ -19617,7 +19891,7 @@ export const OrganisationCourseLessonSchema = {
     },
     contents: {
       type: 'array',
-      description: 'Full lesson content. Only present when the organisation has full read access.',
+      description: 'Full lesson content. Only present when the caller has full read access.',
       items: {
         $ref: '#/components/schemas/LessonContent',
       },
@@ -23220,6 +23494,23 @@ export const StatusEnum20Schema = {
   readOnly: true,
 } as const;
 
+export const AccessEnumSchema = {
+  type: 'string',
+  description:
+    'The footing the caller views this course on. Resolved server-side; never re-derived by the client.',
+  enum: [
+    'creator',
+    'admin',
+    'organisation',
+    'instructor',
+    'applicant',
+    'pending',
+    'prospect',
+    'student',
+  ],
+  example: 'prospect',
+} as const;
+
 export const ApplicationStatusEnumSchema = {
   type: ['string', 'null'],
   description: "Status of the instructor's existing application, when they have one",
@@ -23871,4 +24162,21 @@ export const LatestEnrollmentStatusEnumWritableSchema = {
   type: 'string',
   description: 'Most recent scheduled-instance enrollment status for this class',
   enum: ['RESERVED', 'ENROLLED', 'WAITLISTED', 'ATTENDED', 'ABSENT', 'CANCELLED'],
+} as const;
+
+export const AccessEnumWritableSchema = {
+  type: 'string',
+  description:
+    'The footing the caller views this course on. Resolved server-side; never re-derived by the client.',
+  enum: [
+    'creator',
+    'admin',
+    'organisation',
+    'instructor',
+    'applicant',
+    'pending',
+    'prospect',
+    'student',
+  ],
+  example: 'prospect',
 } as const;

@@ -509,12 +509,15 @@ import {
   getStatusTransitions,
   withdrawPendingEdit,
   getPendingEdit,
+  getCourseTrainers,
+  getCourseStats,
   checkRubricAssociation,
   getPrimaryRubric,
   getRubricsByContext,
   getOrganisationCourseContent,
   getEnrollmentGradeBook,
   getCourseEnrollments,
+  getCourseContent,
   getCourseCompletionRate,
   removeAllCategoriesFromCourse,
   getCourseCategories,
@@ -722,11 +725,13 @@ import type {
   UpdateProgramTrainingApplicationResponse,
   DeleteProgramRequirementData,
   DeleteProgramRequirementError,
+  DeleteProgramRequirementResponse,
   UpdateProgramRequirementData,
   UpdateProgramRequirementError,
   UpdateProgramRequirementResponse,
   RemoveProgramCourseData,
   RemoveProgramCourseError,
+  RemoveProgramCourseResponse,
   UpdateProgramCourseData,
   UpdateProgramCourseError,
   UpdateProgramCourseResponse,
@@ -1892,6 +1897,10 @@ import type {
   WithdrawPendingEditError,
   WithdrawPendingEditResponse,
   GetPendingEditData,
+  GetCourseTrainersData,
+  GetCourseTrainersError,
+  GetCourseTrainersResponse,
+  GetCourseStatsData,
   CheckRubricAssociationData,
   GetPrimaryRubricData,
   GetRubricsByContextData,
@@ -1902,6 +1911,7 @@ import type {
   GetCourseEnrollmentsData,
   GetCourseEnrollmentsError,
   GetCourseEnrollmentsResponse,
+  GetCourseContentData,
   GetCourseCompletionRateData,
   RemoveAllCategoriesFromCourseData,
   RemoveAllCategoriesFromCourseError,
@@ -2176,6 +2186,7 @@ export const getUserByUuidQueryKey = (options: Options<GetUserByUuidData>) =>
 
 /**
  * Get a user by UUID
+ * Returns the full User record to the account holder, to platform administrators, to a manager of one of the account's organisations, and to a caller with a working relationship to them - the instructor whose class they are enrolled or waitlisted on, or the course creator whose course or programme they are enrolled on or have applied to teach. Every other authenticated caller receives the UserSummary directory projection: display identity only, with no email, phone number, date of birth or username.
  */
 export const getUserByUuidOptions = (options: Options<GetUserByUuidData>) => {
   return queryOptions({
@@ -2337,7 +2348,7 @@ export const updateRuleMutation = (
 
 /**
  * Delete a student
- * Removes a student record from the system.
+ * Removes a student record from the system. Restricted to the learner themselves or a platform admin, because deletion revokes the student domain platform-wide.
  */
 export const deleteStudentMutation = (
   options?: Partial<Options<DeleteStudentData>>
@@ -2364,7 +2375,7 @@ export const getStudentByIdQueryKey = (options: Options<GetStudentByIdData>) =>
 
 /**
  * Get student by ID
- * Fetches a student by their UUID.
+ * Fetches a student by their UUID. Guardian contacts, demographic tag and audit fields are returned only to the learner, an active guardian, a manager of one of the learner's organisations, or a platform admin; other callers receive display identity only.
  */
 export const getStudentByIdOptions = (options: Options<GetStudentByIdData>) => {
   return queryOptions({
@@ -2383,7 +2394,7 @@ export const getStudentByIdOptions = (options: Options<GetStudentByIdData>) => {
 
 /**
  * Update a student
- * Updates an existing student record.
+ * Updates an existing student record. Restricted to the learner, an active guardian, a manager of one of the learner's organisations, or a platform admin; the record cannot be re-pointed at a different user account.
  */
 export const updateStudentMutation = (
   options?: Partial<Options<UpdateStudentData>>
@@ -2948,7 +2959,7 @@ export const saveQuizResponsesMutation = (
 
 /**
  * Delete training program
- * Permanently removes a training program and its associated data.
+ * Permanently removes a training program and its associated data. Restricted to the program's creator and platform admins.
  */
 export const deleteTrainingProgramMutation = (
   options?: Partial<Options<DeleteTrainingProgramData>>
@@ -2998,7 +3009,7 @@ export const getTrainingProgramByUuidOptions = (options: Options<GetTrainingProg
 
 /**
  * Update training program
- * Updates an existing training program with selective field updates.
+ * Updates an existing training program with selective field updates. Restricted to the program's creator and platform admins.
  */
 export const updateTrainingProgramMutation = (
   options?: Partial<Options<UpdateTrainingProgramData>>
@@ -3060,7 +3071,9 @@ export const getProgramTrainingApplicationQueryKey = (
 
 /**
  * Get program training application
- * Retrieves a specific training application for a program.
+ * Retrieves a specific training application for a program. Readable by the program creator, the
+ * applicant and platform admins; anyone else receives 404.
+ *
  */
 export const getProgramTrainingApplicationOptions = (
   options: Options<GetProgramTrainingApplicationData>
@@ -3087,6 +3100,7 @@ export const decideOnProgramTrainingApplicationQueryKey = (
  * Decide on program training application
  * Applies a decision to an instructor or organisation application to deliver the training program.
  * Use the `action` query parameter with values `approve`, `reject`, or `revoke`.
+ * Restricted to the program creator and platform admins.
  *
  */
 export const decideOnProgramTrainingApplicationOptions = (
@@ -3110,6 +3124,7 @@ export const decideOnProgramTrainingApplicationOptions = (
  * Decide on program training application
  * Applies a decision to an instructor or organisation application to deliver the training program.
  * Use the `action` query parameter with values `approve`, `reject`, or `revoke`.
+ * Restricted to the program creator and platform admins.
  *
  */
 export const decideOnProgramTrainingApplicationMutation = (
@@ -3169,17 +3184,17 @@ export const updateProgramTrainingApplicationMutation = (
 
 /**
  * Delete program requirement
- * Removes a requirement from a program.
+ * Removes a requirement from a program. Restricted to the program's creator and platform admins.
  */
 export const deleteProgramRequirementMutation = (
   options?: Partial<Options<DeleteProgramRequirementData>>
 ): UseMutationOptions<
-  unknown,
+  DeleteProgramRequirementResponse,
   DeleteProgramRequirementError,
   Options<DeleteProgramRequirementData>
 > => {
   const mutationOptions: UseMutationOptions<
-    unknown,
+    DeleteProgramRequirementResponse,
     DeleteProgramRequirementError,
     Options<DeleteProgramRequirementData>
   > = {
@@ -3197,7 +3212,7 @@ export const deleteProgramRequirementMutation = (
 
 /**
  * Update program requirement
- * Updates a specific requirement for a program.
+ * Updates a specific requirement for a program. Restricted to the program's creator and platform admins.
  */
 export const updateProgramRequirementMutation = (
   options?: Partial<Options<UpdateProgramRequirementData>>
@@ -3225,13 +3240,17 @@ export const updateProgramRequirementMutation = (
 
 /**
  * Remove course from program
- * Removes the association between a course and program.
+ * Removes the association between a course and program. Restricted to the program's creator and platform admins.
  */
 export const removeProgramCourseMutation = (
   options?: Partial<Options<RemoveProgramCourseData>>
-): UseMutationOptions<unknown, RemoveProgramCourseError, Options<RemoveProgramCourseData>> => {
+): UseMutationOptions<
+  RemoveProgramCourseResponse,
+  RemoveProgramCourseError,
+  Options<RemoveProgramCourseData>
+> => {
   const mutationOptions: UseMutationOptions<
-    unknown,
+    RemoveProgramCourseResponse,
     RemoveProgramCourseError,
     Options<RemoveProgramCourseData>
   > = {
@@ -3249,7 +3268,7 @@ export const removeProgramCourseMutation = (
 
 /**
  * Update program course
- * Updates course association settings within a program.
+ * Updates course association settings within a program. Restricted to the program's creator and platform admins.
  */
 export const updateProgramCourseMutation = (
   options?: Partial<Options<UpdateProgramCourseData>>
@@ -4167,7 +4186,9 @@ export const getTrainingApplicationQueryKey = (options: Options<GetTrainingAppli
 
 /**
  * Get training application
- * Retrieves a specific training application for a course.
+ * Retrieves a specific training application for a course. Readable by the course creator, the
+ * applicant and platform admins; anyone else receives 404.
+ *
  */
 export const getTrainingApplicationOptions = (options: Options<GetTrainingApplicationData>) => {
   return queryOptions({
@@ -5550,6 +5571,7 @@ export const getJobQueryKey = (options: Options<GetJobData>) => createQueryKey('
 
 /**
  * Get a marketplace class job
+ * instructor_pay is included only for admin-verified instructors, managers of the posting organisation and platform admins; other callers receive the advert without it
  */
 export const getJobOptions = (options: Options<GetJobData>) => {
   return queryOptions({
@@ -5592,7 +5614,7 @@ export const updateJobMutation = (
 
 /**
  * Delete certificate
- * Permanently removes a certificate record.
+ * Permanently removes a certificate record. Platform administrators only - course staff withdraw a certificate by revoking it, which leaves the record and its reason behind.
  */
 export const deleteCertificateMutation = (
   options?: Partial<Options<DeleteCertificateData>>
@@ -5642,7 +5664,7 @@ export const getCertificateByUuidOptions = (options: Options<GetCertificateByUui
 
 /**
  * Update certificate
- * Updates an existing certificate with selective field updates.
+ * Updates an existing certificate with selective field updates. The student, course and program a certificate attests to are fixed at issue; correct a wrong certificate by revoking it and issuing a new one.
  */
 export const updateCertificateMutation = (
   options?: Partial<Options<UpdateCertificateData>>
@@ -5670,7 +5692,7 @@ export const updateCertificateMutation = (
 
 /**
  * Delete certificate template
- * Removes a certificate template.
+ * Removes a certificate template. Platform administrators only.
  */
 export const deleteCertificateTemplateMutation = (
   options?: Partial<Options<DeleteCertificateTemplateData>>
@@ -5698,7 +5720,7 @@ export const deleteCertificateTemplateMutation = (
 
 /**
  * Update certificate template
- * Updates an existing certificate template.
+ * Updates an existing certificate template. Platform administrators only - templates carry no owner, so editing one edits it for every certificate that renders from it.
  */
 export const updateCertificateTemplateMutation = (
   options?: Partial<Options<UpdateCertificateTemplateData>>
@@ -6563,7 +6585,7 @@ export const getAllStudentsQueryKey = (options: Options<GetAllStudentsData>) =>
 
 /**
  * Get all students
- * Fetches a paginated list of students.
+ * Fetches a paginated list of students. Guardian contacts, demographic tag and audit fields appear only on the records the caller is related to.
  */
 export const getAllStudentsOptions = (options: Options<GetAllStudentsData>) => {
   return queryOptions({
@@ -6586,7 +6608,7 @@ export const getAllStudentsInfiniteQueryKey = (
 
 /**
  * Get all students
- * Fetches a paginated list of students.
+ * Fetches a paginated list of students. Guardian contacts, demographic tag and audit fields appear only on the records the caller is related to.
  */
 export const getAllStudentsInfiniteOptions = (options: Options<GetAllStudentsData>) => {
   return infiniteQueryOptions<
@@ -8000,7 +8022,7 @@ export const publishProgramQueryKey = (options: Options<PublishProgramData>) =>
 
 /**
  * Publish training program
- * Publishes a program making it available for enrollment.
+ * Publishes a program making it available for enrollment. Restricted to the program's creator and platform admins.
  */
 export const publishProgramOptions = (options: Options<PublishProgramData>) => {
   return queryOptions({
@@ -8019,7 +8041,7 @@ export const publishProgramOptions = (options: Options<PublishProgramData>) => {
 
 /**
  * Publish training program
- * Publishes a program making it available for enrollment.
+ * Publishes a program making it available for enrollment. Restricted to the program's creator and platform admins.
  */
 export const publishProgramMutation = (
   options?: Partial<Options<PublishProgramData>>
@@ -8049,6 +8071,9 @@ export const listProgramTrainingApplicationsQueryKey = (
  * List program training applications
  * Retrieves applications for a program. Optionally filter by status using `status=pending|approved|rejected|revoked`.
  *
+ * Restricted to the program creator and platform admins: every application carries the applicant's
+ * rate card, which is theirs and the program creator's business alone.
+ *
  */
 export const listProgramTrainingApplicationsOptions = (
   options: Options<ListProgramTrainingApplicationsData>
@@ -8075,6 +8100,9 @@ export const listProgramTrainingApplicationsInfiniteQueryKey = (
 /**
  * List program training applications
  * Retrieves applications for a program. Optionally filter by status using `status=pending|approved|rejected|revoked`.
+ *
+ * Restricted to the program creator and platform admins: every application carries the applicant's
+ * rate card, which is theirs and the program creator's business alone.
  *
  */
 export const listProgramTrainingApplicationsInfiniteOptions = (
@@ -8131,6 +8159,10 @@ export const submitProgramTrainingApplicationQueryKey = (
  * - Duplicate pending or approved submissions are rejected with clear error messages. Revoked applicants must resubmit to regain access.
  * - Program creators review applications using the approval endpoints below.
  *
+ * The applicant named in the body must be the caller: their own instructor profile, or an
+ * organisation they hold an organisation-scoped `organisation_user` or `admin` role in.
+ * Applying in another party's name is rejected with 403.
+ *
  */
 export const submitProgramTrainingApplicationOptions = (
   options: Options<SubmitProgramTrainingApplicationData>
@@ -8157,6 +8189,10 @@ export const submitProgramTrainingApplicationOptions = (
  * - Applicants submit once per program. Rejected applications can be resubmitted, which reopens the request.
  * - Duplicate pending or approved submissions are rejected with clear error messages. Revoked applicants must resubmit to regain access.
  * - Program creators review applications using the approval endpoints below.
+ *
+ * The applicant named in the body must be the caller: their own instructor profile, or an
+ * organisation they hold an organisation-scoped `organisation_user` or `admin` role in.
+ * Applying in another party's name is rejected with 403.
  *
  */
 export const submitProgramTrainingApplicationMutation = (
@@ -8377,7 +8413,7 @@ export const addProgramRequirementQueryKey = (options: Options<AddProgramRequire
 
 /**
  * Add requirement to program
- * Adds a new requirement or prerequisite to a program.
+ * Adds a new requirement or prerequisite to a program. Restricted to the program's creator and platform admins.
  */
 export const addProgramRequirementOptions = (options: Options<AddProgramRequirementData>) => {
   return queryOptions({
@@ -8396,7 +8432,7 @@ export const addProgramRequirementOptions = (options: Options<AddProgramRequirem
 
 /**
  * Add requirement to program
- * Adds a new requirement or prerequisite to a program.
+ * Adds a new requirement or prerequisite to a program. Restricted to the program's creator and platform admins.
  */
 export const addProgramRequirementMutation = (
   options?: Partial<Options<AddProgramRequirementData>>
@@ -8449,7 +8485,7 @@ export const addProgramCourseQueryKey = (options: Options<AddProgramCourseData>)
 
 /**
  * Add course to program
- * Associates a course with a program, setting sequence and requirement status.
+ * Associates a course with a program, setting sequence and requirement status. Restricted to the program's creator and platform admins.
  */
 export const addProgramCourseOptions = (options: Options<AddProgramCourseData>) => {
   return queryOptions({
@@ -8468,7 +8504,7 @@ export const addProgramCourseOptions = (options: Options<AddProgramCourseData>) 
 
 /**
  * Add course to program
- * Associates a course with a program, setting sequence and requirement status.
+ * Associates a course with a program, setting sequence and requirement status. Restricted to the program's creator and platform admins.
  */
 export const addProgramCourseMutation = (
   options?: Partial<Options<AddProgramCourseData>>
@@ -10354,7 +10390,7 @@ export const getInstructorMembershipsQueryKey = (options: Options<GetInstructorM
 
 /**
  * Get instructor memberships
- * Retrieves all membership records for a specific instructor
+ * Retrieves all membership records for the instructor named in the path. Membership numbers are credential material, so this is answered to the instructor themselves, a platform admin, staff of an organisation they belong to, and whoever is deciding an application they lodged.
  */
 export const getInstructorMembershipsOptions = (options: Options<GetInstructorMembershipsData>) => {
   return queryOptions({
@@ -10378,7 +10414,7 @@ export const getInstructorMembershipsInfiniteQueryKey = (
 
 /**
  * Get instructor memberships
- * Retrieves all membership records for a specific instructor
+ * Retrieves all membership records for the instructor named in the path. Membership numbers are credential material, so this is answered to the instructor themselves, a platform admin, staff of an organisation they belong to, and whoever is deciding an application they lodged.
  */
 export const getInstructorMembershipsInfiniteOptions = (
   options: Options<GetInstructorMembershipsData>
@@ -10595,7 +10631,7 @@ export const getInstructorEducationQueryKey = (options: Options<GetInstructorEdu
 
 /**
  * Get instructor education
- * Retrieves all education records for a specific instructor
+ * Retrieves all education records for the instructor named in the path. Education records carry certificate numbers, so this is answered to the instructor themselves, a platform admin, staff of an organisation they belong to, and whoever is deciding an application they lodged.
  */
 export const getInstructorEducationOptions = (options: Options<GetInstructorEducationData>) => {
   return queryOptions({
@@ -10853,7 +10889,7 @@ export const getAvailabilitySlotsQueryKey = (options: Options<GetAvailabilitySlo
 
 /**
  * List availability slots for an instructor
- * Returns all availability slots configured for the instructor.
+ * Returns all availability slots configured for the instructor. Restricted to the instructor themselves.
  */
 export const getAvailabilitySlotsOptions = (options: Options<GetAvailabilitySlotsData>) => {
   return queryOptions({
@@ -10925,7 +10961,7 @@ export const createLinkQueryKey = (options: Options<CreateLinkData>) =>
 
 /**
  * Link a guardian to a learner
- * Grants a guardian/parent access to monitor a learner using their own credentials.
+ * Grants a guardian/parent access to monitor a learner using their own credentials. Restricted to the learner, a manager of one of the learner's organisations, or a platform admin.
  */
 export const createLinkOptions = (options: Options<CreateLinkData>) => {
   return queryOptions({
@@ -10944,7 +10980,7 @@ export const createLinkOptions = (options: Options<CreateLinkData>) => {
 
 /**
  * Link a guardian to a learner
- * Grants a guardian/parent access to monitor a learner using their own credentials.
+ * Grants a guardian/parent access to monitor a learner using their own credentials. Restricted to the learner, a manager of one of the learner's organisations, or a platform admin.
  */
 export const createLinkMutation = (
   options?: Partial<Options<CreateLinkData>>
@@ -11985,6 +12021,11 @@ export const listTrainingApplicationsQueryKey = (options: Options<ListTrainingAp
  * List training applications
  * Retrieves applications for a course. Optionally filter by status using `status=pending|approved|rejected|revoked`.
  *
+ * Scoped like the search endpoint: the course creator and platform admins read every application in
+ * full, an applicant reads its own, and everybody else sees only the *approved* ones - the course's
+ * instructor directory - stripped of the rate card and the review notes, which are the applicant's
+ * and the course creator's business alone.
+ *
  */
 export const listTrainingApplicationsOptions = (options: Options<ListTrainingApplicationsData>) => {
   return queryOptions({
@@ -12009,6 +12050,11 @@ export const listTrainingApplicationsInfiniteQueryKey = (
 /**
  * List training applications
  * Retrieves applications for a course. Optionally filter by status using `status=pending|approved|rejected|revoked`.
+ *
+ * Scoped like the search endpoint: the course creator and platform admins read every application in
+ * full, an applicant reads its own, and everybody else sees only the *approved* ones - the course's
+ * instructor directory - stripped of the rate card and the review notes, which are the applicant's
+ * and the course creator's business alone.
  *
  */
 export const listTrainingApplicationsInfiniteOptions = (
@@ -13820,7 +13866,10 @@ export const getCourseCreatorDocumentsQueryKey = (
 
 /**
  * Get course creator documents
- * Retrieves all documents for a specific course creator
+ * Retrieves documents for a course creator. The owner and platform admins see every document;
+ * any other authenticated viewer sees only documents an admin has verified, because the public
+ * profile renders a creator's verified credentials.
+ *
  */
 export const getCourseCreatorDocumentsOptions = (
   options: Options<GetCourseCreatorDocumentsData>
@@ -15714,6 +15763,7 @@ export const listJobsQueryKey = (options: Options<ListJobsData>) =>
 
 /**
  * List marketplace class jobs
+ * instructor_pay is included only for admin-verified instructors, managers of the posting organisation and platform admins; other callers receive the advert without it
  */
 export const listJobsOptions = (options: Options<ListJobsData>) => {
   return queryOptions({
@@ -15736,6 +15786,7 @@ export const listJobsInfiniteQueryKey = (
 
 /**
  * List marketplace class jobs
+ * instructor_pay is included only for admin-verified instructors, managers of the posting organisation and platform admins; other callers receive the advert without it
  */
 export const listJobsInfiniteOptions = (options: Options<ListJobsData>) => {
   return infiniteQueryOptions<
@@ -16013,6 +16064,7 @@ export const listJobApplicationsQueryKey = (options: Options<ListJobApplications
 
 /**
  * List applications for a marketplace class job
+ * Restricted to managers of the organisation that posted the job, and to platform admins
  */
 export const listJobApplicationsOptions = (options: Options<ListJobApplicationsData>) => {
   return queryOptions({
@@ -16036,6 +16088,7 @@ export const listJobApplicationsInfiniteQueryKey = (
 
 /**
  * List applications for a marketplace class job
+ * Restricted to managers of the organisation that posted the job, and to platform admins
  */
 export const listJobApplicationsInfiniteOptions = (options: Options<ListJobApplicationsData>) => {
   return infiniteQueryOptions<
@@ -16222,7 +16275,7 @@ export const getAllCertificatesQueryKey = (options: Options<GetAllCertificatesDa
 
 /**
  * Get all certificates
- * Retrieves paginated list of all certificates with filtering support.
+ * Retrieves paginated list of all certificates with filtering support. Platform administrators only.
  */
 export const getAllCertificatesOptions = (options: Options<GetAllCertificatesData>) => {
   return queryOptions({
@@ -16245,7 +16298,7 @@ export const getAllCertificatesInfiniteQueryKey = (
 
 /**
  * Get all certificates
- * Retrieves paginated list of all certificates with filtering support.
+ * Retrieves paginated list of all certificates with filtering support. Platform administrators only.
  */
 export const getAllCertificatesInfiniteOptions = (options: Options<GetAllCertificatesData>) => {
   return infiniteQueryOptions<
@@ -16288,7 +16341,7 @@ export const createCertificateQueryKey = (options: Options<CreateCertificateData
 
 /**
  * Create a new certificate
- * Manually creates a certificate record with automatic number generation.
+ * Manually creates a certificate record with automatic number generation. The body names either a course or a program - never both, and never neither - and the caller must be entitled to grade whichever one it names.
  */
 export const createCertificateOptions = (options: Options<CreateCertificateData>) => {
   return queryOptions({
@@ -16307,7 +16360,7 @@ export const createCertificateOptions = (options: Options<CreateCertificateData>
 
 /**
  * Create a new certificate
- * Manually creates a certificate record with automatic number generation.
+ * Manually creates a certificate record with automatic number generation. The body names either a course or a program - never both, and never neither - and the caller must be entitled to grade whichever one it names.
  */
 export const createCertificateMutation = (
   options?: Partial<Options<CreateCertificateData>>
@@ -16732,6 +16785,7 @@ export const createBookingQueryKey = (options: Options<CreateBookingData>) =>
 
 /**
  * Create a booking for a course/instructor slot
+ * Bookable by the learner themselves, by an administrator of an organisation that learner belongs to, or by a platform admin. The booking commits the named learner to a priced session, so the caller must be able to act for them.
  */
 export const createBookingOptions = (options: Options<CreateBookingData>) => {
   return queryOptions({
@@ -16750,6 +16804,7 @@ export const createBookingOptions = (options: Options<CreateBookingData>) => {
 
 /**
  * Create a booking for a course/instructor slot
+ * Bookable by the learner themselves, by an administrator of an organisation that learner belongs to, or by a platform admin. The booking commits the named learner to a priced session, so the caller must be able to act for them.
  */
 export const createBookingMutation = (
   options?: Partial<Options<CreateBookingData>>
@@ -16820,6 +16875,7 @@ export const paymentCallback1QueryKey = (options: Options<PaymentCallback1Data>)
 
 /**
  * Payment callback to update booking status
+ * Settles a booking's payment state, which confirms the booking and finalises the enrolment. The route sits behind an authenticated filter chain, so no gateway reaches it unauthenticated and there is no signature to verify against; until a real engine is wired up (the gateway client is a placeholder) it is restricted to platform admins rather than to any signed-in user.
  */
 export const paymentCallback1Options = (options: Options<PaymentCallback1Data>) => {
   return queryOptions({
@@ -16838,6 +16894,7 @@ export const paymentCallback1Options = (options: Options<PaymentCallback1Data>) 
 
 /**
  * Payment callback to update booking status
+ * Settles a booking's payment state, which confirms the booking and finalises the enrolment. The route sits behind an authenticated filter chain, so no gateway reaches it unauthenticated and there is no signature to verify against; until a real engine is wired up (the gateway client is a placeholder) it is restricted to platform admins rather than to any signed-in user.
  */
 export const paymentCallback1Mutation = (
   options?: Partial<Options<PaymentCallback1Data>>
@@ -18972,7 +19029,7 @@ export const searchStudentsQueryKey = (options: Options<SearchStudentsData>) =>
 
 /**
  * Search students
- * Search for students based on criteria.
+ * Search for students based on criteria. Guardian contacts, demographic tag and audit fields appear only on the records the caller is related to.
  */
 export const searchStudentsOptions = (options: Options<SearchStudentsData>) => {
   return queryOptions({
@@ -18995,7 +19052,7 @@ export const searchStudentsInfiniteQueryKey = (
 
 /**
  * Search students
- * Search for students based on criteria.
+ * Search for students based on criteria. Guardian contacts, demographic tag and audit fields appear only on the records the caller is related to.
  */
 export const searchStudentsInfiniteOptions = (options: Options<SearchStudentsData>) => {
   return infiniteQueryOptions<
@@ -20542,7 +20599,7 @@ export const getProgramCertificatesQueryKey = (options: Options<GetProgramCertif
 
 /**
  * Get program certificates
- * Retrieves all certificates issued for program completions.
+ * Retrieves all certificates issued for program completions. Restricted to the program's author and platform administrators, because it returns learners' grades.
  */
 export const getProgramCertificatesOptions = (options: Options<GetProgramCertificatesData>) => {
   return queryOptions({
@@ -20566,7 +20623,7 @@ export const getProgramCertificatesInfiniteQueryKey = (
 
 /**
  * Get program certificates
- * Retrieves all certificates issued for program completions.
+ * Retrieves all certificates issued for program completions. Restricted to the program's author and platform administrators, because it returns learners' grades.
  */
 export const getProgramCertificatesInfiniteOptions = (
   options: Options<GetProgramCertificatesData>
@@ -20613,8 +20670,15 @@ export const searchProgramTrainingApplicationsQueryKey = (
 /**
  * Search program training applications
  * Advanced search for training applications using flexible operators on any DTO field.
- * Supports filters such as `status`, `applicantType`, `programUuid`, `applicantUuid`,
+ * Supports filters such as `status`, `applicantType`, `programUuid`, `applicantUuid`, `course_creator_uuid`,
  * `createdDate_between`, and more.
+ *
+ * Results are always confined to what the caller is a party to: their own instructor applications,
+ * those of organisations they are staff of, and every application on programs they created. An
+ * organisation additionally sees which instructors are approved on programs it is approved to
+ * train, without their rate cards - and those instructors drop out of the result entirely when the
+ * request filters or sorts on a withheld field, so a rate card cannot be read back a comparison at
+ * a time. Platform admins see everything.
  *
  */
 export const searchProgramTrainingApplicationsOptions = (
@@ -20642,8 +20706,15 @@ export const searchProgramTrainingApplicationsInfiniteQueryKey = (
 /**
  * Search program training applications
  * Advanced search for training applications using flexible operators on any DTO field.
- * Supports filters such as `status`, `applicantType`, `programUuid`, `applicantUuid`,
+ * Supports filters such as `status`, `applicantType`, `programUuid`, `applicantUuid`, `course_creator_uuid`,
  * `createdDate_between`, and more.
+ *
+ * Results are always confined to what the caller is a party to: their own instructor applications,
+ * those of organisations they are staff of, and every application on programs they created. An
+ * organisation additionally sees which instructors are approved on programs it is approved to
+ * train, without their rate cards - and those instructors drop out of the result entirely when the
+ * request filters or sorts on a withheld field, so a rate card cannot be read back a comparison at
+ * a time. Platform admins see everything.
  *
  */
 export const searchProgramTrainingApplicationsInfiniteOptions = (
@@ -22181,7 +22252,14 @@ export const getInstructorCalendarQueryKey = (options: Options<GetInstructorCale
 
 /**
  * Get merged instructor calendar
- * Returns a merged feed of availability slots, blocked time, and scheduled instances for the instructor within a date range.
+ * Returns a merged feed of availability slots, blocked time, and scheduled instances for
+ * the instructor within a date range.
+ *
+ * Anyone signed in may read it, because choosing when to book an instructor means seeing
+ * which windows are free. Callers other than the instructor themselves get each entry
+ * reduced to its window and whether it is free: titles, the class and organisation behind
+ * a session, its location and any cancellation reason are dropped.
+ *
  */
 export const getInstructorCalendarOptions = (options: Options<GetInstructorCalendarData>) => {
   return queryOptions({
@@ -22316,6 +22394,9 @@ export const searchSkillsQueryKey = (options: Options<SearchSkillsData>) =>
  *
  * **Proficiency Levels:** BEGINNER, INTERMEDIATE, ADVANCED, EXPERT
  *
+ * Cross-instructor for the same reason as the experience search: this is what the
+ * instructor directory filters on, and a skill is public profile copy.
+ *
  * For complete operator documentation, see the main search endpoint.
  *
  */
@@ -22355,6 +22436,9 @@ export const searchSkillsInfiniteQueryKey = (
  * - `createdDate_gte=2024-01-01&proficiencyLevel=EXPERT` - Recently added expert skills
  *
  * **Proficiency Levels:** BEGINNER, INTERMEDIATE, ADVANCED, EXPERT
+ *
+ * Cross-instructor for the same reason as the experience search: this is what the
+ * instructor directory filters on, and a skill is public profile copy.
  *
  * For complete operator documentation, see the main search endpoint.
  *
@@ -22558,7 +22642,7 @@ export const getOrganisationInstructorSummariesQueryKey = (
 
 /**
  * Get organisation instructor directory summaries
- * Returns one aggregated row per active instructor in the organisation — identity, highest qualification, a representative skill, average rating, review count, and the number of class definitions they lead. Scoped strictly to the given organisation.
+ * Returns one aggregated row per active instructor in the organisation — identity, highest qualification, a representative skill, average rating, review count, and the number of class definitions they lead. Scoped strictly to the given organisation, and readable only from inside it: the rows carry members' email addresses, so a caller has to staff this organisation rather than merely hold an organisation role somewhere. Platform administrators pass too.
  */
 export const getOrganisationInstructorSummariesOptions = (
   options: Options<GetOrganisationInstructorSummariesData>
@@ -22596,6 +22680,13 @@ export const searchMembershipsQueryKey = (options: Options<SearchMembershipsData
  * - `isActive=true&endDate=null` - Currently active ongoing memberships
  * - `isActive=false&endDate_gte=2024-01-01` - Recently expired memberships
  * - `startDate_between=2020-01-01,2023-12-31` - Joined between 2020-2023
+ *
+ * Platform administrators search across every instructor. Any other caller only ever
+ * sees their own memberships: instructor filters they supply are replaced with their
+ * own profile. Somebody else's are read through
+ * `GET /{instructorUuid}/memberships`, which admits only the parties related to that
+ * instructor. Membership numbers travel with these records, so neither route is a
+ * directory.
  *
  * For complete operator documentation, see the main search endpoint.
  *
@@ -22635,6 +22726,13 @@ export const searchMembershipsInfiniteQueryKey = (
  * - `isActive=true&endDate=null` - Currently active ongoing memberships
  * - `isActive=false&endDate_gte=2024-01-01` - Recently expired memberships
  * - `startDate_between=2020-01-01,2023-12-31` - Joined between 2020-2023
+ *
+ * Platform administrators search across every instructor. Any other caller only ever
+ * sees their own memberships: instructor filters they supply are replaced with their
+ * own profile. Somebody else's are read through
+ * `GET /{instructorUuid}/memberships`, which admits only the parties related to that
+ * instructor. Membership numbers travel with these records, so neither route is a
+ * directory.
  *
  * For complete operator documentation, see the main search endpoint.
  *
@@ -22696,6 +22794,12 @@ export const searchExperienceQueryKey = (options: Options<SearchExperienceData>)
  * - `isCurrentPosition=false&endDate_gte=2023-01-01` - Recent past positions
  * - `yearsOfExperience_between=3,10` - Mid-level experience (3-10 years)
  *
+ * Deliberately cross-instructor, and the only search here that is. The instructor
+ * directory reads one page of instructors and then one experience query for all of
+ * them, so scoping this to the caller would leave every listing blank. It returns
+ * only what the directory already shows on a public profile - post, employer, dates -
+ * and nothing a credential is proved with.
+ *
  * For complete operator documentation, see the main search endpoint.
  *
  */
@@ -22735,6 +22839,12 @@ export const searchExperienceInfiniteQueryKey = (
  * **Experience Analysis Queries:**
  * - `isCurrentPosition=false&endDate_gte=2023-01-01` - Recent past positions
  * - `yearsOfExperience_between=3,10` - Mid-level experience (3-10 years)
+ *
+ * Deliberately cross-instructor, and the only search here that is. The instructor
+ * directory reads one page of instructors and then one experience query for all of
+ * them, so scoping this to the caller would leave every listing blank. It returns
+ * only what the directory already shows on a public profile - post, employer, dates -
+ * and nothing a credential is proved with.
  *
  * For complete operator documentation, see the main search endpoint.
  *
@@ -22790,6 +22900,13 @@ export const searchEducationQueryKey = (options: Options<SearchEducationData>) =
  * - `yearCompleted_between=2015,2020` - Completed between 2015-2020
  * - `certificateNumber_noteq=null` - Has certificate number
  *
+ * Platform administrators search across every instructor. Any other caller only ever
+ * sees their own education: instructor filters they supply are replaced with their own
+ * profile. Somebody else's qualifications are read through
+ * `GET /{instructorUuid}/education`, which admits only the parties related to that
+ * instructor. Certificate numbers travel with these records, so neither route is a
+ * directory.
+ *
  * For complete operator documentation, see the main search endpoint.
  *
  */
@@ -22824,6 +22941,13 @@ export const searchEducationInfiniteQueryKey = (
  * - `yearCompleted_gte=2020` - Completed in 2020 or later
  * - `yearCompleted_between=2015,2020` - Completed between 2015-2020
  * - `certificateNumber_noteq=null` - Has certificate number
+ *
+ * Platform administrators search across every instructor. Any other caller only ever
+ * sees their own education: instructor filters they supply are replaced with their own
+ * profile. Somebody else's qualifications are read through
+ * `GET /{instructorUuid}/education`, which admits only the parties related to that
+ * instructor. Certificate numbers travel with these records, so neither route is a
+ * directory.
  *
  * For complete operator documentation, see the main search endpoint.
  *
@@ -22885,6 +23009,9 @@ export const searchDocumentsQueryKey = (options: Options<SearchDocumentsData>) =
  * - `isVerified=false&expiryDate_lte=2025-12-31` - Unverified expiring documents
  * - `status_noteq=EXPIRED&expiryDate_lt=2025-07-02` - Non-expired but overdue docs
  *
+ * Platform administrators search across every instructor. Any other caller only ever
+ * sees their own documents: instructor filters they supply are replaced with their own profile.
+ *
  * For complete operator documentation, see the main search endpoint.
  *
  */
@@ -22925,6 +23052,9 @@ export const searchDocumentsInfiniteQueryKey = (
  * **Special Document Queries:**
  * - `isVerified=false&expiryDate_lte=2025-12-31` - Unverified expiring documents
  * - `status_noteq=EXPIRED&expiryDate_lt=2025-07-02` - Non-expired but overdue docs
+ *
+ * Platform administrators search across every instructor. Any other caller only ever
+ * sees their own documents: instructor filters they supply are replaced with their own profile.
  *
  * For complete operator documentation, see the main search endpoint.
  *
@@ -23180,7 +23310,7 @@ export const getEnrollmentOverviewForStudentQueryKey = (
 
 /**
  * Get overall student enrollment overview
- * Retrieves overall class and course enrollments for a student without requiring scheduled-instance inspection.
+ * Retrieves overall class and course enrollments for a student without requiring scheduled-instance inspection. Composing two views does not widen either of them: the course-progress half is the platform-wide record, so it is filled in only for the student themselves and platform administrators, exactly as the /courses route allows. Anyone else sees the class half and an empty course half.
  */
 export const getEnrollmentOverviewForStudentOptions = (
   options: Options<GetEnrollmentOverviewForStudentData>
@@ -23206,7 +23336,7 @@ export const getEnrollmentOverviewForStudentInfiniteQueryKey = (
 
 /**
  * Get overall student enrollment overview
- * Retrieves overall class and course enrollments for a student without requiring scheduled-instance inspection.
+ * Retrieves overall class and course enrollments for a student without requiring scheduled-instance inspection. Composing two views does not widen either of them: the course-progress half is the platform-wide record, so it is filled in only for the student themselves and platform administrators, exactly as the /courses route allows. Anyone else sees the class half and an empty course half.
  */
 export const getEnrollmentOverviewForStudentInfiniteOptions = (
   options: Options<GetEnrollmentOverviewForStudentData>
@@ -23402,7 +23532,7 @@ export const searchEnrollmentsQueryKey = (options: Options<SearchEnrollmentsData
 
 /**
  * Search enrollments
- * Search enrollments using query parameters such as student_uuid and class_definition_uuid.
+ * Search enrollments using query parameters such as student_uuid and class_definition_uuid. The filter is the caller's to choose, so the result is confined to the rows they are party to: enrolments in a class they run -- their own classes and those of organisations they manage -- and their own enrolments. Platform administrators are unrestricted. Rows in anyone else's class are not returned and are not counted in the total, since a filter answered over withheld rows would disclose them just as plainly.
  */
 export const searchEnrollmentsOptions = (options: Options<SearchEnrollmentsData>) => {
   return queryOptions({
@@ -23425,7 +23555,7 @@ export const searchEnrollmentsInfiniteQueryKey = (
 
 /**
  * Search enrollments
- * Search enrollments using query parameters such as student_uuid and class_definition_uuid.
+ * Search enrollments using query parameters such as student_uuid and class_definition_uuid. The filter is the caller's to choose, so the result is confined to the rows they are party to: enrolments in a class they run -- their own classes and those of organisations they manage -- and their own enrolments. Platform administrators are unrestricted. Rows in anyone else's class are not returned and are not counted in the total, since a filter answered over withheld rows would disclose them just as plainly.
  */
 export const searchEnrollmentsInfiniteOptions = (options: Options<SearchEnrollmentsData>) => {
   return infiniteQueryOptions<
@@ -23512,7 +23642,7 @@ export const getStudentPerformanceQueryKey = (options: Options<GetStudentPerform
 
 /**
  * Get one student's performance within an organisation
- * Per-class attendance and performance for a single student, confined to the organisation's own classes. An organisation may only see how a student is doing at its own institution; their learning elsewhere on the platform is unreachable through this endpoint by construction, not by filtering afterwards.
+ * Per-class attendance and performance for a single student, confined to the organisation's own classes. An organisation may only see how a student is doing at its own institution; their learning elsewhere on the platform is unreachable through this endpoint by construction, not by filtering afterwards. Only those who manage the organisation may ask; being a fellow member of it is not enough.
  */
 export const getStudentPerformanceOptions = (options: Options<GetStudentPerformanceData>) => {
   return queryOptions({
@@ -23600,7 +23730,7 @@ export const getActivityFeedQueryKey = (options: Options<GetActivityFeedData>) =
 
 /**
  * Get an organisation's activity feed
- * Recent, human-meaningful events across the organisation — students enrolling, classes being opened and instructors being paid — newest first.
+ * Recent, human-meaningful events across the organisation — students enrolling, classes being opened and instructors being paid — newest first. The amount and currency on PAYOUT events are disclosed only to those who manage the organisation.
  */
 export const getActivityFeedOptions = (options: Options<GetActivityFeedData>) => {
   return queryOptions({
@@ -23623,6 +23753,7 @@ export const getEnrollmentsForInstanceQueryKey = (
 
 /**
  * Get all enrollments for a scheduled instance
+ * The learners on one session's roster, with their enrolment status. Reserved for the people who hold that session — the instructor teaching it, the owner of the class, or a manager of the organisation behind it — and platform administrators.
  */
 export const getEnrollmentsForInstanceOptions = (
   options: Options<GetEnrollmentsForInstanceData>
@@ -23689,6 +23820,7 @@ export const getClassEnrolmentEligibilityQueryKey = (
 
 /**
  * Check whether a student may join a class before they pay for it
+ * Answers yes or no for one learner against one class. It is asked before the enrolment exists, so a shared session cannot be required; the reach is over the class instead — the learner themselves, or whoever holds the class they are being signed up to.
  */
 export const getClassEnrolmentEligibilityOptions = (
   options: Options<GetClassEnrolmentEligibilityData>
@@ -23978,6 +24110,141 @@ export const getPendingEditOptions = (options: Options<GetPendingEditData>) => {
   });
 };
 
+export const getCourseTrainersQueryKey = (options: Options<GetCourseTrainersData>) =>
+  createQueryKey('getCourseTrainers', options);
+
+/**
+ * List approved trainers
+ * Who is approved to deliver this course: the instructors and organisations a learner,
+ * an organisation or the creator would find on the course record.
+ *
+ * **What each caller gets**
+ * - Everyone sees the approved list — name, where the trainer works, when they were
+ * approved, and how many active classes they run on this course.
+ * - The course creator and platform admins additionally see each trainer's `rate_card`
+ * and the `pending_count` of applications still awaiting a decision. For anyone else
+ * those keys are **absent from the JSON**, not null and not zero: the rates are never
+ * loaded, so there is nothing to redact.
+ *
+ * **Sorting** is limited to `display_name`, `approved_at` and `active_class_count`.
+ * Any other sort property — a rate column above all — is rejected with `400`, because
+ * ordering by a hidden field reads it back one comparison at a time.
+ *
+ * `location` is a place in words, such as the organisation's town or the instructor's
+ * stated locality. It is never coordinates.
+ *
+ */
+export const getCourseTrainersOptions = (options: Options<GetCourseTrainersData>) => {
+  return queryOptions({
+    queryFn: async ({ queryKey, signal }) => {
+      const { data } = await getCourseTrainers({
+        ...options,
+        ...queryKey[0],
+        signal,
+        throwOnError: true,
+      });
+      return data;
+    },
+    queryKey: getCourseTrainersQueryKey(options),
+  });
+};
+
+export const getCourseTrainersInfiniteQueryKey = (
+  options: Options<GetCourseTrainersData>
+): QueryKey<Options<GetCourseTrainersData>> => createQueryKey('getCourseTrainers', options, true);
+
+/**
+ * List approved trainers
+ * Who is approved to deliver this course: the instructors and organisations a learner,
+ * an organisation or the creator would find on the course record.
+ *
+ * **What each caller gets**
+ * - Everyone sees the approved list — name, where the trainer works, when they were
+ * approved, and how many active classes they run on this course.
+ * - The course creator and platform admins additionally see each trainer's `rate_card`
+ * and the `pending_count` of applications still awaiting a decision. For anyone else
+ * those keys are **absent from the JSON**, not null and not zero: the rates are never
+ * loaded, so there is nothing to redact.
+ *
+ * **Sorting** is limited to `display_name`, `approved_at` and `active_class_count`.
+ * Any other sort property — a rate column above all — is rejected with `400`, because
+ * ordering by a hidden field reads it back one comparison at a time.
+ *
+ * `location` is a place in words, such as the organisation's town or the instructor's
+ * stated locality. It is never coordinates.
+ *
+ */
+export const getCourseTrainersInfiniteOptions = (options: Options<GetCourseTrainersData>) => {
+  return infiniteQueryOptions<
+    GetCourseTrainersResponse,
+    GetCourseTrainersError,
+    InfiniteData<GetCourseTrainersResponse>,
+    QueryKey<Options<GetCourseTrainersData>>,
+    | number
+    | Pick<QueryKey<Options<GetCourseTrainersData>>[0], 'body' | 'headers' | 'path' | 'query'>
+  >(
+    {
+      queryFn: async ({ pageParam, queryKey, signal }) => {
+        const page: Pick<
+          QueryKey<Options<GetCourseTrainersData>>[0],
+          'body' | 'headers' | 'path' | 'query'
+        > =
+          typeof pageParam === 'object'
+            ? pageParam
+            : {
+                query: {
+                  pageable: { page: pageParam },
+                },
+              };
+        const params = createInfiniteParams(queryKey, page);
+        const { data } = await getCourseTrainers({
+          ...options,
+          ...params,
+          signal,
+          throwOnError: true,
+        });
+        return data;
+      },
+      queryKey: getCourseTrainersInfiniteQueryKey(options),
+    }
+  );
+};
+
+export const getCourseStatsQueryKey = (options: Options<GetCourseStatsData>) =>
+  createQueryKey('getCourseStats', options);
+
+/**
+ * Get course statistics scoped to the caller
+ * Returns up to three blocks, and omits any the caller has not earned.
+ *
+ * - `public` — always present. Learners trained, classes running, mean seat fill,
+ * completion rate, rating and how many trainers are approved to deliver the
+ * course. Seat fill is a percentage rounded to the nearest 5; the filled and
+ * total seat counts behind it are never published, because printed beside a
+ * course's price they make gross revenue a multiplication.
+ * - `scoped` — only for an instructor, or a member of an organisation, holding an
+ * **approved** application to train this course. Covers their own classes alone.
+ * A pending application grants nothing: anybody may lodge one.
+ * - `owner` — only for the course creator and platform admins. Commercial totals.
+ *
+ * An absent block means "not yours to see". It is never a zero to be rendered.
+ *
+ */
+export const getCourseStatsOptions = (options: Options<GetCourseStatsData>) => {
+  return queryOptions({
+    queryFn: async ({ queryKey, signal }) => {
+      const { data } = await getCourseStats({
+        ...options,
+        ...queryKey[0],
+        signal,
+        throwOnError: true,
+      });
+      return data;
+    },
+    queryKey: getCourseStatsQueryKey(options),
+  });
+};
+
 export const checkRubricAssociationQueryKey = (options: Options<CheckRubricAssociationData>) =>
   createQueryKey('checkRubricAssociation', options);
 
@@ -24094,15 +24361,19 @@ export const getOrganisationCourseContentQueryKey = (
 ) => createQueryKey('getOrganisationCourseContent', options);
 
 /**
- * Get course content for an organisation (approval-gated)
- * Returns course content scoped to what a given organisation is allowed to see.
+ * Get course content for an organisation (deprecated)
+ * **Deprecated — use `GET /api/v1/courses/{courseUuid}/content`.**
  *
- * - **Not approved to train:** a decision-making summary — lesson outline, content
- * counts and rating — with no lesson bodies, so full content never leaks.
- * - **Approved to train:** full read access to every lesson's content.
+ * Superseded because it can only answer for a viewer who has an organisation: a
+ * course creator has none, and held at `prospect` forever. Retained as an alias so
+ * existing clients keep working; it delegates to the same assembly and returns the
+ * same shape, with `access` resolved for the organisation in the path rather than
+ * for the caller.
  *
- * Content is read-only here regardless of access; only the course creator can edit it.
+ * Restricted to members of the organisation named in the path (or a platform admin), so
+ * one organisation's approval can never be used to read content on another's behalf.
  *
+ * @deprecated
  */
 export const getOrganisationCourseContentOptions = (
   options: Options<GetOrganisationCourseContentData>
@@ -24149,6 +24420,12 @@ export const getCourseEnrollmentsQueryKey = (options: Options<GetCourseEnrollmen
 /**
  * Get course enrollments
  * Retrieves enrollment data for a specific course with analytics.
+ *
+ * The roster is scoped to the caller by the enrolment service: the course creator, instructors and
+ * organisations approved to deliver the course, and platform admins read every enrolment; a learner
+ * enrolled in the course reads only their own; anybody else browsing the catalogue gets the
+ * enrolment tally alone, with no learner identity, progress or grade on it.
+ *
  */
 export const getCourseEnrollmentsOptions = (options: Options<GetCourseEnrollmentsData>) => {
   return queryOptions({
@@ -24173,6 +24450,12 @@ export const getCourseEnrollmentsInfiniteQueryKey = (
 /**
  * Get course enrollments
  * Retrieves enrollment data for a specific course with analytics.
+ *
+ * The roster is scoped to the caller by the enrolment service: the course creator, instructors and
+ * organisations approved to deliver the course, and platform admins read every enrolment; a learner
+ * enrolled in the course reads only their own; anybody else browsing the catalogue gets the
+ * enrolment tally alone, with no learner identity, progress or grade on it.
+ *
  */
 export const getCourseEnrollmentsInfiniteOptions = (options: Options<GetCourseEnrollmentsData>) => {
   return infiniteQueryOptions<
@@ -24208,6 +24491,49 @@ export const getCourseEnrollmentsInfiniteOptions = (options: Options<GetCourseEn
       queryKey: getCourseEnrollmentsInfiniteQueryKey(options),
     }
   );
+};
+
+export const getCourseContentQueryKey = (options: Options<GetCourseContentData>) =>
+  createQueryKey('getCourseContent', options);
+
+/**
+ * Get course content scoped to the caller
+ * Returns a course's content on whatever footing the caller stands, and says which
+ * footing that is.
+ *
+ * The response carries an `access` string — one of `creator`, `admin`,
+ * `organisation`, `instructor`, `student`, `pending`, `applicant` or `prospect` —
+ * resolved server-side, first match wins. It is the single input a client needs to
+ * decide what page to render; clients must not re-derive it from the signed-in
+ * user's domain, because only the server knows whether an application was approved
+ * or an approval has since been revoked.
+ *
+ * - **`creator`, `admin`, `organisation`, `instructor`, `student`:** `full_access`
+ * is true and every lesson arrives with its `uuid` and `contents`.
+ * - **`pending`, `applicant`, `prospect`:** `full_access` is false and the lessons
+ * carry an outline only — title, description, objectives and a content count.
+ * Neither the content items nor the lesson `uuid` are transmitted, so there is
+ * nothing to filter client-side and nothing to fetch one lesson at a time.
+ *
+ * Content is read-only here whatever the access; only the course creator can edit it.
+ *
+ * Open to anonymous callers, who resolve to `prospect` and receive the same public
+ * summary the catalogue already shows.
+ *
+ */
+export const getCourseContentOptions = (options: Options<GetCourseContentData>) => {
+  return queryOptions({
+    queryFn: async ({ queryKey, signal }) => {
+      const { data } = await getCourseContent({
+        ...options,
+        ...queryKey[0],
+        signal,
+        throwOnError: true,
+      });
+      return data;
+    },
+    queryKey: getCourseContentQueryKey(options),
+  });
 };
 
 export const getCourseCompletionRateQueryKey = (options: Options<GetCourseCompletionRateData>) =>
@@ -24292,6 +24618,13 @@ export const searchTrainingApplicationsQueryKey = (
  * Supports filters such as `status`, `applicantType`, `courseUuid`, `applicantUuid`, `course_creator_uuid`,
  * `createdDate_between`, and more.
  *
+ * Every caller reads in full only what they are a party to: their own instructor applications,
+ * those of organisations they belong to, and every application on courses they created. Platform
+ * admins read everything. Approved applications are additionally visible to anyone - that is the
+ * course's instructor directory - but with the rate card, the notes and the reviewer stripped off,
+ * and with any filter or sort naming one of those fields ignored so the page cannot be used to
+ * read them back.
+ *
  */
 export const searchTrainingApplicationsOptions = (
   options: Options<SearchTrainingApplicationsData>
@@ -24320,6 +24653,13 @@ export const searchTrainingApplicationsInfiniteQueryKey = (
  * Advanced search for training applications using flexible operators on any DTO field.
  * Supports filters such as `status`, `applicantType`, `courseUuid`, `applicantUuid`, `course_creator_uuid`,
  * `createdDate_between`, and more.
+ *
+ * Every caller reads in full only what they are a party to: their own instructor applications,
+ * those of organisations they belong to, and every application on courses they created. Platform
+ * admins read everything. Approved applications are additionally visible to anyone - that is the
+ * course's instructor directory - but with the rate card, the notes and the reviewer stripped off,
+ * and with any filter or sort naming one of those fields ignored so the page cannot be used to
+ * read them back.
  *
  */
 export const searchTrainingApplicationsInfiniteOptions = (
@@ -26137,6 +26477,7 @@ export const getEnrollmentsForClassQueryKey = (options: Options<GetEnrollmentsFo
 
 /**
  * List enrollments for a class definition across all scheduled instances
+ * Whoever runs the class - its instructor, a manager of the owning organisation, or a platform admin - receives the roster in full. Any other caller receives only their own enrolment in it, so a learner can still confirm the seat they hold without reading off a directory of their classmates.
  */
 export const getEnrollmentsForClassOptions = (options: Options<GetEnrollmentsForClassData>) => {
   return queryOptions({
@@ -26314,6 +26655,7 @@ export const listInstructorApplicationsQueryKey = (
 
 /**
  * List marketplace class job applications for an instructor
+ * The instructor and platform admins see every application; an organisation manager sees only those made to their organisation's jobs; anyone else receives an empty page
  */
 export const listInstructorApplicationsOptions = (
   options: Options<ListInstructorApplicationsData>
@@ -26339,6 +26681,7 @@ export const listInstructorApplicationsInfiniteQueryKey = (
 
 /**
  * List marketplace class job applications for an instructor
+ * The instructor and platform admins see every application; an organisation manager sees only those made to their organisation's jobs; anyone else receives an empty page
  */
 export const listInstructorApplicationsInfiniteOptions = (
   options: Options<ListInstructorApplicationsData>
@@ -26458,7 +26801,7 @@ export const verifyCertificateQueryKey = (options: Options<VerifyCertificateData
 
 /**
  * Verify certificate
- * Verifies the authenticity of a certificate using its certificate number.
+ * Verifies the authenticity of a certificate using its certificate number. Returns validity only - use this, not the by-number lookup, for third-party verification.
  */
 export const verifyCertificateOptions = (options: Options<VerifyCertificateData>) => {
   return queryOptions({
@@ -26635,6 +26978,10 @@ export const searchCertificatesQueryKey = (options: Options<SearchCertificatesDa
  * - `programUuid_noteq=null&isValid=true` - Valid program certificates
  * - `finalGrade_between=80,100&isValid=true` - High-grade valid certificates
  *
+ * Platform administrators only: the criteria range over every certificate on the platform,
+ * so there is no course or learner to scope the query to. Course staff list a learner's
+ * certificates through `/student/{studentUuid}`.
+ *
  */
 export const searchCertificatesOptions = (options: Options<SearchCertificatesData>) => {
   return queryOptions({
@@ -26673,6 +27020,10 @@ export const searchCertificatesInfiniteQueryKey = (
  * - `courseUuid_noteq=null&isValid=true` - Valid course certificates
  * - `programUuid_noteq=null&isValid=true` - Valid program certificates
  * - `finalGrade_between=80,100&isValid=true` - High-grade valid certificates
+ *
+ * Platform administrators only: the criteria range over every certificate on the platform,
+ * so there is no course or learner to scope the query to. Course staff list a learner's
+ * certificates through `/student/{studentUuid}`.
  *
  */
 export const searchCertificatesInfiniteOptions = (options: Options<SearchCertificatesData>) => {
@@ -26738,7 +27089,7 @@ export const getProgramCertificates1QueryKey = (options?: Options<GetProgramCert
 
 /**
  * Get program certificates
- * Retrieves all certificates issued for program completions.
+ * Retrieves all certificates issued for program completions. Platform administrators only.
  */
 export const getProgramCertificates1Options = (options?: Options<GetProgramCertificates1Data>) => {
   return queryOptions({
@@ -26760,7 +27111,7 @@ export const getCertificateByNumberQueryKey = (options: Options<GetCertificateBy
 
 /**
  * Get certificate by number
- * Retrieves certificate details using certificate number for public verification.
+ * Retrieves full certificate details using the certificate number. This returns the learner's final grade, so it is guarded like any other read; third parties verifying a printed certificate should use the verification endpoint instead.
  */
 export const getCertificateByNumberOptions = (options: Options<GetCertificateByNumberData>) => {
   return queryOptions({
@@ -26782,7 +27133,7 @@ export const getCertificateFileQueryKey = (options: Options<GetCertificateFileDa
 
 /**
  * Get certificate PDF by file path
- * Retrieves a certificate PDF by its stored relative path.
+ * Retrieves a certificate PDF by its stored relative path. Public, like the platform's other stored media.
  */
 export const getCertificateFileOptions = (options: Options<GetCertificateFileData>) => {
   return queryOptions({
@@ -26804,7 +27155,7 @@ export const getCourseCertificatesQueryKey = (options?: Options<GetCourseCertifi
 
 /**
  * Get course certificates
- * Retrieves all certificates issued for course completions.
+ * Retrieves all certificates issued for course completions. Platform administrators only.
  */
 export const getCourseCertificatesOptions = (options?: Options<GetCourseCertificatesData>) => {
   return queryOptions({
@@ -28315,6 +28666,7 @@ export const clearInstructorAvailabilityMutation = (
 
 /**
  * Revoke guardian access
+ * Restricted to the learner, a manager of one of the learner's organisations, a platform admin, or the guardian giving up their own access.
  */
 export const revokeLinkMutation = (
   options?: Partial<Options<RevokeLinkData>>

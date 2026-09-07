@@ -298,6 +298,13 @@ export type Student = {
   readonly updated_by?: string;
 };
 
+export type ApiResponseStudent = {
+  success?: boolean;
+  data?: Student;
+  message?: string;
+  error?: unknown;
+};
+
 /**
  * Payload to replace an organisation student group's editable attributes.
  */
@@ -1123,10 +1130,6 @@ export type QuizAttempt = {
    */
   readonly grade_display?: string;
   /**
-   * **[READ-ONLY]** Formatted display of the time taken to complete the quiz.
-   */
-  readonly time_display?: string;
-  /**
    * **[READ-ONLY]** Formatted category of the attempt based on outcome and status.
    */
   readonly attempt_category?: string;
@@ -1134,6 +1137,10 @@ export type QuizAttempt = {
    * **[READ-ONLY]** Comprehensive summary of the quiz attempt performance.
    */
   readonly performance_summary?: string;
+  /**
+   * **[READ-ONLY]** Formatted display of the time taken to complete the quiz.
+   */
+  readonly time_display?: string;
 };
 
 /**
@@ -2319,10 +2326,6 @@ export type AvailabilitySlot = {
    */
   readonly updated_by?: string;
   /**
-   * **[READ-ONLY]** Duration of the availability slot in minutes.
-   */
-  readonly duration_minutes?: bigint;
-  /**
    * **[READ-ONLY]** Human-readable formatted duration.
    */
   readonly duration_formatted?: string;
@@ -2338,6 +2341,10 @@ export type AvailabilitySlot = {
    * **[READ-ONLY]** Human-readable description of the availability pattern.
    */
   readonly availability_description?: string;
+  /**
+   * **[READ-ONLY]** Duration of the availability slot in minutes.
+   */
+  readonly duration_minutes?: bigint;
 };
 
 export type ApiResponseAvailabilitySlot = {
@@ -3029,6 +3036,14 @@ export type CourseAssessment = {
    */
   readonly updated_by?: string;
   /**
+   * **[READ-ONLY]** Category classification of the assessment type.
+   */
+  readonly assessment_category?: string;
+  /**
+   * **[READ-ONLY]** Human-readable format of the weight percentage.
+   */
+  readonly weight_display?: string;
+  /**
    * **[READ-ONLY]** Indicates if this is a major assessment component.
    */
   readonly is_major_assessment?: boolean;
@@ -3040,14 +3055,6 @@ export type CourseAssessment = {
    * **[READ-ONLY]** Human-readable description of how line items are combined for this component.
    */
   readonly aggregation_strategy_display?: string;
-  /**
-   * **[READ-ONLY]** Category classification of the assessment type.
-   */
-  readonly assessment_category?: string;
-  /**
-   * **[READ-ONLY]** Human-readable format of the weight percentage.
-   */
-  readonly weight_display?: string;
 };
 
 export type ApiResponseCourseAssessment = {
@@ -3798,11 +3805,11 @@ export type ClassDefinitionUpdateRequest = {
    */
   academic_period_end_date?: Date;
   /**
-   * **[OPTIONAL]** Registration period start date.
+   * **[OPTIONAL]** First day, inclusive, on which students may enrol. Leave out to keep the current one.
    */
   registration_period_start_date?: Date;
   /**
-   * **[OPTIONAL]** Registration period end date.
+   * **[OPTIONAL]** Last day, inclusive, on which students may enrol. Leave out to keep the current one.
    */
   registration_period_end_date?: Date;
   /**
@@ -4022,13 +4029,13 @@ export type ClassDefinition = {
    */
   readonly is_standalone?: boolean;
   /**
-   * **[READ-ONLY]** Computed duration of the class in minutes based on start and end times.
-   */
-  readonly duration_minutes?: bigint;
-  /**
    * **[READ-ONLY]** Human-readable formatted duration.
    */
   readonly duration_formatted?: string;
+  /**
+   * **[READ-ONLY]** Computed duration of the class in minutes based on start and end times.
+   */
+  readonly duration_minutes?: bigint;
   /**
    * **[READ-ONLY]** Human-readable capacity information including waitlist availability.
    */
@@ -4879,10 +4886,6 @@ export type ScheduledInstance = {
    */
   readonly updated_by?: string;
   /**
-   * **[READ-ONLY]** Duration of the scheduled instance in minutes.
-   */
-  readonly duration_minutes?: bigint;
-  /**
    * **[READ-ONLY]** Human-readable formatted duration.
    */
   readonly duration_formatted?: string;
@@ -4894,6 +4897,10 @@ export type ScheduledInstance = {
    * **[READ-ONLY]** Indicates if the scheduled instance is currently active (ongoing).
    */
   readonly is_currently_active?: boolean;
+  /**
+   * **[READ-ONLY]** Duration of the scheduled instance in minutes.
+   */
+  readonly duration_minutes?: bigint;
   /**
    * **[READ-ONLY]** Indicates if the scheduled instance can be cancelled.
    */
@@ -4934,13 +4941,6 @@ export type Period = {
    * Optional reason shown on the calendar
    */
   reason?: string;
-};
-
-export type ApiResponseStudent = {
-  success?: boolean;
-  data?: Student;
-  message?: string;
-  error?: unknown;
 };
 
 /**
@@ -5995,6 +5995,13 @@ export type GuardianStudentLinkRequest = {
   notes?: string;
 };
 
+export type ApiResponseGuardianStudentLink = {
+  success?: boolean;
+  data?: GuardianStudentLink;
+  message?: string;
+  error?: unknown;
+};
+
 /**
  * Records a guardian's consent for a minor to join an organisation.
  */
@@ -6616,13 +6623,13 @@ export type ClassDefinitionCreateRequest = {
    */
   academic_period_end_date?: Date;
   /**
-   * **[OPTIONAL]** Registration period start date.
+   * **[REQUIRED]** First day, inclusive, on which students may enrol.
    */
-  registration_period_start_date?: Date;
+  registration_period_start_date: Date;
   /**
-   * **[OPTIONAL]** Registration period end date.
+   * **[REQUIRED]** Last day, inclusive, on which students may enrol.
    */
-  registration_period_end_date?: Date;
+  registration_period_end_date: Date;
   /**
    * **[OPTIONAL]** Reminder lead time in minutes.
    */
@@ -7707,13 +7714,6 @@ export type PagedDtoUser = {
   links?: PageLinks;
 };
 
-export type ApiResponseListUserSummary = {
-  success?: boolean;
-  data?: Array<UserSummary>;
-  message?: string;
-  error?: unknown;
-};
-
 /**
  * Reduced user projection for directory lookups: display identity only, no contact details
  */
@@ -7751,6 +7751,13 @@ export type UserSummary = {
    * **[READ-ONLY]** Full name including the middle name when one is recorded.
    */
   readonly full_name?: string;
+};
+
+export type ApiResponseListUserSummary = {
+  success?: boolean;
+  data?: Array<UserSummary>;
+  message?: string;
+  error?: unknown;
 };
 
 export type ApiResponsePagedDtoTrainingBranch = {
@@ -9708,9 +9715,31 @@ export type ClassEnrolmentEligibility = {
    */
   already_enrolled?: boolean;
   /**
+   * **[READ-ONLY]** True when today falls inside the class's registration window.
+   */
+  registration_open?: boolean;
+  /**
+   * **[READ-ONLY]** The dates between which this class accepts enrolments.
+   */
+  registration_window?: ClassRegistrationWindow;
+  /**
    * **[READ-ONLY]** Why the student cannot join, phrased for them to read. Null when eligible.
    */
   reason?: string | null;
+};
+
+/**
+ * The first and last day, both inclusive, on which a class accepts enrolments.
+ */
+export type ClassRegistrationWindow = {
+  /**
+   * **[READ-ONLY]** First day enrolment is accepted.
+   */
+  opens_on?: Date;
+  /**
+   * **[READ-ONLY]** Last day enrolment is accepted.
+   */
+  closes_on?: Date;
 };
 
 export type ApiResponseListDocumentTypeOption = {
@@ -9910,6 +9939,159 @@ export type PagedDtoCourseTrainingApplication = {
   links?: PageLinks;
 };
 
+export type ApiResponseCourseTrainerDirectory = {
+  success?: boolean;
+  data?: CourseTrainerDirectory;
+  message?: string;
+  error?: unknown;
+};
+
+/**
+ * The approved delivery list for a course, plus the creator's pending queue
+ */
+export type CourseTrainerDirectory = {
+  /**
+   * Trainers approved to deliver this course.
+   */
+  trainers?: Array<CourseTrainerSummary>;
+  /**
+   * **[COURSE OWNER AND PLATFORM ADMIN ONLY]** Applications still awaiting a decision. Absent for every other caller.
+   */
+  pending_count?: bigint | null;
+};
+
+/**
+ * An instructor or organisation approved to deliver a course
+ */
+export type CourseTrainerSummary = {
+  applicant_type?: ApplicantTypeEnum;
+  /**
+   * Identifier of the approved instructor or organisation.
+   */
+  applicant_uuid?: string;
+  /**
+   * The trainer's name as it should be shown.
+   */
+  display_name?: string;
+  /**
+   * Where the trainer operates, in words. Absent when they have not said.
+   */
+  location?: string | null;
+  /**
+   * When the training application was approved. Absent on records approved before this was captured.
+   */
+  approved_at?: Date | null;
+  /**
+   * How many active classes the trainer currently runs on this course.
+   */
+  active_class_count?: bigint;
+  /**
+   * **[COURSE OWNER AND PLATFORM ADMIN ONLY]** What the trainer charges. Absent for every other caller.
+   */
+  rate_card?: CourseTrainingRateCard;
+};
+
+/**
+ * Course statistics. The scoped and owner blocks are omitted entirely unless the caller is entitled to them.
+ */
+export type CourseStats = {
+  /**
+   * Course-wide figures, present for every signed-in caller.
+   */
+  public?: CourseStatsPublic;
+  /**
+   * The calling trainer's own delivery. Absent unless they are approved to train the course.
+   */
+  scoped?: CourseStatsScoped;
+  /**
+   * Commercial totals. Absent unless the caller is the course creator or a platform admin.
+   */
+  owner?: CourseStatsOwner;
+};
+
+/**
+ * Commercial totals for the course. Absent unless the caller is the creator or a platform admin.
+ */
+export type CourseStatsOwner = {
+  /**
+   * Every enrolment the course has taken, at any status.
+   */
+  total_enrollments?: bigint;
+  /**
+   * Captured line totals for the course.
+   */
+  gross_sales?: number;
+  /**
+   * The platform's share of those captured lines.
+   */
+  platform_fee?: number;
+  /**
+   * Distinct captured orders containing the course.
+   */
+  paid_orders?: bigint;
+  /**
+   * Distinct orders containing the course that were refunded, wholly or partly.
+   */
+  refunded_orders?: bigint;
+};
+
+/**
+ * Course-wide performance figures, readable by any signed-in caller.
+ */
+export type CourseStatsPublic = {
+  /**
+   * Distinct learners who have held a place on any of the course's classes.
+   */
+  learners_trained?: bigint;
+  /**
+   * Active class definitions currently delivering the course.
+   */
+  classes_running?: bigint;
+  /**
+   * Mean seat fill across the running classes, as a percentage rounded to the nearest 5.
+   *
+   * The seat counts behind it are deliberately not published. Filled seats and total
+   * seats printed beside a course's price make gross revenue a multiplication, so the
+   * ratio leaves the server already coarsened and the operands never leave at all.
+   *
+   */
+  average_class_fill?: number;
+  /**
+   * Share of enrolments that reached completion, as a percentage.
+   */
+  completion_rate?: number;
+  /**
+   * Mean learner rating out of 5, or 0 when the course has no reviews.
+   */
+  average_rating?: number;
+  /**
+   * Number of learner reviews.
+   */
+  total_reviews?: bigint;
+  /**
+   * Instructors and organisations approved to deliver the course.
+   */
+  approved_trainer_count?: bigint;
+};
+
+/**
+ * The calling trainer's own delivery of the course. Absent unless they are approved to train it.
+ */
+export type CourseStatsScoped = {
+  /**
+   * Distinct learners the caller has taught on this course.
+   */
+  your_learners?: bigint;
+  /**
+   * The caller's active classes for this course.
+   */
+  your_classes?: bigint;
+  /**
+   * Credited to the caller for captured sales of their own classes.
+   */
+  your_earnings?: number;
+};
+
 export type ApiResponsePagedDtoCourseRubricAssociation = {
   success?: boolean;
   data?: PagedDtoCourseRubricAssociation;
@@ -9951,15 +10133,16 @@ export type ApiResponseOrganisationCourseContent = {
 };
 
 /**
- * Approval-gated course content for an organisation. Summary when not approved, full content when approved.
+ * Course content scoped to the caller. Outline only unless the caller's access carries full read rights.
  */
 export type OrganisationCourseContent = {
   /**
    * The course this content belongs to.
    */
   readonly course_uuid?: string;
+  access?: AccessEnum;
   /**
-   * True when the organisation is approved to train and therefore has full read access.
+   * True when the caller's access carries full read rights and lesson content is therefore included.
    */
   full_access?: boolean;
   /**
@@ -9975,17 +10158,17 @@ export type OrganisationCourseContent = {
    */
   total_reviews?: number;
   /**
-   * Lessons. Outline only until approved, then with full content.
+   * Lessons. Outline only without full access, then with full content.
    */
   lessons?: Array<OrganisationCourseLesson>;
 };
 
 /**
- * Lesson outline (always) plus content (only when the organisation is approved to train).
+ * Lesson outline (always) plus content (only when the caller has full read access).
  */
 export type OrganisationCourseLesson = {
   /**
-   * Lesson identifier. Only present when the organisation has full read access.
+   * Lesson identifier. Only present when the caller has full read access.
    */
   readonly uuid?: string;
   /**
@@ -10009,7 +10192,7 @@ export type OrganisationCourseLesson = {
    */
   content_count?: number;
   /**
-   * Full lesson content. Only present when the organisation has full read access.
+   * Full lesson content. Only present when the caller has full read access.
    */
   contents?: Array<LessonContent>;
 };
@@ -12643,6 +12826,25 @@ export const StatusEnum20 = {
 export type StatusEnum20 = (typeof StatusEnum20)[keyof typeof StatusEnum20];
 
 /**
+ * The footing the caller views this course on. Resolved server-side; never re-derived by the client.
+ */
+export const AccessEnum = {
+  CREATOR: 'creator',
+  ADMIN: 'admin',
+  ORGANISATION: 'organisation',
+  INSTRUCTOR: 'instructor',
+  APPLICANT: 'applicant',
+  PENDING: 'pending',
+  PROSPECT: 'prospect',
+  STUDENT: 'student',
+} as const;
+
+/**
+ * The footing the caller views this course on. Resolved server-side; never re-derived by the client.
+ */
+export type AccessEnum = (typeof AccessEnum)[keyof typeof AccessEnum];
+
+/**
  * Status of the instructor's existing application, when they have one
  */
 export const ApplicationStatusEnum = {
@@ -13709,6 +13911,25 @@ export const LatestEnrollmentStatusEnumWritable = {
 export type LatestEnrollmentStatusEnumWritable =
   (typeof LatestEnrollmentStatusEnumWritable)[keyof typeof LatestEnrollmentStatusEnumWritable];
 
+/**
+ * The footing the caller views this course on. Resolved server-side; never re-derived by the client.
+ */
+export const AccessEnumWritable = {
+  CREATOR: 'creator',
+  ADMIN: 'admin',
+  ORGANISATION: 'organisation',
+  INSTRUCTOR: 'instructor',
+  APPLICANT: 'applicant',
+  PENDING: 'pending',
+  PROSPECT: 'prospect',
+  STUDENT: 'student',
+} as const;
+
+/**
+ * The footing the caller views this course on. Resolved server-side; never re-derived by the client.
+ */
+export type AccessEnumWritable = (typeof AccessEnumWritable)[keyof typeof AccessEnumWritable];
+
 export type DeleteUserData = {
   body?: never;
   path: {
@@ -13757,6 +13978,10 @@ export type GetUserByUuidData = {
 
 export type GetUserByUuidErrors = {
   /**
+   * No authenticated caller
+   */
+  401: ApiResponseObject;
+  /**
    * User not found
    */
   404: ResponseDtoVoid;
@@ -13770,9 +13995,13 @@ export type GetUserByUuidError = GetUserByUuidErrors[keyof GetUserByUuidErrors];
 
 export type GetUserByUuidResponses = {
   /**
-   * User retrieved successfully
+   * User retrieved successfully. `data` is a User for privileged callers and a UserSummary otherwise.
    */
-  200: ApiResponseUser;
+  200: {
+    success?: boolean;
+    data?: User | UserSummary;
+    message?: string;
+  };
 };
 
 export type GetUserByUuidResponse = GetUserByUuidResponses[keyof GetUserByUuidResponses];
@@ -13991,6 +14220,10 @@ export type DeleteStudentData = {
 
 export type DeleteStudentErrors = {
   /**
+   * Caller is neither the learner nor a platform admin
+   */
+  403: ApiResponseVoid;
+  /**
    * Student not found
    */
   404: unknown;
@@ -14052,6 +14285,10 @@ export type UpdateStudentData = {
 };
 
 export type UpdateStudentErrors = {
+  /**
+   * Caller is not related to this student, or is re-pointing the record
+   */
+  403: ApiResponseStudent;
   /**
    * Student not found
    */
@@ -14780,6 +15017,10 @@ export type DeleteTrainingProgramData = {
 
 export type DeleteTrainingProgramErrors = {
   /**
+   * Caller does not own the program
+   */
+  403: ApiResponseVoid;
+  /**
    * Program not found
    */
   404: unknown;
@@ -14845,6 +15086,10 @@ export type UpdateTrainingProgramData = {
 };
 
 export type UpdateTrainingProgramErrors = {
+  /**
+   * Caller does not own the program
+   */
+  403: ApiResponseTrainingProgram;
   /**
    * Program not found
    */
@@ -15015,9 +15260,13 @@ export type DeleteProgramRequirementData = {
 
 export type DeleteProgramRequirementErrors = {
   /**
-   * Not Found
+   * Caller does not own the program
    */
-  404: ResponseDtoVoid;
+  403: unknown;
+  /**
+   * Requirement not found
+   */
+  404: unknown;
   /**
    * Internal Server Error
    */
@@ -15029,10 +15278,13 @@ export type DeleteProgramRequirementError =
 
 export type DeleteProgramRequirementResponses = {
   /**
-   * OK
+   * Requirement removed
    */
-  200: unknown;
+  204: void;
 };
+
+export type DeleteProgramRequirementResponse =
+  DeleteProgramRequirementResponses[keyof DeleteProgramRequirementResponses];
 
 export type UpdateProgramRequirementData = {
   body: ProgramRequirement;
@@ -15046,9 +15298,13 @@ export type UpdateProgramRequirementData = {
 
 export type UpdateProgramRequirementErrors = {
   /**
-   * Not Found
+   * Caller does not own the program
    */
-  404: ResponseDtoVoid;
+  403: ApiResponseProgramRequirement;
+  /**
+   * Requirement not found
+   */
+  404: unknown;
   /**
    * Internal Server Error
    */
@@ -15060,7 +15316,7 @@ export type UpdateProgramRequirementError =
 
 export type UpdateProgramRequirementResponses = {
   /**
-   * OK
+   * Requirement updated
    */
   200: ApiResponseProgramRequirement;
 };
@@ -15080,9 +15336,13 @@ export type RemoveProgramCourseData = {
 
 export type RemoveProgramCourseErrors = {
   /**
-   * Not Found
+   * Caller does not own the program
    */
-  404: ResponseDtoVoid;
+  403: unknown;
+  /**
+   * Program course not found
+   */
+  404: unknown;
   /**
    * Internal Server Error
    */
@@ -15093,10 +15353,13 @@ export type RemoveProgramCourseError = RemoveProgramCourseErrors[keyof RemovePro
 
 export type RemoveProgramCourseResponses = {
   /**
-   * OK
+   * Course removed from program
    */
-  200: unknown;
+  204: void;
 };
+
+export type RemoveProgramCourseResponse =
+  RemoveProgramCourseResponses[keyof RemoveProgramCourseResponses];
 
 export type UpdateProgramCourseData = {
   body: ProgramCourse;
@@ -15110,9 +15373,13 @@ export type UpdateProgramCourseData = {
 
 export type UpdateProgramCourseErrors = {
   /**
-   * Not Found
+   * Caller does not own the program
    */
-  404: ResponseDtoVoid;
+  403: ApiResponseProgramCourse;
+  /**
+   * Program course not found
+   */
+  404: unknown;
   /**
    * Internal Server Error
    */
@@ -15123,7 +15390,7 @@ export type UpdateProgramCourseError = UpdateProgramCourseErrors[keyof UpdatePro
 
 export type UpdateProgramCourseResponses = {
   /**
-   * OK
+   * Program course updated
    */
   200: ApiResponseProgramCourse;
 };
@@ -18114,6 +18381,10 @@ export type UpdateCertificateData = {
 
 export type UpdateCertificateErrors = {
   /**
+   * Attempted to re-point the certificate's subject
+   */
+  400: ApiResponseCertificate;
+  /**
    * Certificate not found
    */
   404: unknown;
@@ -18857,6 +19128,10 @@ export type CreateStudentErrors = {
    * Invalid request data
    */
   400: ApiResponseStudent;
+  /**
+   * Caller may not create a student profile for that user
+   */
+  403: ApiResponseStudent;
   /**
    * Not Found
    */
@@ -19735,6 +20010,10 @@ export type PublishProgramErrors = {
    */
   400: ApiResponseTrainingProgram;
   /**
+   * Caller does not own the program
+   */
+  403: ApiResponseTrainingProgram;
+  /**
    * Not Found
    */
   404: ResponseDtoVoid;
@@ -19802,9 +20081,13 @@ export type SubmitProgramTrainingApplicationData = {
 
 export type SubmitProgramTrainingApplicationErrors = {
   /**
-   * Not Found
+   * Caller is not the named applicant
    */
-  404: ResponseDtoVoid;
+  403: ApiResponseProgramTrainingApplication;
+  /**
+   * Program not found
+   */
+  404: unknown;
   /**
    * Internal Server Error
    */
@@ -19816,9 +20099,9 @@ export type SubmitProgramTrainingApplicationError =
 
 export type SubmitProgramTrainingApplicationResponses = {
   /**
-   * OK
+   * Training application submitted
    */
-  200: ApiResponseProgramTrainingApplication;
+  201: ApiResponseProgramTrainingApplication;
 };
 
 export type SubmitProgramTrainingApplicationResponse =
@@ -19944,6 +20227,10 @@ export type AddProgramRequirementData = {
 
 export type AddProgramRequirementErrors = {
   /**
+   * Caller does not own the program
+   */
+  403: ApiResponseProgramRequirement;
+  /**
    * Not Found
    */
   404: ResponseDtoVoid;
@@ -19958,9 +20245,9 @@ export type AddProgramRequirementError =
 
 export type AddProgramRequirementResponses = {
   /**
-   * OK
+   * Requirement added to program
    */
-  200: ApiResponseProgramRequirement;
+  201: ApiResponseProgramRequirement;
 };
 
 export type AddProgramRequirementResponse =
@@ -20009,6 +20296,10 @@ export type AddProgramCourseData = {
 
 export type AddProgramCourseErrors = {
   /**
+   * Caller does not own the program
+   */
+  403: ApiResponseProgramCourse;
+  /**
    * Not Found
    */
   404: ResponseDtoVoid;
@@ -20022,9 +20313,9 @@ export type AddProgramCourseError = AddProgramCourseErrors[keyof AddProgramCours
 
 export type AddProgramCourseResponses = {
   /**
-   * OK
+   * Course added to program
    */
-  200: ApiResponseProgramCourse;
+  201: ApiResponseProgramCourse;
 };
 
 export type AddProgramCourseResponse = AddProgramCourseResponses[keyof AddProgramCourseResponses];
@@ -21867,6 +22158,10 @@ export type CreateLinkData = {
 };
 
 export type CreateLinkErrors = {
+  /**
+   * Caller has no custody of that learner
+   */
+  403: ApiResponseGuardianStudentLink;
   /**
    * Not Found
    */
@@ -26739,6 +27034,10 @@ export type MarkAttendanceErrors = {
    */
   400: ApiResponseVoid;
   /**
+   * Caller does not hold the session this enrolment sits on
+   */
+  403: ApiResponseVoid;
+  /**
    * Enrollment not found
    */
   404: ResponseDtoVoid;
@@ -30152,6 +30451,10 @@ export type GetOrganisationInstructorSummariesData = {
 
 export type GetOrganisationInstructorSummariesErrors = {
   /**
+   * Caller does not manage the organisation
+   */
+  403: ApiResponseListOrgInstructorSummary;
+  /**
    * Not Found
    */
   404: ResponseDtoVoid;
@@ -30477,6 +30780,10 @@ export type CancelEnrollmentErrors = {
    */
   400: ApiResponseVoid;
   /**
+   * Caller neither owns the enrolment nor holds its session
+   */
+  403: ApiResponseVoid;
+  /**
    * Enrollment not found
    */
   404: ResponseDtoVoid;
@@ -30510,6 +30817,10 @@ export type GetEnrollmentData = {
 };
 
 export type GetEnrollmentErrors = {
+  /**
+   * Caller neither owns the enrolment nor holds its session
+   */
+  403: ApiResponseEnrollment;
   /**
    * Enrollment not found
    */
@@ -30546,6 +30857,10 @@ export type GetScheduledInstanceEnrollmentsForStudentData = {
 };
 
 export type GetScheduledInstanceEnrollmentsForStudentErrors = {
+  /**
+   * Caller shares no session with this learner
+   */
+  403: ApiResponsePagedDtoEnrollment;
   /**
    * Not Found
    */
@@ -30584,6 +30899,10 @@ export type GetEnrollmentOverviewForStudentData = {
 };
 
 export type GetEnrollmentOverviewForStudentErrors = {
+  /**
+   * Caller shares no session with this learner
+   */
+  403: ApiResponseStudentEnrollmentOverview;
   /**
    * Not Found
    */
@@ -30665,6 +30984,10 @@ export type GetClassEnrollmentsForStudentData = {
 
 export type GetClassEnrollmentsForStudentErrors = {
   /**
+   * Caller shares no session with this learner
+   */
+  403: ApiResponsePagedDtoStudentClassEnrollmentSummary;
+  /**
    * Not Found
    */
   404: ResponseDtoVoid;
@@ -30741,6 +31064,10 @@ export type GetWeeklyGrowthData = {
 
 export type GetWeeklyGrowthErrors = {
   /**
+   * Caller does not manage this organisation
+   */
+  403: ApiResponseListWeeklyGrowthPointDto;
+  /**
    * Not Found
    */
   404: ResponseDtoVoid;
@@ -30774,6 +31101,10 @@ export type GetTodayGrowthData = {
 };
 
 export type GetTodayGrowthErrors = {
+  /**
+   * Caller does not manage this organisation
+   */
+  403: ApiResponseListTodayGrowthPointDto;
   /**
    * Not Found
    */
@@ -30813,7 +31144,7 @@ export type GetStudentPerformanceData = {
 
 export type GetStudentPerformanceErrors = {
   /**
-   * Caller does not belong to this organisation
+   * Caller does not manage this organisation
    */
   403: ApiResponseListOrganisationStudentPerformance;
   /**
@@ -30852,6 +31183,10 @@ export type GetStudentSummariesData = {
 };
 
 export type GetStudentSummariesErrors = {
+  /**
+   * Caller does not manage this organisation
+   */
+  403: ApiResponseListStudentEnrolmentSummaryDto;
   /**
    * Not Found
    */
@@ -30893,6 +31228,10 @@ export type GetEnrolmentTrendsData = {
 
 export type GetEnrolmentTrendsErrors = {
   /**
+   * Caller does not manage this organisation
+   */
+  403: ApiResponseListEnrolmentTrendPointDto;
+  /**
    * Not Found
    */
   404: ResponseDtoVoid;
@@ -30927,6 +31266,10 @@ export type GetClassEnrolmentCountsData = {
 };
 
 export type GetClassEnrolmentCountsErrors = {
+  /**
+   * Caller does not manage this organisation
+   */
+  403: ApiResponseListClassEnrolmentCountDto;
   /**
    * Not Found
    */
@@ -30969,6 +31312,10 @@ export type GetActivityFeedData = {
 
 export type GetActivityFeedErrors = {
   /**
+   * Caller does not manage this organisation
+   */
+  403: ApiResponseListOrganisationActivityEventDto;
+  /**
    * Not Found
    */
   404: ResponseDtoVoid;
@@ -31002,6 +31349,10 @@ export type GetEnrollmentsForInstanceData = {
 };
 
 export type GetEnrollmentsForInstanceErrors = {
+  /**
+   * Caller does not hold this session
+   */
+  403: ApiResponseListEnrollment;
   /**
    * Not Found
    */
@@ -31038,6 +31389,10 @@ export type GetEnrollmentCountData = {
 };
 
 export type GetEnrollmentCountErrors = {
+  /**
+   * Caller does not hold this session
+   */
+  403: ApiResponseLong;
   /**
    * Not Found
    */
@@ -31113,6 +31468,10 @@ export type GetClassEnrolmentEligibilityData = {
 };
 
 export type GetClassEnrolmentEligibilityErrors = {
+  /**
+   * Caller is neither the learner nor a holder of this class
+   */
+  403: ApiResponseClassEnrolmentEligibility;
   /**
    * Not Found
    */
@@ -31382,6 +31741,71 @@ export type GetPendingEditResponses = {
 
 export type GetPendingEditResponse = GetPendingEditResponses[keyof GetPendingEditResponses];
 
+export type GetCourseTrainersData = {
+  body?: never;
+  path: {
+    courseUuid: string;
+  };
+  query: {
+    pageable: Pageable;
+  };
+  url: '/api/v1/courses/{courseUuid}/trainers';
+};
+
+export type GetCourseTrainersErrors = {
+  /**
+   * Not Found
+   */
+  404: ResponseDtoVoid;
+  /**
+   * Internal Server Error
+   */
+  500: ResponseDtoVoid;
+};
+
+export type GetCourseTrainersError = GetCourseTrainersErrors[keyof GetCourseTrainersErrors];
+
+export type GetCourseTrainersResponses = {
+  /**
+   * OK
+   */
+  200: ApiResponseCourseTrainerDirectory;
+};
+
+export type GetCourseTrainersResponse =
+  GetCourseTrainersResponses[keyof GetCourseTrainersResponses];
+
+export type GetCourseStatsData = {
+  body?: never;
+  path: {
+    courseUuid: string;
+  };
+  query?: never;
+  url: '/api/v1/courses/{courseUuid}/stats';
+};
+
+export type GetCourseStatsErrors = {
+  /**
+   * Course not found
+   */
+  404: unknown;
+  /**
+   * Internal Server Error
+   */
+  500: ResponseDtoVoid;
+};
+
+export type GetCourseStatsError = GetCourseStatsErrors[keyof GetCourseStatsErrors];
+
+export type GetCourseStatsResponses = {
+  /**
+   * Statistics retrieved successfully
+   */
+  200: CourseStats;
+};
+
+export type GetCourseStatsResponse = GetCourseStatsResponses[keyof GetCourseStatsResponses];
+
 export type CheckRubricAssociationData = {
   body?: never;
   path: {
@@ -31599,6 +32023,37 @@ export type GetCourseEnrollmentsResponses = {
 
 export type GetCourseEnrollmentsResponse =
   GetCourseEnrollmentsResponses[keyof GetCourseEnrollmentsResponses];
+
+export type GetCourseContentData = {
+  body?: never;
+  path: {
+    courseUuid: string;
+  };
+  query?: never;
+  url: '/api/v1/courses/{courseUuid}/content';
+};
+
+export type GetCourseContentErrors = {
+  /**
+   * Not Found
+   */
+  404: ResponseDtoVoid;
+  /**
+   * Internal Server Error
+   */
+  500: ResponseDtoVoid;
+};
+
+export type GetCourseContentError = GetCourseContentErrors[keyof GetCourseContentErrors];
+
+export type GetCourseContentResponses = {
+  /**
+   * OK
+   */
+  200: ApiResponseOrganisationCourseContent;
+};
+
+export type GetCourseContentResponse = GetCourseContentResponses[keyof GetCourseContentResponses];
 
 export type GetCourseCompletionRateData = {
   body?: never;
@@ -34844,6 +35299,10 @@ export type RevokeLinkData = {
 };
 
 export type RevokeLinkErrors = {
+  /**
+   * Caller may not revoke that link
+   */
+  403: ApiResponseVoid;
   /**
    * Not Found
    */
