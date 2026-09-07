@@ -1,4 +1,4 @@
-import type { Course, Lesson } from '@/services/client';
+import type { Course } from '@/services/client';
 import type { PublicCatalogueCourse, PublicCourseDetail } from '@/src/features/catalogue/types';
 
 export const sanitizeRichText = (value?: string | null) => {
@@ -116,5 +116,3 @@ export const formatPricingLabel = (
 };
 
 export const getCourseDisplayTitle = (course: Course) => course.name || 'Untitled course';
-
-export const getLessonDescription = (lesson: Lesson) => sanitizeRichText(lesson.description);
