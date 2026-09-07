@@ -33,7 +33,10 @@
  */
 
 import { useQuery } from '@tanstack/react-query';
-import { Fragment, type ReactNode, useMemo } from 'react';
+import { Fragment, type ReactNode, useCallback, useMemo } from 'react';
+import { toast } from 'sonner';
+
+import { absoluteUrl, publicCourseUrl } from '@/src/features/dashboard/lib/dashboard-url';
 
 import { useDifficultyLevels } from '@/hooks/use-difficultyLevels';
 import { STALE_TIMES } from '@/lib/query-client';
@@ -404,6 +407,22 @@ export function CourseRecordPage({
     reviews: reviews?.length,
   };
 
+  /*
+   * Share copies the PUBLIC catalogue link, never the dashboard URL the viewer is
+   * standing on. A dashboard path is role-scoped and would 404 for whoever it is
+   * pasted to; the catalogue page is the one address that resolves for anyone,
+   * signed in or not. Nothing about the course is disclosed by the link itself —
+   * the public page decides for its own reader what it will show.
+   */
+  const handleShare = useCallback(() => {
+    if (!courseUuid) return;
+    const url = absoluteUrl(publicCourseUrl(courseUuid));
+    navigator.clipboard
+      .writeText(url)
+      .then(() => toast.success('Link copied to clipboard'))
+      .catch(() => toast.error('Could not copy link'));
+  }, [courseUuid]);
+
   /* ── shell ──────────────────────────────────────────────────────────── */
 
   return (
@@ -413,6 +432,7 @@ export function CourseRecordPage({
       courseName={course?.name}
       backHref={backHref}
       priceLabel={priceLabel}
+      onShare={handleShare}
       hero={{
         title: course?.name,
         summary: courseBulletLines(course?.description).join(' ') || undefined,
