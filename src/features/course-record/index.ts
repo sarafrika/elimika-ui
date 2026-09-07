@@ -36,7 +36,6 @@ export {
   useCourseCapability,
 } from './use-course-access';
 export {
-  COURSE_METRICS_ENDPOINTS_LIVE,
   courseStatsQueryKey,
   courseTrainersQueryKey,
   useCourseStats,

@@ -84,12 +84,6 @@ type CopyVars = Record<string, string | number | null | undefined>;
 
 export interface CourseRecordPageProps {
   courseUuid: string;
-  /**
-   * The organisation whose approval gates the content call. Without it the
-   * content query stays idle, `access` holds at `prospect` and the curriculum is
-   * empty — which is the least-privileged default, and correct.
-   */
-  organisationUuid?: string;
   /** Where the shell's back link goes. Omitted, the link is not rendered. */
   backHref?: string;
   className?: string;
@@ -97,11 +91,10 @@ export interface CourseRecordPageProps {
 
 export function CourseRecordPage({
   courseUuid,
-  organisationUuid,
   backHref,
   className,
 }: CourseRecordPageProps) {
-  const record = useCourseRecord({ courseUuid, organisationUuid });
+  const record = useCourseRecord({ courseUuid });
   const { access, capability } = record;
 
   const course = record.course.data;

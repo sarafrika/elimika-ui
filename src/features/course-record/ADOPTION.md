@@ -7,11 +7,7 @@ reference route, then work.
 ## The mount
 
 ```tsx
-<CourseRecordPage
-  courseUuid={courseUuid}
-  organisationUuid={orgUuid}   // optional — see "Access", below
-  backHref="/dashboard/<domain>/<list>"
-/>
+<CourseRecordPage courseUuid={courseUuid} backHref="/dashboard/<domain>/<list>" />
 ```
 
 That is the whole surface. `CourseRecordPage` owns its own data fetching, loading, error and empty
@@ -38,8 +34,10 @@ The eight states are in `COURSE_ACCESS_LEVELS` (`types.ts`): `creator`, `admin`,
 resolve to `prospect` — the least-privileged state, showing the public listing and no teaching
 material. Widening happens only on an explicit instruction from the server.
 
-`organisationUuid` is not an access override. It scopes the content call for a viewer acting on behalf
-of an organisation. Omitted, the org-scoped query stays idle and access holds at `prospect`.
+There is **no `organisationUuid` prop**. There was one, while the only content endpoint was
+org-scoped; the caller-scoped `GET /api/v1/courses/{courseUuid}/content` has since shipped and answers
+for whoever is asking, including a course creator who belongs to no organisation. Do not pass one, and
+do not reintroduce one.
 
 ## What each state sees
 

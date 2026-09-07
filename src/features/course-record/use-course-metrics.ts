@@ -1,19 +1,24 @@
 'use client';
 
 /**
- * The two course-record endpoints that do not exist yet.
+ * The two course-record metric endpoints.
  *
  *   GET /api/v1/courses/{uuid}/stats     → CourseStats
- *   GET /api/v1/courses/{uuid}/trainers  → CourseTrainerSummary[]
+ *   GET /api/v1/courses/{uuid}/trainers  → CourseTrainersEnvelope
  *
- * They are written out in full — request, response shape, staleTime, query key —
- * and held behind {@link COURSE_METRICS_ENDPOINTS_LIVE}. While that flag is
- * `false` the queries are disabled, so React Query reports `isPending` with
- * `fetchStatus: 'idle'`: `isLoading` is **false** and `data` is `undefined`.
- * Every consuming block therefore renders its `<AsyncSection>` *empty* state —
- * not a skeleton that spins forever — and lights up the moment the flag flips.
+ * Both are live. They are called through `client.get` against hand-written
+ * response types rather than through the generated `getCourseStatsOptions` /
+ * `getCourseTrainersOptions`, and that is deliberate: both routes answer with the
+ * platform's `ApiResponse` envelope, so the payload is `data.data`. The generated
+ * types are the wrong shape for `stats` — the operation's OpenAPI annotation
+ * declared the payload where the envelope belongs, so the generated client types
+ * the envelope *as* `CourseStats` and `stats.public` would read `undefined` at
+ * runtime. The annotation is fixed in the backend; until that redeploys and the
+ * client is regenerated, these adapters are the only honest description of what
+ * comes back.
  *
- * Shipping the endpoints is a one-line change here. Nothing else moves.
+ * They also narrow to this feature's own stricter types — `public` required,
+ * counts as `number` rather than `bigint` — which the blocks are written against.
  */
 
 import { useQuery } from '@tanstack/react-query';
@@ -22,9 +27,6 @@ import { STALE_TIMES } from '@/lib/query-client';
 import { client } from '@/services/client/client.gen';
 
 import type { CourseStats, CourseTrainerSummary } from './types';
-
-/** Flip to `true` the day both routes are deployed. */
-export const COURSE_METRICS_ENDPOINTS_LIVE = false;
 
 const BEARER = [{ scheme: 'bearer', type: 'http' }] as const;
 
@@ -71,7 +73,7 @@ export function useCourseStats(courseUuid: string | undefined) {
       if (error) throw error;
       return data?.data;
     },
-    enabled: COURSE_METRICS_ENDPOINTS_LIVE && Boolean(courseUuid),
+    enabled: Boolean(courseUuid),
     staleTime: STALE_TIMES.live,
   });
 }
@@ -92,7 +94,7 @@ export function useCourseTrainers(courseUuid: string | undefined) {
       if (error) throw error;
       return data?.data;
     },
-    enabled: COURSE_METRICS_ENDPOINTS_LIVE && Boolean(courseUuid),
+    enabled: Boolean(courseUuid),
     staleTime: STALE_TIMES.live,
   });
 }

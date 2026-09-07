@@ -11,7 +11,7 @@
  * that region resolves itself — a slow trainers call never blocks the hero, and
  * a 403 on enrolments degrades one card instead of the page.
  *
- *     const record = useCourseRecord({ courseUuid, organisationUuid });
+ *     const record = useCourseRecord({ courseUuid });
  *     <KpiBand access={record.access} stats={record.stats.data} {...asyncProps(record.stats)} />
  *
  * Only `GET /courses/{uuid}` is blocking — `record.isLoading` tracks it alone,
@@ -33,10 +33,10 @@ import {
   getCourseAssessmentsOptions,
   getCourseByUuidOptions,
   getCourseCompletionRateOptions,
+  getCourseContentOptions,
   getCourseEnrollmentsOptions,
   getCourseReviewsOptions,
   getCourseTrainingRequirementsOptions,
-  getOrganisationCourseContentOptions,
   searchTrainingApplicationsOptions,
 } from '@/services/client/@tanstack/react-query.gen';
 import type { CourseEnrollment } from '@/services/client/types.gen';
@@ -87,14 +87,6 @@ export interface CourseEnrollmentPage {
 
 export interface UseCourseRecordOptions {
   courseUuid: string | undefined;
-  /**
-   * The organisation whose approval gates the content call. Today's endpoint is
-   * `/courses/{courseUuid}/organisations/{organisationUuid}/content`; when the
-   * viewer-agnostic route lands this argument goes away and the call becomes
-   * unconditional. Without it the content query stays idle and `access` holds at
-   * its least-privileged default.
-   */
-  organisationUuid?: string;
   /** Set false to hold every query (e.g. while a route param is still resolving). */
   enabled?: boolean;
 }
@@ -131,7 +123,6 @@ export interface CourseRecord {
 
 export function useCourseRecord({
   courseUuid,
-  organisationUuid,
   enabled = true,
 }: UseCourseRecordOptions): CourseRecord {
   const on = enabled && Boolean(courseUuid);
@@ -148,10 +139,8 @@ export function useCourseRecord({
   /* ── access ─────────────────────────────────────────────────────────── */
 
   const contentQuery = useQuery({
-    ...getOrganisationCourseContentOptions({
-      path: { courseUuid: courseUuid ?? '', organisationUuid: organisationUuid ?? '' },
-    }),
-    enabled: on && Boolean(organisationUuid),
+    ...getCourseContentOptions({ path: { courseUuid: courseUuid ?? '' } }),
+    enabled: on,
     staleTime: STALE_TIMES.entity,
   });
   const content = contentQuery.data?.data as CourseRecordContent | undefined;
