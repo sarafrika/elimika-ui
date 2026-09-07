@@ -13,7 +13,7 @@ import {
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useBreadcrumb } from '@/context/breadcrumb-provider';
 import { useClassLessonContent } from '@/hooks/use-class-lesson-content';
-import { useClassRoster } from '@/hooks/use-class-roster';
+import { isStartEligibleRosterEntry, useClassRoster } from '@/hooks/use-class-roster';
 import { useDifficultyLevels } from '@/hooks/use-difficultyLevels';
 import {
   InstructorClassWithSchedule,
@@ -102,7 +102,11 @@ export default function NewClassPage() {
     () => getPreferredScheduleInstance(selectedClass?.schedule ?? []),
     [selectedClass?.schedule]
   );
-  const { roster, isLoading: isLoadingStudents } = useClassRoster(selectedClassUuid ?? undefined);
+  const {
+    roster,
+    rosterAllEnrollments,
+    isLoading: isLoadingStudents,
+  } = useClassRoster(selectedClassUuid ?? undefined);
   const {
     isLoading: isLoadingLessons,
     lessonModules,
@@ -183,6 +187,15 @@ export default function NewClassPage() {
     selectedModule?.course?.uuid ?? selectedClassForDisplay?.course?.uuid ?? '';
 
   const startClassMut = useMutation(startScheduledInstanceMutation());
+  const selectedScheduleStartEligibleStudentCount = useMemo(
+    () =>
+      rosterAllEnrollments.filter(
+        entry =>
+          entry.enrollment?.scheduled_instance_uuid === selectedScheduleInstance?.uuid &&
+          isStartEligibleRosterEntry(entry)
+      ).length,
+    [rosterAllEnrollments, selectedScheduleInstance?.uuid]
+  );
 
   const visibleInstances = selectedClass?.schedule ?? [];
   const countableInstances = visibleInstances.filter(instance => {
@@ -297,6 +310,11 @@ export default function NewClassPage() {
         return;
       }
 
+      if (selectedScheduleStartEligibleStudentCount === 0) {
+        toast.error('At least one enrolled student is required to start this class.');
+        return;
+      }
+
       startClassMut.mutate(
         { path: { instanceUuid: selectedScheduleInstance.uuid } },
         {
@@ -316,6 +334,7 @@ export default function NewClassPage() {
       selectedScheduleInstance?.concluded_at,
       selectedScheduleInstance?.started_at,
       selectedScheduleInstance?.uuid,
+      selectedScheduleStartEligibleStudentCount,
       startClassMut,
     ]
   );

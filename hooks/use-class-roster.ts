@@ -20,6 +20,16 @@ export type RosterEntry = {
   user: User | null | undefined;
 };
 
+const START_ELIGIBLE_ENROLLMENT_STATUSES = new Set(['ENROLLED', 'ATTENDED', 'ABSENT']);
+
+export function isStartEligibleEnrollmentStatus(status: string | null | undefined) {
+  return START_ELIGIBLE_ENROLLMENT_STATUSES.has(String(status ?? '').toUpperCase());
+}
+
+export function isStartEligibleRosterEntry(entry: RosterEntry | null | undefined) {
+  return isStartEligibleEnrollmentStatus(entry?.enrollment?.status);
+}
+
 export function useClassRoster(classId: string | undefined) {
   const enrollmentQuery = useQuery({
     ...getEnrollmentsForClassOptions({

@@ -33,7 +33,11 @@ import {
 import { Textarea } from '@/components/ui/textarea';
 import { useInstructor } from '@/context/instructor-context';
 import { useTimeZone } from '@/context/timezone-context';
-import { useClassRoster, type RosterEntry } from '@/hooks/use-class-roster';
+import {
+  isStartEligibleRosterEntry,
+  useClassRoster,
+  type RosterEntry,
+} from '@/hooks/use-class-roster';
 import { cx, getCardClasses, getEmptyStateClasses } from '@/lib/design-system';
 import { getErrorMessage } from '@/lib/error-utils';
 import type {
@@ -769,7 +773,7 @@ export function ClassScheduleManager({
                 const isBlocked = status === 'BLOCKED';
                 const isConcluded = Boolean(concludedAt?.isValid()) || status === 'COMPLETED';
                 const students = studentsByScheduleInstance[schedule.uuid] ?? [];
-                const hasEnrolledStudents = students.length > 0;
+                const hasEnrolledStudents = students.some(isStartEligibleRosterEntry);
                 const canStart =
                   !isCancelled &&
                   !isBlocked &&

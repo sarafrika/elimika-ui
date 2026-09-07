@@ -33,7 +33,11 @@ import { useUserProfile } from '@/context/profile-context';
 import { useTimeZone } from '@/context/timezone-context';
 import { type ClassDetailsScheduleItem, useClassDetails } from '@/hooks/use-class-details';
 import { useClassLessonContent } from '@/hooks/use-class-lesson-content';
-import { type RosterEntry, useClassRoster } from '@/hooks/use-class-roster';
+import {
+  isStartEligibleRosterEntry,
+  type RosterEntry,
+  useClassRoster,
+} from '@/hooks/use-class-roster';
 import {
   type CourseLessonContent,
   type CourseLessonWithContent,
@@ -2324,13 +2328,15 @@ function SubmissionPanel({
           const isBlocked = status === 'BLOCKED';
 
           const isConcluded = Boolean(activeSchedule?.concluded_at) || status === 'COMPLETED';
+          const hasStartEligibleStudents = activeInstanceStudentsCount > 0;
 
           const canStart =
             !!activeSchedule &&
             !isCancelled &&
             !isBlocked &&
             !isConcluded &&
-            canStartScheduledInstance;
+            hasStartEligibleStudents &&
+            canStartSchedule(activeSchedule, Date.now(), activeInstanceStudentsCount);
 
           const canEnd =
             !!activeSchedule &&
@@ -2399,7 +2405,9 @@ function SubmissionPanel({
                       ? 'Blocked'
                       : !activeSchedule
                         ? 'Select a session'
-                        : 'Start Class'}
+                        : !hasStartEligibleStudents
+                          ? 'No students'
+                          : 'Start Class'}
                 </Button>
               )}
             </div>
@@ -2504,7 +2512,17 @@ export default function ClassTrainingPage({
 
   const activeSchedule =
     sortedSchedules.find(schedule => schedule.uuid === activeScheduleId) ?? null;
-  const enrolledStudentCount = rosterAllEnrollments.length;
+  const activeInstanceStudents = useMemo(
+    () =>
+      rosterAllEnrollments.filter(
+        (entry: RosterEntry) => entry.enrollment?.scheduled_instance_uuid === activeSchedule?.uuid
+      ),
+    [activeSchedule?.uuid, rosterAllEnrollments]
+  );
+  const activeInstanceStartEligibleStudentCount = useMemo(
+    () => activeInstanceStudents.filter(isStartEligibleRosterEntry).length,
+    [activeInstanceStudents]
+  );
 
   useEffect(() => {
     const syncNow = () => setNow(Date.now());
@@ -2516,8 +2534,8 @@ export default function ClassTrainingPage({
   }, []);
 
   const canStartScheduledInstance = useMemo(
-    () => canStartSchedule(activeSchedule, now, enrolledStudentCount),
-    [activeSchedule, enrolledStudentCount, now]
+    () => canStartSchedule(activeSchedule, now, activeInstanceStartEligibleStudentCount),
+    [activeSchedule, activeInstanceStartEligibleStudentCount, now]
   );
 
   const lessonModules = useMemo(() => {
@@ -2627,14 +2645,6 @@ export default function ClassTrainingPage({
     router.push(`${pathname}?${params.toString()}`);
   };
 
-  const activeInstanceStudents = useMemo(
-    () =>
-      rosterAllEnrollments.filter(
-        (entry: RosterEntry) => entry.enrollment?.scheduled_instance_uuid === activeSchedule?.uuid
-      ),
-    [activeSchedule?.uuid, rosterAllEnrollments]
-  );
-
   const filteredRoster = useMemo(
     () =>
       activeInstanceStudents.filter((entry: RosterEntry) =>
@@ -2672,6 +2682,15 @@ export default function ClassTrainingPage({
 
   const handleStartClass = () => {
     if (!activeSchedule?.uuid) return;
+    if (!canStartScheduledInstance) {
+      toast.error(
+        activeInstanceStartEligibleStudentCount > 0
+          ? 'This class session is not available to start right now.'
+          : 'At least one enrolled student is required to start this class.'
+      );
+      return;
+    }
+
     const meetingLink = activeSchedule.meeting_url?.trim();
     const meetingWindow = meetingLink ? window.open('', '_blank', 'noopener,noreferrer') : null;
 
@@ -3760,11 +3779,14 @@ export default function ClassTrainingPage({
                         const isBlocked = status === 'BLOCKED';
                         const isConcluded =
                           Boolean(activeSchedule?.concluded_at) || status === 'COMPLETED';
+                        const hasStartEligibleStudents =
+                          activeInstanceStartEligibleStudentCount > 0;
                         const canStart =
                           !!activeSchedule &&
                           !isCancelled &&
                           !isBlocked &&
                           !isConcluded &&
+                          hasStartEligibleStudents &&
                           canStartScheduledInstance;
                         const canEnd =
                           !!activeSchedule &&
@@ -3821,7 +3843,9 @@ export default function ClassTrainingPage({
                                     ? 'Blocked'
                                     : !activeSchedule
                                       ? 'Select a session'
-                                      : 'Start Class'}
+                                      : !hasStartEligibleStudents
+                                        ? 'No students'
+                                        : 'Start Class'}
                               </Button>
                             )}
                           </div>
