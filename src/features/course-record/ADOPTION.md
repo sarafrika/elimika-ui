@@ -10,8 +10,27 @@ reference route, then work.
 <CourseRecordPage courseUuid={courseUuid} backHref="/dashboard/<domain>/<list>" />
 ```
 
-That is the whole surface. `CourseRecordPage` owns its own data fetching, loading, error and empty
-states, per-region. It does not need to be told who is looking at it.
+That is the whole surface a route *must* supply. `CourseRecordPage` owns its own data fetching,
+loading, error and empty states, per-region. It does not need to be told who is looking at it.
+
+### Actions, if your route owns one
+
+Actions still belong to the route — but the ten routes wanted the same answer, so the container
+carries a default for each and a route only passes a prop where it has somewhere better to go:
+
+| prop | default |
+|---|---|
+| `enrolHref` / `onEnrol` | the role-scoped `available-classes` list for the dashboard in the URL |
+| `compareHref` / `onCompareClasses` | the same list |
+| `primaryAction` / `onPrimaryAction` | creator → the builder, admin → the moderation decision, applicant → the apply form, prospect → the class list, student → the learning hub. Pending, organisation and instructor get **no** button: their action either does not exist yet or is already rendered by the route. |
+| `actions` | the capability map's rows, each given an href where a screen exists |
+| `onReadItem` | opens the content item in the shared lesson viewer |
+| `reviewerNames` | resolved here from the reviews' `student_uuid`s |
+| `onExport` | none — unwired, the export button and its rail row are both dropped |
+| `onShare` | copies the public catalogue link |
+
+A prop you pass always wins over the default. Nothing here renders a control it cannot act on, so
+if you find a dead button, the fix is a destination, not a disabled state.
 
 The reference implementation is
 `app/dashboard/course-creator/course-management/preview/[id]/page.tsx`. Copy its shape: resolve the

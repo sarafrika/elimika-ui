@@ -50,9 +50,7 @@ export type CourseAccess = (typeof COURSE_ACCESS_LEVELS)[number];
 export const DEFAULT_COURSE_ACCESS: CourseAccess = 'prospect';
 
 export function isCourseAccess(value: unknown): value is CourseAccess {
-  return (
-    typeof value === 'string' && (COURSE_ACCESS_LEVELS as readonly string[]).includes(value)
-  );
+  return typeof value === 'string' && (COURSE_ACCESS_LEVELS as readonly string[]).includes(value);
 }
 
 /* ────────────────────────────────────────────────────────────────────────────
@@ -388,7 +386,14 @@ const COURSE_KPI_TRAINER_CASE: CourseKpiCopy = {
   classesLabel: 'Classes running now',
 };
 
-const EXPORT_ACTION: CourseRailAction = { label: 'Export course record (PDF)', icon: 'download' };
+/**
+ * The rail row every full-access viewer's action list ends with. Exported so a
+ * container can find the row and either wire it to a real export or drop it —
+ * advertising a PDF nothing can produce is worse than a shorter list.
+ */
+export const COURSE_EXPORT_ACTION_LABEL = 'Export course record (PDF)';
+
+const EXPORT_ACTION: CourseRailAction = { label: COURSE_EXPORT_ACTION_LABEL, icon: 'download' };
 
 /**
  * The eight viewer states, described once.
@@ -429,8 +434,7 @@ export const COURSE_ACCESS_CAPABILITIES: Record<CourseAccess, CourseAccessCapabi
     content: {
       level: 'full',
       badge: 'Full content',
-      readonlyNote:
-        'Content is read-only here — open the builder to edit; edits re-enter review.',
+      readonlyNote: 'Content is read-only here — open the builder to edit; edits re-enter review.',
     },
     canEdit: true,
     showSales: true,

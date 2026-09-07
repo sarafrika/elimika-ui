@@ -30,17 +30,48 @@
  *
  * A figure the response did not carry is left absent. Nothing here backfills a
  * privileged value from another call, and nothing substitutes a zero.
+ *
+ * ## Actions
+ *
+ * The record is read-only, but every viewer state has one thing it is *for* —
+ * enrol, apply, edit, moderate, continue — and the shell and the blocks have
+ * always taken props for it. This file forwards those props and, where a route
+ * passes none, supplies the destination the platform already has: the same
+ * role-scoped class list the legacy course page pushed to, the course builder,
+ * the per-course moderation decision, the training-application form. See the
+ * destinations table below.
+ *
+ * The rule the defaults obey is that **a control that cannot act is not drawn**.
+ * Where no screen exists for an action — a pending applicant's own application,
+ * a PDF export, a shortlist — the button or row is omitted rather than rendered
+ * dead, and a route that has somewhere better to go passes the prop and wins.
  */
 
 import { useQuery } from '@tanstack/react-query';
-import { Fragment, type ReactNode, useCallback, useMemo } from 'react';
+import Link from 'next/link';
+import { usePathname } from 'next/navigation';
+import { Fragment, type ReactNode, useCallback, useMemo, useState } from 'react';
 import { toast } from 'sonner';
 
-import { absoluteUrl, publicCourseUrl } from '@/src/features/dashboard/lib/dashboard-url';
+import {
+  absoluteUrl,
+  publicCourseUrl,
+  type RoleSegment,
+  routeSegmentFromPath,
+  routeSegmentToDomain,
+} from '@/src/features/dashboard/lib/dashboard-url';
 
+import {
+  LessonContentViewerDialog,
+  type LessonContentPreviewItem,
+} from '@/components/content-preview/LessonContentPreview';
+import { Button } from '@/components/ui/button';
+import { useStudentsByIds } from '@/hooks/use-batched-lookups';
 import { useDifficultyLevels } from '@/hooks/use-difficultyLevels';
 import { STALE_TIMES } from '@/lib/query-client';
 import { getCourseCreatorByUuidOptions } from '@/services/client/@tanstack/react-query.gen';
+import type { LessonContent } from '@/services/client/types.gen';
+import { roleScopedDashboardPath } from '@/src/features/dashboard/lib/active-domain-storage';
 
 import { CourseRecordView } from './CourseRecordView';
 import {
@@ -56,8 +87,10 @@ import {
   type CourseApplicationRow,
   type CourseClassFormatTone,
   type CourseClassRow,
+  type CourseCurriculumItem,
   type CourseCurriculumLesson,
   type CourseOrderRow,
+  type CourseRailActionItem,
   CurriculumTab,
   DeliveryTab,
   EnrolPanel,
@@ -74,27 +107,106 @@ import {
   ReviewsTab,
   summarise,
 } from './blocks';
-import type {
-  ClassDefinition,
-  Course,
-  CourseRailCardId,
-  CourseRecordTabId,
+import {
+  type ClassDefinition,
+  type Course,
+  COURSE_EXPORT_ACTION_LABEL,
+  type CourseAccess,
+  type CourseRailCardId,
+  type CourseRecordTabId,
+  fillCourseCopy,
 } from './types';
 import { asyncProps, useCourseRecord } from './use-course-record';
 
 /** Values a capability-map `{token}` is filled from. */
 type CopyVars = Record<string, string | number | null | undefined>;
 
+/* ────────────────────────────────────────────────────────────────────────────
+ * Where the record's actions go
+ *
+ * `ADOPTION.md` is right that an action belongs to the route — but nine of the
+ * ten routes want the *same* answer, and asking each of them to restate it is
+ * how the enrol button ended up wired on none of them. So every destination
+ * below is a **default**: a route that wants its own passes the matching prop
+ * and this file steps aside. A destination that does not exist is left absent
+ * rather than guessed, and the control that would have used it is not rendered.
+ * ────────────────────────────────────────────────────────────────────────── */
+
+/**
+ * The class list a learner enrols through, per dashboard, as the legacy course
+ * page reached it: `roleScopedDashboardPath(domain, '/dashboard/…/<uuid>')`.
+ *
+ * The sub-path is not the same on every dashboard — student, course-creator and
+ * instructor keep theirs under `courses/`, parent and admin under `all-courses/`
+ * — and a role with no such screen at all (organisation) is deliberately absent,
+ * because a link to a 404 is not better than no link.
+ */
+const CLASSES_LIST_PATH: Partial<Record<RoleSegment, string>> = {
+  student: '/dashboard/courses/available-classes',
+  'course-creator': '/dashboard/courses/available-classes',
+  instructor: '/dashboard/courses/available-classes',
+  parent: '/dashboard/all-courses/available-classes',
+  admin: '/dashboard/all-courses/available-classes',
+};
+
+/** The creator's builder. `?id=` is the course, as every course list links it. */
+const COURSE_BUILDER_PATH = '/dashboard/course-creator/course-management/create-new-course';
+/** The admin's per-course moderation decision (approve / reject / revoke). */
+const MODERATION_PATH = '/dashboard/admin/manage-courses';
+/** The five-step training application, role-independent by design. */
+const APPLY_TO_TRAIN_PATH = '/dashboard/apply-to-train';
+/** Where "Continue learning" goes, matching the learner's own course cards. */
+const LEARNING_HUB_CLASSES_HREF = '/dashboard/student/learning-hub/classes';
+const CREATOR_APPLICATIONS_HREF = '/dashboard/course-creator/training-applications';
+const INSTRUCTOR_NEW_CLASS_HREF = '/dashboard/instructor/classes/new';
+const INSTRUCTOR_RATE_CARD_HREF = '/dashboard/instructor/rate-card';
+const ORGANISATION_NEW_CLASS_HREF = '/dashboard/organisation/classes/new';
+
 export interface CourseRecordPageProps {
   courseUuid: string;
   /** Where the shell's back link goes. Omitted, the link is not rendered. */
   backHref?: string;
+
+  /* — actions the route may own; each one defaults to the table above — */
+
+  /** Replaces the capability map's primary button outright. */
+  primaryAction?: ReactNode;
+  /** Keeps the map's label, runs this instead of following the default link. */
+  onPrimaryAction?: () => void;
+  /** The prospect's "Enroll" target. Wins over `onEnrol`, as the panel does. */
+  enrolHref?: string;
+  onEnrol?: () => void;
+  /** "Compare the N open classes". Defaults to the same class list. */
+  compareHref?: string;
+  onCompareClasses?: () => void;
+  /** Overrides the rail's action rows — label and icon still come from the map. */
+  actions?: readonly CourseRailActionItem[];
+  /** Opens a curriculum item. Defaults to this feature's content viewer. */
+  onReadItem?: (item: CourseCurriculumItem, lesson: CourseCurriculumLesson) => void;
+  /** Reviewer display names by `student_uuid`. Resolved here when not supplied. */
+  reviewerNames?: Readonly<Record<string, string>>;
+  /** Wired, the "Export record" button and its rail row both appear. */
+  onExport?: () => void;
+  /** Defaults to copying the public catalogue link. */
+  onShare?: () => void;
+
   className?: string;
 }
 
 export function CourseRecordPage({
   courseUuid,
   backHref,
+  primaryAction,
+  onPrimaryAction,
+  enrolHref,
+  onEnrol,
+  compareHref,
+  onCompareClasses,
+  actions,
+  onReadItem,
+  reviewerNames,
+  onExport,
+  onShare,
   className,
 }: CourseRecordPageProps) {
   const record = useCourseRecord({ courseUuid });
@@ -103,6 +215,14 @@ export function CourseRecordPage({
   const course = record.course.data;
   const content = record.content.data;
   const stats = record.stats.data;
+
+  /*
+   * The dashboard the viewer is standing on, read off the URL rather than the
+   * domain context: the record only ever mounts on a role-scoped route, and the
+   * segment in the address is what decides which of that role's screens exist.
+   */
+  const segment = routeSegmentFromPath(usePathname());
+  const defaultClassesHref = classesListHref(segment, courseUuid);
 
   /* ── two lookups the record hook does not cover ─────────────────────── */
 
@@ -139,6 +259,41 @@ export function CourseRecordPage({
       }),
     [content]
   );
+
+  /*
+   * The content items again, keyed so the curriculum's "Read" can find the row
+   * the API actually sent. `CourseCurriculumItem` is the block's view model —
+   * title, kind, required — and the viewer needs the source behind it. Nothing
+   * extra is fetched: this is the same `contents` array the accordion is built
+   * from, which the server sends only to a full-access viewer.
+   */
+  const contentSources = useMemo(() => {
+    const sources = new Map<string, LessonContent>();
+    (content?.lessons ?? []).forEach((lesson, index) => {
+      const number = lesson.lesson_number ?? index + 1;
+      for (const item of lesson.contents ?? []) {
+        if (item.uuid) sources.set(item.uuid, item);
+        sources.set(contentKey(number, item.title), item);
+      }
+    });
+    return sources;
+  }, [content]);
+
+  const [readerItem, setReaderItem] = useState<LessonContentPreviewItem | null>(null);
+
+  const handleReadItem = useCallback(
+    (item: CourseCurriculumItem, lesson: CourseCurriculumLesson) => {
+      const source =
+        (item.uuid ? contentSources.get(item.uuid) : undefined) ??
+        contentSources.get(contentKey(lesson.number, item.title));
+      if (source) setReaderItem(source);
+    },
+    [contentSources]
+  );
+
+  // Offered only when there is something behind it. With the content gated the
+  // items are not in the payload at all, and the row draws no Read control.
+  const readItem = onReadItem ?? (contentSources.size > 0 ? handleReadItem : undefined);
 
   const classRows = useMemo<CourseClassRow[]>(
     () => (record.classes.data ?? []).flatMap(toClassRow),
@@ -187,6 +342,30 @@ export function CourseRecordPage({
   const reviews = record.reviews.data;
   const ratings = useMemo(() => summarise(reviews ?? []), [reviews]);
 
+  /*
+   * Bylines for the reviews. A `CourseReview` carries a `student_uuid` and no
+   * name, and `created_by` is an audit field (an email address), not something
+   * to print. One batched lookup resolves the lot; an anonymous review is never
+   * included in the ask, so a learner who chose anonymity is not looked up at
+   * all. No reviewers, no call.
+   */
+  const reviewerIds = useMemo(
+    () =>
+      (reviews ?? [])
+        .filter(review => !review.is_anonymous)
+        .map(review => review.student_uuid)
+        .filter(Boolean),
+    [reviews]
+  );
+  const { studentMap } = useStudentsByIds(reviewerIds);
+  const resolvedReviewerNames = useMemo(() => {
+    const names: Record<string, string> = {};
+    for (const [uuid, student] of Object.entries(studentMap)) {
+      if (student?.full_name) names[uuid] = student.full_name;
+    }
+    return names;
+  }, [studentMap]);
+
   const lessonCount = content?.total_lessons ?? content?.lessons?.length;
   const contentItemCount = content?.lessons
     ? lessons.reduce((total, lesson) => total + (lesson.itemCount ?? 0), 0)
@@ -209,10 +388,7 @@ export function CourseRecordPage({
   const classesKnown = record.classes.data !== undefined;
   const openClasses = classRows.filter(row => row.openForEnrolment !== false);
   const openClassCount = classesKnown ? openClasses.length : undefined;
-  const nextClassStarts = useMemo(
-    () => nextStart(record.classes.data),
-    [record.classes.data]
-  );
+  const nextClassStarts = useMemo(() => nextStart(record.classes.data), [record.classes.data]);
   const formats = useMemo(
     () => [...new Set(classRows.map(row => row.format).filter(Boolean))].join(', ') || undefined,
     [classRows]
@@ -258,6 +434,45 @@ export function CourseRecordPage({
     pendingApplications: pendingApplications.length || undefined,
   };
 
+  /* ── where this viewer's actions go ─────────────────────────────────── */
+
+  /*
+   * `enrolHref` wins over `onEnrol` inside the panel, so a route that supplied
+   * only a handler must not have a default link laid over the top of it. Same
+   * reasoning for the compare button and for the primary action.
+   */
+  const resolvedEnrolHref = enrolHref ?? (onEnrol ? undefined : defaultClassesHref);
+  const resolvedCompareHref = compareHref ?? (onCompareClasses ? undefined : defaultClassesHref);
+
+  const defaultPrimaryHref = primaryActionHref(access, courseUuid, defaultClassesHref);
+  const resolvedPrimaryAction =
+    primaryAction ??
+    (onPrimaryAction || !defaultPrimaryHref ? undefined : (
+      <Button asChild size='sm' className='h-8 rounded-[10px]'>
+        <Link href={defaultPrimaryHref}>
+          {fillCourseCopy(capability.primaryAction, { price: priceLabel })}
+        </Link>
+      </Button>
+    ));
+
+  /*
+   * The rail's rows, given targets. A row the platform has no screen for stays
+   * as the artboard drew it — a statement of what the viewer may do — except the
+   * PDF export, which is dropped outright unless a route hands over a real
+   * `onExport`: promising a download nothing produces is the worse of the two.
+   */
+  const railActions = useMemo<CourseRailActionItem[]>(
+    () =>
+      capability.railActions.flatMap(action => {
+        if (action.label === COURSE_EXPORT_ACTION_LABEL) {
+          return onExport ? [{ ...action, onSelect: onExport }] : [];
+        }
+        const href = railActionHref(action.label, access, courseUuid, defaultClassesHref);
+        return [href ? { ...action, href } : { ...action }];
+      }),
+    [capability.railActions, access, courseUuid, defaultClassesHref, onExport]
+  );
+
   /* ── bands ──────────────────────────────────────────────────────────── */
 
   const kpiBand =
@@ -298,7 +513,15 @@ export function CourseRecordPage({
           />
         );
       case 'applicationStatus':
-        return <ApplicationStatusPanel {...asyncProps(record.applications)} />;
+        return (
+          <ApplicationStatusPanel
+            submittedOn={toIsoDate(record.myApplication.data?.created_date)}
+            rateCardAttached={
+              record.myApplication.data ? Boolean(record.myApplication.data.rate_card) : undefined
+            }
+            {...asyncProps(record.myApplication)}
+          />
+        );
       case 'licence':
         return <LicenceCard access={access} />;
       case 'enrol':
@@ -307,13 +530,17 @@ export function CourseRecordPage({
             price={course?.price ?? undefined}
             openClassCount={openClassCount}
             vars={vars}
+            enrolHref={resolvedEnrolHref}
+            onEnrol={onEnrol}
+            compareHref={resolvedCompareHref}
+            onCompareClasses={onCompareClasses}
             {...asyncProps(record.course)}
           />
         );
       case 'opportunity':
         return <OpportunityPanel vars={vars} {...asyncProps(record.course)} />;
       case 'actions':
-        return <ActionsCard access={access} vars={vars} />;
+        return <ActionsCard access={access} vars={vars} actions={actions ?? railActions} />;
       default:
         return null;
     }
@@ -352,6 +579,7 @@ export function CourseRecordPage({
             lessons={lessons}
             lessonCount={lessonCount}
             contentItemCount={contentItemCount}
+            onReadItem={readItem}
             {...asyncProps(record.content)}
           />
         );
@@ -386,7 +614,13 @@ export function CourseRecordPage({
           />
         ) : null;
       case 'reviews':
-        return <ReviewsTab reviews={reviews} {...asyncProps(record.reviews)} />;
+        return (
+          <ReviewsTab
+            reviews={reviews}
+            reviewerNames={reviewerNames ?? resolvedReviewerNames}
+            {...asyncProps(record.reviews)}
+          />
+        );
       case 'activity':
         return <ActivityTab access={access} />;
       default:
@@ -426,43 +660,160 @@ export function CourseRecordPage({
   /* ── shell ──────────────────────────────────────────────────────────── */
 
   return (
-    <CourseRecordView
-      access={access}
-      className={className}
-      courseName={course?.name}
-      backHref={backHref}
-      priceLabel={priceLabel}
-      onShare={handleShare}
-      hero={{
-        title: course?.name,
-        summary: courseBulletLines(course?.description).join(' ') || undefined,
-        categories: course?.category_names,
-        status: course?.status,
-        creatorName: creator?.full_name,
-        creatorRole: creator?.professional_headline ?? undefined,
-        averageRating,
-        totalReviews,
-        enrolledCount,
-        lessonCount,
-        contentItemCount,
-        contentCountNote: capability.content.countNote,
-        duration,
-        level,
-        ...asyncProps(record.course),
-      }}
-      kpiBand={kpiBand}
-      progressStrip={progressStrip}
-      gateBanner={gateBanner}
-      rail={rail.length > 0 ? rail : undefined}
-      tabPanels={tabPanels}
-      tabCounts={tabCounts}
-    />
+    <>
+      <CourseRecordView
+        access={access}
+        className={className}
+        courseName={course?.name}
+        backHref={backHref}
+        priceLabel={priceLabel}
+        onShare={onShare ?? handleShare}
+        onExport={onExport}
+        primaryAction={resolvedPrimaryAction}
+        onPrimaryAction={onPrimaryAction}
+        hero={{
+          title: course?.name,
+          summary: courseBulletLines(course?.description).join(' ') || undefined,
+          categories: course?.category_names,
+          status: course?.status,
+          creatorName: creator?.full_name,
+          creatorRole: creator?.professional_headline ?? undefined,
+          averageRating,
+          totalReviews,
+          enrolledCount,
+          lessonCount,
+          contentItemCount,
+          contentCountNote: capability.content.countNote,
+          duration,
+          level,
+          ...asyncProps(record.course),
+        }}
+        kpiBand={kpiBand}
+        progressStrip={progressStrip}
+        gateBanner={gateBanner}
+        rail={rail.length > 0 ? rail : undefined}
+        tabPanels={tabPanels}
+        tabCounts={tabCounts}
+      />
+
+      {/*
+       * The reader. Read-only, and it opens nothing the record did not already
+       * hold: the item it shows is the one the content response sent, so a
+       * gated viewer has nothing to open and never sees the control.
+       */}
+      <LessonContentViewerDialog
+        open={readerItem !== null}
+        onOpenChange={open => {
+          if (!open) setReaderItem(null);
+        }}
+        content={readerItem}
+      />
+    </>
   );
+}
+
+/* ────────────────────────────────────────────────────────────────────────────
+ * Destinations
+ * ────────────────────────────────────────────────────────────────────────── */
+
+/**
+ * The class list this dashboard enrols through, or nothing where it has none.
+ *
+ * Built through `roleScopedDashboardPath`, the same helper the legacy course page
+ * used, so the address is identical to the one that screen pushed to.
+ */
+function classesListHref(segment: RoleSegment | null, courseUuid: string): string | undefined {
+  if (!segment || !courseUuid) return undefined;
+  const base = CLASSES_LIST_PATH[segment];
+  if (!base) return undefined;
+  return roleScopedDashboardPath(
+    routeSegmentToDomain(segment),
+    `${base}/${encodeURIComponent(courseUuid)}`
+  );
+}
+
+/**
+ * The capability map's primary button, given somewhere to go.
+ *
+ * Three states are left without one on purpose. A **pending** applicant has
+ * already applied, so "Apply to train" must not link back into the application
+ * form and there is no role-independent screen for the application itself; an
+ * **organisation** and an **instructor** get "Create a class", which their own
+ * routes already render beside the record. Each returns `undefined` and the
+ * shell draws no button rather than a dead one.
+ */
+function primaryActionHref(
+  access: CourseAccess,
+  courseUuid: string,
+  classesHref: string | undefined
+): string | undefined {
+  if (!courseUuid) return undefined;
+  const uuid = encodeURIComponent(courseUuid);
+
+  switch (access) {
+    case 'creator':
+      return `${COURSE_BUILDER_PATH}?id=${uuid}`;
+    case 'admin':
+      return `${MODERATION_PATH}/${uuid}`;
+    case 'applicant':
+      return `${APPLY_TO_TRAIN_PATH}/${uuid}?kind=course`;
+    case 'prospect':
+      return classesHref;
+    case 'student':
+      return LEARNING_HUB_CLASSES_HREF;
+    default:
+      return undefined;
+  }
+}
+
+/**
+ * Where a rail row goes, keyed by the capability map's own label.
+ *
+ * A label the platform has no screen for is absent here and the row renders as
+ * the artboard's statement of what is available. Notably absent: the admin's
+ * version diff, "Assign an instructor", "Message the course creator", the intro
+ * video, both shortlists, "Download my certificate" (which needs a class, not a
+ * course) and "Leave a review" — and the pending applicant's "Submit training
+ * application", which would file a second application over the one in review.
+ */
+function railActionHref(
+  label: string,
+  access: CourseAccess,
+  courseUuid: string,
+  classesHref: string | undefined
+): string | undefined {
+  const uuid = encodeURIComponent(courseUuid);
+
+  switch (label) {
+    case 'Open course builder':
+      return courseUuid ? `${COURSE_BUILDER_PATH}?id=${uuid}` : undefined;
+    case 'Review training applications ({pendingApplications})':
+      return CREATOR_APPLICATIONS_HREF;
+    case 'Open moderation decision':
+      return courseUuid ? `${MODERATION_PATH}/${uuid}` : undefined;
+    case 'Create a class for this course':
+      return access === 'organisation' ? ORGANISATION_NEW_CLASS_HREF : INSTRUCTOR_NEW_CLASS_HREF;
+    case 'Update my rate card':
+      return INSTRUCTOR_RATE_CARD_HREF;
+    case 'Start a training application':
+      return courseUuid ? `${APPLY_TO_TRAIN_PATH}/${uuid}?kind=course` : undefined;
+    case 'Compare the {openClasses} open classes':
+      return classesHref;
+    case 'Continue where I left off':
+      return LEARNING_HUB_CLASSES_HREF;
+    default:
+      return undefined;
+  }
 }
 
 /* ────────────────────────────────────────────────────────────────────────────
  * Composing
  * ────────────────────────────────────────────────────────────────────────── */
+
+/** Fallback key for a content item the response sent without a uuid. */
+function contentKey(lessonNumber: number, title: string | undefined): string {
+  return `${lessonNumber}::${title ?? ''}`;
+}
 
 /**
  * A class definition as the two class surfaces need it.
@@ -484,10 +835,7 @@ function toClassRow(definition: ClassDefinition): CourseClassRow[] {
       format: format.label,
       formatTone: format.tone,
       seatsTotal: definition.max_participants,
-      dates: dateRange(
-        definition.academic_period_start_date,
-        definition.academic_period_end_date
-      ),
+      dates: dateRange(definition.academic_period_start_date, definition.academic_period_end_date),
       price: definition.sale_price ?? undefined,
       openForEnrolment: isOpenForEnrolment(definition),
     },
@@ -499,7 +847,8 @@ function classFormat(locationType: ClassDefinition['location_type']): {
   tone: CourseClassFormatTone;
   place?: string;
 } {
-  if (locationType === 'ONLINE') return { label: 'Online · live', tone: 'online', place: 'Live online' };
+  if (locationType === 'ONLINE')
+    return { label: 'Online · live', tone: 'online', place: 'Live online' };
   if (locationType === 'HYBRID') return { label: 'Blended', tone: 'blended' };
   return { label: 'In-person', tone: 'in-person' };
 }

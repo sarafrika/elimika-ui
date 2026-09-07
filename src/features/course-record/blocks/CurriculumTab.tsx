@@ -151,7 +151,7 @@ export interface CurriculumTabProps extends CourseBlockAsyncProps {
   contentItemCount?: number;
   /** Lessons open on first render. Everything is collapsed by default. */
   defaultOpen?: readonly number[];
-  /** Wires the per-item "Read" action. Omitted, the action renders inert. */
+  /** Wires the per-item "Read" action. Omitted, the control is not drawn. */
   onReadItem?: (item: CourseCurriculumItem, lesson: CourseCurriculumLesson) => void;
   className?: string;
 }
@@ -373,13 +373,7 @@ function LessonRow({
   );
 }
 
-function ContentRow({
-  item,
-  onRead,
-}: {
-  item: CourseCurriculumItem;
-  onRead?: () => void;
-}) {
+function ContentRow({ item, onRead }: { item: CourseCurriculumItem; onRead?: () => void }) {
   const kind = CONTENT_KINDS[item.kind] ?? CONTENT_KINDS.document;
 
   return (
@@ -406,6 +400,11 @@ function ContentRow({
         {kind.label}
       </span>
 
+      {/*
+       * No handler, no control. The row used to draw a bordered "Read" chip
+       * either way, which reads as a button, sits under the cursor like one and
+       * does nothing — worse than an item that plainly cannot be opened.
+       */}
       {onRead ? (
         <button
           type='button'
@@ -415,12 +414,7 @@ function ContentRow({
           <Eye className='size-[13px]' aria-hidden />
           Read
         </button>
-      ) : (
-        <span className='text-muted-foreground inline-flex h-7 flex-none items-center gap-1.5 rounded-[9px] border px-2.5 text-xs font-semibold'>
-          <Eye className='size-[13px]' aria-hidden />
-          Read
-        </span>
-      )}
+      ) : null}
     </div>
   );
 }

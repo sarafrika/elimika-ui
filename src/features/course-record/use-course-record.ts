@@ -25,14 +25,15 @@
  */
 
 import { useQuery } from '@tanstack/react-query';
+import { usePathname } from 'next/navigation';
 import { useMemo } from 'react';
 
+import { useInstructor } from '@/context/instructor-context';
 import { STALE_TIMES } from '@/lib/query-client';
 import {
   getClassDefinitionsForCourseOptions,
   getCourseAssessmentsOptions,
   getCourseByUuidOptions,
-  getCourseCompletionRateOptions,
   getCourseContentOptions,
   getCourseEnrollmentsOptions,
   getCourseReviewsOptions,
@@ -40,6 +41,8 @@ import {
   searchTrainingApplicationsOptions,
 } from '@/services/client/@tanstack/react-query.gen';
 import type { CourseEnrollment } from '@/services/client/types.gen';
+import { routeSegmentFromPath } from '@/src/features/dashboard/lib/dashboard-url';
+import { useOrganisation } from '@/src/features/organisation/context/organisation-context';
 import {
   type ClassDefinition,
   type Course,
@@ -56,9 +59,7 @@ import {
   courseCapability,
 } from './types';
 import { useCourseAccess } from './use-course-access';
-import { useCourseStats, useCourseTrainers,
-  CourseTrainersEnvelope,
-} from './use-course-metrics';
+import { useCourseStats, useCourseTrainers, CourseTrainersEnvelope } from './use-course-metrics';
 
 /** How many rows of a paged collection the record ever needs on screen at once. */
 const PAGE_SIZE = 100;
@@ -72,9 +73,9 @@ export const COURSE_RECORD_SECTIONS = [
   'reviews',
   'assessments',
   'requirements',
-  'completionRate',
   'enrollments',
   'applications',
+  'myApplication',
 ] as const;
 
 export type CourseRecordSectionId = (typeof COURSE_RECORD_SECTIONS)[number];
@@ -104,12 +105,16 @@ export interface CourseRecord {
   reviews: CourseRecordSection<CourseReview[]>;
   assessments: CourseRecordSection<CourseAssessment[]>;
   requirements: CourseRecordSection<CourseTrainingRequirement[]>;
-  /** Normalised to a 0–100 percentage whichever scale the API answers on. */
-  completionRate: CourseRecordSection<number>;
   /** Creator, admin and approved trainers only. */
   enrollments: CourseRecordSection<CourseEnrollmentPage>;
   /** Training applications on this course. Creator and admin only. */
   applications: CourseRecordSection<CourseTrainingApplication[]>;
+  /**
+   * The viewer's **own** application on this course, for the status timeline.
+   * Scoped to them by `applicant_uuid_eq`, so no other party's rate card is ever
+   * requested. Absent for anyone whose rail does not carry the card.
+   */
+  myApplication: CourseRecordSection<CourseTrainingApplication>;
 
   /** From the API, never from the user's domain. */
   access: CourseAccess;
@@ -157,6 +162,25 @@ export function useCourseRecord({
   const canReadContentItems = capability.content.level === 'full';
   const seesScopedFigures = capability.kpi?.set === 'scoped';
   const seesCommercials = capability.showSales;
+  const seesOwnApplication = capability.rail.includes('applicationStatus');
+
+  /*
+   * Who the viewer would have applied *as*.
+   *
+   * This is identity, not access: it never widens anything, it only narrows a
+   * request to the caller's own row, and the server still decides what comes
+   * back. An application is filed either by an instructor or by an organisation,
+   * and plenty of instructors are also affiliated to one — so the dashboard the
+   * viewer is standing on is what says which hat they are wearing, with the
+   * other uuid as the fallback for a surface that is not role-scoped.
+   */
+  const instructor = useInstructor();
+  const organisation = useOrganisation();
+  const segment = routeSegmentFromPath(usePathname());
+  const applicantUuid =
+    segment === 'instructor'
+      ? (instructor?.uuid ?? organisation?.uuid)
+      : (organisation?.uuid ?? instructor?.uuid);
 
   /* ── reference data · 5 min ─────────────────────────────────────────── */
 
@@ -195,6 +219,31 @@ export function useCourseRecord({
     staleTime: STALE_TIMES.entity,
   });
 
+  /*
+   * The applicant's own application.
+   *
+   * The list above is the *owner's* queue and stays shut to everyone but the
+   * creator and an admin — a pending applicant asking for it would be asking for
+   * their competitors' rate cards. This second call asks the same endpoint a
+   * question that can only be about the caller: `applicant_uuid_eq` pinned to
+   * their own uuid alongside the course. It runs only for a viewer whose
+   * capability row actually carries the status card, which is the same rule the
+   * privileged calls above are gated by.
+   */
+  const myApplicationQuery = useQuery({
+    ...searchTrainingApplicationsOptions({
+      query: {
+        searchParams: {
+          course_uuid_eq: courseUuid ?? '',
+          applicant_uuid_eq: applicantUuid ?? '',
+        },
+        pageable: { page: 0, size: PAGE_SIZE },
+      },
+    }),
+    enabled: on && seesOwnApplication && Boolean(applicantUuid),
+    staleTime: STALE_TIMES.entity,
+  });
+
   /* ── live data · 60s ────────────────────────────────────────────────── */
 
   const classesQuery = useQuery({
@@ -203,12 +252,6 @@ export function useCourseRecord({
       query: { activeOnly: true },
     }),
     enabled: on,
-    staleTime: STALE_TIMES.live,
-  });
-
-  const completionQuery = useQuery({
-    ...getCourseCompletionRateOptions({ path: { courseUuid: courseUuid ?? '' } }),
-    enabled: on && capability.kpi !== null,
     staleTime: STALE_TIMES.live,
   });
 
@@ -234,6 +277,15 @@ export function useCourseRecord({
 
   const applications = applicationsQuery.data?.data?.content;
 
+  /** The most recently filed of the viewer's own applications on this course. */
+  const myApplication = useMemo<CourseTrainingApplication | undefined>(() => {
+    const rows = myApplicationQuery.data?.data?.content;
+    if (!rows?.length) return undefined;
+    return [...rows].sort(
+      (left, right) => filedAt(right.created_date) - filedAt(left.created_date)
+    )[0];
+  }, [myApplicationQuery.data]);
+
   const classDefinitions = useMemo(() => {
     const rows = classesQuery.data?.data;
     if (!rows) return undefined;
@@ -241,13 +293,6 @@ export function useCourseRecord({
       .map(row => row.class_definition)
       .filter((definition): definition is ClassDefinition => Boolean(definition));
   }, [classesQuery.data]);
-
-  const completionRate = useMemo(() => {
-    const raw = completionQuery.data?.data;
-    if (typeof raw !== 'number' || !Number.isFinite(raw)) return undefined;
-    // The API has answered on both scales over its life; normalise to 0–100.
-    return raw > 1 ? raw : raw * 100;
-  }, [completionQuery.data]);
 
   const enrollments = useMemo<CourseEnrollmentPage | undefined>(() => {
     const page = enrollmentsQuery.data?.data;
@@ -270,9 +315,9 @@ export function useCourseRecord({
     reviews: toSection(reviewsQuery, reviews),
     assessments: toSection(assessmentsQuery, assessments),
     requirements: toSection(requirementsQuery, requirements),
-    completionRate: toSection(completionQuery, completionRate),
     enrollments: toSection(enrollmentsQuery, enrollments),
     applications: toSection(applicationsQuery, applications),
+    myApplication: toSection(myApplicationQuery, myApplication),
   } satisfies Record<CourseRecordSectionId, CourseRecordSection<unknown>>;
 
   const errors: Partial<Record<CourseRecordSectionId, unknown>> = {};
@@ -297,6 +342,13 @@ export function asyncProps<T>(section: CourseRecordSection<T>): {
   onRetry: () => void;
 } {
   return { loading: section.loading, error: section.error, onRetry: section.refetch };
+}
+
+/** Milliseconds, with anything absent or unparseable sorting last. */
+function filedAt(value: Date | string | null | undefined): number {
+  if (!value) return 0;
+  const ms = (value instanceof Date ? value : new Date(value)).getTime();
+  return Number.isNaN(ms) ? 0 : ms;
 }
 
 type QueryLike = { isLoading: boolean; error: unknown; refetch: () => unknown };
