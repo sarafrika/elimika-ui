@@ -168,7 +168,13 @@ export interface CourseStatsOwner {
  * answer, and the KPI card for it simply does not render.
  */
 export interface CourseStats {
-  public: CourseStatsPublic;
+  /**
+   * Optional because the contract says so (`CourseStats.public?` in the generated
+   * client). Declaring it required here made the compiler vouch for a field the
+   * server may omit, so fourteen call sites dereferenced it unguarded and tsc
+   * stayed silent. An absent block means "not yours to see" — never a zero.
+   */
+  public?: CourseStatsPublic;
   scoped?: CourseStatsScoped;
   owner?: CourseStatsOwner;
 }

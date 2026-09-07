@@ -201,8 +201,8 @@ export function CourseRecordPage({
 
   const trainers = record.trainers.data;
   const approvedTrainerCount =
-    stats?.public.approved_trainer_count ??
-    trainers?.trainers.filter(row => row.approved_at).length;
+    stats?.public?.approved_trainer_count ??
+    trainers?.trainers?.filter(row => row.approved_at).length;
 
   // Until the classes call resolves there is no class count — and a zero on a
   // "classes open now" tile is a claim, not a blank.
@@ -221,7 +221,7 @@ export function CourseRecordPage({
   const priceLabel = formatCourseMoney(course?.price ?? undefined);
   const averageRating = content?.average_rating ?? ratings.average;
   const totalReviews = content?.total_reviews ?? ratings.total;
-  const enrolledCount = record.enrollments.data?.total ?? stats?.public.learners_trained;
+  const enrolledCount = record.enrollments.data?.total ?? stats?.public?.learners_trained;
 
   /** Every `{token}` the capability map leaves for live data, resolved once. */
   const vars: CopyVars = {
@@ -251,8 +251,8 @@ export function CourseRecordPage({
     trainerShare: course?.instructor_share_percentage,
     mandatoryRequirements,
     approvedTrainers: approvedTrainerCount,
-    learners: stats?.public.learners_trained,
-    averageFill: stats?.public.average_class_fill,
+    learners: stats?.public?.learners_trained,
+    averageFill: stats?.public?.average_class_fill,
     rating: ratings.average?.toFixed(1),
     reviews: ratings.total || undefined,
     pendingApplications: pendingApplications.length || undefined,
@@ -402,7 +402,7 @@ export function CourseRecordPage({
 
   const tabCounts: Partial<Record<CourseRecordTabId, number>> = {
     curriculum: lessonCount,
-    delivery: trainers?.trainers.filter(row => row.approved_at).length,
+    delivery: trainers?.trainers?.filter(row => row.approved_at).length,
     classes: record.classes.data?.length,
     reviews: reviews?.length,
   };

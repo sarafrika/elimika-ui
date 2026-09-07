@@ -85,7 +85,7 @@ export function KpiBand({
       ? stats?.owner?.total_enrollments
       : kpi.set === 'scoped'
         ? stats?.scoped?.your_learners
-        : stats?.public.learners_trained;
+        : stats?.public?.learners_trained;
 
   if (learners !== undefined) {
     tiles.push({
@@ -104,7 +104,7 @@ export function KpiBand({
       : kpi.set === 'scoped'
         ? money(stats?.scoped?.your_earnings)
         : kpi.set === 'trainer-case'
-          ? formatPercent(stats?.public.average_class_fill)
+          ? formatPercent(stats?.public?.average_class_fill)
           : money(priceFrom);
 
   if (moneyValue !== undefined) {
@@ -124,7 +124,7 @@ export function KpiBand({
       ? stats?.scoped?.your_classes
       : kpi.set === 'learner-case'
         ? classesOpenNow
-        : stats?.public.classes_running;
+        : stats?.public?.classes_running;
 
   if (classesValue !== undefined) {
     tiles.push({
@@ -138,7 +138,7 @@ export function KpiBand({
   }
 
   /* — 4 · completion ─────────────────────────────────────────────────── */
-  const completion = stats?.public.completion_rate;
+  const completion = stats?.public?.completion_rate;
   if (completion !== undefined) {
     tiles.push({
       key: 'completion',
@@ -159,9 +159,9 @@ export function KpiBand({
   }
 
   /* — 5 · rating ─────────────────────────────────────────────────────── */
-  const rating = stats?.public.average_rating;
+  const rating = stats?.public?.average_rating;
   if (rating !== undefined) {
-    const reviews = stats?.public.total_reviews;
+    const reviews = stats?.public?.total_reviews;
     tiles.push({
       key: 'rating',
       title: 'Average rating',
@@ -263,7 +263,7 @@ function moneyHintFor(
   }
   if (set === 'scoped') return 'your classes only — private to you';
   if (set === 'trainer-case') {
-    const running = stats?.public.classes_running;
+    const running = stats?.public?.classes_running;
     return running === undefined
       ? undefined
       : `across the ${formatCount(running)} classes already running`;
@@ -276,7 +276,7 @@ function classesHintFor(
   stats: CourseStats | undefined,
   nextClassStarts: string | undefined
 ): string | undefined {
-  const trainers = stats?.public.approved_trainer_count;
+  const trainers = stats?.public?.approved_trainer_count;
 
   if (set === 'course') {
     return trainers === undefined
@@ -284,13 +284,13 @@ function classesHintFor(
       : `across ${formatCount(trainers)} approved trainer${trainers === 1 ? '' : 's'}`;
   }
   if (set === 'trainer-case') {
-    const fill = stats?.public.average_class_fill;
+    const fill = stats?.public?.average_class_fill;
     if (trainers === undefined) return undefined;
     const base = `across ${formatCount(trainers)} approved trainer${trainers === 1 ? '' : 's'}`;
     return fill === undefined ? base : `${base} · ${formatPercent(fill)} average fill`;
   }
   if (set === 'learner-case') {
-    const running = stats?.public.classes_running;
+    const running = stats?.public?.classes_running;
     const base = running === undefined ? undefined : `of ${formatCount(running)} running`;
     if (!nextClassStarts) return base;
     return base ? `${base} · next starts ${nextClassStarts}` : `next starts ${nextClassStarts}`;

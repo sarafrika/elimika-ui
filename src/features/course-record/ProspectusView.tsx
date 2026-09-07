@@ -1197,7 +1197,7 @@ function proofTiles(audience: ProspectusAudience, input: ProofInputs): ProofTile
   const tiles: ProofTile[] = [];
 
   /* — 1 · learners trained ───────────────────────────────────────────── */
-  const learners = stats?.public.learners_trained;
+  const learners = stats?.public?.learners_trained;
   if (learners !== undefined) {
     tiles.push({
       key: 'learners',
@@ -1215,8 +1215,8 @@ function proofTiles(audience: ProspectusAudience, input: ProofInputs): ProofTile
 
   /* — 2 · class fill, or the price to a learner ──────────────────────── */
   if (trainer) {
-    const fill = percent(stats?.public.average_class_fill);
-    const running = stats?.public.classes_running;
+    const fill = percent(stats?.public?.average_class_fill);
+    const running = stats?.public?.classes_running;
     if (fill !== undefined) {
       tiles.push({
         key: 'fill',
@@ -1245,8 +1245,8 @@ function proofTiles(audience: ProspectusAudience, input: ProofInputs): ProofTile
   }
 
   /* — 3 · classes ────────────────────────────────────────────────────── */
-  const running = stats?.public.classes_running;
-  const trainers = stats?.public.approved_trainer_count;
+  const running = stats?.public?.classes_running;
+  const trainers = stats?.public?.approved_trainer_count;
   const classesValue = trainer ? running : classesOpenNow;
   if (classesValue !== undefined) {
     tiles.push({
@@ -1264,7 +1264,7 @@ function proofTiles(audience: ProspectusAudience, input: ProofInputs): ProofTile
   }
 
   /* — 4 · completion ─────────────────────────────────────────────────── */
-  const completion = percent(stats?.public.completion_rate);
+  const completion = percent(stats?.public?.completion_rate);
   if (completion !== undefined) {
     const platform = percent(input.platformCompletionRate);
     tiles.push({
@@ -1282,7 +1282,7 @@ function proofTiles(audience: ProspectusAudience, input: ProofInputs): ProofTile
   }
 
   /* — 5 · rating ─────────────────────────────────────────────────────── */
-  const rating = stats?.public.average_rating;
+  const rating = stats?.public?.average_rating;
   if (rating !== undefined) {
     tiles.push({
       key: 'rating',
@@ -1297,7 +1297,7 @@ function proofTiles(audience: ProspectusAudience, input: ProofInputs): ProofTile
       // The gold star accent is `chart-3`; KpiCard's amber rail is the orange
       // warning step, so it is retinted here — as the record's band does.
       className: 'border-l-chart-3',
-      hint: ratingHint(stats?.public.total_reviews, input.highlyRatedShare),
+      hint: ratingHint(stats?.public?.total_reviews, input.highlyRatedShare),
     });
   }
 
@@ -1331,13 +1331,13 @@ function ratingHint(reviews: number | undefined, share: number | undefined): str
 function derivedVars(input: ProofInputs): ProspectusVars {
   const { stats } = input;
   return {
-    learners: countOrUndefined(stats?.public.learners_trained),
-    averageFill: percent(stats?.public.average_class_fill),
-    classesRunning: countOrUndefined(stats?.public.classes_running),
-    approvedTrainers: countOrUndefined(stats?.public.approved_trainer_count),
-    completionRate: percent(stats?.public.completion_rate),
-    rating: stats?.public.average_rating?.toFixed(1),
-    reviews: countOrUndefined(stats?.public.total_reviews),
+    learners: countOrUndefined(stats?.public?.learners_trained),
+    averageFill: percent(stats?.public?.average_class_fill),
+    classesRunning: countOrUndefined(stats?.public?.classes_running),
+    approvedTrainers: countOrUndefined(stats?.public?.approved_trainer_count),
+    completionRate: percent(stats?.public?.completion_rate),
+    rating: stats?.public?.average_rating?.toFixed(1),
+    reviews: countOrUndefined(stats?.public?.total_reviews),
     platformCompletionRate: percent(input.platformCompletionRate),
     highlyRatedShare: percent(input.highlyRatedShare),
     priceFrom: formatCourseMoney(input.priceFrom, input.currency),

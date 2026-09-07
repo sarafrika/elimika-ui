@@ -41,7 +41,8 @@ type StatsResponses = {
  * admins, which is what the owner's "pending your decision" rail card counts.
  */
 export interface CourseTrainersEnvelope {
-  trainers: CourseTrainerSummary[];
+  /** Optional, matching the contract — the envelope can arrive without the list. */
+  trainers?: CourseTrainerSummary[];
   /** Owner and admin only; absent for every other viewer. */
   pending_count?: number;
 }
