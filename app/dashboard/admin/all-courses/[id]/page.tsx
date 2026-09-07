@@ -1,24 +1,39 @@
 'use client';
 
-import ReusableCourseDetailsPage from '@/app/dashboard/_components/reusable-course-details';
-import { useStudent } from '../../../../../context/student-context';
+import { useParams } from 'next/navigation';
+import { useEffect } from 'react';
+import { useBreadcrumb } from '@/context/breadcrumb-provider';
+import { CourseRecordPage } from '@/src/features/course-record';
+import { CourseRecordRouteActions } from '@/src/features/dashboard/courses/components/CourseRecordRouteActions';
 
-type AdminCourseDetailsPageProps = {
-  params: {
-    id: string;
-  };
-};
+const ALL_COURSES_HREF = '/dashboard/admin/all-courses';
 
-export default function CourseDetailsPage({ params }: AdminCourseDetailsPageProps) {
-  const data = params?.id;
-  const student = useStudent();
+export default function AdminCourseDetailsRoute() {
+  const params = useParams();
+  const courseUuid = typeof params?.id === 'string' ? params.id : (params?.id?.[0] ?? '');
+  const { replaceBreadcrumbs } = useBreadcrumb();
+
+  useEffect(() => {
+    replaceBreadcrumbs([
+      { id: 'dashboard', title: 'Dashboard', url: '/dashboard/admin/overview' },
+      { id: 'all-courses', title: 'Browse Courses', url: ALL_COURSES_HREF },
+      {
+        id: 'course',
+        title: 'Course details',
+        url: `${ALL_COURSES_HREF}/${courseUuid}`,
+        isLast: true,
+      },
+    ]);
+  }, [replaceBreadcrumbs, courseUuid]);
 
   return (
-    <ReusableCourseDetailsPage
-      courseId={data}
-      handleEnroll={() => {}}
-      userRole='admin'
-      student_uuid={student?.uuid}
-    />
+    <>
+      <CourseRecordRouteActions
+        courseUuid={courseUuid}
+        classesHref={`${ALL_COURSES_HREF}/available-classes/${courseUuid}`}
+        instructorsHref={`${ALL_COURSES_HREF}/instructor?courseId=${courseUuid}`}
+      />
+      <CourseRecordPage courseUuid={courseUuid} backHref={ALL_COURSES_HREF} />
+    </>
   );
 }
