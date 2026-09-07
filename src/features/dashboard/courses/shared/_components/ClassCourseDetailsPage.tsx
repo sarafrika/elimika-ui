@@ -656,7 +656,7 @@ export default function ClassCourseDetailsPage({
             <div className='border-border bg-card rounded-xl border p-4 shadow-sm sm:p-5 lg:p-6'>
               <StudentsAlsoBought
                 courses={relatedCourses}
-                activeDomain={activeDomain ?? ''}
+                activeDomain={activeDomain}
                 creatorName={creatorName}
               />
             </div>

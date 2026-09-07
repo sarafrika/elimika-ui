@@ -12,7 +12,6 @@ import { useState } from 'react';
 
 import { useRouter } from 'next/navigation';
 import { CourseVideoPreviewModal } from './CourseVideoPreviewModal';
-import { CourseDetailsSheet } from './CourseDetailsSheet';
 
 const imageToneClasses = {
   primary: 'bg-gradient-to-br from-primary/20 via-primary/10 to-background',
@@ -44,29 +43,30 @@ const levelStyles: Record<string, string> = {
 };
 
 export function CoursesCatalogCard({ card, type, onPrimaryAction }: CoursesCatalogCardProps) {
-  const router = useRouter()
+  const router = useRouter();
   const imageUrl = toAuthenticatedMediaUrl(card.imageUrl);
   const resolvedVideoUrl = toAuthenticatedMediaUrl(card.videoUrl);
-  const level = card.secondaryMeta.toLowerCase();
 
   const isLoading = !card.provider;
-  const [open, setOpen] = useState(false);
-  const [selectedId, setSelectedId] = useState<string | null>(null);
   const [videoPreviewOpen, setVideoPreviewOpen] = useState(false);
   const hasVideoPreview = Boolean(resolvedVideoUrl);
 
   return (
-    <article
-      className='border-border bg-card group cursor-pointer overflow-hidden rounded-sm border transition hover:border-primary/40 hover:shadow-md'
-      onClick={() => {
-        if (open) {
-          return;
-        }
+    <article className='border-border bg-card group relative overflow-hidden rounded-sm border transition hover:border-primary/40 hover:shadow-md'>
+      {/*
+        The whole card opens the course record. An overlay link rather than an
+        onClick handler: it is a real anchor, so it is keyboard reachable, can be
+        opened in a new tab, and does not swallow the controls stacked above it —
+        which carry `relative z-10` for exactly that reason. Its own `z-[1]`
+        keeps it over the cover image, which `fill` positions too.
+      */}
+      <Link
+        href={card.detailsHref}
+        className='focus-visible:ring-ring absolute inset-0 z-[1] rounded-[inherit] focus-visible:ring-2 focus-visible:outline-none'
+      >
+        <span className='sr-only'>Open {card.title}</span>
+      </Link>
 
-        setSelectedId(card.id);
-        setOpen(true);
-      }}
-    >
       <div className='block'>
         <div
           className={cn(
@@ -191,9 +191,12 @@ export function CoursesCatalogCard({ card, type, onPrimaryAction }: CoursesCatal
         </div>
 
 
+        {/* Actions — stacked above the card's overlay link. */}
         <div
-          className={cn('grid gap-2', card.showInstructorCta !== false && 'sm:grid-cols-2')}
-          onClick={e => e.stopPropagation()}
+          className={cn(
+            'relative z-10 grid gap-2',
+            card.showInstructorCta !== false && 'sm:grid-cols-2'
+          )}
         >
           {/* Instructor CTA */}
           {card.showInstructorCta !== false && (
@@ -267,20 +270,6 @@ export function CoursesCatalogCard({ card, type, onPrimaryAction }: CoursesCatal
           )}
         </div>
       </div>
-
-      <CourseDetailsSheet
-        key={selectedId}
-        itemId={selectedId}
-        type={card.contentKind}
-        open={open}
-        onOpenChange={value => {
-          setOpen(value);
-
-          if (!value) {
-            setTimeout(() => setSelectedId(null), 200);
-          }
-        }}
-      />
 
       <CourseVideoPreviewModal
         open={videoPreviewOpen}

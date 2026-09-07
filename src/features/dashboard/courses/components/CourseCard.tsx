@@ -1,4 +1,3 @@
-// @ts-nocheck -- pre-existing @hey-api generated-client type drift (see memory: elimika-ui-typecheck)
 'use client';
 
 import RichTextRenderer from '@/components/editors/richTextRenders';
@@ -6,7 +5,8 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
-import type { Course, TrainingProgram } from '@/services/client';
+import { extractEntity, extractPage, getTotalFromMetadata } from '@/lib/api-helpers';
+import type { Course, CourseCreator, CourseEnrollment, TrainingProgram, User } from '@/services/client';
 import {
   getAllDifficultyLevelsOptions,
   getCourseCreatorByUuidOptions,
@@ -15,9 +15,8 @@ import {
 } from '@/services/client/@tanstack/react-query.gen';
 import { isAuthenticatedMediaUrl, toAuthenticatedMediaUrl } from '@/src/lib/media-url';
 import { useQuery } from '@tanstack/react-query';
-import { BookOpen, Heart, Play, Share, Star, Users } from 'lucide-react';
+import { BookOpen, Play, Users } from 'lucide-react';
 import Image from 'next/image';
-import { useRouter } from 'next/navigation';
 
 interface CourseCardProps {
   course: Course | TrainingProgram;
@@ -34,7 +33,6 @@ export function CourseCard({
   handleEnroll,
   handleSearchInstructor,
 }: CourseCardProps) {
-  const _router = useRouter();
   const courseName = 'name' in course ? course.name : course.title;
   const courseCategories = 'category_names' in course ? course.category_names : undefined;
   const difficultyUuid = 'difficulty_uuid' in course ? course.difficulty_uuid : undefined;
@@ -53,25 +51,34 @@ export function CourseCard({
       .toUpperCase();
   };
 
-  const { data: courseCreator } = useQuery({
-    ...getCourseCreatorByUuidOptions({ path: { uuid: course?.course_creator_uuid as string } }),
-    enabled: !!course?.course_creator_uuid,
+  // These three responses come back inside the platform's `{ success, data }`
+  // envelope, which the generated client does not describe. `extractEntity` and
+  // `extractPage` read either shape rather than asserting one.
+  const { data: courseCreatorResponse } = useQuery({
+    ...getCourseCreatorByUuidOptions({ path: { uuid: course?.course_creator_uuid ?? '' } }),
+    enabled: Boolean(course?.course_creator_uuid),
   });
+  const courseCreator = extractEntity<CourseCreator>(courseCreatorResponse);
 
-  const { data: courseCreatorUser } = useQuery({
-    ...getUserByUuidOptions({ path: { uuid: courseCreator?.data?.user_uuid as string } }),
-    enabled: !!courseCreator?.data?.user_uuid,
+  const { data: courseCreatorUserResponse } = useQuery({
+    ...getUserByUuidOptions({ path: { uuid: courseCreator?.user_uuid ?? '' } }),
+    enabled: Boolean(courseCreator?.user_uuid),
   });
-  const creatorName = courseCreatorUser?.data?.full_name || courseCreator?.data?.full_name || '';
-  const creatorImageUrl = courseCreatorUser?.data?.profile_image_url ?? '';
+  const courseCreatorUser = extractEntity<User>(courseCreatorUserResponse);
 
-  const { data } = useQuery({
+  const creatorName = courseCreatorUser?.full_name || courseCreator?.full_name || '';
+  const creatorImageUrl = courseCreatorUser?.profile_image_url ?? '';
+
+  const { data: enrollmentsResponse } = useQuery({
     ...getCourseEnrollmentsOptions({
-      path: { courseUuid: course?.uuid as string },
+      path: { courseUuid: course?.uuid ?? '' },
+      query: { pageable: { page: 0, size: 1 } },
     }),
-    enabled: !!course?.uuid,
+    enabled: Boolean(course?.uuid),
   });
-  const enrollments = data?.data?.content || [];
+  const enrollmentsPage = extractPage<CourseEnrollment>(enrollmentsResponse);
+  const enrollmentCount =
+    getTotalFromMetadata(enrollmentsPage.metadata) || enrollmentsPage.items.length;
 
   const { data: difficulty } = useQuery(getAllDifficultyLevelsOptions());
   const difficultyLevels = difficulty?.data;
@@ -124,30 +131,6 @@ export function CourseCard({
             </div>
           )}
 
-          {/* Actions */}
-          <div className='absolute top-3 right-3 flex gap-2 opacity-0 transition-opacity group-hover:opacity-100'>
-            <Button
-              size='sm'
-              variant='secondary'
-              className='h-8 w-8 p-0'
-              onClick={e => {
-                e.stopPropagation();
-              }}
-            >
-              <Heart className='h-4 w-4' />
-            </Button>
-            <Button
-              size='sm'
-              variant='secondary'
-              className='h-8 w-8 p-0'
-              onClick={e => {
-                e.stopPropagation();
-              }}
-            >
-              <Share className='h-4 w-4' />
-            </Button>
-          </div>
-
           {/* Difficulty Badge */}
           <div className='absolute bottom-3 left-3'>
             <Badge className={getDifficultyColor(difficultyUuid as string)}>
@@ -193,13 +176,8 @@ export function CourseCard({
           {/* Stats */}
           <div className='text-muted-foreground mb-4 flex items-center gap-4 text-sm'>
             <div className='flex items-center gap-1'>
-              <Star className='h-4 w-4 fill-yellow-400 text-yellow-400' />
-              {/* <span>{course?.rating}</span> */}
-              {/* <span>{1.2}</span> */}
-            </div>
-            <div className='flex items-center gap-1'>
               <Users className='h-4 w-4' />
-              <span>{enrollments.length} enrollments</span>
+              <span>{enrollmentCount} enrollments</span>
             </div>
           </div>
 
