@@ -116,3 +116,33 @@ export const formatPricingLabel = (
 };
 
 export const getCourseDisplayTitle = (course: Course) => course.name || 'Untitled course';
+
+// Narrow an already-loaded catalogue page to the visitor's search terms. The
+// catalogue endpoint indexes commerce items, which carry no course title, so a
+// title search cannot be pushed down to it and every term is matched here.
+export const filterCatalogueCourses = <
+  T extends Pick<PublicCatalogueCourse, 'course' | 'creatorName'>,
+>(
+  items: T[],
+  query: string
+) => {
+  const terms = query.toLowerCase().split(/\s+/).filter(Boolean);
+
+  if (terms.length === 0) {
+    return items;
+  }
+
+  return items.filter(({ course, creatorName }) => {
+    const haystack = [
+      course.name,
+      stripRichText(course.description),
+      creatorName,
+      ...(course.category_names ?? []),
+    ]
+      .filter(Boolean)
+      .join(' ')
+      .toLowerCase();
+
+    return terms.every(term => haystack.includes(term));
+  });
+};
