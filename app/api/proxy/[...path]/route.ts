@@ -1,3 +1,5 @@
+import { NextRequest, NextResponse } from 'next/server';
+import type { Session } from 'next-auth';
 import {
   buildPrivateBffCacheKey,
   clearPrivateBffCacheForUser,
@@ -5,14 +7,13 @@ import {
   getPrivateBffCacheEntry,
   getPrivateBffCacheTtlMs,
   PRIVATE_BFF_CACHE_MAX_BODY_BYTES,
+  type PrivateBffCacheEntry,
   refreshPrivateBffCacheEntry,
   storePrivateBffCacheEntry,
-  type PrivateBffCacheEntry,
 } from '@/lib/api/private-bff-cache';
 import { getServerApiBaseUrl } from '@/services/api/base-url';
 import { auth } from '@/services/auth';
-import type { Session } from 'next-auth';
-import { NextRequest, NextResponse } from 'next/server';
+import { ACTING_DOMAIN_HEADER } from '@/src/features/dashboard/lib/active-domain-storage';
 
 export const dynamic = 'force-dynamic';
 export const revalidate = 0;
@@ -61,7 +62,7 @@ function applyPrivateResponseHeaders(headers: Headers, cacheState: CacheState) {
   sanitizeHeaders(headers);
   headers.set('cache-control', 'private, no-store');
   headers.set('x-bff-cache', cacheState);
-  appendVary(headers, ['Authorization', 'Cookie']);
+  appendVary(headers, ['Authorization', 'Cookie', ACTING_DOMAIN_HEADER]);
   return headers;
 }
 
@@ -187,8 +188,13 @@ const proxyRequest = async (request: NextRequest, path: string[]) => {
     const upstreamUrl = buildUpstreamUrl(request, path);
     const headers = getForwardHeaders(request, session);
     const isCacheableRead = request.method === 'GET' && Boolean(cacheUserId);
+    // The acting dashboard varies the upstream answer, so it has to vary the key
+    // as well: one user, one URL, two dashboards, two cache entries.
+    const actingDomain = headers.get(ACTING_DOMAIN_HEADER);
     const cacheKey =
-      isCacheableRead && cacheUserId ? buildPrivateBffCacheKey(cacheUserId, upstreamUrl) : null;
+      isCacheableRead && cacheUserId
+        ? buildPrivateBffCacheKey(cacheUserId, upstreamUrl, actingDomain)
+        : null;
 
     if (cacheKey && cacheUserId) {
       const cachedResponse = getPrivateBffCacheEntry(cacheKey);

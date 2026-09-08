@@ -107,8 +107,19 @@ function serializeHeaders(headers: Headers): [string, string][] {
   );
 }
 
-export function buildPrivateBffCacheKey(userId: string, upstreamUrl: URL) {
-  return `${userId}:GET:${upstreamUrl.pathname}${upstreamUrl.search}`;
+/**
+ * @param actingDomain the dashboard the call was made from, or null when it
+ *   carried none. Part of the key because the same user asking the same URL from
+ *   two dashboards is now entitled to two different answers — without it the
+ *   admin dashboard's full course content would be replayed from this cache onto
+ *   the student dashboard, undoing server-side capping in the one hop after it.
+ */
+export function buildPrivateBffCacheKey(
+  userId: string,
+  upstreamUrl: URL,
+  actingDomain: string | null = null
+) {
+  return `${userId}:GET:${actingDomain ?? '-'}:${upstreamUrl.pathname}${upstreamUrl.search}`;
 }
 
 export function getPrivateBffCacheTtlMs(upstreamUrl: URL) {
