@@ -141,7 +141,7 @@ export function HomeCourseGrid({
         </Link>
       </div>
 
-      <div className='grid gap-[18px] sm:grid-cols-2 lg:grid-cols-3'>
+      <div className='grid gap-[18px] sm:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-4'>
         {visible.map(course => (
           <HomeCourseCard key={course.uuid} course={course} />
         ))}

@@ -23,12 +23,17 @@ import {
 } from '@/src/features/marketing/server';
 import {
   ArrowRight,
+  BadgeCheck,
   BookOpen,
+  CalendarDays,
   CircleAlert,
+  CreditCard,
   GraduationCap,
+  Quote,
   School,
   Search,
   Users,
+  Wallet,
 } from 'lucide-react';
 import { Bricolage_Grotesque } from 'next/font/google';
 import Link from 'next/link';
@@ -45,7 +50,11 @@ const displayFont = Bricolage_Grotesque({
 
 const currentYear = new Date().getFullYear();
 
-const CONTAINER = 'mx-auto w-full max-w-6xl px-5 sm:px-8';
+// Steps up rather than stopping at 6xl: on a 2xl monitor a 1152px column
+// left the page marooned in the middle of the screen. Gutters grow with it
+// so the content never runs to the glass edge.
+const CONTAINER =
+  'mx-auto w-full max-w-6xl px-5 sm:px-8 xl:max-w-7xl 2xl:max-w-[88rem] 2xl:px-12';
 
 const CREATE_ACCOUNT_HREF = '/auth/create-account';
 
@@ -101,6 +110,77 @@ const ENROLMENT_STEPS = [
   },
 ] as const;
 
+// What the platform actually does, in one dark band. Every line here is a
+// feature that exists - registration windows, rate cards, M-Pesa - rather than
+// a capability we would like to claim.
+//
+// The tones are the light-on-dark end of the accent ramp deliberately: this
+// band stays dark in both themes, so the `--tone` classes used elsewhere (which
+// darken for light mode) would render dark-on-dark here.
+const SERVICES = [
+  {
+    title: 'Course catalogue and enrolment',
+    icon: BookOpen,
+    tone: 'var(--el-brand-400)',
+    body: 'Browse by discipline, see the classes actually running, and enrol against a live seat count and registration window.',
+  },
+  {
+    title: 'Pay in KES, by M-Pesa',
+    icon: CreditCard,
+    tone: 'var(--el-accent-jade)',
+    body: 'Local pricing and local payment. Orders, receipts and refunds handled on platform, not over WhatsApp.',
+  },
+  {
+    title: 'Skills Wallet',
+    icon: Wallet,
+    tone: 'var(--el-accent-iris)',
+    body: 'Every skill you finish is recorded against your name - a portable record for an employer, not a certificate in a drawer.',
+  },
+  {
+    title: 'Trainer applications and rate cards',
+    icon: Users,
+    tone: 'var(--el-accent-amber)',
+    body: 'Instructors and schools apply to deliver a course, declaring classrooms, equipment and their own rates. Your rates stay yours.',
+  },
+  {
+    title: 'Classes, timetables and attendance',
+    icon: CalendarDays,
+    tone: 'var(--el-highlight-400)',
+    body: 'Recurring sessions, registration windows and rosters - so a class has a real start date, not an open-ended waitlist.',
+  },
+  {
+    title: 'Assessment and certification',
+    icon: BadgeCheck,
+    tone: 'var(--el-accent-blush)',
+    body: 'Quizzes, assignments and rubrics with grading, and a certificate issued on completion once the work is actually done.',
+  },
+] as const;
+
+// Placeholders, and deliberately obvious ones. Real quotes have to come from
+// real people who agreed to be named; inventing them would be the one thing on
+// this page a visitor could catch us out on.
+const QUOTES = [
+  {
+    quote:
+      '[QUOTE - a learner on finishing a course and what the Skills Wallet record changed for them]',
+    name: '[LEARNER NAME]',
+    role: '[COURSE] / [TOWN]',
+    initials: 'LN',
+  },
+  {
+    quote: '[QUOTE - a trainer on applying to deliver a course and being paid per session]',
+    name: '[TRAINER NAME]',
+    role: '[DISCIPLINE] / [TOWN]',
+    initials: 'TN',
+  },
+  {
+    quote: '[QUOTE - a school on staffing a co-curricular timetable through Elimika]',
+    name: '[SCHOOL NAME]',
+    role: '[ROLE] / [TOWN]',
+    initials: 'SN',
+  },
+] as const;
+
 export async function MarketingHomePage() {
   const { courses, categories, hasError } = await getHomeCatalogue();
 
@@ -127,7 +207,7 @@ export async function MarketingHomePage() {
               <h1
                 className={cn(
                   DISPLAY,
-                  'text-foreground max-w-[15ch] text-[2.25rem] leading-[1.03] font-extrabold tracking-[-0.035em] text-balance sm:text-5xl lg:text-6xl'
+                  'text-foreground max-w-[15ch] text-[2.25rem] leading-[1.03] font-extrabold tracking-[-0.035em] text-balance sm:text-5xl lg:text-6xl 2xl:text-[4.25rem]'
                 )}
               >
                 Find a course. Meet the trainer.{' '}
@@ -143,7 +223,7 @@ export async function MarketingHomePage() {
                 action='/courses'
                 method='get'
                 role='search'
-                className='mt-7 flex max-w-[620px] flex-col gap-2.5 sm:flex-row'
+                className='mt-7 flex max-w-[620px] flex-col gap-2.5 sm:flex-row 2xl:max-w-[720px]'
               >
                 <div className='relative flex-1'>
                   <Search
@@ -288,6 +368,113 @@ export async function MarketingHomePage() {
               ))}
             </ol>
           </div>
+        </section>
+
+        {/*
+          The dark band. It stays dark in both themes on purpose - it is the one
+          moment of contrast on an otherwise light page, and flipping it with the
+          theme would lose that.
+        */}
+        <section className='bg-[var(--el-neutral-950)] text-[var(--el-neutral-0)]'>
+          <div className={cn(CONTAINER, 'py-12 sm:py-16')}>
+            <div className='max-w-2xl'>
+              <p className='text-[11.5px] font-bold tracking-[0.09em] text-[var(--el-brand-300)] uppercase'>
+                What Elimika runs
+              </p>
+              <h2
+                className={cn(
+                  DISPLAY,
+                  'mt-2 text-2xl font-bold tracking-tight sm:text-3xl'
+                )}
+              >
+                Everything between finding a course and getting paid for teaching one.
+              </h2>
+              <p className='mt-3 text-[15px] leading-relaxed text-[var(--el-neutral-300)]'>
+                Not a video library. A working marketplace - enrolment, scheduling, assessment and
+                payment, for learners, trainers and schools on the same platform.
+              </p>
+            </div>
+
+            <ul className='mt-8 grid gap-[18px] sm:grid-cols-2 lg:grid-cols-3'>
+              {SERVICES.map(service => {
+                const Icon = service.icon;
+
+                return (
+                  <li
+                    key={service.title}
+                    className='rounded-[18px] border border-white/12 bg-white/[0.035] p-5 sm:p-6'
+                  >
+                    <span
+                      className='flex size-9 items-center justify-center rounded-[11px]'
+                      style={{ backgroundColor: service.tone }}
+                    >
+                      <Icon className='size-[18px] text-[var(--el-neutral-950)]' aria-hidden />
+                    </span>
+                    <h3
+                      className={cn(DISPLAY, 'mt-3.5 text-base font-bold tracking-tight')}
+                    >
+                      {service.title}
+                    </h3>
+                    <p className='mt-2 text-sm leading-relaxed text-[var(--el-neutral-300)]'>
+                      {service.body}
+                    </p>
+                  </li>
+                );
+              })}
+            </ul>
+          </div>
+        </section>
+
+        <section className={cn(CONTAINER, 'py-12 sm:py-16')}>
+          <div className='flex flex-wrap items-end justify-between gap-4'>
+            <div>
+              <p className='text-primary text-[11.5px] font-bold tracking-[0.09em] uppercase'>
+                In their words
+              </p>
+              <h2
+                className={cn(
+                  DISPLAY,
+                  'text-foreground mt-2 text-2xl font-bold tracking-tight sm:text-3xl'
+                )}
+              >
+                The people already using it
+              </h2>
+            </div>
+            <p className='text-muted-foreground max-w-[34ch] text-xs leading-relaxed sm:text-right'>
+              Bracketed text is a placeholder - drop in real quotes before this page goes live.
+            </p>
+          </div>
+
+          <ul className='mt-8 grid gap-[18px] sm:grid-cols-2 lg:grid-cols-3'>
+            {QUOTES.map(entry => (
+              <li
+                key={entry.name}
+                className={cn(
+                  toneFor(entry.name),
+                  'border-border bg-card flex flex-col gap-4 rounded-[18px] border p-5 sm:p-6'
+                )}
+              >
+                <Quote className={cn(TONE_INK, 'size-[22px]')} aria-hidden />
+                <p className='text-foreground grow text-sm leading-relaxed'>{entry.quote}</p>
+                <div className='border-border/70 flex items-center gap-3 border-t pt-4'>
+                  <span
+                    className={cn(
+                      TONE_INK,
+                      'bg-[color-mix(in_oklch,var(--tone)_14%,var(--card))] flex size-9 items-center justify-center rounded-full text-[13px] font-bold'
+                    )}
+                  >
+                    {entry.initials}
+                  </span>
+                  <span className='min-w-0'>
+                    <span className='text-foreground block text-[13.5px] font-semibold'>
+                      {entry.name}
+                    </span>
+                    <span className='text-muted-foreground mt-0.5 block text-xs'>{entry.role}</span>
+                  </span>
+                </div>
+              </li>
+            ))}
+          </ul>
         </section>
 
         <section
