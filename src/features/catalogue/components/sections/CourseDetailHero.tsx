@@ -48,7 +48,7 @@ export function CourseDetailHero({
   return (
     <Card className={cn('gap-0 overflow-hidden py-0', className)}>
       <div
-        className='relative h-[172px] sm:h-[200px] lg:h-[244px]'
+        className='relative flex min-h-[172px] items-end sm:min-h-[200px] lg:min-h-[244px]'
         style={
           {
             '--course-brand-mid': 'color-mix(in oklch, var(--primary) 78%, black)',
@@ -71,7 +71,9 @@ export function CourseDetailHero({
           }}
         />
 
-        <div className='absolute inset-x-0 bottom-0 px-4 py-5 sm:px-7 sm:py-6'>
+        {/* In flow, not pinned to the bottom of a fixed band: a long title used to
+            grow upward and get clipped by the card's `overflow-hidden`. */}
+        <div className='relative w-full px-4 py-5 sm:px-7 sm:py-6'>
           {leadCategory || course.status ? (
             <div className='mb-3 flex flex-wrap gap-2'>
               {leadCategory ? <HeroChip variant='solid'>{leadCategory}</HeroChip> : null}
@@ -86,8 +88,9 @@ export function CourseDetailHero({
             {title}
           </h1>
 
+          {/* Two lines at every breakpoint, as the dashboard record already does. */}
           {summary ? (
-            <p className='mt-2 line-clamp-2 max-w-[660px] text-sm leading-[1.5] text-white/85 sm:line-clamp-none sm:text-[15px]'>
+            <p className='mt-2 line-clamp-2 max-w-[660px] text-sm leading-[1.5] text-white/85 sm:text-[15px]'>
               {summary}
             </p>
           ) : null}
