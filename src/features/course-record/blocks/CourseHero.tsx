@@ -20,7 +20,11 @@ import type { CourseBlockAsyncProps } from '../types';
 
 export interface CourseHeroProps extends CourseBlockAsyncProps {
   title?: string;
-  /** The one-paragraph course description under the title. */
+  /**
+   * The short blurb under the title — two lines, always. It is a summary, not the
+   * description: the full text renders in the Overview tab's "About this course".
+   * Unclamping it on wide screens let a long description fill the whole hero.
+   */
   summary?: string;
   /** First chip is filled; the rest are outlined, as in the artboard. */
   categories?: readonly string[];
@@ -131,7 +135,7 @@ export function CourseHero({
             </h1>
 
             {summary ? (
-              <p className='mt-2 line-clamp-2 max-w-[660px] text-sm leading-[1.5] text-white/85 sm:line-clamp-none sm:text-[15px]'>
+              <p className='mt-2 line-clamp-2 max-w-[660px] text-sm leading-[1.5] text-white/85 sm:text-[15px]'>
                 {summary}
               </p>
             ) : null}
