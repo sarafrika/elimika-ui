@@ -2266,6 +2266,12 @@ export const QuizAttemptSchema = {
       example: '85.00 / 100.00 (85%)',
       readOnly: true,
     },
+    time_display: {
+      type: 'string',
+      description: '**[READ-ONLY]** Formatted display of the time taken to complete the quiz.',
+      example: '1 hour 15 minutes',
+      readOnly: true,
+    },
     attempt_category: {
       type: 'string',
       description: '**[READ-ONLY]** Formatted category of the attempt based on outcome and status.',
@@ -2276,12 +2282,6 @@ export const QuizAttemptSchema = {
       type: 'string',
       description: '**[READ-ONLY]** Comprehensive summary of the quiz attempt performance.',
       example: 'Passed on attempt 2 with 85% score',
-      readOnly: true,
-    },
-    time_display: {
-      type: 'string',
-      description: '**[READ-ONLY]** Formatted display of the time taken to complete the quiz.',
-      example: '1 hour 15 minutes',
       readOnly: true,
     },
   },
@@ -4633,6 +4633,13 @@ export const AvailabilitySlotSchema = {
       example: 'instructor@sarafrika.com',
       readOnly: true,
     },
+    duration_minutes: {
+      type: 'integer',
+      format: 'int64',
+      description: '**[READ-ONLY]** Duration of the availability slot in minutes.',
+      example: 480,
+      readOnly: true,
+    },
     duration_formatted: {
       type: 'string',
       description: '**[READ-ONLY]** Human-readable formatted duration.',
@@ -4656,13 +4663,6 @@ export const AvailabilitySlotSchema = {
       type: 'string',
       description: '**[READ-ONLY]** Human-readable description of the availability pattern.',
       example: 'Weekly on Monday',
-      readOnly: true,
-    },
-    duration_minutes: {
-      type: 'integer',
-      format: 'int64',
-      description: '**[READ-ONLY]** Duration of the availability slot in minutes.',
-      example: 480,
       readOnly: true,
     },
   },
@@ -7820,6 +7820,73 @@ export const CommerceCatalogueItemSchema = {
       format: 'date-time',
       description: 'Last updated timestamp',
     },
+    course: {
+      $ref: '#/components/schemas/CourseCatalogueSnapshot',
+      description: `Public attributes of the course this entry sells, so a storefront can render a
+catalogue page without fetching each course separately.
+
+Present on course-backed entries returned by \`/search\`; null for class- and
+program-backed entries, and on endpoints that do not resolve it. Carries display
+fields only — the course's commercial terms are not part of this projection.
+`,
+    },
+  },
+} as const;
+
+export const CourseCatalogueSnapshotSchema = {
+  type: 'object',
+  properties: {
+    uuid: {
+      type: 'string',
+      format: 'uuid',
+    },
+    name: {
+      type: 'string',
+    },
+    description: {
+      type: 'string',
+    },
+    thumbnail_url: {
+      type: 'string',
+    },
+    duration_hours: {
+      type: 'integer',
+      format: 'int32',
+    },
+    duration_minutes: {
+      type: 'integer',
+      format: 'int32',
+    },
+    category_names: {
+      type: 'array',
+      items: {
+        type: 'string',
+      },
+    },
+    price: {
+      type: 'number',
+    },
+    age_lower_limit: {
+      type: 'integer',
+      format: 'int32',
+    },
+    age_upper_limit: {
+      type: 'integer',
+      format: 'int32',
+    },
+    published: {
+      type: 'boolean',
+    },
+    accepts_new_enrollments: {
+      type: 'boolean',
+    },
+    creator_uuid: {
+      type: 'string',
+      format: 'uuid',
+    },
+    creator_name: {
+      type: 'string',
+    },
   },
 } as const;
 
@@ -8351,18 +8418,18 @@ conflict_resolution per template:
       example: false,
       readOnly: true,
     },
-    duration_formatted: {
-      type: 'string',
-      description: '**[READ-ONLY]** Human-readable formatted duration.',
-      example: '1h 30m',
-      readOnly: true,
-    },
     duration_minutes: {
       type: 'integer',
       format: 'int64',
       description:
         '**[READ-ONLY]** Computed duration of the class in minutes based on start and end times.',
       example: 90,
+      readOnly: true,
+    },
+    duration_formatted: {
+      type: 'string',
+      description: '**[READ-ONLY]** Human-readable formatted duration.',
+      example: '1h 30m',
       readOnly: true,
     },
     capacity_info: {
@@ -10023,6 +10090,13 @@ export const ScheduledInstanceSchema = {
       example: 'instructor@sarafrika.com',
       readOnly: true,
     },
+    duration_minutes: {
+      type: 'integer',
+      format: 'int64',
+      description: '**[READ-ONLY]** Duration of the scheduled instance in minutes.',
+      example: 90,
+      readOnly: true,
+    },
     duration_formatted: {
       type: 'string',
       description: '**[READ-ONLY]** Human-readable formatted duration.',
@@ -10040,13 +10114,6 @@ export const ScheduledInstanceSchema = {
       description:
         '**[READ-ONLY]** Indicates if the scheduled instance is currently active (ongoing).',
       example: false,
-      readOnly: true,
-    },
-    duration_minutes: {
-      type: 'integer',
-      format: 'int64',
-      description: '**[READ-ONLY]** Duration of the scheduled instance in minutes.',
-      example: 90,
       readOnly: true,
     },
     can_be_cancelled: {
@@ -12115,18 +12182,6 @@ export const EnrollmentSchema = {
       example: true,
       readOnly: true,
     },
-    can_be_cancelled: {
-      type: 'boolean',
-      description: '**[READ-ONLY]** Indicates if the enrollment can be cancelled.',
-      example: true,
-      readOnly: true,
-    },
-    is_attendance_marked: {
-      type: 'boolean',
-      description: '**[READ-ONLY]** Indicates if attendance has been marked for this enrollment.',
-      example: false,
-      readOnly: true,
-    },
     did_attend: {
       type: 'boolean',
       description: '**[READ-ONLY]** Indicates if the student attended the class.',
@@ -12137,6 +12192,18 @@ export const EnrollmentSchema = {
       type: 'string',
       description: '**[READ-ONLY]** Human-readable description of the enrollment status.',
       example: 'Student is enrolled in the class',
+      readOnly: true,
+    },
+    is_attendance_marked: {
+      type: 'boolean',
+      description: '**[READ-ONLY]** Indicates if attendance has been marked for this enrollment.',
+      example: false,
+      readOnly: true,
+    },
+    can_be_cancelled: {
+      type: 'boolean',
+      description: '**[READ-ONLY]** Indicates if the enrollment can be cancelled.',
+      example: true,
       readOnly: true,
     },
   },
@@ -19564,6 +19631,22 @@ export const CourseTrainerSummarySchema = {
   },
 } as const;
 
+export const ApiResponseCourseStatsSchema = {
+  type: 'object',
+  properties: {
+    success: {
+      type: 'boolean',
+    },
+    data: {
+      $ref: '#/components/schemas/CourseStats',
+    },
+    message: {
+      type: 'string',
+    },
+    error: {},
+  },
+} as const;
+
 export const CourseStatsSchema = {
   type: 'object',
   description:
@@ -20306,6 +20389,14 @@ export const CourseEnrollmentSchema = {
       example: 85.5,
       maximum: 100,
       minimum: 0,
+    },
+    course_version: {
+      type: 'integer',
+      format: 'int32',
+      description:
+        '**[READ-ONLY]** The course version this enrolment was sold against. Null follows the live course: the enrolment predates version pinning, or the course has no promoted version yet.',
+      example: 3,
+      readOnly: true,
     },
     created_date: {
       type: 'string',

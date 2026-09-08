@@ -13,9 +13,11 @@ import {
   searchCatalogue,
 } from '@/services/client';
 import type {
+  CatalogueCourseProjection,
   PublicCatalogueCourse,
   PublicCatalogueListResult,
   PublicCourseDetail,
+  PublicCourseSummary,
 } from '@/src/features/catalogue/types';
 import { resolveGeneratedData } from '@/src/lib/api/client.server';
 
@@ -35,7 +37,7 @@ const toJsonSafeMetadata = (metadata: PageMetadataLike): PageMetadataLike =>
     ])
   );
 
-const derivePrice = (course: Course, catalogueItem: CommerceCatalogueItem | null) => {
+const derivePrice = (course: PublicCourseSummary, catalogueItem: CommerceCatalogueItem | null) => {
   if (typeof course.price === 'number') {
     return course.price;
   }
@@ -87,17 +89,35 @@ const fetchCatalogueItem = async (courseUuid: string) => {
   return selectPublicCatalogueItem(extractList<CommerceCatalogueItem>(response));
 };
 
+/** The catalogue's projection, in the shape the cards read. */
+const toCourseSummary = (projection: CatalogueCourseProjection): PublicCourseSummary => ({
+  uuid: projection.uuid,
+  name: projection.name,
+  description: projection.description,
+  thumbnail_url: projection.thumbnail_url,
+  duration_hours: projection.duration_hours,
+  duration_minutes: projection.duration_minutes,
+  category_names: projection.category_names,
+  price: projection.price,
+  age_lower_limit: projection.age_lower_limit,
+  age_upper_limit: projection.age_upper_limit,
+  is_published: projection.published,
+  accepts_new_enrollments: projection.accepts_new_enrollments,
+  course_creator_uuid: projection.creator_uuid,
+});
+
 const enrichCourse = (
-  course: Course,
+  course: PublicCourseSummary,
   creator: CourseCreator | null,
-  catalogueItem: CommerceCatalogueItem | null
+  catalogueItem: CommerceCatalogueItem | null,
+  creatorName?: string
 ): PublicCatalogueCourse => {
   const priceAmount = derivePrice(course, catalogueItem);
 
   return {
     course,
     creator,
-    creatorName: getCreatorName(creator),
+    creatorName: creatorName ?? getCreatorName(creator),
     catalogueItem,
     priceAmount,
     currencyCode: deriveCurrencyCode(catalogueItem),
@@ -135,48 +155,38 @@ export const listPublicCatalogueCourses = async ({
     uniqueCourseMappings.set(item.course_uuid, item);
   }
 
-  const coursePairs = await Promise.all(
-    Array.from(uniqueCourseMappings.entries()).map(async ([courseUuid, catalogueItem]) => {
-      try {
-        const course = await fetchCourse(courseUuid);
-        return course ? { course, catalogueItem } : null;
-      } catch {
-        return null;
-      }
-    })
-  );
+  /*
+   * The catalogue row carries the course.
+   *
+   * This used to fetch each course and each creator separately - one request per
+   * row against `GET /courses/{uuid}`, which requires a token. Logged-out
+   * visitors got a 401 per card, every card was dropped by the surrounding
+   * catch, and the public catalogue rendered empty while the landing page's own
+   * counters - which never made that call - still reported the courses.
+   *
+   * The listing is now one request. A row whose `course` is missing is skipped
+   * rather than fetched: an entry pointing at a course that no longer exists is
+   * not something to paper over with a second call.
+   */
+  const items = Array.from(uniqueCourseMappings.values()).flatMap(catalogueItem => {
+    const projection = catalogueItem.course;
 
-  const validCoursePairs = coursePairs
-    .filter((pair): pair is { course: Course; catalogueItem: CommerceCatalogueItem } =>
-      Boolean(pair?.course?.uuid)
-    )
-    .filter(({ course }) => course.is_published !== false);
+    if (!projection || projection.published === false) {
+      return [];
+    }
 
-  const uniqueCreatorUuids = Array.from(
-    new Set(
-      validCoursePairs
-        .map(({ course }) => course.course_creator_uuid)
-        .filter((creatorUuid): creatorUuid is string => Boolean(creatorUuid))
-    )
-  );
-
-  const creatorEntries = await Promise.all(
-    uniqueCreatorUuids.map(async creatorUuid => {
-      try {
-        const creator = await fetchCreator(creatorUuid);
-        return [creatorUuid, creator] as const;
-      } catch {
-        return [creatorUuid, null] as const;
-      }
-    })
-  );
-
-  const creators = new Map<string, CourseCreator | null>(creatorEntries);
+    return [
+      enrichCourse(
+        toCourseSummary(projection),
+        null,
+        catalogueItem,
+        projection.creator_name ?? undefined
+      ),
+    ];
+  });
 
   return {
-    items: validCoursePairs.map(({ course, catalogueItem }) =>
-      enrichCourse(course, creators.get(course.course_creator_uuid) ?? null, catalogueItem)
-    ),
+    items,
     metadata: toJsonSafeMetadata(cataloguePage.metadata),
   };
 };

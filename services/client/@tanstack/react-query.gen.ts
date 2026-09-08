@@ -251,6 +251,7 @@ import {
   joinWaitlist,
   getAllCourses,
   createCourse,
+  restoreCourseVersion,
   unpublishCourse,
   uploadCourseThumbnail,
   publishCourse,
@@ -1273,6 +1274,9 @@ import type {
   CreateCourseData,
   CreateCourseError,
   CreateCourseResponse,
+  RestoreCourseVersionData,
+  RestoreCourseVersionError,
+  RestoreCourseVersionResponse,
   UnpublishCourseData,
   UnpublishCourseError,
   UnpublishCourseResponse,
@@ -5524,6 +5528,7 @@ export const getClassDefinitionQueryKey = (options: Options<GetClassDefinitionDa
 
 /**
  * Get a class definition by UUID
+ * sale_price is the public price. instructor_pay is included only for the parties to it — the class's own instructor, managers of the organisation that owns it and platform admins; every other caller receives the class without the field.
  */
 export const getClassDefinitionOptions = (options: Options<GetClassDefinitionData>) => {
   return queryOptions({
@@ -11430,6 +11435,90 @@ export const createCourseMutation = (
   return mutationOptions;
 };
 
+export const restoreCourseVersionQueryKey = (options: Options<RestoreCourseVersionData>) =>
+  createQueryKey('restoreCourseVersion', options);
+
+/**
+ * Restore a course version
+ * Loads an approved version back into the course's **draft**, ready for review.
+ *
+ * Restore never touches the live course. The snapshot is materialised into the
+ * shadow draft row, so putting an old version back travels the same
+ * review-and-promote road as any other edit — `GET /{uuid}/edit/diff` shows what
+ * it would change before anyone commits to it, and the live course keeps serving
+ * its current content until the edit is approved.
+ *
+ * Rows the version shares a uuid with are linked back to their live counterparts,
+ * so promotion updates them in place and learner progress survives. A lesson the
+ * version carries that no longer exists live is re-added; a live lesson the
+ * version never had is dropped when the edit is promoted.
+ *
+ * Fails with 409 if an edit is already open — restoring over it would silently
+ * discard work that was never reviewed. Promote or discard that edit first.
+ *
+ * **Authorization:** Only the course owner.
+ *
+ */
+export const restoreCourseVersionOptions = (options: Options<RestoreCourseVersionData>) => {
+  return queryOptions({
+    queryFn: async ({ queryKey, signal }) => {
+      const { data } = await restoreCourseVersion({
+        ...options,
+        ...queryKey[0],
+        signal,
+        throwOnError: true,
+      });
+      return data;
+    },
+    queryKey: restoreCourseVersionQueryKey(options),
+  });
+};
+
+/**
+ * Restore a course version
+ * Loads an approved version back into the course's **draft**, ready for review.
+ *
+ * Restore never touches the live course. The snapshot is materialised into the
+ * shadow draft row, so putting an old version back travels the same
+ * review-and-promote road as any other edit — `GET /{uuid}/edit/diff` shows what
+ * it would change before anyone commits to it, and the live course keeps serving
+ * its current content until the edit is approved.
+ *
+ * Rows the version shares a uuid with are linked back to their live counterparts,
+ * so promotion updates them in place and learner progress survives. A lesson the
+ * version carries that no longer exists live is re-added; a live lesson the
+ * version never had is dropped when the edit is promoted.
+ *
+ * Fails with 409 if an edit is already open — restoring over it would silently
+ * discard work that was never reviewed. Promote or discard that edit first.
+ *
+ * **Authorization:** Only the course owner.
+ *
+ */
+export const restoreCourseVersionMutation = (
+  options?: Partial<Options<RestoreCourseVersionData>>
+): UseMutationOptions<
+  RestoreCourseVersionResponse,
+  RestoreCourseVersionError,
+  Options<RestoreCourseVersionData>
+> => {
+  const mutationOptions: UseMutationOptions<
+    RestoreCourseVersionResponse,
+    RestoreCourseVersionError,
+    Options<RestoreCourseVersionData>
+  > = {
+    mutationFn: async localOptions => {
+      const { data } = await restoreCourseVersion({
+        ...options,
+        ...localOptions,
+        throwOnError: true,
+      });
+      return data;
+    },
+  };
+  return mutationOptions;
+};
+
 export const unpublishCourseQueryKey = (options: Options<UnpublishCourseData>) =>
   createQueryKey('unpublishCourse', options);
 
@@ -15174,6 +15263,7 @@ export const getAllClassDefinitionsQueryKey = (options: Options<GetAllClassDefin
 
 /**
  * Get all class definitions
+ * instructor_pay is included only for the parties to it, as on every other class read. Sorting by it is rejected with 400 for everyone, parties included: ordering a listing by a figure it does not print would disclose the same figure one comparison at a time.
  */
 export const getAllClassDefinitionsOptions = (options: Options<GetAllClassDefinitionsData>) => {
   return queryOptions({
@@ -15197,6 +15287,7 @@ export const getAllClassDefinitionsInfiniteQueryKey = (
 
 /**
  * Get all class definitions
+ * instructor_pay is included only for the parties to it, as on every other class read. Sorting by it is rejected with 400 for everyone, parties included: ordering a listing by a figure it does not print would disclose the same figure one comparison at a time.
  */
 export const getAllClassDefinitionsInfiniteOptions = (
   options: Options<GetAllClassDefinitionsData>
@@ -26524,7 +26615,7 @@ export const getInstructorPayablesForOrganisationQueryKey = (
 
 /**
  * Get what an organisation owes each instructor
- * Aggregated from the instructor obligation ledger: one row was written per delivered session at the training fee that stood on the day, so re-rating a class does not change what has already been earned. Settled sessions move from amount_owed to amount_settled. Use /api/v1/organisations/{organisationUuid}/instructor-obligations for the row-level detail.
+ * Aggregated from the instructor obligation ledger: one row was written per delivered session at the training fee that stood on the day, so re-rating a class does not change what has already been earned. Settled sessions move from amount_owed to amount_settled. Use /api/v1/organisations/{organisationUuid}/instructor-obligations for the row-level detail. Restricted to the organisation's managers and platform admins.
  */
 export const getInstructorPayablesForOrganisationOptions = (
   options: Options<GetInstructorPayablesForOrganisationData>
@@ -26754,6 +26845,7 @@ export const getClassDefinitionsForCourseQueryKey = (
 
 /**
  * Get class definitions for a course
+ * The catalogue a learner browses before enrolling: what classes run on this course, when and at what sale_price. instructor_pay is included only for the parties to it — each class's own instructor, managers of the organisation that owns it and platform admins — so the organisation's margin is not published alongside its price.
  */
 export const getClassDefinitionsForCourseOptions = (
   options: Options<GetClassDefinitionsForCourseData>

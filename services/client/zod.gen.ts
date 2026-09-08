@@ -1496,6 +1496,11 @@ export const zQuizAttempt = z
       .describe('**[READ-ONLY]** Formatted display of the grade information.')
       .readonly()
       .optional(),
+    time_display: z
+      .string()
+      .describe('**[READ-ONLY]** Formatted display of the time taken to complete the quiz.')
+      .readonly()
+      .optional(),
     attempt_category: z
       .string()
       .describe('**[READ-ONLY]** Formatted category of the attempt based on outcome and status.')
@@ -1504,11 +1509,6 @@ export const zQuizAttempt = z
     performance_summary: z
       .string()
       .describe('**[READ-ONLY]** Comprehensive summary of the quiz attempt performance.')
-      .readonly()
-      .optional(),
-    time_display: z
-      .string()
-      .describe('**[READ-ONLY]** Formatted display of the time taken to complete the quiz.')
       .readonly()
       .optional(),
   })
@@ -2969,6 +2969,11 @@ export const zAvailabilitySlot = z
       )
       .readonly()
       .optional(),
+    duration_minutes: z.coerce
+      .bigint()
+      .describe('**[READ-ONLY]** Duration of the availability slot in minutes.')
+      .readonly()
+      .optional(),
     duration_formatted: z
       .string()
       .describe('**[READ-ONLY]** Human-readable formatted duration.')
@@ -2989,11 +2994,6 @@ export const zAvailabilitySlot = z
     availability_description: z
       .string()
       .describe('**[READ-ONLY]** Human-readable description of the availability pattern.')
-      .readonly()
-      .optional(),
-    duration_minutes: z.coerce
-      .bigint()
-      .describe('**[READ-ONLY]** Duration of the availability slot in minutes.')
       .readonly()
       .optional(),
   })
@@ -4751,6 +4751,23 @@ export const zCommerceCatalogueItemUpsertRequest = z
   })
   .describe('Payload for creating or updating catalogue mappings');
 
+export const zCourseCatalogueSnapshot = z.object({
+  uuid: z.string().uuid().optional(),
+  name: z.string().optional(),
+  description: z.string().optional(),
+  thumbnail_url: z.string().optional(),
+  duration_hours: z.number().int().optional(),
+  duration_minutes: z.number().int().optional(),
+  category_names: z.array(z.string()).optional(),
+  price: z.number().optional(),
+  age_lower_limit: z.number().int().optional(),
+  age_upper_limit: z.number().int().optional(),
+  published: z.boolean().optional(),
+  accepts_new_enrollments: z.boolean().optional(),
+  creator_uuid: z.string().uuid().optional(),
+  creator_name: z.string().optional(),
+});
+
 /**
  * Mapping between Elimika courses/classes and internal commerce variants
  */
@@ -4783,6 +4800,7 @@ export const zCommerceCatalogueItem = z
       .optional(),
     created_date: z.string().datetime().describe('Created timestamp').optional(),
     updated_date: z.string().datetime().describe('Last updated timestamp').optional(),
+    course: zCourseCatalogueSnapshot.optional(),
   })
   .describe('Mapping between Elimika courses/classes and internal commerce variants');
 
@@ -5170,16 +5188,16 @@ export const zClassDefinition = z
       )
       .readonly()
       .optional(),
-    duration_formatted: z
-      .string()
-      .describe('**[READ-ONLY]** Human-readable formatted duration.')
-      .readonly()
-      .optional(),
     duration_minutes: z.coerce
       .bigint()
       .describe(
         '**[READ-ONLY]** Computed duration of the class in minutes based on start and end times.'
       )
+      .readonly()
+      .optional(),
+    duration_formatted: z
+      .string()
+      .describe('**[READ-ONLY]** Human-readable formatted duration.')
       .readonly()
       .optional(),
     capacity_info: z
@@ -6007,6 +6025,11 @@ export const zScheduledInstance = z
       )
       .readonly()
       .optional(),
+    duration_minutes: z.coerce
+      .bigint()
+      .describe('**[READ-ONLY]** Duration of the scheduled instance in minutes.')
+      .readonly()
+      .optional(),
     duration_formatted: z
       .string()
       .describe('**[READ-ONLY]** Human-readable formatted duration.')
@@ -6022,11 +6045,6 @@ export const zScheduledInstance = z
       .describe(
         '**[READ-ONLY]** Indicates if the scheduled instance is currently active (ongoing).'
       )
-      .readonly()
-      .optional(),
-    duration_minutes: z.coerce
-      .bigint()
-      .describe('**[READ-ONLY]** Duration of the scheduled instance in minutes.')
       .readonly()
       .optional(),
     can_be_cancelled: z
@@ -7210,16 +7228,6 @@ export const zEnrollment = z
       .describe('**[READ-ONLY]** Indicates if the enrollment is still active (not cancelled).')
       .readonly()
       .optional(),
-    can_be_cancelled: z
-      .boolean()
-      .describe('**[READ-ONLY]** Indicates if the enrollment can be cancelled.')
-      .readonly()
-      .optional(),
-    is_attendance_marked: z
-      .boolean()
-      .describe('**[READ-ONLY]** Indicates if attendance has been marked for this enrollment.')
-      .readonly()
-      .optional(),
     did_attend: z
       .boolean()
       .describe('**[READ-ONLY]** Indicates if the student attended the class.')
@@ -7228,6 +7236,16 @@ export const zEnrollment = z
     status_description: z
       .string()
       .describe('**[READ-ONLY]** Human-readable description of the enrollment status.')
+      .readonly()
+      .optional(),
+    is_attendance_marked: z
+      .boolean()
+      .describe('**[READ-ONLY]** Indicates if attendance has been marked for this enrollment.')
+      .readonly()
+      .optional(),
+    can_be_cancelled: z
+      .boolean()
+      .describe('**[READ-ONLY]** Indicates if the enrollment can be cancelled.')
       .readonly()
       .optional(),
   })
@@ -11131,6 +11149,13 @@ export const zCourseStats = z
     'Course statistics. The scoped and owner blocks are omitted entirely unless the caller is entitled to them.'
   );
 
+export const zApiResponseCourseStats = z.object({
+  success: z.boolean().optional(),
+  data: zCourseStats.optional(),
+  message: z.string().optional(),
+  error: z.unknown().optional(),
+});
+
 export const zPagedDtoCourseRubricAssociation = z.object({
   content: z.array(zCourseRubricAssociation).optional(),
   metadata: zPageMetadata.optional(),
@@ -11476,6 +11501,14 @@ export const zCourseEnrollment = z
       .gte(0)
       .lte(100)
       .describe('**[OPTIONAL]** Final grade achieved by the student in the course.')
+      .optional(),
+    course_version: z
+      .number()
+      .int()
+      .describe(
+        '**[READ-ONLY]** The course version this enrolment was sold against. Null follows the live course: the enrolment predates version pinning, or the course has no promoted version yet.'
+      )
+      .readonly()
       .optional(),
     created_date: z
       .string()
@@ -16788,6 +16821,20 @@ export const zCreateCourseData = z.object({
  */
 export const zCreateCourseResponse = zCourse;
 
+export const zRestoreCourseVersionData = z.object({
+  body: z.never().optional(),
+  path: z.object({
+    uuid: z.string().uuid().describe('UUID of the course'),
+    versionNumber: z.number().int().describe('Version number to restore'),
+  }),
+  query: z.never().optional(),
+});
+
+/**
+ * Version restored into the draft
+ */
+export const zRestoreCourseVersionResponse = zApiResponseCourse;
+
 export const zUnpublishCourseData = z.object({
   body: z.never().optional(),
   path: z.object({
@@ -20587,7 +20634,7 @@ export const zGetCourseStatsData = z.object({
 /**
  * Statistics retrieved successfully
  */
-export const zGetCourseStatsResponse = zCourseStats;
+export const zGetCourseStatsResponse = zApiResponseCourseStats;
 
 export const zCheckRubricAssociationData = z.object({
   body: z.never().optional(),
