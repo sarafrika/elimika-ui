@@ -20,6 +20,7 @@ import {
   PROSPECT_ACCESS_LABEL,
   PROSPECT_BREADCRUMB_ROOT,
 } from '@/src/features/catalogue/prospect';
+import type { CourseTrainingRequirement } from '@/services/client';
 import type { PublicCourseDetail } from '@/src/features/catalogue/types';
 import { CataloguePageShell } from './CataloguePageShell';
 import { CatalogueStatusCard } from './CatalogueStatusCard';
@@ -60,6 +61,17 @@ export function PublicCourseDetailPage({ detail }: { detail: PublicCourseDetail 
 
   // Outline only: the public response carries no lesson items, so `items` stays
   // absent and the block renders its locked notice instead of an empty list.
+  // The block wants the full record shape; the public projection carries the
+  // display fields, and course_uuid is known here.
+  const requirements = (course.training_requirements ?? []).map(requirement => ({
+    ...requirement,
+    course_uuid: course.uuid ?? '',
+    name: requirement.name ?? '',
+    requirement_type: (requirement.requirement_type ??
+      'equipment') as CourseTrainingRequirement['requirement_type'],
+    provided_by: requirement.provided_by as CourseTrainingRequirement['provided_by'],
+  }));
+
   const curriculum: CourseCurriculumLesson[] = lessons.map((lesson, index) => ({
     number: lesson.lesson_number || index + 1,
     title: lesson.title ?? `Lesson ${index + 1}`,
@@ -108,6 +120,7 @@ export function PublicCourseDetailPage({ detail }: { detail: PublicCourseDetail 
             description={course.description}
             objectives={toBulletLines(course.objectives)}
             prerequisites={toBulletLines(course.prerequisites)}
+            requirements={requirements}
           />
           <CurriculumTab access={PROSPECT} lessons={curriculum} lessonCount={lessons.length} />
         </div>

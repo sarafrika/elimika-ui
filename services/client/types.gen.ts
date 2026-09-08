@@ -2219,13 +2219,13 @@ export type InstructorDocument = {
    */
   readonly updated_by?: string;
   /**
-   * **[READ-ONLY]** Indicates if the document has expired based on the expiry date.
-   */
-  readonly is_expired?: boolean;
-  /**
    * **[READ-ONLY]** API-relative URL for previewing or downloading the uploaded document.
    */
   readonly file_url?: string;
+  /**
+   * **[READ-ONLY]** Indicates if the document has expired based on the expiry date.
+   */
+  readonly is_expired?: boolean;
   /**
    * **[READ-ONLY]** Human-readable formatted file size.
    */
@@ -2480,10 +2480,6 @@ export type Course = {
    */
   readonly is_published?: boolean;
   /**
-   * **[READ-ONLY]** Indicates if the course is currently accepting new student enrollments.
-   */
-  readonly accepts_new_enrollments?: boolean;
-  /**
    * **[READ-ONLY]** Indicates if the course is still in draft mode.
    */
   readonly is_draft?: boolean;
@@ -2495,6 +2491,10 @@ export type Course = {
    * **[READ-ONLY]** Indicates if the course is currently under review.
    */
   readonly is_in_review?: boolean;
+  /**
+   * **[READ-ONLY]** Indicates if the course is currently accepting new student enrollments.
+   */
+  readonly accepts_new_enrollments?: boolean;
   /**
    * **[READ-ONLY]** Human-readable format of total course duration.
    */
@@ -3358,13 +3358,13 @@ export type CourseCreatorDocumentDto = {
   readonly updated_date?: Date;
   readonly updated_by?: string;
   /**
-   * **[READ-ONLY]** Indicates if the document has expired based on the expiry date.
-   */
-  readonly is_expired?: boolean;
-  /**
    * **[READ-ONLY]** API-relative URL for previewing or downloading the uploaded document.
    */
   readonly file_url?: string;
+  /**
+   * **[READ-ONLY]** Indicates if the document has expired based on the expiry date.
+   */
+  readonly is_expired?: boolean;
   /**
    * **[READ-ONLY]** Human-readable formatted file size.
    */
@@ -6141,6 +6141,10 @@ export type Enrollment = {
    */
   readonly is_active?: boolean;
   /**
+   * **[READ-ONLY]** Indicates if the enrollment can be cancelled.
+   */
+  readonly can_be_cancelled?: boolean;
+  /**
    * **[READ-ONLY]** Indicates if attendance has been marked for this enrollment.
    */
   readonly is_attendance_marked?: boolean;
@@ -6152,10 +6156,6 @@ export type Enrollment = {
    * **[READ-ONLY]** Human-readable description of the enrollment status.
    */
   readonly status_description?: string;
-  /**
-   * **[READ-ONLY]** Indicates if the enrollment can be cancelled.
-   */
-  readonly can_be_cancelled?: boolean;
 };
 
 export type ApiResponse = {
@@ -10338,6 +10338,18 @@ export type PublicCourseTrainingRequirement = {
    * Unit the quantity is counted in.
    */
   unit?: string;
+  /**
+   * What kind of thing this is.
+   */
+  requirement_type?: string;
+  /**
+   * Who supplies it.
+   */
+  provided_by?: string;
+  /**
+   * Whether delivery depends on it.
+   */
+  is_mandatory?: boolean;
 };
 
 export type ApiResponsePagedDtoLesson = {
