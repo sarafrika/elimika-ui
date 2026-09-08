@@ -6141,6 +6141,10 @@ export type Enrollment = {
    */
   readonly is_active?: boolean;
   /**
+   * **[READ-ONLY]** Indicates if attendance has been marked for this enrollment.
+   */
+  readonly is_attendance_marked?: boolean;
+  /**
    * **[READ-ONLY]** Indicates if the student attended the class.
    */
   readonly did_attend?: boolean;
@@ -6148,10 +6152,6 @@ export type Enrollment = {
    * **[READ-ONLY]** Human-readable description of the enrollment status.
    */
   readonly status_description?: string;
-  /**
-   * **[READ-ONLY]** Indicates if attendance has been marked for this enrollment.
-   */
-  readonly is_attendance_marked?: boolean;
   /**
    * **[READ-ONLY]** Indicates if the enrollment can be cancelled.
    */
@@ -10195,6 +10195,10 @@ export type OrganisationCourseContent = {
    * Lessons. Outline only without full access, then with full content.
    */
   lessons?: Array<OrganisationCourseLesson>;
+  /**
+   * The course itself: title, blurb, objectives, prerequisites and what a trainer must supply. Present for every caller, so a course page can be rendered without a second, authenticated request. Carries no commercial terms.
+   */
+  course?: PublicCourseProfile;
 };
 
 /**
@@ -10229,6 +10233,111 @@ export type OrganisationCourseLesson = {
    * Full lesson content. Only present when the caller has full read access.
    */
   contents?: Array<LessonContent>;
+};
+
+/**
+ * Public attributes of a course, for a course page served to any caller. Carries no commercial terms.
+ */
+export type PublicCourseProfile = {
+  /**
+   * Display title.
+   */
+  name?: string;
+  /**
+   * Rich-text blurb, as authored.
+   */
+  description?: string;
+  /**
+   * What a learner will be able to do afterwards.
+   */
+  objectives?: string;
+  /**
+   * What a learner needs before starting.
+   */
+  prerequisites?: string;
+  /**
+   * Public URL for the course thumbnail.
+   */
+  thumbnail_url?: string;
+  /**
+   * Public URL for the course banner.
+   */
+  banner_url?: string;
+  /**
+   * Public URL for the free intro video.
+   */
+  intro_video_url?: string;
+  /**
+   * Hours component of the advertised duration.
+   */
+  duration_hours?: number;
+  /**
+   * Minutes component of the advertised duration.
+   */
+  duration_minutes?: number;
+  /**
+   * Disciplines the course is filed under.
+   */
+  category_names?: Array<string>;
+  /**
+   * List price. The same figure the catalogue entry sells at.
+   */
+  price?: number;
+  /**
+   * Maximum learners in one class, or null when uncapped.
+   */
+  class_limit?: number;
+  /**
+   * Lower age bound, or null when unrestricted.
+   */
+  age_lower_limit?: number;
+  /**
+   * Upper age bound, or null when unrestricted.
+   */
+  age_upper_limit?: number;
+  /**
+   * Whether the course itself is published.
+   */
+  published?: boolean;
+  /**
+   * Whether the course can currently be enrolled on.
+   */
+  accepts_new_enrollments?: boolean;
+  /**
+   * The course creator.
+   */
+  creator_uuid?: string;
+  /**
+   * The creator's display name, resolved so the caller needs no second lookup.
+   */
+  creator_name?: string;
+  /**
+   * What a trainer must supply to deliver this course.
+   */
+  training_requirements?: Array<PublicCourseTrainingRequirement>;
+  /**
+   * When the course was last changed.
+   */
+  updated_date?: string;
+};
+
+export type PublicCourseTrainingRequirement = {
+  /**
+   * What is needed.
+   */
+  name?: string;
+  /**
+   * Free-text detail.
+   */
+  description?: string;
+  /**
+   * How many.
+   */
+  quantity?: number;
+  /**
+   * Unit the quantity is counted in.
+   */
+  unit?: string;
 };
 
 export type ApiResponsePagedDtoLesson = {

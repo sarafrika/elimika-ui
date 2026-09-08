@@ -12182,6 +12182,12 @@ export const EnrollmentSchema = {
       example: true,
       readOnly: true,
     },
+    is_attendance_marked: {
+      type: 'boolean',
+      description: '**[READ-ONLY]** Indicates if attendance has been marked for this enrollment.',
+      example: false,
+      readOnly: true,
+    },
     did_attend: {
       type: 'boolean',
       description: '**[READ-ONLY]** Indicates if the student attended the class.',
@@ -12192,12 +12198,6 @@ export const EnrollmentSchema = {
       type: 'string',
       description: '**[READ-ONLY]** Human-readable description of the enrollment status.',
       example: 'Student is enrolled in the class',
-      readOnly: true,
-    },
-    is_attendance_marked: {
-      type: 'boolean',
-      description: '**[READ-ONLY]** Indicates if attendance has been marked for this enrollment.',
-      example: false,
       readOnly: true,
     },
     can_be_cancelled: {
@@ -19932,6 +19932,11 @@ export const OrganisationCourseContentSchema = {
         $ref: '#/components/schemas/OrganisationCourseLesson',
       },
     },
+    course: {
+      $ref: '#/components/schemas/PublicCourseProfile',
+      description:
+        'The course itself: title, blurb, objectives, prerequisites and what a trainer must supply. Present for every caller, so a course page can be rendered without a second, authenticated request. Carries no commercial terms.',
+    },
   },
 } as const;
 
@@ -19978,6 +19983,141 @@ export const OrganisationCourseLessonSchema = {
       items: {
         $ref: '#/components/schemas/LessonContent',
       },
+    },
+  },
+} as const;
+
+export const PublicCourseProfileSchema = {
+  type: 'object',
+  description:
+    'Public attributes of a course, for a course page served to any caller. Carries no commercial terms.',
+  properties: {
+    name: {
+      type: 'string',
+      description: 'Display title.',
+      example: 'Piano Foundations for Beginners',
+    },
+    description: {
+      type: 'string',
+      description: 'Rich-text blurb, as authored.',
+    },
+    objectives: {
+      type: 'string',
+      description: 'What a learner will be able to do afterwards.',
+    },
+    prerequisites: {
+      type: 'string',
+      description: 'What a learner needs before starting.',
+    },
+    thumbnail_url: {
+      type: 'string',
+      description: 'Public URL for the course thumbnail.',
+    },
+    banner_url: {
+      type: 'string',
+      description: 'Public URL for the course banner.',
+    },
+    intro_video_url: {
+      type: 'string',
+      description: 'Public URL for the free intro video.',
+    },
+    duration_hours: {
+      type: 'integer',
+      format: 'int32',
+      description: 'Hours component of the advertised duration.',
+      example: 12,
+    },
+    duration_minutes: {
+      type: 'integer',
+      format: 'int32',
+      description: 'Minutes component of the advertised duration.',
+      example: 30,
+    },
+    category_names: {
+      type: 'array',
+      description: 'Disciplines the course is filed under.',
+      items: {
+        type: 'string',
+      },
+    },
+    price: {
+      type: 'number',
+      description: 'List price. The same figure the catalogue entry sells at.',
+      example: 6500,
+    },
+    class_limit: {
+      type: 'integer',
+      format: 'int32',
+      description: 'Maximum learners in one class, or null when uncapped.',
+      example: 24,
+    },
+    age_lower_limit: {
+      type: 'integer',
+      format: 'int32',
+      description: 'Lower age bound, or null when unrestricted.',
+      example: 8,
+    },
+    age_upper_limit: {
+      type: 'integer',
+      format: 'int32',
+      description: 'Upper age bound, or null when unrestricted.',
+      example: 14,
+    },
+    published: {
+      type: 'boolean',
+      description: 'Whether the course itself is published.',
+      example: true,
+    },
+    accepts_new_enrollments: {
+      type: 'boolean',
+      description: 'Whether the course can currently be enrolled on.',
+      example: true,
+    },
+    creator_uuid: {
+      type: 'string',
+      format: 'uuid',
+      description: 'The course creator.',
+    },
+    creator_name: {
+      type: 'string',
+      description: "The creator's display name, resolved so the caller needs no second lookup.",
+    },
+    training_requirements: {
+      type: 'array',
+      description: 'What a trainer must supply to deliver this course.',
+      items: {
+        $ref: '#/components/schemas/PublicCourseTrainingRequirement',
+      },
+    },
+    updated_date: {
+      type: 'string',
+      description: 'When the course was last changed.',
+    },
+  },
+} as const;
+
+export const PublicCourseTrainingRequirementSchema = {
+  type: 'object',
+  properties: {
+    name: {
+      type: 'string',
+      description: 'What is needed.',
+      example: 'Upright piano',
+    },
+    description: {
+      type: 'string',
+      description: 'Free-text detail.',
+    },
+    quantity: {
+      type: 'integer',
+      format: 'int32',
+      description: 'How many.',
+      example: 1,
+    },
+    unit: {
+      type: 'string',
+      description: 'Unit the quantity is counted in.',
+      example: 'per class',
     },
   },
 } as const;

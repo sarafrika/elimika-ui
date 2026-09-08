@@ -7228,6 +7228,11 @@ export const zEnrollment = z
       .describe('**[READ-ONLY]** Indicates if the enrollment is still active (not cancelled).')
       .readonly()
       .optional(),
+    is_attendance_marked: z
+      .boolean()
+      .describe('**[READ-ONLY]** Indicates if attendance has been marked for this enrollment.')
+      .readonly()
+      .optional(),
     did_attend: z
       .boolean()
       .describe('**[READ-ONLY]** Indicates if the student attended the class.')
@@ -7236,11 +7241,6 @@ export const zEnrollment = z
     status_description: z
       .string()
       .describe('**[READ-ONLY]** Human-readable description of the enrollment status.')
-      .readonly()
-      .optional(),
-    is_attendance_marked: z
-      .boolean()
-      .describe('**[READ-ONLY]** Indicates if attendance has been marked for this enrollment.')
       .readonly()
       .optional(),
     can_be_cancelled: z
@@ -11243,6 +11243,78 @@ export const zOrganisationCourseLesson = z
   })
   .describe('Lesson outline (always) plus content (only when the caller has full read access).');
 
+export const zPublicCourseTrainingRequirement = z.object({
+  name: z.string().describe('What is needed.').optional(),
+  description: z.string().describe('Free-text detail.').optional(),
+  quantity: z.number().int().describe('How many.').optional(),
+  unit: z.string().describe('Unit the quantity is counted in.').optional(),
+});
+
+/**
+ * Public attributes of a course, for a course page served to any caller. Carries no commercial terms.
+ */
+export const zPublicCourseProfile = z
+  .object({
+    name: z.string().describe('Display title.').optional(),
+    description: z.string().describe('Rich-text blurb, as authored.').optional(),
+    objectives: z.string().describe('What a learner will be able to do afterwards.').optional(),
+    prerequisites: z.string().describe('What a learner needs before starting.').optional(),
+    thumbnail_url: z.string().describe('Public URL for the course thumbnail.').optional(),
+    banner_url: z.string().describe('Public URL for the course banner.').optional(),
+    intro_video_url: z.string().describe('Public URL for the free intro video.').optional(),
+    duration_hours: z
+      .number()
+      .int()
+      .describe('Hours component of the advertised duration.')
+      .optional(),
+    duration_minutes: z
+      .number()
+      .int()
+      .describe('Minutes component of the advertised duration.')
+      .optional(),
+    category_names: z
+      .array(z.string())
+      .describe('Disciplines the course is filed under.')
+      .optional(),
+    price: z
+      .number()
+      .describe('List price. The same figure the catalogue entry sells at.')
+      .optional(),
+    class_limit: z
+      .number()
+      .int()
+      .describe('Maximum learners in one class, or null when uncapped.')
+      .optional(),
+    age_lower_limit: z
+      .number()
+      .int()
+      .describe('Lower age bound, or null when unrestricted.')
+      .optional(),
+    age_upper_limit: z
+      .number()
+      .int()
+      .describe('Upper age bound, or null when unrestricted.')
+      .optional(),
+    published: z.boolean().describe('Whether the course itself is published.').optional(),
+    accepts_new_enrollments: z
+      .boolean()
+      .describe('Whether the course can currently be enrolled on.')
+      .optional(),
+    creator_uuid: z.string().uuid().describe('The course creator.').optional(),
+    creator_name: z
+      .string()
+      .describe("The creator's display name, resolved so the caller needs no second lookup.")
+      .optional(),
+    training_requirements: z
+      .array(zPublicCourseTrainingRequirement)
+      .describe('What a trainer must supply to deliver this course.')
+      .optional(),
+    updated_date: z.string().describe('When the course was last changed.').optional(),
+  })
+  .describe(
+    'Public attributes of a course, for a course page served to any caller. Carries no commercial terms.'
+  );
+
 /**
  * Course content scoped to the caller. Outline only unless the caller's access carries full read rights.
  */
@@ -11271,6 +11343,7 @@ export const zOrganisationCourseContent = z
       .array(zOrganisationCourseLesson)
       .describe('Lessons. Outline only without full access, then with full content.')
       .optional(),
+    course: zPublicCourseProfile.optional(),
   })
   .describe(
     "Course content scoped to the caller. Outline only unless the caller's access carries full read rights."

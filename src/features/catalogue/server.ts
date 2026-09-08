@@ -7,7 +7,8 @@ import {
   type CourseCreator,
   getCourseByUuid,
   getCourseCreatorByUuid,
-  getCourseLessons,
+  getCourseContent,
+  type OrganisationCourseContent,
   type Lesson,
   resolveByCourseOrClass,
   searchCatalogue,
@@ -195,42 +196,60 @@ export const getPublicCourseDetail = async (
   courseUuid: string
 ): Promise<PublicCourseDetail | null> => {
   try {
-    const course = await fetchCourse(courseUuid);
-
-    if (!course || course.is_published === false) {
-      return null;
-    }
-
-    const [creatorResult, lessonsResult, catalogueItemResult] = await Promise.allSettled([
-      course.course_creator_uuid ? fetchCreator(course.course_creator_uuid) : Promise.resolve(null),
+    // One public call. The course record and the lesson listing are both
+    // authenticated, so fetching them here 404'd the page for logged-out visitors.
+    const [contentResult, catalogueItemResult] = await Promise.allSettled([
       resolveGeneratedData(
-        getCourseLessons({
-          path: { courseUuid },
-          query: { pageable: {} },
-        }),
-        'Failed to load course lessons'
+        getCourseContent({ path: { courseUuid } }),
+        'Failed to load course content'
       ),
       fetchCatalogueItem(courseUuid),
     ]);
 
-    const creator = creatorResult.status === 'fulfilled' ? creatorResult.value : null;
-    const lessonsResponse = lessonsResult.status === 'fulfilled' ? lessonsResult.value : null;
+    const content =
+      contentResult.status === 'fulfilled'
+        ? extractEntity<OrganisationCourseContent>(contentResult.value)
+        : null;
     const catalogueItem =
       catalogueItemResult.status === 'fulfilled' ? catalogueItemResult.value : null;
 
-    if (!catalogueItem) {
+    const profile = content?.course;
+
+    if (!profile || profile.published === false || !catalogueItem) {
       return null;
     }
 
-    const lessons = lessonsResponse ? extractPage<Lesson>(lessonsResponse).items : [];
+    const course: PublicCourseSummary = {
+      uuid: courseUuid,
+      name: profile.name,
+      description: profile.description,
+      objectives: profile.objectives,
+      prerequisites: profile.prerequisites,
+      thumbnail_url: profile.thumbnail_url,
+      banner_url: profile.banner_url,
+      intro_video_url: profile.intro_video_url,
+      duration_hours: profile.duration_hours,
+      duration_minutes: profile.duration_minutes,
+      category_names: profile.category_names,
+      price: profile.price,
+      class_limit: profile.class_limit,
+      age_lower_limit: profile.age_lower_limit,
+      age_upper_limit: profile.age_upper_limit,
+      is_published: profile.published,
+      accepts_new_enrollments: profile.accepts_new_enrollments,
+      course_creator_uuid: profile.creator_uuid,
+      training_requirements: profile.training_requirements,
+      updated_date: profile.updated_date,
+    };
+
     const priceAmount = derivePrice(course, catalogueItem);
 
     return {
       course,
-      creator,
-      creatorName: getCreatorName(creator),
+      creator: null,
+      creatorName: profile.creator_name ?? undefined,
       catalogueItem,
-      lessons,
+      lessons: content?.lessons ?? [],
       priceAmount,
       currencyCode: deriveCurrencyCode(catalogueItem),
       isFree: deriveIsFree(priceAmount),

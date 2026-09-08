@@ -4,7 +4,7 @@ import type {
   Course,
   CourseCatalogueSnapshot,
   CourseCreator,
-  Lesson,
+  PublicCourseProfile,
 } from '@/services/client';
 
 /**
@@ -35,6 +35,24 @@ export type PublicCourseSummary = {
   is_published?: boolean;
   accepts_new_enrollments?: boolean;
   course_creator_uuid?: string;
+  // Detail-page only. A card never reads these, so the listing leaves them unset
+  // rather than carrying paragraphs down every row.
+  objectives?: string;
+  prerequisites?: string;
+  class_limit?: number;
+  intro_video_url?: string;
+  banner_url?: string;
+  training_requirements?: PublicCourseProfile['training_requirements'];
+  updated_date?: string;
+};
+
+/** A lesson as the public outline carries it: no content items, by design. */
+export type PublicCourseLesson = {
+  uuid?: string;
+  lesson_number?: number;
+  title?: string;
+  description?: string;
+  learning_objectives?: string;
 };
 
 /** The catalogue's own projection is one of the shapes a card can render from. */
@@ -56,11 +74,11 @@ export type PublicCatalogueListResult = {
 };
 
 export type PublicCourseDetail = {
-  course: Course;
+  course: PublicCourseSummary;
   creator: CourseCreator | null;
   creatorName?: string;
   catalogueItem: CommerceCatalogueItem | null;
-  lessons: Lesson[];
+  lessons: PublicCourseLesson[];
   priceAmount: number | null;
   currencyCode: string | null;
   isFree: boolean;

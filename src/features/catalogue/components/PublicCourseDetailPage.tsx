@@ -1,6 +1,21 @@
 import { ArrowLeft, CircleAlert } from 'lucide-react';
 import Link from 'next/link';
-import { getCourseDisplayTitle } from '@/src/features/catalogue/format';
+import {
+  AccessCard,
+  CourseHero,
+  type CourseCurriculumLesson,
+  CurriculumTab,
+  EnrolPanel,
+  GateBanner,
+  GlanceCard,
+  OverviewTab,
+} from '@/src/features/course-record/blocks';
+import {
+  formatCourseDuration,
+  getCourseDisplayTitle,
+  stripRichText,
+  toBulletLines,
+} from '@/src/features/catalogue/format';
 import {
   PROSPECT_ACCESS_LABEL,
   PROSPECT_BREADCRUMB_ROOT,
@@ -8,32 +23,19 @@ import {
 import type { PublicCourseDetail } from '@/src/features/catalogue/types';
 import { CataloguePageShell } from './CataloguePageShell';
 import { CatalogueStatusCard } from './CatalogueStatusCard';
-import { CourseAccessCard } from './sections/CourseAccessCard';
-import { CourseCurriculumSection } from './sections/CourseCurriculumSection';
-import { CourseDetailHero } from './sections/CourseDetailHero';
-import { CourseEnrolPanel } from './sections/CourseEnrolPanel';
-import { CourseGateBanner } from './sections/CourseGateBanner';
-import { CourseGlanceCard } from './sections/CourseGlanceCard';
-import { CourseOverviewSection } from './sections/CourseOverviewSection';
 
 /**
  * The public course record, as a prospect sees it.
  *
- * This is the one course-detail surface in the platform that is **not** the
- * client `CourseRecordPage`, and deliberately so: it is server-rendered, so a
- * crawler receives the whole record as HTML and the first paint carries the
- * hero rather than a spinner (see `src/features/course-record/ADOPTION.md`,
- * "Server rendering and SEO"). What it borrows from the record view is the
- * design — the back bar and access pill, the gradient hero and stat strip, the
- * gate banner, the body column and the 380px rail — not the machinery.
- *
- * Access is not decided here. A public listing has one viewer state, the
- * least-privileged of the eight, and this page shows the syllabus and the
- * commercial terms a learner is buying under. It never fetches lesson content,
- * so there is nothing withheld in the markup that a reader could recover; and it
- * never touches a rate card, a margin or a trainer's pay, which belong to the
- * parties in that contract and not to a public page.
+ * Server-rendered, so a crawler receives the record as HTML and the first paint
+ * carries the hero rather than a spinner — the one reason this is not the client
+ * `CourseRecordPage`. It renders the record's own blocks, which take props and
+ * never fetch, so the design is shared rather than copied.
  */
+
+/** The one viewer state a public listing has. The API decides it everywhere else. */
+const PROSPECT = 'prospect' as const;
+
 export function PublicCourseDetailPage({ detail }: { detail: PublicCourseDetail | null }) {
   if (!detail) {
     return (
@@ -51,11 +53,21 @@ export function PublicCourseDetailPage({ detail }: { detail: PublicCourseDetail 
     );
   }
 
-  const title = getCourseDisplayTitle(detail.course);
+  const { course, creator, creatorName, lessons, priceAmount, currencyCode } = detail;
+
+  const title = getCourseDisplayTitle(course);
+  const categories = Array.isArray(course.category_names) ? course.category_names : [];
+
+  // Outline only: the public response carries no lesson items, so `items` stays
+  // absent and the block renders its locked notice instead of an empty list.
+  const curriculum: CourseCurriculumLesson[] = lessons.map((lesson, index) => ({
+    number: lesson.lesson_number || index + 1,
+    title: lesson.title ?? `Lesson ${index + 1}`,
+    objective: stripRichText(lesson.learning_objectives) || stripRichText(lesson.description),
+  }));
 
   return (
     <CataloguePageShell contentClassName='gap-0 py-10 lg:py-12'>
-      {/* ── back bar ─────────────────────────────────────────────────── */}
       <div className='mb-5 flex flex-wrap items-center justify-between gap-x-4 gap-y-3'>
         <div className='flex min-w-0 items-center gap-2.5'>
           <BackToCourses />
@@ -71,23 +83,44 @@ export function PublicCourseDetailPage({ detail }: { detail: PublicCourseDetail 
         </span>
       </div>
 
-      {/* ── hero + stat strip ────────────────────────────────────────── */}
-      <CourseDetailHero detail={detail} className='mb-5' />
+      <CourseHero
+        className='mb-5'
+        title={title}
+        summary={stripRichText(course.description)}
+        categories={categories}
+        status={course.status}
+        creatorName={creatorName}
+        creatorRole={creator?.professional_headline || 'Course creator'}
+        lessonCount={lessons.length}
+        duration={formatCourseDuration(course) ?? undefined}
+      />
 
-      {/* ── gate banner ──────────────────────────────────────────────── */}
-      <CourseGateBanner introVideoUrl={detail.course.intro_video_url} className='mb-[22px]' />
+      <GateBanner
+        access={PROSPECT}
+        className='mb-[22px]'
+        actionHref={course.intro_video_url ?? undefined}
+      />
 
-      {/* ── body + rail ──────────────────────────────────────────────── */}
       <div className='grid items-start gap-[22px] lg:grid-cols-[minmax(0,1fr)_380px]'>
         <div className='flex min-w-0 flex-col gap-[18px]'>
-          <CourseOverviewSection detail={detail} />
-          <CourseCurriculumSection lessons={detail.lessons} />
+          <OverviewTab
+            access={PROSPECT}
+            description={course.description}
+            objectives={toBulletLines(course.objectives)}
+            prerequisites={toBulletLines(course.prerequisites)}
+          />
+          <CurriculumTab access={PROSPECT} lessons={curriculum} lessonCount={lessons.length} />
         </div>
 
         <aside className='flex min-w-0 flex-col gap-4 lg:sticky lg:top-24'>
-          <CourseAccessCard />
-          <CourseGlanceCard detail={detail} />
-          <CourseEnrolPanel detail={detail} />
+          <AccessCard access={PROSPECT} />
+          <GlanceCard access={PROSPECT} />
+          <EnrolPanel
+            price={priceAmount ?? undefined}
+            currency={currencyCode ?? undefined}
+            enrolHref='/auth/create-account'
+            compareHref={`/courses/${course.uuid ?? ''}`}
+          />
         </aside>
       </div>
     </CataloguePageShell>
@@ -98,9 +131,9 @@ function BackToCourses() {
   return (
     <Link
       href='/courses'
-      className='text-muted-foreground hover:text-foreground inline-flex h-8 items-center gap-2 rounded-[10px] px-2.5 text-sm font-medium transition-colors'
+      className='text-muted-foreground hover:text-foreground inline-flex items-center gap-1.5 text-sm font-medium transition-colors'
     >
-      <ArrowLeft className='size-4' />
+      <ArrowLeft className='size-4' aria-hidden='true' />
       Back to courses
     </Link>
   );
