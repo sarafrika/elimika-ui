@@ -89,14 +89,26 @@ export function CoursesRecommendationCard({
           ) : (
             <span />
           )}
-          <Button
-            asChild
-            variant={isApplyToTrain ? 'default' : 'outline'}
-            className='h-8 rounded-xl px-4 text-sm shadow-none'
-            onClick={() => onApplyToTrain?.(card)}
-          >
-            <p>{card.ctaLabel}</p>
-          </Button>
+          {/*
+            Two different actions wore one control: an "Enroll" card used to
+            open the apply-to-train sheet because the click handler ran whatever
+            the label said. Only an apply-to-train card opens the sheet now; an
+            enrol card is a link to where it says it goes.
+          */}
+          {isApplyToTrain ? (
+            <Button
+              type='button'
+              variant='default'
+              className='h-8 rounded-xl px-4 text-sm shadow-none'
+              onClick={() => onApplyToTrain?.(card)}
+            >
+              {card.ctaLabel}
+            </Button>
+          ) : (
+            <Button asChild variant='outline' className='h-8 rounded-xl px-4 text-sm shadow-none'>
+              <Link href={card.ctaHref}>{card.ctaLabel}</Link>
+            </Button>
+          )}
         </div>
       </div>
     </article>

@@ -25,14 +25,11 @@ import {
   CardContent,
   CardHeader
 } from '../../../../../../components/ui/card';
-import { CourseDetailsSheet } from './CourseDetailsSheet';
 import { CourseVideoPreviewModal } from './CourseVideoPreviewModal';
 
 type StudentCoursesCardProps = {
   card: CoursesCatalogCardData;
   type: string;
-  onOpenDetails: (card: CoursesCatalogCardData) => void;
-  onPrimaryAction?: (card: CoursesCatalogCardData) => void;
 };
 
 const imageToneClasses = {
@@ -41,16 +38,6 @@ const imageToneClasses = {
   warning: 'bg-gradient-to-br from-warning/20 via-warning/10 to-background',
 } as const;
 
-const ctaToneClasses: Record<NonNullable<CoursesCatalogCardData['ctaTone']>, string> = {
-  default: 'bg-primary text-primary-foreground hover:bg-primary/90',
-  pending:
-    'border border-[color:var(--warning)] bg-[color:var(--warning)] text-[color:var(--warning-foreground)] hover:brightness-95 disabled:opacity-100',
-  approved:
-    'border border-[color:var(--success)] bg-[color:var(--success)] text-[color:var(--success-foreground)] hover:brightness-95 disabled:opacity-100',
-  revoked:
-    'border border-destructive bg-destructive text-destructive-foreground hover:bg-destructive/90 disabled:opacity-100',
-};
-
 const levelStyles: Record<string, string> = {
   prep: 'bg-success/5 text-success border-success/20 border',
   beginner: 'bg-success/5 text-success border-success/20 border',
@@ -58,35 +45,32 @@ const levelStyles: Record<string, string> = {
   advanced: 'bg-primary/5 text-primary border-primary/20 border',
 };
 
-export function StudentCoursesCard({
-  card,
-  type,
-  onOpenDetails,
-  onPrimaryAction,
-}: StudentCoursesCardProps) {
+export function StudentCoursesCard({ card, type }: StudentCoursesCardProps) {
   const imageUrl = toAuthenticatedMediaUrl(card.imageUrl);
   const resolvedVideoUrl = toAuthenticatedMediaUrl(card.videoUrl);
-  const isLoading = !card.provider;
 
-  const [open, setOpen] = useState(false);
-  const [selectedId, setSelectedId] = useState<string | null>(null);
   const [videoPreviewOpen, setVideoPreviewOpen] = useState(false);
   const hasVideoPreview = Boolean(resolvedVideoUrl);
 
   return (
     <div className="h-full">
-      <Card
-        onClick={() => {
-          if (open) {
-            return;
-          }
+      <Card className="relative flex h-full min-h-[520px] flex-col overflow-hidden pt-0 transition hover:border-primary/40 hover:shadow-md gap-0">
+        {/*
+          The whole card opens the course record. An overlay link rather than an
+          onClick handler: it is a real anchor, so it is keyboard reachable, can
+          be opened in a new tab, and does not swallow the buttons stacked above
+          it — which carry `relative z-10` for exactly that reason. Its own
+          `z-[1]` keeps it over the cover image, which `fill` positions too.
+        */}
+        <Link
+          href={card.detailsHref}
+          className="focus-visible:ring-ring absolute inset-0 z-[1] rounded-[inherit] focus-visible:ring-2 focus-visible:outline-none"
+        >
+          <span className="sr-only">
+            {card.title ? `Open ${card.title}` : 'Open course details'}
+          </span>
+        </Link>
 
-          setSelectedId(card.id);
-          setOpen(true);
-          onOpenDetails(card);
-        }}
-        className="flex h-full min-h-[520px] cursor-pointer flex-col overflow-hidden pt-0 transition hover:border-primary/40 hover:shadow-md gap-0"
-      >
         {/* Cover */}
         <div className="relative h-40 w-full shrink-0 overflow-hidden">
           <ImageWithFallback
@@ -187,19 +171,23 @@ export function StudentCoursesCard({
               </span>
             </div>
 
-            <div className="flex min-w-0 items-center gap-1">
-              <GraduationCap className="h-3.5 w-3.5 shrink-0" />
-              <span className="truncate">
-                {card.minAge || 'Not available'}+
-              </span>
-            </div>
+            {/* "Not available+" was what an absent lower age limit used to render. */}
+            {typeof card.minAge === 'number' ? (
+              <div className="flex min-w-0 items-center gap-1">
+                <GraduationCap className="h-3.5 w-3.5 shrink-0" />
+                <span className="truncate">{card.minAge}+</span>
+              </div>
+            ) : null}
 
-            <div className="flex min-w-0 items-center gap-1">
-              <Layers className="h-3.5 w-3.5 shrink-0" />
-              <span className="truncate">
-                {card.units ?? 0} units
-              </span>
-            </div>
+            {/* No unit count in the list response — an absent row beats a fabricated 0. */}
+            {typeof card.units === 'number' ? (
+              <div className="flex min-w-0 items-center gap-1">
+                <Layers className="h-3.5 w-3.5 shrink-0" />
+                <span className="truncate">
+                  {card.units} units
+                </span>
+              </div>
+            ) : null}
 
             <div className="flex min-w-0 items-center gap-1">
               <Users className="h-3.5 w-3.5 shrink-0" />
@@ -223,11 +211,8 @@ export function StudentCoursesCard({
             </div>
           </div>
 
-          {/* Actions */}
-          <div
-            className="mt-auto grid shrink-0 grid-cols-2 gap-2"
-            onClick={e => e.stopPropagation()}
-          >
+          {/* Actions — stacked above the card's overlay link. */}
+          <div className="relative z-10 mt-auto grid shrink-0 grid-cols-2 gap-2">
             <Button asChild size="sm">
               <Link href={card.enrollHref}>
                 <Users className="mr-1 h-3 w-3" />
@@ -244,20 +229,6 @@ export function StudentCoursesCard({
           </div>
         </CardContent>
       </Card>
-
-      <CourseDetailsSheet
-        key={selectedId}
-        itemId={selectedId}
-        type={card.contentKind}
-        open={open}
-        onOpenChange={value => {
-          setOpen(value);
-
-          if (!value) {
-            setTimeout(() => setSelectedId(null), 200);
-          }
-        }}
-      />
 
       <CourseVideoPreviewModal
         open={videoPreviewOpen}

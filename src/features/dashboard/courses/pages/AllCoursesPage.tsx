@@ -17,7 +17,7 @@ import { useUserDomain } from '@/src/features/dashboard/context/user-domain-cont
 import { CourseCard } from '@/src/features/dashboard/courses/components/CourseCard';
 import { roleScopedDashboardPath } from '@/src/features/dashboard/lib/active-domain-storage';
 import { useQuery } from '@tanstack/react-query';
-import { BookOpen, Filter, Layers, Search } from 'lucide-react';
+import { BookOpen, Layers, Search } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { useDeferredValue, useMemo, useState } from 'react';
 
@@ -63,8 +63,8 @@ export default function AllCoursesPage() {
   // large lists re-filter.
   const deferredQuery = useDeferredValue(searchQuery);
 
-  const paginationMetadata = data?.data?.metadata;
-  const programPaginationMetadata = programsData?.data?.metadata;
+  const totalCoursePages = Number(data?.data?.metadata?.totalPages ?? 0);
+  const totalProgramPages = Number(programsData?.data?.metadata?.totalPages ?? 0);
 
   const { data: apiCat } = useQuery({
     ...getAllCategoriesOptions({ query: { pageable: {} } }),
@@ -177,10 +177,6 @@ export default function AllCoursesPage() {
                   onChange={e => setSearchQuery(e.target.value)}
                 />
               </div>
-              <Button variant='outline'>
-                <Filter className='mr-2 h-4 w-4' />
-                Filters
-              </Button>
             </div>
 
             {/* Category Tabs */}
@@ -228,7 +224,7 @@ export default function AllCoursesPage() {
                     router.push(
                       roleScopedDashboardPath(
                         activeDomain,
-                        `/dashboard/courses/available-classes/${course.uuid}`
+                        `/dashboard/all-courses/available-classes/${course.uuid}`
                       )
                     )
                   }
@@ -236,13 +232,13 @@ export default function AllCoursesPage() {
                     router.push(
                       roleScopedDashboardPath(
                         activeDomain,
-                        `/dashboard/courses/instructor?courseId=${course.uuid}`
+                        `/dashboard/all-courses/instructor?courseId=${course.uuid}`
                       )
                     )
                   }
                   handleClick={() =>
                     router.push(
-                      roleScopedDashboardPath(activeDomain, `/dashboard/courses/${course.uuid}`)
+                      roleScopedDashboardPath(activeDomain, `/dashboard/all-courses/${course.uuid}`)
                     )
                   }
                 />
@@ -269,26 +265,19 @@ export default function AllCoursesPage() {
               />
             )}
 
-            {/* Load More */}
-            {filteredCourses.length > 0 && (
-              <div className='my-12 text-center'>
-                <Button variant='outline'>Load More Courses</Button>
-              </div>
-            )}
-
-            {/* @ts-ignore */}
-            {paginationMetadata?.totalPages >= 1 && (
+            {totalCoursePages >= 1 ? (
               <CustomPagination
-                totalPages={paginationMetadata?.totalPages as number}
+                totalPages={totalCoursePages}
                 onPageChange={page => {
                   setPage(page - 1);
                 }}
               />
-            )}
+            ) : null}
           </TabsContent>
 
           <TabsContent value='programs' className='mt-0'>
-            {/* Course Grid */}
+            {/* Program grid. A training program has no record view — opening one
+                goes to the list of classes running it, which is its own surface. */}
             <div className='grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-4'>
               {filteredPrograms.map(program => (
                 <CourseCard
@@ -299,7 +288,7 @@ export default function AllCoursesPage() {
                     router.push(
                       roleScopedDashboardPath(
                         activeDomain,
-                        `/dashboard/courses/available-programs/${program.uuid}`
+                        `/dashboard/all-courses/available-programs/${program.uuid}`
                       )
                     )
                   }
@@ -307,7 +296,7 @@ export default function AllCoursesPage() {
                     router.push(
                       roleScopedDashboardPath(
                         activeDomain,
-                        `/dashboard/courses/instructor?courseId=${program.uuid}`
+                        `/dashboard/all-courses/instructor?courseId=${program.uuid}`
                       )
                     )
                   }
@@ -315,7 +304,7 @@ export default function AllCoursesPage() {
                     router.push(
                       roleScopedDashboardPath(
                         activeDomain,
-                        `/dashboard/courses/programs/${program.uuid}`
+                        `/dashboard/all-courses/available-programs/${program.uuid}`
                       )
                     )
                   }
@@ -340,22 +329,14 @@ export default function AllCoursesPage() {
               </div>
             )}
 
-            {/* Load More */}
-            {filteredPrograms.length > 0 && (
-              <div className='my-12 text-center'>
-                <Button variant='outline'>Load More Programs</Button>
-              </div>
-            )}
-
-            {/* @ts-ignore */}
-            {programPaginationMetadata?.totalPages >= 1 && (
+            {totalProgramPages >= 1 ? (
               <CustomPagination
-                totalPages={programPaginationMetadata?.totalPages as number}
+                totalPages={totalProgramPages}
                 onPageChange={page => {
                   setPage(page - 1);
                 }}
               />
-            )}
+            ) : null}
           </TabsContent>
         </Tabs>
       </div>

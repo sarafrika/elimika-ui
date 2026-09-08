@@ -19,7 +19,6 @@ type CoursesCategoryTabsProps = {
   activeFilter: CoursesFilterSection['key'] | null;
   onActiveChange: (key: CoursesFilterSection['key']) => void;
   onSelect: (key: CoursesFilterSection['key'], value: string) => void;
-  onClear: () => void;
   className?: string;
 };
 
@@ -29,7 +28,6 @@ export function CoursesCategoryTabs({
   activeFilter,
   onActiveChange,
   onSelect,
-  onClear,
   className,
 }: CoursesCategoryTabsProps) {
   return (
@@ -56,8 +54,8 @@ export function CoursesCategoryTabs({
                 className={cn(
                   'flex items-center rounded-full border transition-colors',
                   isActive
-                    ? 'border-teal-600 bg-teal-600 text-white shadow-sm'
-                    : 'border-border text-foreground hover:bg-muted bg-white'
+                    ? 'border-primary bg-primary text-primary-foreground shadow-sm'
+                    : 'border-border text-foreground hover:bg-muted bg-background'
                 )}
               >
                 <span className='px-4 py-1.5 text-sm font-medium whitespace-nowrap'>
@@ -67,7 +65,7 @@ export function CoursesCategoryTabs({
                 <span
                   className={cn(
                     'flex cursor-pointer items-center rounded-r-full border-l px-2',
-                    isActive ? 'border-white/20' : 'border-border hover:bg-muted'
+                    isActive ? 'border-primary-foreground/20' : 'border-border hover:bg-muted'
                   )}
                 >
                   <ChevronDown className='h-4 w-4' />
@@ -79,15 +77,6 @@ export function CoursesCategoryTabs({
               <DropdownMenuLabel>{section.title}</DropdownMenuLabel>
 
               <DropdownMenuSeparator />
-
-              <DropdownMenuItem
-                onSelect={() => {
-                  onActiveChange(section.key);
-                  onSelect(section.key, '');
-                }}
-              >
-                {!selectedValue && <Check className='h-4 w-4' />}
-              </DropdownMenuItem>
 
               {section.options.map(option => (
                 <DropdownMenuItem

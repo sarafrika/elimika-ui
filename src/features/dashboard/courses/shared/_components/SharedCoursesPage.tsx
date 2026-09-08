@@ -1,4 +1,3 @@
-// @ts-nocheck -- pre-existing @hey-api generated-client type drift (see memory: elimika-ui-typecheck)
 'use client';
 
 import NotesModal from '@/components/custom-modals/notes-modal';
@@ -46,7 +45,12 @@ import {
   submitProgramTrainingApplicationMutation,
   submitTrainingApplicationMutation,
 } from '@/services/client/@tanstack/react-query.gen';
-import type { Category, CourseReview } from '@/services/client/types.gen';
+import type {
+  Category,
+  ClassDefinition,
+  Course,
+  CourseReview,
+} from '@/services/client/types.gen';
 import {
   type CatalogTrainingApplicationData,
   type CoursesCatalogCardData,
@@ -113,9 +117,21 @@ export type UnifiedContentItem = {
   enrollmentCount?: number | undefined;
   imageTone?: string;
   icon?: LucideIcon | undefined;
-  category: string;
-  subject: string;
-  programType: string;
+  /** Vestigial: written as '' by every mapper, read by nothing. */
+  category?: string;
+  subject?: string;
+  programType?: string;
+  /**
+   * Fields the mappers below have always written and the cards have always
+   * read. They were invisible while this file carried `@ts-nocheck`; declaring
+   * them is what makes an absent age limit or category list a `undefined` the
+   * card can skip rather than a silent `any`.
+   */
+  videoUrl?: string;
+  minAge?: number | undefined;
+  maxAge?: number | undefined;
+  categoryNames?: string[] | undefined;
+  activeClasses?: number;
 };
 
 type FilterValues = Record<CoursesFilterSection['key'], string>;
@@ -146,6 +162,37 @@ function normalizeApplicationStatus(status?: string | null) {
 
 function isCourseCreatorLookup(value: unknown): value is { uuid?: string; full_name?: string } {
   return typeof value === 'object' && value !== null && 'uuid' in value;
+}
+
+/**
+ * The rows of a `/search` response.
+ *
+ * The generated client types `searchCourseCreators` as returning a bare `Page`,
+ * but the endpoint answers with the platform's `{ success, data: <page>,
+ * message }` envelope like every other search — the spec is what drifted, not
+ * the server. Walking the shape with `in` keeps the check where the drift is,
+ * at runtime, instead of asserting a type the response may not have.
+ */
+function searchPageContent(response: unknown): unknown[] {
+  if (typeof response !== 'object' || response === null || !('data' in response)) {
+    return [];
+  }
+
+  const page = response.data;
+  if (typeof page !== 'object' || page === null || !('content' in page)) {
+    return [];
+  }
+
+  return Array.isArray(page.content) ? page.content : [];
+}
+
+/** The generated error unions share no `message`; surface one when there is one. */
+function errorMessage(error: unknown): string | undefined {
+  if (typeof error !== 'object' || error === null || !('message' in error)) {
+    return undefined;
+  }
+
+  return typeof error.message === 'string' ? error.message : undefined;
 }
 
 const createCatalogCards = (
@@ -321,6 +368,11 @@ const createCatalogCards = (
       activeClasses: activeClasses.length,
       instructorCount: activeClassesInstructors.size,
       application,
+
+      // Neither the published-courses nor the training-programs response carries
+      // a skills-fund flag, so the card is told "unknown" and leaves the badge
+      // off rather than asserting a course is not eligible.
+      skillsFundEligible: null,
     };
   });
 
@@ -567,9 +619,10 @@ export function SharedCoursesPage({ domain }: SharedCoursesPageProps) {
           category: '',
           subject: '',
           programType: '',
-          minAge: program.age_lower_limit,
-          maxAge: program.age_upper_limit,
-          // categoryNames: course.category_names
+          // A training program carries no age limits of its own — the range comes
+          // from its youngest bundled course, resolved in `createCatalogCards`.
+          minAge: undefined,
+          maxAge: undefined,
         };
       }),
     [categoryMap, courseEnrollmentMap, domain, programs, reviewMap]
@@ -613,8 +666,8 @@ export function SharedCoursesPage({ domain }: SharedCoursesPageProps) {
           category: '',
           subject: '',
           programType: '',
-          minAge: course.age_lower_limit,
-          maxAge: course.age_upper_limit,
+          minAge: course.age_lower_limit ?? undefined,
+          maxAge: course.age_upper_limit ?? undefined,
           categoryNames: course.category_names,
         };
       }),
@@ -733,8 +786,8 @@ export function SharedCoursesPage({ domain }: SharedCoursesPageProps) {
           category: '',
           subject: '',
           programType: '',
-          minAge: course.age_lower_limit,
-          maxAge: course.age_upper_limit,
+          minAge: course.age_lower_limit ?? undefined,
+          maxAge: course.age_upper_limit ?? undefined,
           categoryNames: course.category_names,
         });
       });
@@ -1094,11 +1147,13 @@ export function SharedCoursesPage({ domain }: SharedCoursesPageProps) {
   const creatorMap = useMemo(() => {
     const map = new Map<string, string>();
 
-    creatorQuery.data?.data?.content?.filter(isCourseCreatorLookup).forEach(creator => {
-      if (creator.uuid) {
-        map.set(creator.uuid, creator.full_name || 'Course Creator');
-      }
-    });
+    searchPageContent(creatorQuery.data)
+      .filter(isCourseCreatorLookup)
+      .forEach(creator => {
+        if (creator.uuid) {
+          map.set(creator.uuid, creator.full_name || 'Course Creator');
+        }
+      });
 
     return map;
   }, [creatorQuery.data]);
@@ -1162,9 +1217,11 @@ export function SharedCoursesPage({ domain }: SharedCoursesPageProps) {
 
   const programClassDefinitionsQueries = useQueries({
     queries: programUuids.map(programUuid => ({
+      // `/classes/program/{uuid}` takes no page — it returns every class
+      // definition for the program. The `pageable` this used to send was
+      // dropped on the floor by the server and rejected by the client's types.
       ...getClassDefinitionsForProgramOptions({
         path: { programUuid },
-        query: { pageable: { page: 0, size: 200 } },
       }),
       enabled: Boolean(programUuid),
       staleTime: 5 * 60 * 1000,
@@ -1398,7 +1455,7 @@ export function SharedCoursesPage({ domain }: SharedCoursesPageProps) {
             setSelectedApplicationCard(null);
           },
           onError: error => {
-            toast.error(error?.message ?? 'Unable to submit program application');
+            toast.error(errorMessage(error) ?? 'Unable to submit program application');
           },
         }
       );
@@ -1418,7 +1475,7 @@ export function SharedCoursesPage({ domain }: SharedCoursesPageProps) {
           setSelectedApplicationCard(null);
         },
         onError: error => {
-          toast.error(error?.message ?? 'Unable to submit course application');
+          toast.error(errorMessage(error) ?? 'Unable to submit course application');
         },
       }
     );
@@ -1436,6 +1493,12 @@ export function SharedCoursesPage({ domain }: SharedCoursesPageProps) {
       ).length,
     [filters]
   );
+
+  const applicationCardDuration = !selectedApplicationCard
+    ? undefined
+    : 'duration' in selectedApplicationCard
+      ? selectedApplicationCard.duration
+      : selectedApplicationCard.weeks;
 
   const catalogueSubtitle = isOrganisationDomain
     ? 'Discover courses and programmes your organisation is approved to train.'
@@ -1531,7 +1594,6 @@ export function SharedCoursesPage({ domain }: SharedCoursesPageProps) {
             setFilterValue(key, value);
             setOpen(false);
           }}
-          onClear={clearFilters}
         />
 
         <section className='space-y-2'>
@@ -1635,12 +1697,7 @@ export function SharedCoursesPage({ domain }: SharedCoursesPageProps) {
 
                       {isStudentDomain &&
                         catalogCards.map(card => (
-                          <StudentCoursesCard
-                            type='general'
-                            key={card.id}
-                            card={card}
-                            onPrimaryAction={handleCatalogCardAction}
-                          />
+                          <StudentCoursesCard type='general' key={card.id} card={card} />
                         ))}
                     </div>
 
@@ -1856,9 +1913,8 @@ export function SharedCoursesPage({ domain }: SharedCoursesPageProps) {
                   <p>
                     Provider:{' '}
                     <span className='font-medium'>{selectedApplicationCard.provider}</span>
-                    {selectedApplicationCard.duration
-                      ? ` · Duration: ${selectedApplicationCard.duration}`
-                      : ''}
+                    {/* A recommendation card carries the same label under `weeks`. */}
+                    {applicationCardDuration ? ` · Duration: ${applicationCardDuration}` : ''}
                     {selectedApplicationCard.secondaryMeta
                       ? ` · Focus: ${selectedApplicationCard.secondaryMeta}`
                       : ''}

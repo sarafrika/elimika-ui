@@ -190,9 +190,23 @@ const domainBasePaths: Record<UserDomain, string> = {
   student: '/dashboard/courses',
 };
 
+/**
+ * Where opening a catalogue listing goes.
+ *
+ * A course opens the shared course record — `CourseRecordPage` — mounted as
+ * `<catalogue>/<uuid>`, directly under the list it was opened from, so the
+ * record's back link returns the reader to the list they came from rather than
+ * a sibling list they never visited. It replaced an in-card drawer that showed
+ * a second, older rendering of the same course.
+ *
+ * A training programme has no record view: `CourseRecordPage` is course-shaped
+ * and the programme's real surface is the list of classes running it, which is
+ * where a programme card opens. `/<catalogue>/programs/<uuid>` was never a
+ * route on any dashboard.
+ */
 export function getContentHref(domain: UserDomain, kind: 'course' | 'program', uuid: string) {
   const basePath = domainBasePaths[domain];
-  return kind === 'program' ? `${basePath}/programs/${uuid}` : `${basePath}/${uuid}`;
+  return kind === 'program' ? `${basePath}/available-programs/${uuid}` : `${basePath}/${uuid}`;
 }
 
 export function getEnrollHref(domain: UserDomain, kind: 'course' | 'program', uuid: string) {
