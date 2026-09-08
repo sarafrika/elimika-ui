@@ -26,10 +26,10 @@ import {
   BadgeCheck,
   BookOpen,
   CalendarDays,
+  ChevronDown,
   CircleAlert,
   CreditCard,
   GraduationCap,
-  Quote,
   School,
   Search,
   Users,
@@ -156,28 +156,35 @@ const SERVICES = [
   },
 ] as const;
 
-// Placeholders, and deliberately obvious ones. Real quotes have to come from
-// real people who agreed to be named; inventing them would be the one thing on
-// this page a visitor could catch us out on.
-const QUOTES = [
+// There are no testimonials to run: nobody has been asked for a quote yet, and
+// inventing one is the single thing on this page a visitor could catch us out
+// on. Objections are the better use of the space anyway - a marketplace nobody
+// has heard of gets further by answering the doubt than by asserting a
+// reputation. Every answer below is something the platform actually does.
+const FAQS = [
   {
-    quote:
-      '[QUOTE - a learner on finishing a course and what the Skills Wallet record changed for them]',
-    name: '[LEARNER NAME]',
-    role: '[COURSE] / [TOWN]',
-    initials: 'LN',
+    q: 'Can I see what is in a course before I pay?',
+    a: 'Yes. Every lesson title, what it covers and how many items it holds are listed on the course page before you enrol. The lesson material itself - the videos, documents and quizzes - opens once your enrolment is confirmed.',
   },
   {
-    quote: '[QUOTE - a trainer on applying to deliver a course and being paid per session]',
-    name: '[TRAINER NAME]',
-    role: '[DISCIPLINE] / [TOWN]',
-    initials: 'TN',
+    q: 'How do I pay, and in what currency?',
+    a: 'In Kenyan shillings, by M-Pesa or card at checkout. Courses are priced per course or per session, and the price is on the card before you open it - no quote request, no enquiry form.',
   },
   {
-    quote: '[QUOTE - a school on staffing a co-curricular timetable through Elimika]',
-    name: '[SCHOOL NAME]',
-    role: '[ROLE] / [TOWN]',
-    initials: 'SN',
+    q: 'What do I actually get at the end?',
+    a: 'The certificate and the skills behind it land in your Skills Wallet: one record of what you have completed, that an employer can check without you posting scanned paper around.',
+  },
+  {
+    q: 'I want to teach on Elimika. How does that work?',
+    a: 'Pick a published course and apply to train it, declaring your credentials, the space and equipment you have, and your own rates. The course creator approves the application; Elimika handles enrolment, scheduling and paying you per session.',
+  },
+  {
+    q: 'Can my school use this for co-curricular classes?',
+    a: 'Post the class you need taught and set the fee per session. Trainers already on the platform apply with their rates, and attendance, payment and certificates all run off the same class record.',
+  },
+  {
+    q: 'What if the fee is the thing stopping me?',
+    a: 'The Skills Fund connects learners with scholarships, bursaries and employer-funded training, so a course fee is not the only thing deciding who gets to train.',
   },
 ] as const;
 
@@ -426,52 +433,45 @@ export async function MarketingHomePage() {
         </section>
 
         <section className={cn(CONTAINER, 'py-12 sm:py-16')}>
-          <div className='flex flex-wrap items-end justify-between gap-4'>
-            <div>
-              <p className='text-primary text-[11.5px] font-bold tracking-[0.09em] uppercase'>
-                In their words
-              </p>
-              <h2
-                className={cn(
-                  DISPLAY,
-                  'text-foreground mt-2 text-2xl font-bold tracking-tight sm:text-3xl'
-                )}
-              >
-                The people already using it
-              </h2>
-            </div>
-            <p className='text-muted-foreground max-w-[34ch] text-xs leading-relaxed sm:text-right'>
-              Bracketed text is a placeholder - drop in real quotes before this page goes live.
+          <div className='max-w-2xl'>
+            <p className='text-primary text-[11.5px] font-bold tracking-[0.09em] uppercase'>
+              Before you sign up
             </p>
+            <h2
+              className={cn(
+                DISPLAY,
+                'text-foreground mt-2 text-2xl font-bold tracking-tight sm:text-3xl'
+              )}
+            >
+              The questions people actually ask
+            </h2>
           </div>
 
-          <ul className='mt-8 grid gap-[18px] sm:grid-cols-2 lg:grid-cols-3'>
-            {QUOTES.map(entry => (
-              <li
-                key={entry.name}
-                className={cn(
-                  toneFor(entry.name),
-                  'border-border bg-card flex flex-col gap-4 rounded-[18px] border p-5 sm:p-6'
-                )}
-              >
-                <Quote className={cn(TONE_INK, 'size-[22px]')} aria-hidden />
-                <p className='text-foreground grow text-sm leading-relaxed'>{entry.quote}</p>
-                <div className='border-border/70 flex items-center gap-3 border-t pt-4'>
-                  <span
-                    className={cn(
-                      TONE_INK,
-                      'bg-[color-mix(in_oklch,var(--tone)_14%,var(--card))] flex size-9 items-center justify-center rounded-full text-[13px] font-bold'
-                    )}
-                  >
-                    {entry.initials}
-                  </span>
-                  <span className='min-w-0'>
-                    <span className='text-foreground block text-[13.5px] font-semibold'>
-                      {entry.name}
-                    </span>
-                    <span className='text-muted-foreground mt-0.5 block text-xs'>{entry.role}</span>
-                  </span>
-                </div>
+          {/*
+            Native <details> rather than React state: this section is server
+            rendered, every answer is in the markup a crawler reads, and the
+            disclosure costs no JavaScript.
+          */}
+          <ul className='mt-8 grid gap-3 lg:grid-cols-2 lg:gap-x-5'>
+            {FAQS.map((faq, index) => (
+              <li key={faq.q}>
+                {/* The first one opens by default, so the section reads as an
+                    answer at rest rather than a row of closed boxes. */}
+                <details
+                  open={index === 0}
+                  className='border-border bg-card group rounded-[18px] border px-5 py-4 sm:px-6 sm:py-5'
+                >
+                  <summary className='marker:content-none flex cursor-pointer list-none items-start justify-between gap-4 [&::-webkit-details-marker]:hidden'>
+                    <h3 className='text-foreground text-[15px] leading-snug font-semibold'>
+                      {faq.q}
+                    </h3>
+                    <ChevronDown
+                      className='text-muted-foreground mt-0.5 size-[18px] shrink-0 transition-transform group-open:rotate-180'
+                      aria-hidden='true'
+                    />
+                  </summary>
+                  <p className='text-muted-foreground mt-3 text-sm leading-relaxed'>{faq.a}</p>
+                </details>
               </li>
             ))}
           </ul>
