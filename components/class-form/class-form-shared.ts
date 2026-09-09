@@ -28,10 +28,42 @@ export const SERVICES: Service[] = [
 
 export type RateBasis = 'per_hour' | 'per_session' | 'per_day';
 
-export const RATE_BASES: { value: RateBasis; label: string; unit: string; short: string }[] = [
-  { value: 'per_hour', label: 'Per hour', unit: 'hour', short: 'hr' },
-  { value: 'per_session', label: 'Per session', unit: 'session', short: 'session' },
-  { value: 'per_day', label: 'Per day', unit: 'day', short: 'day' },
+/**
+ * What the money buys. `value` is the API contract and never changes, and the label stays a bare
+ * "Per <unit>" because two class-form toasts read it into "a … rate" and the pickers sit under a
+ * "Charged per" label; the description is where the nuance lives — what moves the price.
+ */
+export const RATE_BASES: {
+  value: RateBasis;
+  label: string;
+  description: string;
+  unit: string;
+  short: string;
+}[] = [
+  {
+    value: 'per_hour',
+    label: 'Per hour',
+    description:
+      'Charged for every hour of contact time, so a 90-minute session bills an hour and a half.',
+    unit: 'hour',
+    short: 'hr',
+  },
+  {
+    value: 'per_session',
+    label: 'Per session',
+    description:
+      'Charged once for a session whatever its length, so a one-hour and a three-hour session cost the same.',
+    unit: 'session',
+    short: 'session',
+  },
+  {
+    value: 'per_day',
+    label: 'Per day',
+    description:
+      'Charged once for each day the class meets, however many sessions fall inside that day.',
+    unit: 'day',
+    short: 'day',
+  },
 ];
 
 export const DEFAULT_RATE_BASIS: RateBasis = 'per_hour';

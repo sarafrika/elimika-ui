@@ -24,9 +24,10 @@ export function MarketingTopNav() {
   });
   const cartItemCount = cartData?.items?.length ?? 0;
 
-  const navLinks = [
+  const navLinks: { label: string; href: string; external?: boolean }[] = [
     { label: 'Catalogue', href: '/courses' },
     { label: 'Help', href: '/help' },
+    { label: 'About Sarafrika', href: 'https://sarafrika.com', external: true },
   ];
 
   const isActive = (href: string) => {
@@ -62,6 +63,8 @@ export function MarketingTopNav() {
               <Link
                 key={link.href}
                 href={link.href}
+                target={link.external ? '_blank' : undefined}
+                rel={link.external ? 'noopener noreferrer' : undefined}
                 className={cn(
                   'hover:bg-muted hover:text-primary rounded-full px-4 py-2 text-sm font-medium transition',
                   isActive(link.href) ? 'bg-muted text-primary' : 'text-muted-foreground'
@@ -108,6 +111,8 @@ export function MarketingTopNav() {
             <Link
               key={link.href}
               href={link.href}
+              target={link.external ? '_blank' : undefined}
+              rel={link.external ? 'noopener noreferrer' : undefined}
               className='border-border text-muted-foreground hover:border-primary/50 hover:text-primary rounded-full border px-3 py-1 text-sm transition'
             >
               {link.label}
