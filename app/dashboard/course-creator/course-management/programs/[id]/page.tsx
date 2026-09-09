@@ -11,6 +11,7 @@ export default function ProgramRoute() {
     <ProgramRecordPage
       programUuid={programUuid}
       backHref={'/dashboard/course-creator/course-management'}
+      className='my-6'
 
     />
   );

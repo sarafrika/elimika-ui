@@ -1,2 +1,2 @@
-export { default, ProgramRecordPage } from '@/src/features/course-record/ProgramRecordPage';
+export { default, ProgramRecordPage, type ProgramRecordPageProps } from '@/src/features/program-record/ProgramRecordPage';
 
