@@ -75,23 +75,6 @@ export default function CourseBuilderPage() {
   const { isLoading: creatorLoading, profile: creatorProfile } = useCourseCreator();
   const { replaceBreadcrumbs } = useBreadcrumb();
 
-  useEffect(() => {
-    replaceBreadcrumbs([
-      { id: 'dashboard', title: 'Dashboard', url: '/dashboard/course-creator/overview' },
-      {
-        id: 'course-management',
-        title: 'Course-management',
-        url: '/dashboard/course-creator/course-management',
-      },
-      {
-        id: 'create-new-course',
-        title: 'Create New Course',
-        url: `/dashboard/course-creator/course-management/create-new-course?id=id`,
-        isLast: true,
-      },
-    ]);
-  }, [replaceBreadcrumbs]);
-
   const formRef = useRef<CourseFormRef>(null);
   const queryClient = useQueryClient();
 

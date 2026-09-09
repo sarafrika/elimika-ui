@@ -204,7 +204,6 @@ export default function DashboardTopBar() {
   const notificationHref = roleScopedDashboardPath(activeDomain, '/dashboard/notifications');
   const createCourseHref = roleScopedDashboardPath(
     activeDomain,
-    // '/dashboard/course-management/create-new-course'
     '/dashboard/courses/create-course'
   );
   const createClassHref = roleScopedDashboardPath(activeDomain, '/dashboard/classes/new');

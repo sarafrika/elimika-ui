@@ -288,7 +288,7 @@ function QuickActionsCard({ activeDomain }: { activeDomain: UserDomain | null })
         <ActionTile
           title='Create syllabus'
           description='Use guided steps to structure lessons and assessments.'
-          href={roleScopedDashboardPath(activeDomain, '/dashboard/course-management/create-new-course')}
+          href={roleScopedDashboardPath(activeDomain, '/dashboard/courses/create-course')}
         />
         <ActionTile
           title='Check analytics'

@@ -195,7 +195,7 @@ export const CourseCreationForm = forwardRef<CourseFormRef, CourseFormProps>(
       activeRequirementProvider,
       setActiveRequirementProvider,
       successResponse,
-      postCreateRedirectHref = '/dashboard/course-creator/course-management/create-new-course',
+      postCreateRedirectHref = '/dashboard/course-creator/courses/create-course',
       onSaveSuccess,
     },
     ref

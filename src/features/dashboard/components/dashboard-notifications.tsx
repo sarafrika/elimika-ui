@@ -12,7 +12,6 @@ import {
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { absoluteDateTime, relativeTimeFromNow } from '@/lib/date';
 import { cn } from '@/lib/utils';
-import { invalidateWorkflowQueriesForNotification } from '@/src/features/dashboard/workflow-query-invalidation';
 import {
   useMarkAllNotificationsRead,
   useNotificationAction,
@@ -20,6 +19,8 @@ import {
   useNotifications,
   type UserNotification,
 } from '@/services/notifications';
+import { invalidateWorkflowQueriesForNotification } from '@/src/features/dashboard/workflow-query-invalidation';
+import { useQueryClient } from '@tanstack/react-query';
 import {
   Award,
   Bell,
@@ -35,7 +36,6 @@ import {
 import Link from 'next/link';
 import { useEffect, useRef, useState } from 'react';
 import { toast } from 'sonner';
-import { useQueryClient } from '@tanstack/react-query';
 
 type DashboardNotificationsProps = {
   notificationHref: string;
@@ -208,7 +208,7 @@ export const getNotificationUrlPath = (
     case 'PROGRAM_CONTENT_REJECTED':
       if (activeDomain === 'course_creator') {
         return metadata?.course_uuid
-          ? `${COURSE_CREATOR_PATH}/course-management/create-new-course?id=${metadata?.course_uuid}`
+          ? `${COURSE_CREATOR_PATH}/courses/create-course?id=${metadata?.course_uuid}`
           : '';
       }
 
@@ -301,11 +301,11 @@ export function DashboardNotifications({
         description: notification.body,
         action: popupHref
           ? {
-              label: 'Open',
-              onClick: () => {
-                window.location.href = popupHref || notificationHref;
-              },
-            }
+            label: 'Open',
+            onClick: () => {
+              window.location.href = popupHref || notificationHref;
+            },
+          }
           : undefined,
       });
       actionMutation.mutate({ uuid: notification.uuid, action: 'popup_seen' });
