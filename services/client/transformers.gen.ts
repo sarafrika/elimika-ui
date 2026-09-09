@@ -137,6 +137,7 @@ import type {
   GetTrainingBranchesByOrganisationResponse,
   CreateTrainingBranch1Response,
   RequestOrganisationVerificationResponse,
+  UploadOrganisationDocumentResponse,
   ListGroupsResponse,
   CreateGroupResponse,
   ListTransactionsResponse,
@@ -355,6 +356,7 @@ import type {
   GetBranchUsersResponse,
   GetBranchUsersByDomainResponse,
   GetOrganisationStatisticsResponse,
+  GetOrganisationDocumentsResponse,
   ListRosterResponse,
   GetCalendarResponse,
   ListBookingsResponse,
@@ -2957,6 +2959,36 @@ export const requestOrganisationVerificationResponseTransformer = async (
   data: any
 ): Promise<RequestOrganisationVerificationResponse> => {
   data = apiResponseOrganisationSchemaResponseTransformer(data);
+  return data;
+};
+
+const organisationDocumentSchemaResponseTransformer = (data: any) => {
+  if (data.file_size_bytes) {
+    data.file_size_bytes = BigInt(data.file_size_bytes.toString());
+  }
+  if (data.upload_date) {
+    data.upload_date = new Date(data.upload_date);
+  }
+  if (data.expiry_date) {
+    data.expiry_date = new Date(data.expiry_date);
+  }
+  if (data.created_date) {
+    data.created_date = new Date(data.created_date);
+  }
+  return data;
+};
+
+const apiResponseOrganisationDocumentSchemaResponseTransformer = (data: any) => {
+  if (data.data) {
+    data.data = organisationDocumentSchemaResponseTransformer(data.data);
+  }
+  return data;
+};
+
+export const uploadOrganisationDocumentResponseTransformer = async (
+  data: any
+): Promise<UploadOrganisationDocumentResponse> => {
+  data = apiResponseOrganisationDocumentSchemaResponseTransformer(data);
   return data;
 };
 
@@ -6083,6 +6115,22 @@ export const getOrganisationStatisticsResponseTransformer = async (
   data: any
 ): Promise<GetOrganisationStatisticsResponse> => {
   data = apiResponseOrganisationDashboardStatsSchemaResponseTransformer(data);
+  return data;
+};
+
+const apiResponseListOrganisationDocumentSchemaResponseTransformer = (data: any) => {
+  if (data.data) {
+    data.data = data.data.map((item: any) => {
+      return organisationDocumentSchemaResponseTransformer(item);
+    });
+  }
+  return data;
+};
+
+export const getOrganisationDocumentsResponseTransformer = async (
+  data: any
+): Promise<GetOrganisationDocumentsResponse> => {
+  data = apiResponseListOrganisationDocumentSchemaResponseTransformer(data);
   return data;
 };
 

@@ -58,7 +58,7 @@ export function OrganisationIdentityFields<TFieldValues extends FieldValues>({
                 {requiredName ? <span className='text-destructive'> *</span> : null}
               </FormLabel>
               <FormControl>
-                <Input placeholder={namePlaceholder} {...field} />
+                <Input autoComplete='off' placeholder={namePlaceholder} {...field} />
               </FormControl>
               {nameDescription ? <FormDescription>{nameDescription}</FormDescription> : null}
               <FormMessage />

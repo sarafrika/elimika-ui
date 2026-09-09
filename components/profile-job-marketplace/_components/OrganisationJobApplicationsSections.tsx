@@ -106,9 +106,15 @@ export function ApplicationStatsCards({
   const cards = [
     { label: 'Total', value: stats.total, icon: Users, tone: 'info' as const },
     { label: 'In review', value: stats.pending, icon: Clock, tone: 'warning' as const },
-    { label: 'Approved', value: stats.approved, icon: CheckCircle2, tone: 'success' as const },
+    // Approved is a shortlist of one or more, never an outcome — tone it as work still outstanding.
+    {
+      label: 'Approved, not hired',
+      value: stats.approved,
+      icon: CheckCircle2,
+      tone: 'warning' as const,
+    },
     { label: 'Closed', value: stats.rejected, icon: XCircle, tone: 'destructive' as const },
-    { label: 'Assigned', value: stats.assigned, icon: BriefcaseBusiness, tone: 'neutral' as const },
+    { label: 'Hired', value: stats.assigned, icon: BriefcaseBusiness, tone: 'success' as const },
   ];
 
   return (
@@ -215,6 +221,9 @@ export function ApplicationsListSection({
         // A candidate moved to shortlisted/interviewing/offered — from here or from the job-matches
         // board — is still live and must stay actionable. Gating on `pending` alone stranded them.
         const reviewDisabled = !canReviewApplication(application.status);
+        // Approval is not the hire. Only the assign call affiliates the instructor and unlocks the
+        // class, so an approved card drops the funnel buttons and leads with the hire.
+        const isApproved = application.status === 'approved';
         const isVerified = application.instructor_admin_verified ?? instructor?.admin_verified;
         const trainingApproved = application.training_approved;
         const approvedRate = application.approved_rate;
@@ -259,7 +268,11 @@ export function ApplicationsListSection({
                   </div>
                 </div>
               </div>
-              <StatusBadge status={application.status} label={formatLabel(application.status)} />
+              <StatusBadge
+                status={application.status}
+                tone={isApproved ? 'warning' : undefined}
+                label={isApproved ? 'Approved — not yet hired' : formatLabel(application.status)}
+              />
             </div>
 
             {notApprovedToTrain ? (
@@ -267,7 +280,7 @@ export function ApplicationsListSection({
                 <TriangleAlert className='text-warning size-4 shrink-0' />
                 <span>
                   This instructor is not approved to train this course or program yet, so they
-                  cannot be approved or assigned.
+                  cannot be approved or hired.
                 </span>
               </div>
             ) : null}
@@ -323,30 +336,34 @@ export function ApplicationsListSection({
                   <UserRound className='mr-2 size-4' />
                   View profile
                 </Button>
-                {STAGE_MOVES.map(stage => (
-                  <Button
-                    key={stage.action}
-                    variant='ghost'
-                    size='sm'
-                    onClick={() => onMoveToStage(application, stage.action)}
-                    disabled={
-                      isReviewPending ||
-                      reviewDisabled ||
-                      application.status === stage.reachedStatus
-                    }
-                  >
-                    {stage.label}
-                  </Button>
-                ))}
-                <Button
-                  variant='outline'
-                  size='sm'
-                  onClick={() => onApprove(application)}
-                  disabled={isReviewPending || reviewDisabled || notApprovedToTrain}
-                >
-                  <CheckCircle2 className='mr-2 size-4' />
-                  Approve
-                </Button>
+                {isApproved ? null : (
+                  <>
+                    {STAGE_MOVES.map(stage => (
+                      <Button
+                        key={stage.action}
+                        variant='ghost'
+                        size='sm'
+                        onClick={() => onMoveToStage(application, stage.action)}
+                        disabled={
+                          isReviewPending ||
+                          reviewDisabled ||
+                          application.status === stage.reachedStatus
+                        }
+                      >
+                        {stage.label}
+                      </Button>
+                    ))}
+                    <Button
+                      variant='outline'
+                      size='sm'
+                      onClick={() => onApprove(application)}
+                      disabled={isReviewPending || reviewDisabled || notApprovedToTrain}
+                    >
+                      <CheckCircle2 className='mr-2 size-4' />
+                      Approve
+                    </Button>
+                  </>
+                )}
                 <Button
                   variant='destructive'
                   size='sm'
@@ -363,8 +380,12 @@ export function ApplicationsListSection({
                     isAssignPending || application.status !== 'approved' || notApprovedToTrain
                   }
                 >
-                  {isAssignPending ? <Spinner className='mr-2 size-4' /> : null}
-                  Assign
+                  {isAssignPending ? (
+                    <Spinner className='mr-2 size-4' />
+                  ) : (
+                    <BriefcaseBusiness className='mr-2 size-4' />
+                  )}
+                  Hire for this class
                 </Button>
               </div>
             </div>

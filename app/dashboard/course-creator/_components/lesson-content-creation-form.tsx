@@ -1,6 +1,5 @@
 'use client';
 
-import { SimpleEditor } from '@/components/tiptap-templates/simple/simple-editor-lazy';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import {
@@ -19,6 +18,7 @@ import React, { useMemo, useRef, useState } from 'react';
 import { useForm, useWatch } from 'react-hook-form';
 import { toast } from 'sonner';
 import { z } from 'zod';
+import { SimpleEditor } from '@/components/tiptap-templates/simple/simple-editor-lazy';
 import { LessonContentViewerDialog } from '../../../../components/content-preview/LessonContentPreview';
 import { Button } from '../../../../components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '../../../../components/ui/card';
@@ -60,6 +60,9 @@ type LessonCreationFormProps = {
 type ContentType = 'TEXT' | 'VIDEO' | 'AUDIO' | 'PDF' | 'IMAGE';
 const tabs = ['Lesson Content', 'Practice Activities'];
 
+// The backend caps a content URL at 500 characters; surface the count while typing.
+const URL_MAX_LENGTH = 500;
+
 const lessonFormSchema = z.object({
   title: z.string().min(1),
   description: z.string().min(1).max(350),
@@ -76,7 +79,10 @@ const lessonContentSchema = z.object({
   content_category: z.string().optional(),
   title: z.string().min(1, 'Title is required'),
   description: z.string().optional(),
-  value: z.string().optional(),
+  value: z
+    .string()
+    .max(URL_MAX_LENGTH, `URL must not exceed ${URL_MAX_LENGTH} characters`)
+    .optional(),
   file_url: z.string().optional(),
   display_order: z.coerce.number().min(0, 'Order number must be positive'),
   uuid: z.string().optional(),
@@ -105,6 +111,7 @@ export const ContentCreationForm: React.FC<LessonCreationFormProps> = ({
 
   const contentForm = useForm<LessonContentValues>({
     resolver: zodResolver(lessonContentSchema),
+    mode: 'onTouched',
     defaultValues: {
       content_type: 'TEXT',
       content_type_uuid: '',
@@ -120,6 +127,8 @@ export const ContentCreationForm: React.FC<LessonCreationFormProps> = ({
   });
 
   const watchedType = useWatch({ control: contentForm.control, name: 'content_type' });
+  const watchedFileUrl = useWatch({ control: contentForm.control, name: 'file_url' });
+  const watchedContentUuid = useWatch({ control: contentForm.control, name: 'uuid' });
 
   const [activeLessonId, setActiveLessonId] = useState<string | null>(null);
   const [lessonContents, setLessonContents] = useState<LessonContentFormItem[]>([]);
@@ -132,6 +141,9 @@ export const ContentCreationForm: React.FC<LessonCreationFormProps> = ({
   const [isDragging, setIsDragging] = useState(false);
   const isMediaContent = ['VIDEO', 'AUDIO', 'PDF', 'IMAGE'].includes(contentType);
   const isLocalMediaSelected = isMediaContent && !!mediaFile;
+  // New media carries no URL to save until it is uploaded, and the upload itself
+  // creates the record, so saving it here would only file an empty content block.
+  const isUnuploadedNewMedia = isMediaContent && !watchedContentUuid && !watchedFileUrl;
 
   const [isViewerOpen, setIsViewerOpen] = useState(false);
   const [selectedLesson, setSelectedLesson] = useState<ContentItem | null>(null);
@@ -296,8 +308,8 @@ export const ContentCreationForm: React.FC<LessonCreationFormProps> = ({
             resetContentForm();
           },
           onError: error => {
-            toast.error(error?.message)
-          }
+            toast.error(error?.message);
+          },
         }
       );
     } else {
@@ -317,8 +329,8 @@ export const ContentCreationForm: React.FC<LessonCreationFormProps> = ({
             resetContentForm();
           },
           onError: error => {
-            toast.error(error?.message)
-          }
+            toast.error(error?.message);
+          },
         }
       );
     }
@@ -387,7 +399,7 @@ export const ContentCreationForm: React.FC<LessonCreationFormProps> = ({
           },
         }
       );
-    } catch (_err) { }
+    } catch (_err) {}
   };
 
   const getContentIcon = (type: string) => {
@@ -467,10 +479,11 @@ export const ContentCreationForm: React.FC<LessonCreationFormProps> = ({
               <button
                 key={tab}
                 onClick={() => setActiveTab(tab)}
-                className={`-mb-px border-b-2 px-4 py-2 transition-colors ${activeTab === tab
-                  ? 'border-primary text-primary font-semibold'
-                  : 'text-muted-foreground hover:text-foreground'
-                  }`}
+                className={`-mb-px border-b-2 px-4 py-2 transition-colors ${
+                  activeTab === tab
+                    ? 'border-primary text-primary font-semibold'
+                    : 'text-muted-foreground hover:text-foreground'
+                }`}
               >
                 {tab}
               </button>
@@ -521,10 +534,11 @@ export const ContentCreationForm: React.FC<LessonCreationFormProps> = ({
                             )}
                           >
                             <div
-                              className={`flex h-8 w-8 items-center justify-center rounded-lg ${selectedContentId === content.uuid
-                                ? 'bg-primary/20 text-primary'
-                                : 'bg-background text-muted-foreground'
-                                }`}
+                              className={`flex h-8 w-8 items-center justify-center rounded-lg ${
+                                selectedContentId === content.uuid
+                                  ? 'bg-primary/20 text-primary'
+                                  : 'bg-background text-muted-foreground'
+                              }`}
                             >
                               {getContentIcon(content.content_type_key ?? 'TEXT')}
                             </div>
@@ -731,71 +745,64 @@ export const ContentCreationForm: React.FC<LessonCreationFormProps> = ({
                                 />
                               )}
 
+                              {/* A link is the content itself, so it is still typed — media is not. */}
                               {['LINK', 'YOUTUBE'].includes(contentType) && (
                                 <FormField
                                   control={contentForm.control}
                                   name='value'
-                                  rules={{
-                                    maxLength: {
-                                      value: 500,
-                                      message: 'File URL must not exceed 500 characters',
-                                    },
+                                  render={({ field, fieldState }) => {
+                                    const urlLength = (field.value ?? '').length;
+                                    const overLimit = urlLength > URL_MAX_LENGTH;
+
+                                    return (
+                                      <FormItem>
+                                        <FormLabel className='text-foreground mb-2 block text-sm font-medium'>
+                                          URL
+                                        </FormLabel>
+                                        <FormControl>
+                                          <Input
+                                            {...field}
+                                            placeholder='Enter URL'
+                                            aria-invalid={overLimit || !!fieldState.error}
+                                            onChange={e => {
+                                              field.onChange(e);
+                                              contentForm.setValue('file_url', e.target.value, {
+                                                shouldValidate: true,
+                                              });
+                                            }}
+                                            className='border-border focus:border-primary focus:ring-primary/20 rounded-lg border px-4 py-2.5 transition-all outline-none focus:ring-2'
+                                          />
+                                        </FormControl>
+                                        <div className='flex items-start justify-between gap-4'>
+                                          <FormMessage />
+                                          <span
+                                            className={cn(
+                                              'ml-auto text-xs tabular-nums',
+                                              overLimit
+                                                ? 'text-destructive'
+                                                : 'text-muted-foreground'
+                                            )}
+                                          >
+                                            {urlLength}/{URL_MAX_LENGTH}
+                                          </span>
+                                        </div>
+                                      </FormItem>
+                                    );
                                   }}
-                                  render={({ field }) => (
-                                    <FormItem>
-                                      <FormLabel className='text-foreground mb-2 block text-sm font-medium'>
-                                        URL (enter media URL or upload media)
-                                      </FormLabel>
-                                      <Input
-                                        {...field}
-                                        placeholder='Enter URL'
-                                        maxLength={500}
-                                        onChange={e => {
-                                          field.onChange(e);
-                                          contentForm.setValue('file_url', e.target.value, {
-                                            shouldValidate: true,
-                                          });
-                                        }}
-                                        className='border-border focus:border-primary focus:ring-primary/20 rounded-lg border px-4 py-2.5 transition-all outline-none focus:ring-2'
-                                      />
-                                      <FormMessage />
-                                    </FormItem>
-                                  )}
                                 />
                               )}
 
                               {['VIDEO', 'AUDIO', 'PDF', 'IMAGE'].includes(contentType) && (
                                 <div className='flex flex-col gap-4'>
-                                  <FormField
-                                    control={contentForm.control}
-                                    name='value'
-                                    rules={{
-                                      maxLength: {
-                                        value: 500,
-                                        message: 'File URL must not exceed 500 characters',
-                                      },
-                                    }}
-                                    render={({ field }) => (
-                                      <FormItem>
-                                        <FormLabel className='text-foreground mb-2 block text-sm font-medium'>
-                                          URL (enter media URL or upload media)
-                                        </FormLabel>
-                                        <Input
-                                          {...field}
-                                          placeholder='Enter URL'
-                                          maxLength={500}
-                                          onChange={e => {
-                                            field.onChange(e);
-                                            contentForm.setValue('file_url', e.target.value, {
-                                              shouldValidate: true,
-                                            });
-                                          }}
-                                          className='border-border focus:border-primary focus:ring-primary/20 rounded-lg border px-4 py-2.5 transition-all outline-none focus:ring-2'
-                                        />
-                                        <FormMessage />
-                                      </FormItem>
-                                    )}
-                                  />
+                                  <div>
+                                    <p className='text-foreground text-sm font-medium'>
+                                      Media file
+                                    </p>
+                                    <p className='text-muted-foreground mt-1 text-sm'>
+                                      Upload the file and the system issues its URL. Media can no
+                                      longer be linked from an external address.
+                                    </p>
+                                  </div>
                                   <div
                                     className={cn(
                                       'space-y-4 rounded-lg border-2 border-dashed p-8 transition-all',
@@ -886,8 +893,8 @@ export const ContentCreationForm: React.FC<LessonCreationFormProps> = ({
                                                 resetContentForm();
                                               },
                                               onError: error => {
-                                                toast.error(error?.message)
-                                              }
+                                                toast.error(error?.message);
+                                              },
                                             }
                                           );
                                         }}
@@ -907,23 +914,14 @@ export const ContentCreationForm: React.FC<LessonCreationFormProps> = ({
                                 <Button type='button' variant='outline' onClick={resetContentForm}>
                                   Cancel
                                 </Button>
-                                {!isLocalMediaSelected ? (
+                                {!isLocalMediaSelected && !isUnuploadedNewMedia ? (
                                   <Button
                                     type='button'
-                                    onClick={() => {
-                                      try {
-                                        const data = contentForm.getValues();
-                                        lessonContentSchema.parse(data);
-                                        handleSaveLessonContent(data);
-                                      } catch (err) {
-                                        if (err instanceof z.ZodError) {
-                                          toast.error('Please fix validation errors');
-                                        }
-                                      }
-                                    }}
+                                    onClick={contentForm.handleSubmit(handleSaveLessonContent, () =>
+                                      toast.error('Please fix validation errors')
+                                    )}
                                     disabled={
-                                      createLessonContent.isPending ||
-                                      updateLessonContent.isPending
+                                      createLessonContent.isPending || updateLessonContent.isPending
                                     }
                                   >
                                     {createLessonContent.isPending || updateLessonContent.isPending

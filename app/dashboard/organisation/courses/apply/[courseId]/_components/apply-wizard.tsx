@@ -19,9 +19,9 @@
  * ## What actually reaches the creator
  *
  * Two things: `buildRateCard`'s grid, and `composeApplicationNotes`' sentence.
- * The classroom photos, the serial numbers and the acquisition choices have no
- * field on the API's application payload — they are captured, shown back on
- * Review, and summarised into the notes. See the route's doc comment.
+ * The classroom photos and the acquisition choices have no field on the API's
+ * application payload — they are captured, shown back on Review, and summarised
+ * into the notes. See the route's doc comment.
  */
 
 import { useMutation, useQueryClient } from '@tanstack/react-query';
@@ -68,6 +68,8 @@ export type ApplyWizardProps = {
   /** Already filtered to the requirements the applicant is on the hook for. */
   requirements: CourseTrainingRequirement[];
   programRequirements: ProgramRequirement[];
+  /** The creator's floor per learner per hour; rates below it are rejected. */
+  minimumFee?: number | null;
   requirementsLoading?: boolean;
   requirementsError?: unknown;
   onRetryRequirements?: () => void;
@@ -83,6 +85,7 @@ export function ApplyWizard({
   applicantUuid,
   requirements,
   programRequirements,
+  minimumFee,
   requirementsLoading,
   requirementsError,
   onRetryRequirements,
@@ -117,19 +120,19 @@ export function ApplyWizard({
     if (state.step === 0) {
       errors.push(...methodErrors());
     } else if (state.step === 1) {
-      errors.push(...validateClassrooms(state.classrooms));
+      errors.push(...validateClassrooms(state.classrooms, state.methods));
     } else if (state.step === 2) {
       if (!isProgram) errors.push(...validateEquipment(state.equipment));
     } else if (state.step === 3) {
-      errors.push(...validatePricing(state.pricing, state.methods));
+      errors.push(...validatePricing(state.pricing, state.methods, minimumFee));
     } else if (state.step === 4) {
       errors.push(...methodErrors());
-      errors.push(...validateClassrooms(state.classrooms));
+      errors.push(...validateClassrooms(state.classrooms, state.methods));
       if (!isProgram) errors.push(...validateEquipment(state.equipment));
-      errors.push(...validatePricing(state.pricing, state.methods));
+      errors.push(...validatePricing(state.pricing, state.methods, minimumFee));
     }
     return errors;
-  }, [isProgram, state]);
+  }, [isProgram, minimumFee, state]);
 
   const canNext = missing.length === 0;
   const isLastStep = state.step === APPLY_STEPS.length - 1;
@@ -219,7 +222,9 @@ export function ApplyWizard({
               onRetry={onRetryRequirements}
             />
           )}
-          {state.step === 3 && <StepPricing state={state} dispatch={dispatch} />}
+          {state.step === 3 && (
+            <StepPricing state={state} dispatch={dispatch} minimumFee={minimumFee} />
+          )}
           {state.step === 4 && (
             <StepReview
               state={state}

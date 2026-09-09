@@ -18,12 +18,13 @@
  *   actually reads. The rate card carries numbers; this carries the sentence.
  */
 
-import type { ElementType } from 'react';
 
 import { Building2, Layers, Monitor, Users, Video } from 'lucide-react';
+import type { ElementType } from 'react';
 
 import { DEFAULT_RATE_BASIS, type RateBasis } from '@/components/class-form';
 import type { CourseTrainingRateCard, CourseTrainingRequirement } from '@/services/client';
+import type { CourseTrainerApplicantType } from '@/src/features/course-record';
 
 /* ────────────────────────────────────────────────────────────────────────────
  * Vocabulary
@@ -40,8 +41,6 @@ export type TrainingContentKind = 'course' | 'program';
 
 export type Classroom = { id: string; name: string; photoUrl?: string };
 
-export type EquipmentItem = { id: string; name: string; brand: string; serial: string };
-
 export type EquipmentAnswer = {
   /**
    * Requirements are keyed by uuid, not name: a course may list the same name
@@ -52,7 +51,6 @@ export type EquipmentAnswer = {
   requirementUuid: string;
   requirementName: string;
   has: 'yes' | 'no' | null;
-  items: EquipmentItem[];
   acquisition?: 'lease' | 'hire';
 };
 
@@ -84,9 +82,6 @@ export type ApplyAction =
   | { type: 'reorderClassrooms'; fromId: string; toId: string }
   | { type: 'equipHas'; uuid: string; has: 'yes' | 'no' }
   | { type: 'equipAcquisition'; uuid: string; acquisition: 'lease' | 'hire' }
-  | { type: 'equipAddItem'; uuid: string; name: string }
-  | { type: 'equipRemoveItem'; uuid: string; itemId: string }
-  | { type: 'equipItem'; uuid: string; itemId: string; patch: Partial<EquipmentItem> }
   | { type: 'priceAdd' }
   | { type: 'priceRemove'; id: string }
   | { type: 'priceUpdate'; id: string; patch: Partial<PriceTier> }
@@ -185,7 +180,6 @@ export function applyReducer(state: ApplyState, action: ApplyAction): ApplyState
               requirementUuid: requirement.uuid,
               requirementName: requirement.name,
               has: null,
-              items: [],
             }
           );
         }),
@@ -268,12 +262,6 @@ export function applyReducer(state: ApplyState, action: ApplyAction): ApplyState
             ? {
                 ...answer,
                 has: action.has,
-                // A first "yes" opens one unit prefilled with the requirement's
-                // own name — the commonest case is one of the thing asked for.
-                items:
-                  action.has === 'yes' && answer.items.length === 0
-                    ? [{ id: uid(), name: answer.requirementName, brand: '', serial: '' }]
-                    : answer.items,
                 acquisition: action.has === 'yes' ? undefined : answer.acquisition,
               }
             : answer
@@ -285,41 +273,6 @@ export function applyReducer(state: ApplyState, action: ApplyAction): ApplyState
         equipment: state.equipment.map(answer =>
           answer.requirementUuid === action.uuid
             ? { ...answer, acquisition: action.acquisition }
-            : answer
-        ),
-      };
-    case 'equipAddItem':
-      return {
-        ...state,
-        equipment: state.equipment.map(answer =>
-          answer.requirementUuid === action.uuid
-            ? {
-                ...answer,
-                items: [...answer.items, { id: uid(), name: action.name, brand: '', serial: '' }],
-              }
-            : answer
-        ),
-      };
-    case 'equipRemoveItem':
-      return {
-        ...state,
-        equipment: state.equipment.map(answer =>
-          answer.requirementUuid === action.uuid
-            ? { ...answer, items: answer.items.filter(item => item.id !== action.itemId) }
-            : answer
-        ),
-      };
-    case 'equipItem':
-      return {
-        ...state,
-        equipment: state.equipment.map(answer =>
-          answer.requirementUuid === action.uuid
-            ? {
-                ...answer,
-                items: answer.items.map(item =>
-                  item.id === action.itemId ? { ...item, ...action.patch } : item
-                ),
-              }
             : answer
         ),
       };
@@ -355,7 +308,18 @@ export function applyReducer(state: ApplyState, action: ApplyAction): ApplyState
  * Validation — the live "complete the following" list
  * ────────────────────────────────────────────────────────────────────────── */
 
-export function validateClassrooms(classrooms: Classroom[]): string[] {
+/**
+ * Whether the applicant has to name a room.
+ *
+ * Only delivery that puts people in a room does. A virtual-only applicant was
+ * previously blocked on naming a classroom they would never use.
+ */
+export function requiresClassroom(methods: TrainingMethod[]): boolean {
+  return methods.some(method => method.includes('in-person') || method === 'hybrid');
+}
+
+export function validateClassrooms(classrooms: Classroom[], methods: TrainingMethod[]): string[] {
+  if (!requiresClassroom(methods)) return [];
   const errors: string[] = [];
   if (classrooms.length === 0) errors.push('Add at least one classroom or lab.');
   const blank = classrooms.filter(room => !room.name.trim()).length;
@@ -363,19 +327,18 @@ export function validateClassrooms(classrooms: Classroom[]): string[] {
   return errors;
 }
 
+/**
+ * The equipment step is a check-off, not an asset register.
+ *
+ * Brand and serial were mandatory, had no column to land in, and were dropped
+ * before submission. Until the equipment inventory exists, all the application
+ * needs is whether the applicant holds each item, and how they would get it.
+ */
 export function validateEquipment(equipment: EquipmentAnswer[]): string[] {
   const errors: string[] = [];
   equipment.forEach(answer => {
     if (answer.has === null) {
       errors.push(`Answer Yes/No for "${answer.requirementName}".`);
-    } else if (answer.has === 'yes') {
-      if (answer.items.length === 0) {
-        errors.push(`Add at least one item for "${answer.requirementName}".`);
-      } else if (
-        answer.items.some(item => !item.name.trim() || !item.brand.trim() || !item.serial.trim())
-      ) {
-        errors.push(`Complete name, brand, and serial for every "${answer.requirementName}" item.`);
-      }
     } else if (answer.has === 'no' && !answer.acquisition) {
       errors.push(`Choose lease or hire for "${answer.requirementName}".`);
     }
@@ -383,7 +346,11 @@ export function validateEquipment(equipment: EquipmentAnswer[]): string[] {
   return errors;
 }
 
-export function validatePricing(pricing: PriceTier[], methods: TrainingMethod[]): string[] {
+export function validatePricing(
+  pricing: PriceTier[],
+  methods: TrainingMethod[],
+  minimumFee?: number | null
+): string[] {
   const errors: string[] = [];
   if (pricing.length === 0) errors.push('Add at least one pricing tier.');
   pricing.forEach((tier, index) => {
@@ -393,10 +360,33 @@ export function validatePricing(pricing: PriceTier[], methods: TrainingMethod[])
       errors.push(`${label} uses a training method that is no longer selected.`);
     if (!tier.duration.trim()) errors.push(`Enter a session duration for ${label}.`);
     const amount = Number.parseFloat(tier.amount);
-    if (!tier.amount.trim() || Number.isNaN(amount) || amount <= 0)
+    if (!tier.amount.trim() || Number.isNaN(amount) || amount <= 0) {
       errors.push(`Enter a valid fee per student for ${label}.`);
+    } else if (isBelowFloor(amount, minimumFee)) {
+      errors.push(`Raise ${label} to at least ${formatFee(minimumFee)} per learner.`);
+    }
   });
   return errors;
+}
+
+/**
+ * The creator's floor, which the API rejects a rate card for breaching.
+ *
+ * The server compares every rate against it, session and daily included, so
+ * this does the same. Warning only on hourly rates would let the other bases
+ * through to a rejection the applicant cannot see the reason for.
+ */
+export function isBelowFloor(amount: number, minimumFee?: number | null): boolean {
+  if (minimumFee == null || !Number.isFinite(minimumFee) || minimumFee <= 0) return false;
+  return Number.isFinite(amount) && amount > 0 && amount < minimumFee;
+}
+
+export function formatFee(amount?: number | null): string {
+  if (amount == null || !Number.isFinite(amount)) return '—';
+  return `${APPLICATION_CURRENCY} ${amount.toLocaleString('en-KE', {
+    minimumFractionDigits: 0,
+    maximumFractionDigits: 2,
+  })}`;
 }
 
 /* ────────────────────────────────────────────────────────────────────────────
@@ -424,16 +414,22 @@ export function normalizeRequirementProvider(provider?: string | null) {
 }
 
 /**
- * Only the requirements the applicant is on the hook for.
+ * Only the requirements this applicant is on the hook for.
  *
  * A requirement the student brings, or the creator supplies, is not a question
- * to put to a school — asking makes the equipment step unanswerable and the
- * "ready 3/5" figure meaningless. An unstated provider is treated as the
+ * to put to the applicant — asking makes the equipment step unanswerable and
+ * the "ready 3/5" figure meaningless. An unstated provider is treated as the
  * applicant's, which is how the catalogue's older rows were entered.
+ *
+ * A lone instructor was previously shown the organisation's list, so they
+ * answered for kit a school supplies and never saw their own.
  */
-export function isOrganisationTrainingRequirement(requirement: CourseTrainingRequirement) {
+export function isApplicantTrainingRequirement(
+  requirement: CourseTrainingRequirement,
+  applicantType: CourseTrainerApplicantType
+) {
   const provider = normalizeRequirementProvider(requirement.provided_by);
-  return provider === null || provider === 'organisation';
+  return provider === null || provider === applicantType;
 }
 
 /** The stable key a requirement's answer is filed under. */

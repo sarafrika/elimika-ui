@@ -32,24 +32,29 @@ import { cn } from '@/lib/utils';
 
 import {
   APPLICATION_CURRENCY,
-  METHOD_OPTIONS,
-  methodOption,
   type ApplyAction,
   type ApplyState,
+  formatFee,
+  isBelowFloor,
+  METHOD_OPTIONS,
+  methodOption,
   type TrainingMethod,
 } from './apply-model';
 
 export function StepPricing({
   state,
   dispatch,
+  minimumFee,
 }: {
   state: ApplyState;
   dispatch: Dispatch<ApplyAction>;
+  minimumFee?: number | null;
 }) {
   const selectedTitles = state.methods
     .map(method => methodOption(method)?.title)
     .filter((title): title is string => Boolean(title));
   const totalTiers = state.pricing.length;
+  const hasFloor = minimumFee != null && Number.isFinite(minimumFee) && minimumFee > 0;
 
   return (
     <div className='space-y-4'>
@@ -73,6 +78,14 @@ export function StepPricing({
         </Badge>
       </div>
 
+      {hasFloor && (
+        <p className='text-muted-foreground text-sm'>
+          The course creator sets a floor of{' '}
+          <span className='text-foreground font-medium'>{formatFee(minimumFee)}</span> per learner.
+          Anything below it is rejected on submission.
+        </p>
+      )}
+
       <div className='space-y-3'>
         {state.pricing.map((tier, index) => {
           const option = methodOption(tier.method);
@@ -80,6 +93,7 @@ export function StepPricing({
           const durationInvalid = !tier.duration.trim();
           const amount = Number.parseFloat(tier.amount);
           const amountInvalid = !tier.amount.trim() || Number.isNaN(amount) || amount <= 0;
+          const belowFloor = !amountInvalid && isBelowFloor(amount, minimumFee);
           return (
             <div key={tier.id} className='rounded-md border p-3'>
               <div className='mb-3 flex items-center justify-between gap-2'>
@@ -209,15 +223,21 @@ export function StepPricing({
                         })
                       }
                       placeholder='0'
-                      aria-invalid={amountInvalid}
+                      aria-invalid={amountInvalid || belowFloor}
                       className={cn(
                         'pl-11',
-                        amountInvalid && 'border-destructive focus-visible:ring-destructive/40'
+                        (amountInvalid || belowFloor) &&
+                          'border-destructive focus-visible:ring-destructive/40'
                       )}
                     />
                   </div>
                   {amountInvalid && (
                     <p className='text-destructive text-[11px]'>Enter an amount greater than 0.</p>
+                  )}
+                  {belowFloor && (
+                    <p className='text-destructive text-[11px]'>
+                      Below the {formatFee(minimumFee)} floor set by the course creator.
+                    </p>
                   )}
                 </div>
               </div>

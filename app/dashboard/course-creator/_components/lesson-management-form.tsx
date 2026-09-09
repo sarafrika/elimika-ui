@@ -54,7 +54,6 @@ import {
   getCourseByUuidOptions,
   getCourseLessonQueryKey,
   getCourseLessonsQueryKey,
-  getLessonContentOptions,
   getLessonContentQueryKey,
   updateCourseAssessmentMutation,
   updateCourseLessonMutation,
@@ -107,8 +106,6 @@ import * as z from 'zod';
 import { useUserProfile } from '../../../../context/profile-context';
 import { cn } from '../../../../lib/utils';
 import { useRubricsWithCriteriaAndScoring } from '../rubrics/rubric-chaining';
-import { LessonMediaPreview } from './lesson-media-preview';
-import { saveLessonMedia } from './save-lesson-media';
 
 export const CONTENT_TYPES = {
   AUDIO: 'Audio',
@@ -256,11 +253,14 @@ function _FormSection({ title, description, children }: FormSectionProps) {
   );
 }
 
+// Keyed by the uppercase key the type picker resolves, not by the display labels in
+// CONTENT_TYPES — keying on the labels made every lookup miss and the file picker fall
+// through to the permissive default.
 const ACCEPTED_FILE_TYPES = {
-  [CONTENT_TYPES.AUDIO]: '.mp3,.wav,audio/*',
-  [CONTENT_TYPES.VIDEO]: '.mp4,.webm,video/*',
-  [CONTENT_TYPES.PDF]: '.pdf',
-  [CONTENT_TYPES.IMAGE]: 'image/*',
+  AUDIO: '.mp3,.wav,audio/*',
+  VIDEO: '.mp4,.webm,video/*',
+  PDF: '.pdf',
+  IMAGE: 'image/*',
 };
 
 const ContentTypeIcons = {
@@ -273,17 +273,53 @@ const ContentTypeIcons = {
   YOUTUBE: Youtube,
 };
 
+// Only LINK and YOUTUBE still take a typed URL. Media types are upload-only, so
+// they no longer have a URL box to place a placeholder in.
 function getContentPlaceholder(contentType: string) {
-  switch (contentType) {
-    case 'TEXT':
-      return 'Enter text content';
-    case 'LINK':
-      return 'Enter external resource URL';
-    case 'YOUTUBE':
-      return 'Enter YouTube video URL';
-    default:
-      return 'Upload file or enter URL';
-  }
+  return contentType === 'YOUTUBE' ? 'Enter YouTube video URL' : 'Enter external resource URL';
+}
+
+type MediaKind = 'IMAGE' | 'VIDEO' | 'AUDIO' | 'PDF' | 'OTHER';
+
+const mediaKindFromMimeType = (mimeType: string): MediaKind => {
+  if (mimeType.startsWith('image/')) return 'IMAGE';
+  if (mimeType.startsWith('video/')) return 'VIDEO';
+  if (mimeType.startsWith('audio/')) return 'AUDIO';
+  if (mimeType.includes('pdf')) return 'PDF';
+  return 'OTHER';
+};
+
+// One renderer for both the file staged locally and the file already saved on the
+// record, so an editor always sees the media itself rather than a raw URL.
+function MediaPreview({ kind, src, label }: { kind: MediaKind; src: string; label: string }) {
+  if (!src) return null;
+
+  return (
+    <div className='border-border overflow-hidden rounded-md border'>
+      {kind === 'IMAGE' ? (
+        // eslint-disable-next-line @next/next/no-img-element
+        <img src={src} alt={label} className='h-56 w-full object-cover' />
+      ) : kind === 'VIDEO' ? (
+        <video controls className='bg-muted h-56 w-full object-contain'>
+          <source src={src} />
+        </video>
+      ) : kind === 'AUDIO' ? (
+        <div className='bg-background p-4'>
+          <audio controls className='w-full'>
+            <source src={src} />
+          </audio>
+        </div>
+      ) : kind === 'PDF' ? (
+        <iframe title={label} src={src} className='h-56 w-full' />
+      ) : (
+        <div className='bg-background flex h-56 flex-col items-center justify-center gap-2 p-4 text-center'>
+          <FileText className='text-muted-foreground h-8 w-8' />
+          <p className='text-sm font-medium'>Preview unavailable</p>
+          <p className='text-muted-foreground text-xs'>{label}</p>
+        </div>
+      )}
+    </div>
+  );
 }
 
 type LessonListProps = {
@@ -1161,7 +1197,6 @@ export type ContentFormValues = z.infer<typeof lessonContentSchema>;
 
 type LessonContentInitialValues = Omit<Partial<ContentFormValues>, 'file_url'> & {
   file_url?: string | null;
-  is_required?: boolean;
 };
 
 // Blank slate the form returns to whenever the sheet closes, or opens fresh (not editing).
@@ -1177,6 +1212,9 @@ const getFreshDefaults = (): ContentFormValues => ({
   uuid: undefined,
 });
 
+// Media reaches a lesson only by upload — a URL box is offered for LINK and YOUTUBE
+// alone. One submit button commits everything: it uploads any staged file, then saves
+// the record with the URL that upload issued.
 function LessonContentForm({
   isOpen,
   onCancel,
@@ -1241,16 +1279,10 @@ function LessonContentForm({
   const [isDragging, setIsDragging] = useState(false);
   const [mediaFile, setMediaFile] = React.useState<File | null>(null);
   const [mediaPreviewUrl, setMediaPreviewUrl] = useState<string | null>(null);
-  const [isSavingMedia, setIsSavingMedia] = useState(false);
-  const mediaSaveInProgress = useRef(false);
 
-  // Reset the form whenever the sheet opens or closes.
-  // - Opens for edit -> hydrate with the editing content's values.
-  // - Opens fresh (e.g. "Add Image") -> blank form, but keep the preselected content_type.
-  // - Closes (isOpen === false, explicitly) -> wipe everything so the next open never
-  //   shows stale input. We check `=== false` rather than falsy so that if the parent
-  //   hasn't wired the isOpen prop through yet, this never fights with edit-mode
-  //   population — `undefined` is treated the same as "open".
+  // Opening hydrates from the edited record or blanks the form; closing wipes it so the
+  // next open never shows stale input. The `=== false` test is deliberate: an undefined
+  // isOpen counts as open, so a parent that never wired the prop still gets edit values.
   React.useEffect(() => {
     if (isOpen === false) {
       form.reset(getFreshDefaults());
@@ -1304,10 +1336,9 @@ function LessonContentForm({
     return Array.isArray(content) ? content : [];
   }, [contentTypeList]);
 
-  // Resolve the active content-type record. Falls back to matching by name
-  // (content_type) so the correct option is highlighted even before
-  // content_type_uuid has been resolved — e.g. the instant the sheet opens
-  // for "Add Video", before the uuid-sync effect below has run.
+  // Resolve the active content-type record, falling back to a match by name so the right
+  // option is highlighted the instant the sheet opens for "Add Video" — before the
+  // uuid-sync effect below has resolved content_type_uuid.
   const selectedTypeObj = React.useMemo(() => {
     if (contentTypeUuid) {
       const selectedByUuid = contentTypeData.find(item => item.uuid === contentTypeUuid);
@@ -1324,13 +1355,22 @@ function LessonContentForm({
     selectedTypeObj?.name?.toUpperCase() || watchedContentType?.toUpperCase() || undefined;
 
   const isMediaUploadType = ['IMAGE', 'VIDEO', 'AUDIO', 'PDF'].includes(selectedTypeKey || '');
-  const isLocalMediaSelected = isMediaUploadType && !!mediaFile;
-  const hasUrlValue =
-    isMediaUploadType && typeof watchedFileUrl === 'string' && watchedFileUrl.trim().length > 0;
-  const hasUploadedMedia =
-    hasUrlValue &&
-    !!toAuthenticatedMediaUrl(watchedFileUrl?.trim())?.startsWith('/api/proxy/api/v1/files');
-  const previewUrl = mediaPreviewUrl ?? (hasUploadedMedia ? watchedFileUrl?.trim() : undefined);
+  // LINK and YOUTUBE are the only types where the URL *is* the content, so they are
+  // the only ones that still offer a URL box.
+  const isUrlEntryType = selectedTypeKey === 'LINK' || selectedTypeKey === 'YOUTUBE';
+  const savedFileUrl = typeof watchedFileUrl === 'string' ? watchedFileUrl.trim() : '';
+  const savedMediaUrl =
+    isMediaUploadType && savedFileUrl
+      ? toAuthenticatedMediaUrl(savedFileUrl) || savedFileUrl
+      : '';
+
+  const clearStagedFile = () => {
+    if (mediaPreviewUrl?.startsWith('blob:')) {
+      URL.revokeObjectURL(mediaPreviewUrl);
+    }
+    setMediaFile(null);
+    setMediaPreviewUrl(null);
+  };
 
   useEffect(() => {
     if (!selectedTypeKey || !contentTypeData.length) return;
@@ -1388,180 +1428,112 @@ function LessonContentForm({
     });
   };
 
-  const handleUploadMedia = async (values: ContentFormValues) => {
-    if (!mediaFile || mediaSaveInProgress.current) return;
-    if (!courseId || !lessonId) {
-      toast.error('Select a lesson before uploading content.');
+  // One commit path for every content type: a staged file is uploaded first and the
+  // record is then saved with the URL the upload issued. With no file staged this is
+  // a plain create/update.
+  const onSubmit = async (data: ContentFormValues) => {
+    const isTextContent = data.content_type === 'TEXT';
+    const typedUrl = typeof data.file_url === 'string' ? data.file_url.trim() : '';
+
+    if (isUrlEntryType && !typedUrl) {
+      toast.error('Enter a URL for this content.');
       return;
     }
 
-    const path = { courseUuid: String(courseId), lessonUuid: String(lessonId) };
-    const originalUuid = isEditMode ? initialValues?.uuid : undefined;
-    mediaSaveInProgress.current = true;
-    setIsSavingMedia(true);
+    if (isMediaUploadType && !mediaFile && !typedUrl) {
+      toast.error('Choose a file to upload.');
+      return;
+    }
+
+    const existingUuid = isEditMode ? data.uuid ?? initialValues?.uuid : undefined;
 
     try {
-      await saveLessonMedia({
-        originalUuid,
-        details: {
-          lesson_uuid: path.lessonUuid,
-          content_type_uuid: values.content_type_uuid,
-          title: values.title,
-          description: values.description,
-          display_order: values.display_order,
-          is_required: initialValues?.is_required ?? false,
-        },
-        operations: {
-          upload: async () => {
-            const response = await uploadLessonMedia.mutateAsync({
-              body: { file: mediaFile },
-              path,
-              query: {
-                content_type_uuid: values.content_type_uuid,
-                title: values.title,
-                description: values.description,
-                is_required: initialValues?.is_required ?? false,
-              },
-            });
-            if (response.error || response.success === false) {
-              throw new Error(response.message || 'Media upload failed');
-            }
-            if (!response.data) throw new Error('The upload returned no content.');
-            return response.data;
+      let fileUrl = typedUrl;
+      let uploadedUuid: string | undefined;
+
+      if (isMediaUploadType && mediaFile) {
+        const uploaded = await uploadLessonMedia.mutateAsync({
+          body: { file: mediaFile },
+          path: {
+            courseUuid: courseId as string,
+            lessonUuid: lessonId as string,
           },
-          update: async (contentUuid, body) => {
-            const response = await updateLessonContent.mutateAsync({
-              path: { ...path, contentUuid },
-              body,
-            });
-            if (response.error || response.success === false) {
-              throw new Error(response.message || 'Could not save the uploaded material.');
-            }
+          query: {
+            content_type_uuid: data.content_type_uuid,
+            title: data.title,
+            description: data.description,
+            is_required: true,
           },
-          remove: async contentUuid => {
-            const response = await deleteLessonContent.mutateAsync({
-              path: { ...path, contentUuid },
-            });
-            if (
-              typeof response === 'object' && response !== null &&
-              (('error' in response && response.error) ||
-                ('success' in response && response.success === false))
-            ) {
-              throw new Error(getErrorMessage(response) || 'Could not remove the previous item.');
-            }
+        });
+
+        const uploadedContent = uploaded?.data;
+        if (!uploadedContent?.file_url) {
+          toast.error('The upload did not return a file location.');
+          return;
+        }
+
+        fileUrl = uploadedContent.file_url;
+        uploadedUuid = uploadedContent.uuid;
+      }
+
+      const contentBody: LessonContent = {
+        lesson_uuid: lessonId as string,
+        content_type_uuid: data.content_type_uuid,
+        title: data.title,
+        description: data.description,
+        content_text: isTextContent ? data.content_text ?? '' : null,
+        file_url: isTextContent ? null : fileUrl,
+        display_order: data.display_order,
+        is_required: true,
+        content_category: data.content_category,
+      };
+
+      // The upload endpoint can only ever create a record, so when replacing the file
+      // on an existing one we keep the edited record and drop the row the upload made.
+      const targetUuid = existingUuid ?? uploadedUuid;
+
+      const saved = targetUuid
+        ? await updateLessonContent.mutateAsync({
+          body: { ...contentBody, uuid: targetUuid },
+          path: {
+            courseUuid: courseId as string,
+            lessonUuid: lessonId as string,
+            contentUuid: targetUuid,
           },
-          list: async () => {
-            const response = await qc.fetchQuery({
-              ...getLessonContentOptions({ path }),
-              staleTime: 0,
-            });
-            if (response.error || response.success === false) {
-              throw new Error(response.message || 'Could not check lesson content.');
-            }
-            if (!response.data) throw new Error('Could not check lesson content.');
-            return response.data;
-          },
-        },
-      });
-      toast.success(isEditMode ? 'Material replaced successfully' : 'Media uploaded successfully');
-      setMediaFile(null);
-      setMediaPreviewUrl(null);
+        })
+        : await createLessonContent.mutateAsync({
+          body: contentBody,
+          path: { courseUuid: courseId as string, lessonUuid: lessonId as string },
+        });
+
+      if (uploadedUuid && uploadedUuid !== targetUuid) {
+        await deleteLessonContent
+          .mutateAsync({
+            path: {
+              courseUuid: courseId as string,
+              lessonUuid: lessonId as string,
+              contentUuid: uploadedUuid,
+            },
+          })
+          .catch(() => undefined);
+      }
+
+      clearStagedFile();
+      invalidateLessonContent();
+      toast.success(saved?.message || (existingUuid ? 'Content updated' : 'Content created'));
       localStorage.removeItem(draftKey);
       onSuccess?.();
       onCancel();
     } catch (error) {
-      toast.error(getErrorMessage(error) || 'Could not save the uploaded material.');
-    } finally {
-      invalidateLessonContent();
-      mediaSaveInProgress.current = false;
-      setIsSavingMedia(false);
+      toast.error(getErrorMessage(error) || 'Failed to save content');
     }
   };
 
-  // Handles everything that ISN'T a local media upload: TEXT content, or a
-  // media type where the user pasted a URL instead of choosing a file.
-  const onSubmit = async (data: ContentFormValues) => {
-    if (isMediaUploadType && mediaFile) {
-      await handleUploadMedia(data);
-      return;
-    }
-
-    const isTextContent = data.content_type === 'TEXT';
-    const contentValue = isTextContent
-      ? data.content_text ?? ''
-      : typeof data.file_url === 'string'
-        ? data.file_url.trim()
-        : '';
-
-    if (isMediaUploadType && !contentValue) {
-      toast.error('Enter a URL or choose a file to upload.');
-      return;
-    }
-
-    const contentBody: LessonContent = {
-      lesson_uuid: lessonId as string,
-      content_type_uuid: data.content_type_uuid,
-      title: data.title,
-      description: data.description,
-      content_text: isTextContent ? contentValue : null,
-      file_url: isTextContent ? null : contentValue,
-      display_order: data.display_order,
-      is_required: true,
-      content_category: data.content_category,
-    };
-
-    try {
-      if (isEditMode) {
-        const contentUuid = data.uuid ?? initialValues?.uuid;
-
-        updateLessonContent.mutate(
-          {
-            body: { ...contentBody, uuid: contentUuid },
-            path: {
-              courseUuid: courseId as string,
-              lessonUuid: lessonId as string,
-              contentUuid: contentUuid as string,
-            },
-          },
-          {
-            onSuccess: data => {
-              invalidateLessonContent();
-              toast.success(data?.message);
-              localStorage.removeItem(draftKey);
-              onSuccess?.();
-              onCancel();
-            },
-            onError: error => {
-              toast.error(getErrorMessage(error) || 'Failed to update content');
-            },
-          }
-        );
-      } else {
-        createLessonContent.mutate(
-          {
-            body: contentBody,
-            path: { courseUuid: courseId as string, lessonUuid: lessonId as string },
-          },
-          {
-            onSuccess: data => {
-              invalidateLessonContent();
-              toast.success(data?.message);
-              localStorage.removeItem(draftKey);
-              onSuccess?.();
-              onCancel();
-            },
-            onError: error => {
-              toast.error(getErrorMessage(error) || 'Failed to create content');
-            },
-          }
-        );
-      }
-    } catch (error) {
-      toast.error(getErrorMessage(error) || 'Something went wrong');
-    }
-  };
-
-  const isPending = createLessonContent.isPending || updateLessonContent.isPending || isSavingMedia;
+  const isPending =
+    createLessonContent.isPending ||
+    updateLessonContent.isPending ||
+    uploadLessonMedia.isPending ||
+    deleteLessonContent.isPending;
 
   return (
     <Form {...form}>
@@ -1569,357 +1541,340 @@ function LessonContentForm({
         onSubmit={form.handleSubmit(onSubmit, handleSubmitError)}
         className={`space-y-6 ${className ?? ''}`}
       >
-        <fieldset disabled={isSavingMedia} className='min-w-0 space-y-6'>
-          <div className='flex items-center justify-end gap-2'>
-            <Button
-              type='button'
-              variant='ghost'
-              className='ml-auto flex items-center gap-2'
-              onClick={() => {
-                localStorage.setItem(draftKey, JSON.stringify(form.getValues()));
-                setDraftSaved(true);
-                toast.success('Draft saved');
+        <div className='flex items-center justify-end gap-2'>
+          <Button
+            type='button'
+            variant='ghost'
+            className='ml-auto flex items-center gap-2'
+            onClick={() => {
+              localStorage.setItem(draftKey, JSON.stringify(form.getValues()));
+              setDraftSaved(true);
+              toast.success('Draft saved');
 
-                setTimeout(() => setDraftSaved(false), 2000);
-              }}
-            >
-              <Save className='h-4 w-4' />
-              {draftSaved ? 'Draft Saved' : 'Save Draft'}
-            </Button>
-          </div>
+              setTimeout(() => setDraftSaved(false), 2000);
+            }}
+          >
+            <Save className='h-4 w-4' />
+            {draftSaved ? 'Draft Saved' : 'Save Draft'}
+          </Button>
+        </div>
 
-          <div className='flex flex-col gap-3 space-y-4'>
+        <div className='flex flex-col gap-3 space-y-4'>
+          <FormField
+            control={form.control}
+            name='display_order'
+            render={({ field }) => (
+              <FormItem>
+                <div className='mb-2 flex flex-col gap-2'>
+                  <FormLabel>Display Order #</FormLabel>
+                  <FormControl>
+                    <Input placeholder='Enter an display number for your content' {...field} />
+                  </FormControl>
+                  <FormMessage />
+                </div>
+              </FormItem>
+            )}
+          />
+
+          <div className='w-full'>
             <FormField
-              control={form.control}
-              name='display_order'
+              name='content_type_uuid'
               render={({ field }) => (
-                <FormItem>
-                  <div className='mb-2 flex flex-col gap-2'>
-                    <FormLabel>Display Order #</FormLabel>
+                <FormItem className='col-span-2'>
+                  <FormLabel>Content Type</FormLabel>
+                  <Select
+                    onValueChange={val => {
+                      try {
+                        const parsed = JSON.parse(val);
+                        setValue('content_type', parsed.name.toUpperCase());
+                        setValue('content_type_uuid', parsed.uuid);
+                        setValue('content_category', parsed.upload_category);
+                      } catch {
+                        setValue('content_type', 'TEXT');
+                        setValue('content_type_uuid', '');
+                        setValue('content_category', '');
+                      }
+                      setValue('content_text', '');
+                      setValue('file_url', '');
+                      if (mediaPreviewUrl?.startsWith('blob:')) {
+                        URL.revokeObjectURL(mediaPreviewUrl);
+                      }
+                      setMediaPreviewUrl(null);
+                      setMediaFile(null);
+                    }}
+                    // Driven by selectedTypeObj (not raw contentTypeUuid) so the right
+                    // option is highlighted immediately on open, even before the
+                    // uuid-sync effect below has had a chance to run.
+                    value={selectedTypeObj ? JSON.stringify(selectedTypeObj) : ''}
+                  >
                     <FormControl>
-                      <Input placeholder='Enter an display number for your content' {...field} />
+                      <SelectTrigger>
+                        <SelectValue placeholder='Select content type' />
+                      </SelectTrigger>
                     </FormControl>
-                    <FormMessage />
-                  </div>
+                    <SelectContent>
+                      {contentTypeData.map(value => {
+                        const Icon = ContentTypeIcons[
+                          value.name.toUpperCase() as keyof typeof ContentTypeIcons
+                        ];
+                        return (
+                          <SelectItem key={value.uuid} value={JSON.stringify(value)}>
+                            <div className='flex items-center gap-2'>
+                              {Icon && <Icon className='h-4 w-4' />}
+                              <span>{value.name}</span>
+                            </div>
+                          </SelectItem>
+                        );
+                      })}
+                    </SelectContent>
+                  </Select>
+                  <FormMessage />
                 </FormItem>
               )}
             />
+          </div>
 
-            <div className='w-full'>
+          {selectedTypeKey === 'TEXT' ? (
+            <div className='flex flex-col gap-6'>
               <FormField
-                name='content_type_uuid'
+                name='title'
                 render={({ field }) => (
-                  <FormItem className='col-span-2'>
-                    <FormLabel>Content Type</FormLabel>
-                    <Select
-                      onValueChange={val => {
-                        try {
-                          const parsed = JSON.parse(val);
-                          setValue('content_type', parsed.name.toUpperCase());
-                          setValue('content_type_uuid', parsed.uuid);
-                          setValue('content_category', parsed.upload_category);
-                        } catch {
-                          setValue('content_type', 'TEXT');
-                          setValue('content_type_uuid', '');
-                          setValue('content_category', '');
-                        }
-                        setValue('content_text', '');
-                        setValue('file_url', '');
-                        if (mediaPreviewUrl?.startsWith('blob:')) {
-                          URL.revokeObjectURL(mediaPreviewUrl);
-                        }
-                        setMediaPreviewUrl(null);
-                        setMediaFile(null);
-                      }}
-                      // Driven by selectedTypeObj (not raw contentTypeUuid) so the right
-                      // option is highlighted immediately on open, even before the
-                      // uuid-sync effect below has had a chance to run.
-                      value={selectedTypeObj ? JSON.stringify(selectedTypeObj) : ''}
-                    >
-                      <FormControl>
-                        <SelectTrigger>
-                          <SelectValue placeholder='Select content type' />
-                        </SelectTrigger>
-                      </FormControl>
-                      <SelectContent>
-                        {contentTypeData.map(value => {
-                          const Icon = ContentTypeIcons[
-                            value.name.toUpperCase() as keyof typeof ContentTypeIcons
-                          ];
-                          return (
-                            <SelectItem key={value.uuid} value={JSON.stringify(value)}>
-                              <div className='flex items-center gap-2'>
-                                {Icon && <Icon className='h-4 w-4' />}
-                                <span>{value.name}</span>
-                              </div>
-                            </SelectItem>
-                          );
-                        })}
-                      </SelectContent>
-                    </Select>
+                  <FormItem>
+                    <FormLabel>Title</FormLabel>
+                    <FormControl>
+                      <Input placeholder='Enter content title' {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              <FormField
+                name='content_text'
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Content</FormLabel>
+                    <FormControl>
+                      <SimpleEditor value={field.value} onChange={field.onChange} />
+                    </FormControl>
                     <FormMessage />
                   </FormItem>
                 )}
               />
             </div>
+          ) : (
+            <>
+              <FormField
+                name='title'
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Title</FormLabel>
+                    <FormControl>
+                      <Input placeholder='Enter content title' {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
 
-            {selectedTypeKey === 'TEXT' ? (
-              <div className='flex flex-col gap-6'>
+              <FormField
+                name='description'
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Description</FormLabel>
+                    <FormControl>
+                      <Input placeholder='Enter content description' {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              {/* URL entry survives only where the URL is the content itself. */}
+              {isUrlEntryType && (
                 <FormField
-                  name='title'
+                  name='file_url'
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Title</FormLabel>
+                      <FormLabel>URL</FormLabel>
+
                       <FormControl>
-                        <Input placeholder='Enter content title' {...field} />
+                        <Input
+                          type='text'
+                          placeholder={getContentPlaceholder(selectedTypeKey ?? '')}
+                          {...field}
+                        />
                       </FormControl>
-                      <FormMessage />
+
+                      <FormMessage className='text-xs' />
                     </FormItem>
                   )}
                 />
+              )}
 
-                <FormField
-                  name='content_text'
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Content</FormLabel>
-                      <FormControl>
-                        <SimpleEditor value={field.value} onChange={field.onChange} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
+              {/* Upload dropzone — the only way media reaches a lesson, whether the
+                  record is new or already carries a file. */}
+              {isMediaUploadType ? (
+                <div
+                  className={cn(
+                    'space-y-4 rounded-lg border-2 border-dashed p-6 transition-colors',
+                    isDragging ? 'border-primary bg-primary/5' : 'border-muted-foreground/30'
                   )}
-                />
-              </div>
-            ) : (
-              <>
-                <FormField
-                  name='title'
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Title</FormLabel>
-                      <FormControl>
-                        <Input placeholder='Enter content title' {...field} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
+                  onDragOver={e => {
+                    e.preventDefault();
+                    setIsDragging(true);
+                  }}
+                  onDragLeave={() => setIsDragging(false)}
+                  onDrop={e => {
+                    e.preventDefault();
+                    setIsDragging(false);
 
-                <FormField
-                  name='description'
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Description</FormLabel>
-                      <FormControl>
-                        <Input placeholder='Enter content description' {...field} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
+                    const file = e.dataTransfer.files?.[0];
+                    if (file) {
+                      if (mediaPreviewUrl?.startsWith('blob:')) {
+                        URL.revokeObjectURL(mediaPreviewUrl);
+                      }
+                      setMediaFile(file);
+                      setMediaPreviewUrl(URL.createObjectURL(file));
+                    }
+                  }}
+                >
+                  <h4 className='text-sm font-medium'>
+                    {selectedTypeKey === 'IMAGE' ? 'Attach Image' : 'Attach File'}
+                  </h4>
 
-                {/* URL entry — hidden once a local file is staged, so only one input path is live at a time. */}
-                {/* {!isLocalMediaSelected &&
-                 (
-                  <FormField
-                    name='file_url'
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>URL</FormLabel>
-
-                        <FormControl>
-                          <Input
-                            type='text'
-                            placeholder={getContentPlaceholder(selectedTypeKey ?? '')}
-                            {...field}
-                          />
-                        </FormControl>
-
-                        {isMediaUploadType && (
-                          <p className='text-muted-foreground text-xs'>
-                            {hasUploadedMedia
-                              ? 'Upload a new file below to replace this material.'
-                              : 'Paste a URL, or clear this field to upload a file.'}
-                          </p>
-                        )}
-
-                        <FormMessage className='text-xs' />
-                      </FormItem>
-                    )}
+                  <Input
+                    ref={fileInputRef}
+                    type='file'
+                    accept={
+                      ACCEPTED_FILE_TYPES[selectedTypeKey as keyof typeof ACCEPTED_FILE_TYPES] ??
+                      'image/*,application/pdf,video/*,audio/*'
+                    }
+                    className='hidden'
+                    onChange={e => {
+                      const file = e.target.files?.[0] || null;
+                      if (mediaPreviewUrl?.startsWith('blob:')) {
+                        URL.revokeObjectURL(mediaPreviewUrl);
+                      }
+                      setMediaFile(file);
+                      setMediaPreviewUrl(file ? URL.createObjectURL(file) : null);
+                      // Clear the input so re-picking the same file after Remove still fires.
+                      e.target.value = '';
+                    }}
                   />
-                )} */}
 
-
-                {/* Stored uploads can be replaced without clearing their saved URL. */}
-                {isMediaUploadType && (!hasUrlValue || hasUploadedMedia || isLocalMediaSelected) ? (
-                  <div
-                    className={cn(
-                      'space-y-4 rounded-lg border-2 border-dashed p-6 transition-colors',
-                      isDragging ? 'border-primary bg-primary/5' : 'border-muted-foreground/30'
-                    )}
-                    onDragOver={e => {
-                      e.preventDefault();
-                      setIsDragging(true);
-                    }}
-                    onDragLeave={() => setIsDragging(false)}
-                    onDrop={e => {
-                      e.preventDefault();
-                      setIsDragging(false);
-                      if (mediaSaveInProgress.current) return;
-
-                      const file = e.dataTransfer.files?.[0];
-                      if (file) {
-                        if (mediaPreviewUrl?.startsWith('blob:')) {
-                          URL.revokeObjectURL(mediaPreviewUrl);
-                        }
-                        setMediaFile(file);
-                        setMediaPreviewUrl(URL.createObjectURL(file));
-                      }
-                    }}
-                  >
-                    <h4 className='text-sm font-medium'>
-                      {hasUploadedMedia
-                        ? 'Replace uploaded material'
-                        : selectedTypeKey === 'IMAGE'
-                          ? 'Attach Image'
-                          : 'Attach File'}
-                    </h4>
-
-                    <Input
-                      ref={fileInputRef}
-                      type='file'
-                      accept={
-                        ACCEPTED_FILE_TYPES[
-                        CONTENT_TYPES[selectedTypeKey as keyof typeof CONTENT_TYPES] as keyof typeof ACCEPTED_FILE_TYPES
-                        ] ??
-                        'image/*,application/pdf,video/*,audio/*'
-                      }
-                      className='hidden'
-                      onChange={e => {
-                        const file = e.target.files?.[0];
-                        if (!file) return;
-                        if (mediaPreviewUrl?.startsWith('blob:')) {
-                          URL.revokeObjectURL(mediaPreviewUrl);
-                        }
-                        setMediaFile(file);
-                        setMediaPreviewUrl(URL.createObjectURL(file));
-                        e.target.value = '';
-                      }}
-                    />
-
-                    {!mediaFile ? (
-                      <div
-                        role='button'
-                        tabIndex={0}
-                        onClick={() => fileInputRef.current?.click()}
-                        onKeyDown={e => e.key === 'Enter' && fileInputRef.current?.click()}
-                        className='bg-muted/40 hover:bg-muted flex cursor-pointer flex-col items-center justify-center gap-2 rounded-md border px-6 py-8 text-center'
-                      >
-                        <p className='text-sm font-medium'>
-                          Drag & drop a file here, or click to browse
+                  {mediaFile ? (
+                    <div className='bg-muted/40 space-y-4 rounded-md border px-4 py-3'>
+                      <div className='flex items-center justify-between gap-3'>
+                        <p className='text-primary min-w-0 flex-1 truncate text-[13px]'>
+                          {mediaFile.name}
                         </p>
-                        <p className='text-muted-foreground text-[13px]'>
-                          {selectedTypeKey === 'IMAGE'
-                            ? 'Upload an image file'
-                            : 'Upload a media file'}
-                        </p>
-                      </div>
-                    ) : (
-                      <div className='bg-muted/40 space-y-4 rounded-md border px-4 py-3'>
-                        <div className='flex items-center justify-between gap-3'>
-                          <p className='text-primary min-w-0 flex-1 truncate text-[13px]'>
-                            {mediaFile.name}
-                          </p>
-                          <div className='flex shrink-0 items-center gap-2'>
-                            <Button
-                              type='button'
-                              variant='ghost'
-                              size='sm'
-                              onClick={() => fileInputRef.current?.click()}
-                            >
-                              Replace
-                            </Button>
-                            <Button
-                              type='button'
-                              variant='ghost'
-                              size='sm'
-                              onClick={() => {
-                                if (mediaPreviewUrl?.startsWith('blob:')) {
-                                  URL.revokeObjectURL(mediaPreviewUrl);
-                                }
-                                setMediaFile(null);
-                                setMediaPreviewUrl(null);
-                                if (fileInputRef.current) fileInputRef.current.value = '';
-                              }}
-                            >
-                              {hasUploadedMedia ? 'Cancel replacement' : 'Remove'}
-                            </Button>
-                          </div>
+                        <div className='flex shrink-0 items-center gap-2'>
+                          <Button
+                            type='button'
+                            variant='ghost'
+                            size='sm'
+                            onClick={() => fileInputRef.current?.click()}
+                          >
+                            Replace
+                          </Button>
+                          <Button
+                            type='button'
+                            variant='ghost'
+                            size='sm'
+                            onClick={clearStagedFile}
+                          >
+                            Remove
+                          </Button>
                         </div>
                       </div>
-                    )}
 
-                    {previewUrl ? (
-                      <div className='space-y-2'>
-                        <p className='text-sm font-medium'>
-                          {mediaFile ? 'File preview' : 'Current material'}
+                      <MediaPreview
+                        kind={mediaKindFromMimeType(mediaFile.type)}
+                        src={mediaPreviewUrl ?? ''}
+                        label={mediaFile.name}
+                      />
+
+                      {savedMediaUrl ? (
+                        <p className='text-muted-foreground text-xs'>
+                          Saving replaces the file currently attached to this content.
                         </p>
-                        <LessonMediaPreview
-                          url={previewUrl}
-                          title={mediaFile?.name ?? form.getValues('title') ?? 'Uploaded material'}
-                          contentType={selectedTypeKey ?? ''}
-                        />
+                      ) : null}
+                    </div>
+                  ) : savedMediaUrl ? (
+                    <div className='bg-muted/40 space-y-4 rounded-md border px-4 py-3'>
+                      <div className='flex items-center justify-between gap-3'>
+                        <p className='text-muted-foreground min-w-0 flex-1 truncate text-[13px]'>
+                          Attached file
+                        </p>
+                        <Button
+                          type='button'
+                          variant='ghost'
+                          size='sm'
+                          onClick={() => fileInputRef.current?.click()}
+                        >
+                          Replace
+                        </Button>
                       </div>
-                    ) : null}
-                  </div>
-                ) : null}
+
+                      <MediaPreview
+                        kind={(selectedTypeKey ?? 'OTHER') as MediaKind}
+                        src={savedMediaUrl}
+                        label='Attached file'
+                      />
+
+                      <p className='text-muted-foreground text-xs'>
+                        An attached file can be replaced, but detaching one is not supported yet.
+                      </p>
+                    </div>
+                  ) : (
+                    <div
+                      role='button'
+                      tabIndex={0}
+                      onClick={() => fileInputRef.current?.click()}
+                      onKeyDown={e => e.key === 'Enter' && fileInputRef.current?.click()}
+                      className='bg-muted/40 hover:bg-muted flex cursor-pointer flex-col items-center justify-center gap-2 rounded-md border px-6 py-8 text-center'
+                    >
+                      <p className='text-sm font-medium'>
+                        Drag & drop a file here, or click to browse
+                      </p>
+                      <p className='text-muted-foreground text-[13px]'>
+                        {selectedTypeKey === 'IMAGE'
+                          ? 'Upload an image file'
+                          : 'Upload a media file'}
+                      </p>
+                    </div>
+                  )}
+                </div>
+              ) : null}
+            </>
+          )}
+        </div>
+
+        {/* Form Buttons */}
+        <div className='flex justify-end gap-2 pt-6'>
+          <Button type='button' variant='outline' onClick={onCancel}>
+            Cancel
+          </Button>
+          {/* The only commit control: it uploads a staged file first where there is one. */}
+          <Button type='submit' className='min-w-fit px-3' disabled={isPending}>
+            {uploadLessonMedia.isPending ? (
+              <>
+                <Spinner className='mr-2 h-4 w-4' />
+                Uploading...
               </>
+            ) : isPending ? (
+              <>
+                <Spinner className='mr-2 h-4 w-4' />
+                {isEditMode ? 'Updating...' : 'Creating...'}
+              </>
+            ) : isEditMode ? (
+              'Update Content'
+            ) : (
+              'Create Content'
             )}
-          </div>
-
-          {/* Form Buttons */}
-          <div className='flex justify-end gap-2 pt-6'>
-            <Button type='button' variant='outline' onClick={onCancel}>
-              Cancel
-            </Button>
-
-            {mediaFile ? (
-              <Button
-                type='button'
-                className='max-w-fit px-3'
-                disabled={isSavingMedia}
-                onClick={form.handleSubmit(handleUploadMedia, handleSubmitError)}
-              >
-                {isSavingMedia ? (
-                  <>
-                    <Spinner className='mr-2 h-4 w-4' />
-                    Uploading...
-                  </>
-                ) : (
-                  isEditMode ? 'Replace Content' : 'Upload Content'
-                )}
-              </Button>
-            ) : null}
-
-            {/* Hidden while a local file is staged — that path is committed exclusively
-                through the "Upload Content" button/mutation above. */}
-            {!isLocalMediaSelected ? (
-              <Button type='submit' className='min-w-fit px-3' disabled={isPending}>
-                {isPending ? (
-                  <>
-                    <Spinner className='mr-2 h-4 w-4' />
-                    {isEditMode ? 'Updating...' : 'Creating...'}
-                  </>
-                ) : isEditMode ? (
-                  'Update Content'
-                ) : (
-                  'Create Content'
-                )}
-              </Button>
-            ) : null}
-          </div>
-        </fieldset>
+          </Button>
+        </div>
       </form>
     </Form>
   );
@@ -1983,6 +1938,9 @@ function AssessmentCreationForm({
 
   const queryClient = useQueryClient();
   const user = useUserProfile();
+  // Audit fields carry the signed-in user, never a placeholder address; when the
+  // profile has not resolved we send nothing rather than a fictional author.
+  const authorEmail = user?.email;
 
   const {
     rubricsWithDetails,
@@ -2007,6 +1965,7 @@ function AssessmentCreationForm({
   const onSubmit = async (values: AssessmentFormValues) => {
     createAssessmentMutation.mutate(
       {
+        path: { courseUuid: courseId as string },
         body: {
           course_uuid: courseId,
           assessment_type: values.assessment_type,
@@ -2015,8 +1974,7 @@ function AssessmentCreationForm({
           weight_percentage: values.weight_percentage,
           rubric_uuid: selectedRubricUuid || values.rubric_uuid,
           is_required: true,
-          created_by: 'instructor@sarafrika.com',
-          updated_by: 'instructor@sarafrika.com',
+          ...(authorEmail ? { created_by: authorEmail, updated_by: authorEmail } : {}),
           assessment_category: 'Participation Component',
           weight_display: `${values.weight_percentage}% of final grade`,
           is_major_assessment: false,
@@ -2057,8 +2015,7 @@ function AssessmentCreationForm({
             weight_percentage: values.weight_percentage,
             rubric_uuid: selectedRubricUuid,
             is_required: true,
-            created_by: 'instructor@sarafrika.com',
-            updated_by: 'instructor@sarafrika.com',
+            ...(authorEmail ? { updated_by: authorEmail } : {}),
             assessment_category: 'Participation Component',
             weight_display: `${values.weight_percentage}% of final grade`,
             is_major_assessment: false,

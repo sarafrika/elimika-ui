@@ -21,6 +21,7 @@ import {
     getProgramReviewsOptions,
     getTrainingProgramByUuidOptions,
 } from '@/services/client/@tanstack/react-query.gen';
+import type { Course } from '@/services/client/types.gen';
 
 import { CourseRecordView } from '@/src/features/course-record/CourseRecordView';
 import {
@@ -43,7 +44,30 @@ import {
     type CourseRailActionItem,
 } from '@/src/features/course-record/blocks';
 import { courseContentKind } from '@/src/features/course-record/blocks/CurriculumTab';
+import type { CourseStats } from '@/src/features/course-record/types';
 
+type ProgramLessonQueryResult = {
+    data?: {
+        data?: {
+            content?: Array<{
+                uuid?: string;
+                course_uuid?: string;
+                lesson_number?: number;
+                title?: string;
+                description?: string;
+            }>;
+        };
+    };
+};
+
+type ProgramContentItem = {
+    uuid?: string;
+    title?: string;
+    content_category?: string | null;
+    mime_type?: string | null;
+    content_type_uuid?: string | null;
+    is_required?: boolean;
+};
 
 export interface ProgramRecordPageProps {
     programUuid: string;
@@ -131,9 +155,9 @@ export function ProgramRecordPage({
 
     // Fetch course lessons for each program course, then fetch their content
     const courseLessonsQueries = useQueries({
-        queries: courses.map((c: any) => ({
-            ...getCourseLessonsOptions({ path: { courseUuid: c.uuid }, query: { pageable: {} } }),
-            enabled: Boolean(c?.uuid),
+        queries: courses.map((course: Course) => ({
+            ...getCourseLessonsOptions({ path: { courseUuid: course.uuid ?? '' }, query: { pageable: {} } }),
+            enabled: Boolean(course?.uuid),
             staleTime: STALE_TIMES.reference,
             refetchOnWindowFocus: false,
             refetchOnMount: false,
@@ -145,9 +169,9 @@ export function ProgramRecordPage({
     // contents. Each lesson knows its course_uuid so we can request the right
     // lesson content endpoint.
     const allLessons = useMemo(() => {
-        return courseLessonsQueries.flatMap((q: any, courseIdx: number) => {
-            const list = q.data?.data?.content ?? [];
-            return (list as any[]).map((lesson, lessonIdx) => ({
+        return courseLessonsQueries.flatMap((query: ProgramLessonQueryResult, courseIdx: number) => {
+            const list = query.data?.data?.content ?? [];
+            return list.map((lesson, lessonIdx) => ({
                 ...lesson,
                 _programCourseIndex: courseIdx,
                 _programLessonIndex: lessonIdx,
@@ -170,7 +194,7 @@ export function ProgramRecordPage({
     // wrapper and then rendering the same lesson/content accordion the single
     // course record uses inside it.
     const courseCurricula = useMemo(() => {
-        return courses.map((course: any, idx: number) => {
+        return courses.map((course: Course, idx: number) => {
             const relatedLessons = allLessons.filter(l => l._programCourseIndex === idx);
             const lessons = relatedLessons.map(lesson => {
                 const lessonIndex = allLessons.findIndex(
@@ -179,10 +203,10 @@ export function ProgramRecordPage({
                         entry._programLessonIndex === lesson._programLessonIndex &&
                         entry.uuid === lesson.uuid
                 );
-                const q = lessonContentQueries[lessonIndex];
-                const contents = q?.data?.data ?? [];
+                const query = lessonContentQueries[lessonIndex];
+                const contents = (query?.data?.data ?? []) as ProgramContentItem[];
 
-                const items = (contents as any[]).map(content => ({
+                const items = contents.map(content => ({
                     uuid: content.uuid,
                     title: `${lesson.lesson_number}. ${lesson.title} — ${content.title ?? ''}`.trim(),
                     kind: courseContentKind(content.content_category ?? content.mime_type ?? content.content_type_uuid ?? ''),
@@ -213,7 +237,10 @@ export function ProgramRecordPage({
     const ratings = useMemo(() => summarise(reviews), [reviews]);
 
     // reviewer names: try to resolve student ids carried on reviews
-    const reviewerIds = reviews.filter((r: any) => !r.is_anonymous).map((r: any) => r.student_uuid).filter(Boolean as any);
+    const reviewerIds = reviews
+        .filter((review: { is_anonymous?: boolean; student_uuid?: string | null }) => !review.is_anonymous)
+        .map((review: { student_uuid?: string | null }) => review.student_uuid)
+        .filter((studentUuid): studentUuid is string => Boolean(studentUuid));
     const { studentMap } = useStudentsByIds(reviewerIds ?? []);
     const resolvedReviewerNames = useMemo(() => {
         const m: Record<string, string> = {};
@@ -225,27 +252,27 @@ export function ProgramRecordPage({
     // ProgramRecordPage mirrors CourseRecordPage behaviour and shows creator/
     // instructor/admin views when opened on those dashboards.
     const segment = routeSegmentFromPath(usePathname());
-    const access = ((): any => {
+    const access = (() => {
         switch (segment) {
             case 'course-creator':
-                return 'creator';
+                return 'creator' as const;
             case 'instructor':
-                return 'instructor';
+                return 'instructor' as const;
             case 'organisation':
-                return 'organisation';
+                return 'organisation' as const;
             case 'admin':
-                return 'admin';
+                return 'admin' as const;
             case 'student':
-                return 'student';
+                return 'student' as const;
             case 'parent':
-                return 'prospect';
+                return 'prospect' as const;
             default:
-                return 'prospect';
+                return 'prospect' as const;
         }
     })();
 
     // Vars for capability copy interpolation — best-effort mapping
-    const vars = {
+    const vars: Record<string, string | number | null | undefined> = {
         lifecycle: program?.status,
         enrolment: enrollments?.length || 0,
         classLimit: program?.class_limit,
@@ -272,7 +299,7 @@ export function ProgramRecordPage({
         rating: ratings.average?.toFixed(1),
         reviews: ratings.total ?? undefined,
         pendingApplications: undefined,
-    } as Record<string, any>;
+    };
 
     // Build a CourseStats-like object from program data so we can reuse
     // `KpiBand` (shared with courses) and display the same cards where
@@ -283,20 +310,19 @@ export function ProgramRecordPage({
             ? Number(enrollmentsQ.data?.data?.metadata?.totalElements)
             : enrollments.length;
 
-    const stats = useMemo(() => {
-        return {
-            public: {
-                learners_trained: enrollmentsTotal ?? 0,
-                classes_running: 0,
-                completion_rate: 0,
-                average_rating: ratings.average ?? 0,
-                total_reviews: ratings.total ?? 0,
-                approved_trainer_count: 0,
-            },
-            scoped: 0,
-            owner: undefined,
-        } as any;
-    }, [enrollmentsTotal, ratings]);
+    const stats = useMemo<CourseStats>(() => ({
+        public: {
+            learners_trained: enrollmentsTotal ?? 0,
+            classes_running: 0,
+            average_class_fill: 0,
+            completion_rate: 0,
+            average_rating: ratings.average ?? 0,
+            total_reviews: ratings.total ?? 0,
+            approved_trainer_count: 0,
+        },
+        scoped: undefined,
+        owner: undefined,
+    }), [enrollmentsTotal, ratings]);
 
     const statsLoading = programQ.isLoading || enrollmentsQ.isLoading || reviewsQ.isLoading;
     const statsError = programQ.error ?? enrollmentsQ.error ?? reviewsQ.error;
@@ -310,7 +336,7 @@ export function ProgramRecordPage({
             classesOpenNow={undefined}
             nextClassStarts={undefined}
             loading={statsLoading}
-            error={statsError as any}
+            error={statsError}
         />
     );
 
@@ -357,14 +383,17 @@ export function ProgramRecordPage({
 
     const deliveryPanel = <DeliveryTab access={access} trainers={[]} trainersAsync={{ loading: false }} classes={[]} classesAsync={{ loading: false }} classesAcceptingCount={0} />;
 
-    const programCommercialCourse = useMemo(() => ({
-        ...program,
-        name: program?.title ?? 'Program',
-        price: program?.price ?? 0,
-        minimum_training_fee: program?.price ?? 0,
-        creator_share_percentage: 60,
-        instructor_share_percentage: 40,
-    }) as any, [program]);
+    const programCommercialCourse = useMemo(
+        () => ({
+            ...program,
+            name: program?.title ?? 'Program',
+            price: program?.price ?? 0,
+            minimum_training_fee: program?.price ?? 0,
+            creator_share_percentage: 60,
+            instructor_share_percentage: 40,
+        }) satisfies Partial<Course> & { name: string; price: number; minimum_training_fee: number; creator_share_percentage: number; instructor_share_percentage: number },
+        [program]
+    );
 
     const programCommercialStats = useMemo(() => ({
         public: {
@@ -383,7 +412,7 @@ export function ProgramRecordPage({
             paid_orders: enrollmentsTotal,
             refunded_orders: 0,
         },
-    }) as any, [enrollmentsTotal, program?.price, ratings.average, ratings.total]);
+    }), [enrollmentsTotal, program?.price, ratings.average, ratings.total]);
 
     const commercialsPanel = (
         <CommercialsTab
@@ -472,8 +501,8 @@ export function ProgramRecordPage({
                 progressStrip={undefined}
                 gateBanner={<GateBanner access={access} vars={vars} />}
                 rail={rail}
-                tabPanels={tabPanels as any}
-                tabCounts={tabCounts as any}
+                tabPanels={tabPanels}
+                tabCounts={tabCounts}
             />
 
             <LessonContentViewerDialog open={false} onOpenChange={() => { }} content={null} />

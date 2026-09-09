@@ -197,6 +197,7 @@ import {
   removeUserFromBranch,
   assignUserToBranch,
   requestOrganisationVerification,
+  uploadOrganisationDocument,
   listGroups,
   createGroup,
   listTransactions,
@@ -456,6 +457,7 @@ import {
   getBranchUsers,
   getBranchUsersByDomain,
   getOrganisationStatistics,
+  getOrganisationDocuments,
   listRoster,
   getSummary,
   getCalendar,
@@ -612,6 +614,7 @@ import {
   removeMember,
   deleteTransaction,
   deleteSource,
+  deleteOrganisationDocument,
   clearInstructorAvailability,
   revokeLink,
   dissociateRubric,
@@ -1132,6 +1135,9 @@ import type {
   RequestOrganisationVerificationData,
   RequestOrganisationVerificationError,
   RequestOrganisationVerificationResponse,
+  UploadOrganisationDocumentData,
+  UploadOrganisationDocumentError,
+  UploadOrganisationDocumentResponse,
   ListGroupsData,
   CreateGroupData,
   CreateGroupError,
@@ -1803,6 +1809,7 @@ import type {
   GetBranchUsersData,
   GetBranchUsersByDomainData,
   GetOrganisationStatisticsData,
+  GetOrganisationDocumentsData,
   ListRosterData,
   ListRosterError,
   ListRosterResponse,
@@ -2089,6 +2096,9 @@ import type {
   DeleteSourceData,
   DeleteSourceError,
   DeleteSourceResponse,
+  DeleteOrganisationDocumentData,
+  DeleteOrganisationDocumentError,
+  DeleteOrganisationDocumentResponse,
   ClearInstructorAvailabilityData,
   ClearInstructorAvailabilityError,
   ClearInstructorAvailabilityResponse,
@@ -8890,6 +8900,59 @@ export const requestOrganisationVerificationMutation = (
   > = {
     mutationFn: async localOptions => {
       const { data } = await requestOrganisationVerification({
+        ...options,
+        ...localOptions,
+        throwOnError: true,
+      });
+      return data;
+    },
+  };
+  return mutationOptions;
+};
+
+export const uploadOrganisationDocumentQueryKey = (
+  options: Options<UploadOrganisationDocumentData>
+) => createQueryKey('uploadOrganisationDocument', options);
+
+/**
+ * Upload an organisation validation document
+ * Stores a registration certificate, licence or authorising letter against the organisation and queues it for review. Document types come from GET /api/v1/document-types?applies_to=ORGANISATION.
+ */
+export const uploadOrganisationDocumentOptions = (
+  options: Options<UploadOrganisationDocumentData>
+) => {
+  return queryOptions({
+    queryFn: async ({ queryKey, signal }) => {
+      const { data } = await uploadOrganisationDocument({
+        ...options,
+        ...queryKey[0],
+        signal,
+        throwOnError: true,
+      });
+      return data;
+    },
+    queryKey: uploadOrganisationDocumentQueryKey(options),
+  });
+};
+
+/**
+ * Upload an organisation validation document
+ * Stores a registration certificate, licence or authorising letter against the organisation and queues it for review. Document types come from GET /api/v1/document-types?applies_to=ORGANISATION.
+ */
+export const uploadOrganisationDocumentMutation = (
+  options?: Partial<Options<UploadOrganisationDocumentData>>
+): UseMutationOptions<
+  UploadOrganisationDocumentResponse,
+  UploadOrganisationDocumentError,
+  Options<UploadOrganisationDocumentData>
+> => {
+  const mutationOptions: UseMutationOptions<
+    UploadOrganisationDocumentResponse,
+    UploadOrganisationDocumentError,
+    Options<UploadOrganisationDocumentData>
+  > = {
+    mutationFn: async localOptions => {
+      const { data } = await uploadOrganisationDocument({
         ...options,
         ...localOptions,
         throwOnError: true,
@@ -21723,6 +21786,27 @@ export const getOrganisationStatisticsOptions = (
   });
 };
 
+export const getOrganisationDocumentsQueryKey = (options: Options<GetOrganisationDocumentsData>) =>
+  createQueryKey('getOrganisationDocuments', options);
+
+/**
+ * List organisation validation documents
+ */
+export const getOrganisationDocumentsOptions = (options: Options<GetOrganisationDocumentsData>) => {
+  return queryOptions({
+    queryFn: async ({ queryKey, signal }) => {
+      const { data } = await getOrganisationDocuments({
+        ...options,
+        ...queryKey[0],
+        signal,
+        throwOnError: true,
+      });
+      return data;
+    },
+    queryKey: getOrganisationDocumentsQueryKey(options),
+  });
+};
+
 export const listRosterQueryKey = (options: Options<ListRosterData>) =>
   createQueryKey('listRoster', options);
 
@@ -23935,6 +24019,7 @@ export const listDocumentTypesQueryKey = (options?: Options<ListDocumentTypesDat
 
 /**
  * List available document types
+ * Filter with applies_to to get the checklist for one onboarding flow, for example ORGANISATION. Omitting it returns the whole catalogue.
  */
 export const listDocumentTypesOptions = (options?: Options<ListDocumentTypesData>) => {
   return queryOptions({
@@ -28718,6 +28803,33 @@ export const deleteSourceMutation = (
   > = {
     mutationFn: async localOptions => {
       const { data } = await deleteSource({
+        ...options,
+        ...localOptions,
+        throwOnError: true,
+      });
+      return data;
+    },
+  };
+  return mutationOptions;
+};
+
+/**
+ * Remove an organisation validation document
+ */
+export const deleteOrganisationDocumentMutation = (
+  options?: Partial<Options<DeleteOrganisationDocumentData>>
+): UseMutationOptions<
+  DeleteOrganisationDocumentResponse,
+  DeleteOrganisationDocumentError,
+  Options<DeleteOrganisationDocumentData>
+> => {
+  const mutationOptions: UseMutationOptions<
+    DeleteOrganisationDocumentResponse,
+    DeleteOrganisationDocumentError,
+    Options<DeleteOrganisationDocumentData>
+  > = {
+    mutationFn: async localOptions => {
+      const { data } = await deleteOrganisationDocument({
         ...options,
         ...localOptions,
         throwOnError: true,

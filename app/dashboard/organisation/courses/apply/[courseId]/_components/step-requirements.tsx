@@ -3,11 +3,13 @@
 /**
  * Step 3 — the creator's requirements, answered.
  *
- * A course asks a question per requirement: do you have this? "Yes" opens a
- * unit list — name/model, brand and serial per unit, each required — because a
- * school with three of a thing is a different proposition from a school with
- * one, and the serials are what a later audit is done against. "No" is not a
- * dead end: Sarafrika will lease or hire the kit, and the choice is recorded.
+ * A course asks one question per requirement: do you have this? "No" is not a
+ * dead end — Sarafrika will lease or hire the kit, and the choice is recorded.
+ *
+ * It is a check-off, not an asset register. Brand and serial were collected per
+ * unit, had no column on the API to land in, and were dropped before submission,
+ * so they blocked applications to no end. Condition and quantity belong to the
+ * equipment inventory when that exists.
  *
  * Only requirements the *applicant* is on the hook for appear here; the filter
  * lives in `apply-model` and the route applies it before this step sees a list.
@@ -16,24 +18,21 @@
  * inventory — so the programme branch reads rather than asks.
  */
 
-import { Plus, ShoppingBag, Trash2 } from 'lucide-react';
+import { ShoppingBag } from 'lucide-react';
 import type { Dispatch } from 'react';
 import { toast } from 'sonner';
 
 import { AsyncSection } from '@/components/data/async-section';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
 import { Skeleton } from '@/components/ui/skeleton';
-import { cn } from '@/lib/utils';
 import type { CourseTrainingRequirement, ProgramRequirement } from '@/services/client';
 
 import {
-  requirementKey,
   type ApplyAction,
   type ApplyState,
   type EquipmentAnswer,
+  requirementKey,
   type TrainingContentKind,
 } from './apply-model';
 
@@ -173,8 +172,7 @@ function EquipmentDeclaration({
           <span className='text-foreground font-medium'>
             prefilled from the course creator&apos;s requirements
           </span>
-          . For each one, tell us if you have it — you can add multiple units per requirement using{' '}
-          <span className='text-foreground font-medium'>Add another</span>.
+          . For each one, tell us whether you already have it.
         </p>
         <Badge variant='secondary'>{requirements.length} required</Badge>
       </div>
@@ -220,7 +218,7 @@ function EquipmentBlock({
             </Badge>
             {answer.has === 'yes' && (
               <Badge variant='secondary' className='text-[10px]'>
-                {answer.items.length} {answer.items.length === 1 ? 'item' : 'items'} added
+                Available
               </Badge>
             )}
           </div>
@@ -249,130 +247,11 @@ function EquipmentBlock({
       </div>
 
       {answer.has === 'yes' && (
-        <div className='mt-4 space-y-3'>
-          {answer.items.map((item, index) => {
-            const nameInvalid = !item.name.trim();
-            const brandInvalid = !item.brand.trim();
-            const serialInvalid = !item.serial.trim();
-            const rowInvalid = nameInvalid || brandInvalid || serialInvalid;
-            return (
-              <div
-                key={item.id}
-                className={cn(
-                  'bg-muted/40 grid gap-2 rounded-md p-3 sm:grid-cols-[1fr_1fr_1fr_auto]',
-                  rowInvalid && 'ring-destructive/40 ring-1'
-                )}
-              >
-                <div className='space-y-1'>
-                  <Label className='text-muted-foreground text-xs'>
-                    Name / Model <span className='text-destructive'>*</span>
-                  </Label>
-                  <Input
-                    value={item.name}
-                    onChange={event =>
-                      dispatch({
-                        type: 'equipItem',
-                        uuid: answer.requirementUuid,
-                        itemId: item.id,
-                        patch: { name: event.target.value },
-                      })
-                    }
-                    placeholder={`Item ${index + 1}`}
-                    required
-                    aria-invalid={nameInvalid}
-                    className={cn(
-                      nameInvalid && 'border-destructive focus-visible:ring-destructive/40'
-                    )}
-                  />
-                  {nameInvalid && <p className='text-destructive text-[11px]'>Required.</p>}
-                </div>
-                <div className='space-y-1'>
-                  <Label className='text-muted-foreground text-xs'>
-                    Brand <span className='text-destructive'>*</span>
-                  </Label>
-                  <Input
-                    value={item.brand}
-                    onChange={event =>
-                      dispatch({
-                        type: 'equipItem',
-                        uuid: answer.requirementUuid,
-                        itemId: item.id,
-                        patch: { brand: event.target.value },
-                      })
-                    }
-                    required
-                    aria-invalid={brandInvalid}
-                    className={cn(
-                      brandInvalid && 'border-destructive focus-visible:ring-destructive/40'
-                    )}
-                  />
-                  {brandInvalid && <p className='text-destructive text-[11px]'>Required.</p>}
-                </div>
-                <div className='space-y-1'>
-                  <Label className='text-muted-foreground text-xs'>
-                    Serial number <span className='text-destructive'>*</span>
-                  </Label>
-                  <Input
-                    value={item.serial}
-                    onChange={event =>
-                      dispatch({
-                        type: 'equipItem',
-                        uuid: answer.requirementUuid,
-                        itemId: item.id,
-                        patch: { serial: event.target.value },
-                      })
-                    }
-                    required
-                    aria-invalid={serialInvalid}
-                    className={cn(
-                      serialInvalid && 'border-destructive focus-visible:ring-destructive/40'
-                    )}
-                  />
-                  {serialInvalid && <p className='text-destructive text-[11px]'>Required.</p>}
-                </div>
-                <Button
-                  type='button'
-                  variant='ghost'
-                  size='icon'
-                  onClick={() =>
-                    dispatch({
-                      type: 'equipRemoveItem',
-                      uuid: answer.requirementUuid,
-                      itemId: item.id,
-                    })
-                  }
-                  aria-label='Remove item'
-                  className='self-end'
-                >
-                  <Trash2 className='text-muted-foreground h-4 w-4' />
-                </Button>
-              </div>
-            );
-          })}
-          {answer.items.length === 0 && (
-            <p className='text-destructive text-[11px]'>
-              Add at least one item with name, brand, and serial number.
-            </p>
-          )}
-          <div className='flex flex-wrap items-center justify-between gap-2 pt-1'>
-            <p className='text-muted-foreground text-xs'>
-              Have more than one? Add each unit so we can track serial numbers individually.
-            </p>
-            <Button
-              type='button'
-              variant='outline'
-              size='sm'
-              onClick={() =>
-                dispatch({
-                  type: 'equipAddItem',
-                  uuid: answer.requirementUuid,
-                  name: requirement.name,
-                })
-              }
-            >
-              <Plus className='mr-2 h-4 w-4' /> Add another {requirement.name}
-            </Button>
-          </div>
+        <div className='bg-muted/30 mt-4 rounded-md border border-dashed p-3'>
+          <p className='text-muted-foreground text-sm'>
+            Noted as available. You will confirm condition and quantity with the course creator
+            before your first session.
+          </p>
         </div>
       )}
 

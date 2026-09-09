@@ -2689,8 +2689,8 @@ export const zInstructorEducation = z
       .describe('**[READ-ONLY]** Formatted string showing year of completion and school name.')
       .readonly()
       .optional(),
-    years_since_completion: z.union([z.number().int().readonly(), z.null()]).readonly().optional(),
     education_level: zEducationLevelEnum.optional(),
+    years_since_completion: z.union([z.number().int().readonly(), z.null()]).readonly().optional(),
     has_certificate_number: z
       .boolean()
       .describe(
@@ -2859,16 +2859,16 @@ export const zInstructorDocument = z
       )
       .readonly()
       .optional(),
+    is_expired: z
+      .boolean()
+      .describe('**[READ-ONLY]** Indicates if the document has expired based on the expiry date.')
+      .readonly()
+      .optional(),
     file_url: z
       .string()
       .describe(
         '**[READ-ONLY]** API-relative URL for previewing or downloading the uploaded document.'
       )
-      .readonly()
-      .optional(),
-    is_expired: z
-      .boolean()
-      .describe('**[READ-ONLY]** Indicates if the document has expired based on the expiry date.')
       .readonly()
       .optional(),
     file_size_formatted: z
@@ -3240,6 +3240,13 @@ export const zCourse = z
       .describe('**[READ-ONLY]** Indicates if the course is published and discoverable.')
       .readonly()
       .optional(),
+    accepts_new_enrollments: z
+      .boolean()
+      .describe(
+        '**[READ-ONLY]** Indicates if the course is currently accepting new student enrollments.'
+      )
+      .readonly()
+      .optional(),
     is_draft: z
       .boolean()
       .describe('**[READ-ONLY]** Indicates if the course is still in draft mode.')
@@ -3253,13 +3260,6 @@ export const zCourse = z
     is_in_review: z
       .boolean()
       .describe('**[READ-ONLY]** Indicates if the course is currently under review.')
-      .readonly()
-      .optional(),
-    accepts_new_enrollments: z
-      .boolean()
-      .describe(
-        '**[READ-ONLY]** Indicates if the course is currently accepting new student enrollments.'
-      )
       .readonly()
       .optional(),
     total_duration_display: z
@@ -4321,16 +4321,16 @@ export const zCourseCreatorDocumentDto = z.object({
   created_by: z.string().readonly().optional(),
   updated_date: z.string().datetime().readonly().optional(),
   updated_by: z.string().readonly().optional(),
+  is_expired: z
+    .boolean()
+    .describe('**[READ-ONLY]** Indicates if the document has expired based on the expiry date.')
+    .readonly()
+    .optional(),
   file_url: z
     .string()
     .describe(
       '**[READ-ONLY]** API-relative URL for previewing or downloading the uploaded document.'
     )
-    .readonly()
-    .optional(),
-  is_expired: z
-    .boolean()
-    .describe('**[READ-ONLY]** Indicates if the document has expired based on the expiry date.')
     .readonly()
     .optional(),
   file_size_formatted: z
@@ -6292,6 +6292,58 @@ export const zApiResponseProgramReview = z.object({
 export const zApiResponseVoid = z.object({
   success: z.boolean().optional(),
   data: z.unknown().optional(),
+  message: z.string().optional(),
+  error: z.unknown().optional(),
+});
+
+/**
+ * Validation document attached to an organisation
+ */
+export const zOrganisationDocument = z
+  .object({
+    uuid: z.string().uuid().describe('Unique identifier of the document').readonly().optional(),
+    organisation_uuid: z
+      .string()
+      .uuid()
+      .describe('Organisation the document belongs to')
+      .optional(),
+    document_type_uuid: z.string().uuid().describe('Document type this file satisfies').optional(),
+    original_filename: z.string().describe('Filename as supplied by the uploader').optional(),
+    stored_filename: z.string().describe('Filename as stored').optional(),
+    file_path: z.string().describe('Path the stored file is served from').optional(),
+    file_size_bytes: z.coerce.bigint().describe('Size of the stored file in bytes').optional(),
+    mime_type: z.string().describe('MIME type of the stored file').optional(),
+    title: z.string().describe('Human-readable title for the document').optional(),
+    description: z.string().describe('Notes supplied with the document').optional(),
+    upload_date: z
+      .string()
+      .datetime()
+      .describe('When the document was uploaded')
+      .readonly()
+      .optional(),
+    is_verified: z
+      .boolean()
+      .describe('Whether a reviewer has verified the document')
+      .readonly()
+      .optional(),
+    status: zStatusEnum7.optional(),
+    expiry_date: z
+      .string()
+      .date()
+      .describe('Expiry date, where the document type carries one')
+      .optional(),
+    created_date: z
+      .string()
+      .datetime()
+      .describe('When the record was created')
+      .readonly()
+      .optional(),
+  })
+  .describe('Validation document attached to an organisation');
+
+export const zApiResponseOrganisationDocument = z.object({
+  success: z.boolean().optional(),
+  data: zOrganisationDocument.optional(),
   message: z.string().optional(),
   error: z.unknown().optional(),
 });
@@ -9801,6 +9853,13 @@ export const zApiResponseOrganisationDashboardStats = z.object({
   error: z.unknown().optional(),
 });
 
+export const zApiResponseListOrganisationDocument = z.object({
+  success: z.boolean().optional(),
+  data: z.array(zOrganisationDocument).optional(),
+  message: z.string().optional(),
+  error: z.unknown().optional(),
+});
+
 export const zApiResponseListStudentGroup = z.object({
   success: z.boolean().optional(),
   data: z.array(zStudentGroup).optional(),
@@ -10782,7 +10841,7 @@ export const zApiResponseClassEnrolmentEligibility = z.object({
 });
 
 /**
- * Selectable document type metadata for instructor and course creator uploads
+ * Selectable document type metadata for profile and organisation uploads
  */
 export const zDocumentTypeOption = z
   .object({
@@ -10802,8 +10861,13 @@ export const zDocumentTypeOption = z
       .boolean()
       .describe('Whether this document type is mandatory in onboarding flows')
       .optional(),
+    applies_to: z.string().describe('Which onboarding flow asks for this document').optional(),
+    requires_expiry: z
+      .boolean()
+      .describe('Whether this document type carries an expiry date. Organisation licences do not.')
+      .optional(),
   })
-  .describe('Selectable document type metadata for instructor and course creator uploads');
+  .describe('Selectable document type metadata for profile and organisation uploads');
 
 export const zApiResponseListDocumentTypeOption = z.object({
   success: z.boolean().optional(),
@@ -16133,6 +16197,28 @@ export const zRequestOrganisationVerificationData = z.object({
  */
 export const zRequestOrganisationVerificationResponse = zApiResponseOrganisation;
 
+export const zUploadOrganisationDocumentData = z.object({
+  body: z
+    .object({
+      file: z.string(),
+    })
+    .optional(),
+  path: z.object({
+    uuid: z.string().uuid().describe('UUID of the organisation the document belongs to'),
+  }),
+  query: z.object({
+    document_type_uuid: z.string().uuid(),
+    title: z.string().optional(),
+    description: z.string().optional(),
+    expiry_date: z.string().date().optional(),
+  }),
+});
+
+/**
+ * Document uploaded successfully
+ */
+export const zUploadOrganisationDocumentResponse = zApiResponseOrganisationDocument;
+
 export const zListGroupsData = z.object({
   body: z.never().optional(),
   path: z.object({
@@ -19885,6 +19971,19 @@ export const zGetOrganisationStatisticsData = z.object({
  */
 export const zGetOrganisationStatisticsResponse = zApiResponseOrganisationDashboardStats;
 
+export const zGetOrganisationDocumentsData = z.object({
+  body: z.never().optional(),
+  path: z.object({
+    uuid: z.string().uuid().describe('UUID of the organisation'),
+  }),
+  query: z.never().optional(),
+});
+
+/**
+ * OK
+ */
+export const zGetOrganisationDocumentsResponse = zApiResponseListOrganisationDocument;
+
 export const zListRosterData = z.object({
   body: z.never().optional(),
   path: z.object({
@@ -20598,7 +20697,11 @@ export const zGetClassEnrolmentEligibilityResponse = zApiResponseClassEnrolmentE
 export const zListDocumentTypesData = z.object({
   body: z.never().optional(),
   path: z.never().optional(),
-  query: z.never().optional(),
+  query: z
+    .object({
+      applies_to: z.string().describe('Onboarding flow the checklist is for').optional(),
+    })
+    .optional(),
 });
 
 /**
@@ -22082,6 +22185,20 @@ export const zDeleteSourceData = z.object({
  * OK
  */
 export const zDeleteSourceResponse = zApiResponseVoid;
+
+export const zDeleteOrganisationDocumentData = z.object({
+  body: z.never().optional(),
+  path: z.object({
+    uuid: z.string().uuid().describe('UUID of the organisation'),
+    documentUuid: z.string().uuid().describe('UUID of the document to remove'),
+  }),
+  query: z.never().optional(),
+});
+
+/**
+ * OK
+ */
+export const zDeleteOrganisationDocumentResponse = zApiResponseVoid;
 
 export const zClearInstructorAvailabilityData = z.object({
   body: z.never().optional(),

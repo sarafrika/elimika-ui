@@ -41,10 +41,10 @@
  * ## What the API takes, and what it does not
  *
  * The application payload is a rate card and a notes string. The classroom
- * names and photos, the per-unit equipment serials and the lease/hire choices
- * have no field of their own on it — they are captured, validated, shown back
- * on Review, and summarised into `application_notes`, which is what the
- * creator's approval screen reads. Widening the payload needs a backend change.
+ * names and photos and the lease/hire choices have no field of their own on it
+ * — they are captured, validated, shown back on Review, and summarised into
+ * `application_notes`, which is what the creator's approval screen reads.
+ * Widening the payload needs a backend change.
  */
 
 import { useQuery } from '@tanstack/react-query';
@@ -71,8 +71,7 @@ import {
 import { CourseRecordPage, type CourseTrainerApplicantType } from '@/src/features/course-record';
 import { useUserDomain } from '@/src/features/dashboard/context/user-domain-context';
 import { useUserProfile } from '@/src/features/profile/context/profile-context';
-
-import { isOrganisationTrainingRequirement } from './_components/apply-model';
+import { isApplicantTrainingRequirement } from './_components/apply-model';
 import { ApplyWizard } from './_components/apply-wizard';
 
 /** How many requirement rows the application form ever needs on screen at once. */
@@ -170,20 +169,29 @@ export default function ApplyPage() {
   );
 
   /*
-   * Only what the applicant is on the hook for. A requirement the student
-   * brings, or the creator supplies, is not a question to put to a school —
-   * and every downstream count (the Review strip, the "Equipment ready: 3/5"
-   * in the notes) is against this same list, so they cannot disagree.
+   * Only what this applicant is on the hook for. A requirement the student
+   * brings, or the creator supplies, is not a question to put to them — and
+   * every downstream count (the Review strip, the "Equipment ready: 3/5" in
+   * the notes) is against this same list, so they cannot disagree.
    */
   const requirements = useMemo(
-    () => courseRequirements.filter(isOrganisationTrainingRequirement),
-    [courseRequirements]
+    () =>
+      courseRequirements.filter(requirement =>
+        isApplicantTrainingRequirement(requirement, applicantType)
+      ),
+    [courseRequirements, applicantType]
   );
 
   const programRequirements = useMemo<ProgramRequirement[]>(
     () => programRequirementsQuery.data?.data?.content ?? [],
     [programRequirementsQuery.data?.data?.content]
   );
+
+  /*
+   * The creator's fee floor, so the pricing step can say so before the API
+   * rejects the rate card. A programme has no floor of its own.
+   */
+  const minimumFee = forCourse ? (course?.minimum_training_fee ?? null) : null;
 
   const requirementsQuery = isProgram ? programRequirementsQuery : courseRequirementsQuery;
   const requirementRowCount = isProgram ? programRequirements.length : requirements.length;
@@ -290,6 +298,7 @@ export default function ApplyPage() {
           applicantUuid={applicantUuid}
           requirements={requirements}
           programRequirements={programRequirements}
+          minimumFee={minimumFee}
           requirementsLoading={requirementsQuery.isLoading && requirementRowCount === 0}
           requirementsError={requirementsQuery.error}
           onRetryRequirements={() => void requirementsQuery.refetch()}

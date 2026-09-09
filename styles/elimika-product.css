@@ -1,0 +1,1278 @@
+/*
+ * Sarafrika product-page styling, ported from https://sarafrika.com/products/elimika.
+ * Every rule is scoped under .sw-page so it cannot leak into the rest of the app.
+ * Tokens carry an --sw- prefix for the same reason.
+ */
+
+.sw-page {
+  --sw-bg: #ffffff;
+  --sw-surface: #f8fafc;
+  --sw-panel: #ffffff;
+  --sw-ink: #111827;
+  --sw-muted: #667085;
+  --sw-border: #e4e7ec;
+  /* Elimika's own brand ramp (hue 265), so the page agrees with the header. */
+  --sw-brand: #0a63f5;
+  --sw-brand-light: #8db5ff;
+  --sw-navy: #243354;
+  --sw-accent: var(--sw-brand);
+  /* Accent on the navy panels: same hue, lifted so it reads against the ground. */
+  --sw-accent-on-dark: var(--sw-brand-light);
+  --sw-shadow-sm: 0 2px 10px #1118270f;
+  --sw-shadow-lg: 0 18px 45px #1118271f;
+
+  display: flex;
+  flex: 1 1 auto;
+  flex-direction: column;
+  background: var(--sw-bg);
+  color: var(--sw-ink);
+  font-family:
+    var(--font-sw-body),
+    Manrope,
+    Inter,
+    ui-sans-serif,
+    system-ui,
+    -apple-system,
+    BlinkMacSystemFont,
+    'Segoe UI',
+    sans-serif;
+  font-size: 16px;
+  font-weight: 400;
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizelegibility;
+}
+
+/* Pre-hydration and system-dark; an explicit light choice keeps the light tokens. */
+@media (prefers-color-scheme: dark) {
+  :root:not(.light) .sw-page {
+    --sw-bg: #000000;
+    --sw-surface: #050505;
+    --sw-panel: #090909;
+    --sw-ink: #f8fafc;
+    --sw-muted: #a3a3a3;
+    --sw-border: #262626;
+    --sw-navy: #0b0f19;
+    --sw-brand: #5a92ff;
+    --sw-shadow-sm: 0 2px 10px #000000b8;
+    --sw-shadow-lg: 0 18px 45px #000000d9;
+  }
+}
+
+.dark .sw-page {
+  --sw-bg: #000000;
+  --sw-surface: #050505;
+  --sw-panel: #090909;
+  --sw-ink: #f8fafc;
+  --sw-muted: #a3a3a3;
+  --sw-border: #262626;
+  --sw-navy: #0b0f19;
+  --sw-brand: #5a92ff;
+  --sw-shadow-sm: 0 2px 10px #000000b8;
+  --sw-shadow-lg: 0 18px 45px #000000d9;
+}
+
+.sw-page * {
+  box-sizing: border-box;
+}
+
+.sw-page main {
+  flex: 1 1 auto;
+}
+
+.sw-page h1,
+.sw-page h2,
+.sw-page h3,
+.sw-page h4,
+.sw-page h5,
+.sw-page h6 {
+  font-family: var(--font-sw-display), Sora, Manrope, ui-sans-serif, system-ui, sans-serif;
+  font-weight: 700;
+  letter-spacing: 0;
+}
+
+.sw-page a {
+  color: inherit;
+  text-decoration: none;
+}
+
+.sw-page button,
+.sw-page input,
+.sw-page select,
+.sw-page textarea {
+  color: inherit;
+  font: inherit;
+}
+
+.sw-page button,
+.sw-page a {
+  -webkit-tap-highlight-color: transparent;
+}
+
+.sw-page img {
+  display: block;
+  max-width: 100%;
+}
+
+.sw-page a:focus-visible,
+.sw-page button:focus-visible,
+.sw-page input:focus-visible {
+  outline: 3px solid color-mix(in srgb, var(--sw-accent), white 25%);
+  outline-offset: 3px;
+}
+
+.sw-page .sr-only {
+  position: absolute;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  clip-path: inset(50%);
+  width: 1px;
+  height: 1px;
+  white-space: nowrap;
+}
+
+/* ---------------------------------------------------------------- layout */
+
+.sw-page .site-container {
+  width: 100%;
+  max-width: 1180px;
+  margin-inline: auto;
+  padding-inline: 1.25rem;
+}
+
+.sw-page .accent-text {
+  color: var(--sw-accent);
+}
+
+.sw-page .accent-surface {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: color-mix(in srgb, var(--sw-accent), transparent 88%);
+  color: var(--sw-accent);
+}
+
+.sw-page .eyebrow,
+.sw-page .card-kicker {
+  margin: 0;
+  font-size: 0.75rem;
+  font-weight: 800;
+  line-height: 1.3;
+  letter-spacing: 0.11em;
+  text-transform: uppercase;
+}
+
+/* --------------------------------------------------------------- buttons */
+
+.sw-page .button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  min-height: 2.85rem;
+  padding: 0 1.25rem;
+  border: 1px solid #0000;
+  border-radius: 999px;
+  cursor: pointer;
+  font-size: 0.875rem;
+  font-weight: 750;
+  line-height: 1;
+  white-space: nowrap;
+  text-decoration: none;
+  transition:
+    opacity 0.16s,
+    transform 0.16s,
+    background-color 0.16s;
+}
+
+.sw-page .button:hover {
+  transform: translateY(-1px);
+}
+
+.sw-page .button--dark {
+  background: #050505;
+  color: #ffffff;
+}
+
+.sw-page .button--light {
+  background: #ffffff;
+  color: #050505;
+}
+
+.sw-page .button--accent {
+  background: var(--sw-accent);
+  color: #ffffff;
+}
+
+.sw-page .button--outline {
+  background: var(--sw-panel);
+  border-color: var(--sw-border);
+  color: var(--sw-ink);
+}
+
+.sw-page .button-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.75rem;
+  margin-top: 1.75rem;
+}
+
+.sw-page .icon-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 2.45rem;
+  height: 2.45rem;
+  padding: 0;
+  border: 0;
+  border-radius: 50%;
+  background: 0 0;
+  color: var(--sw-ink);
+  cursor: pointer;
+}
+
+.sw-page .icon-button:hover {
+  background: var(--sw-surface);
+}
+
+/* ---------------------------------------------------------------- header */
+
+.sw-page .site-header {
+  position: sticky;
+  top: 0;
+  z-index: 50;
+  background: color-mix(in srgb, var(--sw-bg), transparent 3%);
+  border-bottom: 1px solid var(--sw-border);
+}
+
+.sw-page .site-header__inner {
+  display: grid;
+  grid-template-columns: 180px 1fr auto;
+  align-items: center;
+  gap: 1.25rem;
+  max-width: 1240px;
+  min-height: 4.5rem;
+  margin-inline: auto;
+  padding-inline: 1.25rem;
+}
+
+.sw-page .brand {
+  display: inline-flex;
+  align-items: center;
+  min-height: 2.5rem;
+  text-decoration: none;
+}
+
+.sw-page .brand__mark--dark {
+  display: none;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not(.light) .sw-page .brand__mark--light {
+    display: none;
+  }
+
+  :root:not(.light) .sw-page .brand__mark--dark {
+    display: block;
+  }
+}
+
+.dark .sw-page .brand__mark--light {
+  display: none;
+}
+
+.dark .sw-page .brand__mark--dark {
+  display: block;
+}
+
+.sw-page .brand img {
+  width: 10.6rem;
+  height: auto;
+  max-height: 2.5rem;
+  object-fit: contain;
+  object-position: left center;
+}
+
+.sw-page .site-nav {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.2rem;
+}
+
+.sw-page .site-nav a {
+  padding: 0.7rem 0.65rem;
+  border-radius: 6px;
+  color: var(--sw-ink);
+  font-size: 0.84rem;
+  font-weight: 650;
+  text-decoration: none;
+}
+
+.sw-page .site-nav a:hover {
+  background: var(--sw-surface);
+}
+
+.sw-page .header-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.1rem;
+}
+
+.sw-page .mobile-menu-button,
+.sw-page .mobile-nav {
+  display: none;
+}
+
+/* Search affordance: the header button reveals this row. */
+.sw-page .site-search {
+  border-top: 1px solid var(--sw-border);
+  background: var(--sw-surface);
+}
+
+.sw-page .site-search__form {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  max-width: 1240px;
+  margin-inline: auto;
+  padding: 0.85rem 1.25rem;
+}
+
+.sw-page .site-search__input {
+  flex: 1 1 auto;
+  min-width: 0;
+  height: 2.6rem;
+  padding: 0 1rem;
+  border: 1px solid var(--sw-border);
+  border-radius: 999px;
+  background: var(--sw-panel);
+  color: var(--sw-ink);
+  font-size: 0.86rem;
+}
+
+.sw-page .site-search__input::placeholder {
+  color: var(--sw-muted);
+}
+
+/* ------------------------------------------------------------ breadcrumb */
+
+.sw-page .breadcrumb {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding-top: 2rem;
+  color: var(--sw-muted);
+  font-size: 0.76rem;
+}
+
+.sw-page .breadcrumb > span {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+}
+
+.sw-page .breadcrumb a {
+  text-decoration: none;
+}
+
+.sw-page .breadcrumb strong {
+  color: var(--sw-ink);
+  font-weight: 650;
+}
+
+/* ------------------------------------------------------------------ hero */
+
+.sw-page .skills-wallet-hero {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(320px, 0.95fr);
+  align-items: center;
+  gap: 4rem;
+  padding-top: 1.5rem;
+  padding-bottom: 5rem;
+}
+
+.sw-page .skills-wallet-eyebrow {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  padding: 0.35rem 0.8rem;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--sw-accent), transparent 88%);
+  color: var(--sw-accent);
+  font-size: 0.76rem;
+  font-weight: 850;
+}
+
+.sw-page .skills-wallet-hero h1 {
+  max-width: 34rem;
+  margin: 1.25rem 0 0;
+  font-size: 3.35rem;
+  line-height: 1.05;
+}
+
+.sw-page .skills-wallet-lead {
+  max-width: 30rem;
+  margin: 1.3rem 0 0;
+  color: var(--sw-muted);
+  font-size: 1rem;
+  line-height: 1.65;
+}
+
+.sw-page .skills-wallet-badges {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.55rem;
+  margin-top: 1.5rem;
+}
+
+.sw-page .skills-wallet-badges span {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.35rem 0.75rem;
+  border: 1px solid var(--sw-border);
+  border-radius: 999px;
+  background: var(--sw-panel);
+  color: var(--sw-muted);
+  font-size: 0.76rem;
+  font-weight: 700;
+}
+
+.sw-page .skills-wallet-badges svg {
+  color: var(--sw-accent);
+}
+
+/* ----------------------------------------------------------- wallet card */
+
+.sw-page .skills-wallet-card {
+  padding: 1.5rem;
+  border: 1px solid var(--sw-border);
+  border-radius: 24px;
+  background: var(--sw-panel);
+  box-shadow: var(--sw-shadow-lg);
+}
+
+.sw-page .skills-wallet-card__profile {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.sw-page .skills-wallet-card__profile > span {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 2.5rem;
+  height: 2.5rem;
+  border-radius: 50%;
+  background: var(--sw-accent);
+  color: #ffffff;
+}
+
+.sw-page .skills-wallet-card__profile strong,
+.sw-page .skills-wallet-card__profile small {
+  display: block;
+}
+
+.sw-page .skills-wallet-card__profile strong {
+  font-size: 0.9rem;
+}
+
+.sw-page .skills-wallet-card__profile small {
+  margin-top: 0.1rem;
+  color: var(--sw-muted);
+  font-size: 0.75rem;
+}
+
+.sw-page .skills-wallet-id-card {
+  overflow: hidden;
+  margin-top: 1.25rem;
+  padding: 1.25rem;
+  border-radius: 18px;
+  background: var(--sw-navy);
+  color: #ffffff;
+}
+
+.sw-page .skills-wallet-id-card > div {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.sw-page .skills-wallet-id-card p {
+  margin: 0;
+  color: #ffffff9e;
+  font-size: 0.68rem;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.sw-page .skills-wallet-id-card strong,
+.sw-page .skills-wallet-id-card small {
+  display: block;
+}
+
+.sw-page .skills-wallet-id-card strong {
+  margin-top: 0.85rem;
+  font-size: 1.1rem;
+}
+
+.sw-page .skills-wallet-id-card small {
+  margin-top: 0.35rem;
+  color: #ffffff9e;
+  font-size: 0.76rem;
+}
+
+.sw-page .skills-wallet-id-card > span {
+  display: inline-flex;
+  margin-top: 1rem;
+  padding: 0.45rem 0.65rem;
+  border-radius: 8px;
+  background: var(--sw-accent-on-dark);
+  color: var(--sw-navy);
+  font-size: 0.7rem;
+  font-weight: 800;
+}
+
+.sw-page .skills-wallet-readiness {
+  margin-top: 1.25rem;
+  padding: 1rem;
+  border: 1px solid var(--sw-border);
+  border-radius: 18px;
+}
+
+.sw-page .skills-wallet-readiness p {
+  margin: 0;
+  color: var(--sw-muted);
+  font-size: 0.76rem;
+  font-weight: 800;
+}
+
+.sw-page .skills-wallet-readiness div {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  margin-top: 0.85rem;
+}
+
+.sw-page .skills-wallet-readiness span {
+  color: color-mix(in srgb, var(--sw-ink), transparent 18%);
+  font-size: 0.86rem;
+}
+
+.sw-page .skills-wallet-readiness strong,
+.sw-page .skills-wallet-passport__rows em,
+.sw-page .skills-wallet-candidates em {
+  padding: 0.2rem 0.55rem;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--sw-accent), transparent 86%);
+  color: var(--sw-accent);
+  font-size: 0.68rem;
+  font-style: normal;
+  font-weight: 850;
+  white-space: nowrap;
+}
+
+/* ----------------------------------------------------------- stats band */
+
+.sw-page .skills-wallet-stats {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 1rem;
+  margin-bottom: 5rem;
+  padding-top: 2rem;
+  padding-bottom: 2rem;
+  border: 1px solid var(--sw-border);
+  border-radius: 24px;
+}
+
+.sw-page .skills-wallet-stats div {
+  text-align: center;
+}
+
+.sw-page .skills-wallet-stats strong,
+.sw-page .skills-wallet-stats span {
+  display: block;
+}
+
+.sw-page .skills-wallet-stats strong {
+  color: var(--sw-accent);
+  font-size: 2rem;
+  line-height: 1;
+}
+
+.sw-page .skills-wallet-stats span {
+  margin-top: 0.55rem;
+  color: var(--sw-muted);
+  font-size: 0.74rem;
+}
+
+/* ----------------------------------------------------------- split rows */
+
+.sw-page .skills-wallet-split {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(320px, 0.95fr);
+  align-items: center;
+  gap: 3.5rem;
+  padding-bottom: 5rem;
+}
+
+.sw-page .skills-wallet-split h2,
+.sw-page .skills-wallet-section h2,
+.sw-page .skills-wallet-fund h2,
+.sw-page .skills-wallet-final h2 {
+  margin: 0.7rem 0 0;
+  font-size: 2rem;
+  line-height: 1.15;
+}
+
+.sw-page .skills-wallet-split p:not(.eyebrow),
+.sw-page .skills-wallet-section__intro > p:not(.eyebrow),
+.sw-page .skills-wallet-fund p,
+.sw-page .skills-wallet-final p {
+  max-width: 31rem;
+  margin: 1rem 0 0;
+  color: var(--sw-muted);
+  line-height: 1.7;
+}
+
+/* ------------------------------------------------------- passport panels */
+
+.sw-page .skills-wallet-passport,
+.sw-page .skills-wallet-candidates,
+.sw-page .skills-wallet-opportunities {
+  padding: 1.25rem;
+  border: 1px solid var(--sw-border);
+  border-radius: 24px;
+  background: var(--sw-panel);
+  box-shadow: var(--sw-shadow-sm);
+}
+
+.sw-page .skills-wallet-passport__head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.sw-page .skills-wallet-passport__head strong,
+.sw-page .skills-wallet-passport__head small {
+  display: block;
+}
+
+.sw-page .skills-wallet-passport__head small {
+  margin-top: 0.15rem;
+  color: var(--sw-muted);
+  font-size: 0.75rem;
+}
+
+.sw-page .skills-wallet-passport__head > span,
+.sw-page .skills-wallet-feature-card > span,
+.sw-page .skills-wallet-opportunities > div > span {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 2.75rem;
+  height: 2.75rem;
+  border-radius: 12px;
+  background: color-mix(in srgb, var(--sw-accent), transparent 88%);
+  color: var(--sw-accent);
+}
+
+.sw-page .skills-wallet-passport__rows {
+  display: grid;
+  gap: 0.75rem;
+  margin-top: 1.25rem;
+}
+
+.sw-page .skills-wallet-passport__rows > div,
+.sw-page .skills-wallet-candidates > div,
+.sw-page .skills-wallet-opportunities > div {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  min-width: 0;
+  padding: 0.85rem;
+  border: 1px solid var(--sw-border);
+  border-radius: 16px;
+}
+
+.sw-page .skills-wallet-passport__rows > div > span {
+  display: inline-flex;
+  flex: none;
+  align-items: center;
+  justify-content: center;
+  width: 2rem;
+  height: 2rem;
+  border-radius: 50%;
+  background: color-mix(in srgb, var(--sw-accent), transparent 86%);
+  color: var(--sw-accent);
+  font-size: 0.8rem;
+  font-weight: 850;
+}
+
+.sw-page .skills-wallet-passport__rows > div > div,
+.sw-page .skills-wallet-candidates > div > div,
+.sw-page .skills-wallet-opportunities > div > div {
+  flex: auto;
+  min-width: 0;
+}
+
+.sw-page .skills-wallet-passport__rows strong,
+.sw-page .skills-wallet-passport__rows small,
+.sw-page .skills-wallet-candidates strong,
+.sw-page .skills-wallet-candidates small,
+.sw-page .skills-wallet-opportunities strong,
+.sw-page .skills-wallet-opportunities small {
+  display: block;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.sw-page .skills-wallet-passport__rows strong,
+.sw-page .skills-wallet-candidates strong,
+.sw-page .skills-wallet-opportunities strong {
+  font-size: 0.86rem;
+}
+
+.sw-page .skills-wallet-passport__rows small,
+.sw-page .skills-wallet-candidates small,
+.sw-page .skills-wallet-opportunities small {
+  margin-top: 0.2rem;
+  color: var(--sw-muted);
+  font-size: 0.74rem;
+}
+
+/* -------------------------------------------------------- card sections */
+
+.sw-page .skills-wallet-section {
+  padding-bottom: 5rem;
+}
+
+.sw-page .skills-wallet-section__intro {
+  max-width: 42rem;
+  margin-inline: auto;
+  text-align: center;
+}
+
+.sw-page .skills-wallet-section__intro > p:not(.eyebrow) {
+  margin-right: auto;
+  margin-left: auto;
+}
+
+.sw-page .skills-wallet-card-grid,
+.sw-page .skills-wallet-growth-grid {
+  display: grid;
+  gap: 1rem;
+  margin-top: 2.5rem;
+}
+
+.sw-page .skills-wallet-card-grid {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.sw-page .skills-wallet-growth-grid {
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+}
+
+.sw-page .skills-wallet-feature-card {
+  padding: 1.5rem;
+  border: 1px solid var(--sw-border);
+  border-radius: 18px;
+  background: var(--sw-panel);
+  transition:
+    box-shadow 0.16s,
+    transform 0.16s;
+}
+
+.sw-page .skills-wallet-feature-card:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--sw-shadow-sm);
+}
+
+.sw-page .skills-wallet-feature-card h3 {
+  margin: 1rem 0 0;
+  font-size: 1rem;
+  line-height: 1.35;
+}
+
+.sw-page .skills-wallet-feature-card p {
+  margin: 0.45rem 0 0;
+  color: var(--sw-muted);
+  font-size: 0.86rem;
+  line-height: 1.6;
+}
+
+/* ------------------------------------------------------------ skills fund */
+
+.sw-page .skills-wallet-fund {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(300px, 0.9fr);
+  align-items: center;
+  gap: 3rem;
+  margin-bottom: 5rem;
+  padding-top: 3rem;
+  padding-bottom: 3rem;
+  border-radius: 24px;
+  background: var(--sw-navy);
+  color: #ffffff;
+}
+
+.sw-page .skills-wallet-fund p {
+  color: #ffffffb8;
+}
+
+.sw-page .skills-wallet-fund__rows {
+  padding: 1.25rem;
+  border: 1px solid #ffffff1f;
+  border-radius: 18px;
+  background: #ffffff0f;
+}
+
+.sw-page .skills-wallet-fund__rows div {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 0.85rem 0;
+  border-bottom: 1px solid #ffffff1f;
+}
+
+.sw-page .skills-wallet-fund__rows div:first-child {
+  padding-top: 0;
+}
+
+.sw-page .skills-wallet-fund__rows div:last-child {
+  padding-bottom: 0;
+  border-bottom: 0;
+}
+
+.sw-page .skills-wallet-fund__rows span {
+  color: #ffffffa3;
+  font-size: 0.86rem;
+}
+
+.sw-page .skills-wallet-fund__rows strong {
+  color: var(--sw-accent-on-dark);
+  font-size: 0.9rem;
+  text-align: right;
+}
+
+.sw-page .skills-wallet-button--glass {
+  border-color: #ffffff42;
+  background: 0 0;
+  color: #ffffff;
+}
+
+.sw-page .skills-wallet-button--glass:hover {
+  background: #ffffff1a;
+}
+
+.sw-page .skills-wallet-button--navy {
+  background: var(--sw-navy);
+  color: #ffffff;
+}
+
+/* -------------------------------------------------------------- employers */
+
+.sw-page .skills-wallet-employer {
+  align-items: center;
+}
+
+.sw-page .skills-wallet-candidates {
+  display: grid;
+  gap: 0.75rem;
+}
+
+.sw-page .skills-wallet-candidates > div > span {
+  display: inline-flex;
+  flex: none;
+  align-items: center;
+  justify-content: center;
+  width: 2.5rem;
+  height: 2.5rem;
+  border-radius: 50%;
+  background: color-mix(in srgb, var(--sw-accent), transparent 86%);
+  color: var(--sw-accent);
+  font-size: 0.82rem;
+  font-weight: 850;
+}
+
+.sw-page .skills-wallet-candidates em {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+}
+
+/* ------------------------------------------------------------- talent map */
+
+.sw-page .skills-wallet-talent {
+  display: grid;
+  grid-template-columns: minmax(260px, 0.8fr) minmax(0, 1.2fr);
+  gap: 1.5rem;
+  margin-top: 2.5rem;
+}
+
+.sw-page .skills-wallet-benchmark {
+  padding: 1.75rem;
+  border-radius: 24px;
+  background: var(--sw-navy);
+  color: #ffffff;
+}
+
+.sw-page .skills-wallet-benchmark strong {
+  display: block;
+  font-size: 1.1rem;
+}
+
+.sw-page .skills-wallet-benchmark p {
+  margin: 0.7rem 0 0;
+  color: #ffffffa3;
+  font-size: 0.78rem;
+  line-height: 1.6;
+}
+
+.sw-page .skills-wallet-benchmark span {
+  display: block;
+  margin-top: 1.7rem;
+  color: var(--sw-accent-on-dark);
+  font-size: 3rem;
+  font-weight: 850;
+  line-height: 1;
+}
+
+.sw-page .skills-wallet-benchmark small {
+  display: block;
+  margin-top: 0.35rem;
+  color: #ffffffa3;
+  font-size: 0.76rem;
+}
+
+.sw-page .skills-wallet-opportunities {
+  display: grid;
+  gap: 0.75rem;
+}
+
+.sw-page .skills-wallet-opportunities a {
+  flex: none;
+  padding: 0.45rem 0.9rem;
+  border-radius: 999px;
+  background: var(--sw-accent);
+  color: #ffffff;
+  font-size: 0.76rem;
+  font-weight: 850;
+  text-decoration: none;
+}
+
+/* -------------------------------------------------------------- final cta */
+
+.sw-page .skills-wallet-final {
+  padding-bottom: 6rem;
+}
+
+.sw-page .skills-wallet-final > div {
+  padding: 3rem;
+  border: 1px solid var(--sw-border);
+  border-radius: 24px;
+  background: var(--sw-panel);
+  box-shadow: var(--sw-shadow-sm);
+  text-align: center;
+}
+
+/* The project's reset makes svg a block, which text-align cannot centre. */
+.sw-page .skills-wallet-final svg {
+  color: var(--sw-accent);
+  margin-inline: auto;
+}
+
+.sw-page .skills-wallet-final h2,
+.sw-page .skills-wallet-final p {
+  margin-right: auto;
+  margin-left: auto;
+}
+
+.sw-page .skills-wallet-final .button {
+  margin-top: 1.75rem;
+}
+
+/* ---------------------------------------------------------------- footer */
+
+.sw-page .site-footer {
+  border-top: 1px solid var(--sw-border);
+  background: var(--sw-surface);
+}
+
+.sw-page .site-footer__inner {
+  display: grid;
+  grid-template-columns: 1.5fr 0.7fr 0.7fr 1fr;
+  gap: 2.5rem;
+  max-width: 1180px;
+  margin-inline: auto;
+  padding: 4rem 1.25rem 3rem;
+}
+
+.sw-page .brand--footer img {
+  width: 11rem;
+}
+
+/* The margin restores the UA default the source relied on; preflight zeroes it. */
+.sw-page .footer-brand > p {
+  max-width: 22rem;
+  margin: 1em 0;
+  color: var(--sw-muted);
+  font-size: 0.82rem;
+  line-height: 1.65;
+}
+
+.sw-page .footer-socials {
+  display: flex;
+  gap: 0.5rem;
+  margin-top: 1.2rem;
+}
+
+.sw-page .footer-socials a {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 2.3rem;
+  height: 2.3rem;
+  border: 1px solid var(--sw-border);
+  border-radius: 50%;
+}
+
+.sw-page .footer-links,
+.sw-page .footer-contact {
+  display: flex;
+  flex-direction: column;
+  gap: 0.7rem;
+}
+
+.sw-page .footer-links strong,
+.sw-page .footer-contact strong {
+  margin-bottom: 0.25rem;
+  font-size: 0.84rem;
+}
+
+.sw-page .footer-links a,
+.sw-page .footer-contact a:not(.button) {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  color: var(--sw-muted);
+  font-size: 0.76rem;
+  text-decoration: none;
+}
+
+.sw-page .footer-contact .button {
+  align-self: flex-start;
+  margin-top: 0.4rem;
+}
+
+.sw-page .site-footer__bottom {
+  display: flex;
+  justify-content: space-between;
+  max-width: 1180px;
+  margin-inline: auto;
+  padding: 1.2rem 1.25rem;
+  border-top: 1px solid var(--sw-border);
+  color: var(--sw-muted);
+  font-size: 0.68rem;
+}
+
+/* ----------------------------------------------------------- responsive */
+
+@media (max-width: 1080px) {
+  .sw-page .site-nav {
+    display: none;
+  }
+
+  .sw-page .site-header__inner {
+    grid-template-columns: 1fr auto;
+  }
+
+  .sw-page .mobile-menu-button {
+    display: inline-flex;
+  }
+
+  .sw-page .mobile-nav {
+    display: grid;
+    padding: 0.6rem 1.25rem 1rem;
+    border-top: 1px solid var(--sw-border);
+  }
+
+  .sw-page .mobile-nav a {
+    padding: 0.75rem;
+    border-radius: 6px;
+    font-size: 0.88rem;
+    font-weight: 700;
+    text-decoration: none;
+  }
+
+  .sw-page .mobile-nav a:hover {
+    background: var(--sw-surface);
+  }
+}
+
+@media (max-width: 900px) {
+  .sw-page .skills-wallet-hero,
+  .sw-page .skills-wallet-split,
+  .sw-page .skills-wallet-fund {
+    grid-template-columns: 1fr;
+  }
+
+  .sw-page .skills-wallet-card-grid,
+  .sw-page .skills-wallet-growth-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .sw-page .skills-wallet-talent {
+    grid-template-columns: 1fr;
+  }
+
+  .sw-page .site-footer__inner {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (max-width: 700px) {
+  .sw-page .site-header__inner {
+    min-height: 4rem;
+    padding-inline: 0.9rem;
+  }
+
+  .sw-page .brand__mark--dark {
+    display: none;
+  }
+
+  @media (prefers-color-scheme: dark) {
+    :root:not(.light) .sw-page .brand__mark--light {
+      display: none;
+    }
+
+    :root:not(.light) .sw-page .brand__mark--dark {
+      display: block;
+    }
+  }
+
+  .dark .sw-page .brand__mark--light {
+    display: none;
+  }
+
+  .dark .sw-page .brand__mark--dark {
+    display: block;
+  }
+
+  .sw-page .brand img {
+    width: 8.8rem;
+  }
+
+  .sw-page .header-actions .icon-button:nth-child(2) {
+    display: none;
+  }
+
+  .sw-page .site-container {
+    padding-inline: 0.95rem;
+  }
+
+  .sw-page .skills-wallet-hero h1 {
+    font-size: 2.7rem;
+  }
+
+  .sw-page .skills-wallet-hero {
+    gap: 2rem;
+    padding-bottom: 3.8rem;
+  }
+
+  .sw-page .skills-wallet-card-grid,
+  .sw-page .skills-wallet-growth-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .sw-page .site-footer__inner {
+    grid-template-columns: 1fr 1fr;
+    padding-top: 3rem;
+  }
+
+  .sw-page .footer-brand,
+  .sw-page .footer-contact {
+    grid-column: 1 / -1;
+  }
+
+  .sw-page .site-footer__bottom {
+    flex-direction: column;
+    gap: 0.5rem;
+  }
+}
+
+@media (max-width: 440px) {
+  .sw-page .button-row {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .sw-page .button-row .button {
+    width: 100%;
+  }
+
+  .sw-page .skills-wallet-hero h1 {
+    font-size: 2.25rem;
+  }
+
+  .sw-page .skills-wallet-stats {
+    grid-template-columns: 1fr;
+  }
+
+  .sw-page .skills-wallet-passport__rows > div,
+  .sw-page .skills-wallet-candidates > div,
+  .sw-page .skills-wallet-opportunities > div {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .sw-page .skills-wallet-passport__rows em,
+  .sw-page .skills-wallet-candidates em,
+  .sw-page .skills-wallet-opportunities a {
+    align-self: flex-start;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .sw-page .button,
+  .sw-page .skills-wallet-feature-card {
+    transition: none;
+  }
+
+  .sw-page .button:hover,
+  .sw-page .skills-wallet-feature-card:hover {
+    transform: none;
+  }
+}
+
+/* Dark theme flips the wordmark, which ships as dark artwork. */
+.dark .sw-page .brand__mark--dark {
+  display: none;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not(.light) .sw-page .brand__mark--light {
+    display: none;
+  }
+
+  :root:not(.light) .sw-page .brand__mark--dark {
+    display: block;
+  }
+}
+
+.dark .sw-page .brand__mark--light {
+  display: none;
+}
+
+.dark .sw-page .brand__mark--dark {
+  display: block;
+}
+
+.sw-page .brand img {
+  filter: brightness(0) invert();
+}

@@ -3,6 +3,9 @@
 /**
  * Step 2 — the rooms and labs the applicant would teach in.
  *
+ * Only asked of applicants who deliver in person or hybrid. A virtual-only
+ * applicant has no room to describe and was previously blocked here.
+ *
  * A count control seeds the rows, each row is named (required), optionally
  * photographed, and the order is meaningful: the first row is the primary
  * space. Reordering is offered twice — drag for a mouse, the up/down arrows for
@@ -24,7 +27,13 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { cn } from '@/lib/utils';
 
-import { MAX_CLASSROOMS, type ApplyAction, type ApplyState, type Classroom } from './apply-model';
+import {
+  type ApplyAction,
+  type ApplyState,
+  type Classroom,
+  MAX_CLASSROOMS,
+  requiresClassroom,
+} from './apply-model';
 
 const MAX_PHOTO_MB = 5;
 const MAX_PHOTO_BYTES = MAX_PHOTO_MB * 1024 * 1024;
@@ -46,6 +55,15 @@ export function StepClassrooms({
   useEffect(() => {
     setCountInput(String(state.classroomCount));
   }, [state.classroomCount]);
+
+  if (!requiresClassroom(state.methods)) {
+    return (
+      <div className='bg-muted/30 text-muted-foreground rounded-md border border-dashed p-6 text-center text-sm'>
+        You are only offering virtual sessions, so there is no room to describe. Add an in-person or
+        hybrid method on the previous step if you also teach on site.
+      </div>
+    );
+  }
 
   return (
     <div className='space-y-4'>

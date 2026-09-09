@@ -589,6 +589,9 @@ import type {
   RequestOrganisationVerificationData,
   RequestOrganisationVerificationResponses,
   RequestOrganisationVerificationErrors,
+  UploadOrganisationDocumentData,
+  UploadOrganisationDocumentResponses,
+  UploadOrganisationDocumentErrors,
   ListGroupsData,
   ListGroupsResponses,
   ListGroupsErrors,
@@ -1366,6 +1369,9 @@ import type {
   GetOrganisationStatisticsData,
   GetOrganisationStatisticsResponses,
   GetOrganisationStatisticsErrors,
+  GetOrganisationDocumentsData,
+  GetOrganisationDocumentsResponses,
+  GetOrganisationDocumentsErrors,
   ListRosterData,
   ListRosterResponses,
   ListRosterErrors,
@@ -1834,6 +1840,9 @@ import type {
   DeleteSourceData,
   DeleteSourceResponses,
   DeleteSourceErrors,
+  DeleteOrganisationDocumentData,
+  DeleteOrganisationDocumentResponses,
+  DeleteOrganisationDocumentErrors,
   ClearInstructorAvailabilityData,
   ClearInstructorAvailabilityResponses,
   ClearInstructorAvailabilityErrors,
@@ -2006,6 +2015,7 @@ import {
   getTrainingBranchesByOrganisationResponseTransformer,
   createTrainingBranch1ResponseTransformer,
   requestOrganisationVerificationResponseTransformer,
+  uploadOrganisationDocumentResponseTransformer,
   listGroupsResponseTransformer,
   createGroupResponseTransformer,
   listTransactionsResponseTransformer,
@@ -2224,6 +2234,7 @@ import {
   getBranchUsersResponseTransformer,
   getBranchUsersByDomainResponseTransformer,
   getOrganisationStatisticsResponseTransformer,
+  getOrganisationDocumentsResponseTransformer,
   listRosterResponseTransformer,
   getCalendarResponseTransformer,
   listBookingsResponseTransformer,
@@ -8108,6 +8119,39 @@ export const requestOrganisationVerification = <ThrowOnError extends boolean = f
     ],
     url: '/api/v1/organisations/{uuid}/request-verification',
     ...options,
+  });
+};
+
+/**
+ * Upload an organisation validation document
+ * Stores a registration certificate, licence or authorising letter against the organisation and queues it for review. Document types come from GET /api/v1/document-types?applies_to=ORGANISATION.
+ */
+export const uploadOrganisationDocument = <ThrowOnError extends boolean = false>(
+  options: Options<UploadOrganisationDocumentData, ThrowOnError>
+) => {
+  return (options.client ?? _heyApiClient).post<
+    UploadOrganisationDocumentResponses,
+    UploadOrganisationDocumentErrors,
+    ThrowOnError
+  >({
+    ...formDataBodySerializer,
+    responseTransformer: uploadOrganisationDocumentResponseTransformer,
+    security: [
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+    ],
+    url: '/api/v1/organisations/{uuid}/documents/upload',
+    ...options,
+    headers: {
+      'Content-Type': null,
+      ...options.headers,
+    },
   });
 };
 
@@ -15871,6 +15915,33 @@ export const getOrganisationStatistics = <ThrowOnError extends boolean = false>(
 };
 
 /**
+ * List organisation validation documents
+ */
+export const getOrganisationDocuments = <ThrowOnError extends boolean = false>(
+  options: Options<GetOrganisationDocumentsData, ThrowOnError>
+) => {
+  return (options.client ?? _heyApiClient).get<
+    GetOrganisationDocumentsResponses,
+    GetOrganisationDocumentsErrors,
+    ThrowOnError
+  >({
+    responseTransformer: getOrganisationDocumentsResponseTransformer,
+    security: [
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+    ],
+    url: '/api/v1/organisations/{uuid}/documents',
+    ...options,
+  });
+};
+
+/**
  * Page the organisation's student roster
  * Returns students with the group they sit in, joined to their user record, as a single paginated table. Optionally narrowed by branch, academic tier or a single group. Age is not returned; derive it from dob.
  */
@@ -17320,6 +17391,7 @@ export const getClassEnrolmentEligibility = <ThrowOnError extends boolean = fals
 
 /**
  * List available document types
+ * Filter with applies_to to get the checklist for one onboarding flow, for example ORGANISATION. Omitting it returns the whole catalogue.
  */
 export const listDocumentTypes = <ThrowOnError extends boolean = false>(
   options?: Options<ListDocumentTypesData, ThrowOnError>
@@ -20562,6 +20634,32 @@ export const deleteSource = <ThrowOnError extends boolean = false>(
       },
     ],
     url: '/api/v1/skills-fund/sources/{sourceUuid}',
+    ...options,
+  });
+};
+
+/**
+ * Remove an organisation validation document
+ */
+export const deleteOrganisationDocument = <ThrowOnError extends boolean = false>(
+  options: Options<DeleteOrganisationDocumentData, ThrowOnError>
+) => {
+  return (options.client ?? _heyApiClient).delete<
+    DeleteOrganisationDocumentResponses,
+    DeleteOrganisationDocumentErrors,
+    ThrowOnError
+  >({
+    security: [
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+    ],
+    url: '/api/v1/organisations/{uuid}/documents/{documentUuid}',
     ...options,
   });
 };

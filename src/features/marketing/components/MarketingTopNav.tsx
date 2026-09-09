@@ -24,10 +24,9 @@ export function MarketingTopNav() {
   });
   const cartItemCount = cartData?.items?.length ?? 0;
 
-  const navLinks = [
-    { label: 'Catalogue', href: '/courses' },
-    { label: 'Help', href: '/help' },
-  ];
+  // The public catalogue and help routes were retired; the header is the brand,
+  // the cart and the way in.
+  const navLinks: { label: string; href: string; external?: boolean }[] = [];
 
   const isActive = (href: string) => {
     const [path] = href.split('#');
@@ -62,6 +61,8 @@ export function MarketingTopNav() {
               <Link
                 key={link.href}
                 href={link.href}
+                target={link.external ? '_blank' : undefined}
+                rel={link.external ? 'noopener noreferrer' : undefined}
                 className={cn(
                   'hover:bg-muted hover:text-primary rounded-full px-4 py-2 text-sm font-medium transition',
                   isActive(link.href) ? 'bg-muted text-primary' : 'text-muted-foreground'
@@ -108,6 +109,8 @@ export function MarketingTopNav() {
             <Link
               key={link.href}
               href={link.href}
+              target={link.external ? '_blank' : undefined}
+              rel={link.external ? 'noopener noreferrer' : undefined}
               className='border-border text-muted-foreground hover:border-primary/50 hover:text-primary rounded-full border px-3 py-1 text-sm transition'
             >
               {link.label}

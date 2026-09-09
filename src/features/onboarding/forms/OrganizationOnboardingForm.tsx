@@ -1,6 +1,23 @@
 // @ts-nocheck -- pre-existing @hey-api generated-client type drift (see memory: elimika-ui-typecheck)
 'use client';
 
+import { zodResolver } from '@hookform/resolvers/zod';
+import { type QueryKey, useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import {
+  AlertCircle,
+  Building2,
+  CheckCircle2,
+  FileCheck2,
+  FileText,
+  Loader2,
+  Paperclip,
+  UploadCloud,
+  X,
+} from 'lucide-react';
+import { useRouter } from 'next/navigation';
+import { type ChangeEvent, type DragEvent, useMemo, useRef, useState } from 'react';
+import { useForm, useWatch } from 'react-hook-form';
+import { toast } from 'sonner';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -11,13 +28,15 @@ import { Label } from '@/components/ui/label';
 import { Separator } from '@/components/ui/separator';
 import { Skeleton } from '@/components/ui/skeleton';
 import { asRecord, getErrorMessage } from '@/lib/error-utils';
+import { STALE_TIMES } from '@/lib/query-client';
+import { cn } from '@/lib/utils';
 import {
   createOrganisationMutation,
   listDocumentTypesOptions,
+  uploadOrganisationDocumentMutation,
 } from '@/services/client/@tanstack/react-query.gen';
 import type { DocumentTypeOption } from '@/services/client/types.gen';
 import { buildDashboardSwitchPath } from '@/src/features/dashboard/lib/active-domain-storage';
-import { STALE_TIMES } from '@/lib/query-client';
 import {
   OrganisationCountryField,
   OrganisationIdentityFields,
@@ -30,23 +49,6 @@ import {
   organisationRegistrationSchema,
 } from '@/src/features/organisation/forms/shared/organisation-profile';
 import { useUserProfile } from '@/src/features/profile/context/profile-context';
-import { zodResolver } from '@hookform/resolvers/zod';
-import { useMutation, useQuery, useQueryClient, type QueryKey } from '@tanstack/react-query';
-import {
-  AlertCircle,
-  Building2,
-  CheckCircle2,
-  FileCheck2,
-  FileText,
-  Loader2,
-  ShieldCheck,
-  UploadCloud,
-  X,
-} from 'lucide-react';
-import { useRouter } from 'next/navigation';
-import { type ChangeEvent, useMemo, useState } from 'react';
-import { useForm, useWatch } from 'react-hook-form';
-import { toast } from 'sonner';
 
 type CapturedValidationDocument = {
   file: File;
@@ -60,34 +62,6 @@ type CapturedValidationDocuments = Record<string, CapturedValidationDocument>;
 
 const DEFAULT_MAX_FILE_SIZE_MB = 10;
 const DEFAULT_ALLOWED_EXTENSIONS = ['pdf', 'png', 'jpg', 'jpeg'];
-
-const fallbackRequiredDocumentTypes: DocumentTypeOption[] = [
-  {
-    uuid: 'organisation-registration-certificate',
-    name: 'Registration certificate',
-    description: 'Official certificate of incorporation or business registration.',
-    is_required: true,
-    allowed_extensions: DEFAULT_ALLOWED_EXTENSIONS,
-    max_file_size_mb: DEFAULT_MAX_FILE_SIZE_MB,
-  },
-  {
-    uuid: 'organisation-license-accreditation',
-    name: 'Licence or accreditation',
-    description: 'Training licence, accreditation letter, or other regulator approval.',
-    is_required: true,
-    allowed_extensions: DEFAULT_ALLOWED_EXTENSIONS,
-    max_file_size_mb: DEFAULT_MAX_FILE_SIZE_MB,
-  },
-  {
-    uuid: 'organisation-authorisation-letter',
-    name: 'Authorising representative letter',
-    description:
-      'Letter or board resolution confirming the submitter can register this organisation.',
-    is_required: true,
-    allowed_extensions: DEFAULT_ALLOWED_EXTENSIONS,
-    max_file_size_mb: DEFAULT_MAX_FILE_SIZE_MB,
-  },
-];
 
 const getContextCountryName = (context: unknown): string | undefined => {
   const contextRecord = asRecord(context);
@@ -154,11 +128,213 @@ const isGeneratedOrganisationQueryKey = (queryKey: QueryKey) => {
   return id === 'getAllOrganisations' || id === 'getOrganisationByUuid';
 };
 
+type ValidationDocumentRowProps = {
+  capturedDocument?: CapturedValidationDocument;
+  documentKey: string;
+  documentType: DocumentTypeOption;
+  onCapture: (key: string, document: CapturedValidationDocument) => void;
+  onRemove: (key: string) => void;
+};
+
+/** The file input is uncontrolled, so anything that clears the captured document must
+ *  also blank `fileInputRef` — otherwise the field keeps showing a removed filename and
+ *  re-picking that same file fires no change event, stranding the user. */
+function ValidationDocumentRow({
+  capturedDocument,
+  documentKey,
+  documentType,
+  onCapture,
+  onRemove,
+}: ValidationDocumentRowProps) {
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const [isDragging, setIsDragging] = useState(false);
+
+  const label = getDocumentTypeLabel(documentType);
+  const allowedExtensions = getAllowedExtensions(documentType);
+  const maxFileSizeMb = documentType.max_file_size_mb ?? DEFAULT_MAX_FILE_SIZE_MB;
+  const inputId = `validation-document-${documentKey}`;
+  const expiryId = `validation-document-expiry-${documentKey}`;
+  const acceptedCopy = `Accepted: ${allowedExtensions.map(item => `.${item}`).join(', ')}. Max ${maxFileSizeMb} MB.`;
+  const hasValidationError = Boolean(capturedDocument?.validationError);
+
+  const captureFile = (file: File | null | undefined) => {
+    if (!file) return;
+
+    onCapture(documentKey, {
+      file,
+      title: label,
+      description: documentType.description,
+      expiryDate: capturedDocument?.expiryDate,
+      validationError: validateDocumentFile(documentType, file),
+    });
+  };
+
+  const clearFileInput = () => {
+    if (fileInputRef.current) {
+      fileInputRef.current.value = '';
+    }
+  };
+
+  /** Blanking before the picker opens keeps every selection a value change, so
+   *  re-picking the file already attached still fires `change` and re-validates. */
+  const openFilePicker = () => {
+    clearFileInput();
+    fileInputRef.current?.click();
+  };
+
+  const handleRemove = () => {
+    clearFileInput();
+    onRemove(documentKey);
+  };
+
+  const dragHandlers = {
+    onDragOver: (event: DragEvent<HTMLDivElement>) => {
+      event.preventDefault();
+      setIsDragging(true);
+    },
+    onDragLeave: () => setIsDragging(false),
+    onDrop: (event: DragEvent<HTMLDivElement>) => {
+      event.preventDefault();
+      setIsDragging(false);
+      captureFile(event.dataTransfer.files?.[0]);
+    },
+  };
+
+  return (
+    <div className='border-border bg-background rounded-lg border p-4'>
+      <div className='min-w-0 space-y-2'>
+        <div className='flex flex-wrap items-center gap-2'>
+          <FileText className='text-primary h-4 w-4' />
+          <h3 className='text-foreground text-sm font-semibold'>{label}</h3>
+          <Badge variant='outline'>Required</Badge>
+          {capturedDocument?.file && !hasValidationError ? (
+            <Badge variant='secondary' className='gap-1.5'>
+              <CheckCircle2 className='h-3 w-3' />
+              Ready
+            </Badge>
+          ) : null}
+        </div>
+        {documentType.description ? (
+          <p className='text-muted-foreground text-sm'>{documentType.description}</p>
+        ) : null}
+      </div>
+
+      <Separator className='my-4' />
+
+      <div className='grid gap-4 md:grid-cols-[minmax(0,1.4fr)_minmax(180px,0.6fr)]'>
+        <div className='space-y-2'>
+          <Label htmlFor={inputId}>
+            Attach document
+            <span className='text-destructive'> *</span>
+          </Label>
+
+          <Input
+            ref={fileInputRef}
+            id={inputId}
+            type='file'
+            className='hidden'
+            accept={getAcceptValue(documentType)}
+            aria-invalid={hasValidationError}
+            onChange={(event: ChangeEvent<HTMLInputElement>) =>
+              captureFile(event.target.files?.[0])
+            }
+          />
+
+          {capturedDocument?.file ? (
+            <div
+              {...dragHandlers}
+              className={cn(
+                'flex flex-wrap items-center gap-3 rounded-lg border p-3',
+                hasValidationError ? 'border-destructive' : 'border-border',
+                isDragging ? 'border-primary bg-primary/5' : 'bg-muted/40'
+              )}
+            >
+              <Paperclip className='text-primary h-4 w-4 shrink-0' />
+              <div className='min-w-0 flex-1'>
+                <p className='text-foreground truncate text-sm font-medium'>
+                  {capturedDocument.file.name}
+                </p>
+                <p className='text-muted-foreground text-xs'>
+                  {formatFileSize(capturedDocument.file.size)}
+                </p>
+              </div>
+              <Button type='button' variant='outline' size='sm' onClick={openFilePicker}>
+                Replace
+              </Button>
+              <Button type='button' variant='ghost' size='sm' onClick={handleRemove}>
+                <X className='h-4 w-4' />
+                Remove
+              </Button>
+            </div>
+          ) : (
+            <div
+              role='button'
+              tabIndex={0}
+              aria-describedby={`${inputId}-hint`}
+              onClick={openFilePicker}
+              onKeyDown={event => {
+                if (event.key !== 'Enter' && event.key !== ' ') return;
+                event.preventDefault();
+                openFilePicker();
+              }}
+              {...dragHandlers}
+              className={cn(
+                'focus-visible:ring-ring/50 flex cursor-pointer flex-col items-center justify-center gap-1.5 rounded-lg border-2 border-dashed px-6 py-8 text-center transition-colors outline-none focus-visible:ring-[3px]',
+                isDragging
+                  ? 'border-primary bg-primary/5'
+                  : 'border-border bg-muted/40 hover:bg-muted'
+              )}
+            >
+              <UploadCloud className='text-primary h-6 w-6' />
+              <p className='text-foreground text-sm font-medium'>Choose a file</p>
+              <p className='text-muted-foreground text-xs'>
+                Drag and drop here, or click to browse.
+              </p>
+            </div>
+          )}
+
+          <p id={`${inputId}-hint`} className='text-muted-foreground text-xs'>
+            {acceptedCopy}
+          </p>
+
+          {capturedDocument?.validationError ? (
+            <p className='text-destructive text-xs'>{capturedDocument.validationError}</p>
+          ) : null}
+        </div>
+
+        <div className='space-y-2'>
+{documentType.requires_expiry ? (
+            <>
+              <Label htmlFor={expiryId}>Expiry date</Label>
+              <Input
+                id={expiryId}
+                type='date'
+                value={capturedDocument?.expiryDate ?? ''}
+                onChange={event => {
+                  if (!capturedDocument) return;
+                  onCapture(documentKey, {
+                    ...capturedDocument,
+                    expiryDate: event.target.value || undefined,
+                  });
+                }}
+                disabled={!capturedDocument?.file}
+              />
+              <p className='text-muted-foreground text-xs'>
+                Required before this document expires.
+              </p>
+            </>
+          ) : null}
+        </div>
+      </div>
+    </div>
+  );
+}
+
 type ValidationDocumentsStepProps = {
   capturedDocuments: CapturedValidationDocuments;
-  documentTypes: DocumentTypeOption[];
   isLoading: boolean;
-  isUsingFallback: boolean;
+  documentTypesQueryError: boolean;
+  onRetryDocumentTypes: () => void;
   onCapture: (key: string, document: CapturedValidationDocument) => void;
   onRemove: (key: string) => void;
   requiredTypes: DocumentTypeOption[];
@@ -166,15 +342,13 @@ type ValidationDocumentsStepProps = {
 
 function ValidationDocumentsStep({
   capturedDocuments,
-  documentTypes,
   isLoading,
-  isUsingFallback,
+  documentTypesQueryError,
+  onRetryDocumentTypes,
   onCapture,
   onRemove,
   requiredTypes,
 }: ValidationDocumentsStepProps) {
-  const availableCount = documentTypes.length;
-
   if (isLoading) {
     return (
       <Card>
@@ -208,132 +382,35 @@ function ValidationDocumentsStep({
         </div>
       </CardHeader>
       <CardContent className='space-y-4'>
-        {isUsingFallback ? (
-          <Alert>
+        {documentTypesQueryError ? (
+          <Alert variant='destructive'>
             <AlertCircle className='h-4 w-4' />
-            <AlertTitle>Default validation checklist</AlertTitle>
-            <AlertDescription>
-              The API did not return required organisation document metadata, so this form is using
-              the default Elimika validation checklist.
+            <AlertTitle>Could not load the document checklist</AlertTitle>
+            <AlertDescription className='flex flex-col items-start gap-2'>
+              <span>
+                We could not reach the document catalogue, so we cannot tell you what to attach.
+                Everything else on this form still works.
+              </span>
+              <Button type='button' variant='outline' size='sm' onClick={onRetryDocumentTypes}>
+                Try again
+              </Button>
             </AlertDescription>
           </Alert>
-        ) : (
-          <Alert>
-            <ShieldCheck className='h-4 w-4' />
-            <AlertTitle>Backend validation rules loaded</AlertTitle>
-            <AlertDescription>
-              Required document rules are coming from the document type catalogue
-              {availableCount ? ` (${availableCount} available types).` : '.'}
-            </AlertDescription>
-          </Alert>
-        )}
+        ) : null}
 
         <div className='space-y-4'>
           {requiredTypes.map((documentType, index) => {
             const key = getDocumentTypeKey(documentType, index);
-            const capturedDocument = capturedDocuments[key];
-            const label = getDocumentTypeLabel(documentType);
-            const allowedExtensions = getAllowedExtensions(documentType);
-            const maxFileSizeMb = documentType.max_file_size_mb ?? DEFAULT_MAX_FILE_SIZE_MB;
-            const inputId = `validation-document-${key}`;
-            const expiryId = `validation-document-expiry-${key}`;
-
-            const handleFileChange = (event: ChangeEvent<HTMLInputElement>) => {
-              const file = event.target.files?.[0];
-              if (!file) return;
-
-              onCapture(key, {
-                file,
-                title: label,
-                description: documentType.description,
-                expiryDate: capturedDocument?.expiryDate,
-                validationError: validateDocumentFile(documentType, file),
-              });
-            };
 
             return (
-              <div key={key} className='border-border bg-background rounded-lg border p-4'>
-                <div className='flex flex-col gap-4 md:flex-row md:items-start md:justify-between'>
-                  <div className='min-w-0 space-y-2'>
-                    <div className='flex flex-wrap items-center gap-2'>
-                      <FileText className='text-primary h-4 w-4' />
-                      <h3 className='text-foreground text-sm font-semibold'>{label}</h3>
-                      <Badge variant='outline'>Required</Badge>
-                      {capturedDocument?.file && !capturedDocument.validationError ? (
-                        <Badge variant='secondary' className='gap-1.5'>
-                          <CheckCircle2 className='h-3 w-3' />
-                          Ready
-                        </Badge>
-                      ) : null}
-                    </div>
-                    {documentType.description ? (
-                      <p className='text-muted-foreground text-sm'>{documentType.description}</p>
-                    ) : null}
-                    <p className='text-muted-foreground text-xs'>
-                      Accepted: {allowedExtensions.map(item => `.${item}`).join(', ')}. Max{' '}
-                      {maxFileSizeMb} MB.
-                    </p>
-                  </div>
-
-                  {capturedDocument?.file ? (
-                    <Button
-                      type='button'
-                      variant='ghost'
-                      size='sm'
-                      className='self-start'
-                      onClick={() => onRemove(key)}
-                    >
-                      <X className='h-4 w-4' />
-                      Remove
-                    </Button>
-                  ) : null}
-                </div>
-
-                <Separator className='my-4' />
-
-                <div className='grid gap-4 md:grid-cols-[minmax(0,1.4fr)_minmax(180px,0.6fr)]'>
-                  <div className='space-y-2'>
-                    <Label htmlFor={inputId}>Upload document</Label>
-                    <Input
-                      id={inputId}
-                      type='file'
-                      accept={getAcceptValue(documentType)}
-                      onChange={handleFileChange}
-                      aria-invalid={Boolean(capturedDocument?.validationError)}
-                    />
-                    {capturedDocument?.file ? (
-                      <p className='text-muted-foreground text-xs'>
-                        {capturedDocument.file.name} ({formatFileSize(capturedDocument.file.size)})
-                      </p>
-                    ) : (
-                      <p className='text-muted-foreground text-xs'>
-                        Choose the official file for this requirement.
-                      </p>
-                    )}
-                    {capturedDocument?.validationError ? (
-                      <p className='text-destructive text-xs'>{capturedDocument.validationError}</p>
-                    ) : null}
-                  </div>
-
-                  <div className='space-y-2'>
-                    <Label htmlFor={expiryId}>Expiry date</Label>
-                    <Input
-                      id={expiryId}
-                      type='date'
-                      value={capturedDocument?.expiryDate ?? ''}
-                      onChange={event => {
-                        if (!capturedDocument) return;
-                        onCapture(key, {
-                          ...capturedDocument,
-                          expiryDate: event.target.value || undefined,
-                        });
-                      }}
-                      disabled={!capturedDocument?.file}
-                    />
-                    <p className='text-muted-foreground text-xs'>Optional where not applicable.</p>
-                  </div>
-                </div>
-              </div>
+              <ValidationDocumentRow
+                key={key}
+                capturedDocument={capturedDocuments[key]}
+                documentKey={key}
+                documentType={documentType}
+                onCapture={onCapture}
+                onRemove={onRemove}
+              />
             );
           })}
         </div>
@@ -348,9 +425,10 @@ export function OrganizationOnboardingForm() {
   const queryClient = useQueryClient();
   const [capturedDocuments, setCapturedDocuments] = useState<CapturedValidationDocuments>({});
   const createOrganisation = useMutation(createOrganisationMutation());
+  const uploadOrganisationDocument = useMutation(uploadOrganisationDocumentMutation());
 
   const documentTypesQuery = useQuery({
-    ...listDocumentTypesOptions(),
+    ...listDocumentTypesOptions({ query: { applies_to: 'ORGANISATION' } }),
     staleTime: STALE_TIMES.reference,
   });
 
@@ -359,17 +437,10 @@ export function OrganizationOnboardingForm() {
     [documentTypesQuery.data?.data]
   );
 
-  const backendRequiredDocumentTypes = useMemo(
+  const requiredDocumentTypes = useMemo(
     () => documentTypes.filter(documentType => documentType.is_required),
     [documentTypes]
   );
-
-  const requiredDocumentTypes =
-    backendRequiredDocumentTypes.length > 0
-      ? backendRequiredDocumentTypes
-      : fallbackRequiredDocumentTypes;
-
-  const isUsingFallbackDocumentTypes = backendRequiredDocumentTypes.length === 0;
 
   const documentsAreComplete = requiredDocumentTypes.every((documentType, index) => {
     const key = getDocumentTypeKey(documentType, index);
@@ -397,6 +468,40 @@ export function OrganizationOnboardingForm() {
     longitude: normalizeCoordinateValue(longitudeWatch),
   };
 
+  /** Uploads every captured file and returns the labels of the ones that did not make it,
+   *  so the caller can tell the truth about a partial success instead of a blanket one. */
+  const uploadCapturedDocuments = async (organisationUuid: string) => {
+    const failedLabels: string[] = [];
+
+    for (const [index, documentType] of requiredDocumentTypes.entries()) {
+      const key = getDocumentTypeKey(documentType, index);
+      const capturedDocument = capturedDocuments[key];
+
+      if (!capturedDocument?.file || capturedDocument.validationError || !documentType.uuid) {
+        continue;
+      }
+
+      try {
+        await uploadOrganisationDocument.mutateAsync({
+          body: { file: capturedDocument.file },
+          path: { uuid: organisationUuid },
+          query: {
+            document_type_uuid: documentType.uuid,
+            title: capturedDocument.title,
+            description: capturedDocument.description,
+            // The date input already holds YYYY-MM-DD, which is what the LocalDate
+            // parameter wants. Passing a Date here would widen it to a datetime and 400.
+            expiry_date: capturedDocument.expiryDate,
+          },
+        });
+      } catch (_error) {
+        failedLabels.push(getDocumentTypeLabel(documentType));
+      }
+    }
+
+    return failedLabels;
+  };
+
   const handleSubmit = async (data: OrganisationRegistrationFormData) => {
     if (!user?.uuid) {
       toast.error('User not found. Please try again.');
@@ -413,6 +518,11 @@ export function OrganizationOnboardingForm() {
         body: buildOrganisationRegistrationPayload(data),
       });
 
+      const organisationUuid = response.data?.uuid;
+      const failedLabels = organisationUuid
+        ? await uploadCapturedDocuments(organisationUuid)
+        : requiredDocumentTypes.map(getDocumentTypeLabel);
+
       await queryClient.invalidateQueries({
         predicate: query => isGeneratedOrganisationQueryKey(query.queryKey),
       });
@@ -422,8 +532,17 @@ export function OrganizationOnboardingForm() {
         await user.invalidateQuery();
       }
 
-      const successMessage = response.data?.message || 'Organization registered successfully!';
-      toast.success(`${successMessage} Validation documents captured for review.`);
+      const successMessage = response.message || 'Organization registered successfully!';
+
+      if (failedLabels.length === 0) {
+        toast.success(`${successMessage} Your documents are with the review team.`);
+      } else {
+        toast.warning(
+          `${successMessage} We could not upload ${failedLabels.join(', ')}. ` +
+            'You can attach it from your organisation workspace.'
+        );
+      }
+
       router.replace(buildDashboardSwitchPath('organisation_user'));
     } catch (error) {
       toast.error(getErrorMessage(error, 'Failed to register organization. Please try again.'));
@@ -498,9 +617,9 @@ export function OrganizationOnboardingForm() {
 
           <ValidationDocumentsStep
             capturedDocuments={capturedDocuments}
-            documentTypes={documentTypes}
             isLoading={documentTypesQuery.isLoading}
-            isUsingFallback={isUsingFallbackDocumentTypes}
+            documentTypesQueryError={documentTypesQuery.isError}
+            onRetryDocumentTypes={() => documentTypesQuery.refetch()}
             requiredTypes={requiredDocumentTypes}
             onCapture={(key, document) =>
               setCapturedDocuments(current => ({
@@ -532,13 +651,18 @@ export function OrganizationOnboardingForm() {
             type='submit'
             className='w-full'
             disabled={
-              createOrganisation.isPending || documentTypesQuery.isLoading || !documentsAreComplete
+              createOrganisation.isPending ||
+              uploadOrganisationDocument.isPending ||
+              documentTypesQuery.isLoading ||
+              !documentsAreComplete
             }
           >
-            {createOrganisation.isPending ? (
+            {createOrganisation.isPending || uploadOrganisationDocument.isPending ? (
               <>
                 <Loader2 className='h-4 w-4 animate-spin' />
-                Submitting registration...
+                {uploadOrganisationDocument.isPending
+                  ? 'Uploading documents...'
+                  : 'Submitting registration...'}
               </>
             ) : (
               <>
