@@ -162,9 +162,10 @@ export function useInstructorStudentsData() {
         query: { pageable: { page: 0, size: 50 } },
       }),
       enabled: !!studentUuid,
+      // Students move their own progress, so the roster must re-ask; one request per
+      // student means the stale window, not a dead refetchOnMount, is the throttle.
       staleTime: 5 * 60 * 1000,
       refetchOnWindowFocus: false,
-      refetchOnMount: false,
       refetchOnReconnect: false,
     })),
   });

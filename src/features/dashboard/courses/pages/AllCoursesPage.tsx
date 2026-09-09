@@ -42,17 +42,17 @@ export default function AllCoursesPage() {
   const size = 20;
   const [page, setPage] = useState(0);
 
+  // Moderation publishes and withdraws catalogue entries behind this page, so the
+  // stale window has to be the throttle rather than a dead refetchOnMount.
   const { data, isLoading } = useQuery({
     ...getPublishedCoursesOptions({ query: { pageable: { page, size } } }),
     refetchOnWindowFocus: false,
-    refetchOnMount: false,
     refetchOnReconnect: false,
   });
 
   const { data: programsData } = useQuery({
     ...getAllTrainingProgramsOptions({ query: { pageable: {} } }),
     refetchOnWindowFocus: false,
-    refetchOnMount: false,
     refetchOnReconnect: false,
   });
 

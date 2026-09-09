@@ -49,9 +49,10 @@ export function useCourseLessonsWithContent({
       query: { pageable: {} },
     }),
     enabled: isEnabled,
+    // Publishing a course restamps its lessons, so the list a reader sees can change without them
+    // touching anything; the lesson bodies below are immutable and stay cached.
     staleTime: 10 * 60 * 1000,
     refetchOnWindowFocus: false,
-    refetchOnMount: false,
   });
 
   const lessonContentQueries = useQueries({

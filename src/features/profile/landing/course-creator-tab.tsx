@@ -636,6 +636,14 @@ function CreatorCertificateUploadSheet({
   );
 }
 
+/** Verification is an admin's answer about this profile, so the badge is re-asked on every mount. */
+const documentVerificationQueryOptions = {
+  staleTime: 0,
+  refetchOnMount: 'always' as const,
+  refetchOnWindowFocus: true,
+  refetchOnReconnect: true,
+};
+
 function CreatorCertificateDocumentsSection({
   sharedProfile,
   onOpenUpload,
@@ -650,10 +658,8 @@ function CreatorCertificateDocumentsSection({
   const { data, isLoading } = useQuery({
     ...getCourseCreatorDocumentsOptions({ path: { courseCreatorUuid: sharedProfile?.uuid } }),
     enabled: !!sharedProfile?.uuid,
-    staleTime: 5 * 60 * 1000,
     gcTime: 10 * 60 * 1000,
-    refetchOnWindowFocus: false,
-    refetchOnMount: false,
+    ...documentVerificationQueryOptions,
   });
 
   const deleteDocumentMut = useMutation(deleteCourseCreatorDocumentMutation());
@@ -829,10 +835,8 @@ function CreatorVerifiedDocumentsSection({ sharedProfile }: DomainTabProps) {
   const { data: verifiedDocs, isLoading } = useQuery({
     ...getCourseCreatorDocumentsOptions({ path: { courseCreatorUuid: sharedProfile?.uuid } }),
     enabled: !!sharedProfile?.uuid,
-    staleTime: 5 * 60 * 1000,
     gcTime: 10 * 60 * 1000,
-    refetchOnWindowFocus: false,
-    refetchOnMount: false,
+    ...documentVerificationQueryOptions,
     select: response =>
       ((response?.data ?? []) as CourseCreatorDocumentRecord[]).filter(doc => doc.is_verified),
   });

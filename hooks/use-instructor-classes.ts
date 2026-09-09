@@ -43,7 +43,9 @@ function useInstructorClassesWithDetails(instructorUuid?: string) {
     enabled: !!instructorUuid,
     staleTime: 5 * 60 * 1000,
     refetchOnWindowFocus: false,
-    refetchOnMount: false,
+    // This list is what an approved training application or accepted job application adds a class
+    // to. The instructor is reloading precisely to see that, so never answer from cache alone.
+    refetchOnMount: 'always',
     refetchOnReconnect: false,
   });
 
@@ -87,9 +89,10 @@ function useInstructorClassesWithDetails(instructorUuid?: string) {
     queries: programUuids.map(programUuid => ({
       ...getProgramCoursesOptions({ path: { programUuid } }),
       enabled: !!programUuid,
+      // A programme's course list is the owner's to change, not the instructor's, so it has to be
+      // able to revalidate here.
       staleTime: 5 * 60 * 1000,
       refetchOnWindowFocus: false,
-      refetchOnMount: false,
       refetchOnReconnect: false,
     })),
   });

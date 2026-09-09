@@ -22,6 +22,7 @@ import { EmptyState } from '@/components/ui/empty-state';
 import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle } from '@/components/ui/sheet';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Textarea } from '@/components/ui/textarea';
+import { STALE_TIMES } from '@/lib/query-client';
 import {
     getCourseLessonsOptions,
     getLessonContentOptions,
@@ -82,7 +83,7 @@ type LessonModule = {
     courseTitle: string;
     position?: number;
     title: string;
-    description?: string;
+    description?: string | null;
     content_url?: string | null;
     content_text?: string | null;
     lessonUuid?: string;
@@ -231,9 +232,10 @@ export function LessonHubLessonsTab({ learningHubData }: LessonHubLessonsTabProp
                 query: { pageable: {} },
             }),
             enabled: Boolean(courseUuid),
-            staleTime: 10 * 60 * 1000,
+            // The instructor publishes lessons into this list while the student waits, so the
+            // window is short — but one fan-out per enrolled course cannot fire on every mount.
+            staleTime: STALE_TIMES.live,
             refetchOnWindowFocus: false,
-            refetchOnMount: false,
         })),
     });
 
@@ -270,6 +272,8 @@ export function LessonHubLessonsTab({ learningHubData }: LessonHubLessonsTabProp
                 },
             }),
             enabled: Boolean(courseUuid && lesson.uuid),
+            // One request per lesson of every enrolled course, and an authored body cannot change
+            // outside its author's tab — the same bargain use-courselessonwithcontent strikes.
             staleTime: 10 * 60 * 1000,
             refetchOnWindowFocus: false,
             refetchOnMount: false,
@@ -288,16 +292,18 @@ export function LessonHubLessonsTab({ learningHubData }: LessonHubLessonsTabProp
 
     const lessons = useMemo<LessonModule[]>(() => {
         return classRows.flatMap(classRow => {
-            if (!classRow.courseId) return [];
+            // Hoisted: the guard below does not narrow the property inside the nested map.
+            const courseId = classRow.courseId;
+            if (!courseId) return [];
 
-            const course = courseMap[classRow.courseId] as LessonCourse | undefined;
+            const course = courseMap[courseId] as LessonCourse | undefined;
 
-            const courseLessons = courseLessonsByUuid.get(classRow.courseId) ?? [];
+            const courseLessons = courseLessonsByUuid.get(courseId) ?? [];
 
             return courseLessons.map((lesson, index) => {
                 const lessonUuid = lesson.uuid ?? '';
                 const contentItems = lessonUuid
-                    ? lessonContentByKey.get(`${classRow.courseId}:${lessonUuid}`) ?? []
+                    ? lessonContentByKey.get(`${courseId}:${lessonUuid}`) ?? []
                     : [];
                 const firstContent = contentItems[0] ?? null;
                 const lessonId = lessonUuid || `${classRow.classDefinitionUuid}-${lesson.lesson_number ?? index}`;
@@ -307,7 +313,7 @@ export function LessonHubLessonsTab({ learningHubData }: LessonHubLessonsTabProp
                     classDefinitionUuid: classRow.classDefinitionUuid,
                     classTitle: classRow.classTitle,
                     classHref: classRow.classHref,
-                    courseId: classRow.courseId,
+                    courseId,
                     courseTitle: course?.title ?? course?.name ?? classRow.courseTitle,
                     position: lesson.lesson_number,
                     title: lesson.title,

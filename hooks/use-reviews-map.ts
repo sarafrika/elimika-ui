@@ -20,9 +20,10 @@ export function useCourseReviewsMap(courseUuids: string[]) {
         path: { courseUuid: uuid },
       }),
       enabled: !!uuid,
+      // Reviews are written by other students and the review workflow invalidates this key; the
+      // half-hour tier still throttles the per-course fan-out on the catalogue.
       staleTime: 30 * 60 * 1000, // ratings change rarely
       refetchOnWindowFocus: false,
-      refetchOnMount: false,
       refetchOnReconnect: false,
     })),
   });

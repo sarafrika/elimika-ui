@@ -19,9 +19,10 @@ export function useClassLessonContent({ courseUuid, programUuid }: UseClassLesso
   const { data: programCoursesResp, isLoading: isLoadingProgramCourses } = useQuery({
     ...getProgramCoursesOptions({ path: { programUuid: programUuid ?? '' } }),
     enabled: hasProgram,
+    // A programme's course list is edited by its owner, rarely by whoever is reading the class, so
+    // mount revalidation stays on behind the cached paint.
     staleTime: 10 * 60 * 1000,
     refetchOnWindowFocus: false,
-    refetchOnMount: false,
   });
 
   const programCourses = useMemo<ProgramCourseLike[]>(

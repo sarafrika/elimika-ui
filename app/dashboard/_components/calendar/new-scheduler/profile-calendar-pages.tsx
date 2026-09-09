@@ -176,11 +176,10 @@ function useClassStudentSummaries(classUuids: Array<string | null | undefined>) 
       }),
 
       enabled: !!uuid,
-
+      // Somebody enrols or withdraws while the roster sits in the persisted cache, so the
+      // stale window has to be the throttle rather than a dead refetchOnMount.
       staleTime: 5 * 60 * 1000,
-
       refetchOnWindowFocus: false,
-      refetchOnMount: false,
       refetchOnReconnect: false,
     })),
   });
@@ -821,9 +820,10 @@ function OrganizationCalendarPage() {
       path: { organisationUuid: organizationUuid ?? '' },
     }),
     enabled: !!organizationUuid,
+    // Classes appear and change hands through assignment decisions taken elsewhere, so a
+    // mount must re-ask instead of replaying the rehydrated list.
     staleTime: 5 * 60 * 1000,
     refetchOnWindowFocus: false,
-    refetchOnMount: false,
     refetchOnReconnect: false,
   });
 
@@ -855,9 +855,9 @@ function OrganizationCalendarPage() {
     queries: uniqueCourseUuids.map(uuid => ({
       ...getCourseByUuidOptions({ path: { uuid } }),
       enabled: !!uuid,
+      // Moderation can approve or pull a course between visits.
       staleTime: 5 * 60 * 1000,
       refetchOnWindowFocus: false,
-      refetchOnMount: false,
       refetchOnReconnect: false,
     })),
   });
@@ -880,9 +880,9 @@ function OrganizationCalendarPage() {
     queries: uniqueInstructorUuids.map(uuid => ({
       ...getInstructorByUuidOptions({ path: { uuid } }),
       enabled: !!uuid,
+      // Verification can flip an instructor between visits.
       staleTime: 5 * 60 * 1000,
       refetchOnWindowFocus: false,
-      refetchOnMount: false,
       refetchOnReconnect: false,
     })),
   });
