@@ -97,6 +97,7 @@ const workflowQueryIds = {
     'getCart',
     'getOrder',
     'getPaymentStatus',
+    'getWallet',
   ],
   jobApplication: [
     'getJob',
@@ -138,6 +139,33 @@ const workflowQueryIds = {
     'searchInstructors',
     'getOrganisationInstructorSummaries',
   ],
+  assessment: [
+    'getAllAssignments',
+    'searchAssignments',
+    'getAssignmentByUuid',
+    'getAssignmentSubmissions',
+    'searchSubmissions',
+    'getSubmissionAnalytics',
+    'getHighPerformanceSubmissions',
+    'getPendingGrading',
+    'getEnrollmentGradeBook',
+    'getStudentDashboard',
+  ],
+  certificate: [
+    'getStudentCertificates',
+    'getCourseCertificates',
+    'getProgramCertificates',
+    'getDownloadableCertificates',
+    'getAllCertificates',
+    'searchCertificates',
+    'getStudentDashboard',
+  ],
+  invitation: [
+    'listMyInvitations',
+    'listOrganisationInvitations',
+    'getOrganisationInstructorSummaries',
+    'getOrganisationStatistics',
+  ],
 } as const;
 
 const contentModerationQueryIds = workflowQueryIds.contentModeration;
@@ -146,6 +174,9 @@ const trainingApplicationQueryIds = workflowQueryIds.trainingApplication;
 const enrollmentQueryIds = workflowQueryIds.enrollment;
 const jobApplicationQueryIds = workflowQueryIds.jobApplication;
 const reviewQueryIds = workflowQueryIds.review;
+const assessmentQueryIds = workflowQueryIds.assessment;
+const certificateQueryIds = workflowQueryIds.certificate;
+const invitationQueryIds = workflowQueryIds.invitation;
 
 /** A server-side event can change these unwatched, so a restored copy is never fresh. */
 export const VOLATILE_GENERATED_QUERY_IDS: ReadonlySet<string> = Object.freeze(
@@ -254,6 +285,36 @@ export async function invalidateReviewWorkflowQueries(queryClient: QueryClient) 
   ]);
 }
 
+export async function invalidateAssessmentWorkflowQueries(queryClient: QueryClient) {
+  await Promise.all([
+    invalidateGeneratedQueryIds(queryClient, assessmentQueryIds),
+    invalidateQueryKeyPrefixes(queryClient, [notificationQueryKey, ['class-details-related']]),
+  ]);
+}
+
+export async function invalidateCertificateWorkflowQueries(queryClient: QueryClient) {
+  await Promise.all([
+    invalidateGeneratedQueryIds(queryClient, certificateQueryIds),
+    invalidateQueryKeyPrefixes(queryClient, [notificationQueryKey]),
+  ]);
+}
+
+export async function invalidateInvitationWorkflowQueries(queryClient: QueryClient) {
+  await Promise.all([
+    invalidateGeneratedQueryIds(queryClient, invitationQueryIds),
+    invalidateQueryKeyPrefixes(queryClient, [notificationQueryKey, ['organization']]),
+  ]);
+}
+
+/** Grading events that move a mark or a queue; the reminders that share their prefix do not. */
+const GRADING_NOTIFICATION_TYPES = new Set([
+  'ASSIGNMENT_GRADED',
+  'ASSIGNMENT_RETURNED_FOR_REVISION',
+  'ASSIGNMENT_SUBMITTED_CONFIRMATION',
+  'NEW_ASSIGNMENT_SUBMISSION',
+  'ASSESSMENT_COMPLETED',
+]);
+
 export function invalidateWorkflowQueriesForNotification(
   queryClient: QueryClient,
   notification: WorkflowNotification
@@ -275,7 +336,8 @@ export function invalidateWorkflowQueriesForNotification(
   if (
     type.includes('ENROLLMENT') ||
     type === 'CLASS_SCHEDULE_UPDATED' ||
-    type === 'UPCOMING_CLASS_REMINDER'
+    type === 'UPCOMING_CLASS_REMINDER' ||
+    type === 'ORDER_PAYMENT_RECEIPT'
   ) {
     return invalidateEnrollmentWorkflowQueries(queryClient);
   }
@@ -286,6 +348,18 @@ export function invalidateWorkflowQueriesForNotification(
 
   if (type.includes('REVIEW') || type.includes('RATING')) {
     return invalidateReviewWorkflowQueries(queryClient);
+  }
+
+  if (GRADING_NOTIFICATION_TYPES.has(type)) {
+    return invalidateAssessmentWorkflowQueries(queryClient);
+  }
+
+  if (type.includes('CERTIFICATE')) {
+    return invalidateCertificateWorkflowQueries(queryClient);
+  }
+
+  if (type.includes('INVITATION') || type.includes('CONSENT')) {
+    return invalidateInvitationWorkflowQueries(queryClient);
   }
 
   return Promise.resolve();
