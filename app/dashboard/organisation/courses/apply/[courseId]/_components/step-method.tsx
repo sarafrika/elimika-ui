@@ -13,7 +13,7 @@ import type { Dispatch } from 'react';
 import { Checkbox } from '@/components/ui/checkbox';
 import { cn } from '@/lib/utils';
 
-import { METHOD_OPTIONS, type ApplyAction, type ApplyState } from './apply-model';
+import { type ApplyAction, type ApplyState, METHOD_OPTIONS } from './apply-model';
 
 export function StepMethod({
   state,

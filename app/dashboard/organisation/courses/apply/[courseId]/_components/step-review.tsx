@@ -5,7 +5,7 @@
  *
  * The four-up strip is the shape of the offer at a glance; each section below
  * it restates its step in full and carries an Edit link straight back to that
- * step, so a wrong serial is three clicks from fixed rather than four Backs.
+ * step, so a wrong rate is three clicks from fixed rather than four Backs.
  *
  * The denominators here count the same requirements the equipment step asked
  * about — the applicant's own. A total that included the creator's or the
@@ -22,11 +22,11 @@ import type { CourseTrainingRequirement, ProgramRequirement } from '@/services/c
 
 import {
   APPLICATION_CURRENCY,
-  methodOption,
-  requirementKey,
   type ApplyAction,
   type ApplyState,
   type MethodOption,
+  methodOption,
+  requirementKey,
   type TrainingContentKind,
 } from './apply-model';
 
@@ -51,10 +51,6 @@ export function StepReview({
 
   const haveCount = state.equipment.filter(answer => answer.has === 'yes').length;
   const needCount = state.equipment.filter(answer => answer.has === 'no').length;
-  const totalItems = state.equipment.reduce(
-    (total, answer) => total + (answer.has === 'yes' ? answer.items.length : 0),
-    0
-  );
   const requirementCount = isProgram ? programRequirements.length : requirements.length;
 
   const goToStep = (step: number) => dispatch({ type: 'step', step });
@@ -78,8 +74,8 @@ export function StepReview({
           <SummaryStat label='Equipment on hand' value={`${haveCount}/${requirementCount}`} />
         )}
         <SummaryStat
-          label={isProgram ? 'Reviewed' : 'Items catalogued'}
-          value={isProgram ? 'Yes' : String(totalItems)}
+          label={isProgram ? 'Reviewed' : 'To be sourced'}
+          value={isProgram ? 'Yes' : String(needCount)}
         />
       </div>
 
@@ -202,11 +198,7 @@ export function StepReview({
                 <li key={key} className='rounded-md border p-3'>
                   <div className='flex flex-wrap items-center justify-between gap-2'>
                     <span className='font-medium'>{requirement.name}</span>
-                    {answer.has === 'yes' && (
-                      <Badge variant='secondary'>
-                        Ready · {answer.items.length} item{answer.items.length === 1 ? '' : 's'}
-                      </Badge>
-                    )}
+                    {answer.has === 'yes' && <Badge variant='secondary'>Available</Badge>}
                     {answer.has === 'no' && answer.acquisition && (
                       <Badge variant='outline'>
                         {answer.acquisition === 'lease' ? 'Lease to own' : 'Hire'} via Sarafrika
@@ -214,28 +206,6 @@ export function StepReview({
                     )}
                     {answer.has === null && <Badge variant='outline'>Not answered</Badge>}
                   </div>
-                  {answer.has === 'yes' && answer.items.length > 0 && (
-                    <div className='mt-3 overflow-x-auto rounded-md border'>
-                      <table className='w-full text-xs'>
-                        <thead className='bg-muted/50 text-muted-foreground'>
-                          <tr>
-                            <th className='px-2 py-1.5 text-left font-medium'>Name / Model</th>
-                            <th className='px-2 py-1.5 text-left font-medium'>Brand</th>
-                            <th className='px-2 py-1.5 text-left font-medium'>Serial</th>
-                          </tr>
-                        </thead>
-                        <tbody>
-                          {answer.items.map(item => (
-                            <tr key={item.id} className='border-t'>
-                              <td className='px-2 py-1.5'>{item.name || '—'}</td>
-                              <td className='px-2 py-1.5'>{item.brand || '—'}</td>
-                              <td className='px-2 py-1.5 font-mono'>{item.serial || '—'}</td>
-                            </tr>
-                          ))}
-                        </tbody>
-                      </table>
-                    </div>
-                  )}
                 </li>
               );
             })}
