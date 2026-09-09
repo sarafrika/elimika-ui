@@ -61,6 +61,7 @@ import {
   uploadLessonMediaMutation,
 } from '@/services/client/@tanstack/react-query.gen';
 import type { AddCourseAssessmentData, CourseAssessment, Lesson, LessonContent } from '@/services/client/types.gen';
+import { toAuthenticatedMediaUrl } from '@/src/lib/media-url';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import clsx from 'clsx';
@@ -102,7 +103,6 @@ import {
 } from 'react-hook-form';
 import { toast } from 'sonner';
 import * as z from 'zod';
-import { toAuthenticatedMediaUrl } from '@/src/lib/media-url';
 import { useUserProfile } from '../../../../context/profile-context';
 import { cn } from '../../../../lib/utils';
 import { useRubricsWithCriteriaAndScoring } from '../rubrics/rubric-chaining';
@@ -1494,17 +1494,17 @@ function LessonContentForm({
 
       const saved = targetUuid
         ? await updateLessonContent.mutateAsync({
-            body: { ...contentBody, uuid: targetUuid },
-            path: {
-              courseUuid: courseId as string,
-              lessonUuid: lessonId as string,
-              contentUuid: targetUuid,
-            },
-          })
+          body: { ...contentBody, uuid: targetUuid },
+          path: {
+            courseUuid: courseId as string,
+            lessonUuid: lessonId as string,
+            contentUuid: targetUuid,
+          },
+        })
         : await createLessonContent.mutateAsync({
-            body: contentBody,
-            path: { courseUuid: courseId as string, lessonUuid: lessonId as string },
-          });
+          body: contentBody,
+          path: { courseUuid: courseId as string, lessonUuid: lessonId as string },
+        });
 
       if (uploadedUuid && uploadedUuid !== targetUuid) {
         await deleteLessonContent

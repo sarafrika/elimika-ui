@@ -155,8 +155,8 @@ export default {
           url: '/dashboard/course-management/create-new-course',
         },
         {
-          title: 'Drafts',
-          url: '/dashboard/course-management/drafts',
+          title: 'Courses & programs',
+          url: '/dashboard/course-management',
         },
       ],
     },

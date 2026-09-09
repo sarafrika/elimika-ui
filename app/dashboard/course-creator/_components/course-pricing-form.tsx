@@ -189,7 +189,7 @@ export const CoursePricingForm = forwardRef<CourseFormRef, CourseFormProps>(
                 }),
               });
               await invalidateContentModerationWorkflowQueries(queryClient);
-              router.push('/dashboard/course-creator/course-management/all');
+              router.push('/dashboard/course-creator/course-management');
             },
             onError: error => {
               toast.error(getErrorMessage(error) || 'Failed to publish course');

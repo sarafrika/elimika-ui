@@ -208,29 +208,6 @@ export function CoursesCatalogCard({ card, type, onPrimaryAction }: CoursesCatal
             </Button>
           )}
 
-          {/* <Button
-            type='button'
-            className={cn(
-              'h-9 rounded-sm text-sm shadow-none',
-            )}
-            onClick={() => router.push(`/dashboard/instructor/courses/apply/${card.id}`)}
-          >
-            New Apply to train
-          </Button> */}
-
-          {/* <Button
-            type='button'
-            className={cn(
-              'h-9 rounded-sm text-sm shadow-none',
-              ctaToneClasses[card.ctaTone ?? 'default']
-            )}
-            disabled={card.ctaDisabled}
-            onClick={() => onPrimaryAction?.(card)}
-          >
-            <BookOpen className='size-4' />
-            {card.ctaLabel}
-          </Button> */}
-
           {/* Primary CTA */}
           {card.ctaKind === 'apply-course' || card.ctaKind === 'apply-program' ? (
             <Button

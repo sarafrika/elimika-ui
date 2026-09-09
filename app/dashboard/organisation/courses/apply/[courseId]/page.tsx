@@ -51,7 +51,7 @@ import { useQuery } from '@tanstack/react-query';
 import { ArrowLeft } from 'lucide-react';
 import Link from 'next/link';
 import { useParams, usePathname, useRouter, useSearchParams } from 'next/navigation';
-import { useEffect, useMemo } from 'react';
+import { useEffect, useMemo, useRef } from 'react';
 
 import { AsyncSection } from '@/components/data/async-section';
 import { PageHeader } from '@/components/page-header';
@@ -78,6 +78,7 @@ import { ApplyWizard } from './_components/apply-wizard';
 const REQUIREMENT_PAGE_SIZE = 200;
 
 export default function ApplyPage() {
+  const applyWizardRef = useRef<HTMLElement>(null);
   const params = useParams<{ courseId?: string; id?: string }>();
   const trainingId = params?.courseId ?? params?.id ?? '';
 
@@ -257,10 +258,28 @@ export default function ApplyPage() {
           />
         </AsyncSection>
       ) : (
-        <CourseRecordPage courseUuid={trainingId} backHref={backHref} />
+        <CourseRecordPage
+          courseUuid={trainingId}
+          backHref={backHref}
+          onPrimaryAction={() => {
+            applyWizardRef.current?.focus({ preventScroll: true });
+            applyWizardRef.current?.scrollIntoView({
+              behavior: window.matchMedia('(prefers-reduced-motion: reduce)').matches
+                ? 'instant'
+                : 'smooth',
+              block: 'start',
+            });
+          }}
+        />
       )}
 
-      <section aria-labelledby='apply-heading' className='space-y-4 border-t pt-6'>
+      <section
+        ref={applyWizardRef}
+        id='apply-wizard'
+        tabIndex={-1}
+        aria-labelledby='apply-heading'
+        className='scroll-mt-24 space-y-4 border-t pt-6'
+      >
         <div>
           <h2 id='apply-heading' className='text-lg font-semibold'>
             Apply to train {contentTitle || (isProgram ? 'this program' : 'this course')}

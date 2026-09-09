@@ -5,12 +5,12 @@
 
 import {
   type AcademicPeriod,
+  apiCalendarDay,
   type ApprovedRateCard,
   approvedRateFor,
   type DayKey,
   type DayRow,
   DEFAULT_RATE_BASIS,
-  apiCalendarDay,
   firstRegistrationWindowError,
   type RateBasis,
   type RegistrationWindowErrors,
@@ -785,7 +785,6 @@ const InstructorClassCreationPage = () => {
   });
 
   const programIds = appliedPrograms?.data?.content?.map(app => app.program_uuid) ?? [];
-
   const { programMap } = useProgramsByIds(programIds as string[]);
 
   const approvedPrograms = useMemo(() => {

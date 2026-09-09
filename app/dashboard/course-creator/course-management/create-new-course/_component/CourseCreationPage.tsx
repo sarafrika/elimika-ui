@@ -55,7 +55,7 @@ const CourseCreationPage = () => {
           async onSuccess(data, _variables, _context) {
             toast.success(data?.message);
             await invalidateContentModerationWorkflowQueries(queryClient);
-            router.push('/dashboard/course-creator/course-management/all');
+            router.push('/dashboard/course-creator/course-management');
           },
           onError: error => {
             toast.error(getErrorMessage(error) || 'Failed to publish course');
@@ -109,7 +109,7 @@ const CourseCreationPage = () => {
   return (
     <div className='mx-auto space-y-5'>
       <div
-        onClick={() => router.push('/dashboard/course-creator/course-management/all')}
+        onClick={() => router.push('/dashboard/course-creator/course-management')}
         className='flex w-fit cursor-pointer flex-row items-center gap-2 py-2 pr-3'
       >
         <MoveLeft size={18} className='h-5 w-5 cursor-pointer' />

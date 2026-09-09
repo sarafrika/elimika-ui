@@ -7,7 +7,7 @@ import { useParams } from 'next/navigation';
 import { useEffect } from 'react';
 import { CourseCreatorEmptyState } from '../../../_components/loading-state';
 
-const COURSE_MANAGEMENT_HREF = '/dashboard/course-creator/course-management/drafts';
+const COURSE_MANAGEMENT_HREF = '/dashboard/course-creator/course-management';
 
 function Page() {
   const params = useParams();
@@ -38,7 +38,8 @@ function Page() {
     return <CourseCreatorEmptyState />;
   }
 
-  return <CourseRecordPage courseUuid={courseUuid} backHref={COURSE_MANAGEMENT_HREF} />;
+  return <CourseRecordPage className='my-6' courseUuid={courseUuid} backHref={COURSE_MANAGEMENT_HREF} />
+    ;
 }
 
 export default Page;

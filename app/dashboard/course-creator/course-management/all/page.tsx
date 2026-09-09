@@ -1,5 +1,5 @@
-import CourseCreatorCoursesContent from './courses-content';
+import { redirect } from 'next/navigation';
 
-export default function CourseCreatorCoursesPage() {
-  return <CourseCreatorCoursesContent />;
+export default function LegacyCourseManagementPage() {
+  redirect('/dashboard/course-creator/course-management');
 }

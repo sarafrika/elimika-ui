@@ -94,7 +94,7 @@ export function CourseRecordRouteActions({
   };
 
   return (
-    <div className={cn('mb-5 flex flex-wrap items-center gap-2', className)}>
+    <div className={cn('my-4 flex flex-wrap items-center gap-2', className)}>
       <Button asChild size='sm' className='h-8 rounded-[10px]'>
         <Link href={classesHref}>
           <CalendarRange className='size-4' />

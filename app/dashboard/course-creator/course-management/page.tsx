@@ -1,5 +1,5 @@
-import { redirect } from 'next/navigation';
+import CourseCreatorCoursesContent from './courses-content';
 
 export default function CourseManagementPage() {
-  redirect('/dashboard/course-creator/course-management/all?type=courses');
+  return <CourseCreatorCoursesContent />;
 }
