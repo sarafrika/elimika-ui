@@ -4,19 +4,20 @@ import Link from 'next/link';
 const SARAFRIKA_HOME = 'https://sarafrika.com';
 const SARAFRIKA_LOGO = 'https://cms.sarafrika.com/api/media/file/sarafrika-logo.svg';
 
+// Elimika destinations, not the Sarafrika site map — the chrome belongs to
+// this product even though the body mirrors the marketing page.
 const EXPLORE_LINKS = [
-  { label: 'All Products', href: `${SARAFRIKA_HOME}/products` },
-  { label: 'For Learners', href: `${SARAFRIKA_HOME}/solutions/learners` },
-  { label: 'For Employers', href: `${SARAFRIKA_HOME}/solutions/employers` },
-  { label: 'For Educators', href: `${SARAFRIKA_HOME}/solutions/instructors` },
+  { label: 'Course catalogue', href: '/courses' },
+  { label: 'Skills Wallet', href: '/skills-wallet' },
+  { label: 'Help centre', href: '/help' },
+  { label: 'Cart', href: '/cart' },
 ] as const;
 
 const COMPANY_LINKS = [
-  { label: 'About Us', href: `${SARAFRIKA_HOME}/about` },
+  { label: 'About Sarafrika', href: `${SARAFRIKA_HOME}/about` },
   { label: 'Partners', href: `${SARAFRIKA_HOME}/partners` },
   { label: 'Contact', href: `${SARAFRIKA_HOME}/contact` },
   { label: 'Book a Demo', href: `${SARAFRIKA_HOME}/book-a-demo` },
-  { label: 'Careers', href: `${SARAFRIKA_HOME}/careers` },
 ] as const;
 
 const SOCIAL_LINKS = [
@@ -69,11 +70,11 @@ export function ProductFooter() {
 
         <nav aria-label='Explore' className='footer-links'>
           <strong>Explore</strong>
-          <Link href='/'>Elimika</Link>
+          <Link href='/'>Home</Link>
           {EXPLORE_LINKS.map(link => (
-            <a key={link.label} href={link.href} target='_blank' rel='noopener noreferrer'>
+            <Link key={link.label} href={link.href}>
               {link.label}
-            </a>
+            </Link>
           ))}
         </nav>
 
