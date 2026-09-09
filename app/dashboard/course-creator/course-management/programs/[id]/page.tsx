@@ -61,7 +61,7 @@ const ProgramPreview = ({ onEdit: _onEdit }: ProgramPreviewProps) => {
       {
         id: 'programs',
         title: 'Programs',
-        url: '/dashboard/course-creator/course-management/all?type=programs',
+        url: '/dashboard/course-creator/course-management',
       },
       {
         id: 'program-details',
@@ -167,7 +167,7 @@ const ProgramPreview = ({ onEdit: _onEdit }: ProgramPreviewProps) => {
       <div className='mb-4 md:mb-6'>
         <button
           onClick={() =>
-            router.push('/dashboard/course-creator/course-management/all?type=programs')
+            router.push('/dashboard/course-creator/course-management')
           }
           className='mb- text-primary flex items-center gap-2 py-4 text-sm hover:underline md:mb-4 md:text-base'
         >

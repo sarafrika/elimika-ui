@@ -1041,7 +1041,7 @@ export default function CreateCoursePage() {
         <main className='mx-auto w-full space-y-6 px-4 py-6 lg:px-6'>
             <div className='flex flex-row items-center justify-between' >
                 <Link
-                    href='/dashboard/course-creator/course-management/all?type=courses'
+                    href='/dashboard/course-creator/course-management'
                     className='text-muted-foreground hover:text-foreground inline-flex items-center gap-1 text-sm'
                 >
                     <ArrowLeft className='h-4 w-4' /> Back to my courses

@@ -7,7 +7,7 @@ import { useParams } from 'next/navigation';
 import { useEffect } from 'react';
 import { CourseCreatorEmptyState } from '../../../_components/loading-state';
 
-const COURSE_MANAGEMENT_HREF = '/dashboard/course-creator/course-management/drafts';
+const COURSE_MANAGEMENT_HREF = '/dashboard/course-creator/course-management';
 
 function Page() {
   const params = useParams();

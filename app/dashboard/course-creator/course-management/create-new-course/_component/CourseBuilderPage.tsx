@@ -81,7 +81,7 @@ export default function CourseBuilderPage() {
       {
         id: 'course-management',
         title: 'Course-management',
-        url: '/dashboard/course-creator/course-management/drafts',
+        url: '/dashboard/course-creator/course-management',
       },
       {
         id: 'create-new-course',

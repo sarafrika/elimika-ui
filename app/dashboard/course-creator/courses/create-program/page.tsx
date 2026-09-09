@@ -994,7 +994,7 @@ export default function CreateProgramPage() {
     return (
         <div className='space-y-6 p-6'>
             <Link
-                href='/course-management/all?type=courses'
+                href='/dashboard/course-creator/course-management'
                 className='text-muted-foreground hover:text-foreground inline-flex items-center gap-1 text-sm'
             >
                 <ArrowLeft className='h-4 w-4' /> Back to my courses
