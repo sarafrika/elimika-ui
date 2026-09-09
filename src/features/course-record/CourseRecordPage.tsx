@@ -62,8 +62,8 @@ import {
 } from '@/src/features/dashboard/lib/dashboard-url';
 
 import {
-  LessonContentViewerDialog,
   type LessonContentPreviewItem,
+  LessonContentViewerDialog,
 } from '@/components/content-preview/LessonContentPreview';
 import { Button } from '@/components/ui/button';
 import { useStudentsByIds } from '@/hooks/use-batched-lookups';
@@ -82,11 +82,11 @@ import {
   ClassesTab,
   CommercialsTab,
   COURSE_DEFAULT_CURRENCY,
-  courseBulletLines,
-  courseContentKind,
   type CourseApplicationRow,
+  courseBulletLines,
   type CourseClassFormatTone,
   type CourseClassRow,
+  courseContentKind,
   type CourseCurriculumItem,
   type CourseCurriculumLesson,
   type CourseOrderRow,
@@ -305,12 +305,12 @@ export function CourseRecordPage({
       (record.enrollments.data?.items ?? []).flatMap(enrollment =>
         enrollment.uuid
           ? [
-              {
-                uuid: enrollment.uuid,
-                item: course?.name,
-                date: toIsoDate(enrollment.enrollment_date),
-              },
-            ]
+            {
+              uuid: enrollment.uuid,
+              item: course?.name,
+              date: toIsoDate(enrollment.enrollment_date),
+            },
+          ]
           : []
       ),
     [record.enrollments.data, course?.name]
@@ -321,17 +321,17 @@ export function CourseRecordPage({
       (record.applications.data ?? []).flatMap(application =>
         application.uuid && application.status === 'pending'
           ? [
-              {
-                uuid: application.uuid,
-                // The application DTO carries no applicant name — only the uuid
-                // it was filed under. A short reference is the honest stand-in
-                // until the record hook can resolve the two applicant kinds.
-                displayName: `Applicant ${(application.applicant_uuid ?? application.uuid).slice(0, 8)}`,
-                applicantType:
-                  application.applicant_type === 'organisation' ? 'organisation' : 'instructor',
-                appliedAt: toIsoDate(application.created_date),
-              },
-            ]
+            {
+              uuid: application.uuid,
+              // The application DTO carries no applicant name — only the uuid
+              // it was filed under. A short reference is the honest stand-in
+              // until the record hook can resolve the two applicant kinds.
+              displayName: `Applicant ${(application.applicant_uuid ?? application.uuid).slice(0, 8)}`,
+              applicantType:
+                application.applicant_type === 'organisation' ? 'organisation' : 'instructor',
+              appliedAt: toIsoDate(application.created_date),
+            },
+          ]
           : []
       ),
     [record.applications.data]

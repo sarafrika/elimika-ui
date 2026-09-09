@@ -1,4 +1,3 @@
-// @ts-nocheck -- generated client types drift on booking and training application responses
 'use client';
 
 import { ClassScheduleCalendar } from '@/app/class-invite/page';
@@ -28,32 +27,31 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Checkbox } from '@/components/ui/checkbox';
+import { EmptyState } from '@/components/ui/empty-state';
 import { Separator } from '@/components/ui/separator';
 import { Skeleton } from '@/components/ui/skeleton';
+import Spinner from '@/components/ui/spinner';
 import { useUserProfile } from '@/context/profile-context';
 import { useStudent } from '@/context/student-context';
 import { useUserDomain } from '@/context/user-domain-context';
+import { useCoursesByIds, useProgramsByIds } from '@/hooks/use-batched-lookups';
 import useSearchTrainingInstructors from '@/hooks/use-search-training-instructors';
 import { localDate } from '@/lib/date';
+import { STALE_TIMES } from '@/lib/query-client';
 import {
   createBookingMutation,
-  getCourseByUuidOptions,
   getCourseTrainingRequirementsOptions,
   getInstructorScheduleOptions,
+  getProgramRequirementsOptions,
   getStudentBookingsQueryKey,
+  searchProgramTrainingApplicationsOptions,
   searchTrainingApplicationsOptions,
 } from '@/services/client/@tanstack/react-query.gen';
-import type { Course, ScheduledInstance } from '@/services/client/types.gen';
+import type { ScheduledInstance } from '@/services/client/types.gen';
 import { roleScopedDashboardPath } from '@/src/features/dashboard/lib/active-domain-storage';
-import { useMutation, useQueries, useQuery, useQueryClient } from '@tanstack/react-query';
-import {
-  ArrowLeft,
-  CalendarDays,
-  CheckCircle2,
-  MapPin,
-  ShieldCheck,
-  Star
-} from 'lucide-react';
+import { toAuthenticatedMediaUrl } from '@/src/lib/media-url';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { ArrowLeft, CalendarDays, CheckCircle2, MapPin, ShieldCheck, Star } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { useEffect, useMemo, useState } from 'react';
 import { toast } from 'sonner';
@@ -67,13 +65,6 @@ const DEFAULT_END_TIME = '10:00';
 type Props = {
   courseId: string | null;
   instructorId: string | null;
-};
-
-type CourseApplication = {
-  course_uuid?: string;
-  applicant_uuid?: string;
-  applicant_type?: string;
-  rate_card?: Record<string, number | string | null | undefined>;
 };
 
 type ConflictItem = {
@@ -134,7 +125,7 @@ function InstructorSummary({ instructor }: { instructor: SearchInstructor }) {
           <div className='flex min-w-0 items-center gap-4'>
             <Avatar className='border-primary/20 size-20 border-2 sm:size-24'>
               <AvatarImage
-                src={instructor.profile_image_url ?? undefined}
+                src={toAuthenticatedMediaUrl(instructor.profile_image_url) ?? undefined}
                 alt={instructor.full_name}
               />
               <AvatarFallback className='text-lg font-semibold'>{initials}</AvatarFallback>
@@ -169,10 +160,12 @@ function InstructorSummary({ instructor }: { instructor: SearchInstructor }) {
             </div>
           </div>
           <div className='bg-background/80 rounded-xl border p-4 sm:min-w-48'>
-            <p className='text-muted-foreground text-xs font-medium'>Booking with</p>
-            <p className='text-foreground mt-1 text-sm font-semibold'>Your selected instructor</p>
+            <p className='text-muted-foreground text-xs font-medium'>Booking with </p>
+            <p className='text-foreground mt-1 text-sm font-semibold'>
+              {instructor.full_name || 'Instructor'}
+            </p>
             <p className='text-muted-foreground mt-1 text-xs'>
-              Choose a course, service, and schedule below.
+              Choose a course or program, service, and schedule below.
             </p>
           </div>
         </div>
@@ -215,7 +208,7 @@ export default function InstructorHirePage({ courseId, instructorId }: Props) {
   const [requirementsChecked, setRequirementsChecked] = useState<Record<string, boolean>>({});
   const [termsOk, setTermsOk] = useState(false);
 
-  const { data: applicationsResponse, isLoading: applicationsLoading } = useQuery({
+  const courseApplicationsQuery = useQuery({
     ...searchTrainingApplicationsOptions({
       query: {
         pageable: {},
@@ -223,43 +216,121 @@ export default function InstructorHirePage({ courseId, instructorId }: Props) {
       },
     }),
     enabled: Boolean(instructorId),
+    staleTime: STALE_TIMES.entity,
   });
-  const applications = (applicationsResponse?.data?.content ?? []) as CourseApplication[];
-  const approvedApplications = applications.filter(
-    application => application.applicant_type === 'instructor' && application.course_uuid
+  const programApplicationsQuery = useQuery({
+    ...searchProgramTrainingApplicationsOptions({
+      query: {
+        pageable: {},
+        searchParams: { applicant_uuid_eq: instructorId ?? '', status: 'approved' },
+      },
+    }),
+    enabled: Boolean(instructorId),
+    staleTime: STALE_TIMES.entity,
+  });
+  const courseApplications = useMemo(
+    () =>
+      (courseApplicationsQuery.data?.data?.content ?? []).filter(
+        application =>
+          application.status === 'approved' && application.applicant_type === 'instructor'
+      ),
+    [courseApplicationsQuery.data]
   );
-  const courseUuids = [
-    ...new Set(approvedApplications.map(application => application.course_uuid)),
-  ].filter(Boolean);
-  const courseQueries = useQueries({
-    queries: courseUuids.map(uuid => ({
-      ...getCourseByUuidOptions({ path: { uuid } }),
-      enabled: Boolean(uuid),
-    })),
-  });
-  const courses = courseQueries.map(query => query.data?.data).filter(Boolean) as Course[];
-  const selectedCourseUuid = selectedOffering.replace('course:', '');
-  const selectedCourse = courses.find(course => course.uuid === selectedCourseUuid) ?? null;
-  const selectedApplication = approvedApplications.find(
-    application => application.course_uuid === selectedCourseUuid
+  const programApplications = useMemo(
+    () =>
+      (programApplicationsQuery.data?.data?.content ?? []).filter(
+        application =>
+          application.status === 'approved' && application.applicant_type === 'instructor'
+      ),
+    [programApplicationsQuery.data]
+  );
+  const courseIds = useMemo(
+    () =>
+      courseApplications.flatMap(application =>
+        application.course_uuid ? [application.course_uuid] : []
+      ),
+    [courseApplications]
+  );
+  const programIds = useMemo(
+    () =>
+      programApplications.flatMap(application =>
+        application.program_uuid ? [application.program_uuid] : []
+      ),
+    [programApplications]
+  );
+  const { courseMap, isLoading: coursesLoading } = useCoursesByIds(courseIds);
+  const { programMap, isLoading: programsLoading } = useProgramsByIds(programIds);
+  const approvedCourses = useMemo(
+    () =>
+      courseApplications.flatMap(application => {
+        const course = application.course_uuid ? courseMap[application.course_uuid] : undefined;
+        return course?.uuid && course.admin_approved ? [{ ...course, application }] : [];
+      }),
+    [courseApplications, courseMap]
+  );
+  const approvedPrograms = useMemo(
+    () =>
+      programApplications.flatMap(application => {
+        const program = application.program_uuid ? programMap[application.program_uuid] : undefined;
+        return program?.uuid && program.admin_approved ? [{ ...program, application }] : [];
+      }),
+    [programApplications, programMap]
   );
 
-  useEffect(() => {
-    const initialCourse =
-      courseId && courses.some(course => course.uuid === courseId) ? courseId : courses[0]?.uuid;
-    if (initialCourse && !selectedOffering) setSelectedOffering(`course:${initialCourse}`);
-  }, [courseId, courses, selectedOffering]);
+  const offeringsLoading =
+    courseApplicationsQuery.isLoading ||
+    programApplicationsQuery.isLoading ||
+    coursesLoading ||
+    programsLoading;
+  const offeringsError = courseApplicationsQuery.isError || programApplicationsQuery.isError;
+  const offerings = useMemo<Offering[]>(
+    () => [
+      ...approvedCourses.map(course => ({
+        value: `course:${course.uuid}`,
+        label: course.name || 'Untitled course',
+        kind: 'Course' as const,
+        categoryNames: course.category_names ?? [],
+        rateCard: course.application.rate_card,
+      })),
+      ...approvedPrograms.map(program => ({
+        value: `program:${program.uuid}`,
+        label: program.title || 'Untitled program',
+        kind: 'Program' as const,
+        categoryNames: [],
+        categoryUuid: program.category_uuid ?? undefined,
+        rateCard: program.application.rate_card,
+      })),
+    ],
+    [approvedCourses, approvedPrograms]
+  );
+
+  const selectedCourse = approvedCourses.find(
+    course => `course:${course.uuid}` === selectedOffering
+  );
+  const selectedProgram = approvedPrograms.find(
+    program => `program:${program.uuid}` === selectedOffering
+  );
+  const selectedCourseUuid = selectedCourse?.uuid;
+  const selectedProgramUuid = selectedProgram?.uuid;
+  const selectedApplication = selectedCourse?.application ?? selectedProgram?.application;
+  const selectedOfferingDetails = offerings.find(offering => offering.value === selectedOffering);
 
   useEffect(() => {
+    if (offeringsLoading) return;
     setSelectedOffering(current => {
-      const next = current.replace('course:', '');
-      return courses.some(course => course.uuid === next)
-        ? current
-        : courses[0]?.uuid
-          ? `course:${courses[0].uuid}`
-          : '';
+      if (offerings.some(offering => offering.value === current)) return current;
+      return (
+        offerings.find(offering => offering.value === `course:${courseId}`)?.value ??
+        offerings[0]?.value ??
+        ''
+      );
     });
-  }, [courses]);
+  }, [courseId, offerings, offeringsLoading]);
+
+  useEffect(() => {
+    setRequirementsChecked({});
+    setTermsOk(false);
+  }, [selectedOffering]);
 
   const courseRequirementsQuery = useQuery({
     ...getCourseTrainingRequirementsOptions({
@@ -267,14 +338,44 @@ export default function InstructorHirePage({ courseId, instructorId }: Props) {
       query: { pageable: {} },
     }),
     enabled: Boolean(selectedCourseUuid),
+    staleTime: STALE_TIMES.entity,
   });
-  const studentRequirements = (courseRequirementsQuery.data?.data?.content ?? []).filter(
-    requirement => requirement.provided_by?.toLowerCase() === 'student'
+  const programRequirementsQuery = useQuery({
+    ...getProgramRequirementsOptions({
+      path: { programUuid: selectedProgramUuid || 'unset' },
+      query: { pageable: {} },
+    }),
+    enabled: Boolean(selectedProgramUuid),
+    staleTime: STALE_TIMES.entity,
+  });
+  const requirementsQuery = selectedProgram ? programRequirementsQuery : courseRequirementsQuery;
+  const studentRequirements = useMemo(
+    () =>
+      selectedProgram
+        ? (programRequirementsQuery.data?.data?.content ?? []).flatMap(requirement =>
+          requirement.uuid
+            ? [
+              {
+                uuid: requirement.uuid,
+                name: requirement.requirement_text,
+                is_mandatory: requirement.is_mandatory,
+              },
+            ]
+            : []
+        )
+        : (courseRequirementsQuery.data?.data?.content ?? []).flatMap(requirement =>
+          requirement.uuid && requirement.provided_by?.toLowerCase() === 'student'
+            ? [{ ...requirement, uuid: requirement.uuid }]
+            : []
+        ),
+    [selectedProgram, programRequirementsQuery.data, courseRequirementsQuery.data]
   );
-  const mandatoryRequirements = studentRequirements.filter(requirement => requirement.is_mandatory);
-  const requirementsComplete = mandatoryRequirements.every(
-    requirement => requirementsChecked[requirement.uuid]
-  );
+  const requirementsComplete =
+    !requirementsQuery.isLoading &&
+    !requirementsQuery.isError &&
+    studentRequirements
+      .filter(requirement => requirement.is_mandatory)
+      .every(requirement => requirementsChecked[requirement.uuid]);
 
   const scheduleRange = useMemo(() => {
     const start = new Date();
@@ -291,19 +392,6 @@ export default function InstructorHirePage({ courseId, instructorId }: Props) {
   });
   const existingSchedule = (instructorScheduleQuery.data?.data ?? []) as ScheduledInstance[];
 
-  const offerings = useMemo<Offering[]>(
-    () =>
-      courses.map(course => ({
-        value: `course:${course.uuid}`,
-        label: course.name || 'Untitled course',
-        kind: 'Course',
-        categoryNames: course.category_names ?? [],
-        rateCard: approvedApplications.find(application => application.course_uuid === course.uuid)
-          ?.rate_card,
-      })),
-    [approvedApplications, courses]
-  );
-  const selectedOfferingDetails = offerings.find(offering => offering.value === selectedOffering);
   const rateCard = selectedApplication?.rate_card;
   const rateBasis: RateBasis = 'per_hour';
   const serviceFormat =
@@ -384,7 +472,8 @@ export default function InstructorHirePage({ courseId, instructorId }: Props) {
 
   const handleSubmit = async () => {
     if (!student?.uuid) return toast.error('Student profile is required before booking.');
-    if (!selectedCourseUuid || !selectedApplication)
+    if (selectedProgram) return toast.error('Program booking is not available yet.');
+    if (!instructorId || !selectedCourseUuid || !selectedApplication)
       return toast.error('Select an approved course or program.');
     if (!rate) return toast.error('This instructor has no approved rate for the selected service.');
     if (!upcomingSessions.length) return toast.error('Select at least one valid upcoming session.');
@@ -405,8 +494,9 @@ export default function InstructorHirePage({ courseId, instructorId }: Props) {
           session.time === 'All day'
             ? ['00:00', '23:59']
             : session.time.split(/\s*[–-]\s*/).map(value => value.trim());
-        const start = toDateTime(fmtDate(session.date), startText, timezone);
-        const end = toDateTime(fmtDate(session.date), endText, timezone);
+        if (!startText || !endText) throw new Error('Select a valid session time.');
+        const start = new Date(toDateTime(fmtDate(session.date), startText, timezone));
+        const end = new Date(toDateTime(fmtDate(session.date), endText, timezone));
         const created = await createBooking.mutateAsync({
           body: {
             student_uuid: student.uuid,
@@ -426,15 +516,16 @@ export default function InstructorHirePage({ courseId, instructorId }: Props) {
               .join(' · '),
           },
         });
+        if (created.error) throw created.error;
         if (!created?.data?.uuid)
           throw new Error('Booking was created without a booking reference.');
-        createdBookings.push(created.data);
+        createdBookings.push({ uuid: created.data.uuid });
       }
 
       await queryClient.invalidateQueries({
         queryKey: getStudentBookingsQueryKey({
           path: { studentUuid: student.uuid },
-          query: { pageable: {}, status: '' },
+          query: { pageable: {} },
         }),
       });
       const firstBookingUuid = createdBookings[0]?.uuid;
@@ -450,7 +541,7 @@ export default function InstructorHirePage({ courseId, instructorId }: Props) {
     }
   };
 
-  if (instructorsLoading || applicationsLoading) {
+  if (instructorsLoading || offeringsLoading) {
     return (
       <div className='mx-auto max-w-6xl space-y-5 px-4 py-6'>
         <Skeleton className='h-40 w-full rounded-2xl' />
@@ -473,6 +564,37 @@ export default function InstructorHirePage({ courseId, instructorId }: Props) {
     );
   }
 
+  if (offeringsError || !offerings.length) {
+    return (
+      <div className='mx-auto max-w-3xl px-4 py-16'>
+        <EmptyState
+          title={
+            offeringsError ? 'Could not load approved offerings' : 'No approved courses or programs'
+          }
+          description={
+            offeringsError
+              ? 'Please try again to load this instructor’s offerings.'
+              : 'This instructor has no approved offerings available for hire.'
+          }
+          action={
+            offeringsError ? (
+              <Button
+                onClick={() => {
+                  void courseApplicationsQuery.refetch();
+                  void programApplicationsQuery.refetch();
+                }}
+              >
+                Retry
+              </Button>
+            ) : (
+              <Button onClick={handleBack}>Back to instructors</Button>
+            )
+          }
+        />
+      </div>
+    );
+  }
+
   return (
     <div className='mx-auto w-full max-w-7xl space-y-6 px-3 py-5 sm:px-5 lg:px-6'>
       <div className='flex items-center justify-between gap-3'>
@@ -490,7 +612,7 @@ export default function InstructorHirePage({ courseId, instructorId }: Props) {
           <section className='space-y-4'>
             <div>
               <OfferingPicker
-                loading={courseQueries.some(query => query.isLoading)}
+                loading={offeringsLoading}
                 offerings={offerings}
                 offering={selectedOffering}
                 onOfferingChange={setSelectedOffering}
@@ -637,7 +759,9 @@ export default function InstructorHirePage({ courseId, instructorId }: Props) {
                   >
                     {ageKnown
                       ? `Your profile age is ${age}. ${ageEligible ? 'You meet this requirement.' : 'You do not meet this requirement.'}`
-                      : 'Add a date of birth to your profile before booking this course.'}
+                      : lowerAge == null && upperAge == null
+                        ? 'No age restriction is listed for this offering.'
+                        : 'Add a date of birth to your profile before booking this course.'}
                   </p>
                 </div>
               </div>
@@ -645,8 +769,22 @@ export default function InstructorHirePage({ courseId, instructorId }: Props) {
               <div className='flex items-start gap-3'>
                 <ShieldCheck className='text-muted-foreground mt-0.5 size-5' />
                 <div className='flex-1'>
-                  <p className='text-sm font-medium'>Course materials</p>
-                  {studentRequirements.length ? (
+                  <p className='text-sm font-medium'>
+                    {selectedProgram ? 'Program requirements' : 'Course materials'}
+                  </p>
+                  {requirementsQuery.isLoading ? (
+                    <Skeleton className='mt-2 h-10 w-full' />
+                  ) : requirementsQuery.isError ? (
+                    <EmptyState
+                      variant='compact'
+                      title='Could not load requirements'
+                      action={
+                        <Button variant='outline' onClick={() => requirementsQuery.refetch()}>
+                          Retry
+                        </Button>
+                      }
+                    />
+                  ) : studentRequirements.length ? (
                     <div className='mt-2 space-y-2'>
                       {studentRequirements.map(requirement => (
                         <label key={requirement.uuid} className='flex items-start gap-2 text-sm'>
@@ -670,7 +808,9 @@ export default function InstructorHirePage({ courseId, instructorId }: Props) {
                     </div>
                   ) : (
                     <p className='text-muted-foreground mt-1 text-xs'>
-                      No student-provided materials are required.
+                      {selectedProgram
+                        ? 'No program requirements are listed.'
+                        : 'No student-provided materials are required.'}
                     </p>
                   )}
                 </div>
@@ -694,9 +834,11 @@ export default function InstructorHirePage({ courseId, instructorId }: Props) {
             <CardContent className='space-y-5'>
               <div className='space-y-2 text-sm'>
                 <div className='flex justify-between'>
-                  <span className='text-muted-foreground'>Course</span>
+                  <span className='text-muted-foreground'>
+                    {selectedOfferingDetails?.kind ?? 'Course or program'}
+                  </span>
                   <span className='max-w-48 text-right font-medium'>
-                    {selectedCourse?.name || 'Not selected'}
+                    {selectedOfferingDetails?.label || 'Not selected'}
                   </span>
                 </div>
                 <div className='flex justify-between'>
@@ -730,6 +872,12 @@ export default function InstructorHirePage({ courseId, instructorId }: Props) {
                 A booking request will be sent to the instructor. Payment is only requested after
                 the booking is accepted.
               </p>
+              {selectedProgram ? (
+                <p className='text-muted-foreground text-sm' role='status'>
+                  Program booking is not available yet. Select an approved course to send a booking
+                  request.
+                </p>
+              ) : null}
               <Button
                 type='button'
                 size='lg'
@@ -738,13 +886,17 @@ export default function InstructorHirePage({ courseId, instructorId }: Props) {
                   isSubmitting ||
                   !instructorId ||
                   !selectedCourseUuid ||
+                  !requirementsComplete ||
                   !upcomingSessions.length ||
                   conflicts.length > 0
                 }
                 onClick={handleSubmit}
               >
                 {isSubmitting ? (
-                  'Sending request…'
+                  <>
+                    <Spinner className='mr-2' />
+                    Sending request…
+                  </>
                 ) : (
                   <>
                     <CalendarDays className='mr-2 size-4' />
