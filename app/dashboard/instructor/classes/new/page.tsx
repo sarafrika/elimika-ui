@@ -1,6 +1,6 @@
-// @ts-nocheck -- 14 pre-existing errors: ScheduleSettings.weeklyDayTimes and other stale
-// generated-client drift. Unrelated to the registration window; verified identical to HEAD with
-// the directive stripped, so this change adds none.
+// @ts-nocheck -- stale generated-client drift only: ScheduleSettings omits weeklyDayTimes and
+// several class fields type as bigint. Strip the directive and that drift is all that reports;
+// nothing in this file relies on those types staying wrong.
 'use client';
 
 import {
@@ -17,6 +17,7 @@ import {
   type ReminderState,
   validateRegistrationWindow,
 } from '@/components/class-form/class-form-shared';
+import { type ConflictItem, parseConflictError } from '@/components/resourcing/conflicts';
 import {
   type InstructorClassWithSchedule,
   useInstructorClassesWithSchedules,
@@ -24,7 +25,7 @@ import {
 import { type RecurrenceValue, toClassRecurrence } from '@/lib/recurrence';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { format } from 'date-fns';
-import { Loader2 } from 'lucide-react';
+import { AlertTriangle, CalendarClock, Loader2 } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { type FormEvent, useEffect, useMemo, useState } from 'react';
 import { toast } from 'sonner';
@@ -55,8 +56,10 @@ import { useCoursesByIds, useProgramsByIds } from '../../../../../hooks/use-batc
 import { useClassDetails } from '../../../../../hooks/use-class-details';
 import {
   DEFAULT_CLASS_TIME_ZONE,
+  formatScheduleClockTime,
   normalizeScheduleTimeZone,
   parseApiDate,
+  scheduleTimeZoneLabel,
   toUtcIsoDateTime,
 } from '../../../../../lib/date';
 import {
@@ -465,14 +468,18 @@ const findScheduleConflicts = (
     .filter(Boolean) as (ScheduleConflict['existing'] & { startTime: string; endTime: string })[];
 
   return sessions.flatMap(session => {
-    const proposedStart = new Date(
-      buildUtcIsoDateTime(session.date, session.startTime, session.timezone)
-    ).getTime();
-    const proposedEnd = new Date(
-      buildUtcIsoDateTime(session.date, session.endTime, session.timezone)
-    ).getTime();
-    if (Number.isNaN(proposedStart) || Number.isNaN(proposedEnd) || proposedStart >= proposedEnd)
-      return [];
+    // A session whose time has not been entered resolves to nothing, not to midnight,
+    // so it must be skipped rather than compared.
+    const range = getSessionTimeRange(
+      session.date,
+      session.startTime,
+      session.endTime,
+      session.timezone
+    );
+    if (!range || range.start >= range.end) return [];
+
+    const proposedStart = range.start.getTime();
+    const proposedEnd = range.end.getTime();
 
     return existingSchedules
       .filter(existing => {
@@ -527,12 +534,12 @@ const expandSessionsForConflictCheck = (
       const override = scheduleSettings?.weeklyDayTimes[dayIndex];
       const startTime = scheduleSettings.allDay
         ? '00:00'
-        : override?.startTime || scheduleSettings.startClass.startTime || '00:00';
+        : override?.startTime || scheduleSettings.startClass.startTime || '';
       const endTime = scheduleSettings.allDay
         ? '23:59'
         : override?.endTime ||
         scheduleSettings.startClass.endTime ||
-        timeAfterDuration(startTime, DEFAULT_CLASS_DURATION_MINUTES);
+        (startTime ? timeAfterDuration(startTime, DEFAULT_CLASS_DURATION_MINUTES) : '');
       const durationMinutes = String(
         durationMinutesFromTimes(startTime, endTime, scheduleSettings.allDay)
       );
@@ -556,11 +563,11 @@ const expandSessionsForConflictCheck = (
   } else {
     const startTime = scheduleSettings.allDay
       ? '00:00'
-      : scheduleSettings.startClass.startTime || '00:00';
+      : scheduleSettings.startClass.startTime || '';
     const endTime = scheduleSettings.allDay
       ? '23:59'
       : scheduleSettings.startClass.endTime ||
-      timeAfterDuration(startTime, DEFAULT_CLASS_DURATION_MINUTES);
+      (startTime ? timeAfterDuration(startTime, DEFAULT_CLASS_DURATION_MINUTES) : '');
     const durationMinutes = String(
       durationMinutesFromTimes(startTime, endTime, scheduleSettings.allDay)
     );
@@ -583,6 +590,62 @@ const expandSessionsForConflictCheck = (
 
   return sessions;
 };
+
+type StartTimeIssue = { message: string; description: string };
+
+/**
+ * Every fallback used to substitute 00:00 for a start time the instructor never
+ * entered, so a class asked for at noon was booked for ten past midnight without
+ * anything on screen saying so. Refuse the submission and name the control instead.
+ */
+const findMissingStartTime = (
+  schedulePreset: SchedulePreset,
+  scheduleSettings: ScheduleSettings,
+  pickedDates: { date: string; startTime: string }[]
+): StartTimeIssue | undefined => {
+  // An all-day class is a deliberate 00:00-23:59 window, not an unset time.
+  if (scheduleSettings.allDay) return undefined;
+
+  const issue = (description: string) => ({ message: 'Start time is required', description });
+
+  if (schedulePreset === 'pick-dates') {
+    const missing = pickedDates.find(item => !item.startTime);
+    return missing ? issue(`Enter a start time for ${missing.date}.`) : undefined;
+  }
+
+  // Academic periods drive the same weekly day/time grid as the standard preset.
+  if (scheduleSettings.repeat.unit === 'week') {
+    const missingDay = (scheduleSettings.repeat.days || []).find(
+      dayIndex =>
+        !(
+          scheduleSettings.weeklyDayTimes[dayIndex]?.startTime ||
+          scheduleSettings.startClass.startTime
+        )
+    );
+    return missingDay === undefined
+      ? undefined
+      : issue(`Enter a start time for ${DAY_SHORT[missingDay] ?? 'the selected day'}.`);
+  }
+
+  return scheduleSettings.startClass.startTime
+    ? undefined
+    : issue('Enter the time of day this class starts.');
+};
+
+type ScheduleSummary = {
+  zoneLabel: string;
+  sessionCount: number;
+  /** Set while the schedule is not yet resolvable; the facts below are then absent. */
+  incomplete?: string;
+  dateLabel?: string;
+  startClockLabel?: string;
+  rangeLabel?: string;
+  durationLabel?: string;
+  unusualHour?: boolean;
+};
+
+/** Local hours a class almost never legitimately starts at. */
+const isUnusualStartHour = (hour: number) => hour >= 22 || hour < 5;
 
 // correct mobile screen layout issue
 const InstructorClassCreationPage = () => {
@@ -703,6 +766,9 @@ const InstructorClassCreationPage = () => {
   const uploadPromotionalVideo = useMutation(uploadClassPromotionalVideoMutation());
   const [selectedThumbnail, setSelectedThumbnail] = useState<File | null>(null);
   const [selectedPromotionalVideo, setSelectedPromotionalVideo] = useState<File | null>(null);
+  // Session templates are posted with conflict_resolution FAIL, so the backend answers
+  // 409 with the windows it refused and why. Keep them on screen, not in a vanishing toast.
+  const [refusedWindows, setRefusedWindows] = useState<ConflictItem[]>([]);
   const isSubmitting =
     createClassDefinition.isPending ||
     updateClassDefinition.isPending ||
@@ -1421,6 +1487,11 @@ const InstructorClassCreationPage = () => {
       toast.error('Please select at least one date');
       return false;
     }
+    const missingStartTime = findMissingStartTime(schedulePreset, scheduleSettings, pickedDates);
+    if (missingStartTime) {
+      toast.error(missingStartTime.message, { description: missingStartTime.description });
+      return false;
+    }
     if (schedulePreset === 'pick-dates' && !scheduleSettings.allDay) {
       const invalidPickedSession = pickedDates.find(
         item => !hasValidSessionTimeRange({ ...item, durationMinutes: undefined })
@@ -1470,9 +1541,23 @@ const InstructorClassCreationPage = () => {
     return true;
   };
 
+  const handleSubmitError = (error: unknown, fallback: string) => {
+    const report = parseConflictError(error);
+    if (report) {
+      setRefusedWindows(report.conflicts);
+      toast.error(report.message, {
+        description: 'The sessions listed on the form were refused. Move them and publish again.',
+        duration: 8000,
+      });
+      return;
+    }
+    showMutationError(error, fallback);
+  };
+
   // ── Submit ─────────────────────────────────────────────────────────────────
   const submitClass = (isDraft = false) => {
     if (!isFormValid()) return;
+    setRefusedWindows([]);
 
     const locationType = normalizeLocationType(classDetails.location_type);
     const meetingLinkAllowed = locationType === 'ONLINE' || locationType === 'HYBRID';
@@ -1507,21 +1592,21 @@ const InstructorClassCreationPage = () => {
       if (sortedDays.length > 0) {
         const firstIdx = sortedDays[0]!;
         const override = scheduleSettings.weeklyDayTimes[firstIdx];
-        const startTime = override?.startTime || scheduleSettings.startClass.startTime || '00:00';
+        const startTime = override?.startTime || scheduleSettings.startClass.startTime || '';
         const endTime =
           override?.endTime ||
           scheduleSettings.startClass.endTime ||
-          timeAfterDuration(startTime, DEFAULT_CLASS_DURATION_MINUTES);
+          (startTime ? timeAfterDuration(startTime, DEFAULT_CLASS_DURATION_MINUTES) : '');
         return {
           startTime,
           endTime,
           durationMinutes: durationMinutesFromTimes(startTime, endTime),
         };
       }
-      const startTime = scheduleSettings.startClass.startTime || '00:00';
+      const startTime = scheduleSettings.startClass.startTime || '';
       const endTime =
         scheduleSettings.startClass.endTime ||
-        timeAfterDuration(startTime, DEFAULT_CLASS_DURATION_MINUTES);
+        (startTime ? timeAfterDuration(startTime, DEFAULT_CLASS_DURATION_MINUTES) : '');
       return { startTime, endTime, durationMinutes: durationMinutesFromTimes(startTime, endTime) };
     };
 
@@ -1858,7 +1943,7 @@ const InstructorClassCreationPage = () => {
             }
             onSuccess();
           },
-          onError: error => showMutationError(error, 'Failed to update class'),
+          onError: error => handleSubmitError(error, 'Failed to update class'),
         }
       );
     } else {
@@ -1877,7 +1962,7 @@ const InstructorClassCreationPage = () => {
             }
             onSuccess();
           },
-          onError: error => showMutationError(error, 'Failed to create class'),
+          onError: error => handleSubmitError(error, 'Failed to create class'),
         }
       );
     }
@@ -1908,6 +1993,7 @@ const InstructorClassCreationPage = () => {
     setLocationLongitude('');
     setPickedDates([]);
     setPerDayOccurrences({});
+    setRefusedWindows([]);
     setSavedClassUuid(null);
     setIsDataInitialized(true);
     toast.success('Draft cleared');
@@ -1985,17 +2071,20 @@ const InstructorClassCreationPage = () => {
     );
   };
 
+  // The grid used to show a 09:00 default that was never written to state, so the form
+  // read as scheduled while the payload still had no time at all. Show the real value.
   const sharedDays = useMemo<Record<DayKey, DayRow>>(() => {
     const days = {} as Record<DayKey, DayRow>;
     DAY_SHORT.forEach((day, index) => {
       const override = scheduleSettings.weeklyDayTimes[index];
+      const start = override?.startTime || scheduleSettings.startClass.startTime || '';
       days[day as DayKey] = {
         active: scheduleSettings.repeat.days?.includes(index) ?? false,
-        start: override?.startTime || scheduleSettings.startClass.startTime || '09:00',
+        start,
         end:
           override?.endTime ||
           scheduleSettings.startClass.endTime ||
-          timeAfterDuration(override?.startTime || scheduleSettings.startClass.startTime || '09:00', DEFAULT_CLASS_DURATION_MINUTES),
+          (start ? timeAfterDuration(start, DEFAULT_CLASS_DURATION_MINUTES) : ''),
         allDay: scheduleSettings.allDay,
       };
     });
@@ -2012,9 +2101,8 @@ const InstructorClassCreationPage = () => {
         ? [...new Set([...currentDays, index])].sort((a, b) => a - b)
         : currentDays.filter(value => value !== index);
       const currentOverride = prev.weeklyDayTimes[index] || {};
-      const startTime =
-        patch.start ?? currentOverride.startTime ?? prev.startClass.startTime ?? '09:00';
-      const endTime = patch.end ?? currentOverride.endTime ?? prev.startClass.endTime ?? '11:00';
+      const startTime = patch.start ?? currentOverride.startTime ?? prev.startClass.startTime ?? '';
+      const endTime = patch.end ?? currentOverride.endTime ?? prev.startClass.endTime ?? '';
 
       return {
         ...prev,
@@ -2128,7 +2216,11 @@ const InstructorClassCreationPage = () => {
       sessionsForConflictCheck.map(session => ({
         date: new Date(`${session.date}T00:00:00`),
         label: format(new Date(`${session.date}T00:00:00`), 'EEE, MMM d, yyyy'),
-        time: scheduleSettings.allDay ? 'All day' : `${session.startTime} - ${session.endTime}`,
+        time: scheduleSettings.allDay
+          ? 'All day'
+          : session.startTime && session.endTime
+            ? `${session.startTime} - ${session.endTime}`
+            : 'Time not set',
         minutes: durationMinutesFromTimes(
           session.startTime,
           session.endTime,
@@ -2137,6 +2229,68 @@ const InstructorClassCreationPage = () => {
       })),
     [scheduleSettings.allDay, sessionsForConflictCheck]
   );
+
+  /**
+   * What the date, time and zone the form collects actually resolve to. Without it
+   * the only place the resolved instant appeared was the stored record.
+   */
+  const scheduleSummary = useMemo<ScheduleSummary>(() => {
+    const zone = normalizeScheduleTimeZone(scheduleSettings.timezone);
+    const zoneLabel = scheduleTimeZoneLabel(zone);
+    const ordered = [...sessionsForConflictCheck].sort((a, b) =>
+      `${a.date}T${a.startTime}`.localeCompare(`${b.date}T${b.startTime}`)
+    );
+    const first = ordered[0];
+    const sessionCount = ordered.length;
+
+    if (!first) {
+      return { zoneLabel, sessionCount, incomplete: 'Pick the dates and days this class runs on.' };
+    }
+    if (!first.startTime || !first.endTime) {
+      return {
+        zoneLabel,
+        sessionCount,
+        incomplete: 'Enter a start time — nothing is scheduled until you do.',
+      };
+    }
+
+    let startIso: string;
+    let endIso: string;
+    try {
+      startIso = toUtcIsoDateTime(first.date, first.startTime, zone);
+      endIso = toUtcIsoDateTime(first.date, first.endTime, zone);
+    } catch {
+      return {
+        zoneLabel,
+        sessionCount,
+        incomplete: 'The chosen date and time do not make a valid session.',
+      };
+    }
+
+    const localStart = parseApiDate(startIso)?.tz(zone);
+    if (!localStart) {
+      return {
+        zoneLabel,
+        sessionCount,
+        incomplete: 'The chosen date and time do not make a valid session.',
+      };
+    }
+
+    const startClockLabel = formatScheduleClockTime(startIso, zone);
+    return {
+      zoneLabel,
+      sessionCount,
+      dateLabel: localStart.format('dddd, D MMMM YYYY'),
+      startClockLabel,
+      rangeLabel: scheduleSettings.allDay
+        ? 'All day'
+        : `${startClockLabel} – ${formatScheduleClockTime(endIso, zone)}`,
+      durationLabel: formatDurationMinutes(
+        durationMinutesFromTimes(first.startTime, first.endTime, scheduleSettings.allDay)
+      ),
+      unusualHour: !scheduleSettings.allDay && isUnusualStartHour(localStart.hour()),
+    };
+  }, [scheduleSettings.allDay, scheduleSettings.timezone, sessionsForConflictCheck]);
 
   const sharedConflicts = useMemo(
     () =>
@@ -2318,6 +2472,8 @@ const InstructorClassCreationPage = () => {
           />
         )}
 
+        <ScheduleResolution summary={scheduleSummary} />
+
         {/* Outside the preset switch: the window is required however the sessions are laid out. */}
         <RegistrationWindow
           start={scheduleSettings.registrationPeriod.start}
@@ -2348,6 +2504,11 @@ const InstructorClassCreationPage = () => {
           conflicts={sharedConflicts}
         />
 
+        <ResourceConflictAlert
+          title='The scheduler refused these sessions'
+          conflicts={refusedWindows}
+        />
+
         <div className='border-border/70 flex flex-wrap justify-end gap-2 border-t pt-4'>
           <Button
             type='button'
@@ -2372,5 +2533,47 @@ const FieldGroup = ({ label, children }: { label: string; children: React.ReactN
   <div className='space-y-2'>
     <div className='text-foreground text-sm font-semibold'>{label}</div>
     {children}
+  </div>
+);
+
+const SummaryFact = ({ label, value }: { label: string; value: string }) => (
+  <div className='bg-muted/50 rounded-md px-2.5 py-2'>
+    <div className='text-muted-foreground text-[11px] uppercase tracking-wide'>{label}</div>
+    <div className='text-foreground mt-0.5 text-sm font-medium'>{value}</div>
+  </div>
+);
+
+/** The first occurrence as it will actually be stored, so an odd hour is caught before submit. */
+const ScheduleResolution = ({ summary }: { summary: ScheduleSummary }) => (
+  <div className='space-y-3 rounded-lg border p-4'>
+    <div className='flex items-center gap-2 text-sm font-semibold'>
+      <CalendarClock className='text-primary h-4 w-4' />
+      First session
+      <span className='text-muted-foreground ml-auto text-xs font-normal'>
+        {summary.sessionCount} session{summary.sessionCount === 1 ? '' : 's'} in total
+      </span>
+    </div>
+
+    {summary.incomplete ? (
+      <p className='text-muted-foreground text-xs'>{summary.incomplete}</p>
+    ) : (
+      <>
+        <div className='grid gap-2 sm:grid-cols-3'>
+          <SummaryFact label='Date' value={summary.dateLabel ?? ''} />
+          <SummaryFact label='Time' value={summary.rangeLabel ?? ''} />
+          <SummaryFact label='Session length' value={summary.durationLabel ?? ''} />
+        </div>
+        <p className='text-muted-foreground text-xs'>Shown in {summary.zoneLabel}.</p>
+        {summary.unusualHour ? (
+          <div className='border-destructive/30 bg-destructive/5 text-destructive flex items-start gap-2 rounded-md border p-3 text-xs font-medium'>
+            <AlertTriangle className='mt-0.5 h-4 w-4 shrink-0' />
+            <span>
+              The first session starts at {summary.startClockLabel} — the middle of the night where
+              this class runs. Check the start time before you publish.
+            </span>
+          </div>
+        ) : null}
+      </>
+    )}
   </div>
 );

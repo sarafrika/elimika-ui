@@ -4,7 +4,7 @@
 'use client';
 
 import { useMutation, useQuery } from '@tanstack/react-query';
-import { Loader2 } from 'lucide-react';
+import { CalendarClock, Loader2 } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { type FormEvent, useEffect, useMemo, useState } from 'react';
 import { toast } from 'sonner';
@@ -18,6 +18,7 @@ import {
   approvedRateFor,
   ClassMediaUpload,
   computeUpcomingSessions,
+  DAY_FULL,
   DAY_TOKEN,
   type DayKey,
   type DayRow,
@@ -63,7 +64,12 @@ import { useOrganisation } from '@/context/organisation-context';
 import { useTimeZone } from '@/context/timezone-context';
 import { useCoursesByIds, useProgramsByIds } from '@/hooks/use-batched-lookups';
 import { extractList, extractPage } from '@/lib/api-helpers';
-import { normalizeScheduleTimeZone } from '@/lib/date';
+import {
+  formatScheduleClockTime,
+  normalizeScheduleTimeZone,
+  parseApiDate,
+  scheduleTimeZoneLabel,
+} from '@/lib/date';
 import { toCoordinate } from '@/lib/location-types';
 import { STALE_TIMES } from '@/lib/query-client';
 import type {
@@ -501,6 +507,8 @@ export default function OrganisationCreateClassPage() {
     () => new Set(upcomingSessions.map(session => session.date.toDateString())).size,
     [upcomingSessions]
   );
+  // Picked dates meet only on the days chosen; the weekly projection above over-counts them.
+  const plannedSessions = mode === 'pick' ? sortedPickedDates.length : totalSessions;
 
   const updateDay = (d: DayKey, patch: Partial<DayRow>) =>
     setDays(prev => ({ ...prev, [d]: { ...prev[d], ...patch } }));
@@ -623,6 +631,41 @@ export default function OrganisationCreateClassPage() {
     return templates;
   };
 
+  // Read back off the templates that are actually sent, so the organisation sees the instant the
+  // instructor's calendar will get rather than the wall-clock strings it typed.
+  const firstSession = useMemo(() => {
+    let templates: ClassSessionTemplate[] = [];
+    try {
+      templates = buildSessionTemplates();
+    } catch {
+      return null;
+    }
+    if (templates.length === 0) return null;
+    const earliest = templates.reduce((a, b) => (a.start_time <= b.start_time ? a : b));
+    const start = parseApiDate(earliest.start_time)?.tz(timezone);
+    const end = parseApiDate(earliest.end_time)?.tz(timezone);
+    if (!start || !end) return null;
+    const allDay = start.format('HH:mm') === '00:00' && end.format('HH:mm') === '23:59';
+    return {
+      day: start.format('dddd, MMM D, YYYY'),
+      start: formatScheduleClockTime(earliest.start_time, timezone),
+      end: formatScheduleClockTime(earliest.end_time, timezone),
+      oddHour: !allDay && (start.hour() >= 22 || start.hour() < 5),
+    };
+  }, [
+    mode,
+    days,
+    activeDays,
+    startDate,
+    endDate,
+    sortedPickedDates,
+    sessionStart,
+    sessionEnd,
+    academicPeriods,
+    repeatEvery,
+    timezone,
+  ]);
+
   const handleSubmit = (event: FormEvent) => {
     event.preventDefault();
     if (!organisationUuid) return toast.error('No active organisation.');
@@ -665,8 +708,22 @@ export default function OrganisationCreateClassPage() {
     setRegErrors(registrationErrors);
     const registrationMessage = firstRegistrationWindowError(registrationErrors);
     if (registrationMessage) return toast.error(registrationMessage);
+    // Name the input that is blank: the ordering checks below would otherwise blame the end
+    // time for a start that was never set, and no time may be stood in for.
+    if (mode === 'pick' && (!sessionStart || !sessionEnd)) {
+      return toast.error('Set the start and end time the picked dates run at.');
+    }
     if (mode === 'pick' && sessionMinutesFor(sessionStart, sessionEnd) === undefined) {
       return toast.error('The session end time must be after the start time.');
+    }
+    const untimedDay =
+      mode === 'standard'
+        ? activeDays.find(day => !days[day].allDay && (!days[day].start || !days[day].end))
+        : undefined;
+    if (untimedDay) {
+      return toast.error(
+        `Set a start and end time for ${DAY_FULL[untimedDay]}, or mark it all day.`
+      );
     }
     if (
       mode === 'standard' &&
@@ -675,6 +732,12 @@ export default function OrganisationCreateClassPage() {
       )
     ) {
       return toast.error('Every active class day must end after it starts.');
+    }
+    if (
+      mode === 'academic' &&
+      academicPeriods.some(period => period.slots.some(slot => !slot.start || !slot.end))
+    ) {
+      return toast.error('Every academic slot needs a start and an end time.');
     }
     if (
       mode === 'academic' &&
@@ -884,6 +947,28 @@ export default function OrganisationCreateClassPage() {
         <ReminderOptions value={reminder} onChange={patchReminder} />
 
         <UpcomingSessions sessions={upcomingSessions} />
+
+        {firstSession ? (
+          <div className='space-y-2 rounded-lg border p-4'>
+            <div className='flex items-center gap-2 text-sm font-semibold'>
+              <CalendarClock className='text-primary h-4 w-4' />
+              This class will first meet
+            </div>
+            <div className='text-sm'>
+              {firstSession.day}, {firstSession.start} – {firstSession.end}
+            </div>
+            <div className='text-muted-foreground text-xs'>
+              {scheduleTimeZoneLabel(timezone)} · {plannedSessions} session
+              {plannedSessions === 1 ? '' : 's'} in total
+            </div>
+            {firstSession.oddHour ? (
+              <div className='bg-warning/10 text-warning rounded-md px-2.5 py-1.5 text-xs'>
+                That start time is the middle of the night in this timezone — check it before
+                publishing.
+              </div>
+            ) : null}
+          </div>
+        ) : null}
 
         <ResourceConflictAlert
           title='These sessions conflict with existing reservations'
