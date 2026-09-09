@@ -1,33 +1,10 @@
 'use client';
 
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import {
-  BookOpen,
-  CheckCircle,
-  Clock,
-  ListOrdered,
-  MoreVertical,
-  PenLine,
-  PlusCircle,
-  Trash,
-} from 'lucide-react';
-import { useSearchParams } from 'next/navigation';
-import { useEffect, useMemo, useState } from 'react';
-import { toast } from 'sonner';
 import DeleteModal from '@/components/custom-modals/delete-modal';
 import { AsyncSection } from '@/components/data/async-section';
 import RichTextRenderer from '@/components/editors/richTextRenders';
-import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader } from '@/components/ui/card';
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from '@/components/ui/dialog';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -35,18 +12,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
 import { Skeleton } from '@/components/ui/skeleton';
-import { Switch } from '@/components/ui/switch';
-import { Textarea } from '@/components/ui/textarea';
 import { useBreadcrumb } from '@/context/breadcrumb-provider';
 import {
   deleteLessonContentMutation,
@@ -59,6 +25,20 @@ import {
   searchQuizzesOptions,
 } from '@/services/client/@tanstack/react-query.gen';
 import { type ContentType as ApiContentType, type Quiz } from '@/services/client/types.gen';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import {
+  BookOpen,
+  CheckCircle,
+  Clock,
+  ListOrdered,
+  MoreVertical,
+  PenLine,
+  PlusCircle,
+  Trash,
+} from 'lucide-react';
+import { useSearchParams } from 'next/navigation';
+import { useMemo, useState } from 'react';
+import { toast } from 'sonner';
 import type { TLesson, TLessonContentItem } from '../../_components/instructor-type';
 import {
   type ContentFormValues,
@@ -104,22 +84,22 @@ const LessonDetailsPage = () => {
   });
   const lesson = data as unknown as LessonRecord | undefined;
 
-  useEffect(() => {
-    replaceBreadcrumbs([
-      { id: 'dashboard', title: 'Dashboard', url: '/dashboard/course-creator/overview' },
-      {
-        id: 'course-management',
-        title: 'Course Management',
-        url: `/dashboard/course-creator/course-management/create-new-course?id=${courseId}`,
-      },
-      {
-        id: 'lesson-management',
-        title: `Lesson - ${lesson?.title}`,
-        url: `/dashboard/course-creator/course-management/lesson?courseId=${courseId}&id=${lessonId}`,
-        isLast: true,
-      },
-    ]);
-  }, [replaceBreadcrumbs, courseId, lessonId, lesson?.title]);
+  // useEffect(() => {
+  //   replaceBreadcrumbs([
+  //     { id: 'dashboard', title: 'Dashboard', url: '/dashboard/course-creator/overview' },
+  //     {
+  //       id: 'course-management',
+  //       title: 'Course Management',
+  //       url: `/dashboard/course-creator/courses/create-course?id=${courseId}`,
+  //     },
+  //     {
+  //       id: 'lesson-management',
+  //       title: `Lesson - ${lesson?.title}`,
+  //       url: `/dashboard/course-creator/course-management/lesson?courseId=${courseId}&id=${lessonId}`,
+  //       isLast: true,
+  //     },
+  //   ]);
+  // }, [replaceBreadcrumbs, courseId, lessonId, lesson?.title]);
 
   // lesson content
   const { data: contentTypeList } = useQuery(
@@ -185,7 +165,7 @@ const LessonDetailsPage = () => {
           },
         }
       );
-    } catch (_err) {}
+    } catch (_err) { }
   };
 
   // Quiz management
@@ -612,7 +592,7 @@ const LessonDetailsPage = () => {
           <div className='flex flex-row items-center justify-between gap-4'>
             <p className='text-lg font-semibold'>Skill Assignments</p>
             <Button
-              onClick={() => {}}
+              onClick={() => { }}
               variant='secondary'
               size='sm'
               className='flex w-fit items-center gap-1'

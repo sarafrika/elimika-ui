@@ -152,7 +152,7 @@ export default {
       items: [
         {
           title: 'Create New Course',
-          url: '/dashboard/course-management/create-new-course',
+          url: '/dashboard/courses/create-course',
         },
         {
           title: 'Courses & programs',

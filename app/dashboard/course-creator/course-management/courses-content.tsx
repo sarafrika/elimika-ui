@@ -37,6 +37,11 @@ import {
   TableRow,
 } from '@/components/ui/table';
 import { useCourseCreator } from '@/context/course-creator-context';
+import {
+  useOfferingCounts,
+  type OfferingCounts,
+  type OfferingCountState,
+} from '@/hooks/use-offering-counts';
 import { STALE_TIMES } from '@/lib/query-client';
 import { cn } from '@/lib/utils';
 import type { Course, PageMetadata, TrainingProgram } from '@/services/client';
@@ -210,14 +215,14 @@ export default function CourseCreatorCoursesContent() {
       category === 'all'
         ? items
         : items.filter(off => {
-          if (off.type === 'courses') {
-            // `category_uuids` is an array on courses
-            const cu = (off.item as Course).category_uuids ?? [];
-            return cu.includes(category);
-          }
-          // Programs use a single `category_uuid` field
-          return (off.item as TrainingProgram).category_uuid === category;
-        });
+            if (off.type === 'courses') {
+              // `category_uuids` is an array on courses
+              const cu = (off.item as Course).category_uuids ?? [];
+              return cu.includes(category);
+            }
+            // Programs use a single `category_uuid` field
+            return (off.item as TrainingProgram).category_uuid === category;
+          });
 
     return filtered.sort((a, b) => {
       const aDate = a.item.updated_date ? new Date(a.item.updated_date).getTime() : 0;
@@ -225,6 +230,16 @@ export default function CourseCreatorCoursesContent() {
       return bDate - aDate || titleOf(a).localeCompare(titleOf(b));
     });
   }, [contentType, coursesData, programsData, category]);
+  const countReferences = useMemo(
+    () =>
+      !creatorUuid || catalogueOpen
+        ? []
+        : offerings.flatMap(offering =>
+            offering.item.uuid ? [{ type: offering.type, uuid: offering.item.uuid }] : []
+          ),
+    [offerings, creatorUuid, catalogueOpen]
+  );
+  const offeringCounts = useOfferingCounts(countReferences);
   const categories = useMemo(() => {
     if (categoriesQuery.data?.error || categoriesQuery.data?.success === false) return [];
     return [...(categoriesQuery.data?.data?.content ?? [])].sort((a, b) =>
@@ -538,6 +553,7 @@ export default function CourseCreatorCoursesContent() {
                     <OfferingRow
                       key={`${offering.type}-${offering.item.uuid ?? titleOf(offering)}`}
                       offering={offering}
+                      counts={offeringCounts.get(`${offering.type}-${offering.item.uuid}`)}
                       onDelete={() => setDeleteTarget(offering)}
                     />
                   ))}
@@ -617,7 +633,46 @@ export default function CourseCreatorCoursesContent() {
   );
 }
 
-function OfferingRow({ offering, onDelete }: { offering: Offering; onDelete: () => void }) {
+function OfferingCount({ count }: { count?: OfferingCountState }) {
+  if (count?.pending) {
+    return (
+      <span role='status' aria-label='Loading count'>
+        <Skeleton className='h-6 w-12' />
+      </span>
+    );
+  }
+  if (count?.value === undefined) {
+    return (
+      <div className='text-muted-foreground flex items-center gap-1 text-xs'>
+        <span>Unavailable</span>
+        {count && (
+          <Button variant='ghost' size='sm' className='h-7 px-2 text-xs' onClick={count.retry}>
+            Retry
+          </Button>
+        )}
+      </div>
+    );
+  }
+  return (
+    <span
+      className='font-mono tabular-nums'
+      title={count.description}
+      aria-label={`${count.value}: ${count.description}`}
+    >
+      {count.value.toLocaleString()}
+    </span>
+  );
+}
+
+function OfferingRow({
+  offering,
+  counts,
+  onDelete,
+}: {
+  offering: Offering;
+  counts?: OfferingCounts;
+  onDelete: () => void;
+}) {
   const { item } = offering;
   const title = titleOf(offering);
   const status = item.status.toLowerCase();
@@ -634,6 +689,7 @@ function OfferingRow({ offering, onDelete }: { offering: Offering; onDelete: () 
   const statusLabel =
     STATUS_OPTIONS.find(([value]) => value === status)?.[1] ?? status.replaceAll('_', ' ');
   const Icon = offering.type === 'courses' ? BookOpen : Layers;
+
   return (
     <TableRow className='hover:bg-primary/[0.025] [&>td]:px-3 [&>td]:py-4 [&>td]:text-sm'>
       <TableCell className='!pl-2'>
@@ -665,20 +721,17 @@ function OfferingRow({ offering, onDelete }: { offering: Offering; onDelete: () 
           </div>
 
           {/* flex-1 is important */}
-          <div className='min-w-0 w-full flex-1'>
+          <div className='w-full min-w-0 flex-1'>
             {item.uuid ? (
               <Link
                 href={previewHref(offering)}
-                className='hover:text-primary block line-clamp-2 text-sm leading-6 font-semibold'
+                className='hover:text-primary line-clamp-2 block text-sm leading-6 font-semibold'
                 title={title}
               >
                 {title}
               </Link>
             ) : (
-              <span
-                className='block line-clamp-2 font-semibold'
-                title={title}
-              >
+              <span className='line-clamp-2 block font-semibold' title={title}>
                 {title}
               </span>
             )}
@@ -759,30 +812,10 @@ function OfferingRow({ offering, onDelete }: { offering: Offering; onDelete: () 
         )}
       </TableCell>
       <TableCell>
-        <span
-          className={cn(
-            'inline-flex items-center gap-1.5 rounded-md px-2 py-1 text-xs font-semibold',
-            offering.type === 'courses'
-              ? 'bg-muted text-muted-foreground'
-              : 'bg-primary/10 text-primary'
-          )}
-        >
-          <Icon className='size-3' />
-          Ins
-        </span>
+        <OfferingCount count={counts?.trainers} />
       </TableCell>
       <TableCell>
-        <span
-          className={cn(
-            'inline-flex items-center gap-1.5 rounded-md px-2 py-1 text-xs font-semibold',
-            offering.type === 'courses'
-              ? 'bg-muted text-muted-foreground'
-              : 'bg-primary/10 text-primary'
-          )}
-        >
-          <Icon className='size-3' />
-          Studs
-        </span>
+        <OfferingCount count={counts?.students} />
       </TableCell>
       <TableCell>
         <span

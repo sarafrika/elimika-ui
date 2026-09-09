@@ -181,7 +181,7 @@ export function ProgramRecordPage({
 
     const lessonContentQueries = useQueries({
         queries: allLessons.map(lesson => ({
-            ...getLessonContentOptions({ path: { courseUuid: lesson.course_uuid, lessonUuid: lesson.uuid }, query: { pageable: {} } }),
+            ...getLessonContentOptions({ path: { courseUuid: lesson?.course_uuid as string, lessonUuid: lesson?.uuid as string } }),
             enabled: Boolean(lesson?.uuid),
             staleTime: STALE_TIMES.reference,
             refetchOnWindowFocus: false,
