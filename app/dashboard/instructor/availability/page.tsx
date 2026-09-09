@@ -1,16 +1,17 @@
 'use client';
 
 import { useUserProfile } from '@/context/profile-context';
-import { localDate } from '@/lib/date';
+import { localDate, resolveDisplayZone } from '@/lib/date';
 import { getInstructorCalendarOptions } from '@/services/client/@tanstack/react-query.gen';
 import type { InstructorCalendarEntry } from '@/services/client/types.gen';
 import { useQuery } from '@tanstack/react-query';
 import { useEffect, useMemo, useState } from 'react';
 import AvailabilityManager from './components/availability-manager';
-import { type AvailabilityData } from './components/types';
+import { type AvailabilityData, type CalendarEvent, toCalendarInstants } from './components/types';
 
 const Page = () => {
   const user = useUserProfile();
+  const displayZone = useMemo(() => resolveDisplayZone(), []);
   const calendarRange = useMemo(() => {
     const start = new Date();
     start.setFullYear(start.getFullYear() - 2);
@@ -30,21 +31,28 @@ const Page = () => {
     enabled: !!user?.instructor?.uuid,
   });
 
+  const [availabilityData, setAvailabilityData] = useState<AvailabilityData>(() => ({
+    events: [],
+    settings: {
+      timezone: displayZone,
+      autoAcceptBookings: false,
+      bufferTime: 15,
+      workingHours: {
+        start: '08:00',
+        end: '18:00',
+      },
+    },
+  }));
+
   useEffect(() => {
-    const calendarEvents = (availabilitySlotsResponse?.data ?? []).map(
+    const calendarEvents: CalendarEvent[] = (availabilitySlotsResponse?.data ?? []).map(
       (entry: InstructorCalendarEntry) => {
-        const start = entry.start_time ? new Date(entry.start_time) : new Date();
-        const end = entry.end_time ? new Date(entry.end_time) : start;
+        const instants = toCalendarInstants(entry.start_time, entry.end_time, displayZone);
 
         return {
-          id: entry.uuid ?? `${start.toISOString()}-${entry.entry_type ?? 'event'}`,
+          id: entry.uuid ?? `${instants.startDateTime}-${entry.entry_type ?? 'event'}`,
           title: entry.title ?? entry.entry_type ?? 'Availability',
-          startTime: start.toTimeString().slice(0, 5),
-          endTime: end.toTimeString().slice(0, 5),
-          startDateTime: start.toISOString().slice(0, 19),
-          endDateTime: end.toISOString().slice(0, 19),
-          date: new Date(start.toDateString()),
-          day: start.toLocaleDateString('en-US', { weekday: 'long' }),
+          ...instants,
           location: entry.location_type,
           attendees: 0,
           isRecurring: false,
@@ -60,20 +68,7 @@ const Page = () => {
       ...prev,
       events: calendarEvents,
     }));
-  }, [availabilitySlotsResponse?.data]);
-
-  const [availabilityData, setAvailabilityData] = useState<AvailabilityData>({
-    events: [],
-    settings: {
-      timezone: 'UTC',
-      autoAcceptBookings: false,
-      bufferTime: 15,
-      workingHours: {
-        start: '08:00',
-        end: '18:00',
-      },
-    },
-  });
+  }, [availabilitySlotsResponse?.data, displayZone]);
 
   return (
     <AvailabilityManager

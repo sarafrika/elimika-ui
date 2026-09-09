@@ -4,6 +4,7 @@
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
+import { dayjs } from '@/lib/date';
 import { Calendar, ChevronLeft, ChevronRight, Clock } from 'lucide-react';
 import { useState } from 'react';
 import { Badge } from '../../../../../components/ui/badge';
@@ -121,7 +122,7 @@ export function DailyAvailabilityGrid({
 
   function doesSlotApplyToDate(slot: AvailabilitySlot, date: Date) {
     if (slot.recurring) {
-      const weekday = date.toLocaleDateString('en-US', { weekday: 'long' });
+      const weekday = dayjs(date).format('dddd');
       return weekday.toLowerCase() === slot.day.toLowerCase();
     }
     if (slot.date) {
@@ -193,7 +194,7 @@ export function DailyAvailabilityGrid({
     } else {
       setSelectedEvent(null);
       setSelectedSlot({
-        day: currentDate.toLocaleDateString('en-US', { weekday: 'long' }),
+        day: dayjs(currentDate).format('dddd'),
         time,
         date: new Date(currentDate),
       });
@@ -237,18 +238,12 @@ export function DailyAvailabilityGrid({
               <div className='min-w-[200px] text-center'>
                 <h3 className='text-foreground flex flex-row items-center justify-center gap-2 text-lg font-semibold'>
                   <Calendar className='text-primary h-5 w-5' />
-                  {currentDate.toLocaleDateString('en-US', {
-                    weekday: 'long',
-                  })}
+                  {dayjs(currentDate).format('dddd')}
 
                   {isToday && <Badge variant='default'>Today</Badge>}
                 </h3>
                 <p className='text-muted-foreground mt-1 text-sm'>
-                  {currentDate.toLocaleDateString('en-US', {
-                    month: 'long',
-                    day: 'numeric',
-                    year: 'numeric',
-                  })}
+                  {dayjs(currentDate).format('MMMM D, YYYY')}
                 </p>
               </div>
 
@@ -279,10 +274,10 @@ export function DailyAvailabilityGrid({
             </div>
             <div className='p-4 text-center'>
               <div className='text-foreground text-sm font-semibold'>
-                {currentDate.toLocaleDateString('en-US', { weekday: 'long' })}
+                {dayjs(currentDate).format('dddd')}
               </div>
               <div className='text-muted-foreground mt-1 text-xs'>
-                {currentDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
+                {dayjs(currentDate).format('MMM D')}
               </div>
             </div>
           </div>
@@ -293,7 +288,7 @@ export function DailyAvailabilityGrid({
             const status = getSlotStatus(time, currentDate);
             const event = getEventForSlot(time, currentDate);
             const isEventStart = isEventStartSlot(time, currentDate);
-            const weekday = currentDate.toLocaleDateString('en-US', { weekday: 'long' });
+            const weekday = dayjs(currentDate).format('dddd');
 
             if (shouldSkipSlot(time, currentDate)) return null;
 

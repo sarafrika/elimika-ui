@@ -160,7 +160,8 @@ export function useInstructorClassesWithSchedules(instructorUuid?: string) {
     enabled: !!instructorUuid,
     staleTime: 10 * 60 * 1000,
     gcTime: 60 * 60 * 1000,
-    refetchOnMount: false,
+    // Mount revalidation stays on, unlike the other queries here: blocking time invalidates this
+    // key from the availability page, where nothing observes it, so only a later mount refetches.
     refetchOnReconnect: false,
     refetchOnWindowFocus: false,
   });

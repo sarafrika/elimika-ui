@@ -5,6 +5,7 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
+import { dayjs } from '@/lib/date';
 import { ChevronLeft, ChevronRight, Clock, Edit2, Plus } from 'lucide-react';
 import { useState } from 'react';
 import type { ClassData } from '../../trainings/create-new/academic-period-form';
@@ -148,7 +149,7 @@ export function WeeklyAvailabilityGrid({
 
   function doesSlotApplyToDate(slot: AvailabilitySlot, date: Date) {
     if (slot.recurring || slot.isRecurring) {
-      const weekday = date.toLocaleDateString('en-US', { weekday: 'long' });
+      const weekday = dayjs(date).format('dddd');
       return weekday.toLowerCase() === slot.day.toLowerCase();
     }
     if (slot.date) {
@@ -327,21 +328,11 @@ export function WeeklyAvailabilityGrid({
 
               <div className='text-center'>
                 <h3 className='text-foreground text-lg font-semibold'>
-                  {weekDates[0]?.toLocaleDateString('en-US', {
-                    month: 'long',
-                    year: 'numeric',
-                  })}
+                  {weekDates[0] ? dayjs(weekDates[0]).format('MMMM YYYY') : ''}
                 </h3>
                 <p className='text-muted-foreground text-sm'>
-                  {weekDates[0]?.toLocaleDateString('en-US', {
-                    month: 'short',
-                    day: 'numeric',
-                  })}{' '}
-                  –{' '}
-                  {weekDates[6]?.toLocaleDateString('en-US', {
-                    month: 'short',
-                    day: 'numeric',
-                  })}
+                  {weekDates[0] ? dayjs(weekDates[0]).format('MMM D') : ''} –{' '}
+                  {weekDates[6] ? dayjs(weekDates[6]).format('MMM D') : ''}
                 </p>
               </div>
 
@@ -393,10 +384,7 @@ export function WeeklyAvailabilityGrid({
                       isToday ? 'text-primary font-medium' : 'text-muted-foreground'
                     }`}
                   >
-                    {date?.toLocaleDateString('en-US', {
-                      month: 'short',
-                      day: 'numeric',
-                    })}
+                    {date ? dayjs(date).format('MMM D') : ''}
                   </div>
                   {isToday && (
                     <Badge className='mt-1 h-5 text-xs' variant='default'>

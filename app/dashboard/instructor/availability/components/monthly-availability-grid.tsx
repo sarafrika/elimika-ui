@@ -4,6 +4,7 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
+import { dayjs } from '@/lib/date';
 import { Calendar, ChevronLeft, ChevronRight, Clock } from 'lucide-react';
 import { useMemo, useState } from 'react';
 import type { AvailabilityClassData, AvailabilityData, CalendarEvent } from './types';
@@ -95,7 +96,7 @@ export function MonthlyAvailabilityGrid({
   }, [currentMonth]);
 
   const getDayStatus = (date: Date) => {
-    const dayName = date.toLocaleDateString('en-US', { weekday: 'long' });
+    const dayName = dayjs(date).format('dddd');
 
     const daySlots = availabilityData.events.filter(slot => {
       if (slot.date) {
@@ -159,7 +160,7 @@ export function MonthlyAvailabilityGrid({
   };
 
   const handleDayClick = (date: Date) => {
-    const dayName = date.toLocaleDateString('en-US', { weekday: 'long' });
+    const dayName = dayjs(date).format('dddd');
 
     const eventsForDay = availabilityData.events.filter(event => {
       const eventDate = new Date(event.date);
@@ -187,7 +188,7 @@ export function MonthlyAvailabilityGrid({
     setCurrentMonth(newMonth);
   };
 
-  const monthName = currentMonth.toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
+  const monthName = dayjs(currentMonth).format('MMMM YYYY');
   const weekdays = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
 
   return (
@@ -331,11 +332,7 @@ export function MonthlyAvailabilityGrid({
                   <TooltipContent side='top' className='max-w-xs'>
                     <div className='space-y-2 text-sm'>
                       <div className='text-foreground font-semibold'>
-                        {date.toLocaleDateString('en-US', {
-                          weekday: 'long',
-                          month: 'long',
-                          day: 'numeric',
-                        })}
+                        {dayjs(date).format('dddd, MMMM D')}
                       </div>
 
                       {status.booked.length > 0 && (

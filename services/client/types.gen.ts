@@ -2310,6 +2310,10 @@ export type AvailabilitySlot = {
    */
   color_code?: string | null;
   /**
+   * **[OPTIONAL]** IANA timezone the start and end times are written in. Defaults to UTC when omitted, which is how slots recorded before the zone was captured are read.
+   */
+  timezone?: string | null;
+  /**
    * **[READ-ONLY]** Timestamp when the availability slot was first created. Automatically set by the system.
    */
   readonly created_date?: Date;
