@@ -6,6 +6,7 @@ import { useUserProfile } from '@/context/profile-context';
 import useAmdinClassesWithDetails from '@/hooks/use-admin-classes';
 import { useInstructorsByIds, useStudentsByIds, useUsersByIds } from '@/hooks/use-batched-lookups';
 import { useInstructorClassesWithSchedules } from '@/hooks/use-instructor-classes-with-schedules';
+import { localDate } from '@/lib/date';
 import {
   getCalendarOptions,
   getClassDefinitionOptions,
@@ -14,11 +15,18 @@ import {
   getCourseByUuidOptions,
   getEnrollmentsForClassOptions,
   getInstructorByUuidOptions,
+  getInstructorCalendarOptions,
   getStudentScheduleOptions,
   getUserByUuidOptions,
   listResourcesOptions
 } from '@/services/client/@tanstack/react-query.gen';
-import type { ClassDefinition, Course, Student, User } from '@/services/client/types.gen';
+import type {
+  ClassDefinition,
+  Course,
+  InstructorCalendarEntry,
+  Student,
+  User,
+} from '@/services/client/types.gen';
 import { useQueries, useQuery } from '@tanstack/react-query';
 import { useMemo } from 'react';
 import type {
@@ -28,10 +36,12 @@ import type {
   StudentSummary,
 } from './calendar-utils';
 import {
+  formatStatus,
   mapClassDefinitionDetails,
   mapClassSchedule,
   mapStudentSchedule,
   toClassLookup,
+  toStudentInitialsByClass,
 } from './calendar-utils';
 import { SchedulerCalendarView } from './new-scheduler-calendar-view';
 import type { SchedulerEvent, SchedulerProfile } from './types';
@@ -115,6 +125,39 @@ function useOrganisationResourceReservations(organisationUuid?: string) {
     events,
     isLoading: resourcesQuery.isLoading || calendarQueries.some(query => query.isLoading),
   };
+}
+
+/**
+ * The merged availability feed is the only place blocked time reaches - an instructor who closes
+ * a window on the availability page saw their scheduler still offering it as free.
+ */
+function useInstructorMergedCalendar(instructorUuid?: string) {
+  // The endpoint walks the window a day at a time server side, so it is asked for the months an
+  // instructor schedules into rather than years of availability nobody can act on any more.
+  const range = useMemo(() => {
+    const start = new Date();
+    start.setMonth(start.getMonth() - 1);
+    const end = new Date();
+    end.setMonth(end.getMonth() + 6);
+    return { start_date: localDate(start), end_date: localDate(end) };
+  }, []);
+
+  const calendarQuery = useQuery({
+    ...getInstructorCalendarOptions({
+      path: { instructorUuid: instructorUuid ?? '' },
+      query: range,
+    }),
+    enabled: !!instructorUuid,
+    staleTime: 5 * 60 * 1000,
+    refetchOnWindowFocus: false,
+  });
+
+  const entries = useMemo<InstructorCalendarEntry[]>(
+    () => calendarQuery.data?.data ?? [],
+    [calendarQuery.data]
+  );
+
+  return { entries };
 }
 
 function useClassStudentSummaries(classUuids: Array<string | null | undefined>) {
@@ -321,20 +364,25 @@ function AdminCalendarPage() {
     classData.map(classDef => classDef.uuid ?? undefined)
   );
 
+  const studentInitialsByClass = useMemo(
+    () => toStudentInitialsByClass(studentData.students),
+    [studentData.students]
+  );
+
   const events = useMemo(
     () =>
       classData
-        .flatMap((classDef, classIndex) =>
+        .flatMap(classDef =>
           mapClassSchedule(
             classDef,
-            classIndex,
             new Map(instructorSummaries.map(item => [item.uuid, item.fullName] as const)),
-            new Map(instructorSummaries.map(item => [item.uuid, item]))
+            new Map(instructorSummaries.map(item => [item.uuid, item])),
+            studentInitialsByClass
           )
         )
         .filter(event => event.status !== 'Cancelled')
         .sort((a, b) => a.startTime.getTime() - b.startTime.getTime()),
-    [classData, instructorSummaries]
+    [classData, instructorSummaries, studentInitialsByClass]
   );
 
   const data: SchedulerCalendarData = {
@@ -402,14 +450,21 @@ function InstructorCalendarPage() {
     classData.map(classDef => classDef.uuid ?? undefined)
   );
 
+  const studentInitialsByClass = useMemo(
+    () => toStudentInitialsByClass(studentData.students),
+    [studentData.students]
+  );
+
+  const mergedCalendar = useInstructorMergedCalendar(instructorUuid);
+
   const events = useMemo(() => {
     const classEvents = classData
-      .flatMap((classDef, classIndex) =>
+      .flatMap(classDef =>
         mapClassSchedule(
           classDef,
-          classIndex,
           new Map(instructorSummary.map(item => [item.uuid, item.fullName] as const)),
-          new Map(instructorSummary.map(item => [item.uuid, item]))
+          new Map(instructorSummary.map(item => [item.uuid, item])),
+          studentInitialsByClass
         )
       )
       .filter(event => event.status !== 'Cancelled');
@@ -456,7 +511,49 @@ function InstructorCalendarPage() {
         } satisfies SchedulerEvent;
       });
 
-    return [...classEvents, ...reservedEvents].sort(
+    // Availability slots the instructor closed, plus any session only the merged feed knows
+    // about. Open availability is not a commitment, so it stays off the calendar.
+    const knownUuids = new Set(
+      [...classEvents, ...reservedEvents].map(event => event.instanceUuid).filter(Boolean)
+    );
+    const availabilityEvents: SchedulerEvent[] = mergedCalendar.entries
+      .filter(entry => entry.start_time && entry.end_time)
+      .filter(entry => entry.entry_type === 'BLOCKED' || entry.entry_type === 'SCHEDULED_INSTANCE')
+      .filter(entry => !entry.uuid || !knownUuids.has(entry.uuid))
+      .filter(entry => (entry.status ?? '').toUpperCase() !== 'CANCELLED')
+      .map((entry, entryIndex) => {
+        const blocked = entry.entry_type === 'BLOCKED';
+        const engagingOrganisation = entry.organisation_name ?? undefined;
+
+        return {
+          id: `availability-${entry.uuid ?? entryIndex}`,
+          instanceUuid: blocked ? undefined : (entry.uuid ?? undefined),
+          classDefinitionUuid: entry.class_definition_uuid ?? undefined,
+          eventType: blocked ? 'resource_reservation' : 'class',
+          title: entry.title || (blocked ? 'Blocked time' : 'Scheduled class'),
+          course: blocked
+            ? 'Blocked time'
+            : engagingOrganisation
+              ? `Work for ${engagingOrganisation}`
+              : 'Assigned class',
+          instructor: name,
+          instructorUuid: instructorUuid,
+          location: '',
+          locationType: entry.location_type ?? undefined,
+          organisationUuid: entry.organisation_uuid ?? undefined,
+          organisationName: engagingOrganisation,
+          startTime: new Date(entry.start_time as unknown as string),
+          endTime: new Date(entry.end_time as unknown as string),
+          status: blocked ? 'Blocked' : formatStatus(entry.status),
+          category: 'TVET / Vocational',
+          students: blocked
+            ? []
+            : (studentInitialsByClass.get(entry.class_definition_uuid ?? '') ?? []),
+          classCode: '',
+        } satisfies SchedulerEvent;
+      });
+
+    return [...classEvents, ...reservedEvents, ...availabilityEvents].sort(
       (a, b) => a.startTime.getTime() - b.startTime.getTime()
     );
   }, [
@@ -464,13 +561,17 @@ function InstructorCalendarPage() {
     instructorSummary,
     instructorClassesQuery.schedule,
     instructorUuid,
+    mergedCalendar.entries,
     profile?.instructor?.full_name,
+    studentInitialsByClass,
   ]);
 
   const data: SchedulerCalendarData = {
     allInstructors: instructorSummary,
     events,
     instructors: instructorSummary,
+    // Blocked time is an overlay on the schedule, not the schedule itself, so it lands after
+    // first paint rather than holding the whole grid behind a spinner.
     isLoading: instructorClassesQuery.isLoading || studentData.isLoading,
     students: studentData.students,
   };
@@ -694,35 +795,12 @@ function StudentCalendarPage() {
     [studentScheduleQuery.data, studentClassData, instructorSummaries]
   );
 
-  const studentSummaries = useMemo(() => {
-    return studentData.students.length
-      ? studentData.students
-      : (studentScheduleQuery.data?.data ?? []).reduce<StudentSummary[]>((acc, item) => {
-        const classDefinitionUuid = item.class_definition_uuid?.trim();
-        const enrollmentUuid =
-          item.enrollment_uuid?.trim() || item.scheduled_instance_uuid?.trim();
-
-        const studentUuid = enrollmentUuid || classDefinitionUuid;
-        if (!studentUuid) return acc;
-
-        if (acc.some(entry => entry.uuid === studentUuid)) return acc;
-
-        acc.push({
-          uuid: studentUuid,
-          fullName: profile?.student?.full_name || 'Student',
-          classDefinitionUuid,
-          enrollmentUuid,
-        });
-
-        return acc;
-      }, []);
-  }, [studentData.students, studentScheduleQuery.data, profile?.student?.full_name]);
-
   const data: SchedulerCalendarData = {
     allInstructors: instructorSummaries,
     instructors: instructorSummaries,
     events,
-    students: studentSummaries,
+    // Only real enrolments count: a schedule row is a session, not a classmate.
+    students: studentData.students,
     isLoading:
       studentScheduleQuery.isLoading ||
       studentClassDefinitionQueries.some(q => q.isLoading) ||
@@ -855,16 +933,30 @@ function OrganizationCalendarPage() {
 
   const resourceReservations = useOrganisationResourceReservations(organizationUuid);
 
+  const studentData = useClassStudentSummaries(
+    classData.map(classDef => classDef.uuid ?? undefined)
+  );
+
+  const studentInitialsByClass = useMemo(
+    () => toStudentInitialsByClass(studentData.students),
+    [studentData.students]
+  );
+
   const events = useMemo(
     () =>
       classesWithCourseAndInstructor
-        .flatMap((classDef, classIndex) =>
-          mapClassSchedule(classDef as ClassWithScheduleInput, classIndex)
+        .flatMap(classDef =>
+          mapClassSchedule(
+            classDef as ClassWithScheduleInput,
+            undefined,
+            undefined,
+            studentInitialsByClass
+          )
         )
         .filter(event => event.status !== 'Cancelled')
         .concat(resourceReservations.events)
         .sort((a, b) => a.startTime.getTime() - b.startTime.getTime()),
-    [classesWithCourseAndInstructor, resourceReservations.events]
+    [classesWithCourseAndInstructor, resourceReservations.events, studentInitialsByClass]
   );
 
   const instructorSummaries = useMemo<InstructorSummary[]>(() => {
@@ -877,10 +969,6 @@ function OrganizationCalendarPage() {
       };
     });
   }, [instructorMap, uniqueInstructorUuids]);
-
-  const studentData = useClassStudentSummaries(
-    classData.map(classDef => classDef.uuid ?? undefined)
-  );
 
   const data: SchedulerCalendarData = {
     allInstructors: instructorSummaries,

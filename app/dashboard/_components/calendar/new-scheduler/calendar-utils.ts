@@ -1,3 +1,4 @@
+import { dayjs, normalizeTimeZone, resolveDisplayZone, UTC_ZONE } from '@/lib/date';
 import type {
   ClassDefinition,
   Course,
@@ -11,11 +12,8 @@ import type {
   SchedulerProfile,
 } from './types';
 
+/** Only settings the calendar actually honours live here - the panel offers nothing else. */
 export type SchedulePreferences = {
-  defaultClassDuration: string;
-  eventColorMode: string;
-  location: string;
-  showHolidays: boolean;
   showWeekends: boolean;
   timezone: string;
   workingHoursEnd: string;
@@ -86,15 +84,53 @@ export type ClassWithScheduleInput = {
   schedule?: ClassScheduleInput[] | null;
 };
 
-export const DEFAULT_PREFERENCES: SchedulePreferences = {
-  defaultClassDuration: '60',
-  eventColorMode: 'category',
-  location: 'Main campus',
-  showHolidays: true,
+const PREFERENCES_STORAGE_KEY = 'elimika:scheduler-preferences';
+
+/**
+ * Seeded with the stable zone so the server and the first client render agree; the viewer's own
+ * zone - not the platform's - takes over from the timezone context once mounted.
+ */
+export const createDefaultPreferences = (): SchedulePreferences => ({
   showWeekends: true,
-  timezone: 'Africa/Nairobi',
+  timezone: UTC_ZONE,
   workingHoursEnd: '18:00',
   workingHoursStart: '08:00',
+});
+
+const isTimeOption = (value: unknown): value is string =>
+  typeof value === 'string' && /^\d{2}:\d{2}$/.test(value);
+
+export const readSchedulerPreferences = (): Partial<SchedulePreferences> | null => {
+  try {
+    const raw = window.localStorage.getItem(PREFERENCES_STORAGE_KEY);
+    if (!raw) return null;
+
+    const parsed = JSON.parse(raw) as Partial<SchedulePreferences>;
+    const restored: Partial<SchedulePreferences> = {};
+
+    if (typeof parsed.showWeekends === 'boolean') restored.showWeekends = parsed.showWeekends;
+
+    // An unusable stored zone must fall through to detection rather than pin the calendar to UTC.
+    const storedZone = normalizeTimeZone(parsed.timezone, '');
+    if (storedZone) restored.timezone = storedZone;
+
+    if (isTimeOption(parsed.workingHoursStart)) {
+      restored.workingHoursStart = parsed.workingHoursStart;
+    }
+    if (isTimeOption(parsed.workingHoursEnd)) restored.workingHoursEnd = parsed.workingHoursEnd;
+
+    return Object.keys(restored).length ? restored : null;
+  } catch {
+    return null;
+  }
+};
+
+export const persistSchedulerPreferences = (preferences: SchedulePreferences) => {
+  try {
+    window.localStorage.setItem(PREFERENCES_STORAGE_KEY, JSON.stringify(preferences));
+  } catch {
+    // Storage can be blocked (private mode, embedded frames) - the calendar still works.
+  }
 };
 
 export const DEFAULT_FILTERS: SchedulerFilterValues = {
@@ -119,16 +155,11 @@ export const toApiDate = (date: Date) => {
 
 export const formatDateRange = (date: Date, view: 'day' | 'week' | 'month' | 'year') => {
   if (view === 'day') {
-    return date.toLocaleDateString('en-US', {
-      weekday: 'long',
-      month: 'long',
-      day: 'numeric',
-      year: 'numeric',
-    });
+    return dayjs(date).format('dddd, MMMM D, YYYY');
   }
 
   if (view === 'month') {
-    return date.toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
+    return dayjs(date).format('MMMM YYYY');
   }
 
   if (view === 'year') {
@@ -141,7 +172,7 @@ export const formatDateRange = (date: Date, view: 'day' | 'week' | 'month' | 'ye
   const end = new Date(start);
   end.setDate(start.getDate() + 6);
 
-  return `${start.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })} - ${end.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}`;
+  return `${dayjs(start).format('MMM D')} - ${dayjs(end).format('MMM D, YYYY')}`;
 };
 
 export const getNavigationStep = (
@@ -253,10 +284,27 @@ export const toClassLookup = (classes: ClassWithScheduleInput[]) => {
   return map;
 };
 
+/** Initials of the students actually enrolled, keyed by the class definition they enrolled in. */
+export const toStudentInitialsByClass = (students: StudentSummary[]) => {
+  const map = new Map<string, string[]>();
+
+  students.forEach(student => {
+    const classDefinitionUuid = student.classDefinitionUuid?.trim();
+    if (!classDefinitionUuid) return;
+
+    const initials = map.get(classDefinitionUuid) ?? [];
+    initials.push(makeInitials(student.fullName));
+    map.set(classDefinitionUuid, initials);
+  });
+
+  return map;
+};
+
 export const mapScheduledInstance = (
   instance: ScheduledInstance,
   instructorDetails: InstructorSummary,
-  classDetails?: ClassWithScheduleInput | null
+  classDetails?: ClassWithScheduleInput | null,
+  enrolledInitials?: string[]
 ): SchedulerEvent | null => {
   if (!instance.start_time || !instance.end_time) return null;
 
@@ -284,7 +332,7 @@ export const mapScheduledInstance = (
     endTime: new Date(instance.end_time),
     status: formatStatus(instance.status),
     category: inferCategory(title),
-    students: [makeInitials(instructorName), 'ST', 'EN'],
+    students: enrolledInitials ?? [],
     maxParticipants: instance.max_participants || undefined,
   };
 };
@@ -318,16 +366,17 @@ export const mapStudentSchedule = (
     endTime: new Date(item.end_time),
     status: formatStatus(item.scheduling_status || item.enrollment_status),
     category: inferCategory(title),
-    students: ['ME'],
-    maxParticipants: 1,
+    // A learner's own calendar needs no avatar of themselves.
+    students: [],
+    maxParticipants: classDetails?.max_participants || undefined,
   };
 };
 
 export const mapClassSchedule = (
   classDef: ClassWithScheduleInput,
-  classIndex: number,
   instructorNameLookup?: Map<string, string>,
-  instructorSummaryLookup?: Map<string, InstructorSummary>
+  instructorSummaryLookup?: Map<string, InstructorSummary>,
+  studentInitialsByClass?: Map<string, string[]>
 ) => {
   const resolvedInstructorUuid =
     classDef.default_instructor_uuid || classDef.instructor?.uuid || undefined;
@@ -371,10 +420,68 @@ export const mapClassSchedule = (
         endTime: new Date(schedule.end_time as Date | string),
         status: formatStatus(schedule.status),
         category: inferCategory(courseName || title),
-        students: [makeInitials(instructorDetails.fullName), `S${classIndex}`, 'EN'],
+        students: (classDef.uuid ? studentInitialsByClass?.get(classDef.uuid) : undefined) ?? [],
         maxParticipants: schedule.max_participants || classDef.max_participants || undefined,
       } satisfies SchedulerEvent;
     });
+};
+
+/**
+ * Several class definitions of the same course routinely carry one title, which leaves their
+ * cards identical. Their room, or failing that their slot, is what tells them apart.
+ */
+export const disambiguateSharedTitles = (events: SchedulerEvent[], zone: string) => {
+  type ClassMarker = { location: string; start: Date };
+
+  const groups = new Map<string, Map<string, ClassMarker>>();
+
+  events.forEach(event => {
+    const titleKey = event.title?.trim().toLowerCase();
+    if (!titleKey || !event.classDefinitionUuid) return;
+
+    const group = groups.get(titleKey) ?? new Map<string, ClassMarker>();
+    const marker = group.get(event.classDefinitionUuid);
+    const location = event.location?.trim() ?? '';
+
+    if (!marker) {
+      group.set(event.classDefinitionUuid, { location, start: event.startTime });
+    } else {
+      if (!marker.location) marker.location = location;
+      if (event.startTime < marker.start) marker.start = event.startTime;
+    }
+
+    groups.set(titleKey, group);
+  });
+
+  const displayZone = resolveDisplayZone(zone);
+  const details = new Map<string, string>();
+
+  groups.forEach((group, titleKey) => {
+    if (group.size < 2) return;
+
+    const locations = Array.from(group.values(), marker => marker.location);
+    const locationsTellThemApart =
+      locations.every(Boolean) && new Set(locations).size === locations.length;
+
+    group.forEach((marker, classDefinitionUuid) => {
+      details.set(
+        `${titleKey}|${classDefinitionUuid}`,
+        locationsTellThemApart
+          ? marker.location
+          : dayjs(marker.start).tz(displayZone).format('ddd h:mm A')
+      );
+    });
+  });
+
+  if (!details.size) return events;
+
+  return events.map(event => {
+    const detail = event.classDefinitionUuid
+      ? details.get(`${event.title?.trim().toLowerCase()}|${event.classDefinitionUuid}`)
+      : undefined;
+
+    return detail ? { ...event, title: `${event.title} · ${detail}` } : event;
+  });
 };
 
 export const mapClassDefinitionDetails = (classDef: ClassDefinition, course?: Course | null) => ({

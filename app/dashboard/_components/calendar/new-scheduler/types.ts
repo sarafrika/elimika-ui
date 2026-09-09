@@ -24,6 +24,7 @@ export type SchedulerEvent = {
   endTime: Date;
   status?: string;
   category: SchedulerCategory;
+  /** Initials of the students actually enrolled in the class; empty when none or unknown. */
   students: string[];
   maxParticipants?: number;
   classCode: string;

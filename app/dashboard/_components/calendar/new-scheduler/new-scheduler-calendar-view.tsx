@@ -1,7 +1,6 @@
 'use client';
 
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import {
   Select,
@@ -22,19 +21,22 @@ import { useTimeZone } from '@/context/timezone-context';
 import { normalizeTimeZone, scheduleTimeZoneLabel, scheduleTimeZoneOptions } from '@/lib/date';
 import { CalendarDays, ChevronLeft, ChevronRight, Info, Settings } from 'lucide-react';
 import { useRouter } from 'next/navigation';
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { useUserDomain } from '../../../../../context/user-domain-context';
 import { roleScopedDashboardPath } from '../../../../../src/features/dashboard/lib/active-domain-storage';
-import type { SchedulerCalendarData } from './calendar-utils';
+import type { SchedulePreferences, SchedulerCalendarData } from './calendar-utils';
 import {
-  DEFAULT_PREFERENCES,
   TIME_OPTIONS,
+  createDefaultPreferences,
+  disambiguateSharedTitles,
   findClosestDate,
   formatDateRange,
   getDateKey,
   getNavigationStep,
   getTimeValue,
   isSameCalendarDay,
+  persistSchedulerPreferences,
+  readSchedulerPreferences,
 } from './calendar-utils';
 import { schedulerMetrics } from './data';
 import { SchedulerFilters } from './scheduler-filters';
@@ -84,25 +86,52 @@ export function SchedulerCalendarView({ profile, data }: Props) {
   const [showAllInstructors, setShowAllInstructors] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedFilter, setSelectedFilter] = useState<FilterSelection>({ id: 'all', kind: 'all' });
-  const [preferences, setPreferences] = useState(() => ({
-    ...DEFAULT_PREFERENCES,
+  const [preferences, setPreferences] = useState<SchedulePreferences>(() => ({
+    ...createDefaultPreferences(),
     timezone: activeCalendarTimeZone,
   }));
-  const [timezoneTouched, setTimezoneTouched] = useState(false);
+  const preferencesRestored = useRef(false);
+  const timezonePinned = useRef(false);
 
   useEffect(() => {
-    if (timezoneTouched) return;
+    const stored = readSchedulerPreferences();
+    preferencesRestored.current = true;
+    if (!stored) return;
+
+    if (stored.timezone) timezonePinned.current = true;
+    setPreferences(prev => ({ ...prev, ...stored }));
+  }, []);
+
+  // The viewer's own zone only resolves after mount; a zone they picked themselves outranks it.
+  useEffect(() => {
+    if (!preferencesRestored.current || timezonePinned.current) return;
     setPreferences(prev =>
       prev.timezone === activeCalendarTimeZone
         ? prev
         : { ...prev, timezone: activeCalendarTimeZone }
     );
-  }, [activeCalendarTimeZone, timezoneTouched]);
+  }, [activeCalendarTimeZone]);
+
+  // Storing the detected zone would pin it on the next load, so an unrelated
+  // settings edit writes a blank one and leaves the calendar free to follow the viewer.
+  const updatePreferences = (patch: Partial<SchedulePreferences>) => {
+    const next = { ...preferences, ...patch };
+    setPreferences(next);
+    persistSchedulerPreferences({
+      ...next,
+      timezone: timezonePinned.current ? next.timezone : '',
+    });
+  };
 
   const handleCalendarTimeZoneChange = (value: string) => {
-    setTimezoneTouched(true);
-    setPreferences(prev => ({ ...prev, timezone: normalizeTimeZone(value) }));
+    timezonePinned.current = true;
+    updatePreferences({ timezone: normalizeTimeZone(value) });
   };
+
+  const workingHours = useMemo(
+    () => ({ start: preferences.workingHoursStart, end: preferences.workingHoursEnd }),
+    [preferences.workingHoursEnd, preferences.workingHoursStart]
+  );
 
   const events = data.events;
   const allInstructorSummaries =
@@ -137,6 +166,12 @@ export function SchedulerCalendarView({ profile, data }: Props) {
         ? filteredEvents.filter(entry => isSameCalendarDay(entry.startTime, currentDate))
         : filteredEvents,
     [currentDate, filteredEvents, view]
+  );
+
+  // Only what is on screen is worth disambiguating; classes out of range would just add noise.
+  const displayEvents = useMemo(
+    () => disambiguateSharedTitles(visibleEvents, preferences.timezone),
+    [preferences.timezone, visibleEvents]
   );
 
   const searchTerm = normalizeText(searchQuery);
@@ -262,10 +297,12 @@ export function SchedulerCalendarView({ profile, data }: Props) {
   const isLoading = data.isLoading;
 
   const handleEventClick = (event: SchedulerEvent) => {
-    const instanceUuid = event.instanceUuid || event.id;
-    if (!instanceUuid) return;
+    // Blocked time and reservations have no instance page; their synthetic ids route nowhere.
+    if (!event.instanceUuid) return;
 
-    router.push(roleScopedDashboardPath(activeDomain, `/dashboard/class-instance/${instanceUuid}`));
+    router.push(
+      roleScopedDashboardPath(activeDomain, `/dashboard/class-instance/${event.instanceUuid}`)
+    );
   };
 
   const handleCreateSession = (slot?: { date: Date; startTime: Date; endTime: Date }) => {
@@ -517,8 +554,11 @@ export function SchedulerCalendarView({ profile, data }: Props) {
             ) : (
               <SchedulerGrid
                 currentDate={currentDate}
-                events={visibleEvents}
+                events={displayEvents}
                 view={view}
+                timeZone={preferences.timezone}
+                workingHours={workingHours}
+                showWeekends={preferences.showWeekends}
                 onEventClick={handleEventClick}
                 onEmptySlotClick={handleEmptySlotClick}
                 canCreateClass={
@@ -535,11 +575,12 @@ export function SchedulerCalendarView({ profile, data }: Props) {
           <SchedulerRightRail
             currentDate={currentDate}
             profile={profile}
-            events={visibleEvents}
+            events={displayEvents}
             allInstructors={allInstructorSummaries}
             students={studentSummaries}
             showAllInstructors={showAllInstructors}
             onToggleInstructors={() => setShowAllInstructors(v => !v)}
+            timeZone={preferences.timezone}
           />
         </div>
       </div>
@@ -555,12 +596,13 @@ export function SchedulerCalendarView({ profile, data }: Props) {
 
           <SchedulerRightRail
             currentDate={currentDate}
-            events={visibleEvents}
+            events={displayEvents}
             allInstructors={allInstructorSummaries}
             students={studentSummaries}
             showAllInstructors={showAllInstructors}
             onToggleInstructors={() => setShowAllInstructors(v => !v)}
             profile={profile}
+            timeZone={preferences.timezone}
           />
         </SheetContent>
       </Sheet>
@@ -570,39 +612,16 @@ export function SchedulerCalendarView({ profile, data }: Props) {
           <SheetHeader>
             <SheetTitle>Calendar settings</SheetTitle>
             <SheetDescription>
-              Adjust view preferences, timezone, location, and scheduling defaults.
+              Set the zone your sessions are read in, your working hours, and which days show.
             </SheetDescription>
           </SheetHeader>
 
           <div className='space-y-6 px-3 pb-6 sm:px-6'>
-            <section className='space-y-4'>
+            <section className='space-y-3'>
               <div>
                 <h3 className='text-foreground text-sm font-semibold'>View and appearance</h3>
-                <p className='text-muted-foreground text-sm'>
-                  Control how schedule cards are grouped and displayed.
-                </p>
+                <p className='text-muted-foreground text-sm'>Control which days the grid draws.</p>
               </div>
-              <div className='space-y-2'>
-                <Label htmlFor='event-color-mode'>Event colors</Label>
-                <Select
-                  value={preferences.eventColorMode}
-                  onValueChange={value =>
-                    setPreferences(prev => ({ ...prev, eventColorMode: value }))
-                  }
-                >
-                  <SelectTrigger id='event-color-mode'>
-                    <SelectValue placeholder='Choose color mode' />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value='category'>By category</SelectItem>
-                    <SelectItem value='instructor'>By instructor</SelectItem>
-                    <SelectItem value='status'>By status</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-            </section>
-
-            <section className='space-y-3'>
               <div className='flex items-center justify-between rounded-md border p-3'>
                 <div>
                   <p className='text-foreground text-sm font-medium'>Show weekends</p>
@@ -610,29 +629,13 @@ export function SchedulerCalendarView({ profile, data }: Props) {
                 </div>
                 <Switch
                   checked={preferences.showWeekends}
-                  onCheckedChange={checked =>
-                    setPreferences(prev => ({ ...prev, showWeekends: checked }))
-                  }
-                />
-              </div>
-              <div className='flex items-center justify-between rounded-md border p-3'>
-                <div>
-                  <p className='text-foreground text-sm font-medium'>Show holidays</p>
-                  <p className='text-muted-foreground text-xs'>
-                    Reserve space for holiday indicators.
-                  </p>
-                </div>
-                <Switch
-                  checked={preferences.showHolidays}
-                  onCheckedChange={checked =>
-                    setPreferences(prev => ({ ...prev, showHolidays: checked }))
-                  }
+                  onCheckedChange={checked => updatePreferences({ showWeekends: checked })}
                 />
               </div>
             </section>
 
             <section className='grid gap-4 sm:grid-cols-2'>
-              <div className='space-y-2'>
+              <div className='space-y-2 sm:col-span-2'>
                 <Label htmlFor='calendar-timezone'>Timezone</Label>
                 <Select value={preferences.timezone} onValueChange={handleCalendarTimeZoneChange}>
                   <SelectTrigger id='calendar-timezone'>
@@ -646,24 +649,15 @@ export function SchedulerCalendarView({ profile, data }: Props) {
                     ))}
                   </SelectContent>
                 </Select>
-              </div>
-              <div className='space-y-2'>
-                <Label htmlFor='calendar-location'>Default location</Label>
-                <Input
-                  id='calendar-location'
-                  value={preferences.location}
-                  onChange={event =>
-                    setPreferences(prev => ({ ...prev, location: event.target.value }))
-                  }
-                />
+                <p className='text-muted-foreground text-xs'>
+                  Every session time on this calendar is shown in this zone.
+                </p>
               </div>
               <div className='space-y-2'>
                 <Label htmlFor='working-start'>Working hours start</Label>
                 <Select
                   value={preferences.workingHoursStart}
-                  onValueChange={value =>
-                    setPreferences(prev => ({ ...prev, workingHoursStart: value }))
-                  }
+                  onValueChange={value => updatePreferences({ workingHoursStart: value })}
                 >
                   <SelectTrigger id='working-start'>
                     <SelectValue placeholder='Select start time' />
@@ -681,9 +675,7 @@ export function SchedulerCalendarView({ profile, data }: Props) {
                 <Label htmlFor='working-end'>Working hours end</Label>
                 <Select
                   value={preferences.workingHoursEnd}
-                  onValueChange={value =>
-                    setPreferences(prev => ({ ...prev, workingHoursEnd: value }))
-                  }
+                  onValueChange={value => updatePreferences({ workingHoursEnd: value })}
                 >
                   <SelectTrigger id='working-end'>
                     <SelectValue placeholder='Select end time' />
@@ -694,26 +686,6 @@ export function SchedulerCalendarView({ profile, data }: Props) {
                         {time}
                       </SelectItem>
                     ))}
-                  </SelectContent>
-                </Select>
-              </div>
-              <div className='space-y-2 sm:col-span-2'>
-                <Label htmlFor='default-duration'>Default class duration</Label>
-                <Select
-                  value={preferences.defaultClassDuration}
-                  onValueChange={value =>
-                    setPreferences(prev => ({ ...prev, defaultClassDuration: value }))
-                  }
-                >
-                  <SelectTrigger id='default-duration'>
-                    <SelectValue placeholder='Select duration' />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value='30'>30 minutes</SelectItem>
-                    <SelectItem value='45'>45 minutes</SelectItem>
-                    <SelectItem value='60'>60 minutes</SelectItem>
-                    <SelectItem value='90'>90 minutes</SelectItem>
-                    <SelectItem value='120'>120 minutes</SelectItem>
                   </SelectContent>
                 </Select>
               </div>

@@ -1,19 +1,45 @@
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/tiptap-ui-primitive/popover';
+import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
+import { dayjs, formatTime, resolveDisplayZone } from '@/lib/date';
 import { cn } from '@/lib/utils';
 import { Building2, CalendarDays, MapPin, Plus, Video, X } from 'lucide-react';
-import { useEffect, useMemo, useRef, useState, type ReactElement } from 'react';
+import {
+  useEffect,
+  useLayoutEffect,
+  useMemo,
+  useRef,
+  useState,
+  type ReactElement,
+} from 'react';
 import { useUserDomain } from '../../../../../context/user-domain-context';
 import { CreateClassDialog } from '../create-class-dialog';
-import { categoryStyles, schedulerHours } from './data';
+import { categoryStyles, defaultWorkingHours, schedulerHours } from './data';
 import type { SchedulerEvent, SchedulerView } from './types';
 
 const rowHeight = 58;
 
-// Time gutter + 7 day columns. The day columns share `minmax(0,1fr)` so they
+// Breathing room kept above the anchored row so it never sits flush under the
+// sticky header.
+const scrollAnchorPadding = 24;
+
+export type SchedulerWorkingHours = { start: string; end: string };
+
+// Time gutter + day columns. The day columns share `minmax(0,1fr)` so they
 // always divide the remaining width equally, regardless of viewport size.
 const weekColumnClass =
   'grid-cols-[64px_repeat(7,minmax(0,1fr))] sm:grid-cols-[72px_repeat(7,minmax(0,1fr))] lg:grid-cols-[84px_repeat(7,minmax(0,1fr))]';
+
+const weekdayColumnClass =
+  'grid-cols-[64px_repeat(5,minmax(0,1fr))] sm:grid-cols-[72px_repeat(5,minmax(0,1fr))] lg:grid-cols-[84px_repeat(5,minmax(0,1fr))]';
+
+function getWeekColumnClass(dayCount: number) {
+  return dayCount === 5 ? weekdayColumnClass : weekColumnClass;
+}
+
+// Anchoring must be in place before the first paint; React makes layout effects
+// a no-op while rendering on the server.
+const useIsomorphicLayoutEffect = typeof window === 'undefined' ? useEffect : useLayoutEffect;
 
 type EmptySlot = {
   date: Date;
@@ -48,14 +74,6 @@ function getWeekDays(currentDate: Date) {
   });
 }
 
-function isSameCalendarDay(left: Date, right: Date) {
-  return (
-    left.getFullYear() === right.getFullYear() &&
-    left.getMonth() === right.getMonth() &&
-    left.getDate() === right.getDate()
-  );
-}
-
 function isSameMonth(left: Date, right: Date) {
   return left.getFullYear() === right.getFullYear() && left.getMonth() === right.getMonth();
 }
@@ -66,6 +84,33 @@ function getCalendarKey(date: Date) {
   const day = String(date.getDate()).padStart(2, '0');
 
   return `${year}-${month}-${day}`;
+}
+
+function getCalendarMonthKey(date: Date) {
+  return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`;
+}
+
+/** Wall-clock fields of an API instant, read in the zone the grid renders in. */
+function inGridZone(value: Date, timeZone: string) {
+  return dayjs(value).tz(timeZone);
+}
+
+// A 00:10 Africa/Nairobi session belongs to that Nairobi day, not to whatever
+// day the viewer's own browser zone puts it on.
+function getZonedDayKey(value: Date, timeZone: string) {
+  return inGridZone(value, timeZone).format('YYYY-MM-DD');
+}
+
+function getZonedMonthKey(value: Date, timeZone: string) {
+  return inGridZone(value, timeZone).format('YYYY-MM');
+}
+
+function getTodayKey(timeZone: string) {
+  return dayjs().tz(timeZone).format('YYYY-MM-DD');
+}
+
+function isEventOnDay(event: SchedulerEvent, day: Date, timeZone: string) {
+  return getZonedDayKey(event.startTime, timeZone) === getCalendarKey(day);
 }
 
 function getMonthDays(currentDate: Date) {
@@ -80,49 +125,95 @@ function getMonthDays(currentDate: Date) {
   });
 }
 
-function getMonthEvents(events: SchedulerEvent[], monthDate: Date) {
+function getMonthEvents(events: SchedulerEvent[], monthDate: Date, timeZone: string) {
   return events
-    .filter(event => isSameMonth(event.startTime, monthDate))
+    .filter(event => getZonedMonthKey(event.startTime, timeZone) === getCalendarMonthKey(monthDate))
     .sort((left, right) => left.startTime.getTime() - right.startTime.getTime());
 }
 
-function getDayEvents(events: SchedulerEvent[], day: Date) {
+function getDayEvents(events: SchedulerEvent[], day: Date, timeZone: string) {
   return events
-    .filter(event => isSameCalendarDay(event.startTime, day))
+    .filter(event => isEventOnDay(event, day, timeZone))
     .sort((left, right) => left.startTime.getTime() - right.startTime.getTime());
 }
 
-function getEventTop(event: SchedulerEvent) {
-  const hours = event.startTime.getHours();
-  const minutes = event.startTime.getMinutes();
+/** Minutes between the first rendered hour and an instant, in the grid's zone. */
+function getGridMinutes(value: Date, timeZone: string) {
+  const firstHour = schedulerHours[0] ?? 0;
+  const zoned = inGridZone(value, timeZone);
 
-  return hours * rowHeight + (minutes / 60) * rowHeight;
+  return (zoned.hour() - firstHour) * 60 + zoned.minute();
+}
+
+function getEventTop(event: SchedulerEvent, timeZone: string) {
+  return (Math.max(getGridMinutes(event.startTime, timeZone), 0) / 60) * rowHeight;
+}
+
+function getEventDurationMinutes(event: SchedulerEvent) {
+  return (event.endTime.getTime() - event.startTime.getTime()) / (1000 * 60);
 }
 
 function getEventHeight(event: SchedulerEvent) {
-  const durationMs = new Date(event.endTime).getTime() - new Date(event.startTime).getTime();
-
-  const durationMinutes = durationMs / (1000 * 60);
-
-  return Math.max((durationMinutes / 60) * rowHeight, 40);
+  return Math.max((getEventDurationMinutes(event) / 60) * rowHeight, 40);
 }
 
-// Week view uses its own metric because it anchors against the first hour in
-// `schedulerHours` rather than midnight.
-function getEventTimeOffsets(event: SchedulerEvent) {
-  const firstHour = schedulerHours[0] ?? 0;
-
-  const dayStart = new Date(event.startTime);
-  dayStart.setHours(firstHour, 0, 0, 0);
-
-  const startMinutes = (event.startTime.getTime() - dayStart.getTime()) / (1000 * 60);
-  const durationMinutes = (event.endTime.getTime() - event.startTime.getTime()) / (1000 * 60);
+// Week view uses its own metric because its blocks may be as short as 15
+// minutes, where the day view enforces a taller minimum.
+function getEventTimeOffsets(event: SchedulerEvent, timeZone: string) {
   const pixelsPerMinute = rowHeight / 60;
 
   return {
-    top: Math.max(startMinutes, 0) * pixelsPerMinute,
-    height: Math.max(durationMinutes, 15) * pixelsPerMinute,
+    top: getEventTop(event, timeZone),
+    height: Math.max(getEventDurationMinutes(event), 15) * pixelsPerMinute,
   };
+}
+
+/** `HH:mm` -> fractional hour. Only used to anchor the initial scroll offset. */
+function parseClockHour(value: string | undefined, fallback: number) {
+  const [rawHours, rawMinutes] = (value ?? '').split(':');
+
+  const hours = Number(rawHours);
+  const minutes = Number(rawMinutes);
+
+  if (!rawHours || !Number.isFinite(hours)) return fallback;
+
+  return hours + (Number.isFinite(minutes) ? minutes / 60 : 0);
+}
+
+function getAnchorTop(
+  events: SchedulerEvent[],
+  workingHours: SchedulerWorkingHours,
+  timeZone: string
+) {
+  if (events.length) {
+    return Math.min(...events.map(event => getEventTop(event, timeZone)));
+  }
+
+  const firstHour = schedulerHours[0] ?? 0;
+
+  return Math.max(parseClockHour(workingHours.start, 8) - firstHour, 0) * rowHeight;
+}
+
+// The grid always opened at midnight and never scrolled, so an early-hours
+// session sat above the fold and read as missing.
+function useTimeGridAnchor(anchorTop: number, anchorKey: string) {
+  const scrollRef = useRef<HTMLDivElement | null>(null);
+  const hasAnchored = useRef(false);
+
+  useIsomorphicLayoutEffect(() => {
+    const node = scrollRef.current;
+
+    if (!node) return;
+
+    node.scrollTo({
+      top: Math.max(anchorTop - scrollAnchorPadding, 0),
+      behavior: hasAnchored.current ? 'smooth' : 'auto',
+    });
+
+    hasAnchored.current = true;
+  }, [anchorTop, anchorKey]);
+
+  return scrollRef;
 }
 
 function getEventStartMs(event: SchedulerEvent) {
@@ -195,6 +286,7 @@ function getCollisionGroups(events: SchedulerEvent[]) {
 
 const CASCADE_WIDTHS = [100, 80, 60, 50];
 const CASCADE_MAX_VISIBLE = CASCADE_WIDTHS.length;
+const CASCADE_MIN_WIDTH = CASCADE_WIDTHS[CASCADE_WIDTHS.length - 1] ?? 50;
 
 type CascadeEntry = {
   event: SchedulerEvent;
@@ -231,7 +323,7 @@ function layoutCascade(
 
     visible.forEach((event, index) => {
       const { top, height } = getMetrics(event);
-      const width = CASCADE_WIDTHS[index] ?? CASCADE_WIDTHS[CASCADE_WIDTHS.length - 1];
+      const width = CASCADE_WIDTHS[index] ?? CASCADE_MIN_WIDTH;
 
       entries.push({
         event,
@@ -245,9 +337,11 @@ function layoutCascade(
 
     if (hidden.length) {
       const anchor = visible[visible.length - 1] ?? sorted[0];
+
+      if (!anchor) return;
+
       const anchorMetrics = getMetrics(anchor);
-      const anchorWidth =
-        CASCADE_WIDTHS[visible.length - 1] ?? CASCADE_WIDTHS[CASCADE_WIDTHS.length - 1];
+      const anchorWidth = CASCADE_WIDTHS[visible.length - 1] ?? CASCADE_MIN_WIDTH;
 
       overflow.push({
         anchorTop: anchorMetrics.top,
@@ -272,21 +366,48 @@ function getEventStyles(event: SchedulerEvent) {
   return categoryStyles[event.category];
 }
 
-function getCurrentTimeOffset(currentTime: Date) {
-  return (currentTime.getMinutes() / 60) * rowHeight;
+function getCurrentTimeOffset(currentTime: Date, timeZone: string) {
+  return (inGridZone(currentTime, timeZone).minute() / 60) * rowHeight;
 }
 
-function CurrentTimeIndicator({ currentTime }: { currentTime: Date }) {
+function CurrentTimeIndicator({
+  currentTime,
+  timeZone,
+}: {
+  currentTime: Date;
+  timeZone: string;
+}) {
   return (
     <div
       className='pointer-events-none absolute right-0 left-0 z-30 flex items-center'
       style={{
-        top: `${getCurrentTimeOffset(currentTime)}px`,
+        top: `${getCurrentTimeOffset(currentTime, timeZone)}px`,
       }}
       aria-hidden='true'
     >
       <span className='bg-destructive h-2 w-2 shrink-0 rounded-full' />
       <span className='bg-destructive h-0.5 flex-1 shadow-sm' />
+    </div>
+  );
+}
+
+// Only real enrolled students are shown; an empty roster renders nothing rather
+// than claiming attendees the class does not have.
+function EventStudents({ students }: { students: string[] }) {
+  if (!students.length) return null;
+
+  const shown = students.slice(0, 3);
+  const remaining = students.length - shown.length;
+
+  return (
+    <div className='mt-1 hidden items-center gap-1 lg:flex'>
+      {shown.map((student, index) => (
+        <Avatar key={`${student}-${index}`} className='h-5 w-5 border'>
+          <AvatarFallback className='text-[8px]'>{student}</AvatarFallback>
+        </Avatar>
+      ))}
+
+      {remaining > 0 ? <span className='text-[10px] opacity-75'>+{remaining}</span> : null}
     </div>
   );
 }
@@ -310,20 +431,12 @@ function EventBlock({ event }: { event: SchedulerEvent }) {
         {event.location}
       </p>
 
-      {/* <div className='mt-1 hidden items-center gap-1 lg:flex'>
-        {event.students.slice(0, 3).map(student => (
-          <Avatar key={student} className='h-5 w-5 border'>
-            <AvatarFallback className='text-[8px]'>{student}</AvatarFallback>
-          </Avatar>
-        ))}
-
-        <span className='text-[10px] opacity-75'>+{event.students.length + 7}</span>
-      </div> */}
+      <EventStudents students={event.students} />
     </button>
   );
 }
 
-function WeekEventBlock({ event }: { event: SchedulerEvent }) {
+function WeekEventBlock({ event, timeZone }: { event: SchedulerEvent; timeZone: string }) {
   return (
     <button
       type='button'
@@ -337,15 +450,9 @@ function WeekEventBlock({ event }: { event: SchedulerEvent }) {
       </p>
 
       <p className='truncate text-[9px] opacity-75'>
-        {event.startTime.toLocaleTimeString('en-US', {
-          hour: 'numeric',
-          minute: '2-digit',
-        })}
+        {formatTime(event.startTime, { zone: timeZone })}
         {' - '}
-        {event.endTime.toLocaleTimeString('en-US', {
-          hour: 'numeric',
-          minute: '2-digit',
-        })}
+        {formatTime(event.endTime, { zone: timeZone })}
       </p>
 
       <p className='hidden truncate text-[9px] opacity-75 sm:block'>
@@ -355,7 +462,7 @@ function WeekEventBlock({ event }: { event: SchedulerEvent }) {
   );
 }
 
-function CompactEvent({ event }: { event: SchedulerEvent }) {
+function CompactEvent({ event, timeZone }: { event: SchedulerEvent; timeZone: string }) {
   return (
     <button
       type="button"
@@ -366,10 +473,7 @@ function CompactEvent({ event }: { event: SchedulerEvent }) {
     >
       <p className="min-w-0 truncate">{event.title}</p>
       <p className="min-w-0 truncate opacity-75">
-        {event.startTime.toLocaleTimeString('en-US', {
-          hour: 'numeric',
-          minute: '2-digit',
-        })}
+        {formatTime(event.startTime, { zone: timeZone })}
       </p>
     </button>
   );
@@ -378,11 +482,13 @@ function CompactEvent({ event }: { event: SchedulerEvent }) {
 function SchedulerEventDisclosure({
   event,
   overlapEvents,
+  timeZone,
   onViewDetails,
   children,
 }: {
   event: SchedulerEvent;
   overlapEvents: SchedulerEvent[];
+  timeZone: string;
   onViewDetails?: (event: SchedulerEvent) => void;
   children: ReactElement;
 }) {
@@ -405,15 +511,9 @@ function SchedulerEventDisclosure({
               </p>
 
               <p className='mt-0.5 truncate text-[10px] text-muted-foreground'>
-                {event.startTime.toLocaleTimeString('en-US', {
-                  hour: 'numeric',
-                  minute: '2-digit',
-                })}
+                {formatTime(event.startTime, { zone: timeZone })}
                 {' - '}
-                {event.endTime.toLocaleTimeString('en-US', {
-                  hour: 'numeric',
-                  minute: '2-digit',
-                })}
+                {formatTime(event.endTime, { zone: timeZone })}
               </p>
             </div>
 
@@ -443,21 +543,11 @@ function SchedulerEventDisclosure({
               </p>
 
               <p className='text-muted-foreground mt-0.5 text-xs'>
-                {event.startTime.toLocaleString('en-US', {
-                  weekday: 'short',
-                  month: 'short',
-                  day: 'numeric',
-                })}
+                {inGridZone(event.startTime, timeZone).format('ddd, MMM D')}
                 {' · '}
-                {event.startTime.toLocaleTimeString('en-US', {
-                  hour: 'numeric',
-                  minute: '2-digit',
-                })}
+                {formatTime(event.startTime, { zone: timeZone })}
                 {' - '}
-                {event.endTime.toLocaleTimeString('en-US', {
-                  hour: 'numeric',
-                  minute: '2-digit',
-                })}
+                {formatTime(event.endTime, { zone: timeZone })}
               </p>
             </div>
           </div>
@@ -530,7 +620,7 @@ function SchedulerEventDisclosure({
   );
 }
 
-function OverflowChip({ events }: { events: SchedulerEvent[] }) {
+function OverflowChip({ events, timeZone }: { events: SchedulerEvent[]; timeZone: string }) {
   return (
     <Popover>
       <PopoverTrigger asChild>
@@ -557,15 +647,9 @@ function OverflowChip({ events }: { events: SchedulerEvent[] }) {
             <div key={event.id} className='rounded-md px-2 py-1 text-xs hover:bg-muted/60'>
               <p className='truncate font-medium'>{event.title}</p>
               <p className='truncate text-[10px] text-muted-foreground'>
-                {event.startTime.toLocaleTimeString('en-US', {
-                  hour: 'numeric',
-                  minute: '2-digit',
-                })}
+                {formatTime(event.startTime, { zone: timeZone })}
                 {' - '}
-                {event.endTime.toLocaleTimeString('en-US', {
-                  hour: 'numeric',
-                  minute: '2-digit',
-                })}
+                {formatTime(event.endTime, { zone: timeZone })}
               </p>
             </div>
           ))}
@@ -579,6 +663,8 @@ function DayGrid({
   currentDate,
   currentTime,
   events,
+  timeZone,
+  workingHours,
   onEventClick,
   onEmptySlotClick,
   canCreateClass = false,
@@ -587,23 +673,31 @@ function DayGrid({
   currentDate: Date;
   currentTime: Date;
   events: SchedulerEvent[];
+  timeZone: string;
+  workingHours: SchedulerWorkingHours;
   onEventClick?: (event: SchedulerEvent) => void;
   onEmptySlotClick?: (slot: EmptySlot) => void;
   canCreateClass?: boolean;
   onClassCreated?: () => void;
 }) {
-  const dayEvents = getDayEvents(events, currentDate);
+  const dayEvents = getDayEvents(events, currentDate, timeZone);
 
   const dayCascade = useMemo(
     () =>
       layoutCascade(dayEvents, event => ({
-        top: getEventTop(event),
+        top: getEventTop(event, timeZone),
         height: getEventHeight(event),
       })),
-    [dayEvents]
+    [dayEvents, timeZone]
   );
 
-  const shouldShowCurrentTime = isSameCalendarDay(currentDate, currentTime);
+  const scrollRef = useTimeGridAnchor(
+    getAnchorTop(dayEvents, workingHours, timeZone),
+    `day-${getCalendarKey(currentDate)}`
+  );
+
+  const shouldShowCurrentTime =
+    getZonedDayKey(currentTime, timeZone) === getCalendarKey(currentDate);
 
   // Empty-slot click -> class creation modal. Only wired up for roles that
   // are allowed to create classes (instructors / organisation profiles);
@@ -627,7 +721,7 @@ function DayGrid({
       <section className='bg-card flex w-full flex-col overflow-visible rounded-md border shadow-sm'>
         <div className='grid gap-4 p-3 lg:grid-cols-[minmax(0,1fr)_260px] lg:p-4'>
           {/* LEFT SCHEDULE */}
-          <div className='min-w-0'>
+          <div ref={scrollRef} className='max-h-[70vh] min-w-0 overflow-y-auto'>
             <div className='bg-background/95 sticky top-0 z-30 grid grid-cols-[72px_1fr] rounded-t-md border border-b-0 border-border/60 shadow-sm backdrop-blur supports-[backdrop-filter]:bg-background/90'>
               <div className='px-2 py-2 text-center text-[10px] font-semibold sm:text-xs'>Time</div>
 
@@ -686,8 +780,9 @@ function DayGrid({
                         })
                       }
                     >
-                      {shouldShowCurrentTime && currentTime.getHours() === hour ? (
-                        <CurrentTimeIndicator currentTime={currentTime} />
+                      {shouldShowCurrentTime &&
+                      inGridZone(currentTime, timeZone).hour() === hour ? (
+                        <CurrentTimeIndicator currentTime={currentTime} timeZone={timeZone} />
                       ) : null}
                     </div>
                   </div>
@@ -713,6 +808,7 @@ function DayGrid({
                       <SchedulerEventDisclosure
                         event={event}
                         overlapEvents={groupEvents}
+                        timeZone={timeZone}
                         onViewDetails={onEventClick}
                       >
                         <EventBlock event={event} />
@@ -731,7 +827,7 @@ function DayGrid({
                         width: `${100 - item.anchorWidth}%`,
                       }}
                     >
-                      <OverflowChip events={item.events} />
+                      <OverflowChip events={item.events} timeZone={timeZone} />
                     </div>
                   ))}
                 </div>
@@ -755,15 +851,9 @@ function DayGrid({
                       <p className='text-foreground text-sm font-semibold'>{event.title}</p>
 
                       <p className='text-muted-foreground text-xs'>
-                        {event.startTime.toLocaleTimeString('en-US', {
-                          hour: 'numeric',
-                          minute: '2-digit',
-                        })}
+                        {formatTime(event.startTime, { zone: timeZone })}
                         {' - '}
-                        {event.endTime.toLocaleTimeString('en-US', {
-                          hour: 'numeric',
-                          minute: '2-digit',
-                        })}
+                        {formatTime(event.endTime, { zone: timeZone })}
                       </p>
 
                       <p className='text-muted-foreground mt-1 truncate text-xs'>
@@ -820,6 +910,9 @@ function WeekGrid({
   currentDate,
   currentTime,
   events,
+  timeZone,
+  workingHours,
+  showWeekends = true,
   onEventClick,
   onEmptySlotClick,
   canCreateClass = false,
@@ -829,6 +922,9 @@ function WeekGrid({
   currentDate: Date;
   currentTime: Date;
   events: SchedulerEvent[];
+  timeZone: string;
+  workingHours: SchedulerWorkingHours;
+  showWeekends?: boolean;
   onEventClick?: (event: SchedulerEvent) => void;
   onEmptySlotClick?: (slot: EmptySlot) => void;
   canCreateClass?: boolean;
@@ -837,7 +933,19 @@ function WeekGrid({
 }) {
   const { activeDomain } = useUserDomain();
 
-  const schedulerDays = getWeekDays(currentDate);
+  // The week starts on Monday, so dropping the weekend is the first five days.
+  const schedulerDays = showWeekends
+    ? getWeekDays(currentDate)
+    : getWeekDays(currentDate).slice(0, 5);
+
+  const columnClass = getWeekColumnClass(schedulerDays.length);
+
+  const visibleEvents = schedulerDays.flatMap(day => getDayEvents(events, day, timeZone));
+
+  const scrollRef = useTimeGridAnchor(
+    getAnchorTop(visibleEvents, workingHours, timeZone),
+    `week-${getCalendarKey(schedulerDays[0] ?? currentDate)}`
+  );
 
   const [selectedSlot, setSelectedSlot] = useState<EmptySlot | null>(null);
 
@@ -925,13 +1033,13 @@ function WeekGrid({
 
   return (
     <section className='bg-card ring-border/60 flex w-full min-w-0 flex-col overflow-visible rounded-md shadow-sm ring-1'>
-      <div className='bg-background relative w-full min-w-0'>
+      <div ref={scrollRef} className='bg-background relative max-h-[70vh] w-full min-w-0 overflow-y-auto'>
         {/* HEADER */}
         <div className='bg-background/95 sticky top-0 z-30 rounded-t-md border border-b-0 border-border/60 shadow-sm backdrop-blur supports-[backdrop-filter]:bg-background/90'>
           <div
             className={cn(
               'grid border-b border-border/60',
-              weekColumnClass
+              columnClass
             )}
           >
             <div className='px-2 py-2 text-center text-xs font-semibold'>
@@ -943,10 +1051,7 @@ function WeekGrid({
                 key={day.toISOString()}
                 className='border-l px-2 py-2 text-center text-xs font-semibold'
               >
-                {day.toLocaleDateString('en-US', {
-                  weekday: 'short',
-                })}{' '}
-                {day.getDate()}
+                {dayjs(day).format('ddd')} {day.getDate()}
               </div>
             ))}
           </div>
@@ -966,7 +1071,7 @@ function WeekGrid({
                 key={hour}
                 className={cn(
                   'grid border-b last:border-b-0',
-                  weekColumnClass
+                  columnClass
                 )}
                 style={{
                   height: `${rowHeight}px`,
@@ -1018,10 +1123,11 @@ function WeekGrid({
                       )}
                       onClick={() => handleSlotClick(slot)}
                     >
-                      {isSameCalendarDay(day, currentTime) &&
-                        currentTime.getHours() === hour ? (
+                      {getZonedDayKey(currentTime, timeZone) === getCalendarKey(day) &&
+                        inGridZone(currentTime, timeZone).hour() === hour ? (
                         <CurrentTimeIndicator
                           currentTime={currentTime}
+                          timeZone={timeZone}
                         />
                       ) : null}
 
@@ -1034,10 +1140,7 @@ function WeekGrid({
                         >
                           <div className='relative mb-2 px-2 py-1 pr-7'>
                             <p className='text-xs font-medium'>
-                              {slot.startTime.toLocaleTimeString('en-US', {
-                                hour: 'numeric',
-                                minute: '2-digit',
-                              })}
+                              {formatHour(hour)}
                             </p>
 
                             <p className='text-muted-foreground text-[11px]'>
@@ -1096,15 +1199,17 @@ function WeekGrid({
             <div
               className={cn(
                 'pointer-events-none absolute inset-0 grid',
-                weekColumnClass
+                columnClass
               )}
             >
               {/* Time column spacer */}
               <div />
 
               {schedulerDays.map(day => {
-                const dayEvents = events.filter(event => isSameCalendarDay(event.startTime, day));
-                const cascade = layoutCascade(dayEvents, getEventTimeOffsets);
+                const dayEvents = getDayEvents(events, day, timeZone);
+                const cascade = layoutCascade(dayEvents, event =>
+                  getEventTimeOffsets(event, timeZone)
+                );
 
                 return (
                   <div
@@ -1130,9 +1235,10 @@ function WeekGrid({
                         <SchedulerEventDisclosure
                           event={event}
                           overlapEvents={groupEvents}
+                          timeZone={timeZone}
                           onViewDetails={onEventClick}
                         >
-                          <WeekEventBlock event={event} />
+                          <WeekEventBlock event={event} timeZone={timeZone} />
                         </SchedulerEventDisclosure>
                       </div>
                     ))}
@@ -1148,7 +1254,7 @@ function WeekGrid({
                           width: `${100 - item.anchorWidth}%`,
                         }}
                       >
-                        <OverflowChip events={item.events} />
+                        <OverflowChip events={item.events} timeZone={timeZone} />
                       </div>
                     ))}
                   </div>
@@ -1165,20 +1271,22 @@ function WeekGrid({
 function MonthGrid({
   currentDate,
   events,
+  timeZone,
   onEventClick,
   onEmptySlotClick,
   onSelectDate,
 }: {
   currentDate: Date;
   events: SchedulerEvent[];
+  timeZone: string;
   onEventClick?: (event: SchedulerEvent) => void;
   onEmptySlotClick?: (slot: EmptySlot) => void;
   onSelectDate?: (date: Date) => void;
 }) {
   const days = getMonthDays(currentDate);
   const weekLabels = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
-  const today = new Date();
-  const monthEvents = getMonthEvents(events, currentDate);
+  const todayKey = getTodayKey(timeZone);
+  const monthEvents = getMonthEvents(events, currentDate, timeZone);
 
   // Clicking a day cell navigates to that day's Day view. If the parent hasn't
   // wired `onSelectDate` yet, fall back to the old empty-slot-click behavior.
@@ -1206,7 +1314,7 @@ function MonthGrid({
                   Month view
                 </p>
                 <h2 className='text-foreground text-base font-semibold sm:text-lg'>
-                  {currentDate.toLocaleDateString('en-US', { month: 'long', year: 'numeric' })}
+                  {dayjs(currentDate).format('MMMM YYYY')}
                 </h2>
               </div>
               <span className='text-muted-foreground text-xs'>
@@ -1229,8 +1337,9 @@ function MonthGrid({
 
         <div className='grid w-full' style={{ gridTemplateColumns: 'repeat(7, minmax(0, 1fr))' }}>
           {days.map(day => {
-            const dayEvents = getDayEvents(events, day);
+            const dayEvents = getDayEvents(events, day, timeZone);
             const hasCancelledEvents = dayEvents.some(event => isCancelledStatus(event.status));
+            const isToday = getCalendarKey(day) === todayKey;
 
             return (
               <div
@@ -1241,7 +1350,7 @@ function MonthGrid({
                 )}
                 role='button'
                 tabIndex={0}
-                aria-label={`Go to ${day.toLocaleDateString(undefined, { weekday: 'long', month: 'long', day: 'numeric' })}`}
+                aria-label={`Go to ${dayjs(day).format('dddd, MMMM D')}`}
                 onClick={() => handleDayClick(day)}
                 onKeyDown={event => {
                   if (event.key === 'Enter' || event.key === ' ') {
@@ -1254,12 +1363,12 @@ function MonthGrid({
                   <span
                     className={cn(
                       'flex h-6 w-6 items-center justify-center rounded text-xs font-semibold',
-                      isSameCalendarDay(day, today) &&
+                      isToday &&
                       (hasCancelledEvents
                         ? 'bg-destructive text-destructive-foreground'
                         : 'bg-primary text-primary-foreground'),
                       dayEvents.length > 0 &&
-                      !isSameCalendarDay(day, today) &&
+                      !isToday &&
                       (hasCancelledEvents ? 'bg-destructive/10' : 'bg-primary/10')
                     )}
                   >
@@ -1275,9 +1384,10 @@ function MonthGrid({
                       key={event.id}
                       event={event}
                       overlapEvents={[event]}
+                      timeZone={timeZone}
                       onViewDetails={onEventClick}
                     >
-                      <CompactEvent event={event} />
+                      <CompactEvent event={event} timeZone={timeZone} />
                     </SchedulerEventDisclosure>
                   ))}
                   {dayEvents.length > 3 ? (
@@ -1298,13 +1408,15 @@ function MonthGrid({
 function YearGrid({
   currentDate,
   events,
+  timeZone,
   onSelectDate,
 }: {
   currentDate: Date;
   events: SchedulerEvent[];
+  timeZone: string;
   onSelectDate?: (date: Date) => void;
 }) {
-  const today = new Date();
+  const todayKey = getTodayKey(timeZone);
 
   const months = Array.from(
     { length: 12 },
@@ -1314,21 +1426,21 @@ function YearGrid({
   return (
     <section className='bg-card grid w-full min-w-0 gap-3 overflow-hidden rounded-md border p-3 shadow-sm sm:grid-cols-2 xl:grid-cols-3'>
       {months.map(month => {
-        const monthEvents = getMonthEvents(events, month);
+        const monthEvents = getMonthEvents(events, month, timeZone);
 
         const monthDays = getMonthDays(month);
 
         const monthCancelledEventDays = new Set(
           monthEvents
             .filter(event => isCancelledStatus(event.status))
-            .map(event => getCalendarKey(event.startTime))
+            .map(event => getZonedDayKey(event.startTime, timeZone))
         );
 
         return (
           <div key={month.toISOString()} className='bg-background rounded-md border p-3'>
             <div className='mb-3 flex items-center justify-between gap-2'>
               <h3 className='text-foreground text-sm font-semibold'>
-                {month.toLocaleDateString('en-US', { month: 'long' })}
+                {dayjs(month).format('MMMM')}
               </h3>
 
               <span className='text-muted-foreground text-xs'>{monthEvents.length} sessions</span>
@@ -1346,7 +1458,7 @@ function YearGrid({
               {monthDays.map(day => {
                 const dayKey = getCalendarKey(day);
 
-                const dayEvents = getDayEvents(events, day);
+                const dayEvents = getDayEvents(events, day, timeZone);
 
                 const hasEvents = dayEvents.length > 0;
 
@@ -1354,20 +1466,22 @@ function YearGrid({
 
                 const inMonth = isSameMonth(day, month);
 
+                const isToday = dayKey === todayKey;
+
                 return (
                   <button
                     key={day.toISOString()}
                     type='button'
-                    aria-label={`Go to the week of ${day.toLocaleDateString(undefined, { weekday: 'long', month: 'long', day: 'numeric' })}`}
+                    aria-label={`Go to the week of ${dayjs(day).format('dddd, MMMM D')}`}
                     className={cn(
                       'hover:bg-muted relative flex aspect-square cursor-pointer items-center justify-center rounded text-[11px] font-semibold transition-colors',
                       inMonth ? 'text-foreground' : 'text-muted-foreground/50',
-                      isSameCalendarDay(day, today) &&
+                      isToday &&
                       (hasCancelledEvents
                         ? 'bg-destructive text-destructive-foreground'
                         : 'bg-primary text-primary-foreground'),
                       hasEvents &&
-                      !isSameCalendarDay(day, today) &&
+                      !isToday &&
                       (hasCancelledEvents
                         ? 'bg-destructive/10 ring-destructive/30 ring-1'
                         : 'bg-primary/10 ring-primary/30 ring-1')
@@ -1387,7 +1501,7 @@ function YearGrid({
                           'absolute bottom-1 h-1.5 w-1.5 rounded-full',
                           hasCancelledEvents
                             ? 'bg-destructive'
-                            : isSameCalendarDay(day, today)
+                            : isToday
                               ? 'bg-primary-foreground'
                               : 'bg-primary'
                         )}
@@ -1414,6 +1528,9 @@ export function SchedulerGrid({
   currentDate,
   events,
   view,
+  timeZone,
+  workingHours,
+  showWeekends = true,
   onEventClick,
   onEmptySlotClick,
   onSelectDate,
@@ -1423,6 +1540,14 @@ export function SchedulerGrid({
   currentDate: Date;
   events: SchedulerEvent[];
   view: SchedulerView;
+  /** IANA zone the schedule is taught in, e.g. `Africa/Nairobi`. Defaults to
+   * the viewer's own zone. */
+  timeZone?: string;
+  /** `HH:mm` bounds used to anchor the initial scroll when a day has no
+   * sessions. */
+  workingHours?: SchedulerWorkingHours;
+  /** When false, week view renders Monday to Friday only. */
+  showWeekends?: boolean;
   onEventClick?: (event: SchedulerEvent) => void;
   onEmptySlotClick?: (slot: EmptySlot) => void;
   /** Called when a day cell is clicked in Month or Year view — the parent owns
@@ -1436,6 +1561,10 @@ export function SchedulerGrid({
 }) {
   const [currentTime, setCurrentTime] = useState(() => new Date());
 
+  const displayZone = useMemo(() => resolveDisplayZone(timeZone), [timeZone]);
+
+  const resolvedWorkingHours = workingHours ?? defaultWorkingHours;
+
   useEffect(() => {
     const timer = window.setInterval(() => setCurrentTime(new Date()), 30 * 1000);
     return () => window.clearInterval(timer);
@@ -1447,6 +1576,8 @@ export function SchedulerGrid({
         currentDate={currentDate}
         currentTime={currentTime}
         events={events}
+        timeZone={displayZone}
+        workingHours={resolvedWorkingHours}
         onEventClick={onEventClick}
         onEmptySlotClick={onEmptySlotClick}
         canCreateClass={canCreateClass}
@@ -1460,6 +1591,7 @@ export function SchedulerGrid({
       <MonthGrid
         currentDate={currentDate}
         events={events}
+        timeZone={displayZone}
         onEventClick={onEventClick}
         onEmptySlotClick={onEmptySlotClick}
         onSelectDate={onSelectDate}
@@ -1468,7 +1600,14 @@ export function SchedulerGrid({
   }
 
   if (view === 'year') {
-    return <YearGrid currentDate={currentDate} events={events} onSelectDate={onSelectDate} />;
+    return (
+      <YearGrid
+        currentDate={currentDate}
+        events={events}
+        timeZone={displayZone}
+        onSelectDate={onSelectDate}
+      />
+    );
   }
 
   return (
@@ -1476,6 +1615,9 @@ export function SchedulerGrid({
       currentDate={currentDate}
       currentTime={currentTime}
       events={events}
+      timeZone={displayZone}
+      workingHours={resolvedWorkingHours}
+      showWeekends={showWeekends}
       onEventClick={onEventClick}
       onEmptySlotClick={onEmptySlotClick}
       canCreateClass={canCreateClass}
