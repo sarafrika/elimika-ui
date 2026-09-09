@@ -31,6 +31,7 @@ import {
 import { useUserDomain } from '@/src/features/dashboard/context/user-domain-context';
 import { invalidateJobApplicationWorkflowQueries } from '@/src/features/dashboard/workflow-query-invalidation';
 import { roleScopedDashboardPath } from '@/src/features/dashboard/lib/active-domain-storage';
+import { canRejectApplication } from '../application-status';
 
 function formatLabel(value?: string | null) {
   if (!value) return 'Not provided';
@@ -142,6 +143,10 @@ export function JobApplicantReviewPage({
   // Approved, and nothing more. The hire is the assign call, which is what creates the affiliation
   // and unlocks the class, so the page has to stop reading approval as the decision.
   const canAssign = application?.status === 'approved';
+  // Turning a candidate down outlives the approve step: the backend accepts REJECT on anything
+  // still live, and it is the only thing that hands an approved-but-unwanted instructor their
+  // held dates back while the job stays open.
+  const canReject = canRejectApplication(application?.status);
   const showApprovedNotHiredBanner = canAssign && (job?.status as string | undefined) === 'open';
   const payBelowApprovedRate =
     typeof job?.instructor_pay === 'number' &&
@@ -315,7 +320,7 @@ export function JobApplicantReviewPage({
                       onChange={event => setReviewNotes(event.target.value)}
                       placeholder='Add optional notes for this decision...'
                       className='min-h-24'
-                      disabled={!canReview}
+                      disabled={!canReject}
                     />
                   </div>
 
@@ -336,7 +341,7 @@ export function JobApplicantReviewPage({
                     <Button
                       variant='destructive'
                       onClick={() => handleReview('REJECT')}
-                      disabled={!canReview || reviewMutation.isPending}
+                      disabled={!canReject || reviewMutation.isPending}
                     >
                       <XCircle className='mr-2 size-4' />
                       Reject
@@ -361,11 +366,11 @@ export function JobApplicantReviewPage({
                     </p>
                   ) : null}
 
-                  {!canReview && !canAssign ? (
+                  {canReject ? null : (
                     <p className='text-muted-foreground text-xs'>
                       This application has already been finalised and can no longer be actioned.
                     </p>
-                  ) : null}
+                  )}
                 </div>
               </SectionCard>
             </div>

@@ -49,3 +49,10 @@ export const canWithdraw = (status?: string | null): boolean =>
 /** The organisation can still act on this candidate (shortlist / interview / offer / decide). */
 export const canReviewApplication = (status?: string | null): boolean =>
   MOVABLE_STAGES.includes((status ?? '').toLowerCase());
+
+/**
+ * Rejection stays open one stage longer than the funnel moves: approving is not hiring, so an
+ * approved candidate the organisation decides against must still be rejectable. Rejecting is also
+ * what releases the diary holds their application put on them.
+ */
+export const canRejectApplication = (status?: string | null): boolean => isLiveApplication(status);
