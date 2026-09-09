@@ -45,9 +45,13 @@ export function StudentOnboardingForm() {
 
     setIsSubmitting(true);
     try {
-      await createStudent({
+      const response = await createStudent({
         body: data,
       });
+
+      if (response.error) {
+        throw response.error;
+      }
 
       // Invalidate student-related queries
       await queryClient.invalidateQueries({ queryKey: ['students'] });
