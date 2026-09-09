@@ -124,7 +124,8 @@ export function getSettingsVariantConfig(
 
   // Admin help lives under the admin role segment; the bare `/dashboard/support`
   // path bypasses `roleScopedDashboardPath` and 404s.
-  const supportHref = variant === 'admin' ? '/dashboard/admin/support' : '/help';
+  const supportHref =
+    variant === 'admin' ? '/dashboard/admin/support' : 'https://sarafrika.com/contact';
   const roleLabel = formatDomain(normalizeUserDomainValue(profile?.user_domain) ?? variant);
 
   // The `access` tab was dropped everywhere: under four different labels

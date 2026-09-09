@@ -33,8 +33,8 @@ const OPPORTUNITIES = [
     title: 'Approved AI Upskilling Course',
     detail: 'Fund-eligible · Self-paced',
     action: 'Enroll',
-    href: '/courses',
-    requiresSignIn: false,
+    href: DASHBOARD_ENTRY_PATH,
+    requiresSignIn: true,
   },
 ] as const;
 

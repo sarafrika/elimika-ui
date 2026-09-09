@@ -24,11 +24,9 @@ export function MarketingTopNav() {
   });
   const cartItemCount = cartData?.items?.length ?? 0;
 
-  const navLinks: { label: string; href: string; external?: boolean }[] = [
-    { label: 'Catalogue', href: '/courses' },
-    { label: 'Help', href: '/help' },
-    { label: 'About Sarafrika', href: 'https://sarafrika.com', external: true },
-  ];
+  // The public catalogue and help routes were retired; the header is the brand,
+  // the cart and the way in.
+  const navLinks: { label: string; href: string; external?: boolean }[] = [];
 
   const isActive = (href: string) => {
     const [path] = href.split('#');

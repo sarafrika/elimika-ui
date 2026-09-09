@@ -1,7 +1,7 @@
 'use client';
 
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { ArrowLeft, CheckCircle2, TriangleAlert, XCircle } from 'lucide-react';
+import { ArrowLeft, BriefcaseBusiness, CheckCircle2, TriangleAlert, XCircle } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { useMemo, useState } from 'react';
 import { toast } from 'sonner';
@@ -89,8 +89,12 @@ export function JobApplicantReviewPage({
 
   const reviewMutation = useMutation({
     ...reviewApplicationMutation(),
-    onSuccess: async () => {
-      toast.success('Application reviewed successfully.');
+    onSuccess: async (_response, variables) => {
+      toast.success(
+        variables?.query?.action === 'APPROVE'
+          ? 'Approved. Nobody is hired yet — choose Hire for this class to go on.'
+          : 'Application rejected. The applicant has been notified.'
+      );
       setReviewNotes('');
       await invalidate();
     },
@@ -102,14 +106,14 @@ export function JobApplicantReviewPage({
   const assignMutation = useMutation({
     ...assignInstructorMutation(),
     onSuccess: async () => {
-      toast.success('Instructor assigned. Create the class to confirm the reserved bookings.');
+      toast.success('Hired. Create the class to confirm the dates.');
       await invalidate();
       router.push(
         roleScopedDashboardPath(activeDomain, `/dashboard/opportunities/${jobUuid}/create-class`)
       );
     },
     onError: error => {
-      toast.error(error instanceof Error ? error.message : 'Unable to assign this instructor.');
+      toast.error(error instanceof Error ? error.message : 'Unable to hire this instructor.');
     },
   });
 
@@ -135,7 +139,10 @@ export function JobApplicantReviewPage({
     (applicationsQuery.isLoading && !applicationsQuery.data);
   const notApprovedToTrain = application?.training_approved === false;
   const canReview = application?.status === 'pending';
+  // Approved, and nothing more. The hire is the assign call, which is what creates the affiliation
+  // and unlocks the class, so the page has to stop reading approval as the decision.
   const canAssign = application?.status === 'approved';
+  const showApprovedNotHiredBanner = canAssign && (job?.status as string | undefined) === 'open';
   const payBelowApprovedRate =
     typeof job?.instructor_pay === 'number' &&
     typeof application?.approved_rate === 'number' &&
@@ -158,6 +165,19 @@ export function JobApplicantReviewPage({
           title={instructor?.full_name ?? 'Applicant review'}
           description={`Scrutinise this instructor's full profile before deciding on their application${job?.title ? ` for “${job.title}”` : ''}.`}
         />
+
+        {showApprovedNotHiredBanner ? (
+          <div className='border-warning/60 bg-warning/10 flex flex-wrap items-center gap-3 rounded-md border p-4'>
+            <TriangleAlert className='text-warning size-5 shrink-0' />
+            <div className='min-w-0 text-sm'>
+              <div className='text-foreground font-medium'>Approved, not hired</div>
+              <p className='text-muted-foreground'>
+                This job is still open, no class exists, and the instructor has not joined your
+                organisation. Choose Hire for this class below.
+              </p>
+            </div>
+          </div>
+        ) : null}
 
         {isLoading ? (
           <div className='grid gap-4 md:grid-cols-[minmax(0,1fr)_360px]'>
@@ -209,7 +229,10 @@ export function JobApplicantReviewPage({
                   <div className='flex flex-wrap items-center gap-2'>
                     <StatusBadge
                       status={application.status}
-                      label={formatLabel(application.status)}
+                      tone={canAssign ? 'warning' : undefined}
+                      label={
+                        canAssign ? 'Approved — not yet hired' : formatLabel(application.status)
+                      }
                     />
                     {application.instructor_admin_verified ? (
                       <StatusBadge status='verified' label='Verified' />
@@ -222,8 +245,8 @@ export function JobApplicantReviewPage({
                     <div className='border-warning/60 bg-warning/10 text-foreground flex items-center gap-2 rounded-md border p-3'>
                       <TriangleAlert className='text-warning size-4 shrink-0' />
                       <span>
-                        Not approved to train this course or program yet — approval and assignment
-                        are blocked.
+                        Not approved to train this course or program yet — approval and hiring are
+                        blocked.
                       </span>
                     </div>
                   ) : null}
@@ -232,9 +255,9 @@ export function JobApplicantReviewPage({
                     <div className='border-warning/60 bg-warning/10 text-foreground flex items-center gap-2 rounded-md border p-3'>
                       <TriangleAlert className='text-warning size-4 shrink-0' />
                       <span>
-                        This job pays {formatCurrency(job?.instructor_pay)} per {basisUnit}, below the{' '}
-                        {formatCurrency(application.approved_rate)} on this instructor’s rate card.
-                        Assignment will be refused until you raise the instructor pay.
+                        This job pays {formatCurrency(job?.instructor_pay)} per {basisUnit}, below
+                        the {formatCurrency(application.approved_rate)} on this instructor’s rate
+                        card. Hiring will be refused until you raise the instructor pay.
                       </span>
                     </div>
                   ) : null}
@@ -297,17 +320,19 @@ export function JobApplicantReviewPage({
                   </div>
 
                   <div className='flex flex-wrap gap-2'>
-                    <Button
-                      onClick={() => handleReview('APPROVE')}
-                      disabled={!canReview || notApprovedToTrain || reviewMutation.isPending}
-                    >
-                      {reviewMutation.isPending ? (
-                        <Spinner className='mr-2 size-4' />
-                      ) : (
-                        <CheckCircle2 className='mr-2 size-4' />
-                      )}
-                      Approve
-                    </Button>
+                    {canAssign ? null : (
+                      <Button
+                        onClick={() => handleReview('APPROVE')}
+                        disabled={!canReview || notApprovedToTrain || reviewMutation.isPending}
+                      >
+                        {reviewMutation.isPending ? (
+                          <Spinner className='mr-2 size-4' />
+                        ) : (
+                          <CheckCircle2 className='mr-2 size-4' />
+                        )}
+                        Approve
+                      </Button>
+                    )}
                     <Button
                       variant='destructive'
                       onClick={() => handleReview('REJECT')}
@@ -317,14 +342,24 @@ export function JobApplicantReviewPage({
                       Reject
                     </Button>
                     <Button
-                      variant='secondary'
                       onClick={handleAssign}
                       disabled={!canAssign || notApprovedToTrain || assignMutation.isPending}
                     >
-                      {assignMutation.isPending ? <Spinner className='mr-2 size-4' /> : null}
-                      Assign instructor
+                      {assignMutation.isPending ? (
+                        <Spinner className='mr-2 size-4' />
+                      ) : (
+                        <BriefcaseBusiness className='mr-2 size-4' />
+                      )}
+                      Hire for this class
                     </Button>
                   </div>
+
+                  {canAssign ? (
+                    <p className='text-muted-foreground text-xs'>
+                      Hiring assigns the class, adds this instructor to your organisation, and takes
+                      you to the class you still have to create.
+                    </p>
+                  ) : null}
 
                   {!canReview && !canAssign ? (
                     <p className='text-muted-foreground text-xs'>

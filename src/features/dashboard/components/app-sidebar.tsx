@@ -27,6 +27,9 @@ import { useUserProfile } from '@/src/features/profile/context/profile-context';
 import { NavMain } from './nav-main';
 import { NavSecondary } from './nav-secondary';
 
+// The public help route was retired; support now goes to the Sarafrika contact page.
+const SUPPORT_HREF = 'https://sarafrika.com/contact';
+
 const UNVERIFIED_ORGANISATION_MENU_PREFIXES = [
   '/dashboard/overview',
   '/dashboard/account',
@@ -150,7 +153,7 @@ export function AppSidebar({
 
       <SidebarFooter className='w-full p-0'>
         {/* <NavUser items={menu?.user ?? []} /> */}
-        <SettingsSupportWidget href={'/help'} />
+        <SettingsSupportWidget href={SUPPORT_HREF} />
       </SidebarFooter>
     </Sidebar>
   );

@@ -1,15 +1,13 @@
 import { Circle, Mail, Phone } from 'lucide-react';
+import Image from 'next/image';
 import Link from 'next/link';
 
 const SARAFRIKA_HOME = 'https://sarafrika.com';
-const SARAFRIKA_LOGO = 'https://cms.sarafrika.com/api/media/file/sarafrika-logo.svg';
 
 // Elimika destinations, not the Sarafrika site map — the chrome belongs to
 // this product even though the body mirrors the marketing page.
 const EXPLORE_LINKS = [
-  { label: 'Course catalogue', href: '/courses' },
   { label: 'Skills Wallet', href: '/skills-wallet' },
-  { label: 'Help centre', href: '/help' },
   { label: 'Cart', href: '/cart' },
 ] as const;
 
@@ -32,26 +30,27 @@ export function ProductFooter() {
     <footer className='site-footer'>
       <div className='site-footer__inner'>
         <div className='footer-brand'>
-          <a
-            className='brand brand--footer'
-            aria-label='Sarafrika Home'
-            href={SARAFRIKA_HOME}
-            target='_blank'
-            rel='noopener noreferrer'
-          >
-            {/* cms.sarafrika.com is not in next.config remotePatterns, so this stays a plain img. */}
-            <img
-              src={SARAFRIKA_LOGO}
-              alt='Sarafrika'
-              width={1400}
-              height={900}
-              loading='lazy'
-              decoding='async'
+          {/* Elimika's own mark, served locally — the Sarafrika CMS logo is neither
+              this product's brand nor guaranteed to load. */}
+          <Link className='brand brand--footer' aria-label='Elimika home' href='/'>
+            <Image
+              src='/logos/elimika/elimika-logo-color.svg'
+              alt='Elimika'
+              width={180}
+              height={54}
+              className='brand__mark brand__mark--light'
             />
-          </a>
+            <Image
+              src='/logos/elimika/elimika-logo-white.svg'
+              alt='Elimika'
+              width={180}
+              height={54}
+              className='brand__mark brand__mark--dark'
+            />
+          </Link>
           <p>
-            One connected ecosystem for learning, talent, entertainment and community — built for
-            Africa and the world.
+            A verified record of what you can do — for learning, funding and work. Part of
+            Sarafrika, built for Africa and the world.
           </p>
           <div className='footer-socials'>
             {SOCIAL_LINKS.map(social => (

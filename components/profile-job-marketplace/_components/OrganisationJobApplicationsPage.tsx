@@ -1,7 +1,7 @@
 'use client';
 
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { ArrowLeft, BriefcaseBusiness } from 'lucide-react';
+import { ArrowLeft, BriefcaseBusiness, TriangleAlert } from 'lucide-react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useMemo, useState } from 'react';
@@ -67,14 +67,42 @@ const APPLICATION_PAGE_SIZE = 100;
  * notes sheet rather than firing on a bare click.
  */
 const REVIEW_ACTIONS = {
-  SHORTLIST: { title: 'Shortlist candidate', confirmLabel: 'Confirm shortlist' },
-  INTERVIEW: { title: 'Move to interview', confirmLabel: 'Confirm interview' },
-  OFFER: { title: 'Extend an offer', confirmLabel: 'Confirm offer' },
-  APPROVE: { title: 'Approve application', confirmLabel: 'Confirm approval' },
-  REJECT: { title: 'Reject application', confirmLabel: 'Confirm rejection' },
+  SHORTLIST: {
+    title: 'Shortlist candidate',
+    confirmLabel: 'Confirm shortlist',
+    successMessage: 'Shortlisted. Interview or make an offer when you are ready.',
+  },
+  INTERVIEW: {
+    title: 'Move to interview',
+    confirmLabel: 'Confirm interview',
+    successMessage: 'Interview scheduled. The applicant has been notified.',
+  },
+  OFFER: {
+    title: 'Extend an offer',
+    confirmLabel: 'Confirm offer',
+    successMessage: 'Offer sent. Approve them next, then hire them for this class.',
+  },
+  APPROVE: {
+    title: 'Approve application',
+    confirmLabel: 'Confirm approval',
+    successMessage: 'Approved. Nobody is hired yet — choose Hire for this class to go on.',
+  },
+  REJECT: {
+    title: 'Reject application',
+    confirmLabel: 'Confirm rejection',
+    successMessage: 'Application rejected. The applicant has been notified.',
+  },
 } as const;
 
 type ReviewAction = keyof typeof REVIEW_ACTIONS;
+
+/** The review endpoint is multiplexed on `action`, so the toast has to name the step just taken. */
+function reviewSuccessMessage(action?: string | null) {
+  const entry = REVIEW_ACTIONS[(action ?? '') as ReviewAction] as
+    | (typeof REVIEW_ACTIONS)[ReviewAction]
+    | undefined;
+  return entry?.successMessage ?? 'Application reviewed successfully.';
+}
 
 function toDateTimeInputValue(value?: string | Date | null) {
   if (!value) return '';
@@ -169,8 +197,8 @@ export function OrganisationJobApplicationsPage({ jobUuid }: JobApplicationsPage
 
   const reviewMutation = useMutation({
     ...reviewApplicationMutation(),
-    onSuccess: async () => {
-      toast.success('Application reviewed successfully.');
+    onSuccess: async (_response, variables) => {
+      toast.success(reviewSuccessMessage(variables?.query?.action));
       setReviewNotes('');
       setInterviewAt('');
       setPendingReview(null);
@@ -190,12 +218,12 @@ export function OrganisationJobApplicationsPage({ jobUuid }: JobApplicationsPage
   const assignMutation = useMutation({
     ...assignInstructorMutation(),
     onSuccess: async () => {
-      toast.success('Instructor assigned. Create the class to confirm the reserved bookings.');
+      toast.success('Hired. Create the class to confirm the dates.');
       await invalidateJobApplicationWorkflowQueries(queryClient);
       router.push(createClassHref);
     },
     onError: error => {
-      toast.error(error instanceof Error ? error.message : 'Unable to assign this instructor.');
+      toast.error(error instanceof Error ? error.message : 'Unable to hire this instructor.');
     },
   });
 
@@ -244,6 +272,12 @@ export function OrganisationJobApplicationsPage({ jobUuid }: JobApplicationsPage
     [applications]
   );
 
+  // An open job with an approved applicant is the stall this banner exists to name: approving is
+  // not hiring, so nothing downstream — class, affiliation — has happened yet.
+  const jobStatus = job?.status as string | undefined;
+  const hasApprovedApplicant = applications.some(application => application.status === 'approved');
+  const showApprovedNotHiredBanner = jobStatus === 'open' && hasApprovedApplicant;
+
   const openReviewDialog = (application: ClassMarketplaceJobApplication, action: ReviewAction) => {
     setPendingReview({ application, action });
     setReviewNotes(application.review_notes ?? '');
@@ -281,7 +315,7 @@ export function OrganisationJobApplicationsPage({ jobUuid }: JobApplicationsPage
 
   const handleAssign = (application: ClassMarketplaceJobApplication) => {
     if (!application.uuid) {
-      toast.error('This application cannot be assigned yet.');
+      toast.error('This application cannot be hired yet.');
       return;
     }
 
@@ -338,14 +372,27 @@ export function OrganisationJobApplicationsPage({ jobUuid }: JobApplicationsPage
           title={
             isJobsLoading && !jobsResponse ? 'Job applications' : (job?.title ?? 'Job applications')
           }
-          description='Review applicants, approve or reject submissions, then assign an approved instructor.'
+          description='Review applicants, approve or reject submissions, then hire one approved instructor for the class.'
         />
 
-        {(job?.status as string | undefined) === 'awaiting_class' ? (
+        {showApprovedNotHiredBanner ? (
+          <div className='border-warning/60 bg-warning/10 flex flex-wrap items-center gap-3 rounded-md border p-4'>
+            <TriangleAlert className='text-warning size-5 shrink-0' />
+            <div className='min-w-0 text-sm'>
+              <div className='text-foreground font-medium'>Approved, not hired</div>
+              <p className='text-muted-foreground'>
+                This job is still open, no class exists, and the instructor has not joined your
+                organisation. Choose Hire for this class on the applicant you want.
+              </p>
+            </div>
+          </div>
+        ) : null}
+
+        {jobStatus === 'awaiting_class' ? (
           <div className='border-primary/40 bg-primary/5 flex flex-wrap items-center gap-3 rounded-md border p-4'>
             <BriefcaseBusiness className='text-primary size-5 shrink-0' />
             <div className='min-w-0 text-sm'>
-              <div className='text-foreground font-medium'>An instructor is assigned</div>
+              <div className='text-foreground font-medium'>An instructor is hired</div>
               <p className='text-muted-foreground'>
                 The venue and equipment are still only reserved. Create the class to confirm them.
               </p>

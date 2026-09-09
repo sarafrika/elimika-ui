@@ -110,7 +110,7 @@ export function HelpSection() {
 
         <div className='flex flex-wrap items-center gap-3'>
           <Button asChild className='rounded-full px-6' variant='outline'>
-            <Link href='/help'>Help center</Link>
+            <a href='https://sarafrika.com/contact' target='_blank' rel='noopener noreferrer'>Help center</a>
           </Button>
 
           <Dialog>
