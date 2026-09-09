@@ -147,8 +147,7 @@ export default function CourseCreatorCoursesContent() {
       searchParams: {
         ...sharedFilters,
         ...(deferredSearch ? { name_like: deferredSearch } : {}),
-        // Category membership uses the search API's list operator, even for one UUID.
-        ...(category !== 'all' ? { categoryUuids_in: category } : {}),
+        // Category filtering is applied client-side below using the fetched records.
       },
       pageable: { page, size: PAGE_SIZE },
     },
@@ -158,7 +157,7 @@ export default function CourseCreatorCoursesContent() {
       searchParams: {
         ...sharedFilters,
         ...(deferredSearch ? { title_like: deferredSearch } : {}),
-        ...(category !== 'all' ? { categoryUuid: category } : {}),
+        // Category filtering is applied client-side below using the fetched records.
       },
       pageable: { page, size: PAGE_SIZE },
     },
@@ -206,12 +205,26 @@ export default function CourseCreatorCoursesContent() {
       coursesData?.content?.forEach(item => items.push({ type: 'courses', item }));
     if (contentType !== 'courses')
       programsData?.content?.forEach(item => items.push({ type: 'programs', item }));
-    return items.sort((a, b) => {
+    // Apply client-side category filter when a category is selected.
+    const filtered =
+      category === 'all'
+        ? items
+        : items.filter(off => {
+          if (off.type === 'courses') {
+            // `category_uuids` is an array on courses
+            const cu = (off.item as Course).category_uuids ?? [];
+            return cu.includes(category);
+          }
+          // Programs use a single `category_uuid` field
+          return (off.item as TrainingProgram).category_uuid === category;
+        });
+
+    return filtered.sort((a, b) => {
       const aDate = a.item.updated_date ? new Date(a.item.updated_date).getTime() : 0;
       const bDate = b.item.updated_date ? new Date(b.item.updated_date).getTime() : 0;
       return bDate - aDate || titleOf(a).localeCompare(titleOf(b));
     });
-  }, [contentType, coursesData, programsData]);
+  }, [contentType, coursesData, programsData, category]);
   const categories = useMemo(() => {
     if (categoriesQuery.data?.error || categoriesQuery.data?.success === false) return [];
     return [...(categoriesQuery.data?.data?.content ?? [])].sort((a, b) =>
@@ -623,8 +636,8 @@ function OfferingRow({ offering, onDelete }: { offering: Offering; onDelete: () 
   const Icon = offering.type === 'courses' ? BookOpen : Layers;
   return (
     <TableRow className='hover:bg-primary/[0.025] [&>td]:px-3 [&>td]:py-4 [&>td]:text-sm'>
-      <TableCell className='!pl-5'>
-        <div className='flex min-w-72 items-center gap-3'>
+      <TableCell className='!pl-2'>
+        <div className='flex w-full items-center gap-3'>
           <div
             className={cn(
               'relative flex h-12 w-16 shrink-0 items-center justify-center overflow-hidden rounded-md',
@@ -650,26 +663,37 @@ function OfferingRow({ offering, onDelete }: { offering: Offering; onDelete: () 
               </>
             )}
           </div>
-          <div className='min-w-0'>
+
+          {/* flex-1 is important */}
+          <div className='min-w-0 w-full flex-1'>
             {item.uuid ? (
               <Link
                 href={previewHref(offering)}
-                className='hover:text-primary line-clamp-1 text-sm leading-6 font-semibold'
+                className='hover:text-primary block line-clamp-2 text-sm leading-6 font-semibold'
                 title={title}
               >
                 {title}
               </Link>
             ) : (
-              <span className='font-semibold'>{title}</span>
+              <span
+                className='block line-clamp-2 font-semibold'
+                title={title}
+              >
+                {title}
+              </span>
             )}
-            <p className='text-muted-foreground mt-0.5 line-clamp-1 max-w-72 text-sm'>
+
+            <p
+              className='text-muted-foreground mt-0.5 max-w-100 truncate text-sm'
+              title={description || 'No description added yet.'}
+            >
               {description || 'No description added yet.'}
             </p>
 
-            <div className='mt-1 flex items-center gap-2'>
+            <div className='mt-1 flex min-w-0 items-center gap-2'>
               <span
                 className={cn(
-                  'inline-flex items-center gap-1.5 rounded-md px-2 py-1 text-xs font-semibold',
+                  'inline-flex shrink-0 items-center gap-1.5 rounded-md px-2 py-1 text-xs font-semibold',
                   offering.type === 'courses'
                     ? 'bg-muted text-muted-foreground'
                     : 'bg-primary/10 text-primary'
@@ -680,13 +704,22 @@ function OfferingRow({ offering, onDelete }: { offering: Offering; onDelete: () 
               </span>
 
               {offering.type === 'courses' && (
-                <p className='text-muted-foreground text-xs'>
+                <p
+                  className='text-muted-foreground min-w-0 truncate text-xs'
+                  title={
+                    offering.item.training_requirements
+                      ? `${offering.item.training_requirements.length} training requirements`
+                      : item.uuid
+                        ? 'View training requirements'
+                        : 'Requirements unavailable'
+                  }
+                >
                   {offering.item.training_requirements ? (
                     `${offering.item.training_requirements.length} training requirements`
                   ) : item.uuid ? (
                     <Link
                       href={previewHref(offering)}
-                      className='hover:text-primary underline underline-offset-2'
+                      className='hover:text-primary block truncate underline underline-offset-2'
                     >
                       View training requirements
                     </Link>

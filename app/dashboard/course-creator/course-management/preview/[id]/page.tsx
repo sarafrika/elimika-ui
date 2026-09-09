@@ -38,7 +38,8 @@ function Page() {
     return <CourseCreatorEmptyState />;
   }
 
-  return <CourseRecordPage courseUuid={courseUuid} backHref={COURSE_MANAGEMENT_HREF} />;
+  return <CourseRecordPage className='my-6' courseUuid={courseUuid} backHref={COURSE_MANAGEMENT_HREF} />
+    ;
 }
 
 export default Page;
