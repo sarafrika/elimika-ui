@@ -4163,15 +4163,15 @@ export const InstructorEducationSchema = {
       example: '2020 - University of Nairobi',
       readOnly: true,
     },
+    education_level: {
+      $ref: '#/components/schemas/EducationLevelEnum',
+    },
     years_since_completion: {
       type: ['integer', 'null'],
       format: 'int32',
       description: '**[READ-ONLY]** Number of years since the qualification was completed.',
       example: 4,
       readOnly: true,
-    },
-    education_level: {
-      $ref: '#/components/schemas/EducationLevelEnum',
     },
     has_certificate_number: {
       type: 'boolean',
@@ -4420,19 +4420,19 @@ export const InstructorDocumentSchema = {
       example: 'admin@sarafrika.com',
       readOnly: true,
     },
+    is_expired: {
+      type: 'boolean',
+      description:
+        '**[READ-ONLY]** Indicates if the document has expired based on the expiry date.',
+      example: false,
+      readOnly: true,
+    },
     file_url: {
       type: 'string',
       description:
         '**[READ-ONLY]** API-relative URL for previewing or downloading the uploaded document.',
       example:
         '/api/v1/instructors/i1s2t3r4-5u6c-7t8o-9r10-abcdefghijkl/documents/files/profile_documents/instructors/i1s2t3r4-5u6c-7t8o-9r10-abcdefghijkl/550e8400-e29b-41d4-a716-446655440000.pdf',
-      readOnly: true,
-    },
-    is_expired: {
-      type: 'boolean',
-      description:
-        '**[READ-ONLY]** Indicates if the document has expired based on the expiry date.',
-      example: false,
       readOnly: true,
     },
     file_size_formatted: {
@@ -4976,6 +4976,13 @@ export const CourseSchema = {
       example: true,
       readOnly: true,
     },
+    accepts_new_enrollments: {
+      type: 'boolean',
+      description:
+        '**[READ-ONLY]** Indicates if the course is currently accepting new student enrollments.',
+      example: true,
+      readOnly: true,
+    },
     is_draft: {
       type: 'boolean',
       description: '**[READ-ONLY]** Indicates if the course is still in draft mode.',
@@ -4992,13 +4999,6 @@ export const CourseSchema = {
       type: 'boolean',
       description: '**[READ-ONLY]** Indicates if the course is currently under review.',
       example: false,
-      readOnly: true,
-    },
-    accepts_new_enrollments: {
-      type: 'boolean',
-      description:
-        '**[READ-ONLY]** Indicates if the course is currently accepting new student enrollments.',
-      example: true,
       readOnly: true,
     },
     total_duration_display: {
@@ -7069,19 +7069,19 @@ export const CourseCreatorDocumentDTOSchema = {
       type: 'string',
       readOnly: true,
     },
+    is_expired: {
+      type: 'boolean',
+      description:
+        '**[READ-ONLY]** Indicates if the document has expired based on the expiry date.',
+      example: false,
+      readOnly: true,
+    },
     file_url: {
       type: 'string',
       description:
         '**[READ-ONLY]** API-relative URL for previewing or downloading the uploaded document.',
       example:
         '/api/v1/course-creators/c1e2a3t4-5o6r-7c8r-9e10-abcdefghijkl/documents/files/profile_documents/course-creators/c1e2a3t4-5o6r-7c8r-9e10-abcdefghijkl/550e8400-e29b-41d4-a716-446655440000.pdf',
-      readOnly: true,
-    },
-    is_expired: {
-      type: 'boolean',
-      description:
-        '**[READ-ONLY]** Indicates if the document has expired based on the expiry date.',
-      example: false,
       readOnly: true,
     },
     file_size_formatted: {
@@ -10562,6 +10562,99 @@ export const ApiResponseVoidSchema = {
       type: 'string',
     },
     error: {},
+  },
+} as const;
+
+export const ApiResponseOrganisationDocumentSchema = {
+  type: 'object',
+  properties: {
+    success: {
+      type: 'boolean',
+    },
+    data: {
+      $ref: '#/components/schemas/OrganisationDocument',
+    },
+    message: {
+      type: 'string',
+    },
+    error: {},
+  },
+} as const;
+
+export const OrganisationDocumentSchema = {
+  type: 'object',
+  description: 'Validation document attached to an organisation',
+  properties: {
+    uuid: {
+      type: 'string',
+      format: 'uuid',
+      description: 'Unique identifier of the document',
+      readOnly: true,
+    },
+    organisation_uuid: {
+      type: 'string',
+      format: 'uuid',
+      description: 'Organisation the document belongs to',
+    },
+    document_type_uuid: {
+      type: 'string',
+      format: 'uuid',
+      description: 'Document type this file satisfies',
+    },
+    original_filename: {
+      type: 'string',
+      description: 'Filename as supplied by the uploader',
+    },
+    stored_filename: {
+      type: 'string',
+      description: 'Filename as stored',
+    },
+    file_path: {
+      type: 'string',
+      description: 'Path the stored file is served from',
+    },
+    file_size_bytes: {
+      type: 'integer',
+      format: 'int64',
+      description: 'Size of the stored file in bytes',
+    },
+    mime_type: {
+      type: 'string',
+      description: 'MIME type of the stored file',
+    },
+    title: {
+      type: 'string',
+      description: 'Human-readable title for the document',
+    },
+    description: {
+      type: 'string',
+      description: 'Notes supplied with the document',
+    },
+    upload_date: {
+      type: 'string',
+      format: 'date-time',
+      description: 'When the document was uploaded',
+      readOnly: true,
+    },
+    is_verified: {
+      type: 'boolean',
+      description: 'Whether a reviewer has verified the document',
+      readOnly: true,
+    },
+    status: {
+      $ref: '#/components/schemas/StatusEnum7',
+    },
+    expiry_date: {
+      type: 'string',
+      format: 'date',
+      description: 'Expiry date, where the document type carries one',
+    },
+    created_date: {
+      type: 'string',
+      format: 'date-time',
+      description: 'When the record was created',
+      readOnly: true,
+    },
   },
 } as const;
 
@@ -17010,6 +17103,25 @@ export const OrganisationDashboardStatsSchema = {
   },
 } as const;
 
+export const ApiResponseListOrganisationDocumentSchema = {
+  type: 'object',
+  properties: {
+    success: {
+      type: 'boolean',
+    },
+    data: {
+      type: 'array',
+      items: {
+        $ref: '#/components/schemas/OrganisationDocument',
+      },
+    },
+    message: {
+      type: 'string',
+    },
+    error: {},
+  },
+} as const;
+
 export const ApiResponseListStudentGroupSchema = {
   type: 'object',
   properties: {
@@ -19154,7 +19266,7 @@ export const ApiResponseListDocumentTypeOptionSchema = {
 
 export const DocumentTypeOptionSchema = {
   type: 'object',
-  description: 'Selectable document type metadata for instructor and course creator uploads',
+  description: 'Selectable document type metadata for profile and organisation uploads',
   properties: {
     uuid: {
       type: 'string',
@@ -19189,6 +19301,16 @@ export const DocumentTypeOptionSchema = {
     is_required: {
       type: 'boolean',
       description: 'Whether this document type is mandatory in onboarding flows',
+    },
+    applies_to: {
+      type: 'string',
+      description: 'Which onboarding flow asks for this document',
+      example: 'ORGANISATION',
+    },
+    requires_expiry: {
+      type: 'boolean',
+      description:
+        'Whether this document type carries an expiry date. Organisation licences do not.',
     },
   },
 } as const;

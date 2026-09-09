@@ -2099,11 +2099,11 @@ export type InstructorEducation = {
    * **[READ-ONLY]** Formatted string showing year of completion and school name.
    */
   readonly formatted_completion?: string;
+  education_level?: EducationLevelEnum;
   /**
    * **[READ-ONLY]** Number of years since the qualification was completed.
    */
   readonly years_since_completion?: number | null;
-  education_level?: EducationLevelEnum;
   /**
    * **[READ-ONLY]** Indicates if the education record has a certificate number provided.
    */
@@ -2219,13 +2219,13 @@ export type InstructorDocument = {
    */
   readonly updated_by?: string;
   /**
-   * **[READ-ONLY]** API-relative URL for previewing or downloading the uploaded document.
-   */
-  readonly file_url?: string;
-  /**
    * **[READ-ONLY]** Indicates if the document has expired based on the expiry date.
    */
   readonly is_expired?: boolean;
+  /**
+   * **[READ-ONLY]** API-relative URL for previewing or downloading the uploaded document.
+   */
+  readonly file_url?: string;
   /**
    * **[READ-ONLY]** Human-readable formatted file size.
    */
@@ -2480,6 +2480,10 @@ export type Course = {
    */
   readonly is_published?: boolean;
   /**
+   * **[READ-ONLY]** Indicates if the course is currently accepting new student enrollments.
+   */
+  readonly accepts_new_enrollments?: boolean;
+  /**
    * **[READ-ONLY]** Indicates if the course is still in draft mode.
    */
   readonly is_draft?: boolean;
@@ -2491,10 +2495,6 @@ export type Course = {
    * **[READ-ONLY]** Indicates if the course is currently under review.
    */
   readonly is_in_review?: boolean;
-  /**
-   * **[READ-ONLY]** Indicates if the course is currently accepting new student enrollments.
-   */
-  readonly accepts_new_enrollments?: boolean;
   /**
    * **[READ-ONLY]** Human-readable format of total course duration.
    */
@@ -3358,13 +3358,13 @@ export type CourseCreatorDocumentDto = {
   readonly updated_date?: Date;
   readonly updated_by?: string;
   /**
-   * **[READ-ONLY]** API-relative URL for previewing or downloading the uploaded document.
-   */
-  readonly file_url?: string;
-  /**
    * **[READ-ONLY]** Indicates if the document has expired based on the expiry date.
    */
   readonly is_expired?: boolean;
+  /**
+   * **[READ-ONLY]** API-relative URL for previewing or downloading the uploaded document.
+   */
+  readonly file_url?: string;
   /**
    * **[READ-ONLY]** Human-readable formatted file size.
    */
@@ -5179,6 +5179,76 @@ export type ApiResponseVoid = {
   data?: unknown;
   message?: string;
   error?: unknown;
+};
+
+export type ApiResponseOrganisationDocument = {
+  success?: boolean;
+  data?: OrganisationDocument;
+  message?: string;
+  error?: unknown;
+};
+
+/**
+ * Validation document attached to an organisation
+ */
+export type OrganisationDocument = {
+  /**
+   * Unique identifier of the document
+   */
+  readonly uuid?: string;
+  /**
+   * Organisation the document belongs to
+   */
+  organisation_uuid?: string;
+  /**
+   * Document type this file satisfies
+   */
+  document_type_uuid?: string;
+  /**
+   * Filename as supplied by the uploader
+   */
+  original_filename?: string;
+  /**
+   * Filename as stored
+   */
+  stored_filename?: string;
+  /**
+   * Path the stored file is served from
+   */
+  file_path?: string;
+  /**
+   * Size of the stored file in bytes
+   */
+  file_size_bytes?: bigint;
+  /**
+   * MIME type of the stored file
+   */
+  mime_type?: string;
+  /**
+   * Human-readable title for the document
+   */
+  title?: string;
+  /**
+   * Notes supplied with the document
+   */
+  description?: string;
+  /**
+   * When the document was uploaded
+   */
+  readonly upload_date?: Date;
+  /**
+   * Whether a reviewer has verified the document
+   */
+  readonly is_verified?: boolean;
+  status?: StatusEnum7;
+  /**
+   * Expiry date, where the document type carries one
+   */
+  expiry_date?: Date;
+  /**
+   * When the record was created
+   */
+  readonly created_date?: Date;
 };
 
 /**
@@ -8589,6 +8659,13 @@ export type OrganisationDashboardStats = {
   total_branches?: bigint;
 };
 
+export type ApiResponseListOrganisationDocument = {
+  success?: boolean;
+  data?: Array<OrganisationDocument>;
+  message?: string;
+  error?: unknown;
+};
+
 export type ApiResponseListStudentGroup = {
   success?: boolean;
   data?: Array<StudentGroup>;
@@ -9777,7 +9854,7 @@ export type ApiResponseListDocumentTypeOption = {
 };
 
 /**
- * Selectable document type metadata for instructor and course creator uploads
+ * Selectable document type metadata for profile and organisation uploads
  */
 export type DocumentTypeOption = {
   /**
@@ -9804,6 +9881,14 @@ export type DocumentTypeOption = {
    * Whether this document type is mandatory in onboarding flows
    */
   is_required?: boolean;
+  /**
+   * Which onboarding flow asks for this document
+   */
+  applies_to?: string;
+  /**
+   * Whether this document type carries an expiry date. Organisation licences do not.
+   */
+  requires_expiry?: boolean;
 };
 
 export type ApiResponsePagedDtoCurrency = {
@@ -20755,6 +20840,49 @@ export type RequestOrganisationVerificationResponses = {
 export type RequestOrganisationVerificationResponse =
   RequestOrganisationVerificationResponses[keyof RequestOrganisationVerificationResponses];
 
+export type UploadOrganisationDocumentData = {
+  body?: {
+    file: Blob | File;
+  };
+  path: {
+    /**
+     * UUID of the organisation the document belongs to
+     */
+    uuid: string;
+  };
+  query: {
+    document_type_uuid: string;
+    title?: string;
+    description?: string;
+    expiry_date?: Date;
+  };
+  url: '/api/v1/organisations/{uuid}/documents/upload';
+};
+
+export type UploadOrganisationDocumentErrors = {
+  /**
+   * Not Found
+   */
+  404: ResponseDtoVoid;
+  /**
+   * Internal Server Error
+   */
+  500: ResponseDtoVoid;
+};
+
+export type UploadOrganisationDocumentError =
+  UploadOrganisationDocumentErrors[keyof UploadOrganisationDocumentErrors];
+
+export type UploadOrganisationDocumentResponses = {
+  /**
+   * Document uploaded successfully
+   */
+  201: ApiResponseOrganisationDocument;
+};
+
+export type UploadOrganisationDocumentResponse =
+  UploadOrganisationDocumentResponses[keyof UploadOrganisationDocumentResponses];
+
 export type ListGroupsData = {
   body?: never;
   path: {
@@ -29909,6 +30037,42 @@ export type GetOrganisationStatisticsResponses = {
 export type GetOrganisationStatisticsResponse =
   GetOrganisationStatisticsResponses[keyof GetOrganisationStatisticsResponses];
 
+export type GetOrganisationDocumentsData = {
+  body?: never;
+  path: {
+    /**
+     * UUID of the organisation
+     */
+    uuid: string;
+  };
+  query?: never;
+  url: '/api/v1/organisations/{uuid}/documents';
+};
+
+export type GetOrganisationDocumentsErrors = {
+  /**
+   * Not Found
+   */
+  404: ResponseDtoVoid;
+  /**
+   * Internal Server Error
+   */
+  500: ResponseDtoVoid;
+};
+
+export type GetOrganisationDocumentsError =
+  GetOrganisationDocumentsErrors[keyof GetOrganisationDocumentsErrors];
+
+export type GetOrganisationDocumentsResponses = {
+  /**
+   * OK
+   */
+  200: ApiResponseListOrganisationDocument;
+};
+
+export type GetOrganisationDocumentsResponse =
+  GetOrganisationDocumentsResponses[keyof GetOrganisationDocumentsResponses];
+
 export type ListRosterData = {
   body?: never;
   path: {
@@ -31709,7 +31873,12 @@ export type GetClassEnrolmentEligibilityResponse =
 export type ListDocumentTypesData = {
   body?: never;
   path?: never;
-  query?: never;
+  query?: {
+    /**
+     * Onboarding flow the checklist is for
+     */
+    applies_to?: string;
+  };
   url: '/api/v1/document-types';
 };
 
@@ -35461,6 +35630,46 @@ export type DeleteSourceResponses = {
 };
 
 export type DeleteSourceResponse = DeleteSourceResponses[keyof DeleteSourceResponses];
+
+export type DeleteOrganisationDocumentData = {
+  body?: never;
+  path: {
+    /**
+     * UUID of the organisation
+     */
+    uuid: string;
+    /**
+     * UUID of the document to remove
+     */
+    documentUuid: string;
+  };
+  query?: never;
+  url: '/api/v1/organisations/{uuid}/documents/{documentUuid}';
+};
+
+export type DeleteOrganisationDocumentErrors = {
+  /**
+   * Not Found
+   */
+  404: ResponseDtoVoid;
+  /**
+   * Internal Server Error
+   */
+  500: ResponseDtoVoid;
+};
+
+export type DeleteOrganisationDocumentError =
+  DeleteOrganisationDocumentErrors[keyof DeleteOrganisationDocumentErrors];
+
+export type DeleteOrganisationDocumentResponses = {
+  /**
+   * OK
+   */
+  200: ApiResponseVoid;
+};
+
+export type DeleteOrganisationDocumentResponse =
+  DeleteOrganisationDocumentResponses[keyof DeleteOrganisationDocumentResponses];
 
 export type ClearInstructorAvailabilityData = {
   body?: never;
