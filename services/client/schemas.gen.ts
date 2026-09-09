@@ -2266,6 +2266,12 @@ export const QuizAttemptSchema = {
       example: '85.00 / 100.00 (85%)',
       readOnly: true,
     },
+    time_display: {
+      type: 'string',
+      description: '**[READ-ONLY]** Formatted display of the time taken to complete the quiz.',
+      example: '1 hour 15 minutes',
+      readOnly: true,
+    },
     attempt_category: {
       type: 'string',
       description: '**[READ-ONLY]** Formatted category of the attempt based on outcome and status.',
@@ -2276,12 +2282,6 @@ export const QuizAttemptSchema = {
       type: 'string',
       description: '**[READ-ONLY]** Comprehensive summary of the quiz attempt performance.',
       example: 'Passed on attempt 2 with 85% score',
-      readOnly: true,
-    },
-    time_display: {
-      type: 'string',
-      description: '**[READ-ONLY]** Formatted display of the time taken to complete the quiz.',
-      example: '1 hour 15 minutes',
       readOnly: true,
     },
   },
@@ -4420,19 +4420,19 @@ export const InstructorDocumentSchema = {
       example: 'admin@sarafrika.com',
       readOnly: true,
     },
-    is_expired: {
-      type: 'boolean',
-      description:
-        '**[READ-ONLY]** Indicates if the document has expired based on the expiry date.',
-      example: false,
-      readOnly: true,
-    },
     file_url: {
       type: 'string',
       description:
         '**[READ-ONLY]** API-relative URL for previewing or downloading the uploaded document.',
       example:
         '/api/v1/instructors/i1s2t3r4-5u6c-7t8o-9r10-abcdefghijkl/documents/files/profile_documents/instructors/i1s2t3r4-5u6c-7t8o-9r10-abcdefghijkl/550e8400-e29b-41d4-a716-446655440000.pdf',
+      readOnly: true,
+    },
+    is_expired: {
+      type: 'boolean',
+      description:
+        '**[READ-ONLY]** Indicates if the document has expired based on the expiry date.',
+      example: false,
       readOnly: true,
     },
     file_size_formatted: {
@@ -4633,6 +4633,13 @@ export const AvailabilitySlotSchema = {
       example: 'instructor@sarafrika.com',
       readOnly: true,
     },
+    duration_minutes: {
+      type: 'integer',
+      format: 'int64',
+      description: '**[READ-ONLY]** Duration of the availability slot in minutes.',
+      example: 480,
+      readOnly: true,
+    },
     duration_formatted: {
       type: 'string',
       description: '**[READ-ONLY]** Human-readable formatted duration.',
@@ -4656,13 +4663,6 @@ export const AvailabilitySlotSchema = {
       type: 'string',
       description: '**[READ-ONLY]** Human-readable description of the availability pattern.',
       example: 'Weekly on Monday',
-      readOnly: true,
-    },
-    duration_minutes: {
-      type: 'integer',
-      format: 'int64',
-      description: '**[READ-ONLY]** Duration of the availability slot in minutes.',
-      example: 480,
       readOnly: true,
     },
   },
@@ -4976,13 +4976,6 @@ export const CourseSchema = {
       example: true,
       readOnly: true,
     },
-    accepts_new_enrollments: {
-      type: 'boolean',
-      description:
-        '**[READ-ONLY]** Indicates if the course is currently accepting new student enrollments.',
-      example: true,
-      readOnly: true,
-    },
     is_draft: {
       type: 'boolean',
       description: '**[READ-ONLY]** Indicates if the course is still in draft mode.',
@@ -4999,6 +4992,13 @@ export const CourseSchema = {
       type: 'boolean',
       description: '**[READ-ONLY]** Indicates if the course is currently under review.',
       example: false,
+      readOnly: true,
+    },
+    accepts_new_enrollments: {
+      type: 'boolean',
+      description:
+        '**[READ-ONLY]** Indicates if the course is currently accepting new student enrollments.',
+      example: true,
       readOnly: true,
     },
     total_duration_display: {
@@ -7069,19 +7069,19 @@ export const CourseCreatorDocumentDTOSchema = {
       type: 'string',
       readOnly: true,
     },
-    is_expired: {
-      type: 'boolean',
-      description:
-        '**[READ-ONLY]** Indicates if the document has expired based on the expiry date.',
-      example: false,
-      readOnly: true,
-    },
     file_url: {
       type: 'string',
       description:
         '**[READ-ONLY]** API-relative URL for previewing or downloading the uploaded document.',
       example:
         '/api/v1/course-creators/c1e2a3t4-5o6r-7c8r-9e10-abcdefghijkl/documents/files/profile_documents/course-creators/c1e2a3t4-5o6r-7c8r-9e10-abcdefghijkl/550e8400-e29b-41d4-a716-446655440000.pdf',
+      readOnly: true,
+    },
+    is_expired: {
+      type: 'boolean',
+      description:
+        '**[READ-ONLY]** Indicates if the document has expired based on the expiry date.',
+      example: false,
       readOnly: true,
     },
     file_size_formatted: {
@@ -7820,6 +7820,73 @@ export const CommerceCatalogueItemSchema = {
       format: 'date-time',
       description: 'Last updated timestamp',
     },
+    course: {
+      $ref: '#/components/schemas/CourseCatalogueSnapshot',
+      description: `Public attributes of the course this entry sells, so a storefront can render a
+catalogue page without fetching each course separately.
+
+Present on course-backed entries returned by \`/search\`; null for class- and
+program-backed entries, and on endpoints that do not resolve it. Carries display
+fields only — the course's commercial terms are not part of this projection.
+`,
+    },
+  },
+} as const;
+
+export const CourseCatalogueSnapshotSchema = {
+  type: 'object',
+  properties: {
+    uuid: {
+      type: 'string',
+      format: 'uuid',
+    },
+    name: {
+      type: 'string',
+    },
+    description: {
+      type: 'string',
+    },
+    thumbnail_url: {
+      type: 'string',
+    },
+    duration_hours: {
+      type: 'integer',
+      format: 'int32',
+    },
+    duration_minutes: {
+      type: 'integer',
+      format: 'int32',
+    },
+    category_names: {
+      type: 'array',
+      items: {
+        type: 'string',
+      },
+    },
+    price: {
+      type: 'number',
+    },
+    age_lower_limit: {
+      type: 'integer',
+      format: 'int32',
+    },
+    age_upper_limit: {
+      type: 'integer',
+      format: 'int32',
+    },
+    published: {
+      type: 'boolean',
+    },
+    accepts_new_enrollments: {
+      type: 'boolean',
+    },
+    creator_uuid: {
+      type: 'string',
+      format: 'uuid',
+    },
+    creator_name: {
+      type: 'string',
+    },
   },
 } as const;
 
@@ -8351,18 +8418,18 @@ conflict_resolution per template:
       example: false,
       readOnly: true,
     },
-    duration_formatted: {
-      type: 'string',
-      description: '**[READ-ONLY]** Human-readable formatted duration.',
-      example: '1h 30m',
-      readOnly: true,
-    },
     duration_minutes: {
       type: 'integer',
       format: 'int64',
       description:
         '**[READ-ONLY]** Computed duration of the class in minutes based on start and end times.',
       example: 90,
+      readOnly: true,
+    },
+    duration_formatted: {
+      type: 'string',
+      description: '**[READ-ONLY]** Human-readable formatted duration.',
+      example: '1h 30m',
       readOnly: true,
     },
     capacity_info: {
@@ -10023,6 +10090,13 @@ export const ScheduledInstanceSchema = {
       example: 'instructor@sarafrika.com',
       readOnly: true,
     },
+    duration_minutes: {
+      type: 'integer',
+      format: 'int64',
+      description: '**[READ-ONLY]** Duration of the scheduled instance in minutes.',
+      example: 90,
+      readOnly: true,
+    },
     duration_formatted: {
       type: 'string',
       description: '**[READ-ONLY]** Human-readable formatted duration.',
@@ -10040,13 +10114,6 @@ export const ScheduledInstanceSchema = {
       description:
         '**[READ-ONLY]** Indicates if the scheduled instance is currently active (ongoing).',
       example: false,
-      readOnly: true,
-    },
-    duration_minutes: {
-      type: 'integer',
-      format: 'int64',
-      description: '**[READ-ONLY]** Duration of the scheduled instance in minutes.',
-      example: 90,
       readOnly: true,
     },
     can_be_cancelled: {
@@ -19564,6 +19631,22 @@ export const CourseTrainerSummarySchema = {
   },
 } as const;
 
+export const ApiResponseCourseStatsSchema = {
+  type: 'object',
+  properties: {
+    success: {
+      type: 'boolean',
+    },
+    data: {
+      $ref: '#/components/schemas/CourseStats',
+    },
+    message: {
+      type: 'string',
+    },
+    error: {},
+  },
+} as const;
+
 export const CourseStatsSchema = {
   type: 'object',
   description:
@@ -19849,6 +19932,11 @@ export const OrganisationCourseContentSchema = {
         $ref: '#/components/schemas/OrganisationCourseLesson',
       },
     },
+    course: {
+      $ref: '#/components/schemas/PublicCourseProfile',
+      description:
+        'The course itself: title, blurb, objectives, prerequisites and what a trainer must supply. Present for every caller, so a course page can be rendered without a second, authenticated request. Carries no commercial terms.',
+    },
   },
 } as const;
 
@@ -19895,6 +19983,156 @@ export const OrganisationCourseLessonSchema = {
       items: {
         $ref: '#/components/schemas/LessonContent',
       },
+    },
+  },
+} as const;
+
+export const PublicCourseProfileSchema = {
+  type: 'object',
+  description:
+    'Public attributes of a course, for a course page served to any caller. Carries no commercial terms.',
+  properties: {
+    name: {
+      type: 'string',
+      description: 'Display title.',
+      example: 'Piano Foundations for Beginners',
+    },
+    description: {
+      type: 'string',
+      description: 'Rich-text blurb, as authored.',
+    },
+    objectives: {
+      type: 'string',
+      description: 'What a learner will be able to do afterwards.',
+    },
+    prerequisites: {
+      type: 'string',
+      description: 'What a learner needs before starting.',
+    },
+    thumbnail_url: {
+      type: 'string',
+      description: 'Public URL for the course thumbnail.',
+    },
+    banner_url: {
+      type: 'string',
+      description: 'Public URL for the course banner.',
+    },
+    intro_video_url: {
+      type: 'string',
+      description: 'Public URL for the free intro video.',
+    },
+    duration_hours: {
+      type: 'integer',
+      format: 'int32',
+      description: 'Hours component of the advertised duration.',
+      example: 12,
+    },
+    duration_minutes: {
+      type: 'integer',
+      format: 'int32',
+      description: 'Minutes component of the advertised duration.',
+      example: 30,
+    },
+    category_names: {
+      type: 'array',
+      description: 'Disciplines the course is filed under.',
+      items: {
+        type: 'string',
+      },
+    },
+    price: {
+      type: 'number',
+      description: 'List price. The same figure the catalogue entry sells at.',
+      example: 6500,
+    },
+    class_limit: {
+      type: 'integer',
+      format: 'int32',
+      description: 'Maximum learners in one class, or null when uncapped.',
+      example: 24,
+    },
+    age_lower_limit: {
+      type: 'integer',
+      format: 'int32',
+      description: 'Lower age bound, or null when unrestricted.',
+      example: 8,
+    },
+    age_upper_limit: {
+      type: 'integer',
+      format: 'int32',
+      description: 'Upper age bound, or null when unrestricted.',
+      example: 14,
+    },
+    published: {
+      type: 'boolean',
+      description: 'Whether the course itself is published.',
+      example: true,
+    },
+    accepts_new_enrollments: {
+      type: 'boolean',
+      description: 'Whether the course can currently be enrolled on.',
+      example: true,
+    },
+    creator_uuid: {
+      type: 'string',
+      format: 'uuid',
+      description: 'The course creator.',
+    },
+    creator_name: {
+      type: 'string',
+      description: "The creator's display name, resolved so the caller needs no second lookup.",
+    },
+    training_requirements: {
+      type: 'array',
+      description: 'What a trainer must supply to deliver this course.',
+      items: {
+        $ref: '#/components/schemas/PublicCourseTrainingRequirement',
+      },
+    },
+    updated_date: {
+      type: 'string',
+      description: 'When the course was last changed.',
+    },
+  },
+} as const;
+
+export const PublicCourseTrainingRequirementSchema = {
+  type: 'object',
+  properties: {
+    name: {
+      type: 'string',
+      description: 'What is needed.',
+      example: 'Upright piano',
+    },
+    description: {
+      type: 'string',
+      description: 'Free-text detail.',
+    },
+    quantity: {
+      type: 'integer',
+      format: 'int32',
+      description: 'How many.',
+      example: 1,
+    },
+    unit: {
+      type: 'string',
+      description: 'Unit the quantity is counted in.',
+      example: 'per class',
+    },
+    requirement_type: {
+      type: 'string',
+      description: 'What kind of thing this is.',
+      example: 'equipment',
+    },
+    provided_by: {
+      type: 'string',
+      description: 'Who supplies it.',
+      example: 'instructor',
+    },
+    is_mandatory: {
+      type: 'boolean',
+      description: 'Whether delivery depends on it.',
+      example: true,
     },
   },
 } as const;
@@ -20306,6 +20544,14 @@ export const CourseEnrollmentSchema = {
       example: 85.5,
       maximum: 100,
       minimum: 0,
+    },
+    course_version: {
+      type: 'integer',
+      format: 'int32',
+      description:
+        '**[READ-ONLY]** The course version this enrolment was sold against. Null follows the live course: the enrolment predates version pinning, or the course has no promoted version yet.',
+      example: 3,
+      readOnly: true,
     },
     created_date: {
       type: 'string',

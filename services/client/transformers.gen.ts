@@ -182,6 +182,7 @@ import type {
   JoinWaitlistResponse,
   GetAllCoursesResponse,
   CreateCourseResponse,
+  RestoreCourseVersionResponse,
   UnpublishCourseResponse,
   UploadCourseThumbnailResponse,
   PublishCourseResponse,
@@ -3700,6 +3701,13 @@ export const createCourseResponseTransformer = async (data: any): Promise<Create
   return data;
 };
 
+export const restoreCourseVersionResponseTransformer = async (
+  data: any
+): Promise<RestoreCourseVersionResponse> => {
+  data = apiResponseCourseSchemaResponseTransformer(data);
+  return data;
+};
+
 export const unpublishCourseResponseTransformer = async (
   data: any
 ): Promise<UnpublishCourseResponse> => {
@@ -7069,10 +7077,17 @@ const courseStatsSchemaResponseTransformer = (data: any) => {
   return data;
 };
 
+const apiResponseCourseStatsSchemaResponseTransformer = (data: any) => {
+  if (data.data) {
+    data.data = courseStatsSchemaResponseTransformer(data.data);
+  }
+  return data;
+};
+
 export const getCourseStatsResponseTransformer = async (
   data: any
 ): Promise<GetCourseStatsResponse> => {
-  data = courseStatsSchemaResponseTransformer(data);
+  data = apiResponseCourseStatsSchemaResponseTransformer(data);
   return data;
 };
 

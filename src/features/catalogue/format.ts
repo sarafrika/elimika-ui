@@ -1,5 +1,8 @@
-import type { Course } from '@/services/client';
-import type { PublicCatalogueCourse, PublicCourseDetail } from '@/src/features/catalogue/types';
+import type {
+  PublicCatalogueCourse,
+  PublicCourseDetail,
+  PublicCourseSummary,
+} from '@/src/features/catalogue/types';
 
 export const sanitizeRichText = (value?: string | null) => {
   if (!value) return '';
@@ -78,25 +81,25 @@ export const toSafeHref = (value?: string | null) => {
   return /^https?:\/\//i.test(url) ? url : undefined;
 };
 
-export const formatCourseDuration = (course?: Course | null) => {
+export const formatCourseDuration = (course?: PublicCourseSummary | null) => {
   if (!course) return null;
 
   if (course.total_duration_display) {
     return course.total_duration_display;
   }
 
-  const hasHours = typeof course.duration_hours === 'number';
-  const hasMinutes = typeof course.duration_minutes === 'number';
+  const hours = course.duration_hours;
+  const minutes = course.duration_minutes;
 
-  if (!hasHours) {
+  if (typeof hours !== 'number') {
     return null;
   }
 
-  if (hasMinutes && course.duration_minutes > 0) {
-    return `${course.duration_hours}h ${course.duration_minutes}m`;
+  if (typeof minutes === 'number' && minutes > 0) {
+    return `${hours}h ${minutes}m`;
   }
 
-  return `${course.duration_hours}h`;
+  return `${hours}h`;
 };
 
 export const formatPricingLabel = (
@@ -115,4 +118,35 @@ export const formatPricingLabel = (
   return 'Pricing not set';
 };
 
-export const getCourseDisplayTitle = (course: Course) => course.name || 'Untitled course';
+export const getCourseDisplayTitle = (course: PublicCourseSummary) =>
+  course.name || 'Untitled course';
+
+// Narrow an already-loaded catalogue page to the visitor's search terms. The
+// catalogue endpoint indexes commerce items, which carry no course title, so a
+// title search cannot be pushed down to it and every term is matched here.
+export const filterCatalogueCourses = <
+  T extends Pick<PublicCatalogueCourse, 'course' | 'creatorName'>,
+>(
+  items: T[],
+  query: string
+) => {
+  const terms = query.toLowerCase().split(/\s+/).filter(Boolean);
+
+  if (terms.length === 0) {
+    return items;
+  }
+
+  return items.filter(({ course, creatorName }) => {
+    const haystack = [
+      course.name,
+      stripRichText(course.description),
+      creatorName,
+      ...(course.category_names ?? []),
+    ]
+      .filter(Boolean)
+      .join(' ')
+      .toLowerCase();
+
+    return terms.every(term => haystack.includes(term));
+  });
+};

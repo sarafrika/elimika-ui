@@ -1496,6 +1496,11 @@ export const zQuizAttempt = z
       .describe('**[READ-ONLY]** Formatted display of the grade information.')
       .readonly()
       .optional(),
+    time_display: z
+      .string()
+      .describe('**[READ-ONLY]** Formatted display of the time taken to complete the quiz.')
+      .readonly()
+      .optional(),
     attempt_category: z
       .string()
       .describe('**[READ-ONLY]** Formatted category of the attempt based on outcome and status.')
@@ -1504,11 +1509,6 @@ export const zQuizAttempt = z
     performance_summary: z
       .string()
       .describe('**[READ-ONLY]** Comprehensive summary of the quiz attempt performance.')
-      .readonly()
-      .optional(),
-    time_display: z
-      .string()
-      .describe('**[READ-ONLY]** Formatted display of the time taken to complete the quiz.')
       .readonly()
       .optional(),
   })
@@ -2859,16 +2859,16 @@ export const zInstructorDocument = z
       )
       .readonly()
       .optional(),
-    is_expired: z
-      .boolean()
-      .describe('**[READ-ONLY]** Indicates if the document has expired based on the expiry date.')
-      .readonly()
-      .optional(),
     file_url: z
       .string()
       .describe(
         '**[READ-ONLY]** API-relative URL for previewing or downloading the uploaded document.'
       )
+      .readonly()
+      .optional(),
+    is_expired: z
+      .boolean()
+      .describe('**[READ-ONLY]** Indicates if the document has expired based on the expiry date.')
       .readonly()
       .optional(),
     file_size_formatted: z
@@ -2969,6 +2969,11 @@ export const zAvailabilitySlot = z
       )
       .readonly()
       .optional(),
+    duration_minutes: z.coerce
+      .bigint()
+      .describe('**[READ-ONLY]** Duration of the availability slot in minutes.')
+      .readonly()
+      .optional(),
     duration_formatted: z
       .string()
       .describe('**[READ-ONLY]** Human-readable formatted duration.')
@@ -2989,11 +2994,6 @@ export const zAvailabilitySlot = z
     availability_description: z
       .string()
       .describe('**[READ-ONLY]** Human-readable description of the availability pattern.')
-      .readonly()
-      .optional(),
-    duration_minutes: z.coerce
-      .bigint()
-      .describe('**[READ-ONLY]** Duration of the availability slot in minutes.')
       .readonly()
       .optional(),
   })
@@ -3240,13 +3240,6 @@ export const zCourse = z
       .describe('**[READ-ONLY]** Indicates if the course is published and discoverable.')
       .readonly()
       .optional(),
-    accepts_new_enrollments: z
-      .boolean()
-      .describe(
-        '**[READ-ONLY]** Indicates if the course is currently accepting new student enrollments.'
-      )
-      .readonly()
-      .optional(),
     is_draft: z
       .boolean()
       .describe('**[READ-ONLY]** Indicates if the course is still in draft mode.')
@@ -3260,6 +3253,13 @@ export const zCourse = z
     is_in_review: z
       .boolean()
       .describe('**[READ-ONLY]** Indicates if the course is currently under review.')
+      .readonly()
+      .optional(),
+    accepts_new_enrollments: z
+      .boolean()
+      .describe(
+        '**[READ-ONLY]** Indicates if the course is currently accepting new student enrollments.'
+      )
       .readonly()
       .optional(),
     total_duration_display: z
@@ -4321,16 +4321,16 @@ export const zCourseCreatorDocumentDto = z.object({
   created_by: z.string().readonly().optional(),
   updated_date: z.string().datetime().readonly().optional(),
   updated_by: z.string().readonly().optional(),
-  is_expired: z
-    .boolean()
-    .describe('**[READ-ONLY]** Indicates if the document has expired based on the expiry date.')
-    .readonly()
-    .optional(),
   file_url: z
     .string()
     .describe(
       '**[READ-ONLY]** API-relative URL for previewing or downloading the uploaded document.'
     )
+    .readonly()
+    .optional(),
+  is_expired: z
+    .boolean()
+    .describe('**[READ-ONLY]** Indicates if the document has expired based on the expiry date.')
     .readonly()
     .optional(),
   file_size_formatted: z
@@ -4751,6 +4751,23 @@ export const zCommerceCatalogueItemUpsertRequest = z
   })
   .describe('Payload for creating or updating catalogue mappings');
 
+export const zCourseCatalogueSnapshot = z.object({
+  uuid: z.string().uuid().optional(),
+  name: z.string().optional(),
+  description: z.string().optional(),
+  thumbnail_url: z.string().optional(),
+  duration_hours: z.number().int().optional(),
+  duration_minutes: z.number().int().optional(),
+  category_names: z.array(z.string()).optional(),
+  price: z.number().optional(),
+  age_lower_limit: z.number().int().optional(),
+  age_upper_limit: z.number().int().optional(),
+  published: z.boolean().optional(),
+  accepts_new_enrollments: z.boolean().optional(),
+  creator_uuid: z.string().uuid().optional(),
+  creator_name: z.string().optional(),
+});
+
 /**
  * Mapping between Elimika courses/classes and internal commerce variants
  */
@@ -4783,6 +4800,7 @@ export const zCommerceCatalogueItem = z
       .optional(),
     created_date: z.string().datetime().describe('Created timestamp').optional(),
     updated_date: z.string().datetime().describe('Last updated timestamp').optional(),
+    course: zCourseCatalogueSnapshot.optional(),
   })
   .describe('Mapping between Elimika courses/classes and internal commerce variants');
 
@@ -5170,16 +5188,16 @@ export const zClassDefinition = z
       )
       .readonly()
       .optional(),
-    duration_formatted: z
-      .string()
-      .describe('**[READ-ONLY]** Human-readable formatted duration.')
-      .readonly()
-      .optional(),
     duration_minutes: z.coerce
       .bigint()
       .describe(
         '**[READ-ONLY]** Computed duration of the class in minutes based on start and end times.'
       )
+      .readonly()
+      .optional(),
+    duration_formatted: z
+      .string()
+      .describe('**[READ-ONLY]** Human-readable formatted duration.')
       .readonly()
       .optional(),
     capacity_info: z
@@ -6007,6 +6025,11 @@ export const zScheduledInstance = z
       )
       .readonly()
       .optional(),
+    duration_minutes: z.coerce
+      .bigint()
+      .describe('**[READ-ONLY]** Duration of the scheduled instance in minutes.')
+      .readonly()
+      .optional(),
     duration_formatted: z
       .string()
       .describe('**[READ-ONLY]** Human-readable formatted duration.')
@@ -6022,11 +6045,6 @@ export const zScheduledInstance = z
       .describe(
         '**[READ-ONLY]** Indicates if the scheduled instance is currently active (ongoing).'
       )
-      .readonly()
-      .optional(),
-    duration_minutes: z.coerce
-      .bigint()
-      .describe('**[READ-ONLY]** Duration of the scheduled instance in minutes.')
       .readonly()
       .optional(),
     can_be_cancelled: z
@@ -11131,6 +11149,13 @@ export const zCourseStats = z
     'Course statistics. The scoped and owner blocks are omitted entirely unless the caller is entitled to them.'
   );
 
+export const zApiResponseCourseStats = z.object({
+  success: z.boolean().optional(),
+  data: zCourseStats.optional(),
+  message: z.string().optional(),
+  error: z.unknown().optional(),
+});
+
 export const zPagedDtoCourseRubricAssociation = z.object({
   content: z.array(zCourseRubricAssociation).optional(),
   metadata: zPageMetadata.optional(),
@@ -11218,6 +11243,81 @@ export const zOrganisationCourseLesson = z
   })
   .describe('Lesson outline (always) plus content (only when the caller has full read access).');
 
+export const zPublicCourseTrainingRequirement = z.object({
+  name: z.string().describe('What is needed.').optional(),
+  description: z.string().describe('Free-text detail.').optional(),
+  quantity: z.number().int().describe('How many.').optional(),
+  unit: z.string().describe('Unit the quantity is counted in.').optional(),
+  requirement_type: z.string().describe('What kind of thing this is.').optional(),
+  provided_by: z.string().describe('Who supplies it.').optional(),
+  is_mandatory: z.boolean().describe('Whether delivery depends on it.').optional(),
+});
+
+/**
+ * Public attributes of a course, for a course page served to any caller. Carries no commercial terms.
+ */
+export const zPublicCourseProfile = z
+  .object({
+    name: z.string().describe('Display title.').optional(),
+    description: z.string().describe('Rich-text blurb, as authored.').optional(),
+    objectives: z.string().describe('What a learner will be able to do afterwards.').optional(),
+    prerequisites: z.string().describe('What a learner needs before starting.').optional(),
+    thumbnail_url: z.string().describe('Public URL for the course thumbnail.').optional(),
+    banner_url: z.string().describe('Public URL for the course banner.').optional(),
+    intro_video_url: z.string().describe('Public URL for the free intro video.').optional(),
+    duration_hours: z
+      .number()
+      .int()
+      .describe('Hours component of the advertised duration.')
+      .optional(),
+    duration_minutes: z
+      .number()
+      .int()
+      .describe('Minutes component of the advertised duration.')
+      .optional(),
+    category_names: z
+      .array(z.string())
+      .describe('Disciplines the course is filed under.')
+      .optional(),
+    price: z
+      .number()
+      .describe('List price. The same figure the catalogue entry sells at.')
+      .optional(),
+    class_limit: z
+      .number()
+      .int()
+      .describe('Maximum learners in one class, or null when uncapped.')
+      .optional(),
+    age_lower_limit: z
+      .number()
+      .int()
+      .describe('Lower age bound, or null when unrestricted.')
+      .optional(),
+    age_upper_limit: z
+      .number()
+      .int()
+      .describe('Upper age bound, or null when unrestricted.')
+      .optional(),
+    published: z.boolean().describe('Whether the course itself is published.').optional(),
+    accepts_new_enrollments: z
+      .boolean()
+      .describe('Whether the course can currently be enrolled on.')
+      .optional(),
+    creator_uuid: z.string().uuid().describe('The course creator.').optional(),
+    creator_name: z
+      .string()
+      .describe("The creator's display name, resolved so the caller needs no second lookup.")
+      .optional(),
+    training_requirements: z
+      .array(zPublicCourseTrainingRequirement)
+      .describe('What a trainer must supply to deliver this course.')
+      .optional(),
+    updated_date: z.string().describe('When the course was last changed.').optional(),
+  })
+  .describe(
+    'Public attributes of a course, for a course page served to any caller. Carries no commercial terms.'
+  );
+
 /**
  * Course content scoped to the caller. Outline only unless the caller's access carries full read rights.
  */
@@ -11246,6 +11346,7 @@ export const zOrganisationCourseContent = z
       .array(zOrganisationCourseLesson)
       .describe('Lessons. Outline only without full access, then with full content.')
       .optional(),
+    course: zPublicCourseProfile.optional(),
   })
   .describe(
     "Course content scoped to the caller. Outline only unless the caller's access carries full read rights."
@@ -11476,6 +11577,14 @@ export const zCourseEnrollment = z
       .gte(0)
       .lte(100)
       .describe('**[OPTIONAL]** Final grade achieved by the student in the course.')
+      .optional(),
+    course_version: z
+      .number()
+      .int()
+      .describe(
+        '**[READ-ONLY]** The course version this enrolment was sold against. Null follows the live course: the enrolment predates version pinning, or the course has no promoted version yet.'
+      )
+      .readonly()
       .optional(),
     created_date: z
       .string()
@@ -16788,6 +16897,20 @@ export const zCreateCourseData = z.object({
  */
 export const zCreateCourseResponse = zCourse;
 
+export const zRestoreCourseVersionData = z.object({
+  body: z.never().optional(),
+  path: z.object({
+    uuid: z.string().uuid().describe('UUID of the course'),
+    versionNumber: z.number().int().describe('Version number to restore'),
+  }),
+  query: z.never().optional(),
+});
+
+/**
+ * Version restored into the draft
+ */
+export const zRestoreCourseVersionResponse = zApiResponseCourse;
+
 export const zUnpublishCourseData = z.object({
   body: z.never().optional(),
   path: z.object({
@@ -20587,7 +20710,7 @@ export const zGetCourseStatsData = z.object({
 /**
  * Statistics retrieved successfully
  */
-export const zGetCourseStatsResponse = zCourseStats;
+export const zGetCourseStatsResponse = zApiResponseCourseStats;
 
 export const zCheckRubricAssociationData = z.object({
   body: z.never().optional(),

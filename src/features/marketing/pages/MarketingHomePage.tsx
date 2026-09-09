@@ -1,396 +1,611 @@
+import { Button, buttonVariants } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { cn } from '@/lib/utils';
+import { CatalogueStatusCard } from '@/src/features/catalogue/components/CatalogueStatusCard';
+import {
+  BRAND_TONE,
+  TONE_FILL,
+  TONE_INK,
+  TONE_ON_FILL,
+  TONE_PANEL,
+  toneFor,
+} from '@/src/features/marketing/components/discipline-tone';
+import { DISPLAY } from '@/src/features/marketing/components/display-font';
+import {
+  HomeCatalogueFilterProvider,
+  HomeCategoryChips,
+  HomeCourseGrid,
+} from '@/src/features/marketing/components/HomeCatalogueFilter';
+import {
+  getHomeCatalogue,
+  getPlatformStats,
+  HOME_GRID_SIZE,
+} from '@/src/features/marketing/server';
 import {
   ArrowRight,
-  BookOpenCheck,
-  Briefcase,
-  Building2,
-  DollarSign,
-  FolderOpen,
+  BadgeCheck,
+  BookOpen,
+  CalendarDays,
+  ChevronDown,
+  CircleAlert,
+  CreditCard,
   GraduationCap,
-  LayoutDashboard,
-  Sparkles,
+  School,
+  Search,
+  Users,
+  Wallet,
 } from 'lucide-react';
-import Image from 'next/image';
+import { Bricolage_Grotesque } from 'next/font/google';
 import Link from 'next/link';
-import LoginButton from '@/components/LoginButton';
-import { BrandPill } from '@/components/ui/brand-pill';
+import { Suspense } from 'react';
+
+// Bricolage Grotesque for display, against the app's Plus Jakarta Sans for body
+// copy. Declared here rather than in the layout so only this route pays for it.
+const displayFont = Bricolage_Grotesque({
+  variable: '--font-display',
+  subsets: ['latin'],
+  weight: ['600', '700', '800'],
+  display: 'swap',
+});
 
 const currentYear = new Date().getFullYear();
 
-const productHighlights = [
+// Steps up rather than stopping at 6xl: on a 2xl monitor a 1152px column
+// left the page marooned in the middle of the screen. Gutters grow with it
+// so the content never runs to the glass edge.
+const CONTAINER =
+  'mx-auto w-full max-w-6xl px-5 sm:px-8 xl:max-w-7xl 2xl:max-w-[88rem] 2xl:px-12';
+
+const CREATE_ACCOUNT_HREF = '/auth/create-account';
+
+// The three audiences the brief names, each linking to an entry point that
+// exists today - the catalogue for learners, account creation for the supply
+// side - rather than to a marketing page nobody has built.
+const AUDIENCES = [
   {
-    title: 'Creator-first tooling',
-    description:
-      'Craft programs, lessons, and assessments with guided steps, structured analytics, and publishing controls built for scale.',
-    icon: BookOpenCheck,
-  },
-  {
-    title: 'Dynamic domain dashboards',
-    description:
-      'Switch effortlessly between course creator, instructor, organisation, and learner views, each with bespoke insights.',
-    icon: LayoutDashboard,
-  },
-  {
-    title: 'Instruction elevated',
-    description:
-      'Blended delivery, availability management, and training orchestration empower educators to focus on impact.',
+    eyebrow: 'Learners',
     icon: GraduationCap,
+    title: 'Learn something you can prove',
+    body: 'Finish a course and the skill lands in your Skills Wallet - a record you can show an employer, not just a certificate in a drawer.',
+    href: '/courses',
+    cta: 'Browse the catalogue',
+    tone: BRAND_TONE,
+  },
+  {
+    eyebrow: 'Instructors & trainers',
+    icon: Users,
+    title: 'Apply to train. Get paid per session.',
+    body: 'Set your rates for private, group, in-person or virtual delivery. You apply, the course creator approves, and Elimika handles enrolment and payment.',
+    href: CREATE_ACCOUNT_HREF,
+    cta: 'Create a trainer account',
+    tone: toneFor('Instructors'),
+  },
+  {
+    eyebrow: 'Schools',
+    icon: School,
+    title: 'Staff your co-curricular timetable',
+    body: 'Post the class you need taught and let trainers apply, with their classrooms, equipment and rates declared up front.',
+    href: CREATE_ACCOUNT_HREF,
+    cta: 'Register your school',
+    tone: toneFor('Schools'),
   },
 ] as const;
 
-const domainLabels = ['Course creators', 'Instructors', 'Organisations', 'Learners'] as const;
-
-const sarafrikaPoints = [
-  'Unified design tokens capture the gradient language of the Elimika bloom.',
-  'Inclusive typography and colour ensure accessibility without diluting brand character.',
-  'Scalable architecture supports institutions, educators, and lifelong learners alike.',
+const ENROLMENT_STEPS = [
+  {
+    title: 'Find the course',
+    body: 'Search the catalogue or filter by category, then open a course to read its lessons, its trainer and what it costs.',
+  },
+  {
+    title: 'Enrol and pay in KES',
+    body: 'Add the course to your cart and check out. Every fee on Elimika is listed in Kenyan shillings, per course or per session.',
+  },
+  {
+    title: 'Attend and work through it',
+    body: 'Join the sessions your trainer schedules, work through the lessons, and follow your progress from your dashboard.',
+  },
+  {
+    title: 'Keep the credential',
+    body: 'Finish, and the certificate and the skills behind it land in your Skills Wallet where an employer can verify them.',
+  },
 ] as const;
 
-export function MarketingHomePage() {
+// What the platform actually does, in one dark band. Every line here is a
+// feature that exists - registration windows, rate cards, M-Pesa - rather than
+// a capability we would like to claim.
+//
+// The tones are the light-on-dark end of the accent ramp deliberately: this
+// band stays dark in both themes, so the `--tone` classes used elsewhere (which
+// darken for light mode) would render dark-on-dark here.
+const SERVICES = [
+  {
+    title: 'Course catalogue and enrolment',
+    icon: BookOpen,
+    tone: 'var(--el-brand-400)',
+    body: 'Browse by discipline, see the classes actually running, and enrol against a live seat count and registration window.',
+  },
+  {
+    title: 'Pay in KES, by M-Pesa',
+    icon: CreditCard,
+    tone: 'var(--el-accent-jade)',
+    body: 'Local pricing and local payment. Orders, receipts and refunds handled on platform, not over WhatsApp.',
+  },
+  {
+    title: 'Skills Wallet',
+    icon: Wallet,
+    tone: 'var(--el-accent-iris)',
+    body: 'Every skill you finish is recorded against your name - a portable record for an employer, not a certificate in a drawer.',
+  },
+  {
+    title: 'Trainer applications and rate cards',
+    icon: Users,
+    tone: 'var(--el-accent-amber)',
+    body: 'Instructors and schools apply to deliver a course, declaring classrooms, equipment and their own rates. Your rates stay yours.',
+  },
+  {
+    title: 'Classes, timetables and attendance',
+    icon: CalendarDays,
+    tone: 'var(--el-highlight-400)',
+    body: 'Recurring sessions, registration windows and rosters - so a class has a real start date, not an open-ended waitlist.',
+  },
+  {
+    title: 'Assessment and certification',
+    icon: BadgeCheck,
+    tone: 'var(--el-accent-blush)',
+    body: 'Quizzes, assignments and rubrics with grading, and a certificate issued on completion once the work is actually done.',
+  },
+] as const;
+
+// There are no testimonials to run: nobody has been asked for a quote yet, and
+// inventing one is the single thing on this page a visitor could catch us out
+// on. Objections are the better use of the space anyway - a marketplace nobody
+// has heard of gets further by answering the doubt than by asserting a
+// reputation. Every answer below is something the platform actually does.
+const FAQS = [
+  {
+    q: 'Can I see what is in a course before I pay?',
+    a: 'Yes. Every lesson title, what it covers and how many items it holds are listed on the course page before you enrol. The lesson material itself - the videos, documents and quizzes - opens once your enrolment is confirmed.',
+  },
+  {
+    q: 'How do I pay, and in what currency?',
+    a: 'In Kenyan shillings, by M-Pesa or card at checkout. Courses are priced per course or per session, and the price is on the card before you open it - no quote request, no enquiry form.',
+  },
+  {
+    q: 'What do I actually get at the end?',
+    a: 'The certificate and the skills behind it land in your Skills Wallet: one record of what you have completed, that an employer can check without you posting scanned paper around.',
+  },
+  {
+    q: 'I want to teach on Elimika. How does that work?',
+    a: 'Pick a published course and apply to train it, declaring your credentials, the space and equipment you have, and your own rates. The course creator approves the application; Elimika handles enrolment, scheduling and paying you per session.',
+  },
+  {
+    q: 'Can my school use this for co-curricular classes?',
+    a: 'Post the class you need taught and set the fee per session. Trainers already on the platform apply with their rates, and attendance, payment and certificates all run off the same class record.',
+  },
+  {
+    q: 'What if the fee is the thing stopping me?',
+    a: 'The Skills Fund connects learners with scholarships, bursaries and employer-funded training, so a course fee is not the only thing deciding who gets to train.',
+  },
+] as const;
+
+export async function MarketingHomePage() {
+  const { courses, categories, hasError } = await getHomeCatalogue();
+
   return (
-    <>
+    <div className={displayFont.variable}>
       <main>
-        <section className='border-border/50 relative overflow-hidden border-b'>
-          <div className='relative mx-auto flex w-full max-w-6xl flex-col items-center gap-10 px-6 pt-24 pb-24 text-center lg:pt-28'>
-            <span className='border-border/60 bg-card/80 text-primary inline-flex items-center gap-2 rounded-full border px-4 py-1 text-xs font-semibold tracking-[0.4em] uppercase shadow-sm'>
-              Product experience
-            </span>
-            <h1 className='text-foreground max-w-4xl text-4xl leading-tight font-semibold text-balance sm:text-5xl lg:text-[56px]'>
-              Elimika is the home of orchestrated learning experiences for Africa&apos;s creators
-              and institutions.
-            </h1>
-            <p className='text-muted-foreground max-w-3xl text-base sm:text-lg'>
-              A product suite born from the Elimika mark: layered gradients, confident geometry, and
-              purposeful flows designed to elevate every learning journey.
-            </p>
-            <div className='flex flex-col items-center gap-4 sm:flex-row'>
-              <LoginButton />
-              <Link
-                href='/courses'
-                className='border-primary/50 bg-primary/10 text-primary hover:border-primary/70 inline-flex items-center justify-center gap-2 rounded-full border px-7 py-3 text-sm font-semibold shadow'
-              >
-                Browse courses <ArrowRight className='h-4 w-4' />
-              </Link>
-              <Link
-                href='#product'
-                className='border-border bg-card text-primary hover:border-primary/60 hover:text-primary inline-flex items-center justify-center gap-2 rounded-full border px-7 py-3 text-sm font-medium shadow'
-              >
-                Explore the product <ArrowRight className='h-4 w-4' />
-              </Link>
-            </div>
+        <HomeCatalogueFilterProvider categories={categories}>
+          <section className='bg-secondary relative overflow-hidden'>
+            <span
+              aria-hidden='true'
+              className='pointer-events-none absolute -top-32 -right-24 size-[520px] rounded-full bg-[radial-gradient(circle_at_30%_30%,color-mix(in_oklch,var(--el-brand-600)_16%,transparent),transparent_70%)]'
+            />
+            <span
+              aria-hidden='true'
+              className='pointer-events-none absolute -bottom-44 left-8 size-[420px] rounded-full bg-[radial-gradient(circle_at_50%_50%,color-mix(in_oklch,var(--el-accent-amber)_18%,transparent),transparent_70%)]'
+            />
 
-            <div className='border-border/60 bg-card/70 flex flex-col items-center gap-4 rounded-[36px] border px-6 py-6 shadow-lg shadow-black/5 backdrop-blur-sm sm:px-10 sm:py-8'>
-              <p className='text-primary text-xs font-semibold tracking-[0.4em] uppercase'>
-                Domains harmonised
+            <div className={cn(CONTAINER, 'relative py-12 sm:py-16')}>
+              <p className='border-border bg-card text-foreground/80 mb-5 inline-flex items-center gap-2 rounded-full border px-3 py-1.5 text-xs font-semibold'>
+                <span className='bg-success size-1.5 shrink-0 rounded-full' aria-hidden='true' />
+                Learn a trade. Prove it. Get paid for it.
               </p>
-              <div className='text-muted-foreground grid gap-4 text-sm font-medium sm:grid-cols-4'>
-                {domainLabels.map(label => (
-                  <BrandPill
-                    key={label}
-                    className='justify-center text-xs font-semibold tracking-[0.2em] normal-case'
+
+              <h1
+                className={cn(
+                  DISPLAY,
+                  'text-foreground max-w-[15ch] text-[2.25rem] leading-[1.03] font-extrabold tracking-[-0.035em] text-balance sm:text-5xl lg:text-6xl 2xl:text-[4.25rem]'
+                )}
+              >
+                Find a course. Meet the trainer.{' '}
+                <span className='text-primary'>Start this week.</span>
+              </h1>
+
+              <p className='text-muted-foreground mt-4 max-w-[56ch] text-base leading-relaxed'>
+                Live classes and self-paced courses from instructors and training providers across
+                Kenya. Enrol, pay in KES, and every skill you finish lands in your Skills Wallet.
+              </p>
+
+              <form
+                action='/courses'
+                method='get'
+                role='search'
+                className='mt-7 flex max-w-[620px] flex-col gap-2.5 sm:flex-row 2xl:max-w-[720px]'
+              >
+                <div className='relative flex-1'>
+                  <Search
+                    className='text-muted-foreground pointer-events-none absolute top-1/2 left-4 size-[18px] -translate-y-1/2'
+                    aria-hidden='true'
+                  />
+                  <Input
+                    type='search'
+                    name='q'
+                    aria-label='Search courses, skills or trainers'
+                    placeholder='Search courses, skills or trainers'
+                    className='bg-card h-13 rounded-xl pr-4 pl-11 text-[15px] shadow-sm'
+                  />
+                </div>
+                <Button type='submit' className='h-13 rounded-xl px-7 text-[15px] font-semibold'>
+                  Search
+                </Button>
+              </form>
+
+              <div className='mt-6'>
+                <HomeCategoryChips />
+              </div>
+            </div>
+          </section>
+
+          <Suspense fallback={null}>
+            <PlatformProofStrip />
+          </Suspense>
+
+          <section className={cn(CONTAINER, 'py-11 sm:py-12')}>
+            {hasError ? (
+              <CatalogueStatusCard
+                title='Unable to load courses right now'
+                description='The catalogue is temporarily unavailable. Please refresh, or head straight to the full course list.'
+                icon={CircleAlert}
+                tone='error'
+              />
+            ) : courses.length === 0 ? (
+              <CatalogueStatusCard
+                title='No published courses yet'
+                description='The catalogue is being prepared. Check back soon, or get in touch to talk about custom training.'
+                icon={BookOpen}
+              />
+            ) : (
+              <HomeCourseGrid courses={courses} gridSize={HOME_GRID_SIZE} />
+            )}
+          </section>
+        </HomeCatalogueFilterProvider>
+
+        <section className={cn(CONTAINER, 'pb-14 sm:pb-16')}>
+          <h2 className='sr-only'>Three ways into Elimika</h2>
+          <div className='grid gap-[18px] md:grid-cols-3'>
+            {AUDIENCES.map(audience => {
+              const Icon = audience.icon;
+
+              return (
+                <article
+                  key={audience.eyebrow}
+                  className={cn(audience.tone, TONE_PANEL, 'rounded-[18px] border p-6 sm:p-7')}
+                >
+                  <span
+                    className={cn(
+                      TONE_FILL,
+                      TONE_ON_FILL,
+                      'mb-4 inline-flex size-9.5 items-center justify-center rounded-xl'
+                    )}
                   >
-                    {label}
-                  </BrandPill>
-                ))}
-              </div>
-            </div>
+                    <Icon className='size-[19px]' aria-hidden='true' />
+                  </span>
+                  <p
+                    className={cn(TONE_INK, 'text-[11.5px] font-bold tracking-[0.09em] uppercase')}
+                  >
+                    {audience.eyebrow}
+                  </p>
+                  <h3
+                    className={cn(
+                      DISPLAY,
+                      'text-foreground mt-1.5 text-xl leading-tight font-bold tracking-tight'
+                    )}
+                  >
+                    {audience.title}
+                  </h3>
+                  <p className='text-muted-foreground mt-2 text-sm leading-relaxed'>
+                    {audience.body}
+                  </p>
+                  <Link
+                    href={audience.href}
+                    className={cn(
+                      TONE_INK,
+                      'mt-4 inline-flex items-center gap-1.5 text-[13.5px] font-semibold hover:underline'
+                    )}
+                  >
+                    {audience.cta}
+                    <ArrowRight className='size-3.5' aria-hidden='true' />
+                  </Link>
+                </article>
+              );
+            })}
           </div>
         </section>
 
-        <section id='product' className='bg-background/80 py-20'>
-          <div className='mx-auto grid w-full max-w-6xl gap-10 px-6 md:grid-cols-[1.1fr_0.9fr] md:items-center'>
-            <div className='space-y-5'>
-              <p className='text-primary text-sm font-semibold'>Crafted for orchestrators</p>
-              <h2 className='text-foreground text-3xl font-semibold sm:text-4xl'>
-                Purpose-built for creators, instructors, organisations, and learners
-              </h2>
-              <p className='text-muted-foreground text-base'>
-                Each role inherits an environment aligned with their workflow - no
-                context-switching, just clarity, governance, and inspired execution.
+        <section className='bg-secondary border-border border-y'>
+          <div className={cn(CONTAINER, 'py-12 sm:py-16')}>
+            <div className='max-w-2xl'>
+              <p className='text-primary text-[11.5px] font-bold tracking-[0.09em] uppercase'>
+                How enrolling works
               </p>
-              <div className='grid gap-4 sm:grid-cols-2'>
-                <FeatureBadge label='Guided course creation' />
-                <FeatureBadge label='Real-time analytics narratives' />
-                <FeatureBadge label='Institution-ready governance' />
-                <FeatureBadge label='Immersive learner journeys' />
-              </div>
+              <h2
+                className={cn(
+                  DISPLAY,
+                  'text-foreground mt-2 text-2xl font-bold tracking-tight sm:text-3xl'
+                )}
+              >
+                Four steps from browsing to a credential you own
+              </h2>
             </div>
 
-            <div className='border-border/60 bg-card/80 flex-1 rounded-[32px] border p-8 shadow-xl shadow-black/10'>
-              <p className='text-primary text-sm font-semibold'>What our partners say</p>
-              <blockquote className='text-muted-foreground mt-3 text-base'>
-                &ldquo;Elimika is where storytelling meets infrastructure. The product honours our
-                brand while giving our teams the clarity they need to scale.&rdquo;
-              </blockquote>
-              <div className='mt-6 flex items-center gap-3'>
-                <div className='bg-primary/15 rounded-full p-2'>
-                  <Sparkles className='text-primary h-4 w-4' />
-                </div>
-                <div>
-                  <p className='text-foreground text-sm font-semibold'>Sarafrika Product Studio</p>
-                  <p className='text-muted-foreground text-xs'>Design & engineering partner</p>
-                </div>
-              </div>
-            </div>
+            <ol className='mt-8 grid gap-[18px] sm:grid-cols-2 lg:grid-cols-4'>
+              {ENROLMENT_STEPS.map((step, index) => (
+                <li
+                  key={step.title}
+                  className='border-border bg-card rounded-[18px] border p-5 sm:p-6'
+                >
+                  <span
+                    className={cn(
+                      DISPLAY,
+                      'bg-primary/10 text-primary flex size-8 items-center justify-center rounded-lg text-sm font-bold'
+                    )}
+                  >
+                    {index + 1}
+                  </span>
+                  <h3
+                    className={cn(
+                      DISPLAY,
+                      'text-foreground mt-3 text-base font-bold tracking-tight'
+                    )}
+                  >
+                    {step.title}
+                  </h3>
+                  <p className='text-muted-foreground mt-2 text-sm leading-relaxed'>{step.body}</p>
+                </li>
+              ))}
+            </ol>
           </div>
         </section>
 
-        <section id='domains' className='border-border/60 bg-background/70 border-y py-20'>
-          <div className='mx-auto w-full max-w-6xl px-6'>
-            <div className='mb-12 text-center'>
-              <p className='text-primary text-xs font-semibold tracking-[0.4em] uppercase'>
-                Product pillars
+        {/*
+          The dark band. It stays dark in both themes on purpose - it is the one
+          moment of contrast on an otherwise light page, and flipping it with the
+          theme would lose that.
+        */}
+        <section className='bg-[var(--el-neutral-950)] text-[var(--el-neutral-0)]'>
+          <div className={cn(CONTAINER, 'py-12 sm:py-16')}>
+            <div className='max-w-2xl'>
+              <p className='text-[11.5px] font-bold tracking-[0.09em] text-[var(--el-brand-300)] uppercase'>
+                What Elimika runs
               </p>
-              <h2 className='text-foreground mt-3 text-3xl font-semibold sm:text-4xl'>
-                The Elimika platform at a glance
+              <h2
+                className={cn(
+                  DISPLAY,
+                  'mt-2 text-2xl font-bold tracking-tight sm:text-3xl'
+                )}
+              >
+                Everything between finding a course and getting paid for teaching one.
               </h2>
+              <p className='mt-3 text-[15px] leading-relaxed text-[var(--el-neutral-300)]'>
+                Not a video library. A working marketplace - enrolment, scheduling, assessment and
+                payment, for learners, trainers and schools on the same platform.
+              </p>
             </div>
 
-            <div className='grid gap-6 md:grid-cols-3'>
-              {productHighlights.map(feature => {
-                const Icon = feature.icon;
+            <ul className='mt-8 grid gap-[18px] sm:grid-cols-2 lg:grid-cols-3'>
+              {SERVICES.map(service => {
+                const Icon = service.icon;
 
                 return (
-                  <article
-                    key={feature.title}
-                    className='group border-border bg-card/90 hover:border-primary/60 rounded-[28px] border p-6 shadow-lg shadow-black/10 transition hover:-translate-y-1'
+                  <li
+                    key={service.title}
+                    className='rounded-[18px] border border-white/12 bg-white/[0.035] p-5 sm:p-6'
                   >
-                    <div className='bg-primary/15 text-primary mb-5 inline-flex items-center justify-center rounded-full p-3'>
-                      <Icon className='h-5 w-5' />
-                    </div>
-                    <h3 className='text-foreground mb-3 text-lg font-semibold'>{feature.title}</h3>
-                    <p className='text-muted-foreground text-sm leading-6'>{feature.description}</p>
-                  </article>
+                    <span
+                      className='flex size-9 items-center justify-center rounded-[11px]'
+                      style={{ backgroundColor: service.tone }}
+                    >
+                      <Icon className='size-[18px] text-[var(--el-neutral-950)]' aria-hidden />
+                    </span>
+                    <h3
+                      className={cn(DISPLAY, 'mt-3.5 text-base font-bold tracking-tight')}
+                    >
+                      {service.title}
+                    </h3>
+                    <p className='mt-2 text-sm leading-relaxed text-[var(--el-neutral-300)]'>
+                      {service.body}
+                    </p>
+                  </li>
                 );
               })}
-            </div>
+            </ul>
           </div>
         </section>
 
-        <section id='skills-wallet' className='bg-background/80 py-20'>
-          <div className='mx-auto grid w-full max-w-6xl gap-10 px-6 md:grid-cols-2 md:items-center'>
-            <div className='space-y-5'>
-              <h2 className='text-foreground text-3xl font-semibold sm:text-4xl'>
-                What is Skills Wallet?
-              </h2>
-              <p className='text-muted-foreground text-base'>
-                Skills Wallet is a secure digital platform that records and validates your skills,
-                certificates, and experiences. Whether you&apos;re a student, professional, or
-                employer, Skills Wallet makes learning and employment smarter and more connected.
-              </p>
+        <section className={cn(CONTAINER, 'py-12 sm:py-16')}>
+          <div className='max-w-2xl'>
+            <p className='text-primary text-[11.5px] font-bold tracking-[0.09em] uppercase'>
+              Before you sign up
+            </p>
+            <h2
+              className={cn(
+                DISPLAY,
+                'text-foreground mt-2 text-2xl font-bold tracking-tight sm:text-3xl'
+              )}
+            >
+              The questions people actually ask
+            </h2>
+          </div>
+
+          {/*
+            Native <details> rather than React state: this section is server
+            rendered, every answer is in the markup a crawler reads, and the
+            disclosure costs no JavaScript.
+          */}
+          <ul className='mt-8 grid gap-3 lg:grid-cols-2 lg:gap-x-5'>
+            {FAQS.map((faq, index) => (
+              <li key={faq.q}>
+                {/* The first one opens by default, so the section reads as an
+                    answer at rest rather than a row of closed boxes. */}
+                <details
+                  open={index === 0}
+                  className='border-border bg-card group rounded-[18px] border px-5 py-4 sm:px-6 sm:py-5'
+                >
+                  <summary className='marker:content-none flex cursor-pointer list-none items-start justify-between gap-4 [&::-webkit-details-marker]:hidden'>
+                    <h3 className='text-foreground text-[15px] leading-snug font-semibold'>
+                      {faq.q}
+                    </h3>
+                    <ChevronDown
+                      className='text-muted-foreground mt-0.5 size-[18px] shrink-0 transition-transform group-open:rotate-180'
+                      aria-hidden='true'
+                    />
+                  </summary>
+                  <p className='text-muted-foreground mt-3 text-sm leading-relaxed'>{faq.a}</p>
+                </details>
+              </li>
+            ))}
+          </ul>
+        </section>
+
+        <section
+          className={cn(CONTAINER, 'grid gap-8 py-12 sm:py-16 lg:grid-cols-[1.05fr_0.95fr]')}
+        >
+          <div>
+            <p className='text-primary text-[11.5px] font-bold tracking-[0.09em] uppercase'>
+              Skills Wallet
+            </p>
+            <h2
+              className={cn(
+                DISPLAY,
+                'text-foreground mt-2 text-2xl font-bold tracking-tight sm:text-3xl'
+              )}
+            >
+              What you keep after the course ends
+            </h2>
+            <p className='text-muted-foreground mt-4 max-w-xl text-base leading-relaxed'>
+              Skills Wallet is the record of what you have actually done: certificates, verified
+              skills and the learning behind them, held in one place and shareable with an employer
+              without a stack of scanned paper.
+            </p>
+            <Link
+              href='/skills-wallet'
+              className={cn(buttonVariants({ size: 'lg' }), 'mt-6 rounded-xl px-6 font-semibold')}
+            >
+              See how Skills Wallet works
+              <ArrowRight className='size-4' aria-hidden='true' />
+            </Link>
+          </div>
+
+          <div className='border-border bg-card rounded-[18px] border p-6 sm:p-7'>
+            <p className='text-primary text-[11.5px] font-bold tracking-[0.09em] uppercase'>
+              Skills Fund
+            </p>
+            <h3
+              className={cn(
+                DISPLAY,
+                'text-foreground mt-2 text-xl leading-tight font-bold tracking-tight'
+              )}
+            >
+              When the fee is the thing standing in the way
+            </h3>
+            <p className='text-muted-foreground mt-3 text-sm leading-relaxed'>
+              The Skills Fund connects learners with scholarships, bursaries and employer-funded
+              training so a course fee does not decide who gets to train.
+            </p>
+            <Link
+              href='/skills-wallet#skills-fund'
+              className='text-primary mt-4 inline-flex items-center gap-1.5 text-[13.5px] font-semibold hover:underline'
+            >
+              Read about the Skills Fund
+              <ArrowRight className='size-3.5' aria-hidden='true' />
+            </Link>
+          </div>
+        </section>
+
+        <section className={cn(CONTAINER, 'pb-14 sm:pb-20')}>
+          <div className='border-border bg-card rounded-[18px] border p-8 text-center sm:p-12'>
+            <h2
+              className={cn(
+                DISPLAY,
+                'text-foreground text-2xl font-bold tracking-tight text-balance sm:text-3xl'
+              )}
+            >
+              Everything on this page starts in the catalogue
+            </h2>
+            <p className='text-muted-foreground mx-auto mt-3 max-w-xl text-base leading-relaxed'>
+              Find the course, meet the trainer who runs it, and enrol. Trainers and schools start
+              in the same place - with an account.
+            </p>
+            <div className='mt-7 flex flex-col items-stretch justify-center gap-3 sm:flex-row sm:items-center'>
               <Link
-                href='/skills-wallet'
-                className='border-primary bg-primary text-primary-foreground hover:bg-primary/90 inline-flex items-center justify-center gap-2 rounded-full border px-7 py-3 text-sm font-semibold shadow-lg'
+                href='/courses'
+                className={cn(buttonVariants({ size: 'lg' }), 'rounded-xl px-7 font-semibold')}
               >
-                Create Your Skills Wallet <ArrowRight className='h-4 w-4' />
+                Browse the catalogue
+                <ArrowRight className='size-4' aria-hidden='true' />
               </Link>
-            </div>
-
-            <div className='border-border/60 bg-card/80 rounded-[32px] border p-8 shadow-xl shadow-black/10'>
-              <div className='bg-primary/5 flex aspect-video items-center justify-center rounded-[24px]'>
-                <FolderOpen className='text-primary/20 h-24 w-24' />
-              </div>
-            </div>
-          </div>
-        </section>
-
-        <section id='key-features' className='border-border/60 bg-background/70 border-y py-20'>
-          <div className='mx-auto w-full max-w-6xl px-6'>
-            <div className='mb-12 text-center'>
-              <h2 className='text-foreground text-3xl font-semibold sm:text-4xl'>Key Features</h2>
-            </div>
-
-            <div className='grid gap-6 md:grid-cols-2 lg:grid-cols-2'>
-              <article className='group border-border bg-card/90 hover:border-primary/60 rounded-[28px] border p-6 shadow-lg shadow-black/10 transition hover:-translate-y-1'>
-                <div className='bg-primary/15 text-primary mb-5 inline-flex items-center justify-center rounded-full p-3'>
-                  <FolderOpen className='h-5 w-5' />
-                </div>
-                <h3 className='text-foreground mb-3 text-lg font-semibold'>Skills Portfolio</h3>
-                <p className='text-muted-foreground text-sm leading-6'>
-                  Upload, verify, and showcase your skills in one place.
-                </p>
-              </article>
-
-              <article className='group border-border bg-card/90 hover:border-primary/60 rounded-[28px] border p-6 shadow-lg shadow-black/10 transition hover:-translate-y-1'>
-                <div className='bg-primary/15 text-primary mb-5 inline-flex items-center justify-center rounded-full p-3'>
-                  <Briefcase className='h-5 w-5' />
-                </div>
-                <h3 className='text-foreground mb-3 text-lg font-semibold'>Employer Access</h3>
-                <p className='text-muted-foreground text-sm leading-6'>
-                  Share your verified skills with employers instantly
-                </p>
-              </article>
-
-              <article className='group border-border bg-card/90 hover:border-primary/60 rounded-[28px] border p-6 shadow-lg shadow-black/10 transition hover:-translate-y-1'>
-                <div className='bg-primary/15 text-primary mb-5 inline-flex items-center justify-center rounded-full p-3'>
-                  <GraduationCap className='h-5 w-5' />
-                </div>
-                <h3 className='text-foreground mb-3 text-lg font-semibold'>Student Growth</h3>
-                <p className='text-muted-foreground text-sm leading-6'>
-                  Track learning progress from school to workplace
-                </p>
-              </article>
-
-              <article className='group border-border bg-card/90 hover:border-primary/60 rounded-[28px] border p-6 shadow-lg shadow-black/10 transition hover:-translate-y-1'>
-                <div className='bg-primary/15 text-primary mb-5 inline-flex items-center justify-center rounded-full p-3'>
-                  <DollarSign className='h-5 w-5' />
-                </div>
-                <h3 className='text-foreground mb-3 text-lg font-semibold'>Skills Fund</h3>
-                <p className='text-muted-foreground text-sm leading-6'>
-                  Access scholarships, bursaries, and training support
-                </p>
-              </article>
-            </div>
-          </div>
-        </section>
-
-        <section id='skills-fund' className='bg-background py-20'>
-          <div className='mx-auto w-full max-w-6xl px-6'>
-            <div className='border-border/60 bg-card/80 rounded-[36px] border p-10 shadow-xl shadow-black/10 md:p-14'>
-              <div className='mb-8 flex flex-wrap items-center justify-center gap-4'>
-                <BrandPill className='text-xs font-semibold tracking-[0.2em]'>Fund</BrandPill>
-                <BrandPill className='text-xs font-semibold tracking-[0.2em]'>Student</BrandPill>
-                <BrandPill className='text-xs font-semibold tracking-[0.2em]'>Courses</BrandPill>
-                <BrandPill className='text-xs font-semibold tracking-[0.2em]'>
-                  Opportunities
-                </BrandPill>
-              </div>
-
-              <div className='space-y-6 text-center'>
-                <h2 className='text-foreground text-3xl font-semibold sm:text-4xl'>
-                  Invest in Your Future
-                </h2>
-                <p className='text-muted-foreground mx-auto max-w-3xl text-base'>
-                  The Skills Fund empowers learners by connecting them with funding opportunities
-                  for training, workshops, and courses. Employers can also contribute to support
-                  skill development.
-                </p>
-
-                <div className='flex flex-col items-center gap-4 pt-4 sm:flex-row sm:justify-center'>
-                  <Link
-                    href='/skills-fund/apply'
-                    className='border-border bg-card text-foreground hover:border-primary/60 hover:bg-card/80 inline-flex items-center justify-center gap-2 rounded-full border px-7 py-3 text-sm font-semibold shadow-lg'
-                  >
-                    Apply for Skills Fund
-                  </Link>
-                  <Link
-                    href='/skills-fund/contribute'
-                    className='border-border bg-card text-foreground hover:border-primary/60 hover:bg-card/80 inline-flex items-center justify-center gap-2 rounded-full border px-7 py-3 text-sm font-semibold shadow-lg'
-                  >
-                    Fund Student
-                  </Link>
-                </div>
-              </div>
-            </div>
-          </div>
-        </section>
-
-        <section id='for-everyone' className='border-border/60 bg-background/70 border-y py-20'>
-          <div className='mx-auto w-full max-w-6xl px-6'>
-            <div className='grid gap-8 md:grid-cols-3'>
-              <div className='border-border bg-card/90 rounded-[28px] border p-8 shadow-lg shadow-black/10'>
-                <div className='bg-primary/15 text-primary mb-6 inline-flex items-center justify-center rounded-full p-4'>
-                  <GraduationCap className='h-6 w-6' />
-                </div>
-                <h3 className='text-foreground mb-4 text-xl font-semibold'>For Students</h3>
-                <p className='text-muted-foreground text-sm leading-6'>
-                  Build a verified record of achievements, skills, and certificates to showcase your
-                  learning and work opportunities.
-                </p>
-              </div>
-
-              <div className='border-border bg-card/90 rounded-[28px] border p-8 shadow-lg shadow-black/10'>
-                <div className='bg-primary/15 text-primary mb-6 inline-flex items-center justify-center rounded-full p-4'>
-                  <Briefcase className='h-6 w-6' />
-                </div>
-                <h3 className='text-foreground mb-4 text-xl font-semibold'>For Professionals</h3>
-                <p className='text-muted-foreground text-sm leading-6'>
-                  Showcase career milestones, skills development, and professional achievements to
-                  employers and peers.
-                </p>
-              </div>
-
-              <div className='border-border bg-card/90 rounded-[28px] border p-8 shadow-lg shadow-black/10'>
-                <div className='bg-primary/15 text-primary mb-6 inline-flex items-center justify-center rounded-full p-4'>
-                  <Building2 className='h-6 w-6' />
-                </div>
-                <h3 className='text-foreground mb-4 text-xl font-semibold'>
-                  For Schools & Colleges
-                </h3>
-                <p className='text-muted-foreground text-sm leading-6'>
-                  Manage student growth, track achievements, and provide verifiable credentials that
-                  follow learners throughout their careers.
-                </p>
-              </div>
-            </div>
-          </div>
-        </section>
-
-        <section id='powered' className='bg-background py-20'>
-          <div className='mx-auto grid w-full max-w-6xl gap-10 px-6 md:grid-cols-[1.1fr_0.9fr] md:items-center'>
-            <div className='space-y-5'>
-              <p className='border-border bg-secondary/60 text-primary inline-flex items-center gap-2 rounded-full border px-3 py-1 text-xs font-semibold tracking-[0.4em] uppercase'>
-                Powered by Sarafrika
-              </p>
-              <h2 className='text-foreground text-3xl font-semibold sm:text-4xl'>
-                Product craftsmanship by Sarafrika, inspired by the Elimika emblem
-              </h2>
-              <p className='text-muted-foreground text-base'>
-                Sarafrika&apos;s product studios steward Elimika&apos;s vision, from interface
-                language to enabling technology, embedding sustainable design and engineering across
-                every release.
-              </p>
-              <ul className='text-muted-foreground space-y-3 text-sm'>
-                {sarafrikaPoints.map(point => (
-                  <li key={point} className='flex items-start gap-3'>
-                    <div className='bg-primary mt-1 size-2 rounded-full' />
-                    <span>{point}</span>
-                  </li>
-                ))}
-              </ul>
-            </div>
-
-            <div className='border-border/60 bg-card/80 flex flex-col items-center gap-6 rounded-[32px] border p-8 shadow-xl shadow-black/10'>
-              <div className='flex items-center justify-center gap-3'>
-                <Image
-                  alt='Sarafrika logo'
-                  src='/logos/sarafrika/Sarafrika Logo-02.svg'
-                  width={180}
-                  height={48}
-                  className='h-12 w-auto dark:hidden'
-                />
-                <Image
-                  alt='Sarafrika logo in white'
-                  src='/logos/sarafrika/Sarafrika Logo-05.svg'
-                  width={180}
-                  height={48}
-                  className='hidden h-12 w-auto dark:block'
-                />
-              </div>
-              <p className='text-muted-foreground text-center text-sm'>
-                &ldquo;Together, Elimika and Sarafrika celebrate African ingenuity, building a
-                product ecosystem where talent thrives, organisations transform, and learners
-                flourish.&rdquo;
-              </p>
+              <Link
+                href={CREATE_ACCOUNT_HREF}
+                className={cn(
+                  buttonVariants({ size: 'lg', variant: 'outline' }),
+                  'rounded-xl px-7 font-semibold'
+                )}
+              >
+                Create an account
+              </Link>
             </div>
           </div>
         </section>
       </main>
 
-      <footer className='border-border/60 bg-card/80 border-t py-10'>
-        <div className='mx-auto flex w-full max-w-6xl justify-center px-6'>
-          <div className='text-muted-foreground text-xs'>
-            {'\u00A9'} {currentYear} Sarafrika. Elimika is owned and copyrighted by Sarafrika.
-          </div>
+      <footer className='border-border bg-card border-t py-8'>
+        <div className={cn(CONTAINER, 'text-muted-foreground text-center text-xs')}>
+          {'©'} {currentYear} Sarafrika. Elimika is owned and copyrighted by Sarafrika.
         </div>
       </footer>
-    </>
+    </div>
   );
 }
 
-function FeatureBadge({ label }: { label: string }) {
+// The hero's proof strip, streamed separately so counts from unrelated services
+// can never hold up the headline. The band renders nothing at all when none can
+// be read: an absent figure beats an invented one.
+async function PlatformProofStrip() {
+  const stats = await getPlatformStats();
+
+  if (stats.length === 0) {
+    return null;
+  }
+
   return (
-    <div className='border-border bg-card/80 text-primary rounded-full border px-4 py-2 text-xs font-semibold shadow-sm'>
-      {label}
-    </div>
+    <section className='border-border bg-background border-b'>
+      <div className={cn(CONTAINER, 'grid gap-6 py-6 sm:grid-cols-2 lg:grid-cols-3')}>
+        {stats.map((stat, index) => (
+          <p key={stat.key} className={cn(toneFor(stat.key + index), 'flex items-baseline gap-3')}>
+            <span
+              className={cn(
+                DISPLAY,
+                TONE_INK,
+                'text-[26px] font-extrabold tracking-tight sm:text-3xl'
+              )}
+            >
+              {stat.value.toLocaleString('en-US')}
+              {stat.atLeast ? '+' : ''}
+            </span>
+            <span className='text-muted-foreground text-[13.5px] leading-snug'>{stat.label}</span>
+          </p>
+        ))}
+      </div>
+    </section>
   );
 }

@@ -751,6 +751,9 @@ import type {
   CreateCourseData,
   CreateCourseResponses,
   CreateCourseErrors,
+  RestoreCourseVersionData,
+  RestoreCourseVersionResponses,
+  RestoreCourseVersionErrors,
   UnpublishCourseData,
   UnpublishCourseResponses,
   UnpublishCourseErrors,
@@ -2048,6 +2051,7 @@ import {
   joinWaitlistResponseTransformer,
   getAllCoursesResponseTransformer,
   createCourseResponseTransformer,
+  restoreCourseVersionResponseTransformer,
   unpublishCourseResponseTransformer,
   uploadCourseThumbnailResponseTransformer,
   publishCourseResponseTransformer,
@@ -6037,6 +6041,7 @@ export const deactivateClassDefinition = <ThrowOnError extends boolean = false>(
 
 /**
  * Get a class definition by UUID
+ * sale_price is the public price. instructor_pay is included only for the parties to it — the class's own instructor, managers of the organisation that owns it and platform admins; every other caller receives the class without the field.
  */
 export const getClassDefinition = <ThrowOnError extends boolean = false>(
   options: Options<GetClassDefinitionData, ThrowOnError>
@@ -9721,6 +9726,51 @@ export const createCourse = <ThrowOnError extends boolean = false>(
 };
 
 /**
+ * Restore a course version
+ * Loads an approved version back into the course's **draft**, ready for review.
+ *
+ * Restore never touches the live course. The snapshot is materialised into the
+ * shadow draft row, so putting an old version back travels the same
+ * review-and-promote road as any other edit — `GET /{uuid}/edit/diff` shows what
+ * it would change before anyone commits to it, and the live course keeps serving
+ * its current content until the edit is approved.
+ *
+ * Rows the version shares a uuid with are linked back to their live counterparts,
+ * so promotion updates them in place and learner progress survives. A lesson the
+ * version carries that no longer exists live is re-added; a live lesson the
+ * version never had is dropped when the edit is promoted.
+ *
+ * Fails with 409 if an edit is already open — restoring over it would silently
+ * discard work that was never reviewed. Promote or discard that edit first.
+ *
+ * **Authorization:** Only the course owner.
+ *
+ */
+export const restoreCourseVersion = <ThrowOnError extends boolean = false>(
+  options: Options<RestoreCourseVersionData, ThrowOnError>
+) => {
+  return (options.client ?? _heyApiClient).post<
+    RestoreCourseVersionResponses,
+    RestoreCourseVersionErrors,
+    ThrowOnError
+  >({
+    responseTransformer: restoreCourseVersionResponseTransformer,
+    security: [
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+    ],
+    url: '/api/v1/courses/{uuid}/versions/{versionNumber}/restore',
+    ...options,
+  });
+};
+
+/**
  * Unpublish course
  * Unpublishes a course, changing it from PUBLISHED to DRAFT status.
  *
@@ -11877,6 +11927,7 @@ export const completeCart = <ThrowOnError extends boolean = false>(
 
 /**
  * Get all class definitions
+ * instructor_pay is included only for the parties to it, as on every other class read. Sorting by it is rejected with 400 for everyone, parties included: ordering a listing by a figure it does not print would disclose the same figure one comparison at a time.
  */
 export const getAllClassDefinitions = <ThrowOnError extends boolean = false>(
   options: Options<GetAllClassDefinitionsData, ThrowOnError>
@@ -18986,7 +19037,7 @@ export const getClassDefinitionsForOrganisation = <ThrowOnError extends boolean 
 
 /**
  * Get what an organisation owes each instructor
- * Aggregated from the instructor obligation ledger: one row was written per delivered session at the training fee that stood on the day, so re-rating a class does not change what has already been earned. Settled sessions move from amount_owed to amount_settled. Use /api/v1/organisations/{organisationUuid}/instructor-obligations for the row-level detail.
+ * Aggregated from the instructor obligation ledger: one row was written per delivered session at the training fee that stood on the day, so re-rating a class does not change what has already been earned. Settled sessions move from amount_owed to amount_settled. Use /api/v1/organisations/{organisationUuid}/instructor-obligations for the row-level detail. Restricted to the organisation's managers and platform admins.
  */
 export const getInstructorPayablesForOrganisation = <ThrowOnError extends boolean = false>(
   options: Options<GetInstructorPayablesForOrganisationData, ThrowOnError>
@@ -19149,6 +19200,7 @@ export const getClassDefinitionsForInstructor = <ThrowOnError extends boolean = 
 
 /**
  * Get class definitions for a course
+ * The catalogue a learner browses before enrolling: what classes run on this course, when and at what sale_price. instructor_pay is included only for the parties to it — each class's own instructor, managers of the organisation that owns it and platform admins — so the organisation's margin is not published alongside its price.
  */
 export const getClassDefinitionsForCourse = <ThrowOnError extends boolean = false>(
   options: Options<GetClassDefinitionsForCourseData, ThrowOnError>

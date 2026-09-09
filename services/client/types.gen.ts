@@ -1130,6 +1130,10 @@ export type QuizAttempt = {
    */
   readonly grade_display?: string;
   /**
+   * **[READ-ONLY]** Formatted display of the time taken to complete the quiz.
+   */
+  readonly time_display?: string;
+  /**
    * **[READ-ONLY]** Formatted category of the attempt based on outcome and status.
    */
   readonly attempt_category?: string;
@@ -1137,10 +1141,6 @@ export type QuizAttempt = {
    * **[READ-ONLY]** Comprehensive summary of the quiz attempt performance.
    */
   readonly performance_summary?: string;
-  /**
-   * **[READ-ONLY]** Formatted display of the time taken to complete the quiz.
-   */
-  readonly time_display?: string;
 };
 
 /**
@@ -2219,13 +2219,13 @@ export type InstructorDocument = {
    */
   readonly updated_by?: string;
   /**
-   * **[READ-ONLY]** Indicates if the document has expired based on the expiry date.
-   */
-  readonly is_expired?: boolean;
-  /**
    * **[READ-ONLY]** API-relative URL for previewing or downloading the uploaded document.
    */
   readonly file_url?: string;
+  /**
+   * **[READ-ONLY]** Indicates if the document has expired based on the expiry date.
+   */
+  readonly is_expired?: boolean;
   /**
    * **[READ-ONLY]** Human-readable formatted file size.
    */
@@ -2326,6 +2326,10 @@ export type AvailabilitySlot = {
    */
   readonly updated_by?: string;
   /**
+   * **[READ-ONLY]** Duration of the availability slot in minutes.
+   */
+  readonly duration_minutes?: bigint;
+  /**
    * **[READ-ONLY]** Human-readable formatted duration.
    */
   readonly duration_formatted?: string;
@@ -2341,10 +2345,6 @@ export type AvailabilitySlot = {
    * **[READ-ONLY]** Human-readable description of the availability pattern.
    */
   readonly availability_description?: string;
-  /**
-   * **[READ-ONLY]** Duration of the availability slot in minutes.
-   */
-  readonly duration_minutes?: bigint;
 };
 
 export type ApiResponseAvailabilitySlot = {
@@ -2480,10 +2480,6 @@ export type Course = {
    */
   readonly is_published?: boolean;
   /**
-   * **[READ-ONLY]** Indicates if the course is currently accepting new student enrollments.
-   */
-  readonly accepts_new_enrollments?: boolean;
-  /**
    * **[READ-ONLY]** Indicates if the course is still in draft mode.
    */
   readonly is_draft?: boolean;
@@ -2495,6 +2491,10 @@ export type Course = {
    * **[READ-ONLY]** Indicates if the course is currently under review.
    */
   readonly is_in_review?: boolean;
+  /**
+   * **[READ-ONLY]** Indicates if the course is currently accepting new student enrollments.
+   */
+  readonly accepts_new_enrollments?: boolean;
   /**
    * **[READ-ONLY]** Human-readable format of total course duration.
    */
@@ -3358,13 +3358,13 @@ export type CourseCreatorDocumentDto = {
   readonly updated_date?: Date;
   readonly updated_by?: string;
   /**
-   * **[READ-ONLY]** Indicates if the document has expired based on the expiry date.
-   */
-  readonly is_expired?: boolean;
-  /**
    * **[READ-ONLY]** API-relative URL for previewing or downloading the uploaded document.
    */
   readonly file_url?: string;
+  /**
+   * **[READ-ONLY]** Indicates if the document has expired based on the expiry date.
+   */
+  readonly is_expired?: boolean;
   /**
    * **[READ-ONLY]** Human-readable formatted file size.
    */
@@ -3736,6 +3736,33 @@ export type CommerceCatalogueItem = {
    * Last updated timestamp
    */
   updated_date?: Date;
+  /**
+   * Public attributes of the course this entry sells, so a storefront can render a
+   * catalogue page without fetching each course separately.
+   *
+   * Present on course-backed entries returned by `/search`; null for class- and
+   * program-backed entries, and on endpoints that do not resolve it. Carries display
+   * fields only — the course's commercial terms are not part of this projection.
+   *
+   */
+  course?: CourseCatalogueSnapshot;
+};
+
+export type CourseCatalogueSnapshot = {
+  uuid?: string;
+  name?: string;
+  description?: string;
+  thumbnail_url?: string;
+  duration_hours?: number;
+  duration_minutes?: number;
+  category_names?: Array<string>;
+  price?: number;
+  age_lower_limit?: number;
+  age_upper_limit?: number;
+  published?: boolean;
+  accepts_new_enrollments?: boolean;
+  creator_uuid?: string;
+  creator_name?: string;
 };
 
 /**
@@ -4029,13 +4056,13 @@ export type ClassDefinition = {
    */
   readonly is_standalone?: boolean;
   /**
-   * **[READ-ONLY]** Human-readable formatted duration.
-   */
-  readonly duration_formatted?: string;
-  /**
    * **[READ-ONLY]** Computed duration of the class in minutes based on start and end times.
    */
   readonly duration_minutes?: bigint;
+  /**
+   * **[READ-ONLY]** Human-readable formatted duration.
+   */
+  readonly duration_formatted?: string;
   /**
    * **[READ-ONLY]** Human-readable capacity information including waitlist availability.
    */
@@ -4886,6 +4913,10 @@ export type ScheduledInstance = {
    */
   readonly updated_by?: string;
   /**
+   * **[READ-ONLY]** Duration of the scheduled instance in minutes.
+   */
+  readonly duration_minutes?: bigint;
+  /**
    * **[READ-ONLY]** Human-readable formatted duration.
    */
   readonly duration_formatted?: string;
@@ -4897,10 +4928,6 @@ export type ScheduledInstance = {
    * **[READ-ONLY]** Indicates if the scheduled instance is currently active (ongoing).
    */
   readonly is_currently_active?: boolean;
-  /**
-   * **[READ-ONLY]** Duration of the scheduled instance in minutes.
-   */
-  readonly duration_minutes?: bigint;
   /**
    * **[READ-ONLY]** Indicates if the scheduled instance can be cancelled.
    */
@@ -9991,6 +10018,13 @@ export type CourseTrainerSummary = {
   rate_card?: CourseTrainingRateCard;
 };
 
+export type ApiResponseCourseStats = {
+  success?: boolean;
+  data?: CourseStats;
+  message?: string;
+  error?: unknown;
+};
+
 /**
  * Course statistics. The scoped and owner blocks are omitted entirely unless the caller is entitled to them.
  */
@@ -10161,6 +10195,10 @@ export type OrganisationCourseContent = {
    * Lessons. Outline only without full access, then with full content.
    */
   lessons?: Array<OrganisationCourseLesson>;
+  /**
+   * The course itself: title, blurb, objectives, prerequisites and what a trainer must supply. Present for every caller, so a course page can be rendered without a second, authenticated request. Carries no commercial terms.
+   */
+  course?: PublicCourseProfile;
 };
 
 /**
@@ -10195,6 +10233,123 @@ export type OrganisationCourseLesson = {
    * Full lesson content. Only present when the caller has full read access.
    */
   contents?: Array<LessonContent>;
+};
+
+/**
+ * Public attributes of a course, for a course page served to any caller. Carries no commercial terms.
+ */
+export type PublicCourseProfile = {
+  /**
+   * Display title.
+   */
+  name?: string;
+  /**
+   * Rich-text blurb, as authored.
+   */
+  description?: string;
+  /**
+   * What a learner will be able to do afterwards.
+   */
+  objectives?: string;
+  /**
+   * What a learner needs before starting.
+   */
+  prerequisites?: string;
+  /**
+   * Public URL for the course thumbnail.
+   */
+  thumbnail_url?: string;
+  /**
+   * Public URL for the course banner.
+   */
+  banner_url?: string;
+  /**
+   * Public URL for the free intro video.
+   */
+  intro_video_url?: string;
+  /**
+   * Hours component of the advertised duration.
+   */
+  duration_hours?: number;
+  /**
+   * Minutes component of the advertised duration.
+   */
+  duration_minutes?: number;
+  /**
+   * Disciplines the course is filed under.
+   */
+  category_names?: Array<string>;
+  /**
+   * List price. The same figure the catalogue entry sells at.
+   */
+  price?: number;
+  /**
+   * Maximum learners in one class, or null when uncapped.
+   */
+  class_limit?: number;
+  /**
+   * Lower age bound, or null when unrestricted.
+   */
+  age_lower_limit?: number;
+  /**
+   * Upper age bound, or null when unrestricted.
+   */
+  age_upper_limit?: number;
+  /**
+   * Whether the course itself is published.
+   */
+  published?: boolean;
+  /**
+   * Whether the course can currently be enrolled on.
+   */
+  accepts_new_enrollments?: boolean;
+  /**
+   * The course creator.
+   */
+  creator_uuid?: string;
+  /**
+   * The creator's display name, resolved so the caller needs no second lookup.
+   */
+  creator_name?: string;
+  /**
+   * What a trainer must supply to deliver this course.
+   */
+  training_requirements?: Array<PublicCourseTrainingRequirement>;
+  /**
+   * When the course was last changed.
+   */
+  updated_date?: string;
+};
+
+export type PublicCourseTrainingRequirement = {
+  /**
+   * What is needed.
+   */
+  name?: string;
+  /**
+   * Free-text detail.
+   */
+  description?: string;
+  /**
+   * How many.
+   */
+  quantity?: number;
+  /**
+   * Unit the quantity is counted in.
+   */
+  unit?: string;
+  /**
+   * What kind of thing this is.
+   */
+  requirement_type?: string;
+  /**
+   * Who supplies it.
+   */
+  provided_by?: string;
+  /**
+   * Whether delivery depends on it.
+   */
+  is_mandatory?: boolean;
 };
 
 export type ApiResponsePagedDtoLesson = {
@@ -10379,6 +10534,10 @@ export type CourseEnrollment = {
    * **[OPTIONAL]** Final grade achieved by the student in the course.
    */
   final_grade?: number;
+  /**
+   * **[READ-ONLY]** The course version this enrolment was sold against. Null follows the live course: the enrolment predates version pinning, or the course has no promoted version yet.
+   */
+  readonly course_version?: number;
   /**
    * **[READ-ONLY]** Timestamp when the enrollment was created. Automatically set by the system.
    */
@@ -22459,6 +22618,54 @@ export type CreateCourseResponses = {
 
 export type CreateCourseResponse = CreateCourseResponses[keyof CreateCourseResponses];
 
+export type RestoreCourseVersionData = {
+  body?: never;
+  path: {
+    /**
+     * UUID of the course
+     */
+    uuid: string;
+    /**
+     * Version number to restore
+     */
+    versionNumber: number;
+  };
+  query?: never;
+  url: '/api/v1/courses/{uuid}/versions/{versionNumber}/restore';
+};
+
+export type RestoreCourseVersionErrors = {
+  /**
+   * Not the course owner
+   */
+  403: ApiResponseCourse;
+  /**
+   * No such version for this course
+   */
+  404: unknown;
+  /**
+   * An edit is already open
+   */
+  409: ApiResponseCourse;
+  /**
+   * Internal Server Error
+   */
+  500: ResponseDtoVoid;
+};
+
+export type RestoreCourseVersionError =
+  RestoreCourseVersionErrors[keyof RestoreCourseVersionErrors];
+
+export type RestoreCourseVersionResponses = {
+  /**
+   * Version restored into the draft
+   */
+  200: ApiResponseCourse;
+};
+
+export type RestoreCourseVersionResponse =
+  RestoreCourseVersionResponses[keyof RestoreCourseVersionResponses];
+
 export type UnpublishCourseData = {
   body?: never;
   path: {
@@ -24783,6 +24990,10 @@ export type GetAllClassDefinitionsData = {
 };
 
 export type GetAllClassDefinitionsErrors = {
+  /**
+   * Sort names a field the listing withholds
+   */
+  400: ApiResponsePagedDtoClassDefinitionResponse;
   /**
    * Not Found
    */
@@ -31801,7 +32012,7 @@ export type GetCourseStatsResponses = {
   /**
    * Statistics retrieved successfully
    */
-  200: CourseStats;
+  200: ApiResponseCourseStats;
 };
 
 export type GetCourseStatsResponse = GetCourseStatsResponses[keyof GetCourseStatsResponses];

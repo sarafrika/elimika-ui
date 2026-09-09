@@ -1,4 +1,5 @@
 import { BookOpen, CircleAlert } from 'lucide-react';
+import Link from 'next/link';
 import type { PublicCatalogueCourse } from '@/src/features/catalogue/types';
 import { CataloguePageShell } from './CataloguePageShell';
 import { CatalogueStatusCard } from './CatalogueStatusCard';
@@ -7,10 +8,14 @@ import { PublicCourseCard } from './PublicCourseCard';
 export function PublicCoursesPage({
   items,
   hasError = false,
+  query = '',
 }: {
   items: PublicCatalogueCourse[];
   hasError?: boolean;
+  query?: string;
 }) {
+  const isSearching = query.length > 0;
+
   return (
     <CataloguePageShell>
       <header className='border-border bg-card space-y-6 rounded-[36px] border p-8 shadow-xl backdrop-blur-sm lg:p-12'>
@@ -19,12 +24,20 @@ export function PublicCoursesPage({
         </div>
         <div className='space-y-4'>
           <h1 className='text-foreground text-3xl font-semibold sm:text-4xl'>
-            Browse our course catalogue
+            {isSearching ? `Courses matching “${query}”` : 'Browse our course catalogue'}
           </h1>
           <p className='text-muted-foreground max-w-3xl text-base'>
             Explore our comprehensive catalogue of courses created by expert instructors and
             organizations. Find the right course to advance your skills and learning goals.
           </p>
+          {isSearching ? (
+            <Link
+              href='/courses'
+              className='text-primary hover:text-primary/80 inline-flex text-sm font-semibold'
+            >
+              Clear search
+            </Link>
+          ) : null}
         </div>
       </header>
 
@@ -38,8 +51,12 @@ export function PublicCoursesPage({
           />
         ) : items.length === 0 ? (
           <CatalogueStatusCard
-            title='No courses available'
-            description='Our catalogue is being updated. Check back soon for new courses or contact us to explore custom learning opportunities.'
+            title={isSearching ? 'No courses matched your search' : 'No courses available'}
+            description={
+              isSearching
+                ? 'Try a shorter search, a different spelling, or clear the search to see the whole catalogue.'
+                : 'Our catalogue is being updated. Check back soon for new courses or contact us to explore custom learning opportunities.'
+            }
             icon={BookOpen}
           />
         ) : (
@@ -47,7 +64,7 @@ export function PublicCoursesPage({
             <div className='flex items-center justify-between'>
               <div className='text-muted-foreground text-sm'>
                 <span className='text-foreground font-semibold'>{items.length}</span>{' '}
-                {items.length === 1 ? 'course' : 'courses'} available
+                {items.length === 1 ? 'course' : 'courses'} {isSearching ? 'found' : 'available'}
               </div>
             </div>
             <div className='grid gap-6 md:grid-cols-2 lg:grid-cols-3'>

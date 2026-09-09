@@ -7,15 +7,18 @@ import {
   type CourseCreator,
   getCourseByUuid,
   getCourseCreatorByUuid,
-  getCourseLessons,
+  getCourseContent,
+  type OrganisationCourseContent,
   type Lesson,
   resolveByCourseOrClass,
   searchCatalogue,
 } from '@/services/client';
 import type {
+  CatalogueCourseProjection,
   PublicCatalogueCourse,
   PublicCatalogueListResult,
   PublicCourseDetail,
+  PublicCourseSummary,
 } from '@/src/features/catalogue/types';
 import { resolveGeneratedData } from '@/src/lib/api/client.server';
 
@@ -35,7 +38,7 @@ const toJsonSafeMetadata = (metadata: PageMetadataLike): PageMetadataLike =>
     ])
   );
 
-const derivePrice = (course: Course, catalogueItem: CommerceCatalogueItem | null) => {
+const derivePrice = (course: PublicCourseSummary, catalogueItem: CommerceCatalogueItem | null) => {
   if (typeof course.price === 'number') {
     return course.price;
   }
@@ -87,17 +90,35 @@ const fetchCatalogueItem = async (courseUuid: string) => {
   return selectPublicCatalogueItem(extractList<CommerceCatalogueItem>(response));
 };
 
+/** The catalogue's projection, in the shape the cards read. */
+const toCourseSummary = (projection: CatalogueCourseProjection): PublicCourseSummary => ({
+  uuid: projection.uuid,
+  name: projection.name,
+  description: projection.description,
+  thumbnail_url: projection.thumbnail_url,
+  duration_hours: projection.duration_hours,
+  duration_minutes: projection.duration_minutes,
+  category_names: projection.category_names,
+  price: projection.price,
+  age_lower_limit: projection.age_lower_limit,
+  age_upper_limit: projection.age_upper_limit,
+  is_published: projection.published,
+  accepts_new_enrollments: projection.accepts_new_enrollments,
+  course_creator_uuid: projection.creator_uuid,
+});
+
 const enrichCourse = (
-  course: Course,
+  course: PublicCourseSummary,
   creator: CourseCreator | null,
-  catalogueItem: CommerceCatalogueItem | null
+  catalogueItem: CommerceCatalogueItem | null,
+  creatorName?: string
 ): PublicCatalogueCourse => {
   const priceAmount = derivePrice(course, catalogueItem);
 
   return {
     course,
     creator,
-    creatorName: getCreatorName(creator),
+    creatorName: creatorName ?? getCreatorName(creator),
     catalogueItem,
     priceAmount,
     currencyCode: deriveCurrencyCode(catalogueItem),
@@ -135,48 +156,38 @@ export const listPublicCatalogueCourses = async ({
     uniqueCourseMappings.set(item.course_uuid, item);
   }
 
-  const coursePairs = await Promise.all(
-    Array.from(uniqueCourseMappings.entries()).map(async ([courseUuid, catalogueItem]) => {
-      try {
-        const course = await fetchCourse(courseUuid);
-        return course ? { course, catalogueItem } : null;
-      } catch {
-        return null;
-      }
-    })
-  );
+  /*
+   * The catalogue row carries the course.
+   *
+   * This used to fetch each course and each creator separately - one request per
+   * row against `GET /courses/{uuid}`, which requires a token. Logged-out
+   * visitors got a 401 per card, every card was dropped by the surrounding
+   * catch, and the public catalogue rendered empty while the landing page's own
+   * counters - which never made that call - still reported the courses.
+   *
+   * The listing is now one request. A row whose `course` is missing is skipped
+   * rather than fetched: an entry pointing at a course that no longer exists is
+   * not something to paper over with a second call.
+   */
+  const items = Array.from(uniqueCourseMappings.values()).flatMap(catalogueItem => {
+    const projection = catalogueItem.course;
 
-  const validCoursePairs = coursePairs
-    .filter((pair): pair is { course: Course; catalogueItem: CommerceCatalogueItem } =>
-      Boolean(pair?.course?.uuid)
-    )
-    .filter(({ course }) => course.is_published !== false);
+    if (!projection || projection.published === false) {
+      return [];
+    }
 
-  const uniqueCreatorUuids = Array.from(
-    new Set(
-      validCoursePairs
-        .map(({ course }) => course.course_creator_uuid)
-        .filter((creatorUuid): creatorUuid is string => Boolean(creatorUuid))
-    )
-  );
-
-  const creatorEntries = await Promise.all(
-    uniqueCreatorUuids.map(async creatorUuid => {
-      try {
-        const creator = await fetchCreator(creatorUuid);
-        return [creatorUuid, creator] as const;
-      } catch {
-        return [creatorUuid, null] as const;
-      }
-    })
-  );
-
-  const creators = new Map<string, CourseCreator | null>(creatorEntries);
+    return [
+      enrichCourse(
+        toCourseSummary(projection),
+        null,
+        catalogueItem,
+        projection.creator_name ?? undefined
+      ),
+    ];
+  });
 
   return {
-    items: validCoursePairs.map(({ course, catalogueItem }) =>
-      enrichCourse(course, creators.get(course.course_creator_uuid) ?? null, catalogueItem)
-    ),
+    items,
     metadata: toJsonSafeMetadata(cataloguePage.metadata),
   };
 };
@@ -185,42 +196,60 @@ export const getPublicCourseDetail = async (
   courseUuid: string
 ): Promise<PublicCourseDetail | null> => {
   try {
-    const course = await fetchCourse(courseUuid);
-
-    if (!course || course.is_published === false) {
-      return null;
-    }
-
-    const [creatorResult, lessonsResult, catalogueItemResult] = await Promise.allSettled([
-      course.course_creator_uuid ? fetchCreator(course.course_creator_uuid) : Promise.resolve(null),
+    // One public call. The course record and the lesson listing are both
+    // authenticated, so fetching them here 404'd the page for logged-out visitors.
+    const [contentResult, catalogueItemResult] = await Promise.allSettled([
       resolveGeneratedData(
-        getCourseLessons({
-          path: { courseUuid },
-          query: { pageable: {} },
-        }),
-        'Failed to load course lessons'
+        getCourseContent({ path: { courseUuid } }),
+        'Failed to load course content'
       ),
       fetchCatalogueItem(courseUuid),
     ]);
 
-    const creator = creatorResult.status === 'fulfilled' ? creatorResult.value : null;
-    const lessonsResponse = lessonsResult.status === 'fulfilled' ? lessonsResult.value : null;
+    const content =
+      contentResult.status === 'fulfilled'
+        ? extractEntity<OrganisationCourseContent>(contentResult.value)
+        : null;
     const catalogueItem =
       catalogueItemResult.status === 'fulfilled' ? catalogueItemResult.value : null;
 
-    if (!catalogueItem) {
+    const profile = content?.course;
+
+    if (!profile || profile.published === false || !catalogueItem) {
       return null;
     }
 
-    const lessons = lessonsResponse ? extractPage<Lesson>(lessonsResponse).items : [];
+    const course: PublicCourseSummary = {
+      uuid: courseUuid,
+      name: profile.name,
+      description: profile.description,
+      objectives: profile.objectives,
+      prerequisites: profile.prerequisites,
+      thumbnail_url: profile.thumbnail_url,
+      banner_url: profile.banner_url,
+      intro_video_url: profile.intro_video_url,
+      duration_hours: profile.duration_hours,
+      duration_minutes: profile.duration_minutes,
+      category_names: profile.category_names,
+      price: profile.price,
+      class_limit: profile.class_limit,
+      age_lower_limit: profile.age_lower_limit,
+      age_upper_limit: profile.age_upper_limit,
+      is_published: profile.published,
+      accepts_new_enrollments: profile.accepts_new_enrollments,
+      course_creator_uuid: profile.creator_uuid,
+      training_requirements: profile.training_requirements,
+      updated_date: profile.updated_date,
+    };
+
     const priceAmount = derivePrice(course, catalogueItem);
 
     return {
       course,
-      creator,
-      creatorName: getCreatorName(creator),
+      creator: null,
+      creatorName: profile.creator_name ?? undefined,
       catalogueItem,
-      lessons,
+      lessons: content?.lessons ?? [],
       priceAmount,
       currencyCode: deriveCurrencyCode(catalogueItem),
       isFree: deriveIsFree(priceAmount),
