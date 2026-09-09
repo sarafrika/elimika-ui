@@ -11,7 +11,6 @@ import {
   FileText,
   Loader2,
   Paperclip,
-  ShieldCheck,
   UploadCloud,
   X,
 } from 'lucide-react';
@@ -34,6 +33,7 @@ import { cn } from '@/lib/utils';
 import {
   createOrganisationMutation,
   listDocumentTypesOptions,
+  uploadOrganisationDocumentMutation,
 } from '@/services/client/@tanstack/react-query.gen';
 import type { DocumentTypeOption } from '@/services/client/types.gen';
 import { buildDashboardSwitchPath } from '@/src/features/dashboard/lib/active-domain-storage';
@@ -62,34 +62,6 @@ type CapturedValidationDocuments = Record<string, CapturedValidationDocument>;
 
 const DEFAULT_MAX_FILE_SIZE_MB = 10;
 const DEFAULT_ALLOWED_EXTENSIONS = ['pdf', 'png', 'jpg', 'jpeg'];
-
-const fallbackRequiredDocumentTypes: DocumentTypeOption[] = [
-  {
-    uuid: 'organisation-registration-certificate',
-    name: 'Registration certificate',
-    description: 'Official certificate of incorporation or business registration.',
-    is_required: true,
-    allowed_extensions: DEFAULT_ALLOWED_EXTENSIONS,
-    max_file_size_mb: DEFAULT_MAX_FILE_SIZE_MB,
-  },
-  {
-    uuid: 'organisation-license-accreditation',
-    name: 'Licence or accreditation',
-    description: 'Training licence, accreditation letter, or other regulator approval.',
-    is_required: true,
-    allowed_extensions: DEFAULT_ALLOWED_EXTENSIONS,
-    max_file_size_mb: DEFAULT_MAX_FILE_SIZE_MB,
-  },
-  {
-    uuid: 'organisation-authorisation-letter',
-    name: 'Authorising representative letter',
-    description:
-      'Letter or board resolution confirming the submitter can register this organisation.',
-    is_required: true,
-    allowed_extensions: DEFAULT_ALLOWED_EXTENSIONS,
-    max_file_size_mb: DEFAULT_MAX_FILE_SIZE_MB,
-  },
-];
 
 const getContextCountryName = (context: unknown): string | undefined => {
   const contextRecord = asRecord(context);
@@ -331,21 +303,27 @@ function ValidationDocumentRow({
         </div>
 
         <div className='space-y-2'>
-          <Label htmlFor={expiryId}>Expiry date</Label>
-          <Input
-            id={expiryId}
-            type='date'
-            value={capturedDocument?.expiryDate ?? ''}
-            onChange={event => {
-              if (!capturedDocument) return;
-              onCapture(documentKey, {
-                ...capturedDocument,
-                expiryDate: event.target.value || undefined,
-              });
-            }}
-            disabled={!capturedDocument?.file}
-          />
-          <p className='text-muted-foreground text-xs'>Optional where not applicable.</p>
+{documentType.requires_expiry ? (
+            <>
+              <Label htmlFor={expiryId}>Expiry date</Label>
+              <Input
+                id={expiryId}
+                type='date'
+                value={capturedDocument?.expiryDate ?? ''}
+                onChange={event => {
+                  if (!capturedDocument) return;
+                  onCapture(documentKey, {
+                    ...capturedDocument,
+                    expiryDate: event.target.value || undefined,
+                  });
+                }}
+                disabled={!capturedDocument?.file}
+              />
+              <p className='text-muted-foreground text-xs'>
+                Required before this document expires.
+              </p>
+            </>
+          ) : null}
         </div>
       </div>
     </div>
@@ -354,9 +332,9 @@ function ValidationDocumentRow({
 
 type ValidationDocumentsStepProps = {
   capturedDocuments: CapturedValidationDocuments;
-  documentTypes: DocumentTypeOption[];
   isLoading: boolean;
-  isUsingFallback: boolean;
+  documentTypesQueryError: boolean;
+  onRetryDocumentTypes: () => void;
   onCapture: (key: string, document: CapturedValidationDocument) => void;
   onRemove: (key: string) => void;
   requiredTypes: DocumentTypeOption[];
@@ -364,15 +342,13 @@ type ValidationDocumentsStepProps = {
 
 function ValidationDocumentsStep({
   capturedDocuments,
-  documentTypes,
   isLoading,
-  isUsingFallback,
+  documentTypesQueryError,
+  onRetryDocumentTypes,
   onCapture,
   onRemove,
   requiredTypes,
 }: ValidationDocumentsStepProps) {
-  const availableCount = documentTypes.length;
-
   if (isLoading) {
     return (
       <Card>
@@ -406,25 +382,21 @@ function ValidationDocumentsStep({
         </div>
       </CardHeader>
       <CardContent className='space-y-4'>
-        {isUsingFallback ? (
-          <Alert>
+        {documentTypesQueryError ? (
+          <Alert variant='destructive'>
             <AlertCircle className='h-4 w-4' />
-            <AlertTitle>Default validation checklist</AlertTitle>
-            <AlertDescription>
-              The API did not return required organisation document metadata, so this form is using
-              the default Elimika validation checklist.
+            <AlertTitle>Could not load the document checklist</AlertTitle>
+            <AlertDescription className='flex flex-col items-start gap-2'>
+              <span>
+                We could not reach the document catalogue, so we cannot tell you what to attach.
+                Everything else on this form still works.
+              </span>
+              <Button type='button' variant='outline' size='sm' onClick={onRetryDocumentTypes}>
+                Try again
+              </Button>
             </AlertDescription>
           </Alert>
-        ) : (
-          <Alert>
-            <ShieldCheck className='h-4 w-4' />
-            <AlertTitle>Backend validation rules loaded</AlertTitle>
-            <AlertDescription>
-              Required document rules are coming from the document type catalogue
-              {availableCount ? ` (${availableCount} available types).` : '.'}
-            </AlertDescription>
-          </Alert>
-        )}
+        ) : null}
 
         <div className='space-y-4'>
           {requiredTypes.map((documentType, index) => {
@@ -453,9 +425,10 @@ export function OrganizationOnboardingForm() {
   const queryClient = useQueryClient();
   const [capturedDocuments, setCapturedDocuments] = useState<CapturedValidationDocuments>({});
   const createOrganisation = useMutation(createOrganisationMutation());
+  const uploadOrganisationDocument = useMutation(uploadOrganisationDocumentMutation());
 
   const documentTypesQuery = useQuery({
-    ...listDocumentTypesOptions(),
+    ...listDocumentTypesOptions({ query: { applies_to: 'ORGANISATION' } }),
     staleTime: STALE_TIMES.reference,
   });
 
@@ -464,17 +437,10 @@ export function OrganizationOnboardingForm() {
     [documentTypesQuery.data?.data]
   );
 
-  const backendRequiredDocumentTypes = useMemo(
+  const requiredDocumentTypes = useMemo(
     () => documentTypes.filter(documentType => documentType.is_required),
     [documentTypes]
   );
-
-  const requiredDocumentTypes =
-    backendRequiredDocumentTypes.length > 0
-      ? backendRequiredDocumentTypes
-      : fallbackRequiredDocumentTypes;
-
-  const isUsingFallbackDocumentTypes = backendRequiredDocumentTypes.length === 0;
 
   const documentsAreComplete = requiredDocumentTypes.every((documentType, index) => {
     const key = getDocumentTypeKey(documentType, index);
@@ -502,6 +468,40 @@ export function OrganizationOnboardingForm() {
     longitude: normalizeCoordinateValue(longitudeWatch),
   };
 
+  /** Uploads every captured file and returns the labels of the ones that did not make it,
+   *  so the caller can tell the truth about a partial success instead of a blanket one. */
+  const uploadCapturedDocuments = async (organisationUuid: string) => {
+    const failedLabels: string[] = [];
+
+    for (const [index, documentType] of requiredDocumentTypes.entries()) {
+      const key = getDocumentTypeKey(documentType, index);
+      const capturedDocument = capturedDocuments[key];
+
+      if (!capturedDocument?.file || capturedDocument.validationError || !documentType.uuid) {
+        continue;
+      }
+
+      try {
+        await uploadOrganisationDocument.mutateAsync({
+          body: { file: capturedDocument.file },
+          path: { uuid: organisationUuid },
+          query: {
+            document_type_uuid: documentType.uuid,
+            title: capturedDocument.title,
+            description: capturedDocument.description,
+            // The date input already holds YYYY-MM-DD, which is what the LocalDate
+            // parameter wants. Passing a Date here would widen it to a datetime and 400.
+            expiry_date: capturedDocument.expiryDate,
+          },
+        });
+      } catch (_error) {
+        failedLabels.push(getDocumentTypeLabel(documentType));
+      }
+    }
+
+    return failedLabels;
+  };
+
   const handleSubmit = async (data: OrganisationRegistrationFormData) => {
     if (!user?.uuid) {
       toast.error('User not found. Please try again.');
@@ -518,6 +518,11 @@ export function OrganizationOnboardingForm() {
         body: buildOrganisationRegistrationPayload(data),
       });
 
+      const organisationUuid = response.data?.uuid;
+      const failedLabels = organisationUuid
+        ? await uploadCapturedDocuments(organisationUuid)
+        : requiredDocumentTypes.map(getDocumentTypeLabel);
+
       await queryClient.invalidateQueries({
         predicate: query => isGeneratedOrganisationQueryKey(query.queryKey),
       });
@@ -527,8 +532,17 @@ export function OrganizationOnboardingForm() {
         await user.invalidateQuery();
       }
 
-      const successMessage = response.data?.message || 'Organization registered successfully!';
-      toast.success(`${successMessage} Validation documents captured for review.`);
+      const successMessage = response.message || 'Organization registered successfully!';
+
+      if (failedLabels.length === 0) {
+        toast.success(`${successMessage} Your documents are with the review team.`);
+      } else {
+        toast.warning(
+          `${successMessage} We could not upload ${failedLabels.join(', ')}. ` +
+            'You can attach it from your organisation workspace.'
+        );
+      }
+
       router.replace(buildDashboardSwitchPath('organisation_user'));
     } catch (error) {
       toast.error(getErrorMessage(error, 'Failed to register organization. Please try again.'));
@@ -603,9 +617,9 @@ export function OrganizationOnboardingForm() {
 
           <ValidationDocumentsStep
             capturedDocuments={capturedDocuments}
-            documentTypes={documentTypes}
             isLoading={documentTypesQuery.isLoading}
-            isUsingFallback={isUsingFallbackDocumentTypes}
+            documentTypesQueryError={documentTypesQuery.isError}
+            onRetryDocumentTypes={() => documentTypesQuery.refetch()}
             requiredTypes={requiredDocumentTypes}
             onCapture={(key, document) =>
               setCapturedDocuments(current => ({
@@ -637,13 +651,18 @@ export function OrganizationOnboardingForm() {
             type='submit'
             className='w-full'
             disabled={
-              createOrganisation.isPending || documentTypesQuery.isLoading || !documentsAreComplete
+              createOrganisation.isPending ||
+              uploadOrganisationDocument.isPending ||
+              documentTypesQuery.isLoading ||
+              !documentsAreComplete
             }
           >
-            {createOrganisation.isPending ? (
+            {createOrganisation.isPending || uploadOrganisationDocument.isPending ? (
               <>
                 <Loader2 className='h-4 w-4 animate-spin' />
-                Submitting registration...
+                {uploadOrganisationDocument.isPending
+                  ? 'Uploading documents...'
+                  : 'Submitting registration...'}
               </>
             ) : (
               <>
