@@ -44,6 +44,7 @@ import { roleScopedDashboardPath } from '@/src/features/dashboard/lib/active-dom
 import {
   APPLICATION_STATUSES,
   type ApplicationStatus,
+  canRejectApplication,
   canReviewApplication,
 } from '../application-status';
 
@@ -368,7 +369,7 @@ export function ApplicationsListSection({
                   variant='destructive'
                   size='sm'
                   onClick={() => onReject(application)}
-                  disabled={isReviewPending || reviewDisabled}
+                  disabled={isReviewPending || !canRejectApplication(application.status)}
                 >
                   <XCircle className='mr-2 size-4' />
                   Reject

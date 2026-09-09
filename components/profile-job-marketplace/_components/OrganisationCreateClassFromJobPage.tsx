@@ -183,8 +183,8 @@ export function OrganisationCreateClassFromJobPage({ jobUuid }: CreateClassFromJ
           ) : !isReady ? (
             <EmptyState
               icon={UserRound}
-              title='Assign an instructor first'
-              description='A class can only be created once an approved applicant has been assigned to this job.'
+              title='Hire an instructor first'
+              description='A class can only be created once you have hired an approved applicant for this job.'
               action={
                 <Button asChild variant='outline'>
                   <Link href={applicationsHref}>Review applicants</Link>
@@ -196,8 +196,8 @@ export function OrganisationCreateClassFromJobPage({ jobUuid }: CreateClassFromJ
             <div className='grid gap-4 lg:grid-cols-[minmax(0,1fr)_340px]'>
               <div className='space-y-4'>
                 <SectionCard
-                  title='Assigned instructor'
-                  description='Chosen from the approved applicants for this job.'
+                  title='Hired instructor'
+                  description='Hired from the approved applicants for this job.'
                 >
                   <div className='border-border/60 bg-muted/20 flex flex-wrap items-center gap-3 rounded-md border p-4'>
                     <div className='bg-primary/10 text-primary flex size-10 items-center justify-center rounded-full'>
@@ -215,7 +215,7 @@ export function OrganisationCreateClassFromJobPage({ jobUuid }: CreateClassFromJ
                       </div>
                     </div>
                     <div className='ml-auto'>
-                      <StatusBadge status='assigned' label='Assigned' />
+                      <StatusBadge status='assigned' label='Hired' />
                     </div>
                   </div>
                 </SectionCard>
