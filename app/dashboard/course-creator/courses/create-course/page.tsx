@@ -34,7 +34,7 @@ import type {
     Quiz,
 } from '@/services/client/types.gen';
 import { useMutation, useQueries, useQuery, useQueryClient } from '@tanstack/react-query';
-import { ArrowLeft, ChevronDown, ChevronUp, Pencil, PlusCircle, Sparkles, Trash } from 'lucide-react';
+import { ArrowLeft, ChevronDown, ChevronUp, Eye, Pencil, PlusCircle, Sparkles, Trash } from 'lucide-react';
 import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
@@ -72,6 +72,8 @@ import {
     type Provider,
 } from '../../_components/training-requirement-section';
 import AssessmentCreation from './assessment-creation';
+import { AssignmentPreviewSheet } from '../../_components/AssignmentPreviewSheet';
+import { QuizPreviewSheet } from '../../_components/QuizPreviewSheet';
 import { Stepper } from './stepper';
 
 type SaveableCourseFormRef = {
@@ -601,6 +603,7 @@ export default function CreateCoursePage() {
     const [selectedQuizUuid, setSelectedQuizUuid] = useState<string | null>(null);
     const [selectedAssignmentUuid, setSelectedAssignmentUuid] = useState<string | null>(null);
     const [assessmentToDelete, setAssessmentToDelete] = useState<AssessmentListItem | null>(null);
+    const [assessmentToPreview, setAssessmentToPreview] = useState<AssessmentListItem | null>(null);
     const courseFormRef = useRef<CourseFormRef>(null);
     const brandingFormRef = useRef<SaveableCourseFormRef>(null);
     const pricingFormRef = useRef<SaveableCourseFormRef>(null);
@@ -967,6 +970,13 @@ export default function CreateCoursePage() {
             );
         },
         [openAssessmentSheet]
+    );
+
+    const openAssessmentPreview = useCallback(
+        (item: AssessmentListItem) => {
+            if (item.uuid) setAssessmentToPreview(item);
+        },
+        []
     );
 
     const deleteQuizMut = useMutation(deleteQuizMutation());
@@ -1387,6 +1397,17 @@ export default function CreateCoursePage() {
                                                                                             type="button"
                                                                                             variant="outline"
                                                                                             size="sm"
+                                                                                            onClick={() => openAssessmentPreview(item)}
+                                                                                            aria-label={`Preview ${item.kind.toLowerCase()}: ${item.title}`}
+                                                                                            title='View assessment'
+                                                                                        >
+                                                                                            <Eye className="h-4 w-4" />
+                                                                                        </Button>
+
+                                                                                        <Button
+                                                                                            type="button"
+                                                                                            variant="outline"
+                                                                                            size="sm"
                                                                                             onClick={() =>
                                                                                                 openAssessmentEditor(item)
                                                                                             }
@@ -1416,6 +1437,24 @@ export default function CreateCoursePage() {
                                             </div>
                                         )}
 
+                                        {assessmentToPreview?.kind === 'Quiz' && (
+                                            <QuizPreviewSheet
+                                                key={assessmentToPreview.uuid}
+                                                open
+                                                onOpenChange={open => { if (!open) setAssessmentToPreview(null); }}
+                                                quizUuid={assessmentToPreview.uuid}
+                                                lessonTitle={assessmentToPreview.lessonTitle}
+                                            />
+                                        )}
+                                        {assessmentToPreview?.kind === 'Assignment' && (
+                                            <AssignmentPreviewSheet
+                                                key={assessmentToPreview.uuid}
+                                                open
+                                                onOpenChange={open => { if (!open) setAssessmentToPreview(null); }}
+                                                assignmentUuid={assessmentToPreview.uuid}
+                                                lessonTitle={assessmentToPreview.lessonTitle}
+                                            />
+                                        )}
                                         <Sheet open={assessmentSheetOpen} onOpenChange={open => (!open ? closeAssessmentSheet() : setAssessmentSheetOpen(true))}>
                                             <SheetContent
                                                 side='right'
