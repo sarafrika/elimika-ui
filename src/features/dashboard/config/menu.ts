@@ -22,6 +22,7 @@ import {
   LayoutList,
   LibraryIcon,
   LineChart,
+  ListTodo,
   LucideLandmark,
   MapPin,
   PiggyBank,
@@ -489,15 +490,15 @@ export default {
           url: '/dashboard/course-management',
           icon: BookAIcon,
         },
-        // {
-        //   title: 'My Programs',
-        //   url: '/dashboard/programs',
-        //   icon: FileStack,
-        // },
+        {
+          title: 'Instructors',
+          url: '/dashboard/instructors',
+          icon: Users,
+        },
         {
           title: 'Pending Approvals',
           url: '/dashboard/pending-approvals',
-          icon: Users,
+          icon: ListTodo,
         },
         // {
         //   title: 'Students',
