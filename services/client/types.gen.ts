@@ -1891,9 +1891,9 @@ export type InstructorProfessionalMembership = {
    */
   readonly is_complete?: boolean;
   /**
-   * **[READ-ONLY]** Human-readable formatted duration of membership.
+   * **[READ-ONLY]** Duration of membership calculated from start and end dates, in months.
    */
-  readonly formatted_duration?: string | null;
+  readonly membership_duration_months?: number | null;
   membership_status?: MembershipStatusEnum;
   /**
    * **[READ-ONLY]** Formatted membership period showing start and end dates.
@@ -1917,9 +1917,9 @@ export type InstructorProfessionalMembership = {
    */
   readonly is_recent_membership?: boolean;
   /**
-   * **[READ-ONLY]** Duration of membership calculated from start and end dates, in months.
+   * **[READ-ONLY]** Human-readable formatted duration of membership.
    */
-  readonly membership_duration_months?: number | null;
+  readonly formatted_duration?: string | null;
 };
 
 export type ApiResponseInstructorProfessionalMembership = {
@@ -2099,11 +2099,11 @@ export type InstructorEducation = {
    * **[READ-ONLY]** Formatted string showing year of completion and school name.
    */
   readonly formatted_completion?: string;
-  education_level?: EducationLevelEnum;
   /**
    * **[READ-ONLY]** Number of years since the qualification was completed.
    */
   readonly years_since_completion?: number | null;
+  education_level?: EducationLevelEnum;
   /**
    * **[READ-ONLY]** Indicates if the education record has a certificate number provided.
    */
@@ -2219,13 +2219,13 @@ export type InstructorDocument = {
    */
   readonly updated_by?: string;
   /**
-   * **[READ-ONLY]** Indicates if the document has expired based on the expiry date.
-   */
-  readonly is_expired?: boolean;
-  /**
    * **[READ-ONLY]** API-relative URL for previewing or downloading the uploaded document.
    */
   readonly file_url?: string;
+  /**
+   * **[READ-ONLY]** Indicates if the document has expired based on the expiry date.
+   */
+  readonly is_expired?: boolean;
   /**
    * **[READ-ONLY]** Human-readable formatted file size.
    */
@@ -2309,6 +2309,10 @@ export type AvailabilitySlot = {
    * **[OPTIONAL]** Hex color code for blocked time visualization (e.g., for categorizing different types of blocked times).
    */
   color_code?: string | null;
+  /**
+   * **[OPTIONAL]** IANA timezone the start and end times are written in. Defaults to UTC when omitted, which is how slots recorded before the zone was captured are read.
+   */
+  timezone?: string | null;
   /**
    * **[READ-ONLY]** Timestamp when the availability slot was first created. Automatically set by the system.
    */
@@ -3358,13 +3362,13 @@ export type CourseCreatorDocumentDto = {
   readonly updated_date?: Date;
   readonly updated_by?: string;
   /**
-   * **[READ-ONLY]** Indicates if the document has expired based on the expiry date.
-   */
-  readonly is_expired?: boolean;
-  /**
    * **[READ-ONLY]** API-relative URL for previewing or downloading the uploaded document.
    */
   readonly file_url?: string;
+  /**
+   * **[READ-ONLY]** Indicates if the document has expired based on the expiry date.
+   */
+  readonly is_expired?: boolean;
   /**
    * **[READ-ONLY]** Human-readable formatted file size.
    */
@@ -3558,13 +3562,13 @@ export type ContentType = {
    */
   readonly updated_by?: string;
   /**
-   * **[READ-ONLY]** Category for organizing uploads in the user interface.
-   */
-  readonly upload_category?: string;
-  /**
    * **[READ-ONLY]** Indicates if this content type is for media files.
    */
   readonly is_media_type?: boolean;
+  /**
+   * **[READ-ONLY]** Category for organizing uploads in the user interface.
+   */
+  readonly upload_category?: string;
   /**
    * **[READ-ONLY]** Human-readable list of supported file formats.
    */
@@ -7946,6 +7950,68 @@ export type StudentSchedule = {
   readonly is_upcoming?: boolean;
 };
 
+export type ApiResponseListInstructorTimeHold = {
+  success?: boolean;
+  data?: Array<InstructorTimeHold>;
+  message?: string;
+  error?: unknown;
+};
+
+/**
+ * A tentative or firm claim on an instructor's diary raised by a marketplace class job application
+ */
+export type InstructorTimeHold = {
+  /**
+   * **[READ-ONLY]** Unique identifier of the hold
+   */
+  readonly uuid?: string;
+  /**
+   * Instructor whose diary the hold sits on
+   */
+  instructor_uuid?: string;
+  /**
+   * Marketplace job the hold was raised for
+   */
+  job_uuid?: string;
+  /**
+   * Application that raised the hold
+   */
+  application_uuid?: string;
+  /**
+   * Organisation recruiting for the job
+   */
+  organisation_uuid?: string | null;
+  /**
+   * Title of the job the held window would deliver
+   */
+  title?: string | null;
+  /**
+   * Held window start (UTC)
+   */
+  start_time?: Date;
+  /**
+   * Held window end (UTC)
+   */
+  end_time?: Date;
+  /**
+   * Timezone the window was authored in
+   */
+  timezone?: string;
+  status?: StatusEnum17;
+  /**
+   * Class definition the hold became, once confirmed
+   */
+  class_definition_uuid?: string | null;
+  /**
+   * Scheduled instance the hold became, once confirmed
+   */
+  scheduled_instance_uuid?: string | null;
+  /**
+   * **[READ-ONLY]** Display name of the recruiting organisation, so a calendar can say whose work the held time would be without a second lookup.
+   */
+  readonly organisation_name?: string | null;
+};
+
 export type ApiResponseListScheduledInstance = {
   success?: boolean;
   data?: Array<ScheduledInstance>;
@@ -8390,7 +8456,7 @@ export type StudentQuizReview = {
   quiz_uuid?: string;
   attempt_uuid?: string;
   enrollment_uuid?: string;
-  status?: StatusEnum17;
+  status?: StatusEnum18;
   score?: number;
   max_score?: number;
   percentage?: number;
@@ -8511,7 +8577,7 @@ export type ProgramEnrollment = {
    * **[OPTIONAL]** Timestamp when the student completed the program. Null if not yet completed.
    */
   completion_date?: Date | null;
-  status: StatusEnum18;
+  status: StatusEnum19;
   /**
    * **[OPTIONAL]** Percentage of program content completed by the student.
    */
@@ -8875,7 +8941,7 @@ export type ResourceBooking = {
    * Organisation owning the resource
    */
   organisation_uuid?: string;
-  status?: StatusEnum19;
+  status?: StatusEnum20;
   /**
    * Units reserved (1 for venues)
    */
@@ -9994,7 +10060,7 @@ export type CoursePendingEdit = {
    * **[READ-ONLY]** Unique identifier for the pending edit.
    */
   readonly uuid?: string;
-  status?: StatusEnum20;
+  status?: StatusEnum21;
   /**
    * **[READ-ONLY]** The live course this edit applies to.
    */
@@ -10545,10 +10611,6 @@ export type CourseAssessmentScore = {
    */
   readonly is_passing?: boolean;
   /**
-   * **[READ-ONLY]** Formatted display of the grade information.
-   */
-  readonly grade_display?: string;
-  /**
    * **[READ-ONLY]** Formatted category of the score based on performance level.
    */
   readonly score_category?: string;
@@ -10560,6 +10622,10 @@ export type CourseAssessmentScore = {
    * **[READ-ONLY]** Summary indicating the availability and nature of instructor feedback.
    */
   readonly feedback_summary?: string;
+  /**
+   * **[READ-ONLY]** Formatted display of the grade information.
+   */
+  readonly grade_display?: string;
 };
 
 /**
@@ -10610,7 +10676,7 @@ export type CourseEnrollment = {
    * **[OPTIONAL]** Timestamp when the student completed the course. Null if not yet completed.
    */
   completion_date?: Date | null;
-  status: StatusEnum18;
+  status: StatusEnum19;
   /**
    * **[OPTIONAL]** Percentage of course content completed by the student.
    */
@@ -12946,6 +13012,21 @@ export const EnrollmentStatusEnum = {
  */
 export type EnrollmentStatusEnum = (typeof EnrollmentStatusEnum)[keyof typeof EnrollmentStatusEnum];
 
+/**
+ * Hold lifecycle state; only FIRM counts as a scheduling clash
+ */
+export const StatusEnum17 = {
+  TENTATIVE: 'TENTATIVE',
+  FIRM: 'FIRM',
+  CONFIRMED: 'CONFIRMED',
+  RELEASED: 'RELEASED',
+} as const;
+
+/**
+ * Hold lifecycle state; only FIRM counts as a scheduling clash
+ */
+export type StatusEnum17 = (typeof StatusEnum17)[keyof typeof StatusEnum17];
+
 export const QuestionTypeEnum2 = {
   MULTIPLE_CHOICE: 'multiple_choice',
   TRUE_FALSE: 'true_false',
@@ -12955,18 +13036,18 @@ export const QuestionTypeEnum2 = {
 
 export type QuestionTypeEnum2 = (typeof QuestionTypeEnum2)[keyof typeof QuestionTypeEnum2];
 
-export const StatusEnum17 = {
+export const StatusEnum18 = {
   IN_PROGRESS: 'in_progress',
   SUBMITTED: 'submitted',
   GRADED: 'graded',
 } as const;
 
-export type StatusEnum17 = (typeof StatusEnum17)[keyof typeof StatusEnum17];
+export type StatusEnum18 = (typeof StatusEnum18)[keyof typeof StatusEnum18];
 
 /**
  * **[REQUIRED]** Current status of the student's enrollment in the program.
  */
-export const StatusEnum18 = {
+export const StatusEnum19 = {
   ACTIVE: 'ACTIVE',
   COMPLETED: 'COMPLETED',
   DROPPED: 'DROPPED',
@@ -12976,7 +13057,7 @@ export const StatusEnum18 = {
 /**
  * **[REQUIRED]** Current status of the student's enrollment in the program.
  */
-export type StatusEnum18 = (typeof StatusEnum18)[keyof typeof StatusEnum18];
+export type StatusEnum19 = (typeof StatusEnum19)[keyof typeof StatusEnum19];
 
 /**
  * Entry kind
@@ -12996,7 +13077,7 @@ export type EntryTypeEnum = (typeof EntryTypeEnum)[keyof typeof EntryTypeEnum];
 /**
  * Booking lifecycle state
  */
-export const StatusEnum19 = {
+export const StatusEnum20 = {
   HOLD: 'HOLD',
   CONFIRMED: 'CONFIRMED',
   RELEASED: 'RELEASED',
@@ -13006,7 +13087,7 @@ export const StatusEnum19 = {
 /**
  * Booking lifecycle state
  */
-export type StatusEnum19 = (typeof StatusEnum19)[keyof typeof StatusEnum19];
+export type StatusEnum20 = (typeof StatusEnum20)[keyof typeof StatusEnum20];
 
 /**
  * What created the booking
@@ -13057,7 +13138,7 @@ export type LatestEnrollmentStatusEnum =
 /**
  * **[READ-ONLY]** Review state of the edit.
  */
-export const StatusEnum20 = {
+export const StatusEnum21 = {
   PENDING: 'pending',
   APPROVED: 'approved',
   REJECTED: 'rejected',
@@ -13067,7 +13148,7 @@ export const StatusEnum20 = {
 /**
  * **[READ-ONLY]** Review state of the edit.
  */
-export type StatusEnum20 = (typeof StatusEnum20)[keyof typeof StatusEnum20];
+export type StatusEnum21 = (typeof StatusEnum21)[keyof typeof StatusEnum21];
 
 /**
  * The footing the caller views this course on. Resolved server-side; never re-derived by the client.
@@ -14043,6 +14124,21 @@ export const DomainNameEnum2Writable = {
 export type DomainNameEnum2Writable =
   (typeof DomainNameEnum2Writable)[keyof typeof DomainNameEnum2Writable];
 
+/**
+ * Hold lifecycle state; only FIRM counts as a scheduling clash
+ */
+export const StatusEnum17Writable = {
+  TENTATIVE: 'TENTATIVE',
+  FIRM: 'FIRM',
+  CONFIRMED: 'CONFIRMED',
+  RELEASED: 'RELEASED',
+} as const;
+
+/**
+ * Hold lifecycle state; only FIRM counts as a scheduling clash
+ */
+export type StatusEnum17Writable = (typeof StatusEnum17Writable)[keyof typeof StatusEnum17Writable];
+
 export const QuestionTypeEnum2Writable = {
   MULTIPLE_CHOICE: 'multiple_choice',
   TRUE_FALSE: 'true_false',
@@ -14053,18 +14149,18 @@ export const QuestionTypeEnum2Writable = {
 export type QuestionTypeEnum2Writable =
   (typeof QuestionTypeEnum2Writable)[keyof typeof QuestionTypeEnum2Writable];
 
-export const StatusEnum17Writable = {
+export const StatusEnum18Writable = {
   IN_PROGRESS: 'in_progress',
   SUBMITTED: 'submitted',
   GRADED: 'graded',
 } as const;
 
-export type StatusEnum17Writable = (typeof StatusEnum17Writable)[keyof typeof StatusEnum17Writable];
+export type StatusEnum18Writable = (typeof StatusEnum18Writable)[keyof typeof StatusEnum18Writable];
 
 /**
  * **[REQUIRED]** Current status of the student's enrollment in the program.
  */
-export const StatusEnum18Writable = {
+export const StatusEnum19Writable = {
   ACTIVE: 'ACTIVE',
   COMPLETED: 'COMPLETED',
   DROPPED: 'DROPPED',
@@ -14074,7 +14170,7 @@ export const StatusEnum18Writable = {
 /**
  * **[REQUIRED]** Current status of the student's enrollment in the program.
  */
-export type StatusEnum18Writable = (typeof StatusEnum18Writable)[keyof typeof StatusEnum18Writable];
+export type StatusEnum19Writable = (typeof StatusEnum19Writable)[keyof typeof StatusEnum19Writable];
 
 /**
  * Entry kind
@@ -14095,7 +14191,7 @@ export type EntryTypeEnumWritable =
 /**
  * Booking lifecycle state
  */
-export const StatusEnum19Writable = {
+export const StatusEnum20Writable = {
   HOLD: 'HOLD',
   CONFIRMED: 'CONFIRMED',
   RELEASED: 'RELEASED',
@@ -14105,7 +14201,7 @@ export const StatusEnum19Writable = {
 /**
  * Booking lifecycle state
  */
-export type StatusEnum19Writable = (typeof StatusEnum19Writable)[keyof typeof StatusEnum19Writable];
+export type StatusEnum20Writable = (typeof StatusEnum20Writable)[keyof typeof StatusEnum20Writable];
 
 /**
  * What created the booking
@@ -28066,6 +28162,51 @@ export type GetScheduledInstanceResponses = {
 export type GetScheduledInstanceResponse =
   GetScheduledInstanceResponses[keyof GetScheduledInstanceResponses];
 
+export type GetInstructorTimeHoldsData = {
+  body?: never;
+  path: {
+    /**
+     * UUID of the instructor
+     */
+    instructorUuid: string;
+  };
+  query: {
+    /**
+     * Start date of the range (YYYY-MM-DD)
+     */
+    start: Date;
+    /**
+     * End date of the range (YYYY-MM-DD)
+     */
+    end: Date;
+  };
+  url: '/api/v1/timetable/instructors/{instructorUuid}/time-holds';
+};
+
+export type GetInstructorTimeHoldsErrors = {
+  /**
+   * Not Found
+   */
+  404: ResponseDtoVoid;
+  /**
+   * Internal Server Error
+   */
+  500: ResponseDtoVoid;
+};
+
+export type GetInstructorTimeHoldsError =
+  GetInstructorTimeHoldsErrors[keyof GetInstructorTimeHoldsErrors];
+
+export type GetInstructorTimeHoldsResponses = {
+  /**
+   * Instructor time holds retrieved successfully
+   */
+  200: ApiResponseListInstructorTimeHold;
+};
+
+export type GetInstructorTimeHoldsResponse =
+  GetInstructorTimeHoldsResponses[keyof GetInstructorTimeHoldsResponses];
+
 export type GetInstructorScheduleData = {
   body?: never;
   path: {
@@ -30589,11 +30730,11 @@ export type CheckAvailabilityData = {
   };
   query: {
     /**
-     * Start date and time (ISO format: YYYY-MM-DDTHH:mm:ss)
+     * UTC start date and time (ISO format: YYYY-MM-DDTHH:mm:ss)
      */
     start: Date;
     /**
-     * End date and time (ISO format: YYYY-MM-DDTHH:mm:ss)
+     * UTC end date and time (ISO format: YYYY-MM-DDTHH:mm:ss)
      */
     end: Date;
   };

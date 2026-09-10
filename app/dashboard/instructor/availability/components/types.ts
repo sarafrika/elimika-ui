@@ -1,3 +1,4 @@
+import { type ApiDateInput, dayjs, parseApiDate, resolveDisplayZone } from '@/lib/date';
 import type {
   EntryTypeEnum2 as EntryTypeEnum,
   ScheduledInstance,
@@ -9,11 +10,13 @@ export type CalendarEvent = {
   title: string;
   description?: string;
   entry_type?: EntryTypeEnum | 'BOOKING';
-  startTime: string; // HH:mm
-  endTime: string; // HH:mm
-  startDateTime: string; // ISO YYYY-MM-DDTHH:mm:ss
-  endDateTime: string; // ISO YYYY-MM-DDTHH:mm:ss
-  date: Date; // main date for event
+  /** IANA zone the wall-clock fields below are rendered in. */
+  timeZone: string;
+  startTime: string; // HH:mm wall clock in timeZone
+  endTime: string; // HH:mm wall clock in timeZone
+  startDateTime: string; // ISO-8601 instant carrying its offset
+  endDateTime: string; // ISO-8601 instant carrying its offset
+  date: Date; // local midnight of the event's day in timeZone
   day: string; // weekday name
   location?: string;
   attendees?: number;
@@ -31,7 +34,7 @@ export type CalendarEvent = {
 export type AvailabilityData = {
   events: CalendarEvent[];
   settings: {
-    timezone: string;
+    timezone: string; // IANA zone the calendar renders in
     autoAcceptBookings: boolean;
     bufferTime: number; // minutes between slots
     workingHours: {
@@ -110,16 +113,44 @@ export type AvailabilityClassData = {
 //   });
 // }
 
-export function convertToCalendarEvents(classes: ClassScheduleItem[]): CalendarEvent[] {
-  return classes.map(item => {
-    const start = new Date(item.start_time);
-    const end = new Date(item.end_time);
+export type CalendarInstants = Pick<
+  CalendarEvent,
+  'timeZone' | 'startTime' | 'endTime' | 'startDateTime' | 'endDateTime' | 'date' | 'day'
+>;
 
-    const startTime = start.toTimeString().slice(0, 5);
-    const endTime = end.toTimeString().slice(0, 5);
-    const startDateTime = start.toISOString().slice(0, 19);
-    const endDateTime = end.toISOString().slice(0, 19);
-    const day = start.toLocaleDateString('en-US', { weekday: 'long' });
+/** Zone the calendar renders in: the viewer's own, falling back to UTC off-browser. */
+export function calendarDisplayZone(): string {
+  return resolveDisplayZone();
+}
+
+/**
+ * Derive every positioning and display field of an event from its two instants,
+ * so a slot's label and the moment it is placed at can never disagree.
+ */
+export function toCalendarInstants(
+  start: ApiDateInput,
+  end: ApiDateInput,
+  zone: string = calendarDisplayZone()
+): CalendarInstants {
+  const startAt = (parseApiDate(start) ?? dayjs()).tz(zone);
+  const endAt = (parseApiDate(end) ?? startAt).tz(zone);
+
+  return {
+    timeZone: zone,
+    startTime: startAt.format('HH:mm'),
+    endTime: endAt.format('HH:mm'),
+    startDateTime: startAt.format(),
+    endDateTime: endAt.format(),
+    date: dayjs(startAt.format('YYYY-MM-DD')).toDate(),
+    day: startAt.format('dddd'),
+  };
+}
+
+export function convertToCalendarEvents(classes: ClassScheduleItem[]): CalendarEvent[] {
+  const zone = calendarDisplayZone();
+
+  return classes.map(item => {
+    const instants = toCalendarInstants(item.start_time, item.end_time, zone);
 
     const colorMap: Record<string, string> = {
       SCHEDULED: 'hsl(var(--primary))',
@@ -133,14 +164,9 @@ export function convertToCalendarEvents(classes: ClassScheduleItem[]): CalendarE
     return {
       id: item.uuid,
       title: item.title || '',
-      startTime,
-      endTime,
-      startDateTime,
+      ...instants,
       entry_type: item.entry_type,
       is_available: item.is_available,
-      endDateTime,
-      date: new Date(start.toDateString()),
-      day,
       location: item.location_type === 'ONLINE' ? 'Online' : item.location_type,
       attendees: item.max_participants,
       isRecurring: false,

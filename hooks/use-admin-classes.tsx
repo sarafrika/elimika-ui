@@ -29,9 +29,10 @@ type ClassWithDetails = ClassDefinition & {
 function useAmdinClassesWithDetails() {
   const { data, isLoading, isPending, isFetching } = useQuery({
     ...getAllClassDefinitionsOptions({ query: { pageable: {} } }),
+    // Every organisation and instructor writes to this list, and the invalidations that follow
+    // those writes fire in their session, never the admin's, so the tier is the only trigger left.
     staleTime: STALE_TIMES.entity,
     refetchOnWindowFocus: false,
-    refetchOnMount: false,
     refetchOnReconnect: false,
   });
 
@@ -81,9 +82,10 @@ function useAmdinClassesWithDetails() {
         query: scheduleRange,
       }),
       enabled: !!instructorUuid,
-      staleTime: STALE_TIMES.live,
+      // Mount revalidation stays on for reschedules landing elsewhere, but this is one request per
+      // instructor on the platform: the live minute would re-run the whole fan-out per visit.
+      staleTime: STALE_TIMES.entity,
       refetchOnWindowFocus: false,
-      refetchOnMount: false,
       refetchOnReconnect: false,
     })),
   });

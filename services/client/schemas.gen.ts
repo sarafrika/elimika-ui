@@ -3736,10 +3736,12 @@ export const InstructorProfessionalMembershipSchema = {
       example: true,
       readOnly: true,
     },
-    formatted_duration: {
-      type: ['string', 'null'],
-      description: '**[READ-ONLY]** Human-readable formatted duration of membership.',
-      example: '4 years, 3 months',
+    membership_duration_months: {
+      type: ['integer', 'null'],
+      format: 'int32',
+      description:
+        '**[READ-ONLY]** Duration of membership calculated from start and end dates, in months.',
+      example: 51,
       readOnly: true,
     },
     membership_status: {
@@ -3782,12 +3784,10 @@ export const InstructorProfessionalMembershipSchema = {
       example: true,
       readOnly: true,
     },
-    membership_duration_months: {
-      type: ['integer', 'null'],
-      format: 'int32',
-      description:
-        '**[READ-ONLY]** Duration of membership calculated from start and end dates, in months.',
-      example: 51,
+    formatted_duration: {
+      type: ['string', 'null'],
+      description: '**[READ-ONLY]** Human-readable formatted duration of membership.',
+      example: '4 years, 3 months',
       readOnly: true,
     },
   },
@@ -4163,15 +4163,15 @@ export const InstructorEducationSchema = {
       example: '2020 - University of Nairobi',
       readOnly: true,
     },
-    education_level: {
-      $ref: '#/components/schemas/EducationLevelEnum',
-    },
     years_since_completion: {
       type: ['integer', 'null'],
       format: 'int32',
       description: '**[READ-ONLY]** Number of years since the qualification was completed.',
       example: 4,
       readOnly: true,
+    },
+    education_level: {
+      $ref: '#/components/schemas/EducationLevelEnum',
     },
     has_certificate_number: {
       type: 'boolean',
@@ -4420,19 +4420,19 @@ export const InstructorDocumentSchema = {
       example: 'admin@sarafrika.com',
       readOnly: true,
     },
-    is_expired: {
-      type: 'boolean',
-      description:
-        '**[READ-ONLY]** Indicates if the document has expired based on the expiry date.',
-      example: false,
-      readOnly: true,
-    },
     file_url: {
       type: 'string',
       description:
         '**[READ-ONLY]** API-relative URL for previewing or downloading the uploaded document.',
       example:
         '/api/v1/instructors/i1s2t3r4-5u6c-7t8o-9r10-abcdefghijkl/documents/files/profile_documents/instructors/i1s2t3r4-5u6c-7t8o-9r10-abcdefghijkl/550e8400-e29b-41d4-a716-446655440000.pdf',
+      readOnly: true,
+    },
+    is_expired: {
+      type: 'boolean',
+      description:
+        '**[READ-ONLY]** Indicates if the document has expired based on the expiry date.',
+      example: false,
       readOnly: true,
     },
     file_size_formatted: {
@@ -4497,6 +4497,7 @@ export const AvailabilitySlotSchema = {
     specific_date: null,
     start_time: '09:00:00',
     end_time: '17:00:00',
+    timezone: 'Africa/Nairobi',
     custom_pattern: null,
     is_available: true,
     recurrence_interval: 1,
@@ -4602,6 +4603,12 @@ export const AvailabilitySlotSchema = {
         '**[OPTIONAL]** Hex color code for blocked time visualization (e.g., for categorizing different types of blocked times).',
       example: '#FF6B6B',
       pattern: '^#[0-9A-Fa-f]{6}$',
+    },
+    timezone: {
+      type: ['string', 'null'],
+      description:
+        '**[OPTIONAL]** IANA timezone the start and end times are written in. Defaults to UTC when omitted, which is how slots recorded before the zone was captured are read.',
+      example: 'Africa/Nairobi',
     },
     created_date: {
       type: 'string',
@@ -7069,19 +7076,19 @@ export const CourseCreatorDocumentDTOSchema = {
       type: 'string',
       readOnly: true,
     },
-    is_expired: {
-      type: 'boolean',
-      description:
-        '**[READ-ONLY]** Indicates if the document has expired based on the expiry date.',
-      example: false,
-      readOnly: true,
-    },
     file_url: {
       type: 'string',
       description:
         '**[READ-ONLY]** API-relative URL for previewing or downloading the uploaded document.',
       example:
         '/api/v1/course-creators/c1e2a3t4-5o6r-7c8r-9e10-abcdefghijkl/documents/files/profile_documents/course-creators/c1e2a3t4-5o6r-7c8r-9e10-abcdefghijkl/550e8400-e29b-41d4-a716-446655440000.pdf',
+      readOnly: true,
+    },
+    is_expired: {
+      type: 'boolean',
+      description:
+        '**[READ-ONLY]** Indicates if the document has expired based on the expiry date.',
+      example: false,
       readOnly: true,
     },
     file_size_formatted: {
@@ -7538,16 +7545,16 @@ export const ContentTypeSchema = {
       example: 'admin@sarafrika.com',
       readOnly: true,
     },
-    upload_category: {
-      type: 'string',
-      description: '**[READ-ONLY]** Category for organizing uploads in the user interface.',
-      example: 'Large Media Files',
-      readOnly: true,
-    },
     is_media_type: {
       type: 'boolean',
       description: '**[READ-ONLY]** Indicates if this content type is for media files.',
       example: true,
+      readOnly: true,
+    },
+    upload_category: {
+      type: 'string',
+      description: '**[READ-ONLY]** Category for organizing uploads in the user interface.',
+      example: 'Large Media Files',
       readOnly: true,
     },
     supported_formats: {
@@ -15282,6 +15289,110 @@ export const StudentScheduleSchema = {
   },
 } as const;
 
+export const ApiResponseListInstructorTimeHoldSchema = {
+  type: 'object',
+  properties: {
+    success: {
+      type: 'boolean',
+    },
+    data: {
+      type: 'array',
+      items: {
+        $ref: '#/components/schemas/InstructorTimeHold',
+      },
+    },
+    message: {
+      type: 'string',
+    },
+    error: {},
+  },
+} as const;
+
+export const InstructorTimeHoldSchema = {
+  type: 'object',
+  description:
+    "A tentative or firm claim on an instructor's diary raised by a marketplace class job application",
+  example: {
+    uuid: 'ith12345-6789-abcd-ef01-234567890abc',
+    instructor_uuid: 'inst1234-5678-90ab-cdef-123456789abc',
+    job_uuid: 'job12345-6789-abcd-ef01-234567890abc',
+    application_uuid: 'app12345-6789-abcd-ef01-234567890abc',
+    organisation_uuid: 'org12345-6789-abcd-ef01-234567890abc',
+    organisation_name: 'Sarafrika Technical College',
+    title: 'Grade 5 Piano - Term 2',
+    start_time: '2026-09-16T09:00:00',
+    end_time: '2026-09-16T10:00:00',
+    timezone: 'UTC',
+    status: 'TENTATIVE',
+  },
+  properties: {
+    uuid: {
+      type: 'string',
+      format: 'uuid',
+      description: '**[READ-ONLY]** Unique identifier of the hold',
+      readOnly: true,
+    },
+    instructor_uuid: {
+      type: 'string',
+      format: 'uuid',
+      description: 'Instructor whose diary the hold sits on',
+    },
+    job_uuid: {
+      type: 'string',
+      format: 'uuid',
+      description: 'Marketplace job the hold was raised for',
+    },
+    application_uuid: {
+      type: 'string',
+      format: 'uuid',
+      description: 'Application that raised the hold',
+    },
+    organisation_uuid: {
+      type: ['string', 'null'],
+      format: 'uuid',
+      description: 'Organisation recruiting for the job',
+    },
+    title: {
+      type: ['string', 'null'],
+      description: 'Title of the job the held window would deliver',
+    },
+    start_time: {
+      type: 'string',
+      format: 'date-time',
+      description: 'Held window start (UTC)',
+    },
+    end_time: {
+      type: 'string',
+      format: 'date-time',
+      description: 'Held window end (UTC)',
+    },
+    timezone: {
+      type: 'string',
+      description: 'Timezone the window was authored in',
+      example: 'UTC',
+    },
+    status: {
+      $ref: '#/components/schemas/StatusEnum17',
+    },
+    class_definition_uuid: {
+      type: ['string', 'null'],
+      format: 'uuid',
+      description: 'Class definition the hold became, once confirmed',
+    },
+    scheduled_instance_uuid: {
+      type: ['string', 'null'],
+      format: 'uuid',
+      description: 'Scheduled instance the hold became, once confirmed',
+    },
+    organisation_name: {
+      type: ['string', 'null'],
+      description:
+        '**[READ-ONLY]** Display name of the recruiting organisation, so a calendar can say whose work the held time would be without a second lookup.',
+      readOnly: true,
+    },
+  },
+} as const;
+
 export const ApiResponseListScheduledInstanceSchema = {
   type: 'object',
   properties: {
@@ -16508,7 +16619,7 @@ export const StudentQuizReviewSchema = {
       format: 'uuid',
     },
     status: {
-      $ref: '#/components/schemas/StatusEnum17',
+      $ref: '#/components/schemas/StatusEnum18',
     },
     score: {
       type: 'number',
@@ -16806,7 +16917,7 @@ export const ProgramEnrollmentSchema = {
       example: '2024-06-30T16:45:00Z',
     },
     status: {
-      $ref: '#/components/schemas/StatusEnum18',
+      $ref: '#/components/schemas/StatusEnum19',
     },
     progress_percentage: {
       type: 'number',
@@ -17475,7 +17586,7 @@ export const ResourceBookingSchema = {
       description: 'Organisation owning the resource',
     },
     status: {
-      $ref: '#/components/schemas/StatusEnum19',
+      $ref: '#/components/schemas/StatusEnum20',
     },
     quantity: {
       type: 'integer',
@@ -19541,7 +19652,7 @@ The proposed content lives on the draft course referenced by \`draft_course_uuid
       readOnly: true,
     },
     status: {
-      $ref: '#/components/schemas/StatusEnum20',
+      $ref: '#/components/schemas/StatusEnum21',
     },
     course_uuid: {
       type: 'string',
@@ -20505,12 +20616,6 @@ export const CourseAssessmentScoreSchema = {
       example: true,
       readOnly: true,
     },
-    grade_display: {
-      type: 'string',
-      description: '**[READ-ONLY]** Formatted display of the grade information.',
-      example: '87.50 / 100.00 (87.50%)',
-      readOnly: true,
-    },
     score_category: {
       type: 'string',
       description: '**[READ-ONLY]** Formatted category of the score based on performance level.',
@@ -20529,6 +20634,12 @@ export const CourseAssessmentScoreSchema = {
       description:
         '**[READ-ONLY]** Summary indicating the availability and nature of instructor feedback.',
       example: 'Detailed instructor feedback provided',
+      readOnly: true,
+    },
+    grade_display: {
+      type: 'string',
+      description: '**[READ-ONLY]** Formatted display of the grade information.',
+      example: '87.50 / 100.00 (87.50%)',
       readOnly: true,
     },
   },
@@ -20651,7 +20762,7 @@ export const CourseEnrollmentSchema = {
       example: '2024-04-30T16:45:00Z',
     },
     status: {
-      $ref: '#/components/schemas/StatusEnum18',
+      $ref: '#/components/schemas/StatusEnum19',
     },
     progress_percentage: {
       type: 'number',
@@ -23803,17 +23914,24 @@ export const EnrollmentStatusEnumSchema = {
   readOnly: true,
 } as const;
 
+export const StatusEnum17Schema = {
+  type: 'string',
+  description: 'Hold lifecycle state; only FIRM counts as a scheduling clash',
+  enum: ['TENTATIVE', 'FIRM', 'CONFIRMED', 'RELEASED'],
+  example: 'TENTATIVE',
+} as const;
+
 export const QuestionTypeEnum2Schema = {
   type: 'string',
   enum: ['multiple_choice', 'true_false', 'short_answer', 'essay'],
 } as const;
 
-export const StatusEnum17Schema = {
+export const StatusEnum18Schema = {
   type: 'string',
   enum: ['in_progress', 'submitted', 'graded'],
 } as const;
 
-export const StatusEnum18Schema = {
+export const StatusEnum19Schema = {
   type: 'string',
   description: "**[REQUIRED]** Current status of the student's enrollment in the program.",
   enum: ['ACTIVE', 'COMPLETED', 'DROPPED', 'SUSPENDED'],
@@ -23827,7 +23945,7 @@ export const EntryTypeEnumSchema = {
   example: 'HOLD',
 } as const;
 
-export const StatusEnum19Schema = {
+export const StatusEnum20Schema = {
   type: 'string',
   description: 'Booking lifecycle state',
   enum: ['HOLD', 'CONFIRMED', 'RELEASED', 'CANCELLED'],
@@ -23854,7 +23972,7 @@ export const LatestEnrollmentStatusEnumSchema = {
   enum: ['RESERVED', 'ENROLLED', 'WAITLISTED', 'ATTENDED', 'ABSENT', 'CANCELLED'],
 } as const;
 
-export const StatusEnum20Schema = {
+export const StatusEnum21Schema = {
   type: 'string',
   description: '**[READ-ONLY]** Review state of the edit.',
   enum: ['pending', 'approved', 'rejected', 'withdrawn'],
@@ -24481,17 +24599,24 @@ export const DomainNameEnum2WritableSchema = {
   minLength: 1,
 } as const;
 
+export const StatusEnum17WritableSchema = {
+  type: 'string',
+  description: 'Hold lifecycle state; only FIRM counts as a scheduling clash',
+  enum: ['TENTATIVE', 'FIRM', 'CONFIRMED', 'RELEASED'],
+  example: 'TENTATIVE',
+} as const;
+
 export const QuestionTypeEnum2WritableSchema = {
   type: 'string',
   enum: ['multiple_choice', 'true_false', 'short_answer', 'essay'],
 } as const;
 
-export const StatusEnum17WritableSchema = {
+export const StatusEnum18WritableSchema = {
   type: 'string',
   enum: ['in_progress', 'submitted', 'graded'],
 } as const;
 
-export const StatusEnum18WritableSchema = {
+export const StatusEnum19WritableSchema = {
   type: 'string',
   description: "**[REQUIRED]** Current status of the student's enrollment in the program.",
   enum: ['ACTIVE', 'COMPLETED', 'DROPPED', 'SUSPENDED'],
@@ -24505,7 +24630,7 @@ export const EntryTypeEnumWritableSchema = {
   example: 'HOLD',
 } as const;
 
-export const StatusEnum19WritableSchema = {
+export const StatusEnum20WritableSchema = {
   type: 'string',
   description: 'Booking lifecycle state',
   enum: ['HOLD', 'CONFIRMED', 'RELEASED', 'CANCELLED'],

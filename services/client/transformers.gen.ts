@@ -313,6 +313,7 @@ import type {
   GetTrainingBranchesByOrganisation1Response,
   GetStudentScheduleResponse,
   GetScheduledInstanceResponse,
+  GetInstructorTimeHoldsResponse,
   GetInstructorScheduleResponse,
   GetStudentBookingsResponse,
   SearchStudentsResponse,
@@ -5515,6 +5516,32 @@ export const getScheduledInstanceResponseTransformer = async (
   data: any
 ): Promise<GetScheduledInstanceResponse> => {
   data = apiResponseScheduledInstanceSchemaResponseTransformer(data);
+  return data;
+};
+
+const instructorTimeHoldSchemaResponseTransformer = (data: any) => {
+  if (data.start_time) {
+    data.start_time = new Date(data.start_time);
+  }
+  if (data.end_time) {
+    data.end_time = new Date(data.end_time);
+  }
+  return data;
+};
+
+const apiResponseListInstructorTimeHoldSchemaResponseTransformer = (data: any) => {
+  if (data.data) {
+    data.data = data.data.map((item: any) => {
+      return instructorTimeHoldSchemaResponseTransformer(item);
+    });
+  }
+  return data;
+};
+
+export const getInstructorTimeHoldsResponseTransformer = async (
+  data: any
+): Promise<GetInstructorTimeHoldsResponse> => {
+  data = apiResponseListInstructorTimeHoldSchemaResponseTransformer(data);
   return data;
 };
 

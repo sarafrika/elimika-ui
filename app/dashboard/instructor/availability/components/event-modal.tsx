@@ -24,13 +24,16 @@ import {
 } from '@/components/ui/sheet';
 import { Textarea } from '@/components/ui/textarea';
 import { useInstructor } from '@/context/instructor-context';
+import { dayjs } from '@/lib/date';
 import {
   blockInstructorTimeMutation,
   createBookingMutation,
+  getClassDefinitionsForInstructorQueryKey,
+  getInstructorCalendarQueryKey,
+  getInstructorScheduleQueryKey,
   getStudentBookingsQueryKey,
 } from '@/services/client/@tanstack/react-query.gen';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
-import dayjs from 'dayjs';
 import {
   AlertCircle,
   BookOpen,
@@ -47,7 +50,7 @@ import { useEffect, useMemo, useState } from 'react';
 import DatePicker from 'react-multi-date-picker';
 import { toast } from 'sonner';
 import Spinner from '../../../../../components/ui/spinner';
-import type { CalendarEvent } from './types';
+import { calendarDisplayZone, type CalendarEvent, toCalendarInstants } from './types';
 
 type RateKey =
   | 'private_online_hourly_rate'
@@ -196,6 +199,8 @@ function getEndTime(startTime: string): string {
   return `${pad(hours)}:${pad(endMinutes)}`;
 }
 
+// The blocked-period inputs are `type='time'`, i.e. wall clock in the instructor's own browser
+// zone - this form offers no zone picker - so local parsing is the correct reading before UTC.
 function convertDates(dates: DateTimeItem[]): OutputItem[] {
   return dates.map(item => ({
     start_time: dayjs(`${item.date}T${item.startTime}`).toISOString(),
@@ -209,17 +214,9 @@ function calculateDurationHours(start: Date, end: Date) {
 }
 
 function formatOccurrenceLabel(start: Date, end: Date) {
-  return `${start.toLocaleDateString('en-US', {
-    weekday: 'short',
-    month: 'short',
-    day: 'numeric',
-  })} • ${start.toLocaleTimeString('en-US', {
-    hour: 'numeric',
-    minute: '2-digit',
-  })} - ${end.toLocaleTimeString('en-US', {
-    hour: 'numeric',
-    minute: '2-digit',
-  })}`;
+  return `${dayjs(start).format('ddd, MMM D')} • ${dayjs(start).format('h:mm A')} - ${dayjs(
+    end
+  ).format('h:mm A')}`;
 }
 
 function getErrorMessage(error: unknown, fallback: string) {
@@ -647,18 +644,25 @@ export function EventModal({
     return Object.keys(nextErrors).length === 0;
   };
 
+  // A reserved period reaches the instructor's surfaces through three feeds - the merged
+  // availability calendar, the raw timetable the scheduler reads and the class list. Keys are built
+  // path-only so every cached date window matches, not just the range this modal happens to know.
+  const invalidateInstructorScheduleQueries = async (instructorUuid: string) => {
+    await Promise.all(
+      [
+        getInstructorCalendarQueryKey({ path: { instructorUuid } }),
+        getInstructorScheduleQueryKey({ path: { instructorUuid } }),
+        getClassDefinitionsForInstructorQueryKey({ path: { instructorUuid } }),
+      ].map(queryKey => queryClient.invalidateQueries({ queryKey }))
+    );
+  };
+
   const invalidateBookingQueries = async () => {
     const targetInstructorUuid = studentBookingData?.instructor_uuid || instructor?.uuid;
 
-    await queryClient.invalidateQueries({
-      predicate: query =>
-        Boolean(
-          (query.queryKey?.[0] as { _id?: string; path?: { instructorUuid?: string } })?._id ===
-            'getInstructorCalendar' &&
-            (query.queryKey?.[0] as { path?: { instructorUuid?: string } })?.path
-              ?.instructorUuid === targetInstructorUuid
-        ),
-    });
+    if (targetInstructorUuid) {
+      await invalidateInstructorScheduleQueries(targetInstructorUuid);
+    }
 
     await queryClient.invalidateQueries({
       queryKey: getStudentBookingsQueryKey({
@@ -747,15 +751,7 @@ export function EventModal({
       },
       {
         onSuccess: async response => {
-          await queryClient.invalidateQueries({
-            predicate: query =>
-              Boolean(
-                (query.queryKey?.[0] as { _id?: string; path?: { instructorUuid?: string } })
-                  ?._id === 'getInstructorCalendar' &&
-                  (query.queryKey?.[0] as { path?: { instructorUuid?: string } })?.path
-                    ?.instructorUuid === targetInstructorUuid
-              ),
-          });
+          await invalidateInstructorScheduleQueries(targetInstructorUuid);
           toast.success(response?.message || 'Time blocked successfully');
           onClose();
         },
@@ -771,20 +767,18 @@ export function EventModal({
       return;
     }
 
-    const start = new Date(formData.startDateTime!);
-    const end = new Date(formData.endDateTime!);
+    // The `datetime-local` inputs carry no offset, so they are read as wall clock in the zone the
+    // calendar renders - the same zone the API-fed events are converted into.
+    const zone = calendarDisplayZone();
+    const start = dayjs.tz(formData.startDateTime!, zone);
+    const end = dayjs.tz(formData.endDateTime!, zone);
 
     const eventData: CalendarEvent = {
       id: event?.id || `event-${Date.now()}`,
       title: formData.title || '',
       description: formData.description,
       entry_type: formData.entry_type,
-      startTime: `${pad(start.getHours())}:${pad(start.getMinutes())}`,
-      endTime: `${pad(end.getHours())}:${pad(end.getMinutes())}`,
-      startDateTime: formData.startDateTime!,
-      endDateTime: formData.endDateTime!,
-      date: start,
-      day: start.toLocaleDateString('en-US', { weekday: 'long' }),
+      ...toCalendarInstants(start.toDate(), end.toDate(), zone),
       location: formData.location,
       attendees: formData.attendees,
       isRecurring: Boolean(formData.isRecurring),
@@ -930,11 +924,7 @@ export function EventModal({
                         >
                           <div className='min-w-0 flex-1'>
                             <p className='truncate font-medium'>
-                              {new Date(`${item.date}T00:00:00`).toLocaleDateString('en-US', {
-                                weekday: 'short',
-                                month: 'short',
-                                day: 'numeric',
-                              })}
+                              {dayjs(item.date).format('ddd, MMM D')}
                             </p>
                           </div>
 
@@ -1368,23 +1358,14 @@ export function EventModal({
                         <div>
                           <div className='font-medium'>
                             {formData.startDateTime
-                              ? new Date(formData.startDateTime).toLocaleDateString('en-US', {
-                                  weekday: 'long',
-                                  month: 'short',
-                                  day: 'numeric',
-                                  year: 'numeric',
-                                })
+                              ? dayjs(formData.startDateTime).format('dddd, MMM D, YYYY')
                               : 'No date selected'}
                           </div>
                           <p className='text-muted-foreground'>
                             {formData.startDateTime && formData.endDateTime
-                              ? `${new Date(formData.startDateTime).toLocaleTimeString('en-US', {
-                                  hour: 'numeric',
-                                  minute: '2-digit',
-                                })} - ${new Date(formData.endDateTime).toLocaleTimeString('en-US', {
-                                  hour: 'numeric',
-                                  minute: '2-digit',
-                                })}`
+                              ? `${dayjs(formData.startDateTime).format('h:mm A')} - ${dayjs(
+                                  formData.endDateTime
+                                ).format('h:mm A')}`
                               : 'Choose a start and end time'}
                           </p>
                         </div>

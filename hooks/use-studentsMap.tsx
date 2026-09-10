@@ -27,6 +27,8 @@ export const useStudentsMap = (studentUuids: string[]) => {
       return mapped;
     },
     enabled: studentUuids?.length > 0,
+    // A name lookup: nothing an approval, enrolment or moderation decision does changes it, and a
+    // refetch would replay one request per student, so this one stays cached.
     staleTime: 10 * 60 * 1000,
     refetchOnWindowFocus: false,
     refetchOnMount: false,

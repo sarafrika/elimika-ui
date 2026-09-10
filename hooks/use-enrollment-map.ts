@@ -16,6 +16,9 @@ export type EnrollmentMap = Record<
   } | null
 >;
 
+const refetchWhenInvalidated = (query: { state: { isInvalidated: boolean } }) =>
+  query.state.isInvalidated;
+
 export function useCourseEnrollmentsMap(courseUuids: string[]) {
   // Consumers only need the enrollment COUNT — read it from the page
   // metadata of a size-1 request instead of downloading up to 10,000 rows
@@ -27,9 +30,12 @@ export function useCourseEnrollmentsMap(courseUuids: string[]) {
         query: { pageable: { page: 0 } },
       }),
       enabled: !!uuid,
+      // The enrolment workflow and the cache-restore predicate both invalidate this key, so gate the
+      // mount refetch on that rather than on age: the catalogue mounts one of these per row and must
+      // not re-fan-out every time the five-minute window has lapsed.
       staleTime: 5 * 60 * 1000, // 5 minutes
+      refetchOnMount: refetchWhenInvalidated,
       refetchOnWindowFocus: false,
-      refetchOnMount: false,
       refetchOnReconnect: false,
     })),
   });
@@ -66,9 +72,12 @@ export function useClassEnrollmentsMap(classUuids: string[]) {
         path: { uuid },
       }),
       enabled: Boolean(uuid),
+      // Same roster the enrolment workflow and the cache-restore predicate invalidate, so gate the
+      // mount refetch on that: the assignment and overview surfaces mount one of these per class and
+      // would otherwise re-fan-out on a one-minute age alone.
       staleTime: 60 * 1000, // 1 minute
+      refetchOnMount: refetchWhenInvalidated,
       refetchOnWindowFocus: false,
-      refetchOnMount: false,
       refetchOnReconnect: false,
     })),
   });

@@ -21,9 +21,11 @@ export function useClassSchedulesMap(classUuids: string[]) {
         query: { pageable: { size: 200 } },
       }),
       enabled: !!uuid,
+      // A reschedule or cancellation made anywhere but the two schedule managers reaches no
+      // invalidation path — getClassSchedule is outside the volatile restore set — so the timed
+      // mount refetch is the only correction, and staleTime is what throttles the per-class fan-out.
       staleTime: 5 * 60 * 1000,
       refetchOnWindowFocus: false,
-      refetchOnMount: false,
       refetchOnReconnect: false,
     })),
   });
@@ -51,9 +53,12 @@ export function useEnrollmentMap(classUuids: string[]) {
         query: { pageable: { size: 500 } },
       }),
       enabled: !!uuid,
+      // The enrolment workflow and the cache-restore predicate both invalidate this key, so gate the
+      // mount refetch on that rather than on age: a routine remount must not re-fan-out per class,
+      // but an invalidation still has to survive the unmount that plain refetchOnMount:false ate.
       staleTime: 5 * 60 * 1000,
+      refetchOnMount: query => query.state.isInvalidated,
       refetchOnWindowFocus: false,
-      refetchOnMount: false,
       refetchOnReconnect: false,
     })),
   });

@@ -5,6 +5,7 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
+import { dayjs } from '@/lib/date';
 import { Calendar, ChevronLeft, ChevronRight, TrendingUp } from 'lucide-react';
 import { useMemo, useState } from 'react';
 import type { AvailabilityData, AvailabilitySlot } from './types';
@@ -59,13 +60,13 @@ export function YearlyAvailabilityGrid({
     const months = [];
     for (let month = 0; month < 12; month++) {
       const date = new Date(currentYear, month, 1);
-      const monthName = date.toLocaleDateString('en-US', { month: 'long' });
+      const monthName = dayjs(date).format('MMMM');
       const daysInMonth = new Date(currentYear, month + 1, 0).getDate();
 
       months.push({
         index: month,
         name: monthName,
-        shortName: date.toLocaleDateString('en-US', { month: 'short' }),
+        shortName: dayjs(date).format('MMM'),
         daysInMonth,
         date,
       });
@@ -133,7 +134,7 @@ export function YearlyAvailabilityGrid({
 
         if (dayOfWeek === 0 || dayOfWeek === 6) continue;
 
-        const dayName = date.toLocaleDateString('en-US', { weekday: 'long' });
+        const dayName = dayjs(date).format('dddd');
         const defaultTimeSlots = ['09:00', '10:00', '11:00', '14:00', '15:00', '16:00'];
 
         defaultTimeSlots.forEach(time => {

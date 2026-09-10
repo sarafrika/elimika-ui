@@ -49,7 +49,9 @@ export function useInstructorClassesWithSchedules(instructorUuid?: string) {
     staleTime: 10 * 60 * 1000,
     gcTime: 60 * 60 * 1000,
 
-    refetchOnMount: false,
+    // This list is what an approved training application or accepted job application adds a class
+    // to. The instructor is reloading precisely to see that, so never answer from cache alone.
+    refetchOnMount: 'always',
     refetchOnReconnect: false,
     refetchOnWindowFocus: false,
   });
@@ -99,10 +101,11 @@ export function useInstructorClassesWithSchedules(instructorUuid?: string) {
 
       enabled: !!programUuid,
 
+      // A programme's course list is the owner's to change, not the instructor's, so it has to be
+      // able to revalidate here.
       staleTime: 10 * 60 * 1000,
       gcTime: 60 * 60 * 1000,
 
-      refetchOnMount: false,
       refetchOnReconnect: false,
       refetchOnWindowFocus: false,
     })),
@@ -130,10 +133,11 @@ export function useInstructorClassesWithSchedules(instructorUuid?: string) {
 
       enabled: !!classItem.uuid,
 
+      // Students enrol and withdraw without this tab; the enrolment workflow invalidates this key
+      // and needs a mount refetch to be allowed for that invalidation to reach anyone.
       staleTime: 10 * 60 * 1000,
       gcTime: 60 * 60 * 1000,
 
-      refetchOnMount: false,
       refetchOnReconnect: false,
       refetchOnWindowFocus: false,
     })),
@@ -160,7 +164,8 @@ export function useInstructorClassesWithSchedules(instructorUuid?: string) {
     enabled: !!instructorUuid,
     staleTime: 10 * 60 * 1000,
     gcTime: 60 * 60 * 1000,
-    refetchOnMount: false,
+    // Mount revalidation stays on, unlike the other queries here: blocking time invalidates this
+    // key from the availability page, where nothing observes it, so only a later mount refetches.
     refetchOnReconnect: false,
     refetchOnWindowFocus: false,
   });

@@ -12,7 +12,12 @@ import {
 } from 'lucide-react';
 import type { SchedulerCategory, SchedulerMetric } from './types';
 
+// All 24 hours stay rendered — sessions do get scheduled at 00:10 — and the
+// grid scrolls itself to the working day instead of trimming the range.
 export const schedulerHours = Array.from({ length: 24 }, (_, index) => index);
+
+/** `HH:mm` viewport anchor used when no working hours are configured. */
+export const defaultWorkingHours = { start: '08:00', end: '18:00' };
 
 export const categoryStyles: Record<SchedulerCategory, string> = {
   'TVET / Vocational': 'border-primary/50 bg-primary/10 text-primary',

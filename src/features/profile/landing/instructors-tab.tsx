@@ -625,6 +625,14 @@ function InstructorCertificateUploadSheet({
   );
 }
 
+/** Verification is an admin's answer about this profile, so the badge is re-asked on every mount;
+ *  the stale window is kept so the sibling sections and other triggers still share one request. */
+const documentVerificationQueryOptions = {
+  staleTime: 5 * 60 * 1000,
+  refetchOnMount: 'always' as const,
+  refetchOnWindowFocus: false,
+};
+
 function InstructorCertificateDocumentsSection({
   sharedProfile,
   onOpenUpload,
@@ -639,10 +647,8 @@ function InstructorCertificateDocumentsSection({
   const { data, isLoading } = useQuery({
     ...getInstructorDocumentsOptions({ path: { instructorUuid: sharedProfile?.uuid } }),
     enabled: !!sharedProfile?.uuid,
-    staleTime: 5 * 60 * 1000,
     gcTime: 10 * 60 * 1000,
-    refetchOnWindowFocus: false,
-    refetchOnMount: false,
+    ...documentVerificationQueryOptions,
   });
 
   const deleteDocumentMut = useMutation(deleteInstructorDocumentMutation());
@@ -811,10 +817,8 @@ function InstructorVerifiedDocumentsSection({ sharedProfile }: DomainTabProps) {
   const { data: verifiedDocs, isLoading } = useQuery({
     ...getInstructorDocumentsOptions({ path: { instructorUuid: sharedProfile?.uuid } }),
     enabled: !!sharedProfile?.uuid,
-    staleTime: 5 * 60 * 1000,
     gcTime: 10 * 60 * 1000,
-    refetchOnWindowFocus: false,
-    refetchOnMount: false,
+    ...documentVerificationQueryOptions,
     select: response => (response?.data ?? []).filter(doc => doc.is_verified),
   });
 

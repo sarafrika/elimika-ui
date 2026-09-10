@@ -5,6 +5,7 @@ import { useMemo, useState } from 'react';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { dayjs, formatTime, resolveDisplayZone } from '@/lib/date';
 import type { StudentSummary } from './calendar-utils';
 import type { SchedulerEvent, SchedulerProfile } from './types';
 
@@ -15,16 +16,18 @@ type InstructorSummary = {
   subtitle?: string;
 };
 
-function formatTime(date: Date) {
-  return date.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' });
+function getCalendarKey(date: Date) {
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, '0');
+  const day = String(date.getDate()).padStart(2, '0');
+
+  return `${year}-${month}-${day}`;
 }
 
-function isSameCalendarDay(left: Date, right: Date) {
-  return (
-    left.getFullYear() === right.getFullYear() &&
-    left.getMonth() === right.getMonth() &&
-    left.getDate() === right.getDate()
-  );
+// A 00:10 Africa/Nairobi session belongs to that Nairobi day, not to whatever
+// day the viewer's own browser zone puts it on. The grid buckets the same way.
+function getZonedDayKey(value: Date, timeZone: string) {
+  return dayjs(value).tz(timeZone).format('YYYY-MM-DD');
 }
 
 function makeInitials(value?: string) {
@@ -60,6 +63,7 @@ export function SchedulerRightRail({
   students,
   showAllInstructors,
   onToggleInstructors,
+  timeZone,
 }: {
   profile: SchedulerProfile;
   currentDate: Date;
@@ -68,17 +72,22 @@ export function SchedulerRightRail({
   students: StudentSummary[];
   showAllInstructors: boolean;
   onToggleInstructors: () => void;
+  /** IANA zone the calendar is being read in; session times follow it. */
+  timeZone?: string;
 }) {
   const [shareFeedback, setShareFeedback] = useState<'idle' | 'copied'>('idle');
   const [showAllStudents, setShowAllStudents] = useState(false);
   const [showAllLocations, setShowAllLocations] = useState(false);
 
+  const zone = resolveDisplayZone(timeZone);
+  const selectedDayKey = getCalendarKey(currentDate);
+
   const dayEvents = useMemo(
     () =>
       events
-        .filter(event => isSameCalendarDay(event.startTime, currentDate))
+        .filter(event => getZonedDayKey(event.startTime, zone) === selectedDayKey)
         .sort((left, right) => left.startTime.getTime() - right.startTime.getTime()),
-    [currentDate, events]
+    [events, selectedDayKey, zone]
   );
 
   const dayInstructorSummaries = useMemo(
@@ -137,9 +146,11 @@ export function SchedulerRightRail({
 
   const visibleStudents = showAllStudents ? dayStudents : dayStudents.slice(0, 24);
   const visibleLocations = showAllLocations ? dayLocations : dayLocations.slice(0, 5);
-  const visibleSeats =
-    dayStudents.length ||
-    dayEvents.reduce((total, event) => total + (event.maxParticipants ?? event.students.length), 0);
+  // Capacity is what the classes were sized for; enrolment is who actually took a seat.
+  const daySeats = useMemo(
+    () => dayEvents.reduce((total, event) => total + (event.maxParticipants ?? 0), 0),
+    [dayEvents]
+  );
   const shareUrl = typeof window !== 'undefined' ? window.location.href : '';
 
   const copyShareLink = async () => {
@@ -184,7 +195,7 @@ export function SchedulerRightRail({
                 className='grid grid-cols-[50px_minmax(0,1fr)_auto] items-start gap-2'
               >
                 <span className='text-foreground shrink-0 text-[10px] font-semibold whitespace-nowrap'>
-                  {formatTime(event.startTime)}
+                  {formatTime(event.startTime, { zone })}
                 </span>
 
                 <div className='min-w-0 overflow-hidden'>
@@ -282,18 +293,26 @@ export function SchedulerRightRail({
         <div className='mb-2 flex items-center justify-between gap-3'>
           <h2 className='text-foreground text-sm font-semibold'>Students</h2>
           <div className='flex items-center gap-2'>
-            <span className='text-muted-foreground text-xs'>{dayStudents.length} enrolled</span>
-            <Button
-              variant='ghost'
-              size='sm'
-              className='h-7 px-2 text-xs'
-              onClick={() => setShowAllStudents(v => !v)}
-            >
-              {showAllStudents ? 'See less' : 'See more'}
-            </Button>
+            <span className='text-muted-foreground text-xs'>
+              {dayStudents.length ? `${dayStudents.length} enrolled` : 'None enrolled'}
+            </span>
+            {dayStudents.length ? (
+              <Button
+                variant='ghost'
+                size='sm'
+                className='h-7 px-2 text-xs'
+                onClick={() => setShowAllStudents(v => !v)}
+              >
+                {showAllStudents ? 'See less' : 'See more'}
+              </Button>
+            ) : null}
           </div>
         </div>
-        {/* <p className='text-foreground text-sm font-semibold'>{visibleSeats} Seats Visible</p> */}
+        {daySeats ? (
+          <p className='text-muted-foreground text-xs'>
+            {dayStudents.length} of {daySeats} seats taken in this day&apos;s sessions.
+          </p>
+        ) : null}
         <div
           className={
             showAllStudents

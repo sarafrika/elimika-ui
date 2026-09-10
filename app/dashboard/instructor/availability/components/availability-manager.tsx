@@ -1,6 +1,6 @@
 'use client';
 
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
 import {
   Bell,
   Calendar,
@@ -21,12 +21,10 @@ import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useUserProfile } from '@/context/profile-context';
+import { resolveDisplayZone } from '@/lib/date';
 import {
   clearInstructorAvailabilityMutation,
   createAvailabilitySlotMutation,
-  getAvailabilitySlotsQueryKey,
-  getInstructorCalendarOptions,
-  getInstructorCalendarQueryKey,
 } from '@/services/client/@tanstack/react-query.gen';
 import Spinner from '../../../../../components/ui/spinner';
 import { AvailabilityBooking } from './availability-booking';
@@ -35,8 +33,14 @@ import type { AvailabilityClassData, AvailabilityData } from './types';
 import { WeeklyAvailabilityGrid } from './weekly-availability-grid';
 import { YearlyAvailabilityGrid } from './yearly-availability-grid';
 
+const instructorScheduleQueryIds: string[] = [
+  'getInstructorCalendar',
+  'getInstructorSchedule',
+  'getAvailabilitySlots',
+];
+
 const availabilitySettings = {
-  timezone: 'UTC',
+  timezone: resolveDisplayZone(),
   autoAcceptBookings: false,
   bufferTime: 15,
   workingHours: {
@@ -61,17 +65,23 @@ export default function AvailabilityManager({
   const user = useUserProfile();
   const qc = useQueryClient();
 
-  // data points
-  // const [availability, setAvailability] = useState<DayAvailability[]>([]);
-  useQuery(
-    getInstructorCalendarOptions({
-      path: { instructorUuid: user?.instructor?.uuid as string },
-      query: {
-        start_date: new Date('2025-09-11'),
-        end_date: new Date('2026-11-11'),
+  // Availability edits reach the instructor through three feeds - the merged calendar this page and
+  // the scheduler read, the raw timetable and the slot list. Matching on the instructor alone drops
+  // every cached date window, not just the range one caller happens to know.
+  const invalidateInstructorScheduleQueries = (instructorUuid: string) =>
+    qc.invalidateQueries({
+      predicate: query => {
+        const key = query.queryKey[0] as
+          | { _id?: string; path?: { instructorUuid?: string } }
+          | undefined;
+
+        return (
+          !!key?._id &&
+          instructorScheduleQueryIds.includes(key._id) &&
+          key.path?.instructorUuid === instructorUuid
+        );
       },
-    })
-  );
+    });
 
   const [currentTab, setCurrentTab] = useState('weekly');
   const [isEditing, setIsEditing] = useState(false);
@@ -120,23 +130,16 @@ export default function AvailabilityManager({
 
   const clearAvailability = useMutation(clearInstructorAvailabilityMutation());
   const handleClearAvailability = () => {
-    if (!user?.instructor?.uuid) return;
+    const instructorUuid = user?.instructor?.uuid;
+    if (!instructorUuid) return;
 
     try {
       clearAvailability.mutate(
-        { path: { instructorUuid: user?.instructor?.uuid } },
+        { path: { instructorUuid } },
         {
-          onSuccess: data => {
+          onSuccess: async data => {
+            await invalidateInstructorScheduleQueries(instructorUuid);
             toast.success(data?.message || 'Instructor availability deleted successfully');
-            qc.invalidateQueries({
-              queryKey: getInstructorCalendarQueryKey({
-                path: { instructorUuid: user?.instructor?.uuid as string },
-                query: {
-                  start_date: new Date('2025-09-11'),
-                  end_date: new Date('2026-11-11'),
-                },
-              }),
-            });
           },
         }
       );
@@ -174,9 +177,7 @@ export default function AvailabilityManager({
         )
       );
 
-      qc.invalidateQueries({
-        queryKey: getAvailabilitySlotsQueryKey({ path: { instructorUuid } }),
-      });
+      await invalidateInstructorScheduleQueries(instructorUuid);
       toast.success('Weekly availability saved successfully');
       setIsEditing(false);
     } catch (_error) {

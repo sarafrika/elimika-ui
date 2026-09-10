@@ -37,6 +37,26 @@ type QuizScheduleWithClass = ClassQuizSchedule & { classUuid: string };
 
 const QUERY_STALE_TIME = 1000 * 60 * 30;
 const QUERY_GC_TIME = 1000 * 60 * 60 * 24;
+const SCHEDULE_STALE_TIME = 1000 * 60 * 5;
+const SUBMISSION_STALE_TIME = 1000 * 60;
+
+// This instructor authors these on the class surfaces, which invalidate the same keys, so
+// the stale window is the throttle for the per-class fan-out rather than a dead refetchOnMount.
+const SCHEDULE_QUERY_OPTIONS = {
+  staleTime: SCHEDULE_STALE_TIME,
+  gcTime: QUERY_GC_TIME,
+  refetchOnWindowFocus: false,
+  refetchOnReconnect: false,
+};
+
+// Students submit while this page is closed and nothing in the app invalidates that, so it has
+// to revalidate behind the cached paint; one request per task means the window caps the burst.
+const SUBMISSION_QUERY_OPTIONS = {
+  staleTime: SUBMISSION_STALE_TIME,
+  gcTime: QUERY_GC_TIME,
+  refetchOnWindowFocus: false,
+  refetchOnReconnect: false,
+};
 
 const isDefinedString = (value: unknown): value is string =>
   typeof value === 'string' && value.length > 0;
@@ -106,11 +126,10 @@ export function AssignmentPageClient() {
         query: { pageable: { page: 0, size: 100 } },
       }),
       enabled: !!item.course_uuid,
+      // Authored curriculum, read here only for titles: the stale window is the throttle.
       staleTime: QUERY_STALE_TIME,
       gcTime: QUERY_GC_TIME,
-      refetchOnMount: false,
       refetchOnWindowFocus: false,
-      refetchOnReconnect: false,
     })),
   });
 
@@ -118,11 +137,7 @@ export function AssignmentPageClient() {
     queries: uniqueClasses.map(item => ({
       ...getAssignmentSchedulesOptions({ path: { classUuid: item.uuid as string } }),
       enabled: !!item.uuid,
-      staleTime: QUERY_STALE_TIME,
-      gcTime: QUERY_GC_TIME,
-      refetchOnMount: false,
-      refetchOnWindowFocus: false,
-      refetchOnReconnect: false,
+      ...SCHEDULE_QUERY_OPTIONS,
     })),
   });
 
@@ -130,11 +145,7 @@ export function AssignmentPageClient() {
     queries: uniqueClasses.map(item => ({
       ...getQuizSchedulesOptions({ path: { classUuid: item.uuid as string } }),
       enabled: !!item.uuid,
-      staleTime: QUERY_STALE_TIME,
-      gcTime: QUERY_GC_TIME,
-      refetchOnMount: false,
-      refetchOnWindowFocus: false,
-      refetchOnReconnect: false,
+      ...SCHEDULE_QUERY_OPTIONS,
     })),
   });
 
@@ -194,11 +205,7 @@ export function AssignmentPageClient() {
     queries: uniqueAssignmentUuids.map(uuid => ({
       ...getAssignmentSubmissionsOptions({ path: { assignmentUuid: uuid } }),
       enabled: !!uuid,
-      staleTime: QUERY_STALE_TIME,
-      gcTime: QUERY_GC_TIME,
-      refetchOnMount: false,
-      refetchOnWindowFocus: false,
-      refetchOnReconnect: false,
+      ...SUBMISSION_QUERY_OPTIONS,
     })),
   });
 
@@ -209,11 +216,7 @@ export function AssignmentPageClient() {
         query: { pageable: { page: 0, size: 100 } },
       }),
       enabled: !!uuid,
-      staleTime: QUERY_STALE_TIME,
-      gcTime: QUERY_GC_TIME,
-      refetchOnMount: false,
-      refetchOnWindowFocus: false,
-      refetchOnReconnect: false,
+      ...SUBMISSION_QUERY_OPTIONS,
     })),
   });
 
@@ -430,10 +433,12 @@ export function AssignmentPageClient() {
   const { data: pendingGradingData } = useQuery({
     ...getPendingGradingOptions({ path: { instructorUuid: instructorUuid as string } }),
     enabled: !!instructorUuid,
-    staleTime: QUERY_STALE_TIME,
     gcTime: QUERY_GC_TIME,
-    refetchOnMount: false,
-    refetchOnWindowFocus: false,
+    // One request for the whole queue and the reason the instructor opened the page, so it
+    // re-asks on every mount and on return to the tab.
+    staleTime: 0,
+    refetchOnMount: 'always',
+    refetchOnWindowFocus: true,
     refetchOnReconnect: false,
   });
 
@@ -441,11 +446,8 @@ export function AssignmentPageClient() {
     queries: uniqueAssignmentUuids.slice(0, 12).map(uuid => ({
       ...getSubmissionAnalyticsOptions({ path: { assignmentUuid: uuid } }),
       enabled: !!uuid,
-      staleTime: QUERY_STALE_TIME,
-      gcTime: QUERY_GC_TIME,
-      refetchOnMount: false,
-      refetchOnWindowFocus: false,
-      refetchOnReconnect: false,
+      // Server-side roll-up of the submissions above, so it moves on the same cadence as they do.
+      ...SUBMISSION_QUERY_OPTIONS,
     })),
   });
 

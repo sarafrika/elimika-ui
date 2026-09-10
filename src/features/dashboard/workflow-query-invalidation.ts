@@ -11,137 +11,177 @@ type WorkflowNotification = {
 
 const notificationQueryKey = ['notifications'] as const;
 
-const contentModerationQueryIds = [
-  'getCourseByUuid',
-  'getAllCourses',
-  'searchCourses',
-  'getPublishedCourses',
-  'searchCatalogue',
-  'listPendingCourses',
-  'listPendingCourseEdits',
-  'getCourseEditDiff',
-  'getCourseModerationHistory',
-  'getCourseApprovalStatus',
-  'getTrainingProgramByUuid',
-  'getAllTrainingPrograms',
-  'searchTrainingPrograms',
-  'getPublishedPrograms',
-  'getProgramsByCourseCreator',
-  'listPendingPrograms',
-  'getProgramModerationHistory',
-  'getProgramApprovalStatus',
-] as const;
+const workflowQueryIds = {
+  contentModeration: [
+    'getCourseByUuid',
+    'getAllCourses',
+    'searchCourses',
+    'getPublishedCourses',
+    'searchCatalogue',
+    'listPendingCourses',
+    'listPendingCourseEdits',
+    'getCourseEditDiff',
+    'getCourseModerationHistory',
+    'getCourseApprovalStatus',
+    'getTrainingProgramByUuid',
+    'getAllTrainingPrograms',
+    'searchTrainingPrograms',
+    'getPublishedPrograms',
+    'getProgramsByCourseCreator',
+    'listPendingPrograms',
+    'getProgramModerationHistory',
+    'getProgramApprovalStatus',
+  ],
+  domainVerification: [
+    'getInstructorByUuid',
+    'getCourseCreatorByUuid',
+    'getOrganisationByUuid',
+    'getAllInstructors',
+    'getAllCourseCreators',
+    'getAllOrganisations',
+    'searchInstructors',
+    'searchCourseCreators',
+    'getPendingOrganisations',
+    'isInstructorVerified',
+    'isCourseCreatorVerified',
+    'isOrganisationVerified',
+    'getOrganisationSupportedDomains',
+    'getOrganisationStatistics',
+    'getOrganisationInstructorSummaries',
+    'getInstructorDocuments',
+    'getCourseCreatorDocuments',
+    'getInstructorDocumentMedia',
+    'getCourseCreatorDocumentMedia',
+    'searchDocuments',
+  ],
+  trainingApplication: [
+    'getTrainingApplication',
+    'getProgramTrainingApplication',
+    'listTrainingApplications',
+    'listProgramTrainingApplications',
+    'searchTrainingApplications',
+    'searchProgramTrainingApplications',
+    'getCourseByUuid',
+    'getTrainingProgramByUuid',
+    'getAllCourses',
+    'getAllTrainingPrograms',
+    'searchCourses',
+    'searchTrainingPrograms',
+    'getPublishedCourses',
+    'getPublishedPrograms',
+    'getProgramsByCourseCreator',
+    'getClassDefinitionsForInstructor',
+    'getClassDefinitionsForOrganisation',
+  ],
+  enrollment: [
+    'getEnrollmentOverviewForStudent',
+    'getCourseEnrollments',
+    'getCourseEnrollmentsForStudent',
+    'getClassEnrollmentsForStudent',
+    'getScheduledInstanceEnrollmentsForStudent',
+    'getProgramEnrollments',
+    'searchProgramEnrollments',
+    'getStudentSchedule',
+    'getStudentCertificates',
+    'getStudentDashboard',
+    'getEnrollmentsForClass',
+    'getClassDefinition',
+    'getClassDefinitionsForCourse',
+    'getClassDefinitionsForProgram',
+    'getAllActiveClassDefinitions',
+    'getClassEnrolmentEligibility',
+    'getPublishedCourses',
+    'getPublishedPrograms',
+    'getCourseRecommendations',
+    'searchCatalogue',
+    'getCart',
+    'getOrder',
+    'getPaymentStatus',
+    'getWallet',
+  ],
+  jobApplication: [
+    'getJob',
+    'listJobs',
+    'listJobApplications',
+    'listMyApplications',
+    'listInstructorApplications',
+    'getJobEligibility',
+    'getClassDefinitionsForOrganisation',
+    'getClassDefinitionsForInstructor',
+    'getClassDefinition',
+  ],
+  review: [
+    'getCourseReviews',
+    'getClassReviews',
+    'getProgramReviews',
+    'getInstructorReviews',
+    'getClassRatingSummary',
+    'getProgramRatingSummary',
+    'getInstructorRatingSummary',
+    'getCourseByUuid',
+    'getAllCourses',
+    'searchCourses',
+    'getPublishedCourses',
+    'searchCatalogue',
+    'getTrainingProgramByUuid',
+    'getAllTrainingPrograms',
+    'searchTrainingPrograms',
+    'getPublishedPrograms',
+    'getProgramsByCourseCreator',
+    'getClassDefinition',
+    'getClassDefinitionsForCourse',
+    'getClassDefinitionsForProgram',
+    'getClassDefinitionsForInstructor',
+    'getClassDefinitionsForOrganisation',
+    'getAllActiveClassDefinitions',
+    'getInstructorByUuid',
+    'getAllInstructors',
+    'searchInstructors',
+    'getOrganisationInstructorSummaries',
+  ],
+  assessment: [
+    'getAllAssignments',
+    'searchAssignments',
+    'getAssignmentByUuid',
+    'getAssignmentSubmissions',
+    'searchSubmissions',
+    'getSubmissionAnalytics',
+    'getHighPerformanceSubmissions',
+    'getPendingGrading',
+    'getEnrollmentGradeBook',
+    'getStudentDashboard',
+  ],
+  certificate: [
+    'getStudentCertificates',
+    'getCourseCertificates',
+    'getProgramCertificates',
+    'getDownloadableCertificates',
+    'getAllCertificates',
+    'searchCertificates',
+    'getStudentDashboard',
+  ],
+  invitation: [
+    'listMyInvitations',
+    'listOrganisationInvitations',
+    'getOrganisationInstructorSummaries',
+    'getOrganisationStatistics',
+  ],
+} as const;
 
-const domainVerificationQueryIds = [
-  'getInstructorByUuid',
-  'getCourseCreatorByUuid',
-  'getOrganisationByUuid',
-  'getAllInstructors',
-  'getAllCourseCreators',
-  'getAllOrganisations',
-  'searchInstructors',
-  'searchCourseCreators',
-  'getPendingOrganisations',
-  'isInstructorVerified',
-  'isCourseCreatorVerified',
-  'isOrganisationVerified',
-  'getOrganisationSupportedDomains',
-  'getOrganisationStatistics',
-  'getOrganisationInstructorSummaries',
-  'getInstructorDocuments',
-  'getCourseCreatorDocuments',
-  'getInstructorDocumentMedia',
-  'getCourseCreatorDocumentMedia',
-  'searchDocuments',
-] as const;
+const contentModerationQueryIds = workflowQueryIds.contentModeration;
+const domainVerificationQueryIds = workflowQueryIds.domainVerification;
+const trainingApplicationQueryIds = workflowQueryIds.trainingApplication;
+const enrollmentQueryIds = workflowQueryIds.enrollment;
+const jobApplicationQueryIds = workflowQueryIds.jobApplication;
+const reviewQueryIds = workflowQueryIds.review;
+const assessmentQueryIds = workflowQueryIds.assessment;
+const certificateQueryIds = workflowQueryIds.certificate;
+const invitationQueryIds = workflowQueryIds.invitation;
 
-const trainingApplicationQueryIds = [
-  'getTrainingApplication',
-  'getProgramTrainingApplication',
-  'listTrainingApplications',
-  'listProgramTrainingApplications',
-  'searchTrainingApplications',
-  'searchProgramTrainingApplications',
-  'getCourseByUuid',
-  'getTrainingProgramByUuid',
-  'getAllCourses',
-  'getAllTrainingPrograms',
-  'searchCourses',
-  'searchTrainingPrograms',
-  'getPublishedCourses',
-  'getPublishedPrograms',
-  'getProgramsByCourseCreator',
-  'getClassDefinitionsForInstructor',
-  'getClassDefinitionsForOrganisation',
-] as const;
-
-const enrollmentQueryIds = [
-  'getEnrollmentOverviewForStudent',
-  'getCourseEnrollments',
-  'getCourseEnrollmentsForStudent',
-  'getClassEnrollmentsForStudent',
-  'getScheduledInstanceEnrollmentsForStudent',
-  'getProgramEnrollments',
-  'searchProgramEnrollments',
-  'getStudentSchedule',
-  'getStudentCertificates',
-  'getStudentDashboard',
-  'getEnrollmentsForClass',
-  'getClassDefinition',
-  'getClassDefinitionsForCourse',
-  'getClassDefinitionsForProgram',
-  'getAllActiveClassDefinitions',
-  'getClassEnrolmentEligibility',
-  'getPublishedCourses',
-  'getPublishedPrograms',
-  'getCourseRecommendations',
-  'searchCatalogue',
-  'getCart',
-  'getOrder',
-  'getPaymentStatus',
-] as const;
-
-const jobApplicationQueryIds = [
-  'getJob',
-  'listJobs',
-  'listJobApplications',
-  'listMyApplications',
-  'listInstructorApplications',
-  'getJobEligibility',
-  'getClassDefinitionsForOrganisation',
-  'getClassDefinitionsForInstructor',
-  'getClassDefinition',
-] as const;
-
-const reviewQueryIds = [
-  'getCourseReviews',
-  'getClassReviews',
-  'getProgramReviews',
-  'getInstructorReviews',
-  'getClassRatingSummary',
-  'getProgramRatingSummary',
-  'getInstructorRatingSummary',
-  'getCourseByUuid',
-  'getAllCourses',
-  'searchCourses',
-  'getPublishedCourses',
-  'searchCatalogue',
-  'getTrainingProgramByUuid',
-  'getAllTrainingPrograms',
-  'searchTrainingPrograms',
-  'getPublishedPrograms',
-  'getProgramsByCourseCreator',
-  'getClassDefinition',
-  'getClassDefinitionsForCourse',
-  'getClassDefinitionsForProgram',
-  'getClassDefinitionsForInstructor',
-  'getClassDefinitionsForOrganisation',
-  'getAllActiveClassDefinitions',
-  'getInstructorByUuid',
-  'getAllInstructors',
-  'searchInstructors',
-  'getOrganisationInstructorSummaries',
-] as const;
+/** A server-side event can change these unwatched, so a restored copy is never fresh. */
+export const VOLATILE_GENERATED_QUERY_IDS: ReadonlySet<string> = Object.freeze(
+  new Set<string>(Object.values(workflowQueryIds).flat())
+);
 
 function getGeneratedQueryId(queryKey: QueryKey) {
   const head = queryKey[0] as GeneratedQueryKeyHead | unknown;
@@ -151,6 +191,11 @@ function getGeneratedQueryId(queryKey: QueryKey) {
   }
 
   return undefined;
+}
+
+export function isVolatileGeneratedQuery(queryKey: QueryKey) {
+  const id = getGeneratedQueryId(queryKey);
+  return Boolean(id && VOLATILE_GENERATED_QUERY_IDS.has(id));
 }
 
 export function invalidateGeneratedQueryIds(
@@ -240,6 +285,36 @@ export async function invalidateReviewWorkflowQueries(queryClient: QueryClient) 
   ]);
 }
 
+export async function invalidateAssessmentWorkflowQueries(queryClient: QueryClient) {
+  await Promise.all([
+    invalidateGeneratedQueryIds(queryClient, assessmentQueryIds),
+    invalidateQueryKeyPrefixes(queryClient, [notificationQueryKey, ['class-details-related']]),
+  ]);
+}
+
+export async function invalidateCertificateWorkflowQueries(queryClient: QueryClient) {
+  await Promise.all([
+    invalidateGeneratedQueryIds(queryClient, certificateQueryIds),
+    invalidateQueryKeyPrefixes(queryClient, [notificationQueryKey]),
+  ]);
+}
+
+export async function invalidateInvitationWorkflowQueries(queryClient: QueryClient) {
+  await Promise.all([
+    invalidateGeneratedQueryIds(queryClient, invitationQueryIds),
+    invalidateQueryKeyPrefixes(queryClient, [notificationQueryKey, ['organization']]),
+  ]);
+}
+
+/** Grading events that move a mark or a queue; the reminders that share their prefix do not. */
+const GRADING_NOTIFICATION_TYPES = new Set([
+  'ASSIGNMENT_GRADED',
+  'ASSIGNMENT_RETURNED_FOR_REVISION',
+  'ASSIGNMENT_SUBMITTED_CONFIRMATION',
+  'NEW_ASSIGNMENT_SUBMISSION',
+  'ASSESSMENT_COMPLETED',
+]);
+
 export function invalidateWorkflowQueriesForNotification(
   queryClient: QueryClient,
   notification: WorkflowNotification
@@ -261,7 +336,8 @@ export function invalidateWorkflowQueriesForNotification(
   if (
     type.includes('ENROLLMENT') ||
     type === 'CLASS_SCHEDULE_UPDATED' ||
-    type === 'UPCOMING_CLASS_REMINDER'
+    type === 'UPCOMING_CLASS_REMINDER' ||
+    type === 'ORDER_PAYMENT_RECEIPT'
   ) {
     return invalidateEnrollmentWorkflowQueries(queryClient);
   }
@@ -272,6 +348,18 @@ export function invalidateWorkflowQueriesForNotification(
 
   if (type.includes('REVIEW') || type.includes('RATING')) {
     return invalidateReviewWorkflowQueries(queryClient);
+  }
+
+  if (GRADING_NOTIFICATION_TYPES.has(type)) {
+    return invalidateAssessmentWorkflowQueries(queryClient);
+  }
+
+  if (type.includes('CERTIFICATE')) {
+    return invalidateCertificateWorkflowQueries(queryClient);
+  }
+
+  if (type.includes('INVITATION') || type.includes('CONSENT')) {
+    return invalidateInvitationWorkflowQueries(queryClient);
   }
 
   return Promise.resolve();

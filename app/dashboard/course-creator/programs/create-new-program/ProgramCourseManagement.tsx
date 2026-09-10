@@ -27,6 +27,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog';
+import { STALE_TIMES } from '@/lib/query-client';
 import {
   type Course,
   type ProgramRequirement,
@@ -191,7 +192,9 @@ const ProgramCourseManagement = ({
 
   const { data: allCoursesData } = useQuery({
     ...getAllCoursesOptions({ query: { pageable: {} } }),
-    staleTime: Infinity,
+    // Nothing here invalidates the catalogue, so a course authored elsewhere would never
+    // reach this picker; the reference window is what lets it back in.
+    staleTime: STALE_TIMES.reference,
     refetchOnWindowFocus: false,
   });
 

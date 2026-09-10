@@ -15,6 +15,7 @@ import {
 import { useRouter } from 'next/navigation';
 import { useMemo } from 'react';
 
+import { AsyncSection } from '@/components/data/async-section';
 import { EmptyState } from '@/components/empty-state';
 import { PageHeader } from '@/components/page-header';
 import { Badge } from '@/components/ui/badge';
@@ -59,6 +60,23 @@ function CourseImage({ src, alt }: { src?: string | null; alt: string }) {
   return (
     <div className='from-primary/15 to-primary/5 flex h-12 w-16 shrink-0 items-center justify-center rounded-md bg-gradient-to-br'>
       <BookOpen className='text-primary/70 h-5 w-5' />
+    </div>
+  );
+}
+
+function ApplicationsSkeleton() {
+  return (
+    <div className='divide-border divide-y rounded-lg border'>
+      {[...Array(4)].map((_, i) => (
+        <div key={i} className='flex items-center gap-3 p-3'>
+          <Skeleton className='h-12 w-16 shrink-0 rounded-md' />
+          <div className='min-w-0 flex-1 space-y-2'>
+            <Skeleton className='h-4 w-56 max-w-full' />
+            <Skeleton className='h-3 w-32' />
+          </div>
+          <Skeleton className='h-6 w-20 shrink-0 rounded-full' />
+        </div>
+      ))}
     </div>
   );
 }
@@ -110,6 +128,9 @@ export default function MyApplicationsPage() {
       },
     }),
     enabled: Boolean(organisationUuid),
+    // A reviewer decides this elsewhere, so a held answer is wrong the moment they
+    // decide; stale on arrival is what makes the defaults re-ask on mount and focus.
+    staleTime: 0,
   });
   const applications = applicationsQuery.data?.data?.content ?? [];
 
@@ -162,13 +183,21 @@ export default function MyApplicationsPage() {
         description='Track applications to train courses and their review status.'
       />
 
-      {applications.length === 0 ? (
-        <EmptyState
-          icon={FileText}
-          title='No applications yet'
-          description='Apply to train a course from the catalogue and track its review status here.'
-        />
-      ) : (
+      <AsyncSection
+        loading={applicationsQuery.isLoading && !applicationsQuery.data}
+        error={applicationsQuery.error}
+        empty={applications.length === 0}
+        skeleton={<ApplicationsSkeleton />}
+        errorTitle="Couldn't load your applications"
+        onRetry={applicationsQuery.refetch}
+        emptyState={
+          <EmptyState
+            icon={FileText}
+            title='No applications yet'
+            description='Apply to train a course from the catalogue and track its review status here.'
+          />
+        }
+      >
         <div className='space-y-3'>
           {/* Mobile card list */}
           <div className='sm:hidden'>
@@ -267,7 +296,7 @@ export default function MyApplicationsPage() {
             </Table>
           </div>
         </div>
-      )}
+      </AsyncSection>
     </div>
   );
 }

@@ -62,10 +62,11 @@ export default function AvailableClassesPage({
     clearDates,
   } = useDateRangeFilter();
 
+  // Catalogue membership decides whether a class is listed at all, so once the
+  // ten-minute window lapses the cached copy paints but is still re-asked.
   const { data: catalogues } = useQuery({
     ...listCatalogItemsOptions(),
     staleTime: 1000 * 60 * 10,
-    refetchOnMount: false,
     refetchOnWindowFocus: false,
   });
 

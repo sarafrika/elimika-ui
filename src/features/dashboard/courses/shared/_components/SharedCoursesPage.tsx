@@ -1224,9 +1224,11 @@ export function SharedCoursesPage({ domain }: SharedCoursesPageProps) {
         path: { programUuid },
       }),
       enabled: Boolean(programUuid),
+      // A program's classes are opened and closed by somebody else, so the stale
+      // window is the throttle here — a dead mount would replay a rehydrated
+      // answer for the rest of the session.
       staleTime: 5 * 60 * 1000,
       refetchOnWindowFocus: false,
-      refetchOnMount: false,
       refetchOnReconnect: false,
     })),
   });
@@ -1251,9 +1253,10 @@ export function SharedCoursesPage({ domain }: SharedCoursesPageProps) {
         query: { pageable: { page: 0, size: 1 } },
       }),
       enabled: Boolean(programUuid),
+      // Every learner who enrols moves this count, so the minute-long stale
+      // window throttles the card without pinning it to the persisted answer.
       staleTime: 60 * 1000,
       refetchOnWindowFocus: false,
-      refetchOnMount: false,
       refetchOnReconnect: false,
     })),
   });

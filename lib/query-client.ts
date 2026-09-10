@@ -1,8 +1,8 @@
 import { QueryClient } from '@tanstack/react-query';
 
 /**
- * staleTime tiers. Pick the slowest tier the data can tolerate — every tier
- * step down multiplies refetch traffic across the app.
+ * staleTime tiers cap how long an answer is reused before the next mount refetches it
+ * behind the paint — not how long it may be shown unasked. Pick the slowest tier that fits.
  */
 export const STALE_TIMES = {
   /** Reference data that rarely changes: categories, difficulty levels, course catalog. */

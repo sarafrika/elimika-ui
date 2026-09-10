@@ -7,6 +7,7 @@ import {
   CLIENT_QUERY_CACHE_STORAGE_KEY,
   makeQueryClient,
 } from '@/lib/query-client';
+import { isVolatileGeneratedQuery } from '@/src/features/dashboard/workflow-query-invalidation';
 import { createSyncStoragePersister } from '@tanstack/query-sync-storage-persister';
 import { PersistQueryClientProvider } from '@tanstack/react-query-persist-client';
 import { SessionProvider } from 'next-auth/react';
@@ -39,6 +40,14 @@ export function RootProviders({ children }: { children: ReactNode }) {
         buster: CLIENT_QUERY_CACHE_BUSTER,
         maxAge: CLIENT_QUERY_CACHE_MAX_AGE_MS,
         persister,
+      }}
+      onSuccess={() => {
+        // Workflow state changes on the server between visits, so its restored copy may be
+        // painted but never counted as fresh; every other entry keeps its own staleTime tier.
+        void queryClient.invalidateQueries({
+          predicate: query => isVolatileGeneratedQuery(query.queryKey),
+          refetchType: 'none',
+        });
       }}
     >
       <SessionProvider>

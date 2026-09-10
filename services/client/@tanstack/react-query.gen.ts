@@ -402,6 +402,7 @@ import {
   getStudentSchedule,
   cancelScheduledClass,
   getScheduledInstance,
+  getInstructorTimeHolds,
   getInstructorSchedule,
   getStudentBookings,
   searchStudents,
@@ -1694,6 +1695,9 @@ import type {
   CancelScheduledClassError,
   CancelScheduledClassResponse,
   GetScheduledInstanceData,
+  GetInstructorTimeHoldsData,
+  GetInstructorTimeHoldsError,
+  GetInstructorTimeHoldsResponse,
   GetInstructorScheduleData,
   GetInstructorScheduleError,
   GetInstructorScheduleResponse,
@@ -19047,6 +19051,75 @@ export const getScheduledInstanceOptions = (options: Options<GetScheduledInstanc
   });
 };
 
+export const getInstructorTimeHoldsQueryKey = (options: Options<GetInstructorTimeHoldsData>) =>
+  createQueryKey('getInstructorTimeHolds', options);
+
+/**
+ * Get marketplace time holds for a specific instructor within a date range
+ * Tentative and firm claims raised by the instructor's marketplace job applications. Read separately from the schedule because a hold is not a session: it carries no enrolment, attendance or pay, and only a FIRM hold counts as a scheduling clash.
+ */
+export const getInstructorTimeHoldsOptions = (options: Options<GetInstructorTimeHoldsData>) => {
+  return queryOptions({
+    queryFn: async ({ queryKey, signal }) => {
+      const { data } = await getInstructorTimeHolds({
+        ...options,
+        ...queryKey[0],
+        signal,
+        throwOnError: true,
+      });
+      return data;
+    },
+    queryKey: getInstructorTimeHoldsQueryKey(options),
+  });
+};
+
+export const getInstructorTimeHoldsInfiniteQueryKey = (
+  options: Options<GetInstructorTimeHoldsData>
+): QueryKey<Options<GetInstructorTimeHoldsData>> =>
+  createQueryKey('getInstructorTimeHolds', options, true);
+
+/**
+ * Get marketplace time holds for a specific instructor within a date range
+ * Tentative and firm claims raised by the instructor's marketplace job applications. Read separately from the schedule because a hold is not a session: it carries no enrolment, attendance or pay, and only a FIRM hold counts as a scheduling clash.
+ */
+export const getInstructorTimeHoldsInfiniteOptions = (
+  options: Options<GetInstructorTimeHoldsData>
+) => {
+  return infiniteQueryOptions<
+    GetInstructorTimeHoldsResponse,
+    GetInstructorTimeHoldsError,
+    InfiniteData<GetInstructorTimeHoldsResponse>,
+    QueryKey<Options<GetInstructorTimeHoldsData>>,
+    | Date
+    | Pick<QueryKey<Options<GetInstructorTimeHoldsData>>[0], 'body' | 'headers' | 'path' | 'query'>
+  >(
+    {
+      queryFn: async ({ pageParam, queryKey, signal }) => {
+        const page: Pick<
+          QueryKey<Options<GetInstructorTimeHoldsData>>[0],
+          'body' | 'headers' | 'path' | 'query'
+        > =
+          typeof pageParam === 'object'
+            ? pageParam
+            : {
+                query: {
+                  start: pageParam,
+                },
+              };
+        const params = createInfiniteParams(queryKey, page);
+        const { data } = await getInstructorTimeHolds({
+          ...options,
+          ...params,
+          signal,
+          throwOnError: true,
+        });
+        return data;
+      },
+      queryKey: getInstructorTimeHoldsInfiniteQueryKey(options),
+    }
+  );
+};
+
 export const getInstructorScheduleQueryKey = (options: Options<GetInstructorScheduleData>) =>
   createQueryKey('getInstructorSchedule', options);
 
@@ -22358,6 +22431,9 @@ export const checkAvailabilityQueryKey = (options: Options<CheckAvailabilityData
  * Check if instructor is available during a time period
  * Checks whether an instructor is available for the entire specified time period.
  *
+ * The window is given in UTC, and each availability slot is compared against it in the
+ * zone that slot was authored in.
+ *
  * Returns true unless a blocked slot overlaps the requested window.
  *
  */
@@ -22383,6 +22459,9 @@ export const checkAvailabilityInfiniteQueryKey = (
 /**
  * Check if instructor is available during a time period
  * Checks whether an instructor is available for the entire specified time period.
+ *
+ * The window is given in UTC, and each availability slot is compared against it in the
+ * zone that slot was authored in.
  *
  * Returns true unless a blocked slot overlaps the requested window.
  *

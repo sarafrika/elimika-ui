@@ -91,7 +91,13 @@ export default function ApplicationDetailPage() {
       },
     }),
     enabled: Boolean(organisationUuid),
+    // A reviewer decides this elsewhere: paint the persisted answer, then always re-ask.
+    staleTime: 0,
+    refetchOnMount: 'always',
+    refetchOnWindowFocus: true,
+    refetchOnReconnect: true,
   });
+  const isRevalidating = applicationsQuery.isFetching && !applicationsQuery.isLoading;
   const app: CourseTrainingApplication | undefined = (
     applicationsQuery.data?.data?.content ?? []
   ).find(a => a.uuid === id);
@@ -271,6 +277,11 @@ export default function ApplicationDetailPage() {
           <Button variant='outline' size='sm' onClick={copyLink}>
             <Share2 className='mr-2 h-4 w-4' /> Share
           </Button>
+          {isRevalidating && (
+            <span className='text-muted-foreground inline-flex items-center gap-1.5 text-xs'>
+              <RefreshCw className='h-3 w-3 animate-spin' /> Checking for updates
+            </span>
+          )}
           <Badge variant={statusVariant(app.status)}>{pretty(app.status)}</Badge>
         </div>
       </div>

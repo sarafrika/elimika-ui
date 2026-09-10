@@ -1204,6 +1204,9 @@ import type {
   GetScheduledInstanceData,
   GetScheduledInstanceResponses,
   GetScheduledInstanceErrors,
+  GetInstructorTimeHoldsData,
+  GetInstructorTimeHoldsResponses,
+  GetInstructorTimeHoldsErrors,
   GetInstructorScheduleData,
   GetInstructorScheduleResponses,
   GetInstructorScheduleErrors,
@@ -2191,6 +2194,7 @@ import {
   getTrainingBranchesByOrganisation1ResponseTransformer,
   getStudentScheduleResponseTransformer,
   getScheduledInstanceResponseTransformer,
+  getInstructorTimeHoldsResponseTransformer,
   getInstructorScheduleResponseTransformer,
   getStudentBookingsResponseTransformer,
   searchStudentsResponseTransformer,
@@ -14320,6 +14324,34 @@ export const getScheduledInstance = <ThrowOnError extends boolean = false>(
 };
 
 /**
+ * Get marketplace time holds for a specific instructor within a date range
+ * Tentative and firm claims raised by the instructor's marketplace job applications. Read separately from the schedule because a hold is not a session: it carries no enrolment, attendance or pay, and only a FIRM hold counts as a scheduling clash.
+ */
+export const getInstructorTimeHolds = <ThrowOnError extends boolean = false>(
+  options: Options<GetInstructorTimeHoldsData, ThrowOnError>
+) => {
+  return (options.client ?? _heyApiClient).get<
+    GetInstructorTimeHoldsResponses,
+    GetInstructorTimeHoldsErrors,
+    ThrowOnError
+  >({
+    responseTransformer: getInstructorTimeHoldsResponseTransformer,
+    security: [
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+    ],
+    url: '/api/v1/timetable/instructors/{instructorUuid}/time-holds',
+    ...options,
+  });
+};
+
+/**
  * Get schedule for a specific instructor within a date range
  */
 export const getInstructorSchedule = <ThrowOnError extends boolean = false>(
@@ -16323,6 +16355,9 @@ export const getInstructorBookings = <ThrowOnError extends boolean = false>(
 /**
  * Check if instructor is available during a time period
  * Checks whether an instructor is available for the entire specified time period.
+ *
+ * The window is given in UTC, and each availability slot is compared against it in the
+ * zone that slot was authored in.
  *
  * Returns true unless a blocked slot overlaps the requested window.
  *

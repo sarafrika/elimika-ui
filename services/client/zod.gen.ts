@@ -2444,7 +2444,10 @@ export const zInstructorProfessionalMembership = z
       .describe('**[READ-ONLY]** Indicates if the membership record has all essential information.')
       .readonly()
       .optional(),
-    formatted_duration: z.union([z.string().readonly(), z.null()]).readonly().optional(),
+    membership_duration_months: z
+      .union([z.number().int().readonly(), z.null()])
+      .readonly()
+      .optional(),
     membership_status: zMembershipStatusEnum.optional(),
     membership_period: z.union([z.string().readonly(), z.null()]).readonly().optional(),
     is_long_standing_member: z
@@ -2464,10 +2467,7 @@ export const zInstructorProfessionalMembership = z
       .describe('**[READ-ONLY]** Indicates if this membership was started within the last 3 years.')
       .readonly()
       .optional(),
-    membership_duration_months: z
-      .union([z.number().int().readonly(), z.null()])
-      .readonly()
-      .optional(),
+    formatted_duration: z.union([z.string().readonly(), z.null()]).readonly().optional(),
   })
   .describe(
     'Professional membership record for instructors including associations, industry bodies, and certification organizations'
@@ -2689,8 +2689,8 @@ export const zInstructorEducation = z
       .describe('**[READ-ONLY]** Formatted string showing year of completion and school name.')
       .readonly()
       .optional(),
-    education_level: zEducationLevelEnum.optional(),
     years_since_completion: z.union([z.number().int().readonly(), z.null()]).readonly().optional(),
+    education_level: zEducationLevelEnum.optional(),
     has_certificate_number: z
       .boolean()
       .describe(
@@ -2859,16 +2859,16 @@ export const zInstructorDocument = z
       )
       .readonly()
       .optional(),
-    is_expired: z
-      .boolean()
-      .describe('**[READ-ONLY]** Indicates if the document has expired based on the expiry date.')
-      .readonly()
-      .optional(),
     file_url: z
       .string()
       .describe(
         '**[READ-ONLY]** API-relative URL for previewing or downloading the uploaded document.'
       )
+      .readonly()
+      .optional(),
+    is_expired: z
+      .boolean()
+      .describe('**[READ-ONLY]** Indicates if the document has expired based on the expiry date.')
       .readonly()
       .optional(),
     file_size_formatted: z
@@ -2941,6 +2941,7 @@ export const zAvailabilitySlot = z
     effective_start_date: z.union([z.string().date(), z.null()]).optional(),
     effective_end_date: z.union([z.string().date(), z.null()]).optional(),
     color_code: z.union([z.string().regex(/^#[0-9A-Fa-f]{6}$/), z.null()]).optional(),
+    timezone: z.union([z.string(), z.null()]).optional(),
     created_date: z
       .string()
       .datetime()
@@ -4321,16 +4322,16 @@ export const zCourseCreatorDocumentDto = z.object({
   created_by: z.string().readonly().optional(),
   updated_date: z.string().datetime().readonly().optional(),
   updated_by: z.string().readonly().optional(),
-  is_expired: z
-    .boolean()
-    .describe('**[READ-ONLY]** Indicates if the document has expired based on the expiry date.')
-    .readonly()
-    .optional(),
   file_url: z
     .string()
     .describe(
       '**[READ-ONLY]** API-relative URL for previewing or downloading the uploaded document.'
     )
+    .readonly()
+    .optional(),
+  is_expired: z
+    .boolean()
+    .describe('**[READ-ONLY]** Indicates if the document has expired based on the expiry date.')
     .readonly()
     .optional(),
   file_size_formatted: z
@@ -4612,14 +4613,14 @@ export const zContentType = z
       )
       .readonly()
       .optional(),
-    upload_category: z
-      .string()
-      .describe('**[READ-ONLY]** Category for organizing uploads in the user interface.')
-      .readonly()
-      .optional(),
     is_media_type: z
       .boolean()
       .describe('**[READ-ONLY]** Indicates if this content type is for media files.')
+      .readonly()
+      .optional(),
+    upload_category: z
+      .string()
+      .describe('**[READ-ONLY]** Category for organizing uploads in the user interface.')
       .readonly()
       .optional(),
     supported_formats: z
@@ -9096,6 +9097,52 @@ export const zApiResponseListStudentSchedule = z.object({
   error: z.unknown().optional(),
 });
 
+/**
+ * Hold lifecycle state; only FIRM counts as a scheduling clash
+ */
+export const zStatusEnum17 = z
+  .enum(['TENTATIVE', 'FIRM', 'CONFIRMED', 'RELEASED'])
+  .describe('Hold lifecycle state; only FIRM counts as a scheduling clash');
+
+/**
+ * A tentative or firm claim on an instructor's diary raised by a marketplace class job application
+ */
+export const zInstructorTimeHold = z
+  .object({
+    uuid: z
+      .string()
+      .uuid()
+      .describe('**[READ-ONLY]** Unique identifier of the hold')
+      .readonly()
+      .optional(),
+    instructor_uuid: z
+      .string()
+      .uuid()
+      .describe('Instructor whose diary the hold sits on')
+      .optional(),
+    job_uuid: z.string().uuid().describe('Marketplace job the hold was raised for').optional(),
+    application_uuid: z.string().uuid().describe('Application that raised the hold').optional(),
+    organisation_uuid: z.union([z.string().uuid(), z.null()]).optional(),
+    title: z.union([z.string(), z.null()]).optional(),
+    start_time: z.string().datetime().describe('Held window start (UTC)').optional(),
+    end_time: z.string().datetime().describe('Held window end (UTC)').optional(),
+    timezone: z.string().describe('Timezone the window was authored in').optional(),
+    status: zStatusEnum17.optional(),
+    class_definition_uuid: z.union([z.string().uuid(), z.null()]).optional(),
+    scheduled_instance_uuid: z.union([z.string().uuid(), z.null()]).optional(),
+    organisation_name: z.union([z.string().readonly(), z.null()]).readonly().optional(),
+  })
+  .describe(
+    "A tentative or firm claim on an instructor's diary raised by a marketplace class job application"
+  );
+
+export const zApiResponseListInstructorTimeHold = z.object({
+  success: z.boolean().optional(),
+  data: z.array(zInstructorTimeHold).optional(),
+  message: z.string().optional(),
+  error: z.unknown().optional(),
+});
+
 export const zApiResponseListScheduledInstance = z.object({
   success: z.boolean().optional(),
   data: z.array(zScheduledInstance).optional(),
@@ -9506,7 +9553,7 @@ export const zApiResponsePagedDtoQuizAttempt = z.object({
   error: z.unknown().optional(),
 });
 
-export const zStatusEnum17 = z.enum(['in_progress', 'submitted', 'graded']);
+export const zStatusEnum18 = z.enum(['in_progress', 'submitted', 'graded']);
 
 export const zResponseReviewDto = z.object({
   uuid: z.string().uuid().optional(),
@@ -9545,7 +9592,7 @@ export const zStudentQuizReview = z
     quiz_uuid: z.string().uuid().optional(),
     attempt_uuid: z.string().uuid().optional(),
     enrollment_uuid: z.string().uuid().optional(),
-    status: zStatusEnum17.optional(),
+    status: zStatusEnum18.optional(),
     score: z.number().optional(),
     max_score: z.number().optional(),
     percentage: z.number().optional(),
@@ -9636,7 +9683,7 @@ export const zApiResponsePagedDtoProgramRequirement = z.object({
 /**
  * **[REQUIRED]** Current status of the student's enrollment in the program.
  */
-export const zStatusEnum18 = z
+export const zStatusEnum19 = z
   .enum(['ACTIVE', 'COMPLETED', 'DROPPED', 'SUSPENDED'])
   .describe("**[REQUIRED]** Current status of the student's enrollment in the program.");
 
@@ -9667,7 +9714,7 @@ export const zProgramEnrollment = z
       .describe('**[OPTIONAL]** Timestamp when the student enrolled in the program.')
       .optional(),
     completion_date: z.union([z.string().datetime(), z.null()]).optional(),
-    status: zStatusEnum18,
+    status: zStatusEnum19,
     progress_percentage: z
       .number()
       .gte(0)
@@ -9996,7 +10043,7 @@ export const zApiResponseListResourceCalendarEntry = z.object({
 /**
  * Booking lifecycle state
  */
-export const zStatusEnum19 = z
+export const zStatusEnum20 = z
   .enum(['HOLD', 'CONFIRMED', 'RELEASED', 'CANCELLED'])
   .describe('Booking lifecycle state');
 
@@ -10020,7 +10067,7 @@ export const zResourceBooking = z
       .optional(),
     resource_uuid: z.string().uuid().describe('Resource booked').optional(),
     organisation_uuid: z.string().uuid().describe('Organisation owning the resource').optional(),
-    status: zStatusEnum19.optional(),
+    status: zStatusEnum20.optional(),
     quantity: z.number().int().describe('Units reserved (1 for venues)').optional(),
     start_time: z.string().datetime().describe('Reservation window start (UTC)').optional(),
     end_time: z.string().datetime().describe('Reservation window end (UTC)').optional(),
@@ -10974,7 +11021,7 @@ export const zApiResponseListContentStatus = z.object({
 /**
  * **[READ-ONLY]** Review state of the edit.
  */
-export const zStatusEnum20 = z
+export const zStatusEnum21 = z
   .enum(['pending', 'approved', 'rejected', 'withdrawn'])
   .describe('**[READ-ONLY]** Review state of the edit.');
 
@@ -10994,7 +11041,7 @@ export const zCoursePendingEdit = z
       .describe('**[READ-ONLY]** Unique identifier for the pending edit.')
       .readonly()
       .optional(),
-    status: zStatusEnum20.optional(),
+    status: zStatusEnum21.optional(),
     course_uuid: z
       .string()
       .uuid()
@@ -11540,11 +11587,6 @@ export const zCourseAssessmentScore = z
       .describe('**[READ-ONLY]** Indicates if the score meets the passing criteria (60% or above).')
       .readonly()
       .optional(),
-    grade_display: z
-      .string()
-      .describe('**[READ-ONLY]** Formatted display of the grade information.')
-      .readonly()
-      .optional(),
     score_category: z
       .string()
       .describe('**[READ-ONLY]** Formatted category of the score based on performance level.')
@@ -11562,6 +11604,11 @@ export const zCourseAssessmentScore = z
       .describe(
         '**[READ-ONLY]** Summary indicating the availability and nature of instructor feedback.'
       )
+      .readonly()
+      .optional(),
+    grade_display: z
+      .string()
+      .describe('**[READ-ONLY]** Formatted display of the grade information.')
       .readonly()
       .optional(),
   })
@@ -11629,7 +11676,7 @@ export const zCourseEnrollment = z
       .describe('**[OPTIONAL]** Timestamp when the student enrolled in the course.')
       .optional(),
     completion_date: z.union([z.string().datetime(), z.null()]).optional(),
-    status: zStatusEnum18,
+    status: zStatusEnum19,
     progress_percentage: z
       .number()
       .gte(0)
@@ -13481,6 +13528,13 @@ export const zDomainNameEnum2Writable = z
   .enum(['student', 'instructor', 'admin', 'organisation_user', 'course_creator'])
   .describe('Domain/role to assign within the organisation');
 
+/**
+ * Hold lifecycle state; only FIRM counts as a scheduling clash
+ */
+export const zStatusEnum17Writable = z
+  .enum(['TENTATIVE', 'FIRM', 'CONFIRMED', 'RELEASED'])
+  .describe('Hold lifecycle state; only FIRM counts as a scheduling clash');
+
 export const zQuestionTypeEnum2Writable = z.enum([
   'multiple_choice',
   'true_false',
@@ -13488,12 +13542,12 @@ export const zQuestionTypeEnum2Writable = z.enum([
   'essay',
 ]);
 
-export const zStatusEnum17Writable = z.enum(['in_progress', 'submitted', 'graded']);
+export const zStatusEnum18Writable = z.enum(['in_progress', 'submitted', 'graded']);
 
 /**
  * **[REQUIRED]** Current status of the student's enrollment in the program.
  */
-export const zStatusEnum18Writable = z
+export const zStatusEnum19Writable = z
   .enum(['ACTIVE', 'COMPLETED', 'DROPPED', 'SUSPENDED'])
   .describe("**[REQUIRED]** Current status of the student's enrollment in the program.");
 
@@ -13507,7 +13561,7 @@ export const zEntryTypeEnumWritable = z
 /**
  * Booking lifecycle state
  */
-export const zStatusEnum19Writable = z
+export const zStatusEnum20Writable = z
   .enum(['HOLD', 'CONFIRMED', 'RELEASED', 'CANCELLED'])
   .describe('Booking lifecycle state');
 
@@ -19134,6 +19188,22 @@ export const zGetScheduledInstanceData = z.object({
  */
 export const zGetScheduledInstanceResponse = zApiResponseScheduledInstance;
 
+export const zGetInstructorTimeHoldsData = z.object({
+  body: z.never().optional(),
+  path: z.object({
+    instructorUuid: z.string().uuid().describe('UUID of the instructor'),
+  }),
+  query: z.object({
+    start: z.string().date().describe('Start date of the range (YYYY-MM-DD)'),
+    end: z.string().date().describe('End date of the range (YYYY-MM-DD)'),
+  }),
+});
+
+/**
+ * Instructor time holds retrieved successfully
+ */
+export const zGetInstructorTimeHoldsResponse = zApiResponseListInstructorTimeHold;
+
 export const zGetInstructorScheduleData = z.object({
   body: z.never().optional(),
   path: z.object({
@@ -20217,8 +20287,11 @@ export const zCheckAvailabilityData = z.object({
     instructorUuid: z.string().uuid().describe('UUID of the instructor'),
   }),
   query: z.object({
-    start: z.string().datetime().describe('Start date and time (ISO format: YYYY-MM-DDTHH:mm:ss)'),
-    end: z.string().datetime().describe('End date and time (ISO format: YYYY-MM-DDTHH:mm:ss)'),
+    start: z
+      .string()
+      .datetime()
+      .describe('UTC start date and time (ISO format: YYYY-MM-DDTHH:mm:ss)'),
+    end: z.string().datetime().describe('UTC end date and time (ISO format: YYYY-MM-DDTHH:mm:ss)'),
   }),
 });
 
