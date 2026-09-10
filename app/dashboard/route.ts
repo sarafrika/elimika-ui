@@ -1,4 +1,5 @@
-import { NextResponse, type NextRequest } from 'next/server';
+import { type NextRequest } from 'next/server';
+import { redirectToPath } from '@/lib/site-redirect';
 import {
   ACTIVE_DASHBOARD_COOKIE,
   ACTIVE_DASHBOARD_COOKIE_MAX_AGE,
@@ -20,7 +21,7 @@ export async function GET(request: NextRequest) {
   );
   const target = await resolveDashboardEntryTarget(preferred);
 
-  const response = NextResponse.redirect(new URL(target.redirectTo, request.nextUrl.origin));
+  const response = redirectToPath(request, target.redirectTo);
 
   if (target.activeDomain && target.activeDomain !== preferred) {
     response.cookies.set(ACTIVE_DASHBOARD_COOKIE, target.activeDomain, {
