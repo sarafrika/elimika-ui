@@ -1,27 +1,15 @@
 'use client';
 
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { ArrowLeft, BriefcaseBusiness, TriangleAlert } from 'lucide-react';
+import { useQuery } from '@tanstack/react-query';
+import { ArrowLeft, BriefcaseBusiness } from 'lucide-react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useMemo, useState } from 'react';
-import { toast } from 'sonner';
 
 import { AdminPageHeader, adminTheme, SectionCard } from '@/app/dashboard/admin/_components/ui';
 import { AsyncSection } from '@/components/data/async-section';
 import { Button } from '@/components/ui/button';
 import { EmptyState } from '@/components/ui/empty-state';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import {
-  Sheet,
-  SheetContent,
-  SheetDescription,
-  SheetHeader,
-  SheetTitle,
-} from '@/components/ui/sheet';
-import Spinner from '@/components/ui/spinner';
-import { Textarea } from '@/components/ui/textarea';
 import {
   useCoursesByIds,
   useInstructorsByIds,
@@ -30,15 +18,13 @@ import {
 import { cn } from '@/lib/utils';
 import type { ClassMarketplaceJob, ClassMarketplaceJobApplication } from '@/services/client';
 import {
-  assignInstructorMutation,
   listJobApplicationsOptions,
   listJobsOptions,
-  reviewApplicationMutation,
 } from '@/services/client/@tanstack/react-query.gen';
 import { useUserDomain } from '@/src/features/dashboard/context/user-domain-context';
-import { invalidateJobApplicationWorkflowQueries } from '@/src/features/dashboard/workflow-query-invalidation';
 import { roleScopedDashboardPath } from '@/src/features/dashboard/lib/active-domain-storage';
 import { useOrganisation } from '@/src/features/organisation/context/organisation-context';
+import { isClassCreatedStatus, isExitStatus, nextStepFor } from '../application-status';
 import {
   ApplicationListSkeleton,
   ApplicationStatsCards,
@@ -60,72 +46,6 @@ type ClassMarketplaceJobWithProgram = ClassMarketplaceJob & {
 const JOB_PAGE_SIZE = 50;
 const APPLICATION_PAGE_SIZE = 100;
 
-/**
- * Every step an organisation can take on a live application. The backend multiplexes all of them
- * through one review endpoint keyed on `action` (lower-cased server-side), so the stage moves need
- * no separate mutation. Each one notifies the applicant, which is why they all route through the
- * notes sheet rather than firing on a bare click.
- */
-const REVIEW_ACTIONS = {
-  SHORTLIST: {
-    title: 'Shortlist candidate',
-    confirmLabel: 'Confirm shortlist',
-    successMessage: 'Shortlisted. Interview or make an offer when you are ready.',
-  },
-  INTERVIEW: {
-    title: 'Move to interview',
-    confirmLabel: 'Confirm interview',
-    successMessage: 'Interview scheduled. The applicant has been notified.',
-  },
-  OFFER: {
-    title: 'Extend an offer',
-    confirmLabel: 'Confirm offer',
-    successMessage: 'Offer sent. Approve them next, then hire them for this class.',
-  },
-  APPROVE: {
-    title: 'Approve application',
-    confirmLabel: 'Confirm approval',
-    successMessage: 'Approved. Nobody is hired yet — choose Hire for this class to go on.',
-  },
-  REJECT: {
-    title: 'Reject application',
-    confirmLabel: 'Confirm rejection',
-    successMessage: 'Application rejected. The applicant has been notified.',
-  },
-} as const;
-
-type ReviewAction = keyof typeof REVIEW_ACTIONS;
-
-/** The review endpoint is multiplexed on `action`, so the toast has to name the step just taken. */
-function reviewSuccessMessage(action?: string | null) {
-  const entry = REVIEW_ACTIONS[(action ?? '') as ReviewAction] as
-    | (typeof REVIEW_ACTIONS)[ReviewAction]
-    | undefined;
-  return entry?.successMessage ?? 'Application reviewed successfully.';
-}
-
-function toDateTimeInputValue(value?: string | Date | null) {
-  if (!value) return '';
-  const date = value instanceof Date ? value : new Date(value);
-  if (Number.isNaN(date.getTime())) return '';
-
-  const pad = (part: number) => String(part).padStart(2, '0');
-  return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}T${pad(
-    date.getHours()
-  )}:${pad(date.getMinutes())}`;
-}
-
-function toUtcLocalDateTime(value: string) {
-  if (!value) return null;
-  const date = new Date(value);
-  if (Number.isNaN(date.getTime())) return null;
-  return date.toISOString().slice(0, 19);
-}
-
-function isInterviewAction(action?: ReviewAction) {
-  return action === 'INTERVIEW';
-}
-
 function shortId(value?: string | null) {
   if (!value) return 'Unknown';
   return value.slice(0, 8);
@@ -138,18 +58,10 @@ function getJobProgramUuid(job?: ClassMarketplaceJobWithProgram | null) {
 export function OrganisationJobApplicationsPage({ jobUuid }: JobApplicationsPageProps) {
   const { activeDomain } = useUserDomain();
   const router = useRouter();
-  const queryClient = useQueryClient();
   const organisation = useOrganisation();
   const organisationUuid = organisation?.uuid ?? '';
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState<ApplicationStatusFilter>('ALL');
-  const [reviewNotes, setReviewNotes] = useState('');
-  const [interviewAt, setInterviewAt] = useState('');
-  const [reviewDialogOpen, setReviewDialogOpen] = useState(false);
-  const [pendingReview, setPendingReview] = useState<{
-    application: ClassMarketplaceJobApplication;
-    action: ReviewAction;
-  } | null>(null);
   const jobsListOptions = {
     query: {
       organisation_uuid: organisationUuid,
@@ -195,37 +107,16 @@ export function OrganisationJobApplicationsPage({ jobUuid }: JobApplicationsPage
       ? (courseMap[job.course_uuid]?.name ?? `Course ${shortId(job.course_uuid)}`)
       : 'Course or program';
 
-  const reviewMutation = useMutation({
-    ...reviewApplicationMutation(),
-    onSuccess: async (_response, variables) => {
-      toast.success(reviewSuccessMessage(variables?.query?.action));
-      setReviewNotes('');
-      setInterviewAt('');
-      setPendingReview(null);
-      setReviewDialogOpen(false);
-      await invalidateJobApplicationWorkflowQueries(queryClient);
-    },
-    onError: error => {
-      toast.error(error instanceof Error ? error.message : 'Unable to review this application.');
-    },
-  });
-
   const createClassHref = roleScopedDashboardPath(
     activeDomain,
     `/dashboard/opportunities/${jobUuid}/create-class`
   );
 
-  const assignMutation = useMutation({
-    ...assignInstructorMutation(),
-    onSuccess: async () => {
-      toast.success('Hired. Create the class to confirm the dates.');
-      await invalidateJobApplicationWorkflowQueries(queryClient);
-      router.push(createClassHref);
-    },
-    onError: error => {
-      toast.error(error instanceof Error ? error.message : 'Unable to hire this instructor.');
-    },
-  });
+  const applicantHref = (application: ClassMarketplaceJobApplication) =>
+    roleScopedDashboardPath(
+      activeDomain,
+      `/dashboard/opportunities/${jobUuid}/applications/${application.uuid}`
+    );
 
   const filteredApplications = useMemo(() => {
     const query = searchQuery.trim().toLowerCase();
@@ -260,72 +151,23 @@ export function OrganisationJobApplicationsPage({ jobUuid }: JobApplicationsPage
     () => ({
       total: applications.length,
       // Everyone still moving through the funnel, not just those yet to be looked at.
-      pending: applications.filter(application =>
-        ['pending', 'shortlisted', 'interviewing', 'offered'].includes(application.status ?? '')
-      ).length,
-      approved: applications.filter(application => application.status === 'approved').length,
-      rejected: applications.filter(application =>
-        ['rejected', 'not_selected', 'withdrawn'].includes(application.status ?? '')
-      ).length,
-      assigned: applications.filter(application => application.status === 'assigned').length,
+      inReview: applications.filter(application => nextStepFor(application.status)).length,
+      // The cast carries the generated client, whose funnel still predates the backend's `hired`.
+      hired: applications.filter(application => (application.status as string) === 'hired').length,
+      classCreated: applications.filter(application => isClassCreatedStatus(application.status))
+        .length,
+      closed: applications.filter(application => isExitStatus(application.status)).length,
     }),
     [applications]
   );
 
-  // An open job with an approved applicant is the stall this banner exists to name: approving is
-  // not hiring, so nothing downstream — class, affiliation — has happened yet.
+  // Hiring is the last decision; the class is the next act, and creating it is what puts the
+  // instructor on the job. This banner points at that act rather than at a missing Assign click.
   const jobStatus = job?.status as string | undefined;
-  const hasApprovedApplicant = applications.some(application => application.status === 'approved');
-  const showApprovedNotHiredBanner = jobStatus === 'open' && hasApprovedApplicant;
-
-  const openReviewDialog = (application: ClassMarketplaceJobApplication, action: ReviewAction) => {
-    setPendingReview({ application, action });
-    setReviewNotes(application.review_notes ?? '');
-    setInterviewAt(isInterviewAction(action) ? toDateTimeInputValue(application.interview_at) : '');
-    setReviewDialogOpen(true);
-  };
-
-  const handleReviewConfirm = () => {
-    if (!pendingReview?.application.uuid) return;
-
-    const scheduledInterviewAt = isInterviewAction(pendingReview.action)
-      ? toUtcLocalDateTime(interviewAt)
-      : null;
-    if (isInterviewAction(pendingReview.action) && !scheduledInterviewAt) {
-      toast.error('Select an interview date and time.');
-      return;
-    }
-
-    const body = {
-      ...(reviewNotes.trim() ? { review_notes: reviewNotes.trim() } : {}),
-      ...(scheduledInterviewAt ? { interview_at: scheduledInterviewAt } : {}),
-    };
-
-    reviewMutation.mutate({
-      path: {
-        jobUuid,
-        applicationUuid: pendingReview.application.uuid,
-      },
-      query: {
-        action: pendingReview.action,
-      },
-      body: Object.keys(body).length ? body : undefined,
-    });
-  };
-
-  const handleAssign = (application: ClassMarketplaceJobApplication) => {
-    if (!application.uuid) {
-      toast.error('This application cannot be hired yet.');
-      return;
-    }
-
-    assignMutation.mutate({
-      path: { jobUuid },
-      body: {
-        application_uuid: application.uuid,
-      },
-    });
-  };
+  const hasHiredApplicant = applications.some(
+    application => (application.status as string) === 'hired'
+  );
+  const showCreateClassBanner = hasHiredApplicant || jobStatus === 'awaiting_class';
 
   if (!organisationUuid) {
     return (
@@ -372,29 +214,17 @@ export function OrganisationJobApplicationsPage({ jobUuid }: JobApplicationsPage
           title={
             isJobsLoading && !jobsResponse ? 'Job applications' : (job?.title ?? 'Job applications')
           }
-          description='Review applicants, approve or reject submissions, then hire one approved instructor for the class.'
+          description='See where every applicant stands. Open an applicant to decide on them.'
         />
 
-        {showApprovedNotHiredBanner ? (
-          <div className='border-warning/60 bg-warning/10 flex flex-wrap items-center gap-3 rounded-md border p-4'>
-            <TriangleAlert className='text-warning size-5 shrink-0' />
-            <div className='min-w-0 text-sm'>
-              <div className='text-foreground font-medium'>Approved, not hired</div>
-              <p className='text-muted-foreground'>
-                This job is still open, no class exists, and the instructor has not joined your
-                organisation. Choose Hire for this class on the applicant you want.
-              </p>
-            </div>
-          </div>
-        ) : null}
-
-        {jobStatus === 'awaiting_class' ? (
+        {showCreateClassBanner ? (
           <div className='border-primary/40 bg-primary/5 flex flex-wrap items-center gap-3 rounded-md border p-4'>
             <BriefcaseBusiness className='text-primary size-5 shrink-0' />
             <div className='min-w-0 text-sm'>
               <div className='text-foreground font-medium'>An instructor is hired</div>
               <p className='text-muted-foreground'>
-                The venue and equipment are still only reserved. Create the class to confirm them.
+                They have joined your organisation. Creating the class puts them on this job and
+                confirms the venue and equipment their application reserved.
               </p>
             </div>
             <Button asChild size='sm' className='ml-auto'>
@@ -427,23 +257,8 @@ export function OrganisationJobApplicationsPage({ jobUuid }: JobApplicationsPage
                 applications={filteredApplications}
                 instructorMap={instructorMap}
                 isInstructorsLoading={isInstructorsLoading}
-                isReviewPending={reviewMutation.isPending}
-                isAssignPending={assignMutation.isPending}
                 jobInstructorPay={job?.instructor_pay}
-                onApprove={application => openReviewDialog(application, 'APPROVE')}
-                onReject={application => openReviewDialog(application, 'REJECT')}
-                onMoveToStage={(application, stage) => openReviewDialog(application, stage)}
-                onAssign={handleAssign}
-                onViewProfile={application => {
-                  if (application.uuid) {
-                    router.push(
-                      roleScopedDashboardPath(
-                        activeDomain,
-                        `/dashboard/opportunities/${jobUuid}/applications/${application.uuid}`
-                      )
-                    );
-                  }
-                }}
+                applicantHref={applicantHref}
               />
             </AsyncSection>
           </SectionCard>
@@ -455,100 +270,6 @@ export function OrganisationJobApplicationsPage({ jobUuid }: JobApplicationsPage
             isLoading={isJobsLoading && !jobsResponse}
           />
         </div>
-
-        <Sheet
-          open={reviewDialogOpen}
-          onOpenChange={open => {
-            setReviewDialogOpen(open);
-            if (!open) {
-              setPendingReview(null);
-              setReviewNotes('');
-              setInterviewAt('');
-            }
-          }}
-        >
-          <SheetContent
-            side='right'
-            className='flex w-[min(98vw,480px)] max-w-none flex-col overflow-y-auto sm:max-w-none'
-          >
-            <div className='space-y-6 p-3 sm:p-6'>
-              <SheetHeader className='space-y-3 pr-10 text-left'>
-                <SheetTitle>
-                  {pendingReview
-                    ? REVIEW_ACTIONS[pendingReview.action].title
-                    : 'Review application'}
-                </SheetTitle>
-                <SheetDescription>
-                  {isInterviewAction(pendingReview?.action)
-                    ? 'Set the interview date and add notes before confirming. The applicant is notified of both.'
-                    : 'Add review notes before confirming. The applicant is notified of this step and receives the notes you submit with it.'}
-                </SheetDescription>
-              </SheetHeader>
-
-              {isInterviewAction(pendingReview?.action) ? (
-                <div className='space-y-2'>
-                  <Label htmlFor='interview-at' className='text-sm font-medium'>
-                    Interview date and time
-                  </Label>
-                  <Input
-                    id='interview-at'
-                    type='datetime-local'
-                    value={interviewAt}
-                    min={toDateTimeInputValue(new Date())}
-                    onChange={event => setInterviewAt(event.target.value)}
-                  />
-                </div>
-              ) : null}
-
-              <div className='space-y-2'>
-                <Label htmlFor='review-notes' className='text-sm font-medium'>
-                  Review notes
-                </Label>
-                <Textarea
-                  id='review-notes'
-                  value={reviewNotes}
-                  onChange={event => setReviewNotes(event.target.value)}
-                  placeholder='Add optional notes for this review...'
-                  className='min-h-32'
-                />
-              </div>
-
-              <div className='flex flex-wrap justify-end gap-2'>
-                <Button
-                  variant='outline'
-                  onClick={() => {
-                    setReviewDialogOpen(false);
-                    setPendingReview(null);
-                    setReviewNotes('');
-                    setInterviewAt('');
-                  }}
-                  disabled={reviewMutation.isPending}
-                >
-                  Cancel
-                </Button>
-                <Button
-                  variant={pendingReview?.action === 'REJECT' ? 'destructive' : 'default'}
-                  onClick={handleReviewConfirm}
-                  disabled={
-                    reviewMutation.isPending ||
-                    !pendingReview?.application.uuid ||
-                    (isInterviewAction(pendingReview?.action) && !toUtcLocalDateTime(interviewAt))
-                  }
-                >
-                  {reviewMutation.isPending ? (
-                    <>
-                      <Spinner className='mr-2 size-4' />
-                      Submitting...
-                    </>
-                  ) : (
-                    ((pendingReview && REVIEW_ACTIONS[pendingReview.action].confirmLabel) ??
-                    'Confirm')
-                  )}
-                </Button>
-              </div>
-            </div>
-          </SheetContent>
-        </Sheet>
       </div>
     </div>
   );

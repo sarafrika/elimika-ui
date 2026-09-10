@@ -1745,6 +1745,12 @@ export const QuizSchema = {
       example: 'instructor@sarafrika.com',
       readOnly: true,
     },
+    is_timed: {
+      type: 'boolean',
+      description: '**[READ-ONLY]** Indicates if the quiz has a time limit.',
+      example: true,
+      readOnly: true,
+    },
     is_published: {
       type: 'boolean',
       description: '**[READ-ONLY]** Indicates if the quiz is published and accessible to students.',
@@ -1755,12 +1761,6 @@ export const QuizSchema = {
       type: 'string',
       description: '**[READ-ONLY]** Human-readable format of quiz time limit.',
       example: '30 minutes',
-      readOnly: true,
-    },
-    is_timed: {
-      type: 'boolean',
-      description: '**[READ-ONLY]** Indicates if the quiz has a time limit.',
-      example: true,
       readOnly: true,
     },
     has_multiple_attempts: {
@@ -3736,12 +3736,10 @@ export const InstructorProfessionalMembershipSchema = {
       example: true,
       readOnly: true,
     },
-    membership_duration_months: {
-      type: ['integer', 'null'],
-      format: 'int32',
-      description:
-        '**[READ-ONLY]** Duration of membership calculated from start and end dates, in months.',
-      example: 51,
+    formatted_duration: {
+      type: ['string', 'null'],
+      description: '**[READ-ONLY]** Human-readable formatted duration of membership.',
+      example: '4 years, 3 months',
       readOnly: true,
     },
     membership_status: {
@@ -3784,10 +3782,12 @@ export const InstructorProfessionalMembershipSchema = {
       example: true,
       readOnly: true,
     },
-    formatted_duration: {
-      type: ['string', 'null'],
-      description: '**[READ-ONLY]** Human-readable formatted duration of membership.',
-      example: '4 years, 3 months',
+    membership_duration_months: {
+      type: ['integer', 'null'],
+      format: 'int32',
+      description:
+        '**[READ-ONLY]** Duration of membership calculated from start and end dates, in months.',
+      example: 51,
       readOnly: true,
     },
   },
@@ -4420,19 +4420,19 @@ export const InstructorDocumentSchema = {
       example: 'admin@sarafrika.com',
       readOnly: true,
     },
+    is_expired: {
+      type: 'boolean',
+      description:
+        '**[READ-ONLY]** Indicates if the document has expired based on the expiry date.',
+      example: false,
+      readOnly: true,
+    },
     file_url: {
       type: 'string',
       description:
         '**[READ-ONLY]** API-relative URL for previewing or downloading the uploaded document.',
       example:
         '/api/v1/instructors/i1s2t3r4-5u6c-7t8o-9r10-abcdefghijkl/documents/files/profile_documents/instructors/i1s2t3r4-5u6c-7t8o-9r10-abcdefghijkl/550e8400-e29b-41d4-a716-446655440000.pdf',
-      readOnly: true,
-    },
-    is_expired: {
-      type: 'boolean',
-      description:
-        '**[READ-ONLY]** Indicates if the document has expired based on the expiry date.',
-      example: false,
       readOnly: true,
     },
     file_size_formatted: {
@@ -4640,13 +4640,6 @@ export const AvailabilitySlotSchema = {
       example: 'instructor@sarafrika.com',
       readOnly: true,
     },
-    duration_minutes: {
-      type: 'integer',
-      format: 'int64',
-      description: '**[READ-ONLY]** Duration of the availability slot in minutes.',
-      example: 480,
-      readOnly: true,
-    },
     duration_formatted: {
       type: 'string',
       description: '**[READ-ONLY]** Human-readable formatted duration.',
@@ -4670,6 +4663,13 @@ export const AvailabilitySlotSchema = {
       type: 'string',
       description: '**[READ-ONLY]** Human-readable description of the availability pattern.',
       example: 'Weekly on Monday',
+      readOnly: true,
+    },
+    duration_minutes: {
+      type: 'integer',
+      format: 'int64',
+      description: '**[READ-ONLY]** Duration of the availability slot in minutes.',
+      example: 480,
       readOnly: true,
     },
   },
@@ -7076,19 +7076,19 @@ export const CourseCreatorDocumentDTOSchema = {
       type: 'string',
       readOnly: true,
     },
+    is_expired: {
+      type: 'boolean',
+      description:
+        '**[READ-ONLY]** Indicates if the document has expired based on the expiry date.',
+      example: false,
+      readOnly: true,
+    },
     file_url: {
       type: 'string',
       description:
         '**[READ-ONLY]** API-relative URL for previewing or downloading the uploaded document.',
       example:
         '/api/v1/course-creators/c1e2a3t4-5o6r-7c8r-9e10-abcdefghijkl/documents/files/profile_documents/course-creators/c1e2a3t4-5o6r-7c8r-9e10-abcdefghijkl/550e8400-e29b-41d4-a716-446655440000.pdf',
-      readOnly: true,
-    },
-    is_expired: {
-      type: 'boolean',
-      description:
-        '**[READ-ONLY]** Indicates if the document has expired based on the expiry date.',
-      example: false,
       readOnly: true,
     },
     file_size_formatted: {
@@ -7545,16 +7545,16 @@ export const ContentTypeSchema = {
       example: 'admin@sarafrika.com',
       readOnly: true,
     },
-    is_media_type: {
-      type: 'boolean',
-      description: '**[READ-ONLY]** Indicates if this content type is for media files.',
-      example: true,
-      readOnly: true,
-    },
     upload_category: {
       type: 'string',
       description: '**[READ-ONLY]** Category for organizing uploads in the user interface.',
       example: 'Large Media Files',
+      readOnly: true,
+    },
+    is_media_type: {
+      type: 'boolean',
+      description: '**[READ-ONLY]** Indicates if this content type is for media files.',
+      example: true,
       readOnly: true,
     },
     supported_formats: {
@@ -8425,18 +8425,18 @@ conflict_resolution per template:
       example: false,
       readOnly: true,
     },
+    duration_formatted: {
+      type: 'string',
+      description: '**[READ-ONLY]** Human-readable formatted duration.',
+      example: '1h 30m',
+      readOnly: true,
+    },
     duration_minutes: {
       type: 'integer',
       format: 'int64',
       description:
         '**[READ-ONLY]** Computed duration of the class in minutes based on start and end times.',
       example: 90,
-      readOnly: true,
-    },
-    duration_formatted: {
-      type: 'string',
-      description: '**[READ-ONLY]** Human-readable formatted duration.',
-      example: '1h 30m',
       readOnly: true,
     },
     capacity_info: {
@@ -10097,13 +10097,6 @@ export const ScheduledInstanceSchema = {
       example: 'instructor@sarafrika.com',
       readOnly: true,
     },
-    duration_minutes: {
-      type: 'integer',
-      format: 'int64',
-      description: '**[READ-ONLY]** Duration of the scheduled instance in minutes.',
-      example: 90,
-      readOnly: true,
-    },
     duration_formatted: {
       type: 'string',
       description: '**[READ-ONLY]** Human-readable formatted duration.',
@@ -10121,6 +10114,13 @@ export const ScheduledInstanceSchema = {
       description:
         '**[READ-ONLY]** Indicates if the scheduled instance is currently active (ongoing).',
       example: false,
+      readOnly: true,
+    },
+    duration_minutes: {
+      type: 'integer',
+      format: 'int64',
+      description: '**[READ-ONLY]** Duration of the scheduled instance in minutes.',
+      example: 90,
       readOnly: true,
     },
     can_be_cancelled: {
@@ -12288,12 +12288,6 @@ export const EnrollmentSchema = {
       example: true,
       readOnly: true,
     },
-    is_attendance_marked: {
-      type: 'boolean',
-      description: '**[READ-ONLY]** Indicates if attendance has been marked for this enrollment.',
-      example: false,
-      readOnly: true,
-    },
     did_attend: {
       type: 'boolean',
       description: '**[READ-ONLY]** Indicates if the student attended the class.',
@@ -12304,6 +12298,12 @@ export const EnrollmentSchema = {
       type: 'string',
       description: '**[READ-ONLY]** Human-readable description of the enrollment status.',
       example: 'Student is enrolled in the class',
+      readOnly: true,
+    },
+    is_attendance_marked: {
+      type: 'boolean',
+      description: '**[READ-ONLY]** Indicates if attendance has been marked for this enrollment.',
+      example: false,
       readOnly: true,
     },
   },
@@ -13661,45 +13661,6 @@ export const ApiResponseClassDefinitionSchema = {
       type: 'string',
     },
     error: {},
-  },
-} as const;
-
-export const ClassMarketplaceJobAssignmentRequestSchema = {
-  type: 'object',
-  description: 'Selects an approved instructor application and creates the actual class',
-  properties: {
-    application_uuid: {
-      type: 'string',
-      format: 'uuid',
-    },
-  },
-  required: ['application_uuid'],
-} as const;
-
-export const ApiResponseClassMarketplaceJobAssignmentResponseSchema = {
-  type: 'object',
-  properties: {
-    success: {
-      type: 'boolean',
-    },
-    data: {
-      $ref: '#/components/schemas/ClassMarketplaceJobAssignmentResponse',
-    },
-    message: {
-      type: 'string',
-    },
-    error: {},
-  },
-} as const;
-
-export const ClassMarketplaceJobAssignmentResponseSchema = {
-  type: 'object',
-  description:
-    'Result of assigning an instructor to a marketplace class job. The job moves to AWAITING_CLASS and its resource holds stay reserved until the class is created.',
-  properties: {
-    job: {
-      $ref: '#/components/schemas/ClassMarketplaceJob',
-    },
   },
 } as const;
 
@@ -20616,6 +20577,12 @@ export const CourseAssessmentScoreSchema = {
       example: true,
       readOnly: true,
     },
+    grade_display: {
+      type: 'string',
+      description: '**[READ-ONLY]** Formatted display of the grade information.',
+      example: '87.50 / 100.00 (87.50%)',
+      readOnly: true,
+    },
     score_category: {
       type: 'string',
       description: '**[READ-ONLY]** Formatted category of the score based on performance level.',
@@ -20634,12 +20601,6 @@ export const CourseAssessmentScoreSchema = {
       description:
         '**[READ-ONLY]** Summary indicating the availability and nature of instructor feedback.',
       example: 'Detailed instructor feedback provided',
-      readOnly: true,
-    },
-    grade_display: {
-      type: 'string',
-      description: '**[READ-ONLY]** Formatted display of the grade information.',
-      example: '87.50 / 100.00 (87.50%)',
       readOnly: true,
     },
   },
@@ -23709,7 +23670,7 @@ export const TypeEnumSchema = {
     'CLASS_MARKETPLACE_JOB_APPLICATION_SHORTLISTED',
     'CLASS_MARKETPLACE_JOB_APPLICATION_INTERVIEWING',
     'CLASS_MARKETPLACE_JOB_APPLICATION_OFFERED',
-    'CLASS_MARKETPLACE_JOB_APPLICATION_APPROVED',
+    'CLASS_MARKETPLACE_JOB_APPLICATION_HIRED',
     'CLASS_MARKETPLACE_JOB_APPLICATION_ASSIGNED',
     'CLASS_MARKETPLACE_JOB_APPLICATION_CANCELLED',
     'CLASS_MARKETPLACE_JOB_APPLICATION_WITHDRAWN',
@@ -23829,7 +23790,7 @@ export const StatusEnum14Schema = {
     'shortlisted',
     'interviewing',
     'offered',
-    'approved',
+    'hired',
     'rejected',
     'assigned',
     'not_selected',
@@ -24005,7 +23966,7 @@ export const ApplicationStatusEnumSchema = {
     'shortlisted',
     'interviewing',
     'offered',
-    'approved',
+    'hired',
     'rejected',
     'assigned',
     'not_selected',
@@ -24434,7 +24395,7 @@ export const TypeEnumWritableSchema = {
     'CLASS_MARKETPLACE_JOB_APPLICATION_SHORTLISTED',
     'CLASS_MARKETPLACE_JOB_APPLICATION_INTERVIEWING',
     'CLASS_MARKETPLACE_JOB_APPLICATION_OFFERED',
-    'CLASS_MARKETPLACE_JOB_APPLICATION_APPROVED',
+    'CLASS_MARKETPLACE_JOB_APPLICATION_HIRED',
     'CLASS_MARKETPLACE_JOB_APPLICATION_ASSIGNED',
     'CLASS_MARKETPLACE_JOB_APPLICATION_CANCELLED',
     'CLASS_MARKETPLACE_JOB_APPLICATION_WITHDRAWN',

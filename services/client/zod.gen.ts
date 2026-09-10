@@ -1119,6 +1119,11 @@ export const zQuiz = z
       )
       .readonly()
       .optional(),
+    is_timed: z
+      .boolean()
+      .describe('**[READ-ONLY]** Indicates if the quiz has a time limit.')
+      .readonly()
+      .optional(),
     is_published: z
       .boolean()
       .describe('**[READ-ONLY]** Indicates if the quiz is published and accessible to students.')
@@ -1127,11 +1132,6 @@ export const zQuiz = z
     time_limit_display: z
       .string()
       .describe('**[READ-ONLY]** Human-readable format of quiz time limit.')
-      .readonly()
-      .optional(),
-    is_timed: z
-      .boolean()
-      .describe('**[READ-ONLY]** Indicates if the quiz has a time limit.')
       .readonly()
       .optional(),
     has_multiple_attempts: z
@@ -2444,10 +2444,7 @@ export const zInstructorProfessionalMembership = z
       .describe('**[READ-ONLY]** Indicates if the membership record has all essential information.')
       .readonly()
       .optional(),
-    membership_duration_months: z
-      .union([z.number().int().readonly(), z.null()])
-      .readonly()
-      .optional(),
+    formatted_duration: z.union([z.string().readonly(), z.null()]).readonly().optional(),
     membership_status: zMembershipStatusEnum.optional(),
     membership_period: z.union([z.string().readonly(), z.null()]).readonly().optional(),
     is_long_standing_member: z
@@ -2467,7 +2464,10 @@ export const zInstructorProfessionalMembership = z
       .describe('**[READ-ONLY]** Indicates if this membership was started within the last 3 years.')
       .readonly()
       .optional(),
-    formatted_duration: z.union([z.string().readonly(), z.null()]).readonly().optional(),
+    membership_duration_months: z
+      .union([z.number().int().readonly(), z.null()])
+      .readonly()
+      .optional(),
   })
   .describe(
     'Professional membership record for instructors including associations, industry bodies, and certification organizations'
@@ -2859,16 +2859,16 @@ export const zInstructorDocument = z
       )
       .readonly()
       .optional(),
+    is_expired: z
+      .boolean()
+      .describe('**[READ-ONLY]** Indicates if the document has expired based on the expiry date.')
+      .readonly()
+      .optional(),
     file_url: z
       .string()
       .describe(
         '**[READ-ONLY]** API-relative URL for previewing or downloading the uploaded document.'
       )
-      .readonly()
-      .optional(),
-    is_expired: z
-      .boolean()
-      .describe('**[READ-ONLY]** Indicates if the document has expired based on the expiry date.')
       .readonly()
       .optional(),
     file_size_formatted: z
@@ -2970,11 +2970,6 @@ export const zAvailabilitySlot = z
       )
       .readonly()
       .optional(),
-    duration_minutes: z.coerce
-      .bigint()
-      .describe('**[READ-ONLY]** Duration of the availability slot in minutes.')
-      .readonly()
-      .optional(),
     duration_formatted: z
       .string()
       .describe('**[READ-ONLY]** Human-readable formatted duration.')
@@ -2995,6 +2990,11 @@ export const zAvailabilitySlot = z
     availability_description: z
       .string()
       .describe('**[READ-ONLY]** Human-readable description of the availability pattern.')
+      .readonly()
+      .optional(),
+    duration_minutes: z.coerce
+      .bigint()
+      .describe('**[READ-ONLY]** Duration of the availability slot in minutes.')
       .readonly()
       .optional(),
   })
@@ -4322,16 +4322,16 @@ export const zCourseCreatorDocumentDto = z.object({
   created_by: z.string().readonly().optional(),
   updated_date: z.string().datetime().readonly().optional(),
   updated_by: z.string().readonly().optional(),
+  is_expired: z
+    .boolean()
+    .describe('**[READ-ONLY]** Indicates if the document has expired based on the expiry date.')
+    .readonly()
+    .optional(),
   file_url: z
     .string()
     .describe(
       '**[READ-ONLY]** API-relative URL for previewing or downloading the uploaded document.'
     )
-    .readonly()
-    .optional(),
-  is_expired: z
-    .boolean()
-    .describe('**[READ-ONLY]** Indicates if the document has expired based on the expiry date.')
     .readonly()
     .optional(),
   file_size_formatted: z
@@ -4613,14 +4613,14 @@ export const zContentType = z
       )
       .readonly()
       .optional(),
-    is_media_type: z
-      .boolean()
-      .describe('**[READ-ONLY]** Indicates if this content type is for media files.')
-      .readonly()
-      .optional(),
     upload_category: z
       .string()
       .describe('**[READ-ONLY]** Category for organizing uploads in the user interface.')
+      .readonly()
+      .optional(),
+    is_media_type: z
+      .boolean()
+      .describe('**[READ-ONLY]** Indicates if this content type is for media files.')
       .readonly()
       .optional(),
     supported_formats: z
@@ -5189,16 +5189,16 @@ export const zClassDefinition = z
       )
       .readonly()
       .optional(),
+    duration_formatted: z
+      .string()
+      .describe('**[READ-ONLY]** Human-readable formatted duration.')
+      .readonly()
+      .optional(),
     duration_minutes: z.coerce
       .bigint()
       .describe(
         '**[READ-ONLY]** Computed duration of the class in minutes based on start and end times.'
       )
-      .readonly()
-      .optional(),
-    duration_formatted: z
-      .string()
-      .describe('**[READ-ONLY]** Human-readable formatted duration.')
       .readonly()
       .optional(),
     capacity_info: z
@@ -6026,11 +6026,6 @@ export const zScheduledInstance = z
       )
       .readonly()
       .optional(),
-    duration_minutes: z.coerce
-      .bigint()
-      .describe('**[READ-ONLY]** Duration of the scheduled instance in minutes.')
-      .readonly()
-      .optional(),
     duration_formatted: z
       .string()
       .describe('**[READ-ONLY]** Human-readable formatted duration.')
@@ -6046,6 +6041,11 @@ export const zScheduledInstance = z
       .describe(
         '**[READ-ONLY]** Indicates if the scheduled instance is currently active (ongoing).'
       )
+      .readonly()
+      .optional(),
+    duration_minutes: z.coerce
+      .bigint()
+      .describe('**[READ-ONLY]** Duration of the scheduled instance in minutes.')
       .readonly()
       .optional(),
     can_be_cancelled: z
@@ -6823,7 +6823,7 @@ export const zTypeEnum = z.enum([
   'CLASS_MARKETPLACE_JOB_APPLICATION_SHORTLISTED',
   'CLASS_MARKETPLACE_JOB_APPLICATION_INTERVIEWING',
   'CLASS_MARKETPLACE_JOB_APPLICATION_OFFERED',
-  'CLASS_MARKETPLACE_JOB_APPLICATION_APPROVED',
+  'CLASS_MARKETPLACE_JOB_APPLICATION_HIRED',
   'CLASS_MARKETPLACE_JOB_APPLICATION_ASSIGNED',
   'CLASS_MARKETPLACE_JOB_APPLICATION_CANCELLED',
   'CLASS_MARKETPLACE_JOB_APPLICATION_WITHDRAWN',
@@ -7286,11 +7286,6 @@ export const zEnrollment = z
       .describe('**[READ-ONLY]** Indicates if the enrollment can be cancelled.')
       .readonly()
       .optional(),
-    is_attendance_marked: z
-      .boolean()
-      .describe('**[READ-ONLY]** Indicates if attendance has been marked for this enrollment.')
-      .readonly()
-      .optional(),
     did_attend: z
       .boolean()
       .describe('**[READ-ONLY]** Indicates if the student attended the class.')
@@ -7299,6 +7294,11 @@ export const zEnrollment = z
     status_description: z
       .string()
       .describe('**[READ-ONLY]** Human-readable description of the enrollment status.')
+      .readonly()
+      .optional(),
+    is_attendance_marked: z
+      .boolean()
+      .describe('**[READ-ONLY]** Indicates if attendance has been marked for this enrollment.')
       .readonly()
       .optional(),
   })
@@ -8093,33 +8093,6 @@ export const zApiResponseClassDefinition = z.object({
 });
 
 /**
- * Selects an approved instructor application and creates the actual class
- */
-export const zClassMarketplaceJobAssignmentRequest = z
-  .object({
-    application_uuid: z.string().uuid(),
-  })
-  .describe('Selects an approved instructor application and creates the actual class');
-
-/**
- * Result of assigning an instructor to a marketplace class job. The job moves to AWAITING_CLASS and its resource holds stay reserved until the class is created.
- */
-export const zClassMarketplaceJobAssignmentResponse = z
-  .object({
-    job: zClassMarketplaceJob.optional(),
-  })
-  .describe(
-    'Result of assigning an instructor to a marketplace class job. The job moves to AWAITING_CLASS and its resource holds stay reserved until the class is created.'
-  );
-
-export const zApiResponseClassMarketplaceJobAssignmentResponse = z.object({
-  success: z.boolean().optional(),
-  data: zClassMarketplaceJobAssignmentResponse.optional(),
-  message: z.string().optional(),
-  error: z.unknown().optional(),
-});
-
-/**
  * Application submitted by an instructor against a marketplace class job
  */
 export const zClassMarketplaceJobApplicationRequest = z
@@ -8133,7 +8106,7 @@ export const zStatusEnum14 = z.enum([
   'shortlisted',
   'interviewing',
   'offered',
-  'approved',
+  'hired',
   'rejected',
   'assigned',
   'not_selected',
@@ -11587,6 +11560,11 @@ export const zCourseAssessmentScore = z
       .describe('**[READ-ONLY]** Indicates if the score meets the passing criteria (60% or above).')
       .readonly()
       .optional(),
+    grade_display: z
+      .string()
+      .describe('**[READ-ONLY]** Formatted display of the grade information.')
+      .readonly()
+      .optional(),
     score_category: z
       .string()
       .describe('**[READ-ONLY]** Formatted category of the score based on performance level.')
@@ -11604,11 +11582,6 @@ export const zCourseAssessmentScore = z
       .describe(
         '**[READ-ONLY]** Summary indicating the availability and nature of instructor feedback.'
       )
-      .readonly()
-      .optional(),
-    grade_display: z
-      .string()
-      .describe('**[READ-ONLY]** Formatted display of the grade information.')
       .readonly()
       .optional(),
   })
@@ -12247,7 +12220,7 @@ export const zApplicationStatusEnum = z
     'shortlisted',
     'interviewing',
     'offered',
-    'approved',
+    'hired',
     'rejected',
     'assigned',
     'not_selected',
@@ -13384,7 +13357,7 @@ export const zTypeEnumWritable = z.enum([
   'CLASS_MARKETPLACE_JOB_APPLICATION_SHORTLISTED',
   'CLASS_MARKETPLACE_JOB_APPLICATION_INTERVIEWING',
   'CLASS_MARKETPLACE_JOB_APPLICATION_OFFERED',
-  'CLASS_MARKETPLACE_JOB_APPLICATION_APPROVED',
+  'CLASS_MARKETPLACE_JOB_APPLICATION_HIRED',
   'CLASS_MARKETPLACE_JOB_APPLICATION_ASSIGNED',
   'CLASS_MARKETPLACE_JOB_APPLICATION_CANCELLED',
   'CLASS_MARKETPLACE_JOB_APPLICATION_WITHDRAWN',
@@ -18289,19 +18262,6 @@ export const zCancelJobData = z.object({
  * OK
  */
 export const zCancelJobResponse = zApiResponseClassMarketplaceJob;
-
-export const zAssignInstructorData = z.object({
-  body: zClassMarketplaceJobAssignmentRequest,
-  path: z.object({
-    jobUuid: z.string().uuid(),
-  }),
-  query: z.never().optional(),
-});
-
-/**
- * OK
- */
-export const zAssignInstructorResponse = zApiResponseClassMarketplaceJobAssignmentResponse;
 
 export const zListJobApplicationsData = z.object({
   body: z.never().optional(),

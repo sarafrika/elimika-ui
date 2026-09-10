@@ -6,16 +6,18 @@ import dayjs from 'dayjs';
 import relativeTime from 'dayjs/plugin/relativeTime';
 import {
   ArrowLeft,
+  ArrowRight,
   Award,
   BadgeCheck,
   Briefcase,
   CalendarClock,
+  Check,
   CheckCircle2,
   ExternalLink,
   GraduationCap,
   Link as LinkIcon,
-  Sparkles,
   ThumbsDown,
+  TriangleAlert,
   UserCheck,
 } from 'lucide-react';
 import Link from 'next/link';
@@ -24,6 +26,15 @@ import { useMemo, useState } from 'react';
 import { toast } from 'sonner';
 
 import { AsyncSection } from '@/components/data/async-section';
+import {
+  canRejectApplication,
+  HIRING_STAGES,
+  isClassCreatedStatus,
+  isExitStatus,
+  nextStepFor,
+  stageIndexOf,
+  statusLabel,
+} from '@/components/profile-job-marketplace/application-status';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -46,11 +57,11 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Textarea } from '@/components/ui/textarea';
 import { extractEntity, extractList } from '@/lib/api-helpers';
+import { getErrorMessage } from '@/lib/error-utils';
 import { cn } from '@/lib/utils';
 import type { ClassMarketplaceJobApplication, Instructor } from '@/services/client';
 import { invalidateJobApplicationWorkflowQueries } from '@/src/features/dashboard/workflow-query-invalidation';
 import {
-  assignInstructorMutation,
   getInstructorByUuidOptions,
   getInstructorEducationOptions,
   getInstructorExperienceOptions,
@@ -62,33 +73,23 @@ import {
 
 dayjs.extend(relativeTime);
 
-const STAGES = ['Applied', 'Shortlist', 'Interview', 'Offer', 'Hire'] as const;
-const STATUS_TO_STAGE: Record<string, string> = {
-  pending: 'Applied',
-  shortlisted: 'Shortlist',
-  interviewing: 'Interview',
-  offered: 'Offer',
-  approved: 'Hire',
-  assigned: 'Hire',
-};
-const STAGE_TO_ACTION: Record<string, string> = {
-  Shortlist: 'shortlist',
-  Interview: 'interview',
-  Offer: 'offer',
-  Hire: 'approve',
+const HIRED_INDEX = HIRING_STAGES.length - 1;
+// The endpoint is multiplexed on `action`, so the toast has to name the step actually taken.
+const MOVE_MESSAGES: Record<string, string> = {
+  shortlist: 'Candidate shortlisted.',
+  interview: 'Interview scheduled. The candidate has been notified.',
+  offer: 'Offer sent to the candidate.',
+  hire: 'Hired. They are a member of your organisation now — create the class to put them on the job.',
+  reject: 'Candidate rejected. They have been notified.',
 };
 const stageStyles: Record<string, string> = {
-  Applied: 'border-border bg-muted text-muted-foreground',
-  Shortlist: 'border-sky-200 bg-sky-50 text-sky-700',
-  Interview: 'border-warning/30 bg-warning/10 text-warning',
-  Offer: 'border-primary/30 bg-primary/10 text-primary',
-  Hire: 'border-success/30 bg-success/10 text-success',
+  pending: 'border-border bg-muted text-muted-foreground',
+  shortlisted: 'border-sky-200 bg-sky-50 text-sky-700',
+  interviewing: 'border-warning/30 bg-warning/10 text-warning',
+  offered: 'border-primary/30 bg-primary/10 text-primary',
+  hired: 'border-success/30 bg-success/10 text-success',
+  assigned: 'border-success/30 bg-success/10 text-success',
 };
-// `withdrawn` belongs here too: the candidate pulled out, so they are no longer in the funnel.
-const CLOSED_STATUSES = ['rejected', 'not_selected', 'withdrawn'];
-const stageOf = (s?: string) =>
-  STATUS_TO_STAGE[(s ?? '').toLowerCase()] ??
-  (CLOSED_STATUSES.includes((s ?? '').toLowerCase()) ? 'Rejected' : 'Applied');
 const matchScore = (a?: ClassMarketplaceJobApplication) =>
   (a?.instructor_admin_verified ? 50 : 0) + (a?.training_approved ? 50 : 0);
 const initials = (name: string) =>
@@ -159,6 +160,96 @@ function InfoRow({ icon, label, value }: { icon: React.ReactNode; label: string;
   );
 }
 
+/**
+ * The whole funnel on one line: what this candidate has been through, where they are, what is
+ * left. Creating the class comes after the hire and is not a stage, so it never appears here.
+ */
+function StageRail({ status }: { status?: string }) {
+  const closed = isExitStatus(status);
+  // A created class means the funnel was walked to its end, so every stage sits behind it.
+  const reached = isClassCreatedStatus(status) ? HIRED_INDEX : stageIndexOf(status);
+
+  return (
+    <Card>
+      <CardContent className='space-y-3 p-5'>
+        <div className='flex flex-wrap items-center justify-between gap-2'>
+          <h2 className='text-sm font-semibold'>Where this candidate stands</h2>
+          <Badge
+            variant='outline'
+            className={cn('text-xs', stageStyles[status ?? ''] ?? 'text-destructive')}
+          >
+            {statusLabel(status)}
+          </Badge>
+        </div>
+        <ol className='flex flex-wrap items-center gap-y-3'>
+          {HIRING_STAGES.map((stage, index) => {
+            const behind = !closed && index < reached;
+            const here = !closed && index === reached;
+            return (
+              <li key={stage} className='flex items-center'>
+                <span
+                  className={cn(
+                    'flex h-6 w-6 shrink-0 items-center justify-center rounded-full border text-xs font-medium',
+                    behind
+                      ? 'border-teal-500 bg-teal-500 text-white'
+                      : here
+                        ? 'border-teal-600 bg-teal-50 text-teal-700'
+                        : 'border-border text-muted-foreground'
+                  )}
+                  aria-current={here ? 'step' : undefined}
+                >
+                  {behind ? <Check className='h-3.5 w-3.5' /> : index + 1}
+                </span>
+                <span
+                  className={cn('ml-2 text-sm', here ? 'font-medium' : 'text-muted-foreground')}
+                >
+                  {statusLabel(stage)}
+                </span>
+                {index < HIRED_INDEX ? (
+                  <span
+                    aria-hidden
+                    className={cn('mx-3 h-px w-8', behind ? 'bg-teal-500' : 'bg-border')}
+                  />
+                ) : null}
+              </li>
+            );
+          })}
+        </ol>
+        <p className='text-muted-foreground text-xs'>
+          {closed
+            ? `This application closed as ${statusLabel(status)}, so no stage remains.`
+            : 'Hiring is the last decision. Creating the class is what puts the hired instructor on the job.'}
+        </p>
+      </CardContent>
+    </Card>
+  );
+}
+
+/** A refused transition moves nothing, so the server's own reason stays on screen beside the control. */
+function TransitionError({ message }: { message: string | null }) {
+  if (!message) return null;
+  return (
+    <div
+      role='alert'
+      className='border-destructive/50 bg-destructive/10 flex items-start gap-2 rounded-md border p-3 text-sm'
+    >
+      <TriangleAlert className='text-destructive mt-0.5 h-4 w-4 shrink-0' />
+      <span>{message}</span>
+    </div>
+  );
+}
+
+/** A disabled control owes the organisation the reason, so the gate is named where the button is. */
+function HireBlockedNotice({ blocked }: { blocked: boolean }) {
+  if (!blocked) return null;
+  return (
+    <div className='border-warning/60 bg-warning/10 text-foreground flex items-start gap-2 rounded-md border p-3 text-sm'>
+      <TriangleAlert className='text-warning mt-0.5 h-4 w-4 shrink-0' />
+      <span>Not approved to train this course or program yet — hiring is blocked.</span>
+    </div>
+  );
+}
+
 export default function CandidateDetailPage() {
   const params = useParams<{ candidateId: string }>();
   const instructorUuid = params?.candidateId ?? '';
@@ -170,6 +261,7 @@ export default function CandidateDetailPage() {
   const [interviewDialogOpen, setInterviewDialogOpen] = useState(false);
   const [interviewAt, setInterviewAt] = useState('');
   const [interviewNote, setInterviewNote] = useState('');
+  const [transitionError, setTransitionError] = useState<string | null>(null);
 
   const instructorQuery = useQuery({
     ...getInstructorByUuidOptions({ path: { uuid: instructorUuid } }),
@@ -215,55 +307,62 @@ export default function CandidateDetailPage() {
     (a: ClassMarketplaceJobApplication) =>
       a.uuid === applicationUuid || a.instructor_uuid === instructorUuid
   );
-  const stage = stageOf(app?.status);
+  const status = app?.status as string | undefined;
   const match = matchScore(app);
+  // The one move available from here. Never two, never one that skips a stage.
+  const nextStep = nextStepFor(status);
+  const isHired = stageIndexOf(status) === HIRED_INDEX;
+  const classCreated = isClassCreatedStatus(status);
+  const canReject = canRejectApplication(status);
+  // The hire endpoint refuses an instructor who is not approved to deliver this job, so the
+  // control never offers a move the server will turn down.
+  const notApprovedToTrain = app?.training_approved === false;
+  const forwardBlocked = nextStep?.action === 'hire' && notApprovedToTrain;
+  const createClassHref = `/dashboard/organisation/opportunities/${jobUuid}/create-class`;
 
-  // Approving a candidate only marks them as the organisation's choice. The hire itself is the
-  // assignment: it is what affiliates the instructor with the organisation, moves the job to
-  // awaiting-class so the class can be created, and sends the "you've been hired" notice.
-  // "Hire" used to stop at approve, which left all three undone.
-  const assignMutation = useMutation({
-    ...assignInstructorMutation(),
-    onSuccess: async () => {
-      await invalidateJobApplicationWorkflowQueries(queryClient);
-      await applicationsQuery.refetch();
-      toast.success('Candidate hired', {
-        description: 'They now belong to your organisation. Create the class to schedule it.',
-      });
-    },
-    onError: error =>
-      toast.error(error instanceof Error ? error.message : 'Could not complete the hire'),
-  });
-
+  // Hiring is one backend transition that affiliates the instructor. Nothing is chained onto it:
+  // a refused step must leave the candidate exactly where they were.
   const moveMutation = useMutation({
     ...reviewApplicationMutation(),
     onSuccess: async (_d, vars) => {
       await invalidateJobApplicationWorkflowQueries(queryClient);
       await applicationsQuery.refetch();
-      if (vars?.query?.action === 'approve' && app?.uuid) {
-        assignMutation.mutate({
-          path: { jobUuid },
-          body: { application_uuid: app.uuid },
-        });
-        return;
-      }
-      toast.success(`Candidate moved to ${vars?.query?.action ?? 'stage'}`);
+      const action = String(vars?.query?.action ?? '');
+      setTransitionError(null);
+      toast.success(MOVE_MESSAGES[action] ?? 'Candidate updated.');
     },
-    onError: () => toast.error('Could not update candidate stage'),
+    onError: error => {
+      // A refused skip names both stages, so the server's own words stand in for a generic toast.
+      const message = getErrorMessage(error, 'Could not move this candidate.');
+      setTransitionError(message);
+      toast.error(message);
+    },
   });
-  const act = (action: string, body?: Record<string, string>) =>
-    app &&
+  const act = (action: string, body?: Record<string, string>) => {
+    if (!app) return;
+    setTransitionError(null);
     moveMutation.mutate({
       path: { jobUuid, applicationUuid: app.uuid as string },
       query: { action },
       body,
     });
+  };
 
   const openInterviewDialog = () => {
     if (!app) return;
     setInterviewAt(toDateTimeInputValue(app.interview_at));
     setInterviewNote(app.review_notes ?? '');
     setInterviewDialogOpen(true);
+  };
+
+  const takeNextStep = () => {
+    if (!nextStep) return;
+    // Only the interview step carries a payload the organisation still has to supply.
+    if (nextStep.action === 'interview') {
+      openInterviewDialog();
+      return;
+    }
+    act(nextStep.action);
   };
 
   const confirmInterview = () => {
@@ -339,10 +438,10 @@ export default function CandidateDetailPage() {
                 variant='outline'
                 className={cn(
                   'bg-card border-white/40 text-xs',
-                  stageStyles[stage] ?? 'text-destructive'
+                  stageStyles[status ?? ''] ?? 'text-destructive'
                 )}
               >
-                {stage}
+                {statusLabel(status)}
               </Badge>
             </div>
             <h1 className='mt-2 text-3xl font-bold tracking-tight sm:text-4xl'>{name}</h1>
@@ -376,6 +475,23 @@ export default function CandidateDetailPage() {
           </div>
         </CardContent>
       </Card>
+
+      {app ? <StageRail status={status} /> : null}
+
+      {isHired ? (
+        <Card className='border-success/40 bg-success/10'>
+          <CardContent className='flex flex-wrap items-start gap-3 p-5'>
+            <UserCheck className='text-success mt-0.5 h-5 w-5 shrink-0' />
+            <div className='min-w-0 text-sm'>
+              <div className='font-medium'>Hired — {name} is now a member of your organisation</div>
+              <p className='text-muted-foreground'>
+                Nothing is left to assign. Creating this job’s class is what puts them on it, built
+                from the sessions the job already holds.
+              </p>
+            </div>
+          </CardContent>
+        </Card>
+      ) : null}
 
       {/* Stat strip */}
       <div className='grid grid-cols-2 gap-3 sm:grid-cols-4'>
@@ -608,32 +724,51 @@ export default function CandidateDetailPage() {
             <TabsContent value='actions' className='mt-4'>
               <Card>
                 <CardHeader>
-                  <CardTitle className='text-base'>Move candidate</CardTitle>
+                  <CardTitle className='text-base'>
+                    {nextStep ? 'Move candidate' : isHired ? 'Create the class' : 'No move left'}
+                  </CardTitle>
                 </CardHeader>
-                <CardContent className='grid gap-2 sm:grid-cols-2'>
-                  {STAGES.filter(s => s !== 'Applied').map(s => (
-                    <Button
-                      key={s}
-                      variant={stage === s ? 'default' : 'outline'}
-                      className='justify-start'
-                      disabled={!app || moveMutation.isPending || assignMutation.isPending}
-                      onClick={() =>
-                        STAGE_TO_ACTION[s] === 'interview'
-                          ? openInterviewDialog()
-                          : act(STAGE_TO_ACTION[s])
-                      }
-                    >
-                      <UserCheck className='mr-2 h-4 w-4' /> Move to {s}
-                    </Button>
-                  ))}
-                  <Button
-                    variant='outline'
-                    className='text-destructive justify-start'
-                    disabled={!app || moveMutation.isPending || assignMutation.isPending}
-                    onClick={() => act('reject')}
-                  >
-                    <ThumbsDown className='mr-2 h-4 w-4' /> Reject candidate
-                  </Button>
+                <CardContent className='space-y-3'>
+                  <TransitionError message={transitionError} />
+                  <HireBlockedNotice blocked={forwardBlocked} />
+                  <div className='grid gap-2 sm:grid-cols-2'>
+                    {nextStep ? (
+                      <Button
+                        className='justify-start'
+                        disabled={!app || forwardBlocked || moveMutation.isPending}
+                        onClick={takeNextStep}
+                      >
+                        <ArrowRight className='mr-2 h-4 w-4' /> {nextStep.label}
+                      </Button>
+                    ) : isHired ? (
+                      <Button className='justify-start' asChild>
+                        <Link href={createClassHref}>
+                          <Briefcase className='mr-2 h-4 w-4' /> Create the class
+                        </Link>
+                      </Button>
+                    ) : null}
+                    {canReject ? (
+                      <Button
+                        variant='outline'
+                        className='text-destructive justify-start'
+                        disabled={!app || moveMutation.isPending}
+                        onClick={() => act('reject')}
+                      >
+                        <ThumbsDown className='mr-2 h-4 w-4' /> Reject candidate
+                      </Button>
+                    ) : null}
+                  </div>
+                  <p className='text-muted-foreground text-xs'>
+                    {forwardBlocked
+                      ? 'Hiring stays closed until this instructor is approved to deliver what this job teaches.'
+                      : nextStep
+                        ? `${nextStep.label} moves them to ${statusLabel(nextStep.leadsTo)}. No stage can be skipped, so this is the only way forward.`
+                        : isHired
+                          ? 'The funnel ends at the hire. Creating the class assigns them, converts the times held for this job and closes the other candidates out.'
+                          : classCreated
+                            ? 'This job’s class has been created and this instructor is on it.'
+                            : `This application closed as ${statusLabel(status)} and can no longer be actioned.`}
+                  </p>
                 </CardContent>
               </Card>
             </TabsContent>
@@ -645,18 +780,27 @@ export default function CandidateDetailPage() {
           <Card className='overflow-hidden'>
             <div className='bg-gradient-to-br from-teal-600 to-teal-800 p-5 text-white'>
               <div className='text-xs tracking-wide text-white/70 uppercase'>Pipeline stage</div>
-              <div className='mt-1 text-3xl font-semibold'>{stage}</div>
+              <div className='mt-1 text-3xl font-semibold'>{statusLabel(status)}</div>
               <div className='mt-1 text-xs text-white/70'>{match}% match</div>
-              <Button
-                className='bg-card hover:bg-card/90 mt-4 w-full text-teal-700'
-                disabled={!app || stage !== 'Applied' || moveMutation.isPending}
-                onClick={() => act('shortlist')}
-              >
-                <Sparkles className='mr-2 h-4 w-4' />{' '}
-                {stage === 'Applied' ? 'Shortlist' : 'Shortlisted'}
-              </Button>
+              {nextStep ? (
+                <Button
+                  className='bg-card hover:bg-card/90 mt-4 w-full text-teal-700'
+                  disabled={!app || forwardBlocked || moveMutation.isPending}
+                  onClick={takeNextStep}
+                >
+                  <ArrowRight className='mr-2 h-4 w-4' /> {nextStep.label}
+                </Button>
+              ) : isHired ? (
+                <Button className='bg-card hover:bg-card/90 mt-4 w-full text-teal-700' asChild>
+                  <Link href={createClassHref}>
+                    <Briefcase className='mr-2 h-4 w-4' /> Create the class
+                  </Link>
+                </Button>
+              ) : null}
             </div>
             <CardContent className='space-y-3 pt-5 text-sm'>
+              <TransitionError message={transitionError} />
+              <HireBlockedNotice blocked={forwardBlocked} />
               <div className='flex items-center justify-between'>
                 <dt className='text-muted-foreground'>Rate</dt>
                 <dd className='font-medium'>

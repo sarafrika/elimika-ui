@@ -1,10 +1,11 @@
 // @ts-nocheck -- 1:1 Lovable port; @hey-api generated-client type drift
 'use client';
 
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { useQuery } from '@tanstack/react-query';
 import dayjs from 'dayjs';
 import relativeTime from 'dayjs/plugin/relativeTime';
 import {
+  ArrowRight,
   Award,
   BadgeCheck,
   Briefcase,
@@ -13,41 +14,26 @@ import {
   GraduationCap,
   Inbox,
   Link as LinkIcon,
-  MoreHorizontal,
   Sparkles,
   TrendingUp,
 } from 'lucide-react';
 import Link from 'next/link';
 import { useEffect, useMemo, useState } from 'react';
-import { toast } from 'sonner';
 
 import { EmptyState } from '@/components/empty-state';
 import { PageHeader } from '@/components/page-header';
 import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-} from '@/components/ui/alert-dialog';
+  HIRING_STAGES,
+  type HiringStage,
+  isClassCreatedStatus,
+  nextStepFor,
+  stageIndexOf,
+  statusLabel,
+} from '@/components/profile-job-marketplace/application-status';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import {
-  DropdownMenu,
-  DropdownMenuCheckboxItem,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuLabel,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
 import { Progress } from '@/components/ui/progress';
 import {
   Select,
@@ -58,7 +44,6 @@ import {
 } from '@/components/ui/select';
 import { Separator } from '@/components/ui/separator';
 import { Skeleton } from '@/components/ui/skeleton';
-import { Textarea } from '@/components/ui/textarea';
 import { useOrganisation } from '@/context/organisation-context';
 import { extractEntity, extractList, extractPage } from '@/lib/api-helpers';
 import { cn } from '@/lib/utils';
@@ -67,47 +52,33 @@ import type {
   ClassMarketplaceJobApplication,
   Instructor,
 } from '@/services/client';
-import { invalidateJobApplicationWorkflowQueries } from '@/src/features/dashboard/workflow-query-invalidation';
 import {
-  assignInstructorMutation,
   getInstructorByUuidOptions,
   getInstructorSkillsOptions,
   listJobApplicationsOptions,
   listJobsOptions,
-  reviewApplicationMutation,
 } from '@/services/client/@tanstack/react-query.gen';
 
 dayjs.extend(relativeTime);
 
-// Recruitment funnel — maps to the real marketplace application statuses.
-const STAGES = ['Applied', 'Shortlist', 'Interview', 'Offer', 'Hire'] as const;
-const STATUS_TO_STAGE: Record<string, (typeof STAGES)[number]> = {
-  pending: 'Applied',
-  shortlisted: 'Shortlist',
-  interviewing: 'Interview',
-  offered: 'Offer',
-  approved: 'Hire',
-  assigned: 'Hire',
+const STAGE_STYLES: Record<HiringStage, string> = {
+  pending: 'border-border bg-muted text-muted-foreground',
+  shortlisted: 'border-sky-200 bg-sky-50 text-sky-700',
+  interviewing: 'border-warning/30 bg-warning/10 text-warning',
+  offered: 'border-primary/30 bg-primary/10 text-primary',
+  hired: 'border-success/30 bg-success/10 text-success',
 };
-const STAGE_TO_ACTION: Record<string, string> = {
-  Shortlist: 'shortlist',
-  Interview: 'interview',
-  Offer: 'offer',
-  Hire: 'approve',
+const CLASS_CREATED_STYLE = 'border-success/30 bg-success/10 text-success';
+const CLOSED_STYLE = 'border-destructive/30 bg-destructive/10 text-destructive';
+
+const badgeStyleFor = (status?: string) => {
+  const stage = HIRING_STAGES[stageIndexOf(status)];
+  if (stage) return STAGE_STYLES[stage];
+  return isClassCreatedStatus(status) ? CLASS_CREATED_STYLE : CLOSED_STYLE;
 };
-const stageStyles: Record<string, string> = {
-  Applied: 'border-border bg-muted text-muted-foreground',
-  Shortlist: 'border-sky-200 bg-sky-50 text-sky-700',
-  Interview: 'border-warning/30 bg-warning/10 text-warning',
-  Offer: 'border-primary/30 bg-primary/10 text-primary',
-  Hire: 'border-success/30 bg-success/10 text-success',
-};
-// `withdrawn` belongs here too: the candidate pulled out, so they are no longer in the funnel.
-// Leaving it out put them back in the Applied column looking like they were still waiting.
-const CLOSED_STATUSES = ['rejected', 'not_selected', 'withdrawn'];
-const stageOf = (status?: string) =>
-  STATUS_TO_STAGE[(status ?? '').toLowerCase()] ??
-  (CLOSED_STATUSES.includes((status ?? '').toLowerCase()) ? 'Rejected' : 'Applied');
+// A created class sits past the whole funnel; anything else off it has left, so it sorts last.
+const rankOf = (status?: string) =>
+  isClassCreatedStatus(status) ? HIRING_STAGES.length : stageIndexOf(status);
 const matchScore = (a: ClassMarketplaceJobApplication) =>
   (a.instructor_admin_verified ? 50 : 0) + (a.training_approved ? 50 : 0);
 const matchColor = (n: number) =>
@@ -119,24 +90,6 @@ const initials = (name: string) =>
     .join('')
     .slice(0, 2)
     .toUpperCase() || '?';
-
-function toUtcLocalDateTime(value: string) {
-  if (!value) return null;
-  const date = new Date(value);
-  if (Number.isNaN(date.getTime())) return null;
-  return date.toISOString().slice(0, 19);
-}
-
-function toDateTimeInputValue(value?: string | Date | null) {
-  if (!value) return '';
-  const date = value instanceof Date ? value : new Date(value);
-  if (Number.isNaN(date.getTime())) return '';
-
-  const pad = (part: number) => String(part).padStart(2, '0');
-  return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}T${pad(
-    date.getHours()
-  )}:${pad(date.getMinutes())}`;
-}
 
 function useInstructor(uuid?: string) {
   const q = useQuery({
@@ -152,12 +105,10 @@ function CandidateCard({
   app,
   index,
   jobUuid,
-  onShortlist,
 }: {
   app: ClassMarketplaceJobApplication;
   index: number;
   jobUuid: string;
-  onShortlist: (a: ClassMarketplaceJobApplication) => void;
 }) {
   const { loading, instructor, name } = useInstructor(app.instructor_uuid);
   const displayName = name ?? 'Applicant';
@@ -172,7 +123,8 @@ function CandidateCard({
     .slice(0, 4);
   const match = matchScore(app);
   const accent = index === 0 ? 'bg-success' : index === 1 ? 'bg-teal-500' : 'bg-warning';
-  const stage = stageOf(app.status);
+  const nextStep = nextStepFor(app.status);
+  const href = `/dashboard/organisation/job-matches/${app.instructor_uuid}?job=${jobUuid}&application=${app.uuid}`;
 
   return (
     <Card className='relative overflow-hidden'>
@@ -295,31 +247,19 @@ function CandidateCard({
               )}
             </p>
           </div>
-          <Badge
-            variant='outline'
-            className={cn(
-              'text-xs',
-              stageStyles[stage] ?? 'border-destructive/30 bg-destructive/10 text-destructive'
-            )}
-          >
-            {stage}
+          <Badge variant='outline' className={cn('text-xs', badgeStyleFor(app.status))}>
+            {statusLabel(app.status)}
           </Badge>
         </div>
 
-        <div className='flex gap-2'>
-          <Button
-            size='sm'
-            className='flex-1'
-            disabled={stage !== 'Applied'}
-            onClick={() => onShortlist(app)}
-          >
-            {stage === 'Applied' ? 'Shortlist' : stage === 'Rejected' ? 'Rejected' : 'Shortlisted'}
-          </Button>
-          <Button size='sm' variant='outline' className='flex-1' asChild>
-            <Link
-              href={`/dashboard/organisation/job-matches/${app.instructor_uuid}?job=${jobUuid}&application=${app.uuid}`}
-            >
-              View profile
+        <div className='flex items-center gap-2'>
+          <span className='text-muted-foreground text-xs'>
+            {nextStep ? `Next step: ${nextStep.label}` : 'No further steps'}
+          </span>
+          <Button size='sm' variant='outline' className='ml-auto' asChild>
+            <Link href={href}>
+              {nextStep ? 'Review applicant' : 'Open applicant'}
+              <ArrowRight className='ml-2 h-3.5 w-3.5' />
             </Link>
           </Button>
         </div>
@@ -353,7 +293,6 @@ function Stat({
 export default function JobMatchesPage() {
   const organisation = useOrganisation();
   const organisationUuid = organisation?.uuid ?? '';
-  const queryClient = useQueryClient();
 
   const jobsQuery = useQuery({
     ...listJobsOptions({
@@ -378,93 +317,6 @@ export default function JobMatchesPage() {
   });
   const applications = extractPage<ClassMarketplaceJobApplication>(applicationsQuery.data).items;
 
-  const [shortlistTarget, setShortlistTarget] = useState<ClassMarketplaceJobApplication | null>(
-    null
-  );
-  const [shortlistNote, setShortlistNote] = useState('');
-  const [interviewTarget, setInterviewTarget] = useState<ClassMarketplaceJobApplication | null>(
-    null
-  );
-  const [interviewAt, setInterviewAt] = useState('');
-  const [interviewNote, setInterviewNote] = useState('');
-
-  const assignMutation = useMutation({
-    ...assignInstructorMutation(),
-    onSuccess: async () => {
-      await invalidateJobApplicationWorkflowQueries(queryClient);
-      await applicationsQuery.refetch();
-      toast.success('Candidate hired', {
-        description: 'They now belong to your organisation. Create the class to schedule it.',
-      });
-    },
-    onError: error =>
-      toast.error(error instanceof Error ? error.message : 'Could not complete the hire'),
-  });
-
-  const moveMutation = useMutation({
-    ...reviewApplicationMutation(),
-    onSuccess: async (_d, vars) => {
-      await invalidateJobApplicationWorkflowQueries(queryClient);
-      await applicationsQuery.refetch();
-      // Approve marks the choice; the assignment is the hire — it affiliates the instructor
-      // with the organisation, opens class creation and sends the hired notice.
-      if (vars?.query?.action === 'approve' && vars?.path?.applicationUuid) {
-        assignMutation.mutate({
-          path: { jobUuid: selectedJobUuid },
-          body: { application_uuid: vars.path.applicationUuid as string },
-        });
-        return;
-      }
-      toast.success(`Candidate moved to ${vars?.query?.action ?? 'stage'}`);
-    },
-    onError: () => toast.error('Could not update candidate stage'),
-  });
-  const move = (
-    app: ClassMarketplaceJobApplication,
-    action: string,
-    note?: string,
-    scheduledInterviewAt?: string
-  ) =>
-    moveMutation.mutate({
-      path: { jobUuid: selectedJobUuid, applicationUuid: app.uuid as string },
-      query: { action },
-      body:
-        note || scheduledInterviewAt
-          ? {
-              ...(note ? { review_notes: note } : {}),
-              ...(scheduledInterviewAt ? { interview_at: scheduledInterviewAt } : {}),
-            }
-          : undefined,
-    });
-
-  const moveToStage = (app: ClassMarketplaceJobApplication, stage: string) => {
-    const action = STAGE_TO_ACTION[stage];
-    if (action === 'interview') {
-      setInterviewTarget(app);
-      setInterviewAt(toDateTimeInputValue(app.interview_at));
-      setInterviewNote(app.review_notes ?? '');
-      return;
-    }
-    if (action) move(app, action);
-  };
-  const confirmShortlist = () => {
-    if (shortlistTarget) move(shortlistTarget, 'shortlist', shortlistNote.trim() || undefined);
-    setShortlistTarget(null);
-    setShortlistNote('');
-  };
-  const confirmInterview = () => {
-    if (!interviewTarget) return;
-    const scheduledInterviewAt = toUtcLocalDateTime(interviewAt);
-    if (!scheduledInterviewAt) {
-      toast.error('Select an interview date and time.');
-      return;
-    }
-    move(interviewTarget, 'interview', interviewNote.trim() || undefined, scheduledInterviewAt);
-    setInterviewTarget(null);
-    setInterviewAt('');
-    setInterviewNote('');
-  };
-
   const topThree = useMemo(
     () =>
       [...applications]
@@ -477,20 +329,27 @@ export default function JobMatchesPage() {
     [applications]
   );
   const pipeline = useMemo(() => {
-    const counts = Object.fromEntries(STAGES.map(s => [s, 0])) as Record<string, number>;
+    const counts = Object.fromEntries(HIRING_STAGES.map(s => [s, 0])) as Record<
+      HiringStage,
+      number
+    >;
     for (const a of applications) {
-      const s = stageOf(a.status);
-      if (counts[s] != null) counts[s] += 1;
+      const stage = HIRING_STAGES[stageIndexOf(a.status)];
+      if (stage) counts[stage] += 1;
     }
     return counts;
   }, [applications]);
+  const classesCreated = useMemo(
+    () => applications.filter(a => isClassCreatedStatus(a.status)).length,
+    [applications]
+  );
 
   return (
     <div className='mx-auto w-full max-w-[1600px] space-y-6 px-3 py-4 sm:px-5 lg:px-6 2xl:max-w-[1840px]'>
       <PageHeader
         eyebrow='Onboarding'
         title='Job Matches'
-        description='Candidates for your open instructor postings, ranked by verification and moved through your pipeline.'
+        description='Candidates for your open instructor postings, ranked by verification. Open an applicant to decide on them.'
         action={
           jobs.length ? (
             <div className='flex items-center gap-2'>
@@ -575,13 +434,7 @@ export default function JobMatchesPage() {
           ) : (
             <div className='grid gap-4 md:grid-cols-2 xl:grid-cols-3'>
               {topThree.map((app, idx) => (
-                <CandidateCard
-                  key={app.uuid}
-                  app={app}
-                  index={idx}
-                  jobUuid={selectedJobUuid}
-                  onShortlist={setShortlistTarget}
-                />
+                <CandidateCard key={app.uuid} app={app} index={idx} jobUuid={selectedJobUuid} />
               ))}
             </div>
           )}
@@ -606,15 +459,22 @@ export default function JobMatchesPage() {
                     label='Candidates'
                     value={applications.length}
                   />
+                  <Stat
+                    icon={<CheckCircle2 className='h-4 w-4' />}
+                    label='Classes created'
+                    value={classesCreated}
+                  />
                 </div>
               </div>
             </CardHeader>
             <CardContent>
               <div className='grid grid-cols-2 gap-3 sm:grid-cols-5'>
-                {STAGES.map(stage => (
-                  <div key={stage} className={cn('rounded-lg border p-3', stageStyles[stage])}>
+                {HIRING_STAGES.map(stage => (
+                  <div key={stage} className={cn('rounded-lg border p-3', STAGE_STYLES[stage])}>
                     <div className='flex items-center justify-between'>
-                      <p className='text-xs font-semibold tracking-wide uppercase'>{stage}</p>
+                      <p className='text-xs font-semibold tracking-wide uppercase'>
+                        {statusLabel(stage)}
+                      </p>
                       <Award className='h-3.5 w-3.5 opacity-60' />
                     </div>
                     <p className='mt-1 text-2xl font-bold'>{pipeline[stage]}</p>
@@ -630,19 +490,9 @@ export default function JobMatchesPage() {
                       Candidates for {selectedJob?.title ?? 'this posting'}
                     </p>
                     {[...applications]
-                      .sort(
-                        (a, b) =>
-                          STAGES.indexOf(stageOf(b.status)) - STAGES.indexOf(stageOf(a.status))
-                      )
+                      .sort((a, b) => rankOf(b.status) - rankOf(a.status))
                       .map(app => (
-                        <CandidateRow
-                          key={app.uuid}
-                          app={app}
-                          jobUuid={selectedJobUuid}
-                          onMove={moveToStage}
-                          onReject={a => move(a, 'reject')}
-                          moving={moveMutation.isPending}
-                        />
+                        <CandidateRow key={app.uuid} app={app} jobUuid={selectedJobUuid} />
                       ))}
                   </div>
                 </>
@@ -651,112 +501,14 @@ export default function JobMatchesPage() {
           </Card>
         </>
       )}
-
-      <AlertDialog
-        open={shortlistTarget !== null}
-        onOpenChange={open => {
-          if (!open) setShortlistTarget(null);
-        }}
-      >
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>Shortlist this candidate?</AlertDialogTitle>
-            <AlertDialogDescription>
-              They'll move from <strong>Applied</strong> to <strong>Shortlist</strong> in your
-              recruitment pipeline.
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <div className='space-y-1.5'>
-            <Label htmlFor='shortlist-note' className='text-xs'>
-              Internal note (optional)
-            </Label>
-            <Textarea
-              id='shortlist-note'
-              placeholder='e.g. Strong portfolio, schedule intro call'
-              value={shortlistNote}
-              onChange={e => setShortlistNote(e.target.value)}
-            />
-          </div>
-          <AlertDialogFooter>
-            <AlertDialogCancel>Cancel</AlertDialogCancel>
-            <AlertDialogAction onClick={confirmShortlist}>Shortlist</AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
-
-      <AlertDialog
-        open={interviewTarget !== null}
-        onOpenChange={open => {
-          if (!open) {
-            setInterviewTarget(null);
-            setInterviewAt('');
-            setInterviewNote('');
-          }
-        }}
-      >
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>Move candidate to interview?</AlertDialogTitle>
-            <AlertDialogDescription>
-              Set the interview date and time before notifying the instructor.
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <div className='space-y-3'>
-            <div className='space-y-1.5'>
-              <Label htmlFor='pipeline-interview-at' className='text-xs'>
-                Interview date and time
-              </Label>
-              <Input
-                id='pipeline-interview-at'
-                type='datetime-local'
-                value={interviewAt}
-                min={toDateTimeInputValue(new Date())}
-                onChange={event => setInterviewAt(event.target.value)}
-              />
-            </div>
-            <div className='space-y-1.5'>
-              <Label htmlFor='pipeline-interview-note' className='text-xs'>
-                Note (optional)
-              </Label>
-              <Textarea
-                id='pipeline-interview-note'
-                placeholder='e.g. Prepare a 10-minute demo lesson'
-                value={interviewNote}
-                onChange={event => setInterviewNote(event.target.value)}
-              />
-            </div>
-          </div>
-          <AlertDialogFooter>
-            <AlertDialogCancel>Cancel</AlertDialogCancel>
-            <AlertDialogAction
-              onClick={confirmInterview}
-              disabled={!toUtcLocalDateTime(interviewAt)}
-            >
-              Confirm interview
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
     </div>
   );
 }
 
-function CandidateRow({
-  app,
-  jobUuid,
-  onMove,
-  onReject,
-  moving,
-}: {
-  app: ClassMarketplaceJobApplication;
-  jobUuid: string;
-  onMove: (a: ClassMarketplaceJobApplication, s: string) => void;
-  onReject: (a: ClassMarketplaceJobApplication) => void;
-  moving: boolean;
-}) {
+function CandidateRow({ app, jobUuid }: { app: ClassMarketplaceJobApplication; jobUuid: string }) {
   const { loading, name } = useInstructor(app.instructor_uuid);
   const displayName = name ?? 'Applicant';
-  const stage = stageOf(app.status);
+  const nextStep = nextStepFor(app.status);
   const href = `/dashboard/organisation/job-matches/${app.instructor_uuid}?job=${jobUuid}&application=${app.uuid}`;
   return (
     <div className='flex flex-wrap items-center gap-3 rounded-md border p-2.5'>
@@ -778,52 +530,16 @@ function CandidateRow({
           {app.approved_rate != null && ` · KES ${Number(app.approved_rate).toLocaleString()}/hr`}
         </p>
       </div>
-      <Badge
-        variant='outline'
-        className={cn(
-          'text-xs',
-          stageStyles[stage] ?? 'border-destructive/30 bg-destructive/10 text-destructive'
-        )}
-      >
-        {stage}
+      <Badge variant='outline' className={cn('text-xs', badgeStyleFor(app.status))}>
+        {statusLabel(app.status)}
       </Badge>
-      <DropdownMenu>
-        <DropdownMenuTrigger asChild>
-          <Button size='sm' variant='ghost' className='h-8' disabled={moving}>
-            Move →
-          </Button>
-        </DropdownMenuTrigger>
-        <DropdownMenuContent align='end' className='w-48'>
-          <DropdownMenuLabel>Move to stage</DropdownMenuLabel>
-          <DropdownMenuSeparator />
-          {STAGES.filter(s => s !== 'Applied').map(s => (
-            <DropdownMenuCheckboxItem
-              key={s}
-              checked={stage === s}
-              onCheckedChange={() => onMove(app, s)}
-            >
-              {s}
-            </DropdownMenuCheckboxItem>
-          ))}
-        </DropdownMenuContent>
-      </DropdownMenu>
-      <DropdownMenu>
-        <DropdownMenuTrigger asChild>
-          <Button size='icon' variant='ghost' className='h-8 w-8'>
-            <MoreHorizontal className='h-4 w-4' />
-          </Button>
-        </DropdownMenuTrigger>
-        <DropdownMenuContent align='end'>
-          <DropdownMenuLabel>{displayName}</DropdownMenuLabel>
-          <DropdownMenuSeparator />
-          <DropdownMenuItem asChild>
-            <Link href={href}>View profile</Link>
-          </DropdownMenuItem>
-          <DropdownMenuItem className='text-destructive' onClick={() => onReject(app)}>
-            Reject
-          </DropdownMenuItem>
-        </DropdownMenuContent>
-      </DropdownMenu>
+      {/* Every decision is taken on the applicant's own page, so the row only points at it. */}
+      <Button size='sm' variant='ghost' className='h-8' asChild>
+        <Link href={href}>
+          {nextStep ? `Review · ${nextStep.label}` : 'Open applicant'}
+          <ArrowRight className='ml-2 h-3.5 w-3.5' />
+        </Link>
+      </Button>
     </div>
   );
 }

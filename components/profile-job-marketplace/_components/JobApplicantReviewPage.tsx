@@ -1,7 +1,16 @@
 'use client';
 
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { ArrowLeft, BriefcaseBusiness, CheckCircle2, TriangleAlert, XCircle } from 'lucide-react';
+import {
+  ArrowLeft,
+  ArrowRight,
+  BriefcaseBusiness,
+  Check,
+  TriangleAlert,
+  UserCheck,
+  XCircle,
+} from 'lucide-react';
+import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useMemo, useState } from 'react';
 import { toast } from 'sonner';
@@ -16,36 +25,143 @@ import { type RateBasis, rateBasisShort, rateBasisUnit } from '@/components/clas
 import { InstructorReviewProfile } from '@/components/instructor-review/InstructorReviewProfile';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Skeleton } from '@/components/ui/skeleton';
 import Spinner from '@/components/ui/spinner';
 import { Textarea } from '@/components/ui/textarea';
 import { useInstructorsByIds } from '@/hooks/use-batched-lookups';
+import { getErrorMessage } from '@/lib/error-utils';
 import { formatCurrency } from '@/lib/format-currency';
+import { cn } from '@/lib/utils';
+import type { ClassMarketplaceJobDecisionRequest } from '@/services/client';
 import {
-  assignInstructorMutation,
   getJobOptions,
   listJobApplicationsOptions,
   reviewApplicationMutation,
 } from '@/services/client/@tanstack/react-query.gen';
 import { useUserDomain } from '@/src/features/dashboard/context/user-domain-context';
-import { invalidateJobApplicationWorkflowQueries } from '@/src/features/dashboard/workflow-query-invalidation';
 import { roleScopedDashboardPath } from '@/src/features/dashboard/lib/active-domain-storage';
-import { canRejectApplication } from '../application-status';
+import { invalidateJobApplicationWorkflowQueries } from '@/src/features/dashboard/workflow-query-invalidation';
+import {
+  canRejectApplication,
+  HIRING_STAGES,
+  isClassCreatedStatus,
+  isExitStatus,
+  nextStepFor,
+  stageIndexOf,
+  statusLabel,
+} from '../application-status';
 
-function formatLabel(value?: string | null) {
-  if (!value) return 'Not provided';
-  return value
-    .replace(/_/g, ' ')
-    .toLowerCase()
-    .replace(/(^|\s)\S/g, letter => letter.toUpperCase());
-}
+const HIRED_INDEX = HIRING_STAGES.length - 1;
+
+/** The endpoint is multiplexed on `action`, so each confirmation names the step actually taken. */
+const DECISION_MESSAGES: Record<string, string> = {
+  shortlist: 'Shortlisted. The applicant has been notified.',
+  interview: 'Moved to interview. The applicant has the date.',
+  offer: 'Offer made. The applicant has been notified.',
+  hire: 'Hired. They have joined your organisation and this job is ready for its class.',
+  reject: 'Application rejected. The applicant has been notified.',
+};
+
+/** Every decision endpoint refuses a job that has left OPEN, so each closed state says so plainly. */
+const JOB_CLOSED_REASONS: Record<string, string> = {
+  awaiting_class:
+    'Another applicant was hired for this job, so no decision can be taken here. This application closes as Not selected once the class is created.',
+  filled:
+    'This job’s class has been created with another applicant, so this application can no longer be actioned.',
+  cancelled: 'This job was cancelled, so no decision can be taken on this application.',
+  expired: 'This job expired, so no decision can be taken on this application.',
+};
+
+const JOB_CLOSED_FALLBACK =
+  'This job is no longer open, so no decision can be taken on this application.';
 
 function formatDate(value?: string | Date | null) {
   if (!value) return 'Not provided';
   const date = value instanceof Date ? value : new Date(value);
   if (Number.isNaN(date.getTime())) return 'Not provided';
   return new Intl.DateTimeFormat('en-US', { dateStyle: 'medium', timeStyle: 'short' }).format(date);
+}
+
+function toDateTimeInputValue(value?: string | Date | null) {
+  if (!value) return '';
+  const date = value instanceof Date ? value : new Date(value);
+  if (Number.isNaN(date.getTime())) return '';
+
+  const pad = (part: number) => String(part).padStart(2, '0');
+  return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}T${pad(
+    date.getHours()
+  )}:${pad(date.getMinutes())}`;
+}
+
+/** The backend stores interviews as a zone-free LocalDateTime, so the offset is stripped here. */
+function toUtcLocalDateTime(value: string) {
+  if (!value) return null;
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return null;
+  return date.toISOString().slice(0, 19);
+}
+
+/**
+ * The whole funnel, always on screen: stages behind this applicant, the one they are in, the ones
+ * still to come. Hiring is last — creating the class is not a stage and never appears here.
+ */
+function ApplicationStageRail({ status }: { status?: string | null }) {
+  const closed = isExitStatus(status);
+  // A created class means the funnel was walked to its end, so every stage sits behind it.
+  const reached = isClassCreatedStatus(status) ? HIRED_INDEX : stageIndexOf(status);
+  const tone = closed ? 'destructive' : reached === HIRED_INDEX ? 'success' : 'info';
+
+  return (
+    <SectionCard
+      title='Where this applicant stands'
+      description={
+        closed
+          ? `This application closed as ${statusLabel(status)}, so no stage remains.`
+          : 'Hiring is the last decision. The class is created after it, and that is what puts the instructor on the job.'
+      }
+      actions={<StatusBadge status={status ?? undefined} tone={tone} label={statusLabel(status)} />}
+    >
+      <ol className='flex flex-wrap items-center gap-y-3'>
+        {HIRING_STAGES.map((stage, index) => {
+          const behind = !closed && index < reached;
+          const here = !closed && index === reached;
+          return (
+            <li key={stage} className='flex items-center'>
+              <span
+                className={cn(
+                  'flex size-6 shrink-0 items-center justify-center rounded-full border text-xs font-medium',
+                  behind
+                    ? 'border-success/40 bg-success/10 text-success'
+                    : here
+                      ? 'border-primary bg-primary text-primary-foreground'
+                      : 'border-border/70 text-muted-foreground'
+                )}
+                aria-current={here ? 'step' : undefined}
+              >
+                {behind ? <Check className='size-3.5' /> : index + 1}
+              </span>
+              <span
+                className={cn(
+                  'ml-2 text-sm',
+                  here ? 'text-foreground font-medium' : 'text-muted-foreground'
+                )}
+              >
+                {statusLabel(stage)}
+              </span>
+              {index < HIRED_INDEX ? (
+                <span
+                  aria-hidden
+                  className={cn('mx-3 h-px w-8', behind ? 'bg-success/50' : 'bg-border')}
+                />
+              ) : null}
+            </li>
+          );
+        })}
+      </ol>
+    </SectionCard>
+  );
 }
 
 export function JobApplicantReviewPage({
@@ -59,6 +175,8 @@ export function JobApplicantReviewPage({
   const { activeDomain } = useUserDomain();
   const queryClient = useQueryClient();
   const [reviewNotes, setReviewNotes] = useState('');
+  const [interviewAt, setInterviewAt] = useState('');
+  const [transitionError, setTransitionError] = useState<string | null>(null);
 
   const jobQuery = useQuery({
     ...getJobOptions({ path: { jobUuid } }),
@@ -84,54 +202,81 @@ export function JobApplicantReviewPage({
   const { instructorMap } = useInstructorsByIds(instructorIds);
   const instructor = instructorUuid ? (instructorMap[instructorUuid] ?? null) : null;
 
-  const invalidate = async () => {
-    await invalidateJobApplicationWorkflowQueries(queryClient);
-  };
+  const status = application?.status as string | undefined;
+  // The one move this applicant can make. Never two, never one that skips a stage.
+  const nextStep = nextStepFor(status);
+  const isHired = stageIndexOf(status) === HIRED_INDEX;
+  const classCreated = isClassCreatedStatus(status);
+  const canReject = canRejectApplication(status);
+
+  // A hire elsewhere — or a cancellation — takes the job out of OPEN and the server then refuses
+  // every decision, so this applicant's funnel ends even while their own status names a live stage.
+  const jobStatus = job?.status as string | undefined;
+  const jobClosedToDecisions = Boolean(jobStatus) && jobStatus !== 'open';
+  const decisionsClosed = Boolean(nextStep) && jobClosedToDecisions;
+  const jobClosedReason = JOB_CLOSED_REASONS[jobStatus ?? ''] ?? JOB_CLOSED_FALLBACK;
+  const forwardStep = decisionsClosed ? null : nextStep;
+  const showReject = canReject && !decisionsClosed;
+  const needsInterviewAt = forwardStep?.action === 'interview';
+
+  const createClassHref = roleScopedDashboardPath(
+    activeDomain,
+    `/dashboard/opportunities/${jobUuid}/create-class`
+  );
+  const classesHref = roleScopedDashboardPath(activeDomain, '/dashboard/classes');
 
   const reviewMutation = useMutation({
     ...reviewApplicationMutation(),
     onSuccess: async (_response, variables) => {
-      toast.success(
-        variables?.query?.action === 'APPROVE'
-          ? 'Approved. Nobody is hired yet — choose Hire for this class to go on.'
-          : 'Application rejected. The applicant has been notified.'
-      );
+      const action = String(variables?.query?.action ?? '');
+      toast.success(DECISION_MESSAGES[action] ?? 'Applicant updated.');
       setReviewNotes('');
-      await invalidate();
+      setInterviewAt('');
+      setTransitionError(null);
+      await invalidateJobApplicationWorkflowQueries(queryClient);
     },
     onError: error => {
-      toast.error(error instanceof Error ? error.message : 'Unable to review this application.');
+      // A refused skip names both stages, so the server's own words stand in for a generic toast.
+      const message = getErrorMessage(error, 'Unable to move this application.');
+      setTransitionError(message);
+      toast.error(message);
     },
   });
 
-  const assignMutation = useMutation({
-    ...assignInstructorMutation(),
-    onSuccess: async () => {
-      toast.success('Hired. Create the class to confirm the dates.');
-      await invalidate();
-      router.push(
-        roleScopedDashboardPath(activeDomain, `/dashboard/opportunities/${jobUuid}/create-class`)
-      );
-    },
-    onError: error => {
-      toast.error(error instanceof Error ? error.message : 'Unable to hire this instructor.');
-    },
-  });
+  const buildBody = (scheduledInterviewAt?: string | null) => {
+    const notes = reviewNotes.trim();
+    if (!notes && !scheduledInterviewAt) return undefined;
+    // The generated body types interview_at as a Date; the backend wants the zone-free string.
+    return {
+      ...(notes ? { review_notes: notes } : {}),
+      ...(scheduledInterviewAt ? { interview_at: scheduledInterviewAt as unknown as Date } : {}),
+    } satisfies ClassMarketplaceJobDecisionRequest;
+  };
 
-  const handleReview = (action: 'APPROVE' | 'REJECT') => {
-    if (!application?.uuid) return;
+  const submitStep = () => {
+    if (!application?.uuid || !forwardStep) return;
+
+    const scheduledInterviewAt = needsInterviewAt ? toUtcLocalDateTime(interviewAt) : null;
+    if (needsInterviewAt && !scheduledInterviewAt) {
+      setTransitionError('Set the interview date and time before moving this applicant on.');
+      return;
+    }
+
+    setTransitionError(null);
     reviewMutation.mutate({
       path: { jobUuid, applicationUuid: application.uuid },
-      query: { action },
-      body: reviewNotes.trim() ? { review_notes: reviewNotes.trim() } : undefined,
+      query: { action: forwardStep.action },
+      body: buildBody(scheduledInterviewAt),
     });
   };
 
-  const handleAssign = () => {
+  const submitRejection = () => {
     if (!application?.uuid) return;
-    assignMutation.mutate({
-      path: { jobUuid },
-      body: { application_uuid: application.uuid },
+    setTransitionError(null);
+    reviewMutation.mutate({
+      path: { jobUuid, applicationUuid: application.uuid },
+      query: { action: 'reject' },
+      body: buildBody(),
     });
   };
 
@@ -139,15 +284,7 @@ export function JobApplicantReviewPage({
     (jobQuery.isLoading && !jobQuery.data) ||
     (applicationsQuery.isLoading && !applicationsQuery.data);
   const notApprovedToTrain = application?.training_approved === false;
-  const canReview = application?.status === 'pending';
-  // Approved, and nothing more. The hire is the assign call, which is what creates the affiliation
-  // and unlocks the class, so the page has to stop reading approval as the decision.
-  const canAssign = application?.status === 'approved';
-  // Turning a candidate down outlives the approve step: the backend accepts REJECT on anything
-  // still live, and it is the only thing that hands an approved-but-unwanted instructor their
-  // held dates back while the job stays open.
-  const canReject = canRejectApplication(application?.status);
-  const showApprovedNotHiredBanner = canAssign && (job?.status as string | undefined) === 'open';
+  const forwardBlocked = forwardStep?.action === 'hire' && notApprovedToTrain;
   const payBelowApprovedRate =
     typeof job?.instructor_pay === 'number' &&
     typeof application?.approved_rate === 'number' &&
@@ -171,14 +308,19 @@ export function JobApplicantReviewPage({
           description={`Scrutinise this instructor's full profile before deciding on their application${job?.title ? ` for “${job.title}”` : ''}.`}
         />
 
-        {showApprovedNotHiredBanner ? (
-          <div className='border-warning/60 bg-warning/10 flex flex-wrap items-center gap-3 rounded-md border p-4'>
-            <TriangleAlert className='text-warning size-5 shrink-0' />
+        {application ? <ApplicationStageRail status={status} /> : null}
+
+        {isHired ? (
+          <div className='border-success/50 bg-success/10 flex flex-wrap items-start gap-3 rounded-md border p-4'>
+            <UserCheck className='text-success mt-0.5 size-5 shrink-0' />
             <div className='min-w-0 text-sm'>
-              <div className='text-foreground font-medium'>Approved, not hired</div>
+              <div className='text-foreground font-medium'>
+                Hired — {instructor?.full_name ?? 'this instructor'} is now a member of your
+                organisation
+              </div>
               <p className='text-muted-foreground'>
-                This job is still open, no class exists, and the instructor has not joined your
-                organisation. Choose Hire for this class below.
+                Nothing is left to assign. Creating this job’s class is what puts them on it, built
+                from the sessions the job already holds.
               </p>
             </div>
           </div>
@@ -233,11 +375,9 @@ export function JobApplicantReviewPage({
                 <div className='space-y-3 text-sm'>
                   <div className='flex flex-wrap items-center gap-2'>
                     <StatusBadge
-                      status={application.status}
-                      tone={canAssign ? 'warning' : undefined}
-                      label={
-                        canAssign ? 'Approved — not yet hired' : formatLabel(application.status)
-                      }
+                      status={status}
+                      tone={isHired || classCreated ? 'success' : undefined}
+                      label={statusLabel(status)}
                     />
                     {application.instructor_admin_verified ? (
                       <StatusBadge status='verified' label='Verified' />
@@ -250,8 +390,7 @@ export function JobApplicantReviewPage({
                     <div className='border-warning/60 bg-warning/10 text-foreground flex items-center gap-2 rounded-md border p-3'>
                       <TriangleAlert className='text-warning size-4 shrink-0' />
                       <span>
-                        Not approved to train this course or program yet — approval and hiring are
-                        blocked.
+                        Not approved to train this course or program yet — hiring is blocked.
                       </span>
                     </div>
                   ) : null}
@@ -262,7 +401,8 @@ export function JobApplicantReviewPage({
                       <span>
                         This job pays {formatCurrency(job?.instructor_pay)} per {basisUnit}, below
                         the {formatCurrency(application.approved_rate)} on this instructor’s rate
-                        card. Hiring will be refused until you raise the instructor pay.
+                        card. The hire will go through, but creating this job’s class will be
+                        refused until you raise the instructor pay.
                       </span>
                     </div>
                   ) : null}
@@ -273,6 +413,15 @@ export function JobApplicantReviewPage({
                     </div>
                     <p className='mt-0.5'>{formatDate(application.created_date)}</p>
                   </div>
+
+                  {application.interview_at ? (
+                    <div>
+                      <div className='text-muted-foreground text-xs tracking-wide uppercase'>
+                        Interview
+                      </div>
+                      <p className='mt-0.5'>{formatDate(application.interview_at)}</p>
+                    </div>
+                  ) : null}
 
                   {application.reviewed_at ? (
                     <div>
@@ -310,65 +459,113 @@ export function JobApplicantReviewPage({
 
               <SectionCard title='Decision'>
                 <div className='space-y-3'>
-                  <div className='space-y-2'>
-                    <Label htmlFor='review-notes' className='text-sm font-medium'>
-                      Review notes
-                    </Label>
-                    <Textarea
-                      id='review-notes'
-                      value={reviewNotes}
-                      onChange={event => setReviewNotes(event.target.value)}
-                      placeholder='Add optional notes for this decision...'
-                      className='min-h-24'
-                      disabled={!canReject}
-                    />
-                  </div>
+                  {forwardStep || showReject ? (
+                    <div className='space-y-2'>
+                      <Label htmlFor='review-notes' className='text-sm font-medium'>
+                        Review notes
+                      </Label>
+                      <Textarea
+                        id='review-notes'
+                        value={reviewNotes}
+                        onChange={event => setReviewNotes(event.target.value)}
+                        placeholder='Add optional notes for this decision...'
+                        className='min-h-24'
+                      />
+                    </div>
+                  ) : null}
+
+                  {needsInterviewAt ? (
+                    <div className='space-y-2'>
+                      <Label htmlFor='interview-at' className='text-sm font-medium'>
+                        Interview date and time
+                      </Label>
+                      <Input
+                        id='interview-at'
+                        type='datetime-local'
+                        value={interviewAt}
+                        min={toDateTimeInputValue(new Date())}
+                        onChange={event => setInterviewAt(event.target.value)}
+                      />
+                    </div>
+                  ) : null}
+
+                  {transitionError ? (
+                    <div
+                      role='alert'
+                      className='border-destructive/50 bg-destructive/10 text-foreground flex items-start gap-2 rounded-md border p-3 text-sm'
+                    >
+                      <TriangleAlert className='text-destructive mt-0.5 size-4 shrink-0' />
+                      <span>{transitionError}</span>
+                    </div>
+                  ) : null}
+
+                  {decisionsClosed ? (
+                    <div className='border-border bg-muted/40 text-foreground flex items-start gap-2 rounded-md border p-3 text-sm'>
+                      <TriangleAlert className='text-muted-foreground mt-0.5 size-4 shrink-0' />
+                      <span>{jobClosedReason}</span>
+                    </div>
+                  ) : null}
 
                   <div className='flex flex-wrap gap-2'>
-                    {canAssign ? null : (
+                    {forwardStep ? (
                       <Button
-                        onClick={() => handleReview('APPROVE')}
-                        disabled={!canReview || notApprovedToTrain || reviewMutation.isPending}
+                        onClick={submitStep}
+                        disabled={forwardBlocked || reviewMutation.isPending}
                       >
                         {reviewMutation.isPending ? (
                           <Spinner className='mr-2 size-4' />
                         ) : (
-                          <CheckCircle2 className='mr-2 size-4' />
+                          <ArrowRight className='mr-2 size-4' />
                         )}
-                        Approve
+                        {forwardStep.label}
                       </Button>
-                    )}
-                    <Button
-                      variant='destructive'
-                      onClick={() => handleReview('REJECT')}
-                      disabled={!canReject || reviewMutation.isPending}
-                    >
-                      <XCircle className='mr-2 size-4' />
-                      Reject
-                    </Button>
-                    <Button
-                      onClick={handleAssign}
-                      disabled={!canAssign || notApprovedToTrain || assignMutation.isPending}
-                    >
-                      {assignMutation.isPending ? (
-                        <Spinner className='mr-2 size-4' />
-                      ) : (
-                        <BriefcaseBusiness className='mr-2 size-4' />
-                      )}
-                      Hire for this class
-                    </Button>
+                    ) : isHired ? (
+                      <Button asChild>
+                        <Link href={createClassHref}>
+                          <BriefcaseBusiness className='mr-2 size-4' />
+                          Create the class
+                        </Link>
+                      </Button>
+                    ) : classCreated ? (
+                      <Button asChild variant='outline'>
+                        <Link href={classesHref}>
+                          <BriefcaseBusiness className='mr-2 size-4' />
+                          View the class
+                        </Link>
+                      </Button>
+                    ) : null}
+
+                    {showReject ? (
+                      <Button
+                        variant='outline'
+                        className='text-destructive'
+                        onClick={submitRejection}
+                        disabled={reviewMutation.isPending}
+                      >
+                        <XCircle className='mr-2 size-4' />
+                        Reject
+                      </Button>
+                    ) : null}
                   </div>
 
-                  {canAssign ? (
+                  {forwardStep ? (
                     <p className='text-muted-foreground text-xs'>
-                      Hiring assigns the class, adds this instructor to your organisation, and takes
-                      you to the class you still have to create.
+                      {forwardStep.label} moves this applicant to {statusLabel(forwardStep.leadsTo)}
+                      . No stage can be skipped, so this is the only way forward.
                     </p>
-                  ) : null}
-
-                  {canReject ? null : (
+                  ) : isHired ? (
                     <p className='text-muted-foreground text-xs'>
-                      This application has already been finalised and can no longer be actioned.
+                      The funnel ends here. Creating the class assigns them, converts the times held
+                      for this job and closes the other applicants out.
+                    </p>
+                  ) : classCreated ? (
+                    <p className='text-muted-foreground text-xs'>
+                      This job’s class has been created and this instructor is on it.
+                    </p>
+                  ) : decisionsClosed ? null : (
+                    <p className='text-muted-foreground text-xs'>
+                      This application closed as {statusLabel(status)} and can no longer be
+                      actioned.
                     </p>
                   )}
                 </div>

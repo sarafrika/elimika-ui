@@ -8,11 +8,12 @@ import {
   Lock,
   MapPin,
   ShieldCheck,
+  TriangleAlert,
   UserRound,
 } from 'lucide-react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { useMemo } from 'react';
+import { useMemo, useState } from 'react';
 import { toast } from 'sonner';
 
 import {
@@ -35,12 +36,14 @@ import {
   useProgramsByIds,
 } from '@/hooks/use-batched-lookups';
 import { formatDate, formatDateTimeWithZone } from '@/lib/date';
+import { getErrorMessage } from '@/lib/error-utils';
 import { formatCurrency } from '@/lib/format-currency';
 import { cn } from '@/lib/utils';
 import type { ClassMarketplaceJob } from '@/services/client';
 import {
   createClassForJobMutation,
   getJobOptions,
+  listJobApplicationsOptions,
 } from '@/services/client/@tanstack/react-query.gen';
 import { useUserDomain } from '@/src/features/dashboard/context/user-domain-context';
 import { roleScopedDashboardPath } from '@/src/features/dashboard/lib/active-domain-storage';
@@ -63,21 +66,34 @@ function shortId(value?: string | null) {
 
 function labelFor(value?: string | null) {
   if (!value) return '—';
-  return value
-    .replace(/_/g, ' ')
-    .replace(/\b\w/g, character => character.toUpperCase());
+  return value.replace(/_/g, ' ').replace(/\b\w/g, character => character.toUpperCase());
 }
 
 export function OrganisationCreateClassFromJobPage({ jobUuid }: CreateClassFromJobPageProps) {
   const { activeDomain } = useUserDomain();
   const router = useRouter();
   const queryClient = useQueryClient();
+  const [createError, setCreateError] = useState<string | null>(null);
 
   const jobOptions = { path: { jobUuid } };
   const jobQuery = useQuery({ ...getJobOptions(jobOptions), enabled: Boolean(jobUuid) });
   const job = (jobQuery.data?.data ?? null) as JobWithPricing | null;
 
-  const instructorUuid = job?.assigned_instructor_uuid ?? null;
+  const applicationsQuery = useQuery({
+    ...listJobApplicationsOptions({
+      path: { jobUuid },
+      query: { pageable: { page: 0, size: 100 } },
+    }),
+    enabled: Boolean(jobUuid),
+  });
+  // The job only names its instructor once the class exists, so before that the hire itself —
+  // the application the job stamped when it was hired — is the one reliable source.
+  const hiredApplication = (applicationsQuery.data?.data?.content ?? []).find(
+    application =>
+      application.uuid === job?.assigned_application_uuid ||
+      (application.status as string | undefined) === 'hired'
+  );
+  const instructorUuid = job?.assigned_instructor_uuid ?? hiredApplication?.instructor_uuid ?? null;
   const { instructorMap, isLoading: isInstructorLoading } = useInstructorsByIds(
     instructorUuid ? [instructorUuid] : []
   );
@@ -108,7 +124,9 @@ export function OrganisationCreateClassFromJobPage({ jobUuid }: CreateClassFromJ
   const createClass = useMutation({
     ...createClassForJobMutation(),
     onSuccess: async response => {
-      toast.success('Class created. The reserved venue and equipment are now booked.');
+      toast.success(
+        'Class created. The hired instructor is on it and the reserved venue and equipment are booked.'
+      );
       await invalidateJobApplicationWorkflowQueries(queryClient);
       const classUuid = response?.data?.uuid;
       router.push(
@@ -119,11 +137,13 @@ export function OrganisationCreateClassFromJobPage({ jobUuid }: CreateClassFromJ
       );
     },
     onError: error => {
-      toast.error(
-        error instanceof Error
-          ? error.message
-          : 'Unable to create the class for this job. The reserved times may no longer be free.'
+      // The server explains a refusal precisely — a stale hire, a lost hold — so it speaks here.
+      const message = getErrorMessage(
+        error,
+        'Unable to create the class for this job. The reserved times may no longer be free.'
       );
+      setCreateError(message);
+      toast.error(message);
     },
   });
 
@@ -146,8 +166,12 @@ export function OrganisationCreateClassFromJobPage({ jobUuid }: CreateClassFromJ
         </Button>
 
         <AdminPageHeader
-          title={jobQuery.isLoading && !job ? 'Create the class' : `Create the class for ${job?.title ?? 'this job'}`}
-          description='The offering, schedule, venue and pricing were fixed when this job was posted. Creating the class turns the reserved times into confirmed bookings.'
+          title={
+            jobQuery.isLoading && !job
+              ? 'Create the class'
+              : `Create the class for ${job?.title ?? 'this job'}`
+          }
+          description='The offering, schedule, venue and pricing were fixed when this job was posted. Creating the class is what puts the hired instructor on it and turns the reserved times into confirmed bookings.'
         />
 
         <AsyncSection
@@ -170,7 +194,7 @@ export function OrganisationCreateClassFromJobPage({ jobUuid }: CreateClassFromJ
             <EmptyState
               icon={ShieldCheck}
               title='This job already has its class'
-              description='The class was created and the reserved venue and equipment are booked.'
+              description='The class was created, the hired instructor is on it, and the reserved venue and equipment are booked.'
               action={
                 <Button asChild variant='outline'>
                   <Link href={roleScopedDashboardPath(activeDomain, '/dashboard/classes')}>
@@ -183,11 +207,11 @@ export function OrganisationCreateClassFromJobPage({ jobUuid }: CreateClassFromJ
           ) : !isReady ? (
             <EmptyState
               icon={UserRound}
-              title='Hire an instructor first'
-              description='A class can only be created once you have hired an approved applicant for this job.'
+              title='Hire somebody first'
+              description='Nobody has been hired for this job yet. Open an applicant’s profile and hire them — the hire makes them a member of your organisation and leaves this job ready for its class.'
               action={
                 <Button asChild variant='outline'>
-                  <Link href={applicationsHref}>Review applicants</Link>
+                  <Link href={applicationsHref}>Open the applicants</Link>
                 </Button>
               }
               variant='card'
@@ -197,7 +221,7 @@ export function OrganisationCreateClassFromJobPage({ jobUuid }: CreateClassFromJ
               <div className='space-y-4'>
                 <SectionCard
                   title='Hired instructor'
-                  description='Hired from the approved applicants for this job.'
+                  description='Hired for this job and already a member of your organisation. Creating the class is what puts them on it.'
                 >
                   <div className='border-border/60 bg-muted/20 flex flex-wrap items-center gap-3 rounded-md border p-4'>
                     <div className='bg-primary/10 text-primary flex size-10 items-center justify-center rounded-full'>
@@ -206,7 +230,7 @@ export function OrganisationCreateClassFromJobPage({ jobUuid }: CreateClassFromJ
                     <div className='min-w-0'>
                       <div className='text-foreground truncate text-sm font-medium'>
                         {instructor?.full_name ??
-                          (isInstructorLoading
+                          (isInstructorLoading || applicationsQuery.isLoading
                             ? 'Loading instructor profile…'
                             : `Instructor ${shortId(instructorUuid)}`)}
                       </div>
@@ -215,7 +239,7 @@ export function OrganisationCreateClassFromJobPage({ jobUuid }: CreateClassFromJ
                       </div>
                     </div>
                     <div className='ml-auto'>
-                      <StatusBadge status='assigned' label='Hired' />
+                      <StatusBadge status='hired' tone='success' label='Hired — a member' />
                     </div>
                   </div>
                 </SectionCard>
@@ -322,14 +346,26 @@ export function OrganisationCreateClassFromJobPage({ jobUuid }: CreateClassFromJ
 
                 <SectionCard title='Create the class' className='h-fit'>
                   <p className='text-muted-foreground text-sm'>
-                    The venue and equipment held for this job are still only reserved. Creating the
-                    class confirms those bookings and publishes the sessions to the instructor’s
-                    timetable.
+                    This is the step that assigns the instructor you hired. It confirms the venue
+                    and equipment still only reserved for this job, publishes the sessions to the
+                    instructor’s timetable and closes the other applicants out.
                   </p>
+                  {createError ? (
+                    <div
+                      role='alert'
+                      className='border-destructive/50 bg-destructive/10 text-foreground mt-3 flex items-start gap-2 rounded-md border p-3 text-sm'
+                    >
+                      <TriangleAlert className='text-destructive mt-0.5 size-4 shrink-0' />
+                      <span>{createError}</span>
+                    </div>
+                  ) : null}
                   <Button
                     className='mt-4 w-full'
                     disabled={createClass.isPending}
-                    onClick={() => createClass.mutate({ path: { jobUuid } })}
+                    onClick={() => {
+                      setCreateError(null);
+                      createClass.mutate({ path: { jobUuid } });
+                    }}
                   >
                     {createClass.isPending ? <Spinner className='mr-2 size-4' /> : null}
                     Create class
@@ -369,7 +405,9 @@ function MoneyRow({
           emphasis ? 'text-lg font-semibold' : 'text-base font-medium'
         )}
       >
-        {value === null ? 'Not specified' : `${formatCurrency(value)} / ${rateBasisShort(rateBasis)}`}
+        {value === null
+          ? 'Not specified'
+          : `${formatCurrency(value)} / ${rateBasisShort(rateBasis)}`}
       </div>
     </div>
   );

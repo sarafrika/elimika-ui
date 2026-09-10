@@ -339,7 +339,6 @@ import {
   uploadJobThumbnail,
   createClassForJob,
   cancelJob,
-  assignInstructor,
   listJobApplications,
   applyToJob,
   reviewApplication,
@@ -1522,9 +1521,6 @@ import type {
   CancelJobData,
   CancelJobError,
   CancelJobResponse,
-  AssignInstructorData,
-  AssignInstructorError,
-  AssignInstructorResponse,
   ListJobApplicationsData,
   ListJobApplicationsError,
   ListJobApplicationsResponse,
@@ -16081,7 +16077,8 @@ export const createClassForJobQueryKey = (options: Options<CreateClassForJobData
   createQueryKey('createClassForJob', options);
 
 /**
- * Create the class for a job whose instructor has been assigned
+ * Create the class for a job whose applicant has been hired
+ * Creating the class is what assigns the hired instructor: it stamps their application assigned, converts their time holds and fills the job. There is no separate assign call.
  */
 export const createClassForJobOptions = (options: Options<CreateClassForJobData>) => {
   return queryOptions({
@@ -16099,7 +16096,8 @@ export const createClassForJobOptions = (options: Options<CreateClassForJobData>
 };
 
 /**
- * Create the class for a job whose instructor has been assigned
+ * Create the class for a job whose applicant has been hired
+ * Creating the class is what assigns the hired instructor: it stamps their application assigned, converts their time holds and fills the job. There is no separate assign call.
  */
 export const createClassForJobMutation = (
   options?: Partial<Options<CreateClassForJobData>>
@@ -16159,54 +16157,6 @@ export const cancelJobMutation = (
   > = {
     mutationFn: async localOptions => {
       const { data } = await cancelJob({
-        ...options,
-        ...localOptions,
-        throwOnError: true,
-      });
-      return data;
-    },
-  };
-  return mutationOptions;
-};
-
-export const assignInstructorQueryKey = (options: Options<AssignInstructorData>) =>
-  createQueryKey('assignInstructor', options);
-
-/**
- * Assign an approved instructor and create the actual class
- */
-export const assignInstructorOptions = (options: Options<AssignInstructorData>) => {
-  return queryOptions({
-    queryFn: async ({ queryKey, signal }) => {
-      const { data } = await assignInstructor({
-        ...options,
-        ...queryKey[0],
-        signal,
-        throwOnError: true,
-      });
-      return data;
-    },
-    queryKey: assignInstructorQueryKey(options),
-  });
-};
-
-/**
- * Assign an approved instructor and create the actual class
- */
-export const assignInstructorMutation = (
-  options?: Partial<Options<AssignInstructorData>>
-): UseMutationOptions<
-  AssignInstructorResponse,
-  AssignInstructorError,
-  Options<AssignInstructorData>
-> => {
-  const mutationOptions: UseMutationOptions<
-    AssignInstructorResponse,
-    AssignInstructorError,
-    Options<AssignInstructorData>
-  > = {
-    mutationFn: async localOptions => {
-      const { data } = await assignInstructor({
         ...options,
         ...localOptions,
         throwOnError: true,
@@ -16334,7 +16284,8 @@ export const reviewApplicationQueryKey = (options: Options<ReviewApplicationData
   createQueryKey('reviewApplication', options);
 
 /**
- * Approve or reject a marketplace class job application
+ * Move a marketplace class job application through the funnel
+ * Stages run applied -> shortlisted -> interviewing -> offered -> hired and no stage may be skipped; hire is the last decision, after which the job's class can be created
  */
 export const reviewApplicationOptions = (options: Options<ReviewApplicationData>) => {
   return queryOptions({
@@ -16352,7 +16303,8 @@ export const reviewApplicationOptions = (options: Options<ReviewApplicationData>
 };
 
 /**
- * Approve or reject a marketplace class job application
+ * Move a marketplace class job application through the funnel
+ * Stages run applied -> shortlisted -> interviewing -> offered -> hired and no stage may be skipped; hire is the last decision, after which the job's class can be created
  */
 export const reviewApplicationMutation = (
   options?: Partial<Options<ReviewApplicationData>>
