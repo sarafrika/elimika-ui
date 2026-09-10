@@ -23,26 +23,93 @@ import { GraduationCap, Search } from 'lucide-react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useDeferredValue, useMemo, useState } from 'react';
+import { useClassesEnrollmentsByIds, useInstructorClasses, useInstructorRatingSummaries } from '../../../../hooks/use-batched-lookups';
 import { useCreatorInstructors } from './_components/useCreatorInstructors';
 
 export default function InstructorsPage() {
-  const { instructors, courseCount, applicationsQuery, isLoading, hasProfile } =
-    useCreatorInstructors();
   const router = useRouter();
   const [search, setSearch] = useState('');
   const searchTerm = useDeferredValue(search).trim().toLowerCase();
+
+  const {
+    instructors,
+    courseCount,
+    applicationsQuery,
+    isLoading,
+    hasProfile,
+  } = useCreatorInstructors();
+
+  const instructorUuids =
+    instructors?.map((instructor) => instructor.uuid) ?? [];
+
+  const { instructorRatingSummariesMap, } = useInstructorRatingSummaries(instructorUuids);
+  const { instructorClassesMap, } = useInstructorClasses(instructorUuids);
+
+  // Get all class UUIDs across all instructors
+  const classUuids = useMemo(
+    () =>
+      Object.values(instructorClassesMap ?? {})
+        .flatMap((classes) =>
+          // @ts-ignore
+          classes.map((item) => item?.class_definition?.uuid).filter(Boolean)
+        ),
+    [instructorClassesMap]
+  );
+
+  const { classEnrollmentsMap, } = useClassesEnrollmentsByIds(classUuids);
+
   const filtered = useMemo(
     () =>
       instructors
-        .filter(instructor =>
+        .filter((instructor) =>
           [
             instructor.name,
             instructor.profile?.professional_headline,
-            ...instructor.courses.map(course => course.name),
-          ].some(value => value?.toLowerCase().includes(searchTerm))
+            ...instructor.courses.map((course) => course.name),
+          ].some((value) =>
+            value?.toLowerCase().includes(searchTerm)
+          )
         )
+        .map((instructor) => {
+          const classes =
+            instructorClassesMap?.[instructor.uuid]?.map(
+              // @ts-ignore
+              (item) => item?.class_definition
+            ) ?? [];
+
+          // Sum enrollments across all of this instructor's classes
+          const totalStudents = classes.reduce((total, classItem) => {
+            if (!classItem?.uuid) return total;
+
+            const enrollments =
+              classEnrollmentsMap.get(classItem.uuid) ?? [];
+
+            return total + enrollments.length;
+          }, 0);
+
+          return {
+            ...instructor,
+
+            ratingSummary:
+              instructorRatingSummariesMap?.[instructor.uuid] ?? {
+                instructor_uuid: instructor.uuid,
+                average_rating: 0,
+                review_count: 0,
+              },
+
+            classes,
+
+            totalStudents,
+          };
+        })
         .sort((a, b) => a.name.localeCompare(b.name)),
-    [instructors, searchTerm]
+    [
+      instructors,
+      searchTerm,
+      instructorRatingSummariesMap,
+      instructorClassesMap,
+      classEnrollmentsMap,
+    ]
   );
 
   return (
@@ -184,15 +251,20 @@ export default function InstructorsPage() {
                   </TableCell>
 
                   <TableCell className='text-muted-foreground'>
-                    0 classes
+                    {instructor?.classes?.length ?? 0}{' '}
+                    {(instructor?.classes?.length ?? 0) === 1 ? 'class' : 'classes'}
                   </TableCell>
 
                   <TableCell className='text-muted-foreground'>
-                    0 students
+                    {instructor.totalStudents}{" "}
+                    {instructor.totalStudents === 1 ? "student" : "students"}
                   </TableCell>
 
                   <TableCell className='text-muted-foreground'>
-                    0 Rating
+                    {instructor.ratingSummary?.review_count > 0
+                      ? `${instructor.ratingSummary.average_rating.toFixed(1)} (${instructor.ratingSummary.review_count} ${instructor.ratingSummary.review_count === 1 ? 'review' : 'reviews'
+                      })`
+                      : 'No reviews'}
                   </TableCell>
 
                   <TableCell>

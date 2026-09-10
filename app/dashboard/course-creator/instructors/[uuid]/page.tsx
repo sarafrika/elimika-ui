@@ -75,6 +75,7 @@ import {
   getUserByUuidQueryKey,
 } from '@/services/client/@tanstack/react-query.gen';
 import { toAuthenticatedMediaUrl } from '@/src/lib/media-url';
+import { stripHtml } from '../../../../../src/features/dashboard/courses/shared/_components/courses-data';
 
 const tabListClass =
   'h-auto w-full justify-start gap-7 overflow-x-auto rounded-none border-b border-border/70 bg-transparent p-0';
@@ -266,9 +267,9 @@ export default function CourseCreatorInstructorDetailPage() {
     ...(routeUuid
       ? getInstructorByUuidOptions({ path: { uuid: routeUuid } })
       : {
-          queryKey: getInstructorByUuidQueryKey({ path: { uuid: routeUuid } }),
-          queryFn: skipToken,
-        }),
+        queryKey: getInstructorByUuidQueryKey({ path: { uuid: routeUuid } }),
+        queryFn: skipToken,
+      }),
     enabled: Boolean(routeUuid),
     staleTime: STALE_TIMES.entity,
     retry: false,
@@ -300,16 +301,16 @@ export default function CourseCreatorInstructorDetailPage() {
   const skillsQuery = useQuery({
     ...(instructorUuid
       ? getInstructorSkillsOptions({
+        ...pathOptions,
+        query: { pageable: { page: 0, size: 80 } },
+      })
+      : {
+        queryKey: getInstructorSkillsQueryKey({
           ...pathOptions,
           query: { pageable: { page: 0, size: 80 } },
-        })
-      : {
-          queryKey: getInstructorSkillsQueryKey({
-            ...pathOptions,
-            query: { pageable: { page: 0, size: 80 } },
-          }),
-          queryFn: skipToken,
         }),
+        queryFn: skipToken,
+      }),
     enabled: Boolean(instructorUuid),
     staleTime: STALE_TIMES.entity,
     retry: false,
@@ -325,16 +326,16 @@ export default function CourseCreatorInstructorDetailPage() {
   const membershipsQuery = useQuery({
     ...(instructorUuid
       ? getInstructorMembershipsOptions({
+        ...pathOptions,
+        query: { pageable: { page: 0, size: 80 } },
+      })
+      : {
+        queryKey: getInstructorMembershipsQueryKey({
           ...pathOptions,
           query: { pageable: { page: 0, size: 80 } },
-        })
-      : {
-          queryKey: getInstructorMembershipsQueryKey({
-            ...pathOptions,
-            query: { pageable: { page: 0, size: 80 } },
-          }),
-          queryFn: skipToken,
         }),
+        queryFn: skipToken,
+      }),
     enabled: Boolean(instructorUuid),
     staleTime: STALE_TIMES.entity,
     retry: false,
@@ -342,16 +343,16 @@ export default function CourseCreatorInstructorDetailPage() {
   const experienceQuery = useQuery({
     ...(instructorUuid
       ? getInstructorExperienceOptions({
+        ...pathOptions,
+        query: { pageable: { page: 0, size: 80 } },
+      })
+      : {
+        queryKey: getInstructorExperienceQueryKey({
           ...pathOptions,
           query: { pageable: { page: 0, size: 80 } },
-        })
-      : {
-          queryKey: getInstructorExperienceQueryKey({
-            ...pathOptions,
-            query: { pageable: { page: 0, size: 80 } },
-          }),
-          queryFn: skipToken,
         }),
+        queryFn: skipToken,
+      }),
     enabled: Boolean(instructorUuid),
     staleTime: STALE_TIMES.entity,
     retry: false,
@@ -375,16 +376,16 @@ export default function CourseCreatorInstructorDetailPage() {
   const classesQuery = useQuery({
     ...(instructorUuid
       ? getClassDefinitionsForInstructorOptions({
+        ...pathOptions,
+        query: { activeOnly: false },
+      })
+      : {
+        queryKey: getClassDefinitionsForInstructorQueryKey({
           ...pathOptions,
           query: { activeOnly: false },
-        })
-      : {
-          queryKey: getClassDefinitionsForInstructorQueryKey({
-            ...pathOptions,
-            query: { activeOnly: false },
-          }),
-          queryFn: skipToken,
         }),
+        queryFn: skipToken,
+      }),
     enabled: Boolean(instructorUuid),
     staleTime: STALE_TIMES.live,
     retry: false,
@@ -610,7 +611,7 @@ export default function CourseCreatorInstructorDetailPage() {
 
       <SectionPanel title='Bio' description='Professional background and teaching profile.'>
         <p className='text-muted-foreground max-w-6xl text-sm leading-6 whitespace-pre-line'>
-          {instructor?.bio || '0'}
+          {stripHtml(instructor?.bio) || '0'}
         </p>
       </SectionPanel>
 
@@ -741,7 +742,7 @@ export default function CourseCreatorInstructorDetailPage() {
                     label: 'Coordinates',
                     value:
                       typeof instructor?.latitude === 'number' &&
-                      typeof instructor?.longitude === 'number'
+                        typeof instructor?.longitude === 'number'
                         ? `${instructor.latitude}, ${instructor.longitude}`
                         : '0',
                   },

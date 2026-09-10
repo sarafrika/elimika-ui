@@ -24,7 +24,10 @@ import {
 import {
   getClassDefinitionOptions,
   getClassDefinitionsForCourseOptions,
+  getClassDefinitionsForInstructorOptions,
   getCourseAssessmentsOptions,
+  getEnrollmentsForClassOptions,
+  getInstructorRatingSummaryOptions,
   getUserByUuidOptions,
   getUserDirectoryOptions,
   search2Options,
@@ -549,6 +552,115 @@ export function useCourseClasses(courseUuids: string[]) {
       };
     },
   });
+}
+
+export function useInstructorRatingSummaries(instructorUuids: string[]) {
+  const uniqueInstructorUuids = useMemo(
+    () => [...new Set(instructorUuids.filter(Boolean))].sort(),
+    [instructorUuids]
+  );
+
+  return useQueries({
+    queries: uniqueInstructorUuids.map(uuid => ({
+      ...getInstructorRatingSummaryOptions({
+        path: { instructorUuid: uuid },
+        query: { pageable: {} },
+      }),
+      enabled: Boolean(uuid),
+      staleTime: STALE_TIMES.entity,
+    })),
+
+    combine: results => {
+      const instructorRatingSummariesMap: Record<string, InstructorRatingSummary> = {};
+
+      results.forEach((result, index) => {
+        const instructorUuid = uniqueInstructorUuids[index];
+        const ratingSummary = result.data?.data;
+
+        if (instructorUuid && ratingSummary) {
+          instructorRatingSummariesMap[instructorUuid] = ratingSummary;
+        }
+      });
+
+      return {
+        instructorRatingSummariesMap,
+        items: Object.values(instructorRatingSummariesMap),
+        isLoading: results.some(r => r.isLoading),
+      };
+    },
+  });
+}
+
+export function useInstructorClasses(instructorUuids: string[]) {
+  const uniqueInstructorUuids = useMemo(
+    () => [...new Set(instructorUuids.filter(Boolean))].sort(),
+    [instructorUuids]
+  );
+
+  return useQueries({
+    queries: uniqueInstructorUuids.map(uuid => ({
+      ...getClassDefinitionsForInstructorOptions({
+        path: { instructorUuid: uuid },
+        query: { pageable: {} },
+      }),
+      enabled: Boolean(uuid),
+      staleTime: STALE_TIMES.entity,
+    })),
+
+    combine: results => {
+      const instructorClassesMap: Record<string, ClassDefinition[]> = {};
+
+      results.forEach((result, index) => {
+        const instructorUuid = uniqueInstructorUuids[index];
+        const classDefinitions = result.data?.data;
+
+        if (instructorUuid && classDefinitions) {
+          instructorClassesMap[instructorUuid] = classDefinitions;
+        }
+      });
+
+      return {
+        instructorClassesMap,
+        items: Object.values(instructorClassesMap).flat(),
+        isLoading: results.some(r => r.isLoading),
+      };
+    },
+  });
+}
+
+export function useClassesEnrollmentsByIds(classUuids: string[]) {
+  const uniqueClassUuids = useMemo(
+    () => [...new Set(classUuids.filter(Boolean))].sort(),
+    [classUuids]
+  );
+
+  const results = useQueries({
+    queries: uniqueClassUuids.map((uuid) => ({
+      ...getEnrollmentsForClassOptions({
+        path: { uuid },
+        query: { pageable: {} },
+      }),
+      enabled: !!uuid,
+      staleTime: STALE_TIMES.entity,
+    })),
+  });
+
+  const classEnrollmentsMap = useMemo(
+    () =>
+      new Map(
+        uniqueClassUuids.map((classUuid, index) => [
+          classUuid,
+          results[index]?.data?.data ?? [],
+        ])
+      ),
+    [uniqueClassUuids, results]
+  );
+
+  return {
+    results,
+    classEnrollmentsMap,
+    isLoading: results.some((result) => result.isLoading),
+  };
 }
 
 
