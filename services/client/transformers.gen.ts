@@ -264,7 +264,6 @@ import type {
   UploadJobThumbnailResponse,
   CreateClassForJobResponse,
   CancelJobResponse,
-  AssignInstructorResponse,
   ListJobApplicationsResponse,
   ApplyToJobResponse,
   ReviewApplicationResponse,
@@ -4898,27 +4897,6 @@ export const createClassForJobResponseTransformer = async (
 
 export const cancelJobResponseTransformer = async (data: any): Promise<CancelJobResponse> => {
   data = apiResponseClassMarketplaceJobSchemaResponseTransformer(data);
-  return data;
-};
-
-const classMarketplaceJobAssignmentResponseSchemaResponseTransformer = (data: any) => {
-  if (data.job) {
-    data.job = classMarketplaceJobSchemaResponseTransformer(data.job);
-  }
-  return data;
-};
-
-const apiResponseClassMarketplaceJobAssignmentResponseSchemaResponseTransformer = (data: any) => {
-  if (data.data) {
-    data.data = classMarketplaceJobAssignmentResponseSchemaResponseTransformer(data.data);
-  }
-  return data;
-};
-
-export const assignInstructorResponseTransformer = async (
-  data: any
-): Promise<AssignInstructorResponse> => {
-  data = apiResponseClassMarketplaceJobAssignmentResponseSchemaResponseTransformer(data);
   return data;
 };
 

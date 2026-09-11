@@ -864,6 +864,10 @@ export type Quiz = {
    */
   readonly updated_by?: string;
   /**
+   * **[READ-ONLY]** Indicates if the quiz has a time limit.
+   */
+  readonly is_timed?: boolean;
+  /**
    * **[READ-ONLY]** Indicates if the quiz is published and accessible to students.
    */
   readonly is_published?: boolean;
@@ -871,10 +875,6 @@ export type Quiz = {
    * **[READ-ONLY]** Human-readable format of quiz time limit.
    */
   readonly time_limit_display?: string;
-  /**
-   * **[READ-ONLY]** Indicates if the quiz has a time limit.
-   */
-  readonly is_timed?: boolean;
   /**
    * **[READ-ONLY]** Indicates if students can take the quiz multiple times.
    */
@@ -1891,9 +1891,9 @@ export type InstructorProfessionalMembership = {
    */
   readonly is_complete?: boolean;
   /**
-   * **[READ-ONLY]** Duration of membership calculated from start and end dates, in months.
+   * **[READ-ONLY]** Human-readable formatted duration of membership.
    */
-  readonly membership_duration_months?: number | null;
+  readonly formatted_duration?: string | null;
   membership_status?: MembershipStatusEnum;
   /**
    * **[READ-ONLY]** Formatted membership period showing start and end dates.
@@ -1917,9 +1917,9 @@ export type InstructorProfessionalMembership = {
    */
   readonly is_recent_membership?: boolean;
   /**
-   * **[READ-ONLY]** Human-readable formatted duration of membership.
+   * **[READ-ONLY]** Duration of membership calculated from start and end dates, in months.
    */
-  readonly formatted_duration?: string | null;
+  readonly membership_duration_months?: number | null;
 };
 
 export type ApiResponseInstructorProfessionalMembership = {
@@ -2219,13 +2219,13 @@ export type InstructorDocument = {
    */
   readonly updated_by?: string;
   /**
-   * **[READ-ONLY]** API-relative URL for previewing or downloading the uploaded document.
-   */
-  readonly file_url?: string;
-  /**
    * **[READ-ONLY]** Indicates if the document has expired based on the expiry date.
    */
   readonly is_expired?: boolean;
+  /**
+   * **[READ-ONLY]** API-relative URL for previewing or downloading the uploaded document.
+   */
+  readonly file_url?: string;
   /**
    * **[READ-ONLY]** Human-readable formatted file size.
    */
@@ -2330,10 +2330,6 @@ export type AvailabilitySlot = {
    */
   readonly updated_by?: string;
   /**
-   * **[READ-ONLY]** Duration of the availability slot in minutes.
-   */
-  readonly duration_minutes?: bigint;
-  /**
    * **[READ-ONLY]** Human-readable formatted duration.
    */
   readonly duration_formatted?: string;
@@ -2349,6 +2345,10 @@ export type AvailabilitySlot = {
    * **[READ-ONLY]** Human-readable description of the availability pattern.
    */
   readonly availability_description?: string;
+  /**
+   * **[READ-ONLY]** Duration of the availability slot in minutes.
+   */
+  readonly duration_minutes?: bigint;
 };
 
 export type ApiResponseAvailabilitySlot = {
@@ -3362,13 +3362,13 @@ export type CourseCreatorDocumentDto = {
   readonly updated_date?: Date;
   readonly updated_by?: string;
   /**
-   * **[READ-ONLY]** API-relative URL for previewing or downloading the uploaded document.
-   */
-  readonly file_url?: string;
-  /**
    * **[READ-ONLY]** Indicates if the document has expired based on the expiry date.
    */
   readonly is_expired?: boolean;
+  /**
+   * **[READ-ONLY]** API-relative URL for previewing or downloading the uploaded document.
+   */
+  readonly file_url?: string;
   /**
    * **[READ-ONLY]** Human-readable formatted file size.
    */
@@ -3562,13 +3562,13 @@ export type ContentType = {
    */
   readonly updated_by?: string;
   /**
-   * **[READ-ONLY]** Indicates if this content type is for media files.
-   */
-  readonly is_media_type?: boolean;
-  /**
    * **[READ-ONLY]** Category for organizing uploads in the user interface.
    */
   readonly upload_category?: string;
+  /**
+   * **[READ-ONLY]** Indicates if this content type is for media files.
+   */
+  readonly is_media_type?: boolean;
   /**
    * **[READ-ONLY]** Human-readable list of supported file formats.
    */
@@ -4060,13 +4060,13 @@ export type ClassDefinition = {
    */
   readonly is_standalone?: boolean;
   /**
-   * **[READ-ONLY]** Computed duration of the class in minutes based on start and end times.
-   */
-  readonly duration_minutes?: bigint;
-  /**
    * **[READ-ONLY]** Human-readable formatted duration.
    */
   readonly duration_formatted?: string;
+  /**
+   * **[READ-ONLY]** Computed duration of the class in minutes based on start and end times.
+   */
+  readonly duration_minutes?: bigint;
   /**
    * **[READ-ONLY]** Human-readable capacity information including waitlist availability.
    */
@@ -4917,10 +4917,6 @@ export type ScheduledInstance = {
    */
   readonly updated_by?: string;
   /**
-   * **[READ-ONLY]** Duration of the scheduled instance in minutes.
-   */
-  readonly duration_minutes?: bigint;
-  /**
    * **[READ-ONLY]** Human-readable formatted duration.
    */
   readonly duration_formatted?: string;
@@ -4932,6 +4928,10 @@ export type ScheduledInstance = {
    * **[READ-ONLY]** Indicates if the scheduled instance is currently active (ongoing).
    */
   readonly is_currently_active?: boolean;
+  /**
+   * **[READ-ONLY]** Duration of the scheduled instance in minutes.
+   */
+  readonly duration_minutes?: bigint;
   /**
    * **[READ-ONLY]** Indicates if the scheduled instance can be cancelled.
    */
@@ -6219,10 +6219,6 @@ export type Enrollment = {
    */
   readonly can_be_cancelled?: boolean;
   /**
-   * **[READ-ONLY]** Indicates if attendance has been marked for this enrollment.
-   */
-  readonly is_attendance_marked?: boolean;
-  /**
    * **[READ-ONLY]** Indicates if the student attended the class.
    */
   readonly did_attend?: boolean;
@@ -6230,6 +6226,10 @@ export type Enrollment = {
    * **[READ-ONLY]** Human-readable description of the enrollment status.
    */
   readonly status_description?: string;
+  /**
+   * **[READ-ONLY]** Indicates if attendance has been marked for this enrollment.
+   */
+  readonly is_attendance_marked?: boolean;
 };
 
 export type ApiResponse = {
@@ -7061,27 +7061,6 @@ export type ApiResponseClassDefinition = {
   data?: ClassDefinition;
   message?: string;
   error?: unknown;
-};
-
-/**
- * Selects an approved instructor application and creates the actual class
- */
-export type ClassMarketplaceJobAssignmentRequest = {
-  application_uuid: string;
-};
-
-export type ApiResponseClassMarketplaceJobAssignmentResponse = {
-  success?: boolean;
-  data?: ClassMarketplaceJobAssignmentResponse;
-  message?: string;
-  error?: unknown;
-};
-
-/**
- * Result of assigning an instructor to a marketplace class job. The job moves to AWAITING_CLASS and its resource holds stay reserved until the class is created.
- */
-export type ClassMarketplaceJobAssignmentResponse = {
-  job?: ClassMarketplaceJob;
 };
 
 /**
@@ -10611,6 +10590,10 @@ export type CourseAssessmentScore = {
    */
   readonly is_passing?: boolean;
   /**
+   * **[READ-ONLY]** Formatted display of the grade information.
+   */
+  readonly grade_display?: string;
+  /**
    * **[READ-ONLY]** Formatted category of the score based on performance level.
    */
   readonly score_category?: string;
@@ -10622,10 +10605,6 @@ export type CourseAssessmentScore = {
    * **[READ-ONLY]** Summary indicating the availability and nature of instructor feedback.
    */
   readonly feedback_summary?: string;
-  /**
-   * **[READ-ONLY]** Formatted display of the grade information.
-   */
-  readonly grade_display?: string;
 };
 
 /**
@@ -12702,7 +12681,7 @@ export const TypeEnum = {
   CLASS_MARKETPLACE_JOB_APPLICATION_SHORTLISTED: 'CLASS_MARKETPLACE_JOB_APPLICATION_SHORTLISTED',
   CLASS_MARKETPLACE_JOB_APPLICATION_INTERVIEWING: 'CLASS_MARKETPLACE_JOB_APPLICATION_INTERVIEWING',
   CLASS_MARKETPLACE_JOB_APPLICATION_OFFERED: 'CLASS_MARKETPLACE_JOB_APPLICATION_OFFERED',
-  CLASS_MARKETPLACE_JOB_APPLICATION_APPROVED: 'CLASS_MARKETPLACE_JOB_APPLICATION_APPROVED',
+  CLASS_MARKETPLACE_JOB_APPLICATION_HIRED: 'CLASS_MARKETPLACE_JOB_APPLICATION_HIRED',
   CLASS_MARKETPLACE_JOB_APPLICATION_ASSIGNED: 'CLASS_MARKETPLACE_JOB_APPLICATION_ASSIGNED',
   CLASS_MARKETPLACE_JOB_APPLICATION_CANCELLED: 'CLASS_MARKETPLACE_JOB_APPLICATION_CANCELLED',
   CLASS_MARKETPLACE_JOB_APPLICATION_WITHDRAWN: 'CLASS_MARKETPLACE_JOB_APPLICATION_WITHDRAWN',
@@ -12867,7 +12846,7 @@ export const StatusEnum14 = {
   SHORTLISTED: 'shortlisted',
   INTERVIEWING: 'interviewing',
   OFFERED: 'offered',
-  APPROVED: 'approved',
+  HIRED: 'hired',
   REJECTED: 'rejected',
   ASSIGNED: 'assigned',
   NOT_SELECTED: 'not_selected',
@@ -13177,7 +13156,7 @@ export const ApplicationStatusEnum = {
   SHORTLISTED: 'shortlisted',
   INTERVIEWING: 'interviewing',
   OFFERED: 'offered',
-  APPROVED: 'approved',
+  HIRED: 'hired',
   REJECTED: 'rejected',
   ASSIGNED: 'assigned',
   NOT_SELECTED: 'not_selected',
@@ -13866,7 +13845,7 @@ export const TypeEnumWritable = {
   CLASS_MARKETPLACE_JOB_APPLICATION_SHORTLISTED: 'CLASS_MARKETPLACE_JOB_APPLICATION_SHORTLISTED',
   CLASS_MARKETPLACE_JOB_APPLICATION_INTERVIEWING: 'CLASS_MARKETPLACE_JOB_APPLICATION_INTERVIEWING',
   CLASS_MARKETPLACE_JOB_APPLICATION_OFFERED: 'CLASS_MARKETPLACE_JOB_APPLICATION_OFFERED',
-  CLASS_MARKETPLACE_JOB_APPLICATION_APPROVED: 'CLASS_MARKETPLACE_JOB_APPLICATION_APPROVED',
+  CLASS_MARKETPLACE_JOB_APPLICATION_HIRED: 'CLASS_MARKETPLACE_JOB_APPLICATION_HIRED',
   CLASS_MARKETPLACE_JOB_APPLICATION_ASSIGNED: 'CLASS_MARKETPLACE_JOB_APPLICATION_ASSIGNED',
   CLASS_MARKETPLACE_JOB_APPLICATION_CANCELLED: 'CLASS_MARKETPLACE_JOB_APPLICATION_CANCELLED',
   CLASS_MARKETPLACE_JOB_APPLICATION_WITHDRAWN: 'CLASS_MARKETPLACE_JOB_APPLICATION_WITHDRAWN',
@@ -25874,37 +25853,6 @@ export type CancelJobResponses = {
 };
 
 export type CancelJobResponse = CancelJobResponses[keyof CancelJobResponses];
-
-export type AssignInstructorData = {
-  body: ClassMarketplaceJobAssignmentRequest;
-  path: {
-    jobUuid: string;
-  };
-  query?: never;
-  url: '/api/v1/classes/jobs/{jobUuid}/assignments';
-};
-
-export type AssignInstructorErrors = {
-  /**
-   * Not Found
-   */
-  404: ResponseDtoVoid;
-  /**
-   * Internal Server Error
-   */
-  500: ResponseDtoVoid;
-};
-
-export type AssignInstructorError = AssignInstructorErrors[keyof AssignInstructorErrors];
-
-export type AssignInstructorResponses = {
-  /**
-   * OK
-   */
-  200: ApiResponseClassMarketplaceJobAssignmentResponse;
-};
-
-export type AssignInstructorResponse = AssignInstructorResponses[keyof AssignInstructorResponses];
 
 export type ListJobApplicationsData = {
   body?: never;

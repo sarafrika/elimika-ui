@@ -1,13 +1,13 @@
 'use client';
 
 import {
+  ArrowRight,
   BriefcaseBusiness,
   CheckCircle2,
   Clock,
   MapPin,
   Search,
   TriangleAlert,
-  UserRound,
   Users,
   XCircle,
 } from 'lucide-react';
@@ -32,7 +32,6 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { Skeleton } from '@/components/ui/skeleton';
-import Spinner from '@/components/ui/spinner';
 import { formatCurrency } from '@/lib/format-currency';
 import type {
   ClassMarketplaceJob,
@@ -44,27 +43,21 @@ import { roleScopedDashboardPath } from '@/src/features/dashboard/lib/active-dom
 import {
   APPLICATION_STATUSES,
   type ApplicationStatus,
-  canRejectApplication,
-  canReviewApplication,
+  isClassCreatedStatus,
+  nextStepFor,
+  statusLabel,
 } from '../application-status';
 
 export { APPLICATION_STATUSES };
 
 export type ApplicationStatusFilter = 'ALL' | ApplicationStatus;
 
-/** The pre-decision stages, in funnel order, with the status each one lands the candidate on. */
-const STAGE_MOVES = [
-  { action: 'SHORTLIST', label: 'Shortlist', reachedStatus: 'shortlisted' },
-  { action: 'INTERVIEW', label: 'Interview', reachedStatus: 'interviewing' },
-  { action: 'OFFER', label: 'Offer', reachedStatus: 'offered' },
-] as const;
-
 export type ApplicationStats = {
   total: number;
-  pending: number;
-  approved: number;
-  rejected: number;
-  assigned: number;
+  inReview: number;
+  hired: number;
+  classCreated: number;
+  closed: number;
 };
 
 function formatLabel(value?: string | null) {
@@ -106,16 +99,15 @@ export function ApplicationStatsCards({
 
   const cards = [
     { label: 'Total', value: stats.total, icon: Users, tone: 'info' as const },
-    { label: 'In review', value: stats.pending, icon: Clock, tone: 'warning' as const },
-    // Approved is a shortlist of one or more, never an outcome — tone it as work still outstanding.
+    { label: 'In review', value: stats.inReview, icon: Clock, tone: 'warning' as const },
+    { label: 'Hired', value: stats.hired, icon: CheckCircle2, tone: 'success' as const },
     {
-      label: 'Approved, not hired',
-      value: stats.approved,
-      icon: CheckCircle2,
-      tone: 'warning' as const,
+      label: 'Class created',
+      value: stats.classCreated,
+      icon: BriefcaseBusiness,
+      tone: 'success' as const,
     },
-    { label: 'Closed', value: stats.rejected, icon: XCircle, tone: 'destructive' as const },
-    { label: 'Hired', value: stats.assigned, icon: BriefcaseBusiness, tone: 'success' as const },
+    { label: 'Closed', value: stats.closed, icon: XCircle, tone: 'destructive' as const },
   ];
 
   return (
@@ -167,7 +159,7 @@ export function ApplicationsFilterBar({
           <SelectItem value='ALL'>All statuses</SelectItem>
           {APPLICATION_STATUSES.map(status => (
             <SelectItem key={status} value={status}>
-              {formatLabel(status)}
+              {statusLabel(status)}
             </SelectItem>
           ))}
         </SelectContent>
@@ -180,30 +172,28 @@ export function ApplicationsListSection({
   applications,
   instructorMap,
   isInstructorsLoading,
-  isReviewPending,
-  isAssignPending,
   jobInstructorPay,
-  onApprove,
-  onReject,
-  onAssign,
-  onMoveToStage,
-  onViewProfile,
+  jobStatus,
+  applicantHref,
 }: {
   applications: ClassMarketplaceJobApplication[];
   instructorMap: Record<string, Instructor>;
   isInstructorsLoading: boolean;
-  isReviewPending: boolean;
-  isAssignPending: boolean;
   jobInstructorPay?: number | null;
-  onApprove: (application: ClassMarketplaceJobApplication) => void;
-  onReject: (application: ClassMarketplaceJobApplication) => void;
-  onAssign: (application: ClassMarketplaceJobApplication) => void;
-  onMoveToStage: (
-    application: ClassMarketplaceJobApplication,
-    stage: 'SHORTLIST' | 'INTERVIEW' | 'OFFER'
-  ) => void;
-  onViewProfile: (application: ClassMarketplaceJobApplication) => void;
+  jobStatus?: string | null;
+  applicantHref: (application: ClassMarketplaceJobApplication) => string;
 }) {
+  // A hire takes the job out of OPEN and every decision endpoint then refuses it, so the other
+  // rows must stop offering a step the server would turn away.
+  const hiredOnThisJob = applications.some(
+    application =>
+      (application.status as string) === 'hired' || isClassCreatedStatus(application.status)
+  );
+  const jobClosedToDecisions = hiredOnThisJob || (Boolean(jobStatus) && jobStatus !== 'open');
+  const closedNote = hiredOnThisJob
+    ? 'Another applicant was hired — no decision left here'
+    : 'This job is no longer open to decisions';
+
   return (
     <div className='space-y-3'>
       {applications.map(application => {
@@ -219,12 +209,12 @@ export function ApplicationsListSection({
             .join('')
             .slice(0, 2)
             .toUpperCase() || '?';
-        // A candidate moved to shortlisted/interviewing/offered — from here or from the job-matches
-        // board — is still live and must stay actionable. Gating on `pending` alone stranded them.
-        const reviewDisabled = !canReviewApplication(application.status);
-        // Approval is not the hire. Only the assign call affiliates the instructor and unlocks the
-        // class, so an approved card drops the funnel buttons and leads with the hire.
-        const isApproved = application.status === 'approved';
+        // The cast carries the generated client, whose funnel still predates the backend's `hired`.
+        const isHired = (application.status as string) === 'hired';
+        const classCreated = isClassCreatedStatus(application.status);
+        const nextStep = nextStepFor(application.status);
+        const decisionsClosed = Boolean(nextStep) && jobClosedToDecisions;
+        const forwardStep = decisionsClosed ? null : nextStep;
         const isVerified = application.instructor_admin_verified ?? instructor?.admin_verified;
         const trainingApproved = application.training_approved;
         const approvedRate = application.approved_rate;
@@ -242,7 +232,11 @@ export function ApplicationsListSection({
                 </div>
                 <div className='space-y-1'>
                   <div className='flex flex-wrap items-center gap-2'>
-                    <h3 className='text-base font-semibold tracking-tight'>{displayName}</h3>
+                    <h3 className='text-base font-semibold tracking-tight'>
+                      <Link href={applicantHref(application)} className='hover:underline'>
+                        {displayName}
+                      </Link>
+                    </h3>
                     {isVerified ? (
                       <StatusBadge status='verified' label='Verified' />
                     ) : isVerified === false ? (
@@ -271,17 +265,17 @@ export function ApplicationsListSection({
               </div>
               <StatusBadge
                 status={application.status}
-                tone={isApproved ? 'warning' : undefined}
-                label={isApproved ? 'Approved — not yet hired' : formatLabel(application.status)}
+                tone={isHired || classCreated ? 'success' : undefined}
+                label={statusLabel(application.status)}
               />
             </div>
 
-            {notApprovedToTrain ? (
+            {notApprovedToTrain && forwardStep ? (
               <div className='border-warning/60 bg-warning/10 text-foreground mt-3 flex items-center gap-2 rounded-md border p-3 text-sm'>
                 <TriangleAlert className='text-warning size-4 shrink-0' />
                 <span>
                   This instructor is not approved to train this course or program yet, so they
-                  cannot be approved or hired.
+                  cannot be hired.
                 </span>
               </div>
             ) : null}
@@ -332,61 +326,25 @@ export function ApplicationsListSection({
                 ) : null}
               </div>
 
-              <div className='ml-auto flex flex-wrap gap-2'>
-                <Button variant='ghost' size='sm' onClick={() => onViewProfile(application)}>
-                  <UserRound className='mr-2 size-4' />
-                  View profile
-                </Button>
-                {isApproved ? null : (
-                  <>
-                    {STAGE_MOVES.map(stage => (
-                      <Button
-                        key={stage.action}
-                        variant='ghost'
-                        size='sm'
-                        onClick={() => onMoveToStage(application, stage.action)}
-                        disabled={
-                          isReviewPending ||
-                          reviewDisabled ||
-                          application.status === stage.reachedStatus
-                        }
-                      >
-                        {stage.label}
-                      </Button>
-                    ))}
-                    <Button
-                      variant='outline'
-                      size='sm'
-                      onClick={() => onApprove(application)}
-                      disabled={isReviewPending || reviewDisabled || notApprovedToTrain}
-                    >
-                      <CheckCircle2 className='mr-2 size-4' />
-                      Approve
-                    </Button>
-                  </>
-                )}
-                <Button
-                  variant='destructive'
-                  size='sm'
-                  onClick={() => onReject(application)}
-                  disabled={isReviewPending || !canRejectApplication(application.status)}
-                >
-                  <XCircle className='mr-2 size-4' />
-                  Reject
-                </Button>
-                <Button
-                  size='sm'
-                  onClick={() => onAssign(application)}
-                  disabled={
-                    isAssignPending || application.status !== 'approved' || notApprovedToTrain
-                  }
-                >
-                  {isAssignPending ? (
-                    <Spinner className='mr-2 size-4' />
-                  ) : (
-                    <BriefcaseBusiness className='mr-2 size-4' />
-                  )}
-                  Hire for this class
+              {/* Decisions are taken on the applicant's own page; this board only says where
+                  they stand and shows the way there. */}
+              <div className='ml-auto flex flex-wrap items-center gap-3'>
+                <span className='text-muted-foreground text-xs'>
+                  {classCreated
+                    ? 'This job’s class exists'
+                    : isHired
+                      ? 'Hired — create the class next'
+                      : decisionsClosed
+                        ? closedNote
+                        : nextStep
+                          ? `Next step: ${nextStep.label}`
+                          : 'No further steps'}
+                </span>
+                <Button asChild variant='outline' size='sm'>
+                  <Link href={applicantHref(application)}>
+                    {forwardStep ? 'Review applicant' : 'Open applicant'}
+                    <ArrowRight className='ml-2 size-4' />
+                  </Link>
                 </Button>
               </div>
             </div>

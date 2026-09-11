@@ -1015,9 +1015,6 @@ import type {
   CancelJobData,
   CancelJobResponses,
   CancelJobErrors,
-  AssignInstructorData,
-  AssignInstructorResponses,
-  AssignInstructorErrors,
   ListJobApplicationsData,
   ListJobApplicationsResponses,
   ListJobApplicationsErrors,
@@ -2145,7 +2142,6 @@ import {
   uploadJobThumbnailResponseTransformer,
   createClassForJobResponseTransformer,
   cancelJobResponseTransformer,
-  assignInstructorResponseTransformer,
   listJobApplicationsResponseTransformer,
   applyToJobResponseTransformer,
   reviewApplicationResponseTransformer,
@@ -12445,7 +12441,8 @@ export const uploadJobThumbnail = <ThrowOnError extends boolean = false>(
 };
 
 /**
- * Create the class for a job whose instructor has been assigned
+ * Create the class for a job whose applicant has been hired
+ * Creating the class is what assigns the hired instructor: it stamps their application assigned, converts their time holds and fills the job. There is no separate assign call.
  */
 export const createClassForJob = <ThrowOnError extends boolean = false>(
   options: Options<CreateClassForJobData, ThrowOnError>
@@ -12491,37 +12488,6 @@ export const cancelJob = <ThrowOnError extends boolean = false>(
     ],
     url: '/api/v1/classes/jobs/{jobUuid}/cancel',
     ...options,
-  });
-};
-
-/**
- * Assign an approved instructor and create the actual class
- */
-export const assignInstructor = <ThrowOnError extends boolean = false>(
-  options: Options<AssignInstructorData, ThrowOnError>
-) => {
-  return (options.client ?? _heyApiClient).post<
-    AssignInstructorResponses,
-    AssignInstructorErrors,
-    ThrowOnError
-  >({
-    responseTransformer: assignInstructorResponseTransformer,
-    security: [
-      {
-        scheme: 'bearer',
-        type: 'http',
-      },
-      {
-        scheme: 'bearer',
-        type: 'http',
-      },
-    ],
-    url: '/api/v1/classes/jobs/{jobUuid}/assignments',
-    ...options,
-    headers: {
-      'Content-Type': 'application/json',
-      ...options.headers,
-    },
   });
 };
 
@@ -12586,7 +12552,8 @@ export const applyToJob = <ThrowOnError extends boolean = false>(
 };
 
 /**
- * Approve or reject a marketplace class job application
+ * Move a marketplace class job application through the funnel
+ * Stages run applied -> shortlisted -> interviewing -> offered -> hired and no stage may be skipped; hire is the last decision, after which the job's class can be created
  */
 export const reviewApplication = <ThrowOnError extends boolean = false>(
   options: Options<ReviewApplicationData, ThrowOnError>

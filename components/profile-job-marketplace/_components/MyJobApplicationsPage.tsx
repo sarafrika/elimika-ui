@@ -1,6 +1,6 @@
 'use client';
 
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { useMutation, useQueries, useQuery, useQueryClient } from '@tanstack/react-query';
 import { ArrowRight, BriefcaseBusiness, CheckCircle2, Clock, Search, XCircle } from 'lucide-react';
 import Link from 'next/link';
 import { useEffect, useMemo, useState } from 'react';
@@ -29,10 +29,11 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { Skeleton } from '@/components/ui/skeleton';
+import { useOrganisationsByIds } from '@/hooks/use-batched-lookups';
 import { getErrorMessage } from '@/lib/error-utils';
 import type { ClassMarketplaceJob, ClassMarketplaceJobApplication } from '@/services/client';
 import {
-  listJobsOptions,
+  getJobOptions,
   listMyApplicationsOptions,
   withdrawApplicationMutation,
 } from '@/services/client/@tanstack/react-query.gen';
@@ -45,7 +46,10 @@ import {
   APPLICATION_STATUSES,
   type ApplicationStatus,
   canWithdraw,
-  isLiveApplication,
+  isClassCreatedStatus,
+  isExitStatus,
+  nextStepFor,
+  statusLabel,
 } from '../application-status';
 
 function formatDate(value?: string | Date | null) {
@@ -62,7 +66,6 @@ function formatLabel(value?: string | null) {
     .toLowerCase()
     .replace(/(^|\s)\S/g, letter => letter.toUpperCase());
 }
-
 
 export function MyJobApplicationsPage() {
   const { activeDomain } = useUserDomain();
@@ -92,26 +95,6 @@ export function MyJobApplicationsPage() {
       },
     ]);
   }, [replaceBreadcrumbs]);
-
-  // const { data: jobsResponse, isLoading: isJobsLoading } = useQuery({
-  //   ...listJobsOptions({
-  //     query: {
-  //       pageable: {
-  //         page: 0,
-  //         size: PAGE_SIZE,
-  //         sort: ['created_date,desc'],
-  //       },
-  //       ...(isOrganizationView && organisationUuid ? { organisation_uuid: organisationUuid } : {}),
-  //     },
-  //   }),
-  //   enabled: true,
-  // });
-  const { data: jobsResponse, isLoading: isJobsLoading } = useQuery({
-    ...listJobsOptions({
-      query: { pageable: {}, organisation_uuid: 'ec237ec5-f13c-4248-bf70-8d0099cb3a15' },
-    }),
-    enabled: true,
-  });
 
   // Hoisted so the query and the post-withdraw invalidation build the identical key — calling
   // listMyApplicationsQueryKey() with no argument does not compile, and a differently-shaped
@@ -143,7 +126,7 @@ export function MyJobApplicationsPage() {
       setPendingWithdrawal(null);
       void invalidateJobApplicationWorkflowQueries(queryClient);
     },
-    onError: (error: unknown) => {
+    onError: error => {
       toast.error(getErrorMessage(error, 'Unable to withdraw this application.'));
     },
   });
@@ -158,12 +141,48 @@ export function MyJobApplicationsPage() {
     });
   };
 
-  const applications = applicationsResponse?.data?.content ?? [];
-  const jobs = jobsResponse?.data?.content ?? [];
-  const jobsByUuid = useMemo(
-    () => new Map(jobs.map((job: ClassMarketplaceJob) => [job.uuid ?? '', job] as const)),
-    [jobs]
+  const applications = useMemo(
+    () => applicationsResponse?.data?.content ?? [],
+    [applicationsResponse]
   );
+
+  // One lookup per job actually applied to, never a page of the whole marketplace: an instructor
+  // applies across organisations, and the job behind an old application may be long since closed.
+  const jobUuids = useMemo(
+    () =>
+      Array.from(
+        new Set(applications.map(application => application.job_uuid ?? '').filter(Boolean))
+      ),
+    [applications]
+  );
+
+  const { jobsByUuid, isLoading: jobsLoading } = useQueries({
+    queries: jobUuids.map(jobUuid => ({ ...getJobOptions({ path: { jobUuid } }) })),
+    combine: results => ({
+      jobsByUuid: new Map(
+        results
+          .map(result => result.data?.data)
+          .filter((job): job is ClassMarketplaceJob => Boolean(job?.uuid))
+          .map(job => [job.uuid ?? '', job] as const)
+      ),
+      isLoading: results.some(result => result.isLoading),
+    }),
+  });
+
+  // A hire is what makes the instructor a member, so these are the organisations they belong to.
+  const memberOrganisationUuids = useMemo(
+    () =>
+      applications
+        // The cast carries the generated client, whose funnel still predates the backend's `hired`.
+        .filter(
+          application =>
+            (application.status as string) === 'hired' || isClassCreatedStatus(application.status)
+        )
+        .map(application => jobsByUuid.get(application.job_uuid ?? '')?.organisation_uuid ?? '')
+        .filter(Boolean),
+    [applications, jobsByUuid]
+  );
+  const { organisationMap } = useOrganisationsByIds(memberOrganisationUuids);
 
   const filteredApplications = useMemo(() => {
     const query = searchQuery.trim().toLowerCase();
@@ -195,13 +214,15 @@ export function MyJobApplicationsPage() {
   const stats = useMemo(
     () => ({
       total: applications.length,
-      // Anything the organisation is still weighing up, at any stage of the funnel.
-      inProgress: applications.filter(application => isLiveApplication(application.status))
-        .length,
-      hired: applications.filter(application => application.status === 'assigned').length,
-      closed: applications.filter(application =>
-        ['rejected', 'not_selected', 'withdrawn'].includes(application.status ?? '')
+      // Anything the organisation is still deciding on, at any stage of the funnel.
+      inProgress: applications.filter(application => nextStepFor(application.status)).length,
+      // Hiring makes the instructor a member; a class that exists was staffed by one of these hires.
+      // The cast carries the generated client, whose funnel still predates the backend's `hired`.
+      hired: applications.filter(
+        application =>
+          (application.status as string) === 'hired' || isClassCreatedStatus(application.status)
       ).length,
+      closed: applications.filter(application => isExitStatus(application.status)).length,
     }),
     [applications]
   );
@@ -261,7 +282,7 @@ export function MyJobApplicationsPage() {
                 <SelectItem value='ALL'>All statuses</SelectItem>
                 {APPLICATION_STATUSES.map(status => (
                   <SelectItem key={status} value={status}>
-                    {formatLabel(status)}
+                    {statusLabel(status)}
                   </SelectItem>
                 ))}
               </SelectContent>
@@ -279,7 +300,7 @@ export function MyJobApplicationsPage() {
           </div>
 
           <AsyncSection
-            loading={applicationsLoading}
+            loading={applicationsLoading || jobsLoading}
             error={applicationsError}
             empty={!filteredApplications.length}
             onRetry={() => refetchApplications()}
@@ -303,6 +324,13 @@ export function MyJobApplicationsPage() {
             <div className='grid gap-4 md:grid-cols-2 lg:grid-cols-3'>
               {filteredApplications.map(application => {
                 const job = jobsByUuid.get(application.job_uuid ?? '');
+                // The cast carries the generated client, whose funnel still predates the backend's `hired`.
+                const isHired = (application.status as string) === 'hired';
+                const classCreated = isClassCreatedStatus(application.status);
+                const nextStep = nextStepFor(application.status);
+                const organisationName = job?.organisation_uuid
+                  ? (organisationMap[job.organisation_uuid]?.name ?? 'this organisation')
+                  : 'this organisation';
 
                 return (
                   <div
@@ -321,9 +349,28 @@ export function MyJobApplicationsPage() {
 
                       <StatusBadge
                         status={application.status}
-                        label={formatLabel(application.status)}
+                        tone={isHired || classCreated ? 'success' : undefined}
+                        label={statusLabel(application.status)}
                       />
                     </div>
+
+                    {isHired || classCreated ? (
+                      <div className='border-success/40 bg-success/10 text-foreground mt-3 flex items-start gap-2 rounded-md border p-3 text-sm'>
+                        <CheckCircle2 className='text-success mt-0.5 size-4 shrink-0' />
+                        <span>
+                          You were hired and are now a member of <strong>{organisationName}</strong>
+                          .{' '}
+                          {classCreated
+                            ? 'Your class has been created — it is on your schedule.'
+                            : 'They create the class next, which puts you on it.'}
+                        </span>
+                      </div>
+                    ) : nextStep ? (
+                      <p className='text-muted-foreground mt-3 text-sm'>
+                        Still open. The organisation’s next step is to{' '}
+                        {nextStep.label.toLowerCase()}.
+                      </p>
+                    ) : null}
 
                     <div className='mt-4'>
                       <DetailGrid
@@ -364,7 +411,9 @@ export function MyJobApplicationsPage() {
                         ) : null}
 
                         <Button asChild variant='outline' size='sm'>
-                          <Link href={roleScopedDashboardPath(activeDomain, '/dashboard/opportunities')}>
+                          <Link
+                            href={roleScopedDashboardPath(activeDomain, '/dashboard/opportunities')}
+                          >
                             View opportunities
                             <ArrowRight className='ml-2 size-4' />
                           </Link>
