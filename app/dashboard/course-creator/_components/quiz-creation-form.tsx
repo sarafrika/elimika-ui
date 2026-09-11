@@ -679,7 +679,7 @@ export const QuizCreationForm = (props: QuizCreationFormProps) => {
 
   const isPublished = selectedQuizData.status === 'PUBLISHED';
   const isSavingQuiz = quizAction === 'save' && isPending;
-  const isPublishingQuiz = quizAction === 'publish' && isPending;
+  const isPublishingQuiz = quizAction === 'publish';
   const isUnpublishingQuiz = quizAction === 'unpublish' && isPending;
 
   const handleDeleteQuiz = useCallback(() => {
@@ -992,6 +992,17 @@ export const QuizCreationForm = (props: QuizCreationFormProps) => {
                 Delete Quiz
               </Button>
 
+              {selectedQuizData.status === 'DRAFT' && (
+                <Button
+                  type='button'
+                  size='sm'
+                  onClick={handlePublishQuiz}
+                  disabled={isPending || isSavingQuestions || quizAction !== null || isDeletingQuiz}
+                >
+                  {isPublishingQuiz ? <Spinner className='mr-2 h-4 w-4' /> : null}
+                  Publish Quiz
+                </Button>
+              )}
               {isPublished && (
                 <Button
                   size='sm'

@@ -634,7 +634,8 @@ function AssessmentTasksSection({
 
                   <div className='space-y-2 overflow-y-auto pr-1'>
                     {filteredLessonAssignments.map(assignment => {
-                      const isSelected = selectedAssignmentUuid === assignment.uuid;
+                      const isSelected =
+                        selectedAssignmentUuid === assignment.uuid;
                       const isDraft = !assignment.is_published;
 
                       return (
@@ -651,36 +652,27 @@ function AssessmentTasksSection({
                             <div className='flex items-start justify-between gap-3'>
                               <div className='min-w-0 flex-1'>
                                 <div className='flex items-center gap-2'>
-                                  <p className='truncate text-sm font-medium'>{assignment.title}</p>
+                                  <p className='truncate text-sm font-medium'>
+                                    {assignment.title}
+                                  </p>
 
                                   {assignment.is_published ? (
-                                    <Badge variant='secondary' className='text-[10px]'>
+                                    <Badge
+                                      variant='secondary'
+                                      className='text-[10px]'
+                                    >
                                       Published
                                     </Badge>
                                   ) : (
-                                    <Badge className='border-destructive/20 bg-destructive/20 text-destructive border text-[10px]'>
+                                    <Badge
+                                      className='border-destructive/20 bg-destructive/20 text-destructive border text-[10px]'
+                                    >
                                       Draft
                                     </Badge>
                                   )}
                                 </div>
 
-                                {/* {assignment.description && (
-                                  <div className="text-muted-foreground mt-1 text-xs">
-                                    <RichTextRenderer
-                                      htmlString={assignment.description}
-                                      maxChars={500}
-                                    />
-                                  </div>
-                                )} */}
-
-                                {/* {assignment.instructions && (
-                                  <div className="text-muted-foreground mt-2 text-[11px] italic">
-                                    <RichTextRenderer
-                                      htmlString={assignment.instructions}
-                                    />
-                                  </div>
-                                )} */}
-
+                                {/* Assignment metadata */}
                                 <div className='text-muted-foreground mt-3 flex flex-wrap gap-2 text-[11px]'>
                                   {assignment.max_points && (
                                     <Badge variant='outline'>
@@ -690,12 +682,20 @@ function AssessmentTasksSection({
                                     </Badge>
                                   )}
 
-                                  {((assignment.submission_types as unknown as string[] | undefined)
-                                    ?.length ?? 0) > 0 && (
+                                  {(
+                                    (assignment.submission_types as unknown as
+                                      | string[]
+                                      | undefined) ?? []
+                                  ).length > 0 && (
                                       <Badge variant='outline'>
                                         📤{' '}
                                         {assignment.submission_summary ??
-                                          `${(assignment.submission_types as unknown as string[] | undefined)?.length ?? 0} submission types`}
+                                          `${(
+                                            assignment.submission_types as unknown as
+                                            | string[]
+                                            | undefined
+                                          )?.length ?? 0
+                                          } submission types`}
                                       </Badge>
                                     )}
 
@@ -706,17 +706,26 @@ function AssessmentTasksSection({
                                   )}
                                 </div>
 
-                                {((assignment.submission_types as unknown as string[] | undefined)
-                                  ?.length ?? 0) > 0 && (
+                                {(
+                                  (assignment.submission_types as unknown as
+                                    | string[]
+                                    | undefined) ?? []
+                                ).length > 0 && (
                                     <div className='mt-2 flex flex-wrap gap-1'>
                                       <p className='text-muted-foreground text-xs'>
                                         Accepted Submissions:
                                       </p>
 
                                       {(
-                                        assignment.submission_types as unknown as string[] | undefined
+                                        assignment.submission_types as unknown as
+                                        | string[]
+                                        | undefined
                                       )?.map(type => (
-                                        <Badge key={type} variant='secondary' className='text-[10px]'>
+                                        <Badge
+                                          key={type}
+                                          variant='secondary'
+                                          className='text-[10px]'
+                                        >
                                           {type}
                                         </Badge>
                                       ))}
@@ -728,9 +737,24 @@ function AssessmentTasksSection({
                                 <Button
                                   size='sm'
                                   variant={isSelected ? 'default' : 'outline'}
-                                  onClick={() => openAssignmentSheet(assignment)}
+                                  aria-disabled={isDraft}
+                                  className={
+                                    isDraft
+                                      ? 'cursor-not-allowed opacity-50'
+                                      : ''
+                                  }
+                                  onClick={() => {
+                                    if (isDraft) {
+                                      toast.info(
+                                        'This assignment is not available until it is published by the course creator.'
+                                      );
+                                      return;
+                                    }
+
+                                    openAssignmentSheet(assignment);
+                                  }}
                                 >
-                                  {isSelected ? 'Selected' : 'Assign'}
+                                  Assign
                                 </Button>
                               </div>
                             </div>
@@ -774,54 +798,65 @@ function AssessmentTasksSection({
                   <div className='space-y-2 overflow-y-auto pr-1'>
                     {filteredLessonQuizzes.map(quiz => {
                       const isSelected = selectedQuizUuid === quiz.uuid;
+                      const isDraft = !quiz.is_published;
 
                       return (
                         <div
                           key={quiz.uuid}
-                          className={`rounded-lg border transition-all ${isSelected ? 'border-primary bg-primary/5' : 'border-border'
+                          className={`rounded-lg border transition-all ${isDraft
+                            ? 'opacity-60'
+                            : isSelected
+                              ? 'border-primary bg-primary/5'
+                              : 'border-border'
                             }`}
                         >
                           <div className='p-3'>
                             <div className='flex items-start justify-between gap-3'>
                               <div className='min-w-0 flex-1'>
                                 <div className='flex items-center gap-2'>
-                                  <p className='truncate text-sm font-medium'>{quiz.title}</p>
+                                  <p className='truncate text-sm font-medium'>
+                                    {quiz.title}
+                                  </p>
 
-                                  {quiz.is_published && (
-                                    <Badge variant='secondary' className='text-[10px]'>
+                                  {quiz.is_published ? (
+                                    <Badge
+                                      variant='secondary'
+                                      className='text-[10px]'
+                                    >
                                       Published
+                                    </Badge>
+                                  ) : (
+                                    <Badge
+                                      className='border-destructive/20 bg-destructive/20 text-destructive border text-[10px]'
+                                    >
+                                      Draft
                                     </Badge>
                                   )}
                                 </div>
 
-                                {/* {quiz.description && (
-                                  <p className="text-muted-foreground mt-1 line-clamp-2 text-xs">
-                                    {quiz.description}
-                                  </p>
-                                )}
-
-                                {quiz.instructions && (
-                                  <p className="text-muted-foreground mt-2 line-clamp-2 text-[11px] italic">
-                                    {quiz.instructions}
-                                  </p>
-                                )} */}
-
+                                {/* Quiz metadata */}
                                 <div className='text-muted-foreground mt-3 flex flex-wrap items-center gap-2 text-[11px]'>
-                                  {quiz.is_timed && quiz.time_limit_minutes && (
-                                    <Badge variant='outline'>
-                                      ⏱{' '}
-                                      {quiz.time_limit_display ?? `${quiz.time_limit_minutes} mins`}
-                                    </Badge>
-                                  )}
+                                  {quiz.is_timed &&
+                                    quiz.time_limit_minutes && (
+                                      <Badge variant='outline'>
+                                        ⏱{' '}
+                                        {quiz.time_limit_display ??
+                                          `${quiz.time_limit_minutes} mins`}
+                                      </Badge>
+                                    )}
 
                                   {quiz.passing_score && (
-                                    <Badge variant='outline'>🎯 Pass: {quiz.passing_score}%</Badge>
+                                    <Badge variant='outline'>
+                                      🎯 Pass: {quiz.passing_score}%
+                                    </Badge>
                                   )}
 
                                   {quiz.attempts_allowed && (
                                     <Badge variant='outline'>
                                       🔁 {quiz.attempts_allowed}{' '}
-                                      {quiz.attempts_allowed === 1 ? 'Attempt' : 'Attempts'}
+                                      {quiz.attempts_allowed === 1
+                                        ? 'Attempt'
+                                        : 'Attempts'}
                                     </Badge>
                                   )}
                                 </div>
@@ -831,9 +866,24 @@ function AssessmentTasksSection({
                                 <Button
                                   size='sm'
                                   variant={isSelected ? 'default' : 'outline'}
-                                  onClick={() => openQuizSheet(quiz)}
+                                  aria-disabled={isDraft}
+                                  className={
+                                    isDraft
+                                      ? 'cursor-not-allowed opacity-50'
+                                      : ''
+                                  }
+                                  onClick={() => {
+                                    if (isDraft) {
+                                      toast.info(
+                                        'This quiz is not available until it is published by the course creator.'
+                                      );
+                                      return;
+                                    }
+
+                                    openQuizSheet(quiz);
+                                  }}
                                 >
-                                  {isSelected ? 'Selected' : 'Assign'}
+                                  Assign
                                 </Button>
                               </div>
                             </div>
@@ -1243,6 +1293,22 @@ function AssignedTaskRow({
         </div>
 
         <div className='min-w-0 flex-1'>
+          {type === 'assignment' ? (
+            <Badge
+              variant='secondary'
+              className='border-primary/30 bg-primary/5 text-[10px] font-medium text-primary'
+            >
+              Assignment
+            </Badge>
+          ) : (
+            <Badge
+              variant='outline'
+              className='border-primary/30 bg-primary/5 text-[10px] font-medium text-primary'
+            >
+              Quiz
+            </Badge>
+          )}
+
           <p className='text-sm leading-tight font-medium'>{title}</p>
 
           <p className='text-muted-foreground mt-0.5 text-[11px]'>

@@ -20,6 +20,7 @@ import type { AssignmentAttachment } from '@/services/client/types.gen';
 import { toAuthenticatedMediaUrl } from '@/src/lib/media-url';
 import { useQuery } from '@tanstack/react-query';
 import { Eye, FileText } from 'lucide-react';
+import { AssignmentContentPreview } from '../../../../components/content-preview/AssignmentContentPreview';
 import {
     assessmentLabel,
     PreviewError,
@@ -172,28 +173,30 @@ export function AssignmentPreviewSheet({
                                 )}
                             </PreviewSection>
                             {assignment.rubric_uuid && <PreviewRubric uuid={assignment.rubric_uuid} />}
+
                             <PreviewSection title='Attachments'>
-                                {attachmentsQuery.isPending ? (
-                                    <PreviewLoading />
-                                ) : attachmentsFailed ? (
-                                    <PreviewError
-                                        title='Unable to load attachments'
-                                        retry={() => {
-                                            void attachmentsQuery.refetch();
-                                        }}
-                                    />
-                                ) : attachments.length ? (
-                                    <ul className='space-y-2'>
-                                        {attachments.map(attachment => (
-                                            <AttachmentRow
-                                                key={attachment.uuid ?? attachment.stored_filename}
-                                                attachment={attachment}
-                                            />
-                                        ))}
-                                    </ul>
-                                ) : (
-                                    <EmptyState variant='compact' title='No attachments added' />
-                                )}
+                                <div className='space-y-3'>
+                                    <div className='flex items-center justify-between'>
+                                        <Badge variant='outline'>
+                                            {attachments.length ?? 0} files attached
+                                        </Badge>
+                                    </div>
+
+                                    {attachmentsQuery.isPending ? (
+                                        <PreviewLoading />
+                                    ) : attachmentsFailed ? (
+                                        <PreviewError
+                                            title='Unable to load attachments'
+                                            retry={() => {
+                                                void attachmentsQuery.refetch();
+                                            }}
+                                        />
+                                    ) : (
+                                        <AssignmentContentPreview
+                                            attachments={attachments ?? []}
+                                        />
+                                    )}
+                                </div>
                             </PreviewSection>
                         </>
                     )}

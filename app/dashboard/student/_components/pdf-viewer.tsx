@@ -2,6 +2,7 @@
 
 import React, { useEffect, useRef, useState } from 'react';
 import { loadPdfjs, type PDFDocumentProxy, type PDFPageProxy } from '@/lib/pdfjs';
+import { PreviewLoading } from '@/components/content-preview/PreviewLoading';
 
 interface PDFViewerProps {
   file: string; // URL or path to PDF
@@ -12,6 +13,7 @@ const PDFViewer: React.FC<PDFViewerProps> = ({ file }) => {
   const [numPages, setNumPages] = useState<number>(0);
   const [pageNumber, setPageNumber] = useState<number>(1);
   const [error, setError] = useState<string | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
   const pdfRef = useRef<PDFDocumentProxy | null>(null);
 
   useEffect(() => {
@@ -40,6 +42,7 @@ const PDFViewer: React.FC<PDFViewerProps> = ({ file }) => {
     const loadPDF = async () => {
       try {
         setError(null);
+        setIsLoading(true);
         setPageNumber(1);
         const pdfjsLib = await loadPdfjs();
         const pdf: PDFDocumentProxy = await pdfjsLib.getDocument(file).promise;
@@ -50,6 +53,8 @@ const PDFViewer: React.FC<PDFViewerProps> = ({ file }) => {
       } catch (loadError) {
         if (cancelled) return;
         setError(loadError instanceof Error ? loadError.message : 'Failed to load PDF.');
+      } finally {
+        if (!cancelled) setIsLoading(false);
       }
     };
 
@@ -64,15 +69,23 @@ const PDFViewer: React.FC<PDFViewerProps> = ({ file }) => {
     const pdf = pdfRef.current;
     if (!pdf || !canvasRef.current) return;
 
-    const page = await pdf.getPage(targetPage);
-    const viewport = page.getViewport({ scale: 1.5 });
-    const canvas = canvasRef.current;
-    const context = canvas.getContext('2d');
-    if (!context) return;
+    setIsLoading(true);
+    try {
+      const page = await pdf.getPage(targetPage);
+      const viewport = page.getViewport({ scale: 1.5 });
+      const canvas = canvasRef.current;
+      if (!canvas) return;
+      const context = canvas.getContext('2d');
+      if (!context) return;
 
-    canvas.height = viewport.height;
-    canvas.width = viewport.width;
-    await page.render({ canvasContext: context, viewport }).promise;
+      canvas.height = viewport.height;
+      canvas.width = viewport.width;
+      await page.render({ canvasContext: context, viewport }).promise;
+    } catch (renderError) {
+      setError(renderError instanceof Error ? renderError.message : 'Failed to render PDF page.');
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   const nextPage = async () => {
@@ -104,20 +117,26 @@ const PDFViewer: React.FC<PDFViewerProps> = ({ file }) => {
 
   return (
     <div className='w-full max-w-full min-w-0 space-y-4 overflow-hidden'>
-      <div className='overflow-hidden rounded-xl border'>
+      {isLoading && <PreviewLoading title='PDF' />}
+      <div
+        aria-hidden={isLoading}
+        className={isLoading ? 'invisible h-0 overflow-hidden' : 'overflow-hidden rounded-xl border'}
+      >
         <canvas ref={canvasRef} className='block h-auto w-full max-w-full' />
       </div>
-      <div className='mt-2 flex flex-wrap items-center justify-center gap-2 sm:gap-4'>
-        <button type='button' onClick={prevPage} disabled={pageNumber === 1}>
-          Previous
-        </button>
-        <span>
-          {pageNumber} / {numPages}
-        </span>
-        <button type='button' onClick={nextPage} disabled={pageNumber === numPages}>
-          Next
-        </button>
-      </div>
+      {!isLoading && (
+        <div className='mt-2 flex flex-wrap items-center justify-center gap-2 sm:gap-4'>
+          <button type='button' onClick={prevPage} disabled={pageNumber === 1}>
+            Previous
+          </button>
+          <span>
+            {pageNumber} / {numPages}
+          </span>
+          <button type='button' onClick={nextPage} disabled={pageNumber === numPages}>
+            Next
+          </button>
+        </div>
+      )}
     </div>
   );
 };

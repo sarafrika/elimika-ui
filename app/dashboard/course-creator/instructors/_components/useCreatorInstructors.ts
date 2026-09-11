@@ -1,11 +1,11 @@
 'use client';
 
-import { useInfiniteQuery } from '@tanstack/react-query';
-import { useMemo } from 'react';
 import { useCourseCreator } from '@/context/course-creator-context';
 import { useCoursesByIds, useInstructorsByIds } from '@/hooks/use-batched-lookups';
 import { STALE_TIMES } from '@/lib/query-client';
 import { searchTrainingApplicationsInfiniteOptions } from '@/services/client/@tanstack/react-query.gen';
+import { useInfiniteQuery } from '@tanstack/react-query';
+import { useMemo } from 'react';
 import { groupInstructorCourses } from './instructor-data';
 
 const PAGE_SIZE = 50;
@@ -62,6 +62,8 @@ export function useCreatorInstructors(instructorUuid?: string) {
         courses: group.courseIds.map(uuid => ({
           uuid,
           name: courseMap[uuid]?.name || 'Course title unavailable',
+          creator_share_percentage: courseMap[uuid]?.creator_share_percentage,
+          instructor_share_percentage: courseMap[uuid]?.instructor_share_percentage,
         })),
       })),
     [groups, instructorMap, courseMap]

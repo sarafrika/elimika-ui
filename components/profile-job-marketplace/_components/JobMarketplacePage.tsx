@@ -77,7 +77,6 @@ import {
   listJobsOptions,
   listMyApplicationsOptions,
 } from '@/services/client/@tanstack/react-query.gen';
-import { invalidateJobApplicationWorkflowQueries } from '@/src/features/dashboard/workflow-query-invalidation';
 import type {
   ClassMarketplaceJob,
   ClassMarketplaceJobRequest,
@@ -92,6 +91,7 @@ import type {
 } from '@/services/client/types.gen';
 import { useUserDomain } from '@/src/features/dashboard/context/user-domain-context';
 import { roleScopedDashboardPath } from '@/src/features/dashboard/lib/active-domain-storage';
+import { invalidateJobApplicationWorkflowQueries } from '@/src/features/dashboard/workflow-query-invalidation';
 import { useOrganisation } from '@/src/features/organisation/context/organisation-context';
 import { useUserProfile } from '@/src/features/profile/context/profile-context';
 
@@ -699,10 +699,7 @@ function JobDetailsSheet({
                   {eligibility && !eligibility.training_approved && job.course_uuid ? (
                     <Button asChild variant='outline' size='sm'>
                       <Link
-                        href={roleScopedDashboardPath(
-                          activeDomain,
-                          `/dashboard/courses`
-                        )}
+                        href={`/dashboard/apply-to-train/${job.course_uuid}?kind=course`}
                       >
                         Apply to train this course
                       </Link>

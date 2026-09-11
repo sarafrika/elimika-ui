@@ -1,6 +1,6 @@
 'use client';
 
-import PDFViewer from '@/app/dashboard/student/_components/pdf-viewer';
+import dynamic from 'next/dynamic';
 import {
   Sheet,
   SheetContent,
@@ -14,6 +14,12 @@ import {
 } from '@/lib/lesson-content-preview';
 import { useEffect, useRef, useState } from 'react';
 import { Badge } from '../ui/badge';
+import { PreviewLoading } from './PreviewLoading';
+
+const PDFViewer = dynamic(() => import('@/app/dashboard/student/_components/pdf-viewer'), {
+  ssr: false,
+  loading: () => <PreviewLoading title='PDF' />,
+});
 
 type ContentTypeDetailsMap = Record<
   string,
@@ -364,11 +370,7 @@ function OfficeDocumentPreview({
           {resolvedOfficeType.toUpperCase()}
         </Badge>
       </div>
-      {isLoading ? (
-        <div className='text-muted-foreground flex min-h-[420px] items-center justify-center rounded-2xl border border-dashed text-sm'>
-          Loading {title || 'document'}...
-        </div>
-      ) : null}
+      {isLoading ? <PreviewLoading title={title || 'document'} /> : null}
       {resolvedOfficeType === 'spreadsheet' ? (
         spreadsheetRows ? (
           <div className='lesson-content-office-preview min-h-[72vh] w-full overflow-auto rounded-2xl'>
@@ -395,7 +397,8 @@ function OfficeDocumentPreview({
       ) : (
         <div
           ref={containerRef}
-          className='lesson-content-office-preview min-h-[72vh] w-full overflow-auto rounded-2xl'
+          aria-hidden={isLoading}
+          className={`lesson-content-office-preview w-full overflow-auto rounded-2xl ${isLoading ? 'invisible h-0' : 'min-h-[72vh]'}`}
         />
       )}
     </div>
@@ -433,6 +436,80 @@ function getVimeoEmbedUrl(source: string) {
   } catch {
     return '';
   }
+}
+
+function MediaFilePreview({
+  source,
+  title,
+  type,
+}: {
+  source: string;
+  title: string;
+  type: 'image' | 'video' | 'audio' | 'embed';
+}) {
+  const [isLoading, setIsLoading] = useState(true);
+  const [hasError, setHasError] = useState(false);
+  const handleLoad = () => setIsLoading(false);
+  const handleError = () => {
+    setHasError(true);
+    setIsLoading(false);
+  };
+
+  return (
+    <div className='bg-background mb-20 w-full max-w-full min-w-0 overflow-hidden p-4'>
+      {isLoading && <PreviewLoading title={title} />}
+      {hasError && (
+        <div className='text-muted-foreground flex min-h-[360px] items-center justify-center rounded-2xl border border-dashed p-6 text-center text-sm'>
+          Unable to load this preview.
+        </div>
+      )}
+      <div
+        aria-hidden={isLoading || hasError}
+        className={isLoading || hasError ? 'invisible h-0 overflow-hidden' : undefined}
+      >
+        {type === 'image' && (
+          <img
+            src={source}
+            alt={title}
+            onLoad={handleLoad}
+            onError={handleError}
+            className='block h-auto max-h-[680px] w-full max-w-full rounded-2xl object-contain'
+          />
+        )}
+        {type === 'video' && (
+          <video
+            controls
+            preload='auto'
+            src={source}
+            onLoadedData={handleLoad}
+            onError={handleError}
+            className='block aspect-video w-full max-w-full rounded-2xl'
+          />
+        )}
+        {type === 'audio' && (
+          <audio
+            controls
+            preload='metadata'
+            src={source}
+            onLoadedMetadata={handleLoad}
+            onError={handleError}
+            className='w-full'
+          />
+        )}
+        {type === 'embed' && (
+          <iframe
+            src={source}
+            title={title}
+            onLoad={handleLoad}
+            onError={handleError}
+            className='block aspect-video w-full max-w-full'
+            allow='accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture'
+            allowFullScreen
+          />
+        )}
+      </div>
+    </div>
+  );
 }
 
 export function RichTextPreview({ html }: { html: string }) {
@@ -550,7 +627,7 @@ export function LessonContentPreview({
   if (resolvedType === 'pdf') {
     return resolvedSource ? (
       <div className='bg-background mb-20 w-full max-w-full min-w-0 overflow-hidden p-4'>
-        <PDFViewer file={resolvedSource} />
+        <PDFViewer key={resolvedSource} file={resolvedSource} />
       </div>
     ) : (
       <div className='text-muted-foreground flex min-h-[360px] w-full max-w-full min-w-0 items-center justify-center rounded-[28px] border border-dashed p-8 text-center text-sm'>
@@ -570,6 +647,7 @@ export function LessonContentPreview({
   ) {
     return resolvedSource ? (
       <OfficeDocumentPreview
+        key={`${resolvedType}-${resolvedSource}`}
         source={resolvedSource}
         title={content.title || 'Office document'}
         type={resolvedType}
@@ -591,26 +669,22 @@ export function LessonContentPreview({
 
     if (embedUrl) {
       return (
-        <div className='bg-background mb-20 w-full max-w-full min-w-0 overflow-hidden'>
-          <iframe
-            src={embedUrl}
-            title={content.title || 'Lesson video'}
-            className='block aspect-video w-full max-w-full'
-            allow='accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture'
-            allowFullScreen
-          />
-        </div>
+        <MediaFilePreview
+          key={`embed-${embedUrl}`}
+          source={embedUrl}
+          title={content.title || 'Lesson video'}
+          type='embed'
+        />
       );
     }
 
     return resolvedSource ? (
-      <div className='border-border/60 bg-background mb-20 w-full max-w-full min-w-0 overflow-hidden border p-4'>
-        <video
-          controls
-          className='block aspect-video w-full max-w-full rounded-2xl'
-          src={resolvedSource}
-        />
-      </div>
+      <MediaFilePreview
+        key={`video-${resolvedSource}`}
+        source={resolvedSource}
+        title={content.title || 'Lesson video'}
+        type='video'
+      />
     ) : (
       <div className='text-muted-foreground flex min-h-[360px] w-full max-w-full min-w-0 items-center justify-center rounded-[28px] border border-dashed p-8 text-center text-sm'>
         This video source is not available yet.
@@ -623,9 +697,12 @@ export function LessonContentPreview({
    */
   if (resolvedType === 'audio') {
     return resolvedSource ? (
-      <div className='bg-background mb-20 w-full max-w-full min-w-0 p-6'>
-        <audio controls className='w-full' src={resolvedSource} />
-      </div>
+      <MediaFilePreview
+        key={`audio-${resolvedSource}`}
+        source={resolvedSource}
+        title={content.title || 'Lesson audio'}
+        type='audio'
+      />
     ) : (
       <div className='text-muted-foreground flex min-h-[220px] w-full max-w-full min-w-0 items-center justify-center rounded-[28px] border border-dashed p-8 text-center text-sm'>
         This audio source is not available yet.
@@ -638,13 +715,12 @@ export function LessonContentPreview({
    */
   if (resolvedType === 'image') {
     return resolvedSource ? (
-      <div className='bg-background mb-20 w-full max-w-full min-w-0 overflow-hidden p-4'>
-        <img
-          src={resolvedSource}
-          alt={content.title || 'Lesson image'}
-          className='block h-auto max-h-[680px] w-full max-w-full rounded-2xl object-contain'
-        />
-      </div>
+      <MediaFilePreview
+        key={`image-${resolvedSource}`}
+        source={resolvedSource}
+        title={content.title || 'Lesson image'}
+        type='image'
+      />
     ) : (
       <div className='text-muted-foreground flex min-h-[360px] w-full max-w-full min-w-0 items-center justify-center rounded-[28px] border border-dashed p-8 text-center text-sm'>
         This image source is not available yet.
