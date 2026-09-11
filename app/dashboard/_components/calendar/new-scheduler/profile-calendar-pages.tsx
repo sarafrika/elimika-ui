@@ -601,8 +601,8 @@ function StudentCalendarPage() {
       },
     }),
     enabled: !!studentUuid,
-    staleTime: 5 * 60 * 1000,
-    refetchOnWindowFocus: false,
+    // staleTime: 5 * 60 * 1000,
+    // refetchOnWindowFocus: false,
   });
 
   // -----------------------------
@@ -625,7 +625,7 @@ function StudentCalendarPage() {
     queries: studentClassDefinitionUuids.map(uuid => ({
       ...getClassDefinitionOptions({ path: { uuid } }),
       enabled: !!uuid,
-      staleTime: 5 * 60 * 1000,
+      // staleTime: 5 * 60 * 1000,
     })),
   });
 
@@ -656,7 +656,7 @@ function StudentCalendarPage() {
     queries: studentCourseUuids.map(uuid => ({
       ...getCourseByUuidOptions({ path: { uuid } }),
       enabled: !!uuid,
-      staleTime: 5 * 60 * 1000,
+      // staleTime: 5 * 60 * 1000,
     })),
   });
 
@@ -710,7 +710,7 @@ function StudentCalendarPage() {
     queries: instructorUuids.map(uuid => ({
       ...getInstructorByUuidOptions({ path: { uuid } }),
       enabled: !!uuid,
-      staleTime: 5 * 60 * 1000,
+      // staleTime: 5 * 60 * 1000,
     })),
   });
 
@@ -725,7 +725,7 @@ function StudentCalendarPage() {
     queries: instructorUserUuids.map(uuid => ({
       ...getUserByUuidOptions({ path: { uuid } }),
       enabled: !!uuid,
-      staleTime: 5 * 60 * 1000,
+      // staleTime: 5 * 60 * 1000,
     })),
   });
 
@@ -822,9 +822,9 @@ function OrganizationCalendarPage() {
     enabled: !!organizationUuid,
     // Classes appear and change hands through assignment decisions taken elsewhere, so a
     // mount must re-ask instead of replaying the rehydrated list.
-    staleTime: 5 * 60 * 1000,
-    refetchOnWindowFocus: false,
-    refetchOnReconnect: false,
+    // staleTime: 5 * 60 * 1000,
+    // refetchOnWindowFocus: false,
+    // refetchOnReconnect: false,
   });
 
   const classData = useMemo(
@@ -856,9 +856,9 @@ function OrganizationCalendarPage() {
       ...getCourseByUuidOptions({ path: { uuid } }),
       enabled: !!uuid,
       // Moderation can approve or pull a course between visits.
-      staleTime: 5 * 60 * 1000,
-      refetchOnWindowFocus: false,
-      refetchOnReconnect: false,
+      // staleTime: 5 * 60 * 1000,
+      // refetchOnWindowFocus: false,
+      // refetchOnReconnect: false,
     })),
   });
 
@@ -881,9 +881,9 @@ function OrganizationCalendarPage() {
       ...getInstructorByUuidOptions({ path: { uuid } }),
       enabled: !!uuid,
       // Verification can flip an instructor between visits.
-      staleTime: 5 * 60 * 1000,
-      refetchOnWindowFocus: false,
-      refetchOnReconnect: false,
+      // staleTime: 5 * 60 * 1000,
+      // refetchOnWindowFocus: false,
+      // refetchOnReconnect: false,
     })),
   });
 
@@ -908,10 +908,10 @@ function OrganizationCalendarPage() {
         query: { pageable: { page: 0, size: 1000 } },
       }),
       enabled: !!cls.uuid,
-      staleTime: 5 * 60 * 1000,
-      refetchOnWindowFocus: false,
-      refetchOnMount: false,
-      refetchOnReconnect: false,
+      // staleTime: 5 * 60 * 1000,
+      // refetchOnWindowFocus: false,
+      // refetchOnMount: false,
+      // refetchOnReconnect: false,
     })),
   });
 

@@ -42,6 +42,7 @@ import { toast } from 'sonner';
 import DeleteModal from '../../../../../components/custom-modals/delete-modal';
 import { useCourseLessonsWithContent } from '../../../../../hooks/use-courselessonwithcontent';
 import { stripHtml } from '../../../../../src/features/dashboard/courses/shared/_components/courses-data';
+import { AssignmentPreviewSheet } from '../../_components/AssignmentPreviewSheet';
 import CourseBrandingForm from '../../_components/course-branding-form';
 import {
     CourseCreationForm,
@@ -67,13 +68,12 @@ import {
     CourseCreatorLoadingState,
 } from '../../_components/loading-state';
 import { PracticeActivityManager } from '../../_components/practice-activity-management';
+import { QuizPreviewSheet } from '../../_components/QuizPreviewSheet';
 import {
     createEmptyDraftsByProvider,
     type Provider,
 } from '../../_components/training-requirement-section';
 import AssessmentCreation from './assessment-creation';
-import { AssignmentPreviewSheet } from '../../_components/AssignmentPreviewSheet';
-import { QuizPreviewSheet } from '../../_components/QuizPreviewSheet';
 import { Stepper } from './stepper';
 
 type SaveableCourseFormRef = {
@@ -1349,85 +1349,88 @@ export default function CreateCoursePage() {
                                                                                 No assessments have been added to this lesson yet.
                                                                             </div>
                                                                         ) : (
-                                                                            items.map(item => (
-                                                                                <div
-                                                                                    key={`${item.kind}-${item.uuid}`}
-                                                                                    className="flex flex-col gap-4 rounded-xl border border-border bg-muted/40 p-4"
-                                                                                >
-                                                                                    <div className="space-y-2">
-                                                                                        <div className="flex flex-wrap items-center gap-2">
-                                                                                            <Badge variant="secondary">
-                                                                                                {item.kind}
-                                                                                            </Badge>
+                                                                            items.map(item => {
+                                                                                const isDraft = item.statusLabel === 'Draft';
 
-                                                                                            <Badge variant={item.statusTone}>
-                                                                                                {item.statusLabel}
-                                                                                            </Badge>
+                                                                                return (
+                                                                                    <div
+                                                                                        key={`${item.kind}-${item.uuid}`}
+                                                                                        className={`flex flex-col gap-4 rounded-xl border p-4 ${isDraft
+                                                                                            ? 'border-destructive/30 bg-destructive/5'
+                                                                                            : 'border-border bg-muted/40'
+                                                                                            }`}
+                                                                                    >
+                                                                                        <div className='space-y-2'>
+                                                                                            <div className='flex flex-wrap items-center gap-2'>
+                                                                                                <Badge variant='secondary'>{item.kind}</Badge>
 
+                                                                                                <Badge variant={item.statusTone}>{item.statusLabel}</Badge>
 
-                                                                                            <div className="flex flex-wrap gap-2">
-                                                                                                {item.meta.map(meta => (
-                                                                                                    <Badge
-                                                                                                        key={meta}
-                                                                                                        variant="outline"
-                                                                                                        className="rounded-full"
-                                                                                                    >
-                                                                                                        {meta}
-                                                                                                    </Badge>
-                                                                                                ))}
+                                                                                                <div className='flex flex-wrap gap-2'>
+                                                                                                    {item.meta.map(meta => (
+                                                                                                        <Badge
+                                                                                                            key={meta}
+                                                                                                            variant='outline'
+                                                                                                            className='rounded-full'
+                                                                                                        >
+                                                                                                            {meta}
+                                                                                                        </Badge>
+                                                                                                    ))}
+                                                                                                </div>
+                                                                                            </div>
+
+                                                                                            <div className='space-y-1'>
+                                                                                                <p className='font-semibold text-foreground'>{item.title}</p>
+
+                                                                                                <p className='line-clamp-2 text-sm text-muted-foreground'>
+                                                                                                    {item.description}
+                                                                                                </p>
                                                                                             </div>
                                                                                         </div>
 
-                                                                                        <div className="space-y-1">
-                                                                                            <p className="font-semibold text-foreground">
-                                                                                                {item.title}
-                                                                                            </p>
+                                                                                        <div
+                                                                                            className='flex flex-row flex-wrap items-end justify-end gap-2'
+                                                                                            onClick={e => e.stopPropagation()}
+                                                                                        >
+                                                                                            <Button
+                                                                                                type='button'
+                                                                                                variant='outline'
+                                                                                                size='sm'
+                                                                                                onClick={() => openAssessmentPreview(item)}
+                                                                                                aria-label={`Preview ${item.kind.toLowerCase()}: ${item.title}`}
+                                                                                                title='View assessment'
+                                                                                            >
+                                                                                                <Eye className='h-4 w-4' />
+                                                                                            </Button>
 
-                                                                                            <p className="line-clamp-2 text-sm text-muted-foreground">
-                                                                                                {item.description}
-                                                                                            </p>
+                                                                                            <Button
+                                                                                                type='button'
+                                                                                                variant='outline'
+                                                                                                size='sm'
+                                                                                                onClick={() => openAssessmentEditor(item)}
+                                                                                            >
+                                                                                                <Pencil className='h-4 w-4' />
+                                                                                            </Button>
+
+                                                                                            <Button
+                                                                                                type='button'
+                                                                                                variant='destructive'
+                                                                                                size='sm'
+                                                                                                onClick={() => handleDeleteAssessment(item)}
+                                                                                            >
+                                                                                                <Trash className='h-4 w-4' />
+                                                                                            </Button>
                                                                                         </div>
+
+                                                                                        {isDraft && (
+                                                                                            <div className='border-t border-destructive/20 pt-3 text-sm font-medium text-destructive'>
+                                                                                                This {item.kind.toLowerCase()} is currently in draft and will not be
+                                                                                                visible to users until it is published.
+                                                                                            </div>
+                                                                                        )}
                                                                                     </div>
-
-                                                                                    <div
-                                                                                        className="flex flex-row flex-wrap gap-2 items-end justify-end"
-                                                                                        onClick={e => e.stopPropagation()}
-                                                                                    >
-                                                                                        <Button
-                                                                                            type="button"
-                                                                                            variant="outline"
-                                                                                            size="sm"
-                                                                                            onClick={() => openAssessmentPreview(item)}
-                                                                                            aria-label={`Preview ${item.kind.toLowerCase()}: ${item.title}`}
-                                                                                            title='View assessment'
-                                                                                        >
-                                                                                            <Eye className="h-4 w-4" />
-                                                                                        </Button>
-
-                                                                                        <Button
-                                                                                            type="button"
-                                                                                            variant="outline"
-                                                                                            size="sm"
-                                                                                            onClick={() =>
-                                                                                                openAssessmentEditor(item)
-                                                                                            }
-                                                                                        >
-                                                                                            <Pencil className=" h-4 w-4" />
-                                                                                        </Button>
-
-                                                                                        <Button
-                                                                                            type="button"
-                                                                                            variant="destructive"
-                                                                                            size="sm"
-                                                                                            onClick={() =>
-                                                                                                handleDeleteAssessment(item)
-                                                                                            }
-                                                                                        >
-                                                                                            <Trash className="h-4 w-4" />
-                                                                                        </Button>
-                                                                                    </div>
-                                                                                </div>
-                                                                            ))
+                                                                                );
+                                                                            })
                                                                         )}
                                                                     </CardContent>
                                                                 ) : null}

@@ -43,17 +43,16 @@ export function useInstructorClassesWithSchedules(instructorUuid?: string) {
       path: { instructorUuid: instructorUuid as string, },
       query: { activeOnly: true },
     }),
-
     enabled: !!instructorUuid,
 
-    staleTime: 10 * 60 * 1000,
-    gcTime: 60 * 60 * 1000,
+    // staleTime: 10 * 60 * 1000,
+    // gcTime: 60 * 60 * 1000,
 
     // This list is what an approved training application or accepted job application adds a class
     // to. The instructor is reloading precisely to see that, so never answer from cache alone.
-    refetchOnMount: 'always',
-    refetchOnReconnect: false,
-    refetchOnWindowFocus: false,
+    // refetchOnMount: 'always',
+    // refetchOnReconnect: false,
+    // refetchOnWindowFocus: false,
   });
 
   const classes = useMemo(
@@ -98,16 +97,15 @@ export function useInstructorClassesWithSchedules(instructorUuid?: string) {
           programUuid: programUuid as string,
         },
       }),
-
       enabled: !!programUuid,
 
       // A programme's course list is the owner's to change, not the instructor's, so it has to be
       // able to revalidate here.
-      staleTime: 10 * 60 * 1000,
-      gcTime: 60 * 60 * 1000,
+      // staleTime: 10 * 60 * 1000,
+      // gcTime: 60 * 60 * 1000,
 
-      refetchOnReconnect: false,
-      refetchOnWindowFocus: false,
+      // refetchOnReconnect: false,
+      // refetchOnWindowFocus: false,
     })),
   });
 
@@ -135,11 +133,11 @@ export function useInstructorClassesWithSchedules(instructorUuid?: string) {
 
       // Students enrol and withdraw without this tab; the enrolment workflow invalidates this key
       // and needs a mount refetch to be allowed for that invalidation to reach anyone.
-      staleTime: 10 * 60 * 1000,
-      gcTime: 60 * 60 * 1000,
+      // staleTime: 10 * 60 * 1000,
+      // gcTime: 60 * 60 * 1000,
 
-      refetchOnReconnect: false,
-      refetchOnWindowFocus: false,
+      // refetchOnReconnect: false,
+      // refetchOnWindowFocus: false,
     })),
   });
 
@@ -162,12 +160,12 @@ export function useInstructorClassesWithSchedules(instructorUuid?: string) {
       query: scheduleRange,
     }),
     enabled: !!instructorUuid,
-    staleTime: 10 * 60 * 1000,
-    gcTime: 60 * 60 * 1000,
+    // staleTime: 10 * 60 * 1000,
+    // gcTime: 60 * 60 * 1000,
     // Mount revalidation stays on, unlike the other queries here: blocking time invalidates this
     // key from the availability page, where nothing observes it, so only a later mount refetches.
-    refetchOnReconnect: false,
-    refetchOnWindowFocus: false,
+    // refetchOnReconnect: false,
+    // refetchOnWindowFocus: false,
   });
 
   const schedulesByClass = useMemo(() => {
@@ -235,9 +233,9 @@ export function useInstructorClassesWithSchedules(instructorUuid?: string) {
       (instructorScheduleQuery.data?.data ?? []).map(instance =>
         instance.organisation_uuid && !instance.organisation_name
           ? {
-              ...instance,
-              organisation_name: organisationMap[instance.organisation_uuid]?.name,
-            }
+            ...instance,
+            organisation_name: organisationMap[instance.organisation_uuid]?.name,
+          }
           : instance
       ),
     [instructorScheduleQuery.data, organisationMap]

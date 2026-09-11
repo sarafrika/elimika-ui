@@ -218,7 +218,7 @@ export default {
           icon: CalendarClock,
         },
         {
-          title: 'Schedule',
+          title: 'Calendar',
           url: '/dashboard/calendar',
           icon: Calendar,
         },
@@ -301,7 +301,7 @@ export default {
           icon: BadgeCheck,
         },
         {
-          title: 'Schedule',
+          title: 'Calendar',
           url: '/dashboard/calendar',
           icon: CalendarClock,
         },
@@ -653,7 +653,7 @@ export default {
           icon: Building2,
         },
         {
-          title: 'Classes Schedule',
+          title: 'Calendar',
           url: '/dashboard/calendar',
           icon: CalendarClock,
         },

@@ -56,7 +56,7 @@ export default function InstructorsPage() {
     [instructorClassesMap]
   );
 
-  const { classEnrollmentsMap, } = useClassesEnrollmentsByIds(classUuids);
+  const { classEnrollmentsMap } = useClassesEnrollmentsByIds(classUuids);
 
   const filtered = useMemo(
     () =>
@@ -77,15 +77,22 @@ export default function InstructorsPage() {
               (item) => item?.class_definition
             ) ?? [];
 
-          // Sum enrollments across all of this instructor's classes
-          const totalStudents = classes.reduce((total, classItem) => {
-            if (!classItem?.uuid) return total;
+          // Count unique students across all of this instructor's classes
+          const uniqueStudentUuids = new Set<string>();
 
-            const enrollments =
-              classEnrollmentsMap.get(classItem.uuid) ?? [];
+          classes.forEach(classItem => {
+            if (!classItem?.uuid) return;
 
-            return total + enrollments.length;
-          }, 0);
+            const enrollments = classEnrollmentsMap.get(classItem.uuid) ?? [];
+
+            enrollments.forEach(enrollment => {
+              if (enrollment?.student_uuid) {
+                uniqueStudentUuids.add(enrollment.student_uuid);
+              }
+            });
+          });
+
+          const totalStudents = uniqueStudentUuids.size;
 
           return {
             ...instructor,
@@ -192,11 +199,15 @@ export default function InstructorsPage() {
         />
       ) : (
         <div className='overflow-x-auto rounded-lg border'>
-          <Table className='min-w-[700px]'>
+          <Table className='min-w-[1000px]'>
             <TableHeader>
               <TableRow>
                 <TableHead>Instructor</TableHead>
                 <TableHead>Your courses</TableHead>
+                <TableHead className='flex flex-col text-start'>
+                  <p>Split Ratio</p>
+                  <p>Creator/Instructor</p>
+                </TableHead>
                 <TableHead>No of Classes</TableHead>
                 <TableHead>No of Students</TableHead>
                 <TableHead>Rating</TableHead>
@@ -217,7 +228,8 @@ export default function InstructorsPage() {
                     )
                   }
                 >
-                  <TableCell>
+                  {/* Instructor */}
+                  <TableCell className='align-top'>
                     <div className='flex items-center gap-3'>
                       <Avatar className='h-9 w-9 shrink-0'>
                         <AvatarFallback className='bg-primary/10 text-primary text-xs'>
@@ -233,41 +245,120 @@ export default function InstructorsPage() {
                       <div>
                         <p className='font-medium'>{instructor.name}</p>
                         <p className='text-muted-foreground max-w-xs truncate text-xs'>
-                          {instructor.profile?.professional_headline ||
-                            'Instructor'}
+                          {instructor.profile?.professional_headline || 'Instructor'}
                         </p>
                       </div>
                     </div>
                   </TableCell>
 
-                  <TableCell>
-                    <div className='flex max-w-md flex-wrap gap-1'>
+                  {/* Courses */}
+                  <TableCell className='align-top'>
+                    <div className='space-y-3'>
                       {instructor.courses.map(course => (
-                        <Badge key={course.uuid} variant='secondary'>
-                          {course.name}
-                        </Badge>
+                        <div
+                          key={course.uuid}
+                          className='min-w-[180px]'
+                        >
+                          <p className='truncate text-sm font-medium'>
+                            {course.name}
+                          </p>
+                        </div>
                       ))}
                     </div>
                   </TableCell>
 
-                  <TableCell className='text-muted-foreground'>
-                    {instructor?.classes?.length ?? 0}{' '}
-                    {(instructor?.classes?.length ?? 0) === 1 ? 'class' : 'classes'}
+                  {/* Split Ratio */}
+                  <TableCell className='align-top'>
+                    <div className='space-y-3'>
+                      {instructor.courses.map(course => (
+                        <div key={course.uuid} className='h-5'>
+                          <Badge variant='outline' className='font-medium'>
+                            {course.creator_share_percentage ?? 0}/
+                            {course.instructor_share_percentage ?? 0}
+                          </Badge>
+                        </div>
+                      ))}
+                    </div>
                   </TableCell>
 
-                  <TableCell className='text-muted-foreground'>
-                    {instructor.totalStudents}{" "}
-                    {instructor.totalStudents === 1 ? "student" : "students"}
+                  {/* Number of Classes */}
+                  <TableCell className='align-top'>
+                    <div className='space-y-3'>
+                      {instructor.courses.map(course => {
+                        const courseClasses =
+                          instructor.classes?.filter(
+                            classItem => classItem.course_uuid === course.uuid
+                          ) ?? [];
+
+                        const classCount = courseClasses.length;
+
+                        return (
+                          <div
+                            key={course.uuid}
+                            className='h-5 text-sm text-muted-foreground'
+                          >
+                            {classCount}{' '}
+                            {classCount === 1 ? 'class' : 'classes'}
+                          </div>
+                        );
+                      })}
+                    </div>
                   </TableCell>
 
-                  <TableCell className='text-muted-foreground'>
+                  {/* Number of Students */}
+                  <TableCell className='align-top'>
+                    <div className='space-y-3'>
+                      {instructor.courses.map(course => {
+                        const courseClasses =
+                          instructor.classes?.filter(
+                            classItem => classItem.course_uuid === course.uuid
+                          ) ?? [];
+
+                        const studentUuids = new Set<string>();
+
+                        courseClasses.forEach(classItem => {
+                          const classUuid = classItem.uuid;
+
+                          if (!classUuid) return;
+
+                          const enrollments =
+                            classEnrollmentsMap.get(classUuid) ?? [];
+
+                          enrollments.forEach(enrollment => {
+                            if (enrollment?.student_uuid) {
+                              studentUuids.add(enrollment.student_uuid);
+                            }
+                          });
+                        });
+
+                        const studentCount = studentUuids.size;
+
+                        return (
+                          <div
+                            key={course.uuid}
+                            className='h-5 text-sm text-muted-foreground'
+                          >
+                            {studentCount}{' '}
+                            {studentCount === 1 ? 'student' : 'students'}
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </TableCell>
+
+                  {/* Rating */}
+                  <TableCell className='align-top text-muted-foreground'>
                     {instructor.ratingSummary?.review_count > 0
-                      ? `${instructor.ratingSummary.average_rating.toFixed(1)} (${instructor.ratingSummary.review_count} ${instructor.ratingSummary.review_count === 1 ? 'review' : 'reviews'
+                      ? `${instructor.ratingSummary.average_rating.toFixed(1)} (${instructor.ratingSummary.review_count
+                      } ${instructor.ratingSummary.review_count === 1
+                        ? 'review'
+                        : 'reviews'
                       })`
                       : 'No reviews'}
                   </TableCell>
 
-                  <TableCell>
+                  {/* Status */}
+                  <TableCell className='align-top'>
                     <Badge>Approved</Badge>
                   </TableCell>
                 </TableRow>

@@ -1,20 +1,32 @@
-import { Download, FileAudio, FileImage, FileSpreadsheet, FileText, FileVideo } from 'lucide-react';
+'use client';
+
+import { FileAudio, FileImage, FileSpreadsheet, FileText, FileVideo } from 'lucide-react';
+import dynamic from 'next/dynamic';
 
 import { Badge } from '@/components/ui/badge';
-import { Button } from '@/components/ui/button';
+import { Card } from '@/components/ui/card';
+import { EmptyState } from '@/components/ui/empty-state';
+import { Skeleton } from '@/components/ui/skeleton';
+import type { AssignmentAttachment as ApiAssignmentAttachment } from '@/services/client';
+import { toAuthenticatedMediaUrl } from '@/src/lib/media-url';
 
-type AssignmentAttachment = {
-  uuid: string;
-  original_filename: string;
-  mime_type: string;
-  file_url: string;
+const DocumentPreview = dynamic(
+  () => import('./LessonContentPreview').then(module => module.LessonContentPreview),
+  { ssr: false, loading: () => <Skeleton className='h-96 w-full' /> }
+);
+
+type AssignmentAttachment = Pick<
+  ApiAssignmentAttachment,
+  'uuid' | 'original_filename' | 'mime_type' | 'file_url' | 'stored_filename'
+> & {
   file_size_bytes?: bigint | number;
 };
 
 function formatFileSize(bytes?: bigint | number) {
-  if (!bytes) return null;
+  if (bytes == null) return null;
 
   const value = Number(bytes);
+  if (!Number.isFinite(value) || value < 0) return null;
 
   if (value < 1024) return `${value} B`;
   if (value < 1024 * 1024) return `${(value / 1024).toFixed(1)} KB`;
@@ -22,21 +34,32 @@ function formatFileSize(bytes?: bigint | number) {
   return `${(value / (1024 * 1024)).toFixed(1)} MB`;
 }
 
-function getFileType(mimeType?: string) {
-  if (!mimeType) return 'file';
+function getFileType(file: AssignmentAttachment) {
+  const mimeType = file.mime_type?.toLowerCase() ?? '';
+  const extension = (file.original_filename || file.file_url || file.stored_filename || '')
+    .split(/[?#]/)[0]
+    .split('.')
+    .pop()
+    ?.toLowerCase();
 
-  if (mimeType.includes('pdf')) return 'pdf';
-  if (mimeType.includes('image')) return 'image';
-  if (mimeType.includes('audio')) return 'audio';
-  if (mimeType.includes('video')) return 'video';
+  if (mimeType.includes('pdf') || extension === 'pdf') return 'pdf';
+  if (
+    mimeType.startsWith('image/') ||
+    ['jpg', 'jpeg', 'png', 'gif', 'webp', 'svg'].includes(extension ?? '')
+  )
+    return 'image';
+  if (mimeType.startsWith('audio/')) return 'audio';
+  if (mimeType.startsWith('video/')) return 'video';
 
-  if (mimeType.includes('word') || mimeType.includes('document')) {
-    return 'document';
-  }
-
-  if (mimeType.includes('sheet') || mimeType.includes('excel')) {
+  // "officedocument" also appears in spreadsheet MIME types.
+  if (
+    mimeType.includes('sheet') ||
+    mimeType.includes('excel') ||
+    ['xls', 'xlsx', 'xlsm', 'ods'].includes(extension ?? '')
+  ) {
     return 'spreadsheet';
   }
+  if (mimeType.includes('wordprocessingml') || extension === 'docx') return 'document';
 
   return 'file';
 }
@@ -65,85 +88,77 @@ function getFileIcon(type: string) {
 
 export function AssignmentContentPreview({ attachments }: { attachments: AssignmentAttachment[] }) {
   if (!attachments?.length) {
-    return (
-      <div className='text-muted-foreground flex min-h-[240px] items-center justify-center rounded-2xl border border-dashed p-6 text-center text-sm'>
-        No attachments available for this assignment.
-      </div>
-    );
+    return <EmptyState variant='compact' title='No attachments available for this assignment.' />;
   }
 
   return (
     <div className='space-y-6'>
       {attachments.map(file => {
-        const fileType = getFileType(file.mime_type);
+        const fileType = getFileType(file);
+        const source = toAuthenticatedMediaUrl(file.file_url?.trim());
+        const filename =
+          file.original_filename || file.stored_filename?.split('/').pop() || 'Attachment';
+        const fileSize = formatFileSize(file.file_size_bytes);
 
         return (
-          <div key={file.uuid} className='rounded-2xl border p-4'>
+          <Card key={file.uuid || file.file_url || filename} className='min-w-0 rounded-2xl p-4'>
             {/* Header */}
             <div className='mb-4 flex items-start justify-between gap-3'>
               <div className='min-w-0 flex-1'>
                 <div className='flex items-center gap-2'>
                   {getFileIcon(fileType)}
 
-                  <p className='truncate text-sm font-medium'>{file.original_filename}</p>
+                  <p className='text-sm font-medium break-words'>{filename}</p>
                 </div>
 
                 <div className='text-muted-foreground mt-2 flex flex-wrap items-center gap-2 text-xs'>
-                  <Badge variant='outline'>{file.mime_type}</Badge>
-
-                  {file.file_size_bytes && (
-                    <Badge variant='outline'>{formatFileSize(file.file_size_bytes)}</Badge>
+                  {file.mime_type && (
+                    <Badge variant='outline' className='max-w-full break-all whitespace-normal'>
+                      {file.mime_type}
+                    </Badge>
                   )}
+
+                  {fileSize !== null && <Badge variant='outline'>{fileSize}</Badge>}
                 </div>
               </div>
-
-              <Button asChild size='sm' variant='outline'>
-                <a href={file.file_url} target='_blank' rel='noopener noreferrer'>
-                  <Download className='mr-2 size-4' />
-                  Download
-                </a>
-              </Button>
             </div>
 
             {/* Preview */}
-            {fileType === 'pdf' && (
-              <iframe
-                src={file.file_url}
-                className='h-[700px] w-full rounded-xl border'
-                title={file.original_filename}
+            {source && (fileType === 'pdf' || fileType === 'document') && (
+              <DocumentPreview
+                key={source}
+                content={{ file_url: source, title: filename, mime_type: file.mime_type }}
+                contentType={fileType}
               />
             )}
 
-            {fileType === 'image' && (
+            {source && fileType === 'image' && (
               <img
-                src={file.file_url}
-                alt={file.original_filename}
+                src={source}
+                alt={filename}
                 className='max-h-[700px] w-full rounded-xl object-contain'
               />
             )}
 
-            {(fileType === 'document' || fileType === 'spreadsheet') && (
-              <iframe
-                src={`https://view.officeapps.live.com/op/embed.aspx?src=${encodeURIComponent(
-                  window.location.origin + file.file_url
-                )}`}
-                className='h-[700px] w-full rounded-xl border'
-                title={file.original_filename}
+            {source && fileType === 'audio' && (
+              <audio controls preload='metadata' className='w-full' src={source} />
+            )}
+
+            {source && fileType === 'video' && (
+              <video controls preload='metadata' className='w-full rounded-xl' src={source} />
+            )}
+
+            {(!source || fileType === 'file' || fileType === 'spreadsheet') && (
+              <EmptyState
+                variant='compact'
+                title={
+                  source
+                    ? 'Preview unavailable for this file type.'
+                    : 'This attachment is not available yet.'
+                }
               />
             )}
-
-            {fileType === 'audio' && <audio controls className='w-full' src={file.file_url} />}
-
-            {fileType === 'video' && (
-              <video controls className='w-full rounded-xl' src={file.file_url} />
-            )}
-
-            {fileType === 'file' && (
-              <div className='text-muted-foreground flex min-h-[180px] items-center justify-center rounded-xl border border-dashed text-sm'>
-                Preview unavailable for this file type.
-              </div>
-            )}
-          </div>
+          </Card>
         );
       })}
     </div>
