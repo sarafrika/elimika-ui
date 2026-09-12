@@ -1,11 +1,12 @@
 'use client';
 
-import { CalendarDays, Clock, MoreVertical, Plus, Trash2, X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { cn } from '@/lib/utils';
+import { ScheduleDateInput } from './ScheduleDateInput';
+import { CalendarDays, Clock, MoreVertical, Plus, Trash2, X } from 'lucide-react';
 import {
   type AcademicPeriod,
   DAY_FULL,
@@ -169,10 +170,9 @@ export function AcademicPeriodsPanel({
                 <Label className='text-muted-foreground text-[11px]'>Start Date</Label>
                 <div className='relative'>
                   <CalendarDays className='text-muted-foreground pointer-events-none absolute top-1/2 left-2 h-3.5 w-3.5 -translate-y-1/2' />
-                  <Input
-                    type='date'
+                  <ScheduleDateInput
                     value={p.startDate}
-                    onChange={e => updatePeriod(p.id, { startDate: e.target.value })}
+                    onValueChange={startDate => updatePeriod(p.id, { startDate })}
                     className='h-9 pl-7 text-sm'
                   />
                 </div>
@@ -183,10 +183,10 @@ export function AcademicPeriodsPanel({
                 <Label className='text-muted-foreground text-[11px]'>End Date</Label>
                 <div className='relative'>
                   <CalendarDays className='text-muted-foreground pointer-events-none absolute top-1/2 left-2 h-3.5 w-3.5 -translate-y-1/2' />
-                  <Input
-                    type='date'
+                  <ScheduleDateInput
                     value={p.endDate}
-                    onChange={e => updatePeriod(p.id, { endDate: e.target.value })}
+                    min={p.startDate}
+                    onValueChange={endDate => updatePeriod(p.id, { endDate })}
                     className='h-9 pl-7 text-sm'
                   />
                 </div>

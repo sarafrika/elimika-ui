@@ -6,6 +6,7 @@ import {
   getProgramCoursesOptions,
 } from '@/services/client/@tanstack/react-query.gen';
 import type {
+  Enrollment,
   GetClassDefinitionsForInstructorResponse,
   GetClassScheduleResponse,
   GetCourseByUuidResponse,
@@ -29,7 +30,7 @@ export type InstructorClassWithSchedule = InstructorClass & {
   course?: InstructorCourse | null;
   programCourses?: ProgramCourseLike[];
   schedule: InstructorSchedule[];
-  enrollments: unknown[];
+  enrollments: Enrollment[];
   /**
    * Name of the organisation that owns the class, when one does. A class definition carries only
    * the organisation's id, but every instructor-facing surface needs to say whose work it is.

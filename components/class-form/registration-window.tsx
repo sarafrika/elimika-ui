@@ -1,8 +1,8 @@
 'use client';
 
-import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { cn } from '@/lib/utils';
+import { ScheduleDateInput } from './ScheduleDateInput';
 import { REGISTRATION_WINDOW_HINT, type RegistrationWindowErrors } from './class-form-shared';
 
 /**
@@ -43,22 +43,13 @@ export function RegistrationWindow({
           <Label htmlFor={startId} className='text-xs'>
             Registration opens *
           </Label>
-          <Input
+          <ScheduleDateInput
             id={startId}
-            type='date'
-            // aria-required, not the `required` attribute — and no `min` on the closing
-            // input either. Native constraint validation fires its own bubble on submit
-            // and stops the handler running, which would pre-empt the inline error and
-            // toast every other failure in these forms is reported through. The window
-            // is enforced by validateRegistrationWindow, which is the one place that
-            // knows the whole rule (required, end >= start, and not already closed on
-            // create) and can word each failure. Announce the requirement, do not police
-            // it here.
             aria-required
             value={start}
             aria-invalid={Boolean(errors?.start)}
             aria-describedby={errors?.start ? `${startId}-error` : undefined}
-            onChange={event => onStartChange(event.target.value)}
+            onValueChange={onStartChange}
           />
           {errors?.start ? (
             <p id={`${startId}-error`} className='text-destructive text-[11px]'>
@@ -70,14 +61,14 @@ export function RegistrationWindow({
           <Label htmlFor={endId} className='text-xs'>
             Registration closes *
           </Label>
-          <Input
+          <ScheduleDateInput
             id={endId}
-            type='date'
+            min={start}
             aria-required
             value={end}
             aria-invalid={Boolean(errors?.end)}
             aria-describedby={errors?.end ? `${endId}-error` : undefined}
-            onChange={event => onEndChange(event.target.value)}
+            onValueChange={onEndChange}
           />
           {errors?.end ? (
             <p id={`${endId}-error`} className='text-destructive text-[11px]'>

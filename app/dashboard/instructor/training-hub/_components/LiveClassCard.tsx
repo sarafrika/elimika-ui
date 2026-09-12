@@ -26,18 +26,15 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { Progress } from '@/components/ui/progress';
 import { isAuthenticatedMediaUrl, toAuthenticatedMediaUrl } from '@/src/lib/media-url';
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
 import {
   BookOpen,
   CalendarDays,
-  Check,
   CheckCircle2,
   ChevronDown,
-  CircleCheck,
   Copy,
   EllipsisVertical,
   Eye,
-  Filter,
   Pencil,
   Play,
   Plus,
@@ -48,7 +45,7 @@ import {
 import Image from 'next/image';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { useMemo, useState } from 'react';
+import { useState } from 'react';
 import { toast } from 'sonner';
 import { LinkShareCard } from '../../../../../components/shared/link-share-card';
 import { Badge } from '../../../../../components/ui/badge';
@@ -63,127 +60,29 @@ import {
 import { useUserProfile } from '../../../../../context/profile-context';
 import { useDifficultyLevels } from '../../../../../hooks/use-difficultyLevels';
 import { buildSocialShareUrl, openShareWindow } from '../../../../../lib/share';
-import { cn } from '../../../../../lib/utils';
 import {
   deactivateClassDefinitionMutation,
-  getAllStudentsOptions,
   getClassDefinitionsForInstructorQueryKey,
-  getCourseEnrollmentsOptions,
-  getEnrollmentsForClassOptions,
 } from '../../../../../services/client/@tanstack/react-query.gen';
 import { RichTextPreview } from '../../classes/class-training/[id]/_components/ClassTrainingPage';
 import { socialShareActions } from '../../classes/overview/[id]/page';
+import { InviteStudentsSheetContent } from './InviteStudentsSheetContent';
 import type { TrainingHubLiveClass } from './training-hub-data';
 
 type LiveClassCardProps = {
   liveClass: TrainingHubLiveClass;
+  instructorStudentUuids: string[];
+  studentsLoading: boolean;
 };
 
-export function LiveClassCard({ liveClass }: LiveClassCardProps) {
+export function LiveClassCard({
+  liveClass,
+  instructorStudentUuids,
+  studentsLoading,
+}: LiveClassCardProps) {
   const qc = useQueryClient();
   const profile = useUserProfile();
   const router = useRouter()
-
-  const [search, setSearch] = useState('');
-  const [filter, setFilter] = useState<'all' | 'enrolled' | 'not_enrolled'>('all');
-
-  const { data: courseEnrollments } = useQuery({
-    ...getCourseEnrollmentsOptions({
-      path: { courseUuid: liveClass?.class?.course_uuid as string },
-      query: { pageable: {} },
-    }),
-  });
-
-  const { data: classEnrollments } = useQuery({
-    ...getEnrollmentsForClassOptions({
-      path: { uuid: liveClass?.class?.uuid as string },
-    }),
-  });
-
-  const { data: allStudents } = useQuery({
-    ...getAllStudentsOptions({ query: { pageable: {} } }),
-  });
-
-  const studentUuids = useMemo(
-    () =>
-      courseEnrollments?.data?.content
-        ?.map(enrollment => enrollment.student_uuid)
-        .filter(Boolean) ?? [],
-    [courseEnrollments]
-  );
-
-  const enrolledSet = useMemo(() => {
-    return new Set(studentUuids);
-  }, [studentUuids]);
-
-  const classEnrolledSet = useMemo(() => {
-    return new Set((classEnrollments?.data ?? []).map(e => e.student_uuid));
-  }, [classEnrollments]);
-
-  const students = useMemo(() => {
-    const all = allStudents?.data?.content ?? [];
-
-    return all.filter(student => enrolledSet.has(student?.uuid as string));
-  }, [allStudents, enrolledSet]);
-
-  const filteredStudents = useMemo(() => {
-    const all = allStudents?.data?.content ?? [];
-
-    return all
-      .filter(student => {
-        const isEnrolled = classEnrolledSet.has(student?.uuid as string);
-
-        if (filter === 'enrolled') return isEnrolled;
-        if (filter === 'not_enrolled') return !isEnrolled;
-        return true;
-      })
-
-      .filter(student => {
-        if (!search.trim()) return true;
-
-        return student.full_name?.toLowerCase().includes(search.toLowerCase());
-      });
-  }, [allStudents, enrolledSet, filter, search]);
-
-  const inviteStudents = useMemo(() => {
-    const all = allStudents?.data?.content ?? [];
-
-    return all.filter(student => {
-      const uuid = student?.uuid as string;
-      return !classEnrolledSet.has(uuid);
-    });
-  }, [allStudents, classEnrolledSet]);
-
-  const [selectedStudentUuids, setSelectedStudentUuids] = useState<string[]>([]);
-
-  const toggleStudent = (studentUuid: string) => {
-    setSelectedStudentUuids(current =>
-      current.includes(studentUuid)
-        ? current.filter(id => id !== studentUuid)
-        : [...current, studentUuid]
-    );
-  };
-
-  // const inviteStudentsMutation = useMutation({
-  //   mutationFn: async () => {
-  //     return inviteStudentsToLiveClass({
-  //       path: {
-  //         liveClassUuid: liveClass.uuid,
-  //       },
-  //       body: {
-  //         student_uuids: selectedStudentUuids,
-  //       },
-  //     });
-  //   },
-  //   onSuccess: () => {
-  //     toast.success(
-  //       `${selectedStudentUuids.length} student(s) invited`
-  //     );
-
-  //     setSelectedStudentUuids([]);
-  //     setInviteOpen(false);
-  //   },
-  // });
 
   const imageUrl = toAuthenticatedMediaUrl(liveClass.imageUrl as string);
   const promotionalVideoUrl = toAuthenticatedMediaUrl(liveClass.promotionalVideoUrl as string);
@@ -221,8 +120,8 @@ export function LiveClassCard({ liveClass }: LiveClassCardProps) {
 
 
   const registrationLink =
-    typeof window !== 'undefined'
-      ? `${window.location.origin}/dashboard/student/courses/available-classes/${liveClass?.class?.course?.uuid}/enroll?id=${liveClass?.classUuid}`
+    typeof window !== 'undefined' && liveClass.class.course_uuid && liveClass.classUuid
+      ? `${window.location.origin}/dashboard/student/courses/available-classes/${liveClass.class.course_uuid}/enroll?id=${liveClass.classUuid}`
       : '';
 
   const statusConfig =
@@ -709,7 +608,7 @@ export function LiveClassCard({ liveClass }: LiveClassCardProps) {
       </AlertDialog>
 
       <Sheet open={inviteOpen} onOpenChange={setInviteOpen}>
-        <SheetContent side='right' className='flex w-full flex-col p-0 sm:max-w-xl'>
+        <SheetContent side='right' className='flex w-full flex-col p-0 sm:max-w-3xl'>
           <div className='border-b px-3'>
             <SheetHeader>
               <SheetTitle>Invite Students</SheetTitle>
@@ -718,164 +617,15 @@ export function LiveClassCard({ liveClass }: LiveClassCardProps) {
             </SheetHeader>
           </div>
 
-          {/* Scrollable content */}
-          <div className='flex-1 overflow-y-auto'>
-            <div className='space-y-6 px-3'>
-              <div>
-                <h3 className='mb-3 text-sm font-medium'>Select students</h3>
-
-                <div className='mb-3 flex flex-row gap-2'>
-                  <input
-                    value={search}
-                    onChange={e => setSearch(e.target.value)}
-                    placeholder='Search students...'
-                    className='h-9 w-full rounded-md border px-3 text-sm'
-                  />
-
-                  <DropdownMenu>
-                    <DropdownMenuTrigger asChild>
-                      <Button variant='outline' size='sm'>
-                        <Filter className='mr-2 h-4 w-4' />
-                        Filter
-                      </Button>
-                    </DropdownMenuTrigger>
-
-                    <DropdownMenuContent className='w-48' align='start'>
-                      <DropdownMenuItem
-                        onClick={() => setFilter('all')}
-                        className={cn(
-                          'flex items-center justify-between',
-                          filter === 'all' && 'bg-muted font-medium'
-                        )}
-                      >
-                        All
-                        {filter === 'all' && <Check className='h-4 w-4' />}
-                      </DropdownMenuItem>
-
-                      <DropdownMenuItem
-                        onClick={() => setFilter('enrolled')}
-                        className={cn(
-                          'flex items-center justify-between',
-                          filter === 'enrolled' && 'bg-muted font-medium'
-                        )}
-                      >
-                        Enrolled
-                        {filter === 'enrolled' && <Check className='h-4 w-4' />}
-                      </DropdownMenuItem>
-
-                      <DropdownMenuItem
-                        onClick={() => setFilter('not_enrolled')}
-                        className={cn(
-                          'flex items-center justify-between',
-                          filter === 'not_enrolled' && 'bg-muted font-medium'
-                        )}
-                      >
-                        Not enrolled
-                        {filter === 'not_enrolled' && <Check className='h-4 w-4' />}
-                      </DropdownMenuItem>
-                    </DropdownMenuContent>
-                  </DropdownMenu>
-                </div>
-
-                <div className='space-y-2'>
-                  {filteredStudents.map(student => {
-                    const selected = selectedStudentUuids.includes(student?.uuid as string);
-
-                    return (
-                      <button
-                        key={student?.uuid}
-                        type='button'
-                        onClick={() => toggleStudent(student?.uuid as string)}
-                        className={cn(
-                          'flex w-full items-start justify-between rounded-lg border p-3 text-left transition-colors',
-                          selected && 'border-primary bg-primary/5'
-                        )}
-                      >
-                        <div className='flex w-full min-w-0 flex-row items-center justify-between'>
-                          <p className='truncate text-sm font-medium'>{student?.full_name}</p>
-
-                          <div className='gapp-2 flex flex-row items-center'>
-                            <p className='flex items-center gap-2 truncate font-medium'>
-                              {classEnrolledSet.has(student?.uuid as string) && (
-                                <span className='bg-primary/10 text-primary rounded px-2 py-0.5 text-[10px]'>
-                                  Enrolled
-                                </span>
-                              )}
-                            </p>
-                            <CircleCheck
-                              className={cn(
-                                'h-5 w-5 transition-colors',
-                                selected ? 'text-primary' : 'hidden'
-                              )}
-                            />
-                          </div>
-                        </div>
-                      </button>
-                    );
-                  })}
-                </div>
-              </div>
-
-              {/* <LinkShareCard
-                title="Registration Link"
-                description="Copy or share the registration link for enrollment."
-                url={registrationLink}
-                footer={
-                  <div className="space-y-3">
-                    <h4 className="text-sm font-medium">
-                      Share via
-                    </h4>
-
-                    <div className="flex flex-wrap gap-2">
-                      {socialShareActions.map(
-                        ({ icon: Icon, label, platform }) => (
-                          <Button
-                            key={label}
-                            size="sm"
-                            variant="outline"
-                            className="gap-2"
-                            disabled={!registrationLink}
-                            onClick={() =>
-                              openShareWindow(
-                                buildSocialShareUrl(platform, {
-                                  title: liveClass.title,
-                                  url: registrationLink,
-                                  description: `Check out this class: ${liveClass.title}`,
-                                })
-                              )
-                            }
-                          >
-                            <Icon className="h-4 w-4" />
-                            {label}
-                          </Button>
-                        )
-                      )}
-                    </div>
-                  </div>
-                }
-              /> */}
-            </div>
-          </div>
-
-          {/* Fixed footer */}
-          <div className='bg-background border-t p-4'>
-            <div className='flex items-center justify-between'>
-              <p className='text-muted-foreground text-sm'>
-                {selectedStudentUuids.length} selected
-              </p>
-
-              <Button
-              // disabled={
-              //   selectedStudentUuids.length === 0 ||
-              //   inviteStudentsMutation.isPending
-              // }
-              // onClick={() => inviteStudentsMutation.mutate()}
-              >
-                Send invite
-                {selectedStudentUuids.length > 0 ? ` (${selectedStudentUuids.length})` : ''}
-              </Button>
-            </div>
-          </div>
+          {inviteOpen && (
+            <InviteStudentsSheetContent
+              studentUuids={instructorStudentUuids}
+              enrollments={liveClass.class.enrollments}
+              loading={studentsLoading}
+              title={liveClass.title}
+              registrationLink={registrationLink}
+            />
+          )}
         </SheetContent>
       </Sheet>
     </Card>

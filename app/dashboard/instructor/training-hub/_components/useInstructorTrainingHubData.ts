@@ -91,6 +91,26 @@ export function useInstructorTrainingHubData() {
 
   const { classes, isLoading: isLoadingClasses } = useInstructorClassesWithSchedules(instructorUuid);
 
+  // Same class-enrollment relationship as useInstructorStudentsData, reusing
+  // the hub's loaded classes without fetching progress or contacts for the roster.
+  const instructorStudentUuids = useMemo(
+    () => [
+      ...new Set(
+        classes.flatMap(classItem =>
+          classItem.enrollments
+            .filter(
+              enrollment =>
+                enrollment.is_active !== false &&
+                ACTIVE_ENROLLMENT_STATUSES.has(enrollment.status ?? '')
+            )
+            .map(enrollment => enrollment.student_uuid)
+            .filter(Boolean)
+        )
+      ),
+    ],
+    [classes]
+  );
+
   const { data: coursesResponse, isLoading: isLoadingCourses } = useQuery({
     ...getAllCoursesOptions({
       query: {
@@ -456,6 +476,7 @@ export function useInstructorTrainingHubData() {
 
   return {
     classes: relevantClasses,
+    instructorStudentUuids,
     liveClasses,
     managedCourses,
     waitingList,

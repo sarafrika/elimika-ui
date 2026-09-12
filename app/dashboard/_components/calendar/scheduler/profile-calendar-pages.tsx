@@ -43,7 +43,7 @@ import {
   toClassLookup,
   toStudentInitialsByClass,
 } from './calendar-utils';
-import { SchedulerCalendarView } from './new-scheduler-calendar-view';
+import { SchedulerCalendarView } from './scheduler-calendar-view';
 import type { SchedulerEvent, SchedulerProfile } from './types';
 
 /**
@@ -987,7 +987,7 @@ function OrganizationCalendarPage() {
   return <SchedulerCalendarView profile='organization' data={data} />;
 }
 
-export function NewSchedulerCalendarPage({ profile }: { profile: SchedulerProfile }) {
+export function SchedulerCalendarPage({ profile }: { profile: SchedulerProfile }) {
   if (profile === 'admin') {
     return <AdminCalendarPage />;
   }

@@ -116,7 +116,7 @@ export function InstructorTrainingHubPage() {
     'all' | 'today' | 'upcoming' | 'incomplete' | 'remedial' | 'make-up' | 'cancelled' | 'completed'
   >('all');
 
-  const { liveClasses, upcomingBookings, waitingList, isLoading, classes } =
+  const { liveClasses, upcomingBookings, waitingList, isLoading, classes, instructorStudentUuids } =
     useInstructorTrainingHubData();
 
   const normalizedSearch = searchTerm.trim().toLowerCase();
@@ -225,7 +225,12 @@ export function InstructorTrainingHubPage() {
 
           <div className='space-y-3'>
             {filteredLiveClasses.map(liveClass => (
-              <LiveClassCard key={liveClass.id} liveClass={liveClass} />
+              <LiveClassCard
+                key={liveClass.id}
+                liveClass={liveClass}
+                instructorStudentUuids={instructorStudentUuids}
+                studentsLoading={isLoading}
+              />
             ))}
 
             {!isLoading && filteredLiveClasses.length === 0 && (
