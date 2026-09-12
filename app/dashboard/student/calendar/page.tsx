@@ -1,7 +1,7 @@
-import { NewSchedulerCalendarPage } from '@/app/dashboard/_components/calendar/new-scheduler/new-scheduler-calendar-page';
+import { SchedulerCalendarPage } from '@/app/dashboard/_components/calendar/scheduler/scheduler-calendar-page';
 
 const Page = () => {
-  return <NewSchedulerCalendarPage profile='student' />;
+  return <SchedulerCalendarPage profile='student' />;
 };
 
 export default Page;

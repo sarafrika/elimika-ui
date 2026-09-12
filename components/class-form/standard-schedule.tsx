@@ -11,6 +11,7 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { cn } from '@/lib/utils';
+import { ScheduleDateInput } from './ScheduleDateInput';
 import {
   DAYS,
   type DayKey,
@@ -205,15 +206,12 @@ export function StandardSchedule({
         <div className='grid gap-3 sm:grid-cols-2'>
           <div className='space-y-1'>
             <Label className='text-xs'>Start Date *</Label>
-            <Input
-              type='date'
-              value={startDate}
-              onChange={e => onStartDateChange(e.target.value)}
-            />
+            <ScheduleDateInput value={startDate} onValueChange={onStartDateChange} />
           </div>
+
           <div className='space-y-1'>
             <Label className='text-xs'>End Repeat *</Label>
-            <Input type='date' value={endDate} onChange={e => onEndDateChange(e.target.value)} />
+            <ScheduleDateInput value={endDate} min={startDate} onValueChange={onEndDateChange} />
           </div>
         </div>
         <div className='space-y-1'>

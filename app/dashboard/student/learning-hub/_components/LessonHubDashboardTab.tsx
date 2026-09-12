@@ -279,18 +279,24 @@ export function LessonHubDashboardTab({ learningHubData }: LearningHubDataProps)
                                                     {item.courseName}
                                                 </p>
                                             </div>
-                                            <span className='inline-flex items-center rounded-md border px-2.5 py-1 text-xs font-medium'>
-                                                Resume <ArrowRight className='ml-1 h-3 w-3' />
+
+                                            <span className='inline-flex items-center rounded-md border border-primary/20 bg-primary/10 px-2.5 py-1 text-xs font-medium text-primary transition-colors group-hover:bg-primary/15'>
+                                                {item.progress === 0 ? 'Start Class' : 'Resume'}
+                                                <ArrowRight className='ml-1 h-3 w-3' />
                                             </span>
                                         </div>
-                                        <div className="mt-3 flex items-center gap-3">
-                                            <div className="h-2 flex-1 rounded-full bg-muted">
+
+                                        <div className='mt-3 flex items-center gap-3'>
+                                            <div className='h-2 flex-1 rounded-full bg-muted'>
                                                 <div
-                                                    className="h-full rounded-full bg-muted-foreground"
+                                                    className='h-full rounded-full bg-primary/80'
                                                     style={{ width: `${item.progress}%` }}
                                                 />
                                             </div>
-                                            <span className="w-10 text-right text-xs tabular-nums text-muted-foreground">{item.progress}%</span>
+
+                                            <span className='w-10 text-right text-xs tabular-nums text-muted-foreground'>
+                                                {item.progress}%
+                                            </span>
                                         </div>
                                     </Link>
                                 );

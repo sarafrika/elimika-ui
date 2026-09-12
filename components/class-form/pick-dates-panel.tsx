@@ -1,6 +1,5 @@
 'use client';
 
-import { CalendarDays, Info, Trash2 } from 'lucide-react';
 import { Calendar } from '@/components/ui/calendar';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -11,6 +10,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
+import { CalendarDays, Info, Trash2 } from 'lucide-react';
 import {
   fmtTime12,
   formatDuration,
@@ -48,6 +48,9 @@ export function PickDatesPanel({
     onPickedDatesChange(pickedDates.filter(x => x.getTime() !== d.getTime()));
   const sessionMinutes = sessionMinutesFor(sessionStart, sessionEnd);
 
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+
   return (
     <div className='space-y-4'>
       <div className='grid gap-6 lg:grid-cols-[auto_1fr_1fr]'>
@@ -59,11 +62,16 @@ export function PickDatesPanel({
             <Calendar
               mode='multiple'
               selected={pickedDates}
-              onSelect={d => onPickedDatesChange(d ?? [])}
+              onSelect={dates => {
+                const earliest = new Date();
+                earliest.setHours(0, 0, 0, 0);
+                onPickedDatesChange((dates ?? []).filter(date => date >= earliest));
+              }}
               month={pickMonth}
               onMonthChange={onPickMonthChange}
               weekStartsOn={1}
               showOutsideDays
+              disabled={{ before: today }}
             />
           </div>
         </div>
