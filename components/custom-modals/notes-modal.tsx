@@ -1,5 +1,6 @@
 'use client';
 
+import { allCourseTrainingRequirementsOptions } from '@/services/course-training-requirements';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -24,7 +25,6 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useUserDomain } from '../../context/user-domain-context';
 import { CourseTrainingRequirement } from '../../services/client';
 import {
-  getCourseTrainingRequirementsOptions,
   getProgramRequirementsOptions,
 } from '../../services/client/@tanstack/react-query.gen';
 import type { CatalogTrainingApplicationData } from '../../src/features/dashboard/courses/shared/_components/courses-data';
@@ -169,11 +169,8 @@ export default function NotesModal({
   }, [applyExistingApplication, existingApplication, formRevision, open, readOnly, resetForm]);
 
   const { data: courseTrainingReqResp } = useQuery({
-    ...getCourseTrainingRequirementsOptions({
-      path: { courseUuid: selectedContentId },
-      query: { pageable: {} },
-    }),
-    enabled: selectedContentKind === 'course' && Boolean(selectedContentId),
+    ...allCourseTrainingRequirementsOptions(selectedContentId),
+    enabled: open && selectedContentKind === 'course' && Boolean(selectedContentId),
   });
   // const { data: courseRequirementResp } = useQuery({
   //   ...getCourseRequirementsOptions({ path: { courseUuid: selectedApplicationCard?.id }, query: { pageable: {} } }),

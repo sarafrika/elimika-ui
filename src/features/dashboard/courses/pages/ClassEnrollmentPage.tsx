@@ -1,6 +1,7 @@
 // @ts-nocheck -- pre-existing @hey-api generated-client type drift (see memory: elimika-ui-typecheck)
 'use client';
 
+import { allCourseTrainingRequirementsOptions } from '@/services/course-training-requirements';
 import { ClassScheduleCalendar } from '@/app/class-invite/page';
 import { type RateBasis, rateBasisShort } from '@/components/class-form';
 import { Badge } from '@/components/ui/badge';
@@ -15,7 +16,6 @@ import {
   enrollStudentMutation,
   getCartQueryKey,
   getClassEnrolmentEligibilityOptions,
-  getCourseTrainingRequirementsOptions,
   getEnrollmentsForClassOptions,
   joinWaitlistMutation
 } from '@/services/client/@tanstack/react-query.gen';
@@ -258,9 +258,7 @@ export default function ClassEnrollmentPage({
   );
 
   const { data: courseReqResp } = useQuery({
-    ...getCourseTrainingRequirementsOptions({
-      path: { courseUuid: enrollingClass?.course?.uuid ?? '' },
-    }),
+    ...allCourseTrainingRequirementsOptions(enrollingClass?.course?.uuid),
     enabled: Boolean(enrollingClass?.course?.uuid),
   });
 

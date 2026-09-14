@@ -1,5 +1,6 @@
 'use client';
 
+import { allCourseTrainingRequirementsOptions } from '@/services/course-training-requirements';
 import { useQuery } from '@tanstack/react-query';
 import Link from 'next/link';
 import { useMemo } from 'react';
@@ -44,7 +45,6 @@ import {
   getCourseAssessmentsOptions,
   getCourseByUuidOptions,
   getCourseReviewsOptions,
-  getCourseTrainingRequirementsOptions,
   getProgramCoursesOptions,
   getProgramReviewsOptions,
   getTrainingProgramByUuidOptions,
@@ -84,10 +84,7 @@ export function CourseDetailsSheet({
   const course = courseResp?.data as Course | undefined;
 
   const { data: courseReqResp } = useQuery({
-    ...getCourseTrainingRequirementsOptions({
-      path: { courseUuid: resolvedId },
-      query: { pageable: {} },
-    }),
+    ...allCourseTrainingRequirementsOptions(resolvedId),
     enabled: open && !!resolvedId && isCourse,
     placeholderData: undefined,
   });

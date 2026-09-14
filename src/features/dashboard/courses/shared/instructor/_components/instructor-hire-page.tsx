@@ -1,5 +1,6 @@
 'use client';
 
+import { allCourseTrainingRequirementsOptions } from '@/services/course-training-requirements';
 import { ClassScheduleCalendar } from '@/app/class-invite/page';
 import {
   approvedRateFor,
@@ -40,7 +41,6 @@ import { localDate } from '@/lib/date';
 import { STALE_TIMES } from '@/lib/query-client';
 import {
   createBookingMutation,
-  getCourseTrainingRequirementsOptions,
   getInstructorScheduleOptions,
   getProgramRequirementsOptions,
   getStudentBookingsQueryKey,
@@ -333,10 +333,7 @@ export default function InstructorHirePage({ courseId, instructorId }: Props) {
   }, [selectedOffering]);
 
   const courseRequirementsQuery = useQuery({
-    ...getCourseTrainingRequirementsOptions({
-      path: { courseUuid: selectedCourseUuid || 'unset' },
-      query: { pageable: {} },
-    }),
+    ...allCourseTrainingRequirementsOptions(selectedCourseUuid),
     enabled: Boolean(selectedCourseUuid),
     staleTime: STALE_TIMES.entity,
   });

@@ -16,7 +16,11 @@ import {
   getCourseTrainingRequirementsQueryKey,
   updateCourseTrainingRequirementMutation,
 } from '@/services/client/@tanstack/react-query.gen';
-import type { CourseTrainingRequirement } from '@/services/client/types.gen';
+import type {
+  AddCourseTrainingRequirementResponse,
+  CourseTrainingRequirement,
+} from '@/services/client/types.gen';
+import Spinner from '@/components/ui/spinner';
 import type { QueryClient } from '@tanstack/react-query';
 import { CheckCircle2, Loader2, Pencil, Plus, Save, Trash2, X } from 'lucide-react';
 import { type Dispatch, Fragment, type SetStateAction, useState } from 'react';
@@ -66,6 +70,7 @@ type RequirementMutation<TVariables> = {
 };
 
 const PROVIDERS: { value: Provider; label: string }[] = [
+  { value: 'course_creator', label: 'Course creator' },
   { value: 'instructor', label: 'Instructor' },
   { value: 'organisation', label: 'Organisation' },
   { value: 'student', label: 'Student' },
@@ -124,7 +129,11 @@ type Props = {
   setExistingRequirements: React.Dispatch<React.SetStateAction<RequirementRecord[]>>;
   editingCourseId?: string;
   courseId?: string;
-  addTrainingReqMut: RequirementMutation<AddRequirementVariables>;
+  addTrainingReqMut: {
+    mutateAsync: (
+      variables: AddRequirementVariables
+    ) => Promise<AddCourseTrainingRequirementResponse>;
+  };
   updateTrainingReqMut: RequirementMutation<UpdateRequirementVariables>;
   deleteTrainingReqMut: RequirementMutation<DeleteRequirementVariables>;
   deletingId: string | null;
@@ -177,6 +186,7 @@ export function TrainingRequirementsSection({
   };
 
   const saveDraftsForProvider = async (provider: Provider) => {
+    if (savingProvider) return;
     if (!targetCourseUuid) {
       toast.error('Save the course first before adding requirements.');
       return;
@@ -192,57 +202,55 @@ export function TrainingRequirementsSection({
     setSavingProvider(provider);
 
     try {
+      // Each mutateAsync call owns its promise; consecutive mutate callbacks do not.
       const results = await Promise.allSettled(
-        drafts.map(
-          draft =>
-            new Promise<unknown>((resolve, reject) => {
-              const variables = {
-                body: {
-                  name: draft.name.trim(),
-                  requirement_type: draft.requirement_type,
-                  quantity: draft.quantity ? Number(draft.quantity) : 0,
-                  unit: draft.unit,
-                  is_mandatory: draft.is_mandatory,
-                  description: draft.description,
-                  provided_by: provider,
-                  course_uuid: targetCourseUuid,
-                } as AddRequirementVariables['body'],
-                path: { courseUuid: targetCourseUuid },
-              } as AddRequirementVariables;
-              addTrainingReqMut.mutate(variables, {
-                onSuccess: res => resolve(res),
-                onError: err => reject(err),
-              });
-            })
-        )
+        drafts.map(async draft => {
+          const response = await addTrainingReqMut.mutateAsync({
+            body: {
+              name: draft.name.trim(),
+              requirement_type: draft.requirement_type,
+              quantity: draft.quantity ? Number(draft.quantity) : 0,
+              unit: draft.unit,
+              is_mandatory: draft.is_mandatory,
+              description: draft.description,
+              provided_by: provider,
+              course_uuid: targetCourseUuid,
+            } as AddRequirementVariables['body'],
+            path: { courseUuid: targetCourseUuid },
+          });
+          if (response.error || response.success === false || !response.data) {
+            throw new Error(response.message || 'Failed to save requirement.');
+          }
+          return { draftId: draft.id, requirement: response.data };
+        })
       );
 
-      const succeeded = results
-        .filter((r): r is PromiseFulfilledResult<unknown> => r.status === 'fulfilled')
-        .map(r => (r.value as { data?: RequirementRecord } | undefined)?.data)
-        .filter((requirement): requirement is RequirementRecord => Boolean(requirement));
+      const succeeded = results.flatMap(result =>
+        result.status === 'fulfilled' ? [result.value] : []
+      );
+      const failed = results.length - succeeded.length;
 
       if (succeeded.length > 0) {
-        setExistingRequirements(prev => [...prev, ...succeeded]);
+        setExistingRequirements(prev => [...prev, ...succeeded.map(item => item.requirement)]);
         qc.invalidateQueries({
           queryKey: getCourseTrainingRequirementsQueryKey({
             path: { courseUuid: targetCourseUuid },
             query: { pageable: {} },
           }),
         });
-        // Reset only the provider that was successfully persisted.
-        setDraftsByProvider(prev => ({
-          ...prev,
-          [provider]: [emptyDraft()],
-        }));
+        const savedDraftIds = new Set(succeeded.map(item => item.draftId));
+        setDraftsByProvider(prev => {
+          const remaining = prev[provider].filter(draft => !savedDraftIds.has(draft.id));
+          return { ...prev, [provider]: remaining.length > 0 ? remaining : [emptyDraft()] };
+        });
         toast.success(
           `${succeeded.length} requirement${succeeded.length > 1 ? 's' : ''} saved for ${PROVIDERS.find(p => p.value === provider)?.label}.`
         );
-        setActiveProvider(null);
+        if (failed === 0) setActiveProvider(null);
       }
 
-      const failed = results.filter(r => r.status === 'rejected').length;
-      if (failed > 0) toast.error(`${failed} requirement(s) failed to save.`);
+      if (failed > 0)
+        toast.error(`${failed} requirement(s) failed to save. Retry the remaining rows.`);
     } finally {
       setSavingProvider(null);
     }
@@ -354,6 +362,7 @@ export function TrainingRequirementsSection({
             <button
               key={p.value}
               type='button'
+              disabled={!!savingProvider}
               onClick={() => setActiveProvider(prev => (prev === p.value ? null : p.value))}
               className={[
                 'rounded-full border px-4 py-1.5 text-sm font-medium transition-all',
@@ -381,6 +390,7 @@ export function TrainingRequirementsSection({
               variant='ghost'
               size='sm'
               className='h-7 w-7 p-0'
+              disabled={!!savingProvider}
               onClick={() => setActiveProvider(null)}
             >
               <X className='h-4 w-4' />
@@ -415,6 +425,7 @@ export function TrainingRequirementsSection({
                     {/* Name */}
                     <td className='px-3 py-2'>
                       <Textarea
+                        disabled={!!savingProvider}
                         placeholder='e.g., Piano room'
                         value={row.name}
                         onChange={e =>
@@ -427,6 +438,7 @@ export function TrainingRequirementsSection({
                     {/* Type */}
                     <td className='px-3 py-2'>
                       <Select
+                        disabled={!!savingProvider}
                         value={row.requirement_type}
                         onValueChange={v =>
                           updateDraftRow(activeProvider, row.id, { requirement_type: v })
@@ -448,6 +460,7 @@ export function TrainingRequirementsSection({
                     {/* Quantity */}
                     <td className='px-3 py-2'>
                       <Input
+                        disabled={!!savingProvider}
                         type='number'
                         min='0'
                         placeholder='0'
@@ -462,6 +475,7 @@ export function TrainingRequirementsSection({
                     {/* Unit */}
                     <td className='px-3 py-2'>
                       <Select
+                        disabled={!!savingProvider}
                         value={row.unit}
                         onValueChange={v => updateDraftRow(activeProvider, row.id, { unit: v })}
                       >
@@ -481,6 +495,7 @@ export function TrainingRequirementsSection({
                     {/* Mandatory */}
                     <td className='px-3 py-2 text-center'>
                       <Checkbox
+                        disabled={!!savingProvider}
                         checked={row.is_mandatory}
                         onCheckedChange={v =>
                           updateDraftRow(activeProvider, row.id, { is_mandatory: !!v })
@@ -491,6 +506,7 @@ export function TrainingRequirementsSection({
                     {/* Description */}
                     <td className='px-3 py-2'>
                       <Textarea
+                        disabled={!!savingProvider}
                         placeholder='Optional'
                         value={row.description}
                         onChange={e =>
@@ -507,7 +523,7 @@ export function TrainingRequirementsSection({
                         variant='ghost'
                         size='sm'
                         className='h-7 w-7 p-0'
-                        disabled={draftsByProvider[activeProvider].length === 1}
+                        disabled={!!savingProvider || draftsByProvider[activeProvider].length === 1}
                         onClick={() => removeDraftRow(activeProvider, row.id)}
                       >
                         <X className='text-muted-foreground h-3.5 w-3.5' />
@@ -525,6 +541,7 @@ export function TrainingRequirementsSection({
               type='button'
               variant='ghost'
               size='sm'
+              disabled={!!savingProvider}
               onClick={() => addDraftRow(activeProvider)}
               className='flex items-center gap-1 text-sm'
             >
@@ -538,19 +555,19 @@ export function TrainingRequirementsSection({
                 variant='outline'
                 size='sm'
                 onClick={() => setActiveProvider(null)}
-                disabled={savingProvider === activeProvider}
+                disabled={!!savingProvider}
               >
                 Cancel
               </Button>
               <Button
                 type='button'
                 size='sm'
-                disabled={savingProvider === activeProvider}
+                disabled={!!savingProvider}
                 onClick={() => saveDraftsForProvider(activeProvider)}
               >
                 {savingProvider === activeProvider ? (
                   <span className='flex items-center gap-2'>
-                    <Loader2 className='h-3.5 w-3.5 animate-spin' />
+                    <Spinner className='h-3.5 w-3.5' />
                     Saving…
                   </span>
                 ) : (
