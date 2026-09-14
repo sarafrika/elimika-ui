@@ -36,6 +36,7 @@ import { Button } from '@/components/ui/button';
 import { EmptyState } from '@/components/ui/empty-state';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { useCoursesByIds } from '@/hooks/use-batched-lookups';
 import { extractList, extractPage } from '@/lib/api-helpers';
 import { formatCurrency } from '@/lib/format-currency';
 import { formatCount, toNumber } from '@/lib/metrics';
@@ -208,15 +209,32 @@ function SectionPanel({
   );
 }
 
-function DetailGrid({ items, columns = 2 }: { items: DetailItem[]; columns?: 1 | 2 | 3 }) {
+function DetailGrid({
+  items,
+  columns = 2,
+}: {
+  items: DetailItem[];
+  columns?: 1 | 2 | 3;
+}) {
   const cols =
-    columns === 1 ? 'sm:grid-cols-1' : columns === 3 ? 'sm:grid-cols-3' : 'sm:grid-cols-2';
+    columns === 1
+      ? 'sm:grid-cols-1'
+      : columns === 3
+        ? 'sm:grid-cols-3'
+        : 'sm:grid-cols-2';
+
   return (
     <div className={cn('grid gap-3', cols)}>
       {items.map((item, index) => (
-        <div key={index} className='border-border/60 bg-muted/20 rounded-md border px-3 py-2.5'>
-          <p className='text-muted-foreground text-xs tracking-wide uppercase'>{item.label}</p>
-          <div className='text-foreground mt-1 min-w-0 text-sm font-medium'>
+        <div
+          key={index}
+          className='border-border/60 bg-muted/20 min-w-0 rounded-md border px-3 py-2.5'
+        >
+          <p className='text-muted-foreground text-xs tracking-wide uppercase'>
+            {item.label}
+          </p>
+
+          <div className='text-foreground mt-1 min-w-0 max-w-full text-sm font-medium break-words'>
             {item.value ?? '0'}
           </div>
         </div>
@@ -416,6 +434,11 @@ export default function CourseCreatorInstructorDetailPage() {
         .filter(isClassDefinition),
     [classesQuery.data]
   );
+  const courseUuids = useMemo(
+    () => assignedClasses.flatMap(item => (item.course_uuid ? [item.course_uuid] : [])),
+    [assignedClasses]
+  );
+  const { courseMap, isLoading: coursesLoading } = useCoursesByIds(courseUuids);
   const currentExperience = experience.find(item => item.is_current_position);
   const qualification = education.find(item => item.is_complete) ?? education[0];
   const primarySkill = skills[0];
@@ -844,7 +867,10 @@ export default function CourseCreatorInstructorDetailPage() {
                         <td className='px-3 py-3'>
                           <p className='text-foreground font-medium'>{item.title}</p>
                           <p className='text-muted-foreground text-xs'>
-                            {item.course_uuid ? `Course ${item.course_uuid}` : 'Standalone class'}
+                            {item.course_uuid
+                              ? courseMap[item.course_uuid]?.name ||
+                                (coursesLoading ? 'Loading course…' : 'Course unavailable')
+                              : 'Standalone class'}
                           </p>
                         </td>
                         <td className='px-3 py-3'>
@@ -945,7 +971,10 @@ export default function CourseCreatorInstructorDetailPage() {
                           <td className='px-3 py-3'>
                             <p className='text-foreground font-medium'>{item.title}</p>
                             <p className='text-muted-foreground text-xs'>
-                              {item.course_uuid ? `Course ${item.course_uuid}` : 'Standalone class'}
+                              {item.course_uuid
+                                ? courseMap[item.course_uuid]?.name ||
+                                  (coursesLoading ? 'Loading course…' : 'Course unavailable')
+                                : 'Standalone class'}
                             </p>
                           </td>
                           <td className='px-3 py-3'>{formatCount(enrolled, '0')}</td>

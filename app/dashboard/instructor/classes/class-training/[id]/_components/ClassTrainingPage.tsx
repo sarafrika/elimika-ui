@@ -543,10 +543,16 @@ function AssessmentTasksSection({
   );
 
   const filteredLessonAssignments = lessonAssignments.filter(
-    assignment => !assignedAssignmentUuids.has(assignment.uuid)
+    assignment =>
+      assignment.is_published &&
+      !assignedAssignmentUuids.has(assignment.uuid)
   );
 
-  const filteredLessonQuizzes = lessonQuizzes.filter(quiz => !assignedQuizUuids.has(quiz.uuid));
+  const filteredLessonQuizzes = lessonQuizzes.filter(
+    quiz =>
+      quiz.is_published &&
+      !assignedQuizUuids.has(quiz.uuid)
+  );
 
   return (
     <div className='mb-20 space-y-3'>

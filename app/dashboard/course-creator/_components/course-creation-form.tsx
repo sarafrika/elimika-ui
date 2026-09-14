@@ -1,6 +1,7 @@
 // @ts-nocheck -- pre-existing @hey-api generated-client type drift (see memory: elimika-ui-typecheck)
 'use client';
 
+import { allCourseTrainingRequirementsOptions } from '@/services/course-training-requirements';
 import { SimpleEditor } from '@/components/tiptap-templates/simple/simple-editor-lazy';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -43,7 +44,6 @@ import {
   getAllCategoriesOptions,
   getAllCategoriesQueryKey,
   getCourseByUuidQueryKey,
-  getCourseTrainingRequirementsOptions,
   searchCoursesQueryKey,
   updateCourseTrainingRequirementMutation,
 } from '@/services/client/@tanstack/react-query.gen';
@@ -153,8 +153,9 @@ function SavingOverlay({ stage }: { stage: SaveStage }) {
             return (
               <div
                 key={step.key}
-                className={`flex items-center gap-3 transition-opacity duration-300 ${isActive ? 'opacity-100' : isDone ? 'opacity-60' : 'opacity-25'
-                  }`}
+                className={`flex items-center gap-3 transition-opacity duration-300 ${
+                  isActive ? 'opacity-100' : isDone ? 'opacity-60' : 'opacity-25'
+                }`}
               >
                 {isDone ? (
                   <CheckCircle2 className='text-success h-4 w-4 shrink-0' />
@@ -279,10 +280,7 @@ export const CourseCreationForm = forwardRef<CourseFormRef, CourseFormProps>(
     };
 
     const { data: trainingRequirements } = useQuery({
-      ...getCourseTrainingRequirementsOptions({
-        path: { courseUuid: courseId || editingCourseId || '' },
-        query: { pageable: {} },
-      }),
+      ...allCourseTrainingRequirementsOptions(editingCourseId || courseId),
       enabled: !!courseId || !!editingCourseId,
     });
 
@@ -506,7 +504,7 @@ export const CourseCreationForm = forwardRef<CourseFormRef, CourseFormProps>(
           onSuccess: courseResponse => {
             const newCourseUuid = courseResponse?.data?.uuid as string;
 
-            router.replace(`/dashboard/course-creator/courses/create-course?id=${newCourseUuid}`)
+            router.replace(`/dashboard/course-creator/courses/create-course?id=${newCourseUuid}`);
 
             queryClient.invalidateQueries({
               queryKey: getCourseByUuidQueryKey({ path: { uuid: newCourseUuid } }),

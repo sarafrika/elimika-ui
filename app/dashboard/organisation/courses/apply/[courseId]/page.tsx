@@ -47,6 +47,7 @@
  * Widening the payload needs a backend change.
  */
 
+import { allCourseTrainingRequirementsOptions } from '@/services/course-training-requirements';
 import { useQuery } from '@tanstack/react-query';
 import { ArrowLeft } from 'lucide-react';
 import Link from 'next/link';
@@ -64,7 +65,6 @@ import { STALE_TIMES } from '@/lib/query-client';
 import type { CourseTrainingRequirement, ProgramRequirement } from '@/services/client';
 import {
   getCourseByUuidOptions,
-  getCourseTrainingRequirementsOptions,
   getProgramRequirementsOptions,
   getTrainingProgramByUuidOptions,
 } from '@/services/client/@tanstack/react-query.gen';
@@ -143,10 +143,7 @@ export default function ApplyPage() {
   const program = programQuery.data?.data;
 
   const courseRequirementsQuery = useQuery({
-    ...getCourseTrainingRequirementsOptions({
-      path: { courseUuid: trainingId },
-      query: { pageable: { page: 0, size: REQUIREMENT_PAGE_SIZE } },
-    }),
+    ...allCourseTrainingRequirementsOptions(trainingId),
     enabled: forCourse,
     staleTime: STALE_TIMES.entity,
   });

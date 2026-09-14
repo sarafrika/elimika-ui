@@ -24,6 +24,7 @@
  * `blocks/*` component, the call belongs here instead.
  */
 
+import { allCourseTrainingRequirementsOptions } from '@/services/course-training-requirements';
 import { useQuery } from '@tanstack/react-query';
 import { usePathname } from 'next/navigation';
 import { useMemo } from 'react';
@@ -37,7 +38,6 @@ import {
   getCourseContentOptions,
   getCourseEnrollmentsOptions,
   getCourseReviewsOptions,
-  getCourseTrainingRequirementsOptions,
   searchTrainingApplicationsOptions,
 } from '@/services/client/@tanstack/react-query.gen';
 import type { CourseEnrollment } from '@/services/client/types.gen';
@@ -200,10 +200,7 @@ export function useCourseRecord({
   });
 
   const requirementsQuery = useQuery({
-    ...getCourseTrainingRequirementsOptions({
-      path: { courseUuid: courseUuid ?? '' },
-      query: { pageable: { page: 0, size: PAGE_SIZE } },
-    }),
+    ...allCourseTrainingRequirementsOptions(courseUuid),
     enabled: on,
     staleTime: STALE_TIMES.entity,
   });

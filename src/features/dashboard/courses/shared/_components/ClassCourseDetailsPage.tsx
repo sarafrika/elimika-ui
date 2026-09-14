@@ -1,5 +1,6 @@
 'use client';
 
+import { allCourseTrainingRequirementsOptions } from '@/services/course-training-requirements';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { CalendarClock, Heart, Share2 } from 'lucide-react';
 import { useParams, useRouter } from 'next/navigation';
@@ -50,7 +51,6 @@ import {
   getCourseAssessmentsOptions,
   getCourseCreatorByUuidOptions,
   getCourseReviewsOptions,
-  getCourseTrainingRequirementsOptions,
   getPublishedCoursesOptions,
   searchTrainingApplicationsOptions,
   submitTrainingApplicationMutation,
@@ -244,10 +244,7 @@ export default function ClassCourseDetailsPage({
   }, [courses, resolvedCourseId]);
 
   const { data: cReqData } = useQuery({
-    ...getCourseTrainingRequirementsOptions({
-      path: { courseUuid: resolvedCourseId as string },
-      query: { pageable: {} },
-    }),
+    ...allCourseTrainingRequirementsOptions(resolvedCourseId),
     enabled: !!resolvedCourseId,
   });
   const requirementCount = Number(cReqData?.data?.content?.length) ?? 0;

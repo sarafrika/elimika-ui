@@ -1,6 +1,7 @@
 // @ts-nocheck -- pre-existing @hey-api generated-client type drift (see memory: elimika-ui-typecheck)
 'use client';
 
+import { allCourseTrainingRequirementsOptions } from '@/services/course-training-requirements';
 import { ClassScheduleCalendar } from '@/app/class-invite/page';
 import { type RateBasis, rateBasisShort } from '@/components/class-form';
 import RichTextRenderer from '@/components/editors/richTextRenders';
@@ -16,7 +17,6 @@ import {
   createCartMutation,
   enrollStudentMutation,
   getCartQueryKey,
-  getCourseTrainingRequirementsOptions,
   getEnrollmentsForClassOptions,
   joinWaitlistMutation,
 } from '@/services/client/@tanstack/react-query.gen';
@@ -298,7 +298,7 @@ export default function ProgramClassEnrollmentPage({
   // ── Material requirements, fetched per bundled course and merged ────────
   const requirementQueries = useQueries({
     queries: programCourses.map(course => ({
-      ...getCourseTrainingRequirementsOptions({ path: { courseUuid: course.uuid ?? '' } }),
+      ...allCourseTrainingRequirementsOptions(course.uuid),
       enabled: Boolean(course.uuid),
     })),
   });
@@ -306,7 +306,7 @@ export default function ProgramClassEnrollmentPage({
   const studentRequirements = useMemo(
     () =>
       requirementQueries
-        .flatMap(q => q.data?.content ?? [])
+        .flatMap(q => q.data?.data?.content ?? [])
         .filter(requirement => requirement.provided_by?.toLowerCase() === 'student'),
     [requirementQueries]
   );
