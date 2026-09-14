@@ -110,6 +110,19 @@ export function ApplyWizard({
     dispatch({ type: 'initEquipment', requirements: requirementSeeds });
   }, [isProgram, requirementSeeds]);
 
+  // If the applicant is an instructor, pre-fill the classroom name as
+  // "Not applicable" so validations that depend on a classroom name do not
+  // block progress. Only set this when the field is blank to avoid clobbering
+  // any deliberate input.
+  useEffect(() => {
+    if (applicantType !== 'instructor') return;
+    const first = state.classrooms?.[0];
+    if (!first) return;
+    if (!first.name || first.name.trim() === '') {
+      dispatch({ type: 'classroom', id: first.id, patch: { name: 'Not applicable' } });
+    }
+  }, [applicantType, state.classrooms]);
+
   /* ── what is stopping this step ─────────────────────────────────────── */
 
   const missing = useMemo(() => {
@@ -120,14 +133,18 @@ export function ApplyWizard({
     if (state.step === 0) {
       errors.push(...methodErrors());
     } else if (state.step === 1) {
-      errors.push(...validateClassrooms(state.classrooms, state.methods));
+      if (applicantType !== 'instructor') {
+        errors.push(...validateClassrooms(state.classrooms, state.methods));
+      }
     } else if (state.step === 2) {
       if (!isProgram) errors.push(...validateEquipment(state.equipment));
     } else if (state.step === 3) {
       errors.push(...validatePricing(state.pricing, state.methods, minimumFee));
     } else if (state.step === 4) {
       errors.push(...methodErrors());
-      errors.push(...validateClassrooms(state.classrooms, state.methods));
+      if (applicantType !== 'instructor') {
+        errors.push(...validateClassrooms(state.classrooms, state.methods));
+      }
       if (!isProgram) errors.push(...validateEquipment(state.equipment));
       errors.push(...validatePricing(state.pricing, state.methods, minimumFee));
     }
@@ -135,13 +152,35 @@ export function ApplyWizard({
   }, [isProgram, minimumFee, state]);
 
   const canNext = missing.length === 0;
-  const isLastStep = state.step === APPLY_STEPS.length - 1;
+
+  // Build the visible steps for this applicant. Instructors skip the
+  // "Classrooms & labs" step entirely, so the stepper and navigation
+  // operate over a filtered list while the reducer still stores the
+  // original step indices.
+  const allSteps = APPLY_STEPS;
+  const visibleStepPairs = allSteps
+    .map((label, idx) => ({ label, idx }))
+    .filter(pair => !(applicantType === 'instructor' && pair.label === 'Classrooms & labs'));
+  const visibleSteps = visibleStepPairs.map(p => p.label as string);
+  const visibleIndices = visibleStepPairs.map(p => p.idx);
+
+  const visibleIndex = Math.max(0, visibleIndices.indexOf(state.step));
+  const isLastStep = visibleIndex === visibleSteps.length - 1;
 
   const goNext = () => {
     if (!canNext) return;
-    dispatch({ type: 'step', step: Math.min(APPLY_STEPS.length - 1, state.step + 1) });
+    const current = visibleIndices.indexOf(state.step);
+    const nextIndex = Math.min(visibleSteps.length - 1, current + 1);
+    const target = visibleIndices[nextIndex] ?? state.step;
+    dispatch({ type: 'step', step: target });
   };
-  const goBack = () => dispatch({ type: 'step', step: Math.max(0, state.step - 1) });
+
+  const goBack = () => {
+    const current = visibleIndices.indexOf(state.step);
+    const prevIndex = Math.max(0, current - 1);
+    const target = visibleIndices[prevIndex] ?? state.step;
+    dispatch({ type: 'step', step: target });
+  };
 
   /* ── submitting ─────────────────────────────────────────────────────── */
 
@@ -197,7 +236,7 @@ export function ApplyWizard({
 
   return (
     <div className='space-y-6'>
-      <Stepper step={state.step} />
+      <Stepper step={visibleIndex} steps={visibleSteps} />
 
       <Card>
         <CardHeader>
@@ -208,7 +247,9 @@ export function ApplyWizard({
         </CardHeader>
         <CardContent className='space-y-6'>
           {state.step === 0 && <StepMethod state={state} dispatch={dispatch} />}
-          {state.step === 1 && <StepClassrooms state={state} dispatch={dispatch} />}
+          {state.step === 1 && applicantType !== 'instructor' && (
+            <StepClassrooms state={state} dispatch={dispatch} />
+          )}
           {state.step === 2 && (
             <StepRequirements
               state={state}
@@ -292,11 +333,11 @@ function stepDescription(step: number, isProgram: boolean) {
   }
 }
 
-function Stepper({ step }: { step: number }) {
+function Stepper({ step, steps }: { step: number; steps: readonly string[] }) {
   return (
     <>
       <ol className='hidden items-center gap-2 sm:flex'>
-        {APPLY_STEPS.map((label, index) => {
+        {steps.map((label, index) => {
           const active = index === step;
           const done = index < step;
           return (
@@ -319,14 +360,14 @@ function Stepper({ step }: { step: number }) {
               >
                 {label}
               </span>
-              {index < APPLY_STEPS.length - 1 && <div className='bg-border mx-2 h-px flex-1' />}
+              {index < steps.length - 1 && <div className='bg-border mx-2 h-px flex-1' />}
             </li>
           );
         })}
       </ol>
       <p className='text-muted-foreground text-sm sm:hidden'>
-        Step {step + 1} of {APPLY_STEPS.length} —{' '}
-        <span className='text-foreground font-medium'>{APPLY_STEPS[step]}</span>
+        Step {step + 1} of {steps.length} —{' '}
+        <span className='text-foreground font-medium'>{steps[step]}</span>
       </p>
     </>
   );

@@ -58,19 +58,12 @@ type Props = {
 
 type FilterSelection =
   | { id: 'all'; kind: 'all' }
-  | { id: string; kind: 'class' | 'booking' | 'venue' | 'classroom' | 'instructor' };
+  | { id: string; kind: 'class' | 'booking' | 'venue' | 'equipment' | 'instructor' };
 
 const normalizeText = (value?: string | null) => value?.trim().toLowerCase() ?? '';
 
-const isVenueLocation = (value?: string | null) => {
-  const normalized = normalizeText(value);
-  return Boolean(normalized) && !normalized.includes('room') && !normalized.includes('classroom');
-};
-
-const isClassroomLocation = (value?: string | null) => {
-  const normalized = normalizeText(value);
-  return normalized.includes('room') || normalized.includes('classroom');
-};
+const isEquipmentEvent = (event: SchedulerEvent) =>
+  normalizeText(event.locationType) === 'equipment_pool';
 
 export function SchedulerCalendarView({ profile, data }: Props) {
   const router = useRouter();
@@ -147,8 +140,9 @@ export function SchedulerCalendarView({ profile, data }: Props) {
         if (selectedFilter.kind === 'booking' && event.eventType !== 'booking_request')
           return false;
         if (
-          (selectedFilter.kind === 'venue' || selectedFilter.kind === 'classroom') &&
-          event.location !== selectedFilter.id
+          (selectedFilter.kind === 'venue' || selectedFilter.kind === 'equipment') &&
+          (event.location !== selectedFilter.id ||
+            isEquipmentEvent(event) !== (selectedFilter.kind === 'equipment'))
         ) {
           return false;
         }
@@ -213,7 +207,7 @@ export function SchedulerCalendarView({ profile, data }: Props) {
     const items = Array.from(
       new Set(
         allEvents
-          .filter(event => isVenueLocation(event.location))
+          .filter(event => !isEquipmentEvent(event))
           .map(event => event.location)
           .filter(Boolean)
       )
@@ -224,11 +218,11 @@ export function SchedulerCalendarView({ profile, data }: Props) {
     return items.filter(item => !searchTerm || item.name.toLowerCase().includes(searchTerm));
   }, [allEvents, searchTerm]);
 
-  const classroomFilterItems = useMemo(() => {
+  const equipmentFilterItems = useMemo(() => {
     const items = Array.from(
       new Set(
         allEvents
-          .filter(event => isClassroomLocation(event.location))
+          .filter(isEquipmentEvent)
           .map(event => event.location)
           .filter(Boolean)
       )
@@ -264,13 +258,22 @@ export function SchedulerCalendarView({ profile, data }: Props) {
   }, [currentDate, filteredEvents, hasActiveFilters]);
 
   const metrics = useMemo<SchedulerMetric[]>(() => {
-    const classCount = new Set(visibleEvents.map(event => event.classDefinitionUuid || event.title))
-      .size;
+    const classCount = new Set(
+      visibleEvents.map(event => event.classDefinitionUuid).filter(Boolean)
+    ).size;
     const eventCount = visibleEvents.length;
     const instructorCount = new Set(
       visibleEvents.map(event => event.instructorUuid || event.instructor).filter(Boolean)
     ).size;
-    const venueCount = new Set(visibleEvents.map(event => event.location).filter(Boolean)).size;
+    const venueCount = new Set(
+      visibleEvents
+        .filter(event => !isEquipmentEvent(event))
+        .map(event => event.location)
+        .filter(Boolean)
+    ).size;
+    const equipmentCount = new Set(
+      visibleEvents.filter(isEquipmentEvent).map(event => event.location).filter(Boolean)
+    ).size;
     const zeroCount = 0;
 
     return schedulerMetrics.map(metric => {
@@ -288,6 +291,10 @@ export function SchedulerCalendarView({ profile, data }: Props) {
 
       if (metric.label === 'Venues') {
         return { ...metric, value: String(venueCount) };
+      }
+
+      if (metric.label === 'Equipment') {
+        return { ...metric, value: String(equipmentCount) };
       }
 
       return { ...metric, value: String(zeroCount) };
@@ -376,22 +383,19 @@ export function SchedulerCalendarView({ profile, data }: Props) {
         onToggle: () => {},
         selectedId: selectedFilter.kind === 'venue' ? selectedFilter.id : null,
       },
-      // {
-      //   count: classroomFilterItems.length,
-      //   isOpen: true,
-      //   items: classroomFilterItems,
-      //   key: 'classrooms',
-      //   label: 'Classrooms',
-      //   onItemClick: id => {
-      //     setSelectedFilter({ id, kind: 'classroom' });
-      //     setFiltersOpen(false);
-      //   },
-      //   onToggle: () => { },
-      //   selectedId:
-      //     selectedFilter.kind === 'classroom'
-      //       ? selectedFilter.id
-      //       : null,
-      // },
+      {
+        count: equipmentFilterItems.length,
+        isOpen: true,
+        items: equipmentFilterItems,
+        key: 'equipment',
+        label: 'Equipment',
+        onItemClick: id => {
+          setSelectedFilter({ id, kind: 'equipment' });
+          setFiltersOpen(false);
+        },
+        onToggle: () => {},
+        selectedId: selectedFilter.kind === 'equipment' ? selectedFilter.id : null,
+      },
     ];
 
     // ONLY organisation/admin sees instructors
@@ -431,7 +435,7 @@ export function SchedulerCalendarView({ profile, data }: Props) {
     return sections;
   }, [
     classFilterItems,
-    classroomFilterItems,
+    equipmentFilterItems,
     instructorFilterItems,
     profile,
     selectedFilter,
