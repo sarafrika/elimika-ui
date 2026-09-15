@@ -843,14 +843,6 @@ function OrganizationCalendarPage() {
     return Array.from(set);
   }, [classData]);
 
-  const uniqueInstructorUuids = useMemo(() => {
-    const set = new Set<string>();
-    classData.forEach(cls => {
-      if (cls.default_instructor_uuid) set.add(cls.default_instructor_uuid);
-    });
-    return Array.from(set);
-  }, [classData]);
-
   const courseQueries = useQueries({
     queries: uniqueCourseUuids.map(uuid => ({
       ...getCourseByUuidOptions({ path: { uuid } }),
@@ -876,31 +868,6 @@ function OrganizationCalendarPage() {
     return map;
   }, [courseDataArray, uniqueCourseUuids]);
 
-  const instructorQueries = useQueries({
-    queries: uniqueInstructorUuids.map(uuid => ({
-      ...getInstructorByUuidOptions({ path: { uuid } }),
-      enabled: !!uuid,
-      // Verification can flip an instructor between visits.
-      // staleTime: 5 * 60 * 1000,
-      // refetchOnWindowFocus: false,
-      // refetchOnReconnect: false,
-    })),
-  });
-
-  const instructorDataArray = useMemo(
-    () => instructorQueries.map(query => query.data ?? null),
-    [instructorQueries]
-  );
-
-  const instructorMap = useMemo(() => {
-    const map = new Map<string, NonNullable<(typeof instructorDataArray)[number]>>();
-    uniqueInstructorUuids.forEach((uuid, index) => {
-      const instructor = instructorDataArray[index];
-      if (instructor) map.set(uuid, instructor);
-    });
-    return map;
-  }, [instructorDataArray, uniqueInstructorUuids]);
-
   const scheduleQueries = useQueries({
     queries: classData.map(cls => ({
       ...getClassScheduleOptions({
@@ -920,12 +887,60 @@ function OrganizationCalendarPage() {
     [scheduleQueries]
   );
 
+  const uniqueInstructorUuids = useMemo(
+    () =>
+      Array.from(
+        new Set(
+          [
+            ...classData.map(cls => cls.default_instructor_uuid),
+            ...scheduleData.flatMap(schedule => schedule.map(item => item.instructor_uuid)),
+          ].filter((uuid): uuid is string => Boolean(uuid))
+        )
+      ),
+    [classData, scheduleData]
+  );
+
+  const { instructorMap, isLoading: instructorsLoading } =
+    useInstructorsByIds(uniqueInstructorUuids);
+  const instructorUserUuids = useMemo(
+    () =>
+      Object.values(instructorMap)
+        .filter(instructor => !instructor.full_name?.trim())
+        .map(instructor => instructor.user_uuid)
+        .filter((uuid): uuid is string => Boolean(uuid)),
+    [instructorMap]
+  );
+  const { userMap: instructorUsers, isLoading: instructorUsersLoading } =
+    useUsersByIds(instructorUserUuids);
+
+  const instructorSummaries = useMemo<InstructorSummary[]>(
+    () =>
+      uniqueInstructorUuids.map(uuid => {
+        const instructor = instructorMap[uuid];
+        const user = instructor?.user_uuid ? instructorUsers[instructor.user_uuid] : undefined;
+        return {
+          uuid,
+          fullName:
+            instructor?.full_name?.trim() ||
+            user?.full_name?.trim() ||
+            user?.display_name?.trim() ||
+            'Instructor pending',
+          subtitle: instructor?.professional_headline || 'Attached to class data',
+        };
+      }),
+    [instructorMap, instructorUsers, uniqueInstructorUuids]
+  );
+  const instructorSummaryLookup = useMemo(
+    () => new Map(instructorSummaries.map(instructor => [instructor.uuid, instructor])),
+    [instructorSummaries]
+  );
+
   const classesWithCourseAndInstructor = useMemo(() => {
     return classData.map((cls, i) => ({
       ...cls,
       course: cls.course_uuid ? (courseMap.get(cls.course_uuid) ?? null) : null,
       instructor: cls.default_instructor_uuid
-        ? (instructorMap.get(cls.default_instructor_uuid) ?? null)
+        ? (instructorMap[cls.default_instructor_uuid] ?? null)
         : null,
       schedule: scheduleData[i] ?? null,
     }));
@@ -949,26 +964,20 @@ function OrganizationCalendarPage() {
           mapClassSchedule(
             classDef as ClassWithScheduleInput,
             undefined,
-            undefined,
+            instructorSummaryLookup,
             studentInitialsByClass
           )
         )
         .filter(event => event.status !== 'Cancelled')
         .concat(resourceReservations.events)
         .sort((a, b) => a.startTime.getTime() - b.startTime.getTime()),
-    [classesWithCourseAndInstructor, resourceReservations.events, studentInitialsByClass]
+    [
+      classesWithCourseAndInstructor,
+      instructorSummaryLookup,
+      resourceReservations.events,
+      studentInitialsByClass,
+    ]
   );
-
-  const instructorSummaries = useMemo<InstructorSummary[]>(() => {
-    return uniqueInstructorUuids.map(uuid => {
-      const instructor = instructorMap.get(uuid);
-      return {
-        uuid,
-        fullName: instructor?.full_name || 'Instructor pending',
-        subtitle: instructor?.professional_headline || 'Attached to class data',
-      };
-    });
-  }, [instructorMap, uniqueInstructorUuids]);
 
   const data: SchedulerCalendarData = {
     allInstructors: instructorSummaries,
@@ -977,7 +986,8 @@ function OrganizationCalendarPage() {
     isLoading:
       organizationClassesQuery.isLoading ||
       courseQueries.some(query => query.isLoading) ||
-      instructorQueries.some(query => query.isLoading) ||
+      instructorsLoading ||
+      instructorUsersLoading ||
       scheduleQueries.some(query => query.isLoading) ||
       resourceReservations.isLoading ||
       studentData.isLoading,

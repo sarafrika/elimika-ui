@@ -341,25 +341,10 @@ export default function OrganisationCreateClassPage() {
   const [rateBasis, setRateBasis] = useState<RateBasis>(DEFAULT_RATE_BASIS);
   const approvedFee = useMemo(
     () => approvedRateFor(selectedOffering?.rateCard, sessionFormat, delivery, rateBasis),
-    [selectedOffering, sessionFormat, delivery]
+    [selectedOffering, sessionFormat, delivery, rateBasis]
   );
   const [salePrice, setSalePrice] = useState('');
   const [instructorPay, setInstructorPay] = useState('');
-  const [feesDirty, setFeesDirty] = useState(false);
-  useEffect(() => {
-    if (feesDirty) return;
-    const suggested = approvedFee === undefined ? '' : String(approvedFee);
-    setSalePrice(suggested);
-    setInstructorPay(suggested);
-  }, [approvedFee, feesDirty]);
-  const handleSalePriceChange = (value: string) => {
-    setFeesDirty(true);
-    setSalePrice(value);
-  };
-  const handleInstructorPayChange = (value: string) => {
-    setFeesDirty(true);
-    setInstructorPay(value);
-  };
   const [maxParticipants, setMaxParticipants] = useState('20');
   const [allowWaitlist, setAllowWaitlist] = useState(true);
 
@@ -688,13 +673,23 @@ export default function OrganisationCreateClassPage() {
     }
     const saleValue = num(salePrice);
     const payValue = num(instructorPay);
-    if (saleValue === undefined || saleValue < 0) {
+    if (saleValue === undefined || !Number.isFinite(saleValue) || saleValue < 0) {
       return toast.error(
         `Enter the sale price learners are charged per ${rateBasisUnit(rateBasis)}.`
       );
     }
-    if (payValue === undefined || payValue < 0) {
+    if (payValue === undefined || !Number.isFinite(payValue) || payValue < 0) {
       return toast.error(`Enter the pay the instructor receives per ${rateBasisUnit(rateBasis)}.`);
+    }
+    if (saleValue < approvedFee) {
+      return toast.error(
+        `Sale price must be at least the approved fee of ${approvedFee} per ${rateBasisUnit(rateBasis)}.`
+      );
+    }
+    if (payValue < approvedFee) {
+      return toast.error(
+        `Instructor pay must be at least the approved fee of ${approvedFee} per ${rateBasisUnit(rateBasis)}.`
+      );
     }
     if (payValue > saleValue) {
       return toast.error('Instructor pay cannot exceed the sale price.');
@@ -850,9 +845,9 @@ export default function OrganisationCreateClassPage() {
           approvedFee={approvedFee}
           currency={selectedOffering?.rateCard?.currency}
           salePrice={salePrice}
-          onSalePriceChange={handleSalePriceChange}
+          onSalePriceChange={setSalePrice}
           instructorPay={instructorPay}
-          onInstructorPayChange={handleInstructorPayChange}
+          onInstructorPayChange={setInstructorPay}
           maxParticipants={maxParticipants}
           onMaxChange={setMaxParticipants}
           allowWaitlist={allowWaitlist}

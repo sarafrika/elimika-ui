@@ -76,6 +76,7 @@ import {
   getJobEligibilityOptions,
   listJobsOptions,
   listMyApplicationsOptions,
+  searchTrainingApplicationsOptions,
 } from '@/services/client/@tanstack/react-query.gen';
 import type {
   ClassMarketplaceJob,
@@ -696,7 +697,7 @@ function JobDetailsSheet({
                     {eligibility?.reason ??
                       'You are not currently eligible to apply for this posting.'}
                   </p>
-                  {eligibility && !eligibility.training_approved && job.course_uuid ? (
+                  {/* {eligibility && !eligibility.training_approved && job.course_uuid ? (
                     <Button asChild variant='outline' size='sm'>
                       <Link
                         href={`/dashboard/apply-to-train/${job.course_uuid}?kind=course`}
@@ -704,7 +705,7 @@ function JobDetailsSheet({
                         Apply to train this course
                       </Link>
                     </Button>
-                  ) : null}
+                  ) : null} */}
                 </div>
               ) : null}
 
@@ -771,6 +772,7 @@ export function JobMarketplacePage({ role }: { role: JobMarketplaceRole }) {
   const config = getJobMarketplaceRoleConfig(role);
   const { activeDomain } = useUserDomain();
   const profile = useUserProfile();
+
   const profileOrg = profile?.organisation_affiliations?.[0];
   const orgData = useOrganisation();
 
@@ -898,6 +900,45 @@ export function JobMarketplacePage({ role }: { role: JobMarketplaceRole }) {
 
   const organisations = extractPage<Organisation>(organisationsResponse).items;
   const myApplications = myApplicationsQuery.data?.data?.content ?? [];
+
+  // Fetch training applications for the current instructor to determine
+  // which courses/programs they've been approved to train.
+  const { data: trainingAppsResponse } = useQuery({
+    ...searchTrainingApplicationsOptions({
+      query: {
+        pageable: { page: 0, size: 200 },
+        searchParams: { applicant_uuid_eq: instructor?.uuid ?? '' },
+      },
+    }),
+    enabled: Boolean(canApply && instructor?.uuid),
+    refetchOnWindowFocus: false,
+  });
+
+  const approvedApplications = trainingAppsResponse?.data?.content ?? [];
+
+  const approvedCourseUuids = useMemo(
+    () => new Set(approvedApplications.filter(app => app.status === 'approved' && app.course_uuid).map(app => app.course_uuid as string)),
+    [approvedApplications]
+  );
+
+  const approvedProgramUuids = useMemo(
+    () => new Set(approvedApplications.filter(app => app.status === 'approved' && app.program_uuid).map(app => app.program_uuid as string)),
+    [approvedApplications]
+  );
+
+  const visibleJobs = useMemo(() => {
+    if (!canApply) return jobs;
+    return jobs.filter(job => {
+      const programUuid = getJobProgramUuid(job);
+      const jobCourseUuid = job.course_uuid ?? null;
+      return (
+        (jobCourseUuid && approvedCourseUuids.has(jobCourseUuid)) ||
+        (programUuid && approvedProgramUuids.has(programUuid))
+      );
+    });
+  }, [canApply, jobs, approvedCourseUuids, approvedProgramUuids]);
+
+  const jobsUsed = canApply ? visibleJobs : jobs;
   const organisationOptions = useMemo(() => {
     const options = organisations
       .filter(organisationItem => organisationItem.uuid)
@@ -978,8 +1019,8 @@ export function JobMarketplacePage({ role }: { role: JobMarketplaceRole }) {
   );
 
   const selectedJob = useMemo(
-    () => jobs.find(job => job.uuid === selectedJobUuid) ?? null,
-    [jobs, selectedJobUuid]
+    () => jobsUsed.find(job => job.uuid === selectedJobUuid) ?? null,
+    [jobsUsed, selectedJobUuid]
   );
 
   const applicationByJobUuid = useMemo(() => {
@@ -987,7 +1028,7 @@ export function JobMarketplacePage({ role }: { role: JobMarketplaceRole }) {
   }, [myApplications]);
 
   const jobsBeforeStatusFilter = useMemo(() => {
-    return jobs.filter(job => {
+    return jobsUsed.filter(job => {
       const programUuid = getJobProgramUuid(job);
       const searchable = [
         job.title,
@@ -1024,12 +1065,25 @@ export function JobMarketplacePage({ role }: { role: JobMarketplaceRole }) {
         matchesLocation
       );
     });
-  }, [contentFilter, jobs, locationFilter, organisationFilter, search, sessionFormatFilter]);
+  }, [contentFilter, jobsUsed, locationFilter, organisationFilter, search, sessionFormatFilter]);
+
+
+
 
   const filteredJobs = useMemo(() => {
-    return jobsBeforeStatusFilter.filter(
-      job => statusFilter === 'all' || job.status === statusFilter
-    );
+    return jobsBeforeStatusFilter
+      .filter(job => statusFilter === 'all' || job.status === statusFilter)
+      .filter(job => {
+        if (!canApply) return true;
+        const programUuid = getJobProgramUuid(job);
+        const jobCourseUuid = job.course_uuid ?? null;
+
+        // Only show jobs that match the instructor's approved course or program UUIDs.
+        return (
+          (jobCourseUuid && approvedCourseUuids.has(jobCourseUuid)) ||
+          (programUuid && approvedProgramUuids.has(programUuid))
+        );
+      });
   }, [jobsBeforeStatusFilter, statusFilter]);
 
   const sortedJobs = useMemo(
@@ -1051,41 +1105,41 @@ export function JobMarketplacePage({ role }: { role: JobMarketplaceRole }) {
   );
 
   const kpis = useMemo(() => {
-    const openCount = jobs.filter(job => job.status === 'open').length;
+    const openCount = jobsUsed.filter(job => job.status === 'open').length;
 
     if (isOrganizationView) {
       return [
         {
           label: 'Total postings',
-          value: jobs.length,
+          value: jobsUsed.length,
           icon: BriefcaseBusiness,
           tone: 'info' as const,
         },
         { label: 'Open', value: openCount, icon: CheckCircle2, tone: 'success' as const },
         {
           label: 'Awaiting class',
-          value: jobs.filter(job => (job.status as string) === 'awaiting_class').length,
+          value: jobsUsed.filter(job => (job.status as string) === 'awaiting_class').length,
           icon: Clock,
           tone: 'warning' as const,
         },
         {
           label: 'Filled',
-          value: jobs.filter(job => job.status === 'filled').length,
+          value: jobsUsed.filter(job => job.status === 'filled').length,
           icon: Users,
           tone: 'neutral' as const,
         },
         {
           label: 'Cancelled',
-          value: jobs.filter(job => job.status === 'cancelled').length,
+          value: jobsUsed.filter(job => job.status === 'cancelled').length,
           icon: Trash2,
           tone: 'destructive' as const,
         },
       ];
     }
 
-    const distinctOrganisations = new Set(jobs.map(job => job.organisation_uuid).filter(Boolean))
+    const distinctOrganisations = new Set(jobsUsed.map(job => job.organisation_uuid).filter(Boolean))
       .size;
-    const remoteCount = jobs.filter(job => job.location_type === 'ONLINE').length;
+    const remoteCount = jobsUsed.filter(job => job.location_type === 'ONLINE').length;
 
     return [
       { label: 'Open roles', value: openCount, icon: BriefcaseBusiness, tone: 'success' as const },

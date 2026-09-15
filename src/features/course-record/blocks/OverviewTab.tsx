@@ -192,10 +192,10 @@ export const COURSE_REQUIREMENT_PROVIDER_ORDER: readonly ProvidedByEnum[] = [
 
 /** Reads into "Provided by …", as the artboard's meta line does. */
 export const COURSE_REQUIREMENT_PROVIDER_LABELS: Record<ProvidedByEnum, string> = {
-  organisation: 'the training provider',
+  organisation: 'the training provider (organisation)',
   instructor: 'the instructor',
   course_creator: 'the course creator',
-  student: 'the learner',
+  student: 'the learner (student)',
 };
 
 export const COURSE_REQUIREMENT_TYPE_LABELS: Record<RequirementTypeEnum2, string> = {

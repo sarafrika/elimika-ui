@@ -1,6 +1,5 @@
 'use client';
 
-import { Coins, Wallet } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import {
@@ -11,6 +10,7 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { Switch } from '@/components/ui/switch';
+import { Coins, Wallet } from 'lucide-react';
 import {
   DEFAULT_RATE_BASIS,
   formatMoney,
@@ -79,6 +79,9 @@ export function PricingCapacity({
           : Math.max(totalSessions, 1);
   const totalMargin = margin !== undefined ? margin * units : undefined;
   const unitsLabel = Number.isInteger(units) ? String(units) : units.toFixed(2);
+  const minimum = Math.max(approvedFee ?? 0, 0);
+  const saleBelowMinimum = sale !== undefined && sale < minimum;
+  const payBelowMinimum = pay !== undefined && pay < minimum;
   const overpaid = margin !== undefined && margin < 0;
 
   return (
@@ -112,17 +115,27 @@ export function PricingCapacity({
           </Label>
           <Input
             id='sale-price'
+            aria-invalid={saleBelowMinimum}
+            aria-describedby='sale-price-hint'
             type='number'
-            min={0}
+            min={minimum}
+            required={!readOnly}
             step='0.01'
             value={salePrice}
             readOnly={readOnly}
             onChange={e => onSalePriceChange(e.target.value)}
           />
-          <p className='text-muted-foreground text-[11px]'>
+          <p
+            id='sale-price-hint'
+            className={
+              saleBelowMinimum
+                ? 'text-destructive text-[11px]'
+                : 'text-muted-foreground text-[11px]'
+            }
+          >
             {approvedFee === undefined
               ? `The course creator has not approved a per-${unit} rate for this format and delivery mode.`
-              : `What a learner pays. Suggested ${formatMoney(approvedFee, currency)} — the approved rate. The course minimum floors this.`}
+              : `What a learner pays. Minimum ${formatMoney(minimum, currency)} per ${unit} — the approved fee.`}
           </p>
         </div>
 
@@ -132,16 +145,30 @@ export function PricingCapacity({
           </Label>
           <Input
             id='instructor-pay'
+            aria-invalid={payBelowMinimum || overpaid}
+            aria-describedby='instructor-pay-hint'
             type='number'
-            min={0}
+            min={minimum}
+            required={!readOnly}
             step='0.01'
+            max={sale}
             value={instructorPay}
             readOnly={readOnly}
             onChange={e => onInstructorPayChange(e.target.value)}
           />
-          <p className='text-muted-foreground text-[11px]'>
-            What you pay the instructor. It cannot exceed the sale price, and an applicant can only
-            be assigned when it covers their approved rate.
+          <p
+            id='instructor-pay-hint'
+            className={
+              payBelowMinimum || overpaid
+                ? 'text-destructive text-[11px]'
+                : 'text-muted-foreground text-[11px]'
+            }
+          >
+            {approvedFee === undefined
+              ? 'What you pay the instructor.'
+              : `What you pay the instructor. Minimum ${formatMoney(minimum, currency)} per ${unit} — the approved fee.`}{' '}
+            It cannot exceed the sale price, and an applicant can only be assigned when it covers
+            their approved rate.
           </p>
         </div>
 
