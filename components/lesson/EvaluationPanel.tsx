@@ -25,6 +25,7 @@ import type {
   Quiz,
   ClassAssignmentSchedule,
   ClassQuizSchedule,
+  ScheduledInstance,
 } from '@/services/client/types.gen';
 import {
   hasApiError,
@@ -34,6 +35,13 @@ import {
 } from './workbook-data';
 import { WorkbookLoading } from './WorkbookLoading';
 import { WorkbookError } from './WorkbookError';
+import { belongsToSession, gradingDeadline } from './assessment-scheduling';
+import type { AssessmentToSchedule } from './ScheduleAssessmentDialog';
+
+const ScheduleAssessmentDialog = dynamic(
+  () => import('./ScheduleAssessmentDialog').then(module => module.ScheduleAssessmentDialog),
+  { loading: () => <WorkbookLoading /> }
+);
 
 const AssignmentPreview = dynamic(
   () =>
@@ -75,13 +83,16 @@ export function EvaluationPanel({
   role,
   managementHref,
   section = 'evaluation',
+  activeSession,
 }: {
   classId: string;
   lessonId: string;
   role: WorkbookRole;
   managementHref: string;
   section?: 'evaluation' | 'quiz' | 'assignment' | 'grading';
+  activeSession?: ScheduledInstance;
 }) {
+  const [taskToSchedule, setTaskToSchedule] = useState<AssessmentToSchedule | null>(null);
   const [expanded, setExpanded] = useState<string | null>(null);
   const showAssignments = section !== 'quiz';
   const showQuizzes = section !== 'assignment';
@@ -145,12 +156,13 @@ export function EvaluationPanel({
         : (assignmentSchedules.data?.data ?? []).filter(
             item =>
               item.lesson_uuid === lessonId &&
+              (role !== 'instructor' || belongsToSession(item, activeSession?.uuid)) &&
               (!item.class_definition_uuid || item.class_definition_uuid === classId) &&
               (role === 'instructor' ||
                 !item.visible_at ||
                 dayjs(item.visible_at).valueOf() <= Date.now())
           ),
-    [assignmentSchedules.data, lessonId, classId, role]
+    [assignmentSchedules.data, lessonId, classId, role, activeSession?.uuid]
   );
   const scopedQuizzes = useMemo(
     () =>
@@ -159,12 +171,13 @@ export function EvaluationPanel({
         : (quizSchedules.data?.data ?? []).filter(
             item =>
               item.lesson_uuid === lessonId &&
+              (role !== 'instructor' || belongsToSession(item, activeSession?.uuid)) &&
               (!item.class_definition_uuid || item.class_definition_uuid === classId) &&
               (role === 'instructor' ||
                 !item.visible_at ||
                 dayjs(item.visible_at).valueOf() <= Date.now())
           ),
-    [quizSchedules.data, lessonId, classId, role]
+    [quizSchedules.data, lessonId, classId, role, activeSession?.uuid]
   );
   // Schedules can reference class clones beyond the current template page.
   // Resolve those references in batches, never with a request per card.
@@ -274,12 +287,29 @@ export function EvaluationPanel({
               : `${title === 'Evaluation' ? 'Assignments and quizzes' : title === 'Quiz' ? 'Quizzes' : 'Assignments'} for this lesson in this class.`}
           </p>
         </div>
-        {role === 'instructor' && (
+        {role === 'instructor' && isGrading && (
           <Button asChild variant='outline'>
             <Link href={managementHref}>Manage schedules & grading</Link>
           </Button>
         )}
       </div>
+      {role === 'instructor' && !isGrading && (
+        <p className='text-muted-foreground text-sm'>
+          {activeSession
+            ? 'Schedule and assign published tasks to students in the selected class session.'
+            : 'Select a class session in the register to schedule and assign tasks.'}
+        </p>
+      )}
+      {taskToSchedule && activeSession && (
+        <ScheduleAssessmentDialog
+          key={`${taskToSchedule.kind}-${taskToSchedule.uuid}-${activeSession.uuid}`}
+          task={taskToSchedule}
+          session={activeSession}
+          classId={classId}
+          lessonId={lessonId}
+          onClose={() => setTaskToSchedule(null)}
+        />
+      )}
       {showAssignments && (
         <section className='space-y-4'>
           <h3 className='font-semibold'>Assignments</h3>
@@ -303,9 +333,7 @@ export function EvaluationPanel({
                     {schedule?.max_attempts != null && (
                       <Badge variant='outline'>{schedule.max_attempts} attempts</Badge>
                     )}
-                    {submissionTypes && (
-                      <Badge variant='outline'>{submissionTypes}</Badge>
-                    )}
+                    {submissionTypes && <Badge variant='outline'>{submissionTypes}</Badge>}
                   </div>
                 </CardHeader>
                 <CardContent className='space-y-4'>
@@ -319,11 +347,30 @@ export function EvaluationPanel({
                     <p className='text-muted-foreground text-sm'>
                       Release:{' '}
                       {schedule.visible_at ? formatDeadline(schedule.visible_at) : 'Immediately'} ·
-                      Grading: {formatDeadline(schedule.grading_due_at)}
+                      Grading: {formatDeadline(gradingDeadline(schedule))}
                       {schedule.notes ? ` · ${schedule.notes}` : ''}
                     </p>
                   )}
                   <div className='flex flex-wrap gap-2'>
+                    {role === 'instructor' && !isGrading && uuid && (
+                      <Button
+                        disabled={!activeSession?.uuid || (!schedule && !assignment?.is_published)}
+                        onClick={() =>
+                          setTaskToSchedule({
+                            kind: 'assignment',
+                            uuid,
+                            title: assignment?.title ?? 'Assignment',
+                            schedule,
+                          })
+                        }
+                      >
+                        {schedule
+                          ? 'Edit schedule'
+                          : assignment?.is_published
+                            ? 'Schedule & assign'
+                            : 'Awaiting publication'}
+                      </Button>
+                    )}
                     {uuid && (
                       <Button
                         variant='outline'
@@ -348,7 +395,7 @@ export function EvaluationPanel({
                   </div>
                   {isGrading && schedule && (
                     <p className='text-muted-foreground text-sm'>
-                      Grading due {formatDeadline(schedule.grading_due_at)}
+                      Grading due {formatDeadline(gradingDeadline(schedule))}
                     </p>
                   )}
                   {uuid &&
@@ -409,6 +456,25 @@ export function EvaluationPanel({
                       {schedule.notes ? ` · ${schedule.notes}` : ''}
                     </p>
                   )}
+                  {role === 'instructor' && !isGrading && uuid && (
+                    <Button
+                      disabled={!activeSession?.uuid || (!schedule && !quiz?.is_published)}
+                      onClick={() =>
+                        setTaskToSchedule({
+                          kind: 'quiz',
+                          uuid,
+                          title: quiz?.title ?? 'Quiz',
+                          schedule,
+                        })
+                      }
+                    >
+                      {schedule
+                        ? 'Edit schedule'
+                        : quiz?.is_published
+                          ? 'Schedule & assign'
+                          : 'Awaiting publication'}
+                    </Button>
+                  )}
                   {(role === 'instructor' || isGrading) && uuid && (
                     <Button
                       variant='outline'
@@ -432,7 +498,7 @@ export function EvaluationPanel({
                   )}
                   {isGrading && schedule && (
                     <p className='text-muted-foreground text-sm'>
-                      Grading due {formatDeadline(schedule.grading_due_at)}
+                      Grading due {formatDeadline(gradingDeadline(schedule))}
                     </p>
                   )}
                   {isGrading && expanded === id && <GradingCriteria rubricId={quiz?.rubric_uuid} />}
@@ -458,7 +524,7 @@ export function EvaluationPanel({
   );
 }
 
-function GradingCriteria({ rubricId }: { rubricId?: string }) {
+function GradingCriteria({ rubricId }: { rubricId?: string | null }) {
   return rubricId ? (
     <RubricPreview rubricId={rubricId} />
   ) : (

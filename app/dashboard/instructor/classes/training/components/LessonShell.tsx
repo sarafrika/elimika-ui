@@ -18,7 +18,6 @@ import {
 import Link from 'next/link';
 import { useEffect, useRef, type ReactNode } from 'react';
 import { Card } from '../../../../../../components/ui/card';
-import { InstructorAttendanceRail } from './InstructorAttendanceRail';
 import type { LessonTabKey } from './LessonTabPanels';
 
 const TABS = [
@@ -66,6 +65,7 @@ export function LessonShell({
   contentReady,
   isCompleted,
   onComplete,
+  attendanceRail,
 }: {
   classTitle: string;
   courseTitle: string;
@@ -86,6 +86,7 @@ export function LessonShell({
   contentReady: boolean;
   isCompleted: boolean;
   onComplete: () => void;
+  attendanceRail?: ReactNode;
 }) {
   const showPagination = tab === 'lesson' && !showList && pageCount > 0;
   const showNavigation = !showList && tab !== 'resources' && (tab !== 'lesson' || contentReady);
@@ -201,8 +202,8 @@ export function LessonShell({
           </div>
         </header>
         <main className='flex min-w-0 flex-1 flex-col px-3 py-4 sm:px-7 sm:py-6'>
-          <div className='mx-auto flex w-full items-start gap-6'>
-            <div className='min-w-0 flex-1'>
+          <div className='mx-auto flex w-full flex-col items-start gap-6 lg:flex-row'>
+            <div className='w-full min-w-0 flex-1'>
               <Card className='min-h-[34rem] rounded-lg border shadow-sm'>
                 <div
                   ref={contentStart}
@@ -237,9 +238,7 @@ export function LessonShell({
                     variant='outline'
                     disabled={tab === 'lesson' && pageIndex === 0}
                     onClick={() =>
-                      previousSection
-                        ? onTabChange(previousSection)
-                        : onPageChange(pageIndex - 1)
+                      previousSection ? onTabChange(previousSection) : onPageChange(pageIndex - 1)
                     }
                   >
                     <ChevronLeft className='h-4 w-4' />
@@ -260,21 +259,11 @@ export function LessonShell({
               )}
             </div>
 
-            <Card className='h-full hidden w-80 shrink-0 lg:sticky lg:top-6 lg:block'>
-              <InstructorAttendanceRail
-                roster={[]}
-                onOpenRegister={() => {
-                  throw new Error('Function not implemented.');
-                }}
-                canAdmit={false}
-                onAdmit={(studentUuid: string) => {
-                  throw new Error('Function not implemented.');
-                }}
-                onEvaluate={(studentUuid: string) => {
-                  throw new Error('Function not implemented.');
-                }}
-              />
-            </Card>
+            {attendanceRail && (
+              <Card className='w-full shrink-0 overflow-hidden lg:sticky lg:top-6 lg:w-80'>
+                {attendanceRail}
+              </Card>
+            )}
           </div>
         </main>
       </div>

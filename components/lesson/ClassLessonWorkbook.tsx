@@ -21,6 +21,18 @@ import { useQuery } from '@tanstack/react-query';
 import { Video } from 'lucide-react';
 import { useMemo, useState, type ReactNode } from 'react';
 import { toast } from 'sonner';
+import { useRouter } from 'next/navigation';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
+import { Label } from '@/components/ui/label';
+import { dayjs } from '@/lib/date';
+import { useWorkbookSession } from './useWorkbookSession';
+import { WorkbookClassRegister } from './WorkbookClassRegister';
 import { EvaluationPanel } from './EvaluationPanel';
 import { WorkbookError } from './WorkbookError';
 import { WorkbookLoading } from './WorkbookLoading';
@@ -84,6 +96,12 @@ function SelectedLessonWorkbook({
   onComplete: () => void;
 }) {
   const { searchParams, navigate } = useWorkbookNavigation();
+  const router = useRouter();
+  const sessionState = useWorkbookSession(
+    classId,
+    searchParams.get('schedule'),
+    role === 'instructor'
+  );
   const requestedTab = searchParams.get('tab');
   const tab: LessonTabKey =
     requestedTab === 'assessment' || requestedTab === 'evaluation'
@@ -93,10 +111,10 @@ function SelectedLessonWorkbook({
           ? 'summary'
           : 'grading'
         : requestedTab === 'practice' ||
-          requestedTab === 'quiz' ||
-          requestedTab === 'assignment' ||
-          requestedTab === 'grading' ||
-          requestedTab === 'resources'
+            requestedTab === 'quiz' ||
+            requestedTab === 'assignment' ||
+            requestedTab === 'grading' ||
+            requestedTab === 'resources'
           ? requestedTab
           : 'lesson';
   const showList = searchParams.get('view') === 'lessons';
@@ -114,8 +132,8 @@ function SelectedLessonWorkbook({
       hasApiError(contentQuery.data)
         ? []
         : [...(contentQuery.data?.data ?? [])].sort(
-          (a, b) => (a.display_order ?? 0) - (b.display_order ?? 0)
-        ),
+            (a, b) => (a.display_order ?? 0) - (b.display_order ?? 0)
+          ),
     [contentQuery.data]
   );
   const contentTypes = useMemo(
@@ -180,6 +198,7 @@ function SelectedLessonWorkbook({
         role={role}
         managementHref={managementHref}
         section={tab}
+        activeSession={sessionState.session}
       />
     );
   else if (tab === 'summary')
@@ -251,6 +270,58 @@ function SelectedLessonWorkbook({
     );
   return (
     <LessonShell
+      attendanceRail={
+        role === 'instructor' ? (
+          <>
+            <div className='space-y-2 border-b p-4'>
+              <Label htmlFor='workbook-session'>Class session</Label>
+              <Select
+                value={sessionState.session?.uuid ?? ''}
+                onValueChange={schedule => navigate({ schedule })}
+              >
+                <SelectTrigger id='workbook-session'>
+                  <SelectValue placeholder='Select a session' />
+                </SelectTrigger>
+                <SelectContent>
+                  {sessionState.sessions.map(session => (
+                    <SelectItem key={session.uuid} value={session.uuid!}>
+                      {dayjs(session.start_time)
+                        .tz(session.timezone)
+                        .format('MMM D, YYYY · h:mm A')}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              {sessionState.query.hasNextPage && (
+                <Button
+                  variant='outline'
+                  size='sm'
+                  disabled={sessionState.query.isFetchingNextPage}
+                  onClick={() => void sessionState.query.fetchNextPage()}
+                >
+                  Load more sessions
+                </Button>
+              )}
+            </div>
+            {sessionState.isLoading ? (
+              <WorkbookLoading />
+            ) : sessionState.isError ? (
+              <WorkbookError title='Unable to load class sessions' retry={sessionState.retry} />
+            ) : (
+              <WorkbookClassRegister
+                classId={classId}
+                sessionId={sessionState.session?.uuid}
+                onEvaluate={enrollmentId => {
+                  const params = new URLSearchParams(contextParams);
+                  params.set('enrollment', enrollmentId);
+                  if (sessionState.session?.uuid) params.set('schedule', sessionState.session.uuid);
+                  router.push(`${legacyPath}?${params.toString()}`);
+                }}
+              />
+            )}
+          </>
+        ) : undefined
+      }
       classTitle={classDefinition.title}
       courseTitle={course.name}
       lessonTitle={lesson.title}
@@ -276,16 +347,18 @@ function SelectedLessonWorkbook({
       }
       onPageChange={index => navigate({ content: contents[index]?.uuid ?? null })}
       onNextLesson={nextLesson?.uuid ? () => selectLesson(nextLesson.uuid!) : undefined}
-      actions={role === "instructor" &&
-        <Button
-          variant='outline'
-          onClick={() => {
-            toast.message('Start Class here');
-          }}
-        >
-          <Video className='h-4 w-4' />
-          Start Class
-        </Button>
+      actions={
+        role === 'instructor' && (
+          <Button
+            variant='outline'
+            onClick={() => {
+              toast.message('Start Class here');
+            }}
+          >
+            <Video className='h-4 w-4' />
+            Start Class
+          </Button>
+        )
       }
     >
       {body}

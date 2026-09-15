@@ -454,7 +454,8 @@ export function LiveClassCard({
                 {/* ACTIONS */}
                 <div className='flex items-center gap-2'>
                   <Link
-                    href={`/dashboard/instructor/classes/class-training/${liveClass.classUuid}`}
+                    // href={`/dashboard/instructor/classes/class-training/${liveClass.classUuid}`}
+                    href={`/dashboard/instructor/classes/training/${liveClass.classUuid}`}
                     className='bg-primary text-primary-foreground hover:bg-primary/90 inline-flex h-9 min-w-[120px] items-center justify-center gap-2 rounded-md px-5 text-sm font-semibold transition'
                   >
                     Open Class
