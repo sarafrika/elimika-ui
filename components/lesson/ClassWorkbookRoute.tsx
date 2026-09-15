@@ -169,7 +169,7 @@ function CourseWorkspace({ courseId, ...props }: WorkspaceProps & { courseId: st
           lesson =>
             Boolean(lesson.uuid) &&
             (props.role === 'instructor' ||
-              (lesson.active !== false && lesson.status === 'PUBLISHED'))
+              (lesson.active !== false && lesson.status?.toUpperCase() === 'PUBLISHED'))
         )
         .sort((a, b) => a.lesson_number - b.lesson_number),
     [lessonsQuery.data, props.role]
@@ -239,7 +239,8 @@ function RequestedLessonWorkspace({
   if (
     !lesson ||
     lesson.course_uuid !== courseId ||
-    (props.role === 'student' && (lesson.active === false || lesson.status !== 'PUBLISHED'))
+    (props.role === 'student' &&
+      (lesson.active === false || lesson.status?.toUpperCase() !== 'PUBLISHED'))
   )
     return <EmptyState title='Lesson unavailable' />;
   return (
