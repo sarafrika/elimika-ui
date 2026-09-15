@@ -273,21 +273,6 @@ export default function OrganisationPostJobPage() {
   );
   const [salePrice, setSalePrice] = useState('');
   const [instructorPay, setInstructorPay] = useState('');
-  const [feesDirty, setFeesDirty] = useState(false);
-  useEffect(() => {
-    if (feesDirty) return;
-    const suggested = approvedFee === undefined ? '' : String(approvedFee);
-    setSalePrice(suggested);
-    setInstructorPay(suggested);
-  }, [approvedFee, feesDirty]);
-  const handleSalePriceChange = (value: string) => {
-    setFeesDirty(true);
-    setSalePrice(value);
-  };
-  const handleInstructorPayChange = (value: string) => {
-    setFeesDirty(true);
-    setInstructorPay(value);
-  };
   const [maxParticipants, setMaxParticipants] = useState('20');
   const [allowWaitlist, setAllowWaitlist] = useState(true);
 
@@ -455,7 +440,6 @@ export default function OrganisationPostJobPage() {
     if (editingJob.allow_waitlist != null) setAllowWaitlist(editingJob.allow_waitlist);
     if (editingJob.rate_basis) setRateBasis(editingJob.rate_basis as RateBasis);
     if (editingJob.sale_price != null || editingJob.instructor_pay != null) {
-      setFeesDirty(true);
       if (editingJob.sale_price != null) setSalePrice(String(editingJob.sale_price));
       if (editingJob.instructor_pay != null) {
         setInstructorPay(String(editingJob.instructor_pay));
@@ -695,13 +679,23 @@ export default function OrganisationPostJobPage() {
     }
     const saleValue = num(salePrice);
     const payValue = num(instructorPay);
-    if (saleValue === undefined || saleValue < 0) {
+    if (saleValue === undefined || !Number.isFinite(saleValue) || saleValue < 0) {
       return toast.error(
         `Enter the sale price learners are charged per ${rateBasisUnit(rateBasis)}.`
       );
     }
-    if (payValue === undefined || payValue < 0) {
+    if (payValue === undefined || !Number.isFinite(payValue) || payValue < 0) {
       return toast.error(`Enter the pay the instructor receives per ${rateBasisUnit(rateBasis)}.`);
+    }
+    if (saleValue < approvedFee) {
+      return toast.error(
+        `Sale price must be at least the approved fee of ${approvedFee} per ${rateBasisUnit(rateBasis)}.`
+      );
+    }
+    if (payValue < approvedFee) {
+      return toast.error(
+        `Instructor pay must be at least the approved fee of ${approvedFee} per ${rateBasisUnit(rateBasis)}.`
+      );
     }
     if (payValue > saleValue) {
       return toast.error('Instructor pay cannot exceed the sale price.');
@@ -878,9 +872,9 @@ export default function OrganisationPostJobPage() {
           approvedFee={approvedFee}
           currency={selectedOffering?.rateCard?.currency}
           salePrice={salePrice}
-          onSalePriceChange={handleSalePriceChange}
+          onSalePriceChange={setSalePrice}
           instructorPay={instructorPay}
-          onInstructorPayChange={handleInstructorPayChange}
+          onInstructorPayChange={setInstructorPay}
           maxParticipants={maxParticipants}
           onMaxChange={setMaxParticipants}
           allowWaitlist={allowWaitlist}
