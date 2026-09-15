@@ -1,16 +1,20 @@
 'use client';
 
-import { useInfiniteQuery, useQuery } from '@tanstack/react-query';
-import { useMemo, useState } from 'react';
-import dynamic from 'next/dynamic';
-import Link from 'next/link';
-import { Button } from '@/components/ui/button';
+import RichTextRenderer from '@/components/editors/richTextRenders';
 import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { EmptyState } from '@/components/ui/empty-state';
-import RichTextRenderer from '@/components/editors/richTextRenders';
-import { dayjs } from '@/lib/date';
+import {
+  Sheet,
+  SheetContent,
+  SheetDescription,
+  SheetHeader,
+  SheetTitle,
+  SheetTrigger,
+} from '@/components/ui/sheet';
 import { useAssignmentsByIds, useQuizzesByIds } from '@/hooks/use-batched-lookups';
+import { dayjs } from '@/lib/date';
 import { STALE_TIMES } from '@/lib/query-client';
 import {
   getAssignmentAttachmentsOptions,
@@ -22,24 +26,33 @@ import {
 } from '@/services/client/@tanstack/react-query.gen';
 import type {
   Assignment,
-  Quiz,
   ClassAssignmentSchedule,
   ClassQuizSchedule,
+  Quiz,
   ScheduledInstance,
 } from '@/services/client/types.gen';
+import { useInfiniteQuery, useQuery } from '@tanstack/react-query';
+import dynamic from 'next/dynamic';
+import Link from 'next/link';
+import { type ReactNode, useMemo, useState } from 'react';
+import { belongsToSession, gradingDeadline } from './assessment-scheduling';
+import type { AssessmentToSchedule } from './ScheduleAssessmentDialog';
 import {
   hasApiError,
   nextWorkbookPage,
   WORKBOOK_PAGE_SIZE,
   type WorkbookRole,
 } from './workbook-data';
-import { WorkbookLoading } from './WorkbookLoading';
 import { WorkbookError } from './WorkbookError';
-import { belongsToSession, gradingDeadline } from './assessment-scheduling';
-import type { AssessmentToSchedule } from './ScheduleAssessmentDialog';
+import { WorkbookLoading } from './WorkbookLoading';
 
 const ScheduleAssessmentDialog = dynamic(
   () => import('./ScheduleAssessmentDialog').then(module => module.ScheduleAssessmentDialog),
+  { loading: () => <WorkbookLoading /> }
+);
+
+const LessonGradingPanel = dynamic(
+  () => import('./LessonGradingPanel').then(module => module.LessonGradingPanel),
   { loading: () => <WorkbookLoading /> }
 );
 
@@ -79,6 +92,7 @@ function formatSubmissionTypes(value: unknown) {
 
 export function EvaluationPanel({
   classId,
+  courseId,
   lessonId,
   role,
   managementHref,
@@ -86,6 +100,7 @@ export function EvaluationPanel({
   activeSession,
 }: {
   classId: string;
+  courseId: string;
   lessonId: string;
   role: WorkbookRole;
   managementHref: string;
@@ -97,6 +112,7 @@ export function EvaluationPanel({
   const showAssignments = section !== 'quiz';
   const showQuizzes = section !== 'assignment';
   const isGrading = section === 'grading';
+  const instructorGrading = isGrading && role === 'instructor';
   const title =
     section === 'quiz'
       ? 'Quiz'
@@ -121,7 +137,7 @@ export function EvaluationPanel({
     }),
     initialPageParam: 0,
     getNextPageParam: nextWorkbookPage,
-    enabled: Boolean(lessonId && classId) && showAssignments,
+    enabled: Boolean(lessonId && classId) && showAssignments && !instructorGrading,
     staleTime: STALE_TIMES.entity,
   });
   const quizzes = useInfiniteQuery({
@@ -130,7 +146,7 @@ export function EvaluationPanel({
     }),
     initialPageParam: 0,
     getNextPageParam: nextWorkbookPage,
-    enabled: Boolean(lessonId && classId) && showQuizzes,
+    enabled: Boolean(lessonId && classId) && showQuizzes && !instructorGrading,
     staleTime: STALE_TIMES.entity,
   });
   const assignmentItems = useMemo(
@@ -183,7 +199,7 @@ export function EvaluationPanel({
   // Resolve those references in batches, never with a request per card.
   const missingAssignmentIds = useMemo(
     () =>
-      showAssignments && assignments.isSuccess
+      showAssignments && (assignments.isSuccess || instructorGrading)
         ? scopedAssignments.flatMap(schedule =>
             schedule.assignment_uuid &&
             !assignmentItems.some(item => item.uuid === schedule.assignment_uuid)
@@ -191,30 +207,41 @@ export function EvaluationPanel({
               : []
           )
         : [],
-    [showAssignments, assignments.isSuccess, scopedAssignments, assignmentItems]
+    [showAssignments, assignments.isSuccess, instructorGrading, scopedAssignments, assignmentItems]
   );
   const missingQuizIds = useMemo(
     () =>
-      showQuizzes && quizzes.isSuccess
+      showQuizzes && (quizzes.isSuccess || instructorGrading)
         ? scopedQuizzes.flatMap(schedule =>
             schedule.quiz_uuid && !quizItems.some(item => item.uuid === schedule.quiz_uuid)
               ? [schedule.quiz_uuid]
               : []
           )
         : [],
-    [showQuizzes, quizzes.isSuccess, scopedQuizzes, quizItems]
+    [showQuizzes, quizzes.isSuccess, instructorGrading, scopedQuizzes, quizItems]
   );
-  const { assignmentMap, isLoading: assignmentsLoading } =
-    useAssignmentsByIds(missingAssignmentIds);
-  const { quizMap, isLoading: quizzesLoading } = useQuizzesByIds(missingQuizIds);
+  const {
+    assignmentMap,
+    isLoading: assignmentsLoading,
+    isError: assignmentLookupError,
+    refetch: retryAssignments,
+  } = useAssignmentsByIds(missingAssignmentIds);
+  const {
+    quizMap,
+    isLoading: quizzesLoading,
+    isError: quizLookupError,
+    refetch: retryQuizzes,
+  } = useQuizzesByIds(missingQuizIds);
   if (assignmentsLoading || quizzesLoading) return <WorkbookLoading />;
   const activeQueries = [
-    ...(showAssignments ? [assignmentSchedules, assignments] : []),
-    ...(showQuizzes ? [quizSchedules, quizzes] : []),
+    ...(showAssignments ? [assignmentSchedules, ...(!instructorGrading ? [assignments] : [])] : []),
+    ...(showQuizzes ? [quizSchedules, ...(!instructorGrading ? [quizzes] : [])] : []),
   ];
   if (activeQueries.some(query => query.isLoading)) return <WorkbookLoading />;
   if (
     activeQueries.some(query => query.isError) ||
+    assignmentLookupError ||
+    quizLookupError ||
     (showAssignments &&
       (hasApiError(assignmentSchedules.data) || assignments.data?.pages.some(hasApiError))) ||
     (showQuizzes && (hasApiError(quizSchedules.data) || quizzes.data?.pages.some(hasApiError)))
@@ -224,6 +251,8 @@ export function EvaluationPanel({
         title={`Unable to load ${title.toLowerCase()}`}
         retry={() => {
           for (const query of activeQueries) void query.refetch();
+          void retryAssignments();
+          void retryQuizzes();
         }}
       />
     );
@@ -259,6 +288,45 @@ export function EvaluationPanel({
           ]
         : []
     );
+  if (instructorGrading) {
+    return (
+      <LessonGradingPanel
+        key={`${classId}-${lessonId}-${activeSession?.uuid ?? ''}`}
+        classId={classId}
+        courseId={courseId}
+        sessionId={activeSession?.uuid}
+        tasks={[
+          ...assignmentRows.flatMap(({ id, assignment, schedule }) =>
+            schedule?.assignment_uuid
+              ? [
+                  {
+                    id: `assignment-${id}`,
+                    kind: 'assignment' as const,
+                    uuid: schedule.assignment_uuid,
+                    title: assignment?.title ?? 'Assignment',
+                    maxPoints: assignment?.max_points,
+                    dueAt: gradingDeadline(schedule),
+                  },
+                ]
+              : []
+          ),
+          ...quizRows.flatMap(({ id, quiz, schedule }) =>
+            schedule?.quiz_uuid
+              ? [
+                  {
+                    id: `quiz-${id}`,
+                    kind: 'quiz' as const,
+                    uuid: schedule.quiz_uuid,
+                    title: quiz?.title ?? 'Quiz',
+                    dueAt: gradingDeadline(schedule),
+                  },
+                ]
+              : []
+          ),
+        ]}
+      />
+    );
+  }
   if (role === 'instructor') {
     assignmentRows.push(
       ...assignmentItems
@@ -281,11 +349,18 @@ export function EvaluationPanel({
       <div className='flex flex-wrap items-center justify-between gap-3'>
         <div>
           <h2 className='text-xl font-semibold'>{title}</h2>
-          <p className='text-muted-foreground text-sm'>
+          {/* <p className='text-muted-foreground text-sm'>
             {isGrading
               ? 'Review grading criteria and open your assessments for results and feedback.'
               : `${title === 'Evaluation' ? 'Assignments and quizzes' : title === 'Quiz' ? 'Quizzes' : 'Assignments'} for this lesson in this class.`}
-          </p>
+          </p> */}
+          {role === 'instructor' && !isGrading && (
+            <p className='text-muted-foreground text-sm'>
+              {activeSession
+                ? 'Schedule and assign published tasks to students in the selected class session.'
+                : 'Select a class session in the register to schedule and assign tasks.'}
+            </p>
+          )}
         </div>
         {role === 'instructor' && isGrading && (
           <Button asChild variant='outline'>
@@ -293,13 +368,7 @@ export function EvaluationPanel({
           </Button>
         )}
       </div>
-      {role === 'instructor' && !isGrading && (
-        <p className='text-muted-foreground text-sm'>
-          {activeSession
-            ? 'Schedule and assign published tasks to students in the selected class session.'
-            : 'Select a class session in the register to schedule and assign tasks.'}
-        </p>
-      )}
+
       {taskToSchedule && activeSession && (
         <ScheduleAssessmentDialog
           key={`${taskToSchedule.kind}-${taskToSchedule.uuid}-${activeSession.uuid}`}
@@ -310,9 +379,9 @@ export function EvaluationPanel({
           onClose={() => setTaskToSchedule(null)}
         />
       )}
+
       {showAssignments && (
         <section className='space-y-4'>
-          <h3 className='font-semibold'>Assignments</h3>
           {!assignmentRows.length && <EmptyState title='No assignments available' />}
           {assignmentRows.map(({ id, assignment, schedule }) => {
             const uuid = schedule?.assignment_uuid ?? assignment?.uuid;
@@ -371,18 +440,29 @@ export function EvaluationPanel({
                             : 'Awaiting publication'}
                       </Button>
                     )}
-                    {uuid && (
-                      <Button
-                        variant='outline'
-                        onClick={() => setExpanded(expanded === id ? null : id)}
-                      >
-                        {expanded === id
-                          ? 'Hide details'
-                          : isGrading
-                            ? 'View grading criteria'
-                            : 'View assignment & attachments'}
-                      </Button>
-                    )}
+                    {uuid &&
+                      (isGrading ? (
+                        <Button
+                          variant='outline'
+                          onClick={() => setExpanded(expanded === id ? null : id)}
+                        >
+                          {expanded === id ? 'Hide details' : 'View grading criteria'}
+                        </Button>
+                      ) : (
+                        <AssessmentPreviewSheet
+                          title={assignment?.title ?? 'Assignment'}
+                          description='Review the assignment details and attachments.'
+                          triggerLabel='View assignment & attachments'
+                        >
+                          {assignment?.description && (
+                            <RichTextRenderer htmlString={assignment.description} />
+                          )}
+                          {assignment?.instructions && (
+                            <RichTextRenderer htmlString={assignment.instructions} />
+                          )}
+                          <AssignmentAttachments assignmentId={uuid} />
+                        </AssessmentPreviewSheet>
+                      ))}
                     {role === 'student' && uuid && (
                       <Button asChild>
                         <Link
@@ -398,13 +478,9 @@ export function EvaluationPanel({
                       Grading due {formatDeadline(gradingDeadline(schedule))}
                     </p>
                   )}
-                  {uuid &&
-                    expanded === id &&
-                    (isGrading ? (
-                      <GradingCriteria rubricId={assignment?.rubric_uuid} />
-                    ) : (
-                      <AssignmentAttachments assignmentId={uuid} />
-                    ))}
+                  {uuid && expanded === id && isGrading && (
+                    <GradingCriteria rubricId={assignment?.rubric_uuid} />
+                  )}
                 </CardContent>
               </Card>
             );
@@ -420,10 +496,11 @@ export function EvaluationPanel({
           )}
         </section>
       )}
+
       {showQuizzes && (
         <section className='space-y-4'>
-          <h3 className='font-semibold'>Quizzes</h3>
           {!quizRows.length && <EmptyState title='No quizzes available' />}
+
           {quizRows.map(({ id, quiz, schedule }) => {
             const uuid = schedule?.quiz_uuid ?? quiz?.uuid;
             const timeLimit = schedule?.time_limit_override ?? quiz?.time_limit_minutes;
@@ -475,18 +552,24 @@ export function EvaluationPanel({
                           : 'Awaiting publication'}
                     </Button>
                   )}
-                  {(role === 'instructor' || isGrading) && uuid && (
-                    <Button
-                      variant='outline'
-                      onClick={() => setExpanded(expanded === id ? null : id)}
-                    >
-                      {expanded === id
-                        ? 'Hide details'
-                        : isGrading
-                          ? 'View grading criteria'
-                          : 'Preview questions'}
-                    </Button>
-                  )}
+                  {(role === 'instructor' || isGrading) &&
+                    uuid &&
+                    (isGrading ? (
+                      <Button
+                        variant='outline'
+                        onClick={() => setExpanded(expanded === id ? null : id)}
+                      >
+                        {expanded === id ? 'Hide details' : 'View grading criteria'}
+                      </Button>
+                    ) : (
+                      <AssessmentPreviewSheet
+                        title={quiz?.title ?? 'Quiz'}
+                        description='Preview quiz questions and answer options.'
+                        triggerLabel='Preview questions'
+                      >
+                        <QuizQuestions quizId={uuid} />
+                      </AssessmentPreviewSheet>
+                    ))}
                   {role === 'student' && uuid && (
                     <Button asChild>
                       <Link
@@ -502,13 +585,11 @@ export function EvaluationPanel({
                     </p>
                   )}
                   {isGrading && expanded === id && <GradingCriteria rubricId={quiz?.rubric_uuid} />}
-                  {!isGrading && role === 'instructor' && uuid && expanded === id && (
-                    <QuizQuestions quizId={uuid} />
-                  )}
                 </CardContent>
               </Card>
             );
           })}
+
           {quizzes.hasNextPage && (
             <Button
               variant='outline'
@@ -521,6 +602,35 @@ export function EvaluationPanel({
         </section>
       )}
     </div>
+  );
+}
+
+function AssessmentPreviewSheet({
+  title,
+  description,
+  triggerLabel,
+  children,
+}: {
+  title: string;
+  description: string;
+  triggerLabel: string;
+  children: ReactNode;
+}) {
+  const [open, setOpen] = useState(false);
+
+  return (
+    <Sheet open={open} onOpenChange={setOpen}>
+      <SheetTrigger asChild>
+        <Button variant='outline'>{triggerLabel}</Button>
+      </SheetTrigger>
+      <SheetContent side='right' className='w-full sm:max-w-3xl'>
+        <SheetHeader className='shrink-0 border-b pr-12'>
+          <SheetTitle className='break-words'>{title}</SheetTitle>
+          <SheetDescription>{description}</SheetDescription>
+        </SheetHeader>
+        <div className='min-h-0 flex-1 space-y-4 overflow-y-auto px-4 pb-6'>{open && children}</div>
+      </SheetContent>
+    </Sheet>
   );
 }
 

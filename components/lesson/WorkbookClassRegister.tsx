@@ -25,19 +25,26 @@ import {
   markAttendanceMutation,
 } from '@/services/client/@tanstack/react-query.gen';
 import { toAuthenticatedMediaUrl } from '@/src/lib/media-url';
+import type { ScheduledInstance } from '@/services/client/types.gen';
+import {
+  getWorkbookSessionAvailability,
+  useWorkbookSessionAvailability,
+} from './useWorkbookSessionAvailability';
 import { hasApiError } from './workbook-data';
 import { WorkbookLoading } from './WorkbookLoading';
 import { WorkbookError } from './WorkbookError';
 
 export function WorkbookClassRegister({
   classId,
-  sessionId,
+  session,
   onEvaluate,
 }: {
   classId: string;
-  sessionId?: string;
+  session?: ScheduledInstance;
   onEvaluate: (enrollmentId: string) => void;
 }) {
+  const sessionId = session?.uuid;
+  const { canAdmit } = useWorkbookSessionAvailability(session);
   const [open, setOpen] = useState(false);
   const client = useQueryClient();
   const query = useQuery({
@@ -137,13 +144,15 @@ export function WorkbookClassRegister({
     <>
       <InstructorAttendanceRail
         roster={roster}
-        canAdmit={!mutation.isPending}
+        canAdmit={canAdmit && !mutation.isPending}
         pendingStudentId={
           enrollments.find(entry => entry.uuid === mutation.variables?.path.enrollmentUuid)
             ?.student_uuid
         }
         isPending={mutation.isPending}
-        onAdmit={id => mark(id, true)}
+        onAdmit={id => {
+          if (getWorkbookSessionAvailability(session).canAdmit) mark(id, true);
+        }}
         onEvaluate={id => {
           const enrollmentId = enrollments.find(entry => entry.student_uuid === id)?.uuid;
           if (enrollmentId) onEvaluate(enrollmentId);

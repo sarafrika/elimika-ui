@@ -346,13 +346,16 @@ export function useProgramsByIds(ids: string[]) {
 }
 
 export function useAssignmentsByIds(ids: string[]) {
-  const { map, isLoading } = useSearchByIds<Assignment>(ids, searchAssignmentsOptions);
-  return { assignmentMap: map, isLoading };
+  const { map, isLoading, isError, refetch } = useSearchByIds<Assignment>(
+    ids,
+    searchAssignmentsOptions
+  );
+  return { assignmentMap: map, isLoading, isError, refetch };
 }
 
 export function useQuizzesByIds(ids: string[]) {
-  const { map, isLoading } = useSearchByIds<Quiz>(ids, searchQuizzesOptions);
-  return { quizMap: map, isLoading };
+  const { map, isLoading, isError, refetch } = useSearchByIds<Quiz>(ids, searchQuizzesOptions);
+  return { quizMap: map, isLoading, isError, refetch };
 }
 
 export function useInstructorsByIds(ids: string[]) {
@@ -672,5 +675,4 @@ export function useClassesEnrollmentsByIds(classUuids: string[]) {
     isLoading: results.some((result) => result.isLoading),
   };
 }
-
 

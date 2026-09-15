@@ -11,13 +11,17 @@ import { WorkbookPage } from '@/app/dashboard/instructor/classes/training/compon
 import RichTextRenderer from '@/components/editors/richTextRenders';
 import { Button } from '@/components/ui/button';
 import { EmptyState } from '@/components/ui/empty-state';
+import Spinner from '@/components/ui/spinner';
 import { STALE_TIMES } from '@/lib/query-client';
 import {
   getAllContentTypesOptions,
+  getClassScheduleQueryKey,
   getLessonContentOptions,
+  getScheduledInstanceQueryKey,
+  startScheduledInstanceMutation,
 } from '@/services/client/@tanstack/react-query.gen';
 import type { ClassDefinition, ContentType, Course, Lesson } from '@/services/client/types.gen';
-import { useQuery } from '@tanstack/react-query';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { Video } from 'lucide-react';
 import { useMemo, useState, type ReactNode } from 'react';
 import { toast } from 'sonner';
@@ -32,6 +36,10 @@ import {
 import { Label } from '@/components/ui/label';
 import { dayjs } from '@/lib/date';
 import { useWorkbookSession } from './useWorkbookSession';
+import {
+  getWorkbookSessionAvailability,
+  useWorkbookSessionAvailability,
+} from './useWorkbookSessionAvailability';
 import { WorkbookClassRegister } from './WorkbookClassRegister';
 import { EvaluationPanel } from './EvaluationPanel';
 import { WorkbookError } from './WorkbookError';
@@ -102,6 +110,32 @@ function SelectedLessonWorkbook({
     searchParams.get('schedule'),
     role === 'instructor'
   );
+  const queryClient = useQueryClient();
+  const availability = useWorkbookSessionAvailability(sessionState.session);
+  const startClass = useMutation({
+    ...startScheduledInstanceMutation(),
+    onSuccess: async (response, variables) => {
+      if (hasApiError(response)) {
+        toast.error(response.message || 'Unable to start class.');
+        return;
+      }
+      toast.success('Class started.');
+      await Promise.all([
+        queryClient.invalidateQueries({
+          queryKey: getClassScheduleQueryKey({ path: { uuid: classId } }),
+        }),
+        queryClient.invalidateQueries({
+          queryKey: getScheduledInstanceQueryKey({ path: variables.path }),
+        }),
+      ]);
+    },
+    onError: () => toast.error('Unable to start class. Please try again.'),
+  });
+  const classStarted =
+    availability.started ||
+    (startClass.isSuccess &&
+      !hasApiError(startClass.data) &&
+      startClass.variables.path.instanceUuid === sessionState.session?.uuid);
   const requestedTab = searchParams.get('tab');
   const tab: LessonTabKey =
     requestedTab === 'assessment' || requestedTab === 'evaluation'
@@ -194,6 +228,7 @@ function SelectedLessonWorkbook({
       <EvaluationPanel
         key={tab}
         classId={classId}
+        courseId={lesson.course_uuid}
         lessonId={lessonId}
         role={role}
         managementHref={managementHref}
@@ -310,7 +345,7 @@ function SelectedLessonWorkbook({
             ) : (
               <WorkbookClassRegister
                 classId={classId}
-                sessionId={sessionState.session?.uuid}
+                session={sessionState.session}
                 onEvaluate={enrollmentId => {
                   const params = new URLSearchParams(contextParams);
                   params.set('enrollment', enrollmentId);
@@ -351,12 +386,32 @@ function SelectedLessonWorkbook({
         role === 'instructor' && (
           <Button
             variant='outline'
+            disabled={
+              !availability.canStart ||
+              classStarted ||
+              startClass.isPending ||
+              sessionState.isLoading ||
+              Boolean(sessionState.isError)
+            }
+            title='Available from 15 minutes before the session starts until it ends.'
             onClick={() => {
-              toast.message('Start Class here');
+              const session = sessionState.session;
+              if (
+                !session?.uuid ||
+                startClass.isPending ||
+                classStarted ||
+                !getWorkbookSessionAvailability(session).canStart
+              )
+                return;
+              startClass.mutate({ path: { instanceUuid: session.uuid } });
             }}
           >
-            <Video className='h-4 w-4' />
-            Start Class
+            {startClass.isPending ? <Spinner /> : <Video className='h-4 w-4' />}
+            {startClass.isPending
+              ? 'Starting class…'
+              : classStarted
+                ? 'Class started'
+                : 'Start Class'}
           </Button>
         )
       }
