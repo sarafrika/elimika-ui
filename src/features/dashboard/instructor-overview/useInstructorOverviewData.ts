@@ -19,7 +19,6 @@ import type {
 import { useQueries, useQuery } from '@tanstack/react-query';
 import { BarChart3, BookOpen, CheckSquare, GraduationCap, type LucideIcon } from 'lucide-react';
 import { useMemo } from 'react';
-import { useClassEnrollmentsMap } from '../../../../hooks/use-enrollment-map';
 import type {
   OverviewCourse,
   OverviewCourseSummary,
@@ -29,9 +28,9 @@ import type {
   OverviewStat,
   OverviewUpcomingClass,
 } from './_components/overview-data';
+import { ACTIVE_ENROLLMENT_STATUSES, summarizeCourseEnrollments } from './overview-enrollments';
 
 const COURSE_ICONS: LucideIcon[] = [BarChart3, BookOpen, CheckSquare, GraduationCap];
-const ACTIVE_ENROLLMENT_STATUSES = new Set(['ENROLLED', 'ATTENDED', 'ABSENT']);
 
 const formatCompactNumber = (value: number) => new Intl.NumberFormat('en-US').format(value);
 
@@ -161,9 +160,14 @@ export function useInstructorOverviewData() {
     return map;
   }, [classes]);
 
-  const { classEnrollmentsMap, isLoading: isLoadingEnrollment } = useClassEnrollmentsMap([
-    ...classes.map(c => c.uuid ?? ''),
-  ]);
+  const classEnrollmentsMap = useMemo(
+    () => new Map(classes.filter(cls => cls.uuid).map(cls => [cls.uuid, cls.enrollments])),
+    [classes]
+  );
+  const { studentsByCourse, totalStudents } = useMemo(
+    () => summarizeCourseEnrollments(classes),
+    [classes]
+  );
 
   // `combine` gives the result a stable identity (structural sharing), so the
   // downstream memo chain doesn't recompute on every unrelated render.
@@ -302,19 +306,6 @@ export function useInstructorOverviewData() {
         courseInstances[0] ??
         null;
 
-      const enrollments = (classEnrollmentsMap.get(cls.uuid ?? '') ?? []).filter(enrollment =>
-        ACTIVE_ENROLLMENT_STATUSES.has(enrollment.status ?? '')
-      );
-
-      // Courses can have multiple class definitions, so we collapse repeat learners per course card.
-      const uniqueStudents = new Map<string, (typeof enrollments)[number]>();
-      enrollments.forEach(enrollment => {
-        const studentId = enrollment.student_uuid;
-        if (studentId) {
-          uniqueStudents.set(studentId, enrollment);
-        }
-      });
-
       const progress = calculateProgress(classSchedulesMap.get(cls.uuid ?? '') ?? []);
 
       uniqueCourses.set(courseId, {
@@ -322,7 +313,7 @@ export function useInstructorOverviewData() {
         title: course?.name ?? cls.title,
         provider: course?.category_names?.[0] ?? formatSessionFormat(cls.session_format),
         level: formatSessionFormat(cls.location_type),
-        students: uniqueStudents.size,
+        students: studentsByCourse.get(courseId)?.size ?? 0,
         progress,
         actionLabel: 'View Class',
         viewHref: selectedInstance?.instance.uuid
@@ -334,22 +325,7 @@ export function useInstructorOverviewData() {
     });
 
     return Array.from(uniqueCourses.values());
-  }, [classes, classEnrollmentsMap, classSchedulesMap, courseInstanceMap]);
-
-  const totalStudents = useMemo(
-    () =>
-      Array.from(
-        new Set(
-          classes.flatMap(cls =>
-            (classEnrollmentsMap.get(cls.uuid ?? '') ?? [])
-              .filter(enrollment => ACTIVE_ENROLLMENT_STATUSES.has(enrollment.status ?? ''))
-              .map(enrollment => enrollment.student_uuid)
-              .filter((value): value is string => Boolean(value))
-          )
-        )
-      ).length,
-    [classes, classEnrollmentsMap]
-  );
+  }, [classes, studentsByCourse, classSchedulesMap, courseInstanceMap]);
 
   const overallProgress = useMemo(() => {
     const allInstances = classes.flatMap(cls => classSchedulesMap.get(cls.uuid ?? '') ?? []);
@@ -557,7 +533,6 @@ export function useInstructorOverviewData() {
     isLoadingClasses ||
     isLoadingRevenue ||
     isLoadingPayments ||
-    isLoadingEnrollment ||
     isLoadingAssignments ||
     isLoadingWaitlistedStudents;
 
@@ -575,7 +550,6 @@ export function useInstructorOverviewData() {
     isLoadingClasses,
     isLoadingRevenue,
     isLoadingPayments,
-    isLoadingEnrollment,
     isLoadingAssignments,
     isLoadingWaitlistedStudents,
   };
