@@ -689,6 +689,7 @@ export function useStudentLearningHubData(): LearningHubData {
       return {
         id: item.uuid,
         title: classDetails?.title ?? '',
+        classId: classDetails?.uuid,
         courseName: course?.name ?? '',
 
         statusLabel,

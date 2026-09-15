@@ -1,8 +1,8 @@
 'use client';
 
 import { Award, BookOpen, ChevronLeft, ChevronRight, ClipboardList, FileCheck2, LayoutDashboard, Mail, PlayCircle, Users } from 'lucide-react';
-import { useEffect, useRef, useState } from 'react';
 import { usePathname, useRouter, useSearchParams } from 'next/navigation';
+import { useEffect, useRef, useState } from 'react';
 import LessonHubAssessmentsTab from './LessonHubAssessmentsTab';
 import LessonHubAssignmentsTab from './LessonHubAssignmentsTab';
 import LessonHubCertificatesTab from './LessonHubCertificatesTab';

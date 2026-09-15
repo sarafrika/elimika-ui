@@ -446,9 +446,18 @@ export function LiveClassCard({
                     indicatorClassName='bg-primary'
                   />
 
-                  <p className='text-muted-foreground mt-2 text-sm'>
-                    {progress}% completed
-                  </p>
+                  <div className='flex flex-row items-center gap-2'>
+                    <p className='text-muted-foreground mt-2 text-sm'>
+                      {progress}% completed
+                    </p>
+
+                    <Link
+                      href={`/dashboard/instructor/classes/training/${liveClass.classUuid}`}
+                      className='text-primary mt-2 text-sm underline underline-offset-2 transition-colors hover:text-primary/80'
+                    >
+                      New Training View
+                    </Link>
+                  </div>
                 </div>
 
                 {/* ACTIONS */}

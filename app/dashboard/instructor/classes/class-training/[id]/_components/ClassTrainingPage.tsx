@@ -2529,7 +2529,7 @@ export default function ClassTrainingPage({
   const [pageSearch, setPageSearch] = useState('');
   const [selectedContentId, setSelectedContentId] = useState('');
   const [activeScheduleId, setActiveScheduleId] = useState('');
-  const [selectedStudentId, setSelectedStudentId] = useState('');
+  const [selectedStudentId, setSelectedStudentId] = useState(searchParams.get('enrollment') ?? '');
   const [selectedAssignmentUuid, setSelectedAssignmentUuid] = useState('');
   const [selectedQuizUuid, setSelectedQuizUuid] = useState('');
   const [assignmentVisibleAt, setAssignmentVisibleAt] = useState('');
@@ -2549,7 +2549,9 @@ export default function ClassTrainingPage({
   const appliedRouteContentSelectionRef = useRef('');
 
   const [activeTab, setActiveTab] = useState<'content' | 'practice' | 'assessment'>('content');
-  const [activeLefTab, setActiveLeftTab] = useState<'students' | 'evaluation'>('students');
+  const [activeLefTab, setActiveLeftTab] = useState<'students' | 'evaluation'>(
+    searchParams.get('enrollment') ? 'evaluation' : 'students'
+  );
   // const [activeLefTab, setActiveLeftTab] = useState<'students' | 'lessons' | 'evaluation'>('students');
 
   const classData = data.class;
@@ -2726,6 +2728,7 @@ export default function ClassTrainingPage({
   );
 
   useEffect(() => {
+    if (rosterLoading || !activeSchedule?.uuid) return;
     if (activeInstanceStudents.length === 0) {
       setSelectedStudentId('');
       return;
@@ -2738,7 +2741,7 @@ export default function ClassTrainingPage({
     if (!currentStudentExists) {
       setSelectedStudentId(activeInstanceStudents[0]?.enrollment?.uuid ?? '');
     }
-  }, [activeInstanceStudents, selectedStudentId]);
+  }, [activeInstanceStudents, selectedStudentId, rosterLoading, activeSchedule?.uuid]);
 
   const selectedStudent =
     activeInstanceStudents.find(entry => entry.enrollment?.uuid === selectedStudentId) ?? null;

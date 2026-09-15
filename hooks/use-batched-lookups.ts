@@ -104,6 +104,7 @@ function useSearchByIds<T extends { uuid?: string }>(
       const map: Record<string, T> = {};
       const wanted = new Set(uniqueIds);
       for (const result of results) {
+        if (result.data?.error || result.data?.success === false) continue;
         const content = (result.data as SearchResponse | undefined)?.data?.content ?? [];
         for (const item of content as unknown as T[]) {
           if (item.uuid && wanted.has(item.uuid)) {
@@ -114,6 +115,10 @@ function useSearchByIds<T extends { uuid?: string }>(
       return {
         map,
         isLoading: results.some(result => result.isLoading),
+        isError: results.some(
+          result => result.isError || result.data?.error || result.data?.success === false
+        ),
+        refetch: () => Promise.all(results.map(result => result.refetch())),
       };
     },
   });
@@ -159,8 +164,8 @@ function useSearchByField<T>(
 }
 
 export function useStudentsByIds(ids: string[]) {
-  const { map, isLoading } = useSearchByIds<Student>(ids, searchStudentsOptions);
-  return { studentMap: map, isLoading };
+  const { map, isLoading, isError, refetch } = useSearchByIds<Student>(ids, searchStudentsOptions);
+  return { studentMap: map, isLoading, isError, refetch };
 }
 
 export function useEnrollmentsByIds(ids: string[]) {
@@ -196,7 +201,7 @@ export function useUsersByIds(ids: string[]) {
 
   const idChunks = useMemo(() => chunk(uniqueIds, DIRECTORY_CHUNK_SIZE), [uniqueIds]);
 
-  const { map, isLoading } = useQueries({
+  const { map, isLoading, isError, refetch } = useQueries({
     queries: idChunks.map(idChunk => ({
       ...getUserDirectoryOptions({ query: { uuid_in: idChunk } }),
       enabled: idChunk.length > 0,
@@ -208,6 +213,7 @@ export function useUsersByIds(ids: string[]) {
       // introduce rows the caller did not ask for.
       const wanted = new Set(uniqueIds);
       for (const result of results) {
+        if (result.data?.error || result.data?.success === false) continue;
         const content = (result.data as { data?: UserSummary[] } | undefined)?.data ?? [];
         for (const summary of content) {
           if (summary.uuid && wanted.has(summary.uuid)) {
@@ -218,11 +224,15 @@ export function useUsersByIds(ids: string[]) {
       return {
         map: userMap,
         isLoading: results.some(result => result.isLoading),
+        isError: results.some(
+          result => result.isError || result.data?.error || result.data?.success === false
+        ),
+        refetch: () => Promise.all(results.map(result => result.refetch())),
       };
     },
   });
 
-  return { userMap: map, isLoading };
+  return { userMap: map, isLoading, isError, refetch };
 }
 
 /**
@@ -336,13 +346,16 @@ export function useProgramsByIds(ids: string[]) {
 }
 
 export function useAssignmentsByIds(ids: string[]) {
-  const { map, isLoading } = useSearchByIds<Assignment>(ids, searchAssignmentsOptions);
-  return { assignmentMap: map, isLoading };
+  const { map, isLoading, isError, refetch } = useSearchByIds<Assignment>(
+    ids,
+    searchAssignmentsOptions
+  );
+  return { assignmentMap: map, isLoading, isError, refetch };
 }
 
 export function useQuizzesByIds(ids: string[]) {
-  const { map, isLoading } = useSearchByIds<Quiz>(ids, searchQuizzesOptions);
-  return { quizMap: map, isLoading };
+  const { map, isLoading, isError, refetch } = useSearchByIds<Quiz>(ids, searchQuizzesOptions);
+  return { quizMap: map, isLoading, isError, refetch };
 }
 
 export function useInstructorsByIds(ids: string[]) {
@@ -662,5 +675,4 @@ export function useClassesEnrollmentsByIds(classUuids: string[]) {
     isLoading: results.some((result) => result.isLoading),
   };
 }
-
 

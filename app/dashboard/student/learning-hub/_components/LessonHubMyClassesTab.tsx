@@ -18,9 +18,9 @@ import { useUserProfile } from '../../../../../context/profile-context';
 import { useClassesByIds } from '../../../../../hooks/use-batched-lookups';
 import { ClassDefinition } from '../../../../../services/client';
 import { submitClassReviewMutation } from '../../../../../services/client/@tanstack/react-query.gen';
-import { invalidateReviewWorkflowQueries } from '../../../../../src/features/dashboard/workflow-query-invalidation';
 import { formatSessionSchedule } from '../../../../../src/features/dashboard/courses/components/availability-listing-layout';
 import { stripHtml } from '../../../../../src/features/dashboard/courses/shared/_components/courses-data';
+import { invalidateReviewWorkflowQueries } from '../../../../../src/features/dashboard/workflow-query-invalidation';
 import { toAuthenticatedMediaUrl } from '../../../../../src/lib/media-url';
 import { FeedbackDialog } from '../../../_components/review-instructor-modal';
 import type {
@@ -359,6 +359,12 @@ function ClassCard({
             </Link>
           </Button>
         </div>
+
+        <Link href={`/dashboard/student/learning/${item.id}`}
+          className='text-primary mt-2 text-sm underline underline-offset-2 transition-colors hover:text-primary/80'
+        >
+          New Learning View
+        </Link>
 
         <Button
           type="button"
