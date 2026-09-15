@@ -32,6 +32,7 @@ import type {
   ScheduledInstance,
 } from '@/services/client/types.gen';
 import { useInfiniteQuery, useQuery } from '@tanstack/react-query';
+import { Award, CalendarDays, ClipboardCheck, FileText, LucideIcon, Repeat, Target, Timer } from 'lucide-react';
 import dynamic from 'next/dynamic';
 import Link from 'next/link';
 import { type ReactNode, useMemo, useState } from 'react';
@@ -88,6 +89,74 @@ function formatSubmissionTypes(value: unknown) {
     .map(type => type.replaceAll('_', ' '))
     .filter(Boolean)
     .join(', ');
+}
+
+type TaskMetaItem = {
+  icon: LucideIcon;
+  label: string;
+  /** Renders in the default foreground weight instead of muted. */
+  emphasis?: boolean;
+};
+
+/**
+ * One visual shape for both assignments and quizzes: title, a quiet meta strip,
+ * optional body, and a footer band holding scheduling context on the left and
+ * every action on the right.
+ */
+function LessonTaskCard({
+  title,
+  status,
+  meta,
+  body,
+  footerNote,
+  actions,
+  expandedContent,
+}: {
+  title: string;
+  status?: ReactNode;
+  meta: TaskMetaItem[];
+  body?: ReactNode;
+  footerNote?: ReactNode;
+  actions?: ReactNode;
+  expandedContent?: ReactNode;
+}) {
+  return (
+    <Card className='gap-4 overflow-hidden pb-0'>
+      <CardHeader className='gap-3'>
+        <div className='flex flex-wrap items-start justify-between gap-2'>
+          <CardTitle className='text-base'>{title}</CardTitle>
+          {status}
+        </div>
+        {meta.length > 0 && (
+          <div className='text-muted-foreground flex flex-wrap items-center gap-x-4 gap-y-1.5 text-xs'>
+            {meta.map(({ icon: Icon, label, emphasis }) => (
+              <span
+                key={label}
+                className={`flex items-center gap-1.5 ${emphasis ? 'text-foreground font-medium' : ''}`}
+              >
+                <Icon className='h-3.5 w-3.5 shrink-0' />
+                {label}
+              </span>
+            ))}
+          </div>
+        )}
+      </CardHeader>
+
+      {(body || expandedContent) && (
+        <CardContent className='space-y-4 text-sm'>
+          {body}
+          {expandedContent}
+        </CardContent>
+      )}
+
+      {(footerNote || actions) && (
+        <div className='bg-muted/40 flex flex-wrap items-center justify-between gap-3 border-t px-6 py-3'>
+          <p className='text-muted-foreground text-sm'>{footerNote}</p>
+          <div className='flex flex-wrap items-center gap-2'>{actions}</div>
+        </div>
+      )}
+    </Card>
+  );
 }
 
 export function EvaluationPanel({
@@ -170,14 +239,14 @@ export function EvaluationPanel({
       hasApiError(assignmentSchedules.data)
         ? []
         : (assignmentSchedules.data?.data ?? []).filter(
-            item =>
-              item.lesson_uuid === lessonId &&
-              (role !== 'instructor' || belongsToSession(item, activeSession?.uuid)) &&
-              (!item.class_definition_uuid || item.class_definition_uuid === classId) &&
-              (role === 'instructor' ||
-                !item.visible_at ||
-                dayjs(item.visible_at).valueOf() <= Date.now())
-          ),
+          item =>
+            item.lesson_uuid === lessonId &&
+            (role !== 'instructor' || belongsToSession(item, activeSession?.uuid)) &&
+            (!item.class_definition_uuid || item.class_definition_uuid === classId) &&
+            (role === 'instructor' ||
+              !item.visible_at ||
+              dayjs(item.visible_at).valueOf() <= Date.now())
+        ),
     [assignmentSchedules.data, lessonId, classId, role, activeSession?.uuid]
   );
   const scopedQuizzes = useMemo(
@@ -185,14 +254,14 @@ export function EvaluationPanel({
       hasApiError(quizSchedules.data)
         ? []
         : (quizSchedules.data?.data ?? []).filter(
-            item =>
-              item.lesson_uuid === lessonId &&
-              (role !== 'instructor' || belongsToSession(item, activeSession?.uuid)) &&
-              (!item.class_definition_uuid || item.class_definition_uuid === classId) &&
-              (role === 'instructor' ||
-                !item.visible_at ||
-                dayjs(item.visible_at).valueOf() <= Date.now())
-          ),
+          item =>
+            item.lesson_uuid === lessonId &&
+            (role !== 'instructor' || belongsToSession(item, activeSession?.uuid)) &&
+            (!item.class_definition_uuid || item.class_definition_uuid === classId) &&
+            (role === 'instructor' ||
+              !item.visible_at ||
+              dayjs(item.visible_at).valueOf() <= Date.now())
+        ),
     [quizSchedules.data, lessonId, classId, role, activeSession?.uuid]
   );
   // Schedules can reference class clones beyond the current template page.
@@ -201,11 +270,11 @@ export function EvaluationPanel({
     () =>
       showAssignments && (assignments.isSuccess || instructorGrading)
         ? scopedAssignments.flatMap(schedule =>
-            schedule.assignment_uuid &&
+          schedule.assignment_uuid &&
             !assignmentItems.some(item => item.uuid === schedule.assignment_uuid)
-              ? [schedule.assignment_uuid]
-              : []
-          )
+            ? [schedule.assignment_uuid]
+            : []
+        )
         : [],
     [showAssignments, assignments.isSuccess, instructorGrading, scopedAssignments, assignmentItems]
   );
@@ -213,10 +282,10 @@ export function EvaluationPanel({
     () =>
       showQuizzes && (quizzes.isSuccess || instructorGrading)
         ? scopedQuizzes.flatMap(schedule =>
-            schedule.quiz_uuid && !quizItems.some(item => item.uuid === schedule.quiz_uuid)
-              ? [schedule.quiz_uuid]
-              : []
-          )
+          schedule.quiz_uuid && !quizItems.some(item => item.uuid === schedule.quiz_uuid)
+            ? [schedule.quiz_uuid]
+            : []
+        )
         : [],
     [showQuizzes, quizzes.isSuccess, instructorGrading, scopedQuizzes, quizItems]
   );
@@ -264,28 +333,28 @@ export function EvaluationPanel({
   }[] = scopedAssignments.flatMap(schedule =>
     schedule.assignment_uuid
       ? [
-          {
-            id: schedule.uuid ?? schedule.assignment_uuid,
-            assignment:
-              assignmentItems.find(item => item.uuid === schedule.assignment_uuid) ??
-              assignmentMap[schedule.assignment_uuid],
-            schedule,
-          },
-        ]
+        {
+          id: schedule.uuid ?? schedule.assignment_uuid,
+          assignment:
+            assignmentItems.find(item => item.uuid === schedule.assignment_uuid) ??
+            assignmentMap[schedule.assignment_uuid],
+          schedule,
+        },
+      ]
       : []
   );
   const quizRows: { id: string; quiz?: Quiz; schedule?: ClassQuizSchedule }[] =
     scopedQuizzes.flatMap(schedule =>
       schedule.quiz_uuid
         ? [
-            {
-              id: schedule.uuid ?? schedule.quiz_uuid,
-              quiz:
-                quizItems.find(item => item.uuid === schedule.quiz_uuid) ??
-                quizMap[schedule.quiz_uuid],
-              schedule,
-            },
-          ]
+          {
+            id: schedule.uuid ?? schedule.quiz_uuid,
+            quiz:
+              quizItems.find(item => item.uuid === schedule.quiz_uuid) ??
+              quizMap[schedule.quiz_uuid],
+            schedule,
+          },
+        ]
         : []
     );
   if (instructorGrading) {
@@ -299,28 +368,28 @@ export function EvaluationPanel({
           ...assignmentRows.flatMap(({ id, assignment, schedule }) =>
             schedule?.assignment_uuid
               ? [
-                  {
-                    id: `assignment-${id}`,
-                    kind: 'assignment' as const,
-                    uuid: schedule.assignment_uuid,
-                    title: assignment?.title ?? 'Assignment',
-                    maxPoints: assignment?.max_points,
-                    dueAt: gradingDeadline(schedule),
-                  },
-                ]
+                {
+                  id: `assignment-${id}`,
+                  kind: 'assignment' as const,
+                  uuid: schedule.assignment_uuid,
+                  title: assignment?.title ?? 'Assignment',
+                  maxPoints: assignment?.max_points,
+                  dueAt: gradingDeadline(schedule),
+                },
+              ]
               : []
           ),
           ...quizRows.flatMap(({ id, quiz, schedule }) =>
             schedule?.quiz_uuid
               ? [
-                  {
-                    id: `quiz-${id}`,
-                    kind: 'quiz' as const,
-                    uuid: schedule.quiz_uuid,
-                    title: quiz?.title ?? 'Quiz',
-                    dueAt: gradingDeadline(schedule),
-                  },
-                ]
+                {
+                  id: `quiz-${id}`,
+                  kind: 'quiz' as const,
+                  uuid: schedule.quiz_uuid,
+                  title: quiz?.title ?? 'Quiz',
+                  dueAt: gradingDeadline(schedule),
+                },
+              ]
               : []
           ),
         ]}
@@ -349,11 +418,6 @@ export function EvaluationPanel({
       <div className='flex flex-wrap items-center justify-between gap-3'>
         <div>
           <h2 className='text-xl font-semibold'>{title}</h2>
-          {/* <p className='text-muted-foreground text-sm'>
-            {isGrading
-              ? 'Review grading criteria and open your assessments for results and feedback.'
-              : `${title === 'Evaluation' ? 'Assignments and quizzes' : title === 'Quiz' ? 'Quizzes' : 'Assignments'} for this lesson in this class.`}
-          </p> */}
           {role === 'instructor' && !isGrading && (
             <p className='text-muted-foreground text-sm'>
               {activeSession
@@ -386,43 +450,72 @@ export function EvaluationPanel({
           {assignmentRows.map(({ id, assignment, schedule }) => {
             const uuid = schedule?.assignment_uuid ?? assignment?.uuid;
             const submissionTypes = formatSubmissionTypes(assignment?.submission_types);
+            const meta: TaskMetaItem[] = [
+              {
+                icon: CalendarDays,
+                label: schedule ? `Due ${formatDeadline(schedule.due_at)}` : 'Not scheduled',
+                emphasis: Boolean(schedule),
+              },
+              ...(assignment?.max_points != null
+                ? [{ icon: Award, label: `${assignment.max_points} points` }]
+                : []),
+              ...(schedule?.max_attempts != null
+                ? [{ icon: Repeat, label: `${schedule.max_attempts} attempts` }]
+                : []),
+              ...(submissionTypes ? [{ icon: FileText, label: submissionTypes }] : []),
+              ...(isGrading && schedule
+                ? [
+                  {
+                    icon: ClipboardCheck,
+                    label: `Grading due ${formatDeadline(gradingDeadline(schedule))}`,
+                  },
+                ]
+                : []),
+            ];
+
             return (
-              <Card key={id}>
-                <CardHeader>
-                  <CardTitle className='text-base'>
-                    {assignment?.title ?? 'Scheduled assignment'}
-                  </CardTitle>
-                  <div className='flex flex-wrap gap-2'>
-                    <Badge variant='secondary'>
-                      {schedule ? `Due ${formatDeadline(schedule.due_at)}` : 'Not scheduled'}
-                    </Badge>
-                    {assignment?.max_points != null && (
-                      <Badge variant='outline'>{assignment.max_points} points</Badge>
-                    )}
-                    {schedule?.max_attempts != null && (
-                      <Badge variant='outline'>{schedule.max_attempts} attempts</Badge>
-                    )}
-                    {submissionTypes && <Badge variant='outline'>{submissionTypes}</Badge>}
-                  </div>
-                </CardHeader>
-                <CardContent className='space-y-4'>
-                  {!isGrading && assignment?.description && (
-                    <RichTextRenderer htmlString={assignment.description} />
-                  )}
-                  {!isGrading && assignment?.instructions && (
-                    <RichTextRenderer htmlString={assignment.instructions} />
-                  )}
-                  {role === 'instructor' && schedule && (
-                    <p className='text-muted-foreground text-sm'>
-                      Release:{' '}
-                      {schedule.visible_at ? formatDeadline(schedule.visible_at) : 'Immediately'} ·
-                      Grading: {formatDeadline(gradingDeadline(schedule))}
-                      {schedule.notes ? ` · ${schedule.notes}` : ''}
-                    </p>
-                  )}
-                  <div className='flex flex-wrap gap-2'>
+              <LessonTaskCard
+                key={id}
+                title={assignment?.title ?? 'Assignment'}
+                status={
+                  role === 'instructor' && !schedule && !assignment?.is_published ? (
+                    <Badge variant='outline'>Draft</Badge>
+                  ) : null
+                }
+                meta={meta}
+                body={
+                  !isGrading && (assignment?.description || assignment?.instructions) ? (
+                    <>
+                      {assignment?.description && (
+                        <RichTextRenderer htmlString={assignment.description} />
+                      )}
+                      {assignment?.instructions && (
+                        <RichTextRenderer htmlString={assignment.instructions} />
+                      )}
+                    </>
+                  ) : null
+                }
+                expandedContent={
+                  uuid && expanded === id && isGrading ? (
+                    <GradingCriteria rubricId={assignment?.rubric_uuid} />
+                  ) : null
+                }
+                footerNote={
+                  role === 'instructor' && schedule
+                    ? [
+                      `Releases ${schedule.visible_at ? formatDeadline(schedule.visible_at) : 'immediately'}`,
+                      `grading ${formatDeadline(gradingDeadline(schedule))}`,
+                      schedule.notes,
+                    ]
+                      .filter(Boolean)
+                      .join(', ')
+                    : null
+                }
+                actions={
+                  <>
                     {role === 'instructor' && !isGrading && uuid && (
                       <Button
+                        size='sm'
                         disabled={!activeSession?.uuid || (!schedule && !assignment?.is_published)}
                         onClick={() =>
                           setTaskToSchedule({
@@ -443,16 +536,17 @@ export function EvaluationPanel({
                     {uuid &&
                       (isGrading ? (
                         <Button
-                          variant='outline'
+                          size='sm'
+                          variant='ghost'
                           onClick={() => setExpanded(expanded === id ? null : id)}
                         >
-                          {expanded === id ? 'Hide details' : 'View grading criteria'}
+                          {expanded === id ? 'Hide criteria' : 'View grading criteria'}
                         </Button>
                       ) : (
                         <AssessmentPreviewSheet
                           title={assignment?.title ?? 'Assignment'}
                           description='Review the assignment details and attachments.'
-                          triggerLabel='View assignment & attachments'
+                          triggerLabel='View details'
                         >
                           {assignment?.description && (
                             <RichTextRenderer htmlString={assignment.description} />
@@ -464,7 +558,7 @@ export function EvaluationPanel({
                         </AssessmentPreviewSheet>
                       ))}
                     {role === 'student' && uuid && (
-                      <Button asChild>
+                      <Button size='sm' asChild>
                         <Link
                           href={`/dashboard/student/assignment/${uuid}?classId=${encodeURIComponent(classId)}`}
                         >
@@ -472,17 +566,9 @@ export function EvaluationPanel({
                         </Link>
                       </Button>
                     )}
-                  </div>
-                  {isGrading && schedule && (
-                    <p className='text-muted-foreground text-sm'>
-                      Grading due {formatDeadline(gradingDeadline(schedule))}
-                    </p>
-                  )}
-                  {uuid && expanded === id && isGrading && (
-                    <GradingCriteria rubricId={assignment?.rubric_uuid} />
-                  )}
-                </CardContent>
-              </Card>
+                  </>
+                }
+              />
             );
           })}
           {assignments.hasNextPage && (
@@ -500,96 +586,118 @@ export function EvaluationPanel({
       {showQuizzes && (
         <section className='space-y-4'>
           {!quizRows.length && <EmptyState title='No quizzes available' />}
-
           {quizRows.map(({ id, quiz, schedule }) => {
             const uuid = schedule?.quiz_uuid ?? quiz?.uuid;
             const timeLimit = schedule?.time_limit_override ?? quiz?.time_limit_minutes;
             const attempts = schedule?.attempt_limit_override ?? quiz?.attempts_allowed;
             const passingScore = schedule?.passing_score_override ?? quiz?.passing_score;
+            const meta: TaskMetaItem[] = [
+              {
+                icon: CalendarDays,
+                label: schedule ? `Due ${formatDeadline(schedule.due_at)}` : 'Not scheduled',
+                emphasis: Boolean(schedule),
+              },
+              ...(timeLimit != null ? [{ icon: Timer, label: `${timeLimit} min` }] : []),
+              ...(attempts != null ? [{ icon: Repeat, label: `${attempts} attempts` }] : []),
+              ...(passingScore != null ? [{ icon: Target, label: `Pass at ${passingScore}%` }] : []),
+              ...(isGrading && schedule
+                ? [
+                  {
+                    icon: ClipboardCheck,
+                    label: `Grading due ${formatDeadline(gradingDeadline(schedule))}`,
+                  },
+                ]
+                : []),
+            ];
+
             return (
-              <Card key={id}>
-                <CardHeader>
-                  <CardTitle className='text-base'>{quiz?.title ?? 'Scheduled quiz'}</CardTitle>
-                  <div className='flex flex-wrap gap-2'>
-                    <Badge variant='secondary'>
-                      {schedule ? `Due ${formatDeadline(schedule.due_at)}` : 'Not scheduled'}
-                    </Badge>
-                    {timeLimit != null && <Badge variant='outline'>{timeLimit} min</Badge>}
-                    {attempts != null && <Badge variant='outline'>{attempts} attempts</Badge>}
-                    {passingScore != null && <Badge variant='outline'>Pass: {passingScore}%</Badge>}
-                  </div>
-                </CardHeader>
-                <CardContent className='space-y-4'>
-                  {!isGrading && quiz?.description && (
-                    <RichTextRenderer htmlString={quiz.description} />
-                  )}
-                  {!isGrading && quiz?.instructions && (
-                    <RichTextRenderer htmlString={quiz.instructions} />
-                  )}
-                  {role === 'instructor' && schedule && (
-                    <p className='text-muted-foreground text-sm'>
-                      Release:{' '}
-                      {schedule.visible_at ? formatDeadline(schedule.visible_at) : 'Immediately'}
-                      {schedule.notes ? ` · ${schedule.notes}` : ''}
-                    </p>
-                  )}
-                  {role === 'instructor' && !isGrading && uuid && (
-                    <Button
-                      disabled={!activeSession?.uuid || (!schedule && !quiz?.is_published)}
-                      onClick={() =>
-                        setTaskToSchedule({
-                          kind: 'quiz',
-                          uuid,
-                          title: quiz?.title ?? 'Quiz',
-                          schedule,
-                        })
-                      }
-                    >
-                      {schedule
-                        ? 'Edit schedule'
-                        : quiz?.is_published
-                          ? 'Schedule & assign'
-                          : 'Awaiting publication'}
-                    </Button>
-                  )}
-                  {(role === 'instructor' || isGrading) &&
-                    uuid &&
-                    (isGrading ? (
+              <LessonTaskCard
+                key={id}
+                title={quiz?.title ?? 'Scheduled quiz'}
+                status={
+                  role === 'instructor' && !schedule && !quiz?.is_published ? (
+                    <Badge variant='outline'>Draft</Badge>
+                  ) : null
+                }
+                meta={meta}
+                body={
+                  !isGrading && (quiz?.description || quiz?.instructions) ? (
+                    <>
+                      {quiz?.description && <RichTextRenderer htmlString={quiz.description} />}
+                      {quiz?.instructions && <RichTextRenderer htmlString={quiz.instructions} />}
+                    </>
+                  ) : null
+                }
+                expandedContent={
+                  isGrading && expanded === id ? (
+                    <GradingCriteria rubricId={quiz?.rubric_uuid} />
+                  ) : null
+                }
+                footerNote={
+                  role === 'instructor' && schedule
+                    ? [
+                      `Releases ${schedule.visible_at ? formatDeadline(schedule.visible_at) : 'immediately'}`,
+                      schedule.notes,
+                    ]
+                      .filter(Boolean)
+                      .join(', ')
+                    : null
+                }
+                actions={
+                  <>
+                    {role === 'instructor' && !isGrading && uuid && (
                       <Button
-                        variant='outline'
-                        onClick={() => setExpanded(expanded === id ? null : id)}
+                        size='sm'
+                        disabled={!activeSession?.uuid || (!schedule && !quiz?.is_published)}
+                        onClick={() =>
+                          setTaskToSchedule({
+                            kind: 'quiz',
+                            uuid,
+                            title: quiz?.title ?? 'Quiz',
+                            schedule,
+                          })
+                        }
                       >
-                        {expanded === id ? 'Hide details' : 'View grading criteria'}
+                        {schedule
+                          ? 'Edit schedule'
+                          : quiz?.is_published
+                            ? 'Schedule & assign'
+                            : 'Awaiting publication'}
                       </Button>
-                    ) : (
-                      <AssessmentPreviewSheet
-                        title={quiz?.title ?? 'Quiz'}
-                        description='Preview quiz questions and answer options.'
-                        triggerLabel='Preview questions'
-                      >
-                        <QuizQuestions quizId={uuid} />
-                      </AssessmentPreviewSheet>
-                    ))}
-                  {role === 'student' && uuid && (
-                    <Button asChild>
-                      <Link
-                        href={`/dashboard/student/assignment/quiz/${uuid}?classId=${encodeURIComponent(classId)}`}
-                      >
-                        {isGrading ? 'View quiz results' : 'Open quiz'}
-                      </Link>
-                    </Button>
-                  )}
-                  {isGrading && schedule && (
-                    <p className='text-muted-foreground text-sm'>
-                      Grading due {formatDeadline(gradingDeadline(schedule))}
-                    </p>
-                  )}
-                  {isGrading && expanded === id && <GradingCriteria rubricId={quiz?.rubric_uuid} />}
-                </CardContent>
-              </Card>
+                    )}
+                    {(role === 'instructor' || isGrading) &&
+                      uuid &&
+                      (isGrading ? (
+                        <Button
+                          size='sm'
+                          variant='ghost'
+                          onClick={() => setExpanded(expanded === id ? null : id)}
+                        >
+                          {expanded === id ? 'Hide criteria' : 'View grading criteria'}
+                        </Button>
+                      ) : (
+                        <AssessmentPreviewSheet
+                          title={quiz?.title ?? 'Quiz'}
+                          description='Preview quiz questions and answer options.'
+                          triggerLabel='Preview questions'
+                        >
+                          <QuizQuestions quizId={uuid} />
+                        </AssessmentPreviewSheet>
+                      ))}
+                    {role === 'student' && uuid && (
+                      <Button size='sm' asChild>
+                        <Link
+                          href={`/dashboard/student/assignment/quiz/${uuid}?classId=${encodeURIComponent(classId)}`}
+                        >
+                          {isGrading ? 'View quiz results' : 'Open quiz'}
+                        </Link>
+                      </Button>
+                    )}
+                  </>
+                }
+              />
             );
           })}
-
           {quizzes.hasNextPage && (
             <Button
               variant='outline'

@@ -1,4 +1,21 @@
 import { parseApiDate } from '@/lib/date';
+import type { AssignmentSubmission, QuizAttempt } from '@/services/client/types.gen';
+
+// The API can return lowercase statuses despite the generated uppercase enum.
+type TaskGradeRecord = Pick<
+  AssignmentSubmission | QuizAttempt,
+  'score' | 'max_score' | 'grade_display'
+> & { status: string };
+
+export function taskGradeLabel(record: TaskGradeRecord | undefined, maxPoints?: number) {
+  if (!record) return 'Not submitted';
+  const status = record.status.toUpperCase();
+  if (['DRAFT', 'RETURNED', 'IN_PROGRESS'].includes(status)) return 'Not submitted';
+  if (status !== 'GRADED') return 'Not graded';
+  if (record.score == null) return record.grade_display || 'Grade unavailable';
+  const maximum = record.max_score ?? maxPoints;
+  return maximum == null ? String(record.score) : `${record.grade_display}`;
+}
 
 export function isValidGrade(value: string, maximum: number) {
   const score = Number(value);
