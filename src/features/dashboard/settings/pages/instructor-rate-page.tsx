@@ -1,533 +1,510 @@
-// @ts-nocheck -- pre-existing @hey-api generated-client type drift (see memory: elimika-ui-typecheck)
 'use client';
 
-import { useQuery } from '@tanstack/react-query';
-import { Calendar, CheckSquare, Clock, Info, Mail, MapPin, Monitor, Users } from 'lucide-react';
-import React, { useEffect, useMemo, useState } from 'react';
-import { Button } from '../../../../../components/ui/button';
-import { CourseTrainingApplication } from '../../../../../services/client';
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import {
-  getAllCoursesOptions,
-  searchTrainingApplicationsOptions,
-} from '../../../../../services/client/@tanstack/react-query.gen';
-import { CourseWithApplication } from '../../../profile/components/instructor/rate-card/types';
-import { useUserProfile } from '../../../profile/context/profile-context';
-import { useProfileFormMode } from '../../../profile/context/profile-form-mode-context';
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
+import { EmptyState } from '@/components/ui/empty-state';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
+import { Skeleton } from '@/components/ui/skeleton';
+import Spinner from '@/components/ui/spinner';
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from '@/components/ui/table';
+import { useCoursesByIds } from '@/hooks/use-batched-lookups';
+import { STALE_TIMES } from '@/lib/query-client';
+import type { CourseTrainingApplication, CourseTrainingRateCard } from '@/services/client';
+import { searchTrainingApplicationsInfiniteOptions } from '@/services/client/@tanstack/react-query.gen';
+import { formatDurationFromParts } from '@/src/features/dashboard/courses/shared/_components/courses-data';
+import { useUserProfile } from '@/src/features/profile/context/profile-context';
+import { useInfiniteQuery } from '@tanstack/react-query';
+import { CalendarDays, Clock3, Info, Laptop, MapPin, Users } from 'lucide-react';
+import { useMemo, useState, type ReactNode } from 'react';
 
-interface SessionRate {
-  id: string;
-  title: string;
-  colorClass: string;
-  badgeLabel: string;
-  badgeType: string;
-  rate: number;
-  currency: string;
-  sessionType: string;
-  locationType: string;
-  duration: string;
-  participants: string;
-  platformOrLocation: string;
-  platformLabel: string;
-  includes: string;
-  description: string;
-}
+const PAGE_SIZE = 20;
+const RATE_DEFINITIONS = [
+  {
+    id: 'group_online',
+    title: 'Online group',
+    sessionType: 'Group session',
+    delivery: 'Online',
+    icon: Users,
+  },
+  {
+    id: 'private_online',
+    title: 'Online private',
+    sessionType: 'Private session',
+    delivery: 'Online',
+    icon: Laptop,
+  },
+  {
+    id: 'group_inperson',
+    title: 'In-person group',
+    sessionType: 'Group session',
+    delivery: 'In person',
+    icon: Users,
+  },
+  {
+    id: 'private_inperson',
+    title: 'In-person private',
+    sessionType: 'Private session',
+    delivery: 'In person',
+    icon: MapPin,
+  },
+] as const;
 
-function SessionIcon({ colorClass }: { colorClass: string }) {
-  const iconMap: Record<string, JSX.Element> = {
-    'online-group': (
-      <svg
-        viewBox='0 0 48 48'
-        fill='none'
-        xmlns='http://www.w3.org/2000/svg'
-        width='52'
-        height='52'
-      >
-        <rect x='6' y='10' width='36' height='24' rx='3' stroke='currentColor' strokeWidth='2' />
-        <path
-          d='M16 34v4M32 34v4M12 38h24'
-          stroke='currentColor'
-          strokeWidth='2'
-          strokeLinecap='round'
-        />
-        <circle cx='17' cy='21' r='4' stroke='currentColor' strokeWidth='2' />
-        <circle cx='31' cy='21' r='4' stroke='currentColor' strokeWidth='2' />
-        <path
-          d='M9 28c0-2 3-4 8-4M39 28c0-2-3-4-8-4M22 28c0-2 1-4 2-4s2 2 2 4'
-          stroke='currentColor'
-          strokeWidth='2'
-          strokeLinecap='round'
-        />
-      </svg>
-    ),
-    'online-private': (
-      <svg
-        viewBox='0 0 48 48'
-        fill='none'
-        xmlns='http://www.w3.org/2000/svg'
-        width='52'
-        height='52'
-      >
-        <rect x='6' y='10' width='36' height='24' rx='3' stroke='currentColor' strokeWidth='2' />
-        <path
-          d='M16 34v4M32 34v4M12 38h24'
-          stroke='currentColor'
-          strokeWidth='2'
-          strokeLinecap='round'
-        />
-        <circle cx='24' cy='22' r='5' stroke='currentColor' strokeWidth='2' />
-        <path
-          d='M14 32c0-3 4-6 10-6s10 3 10 6'
-          stroke='currentColor'
-          strokeWidth='2'
-          strokeLinecap='round'
-        />
-      </svg>
-    ),
-    'group-inperson': (
-      <svg
-        viewBox='0 0 48 48'
-        fill='none'
-        xmlns='http://www.w3.org/2000/svg'
-        width='52'
-        height='52'
-      >
-        <circle cx='16' cy='18' r='5' stroke='currentColor' strokeWidth='2' />
-        <circle cx='32' cy='18' r='5' stroke='currentColor' strokeWidth='2' />
-        <circle cx='24' cy='18' r='5' stroke='currentColor' strokeWidth='2' />
-        <path
-          d='M6 36c0-5 5-8 10-8M42 36c0-5-5-8-10-8M16 36c0-4 3-8 8-8s8 4 8 8'
-          stroke='currentColor'
-          strokeWidth='2'
-          strokeLinecap='round'
-        />
-      </svg>
-    ),
-    'private-inperson': (
-      <svg
-        viewBox='0 0 48 48'
-        fill='none'
-        xmlns='http://www.w3.org/2000/svg'
-        width='52'
-        height='52'
-      >
-        <circle cx='24' cy='18' r='7' stroke='currentColor' strokeWidth='2' />
-        <path
-          d='M10 40c0-6 6-11 14-11s14 5 14 11'
-          stroke='currentColor'
-          strokeWidth='2'
-          strokeLinecap='round'
-        />
-      </svg>
-    ),
-  };
-  return iconMap[colorClass] ?? null;
-}
-
-const COLOR_STYLES: Record<
-  string,
-  { icon: string; title: string; badge: string; info: string; iconBg: string }
-> = {
-  'online-group': {
-    icon: 'text-[hsl(221,83%,53%)]',
-    title: 'text-[hsl(221,83%,48%)]',
-    badge: 'bg-[hsl(214,100%,95%)] text-[hsl(221,83%,40%)] border-[hsl(214,100%,85%)]',
-    info: 'bg-[hsl(214,100%,97%)] text-[hsl(221,83%,45%)] border-[hsl(214,100%,88%)]',
-    iconBg: 'bg-[hsl(214,100%,95%)] text-[hsl(221,83%,48%)]',
-  },
-  'online-private': {
-    icon: 'text-[hsl(152,68%,38%)]',
-    title: 'text-[hsl(152,68%,33%)]',
-    badge: 'bg-[hsl(152,60%,94%)] text-[hsl(152,68%,28%)] border-[hsl(152,60%,82%)]',
-    info: 'bg-[hsl(152,60%,96%)] text-[hsl(152,68%,30%)] border-[hsl(152,60%,85%)]',
-    iconBg: 'bg-[hsl(152,60%,94%)] text-[hsl(152,68%,33%)]',
-  },
-  'group-inperson': {
-    icon: 'text-[hsl(258,68%,52%)]',
-    title: 'text-[hsl(258,68%,45%)]',
-    badge: 'bg-[hsl(258,60%,95%)] text-[hsl(258,68%,38%)] border-[hsl(258,60%,83%)]',
-    info: 'bg-[hsl(258,60%,97%)] text-[hsl(258,68%,40%)] border-[hsl(258,60%,86%)]',
-    iconBg: 'bg-[hsl(258,60%,95%)] text-[hsl(258,68%,45%)]',
-  },
-  'private-inperson': {
-    icon: 'text-[hsl(28,90%,50%)]',
-    title: 'text-[hsl(28,90%,42%)]',
-    badge: 'bg-[hsl(28,100%,94%)] text-[hsl(28,90%,35%)] border-[hsl(28,100%,82%)]',
-    info: 'bg-[hsl(28,100%,96%)] text-[hsl(28,90%,38%)] border-[hsl(28,100%,85%)]',
-    iconBg: 'bg-[hsl(28,100%,94%)] text-[hsl(28,90%,42%)]',
-  },
+type RateDefinition = (typeof RATE_DEFINITIONS)[number];
+type ApplicationWithRateCard = CourseTrainingApplication & {
+  uuid: string;
+  rate_card: CourseTrainingRateCard;
 };
 
-export default function InstructorRateCard() {
+function formatRate(amount: number | null | undefined, currency: string) {
+  if (amount == null || !Number.isFinite(amount)) return 'Not set';
+  try {
+    return new Intl.NumberFormat('en-US', { style: 'currency', currency }).format(amount);
+  } catch {
+    return `${currency} ${amount.toLocaleString('en-US', { maximumFractionDigits: 2 })}`;
+  }
+}
+
+function formatDate(value: Date | undefined | null) {
+  if (!value) return 'Not provided';
+  const date = new Date(value);
+  return Number.isNaN(date.getTime())
+    ? 'Not provided'
+    : date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+}
+
+function formatParticipants(rate: RateDefinition, classLimit: number | null | undefined) {
+  if (rate.id.startsWith('private_')) return '1';
+  return classLimit != null && classLimit > 0 ? `Up to ${classLimit}` : 'Not provided';
+}
+
+export default function InstructorRateCardsPage() {
   const user = useUserProfile();
-  const { disableEditing } = useProfileFormMode();
-
-  const size = 50;
-  const [page] = useState(0);
-
-  const { data: allCourses } = useQuery(
-    getAllCoursesOptions({
-      query: { pageable: { page, size } },
-    })
-  );
-
-  const { data: appliedCourses } = useQuery({
-    ...searchTrainingApplicationsOptions({
+  const instructorId = user?.instructor?.uuid;
+  const [courseId, setCourseId] = useState('');
+  const [selectedRate, setSelectedRate] = useState<{
+    applicationId: string;
+    rate: RateDefinition;
+  } | null>(null);
+  const applicationsQuery = useInfiniteQuery({
+    ...searchTrainingApplicationsInfiniteOptions({
       query: {
-        pageable: {},
-        searchParams: {
-          applicant_uuid_eq: user?.instructor?.uuid as string,
-        },
+        searchParams: { applicant_uuid_eq: instructorId },
+        pageable: { page: 0, size: PAGE_SIZE },
       },
     }),
-    enabled: !!user?.instructor?.uuid,
+    enabled: Boolean(instructorId),
+    staleTime: STALE_TIMES.entity,
+    initialPageParam: 0,
+    getNextPageParam: (lastPage, pages) => {
+      const metadata = lastPage.data?.metadata;
+      if (lastPage.error || lastPage.success === false) return undefined;
+      const hasNext =
+        metadata?.hasNext ??
+        (metadata?.totalPages != null
+          ? pages.length < metadata.totalPages
+          : (lastPage.data?.content?.length ?? 0) === PAGE_SIZE);
+      return hasNext
+        ? {
+          query: {
+            searchParams: { applicant_uuid_eq: instructorId },
+            pageable: { page: pages.length, size: PAGE_SIZE },
+          },
+        }
+        : undefined;
+    },
   });
 
-  const combinedCourses = React.useMemo<CourseWithApplication[]>(() => {
-    if (!allCourses?.data?.content || !appliedCourses?.data?.content) {
-      return [];
+  const groups = useMemo(() => {
+    const byCourse = new Map<string, ApplicationWithRateCard[]>();
+    const seen = new Set<string>();
+    for (const page of applicationsQuery.data?.pages ?? []) {
+      if (page.error || page.success === false) continue;
+      for (const application of page.data?.content ?? []) {
+        const { uuid, course_uuid, rate_card } = application;
+        if (!uuid || !course_uuid || !rate_card || seen.has(uuid)) continue;
+        seen.add(uuid);
+        const cards = byCourse.get(course_uuid) ?? [];
+        cards.push({ ...application, uuid, rate_card });
+        byCourse.set(course_uuid, cards);
+      }
     }
+    return Array.from(byCourse, ([id, cards]) => ({ id, cards }));
+  }, [applicationsQuery.data]);
+  const courseIds = useMemo(() => groups.map(group => group.id), [groups]);
+  const { courseMap, isLoading: coursesLoading } = useCoursesByIds(courseIds);
+  const group = groups.find(item => item.id === courseId) ?? groups[0];
+  const course = group ? courseMap[group.id] : undefined;
+  const courseName = course?.name || (group ? `Course ${group.id}` : '');
+  const duration = coursesLoading
+    ? 'Loading…'
+    : formatDurationFromParts(course?.duration_hours, course?.duration_minutes) || 'Not provided';
+  const selectedApplication = group?.cards.find(item => item.uuid === selectedRate?.applicationId);
+  const hasResponseError = applicationsQuery.data?.pages.some(
+    page => page.error || page.success === false
+  );
 
-    const appliedMap = new Map<string, CourseTrainingApplication>(
-      appliedCourses.data.content.flatMap(app =>
-        app.course_uuid ? ([[app.course_uuid, app]] as const) : []
-      )
+  if (user?.isLoading || applicationsQuery.isLoading) {
+    return (
+      <div className='space-y-6' role='status' aria-label='Loading rate cards'>
+        <Skeleton className='h-10 w-64' />
+        <Skeleton className='h-12 w-full' />
+        <Skeleton className='h-80 w-full' />
+      </div>
     );
+  }
 
-    return allCourses.data.content.flatMap(course => {
-      if (!course.uuid) return [];
+  if (!instructorId) {
+    return (
+      <EmptyState
+        title='Instructor profile unavailable'
+        description='An instructor profile is required to view course rate cards.'
+      />
+    );
+  }
 
-      const application = appliedMap.get(course.uuid);
-
-      return application ? [{ ...course, application }] : [];
-    });
-  }, [allCourses, appliedCourses]);
-
-  const courses = useMemo(() => combinedCourses ?? [], [combinedCourses]);
-
-  const [selectedCourse, setSelectedCourse] = useState<CourseWithApplication | null>(null);
-
-  useEffect(() => {
-    if (courses.length > 0 && !selectedCourse) {
-      setSelectedCourse(courses[0]);
-    }
-  }, [courses, selectedCourse]);
-
-  const sessionRates: SessionRate[] = useMemo(() => {
-    if (!selectedCourse?.application?.rate_card) {
-      return [];
-    }
-
-    const rateCard = selectedCourse.application.rate_card;
-
-    return [
-      {
-        id: 'online-group',
-        title: 'Online Group',
-        colorClass: 'online-group',
-        badgeLabel: 'Group Session • Online',
-        badgeType: 'group-online',
-        rate: rateCard.group_online_hourly_rate ?? 0,
-        currency: 'KSh', //rateCard.currency
-        sessionType: 'Group Session',
-        locationType: 'Online',
-        duration: 'Up to 2 Hours',
-        participants: selectedCourse.class_limit,
-        platformLabel: 'Platform',
-        platformOrLocation: 'Virtual (Zoom, Teams, etc.)',
-        includes: 'Preparation, Delivery & Q&A',
-        description: 'Ideal for virtual training delivered to multiple participants.',
-      },
-      {
-        id: 'online-private',
-        title: 'Online Private',
-        colorClass: 'online-private',
-        badgeLabel: 'Private Session • Online',
-        badgeType: 'private-online',
-        rate: rateCard.private_online_hourly_rate ?? 0,
-        currency: 'KSh', //rateCard.currency
-        sessionType: 'Private Session',
-        locationType: 'Online',
-        duration: 'Up to 2 Hours',
-        participants: selectedCourse.class_limit,
-        platformLabel: 'Platform',
-        platformOrLocation: 'Virtual (Zoom, Teams, etc.)',
-        includes: 'One-on-one instruction & Q&A',
-        description: 'Personalized virtual training for individual learners.',
-      },
-      {
-        id: 'group-inperson',
-        title: 'Group In-Person',
-        colorClass: 'group-inperson',
-        badgeLabel: 'Group Session • In-Person',
-        badgeType: 'group-inperson',
-        rate: rateCard.group_inperson_hourly_rate ?? 0,
-        currency: 'KSh', //rateCard.currency
-        sessionType: 'Group Session',
-        locationType: 'In-Person',
-        duration: 'Up to 2 Hours',
-        participants: selectedCourse.class_limit,
-        platformLabel: 'Location',
-        platformOrLocation: 'On-site / Classroom',
-        includes: 'Preparation, Delivery, Materials & Q&A',
-        description: 'Face-to-face training for groups at your location.',
-      },
-      {
-        id: 'private-inperson',
-        title: 'Private In-Person',
-        colorClass: 'private-inperson',
-        badgeLabel: 'Private Session • In-Person',
-        badgeType: 'private-inperson',
-        rate: rateCard.private_inperson_hourly_rate ?? 0,
-        currency: 'KSh', //rateCard.currency
-        sessionType: 'Private Session',
-        locationType: 'In-Person',
-        duration: 'Up to 2 Hours',
-        participants: selectedCourse.class_limit,
-        platformLabel: 'Location',
-        platformOrLocation: 'On-site / Classroom',
-        includes: 'One-on-one instruction & Materials',
-        description: 'Personalized face-to-face training for individual learners.',
-      },
-    ];
-  }, [selectedCourse]);
-
-  const effectiveDate = selectedCourse?.created_date
-    ? new Date(selectedCourse.created_date).toLocaleDateString('en-US', {
-        month: 'long',
-        day: 'numeric',
-        year: 'numeric',
-      })
-    : 'May 1, 2025';
+  if (
+    (applicationsQuery.isError && !applicationsQuery.data) ||
+    (hasResponseError && !groups.length)
+  ) {
+    return (
+      <EmptyState
+        title='Unable to load rate cards'
+        description='Please try loading your rate cards again.'
+        action={<Button onClick={() => void applicationsQuery.refetch()}>Retry</Button>}
+      />
+    );
+  }
 
   return (
-    <div className='space-y-6'>
-      <div className='flex items-start justify-between gap-4'>
-        <div>
-          <h2 className='text-foreground text-2xl font-semibold'>Instructor Rate Card</h2>
-          <p className='text-muted-foreground mt-1 text-sm'>
-            Standardized instructor compensation rates based on session type.
-          </p>
-        </div>
-      </div>
-
-      <div>
-        <h3 className='text-foreground mb-3 text-[15px] font-semibold'> Select Course </h3>
-        <div className='flex flex-wrap gap-2'>
-          {courses.map(course => {
-            const isActive = selectedCourse?.uuid === course.uuid;
-
-            return (
-              <button
-                key={course.uuid}
-                onClick={() => setSelectedCourse(course)}
-                className={`inline-flex items-center rounded-full border px-3 py-1.5 text-xs font-medium transition-colors duration-150 ${
-                  isActive
-                    ? 'border-primary bg-primary text-primary-foreground'
-                    : 'border-border bg-background text-muted-foreground hover:bg-muted hover:text-foreground'
-                } `}
-              >
-                {course.name}
-              </button>
-            );
-          })}
-        </div>
-      </div>
-
-      <div className='border-border bg-muted/40 flex flex-col flex-wrap gap-4 rounded-lg border px-4 py-4 sm:items-start sm:justify-between lg:flex-row'>
-        <div className='flex min-w-0 flex-1 items-start gap-3'>
-          <Info className='text-muted-foreground mt-0.5 h-4 w-4 shrink-0' />
-
-          <div className='min-w-0'>
-            <p className='text-foreground text-sm font-medium'>{selectedCourse?.name}</p>
-            <p className='text-muted-foreground mt-0.5 text-xs leading-relaxed'>
-              Instructor compensation rates for this course.
+    <div className='min-w-0 rounded-xl'>
+      <div className='mx-auto px-4 pb-8 sm:px-7 sm:pb-10'>
+        <div className='border-border flex flex-col gap-6 border-b pb-7 lg:flex-row lg:items-end lg:justify-between'>
+          <div className='max-w-2xl'>
+            <h1 className='text-foreground mt-2 text-3xl font-bold'>Course rate cards</h1>
+            <p className='text-muted-foreground mt-2 text-sm leading-6'>
+              Select a course to compare its rate cards across every available session format.
             </p>
           </div>
+          {group && (
+            <div className='w-full lg:max-w-sm'>
+              <label
+                className='text-foreground mb-2 block text-sm font-semibold'
+                htmlFor='course-rate-select'
+              >
+                Course
+              </label>
+              <Select
+                value={group.id}
+                onValueChange={value => {
+                  setCourseId(value);
+                  setSelectedRate(null);
+                }}
+              >
+                <SelectTrigger id='course-rate-select' className='w-full bg-background h-11'>
+                  <SelectValue placeholder='Select a course' />
+                </SelectTrigger>
+                <SelectContent>
+                  {groups.map(item => (
+                    <SelectItem key={item.id} value={item.id}>
+                      {courseMap[item.id]?.name || `Course ${item.id}`}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          )}
         </div>
 
-        <div className='text-muted-foreground flex flex-wrap items-center gap-x-4 gap-y-2 text-xs sm:text-sm'>
-          <span>
-            Currency:{' '}
-            <span className='text-foreground font-medium'>
-              {selectedCourse?.application?.rate_card?.currency}
-            </span>
-          </span>
-          <span className='flex items-center gap-1.5'>
-            <Calendar className='h-3.5 w-3.5 shrink-0' />
+        {group ? (
+          <>
+            <section
+              className='border-border grid gap-4 border-b py-6 sm:grid-cols-3'
+              aria-label='Selected course details'
+            >
+              <CourseDetail
+                label='Selected course'
+                value={coursesLoading ? 'Loading course…' : courseName}
+              />
+              <CourseDetail
+                label='Class size'
+                value={
+                  course?.class_limit != null
+                    ? `Up to ${course.class_limit} learners`
+                    : 'Not provided'
+                }
+              />
+              <CourseDetail label='Rate cards loaded' value={String(group.cards.length)} />
+            </section>
+            <section className='space-y-6 pt-7' aria-label='Course rate cards'>
+              {group.cards.map((application, index) => {
+                const card = application.rate_card;
+                const currency = card.currency || 'KES';
+                return (
+                  <Card key={application.uuid} className='min-w-0 overflow-hidden'>
+                    <CardHeader>
+                      <div className='flex flex-wrap items-center justify-between gap-3'>
+                        <CardTitle>
+                          <h2 className='text-lg'>Rate card {index + 1}</h2>
+                        </CardTitle>
+                        <Badge variant='secondary'>
+                          {application.status?.replaceAll('_', ' ') || 'Status unavailable'}
+                        </Badge>
+                      </div>
+                      <CardDescription>All prices are per learner in {currency}.</CardDescription>
+                      <div className='text-muted-foreground flex flex-wrap gap-x-6 gap-y-2 pt-2 text-xs'>
+                        <span>Application: {application.uuid}</span>
+                        <span className='flex items-center gap-1.5'>
+                          <CalendarDays className='h-3.5 w-3.5' />
+                          Submitted: {formatDate(application.created_date)}
+                        </span>
+                        {application.reviewed_at && (
+                          <span>Reviewed: {formatDate(application.reviewed_at)}</span>
+                        )}
+                      </div>
+                    </CardHeader>
+                    <CardContent className='px-0'>
+                      <Table aria-label={`Rate card ${index + 1} for ${courseName}`}>
+                        <TableHeader className='bg-muted/60'>
+                          <TableRow>
+                            <TableHead className='min-w-52 px-4'>Session format</TableHead>
+                            <TableHead className='min-w-32'>Duration</TableHead>
+                            <TableHead className='min-w-40'>No. of participants</TableHead>
+                            <TableHead className='min-w-32'>Per hour</TableHead>
+                            <TableHead className='min-w-32'>Per session</TableHead>
+                            <TableHead className='min-w-32'>Per day</TableHead>
+                            <TableHead className='min-w-36'>Session type</TableHead>
+                            <TableHead className='w-24 text-right'>
+                              <span className='sr-only'>Details</span>
+                            </TableHead>
+                          </TableRow>
+                        </TableHeader>
+                        <TableBody>
+                          {RATE_DEFINITIONS.map(rate => {
+                            const Icon = rate.icon;
+                            return (
+                              <TableRow key={rate.id}>
+                                <TableCell className='px-4 py-4'>
+                                  <div className='flex items-center gap-3'>
+                                    <span className='bg-primary/10 text-primary grid h-9 w-9 shrink-0 place-items-center rounded-md'>
+                                      <Icon className='h-4 w-4' />
+                                    </span>
+                                    <div>
+                                      <p className='text-foreground font-semibold'>{rate.title}</p>
+                                      <p className='text-muted-foreground text-xs'>
+                                        {rate.delivery}
+                                      </p>
+                                    </div>
+                                  </div>
+                                </TableCell>
+                                <TableCell>
+                                  <p>{duration}</p>
+                                  <p className='text-muted-foreground text-xs'>Full course</p>
+                                </TableCell>
+                                <TableCell>
+                                  {coursesLoading && rate.id.startsWith('group_')
+                                    ? 'Loading…'
+                                    : formatParticipants(rate, course?.class_limit)}
+                                </TableCell>
+                                <TableCell className='font-semibold'>
+                                  {formatRate(card[`${rate.id}_hourly_rate`], currency)}
+                                </TableCell>
+                                <TableCell className='font-semibold'>
+                                  {formatRate(card[`${rate.id}_session_rate`], currency)}
+                                </TableCell>
+                                <TableCell className='font-semibold'>
+                                  {formatRate(card[`${rate.id}_daily_rate`], currency)}
+                                </TableCell>
+                                <TableCell>
+                                  <Badge variant='secondary'>{rate.sessionType}</Badge>
+                                </TableCell>
+                                <TableCell className='text-right'>
+                                  <Button
+                                    variant='ghost'
+                                    size='sm'
+                                    aria-label={`View ${rate.title}, rate card ${index + 1}`}
+                                    onClick={() =>
+                                      setSelectedRate({ applicationId: application.uuid, rate })
+                                    }
+                                  >
+                                    View
+                                  </Button>
+                                </TableCell>
+                              </TableRow>
+                            );
+                          })}
+                        </TableBody>
+                      </Table>
+                      {application.application_notes && (
+                        <p className='text-muted-foreground mt-4 px-5 text-sm whitespace-pre-wrap'>
+                          <span className='text-foreground font-medium'>Application notes: </span>
+                          {application.application_notes}
+                        </p>
+                      )}
+                      {application.review_notes && (
+                        <p className='text-muted-foreground mt-3 px-5 text-sm whitespace-pre-wrap'>
+                          <span className='text-foreground font-medium'>Review notes: </span>
+                          {application.review_notes}
+                        </p>
+                      )}
+                    </CardContent>
+                  </Card>
+                );
+              })}
+            </section>
+            <aside className='border-border text-muted-foreground mt-6 flex items-start gap-3 border-t pt-5 text-sm'>
+              <Info className='mt-0.5 h-4 w-4 shrink-0' />
+              <p>
+                Hourly, session and daily prices are separate rates. “Not set” means a price has not
+                been provided for that billing period.
+              </p>
+            </aside>
+          </>
+        ) : (
+          <EmptyState
+            className='mt-7'
+            title='No rate cards found'
+            description='Rate cards from your course training applications will appear here.'
+          />
+        )}
 
-            <span className='whitespace-nowrap'>
-              Effective From: <span className='text-foreground font-medium'>{effectiveDate}</span>
-            </span>
-          </span>
-        </div>
+        {(applicationsQuery.isError || hasResponseError) && groups.length > 0 && (
+          <EmptyState
+            className='mt-6'
+            variant='compact'
+            title='Unable to load more rate cards'
+            action={
+              <Button variant='outline' onClick={() => void applicationsQuery.refetch()}>
+                Retry
+              </Button>
+            }
+          />
+        )}
+        {applicationsQuery.hasNextPage && (
+          <div className='mt-6 space-y-2 text-center'>
+            <p className='text-muted-foreground text-sm'>
+              More applications are available. Load more to see additional courses and rate cards.
+            </p>
+            <Button
+              variant='outline'
+              disabled={applicationsQuery.isFetching}
+              onClick={() => void applicationsQuery.fetchNextPage()}
+            >
+              {applicationsQuery.isFetchingNextPage && <Spinner />}Load more rate cards
+            </Button>
+          </div>
+        )}
       </div>
 
-      <div className='flex flex-wrap justify-start gap-4'>
-        {sessionRates.map(session => {
-          const colors = COLOR_STYLES[session.colorClass];
-
-          const isInPerson = session.locationType === 'In-Person';
-
-          return (
-            <div
-              key={session.id}
-              className='border-border bg-card flex w-full max-w-[420px] min-w-[280px] flex-shrink flex-grow-0 flex-col overflow-hidden rounded-xl border sm:w-[calc(50%-0.5rem)] 2xl:w-[calc(25%-0.75rem)]'
-            >
-              {/* TOP */}
-              <div className='flex flex-col items-center px-4 pt-5 pb-4 text-center lg:px-5'>
-                <h4 className={`mb-3 text-sm font-semibold lg:text-base ${colors.title}`}>
-                  {session.title}
-                </h4>
-
-                <div
-                  className={`mb-4 flex h-14 w-14 items-center justify-center rounded-full lg:h-16 lg:w-16 ${colors.iconBg}`}
-                >
-                  <SessionIcon colorClass={session.colorClass} />
-                </div>
-
-                <p className='text-muted-foreground mb-1 text-[11px] lg:text-xs'>
-                  Rate per Session
-                </p>
-
-                <p className='text-foreground text-xl font-bold lg:text-2xl'>
-                  {session.currency} {session.rate.toLocaleString()}
-                </p>
-
-                <span
-                  className={`mt-3 inline-flex items-center rounded-full border px-2.5 py-1 text-[10px] font-medium lg:px-3 lg:text-xs ${colors.badge}`}
-                >
-                  {session.badgeLabel}
-                </span>
-              </div>
-
-              {/* DIVIDER */}
-              <div className='border-border mx-4 border-t lg:mx-5' />
-
-              {/* DETAILS */}
-              <div className='space-y-2 px-4 py-4 lg:px-5'>
-                {[
-                  {
-                    icon: <Clock className='h-3.5 w-3.5' />,
-                    label: 'Duration',
-                    value: session.duration,
-                  },
-                  {
-                    icon: <Users className='h-3.5 w-3.5' />,
-                    label: 'Participants',
-                    value: session.participants,
-                  },
-                  {
-                    icon: isInPerson ? (
-                      <MapPin className='h-3.5 w-3.5' />
-                    ) : (
-                      <Monitor className='h-3.5 w-3.5' />
-                    ),
-                    label: session.platformLabel,
-                    value: session.platformOrLocation,
-                  },
-                  {
-                    icon: <CheckSquare className='h-3.5 w-3.5' />,
-                    label: 'Includes',
-                    value: session.includes,
-                  },
-                ].map(row => (
-                  <div
-                    key={row.label}
-                    className='flex items-start justify-between gap-2 text-[11px] lg:text-xs'
-                  >
-                    <span className='text-muted-foreground flex min-w-0 shrink items-center gap-1.5'>
-                      {row.icon}
-                      {row.label}
-                    </span>
-
-                    <span className='text-foreground max-w-[55%] text-right break-words'>
-                      {row.value}
-                    </span>
-                  </div>
-                ))}
-              </div>
-
-              {/* NOTE */}
-              <div
-                className={`mx-3 mb-3 flex items-start gap-2 rounded-lg border px-3 py-2 lg:mx-4 lg:mb-4 lg:py-2.5 ${colors.info}`}
-              >
-                <Info className='mt-0.5 h-3.5 w-3.5 shrink-0' />
-
-                <p className='text-[11px] leading-relaxed lg:text-xs'>{session.description}</p>
+      <Dialog
+        open={Boolean(selectedRate && selectedApplication)}
+        onOpenChange={open => {
+          if (!open) setSelectedRate(null);
+        }}
+      >
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>{selectedRate?.rate.title}</DialogTitle>
+            <DialogDescription>
+              {courseName} · {selectedRate?.rate.sessionType}
+            </DialogDescription>
+          </DialogHeader>
+          {selectedRate && selectedApplication && (
+            <div className='space-y-4 pt-2'>
+              <p className='text-muted-foreground text-sm'>
+                Prices per learner in {selectedApplication.rate_card.currency || 'KES'}.
+              </p>
+              <div className='divide-border border-border divide-y border-y'>
+                <RateDetail icon={<Clock3 />} label='Duration (full course)' value={duration} />
+                <RateDetail
+                  icon={<Users />}
+                  label='No. of participants'
+                  value={
+                    coursesLoading && selectedRate.rate.id.startsWith('group_')
+                      ? 'Loading…'
+                      : formatParticipants(selectedRate.rate, course?.class_limit)
+                  }
+                />
+                <RateDetail
+                  icon={<Clock3 />}
+                  label='Per hour'
+                  value={formatRate(
+                    selectedApplication.rate_card[`${selectedRate.rate.id}_hourly_rate`],
+                    selectedApplication.rate_card.currency || 'KES'
+                  )}
+                />
+                <RateDetail
+                  icon={<Clock3 />}
+                  label='Per session'
+                  value={formatRate(
+                    selectedApplication.rate_card[`${selectedRate.rate.id}_session_rate`],
+                    selectedApplication.rate_card.currency || 'KES'
+                  )}
+                />
+                <RateDetail
+                  icon={<CalendarDays />}
+                  label='Per day'
+                  value={formatRate(
+                    selectedApplication.rate_card[`${selectedRate.rate.id}_daily_rate`],
+                    selectedApplication.rate_card.currency || 'KES'
+                  )}
+                />
+                <RateDetail
+                  icon={<Users />}
+                  label='Session type'
+                  value={selectedRate.rate.sessionType}
+                />
+                <RateDetail
+                  icon={selectedRate.rate.delivery === 'Online' ? <Laptop /> : <MapPin />}
+                  label='Delivery'
+                  value={selectedRate.rate.delivery}
+                />
               </div>
             </div>
-          );
-        })}
-      </div>
+          )}
+        </DialogContent>
+      </Dialog>
+    </div>
+  );
+}
 
-      <div className='flex flex-wrap items-stretch gap-4'>
-        <div className='border-border bg-card flex min-w-[280px] flex-1 flex-col rounded-lg border p-4'>
-          <div className='mb-3 flex items-center gap-2'>
-            <svg
-              width='16'
-              height='16'
-              viewBox='0 0 24 24'
-              fill='none'
-              stroke='currentColor'
-              strokeWidth='2'
-              strokeLinecap='round'
-              strokeLinejoin='round'
-              className='text-muted-foreground'
-            >
-              <path d='M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z' />
-              <polyline points='14 2 14 8 20 8' />
-              <line x1='16' y1='13' x2='8' y2='13' />
-              <line x1='16' y1='17' x2='8' y2='17' />
-              <polyline points='10 9 9 9 8 9' />
-            </svg>
+function CourseDetail({ label, value }: { label: string; value: string }) {
+  return (
+    <div>
+      <p className='text-muted-foreground text-xs font-medium'>{label}</p>
+      <p className='text-foreground mt-1 text-sm font-semibold'>{value}</p>
+    </div>
+  );
+}
 
-            <span className='text-foreground text-sm font-semibold'>Additional Notes</span>
-          </div>
-
-          <ul className='text-muted-foreground list-none space-y-1.5 text-xs'>
-            <li className='flex items-start gap-2'>
-              <span className='bg-muted-foreground mt-1 h-1 w-1 shrink-0 rounded-full' />
-              Rates are exclusive of applicable taxes.
-            </li>
-
-            <li className='flex items-start gap-2'>
-              <span className='bg-muted-foreground mt-1 h-1 w-1 shrink-0 rounded-full' />
-              Travel expenses are not included and will be billed separately when applicable.
-            </li>
-
-            <li className='flex items-start gap-2'>
-              <span className='bg-muted-foreground mt-1 h-1 w-1 shrink-0 rounded-full' />
-              Rates are subject to review and may change with prior notice.
-            </li>
-
-            {selectedCourse?.application?.status && (
-              <li className='flex items-start gap-2'>
-                <span className='bg-muted-foreground mt-1 h-1 w-1 shrink-0 rounded-full' />
-                Current application status:{' '}
-                <span className='text-foreground font-medium capitalize'>
-                  {selectedCourse.application.status}
-                </span>
-              </li>
-            )}
-          </ul>
-        </div>
-
-        <div className='border-border bg-card flex min-w-[280px] flex-1 flex-col justify-between rounded-lg border p-4'>
-          <div>
-            <p className='text-foreground mb-1 text-sm font-semibold'>Need a custom rate?</p>
-
-            <p className='text-muted-foreground mb-3 text-xs'>
-              Contact the Training Administration team for special arrangements or custom instructor
-              pricing.
-            </p>
-          </div>
-
-          <Button variant='outline' size='sm' className='mt-auto w-fit gap-2'>
-            <Mail className='h-3.5 w-3.5' />
-            Contact Admin
-          </Button>
-        </div>
-      </div>
+function RateDetail({ icon, label, value }: { icon: ReactNode; label: string; value: string }) {
+  return (
+    <div className='flex items-start justify-between gap-4 py-3 text-sm'>
+      <span className='text-muted-foreground flex items-center gap-2 [&_svg]:h-4 [&_svg]:w-4'>
+        {icon}
+        {label}
+      </span>
+      <span className='text-foreground max-w-64 text-right font-medium'>{value}</span>
     </div>
   );
 }

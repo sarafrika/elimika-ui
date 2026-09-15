@@ -59,7 +59,7 @@ import {
   getVariantSpecificSummary,
   normalizeUserDomainValue,
 } from '../settings-config';
-import InstructorRateCard from './instructor-rate-page';
+import InstructorRateCardsPage from './instructor-rate-page';
 
 type DashboardSettingsPageProps = {
   variant: DashboardSettingsVariant;
@@ -1060,7 +1060,7 @@ function DashboardSettingsPageBody({ variant }: DashboardSettingsPageProps) {
 
           <TabsContent value='rate' className='mt-0'>
             <div className=''>
-              <InstructorRateCard />
+              <InstructorRateCardsPage />
             </div>
           </TabsContent>
 

@@ -48,6 +48,7 @@ import { Button } from '@/components/ui/button';
 import { EmptyState } from '@/components/ui/empty-state';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import Spinner from '@/components/ui/spinner';
 import {
   Select,
   SelectContent,
@@ -101,6 +102,7 @@ import { extractPage } from '../../../lib/api-helpers';
 import { canReapply as statusAllowsReapply } from '../application-status';
 import type { JobMarketplaceRole } from '../data';
 import { getJobMarketplaceRoleConfig } from '../data';
+import { getEffectiveJobStatus, hasJobStarted } from '../job-expiration';
 import { JobCard } from './JobMarketplaceCard';
 import {
   JobListSkeleton,
@@ -396,6 +398,7 @@ function JobDetailsSheet({
   onCancel,
   application,
   myApplicationsHref,
+  now,
 }: {
   job: ClassMarketplaceJobWithProgram | null;
   open: boolean;
@@ -410,12 +413,15 @@ function JobDetailsSheet({
   onCancel?: () => void;
   application?: { status?: string | null; application_note?: string | null } | null;
   myApplicationsHref?: string;
+  now: number;
 }) {
   const queryClient = useQueryClient();
   const { activeDomain } = useUserDomain();
   const [applicationNote, setApplicationNote] = useState('');
   const [showAllSessions, setShowAllSessions] = useState(false);
   const jobUuid = job?.uuid;
+  const hasPastStartTime = hasJobStarted(job?.default_start_time, now);
+  const isExpired = job?.status === 'expired' || hasPastStartTime;
 
   const { organisationMap } = useOrganisationsByIds([job?.organisation_uuid as string]);
   const displayName = organisationMap?.[job?.organisation_uuid as string]?.name;
@@ -438,7 +444,7 @@ function JobDetailsSheet({
   // outside that page was silently offered a fresh application the server would then reject.
   const eligibilityQuery = useQuery({
     ...getJobEligibilityOptions({ path: { jobUuid: jobUuid ?? '' } }),
-    enabled: open && Boolean(jobUuid) && !isManagementView && job?.status === 'open',
+    enabled: open && Boolean(jobUuid) && !isManagementView && job?.status === 'open' && !isExpired,
   });
   const eligibility = eligibilityQuery.data?.data;
 
@@ -488,6 +494,13 @@ function JobDetailsSheet({
 
   const handleApply = () => {
     if (!jobUuid) return;
+    if (hasJobStarted(job.default_start_time)) {
+      toast.error('This job has expired because its start time has passed.');
+      return;
+    }
+    if (job.status !== 'open' || applyMutation.isPending || hasLiveApplication || isIneligible) {
+      return;
+    }
 
     applyMutation.mutate({
       path: { jobUuid },
@@ -691,6 +704,17 @@ function JobDetailsSheet({
                 )}
               </p>
 
+              {isExpired ? (
+                <p
+                  role='status'
+                  className='border-warning/60 bg-warning/10 text-foreground rounded-md border p-3 text-sm'
+                >
+                  {hasPastStartTime
+                    ? 'This job has expired because its start time has passed. Applications are closed.'
+                    : 'This job has expired. Applications are closed.'}
+                </p>
+              ) : null}
+
               {isIneligible ? (
                 <div className='border-warning/60 bg-warning/10 text-foreground space-y-2 rounded-md border border-dashed p-3 text-sm'>
                   <p>
@@ -725,7 +749,7 @@ function JobDetailsSheet({
                 onChange={event => setApplicationNote(event.target.value)}
                 placeholder='Add a short note to support your application.'
                 className='min-h-28'
-                disabled={hasLiveApplication}
+                disabled={hasLiveApplication || isExpired || job.status !== 'open'}
               />
               {alreadyApplied ? (
                 <div className='border-border/70 bg-muted/30 text-muted-foreground flex flex-wrap items-center gap-2 rounded-md border border-dashed p-3 text-sm'>
@@ -734,7 +758,7 @@ function JobDetailsSheet({
                     label={formatEnumLabel(applicationStatus ?? 'applied')}
                   />
                   <span>
-                    {canReapply
+                    {canReapply && !isExpired && job.status === 'open'
                       ? 'Your previous application for this opportunity is closed. You can apply again.'
                       : 'You have already applied to this opportunity.'}
                   </span>
@@ -748,8 +772,15 @@ function JobDetailsSheet({
               <div className='flex flex-wrap gap-2'>
                 <Button
                   onClick={handleApply}
-                  disabled={applyMutation.isPending || hasLiveApplication || isIneligible}
+                  disabled={
+                    applyMutation.isPending ||
+                    hasLiveApplication ||
+                    isIneligible ||
+                    isExpired ||
+                    job.status !== 'open'
+                  }
                 >
+                  {applyMutation.isPending && <Spinner />}
                   {applyMutation.isPending
                     ? 'Submitting...'
                     : canReapply
@@ -846,7 +877,36 @@ export function JobMarketplacePage({ role }: { role: JobMarketplaceRole }) {
     ...listJobsOptions(jobsListOptions),
     enabled: canLoadJobs,
   });
-  const jobs: ClassMarketplaceJobWithProgram[] = jobsResponse?.data?.content ?? [];
+  const rawJobs = useMemo<ClassMarketplaceJobWithProgram[]>(
+    () => jobsResponse?.data?.content ?? [],
+    [jobsResponse]
+  );
+  const [now, setNow] = useState(() => Date.now());
+
+  // Update at the next start time, even when the list or application sheet stays open.
+  // The one-minute cap also catches clock changes without fetching additional data.
+  useEffect(() => {
+    const nextStart = Math.min(
+      ...rawJobs
+        .map(job => job.default_start_time ? new Date(job.default_start_time).getTime() : NaN)
+        .filter(timestamp => Number.isFinite(timestamp) && timestamp > now)
+    );
+    const refreshTime = () => setNow(Date.now());
+    const timeout = window.setTimeout(
+      refreshTime,
+      Math.max(1, Math.min(60_000, nextStart - Date.now()))
+    );
+    window.addEventListener('focus', refreshTime);
+    return () => {
+      window.clearTimeout(timeout);
+      window.removeEventListener('focus', refreshTime);
+    };
+  }, [rawJobs, now]);
+
+  const jobs = useMemo(
+    () => rawJobs.map(job => ({ ...job, status: getEffectiveJobStatus(job, now) })),
+    [rawJobs, now]
+  );
   const jobsLoading = isJobsLoading && !jobsResponse;
 
   const myApplicationsQuery = useQuery({
@@ -1084,7 +1144,7 @@ export function JobMarketplacePage({ role }: { role: JobMarketplaceRole }) {
           (programUuid && approvedProgramUuids.has(programUuid))
         );
       });
-  }, [jobsBeforeStatusFilter, statusFilter]);
+  }, [jobsBeforeStatusFilter, statusFilter, canApply, approvedCourseUuids, approvedProgramUuids]);
 
   const sortedJobs = useMemo(
     () => sortJobs(filteredJobs, sortDirection),
@@ -1162,7 +1222,7 @@ export function JobMarketplacePage({ role }: { role: JobMarketplaceRole }) {
         ]),
       { label: 'Remote', value: remoteCount, icon: Globe2, tone: 'warning' as const },
     ];
-  }, [isOrganizationView, jobs, myApplications.length]);
+  }, [isOrganizationView, jobsUsed, myApplications.length]);
 
   const cancelMutation = useMutation({
     ...cancelJobMutation(),
@@ -1457,7 +1517,8 @@ export function JobMarketplacePage({ role }: { role: JobMarketplaceRole }) {
                         <span className='text-foreground font-semibold tabular-nums'>
                           {tabJobs.length}
                         </span>{' '}
-                        active job posting{tabJobs.length === 1 ? '' : 's'}
+                        {statusFilter === 'open' ? 'active ' : ''}job posting
+                        {tabJobs.length === 1 ? '' : 's'}
                       </p>
                     </div>
 
@@ -1533,6 +1594,7 @@ export function JobMarketplacePage({ role }: { role: JobMarketplaceRole }) {
       </div>
 
       <JobDetailsSheet
+        now={now}
         job={selectedJob}
         open={Boolean(selectedJob)}
         onOpenChange={open => {
