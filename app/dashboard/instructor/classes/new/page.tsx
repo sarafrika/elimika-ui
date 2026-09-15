@@ -12,7 +12,9 @@ import {
   type DayRow,
   DEFAULT_RATE_BASIS,
   firstRegistrationWindowError,
+  num,
   type RateBasis,
+  rateBasisUnit,
   type RegistrationWindowErrors,
   type ReminderState,
   validateRegistrationWindow,
@@ -685,6 +687,8 @@ const InstructorClassCreationPage = () => {
   // how many units the class bills for, so it has to be an explicit choice rather than a default
   // nobody sees — an hourly figure billed per session is a different contract entirely.
   const [rateBasis, setRateBasis] = useState<RateBasis>(DEFAULT_RATE_BASIS);
+  const [salePrice, setSalePrice] = useState('');
+  const [instructorPay, setInstructorPay] = useState('');
   const [classDetails, setClassDetails] = useState<ClassDetails>(() =>
     createInitialClassDetails(instructor?.full_name)
   );
@@ -906,10 +910,10 @@ const InstructorClassCreationPage = () => {
   // previous lookup built a `*_rate` key that no longer exists — the rate card was split into
   // hourly/session/daily columns — so it silently resolved to 0 and every class was priced free.
   const approvedRate = useMemo(() => {
-    if (!rateCard || !classDetails.class_type || !classDetails.location_type) return 0;
+    if (!rateCard || !classDetails.class_type || !classDetails.location_type) return undefined;
     const format = classDetails.class_type === 'PRIVATE' ? 'INDIVIDUAL' : 'GROUP';
     const delivery = classDetails.location_type === 'ONLINE' ? 'ONLINE' : 'IN_PERSON';
-    return approvedRateFor(rateCard as ApprovedRateCard, format, delivery, rateBasis) ?? 0;
+    return approvedRateFor(rateCard as ApprovedRateCard, format, delivery, rateBasis);
   }, [classDetails.class_type, classDetails.location_type, rateCard, rateBasis]);
 
   const totalSessions = sessionsForConflictCheck.length || classData?.scheduled_session_count;
@@ -979,6 +983,9 @@ const InstructorClassCreationPage = () => {
     }
     try {
       const parsed = JSON.parse(savedDraft) as {
+        salePrice?: string;
+        instructorPay?: string;
+        rateBasis?: RateBasis;
         classDetails?: Partial<ClassDetails>;
         scheduleSettings?: Partial<ScheduleSettings>;
         notificationSettings?: Partial<NotificationSettings>;
@@ -993,6 +1000,9 @@ const InstructorClassCreationPage = () => {
           durationMinutes?: string;
         }[];
       };
+      if (typeof parsed.salePrice === 'string') setSalePrice(parsed.salePrice);
+      if (typeof parsed.instructorPay === 'string') setInstructorPay(parsed.instructorPay);
+      if (parsed.rateBasis) setRateBasis(parsed.rateBasis);
       if (parsed.classDetails) {
         const saved = parsed.classDetails;
         setClassDetails(prev => ({
@@ -1064,6 +1074,9 @@ const InstructorClassCreationPage = () => {
       window.localStorage.setItem(
         LOCAL_CLASS_DRAFT_KEY,
         JSON.stringify({
+          salePrice,
+          instructorPay,
+          rateBasis,
           classDetails,
           scheduleSettings,
           notificationSettings,
@@ -1079,6 +1092,9 @@ const InstructorClassCreationPage = () => {
     }, 500);
     return () => window.clearTimeout(timeout);
   }, [
+    salePrice,
+    instructorPay,
+    rateBasis,
     classDetails,
     scheduleSettings,
     notificationSettings,
@@ -1119,6 +1135,9 @@ const InstructorClassCreationPage = () => {
       }>;
     };
 
+    setSalePrice(classRecord.sale_price == null ? '' : String(classRecord.sale_price));
+    setInstructorPay(classRecord.instructor_pay == null ? '' : String(classRecord.instructor_pay));
+    setRateBasis(classRecord.rate_basis ?? DEFAULT_RATE_BASIS);
     setClassDetails({
       uuid: classRecord.uuid || '',
       course_uuid: classRecord.course_uuid ?? '',
@@ -1557,6 +1576,34 @@ const InstructorClassCreationPage = () => {
   // ── Submit ─────────────────────────────────────────────────────────────────
   const submitClass = (isDraft = false) => {
     if (!isFormValid()) return;
+    if (approvedRate === undefined) {
+      return toast.error(
+        'The course creator has not approved a rate for this format, delivery mode and billing basis.'
+      );
+    }
+    const saleValue = num(salePrice);
+    const payValue = num(instructorPay);
+    if (saleValue === undefined || !Number.isFinite(saleValue) || saleValue < 0) {
+      return toast.error(
+        `Enter the sale price learners are charged per ${rateBasisUnit(rateBasis)}.`
+      );
+    }
+    if (payValue === undefined || !Number.isFinite(payValue) || payValue < 0) {
+      return toast.error(`Enter the pay the instructor receives per ${rateBasisUnit(rateBasis)}.`);
+    }
+    if (saleValue < approvedRate) {
+      return toast.error(
+        `Sale price must be at least the approved fee of ${approvedRate} per ${rateBasisUnit(rateBasis)}.`
+      );
+    }
+    if (payValue < approvedRate) {
+      return toast.error(
+        `Instructor pay must be at least the approved fee of ${approvedRate} per ${rateBasisUnit(rateBasis)}.`
+      );
+    }
+    if (payValue > saleValue) {
+      return toast.error('Instructor pay cannot exceed the sale price.');
+    }
     setRefusedWindows([]);
 
     const locationType = normalizeLocationType(classDetails.location_type);
@@ -1857,8 +1904,8 @@ const InstructorClassCreationPage = () => {
       registration_period_end_date: registrationPeriodEnd,
       scheduled_session_count: totalSessions,
       class_reminder_minutes: reminderToMinutes(notificationSettings.reminder),
-      sale_price: approvedRate,
-      instructor_pay: approvedRate,
+      sale_price: saleValue,
+      instructor_pay: payValue,
       rate_basis: rateBasis,
       allow_waitlist: allowWaitlist,
       is_active: !isDraft,
@@ -1975,6 +2022,9 @@ const InstructorClassCreationPage = () => {
 
   const clearDraft = () => {
     if (typeof window !== 'undefined') window.localStorage.removeItem(LOCAL_CLASS_DRAFT_KEY);
+    setSalePrice('');
+    setInstructorPay('');
+    setRateBasis(DEFAULT_RATE_BASIS);
     setClassDetails(createInitialClassDetails(instructor?.full_name));
     setScheduleSettings(createInitialScheduleSettings(activeScheduleTimeZone));
     setScheduleTimezoneOverridden(false);
@@ -2360,10 +2410,10 @@ const InstructorClassCreationPage = () => {
         <PricingCapacity
           approvedFee={approvedRate}
           currency={rateCard?.currency}
-          salePrice={String(approvedRate || '')}
-          onSalePriceChange={() => undefined}
-          instructorPay={String(approvedRate || '')}
-          onInstructorPayChange={() => undefined}
+          salePrice={salePrice}
+          onSalePriceChange={setSalePrice}
+          instructorPay={instructorPay}
+          onInstructorPayChange={setInstructorPay}
           maxParticipants={String(classDetails.class_limit || '')}
           onMaxChange={value =>
             setClassDetails(prev => ({ ...prev, class_limit: Number(value) || 0 }))
@@ -2375,7 +2425,6 @@ const InstructorClassCreationPage = () => {
           totalDays={totalDays}
           rateBasis={rateBasis}
           onRateBasisChange={setRateBasis}
-          readOnly
         />
 
         <LocationVenue

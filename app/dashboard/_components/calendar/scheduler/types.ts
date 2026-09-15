@@ -49,7 +49,7 @@ export type SchedulerFilterSection = {
   count: number;
   isOpen: boolean;
   items: SchedulerFilterItem[];
-  key: 'bookings' | 'classes' | 'classrooms' | 'venues' | 'instructors';
+  key: 'bookings' | 'classes' | 'classrooms' | 'venues' | 'equipment' | 'instructors';
   label: string;
   onItemClick: (id: string) => void;
   onToggle: () => void;
