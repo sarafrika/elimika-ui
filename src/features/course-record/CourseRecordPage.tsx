@@ -73,6 +73,8 @@ import { getCourseCreatorByUuidOptions } from '@/services/client/@tanstack/react
 import type { LessonContent } from '@/services/client/types.gen';
 import { roleScopedDashboardPath } from '@/src/features/dashboard/lib/active-domain-storage';
 
+import { AsyncSection } from '../../../components/data/async-section';
+import { CourseDetailsAsideCard } from '../catalogue/components/CourseDetailsAsideCard';
 import { CourseRecordView } from './CourseRecordView';
 import {
   AccessCard,
@@ -498,13 +500,34 @@ export function CourseRecordPage({
   const gateBanner = capability.gate ? <GateBanner access={access} vars={vars} /> : undefined;
 
   /* ── rail ───────────────────────────────────────────────────────────── */
-
   const railCard = (card: CourseRailCardId): ReactNode => {
     switch (card) {
       case 'access':
         return <AccessCard access={access} vars={vars} />;
       case 'glance':
-        return <GlanceCard access={access} vars={vars} {...asyncProps(record.course)} />;
+        return (<>
+          <AsyncSection {...asyncProps(record.course)} empty={!course}>
+            {course && (
+              <CourseDetailsAsideCard
+                course={course as Course}
+                currencyCode={COURSE_DEFAULT_CURRENCY}
+                level={level}
+                classCount={record.classes.data?.length}
+                deliveryCount={
+                  record.classes.data
+                    ? new Set(record.classes.data.flatMap(item => item.location_type ?? [])).size
+                    : undefined
+                }
+                classesLoading={record.classes.loading}
+                dashboard={
+                  segment === 'organisation' || segment === 'instructor' ? segment : undefined
+                }
+              />
+            )}
+          </AsyncSection>
+          <GlanceCard access={access} vars={vars} {...asyncProps(record.course)} />
+        </>
+        )
       case 'ownerDecisions':
         return (
           <OwnerDecisionsPanel

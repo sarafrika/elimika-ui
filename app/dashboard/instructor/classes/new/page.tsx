@@ -663,12 +663,15 @@ const InstructorClassCreationPage = () => {
   );
 
   const [classId, setClassId] = useState<string | null>(null);
+  const [requestedCourseUuid, setRequestedCourseUuid] = useState<string | null>(null);
+  const [coursePrefillApplied, setCoursePrefillApplied] = useState(false);
   const [isClientReady, setIsClientReady] = useState(false);
 
   useEffect(() => {
     const searchParams = new URLSearchParams(window.location.search);
     const id = searchParams.get('id');
     setClassId(id);
+    setRequestedCourseUuid(searchParams.get('courseUuid')?.trim() || null);
     setIsClientReady(true);
   }, []);
 
@@ -894,6 +897,22 @@ const InstructorClassCreationPage = () => {
     }));
     return [...courseItems, ...programItems];
   }, [approvedCourses, approvedPrograms]);
+
+  useEffect(() => {
+    if (!isDataInitialized || classId || !requestedCourseUuid || coursePrefillApplied) return;
+    const item = catalogItems.find(
+      candidate => candidate.source === 'course' && candidate.uuid === requestedCourseUuid
+    );
+    if (!item) return;
+    setClassDetails(prev => ({
+      ...prev,
+      course_uuid: item.uuid,
+      program_uuid: null,
+      class_limit: item.classLimit,
+      title: item.label || prev.title || '',
+    }));
+    setCoursePrefillApplied(true);
+  }, [catalogItems, classId, isDataInitialized, requestedCourseUuid, coursePrefillApplied]);
 
   const selectedCatalogItem = useMemo(
     () =>

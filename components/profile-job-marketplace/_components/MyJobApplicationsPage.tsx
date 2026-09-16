@@ -1,19 +1,18 @@
 'use client';
 
 import { useMutation, useQueries, useQuery, useQueryClient } from '@tanstack/react-query';
-import { ArrowRight, BriefcaseBusiness, CheckCircle2, Clock, Search, XCircle } from 'lucide-react';
+import { ArrowLeft, ArrowRight, BriefcaseBusiness, CheckCircle2, Clock, Search, XCircle } from 'lucide-react';
 import Link from 'next/link';
 import { useEffect, useMemo, useState } from 'react';
 import { toast } from 'sonner';
 
 import {
-  AdminPageHeader,
   adminTheme,
   DetailGrid,
   SectionCard,
   StatCard,
   StatCardSkeleton,
-  StatusBadge,
+  StatusBadge
 } from '@/app/dashboard/admin/_components/ui';
 import DeleteModal from '@/components/custom-modals/delete-modal';
 import { AsyncSection } from '@/components/data/async-section';
@@ -38,10 +37,11 @@ import {
   withdrawApplicationMutation,
 } from '@/services/client/@tanstack/react-query.gen';
 import { useUserDomain } from '@/src/features/dashboard/context/user-domain-context';
-import { invalidateJobApplicationWorkflowQueries } from '@/src/features/dashboard/workflow-query-invalidation';
 import { roleScopedDashboardPath } from '@/src/features/dashboard/lib/active-domain-storage';
+import { invalidateJobApplicationWorkflowQueries } from '@/src/features/dashboard/workflow-query-invalidation';
 import { useUserProfile } from '@/src/features/profile/context/profile-context';
 import { useBreadcrumb } from '../../../context/breadcrumb-provider';
+import { PageHeader } from '../../page-header';
 import {
   APPLICATION_STATUSES,
   type ApplicationStatus,
@@ -239,23 +239,35 @@ export function MyJobApplicationsPage() {
   return (
     <div className={adminTheme.page}>
       <div className={adminTheme.pageStack}>
-        <AdminPageHeader
+        <PageHeader
           title='My Applications'
           description='Search, filter, and track every marketplace job application you have submitted.'
         />
+
+        <Button
+          variant='ghost'
+          size='sm'
+          asChild
+          className='text-muted-foreground -ml-2 self-start my-2'
+        >
+          <Link href='/dashboard/instructor/opportunities'>
+            <ArrowLeft className='size-4' />
+            Back to jobs
+          </Link>
+        </Button>
 
         <div className='grid gap-4 sm:grid-cols-2 xl:grid-cols-4'>
           {applicationsLoading
             ? kpis.map(kpi => <StatCardSkeleton key={kpi.label} />)
             : kpis.map(kpi => (
-                <StatCard
-                  key={kpi.label}
-                  label={kpi.label}
-                  value={kpi.value}
-                  icon={kpi.icon}
-                  tone={kpi.tone}
-                />
-              ))}
+              <StatCard
+                key={kpi.label}
+                label={kpi.label}
+                value={kpi.value}
+                icon={kpi.icon}
+                tone={kpi.tone}
+              />
+            ))}
         </div>
 
         <SectionCard title='Applications' bodyClassName='space-y-4'>

@@ -94,7 +94,7 @@ export default function InstructorMyCourseDetailsPage() {
   }
 
   return (
-    <div className='mx-auto w-full max-w-[1400px] px-3 py-4 sm:px-5 lg:px-6'>
+    <div className='mx-auto w-full px-3 py-4 sm:px-5 lg:px-6'>
       <div className='mb-4 flex flex-wrap items-center justify-end gap-2'>
         <Button variant='outline' size='sm' className='h-8 rounded-[10px]' onClick={shareCourse}>
           <Share2 className='size-4' />
