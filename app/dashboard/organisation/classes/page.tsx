@@ -41,15 +41,18 @@ import type {
   ClassDefinition,
   ClassEnrolmentCountDto,
   Instructor,
+  OrganisationResource,
   TrainingBranch,
   User,
 } from '@/services/client';
+import { ResourceTypeEnum } from '@/services/client';
 import {
   deactivateClassDefinitionMutation,
   getClassDefinitionsForOrganisationOptions,
   getClassEnrolmentCountsOptions,
   getTrainingBranchesByOrganisationOptions,
   getUsersByOrganisationAndDomainOptions,
+  listResourcesOptions,
 } from '@/services/client/@tanstack/react-query.gen';
 import { dashboardUrl } from '@/src/features/dashboard/lib/dashboard-url';
 
@@ -97,9 +100,16 @@ export default function ClassesPage() {
     enabled: Boolean(organisationUuid),
   });
   const venuesQuery = useQuery({
+    ...listResourcesOptions({
+      path: { organisationUuid },
+      query: { resource_type: ResourceTypeEnum.VENUE, pageable: { page: 0, size: 100 } },
+    }),
+    enabled: Boolean(organisationUuid),
+  });
+  const branchesQuery = useQuery({
     ...getTrainingBranchesByOrganisationOptions({
       path: { uuid: organisationUuid },
-      query: { pageable: { page: 0, size: 200 } },
+      query: { pageable: { page: 0, size: 100 } },
     }),
     enabled: Boolean(organisationUuid),
   });
@@ -146,11 +156,17 @@ export default function ClassesPage() {
     [instructorMap, orgUsersByUuid]
   );
   const venuesByUuid = useMemo(() => {
-    const map = new Map<string, TrainingBranch>();
-    for (const v of extractPage<TrainingBranch>(venuesQuery.data).items)
+    const map = new Map<string, OrganisationResource>();
+    for (const v of extractPage<OrganisationResource>(venuesQuery.data).items)
       if (v.uuid) map.set(v.uuid, v);
     return map;
   }, [venuesQuery.data]);
+  const branchNames = useMemo(() => {
+    const map = new Map<string, string>();
+    for (const b of extractPage<TrainingBranch>(branchesQuery.data).items)
+      if (b.uuid) map.set(b.uuid, b.branch_name);
+    return map;
+  }, [branchesQuery.data]);
 
   const rows = useMemo(
     () =>
@@ -158,6 +174,7 @@ export default function ClassesPage() {
         const scheduled = Number(cd.scheduled_session_count ?? 0);
         const completed = Number(cd.completed_session_count ?? 0);
         const venue = cd.venue_resource_uuid ? venuesByUuid.get(cd.venue_resource_uuid) : undefined;
+        const branchName = branchNames.get(cd.branch_uuid ?? venue?.branch_uuid ?? '');
         return {
           uuid: cd.uuid as string,
           title: cd.title,
@@ -165,10 +182,9 @@ export default function ClassesPage() {
           subject: null as string | null,
           programType: null,
           instructor: resolveInstructor(cd.default_instructor_uuid),
-          venueName:
-            venue?.branch_name ??
-            cd.location_name ??
-            (cd.location_type === 'ONLINE' ? 'Online' : '—'),
+          venueName: venue
+            ? [venue.name, branchName].filter(Boolean).join(' · ')
+            : cd.location_name || (cd.location_type === 'ONLINE' ? 'Online' : '—'),
           start: cd.default_start_time,
           capacity: cd.max_participants ?? null,
           enrolled: enrolledByClass.get(cd.uuid as string) ?? 0,
@@ -176,7 +192,7 @@ export default function ClassesPage() {
           status: cd.is_active === false ? 'Inactive' : 'Active',
         };
       }),
-    [classDefinitions, enrolledByClass, resolveInstructor, venuesByUuid]
+    [classDefinitions, enrolledByClass, resolveInstructor, venuesByUuid, branchNames]
   );
 
   const [activeCategory, setActiveCategory] = useState<string>(ALL_CATEGORIES);
