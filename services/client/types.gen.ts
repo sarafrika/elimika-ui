@@ -1597,7 +1597,7 @@ export type OrganisationResource = {
    */
   readonly uuid?: string;
   /**
-   * Training branch the resource belongs to
+   * **[REQUIRED]** Training branch the resource belongs to. Create and update fail without it; legacy rows may still be null.
    */
   branch_uuid?: string | null;
   resource_type: ResourceTypeEnum;
@@ -4150,6 +4150,10 @@ export type ClassMarketplaceJobRequest = {
    */
   organisation_uuid: string;
   /**
+   * **[REQUIRED]** Training branch that owns the job. IN_PERSON and HYBRID jobs take the branch pin and name as their location.
+   */
+  branch_uuid?: string;
+  /**
    * **[OPTIONAL]** Course backing the advertised class. Required when program_uuid is not provided.
    */
   course_uuid?: string | null;
@@ -4292,6 +4296,14 @@ export type ClassMarketplaceJobResource = {
    * Units to reserve per session (must be 1 for venues; defaults to 1).
    */
   quantity?: number | null;
+  /**
+   * **[READ-ONLY]** Name of the reserved resource.
+   */
+  readonly resource_name?: string;
+  /**
+   * **[READ-ONLY]** Kind of the reserved resource (VENUE or EQUIPMENT_POOL).
+   */
+  readonly resource_type?: string;
 };
 
 export type ApiResponseClassMarketplaceJob = {
@@ -4311,6 +4323,22 @@ export type ClassMarketplaceJob = {
   status?: StatusEnum8;
   readonly resources?: Array<ClassMarketplaceJobResource>;
   readonly organisation_uuid?: string;
+  /**
+   * **[READ-ONLY]** Training branch that owns the job.
+   */
+  readonly branch_uuid?: string;
+  /**
+   * **[READ-ONLY]** Name of the owning training branch.
+   */
+  readonly branch_name?: string;
+  /**
+   * **[READ-ONLY]** Number of applications received for the job.
+   */
+  readonly application_count?: number;
+  /**
+   * **[READ-ONLY]** Instructor hired for the job, once hiring is decided.
+   */
+  readonly hired_instructor_uuid?: string;
   readonly course_uuid?: string;
   readonly program_uuid?: string;
   readonly sale_price?: number;
@@ -25698,6 +25726,7 @@ export type ListJobsData = {
   path?: never;
   query: {
     organisation_uuid?: string;
+    branch_uuid?: string;
     course_uuid?: string;
     program_uuid?: string;
     status?: string;

@@ -5234,6 +5234,16 @@ export const zClassMarketplaceJobResource = z
   .object({
     resource_uuid: z.string().uuid().describe('**[REQUIRED]** Organisation resource to reserve.'),
     quantity: z.union([z.number().int().gte(1), z.null()]).optional(),
+    resource_name: z
+      .string()
+      .describe('**[READ-ONLY]** Name of the reserved resource.')
+      .readonly()
+      .optional(),
+    resource_type: z
+      .string()
+      .describe('**[READ-ONLY]** Kind of the reserved resource (VENUE or EQUIPMENT_POOL).')
+      .readonly()
+      .optional(),
   })
   .describe(
     'Organisation resource a marketplace job reserves for its sessions while recruitment runs (venue booked exclusively, equipment pools by quantity)'
@@ -5257,6 +5267,13 @@ export const zClassMarketplaceJobRequest = z
       .string()
       .uuid()
       .describe('**[REQUIRED]** Organisation posting the marketplace class job.'),
+    branch_uuid: z
+      .string()
+      .uuid()
+      .describe(
+        '**[REQUIRED]** Training branch that owns the job. IN_PERSON and HYBRID jobs take the branch pin and name as their location.'
+      )
+      .optional(),
     course_uuid: z.union([z.string().uuid(), z.null()]).optional(),
     program_uuid: z.union([z.string().uuid(), z.null()]).optional(),
     title: z.string().min(0).max(255).describe('**[REQUIRED]** Advert title for the class job.'),
@@ -5327,6 +5344,29 @@ export const zClassMarketplaceJob = z
     status: zStatusEnum8.optional(),
     resources: z.array(zClassMarketplaceJobResource).readonly().optional(),
     organisation_uuid: z.string().uuid().readonly().optional(),
+    branch_uuid: z
+      .string()
+      .uuid()
+      .describe('**[READ-ONLY]** Training branch that owns the job.')
+      .readonly()
+      .optional(),
+    branch_name: z
+      .string()
+      .describe('**[READ-ONLY]** Name of the owning training branch.')
+      .readonly()
+      .optional(),
+    application_count: z
+      .number()
+      .int()
+      .describe('**[READ-ONLY]** Number of applications received for the job.')
+      .readonly()
+      .optional(),
+    hired_instructor_uuid: z
+      .string()
+      .uuid()
+      .describe('**[READ-ONLY]** Instructor hired for the job, once hiring is decided.')
+      .readonly()
+      .optional(),
     course_uuid: z.string().uuid().readonly().optional(),
     program_uuid: z.string().uuid().readonly().optional(),
     sale_price: z.number().readonly().optional(),
@@ -18197,6 +18237,7 @@ export const zListJobsData = z.object({
   path: z.never().optional(),
   query: z.object({
     organisation_uuid: z.string().uuid().optional(),
+    branch_uuid: z.string().uuid().optional(),
     course_uuid: z.string().uuid().optional(),
     program_uuid: z.string().uuid().optional(),
     status: z.string().optional(),

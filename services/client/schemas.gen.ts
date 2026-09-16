@@ -3187,7 +3187,8 @@ export const OrganisationResourceSchema = {
     branch_uuid: {
       type: ['string', 'null'],
       format: 'uuid',
-      description: 'Training branch the resource belongs to',
+      description:
+        '**[REQUIRED]** Training branch the resource belongs to. Create and update fail without it; legacy rows may still be null.',
     },
     resource_type: {
       $ref: '#/components/schemas/ResourceTypeEnum',
@@ -8600,6 +8601,12 @@ export const ClassMarketplaceJobRequestSchema = {
       format: 'uuid',
       description: '**[REQUIRED]** Organisation posting the marketplace class job.',
     },
+    branch_uuid: {
+      type: 'string',
+      format: 'uuid',
+      description:
+        '**[REQUIRED]** Training branch that owns the job. IN_PERSON and HYBRID jobs take the branch pin and name as their location.',
+    },
     course_uuid: {
       type: ['string', 'null'],
       format: 'uuid',
@@ -8818,6 +8825,16 @@ export const ClassMarketplaceJobResourceSchema = {
       example: 1,
       minimum: 1,
     },
+    resource_name: {
+      type: 'string',
+      description: '**[READ-ONLY]** Name of the reserved resource.',
+      readOnly: true,
+    },
+    resource_type: {
+      type: 'string',
+      description: '**[READ-ONLY]** Kind of the reserved resource (VENUE or EQUIPMENT_POOL).',
+      readOnly: true,
+    },
   },
   required: ['resource_uuid'],
 } as const;
@@ -8869,6 +8886,29 @@ export const ClassMarketplaceJobSchema = {
     organisation_uuid: {
       type: 'string',
       format: 'uuid',
+      readOnly: true,
+    },
+    branch_uuid: {
+      type: 'string',
+      format: 'uuid',
+      description: '**[READ-ONLY]** Training branch that owns the job.',
+      readOnly: true,
+    },
+    branch_name: {
+      type: 'string',
+      description: '**[READ-ONLY]** Name of the owning training branch.',
+      readOnly: true,
+    },
+    application_count: {
+      type: 'integer',
+      format: 'int32',
+      description: '**[READ-ONLY]** Number of applications received for the job.',
+      readOnly: true,
+    },
+    hired_instructor_uuid: {
+      type: 'string',
+      format: 'uuid',
+      description: '**[READ-ONLY]** Instructor hired for the job, once hiring is decided.',
       readOnly: true,
     },
     course_uuid: {
