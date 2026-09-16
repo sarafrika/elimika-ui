@@ -1,3 +1,5 @@
+import { Building2 } from 'lucide-react';
+import { EmptyState } from '@/components/ui/empty-state';
 import { getTrainingBranchByUuid, type TrainingBranch } from '@/services/client';
 import CreateEditBranchform from '@/src/features/organisation/branches/components/createedit-branch-form';
 import type { Action } from '../utils';
@@ -20,7 +22,15 @@ export default async function CreateEditBranchPanel({
     });
 
     if (branchResp.error || !branchResp.data) {
-      return <>No Branch</>;
+      return (
+        <EmptyState
+          variant='card'
+          icon={Building2}
+          title='Branch not found'
+          description='This branch may have been deleted, or you no longer have access to it.'
+          className='mt-6'
+        />
+      );
     }
     branch = branchResp.data?.data as TrainingBranch;
   }

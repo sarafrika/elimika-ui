@@ -93,7 +93,7 @@ export default function BranchOverviewStats({
       <StatTile
         icon={DoorOpen}
         title='Venues'
-        description='Classrooms at this branch'
+        description='Rooms at this branch'
         value={venueUuids.size}
         loading={joinLoading}
         variant='primary'
@@ -101,7 +101,7 @@ export default function BranchOverviewStats({
       <StatTile
         icon={Boxes}
         title='Equipment'
-        description='Resource pools at this branch'
+        description='Pools at this branch'
         value={equipmentCount}
         loading={equipmentQuery.isLoading}
         variant='indigo'
@@ -109,7 +109,7 @@ export default function BranchOverviewStats({
       <StatTile
         icon={School}
         title='Classes'
-        description='Classes scheduled here'
+        description='Scheduled here'
         value={branchClasses.length}
         loading={joinLoading}
         variant='amber'
@@ -117,7 +117,7 @@ export default function BranchOverviewStats({
       <StatTile
         icon={GraduationCap}
         title='Students'
-        description='Enrolled across branch classes'
+        description='Across branch classes'
         value={studentUuids.size}
         loading={studentsLoading}
         variant='green'
