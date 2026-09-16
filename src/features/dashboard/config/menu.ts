@@ -690,6 +690,11 @@ export default {
           icon: DollarSign,
         },
         {
+          title: 'Categories/Subject',
+          url: '/dashboard/categories',
+          icon: DollarSign,
+        },
+        {
           title: 'Financial Overview',
           url: '/dashboard/financial-overview',
           icon: LucideLandmark,

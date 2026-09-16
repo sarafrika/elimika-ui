@@ -502,8 +502,6 @@ export function CourseRecordPage({
   /* ── rail ───────────────────────────────────────────────────────────── */
   const railCard = (card: CourseRailCardId): ReactNode => {
     switch (card) {
-      case 'access':
-        return <AccessCard access={access} vars={vars} />;
       case 'glance':
         return (<>
           <AsyncSection {...asyncProps(record.course)} empty={!course}>
@@ -528,6 +526,8 @@ export function CourseRecordPage({
           <GlanceCard access={access} vars={vars} {...asyncProps(record.course)} />
         </>
         )
+      case 'access':
+        return <AccessCard access={access} vars={vars} />;
       case 'ownerDecisions':
         return (
           <OwnerDecisionsPanel
