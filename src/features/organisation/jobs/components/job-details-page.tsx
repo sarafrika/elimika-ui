@@ -52,12 +52,13 @@ import {
 } from '@/hooks/use-batched-lookups';
 import { formatDate, formatDateOnly } from '@/lib/date';
 import { getErrorMessage } from '@/lib/error-utils';
-import type { ClassMarketplaceJob, ClassMarketplaceJobApplication } from '@/services/client';
+import type { ClassMarketplaceJob } from '@/services/client';
 import { cancelJobMutation, getJobOptions } from '@/services/client/@tanstack/react-query.gen';
 import { invalidateJobApplicationWorkflowQueries } from '@/src/features/dashboard/workflow-query-invalidation';
 import { editJobHref, JOB_TABS, type JobTab, jobApplicantHref, jobsHref } from '../lib/job-routes';
 import {
   deliveryLabel,
+  hiredApplicationFor,
   holdStateFor,
   type JobStage,
   jobSessionWindows,
@@ -78,22 +79,6 @@ import {
   JobWhereContent,
   useJobResourceRows,
 } from './job-sections';
-
-const isHiredStatus = (status?: string | null) => {
-  const key = String(status ?? '').toLowerCase();
-  return key === 'hired' || key === 'assigned';
-};
-
-export function hiredApplicationFor(
-  job: ClassMarketplaceJob | null | undefined,
-  applications: ClassMarketplaceJobApplication[]
-) {
-  return (
-    applications.find(application => application.uuid === job?.assigned_application_uuid) ??
-    applications.find(application => isHiredStatus(application.status)) ??
-    null
-  );
-}
 
 function nextStepCopy(
   stage: JobStage,

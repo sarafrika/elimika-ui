@@ -1,7 +1,11 @@
 import { getEffectiveJobStatus } from '@/components/profile-job-marketplace/job-expiration';
 import { type ApiDateInput, dayjs, DEFAULT_CLASS_TIME_ZONE, parseApiDate } from '@/lib/date';
 import { townFromAddress } from '@/lib/geocoding';
-import type { ClassMarketplaceJob, ClassSessionTemplate } from '@/services/client';
+import type {
+  ClassMarketplaceJob,
+  ClassMarketplaceJobApplication,
+  ClassSessionTemplate,
+} from '@/services/client';
 import { createClassHref, jobHref, repostJobHref, viewClassHref } from './job-routes';
 
 export type JobStage = 'open' | 'awaiting_class' | 'class_created' | 'closed';
@@ -34,6 +38,24 @@ export function jobStatusLabel(job: ClassMarketplaceJob, now = Date.now()) {
   const stage = jobStage(job, now);
   if (stage !== 'closed') return JOB_STAGE_META[stage].label;
   return getEffectiveJobStatus(job, now) === 'cancelled' ? 'Cancelled' : 'Expired';
+}
+
+export function hiredInstructorUuid(job: ClassMarketplaceJob) {
+  return job.hired_instructor_uuid ?? job.assigned_instructor_uuid ?? null;
+}
+
+/** The application the job stamped at hire time, else whichever one reached hired. */
+export function hiredApplicationFor(
+  job: ClassMarketplaceJob | null | undefined,
+  applications: ClassMarketplaceJobApplication[]
+) {
+  const hired = (status?: string | null) =>
+    ['hired', 'assigned'].includes(String(status ?? '').toLowerCase());
+  return (
+    applications.find(application => application.uuid === job?.assigned_application_uuid) ??
+    applications.find(application => hired(application.status)) ??
+    null
+  );
 }
 
 export type HoldState = {

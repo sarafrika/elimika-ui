@@ -34,6 +34,7 @@ import { useOrganisationJobs } from '../hooks/use-organisation-jobs';
 import { jobHref, postJobHref } from '../lib/job-routes';
 import {
   deliveryLabel,
+  hiredInstructorUuid,
   holdStateFor,
   type JobStage,
   jobSessionWindows,
@@ -59,10 +60,6 @@ const STAGE_TABS: Array<{ value: StageFilter; label: string }> = [
 
 const ROW_GRID =
   'lg:grid lg:grid-cols-[minmax(0,2.2fr)_minmax(0,1.1fr)_minmax(0,1.2fr)_minmax(0,1.3fr)_minmax(0,1fr)_minmax(0,0.9fr)_minmax(0,1fr)] lg:gap-3';
-
-export function hiredInstructorUuid(job: ClassMarketplaceJob) {
-  return job.hired_instructor_uuid ?? job.assigned_instructor_uuid ?? null;
-}
 
 export function JobsListPage() {
   const organisation = useOrganisation();
