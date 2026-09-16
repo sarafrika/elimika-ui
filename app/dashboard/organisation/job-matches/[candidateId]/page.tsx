@@ -61,6 +61,7 @@ import { getErrorMessage } from '@/lib/error-utils';
 import { cn } from '@/lib/utils';
 import type { ClassMarketplaceJobApplication, Instructor } from '@/services/client';
 import { invalidateJobApplicationWorkflowQueries } from '@/src/features/dashboard/workflow-query-invalidation';
+import { createClassHref as createClassHrefFor } from '@/src/features/organisation/jobs/lib/job-routes';
 import {
   getInstructorByUuidOptions,
   getInstructorEducationOptions,
@@ -318,7 +319,7 @@ export default function CandidateDetailPage() {
   // control never offers a move the server will turn down.
   const notApprovedToTrain = app?.training_approved === false;
   const forwardBlocked = nextStep?.action === 'hire' && notApprovedToTrain;
-  const createClassHref = `/dashboard/organisation/opportunities/${jobUuid}/create-class`;
+  const createClassHref = createClassHrefFor(jobUuid);
 
   // Hiring is one backend transition that affiliates the instructor. Nothing is chained onto it:
   // a refused step must leave the candidate exactly where they were.

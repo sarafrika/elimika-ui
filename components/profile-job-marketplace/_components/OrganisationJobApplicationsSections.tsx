@@ -1,25 +1,9 @@
 'use client';
 
-import {
-  ArrowRight,
-  BriefcaseBusiness,
-  CheckCircle2,
-  Clock,
-  MapPin,
-  Search,
-  TriangleAlert,
-  Users,
-  XCircle,
-} from 'lucide-react';
+import { ArrowRight, Search, TriangleAlert } from 'lucide-react';
 import Link from 'next/link';
 
-import {
-  DetailGrid,
-  SectionCard,
-  StatCard,
-  StatCardSkeleton,
-  StatusBadge,
-} from '@/app/dashboard/admin/_components/ui';
+import { StatusBadge } from '@/app/dashboard/admin/_components/ui';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { EmptyState } from '@/components/ui/empty-state';
@@ -33,13 +17,7 @@ import {
 } from '@/components/ui/select';
 import { Skeleton } from '@/components/ui/skeleton';
 import { formatCurrency } from '@/lib/format-currency';
-import type {
-  ClassMarketplaceJob,
-  ClassMarketplaceJobApplication,
-  Instructor,
-} from '@/services/client';
-import { useUserDomain } from '@/src/features/dashboard/context/user-domain-context';
-import { roleScopedDashboardPath } from '@/src/features/dashboard/lib/active-domain-storage';
+import type { ClassMarketplaceJobApplication, Instructor } from '@/services/client';
 import {
   APPLICATION_STATUSES,
   type ApplicationStatus,
@@ -52,22 +30,6 @@ export { APPLICATION_STATUSES };
 
 export type ApplicationStatusFilter = 'ALL' | ApplicationStatus;
 
-export type ApplicationStats = {
-  total: number;
-  inReview: number;
-  hired: number;
-  classCreated: number;
-  closed: number;
-};
-
-function formatLabel(value?: string | null) {
-  if (!value) return 'Not provided';
-  return value
-    .replace(/_/g, ' ')
-    .toLowerCase()
-    .replace(/(^|\s)\S/g, letter => letter.toUpperCase());
-}
-
 function formatDate(value?: string | Date | null) {
   if (!value) return 'Not provided';
   const date = value instanceof Date ? value : new Date(value);
@@ -78,51 +40,6 @@ function formatDate(value?: string | Date | null) {
 function shortId(value?: string | null) {
   if (!value) return 'Unknown';
   return value.slice(0, 8);
-}
-
-export function ApplicationStatsCards({
-  isLoading,
-  stats,
-}: {
-  isLoading: boolean;
-  stats: ApplicationStats;
-}) {
-  if (isLoading) {
-    return (
-      <div className='grid gap-4 sm:grid-cols-2 xl:grid-cols-5'>
-        {[0, 1, 2, 3, 4].map(item => (
-          <StatCardSkeleton key={item} />
-        ))}
-      </div>
-    );
-  }
-
-  const cards = [
-    { label: 'Total', value: stats.total, icon: Users, tone: 'info' as const },
-    { label: 'In review', value: stats.inReview, icon: Clock, tone: 'warning' as const },
-    { label: 'Hired', value: stats.hired, icon: CheckCircle2, tone: 'success' as const },
-    {
-      label: 'Class created',
-      value: stats.classCreated,
-      icon: BriefcaseBusiness,
-      tone: 'success' as const,
-    },
-    { label: 'Closed', value: stats.closed, icon: XCircle, tone: 'destructive' as const },
-  ];
-
-  return (
-    <div className='grid gap-4 sm:grid-cols-2 xl:grid-cols-5'>
-      {cards.map(card => (
-        <StatCard
-          key={card.label}
-          label={card.label}
-          value={card.value}
-          icon={card.icon}
-          tone={card.tone}
-        />
-      ))}
-    </div>
-  );
 }
 
 export function ApplicationsFilterBar({
@@ -385,98 +302,5 @@ export function ApplicationsEmptyState() {
       description='No instructor applications match the selected filters.'
       variant='compact'
     />
-  );
-}
-
-export function JobOverviewPanel({
-  job,
-  contentLabel,
-  organisationUuid,
-  isLoading,
-}: {
-  job: ClassMarketplaceJob | null;
-  contentLabel?: string | null;
-  organisationUuid?: string | null;
-  isLoading: boolean;
-}) {
-  const { activeDomain } = useUserDomain();
-
-  if (isLoading) return <JobOverviewSkeleton />;
-
-  return (
-    <SectionCard title='Job overview' className='h-fit'>
-      <DetailGrid
-        columns={1}
-        items={[
-          { label: 'Job title', value: job?.title ?? 'Not found' },
-          {
-            label: 'Sale price per session',
-            value:
-              typeof job?.sale_price === 'number'
-                ? formatCurrency(job.sale_price)
-                : 'Not specified',
-          },
-          {
-            label: 'Instructor pay per session',
-            value:
-              typeof job?.instructor_pay === 'number'
-                ? formatCurrency(job.instructor_pay)
-                : 'Not specified',
-          },
-          {
-            label: 'Margin per session',
-            value:
-              typeof job?.sale_price === 'number' && typeof job?.instructor_pay === 'number'
-                ? formatCurrency(job.sale_price - job.instructor_pay)
-                : 'Not available',
-          },
-          { label: 'Course / program', value: contentLabel ?? 'Not available' },
-          {
-            label: 'Organisation',
-            value: job?.organisation_uuid ?? organisationUuid ?? 'Not available',
-          },
-          {
-            label: 'Location',
-            value: (
-              <span className='inline-flex items-center gap-2'>
-                <MapPin className='text-primary size-4' />
-                {job?.location_name || formatLabel(job?.location_type)}
-              </span>
-            ),
-          },
-          {
-            label: 'Schedule',
-            value: (
-              <div className='space-y-0.5'>
-                <div>{formatDate(job?.default_start_time)}</div>
-                <div className='text-muted-foreground text-xs'>
-                  to {formatDate(job?.default_end_time)}
-                </div>
-              </div>
-            ),
-          },
-        ]}
-      />
-
-      <div className='mt-4 flex flex-wrap gap-2'>
-        <Button variant='outline' size='sm' asChild>
-          <Link href={roleScopedDashboardPath(activeDomain, '/dashboard/opportunities')}>
-            Back to opportunities
-          </Link>
-        </Button>
-      </div>
-    </SectionCard>
-  );
-}
-
-function JobOverviewSkeleton() {
-  return (
-    <SectionCard title='Job overview' className='h-fit'>
-      <div className='space-y-3'>
-        {[0, 1, 2, 3, 4].map(item => (
-          <Skeleton key={item} className='h-16 rounded-md' />
-        ))}
-      </div>
-    </SectionCard>
   );
 }

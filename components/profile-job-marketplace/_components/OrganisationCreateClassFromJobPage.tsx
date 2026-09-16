@@ -48,6 +48,7 @@ import {
 import { useUserDomain } from '@/src/features/dashboard/context/user-domain-context';
 import { roleScopedDashboardPath } from '@/src/features/dashboard/lib/active-domain-storage';
 import { invalidateJobApplicationWorkflowQueries } from '@/src/features/dashboard/workflow-query-invalidation';
+import { MoneyRow } from './MoneyRow';
 
 type CreateClassFromJobPageProps = {
   jobUuid: string;
@@ -378,36 +379,6 @@ export function OrganisationCreateClassFromJobPage({ jobUuid }: CreateClassFromJ
             </div>
           )}
         </AsyncSection>
-      </div>
-    </div>
-  );
-}
-
-function MoneyRow({
-  label,
-  value,
-  accent,
-  emphasis,
-  rateBasis,
-}: {
-  label: string;
-  value: number | null;
-  accent: string;
-  emphasis?: boolean;
-  rateBasis?: RateBasis;
-}) {
-  return (
-    <div className={cn('bg-muted/20 rounded-md border-l-4 px-3 py-2', accent)}>
-      <div className='text-muted-foreground text-xs tracking-wide uppercase'>{label}</div>
-      <div
-        className={cn(
-          'text-foreground mt-0.5 tabular-nums',
-          emphasis ? 'text-lg font-semibold' : 'text-base font-medium'
-        )}
-      >
-        {value === null
-          ? 'Not specified'
-          : `${formatCurrency(value)} / ${rateBasisShort(rateBasis)}`}
       </div>
     </div>
   );

@@ -95,6 +95,11 @@ import { useUserDomain } from '@/src/features/dashboard/context/user-domain-cont
 import { roleScopedDashboardPath } from '@/src/features/dashboard/lib/active-domain-storage';
 import { invalidateJobApplicationWorkflowQueries } from '@/src/features/dashboard/workflow-query-invalidation';
 import { useOrganisation } from '@/src/features/organisation/context/organisation-context';
+import {
+  createClassHref as createClassHrefFor,
+  editJobHref,
+  jobHref,
+} from '@/src/features/organisation/jobs/lib/job-routes';
 import { useUserProfile } from '@/src/features/profile/context/profile-context';
 
 import { useOrganisationsByIds } from '../../../hooks/use-batched-lookups';
@@ -1234,7 +1239,7 @@ export function JobMarketplacePage({ role }: { role: JobMarketplaceRole }) {
   });
 
   const handleEdit = (job: ClassMarketplaceJobWithProgram) => {
-    router.push(`/dashboard/organisation/jobs/new?jobUuid=${job.uuid ?? ''}`);
+    if (job.uuid) router.push(editJobHref(job.uuid));
   };
 
   if (!canLoadJobs) {
@@ -1563,18 +1568,12 @@ export function JobMarketplacePage({ role }: { role: JobMarketplaceRole }) {
                               canReapply={statusAllowsReapply(application?.status)}
                               applicationsHref={
                                 isOrganizationView && job.uuid
-                                  ? roleScopedDashboardPath(
-                                    activeDomain,
-                                    `/dashboard/opportunities/${job.uuid}`
-                                  )
+                                  ? jobHref(job.uuid, 'applicants')
                                   : undefined
                               }
                               createClassHref={
                                 isOrganizationView && job.uuid
-                                  ? roleScopedDashboardPath(
-                                    activeDomain,
-                                    `/dashboard/opportunities/${job.uuid}/create-class`
-                                  )
+                                  ? createClassHrefFor(job.uuid)
                                   : undefined
                               }
                             />

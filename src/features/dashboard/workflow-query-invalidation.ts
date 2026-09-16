@@ -109,6 +109,9 @@ const workflowQueryIds = {
     'getClassDefinitionsForOrganisation',
     'getClassDefinitionsForInstructor',
     'getClassDefinition',
+    'listBookings',
+    'getCalendar',
+    'getInstructorTimeHolds',
   ],
   review: [
     'getCourseReviews',

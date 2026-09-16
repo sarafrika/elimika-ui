@@ -11,7 +11,6 @@ import {
   XCircle,
 } from 'lucide-react';
 import Link from 'next/link';
-import { useRouter } from 'next/navigation';
 import { useMemo, useState } from 'react';
 import { toast } from 'sonner';
 
@@ -40,9 +39,12 @@ import {
   listJobApplicationsOptions,
   reviewApplicationMutation,
 } from '@/services/client/@tanstack/react-query.gen';
-import { useUserDomain } from '@/src/features/dashboard/context/user-domain-context';
-import { roleScopedDashboardPath } from '@/src/features/dashboard/lib/active-domain-storage';
 import { invalidateJobApplicationWorkflowQueries } from '@/src/features/dashboard/workflow-query-invalidation';
+import {
+  createClassHref as createClassHrefFor,
+  jobHref,
+  viewClassHref,
+} from '@/src/features/organisation/jobs/lib/job-routes';
 import {
   canRejectApplication,
   HIRING_STAGES,
@@ -171,8 +173,6 @@ export function JobApplicantReviewPage({
   jobUuid: string;
   applicationUuid: string;
 }) {
-  const router = useRouter();
-  const { activeDomain } = useUserDomain();
   const queryClient = useQueryClient();
   const [reviewNotes, setReviewNotes] = useState('');
   const [interviewAt, setInterviewAt] = useState('');
@@ -219,11 +219,8 @@ export function JobApplicantReviewPage({
   const showReject = canReject && !decisionsClosed;
   const needsInterviewAt = forwardStep?.action === 'interview';
 
-  const createClassHref = roleScopedDashboardPath(
-    activeDomain,
-    `/dashboard/opportunities/${jobUuid}/create-class`
-  );
-  const classesHref = roleScopedDashboardPath(activeDomain, '/dashboard/classes');
+  const createClassHref = createClassHrefFor(jobUuid);
+  const classesHref = viewClassHref(job?.assigned_class_definition_uuid);
 
   const reviewMutation = useMutation({
     ...reviewApplicationMutation(),
@@ -293,14 +290,11 @@ export function JobApplicantReviewPage({
   return (
     <div className={adminTheme.page}>
       <div className={adminTheme.pageStack}>
-        <Button
-          variant='ghost'
-          size='sm'
-          className='text-muted-foreground w-fit px-0'
-          onClick={() => router.back()}
-        >
-          <ArrowLeft className='mr-2 size-4' />
-          Back to applications
+        <Button variant='ghost' size='sm' className='text-muted-foreground w-fit px-0' asChild>
+          <Link href={jobHref(jobUuid, 'applicants')}>
+            <ArrowLeft className='mr-2 size-4' />
+            Back to applicants
+          </Link>
         </Button>
 
         <AdminPageHeader
