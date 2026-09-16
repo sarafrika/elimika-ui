@@ -1,7 +1,7 @@
 'use client';
 
-import { useMutation, useQuery } from '@tanstack/react-query';
-import { Loader2 } from 'lucide-react';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { Info, Loader2, TriangleAlert } from 'lucide-react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { type FormEvent, useEffect, useMemo, useState } from 'react';
 import { toast } from 'sonner';
@@ -23,11 +23,10 @@ import {
   DEFAULT_DAYS,
   DEFAULT_RATE_BASIS,
   type Delivery,
-  EquipmentTarget,
   firstOccurrenceOnOrAfter,
   firstRegistrationWindowError,
   fmtDate,
-  LocationVenue,
+  isPhysicalDelivery,
   num,
   type Offering,
   OfferingPicker,
@@ -51,9 +50,15 @@ import {
   StandardSchedule,
   serviceFormat,
   sessionMinutesFor,
+  TargetGroupPicker,
   toDateTime,
   UpcomingSessions,
+  useBranchResources,
+  useOrganisationBranches,
   validateRegistrationWindow,
+  WhereItHappens,
+  type WhereItHappensValue,
+  whereItHappensBlockers,
 } from '@/components/class-form';
 import { PageHeader } from '@/components/page-header';
 import { type ConflictItem, parseConflictError } from '@/components/resourcing/conflicts';
@@ -62,8 +67,9 @@ import { Button } from '@/components/ui/button';
 import { useOrganisation } from '@/context/organisation-context';
 import { useTimeZone } from '@/context/timezone-context';
 import { useCoursesByIds, useProgramsByIds } from '@/hooks/use-batched-lookups';
-import { extractPage } from '@/lib/api-helpers';
+import { extractEntity, extractPage } from '@/lib/api-helpers';
 import { normalizeScheduleTimeZone } from '@/lib/date';
+import { getErrorMessage } from '@/lib/error-utils';
 import { STALE_TIMES } from '@/lib/query-client';
 import type {
   Category,
@@ -77,14 +83,19 @@ import {
   createJobMutation,
   getAllCategoriesOptions,
   getJobOptions,
-  listResourcesOptions,
+  getResourceOptions,
   searchProgramTrainingApplicationsOptions,
   searchTrainingApplicationsOptions,
   updateJobMutation,
 } from '@/services/client/@tanstack/react-query.gen';
+import { dashboardUrl } from '@/src/features/dashboard/lib/dashboard-url';
+import { invalidateJobApplicationWorkflowQueries } from '@/src/features/dashboard/workflow-query-invalidation';
+
+const JOBS_HREF = dashboardUrl('organisation', 'jobs');
 
 export default function OrganisationPostJobPage() {
   const router = useRouter();
+  const queryClient = useQueryClient();
   const searchParams = useSearchParams();
   const organisation = useOrganisation();
   const organisationUuid = organisation?.uuid ?? '';
@@ -175,9 +186,11 @@ export default function OrganisationPostJobPage() {
 
   const editingJobUuid = searchParams.get('jobUuid')?.trim() ?? '';
   const isEditMode = Boolean(editingJobUuid);
+  // A repost starts from an existing job's answers but saves a brand-new job.
+  const sourceJobUuid = editingJobUuid || (searchParams.get('repostFrom')?.trim() ?? '');
   const editingJobQuery = useQuery({
-    ...getJobOptions({ path: { jobUuid: editingJobUuid } }),
-    enabled: isEditMode,
+    ...getJobOptions({ path: { jobUuid: sourceJobUuid } }),
+    enabled: Boolean(sourceJobUuid),
   });
   const editingJob = editingJobQuery.data?.data ?? null;
 
@@ -193,7 +206,7 @@ export default function OrganisationPostJobPage() {
   const [prefillApplied, setPrefillApplied] = useState(false);
   useEffect(() => {
     if (offerings.length === 0) return;
-    if (isEditMode) return;
+    if (sourceJobUuid) return;
     if (!prefillApplied && prefillValue && offerings.some(o => o.value === prefillValue)) {
       setOffering(prefillValue);
       setPrefillApplied(true);
@@ -203,7 +216,7 @@ export default function OrganisationPostJobPage() {
     if (firstOffering && !offerings.some(o => o.value === offering)) {
       setOffering(firstOffering.value);
     }
-  }, [offerings, offering, prefillValue, prefillApplied, isEditMode]);
+  }, [offerings, offering, prefillValue, prefillApplied, sourceJobUuid]);
 
   const selectedOffering = useMemo(
     () => offerings.find(o => o.value === offering),
@@ -233,38 +246,27 @@ export default function OrganisationPostJobPage() {
 
   const title = useMemo(() => selectedOffering?.label ?? 'New job', [selectedOffering]);
 
-  const orgResourcesQuery = useQuery({
-    ...listResourcesOptions({
-      path: { organisationUuid },
-      query: { pageable: { page: 0, size: 100 }, active: true },
-    }),
-    enabled: Boolean(organisationUuid),
-  });
-  const orgResources = useMemo(
-    () => extractPage<OrganisationResource>(orgResourcesQuery.data).items,
-    [orgResourcesQuery.data]
-  );
-  const venueResources = useMemo(
-    () => orgResources.filter(r => r.resource_type === ResourceTypeEnum.VENUE),
-    [orgResources]
-  );
-  const equipmentResources = useMemo(
-    () => orgResources.filter(r => r.resource_type === ResourceTypeEnum.EQUIPMENT_POOL),
-    [orgResources]
-  );
-
   const [service, setService] = useState<ServiceKey>('group');
   const sessionFormat = serviceFormat(service);
 
-  const [delivery, setDelivery] = useState<Delivery>('IN_PERSON');
-  const [locationName, setLocationName] = useState('');
-  const [locationLatitude, setLocationLatitude] = useState('');
-  const [locationLongitude, setLocationLongitude] = useState('');
-  const [meetingLink, setMeetingLink] = useState('');
-  const [venueUuid, setVenueUuid] = useState('');
-  const [onlyAvailable, setOnlyAvailable] = useState(true);
-  const [equipmentUuids, setEquipmentUuids] = useState<string[]>([]);
+  const [where, setWhere] = useState<WhereItHappensValue>({
+    branchUuid: '',
+    delivery: 'IN_PERSON',
+    meetingLink: '',
+    venueUuid: '',
+    equipmentUuids: [],
+  });
+  const patchWhere = (patch: Partial<WhereItHappensValue>) =>
+    setWhere(current => ({ ...current, ...patch }));
+  const { delivery, meetingLink, venueUuid, equipmentUuids } = where;
   const [targetGroupUuids, setTargetGroupUuids] = useState<string[]>([]);
+
+  const { branches, query: branchesQuery } = useOrganisationBranches(organisationUuid);
+  const selectedBranch = branches.find(branch => branch.uuid === where.branchUuid);
+  const { venues, equipment, venuesQuery, equipmentQuery } = useBranchResources(
+    organisationUuid,
+    where.branchUuid
+  );
 
   const [rateBasis, setRateBasis] = useState<RateBasis>(DEFAULT_RATE_BASIS);
   const approvedFee = useMemo(
@@ -418,22 +420,28 @@ export default function OrganisationPostJobPage() {
   }, [mode, academicPeriods]);
 
   const [hydrated, setHydrated] = useState(false);
+  const [untypedResourceUuids, setUntypedResourceUuids] = useState<string[]>([]);
   useEffect(() => {
-    if (!isEditMode || hydrated || !editingJob) return;
-    if (!orgResourcesQuery.isFetched) return;
+    if (!sourceJobUuid || hydrated || !editingJob) return;
 
     if (editingJob.course_uuid) setOffering(`course:${editingJob.course_uuid}`);
     else if (editingJob.program_uuid) setOffering(`program:${editingJob.program_uuid}`);
 
-    if (editingJob.location_type) setDelivery(editingJob.location_type as Delivery);
-    if (editingJob.location_name) setLocationName(editingJob.location_name);
-    if (editingJob.location_latitude != null) {
-      setLocationLatitude(String(editingJob.location_latitude));
-    }
-    if (editingJob.location_longitude != null) {
-      setLocationLongitude(String(editingJob.location_longitude));
-    }
-    if (editingJob.meeting_link) setMeetingLink(editingJob.meeting_link);
+    const jobResources = editingJob.resources ?? [];
+    const resourceUuids = (matches: (type?: string) => boolean) =>
+      jobResources
+        .filter(resource => matches(resource.resource_type))
+        .map(resource => resource.resource_uuid)
+        .filter((uuid): uuid is string => Boolean(uuid));
+    setWhere({
+      branchUuid: editingJob.branch_uuid ?? '',
+      delivery: (editingJob.location_type as Delivery | undefined) ?? 'IN_PERSON',
+      meetingLink: editingJob.meeting_link ?? '',
+      venueUuid: resourceUuids(type => type === ResourceTypeEnum.VENUE)[0] ?? '',
+      equipmentUuids: resourceUuids(type => type === ResourceTypeEnum.EQUIPMENT_POOL),
+    });
+    // Jobs saved before resources carried their type are sorted once the branch's lists load.
+    setUntypedResourceUuids(resourceUuids(type => !type));
     if (editingJob.max_participants != null) {
       setMaxParticipants(String(editingJob.max_participants));
     }
@@ -445,17 +453,6 @@ export default function OrganisationPostJobPage() {
         setInstructorPay(String(editingJob.instructor_pay));
       }
     }
-
-    const jobResources = editingJob.resources ?? [];
-    const venue = jobResources.find(r => venueResources.some(v => v.uuid === r.resource_uuid));
-    if (venue?.resource_uuid) setVenueUuid(venue.resource_uuid);
-    setEquipmentUuids(
-      jobResources
-        .map(r => r.resource_uuid)
-        .filter(
-          (uuid): uuid is string => Boolean(uuid) && equipmentResources.some(e => e.uuid === uuid)
-        )
-    );
 
     const templates = editingJob.session_templates ?? [];
     const recurring = templates.filter(t => t.recurrence?.recurrence_type);
@@ -541,14 +538,48 @@ export default function OrganisationPostJobPage() {
     }));
 
     setHydrated(true);
-  }, [
-    isEditMode,
-    hydrated,
-    editingJob,
-    venueResources,
-    equipmentResources,
-    orgResourcesQuery.isFetched,
-  ]);
+  }, [sourceJobUuid, hydrated, editingJob]);
+
+  useEffect(() => {
+    if (untypedResourceUuids.length === 0) return;
+    if (!venuesQuery.isFetched || !equipmentQuery.isFetched) return;
+    setWhere(current => ({
+      ...current,
+      venueUuid:
+        current.venueUuid ||
+        untypedResourceUuids.find(uuid => venues.some(venue => venue.uuid === uuid)) ||
+        '',
+      equipmentUuids: Array.from(
+        new Set([
+          ...current.equipmentUuids,
+          ...untypedResourceUuids.filter(uuid => equipment.some(item => item.uuid === uuid)),
+        ])
+      ),
+    }));
+    setUntypedResourceUuids([]);
+  }, [untypedResourceUuids, venuesQuery.isFetched, equipmentQuery.isFetched, venues, equipment]);
+
+  // A job from before branches were required: its venue's branch is the best first guess.
+  const isLegacyJob = Boolean(editingJob && !editingJob.branch_uuid);
+  const legacyResourceUuid = isLegacyJob
+    ? ((
+        editingJob?.resources?.find(
+          resource => resource.resource_type === ResourceTypeEnum.VENUE
+        ) ?? editingJob?.resources?.[0]
+      )?.resource_uuid ?? '')
+    : '';
+  const legacyResourceQuery = useQuery({
+    ...getResourceOptions({ path: { organisationUuid, resourceUuid: legacyResourceUuid } }),
+    enabled: Boolean(organisationUuid && legacyResourceUuid),
+  });
+  const legacyBranchUuid =
+    extractEntity<OrganisationResource>(legacyResourceQuery.data)?.branch_uuid ?? '';
+  useEffect(() => {
+    if (!hydrated || !legacyBranchUuid) return;
+    setWhere(current =>
+      current.branchUuid ? current : { ...current, branchUuid: legacyBranchUuid }
+    );
+  }, [hydrated, legacyBranchUuid]);
 
   const activeDays = useMemo(() => DAYS.filter(d => days[d].active), [days]);
   const upcomingSessions = useMemo(
@@ -570,9 +601,16 @@ export default function OrganisationPostJobPage() {
     [startDate, endDate, days]
   );
   const selectedResources = useMemo(
-    () => orgResources.filter(r => r.uuid === venueUuid || equipmentUuids.includes(r.uuid ?? '')),
-    [orgResources, venueUuid, equipmentUuids]
+    () =>
+      [...venues, ...equipment].filter(
+        resource => resource.uuid === venueUuid || equipmentUuids.includes(resource.uuid ?? '')
+      ),
+    [venues, equipment, venueUuid, equipmentUuids]
   );
+  const blockers = whereItHappensBlockers(where, selectedBranch, {
+    venue: venues.find(venue => venue.uuid === venueUuid),
+    maxParticipants: num(maxParticipants),
+  });
 
   const [resourceConflicts, setResourceConflicts] = useState<ConflictItem[]>([]);
   const onMutationError = (error: unknown, fallback: string) => {
@@ -582,23 +620,26 @@ export default function OrganisationPostJobPage() {
       toast.error(report.message);
       return;
     }
-    toast.error(error instanceof Error ? error.message : fallback);
+    toast.error(getErrorMessage(error, fallback));
   };
 
   const postJob = useMutation({
     ...createJobMutation(),
-    onSuccess: () => {
+    onSuccess: async response => {
       toast.success('Job posted. Instructors can now apply.');
-      router.push('/dashboard/organisation/opportunities');
+      await invalidateJobApplicationWorkflowQueries(queryClient);
+      const jobUuid = response?.data?.uuid;
+      router.push(jobUuid ? dashboardUrl('organisation', `jobs/${jobUuid}`) : JOBS_HREF);
     },
     onError: error => onMutationError(error, 'Unable to post the job.'),
   });
 
   const saveJob = useMutation({
     ...updateJobMutation(),
-    onSuccess: () => {
+    onSuccess: async () => {
       toast.success('Job updated. Resource holds were re-evaluated.');
-      router.push('/dashboard/organisation/opportunities');
+      await invalidateJobApplicationWorkflowQueries(queryClient);
+      router.push(dashboardUrl('organisation', `jobs/${editingJobUuid}`));
     },
     onError: error => onMutationError(error, 'Unable to update the job.'),
   });
@@ -711,21 +752,9 @@ export default function OrganisationPostJobPage() {
     const registrationMessage = firstRegistrationWindowError(registrationErrors);
     if (registrationMessage) return toast.error(registrationMessage);
 
-    const requiresPhysical = delivery === 'IN_PERSON' || delivery === 'HYBRID';
     const requiresLink = delivery === 'ONLINE' || delivery === 'HYBRID';
-    if (requiresPhysical) {
-      if (!locationName.trim() && !venueUuid) {
-        return toast.error('Add a location name or pick a venue for in-person / hybrid classes.');
-      }
-      const latitude = num(locationLatitude);
-      const longitude = num(locationLongitude);
-      if (latitude !== undefined && (latitude < -90 || latitude > 90)) {
-        return toast.error('Latitude must be between -90 and 90 degrees.');
-      }
-      if (longitude !== undefined && (longitude < -180 || longitude > 180)) {
-        return toast.error('Longitude must be between -180 and 180 degrees.');
-      }
-    }
+    const [firstBlocker] = blockers;
+    if (firstBlocker) return toast.error(firstBlocker);
     if (mode === 'pick' && sessionMinutesFor(sessionStart, sessionEnd) === undefined) {
       return toast.error('The session end time must be after the start time.');
     }
@@ -754,10 +783,12 @@ export default function OrganisationPostJobPage() {
 
     setResourceConflicts([]);
     const [offeringKind, offeringUuid] = offering.split(':');
-    const resources: ClassMarketplaceJobResource[] = [
-      ...(venueUuid ? [{ resource_uuid: venueUuid, quantity: 1 }] : []),
-      ...equipmentUuids.map(uuid => ({ resource_uuid: uuid, quantity: 1 })),
-    ];
+    const resources: ClassMarketplaceJobResource[] = isPhysicalDelivery(delivery)
+      ? [
+          ...(venueUuid ? [{ resource_uuid: venueUuid, quantity: 1 }] : []),
+          ...equipmentUuids.map(uuid => ({ resource_uuid: uuid, quantity: 1 })),
+        ]
+      : [];
 
     const apStarts = academicPeriods
       .map(p => p.startDate)
@@ -777,6 +808,7 @@ export default function OrganisationPostJobPage() {
 
     const payload: ClassMarketplaceJobRequest = {
       organisation_uuid: organisationUuid,
+      branch_uuid: where.branchUuid,
       ...(offeringKind === 'program'
         ? { program_uuid: offeringUuid }
         : { course_uuid: offeringUuid }),
@@ -786,9 +818,6 @@ export default function OrganisationPostJobPage() {
       default_start_time: earliest.start_time,
       default_end_time: earliest.end_time,
       location_type: delivery,
-      location_name: requiresPhysical ? locationName.trim() || undefined : undefined,
-      location_latitude: requiresPhysical ? num(locationLatitude) : undefined,
-      location_longitude: requiresPhysical ? num(locationLongitude) : undefined,
       meeting_link: requiresLink ? meetingLink.trim() || undefined : undefined,
       max_participants: num(maxParticipants),
       allow_waitlist: allowWaitlist,
@@ -830,7 +859,7 @@ export default function OrganisationPostJobPage() {
           description={
             isEditMode
               ? 'Changing the schedule or resources releases the existing holds and re-evaluates them. If the new windows clash, nothing is saved.'
-              : 'Advertise an approved course or program for instructors to apply to. The sessions you schedule here reserve your venue and equipment for those exact windows — the class itself is created once you assign an instructor.'
+              : 'Advertise an approved course or program for instructors to apply to. The branch you pick sets where the training happens and which venues and equipment the sessions hold.'
           }
         />
 
@@ -886,28 +915,27 @@ export default function OrganisationPostJobPage() {
           onRateBasisChange={setRateBasis}
         />
 
-        <LocationVenue
-          delivery={delivery}
-          onDeliveryChange={setDelivery}
-          meetingLink={meetingLink}
-          onMeetingLinkChange={setMeetingLink}
-          locationName={locationName}
-          onLocationNameChange={setLocationName}
-          venueUuid={venueUuid}
-          onVenueChange={setVenueUuid}
-          venueResources={venueResources}
-          onlyAvailable={onlyAvailable}
-          onOnlyAvailableChange={setOnlyAvailable}
-          locationLatitude={locationLatitude}
-          onLocationLatitudeChange={setLocationLatitude}
-          locationLongitude={locationLongitude}
-          onLocationLongitudeChange={setLocationLongitude}
+        <WhereItHappens
+          organisationUuid={organisationUuid}
+          value={where}
+          onChange={patchWhere}
+          maxParticipants={num(maxParticipants)}
+          notice={
+            isLegacyJob ? (
+              <div className='border-warning/60 bg-warning/10 text-foreground flex items-start gap-2 rounded-md border p-3 text-sm'>
+                <TriangleAlert className='text-warning mt-0.5 h-4 w-4 shrink-0' />
+                <p>
+                  <strong className='font-semibold'>Pick the branch this job runs at.</strong>{' '}
+                  {legacyBranchUuid
+                    ? 'It was posted before jobs belonged to a branch, so the branch its venue belongs to is preselected.'
+                    : 'It was posted before jobs belonged to a branch.'}
+                </p>
+              </div>
+            ) : null
+          }
         />
 
-        <EquipmentTarget
-          equipmentResources={equipmentResources}
-          equipmentUuids={equipmentUuids}
-          onEquipmentChange={setEquipmentUuids}
+        <TargetGroupPicker
           organisationUuid={organisationUuid}
           targetGroupUuids={targetGroupUuids}
           onTargetGroupsChange={setTargetGroupUuids}
@@ -975,18 +1003,29 @@ export default function OrganisationPostJobPage() {
           conflicts={resourceConflicts}
         />
 
-        <div className='border-border/70 flex flex-wrap justify-end gap-2 border-t pt-4'>
-          <Button
-            type='button'
-            variant='outline'
-            onClick={() => router.push('/dashboard/organisation/opportunities')}
-          >
-            Cancel
-          </Button>
-          <Button type='submit' disabled={isSubmitting}>
-            {isSubmitting ? <Loader2 className='mr-2 size-4 animate-spin' /> : null}
-            {isEditMode ? 'Save changes' : 'Post job'}
-          </Button>
+        <div className='border-border/70 flex flex-col gap-3 border-t pt-4 sm:flex-row sm:items-start sm:justify-end'>
+          {blockers.length > 0 ? (
+            <ul className='text-muted-foreground mr-auto space-y-1 text-xs'>
+              {blockers.map(blocker => (
+                <li key={blocker} className='flex items-center gap-1.5'>
+                  <Info className='h-3.5 w-3.5 shrink-0' />
+                  {blocker}
+                </li>
+              ))}
+            </ul>
+          ) : null}
+          <div className='flex flex-wrap justify-end gap-2'>
+            <Button type='button' variant='outline' onClick={() => router.push(JOBS_HREF)}>
+              Cancel
+            </Button>
+            <Button
+              type='submit'
+              disabled={isSubmitting || blockers.length > 0 || branchesQuery.isLoading}
+            >
+              {isSubmitting ? <Loader2 className='mr-2 size-4 animate-spin' /> : null}
+              {isEditMode ? 'Save changes' : 'Post job'}
+            </Button>
+          </div>
         </div>
       </form>
     </div>

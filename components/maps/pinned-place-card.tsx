@@ -12,6 +12,8 @@ export type PinnedPlaceCardProps = {
   latitude: number;
   longitude: number;
   size?: StaticMapSize;
+  /** Small caps heading above the name. Defaults to "Location". */
+  label?: ReactNode;
   /** Short label chipped onto the map, e.g. "Branch pin". */
   sourceChip?: ReactNode;
   /** Rendered beside the location details on wide screens. */
@@ -31,6 +33,7 @@ export function PinnedPlaceCard({
   latitude,
   longitude,
   size = 'md',
+  label = 'Location',
   sourceChip,
   aside,
   actions,
@@ -67,7 +70,7 @@ export function PinnedPlaceCard({
       >
         <div className='flex min-w-0 flex-col gap-2.5'>
           <p className='text-muted-foreground text-xs font-medium tracking-wide uppercase'>
-            Location
+            {label}
           </p>
           <div className='min-w-0'>
             <p className='text-foreground truncate text-base font-semibold'>{name}</p>

@@ -4152,7 +4152,7 @@ export type ClassMarketplaceJobRequest = {
   /**
    * **[REQUIRED]** Training branch that owns the job. IN_PERSON and HYBRID jobs take the branch pin and name as their location.
    */
-  branch_uuid?: string;
+  branch_uuid: string;
   /**
    * **[OPTIONAL]** Course backing the advertised class. Required when program_uuid is not provided.
    */

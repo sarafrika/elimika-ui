@@ -7,6 +7,7 @@ import { type FormEvent, useId, useState } from 'react';
 import { toast } from 'sonner';
 
 import { apiErrorMessage } from '@/components/resourcing/conflicts';
+import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import {
   Dialog,
@@ -65,26 +66,47 @@ export function BranchSelect({
   branches,
   value,
   onChange,
+  disabled,
+  showAddress = false,
 }: {
   id?: string;
   branches: TrainingBranch[];
   value: string;
   onChange: (branchUuid: string) => void;
+  disabled?: boolean;
+  /** Adds each branch's address under its name, for pickers where the place matters. */
+  showAddress?: boolean;
 }) {
+  const selected = branches.find(branch => branch.uuid === value);
   return (
-    <Select value={value || undefined} onValueChange={onChange}>
+    <Select value={value || undefined} onValueChange={onChange} disabled={disabled}>
       <SelectTrigger id={id} className='w-full'>
         <Building2 className='text-muted-foreground' />
-        <SelectValue placeholder='Select a branch' />
+        {/* Always given children, so Radix never portals the two-line item text in here. */}
+        <SelectValue placeholder='Select a branch'>
+          {selected?.branch_name || 'Untitled branch'}
+        </SelectValue>
       </SelectTrigger>
       <SelectContent>
         {branches
           .filter(branch => branch.uuid)
           .map(branch => (
             <SelectItem key={branch.uuid} value={branch.uuid as string}>
-              {branch.branch_name || 'Untitled branch'}
+              <span className='flex min-w-0 flex-col'>
+                <span className='truncate'>{branch.branch_name || 'Untitled branch'}</span>
+                {showAddress ? (
+                  <span className='truncate text-xs opacity-70'>
+                    {branch.address || 'Location not set'}
+                  </span>
+                ) : null}
+              </span>
               {branchHasPin(branch) ? null : (
-                <span className='text-muted-foreground text-xs'>· No pin yet</span>
+                <Badge
+                  variant='outline'
+                  className='border-warning/30 bg-warning/10 text-warning ml-auto'
+                >
+                  No pin
+                </Badge>
               )}
             </SelectItem>
           ))}

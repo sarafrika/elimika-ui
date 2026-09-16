@@ -4,7 +4,6 @@
 
 export { AcademicPeriodsPanel } from './academic-periods-panel';
 export * from './class-form-shared';
-export { EquipmentTarget } from './equipment-target';
 export { ClassMediaUpload, type MediaFile } from './class-media-upload';
 export { type Delivery, LocationVenue } from './location-venue';
 export { type Offering, OfferingPicker } from './offering-picker';
@@ -18,3 +17,4 @@ export { ServiceCards } from './service-cards';
 export { StandardSchedule } from './standard-schedule';
 export { TargetGroupPicker } from './target-group-picker';
 export { UpcomingSessions } from './upcoming-sessions';
+export * from './where-it-happens';
