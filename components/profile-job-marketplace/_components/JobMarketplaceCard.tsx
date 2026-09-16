@@ -10,6 +10,7 @@ import { Button } from '@/components/ui/button';
 import { formatCurrency } from '@/lib/format-currency';
 import type { ClassMarketplaceJob, Course, Instructor, Organisation, TrainingProgram } from '@/services/client/types.gen';
 import { useOrganisationsByIds } from '../../../hooks/use-batched-lookups';
+import { jobPlaceLabel } from '../job-place';
 
 type ClassMarketplaceJobWithProgram = ClassMarketplaceJob & {
   readonly program_uuid?: string | null;
@@ -190,7 +191,7 @@ export function JobCard({
           </div>
           <div className='text-muted-foreground flex items-center gap-2 text-sm'>
             <MapPin className='text-primary size-4' />
-            <span>{job.location_name || formatEnumLabel(job.location_type)}</span>
+            <span>{jobPlaceLabel(job, formatEnumLabel(job.location_type))}</span>
           </div>
         </div>
 

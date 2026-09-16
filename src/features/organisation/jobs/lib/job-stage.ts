@@ -1,6 +1,6 @@
 import { getEffectiveJobStatus } from '@/components/profile-job-marketplace/job-expiration';
+export { jobAddress, jobHasPin, jobTown } from '@/components/profile-job-marketplace/job-place';
 import { type ApiDateInput, dayjs, DEFAULT_CLASS_TIME_ZONE, parseApiDate } from '@/lib/date';
-import { townFromAddress } from '@/lib/geocoding';
 import type {
   ClassMarketplaceJob,
   ClassMarketplaceJobApplication,
@@ -221,27 +221,6 @@ export const deliveryLabel = (value?: string | null) =>
 export const serviceLabel = (value?: string | null, sessionFormat?: string | null) =>
   (value && SERVICE_LABELS[value]) ||
   (sessionFormat === 'INDIVIDUAL' ? '1-on-1 session' : 'Group session');
-
-/** Branch jobs store "Branch · address"; the address alone is what the map card wants. */
-export function jobAddress(job: ClassMarketplaceJob) {
-  const location = job.location_name?.trim();
-  if (!location) return null;
-  const prefix = job.branch_name ? `${job.branch_name} · ` : '';
-  return prefix && location.startsWith(prefix) ? location.slice(prefix.length) : location;
-}
-
-export function jobTown(job: ClassMarketplaceJob) {
-  return townFromAddress(jobAddress(job));
-}
-
-export function jobHasPin(job: ClassMarketplaceJob) {
-  return (
-    typeof job.location_latitude === 'number' &&
-    Number.isFinite(job.location_latitude) &&
-    typeof job.location_longitude === 'number' &&
-    Number.isFinite(job.location_longitude)
-  );
-}
 
 const pluralDay = (index: number) =>
   `${['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'][index]}s`;

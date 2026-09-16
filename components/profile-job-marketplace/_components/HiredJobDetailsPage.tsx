@@ -30,6 +30,7 @@ import {
 } from '@/services/client/@tanstack/react-query.gen';
 import { useUserProfile } from '@/src/features/profile/context/profile-context';
 import { hiredJobData, isHiredApplication, JOB_HIRES_PATH, jobLabel, jobPay } from '../hired-jobs';
+import { jobPlaceLabel } from '../job-place';
 import { HiredClassSchedule, PlannedJobSchedule } from './HiredJobSchedule';
 import { JobListSkeleton } from './JobMarketplaceSkeletons';
 
@@ -177,7 +178,7 @@ function HiredJobDetails({ job }: { job: ClassMarketplaceJob }) {
           <DetailGrid
             items={[
               { label: 'Delivery mode', value: jobLabel(job.location_type) },
-              { label: 'Venue / location', value: job.location_name || 'Not provided' },
+              { label: 'Venue / location', value: jobPlaceLabel(job, 'Not provided') },
               {
                 label: 'Session format',
                 value:

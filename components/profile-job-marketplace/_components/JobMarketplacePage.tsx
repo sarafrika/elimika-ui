@@ -14,12 +14,15 @@ import {
   Globe2,
   GraduationCap,
   MapPin,
+  Navigation,
   Pencil,
+  Presentation,
   Plus,
   Search,
   SlidersHorizontal,
   Trash2,
-  Users
+  Users,
+  Wrench,
 } from 'lucide-react';
 import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
@@ -41,6 +44,7 @@ import {
 import DeleteModal from '@/components/custom-modals/delete-modal';
 import { PageHeader as AdminPageHeader } from '@/components/dashboard';
 import { AsyncSection } from '@/components/data/async-section';
+import { PinnedPlaceCard } from '@/components/maps/pinned-place-card';
 import { type ConflictItem, parseConflictError } from '@/components/resourcing/conflicts';
 import { ResourceConflictAlert } from '@/components/resourcing/ResourceConflictAlert';
 import { Badge } from '@/components/ui/badge';
@@ -67,6 +71,7 @@ import Spinner from '@/components/ui/spinner';
 import { Tabs, TabsContent } from '@/components/ui/tabs';
 import { Textarea } from '@/components/ui/textarea';
 import { formatCurrency } from '@/lib/format-currency';
+import { googleMapsUrl } from '@/lib/geocoding';
 import { cn } from '@/lib/utils';
 import {
   applyToJobMutation,
@@ -108,6 +113,7 @@ import { canReapply as statusAllowsReapply } from '../application-status';
 import type { JobMarketplaceRole } from '../data';
 import { getJobMarketplaceRoleConfig } from '../data';
 import { getEffectiveJobStatus, hasJobStarted } from '../job-expiration';
+import { jobAddress, jobHasPin } from '../job-place';
 import { JobCard } from './JobMarketplaceCard';
 import {
   JobListSkeleton,
@@ -389,6 +395,89 @@ function JobStatsRow({ job }: { job: ClassMarketplaceJob }) {
   );
 }
 
+function WhereYoullTeach({ job }: { job: ClassMarketplaceJob }) {
+  const resources = job.resources ?? [];
+  const venue = resources.find(
+    resource => resource.resource_type === 'VENUE' && resource.resource_name
+  );
+  const equipment = resources.filter(
+    resource => resource.resource_type === 'EQUIPMENT_POOL' && resource.resource_name
+  );
+  const online = job.location_type === 'ONLINE';
+  const address = jobAddress(job);
+  const name = job.branch_name || address;
+
+  return (
+    <div className={cn(adminTheme.cardPadded, 'space-y-3')}>
+      <h3 className={adminTheme.sectionLabel}>Where you'll teach</h3>
+      {online ? (
+        <p className='text-foreground text-sm font-medium'>Online</p>
+      ) : (
+        <>
+          {jobHasPin(job) ? (
+            <PinnedPlaceCard
+              name={name || 'Training location'}
+              address={job.branch_name ? address : null}
+              latitude={job.location_latitude as number}
+              longitude={job.location_longitude as number}
+              size='sm'
+              label={job.branch_name ? 'Branch' : 'Location'}
+              showMapsLink={false}
+              className='shadow-none'
+              actions={
+                <Button asChild variant='outline' size='sm'>
+                  <a
+                    href={googleMapsUrl(
+                      job.location_latitude as number,
+                      job.location_longitude as number
+                    )}
+                    target='_blank'
+                    rel='noopener noreferrer'
+                  >
+                    <Navigation className='size-4' />
+                    Directions
+                  </a>
+                </Button>
+              }
+            />
+          ) : name ? (
+            <div className='text-sm'>
+              <p className='text-foreground font-medium'>{name}</p>
+              {job.branch_name && address ? (
+                <p className='text-muted-foreground'>{address}</p>
+              ) : null}
+            </div>
+          ) : (
+            <p className='text-muted-foreground text-sm'>
+              The organisation hasn't set a location yet.
+            </p>
+          )}
+          {venue ? (
+            <div className='border-border/60 bg-muted/20 flex items-center gap-2 rounded-md border px-3 py-2 text-sm'>
+              <Presentation className='text-muted-foreground size-4 shrink-0' />
+              <span className='font-medium'>{venue.resource_name}</span>
+            </div>
+          ) : null}
+          {equipment.length > 0 ? (
+            <div className='space-y-2'>
+              <h4 className={adminTheme.sectionLabel}>Provided at the branch</h4>
+              <div className='flex flex-wrap gap-1.5'>
+                {equipment.map(item => (
+                  <Badge key={item.resource_uuid} variant='outline' className='gap-1'>
+                    <Wrench />
+                    {item.resource_name}
+                    {(item.quantity ?? 1) > 1 ? ` × ${item.quantity}` : ''}
+                  </Badge>
+                ))}
+              </div>
+            </div>
+          ) : null}
+        </>
+      )}
+    </div>
+  );
+}
+
 function JobDetailsSheet({
   job,
   open,
@@ -564,6 +653,8 @@ function JobDetailsSheet({
               </div>
             ) : null}
 
+            <WhereYoullTeach job={job} />
+
             <div className={adminTheme.cardPadded}>
               <h3 className={cn(adminTheme.sectionLabel, 'flex flex-row items-center gap-2')}>
                 Sessions
@@ -648,7 +739,6 @@ function JobDetailsSheet({
             <DetailGrid
               columns={2}
               items={[
-                { label: 'Location name', value: job.location_name || 'Not provided' },
                 { label: 'Meeting link', value: job.meeting_link || 'Not provided' },
                 {
                   label: 'Academic period start',

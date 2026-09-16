@@ -19,6 +19,8 @@ export type PinnedPlaceCardProps = {
   /** Rendered beside the location details on wide screens. */
   aside?: ReactNode;
   actions?: ReactNode;
+  /** Hide the built-in "Open in Maps" link, e.g. when `actions` carries directions instead. */
+  showMapsLink?: boolean;
   footer?: ReactNode;
   className?: string;
 };
@@ -37,6 +39,7 @@ export function PinnedPlaceCard({
   sourceChip,
   aside,
   actions,
+  showMapsLink = true,
   footer,
   className,
 }: PinnedPlaceCardProps) {
@@ -82,15 +85,17 @@ export function PinnedPlaceCard({
             <Badge variant='outline' className='font-mono tabular-nums'>
               {formatCoordinates(latitude, longitude)}
             </Badge>
-            <a
-              href={googleMapsUrl(latitude, longitude)}
-              target='_blank'
-              rel='noopener noreferrer'
-              className='text-primary inline-flex items-center gap-1 text-sm font-medium hover:underline'
-            >
-              <ExternalLink className='h-3.5 w-3.5' />
-              Open in Maps
-            </a>
+            {showMapsLink ? (
+              <a
+                href={googleMapsUrl(latitude, longitude)}
+                target='_blank'
+                rel='noopener noreferrer'
+                className='text-primary inline-flex items-center gap-1 text-sm font-medium hover:underline'
+              >
+                <ExternalLink className='h-3.5 w-3.5' />
+                Open in Maps
+              </a>
+            ) : null}
           </div>
           {actions ? <div className='flex flex-wrap items-center gap-2'>{actions}</div> : null}
         </div>

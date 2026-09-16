@@ -51,6 +51,7 @@ import {
   nextStepFor,
   statusLabel,
 } from '../application-status';
+import { jobPlaceLabel } from '../job-place';
 
 function formatDate(value?: string | Date | null) {
   if (!value) return 'Not provided';
@@ -355,7 +356,11 @@ export function MyJobApplicationsPage() {
                           {job?.title ?? 'Unknown job'}
                         </h3>
                         <div className='text-muted-foreground flex flex-wrap gap-2 text-sm'>
-                          <span>{job?.location_name || formatLabel(job?.location_type)}</span>
+                          <span>
+                            {job
+                              ? jobPlaceLabel(job, formatLabel(job.location_type))
+                              : formatLabel(undefined)}
+                          </span>
                         </div>
                       </div>
 

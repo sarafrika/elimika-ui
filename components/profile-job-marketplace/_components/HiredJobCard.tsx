@@ -6,6 +6,7 @@ import { Card, CardContent } from '@/components/ui/card';
 import { formatDateTimeWithZone } from '@/lib/date';
 import type { ClassMarketplaceJob, ClassMarketplaceJobApplication } from '@/services/client';
 import { JOB_HIRES_PATH, jobLabel, jobPay } from '../hired-jobs';
+import { jobPlaceLabel } from '../job-place';
 
 export function HiredJobCard({
   application,
@@ -62,7 +63,7 @@ export function HiredJobCard({
             </p>
             <p className='flex items-start gap-2'>
               <MapPin className='text-muted-foreground mt-0.5 size-4 shrink-0' />
-              <span>{job.location_name || jobLabel(job.location_type)}</span>
+              <span>{jobPlaceLabel(job, jobLabel(job.location_type))}</span>
             </p>
           </div>
           <div className='border-border mt-auto flex flex-wrap items-end justify-between gap-3 border-t pt-4'>
