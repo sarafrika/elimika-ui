@@ -13,6 +13,7 @@ import {
   User,
   MapPinned,
 } from 'lucide-react';
+import { googleMapsUrl } from '@/lib/geocoding';
 import type { TrainingBranch } from '@/services/client';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
@@ -48,6 +49,8 @@ export default function TrainingBranchDetailsPanel({ branch }: TrainingBranchDet
       </div>
     );
   }
+
+  const hasPin = Number.isFinite(branch.latitude) && Number.isFinite(branch.longitude);
 
   return (
     <div className='flex flex-1 flex-col'>
@@ -103,12 +106,12 @@ export default function TrainingBranchDetailsPanel({ branch }: TrainingBranchDet
           </Card>
 
           <div className='grid gap-6 lg:grid-cols-2'>
-            {/* Point of Contact */}
+            {/* Contact person */}
             <Card>
               <CardHeader>
                 <CardTitle className='flex items-center gap-2 text-base font-semibold'>
                   <User className='h-4 w-4' />
-                  Point of Contact
+                  Contact person
                 </CardTitle>
               </CardHeader>
               <CardContent className='space-y-4'>
@@ -238,14 +241,29 @@ export default function TrainingBranchDetailsPanel({ branch }: TrainingBranchDet
             </CardHeader>
             <CardContent>
               <div className='grid gap-3 sm:grid-cols-2'>
-                <Button variant='outline' className='justify-start'>
-                  <User className='mr-2 h-4 w-4' />
-                  Contact POC
+                <Button asChild variant='outline' className='justify-start'>
+                  <a href={`mailto:${branch.poc_email}`}>
+                    <User className='mr-2 h-4 w-4' />
+                    Email contact person
+                  </a>
                 </Button>
-                <Button variant='outline' className='justify-start'>
-                  <MapPin className='mr-2 h-4 w-4' />
-                  View on Map
-                </Button>
+                {hasPin ? (
+                  <Button asChild variant='outline' className='justify-start'>
+                    <a
+                      href={googleMapsUrl(branch.latitude as number, branch.longitude as number)}
+                      target='_blank'
+                      rel='noopener noreferrer'
+                    >
+                      <MapPin className='mr-2 h-4 w-4' />
+                      View on Map
+                    </a>
+                  </Button>
+                ) : (
+                  <Button variant='outline' className='justify-start' disabled>
+                    <MapPin className='mr-2 h-4 w-4' />
+                    No map pin yet
+                  </Button>
+                )}
               </div>
             </CardContent>
           </Card>
