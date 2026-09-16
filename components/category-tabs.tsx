@@ -10,16 +10,20 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { cn } from '@/lib/utils';
+import { buildCategoryTabOptions } from '@/lib/category-filters';
+import type { Category } from '@/services/client';
 
 export const ALL_CATEGORIES = 'All';
 
 export type CategoryTabsProps = {
   /** Full source data used to derive the list of categories/subjects/program types. */
-  items: ReadonlyArray<{
+  items?: ReadonlyArray<{
     category: string;
     subject?: string | null;
     programType?: string | null;
   }>;
+  /** When provided, root categories become tabs and descendants become subjects. */
+  categories?: readonly Category[];
   activeCategory: string;
   onCategoryChange: (category: string) => void;
   /** Selected subject per category (only one active at a time in practice). */
@@ -36,6 +40,8 @@ export type CategoryTabsProps = {
   className?: string;
 };
 
+const EMPTY_ITEMS: NonNullable<CategoryTabsProps['items']> = [];
+
 /**
  * Sticky, scrollable, arrow-navigable category tabs with a subject
  * dropdown per category and a program type dropdown on the "All" pill.
@@ -43,7 +49,8 @@ export type CategoryTabsProps = {
  * Apply-to-Train pages.
  */
 export function CategoryTabs({
-  items,
+  items = EMPTY_ITEMS,
+  categories: hierarchy,
   activeCategory,
   onCategoryChange,
   subjectByCategory,
@@ -59,21 +66,25 @@ export function CategoryTabs({
   const [scrollState, setScrollState] = useState({ canLeft: false, canRight: false });
 
   const categories = useMemo(() => {
-    const set = new Set<string>();
-    items.forEach(i => i.category && set.add(i.category));
-    return [ALL_CATEGORIES, ...Array.from(set).sort()];
-  }, [items]);
-
-  const subjectsByCategory = useMemo(() => {
-    const map: Record<string, string[]> = {};
-    items.forEach(i => {
-      if (!i.subject) return;
-      if (!map[i.category]) map[i.category] = [];
-      if (!map[i.category].includes(i.subject)) map[i.category].push(i.subject);
-    });
-    Object.keys(map).forEach(k => map[k].sort());
-    return map;
-  }, [items]);
+    const options = hierarchy
+      ? buildCategoryTabOptions(hierarchy)
+      : Array.from(new Set(items.map(item => item.category).filter(Boolean)))
+          .sort()
+          .map(category => ({
+            value: category,
+            label: category,
+            subjects: Array.from(
+              new Set(
+                items
+                  .filter(item => item.category === category)
+                  .flatMap(item => (item.subject ? [item.subject] : []))
+              )
+            )
+              .sort()
+              .map(subject => ({ value: subject, label: subject })),
+          }));
+    return [{ value: ALL_CATEGORIES, label: ALL_CATEGORIES, subjects: [] }, ...options];
+  }, [hierarchy, items]);
 
   const updateScrollState = () => {
     const el = scrollerRef.current;
@@ -156,10 +167,14 @@ export function CategoryTabs({
           style={{ WebkitOverflowScrolling: 'touch' }}
         >
           <div className='flex min-w-max items-center gap-2 py-1'>
-            {categories.map(cat => {
+            {categories.map(option => {
+              const cat = option.value;
               const isActive = activeCategory === cat;
-              const subjects = cat === ALL_CATEGORIES ? [] : (subjectsByCategory[cat] ?? []);
+              const subjects = option.subjects;
               const selectedSubject = subjectByCategory[cat];
+              const selectedSubjectLabel = subjects.find(
+                subject => subject.value === selectedSubject
+              )?.label;
               const hasDropdown = cat === ALL_CATEGORIES ? allHasDropdown : subjects.length > 0;
               return (
                 <div
@@ -188,12 +203,12 @@ export function CategoryTabs({
                     )}
                     aria-pressed={isActive}
                   >
-                    {cat}
+                    {option.label}
                     {cat === ALL_CATEGORIES && activeProgramType && (
                       <span className='ml-1.5 text-xs opacity-90'>: {activeProgramType}</span>
                     )}
                     {cat !== ALL_CATEGORIES && isActive && selectedSubject && (
-                      <span className='ml-1.5 text-xs opacity-90'>: {selectedSubject}</span>
+                      <span className='ml-1.5 text-xs opacity-90'>: {selectedSubjectLabel}</span>
                     )}
                   </button>
                   {hasDropdown && (
@@ -204,7 +219,7 @@ export function CategoryTabs({
                           aria-label={
                             cat === ALL_CATEGORIES
                               ? 'Filter by program type'
-                              : `Filter ${cat} by subject`
+                              : `Filter ${option.label} by subject`
                           }
                           className={cn(
                             'flex items-center rounded-r-full border-l px-2',
@@ -247,21 +262,21 @@ export function CategoryTabs({
                                 onSubjectChange(next);
                               }}
                             >
-                              <span className='flex-1'>Any subject in {cat}</span>
+                              <span className='flex-1'>Any subject in {option.label}</span>
                               {!selectedSubject && activeCategory === cat && (
                                 <Check className='h-4 w-4' />
                               )}
                             </DropdownMenuItem>
                             {subjects.map(subj => (
                               <DropdownMenuItem
-                                key={subj}
+                                key={subj.value}
                                 onSelect={() => {
                                   onCategoryChange(cat);
-                                  onSubjectChange({ ...subjectByCategory, [cat]: subj });
+                                  onSubjectChange({ ...subjectByCategory, [cat]: subj.value });
                                 }}
                               >
-                                <span className='flex-1'>{subj}</span>
-                                {selectedSubject === subj && <Check className='h-4 w-4' />}
+                                <span className='flex-1'>{subj.label}</span>
+                                {selectedSubject === subj.value && <Check className='h-4 w-4' />}
                               </DropdownMenuItem>
                             ))}
                             <DropdownMenuSeparator />

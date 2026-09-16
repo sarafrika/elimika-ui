@@ -1,6 +1,5 @@
 'use client';
 
-import { allCourseTrainingRequirementsOptions } from '@/services/course-training-requirements';
 import { ClassScheduleCalendar } from '@/app/class-invite/page';
 import {
   approvedRateFor,
@@ -48,6 +47,7 @@ import {
   searchTrainingApplicationsOptions,
 } from '@/services/client/@tanstack/react-query.gen';
 import type { ScheduledInstance } from '@/services/client/types.gen';
+import { allCourseTrainingRequirementsOptions } from '@/services/course-training-requirements';
 import { roleScopedDashboardPath } from '@/src/features/dashboard/lib/active-domain-storage';
 import { toAuthenticatedMediaUrl } from '@/src/lib/media-url';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';

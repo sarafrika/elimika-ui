@@ -1,7 +1,6 @@
 // @ts-nocheck -- pre-existing @hey-api generated-client type drift (see memory: elimika-ui-typecheck)
 'use client';
 
-import { allCourseTrainingRequirementsOptions } from '@/services/course-training-requirements';
 import { SimpleEditor } from '@/components/tiptap-templates/simple/simple-editor-lazy';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -48,6 +47,7 @@ import {
   updateCourseTrainingRequirementMutation,
 } from '@/services/client/@tanstack/react-query.gen';
 import type { Course, CourseTrainingRequirement } from '@/services/client/types.gen';
+import { allCourseTrainingRequirementsOptions } from '@/services/course-training-requirements';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { CheckCircle2, Loader2, Plus, XIcon } from 'lucide-react';
@@ -153,9 +153,8 @@ function SavingOverlay({ stage }: { stage: SaveStage }) {
             return (
               <div
                 key={step.key}
-                className={`flex items-center gap-3 transition-opacity duration-300 ${
-                  isActive ? 'opacity-100' : isDone ? 'opacity-60' : 'opacity-25'
-                }`}
+                className={`flex items-center gap-3 transition-opacity duration-300 ${isActive ? 'opacity-100' : isDone ? 'opacity-60' : 'opacity-25'
+                  }`}
               >
                 {isDone ? (
                   <CheckCircle2 className='text-success h-4 w-4 shrink-0' />

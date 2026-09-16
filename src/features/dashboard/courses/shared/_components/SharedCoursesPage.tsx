@@ -1,5 +1,6 @@
 'use client';
 
+import { ALL_CATEGORIES, CategoryTabs } from '@/components/category-tabs';
 import NotesModal from '@/components/custom-modals/notes-modal';
 import { Button } from '@/components/ui/button';
 import {
@@ -27,6 +28,8 @@ import { useCourseClasses } from '@/hooks/use-batched-lookups';
 import { useCourseEnrollmentsMap } from '@/hooks/use-enrollment-map';
 import { averageRating, useCourseReviewsMap } from '@/hooks/use-reviews-map';
 import useStudentClassDefinitions from '@/hooks/use-student-class-definition';
+import { matchesCategoryFilter } from '@/lib/category-filters';
+import { STALE_TIMES } from '@/lib/query-client';
 import type { UserDomain } from '@/lib/types';
 import { ApplicantTypeEnum } from '@/services/client';
 import {
@@ -46,7 +49,6 @@ import {
   submitTrainingApplicationMutation,
 } from '@/services/client/@tanstack/react-query.gen';
 import type {
-  Category,
   ClassDefinition,
   Course,
   CourseReview,
@@ -61,7 +63,6 @@ import {
   formatDurationFromParts,
   getApplyToTrainHref,
   getCardPresentation,
-  getCategoryTilePresentation,
   getContentHref,
   getDurationBucket,
   getEnrollHref,
@@ -70,7 +71,6 @@ import {
 } from '@/src/features/dashboard/courses/shared/_components/courses-data';
 import { CoursesCatalogCard } from '@/src/features/dashboard/courses/shared/_components/CoursesCatalogCard';
 import { CoursesCategoryFilters } from '@/src/features/dashboard/courses/shared/_components/CoursesCategoryFilters';
-import { CoursesCategoryTabs } from '@/src/features/dashboard/courses/shared/_components/CoursesCategoryTabs';
 import { CoursesRecommendationCard } from '@/src/features/dashboard/courses/shared/_components/CoursesRecommendationCard';
 import { StudentCoursesCard } from '@/src/features/dashboard/courses/shared/_components/StudentCoursesCard';
 import { roleScopedDashboardPath } from '@/src/features/dashboard/lib/active-domain-storage';
@@ -102,6 +102,7 @@ export type UnifiedContentItem = {
   durationMinutes: number;
   durationLabel: string;
   categoryLabels: string[];
+  categoryUuids?: string[];
   creatorUuid: string;
   creatorName: string;
   levelLabel?: string;
@@ -435,6 +436,7 @@ export function SharedCoursesPage({ domain }: SharedCoursesPageProps) {
   const [search, setSearch] = useState('');
   const [activeTab, setActiveTab] = useState<CoursesCatalogTab>('all-courses');
   const [filters, setFilters] = useState<FilterValues>(defaultFilterValues);
+  const [subjectByCategory, setSubjectByCategory] = useState<Record<string, string>>({});
   const [currentCatalogPage, setCurrentCatalogPage] = useState(1);
   const [applyModalOpen, setApplyModalOpen] = useState(false);
   const [selectedApplicationCard, setSelectedApplicationCard] = useState<
@@ -474,10 +476,11 @@ export function SharedCoursesPage({ domain }: SharedCoursesPageProps) {
       query: {
         pageable: {
           page: 0,
-          size: 24,
+          size: 200,
         },
       },
     }),
+    staleTime: STALE_TIMES.reference,
     refetchOnWindowFocus: false,
   });
 
@@ -560,6 +563,15 @@ export function SharedCoursesPage({ domain }: SharedCoursesPageProps) {
     [categories]
   );
 
+  const categoriesById = useMemo(
+    () => new Map(categories.map(category => [category.uuid ?? category.name, category])),
+    [categories]
+  );
+  const rootCategories = useMemo(
+    () => categories.filter(category => !category.parent_uuid),
+    [categories]
+  );
+
   const difficultyMap = useMemo(
     () => new Map((difficultiesResponse?.data ?? []).map(level => [level.uuid ?? '', level.name])),
     [difficultiesResponse]
@@ -599,6 +611,7 @@ export function SharedCoursesPage({ domain }: SharedCoursesPageProps) {
           durationMinutes: program.total_duration_hours * 60 + program.total_duration_minutes,
           durationLabel,
           categoryLabels: categoryLabel ? [categoryLabel] : [],
+          categoryUuids: program.category_uuid ? [program.category_uuid] : [],
           creatorUuid: program.course_creator_uuid,
           creatorName: '',
           price: program.price ?? undefined,
@@ -647,6 +660,7 @@ export function SharedCoursesPage({ domain }: SharedCoursesPageProps) {
             course.total_duration_display
           ),
           categoryLabels: course.category_names ?? [],
+          categoryUuids: course.category_uuids,
           creatorUuid: course.course_creator_uuid,
           creatorName: '',
           levelLabel: difficultyMap.get(course.difficulty_uuid ?? ''),
@@ -764,6 +778,7 @@ export function SharedCoursesPage({ domain }: SharedCoursesPageProps) {
             course.total_duration_display
           ),
           categoryLabels: course.category_names ?? [],
+          categoryUuids: course.category_uuids,
           creatorUuid: course.course_creator_uuid,
           creatorName: existing?.creatorName ?? '',
           levelLabel: difficultyMap.get(course.difficulty_uuid ?? ''),
@@ -835,11 +850,6 @@ export function SharedCoursesPage({ domain }: SharedCoursesPageProps) {
     user?.courseCreator?.uuid,
   ]);
 
-  const categoryTileData = useMemo(
-    () => categories.map((category, index) => getCategoryTilePresentation(category.name, index)),
-    [categories]
-  );
-
   const filterSections = useMemo<CoursesFilterSection[]>(
     () => [
       {
@@ -857,7 +867,7 @@ export function SharedCoursesPage({ domain }: SharedCoursesPageProps) {
         title: 'Categories',
         options: [
           { label: 'All Categories', value: 'all' },
-          ...categories.map(category => ({
+          ...rootCategories.map(category => ({
             label: category.name,
             value: category.uuid ?? category.name,
           })),
@@ -894,18 +904,7 @@ export function SharedCoursesPage({ domain }: SharedCoursesPageProps) {
         ],
       },
     ],
-    [categories, difficultiesResponse]
-  );
-
-  const [selectedValues, setSelectedValues] = useState({
-    category: '',
-    level: '',
-    duration: '',
-    price: '',
-  });
-
-  const [activeFilter, setActiveFilter] = useState<CoursesFilterSection['key'] | null>(
-    filterSections[0]?.key ?? null
+    [rootCategories, difficultiesResponse]
   );
 
   const allCoursesFeed = useMemo(
@@ -935,7 +934,6 @@ export function SharedCoursesPage({ domain }: SharedCoursesPageProps) {
   const filteredItems = useMemo(
     () =>
       baseTabItems.filter(item => {
-        const resolvedCategoryLabel = categoryMap.get(filters.category) ?? filters.category;
         const resolvedDifficultyLabel = difficultyMap.get(filters.level) ?? filters.level;
 
         const matchesSearch =
@@ -945,13 +943,10 @@ export function SharedCoursesPage({ domain }: SharedCoursesPageProps) {
           item.description.toLowerCase().includes(normalizedSearch) ||
           item.categoryLabels.some(label => label.toLowerCase().includes(normalizedSearch));
 
+        const selectedCategory = subjectByCategory[filters.category] ?? filters.category;
         const matchesCategory =
           filters.category === 'all' ||
-          item.categoryLabels.some(
-            label =>
-              label === resolvedCategoryLabel ||
-              label.toLowerCase() === filters.category.toLowerCase()
-          );
+          matchesCategoryFilter(item, selectedCategory, categories, categoriesById);
 
         const matchesLevel =
           filters.level === 'all' ||
@@ -979,12 +974,12 @@ export function SharedCoursesPage({ domain }: SharedCoursesPageProps) {
           matchesContentType
         );
       }),
-    [baseTabItems, categoryMap, difficultyMap, filters, normalizedSearch]
+    [baseTabItems, categories, categoriesById, difficultyMap, filters, normalizedSearch, subjectByCategory]
   );
 
   useEffect(() => {
     setCurrentCatalogPage(1);
-  }, [activeTab, filters, normalizedSearch]);
+  }, [activeTab, filters, normalizedSearch, subjectByCategory]);
 
   const totalCatalogPages = Math.max(1, Math.ceil(filteredItems.length / CATALOG_PAGE_SIZE));
 
@@ -1355,6 +1350,7 @@ export function SharedCoursesPage({ domain }: SharedCoursesPageProps) {
     programEnrollmentQueries.some(query => query.isLoading || query.isFetching);
 
   const setFilterValue = (key: CoursesFilterSection['key'], value: string) => {
+    if (key === 'category') setSubjectByCategory({});
     setFilters(current => ({
       ...current,
       [key]: value,
@@ -1369,17 +1365,11 @@ export function SharedCoursesPage({ domain }: SharedCoursesPageProps) {
   };
 
   const clearFilters = () => {
+    setSubjectByCategory({});
     setFilters({
       ...defaultFilterValues,
       contentType: activeTab === 'my-courses' ? 'all-courses' : activeTab,
     });
-  };
-
-  const handleCategoryTileClick = (category: Category) => {
-    setFilters(current => ({
-      ...current,
-      category: category.uuid ?? category.name,
-    }));
   };
 
   const handleCatalogCardAction = (card: CoursesCatalogCardData) => {
@@ -1493,8 +1483,8 @@ export function SharedCoursesPage({ domain }: SharedCoursesPageProps) {
     () =>
       (Object.keys(filters) as Array<keyof FilterValues>).filter(
         key => filters[key] !== defaultFilterValues[key]
-      ).length,
-    [filters]
+      ).length + (subjectByCategory[filters.category] ? 1 : 0),
+    [filters, subjectByCategory]
   );
 
   const applicationCardDuration = !selectedApplicationCard
@@ -1588,7 +1578,7 @@ export function SharedCoursesPage({ domain }: SharedCoursesPageProps) {
             </div> */}
         </header>
 
-        <CoursesCategoryTabs
+        {/* <CoursesCategoryTabs
           activeFilter={activeFilter}
           onActiveChange={setActiveFilter}
           sections={filterSections}
@@ -1597,6 +1587,17 @@ export function SharedCoursesPage({ domain }: SharedCoursesPageProps) {
             setFilterValue(key, value);
             setOpen(false);
           }}
+        /> */}
+
+        <CategoryTabs
+          categories={categories}
+          activeCategory={filters.category === 'all' ? ALL_CATEGORIES : filters.category}
+          onCategoryChange={category => {
+            setFilterValue('category', category === ALL_CATEGORIES ? 'all' : category);
+          }}
+          subjectByCategory={subjectByCategory}
+          onSubjectChange={setSubjectByCategory}
+          className='mx-0 px-0 sm:mx-0 sm:px-0'
         />
 
         <section className='space-y-2'>
