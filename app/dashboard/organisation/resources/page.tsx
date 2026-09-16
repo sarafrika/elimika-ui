@@ -1,33 +1,23 @@
-// @ts-nocheck -- 1:1 Lovable port; @hey-api generated-client type drift
 'use client';
 
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { MoreHorizontal, Package, Plus, Search, Trash2, Wrench } from 'lucide-react';
+import { useQuery } from '@tanstack/react-query';
+import { Building2, MoreHorizontal, Pencil, Plus, TriangleAlert, Wrench } from 'lucide-react';
+import Link from 'next/link';
 import { useMemo, useState } from 'react';
-import { toast } from 'sonner';
 
-import LocationInput from '@/components/locationInput';
-import { PageHeader } from '@/components/page-header';
+import { AsyncSection } from '@/components/data/async-section';
+import { PageHeader } from '@/components/dashboard';
+import { AssignBranchDialog } from '@/components/resourcing/assign-branch-dialog';
+import { branchHasPin, ResourceFormDialog } from '@/components/resourcing/resource-form-dialog';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from '@/components/ui/dialog';
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
+import { EmptyState } from '@/components/ui/empty-state';
 import { Skeleton } from '@/components/ui/skeleton';
 import {
   Table,
@@ -37,300 +27,298 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
+import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useOrganisation } from '@/context/organisation-context';
 import { extractPage } from '@/lib/api-helpers';
-import { coordinatesFromPlace, toCoordinate } from '@/lib/location-types';
-import type { OrganisationResource } from '@/services/client';
+import { townFromAddress } from '@/lib/geocoding';
+import { STALE_TIMES } from '@/lib/query-client';
+import type { OrganisationResource, TrainingBranch } from '@/services/client';
+import { ResourceTypeEnum } from '@/services/client';
 import {
-  createResourceMutation,
+  getTrainingBranchesByOrganisationOptions,
   listResourcesOptions,
-  listResourcesQueryKey,
 } from '@/services/client/@tanstack/react-query.gen';
+import { dashboardUrl } from '@/src/features/dashboard/lib/dashboard-url';
+import { OrgPage } from '../_components/org-page';
 
-function AddEquipmentDialog({ organisationUuid }: { organisationUuid: string }) {
-  const qc = useQueryClient();
-  const [open, setOpen] = useState(false);
-  const [location, setLocation] = useState('');
-  const [locationLatitude, setLocationLatitude] = useState('');
-  const [locationLongitude, setLocationLongitude] = useState('');
-  const create = useMutation(createResourceMutation());
-  const listKey = listResourcesQueryKey({
-    path: { organisationUuid },
-    query: { resource_type: 'EQUIPMENT_POOL', pageable: { page: 0, size: 200 } },
-  });
+const ALL_BRANCHES = 'all';
+const UNASSIGNED = 'unassigned';
+const EQUIPMENT_QUERY = {
+  resource_type: ResourceTypeEnum.EQUIPMENT_POOL,
+  pageable: { page: 0, size: 200 },
+};
+const BRANCH_QUERY = { pageable: { page: 0, size: 100 } };
 
-  return (
-    <Dialog open={open} onOpenChange={setOpen}>
-      <DialogTrigger asChild>
-        <Button>
-          <Plus className='mr-2 h-4 w-4' /> Add equipment
-        </Button>
-      </DialogTrigger>
-      <DialogContent className='max-w-lg'>
-        <DialogHeader>
-          <DialogTitle>Add equipment</DialogTitle>
-          <DialogDescription>
-            Register a piece of equipment owned by your organisation.
-          </DialogDescription>
-        </DialogHeader>
-        <form
-          className='space-y-4'
-          onSubmit={e => {
-            e.preventDefault();
-            const f = e.currentTarget;
-            const name = (f.elements.namedItem('e-name') as HTMLInputElement)?.value.trim();
-            const description = (f.elements.namedItem('e-desc') as HTMLInputElement)?.value.trim();
-            const quantity = (f.elements.namedItem('e-qty') as HTMLInputElement)?.value;
-            if (!name) return toast.error('Equipment name is required.');
-            create.mutate(
-              {
-                path: { organisationUuid },
-                body: {
-                  organisation_uuid: organisationUuid,
-                  resource_type: 'EQUIPMENT_POOL',
-                  name,
-                  description: description || undefined,
-                  total_quantity: quantity ? Number(quantity) : 1,
-                  location_name: location.trim() || undefined,
-                  location_latitude: toCoordinate(locationLatitude),
-                  location_longitude: toCoordinate(locationLongitude),
-                  is_active: true,
-                },
-              },
-              {
-                onSuccess: async () => {
-                  setOpen(false);
-                  toast.success('Equipment added', { description: name });
-                  await qc.invalidateQueries({ queryKey: listKey });
-                },
-                onError: () => toast.error('Could not add equipment.'),
-              }
-            );
-          }}
-        >
-          <div className='space-y-2'>
-            <Label htmlFor='e-name'>Name</Label>
-            <Input id='e-name' name='e-name' placeholder='e.g. 3D Printer' required />
-          </div>
-          <div className='space-y-2'>
-            <Label htmlFor='e-desc'>Description</Label>
-            <Input id='e-desc' name='e-desc' placeholder='Optional details' />
-          </div>
-          <div className='grid gap-3 sm:grid-cols-2'>
-            <div className='space-y-2'>
-              <Label htmlFor='e-qty'>Quantity</Label>
-              <Input id='e-qty' name='e-qty' type='number' min={1} defaultValue={1} />
-            </div>
-            <div className='space-y-2'>
-              <Label htmlFor='e-loc'>Location / classroom</Label>
-              <LocationInput
-                id='e-loc'
-                name='e-loc'
-                value={location}
-                onChange={setLocation}
-                placeholder='Search for where it lives — e.g. Lab B'
-                coordinates={{ latitude: locationLatitude, longitude: locationLongitude }}
-                onSuggest={response => {
-                  const { latitude, longitude } = coordinatesFromPlace(response);
-                  if (latitude !== undefined) setLocationLatitude(String(latitude));
-                  if (longitude !== undefined) setLocationLongitude(String(longitude));
-                  return response;
-                }}
-              />
-            </div>
-          </div>
-          <DialogFooter>
-            <Button type='button' variant='outline' onClick={() => setOpen(false)}>
-              Cancel
-            </Button>
-            <Button type='submit' disabled={create.isPending}>
-              {create.isPending ? 'Adding…' : 'Add'}
-            </Button>
-          </DialogFooter>
-        </form>
-      </DialogContent>
-    </Dialog>
-  );
-}
+type EditorState = { resource: OrganisationResource | null } | null;
 
-export default function OrganisationResourcesPage() {
+export default function OrganisationEquipmentPage() {
   const organisation = useOrganisation();
   const organisationUuid = organisation?.uuid ?? '';
 
   const resourcesQuery = useQuery({
-    ...listResourcesOptions({
-      path: { organisationUuid },
-      query: { resource_type: 'EQUIPMENT_POOL', pageable: { page: 0, size: 200 } },
-    }),
+    ...listResourcesOptions({ path: { organisationUuid }, query: EQUIPMENT_QUERY }),
     enabled: Boolean(organisationUuid),
   });
-  const equipment = extractPage<OrganisationResource>(resourcesQuery.data).items;
+  const branchesQuery = useQuery({
+    ...getTrainingBranchesByOrganisationOptions({
+      path: { uuid: organisationUuid },
+      query: BRANCH_QUERY,
+    }),
+    enabled: Boolean(organisationUuid),
+    staleTime: STALE_TIMES.entity,
+  });
 
-  const [query, setQuery] = useState('');
-
-  const rows = useMemo(
-    () =>
-      equipment.filter(r => {
-        if (!query) return true;
-        return `${r.name ?? ''} ${r.location_name ?? ''} ${r.description ?? ''}`
-          .toLowerCase()
-          .includes(query.toLowerCase());
-      }),
-    [equipment, query]
+  const equipment = useMemo(
+    () => extractPage<OrganisationResource>(resourcesQuery.data).items,
+    [resourcesQuery.data]
   );
+  const branches = useMemo(
+    () => extractPage<TrainingBranch>(branchesQuery.data).items,
+    [branchesQuery.data]
+  );
+  const branchByUuid = useMemo(
+    () =>
+      new Map<string, TrainingBranch>(
+        branches.flatMap(branch => (branch.uuid ? [[branch.uuid, branch] as const] : []))
+      ),
+    [branches]
+  );
+  const unassignedCount = equipment.filter(item => !item.branch_uuid).length;
 
-  const kpis = useMemo(() => {
-    const totalUnits = equipment.reduce((a, r) => a + Number(r.total_quantity ?? 0), 0);
-    const active = equipment.filter(r => r.is_active !== false).length;
-    const inactive = equipment.filter(r => r.is_active === false).length;
-    return { total: equipment.length, totalUnits, active, inactive };
-  }, [equipment]);
+  const [filter, setFilter] = useState(ALL_BRANCHES);
+  const [editor, setEditor] = useState<EditorState>(null);
+  const [assigning, setAssigning] = useState<OrganisationResource | null>(null);
+
+  const filters = useMemo(() => {
+    const withItems = branches.filter(
+      branch => branch.uuid && equipment.some(item => item.branch_uuid === branch.uuid)
+    );
+    return [
+      { key: ALL_BRANCHES, label: 'All branches' },
+      ...withItems.map(branch => ({
+        key: branch.uuid as string,
+        label: branch.branch_name || 'Untitled branch',
+      })),
+      ...(unassignedCount ? [{ key: UNASSIGNED, label: `Unassigned (${unassignedCount})` }] : []),
+    ];
+  }, [branches, equipment, unassignedCount]);
+
+  const activeFilter = filters.some(option => option.key === filter) ? filter : ALL_BRANCHES;
+  const rows = equipment.filter(item => {
+    if (activeFilter === ALL_BRANCHES) return true;
+    if (activeFilter === UNASSIGNED) return !item.branch_uuid;
+    return item.branch_uuid === activeFilter;
+  });
 
   return (
-    <div className='mx-auto w-full max-w-[1600px] space-y-6 px-3 py-4 sm:px-5 lg:px-6 2xl:max-w-[1840px]'>
+    <OrgPage className='space-y-6'>
       <PageHeader
         title='Equipment'
-        description='All equipment owned by the organisation. Add new items, update them, or retire assets.'
-        action={<AddEquipmentDialog organisationUuid={organisationUuid} />}
+        description='Equipment pools kept at your branches. Jobs and classes book equipment from the branch it belongs to.'
+        actions={
+          <Button onClick={() => setEditor({ resource: null })} disabled={!organisationUuid}>
+            <Plus className='h-4 w-4' />
+            Add equipment
+          </Button>
+        }
       />
 
-      <div className='grid gap-4 sm:grid-cols-2 lg:grid-cols-4'>
-        <Card className='border-l-primary border-l-4'>
-          <CardContent className='p-6'>
-            <div className='text-2xl font-bold'>{kpis.total}</div>
-            <div className='text-muted-foreground text-xs'>Equipment items</div>
-          </CardContent>
-        </Card>
-        <Card className='border-l-success border-l-4'>
-          <CardContent className='p-6'>
-            <div className='text-2xl font-bold'>{kpis.totalUnits}</div>
-            <div className='text-muted-foreground text-xs'>Total units</div>
-          </CardContent>
-        </Card>
-        <Card className='border-l-4 border-l-teal-400'>
-          <CardContent className='p-6'>
-            <div className='text-2xl font-bold'>{kpis.active}</div>
-            <div className='text-muted-foreground text-xs'>Active</div>
-          </CardContent>
-        </Card>
-        <Card className='border-l-warning border-l-4'>
-          <CardContent className='p-6'>
-            <div className='text-2xl font-bold'>{kpis.inactive}</div>
-            <div className='text-muted-foreground text-xs'>Inactive</div>
-          </CardContent>
-        </Card>
-      </div>
+      {unassignedCount > 0 ? (
+        <div className='border-warning/60 bg-warning/10 text-foreground flex items-start gap-2 rounded-md border p-3 text-sm'>
+          <TriangleAlert className='text-warning mt-0.5 h-4 w-4 shrink-0' />
+          <p>
+            <strong className='font-semibold'>
+              {unassignedCount === 1 ? '1 item has' : `${unassignedCount} items have`} no branch.
+            </strong>{' '}
+            {unassignedCount === 1 ? 'It won’t' : 'They won’t'} appear in job or class pickers until
+            you assign {unassignedCount === 1 ? 'it' : 'them'} to a branch.
+          </p>
+        </div>
+      ) : null}
 
-      <div className='relative max-w-md'>
-        <Search className='text-muted-foreground absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2' />
-        <Input
-          placeholder='Search name, location'
-          value={query}
-          onChange={e => setQuery(e.target.value)}
-          className='pl-9'
-        />
-      </div>
+      {filters.length > 1 ? (
+        <Tabs value={activeFilter} onValueChange={setFilter}>
+          <TabsList className='h-auto flex-wrap justify-start'>
+            {filters.map(option => (
+              <TabsTrigger key={option.key} value={option.key}>
+                {option.label}
+              </TabsTrigger>
+            ))}
+          </TabsList>
+        </Tabs>
+      ) : null}
 
-      <Card>
-        <CardHeader className='pb-3'>
-          <CardTitle className='text-base'>Inventory</CardTitle>
-        </CardHeader>
-        <CardContent className='p-0'>
-          {resourcesQuery.isLoading ? (
-            <div className='space-y-2 p-4'>
-              {[...Array(5)].map((_, i) => (
-                <Skeleton key={i} className='h-12 w-full' />
-              ))}
-            </div>
-          ) : rows.length === 0 ? (
-            <div className='flex flex-col items-center justify-center gap-2 p-12 text-center'>
-              <Package className='text-muted-foreground h-8 w-8' />
-              <div className='font-medium'>
-                {equipment.length === 0 ? 'No equipment yet' : 'No equipment match'}
-              </div>
-              <p className='text-muted-foreground text-sm'>
-                {equipment.length === 0
-                  ? 'Add equipment your organisation owns.'
-                  : 'Try a different search.'}
-              </p>
-            </div>
-          ) : (
-            <div className='overflow-x-auto'>
-              <Table className='min-w-[720px]'>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead className='whitespace-nowrap'>Equipment</TableHead>
-                    <TableHead className='text-center whitespace-nowrap'>Qty</TableHead>
-                    <TableHead className='whitespace-nowrap'>Location</TableHead>
-                    <TableHead className='whitespace-nowrap'>Status</TableHead>
-                    <TableHead className='text-right whitespace-nowrap'>Actions</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {rows.map(r => (
-                    <TableRow key={r.uuid}>
-                      <TableCell className='whitespace-nowrap'>
-                        <div className='flex items-center gap-3'>
-                          <div className='bg-primary/10 text-primary flex h-9 w-9 shrink-0 items-center justify-center rounded-md'>
-                            <Wrench className='h-4 w-4' />
-                          </div>
-                          <div className='min-w-0'>
-                            <div className='font-medium'>{r.name}</div>
-                            {r.description && (
-                              <div className='text-muted-foreground max-w-xs truncate text-xs'>
-                                {r.description}
-                              </div>
-                            )}
-                          </div>
+      <AsyncSection
+        loading={resourcesQuery.isLoading && !resourcesQuery.data}
+        error={resourcesQuery.error}
+        onRetry={() => void resourcesQuery.refetch()}
+        errorTitle='Couldn’t load equipment'
+        empty={equipment.length === 0}
+        skeleton={<EquipmentTableSkeleton />}
+        emptyState={
+          <EmptyState
+            variant='card'
+            icon={Wrench}
+            title='No equipment yet'
+            description={
+              branchesQuery.isSuccess && branches.length === 0
+                ? 'Add a branch first, then add the equipment kept there.'
+                : 'Add the equipment pools kept at your branches so jobs and classes can book them.'
+            }
+            action={
+              <Button onClick={() => setEditor({ resource: null })} disabled={!organisationUuid}>
+                <Plus className='h-4 w-4' />
+                Add equipment
+              </Button>
+            }
+          />
+        }
+      >
+        <div className='border-border/70 bg-card overflow-x-auto rounded-md border shadow-sm'>
+          <Table className='min-w-[760px]'>
+            <TableHeader>
+              <TableRow className='bg-muted/40'>
+                <TableHead>Name</TableHead>
+                <TableHead>Branch</TableHead>
+                <TableHead>Units</TableHead>
+                <TableHead className='hidden md:table-cell'>Where in the branch</TableHead>
+                <TableHead>Status</TableHead>
+                <TableHead className='w-12'>
+                  <span className='sr-only'>Actions</span>
+                </TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {rows.map(item => {
+                const branch = item.branch_uuid ? branchByUuid.get(item.branch_uuid) : undefined;
+                return (
+                  <TableRow key={item.uuid}>
+                    <TableCell>
+                      <div className='flex items-center gap-3'>
+                        <div className='bg-primary/10 text-primary flex h-8 w-8 shrink-0 items-center justify-center rounded-md'>
+                          <Wrench className='h-4 w-4' />
                         </div>
-                      </TableCell>
-                      <TableCell className='text-center whitespace-nowrap'>
-                        {Number(r.total_quantity ?? 0)}
-                      </TableCell>
-                      <TableCell className='text-muted-foreground whitespace-nowrap'>
-                        {r.location_name ?? '—'}
-                      </TableCell>
-                      <TableCell className='whitespace-nowrap'>
-                        <Badge variant={r.is_active !== false ? 'default' : 'secondary'}>
-                          {r.is_active !== false ? 'Active' : 'Inactive'}
-                        </Badge>
-                      </TableCell>
-                      <TableCell className='text-right whitespace-nowrap'>
-                        <DropdownMenu>
-                          <DropdownMenuTrigger asChild>
-                            <Button variant='ghost' size='icon' className='h-8 w-8'>
-                              <MoreHorizontal className='h-4 w-4' />
-                            </Button>
-                          </DropdownMenuTrigger>
-                          <DropdownMenuContent align='end'>
-                            <DropdownMenuItem
-                              onClick={() =>
-                                toast.info('Manage equipment', { description: r.name })
-                              }
-                            >
-                              <Wrench className='mr-2 h-4 w-4' /> Manage
-                            </DropdownMenuItem>
-                            <DropdownMenuItem
-                              className='text-destructive focus:text-destructive'
-                              onClick={() =>
-                                toast.error('Retire equipment', {
-                                  description: `${r.name} marked for retirement.`,
-                                })
-                              }
-                            >
-                              <Trash2 className='mr-2 h-4 w-4' /> Retire
-                            </DropdownMenuItem>
-                          </DropdownMenuContent>
-                        </DropdownMenu>
-                      </TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-            </div>
-          )}
-        </CardContent>
-      </Card>
+                        {item.uuid ? (
+                          <Link
+                            href={dashboardUrl('organisation', `resources/${item.uuid}`)}
+                            className='text-foreground font-medium hover:underline'
+                          >
+                            {item.name}
+                          </Link>
+                        ) : (
+                          <span className='font-medium'>{item.name}</span>
+                        )}
+                      </div>
+                    </TableCell>
+                    <TableCell>
+                      {item.branch_uuid ? (
+                        <div className='min-w-0'>
+                          <div className='flex items-center gap-1.5'>
+                            <Building2 className='text-muted-foreground h-3.5 w-3.5 shrink-0' />
+                            <span className='truncate'>
+                              {branch?.branch_name ||
+                                (branchesQuery.isLoading ? 'Loading…' : 'Unknown branch')}
+                            </span>
+                          </div>
+                          {branch ? (
+                            <div className='text-muted-foreground pl-5 text-xs'>
+                              {branchHasPin(branch)
+                                ? (townFromAddress(branch.address) ?? '')
+                                : 'No pin yet'}
+                            </div>
+                          ) : null}
+                        </div>
+                      ) : (
+                        <div className='flex flex-wrap items-center gap-2'>
+                          <Badge variant='outline' className='border-warning/60 text-warning'>
+                            <TriangleAlert />
+                            No branch
+                          </Badge>
+                          <Button variant='outline' size='sm' onClick={() => setAssigning(item)}>
+                            Assign branch
+                          </Button>
+                        </div>
+                      )}
+                    </TableCell>
+                    <TableCell className='font-mono tabular-nums'>
+                      {item.total_quantity ?? '—'}
+                    </TableCell>
+                    <TableCell className='text-muted-foreground hidden md:table-cell'>
+                      {item.location_name || '—'}
+                    </TableCell>
+                    <TableCell>
+                      <Badge variant={item.is_active !== false ? 'success' : 'outline'}>
+                        {item.is_active !== false ? 'Active' : 'Inactive'}
+                      </Badge>
+                    </TableCell>
+                    <TableCell className='text-right'>
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                          <Button
+                            variant='ghost'
+                            size='icon'
+                            className='h-8 w-8'
+                            aria-label={`Actions for ${item.name}`}
+                          >
+                            <MoreHorizontal className='h-4 w-4' />
+                          </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align='end'>
+                          <DropdownMenuItem onClick={() => setEditor({ resource: item })}>
+                            <Pencil className='mr-2 h-4 w-4' />
+                            Edit
+                          </DropdownMenuItem>
+                          <DropdownMenuItem onClick={() => setAssigning(item)}>
+                            <Building2 className='mr-2 h-4 w-4' />
+                            Assign branch
+                          </DropdownMenuItem>
+                        </DropdownMenuContent>
+                      </DropdownMenu>
+                    </TableCell>
+                  </TableRow>
+                );
+              })}
+            </TableBody>
+          </Table>
+        </div>
+      </AsyncSection>
+
+      <ResourceFormDialog
+        organisationUuid={organisationUuid}
+        resourceType={ResourceTypeEnum.EQUIPMENT_POOL}
+        branches={branches}
+        resource={editor?.resource}
+        open={editor !== null}
+        onOpenChange={open => {
+          if (!open) setEditor(null);
+        }}
+      />
+
+      <AssignBranchDialog
+        organisationUuid={organisationUuid}
+        resource={assigning}
+        branches={branches}
+        open={assigning !== null}
+        onOpenChange={open => {
+          if (!open) setAssigning(null);
+        }}
+      />
+    </OrgPage>
+  );
+}
+
+function EquipmentTableSkeleton() {
+  return (
+    <div className='border-border/70 bg-card space-y-3 rounded-md border p-4 shadow-sm'>
+      <Skeleton className='h-6 w-full' />
+      {Array.from({ length: 5 }).map((_, index) => (
+        <div key={index} className='flex items-center gap-3'>
+          <Skeleton className='h-8 w-8 rounded-md' />
+          <Skeleton className='h-4 flex-1' />
+          <Skeleton className='h-4 w-24' />
+          <Skeleton className='h-4 w-12' />
+        </div>
+      ))}
     </div>
   );
 }

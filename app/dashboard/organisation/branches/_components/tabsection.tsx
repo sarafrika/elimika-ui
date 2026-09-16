@@ -30,11 +30,7 @@ export default function TabSection({ branch }: { branch: TrainingBranch }) {
             <CardDescription>Classrooms and labs available at this branch</CardDescription>
           </CardHeader>
           <CardContent>
-            <BranchResources
-              organisationUuid={organisationUuid}
-              branchUuid={branchUuid}
-              resourceType={ResourceTypeEnum.VENUE}
-            />
+            <BranchResources branch={branch} resourceType={ResourceTypeEnum.VENUE} />
           </CardContent>
         </Card>
       </TabsContent>
@@ -46,11 +42,7 @@ export default function TabSection({ branch }: { branch: TrainingBranch }) {
             <CardDescription>Shared equipment available at this branch</CardDescription>
           </CardHeader>
           <CardContent>
-            <BranchResources
-              organisationUuid={organisationUuid}
-              branchUuid={branchUuid}
-              resourceType={ResourceTypeEnum.EQUIPMENT_POOL}
-            />
+            <BranchResources branch={branch} resourceType={ResourceTypeEnum.EQUIPMENT_POOL} />
           </CardContent>
         </Card>
       </TabsContent>
