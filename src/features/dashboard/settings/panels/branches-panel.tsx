@@ -1,7 +1,17 @@
 'use client';
 
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { Building2, Mail, MapPin, Pencil, Phone, Plus, Trash2, Users } from 'lucide-react';
+import {
+  Building2,
+  Mail,
+  MapPin,
+  MapPinOff,
+  Pencil,
+  Phone,
+  Plus,
+  Trash2,
+  Users,
+} from 'lucide-react';
 import Link from 'next/link';
 import { useMemo, useState } from 'react';
 import { toast } from 'sonner';
@@ -19,13 +29,7 @@ import {
 } from '@/components/ui/alert-dialog';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from '@/components/ui/card';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import {
   Dialog,
   DialogContent,
@@ -40,13 +44,18 @@ import type { StudentGroup, TrainingBranch } from '@/services/client';
 import {
   deleteTrainingBranch1Mutation,
   getTrainingBranchesByOrganisationOptions,
-  getTrainingBranchesByOrganisationQueryKey,
   listGroupsOptions,
 } from '@/services/client/@tanstack/react-query.gen';
+import { dashboardUrl } from '@/src/features/dashboard/lib/dashboard-url';
+import { invalidateGeneratedQueryIds } from '@/src/features/dashboard/workflow-query-invalidation';
 import { useOrganisation } from '@/src/features/organisation/context/organisation-context';
 import CreateEditBranchform from '@/src/features/organisation/branches/components/createedit-branch-form';
 
 const BRANCH_PAGE = { pageable: { page: 0, size: 100 } } as const;
+
+function hasPin(branch: TrainingBranch) {
+  return Number.isFinite(branch.latitude) && Number.isFinite(branch.longitude);
+}
 
 export function BranchesPanel() {
   const queryClient = useQueryClient();
@@ -87,13 +96,14 @@ export function BranchesPanel() {
   const deleteBranch = useMutation(deleteTrainingBranch1Mutation());
 
   const invalidateBranches = async () => {
-    await queryClient.invalidateQueries({
-      queryKey: getTrainingBranchesByOrganisationQueryKey({
-        path: { uuid: organisationUuid },
-        query: BRANCH_PAGE,
-      }),
-    });
-    await queryClient.invalidateQueries({ queryKey: ['organization'] });
+    await Promise.all([
+      invalidateGeneratedQueryIds(queryClient, [
+        'getTrainingBranchesByOrganisation',
+        'getTrainingBranchByUuid',
+        'getTrainingBranchByUuid1',
+      ]),
+      queryClient.invalidateQueries({ queryKey: ['organization'] }),
+    ]);
   };
 
   const openCreate = () => {
@@ -131,7 +141,7 @@ export function BranchesPanel() {
             Branches
           </CardTitle>
           <CardDescription>
-            Each branch has its own contact details and academic groups.
+            Each branch is a training site with its own pin, contact person and academic groups.
           </CardDescription>
         </div>
         <Button size='sm' onClick={openCreate} disabled={!organisationUuid}>
@@ -179,6 +189,12 @@ export function BranchesPanel() {
                     <Badge variant={branch.active ? 'success' : 'outline'} className='shrink-0'>
                       {branch.active ? 'Active' : 'Inactive'}
                     </Badge>
+                    {!hasPin(branch) ? (
+                      <Badge variant='outline' className='border-warning/60 text-warning shrink-0'>
+                        <MapPinOff />
+                        No pin
+                      </Badge>
+                    ) : null}
                   </div>
 
                   <div className='flex shrink-0 items-center gap-1'>
@@ -208,10 +224,7 @@ export function BranchesPanel() {
                   </span>
                   <span className='flex items-center gap-1.5'>
                     <Users className='h-3.5 w-3.5 shrink-0' />
-                    <span className='truncate'>
-                      {branch.poc_name || 'No point of contact'}
-                      {branch.capacity != null ? ` · ${branch.capacity} seats` : ''}
-                    </span>
+                    <span className='truncate'>{branch.poc_name || 'No contact person'}</span>
                   </span>
                   <span className='flex items-center gap-1.5'>
                     <Mail className='h-3.5 w-3.5 shrink-0' />
@@ -225,7 +238,7 @@ export function BranchesPanel() {
 
                 {branch.uuid ? (
                   <Button asChild variant='outline' size='sm'>
-                    <Link href={`/dashboard/organisation/branches/${branch.uuid}`}>
+                    <Link href={dashboardUrl('organisation', `branches/${branch.uuid}`)}>
                       Open branch detail
                     </Link>
                   </Button>
@@ -248,8 +261,8 @@ export function BranchesPanel() {
             <DialogTitle>{editingBranch ? 'Edit branch' : 'New branch'}</DialogTitle>
             <DialogDescription>
               {editingBranch
-                ? 'Update this branch’s details and point of contact.'
-                : 'Add a training location to your organisation.'}
+                ? 'Update this branch’s pin and contact person.'
+                : 'A branch is a physical training site. Its pin is where every class and job at this branch takes place.'}
             </DialogDescription>
           </DialogHeader>
           <CreateEditBranchform
