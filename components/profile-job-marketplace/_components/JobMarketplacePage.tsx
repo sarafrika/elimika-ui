@@ -48,7 +48,6 @@ import { Button } from '@/components/ui/button';
 import { EmptyState } from '@/components/ui/empty-state';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import Spinner from '@/components/ui/spinner';
 import {
   Select,
   SelectContent,
@@ -64,6 +63,7 @@ import {
   SheetTitle,
   SheetTrigger,
 } from '@/components/ui/sheet';
+import Spinner from '@/components/ui/spinner';
 import { Tabs, TabsContent } from '@/components/ui/tabs';
 import { Textarea } from '@/components/ui/textarea';
 import { formatCurrency } from '@/lib/format-currency';
@@ -1126,9 +1126,6 @@ export function JobMarketplacePage({ role }: { role: JobMarketplaceRole }) {
       );
     });
   }, [contentFilter, jobsUsed, locationFilter, organisationFilter, search, sessionFormatFilter]);
-
-
-
 
   const filteredJobs = useMemo(() => {
     return jobsBeforeStatusFilter

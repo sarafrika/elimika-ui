@@ -5,7 +5,7 @@
 
 import { useMutation, useQuery } from '@tanstack/react-query';
 import { CalendarClock, Loader2 } from 'lucide-react';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { type FormEvent, useEffect, useMemo, useState } from 'react';
 import { toast } from 'sonner';
 
@@ -94,6 +94,8 @@ import {
 
 export default function OrganisationCreateClassPage() {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const requestedCourseUuid = searchParams.get('courseUuid')?.trim();
   const organisation = useOrganisation();
   const organisationUuid = organisation?.uuid ?? '';
   const { zone: preferredTimeZone, source: preferredTimeZoneSource } = useTimeZone();
@@ -184,11 +186,22 @@ export default function OrganisationCreateClassPage() {
   );
 
   const [offering, setOffering] = useState('');
+  const [prefillApplied, setPrefillApplied] = useState(false);
   useEffect(() => {
-    if (offerings.length > 0 && !offerings.some(o => o.value === offering)) {
-      setOffering(offerings[0].value);
+    const requestedOffering = requestedCourseUuid ? `course:${requestedCourseUuid}` : '';
+    if (!prefillApplied && requestedOffering) {
+      if (offerings.some(item => item.value === requestedOffering)) {
+        setOffering(requestedOffering);
+        setPrefillApplied(true);
+      }
+      // Do not silently select another course when the requested one is not approved.
+      return;
     }
-  }, [offerings, offering]);
+    const firstOffering = offerings[0];
+    if (firstOffering && !offerings.some(o => o.value === offering)) {
+      setOffering(firstOffering.value);
+    }
+  }, [offerings, offering, requestedCourseUuid, prefillApplied]);
 
   const selectedOffering = useMemo(
     () => offerings.find(o => o.value === offering),

@@ -6,6 +6,7 @@ import {
   BoltIcon,
   BookAIcon,
   BookOpen,
+  BriefcaseBusiness,
   Building2,
   Calendar,
   CalendarClock,
@@ -320,6 +321,11 @@ export default {
           title: 'Jobs',
           url: '/dashboard/opportunities',
           icon: Handshake,
+        },
+        {
+          title: 'Hired Jobs',
+          url: '/dashboard/job-hires',
+          icon: BriefcaseBusiness,
         },
         {
           title: 'Booking Requests',
@@ -714,6 +720,7 @@ export default {
         { title: 'My Courses', url: '/dashboard/courses', icon: BookOpen },
         { title: 'My Applications', url: '/dashboard/my-applications', icon: FileText },
         { title: 'Groups', url: '/dashboard/groups', icon: UsersRound },
+        { title: 'Job Postings', url: '/dashboard/opportunities', icon: BriefcaseBusiness },
         { title: 'Job Matches', url: '/dashboard/job-matches', icon: Sparkles },
       ],
     },

@@ -1,10 +1,10 @@
 'use client';
 
-import { useParams } from 'next/navigation';
-import { useEffect } from 'react';
 import { useBreadcrumb } from '@/context/breadcrumb-provider';
 import { CourseRecordPage } from '@/src/features/course-record';
 import { CourseRecordRouteActions } from '@/src/features/dashboard/courses/components/CourseRecordRouteActions';
+import { useParams } from 'next/navigation';
+import { useEffect } from 'react';
 
 const ALL_COURSES_HREF = '/dashboard/admin/all-courses';
 

@@ -1,37 +1,35 @@
-import { ArrowLeft, CircleAlert } from 'lucide-react';
-import Link from 'next/link';
-import {
-  AccessCard,
-  CourseHero,
-  type CourseCurriculumLesson,
-  CurriculumTab,
-  EnrolPanel,
-  GateBanner,
-  GlanceCard,
-  OverviewTab,
-} from '@/src/features/course-record/blocks';
+import type { CourseTrainingRequirement } from '@/services/client';
 import {
   formatCourseDuration,
   getCourseDisplayTitle,
   stripRichText,
   toBulletLines,
 } from '@/src/features/catalogue/format';
-import {
-  PROSPECT_ACCESS_LABEL,
-  PROSPECT_BREADCRUMB_ROOT,
-} from '@/src/features/catalogue/prospect';
-import type { CourseTrainingRequirement } from '@/services/client';
+import { PROSPECT_ACCESS_LABEL, PROSPECT_BREADCRUMB_ROOT } from '@/src/features/catalogue/prospect';
 import type { PublicCourseDetail } from '@/src/features/catalogue/types';
+import {
+  AccessCard,
+  CourseHero,
+  CurriculumTab,
+  EnrolPanel,
+  GateBanner,
+  GlanceCard,
+  OverviewTab,
+  type CourseCurriculumLesson,
+} from '@/src/features/course-record/blocks';
+import { ArrowLeft, CircleAlert } from 'lucide-react';
+import Link from 'next/link';
 import { CataloguePageShell } from './CataloguePageShell';
 import { CatalogueStatusCard } from './CatalogueStatusCard';
+import { CourseDetailsAsideCard } from './CourseDetailsAsideCard';
 
 /**
  * The public course record, as a prospect sees it.
  *
  * Server-rendered, so a crawler receives the record as HTML and the first paint
  * carries the hero rather than a spinner — the one reason this is not the client
- * `CourseRecordPage`. It renders the record's own blocks, which take props and
- * never fetch, so the design is shared rather than copied.
+ * `CourseRecordPage`. It shares the record's presentation blocks; the aside
+ * enhances the public details with live class counts and signed-in actions.
  */
 
 /** The one viewer state a public listing has. The API decides it everywhere else. */
@@ -126,6 +124,7 @@ export function PublicCourseDetailPage({ detail }: { detail: PublicCourseDetail 
         </div>
 
         <aside className='flex min-w-0 flex-col gap-4 lg:sticky lg:top-24'>
+          <CourseDetailsAsideCard detail={detail} />
           <AccessCard access={PROSPECT} />
           <GlanceCard access={PROSPECT} />
           <EnrolPanel
