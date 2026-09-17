@@ -550,6 +550,18 @@ import type {
   SubmitProgramTrainingApplicationData,
   SubmitProgramTrainingApplicationResponses,
   SubmitProgramTrainingApplicationErrors,
+  ListProgramTrainingApplicationRateUpdatesData,
+  ListProgramTrainingApplicationRateUpdatesResponses,
+  ListProgramTrainingApplicationRateUpdatesErrors,
+  SubmitProgramTrainingRateUpdateData,
+  SubmitProgramTrainingRateUpdateResponses,
+  SubmitProgramTrainingRateUpdateErrors,
+  WithdrawProgramTrainingRateUpdateData,
+  WithdrawProgramTrainingRateUpdateResponses,
+  WithdrawProgramTrainingRateUpdateErrors,
+  DecideOnProgramTrainingRateUpdateData,
+  DecideOnProgramTrainingRateUpdateResponses,
+  DecideOnProgramTrainingRateUpdateErrors,
   GetProgramReviewsData,
   GetProgramReviewsResponses,
   GetProgramReviewsErrors,
@@ -787,6 +799,18 @@ import type {
   SubmitTrainingApplicationData,
   SubmitTrainingApplicationResponses,
   SubmitTrainingApplicationErrors,
+  ListTrainingRateUpdatesData,
+  ListTrainingRateUpdatesResponses,
+  ListTrainingRateUpdatesErrors,
+  SubmitTrainingRateUpdateData,
+  SubmitTrainingRateUpdateResponses,
+  SubmitTrainingRateUpdateErrors,
+  WithdrawTrainingRateUpdateData,
+  WithdrawTrainingRateUpdateResponses,
+  WithdrawTrainingRateUpdateErrors,
+  DecideOnTrainingRateUpdateData,
+  DecideOnTrainingRateUpdateResponses,
+  DecideOnTrainingRateUpdateErrors,
   GetCourseRubricsData,
   GetCourseRubricsResponses,
   GetCourseRubricsErrors,
@@ -1306,6 +1330,12 @@ import type {
   SearchAttemptsData,
   SearchAttemptsResponses,
   SearchAttemptsErrors,
+  ListProgramTrainingRateUpdatesData,
+  ListProgramTrainingRateUpdatesResponses,
+  ListProgramTrainingRateUpdatesErrors,
+  GetProgramTrainingApplicationHistoryData,
+  GetProgramTrainingApplicationHistoryResponses,
+  GetProgramTrainingApplicationHistoryErrors,
   GetProgramRatingSummaryData,
   GetProgramRatingSummaryResponses,
   GetProgramRatingSummaryErrors,
@@ -1387,6 +1417,9 @@ import type {
   ListSentData,
   ListSentResponses,
   ListSentErrors,
+  ListInstructorStudentsData,
+  ListInstructorStudentsResponses,
+  ListInstructorStudentsErrors,
   ListObligationsData,
   ListObligationsResponses,
   ListObligationsErrors,
@@ -1534,6 +1567,12 @@ import type {
   GetPendingEditData,
   GetPendingEditResponses,
   GetPendingEditErrors,
+  ListCourseTrainingRateUpdatesData,
+  ListCourseTrainingRateUpdatesResponses,
+  ListCourseTrainingRateUpdatesErrors,
+  GetTrainingApplicationHistoryData,
+  GetTrainingApplicationHistoryResponses,
+  GetTrainingApplicationHistoryErrors,
   GetCourseTrainersData,
   GetCourseTrainersResponses,
   GetCourseTrainersErrors,
@@ -2004,6 +2043,9 @@ import {
   publishProgramResponseTransformer,
   listProgramTrainingApplicationsResponseTransformer,
   submitProgramTrainingApplicationResponseTransformer,
+  listProgramTrainingApplicationRateUpdatesResponseTransformer,
+  submitProgramTrainingRateUpdateResponseTransformer,
+  decideOnProgramTrainingRateUpdateResponseTransformer,
   getProgramReviewsResponseTransformer,
   submitProgramReviewResponseTransformer,
   getProgramRequirementsResponseTransformer,
@@ -2072,6 +2114,9 @@ import {
   addCourseTrainingRequirementResponseTransformer,
   listTrainingApplicationsResponseTransformer,
   submitTrainingApplicationResponseTransformer,
+  listTrainingRateUpdatesResponseTransformer,
+  submitTrainingRateUpdateResponseTransformer,
+  decideOnTrainingRateUpdateResponseTransformer,
   getCourseRubricsResponseTransformer,
   associateRubricResponseTransformer,
   getCourseReviewsResponseTransformer,
@@ -2214,6 +2259,8 @@ import {
   searchQuizzesResponseTransformer,
   searchQuestionsResponseTransformer,
   searchAttemptsResponseTransformer,
+  listProgramTrainingRateUpdatesResponseTransformer,
+  getProgramTrainingApplicationHistoryResponseTransformer,
   getProgramRatingSummaryResponseTransformer,
   getProgramEnrollmentsResponseTransformer,
   getRequiredCoursesResponseTransformer,
@@ -2239,6 +2286,7 @@ import {
   getCalendarResponseTransformer,
   listBookingsResponseTransformer,
   listSentResponseTransformer,
+  listInstructorStudentsResponseTransformer,
   listObligationsResponseTransformer,
   search2ResponseTransformer,
   getCountsResponseTransformer,
@@ -2278,6 +2326,8 @@ import {
   getCourseVersionsResponseTransformer,
   withdrawPendingEditResponseTransformer,
   getPendingEditResponseTransformer,
+  listCourseTrainingRateUpdatesResponseTransformer,
+  getTrainingApplicationHistoryResponseTransformer,
   getCourseTrainersResponseTransformer,
   getCourseStatsResponseTransformer,
   getPrimaryRubricResponseTransformer,
@@ -3414,7 +3464,8 @@ export const withdrawProgramTrainingApplication = <ThrowOnError extends boolean 
 /**
  * Get program training application
  * Retrieves a specific training application for a program. Readable by the program creator, the
- * applicant and platform admins; anyone else receives 404.
+ * applicant and platform admins; anyone else receives 404. The program creator's first read is
+ * recorded and surfaces as `first_opened_at`.
  *
  */
 export const getProgramTrainingApplication = <ThrowOnError extends boolean = false>(
@@ -4607,7 +4658,8 @@ export const withdrawTrainingApplication = <ThrowOnError extends boolean = false
 /**
  * Get training application
  * Retrieves a specific training application for a course. Readable by the course creator, the
- * applicant and platform admins; anyone else receives 404.
+ * applicant and platform admins; anyone else receives 404. The course creator's first read is
+ * recorded and surfaces as `first_opened_at`.
  *
  */
 export const getTrainingApplication = <ThrowOnError extends boolean = false>(
@@ -7743,6 +7795,132 @@ export const submitProgramTrainingApplication = <ThrowOnError extends boolean = 
 };
 
 /**
+ * List rate updates on a training application
+ * Every rate update on the application, newest first. Readable by the applicant and the program creator; anyone else receives 404.
+ */
+export const listProgramTrainingApplicationRateUpdates = <ThrowOnError extends boolean = false>(
+  options: Options<ListProgramTrainingApplicationRateUpdatesData, ThrowOnError>
+) => {
+  return (options.client ?? _heyApiClient).get<
+    ListProgramTrainingApplicationRateUpdatesResponses,
+    ListProgramTrainingApplicationRateUpdatesErrors,
+    ThrowOnError
+  >({
+    responseTransformer: listProgramTrainingApplicationRateUpdatesResponseTransformer,
+    security: [
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+    ],
+    url: '/api/v1/programs/{programUuid}/training-applications/{applicationUuid}/rate-updates',
+    ...options,
+  });
+};
+
+/**
+ * Propose a rate update
+ * Lets an approved applicant (the instructor, or a manager of the applicant organisation) propose a
+ * replacement rate card. The body carries the full card as it should read after approval, validated
+ * like a new application's card. The application must be APPROVED and have no other pending update.
+ * The program creator approves or rejects it; the current rates stay in force until then.
+ *
+ */
+export const submitProgramTrainingRateUpdate = <ThrowOnError extends boolean = false>(
+  options: Options<SubmitProgramTrainingRateUpdateData, ThrowOnError>
+) => {
+  return (options.client ?? _heyApiClient).post<
+    SubmitProgramTrainingRateUpdateResponses,
+    SubmitProgramTrainingRateUpdateErrors,
+    ThrowOnError
+  >({
+    responseTransformer: submitProgramTrainingRateUpdateResponseTransformer,
+    security: [
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+    ],
+    url: '/api/v1/programs/{programUuid}/training-applications/{applicationUuid}/rate-updates',
+    ...options,
+    headers: {
+      'Content-Type': 'application/json',
+      ...options.headers,
+    },
+  });
+};
+
+/**
+ * Withdraw a rate update
+ * The applicant withdraws their own pending rate update. Only pending updates can be withdrawn.
+ */
+export const withdrawProgramTrainingRateUpdate = <ThrowOnError extends boolean = false>(
+  options: Options<WithdrawProgramTrainingRateUpdateData, ThrowOnError>
+) => {
+  return (options.client ?? _heyApiClient).delete<
+    WithdrawProgramTrainingRateUpdateResponses,
+    WithdrawProgramTrainingRateUpdateErrors,
+    ThrowOnError
+  >({
+    security: [
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+    ],
+    url: '/api/v1/programs/{programUuid}/training-applications/{applicationUuid}/rate-updates/{updateUuid}',
+    ...options,
+  });
+};
+
+/**
+ * Decide on a rate update
+ * The program creator approves or rejects a pending rate update with `action=approve|reject`. Approval
+ * re-validates the proposed card and copies it onto the application in the same transaction; the
+ * application stays APPROVED throughout. Rejection leaves the current rates unchanged.
+ *
+ */
+export const decideOnProgramTrainingRateUpdate = <ThrowOnError extends boolean = false>(
+  options: Options<DecideOnProgramTrainingRateUpdateData, ThrowOnError>
+) => {
+  return (options.client ?? _heyApiClient).post<
+    DecideOnProgramTrainingRateUpdateResponses,
+    DecideOnProgramTrainingRateUpdateErrors,
+    ThrowOnError
+  >({
+    responseTransformer: decideOnProgramTrainingRateUpdateResponseTransformer,
+    security: [
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+    ],
+    url: '/api/v1/programs/{programUuid}/training-applications/{applicationUuid}/rate-updates/{updateUuid}',
+    ...options,
+    headers: {
+      'Content-Type': 'application/json',
+      ...options.headers,
+    },
+  });
+};
+
+/**
  * Get reviews for a program
  * Returns paginated public reviews for the specified training program.
  */
@@ -10212,6 +10390,132 @@ export const submitTrainingApplication = <ThrowOnError extends boolean = false>(
 };
 
 /**
+ * List rate updates on a training application
+ * Every rate update on the application, newest first. Readable by the applicant and the course creator; anyone else receives 404.
+ */
+export const listTrainingRateUpdates = <ThrowOnError extends boolean = false>(
+  options: Options<ListTrainingRateUpdatesData, ThrowOnError>
+) => {
+  return (options.client ?? _heyApiClient).get<
+    ListTrainingRateUpdatesResponses,
+    ListTrainingRateUpdatesErrors,
+    ThrowOnError
+  >({
+    responseTransformer: listTrainingRateUpdatesResponseTransformer,
+    security: [
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+    ],
+    url: '/api/v1/courses/{courseUuid}/training-applications/{applicationUuid}/rate-updates',
+    ...options,
+  });
+};
+
+/**
+ * Propose a rate update
+ * Lets an approved applicant (the instructor, or a manager of the applicant organisation) propose a
+ * replacement rate card. The body carries the full card as it should read after approval, validated
+ * like a new application's card. The application must be APPROVED and have no other pending update.
+ * The course creator approves or rejects it; the current rates stay in force until then.
+ *
+ */
+export const submitTrainingRateUpdate = <ThrowOnError extends boolean = false>(
+  options: Options<SubmitTrainingRateUpdateData, ThrowOnError>
+) => {
+  return (options.client ?? _heyApiClient).post<
+    SubmitTrainingRateUpdateResponses,
+    SubmitTrainingRateUpdateErrors,
+    ThrowOnError
+  >({
+    responseTransformer: submitTrainingRateUpdateResponseTransformer,
+    security: [
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+    ],
+    url: '/api/v1/courses/{courseUuid}/training-applications/{applicationUuid}/rate-updates',
+    ...options,
+    headers: {
+      'Content-Type': 'application/json',
+      ...options.headers,
+    },
+  });
+};
+
+/**
+ * Withdraw a rate update
+ * The applicant withdraws their own pending rate update. Only pending updates can be withdrawn.
+ */
+export const withdrawTrainingRateUpdate = <ThrowOnError extends boolean = false>(
+  options: Options<WithdrawTrainingRateUpdateData, ThrowOnError>
+) => {
+  return (options.client ?? _heyApiClient).delete<
+    WithdrawTrainingRateUpdateResponses,
+    WithdrawTrainingRateUpdateErrors,
+    ThrowOnError
+  >({
+    security: [
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+    ],
+    url: '/api/v1/courses/{courseUuid}/training-applications/{applicationUuid}/rate-updates/{updateUuid}',
+    ...options,
+  });
+};
+
+/**
+ * Decide on a rate update
+ * The course creator approves or rejects a pending rate update with `action=approve|reject`. Approval
+ * re-validates the proposed card and copies it onto the application in the same transaction; the
+ * application stays APPROVED throughout. Rejection leaves the current rates unchanged.
+ *
+ */
+export const decideOnTrainingRateUpdate = <ThrowOnError extends boolean = false>(
+  options: Options<DecideOnTrainingRateUpdateData, ThrowOnError>
+) => {
+  return (options.client ?? _heyApiClient).post<
+    DecideOnTrainingRateUpdateResponses,
+    DecideOnTrainingRateUpdateErrors,
+    ThrowOnError
+  >({
+    responseTransformer: decideOnTrainingRateUpdateResponseTransformer,
+    security: [
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+    ],
+    url: '/api/v1/courses/{courseUuid}/training-applications/{applicationUuid}/rate-updates/{updateUuid}',
+    ...options,
+    headers: {
+      'Content-Type': 'application/json',
+      ...options.headers,
+    },
+  });
+};
+
+/**
  * Get all rubrics associated with a course
  * Retrieves all rubrics that are associated with the specified course, including usage context.
  */
@@ -12381,7 +12685,7 @@ export const listJobs = <ThrowOnError extends boolean = false>(
 
 /**
  * Create a marketplace class job
- * Attached resources are validated against their calendars and reserved with HOLD bookings for every session occurrence; conflicts return 409 with a per-occurrence report. A preferred instructor whose schedule clashes with the sessions is not hired: 409 with the clashing windows, and nothing is posted
+ * Attached resources are validated against their calendars and reserved with HOLD bookings for every session occurrence; conflicts return 409 with a per-occurrence report. A preferred instructor whose schedule clashes with the sessions is not hired: 409 with the clashing windows, and nothing is posted. A preferred instructor with no approved rate for the job's format, delivery and rate_basis, or a rate above instructor_pay, is refused with 409
  */
 export const createJob = <ThrowOnError extends boolean = false>(
   options: Options<CreateJobData, ThrowOnError>
@@ -12442,7 +12746,7 @@ export const uploadJobThumbnail = <ThrowOnError extends boolean = false>(
 
 /**
  * Create the class for a job whose applicant has been hired
- * Creating the class is what assigns the hired instructor: it stamps their application assigned, converts their time holds and fills the job. There is no separate assign call.
+ * Creating the class is what assigns the hired instructor: it stamps their application assigned, converts their time holds and fills the job. There is no separate assign call. Refused with 409 when the hired instructor no longer has an approved rate for the job's rate basis that its pay covers.
  */
 export const createClassForJob = <ThrowOnError extends boolean = false>(
   options: Options<CreateClassForJobData, ThrowOnError>
@@ -12521,7 +12825,7 @@ export const listJobApplications = <ThrowOnError extends boolean = false>(
 
 /**
  * Apply to a marketplace class job
- * Applications are hard-blocked (409 with conflict details) when the instructor's existing schedule overlaps any of the job's planned session occurrences
+ * Applications are hard-blocked (409 with conflict details) when the instructor's existing schedule overlaps any of the job's planned session occurrences, and refused with 409 when the instructor has no approved rate for the job's format, delivery and rate basis or that rate is above the job's pay
  */
 export const applyToJob = <ThrowOnError extends boolean = false>(
   options: Options<ApplyToJobData, ThrowOnError>
@@ -12553,7 +12857,7 @@ export const applyToJob = <ThrowOnError extends boolean = false>(
 
 /**
  * Move a marketplace class job application through the funnel
- * Stages run applied -> shortlisted -> interviewing -> offered -> hired and no stage may be skipped; hire is the last decision, after which the job's class can be created. A hire whose sessions clash with the instructor's schedule is refused with 409 and the clashing windows, and the application, job and time holds are left as they were
+ * Stages run applied -> shortlisted -> interviewing -> offered -> hired and no stage may be skipped; hire is the last decision, after which the job's class can be created. A hire whose sessions clash with the instructor's schedule is refused with 409 and the clashing windows, and the application, job and time holds are left as they were. A hire whose instructor has no approved rate for the job's rate basis, or a rate above the job's pay, is refused with 409 before anything is written
  */
 export const reviewApplication = <ThrowOnError extends boolean = false>(
   options: Options<ReviewApplicationData, ThrowOnError>
@@ -15274,6 +15578,64 @@ export const searchAttempts = <ThrowOnError extends boolean = false>(
 };
 
 /**
+ * List rate updates to review on a program
+ * The program creator's queue of rate updates across the program's applications. Filter with `status=pending|approved|rejected|withdrawn`.
+ */
+export const listProgramTrainingRateUpdates = <ThrowOnError extends boolean = false>(
+  options: Options<ListProgramTrainingRateUpdatesData, ThrowOnError>
+) => {
+  return (options.client ?? _heyApiClient).get<
+    ListProgramTrainingRateUpdatesResponses,
+    ListProgramTrainingRateUpdatesErrors,
+    ThrowOnError
+  >({
+    responseTransformer: listProgramTrainingRateUpdatesResponseTransformer,
+    security: [
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+    ],
+    url: '/api/v1/programs/{programUuid}/training-rate-updates',
+    ...options,
+  });
+};
+
+/**
+ * Get program training application history
+ * The application's history, newest first, including every rate update step. Readable by the
+ * applicant and the program creator; anyone else receives 404.
+ *
+ */
+export const getProgramTrainingApplicationHistory = <ThrowOnError extends boolean = false>(
+  options: Options<GetProgramTrainingApplicationHistoryData, ThrowOnError>
+) => {
+  return (options.client ?? _heyApiClient).get<
+    GetProgramTrainingApplicationHistoryResponses,
+    GetProgramTrainingApplicationHistoryErrors,
+    ThrowOnError
+  >({
+    responseTransformer: getProgramTrainingApplicationHistoryResponseTransformer,
+    security: [
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+    ],
+    url: '/api/v1/programs/{programUuid}/training-applications/{applicationUuid}/history',
+    ...options,
+  });
+};
+
+/**
  * Get program rating summary
  * Returns the average rating and total review count for a training program.
  */
@@ -16065,6 +16427,34 @@ export const listSent = <ThrowOnError extends boolean = false>(
       },
     ],
     url: '/api/v1/organisations/{organisationUuid}/notifications/sent',
+    ...options,
+  });
+};
+
+/**
+ * List the students an instructor teaches in the organisation's classes
+ * One row per student per class, for classes the organisation owns and the instructor is instructor of record for. Only managers of the organisation (and platform admins) may ask; class_options lists every such class with students, whatever the filters.
+ */
+export const listInstructorStudents = <ThrowOnError extends boolean = false>(
+  options: Options<ListInstructorStudentsData, ThrowOnError>
+) => {
+  return (options.client ?? _heyApiClient).get<
+    ListInstructorStudentsResponses,
+    ListInstructorStudentsErrors,
+    ThrowOnError
+  >({
+    responseTransformer: listInstructorStudentsResponseTransformer,
+    security: [
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+    ],
+    url: '/api/v1/organisations/{organisationUuid}/instructors/{instructorUuid}/students',
     ...options,
   });
 };
@@ -17604,6 +17994,65 @@ export const getPendingEdit = <ThrowOnError extends boolean = false>(
       },
     ],
     url: '/api/v1/courses/{uuid}/pending-edit',
+    ...options,
+  });
+};
+
+/**
+ * List rate updates to review on a course
+ * The course creator's queue of rate updates across the course's applications. Filter with `status=pending|approved|rejected|withdrawn`.
+ */
+export const listCourseTrainingRateUpdates = <ThrowOnError extends boolean = false>(
+  options: Options<ListCourseTrainingRateUpdatesData, ThrowOnError>
+) => {
+  return (options.client ?? _heyApiClient).get<
+    ListCourseTrainingRateUpdatesResponses,
+    ListCourseTrainingRateUpdatesErrors,
+    ThrowOnError
+  >({
+    responseTransformer: listCourseTrainingRateUpdatesResponseTransformer,
+    security: [
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+    ],
+    url: '/api/v1/courses/{courseUuid}/training-rate-updates',
+    ...options,
+  });
+};
+
+/**
+ * Get training application history
+ * The application's history, newest first: submitted, edited, opened_by_creator, approved, rejected,
+ * revoked, withdrawn and every rate update step, each with its actor and notes. Readable by the
+ * applicant and the course creator; anyone else receives 404.
+ *
+ */
+export const getTrainingApplicationHistory = <ThrowOnError extends boolean = false>(
+  options: Options<GetTrainingApplicationHistoryData, ThrowOnError>
+) => {
+  return (options.client ?? _heyApiClient).get<
+    GetTrainingApplicationHistoryResponses,
+    GetTrainingApplicationHistoryErrors,
+    ThrowOnError
+  >({
+    responseTransformer: getTrainingApplicationHistoryResponseTransformer,
+    security: [
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+    ],
+    url: '/api/v1/courses/{courseUuid}/training-applications/{applicationUuid}/history',
     ...options,
   });
 };
@@ -19168,6 +19617,7 @@ export const getClassMedia = <ThrowOnError extends boolean = false>(
 
 /**
  * Check current instructor's eligibility for a marketplace class job
+ * eligible requires rate_ok: an approved rate for the job's format, delivery and rate basis that the job's pay covers
  */
 export const getJobEligibility = <ThrowOnError extends boolean = false>(
   options: Options<GetJobEligibilityData, ThrowOnError>

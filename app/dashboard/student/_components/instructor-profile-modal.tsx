@@ -135,9 +135,14 @@ export const InstructorProfileComponent: React.FC<Props> = ({
 
   const [selectedRateKey, setSelectedRateKey] = useState<RateKey>('private_online_hourly_rate');
   const [totalAmount, setTotalAmount] = useState(0);
+  // A null rate means the method isn't offered, so it is left out rather than priced at zero.
   const bookingRates = matchedCourse?.rate_card
     ? {
-        ...matchedCourse.rate_card,
+        ...Object.fromEntries(
+          Object.entries(matchedCourse.rate_card).filter(
+            ([key, value]) => key !== 'currency' && typeof value === 'number'
+          )
+        ),
         currency: matchedCourse.rate_card.currency ?? 'KES',
       }
     : undefined;

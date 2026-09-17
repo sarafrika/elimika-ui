@@ -621,14 +621,14 @@ export const StudentSchema = {
     primaryGuardianContact: {
       type: 'string',
     },
+    secondaryGuardianContact: {
+      type: 'string',
+    },
     allGuardianContacts: {
       type: 'array',
       items: {
         type: 'string',
       },
-    },
-    secondaryGuardianContact: {
-      type: 'string',
     },
     full_name: {
       type: 'string',
@@ -1332,6 +1332,12 @@ export const RubricCriteriaSchema = {
       example: 'instructor@sarafrika.com',
       readOnly: true,
     },
+    is_primary_criteria: {
+      type: 'boolean',
+      description: '**[READ-ONLY]** Indicates if this is a primary assessment criteria.',
+      example: true,
+      readOnly: true,
+    },
     criteria_category: {
       type: 'string',
       description: '**[READ-ONLY]** Category classification of the assessment criteria.',
@@ -1348,12 +1354,6 @@ export const RubricCriteriaSchema = {
       type: 'string',
       description: '**[READ-ONLY]** Formatted criteria number for display in assessment interface.',
       example: 'Criteria 1',
-      readOnly: true,
-    },
-    is_primary_criteria: {
-      type: 'boolean',
-      description: '**[READ-ONLY]** Indicates if this is a primary assessment criteria.',
-      example: true,
       readOnly: true,
     },
   },
@@ -1439,19 +1439,19 @@ export const RubricMatrixSchema = {
         '**[READ-ONLY]** Statistical information about the matrix completion and scoring.',
       readOnly: true,
     },
+    is_complete: {
+      type: 'boolean',
+      description:
+        '**[READ-ONLY]** Whether all matrix cells have been completed with descriptions.',
+      example: true,
+      readOnly: true,
+    },
     expected_cell_count: {
       type: 'integer',
       format: 'int32',
       description:
         '**[READ-ONLY]** Expected number of matrix cells (criteria count × scoring levels count).',
       example: 20,
-      readOnly: true,
-    },
-    is_complete: {
-      type: 'boolean',
-      description:
-        '**[READ-ONLY]** Whether all matrix cells have been completed with descriptions.',
-      example: true,
       readOnly: true,
     },
   },
@@ -2508,92 +2508,90 @@ export const CourseTrainingRateCardSchema = {
       pattern: '^[A-Za-z]{3}$',
     },
     private_online_hourly_rate: {
-      type: 'number',
-      description: '1:1 private session rate when delivered online, per learner per hour.',
+      type: ['number', 'null'],
+      description:
+        'Private (1:1) online rate per learner per hour. Null when this method is not offered; an offered method (format x location) prices all three bases, each above zero and at least the minimum training fee.',
       example: 3500,
       minimum: 0,
     },
     private_inperson_hourly_rate: {
-      type: 'number',
-      description: '1:1 private session rate when delivered in person, per learner per hour.',
-      example: 3600,
+      type: ['number', 'null'],
+      description:
+        'Private (1:1) in-person rate per learner per hour. Null when this method is not offered; an offered method (format x location) prices all three bases, each above zero and at least the minimum training fee.',
+      example: 3500,
       minimum: 0,
     },
     group_online_hourly_rate: {
-      type: 'number',
-      description: 'Group session rate when delivered online, per learner per hour.',
-      example: 2800,
+      type: ['number', 'null'],
+      description:
+        'Group online rate per learner per hour. Null when this method is not offered; an offered method (format x location) prices all three bases, each above zero and at least the minimum training fee.',
+      example: 3500,
       minimum: 0,
     },
     group_inperson_hourly_rate: {
-      type: 'number',
-      description: 'Group session rate when delivered in person, per learner per hour.',
-      example: 3000,
+      type: ['number', 'null'],
+      description:
+        'Group in-person rate per learner per hour. Null when this method is not offered; an offered method (format x location) prices all three bases, each above zero and at least the minimum training fee.',
+      example: 3500,
       minimum: 0,
     },
     private_online_session_rate: {
       type: ['number', 'null'],
       description:
-        '1:1 private session rate when delivered online, per learner per session, whatever its length. Required for new and updated cards; null on cards created before per-session pricing existed.',
+        'Private (1:1) online rate per learner per session, whatever its length. Null when this method is not offered; an offered method (format x location) prices all three bases, each above zero and at least the minimum training fee.',
       example: 3500,
       minimum: 0,
     },
     private_inperson_session_rate: {
       type: ['number', 'null'],
       description:
-        '1:1 private session rate when delivered in person, per learner per session, whatever its length. Required for new and updated cards; null on cards created before per-session pricing existed.',
+        'Private (1:1) in-person rate per learner per session, whatever its length. Null when this method is not offered; an offered method (format x location) prices all three bases, each above zero and at least the minimum training fee.',
       example: 3500,
       minimum: 0,
     },
     group_online_session_rate: {
       type: ['number', 'null'],
       description:
-        'Group session rate when delivered online, per learner per session, whatever its length. Required for new and updated cards; null on cards created before per-session pricing existed.',
+        'Group online rate per learner per session, whatever its length. Null when this method is not offered; an offered method (format x location) prices all three bases, each above zero and at least the minimum training fee.',
       example: 3500,
       minimum: 0,
     },
     group_inperson_session_rate: {
       type: ['number', 'null'],
       description:
-        'Group session rate when delivered in person, per learner per session, whatever its length. Required for new and updated cards; null on cards created before per-session pricing existed.',
+        'Group in-person rate per learner per session, whatever its length. Null when this method is not offered; an offered method (format x location) prices all three bases, each above zero and at least the minimum training fee.',
       example: 3500,
       minimum: 0,
     },
     private_online_daily_rate: {
       type: ['number', 'null'],
       description:
-        '1:1 private session rate when delivered online, per learner per calendar day, however many sessions fall in it. Required for new and updated cards; null on cards created before per-daily pricing existed.',
+        'Private (1:1) online rate per learner per calendar day, however many sessions fall in it. Null when this method is not offered; an offered method (format x location) prices all three bases, each above zero and at least the minimum training fee.',
       example: 3500,
       minimum: 0,
     },
     private_inperson_daily_rate: {
       type: ['number', 'null'],
       description:
-        '1:1 private session rate when delivered in person, per learner per calendar day, however many sessions fall in it. Required for new and updated cards; null on cards created before per-daily pricing existed.',
+        'Private (1:1) in-person rate per learner per calendar day, however many sessions fall in it. Null when this method is not offered; an offered method (format x location) prices all three bases, each above zero and at least the minimum training fee.',
       example: 3500,
       minimum: 0,
     },
     group_online_daily_rate: {
       type: ['number', 'null'],
       description:
-        'Group session rate when delivered online, per learner per calendar day, however many sessions fall in it. Required for new and updated cards; null on cards created before per-daily pricing existed.',
+        'Group online rate per learner per calendar day, however many sessions fall in it. Null when this method is not offered; an offered method (format x location) prices all three bases, each above zero and at least the minimum training fee.',
       example: 3500,
       minimum: 0,
     },
     group_inperson_daily_rate: {
       type: ['number', 'null'],
       description:
-        'Group session rate when delivered in person, per learner per calendar day, however many sessions fall in it. Required for new and updated cards; null on cards created before per-daily pricing existed.',
+        'Group in-person rate per learner per calendar day, however many sessions fall in it. Null when this method is not offered; an offered method (format x location) prices all three bases, each above zero and at least the minimum training fee.',
       example: 3500,
       minimum: 0,
     },
   },
-  required: [
-    'group_inperson_hourly_rate',
-    'group_online_hourly_rate',
-    'private_inperson_hourly_rate',
-    'private_online_hourly_rate',
-  ],
 } as const;
 
 export const ProgramTrainingApplicationUpdateRequestSchema = {
@@ -2622,8 +2620,47 @@ export const ProgramTrainingApplicationUpdateRequestSchema = {
       maxLength: 2000,
       minLength: 0,
     },
+    offered_venue_uuids: {
+      type: ['array', 'null'],
+      description:
+        'Venue resource UUIDs the organisation offers for training: each must be an active VENUE of the applicant organisation. Organisation applicants only. Omit to keep what is stored; send [] to clear.',
+      items: {
+        type: 'string',
+        format: 'uuid',
+      },
+    },
+    requirement_answers: {
+      type: ['array', 'null'],
+      description:
+        "Answers to the course's training requirements (for programs, those of its courses). acquisition is required when has_it is false. Omit to keep what is stored; send [] to clear.",
+      items: {
+        $ref: '#/components/schemas/TrainingRequirementAnswerRequest',
+      },
+    },
   },
   required: ['rate_card'],
+} as const;
+
+export const TrainingRequirementAnswerRequestSchema = {
+  type: 'object',
+  description:
+    'Whether the applicant has a training requirement, and if not how they would obtain it',
+  properties: {
+    requirement_uuid: {
+      type: 'string',
+      format: 'uuid',
+      description:
+        '**[REQUIRED]** A training requirement of the course (for programs, of one of its courses).',
+    },
+    has_it: {
+      type: 'boolean',
+      description: '**[REQUIRED]** Whether the applicant already has it.',
+    },
+    acquisition: {
+      $ref: '#/components/schemas/AcquisitionEnum',
+    },
+  },
+  required: ['has_it', 'requirement_uuid'],
 } as const;
 
 export const ApiResponseProgramTrainingApplicationSchema = {
@@ -2734,6 +2771,161 @@ export const ProgramTrainingApplicationSchema = {
     updated_by: {
       type: ['string', 'null'],
       description: '**[READ-ONLY]** Audit user who last modified the application.',
+      readOnly: true,
+    },
+    pending_rate_update_uuid: {
+      type: ['string', 'null'],
+      format: 'uuid',
+      description:
+        '**[READ-ONLY]** The rate update awaiting review on this application, or null when there is none (always null for non-parties).',
+      readOnly: true,
+    },
+    rate_floor_flags: {
+      type: 'null',
+      $ref: '#/components/schemas/TrainingRateFloorFlags',
+      description:
+        '**[READ-ONLY]** For the course or program owner only: per rate card cell, true when the rate is set and below the minimum training fee. Null for everyone else.',
+      readOnly: true,
+    },
+    first_opened_at: {
+      type: ['string', 'null'],
+      format: 'date-time',
+      description:
+        '**[READ-ONLY]** When the course or program creator first opened this application (UTC), or null if not yet. Null for non-parties.',
+      readOnly: true,
+    },
+    offered_venues: {
+      type: ['array', 'null'],
+      description:
+        '**[READ-ONLY]** Venues the applicant organisation offers, resolved from its resources. Empty for instructors; null for non-parties.',
+      items: {
+        $ref: '#/components/schemas/TrainingApplicationVenue',
+      },
+      readOnly: true,
+    },
+    requirement_answers: {
+      type: ['array', 'null'],
+      description:
+        "**[READ-ONLY]** The applicant's answers to the training requirements. Null for non-parties.",
+      items: {
+        $ref: '#/components/schemas/TrainingRequirementAnswer',
+      },
+      readOnly: true,
+    },
+  },
+} as const;
+
+export const TrainingApplicationVenueSchema = {
+  type: 'object',
+  description: 'A venue the applicant organisation offers for delivering the training',
+  properties: {
+    name: {
+      type: ['string', 'null'],
+      description: '**[READ-ONLY]** Venue name; null if the resource no longer exists.',
+      readOnly: true,
+    },
+    resource_uuid: {
+      type: 'string',
+      format: 'uuid',
+      description: '**[READ-ONLY]** The venue resource.',
+      readOnly: true,
+    },
+    seat_capacity: {
+      type: ['integer', 'null'],
+      format: 'int32',
+      description: '**[READ-ONLY]** Seats in the venue.',
+      readOnly: true,
+    },
+    location_name: {
+      type: ['string', 'null'],
+      description: '**[READ-ONLY]** Free-text location of the venue.',
+      readOnly: true,
+    },
+    branch_uuid: {
+      type: ['string', 'null'],
+      format: 'uuid',
+      description: '**[READ-ONLY]** Branch the venue belongs to.',
+      readOnly: true,
+    },
+    branch_name: {
+      type: ['string', 'null'],
+      description: '**[READ-ONLY]** Name of that branch.',
+      readOnly: true,
+    },
+  },
+} as const;
+
+export const TrainingRateFloorFlagsSchema = {
+  type: 'object',
+  description:
+    'Per cell, true when the rate is set and below the minimum training fee (legacy cards can be). Owner only.',
+  properties: {
+    minimum_training_fee: {
+      type: 'number',
+      description:
+        "The minimum training fee the card is compared against: the course's, or the highest across a program's courses.",
+    },
+    private_online_hourly_rate: {
+      type: 'boolean',
+    },
+    private_inperson_hourly_rate: {
+      type: 'boolean',
+    },
+    group_online_hourly_rate: {
+      type: 'boolean',
+    },
+    group_inperson_hourly_rate: {
+      type: 'boolean',
+    },
+    private_online_session_rate: {
+      type: 'boolean',
+    },
+    private_inperson_session_rate: {
+      type: 'boolean',
+    },
+    group_online_session_rate: {
+      type: 'boolean',
+    },
+    group_inperson_session_rate: {
+      type: 'boolean',
+    },
+    private_online_daily_rate: {
+      type: 'boolean',
+    },
+    private_inperson_daily_rate: {
+      type: 'boolean',
+    },
+    group_online_daily_rate: {
+      type: 'boolean',
+    },
+    group_inperson_daily_rate: {
+      type: 'boolean',
+    },
+  },
+} as const;
+
+export const TrainingRequirementAnswerSchema = {
+  type: 'object',
+  description: "The applicant's answer to one training requirement",
+  properties: {
+    acquisition: {
+      $ref: '#/components/schemas/AcquisitionEnum',
+    },
+    requirement_uuid: {
+      type: 'string',
+      format: 'uuid',
+      description: '**[READ-ONLY]** The training requirement answered.',
+      readOnly: true,
+    },
+    requirement_name: {
+      type: ['string', 'null'],
+      description:
+        "**[READ-ONLY]** The requirement's name; null if it has since been removed from the course.",
+      readOnly: true,
+    },
+    has_it: {
+      type: 'boolean',
+      description: '**[READ-ONLY]** Whether the applicant has it.',
       readOnly: true,
     },
   },
@@ -3747,6 +3939,14 @@ export const InstructorProfessionalMembershipSchema = {
       example: '4 years, 3 months',
       readOnly: true,
     },
+    membership_duration_months: {
+      type: ['integer', 'null'],
+      format: 'int32',
+      description:
+        '**[READ-ONLY]** Duration of membership calculated from start and end dates, in months.',
+      example: 51,
+      readOnly: true,
+    },
     membership_status: {
       $ref: '#/components/schemas/MembershipStatusEnum',
     },
@@ -3785,14 +3985,6 @@ export const InstructorProfessionalMembershipSchema = {
       description:
         '**[READ-ONLY]** Indicates if this membership was started within the last 3 years.',
       example: true,
-      readOnly: true,
-    },
-    membership_duration_months: {
-      type: ['integer', 'null'],
-      format: 'int32',
-      description:
-        '**[READ-ONLY]** Duration of membership calculated from start and end dates, in months.',
-      example: 51,
       readOnly: true,
     },
   },
@@ -5202,6 +5394,23 @@ export const CourseTrainingApplicationUpdateRequestSchema = {
       maxLength: 2000,
       minLength: 0,
     },
+    offered_venue_uuids: {
+      type: ['array', 'null'],
+      description:
+        'Venue resource UUIDs the organisation offers for training: each must be an active VENUE of the applicant organisation. Organisation applicants only. Omit to keep what is stored; send [] to clear.',
+      items: {
+        type: 'string',
+        format: 'uuid',
+      },
+    },
+    requirement_answers: {
+      type: ['array', 'null'],
+      description:
+        "Answers to the course's training requirements (for programs, those of its courses). acquisition is required when has_it is false. Omit to keep what is stored; send [] to clear.",
+      items: {
+        $ref: '#/components/schemas/TrainingRequirementAnswerRequest',
+      },
+    },
   },
   required: ['rate_card'],
 } as const;
@@ -5314,6 +5523,45 @@ export const CourseTrainingApplicationSchema = {
     updated_by: {
       type: ['string', 'null'],
       description: '**[READ-ONLY]** Audit user who last modified the application.',
+      readOnly: true,
+    },
+    pending_rate_update_uuid: {
+      type: ['string', 'null'],
+      format: 'uuid',
+      description:
+        '**[READ-ONLY]** The rate update awaiting review on this application, or null when there is none (always null for non-parties).',
+      readOnly: true,
+    },
+    rate_floor_flags: {
+      type: 'null',
+      $ref: '#/components/schemas/TrainingRateFloorFlags',
+      description:
+        '**[READ-ONLY]** For the course or program owner only: per rate card cell, true when the rate is set and below the minimum training fee. Null for everyone else.',
+      readOnly: true,
+    },
+    first_opened_at: {
+      type: ['string', 'null'],
+      format: 'date-time',
+      description:
+        '**[READ-ONLY]** When the course or program creator first opened this application (UTC), or null if not yet. Null for non-parties.',
+      readOnly: true,
+    },
+    offered_venues: {
+      type: ['array', 'null'],
+      description:
+        '**[READ-ONLY]** Venues the applicant organisation offers, resolved from its resources. Empty for instructors; null for non-parties.',
+      items: {
+        $ref: '#/components/schemas/TrainingApplicationVenue',
+      },
+      readOnly: true,
+    },
+    requirement_answers: {
+      type: ['array', 'null'],
+      description:
+        "**[READ-ONLY]** The applicant's answers to the training requirements. Null for non-parties.",
+      items: {
+        $ref: '#/components/schemas/TrainingRequirementAnswer',
+      },
       readOnly: true,
     },
   },
@@ -8583,6 +8831,9 @@ export const ClassMarketplaceJobRequestSchema = {
     meeting_link: 'https://meet.google.com/abc-defg-hij',
     max_participants: 24,
     allow_waitlist: true,
+    sale_price: 240,
+    instructor_pay: 180,
+    rate_basis: 'per_hour',
     session_templates: [
       {
         start_time: '2026-05-02T09:00:00',
@@ -8710,19 +8961,19 @@ export const ClassMarketplaceJobRequestSchema = {
       description: 'Optional waitlist toggle for the eventual class.',
     },
     sale_price: {
-      type: ['number', 'null'],
+      type: 'number',
       description:
-        "**[OPTIONAL]** Price per learner per hour, charged once the class exists. Defaults to the organisation's approved rate when omitted. Must be at least the course minimum training fee.",
+        "**[REQUIRED]** Price per learner in the rate_basis unit, charged once the class exists. Must be at least the organisation's approved rate for the job's format, delivery and basis, and at least the course minimum training fee.",
       example: 240,
     },
     instructor_pay: {
-      type: ['number', 'null'],
+      type: 'number',
       description:
-        '**[OPTIONAL]** Per-session pay offered to the eventual instructor. An applicant is assignable only when this is at least their approved rate. Defaults to the sale price when omitted, leaving no margin.',
+        "**[REQUIRED]** Pay offered to the eventual instructor in the rate_basis unit. Must be greater than zero and no more than sale_price. An instructor can apply and be hired only when their approved rate for the job's basis is at most this.",
       example: 180,
     },
     rate_basis: {
-      $ref: '#/components/schemas/RateBasisEnum',
+      $ref: '#/components/schemas/RateBasisEnum2',
     },
     session_templates: {
       type: 'array',
@@ -8806,8 +9057,11 @@ export const ClassMarketplaceJobRequestSchema = {
     'class_visibility',
     'default_end_time',
     'default_start_time',
+    'instructor_pay',
     'location_type',
     'organisation_uuid',
+    'rate_basis',
+    'sale_price',
     'session_format',
     'session_templates',
     'title',
@@ -9266,18 +9520,6 @@ export const CertificateSchema = {
       example: 'system',
       readOnly: true,
     },
-    certificate_type: {
-      type: 'string',
-      description: '**[READ-ONLY]** Type of certificate based on completion achievement.',
-      example: 'Course Completion',
-      readOnly: true,
-    },
-    is_downloadable: {
-      type: 'boolean',
-      description: '**[READ-ONLY]** Indicates if the certificate can be downloaded by the student.',
-      example: true,
-      readOnly: true,
-    },
     grade_letter: {
       type: 'string',
       description: '**[READ-ONLY]** Letter grade representation of the final grade.',
@@ -9288,6 +9530,18 @@ export const CertificateSchema = {
       type: 'string',
       description: '**[READ-ONLY]** Current validity status of the certificate.',
       example: 'Valid Certificate',
+      readOnly: true,
+    },
+    certificate_type: {
+      type: 'string',
+      description: '**[READ-ONLY]** Type of certificate based on completion achievement.',
+      example: 'Course Completion',
+      readOnly: true,
+    },
+    is_downloadable: {
+      type: 'boolean',
+      description: '**[READ-ONLY]** Indicates if the certificate can be downloaded by the student.',
+      example: true,
       readOnly: true,
     },
   },
@@ -10430,6 +10684,23 @@ export const ProgramTrainingApplicationRequestSchema = {
       maxLength: 2000,
       minLength: 0,
     },
+    offered_venue_uuids: {
+      type: ['array', 'null'],
+      description:
+        'Venue resource UUIDs the organisation offers for training: each must be an active VENUE of the applicant organisation. Organisation applicants only. Omitted means none.',
+      items: {
+        type: 'string',
+        format: 'uuid',
+      },
+    },
+    requirement_answers: {
+      type: ['array', 'null'],
+      description:
+        "Answers to the course's training requirements (for programs, those of its courses). acquisition is required when has_it is false. Omitted means none.",
+      items: {
+        $ref: '#/components/schemas/TrainingRequirementAnswerRequest',
+      },
+    },
   },
   required: ['applicant_type', 'applicant_uuid', 'rate_card'],
 } as const;
@@ -10444,6 +10715,157 @@ export const ProgramTrainingApplicationDecisionRequestSchema = {
     review_notes: {
       type: ['string', 'null'],
       description: 'Optional notes captured alongside the decision.',
+      maxLength: 2000,
+      minLength: 0,
+    },
+  },
+} as const;
+
+export const TrainingRateUpdateRequestSchema = {
+  type: 'object',
+  description:
+    'Proposes a replacement rate card on an approved training application for the course creator to approve',
+  example: {
+    rate_card: {
+      currency: 'KES',
+      private_online_hourly_rate: null,
+      private_online_session_rate: null,
+      private_online_daily_rate: null,
+      group_online_hourly_rate: 3000,
+      group_online_session_rate: 5000,
+      group_online_daily_rate: 12000,
+    },
+    note: 'Venue costs rose this term.',
+  },
+  properties: {
+    rate_card: {
+      $ref: '#/components/schemas/CourseTrainingRateCard',
+      description: '**[REQUIRED]** The full rate card as it should read once approved.',
+    },
+    note: {
+      type: ['string', 'null'],
+      description: 'Why the rates are changing, for the course creator.',
+      maxLength: 2000,
+      minLength: 0,
+    },
+  },
+  required: ['rate_card'],
+} as const;
+
+export const ApiResponseTrainingRateUpdateSchema = {
+  type: 'object',
+  properties: {
+    success: {
+      type: 'boolean',
+    },
+    data: {
+      $ref: '#/components/schemas/TrainingRateUpdate',
+    },
+    message: {
+      type: 'string',
+    },
+    error: {},
+  },
+} as const;
+
+export const TrainingRateUpdateSchema = {
+  type: 'object',
+  description: 'A proposed replacement rate card on an approved training application',
+  properties: {
+    uuid: {
+      type: 'string',
+      format: 'uuid',
+      description: '**[READ-ONLY]** Identifier of the rate update.',
+      readOnly: true,
+    },
+    note: {
+      type: ['string', 'null'],
+      description: "**[READ-ONLY]** The applicant's reason for the change.",
+      readOnly: true,
+    },
+    status: {
+      $ref: '#/components/schemas/StatusEnum10',
+    },
+    application_uuid: {
+      type: 'string',
+      format: 'uuid',
+      description: '**[READ-ONLY]** The training application whose rates would change.',
+      readOnly: true,
+    },
+    application_type: {
+      $ref: '#/components/schemas/ApplicationTypeEnum',
+    },
+    course_uuid: {
+      type: ['string', 'null'],
+      format: 'uuid',
+      description: '**[READ-ONLY]** The course, for a course application; otherwise null.',
+      readOnly: true,
+    },
+    program_uuid: {
+      type: ['string', 'null'],
+      format: 'uuid',
+      description: '**[READ-ONLY]** The program, for a program application; otherwise null.',
+      readOnly: true,
+    },
+    applicant_type: {
+      $ref: '#/components/schemas/ApplicantTypeEnum',
+    },
+    applicant_uuid: {
+      type: 'string',
+      format: 'uuid',
+      description: '**[READ-ONLY]** Instructor or organisation UUID.',
+      readOnly: true,
+    },
+    applicant_name: {
+      type: ['string', 'null'],
+      description: '**[READ-ONLY]** Instructor display name or organisation name.',
+      readOnly: true,
+    },
+    current_rate_card: {
+      $ref: '#/components/schemas/CourseTrainingRateCard',
+      description: '**[READ-ONLY]** The rate card in force on the application right now.',
+      readOnly: true,
+    },
+    proposed_rate_card: {
+      $ref: '#/components/schemas/CourseTrainingRateCard',
+      description: '**[READ-ONLY]** The full rate card proposed.',
+      readOnly: true,
+    },
+    created_date: {
+      type: 'string',
+      format: 'date-time',
+      description: '**[READ-ONLY]** When the update was proposed (UTC).',
+      readOnly: true,
+    },
+    reviewed_by: {
+      type: ['string', 'null'],
+      description: '**[READ-ONLY]** Who approved or rejected it.',
+      readOnly: true,
+    },
+    reviewed_at: {
+      type: ['string', 'null'],
+      format: 'date-time',
+      description: '**[READ-ONLY]** When it was approved, rejected or closed (UTC).',
+      readOnly: true,
+    },
+    review_notes: {
+      type: ['string', 'null'],
+      description: "**[READ-ONLY]** The course creator's notes.",
+      readOnly: true,
+    },
+  },
+} as const;
+
+export const TrainingRateUpdateDecisionRequestSchema = {
+  type: 'object',
+  description: 'Payload for approving or rejecting a proposed training rate update',
+  example: {
+    review_notes: "Approved from next month's classes.",
+  },
+  properties: {
+    review_notes: {
+      type: ['string', 'null'],
+      description: 'Optional notes shown to the applicant.',
       maxLength: 2000,
       minLength: 0,
     },
@@ -10781,7 +11203,7 @@ export const CreateSkillsFundTransactionRequestSchema = {
       description: 'Type: Allocation, Disbursement, Adjustment. Defaults to Allocation.',
     },
     status: {
-      $ref: '#/components/schemas/StatusEnum10',
+      $ref: '#/components/schemas/StatusEnum11',
     },
     transaction_date: {
       type: 'string',
@@ -10847,7 +11269,7 @@ export const SkillsFundTransactionSchema = {
       description: 'Type: Allocation, Disbursement, Adjustment.',
     },
     status: {
-      $ref: '#/components/schemas/StatusEnum10',
+      $ref: '#/components/schemas/StatusEnum11',
     },
     transaction_date: {
       type: ['string', 'null'],
@@ -11596,7 +12018,7 @@ export const NotificationDTOSchema = {
       $ref: '#/components/schemas/PresentationEnum',
     },
     status: {
-      $ref: '#/components/schemas/StatusEnum11',
+      $ref: '#/components/schemas/StatusEnum12',
     },
     title: {
       type: 'string',
@@ -12013,7 +12435,7 @@ export const GuardianStudentLinkSchema = {
       $ref: '#/components/schemas/ShareScopeEnum',
     },
     status: {
-      $ref: '#/components/schemas/StatusEnum12',
+      $ref: '#/components/schemas/StatusEnum13',
     },
     primaryGuardian: {
       type: 'boolean',
@@ -12288,7 +12710,7 @@ export const EnrollmentSchema = {
       example: 'st123456-7890-abcd-ef01-234567890abc',
     },
     status: {
-      $ref: '#/components/schemas/StatusEnum13',
+      $ref: '#/components/schemas/StatusEnum14',
     },
     attendance_marked_at: {
       type: ['string', 'null'],
@@ -12407,6 +12829,23 @@ export const CourseTrainingApplicationRequestSchema = {
       description: 'Optional notes to help the course creator evaluate the request.',
       maxLength: 2000,
       minLength: 0,
+    },
+    offered_venue_uuids: {
+      type: ['array', 'null'],
+      description:
+        'Venue resource UUIDs the organisation offers for training: each must be an active VENUE of the applicant organisation. Organisation applicants only. Omitted means none.',
+      items: {
+        type: 'string',
+        format: 'uuid',
+      },
+    },
+    requirement_answers: {
+      type: ['array', 'null'],
+      description:
+        "Answers to the course's training requirements (for programs, those of its courses). acquisition is required when has_it is false. Omitted means none.",
+      items: {
+        $ref: '#/components/schemas/TrainingRequirementAnswerRequest',
+      },
     },
   },
   required: ['applicant_type', 'applicant_uuid', 'rate_card'],
@@ -13752,7 +14191,7 @@ export const ClassMarketplaceJobApplicationSchema = {
       readOnly: true,
     },
     status: {
-      $ref: '#/components/schemas/StatusEnum14',
+      $ref: '#/components/schemas/StatusEnum15',
     },
     job_uuid: {
       type: 'string',
@@ -13792,7 +14231,13 @@ export const ClassMarketplaceJobApplicationSchema = {
     approved_rate: {
       type: ['number', 'null'],
       description:
-        "The applicant's approved training rate matching the job's session format and delivery modality",
+        "The applicant's approved rate for the job's session format, delivery and rate basis; absent when they have none",
+      readOnly: true,
+    },
+    rate_covers_pay: {
+      type: ['boolean', 'null'],
+      description:
+        "Whether the job's instructor pay covers the applicant's approved rate; false when they have no rate. Absent outside a job context",
       readOnly: true,
     },
     reviewed_by: {
@@ -13944,7 +14389,7 @@ export const BookingResponseSchema = {
       description: 'End time for the session',
     },
     status: {
-      $ref: '#/components/schemas/StatusEnum15',
+      $ref: '#/components/schemas/StatusEnum16',
     },
     price_amount: {
       type: 'number',
@@ -14189,7 +14634,7 @@ export const AssignmentSubmissionSchema = {
       example: '2024-04-10T14:30:00Z',
     },
     status: {
-      $ref: '#/components/schemas/StatusEnum16',
+      $ref: '#/components/schemas/StatusEnum17',
     },
     score: {
       type: 'number',
@@ -15382,7 +15827,7 @@ export const InstructorTimeHoldSchema = {
       example: 'UTC',
     },
     status: {
-      $ref: '#/components/schemas/StatusEnum17',
+      $ref: '#/components/schemas/StatusEnum18',
     },
     class_definition_uuid: {
       type: ['string', 'null'],
@@ -16629,7 +17074,7 @@ export const StudentQuizReviewSchema = {
       format: 'uuid',
     },
     status: {
-      $ref: '#/components/schemas/StatusEnum18',
+      $ref: '#/components/schemas/StatusEnum19',
     },
     score: {
       type: 'number',
@@ -16720,6 +17165,40 @@ export const PagedDTOTrainingProgramSchema = {
   },
 } as const;
 
+export const ApiResponsePagedDTOTrainingRateUpdateSchema = {
+  type: 'object',
+  properties: {
+    success: {
+      type: 'boolean',
+    },
+    data: {
+      $ref: '#/components/schemas/PagedDTOTrainingRateUpdate',
+    },
+    message: {
+      type: 'string',
+    },
+    error: {},
+  },
+} as const;
+
+export const PagedDTOTrainingRateUpdateSchema = {
+  type: 'object',
+  properties: {
+    content: {
+      type: 'array',
+      items: {
+        $ref: '#/components/schemas/TrainingRateUpdate',
+      },
+    },
+    metadata: {
+      $ref: '#/components/schemas/PageMetadata',
+    },
+    links: {
+      $ref: '#/components/schemas/PageLinks',
+    },
+  },
+} as const;
+
 export const ApiResponsePagedDTOProgramTrainingApplicationSchema = {
   type: 'object',
   properties: {
@@ -16750,6 +17229,92 @@ export const PagedDTOProgramTrainingApplicationSchema = {
     },
     links: {
       $ref: '#/components/schemas/PageLinks',
+    },
+  },
+} as const;
+
+export const ApiResponseListTrainingRateUpdateSchema = {
+  type: 'object',
+  properties: {
+    success: {
+      type: 'boolean',
+    },
+    data: {
+      type: 'array',
+      items: {
+        $ref: '#/components/schemas/TrainingRateUpdate',
+      },
+    },
+    message: {
+      type: 'string',
+    },
+    error: {},
+  },
+} as const;
+
+export const ApiResponseListTrainingApplicationEventSchema = {
+  type: 'object',
+  properties: {
+    success: {
+      type: 'boolean',
+    },
+    data: {
+      type: 'array',
+      items: {
+        $ref: '#/components/schemas/TrainingApplicationEvent',
+      },
+    },
+    message: {
+      type: 'string',
+    },
+    error: {},
+  },
+} as const;
+
+export const TrainingApplicationEventSchema = {
+  type: 'object',
+  description: "A step in a training application's history, newest first",
+  properties: {
+    uuid: {
+      type: 'string',
+      format: 'uuid',
+      description: '**[READ-ONLY]** Identifier of the event.',
+      readOnly: true,
+    },
+    note: {
+      type: ['string', 'null'],
+      description:
+        '**[READ-ONLY]** Notes captured with the step (application, review or rate update notes).',
+      readOnly: true,
+    },
+    application_type: {
+      $ref: '#/components/schemas/ApplicationTypeEnum',
+    },
+    application_uuid: {
+      type: 'string',
+      format: 'uuid',
+      description: '**[READ-ONLY]** The application the event belongs to.',
+      readOnly: true,
+    },
+    event_type: {
+      $ref: '#/components/schemas/EventTypeEnum',
+    },
+    actor_uuid: {
+      type: ['string', 'null'],
+      format: 'uuid',
+      description: '**[READ-ONLY]** The user who took the step; null for system actions.',
+      readOnly: true,
+    },
+    actor_name: {
+      type: ['string', 'null'],
+      description: "**[READ-ONLY]** The actor's name as it was when the step was taken.",
+      readOnly: true,
+    },
+    created_date: {
+      type: 'string',
+      format: 'date-time',
+      description: '**[READ-ONLY]** When it happened (UTC).',
+      readOnly: true,
     },
   },
 } as const;
@@ -16927,7 +17492,7 @@ export const ProgramEnrollmentSchema = {
       example: '2024-06-30T16:45:00Z',
     },
     status: {
-      $ref: '#/components/schemas/StatusEnum19',
+      $ref: '#/components/schemas/StatusEnum20',
     },
     progress_percentage: {
       type: 'number',
@@ -17596,7 +18161,7 @@ export const ResourceBookingSchema = {
       description: 'Organisation owning the resource',
     },
     status: {
-      $ref: '#/components/schemas/StatusEnum20',
+      $ref: '#/components/schemas/StatusEnum21',
     },
     quantity: {
       type: 'integer',
@@ -17698,6 +18263,151 @@ export const ApiResponseListOrganisationInvitationSchema = {
       type: 'string',
     },
     error: {},
+  },
+} as const;
+
+export const ApiResponseInstructorStudentPageSchema = {
+  type: 'object',
+  properties: {
+    success: {
+      type: 'boolean',
+    },
+    data: {
+      $ref: '#/components/schemas/InstructorStudentPage',
+    },
+    message: {
+      type: 'string',
+    },
+    error: {},
+  },
+} as const;
+
+export const InstructorClassOptionSchema = {
+  type: 'object',
+  description: 'A class the instructor has students in, for filtering the student list',
+  properties: {
+    class_definition_uuid: {
+      type: 'string',
+      format: 'uuid',
+      description: 'The class',
+      readOnly: true,
+    },
+    class_title: {
+      type: 'string',
+      description: 'Title of the class',
+      example: 'Grade 5 Piano - Term 2',
+      readOnly: true,
+    },
+  },
+} as const;
+
+export const InstructorStudentSchema = {
+  type: 'object',
+  description:
+    "A student in one of the organisation's classes taught by the instructor; one row per student per class",
+  properties: {
+    student_uuid: {
+      type: 'string',
+      format: 'uuid',
+      description: 'The student',
+      readOnly: true,
+    },
+    student_name: {
+      type: 'string',
+      description: "The student's full name",
+      example: 'Amina Otieno',
+      readOnly: true,
+    },
+    class_definition_uuid: {
+      type: 'string',
+      format: 'uuid',
+      description: 'The class the student is enrolled in',
+      readOnly: true,
+    },
+    class_title: {
+      type: 'string',
+      description: 'Title of the class',
+      example: 'Grade 5 Piano - Term 2',
+      readOnly: true,
+    },
+    course_name: {
+      type: ['string', 'null'],
+      description: 'Name of the course, or title of the training program, the class delivers',
+      example: 'Beginner Piano',
+      readOnly: true,
+    },
+    session_format: {
+      $ref: '#/components/schemas/SessionFormatEnum2',
+    },
+    location_type: {
+      $ref: '#/components/schemas/LocationTypeEnum2',
+    },
+    schedule_summary: {
+      type: ['string', 'null'],
+      description: 'When the class meets, from its session templates',
+      example: 'Mon & Wed · 9:00–11:00',
+      readOnly: true,
+    },
+    branch_uuid: {
+      type: ['string', 'null'],
+      format: 'uuid',
+      description: 'Training branch the class is delivered at',
+      readOnly: true,
+    },
+    branch_name: {
+      type: ['string', 'null'],
+      description: 'Name of that branch',
+      example: 'Main Campus',
+      readOnly: true,
+    },
+    enrolled_at: {
+      type: 'string',
+      format: 'date-time',
+      description: 'When the student first enrolled in the class (UTC)',
+      readOnly: true,
+    },
+    attendance_rate: {
+      type: ['number', 'null'],
+      format: 'double',
+      description:
+        "Sessions attended as a percentage (0-100) of the student's held sessions, i.e. those with attendance recorded (attended or absent); null when none has been recorded",
+      example: 83.3,
+      readOnly: true,
+    },
+    enrollment_status: {
+      $ref: '#/components/schemas/EnrollmentStatusEnum2',
+    },
+  },
+} as const;
+
+export const InstructorStudentPageSchema = {
+  type: 'object',
+  description: "A page of an instructor's students plus the classes to filter them by",
+  properties: {
+    content: {
+      type: 'array',
+      items: {
+        $ref: '#/components/schemas/InstructorStudent',
+      },
+      readOnly: true,
+    },
+    metadata: {
+      $ref: '#/components/schemas/PageMetadata',
+      readOnly: true,
+    },
+    links: {
+      $ref: '#/components/schemas/PageLinks',
+      readOnly: true,
+    },
+    class_options: {
+      type: 'array',
+      description:
+        "Every class of the organisation's the instructor has students in, whatever the filters",
+      items: {
+        $ref: '#/components/schemas/InstructorClassOption',
+      },
+      readOnly: true,
+    },
   },
 } as const;
 
@@ -18528,7 +19238,7 @@ export const GuardianStudentDashboardDTOSchema = {
       $ref: '#/components/schemas/ShareScopeEnum',
     },
     status: {
-      $ref: '#/components/schemas/StatusEnum12',
+      $ref: '#/components/schemas/StatusEnum13',
     },
     courseProgress: {
       type: 'array',
@@ -18639,7 +19349,7 @@ export const GuardianStudentSummaryDTOSchema = {
       $ref: '#/components/schemas/ShareScopeEnum',
     },
     status: {
-      $ref: '#/components/schemas/StatusEnum12',
+      $ref: '#/components/schemas/StatusEnum13',
     },
     primaryGuardian: {
       type: 'boolean',
@@ -18844,7 +19554,7 @@ export const StudentClassEnrollmentSummarySchema = {
       description: 'Most recent scheduled-instance enrollment identifier for this class',
     },
     latest_enrollment_status: {
-      $ref: '#/components/schemas/LatestEnrollmentStatusEnum',
+      $ref: '#/components/schemas/EnrollmentStatusEnum2',
     },
     scheduled_instance_count: {
       type: 'integer',
@@ -19668,7 +20378,7 @@ The proposed content lives on the draft course referenced by \`draft_course_uuid
       readOnly: true,
     },
     status: {
-      $ref: '#/components/schemas/StatusEnum21',
+      $ref: '#/components/schemas/StatusEnum10',
     },
     course_uuid: {
       type: 'string',
@@ -20778,7 +21488,7 @@ export const CourseEnrollmentSchema = {
       example: '2024-04-30T16:45:00Z',
     },
     status: {
-      $ref: '#/components/schemas/StatusEnum19',
+      $ref: '#/components/schemas/StatusEnum20',
     },
     progress_percentage: {
       type: 'number',
@@ -21963,6 +22673,18 @@ export const ClassMarketplaceJobEligibilitySchema = {
       type: 'boolean',
       description:
         "Whether the instructor is approved to deliver the job's course or training program",
+      readOnly: true,
+    },
+    rate_ok: {
+      type: 'boolean',
+      description:
+        "Whether the instructor has an approved rate for this job's session format, delivery and rate basis that the job's pay covers",
+      readOnly: true,
+    },
+    approved_rate: {
+      type: ['number', 'null'],
+      description:
+        "The instructor's approved rate for this job's session format, delivery and rate basis; absent when they have none",
       readOnly: true,
     },
     already_applied: {
@@ -23398,6 +24120,13 @@ export const StatusEnum2Schema = {
   example: 'GRADED',
 } as const;
 
+export const AcquisitionEnumSchema = {
+  type: ['string', 'null'],
+  description:
+    'How the applicant would obtain it: required when has_it is false, ignored when true.',
+  enum: ['lease', 'hire'],
+} as const;
+
 export const StatusEnum3Schema = {
   type: 'string',
   description: '**[READ-ONLY]** Current status of the application.',
@@ -23635,6 +24364,14 @@ export const ConflictResolutionEnumSchema = {
   example: 'FAIL',
 } as const;
 
+export const RateBasisEnum2Schema = {
+  type: 'string',
+  description:
+    '**[REQUIRED]** Unit both prices are quoted in, fixed by the contract this job represents.',
+  enum: ['per_hour', 'per_session', 'per_day'],
+  example: 'per_hour',
+} as const;
+
 export const ServiceTypeEnumSchema = {
   type: ['string', 'null'],
   description:
@@ -23660,12 +24397,6 @@ export const BookingStatusEnumSchema = {
 export const StatusEnum8Schema = {
   type: 'string',
   enum: ['open', 'awaiting_class', 'filled', 'cancelled', 'expired'],
-  readOnly: true,
-} as const;
-
-export const RateBasisEnum2Schema = {
-  type: 'string',
-  enum: ['per_hour', 'per_session', 'per_day'],
   readOnly: true,
 } as const;
 
@@ -23701,6 +24432,20 @@ export const StatusEnum9Schema = {
 
 export const StatusEnum10Schema = {
   type: 'string',
+  description: '**[READ-ONLY]** Review status.',
+  enum: ['pending', 'approved', 'rejected', 'withdrawn'],
+  readOnly: true,
+} as const;
+
+export const ApplicationTypeEnumSchema = {
+  type: 'string',
+  description: '**[READ-ONLY]** Whether the application targets a course or a program.',
+  enum: ['course', 'program'],
+  readOnly: true,
+} as const;
+
+export const StatusEnum11Schema = {
+  type: 'string',
   description:
     "PENDING, ALLOCATED, APPROVED or DISBURSED. The legacy value 'Completed' is accepted and stored as DISBURSED. Defaults to PENDING.",
   enum: ['PENDING', 'ALLOCATED', 'APPROVED', 'DISBURSED'],
@@ -23734,6 +24479,9 @@ export const TypeEnumSchema = {
     'PROGRAM_TRAINING_APPLICATION_APPROVED',
     'PROGRAM_TRAINING_APPLICATION_REJECTED',
     'PROGRAM_TRAINING_APPLICATION_REVOKED',
+    'TRAINING_RATE_UPDATE_SUBMITTED',
+    'TRAINING_RATE_UPDATE_APPROVED',
+    'TRAINING_RATE_UPDATE_REJECTED',
     'CLASS_MARKETPLACE_JOB_APPLICATION_REJECTED',
     'CLASS_MARKETPLACE_JOB_APPLICATION_NOT_SELECTED',
     'CLASS_MARKETPLACE_JOB_EXPIRED',
@@ -23800,7 +24548,7 @@ export const PresentationEnumSchema = {
   enum: ['POPUP', 'INBOX'],
 } as const;
 
-export const StatusEnum11Schema = {
+export const StatusEnum12Schema = {
   type: 'string',
   enum: ['UNREAD', 'READ', 'ARCHIVED'],
 } as const;
@@ -23819,7 +24567,7 @@ export const ShareScopeEnumSchema = {
   enum: ['FULL', 'ACADEMICS', 'ATTENDANCE'],
 } as const;
 
-export const StatusEnum12Schema = {
+export const StatusEnum13Schema = {
   type: 'string',
   enum: ['PENDING', 'ACTIVE', 'REVOKED'],
 } as const;
@@ -23833,7 +24581,7 @@ export const ShareScopeEnum2Schema = {
   pattern: '(?i)FULL|ACADEMICS|ATTENDANCE',
 } as const;
 
-export const StatusEnum13Schema = {
+export const StatusEnum14Schema = {
   type: 'string',
   description: '**[OPTIONAL]** Current enrollment and attendance status.',
   enum: ['ENROLLED', 'WAITLISTED', 'ATTENDED', 'ABSENT', 'CANCELLED'],
@@ -23855,7 +24603,7 @@ export const ReleaseStrategyEnumSchema = {
   example: 'CUSTOM',
 } as const;
 
-export const StatusEnum14Schema = {
+export const StatusEnum15Schema = {
   type: 'string',
   enum: [
     'pending',
@@ -23871,7 +24619,7 @@ export const StatusEnum14Schema = {
   readOnly: true,
 } as const;
 
-export const StatusEnum15Schema = {
+export const StatusEnum16Schema = {
   type: 'string',
   description: 'Current status of the booking',
   enum: [
@@ -23894,7 +24642,7 @@ export const PaymentStatusEnumSchema = {
   pattern: '^(succeeded|failed)$',
 } as const;
 
-export const StatusEnum16Schema = {
+export const StatusEnum17Schema = {
   type: 'string',
   description: '**[REQUIRED]** Current status of the submission in the grading workflow.',
   enum: ['DRAFT', 'SUBMITTED', 'IN_REVIEW', 'GRADED', 'RETURNED'],
@@ -23947,7 +24695,7 @@ export const EnrollmentStatusEnumSchema = {
   readOnly: true,
 } as const;
 
-export const StatusEnum17Schema = {
+export const StatusEnum18Schema = {
   type: 'string',
   description: 'Hold lifecycle state; only FIRM counts as a scheduling clash',
   enum: ['TENTATIVE', 'FIRM', 'CONFIRMED', 'RELEASED'],
@@ -23959,12 +24707,31 @@ export const QuestionTypeEnum2Schema = {
   enum: ['multiple_choice', 'true_false', 'short_answer', 'essay'],
 } as const;
 
-export const StatusEnum18Schema = {
+export const StatusEnum19Schema = {
   type: 'string',
   enum: ['in_progress', 'submitted', 'graded'],
 } as const;
 
-export const StatusEnum19Schema = {
+export const EventTypeEnumSchema = {
+  type: 'string',
+  description: '**[READ-ONLY]** What happened.',
+  enum: [
+    'submitted',
+    'edited',
+    'opened_by_creator',
+    'approved',
+    'rejected',
+    'revoked',
+    'withdrawn',
+    'rates_update_submitted',
+    'rates_update_approved',
+    'rates_update_rejected',
+    'rates_update_withdrawn',
+  ],
+  readOnly: true,
+} as const;
+
+export const StatusEnum20Schema = {
   type: 'string',
   description: "**[REQUIRED]** Current status of the student's enrollment in the program.",
   enum: ['ACTIVE', 'COMPLETED', 'DROPPED', 'SUSPENDED'],
@@ -23978,7 +24745,7 @@ export const EntryTypeEnumSchema = {
   example: 'HOLD',
 } as const;
 
-export const StatusEnum20Schema = {
+export const StatusEnum21Schema = {
   type: 'string',
   description: 'Booking lifecycle state',
   enum: ['HOLD', 'CONFIRMED', 'RELEASED', 'CANCELLED'],
@@ -23992,26 +24759,34 @@ export const SourceTypeEnumSchema = {
   example: 'MARKETPLACE_JOB',
 } as const;
 
+export const SessionFormatEnum2Schema = {
+  type: ['string', 'null'],
+  description: 'Session format of the class',
+  enum: ['INDIVIDUAL', 'GROUP'],
+  readOnly: true,
+} as const;
+
+export const LocationTypeEnum2Schema = {
+  type: ['string', 'null'],
+  description: 'Delivery location type of the class',
+  enum: ['ONLINE', 'IN_PERSON', 'HYBRID'],
+  readOnly: true,
+} as const;
+
+export const EnrollmentStatusEnum2Schema = {
+  type: 'string',
+  description:
+    "The student's standing in the class: ENROLLED while any session enrolment is live, otherwise RESERVED, WAITLISTED or CANCELLED",
+  enum: ['RESERVED', 'ENROLLED', 'WAITLISTED', 'ATTENDED', 'ABSENT', 'CANCELLED'],
+  readOnly: true,
+} as const;
+
 export const EntryTypeEnum2Schema = {
   type: 'string',
   description:
     'Entry type: AVAILABILITY, BLOCKED, SCHEDULED_INSTANCE, JOB_HOLD (a class job the instructor was hired for holds this time; busy) or JOB_APPLICATION (a job the instructor applied to; not busy, shown to the instructor only)',
   enum: ['AVAILABILITY', 'BLOCKED', 'SCHEDULED_INSTANCE', 'JOB_HOLD', 'JOB_APPLICATION'],
   example: 'SCHEDULED_INSTANCE',
-} as const;
-
-export const LatestEnrollmentStatusEnumSchema = {
-  type: 'string',
-  description: 'Most recent scheduled-instance enrollment status for this class',
-  enum: ['RESERVED', 'ENROLLED', 'WAITLISTED', 'ATTENDED', 'ABSENT', 'CANCELLED'],
-} as const;
-
-export const StatusEnum21Schema = {
-  type: 'string',
-  description: '**[READ-ONLY]** Review state of the edit.',
-  enum: ['pending', 'approved', 'rejected', 'withdrawn'],
-  example: 'pending',
-  readOnly: true,
 } as const;
 
 export const AccessEnumSchema = {
@@ -24254,6 +25029,13 @@ export const StatusEnum2WritableSchema = {
   example: 'GRADED',
 } as const;
 
+export const AcquisitionEnumWritableSchema = {
+  type: ['string', 'null'],
+  description:
+    'How the applicant would obtain it: required when has_it is false, ignored when true.',
+  enum: ['lease', 'hire'],
+} as const;
+
 export const RequirementTypeEnumWritableSchema = {
   type: 'string',
   description: '**[REQUIRED]** Type of requirement classification for this program element.',
@@ -24396,6 +25178,14 @@ export const ConflictResolutionEnumWritableSchema = {
   example: 'FAIL',
 } as const;
 
+export const RateBasisEnum2WritableSchema = {
+  type: 'string',
+  description:
+    '**[REQUIRED]** Unit both prices are quoted in, fixed by the contract this job represents.',
+  enum: ['per_hour', 'per_session', 'per_day'],
+  example: 'per_hour',
+} as const;
+
 export const ServiceTypeEnumWritableSchema = {
   type: ['string', 'null'],
   description:
@@ -24427,7 +25217,7 @@ export const StatusEnum9WritableSchema = {
   example: 'SCHEDULED',
 } as const;
 
-export const StatusEnum10WritableSchema = {
+export const StatusEnum11WritableSchema = {
   type: 'string',
   description:
     "PENDING, ALLOCATED, APPROVED or DISBURSED. The legacy value 'Completed' is accepted and stored as DISBURSED. Defaults to PENDING.",
@@ -24462,6 +25252,9 @@ export const TypeEnumWritableSchema = {
     'PROGRAM_TRAINING_APPLICATION_APPROVED',
     'PROGRAM_TRAINING_APPLICATION_REJECTED',
     'PROGRAM_TRAINING_APPLICATION_REVOKED',
+    'TRAINING_RATE_UPDATE_SUBMITTED',
+    'TRAINING_RATE_UPDATE_APPROVED',
+    'TRAINING_RATE_UPDATE_REJECTED',
     'CLASS_MARKETPLACE_JOB_APPLICATION_REJECTED',
     'CLASS_MARKETPLACE_JOB_APPLICATION_NOT_SELECTED',
     'CLASS_MARKETPLACE_JOB_EXPIRED',
@@ -24528,7 +25321,7 @@ export const PresentationEnumWritableSchema = {
   enum: ['POPUP', 'INBOX'],
 } as const;
 
-export const StatusEnum11WritableSchema = {
+export const StatusEnum12WritableSchema = {
   type: 'string',
   enum: ['UNREAD', 'READ', 'ARCHIVED'],
 } as const;
@@ -24547,7 +25340,7 @@ export const ShareScopeEnumWritableSchema = {
   enum: ['FULL', 'ACADEMICS', 'ATTENDANCE'],
 } as const;
 
-export const StatusEnum12WritableSchema = {
+export const StatusEnum13WritableSchema = {
   type: 'string',
   enum: ['PENDING', 'ACTIVE', 'REVOKED'],
 } as const;
@@ -24561,7 +25354,7 @@ export const ShareScopeEnum2WritableSchema = {
   pattern: '(?i)FULL|ACADEMICS|ATTENDANCE',
 } as const;
 
-export const StatusEnum13WritableSchema = {
+export const StatusEnum14WritableSchema = {
   type: 'string',
   description: '**[OPTIONAL]** Current enrollment and attendance status.',
   enum: ['ENROLLED', 'WAITLISTED', 'ATTENDED', 'ABSENT', 'CANCELLED'],
@@ -24583,7 +25376,7 @@ export const ReleaseStrategyEnumWritableSchema = {
   example: 'CUSTOM',
 } as const;
 
-export const StatusEnum15WritableSchema = {
+export const StatusEnum16WritableSchema = {
   type: 'string',
   description: 'Current status of the booking',
   enum: [
@@ -24606,7 +25399,7 @@ export const PaymentStatusEnumWritableSchema = {
   pattern: '^(succeeded|failed)$',
 } as const;
 
-export const StatusEnum16WritableSchema = {
+export const StatusEnum17WritableSchema = {
   type: 'string',
   description: '**[REQUIRED]** Current status of the submission in the grading workflow.',
   enum: ['DRAFT', 'SUBMITTED', 'IN_REVIEW', 'GRADED', 'RETURNED'],
@@ -24635,7 +25428,7 @@ export const DomainNameEnum2WritableSchema = {
   minLength: 1,
 } as const;
 
-export const StatusEnum17WritableSchema = {
+export const StatusEnum18WritableSchema = {
   type: 'string',
   description: 'Hold lifecycle state; only FIRM counts as a scheduling clash',
   enum: ['TENTATIVE', 'FIRM', 'CONFIRMED', 'RELEASED'],
@@ -24647,12 +25440,12 @@ export const QuestionTypeEnum2WritableSchema = {
   enum: ['multiple_choice', 'true_false', 'short_answer', 'essay'],
 } as const;
 
-export const StatusEnum18WritableSchema = {
+export const StatusEnum19WritableSchema = {
   type: 'string',
   enum: ['in_progress', 'submitted', 'graded'],
 } as const;
 
-export const StatusEnum19WritableSchema = {
+export const StatusEnum20WritableSchema = {
   type: 'string',
   description: "**[REQUIRED]** Current status of the student's enrollment in the program.",
   enum: ['ACTIVE', 'COMPLETED', 'DROPPED', 'SUSPENDED'],
@@ -24666,7 +25459,7 @@ export const EntryTypeEnumWritableSchema = {
   example: 'HOLD',
 } as const;
 
-export const StatusEnum20WritableSchema = {
+export const StatusEnum21WritableSchema = {
   type: 'string',
   description: 'Booking lifecycle state',
   enum: ['HOLD', 'CONFIRMED', 'RELEASED', 'CANCELLED'],
@@ -24686,12 +25479,6 @@ export const EntryTypeEnum2WritableSchema = {
     'Entry type: AVAILABILITY, BLOCKED, SCHEDULED_INSTANCE, JOB_HOLD (a class job the instructor was hired for holds this time; busy) or JOB_APPLICATION (a job the instructor applied to; not busy, shown to the instructor only)',
   enum: ['AVAILABILITY', 'BLOCKED', 'SCHEDULED_INSTANCE', 'JOB_HOLD', 'JOB_APPLICATION'],
   example: 'SCHEDULED_INSTANCE',
-} as const;
-
-export const LatestEnrollmentStatusEnumWritableSchema = {
-  type: 'string',
-  description: 'Most recent scheduled-instance enrollment status for this class',
-  enum: ['RESERVED', 'ENROLLED', 'WAITLISTED', 'ATTENDED', 'ABSENT', 'CANCELLED'],
 } as const;
 
 export const AccessEnumWritableSchema = {

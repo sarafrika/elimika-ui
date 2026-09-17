@@ -325,7 +325,7 @@ export function invalidateWorkflowQueriesForNotification(
 ) {
   const type = notification.type ?? '';
 
-  if (type.includes('TRAINING_APPLICATION')) {
+  if (type.includes('TRAINING_APPLICATION') || type.includes('TRAINING_RATE_UPDATE')) {
     return invalidateTrainingApplicationWorkflowQueries(queryClient);
   }
 
