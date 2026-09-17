@@ -25,6 +25,7 @@ import {
 import { useUserDomain } from '@/src/features/dashboard/context/user-domain-context';
 import type { SearchInstructor } from '@/src/features/dashboard/courses/types';
 import { roleScopedDashboardPath } from '@/src/features/dashboard/lib/active-domain-storage';
+import { lowestRatesLabel } from '@/src/features/rate-card/application-display';
 import { useQuery } from '@tanstack/react-query';
 import {
   ArrowLeft,
@@ -919,9 +920,9 @@ export default function StudentInstructorSearchPage() {
                           </div>
                           <div>Teaching: Method not specified</div>
                           <div>Modes: {getDeliveryModesLabel(instructor)}</div>
-                          <div>Hourly: {instructor.pricing?.rate_card?.currency} {instructor.pricing?.rate_card?.group_inperson_hourly_rate ?? ''}</div>
-                          <div>Group: {instructor.pricing?.rate_card?.currency} {instructor.pricing?.rate_card?.group_inperson_hourly_rate ?? ''}</div>
-                          <div>Private: {instructor.pricing?.rate_card?.currency} {instructor.pricing?.rate_card?.private_inperson_hourly_rate ?? ''}</div>
+                          <div className="md:col-span-3">
+                            Rates from: {lowestRatesLabel(instructor.pricing?.rate_card) ?? 'Not set'}
+                          </div>
                         </div>
 
                         <div className="mt-4 flex flex-wrap gap-2">

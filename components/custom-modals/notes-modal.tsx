@@ -1,16 +1,9 @@
 'use client';
 
 import { allCourseTrainingRequirementsOptions } from '@/services/course-training-requirements';
+import { RateCardGrid } from '@/components/rate-card/rate-card-grid';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
 import {
   Sheet,
   SheetContent,
@@ -20,6 +13,7 @@ import {
 } from '@/components/ui/sheet';
 import Spinner from '@/components/ui/spinner';
 import { Textarea } from '@/components/ui/textarea';
+import { normaliseRateCard, type RateCard, validateRateCard } from '@/lib/rate-card';
 import { useQuery } from '@tanstack/react-query';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useUserDomain } from '../../context/user-domain-context';
@@ -40,14 +34,8 @@ interface NotesModalProps {
   title?: React.ReactNode;
   description?: React.ReactNode;
   placeholder?: string;
-  onSave: (data: {
-    notes: string;
-    private_online_hourly_rate: number;
-    private_inperson_hourly_rate: number;
-    group_online_hourly_rate: number;
-    group_inperson_hourly_rate: number;
-    rate_currency: string;
-  }) => void;
+  /** The card is normalised: every cell present, methods not offered as null. */
+  onSave: (data: { notes: string; rate_card: RateCard }) => void;
   isLoading?: boolean;
   saveText?: string;
   cancelText?: string;
@@ -108,11 +96,9 @@ export default function NotesModal({
   formRevision = 0,
 }: NotesModalProps) {
   const [notes, setNotes] = useState('');
-  const [privateOnlineRate, setPrivateOnlineRate] = useState<number | ''>(0);
-  const [privateInpersonRate, setPrivateInpersonRate] = useState<number | ''>(0);
-  const [groupOnlineRate, setGroupOnlineRate] = useState<number | ''>(0);
-  const [groupInpersonRate, setGroupInpersonRate] = useState<number | ''>(0);
-  const [currency, setCurrency] = useState('KES');
+  const [card, setCard] = useState<RateCard>(() => normaliseRateCard(null));
+  const minimumFee = Number(minimum_rate) || null;
+  const rateValidation = useMemo(() => validateRateCard(card, minimumFee), [card, minimumFee]);
 
   const { activeDomain } = useUserDomain();
   const [requirements, setRequirements] = useState<RequirementDisplayItem[]>([]);
@@ -122,33 +108,17 @@ export default function NotesModal({
   const selectedContentId = contentId ?? selectedApplicationCard?.id ?? '';
 
   const applyExistingApplication = useCallback(() => {
-    const rateCard = existingApplication?.rate_card;
     setNotes(existingApplication?.application_notes ?? '');
-    setPrivateOnlineRate(rateCard?.private_online_hourly_rate ?? '');
-    setPrivateInpersonRate(rateCard?.private_inperson_hourly_rate ?? '');
-    setGroupOnlineRate(rateCard?.group_online_hourly_rate ?? '');
-    setGroupInpersonRate(rateCard?.group_inperson_hourly_rate ?? '');
-    setCurrency((rateCard?.currency ?? 'KES').toUpperCase());
+    setCard(normaliseRateCard(existingApplication?.rate_card));
   }, [existingApplication]);
 
   const resetForm = useCallback(() => {
     setNotes('');
-    setPrivateOnlineRate(0);
-    setPrivateInpersonRate(0);
-    setGroupOnlineRate(0);
-    setGroupInpersonRate(0);
-    setCurrency('KES');
+    setCard(normaliseRateCard(null));
   }, []);
 
   const handleSave = () => {
-    onSave({
-      notes,
-      private_online_hourly_rate: Number(privateOnlineRate),
-      private_inperson_hourly_rate: Number(privateInpersonRate),
-      group_online_hourly_rate: Number(groupOnlineRate),
-      group_inperson_hourly_rate: Number(groupInpersonRate),
-      rate_currency: currency,
-    });
+    onSave({ notes, rate_card: normaliseRateCard(card) });
     resetForm();
   };
 
@@ -321,7 +291,7 @@ export default function NotesModal({
         if (!open) resetForm();
       }}
     >
-      <SheetContent className='flex w-full flex-col p-3 sm:max-w-[600px] sm:p-6'>
+      <SheetContent className='flex w-full flex-col p-3 sm:max-w-[820px] sm:p-6'>
         <SheetHeader className='border-border border-b p-0 pb-4'>
           <SheetTitle>{title}</SheetTitle>
           {description && (
@@ -399,101 +369,21 @@ export default function NotesModal({
 
           {userType === 'instructor' && (
             <>
-              {/* Currency */}
-              <div className='space-y-1'>
-                <label className='text-muted-foreground text-sm font-medium'>Currency</label>
-                <Select value={currency} onValueChange={setCurrency} disabled={readOnly}>
-                  <SelectTrigger className='w-full'>
-                    <SelectValue placeholder='Select currency' />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value='KES'>KES</SelectItem>
-                    {/* <SelectItem value='USD'>USD</SelectItem>
-                    <SelectItem value='EUR'>EUR</SelectItem>
-                    <SelectItem value='GBP'>GBP</SelectItem> */}
-                  </SelectContent>
-                </Select>
-              </div>
-
-              {/* Minimum rate note */}
               <p className='text-muted-foreground text-sm'>
-                Set the amount you want to charge students per hour per head. The minimum amount you
-                can charge has already been preset by the course creator:{' '}
-                <span className='font-semibold'>
-                  {minimum_rate} {currency}
-                </span>{' '}
-                per hour per head.
+                {readOnly
+                  ? 'The rates in this application, per learner.'
+                  : 'Switch on each training method you offer and price it per hour, per session and per day.'}
               </p>
-
-              {/* Private Training Rates */}
-              <div className='rounded-md border p-3'>
-                <h3 className='mb-3 text-sm font-semibold'>Private Training Rates</h3>
-                <p className='text-muted-foreground mb-3 text-xs'>
-                  Enter the amount you will charge one student per hour per head for private
-                  sessions.
-                </p>
-                <div className='flex gap-4'>
-                  <div className='flex-1 space-y-1'>
-                    <label className='text-muted-foreground text-sm font-medium'>Online</label>
-                    <Input
-                      type='number'
-                      min={minimum_rate}
-                      value={privateOnlineRate}
-                      disabled={readOnly}
-                      onChange={e =>
-                        setPrivateOnlineRate(e.target.value ? Number(e.target.value) : '')
-                      }
-                    />
-                  </div>
-                  <div className='flex-1 space-y-1'>
-                    <label className='text-muted-foreground text-sm font-medium'>In-Person</label>
-                    <Input
-                      type='number'
-                      min={minimum_rate}
-                      value={privateInpersonRate}
-                      disabled={readOnly}
-                      onChange={e =>
-                        setPrivateInpersonRate(e.target.value ? Number(e.target.value) : '')
-                      }
-                    />
-                  </div>
-                </div>
-              </div>
-
-              {/* Group Training Rates */}
-              <div className='rounded-md border p-3'>
-                <h3 className='mb-3 text-sm font-semibold'>Group Training Rates</h3>
-                <p className='text-muted-foreground mb-3 text-xs'>
-                  Enter the amount you will charge each student per hour per head for group
-                  sessions.
-                </p>
-                <div className='flex gap-4'>
-                  <div className='flex-1 space-y-1'>
-                    <label className='text-muted-foreground text-sm font-medium'>Online</label>
-                    <Input
-                      type='number'
-                      min={minimum_rate}
-                      value={groupOnlineRate}
-                      disabled={readOnly}
-                      onChange={e =>
-                        setGroupOnlineRate(e.target.value ? Number(e.target.value) : '')
-                      }
-                    />
-                  </div>
-                  <div className='flex-1 space-y-1'>
-                    <label className='text-muted-foreground text-sm font-medium'>In-Person</label>
-                    <Input
-                      type='number'
-                      min={minimum_rate}
-                      value={groupInpersonRate}
-                      disabled={readOnly}
-                      onChange={e =>
-                        setGroupInpersonRate(e.target.value ? Number(e.target.value) : '')
-                      }
-                    />
-                  </div>
-                </div>
-              </div>
+              <RateCardGrid
+                mode={readOnly ? 'view' : 'edit'}
+                value={card}
+                onChange={setCard}
+                errors={readOnly ? undefined : rateValidation.cells}
+                minimum={minimumFee}
+              />
+              {!readOnly && rateValidation.card.length > 0 ? (
+                <p className='text-destructive text-xs'>{rateValidation.card.join(' ')}</p>
+              ) : null}
             </>
           )}
           <div className='space-y-4'>
@@ -611,7 +501,12 @@ export default function NotesModal({
               <Button
                 onClick={handleSave}
                 className='min-w-[100px]'
-                disabled={isLoading || !notes.trim() || hasUncheckedMandatoryRequirements}
+                disabled={
+                  isLoading ||
+                  !notes.trim() ||
+                  hasUncheckedMandatoryRequirements ||
+                  (userType === 'instructor' && !rateValidation.valid)
+                }
                 {...saveButtonProps}
               >
                 {isLoading ? <Spinner /> : saveText}

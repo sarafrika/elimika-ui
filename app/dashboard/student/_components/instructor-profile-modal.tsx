@@ -37,6 +37,7 @@ import type {
   InstructorCalendarEntry,
   InstructorReview,
 } from '@/services/client/types.gen';
+import { RateCardGrid } from '@/components/rate-card/rate-card-grid';
 import type { Booking } from '@/src/features/dashboard/courses/pages/InstructorBookingPage';
 import type { SearchInstructor } from '@/src/features/dashboard/courses/types';
 import {
@@ -397,51 +398,7 @@ export const InstructorProfileComponent: React.FC<Props> = ({
                 <div>
                   <CardTitle className='mb-4'>Rate Card</CardTitle>
                 </div>
-                <div className='space-y-4'>
-                  <div className='bg-muted flex items-center justify-between rounded-lg p-4'>
-                    <div>
-                      <p>Group In Person Rate</p>
-                      <p className='text-muted-foreground text-sm'>Per hour per head</p>
-                    </div>
-                    <p className='text-2xl'>
-                      {matchedCourse?.rate_card?.currency}{' '}
-                      {matchedCourse?.rate_card?.group_inperson_hourly_rate}
-                    </p>
-                  </div>
-
-                  <div className='bg-muted flex items-center justify-between rounded-lg p-4'>
-                    <div>
-                      <p>Group Online Rate</p>
-                      <p className='text-muted-foreground text-sm'>Per hour per head</p>
-                    </div>
-                    <p className='text-2xl'>
-                      {matchedCourse?.rate_card?.currency}{' '}
-                      {matchedCourse?.rate_card?.group_online_hourly_rate}
-                    </p>
-                  </div>
-
-                  <div className='bg-muted flex items-center justify-between rounded-lg p-4'>
-                    <div>
-                      <p>Private In Person Rate</p>
-                      <p className='text-muted-foreground text-sm'>Per hour per head</p>
-                    </div>
-                    <p className='text-2xl'>
-                      {matchedCourse?.rate_card?.currency}{' '}
-                      {matchedCourse?.rate_card?.private_inperson_hourly_rate}
-                    </p>
-                  </div>
-
-                  <div className='bg-muted flex items-center justify-between rounded-lg p-4'>
-                    <div>
-                      <p>Private Online Rate</p>
-                      <p className='text-muted-foreground text-sm'>Per hour per head</p>
-                    </div>
-                    <p className='text-2xl'>
-                      {matchedCourse?.rate_card?.currency}{' '}
-                      {matchedCourse?.rate_card?.private_online_hourly_rate}
-                    </p>
-                  </div>
-                </div>
+                <RateCardGrid mode='view' value={matchedCourse?.rate_card} />
               </Card>
 
               <Card className='border-primary/30 bg-primary/10 mb-6 rounded-[22px] p-6 shadow-none'>
@@ -450,8 +407,8 @@ export const InstructorProfileComponent: React.FC<Props> = ({
                   <div>
                     <p className='text-primary'>Pricing Information</p>
                     <p className='text-primary mt-1 text-sm'>
-                      All rates are in KES/NAIRA. Custom packages and group discounts are available.
-                      Contact instructor for details.
+                      Rates are per learner in {matchedCourse?.rate_card?.currency ?? 'KES'}, per
+                      hour, per session or per day depending on how the class is billed.
                     </p>
                   </div>
                 </div>

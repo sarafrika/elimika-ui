@@ -23,6 +23,7 @@ import {
 } from '@/components/ui/table';
 import { useInstructor } from '@/context/instructor-context';
 import { extractEntity } from '@/lib/api-helpers';
+import { formatRateAmount } from '@/lib/rate-card';
 import { ApplicantTypeEnum } from '@/services/client';
 import { getCourseByUuidOptions, searchTrainingApplicationsOptions } from '@/services/client/@tanstack/react-query.gen';
 import type {
@@ -31,6 +32,7 @@ import type {
   CourseTrainingRateCard,
 } from '@/services/client/types.gen';
 import { formatDurationFromParts } from '@/src/features/dashboard/courses/shared/_components/courses-data';
+import { lowestRatesLabel } from '@/src/features/rate-card/application-display';
 import { toAuthenticatedMediaUrl } from '@/src/lib/media-url';
 import { useQueries, useQuery } from '@tanstack/react-query';
 import { BookOpen, Eye, MoreHorizontal, PlusSquare } from 'lucide-react';
@@ -102,47 +104,12 @@ function getCourseCategory(course: Course) {
   return course.category_names?.[0] ?? 'General';
 }
 
-function getRateFromRateCard(rateCard?: CourseTrainingRateCard | null) {
-  if (!rateCard) {
-    return undefined;
-  }
-
-  const rates = [
-    rateCard.group_inperson_hourly_rate,
-    rateCard.group_online_hourly_rate,
-    rateCard.private_inperson_hourly_rate,
-    rateCard.private_online_hourly_rate,
-    rateCard.group_inperson_session_rate,
-    rateCard.group_online_session_rate,
-    rateCard.private_inperson_session_rate,
-    rateCard.private_online_session_rate,
-    rateCard.group_inperson_daily_rate,
-    rateCard.group_online_daily_rate,
-    rateCard.private_inperson_daily_rate,
-    rateCard.private_online_daily_rate,
-  ].filter((value): value is number => typeof value === 'number' && Number.isFinite(value) && value > 0);
-
-  return rates[0];
-}
-
+/** The lowest approved rate on each basis; without a card, the course's minimum fee. */
 function formatRateLabel(rateCard?: CourseTrainingRateCard | null, fallbackRate?: number) {
-  const amount = getRateFromRateCard(rateCard) ?? fallbackRate;
-
-  if (typeof amount !== 'number') {
-    return '—';
-  }
-
-  const currencyCode = rateCard?.currency ?? 'KES';
-
-  try {
-    return new Intl.NumberFormat('en-KE', {
-      style: 'currency',
-      currency: currencyCode,
-      maximumFractionDigits: 0,
-    }).format(amount);
-  } catch {
-    return `${currencyCode} ${amount.toLocaleString()}`;
-  }
+  return (
+    lowestRatesLabel(rateCard) ??
+    (typeof fallbackRate === 'number' ? `Min. ${formatRateAmount(fallbackRate)}` : '—')
+  );
 }
 
 export default function InstructorApprovedCoursesPage() {

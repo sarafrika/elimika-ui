@@ -53,13 +53,9 @@ import {
   getUsersByOrganisationAndDomainOptions,
   searchTrainingApplicationsOptions,
 } from '@/services/client/@tanstack/react-query.gen';
+import { offeredMethods, type TrainingMethod } from '@/lib/rate-card';
+import { lowestRatesLabel } from '@/src/features/rate-card/application-display';
 import { toAuthenticatedMediaUrl } from '@/src/lib/media-url';
-
-const currency = new Intl.NumberFormat('en-KE', {
-  style: 'currency',
-  currency: 'KES',
-  maximumFractionDigits: 0,
-});
 
 const PROGRAM_TYPES = [
   'Short courses',
@@ -71,29 +67,9 @@ const PROGRAM_TYPES = [
   'Degree programs',
 ];
 
-/** Rate-card cells → Lovable's pricing-tier vocabulary (session format + location). */
-const RATE_TIERS: {
-  method: string;
-  fmt: string;
-  loc: string;
-  key: keyof NonNullable<CourseTrainingApplication['rate_card']>;
-}[] = [
-  { method: 'Group In-Person', fmt: 'GROUP', loc: 'IN_PERSON', key: 'group_inperson_hourly_rate' },
-  { method: 'Group Virtual', fmt: 'GROUP', loc: 'ONLINE', key: 'group_online_hourly_rate' },
-  {
-    method: 'Private In-Person',
-    fmt: 'INDIVIDUAL',
-    loc: 'IN_PERSON',
-    key: 'private_inperson_hourly_rate',
-  },
-  { method: 'Private Virtual', fmt: 'INDIVIDUAL', loc: 'ONLINE', key: 'private_online_hourly_rate' },
-];
-
-/** "KES 1,200" for one price, "KES 1,200 – KES 2,000" when the methods are priced differently. */
-const amountLabel = (min: number, max: number) => {
-  if (max <= 0) return '—';
-  return min === max ? currency.format(max) : `${currency.format(min)} – ${currency.format(max)}`;
-};
+/** A training method as the class definitions key it: session format and location. */
+const methodClassKey = (method: TrainingMethod) =>
+  `${method.format}|${method.location === 'online' ? 'ONLINE' : 'IN_PERSON'}`;
 
 const normStatus = (s?: string): string => {
   const v = (s ?? '').toLowerCase();
@@ -300,10 +276,9 @@ export default function CoursesPage() {
             toAuthenticatedMediaUrl(course?.banner_url ?? course?.thumbnail_url) ?? null;
           const status = archived[app.uuid as string] ? 'Archived' : normStatus(app.status);
 
-          const tiers = RATE_TIERS.filter(t => Number(app.rate_card?.[t.key] ?? 0) > 0);
-          const amounts = tiers.map(t => Number(app.rate_card?.[t.key] ?? 0));
-          const classDefs = tiers
-            .map(t => classDefByKey.get(`${courseUuid}|${t.fmt}|${t.loc}`))
+          const methods = offeredMethods(app.rate_card);
+          const classDefs = methods
+            .map(method => classDefByKey.get(`${courseUuid}|${methodClassKey(method)}`))
             .filter((cd): cd is ClassDefinition => Boolean(cd));
 
           const instructors = Array.from(
@@ -323,9 +298,8 @@ export default function CoursesPage() {
             programType: null,
             displayName: name,
             subjectLabel: subject ?? '—',
-            methods: tiers.map(t => t.method),
-            minAmount: amounts.length ? Math.min(...amounts) : 0,
-            maxAmount: amounts.length ? Math.max(...amounts) : 0,
+            methods: methods.map(method => method.label),
+            rates: lowestRatesLabel(app.rate_card) ?? '—',
             lessons: classDefs.reduce((sum, cd) => sum + Number(cd.scheduled_session_count ?? 0), 0),
             instructor: instructors[0],
             extraInstructorCount: Math.max(instructors.length - 1, 0),
@@ -429,7 +403,7 @@ export default function CoursesPage() {
                               ))
                             )}
                             <Badge variant='outline' className='text-xs'>
-                              {amountLabel(row.minAmount, row.maxAmount)}
+                              {row.rates}
                             </Badge>
                             <Badge variant='outline' className='text-xs'>
                               {row.lessons} Lessons
@@ -525,7 +499,7 @@ export default function CoursesPage() {
                             </div>
                           </TableCell>
                           <TableCell className='text-right font-mono whitespace-nowrap'>
-                            {amountLabel(row.minAmount, row.maxAmount)}
+                            {row.rates}
                           </TableCell>
                           <TableCell className='whitespace-nowrap'>{row.lessons}</TableCell>
                           <TableCell className='whitespace-nowrap'>
