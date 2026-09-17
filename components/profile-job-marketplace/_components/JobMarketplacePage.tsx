@@ -45,8 +45,12 @@ import DeleteModal from '@/components/custom-modals/delete-modal';
 import { PageHeader as AdminPageHeader } from '@/components/dashboard';
 import { AsyncSection } from '@/components/data/async-section';
 import { PinnedPlaceCard } from '@/components/maps/pinned-place-card';
-import { type ConflictItem, parseConflictError } from '@/components/resourcing/conflicts';
-import { ResourceConflictAlert } from '@/components/resourcing/ResourceConflictAlert';
+import { SchedulingConflictAlert } from '@/components/scheduling/scheduling-conflict-alert';
+import {
+  parseSchedulingConflicts,
+  type SchedulingConflict,
+  toSchedulingConflicts,
+} from '@/lib/scheduling-conflicts';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { EmptyState } from '@/components/ui/empty-state';
@@ -532,7 +536,7 @@ function JobDetailsSheet({
   const startsAt = firstSchedule?.start_time;
   const endsAt = lastSchedule?.end_time;
 
-  const [applyConflicts, setApplyConflicts] = useState<ConflictItem[]>([]);
+  const [applyConflicts, setApplyConflicts] = useState<SchedulingConflict[]>([]);
   // Asked unconditionally now. This endpoint exists precisely to answer "can this instructor apply",
   // and gating it on the locally-cached application list meant an instructor whose application fell
   // outside that page was silently offered a fresh application the server would then reject.
@@ -550,17 +554,9 @@ function JobDetailsSheet({
     eligibility?.can_reapply ?? statusAllowsReapply(application?.status);
   const hasLiveApplication = alreadyApplied && !canReapply;
   const isIneligible = Boolean(eligibility && !eligibility.eligible);
-  const eligibilityScheduleConflicts = useMemo<ConflictItem[]>(() => {
+  const eligibilityScheduleConflicts = useMemo<SchedulingConflict[]>(() => {
     if (!eligibility || eligibility.schedule_clear !== false) return [];
-    return (eligibility.schedule_conflicts ?? []).map(conflict => ({
-      start: conflict.requested_start
-        ? new Date(conflict.requested_start).toLocaleString()
-        : undefined,
-      end: conflict.requested_end ? new Date(conflict.requested_end).toLocaleString() : undefined,
-      reasons: (conflict.reasons ?? []).filter(
-        (reason): reason is string => typeof reason === 'string'
-      ),
-    }));
+    return toSchedulingConflicts(eligibility.schedule_conflicts);
   }, [eligibility]);
 
   const applyMutation = useMutation({
@@ -572,7 +568,7 @@ function JobDetailsSheet({
       await invalidateJobApplicationWorkflowQueries(queryClient);
     },
     onError: error => {
-      const report = parseConflictError(error);
+      const report = parseSchedulingConflicts(error);
       if (report) {
         setApplyConflicts(report.conflicts);
         toast.error('Your schedule conflicts with sessions of this job.');
@@ -828,8 +824,9 @@ function JobDetailsSheet({
                 </div>
               ) : null}
 
-              <ResourceConflictAlert
+              <SchedulingConflictAlert
                 title='Sessions that clash with your existing schedule'
+                timeZone={firstSchedule?.timezone}
                 conflicts={
                   applyConflicts.length > 0 ? applyConflicts : eligibilityScheduleConflicts
                 }

@@ -32,6 +32,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { useInstructorsByIds } from '@/hooks/use-batched-lookups';
 import { getErrorMessage } from '@/lib/error-utils';
 import { formatCurrency } from '@/lib/format-currency';
+import { parseSchedulingConflicts, type SchedulingConflict } from '@/lib/scheduling-conflicts';
 import { cn } from '@/lib/utils';
 import type { ClassMarketplaceJobDecisionRequest } from '@/services/client';
 import {
@@ -45,6 +46,7 @@ import {
   jobHref,
   viewClassHref,
 } from '@/src/features/organisation/jobs/lib/job-routes';
+import { firstSession } from '@/src/features/organisation/jobs/lib/job-stage';
 import {
   canRejectApplication,
   HIRING_STAGES,
@@ -54,6 +56,7 @@ import {
   stageIndexOf,
   statusLabel,
 } from '../application-status';
+import { HireClashAlert, hireClashTitle } from './HireClashAlert';
 
 const HIRED_INDEX = HIRING_STAGES.length - 1;
 
@@ -177,6 +180,7 @@ export function JobApplicantReviewPage({
   const [reviewNotes, setReviewNotes] = useState('');
   const [interviewAt, setInterviewAt] = useState('');
   const [transitionError, setTransitionError] = useState<string | null>(null);
+  const [hireClashes, setHireClashes] = useState<SchedulingConflict[]>([]);
 
   const jobQuery = useQuery({
     ...getJobOptions({ path: { jobUuid } }),
@@ -230,9 +234,17 @@ export function JobApplicantReviewPage({
       setReviewNotes('');
       setInterviewAt('');
       setTransitionError(null);
+      setHireClashes([]);
       await invalidateJobApplicationWorkflowQueries(queryClient);
     },
-    onError: error => {
+    onError: async (error, variables) => {
+      const clashes = variables?.query?.action === 'hire' ? parseSchedulingConflicts(error) : null;
+      if (clashes) {
+        setHireClashes(clashes.conflicts);
+        toast.error(hireClashTitle(clashes.conflicts.length));
+        await invalidateJobApplicationWorkflowQueries(queryClient);
+        return;
+      }
       // A refused skip names both stages, so the server's own words stand in for a generic toast.
       const message = getErrorMessage(error, 'Unable to move this application.');
       setTransitionError(message);
@@ -260,6 +272,7 @@ export function JobApplicantReviewPage({
     }
 
     setTransitionError(null);
+    setHireClashes([]);
     reviewMutation.mutate({
       path: { jobUuid, applicationUuid: application.uuid },
       query: { action: forwardStep.action },
@@ -270,6 +283,7 @@ export function JobApplicantReviewPage({
   const submitRejection = () => {
     if (!application?.uuid) return;
     setTransitionError(null);
+    setHireClashes([]);
     reviewMutation.mutate({
       path: { jobUuid, applicationUuid: application.uuid },
       query: { action: 'reject' },
@@ -482,6 +496,12 @@ export function JobApplicantReviewPage({
                       />
                     </div>
                   ) : null}
+
+                  <HireClashAlert
+                    conflicts={hireClashes}
+                    instructorName={instructor?.full_name}
+                    timeZone={job ? firstSession(job)?.timezone : undefined}
+                  />
 
                   {transitionError ? (
                     <div

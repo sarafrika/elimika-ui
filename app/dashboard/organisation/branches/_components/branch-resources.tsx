@@ -15,7 +15,7 @@ import {
 import { useMemo, useState } from 'react';
 import { toast } from 'sonner';
 import { AsyncSection } from '@/components/data/async-section';
-import { apiErrorMessage } from '@/components/resourcing/conflicts';
+import { getErrorMessage } from '@/lib/error-utils';
 import {
   RESOURCE_QUERY_IDS,
   ResourceFormDialog,
@@ -98,7 +98,7 @@ export default function BranchResources({ branch, resourceType }: BranchResource
     },
     onError: error => {
       toast.error(
-        apiErrorMessage(error, 'Unable to deactivate. Release its future bookings first.')
+        getErrorMessage(error, 'Unable to deactivate. Release its future bookings first.')
       );
     },
   });

@@ -27,6 +27,10 @@ import { toast } from 'sonner';
 
 import { AsyncSection } from '@/components/data/async-section';
 import {
+  HireClashAlert,
+  hireClashTitle,
+} from '@/components/profile-job-marketplace/_components/HireClashAlert';
+import {
   canRejectApplication,
   HIRING_STAGES,
   isClassCreatedStatus,
@@ -58,6 +62,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Textarea } from '@/components/ui/textarea';
 import { extractEntity, extractList } from '@/lib/api-helpers';
 import { getErrorMessage } from '@/lib/error-utils';
+import { parseSchedulingConflicts, type SchedulingConflict } from '@/lib/scheduling-conflicts';
 import { cn } from '@/lib/utils';
 import type { ClassMarketplaceJobApplication, Instructor } from '@/services/client';
 import { invalidateJobApplicationWorkflowQueries } from '@/src/features/dashboard/workflow-query-invalidation';
@@ -263,6 +268,7 @@ export default function CandidateDetailPage() {
   const [interviewAt, setInterviewAt] = useState('');
   const [interviewNote, setInterviewNote] = useState('');
   const [transitionError, setTransitionError] = useState<string | null>(null);
+  const [hireClashes, setHireClashes] = useState<SchedulingConflict[]>([]);
 
   const instructorQuery = useQuery({
     ...getInstructorByUuidOptions({ path: { uuid: instructorUuid } }),
@@ -330,9 +336,17 @@ export default function CandidateDetailPage() {
       await applicationsQuery.refetch();
       const action = String(vars?.query?.action ?? '');
       setTransitionError(null);
+      setHireClashes([]);
       toast.success(MOVE_MESSAGES[action] ?? 'Candidate updated.');
     },
-    onError: error => {
+    onError: async (error, variables) => {
+      const clashes = variables?.query?.action === 'hire' ? parseSchedulingConflicts(error) : null;
+      if (clashes) {
+        setHireClashes(clashes.conflicts);
+        toast.error(hireClashTitle(clashes.conflicts.length));
+        await invalidateJobApplicationWorkflowQueries(queryClient);
+        return;
+      }
       // A refused skip names both stages, so the server's own words stand in for a generic toast.
       const message = getErrorMessage(error, 'Could not move this candidate.');
       setTransitionError(message);
@@ -342,6 +356,7 @@ export default function CandidateDetailPage() {
   const act = (action: string, body?: Record<string, string>) => {
     if (!app) return;
     setTransitionError(null);
+    setHireClashes([]);
     moveMutation.mutate({
       path: { jobUuid, applicationUuid: app.uuid as string },
       query: { action },
@@ -517,6 +532,8 @@ export default function CandidateDetailPage() {
           value={app?.created_date ? dayjs(app.created_date).fromNow() : '—'}
         />
       </div>
+
+      <HireClashAlert conflicts={hireClashes} instructorName={name} />
 
       <div className='grid gap-6 lg:grid-cols-[minmax(0,1fr)_320px]'>
         {/* Main */}

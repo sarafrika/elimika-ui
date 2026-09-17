@@ -19,7 +19,8 @@ import {
   type ReminderState,
   validateRegistrationWindow,
 } from '@/components/class-form/class-form-shared';
-import { type ConflictItem, parseConflictError } from '@/components/resourcing/conflicts';
+import { SchedulingConflictAlert } from '@/components/scheduling/scheduling-conflict-alert';
+import { parseSchedulingConflicts, type SchedulingConflict } from '@/lib/scheduling-conflicts';
 import {
   type InstructorClassWithSchedule,
   useInstructorClassesWithSchedules,
@@ -49,7 +50,6 @@ import {
   UpcomingSessions,
 } from '../../../../../components/class-form';
 import { PageHeader } from '../../../../../components/page-header';
-import { ResourceConflictAlert } from '../../../../../components/resourcing/ResourceConflictAlert';
 import { Button } from '../../../../../components/ui/button';
 import { useUserProfile } from '../../../../../context/profile-context';
 import { useTimeZone } from '../../../../../context/timezone-context';
@@ -775,7 +775,7 @@ const InstructorClassCreationPage = () => {
   const [selectedPromotionalVideo, setSelectedPromotionalVideo] = useState<File | null>(null);
   // Session templates are posted with conflict_resolution FAIL, so the backend answers
   // 409 with the windows it refused and why. Keep them on screen, not in a vanishing toast.
-  const [refusedWindows, setRefusedWindows] = useState<ConflictItem[]>([]);
+  const [refusedWindows, setRefusedWindows] = useState<SchedulingConflict[]>([]);
   const isSubmitting =
     createClassDefinition.isPending ||
     updateClassDefinition.isPending ||
@@ -1580,7 +1580,7 @@ const InstructorClassCreationPage = () => {
   };
 
   const handleSubmitError = (error: unknown, fallback: string) => {
-    const report = parseConflictError(error);
+    const report = parseSchedulingConflicts(error);
     if (report) {
       setRefusedWindows(report.conflicts);
       toast.error(report.message, {
@@ -2361,13 +2361,21 @@ const InstructorClassCreationPage = () => {
     };
   }, [scheduleSettings.allDay, scheduleSettings.timezone, sessionsForConflictCheck]);
 
-  const sharedConflicts = useMemo(
+  const sharedConflicts = useMemo<SchedulingConflict[]>(
     () =>
-      scheduleConflicts.map(conflict => ({
-        start: `${conflict.proposed.date} ${conflict.proposed.startTime}`,
-        end: conflict.proposed.endTime,
-        reasons: [`Overlaps with ${conflict.existing.classTitle}`],
-      })),
+      scheduleConflicts.map(({ proposed, existing }) => {
+        const range = getSessionTimeRange(
+          proposed.date,
+          proposed.startTime,
+          proposed.endTime,
+          proposed.timezone
+        );
+        return {
+          start: range?.start ?? null,
+          end: range?.end ?? null,
+          reasons: [`Overlaps with ${existing.classTitle}`],
+        };
+      }),
     [scheduleConflicts]
   );
 
@@ -2567,14 +2575,16 @@ const InstructorClassCreationPage = () => {
 
         <UpcomingSessions sessions={sharedUpcomingSessions} />
 
-        <ResourceConflictAlert
+        <SchedulingConflictAlert
           title='These sessions conflict with existing instructor classes'
           conflicts={sharedConflicts}
+          timeZone={scheduleSettings.timezone}
         />
 
-        <ResourceConflictAlert
+        <SchedulingConflictAlert
           title='The scheduler refused these sessions'
           conflicts={refusedWindows}
+          timeZone={scheduleSettings.timezone}
         />
 
         <div className='border-border/70 flex flex-wrap justify-end gap-2 border-t pt-4'>

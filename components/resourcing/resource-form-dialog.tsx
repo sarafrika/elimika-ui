@@ -6,7 +6,7 @@ import Link from 'next/link';
 import { type FormEvent, useId, useState } from 'react';
 import { toast } from 'sonner';
 
-import { apiErrorMessage } from '@/components/resourcing/conflicts';
+import { getErrorMessage } from '@/lib/error-utils';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import {
@@ -236,7 +236,7 @@ function ResourceForm({
       : null;
 
   const handleError = (error: unknown) =>
-    toast.error(apiErrorMessage(error, `Unable to save this ${noun}.`));
+    toast.error(getErrorMessage(error, `Unable to save this ${noun}.`));
   const createMutation = useMutation({ ...createResourceMutation(), onError: handleError });
   const updateMutation = useMutation({ ...updateResourceMutation(), onError: handleError });
   const isPending = createMutation.isPending || updateMutation.isPending;

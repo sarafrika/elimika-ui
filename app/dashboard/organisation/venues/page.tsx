@@ -8,7 +8,7 @@ import { toast } from 'sonner';
 import { AsyncSection } from '@/components/data/async-section';
 import { PageHeader } from '@/components/dashboard';
 import { AssignBranchDialog } from '@/components/resourcing/assign-branch-dialog';
-import { apiErrorMessage } from '@/components/resourcing/conflicts';
+import { getErrorMessage } from '@/lib/error-utils';
 import {
   RESOURCE_QUERY_IDS,
   ResourceFormDialog,
@@ -100,7 +100,7 @@ export default function VenuesPage() {
           toast.success(`Venue "${venue.name}" removed`);
           await invalidateGeneratedQueryIds(queryClient, RESOURCE_QUERY_IDS);
         },
-        onError: error => toast.error(apiErrorMessage(error, 'Could not remove the venue.')),
+        onError: error => toast.error(getErrorMessage(error, 'Could not remove the venue.')),
       }
     );
   };

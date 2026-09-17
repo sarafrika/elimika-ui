@@ -21,7 +21,7 @@ import {
   type Offering,
   type RateBasis,
 } from '@/components/class-form';
-import { ResourceConflictAlert } from '@/components/resourcing/ResourceConflictAlert';
+import { SchedulingConflictAlert } from '@/components/scheduling/scheduling-conflict-alert';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -38,6 +38,7 @@ import { useCoursesByIds, useProgramsByIds } from '@/hooks/use-batched-lookups';
 import useSearchTrainingInstructors from '@/hooks/use-search-training-instructors';
 import { localDate } from '@/lib/date';
 import { STALE_TIMES } from '@/lib/query-client';
+import type { SchedulingConflict } from '@/lib/scheduling-conflicts';
 import {
   createBookingMutation,
   getInstructorScheduleOptions,
@@ -65,12 +66,6 @@ const DEFAULT_END_TIME = '10:00';
 type Props = {
   courseId: string | null;
   instructorId: string | null;
-};
-
-type ConflictItem = {
-  start?: string;
-  end?: string;
-  reasons: string[];
 };
 
 const ageFromDate = (dob?: Date | string | null) => {
@@ -421,7 +416,7 @@ export default function InstructorHirePage({ courseId, instructorId }: Props) {
     () => scheduleWindows(upcomingSessions, timezone),
     [upcomingSessions, timezone]
   );
-  const conflicts = useMemo<ConflictItem[]>(() => {
+  const conflicts = useMemo<SchedulingConflict[]>(() => {
     const busy = existingSchedule.filter(
       item => String(item.status ?? '').toUpperCase() !== 'CANCELLED'
     );
@@ -433,8 +428,8 @@ export default function InstructorHirePage({ courseId, instructorId }: Props) {
         if (window.start >= existingEnd || existingStart >= window.end) return [];
         return [
           {
-            start: existingStart.toLocaleString(),
-            end: existingEnd.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' }),
+            start: existingStart,
+            end: existingEnd,
             reasons: [`Overlaps with ${item.title || 'an existing instructor class'}`],
           },
         ];
@@ -725,9 +720,10 @@ export default function InstructorHirePage({ courseId, instructorId }: Props) {
                   No existing classes are currently on this instructor&apos;s calendar.
                 </p>
               )}
-              <ResourceConflictAlert
+              <SchedulingConflictAlert
                 title="Your currently selected sessions overlap the instructor's current class schedule"
                 conflicts={conflicts}
+                timeZone={timezone}
               />
             </div>
           </section>

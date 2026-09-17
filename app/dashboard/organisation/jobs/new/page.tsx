@@ -61,8 +61,7 @@ import {
   whereItHappensBlockers,
 } from '@/components/class-form';
 import { PageHeader } from '@/components/page-header';
-import { type ConflictItem, parseConflictError } from '@/components/resourcing/conflicts';
-import { ResourceConflictAlert } from '@/components/resourcing/ResourceConflictAlert';
+import { SchedulingConflictAlert } from '@/components/scheduling/scheduling-conflict-alert';
 import { Button } from '@/components/ui/button';
 import { useOrganisation } from '@/context/organisation-context';
 import { useTimeZone } from '@/context/timezone-context';
@@ -71,6 +70,7 @@ import { extractEntity, extractPage } from '@/lib/api-helpers';
 import { normalizeScheduleTimeZone } from '@/lib/date';
 import { getErrorMessage } from '@/lib/error-utils';
 import { STALE_TIMES } from '@/lib/query-client';
+import { parseSchedulingConflicts, type SchedulingConflict } from '@/lib/scheduling-conflicts';
 import type {
   Category,
   ClassMarketplaceJobRequest,
@@ -612,9 +612,9 @@ export default function OrganisationPostJobPage() {
     maxParticipants: num(maxParticipants),
   });
 
-  const [resourceConflicts, setResourceConflicts] = useState<ConflictItem[]>([]);
+  const [resourceConflicts, setResourceConflicts] = useState<SchedulingConflict[]>([]);
   const onMutationError = (error: unknown, fallback: string) => {
-    const report = parseConflictError(error);
+    const report = parseSchedulingConflicts(error);
     if (report) {
       setResourceConflicts(report.conflicts);
       toast.error(report.message);
@@ -998,9 +998,10 @@ export default function OrganisationPostJobPage() {
           excludeJobUuid={editingJobUuid || undefined}
         />
 
-        <ResourceConflictAlert
+        <SchedulingConflictAlert
           title='These sessions conflict with existing reservations'
           conflicts={resourceConflicts}
+          timeZone={timezone}
         />
 
         <div className='border-border/70 flex flex-col gap-3 border-t pt-4 sm:flex-row sm:items-start sm:justify-end'>

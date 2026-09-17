@@ -5,7 +5,7 @@ import { Info } from 'lucide-react';
 import { type FormEvent, useId, useState } from 'react';
 import { toast } from 'sonner';
 
-import { apiErrorMessage } from '@/components/resourcing/conflicts';
+import { getErrorMessage } from '@/lib/error-utils';
 import {
   BranchPinNote,
   BranchSelect,
@@ -67,7 +67,7 @@ function AssignBranchForm({
 
   const assign = useMutation({
     ...updateResourceMutation(),
-    onError: error => toast.error(apiErrorMessage(error, 'Unable to assign a branch.')),
+    onError: error => toast.error(getErrorMessage(error, 'Unable to assign a branch.')),
   });
 
   const handleSubmit = (event: FormEvent<HTMLFormElement>) => {
