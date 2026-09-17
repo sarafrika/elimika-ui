@@ -13,6 +13,7 @@ import { cn } from '@/lib/utils';
 import { Building2, CalendarDays, Lock, MapPin, Plus, Video, X } from 'lucide-react';
 import Link from 'next/link';
 import {
+  type ComponentProps,
   useEffect,
   useLayoutEffect,
   useMemo,
@@ -442,13 +443,18 @@ function EventStudents({ students }: { students: string[] }) {
   );
 }
 
-function EventBlock({ event }: { event: SchedulerEvent }) {
+type EventTriggerProps = Omit<ComponentProps<'button'>, 'children'>;
+
+// Popover triggers pass their ref, handlers and state through asChild, so each block spreads them.
+function EventBlock({ event, className, ...trigger }: EventTriggerProps & { event: SchedulerEvent }) {
   return (
     <button
       type='button'
+      {...trigger}
       className={cn(
         'focus-visible:ring-ring h-full w-full cursor-pointer overflow-hidden rounded-md border border-l-4 px-1 py-1 text-left shadow-sm transition hover:shadow-md focus-visible:ring-2 focus-visible:outline-none sm:px-1.5 lg:p-2',
-        getEventStyles(event)
+        getEventStyles(event),
+        className
       )}
     >
       <p className='truncate text-[9px] font-semibold sm:text-[10px] lg:text-xs'>{event.title}</p>
@@ -466,13 +472,20 @@ function EventBlock({ event }: { event: SchedulerEvent }) {
   );
 }
 
-function WeekEventBlock({ event, timeZone }: { event: SchedulerEvent; timeZone: string }) {
+function WeekEventBlock({
+  event,
+  timeZone,
+  className,
+  ...trigger
+}: EventTriggerProps & { event: SchedulerEvent; timeZone: string }) {
   return (
     <button
       type='button'
+      {...trigger}
       className={cn(
         'focus-visible:ring-ring h-full w-full cursor-pointer overflow-hidden rounded-md border border-l-4 px-2 py-1 text-left shadow-sm transition hover:shadow-md focus-visible:ring-2 focus-visible:outline-none',
-        getEventStyles(event)
+        getEventStyles(event),
+        className
       )}
     >
       <p className='truncate text-[10px] font-semibold sm:text-[11px]'>
@@ -492,13 +505,20 @@ function WeekEventBlock({ event, timeZone }: { event: SchedulerEvent; timeZone: 
   );
 }
 
-function CompactEvent({ event, timeZone }: { event: SchedulerEvent; timeZone: string }) {
+function CompactEvent({
+  event,
+  timeZone,
+  className,
+  ...trigger
+}: EventTriggerProps & { event: SchedulerEvent; timeZone: string }) {
   return (
     <button
       type="button"
+      {...trigger}
       className={cn(
         'w-full min-w-0 max-w-full overflow-hidden rounded border border-l-[3px] px-2 py-1 text-left text-[10px] font-semibold transition hover:shadow-sm',
-        getEventStyles(event)
+        getEventStyles(event),
+        className
       )}
     >
       <p className="min-w-0 truncate">{event.title}</p>
@@ -1435,15 +1455,21 @@ function MonthGrid({
                 </div>
                 <div className='cursor-pointer space-y-1'>
                   {dayEvents.slice(0, 3).map(event => (
-                    <SchedulerEventDisclosure
+                    // The popover portals, but its clicks still bubble here, not to the day cell.
+                    <div
                       key={event.id}
-                      event={event}
-                      overlapEvents={[event]}
-                      timeZone={timeZone}
-                      onViewDetails={onEventClick}
+                      onClick={clickEvent => clickEvent.stopPropagation()}
+                      onKeyDown={keyEvent => keyEvent.stopPropagation()}
                     >
-                      <CompactEvent event={event} timeZone={timeZone} />
-                    </SchedulerEventDisclosure>
+                      <SchedulerEventDisclosure
+                        event={event}
+                        overlapEvents={[event]}
+                        timeZone={timeZone}
+                        onViewDetails={onEventClick}
+                      >
+                        <CompactEvent event={event} timeZone={timeZone} />
+                      </SchedulerEventDisclosure>
+                    </div>
                   ))}
                   {dayEvents.length > 3 ? (
                     <p className='text-muted-foreground text-[10px] font-semibold'>
