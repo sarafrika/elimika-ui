@@ -13,6 +13,7 @@ import {
 } from '@/services/client/@tanstack/react-query.gen';
 import { isFullUser } from '@/services/user/is-full-user';
 import type { SearchInstructor } from '@/src/features/dashboard/courses/types';
+import { lowestRatesLabel } from '@/src/features/rate-card/application-display';
 import { InstructorSkillCard } from '../../instructor/profile/skills/_component/instructor-skill-card';
 
 type Props = {
@@ -60,12 +61,7 @@ export const InstructorCard = ({ instructor, onViewProfile, courseId }: Props) =
     course => course.course_uuid === courseId
   );
 
-  const rateCard = matchedCourse?.rate_card;
-
-  const rates = rateCard ? Object.values(rateCard).filter(value => typeof value === 'number') : [];
-
-  const minRate = rates.length ? Math.min(...rates) : null;
-  const maxRate = rates.length ? Math.max(...rates) : null;
+  const ratesLabel = lowestRatesLabel(matchedCourse?.rate_card);
 
   return (
     <Card className='border-border/70 bg-card h-full overflow-hidden rounded-[24px] shadow-sm transition hover:-translate-y-1 hover:shadow-lg'>
@@ -164,14 +160,10 @@ export const InstructorCard = ({ instructor, onViewProfile, courseId }: Props) =
             <div>
               <p className='text-muted-foreground text-sm'>Starting from</p>
 
-              {matchedCourse && minRate !== null ? (
-                <p className='text-lg font-semibold'>
-                  {rateCard?.currency ?? 'KES'} {minRate}
-                  {maxRate !== null && maxRate !== minRate ? ` - ${maxRate}` : ''}
-                  <span className='text-muted-foreground text-sm'> per hour</span>
-                </p>
+              {ratesLabel ? (
+                <p className='text-sm font-semibold'>{ratesLabel}</p>
               ) : (
-                <p className='text-muted-foreground text-sm'>Hourly rate not available</p>
+                <p className='text-muted-foreground text-sm'>Rates not available</p>
               )}
             </div>
 

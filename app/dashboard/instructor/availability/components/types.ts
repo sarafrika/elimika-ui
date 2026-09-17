@@ -11,7 +11,7 @@ export type CalendarEvent = {
   id: string;
   title: string;
   description?: string;
-  entry_type?: EntryTypeEnum | 'BOOKING';
+  entry_type?: EntryTypeEnum;
   /** IANA zone the wall-clock fields below are rendered in. */
   timeZone: string;
   startTime: string; // HH:mm wall clock in timeZone

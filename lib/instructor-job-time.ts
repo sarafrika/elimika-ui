@@ -23,9 +23,6 @@ export const UNAVAILABLE_LABEL = 'Unavailable';
 export const JOB_HOLD_BLOCK_REASON =
   'This time is held for a class job you were hired for, so nothing else can be booked into it.';
 
-export const INSTRUCTOR_UNAVAILABLE_REASON =
-  'The instructor is unavailable at this time. Pick another slot.';
-
 /** Other viewers get holds redacted, so a hold without a title reads as plain unavailability. */
 export function jobTimeTitle(kind: JobTimeKind, title?: string | null) {
   if (title?.trim()) return title;

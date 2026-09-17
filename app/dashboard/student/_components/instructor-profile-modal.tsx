@@ -1,6 +1,6 @@
 'use client';
 
-import { useQuery, useQueryClient } from '@tanstack/react-query';
+import { useQuery } from '@tanstack/react-query';
 import {
   Award,
   BookOpen,
@@ -14,97 +14,46 @@ import {
   Video,
   X,
 } from 'lucide-react';
+import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
 import type React from 'react';
-import { useEffect, useState } from 'react';
 import RichTextRenderer from '@/components/editors/richTextRenders';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { useStudent } from '@/context/student-context';
+import { useUserDomain } from '@/context/user-domain-context';
 import useInstructorClassesWithDetails from '@/hooks/use-instructor-classes';
 import {
-  getInstructorCalendarOptions,
   getInstructorReviewsOptions,
   listCatalogItemsOptions,
   searchTrainingApplicationsOptions,
 } from '@/services/client/@tanstack/react-query.gen';
-import type {
-  CourseTrainingApplication,
-  CourseTrainingRateCard,
-  InstructorCalendarEntry,
-  InstructorReview,
-} from '@/services/client/types.gen';
+import type { CourseTrainingApplication, InstructorReview } from '@/services/client/types.gen';
 import { RateCardGrid } from '@/components/rate-card/rate-card-grid';
-import type { Booking } from '@/src/features/dashboard/courses/pages/InstructorBookingPage';
 import type { SearchInstructor } from '@/src/features/dashboard/courses/types';
-import {
-  AvailabilityData,
-  ClassScheduleItem,
-  convertToCalendarEvents,
-} from '../../instructor/availability/components/types';
+import { dashboardUrl } from '@/src/features/dashboard/lib/dashboard-url';
 import { ReviewCard } from '../../instructor/reviews/review-card';
-import BookInstructorTimeTableManager from './book-instructor-schedule';
 
 type Props = {
   instructor: SearchInstructor;
   onClose: () => void;
-  onBookingComplete: (booking: Booking) => void;
 };
 
-type RateKey = keyof Pick<
-  CourseTrainingRateCard,
-  'group_inperson_hourly_rate' | 'group_online_hourly_rate' | 'private_inperson_hourly_rate' | 'private_online_hourly_rate'
->;
+function hireFlowHref(instructorUuid: string, courseId: string | null) {
+  const query = new URLSearchParams({ ...(courseId ? { courseId } : {}), id: instructorUuid });
+  return dashboardUrl('student', `courses/instructor?${query}`);
+}
 
-export const InstructorProfileComponent: React.FC<Props> = ({
-  instructor,
-  onClose,
-  onBookingComplete,
-}) => {
-  const student = useStudent();
-  const qc = useQueryClient();
+export const InstructorProfileComponent: React.FC<Props> = ({ instructor, onClose }) => {
+  const { activeDomain } = useUserDomain();
   const searchParams = useSearchParams();
   const courseId = searchParams.get('courseId');
 
-  const [showBooking, setShowBooking] = useState(false);
-  const [reason, setReason] = useState('');
-
-  const { data: timetable } = useQuery({
-    ...getInstructorCalendarOptions({
-      path: { instructorUuid: instructor?.uuid as string },
-      query: { start_date: new Date('2024-09-10'), end_date: new Date('2026-11-11') },
-    }),
-    enabled: !!instructor?.uuid,
-  });
-
-  const instructorSchedule: InstructorCalendarEntry[] = timetable?.data ?? [];
-
-  const [availabilityData, setAvailabilityData] = useState<AvailabilityData>({
-    events: convertToCalendarEvents(instructorSchedule as ClassScheduleItem[]),
-    settings: {
-      timezone: 'UTC',
-      autoAcceptBookings: false,
-      bufferTime: 15,
-      workingHours: {
-        start: '08:00',
-        end: '18:00',
-      },
-    },
-  });
-
-  useEffect(() => {
-    const eventsFromSchedule = timetable?.data
-      ? convertToCalendarEvents(timetable.data as ClassScheduleItem[])
-      : [];
-
-    setAvailabilityData(prev => ({
-      ...prev,
-      events: eventsFromSchedule,
-    }));
-  }, [timetable?.data]);
+  // Only a learner books, and in the shared hire flow priced on the approved billing basis.
+  const hireHref =
+    activeDomain === 'student' && instructor?.uuid ? hireFlowHref(instructor.uuid, courseId) : null;
 
   const { data: catalogues } = useQuery(listCatalogItemsOptions());
   const { classes: classesWithCourseAndInstructor } = useInstructorClassesWithDetails(
@@ -133,20 +82,6 @@ export const InstructorProfileComponent: React.FC<Props> = ({
   const matchedCourse: CourseTrainingApplication | undefined = appliedCourses?.data?.content?.find(
     course => course.course_uuid === courseId
   );
-
-  const [selectedRateKey, setSelectedRateKey] = useState<RateKey>('private_online_hourly_rate');
-  const [totalAmount, setTotalAmount] = useState(0);
-  // A null rate means the method isn't offered, so it is left out rather than priced at zero.
-  const bookingRates = matchedCourse?.rate_card
-    ? {
-        ...Object.fromEntries(
-          Object.entries(matchedCourse.rate_card).filter(
-            ([key, value]) => key !== 'currency' && typeof value === 'number'
-          )
-        ),
-        currency: matchedCourse.rate_card.currency ?? 'KES',
-      }
-    : undefined;
 
   return (
     <div className='relative mx-auto w-full max-w-7xl self-center overflow-y-auto'>
@@ -214,36 +149,17 @@ export const InstructorProfileComponent: React.FC<Props> = ({
             </div>
           </div>
 
-          <div className='mt-5 flex justify-end'>
-            <Button
-              onClick={() => setShowBooking(true)}
-              size='lg'
-              className='flex items-center gap-2 rounded-xl'
-            >
-              <Calendar className='h-4 w-4' />
-              Book Session
-            </Button>
-          </div>
+          {hireHref ? (
+            <div className='mt-5 flex justify-end'>
+              <Button asChild size='lg' className='flex items-center gap-2 rounded-xl'>
+                <Link href={hireHref}>
+                  <Calendar className='h-4 w-4' />
+                  Book Session
+                </Link>
+              </Button>
+            </div>
+          ) : null}
         </div>
-
-        {showBooking && (
-          <>
-            <BookInstructorTimeTableManager
-              availabilityData={availabilityData || []}
-              onAvailabilityUpdate={setAvailabilityData}
-              studentBookingData={{
-                course_uuid: courseId || '',
-                student_uuid: student?.uuid || '',
-                instructor_uuid: instructor?.uuid || '',
-                booking_id: '',
-                price_amount: totalAmount,
-                purpose: reason,
-                rate_key: selectedRateKey,
-                rates: bookingRates,
-              }}
-            />
-          </>
-        )}
 
         <Tabs defaultValue='overview' className='w-full'>
           <TabsList className='bg-muted/50 flex h-auto flex-row gap-2 rounded-2xl p-1'>
