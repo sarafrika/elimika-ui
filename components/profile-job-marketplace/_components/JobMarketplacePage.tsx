@@ -82,7 +82,6 @@ import {
   getJobEligibilityOptions,
   listJobsOptions,
   listMyApplicationsOptions,
-  searchTrainingApplicationsOptions,
 } from '@/services/client/@tanstack/react-query.gen';
 import type {
   ClassMarketplaceJob,
@@ -552,6 +551,8 @@ function JobDetailsSheet({
   // outside that page was silently offered a fresh application the server would then reject.
   const eligibilityQuery = useQuery({
     ...getJobEligibilityOptions({ path: { jobUuid: jobUuid ?? '' } }),
+    // Approvals land from another user, so opening a job always re-checks.
+    staleTime: 0,
     enabled: open && Boolean(jobUuid) && !isManagementView && job?.status === 'open' && !isExpired,
   });
   const eligibility = eligibilityQuery.data?.data;
@@ -955,6 +956,8 @@ export function JobMarketplacePage({ role }: { role: JobMarketplaceRole }) {
         size: JOB_PAGE_SIZE,
       },
       ...(isOrganizationView ? { organisation_uuid: organisationUuid } : {}),
+      // Filter on the server so closed postings can't crowd open ones out of the first page.
+      ...(!isOrganizationView && statusFilter !== 'all' ? { status: statusFilter } : {}),
     },
   };
 
@@ -1063,44 +1066,8 @@ export function JobMarketplacePage({ role }: { role: JobMarketplaceRole }) {
   const organisations = extractPage<Organisation>(organisationsResponse).items;
   const myApplications = myApplicationsQuery.data?.data?.content ?? [];
 
-  // Fetch training applications for the current instructor to determine
-  // which courses/programs they've been approved to train.
-  const { data: trainingAppsResponse } = useQuery({
-    ...searchTrainingApplicationsOptions({
-      query: {
-        pageable: { page: 0, size: 200 },
-        searchParams: { applicant_uuid_eq: instructor?.uuid ?? '' },
-      },
-    }),
-    enabled: Boolean(canApply && instructor?.uuid),
-    refetchOnWindowFocus: false,
-  });
-
-  const approvedApplications = trainingAppsResponse?.data?.content ?? [];
-
-  const approvedCourseUuids = useMemo(
-    () => new Set(approvedApplications.filter(app => app.status === 'approved' && app.course_uuid).map(app => app.course_uuid as string)),
-    [approvedApplications]
-  );
-
-  const approvedProgramUuids = useMemo(
-    () => new Set(approvedApplications.filter(app => app.status === 'approved' && app.program_uuid).map(app => app.program_uuid as string)),
-    [approvedApplications]
-  );
-
-  const visibleJobs = useMemo(() => {
-    if (!canApply) return jobs;
-    return jobs.filter(job => {
-      const programUuid = getJobProgramUuid(job);
-      const jobCourseUuid = job.course_uuid ?? null;
-      return (
-        (jobCourseUuid && approvedCourseUuids.has(jobCourseUuid)) ||
-        (programUuid && approvedProgramUuids.has(programUuid))
-      );
-    });
-  }, [canApply, jobs, approvedCourseUuids, approvedProgramUuids]);
-
-  const jobsUsed = canApply ? visibleJobs : jobs;
+  // Instructors see every posting; the job sheet's checklist explains what blocks an application.
+  const jobsUsed = jobs;
   const organisationOptions = useMemo(() => {
     const options = organisations
       .filter(organisationItem => organisationItem.uuid)
@@ -1229,21 +1196,10 @@ export function JobMarketplacePage({ role }: { role: JobMarketplaceRole }) {
     });
   }, [contentFilter, jobsUsed, locationFilter, organisationFilter, search, sessionFormatFilter]);
 
-  const filteredJobs = useMemo(() => {
-    return jobsBeforeStatusFilter
-      .filter(job => statusFilter === 'all' || job.status === statusFilter)
-      .filter(job => {
-        if (!canApply) return true;
-        const programUuid = getJobProgramUuid(job);
-        const jobCourseUuid = job.course_uuid ?? null;
-
-        // Only show jobs that match the instructor's approved course or program UUIDs.
-        return (
-          (jobCourseUuid && approvedCourseUuids.has(jobCourseUuid)) ||
-          (programUuid && approvedProgramUuids.has(programUuid))
-        );
-      });
-  }, [jobsBeforeStatusFilter, statusFilter, canApply, approvedCourseUuids, approvedProgramUuids]);
+  const filteredJobs = useMemo(
+    () => jobsBeforeStatusFilter.filter(job => statusFilter === 'all' || job.status === statusFilter),
+    [jobsBeforeStatusFilter, statusFilter]
+  );
 
   const sortedJobs = useMemo(
     () => sortJobs(filteredJobs, sortDirection),

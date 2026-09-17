@@ -78,6 +78,7 @@ const workflowQueryIds = {
     'getProgramsByCourseCreator',
     'getClassDefinitionsForInstructor',
     'getClassDefinitionsForOrganisation',
+    'getJobEligibility',
   ],
   enrollment: [
     'getEnrollmentOverviewForStudent',
