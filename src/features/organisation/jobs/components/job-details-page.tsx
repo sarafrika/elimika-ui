@@ -59,8 +59,9 @@ import { editJobHref, JOB_TABS, type JobTab, jobApplicantHref, jobsHref } from '
 import {
   deliveryLabel,
   hiredApplicationFor,
-  holdStateFor,
+  instructorTimeHoldState,
   type JobStage,
+  jobResourcesHoldState,
   jobSessionWindows,
   jobStage,
   nextStepCta,
@@ -187,7 +188,8 @@ export function JobDetailsPage({ jobUuid }: { jobUuid: string }) {
   }
 
   const stage = job ? jobStage(job, now) : 'open';
-  const hold = job ? holdStateFor(job, now) : null;
+  const resourcesHold = job ? jobResourcesHoldState(job) : null;
+  const sessionsHold = job ? instructorTimeHoldState(job, now) : null;
   const cta = job ? nextStepCta(job, now) : null;
   const canEdit = stage === 'open' || stage === 'awaiting_class';
   const applicantCount = Number(job?.application_count ?? applications.length);
@@ -322,7 +324,7 @@ export function JobDetailsPage({ jobUuid }: { jobUuid: string }) {
         </div>
 
         <TabsContent value='overview'>
-          {job && hold && cta ? (
+          {job && resourcesHold && sessionsHold && cta ? (
             <div className='grid gap-5 lg:grid-cols-[minmax(0,1fr)_360px]'>
               <div className='flex min-w-0 flex-col gap-5'>
                 <SectionCard
@@ -343,12 +345,9 @@ export function JobDetailsPage({ jobUuid }: { jobUuid: string }) {
                 <SectionCard
                   title='Schedule'
                   description={scheduleSummary(windows)}
-                  actions={<HoldBadge hold={hold} label={hold.note} />}
+                  actions={<HoldBadge hold={sessionsHold} label={sessionsHold.note} />}
                 >
-                  <JobSessionList
-                    windows={windows}
-                    hold={holdStateFor(job, now, { sessions: true })}
-                  />
+                  <JobSessionList windows={windows} hold={sessionsHold} />
                   <div className='mt-4 grid gap-3 sm:grid-cols-2'>
                     <DetailRow
                       label='Registration window'
@@ -414,15 +413,14 @@ export function JobDetailsPage({ jobUuid }: { jobUuid: string }) {
                 <SectionCard title='Venue & equipment'>
                   <JobResourceList
                     rows={resourceRows}
-                    hold={hold}
                     isLoading={resourcesLoading}
                     online={job.location_type === 'ONLINE'}
                   />
                   {resourceRows.length > 0 ? (
                     <p className='text-muted-foreground mt-3 border-t pt-3 text-xs'>
-                      {hold.key === 'confirmed'
+                      {resourcesHold.key === 'confirmed'
                         ? 'These were confirmed when the class was created and now belong to the class.'
-                        : hold.key === 'released'
+                        : resourcesHold.key === 'released'
                           ? 'This job has closed, so these holds were released.'
                           : 'Held for the job’s exact session windows. Creating the class confirms them; cancelling or letting the job expire releases them.'}
                     </p>
@@ -475,10 +473,10 @@ export function JobDetailsPage({ jobUuid }: { jobUuid: string }) {
         </TabsContent>
 
         <TabsContent value='holds'>
-          {job && hold ? (
+          {job && resourcesHold ? (
             <JobHoldsTab
               job={job}
-              hold={hold}
+              hold={resourcesHold}
               resourceRows={resourceRows}
               instructor={hiredInstructor}
               instructorUuid={hiredUuid}

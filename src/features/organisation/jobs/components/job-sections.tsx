@@ -17,10 +17,12 @@ import type {
   OrganisationResource,
 } from '@/services/client';
 import {
+  CONFIRMED_HOLD,
   type HoldState,
   type JobSessionWindow,
   jobAddress,
   jobHasPin,
+  resourceHoldState,
   sessionDayLabel,
   sessionTimeRange,
 } from '../lib/job-stage';
@@ -220,14 +222,15 @@ export function JobSessionList({
   );
 }
 
+/** Each row carries its own booking state; `confirmed` covers the moment the class was just created. */
 export function JobResourceList({
   rows,
-  hold,
+  confirmed,
   isLoading,
   online,
 }: {
   rows: JobResourceRow[];
-  hold: HoldState;
+  confirmed?: boolean;
   isLoading?: boolean;
   online?: boolean;
 }) {
@@ -257,7 +260,7 @@ export function JobResourceList({
                 <p className='text-muted-foreground text-xs'>{resourceMeta(row)}</p>
               )}
             </div>
-            <HoldBadge hold={hold} />
+            <HoldBadge hold={confirmed ? CONFIRMED_HOLD : resourceHoldState(row.resource)} />
           </div>
         );
       })}

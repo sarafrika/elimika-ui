@@ -29,7 +29,7 @@ import { jobHref, jobsHref, postJobHref } from '@/src/features/organisation/jobs
 import {
   deliveryLabel,
   hiredInstructorUuid,
-  holdStateFor,
+  jobResourcesHoldState,
   jobSessionWindows,
   jobStage,
   jobTown,
@@ -145,7 +145,6 @@ export function PickJobStep({
               <ReadyJobCard
                 key={job.uuid}
                 job={job}
-                now={now}
                 selected={job.uuid === selected}
                 onSelect={() => setSelected(job.uuid ?? '')}
                 instructorMap={instructorMap}
@@ -204,20 +203,18 @@ export function PickJobStep({
 
 function ReadyJobCard({
   job,
-  now,
   selected,
   onSelect,
   instructorMap,
 }: {
   job: ClassMarketplaceJob;
-  now: number;
   selected: boolean;
   onSelect: () => void;
   instructorMap: Record<string, Instructor>;
 }) {
   const windows = useMemo(() => jobSessionWindows(job), [job]);
   const first = windows[0];
-  const hold = holdStateFor(job, now);
+  const resourcesHold = jobResourcesHoldState(job);
   const hiredUuid = hiredInstructorUuid(job);
   const hiredName = hiredUuid ? instructorMap[hiredUuid]?.full_name : null;
   const online = job.location_type === 'ONLINE';
@@ -287,8 +284,8 @@ function ReadyJobCard({
         ))}
         <span className='text-muted-foreground text-xs'>
           {job.resources?.length
-            ? 'on hold'
-            : online || hold.key === 'online'
+            ? resourcesHold.label.toLowerCase()
+            : online
               ? 'Online — nothing held but instructor time'
               : 'No venue or equipment held'}
         </span>

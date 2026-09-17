@@ -49,20 +49,14 @@ import {
   viewClassHref,
 } from '@/src/features/organisation/jobs/lib/job-routes';
 import {
+  CONFIRMED_HOLD,
   hiredApplicationFor,
   hiredInstructorUuid,
-  holdStateFor,
+  instructorTimeHoldState,
   jobSessionWindows,
-  type HoldState,
   scheduleSummary,
   serviceLabel,
 } from '@/src/features/organisation/jobs/lib/job-stage';
-
-const CONFIRMED: HoldState = {
-  key: 'confirmed',
-  label: 'Confirmed',
-  note: 'Confirmed for the class',
-};
 
 function LockedTitle({ children }: { children: ReactNode }) {
   return (
@@ -138,8 +132,7 @@ export function ReviewCreateStep({
   const created = createdClassUuid !== null;
   const status = job?.status as string | undefined;
   const physical = job?.location_type !== 'ONLINE';
-  const sessionHold = created ? CONFIRMED : job ? holdStateFor(job, now, { sessions: true }) : null;
-  const resourceHold = created ? CONFIRMED : job ? holdStateFor(job, now) : null;
+  const sessionHold = created ? CONFIRMED_HOLD : job ? instructorTimeHoldState(job, now) : null;
   const venue = resourceRows.find(row => row.kind === 'VENUE') ?? null;
 
   const renderBlocked = () => {
@@ -207,7 +200,7 @@ export function ReviewCreateStep({
         </div>
       }
     >
-      {job && sessionHold && resourceHold ? (
+      {job && sessionHold ? (
         !created && status !== 'awaiting_class' ? (
           renderBlocked()
         ) : (
@@ -269,7 +262,7 @@ export function ReviewCreateStep({
                   actions={
                     <HoldBadge
                       hold={sessionHold}
-                      label={created ? 'Confirmed for the class' : 'On hold for this job'}
+                      label={sessionHold.note}
                     />
                   }
                 >
@@ -287,7 +280,7 @@ export function ReviewCreateStep({
                   >
                     <JobResourceList
                       rows={resourceRows}
-                      hold={resourceHold}
+                      confirmed={created}
                       isLoading={resourcesLoading}
                     />
                   </SectionCard>

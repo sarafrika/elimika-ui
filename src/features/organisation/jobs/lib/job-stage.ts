@@ -2,8 +2,10 @@ import { getEffectiveJobStatus } from '@/components/profile-job-marketplace/job-
 export { jobAddress, jobHasPin, jobTown } from '@/components/profile-job-marketplace/job-place';
 import { type ApiDateInput, dayjs, DEFAULT_CLASS_TIME_ZONE, parseApiDate } from '@/lib/date';
 import type {
+  BookingStatusEnum,
   ClassMarketplaceJob,
   ClassMarketplaceJobApplication,
+  ClassMarketplaceJobResource,
   ClassSessionTemplate,
 } from '@/services/client';
 import { createClassHref, jobHref, repostJobHref, viewClassHref } from './job-routes';
@@ -59,27 +61,55 @@ export function hiredApplicationFor(
 }
 
 export type HoldState = {
-  key: 'held' | 'confirmed' | 'released' | 'online';
+  key: 'held' | 'confirmed' | 'released' | 'online' | 'none';
   label: string;
   note: string;
 };
 
-/** Pass `sessions` for per-session badges: an online job still holds the instructor's time. */
-export function holdStateFor(
-  job: ClassMarketplaceJob,
-  now = Date.now(),
-  { sessions = false }: { sessions?: boolean } = {}
-): HoldState {
-  if (!sessions && job.location_type === 'ONLINE' && !job.resources?.length) {
-    return { key: 'online', label: 'Online', note: 'Online — nothing to book' };
+export const CONFIRMED_HOLD: HoldState = {
+  key: 'confirmed',
+  label: 'Confirmed',
+  note: 'Confirmed for the class',
+};
+
+const RESOURCE_HOLD_STATES: Record<BookingStatusEnum, HoldState> = {
+  HOLD: { key: 'held', label: 'On hold', note: 'On hold for these sessions' },
+  CONFIRMED: CONFIRMED_HOLD,
+  RELEASED: { key: 'released', label: 'Released', note: 'Released for others to book' },
+};
+
+const NOT_BOOKED: HoldState = { key: 'none', label: 'Not booked', note: 'Not booked' };
+
+/** The resource's own booking state for this job, as the server reports it. */
+export function resourceHoldState(resource: ClassMarketplaceJobResource): HoldState {
+  return (resource.booking_status && RESOURCE_HOLD_STATES[resource.booking_status]) || NOT_BOOKED;
+}
+
+/** One state for all venue and equipment: a live hold outranks confirmed, which outranks released. */
+export function jobResourcesHoldState(job: ClassMarketplaceJob): HoldState {
+  const resources = job.resources ?? [];
+  if (resources.length === 0) {
+    return job.location_type === 'ONLINE'
+      ? { key: 'online', label: 'Online', note: 'Online — nothing to book' }
+      : { key: 'none', label: 'Nothing held', note: 'Nothing held' };
   }
+  const status = (['HOLD', 'CONFIRMED', 'RELEASED'] as const).find(candidate =>
+    resources.some(resource => resource.booking_status === candidate)
+  );
+  return status ? RESOURCE_HOLD_STATES[status] : NOT_BOOKED;
+}
+
+/** Hiring firms the instructor's time; creating the class turns it into their scheduled sessions. */
+export function instructorTimeHoldState(job: ClassMarketplaceJob, now = Date.now()): HoldState {
   switch (jobStage(job, now)) {
+    case 'open':
+      return { key: 'none', label: 'Not held yet', note: 'Held once you hire' };
+    case 'awaiting_class':
+      return { key: 'held', label: 'On hold', note: 'Held for the hired instructor' };
     case 'class_created':
-      return { key: 'confirmed', label: 'Confirmed', note: 'Confirmed for the class' };
-    case 'closed':
-      return { key: 'released', label: 'Holds released', note: 'Holds released' };
+      return CONFIRMED_HOLD;
     default:
-      return { key: 'held', label: 'On hold', note: 'On hold for these sessions' };
+      return { key: 'released', label: 'Released', note: 'Released' };
   }
 }
 

@@ -35,12 +35,13 @@ import { jobHref, postJobHref } from '../lib/job-routes';
 import {
   deliveryLabel,
   hiredInstructorUuid,
-  holdStateFor,
   type JobStage,
+  jobResourcesHoldState,
   jobSessionWindows,
   jobStage,
   jobTown,
   nextStepCta,
+  resourceHoldState,
   serviceLabel,
   sessionCountLabel,
 } from '../lib/job-stage';
@@ -290,7 +291,7 @@ function JobRow({
   instructorMap: Record<string, Instructor>;
 }) {
   const stage = jobStage(job, now);
-  const hold = holdStateFor(job, now);
+  const resourcesHold = jobResourcesHoldState(job);
   const windows = useMemo(() => jobSessionWindows(job), [job]);
   const first = windows[0];
   const cta = nextStepCta(job, now);
@@ -365,16 +366,17 @@ function JobRow({
       <div className='min-w-0'>
         <CellLabel>Venue &amp; equipment</CellLabel>
         <div className='flex flex-col items-start gap-1'>
-          {(job.resources ?? []).map(resource => (
-            <HoldBadge
-              key={resource.resource_uuid}
-              hold={hold}
-              label={resource.resource_name || 'Held resource'}
-            />
-          ))}
-          <span className='text-muted-foreground text-xs'>
-            {job.resources?.length || hold.key === 'online' ? hold.note : 'Nothing held'}
-          </span>
+          {(job.resources ?? []).map(resource => {
+            const hold = resourceHoldState(resource);
+            return (
+              <HoldBadge
+                key={resource.resource_uuid}
+                hold={hold}
+                label={`${resource.resource_name || 'Resource'} · ${hold.label}`}
+              />
+            );
+          })}
+          <span className='text-muted-foreground text-xs'>{resourcesHold.note}</span>
         </div>
       </div>
 
