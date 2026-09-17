@@ -15,6 +15,7 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog';
 import { Label } from '@/components/ui/label';
+import { formatRate, formatRateAmount } from '@/lib/rate-card';
 import type { BookingRecord, SearchInstructor } from '../types';
 import { getStatusColor } from './manage-bookings';
 
@@ -138,10 +139,16 @@ export const BookingDetailsModal: React.FC<BookingDetailsModalProps> = ({
                   {booking.payment_session_id}
                 </Badge>
               </div>
+              {booking.rate_basis ? (
+                <div className='flex justify-between text-sm'>
+                  <span className='text-muted-foreground'>Rate</span>
+                  <span>{formatRate(booking.unit_rate, booking.rate_basis, booking.currency)}</span>
+                </div>
+              ) : null}
               <div className='flex items-center justify-between'>
                 <span className='font-medium'>Total Amount</span>
                 <span className='text-xl font-semibold'>
-                  {booking.currency} {booking.price_amount}
+                  {formatRateAmount(booking.price_amount, booking.currency)}
                 </span>
               </div>
             </div>

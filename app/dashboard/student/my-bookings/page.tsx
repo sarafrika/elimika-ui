@@ -24,6 +24,7 @@ import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useBreadcrumb } from '@/context/breadcrumb-provider';
 import { useStudent } from '@/context/student-context';
 import { useCoursesByIds, useInstructorsByIds } from '@/hooks/use-batched-lookups';
+import { formatRate } from '@/lib/rate-card';
 import { cn } from '@/lib/utils';
 import {
   getStudentBookingsOptions,
@@ -327,6 +328,11 @@ function StudentBookingPage() {
                     <span className='font-medium text-foreground'>
                       {formatMoney(booking.price_amount, booking.currency ?? 'KES')}
                     </span>
+                    {booking.rate_basis ? (
+                      <span>
+                        at {formatRate(booking.unit_rate, booking.rate_basis, booking.currency)}
+                      </span>
+                    ) : null}
                   </div>
                 </button>
               );
@@ -451,6 +457,12 @@ function BookingDetailPanel({
           <Row label='Session' value={formatDate(booking.start_time)} />
           <Row label='Time' value={formatTimeRange(booking.start_time, booking.end_time)} />
           <Row label='Amount' value={formatMoney(booking.price_amount, booking.currency ?? 'KES')} />
+          {booking.rate_basis ? (
+            <Row
+              label='Rate'
+              value={formatRate(booking.unit_rate, booking.rate_basis, booking.currency)}
+            />
+          ) : null}
         </div>
 
         {booking.purpose?.trim() ? (
@@ -494,7 +506,10 @@ function BookingDetailPanel({
 
           {isPaid ? (
             <p className='flex items-center gap-2 rounded-lg bg-success/10 px-3 py-2 text-xs text-success'>
-              <CheckCircle2 className='h-4 w-4' /> Paid — your session is confirmed.
+              <CheckCircle2 className='h-4 w-4' />
+              {booking.price_amount === 0 && booking.rate_basis === 'per_day'
+                ? 'No payment needed — the day rate is charged on your first session that day.'
+                : 'Paid — your session is confirmed.'}
             </p>
           ) : (
             <Button className='w-full' disabled={!canPay || paying} onClick={onPay}>
