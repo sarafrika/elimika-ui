@@ -91,6 +91,7 @@ const workflowQueryIds = {
     'getStudentCertificates',
     'getStudentDashboard',
     'getEnrollmentsForClass',
+    'listInstructorStudents',
     'getClassDefinition',
     'getClassDefinitionsForCourse',
     'getClassDefinitionsForProgram',
