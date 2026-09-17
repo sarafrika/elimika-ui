@@ -79,6 +79,7 @@ const workflowQueryIds = {
     'getClassDefinitionsForInstructor',
     'getClassDefinitionsForOrganisation',
     'getJobEligibility',
+    'getJobsEligibility',
   ],
   enrollment: [
     'getEnrollmentOverviewForStudent',
@@ -110,6 +111,9 @@ const workflowQueryIds = {
   jobApplication: [
     'getJob',
     'listJobs',
+    'getJobsEligibility',
+    'getJobApplication',
+    'listJobApplicationEvents',
     'listJobApplications',
     'listMyApplications',
     'listInstructorApplications',
@@ -267,6 +271,7 @@ export async function invalidateTrainingApplicationWorkflowQueries(queryClient: 
 const rateUpdateJobQueryIds = [
   'getJob',
   'getJobEligibility',
+  'getJobsEligibility',
   'listJobApplications',
   'listMyApplications',
   'listInstructorApplications',
