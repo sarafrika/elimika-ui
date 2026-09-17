@@ -13,7 +13,8 @@ import { useBreadcrumb } from '@/context/breadcrumb-provider';
 import { useOrganisationsByIds } from '@/hooks/use-batched-lookups';
 import { STALE_TIMES } from '@/lib/query-client';
 import { getJobOptions } from '@/services/client/@tanstack/react-query.gen';
-import { hiredJobData, JOB_HIRES_PATH } from '../hired-jobs';
+import { findWorkHref, hiredJobsHref } from '@/src/features/instructor-jobs/job-routes';
+import { hiredJobData } from '../hired-jobs';
 import { useHiredApplications } from '../use-hired-applications';
 import { HiredJobCard } from './HiredJobCard';
 import { HiredJobListSkeleton } from './JobMarketplaceSkeletons';
@@ -26,7 +27,8 @@ export function HiredJobsPage() {
   useEffect(() => {
     replaceBreadcrumbs([
       { id: 'dashboard', title: 'Dashboard', url: '/dashboard/instructor' },
-      { id: 'job-hires', title: 'Hired Jobs', url: JOB_HIRES_PATH, isLast: true },
+      { id: 'jobs', title: 'Jobs', url: findWorkHref() },
+      { id: 'hired', title: 'Hired', url: hiredJobsHref(), isLast: true },
     ]);
   }, [replaceBreadcrumbs]);
 

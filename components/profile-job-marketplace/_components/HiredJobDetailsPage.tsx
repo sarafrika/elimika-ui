@@ -29,7 +29,8 @@ import {
   getJobOptions,
 } from '@/services/client/@tanstack/react-query.gen';
 import { useUserProfile } from '@/src/features/profile/context/profile-context';
-import { hiredJobData, isHiredApplication, JOB_HIRES_PATH, jobLabel, jobPay } from '../hired-jobs';
+import { findWorkHref, hiredJobHref, hiredJobsHref } from '@/src/features/instructor-jobs/job-routes';
+import { hiredJobData, isHiredApplication, jobLabel, jobPay } from '../hired-jobs';
 import { jobPlaceLabel } from '../job-place';
 import { HiredClassSchedule, PlannedJobSchedule } from './HiredJobSchedule';
 import { JobListSkeleton } from './JobMarketplaceSkeletons';
@@ -54,11 +55,12 @@ export function HiredJobDetailsPage({ jobUuid }: { jobUuid: string }) {
   useEffect(() => {
     replaceBreadcrumbs([
       { id: 'dashboard', title: 'Dashboard', url: '/dashboard/instructor' },
-      { id: 'job-hires', title: 'Hired Jobs', url: JOB_HIRES_PATH },
+      { id: 'jobs', title: 'Jobs', url: findWorkHref() },
+      { id: 'hired', title: 'Hired', url: hiredJobsHref() },
       {
         id: 'hired-job',
         title: job.data?.title ?? 'Job details',
-        url: `${JOB_HIRES_PATH}/${jobUuid}`,
+        url: hiredJobHref(jobUuid),
         isLast: true,
       },
     ]);
@@ -68,9 +70,9 @@ export function HiredJobDetailsPage({ jobUuid }: { jobUuid: string }) {
     <div className={adminTheme.page}>
       <div className={adminTheme.pageStack}>
         <Button variant='ghost' className='w-fit' asChild>
-          <Link href={JOB_HIRES_PATH}>
+          <Link href={hiredJobsHref()}>
             <ArrowLeft className='size-4' />
-            Back to Hired Jobs
+            Back to hired jobs
           </Link>
         </Button>
         <AdminPageHeader

@@ -3,8 +3,6 @@ import type { ClassMarketplaceJob, ClassRecurrence } from '@/services/client';
 import { formatDateOnly } from '@/lib/date';
 import { isClassCreatedStatus } from './application-status';
 
-export const JOB_HIRES_PATH = '/dashboard/instructor/job-hires';
-
 export function isHiredApplication(status?: string | null) {
   return status?.toLowerCase() === 'hired' || isClassCreatedStatus(status);
 }

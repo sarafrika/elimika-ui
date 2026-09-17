@@ -7,7 +7,6 @@ import {
   BookAIcon,
   BookOpen,
   Briefcase,
-  BriefcaseBusiness,
   Building2,
   Calendar,
   CalendarClock,
@@ -322,11 +321,6 @@ export default {
           title: 'Jobs',
           url: '/dashboard/opportunities',
           icon: Handshake,
-        },
-        {
-          title: 'Hired Jobs',
-          url: '/dashboard/job-hires',
-          icon: BriefcaseBusiness,
         },
         {
           title: 'Booking Requests',

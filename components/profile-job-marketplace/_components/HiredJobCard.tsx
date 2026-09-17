@@ -5,7 +5,8 @@ import { Badge } from '@/components/ui/badge';
 import { Card, CardContent } from '@/components/ui/card';
 import { formatDateTimeWithZone } from '@/lib/date';
 import type { ClassMarketplaceJob, ClassMarketplaceJobApplication } from '@/services/client';
-import { JOB_HIRES_PATH, jobLabel, jobPay } from '../hired-jobs';
+import { hiredJobHref } from '@/src/features/instructor-jobs/job-routes';
+import { jobLabel, jobPay } from '../hired-jobs';
 import { jobPlaceLabel } from '../job-place';
 
 export function HiredJobCard({
@@ -19,7 +20,7 @@ export function HiredJobCard({
 }) {
   return (
     <Link
-      href={`${JOB_HIRES_PATH}/${application.job_uuid}`}
+      href={hiredJobHref(application.job_uuid ?? '')}
       className='group focus-visible:ring-ring block h-full rounded-xl outline-none focus-visible:ring-2 focus-visible:ring-offset-2'
     >
       <Card className='group-hover:border-primary/50 h-full transition-colors'>

@@ -1,4 +1,4 @@
-import { dashboardUrl } from '@/src/features/dashboard/lib/dashboard-url';
+import { hiredJobHref, myApplicationsHref } from '@/src/features/instructor-jobs/job-routes';
 
 /** Time an instructor was hired for while the job's class does not exist yet. Blocks booking. */
 export const JOB_HOLD_ENTRY = 'JOB_HOLD';
@@ -30,8 +30,8 @@ export function jobTimeTitle(kind: JobTimeKind, title?: string | null) {
 }
 
 export function jobTimeHref(kind: JobTimeKind, jobUuid?: string | null) {
-  if (kind === 'hold' && jobUuid) return dashboardUrl('instructor', `job-hires/${jobUuid}`);
-  return dashboardUrl('instructor', 'opportunities/my-applications');
+  if (kind === 'hold' && jobUuid) return hiredJobHref(jobUuid);
+  return myApplicationsHref();
 }
 
 type TimeWindow = { start: Date | number | string; end: Date | number | string };
