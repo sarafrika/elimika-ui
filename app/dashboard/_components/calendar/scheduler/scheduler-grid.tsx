@@ -1,9 +1,17 @@
+import { JOB_TIME_STYLES } from '@/components/instructor/job-time';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/tiptap-ui-primitive/popover';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
 import { dayjs, formatTime, resolveDisplayZone } from '@/lib/date';
+import {
+  findOverlappingWindow,
+  JOB_HOLD_BLOCK_REASON,
+  type JobTimeKind,
+  jobTimeHref,
+} from '@/lib/instructor-job-time';
 import { cn } from '@/lib/utils';
-import { Building2, CalendarDays, MapPin, Plus, Video, X } from 'lucide-react';
+import { Building2, CalendarDays, Lock, MapPin, Plus, Video, X } from 'lucide-react';
+import Link from 'next/link';
 import {
   useEffect,
   useLayoutEffect,
@@ -12,6 +20,7 @@ import {
   useState,
   type ReactElement,
 } from 'react';
+import { toast } from 'sonner';
 import { useUserDomain } from '../../../../../context/user-domain-context';
 import { CreateClassDialog } from '../create-class-dialog';
 import { categoryStyles, defaultWorkingHours, schedulerHours } from './data';
@@ -358,7 +367,28 @@ function isCancelledStatus(status?: string) {
   return Boolean(status?.toLowerCase().includes('cancel'));
 }
 
+function jobTimeKindOf(event: SchedulerEvent): JobTimeKind | null {
+  if (event.eventType === 'job_hold') return 'hold';
+  if (event.eventType === 'job_application') return 'application';
+  return null;
+}
+
+/** A hired job holds this time, so the slot cannot take a new class or block. */
+function refuseHeldSlot(events: SchedulerEvent[], slot: EmptySlot) {
+  const holds = events
+    .filter(event => event.eventType === 'job_hold')
+    .map(event => ({ start: event.startTime, end: event.endTime }));
+  if (!findOverlappingWindow(holds, { start: slot.startTime, end: slot.endTime })) return false;
+  toast.error(JOB_HOLD_BLOCK_REASON);
+  return true;
+}
+
 function getEventStyles(event: SchedulerEvent) {
+  const jobKind = jobTimeKindOf(event);
+  if (jobKind) {
+    return JOB_TIME_STYLES[jobKind];
+  }
+
   if (isCancelledStatus(event.status)) {
     return 'border-destructive/70 bg-destructive text-destructive-foreground';
   }
@@ -424,7 +454,7 @@ function EventBlock({ event }: { event: SchedulerEvent }) {
       <p className='truncate text-[9px] font-semibold sm:text-[10px] lg:text-xs'>{event.title}</p>
 
       <p className='hidden truncate text-[9px] opacity-80 sm:block lg:text-[11px]'>
-        {event.instructor}
+        {jobTimeKindOf(event) ? (event.organisationName ?? event.status) : event.instructor}
       </p>
 
       <p className='hidden truncate text-[9px] opacity-75 md:block lg:text-[11px]'>
@@ -494,6 +524,7 @@ function SchedulerEventDisclosure({
 }) {
   const hasOverlap = overlapEvents.length > 1;
   const joinHref = event.meetingLink?.trim() || '';
+  const jobKind = jobTimeKindOf(event);
 
   return (
     <Popover>
@@ -567,19 +598,30 @@ function SchedulerEventDisclosure({
               </div>
             ) : null}
 
-            <div className='flex items-center gap-2 text-sm'>
-              <MapPin className='text-muted-foreground h-4 w-4 shrink-0' />
-              <span className='min-w-0 truncate'>{event.location}</span>
-            </div>
+            {jobKind === 'hold' ? (
+              <div className='flex items-center gap-2 text-sm'>
+                <Lock className='text-muted-foreground h-4 w-4 shrink-0' />
+                <span className='min-w-0'>Blocks new classes and bookings until the class is created</span>
+              </div>
+            ) : null}
 
-            <div className='flex items-center gap-2 text-sm'>
-              <Video className='text-muted-foreground h-4 w-4 shrink-0' />
-              <span className='min-w-0 truncate'>
-                {event.meetingLink
-                  ? 'Meeting link available'
-                  : 'No meeting link available'}
-              </span>
-            </div>
+            {jobKind ? null : (
+              <>
+                <div className='flex items-center gap-2 text-sm'>
+                  <MapPin className='text-muted-foreground h-4 w-4 shrink-0' />
+                  <span className='min-w-0 truncate'>{event.location}</span>
+                </div>
+
+                <div className='flex items-center gap-2 text-sm'>
+                  <Video className='text-muted-foreground h-4 w-4 shrink-0' />
+                  <span className='min-w-0 truncate'>
+                    {event.meetingLink
+                      ? 'Meeting link available'
+                      : 'No meeting link available'}
+                  </span>
+                </div>
+              </>
+            )}
           </div>
 
           {hasOverlap ? (
@@ -592,6 +634,14 @@ function SchedulerEventDisclosure({
           ) : null}
 
           <div className='grid gap-2'>
+            {jobKind ? (
+              <Button asChild className='w-full'>
+                <Link href={jobTimeHref(jobKind, event.jobUuid)}>
+                  {jobKind === 'hold' ? 'View hired job' : 'View my applications'}
+                </Link>
+              </Button>
+            ) : null}
+
             {joinHref ? (
               <Button asChild className='w-full'>
                 <a
@@ -710,6 +760,7 @@ function DayGrid({
     // handler navigates away (e.g. router.push to a "new class" page), it
     // unmounts this component before the dialog ever gets a chance to open.
     if (canCreateClass) {
+      if (refuseHeldSlot(dayEvents, slot)) return;
       setCreateSlot(slot);
       return;
     }
@@ -951,6 +1002,10 @@ function WeekGrid({
 
   function handleSlotClick(slot: EmptySlot) {
     if (canCreateClass) {
+      if (refuseHeldSlot(visibleEvents, slot)) {
+        setSelectedSlot(null);
+        return;
+      }
       setSelectedSlot(prev => {
         if (
           prev?.startTime.getTime() === slot.startTime.getTime() &&

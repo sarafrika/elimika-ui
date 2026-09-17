@@ -1,4 +1,6 @@
 import { type ApiDateInput, dayjs, parseApiDate, resolveDisplayZone } from '@/lib/date';
+import type { JobTimeDetail } from '@/components/instructor/job-time';
+import { JOB_HOLD_ENTRY, jobTimeKind, jobTimeTitle } from '@/lib/instructor-job-time';
 import type {
   EntryTypeEnum2 as EntryTypeEnum,
   ScheduledInstance,
@@ -29,6 +31,8 @@ export type CalendarEvent = {
   is_available?: boolean;
   /** Organisation that engaged the instructor for this session, when the class is org-owned. */
   organisation?: string;
+  /** Marketplace job behind a JOB_HOLD or JOB_APPLICATION entry. */
+  jobUuid?: string;
 };
 
 export type AvailabilityData = {
@@ -57,6 +61,7 @@ export type ClassScheduleItem = {
   is_available?: boolean;
   organisation_uuid?: string | null;
   organisation_name?: string | null;
+  job_uuid?: string | null;
 };
 
 export type AvailabilityClassData = {
@@ -160,10 +165,11 @@ export function convertToCalendarEvents(classes: ClassScheduleItem[]): CalendarE
     const defaultEventColor = 'hsl(var(--muted-foreground))';
 
     const statusKey = String(item.status ?? '').toUpperCase();
+    const jobKind = jobTimeKind(item.entry_type);
 
     return {
       id: item.uuid,
-      title: item.title || '',
+      title: jobKind ? jobTimeTitle(jobKind, item.title) : item.title || '',
       ...instants,
       entry_type: item.entry_type,
       is_available: item.is_available,
@@ -176,6 +182,51 @@ export function convertToCalendarEvents(classes: ClassScheduleItem[]): CalendarE
       reminders: [15],
       notes: item.cancellation_reason || '',
       organisation: item.organisation_name || undefined,
+      jobUuid: item.job_uuid || undefined,
     };
   });
+}
+
+/** Held or applied-for job time as read-only details; null for every other calendar item. */
+export function jobTimeDetailOf(event: CalendarEvent): JobTimeDetail | null {
+  const kind = jobTimeKind(event.entry_type);
+  if (!kind) return null;
+  return {
+    kind,
+    title: event.title,
+    start: event.startDateTime,
+    end: event.endDateTime,
+    organisationName: event.organisation,
+    jobUuid: event.jobUuid,
+    timeZone: event.timeZone,
+  };
+}
+
+export function jobHoldWindows(events: CalendarEvent[]) {
+  return events
+    .filter(event => event.entry_type === JOB_HOLD_ENTRY)
+    .map(event => ({ start: event.startDateTime, end: event.endDateTime }));
+}
+
+/** The first job-time entry covering an hour slot on a day, holds ahead of applications. */
+export function jobTimeForSlot(events: CalendarEvent[], time: string, date: Date) {
+  const covering = events.filter(event => {
+    if (!jobTimeKind(event.entry_type) || !event.date) return false;
+    if (new Date(event.date).toDateString() !== date.toDateString()) return false;
+    const slotHour = time.slice(0, 2);
+    return event.startTime.slice(0, 2) <= slotHour && slotHour < endHourCeiling(event.endTime);
+  });
+  return covering.find(event => event.entry_type === JOB_HOLD_ENTRY) ?? covering[0] ?? null;
+}
+
+/** "10:30" still occupies the 10:00 slot, so a partial hour rounds up. */
+function endHourCeiling(endTime: string) {
+  const [hours = '00', minutes = '00'] = endTime.split(':');
+  const ceiling = Number(minutes) > 0 ? Number(hours) + 1 : Number(hours);
+  return String(ceiling).padStart(2, '0');
+}
+
+export function jobTimeRowSpan(event: CalendarEvent) {
+  const startHour = Number(event.startTime.slice(0, 2));
+  return Math.max(1, Number(endHourCeiling(event.endTime)) - startHour);
 }

@@ -412,6 +412,16 @@
   }
 }
 
+/* Hatched warning fill for instructor time a hired job is holding. */
+@utility bg-job-hold {
+  background-color: color-mix(in oklch, var(--warning) 8%, var(--card));
+  background-image: repeating-linear-gradient(
+    135deg,
+    color-mix(in oklch, var(--warning) 30%, transparent) 0 2px,
+    transparent 2px 8px
+  );
+}
+
 html {
   scroll-behavior: smooth;
 }

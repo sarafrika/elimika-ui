@@ -26,6 +26,11 @@ import { Textarea } from '@/components/ui/textarea';
 import { useInstructor } from '@/context/instructor-context';
 import { dayjs } from '@/lib/date';
 import {
+  findOverlappingWindow,
+  INSTRUCTOR_UNAVAILABLE_REASON,
+  JOB_HOLD_BLOCK_REASON,
+} from '@/lib/instructor-job-time';
+import {
   blockInstructorTimeMutation,
   createBookingMutation,
   getClassDefinitionsForInstructorQueryKey,
@@ -42,6 +47,7 @@ import {
   Clock,
   Coffee,
   Info,
+  Lock,
   MapPin,
   Repeat,
   Trash2,
@@ -87,6 +93,8 @@ interface EventModalProps {
   onSave: (event: CalendarEvent) => void;
   onDelete?: (eventId: string) => void;
   studentBookingData?: StudentBookingData;
+  /** Windows a hired job holds; availability and bookings may not overlap them. */
+  jobHolds?: Array<{ start: string | Date; end: string | Date }>;
 }
 
 interface DateTimeItem {
@@ -291,6 +299,7 @@ export function EventModal({
   onSave,
   onDelete,
   studentBookingData,
+  jobHolds = [],
 }: EventModalProps) {
   const [formData, setFormData] = useState<FormState>(baseFormState());
   const [blockDates, setBlockDates] = useState<DateTimeItem[]>([]);
@@ -384,6 +393,33 @@ export function EventModal({
 
     return buildRecurringOccurrences(bookingStart, bookingEnd, repeatUntil, selectedWeekdays);
   }, [bookingEnd, bookingStart, repeatUntil, repeatWeekly, selectedWeekdays]);
+
+  // Blocking time over a hold is harmless; offering it as availability or booking it is not.
+  const heldClashReason = useMemo(() => {
+    if (jobHolds.length === 0) return null;
+    const reason = isStudentBookingFlow ? INSTRUCTOR_UNAVAILABLE_REASON : JOB_HOLD_BLOCK_REASON;
+    if (formData.entry_type === 'BOOKING') {
+      return bookingOccurrences.some(occurrence => findOverlappingWindow(jobHolds, occurrence))
+        ? reason
+        : null;
+    }
+    if (formData.entry_type !== 'AVAILABILITY' || !formData.startDateTime || !formData.endDateTime) {
+      return null;
+    }
+    const zone = calendarDisplayZone();
+    const window = {
+      start: dayjs.tz(formData.startDateTime, zone).toDate(),
+      end: dayjs.tz(formData.endDateTime, zone).toDate(),
+    };
+    return findOverlappingWindow(jobHolds, window) ? reason : null;
+  }, [
+    bookingOccurrences,
+    formData.endDateTime,
+    formData.entry_type,
+    formData.startDateTime,
+    isStudentBookingFlow,
+    jobHolds,
+  ]);
 
   const totalBookingPrice = useMemo(
     () => computedPrice * Math.max(bookingOccurrences.length, 1),
@@ -794,6 +830,11 @@ export function EventModal({
   };
 
   const handleSave = async () => {
+    if (heldClashReason) {
+      toast.error(heldClashReason);
+      return;
+    }
+
     if (selectedEventType.value === 'BOOKING') {
       await handleBookingSubmit();
       return;
@@ -846,6 +887,15 @@ export function EventModal({
 
         <div className='flex-1 overflow-y-auto px-6 py-6'>
           <div className='space-y-6'>
+            {heldClashReason ? (
+              <Alert className='border-warning/60 bg-job-hold'>
+                <Lock className='h-4 w-4' />
+                <AlertTitle>
+                  {isStudentBookingFlow ? 'Unavailable' : 'Held for a job you were hired for'}
+                </AlertTitle>
+                <AlertDescription>{heldClashReason}</AlertDescription>
+              </Alert>
+            ) : null}
             {!isStudentBookingFlow && (
               <Card className='gap-0 py-0'>
                 <CardHeader className='border-b px-6 py-5'>
@@ -1401,7 +1451,7 @@ export function EventModal({
             </Button>
             <Button
               onClick={() => void handleSave()}
-              disabled={isSaving || readOnlyStudentEvent}
+              disabled={isSaving || readOnlyStudentEvent || Boolean(heldClashReason)}
               className='min-w-[160px]'
             >
               {isSaving ? (

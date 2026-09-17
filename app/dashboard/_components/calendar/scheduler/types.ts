@@ -9,7 +9,9 @@ export type SchedulerEvent = {
   instanceUuid?: string;
   classDefinitionUuid?: string;
   /** `resource_reservation` covers both recruitment holds and confirmed resource bookings. */
-  eventType?: 'class' | 'booking_request' | 'resource_reservation';
+  eventType?: 'class' | 'booking_request' | 'resource_reservation' | 'job_hold' | 'job_application';
+  /** The marketplace job behind a `job_hold` or `job_application` entry. */
+  jobUuid?: string;
   title: string;
   course: string;
   instructor: string;

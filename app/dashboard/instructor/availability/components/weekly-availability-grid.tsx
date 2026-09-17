@@ -1,16 +1,35 @@
 // @ts-nocheck -- pre-existing @hey-api generated-client type drift (see memory: elimika-ui-typecheck)
 'use client';
 
+import {
+  JOB_TIME_STYLES,
+  type JobTimeDetail,
+  JobTimeDetailsDialog,
+} from '@/components/instructor/job-time';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { dayjs } from '@/lib/date';
-import { ChevronLeft, ChevronRight, Clock, Edit2, Plus } from 'lucide-react';
+import {
+  INSTRUCTOR_UNAVAILABLE_REASON,
+  JOB_TIME_LABELS,
+  jobTimeKind,
+  UNAVAILABLE_LABEL,
+} from '@/lib/instructor-job-time';
+import { ChevronLeft, ChevronRight, Clock, Edit2, Lock, Plus } from 'lucide-react';
 import { useState } from 'react';
+import { toast } from 'sonner';
 import type { ClassData } from '../../trainings/create-new/academic-period-form';
 import { EventModal, EventType, StudentBookingData } from './event-modal';
-import type { AvailabilityData, CalendarEvent } from './types';
+import {
+  type AvailabilityData,
+  type CalendarEvent,
+  jobHoldWindows,
+  jobTimeDetailOf,
+  jobTimeForSlot,
+  jobTimeRowSpan,
+} from './types';
 
 interface WeeklyAvailabilityGridProps {
   availabilityData: AvailabilityData;
@@ -32,6 +51,10 @@ export const mapEventTypeToStatus = (entry_type: EventType) => {
       return 'unavailable';
     case 'SCHEDULED_INSTANCE':
       return 'booked';
+    case 'JOB_HOLD':
+      return 'on hold';
+    case 'JOB_APPLICATION':
+      return 'applied';
     default:
       return null;
   }
@@ -69,6 +92,17 @@ export function WeeklyAvailabilityGrid({
     time: string;
     date: Date;
   } | null>(null);
+  const [jobTimeDetail, setJobTimeDetail] = useState<JobTimeDetail | null>(null);
+  const isStudentView = Boolean(studentBookingData);
+
+  // Learners only ever see a hold as unavailability; the instructor gets its read-only details.
+  const openJobTime = (event: CalendarEvent) => {
+    if (isStudentView) {
+      toast.error(INSTRUCTOR_UNAVAILABLE_REASON);
+      return;
+    }
+    setJobTimeDetail(jobTimeDetailOf(event));
+  };
 
   const days = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
   const timeSlots = generateTimeSlots();
@@ -236,6 +270,14 @@ export function WeeklyAvailabilityGrid({
   };
 
   const handleSlotClick = (day: string, time: string, date: Date) => {
+    const jobTime = getEventForSlot(day, time, date)
+      ? null
+      : jobTimeForSlot(availabilityData.events, time, date);
+    if (jobTime?.entry_type === 'JOB_HOLD') {
+      openJobTime(jobTime);
+      return;
+    }
+
     const event =
       getEventForSlot(day, time, date) ||
       getAvailabilityForSlot(day, time) ||
@@ -418,6 +460,12 @@ export function WeeklyAvailabilityGrid({
                 const isAvailabilityStart = isAvailabilityStartSlot(day, time);
                 const blockedSlot = getBlockedSlot(day, time, date);
                 const isBlockedStart = isBlockedStartSlot(day, time, date);
+                const jobTime = eventInSlot
+                  ? null
+                  : jobTimeForSlot(availabilityData.events, time, date);
+                const jobKind = jobTimeKind(jobTime?.entry_type);
+                const isJobTimeStart =
+                  jobTime && jobTime.startTime.slice(0, 2) === time.slice(0, 2);
 
                 return (
                   <TooltipProvider key={`${day}-${time}`}>
@@ -500,6 +548,23 @@ export function WeeklyAvailabilityGrid({
                               )}
                             </button>
                           )}
+
+                          {jobTime && jobKind && isJobTimeStart ? (
+                            <button
+                              type='button'
+                              className={`absolute inset-x-1.5 top-1.5 z-20 flex flex-col items-center justify-center overflow-hidden rounded-md border px-1 text-center text-xs ${JOB_TIME_STYLES[jobKind]}`}
+                              style={{ height: `${jobTimeRowSpan(jobTime) * 53 - 12}px` }}
+                              onClick={() => openJobTime(jobTime)}
+                            >
+                              {jobKind === 'hold' ? <Lock className='mb-0.5 h-3 w-3' /> : null}
+                              <span className='line-clamp-2 font-medium'>
+                                {isStudentView ? UNAVAILABLE_LABEL : jobTime.title}
+                              </span>
+                              <span className='text-muted-foreground'>
+                                {jobTime.startTime} - {jobTime.endTime}
+                              </span>
+                            </button>
+                          ) : null}
                         </div>
                       </TooltipTrigger>
                       <TooltipContent side='top' className='max-w-xs'>
@@ -523,6 +588,18 @@ export function WeeklyAvailabilityGrid({
                               {eventInSlot.startTime} - {eventInSlot.endTime}
                             </div>
                           )}
+                          {jobTime && jobKind ? (
+                            <div className='text-muted-foreground text-xs'>
+                              <strong className='text-foreground'>
+                                {isStudentView ? UNAVAILABLE_LABEL : JOB_TIME_LABELS[jobKind].legend}
+                                :
+                              </strong>{' '}
+                              {isStudentView ? '' : jobTime.title}
+                              {!isStudentView && jobTime.organisation
+                                ? ` · ${jobTime.organisation}`
+                                : ''}
+                            </div>
+                          ) : null}
                           <div className='text-muted-foreground text-xs'>
                             <strong className='text-foreground'>Status:</strong>{' '}
                             {status || 'Available to book'}
@@ -546,7 +623,10 @@ export function WeeklyAvailabilityGrid({
         onSave={handleSaveEvent}
         onDelete={handleDeleteEvent}
         studentBookingData={studentBookingData}
+        jobHolds={jobHoldWindows(availabilityData.events)}
       />
+
+      <JobTimeDetailsDialog detail={jobTimeDetail} onClose={() => setJobTimeDetail(null)} />
     </div>
   );
 }
