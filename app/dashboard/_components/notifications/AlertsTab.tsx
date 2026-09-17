@@ -8,6 +8,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import Spinner from '@/components/ui/spinner';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { absoluteDateTime, relativeTimeFromNow } from '@/lib/date';
+import { conflictWindowLabel, toSchedulingConflict } from '@/lib/scheduling-conflicts';
 import { cn } from '@/lib/utils';
 import type { UserDomain } from '@/lib/types';
 import {
@@ -18,48 +19,23 @@ import {
   type NotificationListParams,
   type UserNotification,
 } from '@/services/notifications';
-import {
-  Archive,
-  Award,
-  Bell,
-  CalendarClock,
-  CheckCircle2,
-  CreditCard,
-  ExternalLink,
-  FileCheck2,
-  GraduationCap,
-  Inbox,
-  MessageSquare,
-  UserPlus,
-  type LucideIcon,
-} from 'lucide-react';
+import { Archive, Bell, CalendarClock, CheckCircle2, ExternalLink, Inbox } from 'lucide-react';
 import Link from 'next/link';
 import { useState } from 'react';
 import { toast } from 'sonner';
 import { useUserDomain } from '../../../../context/user-domain-context';
-import { getNotificationUrlPath } from '../../../../src/features/dashboard/components/dashboard-notifications';
+import {
+  getNotificationUrlPath,
+  notificationIcon,
+} from '../../../../src/features/dashboard/components/dashboard-notifications';
 
 type NotificationTab = 'all' | 'unread' | 'popups' | 'archived';
 
 const notificationTabs: NotificationTab[] = ['all', 'unread', 'popups', 'archived'];
 const pageSize = 20;
 
-const iconByType: Array<[RegExp, LucideIcon]> = [
-  [/PAYMENT|RECEIPT/, CreditCard],
-  [/CERTIFICATE|ACHIEVEMENT|MILESTONE/, Award],
-  [/CLASS|DEADLINE|REMINDER|SCHEDULE/, CalendarClock],
-  [/ENROLLMENT/, GraduationCap],
-  [/APPLICATION|INVITATION|REQUEST/, UserPlus],
-  [/DOCUMENT|PROFILE/, FileCheck2],
-  [/MESSAGE/, MessageSquare],
-];
-
 function isNotificationTab(value: string): value is NotificationTab {
   return notificationTabs.includes(value as NotificationTab);
-}
-
-function getNotificationIcon(type: string) {
-  return iconByType.find(([pattern]) => pattern.test(type))?.[1] ?? Bell;
 }
 
 function getNotificationTone(notification: UserNotification) {
@@ -132,7 +108,32 @@ function metadataValue(value: unknown) {
   }
 }
 
+const HIRE_BLOCKED_TYPE = /^CLASS_MARKETPLACE_JOB_HIRE_BLOCKED_/;
+
+/** A refused hire reads as the job, who it concerns, and the sessions that clashed. */
+function hireBlockedEntries(notification: UserNotification) {
+  const metadata = notification.metadata ?? {};
+  const firstClash = toSchedulingConflict({
+    requested_start: metadata.first_clash_start,
+    requested_end: metadata.first_clash_end,
+  });
+  const reasons = Array.isArray(metadata.clash_reasons) ? metadata.clash_reasons : [];
+  const counterpart = notification.type.endsWith('_ORGANISATION')
+    ? ['Instructor', metadata.instructor_name]
+    : ['Organisation', metadata.organisation_name];
+  return [
+    ['Job', metadata.job_title],
+    counterpart,
+    ['Clashing sessions', metadata.clash_count],
+    ['First clash', firstClash ? conflictWindowLabel(firstClash) : null],
+    ['Reason', reasons.find(reason => typeof reason === 'string')],
+  ]
+    .map(([label, value]) => [String(label), metadataValue(value)] as const)
+    .filter((entry): entry is readonly [string, string] => Boolean(entry[1]));
+}
+
 function metadataEntries(notification: UserNotification) {
+  if (HIRE_BLOCKED_TYPE.test(notification.type)) return hireBlockedEntries(notification);
   return Object.entries(notification.metadata ?? {})
     .map(([key, value]) => [notificationTypeLabel(key), metadataValue(value)] as const)
     .filter((entry): entry is readonly [string, string] => Boolean(entry[1]))
@@ -333,7 +334,7 @@ export function AlertsTab() {
 
               <div className='space-y-3'>
                 {normalizedNotifications.map(notification => {
-                  const Icon = getNotificationIcon(notification.type);
+                  const Icon = notificationIcon(notification.type);
                   const unread = notification.status === 'UNREAD';
                   const details = metadataEntries(notification);
 

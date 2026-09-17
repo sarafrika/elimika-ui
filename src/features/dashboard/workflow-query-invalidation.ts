@@ -112,6 +112,7 @@ const workflowQueryIds = {
     'listBookings',
     'getCalendar',
     'getInstructorTimeHolds',
+    'getInstructorCalendar',
   ],
   review: [
     'getCourseReviews',
@@ -345,6 +346,7 @@ export function invalidateWorkflowQueriesForNotification(
     return invalidateEnrollmentWorkflowQueries(queryClient);
   }
 
+  // Includes HIRE_BLOCKED: a refused hire moves nothing, but both sides re-read applicants and holds.
   if (type.includes('CLASS_MARKETPLACE_JOB')) {
     return invalidateJobApplicationWorkflowQueries(queryClient);
   }
