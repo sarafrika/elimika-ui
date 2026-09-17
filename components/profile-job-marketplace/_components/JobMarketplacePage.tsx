@@ -98,6 +98,8 @@ import type {
 import { useUserDomain } from '@/src/features/dashboard/context/user-domain-context';
 import { roleScopedDashboardPath } from '@/src/features/dashboard/lib/active-domain-storage';
 import { invalidateJobApplicationWorkflowQueries } from '@/src/features/dashboard/workflow-query-invalidation';
+import { JobsSectionTabs } from '@/src/features/instructor-jobs/components/jobs-section-tabs';
+import { myApplicationsQueryArgs } from '@/src/features/instructor-jobs/job-queries';
 import { useOrganisation } from '@/src/features/organisation/context/organisation-context';
 import {
   createClassHref as createClassHrefFor,
@@ -1015,13 +1017,7 @@ export function JobMarketplacePage({ role }: { role: JobMarketplaceRole }) {
   const jobsLoading = isJobsLoading && !jobsResponse;
 
   const myApplicationsQuery = useQuery({
-    ...listMyApplicationsOptions({
-      query: {
-        // Every application has to be reconciled against the listings, so the default
-        // page of 20 would silently drop the "already applied" badge on older postings.
-        pageable: { page: 0, size: 200 },
-      },
-    }),
+    ...listMyApplicationsOptions(myApplicationsQueryArgs),
     // Only appliers (instructors) have applications to reconcile against listings.
     enabled: Boolean(canApply && userUuid),
   });
@@ -1343,7 +1339,7 @@ export function JobMarketplacePage({ role }: { role: JobMarketplaceRole }) {
           description={config.description}
           actions={
             <>
-              {!isOrganizationView ? (
+              {!isOrganizationView && !canApply ? (
                 <Button variant='outline' asChild>
                   <Link href={roleScopedDashboardPath(activeDomain, '/dashboard/opportunities/my-applications')}>
                     My applications
@@ -1361,6 +1357,7 @@ export function JobMarketplacePage({ role }: { role: JobMarketplaceRole }) {
             </>
           }
         />
+        {canApply ? <JobsSectionTabs /> : null}
 
         <div className='grid gap-4 sm:grid-cols-2 xl:grid-cols-4'>
           {jobsLoading

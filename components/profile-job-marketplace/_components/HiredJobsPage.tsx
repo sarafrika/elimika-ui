@@ -1,8 +1,7 @@
 'use client';
 
 import { useQueries } from '@tanstack/react-query';
-import { ArrowLeft, BriefcaseBusiness } from 'lucide-react';
-import Link from 'next/link';
+import { BriefcaseBusiness } from 'lucide-react';
 import { useEffect, useMemo, useState } from 'react';
 import { adminTheme } from '@/app/dashboard/admin/_components/ui';
 import { AsyncSection } from '@/components/data/async-section';
@@ -13,6 +12,7 @@ import { useBreadcrumb } from '@/context/breadcrumb-provider';
 import { useOrganisationsByIds } from '@/hooks/use-batched-lookups';
 import { STALE_TIMES } from '@/lib/query-client';
 import { getJobOptions } from '@/services/client/@tanstack/react-query.gen';
+import { JobsSectionTabs } from '@/src/features/instructor-jobs/components/jobs-section-tabs';
 import { findWorkHref, hiredJobsHref } from '@/src/features/instructor-jobs/job-routes';
 import { hiredJobData } from '../hired-jobs';
 import { useHiredApplications } from '../use-hired-applications';
@@ -75,12 +75,7 @@ export function HiredJobsPage() {
           title='Hired Jobs'
           description='View the jobs you have been hired for, including agreed pay, training schedules, and class details.'
         />
-        <Button variant='ghost' size='sm' asChild className='text-muted-foreground w-fit'>
-          <Link href='/dashboard/instructor/opportunities'>
-            <ArrowLeft className='size-4' />
-            Back to jobs
-          </Link>
-        </Button>
+        <JobsSectionTabs />
         <AsyncSection
           loading={loading}
           error={hires.error || jobs.error}

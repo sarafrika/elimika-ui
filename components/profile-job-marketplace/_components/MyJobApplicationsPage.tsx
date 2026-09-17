@@ -1,7 +1,7 @@
 'use client';
 
 import { useMutation, useQueries, useQuery, useQueryClient } from '@tanstack/react-query';
-import { ArrowLeft, ArrowRight, BriefcaseBusiness, CheckCircle2, Clock, Search, XCircle } from 'lucide-react';
+import { ArrowRight, BriefcaseBusiness, CheckCircle2, Clock, Search, XCircle } from 'lucide-react';
 import Link from 'next/link';
 import { useEffect, useMemo, useState } from 'react';
 import { toast } from 'sonner';
@@ -39,6 +39,8 @@ import {
 import { useUserDomain } from '@/src/features/dashboard/context/user-domain-context';
 import { roleScopedDashboardPath } from '@/src/features/dashboard/lib/active-domain-storage';
 import { invalidateJobApplicationWorkflowQueries } from '@/src/features/dashboard/workflow-query-invalidation';
+import { JobsSectionTabs } from '@/src/features/instructor-jobs/components/jobs-section-tabs';
+import { findWorkHref, myApplicationsHref } from '@/src/features/instructor-jobs/job-routes';
 import { useUserProfile } from '@/src/features/profile/context/profile-context';
 import { useBreadcrumb } from '../../../context/breadcrumb-provider';
 import { PageHeader } from '../../page-header';
@@ -83,15 +85,11 @@ export function MyJobApplicationsPage() {
   useEffect(() => {
     replaceBreadcrumbs([
       { id: 'dashboard', title: 'Dashboard', url: '/dashboard' },
-      {
-        id: 'opportunities',
-        title: 'Opportunities',
-        url: '/dashboard/opportunities',
-      },
+      { id: 'jobs', title: 'Jobs', url: findWorkHref() },
       {
         id: 'applications',
-        title: 'Applications',
-        url: '/dashboard/opportunities/my-applications',
+        title: 'My applications',
+        url: myApplicationsHref(),
         isLast: true,
       },
     ]);
@@ -244,18 +242,7 @@ export function MyJobApplicationsPage() {
           title='My Applications'
           description='Search, filter, and track every marketplace job application you have submitted.'
         />
-
-        <Button
-          variant='ghost'
-          size='sm'
-          asChild
-          className='text-muted-foreground -ml-2 self-start my-2'
-        >
-          <Link href='/dashboard/instructor/opportunities'>
-            <ArrowLeft className='size-4' />
-            Back to jobs
-          </Link>
-        </Button>
+        <JobsSectionTabs />
 
         <div className='grid gap-4 sm:grid-cols-2 xl:grid-cols-4'>
           {applicationsLoading
