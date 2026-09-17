@@ -23,21 +23,12 @@ import type {
   ClassMarketplaceJobEligibility,
 } from '@/services/client/types.gen';
 import { dashboardUrl } from '@/src/features/dashboard/lib/dashboard-url';
+import type { PendingRate, RateStanding } from '@/src/features/instructor-jobs/job-readiness';
 import { serviceLabel } from '@/src/features/organisation/jobs/lib/job-stage';
 import { useRateUpdates } from '@/src/features/rate-card/hooks';
 import type { TrainingApplicationKind } from '@/src/features/rate-card/types';
 
 type CheckState = 'pass' | 'fail' | 'pending';
-
-/** Where the instructor's rate stands against this job's format, delivery and basis. */
-export type RateStanding =
-  | { kind: 'ok'; approvedRate: number | null }
-  | { kind: 'above_pay'; approvedRate: number }
-  | { kind: 'resolving' }
-  | { kind: 'awaiting'; creatorName: string | null }
-  | { kind: 'missing' };
-
-export type PendingRate = { loading: boolean; awaiting: boolean; creatorName: string | null };
 
 const ICONS = { pass: CircleCheck, fail: CircleX, pending: Clock3 } as const;
 const ICON_TONES: Record<CheckState, string> = {
@@ -157,40 +148,6 @@ export function usePendingRateUpdate({
     awaiting,
     creatorName: (creatorUuid && courseCreatorMap[creatorUuid]?.full_name) || null,
   };
-}
-
-export function rateStandingFor(
-  eligibility: ClassMarketplaceJobEligibility,
-  pendingRate: PendingRate
-): RateStanding {
-  if (eligibility.rate_ok !== false) {
-    return { kind: 'ok', approvedRate: eligibility.approved_rate ?? null };
-  }
-  if (typeof eligibility.approved_rate === 'number') {
-    return { kind: 'above_pay', approvedRate: eligibility.approved_rate };
-  }
-  if (pendingRate.loading) return { kind: 'resolving' };
-  if (pendingRate.awaiting) return { kind: 'awaiting', creatorName: pendingRate.creatorName };
-  return { kind: 'missing' };
-}
-
-/** Whether the apply button is blocked, and the reason shown under it. */
-export function applyGate(
-  eligibility: ClassMarketplaceJobEligibility | undefined,
-  rate: RateStanding | null
-): { blocked: boolean; hint: string | null } {
-  if (!eligibility || eligibility.eligible !== false) return { blocked: false, hint: null };
-  const reason = eligibility.reason ?? 'You are not currently eligible to apply for this job.';
-  const earlierCheckFails =
-    eligibility.instructor_verified === false || eligibility.training_approved === false;
-  if (!earlierCheckFails && rate?.kind === 'awaiting') {
-    return { blocked: true, hint: "You can apply once the rate is approved. We'll let you know." };
-  }
-  if (!earlierCheckFails && rate?.kind === 'missing') {
-    return { blocked: true, hint: 'Jobs can only hire you on a basis you have an approved rate for.' };
-  }
-  if (!earlierCheckFails && rate?.kind === 'resolving') return { blocked: true, hint: null };
-  return { blocked: true, hint: reason };
 }
 
 function CheckRow({

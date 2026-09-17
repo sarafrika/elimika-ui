@@ -100,6 +100,7 @@ import { roleScopedDashboardPath } from '@/src/features/dashboard/lib/active-dom
 import { invalidateJobApplicationWorkflowQueries } from '@/src/features/dashboard/workflow-query-invalidation';
 import { JobsSectionTabs } from '@/src/features/instructor-jobs/components/jobs-section-tabs';
 import { myApplicationsQueryArgs } from '@/src/features/instructor-jobs/job-queries';
+import { applyGate, rateStandingFor } from '@/src/features/instructor-jobs/job-readiness';
 import { useOrganisation } from '@/src/features/organisation/context/organisation-context';
 import {
   createClassHref as createClassHrefFor,
@@ -117,10 +118,8 @@ import { getJobMarketplaceRoleConfig } from '../data';
 import { getEffectiveJobStatus, hasJobStarted } from '../job-expiration';
 import { jobAddress, jobHasPin } from '../job-place';
 import {
-  applyGate,
   JobEligibilityChecklist,
   jobTermsSummary,
-  rateStandingFor,
   usePendingRateUpdate,
 } from './JobEligibilityChecklist';
 import { JobCard } from './JobMarketplaceCard';
