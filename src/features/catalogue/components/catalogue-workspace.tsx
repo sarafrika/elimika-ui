@@ -38,6 +38,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { useOrganisation } from '@/context/organisation-context';
 import { useUserProfile } from '@/context/profile-context';
 import { useCoursesByIds } from '@/hooks/use-batched-lookups';
+import { publicCourseUrl } from '@/src/features/dashboard/lib/dashboard-url';
 import { extractEntity } from '@/lib/api-helpers';
 import type {
   ApiResponseListCommerceCatalogueItem,
@@ -138,11 +139,8 @@ const buildRows = (items: CommerceCatalogueItem[]): CatalogueRow[] =>
       item.class_definition_uuid ||
       `catalogue-${index}`;
 
-    const detailsHref = item.course_uuid
-      ? `/dashboard/admin/course-management/preview/${item.course_uuid}`
-      : item.class_definition_uuid
-        ? `/dashboard/admin/trainings/overview/${item.class_definition_uuid}`
-        : null;
+    // The public course page works for every scope; classes have no shared detail page yet.
+    const detailsHref = item.course_uuid ? publicCourseUrl(item.course_uuid) : null;
 
     return {
       id,

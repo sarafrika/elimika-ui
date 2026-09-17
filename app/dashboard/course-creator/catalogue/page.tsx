@@ -1,6 +1,6 @@
 'use client';
 
-import { CatalogueWorkspace } from '@/app/dashboard/admin/catalogue/_components/catalogue-workspace';
+import { CatalogueWorkspace } from '@/src/features/catalogue/components/catalogue-workspace';
 
 export default function CourseCreatorCataloguePage() {
   return (
