@@ -1,7 +1,7 @@
 'use client';
 
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { ArrowLeft, GitCompareArrows, Layers, Pencil, TriangleAlert } from 'lucide-react';
+import { ArrowLeft, GitCompareArrows, Layers, Pencil } from 'lucide-react';
 import Link from 'next/link';
 import { useMemo, useState } from 'react';
 import { toast } from 'sonner';
@@ -28,7 +28,7 @@ import { useCourseCreatorsByIds } from '@/hooks/use-batched-lookups';
 import { dayjs } from '@/lib/date';
 import { getErrorMessage } from '@/lib/error-utils';
 import { STALE_TIMES } from '@/lib/query-client';
-import { DEFAULT_CURRENCY, formatRateAmount, missingCells, offeredMethods } from '@/lib/rate-card';
+import { DEFAULT_CURRENCY, formatRateAmount, offeredMethods } from '@/lib/rate-card';
 import {
   getCourseByUuidOptions,
   getTrainingProgramByUuidOptions,
@@ -44,6 +44,7 @@ import {
   DetailSection,
   DetailSectionSkeleton,
   formatApplicationDate,
+  MissingRatesNote,
   OfferedVenuesList,
   RequirementAnswersTable,
 } from './application-sections';
@@ -269,7 +270,7 @@ export function TrainingApplicationDetails({
                   </div>
                 ) : null}
                 {status === 'approved' && !pendingUpdateUuid ? (
-                  <MissingRatesNote count={missingCells(application.rate_card).length} />
+                  <MissingRatesNote card={application.rate_card} />
                 ) : null}
                 {compare && pendingUpdate ? (
                   <RateCardGrid
@@ -421,21 +422,6 @@ function SummaryItem({ label, children }: { label: string; children: React.React
       <dt className='text-muted-foreground text-xs font-medium'>{label}</dt>
       <dd className='text-foreground mt-0.5'>{children}</dd>
     </div>
-  );
-}
-
-function MissingRatesNote({ count }: { count: number }) {
-  if (count === 0) return null;
-  return (
-    <p className='border-warning/50 bg-warning/10 text-foreground flex items-start gap-2 rounded-lg border p-3 text-sm'>
-      <TriangleAlert aria-hidden className='text-warning mt-0.5 size-4 shrink-0' />
-      <span>
-        <strong>
-          {count} {count === 1 ? 'rate' : 'rates'} missing.
-        </strong>{' '}
-        Jobs billed on a missing basis can’t hire you for that method until you add them.
-      </span>
-    </p>
   );
 }
 

@@ -8,3 +8,7 @@ export {
 } from './use-rate-update-mutations';
 export { useCreatorRateUpdates, useRateUpdates } from './use-rate-updates';
 export { useTrainingApplication } from './use-training-application';
+export {
+  type TrainingApplicationEntry,
+  useTrainingApplicationList,
+} from './use-training-application-list';

@@ -1,14 +1,15 @@
 'use client';
 
-import { Building2, MapPin, Users } from 'lucide-react';
+import { Building2, MapPin, TriangleAlert, Users } from 'lucide-react';
 import type { ReactNode } from 'react';
 
 import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
 import { dayjs } from '@/lib/date';
+import type { RateCardInput } from '@/lib/rate-card';
 import { cn } from '@/lib/utils';
 import type { TrainingApplicationVenue, TrainingRequirementAnswer } from '@/services/client';
-import { describeApplicationEvent } from '../application-display';
+import { describeApplicationEvent, describeMissingRates } from '../application-display';
 import type { TrainingApplicationEvent } from '../types';
 
 /** "16 Sep 2026, 10:12 AM"; an em dash when unknown. */
@@ -94,6 +95,31 @@ export function OfferedVenuesList({
         </li>
       ))}
     </ul>
+  );
+}
+
+/** Warns that offered methods lack some bases, which blocks jobs billed on them. */
+export function MissingRatesNote({
+  card,
+  className,
+}: {
+  card: RateCardInput | null | undefined;
+  className?: string;
+}) {
+  const missing = describeMissingRates(card);
+  if (!missing) return null;
+  return (
+    <p
+      className={cn(
+        'border-warning/50 bg-warning/10 text-foreground flex items-start gap-2 rounded-lg border p-3 text-sm',
+        className
+      )}
+    >
+      <TriangleAlert aria-hidden className='text-warning mt-0.5 size-4 shrink-0' />
+      <span>
+        <strong>{missing.title}</strong> {missing.detail}
+      </span>
+    </p>
   );
 }
 

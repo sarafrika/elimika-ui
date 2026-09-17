@@ -59,7 +59,6 @@ import {
   getVariantSpecificSummary,
   normalizeUserDomainValue,
 } from '../settings-config';
-import InstructorRateCardsPage from './instructor-rate-page';
 
 type DashboardSettingsPageProps = {
   variant: DashboardSettingsVariant;
@@ -295,10 +294,13 @@ function DashboardSettingsPageBody({ variant }: DashboardSettingsPageProps) {
     ? (requestedTab as string)
     : defaultTab;
 
-  // Branches moved to their own page; forward old `?tab=branches` links there.
+  // Branches and rate cards moved to their own pages; forward old tab links there.
   useEffect(() => {
     if (variant === 'organisation' && requestedTab === 'branches') {
       router.replace(dashboardUrl('organisation', 'branches'));
+    }
+    if (variant === 'instructor' && requestedTab === 'rate') {
+      router.replace(dashboardUrl('instructor', 'rate-card'));
     }
   }, [variant, requestedTab, router]);
 
@@ -1062,12 +1064,6 @@ function DashboardSettingsPageBody({ variant }: DashboardSettingsPageProps) {
                 </div>
               </div>
             )}
-          </TabsContent>
-
-          <TabsContent value='rate' className='mt-0'>
-            <div className=''>
-              <InstructorRateCardsPage />
-            </div>
           </TabsContent>
 
           <TabsContent value='groups' className='mt-0'>
