@@ -133,7 +133,6 @@ export function InstructorStudentsPanel({
   const isFiltered = Boolean(search || classUuid);
 
   // The unfiltered first page carries the headline totals and shares its cache entry with the roster.
-  // Rows are one per student per class, so its total counts enrolments, not distinct students.
   const overviewQuery = useQuery({
     ...listInstructorStudentsOptions({ path, query: { page: 0, size: PAGE_SIZE } }),
     enabled,
@@ -156,6 +155,7 @@ export function InstructorStudentsPanel({
 
   const overview = overviewQuery.data?.data;
   const overviewTotal = toNumber(overview?.metadata?.totalElements, overview?.content?.length ?? 0);
+  const studentCount = toNumber(overview?.student_count, 0);
   const classOptions = (overview?.class_options ?? []).filter(
     (option): option is InstructorClassOption & { class_definition_uuid: string } =>
       Boolean(option.class_definition_uuid)
@@ -200,7 +200,7 @@ export function InstructorStudentsPanel({
             variant='outline'
             className='border-primary/30 bg-primary/10 text-primary rounded-md'
           >
-            {countLabel(overviewTotal, 'enrolment', 'enrolments')} across{' '}
+            {countLabel(studentCount, 'student', 'students')} across{' '}
             {countLabel(classOptions.length, 'class', 'classes')}
           </Badge>
         ) : null}
