@@ -1,5 +1,5 @@
-import { JobMarketplacePage } from '@/components/profile-job-marketplace';
+import { FindWorkPage } from '@/src/features/instructor-jobs/find-work/find-work-page';
 
-export default function JobMarketPlacePage() {
-  return <JobMarketplacePage role='instructor' />;
+export default function InstructorFindWorkPage() {
+  return <FindWorkPage />;
 }
