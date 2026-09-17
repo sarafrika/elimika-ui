@@ -17,7 +17,9 @@ import {
   type ReminderState,
   validateRegistrationWindow,
 } from '@/components/class-form/class-form-shared';
+import { AsyncSection } from '@/components/data/async-section';
 import { SchedulingConflictAlert } from '@/components/scheduling/scheduling-conflict-alert';
+import { Skeleton } from '@/components/ui/skeleton';
 import { type DeliveryMode, formatRateBasis, rateFor } from '@/lib/rate-card';
 import { dashboardUrl } from '@/src/features/dashboard/lib/dashboard-url';
 import { parseSchedulingConflicts, type SchedulingConflict } from '@/lib/scheduling-conflicts';
@@ -751,9 +753,12 @@ const InstructorClassCreationPage = () => {
   const [perDayOccurrences, setPerDayOccurrences] = useState<Record<number, PerDayOccurrence>>({});
 
   const resolvedId = classId || savedClassUuid;
-  const { data: combinedClass, isLoading } = useClassDetails(
-    isClientReady && resolvedId ? resolvedId : undefined
-  );
+  const {
+    data: combinedClass,
+    isLoading,
+    isError: classLoadFailed,
+    refetch: refetchClass,
+  } = useClassDetails(isClientReady && resolvedId ? resolvedId : undefined);
   const classData = combinedClass?.class;
 
   const { classes: instructorClasses = [] } = useInstructorClassesWithSchedules(instructor?.uuid);
@@ -805,7 +810,7 @@ const InstructorClassCreationPage = () => {
     ]);
   };
 
-  const { data: appliedCourses } = useQuery({
+  const appliedCoursesQuery = useQuery({
     ...searchTrainingApplicationsOptions({
       query: {
         pageable: {},
@@ -814,9 +819,10 @@ const InstructorClassCreationPage = () => {
     }),
     enabled: !!instructor?.uuid,
   });
+  const appliedCourses = appliedCoursesQuery.data;
 
   const courseIds = appliedCourses?.data?.content?.map(app => app.course_uuid) ?? [];
-  const { courseMap } = useCoursesByIds(courseIds as string[]);
+  const { courseMap, isLoading: coursesLoading } = useCoursesByIds(courseIds as string[]);
 
   const approvedCourses = useMemo(() => {
     if (!appliedCourses?.data?.content || !courseMap) return [];
@@ -836,7 +842,7 @@ const InstructorClassCreationPage = () => {
       .filter(Boolean);
   }, [appliedCourses, courseMap]);
 
-  const { data: appliedPrograms } = useQuery({
+  const appliedProgramsQuery = useQuery({
     ...searchProgramTrainingApplicationsOptions({
       query: {
         pageable: {},
@@ -845,9 +851,21 @@ const InstructorClassCreationPage = () => {
     }),
     enabled: !!instructor?.uuid,
   });
+  const appliedPrograms = appliedProgramsQuery.data;
 
   const programIds = appliedPrograms?.data?.content?.map(app => app.program_uuid) ?? [];
-  const { programMap } = useProgramsByIds(programIds as string[]);
+  const { programMap, isLoading: programsLoading } = useProgramsByIds(programIds as string[]);
+  const offeringsLoading =
+    !instructor ||
+    appliedCoursesQuery.isLoading ||
+    appliedProgramsQuery.isLoading ||
+    coursesLoading ||
+    programsLoading;
+  const offeringsError = appliedCoursesQuery.error ?? appliedProgramsQuery.error;
+  const retryOfferings = () => {
+    if (appliedCoursesQuery.isError) void appliedCoursesQuery.refetch();
+    if (appliedProgramsQuery.isError) void appliedProgramsQuery.refetch();
+  };
 
   const approvedPrograms = useMemo(() => {
     if (!appliedPrograms?.data?.content || !programMap) return [];
@@ -2373,26 +2391,6 @@ const InstructorClassCreationPage = () => {
     [scheduleConflicts]
   );
 
-  if (isLoading) {
-    return (
-      <div className='bg-background/95 fixed inset-0 z-50 flex items-center justify-center backdrop-blur-sm'>
-        <div className='flex flex-col items-center gap-4 text-center'>
-          <div className='bg-primary/10 flex items-center justify-center rounded-full p-4'>
-            <Loader2 className='text-primary h-8 w-8 animate-spin' />
-          </div>
-
-          {/* Text */}
-          <div className='space-y-1'>
-            <p className='text-foreground text-base font-semibold'>Loading class details</p>
-            <p className='text-muted-foreground text-sm'>
-              Please wait while we retrieve class details...
-            </p>
-          </div>
-        </div>
-      </div>
-    );
-  }
-
   return (
     <div className='mx-auto w-full max-w-[1200px] space-y-6 px-3 py-4 sm:px-5 lg:px-6'>
       <form onSubmit={handleSubmit} className='space-y-6'>
@@ -2401,206 +2399,221 @@ const InstructorClassCreationPage = () => {
           description='For an approved offering you can deliver. The class is scheduled immediately on your calendar and can be published for learners to join.'
         />
 
-        <OfferingPicker
-          loading={!instructor}
-          offerings={instructorOfferings}
-          offering={selectedOfferingValue}
-          onOfferingChange={handleOfferingChange}
-          selectedOffering={selectedInstructorOffering}
-          categories={[]}
-          categoriesLoading={false}
-          programCategoryUuid=''
-          onProgramCategoryChange={() => undefined}
-          title={classDetails.title}
-          onTitleChange={value => setClassDetails(prev => ({ ...prev, title: value }))}
-          showInstructor={false}
-          showCategory={false}
-          titleLabel='Class title'
-          titleHint='This is the title learners will see on the class.'
-          titlePlaceholder='Enter a class title'
-        />
-
-        <DeliveryCards value={deliveryMode} onChange={handleDeliveryChange} />
-
-        {selectedInstructorOffering && deliveryMode ? (
-          <>
-            <BillingBasisCards
-              value={rateBasis}
-              onChange={handleBasisChange}
-              hint='Learners are charged, and you are paid, per unit of this basis.'
-              statusFor={basis => basisStatus(rateCard, proposedRateCard, deliveryMode, basis)}
-              renderAddAction={basis => (
-                <Button asChild size='sm' variant='outline'>
-                  <Link href={addRatesHref(basis.value)}>
-                    <Plus aria-hidden />
-                    Add {basis.phrase} rates
-                  </Link>
-                </Button>
-              )}
+        {/* Editing hydrates every field below from the class record, so they wait on it. */}
+        <AsyncSection
+          loading={isLoading}
+          error={classLoadFailed}
+          errorTitle='Couldn’t load this class'
+          onRetry={() => void refetchClass()}
+          skeleton={<ClassFormSkeleton />}
+        >
+          <AsyncSection
+            error={offeringsError}
+            errorTitle='Couldn’t load your approved offerings'
+            onRetry={retryOfferings}
+          >
+            <OfferingPicker
+              loading={offeringsLoading}
+              offerings={instructorOfferings}
+              offering={selectedOfferingValue}
+              onOfferingChange={handleOfferingChange}
+              selectedOffering={selectedInstructorOffering}
+              categories={[]}
+              categoriesLoading={false}
+              programCategoryUuid=''
+              onProgramCategoryChange={() => undefined}
+              title={classDetails.title}
+              onTitleChange={value => setClassDetails(prev => ({ ...prev, title: value }))}
+              showInstructor={false}
+              showCategory={false}
+              titleLabel='Class title'
+              titleHint='This is the title learners will see on the class.'
+              titlePlaceholder='Enter a class title'
             />
+          </AsyncSection>
 
-            <ServiceCards
-              value={service}
-              onChange={handleServiceChange}
-              rateCard={rateCard as ApprovedRateCard | undefined}
-              delivery={deliveryMode}
+          <DeliveryCards value={deliveryMode} onChange={handleDeliveryChange} />
+
+          {selectedInstructorOffering && deliveryMode ? (
+            <>
+              <BillingBasisCards
+                value={rateBasis}
+                onChange={handleBasisChange}
+                hint='Learners are charged, and you are paid, per unit of this basis.'
+                statusFor={basis => basisStatus(rateCard, proposedRateCard, deliveryMode, basis)}
+                renderAddAction={basis => (
+                  <Button asChild size='sm' variant='outline'>
+                    <Link href={addRatesHref(basis.value)}>
+                      <Plus aria-hidden />
+                      Add {basis.phrase} rates
+                    </Link>
+                  </Button>
+                )}
+              />
+
+              <ServiceCards
+                value={service}
+                onChange={handleServiceChange}
+                rateCard={rateCard as ApprovedRateCard | undefined}
+                delivery={deliveryMode}
+                basis={rateBasis}
+              />
+            </>
+          ) : (
+            <div className='border-border bg-muted/30 text-muted-foreground rounded-md border border-dashed px-4 py-5 text-center text-sm'>
+              Pick the course or program and how it is delivered to see your approved rates.
+            </div>
+          )}
+
+          {rateBasis && service ? (
+            <PricingCapacity
               basis={rateBasis}
+              approvedRate={approvedRate}
+              currency={rateCard?.currency}
+              salePrice={salePrice}
+              onSalePriceChange={setSalePrice}
+              instructorPay={instructorPay}
+              onInstructorPayChange={setInstructorPay}
+              maxParticipants={String(classDetails.class_limit || '')}
+              onMaxChange={value =>
+                setClassDetails(prev => ({ ...prev, class_limit: Number(value) || 0 }))
+              }
+              allowWaitlist={allowWaitlist}
+              onAllowWaitlistChange={setAllowWaitlist}
+              totals={{
+                sessions: sessionsForConflictCheck.length,
+                minutes: totalHours * 60,
+                days: totalDays,
+              }}
+              payHint='What you are paid. It can’t be below your approved rate or above the sale price.'
+              payAtLeastRate
             />
-          </>
-        ) : (
-          <div className='border-border bg-muted/30 text-muted-foreground rounded-md border border-dashed px-4 py-5 text-center text-sm'>
-            Pick the course or program and how it is delivered to see your approved rates.
-          </div>
-        )}
+          ) : null}
 
-        {rateBasis && service ? (
-          <PricingCapacity
-            basis={rateBasis}
-            approvedRate={approvedRate}
-            currency={rateCard?.currency}
-            salePrice={salePrice}
-            onSalePriceChange={setSalePrice}
-            instructorPay={instructorPay}
-            onInstructorPayChange={setInstructorPay}
-            maxParticipants={String(classDetails.class_limit || '')}
-            onMaxChange={value =>
-              setClassDetails(prev => ({ ...prev, class_limit: Number(value) || 0 }))
+          <LocationVenue
+            delivery={deliveryMode}
+            meetingLink={classDetails.meeting_link}
+            onMeetingLinkChange={value =>
+              setClassDetails(prev => ({ ...prev, meeting_link: value }))
             }
-            allowWaitlist={allowWaitlist}
-            onAllowWaitlistChange={setAllowWaitlist}
-            totals={{
-              sessions: sessionsForConflictCheck.length,
-              minutes: totalHours * 60,
-              days: totalDays,
-            }}
-            payHint='What you are paid. It can’t be below your approved rate or above the sale price.'
-            payAtLeastRate
+            locationName={classDetails.location_name}
+            onLocationNameChange={value =>
+              setClassDetails(prev => ({ ...prev, location_name: value }))
+            }
+            locationLatitude={locationLatitude}
+            onLocationLatitudeChange={setLocationLatitude}
+            locationLongitude={locationLongitude}
+            onLocationLongitudeChange={setLocationLongitude}
           />
-        ) : null}
 
-        <LocationVenue
-          delivery={deliveryMode}
-          meetingLink={classDetails.meeting_link}
-          onMeetingLinkChange={value =>
-            setClassDetails(prev => ({ ...prev, meeting_link: value }))
-          }
-          locationName={classDetails.location_name}
-          onLocationNameChange={value =>
-            setClassDetails(prev => ({ ...prev, location_name: value }))
-          }
-          locationLatitude={locationLatitude}
-          onLocationLatitudeChange={setLocationLatitude}
-          locationLongitude={locationLongitude}
-          onLocationLongitudeChange={setLocationLongitude}
-        />
-
-        <ScheduleModeCards
-          value={scheduleMode}
-          onChange={value =>
-            setSchedulePreset(
-              value === 'pick' ? 'pick-dates' : value === 'academic' ? 'academic-period' : 'standard'
-            )
-          }
-        />
-
-        {scheduleMode === 'pick' ? (
-          <PickDatesPanel
-            pickedDates={sharedPickedDates}
-            onPickedDatesChange={updatePickedDates}
-            sortedPickedDates={sortedSharedPickedDates}
-            pickMonth={pickMonth}
-            onPickMonthChange={setPickMonth}
-            sessionStart={sharedSessionStart}
-            onSessionStartChange={value => updatePickedSessionTime('startTime', value)}
-            sessionEnd={sharedSessionEnd}
-            onSessionEndChange={value => updatePickedSessionTime('endTime', value)}
-            timezone={scheduleSettings.timezone}
-            onTimezoneChange={handleScheduleTimeZoneChange}
+          <ScheduleModeCards
+            value={scheduleMode}
+            onChange={value =>
+              setSchedulePreset(
+                value === 'pick' ? 'pick-dates' : value === 'academic' ? 'academic-period' : 'standard'
+              )
+            }
           />
-        ) : scheduleMode === 'academic' ? (
-          <AcademicPeriodsPanel periods={academicPeriods} onChange={handleAcademicPeriodsChange} />
-        ) : (
-          <StandardSchedule
-            days={sharedDays}
-            onDayChange={updateSharedDay}
-            repeatEvery={String(scheduleSettings.repeat.interval || 1)}
-            onRepeatEveryChange={value =>
-              setScheduleSettings(prev => ({
-                ...prev,
-                repeat: { ...prev.repeat, interval: Number(value) || 1 },
-              }))
-            }
-            repeatUnit={
-              scheduleSettings.repeat.unit === 'day'
-                ? 'Day'
-                : scheduleSettings.repeat.unit === 'month'
-                  ? 'Month'
-                  : 'Week'
-            }
-            onRepeatUnitChange={value =>
-              setScheduleSettings(prev => ({
-                ...prev,
-                repeat: {
-                  ...prev.repeat,
-                  unit: value.toLowerCase() as 'day' | 'week' | 'month',
-                  days: value === 'Week' ? prev.repeat.days : [],
-                },
-              }))
-            }
-            startDate={scheduleSettings.startClass.date}
-            onStartDateChange={value =>
-              setScheduleSettings(prev => ({
-                ...prev,
-                startClass: { ...prev.startClass, date: value },
-                endRepeat: prev.endRepeat || value,
-              }))
-            }
-            endDate={scheduleSettings.endRepeat}
-            onEndDateChange={value => setScheduleSettings(prev => ({ ...prev, endRepeat: value }))}
-            timezone={scheduleSettings.timezone}
-            onTimezoneChange={handleScheduleTimeZoneChange}
-            totalSessions={sessionsForConflictCheck.length}
+
+          {scheduleMode === 'pick' ? (
+            <PickDatesPanel
+              pickedDates={sharedPickedDates}
+              onPickedDatesChange={updatePickedDates}
+              sortedPickedDates={sortedSharedPickedDates}
+              pickMonth={pickMonth}
+              onPickMonthChange={setPickMonth}
+              sessionStart={sharedSessionStart}
+              onSessionStartChange={value => updatePickedSessionTime('startTime', value)}
+              sessionEnd={sharedSessionEnd}
+              onSessionEndChange={value => updatePickedSessionTime('endTime', value)}
+              timezone={scheduleSettings.timezone}
+              onTimezoneChange={handleScheduleTimeZoneChange}
+            />
+          ) : scheduleMode === 'academic' ? (
+            <AcademicPeriodsPanel periods={academicPeriods} onChange={handleAcademicPeriodsChange} />
+          ) : (
+            <StandardSchedule
+              days={sharedDays}
+              onDayChange={updateSharedDay}
+              repeatEvery={String(scheduleSettings.repeat.interval || 1)}
+              onRepeatEveryChange={value =>
+                setScheduleSettings(prev => ({
+                  ...prev,
+                  repeat: { ...prev.repeat, interval: Number(value) || 1 },
+                }))
+              }
+              repeatUnit={
+                scheduleSettings.repeat.unit === 'day'
+                  ? 'Day'
+                  : scheduleSettings.repeat.unit === 'month'
+                    ? 'Month'
+                    : 'Week'
+              }
+              onRepeatUnitChange={value =>
+                setScheduleSettings(prev => ({
+                  ...prev,
+                  repeat: {
+                    ...prev.repeat,
+                    unit: value.toLowerCase() as 'day' | 'week' | 'month',
+                    days: value === 'Week' ? prev.repeat.days : [],
+                  },
+                }))
+              }
+              startDate={scheduleSettings.startClass.date}
+              onStartDateChange={value =>
+                setScheduleSettings(prev => ({
+                  ...prev,
+                  startClass: { ...prev.startClass, date: value },
+                  endRepeat: prev.endRepeat || value,
+                }))
+              }
+              endDate={scheduleSettings.endRepeat}
+              onEndDateChange={value => setScheduleSettings(prev => ({ ...prev, endRepeat: value }))}
+              timezone={scheduleSettings.timezone}
+              onTimezoneChange={handleScheduleTimeZoneChange}
+              totalSessions={sessionsForConflictCheck.length}
+            />
+          )}
+
+          <ScheduleResolution summary={scheduleSummary} />
+
+          {/* Outside the preset switch: the window is required however the sessions are laid out. */}
+          <RegistrationWindow
+            start={scheduleSettings.registrationPeriod.start}
+            onStartChange={handleRegistrationStartChange}
+            end={scheduleSettings.registrationPeriod.end}
+            onEndChange={handleRegistrationEndChange}
+            errors={registrationErrors}
           />
-        )}
 
-        <ScheduleResolution summary={scheduleSummary} />
+          <ClassMediaUpload
+            selectedThumbnail={selectedThumbnail}
+            selectedVideo={selectedPromotionalVideo}
+            onMediaSelect={(media: MediaFile) =>
+              media.type === 'thumbnail'
+                ? setSelectedThumbnail(media.file)
+                : setSelectedPromotionalVideo(media.file)
+            }
+            onRemoveThumbnail={() => setSelectedThumbnail(null)}
+            onRemoveVideo={() => setSelectedPromotionalVideo(null)}
+          />
 
-        {/* Outside the preset switch: the window is required however the sessions are laid out. */}
-        <RegistrationWindow
-          start={scheduleSettings.registrationPeriod.start}
-          onStartChange={handleRegistrationStartChange}
-          end={scheduleSettings.registrationPeriod.end}
-          onEndChange={handleRegistrationEndChange}
-          errors={registrationErrors}
-        />
+          <ReminderOptions value={sharedReminder} onChange={handleReminderChange} />
 
-        <ClassMediaUpload
-          selectedThumbnail={selectedThumbnail}
-          selectedVideo={selectedPromotionalVideo}
-          onMediaSelect={(media: MediaFile) =>
-            media.type === 'thumbnail'
-              ? setSelectedThumbnail(media.file)
-              : setSelectedPromotionalVideo(media.file)
-          }
-          onRemoveThumbnail={() => setSelectedThumbnail(null)}
-          onRemoveVideo={() => setSelectedPromotionalVideo(null)}
-        />
+          <UpcomingSessions sessions={sharedUpcomingSessions} />
 
-        <ReminderOptions value={sharedReminder} onChange={handleReminderChange} />
+          <SchedulingConflictAlert
+            title='These sessions conflict with existing instructor classes'
+            conflicts={sharedConflicts}
+            timeZone={scheduleSettings.timezone}
+          />
 
-        <UpcomingSessions sessions={sharedUpcomingSessions} />
-
-        <SchedulingConflictAlert
-          title='These sessions conflict with existing instructor classes'
-          conflicts={sharedConflicts}
-          timeZone={scheduleSettings.timezone}
-        />
-
-        <SchedulingConflictAlert
-          title='The scheduler refused these sessions'
-          conflicts={refusedWindows}
-          timeZone={scheduleSettings.timezone}
-        />
+          <SchedulingConflictAlert
+            title='The scheduler refused these sessions'
+            conflicts={refusedWindows}
+            timeZone={scheduleSettings.timezone}
+          />
+        </AsyncSection>
 
         <div className='border-border/70 flex flex-wrap justify-end gap-2 border-t pt-4'>
           <Button
@@ -2610,7 +2623,7 @@ const InstructorClassCreationPage = () => {
           >
             Cancel
           </Button>
-          <Button type='submit' disabled={isSubmitting}>
+          <Button type='submit' disabled={isSubmitting || isLoading || classLoadFailed}>
             {isSubmitting ? <Loader2 className='mr-2 size-4 animate-spin' /> : null}
             {isSubmitting ? 'Publishing...' : 'Publish Class'}
           </Button>
@@ -2621,6 +2634,30 @@ const InstructorClassCreationPage = () => {
 };
 
 export default InstructorClassCreationPage;
+
+/** Mirrors the form's sections while an edited class loads. */
+const ClassFormSkeleton = () => (
+  <div aria-hidden='true' className='space-y-6'>
+    <div className='space-y-2'>
+      <Skeleton className='h-4 w-44' />
+      <Skeleton className='h-9 w-full' />
+      <Skeleton className='mt-4 h-4 w-28' />
+      <Skeleton className='h-9 w-full' />
+    </div>
+    {[3, 3, 2].map((cards, index) => (
+      <div key={index} className='space-y-2'>
+        <Skeleton className='h-4 w-40' />
+        <div className={cards === 3 ? 'grid gap-3 sm:grid-cols-3' : 'grid gap-3 sm:grid-cols-2'}>
+          {Array.from({ length: cards }).map((_, card) => (
+            <Skeleton key={card} className='h-20 rounded-lg' />
+          ))}
+        </div>
+      </div>
+    ))}
+    <Skeleton className='h-48 w-full rounded-lg' />
+    <Skeleton className='h-28 w-full rounded-lg' />
+  </div>
+);
 
 const FieldGroup = ({ label, children }: { label: string; children: React.ReactNode }) => (
   <div className='space-y-2'>
