@@ -1,263 +1,114 @@
-/**
- * The application's draft, and everything that reads it.
- *
- * The wizard's five steps all edit one {@link ApplyState}: which delivery
- * methods the applicant offers, the rooms they would teach in, the equipment
- * they can already put their hands on, and the price they want for each method.
- * The reducer is the only writer; the validators and the two composers
- * (`buildRateCard`, `composeApplicationNotes`) are the only readers that leave
- * the browser.
- *
- * Two of those readers are the whole point of the screen, so they are here
- * rather than inline in a step:
- *
- * - `buildRateCard` folds the tier list onto the API's 4 modalities × 3 bases
- *   grid. A basis nobody quoted is left unset, which makes the applicant
- *   ineligible for work contracted that way rather than guessing a figure.
- * - `composeApplicationNotes` is what the course creator's approval screen
- *   actually reads. The rate card carries numbers; this carries the sentence.
- */
-
-
-import { Building2, Layers, Monitor, Users, Video } from 'lucide-react';
-import type { ElementType } from 'react';
-
-import { DEFAULT_RATE_BASIS, type RateBasis } from '@/components/class-form';
-import type { CourseTrainingRateCard, CourseTrainingRequirement } from '@/services/client';
+import {
+  normaliseRateCard,
+  offeredMethods,
+  type RateCard,
+  validateRateCard,
+} from '@/lib/rate-card';
+import type {
+  CourseTrainingApplicationUpdateRequest,
+  CourseTrainingRequirement,
+  TrainingRequirementAnswerRequest,
+} from '@/services/client';
 import type { CourseTrainerApplicantType } from '@/src/features/course-record';
-
-/* ────────────────────────────────────────────────────────────────────────────
- * Vocabulary
- * ────────────────────────────────────────────────────────────────────────── */
-
-export type TrainingMethod =
-  | 'private-in-person'
-  | 'private-virtual'
-  | 'group-in-person'
-  | 'group-virtual'
-  | 'hybrid';
+import type { TrainingApplication } from '@/src/features/rate-card/types';
 
 export type TrainingContentKind = 'course' | 'program';
 
-export type Classroom = { id: string; name: string; photoUrl?: string };
+export type StepId = 'venues' | 'requirements' | 'pricing' | 'review';
 
-export type EquipmentAnswer = {
-  /**
-   * Requirements are keyed by uuid, not name: a course may list the same name
-   * twice (this catalogue has four such pairs) and name-keyed answers made those
-   * rows share one another's state while leaving orphan rows nobody could
-   * answer — the wizard could then never satisfy its own validation.
-   */
+export type ApplyStep = { id: StepId; label: string };
+
+/** Wizard order; instructors skip venues. */
+export const APPLY_STEPS: readonly ApplyStep[] = [
+  { id: 'venues', label: 'Classrooms & labs' },
+  { id: 'requirements', label: 'Requirements' },
+  { id: 'pricing', label: 'Pricing' },
+  { id: 'review', label: 'Review' },
+];
+
+export function visibleSteps(applicantType: CourseTrainerApplicantType): readonly ApplyStep[] {
+  return applicantType === 'organisation'
+    ? APPLY_STEPS
+    : APPLY_STEPS.filter(step => step.id !== 'venues');
+}
+
+/** Keyed by requirement uuid: a course may list the same name twice. */
+export type RequirementAnswer = {
   requirementUuid: string;
   requirementName: string;
   has: 'yes' | 'no' | null;
   acquisition?: 'lease' | 'hire';
 };
 
-export type PriceTier = {
-  id: string;
-  method: TrainingMethod | '';
-  duration: string;
-  amount: string;
-  basis: RateBasis;
-};
-
 export type ApplyState = {
-  step: number;
-  methods: TrainingMethod[];
-  classroomCount: number;
-  classrooms: Classroom[];
-  equipment: EquipmentAnswer[];
-  pricing: PriceTier[];
+  step: StepId;
+  card: RateCard;
+  venueUuids: string[];
+  answers: RequirementAnswer[];
+  note: string;
 };
 
 export type ApplyAction =
-  | { type: 'step'; step: number }
-  | { type: 'toggleMethod'; method: TrainingMethod }
-  | { type: 'classroomCount'; count: number }
-  | { type: 'classroom'; id: string; patch: Partial<Classroom> }
-  | { type: 'addClassroom' }
-  | { type: 'removeClassroom'; id: string }
-  | { type: 'moveClassroom'; id: string; direction: 'up' | 'down' }
-  | { type: 'reorderClassrooms'; fromId: string; toId: string }
-  | { type: 'equipHas'; uuid: string; has: 'yes' | 'no' }
-  | { type: 'equipAcquisition'; uuid: string; acquisition: 'lease' | 'hire' }
-  | { type: 'priceAdd' }
-  | { type: 'priceRemove'; id: string }
-  | { type: 'priceUpdate'; id: string; patch: Partial<PriceTier> }
-  | { type: 'initEquipment'; requirements: { uuid: string; name: string }[] };
+  | { type: 'step'; step: StepId }
+  | { type: 'card'; card: RateCard }
+  | { type: 'toggleVenue'; uuid: string }
+  | { type: 'answerHas'; uuid: string; has: 'yes' | 'no' }
+  | { type: 'answerAcquisition'; uuid: string; acquisition: 'lease' | 'hire' }
+  | { type: 'initAnswers'; requirements: { uuid: string; name: string }[] }
+  | { type: 'note'; note: string };
 
-export const APPLY_STEPS = [
-  'Training method',
-  'Classrooms & labs',
-  'Requirements',
-  'Pricing',
-  'Review',
-] as const;
-
-/** The applicant's own quote is always in the platform currency. */
-export const APPLICATION_CURRENCY = 'KES';
-
-/** How many classrooms the count control will accept. */
-export const MAX_CLASSROOMS = 20;
-
-export type MethodOption = {
-  value: TrainingMethod;
-  title: string;
-  description: string;
-  icon: ElementType;
-};
-
-export const METHOD_OPTIONS: MethodOption[] = [
-  {
-    value: 'private-in-person',
-    title: 'Private in-person (live)',
-    description: 'One-on-one on-site sessions.',
-    icon: Users,
-  },
-  {
-    value: 'private-virtual',
-    title: 'Private virtual',
-    description: 'One-on-one online sessions.',
-    icon: Monitor,
-  },
-  {
-    value: 'group-in-person',
-    title: 'Group in-person (live)',
-    description: 'Cohort on-site at your venue.',
-    icon: Building2,
-  },
-  {
-    value: 'group-virtual',
-    title: 'Group virtual',
-    description: 'Cohort delivered online.',
-    icon: Video,
-  },
-  { value: 'hybrid', title: 'Hybrid', description: 'Mix of in-person and virtual.', icon: Layers },
-];
-
-export const methodOption = (method: TrainingMethod | '') =>
-  METHOD_OPTIONS.find(option => option.value === method);
-
-export const methodTitle = (method: TrainingMethod | '') => methodOption(method)?.title;
-
-/* ────────────────────────────────────────────────────────────────────────────
- * The draft
- * ────────────────────────────────────────────────────────────────────────── */
-
-export const uid = () => Math.random().toString(36).slice(2, 9);
-
-export function initialApplyState(): ApplyState {
+/** A fresh draft, or one hydrated from a pending application being edited. */
+export function initialApplyState(
+  applicantType: CourseTrainerApplicantType,
+  application?: TrainingApplication | null
+): ApplyState {
   return {
-    step: 0,
-    methods: [],
-    classroomCount: 1,
-    classrooms: [{ id: uid(), name: '' }],
-    equipment: [],
-    pricing: [],
+    step: visibleSteps(applicantType)[0]!.id,
+    card: normaliseRateCard(application?.rate_card),
+    venueUuids: (application?.offered_venues ?? [])
+      .map(venue => venue.resource_uuid)
+      .filter((uuid): uuid is string => Boolean(uuid)),
+    answers: (application?.requirement_answers ?? [])
+      .filter(answer => answer.requirement_uuid)
+      .map(answer => ({
+        requirementUuid: answer.requirement_uuid as string,
+        requirementName: answer.requirement_name ?? 'Requirement',
+        has: answer.has_it ? 'yes' : 'no',
+        acquisition: answer.has_it ? undefined : (answer.acquisition ?? undefined),
+      })),
+    note: application?.application_notes ?? '',
   };
-}
-
-function makeClassrooms(count: number, existing: Classroom[]): Classroom[] {
-  if (count <= existing.length) return existing.slice(0, count);
-  const extras = Array.from({ length: count - existing.length }, () => ({ id: uid(), name: '' }));
-  return [...existing, ...extras];
 }
 
 export function applyReducer(state: ApplyState, action: ApplyAction): ApplyState {
   switch (action.type) {
     case 'step':
       return { ...state, step: action.step };
-    case 'initEquipment':
+    case 'card':
+      return { ...state, card: action.card };
+    case 'toggleVenue':
       return {
         ...state,
-        equipment: action.requirements.map(requirement => {
-          const existing = state.equipment.find(
-            answer => answer.requirementUuid === requirement.uuid
-          );
-          return (
-            existing ?? {
+        venueUuids: state.venueUuids.includes(action.uuid)
+          ? state.venueUuids.filter(uuid => uuid !== action.uuid)
+          : [...state.venueUuids, action.uuid],
+      };
+    case 'initAnswers':
+      return {
+        ...state,
+        answers: action.requirements.map(
+          requirement =>
+            state.answers.find(answer => answer.requirementUuid === requirement.uuid) ?? {
               requirementUuid: requirement.uuid,
               requirementName: requirement.name,
               has: null,
             }
-          );
-        }),
-      };
-    case 'toggleMethod': {
-      const exists = state.methods.includes(action.method);
-      const methods = exists
-        ? state.methods.filter(method => method !== action.method)
-        : [...state.methods, action.method];
-      // Selecting a method opens a tier for it; deselecting takes its tiers away
-      // rather than leaving the applicant priced for something they withdrew.
-      const pricing = exists
-        ? state.pricing.filter(tier => tier.method !== action.method)
-        : state.pricing.some(tier => tier.method === action.method)
-          ? state.pricing
-          : [
-              ...state.pricing,
-              {
-                id: uid(),
-                method: action.method,
-                duration: '',
-                amount: '',
-                basis: DEFAULT_RATE_BASIS,
-              },
-            ];
-      return { ...state, methods, pricing };
-    }
-    case 'classroomCount': {
-      if (!Number.isFinite(action.count)) return state;
-      const count = Math.max(0, Math.min(MAX_CLASSROOMS, action.count));
-      return {
-        ...state,
-        classroomCount: count,
-        classrooms: makeClassrooms(count, state.classrooms),
-      };
-    }
-    case 'classroom':
-      return {
-        ...state,
-        classrooms: state.classrooms.map(room =>
-          room.id === action.id ? { ...room, ...action.patch } : room
         ),
       };
-    case 'addClassroom': {
-      const next = [...state.classrooms, { id: uid(), name: '' }];
-      return { ...state, classroomCount: next.length, classrooms: next };
-    }
-    case 'removeClassroom': {
-      const next = state.classrooms.filter(room => room.id !== action.id);
-      return { ...state, classroomCount: next.length, classrooms: next };
-    }
-    case 'moveClassroom': {
-      const index = state.classrooms.findIndex(room => room.id === action.id);
-      if (index < 0) return state;
-      const target = action.direction === 'up' ? index - 1 : index + 1;
-      const next = state.classrooms.slice();
-      const moved = next[index];
-      const displaced = next[target];
-      if (!moved || !displaced) return state;
-      next[index] = displaced;
-      next[target] = moved;
-      return { ...state, classrooms: next };
-    }
-    case 'reorderClassrooms': {
-      if (action.fromId === action.toId) return state;
-      const from = state.classrooms.findIndex(room => room.id === action.fromId);
-      const to = state.classrooms.findIndex(room => room.id === action.toId);
-      if (from < 0 || to < 0) return state;
-      const next = state.classrooms.slice();
-      const [moved] = next.splice(from, 1);
-      if (!moved) return state;
-      next.splice(to, 0, moved);
-      return { ...state, classrooms: next };
-    }
-    case 'equipHas':
+    case 'answerHas':
       return {
         ...state,
-        equipment: state.equipment.map(answer =>
+        answers: state.answers.map(answer =>
           answer.requirementUuid === action.uuid
             ? {
                 ...answer,
@@ -267,131 +118,54 @@ export function applyReducer(state: ApplyState, action: ApplyAction): ApplyState
             : answer
         ),
       };
-    case 'equipAcquisition':
+    case 'answerAcquisition':
       return {
         ...state,
-        equipment: state.equipment.map(answer =>
+        answers: state.answers.map(answer =>
           answer.requirementUuid === action.uuid
             ? { ...answer, acquisition: action.acquisition }
             : answer
         ),
       };
-    case 'priceAdd':
-      return {
-        ...state,
-        pricing: [
-          ...state.pricing,
-          {
-            id: uid(),
-            method: state.methods[0] ?? '',
-            duration: '',
-            amount: '',
-            basis: DEFAULT_RATE_BASIS,
-          },
-        ],
-      };
-    case 'priceRemove':
-      return { ...state, pricing: state.pricing.filter(tier => tier.id !== action.id) };
-    case 'priceUpdate':
-      return {
-        ...state,
-        pricing: state.pricing.map(tier =>
-          tier.id === action.id ? { ...tier, ...action.patch } : tier
-        ),
-      };
+    case 'note':
+      return { ...state, note: action.note };
     default:
       return state;
   }
 }
 
-/* ────────────────────────────────────────────────────────────────────────────
- * Validation — the live "complete the following" list
- * ────────────────────────────────────────────────────────────────────────── */
-
-/**
- * Whether the applicant has to name a room.
- *
- * Only delivery that puts people in a room does. A virtual-only applicant was
- * previously blocked on naming a classroom they would never use.
- */
-export function requiresClassroom(methods: TrainingMethod[]): boolean {
-  return methods.some(method => method.includes('in-person') || method === 'hybrid');
-}
-
-export function validateClassrooms(classrooms: Classroom[], methods: TrainingMethod[]): string[] {
-  if (!requiresClassroom(methods)) return [];
-  const errors: string[] = [];
-  if (classrooms.length === 0) errors.push('Add at least one classroom or lab.');
-  const blank = classrooms.filter(room => !room.name.trim()).length;
-  if (blank > 0) errors.push(`Name ${blank} classroom${blank > 1 ? 's' : ''}.`);
-  return errors;
-}
-
-/**
- * The equipment step is a check-off, not an asset register.
- *
- * Brand and serial were mandatory, had no column to land in, and were dropped
- * before submission. Until the equipment inventory exists, all the application
- * needs is whether the applicant holds each item, and how they would get it.
- */
-export function validateEquipment(equipment: EquipmentAnswer[]): string[] {
-  const errors: string[] = [];
-  equipment.forEach(answer => {
-    if (answer.has === null) {
-      errors.push(`Answer Yes/No for "${answer.requirementName}".`);
-    } else if (answer.has === 'no' && !answer.acquisition) {
-      errors.push(`Choose lease or hire for "${answer.requirementName}".`);
-    }
+export function validateAnswers(answers: RequirementAnswer[]): string[] {
+  return answers.flatMap(answer => {
+    if (answer.has === null) return [`Answer Yes or No for "${answer.requirementName}".`];
+    if (answer.has === 'no' && !answer.acquisition)
+      return [`Choose lease or hire for "${answer.requirementName}".`];
+    return [];
   });
-  return errors;
 }
 
-export function validatePricing(
-  pricing: PriceTier[],
-  methods: TrainingMethod[],
-  minimumFee?: number | null
-): string[] {
-  const errors: string[] = [];
-  if (pricing.length === 0) errors.push('Add at least one pricing tier.');
-  pricing.forEach((tier, index) => {
-    const label = `pricing tier #${index + 1}`;
-    if (!tier.method) errors.push(`Select a training method for ${label}.`);
-    if (tier.method && !methods.includes(tier.method))
-      errors.push(`${label} uses a training method that is no longer selected.`);
-    if (!tier.duration.trim()) errors.push(`Enter a session duration for ${label}.`);
-    const amount = Number.parseFloat(tier.amount);
-    if (!tier.amount.trim() || Number.isNaN(amount) || amount <= 0) {
-      errors.push(`Enter a valid fee per student for ${label}.`);
-    } else if (isBelowFloor(amount, minimumFee)) {
-      errors.push(`Raise ${label} to at least ${formatFee(minimumFee)} per learner.`);
-    }
-  });
-  return errors;
+/** The rate card's blocking problems as one list, for the step's "complete the following". */
+export function validatePricing(card: RateCard, minimumFee?: number | null): string[] {
+  const { cells, card: cardErrors } = validateRateCard(card, minimumFee);
+  const messages = Object.values(cells);
+  const empty = messages.filter(message => message.startsWith('Enter a rate')).length;
+  const tooLow = messages.length - empty;
+  return [
+    ...cardErrors,
+    ...(empty > 0
+      ? [
+          `${empty} ${empty === 1 ? 'rate is' : 'rates are'} still empty. Every method you offer needs a price per hour, per session and per day.`,
+        ]
+      : []),
+    ...(tooLow > 0
+      ? [`${tooLow} ${tooLow === 1 ? 'rate is' : 'rates are'} below the minimum training fee.`]
+      : []),
+  ];
 }
 
-/**
- * The creator's floor, which the API rejects a rate card for breaching.
- *
- * The server compares every rate against it, session and daily included, so
- * this does the same. Warning only on hourly rates would let the other bases
- * through to a rejection the applicant cannot see the reason for.
- */
-export function isBelowFloor(amount: number, minimumFee?: number | null): boolean {
-  if (minimumFee == null || !Number.isFinite(minimumFee) || minimumFee <= 0) return false;
-  return Number.isFinite(amount) && amount > 0 && amount < minimumFee;
+/** True when the card offers a method taught in a room. */
+export function offersInPerson(card: RateCard): boolean {
+  return offeredMethods(card).some(method => method.location === 'in-person');
 }
-
-export function formatFee(amount?: number | null): string {
-  if (amount == null || !Number.isFinite(amount)) return '—';
-  return `${APPLICATION_CURRENCY} ${amount.toLocaleString('en-KE', {
-    minimumFractionDigits: 0,
-    maximumFractionDigits: 2,
-  })}`;
-}
-
-/* ────────────────────────────────────────────────────────────────────────────
- * Whose requirement is it
- * ────────────────────────────────────────────────────────────────────────── */
 
 /** The provider vocabulary, spelled every way the API has spelled it. */
 export function normalizeRequirementProvider(provider?: string | null) {
@@ -413,17 +187,7 @@ export function normalizeRequirementProvider(provider?: string | null) {
   }
 }
 
-/**
- * Only the requirements this applicant is on the hook for.
- *
- * A requirement the student brings, or the creator supplies, is not a question
- * to put to the applicant — asking makes the equipment step unanswerable and
- * the "ready 3/5" figure meaningless. An unstated provider is treated as the
- * applicant's, which is how the catalogue's older rows were entered.
- *
- * A lone instructor was previously shown the organisation's list, so they
- * answered for kit a school supplies and never saw their own.
- */
+/** Requirements the applicant provides; an unstated provider counts as theirs. */
 export function isApplicantTrainingRequirement(
   requirement: CourseTrainingRequirement,
   applicantType: CourseTrainerApplicantType
@@ -432,94 +196,28 @@ export function isApplicantTrainingRequirement(
   return provider === null || provider === applicantType;
 }
 
-/** The stable key a requirement's answer is filed under. */
-export const requirementKey = (requirement: CourseTrainingRequirement) =>
-  requirement.uuid ?? requirement.name;
-
-/* ────────────────────────────────────────────────────────────────────────────
- * What leaves the browser
- * ────────────────────────────────────────────────────────────────────────── */
-
-type RateModality = 'private_online' | 'private_inperson' | 'group_online' | 'group_inperson';
-type RateSuffix = 'hourly_rate' | 'session_rate' | 'daily_rate';
-type RateCardField = `${RateModality}_${RateSuffix}`;
-
-/** Hybrid has no cell of its own — it is captured in the notes, not the grid. */
-const RATE_MODALITY: Record<TrainingMethod, RateModality | null> = {
-  'private-virtual': 'private_online',
-  'private-in-person': 'private_inperson',
-  'group-virtual': 'group_online',
-  'group-in-person': 'group_inperson',
-  hybrid: null,
-};
-
-const RATE_SUFFIX: Record<RateBasis, RateSuffix> = {
-  per_hour: 'hourly_rate',
-  per_session: 'session_rate',
-  per_day: 'daily_rate',
-};
-
-/**
- * The tier list as the API's rate card.
- *
- * One tier prices one modality in the basis it was quoted in. The four hourly
- * cells are required by the schema so they default to `0` — "not offered" —
- * and a per-session or per-day quote lands in its own `*_session_rate` /
- * `*_daily_rate` cell, leaving the hourly one at zero.
- */
-export function buildRateCard(pricing: PriceTier[]): CourseTrainingRateCard {
-  const quoted: Partial<Record<RateCardField, number>> = {};
-
-  for (const tier of pricing) {
-    const modality = tier.method ? RATE_MODALITY[tier.method] : null;
-    const amount = Number.parseFloat(tier.amount);
-    if (modality && Number.isFinite(amount)) {
-      quoted[`${modality}_${RATE_SUFFIX[tier.basis ?? DEFAULT_RATE_BASIS]}`] = amount;
-    }
-  }
-
-  return {
-    currency: APPLICATION_CURRENCY,
-    private_online_hourly_rate: 0,
-    private_inperson_hourly_rate: 0,
-    group_online_hourly_rate: 0,
-    group_inperson_hourly_rate: 0,
-    ...quoted,
-  };
+/** The applicant's own note, or null; nothing else is folded into it. */
+export function composeApplicationNotes(note: string): string | null {
+  return note.trim() || null;
 }
 
-/**
- * The sentence the creator's approval screen reads.
- *
- * The rate card carries the numbers and nothing else; this is where the shape
- * of the offer goes — which methods, which rooms, and how much of the kit the
- * applicant already owns.
- */
-export function composeApplicationNotes({
-  methods,
-  classrooms,
-  equipment,
-  requirementCount,
-  programRequirementCount,
-  isProgram,
-}: {
-  methods: TrainingMethod[];
-  classrooms: Classroom[];
-  equipment: EquipmentAnswer[];
-  requirementCount: number;
-  programRequirementCount: number;
-  isProgram: boolean;
-}): string {
-  const titles = methods
-    .map(methodTitle)
-    .filter((title): title is string => Boolean(title))
-    .join(', ');
+/** Everything the wizard sends besides the applicant identity. */
+export function buildApplicationPayload(
+  state: ApplyState,
+  { applicantType, isProgram }: { applicantType: CourseTrainerApplicantType; isProgram: boolean }
+): CourseTrainingApplicationUpdateRequest {
+  const answers: TrainingRequirementAnswerRequest[] = state.answers
+    .filter(answer => answer.has !== null)
+    .map(answer => ({
+      requirement_uuid: answer.requirementUuid,
+      has_it: answer.has === 'yes',
+      ...(answer.has === 'no' && answer.acquisition ? { acquisition: answer.acquisition } : {}),
+    }));
 
-  return [
-    `Methods: ${titles}`,
-    `Classrooms: ${classrooms.map(room => room.name || '(unnamed)').join(', ')}`,
-    isProgram
-      ? `Program requirements reviewed: ${programRequirementCount}`
-      : `Equipment ready: ${equipment.filter(answer => answer.has === 'yes').length}/${requirementCount}`,
-  ].join(' · ');
+  return {
+    rate_card: normaliseRateCard(state.card),
+    application_notes: composeApplicationNotes(state.note),
+    ...(applicantType === 'organisation' ? { offered_venue_uuids: state.venueUuids } : {}),
+    ...(isProgram ? {} : { requirement_answers: answers }),
+  };
 }

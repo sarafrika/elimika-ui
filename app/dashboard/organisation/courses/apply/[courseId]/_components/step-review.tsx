@@ -1,274 +1,160 @@
 'use client';
 
-/**
- * Step 5 — everything the applicant is about to send, on one screen.
- *
- * The four-up strip is the shape of the offer at a glance; each section below
- * it restates its step in full and carries an Edit link straight back to that
- * step, so a wrong rate is three clicks from fixed rather than four Backs.
- *
- * The denominators here count the same requirements the equipment step asked
- * about — the applicant's own. A total that included the creator's or the
- * student's kit would read as "3/9 ready" for a school that is in fact ready.
- */
+import { TriangleAlert } from 'lucide-react';
+import { type Dispatch, useId } from 'react';
 
-import { Camera, Tag } from 'lucide-react';
-import type { Dispatch } from 'react';
-
-import { rateBasisLabel } from '@/components/class-form';
+import { RateCardGrid } from '@/components/rate-card/rate-card-grid';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import type { CourseTrainingRequirement, ProgramRequirement } from '@/services/client';
+import { Label } from '@/components/ui/label';
+import { Textarea } from '@/components/ui/textarea';
+import { offeredMethods } from '@/lib/rate-card';
+import type { ProgramRequirement } from '@/services/client';
+import type { CourseTrainerApplicantType } from '@/src/features/course-record';
 
 import {
-  APPLICATION_CURRENCY,
   type ApplyAction,
   type ApplyState,
-  type MethodOption,
-  methodOption,
-  requirementKey,
+  offersInPerson,
+  type StepId,
   type TrainingContentKind,
 } from './apply-model';
+import { useOfferableVenues } from './use-offerable-venues';
 
+/** Everything the applicant is about to send, each section one click from its step. */
 export function StepReview({
   state,
   dispatch,
   contentKind,
-  requirements,
+  applicantType,
+  organisationUuid,
   programRequirements,
 }: {
   state: ApplyState;
   dispatch: Dispatch<ApplyAction>;
   contentKind: TrainingContentKind;
-  requirements: CourseTrainingRequirement[];
+  applicantType: CourseTrainerApplicantType;
+  organisationUuid: string;
   programRequirements: ProgramRequirement[];
 }) {
-  const isProgram = contentKind === 'program';
-
-  const selectedMethods = state.methods
-    .map(methodOption)
-    .filter((option): option is MethodOption => Boolean(option));
-
-  const haveCount = state.equipment.filter(answer => answer.has === 'yes').length;
-  const needCount = state.equipment.filter(answer => answer.has === 'no').length;
-  const requirementCount = isProgram ? programRequirements.length : requirements.length;
-
-  const goToStep = (step: number) => dispatch({ type: 'step', step });
-
-  const firstMethodName = selectedMethods[0]?.title.split(' (')[0];
-  const methodSummary =
-    selectedMethods.length === 0
-      ? '—'
-      : selectedMethods.length === 1
-        ? (firstMethodName ?? '—')
-        : `${selectedMethods.length} selected`;
+  const noteId = useId();
+  const isOrganisation = applicantType === 'organisation';
+  const { byUuid } = useOfferableVenues(organisationUuid, isOrganisation);
+  const methods = offeredMethods(state.card);
+  const goTo = (step: StepId) => dispatch({ type: 'step', step });
+  const creator = contentKind === 'program' ? 'program creator' : 'course creator';
 
   return (
     <div className='space-y-6 text-sm'>
-      <div className='bg-muted/30 grid gap-3 rounded-md border p-3 sm:grid-cols-4'>
-        <SummaryStat label='Methods' value={methodSummary} />
-        <SummaryStat label='Classrooms' value={String(state.classrooms.length)} />
-        {isProgram ? (
-          <SummaryStat label='Requirements' value={String(requirementCount)} />
-        ) : (
-          <SummaryStat label='Equipment on hand' value={`${haveCount}/${requirementCount}`} />
-        )}
-        <SummaryStat
-          label={isProgram ? 'Reviewed' : 'To be sourced'}
-          value={isProgram ? 'Yes' : String(needCount)}
-        />
-      </div>
-
       <section className='space-y-2'>
         <SectionHeader
-          title={`Training methods (${selectedMethods.length})`}
-          onEdit={() => goToStep(0)}
+          title={`Rate card · ${methods.length} ${methods.length === 1 ? 'method' : 'methods'}`}
+          onEdit={() => goTo('pricing')}
         />
-        {selectedMethods.length === 0 ? (
-          <p className='text-muted-foreground rounded-md border border-dashed p-3'>
-            No training methods selected.
-          </p>
-        ) : (
-          <ul className='grid gap-2 sm:grid-cols-2'>
-            {selectedMethods.map(method => {
-              const Icon = method.icon;
-              return (
-                <li key={method.value} className='flex items-start gap-3 rounded-md border p-3'>
-                  <span className='bg-primary/10 text-primary flex h-9 w-9 items-center justify-center rounded-md'>
-                    <Icon className='h-5 w-5' />
-                  </span>
-                  <div className='min-w-0'>
-                    <p className='font-medium'>{method.title}</p>
-                    <p className='text-muted-foreground'>{method.description}</p>
-                  </div>
-                </li>
-              );
-            })}
-          </ul>
-        )}
+        <RateCardGrid mode='view' value={state.card} />
       </section>
 
-      <section className='space-y-2'>
-        <SectionHeader
-          title={`Classrooms & labs (${state.classrooms.length})`}
-          onEdit={() => goToStep(1)}
-        />
-        {state.classrooms.length === 0 ? (
-          <p className='text-muted-foreground rounded-md border border-dashed p-3'>
-            No classrooms added.
-          </p>
-        ) : (
-          <ol className='grid gap-2 sm:grid-cols-2'>
-            {state.classrooms.map((classroom, index) => (
-              <li key={classroom.id} className='flex items-center gap-3 rounded-md border p-2'>
-                {classroom.photoUrl ? (
-                  // eslint-disable-next-line @next/next/no-img-element
-                  <img
-                    src={classroom.photoUrl}
-                    alt={classroom.name || `Classroom ${index + 1}`}
-                    className='h-14 w-14 rounded-md object-cover'
-                  />
-                ) : (
-                  <div className='bg-muted text-muted-foreground flex h-14 w-14 items-center justify-center rounded-md'>
-                    <Camera className='h-4 w-4' />
-                  </div>
-                )}
-                <div className='min-w-0 flex-1'>
-                  <p className='truncate font-medium'>
-                    <span className='text-muted-foreground mr-1'>#{index + 1}</span>
-                    {classroom.name || '(unnamed)'}
-                  </p>
-                  <p className='text-muted-foreground text-xs'>
-                    {classroom.photoUrl ? 'Photo attached' : 'No photo'}
-                  </p>
-                </div>
-              </li>
-            ))}
-          </ol>
-        )}
-      </section>
+      {isOrganisation ? (
+        <section className='space-y-2'>
+          <SectionHeader
+            title={`Where you'll teach (${state.venueUuids.length})`}
+            onEdit={() => goTo('venues')}
+          />
+          {state.venueUuids.length === 0 ? (
+            <p className='text-muted-foreground rounded-md border border-dashed p-3'>
+              No venues offered.
+            </p>
+          ) : (
+            <ul className='grid gap-2 sm:grid-cols-2'>
+              {state.venueUuids.map(uuid => {
+                const venue = byUuid.get(uuid);
+                return (
+                  <li key={uuid} className='rounded-md border p-3'>
+                    <p className='font-medium'>{venue?.name ?? 'Venue'}</p>
+                    <p className='text-muted-foreground text-xs'>
+                      {[
+                        venue?.seat_capacity ? `${venue.seat_capacity} seats` : null,
+                        venue?.location_name,
+                      ]
+                        .filter(Boolean)
+                        .join(' · ') || '—'}
+                    </p>
+                  </li>
+                );
+              })}
+            </ul>
+          )}
+          {state.venueUuids.length === 0 && offersInPerson(state.card) ? (
+            <p className='text-foreground bg-warning/10 border-warning/40 flex items-start gap-2 rounded-md border p-3'>
+              <TriangleAlert aria-hidden className='text-warning mt-0.5 size-4 shrink-0' />
+              You offer in-person training but no venue. The {creator} will not know where you would
+              teach.
+            </p>
+          ) : null}
+        </section>
+      ) : null}
 
       <section className='space-y-2'>
         <SectionHeader
           title={
-            isProgram
-              ? `Program requirements (${requirementCount})`
-              : `Equipment (${haveCount} ready · ${needCount} to source)`
+            contentKind === 'program'
+              ? `Program requirements (${programRequirements.length})`
+              : `Course requirements (${state.answers.length})`
           }
-          onEdit={() => goToStep(2)}
+          onEdit={() => goTo('requirements')}
         />
-        {isProgram ? (
-          programRequirements.length === 0 ? (
-            <p className='text-muted-foreground rounded-md border border-dashed p-3'>
-              No program requirements were published yet.
-            </p>
-          ) : (
-            <ul className='space-y-2'>
-              {programRequirements.map(requirement => (
-                <li
-                  key={requirement.uuid ?? requirement.requirement_text}
-                  className='rounded-md border p-3'
-                >
-                  <div className='flex flex-wrap items-center justify-between gap-2'>
-                    <span className='font-medium'>{requirement.requirement_text}</span>
-                    {requirement.is_mandatory ? (
-                      <Badge variant='destructive' className='text-[10px]'>
-                        Mandatory
-                      </Badge>
-                    ) : (
-                      <Badge variant='outline' className='text-[10px]'>
-                        Optional
-                      </Badge>
-                    )}
-                  </div>
-                  <p className='text-muted-foreground mt-1 text-sm'>
-                    {requirement.requirement_category ?? requirement.requirement_type}
-                  </p>
-                </li>
-              ))}
-            </ul>
-          )
+        {contentKind === 'program' ? (
+          <p className='text-muted-foreground rounded-md border border-dashed p-3'>
+            {programRequirements.length === 0
+              ? 'No program requirements were published yet.'
+              : 'You reviewed the program requirements.'}
+          </p>
+        ) : state.answers.length === 0 ? (
+          <p className='text-muted-foreground rounded-md border border-dashed p-3'>
+            No requirements to answer.
+          </p>
         ) : (
-          <ul className='space-y-2'>
-            {requirements.map(requirement => {
-              const key = requirementKey(requirement);
-              const answer = state.equipment.find(row => row.requirementUuid === key);
-              if (!answer) return null;
-              return (
-                <li key={key} className='rounded-md border p-3'>
-                  <div className='flex flex-wrap items-center justify-between gap-2'>
-                    <span className='font-medium'>{requirement.name}</span>
-                    {answer.has === 'yes' && <Badge variant='secondary'>Available</Badge>}
-                    {answer.has === 'no' && answer.acquisition && (
-                      <Badge variant='outline'>
-                        {answer.acquisition === 'lease' ? 'Lease to own' : 'Hire'} via Sarafrika
-                      </Badge>
-                    )}
-                    {answer.has === null && <Badge variant='outline'>Not answered</Badge>}
-                  </div>
-                </li>
-              );
-            })}
+          <ul className='divide-y rounded-md border'>
+            {state.answers.map(answer => (
+              <li
+                key={answer.requirementUuid}
+                className='flex flex-wrap items-center justify-between gap-2 px-3 py-2'
+              >
+                <span className='font-medium'>{answer.requirementName}</span>
+                {answer.has === 'yes' ? (
+                  <Badge variant='outline' className='border-success/40 bg-success/10 text-success'>
+                    Has it
+                  </Badge>
+                ) : answer.has === 'no' ? (
+                  <Badge variant='outline' className='border-warning/50 bg-warning/10'>
+                    {answer.acquisition === 'lease'
+                      ? 'Will lease'
+                      : answer.acquisition === 'hire'
+                        ? 'Will hire'
+                        : 'Not yet'}
+                  </Badge>
+                ) : (
+                  <Badge variant='outline'>Not answered</Badge>
+                )}
+              </li>
+            ))}
           </ul>
         )}
       </section>
 
       <section className='space-y-2'>
-        <SectionHeader
-          title={`Pricing (${state.pricing.length} ${state.pricing.length === 1 ? 'tier' : 'tiers'})`}
-          onEdit={() => goToStep(3)}
+        <Label htmlFor={noteId} className='font-semibold'>
+          Note for the {creator}{' '}
+          <span className='text-muted-foreground font-normal'>(optional)</span>
+        </Label>
+        <Textarea
+          id={noteId}
+          rows={3}
+          value={state.note}
+          onChange={event => dispatch({ type: 'note', note: event.target.value })}
+          placeholder='Anything that helps them decide, e.g. your experience with this subject.'
         />
-        {state.pricing.length === 0 ? (
-          <p className='text-muted-foreground rounded-md border border-dashed p-3'>
-            No pricing tiers added.
-          </p>
-        ) : (
-          <div className='overflow-x-auto rounded-md border'>
-            <table className='w-full text-xs'>
-              <thead className='bg-muted/50 text-muted-foreground'>
-                <tr>
-                  <th className='px-3 py-2 text-left font-medium'>Training method</th>
-                  <th className='px-3 py-2 text-left font-medium'>Session duration</th>
-                  <th className='px-3 py-2 text-left font-medium'>Charged per</th>
-                  <th className='px-3 py-2 text-right font-medium'>
-                    Fee / student ({APPLICATION_CURRENCY})
-                  </th>
-                </tr>
-              </thead>
-              <tbody>
-                {state.pricing.map(tier => {
-                  const option = methodOption(tier.method);
-                  const amount = Number.parseFloat(tier.amount);
-                  return (
-                    <tr key={tier.id} className='border-t'>
-                      <td className='px-3 py-2'>
-                        <span className='inline-flex items-center gap-1.5'>
-                          <Tag className='text-muted-foreground h-3 w-3' />
-                          {option?.title ?? '—'}
-                        </span>
-                      </td>
-                      <td className='px-3 py-2'>{tier.duration || '—'}</td>
-                      <td className='px-3 py-2'>{rateBasisLabel(tier.basis)}</td>
-                      <td className='px-3 py-2 text-right font-mono'>
-                        {Number.isFinite(amount) ? amount.toLocaleString() : '—'}
-                      </td>
-                    </tr>
-                  );
-                })}
-              </tbody>
-            </table>
-          </div>
-        )}
       </section>
-    </div>
-  );
-}
-
-function SummaryStat({ label, value }: { label: string; value: string }) {
-  return (
-    <div>
-      <p className='text-muted-foreground text-[11px] tracking-wide uppercase'>{label}</p>
-      <p className='mt-0.5 font-semibold'>{value}</p>
     </div>
   );
 }
