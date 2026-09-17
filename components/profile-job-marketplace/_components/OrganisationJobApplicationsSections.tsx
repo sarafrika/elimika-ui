@@ -205,7 +205,7 @@ export function ApplicationsListSection({
                   Approved rate:{' '}
                   {typeof approvedRate === 'number'
                     ? formatRate(approvedRate, jobRateBasis)
-                    : 'Not on rate card'}
+                    : 'None approved for this job'}
                 </Badge>
                 <Badge variant='outline' className='rounded-md'>
                   Instructor pay:{' '}
@@ -217,7 +217,7 @@ export function ApplicationsListSection({
                 typeof jobInstructorPay === 'number' &&
                 jobInstructorPay < approvedRate ? (
                   <Badge className='border-warning/60 bg-warning/10 text-warning rounded-md'>
-                    Instructor pay is below the approved rate
+                    Rate above this job’s pay, so they can’t be hired
                   </Badge>
                 ) : null}
               </div>

@@ -20,7 +20,6 @@ import {
   SectionCard,
   StatusBadge,
 } from '@/app/dashboard/admin/_components/ui';
-import { type RateBasis, rateBasisShort, rateBasisUnit } from '@/components/class-form';
 import { InstructorReviewProfile } from '@/components/instructor-review/InstructorReviewProfile';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -31,7 +30,7 @@ import Spinner from '@/components/ui/spinner';
 import { Textarea } from '@/components/ui/textarea';
 import { useInstructorsByIds } from '@/hooks/use-batched-lookups';
 import { getErrorMessage } from '@/lib/error-utils';
-import { formatCurrency } from '@/lib/format-currency';
+import { formatRate, formatRateAmount } from '@/lib/rate-card';
 import { parseSchedulingConflicts, type SchedulingConflict } from '@/lib/scheduling-conflicts';
 import { cn } from '@/lib/utils';
 import type { ClassMarketplaceJobDecisionRequest } from '@/services/client';
@@ -46,7 +45,7 @@ import {
   jobHref,
   viewClassHref,
 } from '@/src/features/organisation/jobs/lib/job-routes';
-import { firstSession } from '@/src/features/organisation/jobs/lib/job-stage';
+import { jobSessionWindows } from '@/src/features/organisation/jobs/lib/job-stage';
 import {
   canRejectApplication,
   HIRING_STAGES,
@@ -56,7 +55,8 @@ import {
   stageIndexOf,
   statusLabel,
 } from '../application-status';
-import { HireClashAlert, hireClashTitle } from './HireClashAlert';
+import { hireClashTitle } from './HireClashAlert';
+import { HireChecksPanel, useHireRateCheck } from './HireChecksPanel';
 
 const HIRED_INDEX = HIRING_STAGES.length - 1;
 
@@ -187,8 +187,9 @@ export function JobApplicantReviewPage({
     enabled: Boolean(jobUuid),
   });
   const job = jobQuery.data?.data ?? null;
-  const basisShort = rateBasisShort(job?.rate_basis as RateBasis);
-  const basisUnit = rateBasisUnit(job?.rate_basis as RateBasis);
+  const rateLabel = (amount: number) =>
+    job?.rate_basis ? formatRate(amount, job.rate_basis) : formatRateAmount(amount);
+  const sessionWindows = useMemo(() => (job ? jobSessionWindows(job) : []), [job]);
 
   const applicationsQuery = useQuery({
     ...listJobApplicationsOptions({
@@ -205,6 +206,12 @@ export function JobApplicantReviewPage({
   const instructorIds = useMemo(() => (instructorUuid ? [instructorUuid] : []), [instructorUuid]);
   const { instructorMap } = useInstructorsByIds(instructorIds);
   const instructor = instructorUuid ? (instructorMap[instructorUuid] ?? null) : null;
+  const { rateCheck, recordRateRefusal, clearRateRefusal } = useHireRateCheck(
+    application,
+    job,
+    instructor?.full_name,
+    Math.max(jobQuery.dataUpdatedAt, applicationsQuery.dataUpdatedAt)
+  );
 
   const status = application?.status as string | undefined;
   // The one move this applicant can make. Never two, never one that skips a stage.
@@ -235,13 +242,22 @@ export function JobApplicantReviewPage({
       setInterviewAt('');
       setTransitionError(null);
       setHireClashes([]);
+      clearRateRefusal();
       await invalidateJobApplicationWorkflowQueries(queryClient);
     },
     onError: async (error, variables) => {
-      const clashes = variables?.query?.action === 'hire' ? parseSchedulingConflicts(error) : null;
+      const hiring = variables?.query?.action === 'hire';
+      const clashes = hiring ? parseSchedulingConflicts(error) : null;
       if (clashes) {
         setHireClashes(clashes.conflicts);
         toast.error(hireClashTitle(clashes.conflicts.length));
+        await invalidateJobApplicationWorkflowQueries(queryClient);
+        return;
+      }
+      // A rate refusal belongs in the Rate check; the refetch brings the approved rate up to date.
+      const rateRefusal = hiring ? recordRateRefusal(error) : null;
+      if (rateRefusal) {
+        toast.error(rateRefusal);
         await invalidateJobApplicationWorkflowQueries(queryClient);
         return;
       }
@@ -273,6 +289,7 @@ export function JobApplicantReviewPage({
 
     setTransitionError(null);
     setHireClashes([]);
+    clearRateRefusal();
     reviewMutation.mutate({
       path: { jobUuid, applicationUuid: application.uuid },
       query: { action: forwardStep.action },
@@ -284,6 +301,7 @@ export function JobApplicantReviewPage({
     if (!application?.uuid) return;
     setTransitionError(null);
     setHireClashes([]);
+    clearRateRefusal();
     reviewMutation.mutate({
       path: { jobUuid, applicationUuid: application.uuid },
       query: { action: 'reject' },
@@ -295,11 +313,15 @@ export function JobApplicantReviewPage({
     (jobQuery.isLoading && !jobQuery.data) ||
     (applicationsQuery.isLoading && !applicationsQuery.data);
   const notApprovedToTrain = application?.training_approved === false;
-  const forwardBlocked = forwardStep?.action === 'hire' && notApprovedToTrain;
-  const payBelowApprovedRate =
-    typeof job?.instructor_pay === 'number' &&
-    typeof application?.approved_rate === 'number' &&
-    job.instructor_pay < application.approved_rate;
+  // Only the hire is gated; the earlier stages stay open whatever the rate says.
+  const hireBlockedReason =
+    forwardStep?.action !== 'hire'
+      ? null
+      : notApprovedToTrain
+        ? 'Not approved to train this course or program yet, so they cannot be hired.'
+        : rateCheck.ok
+          ? null
+          : rateCheck.message;
 
   return (
     <div className={adminTheme.page}>
@@ -355,23 +377,23 @@ export function JobApplicantReviewPage({
                 <>
                   {typeof application.approved_rate === 'number' ? (
                     <Badge variant='outline' className='rounded-md'>
-                      Approved rate: {formatCurrency(application.approved_rate)} / {basisShort}
+                      Approved rate: {rateLabel(application.approved_rate)}
                     </Badge>
                   ) : null}
                   {typeof job?.sale_price === 'number' ? (
                     <Badge variant='outline' className='rounded-md'>
-                      Sale price: {formatCurrency(job.sale_price)} / {basisShort}
+                      Sale price: {rateLabel(job.sale_price)}
                     </Badge>
                   ) : null}
                   {typeof job?.instructor_pay === 'number' ? (
                     <Badge variant='outline' className='rounded-md'>
-                      Instructor pay: {formatCurrency(job.instructor_pay)} / {basisShort}
+                      Instructor pay: {rateLabel(job.instructor_pay)}
                     </Badge>
                   ) : null}
                   {typeof job?.sale_price === 'number' &&
                   typeof job?.instructor_pay === 'number' ? (
                     <Badge variant='outline' className='rounded-md'>
-                      Margin: {formatCurrency(job.sale_price - job.instructor_pay)} / {basisShort}
+                      Margin: {rateLabel(job.sale_price - job.instructor_pay)}
                     </Badge>
                   ) : null}
                 </>
@@ -379,6 +401,18 @@ export function JobApplicantReviewPage({
             />
 
             <div className='h-fit space-y-4'>
+              {forwardStep ? (
+                <HireChecksPanel
+                  rateCheck={rateCheck}
+                  clashes={hireClashes}
+                  sessionCount={sessionWindows.length}
+                  instructorName={instructor?.full_name}
+                  timeZone={sessionWindows[0]?.timezone}
+                  jobError={job ? null : jobQuery.error}
+                  onRetry={() => jobQuery.refetch()}
+                />
+              ) : null}
+
               <SectionCard title='Application'>
                 <div className='space-y-3 text-sm'>
                   <div className='flex flex-wrap items-center gap-2'>
@@ -399,18 +433,6 @@ export function JobApplicantReviewPage({
                       <TriangleAlert className='text-warning size-4 shrink-0' />
                       <span>
                         Not approved to train this course or program yet — hiring is blocked.
-                      </span>
-                    </div>
-                  ) : null}
-
-                  {payBelowApprovedRate ? (
-                    <div className='border-warning/60 bg-warning/10 text-foreground flex items-center gap-2 rounded-md border p-3'>
-                      <TriangleAlert className='text-warning size-4 shrink-0' />
-                      <span>
-                        This job pays {formatCurrency(job?.instructor_pay)} per {basisUnit}, below
-                        the {formatCurrency(application.approved_rate)} on this instructor’s rate
-                        card. The hire will go through, but creating this job’s class will be
-                        refused until you raise the instructor pay.
                       </span>
                     </div>
                   ) : null}
@@ -497,12 +519,6 @@ export function JobApplicantReviewPage({
                     </div>
                   ) : null}
 
-                  <HireClashAlert
-                    conflicts={hireClashes}
-                    instructorName={instructor?.full_name}
-                    timeZone={job ? firstSession(job)?.timezone : undefined}
-                  />
-
                   {transitionError ? (
                     <div
                       role='alert'
@@ -524,7 +540,7 @@ export function JobApplicantReviewPage({
                     {forwardStep ? (
                       <Button
                         onClick={submitStep}
-                        disabled={forwardBlocked || reviewMutation.isPending}
+                        disabled={Boolean(hireBlockedReason) || reviewMutation.isPending}
                       >
                         {reviewMutation.isPending ? (
                           <Spinner className='mr-2 size-4' />
@@ -562,7 +578,12 @@ export function JobApplicantReviewPage({
                     ) : null}
                   </div>
 
-                  {forwardStep ? (
+                  {hireBlockedReason ? (
+                    <p className='text-foreground flex items-start gap-1.5 text-xs'>
+                      <XCircle className='text-destructive mt-px size-3.5 shrink-0' />
+                      <span>{hireBlockedReason}</span>
+                    </p>
+                  ) : forwardStep ? (
                     <p className='text-muted-foreground text-xs'>
                       {forwardStep.label} moves this applicant to {statusLabel(forwardStep.leadsTo)}
                       . No stage can be skipped, so this is the only way forward.
