@@ -1,31 +1,81 @@
 // Shared types, catalogues, and pure helpers for the organisation create-class form.
 // Kept UI-free so every section component and the container page import from one place.
 import { scheduleTimeZoneOptions, toUtcIsoDateTime } from '@/lib/date';
-import type { RateBasis, RateCard } from '@/lib/rate-card';
+import {
+  type DeliveryMode,
+  formatRateAmount,
+  formatRateBasis,
+  getRateBasis,
+  type RateBasis,
+  type RateCard,
+  type RateCardInput,
+  rateFor,
+  type TrainingFormat,
+} from '@/lib/rate-card';
 import type { User } from '@/services/client';
 
-// ─── Services (drive the session format; prices are display-only) ────────────
+// ─── Services (drive the session format; each is priced from one rate card cell) ─
 export type ServiceKey = '1on1' | 'group' | 'online' | 'private-online';
 export type Service = {
   key: ServiceKey;
   title: string;
-  subtitle?: string;
-  unit: string;
-  format: 'INDIVIDUAL' | 'GROUP';
+  subtitle: string;
+  format: TrainingFormat;
+  online: boolean;
 };
 
-export const SERVICES: Service[] = [
-  { key: '1on1', title: '1-on-1 Session', unit: 'session', format: 'INDIVIDUAL' },
+export const SERVICES: readonly Service[] = [
   {
-    key: 'group',
-    title: 'Group Session',
-    subtitle: '(2–5 people)',
-    unit: 'person',
-    format: 'GROUP',
+    key: '1on1',
+    title: '1-on-1 session',
+    subtitle: '1 learner',
+    format: 'INDIVIDUAL',
+    online: false,
   },
-  { key: 'online', title: 'Online Course', unit: 'course', format: 'GROUP' },
-  { key: 'private-online', title: 'Private Online Class', unit: 'class', format: 'INDIVIDUAL' },
+  { key: 'group', title: 'Group session', subtitle: '2–5 people', format: 'GROUP', online: false },
+  {
+    key: 'private-online',
+    title: 'Private online class',
+    subtitle: '1 learner',
+    format: 'INDIVIDUAL',
+    online: true,
+  },
+  { key: 'online', title: 'Online course', subtitle: 'Group', format: 'GROUP', online: true },
 ];
+
+/** The two services a delivery offers: online ones for online, in-person ones otherwise. */
+export const servicesFor = (delivery: DeliveryMode): Service[] =>
+  SERVICES.filter(service => service.online === (delivery === 'ONLINE'));
+
+export const getService = (key?: ServiceKey | null) =>
+  SERVICES.find(service => service.key === key);
+
+/** The service a saved job or class runs as, re-read against its delivery. */
+export function serviceForDelivery(
+  delivery: DeliveryMode,
+  { serviceType, sessionFormat }: { serviceType?: string | null; sessionFormat?: string | null }
+): ServiceKey {
+  const saved = SERVICES.find(service => SERVICE_TYPE_ENUM[service.key] === serviceType);
+  const format = saved?.format ?? (sessionFormat === 'INDIVIDUAL' ? 'INDIVIDUAL' : 'GROUP');
+  return servicesFor(delivery).find(service => service.format === format)!.key;
+}
+
+export type BasisStatus = 'approved' | 'pending' | 'missing';
+
+const FORMATS: readonly TrainingFormat[] = ['INDIVIDUAL', 'GROUP'];
+
+/** Approved when the card prices the basis for the delivery; pending when only a proposal does. */
+export function basisStatus(
+  card: RateCardInput | null | undefined,
+  proposedCard: RateCardInput | null | undefined,
+  delivery: DeliveryMode,
+  basis: RateBasis
+): BasisStatus {
+  const covers = (candidate: RateCardInput | null | undefined) =>
+    FORMATS.some(format => rateFor(candidate, { format, delivery, basis }) !== null);
+  if (covers(card)) return 'approved';
+  return covers(proposedCard) ? 'pending' : 'missing';
+}
 
 export type { RateBasis } from '@/lib/rate-card';
 
@@ -83,8 +133,8 @@ export type ApprovedRateCard = RateCard;
 export const formatMoney = (amount?: number | null, currency?: string | null) =>
   typeof amount === 'number' ? `${currency ?? 'KES'} ${amount.toLocaleString()}` : '—';
 
-export const serviceFormat = (key: ServiceKey): 'INDIVIDUAL' | 'GROUP' =>
-  SERVICES.find(s => s.key === key)?.format ?? 'GROUP';
+export const serviceFormat = (key?: ServiceKey | null): TrainingFormat =>
+  getService(key)?.format ?? 'GROUP';
 
 /** Map the UI service key onto the backend ServiceTypeEnum value. */
 export const SERVICE_TYPE_ENUM: Record<
@@ -96,6 +146,54 @@ export const SERVICE_TYPE_ENUM: Record<
   online: 'ONLINE',
   'private-online': 'PRIVATE_ONLINE',
 };
+
+// ─── Price and pay ────────────────────────────────────────────────────────────
+export type ScheduleTotals = { sessions: number; minutes: number; days: number };
+
+/** How many units of the basis a schedule bills: hours, sessions or distinct class days. */
+export function billableUnits(basis: RateBasis, totals: ScheduleTotals): number {
+  if (basis === 'per_session') return totals.sessions;
+  if (basis === 'per_day') return totals.days;
+  return Math.round((totals.minutes / 60) * 100) / 100;
+}
+
+/** "12 sessions", "1.5 hours", "1 day". */
+export function unitsLabel(units: number, basis: RateBasis): string {
+  const { unit } = getRateBasis(basis);
+  const count = Number.isInteger(units) ? String(units) : String(Number(units.toFixed(2)));
+  return `${count} ${unit}${units === 1 ? '' : 's'}`;
+}
+
+export type PriceAndPayIssue = { message: string; incomplete: boolean };
+
+/** The first reason a sale price and instructor pay can't be saved, or null when they can. */
+export function priceAndPayIssue({
+  salePrice,
+  instructorPay,
+  approvedRate,
+  basis,
+  currency,
+}: {
+  salePrice: string;
+  instructorPay: string;
+  approvedRate?: number | null;
+  basis: RateBasis;
+  currency?: string | null;
+}): PriceAndPayIssue | null {
+  const sale = num(salePrice);
+  const pay = num(instructorPay);
+  const issue = (message: string, incomplete = false) => ({ message, incomplete });
+  if (sale === undefined) return issue('Enter the sale price and instructor pay.', true);
+  if (sale <= 0) return issue('Sale price must be above zero.');
+  if (typeof approvedRate === 'number' && sale < approvedRate) {
+    const floor = `${formatRateAmount(approvedRate, currency)} ${formatRateBasis(basis)}`;
+    return issue(`Sale price is below your approved rate of ${floor}.`);
+  }
+  if (pay === undefined) return issue('Enter the instructor pay.', true);
+  if (pay <= 0) return issue('Instructor pay must be above zero.');
+  if (pay > sale) return issue('Instructor pay cannot exceed the sale price.');
+  return null;
+}
 
 // ─── Days ─────────────────────────────────────────────────────────────────────
 export const DAYS = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'] as const;
@@ -398,6 +496,77 @@ export function computeSessionWindows(
     if (out.length > 500) break;
   }
   return out.sort((a, b) => a.start.getTime() - b.start.getTime());
+}
+
+const INACTIVE_DAY: DayRow = { active: false, start: '09:00', end: '10:00', allDay: false };
+
+/** Every session a schedule creates, in date order, whichever way it was laid out. */
+export function scheduledSessions({
+  mode,
+  startDate,
+  endDate,
+  days,
+  pickedDates,
+  sessionStart,
+  sessionEnd,
+  periods,
+}: {
+  mode: ScheduleMode;
+  startDate: string;
+  endDate: string;
+  days: Record<DayKey, DayRow>;
+  pickedDates: Date[];
+  sessionStart: string;
+  sessionEnd: string;
+  periods: AcademicPeriod[];
+}): UpcomingSession[] {
+  if (mode === 'standard') return computeUpcomingSessions(startDate, endDate, days);
+  if (mode === 'pick') {
+    const minutes = sessionMinutesFor(sessionStart, sessionEnd);
+    if (minutes === undefined) return [];
+    return computePickedSessions(pickedDates, sessionStart, sessionEnd, minutes);
+  }
+  const sessions = periods.flatMap(period =>
+    period.slots.flatMap(slot => {
+      const slotDays = Object.fromEntries(DAYS.map(day => [day, INACTIVE_DAY])) as Record<
+        DayKey,
+        DayRow
+      >;
+      slotDays[slot.day] = { active: true, start: slot.start, end: slot.end, allDay: false };
+      return computeUpcomingSessions(period.startDate, period.endDate, slotDays);
+    })
+  );
+  return sessions.sort((a, b) => a.date.getTime() - b.date.getTime());
+}
+
+function computePickedSessions(
+  pickedDates: Date[],
+  start: string,
+  end: string,
+  minutes: number
+): UpcomingSession[] {
+  const [hours = 0, mins = 0] = start.split(':').map(Number);
+  return pickedDates
+    .map(picked => {
+      const date = new Date(picked);
+      date.setHours(hours, mins, 0, 0);
+      const label = date.toLocaleDateString(undefined, {
+        weekday: 'short',
+        month: 'short',
+        day: 'numeric',
+      });
+      return { date, label, time: `${start}–${end}`, minutes };
+    })
+    .sort((a, b) => a.date.getTime() - b.date.getTime());
+}
+
+/** Session count, scheduled minutes and distinct class days of a session list. */
+export function scheduleTotals(sessions: UpcomingSession[]): ScheduleTotals {
+  return {
+    sessions: sessions.length,
+    minutes: sessions.reduce((sum, session) => sum + session.minutes, 0),
+    days: new Set(sessions.map(session => session.date.toDateString())).size,
+  };
 }
 
 export function fmtTime12(hhmm: string) {

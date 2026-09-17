@@ -34,6 +34,8 @@ import { type FormEvent, useEffect, useMemo, useState } from 'react';
 import { toast } from 'sonner';
 import {
   AcademicPeriodsPanel,
+  BillingBasisCards,
+  basisStatus,
   ClassMediaUpload,
   LocationVenue,
   type MediaFile,
@@ -2426,16 +2428,30 @@ const InstructorClassCreationPage = () => {
           titlePlaceholder='Enter a class title'
         />
 
+        <BillingBasisCards
+          value={rateBasis}
+          onChange={setRateBasis}
+          statusFor={basis =>
+            basisStatus(
+              rateCard as ApprovedRateCard | undefined,
+              null,
+              normalizeLocationType(classDetails.location_type) as 'ONLINE' | 'IN_PERSON' | 'HYBRID',
+              basis
+            )
+          }
+        />
+
         <ServiceCards
           value={serviceKey}
           onChange={handleServiceChange}
           rateCard={rateCard as ApprovedRateCard | undefined}
           delivery={normalizeLocationType(classDetails.location_type) as 'ONLINE' | 'IN_PERSON' | 'HYBRID'}
-          rateBasis={rateBasis}
+          basis={rateBasis}
         />
 
         <PricingCapacity
-          approvedFee={approvedRate}
+          basis={rateBasis}
+          approvedRate={approvedRate}
           currency={rateCard?.currency}
           salePrice={salePrice}
           onSalePriceChange={setSalePrice}
@@ -2447,11 +2463,11 @@ const InstructorClassCreationPage = () => {
           }
           allowWaitlist={allowWaitlist}
           onAllowWaitlistChange={setAllowWaitlist}
-          totalSessions={sessionsForConflictCheck.length}
-          totalMinutes={totalHours * 60}
-          totalDays={totalDays}
-          rateBasis={rateBasis}
-          onRateBasisChange={setRateBasis}
+          totals={{
+            sessions: sessionsForConflictCheck.length,
+            minutes: totalHours * 60,
+            days: totalDays,
+          }}
         />
 
         <LocationVenue

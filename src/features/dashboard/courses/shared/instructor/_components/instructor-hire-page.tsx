@@ -457,8 +457,8 @@ export default function InstructorHirePage({ courseId, instructorId }: Props) {
       )
     );
 
-  const handleServiceChange = (next: string) => {
-    setServiceKey(next as typeof serviceKey);
+  const handleServiceChange = (next: typeof serviceKey) => {
+    setServiceKey(next);
     setDelivery(next === 'private-online' || next === 'online' ? 'ONLINE' : delivery);
   };
 
@@ -629,7 +629,7 @@ export default function InstructorHirePage({ courseId, instructorId }: Props) {
                 onChange={handleServiceChange}
                 rateCard={rateCard}
                 delivery={delivery}
-                rateBasis={rateBasis}
+                basis={rateBasis}
               />
             </div>
           </section>

@@ -1,80 +1,73 @@
 'use client';
 
-import { Label } from '@/components/ui/label';
-import { rateFor } from '@/lib/rate-card';
-import { cn } from '@/lib/utils';
 import {
-  type ApprovedRateCard,
-  DEFAULT_RATE_BASIS,
-  formatMoney,
+  type DeliveryMode,
+  formatRate,
   type RateBasis,
-  rateBasisUnit,
-  SERVICES,
-  type ServiceKey,
-} from './class-form-shared';
+  type RateCard,
+  rateFor,
+} from '@/lib/rate-card';
+import { ChoiceCard } from './choice-card';
+import { type ServiceKey, servicesFor } from './class-form-shared';
 
+/** The delivery's two services, each priced from the one rate card cell it bills at. */
 export function ServiceCards({
   value,
   onChange,
   rateCard,
   delivery,
-  rateBasis = DEFAULT_RATE_BASIS,
+  basis,
 }: {
-  value: ServiceKey;
-  onChange: (v: ServiceKey) => void;
-  rateCard?: ApprovedRateCard;
-  delivery: 'IN_PERSON' | 'ONLINE' | 'HYBRID';
-  rateBasis?: RateBasis;
+  value: ServiceKey | null;
+  onChange: (service: ServiceKey) => void;
+  rateCard?: RateCard | null;
+  delivery: DeliveryMode;
+  basis: RateBasis | null;
 }) {
-  const unit = rateBasisUnit(rateBasis);
+  const online = delivery === 'ONLINE';
+
   return (
-    <div className='space-y-3'>
-      <Label className='text-sm font-medium'>Select Service</Label>
-      <div className='grid gap-3 sm:grid-cols-2 lg:grid-cols-4'>
-        {SERVICES.map(s => {
-          const selected = value === s.key;
-          const rate = rateFor(rateCard, { format: s.format, delivery, basis: rateBasis });
-          return (
-            <button
-              key={s.key}
-              type='button'
-              onClick={() => onChange(s.key)}
-              className={cn(
-                'rounded-lg border p-3 text-left transition-all',
-                selected
-                  ? 'border-primary bg-primary/5 ring-primary/25 ring-2'
-                  : 'border-border hover:border-primary/40'
-              )}
-            >
-              <div className='flex items-start gap-2'>
-                <span
-                  className={cn(
-                    'mt-0.5 flex h-4 w-4 shrink-0 items-center justify-center rounded-full border-2',
-                    selected ? 'border-primary' : 'border-muted-foreground/40'
-                  )}
-                >
-                  {selected && <span className='bg-primary h-2 w-2 rounded-full' />}
-                </span>
-                <div className='min-w-0'>
-                  <div className='text-sm leading-tight font-medium'>{s.title}</div>
-                  {s.subtitle && <div className='text-muted-foreground text-xs'>{s.subtitle}</div>}
-                </div>
-              </div>
-              <div className='text-muted-foreground mt-3 text-xs'>
-                <span className='text-foreground font-medium'>
-                  {formatMoney(rate, rateCard?.currency)}
-                </span>{' '}
-                / {unit}
-              </div>
-            </button>
-          );
-        })}
-      </div>
-      <p className='text-muted-foreground text-[11px]'>
-        {rateCard
-          ? `Rates are the ones the course creator approved for your organisation, for your selected delivery mode and a per-${unit} contract.`
-          : 'Select an approved course or program to see the rates its creator approved.'}
+    <fieldset className='min-w-0 space-y-2'>
+      <legend className='text-foreground text-sm font-semibold'>Which service?</legend>
+      <p className='text-muted-foreground text-xs'>
+        {online
+          ? 'Online services, priced with your online rates.'
+          : 'In-person services, priced with your in-person rates.'}
       </p>
-    </div>
+      {basis ? (
+        <div role='radiogroup' aria-label='Service' className='grid gap-3 pt-1 sm:grid-cols-2'>
+          {servicesFor(delivery).map(service => {
+            const rate = rateFor(rateCard, { format: service.format, delivery, basis });
+            return (
+              <ChoiceCard
+                key={service.key}
+                title={service.title}
+                aside={<span className='text-muted-foreground text-xs'>{service.subtitle}</span>}
+                selected={value === service.key}
+                disabled={rate === null}
+                onSelect={() => onChange(service.key)}
+              >
+                <p className='text-muted-foreground pl-6 text-xs'>
+                  {rate === null ? (
+                    'Not on your rate card'
+                  ) : (
+                    <>
+                      <span className='text-foreground text-base font-semibold'>
+                        {formatRate(rate, basis, rateCard?.currency)}
+                      </span>{' '}
+                      per learner · your approved rate
+                    </>
+                  )}
+                </p>
+              </ChoiceCard>
+            );
+          })}
+        </div>
+      ) : (
+        <div className='border-border bg-muted/30 text-muted-foreground rounded-md border border-dashed px-4 py-5 text-center text-sm'>
+          Pick a billing basis on your rate card to see your services.
+        </div>
+      )}
+    </fieldset>
   );
 }

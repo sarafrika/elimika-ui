@@ -3,8 +3,10 @@
 // Shared types, catalogues, and pure helpers plus one component per section.
 
 export { AcademicPeriodsPanel } from './academic-periods-panel';
+export { BillingBasisCards } from './billing-basis-cards';
 export * from './class-form-shared';
 export { ClassMediaUpload, type MediaFile } from './class-media-upload';
+export { DeliveryCards, deliveryModeLabel } from './delivery-cards';
 export { type Delivery, LocationVenue } from './location-venue';
 export { type Offering, OfferingPicker } from './offering-picker';
 export { PickDatesPanel } from './pick-dates-panel';

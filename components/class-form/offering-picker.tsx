@@ -27,6 +27,13 @@ export type Offering = {
   categoryUuid?: string;
   /** Rates the course creator approved for this organisation on this offering. */
   rateCard?: ApprovedRateCard;
+  /** The approved training application the rate card belongs to. */
+  applicationUuid?: string;
+  /** Set while a rate update on that application awaits the creator. */
+  pendingRateUpdateUuid?: string | null;
+  /** Every offered rate must be at least this; courses only. */
+  minimumFee?: number | null;
+  creatorUuid?: string;
 };
 
 /**
