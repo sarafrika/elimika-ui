@@ -1,10 +1,10 @@
 'use client';
 
 import { Label } from '@/components/ui/label';
+import { rateFor } from '@/lib/rate-card';
 import { cn } from '@/lib/utils';
 import {
   type ApprovedRateCard,
-  approvedRateFor,
   DEFAULT_RATE_BASIS,
   formatMoney,
   type RateBasis,
@@ -33,7 +33,7 @@ export function ServiceCards({
       <div className='grid gap-3 sm:grid-cols-2 lg:grid-cols-4'>
         {SERVICES.map(s => {
           const selected = value === s.key;
-          const rate = approvedRateFor(rateCard, s.format, delivery, rateBasis);
+          const rate = rateFor(rateCard, { format: s.format, delivery, basis: rateBasis });
           return (
             <button
               key={s.key}

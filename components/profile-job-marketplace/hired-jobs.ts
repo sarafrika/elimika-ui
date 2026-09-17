@@ -1,5 +1,4 @@
-import { rateBasisShort } from '@/components/class-form/class-form-shared';
-import { formatCurrency } from '@/lib/format-currency';
+import { formatRate } from '@/lib/rate-card';
 import type { ClassMarketplaceJob, ClassRecurrence } from '@/services/client';
 import { formatDateOnly } from '@/lib/date';
 import { isClassCreatedStatus } from './application-status';
@@ -33,10 +32,7 @@ export function jobLabel(value?: string | null) {
 
 export function jobPay(job: ClassMarketplaceJob) {
   if (typeof job.instructor_pay !== 'number') return 'Not set';
-  const amount = formatCurrency(job.instructor_pay);
-  return job.rate_basis
-    ? `${amount} / ${rateBasisShort(job.rate_basis)}`
-    : `${amount} (rate basis not set)`;
+  return formatRate(job.instructor_pay, job.rate_basis);
 }
 
 export function recurrenceLabel(recurrence?: ClassRecurrence) {

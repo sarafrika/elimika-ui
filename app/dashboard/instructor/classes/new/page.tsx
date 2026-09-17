@@ -7,7 +7,6 @@ import {
   type AcademicPeriod,
   apiCalendarDay,
   type ApprovedRateCard,
-  approvedRateFor,
   type DayKey,
   type DayRow,
   DEFAULT_RATE_BASIS,
@@ -20,6 +19,7 @@ import {
   validateRegistrationWindow,
 } from '@/components/class-form/class-form-shared';
 import { SchedulingConflictAlert } from '@/components/scheduling/scheduling-conflict-alert';
+import { rateFor } from '@/lib/rate-card';
 import { parseSchedulingConflicts, type SchedulingConflict } from '@/lib/scheduling-conflicts';
 import {
   type InstructorClassWithSchedule,
@@ -932,7 +932,7 @@ const InstructorClassCreationPage = () => {
     if (!rateCard || !classDetails.class_type || !classDetails.location_type) return undefined;
     const format = classDetails.class_type === 'PRIVATE' ? 'INDIVIDUAL' : 'GROUP';
     const delivery = classDetails.location_type === 'ONLINE' ? 'ONLINE' : 'IN_PERSON';
-    return approvedRateFor(rateCard as ApprovedRateCard, format, delivery, rateBasis);
+    return rateFor(rateCard as ApprovedRateCard, { format, delivery, basis: rateBasis }) ?? undefined;
   }, [classDetails.class_type, classDetails.location_type, rateCard, rateBasis]);
 
   const totalSessions = sessionsForConflictCheck.length || classData?.scheduled_session_count;
@@ -2126,12 +2126,12 @@ const InstructorClassCreationPage = () => {
     };
     const selected = serviceMap[value];
     const format = selected.classType === 'PRIVATE' ? 'INDIVIDUAL' : 'GROUP';
-    const price = approvedRateFor(
-      rateCard as ApprovedRateCard | undefined,
-      format,
-      selected.locationType,
-      rateBasis
-    );
+    const price =
+      rateFor(rateCard as ApprovedRateCard | undefined, {
+        format,
+        delivery: selected.locationType,
+        basis: rateBasis,
+      }) ?? undefined;
     handleServiceTypeChange(
       selected.serviceType,
       selected.classType,

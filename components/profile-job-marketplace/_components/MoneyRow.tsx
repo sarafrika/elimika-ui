@@ -1,5 +1,4 @@
-import { type RateBasis, rateBasisShort } from '@/components/class-form/class-form-shared';
-import { formatCurrency } from '@/lib/format-currency';
+import { formatRate, type RateBasis } from '@/lib/rate-card';
 import { cn } from '@/lib/utils';
 
 export function MoneyRow({
@@ -25,9 +24,7 @@ export function MoneyRow({
           emphasis ? 'text-lg font-semibold' : 'text-base font-medium'
         )}
       >
-        {value === null
-          ? 'Not specified'
-          : `${formatCurrency(value)} / ${rateBasisShort(rateBasis)}`}
+        {value === null ? 'Not specified' : formatRate(value, rateBasis)}
       </div>
     </div>
   );

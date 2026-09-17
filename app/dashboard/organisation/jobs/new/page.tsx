@@ -13,7 +13,6 @@ import {
   addDays,
   apiCalendarDay,
   calendarDayInput,
-  approvedRateFor,
   computeSessionWindows,
   computeUpcomingSessions,
   DAY_TOKEN,
@@ -70,6 +69,7 @@ import { extractEntity, extractPage } from '@/lib/api-helpers';
 import { normalizeScheduleTimeZone } from '@/lib/date';
 import { getErrorMessage } from '@/lib/error-utils';
 import { STALE_TIMES } from '@/lib/query-client';
+import { rateFor } from '@/lib/rate-card';
 import { parseSchedulingConflicts, type SchedulingConflict } from '@/lib/scheduling-conflicts';
 import type {
   Category,
@@ -270,7 +270,9 @@ export default function OrganisationPostJobPage() {
 
   const [rateBasis, setRateBasis] = useState<RateBasis>(DEFAULT_RATE_BASIS);
   const approvedFee = useMemo(
-    () => approvedRateFor(selectedOffering?.rateCard, sessionFormat, delivery, rateBasis),
+    () =>
+      rateFor(selectedOffering?.rateCard, { format: sessionFormat, delivery, basis: rateBasis }) ??
+      undefined,
     [selectedOffering, sessionFormat, delivery, rateBasis]
   );
   const [salePrice, setSalePrice] = useState('');

@@ -16,7 +16,7 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { Skeleton } from '@/components/ui/skeleton';
-import { formatCurrency } from '@/lib/format-currency';
+import { formatRate, type RateBasis } from '@/lib/rate-card';
 import type { ClassMarketplaceJobApplication, Instructor } from '@/services/client';
 import {
   APPLICATION_STATUSES,
@@ -90,6 +90,7 @@ export function ApplicationsListSection({
   instructorMap,
   isInstructorsLoading,
   jobInstructorPay,
+  jobRateBasis,
   jobStatus,
   applicantHref,
 }: {
@@ -97,6 +98,7 @@ export function ApplicationsListSection({
   instructorMap: Record<string, Instructor>;
   isInstructorsLoading: boolean;
   jobInstructorPay?: number | null;
+  jobRateBasis?: RateBasis | null;
   jobStatus?: string | null;
   applicantHref: (application: ClassMarketplaceJobApplication) => string;
 }) {
@@ -202,13 +204,13 @@ export function ApplicationsListSection({
                 <Badge variant='outline' className='rounded-md'>
                   Approved rate:{' '}
                   {typeof approvedRate === 'number'
-                    ? `${formatCurrency(approvedRate)} / session`
+                    ? formatRate(approvedRate, jobRateBasis)
                     : 'Not on rate card'}
                 </Badge>
                 <Badge variant='outline' className='rounded-md'>
                   Instructor pay:{' '}
                   {typeof jobInstructorPay === 'number'
-                    ? `${formatCurrency(jobInstructorPay)} / session`
+                    ? formatRate(jobInstructorPay, jobRateBasis)
                     : 'Not specified'}
                 </Badge>
                 {typeof approvedRate === 'number' &&

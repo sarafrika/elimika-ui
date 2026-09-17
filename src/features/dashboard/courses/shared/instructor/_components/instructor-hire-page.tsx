@@ -2,7 +2,6 @@
 
 import { ClassScheduleCalendar } from '@/app/class-invite/page';
 import {
-  approvedRateFor,
   computeUpcomingSessions,
   DEFAULT_DAYS,
   fmtDate,
@@ -48,6 +47,7 @@ import {
   searchTrainingApplicationsOptions,
 } from '@/services/client/@tanstack/react-query.gen';
 import type { ScheduledInstance } from '@/services/client/types.gen';
+import { formatRate, rateFor } from '@/lib/rate-card';
 import { allCourseTrainingRequirementsOptions } from '@/services/course-training-requirements';
 import { roleScopedDashboardPath } from '@/src/features/dashboard/lib/active-domain-storage';
 import { toAuthenticatedMediaUrl } from '@/src/lib/media-url';
@@ -388,7 +388,7 @@ export default function InstructorHirePage({ courseId, instructorId }: Props) {
   const rateBasis: RateBasis = 'per_hour';
   const serviceFormat =
     serviceKey === '1on1' || serviceKey === 'private-online' ? 'INDIVIDUAL' : 'GROUP';
-  const rate = approvedRateFor(rateCard, serviceFormat, delivery, rateBasis) ?? 0;
+  const rate = rateFor(rateCard, { format: serviceFormat, delivery, basis: rateBasis }) ?? 0;
 
   const upcomingSessions = useMemo(() => {
     if (scheduleMode === 'pick') {
@@ -849,7 +849,7 @@ export default function InstructorHirePage({ courseId, instructorId }: Props) {
                 <div className='flex justify-between'>
                   <span className='text-muted-foreground'>Rate</span>
                   <span className='font-medium'>
-                    {formatMoney(rate, rateCard?.currency)} / hour
+                    {formatRate(rate, rateBasis, rateCard?.currency)}
                   </span>
                 </div>
                 <div className='flex justify-between'>

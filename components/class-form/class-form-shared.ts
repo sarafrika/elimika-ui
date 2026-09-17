@@ -1,6 +1,7 @@
 // Shared types, catalogues, and pure helpers for the organisation create-class form.
 // Kept UI-free so every section component and the container page import from one place.
 import { scheduleTimeZoneOptions, toUtcIsoDateTime } from '@/lib/date';
+import type { RateBasis, RateCard } from '@/lib/rate-card';
 import type { User } from '@/services/client';
 
 // ─── Services (drive the session format; prices are display-only) ────────────
@@ -26,7 +27,7 @@ export const SERVICES: Service[] = [
   { key: 'private-online', title: 'Private Online Class', unit: 'class', format: 'INDIVIDUAL' },
 ];
 
-export type RateBasis = 'per_hour' | 'per_session' | 'per_day';
+export type { RateBasis } from '@/lib/rate-card';
 
 /**
  * What the money buys. `value` is the API contract and never changes, and the label stays a bare
@@ -76,46 +77,8 @@ export const rateBasisUnit = (basis?: RateBasis | null) => basisEntry(basis).uni
 export const rateBasisShort = (basis?: RateBasis | null) => basisEntry(basis).short;
 export const rateBasisLabel = (basis?: RateBasis | null) => basisEntry(basis).label;
 
-/**
- * The rate card the course creator approved on the training application, in each of the three
- * bases a job can be contracted in. These are the only fees an organisation may advertise at.
- */
-export type ApprovedRateCard = {
-  currency?: string | null;
-  private_online_hourly_rate?: number | null;
-  private_inperson_hourly_rate?: number | null;
-  group_online_hourly_rate?: number | null;
-  group_inperson_hourly_rate?: number | null;
-  private_online_session_rate?: number | null;
-  private_inperson_session_rate?: number | null;
-  group_online_session_rate?: number | null;
-  group_inperson_session_rate?: number | null;
-  private_online_daily_rate?: number | null;
-  private_inperson_daily_rate?: number | null;
-  group_online_daily_rate?: number | null;
-  group_inperson_daily_rate?: number | null;
-};
-
-/**
- * Picks the approved rate for a session format, delivery mode and contracted basis. Mirrors the
- * backend's `resolveRate`: online delivery uses the online rates, in-person and hybrid use
- * in-person. Undefined means the instructor has not priced that basis — not that it is free.
- */
-export const approvedRateFor = (
-  rateCard: ApprovedRateCard | undefined,
-  format: 'INDIVIDUAL' | 'GROUP',
-  delivery: 'IN_PERSON' | 'ONLINE' | 'HYBRID',
-  basis: RateBasis = DEFAULT_RATE_BASIS
-): number | undefined => {
-  if (!rateCard) return undefined;
-  const online = delivery === 'ONLINE';
-  const scope = format === 'INDIVIDUAL' ? 'private' : 'group';
-  const mode = online ? 'online' : 'inperson';
-  const suffix =
-    basis === 'per_session' ? 'session_rate' : basis === 'per_day' ? 'daily_rate' : 'hourly_rate';
-  const value = rateCard[`${scope}_${mode}_${suffix}` as keyof ApprovedRateCard];
-  return typeof value === 'number' ? value : undefined;
-};
+/** The rate card the course creator approved; read it with `rateFor` from `@/lib/rate-card`. */
+export type ApprovedRateCard = RateCard;
 
 export const formatMoney = (amount?: number | null, currency?: string | null) =>
   typeof amount === 'number' ? `${currency ?? 'KES'} ${amount.toLocaleString()}` : '—';

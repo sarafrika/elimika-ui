@@ -97,6 +97,7 @@ export function JobApplicantsPanel({
           instructorMap={instructorMap}
           isInstructorsLoading={isInstructorsLoading}
           jobInstructorPay={job?.instructor_pay}
+          jobRateBasis={job?.rate_basis}
           jobStatus={job?.status}
           applicantHref={applicantHref}
         />
