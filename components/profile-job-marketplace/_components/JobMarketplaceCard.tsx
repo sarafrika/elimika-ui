@@ -8,6 +8,7 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { formatRate } from '@/lib/rate-card';
 import type { ClassMarketplaceJob, Course, Instructor, Organisation, TrainingProgram } from '@/services/client/types.gen';
+import { deliveryLabel, serviceLabel } from '@/src/features/organisation/jobs/lib/job-stage';
 import { useOrganisationsByIds } from '../../../hooks/use-batched-lookups';
 import { jobPlaceLabel } from '../job-place';
 
@@ -98,8 +99,8 @@ function JobBadgeRow({
         <MetaBadge>Pay not specified</MetaBadge>
       )}
       <MetaBadge>{formatEnumLabel(job.class_visibility)}</MetaBadge>
-      <MetaBadge>{formatEnumLabel(job.session_format)}</MetaBadge>
-      <MetaBadge>{formatEnumLabel(job.location_type)}</MetaBadge>
+      <MetaBadge>{serviceLabel(job.service_type, job.session_format)}</MetaBadge>
+      <MetaBadge>{deliveryLabel(job.location_type)}</MetaBadge>
       <MetaBadge>{getDisplayOrganisationLabel(job, organisationName)}</MetaBadge>
       <MetaBadge>{getDisplayContentLabel(job, course, program)}</MetaBadge>
     </div>

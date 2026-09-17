@@ -82,53 +82,10 @@ export function basisStatus(
 
 export type { RateBasis } from '@/lib/rate-card';
 
-/**
- * What the money buys. `value` is the API contract and never changes, and the label stays a bare
- * "Per <unit>" because two class-form toasts read it into "a … rate" and the pickers sit under a
- * "Charged per" label; the description is where the nuance lives — what moves the price.
- */
-export const RATE_BASES: {
-  value: RateBasis;
-  label: string;
-  description: string;
-  unit: string;
-  short: string;
-}[] = [
-  {
-    value: 'per_hour',
-    label: 'Per hour',
-    description:
-      'Charged for every hour of contact time, so a 90-minute session bills an hour and a half.',
-    unit: 'hour',
-    short: 'hr',
-  },
-  {
-    value: 'per_session',
-    label: 'Per session',
-    description:
-      'Charged once for a session whatever its length, so a one-hour and a three-hour session cost the same.',
-    unit: 'session',
-    short: 'session',
-  },
-  {
-    value: 'per_day',
-    label: 'Per day',
-    description:
-      'Charged once for each day the class meets, however many sessions fall inside that day.',
-    unit: 'day',
-    short: 'day',
-  },
-];
-
+// Only the apply-to-train wizard still reads these; new code uses `@/lib/rate-card` directly.
+export { RATE_BASES } from '@/lib/rate-card';
 export const DEFAULT_RATE_BASIS: RateBasis = 'per_hour';
-const DEFAULT_RATE_BASIS_ENTRY = RATE_BASES[0]!;
-
-const basisEntry = (basis?: RateBasis | null) =>
-  RATE_BASES.find(b => b.value === basis) ?? DEFAULT_RATE_BASIS_ENTRY;
-
-export const rateBasisUnit = (basis?: RateBasis | null) => basisEntry(basis).unit;
-export const rateBasisShort = (basis?: RateBasis | null) => basisEntry(basis).short;
-export const rateBasisLabel = (basis?: RateBasis | null) => basisEntry(basis).label;
+export const rateBasisLabel = (basis?: RateBasis | null) => getRateBasis(basis).label;
 
 /** The rate card the course creator approved; read it with `rateFor` from `@/lib/rate-card`. */
 export type ApprovedRateCard = RateCard;

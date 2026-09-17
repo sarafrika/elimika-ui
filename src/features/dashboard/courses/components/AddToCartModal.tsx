@@ -1,6 +1,5 @@
 'use client';
 
-import { type RateBasis, rateBasisUnit } from '@/components/class-form';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import {
@@ -11,6 +10,7 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog';
 import Spinner from '@/components/ui/spinner';
+import { formatRate, formatRateAmount } from '@/lib/rate-card';
 import type { Course } from '@/services/client/types.gen';
 import { toAuthenticatedMediaUrl } from '@/src/lib/media-url';
 import type { BundledClass } from '../types';
@@ -82,11 +82,13 @@ export default function AddToCartModal({
             <div className='mt-4 flex flex-row items-center gap-2'>
               <div className='text-muted-foreground text-sm'>Price</div>
               <div className='text-foreground text-lg font-semibold'>
-                {cls?.sale_price ? `KES ${cls.sale_price}` : 'Free'}
+                {!cls?.sale_price
+                  ? 'Free'
+                  : cls.rate_basis
+                    ? formatRate(cls.sale_price, cls.rate_basis)
+                    : formatRateAmount(cls.sale_price)}
               </div>
-              <span className='text-sm'>
-                (per {rateBasisUnit(cls?.rate_basis as RateBasis)} per head)
-              </span>
+              {cls?.sale_price ? <span className='text-sm'>per learner</span> : null}
             </div>
 
             <div className='mt-3 flex flex-wrap items-center gap-2'>

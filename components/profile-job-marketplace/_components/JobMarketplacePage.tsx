@@ -37,15 +37,10 @@ import {
   StatCardSkeleton,
   StatusBadge,
 } from '@/app/dashboard/admin/_components/ui';
-import { type RateBasis, rateBasisUnit } from '@/components/class-form';
-import {
-  RATE_BASES
-} from '@/components/class-form/class-form-shared';
 import DeleteModal from '@/components/custom-modals/delete-modal';
 import { PageHeader as AdminPageHeader } from '@/components/dashboard';
 import { AsyncSection } from '@/components/data/async-section';
 import { PinnedPlaceCard } from '@/components/maps/pinned-place-card';
-import { SchedulingConflictAlert } from '@/components/scheduling/scheduling-conflict-alert';
 import {
   parseSchedulingConflicts,
   type SchedulingConflict,
@@ -74,8 +69,9 @@ import {
 import Spinner from '@/components/ui/spinner';
 import { Tabs, TabsContent } from '@/components/ui/tabs';
 import { Textarea } from '@/components/ui/textarea';
-import { formatCurrency } from '@/lib/format-currency';
+import { getErrorMessage } from '@/lib/error-utils';
 import { googleMapsUrl } from '@/lib/geocoding';
+import { formatRateAmount, formatRateBasis, RATE_BASES, type RateBasis } from '@/lib/rate-card';
 import { cn } from '@/lib/utils';
 import {
   applyToJobMutation,
@@ -109,6 +105,7 @@ import {
   editJobHref,
   jobHref,
 } from '@/src/features/organisation/jobs/lib/job-routes';
+import { deliveryLabel, serviceLabel } from '@/src/features/organisation/jobs/lib/job-stage';
 import { useUserProfile } from '@/src/features/profile/context/profile-context';
 
 import { useOrganisationsByIds } from '../../../hooks/use-batched-lookups';
@@ -118,6 +115,13 @@ import type { JobMarketplaceRole } from '../data';
 import { getJobMarketplaceRoleConfig } from '../data';
 import { getEffectiveJobStatus, hasJobStarted } from '../job-expiration';
 import { jobAddress, jobHasPin } from '../job-place';
+import {
+  applyGate,
+  JobEligibilityChecklist,
+  jobTermsSummary,
+  rateStandingFor,
+  usePendingRateUpdate,
+} from './JobEligibilityChecklist';
 import { JobCard } from './JobMarketplaceCard';
 import {
   JobListSkeleton,
@@ -356,11 +360,11 @@ function JobStatsRow({ job }: { job: ClassMarketplaceJob }) {
       columns={3}
       items={[
         {
-          label: `Pay per ${rateBasisUnit(job.rate_basis as RateBasis)}`,
+          label: job.rate_basis ? `Pay ${formatRateBasis(job.rate_basis)}` : 'Pay',
           value: (
             <span className='text-primary text-base font-bold'>
               {typeof job.instructor_pay === 'number'
-                ? formatCurrency(job.instructor_pay)
+                ? formatRateAmount(job.instructor_pay)
                 : 'Not specified'}
             </span>
           ),
@@ -536,7 +540,13 @@ function JobDetailsSheet({
   const startsAt = firstSchedule?.start_time;
   const endsAt = lastSchedule?.end_time;
 
-  const [applyConflicts, setApplyConflicts] = useState<SchedulingConflict[]>([]);
+  const [refused, setRefused] = useState<{
+    jobUuid: string;
+    conflicts: SchedulingConflict[];
+    message: string | null;
+  } | null>(null);
+  const refusal = refused && refused.jobUuid === jobUuid ? refused : null;
+  const applyConflicts = refusal?.conflicts ?? [];
   // Asked unconditionally now. This endpoint exists precisely to answer "can this instructor apply",
   // and gating it on the locally-cached application list meant an instructor whose application fell
   // outside that page was silently offered a fresh application the server would then reject.
@@ -553,34 +563,50 @@ function JobDetailsSheet({
   const canReapply =
     eligibility?.can_reapply ?? statusAllowsReapply(application?.status);
   const hasLiveApplication = alreadyApplied && !canReapply;
-  const isIneligible = Boolean(eligibility && !eligibility.eligible);
   const eligibilityScheduleConflicts = useMemo<SchedulingConflict[]>(() => {
     if (!eligibility || eligibility.schedule_clear !== false) return [];
     return toSchedulingConflicts(eligibility.schedule_conflicts);
   }, [eligibility]);
+
+  const pendingRate = usePendingRateUpdate({
+    job,
+    instructorUuid: instructor?.uuid,
+    creatorUuid: program?.course_creator_uuid ?? course?.course_creator_uuid,
+    enabled: open && eligibility?.rate_ok === false && eligibility.approved_rate == null,
+  });
+  const rateStanding = eligibility ? rateStandingFor(eligibility, pendingRate) : null;
+  const gate = applyGate(eligibility, rateStanding);
+  const isIneligible = gate.blocked;
 
   const applyMutation = useMutation({
     ...applyToJobMutation(),
     onSuccess: async () => {
       toast.success('Application submitted successfully.');
       setApplicationNote('');
+      setRefused(null);
       onOpenChange(false);
       await invalidateJobApplicationWorkflowQueries(queryClient);
     },
-    onError: error => {
+    onError: async (error, variables) => {
       const report = parseSchedulingConflicts(error);
-      if (report) {
-        setApplyConflicts(report.conflicts);
-        toast.error('Your schedule conflicts with sessions of this job.');
-        return;
-      }
-      toast.error(error instanceof Error ? error.message : 'Unable to apply for this posting.');
+      setRefused({
+        jobUuid: variables.path.jobUuid,
+        conflicts: report?.conflicts ?? [],
+        message: report ? null : getErrorMessage(error, 'Unable to apply for this job.'),
+      });
+      toast.error(
+        report
+          ? 'Your schedule conflicts with sessions of this job.'
+          : 'Your application was not submitted.'
+      );
+      await invalidateJobApplicationWorkflowQueries(queryClient);
     },
   });
 
   if (!job) return null;
 
   const sessionTemplateCount = job.session_templates?.length ?? 0;
+  const checksEligibility = job.status === 'open' && !isExpired && !hasLiveApplication;
 
   const handleApply = () => {
     if (!jobUuid) return;
@@ -609,10 +635,10 @@ function JobDetailsSheet({
             <div className='flex flex-wrap items-center gap-2'>
               <StatusBadge status={job.status} />
               <Badge variant='outline' className='rounded-md px-2.5 py-0.5 text-xs font-medium'>
-                {formatEnumLabel(job.session_format)}
+                {serviceLabel(job.service_type, job.session_format)}
               </Badge>
               <Badge variant='outline' className='rounded-md px-2.5 py-0.5 text-xs font-medium'>
-                {formatEnumLabel(job.location_type)}
+                {deliveryLabel(job.location_type)}
               </Badge>
             </div>
             <SheetTitle className='text-2xl tracking-tight'>
@@ -779,21 +805,11 @@ function JobDetailsSheet({
               </Button>
             </div>
           ) : (
-            <div className={cn('space-y-3', adminTheme.cardPadded)}>
-              <p className='border-primary/30 bg-primary/10 text-foreground rounded-md border p-3 text-sm'>
-                {typeof job.instructor_pay === 'number' ? (
-                  <>
-                    You will be paid{' '}
-                    <span className='text-primary font-bold'>
-                      {formatCurrency(job.instructor_pay)} per{' '}
-                      {rateBasisUnit(job.rate_basis as RateBasis)}
-                    </span>{' '}
-                    for this engagement.
-                  </>
-                ) : (
-                  'The organisation has not specified instructor pay for this posting.'
-                )}
-              </p>
+            <div className={cn('space-y-4', adminTheme.cardPadded)}>
+              <div className='space-y-1'>
+                <h3 className='text-foreground text-base font-semibold'>Can you apply?</h3>
+                <p className='text-muted-foreground text-sm'>{jobTermsSummary(job)}</p>
+              </div>
 
               {isExpired ? (
                 <p
@@ -806,31 +822,21 @@ function JobDetailsSheet({
                 </p>
               ) : null}
 
-              {isIneligible ? (
-                <div className='border-warning/60 bg-warning/10 text-foreground space-y-2 rounded-md border border-dashed p-3 text-sm'>
-                  <p>
-                    {eligibility?.reason ??
-                      'You are not currently eligible to apply for this posting.'}
-                  </p>
-                  {/* {eligibility && !eligibility.training_approved && job.course_uuid ? (
-                    <Button asChild variant='outline' size='sm'>
-                      <Link
-                        href={`/dashboard/apply-to-train/${job.course_uuid}?kind=course`}
-                      >
-                        Apply to train this course
-                      </Link>
-                    </Button>
-                  ) : null} */}
-                </div>
+              {checksEligibility ? (
+                <JobEligibilityChecklist
+                  job={job}
+                  eligibility={eligibility}
+                  rate={rateStanding}
+                  loading={eligibilityQuery.isLoading}
+                  error={eligibilityQuery.error}
+                  onRetry={() => eligibilityQuery.refetch()}
+                  conflicts={
+                    applyConflicts.length > 0 ? applyConflicts : eligibilityScheduleConflicts
+                  }
+                  timeZone={firstSchedule?.timezone}
+                  refusal={refusal?.message}
+                />
               ) : null}
-
-              <SchedulingConflictAlert
-                title='Sessions that clash with your existing schedule'
-                timeZone={firstSchedule?.timezone}
-                conflicts={
-                  applyConflicts.length > 0 ? applyConflicts : eligibilityScheduleConflicts
-                }
-              />
 
               <Label htmlFor='application-note' className='text-sm font-semibold'>
                 Application note
@@ -868,6 +874,7 @@ function JobDetailsSheet({
                     applyMutation.isPending ||
                     hasLiveApplication ||
                     isIneligible ||
+                    eligibilityQuery.isLoading ||
                     isExpired ||
                     job.status !== 'open'
                   }
@@ -883,6 +890,9 @@ function JobDetailsSheet({
                   Close
                 </Button>
               </div>
+              {checksEligibility && gate.hint ? (
+                <p className='text-muted-foreground text-sm'>{gate.hint}</p>
+              ) : null}
             </div>
           )}
         </div>

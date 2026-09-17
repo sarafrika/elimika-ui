@@ -30,6 +30,7 @@ import {
   INSTRUCTOR_UNAVAILABLE_REASON,
   JOB_HOLD_BLOCK_REASON,
 } from '@/lib/instructor-job-time';
+import { formatRate } from '@/lib/rate-card';
 import {
   blockInstructorTimeMutation,
   createBookingMutation,
@@ -1087,8 +1088,7 @@ export function EventModal({
                           <SelectContent>
                             {availableRateOptions.map(option => (
                               <SelectItem key={option.key} value={option.key}>
-                                {option.label} ({rates?.currency ?? 'KES'} {rates?.[option.key]}
-                                /hr)
+                                {`${option.label} (${formatRate(rates?.[option.key], 'per_hour', rates?.currency)})`}
                               </SelectItem>
                             ))}
                           </SelectContent>
