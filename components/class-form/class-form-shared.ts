@@ -82,11 +82,6 @@ export function basisStatus(
 
 export type { RateBasis } from '@/lib/rate-card';
 
-// Only the apply-to-train wizard still reads these; new code uses `@/lib/rate-card` directly.
-export { RATE_BASES } from '@/lib/rate-card';
-export const DEFAULT_RATE_BASIS: RateBasis = 'per_hour';
-export const rateBasisLabel = (basis?: RateBasis | null) => getRateBasis(basis).label;
-
 /** The rate card the course creator approved; read it with `rateFor` from `@/lib/rate-card`. */
 export type ApprovedRateCard = RateCard;
 
