@@ -1,5 +1,6 @@
 import { clearPrivateBffCacheForUser } from '@/lib/api/private-bff-cache';
 import NextAuth, { type NextAuthConfig } from 'next-auth';
+import type { JWT } from 'next-auth/jwt';
 import Keycloak from 'next-auth/providers/keycloak';
 
 /**
@@ -79,6 +80,64 @@ function getTokenCacheUserId(token: unknown): string | undefined {
   return getFirstString(typedToken.id, typedToken.email);
 }
 
+/**
+ * Swap the refresh token for a fresh access token. Without this an admin session dies
+ * quietly after an hour: the expired token is still sent and every call returns 401.
+ * On failure the session carries `RefreshAccessTokenError` so the UI can ask for a new
+ * sign-in instead of showing empty pages.
+ */
+async function refreshAccessToken(token: JWT): Promise<JWT> {
+  try {
+    const issuer = process.env.KEYCLOAK_ISSUER;
+    const clientId = process.env.KEYCLOAK_CLIENT_ID;
+    const clientSecret = process.env.KEYCLOAK_CLIENT_SECRET;
+    const refreshToken = token.refreshToken;
+
+    if (!issuer || !clientId || !clientSecret || typeof refreshToken !== 'string') {
+      return { ...token, error: 'RefreshAccessTokenError' };
+    }
+
+    const response = await fetch(`${issuer}/protocol/openid-connect/token`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+      body: new URLSearchParams({
+        grant_type: 'refresh_token',
+        client_id: clientId,
+        client_secret: clientSecret,
+        refresh_token: refreshToken,
+      }),
+    });
+
+    const refreshed = (await response.json()) as {
+      access_token?: string;
+      refresh_token?: string;
+      expires_in?: number;
+      id_token?: string;
+    };
+
+    if (!response.ok || !refreshed.access_token) {
+      return { ...token, error: 'RefreshAccessTokenError' };
+    }
+
+    const decoded = decodeJWT(refreshed.access_token);
+
+    return {
+      ...token,
+      accessToken: refreshed.access_token,
+      refreshToken: refreshed.refresh_token ?? refreshToken,
+      accessTokenExpires: Date.now() + (refreshed.expires_in ?? 300) * 1000,
+      id_token: refreshed.id_token ?? token.id_token,
+      realm_access: decoded.realm_access ?? token.realm_access,
+      resource_access: decoded.resource_access ?? token.resource_access,
+      organisation: decoded.organisation ?? token.organisation,
+      'organisation-slug': decoded['organisation-slug'] ?? token['organisation-slug'],
+      error: undefined,
+    };
+  } catch {
+    return { ...token, error: 'RefreshAccessTokenError' };
+  }
+}
+
 const config: NextAuthConfig = {
   session: { strategy: 'jwt' },
   providers: [
@@ -121,14 +180,13 @@ const config: NextAuthConfig = {
         };
       }
 
-      // Return previous token if the access token has not expired yet
-      if (Date.now() < (token.accessTokenExpires as number)) {
+      // Refresh a minute early so a call in flight never carries an expired token.
+      const expiresAt = token.accessTokenExpires as number | undefined;
+      if (typeof expiresAt === 'number' && Date.now() < expiresAt - 60_000) {
         return token;
       }
 
-      // Access token has expired, try to update it
-      // return refreshAccessToken(token)   <-- Commenting this out as per your request
-      return token; // Just return the existing token without refresh
+      return refreshAccessToken(token);
     },
     async session({ session, token }) {
       if (session.user) {

@@ -24,7 +24,12 @@ try {
   output = `${error.stdout ?? ''}${error.stderr ?? ''}`;
 }
 
-const count = (output.match(/error TS\d+/g) ?? []).length;
+// Generated route types under .next drift with the last build, so a repo with a warm
+// .next counts differently from a fresh checkout. Count source errors only.
+const sourceLines = output
+  .split('\n')
+  .filter(line => /error TS\d+/.test(line) && !line.startsWith('.next/'));
+const count = sourceLines.length;
 const ceiling = Number(fs.readFileSync(CEILING_FILE, 'utf8').trim());
 
 if (process.argv.includes('--update')) {
