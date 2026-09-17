@@ -165,7 +165,12 @@ export default function ApplyPage() {
     requirementsLoading: requirementsQuery.isLoading && requirementRowCount === 0,
     requirementsError: requirementsQuery.error,
     onRetryRequirements: () => void requirementsQuery.refetch(),
-    onSubmitted: () => router.push(applicationsHref),
+    onSubmitted: (applicationUuid: string | null) =>
+      router.push(
+        !isInstructorDomain && applicationUuid
+          ? dashboardUrl('organisation', `approvals/${applicationUuid}`)
+          : applicationsHref
+      ),
   };
 
   return (
@@ -244,7 +249,15 @@ export default function ApplyPage() {
                 description={`The ${kind} creator has already decided on it.`}
                 action={
                   <Button asChild variant='outline' size='sm'>
-                    <Link href={applicationsHref}>View your applications</Link>
+                    <Link
+                      href={
+                        isInstructorDomain
+                          ? applicationsHref
+                          : dashboardUrl('organisation', `approvals/${editingUuid}`)
+                      }
+                    >
+                      View application
+                    </Link>
                   </Button>
                 }
               />
