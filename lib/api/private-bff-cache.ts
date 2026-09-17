@@ -44,6 +44,22 @@ const textEncoder = new TextEncoder();
 
 let totalBytes = 0;
 
+/**
+ * Admin decision queues must never be answered from another admin's cache: two admins
+ * working the same inbox would see each other's cleared items linger. These paths are
+ * always fetched fresh.
+ */
+const NO_CACHE_PATH_PATTERNS = [
+  '/admin/courses/pending',
+  '/admin/dashboard/activity-feed',
+  '/admin/dashboard/statistics',
+  '/admin/organisations/pending',
+  '/admin/programs/pending',
+  '/admin/review-queue',
+  '/documents/search',
+  '/verification-status',
+];
+
 const LIVE_PATH_PATTERNS = [
   '/attendance',
   '/bookings',
@@ -122,8 +138,18 @@ export function buildPrivateBffCacheKey(
   return `${userId}:GET:${actingDomain ?? '-'}:${upstreamUrl.pathname}${upstreamUrl.search}`;
 }
 
+/** True when a response must not be served from this cache at all. */
+export function isPrivateBffCacheBypassed(upstreamUrl: URL) {
+  const pathname = upstreamUrl.pathname.toLowerCase();
+  return NO_CACHE_PATH_PATTERNS.some(pattern => pathname.includes(pattern));
+}
+
 export function getPrivateBffCacheTtlMs(upstreamUrl: URL) {
   const pathname = upstreamUrl.pathname.toLowerCase();
+
+  if (isPrivateBffCacheBypassed(upstreamUrl)) {
+    return 0;
+  }
 
   if (LIVE_PATH_PATTERNS.some(pattern => pathname.includes(pattern))) {
     return LIVE_FRESH_TTL_MS;
