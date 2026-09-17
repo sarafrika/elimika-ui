@@ -1491,11 +1491,6 @@ export const zQuizAttempt = z
       )
       .readonly()
       .optional(),
-    grade_display: z
-      .string()
-      .describe('**[READ-ONLY]** Formatted display of the grade information.')
-      .readonly()
-      .optional(),
     time_display: z
       .string()
       .describe('**[READ-ONLY]** Formatted display of the time taken to complete the quiz.')
@@ -1509,6 +1504,11 @@ export const zQuizAttempt = z
     performance_summary: z
       .string()
       .describe('**[READ-ONLY]** Comprehensive summary of the quiz attempt performance.')
+      .readonly()
+      .optional(),
+    grade_display: z
+      .string()
+      .describe('**[READ-ONLY]** Formatted display of the grade information.')
       .readonly()
       .optional(),
   })
@@ -5314,16 +5314,16 @@ export const zClassDefinition = z
       )
       .readonly()
       .optional(),
-    duration_formatted: z
-      .string()
-      .describe('**[READ-ONLY]** Human-readable formatted duration.')
-      .readonly()
-      .optional(),
     capacity_info: z
       .string()
       .describe(
         '**[READ-ONLY]** Human-readable capacity information including waitlist availability.'
       )
+      .readonly()
+      .optional(),
+    duration_formatted: z
+      .string()
+      .describe('**[READ-ONLY]** Human-readable formatted duration.')
       .readonly()
       .optional(),
   })
@@ -5643,16 +5643,6 @@ export const zCertificate = z
       )
       .readonly()
       .optional(),
-    grade_letter: z
-      .string()
-      .describe('**[READ-ONLY]** Letter grade representation of the final grade.')
-      .readonly()
-      .optional(),
-    validity_status: z
-      .string()
-      .describe('**[READ-ONLY]** Current validity status of the certificate.')
-      .readonly()
-      .optional(),
     certificate_type: z
       .string()
       .describe('**[READ-ONLY]** Type of certificate based on completion achievement.')
@@ -5661,6 +5651,16 @@ export const zCertificate = z
     is_downloadable: z
       .boolean()
       .describe('**[READ-ONLY]** Indicates if the certificate can be downloaded by the student.')
+      .readonly()
+      .optional(),
+    grade_letter: z
+      .string()
+      .describe('**[READ-ONLY]** Letter grade representation of the final grade.')
+      .readonly()
+      .optional(),
+    validity_status: z
+      .string()
+      .describe('**[READ-ONLY]** Current validity status of the certificate.')
       .readonly()
       .optional(),
   })
@@ -8419,7 +8419,7 @@ export const zClassMarketplaceJobDecisionRequest = z
   );
 
 /**
- * Request payload for creating a booking for an instructor and course
+ * Request payload for creating a booking for an instructor and course. The server prices it from the instructor's approved rate card for the chosen format, delivery and basis.
  */
 export const zCreateBookingRequest = z
   .object({
@@ -8428,11 +8428,14 @@ export const zCreateBookingRequest = z
     instructor_uuid: z.string().uuid().describe('UUID of the instructor for the session'),
     start_time: z.string().datetime().describe('Start time for the requested session'),
     end_time: z.string().datetime().describe('End time for the requested session'),
-    price_amount: z.number().gte(0).describe('Agreed price for the session').optional(),
-    currency: z
+    training_format: zSessionFormatEnum,
+    delivery_mode: zLocationTypeEnum,
+    rate_basis: zRateBasisEnum2,
+    timezone: z
       .string()
-      .regex(/^[A-Za-z]{3}$/)
-      .describe('ISO currency code (e.g., USD, KES)')
+      .describe(
+        'IANA timezone deciding the class day a per-day rate is charged on. Defaults to UTC.'
+      )
       .optional(),
     purpose: z
       .string()
@@ -8441,7 +8444,9 @@ export const zCreateBookingRequest = z
       .describe('Optional purpose or note for this booking')
       .optional(),
   })
-  .describe('Request payload for creating a booking for an instructor and course');
+  .describe(
+    "Request payload for creating a booking for an instructor and course. The server prices it from the instructor's approved rate card for the chosen format, delivery and basis."
+  );
 
 /**
  * Current status of the booking
@@ -8471,8 +8476,18 @@ export const zBookingResponse = z
     start_time: z.string().datetime().describe('Start time for the session'),
     end_time: z.string().datetime().describe('End time for the session'),
     status: zStatusEnum16,
-    price_amount: z.number().describe('Price amount agreed for the booking').optional(),
+    price_amount: z
+      .number()
+      .describe('Price charged for the booking, computed by the server from the approved rate')
+      .optional(),
     currency: z.string().describe('ISO currency code for the booking price').optional(),
+    rate_basis: zRateBasisEnum2.optional(),
+    training_format: zSessionFormatEnum.optional(),
+    delivery_mode: zLocationTypeEnum.optional(),
+    unit_rate: z
+      .number()
+      .describe('The approved rate, in its basis, the price was computed from')
+      .optional(),
     payment_session_id: z
       .string()
       .describe('Payment session identifier from the payment engine')
@@ -10504,6 +10519,13 @@ export const zInstructorStudentPage = z
       .array(zInstructorClassOption)
       .describe(
         "Every class of the organisation's the instructor has students in, whatever the filters"
+      )
+      .readonly()
+      .optional(),
+    student_count: z.coerce
+      .bigint()
+      .describe(
+        'Distinct students across every class in class_options, whatever the filters; metadata.totalElements counts student-per-class rows instead'
       )
       .readonly()
       .optional(),

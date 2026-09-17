@@ -22516,7 +22516,7 @@ export const listInstructorStudentsQueryKey = (options: Options<ListInstructorSt
 
 /**
  * List the students an instructor teaches in the organisation's classes
- * One row per student per class, for classes the organisation owns and the instructor is instructor of record for. Only managers of the organisation (and platform admins) may ask; class_options lists every such class with students, whatever the filters.
+ * One row per student per class, for classes the organisation owns and the instructor is instructor of record for. Only managers of the organisation (and platform admins) may ask; class_options lists every such class with students and student_count the distinct students across them, whatever the filters.
  */
 export const listInstructorStudentsOptions = (options: Options<ListInstructorStudentsData>) => {
   return queryOptions({
@@ -22540,7 +22540,7 @@ export const listInstructorStudentsInfiniteQueryKey = (
 
 /**
  * List the students an instructor teaches in the organisation's classes
- * One row per student per class, for classes the organisation owns and the instructor is instructor of record for. Only managers of the organisation (and platform admins) may ask; class_options lists every such class with students, whatever the filters.
+ * One row per student per class, for classes the organisation owns and the instructor is instructor of record for. Only managers of the organisation (and platform admins) may ask; class_options lists every such class with students and student_count the distinct students across them, whatever the filters.
  */
 export const listInstructorStudentsInfiniteOptions = (
   options: Options<ListInstructorStudentsData>

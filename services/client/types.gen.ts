@@ -1126,10 +1126,6 @@ export type QuizAttempt = {
    */
   readonly is_completed?: boolean;
   /**
-   * **[READ-ONLY]** Formatted display of the grade information.
-   */
-  readonly grade_display?: string;
-  /**
    * **[READ-ONLY]** Formatted display of the time taken to complete the quiz.
    */
   readonly time_display?: string;
@@ -1141,6 +1137,10 @@ export type QuizAttempt = {
    * **[READ-ONLY]** Comprehensive summary of the quiz attempt performance.
    */
   readonly performance_summary?: string;
+  /**
+   * **[READ-ONLY]** Formatted display of the grade information.
+   */
+  readonly grade_display?: string;
 };
 
 /**
@@ -4206,13 +4206,13 @@ export type ClassDefinition = {
    */
   readonly duration_minutes?: bigint;
   /**
-   * **[READ-ONLY]** Human-readable formatted duration.
-   */
-  readonly duration_formatted?: string;
-  /**
    * **[READ-ONLY]** Human-readable capacity information including waitlist availability.
    */
   readonly capacity_info?: string;
+  /**
+   * **[READ-ONLY]** Human-readable formatted duration.
+   */
+  readonly duration_formatted?: string;
 };
 
 /**
@@ -4603,14 +4603,6 @@ export type Certificate = {
    */
   readonly updated_by?: string;
   /**
-   * **[READ-ONLY]** Letter grade representation of the final grade.
-   */
-  readonly grade_letter?: string;
-  /**
-   * **[READ-ONLY]** Current validity status of the certificate.
-   */
-  readonly validity_status?: string;
-  /**
    * **[READ-ONLY]** Type of certificate based on completion achievement.
    */
   readonly certificate_type?: string;
@@ -4618,6 +4610,14 @@ export type Certificate = {
    * **[READ-ONLY]** Indicates if the certificate can be downloaded by the student.
    */
   readonly is_downloadable?: boolean;
+  /**
+   * **[READ-ONLY]** Letter grade representation of the final grade.
+   */
+  readonly grade_letter?: string;
+  /**
+   * **[READ-ONLY]** Current validity status of the certificate.
+   */
+  readonly validity_status?: string;
 };
 
 export type ApiResponseCertificate = {
@@ -7400,7 +7400,7 @@ export type ClassMarketplaceJobDecisionRequest = {
 };
 
 /**
- * Request payload for creating a booking for an instructor and course
+ * Request payload for creating a booking for an instructor and course. The server prices it from the instructor's approved rate card for the chosen format, delivery and basis.
  */
 export type CreateBookingRequest = {
   /**
@@ -7423,14 +7423,13 @@ export type CreateBookingRequest = {
    * End time for the requested session
    */
   end_time: Date;
+  training_format: SessionFormatEnum;
+  delivery_mode: LocationTypeEnum;
+  rate_basis: RateBasisEnum2;
   /**
-   * Agreed price for the session
+   * IANA timezone deciding the class day a per-day rate is charged on. Defaults to UTC.
    */
-  price_amount?: number;
-  /**
-   * ISO currency code (e.g., USD, KES)
-   */
-  currency?: string;
+  timezone?: string;
   /**
    * Optional purpose or note for this booking
    */
@@ -7474,13 +7473,20 @@ export type BookingResponse = {
   end_time: Date;
   status: StatusEnum16;
   /**
-   * Price amount agreed for the booking
+   * Price charged for the booking, computed by the server from the approved rate
    */
   price_amount?: number;
   /**
    * ISO currency code for the booking price
    */
   currency?: string;
+  rate_basis?: RateBasisEnum2;
+  training_format?: SessionFormatEnum;
+  delivery_mode?: LocationTypeEnum;
+  /**
+   * The approved rate, in its basis, the price was computed from
+   */
+  unit_rate?: number;
   /**
    * Payment session identifier from the payment engine
    */
@@ -9397,6 +9403,10 @@ export type InstructorStudentPage = {
    * Every class of the organisation's the instructor has students in, whatever the filters
    */
   readonly class_options?: Array<InstructorClassOption>;
+  /**
+   * Distinct students across every class in class_options, whatever the filters; metadata.totalElements counts student-per-class rows instead
+   */
+  readonly student_count?: bigint;
 };
 
 export type ApiResponsePagedDtoInstructorObligation = {

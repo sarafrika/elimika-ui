@@ -2264,12 +2264,6 @@ export const QuizAttemptSchema = {
       example: true,
       readOnly: true,
     },
-    grade_display: {
-      type: 'string',
-      description: '**[READ-ONLY]** Formatted display of the grade information.',
-      example: '85.00 / 100.00 (85%)',
-      readOnly: true,
-    },
     time_display: {
       type: 'string',
       description: '**[READ-ONLY]** Formatted display of the time taken to complete the quiz.',
@@ -2286,6 +2280,12 @@ export const QuizAttemptSchema = {
       type: 'string',
       description: '**[READ-ONLY]** Comprehensive summary of the quiz attempt performance.',
       example: 'Passed on attempt 2 with 85% score',
+      readOnly: true,
+    },
+    grade_display: {
+      type: 'string',
+      description: '**[READ-ONLY]** Formatted display of the grade information.',
+      example: '85.00 / 100.00 (85%)',
       readOnly: true,
     },
   },
@@ -8686,17 +8686,17 @@ conflict_resolution per template:
       example: 90,
       readOnly: true,
     },
-    duration_formatted: {
-      type: 'string',
-      description: '**[READ-ONLY]** Human-readable formatted duration.',
-      example: '1h 30m',
-      readOnly: true,
-    },
     capacity_info: {
       type: 'string',
       description:
         '**[READ-ONLY]** Human-readable capacity information including waitlist availability.',
       example: 'Max 25 participants (waitlist enabled)',
+      readOnly: true,
+    },
+    duration_formatted: {
+      type: 'string',
+      description: '**[READ-ONLY]** Human-readable formatted duration.',
+      example: '1h 30m',
       readOnly: true,
     },
   },
@@ -9520,18 +9520,6 @@ export const CertificateSchema = {
       example: 'system',
       readOnly: true,
     },
-    grade_letter: {
-      type: 'string',
-      description: '**[READ-ONLY]** Letter grade representation of the final grade.',
-      example: 'B+',
-      readOnly: true,
-    },
-    validity_status: {
-      type: 'string',
-      description: '**[READ-ONLY]** Current validity status of the certificate.',
-      example: 'Valid Certificate',
-      readOnly: true,
-    },
     certificate_type: {
       type: 'string',
       description: '**[READ-ONLY]** Type of certificate based on completion achievement.',
@@ -9542,6 +9530,18 @@ export const CertificateSchema = {
       type: 'boolean',
       description: '**[READ-ONLY]** Indicates if the certificate can be downloaded by the student.',
       example: true,
+      readOnly: true,
+    },
+    grade_letter: {
+      type: 'string',
+      description: '**[READ-ONLY]** Letter grade representation of the final grade.',
+      example: 'B+',
+      readOnly: true,
+    },
+    validity_status: {
+      type: 'string',
+      description: '**[READ-ONLY]** Current validity status of the certificate.',
+      example: 'Valid Certificate',
       readOnly: true,
     },
   },
@@ -14289,7 +14289,8 @@ export const ClassMarketplaceJobDecisionRequestSchema = {
 
 export const CreateBookingRequestSchema = {
   type: 'object',
-  description: 'Request payload for creating a booking for an instructor and course',
+  description:
+    "Request payload for creating a booking for an instructor and course. The server prices it from the instructor's approved rate card for the chosen format, delivery and basis.",
   properties: {
     student_uuid: {
       type: 'string',
@@ -14316,17 +14317,20 @@ export const CreateBookingRequestSchema = {
       format: 'date-time',
       description: 'End time for the requested session',
     },
-    price_amount: {
-      type: 'number',
-      description: 'Agreed price for the session',
-      example: 50,
-      minimum: 0,
+    training_format: {
+      $ref: '#/components/schemas/SessionFormatEnum',
     },
-    currency: {
+    delivery_mode: {
+      $ref: '#/components/schemas/LocationTypeEnum',
+    },
+    rate_basis: {
+      $ref: '#/components/schemas/RateBasisEnum2',
+    },
+    timezone: {
       type: 'string',
-      description: 'ISO currency code (e.g., USD, KES)',
-      example: 'USD',
-      pattern: '^[A-Za-z]{3}$',
+      description:
+        'IANA timezone deciding the class day a per-day rate is charged on. Defaults to UTC.',
+      example: 'Africa/Nairobi',
     },
     purpose: {
       type: 'string',
@@ -14335,7 +14339,16 @@ export const CreateBookingRequestSchema = {
       minLength: 0,
     },
   },
-  required: ['course_uuid', 'end_time', 'instructor_uuid', 'start_time', 'student_uuid'],
+  required: [
+    'course_uuid',
+    'delivery_mode',
+    'end_time',
+    'instructor_uuid',
+    'rate_basis',
+    'start_time',
+    'student_uuid',
+    'training_format',
+  ],
 } as const;
 
 export const ApiResponseBookingResponseSchema = {
@@ -14393,11 +14406,24 @@ export const BookingResponseSchema = {
     },
     price_amount: {
       type: 'number',
-      description: 'Price amount agreed for the booking',
+      description: 'Price charged for the booking, computed by the server from the approved rate',
     },
     currency: {
       type: 'string',
       description: 'ISO currency code for the booking price',
+    },
+    rate_basis: {
+      $ref: '#/components/schemas/RateBasisEnum2',
+    },
+    training_format: {
+      $ref: '#/components/schemas/SessionFormatEnum',
+    },
+    delivery_mode: {
+      $ref: '#/components/schemas/LocationTypeEnum',
+    },
+    unit_rate: {
+      type: 'number',
+      description: 'The approved rate, in its basis, the price was computed from',
     },
     payment_session_id: {
       type: 'string',
@@ -18406,6 +18432,13 @@ export const InstructorStudentPageSchema = {
       items: {
         $ref: '#/components/schemas/InstructorClassOption',
       },
+      readOnly: true,
+    },
+    student_count: {
+      type: 'integer',
+      format: 'int64',
+      description:
+        'Distinct students across every class in class_options, whatever the filters; metadata.totalElements counts student-per-class rows instead',
       readOnly: true,
     },
   },

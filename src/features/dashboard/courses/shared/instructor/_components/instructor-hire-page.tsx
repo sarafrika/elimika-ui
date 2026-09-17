@@ -489,17 +489,6 @@ export default function InstructorHirePage({ courseId, instructorId }: Props) {
     }
   };
 
-  // A per-day rate is charged once for each class day, on that day's first session.
-  const sessionPrice = (session: { date: Date; minutes: number }, index: number) => {
-    if (!rate || !rateBasis) return 0;
-    if (rateBasis === 'per_session') return rate;
-    if (rateBasis === 'per_hour') return (session.minutes / 60) * rate;
-    const day = session.date.toDateString();
-    return upcomingSessions.findIndex(other => other.date.toDateString() === day) === index
-      ? rate
-      : 0;
-  };
-
   const handleSubmit = async () => {
     if (!student?.uuid) return toast.error('Student profile is required before booking.');
     if (selectedProgram) return toast.error('Program booking is not available yet.');
@@ -525,7 +514,7 @@ export default function InstructorHirePage({ courseId, instructorId }: Props) {
     if (!termsOk) return toast.error('Confirm that you agree to the schedule and booking terms.');
     try {
       const createdBookings: Array<{ uuid: string }> = [];
-      for (const [index, session] of upcomingSessions.entries()) {
+      for (const session of upcomingSessions) {
         const [startText, endText] =
           session.time === 'All day'
             ? ['00:00', '23:59']
@@ -540,8 +529,10 @@ export default function InstructorHirePage({ courseId, instructorId }: Props) {
             instructor_uuid: instructorId,
             start_time: start,
             end_time: end,
-            price_amount: sessionPrice(session, index),
-            currency: rateCard?.currency ?? 'KES',
+            training_format: serviceFormat(serviceKey),
+            delivery_mode: delivery,
+            rate_basis: rateBasis,
+            timezone,
             purpose: [
               `Instructor hire for ${selectedCourse?.name ?? 'course'}`,
               `Service: ${getService(serviceKey)?.title}`,
@@ -913,6 +904,13 @@ export default function InstructorHirePage({ courseId, instructorId }: Props) {
               </div>
               <Separator />
 
+              <p className='text-muted-foreground text-xs'>
+                The total is an estimate: each session is priced from the instructor&apos;s approved
+                rate when the request is sent.
+                {rateBasis === 'per_day'
+                  ? ' A class day you have already booked with this instructor is not charged again.'
+                  : null}
+              </p>
               <p className='text-muted-foreground text-xs'>
                 A booking request will be sent to the instructor. Payment is only requested after
                 the booking is accepted.

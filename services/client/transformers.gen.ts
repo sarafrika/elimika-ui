@@ -6401,6 +6401,9 @@ const instructorStudentPageSchemaResponseTransformer = (data: any) => {
   if (data.metadata) {
     data.metadata = pageMetadataSchemaResponseTransformer(data.metadata);
   }
+  if (data.student_count) {
+    data.student_count = BigInt(data.student_count.toString());
+  }
   return data;
 };
 
