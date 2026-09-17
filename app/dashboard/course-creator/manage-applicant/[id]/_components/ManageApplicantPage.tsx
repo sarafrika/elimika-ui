@@ -4,26 +4,19 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { EmptyState } from '@/components/ui/empty-state';
+import { Skeleton } from '@/components/ui/skeleton';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Textarea } from '@/components/ui/textarea';
 import { useCourseCreator } from '@/context/course-creator-context';
-import { useCoursesByIds, useProgramsByIds } from '@/hooks/use-batched-lookups';
-import { extractPage } from '@/lib/api-helpers';
+import { dayjs } from '@/lib/date';
 import type {
-  Course,
-  CourseTrainingApplication,
   Instructor,
   InstructorDocument,
   InstructorEducation,
   InstructorReview,
   InstructorSkill,
   Organisation,
-  ProgramTrainingApplication,
-  TrainingProgram,
 } from '@/services/client';
 import {
-  decideOnProgramTrainingApplicationMutation,
-  decideOnTrainingApplicationMutation,
   getInstructorByUuidOptions,
   getInstructorDocumentsOptions,
   getInstructorEducationOptions,
@@ -31,12 +24,14 @@ import {
   getInstructorSkillsOptions,
   getOrganisationByUuidOptions,
   getUserByUuidOptions,
-  searchProgramTrainingApplicationsOptions,
-  searchTrainingApplicationsOptions,
 } from '@/services/client/@tanstack/react-query.gen';
-import { invalidateTrainingApplicationWorkflowQueries } from '@/src/features/dashboard/workflow-query-invalidation';
+import { CreatorApplicationReview } from '@/src/features/rate-card/components/creator-application-review';
+import {
+  type TrainingApplicationEntry,
+  useTrainingApplicationList,
+} from '@/src/features/rate-card/hooks';
 import { toAuthenticatedMediaUrl } from '@/src/lib/media-url';
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { useQuery } from '@tanstack/react-query';
 import {
   ArrowLeft,
   Award,
@@ -48,10 +43,7 @@ import {
   LinkIcon,
   MapPin,
   Star,
-  ThumbsDown,
-  ThumbsUp,
   Users,
-  XCircle
 } from 'lucide-react';
 import Link from 'next/link';
 import { useMemo, useState } from 'react';
@@ -60,7 +52,6 @@ import { stripHtml } from '../../../../../../src/features/dashboard/courses/shar
 import { adminTheme, DetailGrid, SectionCard, StatusBadge } from '../../../../admin/_components/ui';
 
 type ApplicantType = 'instructor' | 'organisation';
-type TrainingApplication = CourseTrainingApplication | ProgramTrainingApplication;
 
 function formatDate(value?: string | Date | null): string {
   if (!value) return '—';
@@ -88,20 +79,6 @@ function formatDateTime(value?: string | Date | null): string {
     });
 }
 
-function getErrorMessage(error: unknown) {
-  if (typeof error === 'object' && error !== null && 'message' in error) {
-    return typeof error.message === 'string' ? error.message : undefined;
-  }
-  return undefined;
-}
-
-const isCourseApplication = (application: TrainingApplication): application is CourseTrainingApplication =>
-  'course_uuid' in application;
-
-const isProgramApplication = (
-  application: TrainingApplication
-): application is ProgramTrainingApplication => 'program_uuid' in application;
-
 function ApplicantTypePill({ type }: { type: ApplicantType }) {
   return type === 'instructor' ? (
     <span className='bg-primary/10 text-primary inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-semibold'>
@@ -113,184 +90,6 @@ function ApplicantTypePill({ type }: { type: ApplicantType }) {
       <Building2 className='size-3' />
       Organisation
     </span>
-  );
-}
-
-function ReviewDialog({
-  open,
-  onOpenChange,
-  application,
-  action,
-  onSubmit,
-  isLoading,
-}: {
-  open: boolean;
-  onOpenChange: (open: boolean) => void;
-  application: TrainingApplication | null;
-  action: 'approve' | 'reject' | 'revoke';
-  onSubmit: (reviewNotes: string) => void;
-  isLoading: boolean;
-}) {
-  const [reviewNotes, setReviewNotes] = useState('');
-
-  const config = {
-    approve: {
-      title: 'Approve application',
-      description: 'Approve this application so the applicant can train this course or program.',
-      icon: ThumbsUp,
-      iconBg: 'bg-success/10',
-      iconColor: 'text-success',
-    },
-    reject: {
-      title: 'Reject application',
-      description: 'Reject this application. Please provide a reason.',
-      icon: ThumbsDown,
-      iconBg: 'bg-destructive/10',
-      iconColor: 'text-destructive',
-    },
-    revoke: {
-      title: 'Revoke approval',
-      description: 'Revoke the earlier approval and explain why.',
-      icon: XCircle,
-      iconBg: 'bg-warning/10',
-      iconColor: 'text-warning',
-    },
-  }[action];
-
-  const Icon = config.icon;
-
-  return (
-    <div
-      className={`fixed inset-0 z-50 ${open ? 'block' : 'hidden'}`}
-      aria-hidden={!open}
-      role='presentation'
-      onClick={() => onOpenChange(false)}
-      onKeyDown={() => undefined}
-    >
-      <div className='bg-background/80 absolute inset-0 backdrop-blur-sm' />
-      <div
-        className='absolute inset-x-0 top-10 mx-auto w-[min(100%-1.5rem,42rem)] rounded-md border border-border/70 bg-card p-5 shadow-xl'
-        onClick={event => event.stopPropagation()}
-      >
-        <div className='flex items-start gap-3'>
-          <div className={`rounded-xl p-2.5 ${config.iconBg}`}>
-            <Icon className={`size-5 ${config.iconColor}`} />
-          </div>
-          <div>
-            <h3 className='text-foreground text-lg font-semibold'>{config.title}</h3>
-            <p className='text-muted-foreground mt-1 text-sm'>{config.description}</p>
-          </div>
-        </div>
-
-        {application ? (
-          <div className='mt-4 space-y-3'>
-            <div className='border-border/60 bg-muted/20 rounded-md border p-4'>
-              <div className='flex items-center gap-2'>
-                <ApplicantTypePill type={(application.applicant_type as ApplicantType) ?? 'instructor'} />
-                <StatusBadge status={application.status} />
-              </div>
-              {application.application_notes ? (
-                <p className='text-muted-foreground mt-2 text-sm'>
-                  &quot;{application.application_notes}&quot;
-                </p>
-              ) : null}
-            </div>
-            <div className='space-y-2'>
-              <label className='text-sm font-medium'>
-                Review notes {action === 'reject' ? <span className='text-destructive'>*</span> : null}
-              </label>
-              <Textarea
-                value={reviewNotes}
-                onChange={event => setReviewNotes(event.target.value)}
-                placeholder={`Add your ${action} notes...`}
-                rows={4}
-              />
-            </div>
-          </div>
-        ) : null}
-
-        <div className='mt-5 flex justify-end gap-2'>
-          <Button variant='outline' onClick={() => onOpenChange(false)} disabled={isLoading}>
-            Cancel
-          </Button>
-          <Button
-            onClick={() => {
-              onSubmit(reviewNotes);
-              setReviewNotes('');
-            }}
-            disabled={isLoading || (action === 'reject' && !reviewNotes.trim())}
-          >
-            {action === 'approve' ? 'Approve' : action === 'reject' ? 'Reject' : 'Revoke'}
-          </Button>
-        </div>
-      </div>
-    </div>
-  );
-}
-
-function ApplicationCard({
-  application,
-  title,
-  onApprove,
-  onReject,
-  onRevoke,
-}: {
-  application: TrainingApplication;
-  title: string;
-  onApprove: () => void;
-  onReject: () => void;
-  onRevoke: () => void;
-}) {
-  const isPending = application.status?.toLowerCase() === 'pending';
-  const isApproved = application.status?.toLowerCase() === 'approved';
-
-  return (
-    <div className='border-border/60 bg-muted/20 rounded-md border p-4'>
-      <div className='flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between'>
-        <div className='min-w-0'>
-          <div className='flex flex-wrap items-center gap-2'>
-            <p className='text-foreground truncate text-sm font-semibold'>{title}</p>
-            <StatusBadge status={application.status} />
-          </div>
-          <p className='text-muted-foreground mt-1 text-xs'>
-            Submitted {formatDate(application.created_date)}
-          </p>
-        </div>
-        <div className='flex shrink-0 flex-wrap gap-2'>
-          {isPending ? (
-            <>
-              <Button size='sm' onClick={onApprove}>
-                Approve
-              </Button>
-              <Button variant='outline' size='sm' onClick={onReject}>
-                Reject
-              </Button>
-            </>
-          ) : isApproved ? (
-            <Button variant='outline' size='sm' onClick={onRevoke}>
-              Revoke
-            </Button>
-          ) : (
-            <span className='text-muted-foreground text-xs'>Finalised</span>
-          )}
-        </div>
-      </div>
-
-      <DetailGrid
-        columns={2}
-        className='mt-4'
-        items={[
-          {
-            label: 'Notes',
-            value: application.application_notes || '-',
-          },
-          {
-            label: 'Review notes',
-            value: application.review_notes || '-',
-          },
-        ]}
-      />
-    </div>
   );
 }
 
@@ -496,42 +295,39 @@ function ProfileCard({
 function ApplicationsSection({
   title,
   description,
-  applications,
-  courseMap,
-  programMap,
-  onApprove,
-  onReject,
-  onRevoke,
+  entries,
+  creatorUuid,
+  loading,
 }: {
   title: string;
   description: string;
-  applications: TrainingApplication[];
-  courseMap: Record<string, Course>;
-  programMap: Record<string, TrainingProgram>;
-  onApprove: (application: TrainingApplication) => void;
-  onReject: (application: TrainingApplication) => void;
-  onRevoke: (application: TrainingApplication) => void;
+  entries: TrainingApplicationEntry[];
+  creatorUuid: string;
+  loading: boolean;
 }) {
   return (
     <SectionCard title={title} description={description}>
-      {applications.length ? (
-        <div className='space-y-3'>
-          {applications.map(application => {
-            const entityTitle = isCourseApplication(application)
-              ? courseMap[application?.course_uuid]?.name ?? application.course_uuid
-              : programMap[application?.program_uuid]?.title ?? application.program_uuid;
-
-            return (
-              <ApplicationCard
-                key={application.uuid}
-                application={application}
-                title={entityTitle}
-                onApprove={() => onApprove(application)}
-                onReject={() => onReject(application)}
-                onRevoke={() => onRevoke(application)}
-              />
-            );
-          })}
+      {loading ? (
+        <Skeleton className='h-72 w-full rounded-xl' />
+      ) : entries.length ? (
+        <div className='space-y-4'>
+          {entries.map(entry => (
+            <CreatorApplicationReview
+              key={entry.uuid}
+              entry={entry}
+              canDecide={
+                entry.creatorUuid
+                  ? entry.creatorUuid === creatorUuid
+                  : Boolean(entry.application.rate_floor_flags)
+              }
+              heading={entry.title ?? (entry.kind === 'program' ? 'Program' : 'Course')}
+              subheading={
+                entry.application.created_date
+                  ? `Submitted ${dayjs(entry.application.created_date).format('D MMM YYYY')}`
+                  : undefined
+              }
+            />
+          ))}
         </div>
       ) : (
         <EmptyState
@@ -546,12 +342,9 @@ function ApplicationsSection({
 }
 
 export default function ManageApplicantPage({ uuid }: { uuid: string }) {
-  const queryClient = useQueryClient();
   const { profile: courseCreator } = useCourseCreator();
+  const creatorUuid = courseCreator?.uuid ?? '';
   const [tab, setTab] = useState<'profile' | 'course' | 'program'>('profile');
-  const [reviewAction, setReviewAction] = useState<'approve' | 'reject' | 'revoke'>('approve');
-  const [selectedApplication, setSelectedApplication] = useState<TrainingApplication | null>(null);
-  const [reviewOpen, setReviewOpen] = useState(false);
 
   const { data: instructorData, isLoading: isInstructorLoading } = useQuery({
     ...getInstructorByUuidOptions({ path: { uuid } }),
@@ -581,47 +374,18 @@ export default function ManageApplicantPage({ uuid }: { uuid: string }) {
     staleTime: 30_000,
   });
 
-  const courseApplicationsQuery = useQuery({
-    ...searchTrainingApplicationsOptions({
-      query: {
-        searchParams: {
-          applicant_uuid_eq: uuid,
-          course_creator_uuid: courseCreator?.uuid ?? '',
-        },
-        pageable: { page: 0, size: 100 },
-      },
-    }),
-    enabled: !!courseCreator?.uuid && !!uuid,
-    staleTime: 30_000,
-  });
-  const programApplicationsQuery = useQuery({
-    ...searchProgramTrainingApplicationsOptions({
-      query: {
-        searchParams: {
-          applicant_uuid_eq: uuid,
-          course_creator_uuid: courseCreator?.uuid ?? '',
-        },
-        pageable: { page: 0, size: 100 },
-      },
-    }),
-    enabled: !!courseCreator?.uuid && !!uuid,
-    staleTime: 30_000,
-  });
-
-  const courseApplications = extractPage<CourseTrainingApplication>(courseApplicationsQuery.data).items;
-  const programApplications = extractPage<ProgramTrainingApplication>(programApplicationsQuery.data).items;
-
-  const courseIds = useMemo(
-    () => courseApplications.map(application => application.course_uuid).filter(Boolean),
-    [courseApplications]
+  const applications = useTrainingApplicationList(
+    { applicant_uuid_eq: uuid, course_creator_uuid: creatorUuid },
+    Boolean(creatorUuid && uuid)
   );
-  const programIds = useMemo(
-    () => programApplications.map(application => application.program_uuid).filter(Boolean),
-    [programApplications]
+  const courseApplications = useMemo(
+    () => applications.entries.filter(entry => entry.kind === 'course'),
+    [applications.entries]
   );
-
-  const { courseMap, isLoading: coursesLoading } = useCoursesByIds(courseIds as string[]);
-  const { programMap, isLoading: programsLoading } = useProgramsByIds(programIds as string[]);
+  const programApplications = useMemo(
+    () => applications.entries.filter(entry => entry.kind === 'program'),
+    [applications.entries]
+  );
 
   const skillsQuery = useQuery({
     ...getInstructorSkillsOptions({
@@ -652,47 +416,6 @@ export default function ManageApplicantPage({ uuid }: { uuid: string }) {
   const documents: InstructorDocument[] = documentsQuery.data?.data ?? [];
   const reviews: InstructorReview[] = reviewsQuery.data?.data ?? [];
 
-  const courseMutation = useMutation(decideOnTrainingApplicationMutation());
-  const programMutation = useMutation(decideOnProgramTrainingApplicationMutation());
-
-  const openReview = (application: TrainingApplication, action: 'approve' | 'reject' | 'revoke') => {
-    setSelectedApplication(application);
-    setReviewAction(action);
-    setReviewOpen(true);
-  };
-
-  const submitReview = async (reviewNotes: string) => {
-    try {
-      if (!selectedApplication) return;
-      if (isCourseApplication(selectedApplication)) {
-        await courseMutation.mutateAsync({
-          path: {
-            courseUuid: selectedApplication?.course_uuid!,
-            applicationUuid: selectedApplication?.uuid!,
-          },
-          query: { action: reviewAction },
-          body: { review_notes: reviewNotes },
-        });
-      } else if (isProgramApplication(selectedApplication)) {
-        await programMutation.mutateAsync({
-          path: {
-            programUuid: selectedApplication?.program_uuid!,
-            applicationUuid: selectedApplication?.uuid!,
-          },
-          query: { action: reviewAction },
-          body: { review_notes: reviewNotes },
-        });
-      }
-
-      toast.success(`Application ${reviewAction}d successfully`);
-      setReviewOpen(false);
-      setSelectedApplication(null);
-      await invalidateTrainingApplicationWorkflowQueries(queryClient);
-    } catch (error) {
-      toast.error(getErrorMessage(error) || `Failed to ${reviewAction} application`);
-    }
-  };
-
   const applicantName = applicantType === 'instructor' ? instructor?.full_name : organisation?.name;
   const applicantHeadline =
     applicantType === 'instructor'
@@ -715,9 +438,7 @@ export default function ManageApplicantPage({ uuid }: { uuid: string }) {
       course: courseApplications.length,
       program: programApplications.length,
       pending:
-        [...courseApplications, ...programApplications].filter(
-          application => application.status?.toLowerCase() === 'pending'
-        ).length,
+        applications.entries.filter(entry => entry.application.status === 'pending').length,
     }),
     [courseApplications, programApplications]
   );
@@ -725,10 +446,8 @@ export default function ManageApplicantPage({ uuid }: { uuid: string }) {
   const loading =
     isInstructorLoading ||
     isOrganisationLoading ||
-    courseApplicationsQuery.isLoading ||
-    programApplicationsQuery.isLoading ||
-    coursesLoading ||
-    programsLoading;
+    applications.loading ||
+    applications.titlesLoading;
 
   if (!loading && !applicantType) {
     return (
@@ -888,12 +607,9 @@ export default function ManageApplicantPage({ uuid }: { uuid: string }) {
                   <ApplicationsSection
                     title='Course applications'
                     description='Training applications submitted for courses owned by this course creator.'
-                    applications={courseApplications}
-                    courseMap={courseMap}
-                    programMap={{}}
-                    onApprove={(application) => openReview(application, 'approve')}
-                    onReject={(application) => openReview(application, 'reject')}
-                    onRevoke={(application) => openReview(application, 'revoke')}
+                    entries={courseApplications}
+                    creatorUuid={creatorUuid}
+                    loading={applications.loading}
                   />
                 </TabsContent>
 
@@ -901,12 +617,9 @@ export default function ManageApplicantPage({ uuid }: { uuid: string }) {
                   <ApplicationsSection
                     title='Program applications'
                     description='Training applications submitted for programs owned by this course creator.'
-                    applications={programApplications}
-                    courseMap={{}}
-                    programMap={programMap}
-                    onApprove={(application) => openReview(application, 'approve')}
-                    onReject={(application) => openReview(application, 'reject')}
-                    onRevoke={(application) => openReview(application, 'revoke')}
+                    entries={programApplications}
+                    creatorUuid={creatorUuid}
+                    loading={applications.loading}
                   />
                 </TabsContent>
               </Tabs>
@@ -976,15 +689,6 @@ export default function ManageApplicantPage({ uuid }: { uuid: string }) {
           </aside> */}
         </div>
       </div>
-
-      <ReviewDialog
-        open={reviewOpen}
-        onOpenChange={setReviewOpen}
-        application={selectedApplication}
-        action={reviewAction}
-        onSubmit={submitReview}
-        isLoading={courseMutation.isPending || programMutation.isPending}
-      />
     </main>
   );
 }

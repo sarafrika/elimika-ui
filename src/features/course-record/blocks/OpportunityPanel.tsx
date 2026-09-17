@@ -26,7 +26,7 @@ import { type CourseBlockAsyncProps, fillCourseCopy } from '../types';
  * ────────────────────────────────────────────────────────────────────────── */
 
 const PANEL_TITLE = 'What you would work under';
-const PANEL_SUB = 'The creator’s terms. You set your own rate when you apply.';
+const PANEL_SUB = 'The creator’s terms. You set your own rates when you apply.';
 const PRIVATE_CHIP = 'Private to you';
 const DEMAND_TITLE = 'Demand signal';
 const APPLY_CTA = 'Apply to train';
@@ -64,7 +64,7 @@ export type CourseOpportunityVars = Record<string, string | number | null | unde
 export const COURSE_OPPORTUNITY_TERMS: readonly CourseOpportunityTerm[] = [
   {
     k: 'Minimum training fee',
-    v: '{minimumFee} / hr / head',
+    v: '{minimumFee} per learner, on every rate',
     requires: ['minimumFee'],
     tone: 'value',
   },
@@ -75,7 +75,11 @@ export const COURSE_OPPORTUNITY_TERMS: readonly CourseOpportunityTerm[] = [
     tone: 'value',
   },
   { k: 'Platform fee', v: '{platformFee} of the sale', requires: ['platformFee'], tone: 'muted' },
-  { k: 'Your rate', v: 'You set it on the application', tone: 'highlight' },
+  {
+    k: 'Your rates',
+    v: 'Per hour, per session and per day, on the application',
+    tone: 'highlight',
+  },
 ];
 
 const TERM_LABEL: Record<CourseOpportunityTone, string> = {

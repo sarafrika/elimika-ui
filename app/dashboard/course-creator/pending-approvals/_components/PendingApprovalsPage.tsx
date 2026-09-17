@@ -3,16 +3,19 @@
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
 import { EmptyState } from '@/components/ui/empty-state';
+import { Skeleton } from '@/components/ui/skeleton';
 import { Input } from '@/components/ui/input';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useCourseCreator } from '@/context/course-creator-context';
 import { extractPage } from '@/lib/api-helpers';
 import { useQuery } from '@tanstack/react-query';
-import { Building2, Clock3, ExternalLink, GraduationCap, Loader2, Search, Users } from 'lucide-react';
+import { Building2, Clock3, ExternalLink, GraduationCap, Layers, Search, Users } from 'lucide-react';
 import Link from 'next/link';
 import { useMemo, useState } from 'react';
 
 import { useInstructorsByIds, useOrganisationsByIds } from '@/hooks/use-batched-lookups';
+import { APPROVAL_QUERY_FRESHNESS } from '@/lib/query-client';
+import { dashboardUrl } from '@/src/features/dashboard/lib/dashboard-url';
 import type { CourseTrainingApplication, ProgramTrainingApplication } from '@/services/client';
 import {
   searchProgramTrainingApplicationsOptions,
@@ -136,6 +139,7 @@ export default function PendingApprovalsPage() {
       },
     }),
     enabled: !!courseCreator?.uuid,
+    ...APPROVAL_QUERY_FRESHNESS,
     staleTime: 30_000,
   });
 
@@ -149,6 +153,7 @@ export default function PendingApprovalsPage() {
       },
     }),
     enabled: !!courseCreator?.uuid,
+    ...APPROVAL_QUERY_FRESHNESS,
     staleTime: 30_000,
   });
 
@@ -281,6 +286,9 @@ export default function PendingApprovalsPage() {
   }, [applicantMap]);
 
   const isLoading = courseApplicationsQuery.isLoading || programApplicationsQuery.isLoading;
+  const pendingRateUpdates = allApplications.filter(
+    application => application.status === 'approved' && application.pending_rate_update_uuid
+  ).length;
 
   return (
     <main className={adminTheme.page}>
@@ -333,6 +341,20 @@ export default function PendingApprovalsPage() {
           </div>
         </div>
 
+        {pendingRateUpdates > 0 ? (
+          <div className='border-primary/30 bg-primary/5 flex flex-wrap items-center justify-between gap-3 rounded-md border p-4'>
+            <p className='text-foreground flex items-center gap-2 text-sm'>
+              <Layers className='text-primary size-4' />
+              {pendingRateUpdates} approved {pendingRateUpdates === 1 ? 'applicant has' : 'applicants have'} rate card updates waiting for you.
+            </p>
+            <Button size='sm' asChild>
+              <Link href={dashboardUrl('course_creator', 'training-applications?tab=rate-updates')}>
+                Review rate card updates
+              </Link>
+            </Button>
+          </div>
+        ) : null}
+
         <SectionCard
           title='Approval queue'
           description='Each applicant card groups all of their course and program applications.'
@@ -359,29 +381,10 @@ export default function PendingApprovalsPage() {
               </TabsTrigger>
             </TabsList>
 
-            <TabsContent value='all' className='mt-0 space-y-4'>
-              {isLoading ? (
-                <div className='flex h-48 items-center justify-center'>
-                  <Loader2 className='text-muted-foreground h-6 w-6 animate-spin' />
-                </div>
-              ) : applicants.length === 0 ? (
-                <EmptyState
-                  icon={Users}
-                  title='No pending applicants'
-                  description='When instructors or organisations submit applications, they will appear here.'
-                  variant='compact'
-                />
-              ) : (
-                <div className='flex flex-col gap-4'>
-                  {applicants.map(applicant => (
-                    <ApplicantCard key={applicant.uuid} applicant={applicant} />
-                  ))}
-                </div>
-              )}
-            </TabsContent>
-
             <TabsContent value='instructor' className='mt-0 space-y-4'>
-              {applicants.filter(applicant => applicant.type === 'instructor').length ? (
+              {isLoading ? (
+                <Skeleton className='h-28 w-full rounded-md' />
+              ) : applicants.filter(applicant => applicant.type === 'instructor').length ? (
                 <div className='flex flex-col gap-4'>
                   {applicants
                     .filter(applicant => applicant.type === 'instructor')
@@ -400,7 +403,9 @@ export default function PendingApprovalsPage() {
             </TabsContent>
 
             <TabsContent value='organisation' className='mt-0 space-y-4'>
-              {applicants.filter(applicant => applicant.type === 'organisation').length ? (
+              {isLoading ? (
+                <Skeleton className='h-28 w-full rounded-md' />
+              ) : applicants.filter(applicant => applicant.type === 'organisation').length ? (
                 <div className='flex flex-col gap-4'>
                   {applicants
                     .filter(applicant => applicant.type === 'organisation')

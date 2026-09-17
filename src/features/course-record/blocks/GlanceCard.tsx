@@ -102,7 +102,11 @@ export const COURSE_GLANCE_ROWS: Record<CourseGlanceSetId, readonly CourseGlance
 
   applicant: [
     { k: 'Lessons / duration', v: '{lessons} · {duration}', requires: ['lessons', 'duration'] },
-    { k: 'Minimum training fee', v: '{minimumFee} / hr / head', requires: ['minimumFee'] },
+    {
+      k: 'Minimum training fee',
+      v: '{minimumFee} per learner, on every rate',
+      requires: ['minimumFee'],
+    },
     {
       k: 'Revenue split',
       v: 'Creator {creatorShare} / Trainer {trainerShare}',

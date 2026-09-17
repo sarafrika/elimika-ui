@@ -1,4 +1,12 @@
-import { missingCells, offeredMethods, RATE_BASES, type RateCardInput } from '@/lib/rate-card';
+import {
+  cellKey,
+  formatRate,
+  missingCells,
+  offeredMethods,
+  parseRate,
+  RATE_BASES,
+  type RateCardInput,
+} from '@/lib/rate-card';
 import type { UserOrganisationAffiliationDto } from '@/services/client';
 import type { TrainingApplicationEvent, TrainingApplicationKind } from './types';
 
@@ -81,6 +89,18 @@ export function describeMissingRates(card: RateCardInput | null | undefined) {
     title: `${missing.length} ${missing.length === 1 ? 'rate' : 'rates'} missing.`,
     detail: `Jobs billed ${joinOr(bases)} for ${joinOr(methods)} classes can’t hire you until you add them.`,
   };
+}
+
+/** The lowest offered rate on each basis, e.g. "KES 620 / hour · KES 1,800 / session". */
+export function lowestRatesLabel(card: RateCardInput | null | undefined): string | undefined {
+  const methods = offeredMethods(card);
+  const lowest = RATE_BASES.flatMap(basis => {
+    const rates = methods
+      .map(method => parseRate(card?.[cellKey(method, basis)]))
+      .filter((rate): rate is number => rate !== null);
+    return rates.length ? [formatRate(Math.min(...rates), basis.value, card?.currency)] : [];
+  });
+  return lowest.length ? lowest.join(' · ') : undefined;
 }
 
 function joinOr(items: string[]) {
