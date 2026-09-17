@@ -133,7 +133,7 @@ export function WhereItHappens({
               <p className='text-muted-foreground text-xs'>
                 No branches yet.{' '}
                 <Link
-                  href={dashboardUrl('organisation', 'settings?tab=branches')}
+                  href={dashboardUrl('organisation', 'branches')}
                   className='text-primary font-medium hover:underline'
                 >
                   Add a branch

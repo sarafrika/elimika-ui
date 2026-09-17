@@ -105,7 +105,7 @@ export function OverviewKpis() {
       hint: 'Locations / campuses',
       icon: Building,
       variant: 'coral',
-      href: '/dashboard/organisation/settings?tab=branches',
+      href: '/dashboard/organisation/branches',
       loading: branchesQuery.isLoading,
     },
     {

@@ -1,5 +1,15 @@
 'use client';
 
+import { zodResolver } from '@hookform/resolvers/zod';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { ChevronRight, LayoutPanelLeft, Pencil, ShieldCheck, Wallet } from 'lucide-react';
+import Link from 'next/link';
+import { usePathname, useRouter, useSearchParams } from 'next/navigation';
+import type React from 'react';
+import { Suspense, useEffect, useMemo, useRef, useState } from 'react';
+import { useForm } from 'react-hook-form';
+import { toast } from 'sonner';
+import * as z from 'zod';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -25,18 +35,9 @@ import {
   updateUserMutation,
   uploadProfileImageMutation,
 } from '@/services/client/@tanstack/react-query.gen';
+import { dashboardUrl } from '@/src/features/dashboard/lib/dashboard-url';
 import { useOrganisation } from '@/src/features/organisation/context/organisation-context';
 import { useUserProfile } from '@/src/features/profile/context/profile-context';
-import { zodResolver } from '@hookform/resolvers/zod';
-import { useMutation, useQueryClient } from '@tanstack/react-query';
-import { ChevronRight, LayoutPanelLeft, Pencil, ShieldCheck, Wallet } from 'lucide-react';
-import Link from 'next/link';
-import { usePathname, useRouter, useSearchParams } from 'next/navigation';
-import type React from 'react';
-import { Suspense, useEffect, useMemo, useRef, useState } from 'react';
-import { useForm } from 'react-hook-form';
-import { toast } from 'sonner';
-import * as z from 'zod';
 import { ElimikaUserId } from '../../../../../app/dashboard/_components/elimika-user-id';
 import { useProfileShareUrl } from '../../../../../app/dashboard/_components/skills-wallet/use-profile-share-url';
 import RichTextRenderer from '../../../../../components/editors/richTextRenders';
@@ -47,7 +48,6 @@ import { SettingsField } from '../_components/settings-field';
 import { SettingsPageHeader } from '../_components/settings-page-header';
 import { TimezoneSetting } from '../_components/timezone-setting';
 import { AcademicGroupsPanel } from '../panels/academic-groups-panel';
-import { BranchesPanel } from '../panels/branches-panel';
 import { InstitutionProfilePanel } from '../panels/institution-profile-panel';
 import { RolesPermissionsPanel } from '../panels/roles-permissions-panel';
 import {
@@ -288,13 +288,19 @@ function DashboardSettingsPageBody({ variant }: DashboardSettingsPageProps) {
     [variant, profile, organisation]
   );
 
-  // Tabs are URL-driven so panels can be deep-linked (e.g. the retired
-  // /branches route redirects to `?tab=branches`).
+  // Tabs are URL-driven so panels can be deep-linked.
   const defaultTab = config.tabs[0]?.value ?? 'profile';
   const requestedTab = searchParams.get('tab');
   const activeTab = config.tabs.some(tab => tab.value === requestedTab)
     ? (requestedTab as string)
     : defaultTab;
+
+  // Branches moved to their own page; forward old `?tab=branches` links there.
+  useEffect(() => {
+    if (variant === 'organisation' && requestedTab === 'branches') {
+      router.replace(dashboardUrl('organisation', 'branches'));
+    }
+  }, [variant, requestedTab, router]);
 
   const handleTabChange = (nextTab: string) => {
     const params = new URLSearchParams(searchParams.toString());
@@ -1062,10 +1068,6 @@ function DashboardSettingsPageBody({ variant }: DashboardSettingsPageProps) {
             <div className=''>
               <InstructorRateCardsPage />
             </div>
-          </TabsContent>
-
-          <TabsContent value='branches' className='mt-0'>
-            <BranchesPanel />
           </TabsContent>
 
           <TabsContent value='groups' className='mt-0'>

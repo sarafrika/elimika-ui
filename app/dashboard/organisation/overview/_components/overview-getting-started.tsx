@@ -70,7 +70,7 @@ export function OverviewGettingStarted() {
     {
       key: 'venues',
       label: 'Add training venues',
-      href: '/dashboard/organisation/settings?tab=branches',
+      href: '/dashboard/organisation/branches',
       done: branchCount > 0,
     },
     {

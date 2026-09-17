@@ -738,6 +738,7 @@ export default {
         { title: 'Jobs', url: '/dashboard/jobs', icon: Briefcase },
         { title: 'Classes', url: '/dashboard/classes', icon: LayoutList },
         { title: 'Waiting List', url: '/dashboard/waiting-list', icon: Clock },
+        { title: 'Branches', url: '/dashboard/branches', icon: Building2 },
         { title: 'Venues', url: '/dashboard/venues', icon: MapPin },
         { title: 'Equipment', url: '/dashboard/resources', icon: Wrench },
       ],

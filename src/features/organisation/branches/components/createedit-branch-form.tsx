@@ -328,7 +328,7 @@ function BranchFormActions({
         </Button>
       ) : (
         <Button type='button' variant='outline' asChild>
-          <Link href={dashboardUrl('organisation', 'settings?tab=branches')}>Cancel</Link>
+          <Link href={dashboardUrl('organisation', 'branches')}>Cancel</Link>
         </Button>
       )}
       <Button type='submit' disabled={isSaving || !hasPin}>

@@ -151,7 +151,6 @@ export function getSettingsVariantConfig(
     ],
     organisation: [
       { value: 'profile', label: 'Institution Profile' },
-      { value: 'branches', label: 'Branches' },
       { value: 'groups', label: 'Academic Groups' },
       { value: 'roles', label: 'Roles & Permissions' },
       { value: 'support', label: 'Support' },

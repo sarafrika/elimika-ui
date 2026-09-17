@@ -13,7 +13,7 @@ import BranchOverviewStats from '../_components/branch-overview-stats';
 import TabSection from '../_components/tabsection';
 import type { Action } from './utils';
 
-const ALL_BRANCHES_HREF = dashboardUrl('organisation', 'settings?tab=branches');
+const ALL_BRANCHES_HREF = dashboardUrl('organisation', 'branches');
 
 function BackLink() {
   return (
