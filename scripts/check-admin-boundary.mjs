@@ -115,7 +115,11 @@ for (const file of allFiles) {
 
 // 3. Every admin file is reachable from a route.
 const ENTRY = /(page|layout|loading|error|not-found|route|template|default)\.tsx?$/;
-const entries = adminFiles.filter(file => ENTRY.test(file));
+/** A unit test counts as a reason for a file to exist while its screen is still being built. */
+const TEST_FILE = /\.test\.tsx?$/;
+/** Foundation modules may wait for the screen that uses them; they say so in a comment. */
+const FOUNDATION = '// admin-boundary: foundation';
+const entries = adminFiles.filter(file => ENTRY.test(file) || TEST_FILE.test(file));
 const reachable = new Set(entries);
 const queue = [...entries];
 
@@ -158,9 +162,11 @@ while (queue.length) {
 }
 
 for (const file of adminFiles) {
-  if (!reachable.has(file)) {
-    problems.push(`${file}: not reachable from any admin route — delete it or wire it up`);
-  }
+  if (reachable.has(file)) continue;
+  if (read(file).includes(FOUNDATION)) continue;
+  problems.push(
+    `${file}: not reachable from a route or a test — wire it up, delete it, or mark it "${FOUNDATION}"`
+  );
 }
 
 // 4. No @ts-nocheck under admin paths.
