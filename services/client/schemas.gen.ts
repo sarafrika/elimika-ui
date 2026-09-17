@@ -621,14 +621,14 @@ export const StudentSchema = {
     primaryGuardianContact: {
       type: 'string',
     },
-    secondaryGuardianContact: {
-      type: 'string',
-    },
     allGuardianContacts: {
       type: 'array',
       items: {
         type: 'string',
       },
+    },
+    secondaryGuardianContact: {
+      type: 'string',
     },
     full_name: {
       type: 'string',
@@ -1332,12 +1332,6 @@ export const RubricCriteriaSchema = {
       example: 'instructor@sarafrika.com',
       readOnly: true,
     },
-    is_primary_criteria: {
-      type: 'boolean',
-      description: '**[READ-ONLY]** Indicates if this is a primary assessment criteria.',
-      example: true,
-      readOnly: true,
-    },
     criteria_category: {
       type: 'string',
       description: '**[READ-ONLY]** Category classification of the assessment criteria.',
@@ -1354,6 +1348,12 @@ export const RubricCriteriaSchema = {
       type: 'string',
       description: '**[READ-ONLY]** Formatted criteria number for display in assessment interface.',
       example: 'Criteria 1',
+      readOnly: true,
+    },
+    is_primary_criteria: {
+      type: 'boolean',
+      description: '**[READ-ONLY]** Indicates if this is a primary assessment criteria.',
+      example: true,
       readOnly: true,
     },
   },
@@ -1439,19 +1439,19 @@ export const RubricMatrixSchema = {
         '**[READ-ONLY]** Statistical information about the matrix completion and scoring.',
       readOnly: true,
     },
-    is_complete: {
-      type: 'boolean',
-      description:
-        '**[READ-ONLY]** Whether all matrix cells have been completed with descriptions.',
-      example: true,
-      readOnly: true,
-    },
     expected_cell_count: {
       type: 'integer',
       format: 'int32',
       description:
         '**[READ-ONLY]** Expected number of matrix cells (criteria count × scoring levels count).',
       example: 20,
+      readOnly: true,
+    },
+    is_complete: {
+      type: 'boolean',
+      description:
+        '**[READ-ONLY]** Whether all matrix cells have been completed with descriptions.',
+      example: true,
       readOnly: true,
     },
   },
@@ -4645,6 +4645,13 @@ export const AvailabilitySlotSchema = {
       example: 'instructor@sarafrika.com',
       readOnly: true,
     },
+    duration_minutes: {
+      type: 'integer',
+      format: 'int64',
+      description: '**[READ-ONLY]** Duration of the availability slot in minutes.',
+      example: 480,
+      readOnly: true,
+    },
     duration_formatted: {
       type: 'string',
       description: '**[READ-ONLY]** Human-readable formatted duration.',
@@ -4668,13 +4675,6 @@ export const AvailabilitySlotSchema = {
       type: 'string',
       description: '**[READ-ONLY]** Human-readable description of the availability pattern.',
       example: 'Weekly on Monday',
-      readOnly: true,
-    },
-    duration_minutes: {
-      type: 'integer',
-      format: 'int64',
-      description: '**[READ-ONLY]** Duration of the availability slot in minutes.',
-      example: 480,
       readOnly: true,
     },
   },
@@ -8430,6 +8430,14 @@ conflict_resolution per template:
       example: false,
       readOnly: true,
     },
+    duration_minutes: {
+      type: 'integer',
+      format: 'int64',
+      description:
+        '**[READ-ONLY]** Computed duration of the class in minutes based on start and end times.',
+      example: 90,
+      readOnly: true,
+    },
     duration_formatted: {
       type: 'string',
       description: '**[READ-ONLY]** Human-readable formatted duration.',
@@ -8441,14 +8449,6 @@ conflict_resolution per template:
       description:
         '**[READ-ONLY]** Human-readable capacity information including waitlist availability.',
       example: 'Max 25 participants (waitlist enabled)',
-      readOnly: true,
-    },
-    duration_minutes: {
-      type: 'integer',
-      format: 'int64',
-      description:
-        '**[READ-ONLY]** Computed duration of the class in minutes based on start and end times.',
-      example: 90,
       readOnly: true,
     },
   },
@@ -8838,6 +8838,9 @@ export const ClassMarketplaceJobResourceSchema = {
     },
     resource_type: {
       $ref: '#/components/schemas/ResourceTypeEnum2',
+    },
+    booking_status: {
+      $ref: '#/components/schemas/BookingStatusEnum',
     },
   },
   required: ['resource_uuid'],
@@ -10143,6 +10146,13 @@ export const ScheduledInstanceSchema = {
       example: 'instructor@sarafrika.com',
       readOnly: true,
     },
+    duration_minutes: {
+      type: 'integer',
+      format: 'int64',
+      description: '**[READ-ONLY]** Duration of the scheduled instance in minutes.',
+      example: 90,
+      readOnly: true,
+    },
     duration_formatted: {
       type: 'string',
       description: '**[READ-ONLY]** Human-readable formatted duration.',
@@ -10160,13 +10170,6 @@ export const ScheduledInstanceSchema = {
       description:
         '**[READ-ONLY]** Indicates if the scheduled instance is currently active (ongoing).',
       example: false,
-      readOnly: true,
-    },
-    duration_minutes: {
-      type: 'integer',
-      format: 'int64',
-      description: '**[READ-ONLY]** Duration of the scheduled instance in minutes.',
-      example: 90,
       readOnly: true,
     },
     can_be_cancelled: {
@@ -12328,10 +12331,10 @@ export const EnrollmentSchema = {
       example: true,
       readOnly: true,
     },
-    status_description: {
-      type: 'string',
-      description: '**[READ-ONLY]** Human-readable description of the enrollment status.',
-      example: 'Student is enrolled in the class',
+    can_be_cancelled: {
+      type: 'boolean',
+      description: '**[READ-ONLY]** Indicates if the enrollment can be cancelled.',
+      example: true,
       readOnly: true,
     },
     is_attendance_marked: {
@@ -12346,10 +12349,10 @@ export const EnrollmentSchema = {
       example: false,
       readOnly: true,
     },
-    can_be_cancelled: {
-      type: 'boolean',
-      description: '**[READ-ONLY]** Indicates if the enrollment can be cancelled.',
-      example: true,
+    status_description: {
+      type: 'string',
+      description: '**[READ-ONLY]** Human-readable description of the enrollment status.',
+      example: 'Student is enrolled in the class',
       readOnly: true,
     },
   },
@@ -16976,16 +16979,16 @@ export const ProgramEnrollmentSchema = {
       example: false,
       readOnly: true,
     },
-    progress_display: {
-      type: 'string',
-      description: "**[READ-ONLY]** Formatted display of the student's progress in the program.",
-      example: '100.00% Complete',
-      readOnly: true,
-    },
     enrollment_category: {
       type: 'string',
       description: '**[READ-ONLY]** Formatted category of the enrollment based on current status.',
       example: 'Completed Program Enrollment',
+      readOnly: true,
+    },
+    progress_display: {
+      type: 'string',
+      description: "**[READ-ONLY]** Formatted display of the student's progress in the program.",
+      example: '100.00% Complete',
       readOnly: true,
     },
     enrollment_duration: {
@@ -18277,6 +18280,12 @@ export const InstructorCalendarEntrySchema = {
       type: 'string',
       description: 'Display name of the owning organisation',
       example: 'Sarafrika Technical College',
+    },
+    job_uuid: {
+      type: ['string', 'null'],
+      format: 'uuid',
+      description:
+        'Marketplace job behind a JOB_HOLD or JOB_APPLICATION entry; omitted for other callers',
     },
   },
 } as const;
@@ -20829,16 +20838,16 @@ export const CourseEnrollmentSchema = {
       example: false,
       readOnly: true,
     },
-    progress_display: {
-      type: 'string',
-      description: "**[READ-ONLY]** Formatted display of the student's progress in the course.",
-      example: '100.00% Complete',
-      readOnly: true,
-    },
     enrollment_category: {
       type: 'string',
       description: '**[READ-ONLY]** Formatted category of the enrollment based on current status.',
       example: 'Completed Enrollment',
+      readOnly: true,
+    },
+    progress_display: {
+      type: 'string',
+      description: "**[READ-ONLY]** Formatted display of the student's progress in the course.",
+      example: '100.00% Complete',
       readOnly: true,
     },
     enrollment_duration: {
@@ -23640,6 +23649,14 @@ export const ResourceTypeEnum2Schema = {
   readOnly: true,
 } as const;
 
+export const BookingStatusEnumSchema = {
+  type: ['string', 'null'],
+  description:
+    "**[READ-ONLY]** Effective state of this resource's bookings for the job: HOLD while any session is still held, else CONFIRMED once the class booked it, else RELEASED when every booking was released or cancelled. Omitted when the job never booked the resource.",
+  enum: ['HOLD', 'CONFIRMED', 'RELEASED'],
+  readOnly: true,
+} as const;
+
 export const StatusEnum8Schema = {
   type: 'string',
   enum: ['open', 'awaiting_class', 'filled', 'cancelled', 'expired'],
@@ -23727,6 +23744,8 @@ export const TypeEnumSchema = {
     'CLASS_MARKETPLACE_JOB_APPLICATION_ASSIGNED',
     'CLASS_MARKETPLACE_JOB_APPLICATION_CANCELLED',
     'CLASS_MARKETPLACE_JOB_APPLICATION_WITHDRAWN',
+    'CLASS_MARKETPLACE_JOB_HIRE_BLOCKED_ORGANISATION',
+    'CLASS_MARKETPLACE_JOB_HIRE_BLOCKED_INSTRUCTOR',
     'CLASS_ENROLLMENT_CONFIRMED',
     'COURSE_ENROLLMENT_MILESTONE',
     'COURSE_ENROLLMENT_NOTICE',
@@ -23975,8 +23994,9 @@ export const SourceTypeEnumSchema = {
 
 export const EntryTypeEnum2Schema = {
   type: 'string',
-  description: 'Entry type: AVAILABILITY, BLOCKED, or SCHEDULED_INSTANCE',
-  enum: ['AVAILABILITY', 'BLOCKED', 'SCHEDULED_INSTANCE'],
+  description:
+    'Entry type: AVAILABILITY, BLOCKED, SCHEDULED_INSTANCE, JOB_HOLD (a class job the instructor was hired for holds this time; busy) or JOB_APPLICATION (a job the instructor applied to; not busy, shown to the instructor only)',
+  enum: ['AVAILABILITY', 'BLOCKED', 'SCHEDULED_INSTANCE', 'JOB_HOLD', 'JOB_APPLICATION'],
   example: 'SCHEDULED_INSTANCE',
 } as const;
 
@@ -24452,6 +24472,8 @@ export const TypeEnumWritableSchema = {
     'CLASS_MARKETPLACE_JOB_APPLICATION_ASSIGNED',
     'CLASS_MARKETPLACE_JOB_APPLICATION_CANCELLED',
     'CLASS_MARKETPLACE_JOB_APPLICATION_WITHDRAWN',
+    'CLASS_MARKETPLACE_JOB_HIRE_BLOCKED_ORGANISATION',
+    'CLASS_MARKETPLACE_JOB_HIRE_BLOCKED_INSTRUCTOR',
     'CLASS_ENROLLMENT_CONFIRMED',
     'COURSE_ENROLLMENT_MILESTONE',
     'COURSE_ENROLLMENT_NOTICE',
@@ -24660,8 +24682,9 @@ export const SourceTypeEnumWritableSchema = {
 
 export const EntryTypeEnum2WritableSchema = {
   type: 'string',
-  description: 'Entry type: AVAILABILITY, BLOCKED, or SCHEDULED_INSTANCE',
-  enum: ['AVAILABILITY', 'BLOCKED', 'SCHEDULED_INSTANCE'],
+  description:
+    'Entry type: AVAILABILITY, BLOCKED, SCHEDULED_INSTANCE, JOB_HOLD (a class job the instructor was hired for holds this time; busy) or JOB_APPLICATION (a job the instructor applied to; not busy, shown to the instructor only)',
+  enum: ['AVAILABILITY', 'BLOCKED', 'SCHEDULED_INSTANCE', 'JOB_HOLD', 'JOB_APPLICATION'],
   example: 'SCHEDULED_INSTANCE',
 } as const;
 

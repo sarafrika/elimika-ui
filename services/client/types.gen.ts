@@ -274,8 +274,8 @@ export type Student = {
    */
   bio?: string | null;
   primaryGuardianContact?: string;
-  secondaryGuardianContact?: string;
   allGuardianContacts?: Array<string>;
+  secondaryGuardianContact?: string;
   /**
    * **[READ-ONLY]** Complete name of the student. Automatically derived from the linked user profile.
    */
@@ -672,10 +672,6 @@ export type RubricCriteria = {
    */
   readonly updated_by?: string;
   /**
-   * **[READ-ONLY]** Indicates if this is a primary assessment criteria.
-   */
-  readonly is_primary_criteria?: boolean;
-  /**
    * **[READ-ONLY]** Category classification of the assessment criteria.
    */
   readonly criteria_category?: string;
@@ -687,6 +683,10 @@ export type RubricCriteria = {
    * **[READ-ONLY]** Formatted criteria number for display in assessment interface.
    */
   readonly criteria_number?: string;
+  /**
+   * **[READ-ONLY]** Indicates if this is a primary assessment criteria.
+   */
+  readonly is_primary_criteria?: boolean;
 };
 
 /**
@@ -716,13 +716,13 @@ export type RubricMatrix = {
    */
   matrix_statistics?: MatrixStatistics;
   /**
-   * **[READ-ONLY]** Whether all matrix cells have been completed with descriptions.
-   */
-  readonly is_complete?: boolean;
-  /**
    * **[READ-ONLY]** Expected number of matrix cells (criteria count × scoring levels count).
    */
   readonly expected_cell_count?: number;
+  /**
+   * **[READ-ONLY]** Whether all matrix cells have been completed with descriptions.
+   */
+  readonly is_complete?: boolean;
 };
 
 export type ApiResponseRubricCriteria = {
@@ -2330,6 +2330,10 @@ export type AvailabilitySlot = {
    */
   readonly updated_by?: string;
   /**
+   * **[READ-ONLY]** Duration of the availability slot in minutes.
+   */
+  readonly duration_minutes?: bigint;
+  /**
    * **[READ-ONLY]** Human-readable formatted duration.
    */
   readonly duration_formatted?: string;
@@ -2345,10 +2349,6 @@ export type AvailabilitySlot = {
    * **[READ-ONLY]** Human-readable description of the availability pattern.
    */
   readonly availability_description?: string;
-  /**
-   * **[READ-ONLY]** Duration of the availability slot in minutes.
-   */
-  readonly duration_minutes?: bigint;
 };
 
 export type ApiResponseAvailabilitySlot = {
@@ -4060,6 +4060,10 @@ export type ClassDefinition = {
    */
   readonly is_standalone?: boolean;
   /**
+   * **[READ-ONLY]** Computed duration of the class in minutes based on start and end times.
+   */
+  readonly duration_minutes?: bigint;
+  /**
    * **[READ-ONLY]** Human-readable formatted duration.
    */
   readonly duration_formatted?: string;
@@ -4067,10 +4071,6 @@ export type ClassDefinition = {
    * **[READ-ONLY]** Human-readable capacity information including waitlist availability.
    */
   readonly capacity_info?: string;
-  /**
-   * **[READ-ONLY]** Computed duration of the class in minutes based on start and end times.
-   */
-  readonly duration_minutes?: bigint;
 };
 
 /**
@@ -4301,6 +4301,7 @@ export type ClassMarketplaceJobResource = {
    */
   readonly resource_name?: string | null;
   resource_type?: ResourceTypeEnum2;
+  booking_status?: BookingStatusEnum;
 };
 
 export type ApiResponseClassMarketplaceJob = {
@@ -4942,6 +4943,10 @@ export type ScheduledInstance = {
    */
   readonly updated_by?: string;
   /**
+   * **[READ-ONLY]** Duration of the scheduled instance in minutes.
+   */
+  readonly duration_minutes?: bigint;
+  /**
    * **[READ-ONLY]** Human-readable formatted duration.
    */
   readonly duration_formatted?: string;
@@ -4953,10 +4958,6 @@ export type ScheduledInstance = {
    * **[READ-ONLY]** Indicates if the scheduled instance is currently active (ongoing).
    */
   readonly is_currently_active?: boolean;
-  /**
-   * **[READ-ONLY]** Duration of the scheduled instance in minutes.
-   */
-  readonly duration_minutes?: bigint;
   /**
    * **[READ-ONLY]** Indicates if the scheduled instance can be cancelled.
    */
@@ -6240,9 +6241,9 @@ export type Enrollment = {
    */
   readonly is_active?: boolean;
   /**
-   * **[READ-ONLY]** Human-readable description of the enrollment status.
+   * **[READ-ONLY]** Indicates if the enrollment can be cancelled.
    */
-  readonly status_description?: string;
+  readonly can_be_cancelled?: boolean;
   /**
    * **[READ-ONLY]** Indicates if attendance has been marked for this enrollment.
    */
@@ -6252,9 +6253,9 @@ export type Enrollment = {
    */
   readonly did_attend?: boolean;
   /**
-   * **[READ-ONLY]** Indicates if the enrollment can be cancelled.
+   * **[READ-ONLY]** Human-readable description of the enrollment status.
    */
-  readonly can_be_cancelled?: boolean;
+  readonly status_description?: string;
 };
 
 export type ApiResponse = {
@@ -8611,13 +8612,13 @@ export type ProgramEnrollment = {
    */
   readonly is_active?: boolean;
   /**
-   * **[READ-ONLY]** Formatted display of the student's progress in the program.
-   */
-  readonly progress_display?: string;
-  /**
    * **[READ-ONLY]** Formatted category of the enrollment based on current status.
    */
   readonly enrollment_category?: string;
+  /**
+   * **[READ-ONLY]** Formatted display of the student's progress in the program.
+   */
+  readonly progress_display?: string;
   /**
    * **[READ-ONLY]** Duration of the enrollment from start to completion or current date.
    */
@@ -9285,6 +9286,10 @@ export type InstructorCalendarEntry = {
    * Display name of the owning organisation
    */
   organisation_name?: string;
+  /**
+   * Marketplace job behind a JOB_HOLD or JOB_APPLICATION entry; omitted for other callers
+   */
+  job_uuid?: string | null;
 };
 
 export type ApiResponseInstructorStatement = {
@@ -10714,13 +10719,13 @@ export type CourseEnrollment = {
    */
   readonly is_active?: boolean;
   /**
-   * **[READ-ONLY]** Formatted display of the student's progress in the course.
-   */
-  readonly progress_display?: string;
-  /**
    * **[READ-ONLY]** Formatted category of the enrollment based on current status.
    */
   readonly enrollment_category?: string;
+  /**
+   * **[READ-ONLY]** Formatted display of the student's progress in the course.
+   */
+  readonly progress_display?: string;
   /**
    * **[READ-ONLY]** Duration of the enrollment from start to completion or current date.
    */
@@ -12597,6 +12602,20 @@ export const ResourceTypeEnum2 = {
  */
 export type ResourceTypeEnum2 = (typeof ResourceTypeEnum2)[keyof typeof ResourceTypeEnum2];
 
+/**
+ * **[READ-ONLY]** Effective state of this resource's bookings for the job: HOLD while any session is still held, else CONFIRMED once the class booked it, else RELEASED when every booking was released or cancelled. Omitted when the job never booked the resource.
+ */
+export const BookingStatusEnum = {
+  HOLD: 'HOLD',
+  CONFIRMED: 'CONFIRMED',
+  RELEASED: 'RELEASED',
+} as const;
+
+/**
+ * **[READ-ONLY]** Effective state of this resource's bookings for the job: HOLD while any session is still held, else CONFIRMED once the class booked it, else RELEASED when every booking was released or cancelled. Omitted when the job never booked the resource.
+ */
+export type BookingStatusEnum = (typeof BookingStatusEnum)[keyof typeof BookingStatusEnum];
+
 export const StatusEnum8 = {
   OPEN: 'open',
   AWAITING_CLASS: 'awaiting_class',
@@ -12723,6 +12742,9 @@ export const TypeEnum = {
   CLASS_MARKETPLACE_JOB_APPLICATION_ASSIGNED: 'CLASS_MARKETPLACE_JOB_APPLICATION_ASSIGNED',
   CLASS_MARKETPLACE_JOB_APPLICATION_CANCELLED: 'CLASS_MARKETPLACE_JOB_APPLICATION_CANCELLED',
   CLASS_MARKETPLACE_JOB_APPLICATION_WITHDRAWN: 'CLASS_MARKETPLACE_JOB_APPLICATION_WITHDRAWN',
+  CLASS_MARKETPLACE_JOB_HIRE_BLOCKED_ORGANISATION:
+    'CLASS_MARKETPLACE_JOB_HIRE_BLOCKED_ORGANISATION',
+  CLASS_MARKETPLACE_JOB_HIRE_BLOCKED_INSTRUCTOR: 'CLASS_MARKETPLACE_JOB_HIRE_BLOCKED_INSTRUCTOR',
   CLASS_ENROLLMENT_CONFIRMED: 'CLASS_ENROLLMENT_CONFIRMED',
   COURSE_ENROLLMENT_MILESTONE: 'COURSE_ENROLLMENT_MILESTONE',
   COURSE_ENROLLMENT_NOTICE: 'COURSE_ENROLLMENT_NOTICE',
@@ -13121,16 +13143,18 @@ export const SourceTypeEnum = {
 export type SourceTypeEnum = (typeof SourceTypeEnum)[keyof typeof SourceTypeEnum];
 
 /**
- * Entry type: AVAILABILITY, BLOCKED, or SCHEDULED_INSTANCE
+ * Entry type: AVAILABILITY, BLOCKED, SCHEDULED_INSTANCE, JOB_HOLD (a class job the instructor was hired for holds this time; busy) or JOB_APPLICATION (a job the instructor applied to; not busy, shown to the instructor only)
  */
 export const EntryTypeEnum2 = {
   AVAILABILITY: 'AVAILABILITY',
   BLOCKED: 'BLOCKED',
   SCHEDULED_INSTANCE: 'SCHEDULED_INSTANCE',
+  JOB_HOLD: 'JOB_HOLD',
+  JOB_APPLICATION: 'JOB_APPLICATION',
 } as const;
 
 /**
- * Entry type: AVAILABILITY, BLOCKED, or SCHEDULED_INSTANCE
+ * Entry type: AVAILABILITY, BLOCKED, SCHEDULED_INSTANCE, JOB_HOLD (a class job the instructor was hired for holds this time; busy) or JOB_APPLICATION (a job the instructor applied to; not busy, shown to the instructor only)
  */
 export type EntryTypeEnum2 = (typeof EntryTypeEnum2)[keyof typeof EntryTypeEnum2];
 
@@ -13887,6 +13911,9 @@ export const TypeEnumWritable = {
   CLASS_MARKETPLACE_JOB_APPLICATION_ASSIGNED: 'CLASS_MARKETPLACE_JOB_APPLICATION_ASSIGNED',
   CLASS_MARKETPLACE_JOB_APPLICATION_CANCELLED: 'CLASS_MARKETPLACE_JOB_APPLICATION_CANCELLED',
   CLASS_MARKETPLACE_JOB_APPLICATION_WITHDRAWN: 'CLASS_MARKETPLACE_JOB_APPLICATION_WITHDRAWN',
+  CLASS_MARKETPLACE_JOB_HIRE_BLOCKED_ORGANISATION:
+    'CLASS_MARKETPLACE_JOB_HIRE_BLOCKED_ORGANISATION',
+  CLASS_MARKETPLACE_JOB_HIRE_BLOCKED_INSTRUCTOR: 'CLASS_MARKETPLACE_JOB_HIRE_BLOCKED_INSTRUCTOR',
   CLASS_ENROLLMENT_CONFIRMED: 'CLASS_ENROLLMENT_CONFIRMED',
   COURSE_ENROLLMENT_MILESTONE: 'COURSE_ENROLLMENT_MILESTONE',
   COURSE_ENROLLMENT_NOTICE: 'COURSE_ENROLLMENT_NOTICE',
@@ -14236,16 +14263,18 @@ export type SourceTypeEnumWritable =
   (typeof SourceTypeEnumWritable)[keyof typeof SourceTypeEnumWritable];
 
 /**
- * Entry type: AVAILABILITY, BLOCKED, or SCHEDULED_INSTANCE
+ * Entry type: AVAILABILITY, BLOCKED, SCHEDULED_INSTANCE, JOB_HOLD (a class job the instructor was hired for holds this time; busy) or JOB_APPLICATION (a job the instructor applied to; not busy, shown to the instructor only)
  */
 export const EntryTypeEnum2Writable = {
   AVAILABILITY: 'AVAILABILITY',
   BLOCKED: 'BLOCKED',
   SCHEDULED_INSTANCE: 'SCHEDULED_INSTANCE',
+  JOB_HOLD: 'JOB_HOLD',
+  JOB_APPLICATION: 'JOB_APPLICATION',
 } as const;
 
 /**
- * Entry type: AVAILABILITY, BLOCKED, or SCHEDULED_INSTANCE
+ * Entry type: AVAILABILITY, BLOCKED, SCHEDULED_INSTANCE, JOB_HOLD (a class job the instructor was hired for holds this time; busy) or JOB_APPLICATION (a job the instructor applied to; not busy, shown to the instructor only)
  */
 export type EntryTypeEnum2Writable =
   (typeof EntryTypeEnum2Writable)[keyof typeof EntryTypeEnum2Writable];

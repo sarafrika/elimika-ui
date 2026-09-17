@@ -15982,7 +15982,7 @@ export const createJobQueryKey = (options: Options<CreateJobData>) =>
 
 /**
  * Create a marketplace class job
- * Attached resources are validated against their calendars and reserved with HOLD bookings for every session occurrence; conflicts return 409 with a per-occurrence report
+ * Attached resources are validated against their calendars and reserved with HOLD bookings for every session occurrence; conflicts return 409 with a per-occurrence report. A preferred instructor whose schedule clashes with the sessions is not hired: 409 with the clashing windows, and nothing is posted
  */
 export const createJobOptions = (options: Options<CreateJobData>) => {
   return queryOptions({
@@ -16001,7 +16001,7 @@ export const createJobOptions = (options: Options<CreateJobData>) => {
 
 /**
  * Create a marketplace class job
- * Attached resources are validated against their calendars and reserved with HOLD bookings for every session occurrence; conflicts return 409 with a per-occurrence report
+ * Attached resources are validated against their calendars and reserved with HOLD bookings for every session occurrence; conflicts return 409 with a per-occurrence report. A preferred instructor whose schedule clashes with the sessions is not hired: 409 with the clashing windows, and nothing is posted
  */
 export const createJobMutation = (
   options?: Partial<Options<CreateJobData>>
@@ -16285,7 +16285,7 @@ export const reviewApplicationQueryKey = (options: Options<ReviewApplicationData
 
 /**
  * Move a marketplace class job application through the funnel
- * Stages run applied -> shortlisted -> interviewing -> offered -> hired and no stage may be skipped; hire is the last decision, after which the job's class can be created
+ * Stages run applied -> shortlisted -> interviewing -> offered -> hired and no stage may be skipped; hire is the last decision, after which the job's class can be created. A hire whose sessions clash with the instructor's schedule is refused with 409 and the clashing windows, and the application, job and time holds are left as they were
  */
 export const reviewApplicationOptions = (options: Options<ReviewApplicationData>) => {
   return queryOptions({
@@ -16304,7 +16304,7 @@ export const reviewApplicationOptions = (options: Options<ReviewApplicationData>
 
 /**
  * Move a marketplace class job application through the funnel
- * Stages run applied -> shortlisted -> interviewing -> offered -> hired and no stage may be skipped; hire is the last decision, after which the job's class can be created
+ * Stages run applied -> shortlisted -> interviewing -> offered -> hired and no stage may be skipped; hire is the last decision, after which the job's class can be created. A hire whose sessions clash with the instructor's schedule is refused with 409 and the clashing windows, and the application, job and time holds are left as they were
  */
 export const reviewApplicationMutation = (
   options?: Partial<Options<ReviewApplicationData>>
@@ -22386,7 +22386,8 @@ export const checkAvailabilityQueryKey = (options: Options<CheckAvailabilityData
  * The window is given in UTC, and each availability slot is compared against it in the
  * zone that slot was authored in.
  *
- * Returns true unless a blocked slot overlaps the requested window.
+ * Returns true unless a blocked slot, or a class job the instructor was hired for (a FIRM
+ * hold), overlaps the requested window. Jobs the instructor merely applied to never count.
  *
  */
 export const checkAvailabilityOptions = (options: Options<CheckAvailabilityData>) => {
@@ -22415,7 +22416,8 @@ export const checkAvailabilityInfiniteQueryKey = (
  * The window is given in UTC, and each availability slot is compared against it in the
  * zone that slot was authored in.
  *
- * Returns true unless a blocked slot overlaps the requested window.
+ * Returns true unless a blocked slot, or a class job the instructor was hired for (a FIRM
+ * hold), overlaps the requested window. Jobs the instructor merely applied to never count.
  *
  */
 export const checkAvailabilityInfiniteOptions = (options: Options<CheckAvailabilityData>) => {
@@ -22458,8 +22460,10 @@ export const getInstructorCalendarQueryKey = (options: Options<GetInstructorCale
 
 /**
  * Get merged instructor calendar
- * Returns a merged feed of availability slots, blocked time, and scheduled instances for
- * the instructor within a date range.
+ * Returns a merged feed of availability slots, blocked time, scheduled instances and
+ * marketplace job holds for the instructor within a date range. A JOB_HOLD entry is time a
+ * class job the instructor was hired for holds (busy). The instructor alone also sees a
+ * JOB_APPLICATION entry for each job they applied to; it never blocks booking.
  *
  * Anyone signed in may read it, because choosing when to book an instructor means seeing
  * which windows are free. Callers other than the instructor themselves get each entry

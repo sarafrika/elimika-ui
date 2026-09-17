@@ -376,8 +376,8 @@ export const zStudent = z
       .optional(),
     bio: z.union([z.string().min(0).max(2000), z.null()]).optional(),
     primaryGuardianContact: z.string().optional(),
-    secondaryGuardianContact: z.string().optional(),
     allGuardianContacts: z.array(z.string()).optional(),
+    secondaryGuardianContact: z.string().optional(),
     full_name: z
       .string()
       .describe(
@@ -830,11 +830,6 @@ export const zRubricCriteria = z
       )
       .readonly()
       .optional(),
-    is_primary_criteria: z
-      .boolean()
-      .describe('**[READ-ONLY]** Indicates if this is a primary assessment criteria.')
-      .readonly()
-      .optional(),
     criteria_category: z
       .string()
       .describe('**[READ-ONLY]** Category classification of the assessment criteria.')
@@ -848,6 +843,11 @@ export const zRubricCriteria = z
     criteria_number: z
       .string()
       .describe('**[READ-ONLY]** Formatted criteria number for display in assessment interface.')
+      .readonly()
+      .optional(),
+    is_primary_criteria: z
+      .boolean()
+      .describe('**[READ-ONLY]** Indicates if this is a primary assessment criteria.')
       .readonly()
       .optional(),
   })
@@ -902,17 +902,17 @@ export const zRubricMatrix = z
         "**[REQUIRED]** Matrix cells mapping criteria to scoring levels with descriptions. Key format: 'criteriaUuid_scoringLevelUuid'."
       ),
     matrix_statistics: zMatrixStatistics.optional(),
-    is_complete: z
-      .boolean()
-      .describe('**[READ-ONLY]** Whether all matrix cells have been completed with descriptions.')
-      .readonly()
-      .optional(),
     expected_cell_count: z
       .number()
       .int()
       .describe(
         '**[READ-ONLY]** Expected number of matrix cells (criteria count × scoring levels count).'
       )
+      .readonly()
+      .optional(),
+    is_complete: z
+      .boolean()
+      .describe('**[READ-ONLY]** Whether all matrix cells have been completed with descriptions.')
       .readonly()
       .optional(),
   })
@@ -2975,6 +2975,11 @@ export const zAvailabilitySlot = z
       )
       .readonly()
       .optional(),
+    duration_minutes: z.coerce
+      .bigint()
+      .describe('**[READ-ONLY]** Duration of the availability slot in minutes.')
+      .readonly()
+      .optional(),
     duration_formatted: z
       .string()
       .describe('**[READ-ONLY]** Human-readable formatted duration.')
@@ -2995,11 +3000,6 @@ export const zAvailabilitySlot = z
     availability_description: z
       .string()
       .describe('**[READ-ONLY]** Human-readable description of the availability pattern.')
-      .readonly()
-      .optional(),
-    duration_minutes: z.coerce
-      .bigint()
-      .describe('**[READ-ONLY]** Duration of the availability slot in minutes.')
       .readonly()
       .optional(),
   })
@@ -5194,6 +5194,13 @@ export const zClassDefinition = z
       )
       .readonly()
       .optional(),
+    duration_minutes: z.coerce
+      .bigint()
+      .describe(
+        '**[READ-ONLY]** Computed duration of the class in minutes based on start and end times.'
+      )
+      .readonly()
+      .optional(),
     duration_formatted: z
       .string()
       .describe('**[READ-ONLY]** Human-readable formatted duration.')
@@ -5203,13 +5210,6 @@ export const zClassDefinition = z
       .string()
       .describe(
         '**[READ-ONLY]** Human-readable capacity information including waitlist availability.'
-      )
-      .readonly()
-      .optional(),
-    duration_minutes: z.coerce
-      .bigint()
-      .describe(
-        '**[READ-ONLY]** Computed duration of the class in minutes based on start and end times.'
       )
       .readonly()
       .optional(),
@@ -5240,6 +5240,15 @@ export const zResourceTypeEnum2 = z
   .describe('**[READ-ONLY]** Kind of the reserved resource.');
 
 /**
+ * **[READ-ONLY]** Effective state of this resource's bookings for the job: HOLD while any session is still held, else CONFIRMED once the class booked it, else RELEASED when every booking was released or cancelled. Omitted when the job never booked the resource.
+ */
+export const zBookingStatusEnum = z
+  .enum(['HOLD', 'CONFIRMED', 'RELEASED'])
+  .describe(
+    "**[READ-ONLY]** Effective state of this resource's bookings for the job: HOLD while any session is still held, else CONFIRMED once the class booked it, else RELEASED when every booking was released or cancelled. Omitted when the job never booked the resource."
+  );
+
+/**
  * Organisation resource a marketplace job reserves for its sessions while recruitment runs (venue booked exclusively, equipment pools by quantity)
  */
 export const zClassMarketplaceJobResource = z
@@ -5248,6 +5257,7 @@ export const zClassMarketplaceJobResource = z
     quantity: z.union([z.number().int().gte(1), z.null()]).optional(),
     resource_name: z.union([z.string().readonly(), z.null()]).readonly().optional(),
     resource_type: zResourceTypeEnum2.optional(),
+    booking_status: zBookingStatusEnum.optional(),
   })
   .describe(
     'Organisation resource a marketplace job reserves for its sessions while recruitment runs (venue booked exclusively, equipment pools by quantity)'
@@ -6054,6 +6064,11 @@ export const zScheduledInstance = z
       )
       .readonly()
       .optional(),
+    duration_minutes: z.coerce
+      .bigint()
+      .describe('**[READ-ONLY]** Duration of the scheduled instance in minutes.')
+      .readonly()
+      .optional(),
     duration_formatted: z
       .string()
       .describe('**[READ-ONLY]** Human-readable formatted duration.')
@@ -6069,11 +6084,6 @@ export const zScheduledInstance = z
       .describe(
         '**[READ-ONLY]** Indicates if the scheduled instance is currently active (ongoing).'
       )
-      .readonly()
-      .optional(),
-    duration_minutes: z.coerce
-      .bigint()
-      .describe('**[READ-ONLY]** Duration of the scheduled instance in minutes.')
       .readonly()
       .optional(),
     can_be_cancelled: z
@@ -6855,6 +6865,8 @@ export const zTypeEnum = z.enum([
   'CLASS_MARKETPLACE_JOB_APPLICATION_ASSIGNED',
   'CLASS_MARKETPLACE_JOB_APPLICATION_CANCELLED',
   'CLASS_MARKETPLACE_JOB_APPLICATION_WITHDRAWN',
+  'CLASS_MARKETPLACE_JOB_HIRE_BLOCKED_ORGANISATION',
+  'CLASS_MARKETPLACE_JOB_HIRE_BLOCKED_INSTRUCTOR',
   'CLASS_ENROLLMENT_CONFIRMED',
   'COURSE_ENROLLMENT_MILESTONE',
   'COURSE_ENROLLMENT_NOTICE',
@@ -7309,9 +7321,9 @@ export const zEnrollment = z
       .describe('**[READ-ONLY]** Indicates if the enrollment is still active (not cancelled).')
       .readonly()
       .optional(),
-    status_description: z
-      .string()
-      .describe('**[READ-ONLY]** Human-readable description of the enrollment status.')
+    can_be_cancelled: z
+      .boolean()
+      .describe('**[READ-ONLY]** Indicates if the enrollment can be cancelled.')
       .readonly()
       .optional(),
     is_attendance_marked: z
@@ -7324,9 +7336,9 @@ export const zEnrollment = z
       .describe('**[READ-ONLY]** Indicates if the student attended the class.')
       .readonly()
       .optional(),
-    can_be_cancelled: z
-      .boolean()
-      .describe('**[READ-ONLY]** Indicates if the enrollment can be cancelled.')
+    status_description: z
+      .string()
+      .describe('**[READ-ONLY]** Human-readable description of the enrollment status.')
       .readonly()
       .optional(),
   })
@@ -9763,14 +9775,14 @@ export const zProgramEnrollment = z
       .describe('**[READ-ONLY]** Indicates if the enrollment is currently active and ongoing.')
       .readonly()
       .optional(),
-    progress_display: z
-      .string()
-      .describe("**[READ-ONLY]** Formatted display of the student's progress in the program.")
-      .readonly()
-      .optional(),
     enrollment_category: z
       .string()
       .describe('**[READ-ONLY]** Formatted category of the enrollment based on current status.')
+      .readonly()
+      .optional(),
+    progress_display: z
+      .string()
+      .describe("**[READ-ONLY]** Formatted display of the student's progress in the program.")
       .readonly()
       .optional(),
     enrollment_duration: z
@@ -10317,11 +10329,13 @@ export const zApiResponseListAvailabilitySlot = z.object({
 });
 
 /**
- * Entry type: AVAILABILITY, BLOCKED, or SCHEDULED_INSTANCE
+ * Entry type: AVAILABILITY, BLOCKED, SCHEDULED_INSTANCE, JOB_HOLD (a class job the instructor was hired for holds this time; busy) or JOB_APPLICATION (a job the instructor applied to; not busy, shown to the instructor only)
  */
 export const zEntryTypeEnum2 = z
-  .enum(['AVAILABILITY', 'BLOCKED', 'SCHEDULED_INSTANCE'])
-  .describe('Entry type: AVAILABILITY, BLOCKED, or SCHEDULED_INSTANCE');
+  .enum(['AVAILABILITY', 'BLOCKED', 'SCHEDULED_INSTANCE', 'JOB_HOLD', 'JOB_APPLICATION'])
+  .describe(
+    'Entry type: AVAILABILITY, BLOCKED, SCHEDULED_INSTANCE, JOB_HOLD (a class job the instructor was hired for holds this time; busy) or JOB_APPLICATION (a job the instructor applied to; not busy, shown to the instructor only)'
+  );
 
 /**
  * Unified calendar entry combining availability slots and scheduled instances
@@ -10362,6 +10376,7 @@ export const zInstructorCalendarEntry = z
       )
       .optional(),
     organisation_name: z.string().describe('Display name of the owning organisation').optional(),
+    job_uuid: z.union([z.string().uuid(), z.null()]).optional(),
   })
   .describe('Unified calendar entry combining availability slots and scheduled instances');
 
@@ -11733,14 +11748,14 @@ export const zCourseEnrollment = z
       .describe('**[READ-ONLY]** Indicates if the enrollment is currently active and ongoing.')
       .readonly()
       .optional(),
-    progress_display: z
-      .string()
-      .describe("**[READ-ONLY]** Formatted display of the student's progress in the course.")
-      .readonly()
-      .optional(),
     enrollment_category: z
       .string()
       .describe('**[READ-ONLY]** Formatted category of the enrollment based on current status.')
+      .readonly()
+      .optional(),
+    progress_display: z
+      .string()
+      .describe("**[READ-ONLY]** Formatted display of the student's progress in the course.")
       .readonly()
       .optional(),
     enrollment_duration: z
@@ -13389,6 +13404,8 @@ export const zTypeEnumWritable = z.enum([
   'CLASS_MARKETPLACE_JOB_APPLICATION_ASSIGNED',
   'CLASS_MARKETPLACE_JOB_APPLICATION_CANCELLED',
   'CLASS_MARKETPLACE_JOB_APPLICATION_WITHDRAWN',
+  'CLASS_MARKETPLACE_JOB_HIRE_BLOCKED_ORGANISATION',
+  'CLASS_MARKETPLACE_JOB_HIRE_BLOCKED_INSTRUCTOR',
   'CLASS_ENROLLMENT_CONFIRMED',
   'COURSE_ENROLLMENT_MILESTONE',
   'COURSE_ENROLLMENT_NOTICE',
@@ -13574,11 +13591,13 @@ export const zSourceTypeEnumWritable = z
   .describe('What created the booking');
 
 /**
- * Entry type: AVAILABILITY, BLOCKED, or SCHEDULED_INSTANCE
+ * Entry type: AVAILABILITY, BLOCKED, SCHEDULED_INSTANCE, JOB_HOLD (a class job the instructor was hired for holds this time; busy) or JOB_APPLICATION (a job the instructor applied to; not busy, shown to the instructor only)
  */
 export const zEntryTypeEnum2Writable = z
-  .enum(['AVAILABILITY', 'BLOCKED', 'SCHEDULED_INSTANCE'])
-  .describe('Entry type: AVAILABILITY, BLOCKED, or SCHEDULED_INSTANCE');
+  .enum(['AVAILABILITY', 'BLOCKED', 'SCHEDULED_INSTANCE', 'JOB_HOLD', 'JOB_APPLICATION'])
+  .describe(
+    'Entry type: AVAILABILITY, BLOCKED, SCHEDULED_INSTANCE, JOB_HOLD (a class job the instructor was hired for holds this time; busy) or JOB_APPLICATION (a job the instructor applied to; not busy, shown to the instructor only)'
+  );
 
 /**
  * Most recent scheduled-instance enrollment status for this class
