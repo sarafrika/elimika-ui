@@ -316,14 +316,18 @@ export const TrainingBranchSchema = {
     latitude: {
       type: ['number', 'null'],
       description:
-        '**[OPTIONAL]** Latitude of the branch address, resolved when the address was searched.',
+        '**[OPTIONAL]** Latitude of the branch address, resolved when the address was searched. Send it together with longitude. Omitting both keeps the stored pin unless the address is cleared.',
       example: -1.2921,
+      maximum: 90,
+      minimum: -90,
     },
     longitude: {
       type: ['number', 'null'],
       description:
-        '**[OPTIONAL]** Longitude of the branch address, resolved when the address was searched.',
+        '**[OPTIONAL]** Longitude of the branch address, resolved when the address was searched. Send it together with latitude.',
       example: 36.8219,
+      maximum: 180,
+      minimum: -180,
     },
     poc_name: {
       type: 'string',
@@ -1745,12 +1749,6 @@ export const QuizSchema = {
       example: 'instructor@sarafrika.com',
       readOnly: true,
     },
-    is_timed: {
-      type: 'boolean',
-      description: '**[READ-ONLY]** Indicates if the quiz has a time limit.',
-      example: true,
-      readOnly: true,
-    },
     is_published: {
       type: 'boolean',
       description: '**[READ-ONLY]** Indicates if the quiz is published and accessible to students.',
@@ -1761,6 +1759,12 @@ export const QuizSchema = {
       type: 'string',
       description: '**[READ-ONLY]** Human-readable format of quiz time limit.',
       example: '30 minutes',
+      readOnly: true,
+    },
+    is_timed: {
+      type: 'boolean',
+      description: '**[READ-ONLY]** Indicates if the quiz has a time limit.',
+      example: true,
       readOnly: true,
     },
     has_multiple_attempts: {
@@ -3185,10 +3189,10 @@ export const OrganisationResourceSchema = {
       readOnly: true,
     },
     branch_uuid: {
-      type: ['string', 'null'],
+      type: 'string',
       format: 'uuid',
       description:
-        '**[REQUIRED]** Training branch the resource belongs to. Create and update fail without it; legacy rows may still be null.',
+        '**[REQUIRED]** Active training branch of the organisation the resource belongs to. It cannot move to another branch while it has future holds or confirmed bookings.',
     },
     resource_type: {
       $ref: '#/components/schemas/ResourceTypeEnum',
@@ -3243,7 +3247,7 @@ export const OrganisationResourceSchema = {
       readOnly: true,
     },
   },
-  required: ['name', 'resource_type'],
+  required: ['branch_uuid', 'name', 'resource_type'],
 } as const;
 
 export const ApiResponseOrganisationResourceSchema = {
@@ -8432,19 +8436,19 @@ conflict_resolution per template:
       example: '1h 30m',
       readOnly: true,
     },
+    capacity_info: {
+      type: 'string',
+      description:
+        '**[READ-ONLY]** Human-readable capacity information including waitlist availability.',
+      example: 'Max 25 participants (waitlist enabled)',
+      readOnly: true,
+    },
     duration_minutes: {
       type: 'integer',
       format: 'int64',
       description:
         '**[READ-ONLY]** Computed duration of the class in minutes based on start and end times.',
       example: 90,
-      readOnly: true,
-    },
-    capacity_info: {
-      type: 'string',
-      description:
-        '**[READ-ONLY]** Human-readable capacity information including waitlist availability.',
-      example: 'Max 25 participants (waitlist enabled)',
       readOnly: true,
     },
   },
@@ -8567,6 +8571,7 @@ export const ClassMarketplaceJobRequestSchema = {
   description: 'Draft class advert posted by an organisation before a final instructor is assigned',
   example: {
     organisation_uuid: 'org-1234-5678-90ab-cdef12345678',
+    branch_uuid: 'branch-1234-5678-90ab-cdef12345678',
     course_uuid: 'course-1234-5678-90ab-cdef12345678',
     title: 'Weekend Data Analysis Bootcamp',
     description: 'School-led advert for an approved course delivery slot.',
@@ -8575,9 +8580,6 @@ export const ClassMarketplaceJobRequestSchema = {
     default_start_time: '2026-05-02T09:00:00',
     default_end_time: '2026-05-02T12:00:00',
     location_type: 'HYBRID',
-    location_name: 'Nairobi Campus - Lab 2',
-    location_latitude: -1.292066,
-    location_longitude: 36.821945,
     meeting_link: 'https://meet.google.com/abc-defg-hij',
     max_participants: 24,
     allow_waitlist: true,
@@ -8600,12 +8602,6 @@ export const ClassMarketplaceJobRequestSchema = {
       type: 'string',
       format: 'uuid',
       description: '**[REQUIRED]** Organisation posting the marketplace class job.',
-    },
-    branch_uuid: {
-      type: 'string',
-      format: 'uuid',
-      description:
-        '**[REQUIRED]** Training branch that owns the job. IN_PERSON and HYBRID jobs take the branch pin and name as their location.',
     },
     course_uuid: {
       type: ['string', 'null'],
@@ -8683,17 +8679,20 @@ export const ClassMarketplaceJobRequestSchema = {
     },
     location_name: {
       type: ['string', 'null'],
-      description: 'Optional human-readable location name. Required for IN_PERSON and HYBRID.',
+      description:
+        "Ignored for IN_PERSON and HYBRID: the name is derived from the branch as 'Branch name · address'. Kept as sent for ONLINE.",
       maxLength: 255,
       minLength: 0,
     },
     location_latitude: {
       type: ['number', 'null'],
-      description: 'Optional location latitude. Required for IN_PERSON and HYBRID.',
+      description:
+        "Ignored for IN_PERSON and HYBRID: copied from the branch's location pin when the job is saved. Kept as sent for ONLINE.",
     },
     location_longitude: {
       type: ['number', 'null'],
-      description: 'Optional location longitude. Required for IN_PERSON and HYBRID.',
+      description:
+        "Ignored for IN_PERSON and HYBRID: copied from the branch's location pin when the job is saved. Kept as sent for ONLINE.",
     },
     meeting_link: {
       type: ['string', 'null'],
@@ -8795,8 +8794,15 @@ export const ClassMarketplaceJobRequestSchema = {
       type: ['boolean', 'null'],
       description: '**[OPTIONAL]** Deliver reminders via push notification.',
     },
+    branch_uuid: {
+      type: 'string',
+      format: 'uuid',
+      description:
+        "**[REQUIRED]** Training branch the class is delivered at. Its location pin becomes the job's location for IN_PERSON and HYBRID delivery.",
+    },
   },
   required: [
+    'branch_uuid',
     'class_visibility',
     'default_end_time',
     'default_start_time',
@@ -8826,14 +8832,12 @@ export const ClassMarketplaceJobResourceSchema = {
       minimum: 1,
     },
     resource_name: {
-      type: 'string',
+      type: ['string', 'null'],
       description: '**[READ-ONLY]** Name of the reserved resource.',
       readOnly: true,
     },
     resource_type: {
-      type: 'string',
-      description: '**[READ-ONLY]** Kind of the reserved resource (VENUE or EQUIPMENT_POOL).',
-      readOnly: true,
+      $ref: '#/components/schemas/ResourceTypeEnum2',
     },
   },
   required: ['resource_uuid'],
@@ -8886,29 +8890,6 @@ export const ClassMarketplaceJobSchema = {
     organisation_uuid: {
       type: 'string',
       format: 'uuid',
-      readOnly: true,
-    },
-    branch_uuid: {
-      type: 'string',
-      format: 'uuid',
-      description: '**[READ-ONLY]** Training branch that owns the job.',
-      readOnly: true,
-    },
-    branch_name: {
-      type: 'string',
-      description: '**[READ-ONLY]** Name of the owning training branch.',
-      readOnly: true,
-    },
-    application_count: {
-      type: 'integer',
-      format: 'int32',
-      description: '**[READ-ONLY]** Number of applications received for the job.',
-      readOnly: true,
-    },
-    hired_instructor_uuid: {
-      type: 'string',
-      format: 'uuid',
-      description: '**[READ-ONLY]** Instructor hired for the job, once hiring is decided.',
       readOnly: true,
     },
     course_uuid: {
@@ -9102,6 +9083,31 @@ export const ClassMarketplaceJobSchema = {
     },
     remind_via_push: {
       type: 'boolean',
+      readOnly: true,
+    },
+    branch_uuid: {
+      type: ['string', 'null'],
+      format: 'uuid',
+      description:
+        '**[READ-ONLY]** Training branch the class is delivered at (null only on legacy jobs).',
+      readOnly: true,
+    },
+    branch_name: {
+      type: ['string', 'null'],
+      description: "**[READ-ONLY]** Name of the job's training branch.",
+      readOnly: true,
+    },
+    application_count: {
+      type: 'integer',
+      format: 'int64',
+      description:
+        '**[READ-ONLY]** Applications received for the job, not counting withdrawn ones.',
+      readOnly: true,
+    },
+    hired_instructor_uuid: {
+      type: ['string', 'null'],
+      format: 'uuid',
+      description: '**[READ-ONLY]** Instructor hired for the job; null until someone is hired.',
       readOnly: true,
     },
     duration_minutes: {
@@ -12322,18 +12328,6 @@ export const EnrollmentSchema = {
       example: true,
       readOnly: true,
     },
-    can_be_cancelled: {
-      type: 'boolean',
-      description: '**[READ-ONLY]** Indicates if the enrollment can be cancelled.',
-      example: true,
-      readOnly: true,
-    },
-    did_attend: {
-      type: 'boolean',
-      description: '**[READ-ONLY]** Indicates if the student attended the class.',
-      example: false,
-      readOnly: true,
-    },
     status_description: {
       type: 'string',
       description: '**[READ-ONLY]** Human-readable description of the enrollment status.',
@@ -12344,6 +12338,18 @@ export const EnrollmentSchema = {
       type: 'boolean',
       description: '**[READ-ONLY]** Indicates if attendance has been marked for this enrollment.',
       example: false,
+      readOnly: true,
+    },
+    did_attend: {
+      type: 'boolean',
+      description: '**[READ-ONLY]** Indicates if the student attended the class.',
+      example: false,
+      readOnly: true,
+    },
+    can_be_cancelled: {
+      type: 'boolean',
+      description: '**[READ-ONLY]** Indicates if the enrollment can be cancelled.',
+      example: true,
       readOnly: true,
     },
   },
@@ -16970,16 +16976,16 @@ export const ProgramEnrollmentSchema = {
       example: false,
       readOnly: true,
     },
-    enrollment_category: {
-      type: 'string',
-      description: '**[READ-ONLY]** Formatted category of the enrollment based on current status.',
-      example: 'Completed Program Enrollment',
-      readOnly: true,
-    },
     progress_display: {
       type: 'string',
       description: "**[READ-ONLY]** Formatted display of the student's progress in the program.",
       example: '100.00% Complete',
+      readOnly: true,
+    },
+    enrollment_category: {
+      type: 'string',
+      description: '**[READ-ONLY]** Formatted category of the enrollment based on current status.',
+      example: 'Completed Program Enrollment',
       readOnly: true,
     },
     enrollment_duration: {
@@ -20823,16 +20829,16 @@ export const CourseEnrollmentSchema = {
       example: false,
       readOnly: true,
     },
-    enrollment_category: {
-      type: 'string',
-      description: '**[READ-ONLY]** Formatted category of the enrollment based on current status.',
-      example: 'Completed Enrollment',
-      readOnly: true,
-    },
     progress_display: {
       type: 'string',
       description: "**[READ-ONLY]** Formatted display of the student's progress in the course.",
       example: '100.00% Complete',
+      readOnly: true,
+    },
+    enrollment_category: {
+      type: 'string',
+      description: '**[READ-ONLY]** Formatted category of the enrollment based on current status.',
+      example: 'Completed Enrollment',
       readOnly: true,
     },
     enrollment_duration: {
@@ -23625,6 +23631,13 @@ export const ServiceTypeEnumSchema = {
   description:
     '**[OPTIONAL]** Preset service the class is offered under (drives the commercial format shown to learners).',
   enum: ['ONE_ON_ONE', 'GROUP', 'ONLINE', 'PRIVATE_ONLINE'],
+} as const;
+
+export const ResourceTypeEnum2Schema = {
+  type: ['string', 'null'],
+  description: '**[READ-ONLY]** Kind of the reserved resource.',
+  enum: ['VENUE', 'EQUIPMENT_POOL'],
+  readOnly: true,
 } as const;
 
 export const StatusEnum8Schema = {

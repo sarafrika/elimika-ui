@@ -134,11 +134,11 @@ export type TrainingBranch = {
    */
   address?: string | null;
   /**
-   * **[OPTIONAL]** Latitude of the branch address, resolved when the address was searched.
+   * **[OPTIONAL]** Latitude of the branch address, resolved when the address was searched. Send it together with longitude. Omitting both keeps the stored pin unless the address is cleared.
    */
   latitude?: number | null;
   /**
-   * **[OPTIONAL]** Longitude of the branch address, resolved when the address was searched.
+   * **[OPTIONAL]** Longitude of the branch address, resolved when the address was searched. Send it together with latitude.
    */
   longitude?: number | null;
   /**
@@ -864,10 +864,6 @@ export type Quiz = {
    */
   readonly updated_by?: string;
   /**
-   * **[READ-ONLY]** Indicates if the quiz has a time limit.
-   */
-  readonly is_timed?: boolean;
-  /**
    * **[READ-ONLY]** Indicates if the quiz is published and accessible to students.
    */
   readonly is_published?: boolean;
@@ -875,6 +871,10 @@ export type Quiz = {
    * **[READ-ONLY]** Human-readable format of quiz time limit.
    */
   readonly time_limit_display?: string;
+  /**
+   * **[READ-ONLY]** Indicates if the quiz has a time limit.
+   */
+  readonly is_timed?: boolean;
   /**
    * **[READ-ONLY]** Indicates if students can take the quiz multiple times.
    */
@@ -1597,9 +1597,9 @@ export type OrganisationResource = {
    */
   readonly uuid?: string;
   /**
-   * **[REQUIRED]** Training branch the resource belongs to. Create and update fail without it; legacy rows may still be null.
+   * **[REQUIRED]** Active training branch of the organisation the resource belongs to. It cannot move to another branch while it has future holds or confirmed bookings.
    */
-  branch_uuid?: string | null;
+  branch_uuid: string;
   resource_type: ResourceTypeEnum;
   /**
    * Resource name, unique per organisation
@@ -4064,13 +4064,13 @@ export type ClassDefinition = {
    */
   readonly duration_formatted?: string;
   /**
-   * **[READ-ONLY]** Computed duration of the class in minutes based on start and end times.
-   */
-  readonly duration_minutes?: bigint;
-  /**
    * **[READ-ONLY]** Human-readable capacity information including waitlist availability.
    */
   readonly capacity_info?: string;
+  /**
+   * **[READ-ONLY]** Computed duration of the class in minutes based on start and end times.
+   */
+  readonly duration_minutes?: bigint;
 };
 
 /**
@@ -4150,10 +4150,6 @@ export type ClassMarketplaceJobRequest = {
    */
   organisation_uuid: string;
   /**
-   * **[REQUIRED]** Training branch that owns the job. IN_PERSON and HYBRID jobs take the branch pin and name as their location.
-   */
-  branch_uuid: string;
-  /**
    * **[OPTIONAL]** Course backing the advertised class. Required when program_uuid is not provided.
    */
   course_uuid?: string | null;
@@ -4205,15 +4201,15 @@ export type ClassMarketplaceJobRequest = {
   class_color?: string | null;
   location_type: LocationTypeEnum;
   /**
-   * Optional human-readable location name. Required for IN_PERSON and HYBRID.
+   * Ignored for IN_PERSON and HYBRID: the name is derived from the branch as 'Branch name · address'. Kept as sent for ONLINE.
    */
   location_name?: string | null;
   /**
-   * Optional location latitude. Required for IN_PERSON and HYBRID.
+   * Ignored for IN_PERSON and HYBRID: copied from the branch's location pin when the job is saved. Kept as sent for ONLINE.
    */
   location_latitude?: number | null;
   /**
-   * Optional location longitude. Required for IN_PERSON and HYBRID.
+   * Ignored for IN_PERSON and HYBRID: copied from the branch's location pin when the job is saved. Kept as sent for ONLINE.
    */
   location_longitude?: number | null;
   /**
@@ -4282,6 +4278,10 @@ export type ClassMarketplaceJobRequest = {
    * **[OPTIONAL]** Deliver reminders via push notification.
    */
   remind_via_push?: boolean | null;
+  /**
+   * **[REQUIRED]** Training branch the class is delivered at. Its location pin becomes the job's location for IN_PERSON and HYBRID delivery.
+   */
+  branch_uuid: string;
 };
 
 /**
@@ -4299,11 +4299,8 @@ export type ClassMarketplaceJobResource = {
   /**
    * **[READ-ONLY]** Name of the reserved resource.
    */
-  readonly resource_name?: string;
-  /**
-   * **[READ-ONLY]** Kind of the reserved resource (VENUE or EQUIPMENT_POOL).
-   */
-  readonly resource_type?: string;
+  readonly resource_name?: string | null;
+  resource_type?: ResourceTypeEnum2;
 };
 
 export type ApiResponseClassMarketplaceJob = {
@@ -4323,22 +4320,6 @@ export type ClassMarketplaceJob = {
   status?: StatusEnum8;
   readonly resources?: Array<ClassMarketplaceJobResource>;
   readonly organisation_uuid?: string;
-  /**
-   * **[READ-ONLY]** Training branch that owns the job.
-   */
-  readonly branch_uuid?: string;
-  /**
-   * **[READ-ONLY]** Name of the owning training branch.
-   */
-  readonly branch_name?: string;
-  /**
-   * **[READ-ONLY]** Number of applications received for the job.
-   */
-  readonly application_count?: number;
-  /**
-   * **[READ-ONLY]** Instructor hired for the job, once hiring is decided.
-   */
-  readonly hired_instructor_uuid?: string;
   readonly course_uuid?: string;
   readonly program_uuid?: string;
   readonly sale_price?: number;
@@ -4387,6 +4368,22 @@ export type ClassMarketplaceJob = {
   readonly remind_via_email?: boolean;
   readonly remind_via_sms?: boolean;
   readonly remind_via_push?: boolean;
+  /**
+   * **[READ-ONLY]** Training branch the class is delivered at (null only on legacy jobs).
+   */
+  readonly branch_uuid?: string | null;
+  /**
+   * **[READ-ONLY]** Name of the job's training branch.
+   */
+  readonly branch_name?: string | null;
+  /**
+   * **[READ-ONLY]** Applications received for the job, not counting withdrawn ones.
+   */
+  readonly application_count?: bigint;
+  /**
+   * **[READ-ONLY]** Instructor hired for the job; null until someone is hired.
+   */
+  readonly hired_instructor_uuid?: string | null;
   readonly duration_minutes?: bigint;
 };
 
@@ -6243,14 +6240,6 @@ export type Enrollment = {
    */
   readonly is_active?: boolean;
   /**
-   * **[READ-ONLY]** Indicates if the enrollment can be cancelled.
-   */
-  readonly can_be_cancelled?: boolean;
-  /**
-   * **[READ-ONLY]** Indicates if the student attended the class.
-   */
-  readonly did_attend?: boolean;
-  /**
    * **[READ-ONLY]** Human-readable description of the enrollment status.
    */
   readonly status_description?: string;
@@ -6258,6 +6247,14 @@ export type Enrollment = {
    * **[READ-ONLY]** Indicates if attendance has been marked for this enrollment.
    */
   readonly is_attendance_marked?: boolean;
+  /**
+   * **[READ-ONLY]** Indicates if the student attended the class.
+   */
+  readonly did_attend?: boolean;
+  /**
+   * **[READ-ONLY]** Indicates if the enrollment can be cancelled.
+   */
+  readonly can_be_cancelled?: boolean;
 };
 
 export type ApiResponse = {
@@ -8614,13 +8611,13 @@ export type ProgramEnrollment = {
    */
   readonly is_active?: boolean;
   /**
-   * **[READ-ONLY]** Formatted category of the enrollment based on current status.
-   */
-  readonly enrollment_category?: string;
-  /**
    * **[READ-ONLY]** Formatted display of the student's progress in the program.
    */
   readonly progress_display?: string;
+  /**
+   * **[READ-ONLY]** Formatted category of the enrollment based on current status.
+   */
+  readonly enrollment_category?: string;
   /**
    * **[READ-ONLY]** Duration of the enrollment from start to completion or current date.
    */
@@ -10717,13 +10714,13 @@ export type CourseEnrollment = {
    */
   readonly is_active?: boolean;
   /**
-   * **[READ-ONLY]** Formatted category of the enrollment based on current status.
-   */
-  readonly enrollment_category?: string;
-  /**
    * **[READ-ONLY]** Formatted display of the student's progress in the course.
    */
   readonly progress_display?: string;
+  /**
+   * **[READ-ONLY]** Formatted category of the enrollment based on current status.
+   */
+  readonly enrollment_category?: string;
   /**
    * **[READ-ONLY]** Duration of the enrollment from start to completion or current date.
    */
@@ -12586,6 +12583,19 @@ export const ServiceTypeEnum = {
  * **[OPTIONAL]** Preset service the class is offered under (drives the commercial format shown to learners).
  */
 export type ServiceTypeEnum = (typeof ServiceTypeEnum)[keyof typeof ServiceTypeEnum];
+
+/**
+ * **[READ-ONLY]** Kind of the reserved resource.
+ */
+export const ResourceTypeEnum2 = {
+  VENUE: 'VENUE',
+  EQUIPMENT_POOL: 'EQUIPMENT_POOL',
+} as const;
+
+/**
+ * **[READ-ONLY]** Kind of the reserved resource.
+ */
+export type ResourceTypeEnum2 = (typeof ResourceTypeEnum2)[keyof typeof ResourceTypeEnum2];
 
 export const StatusEnum8 = {
   OPEN: 'open',
@@ -25726,9 +25736,12 @@ export type ListJobsData = {
   path?: never;
   query: {
     organisation_uuid?: string;
-    branch_uuid?: string;
     course_uuid?: string;
     program_uuid?: string;
+    /**
+     * Only jobs delivered at this training branch
+     */
+    branch_uuid?: string;
     status?: string;
     pageable: Pageable;
   };

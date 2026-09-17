@@ -298,7 +298,7 @@ function JobRow({
   const hiredName = hiredUuid
     ? (instructorMap[hiredUuid]?.full_name ?? 'the hired instructor')
     : null;
-  const applicants = job.application_count ?? 0;
+  const applicants = Number(job.application_count ?? 0);
   const applicantNote =
     stage === 'awaiting_class' && hiredName
       ? `Hired ${hiredName}`

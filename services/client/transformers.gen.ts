@@ -2107,6 +2107,9 @@ const classMarketplaceJobSchemaResponseTransformer = (data: any) => {
   if (data.updated_date) {
     data.updated_date = new Date(data.updated_date);
   }
+  if (data.application_count) {
+    data.application_count = BigInt(data.application_count.toString());
+  }
   if (data.duration_minutes) {
     data.duration_minutes = BigInt(data.duration_minutes.toString());
   }

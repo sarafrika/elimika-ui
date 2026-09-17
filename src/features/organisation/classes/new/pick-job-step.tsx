@@ -300,7 +300,7 @@ function ReadyJobCard({
 function NotReadyRow({ job }: { job: ClassMarketplaceJob }) {
   const windows = useMemo(() => jobSessionWindows(job), [job]);
   const first = windows[0];
-  const applicants = job.application_count ?? 0;
+  const applicants = Number(job.application_count ?? 0);
   return (
     <div className='bg-muted/30 flex flex-col gap-3 rounded-xl border p-4 sm:flex-row sm:items-center'>
       <div className='min-w-0 flex-1'>

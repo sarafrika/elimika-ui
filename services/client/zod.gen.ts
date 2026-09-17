@@ -199,8 +199,8 @@ export const zTrainingBranch = z
       .max(200)
       .describe('**[REQUIRED]** Name of the training branch or location. Must not be blank.'),
     address: z.union([z.string(), z.null()]).optional(),
-    latitude: z.union([z.number(), z.null()]).optional(),
-    longitude: z.union([z.number(), z.null()]).optional(),
+    latitude: z.union([z.number().gte(-90).lte(90), z.null()]).optional(),
+    longitude: z.union([z.number().gte(-180).lte(180), z.null()]).optional(),
     poc_name: z
       .string()
       .min(0)
@@ -1119,11 +1119,6 @@ export const zQuiz = z
       )
       .readonly()
       .optional(),
-    is_timed: z
-      .boolean()
-      .describe('**[READ-ONLY]** Indicates if the quiz has a time limit.')
-      .readonly()
-      .optional(),
     is_published: z
       .boolean()
       .describe('**[READ-ONLY]** Indicates if the quiz is published and accessible to students.')
@@ -1132,6 +1127,11 @@ export const zQuiz = z
     time_limit_display: z
       .string()
       .describe('**[READ-ONLY]** Human-readable format of quiz time limit.')
+      .readonly()
+      .optional(),
+    is_timed: z
+      .boolean()
+      .describe('**[READ-ONLY]** Indicates if the quiz has a time limit.')
       .readonly()
       .optional(),
     has_multiple_attempts: z
@@ -2095,7 +2095,12 @@ export const zOrganisationResource = z
       .describe('**[READ-ONLY]** Unique identifier of the resource')
       .readonly()
       .optional(),
-    branch_uuid: z.union([z.string().uuid(), z.null()]).optional(),
+    branch_uuid: z
+      .string()
+      .uuid()
+      .describe(
+        '**[REQUIRED]** Active training branch of the organisation the resource belongs to. It cannot move to another branch while it has future holds or confirmed bookings.'
+      ),
     resource_type: zResourceTypeEnum,
     name: z.string().min(1).describe('Resource name, unique per organisation'),
     description: z.union([z.string(), z.null()]).optional(),
@@ -5194,17 +5199,17 @@ export const zClassDefinition = z
       .describe('**[READ-ONLY]** Human-readable formatted duration.')
       .readonly()
       .optional(),
-    duration_minutes: z.coerce
-      .bigint()
-      .describe(
-        '**[READ-ONLY]** Computed duration of the class in minutes based on start and end times.'
-      )
-      .readonly()
-      .optional(),
     capacity_info: z
       .string()
       .describe(
         '**[READ-ONLY]** Human-readable capacity information including waitlist availability.'
+      )
+      .readonly()
+      .optional(),
+    duration_minutes: z.coerce
+      .bigint()
+      .describe(
+        '**[READ-ONLY]** Computed duration of the class in minutes based on start and end times.'
       )
       .readonly()
       .optional(),
@@ -5228,22 +5233,21 @@ export const zApiResponseClassDefinitionResponse = z.object({
 });
 
 /**
+ * **[READ-ONLY]** Kind of the reserved resource.
+ */
+export const zResourceTypeEnum2 = z
+  .enum(['VENUE', 'EQUIPMENT_POOL'])
+  .describe('**[READ-ONLY]** Kind of the reserved resource.');
+
+/**
  * Organisation resource a marketplace job reserves for its sessions while recruitment runs (venue booked exclusively, equipment pools by quantity)
  */
 export const zClassMarketplaceJobResource = z
   .object({
     resource_uuid: z.string().uuid().describe('**[REQUIRED]** Organisation resource to reserve.'),
     quantity: z.union([z.number().int().gte(1), z.null()]).optional(),
-    resource_name: z
-      .string()
-      .describe('**[READ-ONLY]** Name of the reserved resource.')
-      .readonly()
-      .optional(),
-    resource_type: z
-      .string()
-      .describe('**[READ-ONLY]** Kind of the reserved resource (VENUE or EQUIPMENT_POOL).')
-      .readonly()
-      .optional(),
+    resource_name: z.union([z.string().readonly(), z.null()]).readonly().optional(),
+    resource_type: zResourceTypeEnum2.optional(),
   })
   .describe(
     'Organisation resource a marketplace job reserves for its sessions while recruitment runs (venue booked exclusively, equipment pools by quantity)'
@@ -5267,13 +5271,6 @@ export const zClassMarketplaceJobRequest = z
       .string()
       .uuid()
       .describe('**[REQUIRED]** Organisation posting the marketplace class job.'),
-    branch_uuid: z
-      .string()
-      .uuid()
-      .describe(
-        '**[REQUIRED]** Training branch that owns the job. IN_PERSON and HYBRID jobs take the branch pin and name as their location.'
-      )
-      .optional(),
     course_uuid: z.union([z.string().uuid(), z.null()]).optional(),
     program_uuid: z.union([z.string().uuid(), z.null()]).optional(),
     title: z.string().min(0).max(255).describe('**[REQUIRED]** Advert title for the class job.'),
@@ -5324,6 +5321,12 @@ export const zClassMarketplaceJobRequest = z
     remind_via_email: z.union([z.boolean(), z.null()]).optional(),
     remind_via_sms: z.union([z.boolean(), z.null()]).optional(),
     remind_via_push: z.union([z.boolean(), z.null()]).optional(),
+    branch_uuid: z
+      .string()
+      .uuid()
+      .describe(
+        "**[REQUIRED]** Training branch the class is delivered at. Its location pin becomes the job's location for IN_PERSON and HYBRID delivery."
+      ),
   })
   .describe('Draft class advert posted by an organisation before a final instructor is assigned');
 
@@ -5344,29 +5347,6 @@ export const zClassMarketplaceJob = z
     status: zStatusEnum8.optional(),
     resources: z.array(zClassMarketplaceJobResource).readonly().optional(),
     organisation_uuid: z.string().uuid().readonly().optional(),
-    branch_uuid: z
-      .string()
-      .uuid()
-      .describe('**[READ-ONLY]** Training branch that owns the job.')
-      .readonly()
-      .optional(),
-    branch_name: z
-      .string()
-      .describe('**[READ-ONLY]** Name of the owning training branch.')
-      .readonly()
-      .optional(),
-    application_count: z
-      .number()
-      .int()
-      .describe('**[READ-ONLY]** Number of applications received for the job.')
-      .readonly()
-      .optional(),
-    hired_instructor_uuid: z
-      .string()
-      .uuid()
-      .describe('**[READ-ONLY]** Instructor hired for the job, once hiring is decided.')
-      .readonly()
-      .optional(),
     course_uuid: z.string().uuid().readonly().optional(),
     program_uuid: z.string().uuid().readonly().optional(),
     sale_price: z.number().readonly().optional(),
@@ -5417,6 +5397,14 @@ export const zClassMarketplaceJob = z
     remind_via_email: z.boolean().readonly().optional(),
     remind_via_sms: z.boolean().readonly().optional(),
     remind_via_push: z.boolean().readonly().optional(),
+    branch_uuid: z.union([z.string().uuid().readonly(), z.null()]).readonly().optional(),
+    branch_name: z.union([z.string().readonly(), z.null()]).readonly().optional(),
+    application_count: z.coerce
+      .bigint()
+      .describe('**[READ-ONLY]** Applications received for the job, not counting withdrawn ones.')
+      .readonly()
+      .optional(),
+    hired_instructor_uuid: z.union([z.string().uuid().readonly(), z.null()]).readonly().optional(),
     duration_minutes: z.coerce.bigint().readonly().optional(),
   })
   .describe(
@@ -7321,16 +7309,6 @@ export const zEnrollment = z
       .describe('**[READ-ONLY]** Indicates if the enrollment is still active (not cancelled).')
       .readonly()
       .optional(),
-    can_be_cancelled: z
-      .boolean()
-      .describe('**[READ-ONLY]** Indicates if the enrollment can be cancelled.')
-      .readonly()
-      .optional(),
-    did_attend: z
-      .boolean()
-      .describe('**[READ-ONLY]** Indicates if the student attended the class.')
-      .readonly()
-      .optional(),
     status_description: z
       .string()
       .describe('**[READ-ONLY]** Human-readable description of the enrollment status.')
@@ -7339,6 +7317,16 @@ export const zEnrollment = z
     is_attendance_marked: z
       .boolean()
       .describe('**[READ-ONLY]** Indicates if attendance has been marked for this enrollment.')
+      .readonly()
+      .optional(),
+    did_attend: z
+      .boolean()
+      .describe('**[READ-ONLY]** Indicates if the student attended the class.')
+      .readonly()
+      .optional(),
+    can_be_cancelled: z
+      .boolean()
+      .describe('**[READ-ONLY]** Indicates if the enrollment can be cancelled.')
       .readonly()
       .optional(),
   })
@@ -9775,14 +9763,14 @@ export const zProgramEnrollment = z
       .describe('**[READ-ONLY]** Indicates if the enrollment is currently active and ongoing.')
       .readonly()
       .optional(),
-    enrollment_category: z
-      .string()
-      .describe('**[READ-ONLY]** Formatted category of the enrollment based on current status.')
-      .readonly()
-      .optional(),
     progress_display: z
       .string()
       .describe("**[READ-ONLY]** Formatted display of the student's progress in the program.")
+      .readonly()
+      .optional(),
+    enrollment_category: z
+      .string()
+      .describe('**[READ-ONLY]** Formatted category of the enrollment based on current status.')
       .readonly()
       .optional(),
     enrollment_duration: z
@@ -11745,14 +11733,14 @@ export const zCourseEnrollment = z
       .describe('**[READ-ONLY]** Indicates if the enrollment is currently active and ongoing.')
       .readonly()
       .optional(),
-    enrollment_category: z
-      .string()
-      .describe('**[READ-ONLY]** Formatted category of the enrollment based on current status.')
-      .readonly()
-      .optional(),
     progress_display: z
       .string()
       .describe("**[READ-ONLY]** Formatted display of the student's progress in the course.")
+      .readonly()
+      .optional(),
+    enrollment_category: z
+      .string()
+      .describe('**[READ-ONLY]** Formatted category of the enrollment based on current status.')
       .readonly()
       .optional(),
     enrollment_duration: z
@@ -18237,9 +18225,13 @@ export const zListJobsData = z.object({
   path: z.never().optional(),
   query: z.object({
     organisation_uuid: z.string().uuid().optional(),
-    branch_uuid: z.string().uuid().optional(),
     course_uuid: z.string().uuid().optional(),
     program_uuid: z.string().uuid().optional(),
+    branch_uuid: z
+      .string()
+      .uuid()
+      .describe('Only jobs delivered at this training branch')
+      .optional(),
     status: z.string().optional(),
     pageable: zPageable,
   }),

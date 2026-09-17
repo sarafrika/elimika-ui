@@ -190,7 +190,7 @@ export function JobDetailsPage({ jobUuid }: { jobUuid: string }) {
   const hold = job ? holdStateFor(job, now) : null;
   const cta = job ? nextStepCta(job, now) : null;
   const canEdit = stage === 'open' || stage === 'awaiting_class';
-  const applicantCount = job?.application_count ?? applications.length;
+  const applicantCount = Number(job?.application_count ?? applications.length);
   const hiredName = hiredInstructor?.full_name || 'The hired instructor';
   const venue = resourceRows.find(row => row.kind === 'VENUE') ?? null;
 
