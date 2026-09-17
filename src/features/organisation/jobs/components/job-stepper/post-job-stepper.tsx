@@ -30,6 +30,7 @@ import {
   TargetGroupPicker,
   useBranchResources,
   useOrganisationBranches,
+  useProposedRateCard,
   venueTooSmall,
   WhereItHappens,
   type WhereItHappensValue,
@@ -72,7 +73,7 @@ import {
 } from '@/services/client/@tanstack/react-query.gen';
 import { invalidateJobApplicationWorkflowQueries } from '@/src/features/dashboard/workflow-query-invalidation';
 import { jobHref, jobsHref } from '../../lib/job-routes';
-import { BillingStep, useProposedRateCard } from './billing-step';
+import { BillingStep } from './billing-step';
 import { isReachable, JOB_STEPS, REVIEW_STEP } from './job-steps';
 import { ReviewRows } from './review-rows';
 import { ScheduleStep } from './schedule-step';

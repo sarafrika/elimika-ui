@@ -76,6 +76,7 @@ export function PricingCapacity({
   onAllowWaitlistChange,
   totals,
   payHint = 'Instructors can be hired only if their approved rate fits under this.',
+  payAtLeastRate = false,
   children,
 }: {
   basis: RateBasis;
@@ -91,13 +92,22 @@ export function PricingCapacity({
   onAllowWaitlistChange: (value: boolean) => void;
   totals: ScheduleTotals;
   payHint?: ReactNode;
+  /** The pay goes to the instructor whose approved rate this is, so it can't go below it. */
+  payAtLeastRate?: boolean;
   /** Extra capacity fields, e.g. target groups. */
   children?: ReactNode;
 }) {
   const fieldId = useId();
   const { unit } = getRateBasis(basis);
   const money = currency || 'KES';
-  const issue = priceAndPayIssue({ salePrice, instructorPay, approvedRate, basis, currency });
+  const issue = priceAndPayIssue({
+    salePrice,
+    instructorPay,
+    approvedRate,
+    basis,
+    currency,
+    payAtLeastRate,
+  });
   const shownIssue = issue && !issue.incomplete ? issue.message : null;
   const saleInvalid = Boolean(shownIssue?.startsWith('Sale price'));
   const payInvalid = Boolean(shownIssue?.startsWith('Instructor pay'));

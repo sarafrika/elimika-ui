@@ -6,7 +6,7 @@ import type { ReactNode } from 'react';
 import { Badge } from '@/components/ui/badge';
 import { RATE_BASES, type RateBasis, type RateBasisInfo } from '@/lib/rate-card';
 import { ChoiceCard } from './choice-card';
-import type { BasisStatus } from './class-form-shared';
+import type { BasisStatus, RateViewer } from './class-form-shared';
 
 /** Only bases the rate card prices can be picked; the rest say why and how to add them. */
 export function BillingBasisCards({
@@ -15,16 +15,20 @@ export function BillingBasisCards({
   statusFor,
   renderAddAction,
   hint,
+  viewer = 'owner',
 }: {
   value: RateBasis | null;
   onChange: (basis: RateBasis) => void;
   statusFor: (basis: RateBasis) => BasisStatus;
   renderAddAction?: (basis: RateBasisInfo) => ReactNode;
   hint?: ReactNode;
+  viewer?: RateViewer;
 }) {
   return (
     <fieldset className='min-w-0 space-y-2'>
-      <legend className='text-foreground text-sm font-semibold'>How are learners billed?</legend>
+      <legend className='text-foreground text-sm font-semibold'>
+        {viewer === 'owner' ? 'How are learners billed?' : 'How would you like to be billed?'}
+      </legend>
       {hint ? <p className='text-muted-foreground text-xs'>{hint}</p> : null}
       <div role='radiogroup' aria-label='Billing basis' className='grid gap-3 pt-1 md:grid-cols-3'>
         {RATE_BASES.map(basis => {
@@ -42,7 +46,7 @@ export function BillingBasisCards({
                 {status === 'approved' ? (
                   <Badge variant='outline' className='border-success/40 bg-success/10 text-success'>
                     <CircleCheck aria-hidden />
-                    Rates approved
+                    {viewer === 'owner' ? 'Rates approved' : 'Offered'}
                   </Badge>
                 ) : status === 'pending' ? (
                   <Badge
@@ -55,7 +59,7 @@ export function BillingBasisCards({
                 ) : (
                   <>
                     <Badge variant='outline' className='bg-muted/60 text-muted-foreground'>
-                      Not on your rate card
+                      {viewer === 'owner' ? 'Not on your rate card' : 'Not offered'}
                     </Badge>
                     {renderAddAction?.(basis)}
                   </>

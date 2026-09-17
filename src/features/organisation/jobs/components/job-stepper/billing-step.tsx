@@ -7,24 +7,13 @@ import {
   BillingBasisCards,
   basisStatus,
   type Offering,
+  offeringTarget,
   ServiceCards,
   type ServiceKey,
 } from '@/components/class-form';
 import { UpdateRatesDialog } from '@/components/rate-card/update-rates-dialog';
 import { Button } from '@/components/ui/button';
 import type { DeliveryMode, RateBasis, RateCard } from '@/lib/rate-card';
-import { useRateUpdates } from '@/src/features/rate-card/hooks';
-
-/** The organisation's proposed card, while a rate update on its application awaits approval. */
-export function useProposedRateCard(offering?: Offering) {
-  const [kind, parentUuid = ''] = (offering?.value ?? '').split(':');
-  const { pending } = useRateUpdates(
-    kind === 'program' ? 'program' : 'course',
-    parentUuid,
-    offering?.pendingRateUpdateUuid ? offering.applicationUuid : null
-  );
-  return pending?.proposed_rate_card ?? null;
-}
 
 export function BillingStep({
   offering,
@@ -50,7 +39,7 @@ export function BillingStep({
   const [dialogOpen, setDialogOpen] = useState(false);
   const [dialogBasis, setDialogBasis] = useState<RateBasis>('per_hour');
   const [added, setAdded] = useState(false);
-  const [kind, parentUuid = ''] = offering.value.split(':');
+  const { kind, parentUuid } = offeringTarget(offering);
   const approver = creatorName?.trim() || 'the course creator';
 
   return (
@@ -106,7 +95,7 @@ export function BillingStep({
         <UpdateRatesDialog
           open={dialogOpen}
           onOpenChange={setDialogOpen}
-          kind={kind === 'program' ? 'program' : 'course'}
+          kind={kind}
           parentUuid={parentUuid}
           applicationUuid={offering.applicationUuid}
           title={offering.label}

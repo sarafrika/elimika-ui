@@ -62,6 +62,9 @@ export function serviceForDelivery(
 
 export type BasisStatus = 'approved' | 'pending' | 'missing';
 
+/** Whose rates the cards show: the viewer's own card, or someone they are booking. */
+export type RateViewer = 'owner' | 'learner';
+
 const FORMATS: readonly TrainingFormat[] = ['INDIVIDUAL', 'GROUP'];
 
 /** Approved when the card prices the basis for the delivery; pending when only a proposal does. */
@@ -130,9 +133,6 @@ export const rateBasisLabel = (basis?: RateBasis | null) => basisEntry(basis).la
 /** The rate card the course creator approved; read it with `rateFor` from `@/lib/rate-card`. */
 export type ApprovedRateCard = RateCard;
 
-export const formatMoney = (amount?: number | null, currency?: string | null) =>
-  typeof amount === 'number' ? `${currency ?? 'KES'} ${amount.toLocaleString()}` : '—';
-
 export const serviceFormat = (key?: ServiceKey | null): TrainingFormat =>
   getService(key)?.format ?? 'GROUP';
 
@@ -173,25 +173,34 @@ export function priceAndPayIssue({
   approvedRate,
   basis,
   currency,
+  payAtLeastRate = false,
 }: {
   salePrice: string;
   instructorPay: string;
   approvedRate?: number | null;
   basis: RateBasis;
   currency?: string | null;
+  /** Set when the instructor being paid is the one whose rate this is. */
+  payAtLeastRate?: boolean;
 }): PriceAndPayIssue | null {
   const sale = num(salePrice);
   const pay = num(instructorPay);
   const issue = (message: string, incomplete = false) => ({ message, incomplete });
   if (sale === undefined) return issue('Enter the sale price and instructor pay.', true);
   if (sale <= 0) return issue('Sale price must be above zero.');
-  if (typeof approvedRate === 'number' && sale < approvedRate) {
-    const floor = `${formatRateAmount(approvedRate, currency)} ${formatRateBasis(basis)}`;
+  const floor =
+    typeof approvedRate === 'number'
+      ? `${formatRateAmount(approvedRate, currency)} ${formatRateBasis(basis)}`
+      : null;
+  if (floor && sale < (approvedRate ?? 0)) {
     return issue(`Sale price is below your approved rate of ${floor}.`);
   }
   if (pay === undefined) return issue('Enter the instructor pay.', true);
   if (pay <= 0) return issue('Instructor pay must be above zero.');
   if (pay > sale) return issue('Instructor pay cannot exceed the sale price.');
+  if (payAtLeastRate && floor && pay < (approvedRate ?? 0)) {
+    return issue(`Instructor pay is below your approved rate of ${floor}.`);
+  }
   return null;
 }
 

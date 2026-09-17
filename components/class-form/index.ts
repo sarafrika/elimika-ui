@@ -19,4 +19,5 @@ export { ServiceCards } from './service-cards';
 export { StandardSchedule } from './standard-schedule';
 export { TargetGroupPicker } from './target-group-picker';
 export { UpcomingSessions } from './upcoming-sessions';
+export { offeringTarget, useProposedRateCard } from './use-proposed-rate-card';
 export * from './where-it-happens';
