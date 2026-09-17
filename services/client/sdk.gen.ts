@@ -1045,6 +1045,9 @@ import type {
   ApplyToJobData,
   ApplyToJobResponses,
   ApplyToJobErrors,
+  GetJobApplicationData,
+  GetJobApplicationResponses,
+  GetJobApplicationErrors,
   ReviewApplicationData,
   ReviewApplicationResponses,
   ReviewApplicationErrors,
@@ -1726,6 +1729,12 @@ import type {
   GetJobEligibilityData,
   GetJobEligibilityResponses,
   GetJobEligibilityErrors,
+  ListJobApplicationEventsData,
+  ListJobApplicationEventsResponses,
+  ListJobApplicationEventsErrors,
+  GetJobsEligibilityData,
+  GetJobsEligibilityResponses,
+  GetJobsEligibilityErrors,
   ListMyApplicationsData,
   ListMyApplicationsResponses,
   ListMyApplicationsErrors,
@@ -2189,6 +2198,7 @@ import {
   cancelJobResponseTransformer,
   listJobApplicationsResponseTransformer,
   applyToJobResponseTransformer,
+  getJobApplicationResponseTransformer,
   reviewApplicationResponseTransformer,
   withdrawApplicationResponseTransformer,
   getAllCertificatesResponseTransformer,
@@ -2367,6 +2377,8 @@ import {
   getClassDefinitionsForOrganisationResponseTransformer,
   getInstructorPayablesForOrganisationResponseTransformer,
   getJobEligibilityResponseTransformer,
+  listJobApplicationEventsResponseTransformer,
+  getJobsEligibilityResponseTransformer,
   listMyApplicationsResponseTransformer,
   listInstructorApplicationsResponseTransformer,
   getClassDefinitionsForInstructorResponseTransformer,
@@ -12856,6 +12868,34 @@ export const applyToJob = <ThrowOnError extends boolean = false>(
 };
 
 /**
+ * Get one marketplace class job application
+ * Readable by the applicant instructor, managers of the organisation that posted the job, and platform admins; anyone else is refused with 403
+ */
+export const getJobApplication = <ThrowOnError extends boolean = false>(
+  options: Options<GetJobApplicationData, ThrowOnError>
+) => {
+  return (options.client ?? _heyApiClient).get<
+    GetJobApplicationResponses,
+    GetJobApplicationErrors,
+    ThrowOnError
+  >({
+    responseTransformer: getJobApplicationResponseTransformer,
+    security: [
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+    ],
+    url: '/api/v1/classes/jobs/{jobUuid}/applications/{applicationUuid}',
+    ...options,
+  });
+};
+
+/**
  * Move a marketplace class job application through the funnel
  * Stages run applied -> shortlisted -> interviewing -> offered -> hired and no stage may be skipped; hire is the last decision, after which the job's class can be created. A hire whose sessions clash with the instructor's schedule is refused with 409 and the clashing windows, and the application, job and time holds are left as they were. A hire whose instructor has no approved rate for the job's rate basis, or a rate above the job's pay, is refused with 409 before anything is written
  */
@@ -19639,6 +19679,62 @@ export const getJobEligibility = <ThrowOnError extends boolean = false>(
       },
     ],
     url: '/api/v1/classes/jobs/{jobUuid}/eligibility',
+    ...options,
+  });
+};
+
+/**
+ * List a marketplace class job application's activity
+ * Every step the application has taken, newest first: applied, reapplied, shortlisted, interviewing (an interview invitation, with interview_at), offered, hired, assigned (the class was created), rejected, not_selected and withdrawn, each with its actor and note. Same access as reading the application
+ */
+export const listJobApplicationEvents = <ThrowOnError extends boolean = false>(
+  options: Options<ListJobApplicationEventsData, ThrowOnError>
+) => {
+  return (options.client ?? _heyApiClient).get<
+    ListJobApplicationEventsResponses,
+    ListJobApplicationEventsErrors,
+    ThrowOnError
+  >({
+    responseTransformer: listJobApplicationEventsResponseTransformer,
+    security: [
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+    ],
+    url: '/api/v1/classes/jobs/{jobUuid}/applications/{applicationUuid}/events',
+    ...options,
+  });
+};
+
+/**
+ * Check the current instructor's eligibility for several marketplace class jobs
+ * One entry per known job, in request order, each shaped like the single eligibility read. Unknown job uuids are skipped. At most 50 job_uuids per call; more return 400. Callers without an instructor profile are refused
+ */
+export const getJobsEligibility = <ThrowOnError extends boolean = false>(
+  options: Options<GetJobsEligibilityData, ThrowOnError>
+) => {
+  return (options.client ?? _heyApiClient).get<
+    GetJobsEligibilityResponses,
+    GetJobsEligibilityErrors,
+    ThrowOnError
+  >({
+    responseTransformer: getJobsEligibilityResponseTransformer,
+    security: [
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+    ],
+    url: '/api/v1/classes/jobs/eligibility',
     ...options,
   });
 };

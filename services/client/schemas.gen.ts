@@ -2264,6 +2264,12 @@ export const QuizAttemptSchema = {
       example: true,
       readOnly: true,
     },
+    grade_display: {
+      type: 'string',
+      description: '**[READ-ONLY]** Formatted display of the grade information.',
+      example: '85.00 / 100.00 (85%)',
+      readOnly: true,
+    },
     time_display: {
       type: 'string',
       description: '**[READ-ONLY]** Formatted display of the time taken to complete the quiz.',
@@ -2280,12 +2286,6 @@ export const QuizAttemptSchema = {
       type: 'string',
       description: '**[READ-ONLY]** Comprehensive summary of the quiz attempt performance.',
       example: 'Passed on attempt 2 with 85% score',
-      readOnly: true,
-    },
-    grade_display: {
-      type: 'string',
-      description: '**[READ-ONLY]** Formatted display of the grade information.',
-      example: '85.00 / 100.00 (85%)',
       readOnly: true,
     },
   },
@@ -5211,17 +5211,17 @@ export const CourseSchema = {
       example: '40 hours 30 minutes',
       readOnly: true,
     },
-    has_multiple_categories: {
-      type: 'boolean',
-      description: '**[READ-ONLY]** Indicates if the course belongs to multiple categories.',
-      example: true,
-      readOnly: true,
-    },
     category_count: {
       type: 'integer',
       format: 'int32',
       description: '**[READ-ONLY]** Number of categories this course belongs to.',
       example: 2,
+      readOnly: true,
+    },
+    has_multiple_categories: {
+      type: 'boolean',
+      description: '**[READ-ONLY]** Indicates if the course belongs to multiple categories.',
+      example: true,
       readOnly: true,
     },
     lifecycle_stage: {
@@ -6342,18 +6342,6 @@ export const CourseAssessmentSchema = {
       example: 'instructor@sarafrika.com',
       readOnly: true,
     },
-    assessment_category: {
-      type: 'string',
-      description: '**[READ-ONLY]** Category classification of the assessment type.',
-      example: 'Participation Component',
-      readOnly: true,
-    },
-    weight_display: {
-      type: 'string',
-      description: '**[READ-ONLY]** Human-readable format of the weight percentage.',
-      example: '20% of final grade',
-      readOnly: true,
-    },
     is_major_assessment: {
       type: 'boolean',
       description: '**[READ-ONLY]** Indicates if this is a major assessment component.',
@@ -6371,6 +6359,18 @@ export const CourseAssessmentSchema = {
       description:
         '**[READ-ONLY]** Human-readable description of how line items are combined for this component.',
       example: 'Weighted line items',
+      readOnly: true,
+    },
+    assessment_category: {
+      type: 'string',
+      description: '**[READ-ONLY]** Category classification of the assessment type.',
+      example: 'Participation Component',
+      readOnly: true,
+    },
+    weight_display: {
+      type: 'string',
+      description: '**[READ-ONLY]** Human-readable format of the weight percentage.',
+      example: '20% of final grade',
       readOnly: true,
     },
   },
@@ -9365,6 +9365,22 @@ export const ClassMarketplaceJobSchema = {
       type: ['string', 'null'],
       format: 'uuid',
       description: '**[READ-ONLY]** Instructor hired for the job; null until someone is hired.',
+      readOnly: true,
+    },
+    contact_name: {
+      type: ['string', 'null'],
+      description:
+        "**[READ-ONLY]** The branch's contact person; only for the hired instructor, the organisation's managers and platform admins.",
+      readOnly: true,
+    },
+    contact_phone: {
+      type: ['string', 'null'],
+      description: "**[READ-ONLY]** The contact person's phone; same visibility as contact_name.",
+      readOnly: true,
+    },
+    contact_email: {
+      type: ['string', 'null'],
+      description: "**[READ-ONLY]** The contact person's email; same visibility as contact_name.",
       readOnly: true,
     },
     duration_minutes: {
@@ -14193,6 +14209,13 @@ export const ClassMarketplaceJobApplicationSchema = {
     status: {
       $ref: '#/components/schemas/StatusEnum15',
     },
+    job: {
+      type: 'null',
+      $ref: '#/components/schemas/ClassMarketplaceJobSummary',
+      description:
+        "Summary of the job applied to; present on an instructor's application lists and the single application read",
+      readOnly: true,
+    },
     job_uuid: {
       type: 'string',
       format: 'uuid',
@@ -14265,6 +14288,114 @@ export const ClassMarketplaceJobApplicationSchema = {
     },
     updated_by: {
       type: 'string',
+      readOnly: true,
+    },
+  },
+} as const;
+
+export const ClassMarketplaceJobSummarySchema = {
+  type: 'object',
+  description: 'Compact read-only summary of the job an application was made to',
+  properties: {
+    title: {
+      type: 'string',
+      description: '**[READ-ONLY]** Job title.',
+      readOnly: true,
+    },
+    status: {
+      $ref: '#/components/schemas/StatusEnum8',
+    },
+    course_uuid: {
+      type: ['string', 'null'],
+      format: 'uuid',
+      description: '**[READ-ONLY]** Course the class teaches; absent for a program job.',
+      readOnly: true,
+    },
+    course_name: {
+      type: ['string', 'null'],
+      description: '**[READ-ONLY]** Name of the course.',
+      readOnly: true,
+    },
+    program_uuid: {
+      type: ['string', 'null'],
+      format: 'uuid',
+      description: '**[READ-ONLY]** Training program the class teaches; absent for a course job.',
+      readOnly: true,
+    },
+    program_name: {
+      type: ['string', 'null'],
+      description: '**[READ-ONLY]** Title of the training program.',
+      readOnly: true,
+    },
+    organisation_uuid: {
+      type: 'string',
+      format: 'uuid',
+      description: '**[READ-ONLY]** Organisation that posted the job.',
+      readOnly: true,
+    },
+    organisation_name: {
+      type: ['string', 'null'],
+      description: '**[READ-ONLY]** Name of the organisation.',
+      readOnly: true,
+    },
+    branch_uuid: {
+      type: ['string', 'null'],
+      format: 'uuid',
+      description: '**[READ-ONLY]** Training branch the class is delivered at.',
+      readOnly: true,
+    },
+    branch_name: {
+      type: ['string', 'null'],
+      description: '**[READ-ONLY]** Name of the training branch.',
+      readOnly: true,
+    },
+    location_type: {
+      $ref: '#/components/schemas/LocationTypeEnum',
+    },
+    session_format: {
+      $ref: '#/components/schemas/SessionFormatEnum',
+    },
+    rate_basis: {
+      $ref: '#/components/schemas/RateBasisEnum2',
+    },
+    instructor_pay: {
+      type: ['number', 'null'],
+      description:
+        '**[READ-ONLY]** Pay per rate_basis; absent under the same rule as the job read.',
+      readOnly: true,
+    },
+    first_session_start: {
+      type: ['string', 'null'],
+      format: 'date-time',
+      description: '**[READ-ONLY]** Start of the earliest planned session (UTC).',
+      readOnly: true,
+    },
+    session_count: {
+      type: 'integer',
+      format: 'int32',
+      description: '**[READ-ONLY]** Number of planned sessions.',
+      readOnly: true,
+    },
+    class_definition_uuid: {
+      type: ['string', 'null'],
+      format: 'uuid',
+      description: '**[READ-ONLY]** The class created for the job, once there is one.',
+      readOnly: true,
+    },
+    contact_name: {
+      type: ['string', 'null'],
+      description:
+        "**[READ-ONLY]** The branch's contact person; only for the job's hired instructor, the organisation's managers and platform admins.",
+      readOnly: true,
+    },
+    contact_phone: {
+      type: ['string', 'null'],
+      description: "**[READ-ONLY]** The contact person's phone; same visibility as contact_name.",
+      readOnly: true,
+    },
+    contact_email: {
+      type: ['string', 'null'],
+      description: "**[READ-ONLY]** The contact person's email; same visibility as contact_name.",
       readOnly: true,
     },
   },
@@ -22697,6 +22828,12 @@ export const ClassMarketplaceJobEligibilitySchema = {
       description: 'Human-readable explanation when the instructor is not eligible',
       readOnly: true,
     },
+    job_uuid: {
+      type: 'string',
+      format: 'uuid',
+      description: 'The job this answer is for',
+      readOnly: true,
+    },
     instructor_verified: {
       type: 'boolean',
       description: 'Whether the instructor profile has been verified by an administrator',
@@ -22783,6 +22920,102 @@ export const PagedDTOClassMarketplaceJobApplicationSchema = {
     links: {
       $ref: '#/components/schemas/PageLinks',
     },
+  },
+} as const;
+
+export const ApiResponseListClassMarketplaceJobApplicationEventSchema = {
+  type: 'object',
+  properties: {
+    success: {
+      type: 'boolean',
+    },
+    data: {
+      type: 'array',
+      items: {
+        $ref: '#/components/schemas/ClassMarketplaceJobApplicationEvent',
+      },
+    },
+    message: {
+      type: 'string',
+    },
+    error: {},
+  },
+} as const;
+
+export const ClassMarketplaceJobApplicationEventSchema = {
+  type: 'object',
+  description: "A step in a marketplace job application's history, newest first",
+  properties: {
+    uuid: {
+      type: 'string',
+      format: 'uuid',
+      description: '**[READ-ONLY]** Identifier of the event.',
+      readOnly: true,
+    },
+    note: {
+      type: ['string', 'null'],
+      description:
+        "**[READ-ONLY]** The application note, the organisation's review note or the closing reason.",
+      readOnly: true,
+    },
+    application_uuid: {
+      type: 'string',
+      format: 'uuid',
+      description: '**[READ-ONLY]** The application the event belongs to.',
+      readOnly: true,
+    },
+    job_uuid: {
+      type: 'string',
+      format: 'uuid',
+      description: '**[READ-ONLY]** The job the application was made to.',
+      readOnly: true,
+    },
+    event_type: {
+      $ref: '#/components/schemas/EventTypeEnum2',
+    },
+    actor_uuid: {
+      type: ['string', 'null'],
+      format: 'uuid',
+      description:
+        '**[READ-ONLY]** The user who took the step; null for system actions such as expiry.',
+      readOnly: true,
+    },
+    actor_name: {
+      type: ['string', 'null'],
+      description: "**[READ-ONLY]** The actor's name as it was when the step was taken.",
+      readOnly: true,
+    },
+    interview_at: {
+      type: ['string', 'null'],
+      format: 'date-time',
+      description: '**[READ-ONLY]** When the interview is (UTC); set on interviewing events only.',
+      readOnly: true,
+    },
+    created_date: {
+      type: 'string',
+      format: 'date-time',
+      description: '**[READ-ONLY]** When it happened (UTC).',
+      readOnly: true,
+    },
+  },
+} as const;
+
+export const ApiResponseListClassMarketplaceJobEligibilitySchema = {
+  type: 'object',
+  properties: {
+    success: {
+      type: 'boolean',
+    },
+    data: {
+      type: 'array',
+      items: {
+        $ref: '#/components/schemas/ClassMarketplaceJobEligibility',
+      },
+    },
+    message: {
+      type: 'string',
+    },
+    error: {},
   },
 } as const;
 
@@ -24850,6 +25083,25 @@ export const ApplicationStatusEnumSchema = {
     'hired',
     'rejected',
     'assigned',
+    'not_selected',
+    'withdrawn',
+  ],
+  readOnly: true,
+} as const;
+
+export const EventTypeEnum2Schema = {
+  type: 'string',
+  description:
+    '**[READ-ONLY]** What happened. interviewing is an interview invitation and assigned is the class being created.',
+  enum: [
+    'applied',
+    'reapplied',
+    'shortlisted',
+    'interviewing',
+    'offered',
+    'hired',
+    'assigned',
+    'rejected',
     'not_selected',
     'withdrawn',
   ],

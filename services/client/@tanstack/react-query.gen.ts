@@ -349,6 +349,7 @@ import {
   cancelJob,
   listJobApplications,
   applyToJob,
+  getJobApplication,
   reviewApplication,
   withdrawApplication,
   getAllCertificates,
@@ -576,6 +577,8 @@ import {
   getInstructorPayablesForOrganisation,
   getClassMedia,
   getJobEligibility,
+  listJobApplicationEvents,
+  getJobsEligibility,
   listMyApplications,
   listInstructorApplications,
   getClassDefinitionsForInstructor,
@@ -1558,6 +1561,7 @@ import type {
   ApplyToJobData,
   ApplyToJobError,
   ApplyToJobResponse,
+  GetJobApplicationData,
   ReviewApplicationData,
   ReviewApplicationError,
   ReviewApplicationResponse,
@@ -2047,6 +2051,8 @@ import type {
   GetInstructorPayablesForOrganisationData,
   GetClassMediaData,
   GetJobEligibilityData,
+  ListJobApplicationEventsData,
+  GetJobsEligibilityData,
   ListMyApplicationsData,
   ListMyApplicationsError,
   ListMyApplicationsResponse,
@@ -16664,6 +16670,28 @@ export const applyToJobMutation = (
   return mutationOptions;
 };
 
+export const getJobApplicationQueryKey = (options: Options<GetJobApplicationData>) =>
+  createQueryKey('getJobApplication', options);
+
+/**
+ * Get one marketplace class job application
+ * Readable by the applicant instructor, managers of the organisation that posted the job, and platform admins; anyone else is refused with 403
+ */
+export const getJobApplicationOptions = (options: Options<GetJobApplicationData>) => {
+  return queryOptions({
+    queryFn: async ({ queryKey, signal }) => {
+      const { data } = await getJobApplication({
+        ...options,
+        ...queryKey[0],
+        signal,
+        throwOnError: true,
+      });
+      return data;
+    },
+    queryKey: getJobApplicationQueryKey(options),
+  });
+};
+
 export const reviewApplicationQueryKey = (options: Options<ReviewApplicationData>) =>
   createQueryKey('reviewApplication', options);
 
@@ -27452,6 +27480,50 @@ export const getJobEligibilityOptions = (options: Options<GetJobEligibilityData>
       return data;
     },
     queryKey: getJobEligibilityQueryKey(options),
+  });
+};
+
+export const listJobApplicationEventsQueryKey = (options: Options<ListJobApplicationEventsData>) =>
+  createQueryKey('listJobApplicationEvents', options);
+
+/**
+ * List a marketplace class job application's activity
+ * Every step the application has taken, newest first: applied, reapplied, shortlisted, interviewing (an interview invitation, with interview_at), offered, hired, assigned (the class was created), rejected, not_selected and withdrawn, each with its actor and note. Same access as reading the application
+ */
+export const listJobApplicationEventsOptions = (options: Options<ListJobApplicationEventsData>) => {
+  return queryOptions({
+    queryFn: async ({ queryKey, signal }) => {
+      const { data } = await listJobApplicationEvents({
+        ...options,
+        ...queryKey[0],
+        signal,
+        throwOnError: true,
+      });
+      return data;
+    },
+    queryKey: listJobApplicationEventsQueryKey(options),
+  });
+};
+
+export const getJobsEligibilityQueryKey = (options: Options<GetJobsEligibilityData>) =>
+  createQueryKey('getJobsEligibility', options);
+
+/**
+ * Check the current instructor's eligibility for several marketplace class jobs
+ * One entry per known job, in request order, each shaped like the single eligibility read. Unknown job uuids are skipped. At most 50 job_uuids per call; more return 400. Callers without an instructor profile are refused
+ */
+export const getJobsEligibilityOptions = (options: Options<GetJobsEligibilityData>) => {
+  return queryOptions({
+    queryFn: async ({ queryKey, signal }) => {
+      const { data } = await getJobsEligibility({
+        ...options,
+        ...queryKey[0],
+        signal,
+        throwOnError: true,
+      });
+      return data;
+    },
+    queryKey: getJobsEligibilityQueryKey(options),
   });
 };
 

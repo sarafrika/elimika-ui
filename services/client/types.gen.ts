@@ -1126,6 +1126,10 @@ export type QuizAttempt = {
    */
   readonly is_completed?: boolean;
   /**
+   * **[READ-ONLY]** Formatted display of the grade information.
+   */
+  readonly grade_display?: string;
+  /**
    * **[READ-ONLY]** Formatted display of the time taken to complete the quiz.
    */
   readonly time_display?: string;
@@ -1137,10 +1141,6 @@ export type QuizAttempt = {
    * **[READ-ONLY]** Comprehensive summary of the quiz attempt performance.
    */
   readonly performance_summary?: string;
-  /**
-   * **[READ-ONLY]** Formatted display of the grade information.
-   */
-  readonly grade_display?: string;
 };
 
 /**
@@ -2618,13 +2618,13 @@ export type Course = {
    */
   readonly total_duration_display?: string;
   /**
-   * **[READ-ONLY]** Indicates if the course belongs to multiple categories.
-   */
-  readonly has_multiple_categories?: boolean;
-  /**
    * **[READ-ONLY]** Number of categories this course belongs to.
    */
   readonly category_count?: number;
+  /**
+   * **[READ-ONLY]** Indicates if the course belongs to multiple categories.
+   */
+  readonly has_multiple_categories?: boolean;
   /**
    * **[READ-ONLY]** Human-readable description of the course's current lifecycle stage.
    */
@@ -3182,14 +3182,6 @@ export type CourseAssessment = {
    */
   readonly updated_by?: string;
   /**
-   * **[READ-ONLY]** Category classification of the assessment type.
-   */
-  readonly assessment_category?: string;
-  /**
-   * **[READ-ONLY]** Human-readable format of the weight percentage.
-   */
-  readonly weight_display?: string;
-  /**
    * **[READ-ONLY]** Indicates if this is a major assessment component.
    */
   readonly is_major_assessment?: boolean;
@@ -3201,6 +3193,14 @@ export type CourseAssessment = {
    * **[READ-ONLY]** Human-readable description of how line items are combined for this component.
    */
   readonly aggregation_strategy_display?: string;
+  /**
+   * **[READ-ONLY]** Category classification of the assessment type.
+   */
+  readonly assessment_category?: string;
+  /**
+   * **[READ-ONLY]** Human-readable format of the weight percentage.
+   */
+  readonly weight_display?: string;
 };
 
 export type ApiResponseCourseAssessment = {
@@ -4527,6 +4527,18 @@ export type ClassMarketplaceJob = {
    * **[READ-ONLY]** Instructor hired for the job; null until someone is hired.
    */
   readonly hired_instructor_uuid?: string | null;
+  /**
+   * **[READ-ONLY]** The branch's contact person; only for the hired instructor, the organisation's managers and platform admins.
+   */
+  readonly contact_name?: string | null;
+  /**
+   * **[READ-ONLY]** The contact person's phone; same visibility as contact_name.
+   */
+  readonly contact_phone?: string | null;
+  /**
+   * **[READ-ONLY]** The contact person's email; same visibility as contact_name.
+   */
+  readonly contact_email?: string | null;
   readonly duration_minutes?: bigint;
 };
 
@@ -7362,6 +7374,10 @@ export type ApiResponseClassMarketplaceJobApplication = {
 export type ClassMarketplaceJobApplication = {
   readonly uuid?: string;
   status?: StatusEnum15;
+  /**
+   * Summary of the job applied to; present on an instructor's application lists and the single application read
+   */
+  job?: ClassMarketplaceJobSummary;
   readonly job_uuid?: string;
   readonly instructor_uuid?: string;
   readonly application_note?: string;
@@ -7389,6 +7405,80 @@ export type ClassMarketplaceJobApplication = {
   readonly updated_date?: Date;
   readonly created_by?: string;
   readonly updated_by?: string;
+};
+
+/**
+ * Compact read-only summary of the job an application was made to
+ */
+export type ClassMarketplaceJobSummary = {
+  /**
+   * **[READ-ONLY]** Job title.
+   */
+  readonly title?: string;
+  status?: StatusEnum8;
+  /**
+   * **[READ-ONLY]** Course the class teaches; absent for a program job.
+   */
+  readonly course_uuid?: string | null;
+  /**
+   * **[READ-ONLY]** Name of the course.
+   */
+  readonly course_name?: string | null;
+  /**
+   * **[READ-ONLY]** Training program the class teaches; absent for a course job.
+   */
+  readonly program_uuid?: string | null;
+  /**
+   * **[READ-ONLY]** Title of the training program.
+   */
+  readonly program_name?: string | null;
+  /**
+   * **[READ-ONLY]** Organisation that posted the job.
+   */
+  readonly organisation_uuid?: string;
+  /**
+   * **[READ-ONLY]** Name of the organisation.
+   */
+  readonly organisation_name?: string | null;
+  /**
+   * **[READ-ONLY]** Training branch the class is delivered at.
+   */
+  readonly branch_uuid?: string | null;
+  /**
+   * **[READ-ONLY]** Name of the training branch.
+   */
+  readonly branch_name?: string | null;
+  location_type?: LocationTypeEnum;
+  session_format?: SessionFormatEnum;
+  rate_basis?: RateBasisEnum2;
+  /**
+   * **[READ-ONLY]** Pay per rate_basis; absent under the same rule as the job read.
+   */
+  readonly instructor_pay?: number | null;
+  /**
+   * **[READ-ONLY]** Start of the earliest planned session (UTC).
+   */
+  readonly first_session_start?: Date | null;
+  /**
+   * **[READ-ONLY]** Number of planned sessions.
+   */
+  readonly session_count?: number;
+  /**
+   * **[READ-ONLY]** The class created for the job, once there is one.
+   */
+  readonly class_definition_uuid?: string | null;
+  /**
+   * **[READ-ONLY]** The branch's contact person; only for the job's hired instructor, the organisation's managers and platform admins.
+   */
+  readonly contact_name?: string | null;
+  /**
+   * **[READ-ONLY]** The contact person's phone; same visibility as contact_name.
+   */
+  readonly contact_phone?: string | null;
+  /**
+   * **[READ-ONLY]** The contact person's email; same visibility as contact_name.
+   */
+  readonly contact_email?: string | null;
 };
 
 /**
@@ -11627,6 +11717,10 @@ export type ClassMarketplaceJobEligibility = {
    */
   readonly reason?: string | null;
   /**
+   * The job this answer is for
+   */
+  readonly job_uuid?: string;
+  /**
    * Whether the instructor profile has been verified by an administrator
    */
   readonly instructor_verified?: boolean;
@@ -11672,6 +11766,59 @@ export type PagedDtoClassMarketplaceJobApplication = {
   content?: Array<ClassMarketplaceJobApplication>;
   metadata?: PageMetadata;
   links?: PageLinks;
+};
+
+export type ApiResponseListClassMarketplaceJobApplicationEvent = {
+  success?: boolean;
+  data?: Array<ClassMarketplaceJobApplicationEvent>;
+  message?: string;
+  error?: unknown;
+};
+
+/**
+ * A step in a marketplace job application's history, newest first
+ */
+export type ClassMarketplaceJobApplicationEvent = {
+  /**
+   * **[READ-ONLY]** Identifier of the event.
+   */
+  readonly uuid?: string;
+  /**
+   * **[READ-ONLY]** The application note, the organisation's review note or the closing reason.
+   */
+  readonly note?: string | null;
+  /**
+   * **[READ-ONLY]** The application the event belongs to.
+   */
+  readonly application_uuid?: string;
+  /**
+   * **[READ-ONLY]** The job the application was made to.
+   */
+  readonly job_uuid?: string;
+  event_type?: EventTypeEnum2;
+  /**
+   * **[READ-ONLY]** The user who took the step; null for system actions such as expiry.
+   */
+  readonly actor_uuid?: string | null;
+  /**
+   * **[READ-ONLY]** The actor's name as it was when the step was taken.
+   */
+  readonly actor_name?: string | null;
+  /**
+   * **[READ-ONLY]** When the interview is (UTC); set on interviewing events only.
+   */
+  readonly interview_at?: Date | null;
+  /**
+   * **[READ-ONLY]** When it happened (UTC).
+   */
+  readonly created_date?: Date;
+};
+
+export type ApiResponseListClassMarketplaceJobEligibility = {
+  success?: boolean;
+  data?: Array<ClassMarketplaceJobEligibility>;
+  message?: string;
+  error?: unknown;
 };
 
 export type ApiResponsePagedDtoCertificateTemplate = {
@@ -13728,6 +13875,27 @@ export const ApplicationStatusEnum = {
  */
 export type ApplicationStatusEnum =
   (typeof ApplicationStatusEnum)[keyof typeof ApplicationStatusEnum];
+
+/**
+ * **[READ-ONLY]** What happened. interviewing is an interview invitation and assigned is the class being created.
+ */
+export const EventTypeEnum2 = {
+  APPLIED: 'applied',
+  REAPPLIED: 'reapplied',
+  SHORTLISTED: 'shortlisted',
+  INTERVIEWING: 'interviewing',
+  OFFERED: 'offered',
+  HIRED: 'hired',
+  ASSIGNED: 'assigned',
+  REJECTED: 'rejected',
+  NOT_SELECTED: 'not_selected',
+  WITHDRAWN: 'withdrawn',
+} as const;
+
+/**
+ * **[READ-ONLY]** What happened. interviewing is an interview invitation and assigned is the class being created.
+ */
+export type EventTypeEnum2 = (typeof EventTypeEnum2)[keyof typeof EventTypeEnum2];
 
 /**
  * **[READ-ONLY]** Type of the moderated content.
@@ -26801,6 +26969,39 @@ export type ApplyToJobResponses = {
 
 export type ApplyToJobResponse = ApplyToJobResponses[keyof ApplyToJobResponses];
 
+export type GetJobApplicationData = {
+  body?: never;
+  path: {
+    jobUuid: string;
+    applicationUuid: string;
+  };
+  query?: never;
+  url: '/api/v1/classes/jobs/{jobUuid}/applications/{applicationUuid}';
+};
+
+export type GetJobApplicationErrors = {
+  /**
+   * Not Found
+   */
+  404: ResponseDtoVoid;
+  /**
+   * Internal Server Error
+   */
+  500: ResponseDtoVoid;
+};
+
+export type GetJobApplicationError = GetJobApplicationErrors[keyof GetJobApplicationErrors];
+
+export type GetJobApplicationResponses = {
+  /**
+   * OK
+   */
+  200: ApiResponseClassMarketplaceJobApplication;
+};
+
+export type GetJobApplicationResponse =
+  GetJobApplicationResponses[keyof GetJobApplicationResponses];
+
 export type ReviewApplicationData = {
   body?: ClassMarketplaceJobDecisionRequest;
   path: {
@@ -35048,6 +35249,75 @@ export type GetJobEligibilityResponses = {
 
 export type GetJobEligibilityResponse =
   GetJobEligibilityResponses[keyof GetJobEligibilityResponses];
+
+export type ListJobApplicationEventsData = {
+  body?: never;
+  path: {
+    jobUuid: string;
+    applicationUuid: string;
+  };
+  query?: never;
+  url: '/api/v1/classes/jobs/{jobUuid}/applications/{applicationUuid}/events';
+};
+
+export type ListJobApplicationEventsErrors = {
+  /**
+   * Not Found
+   */
+  404: ResponseDtoVoid;
+  /**
+   * Internal Server Error
+   */
+  500: ResponseDtoVoid;
+};
+
+export type ListJobApplicationEventsError =
+  ListJobApplicationEventsErrors[keyof ListJobApplicationEventsErrors];
+
+export type ListJobApplicationEventsResponses = {
+  /**
+   * OK
+   */
+  200: ApiResponseListClassMarketplaceJobApplicationEvent;
+};
+
+export type ListJobApplicationEventsResponse =
+  ListJobApplicationEventsResponses[keyof ListJobApplicationEventsResponses];
+
+export type GetJobsEligibilityData = {
+  body?: never;
+  path?: never;
+  query: {
+    /**
+     * Comma-separated job uuids, at most 50
+     */
+    job_uuids: Array<string>;
+  };
+  url: '/api/v1/classes/jobs/eligibility';
+};
+
+export type GetJobsEligibilityErrors = {
+  /**
+   * Not Found
+   */
+  404: ResponseDtoVoid;
+  /**
+   * Internal Server Error
+   */
+  500: ResponseDtoVoid;
+};
+
+export type GetJobsEligibilityError = GetJobsEligibilityErrors[keyof GetJobsEligibilityErrors];
+
+export type GetJobsEligibilityResponses = {
+  /**
+   * OK
+   */
+  200: ApiResponseListClassMarketplaceJobEligibility;
+};
+
+export type GetJobsEligibilityResponse =
+  GetJobsEligibilityResponses[keyof GetJobsEligibilityResponses];
 
 export type ListMyApplicationsData = {
   body?: never;

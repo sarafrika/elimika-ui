@@ -272,6 +272,7 @@ import type {
   CancelJobResponse,
   ListJobApplicationsResponse,
   ApplyToJobResponse,
+  GetJobApplicationResponse,
   ReviewApplicationResponse,
   WithdrawApplicationResponse,
   GetAllCertificatesResponse,
@@ -450,6 +451,8 @@ import type {
   GetClassDefinitionsForOrganisationResponse,
   GetInstructorPayablesForOrganisationResponse,
   GetJobEligibilityResponse,
+  ListJobApplicationEventsResponse,
+  GetJobsEligibilityResponse,
   ListMyApplicationsResponse,
   ListInstructorApplicationsResponse,
   GetClassDefinitionsForInstructorResponse,
@@ -4988,7 +4991,17 @@ export const cancelJobResponseTransformer = async (data: any): Promise<CancelJob
   return data;
 };
 
+const classMarketplaceJobSummarySchemaResponseTransformer = (data: any) => {
+  if (data.first_session_start) {
+    data.first_session_start = new Date(data.first_session_start);
+  }
+  return data;
+};
+
 const classMarketplaceJobApplicationSchemaResponseTransformer = (data: any) => {
+  if (data.job) {
+    data.job = classMarketplaceJobSummarySchemaResponseTransformer(data.job);
+  }
   if (data.interview_at) {
     data.interview_at = new Date(data.interview_at);
   }
@@ -5038,6 +5051,13 @@ const apiResponseClassMarketplaceJobApplicationSchemaResponseTransformer = (data
 };
 
 export const applyToJobResponseTransformer = async (data: any): Promise<ApplyToJobResponse> => {
+  data = apiResponseClassMarketplaceJobApplicationSchemaResponseTransformer(data);
+  return data;
+};
+
+export const getJobApplicationResponseTransformer = async (
+  data: any
+): Promise<GetJobApplicationResponse> => {
   data = apiResponseClassMarketplaceJobApplicationSchemaResponseTransformer(data);
   return data;
 };
@@ -7845,6 +7865,48 @@ export const getJobEligibilityResponseTransformer = async (
   data: any
 ): Promise<GetJobEligibilityResponse> => {
   data = apiResponseClassMarketplaceJobEligibilitySchemaResponseTransformer(data);
+  return data;
+};
+
+const classMarketplaceJobApplicationEventSchemaResponseTransformer = (data: any) => {
+  if (data.interview_at) {
+    data.interview_at = new Date(data.interview_at);
+  }
+  if (data.created_date) {
+    data.created_date = new Date(data.created_date);
+  }
+  return data;
+};
+
+const apiResponseListClassMarketplaceJobApplicationEventSchemaResponseTransformer = (data: any) => {
+  if (data.data) {
+    data.data = data.data.map((item: any) => {
+      return classMarketplaceJobApplicationEventSchemaResponseTransformer(item);
+    });
+  }
+  return data;
+};
+
+export const listJobApplicationEventsResponseTransformer = async (
+  data: any
+): Promise<ListJobApplicationEventsResponse> => {
+  data = apiResponseListClassMarketplaceJobApplicationEventSchemaResponseTransformer(data);
+  return data;
+};
+
+const apiResponseListClassMarketplaceJobEligibilitySchemaResponseTransformer = (data: any) => {
+  if (data.data) {
+    data.data = data.data.map((item: any) => {
+      return classMarketplaceJobEligibilitySchemaResponseTransformer(item);
+    });
+  }
+  return data;
+};
+
+export const getJobsEligibilityResponseTransformer = async (
+  data: any
+): Promise<GetJobsEligibilityResponse> => {
+  data = apiResponseListClassMarketplaceJobEligibilitySchemaResponseTransformer(data);
   return data;
 };
 

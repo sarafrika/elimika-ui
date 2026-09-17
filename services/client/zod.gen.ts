@@ -1491,6 +1491,11 @@ export const zQuizAttempt = z
       )
       .readonly()
       .optional(),
+    grade_display: z
+      .string()
+      .describe('**[READ-ONLY]** Formatted display of the grade information.')
+      .readonly()
+      .optional(),
     time_display: z
       .string()
       .describe('**[READ-ONLY]** Formatted display of the time taken to complete the quiz.')
@@ -1504,11 +1509,6 @@ export const zQuizAttempt = z
     performance_summary: z
       .string()
       .describe('**[READ-ONLY]** Comprehensive summary of the quiz attempt performance.')
-      .readonly()
-      .optional(),
-    grade_display: z
-      .string()
-      .describe('**[READ-ONLY]** Formatted display of the grade information.')
       .readonly()
       .optional(),
   })
@@ -3370,15 +3370,15 @@ export const zCourse = z
       .describe('**[READ-ONLY]** Human-readable format of total course duration.')
       .readonly()
       .optional(),
-    has_multiple_categories: z
-      .boolean()
-      .describe('**[READ-ONLY]** Indicates if the course belongs to multiple categories.')
-      .readonly()
-      .optional(),
     category_count: z
       .number()
       .int()
       .describe('**[READ-ONLY]** Number of categories this course belongs to.')
+      .readonly()
+      .optional(),
+    has_multiple_categories: z
+      .boolean()
+      .describe('**[READ-ONLY]** Indicates if the course belongs to multiple categories.')
       .readonly()
       .optional(),
     lifecycle_stage: z
@@ -4056,16 +4056,6 @@ export const zCourseAssessment = z
       )
       .readonly()
       .optional(),
-    assessment_category: z
-      .string()
-      .describe('**[READ-ONLY]** Category classification of the assessment type.')
-      .readonly()
-      .optional(),
-    weight_display: z
-      .string()
-      .describe('**[READ-ONLY]** Human-readable format of the weight percentage.')
-      .readonly()
-      .optional(),
     is_major_assessment: z
       .boolean()
       .describe('**[READ-ONLY]** Indicates if this is a major assessment component.')
@@ -4081,6 +4071,16 @@ export const zCourseAssessment = z
       .describe(
         '**[READ-ONLY]** Human-readable description of how line items are combined for this component.'
       )
+      .readonly()
+      .optional(),
+    assessment_category: z
+      .string()
+      .describe('**[READ-ONLY]** Category classification of the assessment type.')
+      .readonly()
+      .optional(),
+    weight_display: z
+      .string()
+      .describe('**[READ-ONLY]** Human-readable format of the weight percentage.')
       .readonly()
       .optional(),
   })
@@ -5543,6 +5543,9 @@ export const zClassMarketplaceJob = z
       .readonly()
       .optional(),
     hired_instructor_uuid: z.union([z.string().uuid().readonly(), z.null()]).readonly().optional(),
+    contact_name: z.union([z.string().readonly(), z.null()]).readonly().optional(),
+    contact_phone: z.union([z.string().readonly(), z.null()]).readonly().optional(),
+    contact_email: z.union([z.string().readonly(), z.null()]).readonly().optional(),
     duration_minutes: z.coerce.bigint().readonly().optional(),
   })
   .describe(
@@ -8375,12 +8378,54 @@ export const zStatusEnum15 = z.enum([
 ]);
 
 /**
+ * Compact read-only summary of the job an application was made to
+ */
+export const zClassMarketplaceJobSummary = z
+  .object({
+    title: z.string().describe('**[READ-ONLY]** Job title.').readonly().optional(),
+    status: zStatusEnum8.optional(),
+    course_uuid: z.union([z.string().uuid().readonly(), z.null()]).readonly().optional(),
+    course_name: z.union([z.string().readonly(), z.null()]).readonly().optional(),
+    program_uuid: z.union([z.string().uuid().readonly(), z.null()]).readonly().optional(),
+    program_name: z.union([z.string().readonly(), z.null()]).readonly().optional(),
+    organisation_uuid: z
+      .string()
+      .uuid()
+      .describe('**[READ-ONLY]** Organisation that posted the job.')
+      .readonly()
+      .optional(),
+    organisation_name: z.union([z.string().readonly(), z.null()]).readonly().optional(),
+    branch_uuid: z.union([z.string().uuid().readonly(), z.null()]).readonly().optional(),
+    branch_name: z.union([z.string().readonly(), z.null()]).readonly().optional(),
+    location_type: zLocationTypeEnum.optional(),
+    session_format: zSessionFormatEnum.optional(),
+    rate_basis: zRateBasisEnum2.optional(),
+    instructor_pay: z.union([z.number().readonly(), z.null()]).readonly().optional(),
+    first_session_start: z
+      .union([z.string().datetime().readonly(), z.null()])
+      .readonly()
+      .optional(),
+    session_count: z
+      .number()
+      .int()
+      .describe('**[READ-ONLY]** Number of planned sessions.')
+      .readonly()
+      .optional(),
+    class_definition_uuid: z.union([z.string().uuid().readonly(), z.null()]).readonly().optional(),
+    contact_name: z.union([z.string().readonly(), z.null()]).readonly().optional(),
+    contact_phone: z.union([z.string().readonly(), z.null()]).readonly().optional(),
+    contact_email: z.union([z.string().readonly(), z.null()]).readonly().optional(),
+  })
+  .describe('Compact read-only summary of the job an application was made to');
+
+/**
  * Instructor application to deliver a marketplace class job
  */
 export const zClassMarketplaceJobApplication = z
   .object({
     uuid: z.string().uuid().readonly().optional(),
     status: zStatusEnum15.optional(),
+    job: zClassMarketplaceJobSummary.optional(),
     job_uuid: z.string().uuid().readonly().optional(),
     instructor_uuid: z.string().uuid().readonly().optional(),
     application_note: z.string().readonly().optional(),
@@ -12680,6 +12725,7 @@ export const zClassMarketplaceJobEligibility = z
       .readonly()
       .optional(),
     reason: z.union([z.string().readonly(), z.null()]).readonly().optional(),
+    job_uuid: z.string().uuid().describe('The job this answer is for').readonly().optional(),
     instructor_verified: z
       .boolean()
       .describe('Whether the instructor profile has been verified by an administrator')
@@ -12741,6 +12787,77 @@ export const zPagedDtoClassMarketplaceJobApplication = z.object({
 export const zApiResponsePagedDtoClassMarketplaceJobApplication = z.object({
   success: z.boolean().optional(),
   data: zPagedDtoClassMarketplaceJobApplication.optional(),
+  message: z.string().optional(),
+  error: z.unknown().optional(),
+});
+
+/**
+ * **[READ-ONLY]** What happened. interviewing is an interview invitation and assigned is the class being created.
+ */
+export const zEventTypeEnum2 = z
+  .enum([
+    'applied',
+    'reapplied',
+    'shortlisted',
+    'interviewing',
+    'offered',
+    'hired',
+    'assigned',
+    'rejected',
+    'not_selected',
+    'withdrawn',
+  ])
+  .describe(
+    '**[READ-ONLY]** What happened. interviewing is an interview invitation and assigned is the class being created.'
+  );
+
+/**
+ * A step in a marketplace job application's history, newest first
+ */
+export const zClassMarketplaceJobApplicationEvent = z
+  .object({
+    uuid: z
+      .string()
+      .uuid()
+      .describe('**[READ-ONLY]** Identifier of the event.')
+      .readonly()
+      .optional(),
+    note: z.union([z.string().readonly(), z.null()]).readonly().optional(),
+    application_uuid: z
+      .string()
+      .uuid()
+      .describe('**[READ-ONLY]** The application the event belongs to.')
+      .readonly()
+      .optional(),
+    job_uuid: z
+      .string()
+      .uuid()
+      .describe('**[READ-ONLY]** The job the application was made to.')
+      .readonly()
+      .optional(),
+    event_type: zEventTypeEnum2.optional(),
+    actor_uuid: z.union([z.string().uuid().readonly(), z.null()]).readonly().optional(),
+    actor_name: z.union([z.string().readonly(), z.null()]).readonly().optional(),
+    interview_at: z.union([z.string().datetime().readonly(), z.null()]).readonly().optional(),
+    created_date: z
+      .string()
+      .datetime()
+      .describe('**[READ-ONLY]** When it happened (UTC).')
+      .readonly()
+      .optional(),
+  })
+  .describe("A step in a marketplace job application's history, newest first");
+
+export const zApiResponseListClassMarketplaceJobApplicationEvent = z.object({
+  success: z.boolean().optional(),
+  data: z.array(zClassMarketplaceJobApplicationEvent).optional(),
+  message: z.string().optional(),
+  error: z.unknown().optional(),
+});
+
+export const zApiResponseListClassMarketplaceJobEligibility = z.object({
+  success: z.boolean().optional(),
+  data: z.array(zClassMarketplaceJobEligibility).optional(),
   message: z.string().optional(),
   error: z.unknown().optional(),
 });
@@ -18873,6 +18990,20 @@ export const zApplyToJobData = z.object({
  */
 export const zApplyToJobResponse = zApiResponseClassMarketplaceJobApplication;
 
+export const zGetJobApplicationData = z.object({
+  body: z.never().optional(),
+  path: z.object({
+    jobUuid: z.string().uuid(),
+    applicationUuid: z.string().uuid(),
+  }),
+  query: z.never().optional(),
+});
+
+/**
+ * OK
+ */
+export const zGetJobApplicationResponse = zApiResponseClassMarketplaceJobApplication;
+
 export const zReviewApplicationData = z.object({
   body: zClassMarketplaceJobDecisionRequest.optional(),
   path: z.object({
@@ -22188,6 +22319,34 @@ export const zGetJobEligibilityData = z.object({
  * OK
  */
 export const zGetJobEligibilityResponse = zApiResponseClassMarketplaceJobEligibility;
+
+export const zListJobApplicationEventsData = z.object({
+  body: z.never().optional(),
+  path: z.object({
+    jobUuid: z.string().uuid(),
+    applicationUuid: z.string().uuid(),
+  }),
+  query: z.never().optional(),
+});
+
+/**
+ * OK
+ */
+export const zListJobApplicationEventsResponse =
+  zApiResponseListClassMarketplaceJobApplicationEvent;
+
+export const zGetJobsEligibilityData = z.object({
+  body: z.never().optional(),
+  path: z.never().optional(),
+  query: z.object({
+    job_uuids: z.array(z.string().uuid()).describe('Comma-separated job uuids, at most 50'),
+  }),
+});
+
+/**
+ * OK
+ */
+export const zGetJobsEligibilityResponse = zApiResponseListClassMarketplaceJobEligibility;
 
 export const zListMyApplicationsData = z.object({
   body: z.never().optional(),
