@@ -17,6 +17,11 @@ export const hiredJobsHref = () => instructor('opportunities/hired');
 
 export const hiredJobHref = (jobUuid: string) => instructor(`opportunities/hired/${id(jobUuid)}`);
 
+export const instructorCalendarHref = () => instructor('calendar');
+
+export const instructorClassHref = (classUuid: string) =>
+  instructor(`classes/overview/${id(classUuid)}`);
+
 export type JobsSection = 'find-work' | 'applications' | 'hired';
 
 const JOBS_ROOT = '/dashboard/opportunities';
