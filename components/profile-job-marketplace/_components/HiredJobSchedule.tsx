@@ -3,6 +3,7 @@
 import { useQuery } from '@tanstack/react-query';
 import { useMemo, useState } from 'react';
 import { SectionCard, StatusBadge } from '@/app/dashboard/admin/_components/ui';
+import { Skeleton } from '@/components/ui/skeleton';
 import { AsyncSection } from '@/components/data/async-section';
 import { Button } from '@/components/ui/button';
 import { EmptyState } from '@/components/ui/empty-state';
@@ -11,7 +12,6 @@ import { STALE_TIMES } from '@/lib/query-client';
 import type { ClassMarketplaceJob, ClassSessionTemplate } from '@/services/client';
 import { getClassScheduleOptions } from '@/services/client/@tanstack/react-query.gen';
 import { hiredJobData, jobLabel, recurrenceLabel } from '../hired-jobs';
-import { JobListSkeleton } from './JobMarketplaceSkeletons';
 
 export function PlannedJobSchedule({ job }: { job: ClassMarketplaceJob }) {
   const sessions = useMemo(() => {
@@ -90,7 +90,13 @@ export function HiredClassSchedule({ classUuid }: { classUuid: string }) {
         loading={schedule.isPending}
         error={schedule.error}
         onRetry={() => void schedule.refetch()}
-        skeleton={<JobListSkeleton />}
+        skeleton={
+          <div className='space-y-3' aria-hidden>
+            {[0, 1, 2].map(item => (
+              <Skeleton key={item} className='h-20 w-full rounded-md' />
+            ))}
+          </div>
+        }
         empty={!sessions.length}
         emptyState={
           <EmptyState
