@@ -20,7 +20,7 @@ import { ArrowLeft } from 'lucide-react';
 import Link from 'next/link';
 import { useParams } from 'next/navigation';
 import { useMemo } from 'react';
-import { AdminTable, adminTheme, StatusBadge } from '../../../../admin/_components/ui';
+import { DataTable, StatusBadge, surfaceTheme } from '@/components/data-display';
 
 type CourseRow = {
   id: string;
@@ -189,7 +189,7 @@ export default function CourseCreatorStudentDetailPage() {
 
   if (!studentId) {
     return (
-      <main className={adminTheme.page}>
+      <main className={surfaceTheme.page}>
         <EmptyState
           title='No student selected'
           description='Return to the student roster and open a student record.'
@@ -200,7 +200,7 @@ export default function CourseCreatorStudentDetailPage() {
 
   if (!isLoading && !student) {
     return (
-      <main className={adminTheme.page}>
+      <main className={surfaceTheme.page}>
         <EmptyState
           title='Student not found'
           description='We could not find a student for that link.'
@@ -210,8 +210,8 @@ export default function CourseCreatorStudentDetailPage() {
   }
 
   return (
-    <main className={adminTheme.page}>
-      <div className={adminTheme.pageStack}>
+    <main className={surfaceTheme.page}>
+      <div className={surfaceTheme.pageStack}>
         <Button variant='ghost' size='sm' asChild className='max-w-fit text-muted-foreground mb-2 -ml-2'>
           <Link href='/dashboard/course-creator/enrollments'>
             <ArrowLeft className='size-4' />
@@ -276,7 +276,7 @@ export default function CourseCreatorStudentDetailPage() {
         <div className='space-y-4'>
           <div className='pt-6 font-medium'>Review the courses this student is enrolled in, along with their latest status and timestamps.</div>
 
-          <AdminTable
+          <DataTable
             columns={columns}
             data={rows}
             isLoading={isLoading}

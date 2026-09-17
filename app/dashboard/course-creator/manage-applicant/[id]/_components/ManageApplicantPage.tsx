@@ -49,7 +49,7 @@ import Link from 'next/link';
 import { useMemo, useState } from 'react';
 import { toast } from 'sonner';
 import { stripHtml } from '../../../../../../src/features/dashboard/courses/shared/_components/courses-data';
-import { adminTheme, DetailGrid, SectionCard, StatusBadge } from '../../../../admin/_components/ui';
+import { DetailGrid, SectionCard, StatusBadge, surfaceTheme } from '@/components/data-display';
 
 type ApplicantType = 'instructor' | 'organisation';
 
@@ -131,7 +131,7 @@ function ProfileCard({
               ]}
             />
             <div>
-              <p className={adminTheme.sectionLabel}>Description</p>
+              <p className={surfaceTheme.sectionLabel}>Description</p>
               <p className='text-foreground mt-2 text-sm leading-6'>
                 {organisation.description || 'No description provided.'}
               </p>
@@ -186,14 +186,14 @@ function ProfileCard({
           </div>
 
           <div>
-            <p className={adminTheme.sectionLabel}>Professional headline</p>
+            <p className={surfaceTheme.sectionLabel}>Professional headline</p>
             <p className='text-foreground mt-2 text-sm'>
               {instructor?.professional_headline || 'No headline provided.'}
             </p>
           </div>
 
           <div>
-            <p className={adminTheme.sectionLabel}>Bio</p>
+            <p className={surfaceTheme.sectionLabel}>Bio</p>
             <p className='text-foreground mt-2 text-sm leading-6'>
               {stripHtml(instructor?.bio) || 'No bio provided.'}
             </p>
@@ -451,7 +451,7 @@ export default function ManageApplicantPage({ uuid }: { uuid: string }) {
 
   if (!loading && !applicantType) {
     return (
-      <main className={adminTheme.page}>
+      <main className={surfaceTheme.page}>
         <div className='flex min-h-[40vh] flex-col items-center justify-center gap-3 text-center'>
           <Building2 className='text-muted-foreground size-10' />
           <p className='text-lg font-semibold'>Applicant not found</p>
@@ -464,8 +464,8 @@ export default function ManageApplicantPage({ uuid }: { uuid: string }) {
   }
 
   return (
-    <main className={adminTheme.page}>
-      <div className={adminTheme.pageStack}>
+    <main className={surfaceTheme.page}>
+      <div className={surfaceTheme.pageStack}>
         <Button variant='ghost' size='sm' asChild className='text-muted-foreground -ml-2 self-start'>
           <Link href='/dashboard/course-creator/pending-approvals'>
             <ArrowLeft className='size-4' />

@@ -12,9 +12,9 @@ import { Progress } from "../../../../../components/ui/progress";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "../../../../../components/ui/select";
 import { Wallet } from "../../../../../services/client";
 import { formatKES } from "../../../../../src/features/dashboard/courses/pages/PaymentMethodPicker";
-import { StatusBadge } from "../../../admin/_components/ui";
 import { Bucket, checkBucketRule, fmtDate, METHOD_LABEL, PAY_METHODS, PaymentMethod, useWallet, validatePayment, WalletPayment } from "../page";
 import { PAYABLE_ITEMS } from "./data";
+import { StatusBadge } from '@/components/data-display';
 /* =========================================================================
    Payments tab
    ========================================================================= */

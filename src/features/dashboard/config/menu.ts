@@ -581,6 +581,7 @@ export default {
   // ============================================================
   // ADMIN
   // ============================================================
+  // Rebuilt section by section; each item returns as its phase lands.
   admin: [
     {
       title: 'Overview',
@@ -590,114 +591,6 @@ export default {
           title: 'Home',
           url: '/dashboard/overview',
           icon: LayoutDashboard,
-        },
-      ],
-    },
-    {
-      title: 'Onboarding',
-      icon: Handshake,
-      items: [
-        {
-          title: 'Pending Approvals',
-          url: '/dashboard/pending-approvals',
-          icon: ClipboardList,
-        },
-        {
-          title: 'Opportunities',
-          url: '/dashboard/opportunities',
-          icon: Handshake,
-        },
-      ],
-    },
-    {
-      title: 'Operations',
-      icon: Users,
-      items: [
-        {
-          title: 'Users',
-          url: '/dashboard/users',
-          icon: UsersIcon,
-        },
-        {
-          title: 'Manage Courses',
-          url: '/dashboard/manage-courses',
-          icon: BookOpen,
-        },
-        {
-          title: 'Manage Programs',
-          url: '/dashboard/manage-programs',
-          icon: Layers2,
-        },
-        // {
-        //   title: 'Classes',
-        //   url: '/dashboard/classes',
-        //   icon: FileStackIcon,
-        // },
-        {
-          title: 'Students',
-          url: '/dashboard/students',
-          icon: School,
-        },
-        {
-          title: 'Instructors',
-          url: '/dashboard/instructors',
-          icon: GraduationCap,
-        },
-        {
-          title: 'Course Creators',
-          url: '/dashboard/course-creators',
-          icon: Sparkles,
-        },
-        {
-          title: 'Organizations',
-          url: '/dashboard/organizations',
-          icon: Building2,
-        },
-        {
-          title: 'Calendar',
-          url: '/dashboard/calendar',
-          icon: CalendarClock,
-        },
-        {
-          title: 'Catalogue',
-          url: '/dashboard/catalogue',
-          icon: ShoppingBag,
-        },
-        {
-          title: 'Administrators',
-          url: '/dashboard/administrators',
-          icon: ShieldCheck,
-        },
-      ],
-    },
-    {
-      title: 'Assessment',
-      icon: ClipboardList,
-      items: [],
-    },
-    {
-      title: 'Controls',
-      icon: Settings,
-      items: [
-        {
-          title: 'Currencies',
-          url: '/dashboard/currencies',
-          icon: DollarSign,
-        },
-        {
-          title: 'Categories/Subject',
-          url: '/dashboard/categories',
-          icon: DollarSign,
-        },
-        {
-          title: 'Financial Overview',
-          url: '/dashboard/financial-overview',
-          icon: LucideLandmark,
-        },
-        {
-          title: 'System Config',
-          url: '/dashboard/system-config',
-          icon: Settings,
         },
       ],
     },

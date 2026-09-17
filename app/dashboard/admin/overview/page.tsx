@@ -1,61 +1,29 @@
-import { ClipboardCheck, ShieldCheck } from 'lucide-react';
-import Link from 'next/link';
-import { Suspense } from 'react';
-import { Button } from '@/components/ui/button';
-import { adminTheme } from '../_components/ui/admin-theme';
-import { AdminPageHeader } from '../_components/ui/AdminPageHeader';
-import { SectionCard, SectionCardSkeleton } from '../_components/ui/SectionCard';
-import { StatCardSkeleton } from '../_components/ui/StatCard';
-import { ActivitySection } from './_components/ActivitySection';
-import { KpiSection } from './_components/KpiSection';
+import { PageHeader } from '@/components/page-header';
+import { SectionCard, surfaceTheme } from '@/components/data-display';
 
-function KpiSkeleton() {
+/**
+ * Placeholder while the admin console is rebuilt. Each section returns here as its
+ * phase lands, so the role always has a page to sign in to.
+ */
+export default function AdminOverviewPage() {
   return (
-    <div className='grid gap-4 sm:grid-cols-2 lg:grid-cols-3'>
-      {Array.from({ length: 6 }).map((_, index) => (
-        <StatCardSkeleton key={index} />
-      ))}
-    </div>
-  );
-}
-
-export default function OverviewPage() {
-  return (
-    <main className={adminTheme.page}>
-      <div className={adminTheme.pageStack}>
-        <AdminPageHeader
-          title='Admin overview'
-          description='A live snapshot of platform health, people, content, and commerce.'
-          actions={
-            <>
-              <Button variant='outline' asChild>
-                <Link href='/dashboard/admin/verifications'>
-                  <ShieldCheck className='size-4' />
-                  Verifications
-                </Link>
-              </Button>
-              <Button variant='outline' asChild>
-                <Link href='/dashboard/admin/moderation'>
-                  <ClipboardCheck className='size-4' />
-                  Moderation
-                </Link>
-              </Button>
-            </>
-          }
+    <div className={surfaceTheme.page}>
+      <div className={surfaceTheme.pageStack}>
+        <PageHeader
+          eyebrow='Admin console'
+          title='Being rebuilt'
+          description='The admin console is being rebuilt section by section. Nothing here is live yet.'
         />
-
-        {/* KPI grid — streams independently */}
-        <Suspense fallback={<KpiSkeleton />}>
-          <KpiSection />
-        </Suspense>
-
-        {/* Activity — streams independently */}
-        <Suspense fallback={<SectionCardSkeleton rows={6} />}>
-          <SectionCard title='Recent activity' description='Latest system-wide events.'>
-            <ActivitySection />
-          </SectionCard>
-        </Suspense>
+        <SectionCard
+          title='What happens next'
+          description='Sections arrive in order: home and the review inbox first, then people and organisations.'
+        >
+          <p className='text-muted-foreground text-sm'>
+            Other dashboards are unaffected. Platform data is unchanged — only this console's
+            screens were removed.
+          </p>
+        </SectionCard>
       </div>
-    </main>
+    </div>
   );
 }

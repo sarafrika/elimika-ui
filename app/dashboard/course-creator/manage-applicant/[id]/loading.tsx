@@ -1,10 +1,10 @@
 import { Skeleton } from '@/components/ui/skeleton';
-import { adminTheme } from '../../../admin/_components/ui/admin-theme';
+import { surfaceTheme } from '@/components/data-display';
 
 export default function Loading() {
   return (
-    <main className={adminTheme.page}>
-      <div className={adminTheme.pageStack}>
+    <main className={surfaceTheme.page}>
+      <div className={surfaceTheme.pageStack}>
         <Skeleton className='h-28 w-full rounded-md' />
         <div className='grid gap-4 lg:grid-cols-[minmax(0,1fr)_340px]'>
           <div className='space-y-4'>
