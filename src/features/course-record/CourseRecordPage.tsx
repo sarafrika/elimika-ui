@@ -154,7 +154,7 @@ const CLASSES_LIST_PATH: Partial<Record<RoleSegment, string>> = {
 /** The creator's builder. `?id=` is the course, as every course list links it. */
 const COURSE_BUILDER_PATH = '/dashboard/course-creator/courses/create-course';
 /** The admin's per-course moderation decision (approve / reject / revoke). */
-const MODERATION_PATH = '/dashboard/admin/manage-courses';
+const MODERATION_PATH = '/dashboard/admin/courses';
 /** The five-step training application, role-independent by design. */
 const APPLY_TO_TRAIN_PATH = '/dashboard/apply-to-train';
 /** Where "Continue learning" goes, matching the learner's own course cards. */
