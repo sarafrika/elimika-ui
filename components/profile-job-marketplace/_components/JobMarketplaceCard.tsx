@@ -1,74 +1,16 @@
 'use client';
 
-import { BriefcaseBusiness, CalendarDays, MapPin, Pencil, ShieldCheck, Trash2 } from 'lucide-react';
-import Link from 'next/link';
+import { BriefcaseBusiness, CalendarDays, MapPin } from 'lucide-react';
 
 import { StatusBadge } from '@/app/dashboard/admin/_components/ui';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
+import { formatDateTime } from '@/lib/date';
 import { formatRate } from '@/lib/rate-card';
-import type { ClassMarketplaceJob, Course, Instructor, Organisation, TrainingProgram } from '@/services/client/types.gen';
+import type { ClassMarketplaceJob } from '@/services/client/types.gen';
 import { deliveryLabel, serviceLabel } from '@/src/features/organisation/jobs/lib/job-stage';
-import { useOrganisationsByIds } from '../../../hooks/use-batched-lookups';
+
 import { jobPlaceLabel } from '../job-place';
-
-type ClassMarketplaceJobWithProgram = ClassMarketplaceJob & {
-  readonly program_uuid?: string | null;
-};
-
-function formatEnumLabel(value?: string | null) {
-  if (!value) return 'Not provided';
-
-  return value
-    .replace(/_/g, ' ')
-    .toLowerCase()
-    .replace(/(^|\s)\S/g, letter => letter.toUpperCase());
-}
-
-function formatDateTime(value?: Date | string | null) {
-  if (!value) return 'Not provided';
-
-  const date = value instanceof Date ? value : new Date(value);
-  if (Number.isNaN(date.getTime())) return 'Not provided';
-
-  return new Intl.DateTimeFormat('en-US', {
-    dateStyle: 'medium',
-    timeStyle: 'short',
-  }).format(date);
-}
-
-function getApplicationStatusLabel(status?: string | null) {
-  if (!status) return 'Not applied';
-  return formatEnumLabel(status);
-}
-
-function shortId(value?: string | null) {
-  if (!value) return 'Unknown';
-  return value.slice(0, 8);
-}
-
-function getDisplayOrganisationLabel(job: ClassMarketplaceJob, organisationName?: string | null) {
-  if (organisationName) return organisationName;
-  if (job.organisation_uuid) return `Organisation ${shortId(job.organisation_uuid)}`;
-  return 'Organisation';
-}
-
-function getJobProgramUuid(job: ClassMarketplaceJobWithProgram) {
-  return job.program_uuid ?? null;
-}
-
-function getDisplayContentLabel(
-  job: ClassMarketplaceJobWithProgram,
-  course?: Course | null,
-  program?: TrainingProgram | null
-) {
-  const programUuid = getJobProgramUuid(job);
-  if (program?.title) return program.title;
-  if (programUuid) return `Program ${shortId(programUuid)}`;
-  if (course?.name) return course.name;
-  if (job.course_uuid) return `Course ${shortId(job.course_uuid)}`;
-  return 'Course or program';
-}
 
 function MetaBadge({ children }: { children: React.ReactNode }) {
   return (
@@ -78,165 +20,72 @@ function MetaBadge({ children }: { children: React.ReactNode }) {
   );
 }
 
-function JobBadgeRow({
-  job,
-  course,
-  program,
-  organisationName,
-}: {
-  job: ClassMarketplaceJobWithProgram;
-  course?: Course | null;
-  program?: TrainingProgram | null;
-  organisationName?: string | null;
-}) {
-  return (
-    <div className='flex flex-wrap items-center gap-2'>
-      {typeof job.instructor_pay === 'number' ? (
-        <Badge className='border-primary/30 bg-primary/10 text-primary rounded-md px-2.5 py-0.5 text-xs font-semibold'>
-          {formatRate(job.instructor_pay, job.rate_basis)}
-        </Badge>
-      ) : (
-        <MetaBadge>Pay not specified</MetaBadge>
-      )}
-      <MetaBadge>{formatEnumLabel(job.class_visibility)}</MetaBadge>
-      <MetaBadge>{serviceLabel(job.service_type, job.session_format)}</MetaBadge>
-      <MetaBadge>{deliveryLabel(job.location_type)}</MetaBadge>
-      <MetaBadge>{getDisplayOrganisationLabel(job, organisationName)}</MetaBadge>
-      <MetaBadge>{getDisplayContentLabel(job, course, program)}</MetaBadge>
-    </div>
-  );
-}
-
+/** A class job as read-only roles see it in the marketplace. */
 export function JobCard({
   job,
-  onView,
-  onEdit,
-  onCancel,
-  isManagementView,
-  course,
-  program,
   organisationName,
-  organisation,
-  instructor,
-  applicationStatus,
-  hasApplied,
-  canReapply,
-  applicationsHref,
-  createClassHref,
+  contentTitle,
+  onView,
 }: {
-  job: ClassMarketplaceJobWithProgram;
+  job: ClassMarketplaceJob;
+  organisationName: string | null;
+  contentTitle: string | null;
   onView: () => void;
-  onEdit?: () => void;
-  onCancel?: () => void;
-  isManagementView: boolean;
-  course?: Course | null;
-  program?: TrainingProgram | null;
-  organisationName?: string | null;
-  organisation?: Organisation;
-  instructor?: Instructor;
-  applicationStatus?: string | null;
-  hasApplied?: boolean;
-  canReapply?: boolean;
-  applicationsHref?: string;
-  createClassHref?: string;
 }) {
-  const title = job.title ?? 'Untitled job';
-  const applicationLabel = getApplicationStatusLabel(applicationStatus);
-
-  const { organisationMap } = useOrganisationsByIds([job?.organisation_uuid as string]);
-  const displayName = organisationMap?.[job?.organisation_uuid as string]?.name;
-
   return (
-    <div className='group border-border/70 bg-card hover:border-border flex gap-4 rounded-md border p-5 shadow-sm transition hover:shadow-md'>
-      <div className='flex flex-col items-center gap-2'>
-        <div className='border-primary/30 bg-primary/10 text-primary flex size-11 shrink-0 items-center justify-center rounded-md border'>
-          {isManagementView ? (
-            <ShieldCheck className='size-5' />
-          ) : (
-            <BriefcaseBusiness className='size-5' />
-          )}
-        </div>
+    <article className='border-border/70 bg-card hover:border-border flex gap-4 rounded-md border p-5 shadow-sm transition hover:shadow-md'>
+      <div
+        aria-hidden
+        className='border-primary/30 bg-primary/10 text-primary flex size-11 shrink-0 items-center justify-center rounded-md border'
+      >
+        <BriefcaseBusiness className='size-5' />
       </div>
 
       <div className='min-w-0 flex-1 space-y-3'>
         <div className='flex flex-wrap items-start justify-between gap-3'>
           <div className='min-w-0'>
             <h3 className='text-foreground truncate text-lg font-semibold tracking-tight'>
-              {title}
+              {job.title || 'Untitled job'}
             </h3>
             <p className='text-muted-foreground mt-0.5 text-sm'>
-              {getDisplayOrganisationLabel(job, displayName)} ·{' '}
-              {getDisplayContentLabel(job, course, program)}
+              {organisationName ?? 'Organisation'} · {contentTitle ?? 'Course or program'}
             </p>
           </div>
-          <div className='flex shrink-0 flex-wrap items-center justify-end gap-2'>
-            <StatusBadge status={job.status} />
-            {!isManagementView && applicationStatus ? (
-              <StatusBadge status={applicationStatus} label={applicationLabel} />
-            ) : null}
-          </div>
+          <StatusBadge status={job.status} />
         </div>
 
-        <JobBadgeRow
-          job={job}
-          course={course}
-          program={program}
-          organisationName={displayName}
-        />
+        <div className='flex flex-wrap items-center gap-2'>
+          {typeof job.instructor_pay === 'number' ? (
+            <Badge className='border-primary/30 bg-primary/10 text-primary rounded-md px-2.5 py-0.5 text-xs font-semibold'>
+              {formatRate(job.instructor_pay, job.rate_basis)}
+            </Badge>
+          ) : null}
+          <MetaBadge>{job.class_visibility === 'PRIVATE' ? 'Private class' : 'Public class'}</MetaBadge>
+          <MetaBadge>{serviceLabel(job.service_type, job.session_format)}</MetaBadge>
+          <MetaBadge>{deliveryLabel(job.location_type)}</MetaBadge>
+        </div>
 
         <div className='grid gap-2 sm:grid-cols-2'>
-          <div className='text-muted-foreground flex items-center gap-2 text-sm'>
-            <CalendarDays className='text-primary size-4' />
-            <span>{formatDateTime(job.default_start_time)}</span>
-          </div>
-          <div className='text-muted-foreground flex items-center gap-2 text-sm'>
-            <MapPin className='text-primary size-4' />
-            <span>{jobPlaceLabel(job, formatEnumLabel(job.location_type))}</span>
-          </div>
+          <p className='text-muted-foreground flex items-center gap-2 text-sm'>
+            <CalendarDays aria-hidden className='text-primary size-4' />
+            <span>{formatDateTime(job.default_start_time, { fallback: 'Start not set' })}</span>
+          </p>
+          <p className='text-muted-foreground flex items-center gap-2 text-sm'>
+            <MapPin aria-hidden className='text-primary size-4' />
+            <span>{jobPlaceLabel(job, deliveryLabel(job.location_type))}</span>
+          </p>
         </div>
 
         <p className='text-muted-foreground line-clamp-3 text-sm leading-6'>
           {job.description || 'No description has been provided for this posting yet.'}
         </p>
 
-        <div className='flex flex-wrap items-center gap-2 pt-1'>
+        <div className='pt-1'>
           <Button variant='outline' size='sm' onClick={onView}>
-            View
+            View details
           </Button>
-          {isManagementView && applicationsHref ? (
-            <Button asChild variant='secondary' size='sm'>
-              <Link href={applicationsHref}>View applications</Link>
-            </Button>
-          ) : null}
-          {isManagementView && createClassHref && (job.status as string) === 'awaiting_class' ? (
-            <Button asChild size='sm'>
-              <Link href={createClassHref}>Create the class</Link>
-            </Button>
-          ) : null}
-          {isManagementView && onEdit ? (
-            <Button variant='outline' size='sm' onClick={onEdit}>
-              <Pencil className='mr-1 size-4' />
-              Edit
-            </Button>
-          ) : null}
-          {isManagementView && onCancel ? (
-            <Button variant='destructive' size='sm' onClick={onCancel}>
-              <Trash2 className='mr-1 size-4' />
-              Cancel
-            </Button>
-          ) : null}
-
-          {!isManagementView && hasApplied ? (
-            canReapply ? (
-              <span className='text-muted-foreground text-xs'>
-                Your previous application closed — you can apply again.
-              </span>
-            ) : (
-              <StatusBadge status={applicationStatus} label={`You already applied — ${applicationLabel}`} />
-            )
-          ) : null}
         </div>
       </div>
-    </div>
+    </article>
   );
 }

@@ -57,12 +57,6 @@ export function MarketplaceSidebarSkeleton() {
           ))}
         </div>
       ))}
-      <Skeleton className='h-9 w-full rounded-md' />
-      <Skeleton className='h-9 w-full rounded-md' />
     </div>
   );
-}
-
-export function SelectSkeleton() {
-  return <Skeleton className='h-11 w-full rounded-md' />;
 }
