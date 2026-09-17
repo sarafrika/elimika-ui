@@ -1,12 +1,12 @@
 import { ExternalLink, MapPin, Presentation, Wrench } from 'lucide-react';
 
-import { DetailRow, SectionCard } from '@/app/dashboard/admin/_components/ui';
 import { jobAddress, jobHasPin, jobTown } from '@/components/profile-job-marketplace/job-place';
 import { StaticMap } from '@/components/maps/static-map';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { googleMapsUrl } from '@/lib/geocoding';
 import type { ClassMarketplaceJob } from '@/services/client/types.gen';
+import { DetailRow, SectionCard } from '@/components/data-display';
 
 function mapsLink(job: ClassMarketplaceJob) {
   return jobHasPin(job)

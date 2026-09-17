@@ -2,7 +2,6 @@
 
 import { BriefcaseBusiness, CalendarDays, MapPin } from 'lucide-react';
 
-import { StatusBadge } from '@/app/dashboard/admin/_components/ui';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { formatDateTime } from '@/lib/date';
@@ -11,6 +10,7 @@ import type { ClassMarketplaceJob } from '@/services/client/types.gen';
 import { deliveryLabel, serviceLabel } from '@/src/features/organisation/jobs/lib/job-stage';
 
 import { jobPlaceLabel } from '../job-place';
+import { StatusBadge } from '@/components/data-display';
 
 function MetaBadge({ children }: { children: React.ReactNode }) {
   return (

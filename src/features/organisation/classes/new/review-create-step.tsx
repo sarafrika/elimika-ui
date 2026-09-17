@@ -14,7 +14,6 @@ import Link from 'next/link';
 import { type ReactNode, useMemo, useState } from 'react';
 import { toast } from 'sonner';
 
-import { DetailRow, SectionCard, SectionCardSkeleton } from '@/app/dashboard/admin/_components/ui';
 import type { RateBasis } from '@/components/class-form';
 import { AsyncSection } from '@/components/data/async-section';
 import { jobApplicationsQueryOptions } from '@/components/profile-job-marketplace/_components/JobApplicantsPanel';
@@ -57,6 +56,7 @@ import {
   scheduleSummary,
   serviceLabel,
 } from '@/src/features/organisation/jobs/lib/job-stage';
+import { DetailRow, SectionCard, SectionCardSkeleton } from '@/components/data-display';
 
 function LockedTitle({ children }: { children: ReactNode }) {
   return (

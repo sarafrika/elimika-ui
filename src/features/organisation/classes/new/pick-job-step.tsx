@@ -13,7 +13,6 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useMemo, useState } from 'react';
 
-import { StatusBadge } from '@/app/dashboard/admin/_components/ui';
 import { AsyncSection } from '@/components/data/async-section';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -36,6 +35,7 @@ import {
   serviceLabel,
   sessionCountLabel,
 } from '@/src/features/organisation/jobs/lib/job-stage';
+import { StatusBadge } from '@/components/data-display';
 
 export function PickJobStep({
   courseUuid,

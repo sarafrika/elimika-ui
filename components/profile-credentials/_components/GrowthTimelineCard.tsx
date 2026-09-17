@@ -8,9 +8,9 @@ import { Card } from '@/components/ui/card';
 import { cn } from '@/lib/utils';
 
 import { useState } from 'react';
-import { PdfPreview } from '../../../app/dashboard/admin/_components/ui/PdfPreview';
 import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle } from '../../ui/sheet';
 import type { GrowthItem } from '../data';
+import { DocumentPreview } from '@/components/data-display';
 
 type GrowthTimelineCardProps = {
   item: GrowthItem;
@@ -130,7 +130,7 @@ export function GrowthTimelineCard({ item, ownerName }: GrowthTimelineCardProps)
           {item.documentUrl ? (
             <div className='flex-1 space-y-4 overflow-y-auto px-5 py-4'>
               <div className='bg-card overflow-hidden rounded-[14px] border shadow-sm'>
-                <PdfPreview
+                <DocumentPreview
                   documentUrl={item.documentUrl}
                   documentLabel={item.documentName as string}
                   documentTitle={item.documentName as string}

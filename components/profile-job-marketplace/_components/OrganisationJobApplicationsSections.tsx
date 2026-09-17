@@ -3,7 +3,6 @@
 import { ArrowRight, Search, TriangleAlert } from 'lucide-react';
 import Link from 'next/link';
 
-import { StatusBadge } from '@/app/dashboard/admin/_components/ui';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { EmptyState } from '@/components/ui/empty-state';
@@ -25,6 +24,7 @@ import {
   nextStepFor,
   statusLabel,
 } from '../application-status';
+import { StatusBadge } from '@/components/data-display';
 
 export { APPLICATION_STATUSES };
 

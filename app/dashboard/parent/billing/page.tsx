@@ -2,17 +2,11 @@
 
 import { useQuery } from '@tanstack/react-query';
 import { Coins, Receipt, ShoppingCart, Wallet } from 'lucide-react';
-import {
-  AdminPageHeader,
-  adminTheme,
-  DetailGrid,
-  SectionCard,
-  StatCard,
-  StatCardSkeleton,
-} from '@/app/dashboard/admin/_components/ui';
 import { extractEntity } from '@/lib/api-helpers';
 import type { RevenueAmountDto, RevenueDashboardDto } from '@/services/client';
 import { getRevenueDashboardOptions } from '@/services/client/@tanstack/react-query.gen';
+import { DetailGrid, SectionCard, StatCard, StatCardSkeleton, surfaceTheme } from '@/components/data-display';
+import { PageHeader } from '@/components/page-header';
 
 /** Format the first (primary-currency) amount from a revenue amount list. */
 const money = (amounts?: RevenueAmountDto[]): string => {
@@ -69,9 +63,9 @@ export default function ParentBillingPage() {
   ];
 
   return (
-    <div className={adminTheme.page}>
-      <div className={adminTheme.pageStack}>
-        <AdminPageHeader
+    <div className={surfaceTheme.page}>
+      <div className={surfaceTheme.pageStack}>
+        <PageHeader
           title='Billing'
           description='What your children have paid for across their learning journey.'
         />

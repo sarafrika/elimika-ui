@@ -1,7 +1,6 @@
 import { CalendarDays } from 'lucide-react';
 import Link from 'next/link';
 
-import { DetailRow, SectionCard } from '@/app/dashboard/admin/_components/ui';
 import { canWithdraw } from '@/components/profile-job-marketplace/application-status';
 import { estimatedJobTotal, jobPay } from '@/components/profile-job-marketplace/hired-jobs';
 import { Button } from '@/components/ui/button';
@@ -9,6 +8,7 @@ import type { ClassMarketplaceJobApplication } from '@/services/client';
 
 import { instructorCalendarHref } from '../../job-routes';
 import { calendarSummary, scheduleLabel, whereLabel } from '../application-view';
+import { DetailRow, SectionCard } from '@/components/data-display';
 
 export function ApplicationRail({
   application,

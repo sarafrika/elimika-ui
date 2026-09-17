@@ -25,7 +25,6 @@ import { useParams } from 'next/navigation';
 import type { ComponentType, ReactNode } from 'react';
 import { useMemo, useState } from 'react';
 
-import { StatusBadge, statusToneClass, type StatusTone } from '@/app/dashboard/admin/_components/ui';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -56,6 +55,7 @@ import {
 } from '@/services/client/@tanstack/react-query.gen';
 import { toAuthenticatedMediaUrl } from '@/src/lib/media-url';
 import { generateWalletId, institutionRef } from '@/src/lib/wallet-id';
+import { StatusBadge, StatusTone, statusToneClass } from '@/components/data-display';
 
 const EMPTY_UUID = '00000000-0000-0000-0000-000000000000';
 const tabListClass =

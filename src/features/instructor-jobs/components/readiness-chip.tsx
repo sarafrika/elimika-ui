@@ -1,7 +1,7 @@
-import { type StatusTone, statusToneClass } from '@/app/dashboard/admin/_components/ui/admin-theme';
 import { cn } from '@/lib/utils';
 
 import type { ReadinessTone } from '../job-readiness';
+import { StatusTone, statusToneClass } from '@/components/data-display';
 
 const TONES: Record<ReadinessTone, StatusTone> = {
   success: 'success',

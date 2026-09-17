@@ -20,14 +20,6 @@ import {
 } from 'lucide-react';
 import { useDeferredValue, useMemo, useState } from 'react';
 
-import {
-  adminTheme,
-  DetailGrid,
-  SectionCard,
-  StatCard,
-  StatCardSkeleton,
-  StatusBadge,
-} from '@/app/dashboard/admin/_components/ui';
 import { PageHeader } from '@/components/dashboard';
 import { AsyncSection } from '@/components/data/async-section';
 import { Badge } from '@/components/ui/badge';
@@ -79,6 +71,7 @@ import { JobCard } from './JobMarketplaceCard';
 import { JobListSkeleton, MarketplaceSidebarSkeleton } from './JobMarketplaceSkeletons';
 import { MarketplaceSidebar } from './MarketplaceSidebar';
 import { MarketplaceTabs } from './MarketplaceTabs';
+import { DetailGrid, SectionCard, StatCard, StatCardSkeleton, StatusBadge, surfaceTheme } from '@/components/data-display';
 
 type StatusFilter = 'all' | 'open' | 'awaiting_class' | 'filled' | 'cancelled' | 'expired';
 type SortDirection = 'newest' | 'oldest';
@@ -389,8 +382,8 @@ export function JobMarketplacePage({ role }: { role: JobMarketplaceRole }) {
   const selectedJob = jobs.find(job => job.uuid === selectedJobUuid) ?? null;
 
   return (
-    <main className={cn(adminTheme.page, 'pb-16')}>
-      <div className={adminTheme.pageStack}>
+    <main className={cn(surfaceTheme.page, 'pb-16')}>
+      <div className={surfaceTheme.pageStack}>
         <PageHeader title='Opportunities' description={config.description} />
 
         <div className='grid gap-4 sm:grid-cols-2 xl:grid-cols-4'>

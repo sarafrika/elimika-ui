@@ -2,7 +2,6 @@
 
 import { Activity } from 'lucide-react';
 
-import { SectionCard } from '@/app/dashboard/admin/_components/ui';
 import { AsyncSection } from '@/components/data/async-section';
 import { statusLabel } from '@/components/profile-job-marketplace/application-status';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -12,6 +11,7 @@ import type {
   ClassMarketplaceJobApplication,
   Instructor,
 } from '@/services/client';
+import { SectionCard } from '@/components/data-display';
 
 type ActivityEvent = { key: string; text: string; at: Date };
 

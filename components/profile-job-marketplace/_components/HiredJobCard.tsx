@@ -1,7 +1,6 @@
 import { ArrowRight, Info } from 'lucide-react';
 import Link from 'next/link';
 
-import { adminTheme, DetailRow } from '@/app/dashboard/admin/_components/ui';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -19,6 +18,7 @@ import { hiredJobHref, instructorClassHref } from '@/src/features/instructor-job
 import { estimatedJobTotal, jobPay, sessionsPhrase } from '../hired-jobs';
 import { isClassCreatedStatus } from '../application-status';
 import type { HiredApplication } from '../use-hired-applications';
+import { DetailRow, surfaceTheme } from '@/components/data-display';
 
 const FORMAT_LABELS: Record<string, string> = { GROUP: 'Group', INDIVIDUAL: 'Private' };
 
@@ -65,7 +65,7 @@ export function HiredJobCard({
   const visibleAction = classCreated ? 'Hire details' : 'View hire details';
 
   return (
-    <article className={cn(adminTheme.card, 'flex h-full flex-col gap-4 p-5')}>
+    <article className={cn(surfaceTheme.card, 'flex h-full flex-col gap-4 p-5')}>
       <div className='flex items-start justify-between gap-3'>
         <div className='flex min-w-0 items-center gap-3'>
           <Avatar className='size-9'>
@@ -158,7 +158,7 @@ export function HiredJobCard({
 
 export function HiredJobCardSkeleton() {
   return (
-    <div className={cn(adminTheme.card, 'space-y-4 p-5')} aria-hidden>
+    <div className={cn(surfaceTheme.card, 'space-y-4 p-5')} aria-hidden>
       <div className='flex items-center justify-between gap-3'>
         <div className='flex items-center gap-3'>
           <Skeleton className='size-9 rounded-full' />

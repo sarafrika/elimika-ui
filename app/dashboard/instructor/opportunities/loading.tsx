@@ -1,11 +1,11 @@
-import { adminTheme, StatCardSkeleton } from '@/app/dashboard/admin/_components/ui';
 import { Skeleton } from '@/components/ui/skeleton';
+import { StatCardSkeleton, surfaceTheme } from '@/components/data-display';
 
 /** Shared by the Jobs tabs that have no loading state of their own. */
 export default function JobsLoading() {
   return (
-    <div className={adminTheme.page}>
-      <div className={adminTheme.pageStack}>
+    <div className={surfaceTheme.page}>
+      <div className={surfaceTheme.pageStack}>
         <div className='space-y-2 border-b pb-4'>
           <Skeleton className='h-8 w-32' />
           <Skeleton className='h-4 w-96 max-w-full' />

@@ -1,6 +1,5 @@
 import { History } from 'lucide-react';
 
-import { SectionCard } from '@/app/dashboard/admin/_components/ui';
 import { AsyncSection } from '@/components/data/async-section';
 import { EmptyState } from '@/components/ui/empty-state';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -8,6 +7,7 @@ import { cn } from '@/lib/utils';
 import type { ClassMarketplaceJobApplicationEvent } from '@/services/client';
 
 import { type EventTone, timelineEntry } from '../application-view';
+import { SectionCard } from '@/components/data-display';
 
 const DOT_TONES: Record<EventTone, string> = {
   brand: 'bg-primary',

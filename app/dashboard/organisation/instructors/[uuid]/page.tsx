@@ -36,8 +36,6 @@ import { extractEntity, extractList, extractPage } from '@/lib/api-helpers';
 import { formatCurrency } from '@/lib/format-currency';
 import { formatCount, toNumber } from '@/lib/metrics';
 import { cn } from '@/lib/utils';
-import { StatusBadge } from '@/app/dashboard/admin/_components/ui';
-import { statusToneClass, type StatusTone } from '@/app/dashboard/admin/_components/ui';
 import type {
   ClassDefinition,
   ClassEnrolmentCountDto,
@@ -70,6 +68,7 @@ import {
 import { toAuthenticatedMediaUrl } from '@/src/lib/media-url';
 
 import { InstructorStudentsPanel } from './_components/instructor-students-panel';
+import { StatusBadge, StatusTone, statusToneClass } from '@/components/data-display';
 
 const tabListClass =
   'h-auto w-full justify-start gap-7 overflow-x-auto rounded-none border-b border-border/70 bg-transparent p-0';

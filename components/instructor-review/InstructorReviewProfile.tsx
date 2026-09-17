@@ -4,7 +4,6 @@ import { useQuery } from '@tanstack/react-query';
 import { BriefcaseBusiness, FileText, GraduationCap, Star } from 'lucide-react';
 import Link from 'next/link';
 
-import { adminTheme, StatusBadge } from '@/app/dashboard/admin/_components/ui';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -19,6 +18,7 @@ import {
   getInstructorSkillsOptions,
 } from '@/services/client/@tanstack/react-query.gen';
 import type { Instructor } from '@/services/client/types.gen';
+import { StatusBadge, surfaceTheme } from '@/components/data-display';
 
 function formatEnumLabel(value?: string | null) {
   if (!value) return '';
@@ -44,8 +44,8 @@ function ProfileSection({
   children: React.ReactNode;
 }) {
   return (
-    <div className={adminTheme.cardPadded}>
-      <h3 className={cn(adminTheme.sectionLabel, 'flex items-center gap-2')}>
+    <div className={surfaceTheme.cardPadded}>
+      <h3 className={cn(surfaceTheme.sectionLabel, 'flex items-center gap-2')}>
         <Icon className='text-primary size-4' />
         {title}
       </h3>
@@ -116,7 +116,7 @@ export function InstructorReviewProfile({
 
   return (
     <div className='space-y-4'>
-      <div className={adminTheme.cardPadded}>
+      <div className={surfaceTheme.cardPadded}>
         <div className='flex items-start gap-3'>
           <div className='border-primary/30 bg-primary/10 text-primary flex size-12 shrink-0 items-center justify-center rounded-md border text-lg font-semibold'>
             {initials}

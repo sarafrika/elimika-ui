@@ -15,7 +15,6 @@ import { usePathname, useRouter, useSearchParams } from 'next/navigation';
 import { useMemo, useState } from 'react';
 import { toast } from 'sonner';
 
-import { DetailRow, SectionCard, SectionCardSkeleton } from '@/app/dashboard/admin/_components/ui';
 import { OrgPage } from '@/app/dashboard/organisation/_components/org-page';
 import type { RateBasis } from '@/components/class-form';
 import { AsyncSection } from '@/components/data/async-section';
@@ -80,6 +79,7 @@ import {
   JobWhereContent,
   useJobResourceRows,
 } from './job-sections';
+import { DetailRow, SectionCard, SectionCardSkeleton } from '@/components/data-display';
 
 function nextStepCopy(
   stage: JobStage,

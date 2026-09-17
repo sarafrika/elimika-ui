@@ -1,7 +1,6 @@
 import { CalendarClock, CheckCircle2, Info } from 'lucide-react';
 import Link from 'next/link';
 
-import { SectionCard } from '@/app/dashboard/admin/_components/ui';
 import { cn } from '@/lib/utils';
 import type {
   ClassMarketplaceJobApplication,
@@ -17,6 +16,7 @@ import {
   progressSteps,
 } from '../application-view';
 import { trackerSegmentClass } from './application-stage';
+import { SectionCard } from '@/components/data-display';
 
 const NOTE_TONES: Record<NoteTone, { box: string; icon: string }> = {
   info: { box: 'border-primary/30 bg-primary/5', icon: 'text-primary' },
