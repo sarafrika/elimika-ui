@@ -98,6 +98,7 @@ export type UnifiedContentItem = {
   id: string;
   kind: 'course' | 'program';
   title: string;
+  is_published: boolean;
   description: string;
   createdAt: number;
   durationMinutes: number;
@@ -607,6 +608,7 @@ export function SharedCoursesPage({ domain }: SharedCoursesPageProps) {
           id: program.uuid ?? '',
           kind: 'program',
           title: program.title,
+          is_published: program.published,
           description: stripHtml(program.description),
           createdAt: program.created_date ? new Date(program.created_date).getTime() : 0,
           durationMinutes: program.total_duration_hours * 60 + program.total_duration_minutes,
@@ -652,6 +654,7 @@ export function SharedCoursesPage({ domain }: SharedCoursesPageProps) {
           id: course.uuid ?? '',
           kind: 'course',
           title: course.name,
+          is_published: course.is_published as boolean,
           description: stripHtml(course.description),
           createdAt: course.created_date ? new Date(course.created_date).getTime() : 0,
           durationMinutes: course.duration_hours * 60 + course.duration_minutes,
@@ -770,6 +773,7 @@ export function SharedCoursesPage({ domain }: SharedCoursesPageProps) {
           id: course.uuid,
           kind: 'course',
           title: course.name,
+          is_published: course.is_published as boolean,
           description: stripHtml(course.description),
           createdAt: course.created_date ? new Date(course.created_date).getTime() : 0,
           durationMinutes: course.duration_hours * 60 + course.duration_minutes,
@@ -935,6 +939,8 @@ export function SharedCoursesPage({ domain }: SharedCoursesPageProps) {
   const filteredItems = useMemo(
     () =>
       baseTabItems.filter(item => {
+        if (item.is_published !== true) return false;
+
         const resolvedDifficultyLabel = difficultyMap.get(filters.level) ?? filters.level;
 
         const matchesSearch =
@@ -945,6 +951,7 @@ export function SharedCoursesPage({ domain }: SharedCoursesPageProps) {
           item.categoryLabels.some(label => label.toLowerCase().includes(normalizedSearch));
 
         const selectedCategory = subjectByCategory[filters.category] ?? filters.category;
+
         const matchesCategory =
           filters.category === 'all' ||
           matchesCategoryFilter(item, selectedCategory, categories, categoriesById);
@@ -959,7 +966,9 @@ export function SharedCoursesPage({ domain }: SharedCoursesPageProps) {
 
         const matchesPrice =
           filters.price === 'all' ||
-          (filters.price === 'free' ? !item.minimumRate || item.minimumRate <= 0 : (item.minimumRate ?? 0) > 0);
+          (filters.price === 'free'
+            ? !item.minimumRate || item.minimumRate <= 0
+            : (item.minimumRate ?? 0) > 0);
 
         const matchesContentType =
           filters.contentType === 'all-courses' ||
@@ -975,7 +984,15 @@ export function SharedCoursesPage({ domain }: SharedCoursesPageProps) {
           matchesContentType
         );
       }),
-    [baseTabItems, categories, categoriesById, difficultyMap, filters, normalizedSearch, subjectByCategory]
+    [
+      baseTabItems,
+      categories,
+      categoriesById,
+      difficultyMap,
+      filters,
+      normalizedSearch,
+      subjectByCategory,
+    ]
   );
 
   useEffect(() => {

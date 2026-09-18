@@ -360,6 +360,20 @@ function AssignmentDetailSheet({
                             <Input
                                 type='file'
                                 multiple
+                                accept={assignment?.submission_types?.length ? assignment.submission_types.map(type => {
+                                    switch (type.toUpperCase()) {
+                                        case 'DOCUMENT':
+                                            return '.pdf,.doc,.docx,.txt,.rtf';
+                                        case 'IMAGE':
+                                            return 'image/*';
+                                        case 'AUDIO':
+                                            return 'audio/*';
+                                        case 'VIDEO':
+                                            return 'video/*';
+                                        default:
+                                            return '*/*';
+                                    }
+                                }).join(',') : 'audio/*,.pdf,image/*,video/*,.doc,.docx,.txt'}
                                 disabled={isSubmitting}
                                 onChange={event => handleFiles(event.target.files)}
                             />

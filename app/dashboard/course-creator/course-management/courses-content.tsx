@@ -75,6 +75,7 @@ import Image from 'next/image';
 import Link from 'next/link';
 import { useDeferredValue, useEffect, useMemo, useState } from 'react';
 import { toast } from 'sonner';
+import { ALL_CATEGORIES, CategoryTabs } from '../../../../components/category-tabs';
 import CoursesLoading from './loading';
 
 const CatalogueWorkspace = dynamic(
@@ -134,11 +135,19 @@ export default function CourseCreatorCoursesContent() {
   }, [search]);
   const deferredSearch = useDeferredValue(debouncedSearch);
   const [status, setStatus] = useState('all');
-  const [category, setCategory] = useState('all');
+  const [activeCategory, setActiveCategory] = useState(ALL_CATEGORIES);
+  const [subjectByCategory, setSubjectByCategory] = useState<Record<string, string>>({});
   const [catalogueOpen, setCatalogueOpen] = useState(false);
   const [deleteTarget, setDeleteTarget] = useState<Offering | null>(null);
   const [pagination, setPagination] = useState({ key: '', page: 0 });
-  const filterKey = JSON.stringify([creatorUuid, contentType, deferredSearch, status, category]);
+  const filterKey = JSON.stringify([
+    creatorUuid,
+    contentType,
+    deferredSearch,
+    status,
+    activeCategory,
+    subjectByCategory,
+  ]);
   const page = pagination.key === filterKey ? pagination.page : 0;
   const setPage = (nextPage: number) => setPagination({ key: filterKey, page: nextPage });
   const qc = useQueryClient();
@@ -204,48 +213,98 @@ export default function CourseCreatorCoursesContent() {
       : 0,
     1
   );
-  const offerings = useMemo(() => {
-    const items: Offering[] = [];
-    if (contentType !== 'programs')
-      coursesData?.content?.forEach(item => items.push({ type: 'courses', item }));
-    if (contentType !== 'courses')
-      programsData?.content?.forEach(item => items.push({ type: 'programs', item }));
-    // Apply client-side category filter when a category is selected.
-    const filtered =
-      category === 'all'
-        ? items
-        : items.filter(off => {
-            if (off.type === 'courses') {
-              // `category_uuids` is an array on courses
-              const cu = (off.item as Course).category_uuids ?? [];
-              return cu.includes(category);
-            }
-            // Programs use a single `category_uuid` field
-            return (off.item as TrainingProgram).category_uuid === category;
-          });
 
-    return filtered.sort((a, b) => {
-      const aDate = a.item.updated_date ? new Date(a.item.updated_date).getTime() : 0;
-      const bDate = b.item.updated_date ? new Date(b.item.updated_date).getTime() : 0;
-      return bDate - aDate || titleOf(a).localeCompare(titleOf(b));
-    });
-  }, [contentType, coursesData, programsData, category]);
-  const countReferences = useMemo(
-    () =>
-      !creatorUuid || catalogueOpen
-        ? []
-        : offerings.flatMap(offering =>
-            offering.item.uuid ? [{ type: offering.type, uuid: offering.item.uuid }] : []
-          ),
-    [offerings, creatorUuid, catalogueOpen]
-  );
-  const offeringCounts = useOfferingCounts(countReferences);
   const categories = useMemo(() => {
     if (categoriesQuery.data?.error || categoriesQuery.data?.success === false) return [];
     return [...(categoriesQuery.data?.data?.content ?? [])].sort((a, b) =>
       a.name.localeCompare(b.name)
     );
   }, [categoriesQuery.data]);
+
+  const offerings = useMemo(() => {
+    const items: Offering[] = [];
+    if (contentType !== 'programs')
+      coursesData?.content?.forEach(item => items.push({ type: 'courses', item }));
+    if (contentType !== 'courses')
+      programsData?.content?.forEach(item => items.push({ type: 'programs', item }));
+
+    return items.sort((a, b) => {
+      const aDate = a.item.updated_date ? new Date(a.item.updated_date).getTime() : 0;
+      const bDate = b.item.updated_date ? new Date(b.item.updated_date).getTime() : 0;
+      return bDate - aDate || titleOf(a).localeCompare(titleOf(b));
+    });
+  }, [contentType, coursesData, programsData]);
+
+  const categoryTabItems = useMemo(() => {
+    return offerings.flatMap(offering => {
+      const categoryUuids: string[] =
+        offering.type === 'courses'
+          ? ((offering.item as Course).category_uuids ?? []).filter(Boolean)
+          : (offering.item as TrainingProgram).category_uuid
+            ? [(offering.item as TrainingProgram).category_uuid].filter(Boolean)
+            : [];
+
+      return categoryUuids.flatMap(categoryUuid => {
+        const category = categories.find(item => item.uuid === categoryUuid);
+        if (!category) return [];
+
+        const rootCategory = category.parent_uuid
+          ? categories.find(item => item.uuid === category.parent_uuid)
+          : category;
+        if (!rootCategory?.uuid) return [];
+
+        return [
+          {
+            category: rootCategory.uuid,
+            subject: category.parent_uuid ? category.uuid ?? null : null,
+            programType: undefined,
+          },
+        ];
+      });
+    });
+  }, [categories, offerings]);
+
+  const filteredOfferings = useMemo(() => {
+    if (activeCategory === ALL_CATEGORIES) {
+      return offerings;
+    }
+
+    const selectedSubject = subjectByCategory[activeCategory];
+
+    return offerings.filter(offering => {
+      const categoryUuids: string[] =
+        offering.type === 'courses'
+          ? ((offering.item as Course).category_uuids ?? []).filter(Boolean)
+          : (offering.item as TrainingProgram).category_uuid
+            ? [(offering.item as TrainingProgram).category_uuid].filter(Boolean)
+            : [];
+
+      const matches = categoryUuids.some(categoryUuid => {
+        const category = categories.find(item => item.uuid === categoryUuid);
+        const rootCategory = category?.parent_uuid
+          ? categories.find(item => item.uuid === category.parent_uuid)
+          : category;
+
+        if (!rootCategory?.uuid) return false;
+        if (rootCategory.uuid !== activeCategory) return false;
+        if (!selectedSubject) return true;
+        return categoryUuid === selectedSubject;
+      });
+
+      return matches;
+    });
+  }, [activeCategory, categories, offerings, subjectByCategory]);
+  const countReferences = useMemo(
+    () =>
+      !creatorUuid || catalogueOpen
+        ? []
+        : offerings.flatMap(offering =>
+          offering.item.uuid ? [{ type: offering.type, uuid: offering.item.uuid }] : []
+        ),
+    [offerings, creatorUuid, catalogueOpen]
+  );
+  const offeringCounts = useOfferingCounts(countReferences);
+
   const loading =
     creator.isLoading || (!!creatorUuid && (coursesQuery.isPending || programsQuery.isPending));
   const failed =
@@ -301,7 +360,8 @@ export default function CourseCreatorCoursesContent() {
   const resetFilters = () => {
     setSearch('');
     setStatus('all');
-    setCategory('all');
+    setActiveCategory(ALL_CATEGORIES);
+    setSubjectByCategory({});
   };
   // A shorter stream may finish before the other; clamp its consumed rows independently.
   const consumed =
@@ -427,56 +487,25 @@ export default function CourseCreatorCoursesContent() {
               </SelectContent>
             </Select>
           </div>
-          <div
-            className='bg-muted/15 flex items-center gap-2 overflow-x-auto border-b px-4 py-3'
-            role='group'
-            aria-label='Filter by category'
-          >
-            <span className='text-muted-foreground mr-1 hidden font-mono text-xs tracking-wider uppercase sm:inline'>
-              Category
-            </span>
-            <Button
-              size='sm'
-              variant='outline'
-              aria-pressed={category === 'all'}
-              onClick={() => setCategory('all')}
-              className={cn(
-                'h-8 shrink-0 rounded-full px-3 text-sm',
-                category === 'all' && 'bg-primary/10 text-primary border-primary/10'
-              )}
-            >
-              All
-            </Button>
-            {categories.map(
-              item =>
-                item.uuid && (
-                  <Button
-                    key={item.uuid}
-                    size='sm'
-                    variant='outline'
-                    aria-pressed={category === item.uuid}
-                    onClick={() => setCategory(item.uuid ?? 'all')}
-                    className={cn(
-                      'h-8 shrink-0 rounded-full px-3 text-sm',
-                      category === item.uuid && 'bg-primary/10 text-primary border-primary/10'
-                    )}
-                  >
-                    {item.name}
-                  </Button>
-                )
-            )}
-            {(search || status !== 'all' || category !== 'all') && (
-              <Button
-                variant='ghost'
-                size='sm'
-                onClick={resetFilters}
-                className='ml-auto h-7 shrink-0 text-xs'
-              >
+
+          <CategoryTabs
+            categories={categories}
+            items={categoryTabItems}
+            activeCategory={activeCategory}
+            onCategoryChange={setActiveCategory}
+            subjectByCategory={subjectByCategory}
+            onSubjectChange={setSubjectByCategory}
+          />
+
+          {(search || status !== 'all' || activeCategory !== ALL_CATEGORIES) && (
+            <div className='border-b px-4 py-3 text-right'>
+              <Button variant='ghost' size='sm' onClick={resetFilters} className='h-7 text-xs'>
                 <X className='size-3' />
                 Clear filters
               </Button>
-            )}
-          </div>
+            </div>
+          )}
+
           <CardContent className='p-0' aria-busy={loading || search.trim() !== deferredSearch}>
             {loading ? (
               <CoursesLoading />
@@ -509,17 +538,17 @@ export default function CourseCreatorCoursesContent() {
                 variant='plain'
                 icon={BookOpen}
                 title={
-                  search || status !== 'all' || category !== 'all'
+                  search || status !== 'all' || activeCategory !== ALL_CATEGORIES
                     ? 'No matching content'
                     : 'Your library starts here'
                 }
                 description={
-                  search || status !== 'all' || category !== 'all'
+                  search || status !== 'all' || activeCategory !== ALL_CATEGORIES
                     ? 'Try a different title or remove a filter.'
                     : 'Create a course or bundle courses into a learning program.'
                 }
                 action={
-                  search || status !== 'all' || category !== 'all' ? (
+                  search || status !== 'all' || activeCategory !== ALL_CATEGORIES ? (
                     <Button variant='outline' onClick={resetFilters}>
                       Clear filters
                     </Button>
@@ -536,7 +565,9 @@ export default function CourseCreatorCoursesContent() {
               <Table className='min-w-[1080px]'>
                 <TableHeader>
                   <TableRow className='hover:bg-transparent [&>th]:h-12 [&>th]:px-3 [&>th]:text-sm [&>th]:font-medium'>
-                    <TableHead className='w-[34%] !pl-5'>Course or program</TableHead>
+                    <TableHead className='w-[34%] !pl-5'>
+                      Course or program
+                    </TableHead>
                     <TableHead>Pricing</TableHead>
                     <TableHead>Revenue split</TableHead>
                     <TableHead>Instructors</TableHead>
@@ -548,15 +579,29 @@ export default function CourseCreatorCoursesContent() {
                     </TableHead>
                   </TableRow>
                 </TableHeader>
+
                 <TableBody>
-                  {offerings.map(offering => (
-                    <OfferingRow
-                      key={`${offering.type}-${offering.item.uuid ?? titleOf(offering)}`}
-                      offering={offering}
-                      counts={offeringCounts.get(`${offering.type}-${offering.item.uuid}`)}
-                      onDelete={() => setDeleteTarget(offering)}
-                    />
-                  ))}
+                  {filteredOfferings.length ? (
+                    filteredOfferings.map(offering => (
+                      <OfferingRow
+                        key={`${offering.type}-${offering.item.uuid ?? titleOf(offering)}`}
+                        offering={offering}
+                        counts={offeringCounts.get(
+                          `${offering.type}-${offering.item.uuid}`
+                        )}
+                        onDelete={() => setDeleteTarget(offering)}
+                      />
+                    ))
+                  ) : (
+                    <TableRow>
+                      <TableCell
+                        colSpan={8}
+                        className='text-muted-foreground h-32 text-center'
+                      >
+                        No results found matching your search or filter criteria.
+                      </TableCell>
+                    </TableRow>
+                  )}
                 </TableBody>
               </Table>
             )}
@@ -755,32 +800,6 @@ function OfferingRow({
                 <Icon className='size-3' />
                 {offering.type === 'courses' ? 'Course' : 'Program'}
               </span>
-
-              {offering.type === 'courses' && (
-                <p
-                  className='text-muted-foreground min-w-0 truncate text-xs'
-                  title={
-                    offering.item.training_requirements
-                      ? `${offering.item.training_requirements.length} training requirements`
-                      : item.uuid
-                        ? 'View training requirements'
-                        : 'Requirements unavailable'
-                  }
-                >
-                  {offering.item.training_requirements ? (
-                    `${offering.item.training_requirements.length} training requirements`
-                  ) : item.uuid ? (
-                    <Link
-                      href={previewHref(offering)}
-                      className='hover:text-primary block truncate underline underline-offset-2'
-                    >
-                      View training requirements
-                    </Link>
-                  ) : (
-                    'Requirements unavailable'
-                  )}
-                </p>
-              )}
             </div>
           </div>
         </div>

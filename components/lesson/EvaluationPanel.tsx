@@ -357,6 +357,7 @@ export function EvaluationPanel({
         ]
         : []
     );
+
   if (instructorGrading) {
     return (
       <LessonGradingPanel
@@ -375,6 +376,8 @@ export function EvaluationPanel({
                   title: assignment?.title ?? 'Assignment',
                   maxPoints: assignment?.max_points,
                   dueAt: gradingDeadline(schedule),
+                  ...assignment,
+                  schedule
                 },
               ]
               : []
@@ -388,6 +391,8 @@ export function EvaluationPanel({
                   uuid: schedule.quiz_uuid,
                   title: quiz?.title ?? 'Quiz',
                   dueAt: gradingDeadline(schedule),
+                  ...quiz,
+                  schedule
                 },
               ]
               : []
