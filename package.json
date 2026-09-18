@@ -20,7 +20,8 @@
     "lint:admin": "node scripts/check-admin-boundary.mjs",
     "typecheck:ratchet": "node scripts/perf/ts-error-ratchet.mjs",
     "test": "tsx --test \"{app,components,src}/**/*.test.ts\"",
-    "test:admin": "tsx --test \"src/features/admin/**/*.test.ts\""
+    "test:admin": "tsx --test \"src/features/admin/**/*.test.ts\"",
+    "perf:admin": "node scripts/perf/admin-budgets.mjs"
   },
   "dependencies": {
     "@dnd-kit/core": "^6.3.1",
