@@ -1,9 +1,5 @@
 'use client';
 
-import { useMemo, useState } from 'react';
-import { useInfiniteQuery, useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import dynamic from 'next/dynamic';
-import { toast } from 'sonner';
 import RichTextRenderer from '@/components/editors/richTextRenders';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -43,7 +39,18 @@ import {
 } from '@/services/client/@tanstack/react-query.gen';
 import type { AssignmentSubmission, QuizAttempt } from '@/services/client/types.gen';
 import { toAuthenticatedMediaUrl } from '@/src/lib/media-url';
-import { isValidGrade, newestSubmissionsFirst } from './grading';
+import { useInfiniteQuery, useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import dynamic from 'next/dynamic';
+import { useMemo, useState } from 'react';
+import { toast } from 'sonner';
+import {
+  isTaskGraded,
+  isTaskSubmitted,
+  isValidGrade,
+  isWrittenQuestion,
+  newestSubmissionsFirst,
+  taskGradeLabel,
+} from './grading';
 import type { LessonGradingTask } from './LessonGradingPanel';
 import { hasApiError, nextWorkbookPage, WORKBOOK_PAGE_SIZE } from './workbook-data';
 import { WorkbookError } from './WorkbookError';
@@ -136,19 +143,28 @@ function AssignmentGrading({ task, enrollmentId, onGraded }: GradingProps) {
     <div className='space-y-5'>
       {submissions.length > 0 ? (
         <>
-          <Label>Submission</Label>
-          <Select value={submission?.uuid} onValueChange={setSelectedId}>
-            <SelectTrigger aria-label='Choose submission'>
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              {submissions.map(item => (
-                <SelectItem key={item.uuid} value={item.uuid!}>
-                  {formatDateTime(item.submitted_at)} · {item.status.replaceAll('_', ' ')}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+          <div className='flex flex-row items-center justify-between'>
+            <div className='flex flex-col gap-2' >
+              <Label>Submission</Label>
+              <Select value={submission?.uuid} onValueChange={setSelectedId}>
+                <SelectTrigger aria-label='Choose submission'>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {submissions.map(item => (
+                    <SelectItem key={item.uuid} value={item.uuid!}>
+                      {formatDateTime(item.submitted_at)} · {item.status.replaceAll('_', ' ')}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            <Badge variant='secondary'>
+              {submission?.submission_status_display || submission?.status.replaceAll('_', ' ')}
+            </Badge>
+          </div>
+
           {submission?.uuid && (
             <AssignmentSubmissionGrade
               key={submission.uuid}
@@ -164,6 +180,7 @@ function AssignmentGrading({ task, enrollmentId, onGraded }: GradingProps) {
           description='This task is assigned to the student. Grading becomes available after they submit their work.'
         />
       )}
+
       {query.hasNextPage && (
         <Button
           variant='outline'
@@ -189,17 +206,20 @@ function AssignmentSubmissionGrade({
   const client = useQueryClient();
   const mutation = useMutation(gradeSubmissionMutation());
   const maxScore = submission.max_score ?? task.maxPoints ?? 100;
+  const isReadOnly = isTaskGraded(submission);
+
   return (
-    <div className='space-y-5'>
-      <Badge variant='secondary'>
-        {submission.submission_status_display || submission.status.replaceAll('_', ' ')}
-      </Badge>
+    <div className='space-y-12'>
       {submission.submission_text && (
         <section className='space-y-2'>
-          <h3 className='font-semibold'>Student response</h3>
-          <RichTextRenderer htmlString={submission.submission_text} />
+          <h3 className='font-semibold'>Student Response</h3>
+
+          <div className='text-sm'>
+            <RichTextRenderer htmlString={submission.submission_text} />
+          </div>
         </section>
       )}
+
       {submission.uuid && (
         <SubmissionFiles
           assignmentId={task.uuid}
@@ -207,21 +227,31 @@ function AssignmentSubmissionGrade({
           fileUrls={submission.file_urls ?? []}
         />
       )}
-      {['SUBMITTED', 'IN_REVIEW', 'GRADED'].includes(submission.status) ? (
+
+      {isTaskSubmitted(submission) ? (
         <GradeForm
           key={`${submission.uuid}-${submission.updated_date}-${submission.score}`}
           maximum={maxScore}
           initialScore={submission.score}
           initialFeedback={submission.instructor_comments}
           isPending={mutation.isPending}
+          isReadOnly={isReadOnly}
           onSave={async (score, feedback) => {
-            if (!submission.uuid || mutation.isPending) return;
+            if (
+              !task.uuid ||
+              !submission.uuid ||
+              !isTaskSubmitted(submission) ||
+              mutation.isPending
+            )
+              return;
             const response = await mutation.mutateAsync({
               path: { assignmentUuid: task.uuid, submissionUuid: submission.uuid },
               query: { score, maxScore, comments: feedback },
             });
             if (hasApiError(response)) throw new Error(response.message || 'Unable to save grade.');
-            onGraded(`${score} / ${maxScore}`);
+            onGraded(
+              response.data ? taskGradeLabel(response.data, maxScore) : `${score} / ${maxScore}`
+            );
             toast.success('Assignment grade saved.');
             await Promise.all([
               client.invalidateQueries({
@@ -322,6 +352,7 @@ function QuizGrading({ task, enrollmentId, onGraded }: GradingProps) {
     [query.data, task.uuid, enrollmentId]
   );
   const attempt = attempts.find(item => item.uuid === selectedId) ?? attempts[0];
+
   if (query.isLoading) return <WorkbookLoading />;
   if (query.isError || query.data?.pages.some(hasApiError))
     return (
@@ -345,7 +376,7 @@ function QuizGrading({ task, enrollmentId, onGraded }: GradingProps) {
             </SelectContent>
           </Select>
           {attempt?.uuid &&
-            (attempt.status === 'IN_PROGRESS' ? (
+            (!isTaskSubmitted(attempt) ? (
               <EmptyState
                 title='Quiz in progress'
                 description='Grading becomes available once the student submits this attempt.'
@@ -382,6 +413,7 @@ function QuizAttemptGrade({
 }) {
   const client = useQueryClient();
   const mutation = useMutation(gradeQuizTextResponseMutation());
+  const isReadOnly = isTaskGraded(attempt);
   // Mounted only for an identified, submitted attempt.
   const options = {
     path: { quizUuid: attempt.quiz_uuid, attemptUuid: attempt.uuid! },
@@ -411,9 +443,7 @@ function QuizAttemptGrade({
       {[...review.questions]
         .sort((a, b) => (a.display_order ?? 0) - (b.display_order ?? 0))
         .map((question, index) => {
-          const written = ['SHORT_ANSWER', 'SHORT_TEXT', 'ESSAY'].includes(
-            question.question_type ?? ''
-          );
+          const written = isWrittenQuestion(question.question_type);
           const selectedOption = question.options?.find(
             option => option.uuid === question.response?.selected_option_uuid
           );
@@ -432,9 +462,17 @@ function QuizAttemptGrade({
                   maximum={question.points ?? 0}
                   initialScore={question.response?.points_earned}
                   isPending={mutation.isPending}
+                  isReadOnly={isReadOnly}
                   label={`Score for question ${index + 1}`}
                   onSave={async (points, feedback) => {
-                    if (!attempt.uuid || !question.uuid || mutation.isPending) return;
+                    if (
+                      !attempt.quiz_uuid ||
+                      !attempt.uuid ||
+                      !question.uuid ||
+                      !isTaskSubmitted(attempt) ||
+                      mutation.isPending
+                    )
+                      return;
                     const response = await mutation.mutateAsync({
                       path: {
                         quizUuid: attempt.quiz_uuid,
@@ -447,8 +485,8 @@ function QuizAttemptGrade({
                       throw new Error(response.message || 'Unable to save grade.');
                     const updated = response.data;
                     onGraded(
-                      updated?.status === 'GRADED'
-                        ? `${updated.score ?? 0} / ${updated.max_score ?? 0}`
+                      updated?.status.toUpperCase() === 'GRADED'
+                        ? taskGradeLabel(updated)
                         : 'Grading in progress'
                     );
                     toast.success('Quiz response grade saved.');
@@ -491,6 +529,7 @@ function GradeForm({
   initialScore,
   initialFeedback,
   isPending,
+  isReadOnly = false,
   label = 'Score',
   onSave,
 }: {
@@ -498,31 +537,44 @@ function GradeForm({
   initialScore?: number;
   initialFeedback?: string;
   isPending: boolean;
+  isReadOnly?: boolean;
   label?: string;
   onSave: (score: number, feedback: string) => Promise<void>;
 }) {
-  const [score, setScore] = useState(initialScore == null ? '' : String(initialScore));
+  const [score, setScore] = useState(
+    initialScore == null ? '' : String(initialScore)
+  );
   const [feedback, setFeedback] = useState(initialFeedback ?? '');
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
+
   const pending = saving || isPending;
+  const readOnly = isReadOnly || pending;
+
   return (
     <form
-      className='space-y-3'
+      className='w-full space-y-3'
       onSubmit={async event => {
         event.preventDefault();
-        if (pending) return;
+
+        if (readOnly) return;
+
         setError('');
+
         if (!isValidGrade(score, maximum)) {
           setError(`Enter a score between 0 and ${maximum}.`);
           return;
         }
+
         setSaving(true);
+
         try {
           await onSave(Number(score), feedback);
         } catch (error) {
           setError(
-            error instanceof Error ? error.message : 'Unable to save grade. Please try again.'
+            error instanceof Error
+              ? error.message
+              : 'Unable to save grade. Please try again.'
           );
         } finally {
           setSaving(false);
@@ -533,6 +585,7 @@ function GradeForm({
         <span className='text-sm font-medium'>
           {label} (out of {maximum})
         </span>
+
         <Input
           aria-label={label}
           type='number'
@@ -540,29 +593,41 @@ function GradeForm({
           max={maximum}
           step='any'
           required
-          disabled={pending}
+          disabled={readOnly}
           value={score}
           onChange={event => setScore(event.target.value)}
           className='max-w-40'
         />
       </label>
+
       <label className='block space-y-1'>
         <span className='text-sm font-medium'>Feedback</span>
+
         <Textarea
           value={feedback}
-          disabled={pending}
+          disabled={readOnly}
           onChange={event => setFeedback(event.target.value)}
           placeholder='Feedback for this student (optional)'
         />
       </label>
+
       {error && (
         <p role='alert' className='text-destructive text-sm'>
           {error}
         </p>
       )}
-      <Button type='submit' disabled={pending || !isValidGrade(score, maximum)}>
-        {pending && <Spinner />}Save grade
-      </Button>
+
+      <div className='flex justify-end'>
+        <Button
+          type='submit'
+          disabled={
+            readOnly || !isValidGrade(score, maximum)
+          }
+        >
+          {pending && <Spinner />}
+          Save grade
+        </Button>
+      </div>
     </form>
   );
 }

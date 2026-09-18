@@ -59,8 +59,9 @@ import {
   type SetStateAction,
   useEffect,
   useImperativeHandle,
+  useMemo,
   useRef,
-  useState,
+  useState
 } from 'react';
 import { useForm, useWatch } from 'react-hook-form';
 import { toast } from 'sonner';
@@ -264,7 +265,9 @@ export const CourseCreationForm = forwardRef<CourseFormRef, CourseFormProps>(
     }, [initialValues, form]);
 
     const appendCategory = (uuid: string) => {
-      form.setValue('categories', [...form.getValues('categories'), uuid], {
+      const existing = form.getValues('categories') ?? [];
+      if (!uuid || existing.includes(uuid)) return;
+      form.setValue('categories', [...existing, uuid], {
         shouldDirty: true,
         shouldValidate: true,
       });
@@ -300,11 +303,36 @@ export const CourseCreationForm = forwardRef<CourseFormRef, CourseFormProps>(
     const setActiveStep = stepper?.setActiveStep ?? (() => undefined);
     const { difficultyLevels, isLoading: difficultyIsLoading } = useDifficultyLevels();
 
+    const { data: categories } = useQuery(
+      getAllCategoriesOptions({ query: { pageable: { page: 0, size: 100 } } })
+    );
+
+    const [selectedParentCategoryUuid, setSelectedParentCategoryUuid] = useState('');
+    const [selectedSubjectUuid, setSelectedSubjectUuid] = useState('');
     const [categoryInput, setCategoryInput] = useState('');
 
+    const rootCategories = useMemo(
+      () =>
+        ((categories?.data?.content as CategoryItem[] | undefined) ?? []).filter(
+          (cat: CategoryItem) => !cat.parent_uuid
+        ),
+      [categories?.data?.content]
+    );
+
+    const subjectOptions = useMemo(() => {
+      if (!selectedParentCategoryUuid) return [];
+      const parent = rootCategories.find(cat => cat.uuid === selectedParentCategoryUuid);
+      const children = ((categories?.data?.content as CategoryItem[] | undefined) ?? []).filter(
+        cat => cat.parent_uuid === selectedParentCategoryUuid
+      );
+      return parent ? [{ uuid: parent.uuid, name: parent.name }, ...children] : children;
+    }, [categories?.data?.content, rootCategories, selectedParentCategoryUuid]);
+
     const { mutate: createCategoryMutation, isPending: createCategoryPending } = useMutation({
-      mutationFn: ({ body }: { body: { name: string } }) => createCategory({ body }),
+      mutationFn: ({ body }: { body: { name: string; parent_uuid?: string | null } }) =>
+        createCategory({ body }),
       onSuccess: (data: CategoryMutationResponse) => {
+        const createdUuid = data?.data?.uuid || data?.data?.uuid;
         if (data?.error) {
           const duplicateMessage = getFormErrorMessage(data.error.error);
           if (duplicateMessage?.toLowerCase().includes('duplicate key')) {
@@ -316,6 +344,14 @@ export const CourseCreationForm = forwardRef<CourseFormRef, CourseFormProps>(
           setCategoryInput('');
           return;
         }
+
+        if (selectedParentCategoryUuid) {
+          appendCategory(selectedParentCategoryUuid);
+        }
+        if (createdUuid) {
+          appendCategory(createdUuid);
+        }
+
         toast.success(data?.message || 'Category added successfully');
         dialogCloseRef.current?.click();
         queryClient.invalidateQueries({
@@ -338,10 +374,6 @@ export const CourseCreationForm = forwardRef<CourseFormRef, CourseFormProps>(
 
     const [deletingId, setDeletingId] = useState<string | null>(null);
     const deleteTrainingReqMut = useMutation(deleteCourseTrainingRequirementMutation());
-
-    const { data: categories } = useQuery(
-      getAllCategoriesOptions({ query: { pageable: { page: 0, size: 100 } } })
-    );
 
     const creatorShare =
       useWatch({ control: form.control, name: 'creator_share_percentage' }) ?? [];
@@ -612,107 +644,250 @@ export const CourseCreationForm = forwardRef<CourseFormRef, CourseFormProps>(
             {/* Categories */}
             <FormSection
               title='Course Categories'
-              description='Add relevant categories for your course'
+              description='Choose a category and then the subject or subcategory relevant to your course.'
             >
-              <FormItem>
-                <div className='mb-4 flex items-center gap-2'>
+              <div className='space-y-4'>
+                {/* Parent category */}
+                <div className='space-y-2'>
+                  <Label htmlFor='parent-category-select'>Category</Label>
+
                   <Select
-                    value=''
-                    onValueChange={uuid => {
-                      if (uuid && !categoriesSelected.includes(uuid)) {
-                        appendCategory(uuid);
-                      }
+                    value={selectedParentCategoryUuid}
+                    onValueChange={value => {
+                      setSelectedParentCategoryUuid(value);
+                      appendCategory(value);
+                      setSelectedSubjectUuid('');
                     }}
                   >
                     <FormControl className='w-full'>
-                      <SelectTrigger>
+                      <SelectTrigger id='parent-category-select'>
                         <SelectValue placeholder='Select category' />
                       </SelectTrigger>
                     </FormControl>
+
                     <SelectContent>
                       <div className='max-h-[250px] overflow-auto'>
-                        {/* @ts-ignore */}
-                        {(categories?.data?.content as CategoryItem[] | undefined)
-                          ?.filter(
-                            (cat: CategoryItem) => !categoriesSelected.includes(cat.uuid ?? '')
-                          )
-                          .map((cat: CategoryItem) => (
-                            <SelectItem key={cat.uuid} value={cat.uuid as string}>
+                        {rootCategories.length ? (
+                          rootCategories.map((cat: CategoryItem) => (
+                            <SelectItem
+                              key={cat.uuid}
+                              value={cat.uuid as string}
+                            >
                               {cat.name}
                             </SelectItem>
-                          ))}
+                          ))
+                        ) : (
+                          <div className='text-muted-foreground px-2 py-2 text-sm'>
+                            No parent categories yet
+                          </div>
+                        )}
                       </div>
                     </SelectContent>
                   </Select>
+                </div>
 
-                  <div className='hidden'>
+                {/* Subject + Add Subject */}
+                <div className='space-y-2'>
+                  <Label htmlFor='subject-select'>
+                    Subject / Subcategory
+                  </Label>
+
+                  <div className='flex flex-col gap-2 sm:flex-row sm:items-center'>
+                    <div className='min-w-0 flex-1'>
+                      <Select
+                        value={selectedSubjectUuid}
+                        onValueChange={uuid => {
+                          if (!uuid) return;
+
+                          if (selectedParentCategoryUuid) {
+                            appendCategory(selectedParentCategoryUuid);
+                          }
+
+                          appendCategory(uuid);
+                          setSelectedSubjectUuid('');
+                        }}
+                        disabled={!selectedParentCategoryUuid}
+                      >
+                        <FormControl className='w-full'>
+                          <SelectTrigger id='subject-select'>
+                            <SelectValue
+                              placeholder={
+                                selectedParentCategoryUuid
+                                  ? 'Select subject'
+                                  : 'Select a category first'
+                              }
+                            />
+                          </SelectTrigger>
+                        </FormControl>
+
+                        <SelectContent>
+                          <div className='max-h-[250px] overflow-auto'>
+                            {subjectOptions.length ? (
+                              subjectOptions
+                                .filter(
+                                  (cat: CategoryItem) =>
+                                    !categoriesSelected.includes(cat.uuid ?? '')
+                                )
+                                .map((cat: CategoryItem) => (
+                                  <SelectItem
+                                    key={cat.uuid}
+                                    value={cat.uuid as string}
+                                  >
+                                    {cat.name}
+                                  </SelectItem>
+                                ))
+                            ) : (
+                              <div className='text-muted-foreground px-2 py-2 text-sm'>
+                                No subjects available for this category
+                              </div>
+                            )}
+                          </div>
+                        </SelectContent>
+                      </Select>
+                    </div>
+
                     <Dialog>
-                      <DialogTrigger className='hidden sm:flex' asChild>
-                        <Button variant='outline' className='hidden sm:flex'>
-                          Add new
+                      <DialogTrigger asChild>
+                        <Button
+                          type='button'
+                          variant='outline'
+                          className='shrink-0 sm:w-auto'
+                        >
+                          <Plus className='size-4' />
+                          <span>Add Subject</span>
                         </Button>
                       </DialogTrigger>
-                      <DialogTrigger className='flex sm:hidden' asChild>
-                        <Button variant='outline' className='flex sm:hidden'>
-                          <Plus />
-                        </Button>
-                      </DialogTrigger>
-                      <DialogContent className='w-full sm:max-w-[350px]'>
+
+                      <DialogContent className='w-full sm:max-w-[420px]'>
                         <DialogHeader>
-                          <DialogTitle>Add new category</DialogTitle>
-                          <DialogDescription>Add a new category here.</DialogDescription>
+                          <DialogTitle>Add new subject</DialogTitle>
+                          <DialogDescription>
+                            Create a subcategory under an existing parent category.
+                          </DialogDescription>
                         </DialogHeader>
-                        <div className='flex w-full items-center gap-2 py-2'>
-                          <div className='grid w-full gap-3'>
-                            <Label htmlFor='category-name'>Category Name</Label>
+
+                        <div className='grid gap-6 py-2'>
+                          <div className='space-y-2'>
+                            <Label htmlFor='parent-category-name'>
+                              Parent category
+                            </Label>
+
+                            <Select
+                              value={selectedParentCategoryUuid}
+                              onValueChange={value =>
+                                setSelectedParentCategoryUuid(value)
+                              }
+                            >
+                              <SelectTrigger
+                                className='w-full'
+                                id='parent-category-name'
+                              >
+                                <SelectValue placeholder='Choose parent category' />
+                              </SelectTrigger>
+
+                              <SelectContent>
+                                {rootCategories.map((cat: CategoryItem) => (
+                                  <SelectItem
+                                    key={cat.uuid}
+                                    value={cat.uuid as string}
+                                  >
+                                    {cat.name}
+                                  </SelectItem>
+                                ))}
+                              </SelectContent>
+                            </Select>
+                          </div>
+
+                          <div className='space-y-2'>
+                            <Label htmlFor='subcategory-name'>
+                              Subcategory name
+                            </Label>
+
                             <Input
-                              id='category-name'
-                              name='category'
+                              id='subcategory-name'
+                              name='subcategory'
                               value={categoryInput}
                               onChange={e => setCategoryInput(e.target.value)}
+                              placeholder='e.g. Web Design'
                               autoFocus
                             />
                           </div>
                         </div>
+
                         <DialogFooter className='justify-end'>
                           <Button
                             type='button'
                             className='min-w-[75px]'
                             onClick={() => {
-                              if (categoryInput?.trim()) {
-                                createCategoryMutation({ body: { name: categoryInput.trim() } });
+                              if (!selectedParentCategoryUuid) {
+                                toast.error('Select a parent category first.');
+                                return;
                               }
+
+                              if (!categoryInput.trim()) {
+                                toast.error('Enter a subcategory name.');
+                                return;
+                              }
+
+                              createCategoryMutation({
+                                body: {
+                                  name: categoryInput.trim(),
+                                  parent_uuid: selectedParentCategoryUuid,
+                                },
+                              });
                             }}
+                            disabled={
+                              createCategoryPending ||
+                              !selectedParentCategoryUuid
+                            }
                           >
                             {createCategoryPending ? <Spinner /> : 'Add'}
                           </Button>
+
                           <DialogClose asChild>
-                            <button ref={dialogCloseRef} style={{ display: 'none' }} />
+                            <button
+                              ref={dialogCloseRef}
+                              style={{ display: 'none' }}
+                            />
                           </DialogClose>
                         </DialogFooter>
                       </DialogContent>
                     </Dialog>
                   </div>
                 </div>
-              </FormItem>
+              </div>
 
-              <div className='flex flex-wrap gap-2'>
+              {/* Selected categories */}
+              <div className='mt-4 flex flex-wrap gap-2'>
                 {categoriesSelected.map((uuid: string, index: number) => {
-                  const cat = categories?.data?.content?.find((c: CategoryItem) => c.uuid === uuid);
+                  const cat = categories?.data?.content?.find(
+                    (c: CategoryItem) => c.uuid === uuid
+                  );
 
                   if (!cat) return null;
 
                   return (
-                    <Badge key={uuid} variant='secondary' className='flex items-center gap-1'>
+                    <Badge
+                      key={uuid}
+                      variant='secondary'
+                      className='flex items-center gap-1'
+                    >
                       {cat.name}
-                      <button type='button' className='ml-2' onClick={() => removeCategory(index)}>
-                        <XIcon className='h-3 w-3' />
+
+                      <button
+                        type='button'
+                        className='ml-2'
+                        onClick={() => removeCategory(index)}
+                        aria-label={`Remove ${cat.name}`}
+                      >
+                        <XIcon className='size-3' />
                       </button>
                     </Badge>
                   );
                 })}
               </div>
             </FormSection>
+
 
             {/* Learning Objectives */}
             <FormSection

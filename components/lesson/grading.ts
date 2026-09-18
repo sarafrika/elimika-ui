@@ -7,14 +7,28 @@ type TaskGradeRecord = Pick<
   'score' | 'max_score' | 'grade_display'
 > & { status: string };
 
+export function isTaskSubmitted(record: { status: string } | undefined) {
+  return ['SUBMITTED', 'IN_REVIEW', 'GRADED'].includes(record?.status.toUpperCase() ?? '');
+}
+
+export function isTaskGraded(record: { status: string } | undefined) {
+  return record?.status.toUpperCase() === 'GRADED';
+}
+
+export function isWrittenQuestion(questionType?: string) {
+  return ['SHORT_ANSWER', 'SHORT_TEXT', 'ESSAY'].includes(questionType?.toUpperCase() ?? '');
+}
+
 export function taskGradeLabel(record: TaskGradeRecord | undefined, maxPoints?: number) {
-  if (!record) return 'Not submitted';
+  if (!record || !isTaskSubmitted(record)) return 'Not submitted';
   const status = record.status.toUpperCase();
-  if (['DRAFT', 'RETURNED', 'IN_PROGRESS'].includes(status)) return 'Not submitted';
   if (status !== 'GRADED') return 'Not graded';
   if (record.score == null) return record.grade_display || 'Grade unavailable';
   const maximum = record.max_score ?? maxPoints;
-  return maximum == null ? String(record.score) : `${record.grade_display}`;
+  return (
+    record.grade_display ||
+    (maximum == null ? String(record.score) : `${record.score} / ${maximum}`)
+  );
 }
 
 export function isValidGrade(value: string, maximum: number) {

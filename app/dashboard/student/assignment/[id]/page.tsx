@@ -194,17 +194,6 @@ export default function StudentAssignmentSubmissionPage() {
           enrollment_uuid: activeEnrollmentUuid,
           student_uuid: selectedAssignment.classMeta.studentUuid,
           submission_text: submissionContent,
-          file_urls: canUploadFiles ? ['/assignment.pdf'] : [],
-        },
-        query: {
-          enrollmentUuid: activeEnrollmentUuid,
-          content: submissionContent,
-          enrollment_uuid: activeEnrollmentUuid,
-          file_urls: canUploadFiles ? ['/assignment.pdf'] : [],
-          fileUrls: canUploadFiles ? ['/assignment.pdf'] : [],
-          student_uuid: selectedAssignment.classMeta.studentUuid,
-          studentUuid: selectedAssignment.classMeta.studentUuid,
-          submission_text: submissionContent,
         },
       });
 
@@ -504,6 +493,20 @@ export default function StudentAssignmentSubmissionPage() {
                   isSubmitting={isSubmitting}
                   isResubmit
                   activeEnrollmentUuid={activeEnrollmentUuid}
+                  accept={selectedSubmissionTypes.length ? selectedSubmissionTypes.map(type => {
+                    switch (type.toUpperCase()) {
+                      case 'DOCUMENT':
+                        return '.pdf,.doc,.docx,.txt,.rtf';
+                      case 'IMAGE':
+                        return 'image/*';
+                      case 'AUDIO':
+                        return 'audio/*';
+                      case 'VIDEO':
+                        return 'video/*';
+                      default:
+                        return '*/*';
+                    }
+                  }).join(',') : 'audio/*,.pdf,image/*,video/*,.doc,.docx,.txt'}
                 />
               </div>
             )}
@@ -530,6 +533,20 @@ export default function StudentAssignmentSubmissionPage() {
               isSubmitting={isSubmitting}
               isResubmit={false}
               activeEnrollmentUuid={activeEnrollmentUuid}
+              accept={selectedSubmissionTypes.length ? selectedSubmissionTypes.map(type => {
+                switch (type.toUpperCase()) {
+                  case 'DOCUMENT':
+                    return '.pdf,.doc,.docx,.txt,.rtf';
+                  case 'IMAGE':
+                    return 'image/*';
+                  case 'AUDIO':
+                    return 'audio/*';
+                  case 'VIDEO':
+                    return 'video/*';
+                  default:
+                    return '*/*';
+                }
+              }).join(',') : 'audio/*,.pdf,image/*,video/*,.doc,.docx,.txt'}
             />
           </CardContent>
         </Card>
@@ -552,6 +569,7 @@ function SubmissionForm({
   isSubmitting,
   isResubmit,
   activeEnrollmentUuid,
+  accept,
 }: {
   submissionText: string;
   setSubmissionText: (v: string) => void;
@@ -564,6 +582,7 @@ function SubmissionForm({
   isSubmitting: boolean;
   isResubmit: boolean;
   activeEnrollmentUuid?: string | null;
+  accept?: string;
 }) {
   return (
     <div className='space-y-4'>
@@ -600,6 +619,7 @@ function SubmissionForm({
             !canUploadFiles || !canSubmit || isSubmitting ? 'pointer-events-none opacity-60' : ''
           )}
           multiple
+          accept={accept}
           onFilesAdded={onFilesAdded}
         >
           <div className='flex flex-col items-center gap-2 text-center'>

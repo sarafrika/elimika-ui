@@ -30,7 +30,7 @@ import { useInfiniteQuery, useQuery } from '@tanstack/react-query';
 import dynamic from 'next/dynamic';
 import { useDeferredValue, useMemo, useState } from 'react';
 import { Avatar, AvatarFallback, AvatarImage } from '../ui/avatar';
-import { taskGradeLabel } from './grading';
+import { isTaskGraded, isTaskSubmitted, taskGradeLabel } from './grading';
 import { useLessonTaskGrades } from './useLessonTaskGrades';
 import {
   hasApiError,
@@ -273,113 +273,159 @@ export function LessonGradingPanel({
               </div>
             </CardHeader>
 
-            <CardContent>
+            <CardContent className='px-4 sm:px-6'>
               {!tasks.length ? (
                 <EmptyState title='No tasks assigned for this lesson' />
               ) : (
-                <Table aria-label={`Assigned tasks for ${student.name}`}>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead>Assigned task</TableHead>
-                      <TableHead>Type</TableHead>
-                      <TableHead>Grading due</TableHead>
-                      <TableHead>Grade / status</TableHead>
-                      <TableHead>Actions</TableHead>
-                    </TableRow>
-                  </TableHeader>
+                <div className='overflow-x-auto'>
+                  <Table aria-label={`Assigned tasks for ${student.name}`}>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead className='min-w-56'>Task</TableHead>
+                        <TableHead className='w-32'>Type</TableHead>
+                        <TableHead className='min-w-52'>Submission/Grading Due</TableHead>
+                        <TableHead className='min-w-40'>Grade / status</TableHead>
+                        <TableHead className='w-32 text-right'>Action</TableHead>
+                      </TableRow>
+                    </TableHeader>
 
-                  <TableBody>
-                    {tasks.map(task => {
-                      const gradeResult = (
-                        task.kind === 'assignment'
-                          ? grades.submissionMap
-                          : grades.attemptMap
-                      ).get(`${student.enrollmentId}-${task.uuid}`);
+                    <TableBody>
+                      {tasks.map(task => {
+                        const gradeResult = (
+                          task.kind === 'assignment'
+                            ? grades.submissionMap
+                            : grades.attemptMap
+                        ).get(`${student.enrollmentId}-${task.uuid}`);
 
-                      const isLoading =
-                        task.kind === 'assignment'
-                          ? grades.assignmentLoading
-                          : grades.quizLoading;
+                        const isLoading =
+                          task.kind === 'assignment'
+                            ? grades.assignmentLoading
+                            : grades.quizLoading;
 
-                      const hasError =
-                        task.kind === 'assignment'
-                          ? grades.assignmentError
-                          : grades.quizError;
+                        const hasError =
+                          task.kind === 'assignment'
+                            ? grades.assignmentError
+                            : grades.quizError;
 
-                      return (
-                        <TableRow key={task.id}>
-                          <TableCell className='min-w-40 font-medium whitespace-normal'>
-                            {task.title}
-                          </TableCell>
+                        const canReview = Boolean(
+                          student.enrollmentId &&
+                          !isLoading &&
+                          !hasError &&
+                          isTaskSubmitted(gradeResult)
+                        );
 
-                          <TableCell>
-                            <Badge variant='secondary'>
-                              {task.kind === 'assignment'
-                                ? 'Assignment'
-                                : 'Quiz'}
-                            </Badge>
-                          </TableCell>
+                        const isGraded = isTaskGraded(gradeResult);
 
-                          <TableCell>
-                            {formatDateTime(task.dueAt, {
-                              fallback: 'No deadline',
-                            })}
-                          </TableCell>
+                        return (
+                          <TableRow key={task.id}>
+                            {/* Task */}
+                            <TableCell className='py-4'>
+                              <div className='min-w-0'>
+                                <p className='font-medium whitespace-normal'>
+                                  {task.title}
+                                </p>
+                              </div>
+                            </TableCell>
 
-                          <TableCell>
-                            {!student.enrollmentId &&
-                              courseQuery.hasNextPage ? (
-                              <span className='text-muted-foreground'>
-                                Student record not loaded
-                              </span>
-                            ) : isLoading ? (
-                              <Skeleton
-                                className='h-5 w-24'
-                                aria-label='Loading grade'
-                              />
-                            ) : hasError ? (
-                              <Button
-                                variant='ghost'
-                                size='sm'
-                                onClick={grades.refetch}
-                              >
-                                Retry grade status
-                              </Button>
-                            ) : (
-                              <Badge variant='outline'>
-                                {taskGradeLabel(
-                                  gradeResult,
-                                  task.maxPoints
-                                )}
+                            {/* Type */}
+                            <TableCell className='py-4'>
+                              <Badge variant='secondary' className='font-normal'>
+                                {task.kind === 'assignment'
+                                  ? 'Assignment'
+                                  : 'Quiz'}
                               </Badge>
-                            )}
-                          </TableCell>
+                            </TableCell>
 
-                          <TableCell>
-                            <Button
-                              size='sm'
-                              variant='outline'
-                              disabled={!student.enrollmentId}
-                              onClick={() => {
-                                if (!student.enrollmentId) return;
+                            {/* Schedule */}
+                            <TableCell className='py-4'>
+                              <div className='space-y-1 text-sm'>
+                                <div>
+                                  <span className='text-muted-foreground mr-1.5'>
+                                    Submission
+                                  </span>
+                                  <span className='whitespace-nowrap'>
+                                    {formatDateTime(task?.schedule?.due_at, {
+                                      fallback: 'No deadline',
+                                    })}
+                                  </span>
+                                </div>
 
-                                setSelected({
-                                  studentId: student.studentId,
-                                  studentName: student.name,
-                                  enrollmentId: student.enrollmentId,
-                                  task,
-                                });
-                              }}
-                              aria-label={`Review and grade ${task.title} for ${student.name}`}
-                            >
-                              Review & grade
-                            </Button>
-                          </TableCell>
-                        </TableRow>
-                      );
-                    })}
-                  </TableBody>
-                </Table>
+                                <div>
+                                  <span className='text-muted-foreground mr-1.5'>
+                                    Grading
+                                  </span>
+                                  <span className='whitespace-nowrap'>
+                                    {formatDateTime(
+                                      task?.schedule?.grading_due_at,
+                                      {
+                                        fallback: 'No deadline',
+                                      }
+                                    )}
+                                  </span>
+                                </div>
+                              </div>
+                            </TableCell>
+
+                            {/* Grade */}
+                            <TableCell className='py-4'>
+                              {!student.enrollmentId &&
+                                courseQuery.hasNextPage ? (
+                                <span className='text-muted-foreground text-sm'>
+                                  Student record not loaded
+                                </span>
+                              ) : isLoading ? (
+                                <Skeleton
+                                  className='h-5 w-24'
+                                  aria-label='Loading grade'
+                                />
+                              ) : hasError ? (
+                                <Button
+                                  variant='ghost'
+                                  size='sm'
+                                  onClick={grades.refetch}
+                                >
+                                  Retry
+                                </Button>
+                              ) : (
+                                <div className='space-y-0.5'>
+                                  <Badge variant='outline'>
+                                    {taskGradeLabel(
+                                      gradeResult,
+                                      task.maxPoints
+                                    )}
+                                  </Badge>
+                                </div>
+                              )}
+                            </TableCell>
+
+                            {/* Action */}
+                            <TableCell className='py-4 text-right'>
+                              <Button
+                                size='sm'
+                                variant='outline'
+                                disabled={!canReview}
+                                onClick={() => {
+                                  if (!student.enrollmentId || !canReview) return;
+
+                                  setSelected({
+                                    studentId: student.studentId,
+                                    studentName: student.name,
+                                    enrollmentId: student.enrollmentId,
+                                    task,
+                                  });
+                                }}
+                                aria-label={`${isGraded ? 'Review' : 'Review and grade'
+                                  } ${task.title} for ${student.name}`}
+                              >
+                                {isGraded ? 'Review' : 'Review & grade'}
+                              </Button>
+                            </TableCell>
+                          </TableRow>
+                        );
+                      })}
+                    </TableBody>
+                  </Table>
+                </div>
               )}
 
               {!student.enrollmentId && (
