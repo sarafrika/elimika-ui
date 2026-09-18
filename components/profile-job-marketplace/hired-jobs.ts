@@ -1,10 +1,9 @@
-import { rateBasisShort } from '@/components/class-form/class-form-shared';
-import { formatCurrency } from '@/lib/format-currency';
-import type { ClassMarketplaceJob, ClassRecurrence } from '@/services/client';
 import { formatDateOnly } from '@/lib/date';
+import { formatRate, formatRateAmount } from '@/lib/rate-card';
+import type { ClassRecurrence } from '@/services/client';
 import { isClassCreatedStatus } from './application-status';
 
-export const JOB_HIRES_PATH = '/dashboard/instructor/job-hires';
+type JobPayFields = { instructor_pay?: number | null; rate_basis?: string | null };
 
 export function isHiredApplication(status?: string | null) {
   return status?.toLowerCase() === 'hired' || isClassCreatedStatus(status);
@@ -31,12 +30,24 @@ export function jobLabel(value?: string | null) {
     .replace(/\b\w/g, letter => letter.toUpperCase());
 }
 
-export function jobPay(job: ClassMarketplaceJob) {
+/** Works for a full job and for the job summary on an application. */
+export function jobPay(job: JobPayFields) {
   if (typeof job.instructor_pay !== 'number') return 'Not set';
-  const amount = formatCurrency(job.instructor_pay);
-  return job.rate_basis
-    ? `${amount} / ${rateBasisShort(job.rate_basis)}`
-    : `${amount} (rate basis not set)`;
+  return formatRate(job.instructor_pay, job.rate_basis);
+}
+
+/** "about KES 27,000", only when the pay is per session and the session count is known. */
+export function estimatedJobTotal(job: JobPayFields & { session_count?: number | null }) {
+  const count = job.session_count;
+  if (job.rate_basis !== 'per_session' || typeof job.instructor_pay !== 'number') return null;
+  if (typeof count !== 'number' || count < 1) return null;
+  return `about ${formatRateAmount(job.instructor_pay * count)}`;
+}
+
+/** "6 sessions", "1 session", or a neutral fallback when the count is unknown. */
+export function sessionsPhrase(count?: number | null, fallback = 'the sessions') {
+  if (typeof count !== 'number' || count < 1) return fallback;
+  return count === 1 ? '1 session' : `${count} sessions`;
 }
 
 export function recurrenceLabel(recurrence?: ClassRecurrence) {

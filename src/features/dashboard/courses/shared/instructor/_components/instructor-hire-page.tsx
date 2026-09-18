@@ -2,26 +2,32 @@
 
 import { ClassScheduleCalendar } from '@/app/class-invite/page';
 import {
-  approvedRateFor,
+  BillingBasisCards,
+  basisStatus,
+  billableUnits,
   computeUpcomingSessions,
   DEFAULT_DAYS,
+  DeliveryCards,
   fmtDate,
-  formatMoney,
+  getService,
   LocationVenue,
   OfferingPicker,
   PickDatesPanel,
   ScheduleModeCards,
   ServiceCards,
+  type ServiceKey,
+  scheduleTotals,
+  serviceFormat,
   sessionMinutesFor,
   StandardSchedule,
   toDateTime,
   UpcomingSessions,
+  unitsLabel,
   type DayKey,
   type DayRow,
   type Offering,
-  type RateBasis,
 } from '@/components/class-form';
-import { ResourceConflictAlert } from '@/components/resourcing/ResourceConflictAlert';
+import { SchedulingConflictAlert } from '@/components/scheduling/scheduling-conflict-alert';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -38,6 +44,7 @@ import { useCoursesByIds, useProgramsByIds } from '@/hooks/use-batched-lookups';
 import useSearchTrainingInstructors from '@/hooks/use-search-training-instructors';
 import { localDate } from '@/lib/date';
 import { STALE_TIMES } from '@/lib/query-client';
+import type { SchedulingConflict } from '@/lib/scheduling-conflicts';
 import {
   createBookingMutation,
   getInstructorScheduleOptions,
@@ -47,6 +54,14 @@ import {
   searchTrainingApplicationsOptions,
 } from '@/services/client/@tanstack/react-query.gen';
 import type { ScheduledInstance } from '@/services/client/types.gen';
+import {
+  type DeliveryMode,
+  formatRate,
+  formatRateAmount,
+  formatRateBasis,
+  type RateBasis,
+  rateFor,
+} from '@/lib/rate-card';
 import { allCourseTrainingRequirementsOptions } from '@/services/course-training-requirements';
 import { roleScopedDashboardPath } from '@/src/features/dashboard/lib/active-domain-storage';
 import { toAuthenticatedMediaUrl } from '@/src/lib/media-url';
@@ -65,12 +80,6 @@ const DEFAULT_END_TIME = '10:00';
 type Props = {
   courseId: string | null;
   instructorId: string | null;
-};
-
-type ConflictItem = {
-  start?: string;
-  end?: string;
-  reasons: string[];
 };
 
 const ageFromDate = (dob?: Date | string | null) => {
@@ -186,10 +195,9 @@ export default function InstructorHirePage({ courseId, instructorId }: Props) {
     | undefined;
 
   const [selectedOffering, setSelectedOffering] = useState('');
-  const [serviceKey, setServiceKey] = useState<'1on1' | 'group' | 'online' | 'private-online'>(
-    '1on1'
-  );
-  const [delivery, setDelivery] = useState<'ONLINE' | 'IN_PERSON' | 'HYBRID'>('ONLINE');
+  const [delivery, setDelivery] = useState<DeliveryMode | null>(null);
+  const [rateBasis, setRateBasis] = useState<RateBasis | null>(null);
+  const [serviceKey, setServiceKey] = useState<ServiceKey | null>(null);
   const [locationName, setLocationName] = useState('');
   const [locationLatitude, setLocationLatitude] = useState('');
   const [locationLongitude, setLocationLongitude] = useState('');
@@ -330,6 +338,8 @@ export default function InstructorHirePage({ courseId, instructorId }: Props) {
   useEffect(() => {
     setRequirementsChecked({});
     setTermsOk(false);
+    setRateBasis(null);
+    setServiceKey(null);
   }, [selectedOffering]);
 
   const courseRequirementsQuery = useQuery({
@@ -390,10 +400,10 @@ export default function InstructorHirePage({ courseId, instructorId }: Props) {
   const existingSchedule = (instructorScheduleQuery.data?.data ?? []) as ScheduledInstance[];
 
   const rateCard = selectedApplication?.rate_card;
-  const rateBasis: RateBasis = 'per_hour';
-  const serviceFormat =
-    serviceKey === '1on1' || serviceKey === 'private-online' ? 'INDIVIDUAL' : 'GROUP';
-  const rate = approvedRateFor(rateCard, serviceFormat, delivery, rateBasis) ?? 0;
+  const rate =
+    delivery && rateBasis && serviceKey
+      ? rateFor(rateCard, { format: serviceFormat(serviceKey), delivery, basis: rateBasis })
+      : null;
 
   const upcomingSessions = useMemo(() => {
     if (scheduleMode === 'pick') {
@@ -421,7 +431,7 @@ export default function InstructorHirePage({ courseId, instructorId }: Props) {
     () => scheduleWindows(upcomingSessions, timezone),
     [upcomingSessions, timezone]
   );
-  const conflicts = useMemo<ConflictItem[]>(() => {
+  const conflicts = useMemo<SchedulingConflict[]>(() => {
     const busy = existingSchedule.filter(
       item => String(item.status ?? '').toUpperCase() !== 'CANCELLED'
     );
@@ -433,8 +443,8 @@ export default function InstructorHirePage({ courseId, instructorId }: Props) {
         if (window.start >= existingEnd || existingStart >= window.end) return [];
         return [
           {
-            start: existingStart.toLocaleString(),
-            end: existingEnd.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' }),
+            start: existingStart,
+            end: existingEnd,
             reasons: [`Overlaps with ${item.title || 'an existing instructor class'}`],
           },
         ];
@@ -449,8 +459,9 @@ export default function InstructorHirePage({ courseId, instructorId }: Props) {
   const ageEligible =
     age == null || ((lowerAge == null || age >= lowerAge) && (upperAge == null || age <= upperAge));
   const eligibilityReady = ageEligible && (ageKnown || (lowerAge == null && upperAge == null));
-  const totalHours = upcomingSessions.reduce((sum, session) => sum + session.minutes / 60, 0);
-  const totalAmount = totalHours * rate;
+  const totals = scheduleTotals(upcomingSessions);
+  const billedUnits = rateBasis ? billableUnits(rateBasis, totals) : 0;
+  const totalAmount = billedUnits * (rate ?? 0);
   const createBooking = useMutation(createBookingMutation());
   const isSubmitting = createBooking.isPending;
 
@@ -462,9 +473,20 @@ export default function InstructorHirePage({ courseId, instructorId }: Props) {
       )
     );
 
-  const handleServiceChange = (next: string) => {
-    setServiceKey(next as typeof serviceKey);
-    setDelivery(next === 'private-online' || next === 'online' ? 'ONLINE' : delivery);
+  const handleDeliveryChange = (next: DeliveryMode) => {
+    setDelivery(next);
+    setServiceKey(null);
+    if (rateBasis && basisStatus(rateCard, null, next, rateBasis) !== 'approved') {
+      setRateBasis(null);
+    }
+  };
+
+  const handleBasisChange = (next: RateBasis) => {
+    setRateBasis(next);
+    if (!delivery || !serviceKey) return;
+    if (rateFor(rateCard, { format: serviceFormat(serviceKey), delivery, basis: next }) === null) {
+      setServiceKey(null);
+    }
   };
 
   const handleSubmit = async () => {
@@ -472,7 +494,13 @@ export default function InstructorHirePage({ courseId, instructorId }: Props) {
     if (selectedProgram) return toast.error('Program booking is not available yet.');
     if (!instructorId || !selectedCourseUuid || !selectedApplication)
       return toast.error('Select an approved course or program.');
-    if (!rate) return toast.error('This instructor has no approved rate for the selected service.');
+    if (!delivery) return toast.error('Pick how the sessions are delivered.');
+    if (!rateBasis) return toast.error('Pick how you would like to be billed.');
+    if (!serviceKey) return toast.error('Pick a service.');
+    if (!rate)
+      return toast.error(
+        `This instructor has no approved ${formatRateBasis(rateBasis)} rate for this service.`
+      );
     if (!upcomingSessions.length) return toast.error('Select at least one valid upcoming session.');
     if (conflicts.length) return toast.error('Resolve the schedule conflicts before confirming.');
     if (!eligibilityReady)
@@ -501,11 +529,14 @@ export default function InstructorHirePage({ courseId, instructorId }: Props) {
             instructor_uuid: instructorId,
             start_time: start,
             end_time: end,
-            price_amount: (session.minutes / 60) * rate,
-            currency: rateCard?.currency ?? 'KES',
+            training_format: serviceFormat(serviceKey),
+            delivery_mode: delivery,
+            rate_basis: rateBasis,
+            timezone,
             purpose: [
               `Instructor hire for ${selectedCourse?.name ?? 'course'}`,
-              `Service: ${serviceKey}`,
+              `Service: ${getService(serviceKey)?.title}`,
+              `Billed ${formatRateBasis(rateBasis)}`,
               meetingLink ? `Meeting link: ${meetingLink}` : null,
               locationName ? `Location: ${locationName}` : null,
             ]
@@ -627,22 +658,31 @@ export default function InstructorHirePage({ courseId, instructorId }: Props) {
             </div>
           </section>
 
-          <section className='space-y-4'>
-            <div>
-              <ServiceCards
-                value={serviceKey}
-                onChange={handleServiceChange}
-                rateCard={rateCard}
-                delivery={delivery}
-                rateBasis={rateBasis}
-              />
-            </div>
+          <section className='space-y-6'>
+            <DeliveryCards value={delivery} onChange={handleDeliveryChange} />
+            {delivery ? (
+              <>
+                <BillingBasisCards
+                  value={rateBasis}
+                  onChange={handleBasisChange}
+                  statusFor={basis => basisStatus(rateCard, null, delivery, basis)}
+                  viewer='learner'
+                />
+                <ServiceCards
+                  value={serviceKey}
+                  onChange={setServiceKey}
+                  rateCard={rateCard}
+                  delivery={delivery}
+                  basis={rateBasis}
+                  viewer='learner'
+                />
+              </>
+            ) : null}
           </section>
 
           <section className='space-y-4'>
             <LocationVenue
               delivery={delivery}
-              onDeliveryChange={setDelivery}
               meetingLink={meetingLink}
               onMeetingLinkChange={setMeetingLink}
               locationName={locationName}
@@ -651,12 +691,6 @@ export default function InstructorHirePage({ courseId, instructorId }: Props) {
               onLocationLatitudeChange={setLocationLatitude}
               locationLongitude={locationLongitude}
               onLocationLongitudeChange={setLocationLongitude}
-              venueUuid=''
-              onVenueChange={() => undefined}
-              venueResources={[]}
-              onlyAvailable
-              onOnlyAvailableChange={() => undefined}
-              showVenue={false}
             />
           </section>
 
@@ -725,9 +759,10 @@ export default function InstructorHirePage({ courseId, instructorId }: Props) {
                   No existing classes are currently on this instructor&apos;s calendar.
                 </p>
               )}
-              <ResourceConflictAlert
+              <SchedulingConflictAlert
                 title="Your currently selected sessions overlap the instructor's current class schedule"
                 conflicts={conflicts}
+                timeZone={timezone}
               />
             </div>
           </section>
@@ -840,31 +875,42 @@ export default function InstructorHirePage({ courseId, instructorId }: Props) {
                 </div>
                 <div className='flex justify-between'>
                   <span className='text-muted-foreground'>Service</span>
-                  <span className='font-medium'>{serviceKey}</span>
+                  <span className='font-medium'>
+                    {getService(serviceKey)?.title ?? 'Not selected'}
+                  </span>
                 </div>
                 <div className='flex justify-between'>
                   <span className='text-muted-foreground'>Sessions</span>
                   <span className='font-medium'>{upcomingSessions.length}</span>
                 </div>
                 <div className='flex justify-between'>
-                  <span className='text-muted-foreground'>Total hours</span>
-                  <span className='font-medium'>{totalHours.toFixed(1)}</span>
+                  <span className='text-muted-foreground'>Billed for</span>
+                  <span className='font-medium'>
+                    {rateBasis ? unitsLabel(billedUnits, rateBasis) : '—'}
+                  </span>
                 </div>
                 <div className='flex justify-between'>
                   <span className='text-muted-foreground'>Rate</span>
                   <span className='font-medium'>
-                    {formatMoney(rate, rateCard?.currency)} / hour
+                    {rateBasis ? formatRate(rate, rateBasis, rateCard?.currency) : '—'}
                   </span>
                 </div>
                 <div className='flex justify-between'>
                   <span className='text-muted-foreground'>Estimated total</span>
                   <span className='font-semibold'>
-                    {formatMoney(totalAmount, rateCard?.currency ?? 'KES')}
+                    {formatRateAmount(totalAmount, rateCard?.currency)}
                   </span>
                 </div>
               </div>
               <Separator />
 
+              <p className='text-muted-foreground text-xs'>
+                The total is an estimate: each session is priced from the instructor&apos;s approved
+                rate when the request is sent.
+                {rateBasis === 'per_day'
+                  ? ' A class day you have already booked with this instructor is not charged again.'
+                  : null}
+              </p>
               <p className='text-muted-foreground text-xs'>
                 A booking request will be sent to the instructor. Payment is only requested after
                 the booking is accepted.
@@ -881,6 +927,7 @@ export default function InstructorHirePage({ courseId, instructorId }: Props) {
                 className='w-full'
                 disabled={
                   isSubmitting ||
+                  !rate ||
                   !instructorId ||
                   !selectedCourseUuid ||
                   !requirementsComplete ||

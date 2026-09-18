@@ -2,14 +2,13 @@
 
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
-import { Loader2 } from 'lucide-react';
+import { Info } from 'lucide-react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { useForm } from 'react-hook-form';
+import { useForm, useFormContext, useWatch } from 'react-hook-form';
 import { toast } from 'sonner';
 import * as z from 'zod';
 
-import LocationInput from '@/components/locationInput';
 import { Button } from '@/components/ui/button';
 import {
   Card,
@@ -22,7 +21,6 @@ import {
 import {
   Form,
   FormControl,
-  FormDescription,
   FormField,
   FormItem,
   FormLabel,
@@ -30,40 +28,58 @@ import {
 } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { PhoneInput } from '@/components/ui/phone-input';
+import Spinner from '@/components/ui/spinner';
 import { Switch } from '@/components/ui/switch';
 import { extractEntity } from '@/lib/api-helpers';
-import { coordinatesFromPlace } from '@/lib/location-types';
 import type { TrainingBranch } from '@/services/client';
 import {
   createTrainingBranch1Mutation,
-  getTrainingBranchesByOrganisationQueryKey,
   updateTrainingBranch1Mutation,
 } from '@/services/client/@tanstack/react-query.gen';
+import { dashboardUrl } from '@/src/features/dashboard/lib/dashboard-url';
+import { invalidateGeneratedQueryIds } from '@/src/features/dashboard/workflow-query-invalidation';
 import { useOrganisation } from '@/src/features/organisation/context/organisation-context';
+import { BranchLocationField } from './branch-location-field';
 
-/**
- * Capacity is typed as a string so an empty input stays empty instead of
- * coercing to `0` and tripping a "must be positive" error on an optional field.
- */
+const PIN_REQUIRED = 'Add a pin to create this branch';
+
+export const LOCATION_SOURCES = ['search', 'device', 'manual'] as const;
+export type LocationSource = (typeof LOCATION_SOURCES)[number];
+
+const BRANCH_QUERY_IDS = [
+  'getTrainingBranchesByOrganisation',
+  'getTrainingBranchByUuid',
+  'getTrainingBranchByUuid1',
+] as const;
+
 const branchFormSchema = z.object({
   branch_name: z.string().trim().min(1, 'Branch name is required').max(200),
   address: z.string().trim().max(500).optional(),
-  latitude: z.number().optional(),
-  longitude: z.number().optional(),
-  poc_name: z.string().trim().min(1, 'Point of contact name is required').max(200),
-  poc_email: z.string().trim().email('Enter a valid email address').max(320),
-  poc_telephone: z.string().trim().min(1, 'Point of contact phone is required').max(50),
+  latitude: z
+    .number({ required_error: PIN_REQUIRED, invalid_type_error: PIN_REQUIRED })
+    .min(-90, 'Latitude must be between -90 and 90')
+    .max(90, 'Latitude must be between -90 and 90'),
+  longitude: z
+    .number({ required_error: PIN_REQUIRED, invalid_type_error: PIN_REQUIRED })
+    .min(-180, 'Longitude must be between -180 and 180')
+    .max(180, 'Longitude must be between -180 and 180'),
+  // Where the pin came from, for the preview chip only — never sent to the server.
+  location_source: z.enum(LOCATION_SOURCES).optional(),
+  poc_name: z.string().trim().min(1, 'Contact person is required').max(200),
+  poc_email: z.string().trim().email('Enter a valid contact email').max(320),
+  poc_telephone: z.string().trim().min(1, 'Contact phone is required').max(50),
   active: z.boolean(),
 });
 
 export type BranchFormValues = z.infer<typeof branchFormSchema>;
 
-function toFormValues(branch?: TrainingBranch): BranchFormValues {
+function toFormValues(branch?: TrainingBranch): Partial<BranchFormValues> {
   return {
     branch_name: branch?.branch_name ?? '',
     address: branch?.address ?? '',
     latitude: branch?.latitude ?? undefined,
     longitude: branch?.longitude ?? undefined,
+    location_source: undefined,
     poc_name: branch?.poc_name ?? '',
     poc_email: branch?.poc_email ?? '',
     poc_telephone: branch?.poc_telephone ?? '',
@@ -117,8 +133,8 @@ export default function CreateEditBranchform({
       organisation_uuid: organisationUuid,
       branch_name: values.branch_name,
       address: values.address || null,
-      latitude: values.latitude ?? null,
-      longitude: values.longitude ?? null,
+      latitude: values.latitude,
+      longitude: values.longitude,
       poc_name: values.poc_name,
       poc_email: values.poc_email,
       poc_telephone: values.poc_telephone,
@@ -137,13 +153,10 @@ export default function CreateEditBranchform({
 
       toast.success(branch?.uuid ? 'Branch updated' : 'Branch created');
 
-      await queryClient.invalidateQueries({
-        queryKey: getTrainingBranchesByOrganisationQueryKey({
-          path: { uuid: organisationUuid },
-          query: { pageable: { page: 0, size: 100 } },
-        }),
-      });
-      await queryClient.invalidateQueries({ queryKey: ['organization'] });
+      await Promise.all([
+        invalidateGeneratedQueryIds(queryClient, BRANCH_QUERY_IDS),
+        queryClient.invalidateQueries({ queryKey: ['organization'] }),
+      ]);
 
       if (onSave) {
         onSave(saved);
@@ -151,7 +164,7 @@ export default function CreateEditBranchform({
       }
 
       if (saved?.uuid) {
-        router.push(`/dashboard/organisation/branches/${saved.uuid}`);
+        router.push(dashboardUrl('organisation', `branches/${saved.uuid}`));
       }
     } catch {
       toast.error(branch?.uuid ? 'Unable to update this branch' : 'Unable to create this branch');
@@ -165,7 +178,9 @@ export default function CreateEditBranchform({
         name='branch_name'
         render={({ field }) => (
           <FormItem>
-            <FormLabel>Branch name</FormLabel>
+            <FormLabel>
+              Branch name <span className='text-destructive'>*</span>
+            </FormLabel>
             <FormControl>
               <Input placeholder='e.g. Westlands Campus' {...field} />
             </FormControl>
@@ -174,35 +189,7 @@ export default function CreateEditBranchform({
         )}
       />
 
-      <FormField
-        control={form.control}
-        name='address'
-        render={({ field }) => (
-          <FormItem>
-            <FormLabel>Location</FormLabel>
-            <FormControl>
-              <LocationInput
-                name={field.name}
-                value={field.value ?? ''}
-                onChange={field.onChange}
-                onBlur={field.onBlur}
-                placeholder='Search for the address — e.g. 123 Waiyaki Way'
-                coordinates={{
-                  latitude: form.watch('latitude'),
-                  longitude: form.watch('longitude'),
-                }}
-                onSuggest={response => {
-                  const { latitude, longitude } = coordinatesFromPlace(response);
-                  if (latitude !== undefined) form.setValue('latitude', latitude);
-                  if (longitude !== undefined) form.setValue('longitude', longitude);
-                  return response;
-                }}
-              />
-            </FormControl>
-            <FormMessage />
-          </FormItem>
-        )}
-      />
+      <BranchLocationField />
 
       <div className='grid gap-5 sm:grid-cols-2'>
         <FormField
@@ -210,9 +197,11 @@ export default function CreateEditBranchform({
           name='poc_name'
           render={({ field }) => (
             <FormItem>
-              <FormLabel>Point of contact</FormLabel>
+              <FormLabel>
+                Contact person <span className='text-destructive'>*</span>
+              </FormLabel>
               <FormControl>
-                <Input placeholder='Point of contact name' {...field} />
+                <Input placeholder='Full name' {...field} />
               </FormControl>
               <FormMessage />
             </FormItem>
@@ -224,7 +213,9 @@ export default function CreateEditBranchform({
           name='poc_email'
           render={({ field }) => (
             <FormItem>
-              <FormLabel>Point of contact email</FormLabel>
+              <FormLabel>
+                Contact email <span className='text-destructive'>*</span>
+              </FormLabel>
               <FormControl>
                 <Input type='email' placeholder='name@example.com' {...field} />
               </FormControl>
@@ -238,7 +229,9 @@ export default function CreateEditBranchform({
           name='poc_telephone'
           render={({ field }) => (
             <FormItem>
-              <FormLabel>Point of contact phone</FormLabel>
+              <FormLabel>
+                Contact phone <span className='text-destructive'>*</span>
+              </FormLabel>
               <FormControl>
                 <PhoneInput {...field} placeholder='+254 700 000 000' />
               </FormControl>
@@ -274,28 +267,7 @@ export default function CreateEditBranchform({
   );
 
   const actions = (
-    <>
-      <Button type='submit' disabled={isSaving}>
-        {isSaving ? (
-          <>
-            <Loader2 className='mr-2 h-4 w-4 animate-spin' /> Saving…
-          </>
-        ) : branch?.uuid ? (
-          'Save branch'
-        ) : (
-          'Create branch'
-        )}
-      </Button>
-      {onCancel ? (
-        <Button type='button' variant='outline' onClick={onCancel} disabled={isSaving}>
-          Cancel
-        </Button>
-      ) : (
-        <Button type='button' variant='ghost' asChild>
-          <Link href='/dashboard/organisation/settings?tab=branches'>Cancel</Link>
-        </Button>
-      )}
-    </>
+    <BranchFormActions isEdit={Boolean(branch?.uuid)} isSaving={isSaving} onCancel={onCancel} />
   );
 
   if (variant === 'embedded') {
@@ -303,7 +275,7 @@ export default function CreateEditBranchform({
       <Form {...form}>
         <form onSubmit={form.handleSubmit(onSubmit)} className='space-y-6'>
           {fields}
-          <div className='flex flex-row-reverse gap-3'>{actions}</div>
+          <div className='border-border/70 border-t pt-4'>{actions}</div>
         </form>
       </Form>
     );
@@ -311,16 +283,58 @@ export default function CreateEditBranchform({
 
   return (
     <Form {...form}>
-      <form onSubmit={form.handleSubmit(onSubmit)}>
-        <Card className='max-w-[80%]'>
+      <form onSubmit={form.handleSubmit(onSubmit)} className='mx-auto w-full max-w-3xl px-3 py-4'>
+        <Card>
           <CardHeader>
             <CardTitle>{branch ? `Edit ${branch.branch_name}` : 'New branch'}</CardTitle>
-            <CardDescription>Manage branch details</CardDescription>
+            <CardDescription>
+              A branch is a physical training site. Its pin is where every class and job at this
+              branch takes place.
+            </CardDescription>
           </CardHeader>
           <CardContent>{fields}</CardContent>
-          <CardFooter className='flex flex-row-reverse gap-3'>{actions}</CardFooter>
+          <CardFooter className='border-border/70 block border-t pt-4'>{actions}</CardFooter>
         </Card>
       </form>
     </Form>
+  );
+}
+
+/** Subscribes to the pin alone so the rest of the form doesn't re-render when it moves. */
+function BranchFormActions({
+  isEdit,
+  isSaving,
+  onCancel,
+}: {
+  isEdit: boolean;
+  isSaving: boolean;
+  onCancel?: () => void;
+}) {
+  const { control } = useFormContext<BranchFormValues>();
+  const [latitude, longitude] = useWatch({ control, name: ['latitude', 'longitude'] });
+  const hasPin = Number.isFinite(latitude) && Number.isFinite(longitude);
+
+  return (
+    <div className='flex flex-wrap items-center justify-end gap-2'>
+      {!hasPin ? (
+        <span className='text-muted-foreground mr-auto flex items-center gap-1.5 text-xs'>
+          <Info className='h-3.5 w-3.5' />
+          {isEdit ? 'Add a pin to save this branch' : PIN_REQUIRED}
+        </span>
+      ) : null}
+      {onCancel ? (
+        <Button type='button' variant='outline' onClick={onCancel} disabled={isSaving}>
+          Cancel
+        </Button>
+      ) : (
+        <Button type='button' variant='outline' asChild>
+          <Link href={dashboardUrl('organisation', 'branches')}>Cancel</Link>
+        </Button>
+      )}
+      <Button type='submit' disabled={isSaving || !hasPin}>
+        {isSaving ? <Spinner className='h-4 w-4' /> : null}
+        {isSaving ? 'Saving…' : isEdit ? 'Save branch' : 'Create branch'}
+      </Button>
+    </div>
   );
 }

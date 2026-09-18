@@ -13,6 +13,7 @@ import {
 } from 'lucide-react';
 import { useState } from 'react';
 import { toast } from 'sonner';
+import { JobTimeLegend } from '@/components/instructor/job-time';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -22,6 +23,7 @@ import { Switch } from '@/components/ui/switch';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useUserProfile } from '@/context/profile-context';
 import { resolveDisplayZone } from '@/lib/date';
+import { jobTimeKind } from '@/lib/instructor-job-time';
 import {
   clearInstructorAvailabilityMutation,
   createAvailabilitySlotMutation,
@@ -91,7 +93,7 @@ export default function AvailabilityManager({
   const getStatusInfo = () => {
     const _totalSlots = availabilityData?.events?.length;
     const availableSlots = availabilityData?.events?.filter(
-      slot => slot.is_available === true
+      slot => slot.is_available === true && !jobTimeKind(slot.entry_type)
     ).length;
     const _blockedSlots = availabilityData?.events?.filter(
       slot => slot.entry_type === 'BLOCKED'
@@ -345,7 +347,7 @@ export default function AvailabilityManager({
             </CardTitle>
             <div className='flex items-center gap-4'>
               {/* Color Legend */}
-              <div className='flex items-center gap-4 text-sm'>
+              <div className='flex flex-wrap items-center gap-4 text-sm'>
                 <div className='flex items-center gap-1'>
                   <div className='bg-success h-3 w-3 rounded' />
                   <span>Available</span>
@@ -362,6 +364,7 @@ export default function AvailabilityManager({
                   <div className='bg-primary h-3 w-3 rounded' />
                   <span>Booked</span>
                 </div>
+                <JobTimeLegend />
               </div>
             </div>
           </div>

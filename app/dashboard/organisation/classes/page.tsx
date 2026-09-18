@@ -5,8 +5,8 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import dayjs from 'dayjs';
 import { Eye, LayoutList, MoreHorizontal, PauseCircle, Plus, Send, Users } from 'lucide-react';
 import Link from 'next/link';
-import { useRouter } from 'next/navigation';
-import { useCallback, useMemo, useState } from 'react';
+import { useRouter, useSearchParams } from 'next/navigation';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { toast } from 'sonner';
 
 import { ALL_CATEGORIES, CategoryTabs, filterByCategoryTabs } from '@/components/category-tabs';
@@ -36,20 +36,27 @@ import {
 import { useOrganisation } from '@/context/organisation-context';
 import { useInstructorsByIds } from '@/hooks/use-batched-lookups';
 import { extractList, extractPage } from '@/lib/api-helpers';
+import { cn } from '@/lib/utils';
 import type {
   ClassDefinition,
   ClassEnrolmentCountDto,
   Instructor,
+  OrganisationResource,
   TrainingBranch,
   User,
 } from '@/services/client';
+import { ResourceTypeEnum } from '@/services/client';
 import {
   deactivateClassDefinitionMutation,
   getClassDefinitionsForOrganisationOptions,
   getClassEnrolmentCountsOptions,
   getTrainingBranchesByOrganisationOptions,
   getUsersByOrganisationAndDomainOptions,
+  listResourcesOptions,
 } from '@/services/client/@tanstack/react-query.gen';
+import { dashboardUrl } from '@/src/features/dashboard/lib/dashboard-url';
+
+const NEW_CLASS_HREF = dashboardUrl('organisation', 'classes/new');
 
 const categoryLabel = (cd: ClassDefinition) =>
   cd.location_type === 'ONLINE'
@@ -76,6 +83,7 @@ export default function ClassesPage() {
   const organisationUuid = organisation?.uuid ?? '';
   const router = useRouter();
   const queryClient = useQueryClient();
+  const highlight = useSearchParams().get('highlight');
 
   const classesQuery = useQuery({
     ...getClassDefinitionsForOrganisationOptions({ path: { organisationUuid } }),
@@ -92,9 +100,16 @@ export default function ClassesPage() {
     enabled: Boolean(organisationUuid),
   });
   const venuesQuery = useQuery({
+    ...listResourcesOptions({
+      path: { organisationUuid },
+      query: { resource_type: ResourceTypeEnum.VENUE, pageable: { page: 0, size: 100 } },
+    }),
+    enabled: Boolean(organisationUuid),
+  });
+  const branchesQuery = useQuery({
     ...getTrainingBranchesByOrganisationOptions({
       path: { uuid: organisationUuid },
-      query: { pageable: { page: 0, size: 200 } },
+      query: { pageable: { page: 0, size: 100 } },
     }),
     enabled: Boolean(organisationUuid),
   });
@@ -141,11 +156,17 @@ export default function ClassesPage() {
     [instructorMap, orgUsersByUuid]
   );
   const venuesByUuid = useMemo(() => {
-    const map = new Map<string, TrainingBranch>();
-    for (const v of extractPage<TrainingBranch>(venuesQuery.data).items)
+    const map = new Map<string, OrganisationResource>();
+    for (const v of extractPage<OrganisationResource>(venuesQuery.data).items)
       if (v.uuid) map.set(v.uuid, v);
     return map;
   }, [venuesQuery.data]);
+  const branchNames = useMemo(() => {
+    const map = new Map<string, string>();
+    for (const b of extractPage<TrainingBranch>(branchesQuery.data).items)
+      if (b.uuid) map.set(b.uuid, b.branch_name);
+    return map;
+  }, [branchesQuery.data]);
 
   const rows = useMemo(
     () =>
@@ -153,6 +174,7 @@ export default function ClassesPage() {
         const scheduled = Number(cd.scheduled_session_count ?? 0);
         const completed = Number(cd.completed_session_count ?? 0);
         const venue = cd.venue_resource_uuid ? venuesByUuid.get(cd.venue_resource_uuid) : undefined;
+        const branchName = branchNames.get(cd.branch_uuid ?? venue?.branch_uuid ?? '');
         return {
           uuid: cd.uuid as string,
           title: cd.title,
@@ -160,10 +182,9 @@ export default function ClassesPage() {
           subject: null as string | null,
           programType: null,
           instructor: resolveInstructor(cd.default_instructor_uuid),
-          venueName:
-            venue?.branch_name ??
-            cd.location_name ??
-            (cd.location_type === 'ONLINE' ? 'Online' : '—'),
+          venueName: venue
+            ? [venue.name, branchName].filter(Boolean).join(' · ')
+            : cd.location_name || (cd.location_type === 'ONLINE' ? 'Online' : '—'),
           start: cd.default_start_time,
           capacity: cd.max_participants ?? null,
           enrolled: enrolledByClass.get(cd.uuid as string) ?? 0,
@@ -171,7 +192,7 @@ export default function ClassesPage() {
           status: cd.is_active === false ? 'Inactive' : 'Active',
         };
       }),
-    [classDefinitions, enrolledByClass, resolveInstructor, venuesByUuid]
+    [classDefinitions, enrolledByClass, resolveInstructor, venuesByUuid, branchNames]
   );
 
   const [activeCategory, setActiveCategory] = useState<string>(ALL_CATEGORIES);
@@ -236,9 +257,18 @@ export default function ClassesPage() {
     });
 
   const loading = classesQuery.isLoading;
+
+  // A class just created from a job arrives here with ?highlight=<uuid>; bring its row into view.
+  const highlightVisible = Boolean(highlight && filtered.some(r => r.uuid === highlight));
+  useEffect(() => {
+    if (!highlightVisible || !highlight) return;
+    document
+      .getElementById(`class-row-${highlight}`)
+      ?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+  }, [highlight, highlightVisible]);
   const createButton = (
     <Button asChild className='gap-1.5'>
-      <Link href='/dashboard/organisation/classes/new'>
+      <Link href={NEW_CLASS_HREF}>
         <Plus className='h-4 w-4' />
         <span className='hidden sm:inline'>Create class</span>
         <span className='sm:hidden'>Create</span>
@@ -302,10 +332,10 @@ export default function ClassesPage() {
           <LayoutList className='text-muted-foreground mx-auto h-8 w-8' />
           <div className='mt-2 font-medium'>No classes yet</div>
           <p className='text-muted-foreground text-sm'>
-            Post a class for a course you're approved to offer — instructors can then apply.
+            Classes start from a job. Post a job, hire an instructor, then create the class from it.
           </p>
           <Button asChild className='mt-4 gap-1.5'>
-            <Link href='/dashboard/organisation/classes/new'>
+            <Link href={NEW_CLASS_HREF}>
               <Plus className='h-4 w-4' /> Create class
             </Link>
           </Button>
@@ -362,7 +392,11 @@ export default function ClassesPage() {
                   return (
                     <TableRow
                       key={r.uuid}
+                      id={`class-row-${r.uuid}`}
                       data-state={selectedIds.has(r.uuid) ? 'selected' : undefined}
+                      className={cn(
+                        r.uuid === highlight && 'bg-primary/5 ring-primary ring-2 ring-inset'
+                      )}
                     >
                       <TableCell>
                         <Checkbox

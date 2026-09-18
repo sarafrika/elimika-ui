@@ -1,15 +1,28 @@
 // @ts-nocheck -- pre-existing @hey-api generated-client type drift (see memory: elimika-ui-typecheck)
 'use client';
 
+import {
+  JOB_TIME_STYLES,
+  type JobTimeDetail,
+  JobTimeDetailsDialog,
+} from '@/components/instructor/job-time';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { dayjs } from '@/lib/date';
-import { Calendar, ChevronLeft, ChevronRight, Clock } from 'lucide-react';
+import { JOB_TIME_LABELS, jobTimeKind } from '@/lib/instructor-job-time';
+import { Calendar, ChevronLeft, ChevronRight, Clock, Lock } from 'lucide-react';
 import { useState } from 'react';
 import { Badge } from '../../../../../components/ui/badge';
 import { EventModal } from './event-modal';
-import type { AvailabilityData, CalendarEvent } from './types';
+import {
+  type AvailabilityData,
+  type CalendarEvent,
+  jobHoldWindows,
+  jobTimeDetailOf,
+  jobTimeForSlot,
+  jobTimeRowSpan,
+} from './types';
 import { mapEventTypeToStatus } from './weekly-availability-grid';
 
 interface DailyAvailabilityGridProps {
@@ -55,6 +68,7 @@ export function DailyAvailabilityGrid({
     time: string;
     date: Date;
   } | null>(null);
+  const [jobTimeDetail, setJobTimeDetail] = useState<JobTimeDetail | null>(null);
 
   const timeSlots = generateTimeSlots();
 
@@ -153,7 +167,7 @@ export function DailyAvailabilityGrid({
 
   const getEventForSlot = (time: string, date: Date) => {
     return availabilityData?.events?.find(event => {
-      if (!event.date) return false;
+      if (!event.date || jobTimeKind(event.entry_type)) return false;
       const eventDate = new Date(event.date);
       const isSameDate = eventDate.toDateString() === date.toDateString();
       const slotTime = new Date(`2000-01-01T${time}:00`);
@@ -185,6 +199,11 @@ export function DailyAvailabilityGrid({
 
   const handleSlotClick = (time: string) => {
     const existingEvent = getEventForSlot(time, currentDate);
+    const jobTime = existingEvent ? null : jobTimeForSlot(availabilityData.events, time, currentDate);
+    if (jobTime?.entry_type === 'JOB_HOLD') {
+      setJobTimeDetail(jobTimeDetailOf(jobTime));
+      return;
+    }
     if (existingEvent) {
       setSelectedEvent({
         ...existingEvent,
@@ -289,6 +308,8 @@ export function DailyAvailabilityGrid({
             const event = getEventForSlot(time, currentDate);
             const isEventStart = isEventStartSlot(time, currentDate);
             const weekday = dayjs(currentDate).format('dddd');
+            const jobTime = event ? null : jobTimeForSlot(availabilityData.events, time, currentDate);
+            const jobKind = jobTimeKind(jobTime?.entry_type);
 
             if (shouldSkipSlot(time, currentDate)) return null;
 
@@ -386,8 +407,30 @@ export function DailyAvailabilityGrid({
                             </div>
                           )}
 
+                        {jobTime && jobKind && jobTime.startTime.slice(0, 2) === time.slice(0, 2) ? (
+                          <button
+                            type='button'
+                            className={`absolute inset-x-2 top-2 z-20 flex flex-col items-center justify-center rounded-lg border px-3 text-sm font-medium ${JOB_TIME_STYLES[jobKind]}`}
+                            style={{ height: jobTimeRowSpan(jobTime) * 52 }}
+                            onClick={clickEvent => {
+                              clickEvent.stopPropagation();
+                              setJobTimeDetail(jobTimeDetailOf(jobTime));
+                            }}
+                          >
+                            <span className='flex items-center gap-1.5'>
+                              {jobKind === 'hold' ? <Lock className='h-3.5 w-3.5' /> : null}
+                              <span className='line-clamp-2 text-center'>{jobTime.title}</span>
+                            </span>
+                            <span className='text-muted-foreground mt-1 text-xs'>
+                              {jobTime.startTime} - {jobTime.endTime}
+                              {jobTime.organisation ? ` · ${jobTime.organisation}` : ''}
+                            </span>
+                          </button>
+                        ) : null}
+
                         {/* Empty state */}
                         {!event &&
+                          !jobTime &&
                           !isAvailabilityStartSlot(weekday, time) &&
                           !isBlockedStartSlot(weekday, time, currentDate) && (
                             <div className='text-muted-foreground/40 hover:text-muted-foreground flex h-full items-center justify-center text-xs transition-colors'>
@@ -399,6 +442,14 @@ export function DailyAvailabilityGrid({
                     <TooltipContent side='right' className='max-w-xs'>
                       <div className='text-foreground space-y-1 text-sm'>
                         <div className='font-semibold'>{time}</div>
+                        {jobTime && jobKind ? (
+                          <div className='text-muted-foreground text-xs'>
+                            <strong className='text-foreground'>
+                              {JOB_TIME_LABELS[jobKind].legend}:
+                            </strong>{' '}
+                            {jobTime.title}
+                          </div>
+                        ) : null}
                         {event && (
                           <>
                             <div className='text-muted-foreground text-xs'>
@@ -437,7 +488,10 @@ export function DailyAvailabilityGrid({
         selectedSlot={selectedSlot}
         onSave={handleSaveEvent}
         onDelete={handleDeleteEvent}
+        jobHolds={jobHoldWindows(availabilityData.events)}
       />
+
+      <JobTimeDetailsDialog detail={jobTimeDetail} onClose={() => setJobTimeDetail(null)} />
     </div>
   );
 }

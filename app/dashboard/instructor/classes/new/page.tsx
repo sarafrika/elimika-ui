@@ -7,19 +7,22 @@ import {
   type AcademicPeriod,
   apiCalendarDay,
   type ApprovedRateCard,
-  approvedRateFor,
   type DayKey,
   type DayRow,
-  DEFAULT_RATE_BASIS,
   firstRegistrationWindowError,
   num,
+  priceAndPayIssue,
   type RateBasis,
-  rateBasisUnit,
   type RegistrationWindowErrors,
   type ReminderState,
   validateRegistrationWindow,
 } from '@/components/class-form/class-form-shared';
-import { type ConflictItem, parseConflictError } from '@/components/resourcing/conflicts';
+import { AsyncSection } from '@/components/data/async-section';
+import { SchedulingConflictAlert } from '@/components/scheduling/scheduling-conflict-alert';
+import { Skeleton } from '@/components/ui/skeleton';
+import { type DeliveryMode, formatRateBasis, rateFor } from '@/lib/rate-card';
+import { dashboardUrl } from '@/src/features/dashboard/lib/dashboard-url';
+import { parseSchedulingConflicts, type SchedulingConflict } from '@/lib/scheduling-conflicts';
 import {
   type InstructorClassWithSchedule,
   useInstructorClassesWithSchedules,
@@ -27,13 +30,17 @@ import {
 import { type RecurrenceValue, toClassRecurrence } from '@/lib/recurrence';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { format } from 'date-fns';
-import { AlertTriangle, CalendarClock, Loader2 } from 'lucide-react';
+import { AlertTriangle, CalendarClock, Loader2, Plus } from 'lucide-react';
+import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { type FormEvent, useEffect, useMemo, useState } from 'react';
 import { toast } from 'sonner';
 import {
   AcademicPeriodsPanel,
+  BillingBasisCards,
+  basisStatus,
   ClassMediaUpload,
+  DeliveryCards,
   LocationVenue,
   type MediaFile,
   type Offering,
@@ -46,10 +53,13 @@ import {
   ServiceCards,
   type ServiceKey,
   StandardSchedule,
+  serviceFormat,
+  serviceForDelivery,
   UpcomingSessions,
+  offeringTarget,
+  useProposedRateCard,
 } from '../../../../../components/class-form';
 import { PageHeader } from '../../../../../components/page-header';
-import { ResourceConflictAlert } from '../../../../../components/resourcing/ResourceConflictAlert';
 import { Button } from '../../../../../components/ui/button';
 import { useUserProfile } from '../../../../../context/profile-context';
 import { useTimeZone } from '../../../../../context/timezone-context';
@@ -86,7 +96,6 @@ import {
   ConflictResolutionEnum,
   LocationTypeEnum,
   RecurrenceTypeEnum,
-  SessionFormatEnum,
 } from '../../../../../services/client/types.gen';
 import { TOKEN } from '../../../_components/color-charts';
 import {
@@ -94,7 +103,6 @@ import {
   NotificationSettings,
   ScheduleSettings,
 } from '../../trainings/create-new/page';
-import { type ServiceType } from './_components/service-type-selector';
 
 const LOCAL_CLASS_DRAFT_KEY = 'training-class-create-draft:new-class-creation';
 const DAY_NAMES = ['MONDAY', 'TUESDAY', 'WEDNESDAY', 'THURSDAY', 'FRIDAY', 'SATURDAY', 'SUNDAY'];
@@ -116,6 +124,8 @@ type CatalogRateCard = {
 };
 
 type CatalogItem = {
+  applicationUuid?: string;
+  pendingRateUpdateUuid?: string | null;
   classLimit: number;
   label: string | undefined;
   rateCard?: CatalogRateCard;
@@ -162,7 +172,7 @@ const createInitialClassDetails = (instructorName?: string): ClassDetails => ({
   description: '',
   categories: [],
   class_type: 'PUBLIC',
-  location_type: 'ONLINE',
+  location_type: '',
   rate_card: '',
   class_limit: 0,
   targetAudience: '',
@@ -685,11 +695,9 @@ const InstructorClassCreationPage = () => {
   const [isEditHydrated, setIsEditHydrated] = useState(false);
 
   const [schedulePreset, setSchedulePreset] = useState<SchedulePreset>('standard');
-  const [serviceType, setServiceType] = useState<ServiceType | undefined>(undefined);
-  // The unit the approved rate is quoted in. It decides both which rate-card column is read and
-  // how many units the class bills for, so it has to be an explicit choice rather than a default
-  // nobody sees — an hourly figure billed per session is a different contract entirely.
-  const [rateBasis, setRateBasis] = useState<RateBasis>(DEFAULT_RATE_BASIS);
+  const [service, setService] = useState<ServiceKey | null>(null);
+  // Picked from the approved rate card after delivery; nothing is chosen for the instructor.
+  const [rateBasis, setRateBasis] = useState<RateBasis | null>(null);
   const [salePrice, setSalePrice] = useState('');
   const [instructorPay, setInstructorPay] = useState('');
   const [classDetails, setClassDetails] = useState<ClassDetails>(() =>
@@ -745,9 +753,12 @@ const InstructorClassCreationPage = () => {
   const [perDayOccurrences, setPerDayOccurrences] = useState<Record<number, PerDayOccurrence>>({});
 
   const resolvedId = classId || savedClassUuid;
-  const { data: combinedClass, isLoading } = useClassDetails(
-    isClientReady && resolvedId ? resolvedId : undefined
-  );
+  const {
+    data: combinedClass,
+    isLoading,
+    isError: classLoadFailed,
+    refetch: refetchClass,
+  } = useClassDetails(isClientReady && resolvedId ? resolvedId : undefined);
   const classData = combinedClass?.class;
 
   const { classes: instructorClasses = [] } = useInstructorClassesWithSchedules(instructor?.uuid);
@@ -775,7 +786,7 @@ const InstructorClassCreationPage = () => {
   const [selectedPromotionalVideo, setSelectedPromotionalVideo] = useState<File | null>(null);
   // Session templates are posted with conflict_resolution FAIL, so the backend answers
   // 409 with the windows it refused and why. Keep them on screen, not in a vanishing toast.
-  const [refusedWindows, setRefusedWindows] = useState<ConflictItem[]>([]);
+  const [refusedWindows, setRefusedWindows] = useState<SchedulingConflict[]>([]);
   const isSubmitting =
     createClassDefinition.isPending ||
     updateClassDefinition.isPending ||
@@ -799,24 +810,7 @@ const InstructorClassCreationPage = () => {
     ]);
   };
 
-  const handleServiceTypeChange = (
-    newServiceType: ServiceType,
-    classType: 'PRIVATE' | 'GROUP',
-    locationType: 'ONLINE' | 'IN_PERSON' | 'HYBRID',
-    rateCardPrice?: number
-  ) => {
-    setServiceType(newServiceType);
-    setClassDetails(prev => ({
-      ...prev,
-      class_type: classType === 'PRIVATE' ? 'PRIVATE' : 'PUBLIC',
-      location_type: locationType,
-      rate_card: Number.isFinite(rateCardPrice ?? Number.NaN)
-        ? String(rateCardPrice)
-        : prev.rate_card,
-    }));
-  };
-
-  const { data: appliedCourses } = useQuery({
+  const appliedCoursesQuery = useQuery({
     ...searchTrainingApplicationsOptions({
       query: {
         pageable: {},
@@ -825,9 +819,10 @@ const InstructorClassCreationPage = () => {
     }),
     enabled: !!instructor?.uuid,
   });
+  const appliedCourses = appliedCoursesQuery.data;
 
   const courseIds = appliedCourses?.data?.content?.map(app => app.course_uuid) ?? [];
-  const { courseMap } = useCoursesByIds(courseIds as string[]);
+  const { courseMap, isLoading: coursesLoading } = useCoursesByIds(courseIds as string[]);
 
   const approvedCourses = useMemo(() => {
     if (!appliedCourses?.data?.content || !courseMap) return [];
@@ -847,7 +842,7 @@ const InstructorClassCreationPage = () => {
       .filter(Boolean);
   }, [appliedCourses, courseMap]);
 
-  const { data: appliedPrograms } = useQuery({
+  const appliedProgramsQuery = useQuery({
     ...searchProgramTrainingApplicationsOptions({
       query: {
         pageable: {},
@@ -856,9 +851,21 @@ const InstructorClassCreationPage = () => {
     }),
     enabled: !!instructor?.uuid,
   });
+  const appliedPrograms = appliedProgramsQuery.data;
 
   const programIds = appliedPrograms?.data?.content?.map(app => app.program_uuid) ?? [];
-  const { programMap } = useProgramsByIds(programIds as string[]);
+  const { programMap, isLoading: programsLoading } = useProgramsByIds(programIds as string[]);
+  const offeringsLoading =
+    !instructor ||
+    appliedCoursesQuery.isLoading ||
+    appliedProgramsQuery.isLoading ||
+    coursesLoading ||
+    programsLoading;
+  const offeringsError = appliedCoursesQuery.error ?? appliedProgramsQuery.error;
+  const retryOfferings = () => {
+    if (appliedCoursesQuery.isError) void appliedCoursesQuery.refetch();
+    if (appliedProgramsQuery.isError) void appliedProgramsQuery.refetch();
+  };
 
   const approvedPrograms = useMemo(() => {
     if (!appliedPrograms?.data?.content || !programMap) return [];
@@ -886,6 +893,8 @@ const InstructorClassCreationPage = () => {
       classLimit: course?.class_limit ?? 0,
       thumbnailUrl: course?.thumbnail_url || 'NF',
       rateCard: course?.application?.rate_card as CatalogRateCard | undefined,
+      applicationUuid: course?.application?.uuid,
+      pendingRateUpdateUuid: course?.application?.pending_rate_update_uuid,
     }));
     const programItems: CatalogItem[] = approvedPrograms.map(program => ({
       label: program?.title,
@@ -893,6 +902,8 @@ const InstructorClassCreationPage = () => {
       uuid: String(program?.uuid),
       classLimit: program?.class_limit ?? 0,
       rateCard: program?.application?.rate_card as CatalogRateCard | undefined,
+      applicationUuid: program?.application?.uuid,
+      pendingRateUpdateUuid: program?.application?.pending_rate_update_uuid,
       thumbnailUrl: '',
     }));
     return [...courseItems, ...programItems];
@@ -925,15 +936,15 @@ const InstructorClassCreationPage = () => {
   );
 
   const rateCard = selectedCatalogItem?.rateCard;
-  // Reads the approved rate for the selected format, delivery mode and contracted basis. The
-  // previous lookup built a `*_rate` key that no longer exists — the rate card was split into
-  // hourly/session/daily columns — so it silently resolved to 0 and every class was priced free.
+  const deliveryMode = normalizeLocationType(classDetails.location_type) || null;
   const approvedRate = useMemo(() => {
-    if (!rateCard || !classDetails.class_type || !classDetails.location_type) return undefined;
-    const format = classDetails.class_type === 'PRIVATE' ? 'INDIVIDUAL' : 'GROUP';
-    const delivery = classDetails.location_type === 'ONLINE' ? 'ONLINE' : 'IN_PERSON';
-    return approvedRateFor(rateCard as ApprovedRateCard, format, delivery, rateBasis);
-  }, [classDetails.class_type, classDetails.location_type, rateCard, rateBasis]);
+    if (!deliveryMode || !rateBasis || !service) return undefined;
+    const format = serviceFormat(service);
+    return (
+      rateFor(rateCard as ApprovedRateCard, { format, delivery: deliveryMode, basis: rateBasis }) ??
+      undefined
+    );
+  }, [deliveryMode, rateCard, rateBasis, service]);
 
   const totalSessions = sessionsForConflictCheck.length || classData?.scheduled_session_count;
 
@@ -1004,7 +1015,8 @@ const InstructorClassCreationPage = () => {
       const parsed = JSON.parse(savedDraft) as {
         salePrice?: string;
         instructorPay?: string;
-        rateBasis?: RateBasis;
+        rateBasis?: RateBasis | null;
+        service?: ServiceKey | null;
         classDetails?: Partial<ClassDetails>;
         scheduleSettings?: Partial<ScheduleSettings>;
         notificationSettings?: Partial<NotificationSettings>;
@@ -1022,6 +1034,7 @@ const InstructorClassCreationPage = () => {
       if (typeof parsed.salePrice === 'string') setSalePrice(parsed.salePrice);
       if (typeof parsed.instructorPay === 'string') setInstructorPay(parsed.instructorPay);
       if (parsed.rateBasis) setRateBasis(parsed.rateBasis);
+      if (parsed.service) setService(parsed.service);
       if (parsed.classDetails) {
         const saved = parsed.classDetails;
         setClassDetails(prev => ({
@@ -1096,6 +1109,7 @@ const InstructorClassCreationPage = () => {
           salePrice,
           instructorPay,
           rateBasis,
+          service,
           classDetails,
           scheduleSettings,
           notificationSettings,
@@ -1114,6 +1128,7 @@ const InstructorClassCreationPage = () => {
     salePrice,
     instructorPay,
     rateBasis,
+    service,
     classDetails,
     scheduleSettings,
     notificationSettings,
@@ -1156,7 +1171,7 @@ const InstructorClassCreationPage = () => {
 
     setSalePrice(classRecord.sale_price == null ? '' : String(classRecord.sale_price));
     setInstructorPay(classRecord.instructor_pay == null ? '' : String(classRecord.instructor_pay));
-    setRateBasis(classRecord.rate_basis ?? DEFAULT_RATE_BASIS);
+    setRateBasis(classRecord.rate_basis ?? null);
     setClassDetails({
       uuid: classRecord.uuid || '',
       course_uuid: classRecord.course_uuid ?? '',
@@ -1203,24 +1218,15 @@ const InstructorClassCreationPage = () => {
     );
 
     const loadedLocationType = normalizeLocationType(classRecord.location_type);
-    const classTypeValue = classRecord.class_visibility === 'PRIVATE' ? 'PRIVATE' : 'GROUP';
-    let computedServiceType: ServiceType | undefined;
-
-    if (classTypeValue === 'PRIVATE' && loadedLocationType === 'ONLINE') {
-      computedServiceType = 'PRIVATE_ONLINE';
-    } else if (classTypeValue === 'GROUP' && loadedLocationType === 'ONLINE') {
-      computedServiceType = 'GROUP_ONLINE';
-    } else if (classTypeValue === 'GROUP' && loadedLocationType === 'IN_PERSON') {
-      computedServiceType = 'GROUP_INPERSON';
-    } else if (classTypeValue === 'PRIVATE' && loadedLocationType === 'IN_PERSON') {
-      computedServiceType = 'PRIVATE_INPERSON';
-    } else if (classTypeValue === 'PRIVATE' && loadedLocationType === 'HYBRID') {
-      //   computedServiceType = 'PRIVATE_HYBRID';
-      // } else if (classTypeValue === 'GROUP' && loadedLocationType === 'HYBRID') {
-      //   computedServiceType = 'GROUP_HYBRID';
+    if (loadedLocationType) {
+      setService(
+        serviceForDelivery(loadedLocationType, {
+          sessionFormat:
+            classRecord.session_format ??
+            (classRecord.class_visibility === 'PRIVATE' ? 'INDIVIDUAL' : 'GROUP'),
+        })
+      );
     }
-
-    if (computedServiceType) setServiceType(computedServiceType);
 
     if (Array.isArray(classRecord.session_templates) && classRecord.session_templates.length > 0) {
       const templates = classRecord.session_templates;
@@ -1489,21 +1495,21 @@ const InstructorClassCreationPage = () => {
       toast.error('Please enter a class title');
       return false;
     }
-    if (!serviceType) {
-      toast.error('Please select a service type');
-      return false;
-    }
-    const locationType = normalizeLocationType(classDetails.location_type);
-    if (!locationType) {
-      toast.error('Please select a lecture type');
-      return false;
-    }
     if (!selectedCatalogItem) {
       toast.error('Please select a valid course or program');
       return false;
     }
-    if (!Number.isFinite(Number(classDetails.rate_card)) || Number(classDetails.rate_card) <= 0) {
-      toast.error('Please choose a service type with a valid approved rate');
+    const locationType = normalizeLocationType(classDetails.location_type);
+    if (!locationType) {
+      toast.error('Pick how the class is delivered.');
+      return false;
+    }
+    if (!rateBasis) {
+      toast.error('Pick a billing basis on your rate card.');
+      return false;
+    }
+    if (!service) {
+      toast.error('Pick a service.');
       return false;
     }
     if (requiresPhysicalLocation(locationType) && !trimToUndefined(classDetails.location_name)) {
@@ -1580,7 +1586,7 @@ const InstructorClassCreationPage = () => {
   };
 
   const handleSubmitError = (error: unknown, fallback: string) => {
-    const report = parseConflictError(error);
+    const report = parseSchedulingConflicts(error);
     if (report) {
       setRefusedWindows(report.conflicts);
       toast.error(report.message, {
@@ -1595,34 +1601,23 @@ const InstructorClassCreationPage = () => {
   // ── Submit ─────────────────────────────────────────────────────────────────
   const submitClass = (isDraft = false) => {
     if (!isFormValid()) return;
+    if (!rateBasis || !service) return;
     if (approvedRate === undefined) {
       return toast.error(
-        'The course creator has not approved a rate for this format, delivery mode and billing basis.'
+        `Your rate card has no approved ${formatRateBasis(rateBasis)} rate for this service. Add it to your rate card first.`
       );
     }
-    const saleValue = num(salePrice);
-    const payValue = num(instructorPay);
-    if (saleValue === undefined || !Number.isFinite(saleValue) || saleValue < 0) {
-      return toast.error(
-        `Enter the sale price learners are charged per ${rateBasisUnit(rateBasis)}.`
-      );
-    }
-    if (payValue === undefined || !Number.isFinite(payValue) || payValue < 0) {
-      return toast.error(`Enter the pay the instructor receives per ${rateBasisUnit(rateBasis)}.`);
-    }
-    if (saleValue < approvedRate) {
-      return toast.error(
-        `Sale price must be at least the approved fee of ${approvedRate} per ${rateBasisUnit(rateBasis)}.`
-      );
-    }
-    if (payValue < approvedRate) {
-      return toast.error(
-        `Instructor pay must be at least the approved fee of ${approvedRate} per ${rateBasisUnit(rateBasis)}.`
-      );
-    }
-    if (payValue > saleValue) {
-      return toast.error('Instructor pay cannot exceed the sale price.');
-    }
+    const priceIssue = priceAndPayIssue({
+      salePrice,
+      instructorPay,
+      approvedRate,
+      basis: rateBasis,
+      currency: rateCard?.currency,
+      payAtLeastRate: true,
+    });
+    if (priceIssue) return toast.error(priceIssue.message);
+    const saleValue = num(salePrice) ?? 0;
+    const payValue = num(instructorPay) ?? 0;
     setRefusedWindows([]);
 
     const locationType = normalizeLocationType(classDetails.location_type);
@@ -1905,10 +1900,7 @@ const InstructorClassCreationPage = () => {
       title: classDetails.title.trim(),
       description: classDetails.description || undefined,
       class_visibility: classDetails.class_type === 'PRIVATE' ? 'PRIVATE' : 'PUBLIC',
-      session_format:
-        classDetails.class_type === 'PRIVATE'
-          ? SessionFormatEnum.INDIVIDUAL
-          : SessionFormatEnum.GROUP,
+      session_format: serviceFormat(service),
       location_type: LocationTypeEnum[locationType as keyof typeof LocationTypeEnum],
       location_name: trimToUndefined(classDetails.location_name),
       location_latitude: toCoordinate(locationLatitude),
@@ -2043,7 +2035,8 @@ const InstructorClassCreationPage = () => {
     if (typeof window !== 'undefined') window.localStorage.removeItem(LOCAL_CLASS_DRAFT_KEY);
     setSalePrice('');
     setInstructorPay('');
-    setRateBasis(DEFAULT_RATE_BASIS);
+    setRateBasis(null);
+    setService(null);
     setClassDetails(createInitialClassDetails(instructor?.full_name));
     setScheduleSettings(createInitialScheduleSettings(activeScheduleTimeZone));
     setScheduleTimezoneOverridden(false);
@@ -2081,6 +2074,8 @@ const InstructorClassCreationPage = () => {
         kind: item.source === 'course' ? 'Course' : 'Program',
         categoryNames: [],
         rateCard: item.rateCard as ApprovedRateCard | undefined,
+        applicationUuid: item.applicationUuid,
+        pendingRateUpdateUuid: item.pendingRateUpdateUuid,
       })),
     [catalogItems]
   );
@@ -2092,8 +2087,13 @@ const InstructorClassCreationPage = () => {
   const handleOfferingChange = (value: string) => {
     const [source, uuid] = value.split(':');
     const item = catalogItems.find(candidate => candidate.source === source && candidate.uuid === uuid);
-    if (!item) return;
+    if (!item || value === selectedOfferingValue) return;
 
+    // Each offering has its own rate card, so billing starts over.
+    setRateBasis(null);
+    setService(null);
+    setSalePrice('');
+    setInstructorPay('');
     setClassDetails(prev => ({
       ...prev,
       course_uuid: item.source === 'course' ? item.uuid : '',
@@ -2103,40 +2103,52 @@ const InstructorClassCreationPage = () => {
     }));
   };
 
-  const serviceKey = useMemo<ServiceKey>(() => {
-    const privateClass = classDetails.class_type === 'PRIVATE';
-    const online = classDetails.location_type === 'ONLINE';
-    if (privateClass) return online ? 'private-online' : '1on1';
-    return online ? 'online' : 'group';
-  }, [classDetails.class_type, classDetails.location_type]);
+  const selectedInstructorOffering = instructorOfferings.find(
+    item => item.value === selectedOfferingValue
+  );
+  const proposedRateCard = useProposedRateCard(selectedInstructorOffering);
 
-  const handleServiceChange = (value: ServiceKey) => {
-    const serviceMap: Record<
-      ServiceKey,
-      { serviceType: ServiceType; classType: 'PRIVATE' | 'GROUP'; locationType: 'ONLINE' | 'IN_PERSON' }
-    > = {
-      '1on1': { serviceType: 'PRIVATE_INPERSON', classType: 'PRIVATE', locationType: 'IN_PERSON' },
-      group: { serviceType: 'GROUP_INPERSON', classType: 'GROUP', locationType: 'IN_PERSON' },
-      online: { serviceType: 'GROUP_ONLINE', classType: 'GROUP', locationType: 'ONLINE' },
-      'private-online': {
-        serviceType: 'PRIVATE_ONLINE',
-        classType: 'PRIVATE',
-        locationType: 'ONLINE',
-      },
-    };
-    const selected = serviceMap[value];
-    const format = selected.classType === 'PRIVATE' ? 'INDIVIDUAL' : 'GROUP';
-    const price = approvedRateFor(
-      rateCard as ApprovedRateCard | undefined,
-      format,
-      selected.locationType,
-      rateBasis
-    );
-    handleServiceTypeChange(
-      selected.serviceType,
-      selected.classType,
-      selected.locationType,
-      price
+  const handleDeliveryChange = (next: DeliveryMode) => {
+    setClassDetails(prev => ({ ...prev, location_type: next }));
+    setService(null);
+    if (rateBasis && basisStatus(rateCard, null, next, rateBasis) !== 'approved') {
+      setRateBasis(null);
+    }
+  };
+
+  const handleBasisChange = (next: RateBasis) => {
+    if (next === rateBasis || !deliveryMode) return;
+    setRateBasis(next);
+    setSalePrice('');
+    setInstructorPay('');
+    const rate = service
+      ? rateFor(rateCard, { format: serviceFormat(service), delivery: deliveryMode, basis: next })
+      : null;
+    if (rate === null) setService(null);
+    else setSalePrice(String(rate));
+  };
+
+  // A private service is also a private class; group services are listed publicly.
+  const handleServiceChange = (next: ServiceKey) => {
+    setService(next);
+    setClassDetails(prev => ({
+      ...prev,
+      class_type: serviceFormat(next) === 'INDIVIDUAL' ? 'PRIVATE' : 'PUBLIC',
+    }));
+    if (!deliveryMode || !rateBasis || salePrice.trim()) return;
+    const rate = rateFor(rateCard, {
+      format: serviceFormat(next),
+      delivery: deliveryMode,
+      basis: rateBasis,
+    });
+    if (rate !== null) setSalePrice(String(rate));
+  };
+
+  const addRatesHref = (basis: RateBasis) => {
+    const { kind, parentUuid } = offeringTarget(selectedInstructorOffering);
+    return dashboardUrl(
+      'instructor',
+      `rate-card?kind=${kind}&parent=${encodeURIComponent(parentUuid)}&basis=${basis}`
     );
   };
 
@@ -2361,35 +2373,23 @@ const InstructorClassCreationPage = () => {
     };
   }, [scheduleSettings.allDay, scheduleSettings.timezone, sessionsForConflictCheck]);
 
-  const sharedConflicts = useMemo(
+  const sharedConflicts = useMemo<SchedulingConflict[]>(
     () =>
-      scheduleConflicts.map(conflict => ({
-        start: `${conflict.proposed.date} ${conflict.proposed.startTime}`,
-        end: conflict.proposed.endTime,
-        reasons: [`Overlaps with ${conflict.existing.classTitle}`],
-      })),
+      scheduleConflicts.map(({ proposed, existing }) => {
+        const range = getSessionTimeRange(
+          proposed.date,
+          proposed.startTime,
+          proposed.endTime,
+          proposed.timezone
+        );
+        return {
+          start: range?.start ?? null,
+          end: range?.end ?? null,
+          reasons: [`Overlaps with ${existing.classTitle}`],
+        };
+      }),
     [scheduleConflicts]
   );
-
-  if (isLoading) {
-    return (
-      <div className='bg-background/95 fixed inset-0 z-50 flex items-center justify-center backdrop-blur-sm'>
-        <div className='flex flex-col items-center gap-4 text-center'>
-          <div className='bg-primary/10 flex items-center justify-center rounded-full p-4'>
-            <Loader2 className='text-primary h-8 w-8 animate-spin' />
-          </div>
-
-          {/* Text */}
-          <div className='space-y-1'>
-            <p className='text-foreground text-base font-semibold'>Loading class details</p>
-            <p className='text-muted-foreground text-sm'>
-              Please wait while we retrieve class details...
-            </p>
-          </div>
-        </div>
-      </div>
-    );
-  }
 
   return (
     <div className='mx-auto w-full max-w-[1200px] space-y-6 px-3 py-4 sm:px-5 lg:px-6'>
@@ -2399,183 +2399,221 @@ const InstructorClassCreationPage = () => {
           description='For an approved offering you can deliver. The class is scheduled immediately on your calendar and can be published for learners to join.'
         />
 
-        <OfferingPicker
-          loading={!instructor}
-          offerings={instructorOfferings}
-          offering={selectedOfferingValue}
-          onOfferingChange={handleOfferingChange}
-          selectedOffering={instructorOfferings.find(item => item.value === selectedOfferingValue)}
-          categories={[]}
-          categoriesLoading={false}
-          programCategoryUuid=''
-          onProgramCategoryChange={() => undefined}
-          title={classDetails.title}
-          onTitleChange={value => setClassDetails(prev => ({ ...prev, title: value }))}
-          showInstructor={false}
-          showCategory={false}
-          titleLabel='Class title'
-          titleHint='This is the title learners will see on the class.'
-          titlePlaceholder='Enter a class title'
-        />
+        {/* Editing hydrates every field below from the class record, so they wait on it. */}
+        <AsyncSection
+          loading={isLoading}
+          error={classLoadFailed}
+          errorTitle='Couldn’t load this class'
+          onRetry={() => void refetchClass()}
+          skeleton={<ClassFormSkeleton />}
+        >
+          <AsyncSection
+            error={offeringsError}
+            errorTitle='Couldn’t load your approved offerings'
+            onRetry={retryOfferings}
+          >
+            <OfferingPicker
+              loading={offeringsLoading}
+              offerings={instructorOfferings}
+              offering={selectedOfferingValue}
+              onOfferingChange={handleOfferingChange}
+              selectedOffering={selectedInstructorOffering}
+              categories={[]}
+              categoriesLoading={false}
+              programCategoryUuid=''
+              onProgramCategoryChange={() => undefined}
+              title={classDetails.title}
+              onTitleChange={value => setClassDetails(prev => ({ ...prev, title: value }))}
+              showInstructor={false}
+              showCategory={false}
+              titleLabel='Class title'
+              titleHint='This is the title learners will see on the class.'
+              titlePlaceholder='Enter a class title'
+            />
+          </AsyncSection>
 
-        <ServiceCards
-          value={serviceKey}
-          onChange={handleServiceChange}
-          rateCard={rateCard as ApprovedRateCard | undefined}
-          delivery={normalizeLocationType(classDetails.location_type) as 'ONLINE' | 'IN_PERSON' | 'HYBRID'}
-          rateBasis={rateBasis}
-        />
+          <DeliveryCards value={deliveryMode} onChange={handleDeliveryChange} />
 
-        <PricingCapacity
-          approvedFee={approvedRate}
-          currency={rateCard?.currency}
-          salePrice={salePrice}
-          onSalePriceChange={setSalePrice}
-          instructorPay={instructorPay}
-          onInstructorPayChange={setInstructorPay}
-          maxParticipants={String(classDetails.class_limit || '')}
-          onMaxChange={value =>
-            setClassDetails(prev => ({ ...prev, class_limit: Number(value) || 0 }))
-          }
-          allowWaitlist={allowWaitlist}
-          onAllowWaitlistChange={setAllowWaitlist}
-          totalSessions={sessionsForConflictCheck.length}
-          totalMinutes={totalHours * 60}
-          totalDays={totalDays}
-          rateBasis={rateBasis}
-          onRateBasisChange={setRateBasis}
-        />
+          {selectedInstructorOffering && deliveryMode ? (
+            <>
+              <BillingBasisCards
+                value={rateBasis}
+                onChange={handleBasisChange}
+                hint='Learners are charged, and you are paid, per unit of this basis.'
+                statusFor={basis => basisStatus(rateCard, proposedRateCard, deliveryMode, basis)}
+                renderAddAction={basis => (
+                  <Button asChild size='sm' variant='outline'>
+                    <Link href={addRatesHref(basis.value)}>
+                      <Plus aria-hidden />
+                      Add {basis.phrase} rates
+                    </Link>
+                  </Button>
+                )}
+              />
 
-        <LocationVenue
-          delivery={normalizeLocationType(classDetails.location_type) as 'ONLINE' | 'IN_PERSON' | 'HYBRID'}
-          onDeliveryChange={value =>
-            setClassDetails(prev => ({ ...prev, location_type: value }))
-          }
-          meetingLink={classDetails.meeting_link}
-          onMeetingLinkChange={value =>
-            setClassDetails(prev => ({ ...prev, meeting_link: value }))
-          }
-          locationName={classDetails.location_name}
-          onLocationNameChange={value =>
-            setClassDetails(prev => ({ ...prev, location_name: value }))
-          }
-          locationLatitude={locationLatitude}
-          onLocationLatitudeChange={setLocationLatitude}
-          locationLongitude={locationLongitude}
-          onLocationLongitudeChange={setLocationLongitude}
-          venueUuid=''
-          onVenueChange={() => undefined}
-          venueResources={[]}
-          onlyAvailable
-          onOnlyAvailableChange={() => undefined}
-          showVenue={false}
-        />
+              <ServiceCards
+                value={service}
+                onChange={handleServiceChange}
+                rateCard={rateCard as ApprovedRateCard | undefined}
+                delivery={deliveryMode}
+                basis={rateBasis}
+              />
+            </>
+          ) : (
+            <div className='border-border bg-muted/30 text-muted-foreground rounded-md border border-dashed px-4 py-5 text-center text-sm'>
+              Pick the course or program and how it is delivered to see your approved rates.
+            </div>
+          )}
 
-        <ScheduleModeCards
-          value={scheduleMode}
-          onChange={value =>
-            setSchedulePreset(
-              value === 'pick' ? 'pick-dates' : value === 'academic' ? 'academic-period' : 'standard'
-            )
-          }
-        />
+          {rateBasis && service ? (
+            <PricingCapacity
+              basis={rateBasis}
+              approvedRate={approvedRate}
+              currency={rateCard?.currency}
+              salePrice={salePrice}
+              onSalePriceChange={setSalePrice}
+              instructorPay={instructorPay}
+              onInstructorPayChange={setInstructorPay}
+              maxParticipants={String(classDetails.class_limit || '')}
+              onMaxChange={value =>
+                setClassDetails(prev => ({ ...prev, class_limit: Number(value) || 0 }))
+              }
+              allowWaitlist={allowWaitlist}
+              onAllowWaitlistChange={setAllowWaitlist}
+              totals={{
+                sessions: sessionsForConflictCheck.length,
+                minutes: totalHours * 60,
+                days: totalDays,
+              }}
+              payHint='What you are paid. It can’t be below your approved rate or above the sale price.'
+              payAtLeastRate
+            />
+          ) : null}
 
-        {scheduleMode === 'pick' ? (
-          <PickDatesPanel
-            pickedDates={sharedPickedDates}
-            onPickedDatesChange={updatePickedDates}
-            sortedPickedDates={sortedSharedPickedDates}
-            pickMonth={pickMonth}
-            onPickMonthChange={setPickMonth}
-            sessionStart={sharedSessionStart}
-            onSessionStartChange={value => updatePickedSessionTime('startTime', value)}
-            sessionEnd={sharedSessionEnd}
-            onSessionEndChange={value => updatePickedSessionTime('endTime', value)}
-            timezone={scheduleSettings.timezone}
-            onTimezoneChange={handleScheduleTimeZoneChange}
+          <LocationVenue
+            delivery={deliveryMode}
+            meetingLink={classDetails.meeting_link}
+            onMeetingLinkChange={value =>
+              setClassDetails(prev => ({ ...prev, meeting_link: value }))
+            }
+            locationName={classDetails.location_name}
+            onLocationNameChange={value =>
+              setClassDetails(prev => ({ ...prev, location_name: value }))
+            }
+            locationLatitude={locationLatitude}
+            onLocationLatitudeChange={setLocationLatitude}
+            locationLongitude={locationLongitude}
+            onLocationLongitudeChange={setLocationLongitude}
           />
-        ) : scheduleMode === 'academic' ? (
-          <AcademicPeriodsPanel periods={academicPeriods} onChange={handleAcademicPeriodsChange} />
-        ) : (
-          <StandardSchedule
-            days={sharedDays}
-            onDayChange={updateSharedDay}
-            repeatEvery={String(scheduleSettings.repeat.interval || 1)}
-            onRepeatEveryChange={value =>
-              setScheduleSettings(prev => ({
-                ...prev,
-                repeat: { ...prev.repeat, interval: Number(value) || 1 },
-              }))
+
+          <ScheduleModeCards
+            value={scheduleMode}
+            onChange={value =>
+              setSchedulePreset(
+                value === 'pick' ? 'pick-dates' : value === 'academic' ? 'academic-period' : 'standard'
+              )
             }
-            repeatUnit={
-              scheduleSettings.repeat.unit === 'day'
-                ? 'Day'
-                : scheduleSettings.repeat.unit === 'month'
-                  ? 'Month'
-                  : 'Week'
-            }
-            onRepeatUnitChange={value =>
-              setScheduleSettings(prev => ({
-                ...prev,
-                repeat: {
-                  ...prev.repeat,
-                  unit: value.toLowerCase() as 'day' | 'week' | 'month',
-                  days: value === 'Week' ? prev.repeat.days : [],
-                },
-              }))
-            }
-            startDate={scheduleSettings.startClass.date}
-            onStartDateChange={value =>
-              setScheduleSettings(prev => ({
-                ...prev,
-                startClass: { ...prev.startClass, date: value },
-                endRepeat: prev.endRepeat || value,
-              }))
-            }
-            endDate={scheduleSettings.endRepeat}
-            onEndDateChange={value => setScheduleSettings(prev => ({ ...prev, endRepeat: value }))}
-            timezone={scheduleSettings.timezone}
-            onTimezoneChange={handleScheduleTimeZoneChange}
-            totalSessions={sessionsForConflictCheck.length}
           />
-        )}
 
-        <ScheduleResolution summary={scheduleSummary} />
+          {scheduleMode === 'pick' ? (
+            <PickDatesPanel
+              pickedDates={sharedPickedDates}
+              onPickedDatesChange={updatePickedDates}
+              sortedPickedDates={sortedSharedPickedDates}
+              pickMonth={pickMonth}
+              onPickMonthChange={setPickMonth}
+              sessionStart={sharedSessionStart}
+              onSessionStartChange={value => updatePickedSessionTime('startTime', value)}
+              sessionEnd={sharedSessionEnd}
+              onSessionEndChange={value => updatePickedSessionTime('endTime', value)}
+              timezone={scheduleSettings.timezone}
+              onTimezoneChange={handleScheduleTimeZoneChange}
+            />
+          ) : scheduleMode === 'academic' ? (
+            <AcademicPeriodsPanel periods={academicPeriods} onChange={handleAcademicPeriodsChange} />
+          ) : (
+            <StandardSchedule
+              days={sharedDays}
+              onDayChange={updateSharedDay}
+              repeatEvery={String(scheduleSettings.repeat.interval || 1)}
+              onRepeatEveryChange={value =>
+                setScheduleSettings(prev => ({
+                  ...prev,
+                  repeat: { ...prev.repeat, interval: Number(value) || 1 },
+                }))
+              }
+              repeatUnit={
+                scheduleSettings.repeat.unit === 'day'
+                  ? 'Day'
+                  : scheduleSettings.repeat.unit === 'month'
+                    ? 'Month'
+                    : 'Week'
+              }
+              onRepeatUnitChange={value =>
+                setScheduleSettings(prev => ({
+                  ...prev,
+                  repeat: {
+                    ...prev.repeat,
+                    unit: value.toLowerCase() as 'day' | 'week' | 'month',
+                    days: value === 'Week' ? prev.repeat.days : [],
+                  },
+                }))
+              }
+              startDate={scheduleSettings.startClass.date}
+              onStartDateChange={value =>
+                setScheduleSettings(prev => ({
+                  ...prev,
+                  startClass: { ...prev.startClass, date: value },
+                  endRepeat: prev.endRepeat || value,
+                }))
+              }
+              endDate={scheduleSettings.endRepeat}
+              onEndDateChange={value => setScheduleSettings(prev => ({ ...prev, endRepeat: value }))}
+              timezone={scheduleSettings.timezone}
+              onTimezoneChange={handleScheduleTimeZoneChange}
+              totalSessions={sessionsForConflictCheck.length}
+            />
+          )}
 
-        {/* Outside the preset switch: the window is required however the sessions are laid out. */}
-        <RegistrationWindow
-          start={scheduleSettings.registrationPeriod.start}
-          onStartChange={handleRegistrationStartChange}
-          end={scheduleSettings.registrationPeriod.end}
-          onEndChange={handleRegistrationEndChange}
-          errors={registrationErrors}
-        />
+          <ScheduleResolution summary={scheduleSummary} />
 
-        <ClassMediaUpload
-          selectedThumbnail={selectedThumbnail}
-          selectedVideo={selectedPromotionalVideo}
-          onMediaSelect={(media: MediaFile) =>
-            media.type === 'thumbnail'
-              ? setSelectedThumbnail(media.file)
-              : setSelectedPromotionalVideo(media.file)
-          }
-          onRemoveThumbnail={() => setSelectedThumbnail(null)}
-          onRemoveVideo={() => setSelectedPromotionalVideo(null)}
-        />
+          {/* Outside the preset switch: the window is required however the sessions are laid out. */}
+          <RegistrationWindow
+            start={scheduleSettings.registrationPeriod.start}
+            onStartChange={handleRegistrationStartChange}
+            end={scheduleSettings.registrationPeriod.end}
+            onEndChange={handleRegistrationEndChange}
+            errors={registrationErrors}
+          />
 
-        <ReminderOptions value={sharedReminder} onChange={handleReminderChange} />
+          <ClassMediaUpload
+            selectedThumbnail={selectedThumbnail}
+            selectedVideo={selectedPromotionalVideo}
+            onMediaSelect={(media: MediaFile) =>
+              media.type === 'thumbnail'
+                ? setSelectedThumbnail(media.file)
+                : setSelectedPromotionalVideo(media.file)
+            }
+            onRemoveThumbnail={() => setSelectedThumbnail(null)}
+            onRemoveVideo={() => setSelectedPromotionalVideo(null)}
+          />
 
-        <UpcomingSessions sessions={sharedUpcomingSessions} />
+          <ReminderOptions value={sharedReminder} onChange={handleReminderChange} />
 
-        <ResourceConflictAlert
-          title='These sessions conflict with existing instructor classes'
-          conflicts={sharedConflicts}
-        />
+          <UpcomingSessions sessions={sharedUpcomingSessions} />
 
-        <ResourceConflictAlert
-          title='The scheduler refused these sessions'
-          conflicts={refusedWindows}
-        />
+          <SchedulingConflictAlert
+            title='These sessions conflict with existing instructor classes'
+            conflicts={sharedConflicts}
+            timeZone={scheduleSettings.timezone}
+          />
+
+          <SchedulingConflictAlert
+            title='The scheduler refused these sessions'
+            conflicts={refusedWindows}
+            timeZone={scheduleSettings.timezone}
+          />
+        </AsyncSection>
 
         <div className='border-border/70 flex flex-wrap justify-end gap-2 border-t pt-4'>
           <Button
@@ -2585,7 +2623,7 @@ const InstructorClassCreationPage = () => {
           >
             Cancel
           </Button>
-          <Button type='submit' disabled={isSubmitting}>
+          <Button type='submit' disabled={isSubmitting || isLoading || classLoadFailed}>
             {isSubmitting ? <Loader2 className='mr-2 size-4 animate-spin' /> : null}
             {isSubmitting ? 'Publishing...' : 'Publish Class'}
           </Button>
@@ -2596,6 +2634,30 @@ const InstructorClassCreationPage = () => {
 };
 
 export default InstructorClassCreationPage;
+
+/** Mirrors the form's sections while an edited class loads. */
+const ClassFormSkeleton = () => (
+  <div aria-hidden='true' className='space-y-6'>
+    <div className='space-y-2'>
+      <Skeleton className='h-4 w-44' />
+      <Skeleton className='h-9 w-full' />
+      <Skeleton className='mt-4 h-4 w-28' />
+      <Skeleton className='h-9 w-full' />
+    </div>
+    {[3, 3, 2].map((cards, index) => (
+      <div key={index} className='space-y-2'>
+        <Skeleton className='h-4 w-40' />
+        <div className={cards === 3 ? 'grid gap-3 sm:grid-cols-3' : 'grid gap-3 sm:grid-cols-2'}>
+          {Array.from({ length: cards }).map((_, card) => (
+            <Skeleton key={card} className='h-20 rounded-lg' />
+          ))}
+        </div>
+      </div>
+    ))}
+    <Skeleton className='h-48 w-full rounded-lg' />
+    <Skeleton className='h-28 w-full rounded-lg' />
+  </div>
+);
 
 const FieldGroup = ({ label, children }: { label: string; children: React.ReactNode }) => (
   <div className='space-y-2'>

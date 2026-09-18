@@ -26,7 +26,6 @@ import {
 } from '@/components/ui/sheet';
 import { Slider } from '@/components/ui/slider';
 import { searchSkillsOptions } from '@/services/client/@tanstack/react-query.gen';
-import type { Booking } from '@/src/features/dashboard/courses/pages/InstructorBookingPage';
 import { useQuery } from '@tanstack/react-query';
 import { DollarSign, Filter, MapPin, Search, SlidersHorizontal, Star, X } from 'lucide-react';
 import type React from 'react';
@@ -36,7 +35,6 @@ import type { BundledClass, SearchInstructor } from '../types';
 type Props = {
   instructors: SearchInstructor[];
   classes: BundledClass[];
-  onBookingComplete: (booking: Booking) => void;
   courseId: string;
 };
 
@@ -77,7 +75,6 @@ const getInstructorBatchSize = (width: number) => {
 export const InstructorDirectory: React.FC<Props> = ({
   instructors,
   classes: _classes,
-  onBookingComplete,
   courseId,
 }) => {
   const [selectedInstructor, setSelectedInstructor] = useState<SearchInstructor | null>(null);
@@ -560,7 +557,6 @@ export const InstructorDirectory: React.FC<Props> = ({
         <InstructorProfileComponent
           instructor={selectedInstructor}
           onClose={() => setSelectedInstructor(null)}
-          onBookingComplete={onBookingComplete}
         />
       ) : null}
     </div>

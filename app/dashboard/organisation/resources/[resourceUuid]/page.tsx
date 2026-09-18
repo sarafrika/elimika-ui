@@ -1,6 +1,6 @@
 'use client';
 
-import { apiErrorMessage } from '@/components/resourcing/conflicts';
+import { getErrorMessage } from '@/lib/error-utils';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import {
@@ -257,7 +257,7 @@ export default function ResourceDetailPage() {
       await invalidateRulesAndCalendar();
     },
     onError: error => {
-      toast.error(apiErrorMessage(error, 'Unable to save this availability rule.'));
+      toast.error(getErrorMessage(error, 'Unable to save this availability rule.'));
     },
   });
   const updateRuleMutation = useMutation({
@@ -268,7 +268,7 @@ export default function ResourceDetailPage() {
       await invalidateRulesAndCalendar();
     },
     onError: error => {
-      toast.error(apiErrorMessage(error, 'Unable to save this availability rule.'));
+      toast.error(getErrorMessage(error, 'Unable to save this availability rule.'));
     },
   });
   const deleteRuleMutation = useMutation({
@@ -278,7 +278,7 @@ export default function ResourceDetailPage() {
       await invalidateRulesAndCalendar();
     },
     onError: error => {
-      toast.error(apiErrorMessage(error, 'Unable to delete this availability rule.'));
+      toast.error(getErrorMessage(error, 'Unable to delete this availability rule.'));
     },
   });
 

@@ -792,7 +792,7 @@ function OfferingRow({
           )}
         </span>
         <span className='text-muted-foreground mt-1 block text-xs whitespace-nowrap'>
-          {offering.type === 'courses' ? 'min. / trainee / hour' : 'program price'}
+          {offering.type === 'courses' ? 'min. per learner, any basis' : 'program price'}
         </span>
       </TableCell>
       <TableCell>

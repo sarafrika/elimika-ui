@@ -6,6 +6,7 @@
  * small: anything that grows past a handful of lines belongs in its own block.
  */
 
+import { lowestRatesLabel } from '@/src/features/rate-card/application-display';
 import type { CourseTrainingRateCard } from '../types';
 import dayjs from 'dayjs';
 import utc from 'dayjs/plugin/utc';
@@ -129,31 +130,7 @@ export function courseInitials(name: string): string {
  * Rate cards
  * ────────────────────────────────────────────────────────────────────────── */
 
-/** The four hourly rates, in the order the commercials table lists them. */
-const RATE_CARD_HOURLY = [
-  { field: 'private_online_hourly_rate', label: 'private online' },
-  { field: 'private_inperson_hourly_rate', label: 'private in-person' },
-  { field: 'group_online_hourly_rate', label: 'group online' },
-  { field: 'group_inperson_hourly_rate', label: 'group in-person' },
-] as const satisfies ReadonlyArray<{ field: keyof CourseTrainingRateCard; label: string }>;
-
-/**
- * The delivery table's "Rate card (from)" cell — the cheapest hourly rate on the
- * card and the format it buys: `KES 620/hr group online`.
- *
- * The card itself is only present for viewers the API sends one to. Callers pass
- * `trainer.rate_card` straight through; there is no fuller object to pick from.
- */
+/** The delivery table's "Rate card (from)" cell: the lowest offered rate on each basis. */
 export function formatRateCardFrom(card: CourseTrainingRateCard): string | undefined {
-  let cheapest: { rate: number; label: string } | undefined;
-
-  for (const { field, label } of RATE_CARD_HOURLY) {
-    const rate = card[field];
-    if (typeof rate !== 'number' || !Number.isFinite(rate)) continue;
-    if (!cheapest || rate < cheapest.rate) cheapest = { rate, label };
-  }
-
-  if (!cheapest) return undefined;
-  const money = formatCourseMoney(cheapest.rate, card.currency ?? COURSE_DEFAULT_CURRENCY);
-  return money === undefined ? undefined : `${money}/hr ${cheapest.label}`;
+  return lowestRatesLabel({ ...card, currency: card.currency ?? COURSE_DEFAULT_CURRENCY });
 }

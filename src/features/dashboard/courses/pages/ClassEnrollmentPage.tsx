@@ -3,13 +3,13 @@
 
 import { allCourseTrainingRequirementsOptions } from '@/services/course-training-requirements';
 import { ClassScheduleCalendar } from '@/app/class-invite/page';
-import { type RateBasis, rateBasisShort } from '@/components/class-form';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Separator } from '@/components/ui/separator';
 import useBundledClassInfo from '@/hooks/use-course-classes';
+import { formatRate, formatRateAmount } from '@/lib/rate-card';
 import {
   addItemMutation,
   createCartMutation,
@@ -276,13 +276,13 @@ export default function ClassEnrollmentPage({
 
   const trainingFee = enrollingClass?.sale_price;
   const hasFee = typeof trainingFee === 'number' ? trainingFee > 0 : Boolean(trainingFee);
-  const feeUnit = rateBasisShort(enrollingClass?.rate_basis as RateBasis);
+  const feeBasis = enrollingClass?.rate_basis;
   const feeDisplay =
-    typeof trainingFee === 'number'
-      ? `KES ${trainingFee.toLocaleString()} / ${feeUnit}`
-      : trainingFee
-        ? `KES ${trainingFee} / ${feeUnit}`
-        : 'Free';
+    trainingFee || trainingFee === 0
+      ? feeBasis
+        ? formatRate(Number(trainingFee), feeBasis)
+        : formatRateAmount(Number(trainingFee))
+      : 'Free';
 
   // ── Cart mutations ─────────────────────────────────────────────────────
   const { cartId: savedCartId, setCartId } = useCartStore();

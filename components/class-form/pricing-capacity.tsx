@@ -1,34 +1,70 @@
 'use client';
 
+import { TriangleAlert } from 'lucide-react';
+import { type ReactNode, useId } from 'react';
+
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
 import { Switch } from '@/components/ui/switch';
-import { Coins, Wallet } from 'lucide-react';
+import { formatRateAmount, getRateBasis, type RateBasis } from '@/lib/rate-card';
 import {
-  DEFAULT_RATE_BASIS,
-  formatMoney,
-  RATE_BASES,
-  type RateBasis,
-  rateBasisShort,
-  rateBasisUnit,
+  billableUnits,
+  num,
+  priceAndPayIssue,
+  type ScheduleTotals,
+  unitsLabel,
 } from './class-form-shared';
 
-const parseAmount = (value: string) => {
-  const trimmed = value.trim();
-  if (!trimmed) return undefined;
-  const parsed = Number(trimmed);
-  return Number.isNaN(parsed) ? undefined : parsed;
-};
+function AmountInput({
+  id,
+  currency,
+  value,
+  onChange,
+  invalid,
+  describedBy,
+}: {
+  id: string;
+  currency: string;
+  value: string;
+  onChange: (value: string) => void;
+  invalid: boolean;
+  describedBy: string;
+}) {
+  return (
+    <div className='relative'>
+      <span className='text-muted-foreground pointer-events-none absolute top-1/2 left-3 -translate-y-1/2 text-xs font-medium'>
+        {currency}
+      </span>
+      <Input
+        id={id}
+        type='number'
+        inputMode='decimal'
+        min={0}
+        step='0.01'
+        value={value}
+        aria-invalid={invalid}
+        aria-describedby={describedBy}
+        onChange={event => onChange(event.target.value)}
+        className='pl-12 tabular-nums'
+      />
+    </div>
+  );
+}
 
+function TotalCell({ label, amount, detail }: { label: string; amount: string; detail: string }) {
+  return (
+    <div className='border-border/60 bg-muted/20 rounded-md border px-3 py-2.5'>
+      <p className='text-muted-foreground text-xs tracking-wide uppercase'>{label}</p>
+      <p className='text-foreground mt-1 text-base font-semibold tabular-nums'>{amount}</p>
+      <p className='text-muted-foreground text-xs'>{detail}</p>
+    </div>
+  );
+}
+
+/** Sale price and instructor pay per unit of the basis, capacity, and what the schedule totals. */
 export function PricingCapacity({
-  approvedFee,
+  basis,
+  approvedRate,
   currency,
   salePrice,
   onSalePriceChange,
@@ -38,177 +74,137 @@ export function PricingCapacity({
   onMaxChange,
   allowWaitlist,
   onAllowWaitlistChange,
-  totalSessions,
-  totalMinutes,
-  totalDays,
-  rateBasis = DEFAULT_RATE_BASIS,
-  onRateBasisChange,
-  readOnly = false,
+  totals,
+  payHint = 'Instructors can be hired only if their approved rate fits under this.',
+  payAtLeastRate = false,
+  children,
 }: {
-  approvedFee?: number;
+  basis: RateBasis;
+  approvedRate?: number | null;
   currency?: string | null;
   salePrice: string;
-  onSalePriceChange: (v: string) => void;
+  onSalePriceChange: (value: string) => void;
   instructorPay: string;
-  onInstructorPayChange: (v: string) => void;
+  onInstructorPayChange: (value: string) => void;
   maxParticipants: string;
-  onMaxChange: (v: string) => void;
+  onMaxChange: (value: string) => void;
   allowWaitlist: boolean;
-  onAllowWaitlistChange: (v: boolean) => void;
-  totalSessions: number;
-  totalMinutes?: number;
-  totalDays?: number;
-  rateBasis?: RateBasis;
-  onRateBasisChange?: (v: RateBasis) => void;
-  readOnly?: boolean;
+  onAllowWaitlistChange: (value: boolean) => void;
+  totals: ScheduleTotals;
+  payHint?: ReactNode;
+  /** The pay goes to the instructor whose approved rate this is, so it can't go below it. */
+  payAtLeastRate?: boolean;
+  /** Extra capacity fields, e.g. target groups. */
+  children?: ReactNode;
 }) {
-  const sale = parseAmount(salePrice);
-  const pay = parseAmount(instructorPay);
-  const margin = sale !== undefined && pay !== undefined ? sale - pay : undefined;
-  const unit = rateBasisUnit(rateBasis);
-  const short = rateBasisShort(rateBasis);
-  // Both prices are quoted in the contracted basis, so the total follows the matching unit:
-  // scheduled hours, scheduled sessions, or distinct calendar days.
-  const units =
-    rateBasis === 'per_session'
-      ? Math.max(totalSessions, 1)
-      : rateBasis === 'per_day'
-        ? Math.max(totalDays ?? totalSessions, 1)
-        : totalMinutes && totalMinutes > 0
-          ? totalMinutes / 60
-          : Math.max(totalSessions, 1);
-  const totalMargin = margin !== undefined ? margin * units : undefined;
-  const unitsLabel = Number.isInteger(units) ? String(units) : units.toFixed(2);
-  const minimum = Math.max(approvedFee ?? 0, 0);
-  const saleBelowMinimum = sale !== undefined && sale < minimum;
-  const payBelowMinimum = pay !== undefined && pay < minimum;
-  const overpaid = margin !== undefined && margin < 0;
+  const fieldId = useId();
+  const { unit } = getRateBasis(basis);
+  const money = currency || 'KES';
+  const issue = priceAndPayIssue({
+    salePrice,
+    instructorPay,
+    approvedRate,
+    basis,
+    currency,
+    payAtLeastRate,
+  });
+  const shownIssue = issue && !issue.incomplete ? issue.message : null;
+  const saleInvalid = Boolean(shownIssue?.startsWith('Sale price'));
+  const payInvalid = Boolean(shownIssue?.startsWith('Instructor pay'));
+
+  const units = billableUnits(basis, totals);
+  const sale = num(salePrice) ?? 0;
+  const pay = num(instructorPay) ?? 0;
+  const margin = Math.max(sale - pay, 0);
+  const perUnits = unitsLabel(units, basis);
 
   return (
-    <div className='space-y-3 rounded-lg border p-4'>
-      {onRateBasisChange ? (
-        <div className='space-y-2'>
-          <Label htmlFor='rate-basis'>Billing basis</Label>
-          <Select value={rateBasis} onValueChange={v => onRateBasisChange(v as RateBasis)}>
-            <SelectTrigger id='rate-basis' className='sm:w-64'>
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              {RATE_BASES.map(b => (
-                <SelectItem key={b.value} value={b.value}>
-                  {b.label}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-          <p className='text-muted-foreground text-[11px]'>
-            Both prices below are quoted in this unit, and it is the unit the instructor is paid and
-            the learner is charged in. A day means a calendar day, however many sessions fall in it.
-          </p>
-        </div>
-      ) : null}
-
-      <div className='grid gap-4 sm:grid-cols-4'>
-        <div className='space-y-2'>
-          <Label htmlFor='sale-price' className='flex items-center gap-1.5'>
-            <Coins className='size-3.5' /> Sale price per {unit}
-          </Label>
-          <Input
-            id='sale-price'
-            aria-invalid={saleBelowMinimum}
-            aria-describedby='sale-price-hint'
-            type='number'
-            min={minimum}
-            required={!readOnly}
-            step='0.01'
+    <div className='flex min-w-0 flex-col gap-5'>
+      <div className='grid gap-4 md:grid-cols-3'>
+        <div className='flex min-w-0 flex-col gap-2'>
+          <Label htmlFor={`${fieldId}-sale`}>Sale price per {unit}</Label>
+          <AmountInput
+            id={`${fieldId}-sale`}
+            currency={money}
             value={salePrice}
-            readOnly={readOnly}
-            onChange={e => onSalePriceChange(e.target.value)}
+            onChange={onSalePriceChange}
+            invalid={saleInvalid}
+            describedBy={`${fieldId}-sale-hint`}
           />
-          <p
-            id='sale-price-hint'
-            className={
-              saleBelowMinimum
-                ? 'text-destructive text-[11px]'
-                : 'text-muted-foreground text-[11px]'
-            }
-          >
-            {approvedFee === undefined
-              ? `The course creator has not approved a per-${unit} rate for this format and delivery mode.`
-              : `What a learner pays. Minimum ${formatMoney(minimum, currency)} per ${unit} — the approved fee.`}
+          <p id={`${fieldId}-sale-hint`} className='text-muted-foreground text-xs'>
+            {typeof approvedRate === 'number'
+              ? `At least ${formatRateAmount(approvedRate, currency)}, your approved rate.`
+              : 'What each learner pays.'}
           </p>
         </div>
 
-        <div className='space-y-2'>
-          <Label htmlFor='instructor-pay' className='flex items-center gap-1.5'>
-            <Wallet className='size-3.5' /> Instructor pay per {unit}
-          </Label>
-          <Input
-            id='instructor-pay'
-            aria-invalid={payBelowMinimum || overpaid}
-            aria-describedby='instructor-pay-hint'
-            type='number'
-            min={minimum}
-            required={!readOnly}
-            step='0.01'
-            max={sale}
+        <div className='flex min-w-0 flex-col gap-2'>
+          <Label htmlFor={`${fieldId}-pay`}>Instructor pay per {unit}</Label>
+          <AmountInput
+            id={`${fieldId}-pay`}
+            currency={money}
             value={instructorPay}
-            readOnly={readOnly}
-            onChange={e => onInstructorPayChange(e.target.value)}
+            onChange={onInstructorPayChange}
+            invalid={payInvalid}
+            describedBy={`${fieldId}-pay-hint`}
           />
-          <p
-            id='instructor-pay-hint'
-            className={
-              payBelowMinimum || overpaid
-                ? 'text-destructive text-[11px]'
-                : 'text-muted-foreground text-[11px]'
-            }
-          >
-            {approvedFee === undefined
-              ? 'What you pay the instructor.'
-              : `What you pay the instructor. Minimum ${formatMoney(minimum, currency)} per ${unit} — the approved fee.`}{' '}
-            It cannot exceed the sale price, and an applicant can only be assigned when it covers
-            their approved rate.
+          <p id={`${fieldId}-pay-hint`} className='text-muted-foreground text-xs'>
+            {payHint}
           </p>
         </div>
 
-        <div className='space-y-2'>
-          <Label htmlFor='max-participants'>Max participants</Label>
+        <div className='flex min-w-0 flex-col gap-2'>
+          <Label htmlFor={`${fieldId}-max`}>Max participants</Label>
           <Input
-            id='max-participants'
+            id={`${fieldId}-max`}
             type='number'
+            inputMode='numeric'
             min={1}
             value={maxParticipants}
-            onChange={e => onMaxChange(e.target.value)}
+            onChange={event => onMaxChange(event.target.value)}
           />
-        </div>
-
-        <div className='flex items-start gap-2 pt-7'>
-          <Switch
-            id='allow-waitlist'
-            checked={allowWaitlist}
-            onCheckedChange={onAllowWaitlistChange}
-          />
-          <Label htmlFor='allow-waitlist' className='font-normal'>
-            Allow waitlist
-          </Label>
+          <div className='flex items-center gap-2'>
+            <Switch
+              id={`${fieldId}-waitlist`}
+              checked={allowWaitlist}
+              onCheckedChange={onAllowWaitlistChange}
+            />
+            <Label htmlFor={`${fieldId}-waitlist`} className='font-normal'>
+              Allow a waitlist
+            </Label>
+          </div>
         </div>
       </div>
 
-      <p className={overpaid ? 'text-destructive text-[11px]' : 'text-muted-foreground text-[11px]'}>
-        {margin === undefined ? (
-          'Enter a sale price and an instructor pay to see the margin.'
-        ) : overpaid ? (
-          `Instructor pay exceeds the sale price by ${formatMoney(Math.abs(margin), currency)} per ${unit}. Lower it to at most ${formatMoney(sale, currency)}.`
-        ) : (
-          <>
-            {`Margin ${formatMoney(margin, currency)} per ${unit} × ${unitsLabel} ${units === 1 || short === 'hr' ? short : `${short}s`} = `}
-            <span className='text-foreground font-semibold'>
-              {formatMoney(totalMargin, currency)}
-            </span>
-          </>
-        )}
-      </p>
+      {children}
+
+      {shownIssue ? (
+        <div
+          role='alert'
+          className='border-destructive/50 bg-destructive/10 text-foreground flex items-start gap-2 rounded-md border p-3 text-sm'
+        >
+          <TriangleAlert className='text-destructive mt-0.5 size-4 shrink-0' />
+          <span>{shownIssue}</span>
+        </div>
+      ) : null}
+
+      <div className='grid gap-3 sm:grid-cols-3'>
+        <TotalCell
+          label='Each learner pays'
+          amount={formatRateAmount(sale * units, currency)}
+          detail={`${formatRateAmount(sale, currency)} × ${perUnits}`}
+        />
+        <TotalCell
+          label='Instructor earns'
+          amount={formatRateAmount(pay * units, currency)}
+          detail={`${formatRateAmount(pay, currency)} × ${perUnits}`}
+        />
+        <TotalCell
+          label='Your margin per learner'
+          amount={formatRateAmount(margin * units, currency)}
+          detail={`${formatRateAmount(margin, currency)} × ${perUnits}`}
+        />
+      </div>
     </div>
   );
 }

@@ -1,5 +1,6 @@
 'use client';
 
+import { JobTimeLegend } from '@/components/instructor/job-time';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
 import {
@@ -132,6 +133,12 @@ export function SchedulerCalendarView({ profile, data }: Props) {
   const studentSummaries = data.students;
 
   const allEvents = useMemo(() => events, [events]);
+  const jobTimeKinds = useMemo(() => {
+    const kinds = new Set(allEvents.map(event => event.eventType));
+    return (['hold', 'application'] as const).filter(kind =>
+      kinds.has(kind === 'hold' ? 'job_hold' : 'job_application')
+    );
+  }, [allEvents]);
   const filteredEvents = useMemo(
     () =>
       allEvents.filter(event => {
@@ -544,6 +551,8 @@ export function SchedulerCalendarView({ profile, data }: Props) {
           </Button>
         </div>
       </div>
+
+      {jobTimeKinds.length > 0 ? <JobTimeLegend kinds={[...jobTimeKinds]} /> : null}
 
       <div className='flex min-w-0 flex-col gap-4 min-[1300px]:flex-row min-[1300px]:items-start'>
         <div className='flex min-w-0 flex-1 flex-col gap-4'>

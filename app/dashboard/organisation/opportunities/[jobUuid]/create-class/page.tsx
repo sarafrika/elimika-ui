@@ -1,11 +1,12 @@
-'use client';
+import { redirect } from 'next/navigation';
 
-import { useParams } from 'next/navigation';
-import { OrganisationCreateClassFromJobPage } from '@/components/profile-job-marketplace/_components/OrganisationCreateClassFromJobPage';
+import { dashboardUrl } from '@/src/features/dashboard/lib/dashboard-url';
 
-export default function OrganisationCreateClassFromJobRoute() {
-  const params = useParams();
-  const id = params?.jobUuid as string;
-
-  return <OrganisationCreateClassFromJobPage jobUuid={id} />;
+export default async function OrganisationCreateClassRedirect({
+  params,
+}: {
+  params: Promise<{ jobUuid: string }>;
+}) {
+  const { jobUuid } = await params;
+  redirect(dashboardUrl('organisation', `classes/new?job=${encodeURIComponent(jobUuid)}`));
 }

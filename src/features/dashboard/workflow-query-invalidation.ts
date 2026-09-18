@@ -61,6 +61,12 @@ const workflowQueryIds = {
     'listProgramTrainingApplications',
     'searchTrainingApplications',
     'searchProgramTrainingApplications',
+    'getTrainingApplicationHistory',
+    'getProgramTrainingApplicationHistory',
+    'listTrainingRateUpdates',
+    'listProgramTrainingApplicationRateUpdates',
+    'listCourseTrainingRateUpdates',
+    'listProgramTrainingRateUpdates',
     'getCourseByUuid',
     'getTrainingProgramByUuid',
     'getAllCourses',
@@ -72,6 +78,8 @@ const workflowQueryIds = {
     'getProgramsByCourseCreator',
     'getClassDefinitionsForInstructor',
     'getClassDefinitionsForOrganisation',
+    'getJobEligibility',
+    'getJobsEligibility',
   ],
   enrollment: [
     'getEnrollmentOverviewForStudent',
@@ -85,6 +93,7 @@ const workflowQueryIds = {
     'getStudentCertificates',
     'getStudentDashboard',
     'getEnrollmentsForClass',
+    'listInstructorStudents',
     'getClassDefinition',
     'getClassDefinitionsForCourse',
     'getClassDefinitionsForProgram',
@@ -102,6 +111,9 @@ const workflowQueryIds = {
   jobApplication: [
     'getJob',
     'listJobs',
+    'getJobsEligibility',
+    'getJobApplication',
+    'listJobApplicationEvents',
     'listJobApplications',
     'listMyApplications',
     'listInstructorApplications',
@@ -109,6 +121,10 @@ const workflowQueryIds = {
     'getClassDefinitionsForOrganisation',
     'getClassDefinitionsForInstructor',
     'getClassDefinition',
+    'listBookings',
+    'getCalendar',
+    'getInstructorTimeHolds',
+    'getInstructorCalendar',
   ],
   review: [
     'getCourseReviews',
@@ -198,10 +214,7 @@ export function isVolatileGeneratedQuery(queryKey: QueryKey) {
   return Boolean(id && VOLATILE_GENERATED_QUERY_IDS.has(id));
 }
 
-export function invalidateGeneratedQueryIds(
-  queryClient: QueryClient,
-  queryIds: readonly string[]
-) {
+export function invalidateGeneratedQueryIds(queryClient: QueryClient, queryIds: readonly string[]) {
   const idSet = new Set(queryIds);
   return queryClient.invalidateQueries({
     predicate: query => {
@@ -254,23 +267,34 @@ export async function invalidateTrainingApplicationWorkflowQueries(queryClient: 
   ]);
 }
 
+/** Job reads that quote an applicant's approved rate, so a rate update moves them too. */
+const rateUpdateJobQueryIds = [
+  'getJob',
+  'getJobEligibility',
+  'getJobsEligibility',
+  'listJobApplications',
+  'listMyApplications',
+  'listInstructorApplications',
+] as const;
+
+export async function invalidateRateUpdateWorkflowQueries(queryClient: QueryClient) {
+  await Promise.all([
+    invalidateTrainingApplicationWorkflowQueries(queryClient),
+    invalidateGeneratedQueryIds(queryClient, rateUpdateJobQueryIds),
+  ]);
+}
+
 export async function invalidateEnrollmentWorkflowQueries(queryClient: QueryClient) {
   await Promise.all([
     invalidateGeneratedQueryIds(queryClient, enrollmentQueryIds),
-    invalidateQueryKeyPrefixes(queryClient, [
-      notificationQueryKey,
-      ['class-details-related'],
-    ]),
+    invalidateQueryKeyPrefixes(queryClient, [notificationQueryKey, ['class-details-related']]),
   ]);
 }
 
 export async function invalidateJobApplicationWorkflowQueries(queryClient: QueryClient) {
   await Promise.all([
     invalidateGeneratedQueryIds(queryClient, jobApplicationQueryIds),
-    invalidateQueryKeyPrefixes(queryClient, [
-      notificationQueryKey,
-      ['class-details-related'],
-    ]),
+    invalidateQueryKeyPrefixes(queryClient, [notificationQueryKey, ['class-details-related']]),
   ]);
 }
 
@@ -321,6 +345,10 @@ export function invalidateWorkflowQueriesForNotification(
 ) {
   const type = notification.type ?? '';
 
+  if (type.includes('TRAINING_RATE_UPDATE')) {
+    return invalidateRateUpdateWorkflowQueries(queryClient);
+  }
+
   if (type.includes('TRAINING_APPLICATION')) {
     return invalidateTrainingApplicationWorkflowQueries(queryClient);
   }
@@ -342,6 +370,7 @@ export function invalidateWorkflowQueriesForNotification(
     return invalidateEnrollmentWorkflowQueries(queryClient);
   }
 
+  // Includes HIRE_BLOCKED: a refused hire moves nothing, but both sides re-read applicants and holds.
   if (type.includes('CLASS_MARKETPLACE_JOB')) {
     return invalidateJobApplicationWorkflowQueries(queryClient);
   }

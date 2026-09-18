@@ -46,6 +46,7 @@ import { Separator } from '@/components/ui/separator';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useOrganisation } from '@/context/organisation-context';
 import { extractEntity, extractList, extractPage } from '@/lib/api-helpers';
+import { formatRate, formatRateAmount } from '@/lib/rate-card';
 import { cn } from '@/lib/utils';
 import type {
   ClassMarketplaceJob,
@@ -83,6 +84,9 @@ const matchScore = (a: ClassMarketplaceJobApplication) =>
   (a.instructor_admin_verified ? 50 : 0) + (a.training_approved ? 50 : 0);
 const matchColor = (n: number) =>
   n >= 80 ? 'text-success' : n >= 50 ? 'text-warning' : 'text-muted-foreground';
+// A job without a known basis still shows the amount, never a guessed unit.
+const approvedRateLabel = (amount: number, basis?: string | null) =>
+  basis ? formatRate(Number(amount), basis) : formatRateAmount(Number(amount));
 const initials = (name: string) =>
   name
     .split(' ')
@@ -105,10 +109,12 @@ function CandidateCard({
   app,
   index,
   jobUuid,
+  rateBasis,
 }: {
   app: ClassMarketplaceJobApplication;
   index: number;
   jobUuid: string;
+  rateBasis?: string | null;
 }) {
   const { loading, instructor, name } = useInstructor(app.instructor_uuid);
   const displayName = name ?? 'Applicant';
@@ -235,13 +241,12 @@ function CandidateCard({
 
         <div className='flex items-center justify-between'>
           <div>
-            <p className='text-muted-foreground text-[10px] tracking-wide uppercase'>Rate card</p>
+            <p className='text-muted-foreground text-[10px] tracking-wide uppercase'>
+              Approved rate
+            </p>
             <p className='text-sm font-semibold'>
               {app.approved_rate != null ? (
-                <>
-                  KES {Number(app.approved_rate).toLocaleString()}
-                  <span className='text-muted-foreground text-xs font-normal'> / hr</span>
-                </>
+                approvedRateLabel(app.approved_rate, rateBasis)
               ) : (
                 <span className='text-muted-foreground'>—</span>
               )}
@@ -434,7 +439,13 @@ export default function JobMatchesPage() {
           ) : (
             <div className='grid gap-4 md:grid-cols-2 xl:grid-cols-3'>
               {topThree.map((app, idx) => (
-                <CandidateCard key={app.uuid} app={app} index={idx} jobUuid={selectedJobUuid} />
+                <CandidateCard
+                  key={app.uuid}
+                  app={app}
+                  index={idx}
+                  jobUuid={selectedJobUuid}
+                  rateBasis={selectedJob?.rate_basis}
+                />
               ))}
             </div>
           )}
@@ -492,7 +503,12 @@ export default function JobMatchesPage() {
                     {[...applications]
                       .sort((a, b) => rankOf(b.status) - rankOf(a.status))
                       .map(app => (
-                        <CandidateRow key={app.uuid} app={app} jobUuid={selectedJobUuid} />
+                        <CandidateRow
+                          key={app.uuid}
+                          app={app}
+                          jobUuid={selectedJobUuid}
+                          rateBasis={selectedJob?.rate_basis}
+                        />
                       ))}
                   </div>
                 </>
@@ -505,7 +521,15 @@ export default function JobMatchesPage() {
   );
 }
 
-function CandidateRow({ app, jobUuid }: { app: ClassMarketplaceJobApplication; jobUuid: string }) {
+function CandidateRow({
+  app,
+  jobUuid,
+  rateBasis,
+}: {
+  app: ClassMarketplaceJobApplication;
+  jobUuid: string;
+  rateBasis?: string | null;
+}) {
   const { loading, name } = useInstructor(app.instructor_uuid);
   const displayName = name ?? 'Applicant';
   const nextStep = nextStepFor(app.status);
@@ -527,7 +551,7 @@ function CandidateRow({ app, jobUuid }: { app: ClassMarketplaceJobApplication; j
         </Link>
         <p className='text-muted-foreground truncate text-xs'>
           Applied {app.created_date ? dayjs(app.created_date).fromNow() : '—'}
-          {app.approved_rate != null && ` · KES ${Number(app.approved_rate).toLocaleString()}/hr`}
+          {app.approved_rate != null && ` · ${approvedRateLabel(app.approved_rate, rateBasis)}`}
         </p>
       </div>
       <Badge variant='outline' className={cn('text-xs', badgeStyleFor(app.status))}>

@@ -184,6 +184,10 @@ import {
   publishProgram,
   listProgramTrainingApplications,
   submitProgramTrainingApplication,
+  listProgramTrainingApplicationRateUpdates,
+  submitProgramTrainingRateUpdate,
+  withdrawProgramTrainingRateUpdate,
+  decideOnProgramTrainingRateUpdate,
   getProgramReviews,
   submitProgramReview,
   getProgramRequirements,
@@ -263,6 +267,10 @@ import {
   addCourseTrainingRequirement,
   listTrainingApplications,
   submitTrainingApplication,
+  listTrainingRateUpdates,
+  submitTrainingRateUpdate,
+  withdrawTrainingRateUpdate,
+  decideOnTrainingRateUpdate,
   getCourseRubrics,
   associateRubric,
   getCourseReviews,
@@ -341,6 +349,7 @@ import {
   cancelJob,
   listJobApplications,
   applyToJob,
+  getJobApplication,
   reviewApplication,
   withdrawApplication,
   getAllCertificates,
@@ -436,6 +445,8 @@ import {
   searchQuizzes,
   searchQuestions,
   searchAttempts,
+  listProgramTrainingRateUpdates,
+  getProgramTrainingApplicationHistory,
   getProgramRatingSummary,
   getProgramEnrollments,
   getRequiredCourses,
@@ -463,6 +474,7 @@ import {
   getCalendar,
   listBookings,
   listSent,
+  listInstructorStudents,
   listObligations,
   getMonthlySettlements,
   search2,
@@ -512,6 +524,8 @@ import {
   getStatusTransitions,
   withdrawPendingEdit,
   getPendingEdit,
+  listCourseTrainingRateUpdates,
+  getTrainingApplicationHistory,
   getCourseTrainers,
   getCourseStats,
   checkRubricAssociation,
@@ -563,6 +577,8 @@ import {
   getInstructorPayablesForOrganisation,
   getClassMedia,
   getJobEligibility,
+  listJobApplicationEvents,
+  getJobsEligibility,
   listMyApplications,
   listInstructorApplications,
   getClassDefinitionsForInstructor,
@@ -1098,6 +1114,15 @@ import type {
   SubmitProgramTrainingApplicationData,
   SubmitProgramTrainingApplicationError,
   SubmitProgramTrainingApplicationResponse,
+  ListProgramTrainingApplicationRateUpdatesData,
+  SubmitProgramTrainingRateUpdateData,
+  SubmitProgramTrainingRateUpdateError,
+  SubmitProgramTrainingRateUpdateResponse,
+  WithdrawProgramTrainingRateUpdateData,
+  WithdrawProgramTrainingRateUpdateError,
+  DecideOnProgramTrainingRateUpdateData,
+  DecideOnProgramTrainingRateUpdateError,
+  DecideOnProgramTrainingRateUpdateResponse,
   GetProgramReviewsData,
   GetProgramReviewsError,
   GetProgramReviewsResponse,
@@ -1313,6 +1338,15 @@ import type {
   SubmitTrainingApplicationData,
   SubmitTrainingApplicationError,
   SubmitTrainingApplicationResponse,
+  ListTrainingRateUpdatesData,
+  SubmitTrainingRateUpdateData,
+  SubmitTrainingRateUpdateError,
+  SubmitTrainingRateUpdateResponse,
+  WithdrawTrainingRateUpdateData,
+  WithdrawTrainingRateUpdateError,
+  DecideOnTrainingRateUpdateData,
+  DecideOnTrainingRateUpdateError,
+  DecideOnTrainingRateUpdateResponse,
   GetCourseRubricsData,
   GetCourseRubricsError,
   GetCourseRubricsResponse,
@@ -1527,6 +1561,7 @@ import type {
   ApplyToJobData,
   ApplyToJobError,
   ApplyToJobResponse,
+  GetJobApplicationData,
   ReviewApplicationData,
   ReviewApplicationError,
   ReviewApplicationResponse,
@@ -1762,6 +1797,10 @@ import type {
   SearchAttemptsData,
   SearchAttemptsError,
   SearchAttemptsResponse,
+  ListProgramTrainingRateUpdatesData,
+  ListProgramTrainingRateUpdatesError,
+  ListProgramTrainingRateUpdatesResponse,
+  GetProgramTrainingApplicationHistoryData,
   GetProgramRatingSummaryData,
   GetProgramEnrollmentsData,
   GetProgramEnrollmentsError,
@@ -1819,6 +1858,9 @@ import type {
   ListBookingsError,
   ListBookingsResponse,
   ListSentData,
+  ListInstructorStudentsData,
+  ListInstructorStudentsError,
+  ListInstructorStudentsResponse,
   ListObligationsData,
   ListObligationsError,
   ListObligationsResponse,
@@ -1908,6 +1950,10 @@ import type {
   WithdrawPendingEditError,
   WithdrawPendingEditResponse,
   GetPendingEditData,
+  ListCourseTrainingRateUpdatesData,
+  ListCourseTrainingRateUpdatesError,
+  ListCourseTrainingRateUpdatesResponse,
+  GetTrainingApplicationHistoryData,
   GetCourseTrainersData,
   GetCourseTrainersError,
   GetCourseTrainersResponse,
@@ -2005,6 +2051,8 @@ import type {
   GetInstructorPayablesForOrganisationData,
   GetClassMediaData,
   GetJobEligibilityData,
+  ListJobApplicationEventsData,
+  GetJobsEligibilityData,
   ListMyApplicationsData,
   ListMyApplicationsError,
   ListMyApplicationsResponse,
@@ -3086,7 +3134,8 @@ export const getProgramTrainingApplicationQueryKey = (
 /**
  * Get program training application
  * Retrieves a specific training application for a program. Readable by the program creator, the
- * applicant and platform admins; anyone else receives 404.
+ * applicant and platform admins; anyone else receives 404. The program creator's first read is
+ * recorded and surfaces as `first_opened_at`.
  *
  */
 export const getProgramTrainingApplicationOptions = (
@@ -4201,7 +4250,8 @@ export const getTrainingApplicationQueryKey = (options: Options<GetTrainingAppli
 /**
  * Get training application
  * Retrieves a specific training application for a course. Readable by the course creator, the
- * applicant and platform admins; anyone else receives 404.
+ * applicant and platform admins; anyone else receives 404. The course creator's first read is
+ * recorded and surfaces as `first_opened_at`.
  *
  */
 export const getTrainingApplicationOptions = (options: Options<GetTrainingApplicationData>) => {
@@ -8224,6 +8274,179 @@ export const submitProgramTrainingApplicationMutation = (
   > = {
     mutationFn: async localOptions => {
       const { data } = await submitProgramTrainingApplication({
+        ...options,
+        ...localOptions,
+        throwOnError: true,
+      });
+      return data;
+    },
+  };
+  return mutationOptions;
+};
+
+export const listProgramTrainingApplicationRateUpdatesQueryKey = (
+  options: Options<ListProgramTrainingApplicationRateUpdatesData>
+) => createQueryKey('listProgramTrainingApplicationRateUpdates', options);
+
+/**
+ * List rate updates on a training application
+ * Every rate update on the application, newest first. Readable by the applicant and the program creator; anyone else receives 404.
+ */
+export const listProgramTrainingApplicationRateUpdatesOptions = (
+  options: Options<ListProgramTrainingApplicationRateUpdatesData>
+) => {
+  return queryOptions({
+    queryFn: async ({ queryKey, signal }) => {
+      const { data } = await listProgramTrainingApplicationRateUpdates({
+        ...options,
+        ...queryKey[0],
+        signal,
+        throwOnError: true,
+      });
+      return data;
+    },
+    queryKey: listProgramTrainingApplicationRateUpdatesQueryKey(options),
+  });
+};
+
+export const submitProgramTrainingRateUpdateQueryKey = (
+  options: Options<SubmitProgramTrainingRateUpdateData>
+) => createQueryKey('submitProgramTrainingRateUpdate', options);
+
+/**
+ * Propose a rate update
+ * Lets an approved applicant (the instructor, or a manager of the applicant organisation) propose a
+ * replacement rate card. The body carries the full card as it should read after approval, validated
+ * like a new application's card. The application must be APPROVED and have no other pending update.
+ * The program creator approves or rejects it; the current rates stay in force until then.
+ *
+ */
+export const submitProgramTrainingRateUpdateOptions = (
+  options: Options<SubmitProgramTrainingRateUpdateData>
+) => {
+  return queryOptions({
+    queryFn: async ({ queryKey, signal }) => {
+      const { data } = await submitProgramTrainingRateUpdate({
+        ...options,
+        ...queryKey[0],
+        signal,
+        throwOnError: true,
+      });
+      return data;
+    },
+    queryKey: submitProgramTrainingRateUpdateQueryKey(options),
+  });
+};
+
+/**
+ * Propose a rate update
+ * Lets an approved applicant (the instructor, or a manager of the applicant organisation) propose a
+ * replacement rate card. The body carries the full card as it should read after approval, validated
+ * like a new application's card. The application must be APPROVED and have no other pending update.
+ * The program creator approves or rejects it; the current rates stay in force until then.
+ *
+ */
+export const submitProgramTrainingRateUpdateMutation = (
+  options?: Partial<Options<SubmitProgramTrainingRateUpdateData>>
+): UseMutationOptions<
+  SubmitProgramTrainingRateUpdateResponse,
+  SubmitProgramTrainingRateUpdateError,
+  Options<SubmitProgramTrainingRateUpdateData>
+> => {
+  const mutationOptions: UseMutationOptions<
+    SubmitProgramTrainingRateUpdateResponse,
+    SubmitProgramTrainingRateUpdateError,
+    Options<SubmitProgramTrainingRateUpdateData>
+  > = {
+    mutationFn: async localOptions => {
+      const { data } = await submitProgramTrainingRateUpdate({
+        ...options,
+        ...localOptions,
+        throwOnError: true,
+      });
+      return data;
+    },
+  };
+  return mutationOptions;
+};
+
+/**
+ * Withdraw a rate update
+ * The applicant withdraws their own pending rate update. Only pending updates can be withdrawn.
+ */
+export const withdrawProgramTrainingRateUpdateMutation = (
+  options?: Partial<Options<WithdrawProgramTrainingRateUpdateData>>
+): UseMutationOptions<
+  unknown,
+  WithdrawProgramTrainingRateUpdateError,
+  Options<WithdrawProgramTrainingRateUpdateData>
+> => {
+  const mutationOptions: UseMutationOptions<
+    unknown,
+    WithdrawProgramTrainingRateUpdateError,
+    Options<WithdrawProgramTrainingRateUpdateData>
+  > = {
+    mutationFn: async localOptions => {
+      const { data } = await withdrawProgramTrainingRateUpdate({
+        ...options,
+        ...localOptions,
+        throwOnError: true,
+      });
+      return data;
+    },
+  };
+  return mutationOptions;
+};
+
+export const decideOnProgramTrainingRateUpdateQueryKey = (
+  options: Options<DecideOnProgramTrainingRateUpdateData>
+) => createQueryKey('decideOnProgramTrainingRateUpdate', options);
+
+/**
+ * Decide on a rate update
+ * The program creator approves or rejects a pending rate update with `action=approve|reject`. Approval
+ * re-validates the proposed card and copies it onto the application in the same transaction; the
+ * application stays APPROVED throughout. Rejection leaves the current rates unchanged.
+ *
+ */
+export const decideOnProgramTrainingRateUpdateOptions = (
+  options: Options<DecideOnProgramTrainingRateUpdateData>
+) => {
+  return queryOptions({
+    queryFn: async ({ queryKey, signal }) => {
+      const { data } = await decideOnProgramTrainingRateUpdate({
+        ...options,
+        ...queryKey[0],
+        signal,
+        throwOnError: true,
+      });
+      return data;
+    },
+    queryKey: decideOnProgramTrainingRateUpdateQueryKey(options),
+  });
+};
+
+/**
+ * Decide on a rate update
+ * The program creator approves or rejects a pending rate update with `action=approve|reject`. Approval
+ * re-validates the proposed card and copies it onto the application in the same transaction; the
+ * application stays APPROVED throughout. Rejection leaves the current rates unchanged.
+ *
+ */
+export const decideOnProgramTrainingRateUpdateMutation = (
+  options?: Partial<Options<DecideOnProgramTrainingRateUpdateData>>
+): UseMutationOptions<
+  DecideOnProgramTrainingRateUpdateResponse,
+  DecideOnProgramTrainingRateUpdateError,
+  Options<DecideOnProgramTrainingRateUpdateData>
+> => {
+  const mutationOptions: UseMutationOptions<
+    DecideOnProgramTrainingRateUpdateResponse,
+    DecideOnProgramTrainingRateUpdateError,
+    Options<DecideOnProgramTrainingRateUpdateData>
+  > = {
+    mutationFn: async localOptions => {
+      const { data } = await decideOnProgramTrainingRateUpdate({
         ...options,
         ...localOptions,
         throwOnError: true,
@@ -12315,6 +12538,173 @@ export const submitTrainingApplicationMutation = (
   return mutationOptions;
 };
 
+export const listTrainingRateUpdatesQueryKey = (options: Options<ListTrainingRateUpdatesData>) =>
+  createQueryKey('listTrainingRateUpdates', options);
+
+/**
+ * List rate updates on a training application
+ * Every rate update on the application, newest first. Readable by the applicant and the course creator; anyone else receives 404.
+ */
+export const listTrainingRateUpdatesOptions = (options: Options<ListTrainingRateUpdatesData>) => {
+  return queryOptions({
+    queryFn: async ({ queryKey, signal }) => {
+      const { data } = await listTrainingRateUpdates({
+        ...options,
+        ...queryKey[0],
+        signal,
+        throwOnError: true,
+      });
+      return data;
+    },
+    queryKey: listTrainingRateUpdatesQueryKey(options),
+  });
+};
+
+export const submitTrainingRateUpdateQueryKey = (options: Options<SubmitTrainingRateUpdateData>) =>
+  createQueryKey('submitTrainingRateUpdate', options);
+
+/**
+ * Propose a rate update
+ * Lets an approved applicant (the instructor, or a manager of the applicant organisation) propose a
+ * replacement rate card. The body carries the full card as it should read after approval, validated
+ * like a new application's card. The application must be APPROVED and have no other pending update.
+ * The course creator approves or rejects it; the current rates stay in force until then.
+ *
+ */
+export const submitTrainingRateUpdateOptions = (options: Options<SubmitTrainingRateUpdateData>) => {
+  return queryOptions({
+    queryFn: async ({ queryKey, signal }) => {
+      const { data } = await submitTrainingRateUpdate({
+        ...options,
+        ...queryKey[0],
+        signal,
+        throwOnError: true,
+      });
+      return data;
+    },
+    queryKey: submitTrainingRateUpdateQueryKey(options),
+  });
+};
+
+/**
+ * Propose a rate update
+ * Lets an approved applicant (the instructor, or a manager of the applicant organisation) propose a
+ * replacement rate card. The body carries the full card as it should read after approval, validated
+ * like a new application's card. The application must be APPROVED and have no other pending update.
+ * The course creator approves or rejects it; the current rates stay in force until then.
+ *
+ */
+export const submitTrainingRateUpdateMutation = (
+  options?: Partial<Options<SubmitTrainingRateUpdateData>>
+): UseMutationOptions<
+  SubmitTrainingRateUpdateResponse,
+  SubmitTrainingRateUpdateError,
+  Options<SubmitTrainingRateUpdateData>
+> => {
+  const mutationOptions: UseMutationOptions<
+    SubmitTrainingRateUpdateResponse,
+    SubmitTrainingRateUpdateError,
+    Options<SubmitTrainingRateUpdateData>
+  > = {
+    mutationFn: async localOptions => {
+      const { data } = await submitTrainingRateUpdate({
+        ...options,
+        ...localOptions,
+        throwOnError: true,
+      });
+      return data;
+    },
+  };
+  return mutationOptions;
+};
+
+/**
+ * Withdraw a rate update
+ * The applicant withdraws their own pending rate update. Only pending updates can be withdrawn.
+ */
+export const withdrawTrainingRateUpdateMutation = (
+  options?: Partial<Options<WithdrawTrainingRateUpdateData>>
+): UseMutationOptions<
+  unknown,
+  WithdrawTrainingRateUpdateError,
+  Options<WithdrawTrainingRateUpdateData>
+> => {
+  const mutationOptions: UseMutationOptions<
+    unknown,
+    WithdrawTrainingRateUpdateError,
+    Options<WithdrawTrainingRateUpdateData>
+  > = {
+    mutationFn: async localOptions => {
+      const { data } = await withdrawTrainingRateUpdate({
+        ...options,
+        ...localOptions,
+        throwOnError: true,
+      });
+      return data;
+    },
+  };
+  return mutationOptions;
+};
+
+export const decideOnTrainingRateUpdateQueryKey = (
+  options: Options<DecideOnTrainingRateUpdateData>
+) => createQueryKey('decideOnTrainingRateUpdate', options);
+
+/**
+ * Decide on a rate update
+ * The course creator approves or rejects a pending rate update with `action=approve|reject`. Approval
+ * re-validates the proposed card and copies it onto the application in the same transaction; the
+ * application stays APPROVED throughout. Rejection leaves the current rates unchanged.
+ *
+ */
+export const decideOnTrainingRateUpdateOptions = (
+  options: Options<DecideOnTrainingRateUpdateData>
+) => {
+  return queryOptions({
+    queryFn: async ({ queryKey, signal }) => {
+      const { data } = await decideOnTrainingRateUpdate({
+        ...options,
+        ...queryKey[0],
+        signal,
+        throwOnError: true,
+      });
+      return data;
+    },
+    queryKey: decideOnTrainingRateUpdateQueryKey(options),
+  });
+};
+
+/**
+ * Decide on a rate update
+ * The course creator approves or rejects a pending rate update with `action=approve|reject`. Approval
+ * re-validates the proposed card and copies it onto the application in the same transaction; the
+ * application stays APPROVED throughout. Rejection leaves the current rates unchanged.
+ *
+ */
+export const decideOnTrainingRateUpdateMutation = (
+  options?: Partial<Options<DecideOnTrainingRateUpdateData>>
+): UseMutationOptions<
+  DecideOnTrainingRateUpdateResponse,
+  DecideOnTrainingRateUpdateError,
+  Options<DecideOnTrainingRateUpdateData>
+> => {
+  const mutationOptions: UseMutationOptions<
+    DecideOnTrainingRateUpdateResponse,
+    DecideOnTrainingRateUpdateError,
+    Options<DecideOnTrainingRateUpdateData>
+  > = {
+    mutationFn: async localOptions => {
+      const { data } = await decideOnTrainingRateUpdate({
+        ...options,
+        ...localOptions,
+        throwOnError: true,
+      });
+      return data;
+    },
+  };
+  return mutationOptions;
+};
+
 export const getCourseRubricsQueryKey = (options: Options<GetCourseRubricsData>) =>
   createQueryKey('getCourseRubrics', options);
 
@@ -15982,7 +16372,7 @@ export const createJobQueryKey = (options: Options<CreateJobData>) =>
 
 /**
  * Create a marketplace class job
- * Attached resources are validated against their calendars and reserved with HOLD bookings for every session occurrence; conflicts return 409 with a per-occurrence report
+ * Attached resources are validated against their calendars and reserved with HOLD bookings for every session occurrence; conflicts return 409 with a per-occurrence report. A preferred instructor whose schedule clashes with the sessions is not hired: 409 with the clashing windows, and nothing is posted. A preferred instructor with no approved rate for the job's format, delivery and rate_basis, or a rate above instructor_pay, is refused with 409
  */
 export const createJobOptions = (options: Options<CreateJobData>) => {
   return queryOptions({
@@ -16001,7 +16391,7 @@ export const createJobOptions = (options: Options<CreateJobData>) => {
 
 /**
  * Create a marketplace class job
- * Attached resources are validated against their calendars and reserved with HOLD bookings for every session occurrence; conflicts return 409 with a per-occurrence report
+ * Attached resources are validated against their calendars and reserved with HOLD bookings for every session occurrence; conflicts return 409 with a per-occurrence report. A preferred instructor whose schedule clashes with the sessions is not hired: 409 with the clashing windows, and nothing is posted. A preferred instructor with no approved rate for the job's format, delivery and rate_basis, or a rate above instructor_pay, is refused with 409
  */
 export const createJobMutation = (
   options?: Partial<Options<CreateJobData>>
@@ -16078,7 +16468,7 @@ export const createClassForJobQueryKey = (options: Options<CreateClassForJobData
 
 /**
  * Create the class for a job whose applicant has been hired
- * Creating the class is what assigns the hired instructor: it stamps their application assigned, converts their time holds and fills the job. There is no separate assign call.
+ * Creating the class is what assigns the hired instructor: it stamps their application assigned, converts their time holds and fills the job. There is no separate assign call. Refused with 409 when the hired instructor no longer has an approved rate for the job's rate basis that its pay covers.
  */
 export const createClassForJobOptions = (options: Options<CreateClassForJobData>) => {
   return queryOptions({
@@ -16097,7 +16487,7 @@ export const createClassForJobOptions = (options: Options<CreateClassForJobData>
 
 /**
  * Create the class for a job whose applicant has been hired
- * Creating the class is what assigns the hired instructor: it stamps their application assigned, converts their time holds and fills the job. There is no separate assign call.
+ * Creating the class is what assigns the hired instructor: it stamps their application assigned, converts their time holds and fills the job. There is no separate assign call. Refused with 409 when the hired instructor no longer has an approved rate for the job's rate basis that its pay covers.
  */
 export const createClassForJobMutation = (
   options?: Partial<Options<CreateClassForJobData>>
@@ -16239,7 +16629,7 @@ export const applyToJobQueryKey = (options: Options<ApplyToJobData>) =>
 
 /**
  * Apply to a marketplace class job
- * Applications are hard-blocked (409 with conflict details) when the instructor's existing schedule overlaps any of the job's planned session occurrences
+ * Applications are hard-blocked (409 with conflict details) when the instructor's existing schedule overlaps any of the job's planned session occurrences, and refused with 409 when the instructor has no approved rate for the job's format, delivery and rate basis or that rate is above the job's pay
  */
 export const applyToJobOptions = (options: Options<ApplyToJobData>) => {
   return queryOptions({
@@ -16258,7 +16648,7 @@ export const applyToJobOptions = (options: Options<ApplyToJobData>) => {
 
 /**
  * Apply to a marketplace class job
- * Applications are hard-blocked (409 with conflict details) when the instructor's existing schedule overlaps any of the job's planned session occurrences
+ * Applications are hard-blocked (409 with conflict details) when the instructor's existing schedule overlaps any of the job's planned session occurrences, and refused with 409 when the instructor has no approved rate for the job's format, delivery and rate basis or that rate is above the job's pay
  */
 export const applyToJobMutation = (
   options?: Partial<Options<ApplyToJobData>>
@@ -16280,12 +16670,34 @@ export const applyToJobMutation = (
   return mutationOptions;
 };
 
+export const getJobApplicationQueryKey = (options: Options<GetJobApplicationData>) =>
+  createQueryKey('getJobApplication', options);
+
+/**
+ * Get one marketplace class job application
+ * Readable by the applicant instructor, managers of the organisation that posted the job, and platform admins; anyone else is refused with 403
+ */
+export const getJobApplicationOptions = (options: Options<GetJobApplicationData>) => {
+  return queryOptions({
+    queryFn: async ({ queryKey, signal }) => {
+      const { data } = await getJobApplication({
+        ...options,
+        ...queryKey[0],
+        signal,
+        throwOnError: true,
+      });
+      return data;
+    },
+    queryKey: getJobApplicationQueryKey(options),
+  });
+};
+
 export const reviewApplicationQueryKey = (options: Options<ReviewApplicationData>) =>
   createQueryKey('reviewApplication', options);
 
 /**
  * Move a marketplace class job application through the funnel
- * Stages run applied -> shortlisted -> interviewing -> offered -> hired and no stage may be skipped; hire is the last decision, after which the job's class can be created
+ * Stages run applied -> shortlisted -> interviewing -> offered -> hired and no stage may be skipped; hire is the last decision, after which the job's class can be created. A hire whose sessions clash with the instructor's schedule is refused with 409 and the clashing windows, and the application, job and time holds are left as they were. A hire whose instructor has no approved rate for the job's rate basis, or a rate above the job's pay, is refused with 409 before anything is written
  */
 export const reviewApplicationOptions = (options: Options<ReviewApplicationData>) => {
   return queryOptions({
@@ -16304,7 +16716,7 @@ export const reviewApplicationOptions = (options: Options<ReviewApplicationData>
 
 /**
  * Move a marketplace class job application through the funnel
- * Stages run applied -> shortlisted -> interviewing -> offered -> hired and no stage may be skipped; hire is the last decision, after which the job's class can be created
+ * Stages run applied -> shortlisted -> interviewing -> offered -> hired and no stage may be skipped; hire is the last decision, after which the job's class can be created. A hire whose sessions clash with the instructor's schedule is refused with 409 and the clashing windows, and the application, job and time holds are left as they were. A hire whose instructor has no approved rate for the job's rate basis, or a rate above the job's pay, is refused with 409 before anything is written
  */
 export const reviewApplicationMutation = (
   options?: Partial<Options<ReviewApplicationData>>
@@ -20616,6 +21028,108 @@ export const searchAttemptsInfiniteOptions = (options: Options<SearchAttemptsDat
   );
 };
 
+export const listProgramTrainingRateUpdatesQueryKey = (
+  options: Options<ListProgramTrainingRateUpdatesData>
+) => createQueryKey('listProgramTrainingRateUpdates', options);
+
+/**
+ * List rate updates to review on a program
+ * The program creator's queue of rate updates across the program's applications. Filter with `status=pending|approved|rejected|withdrawn`.
+ */
+export const listProgramTrainingRateUpdatesOptions = (
+  options: Options<ListProgramTrainingRateUpdatesData>
+) => {
+  return queryOptions({
+    queryFn: async ({ queryKey, signal }) => {
+      const { data } = await listProgramTrainingRateUpdates({
+        ...options,
+        ...queryKey[0],
+        signal,
+        throwOnError: true,
+      });
+      return data;
+    },
+    queryKey: listProgramTrainingRateUpdatesQueryKey(options),
+  });
+};
+
+export const listProgramTrainingRateUpdatesInfiniteQueryKey = (
+  options: Options<ListProgramTrainingRateUpdatesData>
+): QueryKey<Options<ListProgramTrainingRateUpdatesData>> =>
+  createQueryKey('listProgramTrainingRateUpdates', options, true);
+
+/**
+ * List rate updates to review on a program
+ * The program creator's queue of rate updates across the program's applications. Filter with `status=pending|approved|rejected|withdrawn`.
+ */
+export const listProgramTrainingRateUpdatesInfiniteOptions = (
+  options: Options<ListProgramTrainingRateUpdatesData>
+) => {
+  return infiniteQueryOptions<
+    ListProgramTrainingRateUpdatesResponse,
+    ListProgramTrainingRateUpdatesError,
+    InfiniteData<ListProgramTrainingRateUpdatesResponse>,
+    QueryKey<Options<ListProgramTrainingRateUpdatesData>>,
+    | number
+    | Pick<
+        QueryKey<Options<ListProgramTrainingRateUpdatesData>>[0],
+        'body' | 'headers' | 'path' | 'query'
+      >
+  >(
+    {
+      queryFn: async ({ pageParam, queryKey, signal }) => {
+        const page: Pick<
+          QueryKey<Options<ListProgramTrainingRateUpdatesData>>[0],
+          'body' | 'headers' | 'path' | 'query'
+        > =
+          typeof pageParam === 'object'
+            ? pageParam
+            : {
+                query: {
+                  pageable: { page: pageParam },
+                },
+              };
+        const params = createInfiniteParams(queryKey, page);
+        const { data } = await listProgramTrainingRateUpdates({
+          ...options,
+          ...params,
+          signal,
+          throwOnError: true,
+        });
+        return data;
+      },
+      queryKey: listProgramTrainingRateUpdatesInfiniteQueryKey(options),
+    }
+  );
+};
+
+export const getProgramTrainingApplicationHistoryQueryKey = (
+  options: Options<GetProgramTrainingApplicationHistoryData>
+) => createQueryKey('getProgramTrainingApplicationHistory', options);
+
+/**
+ * Get program training application history
+ * The application's history, newest first, including every rate update step. Readable by the
+ * applicant and the program creator; anyone else receives 404.
+ *
+ */
+export const getProgramTrainingApplicationHistoryOptions = (
+  options: Options<GetProgramTrainingApplicationHistoryData>
+) => {
+  return queryOptions({
+    queryFn: async ({ queryKey, signal }) => {
+      const { data } = await getProgramTrainingApplicationHistory({
+        ...options,
+        ...queryKey[0],
+        signal,
+        throwOnError: true,
+      });
+      return data;
+    },
+    queryKey: getProgramTrainingApplicationHistoryQueryKey(options),
+  });
+};
+
 export const getProgramRatingSummaryQueryKey = (options: Options<GetProgramRatingSummaryData>) =>
   createQueryKey('getProgramRatingSummary', options);
 
@@ -22025,6 +22539,75 @@ export const listSentOptions = (options: Options<ListSentData>) => {
   });
 };
 
+export const listInstructorStudentsQueryKey = (options: Options<ListInstructorStudentsData>) =>
+  createQueryKey('listInstructorStudents', options);
+
+/**
+ * List the students an instructor teaches in the organisation's classes
+ * One row per student per class, for classes the organisation owns and the instructor is instructor of record for. Only managers of the organisation (and platform admins) may ask; class_options lists every such class with students and student_count the distinct students across them, whatever the filters.
+ */
+export const listInstructorStudentsOptions = (options: Options<ListInstructorStudentsData>) => {
+  return queryOptions({
+    queryFn: async ({ queryKey, signal }) => {
+      const { data } = await listInstructorStudents({
+        ...options,
+        ...queryKey[0],
+        signal,
+        throwOnError: true,
+      });
+      return data;
+    },
+    queryKey: listInstructorStudentsQueryKey(options),
+  });
+};
+
+export const listInstructorStudentsInfiniteQueryKey = (
+  options: Options<ListInstructorStudentsData>
+): QueryKey<Options<ListInstructorStudentsData>> =>
+  createQueryKey('listInstructorStudents', options, true);
+
+/**
+ * List the students an instructor teaches in the organisation's classes
+ * One row per student per class, for classes the organisation owns and the instructor is instructor of record for. Only managers of the organisation (and platform admins) may ask; class_options lists every such class with students and student_count the distinct students across them, whatever the filters.
+ */
+export const listInstructorStudentsInfiniteOptions = (
+  options: Options<ListInstructorStudentsData>
+) => {
+  return infiniteQueryOptions<
+    ListInstructorStudentsResponse,
+    ListInstructorStudentsError,
+    InfiniteData<ListInstructorStudentsResponse>,
+    QueryKey<Options<ListInstructorStudentsData>>,
+    | number
+    | Pick<QueryKey<Options<ListInstructorStudentsData>>[0], 'body' | 'headers' | 'path' | 'query'>
+  >(
+    {
+      queryFn: async ({ pageParam, queryKey, signal }) => {
+        const page: Pick<
+          QueryKey<Options<ListInstructorStudentsData>>[0],
+          'body' | 'headers' | 'path' | 'query'
+        > =
+          typeof pageParam === 'object'
+            ? pageParam
+            : {
+                query: {
+                  page: pageParam,
+                },
+              };
+        const params = createInfiniteParams(queryKey, page);
+        const { data } = await listInstructorStudents({
+          ...options,
+          ...params,
+          signal,
+          throwOnError: true,
+        });
+        return data;
+      },
+      queryKey: listInstructorStudentsInfiniteQueryKey(options),
+    }
+  );
+};
+
 export const listObligationsQueryKey = (options: Options<ListObligationsData>) =>
   createQueryKey('listObligations', options);
 
@@ -22386,7 +22969,8 @@ export const checkAvailabilityQueryKey = (options: Options<CheckAvailabilityData
  * The window is given in UTC, and each availability slot is compared against it in the
  * zone that slot was authored in.
  *
- * Returns true unless a blocked slot overlaps the requested window.
+ * Returns true unless a blocked slot, or a class job the instructor was hired for (a FIRM
+ * hold), overlaps the requested window. Jobs the instructor merely applied to never count.
  *
  */
 export const checkAvailabilityOptions = (options: Options<CheckAvailabilityData>) => {
@@ -22415,7 +22999,8 @@ export const checkAvailabilityInfiniteQueryKey = (
  * The window is given in UTC, and each availability slot is compared against it in the
  * zone that slot was authored in.
  *
- * Returns true unless a blocked slot overlaps the requested window.
+ * Returns true unless a blocked slot, or a class job the instructor was hired for (a FIRM
+ * hold), overlaps the requested window. Jobs the instructor merely applied to never count.
  *
  */
 export const checkAvailabilityInfiniteOptions = (options: Options<CheckAvailabilityData>) => {
@@ -22458,8 +23043,10 @@ export const getInstructorCalendarQueryKey = (options: Options<GetInstructorCale
 
 /**
  * Get merged instructor calendar
- * Returns a merged feed of availability slots, blocked time, and scheduled instances for
- * the instructor within a date range.
+ * Returns a merged feed of availability slots, blocked time, scheduled instances and
+ * marketplace job holds for the instructor within a date range. A JOB_HOLD entry is time a
+ * class job the instructor was hired for holds (busy). The instructor alone also sees a
+ * JOB_APPLICATION entry for each job they applied to; it never blocks booking.
  *
  * Anyone signed in may read it, because choosing when to book an instructor means seeing
  * which windows are free. Callers other than the instructor themselves get each entry
@@ -24314,6 +24901,109 @@ export const getPendingEditOptions = (options: Options<GetPendingEditData>) => {
       return data;
     },
     queryKey: getPendingEditQueryKey(options),
+  });
+};
+
+export const listCourseTrainingRateUpdatesQueryKey = (
+  options: Options<ListCourseTrainingRateUpdatesData>
+) => createQueryKey('listCourseTrainingRateUpdates', options);
+
+/**
+ * List rate updates to review on a course
+ * The course creator's queue of rate updates across the course's applications. Filter with `status=pending|approved|rejected|withdrawn`.
+ */
+export const listCourseTrainingRateUpdatesOptions = (
+  options: Options<ListCourseTrainingRateUpdatesData>
+) => {
+  return queryOptions({
+    queryFn: async ({ queryKey, signal }) => {
+      const { data } = await listCourseTrainingRateUpdates({
+        ...options,
+        ...queryKey[0],
+        signal,
+        throwOnError: true,
+      });
+      return data;
+    },
+    queryKey: listCourseTrainingRateUpdatesQueryKey(options),
+  });
+};
+
+export const listCourseTrainingRateUpdatesInfiniteQueryKey = (
+  options: Options<ListCourseTrainingRateUpdatesData>
+): QueryKey<Options<ListCourseTrainingRateUpdatesData>> =>
+  createQueryKey('listCourseTrainingRateUpdates', options, true);
+
+/**
+ * List rate updates to review on a course
+ * The course creator's queue of rate updates across the course's applications. Filter with `status=pending|approved|rejected|withdrawn`.
+ */
+export const listCourseTrainingRateUpdatesInfiniteOptions = (
+  options: Options<ListCourseTrainingRateUpdatesData>
+) => {
+  return infiniteQueryOptions<
+    ListCourseTrainingRateUpdatesResponse,
+    ListCourseTrainingRateUpdatesError,
+    InfiniteData<ListCourseTrainingRateUpdatesResponse>,
+    QueryKey<Options<ListCourseTrainingRateUpdatesData>>,
+    | number
+    | Pick<
+        QueryKey<Options<ListCourseTrainingRateUpdatesData>>[0],
+        'body' | 'headers' | 'path' | 'query'
+      >
+  >(
+    {
+      queryFn: async ({ pageParam, queryKey, signal }) => {
+        const page: Pick<
+          QueryKey<Options<ListCourseTrainingRateUpdatesData>>[0],
+          'body' | 'headers' | 'path' | 'query'
+        > =
+          typeof pageParam === 'object'
+            ? pageParam
+            : {
+                query: {
+                  pageable: { page: pageParam },
+                },
+              };
+        const params = createInfiniteParams(queryKey, page);
+        const { data } = await listCourseTrainingRateUpdates({
+          ...options,
+          ...params,
+          signal,
+          throwOnError: true,
+        });
+        return data;
+      },
+      queryKey: listCourseTrainingRateUpdatesInfiniteQueryKey(options),
+    }
+  );
+};
+
+export const getTrainingApplicationHistoryQueryKey = (
+  options: Options<GetTrainingApplicationHistoryData>
+) => createQueryKey('getTrainingApplicationHistory', options);
+
+/**
+ * Get training application history
+ * The application's history, newest first: submitted, edited, opened_by_creator, approved, rejected,
+ * revoked, withdrawn and every rate update step, each with its actor and notes. Readable by the
+ * applicant and the course creator; anyone else receives 404.
+ *
+ */
+export const getTrainingApplicationHistoryOptions = (
+  options: Options<GetTrainingApplicationHistoryData>
+) => {
+  return queryOptions({
+    queryFn: async ({ queryKey, signal }) => {
+      const { data } = await getTrainingApplicationHistory({
+        ...options,
+        ...queryKey[0],
+        signal,
+        throwOnError: true,
+      });
+      return data;
+    },
+    queryKey: getTrainingApplicationHistoryQueryKey(options),
   });
 };
 
@@ -26776,6 +27466,7 @@ export const getJobEligibilityQueryKey = (options: Options<GetJobEligibilityData
 
 /**
  * Check current instructor's eligibility for a marketplace class job
+ * eligible requires rate_ok: an approved rate for the job's format, delivery and rate basis that the job's pay covers
  */
 export const getJobEligibilityOptions = (options: Options<GetJobEligibilityData>) => {
   return queryOptions({
@@ -26789,6 +27480,50 @@ export const getJobEligibilityOptions = (options: Options<GetJobEligibilityData>
       return data;
     },
     queryKey: getJobEligibilityQueryKey(options),
+  });
+};
+
+export const listJobApplicationEventsQueryKey = (options: Options<ListJobApplicationEventsData>) =>
+  createQueryKey('listJobApplicationEvents', options);
+
+/**
+ * List a marketplace class job application's activity
+ * Every step the application has taken, newest first: applied, reapplied, shortlisted, interviewing (an interview invitation, with interview_at), offered, hired, assigned (the class was created), rejected, not_selected and withdrawn, each with its actor and note. Same access as reading the application
+ */
+export const listJobApplicationEventsOptions = (options: Options<ListJobApplicationEventsData>) => {
+  return queryOptions({
+    queryFn: async ({ queryKey, signal }) => {
+      const { data } = await listJobApplicationEvents({
+        ...options,
+        ...queryKey[0],
+        signal,
+        throwOnError: true,
+      });
+      return data;
+    },
+    queryKey: listJobApplicationEventsQueryKey(options),
+  });
+};
+
+export const getJobsEligibilityQueryKey = (options: Options<GetJobsEligibilityData>) =>
+  createQueryKey('getJobsEligibility', options);
+
+/**
+ * Check the current instructor's eligibility for several marketplace class jobs
+ * One entry per known job, in request order, each shaped like the single eligibility read. Unknown job uuids are skipped. At most 50 job_uuids per call; more return 400. Callers without an instructor profile are refused
+ */
+export const getJobsEligibilityOptions = (options: Options<GetJobsEligibilityData>) => {
+  return queryOptions({
+    queryFn: async ({ queryKey, signal }) => {
+      const { data } = await getJobsEligibility({
+        ...options,
+        ...queryKey[0],
+        signal,
+        throwOnError: true,
+      });
+      return data;
+    },
+    queryKey: getJobsEligibilityQueryKey(options),
   });
 };
 

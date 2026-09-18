@@ -817,7 +817,9 @@ function railActionHref(
     case 'Create a class for this course':
       return access === 'organisation' ? ORGANISATION_NEW_CLASS_HREF : INSTRUCTOR_NEW_CLASS_HREF;
     case 'Update my rate card':
-      return INSTRUCTOR_RATE_CARD_HREF;
+      return courseUuid
+        ? `${INSTRUCTOR_RATE_CARD_HREF}?kind=course&parent=${uuid}`
+        : INSTRUCTOR_RATE_CARD_HREF;
     case 'Start a training application':
       return courseUuid ? `${APPLY_TO_TRAIN_PATH}/${uuid}?kind=course` : undefined;
     case 'Compare the {openClasses} open classes':

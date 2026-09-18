@@ -1,12 +1,17 @@
-'use client';
+import { redirect } from 'next/navigation';
 
-import { useParams } from 'next/navigation';
-import { JobApplicantReviewPage } from '@/components/profile-job-marketplace/_components/JobApplicantReviewPage';
+import { dashboardUrl } from '@/src/features/dashboard/lib/dashboard-url';
 
-export default function OrganisationJobApplicantReviewRoute() {
-  const params = useParams();
-  const jobUuid = params?.jobUuid as string;
-  const applicationUuid = params?.applicationUuid as string;
-
-  return <JobApplicantReviewPage jobUuid={jobUuid} applicationUuid={applicationUuid} />;
+export default async function OrganisationApplicantRedirect({
+  params,
+}: {
+  params: Promise<{ jobUuid: string; applicationUuid: string }>;
+}) {
+  const { jobUuid, applicationUuid } = await params;
+  redirect(
+    dashboardUrl(
+      'organisation',
+      `jobs/${encodeURIComponent(jobUuid)}/applicants/${encodeURIComponent(applicationUuid)}`
+    )
+  );
 }

@@ -38,6 +38,8 @@ import {
 } from '@/components/ui/table';
 import { useOrganisation } from '@/context/organisation-context';
 import { extractEntity } from '@/lib/api-helpers';
+import { APPROVAL_QUERY_FRESHNESS } from '@/lib/query-client';
+import { dashboardUrl } from '@/src/features/dashboard/lib/dashboard-url';
 import { toAuthenticatedMediaUrl } from '@/src/lib/media-url';
 import type { Course } from '@/services/client';
 import {
@@ -128,8 +130,7 @@ export default function MyApplicationsPage() {
       },
     }),
     enabled: Boolean(organisationUuid),
-    // A reviewer decides this elsewhere, so a held answer is wrong the moment they
-    // decide; stale on arrival is what makes the defaults re-ask on mount and focus.
+    ...APPROVAL_QUERY_FRESHNESS,
     staleTime: 0,
   });
   const applications = applicationsQuery.data?.data?.content ?? [];
@@ -157,7 +158,7 @@ export default function MyApplicationsPage() {
   }, [courseQueries, courseUuids]);
 
   const goToApp = (id?: string) =>
-    id && router.push(`/dashboard/organisation/my-applications/${id}`);
+    id && router.push(dashboardUrl('organisation', `approvals/${id}`));
 
   const rows = applications.map(app => {
     const entry = app.course_uuid ? courseByUuid.get(app.course_uuid) : undefined;

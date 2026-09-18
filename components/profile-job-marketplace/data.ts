@@ -1,17 +1,10 @@
 import type { LucideIcon } from 'lucide-react';
 
-export type JobMarketplaceRole =
-  | 'admin'
-  | 'course_creator'
-  | 'instructor'
-  | 'organization'
-  | 'parent'
-  | 'student';
-
-export type MarketplaceTabId = 'all' | 'full-time' | 'freelance' | 'internship' | 'remote';
+/** Roles that browse the marketplace read-only; instructors have their own Find work page. */
+export type JobMarketplaceRole = 'admin' | 'course_creator' | 'parent' | 'student';
 
 export type MarketplaceTab = {
-  id: MarketplaceTabId;
+  id: string;
   label: string;
   count: string | number;
   icon: LucideIcon;
@@ -31,56 +24,26 @@ export type FilterGroup = {
 };
 
 export type JobMarketplaceRoleConfig = {
-  title: string;
   description: string;
-  showManagementRail: boolean;
-  showCreateAction: boolean;
   emptyStateLabel: string;
 };
 
 const roleConfig: Record<JobMarketplaceRole, JobMarketplaceRoleConfig> = {
   student: {
-    title: 'Opportunities',
-    description: 'Explore active job postings and apply for the ones that match your profile.',
-    showManagementRail: true,
-    showCreateAction: false,
-    emptyStateLabel: 'No active opportunities are available right now.',
-  },
-  instructor: {
-    title: 'Opportunities',
-    description: 'Explore active job postings and apply for roles that match your expertise.',
-    showManagementRail: true,
-    showCreateAction: false,
-    emptyStateLabel: 'No active opportunities are available right now.',
+    description: 'Browse the class jobs organisations have posted for instructors.',
+    emptyStateLabel: 'No class jobs match these filters.',
   },
   course_creator: {
-    title: 'Opportunities',
-    description: 'Review active job postings and apply for work that fits your portfolio.',
-    showManagementRail: true,
-    showCreateAction: false,
-    emptyStateLabel: 'No active opportunities are available right now.',
+    description: 'See the class jobs organisations have posted, including jobs for your courses.',
+    emptyStateLabel: 'No class jobs match these filters.',
   },
   parent: {
-    title: 'Opportunities',
-    description: 'Browse active job postings and apply when a role fits your background.',
-    showManagementRail: true,
-    showCreateAction: false,
-    emptyStateLabel: 'No active opportunities are available right now.',
+    description: 'Browse the class jobs organisations have posted for instructors.',
+    emptyStateLabel: 'No class jobs match these filters.',
   },
   admin: {
-    title: 'Opportunities',
-    description: 'Monitor active job postings and apply from the admin workspace when needed.',
-    showManagementRail: true,
-    showCreateAction: false,
-    emptyStateLabel: 'No active opportunities are available right now.',
-  },
-  organization: {
-    title: 'Class Jobs',
-    description:
-      'Create organisation-owned class adverts, review instructor applications, and assign delivery.',
-    showManagementRail: false,
-    showCreateAction: true,
-    emptyStateLabel: 'No class jobs have been created by your organisation yet.',
+    description: 'Monitor the class jobs organisations have posted across the platform.',
+    emptyStateLabel: 'No class jobs match these filters.',
   },
 };
 

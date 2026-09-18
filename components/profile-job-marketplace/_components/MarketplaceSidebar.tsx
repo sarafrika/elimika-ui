@@ -1,112 +1,93 @@
 'use client';
 
-import { ChevronRight } from 'lucide-react';
+import { type ReactNode, useId } from 'react';
 
 import { Badge } from '@/components/ui/badge';
-import { Button } from '@/components/ui/button';
+import { cn } from '@/lib/utils';
 
 import type { FilterGroup } from '../data';
 
 type MarketplaceSidebarProps = {
   heading: string;
-  count: string;
+  count: ReactNode;
   groups: FilterGroup[];
-  setAlertLabel: string;
-  applicationsLabel: string;
-  onSetAlertsClick?: () => void;
-  onApplicationsClick?: () => void;
+  /** Links under the filters, e.g. the instructor's applications. */
+  footer?: ReactNode;
 };
 
-export function MarketplaceSidebar({
-  heading,
-  count,
-  groups,
-  setAlertLabel,
-  applicationsLabel,
-  onSetAlertsClick,
-  onApplicationsClick,
-}: MarketplaceSidebarProps) {
+/** Radio-style filter groups; each option is a pressed/unpressed button. */
+export function MarketplaceSidebar({ heading, count, groups, footer }: MarketplaceSidebarProps) {
+  const idPrefix = useId();
   return (
-    <aside className='space-y-4'>
-      <div className='border-border/70 bg-card space-y-4 rounded-md border px-4 py-4 shadow-sm'>
-        <div className='border-border/60 border-b pb-4'>
-          <h2 className='text-foreground text-base font-semibold'>{heading}</h2>
-          <p className='text-muted-foreground mt-1 text-sm'>{count}</p>
-        </div>
-
-        {groups.map(group => {
-          const GroupIcon = group.icon;
-
-          return (
-            <section
-              key={group.title}
-              className='border-border/60 space-y-2 border-b pb-4 last:border-b-0 last:pb-0'
-            >
-              <div className='text-muted-foreground flex items-center gap-2 text-xs font-medium tracking-wide uppercase'>
-                <GroupIcon className='text-primary size-4' />
-                {group.title}
-              </div>
-
-              <div className='space-y-1'>
-                {group.items.map(item => (
-                  <button
-                    key={item.label}
-                    type='button'
-                    onClick={item.onSelect}
-                    className={
-                      item.active
-                        ? 'bg-primary/10 flex w-full items-center justify-between gap-3 rounded-md px-2.5 py-2 text-left transition-colors'
-                        : 'hover:bg-muted/40 flex w-full items-center justify-between gap-3 rounded-md px-2.5 py-2 text-left transition-colors'
-                    }
-                    aria-pressed={item.active}
-                  >
-                    <span className='flex items-center gap-2.5'>
-                      <span
-                        className={
-                          item.active
-                            ? 'border-primary bg-primary size-3.5 rounded-full border-2'
-                            : 'border-muted-foreground/40 size-3.5 rounded-full border-2'
-                        }
-                      />
-                      <span
-                        className={
-                          item.active
-                            ? 'text-foreground text-sm font-medium'
-                            : 'text-muted-foreground text-sm'
-                        }
-                      >
-                        {item.label}
-                      </span>
-                    </span>
-                    {item.count ? (
-                      <Badge
-                        variant='outline'
-                        className='border-border/70 bg-muted/40 text-muted-foreground rounded-md px-2 py-0.5 text-xs tabular-nums'
-                      >
-                        {item.count}
-                      </Badge>
-                    ) : null}
-                  </button>
-                ))}
-              </div>
-            </section>
-          );
-        })}
-
-        <Button className='w-full' onClick={onSetAlertsClick} disabled={!onSetAlertsClick}>
-          {setAlertLabel}
-        </Button>
-
-        <Button
-          variant='outline'
-          className='w-full justify-between'
-          onClick={onApplicationsClick}
-          disabled={!onApplicationsClick}
-        >
-          {applicationsLabel}
-          <ChevronRight className='size-4' />
-        </Button>
+    <aside className='border-border/70 bg-card space-y-4 rounded-md border px-4 py-4 shadow-sm'>
+      <div className='border-border/60 border-b pb-4'>
+        <h2 className='text-foreground text-base font-semibold'>{heading}</h2>
+        <p className='text-muted-foreground mt-1 text-sm'>{count}</p>
       </div>
+
+      {groups.map(group => {
+        const GroupIcon = group.icon;
+        const titleId = `${idPrefix}-${group.title.toLowerCase().replace(/[^a-z0-9]+/g, '-')}`;
+
+        return (
+          <section
+            key={group.title}
+            aria-labelledby={titleId}
+            className='border-border/60 space-y-2 border-b pb-4 last:border-b-0 last:pb-0'
+          >
+            <h3
+              id={titleId}
+              className='text-muted-foreground flex items-center gap-2 text-xs font-medium tracking-wide uppercase'
+            >
+              <GroupIcon aria-hidden className='text-primary size-4' />
+              {group.title}
+            </h3>
+
+            <div className='space-y-1'>
+              {group.items.map(item => (
+                <button
+                  key={item.label}
+                  type='button'
+                  onClick={item.onSelect}
+                  aria-pressed={item.active}
+                  className={cn(
+                    'flex w-full items-center justify-between gap-3 rounded-md px-2.5 py-2 text-left transition-colors',
+                    item.active ? 'bg-primary/10' : 'hover:bg-muted/40'
+                  )}
+                >
+                  <span className='flex items-center gap-2.5'>
+                    <span
+                      aria-hidden
+                      className={cn(
+                        'size-3.5 rounded-full border-2',
+                        item.active ? 'border-primary bg-primary' : 'border-muted-foreground/40'
+                      )}
+                    />
+                    <span
+                      className={cn(
+                        'text-sm',
+                        item.active ? 'text-foreground font-medium' : 'text-muted-foreground'
+                      )}
+                    >
+                      {item.label}
+                    </span>
+                  </span>
+                  {item.count !== undefined ? (
+                    <Badge
+                      variant='outline'
+                      className='border-border/70 bg-muted/40 text-muted-foreground rounded-md px-2 py-0.5 text-xs tabular-nums'
+                    >
+                      {item.count}
+                    </Badge>
+                  ) : null}
+                </button>
+              ))}
+            </div>
+          </section>
+        );
+      })}
+
+      {footer ? <div className='space-y-2'>{footer}</div> : null}
     </aside>
   );
 }

@@ -27,6 +27,11 @@ import { toast } from 'sonner';
 
 import { AsyncSection } from '@/components/data/async-section';
 import {
+  HireClashAlert,
+  hireClashTitle,
+} from '@/components/profile-job-marketplace/_components/HireClashAlert';
+import { useHireRateCheck } from '@/components/profile-job-marketplace/_components/HireChecksPanel';
+import {
   canRejectApplication,
   HIRING_STAGES,
   isClassCreatedStatus,
@@ -58,15 +63,23 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Textarea } from '@/components/ui/textarea';
 import { extractEntity, extractList } from '@/lib/api-helpers';
 import { getErrorMessage } from '@/lib/error-utils';
+import { formatRate, formatRateAmount } from '@/lib/rate-card';
+import { parseSchedulingConflicts, type SchedulingConflict } from '@/lib/scheduling-conflicts';
 import { cn } from '@/lib/utils';
-import type { ClassMarketplaceJobApplication, Instructor } from '@/services/client';
+import type {
+  ClassMarketplaceJob,
+  ClassMarketplaceJobApplication,
+  Instructor,
+} from '@/services/client';
 import { invalidateJobApplicationWorkflowQueries } from '@/src/features/dashboard/workflow-query-invalidation';
+import { createClassHref as createClassHrefFor } from '@/src/features/organisation/jobs/lib/job-routes';
 import {
   getInstructorByUuidOptions,
   getInstructorEducationOptions,
   getInstructorExperienceOptions,
   getInstructorMembershipsOptions,
   getInstructorSkillsOptions,
+  getJobOptions,
   listJobApplicationsOptions,
   reviewApplicationMutation,
 } from '@/services/client/@tanstack/react-query.gen';
@@ -240,12 +253,12 @@ function TransitionError({ message }: { message: string | null }) {
 }
 
 /** A disabled control owes the organisation the reason, so the gate is named where the button is. */
-function HireBlockedNotice({ blocked }: { blocked: boolean }) {
-  if (!blocked) return null;
+function HireBlockedNotice({ reason }: { reason: string | null }) {
+  if (!reason) return null;
   return (
     <div className='border-warning/60 bg-warning/10 text-foreground flex items-start gap-2 rounded-md border p-3 text-sm'>
       <TriangleAlert className='text-warning mt-0.5 h-4 w-4 shrink-0' />
-      <span>Not approved to train this course or program yet — hiring is blocked.</span>
+      <span>{reason}</span>
     </div>
   );
 }
@@ -262,6 +275,7 @@ export default function CandidateDetailPage() {
   const [interviewAt, setInterviewAt] = useState('');
   const [interviewNote, setInterviewNote] = useState('');
   const [transitionError, setTransitionError] = useState<string | null>(null);
+  const [hireClashes, setHireClashes] = useState<SchedulingConflict[]>([]);
 
   const instructorQuery = useQuery({
     ...getInstructorByUuidOptions({ path: { uuid: instructorUuid } }),
@@ -296,6 +310,14 @@ export default function CandidateDetailPage() {
   const education = extractList<Record<string, unknown>>(educationQuery.data);
   const memberships = extractList<Record<string, unknown>>(membershipsQuery.data);
 
+  const jobQuery = useQuery({
+    ...getJobOptions({ path: { jobUuid } }),
+    enabled: Boolean(jobUuid),
+  });
+  const job = extractEntity<ClassMarketplaceJob>(jobQuery.data);
+  const approvedRateLabel = (amount: number) =>
+    job?.rate_basis ? formatRate(Number(amount), job.rate_basis) : formatRateAmount(Number(amount));
+
   const applicationsQuery = useQuery({
     ...listJobApplicationsOptions({
       path: { jobUuid },
@@ -314,11 +336,25 @@ export default function CandidateDetailPage() {
   const isHired = stageIndexOf(status) === HIRED_INDEX;
   const classCreated = isClassCreatedStatus(status);
   const canReject = canRejectApplication(status);
-  // The hire endpoint refuses an instructor who is not approved to deliver this job, so the
-  // control never offers a move the server will turn down.
+  const { rateCheck, recordRateRefusal, clearRateRefusal } = useHireRateCheck(
+    app,
+    job,
+    instructor?.full_name,
+    Math.max(jobQuery.dataUpdatedAt, applicationsQuery.dataUpdatedAt)
+  );
+  // The hire endpoint refuses an instructor not approved to deliver this job, or whose approved
+  // rate the pay does not cover, so the control never offers a move the server will turn down.
   const notApprovedToTrain = app?.training_approved === false;
-  const forwardBlocked = nextStep?.action === 'hire' && notApprovedToTrain;
-  const createClassHref = `/dashboard/organisation/opportunities/${jobUuid}/create-class`;
+  const hireBlockedReason =
+    nextStep?.action !== 'hire'
+      ? null
+      : notApprovedToTrain
+        ? 'Not approved to train this course or program yet, so they cannot be hired.'
+        : rateCheck.ok
+          ? null
+          : rateCheck.message;
+  const forwardBlocked = Boolean(hireBlockedReason);
+  const createClassHref = createClassHrefFor(jobUuid);
 
   // Hiring is one backend transition that affiliates the instructor. Nothing is chained onto it:
   // a refused step must leave the candidate exactly where they were.
@@ -329,9 +365,26 @@ export default function CandidateDetailPage() {
       await applicationsQuery.refetch();
       const action = String(vars?.query?.action ?? '');
       setTransitionError(null);
+      setHireClashes([]);
+      clearRateRefusal();
       toast.success(MOVE_MESSAGES[action] ?? 'Candidate updated.');
     },
-    onError: error => {
+    onError: async (error, variables) => {
+      const hiring = variables?.query?.action === 'hire';
+      const clashes = hiring ? parseSchedulingConflicts(error) : null;
+      if (clashes) {
+        setHireClashes(clashes.conflicts);
+        toast.error(hireClashTitle(clashes.conflicts.length));
+        await invalidateJobApplicationWorkflowQueries(queryClient);
+        return;
+      }
+      // A rate refusal closes the hire until the refetched approved rate says otherwise.
+      const rateRefusal = hiring ? recordRateRefusal(error) : null;
+      if (rateRefusal) {
+        toast.error(rateRefusal);
+        await invalidateJobApplicationWorkflowQueries(queryClient);
+        return;
+      }
       // A refused skip names both stages, so the server's own words stand in for a generic toast.
       const message = getErrorMessage(error, 'Could not move this candidate.');
       setTransitionError(message);
@@ -341,6 +394,8 @@ export default function CandidateDetailPage() {
   const act = (action: string, body?: Record<string, string>) => {
     if (!app) return;
     setTransitionError(null);
+    setHireClashes([]);
+    clearRateRefusal();
     moveMutation.mutate({
       path: { jobUuid, applicationUuid: app.uuid as string },
       query: { action },
@@ -517,6 +572,8 @@ export default function CandidateDetailPage() {
         />
       </div>
 
+      <HireClashAlert conflicts={hireClashes} instructorName={name} />
+
       <div className='grid gap-6 lg:grid-cols-[minmax(0,1fr)_320px]'>
         {/* Main */}
         <div>
@@ -566,11 +623,9 @@ export default function CandidateDetailPage() {
                     />
                     <InfoRow
                       icon={<Briefcase className='h-4 w-4' />}
-                      label='Proposed rate'
+                      label='Approved rate'
                       value={
-                        app?.approved_rate != null
-                          ? `KES ${Number(app.approved_rate).toLocaleString()}/hr`
-                          : '—'
+                        app?.approved_rate != null ? approvedRateLabel(app.approved_rate) : '—'
                       }
                     />
                   </div>
@@ -730,7 +785,7 @@ export default function CandidateDetailPage() {
                 </CardHeader>
                 <CardContent className='space-y-3'>
                   <TransitionError message={transitionError} />
-                  <HireBlockedNotice blocked={forwardBlocked} />
+                  <HireBlockedNotice reason={hireBlockedReason} />
                   <div className='grid gap-2 sm:grid-cols-2'>
                     {nextStep ? (
                       <Button
@@ -760,7 +815,9 @@ export default function CandidateDetailPage() {
                   </div>
                   <p className='text-muted-foreground text-xs'>
                     {forwardBlocked
-                      ? 'Hiring stays closed until this instructor is approved to deliver what this job teaches.'
+                      ? notApprovedToTrain
+                        ? 'Hiring stays closed until this instructor is approved to deliver what this job teaches.'
+                        : 'Hiring stays closed until they have an approved rate for this job that its pay covers.'
                       : nextStep
                         ? `${nextStep.label} moves them to ${statusLabel(nextStep.leadsTo)}. No stage can be skipped, so this is the only way forward.`
                         : isHired
@@ -800,13 +857,11 @@ export default function CandidateDetailPage() {
             </div>
             <CardContent className='space-y-3 pt-5 text-sm'>
               <TransitionError message={transitionError} />
-              <HireBlockedNotice blocked={forwardBlocked} />
+              <HireBlockedNotice reason={hireBlockedReason} />
               <div className='flex items-center justify-between'>
-                <dt className='text-muted-foreground'>Rate</dt>
+                <dt className='text-muted-foreground'>Approved rate</dt>
                 <dd className='font-medium'>
-                  {app?.approved_rate != null
-                    ? `KES ${Number(app.approved_rate).toLocaleString()}/hr`
-                    : '—'}
+                  {app?.approved_rate != null ? approvedRateLabel(app.approved_rate) : '—'}
                 </dd>
               </div>
               <div className='flex items-center justify-between'>

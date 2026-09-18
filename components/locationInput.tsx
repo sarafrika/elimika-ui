@@ -4,15 +4,16 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 import { Input } from '@/components/ui/input';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { cn } from '@/lib/utils';
-
-type MapboxSuggestFeature = {
-  name: string;
-  mapbox_id: string;
-  place_formatted?: string;
-  latitude: number;
-  longitude: number;
-};
+import {
+  composePlaceLabel,
+  DEFAULT_SEARCH_COUNTRY,
+  GEOCODER_URL,
+  type PhotonFeature,
+  type PlaceSuggestion,
+  SEARCH_BIAS,
+  toSuggestion,
+} from '@/lib/geocoding';
+import { buildStaticMapUrl } from '@/lib/static-map';
 
 type MapboxRetrieveFeature = {
   mapbox_id: string;
@@ -61,72 +62,6 @@ type LocationInputProps = {
   country?: string;
 };
 
-const mapboxToken = process.env.NEXT_PUBLIC_MAPBOX_TOKEN;
-const GEOCODER_URL = process.env.NEXT_PUBLIC_GEOCODER_URL ?? 'https://photon.komoot.io/api/';
-const DEFAULT_SEARCH_COUNTRY = 'KE';
-const SEARCH_BIAS = { latitude: -1.286389, longitude: 36.817223 };
-
-type PhotonFeature = {
-  geometry?: { coordinates?: [number, number] };
-  properties?: {
-    name?: string;
-    street?: string;
-    housenumber?: string;
-    district?: string;
-    city?: string;
-    county?: string;
-    state?: string;
-    country?: string;
-    countrycode?: string;
-    osm_id?: number;
-    osm_key?: string;
-  };
-};
-
-/**
- * OpenStreetMap indexes Kenyan venues that Mapbox Search does not — Sarit Centre,
- * Westgate, Yaya, Strathmore all resolve here and none of them resolve there.
- * Mapbox is still used for the static map preview.
- */
-function toSuggestion(feature: PhotonFeature): MapboxSuggestFeature | null {
-  const p = feature.properties ?? {};
-  const coords = feature.geometry?.coordinates;
-  if (!p.name || !coords) {
-    return null;
-  }
-  const context = [
-    [p.housenumber, p.street].filter(Boolean).join(' '),
-    p.district,
-    p.city ?? p.county,
-    p.country,
-  ]
-    .filter(Boolean)
-    .filter((part, index, all) => all.indexOf(part) === index)
-    .join(', ');
-
-  return {
-    name: p.name,
-    place_formatted: context || undefined,
-    mapbox_id: `${p.osm_key ?? 'place'}:${p.osm_id ?? p.name}`,
-    latitude: coords[1],
-    longitude: coords[0],
-  };
-}
-
-
-/**
- * The searched place is what gets stored, so the label has to name it. The
- * geocoder returns the place in `name` and its surrounding address separately,
- * so keeping only the context would save the city and lose the venue.
- */
-function composePlaceLabel(name?: string | null, placeFormatted?: string | null) {
-  const place = name?.trim();
-  const context = placeFormatted?.trim();
-  if (!place) return context ?? null;
-  if (!context || context === place || context.startsWith(`${place},`)) return place;
-  return `${place}, ${context}`;
-}
-
 export default function LocationInput({
   value,
   onChange,
@@ -143,7 +78,7 @@ export default function LocationInput({
   country = DEFAULT_SEARCH_COUNTRY,
 }: LocationInputProps) {
   const [query, setQuery] = useState(value ?? '');
-  const [suggestions, setSuggestions] = useState<MapboxSuggestFeature[]>([]);
+  const [suggestions, setSuggestions] = useState<PlaceSuggestion[]>([]);
   const [isOpen, setIsOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -154,9 +89,17 @@ export default function LocationInput({
   }>({});
   const [selectedPlaceLabel, setSelectedPlaceLabel] = useState<string | null>(null);
   const closeTimeout = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const queryRef = useRef(value ?? '');
+  // Text that arrived from outside (edit hydration, a reverse-geocode fill, a picked
+  // suggestion) is not a search the user asked for, so it must not open the list.
+  const suppressSearchRef = useRef<string | null>(value ?? '');
 
   useEffect(() => {
-    setQuery(value ?? '');
+    const next = value ?? '';
+    if (next === queryRef.current) return;
+    queryRef.current = next;
+    suppressSearchRef.current = next;
+    setQuery(next);
   }, [value]);
 
   useEffect(() => {
@@ -185,7 +128,7 @@ export default function LocationInput({
   }, [coordinates?.latitude, coordinates?.longitude]);
 
   useEffect(() => {
-    if (!query || query.length < 3) {
+    if (!query || query.length < 3 || query === suppressSearchRef.current) {
       setSuggestions([]);
       setIsOpen(false);
       return;
@@ -214,7 +157,7 @@ export default function LocationInput({
         const matches = (data.features ?? [])
           .filter(feature => !country || feature.properties?.countrycode === country)
           .map(toSuggestion)
-          .filter((item): item is MapboxSuggestFeature => item !== null)
+          .filter((item): item is PlaceSuggestion => item !== null)
           .slice(0, 6);
         setSuggestions(matches);
         setIsOpen(true);
@@ -240,8 +183,10 @@ export default function LocationInput({
   }, [query, country]);
 
   const handleSelect = useCallback(
-    (suggestion: MapboxSuggestFeature) => {
+    (suggestion: PlaceSuggestion) => {
       const label = composePlaceLabel(suggestion.name, suggestion.place_formatted);
+      queryRef.current = label ?? '';
+      suppressSearchRef.current = label ?? '';
       setQuery(label ?? '');
       onChange?.(label ?? '');
       setIsOpen(false);
@@ -303,19 +248,15 @@ export default function LocationInput({
     Number.isFinite(selectedCoordinates.longitude);
 
   const mapPreviewUrl = useMemo(() => {
-    if (!showMapPreview || !mapboxToken || !hasCoordinates) {
+    if (!showMapPreview || !hasCoordinates) {
       return null;
     }
 
-    const { latitude, longitude } = selectedCoordinates;
-    const lat = latitude as number;
-    const lon = longitude as number;
-    const zoom = Math.min(Math.max(mapZoom, 3), 18);
-    const pinColor = '0061ed';
-    const size = '600x320';
-    const baseUrl = 'https://api.mapbox.com/styles/v1/mapbox/streets-v12/static';
-
-    return `${baseUrl}/pin-s+${pinColor}(${lon},${lat})/${lon},${lat},${zoom}/${size}@2x?access_token=${mapboxToken}`;
+    return buildStaticMapUrl({
+      lat: selectedCoordinates.latitude as number,
+      lng: selectedCoordinates.longitude as number,
+      zoom: mapZoom,
+    });
   }, [hasCoordinates, mapZoom, selectedCoordinates, showMapPreview]);
 
   const formattedLatitude =
@@ -334,6 +275,8 @@ export default function LocationInput({
         name={name}
         value={query}
         onChange={event => {
+          queryRef.current = event.target.value;
+          suppressSearchRef.current = null;
           setQuery(event.target.value);
           onChange?.(event.target.value);
         }}
@@ -386,8 +329,8 @@ export default function LocationInput({
 
       {isOpen && !isLoading && suggestions.length === 0 && query.length >= 3 ? (
         <div className='border-border bg-popover text-muted-foreground absolute z-30 mt-1 w-full rounded-md border px-3 py-2 text-sm shadow-lg'>
-          No match on the map. Your own venue name is kept exactly as typed — it just
-          won&apos;t carry coordinates.
+          No match on the map. Your own venue name is kept exactly as typed — it just won&apos;t
+          carry coordinates.
         </div>
       ) : null}
 

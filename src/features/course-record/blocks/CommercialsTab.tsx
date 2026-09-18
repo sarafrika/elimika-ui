@@ -2,6 +2,7 @@ import { Lock } from 'lucide-react';
 import type { ReactNode } from 'react';
 
 import { AsyncSection } from '@/components/data/async-section';
+import { RateCardGrid, RateCardGridSkeleton } from '@/components/rate-card/rate-card-grid';
 import { Card } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
 import { cn } from '@/lib/utils';
@@ -211,7 +212,7 @@ export function CommercialTerms({
         value={
           formatCourseMoney(optional(course?.minimum_training_fee), currency) ?? COURSE_PLACEHOLDER
         }
-        note='per hour, per head — floor for rate cards'
+        note='per learner — floor for every rate on a card'
       />
 
       <Card className='gap-0 px-[18px] py-4'>
@@ -280,20 +281,6 @@ export interface ApprovedRateCardsProps extends CourseBlockAsyncProps {
   className?: string;
 }
 
-/** The four hourly rates, in the order the table lists them. */
-const RATE_COLUMNS = [
-  { field: 'private_online_hourly_rate', heading: 'Private · online' },
-  { field: 'private_inperson_hourly_rate', heading: 'Private · in-person' },
-  { field: 'group_online_hourly_rate', heading: 'Group · online' },
-  { field: 'group_inperson_hourly_rate', heading: 'Group · in-person' },
-] as const satisfies ReadonlyArray<{ field: keyof CourseTrainingRateCard; heading: string }>;
-
-/** Shared by the header row and every body row so the columns cannot drift. */
-const RATE_GRID = 'grid grid-cols-[minmax(0,1.4fr)_repeat(4,minmax(0,1fr))] items-center gap-3';
-
-/** Below `md` the grid gives way to stacked cards, so it never has to scroll. */
-const RATE_TABLE_MIN_WIDTH = 'min-w-[620px]';
-
 export function ApprovedRateCards({
   trainers,
   currency = COURSE_DEFAULT_CURRENCY,
@@ -314,7 +301,8 @@ export function ApprovedRateCards({
       <div className='px-5 pt-4 pb-3.5'>
         <h3 className='text-[15px] font-bold tracking-tight'>Approved rate cards</h3>
         <p className='text-muted-foreground mt-[3px] text-[12.5px] leading-[1.45]'>
-          Hourly rates each approved trainer may charge, by session format.
+          What each approved trainer may charge per learner, by training method, per hour, per
+          session and per day.
         </p>
       </div>
 
@@ -323,55 +311,19 @@ export function ApprovedRateCards({
         error={error}
         onRetry={onRetry}
         empty={rows.length === 0}
-        skeleton={<RateTableSkeleton />}
+        skeleton={
+          <div className='px-5 pb-5'>
+            <RateCardGridSkeleton />
+          </div>
+        }
         errorTitle='Couldn’t load the approved rate cards'
         emptyTitle='No rate cards yet'
         emptyDescription='A rate card appears here once the creator approves a training application that carries one.'
         className='mx-5 mb-5'
       >
-        {/* ≥768: the table. */}
-        <div className='hidden overflow-x-auto md:block'>
-          <div className={RATE_TABLE_MIN_WIDTH} role='table' aria-label='Approved rate cards'>
-            <div
-              className={cn(
-                RATE_GRID,
-                'bg-muted border-border text-muted-foreground border-y px-5 py-[9px] text-[11px] font-bold tracking-[0.05em] uppercase'
-              )}
-              role='row'
-            >
-              <span role='columnheader'>Trainer</span>
-              {RATE_COLUMNS.map(column => (
-                <span key={column.field} role='columnheader' className='text-right'>
-                  {column.heading}
-                </span>
-              ))}
-            </div>
-
-            {rows.map(trainer => (
-              <div
-                key={trainer.applicant_uuid}
-                role='row'
-                className={cn(RATE_GRID, 'border-b-muted border-b px-5 py-[11px] text-[13px]')}
-              >
-                <span role='cell' className='truncate font-semibold'>
-                  {trainer.display_name}
-                </span>
-                {RATE_COLUMNS.map(column => (
-                  <RateCell
-                    key={column.field}
-                    rate={trainer.rate_card[column.field]}
-                    currency={trainer.rate_card.currency ?? currency}
-                  />
-                ))}
-              </div>
-            ))}
-          </div>
-        </div>
-
-        {/* <768: one card per trainer. */}
-        <div className='md:hidden'>
+        <div className='space-y-5 px-5 pb-5'>
           {rows.map(trainer => (
-            <div key={trainer.applicant_uuid} className='border-b-muted border-b px-4 py-3.5'>
+            <section key={trainer.applicant_uuid} className='space-y-2.5'>
               <div className='flex items-center gap-2.5'>
                 <span
                   aria-hidden
@@ -379,43 +331,20 @@ export function ApprovedRateCards({
                 >
                   {courseInitials(trainer.display_name)}
                 </span>
-                <span className='min-w-0 truncate text-[13.5px] font-semibold'>
+                <h4 className='min-w-0 truncate text-[13.5px] font-semibold'>
                   {trainer.display_name}
-                </span>
+                </h4>
               </div>
-
-              <dl className='mt-3 grid grid-cols-2 gap-x-3 gap-y-2.5'>
-                {RATE_COLUMNS.map(column => (
-                  <div key={column.field} className='min-w-0'>
-                    <dt className='text-muted-foreground/70 text-[10.5px] font-bold tracking-[0.05em] uppercase'>
-                      {column.heading}
-                    </dt>
-                    <dd className='mt-0.5 text-[13px] font-semibold'>
-                      {formatRateValue(trainer.rate_card[column.field])}
-                    </dd>
-                  </div>
-                ))}
-              </dl>
-            </div>
+              <RateCardGrid
+                mode='view'
+                value={trainer.rate_card}
+                currency={trainer.rate_card.currency ?? currency}
+              />
+            </section>
           ))}
         </div>
       </AsyncSection>
     </Card>
-  );
-}
-
-/**
- * One hourly rate. The figure is bare, as designed — the terms cards directly
- * above already establish the currency — and the full money string rides along
- * in the tooltip for a card priced in something else.
- */
-function RateCell({ rate, currency }: { rate: number | null | undefined; currency: string }) {
-  const money = formatCourseMoney(optional(rate), currency);
-
-  return (
-    <span role='cell' className='text-foreground/80 text-right' title={money}>
-      {formatRateValue(rate)}
-    </span>
   );
 }
 
@@ -584,29 +513,15 @@ export function CommercialsTabSkeleton() {
           <Skeleton className='h-4 w-40' />
           <Skeleton className='mt-2 h-3 w-72 max-w-full' />
         </div>
-        <RateTableSkeleton />
+        <div className='px-5 pb-5'>
+          <RateCardGridSkeleton />
+        </div>
       </Card>
 
       <Card className='gap-0 px-5 py-4'>
         <Skeleton className='mb-3 h-4 w-36' />
         <PurchasesSkeleton />
       </Card>
-    </div>
-  );
-}
-
-function RateTableSkeleton() {
-  return (
-    <div>
-      <div className='bg-muted border-border h-[33px] border-y' />
-      {[0, 1, 2, 3].map(row => (
-        <div key={row} className='border-b-muted flex items-center gap-3 border-b px-5 py-[11px]'>
-          <Skeleton className='h-3 w-44 max-w-full flex-1' />
-          {[0, 1, 2, 3].map(cell => (
-            <Skeleton key={cell} className='hidden h-3 w-12 flex-none md:block' />
-          ))}
-        </div>
-      ))}
     </div>
   );
 }
@@ -639,11 +554,6 @@ function optional(value: number | null | undefined): number | undefined {
 /** "40" → "40%". Whole numbers stay whole; a half share keeps its decimal. */
 function formatShare(value: number): string {
   return `${Number.isInteger(value) ? value : value.toFixed(1)}%`;
-}
-
-function formatRateValue(rate: number | null | undefined): string {
-  if (typeof rate !== 'number' || !Number.isFinite(rate)) return COURSE_PLACEHOLDER;
-  return new Intl.NumberFormat('en-KE', { maximumFractionDigits: 0 }).format(rate);
 }
 
 /** Routes may hand over an ISO date or one already formatted; both render. */

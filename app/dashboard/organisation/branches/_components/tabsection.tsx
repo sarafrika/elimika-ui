@@ -1,13 +1,7 @@
 'use client';
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from '../../../../../components/ui/card';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '../../../../../components/ui/tabs';
-import { ResourceTypeEnum, type TrainingBranch } from '../../../../../services/client';
+
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { ResourceTypeEnum, type TrainingBranch } from '@/services/client';
 import BranchCourses from './branch-courses';
 import BranchResources from './branch-resources';
 
@@ -16,55 +10,33 @@ export default function TabSection({ branch }: { branch: TrainingBranch }) {
   const branchUuid = branch.uuid ?? '';
 
   return (
-    <Tabs defaultValue='venues' className='mb-20'>
+    <Tabs defaultValue='venues' className='mb-20 gap-3'>
       <TabsList>
-        <TabsTrigger value='venues'>Venues (Classrooms)</TabsTrigger>
-        <TabsTrigger value='resources'>Resources</TabsTrigger>
+        <TabsTrigger value='venues'>Venues</TabsTrigger>
+        <TabsTrigger value='equipment'>Equipment</TabsTrigger>
         <TabsTrigger value='courses'>Courses</TabsTrigger>
       </TabsList>
 
       <TabsContent value='venues'>
-        <Card>
-          <CardHeader>
-            <CardTitle>Venues (Classrooms)</CardTitle>
-            <CardDescription>Classrooms and labs available at this branch</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <BranchResources
-              organisationUuid={organisationUuid}
-              branchUuid={branchUuid}
-              resourceType={ResourceTypeEnum.VENUE}
-            />
-          </CardContent>
-        </Card>
+        <BranchResources branch={branch} resourceType={ResourceTypeEnum.VENUE} />
       </TabsContent>
 
-      <TabsContent value='resources'>
-        <Card>
-          <CardHeader>
-            <CardTitle>Resources</CardTitle>
-            <CardDescription>Shared equipment available at this branch</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <BranchResources
-              organisationUuid={organisationUuid}
-              branchUuid={branchUuid}
-              resourceType={ResourceTypeEnum.EQUIPMENT_POOL}
-            />
-          </CardContent>
-        </Card>
+      <TabsContent value='equipment'>
+        <BranchResources branch={branch} resourceType={ResourceTypeEnum.EQUIPMENT_POOL} />
       </TabsContent>
 
       <TabsContent value='courses'>
-        <Card>
-          <CardHeader>
-            <CardTitle>Courses</CardTitle>
-            <CardDescription>Courses taught at this branch</CardDescription>
-          </CardHeader>
-          <CardContent>
+        <section className='border-border/70 bg-card rounded-md border shadow-sm'>
+          <div className='border-border/60 space-y-1 border-b px-5 py-4'>
+            <h2 className='text-foreground text-base font-semibold'>Courses</h2>
+            <p className='text-muted-foreground text-sm'>
+              Courses taught in classes at {branch.branch_name || 'this branch'}.
+            </p>
+          </div>
+          <div className='p-5'>
             <BranchCourses organisationUuid={organisationUuid} branchUuid={branchUuid} />
-          </CardContent>
-        </Card>
+          </div>
+        </section>
       </TabsContent>
     </Tabs>
   );

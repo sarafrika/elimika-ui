@@ -1,5 +1,6 @@
 'use client';
 
+import { JobTimeLegend } from '@/components/instructor/job-time';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Calendar, Info } from 'lucide-react';
@@ -65,6 +66,7 @@ export default function TimetableManager({
                 <span className='text-muted-foreground text-sm'>{item.label}</span>
               </div>
             ))}
+            <JobTimeLegend />
           </div>
 
           <div className='text-muted-foreground flex items-center gap-2 sm:ml-auto'>

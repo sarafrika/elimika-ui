@@ -1,6 +1,7 @@
 'use client';
 
 import { Badge } from '@/components/ui/badge';
+import { jobTimeKind } from '@/lib/instructor-job-time';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import {
@@ -59,7 +60,7 @@ export function AvailabilityBooking({
   const availableSlots = useMemo(() => {
     const now = new Date();
     const slots = availabilityData.events
-      ?.filter(slot => slot.is_available === true)
+      ?.filter(slot => slot.is_available === true && !jobTimeKind(slot.entry_type))
       ?.filter(slot => {
         // Only show future slots
         if (slot.date) {

@@ -40,10 +40,15 @@ const eventColorMap: Record<
     dot: 'bg-success',
     gradient: 'from-success/5 to-success/10 dark:from-success/20 dark:to-success/15',
   },
-  BOOKING: {
-    badge: 'bg-info/10 text-info border-info/20',
-    dot: 'bg-info',
-    gradient: 'from-info/5 to-info/10 dark:from-info/20 dark:to-info/15',
+  JOB_HOLD: {
+    badge: 'bg-job-hold text-foreground border-warning/60',
+    dot: 'bg-warning',
+    gradient: 'from-warning/5 to-warning/10 dark:from-warning/20 dark:to-warning/15',
+  },
+  JOB_APPLICATION: {
+    badge: 'bg-primary/5 text-muted-foreground border-dashed border-primary/40',
+    dot: 'bg-primary/40',
+    gradient: 'from-primary/5 to-primary/10 dark:from-primary/20 dark:to-primary/15',
   },
 };
 

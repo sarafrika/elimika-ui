@@ -1,9 +1,10 @@
 'use client';
 
 import RichTextRenderer from '@/components/editors/richTextRenders';
+import { RateCardGrid } from '@/components/rate-card/rate-card-grid';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardHeader, CardTitle } from '@/components/ui/card';
-import type { CourseTrainingRateCard } from '@/services/client';
+import { DEFAULT_CURRENCY, type RateCard } from '@/lib/rate-card';
 import type { CourseWithApplication } from './types';
 
 interface CourseDetailsProps {
@@ -12,7 +13,7 @@ interface CourseDetailsProps {
 }
 
 export default function CourseDetails({ course, className = '' }: CourseDetailsProps) {
-  const rates: Partial<CourseTrainingRateCard> = course.application?.rate_card ?? {};
+  const rates: RateCard | undefined = course.application?.rate_card;
 
   return (
     <div className={`space-y-6 ${className}`}>
@@ -69,51 +70,11 @@ export default function CourseDetails({ course, className = '' }: CourseDetailsP
               </div>
             </div>
 
-            <div className='grid grid-cols-2 gap-4 border-t pt-4'>
-              <div>
-                <p className='text-muted-foreground text-sm font-medium'>Pricing:</p>
-                {/* <p className='text-sm'>
-                  {course?.is_free ? 'Free Course' : `${course?.minimum_training_fee}`}
-                </p> */}
-              </div>
-            </div>
-
-            <div className='mt-4 grid grid-cols-1 gap-4 sm:grid-cols-2'>
-              {/* Private Online */}
-              <div className='rounded-xl border p-4 shadow-sm transition hover:shadow-md'>
-                <h3 className='text-lg font-semibold'>Private Online</h3>
-                <p className='text-muted-foreground text-sm'>Rate per hour per head</p>
-                <p className='mt-2 text-xl font-bold'>
-                  {rates?.currency} {rates?.private_online_hourly_rate}
-                </p>
-              </div>
-
-              {/* Private In-Person */}
-              <div className='rounded-xl border p-4 shadow-sm transition hover:shadow-md'>
-                <h3 className='text-lg font-semibold'>Private In-person</h3>
-                <p className='text-muted-foreground text-sm'>Rate per hour per head</p>
-                <p className='mt-2 text-xl font-bold'>
-                  {rates?.currency} {rates?.private_inperson_hourly_rate}
-                </p>
-              </div>
-
-              {/* Group Online */}
-              <div className='rounded-xl border p-4 shadow-sm transition hover:shadow-md'>
-                <h3 className='text-lg font-semibold'>Group Online</h3>
-                <p className='text-muted-foreground text-sm'>Rate per hour per head</p>
-                <p className='mt-2 text-xl font-bold'>
-                  {rates?.currency} {rates?.group_online_hourly_rate}
-                </p>
-              </div>
-
-              {/* Group In-Person */}
-              <div className='rounded-xl border p-4 shadow-sm transition hover:shadow-md'>
-                <h3 className='text-lg font-semibold'>Group In-person</h3>
-                <p className='text-muted-foreground text-sm'>Rate per hour per head</p>
-                <p className='mt-2 text-xl font-bold'>
-                  {rates?.currency} {rates?.group_inperson_hourly_rate}
-                </p>
-              </div>
+            <div className='space-y-2 border-t pt-4'>
+              <p className='text-muted-foreground text-sm font-medium'>
+                Rates per learner ({rates?.currency || DEFAULT_CURRENCY})
+              </p>
+              <RateCardGrid mode='view' value={rates} />
             </div>
           </div>
         </CardHeader>

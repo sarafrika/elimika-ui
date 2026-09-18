@@ -1,15 +1,5 @@
 import { Skeleton } from '@/components/ui/skeleton';
 
-export function HiredJobListSkeleton() {
-  return (
-    <div className='grid gap-4 md:grid-cols-2 xl:grid-cols-3'>
-      {[0, 1, 2, 3, 4, 5].map(item => (
-        <Skeleton key={item} className='h-80 rounded-xl' />
-      ))}
-    </div>
-  );
-}
-
 export function JobListSkeleton() {
   return (
     <div className='3xl:grid-cols-2 grid gap-4'>
@@ -57,12 +47,6 @@ export function MarketplaceSidebarSkeleton() {
           ))}
         </div>
       ))}
-      <Skeleton className='h-9 w-full rounded-md' />
-      <Skeleton className='h-9 w-full rounded-md' />
     </div>
   );
-}
-
-export function SelectSkeleton() {
-  return <Skeleton className='h-11 w-full rounded-md' />;
 }

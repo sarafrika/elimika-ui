@@ -98,6 +98,7 @@ export const useClassDetails = (classId?: string) => {
     data: classDefinitionData,
     isLoading: isLoadingClass,
     isError: isClassError,
+    refetch: refetchClass,
   } = useQuery({
     ...getClassDefinitionOptions({
       path: { uuid: classId as string },
@@ -154,5 +155,6 @@ export const useClassDetails = (classId?: string) => {
     },
     isLoading,
     isError: isClassError,
+    refetch: refetchClass,
   };
 };

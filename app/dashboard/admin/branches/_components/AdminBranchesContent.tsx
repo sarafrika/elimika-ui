@@ -213,14 +213,14 @@ export function AdminBranchesContent() {
                       <div className='mt-3 grid gap-2 text-sm md:grid-cols-2'>
                         <div>
                           <p className='text-muted-foreground text-xs uppercase'>
-                            Point of contact
+                            Contact person
                           </p>
                           <p className='font-medium'>{branch.poc_name}</p>
                           <p className='text-muted-foreground'>{branch.poc_email}</p>
+                          <p className='text-muted-foreground'>{branch.poc_telephone}</p>
                         </div>
                         <div>
-                          <p className='text-muted-foreground text-xs uppercase'>Telephone</p>
-                          <p>{branch.poc_telephone}</p>
+                          <p className='text-muted-foreground text-xs uppercase'>Last updated</p>
                           <p className='text-muted-foreground text-xs'>
                             Updated{' '}
                             {branch.updated_date

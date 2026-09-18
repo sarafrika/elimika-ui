@@ -69,6 +69,8 @@ import {
 } from '@/services/client/@tanstack/react-query.gen';
 import { toAuthenticatedMediaUrl } from '@/src/lib/media-url';
 
+import { InstructorStudentsPanel } from './_components/instructor-students-panel';
+
 const tabListClass =
   'h-auto w-full justify-start gap-7 overflow-x-auto rounded-none border-b border-border/70 bg-transparent p-0';
 const tabTriggerClass =
@@ -866,116 +868,10 @@ export default function OrganisationInstructorDetailPage() {
         </TabsContent>
 
         <TabsContent value='students' className='mt-0'>
-          <SectionPanel
-            title='Student coverage'
-            description='Active learner counts for classes assigned to this instructor.'
-            actions={
-              <>
-                <Button asChild size='sm' variant='outline'>
-                  <Link href='/dashboard/organisation/students'>
-                    <Users className='size-4' />
-                    Open students
-                  </Link>
-                </Button>
-                <Button asChild size='sm'>
-                  <Link href='/dashboard/organisation/invite-students'>
-                    <Mail className='size-4' />
-                    Invite students
-                  </Link>
-                </Button>
-              </>
-            }
-          >
-            {classesQuery.isLoading || enrolmentCountsQuery.isLoading ? (
-              <div className='space-y-2'>
-                {Array.from({ length: 5 }).map((_, index) => (
-                  <Skeleton key={index} className='h-14 w-full rounded-md' />
-                ))}
-              </div>
-            ) : assignedClasses.length === 0 ? (
-              <EmptyPanel
-                icon={Users}
-                title='No assigned class roster'
-                description='Students will appear here after this instructor is assigned to organisation classes.'
-              />
-            ) : (
-              <div className='overflow-x-auto'>
-                <table className='w-full min-w-[1040px] text-sm'>
-                  <thead>
-                    <tr className='border-border/70 border-b text-left'>
-                      <th className='text-muted-foreground px-3 py-2 font-medium'>Class</th>
-                      <th className='text-muted-foreground px-3 py-2 font-medium'>Active students</th>
-                      <th className='text-muted-foreground px-3 py-2 font-medium'>Capacity</th>
-                      <th className='text-muted-foreground px-3 py-2 font-medium'>Fill rate</th>
-                      <th className='text-muted-foreground px-3 py-2 font-medium'>Sessions</th>
-                      <th className='text-muted-foreground px-3 py-2 font-medium'>Status</th>
-                      <th className='text-muted-foreground px-3 py-2 font-medium'>Actions</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {assignedClasses.map(item => {
-                      const enrolled = item.uuid ? (enrolledByClass.get(item.uuid) ?? 0) : 0;
-                      const capacity = toNumber(item.max_participants);
-                      const fillRate = capacity > 0 ? Math.round((enrolled / capacity) * 100) : 0;
-                      return (
-                        <tr key={item.uuid} className='border-border/60 border-b last:border-0'>
-                          <td className='px-3 py-3'>
-                            <p className='text-foreground font-medium'>{item.title}</p>
-                            <p className='text-muted-foreground text-xs'>
-                              {item.course_uuid ? `Course ${item.course_uuid}` : 'Standalone class'}
-                            </p>
-                          </td>
-                          <td className='px-3 py-3'>{formatCount(enrolled, '0')}</td>
-                          <td className='px-3 py-3'>{formatCount(item.max_participants, '0')}</td>
-                          <td className='px-3 py-3'>
-                            <div className='flex w-44 items-center gap-3'>
-                              <div className='bg-muted h-2 flex-1 overflow-hidden rounded-full'>
-                                <div
-                                  className='bg-primary h-full rounded-full'
-                                  style={{ width: `${Math.min(fillRate, 100)}%` }}
-                                />
-                              </div>
-                              <span className='text-muted-foreground w-10 text-right text-xs'>
-                                {fillRate}%
-                              </span>
-                            </div>
-                          </td>
-                          <td className='px-3 py-3'>
-                            {formatCount(item.completed_session_count, '0')}/
-                            {formatCount(item.scheduled_session_count, '0')}
-                          </td>
-                          <td className='px-3 py-3'>
-                            <StatusBadge
-                              status={item.is_active === false ? 'inactive' : 'active'}
-                              label={item.is_active === false ? 'Inactive' : 'Active'}
-                            />
-                          </td>
-                          <td className='px-3 py-3'>
-                            <div className='flex flex-wrap gap-2'>
-                              <Button asChild size='sm' variant='outline'>
-                                <Link href='/dashboard/organisation/students'>Roster</Link>
-                              </Button>
-                              {item.uuid ? (
-                                <Button asChild size='sm' variant='secondary'>
-                                  <Link
-                                    href={`/dashboard/organisation/invite-students?classUuid=${encodeURIComponent(
-                                      item.uuid
-                                    )}`}
-                                  >
-                                    Invite
-                                  </Link>
-                                </Button>
-                              ) : null}
-                            </div>
-                          </td>
-                        </tr>
-                      );
-                    })}
-                  </tbody>
-                </table>
-              </div>
-            )}
-          </SectionPanel>
+          <InstructorStudentsPanel
+            organisationUuid={organisationUuid}
+            instructorUuid={instructorUuid}
+          />
         </TabsContent>
 
         <TabsContent value='credentials' className='mt-0'>

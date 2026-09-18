@@ -30,6 +30,7 @@ import { averageRating, useCourseReviewsMap } from '@/hooks/use-reviews-map';
 import useStudentClassDefinitions from '@/hooks/use-student-class-definition';
 import { matchesCategoryFilter } from '@/lib/category-filters';
 import { STALE_TIMES } from '@/lib/query-client';
+import type { RateCard } from '@/lib/rate-card';
 import type { UserDomain } from '@/lib/types';
 import { ApplicantTypeEnum } from '@/services/client';
 import {
@@ -1428,26 +1429,13 @@ export function SharedCoursesPage({ domain }: SharedCoursesPageProps) {
     setApplyModalOpen(true);
   };
 
-  const handleApplyToTrain = (data: {
-    notes: string;
-    private_online_hourly_rate: number;
-    private_inperson_hourly_rate: number;
-    group_online_hourly_rate: number;
-    group_inperson_hourly_rate: number;
-    rate_currency: string;
-  }) => {
+  const handleApplyToTrain = (data: { notes: string; rate_card: RateCard }) => {
     if (!selectedApplicationCard || !applicantUuid) return;
 
     const body = {
       applicant_type: applicantType,
       applicant_uuid: applicantUuid,
-      rate_card: {
-        currency: data.rate_currency,
-        private_online_hourly_rate: data.private_online_hourly_rate,
-        private_inperson_hourly_rate: data.private_inperson_hourly_rate,
-        group_online_hourly_rate: data.group_online_hourly_rate,
-        group_inperson_hourly_rate: data.group_inperson_hourly_rate,
-      },
+      rate_card: data.rate_card,
       application_notes: data.notes,
     };
 
@@ -1941,8 +1929,8 @@ export function SharedCoursesPage({ domain }: SharedCoursesPageProps) {
                       : ''}
                   </p>
                   <p>
-                    Submit your application notes and set the amount you want to charge students per
-                    hour per head, while respecting the creator-set minimum shown below.
+                    Submit your application notes and price each training method you offer per hour,
+                    per session and per day, at or above the creator-set minimum.
                   </p>
                 </>
               )}

@@ -145,13 +145,11 @@ export function getSettingsVariantConfig(
     ],
     instructor: [
       { value: 'profile', label: 'Profile' },
-      { value: 'rate', label: 'Rate Card' },
       { value: 'support', label: 'Support' },
       { value: 'advanced-settings', label: 'Advanced Settings' },
     ],
     organisation: [
       { value: 'profile', label: 'Institution Profile' },
-      { value: 'branches', label: 'Branches' },
       { value: 'groups', label: 'Academic Groups' },
       { value: 'roles', label: 'Roles & Permissions' },
       { value: 'support', label: 'Support' },

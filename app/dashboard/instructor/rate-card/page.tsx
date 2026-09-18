@@ -1,5 +1,5 @@
-import { InstructorRateCard } from './_components/instructor-ratecard';
+import { InstructorRateCards } from './_components/instructor-rate-cards';
 
-export default function Page() {
-  return <InstructorRateCard />;
+export default function InstructorRateCardPage() {
+  return <InstructorRateCards />;
 }

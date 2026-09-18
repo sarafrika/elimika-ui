@@ -1,29 +1,5 @@
 'use client';
 
-/**
- * The application — five steps, one draft, one POST.
- *
- * The record view above answers "should I apply?". This answers "on what
- * terms?", and it is the only thing on the route that writes: everything the
- * applicant types lives in `applyReducer`'s state until the last step's button
- * turns it into a rate card and a notes line.
- *
- * ## Gating is per step, and it is shown
- *
- * `missing` is recomputed on every keystroke for the *current* step, so Next is
- * disabled with the reasons listed underneath rather than a form that refuses
- * on submit and does not say why. The last step re-runs every step's rules —
- * jumping back via a Review "Edit" link and leaving a field blank must not slip
- * through.
- *
- * ## What actually reaches the creator
- *
- * Two things: `buildRateCard`'s grid, and `composeApplicationNotes`' sentence.
- * The classroom photos and the acquisition choices have no field on the API's
- * application payload — they are captured, shown back on Review, and summarised
- * into the notes. See the route's doc comment.
- */
-
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { ArrowLeft, ArrowRight, Check } from 'lucide-react';
 import { useEffect, useMemo, useReducer } from 'react';
@@ -31,28 +7,32 @@ import { toast } from 'sonner';
 
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Skeleton } from '@/components/ui/skeleton';
+import Spinner from '@/components/ui/spinner';
+import { getErrorMessage } from '@/lib/error-utils';
 import { cn } from '@/lib/utils';
 import type { CourseTrainingRequirement, ProgramRequirement } from '@/services/client';
 import {
   submitProgramTrainingApplicationMutation,
   submitTrainingApplicationMutation,
+  updateProgramTrainingApplicationMutation,
+  updateTrainingApplicationMutation,
 } from '@/services/client/@tanstack/react-query.gen';
 import type { CourseTrainerApplicantType } from '@/src/features/course-record';
 import { invalidateTrainingApplicationWorkflowQueries } from '@/src/features/dashboard/workflow-query-invalidation';
+import type { TrainingApplication } from '@/src/features/rate-card/types';
 
 import {
-  APPLY_STEPS,
+  type ApplyStep,
   applyReducer,
-  buildRateCard,
-  composeApplicationNotes,
+  buildApplicationPayload,
   initialApplyState,
-  requirementKey,
-  validateClassrooms,
-  validateEquipment,
+  type StepId,
+  validateAnswers,
   validatePricing,
+  visibleSteps,
 } from './apply-model';
 import { StepClassrooms } from './step-classrooms';
-import { StepMethod } from './step-method';
 import { StepPricing } from './step-pricing';
 import { StepRequirements } from './step-requirements';
 import { StepReview } from './step-review';
@@ -60,21 +40,32 @@ import { StepReview } from './step-review';
 export type ApplyWizardProps = {
   trainingId: string;
   isProgram: boolean;
-  /** Course name or programme title — used in the confirmation toast only. */
+  /** Course name or program title, for the confirmation toast. */
   contentTitle: string;
   applicantType: CourseTrainerApplicantType;
-  /** Empty until the viewer's own profile resolves; submission waits for it. */
+  /** Empty until the viewer's profile resolves; submission waits for it. */
   applicantUuid: string;
-  /** Already filtered to the requirements the applicant is on the hook for. */
+  /** Already filtered to the requirements the applicant provides. */
   requirements: CourseTrainingRequirement[];
   programRequirements: ProgramRequirement[];
-  /** The creator's floor per learner per hour; rates below it are rejected. */
   minimumFee?: number | null;
   requirementsLoading?: boolean;
   requirementsError?: unknown;
   onRetryRequirements?: () => void;
-  /** Where a successful submission lands. */
-  onSubmitted: () => void;
+  /** A pending application to edit; the draft starts from it and saving updates it. */
+  application?: TrainingApplication | null;
+  /** Receives the saved application's uuid. */
+  onSubmitted: (applicationUuid: string | null) => void;
+};
+
+const STEP_DESCRIPTIONS: Record<StepId, (isProgram: boolean) => string> = {
+  venues: () => 'Offer the venues at your branches you would teach in.',
+  requirements: isProgram =>
+    isProgram
+      ? 'Review the published requirements for this program.'
+      : 'Tell the course creator what you already have.',
+  pricing: () => 'Choose your training methods and price each one on all three bases.',
+  review: () => 'Check your application, then send it for approval.',
 };
 
 export function ApplyWizard({
@@ -89,202 +80,175 @@ export function ApplyWizard({
   requirementsLoading,
   requirementsError,
   onRetryRequirements,
+  application,
   onSubmitted,
 }: ApplyWizardProps) {
   const queryClient = useQueryClient();
-  const [state, dispatch] = useReducer(applyReducer, undefined, initialApplyState);
-
-  /* ── seed the equipment answers from the creator's requirements ─────── */
+  const [state, dispatch] = useReducer(applyReducer, undefined, () =>
+    initialApplyState(applicantType, application)
+  );
+  const editing = Boolean(application?.uuid);
 
   const requirementSeeds = useMemo(
     () =>
-      requirements.map(requirement => ({
-        uuid: requirementKey(requirement),
-        name: requirement.name,
-      })),
+      requirements
+        .filter(requirement => requirement.uuid)
+        .map(requirement => ({ uuid: requirement.uuid as string, name: requirement.name })),
     [requirements]
   );
 
+  const requirementsReady = !isProgram && !requirementsLoading && !requirementsError;
   useEffect(() => {
-    if (isProgram) return;
-    dispatch({ type: 'initEquipment', requirements: requirementSeeds });
-  }, [isProgram, requirementSeeds]);
+    if (requirementsReady) dispatch({ type: 'initAnswers', requirements: requirementSeeds });
+  }, [requirementsReady, requirementSeeds]);
 
-  // If the applicant is an instructor, pre-fill the classroom name as
-  // "Not applicable" so validations that depend on a classroom name do not
-  // block progress. Only set this when the field is blank to avoid clobbering
-  // any deliberate input.
-  useEffect(() => {
-    if (applicantType !== 'instructor') return;
-    const first = state.classrooms?.[0];
-    if (!first) return;
-    if (!first.name || first.name.trim() === '') {
-      dispatch({ type: 'classroom', id: first.id, patch: { name: 'Not applicable' } });
-    }
-  }, [applicantType, state.classrooms]);
-
-  /* ── what is stopping this step ─────────────────────────────────────── */
+  const steps = visibleSteps(applicantType);
+  const index = Math.max(
+    0,
+    steps.findIndex(step => step.id === state.step)
+  );
+  const isLastStep = index === steps.length - 1;
 
   const missing = useMemo(() => {
-    const errors: string[] = [];
-    const methodErrors = () =>
-      state.methods.length === 0 ? ['Select at least one preferred training method.'] : [];
-
-    if (state.step === 0) {
-      errors.push(...methodErrors());
-    } else if (state.step === 1) {
-      if (applicantType !== 'instructor') {
-        errors.push(...validateClassrooms(state.classrooms, state.methods));
-      }
-    } else if (state.step === 2) {
-      if (!isProgram) errors.push(...validateEquipment(state.equipment));
-    } else if (state.step === 3) {
-      errors.push(...validatePricing(state.pricing, state.methods, minimumFee));
-    } else if (state.step === 4) {
-      errors.push(...methodErrors());
-      if (applicantType !== 'instructor') {
-        errors.push(...validateClassrooms(state.classrooms, state.methods));
-      }
-      if (!isProgram) errors.push(...validateEquipment(state.equipment));
-      errors.push(...validatePricing(state.pricing, state.methods, minimumFee));
+    const answers = () => {
+      if (isProgram) return [];
+      if (requirementsError) return ['Reload the course requirements to answer them.'];
+      if (requirementsLoading) return ['Wait for the course requirements to load.'];
+      return validateAnswers(state.answers);
+    };
+    const pricing = () => validatePricing(state.card, minimumFee);
+    switch (state.step) {
+      case 'requirements':
+        return answers();
+      case 'pricing':
+        return pricing();
+      case 'review':
+        return [...answers(), ...pricing()];
+      default:
+        return [];
     }
-    return errors;
-  }, [isProgram, minimumFee, state]);
-
+  }, [
+    isProgram,
+    minimumFee,
+    requirementsError,
+    requirementsLoading,
+    state.answers,
+    state.card,
+    state.step,
+  ]);
   const canNext = missing.length === 0;
 
-  // Build the visible steps for this applicant. Instructors skip the
-  // "Classrooms & labs" step entirely, so the stepper and navigation
-  // operate over a filtered list while the reducer still stores the
-  // original step indices.
-  const allSteps = APPLY_STEPS;
-  const visibleStepPairs = allSteps
-    .map((label, idx) => ({ label, idx }))
-    .filter(pair => !(applicantType === 'instructor' && pair.label === 'Classrooms & labs'));
-  const visibleSteps = visibleStepPairs.map(p => p.label as string);
-  const visibleIndices = visibleStepPairs.map(p => p.idx);
-
-  const visibleIndex = Math.max(0, visibleIndices.indexOf(state.step));
-  const isLastStep = visibleIndex === visibleSteps.length - 1;
-
-  const goNext = () => {
-    if (!canNext) return;
-    const current = visibleIndices.indexOf(state.step);
-    const nextIndex = Math.min(visibleSteps.length - 1, current + 1);
-    const target = visibleIndices[nextIndex] ?? state.step;
-    dispatch({ type: 'step', step: target });
+  const goTo = (offset: number) => {
+    const target = steps[Math.min(steps.length - 1, Math.max(0, index + offset))];
+    if (target) dispatch({ type: 'step', step: target.id });
   };
-
-  const goBack = () => {
-    const current = visibleIndices.indexOf(state.step);
-    const prevIndex = Math.max(0, current - 1);
-    const target = visibleIndices[prevIndex] ?? state.step;
-    dispatch({ type: 'step', step: target });
-  };
-
-  /* ── submitting ─────────────────────────────────────────────────────── */
 
   const courseSubmit = useMutation(submitTrainingApplicationMutation());
   const programSubmit = useMutation(submitProgramTrainingApplicationMutation());
-  const submitting = courseSubmit.isPending || programSubmit.isPending;
+  const courseUpdate = useMutation(updateTrainingApplicationMutation());
+  const programUpdate = useMutation(updateProgramTrainingApplicationMutation());
+  const submitting =
+    courseSubmit.isPending ||
+    programSubmit.isPending ||
+    courseUpdate.isPending ||
+    programUpdate.isPending;
 
   const submit = () => {
-    if (!contentTitle || !applicantUuid) {
+    if (!contentTitle || (!editing && !applicantUuid)) {
       toast.error('Not ready to submit', {
         description: !contentTitle
           ? `The ${isProgram ? 'program' : 'course'} has not finished loading.`
-          : 'Your profile is still loading — try again in a moment.',
+          : 'Your profile is still loading. Try again in a moment.',
       });
       return;
     }
 
-    const body = {
-      applicant_type: applicantType,
-      applicant_uuid: applicantUuid,
-      rate_card: buildRateCard(state.pricing),
-      application_notes: composeApplicationNotes({
-        methods: state.methods,
-        classrooms: state.classrooms,
-        equipment: state.equipment,
-        requirementCount: requirements.length,
-        programRequirementCount: programRequirements.length,
-        isProgram,
-      }),
-    };
-
-    const onSuccess = async () => {
+    const payload = buildApplicationPayload(state, { applicantType, isProgram });
+    const onSuccess = async (response: { data?: { uuid?: string } } | undefined) => {
       await invalidateTrainingApplicationWorkflowQueries(queryClient);
-      toast.success('Application submitted', {
-        description: `Your application to train ${contentTitle} is under review.`,
+      toast.success(editing ? 'Application updated' : 'Application submitted', {
+        description: `Your application to train ${contentTitle} is with the ${isProgram ? 'program' : 'course'} creator.`,
       });
-      onSubmitted();
+      onSubmitted(response?.data?.uuid ?? application?.uuid ?? null);
     };
-    const onError = () => {
-      toast.error('Could not submit application', {
-        description: 'Please review your answers and try again.',
+    const onError = (error: unknown) =>
+      toast.error(editing ? 'Could not update your application' : 'Could not submit application', {
+        description: getErrorMessage(error, 'Please review your answers and try again.'),
       });
-    };
 
-    if (isProgram) {
-      programSubmit.mutate({ path: { programUuid: trainingId }, body }, { onSuccess, onError });
-    } else {
-      courseSubmit.mutate({ path: { courseUuid: trainingId }, body }, { onSuccess, onError });
+    if (editing && application?.uuid) {
+      const path = { applicationUuid: application.uuid };
+      if (isProgram)
+        programUpdate.mutate(
+          { path: { ...path, programUuid: trainingId }, body: payload },
+          { onSuccess, onError }
+        );
+      else
+        courseUpdate.mutate(
+          { path: { ...path, courseUuid: trainingId }, body: payload },
+          { onSuccess, onError }
+        );
+      return;
     }
+
+    const body = { ...payload, applicant_type: applicantType, applicant_uuid: applicantUuid };
+    if (isProgram)
+      programSubmit.mutate({ path: { programUuid: trainingId }, body }, { onSuccess, onError });
+    else courseSubmit.mutate({ path: { courseUuid: trainingId }, body }, { onSuccess, onError });
   };
 
-  /* ── render ─────────────────────────────────────────────────────────── */
+  const current = steps[index]!;
 
   return (
     <div className='space-y-6'>
-      <Stepper step={visibleIndex} steps={visibleSteps} />
+      <Stepper index={index} steps={steps} />
 
       <Card>
         <CardHeader>
           <CardTitle className='text-base' data-testid='apply-step-title'>
-            {APPLY_STEPS[state.step]}
+            {current.label}
           </CardTitle>
-          <CardDescription>{stepDescription(state.step, isProgram)}</CardDescription>
+          <CardDescription>{STEP_DESCRIPTIONS[current.id](isProgram)}</CardDescription>
         </CardHeader>
         <CardContent className='space-y-6'>
-          {state.step === 0 && <StepMethod state={state} dispatch={dispatch} />}
-          {state.step === 1 && applicantType !== 'instructor' && (
-            <StepClassrooms state={state} dispatch={dispatch} />
-          )}
-          {state.step === 2 && (
+          {current.id === 'venues' ? (
+            <StepClassrooms state={state} dispatch={dispatch} organisationUuid={applicantUuid} />
+          ) : null}
+          {current.id === 'requirements' ? (
             <StepRequirements
               state={state}
               dispatch={dispatch}
               contentKind={isProgram ? 'program' : 'course'}
               requirements={requirements}
               programRequirements={programRequirements}
-              courseName={contentTitle}
               loading={requirementsLoading}
               error={requirementsError}
               onRetry={onRetryRequirements}
             />
-          )}
-          {state.step === 3 && (
+          ) : null}
+          {current.id === 'pricing' ? (
             <StepPricing state={state} dispatch={dispatch} minimumFee={minimumFee} />
-          )}
-          {state.step === 4 && (
+          ) : null}
+          {current.id === 'review' ? (
             <StepReview
               state={state}
               dispatch={dispatch}
               contentKind={isProgram ? 'program' : 'course'}
-              requirements={requirements}
+              applicantType={applicantType}
+              organisationUuid={applicantUuid}
               programRequirements={programRequirements}
             />
-          )}
+          ) : null}
 
-          {missing.length > 0 && (
+          {missing.length > 0 ? (
             <div
               role='status'
               aria-live='polite'
-              className='border-warning/40 bg-warning/10 text-warning rounded-md border p-3 text-sm'
+              className='border-warning/40 bg-warning/10 text-foreground rounded-md border p-3 text-sm'
             >
               <p className='mb-1 font-medium'>
                 {isLastStep
-                  ? 'Before submitting, complete the following:'
+                  ? 'Before sending, complete the following:'
                   : 'To continue, complete the following:'}
               </p>
               <ul className='list-disc space-y-0.5 pl-5'>
@@ -293,20 +257,25 @@ export function ApplyWizard({
                 ))}
               </ul>
             </div>
-          )}
+          ) : null}
 
           <div className='flex flex-col-reverse gap-2 border-t pt-4 sm:flex-row sm:justify-between'>
-            <Button type='button' variant='outline' onClick={goBack} disabled={state.step === 0}>
+            <Button type='button' variant='outline' onClick={() => goTo(-1)} disabled={index === 0}>
               <ArrowLeft className='mr-2 h-4 w-4' /> Back
             </Button>
             {isLastStep ? (
               <Button type='button' onClick={submit} disabled={!canNext || submitting}>
-                <Check className='mr-2 h-4 w-4' />{' '}
-                {submitting ? 'Submitting…' : 'Submit application'}
+                {submitting ? (
+                  <Spinner className='mr-2 h-4 w-4' />
+                ) : (
+                  <Check className='mr-2 h-4 w-4' />
+                )}
+                {editing ? 'Save changes' : 'Submit application'}
               </Button>
             ) : (
-              <Button type='button' onClick={goNext} disabled={!canNext}>
-                Next <ArrowRight className='ml-2 h-4 w-4' />
+              <Button type='button' onClick={() => goTo(1)} disabled={!canNext}>
+                {steps[index + 1]?.id === 'review' ? 'Review application' : 'Next'}
+                <ArrowRight className='ml-2 h-4 w-4' />
               </Button>
             )}
           </div>
@@ -316,32 +285,15 @@ export function ApplyWizard({
   );
 }
 
-function stepDescription(step: number, isProgram: boolean) {
-  switch (step) {
-    case 0:
-      return `Choose how you'd like to deliver this ${isProgram ? 'program' : 'course'}.`;
-    case 1:
-      return 'Tell us about the classrooms or labs you can provide.';
-    case 2:
-      return isProgram
-        ? 'Review the published requirements for this program.'
-        : 'Confirm the equipment required to run this course.';
-    case 3:
-      return "Propose your fee per student for each training method you'd offer.";
-    default:
-      return 'Review your answers, then submit for approval.';
-  }
-}
-
-function Stepper({ step, steps }: { step: number; steps: readonly string[] }) {
+function Stepper({ index, steps }: { index: number; steps: readonly ApplyStep[] }) {
   return (
     <>
       <ol className='hidden items-center gap-2 sm:flex'>
-        {steps.map((label, index) => {
-          const active = index === step;
-          const done = index < step;
+        {steps.map((step, position) => {
+          const active = position === index;
+          const done = position < index;
           return (
-            <li key={label} className='flex flex-1 items-center gap-2'>
+            <li key={step.id} className='flex flex-1 items-center gap-2'>
               <div
                 className={cn(
                   'flex h-7 w-7 shrink-0 items-center justify-center rounded-full border text-xs font-semibold',
@@ -350,7 +302,7 @@ function Stepper({ step, steps }: { step: number; steps: readonly string[] }) {
                   !active && !done && 'border-border text-muted-foreground'
                 )}
               >
-                {done ? <Check className='h-4 w-4' /> : index + 1}
+                {done ? <Check className='h-4 w-4' /> : position + 1}
               </div>
               <span
                 className={cn(
@@ -358,17 +310,39 @@ function Stepper({ step, steps }: { step: number; steps: readonly string[] }) {
                   active ? 'text-foreground font-medium' : 'text-muted-foreground'
                 )}
               >
-                {label}
+                {step.label}
               </span>
-              {index < steps.length - 1 && <div className='bg-border mx-2 h-px flex-1' />}
+              {position < steps.length - 1 ? <div className='bg-border mx-2 h-px flex-1' /> : null}
             </li>
           );
         })}
       </ol>
       <p className='text-muted-foreground text-sm sm:hidden'>
-        Step {step + 1} of {steps.length} —{' '}
-        <span className='text-foreground font-medium'>{steps[step]}</span>
+        Step {index + 1} of {steps.length}:{' '}
+        <span className='text-foreground font-medium'>{steps[index]?.label}</span>
       </p>
     </>
+  );
+}
+
+/** Shape-matching placeholder while an application being edited loads. */
+export function ApplyWizardSkeleton() {
+  return (
+    <div className='space-y-6'>
+      <div className='hidden gap-2 sm:flex'>
+        {Array.from({ length: 4 }, (_, position) => (
+          <Skeleton key={position} className='h-7 flex-1' />
+        ))}
+      </div>
+      <div className='space-y-4 rounded-xl border p-6'>
+        <Skeleton className='h-5 w-40' />
+        <Skeleton className='h-4 w-72 max-w-full' />
+        <Skeleton className='h-48 w-full' />
+        <div className='flex justify-between border-t pt-4'>
+          <Skeleton className='h-9 w-24' />
+          <Skeleton className='h-9 w-28' />
+        </div>
+      </div>
+    </div>
   );
 }

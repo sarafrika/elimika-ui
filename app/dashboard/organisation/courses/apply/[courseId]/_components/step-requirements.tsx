@@ -1,26 +1,6 @@
 'use client';
 
-/**
- * Step 3 — the creator's requirements, answered.
- *
- * A course asks one question per requirement: do you have this? "No" is not a
- * dead end — Sarafrika will lease or hire the kit, and the choice is recorded.
- *
- * It is a check-off, not an asset register. Brand and serial were collected per
- * unit, had no column on the API to land in, and were dropped before submission,
- * so they blocked applications to no end. Condition and quantity belong to the
- * equipment inventory when that exists.
- *
- * Only requirements the *applicant* is on the hook for appear here; the filter
- * lives in `apply-model` and the route applies it before this step sees a list.
- *
- * A programme has no such transaction — its requirements are prose, not
- * inventory — so the programme branch reads rather than asks.
- */
-
-import { ShoppingBag } from 'lucide-react';
 import type { Dispatch } from 'react';
-import { toast } from 'sonner';
 
 import { AsyncSection } from '@/components/data/async-section';
 import { Badge } from '@/components/ui/badge';
@@ -28,21 +8,20 @@ import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
 import type { CourseTrainingRequirement, ProgramRequirement } from '@/services/client';
 
-import {
-  type ApplyAction,
-  type ApplyState,
-  type EquipmentAnswer,
-  requirementKey,
-  type TrainingContentKind,
+import type {
+  ApplyAction,
+  ApplyState,
+  RequirementAnswer,
+  TrainingContentKind,
 } from './apply-model';
 
+/** Courses ask "do you have it?" per requirement; programs list theirs to read. */
 export function StepRequirements({
   state,
   dispatch,
   contentKind,
   requirements,
   programRequirements,
-  courseName,
   loading,
   error,
   onRetry,
@@ -52,7 +31,6 @@ export function StepRequirements({
   contentKind: TrainingContentKind;
   requirements: CourseTrainingRequirement[];
   programRequirements: ProgramRequirement[];
-  courseName: string;
   loading?: boolean;
   error?: unknown;
   onRetry?: () => void;
@@ -74,20 +52,15 @@ export function StepRequirements({
       {contentKind === 'program' ? (
         <ProgramRequirements requirements={programRequirements} />
       ) : (
-        <EquipmentDeclaration
-          state={state}
+        <RequirementAnswers
+          answers={state.answers}
           dispatch={dispatch}
           requirements={requirements}
-          courseName={courseName}
         />
       )}
     </AsyncSection>
   );
 }
-
-/* ────────────────────────────────────────────────────────────────────────────
- * Programme — read, do not answer
- * ────────────────────────────────────────────────────────────────────────── */
 
 function ProgramRequirements({ requirements }: { requirements: ProgramRequirement[] }) {
   if (requirements.length === 0) {
@@ -112,27 +85,17 @@ function ProgramRequirements({ requirements }: { requirements: ProgramRequiremen
         {requirements.map(requirement => (
           <div
             key={requirement.uuid ?? requirement.requirement_text}
-            className='rounded-md border p-4'
+            className='flex flex-wrap items-center justify-between gap-2 rounded-md border p-4'
           >
-            <div className='flex flex-wrap items-center justify-between gap-2'>
-              <div className='space-y-1'>
-                <p className='font-medium'>{requirement.requirement_text}</p>
-                <p className='text-muted-foreground text-sm'>
-                  {requirement.requirement_category ?? requirement.requirement_type}
-                </p>
-              </div>
-              <div className='flex flex-wrap gap-2'>
-                {requirement.is_mandatory ? (
-                  <Badge variant='destructive' className='text-[10px]'>
-                    Mandatory
-                  </Badge>
-                ) : (
-                  <Badge variant='outline' className='text-[10px]'>
-                    Optional
-                  </Badge>
-                )}
-              </div>
+            <div className='space-y-1'>
+              <p className='font-medium'>{requirement.requirement_text}</p>
+              <p className='text-muted-foreground text-sm'>
+                {requirement.requirement_category ?? requirement.requirement_type}
+              </p>
             </div>
+            <Badge variant={requirement.is_mandatory ? 'destructive' : 'outline'}>
+              {requirement.is_mandatory ? 'Mandatory' : 'Optional'}
+            </Badge>
           </div>
         ))}
       </div>
@@ -140,26 +103,20 @@ function ProgramRequirements({ requirements }: { requirements: ProgramRequiremen
   );
 }
 
-/* ────────────────────────────────────────────────────────────────────────────
- * Course — the equipment declaration
- * ────────────────────────────────────────────────────────────────────────── */
-
-function EquipmentDeclaration({
-  state,
+function RequirementAnswers({
+  answers,
   dispatch,
   requirements,
-  courseName,
 }: {
-  state: ApplyState;
+  answers: RequirementAnswer[];
   dispatch: Dispatch<ApplyAction>;
   requirements: CourseTrainingRequirement[];
-  courseName: string;
 }) {
   if (requirements.length === 0) {
     return (
       <div className='bg-muted/30 text-muted-foreground rounded-md border border-dashed p-6 text-center text-sm'>
-        The course creator has not listed any organisation equipment requirements for this course.
-        You can continue to the next step.
+        The course creator has not listed any requirements for you to provide. You can continue to
+        the next step.
       </div>
     );
   }
@@ -168,26 +125,21 @@ function EquipmentDeclaration({
     <div className='space-y-4'>
       <div className='bg-muted/30 flex flex-wrap items-center justify-between gap-2 rounded-md border border-dashed p-3'>
         <p className='text-muted-foreground text-sm'>
-          The list below is{' '}
-          <span className='text-foreground font-medium'>
-            prefilled from the course creator&apos;s requirements
-          </span>
-          . For each one, tell us whether you already have it.
+          For each requirement the course creator set, tell us whether you already have it, and if
+          not, how you would get it.
         </p>
         <Badge variant='secondary'>{requirements.length} required</Badge>
       </div>
       <div className='space-y-3'>
         {requirements.map(requirement => {
-          const key = requirementKey(requirement);
-          const answer = state.equipment.find(row => row.requirementUuid === key);
+          const answer = answers.find(row => row.requirementUuid === requirement.uuid);
           if (!answer) return null;
           return (
-            <EquipmentBlock
-              key={key}
+            <RequirementBlock
+              key={answer.requirementUuid}
               requirement={requirement}
               answer={answer}
               dispatch={dispatch}
-              courseName={courseName}
             />
           );
         })}
@@ -196,42 +148,32 @@ function EquipmentDeclaration({
   );
 }
 
-function EquipmentBlock({
+function RequirementBlock({
   requirement,
   answer,
   dispatch,
-  courseName,
 }: {
   requirement: CourseTrainingRequirement;
-  answer: EquipmentAnswer;
+  answer: RequirementAnswer;
   dispatch: Dispatch<ApplyAction>;
-  courseName: string;
 }) {
+  const uuid = answer.requirementUuid;
   return (
     <div className='rounded-md border p-4'>
       <div className='flex flex-wrap items-start justify-between gap-3'>
         <div className='min-w-0 flex-1'>
-          <div className='flex flex-wrap items-center gap-2'>
-            <p className='font-medium'>{requirement.name}</p>
-            <Badge variant='outline' className='text-[10px] font-normal'>
-              Set by course creator
-            </Badge>
-            {answer.has === 'yes' && (
-              <Badge variant='secondary' className='text-[10px]'>
-                Available
-              </Badge>
-            )}
-          </div>
-          {requirement.description && (
+          <p className='font-medium'>{requirement.name}</p>
+          {requirement.description ? (
             <p className='text-muted-foreground mt-1 text-sm'>{requirement.description}</p>
-          )}
+          ) : null}
         </div>
-        <div className='flex gap-2'>
+        <div className='flex gap-2' role='group' aria-label={`Do you have ${requirement.name}?`}>
           <Button
             type='button'
             size='sm'
             variant={answer.has === 'yes' ? 'default' : 'outline'}
-            onClick={() => dispatch({ type: 'equipHas', uuid: answer.requirementUuid, has: 'yes' })}
+            aria-pressed={answer.has === 'yes'}
+            onClick={() => dispatch({ type: 'answerHas', uuid, has: 'yes' })}
           >
             Yes
           </Button>
@@ -239,76 +181,39 @@ function EquipmentBlock({
             type='button'
             size='sm'
             variant={answer.has === 'no' ? 'default' : 'outline'}
-            onClick={() => dispatch({ type: 'equipHas', uuid: answer.requirementUuid, has: 'no' })}
+            aria-pressed={answer.has === 'no'}
+            onClick={() => dispatch({ type: 'answerHas', uuid, has: 'no' })}
           >
             No
           </Button>
         </div>
       </div>
 
-      {answer.has === 'yes' && (
+      {answer.has === 'no' ? (
         <div className='bg-muted/30 mt-4 rounded-md border border-dashed p-3'>
-          <p className='text-muted-foreground text-sm'>
-            Noted as available. You will confirm condition and quantity with the course creator
-            before your first session.
-          </p>
-        </div>
-      )}
-
-      {answer.has === 'no' && (
-        <div className='bg-muted/30 mt-4 rounded-md border border-dashed p-3'>
-          <p className='text-sm'>No problem — Sarafrika can help you acquire this equipment.</p>
-          <div className='mt-3 flex flex-wrap gap-2'>
+          <p className='text-sm'>How would you get it?</p>
+          <div className='mt-3 flex flex-wrap gap-2' role='group' aria-label='How you would get it'>
             <Button
               type='button'
               size='sm'
               variant={answer.acquisition === 'lease' ? 'default' : 'outline'}
-              onClick={() =>
-                dispatch({
-                  type: 'equipAcquisition',
-                  uuid: answer.requirementUuid,
-                  acquisition: 'lease',
-                })
-              }
+              aria-pressed={answer.acquisition === 'lease'}
+              onClick={() => dispatch({ type: 'answerAcquisition', uuid, acquisition: 'lease' })}
             >
-              Lease to own
+              Lease
             </Button>
             <Button
               type='button'
               size='sm'
               variant={answer.acquisition === 'hire' ? 'default' : 'outline'}
-              onClick={() =>
-                dispatch({
-                  type: 'equipAcquisition',
-                  uuid: answer.requirementUuid,
-                  acquisition: 'hire',
-                })
-              }
+              aria-pressed={answer.acquisition === 'hire'}
+              onClick={() => dispatch({ type: 'answerAcquisition', uuid, acquisition: 'hire' })}
             >
               Hire
             </Button>
-            {answer.acquisition && (
-              // There is no shop route to send anyone to. The toast is the whole
-              // of it, and inventing a destination would be a dead link on the
-              // one screen an applicant is least able to recover from.
-              <Button
-                type='button'
-                size='sm'
-                variant='secondary'
-                onClick={() =>
-                  toast.info('Sarafrika Shop', {
-                    description: `We'll help you ${
-                      answer.acquisition === 'lease' ? 'lease to own' : 'hire'
-                    } ${requirement.name} for ${courseName}.`,
-                  })
-                }
-              >
-                <ShoppingBag className='mr-2 h-4 w-4' /> Continue to Sarafrika Shop
-              </Button>
-            )}
           </div>
         </div>
-      )}
+      ) : null}
     </div>
   );
 }

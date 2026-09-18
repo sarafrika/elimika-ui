@@ -31,6 +31,7 @@ import { useOrganisation } from '@/context/organisation-context';
 import { useAssignmentsByLessonIds, useQuizzesByLessonIds } from '@/hooks/use-batched-lookups';
 import { ClassDetailsScheduleItem, CombinedClassDetailsData } from '@/hooks/use-class-details';
 import { useCourseLessonsWithContent } from '@/hooks/use-courselessonwithcontent';
+import type { RateCard } from '@/lib/rate-card';
 import { buildSocialShareUrl, openShareWindow } from '@/lib/share';
 import type {
   Assignment,
@@ -436,14 +437,7 @@ export default function ClassCourseDetailsPage({
       .slice(0, 3);
   }, [course?.course_creator_uuid, course?.uuid, relatedCoursesResponse?.data?.content]);
 
-  const handleApplyToTrain = (data: {
-    notes: string;
-    private_online_hourly_rate: number;
-    private_inperson_hourly_rate: number;
-    group_online_hourly_rate: number;
-    group_inperson_hourly_rate: number;
-    rate_currency: string;
-  }) => {
+  const handleApplyToTrain = (data: { notes: string; rate_card: RateCard }) => {
     if (!course?.uuid) {
       toast.error('Course details are not ready yet.');
       return;
@@ -462,13 +456,7 @@ export default function ClassCourseDetailsPage({
         body: {
           applicant_type: applicantType,
           applicant_uuid: submitterUuid,
-          rate_card: {
-            currency: data.rate_currency,
-            private_online_hourly_rate: data.private_online_hourly_rate,
-            private_inperson_hourly_rate: data.private_inperson_hourly_rate,
-            group_online_hourly_rate: data.group_online_hourly_rate,
-            group_inperson_hourly_rate: data.group_inperson_hourly_rate,
-          },
+          rate_card: data.rate_card,
           application_notes: data.notes,
         },
         path: { courseUuid: course.uuid },
@@ -754,8 +742,8 @@ export default function ClassCourseDetailsPage({
                   {course?.category_names?.[0] ? ` · Focus: ${course?.category_names[0]}` : ''}
                 </p>
                 <p>
-                  Submit your application notes and set the amount you want to charge students per
-                  hour per head, while respecting the creator-set minimum shown below.
+                  Submit your application notes and price each training method you offer per hour,
+                  per session and per day, at or above the creator-set minimum.
                 </p>
               </div>
             }

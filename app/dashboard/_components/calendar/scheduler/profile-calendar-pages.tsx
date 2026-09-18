@@ -8,6 +8,12 @@ import { useInstructorsByIds, useStudentsByIds, useUsersByIds } from '@/hooks/us
 import { useInstructorClassesWithSchedules } from '@/hooks/use-instructor-classes-with-schedules';
 import { localDate } from '@/lib/date';
 import {
+  JOB_TIME_LABELS,
+  type JobTimeKind,
+  jobTimeKind,
+  jobTimeTitle,
+} from '@/lib/instructor-job-time';
+import {
   getCalendarOptions,
   getClassDefinitionOptions,
   getClassDefinitionsForOrganisationOptions,
@@ -552,7 +558,32 @@ function InstructorCalendarPage() {
         } satisfies SchedulerEvent;
       });
 
-    return [...classEvents, ...reservedEvents, ...availabilityEvents].sort(
+    // Job time: held for a job the instructor was hired for, or merely applied to.
+    const jobTimeEvents: SchedulerEvent[] = mergedCalendar.entries
+      .filter(entry => entry.start_time && entry.end_time && jobTimeKind(entry.entry_type))
+      .map((entry, entryIndex) => {
+        const kind = jobTimeKind(entry.entry_type) as JobTimeKind;
+        return {
+          id: `job-${kind}-${entry.uuid ?? entryIndex}`,
+          eventType: kind === 'hold' ? 'job_hold' : 'job_application',
+          jobUuid: entry.job_uuid ?? undefined,
+          title: jobTimeTitle(kind, entry.title),
+          course: JOB_TIME_LABELS[kind].legend,
+          instructor: name,
+          instructorUuid: instructorUuid,
+          location: '',
+          organisationUuid: entry.organisation_uuid ?? undefined,
+          organisationName: entry.organisation_name ?? undefined,
+          startTime: new Date(entry.start_time as unknown as string),
+          endTime: new Date(entry.end_time as unknown as string),
+          status: JOB_TIME_LABELS[kind].status,
+          category: 'TVET / Vocational',
+          students: [],
+          classCode: '',
+        } satisfies SchedulerEvent;
+      });
+
+    return [...classEvents, ...reservedEvents, ...availabilityEvents, ...jobTimeEvents].sort(
       (a, b) => a.startTime.getTime() - b.startTime.getTime()
     );
   }, [

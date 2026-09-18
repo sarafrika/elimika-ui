@@ -25,6 +25,7 @@ import type {
   ViewMode,
 } from '@/components/schedule/types';
 import { Button } from '@/components/ui/button';
+import { formatRateAmount } from '@/lib/rate-card';
 
 export const COLOR_PALETTE = [
   'rgb(59 130 246)',
@@ -1098,9 +1099,11 @@ export const ScheduleSessionDetailsPanel: React.FC<{
         <div className='border-border border-t pt-3'>
           <div className='bg-primary/10 border-primary/20 rounded-lg border p-3'>
             <div className='text-primary mb-0.5 text-xs font-semibold tracking-wider uppercase'>
-              {isBookingRequestEvent(selectedEvent) ? 'Requested Fee' : 'Training Fee (/hr/head)'}
+              {isBookingRequestEvent(selectedEvent) ? 'Requested Fee' : 'Training Fee per learner'}
             </div>
-            <div className='text-primary text-xl font-bold'>${selectedEvent.trainingFee}</div>
+            <div className='text-primary text-xl font-bold'>
+              {formatRateAmount(selectedEvent.trainingFee)}
+            </div>
           </div>
         </div>
 

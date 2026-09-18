@@ -25,6 +25,7 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { Progress } from '@/components/ui/progress';
+import { formatRate } from '@/lib/rate-card';
 import { isAuthenticatedMediaUrl, toAuthenticatedMediaUrl } from '@/src/lib/media-url';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import {
@@ -323,7 +324,10 @@ export function LiveClassCard({
                 </span>
 
                 <span className='bg-muted text-muted-foreground inline-flex items-center rounded-full px-2.5 py-1 text-[11px] font-medium'>
-                  {liveClass.fee} /hr/student
+                  {liveClass.class.rate_basis
+                    ? formatRate(liveClass.class.sale_price ?? 0, liveClass.class.rate_basis)
+                    : liveClass.fee}{' '}
+                  per student
                 </span>
 
                 <div className='flex flex-wrap items-center gap-2'>

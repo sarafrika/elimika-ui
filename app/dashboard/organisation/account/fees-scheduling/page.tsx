@@ -21,6 +21,7 @@ import {
 import { Skeleton } from '@/components/ui/skeleton';
 import { useOrganisation } from '@/context/organisation-context';
 import { useCoursesByIds, useProgramsByIds } from '@/hooks/use-batched-lookups';
+import { formatRateBasis } from '@/lib/rate-card';
 import type {
   ClassDefinition,
   ClassDefinitionUpdateRequest,
@@ -105,6 +106,7 @@ function FeeRow({
     classDefinition.session_format
   );
   const [locationType, setLocationType] = useState<LocationTypeEnum>(classDefinition.location_type);
+  const basis = classDefinition.rate_basis;
 
   const update = useMutation({
     ...updateClassDefinitionMutation(),
@@ -190,7 +192,9 @@ function FeeRow({
         </Select>
       </div>
       <div className='space-y-1'>
-        <Label className='text-xs'>Sale price / hr</Label>
+        <Label className='text-xs'>
+          {basis ? `Sale price ${formatRateBasis(basis)}` : 'Sale price'}
+        </Label>
         <Input
           type='number'
           min={0}
@@ -201,7 +205,9 @@ function FeeRow({
         />
       </div>
       <div className='space-y-1'>
-        <Label className='text-xs'>Instructor pay / hr</Label>
+        <Label className='text-xs'>
+          {basis ? `Instructor pay ${formatRateBasis(basis)}` : 'Instructor pay'}
+        </Label>
         <Input
           type='number'
           min={0}
@@ -268,7 +274,7 @@ export default function OrganisationFeesSchedulingPage() {
     <OrgPage className='space-y-6'>
       <PageHeader
         title='Fees & scheduling'
-        description='Set the per-session fee, class type and delivery method for each class.'
+        description='Set the fee, class type and delivery method for each class.'
         action={
           courseOptions.length > 0 ? (
             <Select value={courseFilter} onValueChange={setCourseFilter}>
@@ -292,7 +298,9 @@ export default function OrganisationFeesSchedulingPage() {
         <CardContent className='space-y-4 p-6'>
           <div className='space-y-1'>
             <h2 className='text-foreground text-base font-semibold'>Classes</h2>
-            <p className='text-muted-foreground text-sm'>Fees are charged per hour of scheduled time</p>
+            <p className='text-muted-foreground text-sm'>
+              Prices and pay are quoted in each class’s own rate basis.
+            </p>
           </div>
 
           {classesQuery.isLoading ? (

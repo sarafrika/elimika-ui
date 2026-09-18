@@ -25,6 +25,7 @@ import {
   Award,
   Bell,
   CalendarClock,
+  CalendarX2,
   CheckCircle2,
   CreditCard,
   FileCheck2,
@@ -43,6 +44,7 @@ type DashboardNotificationsProps = {
 };
 
 const iconByType: Array<[RegExp, LucideIcon]> = [
+  [/HIRE_BLOCKED/, CalendarX2],
   [/PAYMENT|RECEIPT/, CreditCard],
   [/CERTIFICATE|ACHIEVEMENT|MILESTONE/, Award],
   [/CLASS|DEADLINE|REMINDER|SCHEDULE/, CalendarClock],
@@ -52,7 +54,7 @@ const iconByType: Array<[RegExp, LucideIcon]> = [
   [/MESSAGE/, MessageSquare],
 ];
 
-function notificationIcon(type: string) {
+export function notificationIcon(type: string) {
   return iconByType.find(([pattern]) => pattern.test(type))?.[1] ?? Bell;
 }
 

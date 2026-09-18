@@ -71,39 +71,6 @@ export type Instructor = {
   }>;
 };
 
-export type BookingSlot = {
-  id: string;
-  date: Date;
-  startTime: string;
-  endTime: string;
-  duration: number; // in hours
-  venue?: string;
-  mode: 'online' | 'onsite';
-};
-
-export type Booking = {
-  id: string;
-  studentId: string;
-  studentName: string;
-  instructorId: string;
-  instructorName: string;
-  slots: BookingSlot[];
-  recurring?: {
-    frequency: 'daily' | 'weekly' | 'monthly';
-    endDate: Date;
-  };
-  totalSessions: number;
-  totalDuration: number; // in hours
-  totalFee: number;
-  currency: string;
-  paymentMethod?: 'skill-fund' | 'm-pesa' | 'card' | 'bank';
-  paymentStatus: 'pending' | 'completed' | 'failed';
-  status: 'pending' | 'confirmed' | 'declined' | 'cancelled' | 'completed';
-  createdAt: Date;
-  confirmedAt?: Date;
-  notes?: string;
-};
-
 type Props = {
   classes: BundledClass[];
 };
@@ -167,10 +134,6 @@ const InstructorBookingDashboard: React.FC<Props> = ({ classes }) => {
       },
     ]);
   }, [replaceBreadcrumbs, activeDomain, courseId]);
-
-  const handleBookingComplete = (_newBooking: Booking) => {
-    setActiveTab('bookings');
-  };
 
   const handleBookingUpdate = (_updatedBooking: BookingRecord) => {};
 
@@ -253,7 +216,6 @@ const InstructorBookingDashboard: React.FC<Props> = ({ classes }) => {
           <InstructorDirectory
             instructors={filteredInstructors}
             classes={classes}
-            onBookingComplete={handleBookingComplete}
             courseId={courseId as string}
           />
         </TabsContent>

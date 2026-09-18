@@ -3,6 +3,7 @@
 import { useUserProfile } from '@/context/profile-context';
 import { localDate, resolveDisplayZone } from '@/lib/date';
 import { getInstructorCalendarOptions } from '@/services/client/@tanstack/react-query.gen';
+import { jobTimeKind, jobTimeTitle } from '@/lib/instructor-job-time';
 import type { InstructorCalendarEntry } from '@/services/client/types.gen';
 import { useQuery } from '@tanstack/react-query';
 import { useEffect, useMemo, useState } from 'react';
@@ -48,10 +49,13 @@ const Page = () => {
     const calendarEvents: CalendarEvent[] = (availabilitySlotsResponse?.data ?? []).map(
       (entry: InstructorCalendarEntry) => {
         const instants = toCalendarInstants(entry.start_time, entry.end_time, displayZone);
+        const jobKind = jobTimeKind(entry.entry_type);
 
         return {
           id: entry.uuid ?? `${instants.startDateTime}-${entry.entry_type ?? 'event'}`,
-          title: entry.title ?? entry.entry_type ?? 'Availability',
+          title: jobKind
+            ? jobTimeTitle(jobKind, entry.title)
+            : (entry.title ?? entry.entry_type ?? 'Availability'),
           ...instants,
           location: entry.location_type,
           attendees: 0,
@@ -60,6 +64,8 @@ const Page = () => {
           status: entry.status ?? 'SCHEDULED',
           is_available: entry.is_available,
           entry_type: entry.entry_type,
+          organisation: entry.organisation_name || undefined,
+          jobUuid: entry.job_uuid || undefined,
         };
       }
     );
