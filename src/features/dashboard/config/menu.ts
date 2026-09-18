@@ -592,6 +592,16 @@ export default {
           url: '/dashboard/overview',
           icon: LayoutDashboard,
         },
+        {
+          title: 'Review inbox',
+          url: '/dashboard/inbox',
+          icon: ClipboardList,
+        },
+        {
+          title: 'Activity log',
+          url: '/dashboard/activity',
+          icon: ChartNoAxesCombined,
+        },
       ],
     },
   ],
