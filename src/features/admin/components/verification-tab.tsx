@@ -4,7 +4,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { ArrowLeft, ArrowRight, Inbox, Lock, ShieldCheck } from 'lucide-react';
 import Link from 'next/link';
 import { useMemo, useState } from 'react';
-import { useForm } from 'react-hook-form';
+import { Controller, useForm } from 'react-hook-form';
 import { z } from 'zod';
 
 import {
@@ -17,22 +17,26 @@ import {
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Label } from '@/components/ui/label';
-import { Textarea } from '@/components/ui/textarea';
 import { formatDate } from '@/lib/date';
 import { cn } from '@/lib/utils';
 import type { DocumentTypeOption, Instructor, InstructorDocument, User } from '@/services/client';
 import { adminRoutes, type InboxType } from '../lib/admin-routes';
 import { useInstructorEducation } from '../hooks/use-person-record';
 import { useVerifyDocument, useVerifyInstructor } from '../hooks/use-verification-actions';
+import { NoteField, noteToPlainText } from './note-field';
 import { ConfirmDialog } from './confirm-dialog';
 import { SectionBoundary } from './section-boundary';
 
 const noteSchema = z.object({
-  note: z.string().trim().min(10, 'Say what you checked — at least a sentence.'),
+  note: z
+    .string()
+    .refine(value => noteToPlainText(value).length >= 10, 'Say what you checked — at least a sentence.'),
 });
 
 const reasonSchema = z.object({
-  reason: z.string().trim().min(10, 'Say why this profile is being verified.'),
+  reason: z
+    .string()
+    .refine(value => noteToPlainText(value).length >= 10, 'Say why this profile is being verified.'),
 });
 
 interface VerificationTabProps {
@@ -435,19 +439,21 @@ function DecisionPanel({
         </div>
 
         <div className='flex flex-col gap-1.5'>
-          <Label htmlFor='verification-note' className='text-sm font-semibold'>
-            Verification note
-          </Label>
-          <Textarea
-            id='verification-note'
-            rows={4}
-            className='rounded-md'
-            placeholder='What you checked, and against what.'
-            {...form.register('note')}
+          <Controller
+            control={form.control}
+            name='note'
+            render={({ field }) => (
+              <NoteField
+                id='verification-note'
+                label='Verification note'
+                required
+                value={field.value}
+                onChange={field.onChange}
+                error={form.formState.errors.note?.message}
+                helper='Stored on the document and shown in the audit trail.'
+              />
+            )}
           />
-          {form.formState.errors.note ? (
-            <p className='text-destructive text-xs'>{form.formState.errors.note.message}</p>
-          ) : null}
         </div>
 
         <div className='flex flex-wrap gap-2'>
@@ -565,19 +571,20 @@ function ProfileDecision({
         })}
       >
         <div className='flex min-w-[260px] flex-1 flex-col gap-1.5'>
-          <Label htmlFor='verify-reason' className='text-xs font-semibold'>
-            Reason
-          </Label>
-          <Textarea
-            id='verify-reason'
-            rows={2}
-            className='rounded-md'
-            placeholder='What you verified, and against what.'
-            {...form.register('reason')}
+          <Controller
+            control={form.control}
+            name='reason'
+            render={({ field }) => (
+              <NoteField
+                id='verify-reason'
+                label='Reason'
+                required
+                value={field.value}
+                onChange={field.onChange}
+                error={form.formState.errors.reason?.message}
+              />
+            )}
           />
-          {form.formState.errors.reason ? (
-            <p className='text-destructive text-xs'>{form.formState.errors.reason.message}</p>
-          ) : null}
         </div>
         <Button type='submit' className='rounded-md' disabled={isPending || !instructorUuid}>
           Verify instructor

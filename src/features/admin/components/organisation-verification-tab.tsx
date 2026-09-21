@@ -17,7 +17,6 @@ import {
   FormLabel,
   FormMessage,
 } from '@/components/ui/form';
-import { Textarea } from '@/components/ui/textarea';
 import { formatDate } from '@/lib/date';
 import { toNumber } from '@/lib/metrics';
 import type {
@@ -27,6 +26,7 @@ import type {
   OrganisationDocument,
   TrainingBranch,
 } from '@/services/client';
+import { NoteField, noteToPlainText } from './note-field';
 import { ConfirmDialog } from './confirm-dialog';
 import { SectionBoundary } from './section-boundary';
 import {
@@ -37,8 +37,10 @@ import {
 const decisionSchema = z.object({
   reason: z
     .string()
-    .trim()
-    .min(10, 'Say why in at least 10 characters — it travels with the request.'),
+    .refine(
+      value => noteToPlainText(value).length >= 10,
+      'Say why in at least 10 characters — it travels with the request.'
+    ),
 });
 
 type DecisionValues = z.infer<typeof decisionSchema>;
@@ -231,11 +233,12 @@ export function OrganisationVerificationTab({
                     Reason <span className='text-destructive'>*</span>
                   </FormLabel>
                   <FormControl>
-                    <Textarea
-                      {...field}
-                      rows={4}
-                      className='rounded-md'
-                      placeholder='What you checked, and what you concluded.'
+                    <NoteField
+                      id='organisation-decision-reason'
+                      label=''
+                      required
+                      value={field.value}
+                      onChange={field.onChange}
                     />
                   </FormControl>
                   <FormDescription>

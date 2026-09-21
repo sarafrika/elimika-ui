@@ -1,24 +1,28 @@
 'use client';
 
-import { useMemo } from 'react';
+import { useMemo, useState } from 'react';
 
-import {
-  DetailGrid,
-  SectionCard,
-  SectionCardSkeleton,
-  surfaceTheme,
-} from '@/components/data-display';
+import { SectionCardSkeleton, surfaceTheme } from '@/components/data-display';
+import { Button } from '@/components/ui/button';
 import { formatDate } from '@/lib/date';
 import type { User } from '@/services/client';
+import { AuditTab } from '../components/audit-tab';
+import { ConfirmDialog } from '../components/confirm-dialog';
+import { LearningTab } from '../components/learning-tab';
+import { MoneyTab } from '../components/money-tab';
+import { OverviewTab } from '../components/overview-tab';
 import { SectionBoundary } from '../components/section-boundary';
 import { RecordHeader, type RecordBadge } from '../components/record-header';
+import { TeachingTab } from '../components/teaching-tab';
 import { UnderlineTabs, type UnderlineTab } from '../components/underline-tabs';
 import { VerificationTab } from '../components/verification-tab';
+import { useSavePerson } from '../hooks/use-person-actions';
 import {
   useDocumentTypes,
   useInstructorDocuments,
   useInstructorProfile,
   usePersonRecord,
+  useStudentProfile,
 } from '../hooks/use-person-record';
 import { adminRoutes, type PersonTab } from '../lib/admin-routes';
 import { enumParam, stringParam } from '../state/search-state';
@@ -57,6 +61,10 @@ export function AdminPersonPage({ userUuid }: { userUuid: string }) {
   const { instructor, query: instructorQuery } = useInstructorProfile(userUuid);
   const { documents, query: documentsQuery } = useInstructorDocuments(instructor?.uuid);
   const { byUuid, documentTypes } = useDocumentTypes();
+  // Only the tabs that need a learner profile ask for one.
+  const { student } = useStudentProfile(userUuid, tab === 'learning' || tab === 'money' || tab === 'audit');
+  const { save, isPending: isSaving } = useSavePerson(person);
+  const [accountAction, setAccountAction] = useState<'deactivate' | 'reactivate' | null>(null);
 
   const requiredTypeUuids = useMemo(
     () => documentTypes.filter(type => type.is_required && type.uuid).map(type => type.uuid ?? ''),
@@ -105,6 +113,17 @@ export function AdminPersonPage({ userUuid }: { userUuid: string }) {
               person?.created_date ? `Member since ${formatDate(person.created_date)}` : null,
             ].filter(Boolean)}
             badges={badges}
+            actions={
+              person ? (
+                <Button
+                  variant={person.active ? 'outline' : 'default'}
+                  className='rounded-md'
+                  onClick={() => setAccountAction(person.active ? 'deactivate' : 'reactivate')}
+                >
+                  {person.active ? 'Deactivate account' : 'Reactivate account'}
+                </Button>
+              ) : null
+            }
           />
         </SectionBoundary>
 
@@ -115,7 +134,12 @@ export function AdminPersonPage({ userUuid }: { userUuid: string }) {
         />
 
         {tab === 'overview' ? (
-          <OverviewTab person={person} loading={personQuery.isLoading && !personQuery.data} />
+          <OverviewTab
+            person={person}
+            loading={personQuery.isLoading && !personQuery.data}
+            error={personQuery.error}
+            onRetry={() => personQuery.refetch()}
+          />
         ) : null}
 
         {tab === 'verification' ? (
@@ -140,100 +164,58 @@ export function AdminPersonPage({ userUuid }: { userUuid: string }) {
           />
         ) : null}
 
-        {tab !== 'overview' && tab !== 'verification' ? (
-          <SectionCard title={TAB_LABELS[tab]}>
-            <p className='text-muted-foreground text-sm'>
-              This tab lands with the rest of the person record. Nothing is shown here yet rather
-              than showing something that is not real.
-            </p>
-            <button
-              type='button'
-              className='text-primary mt-3 text-sm font-semibold'
-              onClick={() => setTab('verification')}
-            >
-              Back to verification
-            </button>
-          </SectionCard>
+        {tab === 'teaching' ? (
+          <TeachingTab
+            instructor={instructor}
+            loading={instructorQuery.isLoading && !instructorQuery.data}
+            personName={name}
+          />
+        ) : null}
+
+        {tab === 'learning' ? (
+          <LearningTab
+            student={student}
+            loading={personQuery.isLoading && !personQuery.data}
+            personName={name}
+          />
+        ) : null}
+
+        {tab === 'money' ? (
+          <MoneyTab
+            userUuid={userUuid}
+            student={student}
+            loading={personQuery.isLoading && !personQuery.data}
+          />
+        ) : null}
+
+        {tab === 'audit' ? (
+          <AuditTab
+            userUuid={userUuid}
+            targetUuids={[student?.uuid, instructor?.uuid].filter(Boolean) as string[]}
+          />
+        ) : null}
+
+        {person ? (
+          <ConfirmDialog
+            open={accountAction !== null}
+            onOpenChange={open => setAccountAction(open ? accountAction : null)}
+            action={accountAction === 'reactivate' ? 'reactivateAccount' : 'deactivateAccount'}
+            subject={{ name: name || 'this person', confirmValue: person.username }}
+            isPending={isSaving}
+            onConfirm={() =>
+              save(
+                { active: accountAction === 'reactivate' },
+                {
+                  successMessage:
+                    accountAction === 'reactivate' ? 'Account reactivated' : 'Account deactivated',
+                  onDone: () => setAccountAction(null),
+                }
+              )
+            }
+          />
         ) : null}
       </div>
     </div>
   );
 }
 
-function OverviewTab({ person, loading }: { person: User | null; loading: boolean }) {
-  const affiliations = person?.organisation_affiliations ?? [];
-
-  return (
-    <div className='grid gap-4 lg:grid-cols-2'>
-      <SectionBoundary
-        label='the identity details'
-        loading={loading}
-        skeleton={<SectionCardSkeleton rows={4} />}
-      >
-        <SectionCard title='Identity & contact' description='Editing lands with the People section'>
-          <DetailGrid
-            columns={2}
-            items={[
-              { label: 'First name', value: person?.first_name ?? '—' },
-              { label: 'Last name', value: person?.last_name ?? '—' },
-              { label: 'Email', value: person?.email ?? '—' },
-              { label: 'Username', value: person?.username ?? '—' },
-              { label: 'Phone', value: person?.phone_number ?? '—' },
-              { label: 'Date of birth', value: person?.dob ? formatDate(person.dob) : '—' },
-              { label: 'Gender', value: person?.gender ?? '—' },
-              { label: 'Account', value: person?.active ? 'Active' : 'Inactive' },
-            ]}
-          />
-        </SectionCard>
-      </SectionBoundary>
-
-      <SectionBoundary
-        label='the roles and affiliations'
-        loading={loading}
-        skeleton={<SectionCardSkeleton rows={3} />}
-      >
-        <SectionCard title='Roles & access'>
-          <div className='flex flex-col gap-4'>
-            <DetailGrid
-              columns={2}
-              items={[
-                { label: 'User no.', value: person?.user_no ?? '—' },
-                { label: 'Platform role', value: person?.user_domain ?? '—' },
-                {
-                  label: 'Joined',
-                  value: person?.created_date ? formatDate(person.created_date) : '—',
-                },
-                {
-                  label: 'Last updated',
-                  value: person?.updated_date ? formatDate(person.updated_date) : '—',
-                },
-              ]}
-            />
-            <div>
-              <p className='text-muted-foreground mb-2 text-xs font-semibold tracking-wide uppercase'>
-                Organisation affiliations
-              </p>
-              {affiliations.length ? (
-                <ul className='flex flex-col gap-2'>
-                  {affiliations.map((affiliation, index) => (
-                    <li key={index} className='text-foreground text-sm'>
-                      {affiliation.organisation_name}
-                      <span className='text-muted-foreground'>
-                        {' · '}
-                        {affiliation.domain_in_organisation}
-                        {affiliation.branch_name ? ` · ${affiliation.branch_name}` : ''}
-                        {affiliation.active === false ? ' · inactive' : ''}
-                      </span>
-                    </li>
-                  ))}
-                </ul>
-              ) : (
-                <p className='text-muted-foreground text-sm'>No organisation affiliations.</p>
-              )}
-            </div>
-          </div>
-        </SectionCard>
-      </SectionBoundary>
-    </div>
-  );
-}

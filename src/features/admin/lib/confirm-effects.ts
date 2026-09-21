@@ -115,6 +115,13 @@ export const confirmEffects = {
     ],
   }),
 
+  reactivateOrganisation: subject => ({
+    title: `Reactivate ${subject.name}?`,
+    confirmLabel: 'Reactivate organisation',
+    tone: 'default',
+    effects: ['The organisation is set active again', 'Its verification state is unchanged'],
+  }),
+
   approveCourse: subject => ({
     title: `Approve ${subject.name}?`,
     confirmLabel: 'Approve course',
@@ -290,6 +297,81 @@ export const confirmEffects = {
     tone: 'danger',
     effects: ['The obligation is cancelled with your reason'],
     warnings: ['An obligation that is already settled cannot be cancelled.'],
+  }),
+
+  createBranch: subject => ({
+    title: `Add ${subject.name} to ${subject.detail ?? 'this organisation'}?`,
+    confirmLabel: 'Create branch',
+    tone: 'default',
+    effects: [
+      'The branch can be chosen for classes, jobs and member assignments',
+      'Its contact details are shown to instructors and students',
+    ],
+    warnings: ['Without both coordinates the branch has no map pin.'],
+  }),
+
+  updateBranch: subject => ({
+    title: `Save changes to ${subject.name}?`,
+    confirmLabel: 'Save branch',
+    tone: 'default',
+    effects: [
+      'The name, address, contact and pin are replaced with what you entered',
+      'Classes and jobs already pointing at this branch follow the new details',
+    ],
+    warnings: ['Clearing both coordinates removes the map pin.'],
+  }),
+
+  deleteBranch: subject => ({
+    title: `Remove ${subject.name}?`,
+    confirmLabel: 'Remove branch',
+    tone: 'danger',
+    typeToConfirm: subject.confirmValue,
+    effects: [
+      'The branch is set inactive rather than deleted',
+      'Members lose this branch from their membership',
+    ],
+    warnings: [
+      'Classes, jobs and resources that point at this branch keep pointing at it. Move them first if they are still running.',
+    ],
+  }),
+
+  setMemberRole: subject => ({
+    title: `Change ${subject.name}’s role to ${subject.detail ?? 'this role'}?`,
+    confirmLabel: 'Change role',
+    tone: 'default',
+    effects: [
+      'Their role in this organisation changes from their next request',
+      'They keep the umbrella organisation membership either way',
+    ],
+    warnings: ['Leaving the branch empty clears the branch they were assigned to.'],
+  }),
+
+  addOrganisationStaff: subject => ({
+    title: `Add ${subject.name} to ${subject.detail ?? 'this organisation'}?`,
+    confirmLabel: 'Add member',
+    tone: 'default',
+    effects: [
+      'An account is created and attached to this organisation',
+      'They receive an email to activate the account',
+    ],
+    warnings: ['Students cannot be added this way — they are invited instead.'],
+  }),
+
+  revokeInvitation: subject => ({
+    title: `Withdraw the invitation to ${subject.name}?`,
+    confirmLabel: 'Withdraw invitation',
+    tone: 'danger',
+    effects: ['The link in their email stops working', 'The invitation shows as revoked'],
+  }),
+
+  resendInvitation: subject => ({
+    title: `Send ${subject.name}’s invitation again?`,
+    confirmLabel: 'Resend invitation',
+    tone: 'default',
+    effects: [
+      'A fresh link and expiry are issued',
+      'The previous link stops working once the new one is sent',
+    ],
   }),
 } satisfies Record<string, Builder>;
 

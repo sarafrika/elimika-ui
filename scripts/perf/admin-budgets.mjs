@@ -24,6 +24,9 @@ const ROUTES = [
   '/dashboard/admin/overview',
   '/dashboard/admin/inbox',
   '/dashboard/admin/activity',
+  '/dashboard/admin/people',
+  '/dashboard/admin/organisations',
+  '/dashboard/admin/access',
 ];
 
 const BUDGET = {

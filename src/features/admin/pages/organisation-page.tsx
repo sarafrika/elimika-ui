@@ -14,8 +14,12 @@ import {
 import { formatDate } from '@/lib/date';
 import { toNumber } from '@/lib/metrics';
 import { adminRoutes, type OrganisationTab } from '../lib/admin-routes';
-import { enumParam } from '../state/search-state';
+import { enumParam, numberParam, stringParam } from '../state/search-state';
 import { useSearchState } from '../state/use-search-state';
+import { BranchesTab } from '../components/branches-tab';
+import { ClassesTab } from '../components/classes-tab';
+import { FinanceTab } from '../components/finance-tab';
+import { MembersTab } from '../components/members-tab';
 import { OrganisationVerificationTab } from '../components/organisation-verification-tab';
 import { RecordHeader } from '../components/record-header';
 import { SectionBoundary } from '../components/section-boundary';
@@ -24,7 +28,16 @@ import {
   useDocumentTypes,
   useOrganisation,
   useOrganisationBranches,
+  useOrganisationClasses,
   useOrganisationDocuments,
+  useOrganisationEnrolmentCounts,
+  useOrganisationInstructors,
+  useOrganisationInvitations,
+  useOrganisationMembers,
+  useOrganisationObligations,
+  useOrganisationPayables,
+  useOrganisationSettlements,
+  useOrganisationSkillsFund,
   useOrganisationStatistics,
 } from '../hooks/use-organisation-record';
 
@@ -47,6 +60,8 @@ const TAB_LABELS: Record<OrganisationTab, string> = {
 };
 
 const tabParam = enumParam(TAB_IDS, 'overview');
+const memberPageParam = numberParam(0);
+const obligationStatusParam = stringParam('any');
 
 /** Initials for the monogram, e.g. "Nairobi Music Academy" becomes NM. */
 function monogram(name: string) {
@@ -62,9 +77,12 @@ function monogram(name: string) {
 
 export function AdminOrganisationPage({ uuid }: { uuid: string }) {
   const [tab] = useSearchState<OrganisationTab>('tab', tabParam);
+  const [memberPage, setMemberPage] = useSearchState('page', memberPageParam);
+  const [obligationStatus, setObligationStatus] = useSearchState('status', obligationStatusParam);
 
   const { organisation, query } = useOrganisation(uuid);
-  const needsRecordData = tab === 'overview' || tab === 'verification';
+  // Branches feed the overview, the verification checks and the branch manager itself.
+  const needsRecordData = tab === 'overview' || tab === 'verification' || tab === 'branches';
 
   // The statistics endpoint builds three full member lists server-side, so only the
   // Overview tab asks for it. Verification reuses the answer when it is already cached.
@@ -78,6 +96,32 @@ export function AdminOrganisationPage({ uuid }: { uuid: string }) {
     tab === 'verification'
   );
   const { documentTypes } = useDocumentTypes('ORGANISATION', tab === 'verification');
+
+  // Members also need the branch list, so a role change can move someone between them.
+  const membersEnabled = tab === 'members';
+  const { branches: memberBranches } = useOrganisationBranches(uuid, membersEnabled);
+  const {
+    members,
+    totalRows: memberTotal,
+    pageCount: memberPages,
+    query: membersQuery,
+  } = useOrganisationMembers(uuid, memberPage, membersEnabled);
+  const { invitations, query: invitationsQuery } = useOrganisationInvitations(uuid, membersEnabled);
+
+  const classesEnabled = tab === 'classes';
+  const { classes, query: classesQuery } = useOrganisationClasses(uuid, classesEnabled);
+  const { counts: enrolmentCounts } = useOrganisationEnrolmentCounts(uuid, classesEnabled);
+  const { instructors, query: instructorsQuery } = useOrganisationInstructors(uuid, classesEnabled);
+
+  const financeEnabled = tab === 'finance';
+  const { obligations, query: obligationsQuery } = useOrganisationObligations(
+    uuid,
+    obligationStatus,
+    financeEnabled
+  );
+  const { settlements, query: settlementsQuery } = useOrganisationSettlements(uuid, financeEnabled);
+  const { payables, query: payablesQuery } = useOrganisationPayables(uuid, financeEnabled);
+  const { skillsFund, query: skillsFundQuery } = useOrganisationSkillsFund(uuid, financeEnabled);
 
   const tabs = TAB_IDS.map(id => ({
     id,
@@ -237,16 +281,57 @@ export function AdminOrganisationPage({ uuid }: { uuid: string }) {
           />
         ) : null}
 
-        {organisation && tab !== 'overview' && tab !== 'verification' ? (
-          <SectionCard
-            title={`${TAB_LABELS[tab]} lands in P3`}
-            description='This tab is designed but not built yet.'
-          >
-            <p className='text-muted-foreground text-sm'>
-              Overview and Verification are live. Branch management, members, classes and finance
-              arrive with the people and organisations phase.
-            </p>
-          </SectionCard>
+        {organisation && tab === 'branches' ? (
+          <BranchesTab
+            organisation={organisation}
+            branches={branches}
+            branchesQuery={branchesQuery}
+          />
+        ) : null}
+
+        {organisation && tab === 'members' ? (
+          <MembersTab
+            organisation={organisation}
+            members={members}
+            branches={memberBranches}
+            invitations={invitations}
+            membersQuery={{
+              isLoading: membersQuery.isLoading,
+              error: membersQuery.error,
+              refetch: membersQuery.refetch,
+              page: memberPage,
+              pageCount: memberPages,
+              totalRows: memberTotal,
+              onPageChange: setMemberPage,
+            }}
+            invitationsQuery={invitationsQuery}
+          />
+        ) : null}
+
+        {organisation && tab === 'classes' ? (
+          <ClassesTab
+            classes={classes}
+            enrolmentCounts={enrolmentCounts}
+            instructors={instructors}
+            classesQuery={classesQuery}
+            instructorsQuery={instructorsQuery}
+          />
+        ) : null}
+
+        {organisation && tab === 'finance' ? (
+          <FinanceTab
+            organisation={organisation}
+            obligations={obligations}
+            settlements={settlements}
+            payables={payables}
+            skillsFund={skillsFund}
+            status={obligationStatus}
+            onStatusChange={setObligationStatus}
+            obligationsQuery={obligationsQuery}
+            settlementsQuery={settlementsQuery}
+            payablesQuery={payablesQuery}
+            skillsFundQuery={skillsFundQuery}
+          />
         ) : null}
       </div>
     </div>

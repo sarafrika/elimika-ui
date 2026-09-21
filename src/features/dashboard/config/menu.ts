@@ -604,6 +604,27 @@ export default {
         },
       ],
     },
+    {
+      title: 'People',
+      icon: Users,
+      items: [
+        {
+          title: 'People',
+          url: '/dashboard/people',
+          icon: Users,
+        },
+        {
+          title: 'Organisations',
+          url: '/dashboard/organisations',
+          icon: Building2,
+        },
+        {
+          title: 'Admins & access',
+          url: '/dashboard/access',
+          icon: BadgeCheck,
+        },
+      ],
+    },
   ],
   // Exact Lovable navGroups (labels/order/icons). Items are added to each group as
   // their 1:1 page port lands; groups/items not yet ported are omitted (no stubs).

@@ -78,6 +78,8 @@ interface DataTableProps<TData, TValue> {
   fill?: boolean;
   /** Provide this to page on the server instead of in the browser. */
   serverPagination?: ServerPagination;
+  /** Hide the built-in toolbar when the page already owns search and filters. */
+  hideToolbar?: boolean;
 }
 
 export function DataTable<TData, TValue>({
@@ -97,6 +99,7 @@ export function DataTable<TData, TValue>({
   emptyDescription = 'Adjust the search or filters to find what you are looking for.',
   fill = false,
   serverPagination,
+  hideToolbar = false,
 }: DataTableProps<TData, TValue>) {
   const [sorting, setSorting] = useState<SortingState>([]);
   const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([]);
@@ -161,7 +164,7 @@ export function DataTable<TData, TValue>({
 
   return (
     <div className={cn('flex flex-col gap-3', fill && 'h-full min-h-0')}>
-      <div className='flex flex-wrap items-center gap-2'>
+      <div className={cn('flex flex-wrap items-center gap-2', hideToolbar && 'hidden')}>
         <div className='relative min-w-[220px] flex-1'>
           <Search className='text-muted-foreground pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2' />
           <Input
