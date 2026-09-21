@@ -20,7 +20,7 @@
     "lint:admin": "node scripts/check-admin-boundary.mjs",
     "typecheck:ratchet": "node scripts/perf/ts-error-ratchet.mjs",
     "test": "tsx --test \"{app,components,src}/**/*.test.ts\"",
-    "test:admin": "tsx --test \"src/features/admin/**/*.test.ts\"",
+    "test:admin": "tsx --test $(find src/features/admin -name '*.test.ts')",
     "perf:admin": "node scripts/perf/admin-budgets.mjs",
     "verify:admin": "node scripts/verify/admin-smoke.mjs"
   },
