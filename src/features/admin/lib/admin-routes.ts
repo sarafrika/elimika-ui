@@ -22,6 +22,8 @@ export type OrganisationTab =
   | 'classes'
   | 'finance';
 
+export type ProgramTab = 'overview' | 'courses' | 'applications' | 'history';
+
 export type InboxType =
   | 'documents'
   | 'instructors'
@@ -62,8 +64,9 @@ export const adminRoutes = {
   courses: (filters?: { status?: string; approval?: string; q?: string; page?: string }) =>
     withQuery(admin('courses'), filters ?? {}),
   course: (uuid: string, tab?: string) => withQuery(admin(`courses/${uuid}`), { tab }),
-  programs: () => admin('programs'),
-  program: (uuid: string) => admin(`programs/${uuid}`),
+  programs: (filters?: { status?: string; approval?: string; q?: string; page?: string }) =>
+    withQuery(admin('programs'), filters ?? {}),
+  program: (uuid: string, tab?: ProgramTab) => withQuery(admin(`programs/${uuid}`), { tab }),
   classes: (filters?: { view?: string; from?: string; to?: string; instructor?: string }) =>
     withQuery(admin('classes'), filters ?? {}),
   catalogue: () => admin('catalogue'),

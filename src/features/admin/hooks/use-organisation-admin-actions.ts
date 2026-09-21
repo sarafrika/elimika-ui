@@ -22,6 +22,7 @@ import {
   updateTrainingBranch1,
 } from '@/services/client';
 import { invalidateAdminOverview, invalidateAfterVerification } from '../lib/admin-queries';
+import { invalidateGeneratedQueryIds } from '@/src/features/dashboard/workflow-query-invalidation';
 
 /** Reads the status off a thrown response so the message matches what really failed. */
 function statusOf(error: unknown): number | undefined {
@@ -129,7 +130,7 @@ export function useSaveBranch() {
     },
     onSuccess: async (_data, variables) => {
       await invalidateAdminOverview(queryClient);
-      await queryClient.invalidateQueries({ queryKey: ['getTrainingBranchesByOrganisation'] });
+      await invalidateGeneratedQueryIds(queryClient, ['getTrainingBranchesByOrganisation']);
       toast.success(`${variables.values.branch_name} saved`);
     },
     onError: (error, variables) =>
@@ -157,7 +158,7 @@ export function useDeleteBranch() {
       return data;
     },
     onSuccess: async (_data, variables) => {
-      await queryClient.invalidateQueries({ queryKey: ['getTrainingBranchesByOrganisation'] });
+      await invalidateGeneratedQueryIds(queryClient, ['getTrainingBranchesByOrganisation']);
       toast.success(`${variables.branchName} removed`);
     },
     onError: (error, variables) =>
@@ -191,7 +192,7 @@ export function useSetMemberRole() {
     },
     onSuccess: async (_data, variables) => {
       await invalidateAdminOverview(queryClient);
-      await queryClient.invalidateQueries({ queryKey: ['getUsersByOrganisation'] });
+      await invalidateGeneratedQueryIds(queryClient, ['getUsersByOrganisation']);
       toast.success(`${variables.memberName} is now ${variables.domainName.replace(/_/g, ' ')}`);
     },
     onError: (error, variables) =>
@@ -220,7 +221,7 @@ export function useAddOrganisationStaff() {
     },
     onSuccess: async (_data, variables) => {
       await invalidateAdminOverview(queryClient);
-      await queryClient.invalidateQueries({ queryKey: ['getUsersByOrganisation'] });
+      await invalidateGeneratedQueryIds(queryClient, ['getUsersByOrganisation']);
       toast.success(`${variables.values.first_name} ${variables.values.last_name} added`);
     },
     onError: (error, variables) => {
@@ -256,7 +257,7 @@ export function useRevokeInvitation() {
       return data;
     },
     onSuccess: async (_data, variables) => {
-      await queryClient.invalidateQueries({ queryKey: ['listOrganisationInvitations'] });
+      await invalidateGeneratedQueryIds(queryClient, ['listOrganisationInvitations']);
       toast.success(`Invitation to ${variables.recipient} withdrawn`);
     },
     onError: (error, variables) =>
@@ -284,7 +285,7 @@ export function useResendInvitation() {
       return data;
     },
     onSuccess: async (_data, variables) => {
-      await queryClient.invalidateQueries({ queryKey: ['listOrganisationInvitations'] });
+      await invalidateGeneratedQueryIds(queryClient, ['listOrganisationInvitations']);
       toast.success(`Invitation resent to ${variables.recipient}`);
     },
     onError: (error, variables) =>
@@ -317,8 +318,8 @@ export function useSettleObligation() {
       return data;
     },
     onSuccess: async (_data, variables) => {
-      await queryClient.invalidateQueries({ queryKey: ['listObligations'] });
-      await queryClient.invalidateQueries({ queryKey: ['getMonthlySettlements'] });
+      await invalidateGeneratedQueryIds(queryClient, ['listObligations']);
+      await invalidateGeneratedQueryIds(queryClient, ['getMonthlySettlements']);
       toast.success(`Settlement recorded for ${variables.instructorName}`);
     },
     onError: (error, variables) =>
@@ -349,7 +350,7 @@ export function useCancelObligation() {
       return data;
     },
     onSuccess: async (_data, variables) => {
-      await queryClient.invalidateQueries({ queryKey: ['listObligations'] });
+      await invalidateGeneratedQueryIds(queryClient, ['listObligations']);
       toast.success(`Obligation for ${variables.instructorName} cancelled`);
     },
     onError: (error, variables) => {

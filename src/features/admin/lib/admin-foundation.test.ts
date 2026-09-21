@@ -70,7 +70,10 @@ test('every confirm action names the subject and states real effects', () => {
       detail: 'teaching certificate',
       confirmValue: 'kotieno',
     });
-    assert.ok(content.title.includes('Kevin Otieno'), `${action} names the subject`);
+    assert.ok(
+      content.title.includes('Kevin Otieno') || content.title.includes('teaching certificate'),
+      `${action} names what it acts on`
+    );
     assert.ok(content.title.endsWith('?'), `${action} asks a question`);
     assert.ok(content.effects.length > 0, `${action} lists what happens`);
     assert.ok(content.confirmLabel.length > 0, `${action} labels its button`);

@@ -625,6 +625,36 @@ export default {
         },
       ],
     },
+    {
+      title: 'Learning',
+      icon: BookOpen,
+      items: [
+        { title: 'Courses', url: '/dashboard/courses', icon: BookOpen },
+        { title: 'Programs', url: '/dashboard/programs', icon: Layers2 },
+        { title: 'Classes', url: '/dashboard/classes', icon: CalendarClock },
+        { title: 'Catalogue', url: '/dashboard/catalogue', icon: ShoppingBag },
+        { title: 'Rubrics', url: '/dashboard/rubrics', icon: ClipboardCheck },
+        { title: 'Marketplace', url: '/dashboard/marketplace', icon: Briefcase },
+      ],
+    },
+    {
+      title: 'Finance',
+      icon: ChartNoAxesCombined,
+      items: [
+        { title: 'Revenue', url: '/dashboard/revenue', icon: ChartNoAxesCombined },
+        { title: 'Sales & payments', url: '/dashboard/sales', icon: DollarSign },
+        { title: 'Currencies', url: '/dashboard/currencies', icon: DollarSign },
+      ],
+    },
+    {
+      title: 'Platform',
+      icon: Settings,
+      items: [
+        { title: 'Categories', url: '/dashboard/platform/categories', icon: BookAIcon },
+        { title: 'System rules', url: '/dashboard/platform/rules', icon: BoltIcon },
+        { title: 'Config lists', url: '/dashboard/platform/config', icon: Settings },
+      ],
+    },
   ],
   // Exact Lovable navGroups (labels/order/icons). Items are added to each group as
   // their 1:1 page port lands; groups/items not yet ported are omitted (no stubs).
