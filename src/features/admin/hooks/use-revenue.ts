@@ -2,6 +2,7 @@
 
 import { useQuery } from '@tanstack/react-query';
 import { useMemo } from 'react';
+import { localDate } from '@/lib/date';
 
 import { extractEntity, extractList } from '@/lib/api-helpers';
 import type { RevenueAmountDto, RevenueDashboardDto } from '@/services/client';
@@ -30,7 +31,8 @@ export function revenueWindow(range: RevenueRange) {
   const end = new Date();
   const start = new Date(end);
   start.setDate(start.getDate() - DAYS_BACK[range]);
-  return { start, end };
+  // These parameters are LocalDate on the API: a full ISO datetime is rejected.
+  return { start: localDate(start), end: localDate(end) };
 }
 
 /** Platform revenue for one range, plus the fees collected inside it. */

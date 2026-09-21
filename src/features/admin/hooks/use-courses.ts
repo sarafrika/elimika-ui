@@ -76,7 +76,7 @@ export function useCourses(filters: CourseFilters): CoursesResult {
     ...searchCoursesOptions({
       query: {
         searchParams,
-        pageable: { page: filters.page, size: COURSE_PAGE_SIZE, sort: ['updatedDate,desc'] },
+        pageable: { page: filters.page, size: COURSE_PAGE_SIZE, sort: ['lastModifiedDate,desc'] },
       },
     }),
     ...listQuery,

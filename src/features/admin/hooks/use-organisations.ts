@@ -5,7 +5,10 @@ import { useMemo } from 'react';
 
 import { extractPage, getTotalFromMetadata } from '@/lib/api-helpers';
 import type { Organisation } from '@/services/client';
-import { search2Options } from '@/services/client/@tanstack/react-query.gen';
+import {
+  getAllOrganisationsOptions,
+  search2Options,
+} from '@/services/client/@tanstack/react-query.gen';
 import { listQuery } from '../lib/admin-queries';
 
 export const ORGANISATIONS_PAGE_SIZE = 20;
@@ -39,16 +42,26 @@ function buildSearchParams({ q, verified, active }: OrganisationFilters) {
 /** Server-paged organisations for the directory. */
 export function useOrganisations(filters: OrganisationFilters) {
   const page = filters.page ?? 0;
+  const searchParams = buildSearchParams(filters);
+  const isFiltered = Object.keys(searchParams).length > 0;
 
-  const query = useQuery({
+  // The search endpoint returns 500 when it is given no criteria at all, so the
+  // unfiltered directory reads the plain list instead. Both are one server-paged call.
+  const listAll = useQuery({
+    ...getAllOrganisationsOptions({ query: { pageable: { page, size: ORGANISATIONS_PAGE_SIZE } } }),
+    ...listQuery,
+    enabled: !isFiltered,
+  });
+
+  const filtered = useQuery({
     ...search2Options({
-      query: {
-        searchParams: buildSearchParams(filters),
-        pageable: { page, size: ORGANISATIONS_PAGE_SIZE },
-      },
+      query: { searchParams, pageable: { page, size: ORGANISATIONS_PAGE_SIZE } },
     }),
     ...listQuery,
+    enabled: isFiltered,
   });
+
+  const query = isFiltered ? filtered : listAll;
 
   const { organisations, totalRows, pageCount } = useMemo(() => {
     const { items, metadata } = extractPage<Organisation>(query.data);

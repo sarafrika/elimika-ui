@@ -62,7 +62,7 @@ export function useRubrics(filters: RubricFilters) {
     ...searchAssessmentRubricsOptions({
       query: {
         searchParams: searchParams as Record<string, string>,
-        pageable: { page, size: RUBRICS_PAGE_SIZE, sort: ['updatedDate,desc'] },
+        pageable: { page, size: RUBRICS_PAGE_SIZE, sort: ['lastModifiedDate,desc'] },
       },
     }),
     ...listQuery,
