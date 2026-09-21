@@ -11,17 +11,29 @@ import { ADMIN_STALE_TIME } from './admin-keys';
  * Freshness presets. A queue is the only thing an admin watches change under them, so
  * it is the only thing that refetches on focus.
  */
+/**
+ * A failing admin read is shown, not retried into a long shimmer. The generated client
+ * throws the API's error body, which carries no HTTP status, so a status-aware predicate
+ * cannot tell a 500 from a dropped connection and would retry both — that retry is what
+ * put a second identical request on the wire behind every failing section. One attempt,
+ * then the error state with its Retry button, which is the recovery path an admin can see.
+ */
+const FAIL_FAST = { retry: false } as const;
+
 export const queueQuery = {
   staleTime: ADMIN_STALE_TIME.queue,
   refetchOnWindowFocus: true,
+  ...FAIL_FAST,
 } as const;
 
 export const listQuery = {
   staleTime: ADMIN_STALE_TIME.list,
+  ...FAIL_FAST,
 } as const;
 
 export const configQuery = {
   staleTime: ADMIN_STALE_TIME.config,
+  ...FAIL_FAST,
 } as const;
 
 /**
