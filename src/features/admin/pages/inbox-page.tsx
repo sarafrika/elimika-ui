@@ -1,10 +1,11 @@
 'use client';
 
-import { useMemo } from 'react';
+import { useCallback, useMemo } from 'react';
 import { surfaceTheme } from '@/components/data-display';
 import { PageHeader } from '@/components/page-header';
 import { Skeleton } from '@/components/ui/skeleton';
 import { cn } from '@/lib/utils';
+import { useInstructorsByIds } from '@/hooks/use-batched-lookups';
 import { InboxList } from '../components/inbox-list';
 import { InboxRecordPreview } from '../components/inbox-record-preview';
 import { SectionBoundary } from '../components/section-boundary';
@@ -38,6 +39,21 @@ export function InboxPage() {
   const selected = useMemo(
     () => (itemId ? queue.items.find(item => item.id === itemId) : undefined),
     [queue.items, itemId]
+  );
+
+  // Document rows carry an instructor uuid but no name. One batched lookup for the
+  // visible page turns them into people; never one request per row.
+  const instructorIds = useMemo(
+    () =>
+      Array.from(
+        new Set(queue.items.map(item => item.instructorUuid).filter((id): id is string => Boolean(id)))
+      ),
+    [queue.items]
+  );
+  const { instructorMap } = useInstructorsByIds(instructorIds);
+  const nameFor = useCallback(
+    (instructorUuid?: string) => instructorMap[instructorUuid ?? '']?.full_name,
+    [instructorMap]
   );
 
   return (
@@ -106,6 +122,7 @@ export function InboxPage() {
             >
               <InboxList
                 items={queue.items}
+                nameFor={nameFor}
                 selectedId={selected?.id ?? ''}
                 onSelect={item => setItemId(item.id)}
               />

@@ -34,10 +34,13 @@ export function InboxList({
   items,
   selectedId,
   onSelect,
+  nameFor,
 }: {
   items: InboxItem[];
   selectedId: string;
   onSelect: (item: InboxItem) => void;
+  /** Resolves an instructor uuid to a name once the batched lookup lands. */
+  nameFor?: (instructorUuid?: string) => string | undefined;
 }) {
   return (
     <ul className='divide-border/60 divide-y'>
@@ -65,7 +68,9 @@ export function InboxList({
                     {item.subject}
                   </span>
                 </span>
-                <span className='text-muted-foreground block truncate text-xs'>{item.who}</span>
+                <span className='text-muted-foreground block truncate text-xs'>
+                  {nameFor?.(item.instructorUuid) ?? item.who}
+                </span>
               </span>
 
               {waiting.label ? (
