@@ -1,5 +1,5 @@
 # syntax=docker.io/docker/dockerfile:1
-FROM node:lts-alpine AS base
+FROM node:24-alpine AS base
 
 RUN corepack enable && corepack prepare pnpm@10.28.2 --activate
 
