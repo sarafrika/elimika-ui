@@ -52,6 +52,7 @@ export function InboxList({
           <li key={item.id}>
             <button
               type='button'
+              data-testid='inbox-row'
               aria-current={isSelected ? 'true' : undefined}
               onClick={() => onSelect(item)}
               className={cn(
