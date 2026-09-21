@@ -1,5 +1,4 @@
 'use client';
-// admin-boundary: foundation
 
 import { Search, X } from 'lucide-react';
 import { useEffect, useState } from 'react';

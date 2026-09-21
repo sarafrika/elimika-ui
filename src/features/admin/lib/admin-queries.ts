@@ -1,4 +1,3 @@
-// admin-boundary: foundation
 import type { QueryClient } from '@tanstack/react-query';
 import {
   invalidateContentModerationWorkflowQueries,

@@ -1,5 +1,4 @@
 'use client';
-// admin-boundary: foundation
 
 import { usePathname, useRouter, useSearchParams } from 'next/navigation';
 import { useCallback, useMemo } from 'react';

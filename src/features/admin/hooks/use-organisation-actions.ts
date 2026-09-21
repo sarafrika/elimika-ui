@@ -1,5 +1,4 @@
 'use client';
-// admin-boundary: foundation
 
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';

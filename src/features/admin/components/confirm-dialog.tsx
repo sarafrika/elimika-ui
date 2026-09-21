@@ -1,5 +1,4 @@
 'use client';
-// admin-boundary: foundation
 
 import { AlertTriangle, ArrowRight, Check, ShieldAlert } from 'lucide-react';
 import { type ReactNode, useEffect, useState } from 'react';

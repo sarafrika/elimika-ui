@@ -1,5 +1,4 @@
 'use client';
-// admin-boundary: foundation
 
 import Link from 'next/link';
 import type { ReactNode } from 'react';

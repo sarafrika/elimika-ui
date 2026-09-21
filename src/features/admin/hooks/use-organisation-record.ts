@@ -1,5 +1,4 @@
 'use client';
-// admin-boundary: foundation
 
 import { useQuery } from '@tanstack/react-query';
 import { useMemo } from 'react';

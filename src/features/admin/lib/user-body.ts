@@ -1,4 +1,3 @@
-// admin-boundary: foundation
 import type { User } from '@/services/client';
 
 /** Fields an admin can edit on a person. Everything else is carried over untouched. */

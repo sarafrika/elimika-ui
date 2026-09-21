@@ -1,5 +1,4 @@
 'use client';
-// admin-boundary: foundation
 
 import { SimpleEditor } from '@/components/tiptap-templates/simple/simple-editor-lazy';
 import { Label } from '@/components/ui/label';

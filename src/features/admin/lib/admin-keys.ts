@@ -1,4 +1,3 @@
-// admin-boundary: foundation
 /**
  * Query keys for admin-owned reads that are composed in the console rather than taken
  * straight from a generated hook (queues, dossiers, joined lists). Generated queries keep
