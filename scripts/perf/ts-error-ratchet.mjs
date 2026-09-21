@@ -30,10 +30,14 @@ const sourceLines = output
   .split('\n')
   .filter(line => /error TS\d+/.test(line) && !line.startsWith('.next/'));
 const count = sourceLines.length;
-const ceiling = Number(fs.readFileSync(CEILING_FILE, 'utf8').trim());
+// The file keeps the number on the first line and the story behind it underneath, so a
+// raised ceiling always says which merge raised it.
+const ceilingFile = fs.readFileSync(CEILING_FILE, 'utf8');
+const ceiling = Number(ceilingFile.split('\n')[0].trim());
 
 if (process.argv.includes('--update')) {
-  fs.writeFileSync(CEILING_FILE, `${count}\n`);
+  const note = ceilingFile.split('\n').slice(1).join('\n');
+  fs.writeFileSync(CEILING_FILE, `${count}\n${note}`);
   console.log(`Ceiling updated: ${ceiling} → ${count}`);
   process.exit(0);
 }
