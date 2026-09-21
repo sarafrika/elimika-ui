@@ -27,6 +27,18 @@ const ROUTES = [
   '/dashboard/admin/people',
   '/dashboard/admin/organisations',
   '/dashboard/admin/access',
+  '/dashboard/admin/courses',
+  '/dashboard/admin/programs',
+  '/dashboard/admin/classes',
+  '/dashboard/admin/catalogue',
+  '/dashboard/admin/rubrics',
+  '/dashboard/admin/marketplace',
+  '/dashboard/admin/revenue',
+  '/dashboard/admin/sales',
+  '/dashboard/admin/currencies',
+  '/dashboard/admin/platform/categories',
+  '/dashboard/admin/platform/rules',
+  '/dashboard/admin/platform/config',
 ];
 
 const BUDGET = {

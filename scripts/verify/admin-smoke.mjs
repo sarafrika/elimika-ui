@@ -82,6 +82,18 @@ await visit('Activity log', '/dashboard/admin/activity', 'Activity');
 await visit('People', '/dashboard/admin/people', 'People');
 await visit('Organisations', '/dashboard/admin/organisations', 'Organisation');
 await visit('Admins & access', '/dashboard/admin/access', 'access');
+await visit('Courses', '/dashboard/admin/courses', 'Course');
+await visit('Programs', '/dashboard/admin/programs', 'Program');
+await visit('Classes', '/dashboard/admin/classes', 'Class');
+await visit('Catalogue', '/dashboard/admin/catalogue', 'Catalogue');
+await visit('Rubrics', '/dashboard/admin/rubrics', 'Rubric');
+await visit('Marketplace', '/dashboard/admin/marketplace', 'Marketplace');
+await visit('Revenue', '/dashboard/admin/revenue', 'Revenue');
+await visit('Sales', '/dashboard/admin/sales', 'Sales');
+await visit('Currencies', '/dashboard/admin/currencies', 'Currenc');
+await visit('Categories', '/dashboard/admin/platform/categories', 'Categor');
+await visit('System rules', '/dashboard/admin/platform/rules', 'rule');
+await visit('Config lists', '/dashboard/admin/platform/config', 'Content type');
 
 // The route that matters most: a queue item must open the person's own record.
 await page.goto(`${baseUrl}/dashboard/admin/inbox?type=documents`, {
