@@ -2,7 +2,6 @@
 
 import type { ColumnDef } from '@tanstack/react-table';
 import { ArrowRight, BookOpen, FileDiff } from 'lucide-react';
-import Image from 'next/image';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useMemo } from 'react';
@@ -15,6 +14,7 @@ import { formatDateOnly } from '@/lib/date';
 import { toNumber } from '@/lib/metrics';
 import { cn } from '@/lib/utils';
 import type { Course } from '@/services/client';
+import { ImageWithFallback } from '@/components/data/image-with-fallback';
 import { toAuthenticatedMediaUrl } from '@/src/lib/media-url';
 import { FilterBar } from '../components/filter-bar';
 import { SectionBoundary } from '../components/section-boundary';
@@ -96,20 +96,19 @@ export function CoursesPage() {
           return (
             <div className='flex items-center gap-3'>
               <span className='bg-muted relative size-10 shrink-0 overflow-hidden rounded-md'>
-                {thumbnail ? (
-                  <Image
-                    src={thumbnail}
-                    alt=''
-                    fill
-                    sizes='40px'
-                    className='object-cover'
-                    unoptimized
-                  />
-                ) : (
-                  <span className='flex size-full items-center justify-center'>
-                    <BookOpen className='text-muted-foreground size-4' />
-                  </span>
-                )}
+                <ImageWithFallback
+                  src={thumbnail}
+                  alt=''
+                  fill
+                  sizes='40px'
+                  className='object-cover'
+                  unoptimized
+                  fallback={
+                    <span className='flex size-full items-center justify-center'>
+                      <BookOpen className='text-muted-foreground size-4' />
+                    </span>
+                  }
+                />
               </span>
               <div className='min-w-0'>
                 <p className='text-foreground truncate text-sm font-medium'>{course.name}</p>
