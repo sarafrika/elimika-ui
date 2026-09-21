@@ -2,6 +2,7 @@ import assert from 'node:assert/strict';
 import { test } from 'node:test';
 import { adminRoutes } from './admin-routes';
 import { buildConfirm, confirmEffects } from './confirm-effects';
+import { mergeUserBody } from './user-body';
 import {
   applySearchState,
   booleanParam,
@@ -92,4 +93,33 @@ test('actions the API does not fully perform carry a warning', () => {
 
   const deactivate = buildConfirm('deactivateAccount', { name: 'Kevin Otieno' });
   assert.ok(deactivate.warnings?.some(warning => warning.includes('already open')));
+});
+
+test('a user save merges onto the loaded record and always sends active', () => {
+  const loaded = {
+    uuid: 'u-1',
+    first_name: 'Kevin',
+    last_name: 'Otieno',
+    email: 'kevin@example.com',
+    username: 'kotieno',
+    active: true,
+    keycloak_id: 'kc-1',
+    user_no: 'EL-001',
+  } as Parameters<typeof mergeUserBody>[0];
+
+  const saved = mergeUserBody(loaded, { first_name: 'Kev', middle_name: undefined });
+
+  assert.equal(saved.first_name, 'Kev');
+  assert.equal(saved.last_name, 'Otieno', 'untouched fields survive');
+  assert.equal(saved.keycloak_id, 'kc-1', 'fields the form never shows survive');
+  assert.equal(saved.active, true, 'active is always sent');
+});
+
+test('a user save never deactivates by omission', () => {
+  const loaded = { uuid: 'u-2', first_name: 'A', last_name: 'B' } as Parameters<
+    typeof mergeUserBody
+  >[0];
+  assert.equal(mergeUserBody(loaded, {}).active, true);
+  assert.equal(mergeUserBody({ ...loaded, active: false }, {}).active, false);
+  assert.equal(mergeUserBody(loaded, { active: false }).active, false);
 });

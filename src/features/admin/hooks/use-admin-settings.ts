@@ -13,6 +13,7 @@ import {
   uploadProfileImageMutation,
 } from '@/services/client/@tanstack/react-query.gen';
 import { invalidateGeneratedQueryIds } from '@/src/features/dashboard/workflow-query-invalidation';
+import { mergeUserBody } from '../lib/user-body';
 import { listQuery } from '../lib/admin-queries';
 
 /** Largest photo the console will send; the API itself only caps at the global limit. */
@@ -79,7 +80,10 @@ export function useSaveOwnProfile() {
       return;
     }
 
-    const body: User = {
+    // Merged onto the loaded record so a field the API adds later is never cleared,
+    // and so `active` is always sent — an undefined flag would lock you out of your
+    // own account.
+    const body = mergeUserBody(account, {
       first_name: values.first_name.trim(),
       middle_name: values.middle_name.trim() || null,
       last_name: values.last_name.trim(),
@@ -88,10 +92,7 @@ export function useSaveOwnProfile() {
       dob: new Date(values.dob),
       phone_number: values.phone_number.trim() || null,
       gender: (values.gender || undefined) as GenderEnum | undefined,
-      // Sent from the loaded record on purpose — see the note above.
-      active: account.active,
-      keycloak_id: account.keycloak_id,
-    };
+    });
 
     mutation.mutate(
       { path: { uuid: account.uuid }, body },

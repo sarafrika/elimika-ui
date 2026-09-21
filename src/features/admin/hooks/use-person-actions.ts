@@ -6,6 +6,7 @@ import { toast } from 'sonner';
 import { getErrorMessage } from '@/lib/error-utils';
 import type { User } from '@/services/client';
 import { updateUserMutation } from '@/services/client/@tanstack/react-query.gen';
+import { mergeUserBody } from '../lib/user-body';
 import { invalidateAdminOverview } from '../lib/admin-queries';
 
 /** The fields an admin may change on someone else's record. */
@@ -45,17 +46,7 @@ export function useSavePerson(person: User | null) {
       return;
     }
 
-    const body: User = {
-      first_name: changes.first_name ?? person.first_name,
-      middle_name: changes.middle_name ?? person.middle_name,
-      last_name: changes.last_name ?? person.last_name,
-      email: changes.email ?? person.email,
-      username: changes.username ?? person.username,
-      dob: changes.dob ?? person.dob,
-      phone_number: changes.phone_number ?? person.phone_number,
-      gender: changes.gender ?? person.gender,
-      active: changes.active ?? person.active,
-    };
+    const body = mergeUserBody(person, changes);
 
     mutation.mutate(
       { path: { uuid: person.uuid }, body },
