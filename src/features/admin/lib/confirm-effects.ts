@@ -681,6 +681,49 @@ export const confirmEffects = {
     ],
     warnings: ['A wide range means many requests, so give it a moment on large exports.'],
   }),
+
+  markNotificationRead: subject => ({
+    title: `Mark ${subject.name} as read?`,
+    confirmLabel: 'Mark read',
+    tone: 'default',
+    effects: ['It stops counting towards your unread badge', 'It stays in your inbox'],
+  }),
+
+  archiveNotification: subject => ({
+    title: `Archive ${subject.name}?`,
+    confirmLabel: 'Archive',
+    tone: 'danger',
+    effects: ['It leaves your inbox and moves to the Archived tab'],
+    warnings: ['There is no way to unarchive or delete a notification through the API.'],
+  }),
+
+  markAllNotificationsRead: subject => ({
+    title: `Mark everything in ${subject.name} as read?`,
+    confirmLabel: 'Mark all read',
+    tone: 'default',
+    effects: [
+      `Every unread notification in ${subject.name} is marked read`,
+      'Nothing is archived or removed',
+    ],
+    warnings: ['This is the only bulk action the API accepts, and it cannot be undone.'],
+  }),
+
+  sendOrganisationAnnouncement: subject => ({
+    title: `Send this announcement to ${subject.name}?`,
+    confirmLabel: 'Send announcement',
+    tone: 'default',
+    effects: [
+      `It reaches the ${subject.detail ?? 'chosen audience'} at ${subject.name}`,
+      'It lands in each recipient’s in-app inbox, and by email too when you chose email',
+      'It appears in this organisation’s sent history',
+    ],
+    warnings: [
+      'How many people it reached is only known once it has been sent.',
+      'It sends immediately — a scheduled time is stored but not acted on.',
+      'The audience and channel are not checked by the API, so an unrecognised audience quietly reaches nobody.',
+      'There is no platform-wide broadcast; announcements are always per organisation.',
+    ],
+  }),
 } satisfies Record<string, Builder>;
 
 export type ConfirmAction = keyof typeof confirmEffects;

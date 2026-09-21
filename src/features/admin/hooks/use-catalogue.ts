@@ -13,6 +13,7 @@ import {
   updateCatalogItem,
 } from '@/services/client';
 import { searchCatalogueOptions } from '@/services/client/@tanstack/react-query.gen';
+import { invalidateGeneratedQueryIds } from '@/src/features/dashboard/workflow-query-invalidation';
 import { invalidateAdminOverview, listQuery } from '../lib/admin-queries';
 
 export const CATALOGUE_PAGE_SIZE = 20;
@@ -103,8 +104,11 @@ export function useSaveCatalogueItem() {
       return data;
     },
     onSuccess: async (_data, variables) => {
-      await queryClient.invalidateQueries({ queryKey: ['searchCatalogue'] });
-      await queryClient.invalidateQueries({ queryKey: ['listCatalogItems'] });
+      await invalidateGeneratedQueryIds(queryClient, [
+        'searchCatalogue',
+        'listCatalogItems',
+        'resolveByCourseOrClass',
+      ]);
       await invalidateAdminOverview(queryClient);
       toast.success(`${variables.name} saved`);
     },

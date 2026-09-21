@@ -25,6 +25,7 @@ import {
   getEnrollmentsForInstanceOptions,
   getInstructorScheduleOptions,
 } from '@/services/client/@tanstack/react-query.gen';
+import { invalidateGeneratedQueryIds } from '@/src/features/dashboard/workflow-query-invalidation';
 import { invalidateAdminOverview, listQuery, queueQuery } from '../lib/admin-queries';
 
 export const CLASS_PAGE_SIZE = 20;
@@ -182,8 +183,11 @@ export function useCancelSession() {
       return data;
     },
     onSuccess: async (_data, variables) => {
-      await queryClient.invalidateQueries({ queryKey: ['getClassSchedule'] });
-      await queryClient.invalidateQueries({ queryKey: ['getInstructorSchedule'] });
+      await invalidateGeneratedQueryIds(queryClient, [
+        'getClassSchedule',
+        'getInstructorSchedule',
+        'getEnrollmentsForInstance',
+      ]);
       await invalidateAdminOverview(queryClient);
       toast.success(`${variables.title} is cancelled`);
     },
@@ -207,8 +211,13 @@ export function useDeactivateClass() {
       return data;
     },
     onSuccess: async (_data, variables) => {
-      await queryClient.invalidateQueries({ queryKey: ['getAllClassDefinitions'] });
-      await queryClient.invalidateQueries({ queryKey: ['getClassDefinition'] });
+      await invalidateGeneratedQueryIds(queryClient, [
+        'getAllClassDefinitions',
+        'getClassDefinition',
+        'getClassDefinitionsForOrganisation',
+        'getClassSchedule',
+        'searchCatalogue',
+      ]);
       await invalidateAdminOverview(queryClient);
       toast.success(`${variables.title} is no longer running`);
     },
@@ -238,7 +247,7 @@ export function useMarkAttendance() {
       return data;
     },
     onSuccess: async (_data, variables) => {
-      await queryClient.invalidateQueries({ queryKey: ['getEnrollmentsForInstance'] });
+      await invalidateGeneratedQueryIds(queryClient, ['getEnrollmentsForInstance']);
       toast.success(
         `${variables.learnerName} marked ${variables.attended ? 'present' : 'absent'}`
       );

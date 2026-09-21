@@ -653,6 +653,8 @@ export default {
         { title: 'Categories', url: '/dashboard/platform/categories', icon: BookAIcon },
         { title: 'System rules', url: '/dashboard/platform/rules', icon: BoltIcon },
         { title: 'Config lists', url: '/dashboard/platform/config', icon: Settings },
+        { title: 'Notifications', url: '/dashboard/notifications', icon: Bell },
+        { title: 'Settings', url: '/dashboard/settings', icon: Settings },
       ],
     },
   ],
