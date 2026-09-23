@@ -34,7 +34,7 @@ export function PageHeader({ title, description, eyebrow, actions, className }: 
           <div className='text-xs font-semibold uppercase tracking-wider text-primary'>{eyebrow}</div>
         )}
         <h1 className='text-2xl font-bold tracking-tight text-foreground sm:text-3xl'>{title}</h1>
-        {description && <p className='max-w-2xl text-sm text-muted-foreground'>{description}</p>}
+        {description && <p className='max-w-5xl text-sm text-muted-foreground'>{description}</p>}
       </div>
       {actions && <div className='flex flex-wrap gap-2'>{actions}</div>}
     </div>

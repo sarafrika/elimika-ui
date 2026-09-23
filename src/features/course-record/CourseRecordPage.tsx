@@ -606,6 +606,10 @@ export function CourseRecordPage({
             {...asyncProps(record.content)}
           />
         );
+      case 'assessment':
+        return (
+          <div>Assessment Component</div>
+        );
       case 'delivery':
         return (
           <DeliveryTab

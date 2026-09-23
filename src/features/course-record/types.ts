@@ -60,6 +60,7 @@ export function isCourseAccess(value: unknown): value is CourseAccess {
 export const COURSE_RECORD_TABS = [
   'overview',
   'curriculum',
+  'assessment',
   'delivery',
   'commercials',
   'classes',
@@ -77,6 +78,7 @@ export type CourseRecordTabId = (typeof COURSE_RECORD_TABS)[number];
 export const COURSE_RECORD_TAB_LABELS: Record<CourseRecordTabId, string> = {
   overview: 'Overview',
   curriculum: 'Curriculum',
+  assessment: 'Assessment',
   delivery: 'Delivery',
   commercials: 'Commercials',
   classes: 'Classes',
@@ -411,7 +413,7 @@ export const COURSE_ACCESS_CAPABILITIES: Record<CourseAccess, CourseAccessCapabi
     accessBlurb:
       'You own this record. You see every lesson, every content item, the commercial terms and every trainer delivering it — and you are the only party who can edit it or decide applications.',
     primaryAction: 'Edit course',
-    tabs: ['overview', 'curriculum', 'delivery', 'commercials', 'reviews', 'activity'],
+    tabs: ['overview', 'curriculum', 'assessment', 'delivery', 'commercials', 'reviews', 'activity'],
     rail: ['access', 'glance', 'ownerDecisions', 'actions'],
     railActionsTitle: 'Creator actions',
     railActions: [
@@ -459,7 +461,7 @@ export const COURSE_ACCESS_CAPABILITIES: Record<CourseAccess, CourseAccessCapabi
     accessBlurb:
       'Admins read the complete record for moderation: all content, commercial terms, every trainer, and the full version and decision history. Edits stay with the creator.',
     primaryAction: 'Moderate',
-    tabs: ['overview', 'curriculum', 'delivery', 'commercials', 'reviews', 'activity'],
+    tabs: ['overview', 'curriculum', 'assessment', 'delivery', 'commercials', 'reviews', 'activity'],
     rail: ['access', 'glance', 'licence', 'actions'],
     railActionsTitle: 'Moderation actions',
     railActions: [
@@ -507,7 +509,7 @@ export const COURSE_ACCESS_CAPABILITIES: Record<CourseAccess, CourseAccessCapabi
     accessBlurb:
       'You are approved to deliver this course, so every lesson and content item is readable. Every figure here is your own — what other trainers charge and what the course earns overall stay with the creator.',
     primaryAction: 'Create a class',
-    tabs: ['overview', 'curriculum', 'delivery', 'reviews'],
+    tabs: ['overview', 'curriculum', 'assessment', 'delivery', 'reviews'],
     rail: ['access', 'glance', 'licence', 'actions'],
     railActionsTitle: 'Delivery actions',
     railActions: [
@@ -555,7 +557,7 @@ export const COURSE_ACCESS_CAPABILITIES: Record<CourseAccess, CourseAccessCapabi
     accessBlurb:
       'You are approved to deliver this course, so every lesson and content item is readable. Every figure here is your own — what other trainers charge and what the course earns overall stay with the creator.',
     primaryAction: 'Create a class',
-    tabs: ['overview', 'curriculum', 'delivery', 'reviews'],
+    tabs: ['overview', 'curriculum', 'assessment', 'delivery', 'reviews'],
     rail: ['access', 'glance', 'licence', 'actions'],
     railActionsTitle: 'Delivery actions',
     railActions: [
@@ -603,7 +605,7 @@ export const COURSE_ACCESS_CAPABILITIES: Record<CourseAccess, CourseAccessCapabi
     accessBlurb:
       'You are deciding whether to deliver this course. You get everything needed for that decision — syllabus shape, effort, commercial terms, what the venue must provide — and none of the teaching material itself.',
     primaryAction: 'Apply to train',
-    tabs: ['overview', 'curriculum', 'reviews'],
+    tabs: ['overview', 'curriculum', 'assessment', 'reviews'],
     rail: ['access', 'glance', 'opportunity', 'actions'],
     railActionsTitle: 'Before you apply',
     railActions: [
@@ -648,7 +650,7 @@ export const COURSE_ACCESS_CAPABILITIES: Record<CourseAccess, CourseAccessCapabi
     accessBlurb:
       'You can read the outline — lesson titles, objectives and item counts — so you can judge whether to deliver this course. Content items and course performance unlock when the creator approves you.',
     primaryAction: 'Apply to train',
-    tabs: ['overview', 'curriculum', 'reviews'],
+    tabs: ['overview', 'curriculum', 'assessment', 'reviews'],
     rail: ['access', 'glance', 'applicationStatus', 'actions'],
     railActionsTitle: 'Available now',
     railActions: [
@@ -693,7 +695,7 @@ export const COURSE_ACCESS_CAPABILITIES: Record<CourseAccess, CourseAccessCapabi
     accessBlurb:
       'You are browsing before enrolling. The syllabus, the intro video, the price and every class running this course are open. Lesson material opens the moment your enrolment is paid and confirmed.',
     primaryAction: 'Enroll — {price}',
-    tabs: ['overview', 'curriculum', 'classes', 'reviews'],
+    tabs: ['overview', 'curriculum', 'assessment', 'classes', 'reviews'],
     rail: ['access', 'glance', 'enrol', 'actions'],
     railActionsTitle: 'Before you enroll',
     railActions: [
@@ -746,7 +748,7 @@ export const COURSE_ACCESS_CAPABILITIES: Record<CourseAccess, CourseAccessCapabi
     accessBlurb:
       'You are enrolled, so every lesson is open to read at your own pace. Commercial terms and other providers stay with the creator and trainers.',
     primaryAction: 'Continue learning',
-    tabs: ['overview', 'curriculum', 'classes', 'reviews'],
+    tabs: ['overview', 'curriculum', 'assessment', 'classes', 'reviews'],
     rail: ['access', 'glance', 'licence', 'actions'],
     railActionsTitle: 'Learner actions',
     railActions: [
@@ -825,5 +827,6 @@ export type {
   CourseReview,
   CourseTrainingApplication,
   CourseTrainingRateCard,
-  CourseTrainingRequirement,
+  CourseTrainingRequirement
 };
+
