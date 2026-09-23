@@ -1,4 +1,5 @@
-import { Link, createFileRoute } from "@tanstack/react-router";
+'use client'
+
 import {
     ArrowLeft,
     ArrowRight,
@@ -7,20 +8,17 @@ import {
     CheckCircle2,
     ClipboardCheck,
     Clock3,
-    GraduationCap,
     LayoutGrid,
     Plus,
     ShieldCheck,
     Trash2,
     UserRound,
-    Wallet,
+    Wallet
 } from "lucide-react";
-import { useMemo } from "react";
 import type { ReactNode } from "react";
+import { useMemo } from "react";
 import { toast } from "sonner";
 
-import { CourseBuilder } from "@/components/onboarding/CourseBuilder";
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -33,6 +31,9 @@ import {
 } from "@/components/ui/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Textarea } from "@/components/ui/textarea";
+import { cn } from "@/lib/utils";
+import Link from "next/link";
+import type { CourseDraft, WalletField, WalletSectionKey } from "../onboarding";
 import {
     COURSE_CATEGORIES,
     SAMPLE_SARAFRIKA_ACCOUNT,
@@ -40,31 +41,7 @@ import {
     newId,
     useCreatorJourney,
     walletFilledCount,
-} from "@/lib/creator-onboarding";
-import type { CourseDraft, WalletField, WalletSectionKey } from "@/lib/creator-onboarding";
-import { cn } from "@/lib/utils";
-
-export const Route = createFileRoute("/onboarding")({
-    head: () => ({
-        meta: [
-            { title: "Course Creator Onboarding | Elimika" },
-            {
-                name: "description",
-                content:
-                    "Join the Sarafrika ecosystem, open an Elimika course creator account, build your skills wallet and submit it for verification.",
-            },
-            { property: "og:title", content: "Course Creator Onboarding | Elimika" },
-            {
-                property: "og:description",
-                content:
-                    "Join the Sarafrika ecosystem, open an Elimika course creator account, build your skills wallet and submit it for verification.",
-            },
-            { property: "og:type", content: "website" },
-            { name: "twitter:card", content: "summary_large_image" },
-        ],
-    }),
-    component: OnboardingPage,
-});
+} from "../onboarding";
 
 const STEPS = [
     { key: "connect", label: "Sarafrika account", icon: BadgeCheck },
@@ -90,9 +67,10 @@ const ACCOUNT_TYPES = [
     },
     { id: "instructor", name: "Instructor", detail: "Deliver live classes from published courses.", available: false },
     { id: "student", name: "Student", detail: "Enrol and learn at your own pace.", available: false },
+    { id: "organisation", name: "Organisation", detail: "Manage instructors, offer learning programmes, and support learners as an organisation.", available: false, }, { id: "parent", name: "Parent", detail: "Monitor your child's learning progress, manage enrolments, and stay involved in their education.", available: false, },
 ];
 
-function OnboardingPage() {
+export default function CreatorOnboardingPage() {
     const {
         journey,
         hydrated,
@@ -171,37 +149,75 @@ function OnboardingPage() {
             {step === 0 ? (
                 <div className="space-y-5">
                     <p className="text-sm leading-6 text-muted-foreground">
-                        Elimika is part of the Sarafrika ecosystem. Continue with your Sarafrika account and we will carry your
-                        details across — no need to type them again.
+                        Elimika is part of the Sarafrika ecosystem. Continue with your
+                        Sarafrika account and we will carry your details across — no need
+                        to type them again.
                     </p>
+
                     {journey.account ? (
                         <div className="space-y-4">
                             <div className="flex items-start gap-3 rounded-md border border-primary/40 bg-primary/5 p-4">
                                 <BadgeCheck className="mt-0.5 h-5 w-5 text-primary" />
                                 <div className="min-w-0">
-                                    <p className="text-sm font-medium text-foreground">Sarafrika account connected</p>
+                                    <p className="text-sm font-medium text-foreground">
+                                        Sarafrika account connected
+                                    </p>
                                     <p className="text-sm text-muted-foreground">
                                         These details come from your Sarafrika profile and stay in sync.
                                     </p>
                                 </div>
                             </div>
+
                             <dl className="divide-y divide-border overflow-hidden rounded-md border border-border">
-                                <SummaryRow label="Full name" value={journey.account.fullName} />
-                                <SummaryRow label="Email" value={journey.account.email} />
+                                <SummaryDataRow label="Full name" value={journey.account.fullName} />
+                                <SummaryDataRow label="Email" value={journey.account.email} />
                             </dl>
-                            <Button variant="ghost" size="sm" onClick={() => patch({ account: null, displayName: "" })}>
-                                Use a different Sarafrika account
+
+                            <Button
+                                variant="outline"
+                                className="mt-4"
+                                size="sm"
+                                onClick={() => patch({ account: null, displayName: "" })}
+                            >
+                                <span className="text-sm">Use a different Sarafrika account</span>
                             </Button>
                         </div>
                     ) : (
-                        <div className="rounded-md border border-border p-6 text-center">
+                        <div className="rounded-md border border-border p-6 gap-2 text-center">
                             <BadgeCheck className="mx-auto h-6 w-6 text-primary" />
+
                             <p className="mt-3 text-sm text-muted-foreground">
                                 Your full name and email will be shared with Elimika.
                             </p>
-                            <Button className="mt-4" onClick={connectSarafrika}>
-                                Continue with Sarafrika
+
+                            <Button
+                                variant='default'
+                                size='sm'
+                                className='mt-2 bg-primary hover:bg-primary/90 relative gap-2 rounded-sm px-4 py-2 font-semibold shadow-lg transition hover:shadow-xl'
+                                onClick={connectSarafrika}
+                            >
+                                <span className="inline text-sm text-white">Continue with Sarafrika</span>
                             </Button>
+
+                            <div className="mt-5 border-t border-border pt-4">
+                                <p className="text-xs text-muted-foreground">
+                                    Don&apos;t have a Sarafrika account?
+                                </p>
+
+                                <Button
+                                    variant="link"
+                                    className="mt-2 h-auto p-0 text-sm font-medium"
+                                    asChild
+                                >
+                                    <a
+                                        href="SARAFRIKA_SIGNUP_URL"
+                                        target="_blank"
+                                        rel="noopener noreferrer"
+                                    >
+                                        Create a Sarafrika account here
+                                    </a>
+                                </Button>
+                            </div>
                         </div>
                     )}
                 </div>
@@ -247,8 +263,8 @@ function OnboardingPage() {
                         ))}
                     </div>
                     <dl className="divide-y divide-border overflow-hidden rounded-md border border-border">
-                        <SummaryRow label="Full name" value={journey.account?.fullName ?? "—"} />
-                        <SummaryRow label="Email" value={journey.account?.email ?? "—"} />
+                        <SummaryDataRow label="Full name" value={journey.account?.fullName ?? null} />
+                        <SummaryDataRow label="Email" value={journey.account?.email ?? null} />
                     </dl>
                     <p className="text-xs text-muted-foreground">
                         Shared from your Sarafrika account. Update it in your Sarafrika profile to change it here.
@@ -277,13 +293,13 @@ function OnboardingPage() {
                                         })
                                     }
                                     className={cn(
-                                        "flex items-center justify-between rounded-md border px-4 py-3 text-left text-sm transition-colors",
+                                        "flex items-center justify-between rounded-md border px-4 py-3 text-left transition-colors",
                                         selected
                                             ? "border-primary bg-primary/5 font-medium text-foreground"
                                             : "border-border bg-background text-muted-foreground hover:border-primary/40",
                                     )}
                                 >
-                                    {category}
+                                    <span className="text-sm">{category}</span>
                                     {selected ? <CheckCircle2 className="h-4 w-4 text-primary" /> : null}
                                 </button>
                             );
@@ -301,16 +317,19 @@ function OnboardingPage() {
                     <Tabs defaultValue={WALLET_SECTIONS[0]!.key}>
                         <TabsList className="flex h-auto w-full flex-wrap justify-start gap-1">
                             {WALLET_SECTIONS.map((section) => (
-                                <TabsTrigger key={section.key} value={section.key} className="gap-1.5 text-xs">
-                                    {section.label}
+                                <TabsTrigger key={section.key} value={section.key} className="gap-1.5 text-sm">
+
+                                    <span className="text-sm">{section.label}</span>
+
                                     {journey.wallet[section.key].length > 0 ? (
-                                        <span className="rounded-full bg-primary/15 px-1.5 text-[10px] font-semibold text-primary">
+                                        <span className="rounded-full bg-primary/15 px-1.5 text-[8px] font-semibold text-primary">
                                             {journey.wallet[section.key].length}
                                         </span>
                                     ) : null}
                                 </TabsTrigger>
                             ))}
                         </TabsList>
+
                         {WALLET_SECTIONS.map((section) => (
                             <TabsContent key={section.key} value={section.key} className="mt-5 space-y-4">
                                 <p className="text-sm text-muted-foreground">{section.summary}</p>
@@ -336,7 +355,7 @@ function OnboardingPage() {
                                         </div>
                                         <div className="grid gap-4 sm:grid-cols-2">
                                             {section.fields.map((field) => (
-                                                <WalletFieldInput
+                                                <SummaryInputRow
                                                     key={field.key}
                                                     field={field}
                                                     value={item.values[field.key] ?? ""}
@@ -346,9 +365,9 @@ function OnboardingPage() {
                                         </div>
                                     </div>
                                 ))}
-                                <Button variant="outline" size="sm" onClick={() => addWalletItem(section.key as WalletSectionKey)}>
+                                <Button className="mt-4" variant="outline" size="sm" onClick={() => addWalletItem(section.key as WalletSectionKey)}>
                                     <Plus />
-                                    {section.addLabel}
+                                    <div className="text-sm">{section.addLabel}</div>
                                 </Button>
                             </TabsContent>
                         ))}
@@ -363,12 +382,12 @@ function OnboardingPage() {
                         approved.
                     </p>
                     <dl className="divide-y divide-border overflow-hidden rounded-md border border-border">
-                        <SummaryRow label="Name" value={journey.account?.fullName || journey.displayName || "—"} />
-                        <SummaryRow label="Email" value={journey.account?.email ?? "—"} />
-                        <SummaryRow label="Product" value="Elimika" />
-                        <SummaryRow label="Account type" value="Course Creator" />
-                        <SummaryRow label="Categories" value={journey.categories.join(", ") || "—"} />
-                        <SummaryRow
+                        <SummaryDataRow label="Name" value={journey.account?.fullName || journey.displayName || null} />
+                        <SummaryDataRow label="Email" value={journey.account?.email ?? null} />
+                        <SummaryDataRow label="Product" value="Elimika" />
+                        <SummaryDataRow label="Account type" value="Course Creator" />
+                        <SummaryDataRow label="Categories" value={journey.categories.join(", ")} />
+                        <SummaryDataRow
                             label="Skills wallet"
                             value={`${filled} of ${WALLET_SECTIONS.length} sections completed`}
                         />
@@ -377,24 +396,33 @@ function OnboardingPage() {
             ) : null}
 
             <div className="mt-8 flex items-center justify-between border-t border-border pt-5">
-                <Button variant="ghost" size="sm" disabled={step === 0} onClick={() => setStep(Math.max(0, step - 1))}>
+                <Button variant="outline" size="sm" disabled={step === 0} onClick={() => setStep(Math.max(0, step - 1))}>
                     <ArrowLeft />
-                    Back
+                    <span className="text-sm" >Back</span>
                 </Button>
                 {step < STEPS.length - 1 ? (
-                    <Button disabled={!canAdvance} onClick={() => setStep(step + 1)}>
-                        Continue
-                        <ArrowRight />
+                    <Button
+                        disabled={!canAdvance} onClick={() => setStep(step + 1)}
+                        variant='default'
+                        size='sm'
+                        className='bg-primary text-primary-foreground hover:bg-primary/90 relative gap-2 rounded-sm px-5 py-2 text-sm font-semibold shadow-lg transition hover:shadow-xl'
+                    >
+                        <span className="inline text-sm text-primary-foreground">Continue</span>
+                        <ArrowRight className="text-primary-foreground" />
                     </Button>
                 ) : (
                     <Button
+                        disabled={!canAdvance}
+                        variant='default'
+                        size='sm'
+                        className='mt-2 bg-primary text-primary-foreground hover:bg-primary/90 relative gap-2 rounded-sm px-4 py-2 font-semibold shadow-lg transition hover:shadow-xl'
                         onClick={() => {
                             patch({ reviewStatus: "submitted", submittedAt: new Date().toISOString() });
                             toast.success("Skills wallet submitted for verification.");
                         }}
                     >
-                        <ShieldCheck />
-                        Submit for verification
+                        <ShieldCheck className="text-primary-foreground" />
+                        <span className="inline text-sm text-primary-foreground"> Submit for verification</span>
                     </Button>
                 )}
             </div>
@@ -430,7 +458,7 @@ function ReviewState({
     onReset: () => void;
 }) {
     const formatted = (value: string | null) =>
-        value ? new Date(value).toLocaleString(undefined, { dateStyle: "medium", timeStyle: "short" }) : "—";
+        value ? new Date(value).toLocaleString(undefined, { dateStyle: "medium", timeStyle: "short" }) : null;
 
     return (
         <div className="space-y-8">
@@ -451,11 +479,12 @@ function ReviewState({
                         ? "Your skills wallet has been verified. You can now create courses and submit each one for approval."
                         : "Your skills wallet is with the Elimika admin. You will be able to create courses once it is verified."}
                 </p>
-                <dl className="mt-6 w-full divide-y divide-border overflow-hidden rounded-md border border-border text-left">
-                    <SummaryRow label="Categories" value={categories.join(", ") || "—"} />
-                    <SummaryRow label="Skills wallet" value={`${walletCount} of ${WALLET_SECTIONS.length} sections`} />
-                    <SummaryRow label="Submitted" value={formatted(submittedAt)} />
-                    <SummaryRow label="Verified" value={approved ? formatted(approvedAt) : "Pending"} />
+
+                <dl className="mt-6 w-full divide-y divide-border overflow-hidden rounded-md border border-border text-left text-sm">
+                    <SummaryDataRow label="Categories" value={categories.join(", ")} />
+                    <SummaryDataRow label="Skills wallet" value={`${walletCount} of ${WALLET_SECTIONS.length} sections`} />
+                    <SummaryDataRow label="Submitted" value={formatted(submittedAt)} />
+                    <SummaryDataRow label="Verified" value={approved ? formatted(approvedAt) : null} emptyText={approved ? "—" : "Pending"} />
                 </dl>
                 {!approved ? (
                     <Button variant="outline" className="mt-6" onClick={onApprove}>
@@ -466,18 +495,12 @@ function ReviewState({
             </div>
 
             {approved ? (
-                <CourseBuilder
-                    categories={categories}
-                    courses={courses}
-                    onCreateCourse={onCreateCourse}
-                    onUpdateCourse={onUpdateCourse}
-                    onSubmitCourse={onSubmitCourse}
-                />
+                <div>Go to dashboard</div>
             ) : null}
 
             <div className="flex flex-wrap justify-center gap-3 border-t border-border pt-6">
                 <Button asChild variant="outline">
-                    <Link to="/">
+                    <Link href="/">
                         <BookOpen />
                         Back home
                     </Link>
@@ -490,7 +513,7 @@ function ReviewState({
     );
 }
 
-function WalletFieldInput({
+function SummaryInputRow({
     field,
     value,
     onChange,
@@ -502,12 +525,22 @@ function WalletFieldInput({
     const id = `${field.key}-${useMemo(newId, [])}`;
     if (field.type === "select") {
         return (
-            <Field label={field.label}>
-                <Select {...(value ? { value } : {})} onValueChange={onChange}>
-                    <SelectTrigger><SelectValue placeholder="Select" /></SelectTrigger>
+            <Field label={field.label} htmlFor={id}>
+                <Select value={value} onValueChange={onChange}>
+                    <SelectTrigger
+                        id={id}
+                        className="text-sm text-foreground data-[placeholder]:text-sm data-[placeholder]:text-muted-foreground"
+                    >
+                        <SelectValue
+                            placeholder={field.placeholder || "Select"}
+                        />
+                    </SelectTrigger>
+
                     <SelectContent>
                         {(field.options ?? []).map((option) => (
-                            <SelectItem key={option} value={option}>{option}</SelectItem>
+                            <SelectItem key={option} value={option}>
+                                {option}
+                            </SelectItem>
                         ))}
                     </SelectContent>
                 </Select>
@@ -518,7 +551,14 @@ function WalletFieldInput({
         return (
             <div className="sm:col-span-2">
                 <Field label={field.label} htmlFor={id}>
-                    <Textarea id={id} rows={3} value={value} placeholder={field.placeholder} onChange={(e) => onChange(e.target.value)} />
+                    <Textarea
+                        id={id}
+                        rows={3}
+                        className="text-[12px] text-foreground placeholder:text-xs"
+                        value={value}
+                        placeholder={field.placeholder}
+                        onChange={(e) => onChange(e.target.value)}
+                    />
                 </Field>
             </div>
         );
@@ -528,6 +568,7 @@ function WalletFieldInput({
             <Input
                 id={id}
                 type={field.type === "date" ? "date" : "text"}
+                className="text-[10px] text-foreground placeholder:text-[14px]"
                 value={value}
                 placeholder={field.placeholder}
                 onChange={(event) => onChange(event.target.value)}
@@ -536,11 +577,23 @@ function WalletFieldInput({
     );
 }
 
-function SummaryRow({ label, value }: { label: string; value: string }) {
+function SummaryDataRow({
+    label,
+    value,
+    emptyText = "—",
+}: {
+    label: string;
+    value: string | null;
+    emptyText?: string;
+}) {
+    const hasValue = Boolean(value?.trim());
+
     return (
         <div className="flex items-start justify-between gap-4 bg-background px-4 py-3">
             <dt className="text-sm text-muted-foreground">{label}</dt>
-            <dd className="text-right text-sm font-medium text-foreground">{value}</dd>
+            <dd className={cn("text-right font-medium", hasValue ? "text-foreground text-sm" : "text-muted-foreground text-sm")}>
+                {hasValue ? value : emptyText}
+            </dd>
         </div>
     );
 }
@@ -591,10 +644,10 @@ function OnboardingFrame({
 }) {
     return (
         <div className="min-h-screen bg-muted/40">
-            <header className="border-b border-border bg-background">
-                <div className="mx-auto flex max-w-4xl items-center justify-between gap-4 px-4 py-4 sm:px-6">
+            {/* <header className="border-b border-border bg-background">
+                <div className="mx-auto flex max-w-6xl items-center justify-between gap-4 px-4 py-4 sm:px-6">
                     <Button asChild variant="ghost" size="sm">
-                        <Link to="/">
+                        <Link href="/">
                             <ArrowLeft />
                             Home
                         </Link>
@@ -604,11 +657,11 @@ function OnboardingFrame({
                         Sarafrika · Elimika
                     </Badge>
                 </div>
-            </header>
+            </header> */}
 
-            <main className="mx-auto max-w-4xl px-4 py-10 sm:px-6">
+            <main className="mx-auto max-w-6xl px-4 py-10 sm:px-6">
                 <div className="mb-8">
-                    <h1 className="text-2xl font-bold text-foreground">Course creator onboarding</h1>
+                    <h1 className="text-2xl font-bold text-foreground">User Onboarding</h1>
                     <p className="mt-1 text-sm text-muted-foreground">
                         From your Sarafrika account to a verified skills wallet — everything is saved on this device as you go.
                     </p>

@@ -96,11 +96,11 @@ export type FormSectionProps = {
 };
 
 export const FormSection = ({ title, description, children }: FormSectionProps) => (
-  <section className='border-border rounded-3xl border p-6 shadow-lg transition'>
+  <section className=''>
     <div className='flex flex-col gap-6 lg:flex-col lg:items-start lg:gap-4'>
       <div className='flex flex-col'>
         <h3 className='text-foreground text-lg font-semibold'>{title}</h3>
-        <p className='text-muted-foreground text-sm'>{description}</p>
+        {/* <p className='text-muted-foreground text-sm'>{description}</p> */}
       </div>
       <div className='w-full lg:flex-1'>{children}</div>
     </div>

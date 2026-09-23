@@ -189,10 +189,10 @@ export function TrainingRequirementsSection({
           ...emptyDraft(),
           ...(education
             ? {
-                requirement_type: 'education',
-                quantity: String(EDUCATION_QUANTITY),
-                unit: EDUCATION_UNIT,
-              }
+              requirement_type: 'education',
+              quantity: String(EDUCATION_QUANTITY),
+              unit: EDUCATION_UNIT,
+            }
             : {}),
         },
       ],
@@ -233,9 +233,9 @@ export function TrainingRequirementsSection({
               ...(draft.requirement_type === 'education'
                 ? { quantity: EDUCATION_QUANTITY, unit: EDUCATION_UNIT }
                 : {
-                    quantity: draft.quantity ? Number(draft.quantity) : 0,
-                    unit: draft.unit,
-                  }),
+                  quantity: draft.quantity ? Number(draft.quantity) : 0,
+                  unit: draft.unit,
+                }),
               is_mandatory: draft.is_mandatory,
               description: draft.description,
               provided_by: provider,
@@ -318,9 +318,9 @@ export function TrainingRequirementsSection({
         ...(isEducation
           ? { quantity: EDUCATION_QUANTITY, unit: EDUCATION_UNIT }
           : {
-              quantity: editDraft.quantity ? Number(editDraft.quantity) : 0,
-              unit: editDraft.unit,
-            }),
+            quantity: editDraft.quantity ? Number(editDraft.quantity) : 0,
+            unit: editDraft.unit,
+          }),
         is_mandatory: editDraft.is_mandatory,
         description: editDraft.description,
         provided_by: req.provided_by,
@@ -390,15 +390,15 @@ export function TrainingRequirementsSection({
       return [{ id: activeProvider, label: '', education: false, rows }];
     }
     return [
-      {
-        id: 'instructor-education',
-        label: 'Instructor Educational Requirements',
-        education: true,
-        rows: rows.filter(row => row.requirement_type === 'education'),
-      },
+      // {
+      //   id: 'instructor-education',
+      //   label: 'Instructor Educational Requirements',
+      //   education: true,
+      //   rows: rows.filter(row => row.requirement_type === 'education'),
+      // },
       {
         id: 'instructor-other',
-        label: 'Other Instructor Requirements',
+        label: '',
         education: false,
         rows: rows.filter(row => row.requirement_type !== 'education'),
       },
@@ -411,14 +411,14 @@ export function TrainingRequirementsSection({
         const rows = existingRequirements.filter(row => row.provided_by === provider.value);
         if (provider.value !== 'instructor') return [{ ...provider, rows }];
         return [
-          {
-            value: 'instructor-education',
-            label: 'Instructor Educational Requirements',
-            rows: rows.filter(row => row.requirement_type === 'education'),
-          },
+          // {
+          //   value: 'instructor-education',
+          //   label: 'Instructor Educational Requirements',
+          //   rows: rows.filter(row => row.requirement_type === 'education'),
+          // },
           {
             value: 'instructor-other',
-            label: 'Other Instructor Requirements',
+            label: '',
             rows: rows.filter(row => row.requirement_type !== 'education'),
           },
         ];
