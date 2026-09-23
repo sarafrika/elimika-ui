@@ -508,7 +508,7 @@ function DashboardSettingsPageBody({ variant }: DashboardSettingsPageProps) {
   };
 
   const accessActionHref =
-    variant === 'admin' ? '/dashboard/admin/system-config' : config.supportHref;
+    variant === 'admin' ? '/dashboard/admin/platform/rules' : config.supportHref;
 
   return (
     <div className='mb-8 w-full max-w-[1500px] overflow-x-clip px-2 py-3 sm:px-3 sm:py-4 lg:px-4'>
@@ -1182,7 +1182,8 @@ function DashboardSettingsPageBody({ variant }: DashboardSettingsPageProps) {
                           variant='outline'
                           className='h-10 w-full rounded-md text-sm'
                         >
-                          <Link href={`/dashboard/admin/users/${profile.uuid}?tab=audit`}>
+                          {/* Repoint to /dashboard/admin/people/{uuid}?tab=audit once Person 360 lands. */}
+                          <Link href='/dashboard/admin/overview'>
                             View account activity
                           </Link>
                         </Button>

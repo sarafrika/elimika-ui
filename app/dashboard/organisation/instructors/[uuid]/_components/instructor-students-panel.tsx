@@ -32,7 +32,6 @@ import { formatDate } from '@/lib/date';
 import { formatCount, toNumber } from '@/lib/metrics';
 import { STALE_TIMES } from '@/lib/query-client';
 import { cn } from '@/lib/utils';
-import { StatusBadge, type StatusTone } from '@/app/dashboard/admin/_components/ui';
 import type {
   EnrollmentStatusEnum2,
   InstructorClassOption,
@@ -40,6 +39,7 @@ import type {
 } from '@/services/client';
 import { listInstructorStudentsOptions } from '@/services/client/@tanstack/react-query.gen';
 import { dashboardUrl } from '@/src/features/dashboard/lib/dashboard-url';
+import { StatusBadge, StatusTone } from '@/components/data-display';
 
 const PAGE_SIZE = 8;
 const SEARCH_DEBOUNCE_MS = 300;

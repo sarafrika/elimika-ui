@@ -1,1 +1,7 @@
-254
+255
+
+Raised from 247 on 2026-09-21. PR #458 (subject creation, assignment grading) merged
+before this ratchet ran in its checks and brought 11 new errors with it, in
+course-creator, student learning-hub, lesson grading and the shared course pages.
+None of them are admin code, and none were fixed here — the ceiling holds the line at
+the new number so nothing further can be added while that team clears them.

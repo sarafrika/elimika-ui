@@ -4,12 +4,6 @@ import { useQuery } from '@tanstack/react-query';
 import { ArrowLeft, ArrowRight, BriefcaseBusiness, Mail, Phone, UserRound } from 'lucide-react';
 import Link from 'next/link';
 import { useEffect, useMemo } from 'react';
-import {
-  adminTheme,
-  DetailGrid,
-  SectionCard,
-  SectionCardSkeleton,
-} from '@/app/dashboard/admin/_components/ui';
 import { AsyncSection } from '@/components/data/async-section';
 import { Button } from '@/components/ui/button';
 import { EmptyState } from '@/components/ui/empty-state';
@@ -39,6 +33,7 @@ import { useUserProfile } from '@/src/features/profile/context/profile-context';
 import { hiredJobData, isHiredApplication, jobLabel, jobPay } from '../hired-jobs';
 import { jobPlaceLabel } from '../job-place';
 import { HiredClassSchedule, PlannedJobSchedule } from './HiredJobSchedule';
+import { DetailGrid, SectionCard, SectionCardSkeleton, surfaceTheme } from '@/components/data-display';
 
 export function HiredJobDetailsSkeleton() {
   return (
@@ -90,8 +85,8 @@ export function HiredJobDetailsPage({ jobUuid }: { jobUuid: string }) {
   }, [replaceBreadcrumbs, job.data?.title, jobUuid]);
 
   return (
-    <div className={adminTheme.page}>
-      <div className={adminTheme.pageStack}>
+    <div className={surfaceTheme.page}>
+      <div className={surfaceTheme.pageStack}>
         <Button variant='ghost' size='sm' className='-ml-2 w-fit' asChild>
           <Link href={hiredJobsHref()}>
             <ArrowLeft aria-hidden className='size-4' />

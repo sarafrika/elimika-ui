@@ -5,7 +5,6 @@ import { CalendarDays, ChevronLeft, ChevronRight } from 'lucide-react';
 import Link from 'next/link';
 import { useMemo, useState } from 'react';
 
-import { SectionCard } from '@/app/dashboard/admin/_components/ui';
 import { hiredJobData } from '@/components/profile-job-marketplace/hired-jobs';
 import type { HiredApplication } from '@/components/profile-job-marketplace/use-hired-applications';
 import { AsyncSection } from '@/components/data/async-section';
@@ -22,6 +21,7 @@ import { useUserProfile } from '@/src/features/profile/context/profile-context';
 
 import { instructorCalendarHref } from '../../job-routes';
 import { buildWeek, startOfWeek, type WeekBlock, weekLabel, weekQueryRange } from '../hired-week';
+import { SectionCard } from '@/components/data-display';
 
 const BLOCK_STYLES: Record<WeekBlock['kind'], string> = {
   hold: 'border border-dashed border-primary bg-primary/5 text-primary hover:bg-primary/10',

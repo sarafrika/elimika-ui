@@ -1,5 +1,20 @@
-import { SharedNotificationsPage } from '@/app/dashboard/_components/notifications/SharedNotificationsPage';
+import { Suspense } from 'react';
+import { SectionCardSkeleton, surfaceTheme } from '@/components/data-display';
+import { AdminNotificationsPage } from '@/src/features/admin/pages/notifications-page';
 
-export default function AdminNotificationsPage() {
-  return <SharedNotificationsPage />;
+export default function AdminNotificationsRoute() {
+  return (
+    <Suspense
+      fallback={
+        <div className={surfaceTheme.page}>
+          <div className={surfaceTheme.pageStack}>
+            <SectionCardSkeleton rows={2} />
+            <SectionCardSkeleton rows={6} />
+          </div>
+        </div>
+      }
+    >
+      <AdminNotificationsPage />
+    </Suspense>
+  );
 }

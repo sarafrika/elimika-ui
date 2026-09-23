@@ -5,7 +5,6 @@ import Link from 'next/link';
 import { usePathname, useRouter, useSearchParams } from 'next/navigation';
 import { useMemo, useState } from 'react';
 
-import { adminTheme, SectionCardSkeleton } from '@/app/dashboard/admin/_components/ui';
 import { SectionError } from '@/components/data/async-section';
 import { Button } from '@/components/ui/button';
 import { EmptyState } from '@/components/ui/empty-state';
@@ -25,6 +24,7 @@ import { PayPanel } from './pay-panel';
 import { SchedulePanel } from './schedule-panel';
 import { useJobPage } from './use-job-page';
 import { WherePanel } from './where-panel';
+import { SectionCardSkeleton, surfaceTheme } from '@/components/data-display';
 
 const TABS = ['overview', 'schedule', 'where', 'pay', 'dates'] as const;
 type JobTab = (typeof TABS)[number];
@@ -106,7 +106,7 @@ export function JobPage({ jobUuid }: { jobUuid: string }) {
 
   if (!jobQuery.isLoading && !jobQuery.error && !job) {
     return (
-      <main className={cn(adminTheme.page, 'flex flex-col gap-5')}>
+      <main className={cn(surfaceTheme.page, 'flex flex-col gap-5')}>
         <BackLink />
         <EmptyState
           variant='card'
@@ -127,7 +127,7 @@ export function JobPage({ jobUuid }: { jobUuid: string }) {
   const ready = readiness?.state === 'ready';
 
   return (
-    <main className={cn(adminTheme.page, 'flex flex-col gap-5 pb-28 lg:pb-8')}>
+    <main className={cn(surfaceTheme.page, 'flex flex-col gap-5 pb-28 lg:pb-8')}>
       <div className='flex flex-col gap-3.5'>
         <BackLink />
         {job && facts && !data.open ? <ClosedBanner job={job} facts={facts} /> : null}

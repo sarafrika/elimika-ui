@@ -3,7 +3,6 @@
 import { ChevronDown } from 'lucide-react';
 import { useMemo, useState } from 'react';
 
-import { SectionCard } from '@/app/dashboard/admin/_components/ui';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -16,6 +15,7 @@ import {
 
 import { ReadinessChip } from '../components/readiness-chip';
 import { clashesBySession, clashReason, hoursLabel, type JobFacts, sessionDate } from '../job-facts';
+import { SectionCard } from '@/components/data-display';
 
 const FIRST_ROWS = 6;
 

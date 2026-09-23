@@ -18,9 +18,9 @@ import { loadPdfjs, type PDFDocumentProxy, type PDFPageProxy } from '@/lib/pdfjs
 import { cn } from '@/lib/utils';
 import { toAuthenticatedMediaUrl } from '@/src/lib/media-url';
 
-import { PdfPreview } from '../../../app/dashboard/admin/_components/ui/PdfPreview';
 import type { CredentialItem } from '../data';
 import { CredentialDetailGrid } from './CredentialDetailGrid';
+import { DocumentPreview } from '@/components/data-display';
 
 type CredentialCertificateCardProps = {
   item: CredentialItem;
@@ -322,7 +322,7 @@ export function CredentialCertificateCard({
           {item.documentUrl ? (
             <div className='flex-1 space-y-4 overflow-y-auto px-5 py-4'>
               <div className='bg-card overflow-hidden rounded-[14px] border shadow-sm'>
-                <PdfPreview
+                <DocumentPreview
                   documentUrl={item.documentUrl}
                   documentLabel={item.documentLabel}
                   documentTitle={item.documentLabel}

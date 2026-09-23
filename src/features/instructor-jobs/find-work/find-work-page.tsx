@@ -20,11 +20,6 @@ import Link from 'next/link';
 import { usePathname, useRouter, useSearchParams } from 'next/navigation';
 import { type ComponentProps, useCallback, useDeferredValue, useMemo, useState } from 'react';
 
-import {
-  adminTheme,
-  StatCard,
-  StatCardSkeleton,
-} from '@/app/dashboard/admin/_components/ui';
 import { MarketplaceSidebar } from '@/components/profile-job-marketplace/_components/MarketplaceSidebar';
 import { MarketplaceTabs } from '@/components/profile-job-marketplace/_components/MarketplaceTabs';
 import type { FilterGroup } from '@/components/profile-job-marketplace/data';
@@ -83,6 +78,7 @@ import {
 } from './find-work-filters';
 import { FindWorkJobCard, FindWorkJobCardSkeleton } from './find-work-job-card';
 import { type FindWorkRow, useFindWorkJobs } from './use-find-work-jobs';
+import { StatCard, StatCardSkeleton, surfaceTheme } from '@/components/data-display';
 
 const BASIS_ICONS = { all: BriefcaseBusiness, per_hour: Clock, per_session: CalendarDays, per_day: Layers };
 
@@ -284,8 +280,8 @@ export function FindWorkPage() {
     Boolean(deferredSearch) || findWorkQuery({ ...filters, sort: 'soonest' }) !== '';
 
   return (
-    <main className={cn(adminTheme.page, 'pb-16')}>
-      <div className={adminTheme.pageStack}>
+    <main className={cn(surfaceTheme.page, 'pb-16')}>
+      <div className={surfaceTheme.pageStack}>
         <PageHeader
           title='Jobs'
           description='Class jobs posted by organisations. Each one shows whether you can apply, and what to fix if you can’t yet.'
@@ -358,7 +354,7 @@ export function FindWorkPage() {
           <div className='flex min-w-0 flex-col gap-4'>
             <section
               aria-label='Search and sort jobs'
-              className={cn(adminTheme.cardPadded, 'flex flex-col gap-3 p-4')}
+              className={cn(surfaceTheme.cardPadded, 'flex flex-col gap-3 p-4')}
             >
               <div className='flex gap-2'>
                 <label className='relative block min-w-0 flex-1'>

@@ -1,7 +1,6 @@
 import { Check, Minus } from 'lucide-react';
 import type { ReactNode } from 'react';
 
-import { SectionCard } from '@/app/dashboard/admin/_components/ui';
 import { Skeleton } from '@/components/ui/skeleton';
 import { formatRate, formatRateAmount, formatRateBasis, getRateBasis } from '@/lib/rate-card';
 import { cn } from '@/lib/utils';
@@ -9,6 +8,7 @@ import type { ClassMarketplaceJob } from '@/services/client/types.gen';
 
 import type { JobFacts } from '../job-facts';
 import type { RateStanding } from '../job-readiness';
+import { SectionCard } from '@/components/data-display';
 
 const PAID_FOR: Record<string, string> = {
   per_hour: 'You’re paid for every hour you teach.',

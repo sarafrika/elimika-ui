@@ -22,7 +22,8 @@ import {
   searchTrainingApplicationsOptions,
 } from '@/services/client/@tanstack/react-query.gen';
 import { stripHtml } from '../../../../../src/features/dashboard/courses/shared/_components/courses-data';
-import { AdminPageHeader, adminTheme, SectionCard, StatusBadge } from '../../../admin/_components/ui';
+import { SectionCard, StatusBadge, surfaceTheme } from '@/components/data-display';
+import { PageHeader } from '@/components/page-header';
 
 type ApplicantType = 'instructor' | 'organisation';
 
@@ -291,9 +292,9 @@ export default function PendingApprovalsPage() {
   ).length;
 
   return (
-    <main className={adminTheme.page}>
-      <div className={adminTheme.pageStack}>
-        <AdminPageHeader
+    <main className={surfaceTheme.page}>
+      <div className={surfaceTheme.pageStack}>
+        <PageHeader
           title='Pending approvals'
           description='Review all instructor and organisation training applications from a single queue.'
         />

@@ -3,7 +3,6 @@
 import { useQuery } from '@tanstack/react-query';
 import { useDeferredValue, useMemo, useState } from 'react';
 
-import { SectionCard } from '@/app/dashboard/admin/_components/ui';
 import { AsyncSection } from '@/components/data/async-section';
 import { useInstructorsByIds } from '@/hooks/use-batched-lookups';
 import type { ClassMarketplaceJob, ClassMarketplaceJobApplication } from '@/services/client';
@@ -15,6 +14,7 @@ import {
   ApplicationsFilterBar,
   ApplicationsListSection,
 } from './OrganisationJobApplicationsSections';
+import { SectionCard } from '@/components/data-display';
 
 const APPLICATION_PAGE = { page: 0, size: 100 };
 

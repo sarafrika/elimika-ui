@@ -1,13 +1,13 @@
 import Link from 'next/link';
 import type { ReactNode } from 'react';
 
-import { DetailRow, SectionCard } from '@/app/dashboard/admin/_components/ui';
 import { formatDate, formatDateOnly } from '@/lib/date';
 import type { ClassMarketplaceJob } from '@/services/client/types.gen';
 import { dashboardUrl } from '@/src/features/dashboard/lib/dashboard-url';
 import { deliveryLabel, serviceLabel } from '@/src/features/organisation/jobs/lib/job-stage';
 
 import { type JobFacts, sessionDate } from '../job-facts';
+import { DetailRow, SectionCard } from '@/components/data-display';
 
 export function OverviewPanel({
   job,

@@ -1,4 +1,3 @@
-import { DetailRow } from '@/app/dashboard/admin/_components/ui';
 import { formatRate, formatRateAmount } from '@/lib/rate-card';
 import type {
   ClassMarketplaceJob,
@@ -12,6 +11,7 @@ import {
   sessionsLabel,
   timesLabel,
 } from '../job-facts';
+import { DetailRow } from '@/components/data-display';
 
 export function ReviewStep({
   job,

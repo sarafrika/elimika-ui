@@ -3,7 +3,6 @@
 import { CheckCircle2, XCircle } from 'lucide-react';
 import { useCallback, useState } from 'react';
 
-import { SectionCard } from '@/app/dashboard/admin/_components/ui';
 import { AsyncSection } from '@/components/data/async-section';
 import { getErrorMessage } from '@/lib/error-utils';
 import { formatRateAmount, formatRateBasis } from '@/lib/rate-card';
@@ -12,6 +11,7 @@ import { cn } from '@/lib/utils';
 import type { ClassMarketplaceJob, ClassMarketplaceJobApplication } from '@/services/client';
 import { sessionCountLabel } from '@/src/features/organisation/jobs/lib/job-stage';
 import { HireClashAlert } from './HireClashAlert';
+import { SectionCard } from '@/components/data-display';
 
 export type HireCheck = { ok: boolean; message: string };
 

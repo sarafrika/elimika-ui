@@ -16,7 +16,7 @@ import type { ColumnDef } from '@tanstack/react-table';
 import { Layers3 } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { useEffect, useMemo, useState } from 'react';
-import { AdminTable, StatusBadge } from '../../../admin/_components/ui';
+import { DataTable, StatusBadge } from '@/components/data-display';
 
 type ContentItem = {
   uuid: string;
@@ -293,7 +293,7 @@ export function CourseCreatorStudentsTable() {
 
   return (
     <div className='space-y-4'>
-      <AdminTable
+      <DataTable
         columns={columns}
         data={rows}
         isLoading={isLoading}

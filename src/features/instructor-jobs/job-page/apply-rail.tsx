@@ -3,7 +3,6 @@
 import { Building2 } from 'lucide-react';
 import Link from 'next/link';
 
-import { SectionCard } from '@/app/dashboard/admin/_components/ui';
 import {
   HIRING_STAGES,
   isClassCreatedStatus,
@@ -30,6 +29,7 @@ import {
 } from '../job-routes';
 import { EligibilityChecks } from './eligibility-checks';
 import type { JobPageData } from './use-job-page';
+import { SectionCard } from '@/components/data-display';
 
 function stageSentence(status: string | null | undefined, organisation: string, interviewAt?: Date) {
   switch ((status ?? '').toLowerCase()) {

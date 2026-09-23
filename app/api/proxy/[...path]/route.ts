@@ -6,6 +6,7 @@ import {
   deletePrivateBffCacheEntry,
   getPrivateBffCacheEntry,
   getPrivateBffCacheTtlMs,
+  isPrivateBffCacheBypassed,
   PRIVATE_BFF_CACHE_MAX_BODY_BYTES,
   type PrivateBffCacheEntry,
   refreshPrivateBffCacheEntry,
@@ -187,7 +188,10 @@ const proxyRequest = async (request: NextRequest, path: string[]) => {
     const cacheUserId = getCacheUserId(session);
     const upstreamUrl = buildUpstreamUrl(request, path);
     const headers = getForwardHeaders(request, session);
-    const isCacheableRead = request.method === 'GET' && Boolean(cacheUserId);
+    // Decision queues and platform counts are read fresh every time: a cached answer
+    // would show one admin work that another has already cleared.
+    const isCacheableRead =
+      request.method === 'GET' && Boolean(cacheUserId) && !isPrivateBffCacheBypassed(upstreamUrl);
     // The acting dashboard varies the upstream answer, so it has to vary the key
     // as well: one user, one URL, two dashboards, two cache entries.
     const actingDomain = headers.get(ACTING_DOMAIN_HEADER);

@@ -1,10 +1,10 @@
-import { adminTheme } from '@/app/dashboard/admin/_components/ui';
 import { HiredJobDetailsSkeleton } from '@/components/profile-job-marketplace/_components/HiredJobDetailsPage';
+import { surfaceTheme } from '@/components/data-display';
 
 export default function HiredJobLoading() {
   return (
-    <div className={adminTheme.page}>
-      <div className={adminTheme.pageStack}>
+    <div className={surfaceTheme.page}>
+      <div className={surfaceTheme.pageStack}>
         <HiredJobDetailsSkeleton />
       </div>
     </div>

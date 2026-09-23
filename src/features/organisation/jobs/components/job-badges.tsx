@@ -1,7 +1,7 @@
-import { StatusBadge } from '@/app/dashboard/admin/_components/ui';
 import { cn } from '@/lib/utils';
 import type { ClassMarketplaceJob } from '@/services/client';
 import { type HoldState, JOB_STAGE_META, jobStage, jobStatusLabel } from '../lib/job-stage';
+import { StatusBadge } from '@/components/data-display';
 
 export function JobStageBadge({
   job,

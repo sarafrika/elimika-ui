@@ -80,7 +80,7 @@ import CoursesLoading from './loading';
 
 const CatalogueWorkspace = dynamic(
   () =>
-    import('@/app/dashboard/admin/catalogue/_components/catalogue-workspace').then(
+    import('@/src/features/catalogue/components/catalogue-workspace').then(
       module => module.CatalogueWorkspace
     ),
   { loading: () => <Skeleton className='h-96 w-full rounded-2xl' /> }

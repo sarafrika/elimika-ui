@@ -3,7 +3,6 @@
 import { Building2, CalendarClock, Presentation, UserRound, Wrench } from 'lucide-react';
 import { type ReactNode, useState } from 'react';
 
-import { DetailRow, StatusBadge } from '@/app/dashboard/admin/_components/ui';
 import { useBranchResources } from '@/components/class-form';
 import { PinnedPlaceCard } from '@/components/maps/pinned-place-card';
 import { Badge } from '@/components/ui/badge';
@@ -27,6 +26,7 @@ import {
   sessionTimeRange,
 } from '../lib/job-stage';
 import { HoldBadge } from './job-badges';
+import { DetailRow, StatusBadge } from '@/components/data-display';
 
 export type JobResourceRow = {
   resource: ClassMarketplaceJobResource;

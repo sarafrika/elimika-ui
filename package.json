@@ -9,14 +9,20 @@
     "emails:export": "tsx emails/export.tsx",
     "start": "next start",
     "typecheck": "tsc --noEmit -p tsconfig.json",
-    "lint": "biome lint . && node scripts/check-brand-colors.mjs && node scripts/check-dashboard-links.mjs && node scripts/check-query-freshness.mjs && node scripts/check-notification-coverage.mjs",
+    "lint": "biome lint . && node scripts/check-brand-colors.mjs && node scripts/check-dashboard-links.mjs && node scripts/check-query-freshness.mjs && node scripts/check-notification-coverage.mjs && node scripts/check-admin-boundary.mjs",
     "lint:palette": "node scripts/check-brand-colors.mjs",
     "lint:links": "node scripts/check-dashboard-links.mjs",
     "lint:freshness": "node scripts/check-query-freshness.mjs",
     "lint:notifications": "node scripts/check-notification-coverage.mjs",
     "check:dates": "node scripts/check-datetime.mjs",
     "format": "prettier --write \"./**/*.{ts,tsx,js,jsx,json,css,yaml,yml}\"",
-    "format:file": "prettier --write"
+    "format:file": "prettier --write",
+    "lint:admin": "node scripts/check-admin-boundary.mjs",
+    "typecheck:ratchet": "node scripts/perf/ts-error-ratchet.mjs",
+    "test": "tsx --test \"{app,components,src}/**/*.test.ts\"",
+    "test:admin": "tsx --test $(find src/features/admin -name '*.test.ts')",
+    "perf:admin": "node scripts/perf/admin-budgets.mjs",
+    "verify:admin": "node scripts/verify/admin-smoke.mjs"
   },
   "dependencies": {
     "@dnd-kit/core": "^6.3.1",

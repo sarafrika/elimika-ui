@@ -5,7 +5,6 @@ import { ArrowLeft, SearchX } from 'lucide-react';
 import Link from 'next/link';
 import { useEffect, useMemo, useState } from 'react';
 
-import { adminTheme, SectionCardSkeleton } from '@/app/dashboard/admin/_components/ui';
 import { hiredJobData, jobPay } from '@/components/profile-job-marketplace/hired-jobs';
 import { AsyncSection } from '@/components/data/async-section';
 import { Button } from '@/components/ui/button';
@@ -34,6 +33,7 @@ import { ApplicationProgress } from './application-progress';
 import { ApplicationRail } from './application-rail';
 import { ApplicationStageChip } from './application-stage';
 import { WithdrawApplicationDialog } from './withdraw-application-dialog';
+import { SectionCardSkeleton, surfaceTheme } from '@/components/data-display';
 
 export function ApplicationDetailSkeleton() {
   return (
@@ -104,8 +104,8 @@ export function ApplicationDetailPage({ applicationUuid }: { applicationUuid: st
   }, [replaceBreadcrumbs, title, applicationUuid]);
 
   return (
-    <div className={adminTheme.page}>
-      <div className={adminTheme.pageStack}>
+    <div className={surfaceTheme.page}>
+      <div className={surfaceTheme.pageStack}>
         <Button variant='ghost' size='sm' className='-ml-2 w-fit' asChild>
           <Link href={myApplicationsHref()}>
             <ArrowLeft aria-hidden className='size-4' />

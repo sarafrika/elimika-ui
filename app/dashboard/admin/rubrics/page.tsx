@@ -1,17 +1,20 @@
-import { adminTheme } from '../_components/ui/admin-theme';
-import { AdminPageHeader } from '../_components/ui/AdminPageHeader';
-import { RubricsTable } from './_components/RubricsTable';
+import { Suspense } from 'react';
+import { SectionCardSkeleton, surfaceTheme } from '@/components/data-display';
+import { RubricsPage } from '@/src/features/admin/pages/rubrics-page';
 
-export default function RubricsPage() {
+export default function AdminRubricsRoute() {
   return (
-    <main className={adminTheme.page}>
-      <div className={adminTheme.pageStack}>
-        <AdminPageHeader
-          title='Assessment rubrics'
-          description='Browse and manage grading rubrics across the platform.'
-        />
-        <RubricsTable />
-      </div>
-    </main>
+    <Suspense
+      fallback={
+        <div className={surfaceTheme.page}>
+          <div className={surfaceTheme.pageStack}>
+            <SectionCardSkeleton rows={2} />
+            <SectionCardSkeleton rows={6} />
+          </div>
+        </div>
+      }
+    >
+      <RubricsPage />
+    </Suspense>
   );
 }

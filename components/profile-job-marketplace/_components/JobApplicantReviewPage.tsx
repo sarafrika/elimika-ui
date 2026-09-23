@@ -14,12 +14,6 @@ import Link from 'next/link';
 import { useMemo, useState } from 'react';
 import { toast } from 'sonner';
 
-import {
-  AdminPageHeader,
-  adminTheme,
-  SectionCard,
-  StatusBadge,
-} from '@/app/dashboard/admin/_components/ui';
 import { InstructorReviewProfile } from '@/components/instructor-review/InstructorReviewProfile';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -57,6 +51,8 @@ import {
 } from '../application-status';
 import { hireClashTitle } from './HireClashAlert';
 import { HireChecksPanel, useHireRateCheck } from './HireChecksPanel';
+import { SectionCard, StatusBadge, surfaceTheme } from '@/components/data-display';
+import { PageHeader } from '@/components/page-header';
 
 const HIRED_INDEX = HIRING_STAGES.length - 1;
 
@@ -324,8 +320,8 @@ export function JobApplicantReviewPage({
           : rateCheck.message;
 
   return (
-    <div className={adminTheme.page}>
-      <div className={adminTheme.pageStack}>
+    <div className={surfaceTheme.page}>
+      <div className={surfaceTheme.pageStack}>
         <Button variant='ghost' size='sm' className='text-muted-foreground w-fit px-0' asChild>
           <Link href={jobHref(jobUuid, 'applicants')}>
             <ArrowLeft className='mr-2 size-4' />
@@ -333,7 +329,7 @@ export function JobApplicantReviewPage({
           </Link>
         </Button>
 
-        <AdminPageHeader
+        <PageHeader
           title={instructor?.full_name ?? 'Applicant review'}
           description={`Scrutinise this instructor's full profile before deciding on their application${job?.title ? ` for “${job.title}”` : ''}.`}
         />
@@ -362,7 +358,7 @@ export function JobApplicantReviewPage({
             <Skeleton className='h-96 rounded-md' />
           </div>
         ) : !application ? (
-          <div className={adminTheme.cardPadded}>
+          <div className={surfaceTheme.cardPadded}>
             <p className='text-muted-foreground text-sm'>
               This application could not be found. It may have been withdrawn or the job may have
               been cancelled.

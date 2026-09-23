@@ -4,7 +4,6 @@ import { BriefcaseBusiness, Layers } from 'lucide-react';
 import Link from 'next/link';
 import { useEffect, useMemo } from 'react';
 
-import { adminTheme } from '@/app/dashboard/admin/_components/ui';
 import { AsyncSection } from '@/components/data/async-section';
 import { PageHeader } from '@/components/dashboard/page-header';
 import { Button } from '@/components/ui/button';
@@ -18,6 +17,7 @@ import { findWorkHref, hiredJobsHref } from '@/src/features/instructor-jobs/job-
 import { isClassCreatedStatus } from '../application-status';
 import { useHiredApplications } from '../use-hired-applications';
 import { HiredJobCard, HiredJobCardSkeleton } from './HiredJobCard';
+import { surfaceTheme } from '@/components/data-display';
 
 export function HiredJobsPage() {
   const { replaceBreadcrumbs } = useBreadcrumb();
@@ -52,8 +52,8 @@ export function HiredJobsPage() {
   const empty = !hires.isPending && !hires.error && applications.length === 0;
 
   return (
-    <div className={adminTheme.page}>
-      <div className={adminTheme.pageStack}>
+    <div className={surfaceTheme.page}>
+      <div className={surfaceTheme.pageStack}>
         <PageHeader
           title='Jobs'
           description='Class jobs posted by organisations. Check the fit before you apply, then follow each application through to the class.'

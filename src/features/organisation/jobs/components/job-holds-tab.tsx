@@ -1,6 +1,5 @@
 'use client';
 
-import { SectionCard, StatusBadge } from '@/app/dashboard/admin/_components/ui';
 import { AsyncSection } from '@/components/data/async-section';
 import { Skeleton } from '@/components/ui/skeleton';
 import { formatDate } from '@/lib/date';
@@ -10,6 +9,7 @@ import { dominantHoldStatus, useJobHolds } from '../hooks/use-job-holds';
 import { type HoldState, sessionCountLabel } from '../lib/job-stage';
 import type { JobResourceRow } from './job-sections';
 import { resourceName } from './job-sections';
+import { SectionCard, StatusBadge } from '@/components/data-display';
 
 const HOLD_LABELS: Record<string, { label: string; tone: 'success' | 'neutral' | 'info' }> = {
   HOLD: { label: 'On hold', tone: 'neutral' },

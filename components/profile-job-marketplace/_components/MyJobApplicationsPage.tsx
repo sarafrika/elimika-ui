@@ -5,7 +5,6 @@ import { BriefcaseBusiness, CalendarClock, Layers } from 'lucide-react';
 import Link from 'next/link';
 import { useEffect, useMemo, useState } from 'react';
 
-import { adminTheme } from '@/app/dashboard/admin/_components/ui';
 import { AsyncSection } from '@/components/data/async-section';
 import { PageHeader } from '@/components/dashboard/page-header';
 import { Button } from '@/components/ui/button';
@@ -37,6 +36,7 @@ import {
 } from '@/src/features/instructor-jobs/job-routes';
 import { useUserProfile } from '@/src/features/profile/context/profile-context';
 import { hiredJobData } from '../hired-jobs';
+import { surfaceTheme } from '@/components/data-display';
 
 type Segment = 'in-progress' | 'closed';
 
@@ -89,8 +89,8 @@ export function MyJobApplicationsPage() {
   };
 
   return (
-    <div className={adminTheme.page}>
-      <div className={adminTheme.pageStack}>
+    <div className={surfaceTheme.page}>
+      <div className={surfaceTheme.pageStack}>
         <PageHeader
           title='Jobs'
           description='Class jobs posted by organisations. Check the fit before you apply, then follow each application through to the class.'
@@ -156,7 +156,7 @@ export function MyJobApplicationsPage() {
           </div>
         ) : null}
 
-        <section className={cn(adminTheme.card, 'overflow-hidden')}>
+        <section className={cn(surfaceTheme.card, 'overflow-hidden')}>
           <AsyncSection
             loading={applications.isPending}
             error={applications.error}

@@ -507,6 +507,7 @@ export default {
   // ============================================================
   // ADMIN
   // ============================================================
+  // Rebuilt section by section; each item returns as its phase lands.
   admin: [
     {
       title: 'Overview',
@@ -517,114 +518,69 @@ export default {
           url: '/dashboard/overview',
           icon: LayoutDashboard,
         },
-      ],
-    },
-    {
-      title: 'Onboarding',
-      icon: Handshake,
-      items: [
         {
-          title: 'Pending Approvals',
-          url: '/dashboard/pending-approvals',
+          title: 'Review inbox',
+          url: '/dashboard/inbox',
           icon: ClipboardList,
         },
         {
-          title: 'Opportunities',
-          url: '/dashboard/opportunities',
-          icon: Handshake,
+          title: 'Activity log',
+          url: '/dashboard/activity',
+          icon: ChartNoAxesCombined,
         },
       ],
     },
     {
-      title: 'Operations',
+      title: 'People',
       icon: Users,
       items: [
         {
-          title: 'Users',
-          url: '/dashboard/users',
-          icon: UsersIcon,
+          title: 'People',
+          url: '/dashboard/people',
+          icon: Users,
         },
         {
-          title: 'Manage Courses',
-          url: '/dashboard/manage-courses',
-          icon: BookOpen,
-        },
-        {
-          title: 'Manage Programs',
-          url: '/dashboard/manage-programs',
-          icon: Layers2,
-        },
-        // {
-        //   title: 'Classes',
-        //   url: '/dashboard/classes',
-        //   icon: FileStackIcon,
-        // },
-        {
-          title: 'Students',
-          url: '/dashboard/students',
-          icon: School,
-        },
-        {
-          title: 'Instructors',
-          url: '/dashboard/instructors',
-          icon: GraduationCap,
-        },
-        {
-          title: 'Course Creators',
-          url: '/dashboard/course-creators',
-          icon: Sparkles,
-        },
-        {
-          title: 'Organizations',
-          url: '/dashboard/organizations',
+          title: 'Organisations',
+          url: '/dashboard/organisations',
           icon: Building2,
         },
         {
-          title: 'Calendar',
-          url: '/dashboard/calendar',
-          icon: CalendarClock,
-        },
-        {
-          title: 'Catalogue',
-          url: '/dashboard/catalogue',
-          icon: ShoppingBag,
-        },
-        {
-          title: 'Administrators',
-          url: '/dashboard/administrators',
-          icon: ShieldCheck,
+          title: 'Admins & access',
+          url: '/dashboard/access',
+          icon: BadgeCheck,
         },
       ],
     },
     {
-      title: 'Assessment',
-      icon: ClipboardList,
-      items: [],
+      title: 'Learning',
+      icon: BookOpen,
+      items: [
+        { title: 'Courses', url: '/dashboard/courses', icon: BookOpen },
+        { title: 'Programs', url: '/dashboard/programs', icon: Layers2 },
+        { title: 'Classes', url: '/dashboard/classes', icon: CalendarClock },
+        { title: 'Catalogue', url: '/dashboard/catalogue', icon: ShoppingBag },
+        { title: 'Rubrics', url: '/dashboard/rubrics', icon: ClipboardCheck },
+        { title: 'Marketplace', url: '/dashboard/marketplace', icon: Briefcase },
+      ],
     },
     {
-      title: 'Controls',
+      title: 'Finance',
+      icon: ChartNoAxesCombined,
+      items: [
+        { title: 'Revenue', url: '/dashboard/revenue', icon: ChartNoAxesCombined },
+        { title: 'Sales & payments', url: '/dashboard/sales', icon: DollarSign },
+        { title: 'Currencies', url: '/dashboard/currencies', icon: DollarSign },
+      ],
+    },
+    {
+      title: 'Platform',
       icon: Settings,
       items: [
-        {
-          title: 'Currencies',
-          url: '/dashboard/currencies',
-          icon: DollarSign,
-        },
-        {
-          title: 'Categories/Subject',
-          url: '/dashboard/categories',
-          icon: DollarSign,
-        },
-        {
-          title: 'Financial Overview',
-          url: '/dashboard/financial-overview',
-          icon: LucideLandmark,
-        },
-        {
-          title: 'System Config',
-          url: '/dashboard/system-config',
-          icon: Settings,
-        },
+        { title: 'Categories', url: '/dashboard/platform/categories', icon: BookAIcon },
+        { title: 'System rules', url: '/dashboard/platform/rules', icon: BoltIcon },
+        { title: 'Config lists', url: '/dashboard/platform/config', icon: Settings },
+        { title: 'Notifications', url: '/dashboard/notifications', icon: Bell },
+        { title: 'Settings', url: '/dashboard/settings', icon: Settings },
       ],
     },
   ],
