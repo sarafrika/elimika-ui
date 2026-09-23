@@ -29,6 +29,7 @@ import {
 } from '@/services/client/@tanstack/react-query.gen';
 import { useLogout } from '@/src/features/auth/logout';
 import { useUserProfile } from '@/src/features/profile/context/profile-context';
+import { useUserDomain } from '../../../dashboard/context/user-domain-context';
 
 type RemovableDomain = 'student' | 'instructor' | 'course_creator';
 
@@ -47,6 +48,7 @@ const domainOrder: RemovableDomain[] = ['student', 'instructor', 'course_creator
 
 export default function ManageProfileActions({ className = '' }: { className?: string }) {
   const profile = useUserProfile();
+  const { activeDomain } = useUserDomain();
   const logout = useLogout();
   const [selectedDomain, setSelectedDomain] = useState<RemovableDomain | null>(null);
   const [accountDialogOpen, setAccountDialogOpen] = useState(false);
@@ -58,6 +60,8 @@ export default function ManageProfileActions({ className = '' }: { className?: s
 
   const handleRemoval = useCallback(
     async (domain: RemovableDomain, uuid: string | undefined, remover: () => Promise<unknown>) => {
+      if (domain !== activeDomain) return;
+
       if (!uuid) {
         toast.error('We could not find the profile identifier to remove.');
         return;
@@ -72,7 +76,7 @@ export default function ManageProfileActions({ className = '' }: { className?: s
         throw error;
       }
     },
-    [profile]
+    [activeDomain, profile]
   );
 
   const removableProfiles: DomainConfig[] = useMemo(() => {
@@ -83,7 +87,7 @@ export default function ManageProfileActions({ className = '' }: { className?: s
     const domains = (profile.user_domain ?? []) as UserDomain[];
 
     return domainOrder
-      .filter(domain => domains.includes(domain))
+      .filter(domain => domain === activeDomain && domains.includes(domain))
       .map<DomainConfig>(domain => {
         if (domain === 'student') {
           const uuid = profile.student?.uuid;
@@ -143,7 +147,7 @@ export default function ManageProfileActions({ className = '' }: { className?: s
             ),
         };
       });
-  }, [courseCreatorRemoval, handleRemoval, instructorRemoval, profile, studentRemoval]);
+  }, [activeDomain, courseCreatorRemoval, handleRemoval, instructorRemoval, profile, studentRemoval]);
 
   const selectedProfile = removableProfiles.find(profile => profile.id === selectedDomain);
 
@@ -191,7 +195,7 @@ export default function ManageProfileActions({ className = '' }: { className?: s
       <div className='space-y-2'>
         <h2 className='text-foreground text-lg font-semibold'>Profile maintenance</h2>
         <p className='text-muted-foreground text-sm leading-relaxed'>
-          Remove roles you no longer need or delete your account entirely. These actions are
+          Remove your active domain's profile or delete your account entirely. These actions are
           permanent and cannot be undone.
         </p>
       </div>
@@ -241,10 +245,9 @@ export default function ManageProfileActions({ className = '' }: { className?: s
         ) : (
           <Card className='border-primary/30 bg-primary/5 border-dashed md:col-span-2'>
             <CardHeader>
-              <CardTitle>No additional profiles</CardTitle>
+              <CardTitle>No removable profile in this domain</CardTitle>
               <CardDescription>
-                You currently do not have any extra profiles to remove. Add a new profile to see it
-                here.
+                Switch to the domain of the profile you want to remove.
               </CardDescription>
             </CardHeader>
           </Card>
@@ -288,7 +291,7 @@ export default function ManageProfileActions({ className = '' }: { className?: s
       </div>
 
       <AlertDialog
-        open={selectedDomain !== null}
+        open={!!selectedProfile}
         onOpenChange={open => !open && setSelectedDomain(null)}
       >
         <AlertDialogContent>
@@ -305,7 +308,10 @@ export default function ManageProfileActions({ className = '' }: { className?: s
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel disabled={selectedProfile?.isLoading}>Cancel</AlertDialogCancel>
-            <AlertDialogAction onClick={handleConfirmRemoval} disabled={selectedProfile?.isLoading}>
+            <AlertDialogAction
+              onClick={handleConfirmRemoval}
+              disabled={!selectedProfile || selectedProfile.isLoading}
+            >
               {selectedProfile?.isLoading ? (
                 <span className='flex items-center gap-2'>
                   <Spinner className='h-4 w-4' />

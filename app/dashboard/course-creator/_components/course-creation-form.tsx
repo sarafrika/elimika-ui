@@ -96,11 +96,11 @@ export type FormSectionProps = {
 };
 
 export const FormSection = ({ title, description, children }: FormSectionProps) => (
-  <section className='border-border rounded-3xl border p-6 shadow-lg transition'>
+  <section className=''>
     <div className='flex flex-col gap-6 lg:flex-col lg:items-start lg:gap-4'>
       <div className='flex flex-col'>
         <h3 className='text-foreground text-lg font-semibold'>{title}</h3>
-        <p className='text-muted-foreground text-sm'>{description}</p>
+        {/* <p className='text-muted-foreground text-sm'>{description}</p> */}
       </div>
       <div className='w-full lg:flex-1'>{children}</div>
     </div>
@@ -965,39 +965,42 @@ export const CourseCreationForm = forwardRef<CourseFormRef, CourseFormProps>(
             </FormSection>
 
             {/* Course Duration */}
-            <FormSection
-              title='Course Duration'
-              description='Set the time duration for your course'
-            >
-              <div className='grid grid-cols-1 gap-4 md:grid-cols-3'>
-                <FormField
-                  control={form.control}
-                  name='duration_hours'
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Duration Hours</FormLabel>
-                      <FormControl>
-                        <Input type='number' min='0' step='1' {...field} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                <FormField
-                  control={form.control}
-                  name='duration_minutes'
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Duration Minutes</FormLabel>
-                      <FormControl>
-                        <Input type='number' min='0' step='1' {...field} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-              </div>
-            </FormSection>
+            <div className='hidden'>
+              <FormSection
+                title='Course Duration'
+                description='Set the time duration for your course'
+              >
+                <div className='grid grid-cols-1 gap-4 md:grid-cols-3'>
+                  <FormField
+                    control={form.control}
+                    name='duration_hours'
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Duration Hours</FormLabel>
+                        <FormControl>
+                          <Input type='number' min='0' step='1' {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  <FormField
+                    control={form.control}
+                    name='duration_minutes'
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Duration Minutes</FormLabel>
+                        <FormControl>
+                          <Input type='number' min='0' step='1' {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                </div>
+              </FormSection>
+            </div>
+
 
             {/* Difficulty Level */}
             <FormSection

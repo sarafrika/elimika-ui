@@ -2,6 +2,7 @@
 
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
+import { EmptyState } from '@/components/ui/empty-state';
 import { Input } from '@/components/ui/input';
 import {
   Select,
@@ -10,6 +11,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
+import Spinner from '@/components/ui/spinner';
 import {
   addCourseTrainingRequirementMutation,
   deleteCourseTrainingRequirementMutation,
@@ -20,10 +22,9 @@ import type {
   AddCourseTrainingRequirementResponse,
   CourseTrainingRequirement,
 } from '@/services/client/types.gen';
-import Spinner from '@/components/ui/spinner';
 import type { QueryClient } from '@tanstack/react-query';
 import { CheckCircle2, Loader2, Pencil, Plus, Save, Trash2, X } from 'lucide-react';
-import { type Dispatch, Fragment, type SetStateAction, useState } from 'react';
+import { type Dispatch, Fragment, type SetStateAction, useMemo, useState } from 'react';
 import { toast } from 'sonner';
 import { Textarea } from '../../../../components/ui/textarea';
 import { providedByOptions, requirementTypes } from './course-creation-types';
@@ -70,11 +71,18 @@ type RequirementMutation<TVariables> = {
 };
 
 const PROVIDERS: { value: Provider; label: string }[] = [
-  { value: 'course_creator', label: 'Course creator' },
   { value: 'instructor', label: 'Instructor' },
   { value: 'organisation', label: 'Organisation' },
   { value: 'student', label: 'Student' },
 ];
+
+const EDUCATION_QUANTITY = 1;
+const EDUCATION_UNIT = 'license';
+
+const INSTRUCTOR_REQUIREMENT_TYPES = [...requirementTypes, 'education'] as const;
+
+const requirementTypesForProvider = (provider?: Provider | null) =>
+  provider === 'instructor' ? INSTRUCTOR_REQUIREMENT_TYPES : requirementTypes;
 
 const UNIT_OPTIONS = [
   'pieces',
@@ -86,6 +94,7 @@ const UNIT_OPTIONS = [
   'boxes',
   'kits',
   'seats',
+  'license',
   'licenses',
   'copies',
   'other',
@@ -171,10 +180,22 @@ export function TrainingRequirementsSection({
     }));
   };
 
-  const addDraftRow = (provider: Provider) => {
+  const addDraftRow = (provider: Provider, education = false) => {
     setDraftsByProvider(prev => ({
       ...prev,
-      [provider]: [...prev[provider], emptyDraft()],
+      [provider]: [
+        ...prev[provider],
+        {
+          ...emptyDraft(),
+          ...(education
+            ? {
+              requirement_type: 'education',
+              quantity: String(EDUCATION_QUANTITY),
+              unit: EDUCATION_UNIT,
+            }
+            : {}),
+        },
+      ],
     }));
   };
 
@@ -209,8 +230,12 @@ export function TrainingRequirementsSection({
             body: {
               name: draft.name.trim(),
               requirement_type: draft.requirement_type,
-              quantity: draft.quantity ? Number(draft.quantity) : 0,
-              unit: draft.unit,
+              ...(draft.requirement_type === 'education'
+                ? { quantity: EDUCATION_QUANTITY, unit: EDUCATION_UNIT }
+                : {
+                  quantity: draft.quantity ? Number(draft.quantity) : 0,
+                  unit: draft.unit,
+                }),
               is_mandatory: draft.is_mandatory,
               description: draft.description,
               provided_by: provider,
@@ -241,7 +266,10 @@ export function TrainingRequirementsSection({
         const savedDraftIds = new Set(succeeded.map(item => item.draftId));
         setDraftsByProvider(prev => {
           const remaining = prev[provider].filter(draft => !savedDraftIds.has(draft.id));
-          return { ...prev, [provider]: remaining.length > 0 ? remaining : [emptyDraft()] };
+          return {
+            ...prev,
+            [provider]: remaining.length > 0 ? remaining : [emptyDraft()],
+          };
         });
         toast.success(
           `${succeeded.length} requirement${succeeded.length > 1 ? 's' : ''} saved for ${PROVIDERS.find(p => p.value === provider)?.label}.`
@@ -276,16 +304,23 @@ export function TrainingRequirementsSection({
 
   const saveEdit = (req: RequirementRecord) => {
     if (!targetCourseUuid || !req.uuid) return;
+    if (updateTrainingReqMut.isPending) return;
     if (!editDraft.name?.trim()) {
       toast.error('Requirement name is required.');
       return;
     }
+    const requirementType = editDraft.requirement_type ?? req.requirement_type;
+    const isEducation = requirementType === 'education';
     const variables = {
       body: {
         name: editDraft.name?.trim(),
-        requirement_type: editDraft.requirement_type,
-        quantity: editDraft.quantity ? Number(editDraft.quantity) : 0,
-        unit: editDraft.unit,
+        requirement_type: requirementType,
+        ...(isEducation
+          ? { quantity: EDUCATION_QUANTITY, unit: EDUCATION_UNIT }
+          : {
+            quantity: editDraft.quantity ? Number(editDraft.quantity) : 0,
+            unit: editDraft.unit,
+          }),
         is_mandatory: editDraft.is_mandatory,
         description: editDraft.description,
         provided_by: req.provided_by,
@@ -305,7 +340,8 @@ export function TrainingRequirementsSection({
               ...r,
               ...editDraft,
               requirement_type: editDraft.requirement_type ?? r.requirement_type,
-              quantity: Number(editDraft.quantity),
+              quantity: isEducation ? EDUCATION_QUANTITY : Number(editDraft.quantity),
+              unit: isEducation ? EDUCATION_UNIT : editDraft.unit,
             };
           })
         );
@@ -323,11 +359,11 @@ export function TrainingRequirementsSection({
   };
 
   const deleteReq = (req: RequirementRecord) => {
-    if (!editingCourseId || !req.uuid) return;
+    if (!targetCourseUuid || !req.uuid || deleteTrainingReqMut.isPending) return;
     setDeletingId(req.uuid);
     const variables = {
       path: {
-        courseUuid: editingCourseId,
+        courseUuid: targetCourseUuid,
         requirementUuid: req.uuid,
       },
     } as DeleteRequirementVariables;
@@ -335,7 +371,7 @@ export function TrainingRequirementsSection({
       onSuccess: () => {
         qc.invalidateQueries({
           queryKey: getCourseTrainingRequirementsQueryKey({
-            path: { courseUuid: editingCourseId as string },
+            path: { courseUuid: targetCourseUuid },
             query: { pageable: {} },
           }),
         });
@@ -347,10 +383,48 @@ export function TrainingRequirementsSection({
     });
   };
 
-  const grouped = PROVIDERS.map(p => ({
-    ...p,
-    rows: existingRequirements.filter(r => r.provided_by === p.value),
-  })).filter(g => g.rows.length > 0);
+  const draftGroups = useMemo(() => {
+    if (!activeProvider) return [];
+    const rows = draftsByProvider[activeProvider];
+    if (activeProvider !== 'instructor') {
+      return [{ id: activeProvider, label: '', education: false, rows }];
+    }
+    return [
+      // {
+      //   id: 'instructor-education',
+      //   label: 'Instructor Educational Requirements',
+      //   education: true,
+      //   rows: rows.filter(row => row.requirement_type === 'education'),
+      // },
+      {
+        id: 'instructor-other',
+        label: '',
+        education: false,
+        rows: rows.filter(row => row.requirement_type !== 'education'),
+      },
+    ];
+  }, [activeProvider, draftsByProvider]);
+
+  const grouped = useMemo(
+    () =>
+      PROVIDERS.flatMap(provider => {
+        const rows = existingRequirements.filter(row => row.provided_by === provider.value);
+        if (provider.value !== 'instructor') return [{ ...provider, rows }];
+        return [
+          // {
+          //   value: 'instructor-education',
+          //   label: 'Instructor Educational Requirements',
+          //   rows: rows.filter(row => row.requirement_type === 'education'),
+          // },
+          {
+            value: 'instructor-other',
+            label: '',
+            rows: rows.filter(row => row.requirement_type !== 'education'),
+          },
+        ];
+      }).filter(group => group.rows.length > 0),
+    [existingRequirements]
+  );
 
   return (
     <div className='space-y-6'>
@@ -397,158 +471,198 @@ export function TrainingRequirementsSection({
             </Button>
           </div>
 
-          <div className='overflow-x-auto'>
-            <table className='w-full text-sm'>
-              <thead className='border-border border-b'>
-                <tr>
-                  {[
-                    'Requirement Name *',
-                    'Type',
-                    'Quantity',
-                    'Unit',
-                    'Mandatory',
-                    'Description',
-                    '',
-                  ].map(h => (
-                    <th
-                      key={h}
-                      className='text-muted-foreground px-3 py-2 text-left text-xs font-medium tracking-wide whitespace-nowrap'
-                    >
-                      {h}
-                    </th>
-                  ))}
-                </tr>
-              </thead>
-              <tbody className='divide-border divide-y'>
-                {draftsByProvider[activeProvider].map((row, idx) => (
-                  <tr key={row.id} className='hover:bg-muted/20 transition-colors'>
-                    {/* Name */}
-                    <td className='px-3 py-2'>
-                      <Textarea
-                        disabled={!!savingProvider}
-                        placeholder='e.g., Piano room'
-                        value={row.name}
-                        onChange={e =>
-                          updateDraftRow(activeProvider, row.id, { name: e.target.value })
-                        }
-                        className='h-8 min-w-[140px]'
-                      />
-                    </td>
+          {draftGroups.map(group => (
+            <section key={group.id} className='border-border space-y-3 border-t py-4'>
+              <div className='flex flex-wrap items-center justify-between gap-3 px-4'>
+                {group.label && (
+                  <h4 className='text-foreground text-base font-semibold'>{group.label}</h4>
+                )}
+                <Button
+                  type='button'
+                  variant='outline'
+                  size='sm'
+                  disabled={!!savingProvider}
+                  onClick={() => addDraftRow(activeProvider, group.education)}
+                >
+                  <Plus className='h-3.5 w-3.5' />
+                  {group.education ? 'Add new educational requirement' : 'Add requirement'}
+                </Button>
+              </div>
+              {group.rows.length === 0 ? (
+                <EmptyState
+                  variant='compact'
+                  className='mx-4'
+                  title={
+                    group.education ? 'No new educational requirements' : 'No new requirements'
+                  }
+                  description={
+                    group.education
+                      ? 'Add the qualifications instructors need to teach this course.'
+                      : undefined
+                  }
+                />
+              ) : (
+                <div className='overflow-x-auto'>
+                  <table className='w-full text-sm'>
+                    <thead className='border-border border-b'>
+                      <tr>
+                        {[
+                          'Requirement Name *',
+                          'Type',
+                          'Quantity',
+                          'Unit',
+                          'Mandatory',
+                          'Description',
+                          '',
+                        ].map(h => (
+                          <th
+                            key={h}
+                            className='text-muted-foreground px-3 py-2 text-left text-xs font-medium tracking-wide whitespace-nowrap'
+                          >
+                            {h}
+                          </th>
+                        ))}
+                      </tr>
+                    </thead>
+                    <tbody className='divide-border divide-y'>
+                      {group.rows.map(row => (
+                        <tr key={row.id} className='hover:bg-muted/20 transition-colors'>
+                          {/* Name */}
+                          <td className='px-3 py-2'>
+                            <Textarea
+                              disabled={!!savingProvider}
+                              placeholder={
+                                row.requirement_type === 'education'
+                                  ? 'e.g., Bachelor of Education'
+                                  : 'e.g., Piano room'
+                              }
+                              value={row.name}
+                              onChange={e =>
+                                updateDraftRow(activeProvider, row.id, { name: e.target.value })
+                              }
+                              className='h-8 min-w-[140px]'
+                            />
+                          </td>
 
-                    {/* Type */}
-                    <td className='px-3 py-2'>
-                      <Select
-                        disabled={!!savingProvider}
-                        value={row.requirement_type}
-                        onValueChange={v =>
-                          updateDraftRow(activeProvider, row.id, { requirement_type: v })
-                        }
-                      >
-                        <SelectTrigger className='h-8 min-w-[110px]'>
-                          <SelectValue />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {requirementTypes.map(t => (
-                            <SelectItem key={t} value={t}>
-                              {t.charAt(0).toUpperCase() + t.slice(1)}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                    </td>
+                          {/* Type */}
+                          <td className='px-3 py-2'>
+                            <Select
+                              disabled={!!savingProvider}
+                              value={row.requirement_type}
+                              onValueChange={v =>
+                                updateDraftRow(activeProvider, row.id, { requirement_type: v })
+                              }
+                            >
+                              <SelectTrigger className='h-8 min-w-[110px]'>
+                                <SelectValue />
+                              </SelectTrigger>
+                              <SelectContent>
+                                {requirementTypesForProvider(activeProvider).map(t => (
+                                  <SelectItem key={t} value={t}>
+                                    {t.charAt(0).toUpperCase() + t.slice(1)}
+                                  </SelectItem>
+                                ))}
+                              </SelectContent>
+                            </Select>
+                          </td>
 
-                    {/* Quantity */}
-                    <td className='px-3 py-2'>
-                      <Input
-                        disabled={!!savingProvider}
-                        type='number'
-                        min='0'
-                        placeholder='0'
-                        value={row.quantity}
-                        onChange={e =>
-                          updateDraftRow(activeProvider, row.id, { quantity: e.target.value })
-                        }
-                        className='h-8 w-20'
-                      />
-                    </td>
+                          {/* Quantity */}
+                          <td className='px-3 py-2'>
+                            {row.requirement_type === 'education' ? (
+                              <span className='text-muted-foreground'>{EDUCATION_QUANTITY}</span>
+                            ) : (
+                              <Input
+                                disabled={!!savingProvider}
+                                type='number'
+                                min='0'
+                                placeholder='0'
+                                value={row.quantity}
+                                onChange={e =>
+                                  updateDraftRow(activeProvider, row.id, {
+                                    quantity: e.target.value,
+                                  })
+                                }
+                                className='h-8 w-20'
+                              />
+                            )}
+                          </td>
 
-                    {/* Unit */}
-                    <td className='px-3 py-2'>
-                      <Select
-                        disabled={!!savingProvider}
-                        value={row.unit}
-                        onValueChange={v => updateDraftRow(activeProvider, row.id, { unit: v })}
-                      >
-                        <SelectTrigger className='h-8 min-w-[100px]'>
-                          <SelectValue />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {UNIT_OPTIONS.map(u => (
-                            <SelectItem key={u} value={u}>
-                              {u}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                    </td>
+                          {/* Unit */}
+                          <td className='px-3 py-2'>
+                            {row.requirement_type === 'education' ? (
+                              <span className='text-muted-foreground'>{EDUCATION_UNIT}</span>
+                            ) : (
+                              <Select
+                                disabled={!!savingProvider}
+                                value={row.unit}
+                                onValueChange={v =>
+                                  updateDraftRow(activeProvider, row.id, { unit: v })
+                                }
+                              >
+                                <SelectTrigger className='h-8 min-w-[100px]'>
+                                  <SelectValue />
+                                </SelectTrigger>
+                                <SelectContent>
+                                  {UNIT_OPTIONS.map(u => (
+                                    <SelectItem key={u} value={u}>
+                                      {u}
+                                    </SelectItem>
+                                  ))}
+                                </SelectContent>
+                              </Select>
+                            )}
+                          </td>
 
-                    {/* Mandatory */}
-                    <td className='px-3 py-2 text-center'>
-                      <Checkbox
-                        disabled={!!savingProvider}
-                        checked={row.is_mandatory}
-                        onCheckedChange={v =>
-                          updateDraftRow(activeProvider, row.id, { is_mandatory: !!v })
-                        }
-                      />
-                    </td>
+                          {/* Mandatory */}
+                          <td className='px-3 py-2 text-center'>
+                            <Checkbox
+                              disabled={!!savingProvider}
+                              checked={row.is_mandatory}
+                              onCheckedChange={v =>
+                                updateDraftRow(activeProvider, row.id, { is_mandatory: !!v })
+                              }
+                            />
+                          </td>
 
-                    {/* Description */}
-                    <td className='px-3 py-2'>
-                      <Textarea
-                        disabled={!!savingProvider}
-                        placeholder='Optional'
-                        value={row.description}
-                        onChange={e =>
-                          updateDraftRow(activeProvider, row.id, { description: e.target.value })
-                        }
-                        className='h-8 min-w-[160px]'
-                      />
-                    </td>
+                          {/* Description */}
+                          <td className='px-3 py-2'>
+                            <Textarea
+                              disabled={!!savingProvider}
+                              placeholder='Optional'
+                              value={row.description}
+                              onChange={e =>
+                                updateDraftRow(activeProvider, row.id, {
+                                  description: e.target.value,
+                                })
+                              }
+                              className='h-8 min-w-[160px]'
+                            />
+                          </td>
 
-                    {/* Remove row */}
-                    <td className='px-3 py-2'>
-                      <Button
-                        type='button'
-                        variant='ghost'
-                        size='sm'
-                        className='h-7 w-7 p-0'
-                        disabled={!!savingProvider || draftsByProvider[activeProvider].length === 1}
-                        onClick={() => removeDraftRow(activeProvider, row.id)}
-                      >
-                        <X className='text-muted-foreground h-3.5 w-3.5' />
-                      </Button>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+                          {/* Remove row */}
+                          <td className='px-3 py-2'>
+                            <Button
+                              type='button'
+                              variant='ghost'
+                              size='sm'
+                              className='h-7 w-7 p-0'
+                              disabled={!!savingProvider}
+                              onClick={() => removeDraftRow(activeProvider, row.id)}
+                            >
+                              <X className='text-muted-foreground h-3.5 w-3.5' />
+                            </Button>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              )}
+            </section>
+          ))}
 
           {/* Table footer */}
-          <div className='border-border flex items-center justify-between border-t px-4 py-3'>
-            <Button
-              type='button'
-              variant='ghost'
-              size='sm'
-              disabled={!!savingProvider}
-              onClick={() => addDraftRow(activeProvider)}
-              className='flex items-center gap-1 text-sm'
-            >
-              <Plus className='h-3.5 w-3.5' />
-              Add row
-            </Button>
-
+          <div className='border-border flex justify-end border-t px-4 py-3'>
             <div className='flex gap-2'>
               <Button
                 type='button'
@@ -615,6 +729,9 @@ export function TrainingRequirementsSection({
                         const isEditing = editingReqId === req.uuid;
                         const isDeleting = deletingId === req.uuid;
                         const isSavingEdit = updateTrainingReqMut.isPending && isEditing;
+                        const isEducation =
+                          (isEditing ? editDraft.requirement_type : req.requirement_type) ===
+                          'education';
 
                         return (
                           <tr
@@ -651,7 +768,7 @@ export function TrainingRequirementsSection({
                                     <SelectValue />
                                   </SelectTrigger>
                                   <SelectContent>
-                                    {requirementTypes.map(t => (
+                                    {requirementTypesForProvider(req.provided_by).map(t => (
                                       <SelectItem key={t} value={t}>
                                         {t.charAt(0).toUpperCase() + t.slice(1)}
                                       </SelectItem>
@@ -667,7 +784,13 @@ export function TrainingRequirementsSection({
 
                             {/* Quantity */}
                             <td className='px-3 py-2'>
-                              {isEditing ? (
+                              {isEducation ? (
+                                <span className='text-muted-foreground'>
+                                  {isEditing
+                                    ? EDUCATION_QUANTITY
+                                    : (req.quantity ?? EDUCATION_QUANTITY)}
+                                </span>
+                              ) : isEditing ? (
                                 <Input
                                   type='number'
                                   min='0'
@@ -684,7 +807,11 @@ export function TrainingRequirementsSection({
 
                             {/* Unit */}
                             <td className='px-3 py-2'>
-                              {isEditing ? (
+                              {isEducation ? (
+                                <span className='text-muted-foreground'>
+                                  {isEditing ? EDUCATION_UNIT : req.unit || EDUCATION_UNIT}
+                                </span>
+                              ) : isEditing ? (
                                 <Select
                                   value={editDraft.unit ?? 'pieces'}
                                   onValueChange={v => setEditDraft(p => ({ ...p, unit: v }))}
@@ -852,6 +979,9 @@ export function TrainingRequirementsSection({
                       const isEditing = editingReqId === req.uuid;
                       const isDeleting = deletingId === req.uuid;
                       const isSavingEdit = updateTrainingReqMut.isPending && isEditing;
+                      const isEducation =
+                        (isEditing ? editDraft.requirement_type : req.requirement_type) ===
+                        'education';
 
                       return (
                         <tr
@@ -894,7 +1024,7 @@ export function TrainingRequirementsSection({
                                   <SelectValue />
                                 </SelectTrigger>
                                 <SelectContent>
-                                  {requirementTypes.map(t => (
+                                  {requirementTypesForProvider(req.provided_by).map(t => (
                                     <SelectItem key={t} value={t}>
                                       {t.charAt(0).toUpperCase() + t.slice(1)}
                                     </SelectItem>
@@ -910,7 +1040,13 @@ export function TrainingRequirementsSection({
 
                           {/* Quantity */}
                           <td className='px-3 py-2'>
-                            {isEditing ? (
+                            {isEducation ? (
+                              <span className='text-muted-foreground'>
+                                {isEditing
+                                  ? EDUCATION_QUANTITY
+                                  : (req.quantity ?? EDUCATION_QUANTITY)}
+                              </span>
+                            ) : isEditing ? (
                               <Input
                                 type='number'
                                 min='0'
@@ -930,7 +1066,11 @@ export function TrainingRequirementsSection({
 
                           {/* Unit */}
                           <td className='px-3 py-2'>
-                            {isEditing ? (
+                            {isEducation ? (
+                              <span className='text-muted-foreground'>
+                                {isEditing ? EDUCATION_UNIT : req.unit || EDUCATION_UNIT}
+                              </span>
+                            ) : isEditing ? (
                               <Select
                                 value={editDraft.unit ?? 'pieces'}
                                 onValueChange={v => setEditDraft(p => ({ ...p, unit: v }))}

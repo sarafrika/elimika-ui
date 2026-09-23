@@ -306,17 +306,6 @@ export default {
           url: '/dashboard/calendar',
           icon: CalendarClock,
         },
-        // {
-        //   title: 'Profile',
-        //   url: '/dashboard/profile',
-        //   icon: UserCircle,
-        // },
-      ],
-    },
-    {
-      title: 'Onboarding',
-      icon: Handshake,
-      items: [
         {
           title: 'Jobs',
           url: '/dashboard/opportunities',
@@ -327,17 +316,6 @@ export default {
           url: '/dashboard/booking-requests',
           icon: CalendarClock,
         },
-        // {
-        //   title: 'Enrollments',
-        //   url: '/dashboard/enrollments',
-        //   icon: BookOpen,
-        // },
-      ],
-    },
-    {
-      title: 'Operations',
-      icon: Users,
-      items: [
         {
           title: 'Courses',
           url: '/dashboard/courses',
@@ -368,44 +346,6 @@ export default {
           url: '/dashboard/assessment',
           icon: BarChart3,
         },
-        // {
-        //   title: 'Classes',
-        //   url: '/dashboard/classes',
-        //   icon: School,
-        // },
-
-        // {
-        //   title: 'Portfolio',
-        //   url: '/dashboard/portfolio',
-        //   icon: Briefcase,
-        // },
-        // {
-        //   title: 'Communities',
-        //   url: '/dashboard/communities',
-        //   icon: Users,
-        // },
-        // {
-        //   title: 'Library',
-        //   url: '/dashboard/library',
-        //   icon: LucideBookUser,
-        // },
-        // {
-        //   title: 'Credentials Vault',
-        //   url: '/dashboard/credentials',
-        //   icon: Award, // changed (certification/badges)
-        // },
-        // {
-        //   title: 'Reviews',
-        //   url: '/dashboard/reviews',
-        //   icon: Star,
-        // },
-      ],
-    },
-
-    {
-      title: 'Finance',
-      icon: '',
-      items: [
         {
           title: 'Wallet',
           url: '/dashboard/wallet',
@@ -416,6 +356,11 @@ export default {
           url: '/dashboard/skills-fund',
           icon: PiggyBank,
         },
+        // {
+        //   title: 'Profile',
+        //   url: '/dashboard/profile',
+        //   icon: UserCircle,
+        // },
         // {
         //   title: 'Revenue',
         //   url: '/dashboard/revenue',
@@ -432,7 +377,6 @@ export default {
       title: 'Controls',
       icon: Settings,
       items: [
-
         {
           title: 'Analytics',
           url: '/dashboard/analytics',
@@ -470,17 +414,6 @@ export default {
           url: '/dashboard/skills-wallet',
           icon: BadgeCheck,
         },
-        // {
-        //   title: 'Profile',
-        //   url: '/dashboard/profile',
-        //   icon: UserCircle,
-        // },
-      ],
-    },
-    {
-      title: 'Operations',
-      icon: Users,
-      items: [
         {
           title: 'Courses',
           url: '/dashboard/courses',
@@ -497,10 +430,30 @@ export default {
           icon: Users,
         },
         {
-          title: 'Pending Approvals',
+          title: 'Applications',
           url: '/dashboard/pending-approvals',
           icon: ListTodo,
         },
+        {
+          title: 'Rubrics',
+          url: '/dashboard/rubrics',
+          icon: ClipboardList,
+        },
+        {
+          title: 'Wallet',
+          url: '/dashboard/wallet',
+          icon: Wallet,
+        },
+        // {
+        //   title: 'Skills Fund',
+        //   url: '/dashboard/skills-fund',
+        //   icon: PiggyBank,
+        // },
+        // {
+        //   title: 'Profile',
+        //   url: '/dashboard/profile',
+        //   icon: UserCircle,
+        // },
         // {
         //   title: 'Students',
         //   url: '/dashboard/enrollments',
@@ -511,38 +464,11 @@ export default {
         //   url: '/dashboard/library',
         //   icon: Library,
         // },
-      ],
-    },
-    {
-      title: 'Assessment',
-      icon: ClipboardList,
-      items: [
-        {
-          title: 'Rubrics',
-          url: '/dashboard/rubrics',
-          icon: ClipboardList,
-        },
         // {
         //   title: 'Credentials Vault',
         //   url: '/dashboard/credentials',
         //   icon: Award, // changed (certification/badges)
         // },
-      ],
-    },
-    {
-      title: 'Finance',
-      icon: '',
-      items: [
-        {
-          title: 'Wallet',
-          url: '/dashboard/wallet',
-          icon: Wallet,
-        },
-        {
-          title: 'Skills Fund',
-          url: '/dashboard/skills-fund',
-          icon: PiggyBank,
-        },
         // {
         //   title: 'Payments',
         //   url: '/dashboard/payments',
