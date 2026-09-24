@@ -790,9 +790,10 @@ export function LessonContentViewerDialog({
       >
         <SheetHeader className='border-border/70 border-b px-6 py-4 text-left'>
           <SheetTitle>{content?.title || 'Lesson content'}</SheetTitle>
-          {content?.description ? <SheetDescription>{content.description}</SheetDescription> : null}
+          <SheetDescription>Page text and learning material.</SheetDescription>
         </SheetHeader>
-        <div className='min-h-0 flex-1 overflow-auto p-4 md:p-6'>
+        <div className='min-h-0 flex-1 space-y-6 overflow-auto p-4 md:p-6'>
+          {content?.description && <RichTextPreview html={content.description} />}
           <LessonContentPreview
             content={content}
             contentType={contentType}

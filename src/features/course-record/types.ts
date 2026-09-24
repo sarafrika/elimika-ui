@@ -88,10 +88,10 @@ export const COURSE_RECORD_TAB_LABELS: Record<CourseRecordTabId, string> = {
 
 /** The right-rail cards, in the order the artboard stacks them. */
 export const COURSE_RAIL_CARDS = [
-  /** "Owner — full access" + the grant list. Always present. */
-  'access',
   /** "At a glance" key/value table. Always present. */
   'glance',
+  /** "Owner — full access" + the grant list. Always present. */
+  'access',
   /** Creator only — training applications waiting on a decision. */
   'ownerDecisions',
   /** Pending applicant only — the status timeline of their own application. */

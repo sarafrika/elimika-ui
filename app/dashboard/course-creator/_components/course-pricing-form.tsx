@@ -1,7 +1,8 @@
 'use client';
 
+import { WatchedValue } from '@/components/form/watched-value';
 import { Button } from '@/components/ui/button';
-import { Checkbox } from '@/components/ui/checkbox';
+import { CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import {
   Form,
   FormControl,
@@ -32,18 +33,17 @@ import {
   publishCourseQueryKey,
   searchCoursesQueryKey,
   unpublishCourseMutation,
-  unpublishCourseQueryKey
+  unpublishCourseQueryKey,
 } from '@/services/client/@tanstack/react-query.gen';
 import { invalidateContentModerationWorkflowQueries } from '@/src/features/dashboard/workflow-query-invalidation';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { BookCheck, Undo2 } from 'lucide-react';
+import { BadgeDollarSign, BookCheck, Undo2 } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { forwardRef, useEffect, useImperativeHandle, useRef } from 'react';
-import { useForm, useWatch } from 'react-hook-form';
+import { type Control, useForm, useWatch } from 'react-hook-form';
 import { toast } from 'sonner';
 import z from 'zod';
-import { FormSection } from './course-creation-form';
 import { type CourseCreationFormValues, CURRENCIES } from './course-creation-types';
 
 type MutationPayload = Record<string, unknown>;
@@ -104,6 +104,49 @@ export const coursePricingSchema = z.object({
 
 type coursePricingFormValues = z.infer<typeof coursePricingSchema>;
 
+const currencyLabel = (currency: unknown) =>
+  currency === 'KES' ? 'KSh' : String(currency || 'KSh');
+
+function PricingSummary({ control }: { control: Control<coursePricingFormValues> }) {
+  const [fee, instructorShare, creatorShare, currency] = useWatch({
+    control,
+    name: [
+      'minimum_training_fee',
+      'instructor_share_percentage',
+      'creator_share_percentage',
+      'currency',
+    ],
+  });
+  const minimumFee = Number(fee) || 0;
+  const formatAmount = (amount: number) =>
+    `${currencyLabel(currency)} ${amount.toLocaleString(undefined, { maximumFractionDigits: 2 })}`;
+
+  return (
+    <div
+      className='border-border bg-muted/30 grid gap-3 rounded-md border p-4 sm:grid-cols-3'
+      aria-live='polite'
+      aria-atomic='true'
+    >
+      <div>
+        <p className='text-muted-foreground text-xs'>Minimum fee</p>
+        <p className='text-foreground font-semibold'>{formatAmount(minimumFee)}</p>
+      </div>
+      <div>
+        <p className='text-muted-foreground text-xs'>Instructor receives</p>
+        <p className='text-foreground font-semibold'>
+          {formatAmount((minimumFee * (Number(instructorShare) || 0)) / 100)}
+        </p>
+      </div>
+      <div>
+        <p className='text-muted-foreground text-xs'>Course creator receives</p>
+        <p className='text-foreground font-semibold'>
+          {formatAmount((minimumFee * (Number(creatorShare) || 0)) / 100)}
+        </p>
+      </div>
+    </div>
+  );
+}
+
 export const CoursePricingForm = forwardRef<CourseFormRef, CourseFormProps>(
   function CoursePricingForm(
     { showSubmitButton, initialValues, editingCourseId, courseId, successResponse },
@@ -150,7 +193,6 @@ export const CoursePricingForm = forwardRef<CourseFormRef, CourseFormProps>(
     const courseCreatorProfile = courseCreatorContext?.profile;
 
     const authorUuid = courseCreatorProfile?.uuid ?? instructor?.uuid ?? '';
-
 
     const { mutate: updateCourseMutation, isPending: updateCourseIsPending } = useMutation({
       mutationFn: ({ body, uuid }: { body: MutationPayload; uuid: string }) =>
@@ -246,8 +288,6 @@ export const CoursePricingForm = forwardRef<CourseFormRef, CourseFormProps>(
       })
     );
 
-    const creatorShare =
-      useWatch({ control: form.control, name: 'creator_share_percentage' }) ?? [];
     const instructorShare =
       useWatch({ control: form.control, name: 'instructor_share_percentage' }) ?? [];
 
@@ -263,19 +303,6 @@ export const CoursePricingForm = forwardRef<CourseFormRef, CourseFormProps>(
         }
       }
     }, [instructorShare, form]);
-
-    useEffect(() => {
-      if (typeof creatorShare === 'number' && creatorShare >= 0 && creatorShare <= 100) {
-        const calculated = 100 - creatorShare;
-
-        if (form.getValues('instructor_share_percentage') !== calculated) {
-          form.setValue('instructor_share_percentage', calculated, {
-            shouldValidate: true,
-            shouldDirty: true,
-          });
-        }
-      }
-    }, [creatorShare, form]);
 
     const onSubmit = (data: coursePricingFormValues) => {
       const resolvedCourseCreatorUuid = authorUuid;
@@ -331,7 +358,9 @@ export const CoursePricingForm = forwardRef<CourseFormRef, CourseFormProps>(
 
                   // setActiveStep(6);
                   queryClient.invalidateQueries({
-                    queryKey: getCourseByUuidQueryKey({ path: { uuid: editingCourseId as string } }),
+                    queryKey: getCourseByUuidQueryKey({
+                      path: { uuid: editingCourseId as string },
+                    }),
                   });
                   resolve(true);
                   return;
@@ -392,160 +421,184 @@ export const CoursePricingForm = forwardRef<CourseFormRef, CourseFormProps>(
           onSubmit={form.handleSubmit(onSubmit, onError)}
           className='bg-card space-y-6 rounded-[32px] transition'
         >
-          {/* Pricing */}
-          <FormSection title='Course Pricing' description='Set the pricing details for your course'>
-            <div className='w-full space-y-4'>
-              <FormField
-                control={form.control}
-                name='is_free'
-                render={({ field }) => (
-                  <FormItem className='flex flex-row items-start space-x-3 opacity-50'>
-                    <FormControl>
-                      <Checkbox checked={field.value} onCheckedChange={field.onChange} disabled />
-                    </FormControl>
-                    <div className='space-y-1 leading-none'>
-                      <FormLabel>Free Course</FormLabel>
-                      <FormDescription>Make this course available for free</FormDescription>
-                    </div>
-                  </FormItem>
-                )}
-              />
-
-              {/* Full width form fields */}
-              <div className='w-full space-y-4'>
+          <section className='space-y-6'>
+            <CardHeader>
+              <div className='flex items-center gap-2'>
+                <BadgeDollarSign className='text-primary h-4 w-4' />
+                <CardTitle className='text-base'>Course pricing</CardTitle>
+              </div>
+              <CardDescription>
+                Set the minimum learner fee and how course income is shared.
+              </CardDescription>
+            </CardHeader>
+            <CardContent className='grid gap-6'>
+              <div className='grid gap-4 sm:grid-cols-2'>
                 <FormField
                   control={form.control}
-                  name='currency'
+                  name='minimum_training_fee'
                   render={({ field }) => (
-                    <FormItem className='w-full'>
-                      <FormLabel>Currency</FormLabel>
-                      <Select
-                        onValueChange={field.onChange}
-                        defaultValue={field.value}
-                        disabled={isFree}
-                      >
+                    <FormItem className='grid max-w-sm content-start gap-1.5 space-y-0'>
+                      <FormLabel>Minimum fee per student per hour</FormLabel>
+                      <div className='flex items-center gap-2'>
+                        <span className='text-muted-foreground text-sm font-medium'>
+                          <WatchedValue control={form.control} name='currency'>
+                            {currencyLabel}
+                          </WatchedValue>
+                        </span>
                         <FormControl>
-                          <SelectTrigger className='w-full'>
-                            <SelectValue placeholder='Select currency' />
-                          </SelectTrigger>
+                          <Input type='number' min={0} step='0.01' placeholder='0' {...field} />
                         </FormControl>
-                        <SelectContent>
-                          {Object.values(CURRENCIES).map(currency => (
-                            <SelectItem key={currency} value={currency}>
-                              {currency}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
+                      </div>
+                      <FormDescription className='text-xs'>
+                        This is the lowest fee that can be charged to one learner for one teaching
+                        hour.
+                      </FormDescription>
                       <FormMessage />
                     </FormItem>
                   )}
                 />
+                <div className='grid max-w-sm content-start gap-4'>
+                  <FormField
+                    control={form.control}
+                    name='currency'
+                    render={({ field }) => (
+                      <FormItem className='grid gap-1.5 space-y-0'>
+                        <FormLabel>Currency</FormLabel>
+                        <Select
+                          onValueChange={field.onChange}
+                          value={field.value}
+                          disabled={isFree}
+                        >
+                          <FormControl>
+                            <SelectTrigger className='w-full'>
+                              <SelectValue placeholder='Select currency' />
+                            </SelectTrigger>
+                          </FormControl>
+                          <SelectContent>
+                            {Object.values(CURRENCIES).map(currency => (
+                              <SelectItem key={currency} value={currency}>
+                                {currency}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+
+
+                  {/* <FormField
+                    control={form.control}
+                    name='is_free'
+                    render={({ field }) => (
+                      <FormItem className='flex flex-row items-start space-x-3 opacity-50'>
+                        <FormControl>
+                          <Checkbox
+                            checked={field.value}
+                            onCheckedChange={field.onChange}
+                            disabled
+                          />
+                        </FormControl>
+                        <div className='space-y-1 leading-none'>
+                          <FormLabel>Free Course</FormLabel>
+                          <FormDescription className='text-xs'>
+                            Make this course available for free
+                          </FormDescription>
+                        </div>
+                      </FormItem>
+                    )}
+                  /> */}
+                </div>
               </div>
-            </div>
-          </FormSection>
 
-          <FormSection
-            title='Monetization Controls'
-            description='Configure minimum training fee expectations and the revenue split inherited by every instructor.'
-          >
-            <div className='flex flex-col gap-4'>
-              <FormField
-                control={form.control}
-                name='minimum_training_fee'
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Minimum Training Fee (per hour per head)</FormLabel>
-                    <FormControl>
-                      <Input type='number' min='0' step='0.01' {...field} />
-                    </FormControl>
-                    <FormDescription>
-                      Instructor-led classes must charge at least this amount.
-                    </FormDescription>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-
-              <div className='grid grid-cols-1 gap-4 md:grid-cols-2'>
+              <div className='border-border grid gap-4 border-t pt-5'>
+                <div>
+                  <h3 className='text-foreground text-sm font-semibold'>Revenue split</h3>
+                  <p className='text-muted-foreground text-xs'>
+                    The course creator share adjusts automatically so the total always equals 100%.
+                  </p>
+                </div>
+                <div className='grid gap-4 sm:grid-cols-2'>
+                  <FormField
+                    control={form.control}
+                    name='instructor_share_percentage'
+                    render={({ field }) => (
+                      <FormItem className='grid gap-1.5 space-y-0'>
+                        <FormLabel>Instructor share</FormLabel>
+                        <div className='flex items-center gap-2'>
+                          <FormControl>
+                            <Input
+                              {...field}
+                              type='number'
+                              min={0}
+                              max={100}
+                              step={1}
+                              value={field.value ?? 0}
+                              onChange={event => {
+                                const value = Math.min(
+                                  100,
+                                  Math.max(0, Number(event.target.value) || 0)
+                                );
+                                field.onChange(value);
+                                form.setValue('creator_share_percentage', 100 - value, {
+                                  shouldDirty: true,
+                                  shouldValidate: true,
+                                });
+                              }}
+                            />
+                          </FormControl>
+                          <span className='text-muted-foreground text-sm'>%</span>
+                        </div>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  <FormField
+                    control={form.control}
+                    name='creator_share_percentage'
+                    render={({ field }) => (
+                      <FormItem className='grid gap-1.5 space-y-0'>
+                        <FormLabel>Course creator share</FormLabel>
+                        <div className='flex items-center gap-2'>
+                          <FormControl>
+                            <Input
+                              {...field}
+                              type='number'
+                              value={field.value ?? 0}
+                              readOnly
+                              aria-readonly='true'
+                              className='bg-muted/50'
+                            />
+                          </FormControl>
+                          <span className='text-muted-foreground text-sm'>%</span>
+                        </div>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                </div>
+                <PricingSummary control={form.control} />
                 <FormField
                   control={form.control}
-                  name='creator_share_percentage'
+                  name='revenue_share_notes'
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Creator Share (%)</FormLabel>
+                      <FormLabel>Revenue Share Notes (optional)</FormLabel>
                       <FormControl>
-                        <Input
-                          type='number'
-                          min={0}
-                          max={100}
-                          step={1}
-                          value={field.value ?? 0}
-                          onChange={e => {
-                            const value = Math.min(100, Math.max(0, Number(e.target.value)));
-
-                            field.onChange(value);
-                            form.setValue('instructor_share_percentage', 100 - value, {
-                              shouldDirty: true,
-                              shouldValidate: true,
-                            });
-                          }}
+                        <Textarea
+                          rows={3}
+                          placeholder='Add extra context for instructors about this revenue policy.'
+                          {...field}
                         />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
                   )}
                 />
-
-                <FormField
-                  control={form.control}
-                  name='instructor_share_percentage'
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Instructor Share (%)</FormLabel>
-                      <FormControl>
-                        <Input
-                          type='number'
-                          min={0}
-                          max={100}
-                          step={1}
-                          value={field.value ?? 0}
-                          onChange={e => {
-                            const value = Math.min(100, Math.max(0, Number(e.target.value)));
-
-                            field.onChange(value);
-                            form.setValue('creator_share_percentage', 100 - value, {
-                              shouldDirty: true,
-                              shouldValidate: true,
-                            });
-                          }}
-                        />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
               </div>
-            </div>
-
-            <FormField
-              control={form.control}
-              name='revenue_share_notes'
-              render={({ field }) => (
-                <FormItem className='mt-4'>
-                  <FormLabel>Revenue Share Notes (optional)</FormLabel>
-                  <FormControl>
-                    <Textarea
-                      rows={3}
-                      placeholder='Add extra context for instructors about this revenue policy.'
-                      {...field}
-                    />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-          </FormSection>
+            </CardContent>
+          </section>
 
           {/* Coupon codes */}
           {/* <FormSection
@@ -684,7 +737,6 @@ export const CoursePricingForm = forwardRef<CourseFormRef, CourseFormProps>(
               Publish
             </Button>
           )} */}
-
 
           {showSubmitButton && (
             <div className='xxs:flex-col flex flex-col justify-center gap-4 pt-6 sm:flex-row sm:justify-end'>

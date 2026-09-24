@@ -1683,7 +1683,7 @@ function LessonContentForm({
                   <FormItem>
                     <FormLabel>Description</FormLabel>
                     <FormControl>
-                      <Input placeholder='Enter content description' {...field} />
+                      <SimpleEditor value={field.value} onChange={field.onChange} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>

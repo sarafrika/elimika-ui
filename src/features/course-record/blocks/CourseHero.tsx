@@ -1,4 +1,4 @@
-import { BookOpen, Clock, GraduationCap, Layers, Star, Users } from 'lucide-react';
+import { BookOpen, GraduationCap, Layers, Star, Users } from 'lucide-react';
 import type { CSSProperties, ReactNode } from 'react';
 
 import { AsyncSection } from '@/components/data/async-section';
@@ -182,7 +182,7 @@ export function CourseHero({
         </div>
 
         {/* Stat strip — 1px gaps on the border colour show through as dividers. */}
-        <div className='bg-border grid grid-cols-2 gap-px sm:grid-cols-4'>
+        <div className='bg-border grid grid-cols-2 gap-px sm:grid-cols-3'>
           <HeroStat icon={<BookOpen className='size-5' />} label='Lessons' value={numberOr(lessonCount)} />
           <HeroStat
             icon={<Layers className='size-5' />}
@@ -195,11 +195,11 @@ export function CourseHero({
                   : formatCount(contentItemCount)
             }
           />
-          <HeroStat
+          {/* <HeroStat
             icon={<Clock className='size-5' />}
             label='Total duration'
             value={duration ?? PLACEHOLDER}
-          />
+          /> */}
           <HeroStat
             icon={<GraduationCap className='size-5' />}
             label='Level'

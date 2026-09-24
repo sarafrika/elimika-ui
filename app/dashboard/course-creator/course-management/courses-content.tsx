@@ -422,6 +422,7 @@ export default function CourseCreatorCoursesContent() {
             </Button>
           ))}
         </div>
+
         <div className='grid grid-cols-2 gap-2 sm:flex sm:flex-wrap'>
           <Button
             variant='ghost'

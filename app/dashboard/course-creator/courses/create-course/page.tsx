@@ -1,24 +1,25 @@
 'use client';
 
-import { LessonContentViewerDialog } from '@/components/content-preview/LessonContentPreview';
 import { PageHeader } from '@/components/page-header';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { EmptyState } from '@/components/ui/empty-state';
 import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle } from '@/components/ui/sheet';
 import { Skeleton } from '@/components/ui/skeleton';
+import Spinner from '@/components/ui/spinner';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useCourseCreator } from '@/context/course-creator-context';
 import {
     deleteAssignmentMutation,
-    deleteLessonContentMutation,
     deleteQuizMutation,
     getCourseAssessmentsOptions,
+    getCourseAssessmentsQueryKey,
     getCourseByUuidOptions,
     getCourseByUuidQueryKey,
     getCourseLessonsOptions,
+    getCourseLessonsQueryKey,
     getLessonContentOptions,
-    getLessonContentQueryKey,
     publishCourseMutation,
     searchAssignmentsOptions,
     searchQuizzesOptions,
@@ -33,14 +34,13 @@ import type {
     PagedDtoLesson,
     Quiz,
 } from '@/services/client/types.gen';
-import { useMutation, useQueries, useQuery, useQueryClient } from '@tanstack/react-query';
+import { skipToken, useMutation, useQueries, useQuery, useQueryClient } from '@tanstack/react-query';
 import { ArrowLeft, ChevronDown, ChevronUp, Eye, Pencil, PlusCircle, Sparkles, Trash } from 'lucide-react';
 import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { toast } from 'sonner';
 import DeleteModal from '../../../../../components/custom-modals/delete-modal';
-import { useCourseLessonsWithContent } from '../../../../../hooks/use-courselessonwithcontent';
 import { stripHtml } from '../../../../../src/features/dashboard/courses/shared/_components/courses-data';
 import { AssignmentPreviewSheet } from '../../_components/AssignmentPreviewSheet';
 import CourseBrandingForm from '../../_components/course-branding-form';
@@ -49,20 +49,14 @@ import {
     type CourseFormRef,
 } from '../../_components/course-creation-form';
 import type { CourseCreationFormValues } from '../../_components/course-creation-types';
+import { CourseEvaluationSection } from '../../_components/course-evaluation-section';
 import CourseGradingSection from '../../_components/course-grading-section';
 import { CoursePricingForm } from '../../_components/course-pricing-form';
 import {
     getCoursePublishReadiness,
 } from '../../_components/course-publish-readiness';
 import CriteriaCreationForm from '../../_components/criteria-creation-form';
-import {
-    CONTENT_TYPES,
-    LessonContentDialog,
-    LessonDialog,
-    getContentTypeIcon,
-    type ContentType,
-    type LessonFormValues,
-} from '../../_components/lesson-management-form';
+import { LessonContentStack } from '../../_components/lesson-content-stack';
 import {
     CourseCreatorEmptyState,
     CourseCreatorLoadingState,
@@ -74,7 +68,6 @@ import {
     type Provider,
 } from '../../_components/training-requirement-section';
 import AssessmentCreation from './assessment-creation';
-import { Stepper } from './stepper';
 
 type SaveableCourseFormRef = {
     submit: () => Promise<boolean>;
@@ -105,7 +98,7 @@ function StepNav({
                 {previousLabel}
             </Button>
             <Button type='button' onClick={onNext} disabled={nextDisabled}>
-                {nextLoading ? 'Saving...' : nextLabel}
+                {nextLoading ? <><Spinner className='h-4 w-4' /> Saving...</> : nextLabel}
             </Button>
         </div>
     );
@@ -113,16 +106,6 @@ function StepNav({
 
 
 type CourseLesson = Lesson & { uuid: string };
-type InlineLessonContent = LessonContent & {
-    content_type_key?: string;
-};
-type LessonEditable = CourseLesson & {
-    learning_objectives?: string;
-    duration_hours?: number;
-    duration_minutes?: number;
-    resources?: Array<{ title?: string; url?: string }>;
-};
-
 type AssessmentMode = 'Quiz' | 'Assignment';
 
 type AssessmentListItem = {
@@ -138,7 +121,6 @@ type AssessmentListItem = {
     meta: string[];
 };
 
-const CONTENT_TYPE_OPTIONS: ContentType[] = ['TEXT', 'IMAGE', 'VIDEO', 'AUDIO', 'PDF'];
 
 const formatAssessmentDate = (value?: string | Date | null) => {
     if (!value) return 'No due date';
@@ -157,14 +139,7 @@ const getAssessmentStatusTone = (isActive?: boolean, isPublished?: boolean): Ass
     return 'secondary';
 };
 
-const STEP_DETAILS = [
-    { title: 'Course Setup', description: 'Create the course and define its training requirements.' },
-    { title: 'Lessons + Content', description: 'Create lessons, then add lesson content on the same page.' },
-    { title: 'Practice Activities', description: 'Attach activities to a specific lesson.' },
-    { title: 'Assessment Tasks', description: 'Open quiz and assignment editing in a sheet from the right.' },
-    { title: 'Assessment + Grading', description: 'Define the assessment structure and grading rules.' },
-    { title: 'Branding + Pricing', description: 'Finalize the course brand styling and the pricing details.' },
-];
+const COURSE_TABS = ['setup', 'lessons', 'practice', 'assignments', 'assessment', 'evaluation', 'branding', 'pricing'];
 
 const mapCourseValues = (course?: Course | null): Partial<CourseCreationFormValues> | undefined => {
     if (!course) return undefined;
@@ -198,20 +173,6 @@ const mapCourseValues = (course?: Course | null): Partial<CourseCreationFormValu
         instructor_share_percentage: course.instructor_share_percentage ?? 0,
         revenue_share_notes: course.revenue_share_notes || '',
         training_requirements: [],
-    };
-};
-
-const mapLessonValues = (lesson: LessonEditable | null): Partial<LessonFormValues> | undefined => {
-    if (!lesson) return undefined;
-
-    return {
-        number: lesson.lesson_number ?? 0,
-        title: lesson.title ?? '',
-        description: lesson.description ?? '',
-        objectives: lesson.learning_objectives ?? '',
-        duration_hours: lesson.duration_hours ?? 0,
-        duration_minutes: lesson.duration_minutes ?? 0,
-        uuid: lesson.uuid,
     };
 };
 
@@ -250,348 +211,12 @@ function SectionGuard({
 }
 
 
-function LessonContentStack({
-    courseId,
-    lessons,
-    lessonContentsMap,
-    isLoading,
-}: {
-    courseId: string | null;
-    lessons: CourseLesson[];
-    lessonContentsMap: Map<string, LessonContent[]>;
-    isLoading: boolean;
-}) {
-    const [lessonDialogOpen, setLessonDialogOpen] = useState(false);
-    const [editingLesson, setEditingLesson] = useState<LessonEditable | null>(null);
-    const [contentDialogOpen, setContentDialogOpen] = useState(false);
-    const [selectedLessonId, setSelectedLessonId] = useState<string | null>(null);
-    const [editingContent, setEditingContent] = useState<InlineLessonContent | null>(null);
-    const [selectedContentType, setSelectedContentType] = useState<ContentType | null>(null);
-    const [viewingContent, setViewingContent] = useState<InlineLessonContent | null>(null);
-    const [contentViewerOpen, setContentViewerOpen] = useState(false);
-
-    const {
-        contentTypeMap,
-    } = useCourseLessonsWithContent({ courseUuid: courseId as string });
-
-    // ---- delete confirmation state ----
-    const [deleteModal, setDeleteModal] = useState(false);
-    const [pendingDelete, setPendingDelete] = useState<{
-        lessonUuid: string;
-        content: LessonContent;
-    } | null>(null);
-
-    const openCreateLesson = () => {
-        setEditingLesson(null);
-        setLessonDialogOpen(true);
-    };
-
-    const openEditLesson = (lesson: LessonEditable) => {
-        setEditingLesson(lesson);
-        setLessonDialogOpen(true);
-    };
-
-    const closeLessonDialog = () => {
-        setLessonDialogOpen(false);
-        setEditingLesson(null);
-    };
-
-    const openCreateContent = (lessonId: string, contentType?: ContentType) => {
-        setSelectedLessonId(lessonId);
-        setEditingContent(null);
-        setSelectedContentType(contentType ?? null);
-        setContentDialogOpen(true);
-    };
-
-    // How many content blocks the currently-targeted lesson already has — used to
-    // seed display_order for a brand-new piece of content as (count + 1). Recomputed
-    // on every render off the live lessonContentsMap, so it stays correct even if the
-    // map refreshes while the sheet is open.
-    const nextDisplayOrder = selectedLessonId
-        ? (lessonContentsMap.get(selectedLessonId)?.length ?? 0) + 1
-        : 1;
-
-    const openEditContent = (lessonId: string, content: LessonContent) => {
-        setSelectedLessonId(lessonId);
-        setEditingContent(content as InlineLessonContent);
-        setSelectedContentType((content as InlineLessonContent).content_type_key?.toUpperCase() as ContentType | null);
-        setContentDialogOpen(true);
-    };
-
-    const openViewContent = (content: LessonContent) => {
-        setViewingContent(content as InlineLessonContent);
-        setContentViewerOpen(true);
-    };
-
-    const qc = useQueryClient();
-    const deleteContentMut = useMutation(deleteLessonContentMutation());
-    const onDeleteContent = (lessonUuid: string, content: LessonContent) => {
-        setPendingDelete({ lessonUuid, content });
-        setDeleteModal(true);
-    };
-    const confirmDelete = () => {
-        if (!pendingDelete || !courseId) return;
-
-        deleteContentMut.mutate(
-            {
-                path: {
-                    contentUuid: pendingDelete.content.uuid!,
-                    courseUuid: courseId,
-                    lessonUuid: pendingDelete.lessonUuid,
-                },
-            },
-            {
-                onSuccess: () => {
-                    toast.success("Content deleted");
-                    qc.invalidateQueries({
-                        queryKey: getLessonContentQueryKey({
-                            path: {
-                                courseUuid: courseId as string,
-                                lessonUuid: pendingDelete.lessonUuid,
-                            },
-                        }),
-                    });
-                    setDeleteModal(false);
-                    setPendingDelete(null);
-                },
-                onError: (error) => {
-                    toast.error(error.message || "Failed to delete content");
-                },
-            }
-        );
-    };
-
-    return (
-        <div className='space-y-4'>
-            <div className='flex items-center justify-between gap-3'>
-                <div className='space-y-1'>
-                    <p className='text-foreground text-sm font-medium'>Lessons</p>
-                    <p className='text-muted-foreground text-sm'>
-                        Create a lesson, then add content directly underneath it.
-                    </p>
-                </div>
-                <Button type='button' onClick={openCreateLesson}>
-                    <PlusCircle className="h-4 w-4" />  Add Lesson
-                </Button>
-            </div>
-
-            {isLoading ? (
-                <LoadingBlock />
-            ) : lessons.length === 0 ? (
-                <EmptyState
-                    title='No lessons yet'
-                    description='Create your first lesson to start adding content beneath it.'
-                />
-            ) : (
-                <div className='space-y-4'>
-                    {lessons
-                        .slice()
-                        .sort((a, b) => a.lesson_number - b.lesson_number)
-                        .map((lesson, index) => {
-                            const contents = lesson.uuid ? lessonContentsMap.get(lesson.uuid) ?? [] : [];
-
-                            return (
-                                <Card key={lesson.uuid} className='overflow-hidden rounded-2xl'>
-                                    <CardHeader className='flex flex-row items-start justify-between gap-4 border-b'>
-                                        <div className='space-y-1'>
-                                            <CardTitle className='text-base'>
-                                                Lesson {index + 1}: {lesson.title || 'Untitled lesson'}
-                                            </CardTitle>
-                                            <CardDescription>
-                                                {stripHtml(lesson.description) || 'Add engaging content for effective learning.'}
-                                            </CardDescription>
-                                        </div>
-
-                                        <Button
-                                            type='button'
-                                            variant='ghost'
-                                            onClick={() => openEditLesson(lesson as LessonEditable)}
-                                        >
-                                            <Pencil className='h-5 w-5' />
-                                        </Button>
-                                    </CardHeader>
-
-                                    <CardContent className='space-y-4 p-6'>
-                                        <div className='space-y-3'>
-                                            <div className='flex flex-row flex-wrap gap-3'>
-                                                {CONTENT_TYPE_OPTIONS.map(contentType => {
-                                                    const label = CONTENT_TYPES[contentType];
-                                                    const Icon = getContentTypeIcon(contentType);
-
-                                                    return (
-                                                        <Button
-                                                            key={contentType}
-                                                            type='button'
-                                                            variant='outline'
-                                                            className='justify-start gap-2 rounded p-4 text-left max-w-fit'
-                                                            onClick={() => openCreateContent(lesson.uuid, contentType)}
-                                                        >
-                                                            {Icon}
-                                                            <span>{label}</span>
-                                                        </Button>
-                                                    );
-                                                })}
-                                            </div>
-
-                                            <div className='flex items-center justify-between gap-3'>
-                                                <p className='text-foreground text-sm font-medium'>Lesson Content</p>
-                                            </div>
-
-                                            {contents.length === 0 ? (
-                                                <div className='border-border text-muted-foreground rounded-xl border border-dashed px-4 py-8 text-sm'>
-                                                    No content added yet. Choose a content type above to get started.
-                                                </div>
-                                            ) : (
-                                                <div className='space-y-3'>
-                                                    {contents.map(content => (
-                                                        <div
-                                                            key={content.uuid}
-                                                            className='bg-muted/40 border-border flex items-start justify-between gap-4 rounded-xl border p-4'
-                                                        >
-                                                            <div className='space-y-1'>
-                                                                <p className='text-sm font-medium'>{content.title || 'Untitled content'}</p>
-                                                                <p className='text-muted-foreground text-xs'>
-                                                                    {content.content_text
-                                                                        ? 'Text content'
-                                                                        : content.file_url
-                                                                            ? 'File or media content'
-                                                                            : 'Lesson content'}
-                                                                </p>
-                                                            </div>
-
-                                                            <div className='flex flex-row items-center gap-2' >
-                                                                <Button
-                                                                    type='button'
-                                                                    variant='ghost'
-                                                                    size='sm'
-                                                                    onClick={() => openViewContent(content)}
-                                                                >
-                                                                    View
-                                                                </Button>
-                                                                <Button
-                                                                    type='button'
-                                                                    variant='ghost'
-                                                                    size='sm'
-                                                                    onClick={() => openEditContent(lesson.uuid, content)}
-                                                                >
-                                                                    Edit
-                                                                </Button>
-                                                                <Button
-                                                                    type='button'
-                                                                    variant='destructive'
-                                                                    size='sm'
-                                                                    onClick={() => onDeleteContent(lesson.uuid, content)}
-                                                                >
-                                                                    <Trash />
-                                                                </Button>
-                                                            </div>
-                                                        </div>
-                                                    ))}
-                                                </div>
-                                            )}
-                                        </div>
-                                    </CardContent>
-                                </Card>
-                            );
-                        })}
-                </div>
-            )}
-
-            {courseId ? (
-                <>
-                    <LessonDialog
-                        isOpen={lessonDialogOpen}
-                        onOpenChange={open => {
-                            if (!open) {
-                                closeLessonDialog();
-                            } else {
-                                setLessonDialogOpen(true);
-                            }
-                        }}
-                        courseId={courseId}
-                        lessonId={editingLesson?.uuid}
-                        initialValues={mapLessonValues(editingLesson)}
-                        onCancel={closeLessonDialog}
-                    />
-
-                    <LessonContentDialog
-                        isOpen={contentDialogOpen}
-                        onOpenChange={setContentDialogOpen}
-                        courseId={courseId}
-                        lessonId={selectedLessonId ?? ''}
-                        contentId={editingContent?.uuid ?? ''}
-                        onCancel={() => {
-                            setContentDialogOpen(false);
-                            setSelectedLessonId(null);
-                            setEditingContent(null);
-                            setSelectedContentType(null);
-                        }}
-                        initialValues={
-                            editingContent
-                                ? ({
-                                    ...editingContent,
-                                    content_type: contentTypeMap[editingContent.content_type_uuid ?? ''] ?? '',
-                                    content_type_uuid: editingContent.content_type_uuid ?? '',
-                                    content_category: editingContent.content_category ?? '',
-                                    title: editingContent.title ?? '',
-                                    description: editingContent.description ?? '',
-                                    content_text: editingContent.content_text ?? '',
-                                    file_url: editingContent.file_url ?? '',
-                                    display_order: editingContent.display_order ?? 1,
-                                    uuid: editingContent.uuid,
-                                } as never)
-                                : selectedContentType
-                                    ? ({
-                                        content_type: selectedContentType,
-                                        title: selectedContentType === 'TEXT' ? 'Text Content' : '',
-                                        description: '',
-                                        content_type_uuid: '',
-                                        content_category: '',
-                                        content_text: '',
-                                        // Auto-filled from the lesson's current content count, not hardcoded.
-                                        display_order: nextDisplayOrder,
-                                    } as never)
-                                    : undefined
-                        }
-                    />
-
-                    <LessonContentViewerDialog
-                        open={contentViewerOpen}
-                        onOpenChange={open => {
-                            setContentViewerOpen(open);
-                            if (!open) {
-                                setViewingContent(null);
-                            }
-                        }}
-                        content={viewingContent}
-                        contentTypeMap={contentTypeMap}
-                        contentType={viewingContent?.content_type_key ?? null}
-                    />
-
-                    <DeleteModal
-                        open={deleteModal}
-                        setOpen={(open: boolean) => {
-                            setDeleteModal(open);
-                            if (!open) setPendingDelete(null);
-                        }}
-                        title='Delete Content'
-                        description={`Are you sure you want to delete "${pendingDelete?.content.title || 'this content'}"? This action cannot be undone.`}
-                        onConfirm={confirmDelete}
-                        isLoading={deleteContentMut.isPending}
-                        confirmText='Delete Content'
-                    />
-                </>
-            ) : null}
-        </div>
-    );
-}
-
 export default function CreateCoursePage() {
     const creator = useCourseCreator();
     const queryClient = useQueryClient();
     const [step, setStep] = useState(0);
     const [createdCourseId, setCreatedCourseId] = useState<string | null>(null);
-    const [isSavingBrandingPricing, setIsSavingBrandingPricing] = useState(false);
+    const [isSavingSection, setIsSavingSection] = useState(false);
     const [requirementDrafts, setRequirementDrafts] = useState(createEmptyDraftsByProvider());
     const [activeRequirementProvider, setActiveRequirementProvider] =
         useState<Provider | null>(null);
@@ -610,15 +235,23 @@ export default function CreateCoursePage() {
     const searchParams = useSearchParams();
     const queryCourseId = searchParams.get('id');
 
-    const resolvedCourseId = queryCourseId ?? createdCourseId;
+    const resolvedCourseId = queryCourseId || createdCourseId;
+
+    const navigateToStep = useCallback((nextStep: number) => {
+        if (nextStep === 1 && !resolvedCourseId) {
+            toast.error('Save the course details to add lessons.');
+            return;
+        }
+        setStep(nextStep);
+    }, [resolvedCourseId]);
 
     const courseQuery = resolvedCourseId
         ? getCourseByUuidOptions({ path: { uuid: resolvedCourseId } })
         : null;
     const { data: courseResponse, isLoading: courseLoading } = useQuery({
         ...(courseQuery ?? {
-            queryKey: ['create-course', 'course-placeholder'],
-            queryFn: async () => null,
+            queryKey: getCourseByUuidQueryKey({ path: { uuid: resolvedCourseId ?? '' } }),
+            queryFn: skipToken,
         }),
         enabled: Boolean(resolvedCourseId),
         staleTime: 60_000,
@@ -628,21 +261,19 @@ export default function CreateCoursePage() {
     const courseInitialValues = useMemo(() => mapCourseValues(course), [course]);
     const courseApiResponse = courseResponse as ApiResponseCourse | undefined;
 
-    const handleSaveBrandingAndPricing = useCallback(async () => {
-        if (isSavingBrandingPricing) return;
+    const handleSaveSection = useCallback(async (section: 'branding' | 'pricing') => {
+        if (isSavingSection) return;
 
-        setIsSavingBrandingPricing(true);
+        setIsSavingSection(true);
 
         try {
-            const brandingSaved = await brandingFormRef.current?.submit();
-            if (brandingSaved === false) return;
-
-            const pricingSaved = await pricingFormRef.current?.submit();
-            if (pricingSaved === false) return;
+            const formRef = section === 'branding' ? brandingFormRef : pricingFormRef;
+            const saved = await formRef.current?.submit();
+            if (saved && section === 'branding') setStep(7);
         } finally {
-            setIsSavingBrandingPricing(false);
+            setIsSavingSection(false);
         }
-    }, [isSavingBrandingPricing]);
+    }, [isSavingSection]);
 
     const lessonsQuery = resolvedCourseId
         ? getCourseLessonsOptions({
@@ -650,10 +281,10 @@ export default function CreateCoursePage() {
             query: { pageable: { page: 0, size: 100 } },
         })
         : null;
-    const { data: lessonsResponse, isLoading: lessonsLoading } = useQuery({
+    const { data: lessonsResponse, isLoading: lessonsLoading, isError: lessonsError, refetch: refetchLessons } = useQuery({
         ...(lessonsQuery ?? {
-            queryKey: ['create-course', 'lessons-placeholder'],
-            queryFn: async () => null,
+            queryKey: getCourseLessonsQueryKey({ path: { courseUuid: resolvedCourseId ?? '' }, query: { pageable: { page: 0, size: 100 } } }),
+            queryFn: skipToken,
         }),
         enabled: Boolean(resolvedCourseId),
         staleTime: 60_000,
@@ -676,8 +307,8 @@ export default function CreateCoursePage() {
         : null;
     const { data: courseAssessmentsResponse } = useQuery({
         ...(courseAssessmentsQuery ?? {
-            queryKey: ['create-course', 'assessments-placeholder'],
-            queryFn: async () => null,
+            queryKey: getCourseAssessmentsQueryKey({ path: { courseUuid: resolvedCourseId ?? '' }, query: { pageable: {} } }),
+            queryFn: skipToken,
         }),
         enabled: Boolean(resolvedCourseId),
         staleTime: 60_000,
@@ -691,9 +322,9 @@ export default function CreateCoursePage() {
     );
 
     const lessonContentQueries = useQueries({
-        queries: lessonsWithUuid.map(lesson => {
+        queries: resolvedCourseId ? lessonsWithUuid.map(lesson => {
             const options = getLessonContentOptions({
-                path: { courseUuid: resolvedCourseId ?? '', lessonUuid: lesson.uuid },
+                path: { courseUuid: resolvedCourseId, lessonUuid: lesson.uuid },
             });
 
             return {
@@ -701,14 +332,15 @@ export default function CreateCoursePage() {
                 enabled: Boolean(resolvedCourseId && lesson.uuid),
                 staleTime: 60_000,
             };
-        }),
+        }) : [],
     });
 
     const lessonContentMap = useMemo(() => {
         const map = new Map<string, LessonContent[]>();
 
         lessonsWithUuid.forEach((lesson, index) => {
-            const contents = (lessonContentQueries[index]?.data?.data ?? []) as LessonContent[];
+            const response = lessonContentQueries[index]?.data;
+            const contents = response?.error || response?.success === false ? [] : response?.data ?? [];
             map.set(lesson.uuid, contents);
         });
 
@@ -1048,7 +680,7 @@ export default function CreateCoursePage() {
     }
 
     return (
-        <main className='mx-auto w-full space-y-6 px-4 py-6 lg:px-6'>
+        <main className='mx-auto w-full space-y-4 px-4 py-6 lg:px-6'>
             <div className='flex flex-row items-center justify-between' >
                 <Link
                     href='/dashboard/course-creator/course-management'
@@ -1082,7 +714,7 @@ export default function CreateCoursePage() {
             </div>
 
             <PageHeader
-                eyebrow='Program Creator'
+                eyebrow=''
                 title={resolvedCourseId ? course?.name! : 'Create New Course'}
                 description={
                     resolvedCourseId
@@ -1094,17 +726,33 @@ export default function CreateCoursePage() {
                 }
             />
 
-            <div className='space-y-6'>
-                <Stepper step={step} onStep={setStep} />
+            <Tabs
+                value={COURSE_TABS[step]}
+                onValueChange={value => {
+                    const nextStep = COURSE_TABS.indexOf(value);
+                    if (nextStep >= 0) navigateToStep(nextStep);
+                }}
+                className='gap-6'
+            >
+                <TabsList className='flex h-auto w-full flex-wrap justify-start'>
+                    <TabsTrigger className='max-w-fit px-4' value='setup'>Course set-up</TabsTrigger>
+                    <TabsTrigger className='max-w-fit px-4' value='lessons'>Lesson content</TabsTrigger>
+                    <TabsTrigger className='max-w-fit px-4' value='practice'>Practice</TabsTrigger>
+                    <TabsTrigger className='max-w-fit px-4' value='assignments'>Assignments</TabsTrigger>
+                    <TabsTrigger className='max-w-fit px-4' value='assessment'>Assessment</TabsTrigger>
+                    <TabsTrigger className='max-w-fit px-4' value='evaluation'>Evaluation</TabsTrigger>
+                    <TabsTrigger className='max-w-fit px-4' value='branding'>Branding</TabsTrigger>
+                    <TabsTrigger className='max-w-fit px-4' value='pricing'>Pricing</TabsTrigger>
+                </TabsList>
 
-                <Card className='min-h-[calc(100vh-18rem)] rounded-2xl'>
-                    <CardContent className='flex flex-col gap-10'>
+                <section className='min-h-[calc(100vh-18rem)] rounded-2xl border-0 p-0 px-0'>
+                    <section className='flex flex-col gap-10'>
                         <div className='grow'>
-                            {step === 0 ? (
-                                resolvedCourseId && courseLoading ? (
+                            <TabsContent value='setup'>
+                                {resolvedCourseId && courseLoading ? (
                                     <CourseCreatorLoadingState headline='Loading your course details…' />
                                 ) : (
-                                    <div className='space-y-6'>
+                                    <Card className='space-y-6'>
                                         <CourseCreationForm
                                             ref={courseFormRef}
                                             showSubmitButton
@@ -1128,42 +776,47 @@ export default function CreateCoursePage() {
                                             previousLabel='Previous step'
                                             nextLabel='Next step'
                                             previousDisabled
-                                            onNext={() => setStep(step + 1)}
+                                            onNext={() => navigateToStep(step + 1)}
                                         />
-                                    </div>
-                                )
-                            ) : step === 1 ? (
+                                    </Card>
+                                )}
+                            </TabsContent>
+
+                            <TabsContent value='lessons'>
                                 <SectionGuard
                                     isReady={canRenderCourseSections}
                                     isLoading={Boolean(resolvedCourseId) && courseLoading}
                                     title='Save the course first'
                                     description='Lesson creation becomes available once the course has been saved.'
                                 >
-                                    <div className='space-y-6'>
+                                    <Card className='p-6 space-y-6'>
                                         <LessonContentStack
                                             courseId={resolvedCourseId}
                                             lessons={lessonsWithUuid}
                                             lessonContentsMap={lessonContentMap}
-                                            isLoading={Boolean(resolvedCourseId) && courseLoading}
+                                            isLoading={lessonsLoading || lessonContentQueries.some(query => query.isPending)}
+                                            loadError={lessonContentQueries.some(query => (query.isError && !query.data) || !!query.data?.error || query.data?.success === false)}
+                                            onRetry={() => { lessonContentQueries.forEach(query => void query.refetch()); }}
                                         />
 
                                         <StepNav
                                             previousLabel='Previous step'
                                             nextLabel='Next step'
                                             onPrevious={() => setStep(0)}
-                                            onNext={() => setStep(step + 1)}
+                                            onNext={() => navigateToStep(step + 1)}
                                         />
-                                    </div>
+                                    </Card>
                                 </SectionGuard>
-                            ) : step === 2 ? (
+                            </TabsContent>
+
+                            <TabsContent value='practice'>
                                 <SectionGuard
                                     isReady={canRenderCourseSections && lessonsWithUuid.length > 0}
                                     isLoading={Boolean(resolvedCourseId) && lessonsLoading}
                                     title='Add lessons first'
                                     description='Practice activities are available after at least one lesson exists.'
                                 >
-                                    <div className='space-y-6'>
-
+                                    <Card className='space-y-6 p-6'>
                                         <div>
                                             <p className='text-[15px] font-semibold'>Class Practice Activities</p>
                                             <p className='text-muted-foreground text-xs'>
@@ -1207,19 +860,21 @@ export default function CreateCoursePage() {
                                         <StepNav
                                             previousLabel='Previous step'
                                             nextLabel='Next step'
-                                            onPrevious={() => setStep(1)}
-                                            onNext={() => setStep(step + 1)}
+                                            onPrevious={() => navigateToStep(1)}
+                                            onNext={() => navigateToStep(step + 1)}
                                         />
-                                    </div>
+                                    </Card>
                                 </SectionGuard>
-                            ) : step === 3 ? (
+                            </TabsContent>
+
+                            <TabsContent value='assignments'>
                                 <SectionGuard
                                     isReady={canRenderCourseSections && lessonsWithUuid.length > 0}
                                     isLoading={Boolean(resolvedCourseId) && lessonsLoading}
                                     title='Add lessons first'
                                     description='Assessment tasks need at least one lesson before they can be created.'
                                 >
-                                    <div className='space-y-6'>
+                                    <Card className='space-y-6 p-6'>
                                         <div className='space-y-1'>
                                             <p className='text-foreground text-md font-bold'>Assessment builder</p>
                                             <p className='text-muted-foreground text-sm'>
@@ -1515,14 +1170,16 @@ export default function CreateCoursePage() {
                                             onPrevious={() => setStep(2)}
                                             onNext={() => setStep(4)}
                                         />
-                                    </div>
+                                    </Card>
                                 </SectionGuard>
-                            ) : step === 4 ? (
+                            </TabsContent>
+
+                            <TabsContent value='assessment'>
                                 <SectionGuard
                                     isReady={canRenderCourseSections}
                                     isLoading={Boolean(resolvedCourseId) && courseLoading}
                                     title='Save the course first'
-                                    description='Assessment structure and grading become available after the course exists.'
+                                    description='Assessment structure becomes available after the course exists.'
                                 >
                                     <div className='space-y-10'>
                                         <CriteriaCreationForm course={courseApiResponse} />
@@ -1535,22 +1192,72 @@ export default function CreateCoursePage() {
                                         onNext={() => setStep(5)}
                                     />
                                 </SectionGuard>
-                            ) : (
+                            </TabsContent>
+
+                            <TabsContent value='evaluation' className='m-0 flex flex-col gap-4'>
                                 <SectionGuard
                                     isReady={canRenderCourseSections}
                                     isLoading={Boolean(resolvedCourseId) && courseLoading}
                                     title='Save the course first'
-                                    description='Branding and pricing are available after the course is created.'
+                                    description='Evaluation criteria become available after the course exists.'
                                 >
-                                    <div className='space-y-10 max-w-5xl'>
+                                    {resolvedCourseId && (
+                                        <CourseEvaluationSection
+                                            key={resolvedCourseId}
+                                            courseUuid={resolvedCourseId}
+                                            courseCreatorUuid={creator.profile.uuid}
+                                            associatedBy={creator.data.userUuid ?? undefined}
+                                            lessons={lessonsWithUuid}
+                                            lessonsLoading={lessonsLoading}
+                                            lessonsError={lessonsError || Boolean(lessonsResponse?.error) || lessonsResponse?.success === false}
+                                            onRetryLessons={() => void refetchLessons()}
+                                        />
+                                    )}
+                                    <StepNav
+                                        previousLabel='Previous step'
+                                        nextLabel='Next step'
+                                        onPrevious={() => setStep(4)}
+                                        onNext={() => setStep(6)}
+                                    />
+                                </SectionGuard>
+                            </TabsContent>
+
+                            <TabsContent value='branding'>
+                                <SectionGuard
+                                    isReady={canRenderCourseSections}
+                                    isLoading={Boolean(resolvedCourseId) && courseLoading}
+                                    title='Save the course first'
+                                    description='Branding is available after the course is created.'
+                                >
+                                    <Card className='max-w-5xl p-6'>
                                         <CourseBrandingForm
                                             ref={brandingFormRef}
                                             showSubmitButton={false}
                                             courseId={resolvedCourseId || undefined}
                                             editingCourseId={resolvedCourseId || undefined}
                                             initialValues={courseInitialValues}
-                                            nextStepAfterSave={5}
+                                            nextStepAfterSave={7}
                                         />
+                                    </Card>
+                                    <StepNav
+                                        previousLabel='Previous step'
+                                        nextLabel='Save and continue'
+                                        onPrevious={() => setStep(5)}
+                                        onNext={() => void handleSaveSection('branding')}
+                                        nextDisabled={isSavingSection}
+                                        nextLoading={isSavingSection}
+                                    />
+                                </SectionGuard>
+                            </TabsContent>
+
+                            <TabsContent value='pricing'>
+                                <SectionGuard
+                                    isReady={canRenderCourseSections}
+                                    isLoading={Boolean(resolvedCourseId) && courseLoading}
+                                    title='Save the course first'
+                                    description='Pricing is available after the course is created.'
+                                >
+                                    <Card className='max-w-5xl p-6'>
                                         <CoursePricingForm
                                             ref={pricingFormRef}
                                             showSubmitButton={false}
@@ -1558,21 +1265,21 @@ export default function CreateCoursePage() {
                                             editingCourseId={resolvedCourseId || undefined}
                                             initialValues={courseInitialValues}
                                         />
-                                    </div>
+                                    </Card>
                                     <StepNav
                                         previousLabel='Previous step'
                                         nextLabel='Save and finish'
-                                        onPrevious={() => setStep(4)}
-                                        onNext={() => void handleSaveBrandingAndPricing()}
-                                        nextDisabled={isSavingBrandingPricing}
-                                        nextLoading={isSavingBrandingPricing}
+                                        onPrevious={() => setStep(6)}
+                                        onNext={() => void handleSaveSection('pricing')}
+                                        nextDisabled={isSavingSection}
+                                        nextLoading={isSavingSection}
                                     />
                                 </SectionGuard>
-                            )}
+                            </TabsContent>
                         </div>
-                    </CardContent>
-                </Card>
-            </div>
+                    </section>
+                </section>
+            </Tabs>
 
             <DeleteModal
                 open={Boolean(assessmentToDelete)}

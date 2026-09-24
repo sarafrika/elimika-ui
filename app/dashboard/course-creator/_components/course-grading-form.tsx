@@ -3,8 +3,6 @@
 import { useQuery } from '@tanstack/react-query';
 import { useEffect, useMemo, useState } from 'react';
 import { Input } from '../../../../components/ui/input';
-import { Label } from '../../../../components/ui/label';
-import { Switch } from '../../../../components/ui/switch';
 import { getCourseAssessmentsOptions } from '../../../../services/client/@tanstack/react-query.gen';
 import type { CourseAssessment } from '../../../../services/client/types.gen';
 
@@ -181,51 +179,19 @@ export default function CourseGradingForm({ courseUuid }: CourseGradingFormProps
           </div>
         </div> */}
 
-        <div className='bg-card rounded-xl border shadow-sm'>
-          <div className='border-b px-6 py-5'>
-            <h3 className='text-foreground text-base font-bold'>Pass Mark</h3>
-            <p className='text-muted-foreground mt-0.5 text-sm'>
-              Choose whether the pass mark should be calculated automatically or entered manually.
-            </p>
-          </div>
-
-          <div className='space-y-5 px-6 py-5'>
-            <div className='bg-muted/40 flex items-center justify-between rounded-xl border p-4'>
-              <div className='space-y-1'>
-                <p className='text-foreground text-sm font-medium'>Calculated pass mark</p>
-                <p className='text-muted-foreground text-xs'>
-                  Uses 50% of the total allocated grading weight.
-                </p>
-              </div>
-              <Switch checked={useCalculatedPassMark} onCheckedChange={setUseCalculatedPassMark} />
-            </div>
-
-            <div className='space-y-1.5'>
-              <Label htmlFor='course-pass-mark'>
-                {useCalculatedPassMark ? 'Calculated Pass Mark (%)' : 'Manual Pass Mark (%)'}
-              </Label>
-              <Input
-                id='course-pass-mark'
-                type='number'
-                min={0}
-                max={100}
-                value={resolvedPassMark}
-                onChange={event => setManualPassMark(event.target.value)}
-                disabled={useCalculatedPassMark}
-                placeholder='e.g. 50'
-              />
-            </div>
-
-            <div className='bg-muted/40 rounded-lg border px-4 py-3'>
-              <p className='text-foreground text-sm font-semibold'>
-                Learners must score {resolvedPassMark || 0}% to pass this course.
-              </p>
-              <p className='text-muted-foreground mt-1 text-xs'>
-                {useCalculatedPassMark
-                  ? `Calculated from ${DEFAULT_AUTO_PASS_RATE}% of the current total grading weight (${totalWeight}%).`
-                  : 'Manual pass mark is enabled. Enter the minimum score learners must achieve.'}
-              </p>
-            </div>
+        <div className='bg-card flex flex-col rounded-xl border shadow-sm px-6 py-5 gap-3'>
+          <h3 className='text-foreground text-sm font-bold'>Course Pass Mark (%)</h3>
+          <div className='space-y-1.5'>
+            <Input
+              id='course-pass-mark'
+              type='number'
+              min={0}
+              max={100}
+              value={resolvedPassMark}
+              onChange={event => setManualPassMark(event.target.value)}
+              disabled={useCalculatedPassMark}
+              placeholder='e.g. 50'
+            />
           </div>
         </div>
       </div>
