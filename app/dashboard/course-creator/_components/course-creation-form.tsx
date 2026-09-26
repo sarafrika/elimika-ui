@@ -233,6 +233,7 @@ export const CourseCreationForm = forwardRef<CourseFormRef, CourseFormProps>(
       resolver: zodResolver(courseCreationSchema),
       defaultValues: {
         name: '',
+        course_code: '',
         description: '',
         is_free: false,
         objectives: '',
@@ -606,7 +607,7 @@ export const CourseCreationForm = forwardRef<CourseFormRef, CourseFormProps>(
         <SavingOverlay stage={saveStage} />
 
         <Form {...form}>
-          <form onSubmit={form.handleSubmit(onSubmit, onError)} className='m-0 flex flex-col gap-6'>
+          <form onSubmit={form.handleSubmit(onSubmit, onError)} className='m-0 flex flex-col gap-6 pt-2'>
             <section className='space-y-4'>
               <CardHeader>
                 <CardTitle className='text-base'>Course details</CardTitle>
@@ -621,10 +622,58 @@ export const CourseCreationForm = forwardRef<CourseFormRef, CourseFormProps>(
                   name='name'
                   render={({ field }) => (
                     <FormItem className='grid gap-1.5 sm:col-span-2'>
-                      <FormLabel>Course name</FormLabel>
+                      <CardTitle className='text-base'>Course name</CardTitle>
                       <FormControl>
                         <Input placeholder='e.g. Data Analysis with Spreadsheets' {...field} />
                       </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                <FormField
+                  control={form.control}
+                  name='course_code'
+                  render={({ field }) => (
+                    <FormItem className='grid gap-1.5'>
+                      <FormLabel className='text-base font-semibold'>
+                        Course code (optional)
+                      </FormLabel>
+                      <FormControl>
+                        <Input placeholder='e.g. DATA101' {...field} value={field.value ?? ''} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                <FormField
+                  control={form.control}
+                  name='difficulty'
+                  render={({ field }) => (
+                    <FormItem className='grid gap-1.5'>
+                      <CardTitle className='text-base'>Difficulty level</CardTitle>
+                      <Select onValueChange={field.onChange} value={field.value ?? ''}>
+                        <FormControl className='w-full'>
+                          <SelectTrigger>
+                            <SelectValue placeholder='Select difficulty level' />
+                          </SelectTrigger>
+                        </FormControl>
+                        {difficultyIsLoading ? (
+                          <SelectContent>
+                            <Spinner />
+                          </SelectContent>
+                        ) : (
+                          <SelectContent>
+                            {Array.isArray(difficultyLevels) &&
+                              difficultyLevels.map((level: DifficultyLevelItem) => (
+                                <SelectItem key={level.uuid} value={level.uuid as string}>
+                                  {level.name}
+                                </SelectItem>
+                              ))}
+                          </SelectContent>
+                        )}
+                      </Select>
                       <FormMessage />
                     </FormItem>
                   )}
@@ -634,7 +683,7 @@ export const CourseCreationForm = forwardRef<CourseFormRef, CourseFormProps>(
                   <div className='grid gap-4 sm:grid-cols-2'>
                     {/* Category */}
                     <div className='space-y-1.5'>
-                      <Label htmlFor='parent-category-select'>Category</Label>
+                      <CardTitle className='text-base'>Category</CardTitle>
 
                       <Select
                         value={selectedParentCategoryUuid}
@@ -669,7 +718,7 @@ export const CourseCreationForm = forwardRef<CourseFormRef, CourseFormProps>(
 
                     {/* Subject + Add Subject */}
                     <div className='space-y-1.5'>
-                      <Label htmlFor='subject-select'>Subject / Subcategory</Label>
+                      <CardTitle className='text-base'>Subject/Subcategory</CardTitle>
 
                       <div className='flex items-center gap-2'>
                         <div className='min-w-0 flex-1'>
@@ -889,45 +938,15 @@ export const CourseCreationForm = forwardRef<CourseFormRef, CourseFormProps>(
                     </div>
                   )}
                 </div>
-                {/* // add an optional course code field here, on the same row as difficulty level */}
-                <FormField
-                  control={form.control}
-                  name='difficulty'
-                  render={({ field }) => (
-                    <FormItem className='grid gap-1.5'>
-                      <FormLabel>Difficulty level</FormLabel>
-                      <Select onValueChange={field.onChange} value={field.value ?? ''}>
-                        <FormControl className='w-full'>
-                          <SelectTrigger>
-                            <SelectValue placeholder='Select difficulty level' />
-                          </SelectTrigger>
-                        </FormControl>
-                        {difficultyIsLoading ? (
-                          <SelectContent>
-                            <Spinner />
-                          </SelectContent>
-                        ) : (
-                          <SelectContent>
-                            {Array.isArray(difficultyLevels) &&
-                              difficultyLevels.map((level: DifficultyLevelItem) => (
-                                <SelectItem key={level.uuid} value={level.uuid as string}>
-                                  {level.name}
-                                </SelectItem>
-                              ))}
-                          </SelectContent>
-                        )}
-                      </Select>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
+
+
 
                 <FormField
                   control={form.control}
                   name='description'
                   render={({ field }) => (
                     <FormItem className='grid gap-1.5 sm:col-span-2'>
-                      <FormLabel>Course description</FormLabel>
+                      <CardTitle className='text-base'>Course description</CardTitle>
                       <FormControl>
                         {/<[a-z][\s\S]*>/i.test(field.value ?? '') ? (
                           <SimpleEditor value={field.value} onChange={field.onChange} />
@@ -948,7 +967,7 @@ export const CourseCreationForm = forwardRef<CourseFormRef, CourseFormProps>(
                   name='prerequisites'
                   render={({ field }) => (
                     <FormItem className='grid gap-1.5 sm:col-span-2'>
-                      <FormLabel>Pre-requisites</FormLabel>
+                      <CardTitle className='text-base'>Pre-requisites</CardTitle>
                       <FormControl>
                         {/<[a-z][\s\S]*>/i.test(field.value ?? '') ? (
                           <SimpleEditor value={field.value} onChange={field.onChange} />

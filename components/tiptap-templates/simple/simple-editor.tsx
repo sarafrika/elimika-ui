@@ -17,7 +17,6 @@ import { StarterKit } from '@tiptap/starter-kit';
 
 // --- UI Primitives ---
 import { Button } from '@/components/tiptap-ui-primitive/button';
-import { Spacer } from '@/components/tiptap-ui-primitive/spacer';
 import { Toolbar, ToolbarGroup, ToolbarSeparator } from '@/components/tiptap-ui-primitive/toolbar';
 
 // --- Tiptap Node ---
@@ -76,8 +75,6 @@ const MainToolbarContent = ({
 }) => {
   return (
     <>
-      <Spacer />
-
       <ToolbarGroup>
         <UndoRedoButton action='undo' />
         <UndoRedoButton action='redo' />
@@ -129,8 +126,6 @@ const MainToolbarContent = ({
       <ToolbarGroup>
         <ImageUploadButton text='Add' />
       </ToolbarGroup>
-
-      <Spacer />
 
       {isMobile && <ToolbarSeparator />}
 
@@ -251,7 +246,7 @@ export function SimpleEditor({
     <div className='simple-editor-wrapper' data-readonly={isEditable ? undefined : true}>
       <EditorContext.Provider value={{ editor }}>
         {showToolbar ? (
-          <Toolbar ref={toolbarRef}>
+          <Toolbar ref={toolbarRef} className='justify-start'>
             {mobileView === 'main' ? (
               <MainToolbarContent
                 onHighlighterClick={() => setMobileView('highlighter')}
