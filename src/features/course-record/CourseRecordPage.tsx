@@ -81,6 +81,7 @@ import {
   ActionsCard,
   ActivityTab,
   ApplicationStatusPanel,
+  AssessmentTab,
   ClassesTab,
   CommercialsTab,
   COURSE_DEFAULT_CURRENCY,
@@ -107,7 +108,7 @@ import {
   OwnerDecisionsPanel,
   ProgressStrip,
   ReviewsTab,
-  summarise,
+  summarise
 } from './blocks';
 import {
   type ClassDefinition,
@@ -217,7 +218,6 @@ export function CourseRecordPage({
   const course = record.course.data;
   const content = record.content.data;
   const stats = record.stats.data;
-
   /*
    * The dashboard the viewer is standing on, read off the URL rather than the
    * domain context: the record only ever mounts on a role-scoped route, and the
@@ -605,6 +605,10 @@ export function CourseRecordPage({
             onReadItem={readItem}
             {...asyncProps(record.content)}
           />
+        );
+      case 'assessment':
+        return (
+          <AssessmentTab assessments={assessments} {...asyncProps(record.assessments)} />
         );
       case 'delivery':
         return (

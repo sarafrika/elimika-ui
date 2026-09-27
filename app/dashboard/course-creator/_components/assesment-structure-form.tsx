@@ -581,7 +581,7 @@ function AssessmentSheet({
             </div>
 
             {/* Rubric */}
-            <div className='flex flex-col gap-1.5'>
+            <div className='hidden flex-col gap-1.5'>
               <Label className='flex items-center gap-1 text-sm font-medium'>
                 Rubric
 
@@ -703,7 +703,7 @@ function AssessmentSheet({
             </div>
 
             {/* Toggles */}
-            <div className='bg-muted/40 flex flex-col gap-4 rounded-xl border p-4'>
+            <div className='bg-muted/40 mt-4 flex flex-col gap-4 rounded-xl border p-4'>
               {/* Required Assessment */}
               <div className='flex items-center justify-between'>
                 <div>

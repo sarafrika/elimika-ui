@@ -159,7 +159,7 @@ export function useCourseRecord({
    * the same statement. Before the content response lands, `access` is
    * `prospect` and these stay idle — which is the correct default.
    */
-  const canReadContentItems = capability.content.level === 'full';
+  const seesAssessments = capability.tabs.includes('assessment');
   const seesScopedFigures = capability.kpi?.set === 'scoped';
   const seesCommercials = capability.showSales;
   const seesOwnApplication = capability.rail.includes('applicationStatus');
@@ -195,7 +195,7 @@ export function useCourseRecord({
       path: { courseUuid: courseUuid ?? '' },
       query: { pageable: { page: 0, size: PAGE_SIZE } },
     }),
-    enabled: on && canReadContentItems,
+    enabled: on && seesAssessments,
     staleTime: STALE_TIMES.entity,
   });
 

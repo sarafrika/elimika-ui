@@ -58,6 +58,7 @@ export {
   type ApplicationStatusPanelProps,
   ApplicationStatusPanelSkeleton,
 } from './ApplicationStatusPanel';
+export { AssessmentTab, type AssessmentTabProps } from './AssessmentTab';
 export {
   ClassesTab,
   type ClassesTabProps,

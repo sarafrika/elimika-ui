@@ -29,6 +29,7 @@ export const trainingRequirementSchema = z.object({
 
 export const courseCreationSchema = z.object({
   name: z.string().min(1, 'Course name is required'),
+  course_code: z.string().trim().optional(),
   description: z.string().min(10, 'Course description is required'),
   objectives: z
     .string()

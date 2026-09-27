@@ -24,13 +24,11 @@ import {
   LibraryIcon,
   LineChart,
   ListTodo,
-  LucideLandmark,
   MapPin,
   PiggyBank,
   Rocket,
   School,
   Settings,
-  ShieldCheck,
   ShoppingBag,
   Sparkles,
   Tag,
@@ -39,7 +37,6 @@ import {
   UserIcon,
   UserPlus,
   Users,
-  UsersIcon,
   UsersRound,
   Wallet,
   Wrench
@@ -437,6 +434,11 @@ export default {
         {
           title: 'Rubrics',
           url: '/dashboard/rubrics',
+          icon: ClipboardList,
+        },
+        {
+          title: 'Assessments',
+          url: '/dashboard/assessments',
           icon: ClipboardList,
         },
         {

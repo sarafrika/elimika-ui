@@ -381,6 +381,14 @@ export function ProgramRecordPage({
         </div>
     );
 
+    const assessmentPanel = (
+        <div className='flex flex-col gap-5'>
+            <div className='text-muted-foreground rounded-[12px] border border-dashed px-4 py-6 text-sm'>
+                No assessment have been added to this program yet.
+            </div>
+        </div>
+    );
+
     const deliveryPanel = <DeliveryTab access={access} trainers={[]} trainersAsync={{ loading: false }} classes={[]} classesAsync={{ loading: false }} classesAcceptingCount={0} />;
 
     const programCommercialCourse = useMemo(
@@ -435,6 +443,7 @@ export function ProgramRecordPage({
     const tabPanels: Partial<Record<string, ReactNode>> = {
         overview: overviewPanel,
         curriculum: curriculumPanel,
+        assessment: assessmentPanel,
         delivery: deliveryPanel,
         commercials: commercialsPanel,
         reviews: reviewsPanel,

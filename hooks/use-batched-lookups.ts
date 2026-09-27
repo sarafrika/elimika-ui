@@ -287,7 +287,7 @@ export function useCoursesByIds(ids: string[]) {
 
   const idChunks = useMemo(() => chunk(uniqueIds, CHUNK_SIZE), [uniqueIds]);
 
-  const { map, isLoading } = useQueries({
+  const { map, isLoading, isError, refetch } = useQueries({
     queries: idChunks.map(idChunk => {
       const query = {
         searchParams: { uuid_in: idChunk.join(',') },
@@ -318,6 +318,7 @@ export function useCoursesByIds(ids: string[]) {
       const wanted = new Set(uniqueIds);
 
       for (const result of results) {
+        if (result.data?.error || result.data?.success === false) continue;
         const content = result.data?.data?.content ?? [];
         for (const item of content) {
           if (item.uuid && wanted.has(item.uuid)) {
@@ -329,11 +330,15 @@ export function useCoursesByIds(ids: string[]) {
       return {
         map,
         isLoading: results.some(result => result.isLoading),
+        isError: results.some(
+          result => result.isError || Boolean(result.data?.error) || result.data?.success === false
+        ),
+        refetch: () => Promise.all(results.map(result => result.refetch())),
       };
     },
   });
 
-  return { courseMap: map, isLoading };
+  return { courseMap: map, isLoading, isError, refetch };
 }
 
 export function useProgramsByIds(ids: string[]) {

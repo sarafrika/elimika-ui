@@ -373,7 +373,7 @@ export default function CourseCreatorCoursesContent() {
       <header className='flex flex-col justify-between gap-6 border-b pb-7 xl:flex-row xl:items-end'>
         <div>
           <h1 className='text-2xl font-bold'>Courses &amp; programs</h1>
-          <p className='text-muted-foreground max-w-xl text-sm leading-relaxed'>
+          <p className='text-muted-foreground max-w-5xl text-sm leading-relaxed'>
             Manage your courses, build learning pathways, and track publishing and pricing from one
             place.
           </p>
@@ -422,6 +422,7 @@ export default function CourseCreatorCoursesContent() {
             </Button>
           ))}
         </div>
+
         <div className='grid grid-cols-2 gap-2 sm:flex sm:flex-wrap'>
           <Button
             variant='ghost'
@@ -691,7 +692,12 @@ function OfferingCount({ count }: { count?: OfferingCountState }) {
       <div className='text-muted-foreground flex items-center gap-1 text-xs'>
         <span>Unavailable</span>
         {count && (
-          <Button variant='ghost' size='sm' className='h-7 px-2 text-xs' onClick={count.retry}>
+          <Button
+            variant='ghost'
+            size='sm'
+            className='relative z-20 h-7 px-2 text-xs'
+            onClick={count.retry}
+          >
             Retry
           </Button>
         )}
@@ -736,7 +742,7 @@ function OfferingRow({
   const Icon = offering.type === 'courses' ? BookOpen : Layers;
 
   return (
-    <TableRow className='hover:bg-primary/[0.025] [&>td]:px-3 [&>td]:py-4 [&>td]:text-sm'>
+    <TableRow className='hover:bg-primary/[0.025] relative [&>td]:px-3 [&>td]:py-4 [&>td]:text-sm'>
       <TableCell className='!pl-2'>
         <div className='flex w-full items-center gap-3'>
           <div
@@ -767,10 +773,11 @@ function OfferingRow({
 
           {/* flex-1 is important */}
           <div className='w-full min-w-0 flex-1'>
+            {/* Stretch the details link across the row; action controls sit above it. */}
             {item.uuid ? (
               <Link
                 href={previewHref(offering)}
-                className='hover:text-primary line-clamp-2 block text-sm leading-6 font-semibold'
+                className='hover:text-primary focus-visible:after:ring-ring line-clamp-2 block text-sm leading-6 font-semibold after:absolute after:inset-0 after:z-10 focus-visible:outline-none focus-visible:after:ring-2 focus-visible:after:ring-inset'
                 title={title}
               >
                 {title}
@@ -861,7 +868,7 @@ function OfferingRow({
               <Button
                 variant='ghost'
                 size='icon'
-                className='text-muted-foreground size-8 rounded-md'
+                className='text-muted-foreground relative z-20 size-8 rounded-md'
                 asChild
               >
                 <Link href={editHref(offering)} aria-label={`Edit ${title}`}>
@@ -873,7 +880,7 @@ function OfferingRow({
                   <Button
                     variant='ghost'
                     size='icon'
-                    className='text-muted-foreground size-8 rounded-md'
+                    className='text-muted-foreground relative z-20 size-8 rounded-md'
                     aria-label={`More actions for ${title}`}
                   >
                     <MoreHorizontal className='size-4' />

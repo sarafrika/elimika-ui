@@ -2,8 +2,8 @@
 'use client';
 
 import { SimpleEditor } from '@/components/tiptap-templates/simple/simple-editor-lazy';
-import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import {
   Dialog,
   DialogClose,
@@ -32,6 +32,7 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import Spinner from '@/components/ui/spinner';
+import { Textarea } from '@/components/ui/textarea';
 import { useOptionalCourseCreator } from '@/context/course-creator-context';
 import { useInstructor } from '@/context/instructor-context';
 import { useDifficultyLevels } from '@/hooks/use-difficultyLevels';
@@ -61,7 +62,7 @@ import {
   useImperativeHandle,
   useMemo,
   useRef,
-  useState
+  useState,
 } from 'react';
 import { useForm, useWatch } from 'react-hook-form';
 import { toast } from 'sonner';
@@ -71,6 +72,7 @@ import {
   courseCreationSchema,
   emptyRequirement,
 } from './course-creation-types';
+import { CourseLearningOutcomes } from './course-learning-outcomes';
 import {
   createEmptyDraftsByProvider,
   type DraftsByProvider,
@@ -96,14 +98,19 @@ export type FormSectionProps = {
 };
 
 export const FormSection = ({ title, description, children }: FormSectionProps) => (
-  <section className=''>
-    <div className='flex flex-col gap-6 lg:flex-col lg:items-start lg:gap-4'>
-      <div className='flex flex-col'>
-        <h3 className='text-foreground text-lg font-semibold'>{title}</h3>
-        {/* <p className='text-muted-foreground text-sm'>{description}</p> */}
-      </div>
-      <div className='w-full lg:flex-1'>{children}</div>
+  <section className='space-y-2'>
+    {/* Section heading */}
+    <div className='space-y-1'>
+      <h3 className='text-foreground text-sm font-semibold'>{title}</h3>
+      {/*  {description && (
+        <p className="text-sm leading-5 text-muted-foreground">
+          {description}
+        </p>
+      )} */}
     </div>
+
+    {/* Form fields */}
+    <div className='grid w-full gap-4'>{children}</div>
   </section>
 );
 
@@ -226,6 +233,7 @@ export const CourseCreationForm = forwardRef<CourseFormRef, CourseFormProps>(
       resolver: zodResolver(courseCreationSchema),
       defaultValues: {
         name: '',
+        course_code: '',
         description: '',
         is_free: false,
         objectives: '',
@@ -599,386 +607,417 @@ export const CourseCreationForm = forwardRef<CourseFormRef, CourseFormProps>(
         <SavingOverlay stage={saveStage} />
 
         <Form {...form}>
-          <form
-            onSubmit={form.handleSubmit(onSubmit, onError)}
-            className='bg-card space-y-6 rounded-[32px] transition'
-          >
-            {/* Course Name */}
-            <FormSection
-              title='Course Name'
-              description='This will be the name of your course, visible to students and instructors.'
-            >
-              <FormField
-                control={form.control}
-                name='name'
-                render={({ field }) => (
-                  <FormItem>
-                    <FormControl>
-                      <Input placeholder='Enter course name' {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-            </FormSection>
+          <form onSubmit={form.handleSubmit(onSubmit, onError)} className='m-0 flex flex-col gap-6 pt-2'>
+            <section className='space-y-4'>
+              <CardHeader>
+                <CardTitle className='text-base'>Course details</CardTitle>
+                <CardDescription>
+                  The essentials students see when browsing your course.
+                </CardDescription>
+              </CardHeader>
 
-            {/* Course Description */}
-            <FormSection
-              title='Course Description'
-              description='A brief description of what this course covers'
-            >
-              <FormField
-                control={form.control}
-                name='description'
-                render={({ field }) => (
-                  <FormItem>
-                    <FormControl>
-                      <SimpleEditor value={field.value} onChange={field.onChange} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-            </FormSection>
+              <CardContent className='grid gap-4 sm:grid-cols-2'>
+                <FormField
+                  control={form.control}
+                  name='name'
+                  render={({ field }) => (
+                    <FormItem className='grid gap-1.5 sm:col-span-2'>
+                      <CardTitle className='text-base'>Course name</CardTitle>
+                      <FormControl>
+                        <Input placeholder='e.g. Data Analysis with Spreadsheets' {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
 
-            {/* Categories */}
-            <FormSection
-              title='Course Categories'
-              description='Choose a category and then the subject or subcategory relevant to your course.'
-            >
-              <div className='space-y-4'>
-                {/* Parent category */}
-                <div className='space-y-2'>
-                  <Label htmlFor='parent-category-select'>Category</Label>
+                <FormField
+                  control={form.control}
+                  name='course_code'
+                  render={({ field }) => (
+                    <FormItem className='grid gap-1.5'>
+                      <FormLabel className='text-base font-semibold'>
+                        Course code (optional)
+                      </FormLabel>
+                      <FormControl>
+                        <Input placeholder='e.g. DATA101' {...field} value={field.value ?? ''} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
 
-                  <Select
-                    value={selectedParentCategoryUuid}
-                    onValueChange={value => {
-                      setSelectedParentCategoryUuid(value);
-                      appendCategory(value);
-                      setSelectedSubjectUuid('');
-                    }}
-                  >
-                    <FormControl className='w-full'>
-                      <SelectTrigger id='parent-category-select'>
-                        <SelectValue placeholder='Select category' />
-                      </SelectTrigger>
-                    </FormControl>
-
-                    <SelectContent>
-                      <div className='max-h-[250px] overflow-auto'>
-                        {rootCategories.length ? (
-                          rootCategories.map((cat: CategoryItem) => (
-                            <SelectItem
-                              key={cat.uuid}
-                              value={cat.uuid as string}
-                            >
-                              {cat.name}
-                            </SelectItem>
-                          ))
-                        ) : (
-                          <div className='text-muted-foreground px-2 py-2 text-sm'>
-                            No parent categories yet
-                          </div>
-                        )}
-                      </div>
-                    </SelectContent>
-                  </Select>
-                </div>
-
-                {/* Subject + Add Subject */}
-                <div className='space-y-2'>
-                  <Label htmlFor='subject-select'>
-                    Subject / Subcategory
-                  </Label>
-
-                  <div className='flex flex-col gap-2 sm:flex-row sm:items-center'>
-                    <div className='min-w-0 flex-1'>
-                      <Select
-                        value={selectedSubjectUuid}
-                        onValueChange={uuid => {
-                          if (!uuid) return;
-
-                          if (selectedParentCategoryUuid) {
-                            appendCategory(selectedParentCategoryUuid);
-                          }
-
-                          appendCategory(uuid);
-                          setSelectedSubjectUuid('');
-                        }}
-                        disabled={!selectedParentCategoryUuid}
-                      >
+                <FormField
+                  control={form.control}
+                  name='difficulty'
+                  render={({ field }) => (
+                    <FormItem className='grid gap-1.5'>
+                      <CardTitle className='text-base'>Difficulty level</CardTitle>
+                      <Select onValueChange={field.onChange} value={field.value ?? ''}>
                         <FormControl className='w-full'>
-                          <SelectTrigger id='subject-select'>
-                            <SelectValue
-                              placeholder={
-                                selectedParentCategoryUuid
-                                  ? 'Select subject'
-                                  : 'Select a category first'
-                              }
-                            />
+                          <SelectTrigger>
+                            <SelectValue placeholder='Select difficulty level' />
                           </SelectTrigger>
                         </FormControl>
+                        {difficultyIsLoading ? (
+                          <SelectContent>
+                            <Spinner />
+                          </SelectContent>
+                        ) : (
+                          <SelectContent>
+                            {Array.isArray(difficultyLevels) &&
+                              difficultyLevels.map((level: DifficultyLevelItem) => (
+                                <SelectItem key={level.uuid} value={level.uuid as string}>
+                                  {level.name}
+                                </SelectItem>
+                              ))}
+                          </SelectContent>
+                        )}
+                      </Select>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                <div className='space-y-5 sm:col-span-2'>
+                  <div className='grid gap-4 sm:grid-cols-2'>
+                    {/* Category */}
+                    <div className='space-y-1.5'>
+                      <CardTitle className='text-base'>Category</CardTitle>
+
+                      <Select
+                        value={selectedParentCategoryUuid}
+                        onValueChange={value => {
+                          setSelectedParentCategoryUuid(value);
+                          appendCategory(value);
+                          setSelectedSubjectUuid('');
+                        }}
+                      >
+                        <SelectTrigger
+                          id='parent-category-select'
+                          className='w-full'
+                        >
+                          <SelectValue placeholder='Select category' />
+                        </SelectTrigger>
 
                         <SelectContent>
-                          <div className='max-h-[250px] overflow-auto'>
-                            {subjectOptions.length ? (
-                              subjectOptions
-                                .filter(
-                                  (cat: CategoryItem) =>
-                                    !categoriesSelected.includes(cat.uuid ?? '')
-                                )
-                                .map((cat: CategoryItem) => (
-                                  <SelectItem
-                                    key={cat.uuid}
-                                    value={cat.uuid as string}
-                                  >
-                                    {cat.name}
-                                  </SelectItem>
-                                ))
-                            ) : (
-                              <div className='text-muted-foreground px-2 py-2 text-sm'>
-                                No subjects available for this category
-                              </div>
-                            )}
-                          </div>
+                          {rootCategories.length ? (
+                            rootCategories.map((cat: CategoryItem) => (
+                              <SelectItem key={cat.uuid} value={cat.uuid as string}>
+                                {cat.name}
+                              </SelectItem>
+                            ))
+                          ) : (
+                            <div className='text-muted-foreground px-2 py-2 text-sm'>
+                              No parent categories yet
+                            </div>
+                          )}
                         </SelectContent>
                       </Select>
                     </div>
 
-                    <Dialog>
-                      <DialogTrigger asChild>
-                        <Button
-                          type='button'
-                          variant='outline'
-                          className='shrink-0 sm:w-auto'
-                        >
-                          <Plus className='size-4' />
-                          <span>Add Subject</span>
-                        </Button>
-                      </DialogTrigger>
+                    {/* Subject + Add Subject */}
+                    <div className='space-y-1.5'>
+                      <CardTitle className='text-base'>Subject/Subcategory</CardTitle>
 
-                      <DialogContent className='w-full sm:max-w-[420px]'>
-                        <DialogHeader>
-                          <DialogTitle>Add new subject</DialogTitle>
-                          <DialogDescription>
-                            Create a subcategory under an existing parent category.
-                          </DialogDescription>
-                        </DialogHeader>
+                      <div className='flex items-center gap-2'>
+                        <div className='min-w-0 flex-1'>
+                          <Select
+                            value={selectedSubjectUuid}
+                            onValueChange={uuid => {
+                              if (!uuid) return;
 
-                        <div className='grid gap-6 py-2'>
-                          <div className='space-y-2'>
-                            <Label htmlFor='parent-category-name'>
-                              Parent category
-                            </Label>
-
-                            <Select
-                              value={selectedParentCategoryUuid}
-                              onValueChange={value =>
-                                setSelectedParentCategoryUuid(value)
+                              if (selectedParentCategoryUuid) {
+                                appendCategory(selectedParentCategoryUuid);
                               }
+
+                              appendCategory(uuid);
+                              setSelectedSubjectUuid('');
+                            }}
+                            disabled={!selectedParentCategoryUuid}
+                          >
+                            <SelectTrigger
+                              id='subject-select'
+                              className='w-full'
                             >
-                              <SelectTrigger
-                                className='w-full'
-                                id='parent-category-name'
-                              >
-                                <SelectValue placeholder='Choose parent category' />
-                              </SelectTrigger>
+                              <SelectValue
+                                placeholder={
+                                  selectedParentCategoryUuid
+                                    ? 'Select subject'
+                                    : 'Select a category first'
+                                }
+                              />
+                            </SelectTrigger>
 
-                              <SelectContent>
-                                {rootCategories.map((cat: CategoryItem) => (
-                                  <SelectItem
-                                    key={cat.uuid}
-                                    value={cat.uuid as string}
-                                  >
-                                    {cat.name}
-                                  </SelectItem>
-                                ))}
-                              </SelectContent>
-                            </Select>
-                          </div>
-
-                          <div className='space-y-2'>
-                            <Label htmlFor='subcategory-name'>
-                              Subcategory name
-                            </Label>
-
-                            <Input
-                              id='subcategory-name'
-                              name='subcategory'
-                              value={categoryInput}
-                              onChange={e => setCategoryInput(e.target.value)}
-                              placeholder='e.g. Web Design'
-                              autoFocus
-                            />
-                          </div>
+                            <SelectContent>
+                              {subjectOptions.length ? (
+                                subjectOptions
+                                  .filter(
+                                    (cat: CategoryItem) =>
+                                      !categoriesSelected.includes(cat.uuid ?? '')
+                                  )
+                                  .map((cat: CategoryItem) => (
+                                    <SelectItem
+                                      key={cat.uuid}
+                                      value={cat.uuid as string}
+                                    >
+                                      {cat.name}
+                                    </SelectItem>
+                                  ))
+                              ) : (
+                                <div className='text-muted-foreground px-2 py-2 text-sm'>
+                                  No subjects available for this category
+                                </div>
+                              )}
+                            </SelectContent>
+                          </Select>
                         </div>
 
-                        <DialogFooter className='justify-end'>
-                          <Button
-                            type='button'
-                            className='min-w-[75px]'
-                            onClick={() => {
-                              if (!selectedParentCategoryUuid) {
-                                toast.error('Select a parent category first.');
-                                return;
-                              }
+                        {/* Add Subject Modal Trigger */}
+                        <Dialog>
+                          <DialogTrigger asChild>
+                            <Button
+                              type='button'
+                              variant='outline'
+                              size='icon'
+                              className='size-9 shrink-0'
+                              aria-label='Add new subject'
+                              title='Add new subject'
+                            >
+                              <Plus className='size-4' />
+                            </Button>
+                          </DialogTrigger>
 
-                              if (!categoryInput.trim()) {
-                                toast.error('Enter a subcategory name.');
-                                return;
-                              }
+                          <DialogContent className='w-full sm:max-w-[420px]'>
+                            <DialogHeader>
+                              <DialogTitle>Add new subject</DialogTitle>
+                              <DialogDescription>
+                                Create a subcategory under an existing parent category.
+                              </DialogDescription>
+                            </DialogHeader>
 
-                              createCategoryMutation({
-                                body: {
-                                  name: categoryInput.trim(),
-                                  parent_uuid: selectedParentCategoryUuid,
-                                },
-                              });
-                            }}
-                            disabled={
-                              createCategoryPending ||
-                              !selectedParentCategoryUuid
-                            }
-                          >
-                            {createCategoryPending ? <Spinner /> : 'Add'}
-                          </Button>
+                            <div className='grid gap-5 py-2'>
+                              <div className='space-y-1.5'>
+                                <Label htmlFor='parent-category-name'>
+                                  Parent category
+                                </Label>
 
-                          <DialogClose asChild>
-                            <button
-                              ref={dialogCloseRef}
-                              style={{ display: 'none' }}
-                            />
-                          </DialogClose>
-                        </DialogFooter>
-                      </DialogContent>
-                    </Dialog>
+                                <Select
+                                  value={selectedParentCategoryUuid}
+                                  onValueChange={value =>
+                                    setSelectedParentCategoryUuid(value)
+                                  }
+                                >
+                                  <SelectTrigger
+                                    className='w-full'
+                                    id='parent-category-name'
+                                  >
+                                    <SelectValue placeholder='Choose parent category' />
+                                  </SelectTrigger>
+
+                                  <SelectContent>
+                                    {rootCategories.map((cat: CategoryItem) => (
+                                      <SelectItem
+                                        key={cat.uuid}
+                                        value={cat.uuid as string}
+                                      >
+                                        {cat.name}
+                                      </SelectItem>
+                                    ))}
+                                  </SelectContent>
+                                </Select>
+                              </div>
+
+                              <div className='space-y-1.5'>
+                                <Label htmlFor='subcategory-name'>
+                                  Subcategory name
+                                </Label>
+
+                                <Input
+                                  id='subcategory-name'
+                                  name='subcategory'
+                                  value={categoryInput}
+                                  onChange={e => setCategoryInput(e.target.value)}
+                                  placeholder='e.g. Web Design'
+                                />
+                              </div>
+                            </div>
+
+                            <DialogFooter>
+                              <Button
+                                type='button'
+                                className='min-w-[75px]'
+                                onClick={() => {
+                                  if (!selectedParentCategoryUuid) {
+                                    toast.error('Select a parent category first.');
+                                    return;
+                                  }
+
+                                  if (!categoryInput.trim()) {
+                                    toast.error('Enter a subcategory name.');
+                                    return;
+                                  }
+
+                                  createCategoryMutation({
+                                    body: {
+                                      name: categoryInput.trim(),
+                                      parent_uuid: selectedParentCategoryUuid,
+                                    },
+                                  });
+                                }}
+                                disabled={
+                                  createCategoryPending ||
+                                  !selectedParentCategoryUuid
+                                }
+                              >
+                                {createCategoryPending ? <Spinner /> : 'Add'}
+                              </Button>
+
+                              <DialogClose asChild>
+                                <button
+                                  ref={dialogCloseRef}
+                                  type='button'
+                                  className='hidden'
+                                  aria-hidden='true'
+                                  tabIndex={-1}
+                                />
+                              </DialogClose>
+                            </DialogFooter>
+                          </DialogContent>
+                        </Dialog>
+                      </div>
+                    </div>
                   </div>
+
+                  {/* Selected Categories */}
+                  {categoriesSelected.length > 0 && (
+                    <div className='space-y-2'>
+                      <div className='flex items-center justify-between'>
+                        <Label className='text-muted-foreground text-xs font-medium'>
+                          Selected categories
+                        </Label>
+
+                        <span className='text-muted-foreground text-xs'>
+                          {categoriesSelected.length}{' '}
+                          {categoriesSelected.length === 1 ? 'selected' : 'selected'}
+                        </span>
+                      </div>
+
+                      <div className='flex flex-wrap gap-2'>
+                        {categoriesSelected.map((uuid: string, index: number) => {
+                          const cat = categories?.data?.content?.find(
+                            (c: CategoryItem) => c.uuid === uuid
+                          );
+
+                          if (!cat) return null;
+
+                          return (
+                            <div
+                              key={uuid}
+                              className='bg-muted/50 border-border/70 inline-flex max-w-full items-center gap-2 rounded-md border py-1 pl-2.5 pr-1'
+                            >
+                              <span className='text-foreground max-w-[240px] truncate text-xs font-medium'>
+                                {cat.name}
+                              </span>
+
+                              <Button
+                                type='button'
+                                variant='ghost'
+                                size='icon'
+                                className='text-muted-foreground hover:text-destructive size-5 shrink-0 rounded-sm'
+                                onClick={() => removeCategory(index)}
+                                aria-label={`Remove ${cat.name}`}
+                                title={`Remove ${cat.name}`}
+                              >
+                                <XIcon className='size-3.5' />
+                              </Button>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  )}
                 </div>
-              </div>
-
-              {/* Selected categories */}
-              <div className='mt-4 flex flex-wrap gap-2'>
-                {categoriesSelected.map((uuid: string, index: number) => {
-                  const cat = categories?.data?.content?.find(
-                    (c: CategoryItem) => c.uuid === uuid
-                  );
-
-                  if (!cat) return null;
-
-                  return (
-                    <Badge
-                      key={uuid}
-                      variant='secondary'
-                      className='flex items-center gap-1'
-                    >
-                      {cat.name}
-
-                      <button
-                        type='button'
-                        className='ml-2'
-                        onClick={() => removeCategory(index)}
-                        aria-label={`Remove ${cat.name}`}
-                      >
-                        <XIcon className='size-3' />
-                      </button>
-                    </Badge>
-                  );
-                })}
-              </div>
-            </FormSection>
 
 
-            {/* Learning Objectives */}
-            <FormSection
-              title='Learning Outcomes'
-              description='List what students will learn from your course'
-            >
+
+                <FormField
+                  control={form.control}
+                  name='description'
+                  render={({ field }) => (
+                    <FormItem className='grid gap-1.5 sm:col-span-2'>
+                      <CardTitle className='text-base'>Course description</CardTitle>
+                      <FormControl>
+                        {/<[a-z][\s\S]*>/i.test(field.value ?? '') ? (
+                          <SimpleEditor value={field.value} onChange={field.onChange} />
+                        ) : (
+                          <Textarea
+                            rows={3}
+                            placeholder='A short summary shown in the catalogue.'
+                            {...field}
+                          />
+                        )}
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={form.control}
+                  name='prerequisites'
+                  render={({ field }) => (
+                    <FormItem className='grid gap-1.5 sm:col-span-2'>
+                      <CardTitle className='text-base'>Pre-requisites</CardTitle>
+                      <FormControl>
+                        {/<[a-z][\s\S]*>/i.test(field.value ?? '') ? (
+                          <SimpleEditor value={field.value} onChange={field.onChange} />
+                        ) : (
+                          <Textarea
+                            rows={2}
+                            placeholder='What learners must already know or have completed.'
+                            {...field}
+                          />
+                        )}
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </CardContent>
+            </section>
+
+            <section className='px-6' >
               <FormField
                 control={form.control}
                 name='objectives'
-                render={({ field }) => (
-                  <FormItem>
-                    <FormControl>
-                      <SimpleEditor value={field.value} onChange={field.onChange} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
+                render={({ field, fieldState }) => (
+                  <CourseLearningOutcomes
+                    value={field.value}
+                    onChange={field.onChange}
+                    onBlur={field.onBlur}
+                    error={fieldState.error?.message}
+                  />
                 )}
               />
-            </FormSection>
+            </section>
 
-            {/* Class Limit */}
-            <FormSection
-              title='Class Limit'
-              description='Set the maximum number of students allowed to enroll'
-            >
-              <FormField
-                control={form.control}
-                name='class_limit'
-                render={({ field }) => (
-                  <FormItem>
-                    <FormControl>
-                      <Input
-                        type='number'
-                        min='1'
-                        placeholder='Maximum number of students'
-                        {...field}
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-            </FormSection>
-
-            {/* Age Limit */}
-            <FormSection title='Age Limit' description='Set the age limit for your course'>
-              <div className='grid grid-cols-1 gap-4 md:grid-cols-3'>
-                <FormField
-                  control={form.control}
-                  name='age_lower_limit'
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Age Lower Limit</FormLabel>
-                      <FormControl>
-                        <Input type='number' min='0' step='1' {...field} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                <FormField
-                  control={form.control}
-                  name='age_upper_limit'
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Age Upper Limit</FormLabel>
-                      <FormControl>
-                        <Input type='number' min='0' step='1' {...field} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-              </div>
-            </FormSection>
-
-            {/* Course Duration */}
-            <div className='hidden'>
-              <FormSection
-                title='Course Duration'
-                description='Set the time duration for your course'
-              >
-                <div className='grid grid-cols-1 gap-4 md:grid-cols-3'>
+            <section className='px-6'>
+              <Card>
+                <CardHeader>
+                  <CardTitle className='text-base'>Age limit and requirements</CardTitle>
+                  <CardDescription>
+                    Who the course is for, and what each party must provide.
+                  </CardDescription>
+                </CardHeader>
+                <CardContent className='grid gap-4 sm:grid-cols-3'>
                   <FormField
                     control={form.control}
-                    name='duration_hours'
+                    name='age_lower_limit'
                     render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Duration Hours</FormLabel>
+                      <FormItem className='grid gap-1.5'>
+                        <FormLabel>Minimum age</FormLabel>
                         <FormControl>
-                          <Input type='number' min='0' step='1' {...field} />
+                          <Input type='number' min={0} step='1' {...field} />
                         </FormControl>
                         <FormMessage />
                       </FormItem>
@@ -986,102 +1025,54 @@ export const CourseCreationForm = forwardRef<CourseFormRef, CourseFormProps>(
                   />
                   <FormField
                     control={form.control}
-                    name='duration_minutes'
+                    name='age_upper_limit'
                     render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Duration Minutes</FormLabel>
+                      <FormItem className='grid gap-1.5'>
+                        <FormLabel>Maximum age</FormLabel>
                         <FormControl>
-                          <Input type='number' min='0' step='1' {...field} />
+                          <Input type='number' min={0} step='1' {...field} />
                         </FormControl>
                         <FormMessage />
                       </FormItem>
                     )}
                   />
-                </div>
-              </FormSection>
-            </div>
-
-
-            {/* Difficulty Level */}
-            <FormSection
-              title='Difficulty Level'
-              description='Set the difficulty level of your course'
-            >
-              <FormField
-                control={form.control}
-                name='difficulty'
-                render={({ field }) => (
-                  <FormItem>
-                    <Select onValueChange={field.onChange} value={field.value ?? ''}>
-                      <FormControl className='w-full'>
-                        <SelectTrigger>
-                          <SelectValue placeholder='Select difficulty level' />
-                        </SelectTrigger>
-                      </FormControl>
-                      {difficultyIsLoading ? (
-                        <SelectContent>
-                          <Spinner />
-                        </SelectContent>
-                      ) : (
-                        <SelectContent>
-                          {Array.isArray(difficultyLevels) &&
-                            difficultyLevels.map((level: DifficultyLevelItem) => (
-                              <SelectItem key={level.uuid} value={level.uuid as string}>
-                                {level.name}
-                              </SelectItem>
-                            ))}
-                        </SelectContent>
-                      )}
-                    </Select>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-            </FormSection>
-
-            {/* Prerequisites */}
-            <FormSection
-              title='Course Prerequisites'
-              description='Outline the knowledge or skills students should have before starting this course.'
-            >
-              <FormField
-                control={form.control}
-                name='prerequisites'
-                render={({ field }) => (
-                  <FormItem>
-                    <FormControl>
-                      <SimpleEditor value={field.value} onChange={field.onChange} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-            </FormSection>
-
-            <FormSection
-              title='Training Requirements'
-              description='Add required resources or facilities for this course, grouped by who provides them.'
-            >
-              <TrainingRequirementsSection
-                existingRequirements={existingRequirements}
-                setExistingRequirements={setExistingRequirements}
-                editingCourseId={editingCourseId}
-                courseId={courseId}
-                draftsByProvider={controlledRequirementDrafts}
-                setDraftsByProvider={controlledSetRequirementDrafts}
-                activeProvider={controlledActiveRequirementProvider}
-                setActiveProvider={controlledSetActiveRequirementProvider}
-                addTrainingReqMut={addTrainingReqMut}
-                updateTrainingReqMut={updateTrainingReqMut}
-                deleteTrainingReqMut={deleteTrainingReqMut}
-                deletingId={deletingId}
-                setDeletingId={setDeletingId}
-                qc={qc}
-              />
-            </FormSection>
+                  <FormField
+                    control={form.control}
+                    name='class_limit'
+                    render={({ field }) => (
+                      <FormItem className='grid gap-1.5'>
+                        <FormLabel>Class size limit</FormLabel>
+                        <FormControl>
+                          <Input type='number' min={1} step='1' {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  <div className='min-w-0 sm:col-span-3'>
+                    <TrainingRequirementsSection
+                      existingRequirements={existingRequirements}
+                      setExistingRequirements={setExistingRequirements}
+                      editingCourseId={editingCourseId}
+                      courseId={courseId}
+                      draftsByProvider={controlledRequirementDrafts}
+                      setDraftsByProvider={controlledSetRequirementDrafts}
+                      activeProvider={controlledActiveRequirementProvider}
+                      setActiveProvider={controlledSetActiveRequirementProvider}
+                      addTrainingReqMut={addTrainingReqMut}
+                      updateTrainingReqMut={updateTrainingReqMut}
+                      deleteTrainingReqMut={deleteTrainingReqMut}
+                      deletingId={deletingId}
+                      setDeletingId={setDeletingId}
+                      qc={qc}
+                    />
+                  </div>
+                </CardContent>
+              </Card>
+            </section>
 
             {showSubmitButton && (
-              <div className='xxs:flex-col flex flex-col justify-center gap-4 pt-6 sm:flex-row sm:justify-end'>
+              <div className='xxs:flex-col flex flex-col justify-center gap-4 sm:flex-row sm:justify-end'>
                 <Button
                   type='submit'
                   className='min-w-32'
@@ -1089,7 +1080,7 @@ export const CourseCreationForm = forwardRef<CourseFormRef, CourseFormProps>(
                 >
                   {isSaving ? (
                     <span className='flex items-center gap-2'>
-                      <Loader2 className='h-4 w-4 animate-spin' />
+                      <Spinner />
                       Saving…
                     </span>
                   ) : (
