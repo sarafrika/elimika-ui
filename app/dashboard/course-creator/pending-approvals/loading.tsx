@@ -1,5 +1,5 @@
-import { Skeleton } from '@/components/ui/skeleton';
 import { surfaceTheme } from '@/components/data-display';
+import { Skeleton } from '@/components/ui/skeleton';
 
 export default function Loading() {
   return (

@@ -3,31 +3,33 @@
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
 import { EmptyState } from '@/components/ui/empty-state';
-import { Skeleton } from '@/components/ui/skeleton';
 import { Input } from '@/components/ui/input';
+import { Skeleton } from '@/components/ui/skeleton';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useCourseCreator } from '@/context/course-creator-context';
-import { extractPage } from '@/lib/api-helpers';
+import { toAuthenticatedMediaUrl } from '@/src/lib/media-url';
 import { useQuery } from '@tanstack/react-query';
-import { Building2, Clock3, ExternalLink, GraduationCap, Layers, Search, Users } from 'lucide-react';
+import { Building2, Clock3, GraduationCap, Layers, Search, Users } from 'lucide-react';
 import Link from 'next/link';
-import { useMemo, useState } from 'react';
+import { useDeferredValue, useMemo, useState } from 'react';
+import { ApplicantReviewSheet } from './ApplicantReviewSheet';
+import { applicationKey, type ReviewApplication } from './approval-queue';
 
+import { SectionCard, StatusBadge, surfaceTheme } from '@/components/data-display';
+import { PageHeader } from '@/components/page-header';
 import { useInstructorsByIds, useOrganisationsByIds } from '@/hooks/use-batched-lookups';
-import { APPROVAL_QUERY_FRESHNESS } from '@/lib/query-client';
-import { dashboardUrl } from '@/src/features/dashboard/lib/dashboard-url';
+import { APPROVAL_QUERY_FRESHNESS, STALE_TIMES } from '@/lib/query-client';
 import type { CourseTrainingApplication, ProgramTrainingApplication } from '@/services/client';
 import {
   searchProgramTrainingApplicationsOptions,
   searchTrainingApplicationsOptions,
 } from '@/services/client/@tanstack/react-query.gen';
+import { dashboardUrl } from '@/src/features/dashboard/lib/dashboard-url';
 import { stripHtml } from '../../../../../src/features/dashboard/courses/shared/_components/courses-data';
-import { SectionCard, StatusBadge, surfaceTheme } from '@/components/data-display';
-import { PageHeader } from '@/components/page-header';
 
 type ApplicantType = 'instructor' | 'organisation';
 
-type ApplicantSummary = {
+export type ApplicantSummary = {
   uuid: string;
   type: ApplicantType;
   name: string;
@@ -41,18 +43,6 @@ type ApplicantSummary = {
   submittedAt?: string | Date;
 };
 
-function formatDate(value?: string | Date | null): string {
-  if (!value) return '-';
-  const parsed = value instanceof Date ? value : new Date(value);
-  return Number.isNaN(parsed.getTime())
-    ? '-'
-    : parsed.toLocaleDateString(undefined, {
-      day: 'numeric',
-      month: 'short',
-      year: 'numeric',
-    });
-}
-
 function latestStatus(items: Array<CourseTrainingApplication | ProgramTrainingApplication>) {
   const ordered = [...items].sort((a, b) => {
     const dateA = new Date(a.created_date ?? '').getTime();
@@ -62,7 +52,13 @@ function latestStatus(items: Array<CourseTrainingApplication | ProgramTrainingAp
   return ordered[0]?.status ?? 'pending';
 }
 
-function ApplicantCard({ applicant }: { applicant: ApplicantSummary }) {
+function ApplicantCard({
+  applicant,
+  onReview,
+}: {
+  applicant: ApplicantSummary;
+  onReview: () => void;
+}) {
   const initials = applicant.name
     .split(' ')
     .map(part => part[0])
@@ -75,7 +71,7 @@ function ApplicantCard({ applicant }: { applicant: ApplicantSummary }) {
       <div className='flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between'>
         <div className='flex min-w-0 items-start gap-3'>
           <Avatar className='size-12 shrink-0'>
-            <AvatarImage src={applicant.avatarUrl} />
+            <AvatarImage src={toAuthenticatedMediaUrl(applicant.avatarUrl) || undefined} />
             <AvatarFallback
               className={
                 applicant.type === 'organisation'
@@ -91,7 +87,7 @@ function ApplicantCard({ applicant }: { applicant: ApplicantSummary }) {
             </AvatarFallback>
           </Avatar>
           <div className='min-w-0'>
-            <div className='flex flex-wrap items-center gap-2 mb-1'>
+            <div className='mb-1 flex flex-wrap items-center gap-2'>
               <p className='text-foreground truncate text-sm font-semibold'>{applicant.name}</p>
               {/* <StatusBadge status={applicant.latestStatus} /> */}
               <StatusBadge
@@ -107,19 +103,25 @@ function ApplicantCard({ applicant }: { applicant: ApplicantSummary }) {
                 label={applicant.type === 'organisation' ? 'Organisation' : 'Instructor'}
               />
             </div>
-            <p className='text-muted-foreground truncate text-xs'>{stripHtml(applicant.headline) || 'No profile headline'}</p>
+            <p className='text-muted-foreground truncate text-xs'>
+              {stripHtml(applicant.headline) || 'No profile headline'}
+            </p>
             <p className='text-muted-foreground mt-1 truncate text-xs'>{applicant.location}</p>
           </div>
         </div>
 
         <div className='flex shrink-0 flex-wrap gap-2'>
-          <Button variant='outline' size='sm' asChild>
-            <Link href={`/dashboard/course-creator/manage-applicant/${applicant.uuid}`}>
-              <ExternalLink className='size-4' />
-              Review applicant
-            </Link>
+          <Button variant='outline' size='sm' onClick={onReview}>
+            Review applicant
           </Button>
         </div>
+
+        {/* <Button variant='outline' size='sm' asChild>
+          <Link href={`/dashboard/course-creator/manage-applicant/${applicant.uuid}`}>
+            <ExternalLink className='size-4' />
+            Review applicant
+          </Link>
+        </Button> */}
       </div>
     </div>
   );
@@ -128,6 +130,11 @@ function ApplicantCard({ applicant }: { applicant: ApplicantSummary }) {
 export default function PendingApprovalsPage() {
   const { profile: courseCreator } = useCourseCreator();
   const [search, setSearch] = useState('');
+  const deferredSearch = useDeferredValue(search);
+  const [selected, setSelected] = useState<ApplicantSummary | null>(null);
+  const [decisions, setDecisions] = useState<Record<string, 'approved' | 'rejected' | 'revoked'>>(
+    {}
+  );
   const [typeFilter, setTypeFilter] = useState<'all' | ApplicantType>('instructor');
 
   const courseApplicationsQuery = useQuery({
@@ -141,7 +148,7 @@ export default function PendingApprovalsPage() {
     }),
     enabled: !!courseCreator?.uuid,
     ...APPROVAL_QUERY_FRESHNESS,
-    staleTime: 30_000,
+    staleTime: STALE_TIMES.live,
   });
 
   const programApplicationsQuery = useQuery({
@@ -155,12 +162,41 @@ export default function PendingApprovalsPage() {
     }),
     enabled: !!courseCreator?.uuid,
     ...APPROVAL_QUERY_FRESHNESS,
-    staleTime: 30_000,
+    staleTime: STALE_TIMES.live,
   });
 
-  const courseApplications = extractPage<CourseTrainingApplication>(courseApplicationsQuery.data).items;
-  const programApplications = extractPage<ProgramTrainingApplication>(programApplicationsQuery.data).items;
-  const allApplications = [...courseApplications, ...programApplications];
+  const reviewApplications = useMemo<ReviewApplication[]>(
+    () =>
+      [
+        ...(courseApplicationsQuery.data?.error || courseApplicationsQuery.data?.success === false
+          ? []
+          : (courseApplicationsQuery.data?.data?.content ?? [])
+        ).map(application => ({
+          kind: 'course' as const,
+          application,
+          parentUuid: application.course_uuid,
+        })),
+        ...(programApplicationsQuery.data?.error || programApplicationsQuery.data?.success === false
+          ? []
+          : (programApplicationsQuery.data?.data?.content ?? [])
+        ).map(application => ({
+          kind: 'program' as const,
+          application,
+          parentUuid: application.program_uuid,
+        })),
+      ].map(entry => ({
+        ...entry,
+        application: {
+          ...entry.application,
+          status: decisions[applicationKey(entry)] ?? entry.application.status,
+        },
+      })),
+    [courseApplicationsQuery.data, programApplicationsQuery.data, decisions]
+  );
+  const allApplications = useMemo(
+    () => reviewApplications.map(entry => entry.application),
+    [reviewApplications]
+  );
 
   const applicantMap = useMemo(() => {
     const map = new Map<
@@ -174,11 +210,12 @@ export default function PendingApprovalsPage() {
 
     for (const application of allApplications) {
       const uuid = application.applicant_uuid;
-      const type = (application.applicant_type?.toLowerCase() as ApplicantType) ?? 'instructor';
+      const type: ApplicantType =
+        application.applicant_type === 'organisation' ? 'organisation' : 'instructor';
       if (!uuid) continue;
-      const current = map.get(uuid) ?? { uuid, type, applications: [] };
+      const current = map.get(`${type}:${uuid}`) ?? { uuid, type, applications: [] };
       current.applications.push(application);
-      map.set(uuid, current);
+      map.set(`${type}:${uuid}`, current);
     }
 
     return map;
@@ -201,13 +238,12 @@ export default function PendingApprovalsPage() {
   );
 
   const { instructorMap, isLoading: instructorsLoading } = useInstructorsByIds(instructorIds);
-  const { organisationMap, isLoading: organisationsLoading } = useOrganisationsByIds(
-    organisationIds
-  );
+  const { organisationMap, isLoading: organisationsLoading } =
+    useOrganisationsByIds(organisationIds);
 
   const applicants = useMemo<ApplicantSummary[]>(() => {
     return Array.from(applicantMap.values())
-      .map(entry => {
+      .map<ApplicantSummary>(entry => {
         const applications = entry.applications;
         const latest = [...applications].sort((a, b) => {
           const dateA = new Date(a.created_date ?? '').getTime();
@@ -222,8 +258,14 @@ export default function PendingApprovalsPage() {
             type: 'instructor',
             name: instructor?.full_name ?? 'Instructor applicant',
             headline: instructor?.professional_headline ?? instructor?.bio ?? 'Instructor profile',
-            location: instructor?.formatted_location ?? instructor?.location ?? 'Location not listed',
-            avatarUrl: instructor?.profile_picture_url,
+            location:
+              instructor?.location_name ?? instructor?.formatted_location ?? 'Location not listed',
+            avatarUrl:
+              instructor &&
+                'profile_picture_url' in instructor &&
+                typeof instructor.profile_picture_url === 'string'
+                ? instructor.profile_picture_url
+                : undefined,
             latestStatus: latestStatus(applications),
             pendingCount: applications.filter(app => app.status?.toLowerCase() === 'pending')
               .length,
@@ -239,7 +281,9 @@ export default function PendingApprovalsPage() {
           type: 'organisation',
           name: organisation?.name ?? 'Organisation applicant',
           headline: organisation?.description ?? 'Organisation profile',
-          location: [organisation?.location, organisation?.country].filter(Boolean).join(', ') || 'Location not listed',
+          location:
+            [organisation?.location, organisation?.country].filter(Boolean).join(', ') ||
+            'Location not listed',
           avatarUrl: undefined,
           latestStatus: latestStatus(applications),
           pendingCount: applications.filter(app => app.status?.toLowerCase() === 'pending').length,
@@ -250,8 +294,8 @@ export default function PendingApprovalsPage() {
       })
       .filter(applicant => {
         if (typeFilter !== 'all' && applicant.type !== typeFilter) return false;
-        if (!search.trim()) return true;
-        const term = search.trim().toLowerCase();
+        if (!deferredSearch.trim()) return true;
+        const term = deferredSearch.trim().toLowerCase();
         return [applicant.name, applicant.headline, applicant.location]
           .filter(Boolean)
           .some(value => value.toLowerCase().includes(term));
@@ -262,7 +306,7 @@ export default function PendingApprovalsPage() {
         const bDate = b.submittedAt ? new Date(b.submittedAt).getTime() : 0;
         return bDate - aDate;
       });
-  }, [applicantMap, courseApplications, organisationMap, instructorMap, programApplications, search, typeFilter]);
+  }, [applicantMap, organisationMap, instructorMap, deferredSearch, typeFilter]);
 
   const stats = useMemo(() => {
     const allApplicants = Array.from(applicantMap.values());
@@ -277,16 +321,17 @@ export default function PendingApprovalsPage() {
           ).length,
         0
       ),
-      instructors: allApplicants.filter(
-        applicant => applicant.type === 'instructor'
-      ).length,
-      organisations: allApplicants.filter(
-        applicant => applicant.type === 'organisation'
-      ).length,
+      instructors: allApplicants.filter(applicant => applicant.type === 'instructor').length,
+      organisations: allApplicants.filter(applicant => applicant.type === 'organisation').length,
     };
   }, [applicantMap]);
 
-  const isLoading = courseApplicationsQuery.isLoading || programApplicationsQuery.isLoading;
+  const isLoading =
+    !courseCreator?.uuid ||
+    courseApplicationsQuery.isLoading ||
+    programApplicationsQuery.isLoading ||
+    instructorsLoading ||
+    organisationsLoading;
   const pendingRateUpdates = allApplications.filter(
     application => application.status === 'approved' && application.pending_rate_update_uuid
   ).length;
@@ -346,7 +391,9 @@ export default function PendingApprovalsPage() {
           <div className='border-primary/30 bg-primary/5 flex flex-wrap items-center justify-between gap-3 rounded-md border p-4'>
             <p className='text-foreground flex items-center gap-2 text-sm'>
               <Layers className='text-primary size-4' />
-              {pendingRateUpdates} approved {pendingRateUpdates === 1 ? 'applicant has' : 'applicants have'} rate card updates waiting for you.
+              {pendingRateUpdates} approved{' '}
+              {pendingRateUpdates === 1 ? 'applicant has' : 'applicants have'} rate card updates
+              waiting for you.
             </p>
             <Button size='sm' asChild>
               <Link href={dashboardUrl('course_creator', 'training-applications?tab=rate-updates')}>
@@ -366,66 +413,113 @@ export default function PendingApprovalsPage() {
                 value={search}
                 onChange={event => setSearch(event.target.value)}
                 placeholder='Search applicants...'
+                aria-label='Search applicants'
                 className='pl-9'
               />
             </div>
           }
         >
-          <Tabs value={typeFilter} onValueChange={value => setTypeFilter(value as typeof typeFilter)} className='space-y-4'>
-            <TabsList className="h-auto flex-wrap gap-2 justify-start">
-              {/* <TabsTrigger value="all">All · {stats.total}</TabsTrigger> */}
-              <TabsTrigger value="instructor">
-                Instructors · {stats.instructors}
-              </TabsTrigger>
-              <TabsTrigger value="organisation">
-                Organisations · {stats.organisations}
-              </TabsTrigger>
-            </TabsList>
+          {courseApplicationsQuery.isError ||
+            programApplicationsQuery.isError ||
+            courseApplicationsQuery.data?.error ||
+            programApplicationsQuery.data?.error ||
+            courseApplicationsQuery.data?.success === false ||
+            programApplicationsQuery.data?.success === false ? (
+            <EmptyState
+              title='Could not load applications'
+              description='Please retry before reviewing the queue.'
+              action={
+                <Button
+                  variant='outline'
+                  onClick={() => {
+                    void courseApplicationsQuery.refetch();
+                    void programApplicationsQuery.refetch();
+                  }}
+                >
+                  Retry
+                </Button>
+              }
+            />
+          ) : (
+            <Tabs
+              value={typeFilter}
+              onValueChange={value => setTypeFilter(value as typeof typeFilter)}
+              className='space-y-4'
+            >
+              <TabsList className='h-auto flex-wrap justify-start gap-2'>
+                {/* <TabsTrigger value="all">All · {stats.total}</TabsTrigger> */}
+                <TabsTrigger value='instructor'>Instructors · {stats.instructors}</TabsTrigger>
+                <TabsTrigger value='organisation'>
+                  Organisations · {stats.organisations}
+                </TabsTrigger>
+              </TabsList>
 
-            <TabsContent value='instructor' className='mt-0 space-y-4'>
-              {isLoading ? (
-                <Skeleton className='h-28 w-full rounded-md' />
-              ) : applicants.filter(applicant => applicant.type === 'instructor').length ? (
-                <div className='flex flex-col gap-4'>
-                  {applicants
-                    .filter(applicant => applicant.type === 'instructor')
-                    .map(applicant => (
-                      <ApplicantCard key={applicant.uuid} applicant={applicant} />
-                    ))}
-                </div>
-              ) : (
-                <EmptyState
-                  icon={GraduationCap}
-                  title='No instructor applicants'
-                  description='There are no instructor applications in the queue yet.'
-                  variant='compact'
-                />
-              )}
-            </TabsContent>
+              <TabsContent value='instructor' className='mt-0 space-y-4'>
+                {isLoading ? (
+                  <Skeleton className='h-28 w-full rounded-md' />
+                ) : applicants.filter(applicant => applicant.type === 'instructor').length ? (
+                  <div className='flex flex-col gap-4'>
+                    {applicants
+                      .filter(applicant => applicant.type === 'instructor')
+                      .map(applicant => (
+                        <ApplicantCard
+                          key={applicant.uuid}
+                          applicant={applicant}
+                          onReview={() => setSelected(applicant)}
+                        />
+                      ))}
+                  </div>
+                ) : (
+                  <EmptyState
+                    icon={GraduationCap}
+                    title='No instructor applicants'
+                    description='There are no instructor applications in the queue yet.'
+                    variant='compact'
+                  />
+                )}
+              </TabsContent>
 
-            <TabsContent value='organisation' className='mt-0 space-y-4'>
-              {isLoading ? (
-                <Skeleton className='h-28 w-full rounded-md' />
-              ) : applicants.filter(applicant => applicant.type === 'organisation').length ? (
-                <div className='flex flex-col gap-4'>
-                  {applicants
-                    .filter(applicant => applicant.type === 'organisation')
-                    .map(applicant => (
-                      <ApplicantCard key={applicant.uuid} applicant={applicant} />
-                    ))}
-                </div>
-              ) : (
-                <EmptyState
-                  icon={Building2}
-                  title='No organisation applicants'
-                  description='There are no organisation applications in the queue yet.'
-                  variant='compact'
-                />
-              )}
-            </TabsContent>
-          </Tabs>
+              <TabsContent value='organisation' className='mt-0 space-y-4'>
+                {isLoading ? (
+                  <Skeleton className='h-28 w-full rounded-md' />
+                ) : applicants.filter(applicant => applicant.type === 'organisation').length ? (
+                  <div className='flex flex-col gap-4'>
+                    {applicants
+                      .filter(applicant => applicant.type === 'organisation')
+                      .map(applicant => (
+                        <ApplicantCard
+                          key={applicant.uuid}
+                          applicant={applicant}
+                          onReview={() => setSelected(applicant)}
+                        />
+                      ))}
+                  </div>
+                ) : (
+                  <EmptyState
+                    icon={Building2}
+                    title='No organisation applicants'
+                    description='There are no organisation applications in the queue yet.'
+                    variant='compact'
+                  />
+                )}
+              </TabsContent>
+            </Tabs>
+          )}
         </SectionCard>
       </div>
+      {selected && courseCreator?.uuid ? (
+        <ApplicantReviewSheet
+          applicant={selected}
+          instructor={instructorMap[selected.uuid]}
+          organisation={organisationMap[selected.uuid]}
+          applications={reviewApplications}
+          creatorUuid={courseCreator.uuid}
+          onClose={() => setSelected(null)}
+          onDecided={(entry, status) =>
+            setDecisions(previous => ({ ...previous, [applicationKey(entry)]: status }))
+          }
+        />
+      ) : null}
     </main>
   );
 }

@@ -2,7 +2,7 @@
 
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { Check } from 'lucide-react';
-import { type ReactNode, useId, useState } from 'react';
+import { type ReactNode, useEffect, useId, useState } from 'react';
 import { toast } from 'sonner';
 
 import { RateCardGrid } from '@/components/rate-card/rate-card-grid';
@@ -33,7 +33,11 @@ const DECISION_DONE: Record<Decision, string> = {
   revoke: 'Approval revoked.',
 };
 
-function useDecideApplication(kind: TrainingApplicationKind, parentUuid: string, uuid: string) {
+export function useDecideApplication(
+  kind: TrainingApplicationKind,
+  parentUuid: string,
+  uuid: string
+) {
   const queryClient = useQueryClient();
   const course = useMutation(decideOnTrainingApplicationMutation());
   const program = useMutation(decideOnProgramTrainingApplicationMutation());
@@ -41,7 +45,11 @@ function useDecideApplication(kind: TrainingApplicationKind, parentUuid: string,
   const decide = (action: Decision, reviewNotes: string, onDone: () => void) => {
     const body = { review_notes: reviewNotes.trim() || null };
     const callbacks = {
-      onSuccess: async () => {
+      onSuccess: async (response: { error?: unknown; success?: boolean }) => {
+        if (response.error || response.success === false) {
+          toast.error(getErrorMessage(response.error, `Could not ${action} this application.`));
+          return;
+        }
         await invalidateTrainingApplicationWorkflowQueries(queryClient);
         toast.success(DECISION_DONE[action]);
         onDone();
@@ -180,7 +188,15 @@ export function CreatorApplicationReview({
   );
 }
 
-function DecisionPanel({ entry }: { entry: TrainingApplicationEntry }) {
+export function DecisionPanel({
+  entry,
+  onDecided,
+  onPendingChange,
+}: {
+  entry: TrainingApplicationEntry;
+  onDecided?: (status: 'approved' | 'rejected') => void;
+  onPendingChange?: (pending: boolean) => void;
+}) {
   const noteId = useId();
   const [note, setNote] = useState('');
   const [revoking, setRevoking] = useState(false);
@@ -189,6 +205,10 @@ function DecisionPanel({ entry }: { entry: TrainingApplicationEntry }) {
     entry.parentUuid,
     entry.uuid
   );
+  useEffect(() => {
+    onPendingChange?.(pending);
+    return () => onPendingChange?.(false);
+  }, [pending, onPendingChange]);
   const isPending = entry.application.status === 'pending';
   const reset = () => {
     setNote('');
@@ -233,14 +253,28 @@ function DecisionPanel({ entry }: { entry: TrainingApplicationEntry }) {
               type='button'
               variant='outline'
               disabled={pending}
-              onClick={() => decide('reject', note, reset)}
+              onClick={() =>
+                decide('reject', note, () => {
+                  reset();
+                  onDecided?.('rejected');
+                })
+              }
             >
               {spinnerFor('reject')}
               Reject
             </Button>
-            <Button type='button' disabled={pending} onClick={() => decide('approve', note, reset)}>
+            <Button
+              type='button'
+              disabled={pending}
+              onClick={() =>
+                decide('approve', note, () => {
+                  reset();
+                  onDecided?.('approved');
+                })
+              }
+            >
               {spinnerFor('approve') ?? <Check aria-hidden />}
-              Approve rate card
+              Approve application
             </Button>
           </>
         ) : (

@@ -1,14 +1,16 @@
 'use client';
 
-import { useMemo } from 'react';
-import { useFieldArray, useFormContext, useWatch } from 'react-hook-form';
-import { Plus, X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { EmptyState } from '@/components/ui/empty-state';
 import { FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
+import Spinner from '@/components/ui/spinner';
 import { Textarea } from '@/components/ui/textarea';
 import { useCoursesByIds } from '@/hooks/use-batched-lookups';
+import { Plus, X } from 'lucide-react';
+import { useEffect, useMemo } from 'react';
+import { useFieldArray, useFormContext, useWatch } from 'react-hook-form';
+import { formatProgramTrainingFee } from '../program-pricing';
 import type { ProgramFormValues } from '../program-schema';
 import { DraftField, ProgramTextField } from './ProgramFields';
 
@@ -200,7 +202,20 @@ export function ProgramBranding() {
   );
 }
 
-export function ProgramPricing() {
+export function ProgramPricing({
+  minimumTrainingFee,
+  isLoading,
+  onRetry,
+}: {
+  minimumTrainingFee: number | undefined;
+  isLoading: boolean;
+  onRetry: () => void;
+}) {
+  const { control, trigger, getFieldState } = useFormContext<ProgramFormValues>();
+  useEffect(() => {
+    const field = getFieldState('draft.hourlyFee');
+    if (field.isTouched || field.error) void trigger('draft.hourlyFee');
+  }, [minimumTrainingFee, trigger, getFieldState]);
   return (
     <div className='space-y-4'>
       <h3 className='text-sm font-medium'>Pricing</h3>
@@ -216,8 +231,52 @@ export function ProgramPricing() {
       <p className='text-muted-foreground text-xs'>
         This is the total program price. Leave it blank for an unpriced draft, or enter 0 for free.
       </p>
-      <div className='grid gap-4 md:grid-cols-3'>
-        <DraftField name='hourlyFee' label='Minimum fee per student per hour (KES)' type='number' />
+      <div className='grid gap-4 md:grid-cols-3 items-start'>
+        <div className='space-y-2'>
+          <FormField
+            control={control}
+            name='draft.hourlyFee'
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Minimum training fee per student per hour (KES)</FormLabel>
+                <FormControl>
+                  <Input
+                    {...field}
+                    type='number'
+                    min={minimumTrainingFee}
+                    step='0.01'
+                    required
+                    placeholder={
+                      minimumTrainingFee === undefined ? undefined : String(minimumTrainingFee)
+                    }
+                  />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+          {isLoading ? (
+            <p role='status' className='text-muted-foreground flex items-center gap-2 text-xs'>
+              <Spinner /> Loading course minimum fees…
+            </p>
+          ) : minimumTrainingFee === undefined ? (
+            <EmptyState
+              variant='compact'
+              title='Unable to verify course minimum fees'
+              description='All selected courses must be available before the program can be saved.'
+              action={
+                <Button type='button' variant='outline' onClick={onRetry}>
+                  Try again
+                </Button>
+              }
+            />
+          ) : (
+            <p role='status' className='text-muted-foreground text-xs'>
+              Combined minimum: {formatProgramTrainingFee(minimumTrainingFee)} per student
+              per hour.
+            </p>
+          )}
+        </div>
         <DraftField name='instructorShare' label='Instructor share (%)' type='number' />
         <DraftField name='creatorShare' label='Creator share (%)' type='number' />
       </div>

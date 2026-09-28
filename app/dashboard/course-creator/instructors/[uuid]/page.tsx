@@ -7,24 +7,21 @@ import {
   BookOpen,
   BriefcaseBusiness,
   CalendarDays,
-  ClipboardList,
   DollarSign,
   FileCheck,
-  FileText,
   Globe2,
   GraduationCap,
   Mail,
-  MapPin,
-  Phone,
   Star,
   UserRound,
-  Users,
+  Users
 } from 'lucide-react';
 import Link from 'next/link';
 import { useParams } from 'next/navigation';
 import type { ComponentType, ReactNode } from 'react';
 import { useMemo, useState } from 'react';
 
+import { StatusBadge, StatusTone, statusToneClass } from '@/components/data-display';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -72,7 +69,6 @@ import {
 } from '@/services/client/@tanstack/react-query.gen';
 import { toAuthenticatedMediaUrl } from '@/src/lib/media-url';
 import { stripHtml } from '../../../../../src/features/dashboard/courses/shared/_components/courses-data';
-import { StatusBadge, StatusTone, statusToneClass } from '@/components/data-display';
 
 const tabListClass =
   'h-auto w-full justify-start gap-7 overflow-x-auto rounded-none border-b border-border/70 bg-transparent p-0';
@@ -275,7 +271,7 @@ function TimelineList<T>({ items, render }: { items: T[]; render: (item: T) => R
 export default function CourseCreatorInstructorDetailPage() {
   const params = useParams<{ uuid: string }>();
   const routeUuid = decodeURIComponent(params?.uuid ?? '');
-  const [tab, setTab] = useState('overview');
+  const [tab, setTab] = useState('classes');
 
   const instructorQuery = useQuery({
     ...(routeUuid
@@ -634,20 +630,20 @@ export default function CourseCreatorInstructorDetailPage() {
         </p>
       </SectionPanel>
 
-      <Tabs value={tab} onValueChange={setTab} className='space-y-4'>
+      <Tabs value={tab} onValueChange={setTab} className='space-y-4 mb-20'>
         <TabsList className={tabListClass}>
-          <TabsTrigger value='overview' className={tabTriggerClass}>
+          {/* <TabsTrigger value='overview' className={tabTriggerClass}>
             <ClipboardList className='size-4' />
             Overview
-          </TabsTrigger>
+          </TabsTrigger> */}
           <TabsTrigger value='classes' className={tabTriggerClass}>
             <BookOpen className='size-4' />
             Classes
           </TabsTrigger>
-          <TabsTrigger value='students' className={tabTriggerClass}>
+          {/* <TabsTrigger value='students' className={tabTriggerClass}>
             <Users className='size-4' />
             Students
-          </TabsTrigger>
+          </TabsTrigger> */}
           <TabsTrigger value='credentials' className={tabTriggerClass}>
             <GraduationCap className='size-4' />
             Credentials
@@ -660,17 +656,17 @@ export default function CourseCreatorInstructorDetailPage() {
             <Star className='size-4' />
             Reviews
           </TabsTrigger>
-          <TabsTrigger value='documents' className={tabTriggerClass}>
+          {/* <TabsTrigger value='documents' className={tabTriggerClass}>
             <FileText className='size-4' />
             Documents
-          </TabsTrigger>
+          </TabsTrigger> */}
           <TabsTrigger value='payables' className={tabTriggerClass}>
             <DollarSign className='size-4' />
             Payables
           </TabsTrigger>
         </TabsList>
 
-        <TabsContent value='overview' className='mt-0'>
+        {/* <TabsContent value='overview' className='mt-0'>
           <div className='grid gap-4 xl:grid-cols-2'>
             <SectionPanel
               title='Identity data'
@@ -817,7 +813,7 @@ export default function CourseCreatorInstructorDetailPage() {
               />
             </SectionPanel>
           </div>
-        </TabsContent>
+        </TabsContent> */}
 
         <TabsContent value='classes' className='mt-0'>
           <SectionPanel
@@ -851,6 +847,9 @@ export default function CourseCreatorInstructorDetailPage() {
                       <th className='text-muted-foreground px-3 py-2 font-medium'>Format</th>
                       <th className='text-muted-foreground px-3 py-2 font-medium'>Location</th>
                       <th className='text-muted-foreground px-3 py-2 font-medium'>Schedule</th>
+                      <th className='text-muted-foreground px-3 py-2 font-medium'>
+                        Active students
+                      </th>
                       <th className='text-muted-foreground px-3 py-2 font-medium'>Capacity</th>
                       <th className='text-muted-foreground px-3 py-2 font-medium'>Sessions</th>
                       <th className='text-muted-foreground px-3 py-2 font-medium'>Pay</th>
@@ -858,48 +857,75 @@ export default function CourseCreatorInstructorDetailPage() {
                     </tr>
                   </thead>
                   <tbody>
-                    {assignedClasses.map(item => (
-                      <tr key={item.uuid} className='border-border/60 border-b last:border-0'>
-                        <td className='px-3 py-3'>
-                          <p className='text-foreground font-medium'>{item.title}</p>
-                          <p className='text-muted-foreground text-xs'>
-                            {item.course_uuid
-                              ? courseMap[item.course_uuid]?.name ||
-                                (coursesLoading ? 'Loading course…' : 'Course unavailable')
-                              : 'Standalone class'}
-                          </p>
-                        </td>
-                        <td className='px-3 py-3'>
-                          <Badge variant='outline' className='rounded-md'>
-                            {formatEnumLabel(item.session_format)}
-                          </Badge>
-                        </td>
-                        <td className='text-muted-foreground px-3 py-3'>
-                          {item.location_name ?? formatEnumLabel(item.location_type)}
-                        </td>
-                        <td className='text-muted-foreground px-3 py-3'>
-                          {formatDateTime(item.default_start_time)}
-                          <span className='block'>{formatDateTime(item.default_end_time)}</span>
-                        </td>
-                        <td className='px-3 py-3'>{formatCount(item.max_participants, '0')}</td>
-                        <td className='px-3 py-3'>
-                          {formatCount(item.completed_session_count, '0')}/
-                          {formatCount(item.scheduled_session_count, '0')}
-                        </td>
-                        <td className='px-3 py-3'>
-                          {formatCurrency(item.instructor_pay ?? 0)}
-                          <span className='text-muted-foreground block text-xs'>
-                            {formatEnumLabel(item.rate_basis)}
-                          </span>
-                        </td>
-                        <td className='px-3 py-3'>
-                          <StatusBadge
-                            status={item.is_active === true ? 'active' : 'inactive'}
-                            label={item.is_active === true ? 'Active' : 'Inactive'}
-                          />
-                        </td>
-                      </tr>
-                    ))}
+                    {assignedClasses.map(item => {
+                      const enrolled = 0;
+                      const capacity = toNumber(item.max_participants);
+                      const fillRate =
+                        capacity > 0 ? Math.round((enrolled / capacity) * 100) : 0;
+
+                      return (
+                        <tr
+                          key={item.uuid}
+                          className='border-border/60 border-b last:border-0'
+                        >
+                          <td className='px-3 py-3'>
+                            <p className='text-foreground font-medium'>{item.title}</p>
+                            <p className='text-muted-foreground text-xs'>
+                              {item.course_uuid
+                                ? courseMap[item.course_uuid]?.name ||
+                                (coursesLoading
+                                  ? 'Loading course…'
+                                  : 'Course unavailable')
+                                : 'Standalone class'}
+                            </p>
+                          </td>
+
+                          <td className='px-3 py-3'>
+                            <Badge variant='outline' className='rounded-md'>
+                              {formatEnumLabel(item.session_format)}
+                            </Badge>
+                          </td>
+
+                          <td className='text-muted-foreground px-3 py-3'>
+                            {item.location_name ?? formatEnumLabel(item.location_type)}
+                          </td>
+
+                          <td className='text-muted-foreground px-3 py-3'>
+                            {formatDateTime(item.default_start_time)}
+                            <span className='block'>
+                              {formatDateTime(item.default_end_time)}
+                            </span>
+                          </td>
+
+                          <td className='px-3 py-3'>
+                            {formatCount(enrolled, '0')}
+                          </td>
+
+                          <td className='px-3 py-3'>
+                            {formatCount(item.max_participants, '0')}
+                          </td>
+
+                          <td className='px-3 py-3'>
+                            {formatCount(item.completed_session_count, '0')}/
+                            {formatCount(item.scheduled_session_count, '0')}
+                          </td>
+
+                          <td className='px-3 py-3'>
+                            {formatCurrency(item.instructor_pay ?? 0)}
+                            <span className='text-muted-foreground block text-xs'>
+                              {formatEnumLabel(item.rate_basis)}
+                            </span>
+                          </td>
+
+                          <td className='px-3 py-3'>
+                            <StatusBadge
+                              status={item.is_active === true ? 'active' : 'inactive'}
+                              label={item.is_active === true ? 'Active' : 'Inactive'}
+                            />
+                          </td>
+                        </tr>
+                      );
+                    })}
                   </tbody>
                 </table>
               </div>
@@ -907,7 +933,7 @@ export default function CourseCreatorInstructorDetailPage() {
           </SectionPanel>
         </TabsContent>
 
-        <TabsContent value='students' className='mt-0'>
+        {/* <TabsContent value='students' className='mt-0'>
           <SectionPanel
             title='Student coverage'
             description='Learner counts for this instructor’s classes. Unavailable counts are shown as zero.'
@@ -969,7 +995,7 @@ export default function CourseCreatorInstructorDetailPage() {
                             <p className='text-muted-foreground text-xs'>
                               {item.course_uuid
                                 ? courseMap[item.course_uuid]?.name ||
-                                  (coursesLoading ? 'Loading course…' : 'Course unavailable')
+                                (coursesLoading ? 'Loading course…' : 'Course unavailable')
                                 : 'Standalone class'}
                             </p>
                           </td>
@@ -1028,7 +1054,7 @@ export default function CourseCreatorInstructorDetailPage() {
               </div>
             )}
           </SectionPanel>
-        </TabsContent>
+        </TabsContent> */}
 
         <TabsContent value='credentials' className='mt-0'>
           <div className='grid gap-4 xl:grid-cols-[0.85fr_1.15fr]'>
@@ -1262,7 +1288,7 @@ export default function CourseCreatorInstructorDetailPage() {
           </div>
         </TabsContent>
 
-        <TabsContent value='documents' className='mt-0'>
+        {/* <TabsContent value='documents' className='mt-0'>
           <SectionPanel title='Documents' description='Uploaded instructor verification documents.'>
             {documentsQuery.isLoading ? (
               <div className='space-y-2'>
@@ -1343,7 +1369,7 @@ export default function CourseCreatorInstructorDetailPage() {
               </div>
             )}
           </SectionPanel>
-        </TabsContent>
+        </TabsContent> */}
 
         <TabsContent value='payables' className='mt-0'>
           <SectionPanel

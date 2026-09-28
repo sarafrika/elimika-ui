@@ -28,6 +28,10 @@ import { useRouter } from 'next/navigation';
 import { useDeferredValue, useMemo, useState } from 'react';
 import { useCreatorInstructors } from './useCreatorInstructors';
 
+// for approved organisations, we need to be able to see list of approved rates and all information filled in while applying to train courses (they have been approved to train)
+
+// for approved instructors, we need to be able to see list of approved rates and all information filled in while applying to train courses (they have been approved to train)
+
 export default function ApprovedInstructors() {
   const router = useRouter();
   const [search, setSearch] = useState('');
