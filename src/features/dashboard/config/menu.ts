@@ -398,7 +398,7 @@ export default {
   // ============================================================
   course_creator: [
     {
-      title: 'Overview',
+      title: '',
       icon: LayoutDashboard,
       items: [
         {
@@ -446,6 +446,26 @@ export default {
           url: '/dashboard/wallet',
           icon: Wallet,
         },
+        {
+          title: 'Notifications',
+          url: '/dashboard/notifications',
+          icon: Bell,
+        },
+        {
+          title: 'Revenue',
+          url: '/dashboard/revenue',
+          icon: DollarSign,
+        },
+        {
+          title: 'Analytics',
+          url: '/dashboard/analytics',
+          icon: ChartNoAxesCombined,
+        },
+        {
+          title: 'Settings',
+          url: '/dashboard/settings',
+          icon: Settings,
+        },
         // {
         //   title: 'Skills Fund',
         //   url: '/dashboard/skills-fund',
@@ -476,32 +496,6 @@ export default {
         //   url: '/dashboard/payments',
         //   icon: DollarSign,
         // },
-      ],
-    },
-    {
-      title: 'Controls',
-      icon: Settings,
-      items: [
-        {
-          title: 'Notifications',
-          url: '/dashboard/notifications',
-          icon: Bell,
-        },
-        {
-          title: 'Revenue',
-          url: '/dashboard/revenue',
-          icon: DollarSign,
-        },
-        {
-          title: 'Analytics',
-          url: '/dashboard/analytics',
-          icon: ChartNoAxesCombined,
-        },
-        {
-          title: 'Settings',
-          url: '/dashboard/settings',
-          icon: Settings,
-        },
       ],
     },
   ],

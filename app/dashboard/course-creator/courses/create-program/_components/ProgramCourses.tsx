@@ -385,7 +385,7 @@ function CourseTile({
       variant='outline'
       aria-pressed={selected}
       onClick={onToggle}
-      className={`bg-background relative h-auto flex-col items-stretch justify-start gap-2 overflow-hidden rounded-none p-0 text-left whitespace-normal ${selected ? 'border-transparent' : 'border-border hover:bg-muted/40'}`}
+      className={`bg-background relative h-auto flex-col items-stretch justify-start gap-2 overflow-hidden rounded-sm p-0 text-left whitespace-normal ${selected ? 'border-transparent' : 'border-border hover:bg-muted/40'}`}
       style={selected ? { boxShadow: `0 0 0 2px ${accent}` } : undefined}
     >
       <span

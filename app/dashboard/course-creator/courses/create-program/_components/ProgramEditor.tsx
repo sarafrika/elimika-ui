@@ -1,16 +1,17 @@
 'use client';
 
-import { useEffect, useMemo, useState } from 'react';
-import { useRouter } from 'next/navigation';
-import { useInfiniteQuery } from '@tanstack/react-query';
+import { Button } from '@/components/ui/button';
+import { Card } from '@/components/ui/card';
+import { EmptyState } from '@/components/ui/empty-state';
+import { Form } from '@/components/ui/form';
+import Spinner from '@/components/ui/spinner';
+import { useCoursesByIds } from '@/hooks/use-batched-lookups';
+import { useUserProfile } from '@/context/profile-context';
+import { STALE_TIMES } from '@/lib/query-client';
+import { getAllCategoriesInfiniteOptions } from '@/services/client/@tanstack/react-query.gen';
+import type { TrainingProgram } from '@/services/client/types.gen';
 import { zodResolver } from '@hookform/resolvers/zod';
-import {
-  useForm,
-  useFormContext,
-  useWatch,
-  type FieldErrors,
-  type FieldPath,
-} from 'react-hook-form';
+import { useInfiniteQuery } from '@tanstack/react-query';
 import {
   ArrowLeft,
   ArrowRight,
@@ -22,18 +23,21 @@ import {
   Palette,
   Scale,
 } from 'lucide-react';
+import Link from 'next/link';
+import { useRouter } from 'next/navigation';
+import { useEffect, useMemo, useState } from 'react';
+import {
+  useForm,
+  useFormContext,
+  useWatch,
+  type FieldErrors,
+  type FieldPath,
+} from 'react-hook-form';
 import { toast } from 'sonner';
-import { Button } from '@/components/ui/button';
-import { Card } from '@/components/ui/card';
-import { EmptyState } from '@/components/ui/empty-state';
-import { Form } from '@/components/ui/form';
-import Spinner from '@/components/ui/spinner';
-import { useUserProfile } from '@/context/profile-context';
-import { STALE_TIMES } from '@/lib/query-client';
-import { getAllCategoriesInfiniteOptions } from '@/services/client/@tanstack/react-query.gen';
-import type { TrainingProgram } from '@/services/client/types.gen';
-import { programFormSchema, type ProgramFormValues } from '../program-schema';
+import { PageHeader } from '../../../../../../components/page-header';
 import { clearNewProgramDraft, readProgramDraft, writeProgramDraft } from '../program-local-draft';
+import type { ProgramFormValues } from '../program-schema';
+import { minimumProgramTrainingFee, programPricingSchema } from '../program-pricing';
 import { useSaveProgram } from '../use-save-program';
 import ProgramCourses from './ProgramCourses';
 import { ProgramSetup } from './ProgramFields';
@@ -77,11 +81,25 @@ export default function ProgramEditor({
   const creatorUuid = profile?.courseCreator?.uuid ?? '';
   const [step, setStep] = useState(0);
   const form = useForm<ProgramFormValues>({
-    resolver: zodResolver(programFormSchema),
+    resolver: (values, context, options) =>
+      zodResolver(programPricingSchema(minimumTrainingFee))(values, context, options),
     defaultValues: initialValues,
     mode: 'onTouched',
     shouldUnregister: false,
   });
+  const selectedCourses = useWatch({ control: form.control, name: 'courses' });
+  const selectedCourseIds = useMemo(
+    () => selectedCourses.map(course => course.courseUuid),
+    [selectedCourses]
+  );
+  const courseFees = useCoursesByIds(selectedCourseIds);
+  const minimumTrainingFee: number | undefined = useMemo(
+    () =>
+      courseFees.isLoading || courseFees.isError
+        ? undefined
+        : minimumProgramTrainingFee(selectedCourseIds, courseFees.courseMap),
+    [selectedCourseIds, courseFees.courseMap, courseFees.isLoading, courseFees.isError]
+  );
   const [draftStorageFailed, setDraftStorageFailed] = useState(false);
   useEffect(() => {
     if (!creatorUuid) return;
@@ -152,24 +170,18 @@ export default function ProgramEditor({
   return (
     <main className='bg-muted/20 min-h-screen px-4 py-6 sm:px-6 lg:px-8'>
       <div className='mx-auto max-w-[1500px] space-y-5'>
-        <header className='border-border flex flex-wrap items-center gap-3 border-b pb-4'>
-          <Button
-            type='button'
-            variant='ghost'
-            size='icon'
-            aria-label='Back to programs'
-            disabled={save.isPending}
-            onClick={backToPrograms}
-          >
-            <ArrowLeft />
-          </Button>
-          <div className='min-w-0 flex-1'>
-            <h1 className='text-foreground text-2xl font-bold'>Programs</h1>
-            <p className='text-muted-foreground text-sm'>
-              Build a program step by step, then open its information page.
-            </p>
-          </div>
-        </header>
+        <Link
+          href='/dashboard/course-creator/course-management'
+          className='text-muted-foreground hover:text-foreground inline-flex items-center gap-1 text-sm'
+        >
+          <ArrowLeft className='h-4 w-4' /> Back to my courses
+        </Link>
+
+        <PageHeader
+          title='Programs'
+          description='Build a program step by step, then open its information page.'
+        />
+
         <Form {...form}>
           <form
             noValidate
@@ -181,7 +193,7 @@ export default function ProgramEditor({
             }}
           >
             <fieldset disabled={save.isPending} className='min-w-0'>
-              <Card className='border-border bg-background gap-0 rounded-none py-0 shadow-sm'>
+              <Card className='border-border bg-background gap-0 rounded-md py-0 shadow-sm'>
                 <div className='border-border border-b p-5'>
                   <div className='flex flex-wrap items-baseline justify-between gap-2'>
                     <ProgramTitle />
@@ -204,7 +216,7 @@ export default function ProgramEditor({
                               variant='ghost'
                               onClick={() => void goToStep(index)}
                               aria-current={index === step ? 'step' : undefined}
-                              className={`h-auto w-full justify-start gap-2 rounded-none border p-2.5 text-left text-xs font-medium ${state === 'current' ? 'border-primary bg-primary/5 text-foreground' : state === 'done' ? 'border-border bg-muted/40 text-foreground' : 'border-border text-muted-foreground hover:bg-muted/40'}`}
+                              className={`h-auto w-full justify-start gap-2 rounded-md border p-2.5 text-left text-xs font-medium ${state === 'current' ? 'border-primary bg-primary/5 text-foreground' : state === 'done' ? 'border-border bg-muted/40 text-foreground' : 'border-border text-muted-foreground hover:bg-muted/40'}`}
                             >
                               <span
                                 className={`flex h-6 w-6 shrink-0 items-center justify-center ${state === 'todo' ? 'bg-muted text-muted-foreground' : 'bg-primary text-primary-foreground'}`}
@@ -292,7 +304,13 @@ export default function ProgramEditor({
                   {step === 2 && <ProgramAssessment />}
                   {step === 3 && <ProgramEvaluation />}
                   {step === 4 && <ProgramBranding />}
-                  {step === 5 && <ProgramPricing />}
+                  {step === 5 && (
+                    <ProgramPricing
+                      minimumTrainingFee={minimumTrainingFee}
+                      isLoading={courseFees.isLoading}
+                      onRetry={() => void courseFees.refetch()}
+                    />
+                  )}
                   <div className='border-border flex flex-wrap items-center justify-between gap-2 border-t pt-5'>
                     <Button type='button' variant='ghost' onClick={backToPrograms}>
                       Cancel

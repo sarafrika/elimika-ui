@@ -53,6 +53,9 @@ import { useParams, useRouter } from 'next/navigation';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { toast } from 'sonner';
 
+import { CourseTrainingRequirements } from '@/app/dashboard/_components/course-training-requirements';
+import { FeedbackDialog } from '@/app/dashboard/_components/review-instructor-modal';
+import { socialShareActions } from '@/app/dashboard/instructor/classes/overview/[id]/page';
 import HTMLTextPreview from '@/components/editors/html-text-preview';
 import { LinkShareCard } from '@/components/shared/link-share-card';
 import { Button } from '@/components/ui/button';
@@ -73,9 +76,6 @@ import {
 import { CombinedClassDetailsData } from '@/hooks/use-class-details';
 import { useCourseEnrollmentsMap } from '@/hooks/use-enrollment-map';
 import { buildSocialShareUrl, openShareWindow } from '@/lib/share';
-import { socialShareActions } from '@/app/dashboard/instructor/classes/overview/[id]/page';
-import { CourseTrainingRequirements } from '@/app/dashboard/_components/course-training-requirements';
-import { FeedbackDialog } from '@/app/dashboard/_components/review-instructor-modal';
 import CourseFaq from '@/src/features/dashboard/courses/shared/_components/CourseFaq';
 import ClassCourseTabNav from '@/src/features/dashboard/courses/shared/_components/CourseTabNav';
 import ShareClassCourse, {
@@ -254,11 +254,10 @@ function StarRatingDisplay({
         {Array.from({ length: 5 }).map((_, i) => (
           <Star
             key={i}
-            className={`${starSize} ${
-              i < Math.round(rating)
-                ? 'fill-warning text-warning'
-                : 'fill-muted text-muted-foreground'
-            }`}
+            className={`${starSize} ${i < Math.round(rating)
+              ? 'fill-warning text-warning'
+              : 'fill-muted text-muted-foreground'
+              }`}
           />
         ))}
       </div>
@@ -526,9 +525,8 @@ function ProgramCurriculum({
                           >
                             <div className='flex min-w-0 items-center gap-2'>
                               <ChevronDown
-                                className={`text-muted-foreground h-4 w-4 shrink-0 transition-transform ${
-                                  isOpen ? 'rotate-180' : ''
-                                }`}
+                                className={`text-muted-foreground h-4 w-4 shrink-0 transition-transform ${isOpen ? 'rotate-180' : ''
+                                  }`}
                               />
                               <span className='text-foreground truncate text-xs font-semibold sm:text-sm'>
                                 {mod.lesson?.title}
@@ -821,9 +819,8 @@ function ProgramOverview({
 
               <div className='mb-3 sm:mb-4'>
                 <div
-                  className={`text-muted-foreground text-xs leading-relaxed sm:text-sm ${
-                    showFullBio ? '' : 'line-clamp-2'
-                  }`}
+                  className={`text-muted-foreground text-xs leading-relaxed sm:text-sm ${showFullBio ? '' : 'line-clamp-2'
+                    }`}
                 >
                   <HTMLTextPreview htmlContent={profile.bio} />
                 </div>
@@ -1622,10 +1619,12 @@ export default function ClassProgramDetailsPage({
 
         if (!isEverythingReady) {
           return (
-            <EnrollmentLoadingState
-              title='Loading your program details'
-              description='We are gathering courses, lessons, tasks, quizzes, and program information so the full learning overview is ready when the page opens.'
-            />
+            <main className='mx-auto max-w-6xl items-center'>
+              <EnrollmentLoadingState
+                title='Loading your program details'
+                description='We are gathering courses, lessons, tasks, quizzes, and program information so the full learning overview is ready when the page opens.'
+              />
+            </main>
           );
         }
 
@@ -1719,13 +1718,13 @@ export default function ClassProgramDetailsPage({
 
                       {activeTab ===
                         `Assessment (${filteredAssignments.length + filteredQuizzes.length})` && (
-                        <ProgramAssessments
-                          assignments={filteredAssignments}
-                          quizzes={filteredQuizzes}
-                          assessmentScheme={assessmentMap}
-                          courseMap={courseMap}
-                        />
-                      )}
+                          <ProgramAssessments
+                            assignments={filteredAssignments}
+                            quizzes={filteredQuizzes}
+                            assessmentScheme={assessmentMap}
+                            courseMap={courseMap}
+                          />
+                        )}
 
                       {activeTab === `Requirements (${aggregatedRequirements.length})` && (
                         <CourseTrainingRequirements
