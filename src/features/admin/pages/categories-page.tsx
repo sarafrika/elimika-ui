@@ -66,7 +66,7 @@ export function CategoriesPage() {
   const search = useCategorySearch(q, active);
   const saveCategory = useSaveCategory();
   const deleteCategory = useDeleteCategory();
-  const courseCount = useCategoryCourseCount(selected?.name);
+  const courseCount = useCategoryCourseCount(selected?.uuid);
 
   const openCreate = (parent?: Category) => {
     setForm({ ...emptyForm, parent_uuid: parent?.uuid ?? null });
@@ -134,10 +134,10 @@ export function CategoriesPage() {
             {search.isSearching ? (
               <SectionBoundary
                 label='the search results'
-                loading={search.query.isLoading}
-                error={search.query.error}
-                onRetry={search.query.refetch}
-                empty={!search.query.isLoading && search.categories.length === 0}
+                loading={search.isLoading}
+                error={search.error}
+                onRetry={search.refetch}
+                empty={!search.isLoading && search.categories.length === 0}
                 emptyTitle='Nothing matches'
                 emptyDescription='Try a different word, or clear the filters.'
                 skeleton={<SectionCardSkeleton rows={5} withHeader={false} />}

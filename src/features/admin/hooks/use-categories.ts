@@ -1,17 +1,24 @@
 'use client';
 
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import {
+  type UseQueryResult,
+  useMutation,
+  useQueries,
+  useQuery,
+  useQueryClient,
+} from '@tanstack/react-query';
 import { useMemo } from 'react';
 import { toast } from 'sonner';
 
 import { extractList, extractPage, getTotalFromMetadata } from '@/lib/api-helpers';
 import { getErrorMessage } from '@/lib/error-utils';
+import { toNumber } from '@/lib/metrics';
 import { type Category, createCategory, deleteCategory, updateCategory } from '@/services/client';
 import {
+  getAllCategoriesOptions,
+  getCoursesByCategoryOptions,
   getRootCategoriesOptions,
   getSubCategoriesOptions,
-  searchCategoriesOptions,
-  searchCoursesOptions,
 } from '@/services/client/@tanstack/react-query.gen';
 import { invalidateGeneratedQueryIds } from '@/src/features/dashboard/workflow-query-invalidation';
 import { configQuery, listQuery } from '../lib/admin-queries';
@@ -25,7 +32,8 @@ const CATEGORY_QUERY_IDS = [
   'getCategoryByUuid',
 ] as const;
 
-export const CATEGORY_SEARCH_PAGE_SIZE = 25;
+/** The whole category list is small, so it is read in a few large pages. */
+const CATEGORY_LIST_PAGE_SIZE = 100;
 
 /** Top of the tree. Children are fetched only when a node is opened. */
 export function useRootCategories() {
@@ -45,45 +53,87 @@ export function useSubCategories(parentUuid: string | undefined, enabled: boolea
   return { categories, query };
 }
 
-/** Flat search across the whole tree, used instead of the tree while a term is typed. */
-export function useCategorySearch(term: string, activeOnly: string) {
-  const trimmed = term.trim();
-
-  const searchParams: Record<string, unknown> = {};
-  if (trimmed) searchParams.name_like = trimmed;
-  if (activeOnly === 'active') searchParams.is_active_eq = true;
-  if (activeOnly === 'inactive') searchParams.is_active_eq = false;
-
-  const query = useQuery({
-    ...searchCategoriesOptions({
-      query: { searchParams, pageable: { page: 0, size: CATEGORY_SEARCH_PAGE_SIZE } },
-    }),
-    ...listQuery,
-    enabled: trimmed.length > 0 || activeOnly !== 'any',
-  });
-
-  const { categories, totalRows } = useMemo(() => {
-    const { items, metadata } = extractPage<Category>(query.data);
-    return { categories: items, totalRows: getTotalFromMetadata(metadata) };
-  }, [query.data]);
-
-  return { categories, totalRows, query, isSearching: trimmed.length > 0 || activeOnly !== 'any' };
+/** Folds the later category pages into one list; module-level so its result is memoised. */
+function combineCategoryPages(results: UseQueryResult<unknown>[]) {
+  return {
+    items: results.flatMap(result => extractPage<Category>(result.data).items),
+    isLoading: results.some(result => result.isLoading),
+    error: results.find(result => result.error)?.error ?? null,
+    refetch: () => {
+      for (const result of results) void result.refetch();
+    },
+  };
 }
 
 /**
- * How many courses carry this category. The course search filters on the category name,
- * so the count follows the name rather than the uuid.
+ * Flat search across the whole tree, used instead of the tree while a term is typed.
+ * Categories are not in the search index and the API has no free-text filter for them,
+ * so the (small) list is read in full and matched by name here.
  */
-export function useCategoryCourseCount(categoryName: string | undefined) {
+export function useCategorySearch(term: string, activeOnly: string) {
+  const needle = term.trim().toLowerCase();
+  const isSearching = needle.length > 0 || activeOnly !== 'any';
+
+  const first = useQuery({
+    ...getAllCategoriesOptions({
+      query: { pageable: { page: 0, size: CATEGORY_LIST_PAGE_SIZE } },
+    }),
+    ...configQuery,
+    enabled: isSearching,
+  });
+
+  const firstPage = useMemo(() => extractPage<Category>(first.data), [first.data]);
+  const pageCount = toNumber(firstPage.metadata.totalPages ?? 1);
+
+  // Page through the rest only when the first page says there is more.
+  const rest = useQueries({
+    queries: Array.from({ length: Math.max(0, pageCount - 1) }, (_, index) => ({
+      ...getAllCategoriesOptions({
+        query: { pageable: { page: index + 1, size: CATEGORY_LIST_PAGE_SIZE } },
+      }),
+      ...configQuery,
+      enabled: isSearching,
+    })),
+    combine: combineCategoryPages,
+  });
+
+  const categories = useMemo(
+    () =>
+      [...firstPage.items, ...rest.items]
+        .filter(category => {
+          if (activeOnly === 'active' && !category.is_active) return false;
+          if (activeOnly === 'inactive' && category.is_active) return false;
+          return !needle || category.name.toLowerCase().includes(needle);
+        })
+        .sort((a, b) => a.name.localeCompare(b.name)),
+    [firstPage.items, rest.items, needle, activeOnly]
+  );
+
+  return {
+    categories,
+    totalRows: categories.length,
+    isSearching,
+    isLoading: (first.isLoading && !first.data) || rest.isLoading,
+    error: first.error ?? rest.error,
+    refetch: () => {
+      void first.refetch();
+      rest.refetch();
+    },
+  };
+}
+
+/**
+ * How many courses carry this category, read from the category's own course list so the
+ * count follows the uuid (the course search no longer filters by category name).
+ */
+export function useCategoryCourseCount(categoryUuid: string | undefined) {
   const query = useQuery({
-    ...searchCoursesOptions({
-      query: {
-        searchParams: { category_name: categoryName ?? '' },
-        pageable: { page: 0, size: 1 },
-      },
+    ...getCoursesByCategoryOptions({
+      path: { categoryUuid: categoryUuid ?? '' },
+      query: { pageable: { page: 0, size: 1 } },
     }),
     ...listQuery,
-    enabled: Boolean(categoryName),
+    enabled: Boolean(categoryUuid),
   });
 
   const count = useMemo(() => {
