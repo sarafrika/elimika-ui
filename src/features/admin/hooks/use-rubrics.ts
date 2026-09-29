@@ -7,6 +7,7 @@ import { toast } from 'sonner';
 import { extractEntity, extractPage, getTotalFromMetadata } from '@/lib/api-helpers';
 import { getErrorMessage } from '@/lib/error-utils';
 import { toNumber } from '@/lib/metrics';
+import { classifySearchError, toSearchTerm } from '@/lib/search-query';
 import { type AssessmentRubric, type RubricMatrix, updateAssessmentRubric } from '@/services/client';
 import {
   getRubricMatrixViewOptions,
@@ -33,21 +34,26 @@ export interface RubricFilters {
 }
 
 /**
- * Search filters are ANDed by the backend, so a typed term goes to `title_like` ONLY.
- * Sending `description_like` alongside it would match just the rubrics whose title and
- * description both contain the term, which is never what the admin means.
+ * Structured filters only. A typed term goes as `q` to the search index, which matches
+ * title and description together and ranks by relevance, so there is no per-field
+ * `title_like` / `description_like` guess to make (the old filters were ANDed, and
+ * sending both matched only rubrics whose title and description each held the term).
  */
-function buildSearchParams({ q, type, visibility, status, active, creatorUuid }: RubricFilters) {
-  const params: Record<string, unknown> = {};
+function buildFilterParams({
+  type,
+  visibility,
+  status,
+  active,
+  creatorUuid,
+}: Omit<RubricFilters, 'q' | 'page'>) {
+  const params: Record<string, string> = {};
 
-  const term = q?.trim();
-  if (term) params.title_like = term;
   if (type) params.rubricType = type;
-  if (visibility === 'public') params.isPublic = true;
-  if (visibility === 'private') params.isPublic = false;
+  if (visibility === 'public') params.isPublic = 'true';
+  if (visibility === 'private') params.isPublic = 'false';
   if (status) params.status = status;
-  if (active === 'active') params.isActive = true;
-  if (active === 'inactive') params.isActive = false;
+  if (active === 'active') params.isActive = 'true';
+  if (active === 'inactive') params.isActive = 'false';
   if (creatorUuid) params.courseCreatorUuid = creatorUuid;
 
   return params;
@@ -56,17 +62,38 @@ function buildSearchParams({ q, type, visibility, status, active, creatorUuid }:
 /** Server-paged rubrics for the directory. */
 export function useRubrics(filters: RubricFilters) {
   const page = filters.page ?? 0;
-  const searchParams = useMemo(() => buildSearchParams(filters), [filters]);
+  const { type, visibility, status, active, creatorUuid } = filters;
+  const term = toSearchTerm(filters.q);
+  const filterParams = useMemo(
+    () => buildFilterParams({ type, visibility, status, active, creatorUuid }),
+    [type, visibility, status, active, creatorUuid]
+  );
+  const searchParams = useMemo(
+    () => (term ? { ...filterParams, q: term } : filterParams),
+    [filterParams, term]
+  );
+  const sorted = { page, size: RUBRICS_PAGE_SIZE, sort: ['lastModifiedDate,desc'] };
 
-  const query = useQuery({
+  // With a term the index ranks by relevance, so no sort is sent.
+  const primary = useQuery({
     ...searchAssessmentRubricsOptions({
-      query: {
-        searchParams: searchParams as Record<string, string>,
-        pageable: { page, size: RUBRICS_PAGE_SIZE, sort: ['lastModifiedDate,desc'] },
-      },
+      query: { searchParams, pageable: term ? { page, size: RUBRICS_PAGE_SIZE } : sorted },
     }),
     ...listQuery,
   });
+
+  const searchIssue = classifySearchError(primary.error, term);
+  const unavailable = searchIssue === 'unavailable';
+
+  // The index is down: the directory still answers without the term.
+  const fallback = useQuery({
+    ...searchAssessmentRubricsOptions({ query: { searchParams: filterParams, pageable: sorted } }),
+    ...listQuery,
+    enabled: unavailable,
+  });
+
+  const query = unavailable ? fallback : primary;
+  const activeParams = unavailable ? filterParams : searchParams;
 
   const { rubrics, totalRows, pageCount } = useMemo(() => {
     const { items, metadata } = extractPage<AssessmentRubric>(query.data);
@@ -83,7 +110,8 @@ export function useRubrics(filters: RubricFilters) {
     pageCount,
     page,
     query,
-    isFiltered: Object.keys(searchParams).length > 0,
+    isFiltered: Object.keys(activeParams).length > 0,
+    searchIssue,
   };
 }
 
