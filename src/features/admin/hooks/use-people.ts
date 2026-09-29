@@ -4,6 +4,7 @@ import { useQuery } from '@tanstack/react-query';
 import { useMemo } from 'react';
 import { extractPage, getTotalFromMetadata } from '@/lib/api-helpers';
 import { toNumber } from '@/lib/metrics';
+import { classifySearchError, type SearchIssue, toSearchTerm } from '@/lib/search-query';
 import type { User } from '@/services/client';
 import { searchOptions } from '@/services/client/@tanstack/react-query.gen';
 import { listQuery } from '../lib/admin-queries';
@@ -29,19 +30,12 @@ export interface PeopleFilters {
 }
 
 /**
- * The users search only filters on fields it marks filterable, so a typed query has to
- * pick one. A term with a space is a name (`full_name_like`); anything else is matched
- * against the email, which is what an admin pastes when chasing one account.
+ * Role and status filters. Free text is not one of them: it goes as `q` to the search
+ * index, which matches names and emails alike, so there is no longer a guess at which
+ * field the admin meant. The backend keeps `user_domain` working alongside `q`.
  */
-function buildSearchParams({ role, q, status }: PeopleFilters) {
+function buildFilterParams({ role, status }: Pick<PeopleFilters, 'role' | 'status'>) {
   const params: Record<string, unknown> = {};
-  const term = q.trim();
-
-  if (term) {
-    if (term.includes(' ')) params.full_name_like = term;
-    else if (term.includes('@')) params.email_like = term;
-    else params.full_name_like = term;
-  }
 
   if (role !== 'all') params.user_domain = role;
   if (status !== 'any') params.active_eq = status === 'active';
@@ -58,22 +52,42 @@ export interface PeopleResult {
   refetch: () => void;
   /** True when filters are set, so an empty result means "nothing matches". */
   isFiltered: boolean;
+  /** Set when the typed search failed; the page shows a notice rather than blocking. */
+  searchIssue: SearchIssue;
 }
 
 /** One page of people, filtered and paged on the server. */
 export function usePeople(filters: PeopleFilters): PeopleResult {
   const size = filters.size ?? PEOPLE_PAGE_SIZE;
-  const searchParams = useMemo(() => buildSearchParams(filters), [filters]);
+  const { role, status, page: pageIndex } = filters;
+  const term = toSearchTerm(filters.q);
+  const filterParams = useMemo(() => buildFilterParams({ role, status }), [role, status]);
+  const searchParams = useMemo(
+    () => (term ? { ...filterParams, q: term } : filterParams),
+    [filterParams, term]
+  );
+  const sorted = { page: pageIndex, size, sort: ['createdDate,desc'] };
 
-  const query = useQuery({
+  // With a term the index ranks by relevance, so no sort is sent.
+  const primary = useQuery({
     ...searchOptions({
-      query: {
-        searchParams,
-        pageable: { page: filters.page, size, sort: ['createdDate,desc'] },
-      },
+      query: { searchParams, pageable: term ? { page: pageIndex, size } : sorted },
     }),
     ...listQuery,
   });
+
+  const searchIssue = classifySearchError(primary.error, term);
+  const unavailable = searchIssue === 'unavailable';
+
+  // The index is down: the directory still answers without the term.
+  const fallback = useQuery({
+    ...searchOptions({ query: { searchParams: filterParams, pageable: sorted } }),
+    ...listQuery,
+    enabled: unavailable,
+  });
+
+  const query = unavailable ? fallback : primary;
+  const activeParams = unavailable ? filterParams : searchParams;
 
   const page = useMemo(() => extractPage<User>(query.data), [query.data]);
 
@@ -86,7 +100,8 @@ export function usePeople(filters: PeopleFilters): PeopleResult {
     refetch: () => {
       void query.refetch();
     },
-    isFiltered: Object.keys(searchParams).length > 0,
+    isFiltered: Object.keys(activeParams).length > 0,
+    searchIssue,
   };
 }
 
