@@ -394,7 +394,7 @@ export default function CourseCreatorCoursesContent() {
         </dl>
       </header>
 
-      <div className='my-6 flex flex-col justify-between gap-4 xl:flex-row xl:items-center'>
+      <div className='mb-6 mt-4 flex flex-col justify-between gap-4 xl:flex-row xl:items-center'>
         <div
           className='bg-muted inline-flex w-full rounded-sm border p-1 sm:w-fit'
           role='group'
@@ -742,7 +742,10 @@ function OfferingRow({
   const Icon = offering.type === 'courses' ? BookOpen : Layers;
 
   return (
-    <TableRow className='hover:bg-primary/[0.025] relative [&>td]:px-3 [&>td]:py-4 [&>td]:text-sm'>
+    <TableRow className={cn(
+      'hover:bg-primary/[0.025] relative [&>td]:px-3 [&>td]:py-4 [&>td]:text-sm',
+      offering.type === 'programs' && 'bg-success/5 hover:bg-success/10'
+    )}>
       <TableCell className='!pl-2'>
         <div className='flex w-full items-center gap-3'>
           <div
@@ -795,7 +798,7 @@ function OfferingRow({
               {description || 'No description added yet.'}
             </p>
 
-            <div className='mt-1 flex min-w-0 items-center gap-2'>
+            {/* <div className='mt-1 flex min-w-0 items-center gap-2'>
               <span
                 className={cn(
                   'inline-flex shrink-0 items-center gap-1.5 rounded-md px-2 py-1 text-xs font-semibold',
@@ -807,7 +810,7 @@ function OfferingRow({
                 <Icon className='size-3' />
                 {offering.type === 'courses' ? 'Course' : 'Program'}
               </span>
-            </div>
+            </div> */}
           </div>
         </div>
       </TableCell>

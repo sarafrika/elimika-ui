@@ -285,7 +285,7 @@ export default {
   // ============================================================
   instructor: [
     {
-      title: 'Overview',
+      title: '',
       icon: LayoutDashboard,
       items: [
         {
@@ -353,6 +353,21 @@ export default {
           url: '/dashboard/skills-fund',
           icon: PiggyBank,
         },
+        {
+          title: 'Analytics',
+          url: '/dashboard/analytics',
+          icon: LineChart,
+        },
+        {
+          title: 'Notifications',
+          url: '/dashboard/notifications',
+          icon: Bell,
+        },
+        {
+          title: 'Settings',
+          url: '/dashboard/settings',
+          icon: Settings,
+        },
         // {
         //   title: 'Profile',
         //   url: '/dashboard/profile',
@@ -370,27 +385,7 @@ export default {
         // },
       ],
     },
-    {
-      title: 'Controls',
-      icon: Settings,
-      items: [
-        {
-          title: 'Analytics',
-          url: '/dashboard/analytics',
-          icon: LineChart,
-        },
-        {
-          title: 'Notifications',
-          url: '/dashboard/notifications',
-          icon: Bell,
-        },
-        {
-          title: 'Settings',
-          url: '/dashboard/settings',
-          icon: Settings,
-        },
-      ],
-    },
+
   ],
 
   // ============================================================
@@ -648,7 +643,7 @@ export default {
   // ============================================================
   parent: [
     {
-      title: 'Overview',
+      title: '',
       icon: LayoutDashboard,
       items: [
         {
@@ -661,39 +656,16 @@ export default {
           url: '/dashboard/overview',
           icon: LayoutDashboard,
         },
-      ],
-    },
-    {
-      title: 'Onboarding',
-      icon: Handshake,
-      items: [
         {
           title: 'Opportunities',
           url: '/dashboard/opportunities',
           icon: Handshake,
         },
-      ],
-    },
-    {
-      title: 'Operations',
-      icon: Users,
-      items: [
         {
           title: 'Attendance',
           url: '/dashboard/attendance',
           icon: CalendarClock,
         },
-      ],
-    },
-    {
-      title: 'Assessment',
-      icon: ClipboardList,
-      items: [],
-    },
-    {
-      title: 'Controls',
-      icon: Settings,
-      items: [
         {
           title: 'Notifications',
           url: '/dashboard/notifications',
@@ -706,5 +678,6 @@ export default {
         },
       ],
     },
+
   ],
 } as Menu;

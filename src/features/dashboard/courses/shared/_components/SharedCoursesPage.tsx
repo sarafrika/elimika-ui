@@ -38,6 +38,7 @@ import {
   getAllDifficultyLevelsOptions,
   getAllTrainingProgramsOptions,
   getClassDefinitionsForProgramOptions,
+  getCourseLessonsOptions,
   getCourseRecommendationsOptions,
   getCourseReviewsOptions,
   getProgramCoursesOptions,
@@ -49,11 +50,7 @@ import {
   submitProgramTrainingApplicationMutation,
   submitTrainingApplicationMutation,
 } from '@/services/client/@tanstack/react-query.gen';
-import type {
-  ClassDefinition,
-  Course,
-  CourseReview,
-} from '@/services/client/types.gen';
+import type { ClassDefinition, Course, CourseReview } from '@/services/client/types.gen';
 import {
   type CatalogTrainingApplicationData,
   type CoursesCatalogCardData,
@@ -84,7 +81,7 @@ import {
   type LucideIcon,
   SlidersHorizontal,
   SquareDashedMousePointer,
-  Users
+  Users,
 } from 'lucide-react';
 import Link from 'next/link';
 import { useEffect, useMemo, useState } from 'react';
@@ -211,7 +208,8 @@ const createCatalogCards = (
   courseClassesMap: Record<string, ClassDefinition[]>,
   programClassesMap: Record<string, ClassDefinition[]>,
   programCoursesMap: Record<string, Course[]>,
-  programLearnerCountMap: Record<string, number>
+  programLearnerCountMap: Record<string, number>,
+  courseLessonCountMap: Record<string, number>
 ): CoursesCatalogCardData[] =>
   items.map((item, index) => {
     const presentation = getCardPresentation(index);
@@ -287,11 +285,29 @@ const createCatalogCards = (
       return [...new Set(categories)];
     })();
 
+    const lessons = (() => {
+      if (item.kind === 'course') return courseLessonCountMap[item.id];
+
+      const courses = programCoursesMap[item.id];
+      if (!courses) return undefined;
+
+      let total = 0;
+      for (const course of courses) {
+        const count = course.uuid ? courseLessonCountMap[course.uuid] : undefined;
+        // A partial program total would understate the lessons learners receive.
+        if (count === undefined) return undefined;
+        total += count;
+      }
+      return total;
+    })();
+
     return {
       id: item.id,
       contentKind: item.kind,
       title: item.title,
       description: item.description,
+
+      lessons,
 
       provider: creatorMap.get(item.creatorUuid) ?? item.creatorName ?? 'Course Creator',
 
@@ -313,7 +329,7 @@ const createCatalogCards = (
         : isInstructorApplyCard
           ? isOrganisationDomain
             ? !canOrganisationApply ||
-            Boolean(applicationStatus && !REAPPLYABLE_OR_APPROVED.has(applicationStatus))
+              Boolean(applicationStatus && !REAPPLYABLE_OR_APPROVED.has(applicationStatus))
             : Boolean(applicationStatus && !REAPPLYABLE.has(applicationStatus))
           : false,
 
@@ -494,7 +510,6 @@ export function SharedCoursesPage({ domain }: SharedCoursesPageProps) {
   const courses = useMemo(() => coursesResponse?.data?.content ?? [], [coursesResponse]);
   const programs = useMemo(() => programsResponse?.data?.content ?? [], [programsResponse]);
   const categories = useMemo(() => categoriesResponse?.data?.content ?? [], [categoriesResponse]);
-
 
   const { data: instructorCourseApplications, isFetching: instructorCourseApplicationsFetching } =
     useQuery({
@@ -1291,11 +1306,58 @@ export function SharedCoursesPage({ domain }: SharedCoursesPageProps) {
     const map: Record<string, Course[]> = {};
 
     programUuids.forEach((programUuid, index) => {
-      map[programUuid] = programCoursesQueries[index]?.data?.data ?? [];
+      const query = programCoursesQueries[index];
+      const response = query?.data;
+      if (query?.isError || response?.error || response?.success === false) return;
+      if (response?.data) map[programUuid] = response.data;
     });
 
     return map;
   }, [programCoursesQueries, programUuids]);
+
+  const lessonCourseUuids = useMemo(
+    () =>
+      [
+        ...new Set([
+          ...courseUuids,
+          ...Object.values(programCoursesMap).flatMap(courses =>
+            courses.map(course => course.uuid).filter((uuid): uuid is string => Boolean(uuid))
+          ),
+        ]),
+      ].sort(),
+    [courseUuids, programCoursesMap]
+  );
+
+  // The API has no bulk lesson-count endpoint. Request just one row per unique
+  // visible course and use its pagination total, including bundled program courses.
+  const courseLessonCountQueries = useQueries({
+    queries: lessonCourseUuids.map(courseUuid => ({
+      ...getCourseLessonsOptions({
+        path: { courseUuid },
+        query: { pageable: { page: 0, size: 1 } },
+      }),
+      enabled: Boolean(courseUuid),
+      staleTime: STALE_TIMES.entity,
+    })),
+  });
+
+  const courseLessonCountMap = useMemo<Record<string, number>>(() => {
+    const map: Record<string, number> = {};
+
+    lessonCourseUuids.forEach((courseUuid, index) => {
+      const query = courseLessonCountQueries[index];
+      const response = query?.data;
+      if (query?.isError || response?.error || response?.success === false) return;
+
+      const totalElements = response?.data?.metadata?.totalElements;
+      if (totalElements == null) return;
+
+      const count = Number(totalElements);
+      if (Number.isSafeInteger(count) && count >= 0) map[courseUuid] = count;
+    });
+
+    return map;
+  }, [courseLessonCountQueries, lessonCourseUuids]);
 
   const programLearnerCountMap = useMemo<Record<string, number>>(() => {
     const map: Record<string, number> = {};
@@ -1324,7 +1386,8 @@ export function SharedCoursesPage({ domain }: SharedCoursesPageProps) {
         courseClassesMap,
         programClassesMap,
         programCoursesMap,
-        programLearnerCountMap
+        programLearnerCountMap,
+        courseLessonCountMap
       ),
     [
       paginatedItems,
@@ -1340,6 +1403,7 @@ export function SharedCoursesPage({ domain }: SharedCoursesPageProps) {
       programClassesMap,
       programCoursesMap,
       programLearnerCountMap,
+      courseLessonCountMap,
     ]
   );
 
@@ -1675,7 +1739,7 @@ export function SharedCoursesPage({ domain }: SharedCoursesPageProps) {
                 </div>
 
                 {isLoading ? (
-                  <div className='grid grid-cols-[repeat(auto-fit,minmax(320px,1fr))] gap-4'>
+                  <div className='grid gap-4 sm:grid-cols-2 sm:gap-5 lg:grid-cols-3 xl:grid-cols-4'>
                     {Array.from({ length: 6 }).map((_, index) => (
                       <div key={index} className='space-y-4 rounded-2xl border p-4'>
                         <Skeleton className='h-40 w-full rounded-xl' />
@@ -1693,7 +1757,7 @@ export function SharedCoursesPage({ domain }: SharedCoursesPageProps) {
                   </div>
                 ) : catalogCards.length > 0 ? (
                   <div className=''>
-                    <div className='grid grid-cols-[repeat(auto-fill,minmax(320px,380px))] gap-4'>
+                    <div className='grid gap-4 sm:grid-cols-2 sm:gap-5 lg:grid-cols-3 xl:grid-cols-4'>
                       {!isStudentDomain &&
                         catalogCards.map(card => (
                           <CoursesCatalogCard
