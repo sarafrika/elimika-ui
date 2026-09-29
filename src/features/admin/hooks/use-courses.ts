@@ -5,6 +5,7 @@ import { useMemo } from 'react';
 
 import { extractEntity, extractPage, getTotalFromMetadata } from '@/lib/api-helpers';
 import { toNumber } from '@/lib/metrics';
+import { classifySearchError, type SearchIssue, toSearchTerm } from '@/lib/search-query';
 import type {
   ContentModerationHistory,
   Course,
@@ -44,15 +45,13 @@ export interface CourseFilters {
 
 /**
  * The courses search only accepts the keys it marks filterable. Price and category
- * uuids are not among them and answer 400, so the filters stay on what works:
- * lifecycle stage, approval, active and a name match.
+ * uuids are not among them and answer 400, so the filters stay on what works: status,
+ * approval and active. Free text is not a filter here — it goes as `q`.
  */
-function buildSearchParams({ status, approval, q }: CourseFilters) {
+function buildFilterParams({ status, approval }: Pick<CourseFilters, 'status' | 'approval'>) {
   const params: Record<string, unknown> = {};
-  const term = q.trim();
 
-  if (term) params.name_like = term;
-  if (status !== 'all') params.lifecycle_stage = status;
+  if (status !== 'all') params.status = status;
   if (approval !== 'any') params.admin_approved = approval === 'approved';
 
   return params;
@@ -66,21 +65,44 @@ export interface CoursesResult {
   error: unknown;
   refetch: () => void;
   isFiltered: boolean;
+  /** Set when the typed search failed; the page shows a notice rather than blocking. */
+  searchIssue: SearchIssue;
 }
 
 /** One page of courses, filtered and paged on the server. */
 export function useCourses(filters: CourseFilters): CoursesResult {
-  const searchParams = useMemo(() => buildSearchParams(filters), [filters]);
+  const { status, approval, page: pageIndex } = filters;
+  const term = toSearchTerm(filters.q);
+  const filterParams = useMemo(() => buildFilterParams({ status, approval }), [status, approval]);
+  const searchParams = useMemo(
+    () => (term ? { ...filterParams, q: term } : filterParams),
+    [filterParams, term]
+  );
+  const sorted = { page: pageIndex, size: COURSE_PAGE_SIZE, sort: ['lastModifiedDate,desc'] };
 
-  const query = useQuery({
+  // With a term the index ranks by relevance, so no sort is sent.
+  const primary = useQuery({
     ...searchCoursesOptions({
       query: {
         searchParams,
-        pageable: { page: filters.page, size: COURSE_PAGE_SIZE, sort: ['lastModifiedDate,desc'] },
+        pageable: term ? { page: pageIndex, size: COURSE_PAGE_SIZE } : sorted,
       },
     }),
     ...listQuery,
   });
+
+  const searchIssue = classifySearchError(primary.error, term);
+  const unavailable = searchIssue === 'unavailable';
+
+  // The index is down: the list still answers without the term.
+  const fallback = useQuery({
+    ...searchCoursesOptions({ query: { searchParams: filterParams, pageable: sorted } }),
+    ...listQuery,
+    enabled: unavailable,
+  });
+
+  const query = unavailable ? fallback : primary;
+  const activeParams = unavailable ? filterParams : searchParams;
 
   const page = useMemo(() => extractPage<Course>(query.data), [query.data]);
 
@@ -93,7 +115,8 @@ export function useCourses(filters: CourseFilters): CoursesResult {
     refetch: () => {
       void query.refetch();
     },
-    isFiltered: Object.keys(searchParams).length > 0,
+    isFiltered: Object.keys(activeParams).length > 0,
+    searchIssue,
   };
 }
 
