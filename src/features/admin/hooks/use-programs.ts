@@ -4,6 +4,7 @@ import { useQuery } from '@tanstack/react-query';
 import { useMemo } from 'react';
 
 import { extractEntity, extractList, extractPage, getTotalFromMetadata } from '@/lib/api-helpers';
+import { classifySearchError, toSearchTerm } from '@/lib/search-query';
 import type {
   Certificate,
   ContentModerationHistory,
@@ -39,15 +40,13 @@ export interface ProgramFilters {
 }
 
 /**
- * Only title, courseCreatorUuid, categoryUuid, isPublished, active, status and
- * adminApproved are filterable. Price and duration filters return 400, so they are
- * never sent.
+ * Only courseCreatorUuid, categoryUuid, isPublished, active, status and adminApproved
+ * are filterable. Price and duration filters return 400, so they are never sent. Free
+ * text is not a filter — it goes as `q`.
  */
-function buildSearchParams({ q, status, approval }: ProgramFilters) {
+function buildFilterParams({ status, approval }: Pick<ProgramFilters, 'status' | 'approval'>) {
   const params: Record<string, unknown> = {};
 
-  const term = q?.trim();
-  if (term) params.title_like = term;
   if (status && status !== 'any') params.status = status;
   if (approval === 'approved') params.admin_approved = true;
   if (approval === 'awaiting') params.admin_approved = false;
@@ -58,16 +57,29 @@ function buildSearchParams({ q, status, approval }: ProgramFilters) {
 /** Server-paged programs for the directory. */
 export function usePrograms(filters: ProgramFilters) {
   const page = filters.page ?? 0;
+  const { status, approval } = filters;
+  const term = toSearchTerm(filters.q);
+  const filterParams = useMemo(() => buildFilterParams({ status, approval }), [status, approval]);
+  const pageable = { page, size: PROGRAMS_PAGE_SIZE };
 
-  const query = useQuery({
+  const primary = useQuery({
     ...searchTrainingProgramsOptions({
-      query: {
-        searchParams: buildSearchParams(filters),
-        pageable: { page, size: PROGRAMS_PAGE_SIZE },
-      },
+      query: { searchParams: term ? { ...filterParams, q: term } : filterParams, pageable },
     }),
     ...listQuery,
   });
+
+  const searchIssue = classifySearchError(primary.error, term);
+  const unavailable = searchIssue === 'unavailable';
+
+  // The index is down: the directory still answers without the term.
+  const fallback = useQuery({
+    ...searchTrainingProgramsOptions({ query: { searchParams: filterParams, pageable } }),
+    ...listQuery,
+    enabled: unavailable,
+  });
+
+  const query = unavailable ? fallback : primary;
 
   const { programs, totalRows, pageCount } = useMemo(() => {
     const { items, metadata } = extractPage<TrainingProgram>(query.data);
@@ -78,7 +90,7 @@ export function usePrograms(filters: ProgramFilters) {
     };
   }, [query.data]);
 
-  return { programs, totalRows, pageCount, page, query };
+  return { programs, totalRows, pageCount, page, query, searchIssue };
 }
 
 /** Programs submitted for approval, for the callout above the list. */
