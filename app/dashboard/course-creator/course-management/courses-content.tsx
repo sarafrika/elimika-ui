@@ -17,6 +17,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
+import { SearchNotice } from '@/components/data/search-notice';
 import { EmptyState } from '@/components/ui/empty-state';
 import { Input } from '@/components/ui/input';
 import {
@@ -43,6 +44,12 @@ import {
   type OfferingCountState,
 } from '@/hooks/use-offering-counts';
 import { STALE_TIMES } from '@/lib/query-client';
+import {
+  classifySearchError,
+  isSearchUnavailableError,
+  type SearchIssue,
+  toSearchTerm,
+} from '@/lib/search-query';
 import { cn } from '@/lib/utils';
 import type { Course, PageMetadata, TrainingProgram } from '@/services/client';
 import {
@@ -88,6 +95,11 @@ const CatalogueWorkspace = dynamic(
 
 // Each page combines two bounded result sets so both types appear in the library.
 const PAGE_SIZE = 10;
+
+/** A 503 from the search index will not fix itself in a retry; anything else gets the default three. */
+function retryUnlessSearchUnavailable(failureCount: number, error: unknown) {
+  return !isSearchUnavailableError(error) && failureCount < 3;
+}
 const STATUS_OPTIONS = [
   ['all', 'All statuses'],
   ['published', 'Published'],
@@ -156,11 +168,16 @@ export default function CourseCreatorCoursesContent() {
     course_creator_uuid_eq: creatorUuid,
     ...(status !== 'all' ? { status_eq: status } : {}),
   };
+  // Free text goes as `q` (relevance-ranked by the search index). When the index is down
+  // the term is dropped for that search so the library still lists.
+  const searchTerm = toSearchTerm(deferredSearch);
+  const [unavailableTerm, setUnavailableTerm] = useState<string>();
+  const sentTerm = searchTerm && searchTerm !== unavailableTerm ? searchTerm : undefined;
   const courseOptions = searchCoursesOptions({
     query: {
       searchParams: {
         ...sharedFilters,
-        ...(deferredSearch ? { name_like: deferredSearch } : {}),
+        ...(sentTerm ? { q: sentTerm } : {}),
         // Category filtering is applied client-side below using the fetched records.
       },
       pageable: { page, size: PAGE_SIZE },
@@ -170,7 +187,7 @@ export default function CourseCreatorCoursesContent() {
     query: {
       searchParams: {
         ...sharedFilters,
-        ...(deferredSearch ? { title_like: deferredSearch } : {}),
+        ...(sentTerm ? { q: sentTerm } : {}),
         // Category filtering is applied client-side below using the fetched records.
       },
       pageable: { page, size: PAGE_SIZE },
@@ -180,12 +197,22 @@ export default function CourseCreatorCoursesContent() {
     ...courseOptions,
     enabled: !!creatorUuid,
     staleTime: STALE_TIMES.entity,
+    retry: retryUnlessSearchUnavailable,
   });
   const programsQuery = useQuery({
     ...programOptions,
     enabled: !!creatorUuid,
     staleTime: STALE_TIMES.entity,
+    retry: retryUnlessSearchUnavailable,
   });
+  const searchError = sentTerm ? (coursesQuery.error ?? programsQuery.error) : null;
+  const searchIssue: SearchIssue =
+    searchTerm && searchTerm === unavailableTerm
+      ? 'unavailable'
+      : classifySearchError(searchError, sentTerm);
+  useEffect(() => {
+    if (sentTerm && isSearchUnavailableError(searchError)) setUnavailableTerm(sentTerm);
+  }, [sentTerm, searchError]);
   const categoriesQuery = useQuery({
     ...getAllCategoriesOptions({ query: { pageable: { page: 0, size: 100 } } }),
     enabled: !!creatorUuid,
@@ -228,12 +255,14 @@ export default function CourseCreatorCoursesContent() {
     if (contentType !== 'courses')
       programsData?.content?.forEach(item => items.push({ type: 'programs', item }));
 
+    // With a search term each list arrives in relevance order; keep it.
+    if (sentTerm) return items;
     return items.sort((a, b) => {
       const aDate = a.item.updated_date ? new Date(a.item.updated_date).getTime() : 0;
       const bDate = b.item.updated_date ? new Date(b.item.updated_date).getTime() : 0;
       return bDate - aDate || titleOf(a).localeCompare(titleOf(b));
     });
-  }, [contentType, coursesData, programsData]);
+  }, [contentType, coursesData, programsData, sentTerm]);
 
   const categoryTabItems = useMemo(() => {
     return offerings.flatMap(offering => {
@@ -506,6 +535,15 @@ export default function CourseCreatorCoursesContent() {
               </Button>
             </div>
           )}
+
+          <SearchNotice
+            issue={searchIssue}
+            className='rounded-none border-x-0 border-t-0'
+            onReset={() => {
+              setSearch('');
+              setDebouncedSearch('');
+            }}
+          />
 
           <CardContent className='p-0' aria-busy={loading || search.trim() !== deferredSearch}>
             {loading ? (
