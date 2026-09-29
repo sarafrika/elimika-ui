@@ -49,6 +49,7 @@ export type CoursesCatalogCardData = {
   title: string;
   provider: string;
   duration: string;
+  lessons?: number;
   secondaryMeta: string;
   enrolledClasses: number;
   applicationStatus?: string | null;

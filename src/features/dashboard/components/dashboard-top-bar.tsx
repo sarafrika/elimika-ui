@@ -763,6 +763,27 @@ function DepositMethodSheet({
   );
 }
 
+
+// CREATE FUNCTIONS
+// INSTRUCTORS
+// - create a class
+// - add course (apply to train)
+
+// ORGANISATIONS
+// - create a class
+// - add course (apply to train)  
+// - search an instructor
+// - post a job
+// - add classroom
+// - add equipment
+
+// COURSE CREATORS
+// - create a course
+
+// STUDENTS
+// - enroll in a class
+// - search instructors
+
 function CreateMenu({ actions, compact = false }: { actions: CreateAction[]; compact?: boolean }) {
   if (actions.length === 0) return null;
 
