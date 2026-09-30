@@ -278,7 +278,7 @@ export function WalletWithdrawPage() {
             <div className='space-y-2'>
               <Label>Recipient UUID</Label>
               <Input
-                placeholder='Search or paste user UUID'
+                placeholder="Paste the recipient's user UUID"
                 value={userSearchQuery}
                 onChange={e => setUserSearchQuery(e.target.value)}
                 onFocus={() => setIsTransferOpen(true)}

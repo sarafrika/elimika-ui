@@ -114,22 +114,17 @@ export function TransferFundsSheet({
               Recipient User UUID <span className='text-destructive'>*</span>
             </Label>
 
+            {/* People search is limited to admins and organisation managers, so there is no
+                user search here: the recipient is identified by their user UUID. */}
             <Input
-              placeholder='Search for user...'
-              value={userSearchQuery}
-              onChange={e => setUserSearchQuery(e.target.value)}
-              disabled={isPending}
-            />
-
-            <Input
-              placeholder='Enter or select user UUID'
+              placeholder="Paste the recipient's user UUID"
               value={targetUserUuid}
               onChange={e => setTargetUserUuid(e.target.value)}
               disabled={isPending}
             />
 
             <p className='text-muted-foreground text-xs'>
-              The selected user will receive the funds in their wallet
+              The user with this UUID receives the funds in their wallet
             </p>
           </div>
 
