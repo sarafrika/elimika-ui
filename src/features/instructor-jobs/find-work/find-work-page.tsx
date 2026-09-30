@@ -11,14 +11,13 @@ import {
   GraduationCap,
   Layers,
   MapPin,
-  Search,
   SlidersHorizontal,
   UserCheck,
   Users,
 } from 'lucide-react';
 import Link from 'next/link';
 import { usePathname, useRouter, useSearchParams } from 'next/navigation';
-import { type ComponentProps, useCallback, useDeferredValue, useMemo, useState } from 'react';
+import { type ComponentProps, useCallback, useMemo, useState } from 'react';
 
 import { MarketplaceSidebar } from '@/components/profile-job-marketplace/_components/MarketplaceSidebar';
 import { MarketplaceTabs } from '@/components/profile-job-marketplace/_components/MarketplaceTabs';
@@ -27,7 +26,9 @@ import { PageHeader } from '@/components/dashboard';
 import { AsyncSection, SectionError } from '@/components/data/async-section';
 import { Button } from '@/components/ui/button';
 import { EmptyState } from '@/components/ui/empty-state';
-import { Input } from '@/components/ui/input';
+import { SearchQueryInput } from '@/components/search/search-input';
+import { SearchNotice } from '@/components/search/search-notice';
+import { useSearchIssue, useSearchQuery } from '@/hooks/use-search-query';
 import {
   Select,
   SelectContent,
@@ -96,19 +97,6 @@ function joinOr(words: string[]) {
 
 const capitalise = (text: string) => text.charAt(0).toUpperCase() + text.slice(1);
 
-function searchable(row: FindWorkRow) {
-  return [
-    row.job.title,
-    row.organisation?.name,
-    row.job.branch_name,
-    row.job.location_name,
-    row.contentTitle,
-  ]
-    .filter(Boolean)
-    .join(' ')
-    .toLowerCase();
-}
-
 function FilterStatCard({
   active,
   onClick,
@@ -139,8 +127,8 @@ export function FindWorkPage() {
   const searchParams = useSearchParams();
   const filters = useMemo(() => parseFindWorkFilters(searchParams), [searchParams]);
   const now = useNow();
-  const [search, setSearch] = useState('');
-  const deferredSearch = useDeferredValue(search.trim().toLowerCase());
+  // Free text is matched on the server by the search index; ?q= seeds it from a link.
+  const search = useSearchQuery({ initial: searchParams.get('q') ?? '' });
   const [applyJob, setApplyJob] = useState<ClassMarketplaceJob | null>(null);
 
   const setFilters = useCallback(
@@ -151,18 +139,18 @@ export function FindWorkPage() {
     [filters, pathname, router]
   );
 
-  const data = useFindWorkJobs(filters, now);
+  const data = useFindWorkJobs(filters, now, search.q);
   const { rows, list, eligibility } = data;
+  const searchIssue = useSearchIssue(search, list.error);
 
   const base = useMemo(
     () =>
       rows.filter(
         row =>
-          (!deferredSearch || searchable(row).includes(deferredSearch)) &&
           matchesFormat(filters.format, row.job) &&
           matchesStarts(filters.starts, row.facts, now)
       ),
-    [rows, deferredSearch, filters.format, filters.starts, now]
+    [rows, filters.format, filters.starts, now]
   );
   const sidebarRows = useMemo(
     () =>
@@ -277,7 +265,7 @@ export function FindWorkPage() {
 
   const applyRow = applyJob ? rows.find(row => row.job.uuid === applyJob.uuid) : undefined;
   const hasFilters =
-    Boolean(deferredSearch) || findWorkQuery({ ...filters, sort: 'soonest' }) !== '';
+    Boolean(search.q) || findWorkQuery({ ...filters, sort: 'soonest' }) !== '';
 
   return (
     <main className={cn(surfaceTheme.page, 'pb-16')}>
@@ -357,20 +345,13 @@ export function FindWorkPage() {
               className={cn(surfaceTheme.cardPadded, 'flex flex-col gap-3 p-4')}
             >
               <div className='flex gap-2'>
-                <label className='relative block min-w-0 flex-1'>
-                  <span className='sr-only'>Search jobs</span>
-                  <Search
-                    aria-hidden
-                    className='text-muted-foreground pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2'
-                  />
-                  <Input
-                    type='search'
-                    value={search}
-                    onChange={event => setSearch(event.target.value)}
-                    placeholder='Search course, organisation, branch or town'
-                    className='h-10 pl-10'
-                  />
-                </label>
+                <SearchQueryInput
+                  search={search}
+                  aria-label='Search jobs'
+                  placeholder='Search course, organisation, branch or town'
+                  className='h-10'
+                  wrapperClassName='min-w-0'
+                />
                 <Sheet>
                   <SheetTrigger asChild>
                     <Button variant='outline' className='h-10 xl:hidden'>
@@ -490,9 +471,10 @@ export function FindWorkPage() {
                   />
                 ) : null}
 
+                <SearchNotice issue={searchIssue} onReset={search.clear} />
                 <AsyncSection
                   loading={data.loading}
-                  error={list.error}
+                  error={searchIssue ? null : list.error}
                   onRetry={() => list.refetch()}
                   errorTitle='Couldn’t load open jobs'
                   skeleton={
@@ -519,7 +501,7 @@ export function FindWorkPage() {
                             variant='outline'
                             size='sm'
                             onClick={() => {
-                              setSearch('');
+                              search.clear();
                               router.replace(pathname, { scroll: false });
                             }}
                           >

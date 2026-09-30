@@ -3,13 +3,17 @@
 
 import { CustomPagination } from '@/components/pagination';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
+import { SearchQueryInput } from '@/components/search/search-input';
+import { SearchNotice } from '@/components/search/search-notice';
+import { useSearchIssue } from '@/hooks/use-search-query';
+import { useUrlSearchQuery } from '@/hooks/use-url-search-query';
+import { retryUnlessClientOrSearchError } from '@/lib/api-errors';
 import { Skeleton } from '@/components/ui/skeleton';
 import type { Course } from '@/services/client';
 import { getAllCoursesOptions } from '@/services/client/@tanstack/react-query.gen';
 import type { PageMetadata } from '@/services/client';
-import { useQuery } from '@tanstack/react-query';
-import { BookOpen, Filter, Search } from 'lucide-react';
+import { keepPreviousData, useQuery } from '@tanstack/react-query';
+import { BookOpen, Filter } from 'lucide-react';
 import { usePathname, useRouter } from 'next/navigation';
 import { useState } from 'react';
 import { CourseCard } from '../../../_components/course-card';
@@ -31,29 +35,29 @@ export default function CourseMangementPage() {
 
   const [_selectedCategory, setSelectedCategory] = useState('all');
   const [selectedSubcategory, setSelectedSubcategory] = useState('');
-  const [searchQuery, setSearchQuery] = useState('');
+  // Free text goes to the server as `q` (search index, typo-tolerant); a new term starts at page 1.
+  const search = useUrlSearchQuery();
 
   const size = 20;
-  const [page, setPage] = useState(0);
+  const [paging, setPaging] = useState({ q: search.q, page: 0 });
+  const page = paging.q === search.q ? paging.page : 0;
+  const setPage = (next: number) => setPaging({ q: search.q, page: next });
 
-  const { data, isLoading, isSuccess, isFetched, isFetching } = useQuery(
-    getAllCoursesOptions({ query: { pageable: { page, size } } })
-  );
+  const coursesQuery = useQuery({
+    ...getAllCoursesOptions({
+      query: { pageable: { page, size }, ...(search.q ? { q: search.q } : {}) },
+    }),
+    placeholderData: keepPreviousData,
+    retry: retryUnlessClientOrSearchError,
+  });
+  const { data, isSuccess, isFetched, isFetching } = coursesQuery;
+  const searchIssue = useSearchIssue(search, coursesQuery.error);
   const courses: Course[] = data?.data?.content ?? [];
   const paginationMetadata: PageMetadata | undefined = data?.data?.metadata;
 
-  const filteredCourses = courses.filter((course: Course) => {
-    const matchesSearch =
-      searchQuery === '' ||
-      course?.name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      course?.description?.toLowerCase().includes(searchQuery.toLowerCase());
-    // course?.subtitle?.toLowerCase().includes(searchQuery.toLowerCase());
-
-    const matchesSubcategory =
-      selectedSubcategory === '' || course.subcategory === selectedSubcategory;
-
-    return matchesSearch && matchesSubcategory;
-  });
+  const filteredCourses = courses.filter(
+    (course: Course) => selectedSubcategory === '' || course.subcategory === selectedSubcategory
+  );
 
   return (
     <div className='min-h-screen'>
@@ -61,20 +65,13 @@ export default function CourseMangementPage() {
         {/* Search and Filters */}
         <div className='mb-8'>
           <div className='mb-6 flex gap-4'>
-            <div className='relative flex-1'>
-              <Search className='text-muted-foreground absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2 transform' />
-              <Input
-                placeholder='Search courses...'
-                className='pl-10'
-                value={searchQuery}
-                onChange={e => setSearchQuery(e.target.value)}
-              />
-            </div>
+            <SearchQueryInput search={search} placeholder='Search courses…' />
             <Button variant='outline'>
               <Filter className='mr-2 h-4 w-4' />
               Filters
             </Button>
           </div>
+          <SearchNotice issue={searchIssue} onReset={search.clear} />
         </div>
 
         {/* Results */}
@@ -128,7 +125,7 @@ export default function CourseMangementPage() {
             <Button
               variant='outline'
               onClick={() => {
-                setSearchQuery('');
+                search.clear();
                 setSelectedCategory('all');
                 setSelectedSubcategory('');
               }}

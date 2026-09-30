@@ -1,6 +1,6 @@
 'use client';
 
-import { useInfiniteQuery, useQuery } from '@tanstack/react-query';
+import { keepPreviousData, useInfiniteQuery, useQuery } from '@tanstack/react-query';
 import { useCallback, useMemo } from 'react';
 
 import { getEffectiveJobStatus } from '@/components/profile-job-marketplace/job-expiration';
@@ -9,6 +9,7 @@ import {
   useOrganisationsByIds,
   useProgramsByIds,
 } from '@/hooks/use-batched-lookups';
+import { retryUnlessClientOrSearchError } from '@/lib/api-errors';
 import { STALE_TIMES } from '@/lib/query-client';
 import {
   listJobsInfiniteOptions,
@@ -35,19 +36,24 @@ export type FacetOption = { value: string; label: string };
 
 const byLabel = (a: FacetOption, b: FacetOption) => a.label.localeCompare(b.label);
 
-/** Open jobs for Find work, with readiness for each and the options its selects offer. */
+/**
+ * Open jobs for Find work, with readiness for each and the options its selects offer.
+ * `q` (debounced, 2+ characters) is matched by the search index on the server.
+ */
 export function useFindWorkJobs(
   filters: Pick<FindWorkFilters, 'organisation' | 'course' | 'program'>,
-  now: number
+  now: number,
+  q?: string
 ) {
   const profile = useUserProfile();
   const enabled = Boolean(profile?.uuid);
-  const serverFiltered = Boolean(filters.organisation || filters.course || filters.program);
+  const serverFiltered = Boolean(filters.organisation || filters.course || filters.program || q);
 
   const list = useInfiniteQuery({
     ...listJobsInfiniteOptions({
       query: {
         status: 'open',
+        ...(q ? { q } : {}),
         ...(filters.organisation ? { organisation_uuid: filters.organisation } : {}),
         ...(filters.program
           ? { program_uuid: filters.program }
@@ -59,6 +65,8 @@ export function useFindWorkJobs(
     }),
     enabled,
     staleTime: STALE_TIMES.live,
+    placeholderData: keepPreviousData,
+    retry: retryUnlessClientOrSearchError,
     initialPageParam: 0,
     getNextPageParam: (lastPage, pages) => {
       const metadata = lastPage.data?.metadata;
