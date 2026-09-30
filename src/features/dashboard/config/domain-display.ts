@@ -1,5 +1,17 @@
 import type { UserDomain } from '@/lib/types';
-import { BookOpen, Briefcase, CalendarPlus, FileCheck, GraduationCap, type LucideIcon, MapPin, Shield, Sparkles, Users } from 'lucide-react';
+import {
+  BookOpen,
+  Briefcase,
+  CalendarPlus,
+  GraduationCap,
+  type LucideIcon,
+  MapPin,
+  Search,
+  Shield,
+  Sparkles,
+  Users,
+  Wrench,
+} from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { useMemo } from 'react';
 import { roleScopedDashboardPath } from '../lib/active-domain-storage';
@@ -98,18 +110,6 @@ export function useCreateMenuActions(activeDomain: UserDomain | null): CreateAct
             icon: Sparkles,
             onSelect: () => router.push(createCourseHref),
           },
-          {
-            label: 'Add Certificate',
-            description: 'Upload a qualification or document',
-            icon: FileCheck,
-            onSelect: () =>
-              router.push(
-                roleScopedDashboardPath(
-                  activeDomain,
-                  '/dashboard/course-management/certificates'
-                )
-              ),
-          },
         ];
 
       case 'instructor':
@@ -120,9 +120,17 @@ export function useCreateMenuActions(activeDomain: UserDomain | null): CreateAct
             icon: CalendarPlus,
             onSelect: () => router.push(createClassHref),
           },
+          {
+            label: 'Add Course',
+            description: 'Apply to train a new course',
+            icon: BookOpen,
+            onSelect: () =>
+              router.push(roleScopedDashboardPath(activeDomain, '/dashboard/courses')),
+          },
         ];
 
       case 'organisation':
+      case 'organisation_user':
         return [
           {
             label: 'Create Class',
@@ -131,27 +139,56 @@ export function useCreateMenuActions(activeDomain: UserDomain | null): CreateAct
             onSelect: () => router.push(createClassHref),
           },
           {
+            label: 'Add Course',
+            description: 'Apply to train a new course',
+            icon: BookOpen,
+            onSelect: () =>
+              router.push(roleScopedDashboardPath(activeDomain, '/dashboard/courses/catalog')),
+          },
+          {
+            label: 'Search Instructors',
+            description: 'Find and onboard instructors',
+            icon: Search,
+            onSelect: () =>
+              router.push(roleScopedDashboardPath(activeDomain, '/dashboard/instructors')),
+          },
+          {
             label: 'Post a Job',
             description: 'Advertise an instructor opening',
             icon: Briefcase,
-            onSelect: () => router.push(roleScopedDashboardPath(activeDomain, '/dashboard/jobs/new')),
+            onSelect: () =>
+              router.push(roleScopedDashboardPath(activeDomain, '/dashboard/jobs/new')),
           },
           {
             label: 'Add Classroom',
             description: 'Register a venue or online room',
             icon: MapPin,
+            onSelect: () => router.push(roleScopedDashboardPath(activeDomain, '/dashboard/venues')),
+          },
+          {
+            label: 'Add Equipment',
+            description: 'Track tools and learning kits',
+            icon: Wrench,
             onSelect: () =>
-              router.push(roleScopedDashboardPath(activeDomain, '/dashboard/venues/new')),
+              router.push(roleScopedDashboardPath(activeDomain, '/dashboard/resources')),
           },
         ];
 
       case 'student':
         return [
           {
-            label: 'Enroll Course',
-            description: 'Browse and join a course',
+            label: 'Enroll in a Class',
+            description: 'Browse courses and join a class',
             icon: GraduationCap,
-            onSelect: () => router.push('/dashboard/student/courses'),
+            onSelect: () =>
+              router.push(roleScopedDashboardPath(activeDomain, '/dashboard/courses')),
+          },
+          {
+            label: 'Search Instructors',
+            description: 'Find an instructor for your learning',
+            icon: Search,
+            onSelect: () =>
+              router.push(roleScopedDashboardPath(activeDomain, '/dashboard/courses/instructor')),
           },
         ];
 

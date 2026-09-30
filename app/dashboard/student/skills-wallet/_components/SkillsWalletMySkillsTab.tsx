@@ -1,6 +1,6 @@
 'use client';
 
-import { Bookmark, MoreHorizontal, Plus, Search, SlidersHorizontal, Sparkles } from 'lucide-react';
+import { Bookmark, MoreHorizontal, Pencil, Plus, Search, SlidersHorizontal, Sparkles, Trash2 } from 'lucide-react';
 import { useDeferredValue, useMemo, useState } from 'react';
 
 import { Badge } from '@/components/ui/badge';
@@ -9,6 +9,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import {
   DropdownMenu,
   DropdownMenuContent,
+  DropdownMenuItem,
   DropdownMenuRadioGroup,
   DropdownMenuRadioItem,
   DropdownMenuTrigger,
@@ -29,9 +30,12 @@ const LEVEL_FILTERS = ['All Levels', 'Beginner', 'Intermediate', 'Advanced', 'Ex
 
 type SkillsWalletMySkillsTabProps = {
   data: Pick<SkillsWalletData, 'skills' | 'categoryCounts'>;
+  onAddSkill?: () => void;
+  onEditSkill?: (skillId: string) => void;
+  onDeleteSkill?: (skillId: string) => void;
 };
 
-export function SkillsWalletMySkillsTab({ data }: SkillsWalletMySkillsTabProps) {
+export function SkillsWalletMySkillsTab({ data, onAddSkill, onEditSkill, onDeleteSkill }: SkillsWalletMySkillsTabProps) {
   const [activeView, setActiveView] = useState<(typeof VIEW_TABS)[number]>('All Skills');
   const [search, setSearch] = useState('');
   const [levelFilter, setLevelFilter] =
@@ -153,7 +157,8 @@ export function SkillsWalletMySkillsTab({ data }: SkillsWalletMySkillsTabProps) 
           </p>
         </div>
         <div className='flex items-center gap-3'>
-          <Button disabled={true} className='bg-primary hover:bg-primary/90 disabled:cursor-not-allowed'>
+          <Button type='button' disabled={!onAddSkill} onClick={onAddSkill}
+            className='bg-primary hover:bg-primary/90 disabled:cursor-not-allowed'>
             <Plus className='mr-2 h-4 w-4' /> Add Skill
           </Button>
         </div>
@@ -289,11 +294,11 @@ export function SkillsWalletMySkillsTab({ data }: SkillsWalletMySkillsTabProps) 
                     {/* Last Used */}
                     <div>
                       <p className="text-[11px] text-muted-foreground">
-                        Last Used
+                        {skill.last_assessed !== undefined ? 'Last assessed' : 'Last Used'}
                       </p>
 
                       <p className="text-sm">
-                        {skill.last_used ?? "—"}
+                        {skill.last_assessed ?? skill.last_used ?? "—"}
                       </p>
                     </div>
                   </div>
@@ -320,14 +325,34 @@ export function SkillsWalletMySkillsTab({ data }: SkillsWalletMySkillsTabProps) 
                       />
                     </Button>
 
-                    <Button
-                      size="icon"
-                      variant="ghost"
-                      className="h-8 w-8"
-                      aria-label={`More options for ${skill.name}`}
-                    >
-                      <MoreHorizontal className="h-4 w-4" />
-                    </Button>
+                    <DropdownMenu>
+                      <DropdownMenuTrigger asChild>
+                        <Button
+                          type='button'
+                          size='icon'
+                          variant='ghost'
+                          className='h-8 w-8'
+                          disabled={!onEditSkill && !onDeleteSkill}
+                          aria-label={`More options for ${skill.name}`}
+                        >
+                          <MoreHorizontal className='h-4 w-4' />
+                        </Button>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent align='end'>
+                        <DropdownMenuItem disabled={!onEditSkill} onSelect={() => onEditSkill?.(skill.id)}>
+                          <Pencil className='h-4 w-4' />
+                          Edit skill
+                        </DropdownMenuItem>
+                        <DropdownMenuItem
+                          variant='destructive'
+                          disabled={!onDeleteSkill}
+                          onSelect={() => onDeleteSkill?.(skill.id)}
+                        >
+                          <Trash2 className='h-4 w-4' />
+                          Delete skill
+                        </DropdownMenuItem>
+                      </DropdownMenuContent>
+                    </DropdownMenu>
                   </div>
                 </div>
               );

@@ -71,6 +71,8 @@ import type {
   InstructorProfessionalMembership
 } from '@/services/client/types.gen';
 
+import { RoleSkillsWalletMySkillsTab } from './RoleSkillsWalletMySkillsTab';
+
 export type SkillsWalletRole = Extract<VerifiedSkillsRole, 'instructor' | 'course_creator'>;
 
 type RoleSkillsWalletPageProps = {
@@ -94,11 +96,6 @@ type TabId = (typeof TABS)[number]['id'];
 
 export function getRoleLabel(role: SkillsWalletRole) {
   return role === 'instructor' ? 'Instructor' : 'Course creator';
-}
-
-export function getRoleWalletId(role: SkillsWalletRole, uuid?: string) {
-  if (!uuid) return `${role.toUpperCase()}-WALLET`;
-  return `${role === 'instructor' ? 'INS' : 'CCR'}-${uuid.slice(0, 8).toUpperCase()}`;
 }
 
 function formatDate(value?: Date | string | null) {
@@ -859,7 +856,6 @@ export function RoleSkillsWalletPage({ role }: RoleSkillsWalletPageProps) {
             </div>
             <WalletIdCard
               label={`${getRoleLabel(role)} Wallet ID`}
-              walletId={getRoleWalletId(role, profileUuid)}
             />
           </div>
 
@@ -871,7 +867,11 @@ export function RoleSkillsWalletPage({ role }: RoleSkillsWalletPageProps) {
         {tab === 'overview' ? (
           <SkillsWalletOverviewTab data={data} onNavigateToTab={value => setTab(value as TabId)} />
         ) : null}
-        {tab === 'skills' ? <SkillsWalletMySkillsTab data={data} /> : null}
+        {tab === 'skills' ? (
+          profileUuid
+            ? <RoleSkillsWalletMySkillsTab key={`${role}-${profileUuid}`} role={role} profileUuid={profileUuid} />
+            : <SkillsWalletMySkillsTab data={{ skills: [], categoryCounts: [] }} />
+        ) : null}
         {tab === 'portfolio' ? <SkillsWalletPortfolioTab data={data} /> : null}
         {tab === 'credentials' ? (
           <SkillsWalletCredentialsVaultTab

@@ -32,6 +32,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Progress } from '@/components/ui/progress';
 import type { Certificate } from '@/services/client/types.gen';
+import { useUserProfile } from '../../../../../context/profile-context';
 
 export const WALLET_ID = 'ELM-SW-2026-000245';
 
@@ -54,6 +55,7 @@ export type SkillRecord = {
   proficiency_pct: number;
   category: string;
   last_used: string | null;
+  last_assessed?: string;
   icon_key: string;
   icon?: LucideIcon;
   tint?: string;
@@ -176,16 +178,17 @@ export function fmtMonth(value?: string | Date | null) {
 
 export function WalletIdCard({
   label = 'Your Skills Wallet ID',
-  walletId = WALLET_ID,
 }: {
   label?: string;
-  walletId?: string;
 }) {
+  const profile = useUserProfile()
+  const walletId = profile?.uuid?.slice(-12)
+
   return (
     <div className='flex flex-col items-end'>
       <p className='text-muted-foreground text-xs'>{label}</p>
       <div className='mt-1 flex items-center gap-2'>
-        <div className='bg-background rounded-md border px-3 py-1.5 font-mono text-sm'>
+        <div className='bg-background rounded-md border px-3 py-1.5 font-mono text-sm uppercase'>
           {walletId}
         </div>
         <Button size='icon' variant='outline' className='h-8 w-8'>

@@ -71,6 +71,7 @@ export type CourseFormProps = {
   editingCourseId?: string;
   courseId?: string;
   successResponse?: (data: unknown) => void;
+  onValuesChange?: () => void;
 };
 
 export type CourseFormRef = {
@@ -149,7 +150,7 @@ function PricingSummary({ control }: { control: Control<coursePricingFormValues>
 
 export const CoursePricingForm = forwardRef<CourseFormRef, CourseFormProps>(
   function CoursePricingForm(
-    { showSubmitButton, initialValues, editingCourseId, courseId, successResponse },
+    { showSubmitButton, initialValues, editingCourseId, courseId, successResponse, onValuesChange },
     ref
   ) {
     const dialogCloseRef = useRef<HTMLButtonElement>(null);
@@ -345,45 +346,25 @@ export const CoursePricingForm = forwardRef<CourseFormRef, CourseFormProps>(
           updateCourseMutation(
             { body: editBody as MutationPayload, uuid: editingCourseId },
             {
-              onSuccess(data, _variables, _context) {
-                const respObj = data?.data;
-                const errorObj = data?.error;
-
-                if (respObj) {
-                  toast.success(data?.data?.message || 'Course updated successfully');
-                  // if (typeof successResponse === "function") {
-                  //   // @ts-expect-error
-                  //   successResponse(data?.data)
-                  // }
-
-                  // setActiveStep(6);
-                  queryClient.invalidateQueries({
-                    queryKey: getCourseByUuidQueryKey({
-                      path: { uuid: editingCourseId as string },
-                    }),
-                  });
-                  resolve(true);
-                  return;
-                }
-
-                if (errorObj && typeof errorObj === 'object') {
-                  Object.values(errorObj).forEach(errorMsg => {
-                    const message = getFormErrorMessage(errorMsg);
-                    if (message) {
-                      toast.error(message);
-                    }
-                  });
-                  resolve(false);
-                  return;
-                } else if ('message' in data && typeof data.message === 'string') {
-                  toast.error(data.message);
-                  resolve(false);
-                  return;
-                } else {
-                  toast.error('An unknown error occurred.');
+              async onSuccess(result) {
+                if (result.error || result.data?.error || result.data?.success === false) {
+                  toast.error(
+                    getErrorMessage(result.error) || result.data?.message || 'Failed to save pricing.'
+                  );
                   resolve(false);
                   return;
                 }
+                if (!result.data) {
+                  toast.error('Failed to save pricing.');
+                  resolve(false);
+                  return;
+                }
+
+                toast.success(result.data.message || 'Course updated successfully');
+                await queryClient.invalidateQueries({
+                  queryKey: getCourseByUuidQueryKey({ path: { uuid: editingCourseId } }),
+                });
+                resolve(true);
               },
               onError() {
                 resolve(false);
@@ -401,7 +382,13 @@ export const CoursePricingForm = forwardRef<CourseFormRef, CourseFormProps>(
     };
 
     useImperativeHandle(ref, () => ({
-      submit: () => form.handleSubmit(onSubmit)(),
+      submit: async () => {
+        let saved = false;
+        await form.handleSubmit(async values => {
+          saved = await onSubmit(values);
+        }, onError)();
+        return saved;
+      },
     }));
 
     const isFree = useWatch({ control: form.control, name: 'is_free' }) ?? [];
@@ -419,6 +406,7 @@ export const CoursePricingForm = forwardRef<CourseFormRef, CourseFormProps>(
       <Form {...form}>
         <form
           onSubmit={form.handleSubmit(onSubmit, onError)}
+          onChange={onValuesChange}
           className='bg-card space-y-6 rounded-[32px] transition'
         >
           <section className='space-y-6'>
@@ -465,7 +453,10 @@ export const CoursePricingForm = forwardRef<CourseFormRef, CourseFormProps>(
                       <FormItem className='grid gap-1.5 space-y-0'>
                         <FormLabel>Currency</FormLabel>
                         <Select
-                          onValueChange={field.onChange}
+                          onValueChange={value => {
+                            field.onChange(value);
+                            onValuesChange?.();
+                          }}
                           value={field.value}
                           disabled={isFree}
                         >
