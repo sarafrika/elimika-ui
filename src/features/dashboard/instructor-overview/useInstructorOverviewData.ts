@@ -247,7 +247,8 @@ export function useInstructorOverviewData() {
         pageable: {
           page: 0,
           size: 4,
-          sort: ['processed_at,desc'],
+          // JPA sorts by entity property: `processedAt`, not the JSON name `processed_at`.
+          sort: ['processedAt,desc'],
         },
       },
     }),

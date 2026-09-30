@@ -1144,8 +1144,8 @@ function InstructorEmptyState({
   const copy =
     activeView === 'search'
       ? {
-        title: 'No instructors are currently available',
-        body: "Try broadening your filters, or check back once instructors have been added.",
+        title: 'No verified instructors match',
+        body: 'Only instructors verified by Elimika are listed here. Try broadening your filters, or check back as more instructors are verified.',
       }
       : activeView === 'saved'
         ? {

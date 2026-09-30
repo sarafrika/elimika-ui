@@ -17,7 +17,10 @@ import { useMemo } from 'react';
 import { useUsersByIds } from './use-batched-lookups';
 
 /**
- * Instructor directory data. Previously fired 5 requests per instructor
+ * Instructor directory data. The API lists verified instructors plus the caller's own
+ * profile, so an empty directory means "no verified instructors", not "none exist";
+ * empty states should say so.
+ * Previously fired 5 requests per instructor
  * (profile, reviews, rating summary, experience, skills — 100+ requests for a
  * 20-instructor page). Now: 1 instructor page + 1 batched user lookup +
  * 1 experience search + 1 skills search + N small rating summaries.

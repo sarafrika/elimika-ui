@@ -13,8 +13,8 @@ import {
 import { listQuery } from '../lib/admin-queries';
 
 /**
- * The admin lists page in memory on the server, so a page size here only slices what
- * has already been built. One generous page keeps it to a single call per tab.
+ * The admin lists are paged in the database. Admin accounts are few, so one generous
+ * page keeps it to a single call per tab and the console filters that page locally.
  */
 const LIST_SIZE = 200;
 const ELIGIBLE_SIZE = 20;
@@ -47,9 +47,9 @@ function toResult(query: {
 }
 
 /**
- * Everyone holding admin access of any kind. The endpoint requires a `filters` map but
- * the service ignores it and pages in memory, so the console sends an empty map and
- * filters on the client.
+ * Everyone holding admin access of any kind. The endpoint requires a `filters` map; the
+ * console sends an empty one, lets the server page the list in the database, and filters
+ * the loaded page on the client.
  */
 export function useAdminUsers(): AdminListResult {
   const query = useQuery({
