@@ -3,6 +3,7 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
 
+import { httpStatusOf } from '@/lib/api-errors';
 import { getErrorMessage } from '@/lib/error-utils';
 import type { User } from '@/services/client';
 import { updateUserMutation } from '@/services/client/@tanstack/react-query.gen';
@@ -16,9 +17,7 @@ export type IdentityChanges = Pick<
 >;
 
 function updateErrorMessage(error: unknown, fallback: string) {
-  const status =
-    (error as { status?: number } | null)?.status ??
-    (error as { response?: { status?: number } } | null)?.response?.status;
+  const status = httpStatusOf(error);
 
   if (status === 403) return 'You don’t have permission to change this account.';
   if (status === 404) return 'That account no longer exists.';

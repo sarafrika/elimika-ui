@@ -3,6 +3,7 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
 
+import { isConflict } from '@/lib/api-errors';
 import { getErrorMessage } from '@/lib/error-utils';
 import {
   type ActionEnum,
@@ -28,14 +29,6 @@ const APPLICATION_DONE: Record<ApplicationDecision, string> = {
   reject: 'rejected',
   revoke: 'revoked',
 };
-
-/** Reads the status off a thrown response so the message matches what really failed. */
-function statusOf(error: unknown): number | undefined {
-  if (!error || typeof error !== 'object') return undefined;
-  const record = error as { status?: unknown; response?: { status?: unknown } };
-  const status = record.status ?? record.response?.status;
-  return typeof status === 'number' ? status : undefined;
-}
 
 /**
  * Approve, send back or revoke a program. The reason is stored in the moderation
@@ -104,7 +97,7 @@ export function useDecideProgramApplication() {
       toast.success(`${variables.applicantName} ${APPLICATION_DONE[variables.action]}`);
     },
     onError: (error, variables) => {
-      if (statusOf(error) === 409) {
+      if (isConflict(error)) {
         toast.error(getErrorMessage(error, 'This application has already been decided'));
         return;
       }

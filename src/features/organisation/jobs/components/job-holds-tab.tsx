@@ -2,6 +2,7 @@
 
 import { AsyncSection } from '@/components/data/async-section';
 import { Skeleton } from '@/components/ui/skeleton';
+import { isForbidden } from '@/lib/api-errors';
 import { formatDate } from '@/lib/date';
 import { getErrorMessage } from '@/lib/error-utils';
 import type { ClassMarketplaceJob, Instructor } from '@/services/client';
@@ -26,10 +27,9 @@ function holdBadge(status: string | null) {
   return <StatusBadge tone={meta.tone} label={meta.label} />;
 }
 
-function isForbidden(error: unknown) {
+function isHoldForbidden(error: unknown) {
   if (!error) return false;
-  const record = error as { status?: number; response?: { status?: number } };
-  if (record.status === 403 || record.response?.status === 403) return true;
+  if (isForbidden(error)) return true;
   return /forbidden|access denied|not allowed/i.test(getErrorMessage(error, ''));
 }
 
@@ -156,9 +156,9 @@ export function JobHoldsTab({
                 key={entry.resource.resource_uuid}
                 loading={entry.isLoading}
                 error={entry.error}
-                onRetry={isForbidden(entry.error) ? undefined : entry.refetch}
+                onRetry={isHoldForbidden(entry.error) ? undefined : entry.refetch}
                 errorTitle={
-                  isForbidden(entry.error)
+                  isHoldForbidden(entry.error)
                     ? `You can’t see ${name}’s bookings`
                     : `Couldn’t load ${name}’s bookings`
                 }
@@ -188,10 +188,10 @@ export function JobHoldsTab({
             loading={instructorQuery.isLoading && !instructorQuery.data}
             error={instructorQuery.error}
             onRetry={
-              isForbidden(instructorQuery.error) ? undefined : () => instructorQuery.refetch()
+              isHoldForbidden(instructorQuery.error) ? undefined : () => instructorQuery.refetch()
             }
             errorTitle={
-              isForbidden(instructorQuery.error)
+              isHoldForbidden(instructorQuery.error)
                 ? 'You can’t see this instructor’s time holds'
                 : 'Couldn’t load the instructor’s time holds'
             }

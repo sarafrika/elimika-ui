@@ -8,6 +8,7 @@ import {
   createConfig,
 } from './client';
 import { createClientConfig } from '../../hey-api';
+import { attachErrorStatus } from '../api/error-interceptor';
 
 /**
  * The `createClientConfig()` function will be called on client initialization
@@ -28,3 +29,5 @@ export const client = createClient(
     })
   )
 );
+
+client.interceptors.error.use(attachErrorStatus);
