@@ -2,7 +2,7 @@
 
 import { usePathname, useRouter, useSearchParams } from 'next/navigation';
 import { useCallback, useMemo } from 'react';
-import { applySearchState, type SearchStateSpec, withPageReset } from './search-state';
+import { applySearchState, type SearchStateSpec, withPageReset } from '@/lib/search-state';
 
 /**
  * Reads one query parameter and writes it back without a full navigation. Filters,

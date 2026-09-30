@@ -44,8 +44,8 @@ import {
   useProgramModerationHistory,
 } from '../hooks/use-programs';
 import { adminRoutes, type ProgramTab } from '../lib/admin-routes';
-import { enumParam, stringParam } from '../state/search-state';
-import { useSearchState } from '../state/use-search-state';
+import { enumParam, stringParam } from '@/lib/search-state';
+import { useSearchState } from '@/hooks/use-search-state';
 
 const TAB_IDS = ['overview', 'courses', 'applications', 'history'] as const satisfies readonly ProgramTab[];
 

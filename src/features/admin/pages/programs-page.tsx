@@ -16,8 +16,8 @@ import { FilterBar } from '../components/filter-bar';
 import { SectionBoundary } from '../components/section-boundary';
 import { usePendingPrograms, usePrograms, PROGRAMS_PAGE_SIZE } from '../hooks/use-programs';
 import { adminRoutes } from '../lib/admin-routes';
-import { numberParam, stringParam } from '../state/search-state';
-import { useSearchState, useSearchStatePatch } from '../state/use-search-state';
+import { numberParam, stringParam } from '@/lib/search-state';
+import { useSearchState, useSearchStatePatch } from '@/hooks/use-search-state';
 
 const searchParam = stringParam();
 const statusParam = stringParam('any');

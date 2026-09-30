@@ -35,8 +35,8 @@ import {
   type NotificationTab,
 } from '../hooks/use-admin-notifications';
 import { useOrganisations } from '../hooks/use-organisations';
-import { enumParam, numberParam, stringParam } from '../state/search-state';
-import { useSearchState } from '../state/use-search-state';
+import { enumParam, numberParam, stringParam } from '@/lib/search-state';
+import { useSearchState } from '@/hooks/use-search-state';
 
 const TABS: { id: NotificationTab; label: string }[] = [
   { id: 'all', label: 'All' },

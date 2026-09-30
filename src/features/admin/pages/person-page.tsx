@@ -25,8 +25,8 @@ import {
   useStudentProfile,
 } from '../hooks/use-person-record';
 import { adminRoutes, type PersonTab } from '../lib/admin-routes';
-import { enumParam, stringParam } from '../state/search-state';
-import { useSearchState } from '../state/use-search-state';
+import { enumParam, stringParam } from '@/lib/search-state';
+import { useSearchState } from '@/hooks/use-search-state';
 
 const PERSON_TABS: PersonTab[] = [
   'overview',

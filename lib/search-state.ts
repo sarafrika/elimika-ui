@@ -1,5 +1,5 @@
 /**
- * Parsing and serialising the admin console's URL state. Filters, tabs, paging and the
+ * Parsing and serialising list pages' URL state. Filters, tabs, paging and the
  * open record all live in the query string, so a reload or a shared link lands on the
  * same view. Pure functions here; the React hook wraps them.
  */
@@ -49,7 +49,18 @@ export function applySearchState(
 }
 
 /** Changing a filter sends you back to the first page; paging itself does not. */
-export const PAGE_RESETTING_KEYS = ['q', 'role', 'status', 'verified', 'active', 'scope', 'type'];
+export const PAGE_RESETTING_KEYS = [
+  'q',
+  'role',
+  'status',
+  'verified',
+  'active',
+  'scope',
+  'type',
+  'category',
+  'level',
+  'price',
+];
 
 export function withPageReset(
   patch: Record<string, string | undefined>,

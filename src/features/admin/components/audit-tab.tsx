@@ -9,8 +9,8 @@ import { absoluteDateTime } from '@/lib/date';
 import { cn } from '@/lib/utils';
 import type { AdminUserActivityEvent } from '@/services/client';
 import { usePersonActivity } from '../hooks/use-person-record';
-import { enumParam, numberParam, stringParam } from '../state/search-state';
-import { useSearchState } from '../state/use-search-state';
+import { enumParam, numberParam, stringParam } from '@/lib/search-state';
+import { useSearchState } from '@/hooks/use-search-state';
 import { SectionBoundary } from './section-boundary';
 
 const SCOPES = ['all', 'actor', 'target'] as const;

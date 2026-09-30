@@ -10,7 +10,7 @@ import {
   numberParam,
   stringParam,
   withPageReset,
-} from '../state/search-state';
+} from '@/lib/search-state';
 
 test('admin routes carry the segment and drop empty filters', () => {
   assert.equal(adminRoutes.overview(), '/dashboard/admin/overview');

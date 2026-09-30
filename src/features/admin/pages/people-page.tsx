@@ -23,8 +23,8 @@ import {
   type PeopleStatus,
 } from '../hooks/use-people';
 import { adminRoutes } from '../lib/admin-routes';
-import { enumParam, numberParam, stringParam } from '../state/search-state';
-import { useSearchState, useSearchStatePatch } from '../state/use-search-state';
+import { enumParam, numberParam, stringParam } from '@/lib/search-state';
+import { useSearchState, useSearchStatePatch } from '@/hooks/use-search-state';
 
 const ROLES: { id: PeopleRole; label: string }[] = [
   { id: 'all', label: 'All' },

@@ -29,8 +29,8 @@ import {
   useCourseStats,
 } from '../hooks/use-courses';
 import { adminRoutes } from '../lib/admin-routes';
-import { enumParam } from '../state/search-state';
-import { useSearchState } from '../state/use-search-state';
+import { enumParam } from '@/lib/search-state';
+import { useSearchState } from '@/hooks/use-search-state';
 
 const TAB_IDS = ['changes', 'curriculum', 'assessments', 'requirements', 'history'] as const;
 type CourseTab = (typeof TAB_IDS)[number];

@@ -18,8 +18,8 @@ import type { RevenueAmountDto, RevenueTimeSeriesPointDto } from '@/services/cli
 import { MoneyList, formatMoney } from '../components/money-list';
 import { SectionBoundary } from '../components/section-boundary';
 import { REVENUE_RANGES, type RevenueRange, useRevenue } from '../hooks/use-revenue';
-import { enumParam } from '../state/search-state';
-import { useSearchState } from '../state/use-search-state';
+import { enumParam } from '@/lib/search-state';
+import { useSearchState } from '@/hooks/use-search-state';
 
 const rangeParam = enumParam<RevenueRange>(['7d', '30d', '90d', '12m'], '30d');
 

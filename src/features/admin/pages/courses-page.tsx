@@ -28,8 +28,8 @@ import {
   type CourseStatusFilter,
 } from '../hooks/use-courses';
 import { adminRoutes } from '../lib/admin-routes';
-import { enumParam, numberParam, stringParam } from '../state/search-state';
-import { useSearchState, useSearchStatePatch } from '../state/use-search-state';
+import { enumParam, numberParam, stringParam } from '@/lib/search-state';
+import { useSearchState, useSearchStatePatch } from '@/hooks/use-search-state';
 
 const STATUSES: { id: CourseStatusFilter; label: string }[] = [
   { id: 'all', label: 'All' },

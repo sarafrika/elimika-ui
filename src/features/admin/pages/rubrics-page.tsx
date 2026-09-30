@@ -35,8 +35,8 @@ import {
   useRubricStatistics,
   useUpdateRubric,
 } from '../hooks/use-rubrics';
-import { numberParam, stringParam } from '../state/search-state';
-import { useSearchState, useSearchStatePatch } from '../state/use-search-state';
+import { numberParam, stringParam } from '@/lib/search-state';
+import { useSearchState, useSearchStatePatch } from '@/hooks/use-search-state';
 
 const searchParam = stringParam();
 const typeParam = stringParam('any');

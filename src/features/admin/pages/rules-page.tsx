@@ -31,8 +31,8 @@ import {
   useSystemRule,
   useSystemRules,
 } from '../hooks/use-system-rules';
-import { numberParam, stringParam } from '../state/search-state';
-import { useSearchState } from '../state/use-search-state';
+import { numberParam, stringParam } from '@/lib/search-state';
+import { useSearchState } from '@/hooks/use-search-state';
 import { SecurityBanner } from './categories-page';
 
 const searchParam = stringParam();

@@ -29,8 +29,8 @@ import {
   useCatalogue,
   useSaveCatalogueItem,
 } from '../hooks/use-catalogue';
-import { numberParam, stringParam } from '../state/search-state';
-import { useSearchState, useSearchStatePatch } from '../state/use-search-state';
+import { numberParam, stringParam } from '@/lib/search-state';
+import { useSearchState, useSearchStatePatch } from '@/hooks/use-search-state';
 
 const activeParam = stringParam('any');
 const visibleParam = stringParam('any');

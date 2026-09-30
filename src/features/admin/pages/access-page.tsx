@@ -29,8 +29,8 @@ import {
   useSystemAdmins,
   type AdminListResult,
 } from '../hooks/use-admin-access';
-import { enumParam } from '../state/search-state';
-import { useSearchState } from '../state/use-search-state';
+import { enumParam } from '@/lib/search-state';
+import { useSearchState } from '@/hooks/use-search-state';
 
 type AccessTab = 'system' | 'all' | 'organisation';
 

@@ -44,8 +44,8 @@ import {
   useSaveGradingLevel,
 } from '../hooks/use-config-lists';
 import { adminRoutes } from '../lib/admin-routes';
-import { enumParam } from '../state/search-state';
-import { useSearchState } from '../state/use-search-state';
+import { enumParam } from '@/lib/search-state';
+import { useSearchState } from '@/hooks/use-search-state';
 import { SecurityBanner } from './categories-page';
 
 const TABS = ['content-types', 'difficulty', 'grading', 'certificates', 'document-types'] as const;

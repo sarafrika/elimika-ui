@@ -39,8 +39,8 @@ import {
   useSaveCategory,
   useSubCategories,
 } from '../hooks/use-categories';
-import { stringParam } from '../state/search-state';
-import { useSearchState } from '../state/use-search-state';
+import { stringParam } from '@/lib/search-state';
+import { useSearchState } from '@/hooks/use-search-state';
 
 const searchParam = stringParam();
 const activeParam = stringParam('any');

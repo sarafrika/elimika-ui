@@ -30,8 +30,8 @@ import {
   useOrderPayments,
   useSales,
 } from '../hooks/use-sales';
-import { enumParam, numberParam, stringParam } from '../state/search-state';
-import { useSearchState } from '../state/use-search-state';
+import { enumParam, numberParam, stringParam } from '@/lib/search-state';
+import { useSearchState } from '@/hooks/use-search-state';
 
 const rangeParam = enumParam<RevenueRange>(['7d', '30d', '90d', '12m'], '30d');
 const statusParam = stringParam('any');

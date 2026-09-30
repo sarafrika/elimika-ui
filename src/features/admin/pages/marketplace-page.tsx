@@ -23,8 +23,8 @@ import { toNumber } from '@/lib/metrics';
 import { SectionBoundary } from '../components/section-boundary';
 import { JOB_STATUSES, JOBS_PAGE_SIZE, useMarketplaceJobs } from '../hooks/use-marketplace';
 import { adminRoutes } from '../lib/admin-routes';
-import { numberParam, stringParam } from '../state/search-state';
-import { useSearchState, useSearchStatePatch } from '../state/use-search-state';
+import { numberParam, stringParam } from '@/lib/search-state';
+import { useSearchState, useSearchStatePatch } from '@/hooks/use-search-state';
 
 const statusParam = stringParam('any');
 const pageParam = numberParam(0);

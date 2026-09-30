@@ -11,8 +11,8 @@ import { InboxRecordPreview } from '../components/inbox-record-preview';
 import { SectionBoundary } from '../components/section-boundary';
 import { useQueueCounts, useReviewQueue } from '../hooks/use-review-queue';
 import type { InboxType } from '../lib/admin-routes';
-import { enumParam, stringParam } from '../state/search-state';
-import { useSearchState } from '../state/use-search-state';
+import { enumParam, stringParam } from '@/lib/search-state';
+import { useSearchState } from '@/hooks/use-search-state';
 
 const TYPES: { id: InboxType; label: string }[] = [
   { id: 'documents', label: 'Documents' },

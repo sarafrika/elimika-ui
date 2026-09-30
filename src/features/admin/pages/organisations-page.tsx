@@ -30,8 +30,8 @@ import { useAdminStatistics } from '../hooks/use-admin-dashboard';
 import { useSetOrganisationActive } from '../hooks/use-organisation-admin-actions';
 import { useOrganisations } from '../hooks/use-organisations';
 import { adminRoutes } from '../lib/admin-routes';
-import { numberParam, stringParam } from '../state/search-state';
-import { useSearchState, useSearchStatePatch } from '../state/use-search-state';
+import { numberParam, stringParam } from '@/lib/search-state';
+import { useSearchState, useSearchStatePatch } from '@/hooks/use-search-state';
 
 const searchParam = stringParam();
 const verifiedParam = stringParam('any');

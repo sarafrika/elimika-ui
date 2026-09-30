@@ -23,8 +23,8 @@ import { ClassDrawer } from '../components/class-drawer';
 import { SectionBoundary } from '../components/section-boundary';
 import { useAdminStatistics } from '../hooks/use-admin-dashboard';
 import { CALENDAR_MAX_DAYS, useAllClasses, useInstructorCalendar } from '../hooks/use-classes';
-import { enumParam, numberParam, stringParam } from '../state/search-state';
-import { useSearchState } from '../state/use-search-state';
+import { enumParam, numberParam, stringParam } from '@/lib/search-state';
+import { useSearchState } from '@/hooks/use-search-state';
 
 const viewParam = enumParam(['list', 'calendar'] as const, 'list');
 const pageParam = numberParam(0);

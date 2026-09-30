@@ -24,8 +24,8 @@ import { toNumber } from '@/lib/metrics';
 import type { AdminActivityEvent } from '@/services/client';
 import { getDashboardActivityOptions } from '@/services/client/@tanstack/react-query.gen';
 import { queueQuery } from '../lib/admin-queries';
-import { numberParam } from '../state/search-state';
-import { useSearchState } from '../state/use-search-state';
+import { numberParam } from '@/lib/search-state';
+import { useSearchState } from '@/hooks/use-search-state';
 import { SectionBoundary } from '../components/section-boundary';
 
 const PAGE_SIZE = 25;

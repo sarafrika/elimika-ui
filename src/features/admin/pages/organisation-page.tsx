@@ -14,8 +14,8 @@ import {
 import { formatDate } from '@/lib/date';
 import { toNumber } from '@/lib/metrics';
 import { adminRoutes, type OrganisationTab } from '../lib/admin-routes';
-import { enumParam, numberParam, stringParam } from '../state/search-state';
-import { useSearchState } from '../state/use-search-state';
+import { enumParam, numberParam, stringParam } from '@/lib/search-state';
+import { useSearchState } from '@/hooks/use-search-state';
 import { BranchesTab } from '../components/branches-tab';
 import { ClassesTab } from '../components/classes-tab';
 import { FinanceTab } from '../components/finance-tab';
