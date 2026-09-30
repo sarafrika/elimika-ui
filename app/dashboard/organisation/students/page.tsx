@@ -32,7 +32,11 @@ import {
   TableRow,
 } from '@/components/ui/table';
 import { useOrganisation } from '@/context/organisation-context';
-import { useUsersByIds } from '@/hooks/use-batched-lookups';
+import {
+  useStudentsByIds,
+  useStudentsByUserIds,
+  useUsersByIds,
+} from '@/hooks/use-batched-lookups';
 import { extractList, extractPage, getTotalFromMetadata } from '@/lib/api-helpers';
 import { getErrorMessage } from '@/lib/error-utils';
 import { formatCount, toNumber } from '@/lib/metrics';
@@ -46,7 +50,6 @@ import {
   getStudentSummariesOptions,
   getUsersByOrganisationAndDomainOptions,
   listRosterOptions,
-  searchStudentsOptions,
 } from '@/services/client/@tanstack/react-query.gen';
 import { toAuthenticatedMediaUrl } from '@/src/lib/media-url';
 import { generateWalletId, institutionRef } from '@/src/lib/wallet-id';
@@ -80,7 +83,6 @@ type StudentRow = {
   programType: null;
 };
 
-const EMPTY_UUID = '00000000-0000-0000-0000-000000000000';
 const studentHref = (id: string) => `/dashboard/organisation/students/${encodeURIComponent(id)}`;
 
 const statusFromSummary = (summary?: { total: number; completed: number }) => {
@@ -163,27 +165,12 @@ export default function StudentsPage() {
       ).sort((a, b) => a.localeCompare(b)),
     [roster]
   );
-  const studentProfilesQuery = useQuery({
-    ...searchStudentsOptions({
-      query: {
-        searchParams: {
-          user_uuid_in: rosterUserUuids.join(',') || EMPTY_UUID,
-        },
-        pageable: { page: 0, size: Math.max(rosterUserUuids.length, 1) },
-      },
-    }),
-    enabled: rosterUserUuids.length > 0,
-    retry: false,
-  });
-  const studentProfileByUserUuid = useMemo(() => {
-    const map = new Map<string, Student>();
-    for (const profile of extractPage<Student>(studentProfilesQuery.data).items) {
-      if (profile.user_uuid) {
-        map.set(profile.user_uuid, profile);
-      }
-    }
-    return map;
-  }, [studentProfilesQuery.data]);
+  // Explicit-ID lookups are capped at 100 ids, so both lists go out in chunks.
+  const studentProfilesQuery = useStudentsByUserIds(rosterUserUuids);
+  const studentProfileByUserUuid = useMemo(
+    () => new Map<string, Student>(Object.entries(studentProfilesQuery.studentMap)),
+    [studentProfilesQuery.studentMap]
+  );
   const summaryStudentUuids = useMemo(
     () =>
       Array.from(
@@ -193,27 +180,11 @@ export default function StudentsPage() {
       ).sort((a, b) => a.localeCompare(b)),
     [summaries]
   );
-  const summaryStudentProfilesQuery = useQuery({
-    ...searchStudentsOptions({
-      query: {
-        searchParams: {
-          uuid_in: summaryStudentUuids.join(',') || EMPTY_UUID,
-        },
-        pageable: { page: 0, size: Math.max(summaryStudentUuids.length, 1) },
-      },
-    }),
-    enabled: summaryStudentUuids.length > 0,
-    retry: false,
-  });
-  const studentProfileByUuid = useMemo(() => {
-    const map = new Map<string, Student>();
-    for (const profile of extractPage<Student>(summaryStudentProfilesQuery.data).items) {
-      if (profile.uuid) {
-        map.set(profile.uuid, profile);
-      }
-    }
-    return map;
-  }, [summaryStudentProfilesQuery.data]);
+  const summaryStudentProfilesQuery = useStudentsByIds(summaryStudentUuids);
+  const studentProfileByUuid = useMemo(
+    () => new Map<string, Student>(Object.entries(summaryStudentProfilesQuery.studentMap)),
+    [summaryStudentProfilesQuery.studentMap]
+  );
   const profileUserUuids = useMemo(
     () =>
       Array.from(
@@ -408,8 +379,8 @@ export default function StudentsPage() {
                 onClick={() => {
                   rosterQuery.refetch();
                   summariesQuery.refetch();
-                  studentProfilesQuery.refetch();
-                  summaryStudentProfilesQuery.refetch();
+                  void studentProfilesQuery.refetch();
+                  void summaryStudentProfilesQuery.refetch();
                 }}
               >
                 Retry

@@ -37,7 +37,7 @@ import {
 import { Skeleton } from '@/components/ui/skeleton';
 import { useOrganisation } from '@/context/organisation-context';
 import { useUserProfile } from '@/context/profile-context';
-import { useCoursesByIds } from '@/hooks/use-batched-lookups';
+import { useClassesByIds, useCoursesByIds } from '@/hooks/use-batched-lookups';
 import { publicCourseUrl } from '@/src/features/dashboard/lib/dashboard-url';
 import { extractEntity } from '@/lib/api-helpers';
 import type {
@@ -49,7 +49,6 @@ import type {
   Instructor,
 } from '@/services/client';
 import {
-  getAllClassDefinitionsOptions,
   getCourseCreatorByUuidOptions,
   getInstructorByUuidOptions,
   listCatalogItemsOptions,
@@ -180,24 +179,15 @@ const useTitleMaps = (rows: CatalogueRow[]): TitleMaps => {
     [rows]
   );
 
-  // Batched lookups: one search covering all course ids and one page of class
-  // definitions, instead of one request per catalogue item.
+  // Batched course lookup, and the classes on screen by id. `/classes` is a visibility-scoped
+  // listing now, not a lookup table: a page of it may not contain the ids we need.
   const { courseMap: courseLookup } = useCoursesByIds(courseIds);
+  const { classDefinitionMap } = useClassesByIds(classIds);
 
-  const classDefinitionsQuery = useQuery({
-    ...getAllClassDefinitionsOptions({ query: { pageable: { page: 0, size: 200 } } }),
-    enabled: classIds.length > 0,
-    staleTime: 5 * 60 * 1000,
-  });
-
-  const classLookup = useMemo(() => {
-    const map = new Map<string, ClassDefinition>();
-    for (const item of classDefinitionsQuery.data?.data?.content ?? []) {
-      const definition = item.class_definition;
-      if (definition?.uuid) map.set(definition.uuid, definition);
-    }
-    return map;
-  }, [classDefinitionsQuery.data]);
+  const classLookup = useMemo(
+    () => new Map<string, ClassDefinition>(Object.entries(classDefinitionMap)),
+    [classDefinitionMap]
+  );
 
   const courseTitleMap = useMemo(() => {
     const map = new Map<string, string>();

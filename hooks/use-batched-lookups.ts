@@ -118,6 +118,7 @@ function useSearchByIds<T extends { uuid?: string }>(
         isError: results.some(
           result => result.isError || result.data?.error || result.data?.success === false
         ),
+        error: results.find(result => result.error)?.error ?? null,
         refetch: () => Promise.all(results.map(result => result.refetch())),
       };
     },
@@ -164,8 +165,56 @@ function useSearchByField<T>(
 }
 
 export function useStudentsByIds(ids: string[]) {
-  const { map, isLoading, isError, refetch } = useSearchByIds<Student>(ids, searchStudentsOptions);
-  return { studentMap: map, isLoading, isError, refetch };
+  const { map, isLoading, isError, error, refetch } = useSearchByIds<Student>(
+    ids,
+    searchStudentsOptions
+  );
+  return { studentMap: map, isLoading, isError, error, refetch };
+}
+
+/**
+ * Student profiles by their user uuid (`user_uuid_in`), in chunks of at most 100: the API
+ * answers 400 to a longer explicit-ID list. The map is keyed by user uuid.
+ */
+export function useStudentsByUserIds(userIds: string[]) {
+  const uniqueIds = useMemo(
+    () => Array.from(new Set(userIds.filter(Boolean))).sort((a, b) => a.localeCompare(b)),
+    [userIds]
+  );
+  const idChunks = useMemo(() => chunk(uniqueIds, CHUNK_SIZE), [uniqueIds]);
+
+  return useQueries({
+    queries: idChunks.map(idChunk => ({
+      ...searchStudentsOptions({
+        query: {
+          searchParams: { user_uuid_in: idChunk.join(',') },
+          pageable: { page: 0, size: idChunk.length },
+        },
+      }),
+      staleTime: STALE_TIMES.entity,
+    })),
+    combine: results => {
+      const studentMap: Record<string, Student> = {};
+      const wanted = new Set(uniqueIds);
+      for (const result of results) {
+        if (result.data?.error || result.data?.success === false) continue;
+        for (const student of result.data?.data?.content ?? []) {
+          if (student.user_uuid && wanted.has(student.user_uuid)) {
+            studentMap[student.user_uuid] = student;
+          }
+        }
+      }
+      return {
+        studentMap,
+        isLoading: results.some(result => result.isLoading),
+        isError: results.some(
+          result => result.isError || result.data?.error || result.data?.success === false
+        ),
+        error: results.find(result => result.error)?.error ?? null,
+        refetch: () => Promise.all(results.map(result => result.refetch())),
+      };
+    },
+  });
 }
 
 export function useEnrollmentsByIds(ids: string[]) {
@@ -526,6 +575,7 @@ export function useClassesByIds(classUuids: string[]) {
         classDefinitionMap,
         items: Object.values(classDefinitionMap),
         isLoading: results.some(r => r.isLoading),
+        isError: results.some(r => r.isError),
       };
     },
   });

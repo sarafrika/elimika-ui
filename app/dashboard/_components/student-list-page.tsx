@@ -71,8 +71,19 @@ type StudentsPageData = {
   };
 };
 
-export default function StudentsListPage({ studentsData }: { studentsData: StudentsPageData }) {
-  const [page, setPage] = useState(0);
+/**
+ * One server page of students. The page number is owned by the route, which fetches that
+ * page, so Previous/Next move the list rather than only the label.
+ */
+export default function StudentsListPage({
+  studentsData,
+  page,
+  onPageChange,
+}: {
+  studentsData: StudentsPageData;
+  page: number;
+  onPageChange: (page: number) => void;
+}) {
 
   const students = studentsData?.data?.content ?? [];
   const totalPages = studentsData?.data?.metadata?.totalPages ?? 0;
@@ -449,13 +460,13 @@ export default function StudentsListPage({ studentsData }: { studentsData: Stude
           {/* Pagination Controls */}
           <div className='flex items-center justify-between border-t p-3'>
             <p className='text-muted-foreground text-xs'>
-              Page {page + 1} of {totalPages}
+              Page {page + 1} of {Math.max(totalPages, 1)}
             </p>
 
             <div className='flex items-center gap-2'>
               <button
                 disabled={page === 0}
-                onClick={() => setPage(prev => Math.max(prev - 1, 0))}
+                onClick={() => onPageChange(Math.max(page - 1, 0))}
                 className='rounded border px-3 py-1 text-sm disabled:opacity-50'
               >
                 Previous
@@ -463,7 +474,7 @@ export default function StudentsListPage({ studentsData }: { studentsData: Stude
 
               <button
                 disabled={page + 1 >= totalPages}
-                onClick={() => setPage(prev => prev + 1)}
+                onClick={() => onPageChange(page + 1)}
                 className='rounded border px-3 py-1 text-sm disabled:opacity-50'
               >
                 Next

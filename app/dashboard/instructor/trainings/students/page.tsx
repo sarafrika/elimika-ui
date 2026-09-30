@@ -2,19 +2,21 @@
 
 import type { ComponentProps } from 'react';
 import { getAllStudentsOptions } from '@/services/client/@tanstack/react-query.gen';
-import { useQuery } from '@tanstack/react-query';
+import { keepPreviousData, useQuery } from '@tanstack/react-query';
 import { useState } from 'react';
 import StudentsListPage from '../../../_components/student-list-page';
 
 export default function StudentsPage() {
-  const [pageSize] = useState(20);
+  const pageSize = 20;
   const [page, setPage] = useState(0);
 
-  const { data: studentsData } = useQuery(
-    getAllStudentsOptions({
-      query: { pageable: { page: 0, size: pageSize } },
-    })
-  );
+  // The API scopes this list to the instructor's own students; page through it on the server.
+  const { data: studentsData } = useQuery({
+    ...getAllStudentsOptions({
+      query: { pageable: { page, size: pageSize } },
+    }),
+    placeholderData: keepPreviousData,
+  });
 
   return (
     <div>
@@ -22,6 +24,8 @@ export default function StudentsPage() {
         studentsData={
           studentsData as unknown as ComponentProps<typeof StudentsListPage>['studentsData']
         }
+        page={page}
+        onPageChange={setPage}
       />
     </div>
   );

@@ -15,7 +15,6 @@ import type {
 } from '../services/client';
 
 import {
-  getAllClassDefinitionsOptions,
   getAssignmentSchedulesOptions,
   getClassEnrollmentsForStudentOptions,
   getClassScheduleOptions,
@@ -25,7 +24,7 @@ import {
   getQuizSchedulesOptions,
 } from '../services/client/@tanstack/react-query.gen';
 
-import { useCoursesByIds } from './use-batched-lookups';
+import { useClassesByIds, useCoursesByIds } from './use-batched-lookups';
 
 type StudentLike = {
   uuid?: string;
@@ -73,34 +72,15 @@ function useStudentClassDefinitions(student?: StudentLike) {
   );
 
   /**
-   * Class definitions (single request)
+   * The enrolled classes, looked up by id. `/classes` is a visibility-scoped listing, not a
+   * lookup table, so a page of it may miss classes the student is enrolled in.
    */
-  const classDefinitionsQuery = useQuery({
-    ...getAllClassDefinitionsOptions({
-      query: {
-        pageable: {
-          page: 0,
-          size: 200,
-        },
-      },
-    }),
-    enabled: classDefinitionUuids.length > 0,
-    staleTime: STALE_TIMES.entity,
-  });
+  const classDefinitionsQuery = useClassesByIds(classDefinitionUuids);
 
-  const classDetailsByUuid = useMemo(() => {
-    const map = new Map<string, ClassDefinition>();
-
-    for (const item of classDefinitionsQuery.data?.data?.content ?? []) {
-      const definition = item.class_definition;
-
-      if (definition?.uuid) {
-        map.set(definition.uuid, definition);
-      }
-    }
-
-    return map;
-  }, [classDefinitionsQuery.data]);
+  const classDetailsByUuid = useMemo(
+    () => new Map<string, ClassDefinition>(Object.entries(classDefinitionsQuery.classDefinitionMap)),
+    [classDefinitionsQuery.classDefinitionMap]
+  );
 
   /**
    * Class schedules
