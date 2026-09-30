@@ -53,6 +53,7 @@ import {
   ProfileViewField,
   ProfileViewGrid,
 } from '@/src/features/profile/components/profile-view-field';
+import { LocationSearchOptIn } from '@/src/features/profile/components/instructor/location-search-opt-in';
 import { useUserProfile } from '@/src/features/profile/context/profile-context';
 import { useProfileFormMode } from '@/src/features/profile/context/profile-form-mode-context';
 
@@ -624,6 +625,17 @@ export default function InstructorProfile() {
           </ProfileFormSection>
         </form>
       </Form>
+
+      <LocationSearchOptIn
+        instructorUuid={instructor?.uuid}
+        enabled={instructor?.location_search_opt_in}
+        hasCoordinates={Boolean(
+          instructor?.has_location_coordinates ??
+            (typeof instructor?.latitude === 'number' && typeof instructor?.longitude === 'number')
+        )}
+        verified={Boolean(instructor?.admin_verified)}
+        onSaved={invalidateQuery}
+      />
     </ProfileFormShell>
   );
 }
