@@ -280,6 +280,18 @@ export const confirmEffects = {
     ],
   }),
 
+  deleteSkill: subject => ({
+    title: `Delete the skill ${subject.name}?`,
+    confirmLabel: 'Delete skill',
+    tone: 'danger',
+    typeToConfirm: subject.confirmValue,
+    effects: [
+      'It is removed from every course and job that is tagged with it',
+      'Instructor skills linked to it are unlinked; their own wording stays',
+    ],
+    warnings: ['Prefer retiring it (switch off Active): existing tags keep it and nothing is lost.'],
+  }),
+
   settleObligation: subject => ({
     title: `Settle ${subject.detail ?? 'this amount'} owed to ${subject.name}?`,
     confirmLabel: 'Record settlement',

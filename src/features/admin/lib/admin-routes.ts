@@ -88,6 +88,7 @@ export const adminRoutes = {
   currencies: () => admin('currencies'),
 
   categories: () => admin('platform/categories'),
+  skills: () => admin('platform/skills'),
   rules: (filters?: { rule?: string; category?: string; status?: string }) =>
     withQuery(admin('platform/rules'), filters ?? {}),
   config: (tab?: string) => withQuery(admin('platform/config'), { tab }),

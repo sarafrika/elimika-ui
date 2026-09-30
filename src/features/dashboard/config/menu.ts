@@ -568,6 +568,7 @@ export default {
       icon: Settings,
       items: [
         { title: 'Categories', url: '/dashboard/platform/categories', icon: BookAIcon },
+        { title: 'Skills', url: '/dashboard/platform/skills', icon: Sparkles },
         { title: 'System rules', url: '/dashboard/platform/rules', icon: BoltIcon },
         { title: 'Config lists', url: '/dashboard/platform/config', icon: Settings },
         { title: 'Notifications', url: '/dashboard/notifications', icon: Bell },
