@@ -38,7 +38,7 @@ import { useUserProfile } from '@/context/profile-context';
 import {
   createClassDefinitionMultipartMutation,
   getAllActiveClassDefinitionsQueryKey,
-  getAllCoursesOptions,
+  getCoursesByInstructorOptions,
   scheduleClassMutation,
   updateClassDefinitionMutation,
   updateScheduledInstanceStatusMutation,
@@ -192,10 +192,19 @@ function ClassForm({
 
   const qc = useQueryClient();
   const _user = useUserProfile();
+  const instructor = useInstructor();
 
   const [_openAddRecurrenceModal, setOpenAddRecurrenceModal] = useState(false);
 
-  const { data: courses } = useQuery(getAllCoursesOptions({ query: { pageable: {} } }));
+  const { data: courses } = useQuery({
+    // Courses this instructor may deliver (the endpoint's meaning since the visibility
+    // change), not the first page of the whole catalogue.
+    ...getCoursesByInstructorOptions({
+      path: { instructorUuid: instructor?.uuid ?? '' },
+      query: { pageable: { page: 0, size: 100 } },
+    }),
+    enabled: Boolean(instructor?.uuid),
+  });
 
   const createAssignment = useMutation(createClassDefinitionMultipartMutation());
   const updateAssignment = useMutation(updateClassDefinitionMutation());

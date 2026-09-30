@@ -1110,9 +1110,9 @@ export function SharedCoursesPage({ domain }: SharedCoursesPageProps) {
       : false;
 
   const recommendationsQuery = useQuery({
-    ...getCourseRecommendationsOptions({
-      query: { user_uuid: user?.uuid ?? '', limit: 6 },
-    }),
+    // No user_uuid: the endpoint recommends for the caller, and a guardian sending a
+    // ward's id would be refused.
+    ...getCourseRecommendationsOptions({ query: { limit: 6 } }),
     enabled: Boolean(user?.uuid),
   });
 

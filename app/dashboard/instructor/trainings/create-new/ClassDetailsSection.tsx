@@ -17,7 +17,7 @@ import { LOCATION_TYPE_OPTIONS, normalizeLocationType } from '@/lib/location-typ
 import { Textarea } from '../../../../../components/ui/textarea';
 import { useInstructor } from '../../../../../context/instructor-context';
 import {
-  getAllCoursesOptions,
+  getCoursesByInstructorOptions,
   getAllDifficultyLevelsOptions,
   getAllTrainingProgramsOptions,
   searchProgramTrainingApplicationsOptions,
@@ -90,7 +90,15 @@ export const ClassDetailsSection = ({
   );
 
   // COURSES //
-  const { data: courses } = useQuery(getAllCoursesOptions({ query: { pageable: {} } }));
+  const { data: courses } = useQuery({
+    // Courses this instructor may deliver (the endpoint's meaning since the visibility
+    // change), not the first page of the whole catalogue.
+    ...getCoursesByInstructorOptions({
+      path: { instructorUuid: instructor?.uuid ?? '' },
+      query: { pageable: { page: 0, size: 100 } },
+    }),
+    enabled: Boolean(instructor?.uuid),
+  });
   const { data: appliedCourses } = useQuery({
     ...searchTrainingApplicationsOptions({
       query: {
