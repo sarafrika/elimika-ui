@@ -1,7 +1,7 @@
 // @ts-nocheck -- 1:1 Lovable port; @hey-api generated-client type drift
 'use client';
 
-import { useQuery } from '@tanstack/react-query';
+import { keepPreviousData, useQuery } from '@tanstack/react-query';
 import {
   BadgeCheck,
   BookOpen,
@@ -19,6 +19,17 @@ import { useEffect, useMemo, useState } from 'react';
 import { toast } from 'sonner';
 
 import { CategoryTabs, filterByCategoryTabs } from '@/components/category-tabs';
+import { FacetChips } from '@/components/search/facet-chips';
+import { SearchQueryInput } from '@/components/search/search-input';
+import { SearchNotice } from '@/components/search/search-notice';
+import { useCoursesByIds } from '@/hooks/use-batched-lookups';
+import { useSearchErrors } from '@/hooks/use-search-query';
+import { useSearchState, useSearchStatePatch } from '@/hooks/use-search-state';
+import { useUrlSearchQuery } from '@/hooks/use-url-search-query';
+import { retryUnlessClientOrSearchError } from '@/lib/api-errors';
+import { classifySearchError } from '@/lib/search/query';
+import { enumParam, stringParam } from '@/lib/search-state';
+import { useTypeSearch } from '@/src/features/search/hooks/use-type-search';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
 import {
@@ -157,6 +168,10 @@ function CourseStats({ courseUuid }: { courseUuid: string }) {
 
 const PAGE_SIZES = ['8', '12', '24', '48'];
 const CATALOG_FETCH_SIZE = 200;
+/** One page of course hits, hydrated by a single batched lookup (the lookup's chunk size). */
+const COURSE_HITS_SIZE = 100;
+const levelParam = stringParam('all');
+const priceParam = enumParam(['all', 'free', 'paid'] as const, 'all');
 
 const PROGRAM_TYPES = [
   'Short courses',
@@ -196,16 +211,56 @@ export default function CatalogPage() {
   const [subjectByCategory, setSubjectByCategory] = useState<Record<string, string>>({});
   const [activeProgramType, setActiveProgramType] = useState<string | null>(null);
 
+  // Text, level and price are served by the search index; category and program type
+  // narrow the loaded items in the browser through the category tabs.
+  const search = useUrlSearchQuery();
+  const patchUrl = useSearchStatePatch();
+  const [level] = useSearchState('level', levelParam);
+  const [price] = useSearchState('price', priceParam);
+  const courseSearch = useTypeSearch({
+    type: 'courses',
+    q: search.q,
+    filters: {
+      status: 'published',
+      admin_approved: true,
+      difficulty_uuid: level === 'all' ? undefined : level,
+      is_free: price === 'all' ? undefined : price === 'free',
+    },
+    facets: 'difficulty_uuid,is_free',
+    sort: search.q ? undefined : 'created_at,desc',
+    page: 0,
+    size: COURSE_HITS_SIZE,
+    enabled: !search.searchUnavailable,
+  });
+  // No database fallback: when the index is down the catalogue loads without the term
+  // and level and price narrow the loaded courses in the browser.
+  const searchDown = search.searchUnavailable || courseSearch.searchUnavailable;
+  const hitIds = useMemo(
+    () => courseSearch.hits.flatMap(hit => (hit.uuid ? [hit.uuid] : [])),
+    [courseSearch.hits]
+  );
+  const hitLookup = useCoursesByIds(searchDown ? [] : hitIds);
   const coursesQuery = useQuery({
     ...getPublishedCoursesOptions({
       query: { pageable: { page: 0, size: CATALOG_FETCH_SIZE } },
     }),
+    enabled: searchDown,
   });
   const programsQuery = useQuery({
     ...getAllTrainingProgramsOptions({
-      query: { pageable: { page: 0, size: CATALOG_FETCH_SIZE } },
+      query: {
+        pageable: { page: 0, size: CATALOG_FETCH_SIZE },
+        ...(search.q ? { q: search.q } : {}),
+      },
     }),
+    placeholderData: keepPreviousData,
+    retry: retryUnlessClientOrSearchError,
   });
+  useSearchErrors(search.q, programsQuery.error);
+  const searchIssue = searchDown
+    ? 'unavailable'
+    : (classifySearchError(courseSearch.error, search.q ?? 'filters') ??
+      classifySearchError(programsQuery.error, search.q));
   const categoriesQuery = useQuery({
     ...getAllCategoriesOptions({
       query: { pageable: { page: 0, size: CATALOG_FETCH_SIZE } },
@@ -282,7 +337,16 @@ export default function CatalogPage() {
     return map;
   }, [categoriesQuery.data]);
 
-  const courses = useMemo(() => extractPage<Course>(coursesQuery.data).items, [coursesQuery.data]);
+  const courses = useMemo(() => {
+    if (searchDown) {
+      return extractPage<Course>(coursesQuery.data).items.filter(
+        course =>
+          (level === 'all' || course.difficulty_uuid === level) &&
+          (price === 'all' || (price === 'free' ? !course.price : Number(course.price) > 0))
+      );
+    }
+    return hitIds.flatMap(id => (hitLookup.courseMap[id] ? [hitLookup.courseMap[id]] : []));
+  }, [searchDown, coursesQuery.data, level, price, hitIds, hitLookup.courseMap]);
   const programs = useMemo(
     () => extractPage<TrainingProgram>(programsQuery.data).items,
     [programsQuery.data]
@@ -290,9 +354,12 @@ export default function CatalogPage() {
 
   const catalogItems = useMemo<CatalogItem[]>(
     () => [
+      // Programs have no level, so choosing one shows courses only.
       ...programs
         .filter(
           program =>
+            level === 'all' &&
+            (price === 'all' || (price === 'free' ? !program.price : Number(program.price) > 0)) &&
             program.admin_approved === true &&
             !(program.uuid && approvedProgramUuids.has(program.uuid))
         )
@@ -357,6 +424,8 @@ export default function CatalogPage() {
       courses,
       creatorsByUuid,
       difficultyByUuid,
+      level,
+      price,
       programs,
     ]
   );
@@ -419,7 +488,8 @@ export default function CatalogPage() {
   };
 
   const loading =
-    coursesQuery.isLoading ||
+    (searchDown ? coursesQuery.isLoading : courseSearch.isLoading && !courseSearch.data) ||
+    hitLookup.isLoading ||
     programsQuery.isLoading ||
     categoriesQuery.isLoading ||
     creatorsQuery.isLoading ||
@@ -439,7 +509,10 @@ export default function CatalogPage() {
 
   useEffect(() => {
     setPage(0);
-  }, [activeCategory, activeProgramType, pageSize, subjectByCategory]);
+  }, [activeCategory, activeProgramType, pageSize, subjectByCategory, search.q, level, price]);
+
+  const levelFacet = courseSearch.facets.difficulty_uuid ?? {};
+  const priceFacet = courseSearch.facets.is_free ?? {};
 
   return (
     <div className='mx-auto w-full max-w-[1600px] space-y-5 px-3 py-4 sm:px-5 lg:px-6 2xl:max-w-[1840px]'>
@@ -451,6 +524,51 @@ export default function CatalogPage() {
         <p className='text-muted-foreground mt-1 text-sm'>
           Explore courses and programs across multiple categories and build skills for your future.
         </p>
+      </div>
+
+      <div className='space-y-3'>
+        <SearchQueryInput
+          search={search}
+          placeholder='Search courses and programs…'
+          aria-label='Search the training catalogue'
+          wrapperClassName='max-w-xl'
+        />
+        <SearchNotice
+          issue={searchIssue}
+          onReset={() => {
+            search.clear();
+            patchUrl({ level: undefined, price: undefined });
+          }}
+        />
+        <div className='flex flex-wrap items-end gap-x-8 gap-y-3'>
+          <FacetChips
+            label='Level'
+            options={extractList<DifficultyLevel>(difficultyQuery.data).flatMap(item =>
+              item.uuid
+                ? [
+                    {
+                      value: item.uuid,
+                      label: item.name,
+                      count: searchDown ? undefined : (levelFacet[item.uuid] ?? 0),
+                    },
+                  ]
+                : []
+            )}
+            selected={level === 'all' ? [] : [level]}
+            multiple={false}
+            onChange={next => patchUrl({ level: next[0] })}
+          />
+          <FacetChips
+            label='Price'
+            options={[
+              { value: 'free', label: 'Free', count: searchDown ? undefined : (priceFacet.true ?? 0) },
+              { value: 'paid', label: 'Paid', count: searchDown ? undefined : (priceFacet.false ?? 0) },
+            ]}
+            selected={price === 'all' ? [] : [price]}
+            multiple={false}
+            onChange={next => patchUrl({ price: next[0] })}
+          />
+        </div>
       </div>
 
       <CategoryTabs

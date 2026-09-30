@@ -145,7 +145,7 @@ export function hitDestination(domain: PaletteDomain, hit: PaletteHit): HitDesti
           return href(url(`courses/${uuid}`));
         case 'programs':
           // No organisation program page yet: the catalogue, searched for this program.
-          return href(withQuery(url('courses/catalog'), { tab: 'programs', q: hit.title }));
+          return href(withQuery(url('courses/catalog'), { q: hit.title }));
         case 'classes':
           return href(withQuery(url('classes'), { highlight: uuid }));
         case 'marketplace_jobs':
