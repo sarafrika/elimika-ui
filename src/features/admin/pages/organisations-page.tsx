@@ -11,6 +11,7 @@ import {
   StatusBadge,
   surfaceTheme,
 } from '@/components/data-display';
+import { SearchNotice } from '@/components/data/search-notice';
 import { PageHeader } from '@/components/page-header';
 import { Button } from '@/components/ui/button';
 import {
@@ -30,7 +31,7 @@ import { useSetOrganisationActive } from '../hooks/use-organisation-admin-action
 import { useOrganisations } from '../hooks/use-organisations';
 import { adminRoutes } from '../lib/admin-routes';
 import { numberParam, stringParam } from '../state/search-state';
-import { useSearchState } from '../state/use-search-state';
+import { useSearchState, useSearchStatePatch } from '../state/use-search-state';
 
 const searchParam = stringParam();
 const verifiedParam = stringParam('any');
@@ -49,7 +50,8 @@ export function OrganisationsPage() {
   );
 
   const { statistics, query: statisticsQuery } = useAdminStatistics();
-  const { organisations, totalRows, pageCount, query } = useOrganisations({
+  const patch = useSearchStatePatch();
+  const { organisations, totalRows, pageCount, query, searchIssue } = useOrganisations({
     q,
     verified,
     active,
@@ -124,6 +126,8 @@ export function OrganisationsPage() {
             },
           ]}
         />
+
+        <SearchNotice issue={searchIssue} onReset={() => patch({ q: undefined })} />
 
         <SectionBoundary
           label='the organisations'

@@ -6,6 +6,7 @@ import { useRouter } from 'next/navigation';
 import { useMemo } from 'react';
 
 import { DataTable, StatusBadge, surfaceTheme } from '@/components/data-display';
+import { SearchNotice } from '@/components/data/search-notice';
 import { PageHeader } from '@/components/page-header';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useCourseCreatorsByIds } from '@/hooks/use-batched-lookups';
@@ -16,7 +17,7 @@ import { SectionBoundary } from '../components/section-boundary';
 import { usePendingPrograms, usePrograms, PROGRAMS_PAGE_SIZE } from '../hooks/use-programs';
 import { adminRoutes } from '../lib/admin-routes';
 import { numberParam, stringParam } from '../state/search-state';
-import { useSearchState } from '../state/use-search-state';
+import { useSearchState, useSearchStatePatch } from '../state/use-search-state';
 
 const searchParam = stringParam();
 const statusParam = stringParam('any');
@@ -33,7 +34,14 @@ export function ProgramsPage() {
   const [approval] = useSearchState('approval', approvalParam);
   const [page, setPage] = useSearchState('page', pageParam);
 
-  const { programs, totalRows, pageCount, query } = usePrograms({ q, status, approval, page });
+  const patch = useSearchStatePatch();
+
+  const { programs, totalRows, pageCount, query, searchIssue } = usePrograms({
+    q,
+    status,
+    approval,
+    page,
+  });
   const { total: pendingTotal, query: pendingQuery } = usePendingPrograms();
 
   // One batched lookup turns creator ids into names; never one request per row.
@@ -112,6 +120,8 @@ export function ProgramsPage() {
             },
           ]}
         />
+
+        <SearchNotice issue={searchIssue} onReset={() => patch({ q: undefined })} />
 
         <SectionBoundary
           label='the programs'

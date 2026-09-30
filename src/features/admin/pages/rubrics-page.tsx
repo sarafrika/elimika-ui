@@ -11,6 +11,7 @@ import {
   StatusBadge,
   surfaceTheme,
 } from '@/components/data-display';
+import { SearchNotice } from '@/components/data/search-notice';
 import { PageHeader } from '@/components/page-header';
 import { Button } from '@/components/ui/button';
 import {
@@ -35,7 +36,7 @@ import {
   useUpdateRubric,
 } from '../hooks/use-rubrics';
 import { numberParam, stringParam } from '../state/search-state';
-import { useSearchState } from '../state/use-search-state';
+import { useSearchState, useSearchStatePatch } from '../state/use-search-state';
 
 const searchParam = stringParam();
 const typeParam = stringParam('any');
@@ -64,7 +65,8 @@ export function RubricsPage() {
   const [pendingVisibility, setPendingVisibility] = useState<AssessmentRubric | null>(null);
 
   const { counts, query: statsQuery } = useRubricStatistics();
-  const { rubrics, totalRows, pageCount, query, isFiltered } = useRubrics({
+  const patch = useSearchStatePatch();
+  const { rubrics, totalRows, pageCount, query, isFiltered, searchIssue } = useRubrics({
     q,
     type: type === 'any' ? undefined : type,
     visibility,
@@ -148,6 +150,8 @@ export function RubricsPage() {
             },
           ]}
         />
+
+        <SearchNotice issue={searchIssue} onReset={() => patch({ q: undefined })} />
 
         <SectionBoundary
           label='the rubrics'

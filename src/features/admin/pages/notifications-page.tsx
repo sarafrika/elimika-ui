@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useState } from 'react';
 
 import { SectionCard, StatusBadge, surfaceTheme } from '@/components/data-display';
+import { SearchNotice } from '@/components/data/search-notice';
 import HTMLTextPreview from '@/components/editors/html-text-preview';
 import { PageHeader } from '@/components/page-header';
 import { Button } from '@/components/ui/button';
@@ -357,7 +358,7 @@ function AnnouncementSheet({
   const [message, setMessage] = useState('');
   const [confirming, setConfirming] = useState(false);
 
-  const { organisations, query } = useOrganisations({ q: debounced, page: 0 });
+  const { organisations, query, searchIssue } = useOrganisations({ q: debounced, page: 0 });
   const { send, isPending } = useSendAnnouncement();
   const sent = useSentAnnouncements(organisation?.uuid);
 
@@ -422,6 +423,16 @@ function AnnouncementSheet({
             </p>
           ) : null}
         </div>
+
+        {!organisation ? (
+          <SearchNotice
+            issue={searchIssue}
+            onReset={() => {
+              setSearch('');
+              setDebounced('');
+            }}
+          />
+        ) : null}
 
         {!organisation ? (
           <div className='border-border/70 max-h-56 overflow-y-auto rounded-md border'>
