@@ -16,6 +16,9 @@ import { Sheet, SheetContent, SheetHeader, SheetTitle } from '@/components/ui/sh
 import { Slider } from '@/components/ui/slider';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import useSearchTrainingInstructors from '@/hooks/use-search-training-instructors';
+import { SearchQueryInput } from '@/components/search/search-input';
+import { SearchNotice } from '@/components/search/search-notice';
+import { useSearchIssue, useSearchQuery } from '@/hooks/use-search-query';
 import {
   getCourseByUuidOptions,
   listTrainingApplicationsOptions,
@@ -223,7 +226,15 @@ export default function StudentInstructorSearchPage() {
   const courseId = searchParams.get('courseId');
   const router = useRouter();
   const { activeDomain } = useUserDomain();
-  const { data: trainingInstructors = [], loading } = useSearchTrainingInstructors();
+  // Names, headlines and skills are matched by the search index (`q`); the other filters
+  // narrow the returned page in the browser.
+  const search = useSearchQuery();
+  const {
+    data: trainingInstructors = [],
+    loading,
+    error: instructorsError,
+  } = useSearchTrainingInstructors({ q: search.q });
+  const searchIssue = useSearchIssue(search, instructorsError);
   const [activeView, setActiveView] = useState<ActiveView>('search');
   const [sortBy, setSortBy] = useState<SortBy>('relevance');
   const [selectedInstructorUuid, setSelectedInstructorUuid] = useState<string | null>(null);
@@ -365,25 +376,7 @@ export default function StudentInstructorSearchPage() {
       return activeInstructorList;
     }
 
-    const query = filters.searchQuery.trim().toLowerCase();
-
     const result = activeInstructorList.filter(instructor => {
-      const searchTarget = [
-        instructor.full_name,
-        instructor.professional_headline,
-        instructor.bio,
-        instructor.location?.city,
-        getInstructorLocation(instructor),
-        ...instructor.specializations.map(skill => skill.skill_name),
-      ]
-        .filter(Boolean)
-        .join(' ')
-        .toLowerCase();
-
-      if (query && !searchTarget.includes(query)) {
-        return false;
-      }
-
       if (filters.skillCategory !== 'all') {
         const hasSkill = instructor.specializations.some(
           skill => skill.skill_name.toLowerCase() === filters.skillCategory.toLowerCase()
@@ -511,6 +504,7 @@ export default function StudentInstructorSearchPage() {
 
   const resetFilters = () => {
     setFilters(searchInstructorFiltersDefaults);
+    search.clear();
     setSortBy('relevance');
   };
 
@@ -647,11 +641,12 @@ export default function StudentInstructorSearchPage() {
               <aside className="space-y-4 rounded-xl border bg-card p-4">
                 <div>
                   <label className="text-xs font-medium text-muted-foreground">Search</label>
-                  <Input
-                    value={filters.searchQuery}
-                    onChange={e => updateFilter('searchQuery', e.target.value)}
-                    placeholder="Name or headline"
+                  <SearchQueryInput
+                    search={search}
+                    placeholder="Name, headline or skill"
+                    aria-label="Search instructors"
                   />
+                  <SearchNotice issue={searchIssue} onReset={search.clear} className="mt-2" />
                 </div>
 
                 <div>

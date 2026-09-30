@@ -12,7 +12,8 @@ import type {
   InstructorSkill,
 } from '@/services/client/types.gen';
 import type { SearchInstructor } from '@/src/features/dashboard/courses/types';
-import { useQueries, useQuery } from '@tanstack/react-query';
+import { retryUnlessClientOrSearchError } from '@/lib/api-errors';
+import { keepPreviousData, useQueries, useQuery } from '@tanstack/react-query';
 import { useMemo } from 'react';
 import { useUsersByIds } from './use-batched-lookups';
 
@@ -25,16 +26,28 @@ import { useUsersByIds } from './use-batched-lookups';
  * 20-instructor page). Now: 1 instructor page + 1 batched user lookup +
  * 1 experience search + 1 skills search + N small rating summaries.
  */
-function useSearchTrainingInstructors() {
+function useSearchTrainingInstructors({
+  q,
+  page = 0,
+  size = 20,
+}: {
+  /** Debounced term (2+ characters): names, headlines and skills via the search index. */
+  q?: string;
+  page?: number;
+  size?: number;
+} = {}) {
   const {
     data,
     isLoading: isInstructorsLoading,
     isError,
     isFetching,
+    error,
   } = useQuery({
     ...getAllInstructorsOptions({
-      query: { pageable: {} },
+      query: { pageable: { page, size }, ...(q ? { q } : {}) },
     }),
+    placeholderData: keepPreviousData,
+    retry: retryUnlessClientOrSearchError,
   });
   const instructors: Instructor[] = useMemo(() => data?.data?.content ?? [], [data]);
 
@@ -169,7 +182,7 @@ function useSearchTrainingInstructors() {
   const isRatingSummaryLoading = ratingSummaryQueries.some(q => q.isLoading);
   const loading =
     isInstructorsLoading ||
-    isFetching ||
+    (isFetching && !data) ||
     isProfilesLoading ||
     isRatingSummaryLoading ||
     isExperiencesLoading ||
@@ -179,6 +192,9 @@ function useSearchTrainingInstructors() {
     data: instructorsWithProfiles,
     loading,
     isError,
+    error,
+    isSearching: isFetching && Boolean(data),
+    totalPages: Number(data?.data?.metadata?.totalPages ?? 1),
   };
 }
 
