@@ -83,6 +83,8 @@ export type CredentialRecord = {
   credential_code: string;
   status: 'Verified' | 'Pending' | 'Expired';
   source: 'platform' | 'external';
+  document_url?: string;
+  filename?: string;
 };
 
 export type CompetencyRecord = {

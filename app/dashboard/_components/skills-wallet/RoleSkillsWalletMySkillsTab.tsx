@@ -6,10 +6,6 @@ import { toast } from 'sonner';
 import DeleteModal from '@/components/custom-modals/delete-modal';
 
 import { SkillsWalletMySkillsTab } from '@/app/dashboard/student/skills-wallet/_components/SkillsWalletMySkillsTab';
-import {
-  fmtDate,
-  type SkillRecord,
-} from '@/app/dashboard/student/skills-wallet/_components/SkillsWalletShared';
 import { Button } from '@/components/ui/button';
 import { EmptyState } from '@/components/ui/empty-state';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -24,7 +20,7 @@ import {
 } from '@/services/client/@tanstack/react-query.gen';
 import type { CourseCreatorSkill, InstructorSkill } from '@/services/client/types.gen';
 import { AddSkillDialog } from './AddSkillDialog';
-import { SKILL_PROFICIENCY, type SkillProfileRole } from './skill-proficiency';
+import { toWalletSkill, type SkillProfileRole } from './skill-proficiency';
 
 const PAGE_SIZE = 20;
 
@@ -71,23 +67,7 @@ export function RoleSkillsWalletMySkillsTab({
   const skillPage = failed ? undefined : response?.data;
   const data = useMemo(
     () => ({
-      skills: (skillPage?.content ?? []).map((skill): SkillRecord => {
-        const proficiency = SKILL_PROFICIENCY.find(
-          option =>
-            option.instructor === skill.proficiency_level ||
-            option.courseCreator === skill.proficiency_level
-        );
-        return {
-          id: skill.uuid || skill.skill_name,
-          name: skill.skill_name,
-          level: proficiency?.label ?? '',
-          proficiency_pct: proficiency?.percentage ?? 0,
-          category: '',
-          last_used: null,
-          last_assessed: fmtDate(skill.updated_date),
-          icon_key: 'Sparkles',
-        };
-      }),
+      skills: (skillPage?.content ?? []).map(toWalletSkill),
       categoryCounts: [],
     }),
     [skillPage]

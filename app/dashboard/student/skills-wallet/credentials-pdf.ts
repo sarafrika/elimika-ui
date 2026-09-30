@@ -29,6 +29,7 @@ const cap = (s?: string | null) => (s ? s.charAt(0).toUpperCase() + s.slice(1) :
 
 export function exportCredentialsPdf(opts: {
     studentName: string;
+    filename?: string;
     credentials: CredentialRow[];
     verifications: VerificationRow[];
 }) {
@@ -47,7 +48,7 @@ export function exportCredentialsPdf(opts: {
 
     doc.setTextColor(30, 41, 59);
     doc.setFontSize(11);
-    doc.text(`Student: ${studentName}`, 40, 96);
+    doc.text(`Owner: ${studentName}`, 40, 96);
     doc.text(`Generated: ${new Date().toLocaleString()}`, 40, 112);
 
     // Credentials
@@ -106,6 +107,6 @@ export function exportCredentialsPdf(opts: {
         );
     }
 
-    const safeName = studentName.replace(/[^a-z0-9]+/gi, "-").toLowerCase() || "student";
+    const safeName = (opts.filename ?? studentName).replace(/[^a-z0-9]+/gi, "-").toLowerCase() || "student";
     doc.save(`elimika-credentials-${safeName}-${new Date().toISOString().slice(0, 10)}.pdf`);
 }

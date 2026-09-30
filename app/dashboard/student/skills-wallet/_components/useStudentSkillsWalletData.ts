@@ -399,12 +399,7 @@ export function useStudentSkillsWalletData() {
       });
     });
 
-    return Array.from(byCourse.values())
-      .sort((a, b) => b.proficiency_pct - a.proficiency_pct)
-      .map((item, index) => ({
-        ...item,
-        proficiency_pct: index === 0 && item.proficiency_pct < 90 ? Math.max(item.proficiency_pct, 90) : item.proficiency_pct,
-      }));
+    return Array.from(byCourse.values()).sort((a, b) => b.proficiency_pct - a.proficiency_pct);
   }, [categoryMap, certificatesByCourse, classDefinitionMap, classEnrollments, courseEnrollments, courseMap, courseProgressByClassAverage, difficultyLevelMap]);
 
   const categoryCounts = useMemo(() => {
@@ -532,6 +527,7 @@ export function useStudentSkillsWalletData() {
       credential_code: certificate.certificate_number ?? certificate.template_uuid,
       status: 'Verified' as const,
       source: 'platform' as const,
+      document_url: certificate.certificate_url,
     })),
   ];
 
