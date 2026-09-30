@@ -5,13 +5,9 @@ import { useMemo } from 'react';
 
 import { DataTable, StatusBadge, surfaceTheme } from '@/components/data-display';
 import { PageHeader } from '@/components/page-header';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
+import { SearchNotice } from '@/components/search/search-notice';
+import { useSearchIssue } from '@/hooks/use-search-query';
+import { useUrlSearchQuery } from '@/hooks/use-url-search-query';
 import { Skeleton } from '@/components/ui/skeleton';
 import {
   useCoursesByIds,
@@ -20,12 +16,14 @@ import {
 } from '@/hooks/use-batched-lookups';
 import { formatDate } from '@/lib/date';
 import { toNumber } from '@/lib/metrics';
+import { FilterBar } from '../components/filter-bar';
 import { SectionBoundary } from '../components/section-boundary';
 import { JOB_STATUSES, JOBS_PAGE_SIZE, useMarketplaceJobs } from '../hooks/use-marketplace';
 import { adminRoutes } from '../lib/admin-routes';
 import { numberParam, stringParam } from '@/lib/search-state';
 import { useSearchState, useSearchStatePatch } from '@/hooks/use-search-state';
 
+const termParam = stringParam();
 const statusParam = stringParam('any');
 const pageParam = numberParam(0);
 
@@ -50,14 +48,19 @@ const money = (amount?: number | null) =>
 
 export function MarketplacePage() {
   const router = useRouter();
+  const [urlTerm] = useSearchState('q', termParam);
   const [status] = useSearchState('status', statusParam);
   const [page, setPage] = useSearchState('page', pageParam);
   const patch = useSearchStatePatch();
+  const search = useUrlSearchQuery();
 
   const { jobs, totalRows, pageCount, query } = useMarketplaceJobs({
     status: status === 'any' ? undefined : status,
+    q: search.q,
     page,
   });
+  const searchIssue = useSearchIssue(search, query.error);
+  const isFiltered = status !== 'any' || Boolean(search.q);
 
   // Jobs carry only uuids for the organisation, course and program, so each set of names
   // is fetched once for the whole page rather than once per row.
@@ -87,40 +90,39 @@ export function MarketplacePage() {
           description='What organisations are hiring instructors to teach, and how far each hire has got.'
         />
 
-        {/* The jobs endpoint filters but does not search, so there is no search box here. */}
-        <div className='flex flex-wrap items-center gap-2'>
-          <Select
-            value={status}
-            onValueChange={value => patch({ status: value === 'any' ? undefined : value })}
-          >
-            <SelectTrigger className='border-border/70 h-9 w-auto min-w-[180px] rounded-md'>
-              <SelectValue placeholder='Status' />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value='any'>Status: any</SelectItem>
-              {JOB_STATUSES.map(value => (
-                <SelectItem key={value} value={value}>
-                  {STATUS_LABEL[value] ?? value}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+        <FilterBar
+          values={{ q: urlTerm, status }}
+          searchPlaceholder='Search jobs by title, course or organisation…'
+          filters={[
+            {
+              key: 'status',
+              label: 'Status',
+              anyValue: 'any',
+              options: JOB_STATUSES.map(value => ({
+                value,
+                label: STATUS_LABEL[value] ?? value,
+              })),
+            },
+          ]}
+        >
           <span className='text-muted-foreground text-xs'>
-            Newest first — the endpoint fixes the order.
+            {search.q ? 'Most relevant first.' : 'Newest first.'}
           </span>
-        </div>
+        </FilterBar>
+
+        <SearchNotice issue={searchIssue} onReset={() => patch({ q: undefined })} />
 
         <SectionBoundary
           label='the job list'
           loading={query.isLoading && jobs.length === 0}
-          error={query.error}
+          error={searchIssue ? null : query.error}
           onRetry={query.refetch}
           empty={!query.isLoading && jobs.length === 0}
-          emptyTitle={status === 'any' ? 'No jobs posted yet' : 'Nothing at this status'}
+          emptyTitle={isFiltered ? 'Nothing matches these filters' : 'No jobs posted yet'}
           emptyDescription={
-            status === 'any'
-              ? 'Organisations post here when they need an instructor for a class.'
-              : 'Clear the filter to see every job.'
+            isFiltered
+              ? 'Clear the search or filter to see every job.'
+              : 'Organisations post here when they need an instructor for a class.'
           }
           skeleton={
             <div className='space-y-3'>

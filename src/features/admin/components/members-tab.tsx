@@ -27,6 +27,10 @@ import {
 } from '@/components/ui/select';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import { formatDate } from '@/lib/date';
+import { SearchQueryInput } from '@/components/search/search-input';
+import { SearchNotice } from '@/components/search/search-notice';
+import type { SearchQueryState } from '@/hooks/use-search-query';
+import type { SearchIssue } from '@/lib/search/query';
 import type {
   DomainNameEnum,
   DomainNameEnum2,
@@ -87,6 +91,9 @@ interface MembersTabProps {
     onPageChange: (page: number) => void;
   };
   invitationsQuery: { isLoading: boolean; error: unknown; refetch: () => void };
+  /** Member search: names through the search index, or an exact email with "@". */
+  search: SearchQueryState;
+  searchIssue: SearchIssue;
 }
 
 const NO_BRANCH = 'none';
@@ -99,6 +106,8 @@ export function MembersTab({
   invitations,
   membersQuery,
   invitationsQuery,
+  search,
+  searchIssue,
 }: MembersTabProps) {
   const organisationUuid = organisation.uuid ?? '';
   const [roleChange, setRoleChange] = useState<{
@@ -153,14 +162,26 @@ export function MembersTab({
           </Button>
         }
       >
+        <div className='mb-3 space-y-2'>
+          <SearchQueryInput
+            search={search}
+            placeholder='Search members by name, or an exact email…'
+            wrapperClassName='max-w-md'
+          />
+          <SearchNotice issue={searchIssue} onReset={search.clear} />
+        </div>
         <SectionBoundary
           label='the members'
           loading={membersQuery.isLoading}
           error={membersQuery.error}
           empty={members.length === 0}
           onRetry={membersQuery.refetch}
-          emptyTitle='No members yet'
-          emptyDescription='Add staff, or invite students and instructors.'
+          emptyTitle={search.q ? 'No member matches this search' : 'No members yet'}
+          emptyDescription={
+            search.q
+              ? 'Search matches names, or a whole email address.'
+              : 'Add staff, or invite students and instructors.'
+          }
         >
           <DataTable
             hideToolbar

@@ -24,12 +24,18 @@ import { SectionBoundary } from '../components/section-boundary';
 import { useAdminStatistics } from '../hooks/use-admin-dashboard';
 import { CALENDAR_MAX_DAYS, useAllClasses, useInstructorCalendar } from '../hooks/use-classes';
 import { enumParam, numberParam, stringParam } from '@/lib/search-state';
-import { useSearchState } from '@/hooks/use-search-state';
+import { useSearchState, useSearchStatePatch } from '@/hooks/use-search-state';
+import { SearchNotice } from '@/components/search/search-notice';
+import { useSearchIssue } from '@/hooks/use-search-query';
+import { useUrlSearchQuery } from '@/hooks/use-url-search-query';
+import { FilterBar } from '../components/filter-bar';
 
 const viewParam = enumParam(['list', 'calendar'] as const, 'list');
 const pageParam = numberParam(0);
 const instructorParam = stringParam();
 const fromParam = stringParam();
+const termParam = stringParam();
+const classParam = stringParam();
 
 const isoDate = (date: Date) => date.toISOString().slice(0, 10);
 
@@ -40,11 +46,17 @@ export function ClassesPage() {
   const [instructor, setInstructor] = useSearchState('instructor', instructorParam);
   const [from, setFrom] = useSearchState('from', fromParam);
   const [openClass, setOpenClass] = useState<ClassDefinition | null>(null);
+  // ?class= opens one class's drawer directly, e.g. from the search palette.
+  const [linkedClass, setLinkedClass] = useSearchState('class', classParam);
+  const [urlTerm] = useSearchState('q', termParam);
+  const patch = useSearchStatePatch();
+  const search = useUrlSearchQuery();
 
   const { statistics, query: statisticsQuery } = useAdminStatistics();
   const metrics = statistics?.timetabling_metrics;
 
-  const { classes, totalRows, pageCount, query } = useAllClasses(page);
+  const { classes, totalRows, pageCount, query } = useAllClasses(page, search.q);
+  const searchIssue = useSearchIssue(search, query.error);
 
   // Organisation names come from one batched lookup for the page.
   const organisationIds = useMemo(
@@ -135,14 +147,23 @@ export function ClassesPage() {
         </SectionBoundary>
 
         {view === 'list' ? (
+          <FilterBar values={{ q: urlTerm }} searchPlaceholder='Search classes by title, course or location…' />
+        ) : null}
+        {view === 'list' ? (
+          <SearchNotice issue={searchIssue} onReset={() => patch({ q: undefined })} />
+        ) : null}
+
+        {view === 'list' ? (
           <SectionBoundary
             label='the classes'
             loading={query.isLoading && classes.length === 0}
-            error={query.error}
+            error={searchIssue ? null : query.error}
             onRetry={query.refetch}
             empty={!query.isLoading && classes.length === 0}
-            emptyTitle='No classes yet'
-            emptyDescription='Nothing has been set up to run.'
+            emptyTitle={search.q ? 'No class matches this search' : 'No classes yet'}
+            emptyDescription={
+              search.q ? 'Clear the search to see every class.' : 'Nothing has been set up to run.'
+            }
           >
             <DataTable
               hideToolbar
@@ -247,10 +268,12 @@ export function ClassesPage() {
       </div>
 
       <ClassDrawer
-        classUuid={openClass?.uuid ?? null}
+        classUuid={openClass?.uuid ?? (linkedClass || null)}
         fallback={openClass}
         onOpenChange={open => {
-          if (!open) setOpenClass(null);
+          if (open) return;
+          setOpenClass(null);
+          if (linkedClass) setLinkedClass('');
         }}
       />
     </div>

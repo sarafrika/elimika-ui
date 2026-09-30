@@ -31,6 +31,9 @@ import {
 } from '../hooks/use-admin-access';
 import { enumParam } from '@/lib/search-state';
 import { useSearchState } from '@/hooks/use-search-state';
+import { SearchInput } from '@/components/search/search-input';
+import { SearchNotice } from '@/components/search/search-notice';
+import { useSearchIssue, useSearchQuery } from '@/hooks/use-search-query';
 
 type AccessTab = 'system' | 'all' | 'organisation';
 
@@ -348,31 +351,25 @@ function GrantAccessSheet({
   open: boolean;
   onOpenChange: (open: boolean) => void;
 }) {
-  const [search, setSearch] = useState('');
-  const [debounced, setDebounced] = useState('');
+  const search = useSearchQuery();
   const [picked, setPicked] = useState<User | null>(null);
   const [level, setLevel] = useState<'platform' | 'organisation'>('platform');
   const [reason, setReason] = useState('');
   const [confirming, setConfirming] = useState(false);
 
   const { grant, isPending } = useGrantAdmin();
-  const eligible = useEligibleUsers(debounced);
-
-  // The eligible endpoint scans every user, so it waits for a pause in typing.
-  useEffect(() => {
-    const timer = setTimeout(() => setDebounced(search), 300);
-    return () => clearTimeout(timer);
-  }, [search]);
+  const eligible = useEligibleUsers(search.q);
+  const searchIssue = useSearchIssue(search, eligible.error);
+  const { clear: clearSearch } = search;
 
   useEffect(() => {
     if (open) return;
-    setSearch('');
-    setDebounced('');
+    clearSearch();
     setPicked(null);
     setLevel('platform');
     setReason('');
     setConfirming(false);
-  }, [open]);
+  }, [open, clearSearch]);
 
   const enoughReason = noteToPlainText(reason).length >= MIN_REASON;
   const canSubmit = level === 'platform' && Boolean(picked?.uuid) && enoughReason;
@@ -395,15 +392,15 @@ function GrantAccessSheet({
           <Label htmlFor='grant-search' className='text-sm font-semibold'>
             Person<span className='text-destructive ml-0.5'>*</span>
           </Label>
-          <Input
+          <SearchInput
             id='grant-search'
-            value={search}
-            onChange={event => {
-              setSearch(event.target.value);
+            value={search.input}
+            onValueChange={value => {
+              search.setInput(value);
               setPicked(null);
             }}
+            isPending={search.isPending && !search.tooShort}
             placeholder='Search by name or email…'
-            className='rounded-md'
             autoComplete='off'
           />
           {picked ? (
@@ -413,18 +410,19 @@ function GrantAccessSheet({
             </p>
           ) : (
             <p className='text-muted-foreground text-xs'>
-              Type at least {ELIGIBLE_MIN_QUERY} characters. This search reads every user, so it
-              only runs when you pause.
+              Type at least {ELIGIBLE_MIN_QUERY} characters. Names are matched even with a typo.
             </p>
           )}
         </div>
+
+        {!picked ? <SearchNotice issue={searchIssue} onReset={search.clear} /> : null}
 
         {eligible.enabled && !picked ? (
           <div className='border-border/70 max-h-64 overflow-y-auto rounded-md border'>
             <SectionBoundary
               label='matching people'
               loading={eligible.isLoading}
-              error={eligible.error}
+              error={searchIssue ? null : eligible.error}
               empty={!eligible.isLoading && eligible.people.length === 0}
               emptyTitle='Nobody matches'
               emptyDescription='Try a different name or email.'

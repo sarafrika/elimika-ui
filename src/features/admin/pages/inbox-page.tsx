@@ -9,10 +9,14 @@ import { useInstructorsByIds } from '@/hooks/use-batched-lookups';
 import { InboxList } from '../components/inbox-list';
 import { InboxRecordPreview } from '../components/inbox-record-preview';
 import { SectionBoundary } from '../components/section-boundary';
-import { useQueueCounts, useReviewQueue } from '../hooks/use-review-queue';
+import { SEARCHABLE_QUEUES, useQueueCounts, useReviewQueue } from '../hooks/use-review-queue';
 import type { InboxType } from '../lib/admin-routes';
 import { enumParam, stringParam } from '@/lib/search-state';
 import { useSearchState } from '@/hooks/use-search-state';
+import { SearchQueryInput } from '@/components/search/search-input';
+import { SearchNotice } from '@/components/search/search-notice';
+import { useSearchIssue } from '@/hooks/use-search-query';
+import { useUrlSearchQuery } from '@/hooks/use-url-search-query';
 
 const TYPES: { id: InboxType; label: string }[] = [
   { id: 'documents', label: 'Documents' },
@@ -33,7 +37,11 @@ export function InboxPage() {
   const [itemId, setItemId] = useSearchState('item', itemParam);
 
   const { counts, waiting, query: countsQuery } = useQueueCounts();
-  const queue = useReviewQueue(type);
+  const search = useUrlSearchQuery();
+  const searchable = SEARCHABLE_QUEUES.includes(type);
+  const term = searchable ? search.q : undefined;
+  const queue = useReviewQueue(type, 0, term);
+  const searchIssue = useSearchIssue({ ...search, q: term }, searchable ? queue.error : null);
 
   // Nothing is opened for you: the preview costs its own calls, so it waits for a click.
   const selected = useMemo(
@@ -104,14 +112,24 @@ export function InboxPage() {
           </nav>
 
           <section className={cn(surfaceTheme.card, 'overflow-hidden')}>
+            {searchable ? (
+              <div className='border-border/70 space-y-2 border-b p-3'>
+                <SearchQueryInput search={search} placeholder='Search pending organisations…' />
+                <SearchNotice issue={searchIssue} onReset={search.clear} />
+              </div>
+            ) : null}
             <SectionBoundary
               label='this queue'
               loading={queue.isLoading}
-              error={queue.error}
+              error={searchIssue ? null : queue.error}
               empty={queue.items.length === 0}
               onRetry={queue.refetch}
-              emptyTitle='Inbox zero'
-              emptyDescription='Nothing is waiting in this queue. New submissions appear here within a minute.'
+              emptyTitle={term ? 'Nothing matches this search' : 'Inbox zero'}
+              emptyDescription={
+                term
+                  ? 'Clear the search to see every organisation waiting for a decision.'
+                  : 'Nothing is waiting in this queue. New submissions appear here within a minute.'
+              }
               skeleton={
                 <div className='space-y-3 p-4'>
                   {Array.from({ length: 6 }).map((_, index) => (

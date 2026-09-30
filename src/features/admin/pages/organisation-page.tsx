@@ -16,6 +16,8 @@ import { toNumber } from '@/lib/metrics';
 import { adminRoutes, type OrganisationTab } from '../lib/admin-routes';
 import { enumParam, numberParam, stringParam } from '@/lib/search-state';
 import { useSearchState } from '@/hooks/use-search-state';
+import { useSearchIssue } from '@/hooks/use-search-query';
+import { useUrlSearchQuery } from '@/hooks/use-url-search-query';
 import { BranchesTab } from '../components/branches-tab';
 import { ClassesTab } from '../components/classes-tab';
 import { FinanceTab } from '../components/finance-tab';
@@ -99,13 +101,15 @@ export function AdminOrganisationPage({ uuid }: { uuid: string }) {
 
   // Members also need the branch list, so a role change can move someone between them.
   const membersEnabled = tab === 'members';
+  const memberSearch = useUrlSearchQuery();
   const { branches: memberBranches } = useOrganisationBranches(uuid, membersEnabled);
   const {
     members,
     totalRows: memberTotal,
     pageCount: memberPages,
     query: membersQuery,
-  } = useOrganisationMembers(uuid, memberPage, membersEnabled);
+  } = useOrganisationMembers(uuid, memberPage, membersEnabled, memberSearch.q);
+  const memberSearchIssue = useSearchIssue(memberSearch, membersQuery.error);
   const { invitations, query: invitationsQuery } = useOrganisationInvitations(uuid, membersEnabled);
 
   const classesEnabled = tab === 'classes';
@@ -297,7 +301,7 @@ export function AdminOrganisationPage({ uuid }: { uuid: string }) {
             invitations={invitations}
             membersQuery={{
               isLoading: membersQuery.isLoading,
-              error: membersQuery.error,
+              error: memberSearchIssue ? null : membersQuery.error,
               refetch: membersQuery.refetch,
               page: memberPage,
               pageCount: memberPages,
@@ -305,6 +309,8 @@ export function AdminOrganisationPage({ uuid }: { uuid: string }) {
               onPageChange: setMemberPage,
             }}
             invitationsQuery={invitationsQuery}
+            search={memberSearch}
+            searchIssue={memberSearchIssue}
           />
         ) : null}
 

@@ -1,6 +1,6 @@
 'use client';
 
-import { useQuery } from '@tanstack/react-query';
+import { keepPreviousData, useQuery } from '@tanstack/react-query';
 import { useMemo } from 'react';
 
 import { extractEntity, extractPage, getTotalFromMetadata } from '@/lib/api-helpers';
@@ -44,10 +44,12 @@ export interface JobFilters {
   branchUuid?: string;
   /** One of JOB_STATUSES; anything else means no filter. */
   status?: string;
+  /** Free text, served by the search index (2+ characters, already debounced). */
+  q?: string;
   page?: number;
 }
 
-/** Server-paged marketplace jobs. The API always returns newest first. */
+/** Server-paged marketplace jobs. Newest first, or by relevance with `q`. */
 export function useMarketplaceJobs(filters: JobFilters) {
   const page = filters.page ?? 0;
 
@@ -59,10 +61,12 @@ export function useMarketplaceJobs(filters: JobFilters) {
         program_uuid: filters.programUuid || undefined,
         branch_uuid: filters.branchUuid || undefined,
         status: filters.status || undefined,
+        ...(filters.q ? { q: filters.q } : {}),
         pageable: { page, size: JOBS_PAGE_SIZE },
       },
     }),
     ...listQuery,
+    placeholderData: keepPreviousData,
   });
 
   const { jobs, totalRows, pageCount } = useMemo(() => {

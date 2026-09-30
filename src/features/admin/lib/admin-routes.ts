@@ -67,11 +67,19 @@ export const adminRoutes = {
   programs: (filters?: { status?: string; approval?: string; q?: string; page?: string }) =>
     withQuery(admin('programs'), filters ?? {}),
   program: (uuid: string, tab?: ProgramTab) => withQuery(admin(`programs/${uuid}`), { tab }),
-  classes: (filters?: { view?: string; from?: string; to?: string; instructor?: string }) =>
+  classes: (filters?: {
+    view?: string;
+    from?: string;
+    to?: string;
+    instructor?: string;
+    q?: string;
+    class?: string;
+  }) =>
     withQuery(admin('classes'), filters ?? {}),
   catalogue: () => admin('catalogue'),
-  rubrics: () => admin('rubrics'),
-  marketplace: () => admin('marketplace'),
+  rubrics: (filters?: { q?: string }) => withQuery(admin('rubrics'), filters ?? {}),
+  marketplace: (filters?: { q?: string; status?: string }) =>
+    withQuery(admin('marketplace'), filters ?? {}),
   job: (uuid: string) => admin(`marketplace/${uuid}`),
 
   revenue: (range?: string) => withQuery(admin('revenue'), { range }),

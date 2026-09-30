@@ -62,11 +62,14 @@ const pageable = (page: number, sort?: string[]) => ({
   ...(sort ? { sort } : {}),
 });
 
+/** The queues whose endpoint takes `q`. */
+export const SEARCHABLE_QUEUES: readonly InboxType[] = ['organisations'];
+
 /**
  * Each queue is its own endpoint; only the selected one runs. The rest stay disabled,
  * so opening the inbox costs the statistics call plus one queue.
  */
-export function useReviewQueue(type: InboxType, page = 0): QueueResult {
+export function useReviewQueue(type: InboxType, page = 0, q?: string): QueueResult {
   const documents = useQuery({
     ...searchDocumentsOptions({
       query: {
@@ -93,7 +96,10 @@ export function useReviewQueue(type: InboxType, page = 0): QueueResult {
   });
 
   const organisations = useQuery({
-    ...getPendingOrganisationsOptions({ query: { pageable: pageable(page) } }),
+    // Only the organisation queue can be searched: `q` is served by the search index.
+    ...getPendingOrganisationsOptions({
+      query: { pageable: pageable(page), ...(q ? { q } : {}) },
+    }),
     ...queueQuery,
     enabled: type === 'organisations',
   });

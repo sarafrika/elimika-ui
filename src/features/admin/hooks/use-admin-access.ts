@@ -3,6 +3,7 @@
 import { useQuery } from '@tanstack/react-query';
 import { useMemo } from 'react';
 import { extractPage, getTotalFromMetadata } from '@/lib/api-helpers';
+import { MIN_SEARCH_TERM_LENGTH, toSearchTerm } from '@/lib/search/query';
 import type { User } from '@/services/client';
 import {
   getAdminEligibleUsersOptions,
@@ -19,8 +20,8 @@ import { listQuery } from '../lib/admin-queries';
 const LIST_SIZE = 200;
 const ELIGIBLE_SIZE = 20;
 
-/** Shortest search that is worth sending to an endpoint that scans every user. */
-export const ELIGIBLE_MIN_QUERY = 2;
+/** Shortest search worth sending; the same two-character minimum as every `q` search. */
+export const ELIGIBLE_MIN_QUERY = MIN_SEARCH_TERM_LENGTH;
 
 export interface AdminListResult {
   people: User[];
@@ -81,12 +82,13 @@ export function useOrganisationAdmins(): AdminListResult {
 }
 
 /**
- * People who could be granted access. The endpoint loads every user and checks each one
- * server-side, so it only runs once the caller has typed enough to narrow it.
+ * People who could be granted access. The endpoint keeps its `search=` parameter but
+ * answers a term from the people index (typo-tolerant; 503 when search is unavailable),
+ * so it only runs once a term of two or more characters has settled.
  */
-export function useEligibleUsers(search: string) {
-  const term = search.trim();
-  const enabled = term.length >= ELIGIBLE_MIN_QUERY;
+export function useEligibleUsers(search: string | undefined) {
+  const term = toSearchTerm(search) ?? '';
+  const enabled = term.length > 0;
 
   const query = useQuery({
     ...getAdminEligibleUsersOptions({

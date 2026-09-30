@@ -1,6 +1,6 @@
 'use client';
 
-import { useQuery } from '@tanstack/react-query';
+import { keepPreviousData, useQuery } from '@tanstack/react-query';
 import { useMemo } from 'react';
 
 import { extractEntity, extractList, extractPage, getTotalFromMetadata } from '@/lib/api-helpers';
@@ -99,14 +99,16 @@ export function useOrganisationBranches(uuid: string, enabled = true) {
 }
 
 /** Members, paged, with their role and branch carried on each affiliation. */
-export function useOrganisationMembers(uuid: string, page: number, enabled = true) {
+export function useOrganisationMembers(uuid: string, page: number, enabled = true, q?: string) {
   const query = useQuery({
+    // `q` matches names through the search index, or an exact email when it contains "@".
     ...getUsersByOrganisationOptions({
       path: { uuid },
-      query: { pageable: { page, size: MEMBER_PAGE_SIZE } },
+      query: { pageable: { page, size: MEMBER_PAGE_SIZE }, ...(q ? { q } : {}) },
     }),
     ...listQuery,
     enabled: Boolean(uuid) && enabled,
+    placeholderData: keepPreviousData,
   });
 
   const { members, totalRows, pageCount } = useMemo(() => {

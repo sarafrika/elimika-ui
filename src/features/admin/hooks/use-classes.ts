@@ -1,6 +1,6 @@
 'use client';
 
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { keepPreviousData, useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useMemo } from 'react';
 import { toast } from 'sonner';
 
@@ -36,12 +36,15 @@ export const CALENDAR_MAX_DAYS = 31;
 
 /**
  * Every class on the platform, one page at a time. The endpoint takes no filters and
- * refuses to sort by instructor_pay, so the page offers neither.
+ * refuses to sort by instructor_pay; free text goes as `q`, served by the search index.
  */
-export function useAllClasses(page: number) {
+export function useAllClasses(page: number, q?: string) {
   const query = useQuery({
-    ...getAllClassDefinitionsOptions({ query: { pageable: { page, size: CLASS_PAGE_SIZE } } }),
+    ...getAllClassDefinitionsOptions({
+      query: { pageable: { page, size: CLASS_PAGE_SIZE }, ...(q ? { q } : {}) },
+    }),
     ...listQuery,
+    placeholderData: keepPreviousData,
   });
 
   const { classes, totalRows, pageCount } = useMemo(() => {
