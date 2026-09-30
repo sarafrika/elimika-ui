@@ -80,3 +80,31 @@ export function SearchInput({
     </div>
   );
 }
+
+/**
+ * `SearchInput` wired to a `useSearchQuery` / `useUrlSearchQuery` state: the spinner while
+ * a term is pending and the two-character hint.
+ */
+export function SearchQueryInput({
+  search,
+  ...props
+}: Omit<SearchInputProps, 'value' | 'onValueChange' | 'isPending' | 'onClear' | 'hint'> & {
+  search: {
+    input: string;
+    setInput: (value: string) => void;
+    clear: () => void;
+    isPending: boolean;
+    tooShort: boolean;
+  };
+}) {
+  return (
+    <SearchInput
+      value={search.input}
+      onValueChange={search.setInput}
+      onClear={search.clear}
+      isPending={search.isPending && !search.tooShort}
+      hint={search.tooShort ? 'Type at least 2 characters' : undefined}
+      {...props}
+    />
+  );
+}

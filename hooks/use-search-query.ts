@@ -9,7 +9,12 @@ import {
   markSearchUnavailable,
   subscribeSearchAvailability,
 } from '@/lib/search/availability';
-import { MIN_SEARCH_TERM_LENGTH, toSearchTerm } from '@/lib/search/query';
+import {
+  classifySearchError,
+  MIN_SEARCH_TERM_LENGTH,
+  type SearchIssue,
+  toSearchTerm,
+} from '@/lib/search/query';
 
 export type SearchQueryState = {
   /** What is in the box, updated on every keystroke. */
@@ -84,4 +89,22 @@ export function useSearchErrors(q: string | undefined, ...errors: unknown[]) {
   useEffect(() => {
     if (unavailable) markSearchUnavailable();
   }, [unavailable]);
+}
+
+/**
+ * `useSearchErrors` plus the issue to show above the list: `unavailable` while the index
+ * is marked down (the list has already reloaded without `q`), `invalid` when a request
+ * carrying `q` was refused with a 400.
+ */
+export function useSearchIssue(
+  search: Pick<SearchQueryState, 'q' | 'searchUnavailable'>,
+  ...errors: unknown[]
+): SearchIssue {
+  useSearchErrors(search.q, ...errors);
+  if (search.searchUnavailable) return 'unavailable';
+  for (const error of errors) {
+    const issue = classifySearchError(error, search.q);
+    if (issue) return issue;
+  }
+  return null;
 }
