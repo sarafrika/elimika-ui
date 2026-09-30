@@ -35,6 +35,8 @@ import { GuardianAttendancePanel } from './GuardianAttendancePanel';
 import { GuardianEnrollmentNotice } from './GuardianEnrollmentNotice';
 import { GuardianEmptyState } from './GuardianEmptyState';
 import { ParentDashboardSkeleton } from './ParentDashboardSkeleton';
+import { CourseRecommendationsCard } from '@/src/features/recommendations/course-recommendation-rail';
+import { LearnerSkillGoalsCard } from '@/src/features/skills/learner-skill-goals-card';
 
 const STUDENT_SELECTION_KEY = 'guardian-dashboard:selected-student';
 
@@ -166,8 +168,20 @@ export function ParentOverviewContent() {
           )}
           <div className={cn('space-y-4', showAcademicWidgets ? '' : 'lg:col-span-1')}>
             <GuardianAttendancePanel shareScope={shareScope} />
+            {activeStudent?.student_uuid ? (
+              <LearnerSkillGoalsCard studentUuid={activeStudent.student_uuid} readOnly />
+            ) : null}
           </div>
         </div>
+
+        {activeStudent?.student_uuid ? (
+          <CourseRecommendationsCard
+            key={activeStudent.student_uuid}
+            studentUuid={activeStudent.student_uuid}
+            title={`Suggested courses for ${snapshot.student_name ?? activeStudent.student_name ?? 'this learner'}`}
+            courseHref={uuid => `/dashboard/parent/all-courses/${uuid}`}
+          />
+        ) : null}
       </>
     );
   };

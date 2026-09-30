@@ -2,6 +2,7 @@
 
 import { StudentOverviewActiveCoursesCard } from '@/src/features/dashboard/workspace/student-overview/_components/StudentOverviewActiveCoursesCard';
 import { StudentOverviewHeroCard } from '@/src/features/dashboard/workspace/student-overview/_components/StudentOverviewHeroCard';
+import { CourseRecommendationsCard } from '@/src/features/recommendations/course-recommendation-rail';
 import { useStudentOverviewData } from '@/src/features/dashboard/workspace/student-overview/useStudentOverviewData';
 import { useDeferredValue, useState } from 'react';
 import { useUserProfile } from '../../../profile/context/profile-context';
@@ -39,6 +40,8 @@ export default function StudentOverviewPage() {
           isLoading={data.isLoadingCourses}
           upcomingAssessments={data.assessments}
         />
+
+        <CourseRecommendationsCard courseHref={uuid => `/dashboard/student/courses/${uuid}`} />
 
         <StudentOpportunities
           opportunities={filteredOpportunities}

@@ -11,6 +11,7 @@ import type {
   CourseCreatorVerificationStatus,
 } from '@/lib/types/course-creator';
 import PurchasableCatalogue from '@/src/features/dashboard/components/PurchasableCatalogue';
+import { CourseRecommendationsCard } from '@/src/features/recommendations/course-recommendation-rail';
 import { useUserDomain } from '@/src/features/dashboard/context/user-domain-context';
 import { roleScopedDashboardPath } from '@/src/features/dashboard/lib/active-domain-storage';
 import { format } from 'date-fns';
@@ -65,6 +66,10 @@ export default function CourseCreatorOverviewContent() {
           <MonetizationCard monetization={monetization} activeDomain={activeDomain} />
           <TrainingRequirementsCard trainingRequirements={trainingRequirements} activeDomain={activeDomain} />
           <PurchasableCatalogue scope='course_creator' />
+          <CourseRecommendationsCard
+            description='Courses to learn from, picked for you'
+            courseHref={uuid => `/dashboard/course-creator/all-courses/${uuid}`}
+          />
         </>
       }
       rightColumn={
