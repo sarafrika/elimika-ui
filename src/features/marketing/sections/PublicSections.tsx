@@ -11,8 +11,12 @@ import {
   DialogTrigger,
 } from '@/components/ui/dialog';
 import { Send } from 'lucide-react';
+import { signIn } from 'next-auth/react';
 import Link from 'next/link';
 import { SupportContactForm } from '../pages/SupportContactForm';
+
+/** Job openings for learners; anonymous visitors sign in and land here. */
+const OPENINGS_PATH = '/dashboard/student/opportunities';
 
 export function SkillsFundSection() {
   return (
@@ -70,7 +74,16 @@ export function OpportunitiesSection() {
             </CardDescription>
           </CardHeader>
           <CardContent>
-            <Button variant='outline' className='rounded-full'>
+            {/* Openings live behind the learner dashboard, so the button signs in first. */}
+            <Button
+              variant='outline'
+              className='rounded-full'
+              onClick={() =>
+                void signIn('keycloak', {
+                  redirectTo: `${window.location.origin}${OPENINGS_PATH}`,
+                })
+              }
+            >
               Search openings
             </Button>
           </CardContent>
