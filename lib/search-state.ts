@@ -60,6 +60,7 @@ export const PAGE_RESETTING_KEYS = [
   'category',
   'level',
   'price',
+  'sort',
 ];
 
 export function withPageReset(

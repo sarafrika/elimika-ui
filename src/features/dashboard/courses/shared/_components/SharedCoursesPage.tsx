@@ -24,11 +24,28 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { useInstructor } from '@/context/instructor-context';
 import { useOrganisation } from '@/context/organisation-context';
 import { useUserProfile } from '@/context/profile-context';
-import { useCourseClasses } from '@/hooks/use-batched-lookups';
+import { FacetChips, FacetChipsSkeleton } from '@/components/search/facet-chips';
+import { SearchQueryInput } from '@/components/search/search-input';
+import { SearchNotice } from '@/components/search/search-notice';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
+import { useCourseClasses, useCoursesByIds } from '@/hooks/use-batched-lookups';
+import { useSearchErrors } from '@/hooks/use-search-query';
+import { useSearchState, useSearchStatePatch } from '@/hooks/use-search-state';
+import { useUrlSearchQuery } from '@/hooks/use-url-search-query';
+import { retryUnlessClientOrSearchError } from '@/lib/api-errors';
+import { classifySearchError } from '@/lib/search/query';
+import { enumParam, numberParam, stringParam } from '@/lib/search-state';
+import { useTypeSearch } from '@/src/features/search/hooks/use-type-search';
 import { useCourseEnrollmentsMap } from '@/hooks/use-enrollment-map';
 import { averageRating, useCourseReviewsMap } from '@/hooks/use-reviews-map';
 import useStudentClassDefinitions from '@/hooks/use-student-class-definition';
-import { matchesCategoryFilter } from '@/lib/category-filters';
+import { categoryWithDescendants, matchesCategoryFilter } from '@/lib/category-filters';
 import { STALE_TIMES } from '@/lib/query-client';
 import type { RateCard } from '@/lib/rate-card';
 import type { UserDomain } from '@/lib/types';
@@ -73,7 +90,13 @@ import { CoursesRecommendationCard } from '@/src/features/dashboard/courses/shar
 import { StudentCoursesCard } from '@/src/features/dashboard/courses/shared/_components/StudentCoursesCard';
 import { roleScopedDashboardPath } from '@/src/features/dashboard/lib/active-domain-storage';
 import { invalidateTrainingApplicationWorkflowQueries } from '@/src/features/dashboard/workflow-query-invalidation';
-import { useMutation, useQueries, useQuery, useQueryClient } from '@tanstack/react-query';
+import {
+  keepPreviousData,
+  useMutation,
+  useQueries,
+  useQuery,
+  useQueryClient,
+} from '@tanstack/react-query';
 import {
   ArrowRight,
   GraduationCap,
@@ -84,7 +107,7 @@ import {
   Users,
 } from 'lucide-react';
 import Link from 'next/link';
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { toast } from 'sonner';
 
 type SharedCoursesPageProps = {
@@ -145,6 +168,27 @@ const defaultFilterValues: FilterValues = {
 };
 
 const CATALOG_PAGE_SIZE = 18;
+
+/**
+ * The faceted catalogue keeps its search, facets, sort and page in the URL so a reload or
+ * a shared link lands on the same results. Content type and duration stay local: the
+ * index has no duration, so that filter narrows the loaded page in the browser.
+ */
+const SORT_OPTIONS = [
+  { value: 'relevance', label: 'Most relevant', sort: undefined },
+  { value: 'newest', label: 'Newest', sort: 'created_at,desc' },
+  { value: 'price', label: 'Price: low to high', sort: 'price,asc' },
+  { value: 'rating', label: 'Highest rated', sort: 'rating_avg,desc' },
+  { value: 'enrolments', label: 'Most enrolled', sort: 'enrolment_count,desc' },
+] as const;
+type CatalogueSort = (typeof SORT_OPTIONS)[number]['value'];
+const SORT_VALUES = SORT_OPTIONS.map(option => option.value) as CatalogueSort[];
+
+const allParam = stringParam('all');
+const priceParam = enumParam(['all', 'free', 'paid'] as const, 'all');
+const sortParam = enumParam<CatalogueSort>(SORT_VALUES, 'relevance');
+const catalogPageParam = numberParam(1);
+const FACETS = 'category_uuids,difficulty_uuid,is_free';
 const trainingApplicationStatusQueryOptions = {
   staleTime: 0,
   refetchOnMount: 'always' as const,
@@ -451,11 +495,26 @@ export function SharedCoursesPage({ domain }: SharedCoursesPageProps) {
     : ApplicantTypeEnum.ORGANISATION;
 
   const [open, setOpen] = useState(false);
-  const [search, setSearch] = useState('');
+  const search = useUrlSearchQuery();
+  const patchUrl = useSearchStatePatch();
   const [activeTab, setActiveTab] = useState<CoursesCatalogTab>('all-courses');
-  const [filters, setFilters] = useState<FilterValues>(defaultFilterValues);
+  const [urlCategory] = useSearchState('category', allParam);
+  const [urlLevel] = useSearchState('level', allParam);
+  const [urlPrice] = useSearchState('price', priceParam);
+  const [sortValue] = useSearchState('sort', sortParam);
+  const [catalogPage, setCatalogPage] = useSearchState('page', catalogPageParam);
+  const [localFilters, setLocalFilters] = useState<Pick<FilterValues, 'contentType' | 'duration'>>({
+    contentType: defaultFilterValues.contentType,
+    duration: defaultFilterValues.duration,
+  });
+  const filters = useMemo<FilterValues>(
+    () => ({ ...localFilters, category: urlCategory, level: urlLevel, price: urlPrice }),
+    [localFilters, urlCategory, urlLevel, urlPrice]
+  );
   const [subjectByCategory, setSubjectByCategory] = useState<Record<string, string>>({});
-  const [currentCatalogPage, setCurrentCatalogPage] = useState(1);
+  const currentCatalogPage = Math.max(1, catalogPage);
+  const setCurrentCatalogPage = (next: number | ((current: number) => number)) =>
+    setCatalogPage(typeof next === 'function' ? next(currentCatalogPage) : next);
   const [applyModalOpen, setApplyModalOpen] = useState(false);
   const [selectedApplicationCard, setSelectedApplicationCard] = useState<
     CoursesCatalogCardData | CoursesRecommendationCardData | null
@@ -465,7 +524,53 @@ export function SharedCoursesPage({ domain }: SharedCoursesPageProps) {
   const [applicationSheetMode, setApplicationSheetMode] = useState<'apply' | 'review'>('apply');
   const [applicationSheetRevision, setApplicationSheetRevision] = useState(0);
 
-  const { data: coursesResponse, isLoading: coursesLoading } = useQuery({
+  const { data: categoriesForFacets } = useQuery({
+    ...getAllCategoriesOptions({ query: { pageable: { page: 0, size: 200 } } }),
+    staleTime: STALE_TIMES.reference,
+    refetchOnWindowFocus: false,
+  });
+  const selectedCategoryUuid =
+    filters.category === 'all' ? null : (subjectByCategory[filters.category] ?? filters.category);
+  const categoryFilterUuids = useMemo(
+    () =>
+      selectedCategoryUuid
+        ? categoryWithDescendants(selectedCategoryUuid, categoriesForFacets?.data?.content ?? [])
+        : undefined,
+    [selectedCategoryUuid, categoriesForFacets]
+  );
+
+  // Courses come from the search index: text, category, level and price are filtered and
+  // counted on the server, one page at a time. Programs have their own tab.
+  const serverCatalogue = filters.contentType !== 'programs';
+  const typeSearch = useTypeSearch({
+    type: 'courses',
+    q: search.q,
+    filters: {
+      status: 'published',
+      category_uuids_in: categoryFilterUuids,
+      difficulty_uuid: filters.level === 'all' ? undefined : filters.level,
+      is_free: filters.price === 'all' ? undefined : filters.price === 'free',
+    },
+    facets: FACETS,
+    sort:
+      SORT_OPTIONS.find(option => option.value === sortValue)?.sort ??
+      (search.q ? undefined : 'created_at,desc'),
+    page: currentCatalogPage - 1,
+    size: CATALOG_PAGE_SIZE,
+    enabled: serverCatalogue && !search.searchUnavailable,
+  });
+  // No database fallback: when the index is down the catalogue lists without the term and
+  // the filters narrow the loaded page in the browser.
+  const searchDown = search.searchUnavailable || typeSearch.searchUnavailable;
+  const facetMode = serverCatalogue && !searchDown;
+  const hitIds = useMemo(
+    () => typeSearch.hits.flatMap(hit => (hit.uuid ? [hit.uuid] : [])),
+    [typeSearch.hits]
+  );
+  // One batched lookup turns the page of hits into full courses for the cards.
+  const hitLookup = useCoursesByIds(facetMode ? hitIds : []);
+
+  const { data: publishedResponse, isLoading: publishedLoading } = useQuery({
     ...getPublishedCoursesOptions({
       query: {
         pageable: {
@@ -475,20 +580,32 @@ export function SharedCoursesPage({ domain }: SharedCoursesPageProps) {
       },
     }),
     refetchOnWindowFocus: false,
+    enabled: !facetMode,
   });
+  const coursesLoading = facetMode
+    ? (typeSearch.isLoading && !typeSearch.data) || hitLookup.isLoading
+    : publishedLoading;
 
-  const { data: programsResponse, isLoading: programsLoading } = useQuery({
+  const programsQuery = useQuery({
     ...getAllTrainingProgramsOptions({
       query: {
         pageable: {
           page: 0,
           size: 12,
         },
+        ...(search.q ? { q: search.q } : {}),
       },
     }),
     refetchOnWindowFocus: false,
+    placeholderData: keepPreviousData,
+    retry: retryUnlessClientOrSearchError,
   });
-
+  const { data: programsResponse, isLoading: programsLoading } = programsQuery;
+  useSearchErrors(search.q, programsQuery.error);
+  const searchIssue = searchDown
+    ? 'unavailable'
+    : (classifySearchError(typeSearch.error, search.q ?? 'filters') ??
+      classifySearchError(programsQuery.error, search.q));
   const { data: categoriesResponse, isLoading: categoriesLoading } = useQuery({
     ...getAllCategoriesOptions({
       query: {
@@ -507,7 +624,13 @@ export function SharedCoursesPage({ domain }: SharedCoursesPageProps) {
     refetchOnWindowFocus: false,
   });
 
-  const courses = useMemo(() => coursesResponse?.data?.content ?? [], [coursesResponse]);
+  const courses = useMemo<Course[]>(
+    () =>
+      facetMode
+        ? hitIds.flatMap(id => (hitLookup.courseMap[id] ? [hitLookup.courseMap[id]] : []))
+        : (publishedResponse?.data?.content ?? []),
+    [facetMode, hitIds, hitLookup.courseMap, publishedResponse]
+  );
   const programs = useMemo(() => programsResponse?.data?.content ?? [], [programsResponse]);
   const categories = useMemo(() => categoriesResponse?.data?.content ?? [], [categoriesResponse]);
 
@@ -942,28 +1065,29 @@ export function SharedCoursesPage({ domain }: SharedCoursesPageProps) {
       return mappedPrograms;
     }
 
-    if (activeTab === 'short-courses') {
+    // The faceted catalogue pages courses on the server; programs live on their own tab.
+    if (activeTab === 'short-courses' || facetMode) {
       return mappedCourses;
     }
 
     return allCoursesFeed;
-  }, [activeTab, allCoursesFeed, mappedCourses, mappedPrograms, myCourseItems]);
+  }, [activeTab, allCoursesFeed, facetMode, mappedCourses, mappedPrograms, myCourseItems]);
 
-  const normalizedSearch = search.trim().toLowerCase();
+  const normalizedSearch = search.q ?? '';
 
   const filteredItems = useMemo(
     () =>
       baseTabItems.filter(item => {
         if (item.is_published !== true) return false;
 
-        const resolvedDifficultyLabel = difficultyMap.get(filters.level) ?? filters.level;
+        const matchesDuration =
+          filters.duration === 'all' ||
+          getDurationBucket(item.durationMinutes) === filters.duration;
 
-        const matchesSearch =
-          normalizedSearch === '' ||
-          item.title.toLowerCase().includes(normalizedSearch) ||
-          item.creatorName.toLowerCase().includes(normalizedSearch) ||
-          item.description.toLowerCase().includes(normalizedSearch) ||
-          item.categoryLabels.some(label => label.toLowerCase().includes(normalizedSearch));
+        // Text, category, level and price were applied by the search index.
+        if (facetMode && item.kind === 'course') return matchesDuration;
+
+        const resolvedDifficultyLabel = difficultyMap.get(filters.level) ?? filters.level;
 
         const selectedCategory = subjectByCategory[filters.category] ?? filters.category;
 
@@ -974,10 +1098,6 @@ export function SharedCoursesPage({ domain }: SharedCoursesPageProps) {
         const matchesLevel =
           filters.level === 'all' ||
           item.levelLabel?.toLowerCase() === resolvedDifficultyLabel.toLowerCase();
-
-        const matchesDuration =
-          filters.duration === 'all' ||
-          getDurationBucket(item.durationMinutes) === filters.duration;
 
         const matchesPrice =
           filters.price === 'all' ||
@@ -991,7 +1111,6 @@ export function SharedCoursesPage({ domain }: SharedCoursesPageProps) {
           (filters.contentType === 'short-courses' && item.kind === 'course');
 
         return (
-          matchesSearch &&
           matchesCategory &&
           matchesLevel &&
           matchesDuration &&
@@ -1004,29 +1123,39 @@ export function SharedCoursesPage({ domain }: SharedCoursesPageProps) {
       categories,
       categoriesById,
       difficultyMap,
+      facetMode,
       filters,
-      normalizedSearch,
       subjectByCategory,
     ]
   );
 
+  // URL filters reset paging as they are written; local ones (tab, duration, subject) do
+  // it here, after the first render so a shared ?page= survives the load.
+  const pageResetKey = `${activeTab}|${localFilters.contentType}|${localFilters.duration}|${JSON.stringify(subjectByCategory)}`;
+  const lastPageResetKey = useRef(pageResetKey);
   useEffect(() => {
-    setCurrentCatalogPage(1);
-  }, [activeTab, filters, normalizedSearch, subjectByCategory]);
+    if (lastPageResetKey.current === pageResetKey) return;
+    lastPageResetKey.current = pageResetKey;
+    if (catalogPage !== 1) setCatalogPage(1);
+  }, [pageResetKey, catalogPage, setCatalogPage]);
 
-  const totalCatalogPages = Math.max(1, Math.ceil(filteredItems.length / CATALOG_PAGE_SIZE));
-
-  useEffect(() => {
-    setCurrentCatalogPage(current => Math.min(current, totalCatalogPages));
-  }, [totalCatalogPages]);
+  const serverTotalPages = Math.max(1, Number(typeSearch.metadata?.totalPages ?? 1));
+  const totalCatalogPages = facetMode
+    ? serverTotalPages
+    : Math.max(1, Math.ceil(filteredItems.length / CATALOG_PAGE_SIZE));
+  const resultCount = facetMode
+    ? Number(typeSearch.metadata?.totalElements ?? filteredItems.length)
+    : filteredItems.length;
 
   const paginatedItems = useMemo(
     () =>
-      filteredItems.slice(
-        (currentCatalogPage - 1) * CATALOG_PAGE_SIZE,
-        currentCatalogPage * CATALOG_PAGE_SIZE
-      ),
-    [currentCatalogPage, filteredItems]
+      facetMode
+        ? filteredItems
+        : filteredItems.slice(
+            (currentCatalogPage - 1) * CATALOG_PAGE_SIZE,
+            currentCatalogPage * CATALOG_PAGE_SIZE
+          ),
+    [currentCatalogPage, facetMode, filteredItems]
   );
 
   const instructorCourseApplicationMap = useMemo(() => {
@@ -1433,10 +1562,11 @@ export function SharedCoursesPage({ domain }: SharedCoursesPageProps) {
 
   const setFilterValue = (key: CoursesFilterSection['key'], value: string) => {
     if (key === 'category') setSubjectByCategory({});
-    setFilters(current => ({
-      ...current,
-      [key]: value,
-    }));
+    if (key === 'category' || key === 'level' || key === 'price') {
+      patchUrl({ [key]: value === 'all' ? undefined : value });
+    } else {
+      setLocalFilters(current => ({ ...current, [key]: value }));
+    }
 
     if (
       key === 'contentType' &&
@@ -1448,11 +1578,24 @@ export function SharedCoursesPage({ domain }: SharedCoursesPageProps) {
 
   const clearFilters = () => {
     setSubjectByCategory({});
-    setFilters({
-      ...defaultFilterValues,
+    setLocalFilters({
+      duration: defaultFilterValues.duration,
       contentType: activeTab === 'my-courses' ? 'all-courses' : activeTab,
     });
+    patchUrl({ category: undefined, level: undefined, price: undefined });
   };
+
+  // Facet counts from the search response. Meilisearch counts with every filter applied,
+  // so a group's counts are shown only while nothing in it is selected (FacetChips).
+  const levelFacet = typeSearch.facets.difficulty_uuid ?? {};
+  const priceFacet = typeSearch.facets.is_free ?? {};
+  const levelOptions = (difficultiesResponse?.data ?? []).flatMap(level =>
+    level.uuid ? [{ value: level.uuid, label: level.name, count: levelFacet[level.uuid] ?? 0 }] : []
+  );
+  const priceOptions = [
+    { value: 'free', label: 'Free', count: priceFacet.true ?? 0 },
+    { value: 'paid', label: 'Paid', count: priceFacet.false ?? 0 },
+  ];
 
   const handleCatalogCardAction = (card: CoursesCatalogCardData) => {
     if (!canApplyToTrain) {
@@ -1595,7 +1738,7 @@ export function SharedCoursesPage({ domain }: SharedCoursesPageProps) {
               {[
                 {
                   icon: GraduationCap,
-                  value: mappedCourses.length,
+                  value: facetMode ? resultCount : mappedCourses.length,
                   label: 'Courses',
                 },
                 {
@@ -1625,26 +1768,21 @@ export function SharedCoursesPage({ domain }: SharedCoursesPageProps) {
             </div>
           </div>
 
-          {/* <div className='relative mt-4'>
-              <Search className='text-muted-foreground pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2' />
-              <Input
-                value={search}
-                onChange={event => setSearch(event.target.value)}
-                placeholder='Search courses, programmes, providers…'
-                className='h-11 pr-9 pl-9'
-                aria-label='Search the course catalogue'
-              />
-              {search ? (
-                <button
-                  type='button'
-                  onClick={() => setSearch('')}
-                  aria-label='Clear search'
-                  className='text-muted-foreground hover:text-foreground absolute top-1/2 right-3 -translate-y-1/2'
-                >
-                  <X className='size-4' />
-                </button>
-              ) : null}
-            </div> */}
+          <div className='mt-4 space-y-2'>
+            <SearchQueryInput
+              search={search}
+              placeholder='Search courses and programmes…'
+              aria-label='Search the course catalogue'
+              className='h-11'
+            />
+            <SearchNotice
+              issue={searchIssue}
+              onReset={() => {
+                search.clear();
+                clearFilters();
+              }}
+            />
+          </div>
         </header>
 
         {/* <CoursesCategoryTabs
@@ -1669,29 +1807,73 @@ export function SharedCoursesPage({ domain }: SharedCoursesPageProps) {
           className='mx-0 px-0 sm:mx-0 sm:px-0'
         />
 
+        {serverCatalogue && !searchDown ? (
+          typeSearch.isLoading && !typeSearch.data ? (
+            <div className='flex flex-wrap gap-6'>
+              <FacetChipsSkeleton chips={4} />
+              <FacetChipsSkeleton chips={2} />
+            </div>
+          ) : (
+            <div className='flex flex-wrap items-end gap-x-8 gap-y-3'>
+              <FacetChips
+                label='Level'
+                options={levelOptions}
+                selected={filters.level === 'all' ? [] : [filters.level]}
+                multiple={false}
+                hideEmpty
+                onChange={next => setFilterValue('level', next[0] ?? 'all')}
+              />
+              <FacetChips
+                label='Price'
+                options={priceOptions}
+                selected={filters.price === 'all' ? [] : [filters.price]}
+                multiple={false}
+                onChange={next => setFilterValue('price', next[0] ?? 'all')}
+              />
+            </div>
+          )
+        ) : null}
+
         <section className='space-y-2'>
           <div className=''>
             <div className='space-y-2'>
               <div className='bg-card rounded-sm p-0'>
                 <div className='border-border bg-card sticky top-0 z-10 flex flex-row items-center justify-between gap-3 py-2.5'>
                   <p className='text-muted-foreground text-xs font-medium sm:text-sm'>
-                    <span className='text-foreground font-semibold tabular-nums'>
-                      {filteredItems.length}
+                    <span className='text-foreground font-semibold tabular-nums' aria-live='polite'>
+                      {resultCount}
                     </span>{' '}
-                    result{filteredItems.length === 1 ? '' : 's'}
+                    result{resultCount === 1 ? '' : 's'}
                     {normalizedSearch ? (
-                      <span className='text-muted-foreground'> for “{search.trim()}”</span>
+                      <span className='text-muted-foreground'> for “{normalizedSearch}”</span>
                     ) : null}
                   </p>
 
                   <div className='flex flex-wrap items-center gap-2'>
+                    {facetMode ? (
+                      <Select
+                        value={sortValue}
+                        onValueChange={value => patchUrl({ sort: value === 'relevance' ? undefined : value })}
+                      >
+                        <SelectTrigger className='h-9 w-auto min-w-[160px]' aria-label='Sort courses'>
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {SORT_OPTIONS.map(option => (
+                            <SelectItem key={option.value} value={option.value}>
+                              {option.label}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    ) : null}
                     {activeFilterCount > 0 || normalizedSearch ? (
                       <Button
                         variant='ghost'
                         size='sm'
                         onClick={() => {
                           clearFilters();
-                          setSearch('');
+                          search.clear();
                         }}
                         className='text-muted-foreground hover:text-foreground h-9 px-2 text-xs font-semibold'
                       >

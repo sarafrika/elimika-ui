@@ -61,3 +61,32 @@ export function matchesCategoryFilter(
     )
   );
 }
+
+/**
+ * A category and every category under it, for a server filter such as
+ * `category_uuids_in`: courses are tagged with their own (often leaf) categories, so
+ * choosing a parent has to include its children.
+ */
+export function categoryWithDescendants(
+  categoryUuid: string,
+  categories: readonly Category[]
+): string[] {
+  const children = new Map<string, string[]>();
+  for (const category of categories) {
+    if (!category.uuid || !category.parent_uuid) continue;
+    const list = children.get(category.parent_uuid) ?? [];
+    list.push(category.uuid);
+    children.set(category.parent_uuid, list);
+  }
+  const result: string[] = [];
+  const seen = new Set<string>();
+  const queue = [categoryUuid];
+  while (queue.length > 0) {
+    const next = queue.shift();
+    if (!next || seen.has(next)) continue;
+    seen.add(next);
+    result.push(next);
+    queue.push(...(children.get(next) ?? []));
+  }
+  return result;
+}
