@@ -35,6 +35,8 @@ import type {
     PagedDtoLesson,
     Quiz,
 } from '@/services/client/types.gen';
+import { CoursePrerequisitesEditor } from '@/src/features/course-prerequisites/course-prerequisites-editor';
+import { CourseSkillsEditor } from '@/src/features/course-skills/course-skills-editor';
 import { invalidateContentModerationWorkflowQueries } from '@/src/features/dashboard/workflow-query-invalidation';
 import { skipToken, useMutation, useQueries, useQuery, useQueryClient } from '@tanstack/react-query';
 import { ArrowLeft, ChevronDown, ChevronUp, Eye, Pencil, PlusCircle, Sparkles, Trash, Undo2 } from 'lucide-react';
@@ -143,7 +145,7 @@ const getAssessmentStatusTone = (isActive?: boolean, isPublished?: boolean): Ass
     return 'secondary';
 };
 
-const COURSE_TABS = ['setup', 'lessons', 'practice', 'assignments', 'assessment', 'evaluation', 'branding', 'pricing'];
+const COURSE_TABS = ['setup', 'lessons', 'practice', 'assignments', 'assessment', 'evaluation', 'branding', 'pricing', 'skills'];
 
 const mapCourseValues = (course?: Course | null): Partial<CourseCreationFormValues> | undefined => {
     if (!course) return undefined;
@@ -800,6 +802,7 @@ export default function CreateCoursePage() {
                     <TabsTrigger className='max-w-fit px-4' value='evaluation'>Evaluation</TabsTrigger>
                     <TabsTrigger className='max-w-fit px-4' value='branding'>Branding</TabsTrigger>
                     <TabsTrigger className='max-w-fit px-4' value='pricing'>Pricing</TabsTrigger>
+                    <TabsTrigger className='max-w-fit px-4' value='skills'>Skills &amp; prerequisites</TabsTrigger>
                 </TabsList>
 
                 <section className='min-h-[calc(100vh-18rem)] rounded-2xl border-0 p-0 px-0'>
@@ -1335,6 +1338,31 @@ export default function CreateCoursePage() {
                                         nextDisabled={publicationDisabled}
                                         nextLoading={isSavingSection || isCourseActionPending || isUpdatingPublication}
                                         nextLoadingLabel={isSavingSection ? 'Saving...' : publicationLoadingLabel}
+                                    />
+                                </SectionGuard>
+                            </TabsContent>
+
+                            <TabsContent value='skills'>
+                                <SectionGuard
+                                    isReady={canRenderCourseSections}
+                                    isLoading={Boolean(resolvedCourseId) && courseLoading}
+                                    title='Save the course first'
+                                    description='Skills and prerequisites are available after the course is created.'
+                                >
+                                    {resolvedCourseId ? (
+                                        <div className='grid max-w-5xl gap-6'>
+                                            <CourseSkillsEditor courseUuid={resolvedCourseId} />
+                                            <CoursePrerequisitesEditor
+                                                courseUuid={resolvedCourseId}
+                                                isLive={course?.admin_approved === true && course?.is_published === true}
+                                            />
+                                        </div>
+                                    ) : null}
+                                    <StepNav
+                                        previousLabel='Previous step'
+                                        nextLabel='Back to set-up'
+                                        onPrevious={() => setStep(7)}
+                                        onNext={() => setStep(0)}
                                     />
                                 </SectionGuard>
                             </TabsContent>
