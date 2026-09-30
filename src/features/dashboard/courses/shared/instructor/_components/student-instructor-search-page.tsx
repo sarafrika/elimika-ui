@@ -18,6 +18,10 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import useSearchTrainingInstructors from '@/hooks/use-search-training-instructors';
 import { SearchQueryInput } from '@/components/search/search-input';
 import { SearchNotice } from '@/components/search/search-notice';
+import { SearchUnavailable } from '@/components/search/search-unavailable';
+import { isSearchUnavailable } from '@/lib/api-errors';
+import { useNearMe } from '@/src/features/near-me/near-me';
+import { DistanceBandBadge, NearMeControl } from '@/src/features/near-me/near-me-control';
 import { useSearchIssue, useSearchQuery } from '@/hooks/use-search-query';
 import {
   getCourseByUuidOptions,
@@ -41,7 +45,6 @@ import {
   Languages,
   Menu,
   MessageSquare,
-  Navigation,
   PiggyBank,
   PlayCircle,
   Star,
@@ -88,12 +91,17 @@ const searchInstructorFiltersDefaults: InstructorSearchFiltersState = {
   mode: 'all',
 };
 
-// Deterministic pseudo-distance in km when we lack coordinates; stable across renders.
-function pseudoDistanceKm(instructorUuid: string, near: string): number {
-  const seed = `${instructorUuid}|${near.trim().toLowerCase()}`;
-  let hash = 0;
-  for (let i = 0; i < seed.length; i++) hash = (hash * 31 + seed.charCodeAt(i)) >>> 0;
-  return Math.round(((hash % 4800) / 100 + 0.5) * 10) / 10; // 0.5 – 48.5 km
+// Near-me results carry only a coarse band; nearest-first sorts by it.
+const DISTANCE_BAND_ORDER: Record<string, number> = {
+  '<2 km': 0,
+  '2-5 km': 1,
+  '5-10 km': 2,
+  '10-25 km': 3,
+  '>25 km': 4,
+};
+
+function distanceRank(instructor: SearchInstructor): number {
+  return DISTANCE_BAND_ORDER[instructor.distance_band ?? ''] ?? 99;
 }
 
 function getInstructorType(instructor: SearchInstructor) {
@@ -229,12 +237,15 @@ export default function StudentInstructorSearchPage() {
   // Names, headlines and skills are matched by the search index (`q`); the other filters
   // narrow the returned page in the browser.
   const search = useSearchQuery();
+  // Near-me lives in component state only; it is never written to the URL.
+  const nearMe = useNearMe();
   const {
     data: trainingInstructors = [],
     loading,
     error: instructorsError,
-  } = useSearchTrainingInstructors({ q: search.q });
-  const searchIssue = useSearchIssue(search, instructorsError);
+  } = useSearchTrainingInstructors({ q: search.q, near: nearMe.params });
+  const nearUnavailable = nearMe.active && isSearchUnavailable(instructorsError);
+  const searchIssue = useSearchIssue(search, nearMe.active ? null : instructorsError);
   const [activeView, setActiveView] = useState<ActiveView>('search');
   const [sortBy, setSortBy] = useState<SortBy>('relevance');
   const [selectedInstructorUuid, setSelectedInstructorUuid] = useState<string | null>(null);
@@ -347,7 +358,7 @@ export default function StudentInstructorSearchPage() {
     isApplicationsLoading ||
     isApplicationsFetching;
 
-  const showDistance = filters.mode === 'physical' && filters.location.trim().length > 0;
+  const showDistance = nearMe.active;
 
   const { data: instructorPricing } = useQuery({
     ...searchTrainingApplicationsOptions({
@@ -461,10 +472,7 @@ export default function StudentInstructorSearchPage() {
       if (sortBy === 'experience') return right.experience - left.experience;
       if (sortBy === 'alphabetical') return left.name.localeCompare(right.name);
       if (sortBy === 'distance' && showDistance) {
-        return (
-          pseudoDistanceKm(left.instructor.uuid as string, filters.location) -
-          pseudoDistanceKm(right.instructor.uuid as string, filters.location)
-        );
+        return distanceRank(left.instructor) - distanceRank(right.instructor);
       }
       if (right.score !== left.score) return right.score - left.score;
       if (right.rating !== left.rating) return right.rating - left.rating;
@@ -578,7 +586,14 @@ export default function StudentInstructorSearchPage() {
         </div>
       </div>
 
-      {isPageLoading ? (
+      {nearUnavailable ? (
+        <SearchUnavailable
+          variant="card"
+          className="mt-4"
+          description="Near-me search is unavailable right now. Clear it to browse every instructor, or try again in a moment."
+          onClear={nearMe.clear}
+        />
+      ) : isPageLoading ? (
         <InstructorSearchPageSkeleton />
       ) : activeInstructorList.length === 0 ? (
         <InstructorEmptyState activeView={activeView} onReset={resetFilters} />
@@ -649,6 +664,14 @@ export default function StudentInstructorSearchPage() {
                   <SearchNotice issue={searchIssue} onReset={search.clear} className="mt-2" />
                 </div>
 
+                <div className="space-y-1">
+                  <span className="text-xs font-medium text-muted-foreground">Near</span>
+                  <NearMeControl nearMe={nearMe} />
+                  <p className="text-[11px] text-muted-foreground">
+                    Shows instructors who opted in to location search, matched to about 1 km.
+                  </p>
+                </div>
+
                 <div>
                   <label className="text-xs font-medium text-muted-foreground">
                     Skill category
@@ -695,11 +718,6 @@ export default function StudentInstructorSearchPage() {
                     onChange={e => updateFilter('location', e.target.value)}
                     placeholder="City or area (e.g. Nairobi CBD)"
                   />
-                  {filters.mode === 'physical' && (
-                    <p className="mt-1 text-[11px] text-muted-foreground">
-                      Distance shown from this location
-                    </p>
-                  )}
                 </div>
 
                 <div>
@@ -830,15 +848,13 @@ export default function StudentInstructorSearchPage() {
               ) : (activeView === 'search' ? paginatedInstructors : filteredInstructors).length === 0 ? (
                 <Card>
                   <CardContent className="py-10 text-center text-muted-foreground">
-                    No instructors match these filters.
+                    {nearMe.active
+                      ? `No instructors near ${nearMe.point?.label} within ${nearMe.radiusKm} km match these filters. Try a wider radius.`
+                      : 'No instructors match these filters.'}
                   </CardContent>
                 </Card>
               ) : (
                 (activeView === 'search' ? paginatedInstructors : filteredInstructors).map(instructor => {
-                  const distance = showDistance
-                    ? pseudoDistanceKm(instructor.uuid as string, filters.location)
-                    : null;
-
                   return (
                     <Card key={instructor.uuid}>
                       <CardHeader className="pb-3">
@@ -879,12 +895,7 @@ export default function StudentInstructorSearchPage() {
                                 </Badge>
                               )}
 
-                              {distance !== null && (
-                                <Badge variant="secondary" className="inline-flex items-center gap-1">
-                                  <Navigation className="h-3 w-3" />
-                                  {distance} km
-                                </Badge>
-                              )}
+                              {showDistance && <DistanceBandBadge band={instructor.distance_band} />}
                             </div>
 
                             <div className="mt-1 flex flex-wrap gap-3 text-xs text-muted-foreground">

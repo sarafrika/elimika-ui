@@ -2,7 +2,15 @@
 
 import { Popover, PopoverTrigger } from '@/components/ui/popover';
 import useBundledClassInfo from '@/hooks/use-course-classes';
-import { listCatalogItemsOptions } from '@/services/client/@tanstack/react-query.gen';
+import { SearchUnavailable } from '@/components/search/search-unavailable';
+import { isSearchUnavailable, retryUnlessClientOrSearchError } from '@/lib/api-errors';
+import { STALE_TIMES } from '@/lib/query-client';
+import {
+  getAllClassDefinitionsOptions,
+  listCatalogItemsOptions,
+} from '@/services/client/@tanstack/react-query.gen';
+import { useNearMe } from '@/src/features/near-me/near-me';
+import { DistanceBandBadge, NearMeControl } from '@/src/features/near-me/near-me-control';
 import { useUserDomain } from '@/src/features/dashboard/context/user-domain-context';
 import AvailabilityClassCard from '@/src/features/dashboard/courses/components/availability-listing-layout';
 import { useDateRangeFilter } from '@/src/features/dashboard/courses/hooks/use-date-range-filter';
@@ -10,7 +18,7 @@ import { useQuery } from '@tanstack/react-query';
 import { format } from 'date-fns';
 import { ArrowLeft, BookOpen, CalendarRange } from 'lucide-react';
 import Link from 'next/link';
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import { DateRange } from 'react-day-picker';
 import { Button } from '../../../../../components/ui/button';
 import {
@@ -87,6 +95,38 @@ export default function AvailableClassesPage({
       )
   );
 
+  // Near me: one index query for classes around the chosen point (IN_PERSON and HYBRID
+  // only, nearest first), intersected with this course's classes. `near` stays in
+  // component state and is never put in the URL.
+  const nearMe = useNearMe();
+  const nearQuery = useQuery({
+    ...getAllClassDefinitionsOptions({
+      query: { ...nearMe.params, pageable: { page: 0, size: 100 } },
+    }),
+    enabled: nearMe.active,
+    staleTime: STALE_TIMES.live,
+    retry: retryUnlessClientOrSearchError,
+  });
+  const nearUnavailable = nearMe.active && isSearchUnavailable(nearQuery.error);
+  const nearBands = useMemo(() => {
+    const bands = new Map<string, { band: string | undefined; rank: number }>();
+    (nearQuery.data?.data?.content ?? []).forEach((item, index) => {
+      const uuid = item.class_definition?.uuid;
+      if (uuid) bands.set(uuid, { band: item.distance_band, rank: index });
+    });
+    return bands;
+  }, [nearQuery.data]);
+  const listedClasses = nearMe.active
+    ? filteredClasses
+        .filter(cls => cls.uuid && nearBands.has(cls.uuid))
+        .sort(
+          (left, right) =>
+            (nearBands.get(left.uuid as string)?.rank ?? 0) -
+            (nearBands.get(right.uuid as string)?.rank ?? 0)
+        )
+    : filteredClasses;
+  const listLoading = loading || (nearMe.active && nearQuery.isLoading);
+
   const instructorFilteredClasses = filteredClasses.filter(
     cls => cls.default_instructor_uuid === instructor?.uuid
   );
@@ -113,7 +153,8 @@ export default function AvailableClassesPage({
           }
         </div>
 
-        <div className='flex items-center gap-2'>
+        <div className='flex flex-wrap items-center gap-2'>
+          <NearMeControl nearMe={nearMe} />
           <Button variant='outline' size='sm' onClick={() => setCourseDetailsOpen(true)}>
             <BookOpen className='mr-1 h-4 w-4' /> Course Details
           </Button>
@@ -174,7 +215,29 @@ export default function AvailableClassesPage({
       </div>
 
       <div className="space-y-4">
-        {loading ? (
+        {nearUnavailable ? (
+          <SearchUnavailable
+            variant='card'
+            description='Near-me search is unavailable right now. Clear it to see every class for this course, or try again in a moment.'
+            onClear={nearMe.clear}
+            onRetry={() => void nearQuery.refetch()}
+          />
+        ) : nearMe.active && nearQuery.isError ? (
+          <div className='rounded-xl border border-dashed p-8 text-center' role='alert'>
+            <p className='text-sm font-medium text-foreground'>Could not search near you</p>
+            <p className='mt-1 text-sm text-muted-foreground'>
+              Try again, or clear the near-me search to see every class.
+            </p>
+            <div className='mt-3 flex justify-center gap-2'>
+              <Button variant='outline' size='sm' onClick={() => void nearQuery.refetch()}>
+                Try again
+              </Button>
+              <Button variant='ghost' size='sm' onClick={nearMe.clear}>
+                Clear near me
+              </Button>
+            </div>
+          </div>
+        ) : listLoading ? (
           Array.from({ length: 4 }).map((_, index) => (
             <div key={index} className="space-y-3 rounded-xl border p-4">
               <Skeleton className="h-6 w-2/3" />
@@ -187,21 +250,35 @@ export default function AvailableClassesPage({
               </div>
             </div>
           ))
-        ) : filteredClasses.length > 0 ? (
-          filteredClasses.map(item => (
-            <AvailabilityClassCard
-              key={item.uuid}
-              cls={item}
-              onViewCourse={() => setCourseDetailsOpen(true)}
-              onViewClass={() => setClassDetailsOpen(true)}
-              onEnroll={selectedClass => {
-                window.location.href = roleScopedDashboardPath(
-                  activeDomain,
-                  `/dashboard/courses/available-classes/${courseId}/enroll?id=${selectedClass.uuid}`
-                );
-              }}
-            />
+        ) : listedClasses.length > 0 ? (
+          listedClasses.map(item => (
+            <div key={item.uuid} className='space-y-2'>
+              {nearMe.active ? (
+                <DistanceBandBadge band={nearBands.get(item.uuid as string)?.band} />
+              ) : null}
+              <AvailabilityClassCard
+                cls={item}
+                onViewCourse={() => setCourseDetailsOpen(true)}
+                onViewClass={() => setClassDetailsOpen(true)}
+                onEnroll={selectedClass => {
+                  window.location.href = roleScopedDashboardPath(
+                    activeDomain,
+                    `/dashboard/courses/available-classes/${courseId}/enroll?id=${selectedClass.uuid}`
+                  );
+                }}
+              />
+            </div>
           ))
+        ) : nearMe.active ? (
+          <div className="rounded-xl border border-dashed p-8 text-center">
+            <p className="text-sm font-medium text-foreground">
+              No classes near {nearMe.point?.label} within {nearMe.radiusKm} km
+            </p>
+            <p className="mt-1 text-sm text-muted-foreground">
+              Only in-person and hybrid classes have a location. Try a wider radius, or clear
+              the near-me search to see online classes too.
+            </p>
+          </div>
         ) : (
           <div className="rounded-xl border border-dashed p-8 text-center">
             <p className="text-sm font-medium text-foreground">

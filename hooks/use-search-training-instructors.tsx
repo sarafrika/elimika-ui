@@ -28,11 +28,17 @@ import { useUsersByIds } from './use-batched-lookups';
  */
 function useSearchTrainingInstructors({
   q,
+  near,
   page = 0,
   size = 20,
 }: {
   /** Debounced term (2+ characters): names, headlines and skills via the search index. */
   q?: string;
+  /**
+   * Near-me params from `useNearMe().params` (`near` rounded to 2 decimals, `radius_km`).
+   * Served by the search index only; results then carry `distance_band`.
+   */
+  near?: { near?: string; radius_km?: string };
   page?: number;
   size?: number;
 } = {}) {
@@ -44,7 +50,11 @@ function useSearchTrainingInstructors({
     error,
   } = useQuery({
     ...getAllInstructorsOptions({
-      query: { pageable: { page, size }, ...(q ? { q } : {}) },
+      query: {
+        pageable: { page, size },
+        ...(q ? { q } : {}),
+        ...(near?.near ? { near: near.near, radius_km: near.radius_km } : {}),
+      },
     }),
     placeholderData: keepPreviousData,
     retry: retryUnlessClientOrSearchError,
