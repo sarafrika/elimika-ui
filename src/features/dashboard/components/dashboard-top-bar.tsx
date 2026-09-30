@@ -32,6 +32,11 @@ import {
 } from '@/src/features/dashboard/config/domain-display';
 import { useUserDomain } from '@/src/features/dashboard/context/user-domain-context';
 import {
+  GlobalSearchSheet,
+  useGlobalSearchShortcut,
+} from '@/src/features/search/components/global-search-sheet';
+import { GlobalSearchTrigger } from '@/src/features/search/components/global-search-trigger';
+import {
   buildDashboardSwitchPath,
   roleScopedDashboardPath,
 } from '@/src/features/dashboard/lib/active-domain-storage';
@@ -60,7 +65,7 @@ import {
 import { useTheme } from 'next-themes';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { Label } from '../../../../components/ui/label';
 import { useCartStore } from '../../../../store/cart-store';
 import { DashboardNotifications } from './dashboard-notifications';
@@ -135,6 +140,11 @@ export default function DashboardTopBar() {
   const activeDomain = domain.activeDomain ?? null;
   const createActions = useCreateMenuActions(activeDomain);
 
+  // One palette for every dashboard: ⌘K / Ctrl K or `/` opens it from anywhere.
+  const [paletteOpen, setPaletteOpen] = useState(false);
+  const openPalette = useCallback(() => setPaletteOpen(true), []);
+  useGlobalSearchShortcut(openPalette);
+
   const activeDomainConfig = activeDomain
     ? dashboardDomainDisplayConfig[activeDomain as keyof typeof dashboardDomainDisplayConfig]
     : null;
@@ -207,18 +217,10 @@ export default function DashboardTopBar() {
       <div className='flex flex-col'>
         <div className='flex items-center gap-3 px-1 py-3 sm:px-3 lg:px-4'>
           <div className='hidden min-w-0 flex-1 xl:block'>
-            <Label className='relative block max-w-2xl 2xl:max-w-3xl'>
-              <Search className='text-muted-foreground pointer-events-none absolute top-1/2 left-4 h-4 w-4 -translate-y-1/2' />
-
-              <Input
-                type='search'
-                placeholder='Search courses, students, and more...'
-                className='border-input bg-background hover:border-primary/40 h-10 rounded-full border pr-16 pl-11 text-xs shadow-sm transition-colors'
-              />
-              <kbd className='border-border bg-muted text-muted-foreground pointer-events-none absolute top-1/2 right-4 hidden -translate-y-1/2 rounded border px-1.5 py-0.5 text-[10px] font-medium 2xl:inline-block'>
-                ⌘K
-              </kbd>
-            </Label>
+            <GlobalSearchTrigger
+              onOpen={openPalette}
+              className='max-w-2xl 2xl:max-w-3xl'
+            />
           </div>
 
           <div className='ml-auto flex items-center gap-2 sm:gap-3'>
@@ -266,19 +268,11 @@ export default function DashboardTopBar() {
         </div>
 
         <div className='border-border/70 border-t px-3 pt-2 sm:px-5 lg:px-6 xl:hidden'>
-          <label className='relative block'>
-            <Search className='text-muted-foreground pointer-events-none absolute top-1/2 left-4 h-4 w-4 -translate-y-1/2' />
-            <Input
-              type='search'
-              placeholder='Search courses, students, and more...'
-              className='border-border/70 bg-card/80 h-11 rounded-md pr-14 pl-11 text-sm shadow-sm'
-            />
-            {/* <span className='text-muted-foreground absolute top-1/2 right-4 -translate-y-1/2 text-xs font-medium'>
-              Ctrl K
-            </span> */}
-          </label>
+          <GlobalSearchTrigger onOpen={openPalette} compact />
         </div>
       </div>
+
+      <GlobalSearchSheet open={paletteOpen} onOpenChange={setPaletteOpen} domain={activeDomain} />
 
       <DepositMethodSheet
         open={isDepositSheetOpen}
