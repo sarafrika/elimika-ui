@@ -1,6 +1,9 @@
 'use client';
 
 import { Button } from '@/components/ui/button';
+import { SearchQueryInput } from '@/components/search/search-input';
+import { SearchNotice } from '@/components/search/search-notice';
+import { useSearchIssue, useSearchQuery } from '@/hooks/use-search-query';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -29,7 +32,6 @@ import {
   Plus,
   PlusCircle,
   Save,
-  Search,
   Trash2,
   X,
 } from 'lucide-react';
@@ -351,13 +353,23 @@ function DeleteConfirmModal({
 
 const RubricManager: React.FC = () => {
   const creator = useCourseCreator();
-  const [searchTerm, setSearchTerm] = useState('');
+  // Titles are matched by the search index (`q`), not filtered in the browser.
+  const search = useSearchQuery();
   const [viewMode, setViewMode] = useState<'cards' | 'table'>('cards');
   const [deletingUuid, setDeletingUuid] = useState<string | null>(null);
 
-  const { rubrics, isLoading, isError, isFetched, refetchAll } = useRubricsData(
-    creator?.data?.profile?.uuid as string
-  );
+  const {
+    rubrics,
+    isLoading: isLoadingRubrics,
+    isError: isRubricsError,
+    isFetched,
+    rubricsError,
+    refetchAll,
+  } = useRubricsData(creator?.data?.profile?.uuid as string, 0, search.q);
+  const searchIssue = useSearchIssue(search, rubricsError);
+  // Keep the last results on screen while a new term loads.
+  const isLoading = isLoadingRubrics && rubrics.length === 0;
+  const isError = isRubricsError && !searchIssue;
   const creatorUuid = creator?.data?.profile?.uuid;
   // Only a rubric's author may change it; public rubrics by other creators are read-only.
   const canChangeRubric = (rubric: { course_creator_uuid?: string | null }) =>
@@ -919,7 +931,7 @@ const RubricManager: React.FC = () => {
 
   // ── Derived state ──────────────────────────────────────────────────────────
 
-  const filtered = rubrics.filter(r => r.title?.toLowerCase().includes(searchTerm.toLowerCase()));
+  const filtered = rubrics;
 
   const isSaving =
     createRubric.isPending ||
@@ -1274,15 +1286,7 @@ const RubricManager: React.FC = () => {
 
         {/* Toolbar */}
         <div className='flex items-center gap-3 border-b px-6 py-3'>
-          <div className='relative flex-1'>
-            <Search className='text-muted-foreground absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2' />
-            <Input
-              placeholder='Search rubrics…'
-              value={searchTerm}
-              onChange={e => setSearchTerm(e.target.value)}
-              className='pl-9'
-            />
-          </div>
+          <SearchQueryInput search={search} placeholder='Search rubrics…' />
           {/* View toggle */}
           <div className='border-border flex rounded-lg border p-0.5'>
             <button
@@ -1302,6 +1306,12 @@ const RubricManager: React.FC = () => {
           </div>
         </div>
 
+        {searchIssue ? (
+          <div className='px-6 pt-4'>
+            <SearchNotice issue={searchIssue} onReset={search.clear} />
+          </div>
+        ) : null}
+
         {/* Content */}
         {isLoading ? (
           <div className='grid gap-4 p-6 sm:grid-cols-2 lg:grid-cols-3'>
@@ -1319,14 +1329,14 @@ const RubricManager: React.FC = () => {
               <FileText size={24} className='text-muted-foreground' />
             </div>
             <p className='text-foreground font-medium'>
-              {searchTerm ? 'No rubrics match your search' : 'No rubrics yet'}
+              {search.q ? 'No rubrics match your search' : 'No rubrics yet'}
             </p>
             <p className='text-muted-foreground max-w-xs text-sm'>
-              {searchTerm
+              {search.q
                 ? 'Try a different search term.'
                 : 'Create your first rubric to get started.'}
             </p>
-            {!searchTerm && (
+            {!search.q && (
               <Button
                 onClick={handleAddNewRubric}
                 size='sm'

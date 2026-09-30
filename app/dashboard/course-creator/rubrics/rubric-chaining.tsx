@@ -12,7 +12,9 @@ import {
   getScoringLevelsByRubricQueryKey,
   searchAssessmentRubricsOptions,
 } from '@/services/client/@tanstack/react-query.gen';
-import { useQueries, useQuery } from '@tanstack/react-query';
+import { keepPreviousData, useQueries, useQuery } from '@tanstack/react-query';
+import { retryUnlessClientOrSearchError } from '@/lib/api-errors';
+import { withQ } from '@/lib/search/params';
 
 export type RubricScoringLevel = {
   level_order: number;
@@ -107,24 +109,34 @@ export type Rubric = {
 type RubricListItem = Omit<Rubric, 'criteria' | 'scoringLevels'>;
 type CriterionListItem = Omit<Criterion, 'scoring'>;
 
-export const useRubricsData = (courseCreatorUuid?: string, refetchTrigger = 0) => {
+/**
+ * The creator's rubrics with their criteria and scoring. `q` (debounced, 2+ characters) is
+ * matched by the search index; a 400 or 503 is reported through `rubricsError`, not retried.
+ */
+export const useRubricsData = (courseCreatorUuid?: string, refetchTrigger = 0, q?: string) => {
   const {
     data: allRubrics,
     isLoading: isRubricsLoading,
     isFetching,
     isError: isRubricsError,
     isFetched: isRubricsFetched,
+    error: rubricsError,
     refetch: refetchRubrics,
-  } = useQuery(
-    searchAssessmentRubricsOptions({
+  } = useQuery({
+    ...searchAssessmentRubricsOptions({
       query: {
         pageable: {},
-        searchParams: {
-          course_creator_uuid_eq: courseCreatorUuid as string,
-        },
+        searchParams: withQ(
+          {
+            course_creator_uuid_eq: courseCreatorUuid as string,
+          },
+          q
+        ),
       },
-    })
-  );
+    }),
+    placeholderData: keepPreviousData,
+    retry: retryUnlessClientOrSearchError,
+  });
 
   const rubricList = (allRubrics?.data?.content ?? []) as unknown as RubricListItem[];
   const rubricUuids = rubricList.map(rubric => rubric.uuid);
@@ -267,6 +279,7 @@ export const useRubricsData = (courseCreatorUuid?: string, refetchTrigger = 0) =
     isLoading,
     isError,
     isFetched,
+    rubricsError,
     refetchAll,
   };
 };
