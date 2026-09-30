@@ -23,10 +23,13 @@ import { useParams } from 'next/navigation';
 import { useEffect } from 'react';
 
 import { useBreadcrumb } from '@/context/breadcrumb-provider';
+import { CoursePrerequisitesNotice } from '@/src/features/course-prerequisites/course-prerequisites-notice';
 import { CourseRecordPage } from '@/src/features/course-record';
 import { CourseRecordRouteActions } from '@/src/features/dashboard/courses/components/CourseRecordRouteActions';
+import { SimilarCoursesRail } from '@/src/features/recommendations/similar-courses-rail';
 
 const CATALOGUE_HREF = '/dashboard/student/courses';
+const courseHref = (uuid: string) => `${CATALOGUE_HREF}/${uuid}`;
 
 export default function StudentCatalogueCourseRecordRoute() {
   const params = useParams();
@@ -54,7 +57,9 @@ export default function StudentCatalogueCourseRecordRoute() {
         classesHref={`${CATALOGUE_HREF}/available-classes/${courseUuid}`}
         instructorsHref={`${CATALOGUE_HREF}/instructor?courseId=${courseUuid}`}
       />
+      <CoursePrerequisitesNotice courseUuid={courseUuid} hrefFor={courseHref} className='mb-4' />
       <CourseRecordPage courseUuid={courseUuid} backHref={CATALOGUE_HREF} />
+      <SimilarCoursesRail courseUuid={courseUuid} hrefFor={courseHref} className='mt-8' />
     </>
   );
 }

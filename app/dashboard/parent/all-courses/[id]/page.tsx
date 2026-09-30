@@ -3,10 +3,13 @@
 import { useParams } from 'next/navigation';
 import { useEffect } from 'react';
 import { useBreadcrumb } from '@/context/breadcrumb-provider';
+import { CoursePrerequisitesNotice } from '@/src/features/course-prerequisites/course-prerequisites-notice';
 import { CourseRecordPage } from '@/src/features/course-record';
 import { CourseRecordRouteActions } from '@/src/features/dashboard/courses/components/CourseRecordRouteActions';
+import { SimilarCoursesRail } from '@/src/features/recommendations/similar-courses-rail';
 
 const ALL_COURSES_HREF = '/dashboard/parent/all-courses';
+const courseHref = (uuid: string) => `${ALL_COURSES_HREF}/${uuid}`;
 
 export default function ParentCourseDetailsRoute() {
   const params = useParams();
@@ -33,7 +36,9 @@ export default function ParentCourseDetailsRoute() {
         classesHref={`${ALL_COURSES_HREF}/available-classes/${courseUuid}`}
         instructorsHref={`${ALL_COURSES_HREF}/instructor?courseId=${courseUuid}`}
       />
+      <CoursePrerequisitesNotice courseUuid={courseUuid} hrefFor={courseHref} className='mb-4' />
       <CourseRecordPage courseUuid={courseUuid} backHref={ALL_COURSES_HREF} />
+      <SimilarCoursesRail courseUuid={courseUuid} hrefFor={courseHref} className='mt-8' />
     </>
   );
 }

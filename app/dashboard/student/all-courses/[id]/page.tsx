@@ -3,10 +3,13 @@
 import { useParams } from 'next/navigation';
 import { useEffect } from 'react';
 import { useBreadcrumb } from '@/context/breadcrumb-provider';
+import { CoursePrerequisitesNotice } from '@/src/features/course-prerequisites/course-prerequisites-notice';
 import { CourseRecordPage } from '@/src/features/course-record';
 import { CourseRecordRouteActions } from '@/src/features/dashboard/courses/components/CourseRecordRouteActions';
+import { SimilarCoursesRail } from '@/src/features/recommendations/similar-courses-rail';
 
 const ALL_COURSES_HREF = '/dashboard/student/all-courses';
+const courseHref = (uuid: string) => `${ALL_COURSES_HREF}/${uuid}`;
 /**
  * The enrolment path the legacy screen pushed to, kept verbatim: the learner's
  * classes list lives under `courses/`, not under `all-courses/`.
@@ -39,7 +42,9 @@ export default function StudentCourseDetailsRoute() {
         classesHref={`${CLASSES_BASE_HREF}/${courseUuid}`}
         instructorsHref={`${INSTRUCTORS_HREF}?courseId=${courseUuid}`}
       />
+      <CoursePrerequisitesNotice courseUuid={courseUuid} hrefFor={courseHref} className='mb-4' />
       <CourseRecordPage courseUuid={courseUuid} backHref={ALL_COURSES_HREF} />
+      <SimilarCoursesRail courseUuid={courseUuid} hrefFor={courseHref} className='mt-8' />
     </>
   );
 }
