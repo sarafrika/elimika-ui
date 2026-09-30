@@ -3,7 +3,7 @@
 import { useEffect, useMemo, useState } from 'react';
 
 import { SectionCard, StatusBadge, surfaceTheme } from '@/components/data-display';
-import { SearchNotice } from '@/components/data/search-notice';
+import { SearchNotice } from '@/components/search/search-notice';
 import HTMLTextPreview from '@/components/editors/html-text-preview';
 import { PageHeader } from '@/components/page-header';
 import { Button } from '@/components/ui/button';

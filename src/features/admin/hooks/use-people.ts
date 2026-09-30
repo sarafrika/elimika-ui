@@ -4,7 +4,7 @@ import { useQuery } from '@tanstack/react-query';
 import { useMemo } from 'react';
 import { extractPage, getTotalFromMetadata } from '@/lib/api-helpers';
 import { toNumber } from '@/lib/metrics';
-import { classifySearchError, type SearchIssue, toSearchTerm } from '@/lib/search-query';
+import { classifySearchError, type SearchIssue, toSearchTerm } from '@/lib/search/query';
 import type { User } from '@/services/client';
 import { searchOptions } from '@/services/client/@tanstack/react-query.gen';
 import { listQuery } from '../lib/admin-queries';

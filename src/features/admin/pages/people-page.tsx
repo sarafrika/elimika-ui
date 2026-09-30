@@ -5,7 +5,7 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useMemo } from 'react';
 import { DataTable, StatusBadge, surfaceTheme } from '@/components/data-display';
-import { SearchNotice } from '@/components/data/search-notice';
+import { SearchNotice } from '@/components/search/search-notice';
 import { PageHeader } from '@/components/page-header';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { Skeleton } from '@/components/ui/skeleton';

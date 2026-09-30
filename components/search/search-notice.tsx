@@ -3,7 +3,7 @@
 import { SearchX } from 'lucide-react';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
-import type { SearchIssue } from '@/lib/search-query';
+import type { SearchIssue } from '@/lib/search/query';
 
 /**
  * A non-blocking line above a searchable list. When the search index is down the list

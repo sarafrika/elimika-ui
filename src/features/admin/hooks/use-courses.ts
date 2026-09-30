@@ -5,7 +5,7 @@ import { useMemo } from 'react';
 
 import { extractEntity, extractPage, getTotalFromMetadata } from '@/lib/api-helpers';
 import { toNumber } from '@/lib/metrics';
-import { classifySearchError, type SearchIssue, toSearchTerm } from '@/lib/search-query';
+import { classifySearchError, type SearchIssue, toSearchTerm } from '@/lib/search/query';
 import type {
   ContentModerationHistory,
   Course,

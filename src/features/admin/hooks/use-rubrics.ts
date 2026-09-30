@@ -7,7 +7,7 @@ import { toast } from 'sonner';
 import { extractEntity, extractPage, getTotalFromMetadata } from '@/lib/api-helpers';
 import { getErrorMessage } from '@/lib/error-utils';
 import { toNumber } from '@/lib/metrics';
-import { classifySearchError, toSearchTerm } from '@/lib/search-query';
+import { classifySearchError, toSearchTerm } from '@/lib/search/query';
 import { type AssessmentRubric, type RubricMatrix, updateAssessmentRubric } from '@/services/client';
 import {
   getRubricMatrixViewOptions,

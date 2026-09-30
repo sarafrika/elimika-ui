@@ -17,7 +17,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import { SearchNotice } from '@/components/data/search-notice';
+import { SearchNotice } from '@/components/search/search-notice';
 import { EmptyState } from '@/components/ui/empty-state';
 import { Input } from '@/components/ui/input';
 import {
@@ -43,13 +43,13 @@ import {
   type OfferingCounts,
   type OfferingCountState,
 } from '@/hooks/use-offering-counts';
+import { isSearchUnavailable, retryUnlessClientOrSearchError } from '@/lib/api-errors';
 import { STALE_TIMES } from '@/lib/query-client';
 import {
   classifySearchError,
-  isSearchUnavailableError,
   type SearchIssue,
   toSearchTerm,
-} from '@/lib/search-query';
+} from '@/lib/search/query';
 import { cn } from '@/lib/utils';
 import type { Course, PageMetadata, TrainingProgram } from '@/services/client';
 import {
@@ -96,10 +96,6 @@ const CatalogueWorkspace = dynamic(
 // Each page combines two bounded result sets so both types appear in the library.
 const PAGE_SIZE = 10;
 
-/** A 503 from the search index will not fix itself in a retry; anything else gets the default three. */
-function retryUnlessSearchUnavailable(failureCount: number, error: unknown) {
-  return !isSearchUnavailableError(error) && failureCount < 3;
-}
 const STATUS_OPTIONS = [
   ['all', 'All statuses'],
   ['published', 'Published'],
@@ -197,13 +193,13 @@ export default function CourseCreatorCoursesContent() {
     ...courseOptions,
     enabled: !!creatorUuid,
     staleTime: STALE_TIMES.entity,
-    retry: retryUnlessSearchUnavailable,
+    retry: retryUnlessClientOrSearchError,
   });
   const programsQuery = useQuery({
     ...programOptions,
     enabled: !!creatorUuid,
     staleTime: STALE_TIMES.entity,
-    retry: retryUnlessSearchUnavailable,
+    retry: retryUnlessClientOrSearchError,
   });
   const searchError = sentTerm ? (coursesQuery.error ?? programsQuery.error) : null;
   const searchIssue: SearchIssue =
@@ -211,7 +207,7 @@ export default function CourseCreatorCoursesContent() {
       ? 'unavailable'
       : classifySearchError(searchError, sentTerm);
   useEffect(() => {
-    if (sentTerm && isSearchUnavailableError(searchError)) setUnavailableTerm(sentTerm);
+    if (sentTerm && isSearchUnavailable(searchError)) setUnavailableTerm(sentTerm);
   }, [sentTerm, searchError]);
   const categoriesQuery = useQuery({
     ...getAllCategoriesOptions({ query: { pageable: { page: 0, size: 100 } } }),

@@ -15,7 +15,7 @@ import { toNumber } from '@/lib/metrics';
 import { cn } from '@/lib/utils';
 import type { Course } from '@/services/client';
 import { ImageWithFallback } from '@/components/data/image-with-fallback';
-import { SearchNotice } from '@/components/data/search-notice';
+import { SearchNotice } from '@/components/search/search-notice';
 import { toAuthenticatedMediaUrl } from '@/src/lib/media-url';
 import { FilterBar } from '../components/filter-bar';
 import { SectionBoundary } from '../components/section-boundary';

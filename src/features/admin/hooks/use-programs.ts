@@ -4,7 +4,7 @@ import { useQuery } from '@tanstack/react-query';
 import { useMemo } from 'react';
 
 import { extractEntity, extractList, extractPage, getTotalFromMetadata } from '@/lib/api-helpers';
-import { classifySearchError, toSearchTerm } from '@/lib/search-query';
+import { classifySearchError, toSearchTerm } from '@/lib/search/query';
 import type {
   Certificate,
   ContentModerationHistory,
