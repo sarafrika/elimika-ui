@@ -1,5 +1,6 @@
 'use client';
 
+import { RubricCombobox } from './rubric-combobox';
 import { SimpleEditor } from '@/components/tiptap-templates/simple/simple-editor-lazy';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import {
@@ -34,7 +35,7 @@ import {
   getAssignmentAttachmentsOptions,
   getAssignmentAttachmentsQueryKey,
   getAssignmentByUuidOptions,
-  searchAssessmentRubricsOptions,
+  getAssessmentRubricByUuidOptions,
   uploadAssignmentAttachmentMutation,
 } from '../../../../services/client/@tanstack/react-query.gen';
 import type {
@@ -152,24 +153,20 @@ export const AssignmentCreationForm = (props: AssignmentCreationFormProps) => {
   const [assignmentAction, setAssignmentAction] = useState<AssignmentAction>(null);
 
   // ── Rubrics ───────────────────────────────────────────────────────────────
-  const { data: searchRubs, isLoading: isLoadingRubrics } = useQuery({
-    ...searchAssessmentRubricsOptions({
-      query: {
-        pageable: {},
-        searchParams: { course_creator_uuid_eq: creator?.profile?.uuid as string },
-      },
-    }),
-    enabled: !!creator?.profile?.uuid,
-  });
-  const rubrics: AssessmentRubric[] = searchRubs?.data?.content ?? [];
 
   // ── Assignment state (must come before any derived values) ────────────────
   const [assignmentData, setAssignmentData] = useState<AssignmentFormState>({
     ...EMPTY_ASSIGNMENT,
   });
 
-  // Now safe to derive selectedRubric from assignmentData
-  const selectedRubric = rubrics.find(r => r.uuid === assignmentData.rubric_uuid);
+  // The picker searches rubrics on the server; the chosen one is read by id.
+  const { data: selectedRubricData } = useQuery({
+    ...getAssessmentRubricByUuidOptions({ path: { uuid: assignmentData.rubric_uuid ?? '' } }),
+    enabled: Boolean(assignmentData.rubric_uuid),
+  });
+  const selectedRubric: AssessmentRubric | undefined = assignmentData.rubric_uuid
+    ? selectedRubricData?.data
+    : undefined;
 
   const [selectedAssignmentUuid, setSelectedAssignmentUuid] = useState<string | null>(
     assignmentId ?? null
@@ -559,63 +556,14 @@ export const AssignmentCreationForm = (props: AssignmentCreationFormProps) => {
               Associate a grading rubric with this assignment
             </p>
 
-            {isLoadingRubrics ? (
-              <div className='flex items-center gap-2 py-2'>
-                <Spinner className='h-4 w-4' />
-                <span className='text-muted-foreground text-xs'>
-                  Loading evaluation rubrics...
-                </span>
-              </div>
-            ) : (
-              <>
-                <Select
-                  value={assignmentData.rubric_uuid || '__none__'}
-                  onValueChange={v =>
-                    handleAssignmentInputChange(
-                      'rubric_uuid',
-                      v === '__none__' ? '' : v
-                    )
-                  }
-                >
-                  <SelectTrigger className='w-full min-w-0 overflow-hidden'>
-                    <SelectValue
-                      placeholder='Select a rubric (optional)'
-                      className='truncate'
-                    >
-                      {selectedRubric ? selectedRubric.title : 'None'}
-                    </SelectValue>
-                  </SelectTrigger>
-
-                  <SelectContent
-                    position='popper'
-                    className='w-[var(--radix-select-trigger-width)] max-w-[calc(100vw-2rem)]'
-                  >
-                    <SelectItem value='__none__'>
-                      <span className='text-muted-foreground'>None</span>
-                    </SelectItem>
-
-                    {rubrics.map(r => (
-                      <SelectItem
-                        key={r.uuid}
-                        value={r.uuid ?? ''}
-                        textValue={r.title}
-                        className='max-w-full'
-                      >
-                        <div className='min-w-0 max-w-full'>
-                          <span className='block truncate font-medium'>
-                            {r.title}
-                          </span>
-
-                          {r.description && (
-                            <span className='text-muted-foreground block truncate text-xs'>
-                              {r.description}
-                            </span>
-                          )}
-                        </div>
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+            <>
+                <RubricCombobox
+                  creatorUuid={creator?.profile?.uuid}
+                  value={assignmentData.rubric_uuid}
+                  onChange={uuid => handleAssignmentInputChange('rubric_uuid', uuid)}
+                  placeholder='Select a rubric (optional)'
+                  aria-label='Evaluation rubric'
+                />
 
                 {selectedRubric ? (
                   <div className='bg-muted/50 mt-1 flex items-start justify-between gap-2 rounded-lg border px-3 py-2'>
@@ -673,8 +621,7 @@ export const AssignmentCreationForm = (props: AssignmentCreationFormProps) => {
                     </Link>
                   </div>
                 )}
-              </>
-            )}
+            </>
           </div>
 
           <div className='flex flex-col gap-2'>

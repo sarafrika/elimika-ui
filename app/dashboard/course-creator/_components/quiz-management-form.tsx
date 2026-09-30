@@ -1,5 +1,7 @@
 'use client';
 
+import { useCourseCreator } from '@/context/course-creator-context';
+import { RubricCombobox } from './rubric-combobox';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
 import {
@@ -35,7 +37,6 @@ import {
   addQuizQuestionMutation,
   createQuizMutation,
   deleteQuizMutation,
-  getAllAssessmentRubricsOptions,
   getCourseLessonsOptions,
   getQuestionOptionsQueryKey,
   getQuizQuestionsQueryKey,
@@ -151,9 +152,8 @@ function QuizForm({
     enabled: !!courseId,
   });
 
-  const { data: rubrics, isLoading: rubricsIsLoading } = useQuery(
-    getAllAssessmentRubricsOptions({ query: { pageable: {} } })
-  );
+  // Rubrics are picked through a server-searched combobox: the creator's own, or public ones.
+  const creator = useCourseCreator();
 
   const createQuiz = useMutation(createQuizMutation());
   const updateQuiz = useMutation(updateQuizMutation());
@@ -202,7 +202,7 @@ function QuizForm({
     }
   };
 
-  const isLoading = lessonIsLoading || rubricsIsLoading;
+  const isLoading = lessonIsLoading;
 
   return (
     <>
@@ -347,18 +347,15 @@ function QuizForm({
               render={({ field }) => (
                 <FormItem className='w-full flex-1'>
                   <FormLabel>Assign Rubric</FormLabel>
-                  <Select onValueChange={field.onChange} value={field.value}>
-                    <SelectTrigger className='w-full'>
-                      <SelectValue placeholder='Select rubric' />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {rubrics?.data?.content?.map(rubric => (
-                        <SelectItem key={rubric.uuid} value={rubric.uuid as string}>
-                          {rubric.title}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
+                  <FormControl>
+                    <RubricCombobox
+                      creatorUuid={creator?.profile?.uuid}
+                      value={field.value}
+                      onChange={uuid => field.onChange(uuid || undefined)}
+                      placeholder='Select rubric'
+                      aria-label='Assign rubric'
+                    />
+                  </FormControl>
                   <FormMessage />
                 </FormItem>
               )}

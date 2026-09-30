@@ -1,5 +1,6 @@
 'use client';
 
+import { RubricCombobox } from './rubric-combobox';
 import { useQuery } from '@tanstack/react-query';
 import { AlertTriangle, Check, FileText, Plus, Trash2, X } from 'lucide-react';
 import Link from 'next/link';
@@ -28,7 +29,7 @@ import {
 } from '../../../../components/ui/tooltip';
 import { useCourseCreator } from '../../../../context/course-creator-context';
 import {
-  searchAssessmentRubricsOptions,
+  getAssessmentRubricByUuidOptions,
   searchQuizzesOptions,
 } from '../../../../services/client/@tanstack/react-query.gen';
 import type { AssessmentRubric, Quiz } from '../../../../services/client/types.gen';
@@ -459,16 +460,6 @@ export const QuizCreationForm = (props: QuizCreationFormProps) => {
   const creator = useCourseCreator();
 
   // ── Rubrics ───────────────────────────────────────────────────────────────
-  const { data: searchRubs, isLoading: isLoadingRubrics } = useQuery({
-    ...searchAssessmentRubricsOptions({
-      query: {
-        pageable: {},
-        searchParams: { course_creator_uuid_eq: creator?.profile?.uuid as string },
-      },
-    }),
-    enabled: !!creator?.profile?.uuid,
-  });
-  const rubrics: RubricItem[] = searchRubs?.data?.content ?? [];
 
   // ── Quiz state ────────────────────────────────────────────────────────────
   const [localQuizData, setLocalQuizData] = useState({ ...EMPTY_QUIZ });
@@ -477,7 +468,14 @@ export const QuizCreationForm = (props: QuizCreationFormProps) => {
   const [quizAction, setQuizAction] = useState<'save' | 'publish' | 'unpublish' | null>(null);
   const [validationErrors, setValidationErrors] = useState<ValidationErrors>({});
 
-  const selectedRubric = rubrics.find(r => r.uuid === localQuizData.rubric_uuid);
+  // The picker searches rubrics on the server; the chosen one is read by id.
+  const { data: selectedRubricData } = useQuery({
+    ...getAssessmentRubricByUuidOptions({ path: { uuid: localQuizData.rubric_uuid } }),
+    enabled: Boolean(localQuizData.rubric_uuid),
+  });
+  const selectedRubric: RubricItem | undefined = localQuizData.rubric_uuid
+    ? selectedRubricData?.data
+    : undefined;
 
   const { data: quizzes } = useQuery({
     ...searchQuizzesOptions({
@@ -780,62 +778,15 @@ export const QuizCreationForm = (props: QuizCreationFormProps) => {
             Associate a grading rubric with this quiz
           </p>
 
-          {isLoadingRubrics ? (
-            <div className='flex items-center gap-2 py-2'>
-              <Spinner className='h-4 w-4' />
-              <span className='text-muted-foreground text-xs'>Loading rubrics...</span>
-            </div>
-          ) : (
-            <>
-              <Select
-                value={localQuizData.rubric_uuid || '__none__'}
-                onValueChange={v =>
-                  handleQuizInputChange(
-                    'rubric_uuid',
-                    v === '__none__' ? '' : v
-                  )
-                }
-              >
-                <SelectTrigger className='w-full min-w-0 text-start min-h-12 rounded-sm overflow-hidden'>
-                  <SelectValue
-                    placeholder='Select a rubric (optional)'
-                    className='truncate'
-                  />
-                </SelectTrigger>
-
-                <SelectContent
-                  position='popper'
-                  className='w-[var(--radix-select-trigger-width)] max-w-[calc(100vw-2rem)]'
-                >
-                  <SelectItem value='__none__'>
-                    <span className='text-muted-foreground'>None</span>
-                  </SelectItem>
-
-                  {rubrics
-                    .filter(
-                      (r): r is RubricItem & { uuid: string } => Boolean(r.uuid)
-                    )
-                    .map(r => (
-                      <SelectItem
-                        key={r.uuid}
-                        value={r.uuid}
-                        className='max-w-full'
-                      >
-                        <div className='min-w-0 max-w-full'>
-                          <span className='block truncate font-medium'>
-                            {r.title}
-                          </span>
-
-                          {r.description && (
-                            <span className='text-muted-foreground block truncate text-xs'>
-                              {r.description}
-                            </span>
-                          )}
-                        </div>
-                      </SelectItem>
-                    ))}
-                </SelectContent>
-              </Select>
+          <>
+              <RubricCombobox
+                creatorUuid={creator?.profile?.uuid}
+                value={localQuizData.rubric_uuid}
+                onChange={uuid => handleQuizInputChange('rubric_uuid', uuid)}
+                placeholder='Select a rubric (optional)'
+                className='min-h-12'
+                aria-label='Quiz rubric'
+              />
 
               {selectedRubric ? (
                 <div className='bg-muted/50 mt-1 flex items-start justify-between gap-2 rounded-lg border px-3 py-2'>
@@ -881,8 +832,7 @@ export const QuizCreationForm = (props: QuizCreationFormProps) => {
                   </Link>
                 </div>
               )}
-            </>
-          )}
+          </>
         </div>
 
         {/* Active toggle */}

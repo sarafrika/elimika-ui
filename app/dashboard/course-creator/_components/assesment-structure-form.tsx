@@ -1,6 +1,7 @@
 // @ts-nocheck -- pre-existing @hey-api generated-client type drift (see memory: elimika-ui-typecheck)
 'use client';
 
+import { RubricCombobox } from './rubric-combobox';
 import { AsyncSection } from '@/components/data/async-section';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
@@ -42,7 +43,7 @@ import {
   getCourseAssessmentsOptions,
   getLineItemsOptions,
   getLineItemsQueryKey,
-  searchAssessmentRubricsOptions,
+  getAssessmentRubricByUuidOptions,
   updateCourseAssessmentMutation,
 } from '../../../../services/client/@tanstack/react-query.gen';
 import type {
@@ -277,21 +278,14 @@ function AssessmentSheet({
 
   const creator = useCourseCreator();
 
-  const { data: searchRubs, isLoading: isLoadingRubrics } = useQuery({
-    ...searchAssessmentRubricsOptions({
-      query: {
-        pageable: {},
-        searchParams: {
-          course_creator_uuid_eq: creator?.profile?.uuid as string,
-        },
-      },
-    }),
-    enabled: !!creator?.profile?.uuid,
+  // The picker searches rubrics on the server; the chosen one is read by id.
+  const { data: selectedRubricData } = useQuery({
+    ...getAssessmentRubricByUuidOptions({ path: { uuid: form.rubric_uuid ?? '' } }),
+    enabled: Boolean(form.rubric_uuid),
   });
-
-  const rubrics: AssessmentRubric[] = searchRubs?.data?.content ?? [];
-
-  const selectedRubric = rubrics.find(r => r.uuid === form.rubric_uuid);
+  const selectedRubric: AssessmentRubric | undefined = form.rubric_uuid
+    ? selectedRubricData?.data
+    : undefined;
 
   const createMut = useMutation(addCourseAssessmentMutation());
   const updateMut = useMutation(updateCourseAssessmentMutation());
@@ -594,53 +588,15 @@ function AssessmentSheet({
                 Associate a grading rubric with this assessment
               </p>
 
-              {isLoadingRubrics ? (
-                <div className='flex items-center gap-2 py-2'>
-                  <Spinner className='h-4 w-4' />
-
-                  <span className='text-muted-foreground text-xs'>
-                    Loading rubrics...
-                  </span>
-                </div>
-              ) : (
-                <>
-                  <Select
-                    value={form.rubric_uuid || '__none__'}
-                    onValueChange={v =>
-                      set(
-                        'rubric_uuid',
-                        v === '__none__' ? '' : v
-                      )
-                    }
-                  >
-                    <SelectTrigger className='w-full sm:max-w-[650px]'>
-                      <SelectValue placeholder='Select a rubric (optional)' />
-                    </SelectTrigger>
-
-                    <SelectContent className='w-full sm:max-w-[600px]'>
-                      <SelectItem value='__none__'>
-                        <span className='text-muted-foreground'>
-                          None
-                        </span>
-                      </SelectItem>
-
-                      {rubrics.map((r: AssessmentRubric) => (
-                        <SelectItem key={r.uuid} value={r.uuid}>
-                          <div className='flex min-w-0 flex-col text-start'>
-                            <span className='font-medium'>
-                              {r.title}
-                            </span>
-
-                            {r.description && (
-                              <span className='text-muted-foreground line-clamp-1 text-xs'>
-                                {r.description}
-                              </span>
-                            )}
-                          </div>
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
+              <>
+                  <RubricCombobox
+                    creatorUuid={creator?.profile?.uuid}
+                    value={form.rubric_uuid}
+                    onChange={uuid => set('rubric_uuid', uuid)}
+                    placeholder='Select a rubric (optional)'
+                    className='sm:max-w-[650px]'
+                    aria-label='Assessment rubric'
+                  />
 
                   {selectedRubric ? (
                     <div className='bg-muted/50 mt-1 flex items-start justify-between gap-2 rounded-lg border px-3 py-2'>
@@ -698,8 +654,7 @@ function AssessmentSheet({
                       </Link>
                     </div>
                   )}
-                </>
-              )}
+              </>
             </div>
 
             {/* Toggles */}

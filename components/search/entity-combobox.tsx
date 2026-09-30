@@ -32,9 +32,11 @@ export type EntityOption = {
   disabled?: boolean;
 };
 
-type EntityQueryOptions<TData> = UseQueryOptions<TData, Error, TData, QueryKey>;
+type EntityQueryOptions<TData, TKey extends QueryKey> = UseQueryOptions<TData, Error, TData, TKey>;
 
-export type EntityComboboxProps<TData> = {
+export type EntityComboboxProps<TData, TKey extends QueryKey = QueryKey> = {
+  /** Heading for the server results when other groups are shown alongside. */
+  groupHeading?: string;
   /** Selected id, or empty. */
   value: string | null | undefined;
   onChange: (value: string, option: EntityOption | undefined) => void;
@@ -42,7 +44,7 @@ export type EntityComboboxProps<TData> = {
    * The generated `*Options(...)` for one page of candidates. `q` is the debounced term
    * (2+ characters) or undefined; send it as `q` where the endpoint supports it.
    */
-  queryOptions: (q: string | undefined) => EntityQueryOptions<TData>;
+  queryOptions: (q: string | undefined) => EntityQueryOptions<TData, TKey>;
   /** Pull the options out of a response. */
   toOptions: (data: TData) => EntityOption[];
   /** Label for the selected id when it is not in the current page (e.g. from a lookup). */
@@ -50,8 +52,16 @@ export type EntityComboboxProps<TData> = {
   placeholder?: string;
   searchPlaceholder?: string;
   emptyText?: string;
-  /** Rendered above the server results, e.g. a "Public rubrics" group. */
-  extraGroups?: ReactNode;
+  /**
+   * Rendered above the server results, e.g. a "None" item or a "Public rubrics" group. A
+   * function receives the debounced term and a `select` that also closes the picker.
+   */
+  extraGroups?:
+    | ReactNode
+    | ((context: {
+        q: string | undefined;
+        select: (value: string, option: EntityOption | undefined) => void;
+      }) => ReactNode);
   disabled?: boolean;
   className?: string;
   'aria-label'?: string;
@@ -63,7 +73,7 @@ export type EntityComboboxProps<TData> = {
  * previous page while a new term loads, and falls back to the unfiltered page (with a
  * notice) when the search index answers 503.
  */
-export function EntityCombobox<TData>({
+export function EntityCombobox<TData, TKey extends QueryKey = QueryKey>({
   value,
   onChange,
   queryOptions,
@@ -73,10 +83,11 @@ export function EntityCombobox<TData>({
   searchPlaceholder = 'Search…',
   emptyText = 'No matches',
   extraGroups,
+  groupHeading,
   disabled,
   className,
   'aria-label': ariaLabel,
-}: EntityComboboxProps<TData>) {
+}: EntityComboboxProps<TData, TKey>) {
   const [open, setOpen] = useState(false);
   const search = useSearchQuery();
   const query = useQuery({
@@ -89,6 +100,10 @@ export function EntityCombobox<TData>({
   useSearchErrors(search.q, query.error);
 
   const options = query.data ? toOptions(query.data) : [];
+  const select = (next: string, option: EntityOption | undefined) => {
+    onChange(next, option);
+    setOpen(false);
+  };
   const selected = options.find(option => option.value === value);
   const triggerLabel = selected?.label ?? (value ? (selectedLabel ?? value) : placeholder);
 
@@ -134,18 +149,15 @@ export function EntityCombobox<TData>({
             ) : (
               <CommandEmpty>{emptyText}</CommandEmpty>
             )}
-            {extraGroups}
+            {typeof extraGroups === 'function' ? extraGroups({ q: search.q, select }) : extraGroups}
             {options.length > 0 ? (
-              <CommandGroup>
+              <CommandGroup heading={groupHeading}>
                 {options.map(option => (
                   <CommandItem
                     key={option.value}
                     value={option.value}
                     disabled={option.disabled}
-                    onSelect={() => {
-                      onChange(option.value, option);
-                      setOpen(false);
-                    }}
+                    onSelect={() => select(option.value, option)}
                   >
                     <Check
                       className={cn('size-4', option.value === value ? 'opacity-100' : 'opacity-0')}
