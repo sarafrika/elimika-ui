@@ -72,6 +72,7 @@ import { JobActivityTab } from './job-activity-tab';
 import { HoldBadge, JobStageBadge } from './job-badges';
 import { JobHoldsTab } from './job-holds-tab';
 import { JobProgressSteps } from './job-progress-steps';
+import { JobRequiredSkillsSection } from './job-required-skills';
 import {
   HiredInstructorRow,
   JobResourceList,
@@ -79,6 +80,7 @@ import {
   JobWhereContent,
   useJobResourceRows,
 } from './job-sections';
+import { JobSuggestedInstructors } from './job-suggested-instructors';
 import { DetailRow, SectionCard, SectionCardSkeleton } from '@/components/data-display';
 
 function nextStepCopy(
@@ -361,6 +363,8 @@ export function JobDetailsPage({ jobUuid }: { jobUuid: string }) {
                   </div>
                 </SectionCard>
 
+                <JobRequiredSkillsSection jobUuid={jobUuid} canEdit={canEdit} />
+
                 <SectionCard title='Offering'>
                   <div className='grid gap-3 sm:grid-cols-2'>
                     <DetailRow
@@ -409,6 +413,8 @@ export function JobDetailsPage({ jobUuid }: { jobUuid: string }) {
                     ) : null}
                   </div>
                 </SectionCard>
+
+                {stage === 'open' && !hiredUuid ? <JobSuggestedInstructors jobUuid={jobUuid} /> : null}
 
                 <SectionCard title='Venue & equipment'>
                   <JobResourceList
