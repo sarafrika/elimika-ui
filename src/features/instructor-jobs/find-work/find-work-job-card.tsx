@@ -8,6 +8,7 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
 import type { ClassMarketplaceJob } from '@/services/client/types.gen';
+import { DistanceBandBadge } from '@/src/features/near-me/near-me-control';
 import { deliveryLabel } from '@/src/features/organisation/jobs/lib/job-stage';
 
 import { ReadinessChip } from '../components/readiness-chip';
@@ -91,6 +92,7 @@ export function FindWorkJobCard({
           <Badge variant='outline' className='rounded-md'>
             {deliveryLabel(job.location_type)}
           </Badge>
+          <DistanceBandBadge band={job.distance_band} className='rounded-md' />
         </div>
 
         <div className='grid gap-x-4 gap-y-2 sm:grid-cols-2'>

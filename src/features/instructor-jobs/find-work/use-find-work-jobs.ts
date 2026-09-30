@@ -38,22 +38,27 @@ const byLabel = (a: FacetOption, b: FacetOption) => a.label.localeCompare(b.labe
 
 /**
  * Open jobs for Find work, with readiness for each and the options its selects offer.
- * `q` (debounced, 2+ characters) is matched by the search index on the server.
+ * `q` (debounced, 2+ characters) is matched by the search index on the server, and so is
+ * `near` (`{ near, radius_km }` from `useNearMe`, never persisted).
  */
 export function useFindWorkJobs(
   filters: Pick<FindWorkFilters, 'organisation' | 'course' | 'program'>,
   now: number,
-  q?: string
+  q?: string,
+  near: { near?: string; radius_km?: string } = {}
 ) {
   const profile = useUserProfile();
   const enabled = Boolean(profile?.uuid);
-  const serverFiltered = Boolean(filters.organisation || filters.course || filters.program || q);
+  const serverFiltered = Boolean(
+    filters.organisation || filters.course || filters.program || q || near.near
+  );
 
   const list = useInfiniteQuery({
     ...listJobsInfiniteOptions({
       query: {
         status: 'open',
         ...(q ? { q } : {}),
+        ...near,
         ...(filters.organisation ? { organisation_uuid: filters.organisation } : {}),
         ...(filters.program
           ? { program_uuid: filters.program }

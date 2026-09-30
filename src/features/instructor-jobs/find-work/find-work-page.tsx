@@ -28,6 +28,7 @@ import { Button } from '@/components/ui/button';
 import { EmptyState } from '@/components/ui/empty-state';
 import { SearchQueryInput } from '@/components/search/search-input';
 import { SearchNotice } from '@/components/search/search-notice';
+import { SearchUnavailable } from '@/components/search/search-unavailable';
 import { useSearchIssue, useSearchQuery } from '@/hooks/use-search-query';
 import {
   Select,
@@ -47,11 +48,15 @@ import {
 import Spinner from '@/components/ui/spinner';
 import { Tabs, TabsContent } from '@/components/ui/tabs';
 import { statusLabel } from '@/components/profile-job-marketplace/application-status';
+import { isSearchUnavailable } from '@/lib/api-errors';
 import { cn } from '@/lib/utils';
 import type { ClassMarketplaceJob } from '@/services/client/types.gen';
 import { dashboardUrl } from '@/src/features/dashboard/lib/dashboard-url';
+import { useNearMe } from '@/src/features/near-me/near-me';
+import { NearMeControl } from '@/src/features/near-me/near-me-control';
 
 import { ApplyDialog } from '../apply/apply-dialog';
+import { BestMatches } from './best-matches';
 import { JobsSectionTabs } from '../components/jobs-section-tabs';
 import { useNow } from '../hooks/use-now';
 import { myApplicationsHref } from '../job-routes';
@@ -139,9 +144,13 @@ export function FindWorkPage() {
     [filters, pathname, router]
   );
 
-  const data = useFindWorkJobs(filters, now, search.q);
+  // Near-me stays in component state: never in the URL, dropped on leaving the page.
+  const nearMe = useNearMe();
+  const data = useFindWorkJobs(filters, now, search.q, nearMe.params);
   const { rows, list, eligibility } = data;
-  const searchIssue = useSearchIssue(search, list.error);
+  const nearUnavailable = nearMe.active && isSearchUnavailable(list.error);
+  // A 503 on a near-me request is about near-me; it must not switch text search off.
+  const searchIssue = useSearchIssue(search, nearMe.active ? null : list.error);
 
   const base = useMemo(
     () =>
@@ -265,7 +274,7 @@ export function FindWorkPage() {
 
   const applyRow = applyJob ? rows.find(row => row.job.uuid === applyJob.uuid) : undefined;
   const hasFilters =
-    Boolean(search.q) || findWorkQuery({ ...filters, sort: 'soonest' }) !== '';
+    Boolean(search.q) || nearMe.active || findWorkQuery({ ...filters, sort: 'soonest' }) !== '';
 
   return (
     <main className={cn(surfaceTheme.page, 'pb-16')}>
@@ -352,6 +361,7 @@ export function FindWorkPage() {
                   className='h-10'
                   wrapperClassName='min-w-0'
                 />
+                <NearMeControl nearMe={nearMe} className='shrink-0 [&>button:first-child]:h-10' />
                 <Sheet>
                   <SheetTrigger asChild>
                     <Button variant='outline' className='h-10 xl:hidden'>
@@ -450,6 +460,8 @@ export function FindWorkPage() {
               </div>
             </section>
 
+            {hasFilters ? null : <BestMatches />}
+
             <Tabs
               value={filters.basis}
               onValueChange={value => setFilters({ basis: value as BasisFilter })}
@@ -472,9 +484,17 @@ export function FindWorkPage() {
                 ) : null}
 
                 <SearchNotice issue={searchIssue} onReset={search.clear} />
+                {nearUnavailable ? (
+                  <SearchUnavailable
+                    variant='card'
+                    description='Near-me search is unavailable right now. Clear it to browse every open job, or try again in a moment.'
+                    onClear={nearMe.clear}
+                    onRetry={() => list.refetch()}
+                  />
+                ) : null}
                 <AsyncSection
                   loading={data.loading}
-                  error={searchIssue ? null : list.error}
+                  error={searchIssue || nearUnavailable ? null : list.error}
                   onRetry={() => list.refetch()}
                   errorTitle='Couldn’t load open jobs'
                   skeleton={
@@ -484,7 +504,7 @@ export function FindWorkPage() {
                       <FindWorkJobCardSkeleton />
                     </div>
                   }
-                  empty={listed.length === 0}
+                  empty={listed.length === 0 && !nearUnavailable}
                   emptyState={
                     <EmptyState
                       variant='compact'
@@ -502,6 +522,7 @@ export function FindWorkPage() {
                             size='sm'
                             onClick={() => {
                               search.clear();
+                              nearMe.clear();
                               router.replace(pathname, { scroll: false });
                             }}
                           >
