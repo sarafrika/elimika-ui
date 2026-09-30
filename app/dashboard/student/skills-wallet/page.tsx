@@ -11,6 +11,8 @@ import {
   Trophy,
 } from 'lucide-react';
 import { useWalletTab } from '@/app/dashboard/_components/skills-wallet/use-wallet-tab';
+import { useStudent } from '@/context/student-context';
+import { LearnerSkillGoalsCard } from '@/src/features/skills/learner-skill-goals-card';
 
 import { SkillsWalletAchievementsTab } from './_components/SkillsWalletAchievementsTab';
 import { SkillsWalletCompetenciesTab } from './_components/SkillsWalletCompetenciesTab';
@@ -40,6 +42,7 @@ type TabId = (typeof TABS)[number]['id'];
 export default function SkillsWallet() {
   const [tab, setTab] = useWalletTab(TABS);
   const data = useStudentSkillsWalletData();
+  const student = useStudent();
 
   return (
     <div className='min-h-screen'>
@@ -71,7 +74,12 @@ export default function SkillsWallet() {
             onNavigateToTab={value => setTab(value as TabId)}
           />
         ) : null}
-        {tab === 'skills' ? <SkillsWalletMySkillsTab data={data} /> : null}
+        {tab === 'skills' ? (
+          <div className='space-y-6'>
+            <LearnerSkillGoalsCard studentUuid={student?.uuid} />
+            <SkillsWalletMySkillsTab data={data} />
+          </div>
+        ) : null}
         {tab === 'portfolio' ? <SkillsWalletPortfolioTab data={data} /> : null}
         {tab === 'credentials' ? <SkillsWalletCredentialsVaultTab data={data} /> : null}
         {tab === 'competencies' ? <SkillsWalletCompetenciesTab data={data} /> : null}
