@@ -2,6 +2,8 @@
 'use client';
 
 import { retryUnlessClientOrSearchError } from '@/lib/api-errors';
+import { CourseContentSearchSheet } from '@/src/features/search/components/course-content-search-sheet';
+import type { CourseContentHit } from '@/src/features/search/hooks/use-course-content-search';
 import { PracticeActivityList } from '@/app/dashboard/course-creator/_components/practice-activity-management';
 import { AsyncSection } from '@/components/data/async-section';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
@@ -944,7 +946,6 @@ export default function StudentClassTrainingPage({
   const { data, isLoading, isError } = useClassDetails(classId);
   const { rosterAllEnrollments, isLoading: rosterLoading } = useClassRoster(classId);
   const [studentSearch, setStudentSearch] = useState('');
-  const [pageSearch, setPageSearch] = useState('');
   const [selectedLessonId, setSelectedLessonId] = useState('');
   const [selectedContentId, setSelectedContentId] = useState('');
   const [activeScheduleId, setActiveScheduleId] = useState('');
@@ -1361,31 +1362,21 @@ export default function StudentClassTrainingPage({
     );
   };
 
-  const handlePageSearch = () => {
-    if (!pageSearch.trim()) return;
-
-    const searchableWindow =
-      typeof window === 'undefined'
-        ? null
-        : (window as unknown as { find?: (...args: unknown[]) => boolean });
-
-    if (typeof searchableWindow?.find === 'function') {
-      const found = searchableWindow.find(
-        pageSearch.trim(),
-        false,
-        false,
-        true,
-        false,
-        false,
-        false
-      );
-      if (!found) {
-        toast.error(`No match found for "${pageSearch.trim()}".`);
-      }
+  // A course search hit opens where it lives: its lesson, and the item itself when it is
+  // a piece of content. Quizzes and assignments open their lesson, whose tasks list them.
+  const openSearchHit = (hit: CourseContentHit) => {
+    const lessonId = hit.type === 'lesson' ? hit.uuid : hit.lesson_uuid;
+    if (!lessonId) return;
+    if (hit.type === 'content' && hit.uuid) {
+      setSelectedLessonId(lessonId);
+      setSelectedContentId(hit.uuid);
+      const params = new URLSearchParams(searchParams.toString());
+      params.set('lesson', lessonId);
+      params.set('content', hit.uuid);
+      router.push(`${pathname}?${params.toString()}`);
       return;
     }
-
-    toast.error('Page search is not supported in this browser.');
+    handleLessonChange(lessonId);
   };
 
   const handleAssignAssignment = () => {
@@ -1559,29 +1550,20 @@ export default function StudentClassTrainingPage({
           </div>
         </div>
 
-        <div className='hidden min-w-0 flex-1 justify-center md:flex'>
-          <div className='flex max-w-xl flex-1 items-center gap-2 rounded-full bg-white/12 px-3 py-0.5'>
-            <Search className='text-primary-foreground/70 h-4 w-4 shrink-0' />
-            <Input
-              value={pageSearch}
-              onChange={event => setPageSearch(event.target.value)}
-              onKeyDown={event => {
-                if (event.key === 'Enter') {
-                  handlePageSearch();
-                }
-              }}
-              placeholder='Search this page...'
-              className='text-foreground placeholder:text-muted-foreground border-0 bg-transparent px-0 text-xs shadow-none focus-visible:ring-0 focus-visible:ring-offset-0 focus-visible:outline-none'
-            />
-            <Button
-              size='sm'
-              variant='ghost'
-              className='text-primary-foreground h-7 shrink-0 hover:bg-white/10'
-              onClick={handlePageSearch}
-            >
-              Find
-            </Button>
-          </div>
+        <div className='flex min-w-0 flex-1 justify-center'>
+          <CourseContentSearchSheet
+            courseUuid={activeLessonCourseUuid || course?.uuid || classData?.course_uuid}
+            onSelect={openSearchHit}
+            trigger={
+              <button
+                type='button'
+                className='text-primary-foreground/80 flex w-full max-w-xl items-center gap-2 rounded-full bg-white/12 px-3 py-1.5 text-left text-xs transition-colors hover:bg-white/20'
+              >
+                <Search className='h-4 w-4 shrink-0' />
+                <span className='truncate'>Search this course…</span>
+              </button>
+            }
+          />
         </div>
 
         <div className='flex items-center gap-2'>
