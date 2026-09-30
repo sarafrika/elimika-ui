@@ -185,7 +185,8 @@ export function AdminActivityPage() {
             columns={columns}
             data={rows}
             getRowId={row => row.event_uuid ?? ''}
-            searchPlaceholder='Search this page…'
+            searchPlaceholder='Filter this page…'
+            filterCurrentPage
             onRowClick={setOpenEvent}
             emptyTitle='Nothing on this page'
             emptyDescription='Try another page or turn off the views filter.'

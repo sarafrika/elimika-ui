@@ -17,6 +17,7 @@ import {
 } from '@tanstack/react-table';
 import { ArrowDown, ArrowUp, ChevronsUpDown, Columns3, Rows2, Rows3, Search } from 'lucide-react';
 import { type ReactNode, useMemo, useState } from 'react';
+import { SearchInput } from '@/components/search/search-input';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
@@ -80,6 +81,20 @@ interface DataTableProps<TData, TValue> {
   serverPagination?: ServerPagination;
   /** Hide the built-in toolbar when the page already owns search and filters. */
   hideToolbar?: boolean;
+  /**
+   * Server search: the box shows `searchValue` and reports every keystroke here instead of
+   * filtering the loaded rows. Pair it with `useSearchQuery` so the term is debounced and
+   * sent as `q`.
+   */
+  searchValue?: string;
+  onSearchChange?: (value: string) => void;
+  /** A search term is pending on the server; shows a spinner in the box. */
+  searchPending?: boolean;
+  /**
+   * With `serverPagination` the built-in box would only filter the rows of the current
+   * page, so it is hidden unless the page opts in (and labels it as such).
+   */
+  filterCurrentPage?: boolean;
 }
 
 export function DataTable<TData, TValue>({
@@ -100,7 +115,13 @@ export function DataTable<TData, TValue>({
   fill = false,
   serverPagination,
   hideToolbar = false,
+  searchValue,
+  onSearchChange,
+  searchPending = false,
+  filterCurrentPage = false,
 }: DataTableProps<TData, TValue>) {
+  const serverSearch = Boolean(onSearchChange);
+  const showSearch = serverSearch || !serverPagination || filterCurrentPage;
   const [sorting, setSorting] = useState<SortingState>([]);
   const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([]);
   const [columnVisibility, setColumnVisibility] = useState<VisibilityState>({});
@@ -140,7 +161,14 @@ export function DataTable<TData, TValue>({
   const table = useReactTable({
     data,
     columns: tableColumns,
-    state: { sorting, columnFilters, columnVisibility, rowSelection, globalFilter },
+    state: {
+      sorting,
+      columnFilters,
+      columnVisibility,
+      rowSelection,
+      // Server search filters on the API; the loaded rows are already the result.
+      globalFilter: serverSearch ? '' : globalFilter,
+    },
     getRowId,
     enableRowSelection,
     onSortingChange: setSorting,
@@ -165,16 +193,17 @@ export function DataTable<TData, TValue>({
   return (
     <div className={cn('flex flex-col gap-3', fill && 'h-full min-h-0')}>
       <div className={cn('flex flex-wrap items-center gap-2', hideToolbar && 'hidden')}>
-        <div className='relative min-w-[220px] flex-1'>
-          <Search className='text-muted-foreground pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2' />
-          <Input
-            value={globalFilter}
-            onChange={event => setGlobalFilter(event.target.value)}
+        {showSearch ? (
+          <SearchInput
+            value={serverSearch ? (searchValue ?? '') : globalFilter}
+            onValueChange={value =>
+              serverSearch ? onSearchChange?.(value) : setGlobalFilter(value)
+            }
+            isPending={serverSearch && searchPending}
             placeholder={searchPlaceholder}
-            aria-label={searchPlaceholder}
-            className='border-border/70 rounded-md pl-9'
+            wrapperClassName='min-w-[220px]'
           />
-        </div>
+        ) : null}
 
         {facetedFilters?.map(filter => {
           const column = table.getColumn(filter.columnId);
