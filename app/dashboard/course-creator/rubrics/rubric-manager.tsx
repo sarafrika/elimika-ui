@@ -35,6 +35,7 @@ import {
   Trash2,
   X,
 } from 'lucide-react';
+import { useSearchParams } from 'next/navigation';
 import { useState } from 'react';
 import { toast } from 'sonner';
 import {
@@ -354,7 +355,8 @@ function DeleteConfirmModal({
 const RubricManager: React.FC = () => {
   const creator = useCourseCreator();
   // Titles are matched by the search index (`q`), not filtered in the browser.
-  const search = useSearchQuery();
+  // ?q= (e.g. from the search palette) seeds the search.
+  const search = useSearchQuery({ initial: useSearchParams().get('q') ?? '' });
   const [viewMode, setViewMode] = useState<'cards' | 'table'>('cards');
   const [deletingUuid, setDeletingUuid] = useState<string | null>(null);
 
