@@ -124,15 +124,7 @@ export function DraftField({
   );
 }
 
-export function ProgramSetup({
-  categories,
-  published,
-  currentStatus,
-}: {
-  categories: Category[];
-  published: boolean;
-  currentStatus?: string;
-}) {
+export function ProgramSetup({ categories }: { categories: Category[] }) {
   const { control } = useFormContext<ProgramFormValues>();
   return (
     <>
@@ -144,37 +136,6 @@ export function ProgramSetup({
           className='lg:col-span-2'
         />
         <DraftField name='programCode' label='Program code' placeholder='e.g. MUSIC-101' />
-        <FormField
-          control={control}
-          name='status'
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Status</FormLabel>
-              <Select
-                value={field.value}
-                onValueChange={field.onChange}
-                disabled={published || (currentStatus !== undefined && currentStatus !== 'draft')}
-              >
-                <FormControl>
-                  <SelectTrigger className='w-full'>
-                    <SelectValue placeholder='Select status' />
-                  </SelectTrigger>
-                </FormControl>
-                <SelectContent>
-                  <SelectItem value='draft'>Draft</SelectItem>
-                  <SelectItem value='published'>Published</SelectItem>
-                  {currentStatus === 'in_review' && (
-                    <SelectItem value='in_review'>In review</SelectItem>
-                  )}
-                  {currentStatus === 'archived' && (
-                    <SelectItem value='archived'>Archived</SelectItem>
-                  )}
-                </SelectContent>
-              </Select>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
         <FormField
           control={control}
           name='categoryUuids'
@@ -249,8 +210,8 @@ export function ProgramSetup({
         <DraftField name='award' label='Program award' />
       </div>
       <p className='text-muted-foreground text-xs'>
-        Program code, subject, and award are kept in your browser draft. Choosing Published
-        publishes the program when you save the final step.
+        Program code, subject, and award are kept in your browser draft. Saving keeps the program
+        in its current state; publish, unpublish or archive it with the actions above.
       </p>
       <div className='grid gap-4 md:grid-cols-2'>
         <ProgramTextField

@@ -12,7 +12,6 @@ import {
   getProgramCoursesQueryKey,
   getProgramRequirementsQueryKey,
   getTrainingProgramByUuidQueryKey,
-  publishProgramMutation,
   removeProgramCourseMutation,
   searchProgramCoursesQueryKey,
   searchTrainingProgramsQueryKey,
@@ -21,7 +20,7 @@ import {
   updateTrainingProgramMutation,
 } from '@/services/client/@tanstack/react-query.gen';
 import type { TrainingProgram } from '@/services/client/types.gen';
-import { invalidateContentModerationWorkflowQueries } from '@/src/features/dashboard/workflow-query-invalidation';
+import { withoutProgramLifecycle } from '@/components/programs/program-lifecycle';
 import { assertProgramResponse, programBody, type ProgramFormValues } from './program-schema';
 
 export function useSaveProgram(
@@ -43,20 +42,26 @@ export function useSaveProgram(
   const addCourse = useMutation(addProgramCourseMutation());
   const updateCourse = useMutation(updateProgramCourseMutation());
   const removeCourse = useMutation(removeProgramCourseMutation());
-  const publishProgram = useMutation(publishProgramMutation());
 
   return useMutation({
-    mutationFn: async ({ values, publish }: { values: ProgramFormValues; publish: boolean }) => {
+    mutationFn: async ({ values }: { values: ProgramFormValues }) => {
       if (!creatorUuid)
         throw new Error('Your course creator profile is still loading. Please try again.');
       const body = programBody(values, creatorUuid, savedProgram.current);
       let uuid = savedProgram.current?.uuid;
       if (uuid) {
-        const response = await updateProgram.mutateAsync({ path: { uuid }, body });
+        const response = await updateProgram.mutateAsync({
+          path: { uuid },
+          body,
+          bodySerializer: withoutProgramLifecycle,
+        });
         assertProgramResponse(response, 'Unable to save program details');
         savedProgram.current = response.data ?? { ...body, uuid };
       } else {
-        const response = await createProgram.mutateAsync({ body });
+        const response = await createProgram.mutateAsync({
+          body,
+          bodySerializer: withoutProgramLifecycle,
+        });
         assertProgramResponse(response, 'Unable to create program');
         if (!response.uuid)
           throw new Error('The program could not be confirmed. No program ID was returned.');
@@ -127,18 +132,6 @@ export function useSaveProgram(
         });
         assertProgramResponse(response, 'Unable to remove course');
         savedCourses.current.delete(courseUuid);
-      }
-      if (publish && !savedProgram.current.published) {
-        const response = await publishProgram.mutateAsync({ path: { uuid } });
-        assertProgramResponse(response, 'Unable to publish program');
-        savedProgram.current = response.data ?? {
-          ...savedProgram.current,
-          status: 'published',
-          published: true,
-          active: true,
-        };
-        form.setValue('status', savedProgram.current.status);
-        await invalidateContentModerationWorkflowQueries(queryClient);
       }
       return uuid;
     },

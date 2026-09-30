@@ -2,12 +2,27 @@
 
 import { useMutation, useQueries, useQuery, useQueryClient } from '@tanstack/react-query';
 import { format } from 'date-fns';
-import { PlusCircle, Trash2 } from 'lucide-react';
+import { MoreHorizontal, PlusCircle, Trash2 } from 'lucide-react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useMemo, useState } from 'react';
 import { toast } from 'sonner';
-import { Badge } from '../../../../../components/ui/badge';
+import {
+  ArchiveProgramSheet,
+  availableProgramActions,
+  PROGRAM_ACTION_COPY,
+  PROGRAM_ACTION_ICON,
+  ProgramLifecycleBadge,
+  type ProgramLifecycleAction,
+  useProgramLifecycle,
+} from '@/components/programs/program-lifecycle';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
 import { Button } from '../../../../../components/ui/button';
 import {
   Card,
@@ -58,15 +73,6 @@ const STATUS_OPTIONS: { label: string; value: ProgramStatusFilter }[] = [
   { label: 'Archived', value: 'archived' },
 ];
 
-const STATUS_BADGE: Record<
-  string,
-  { label: string; variant: 'secondary' | 'default' | 'outline' | 'destructive' }
-> = {
-  PUBLISHED: { label: 'Published', variant: 'default' },
-  DRAFT: { label: 'Draft', variant: 'secondary' },
-  ARCHIVED: { label: 'Archived', variant: 'outline' },
-};
-
 type Program = TrainingProgram & {
   uuid: string;
   title: string;
@@ -94,6 +100,12 @@ const ProgramsList = ({ onEdit, onPreview, onCreate, creator }: ProgramsListProp
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState<ProgramStatusFilter>('all');
   const [selectedCategory, setSelectedCategory] = useState('all');
+  const lifecycle = useProgramLifecycle();
+  const [archiveTarget, setArchiveTarget] = useState<Program | null>(null);
+  const runLifecycle = (action: ProgramLifecycleAction, program: Program) => {
+    if (action === 'archive') setArchiveTarget(program);
+    else void lifecycle.run(action, program.uuid);
+  };
 
   const { data: programsData, isLoading } = useQuery(
     searchTrainingProgramsOptions({
@@ -337,6 +349,8 @@ const ProgramsList = ({ onEdit, onPreview, onCreate, creator }: ProgramsListProp
                         onEdit={onEdit}
                         onPreview={onPreview}
                         onDelete={setDeleteConfirm}
+                        onLifecycle={runLifecycle}
+                        lifecycleBusy={lifecycle.pending !== null}
                       />
                     ))}
                   </TableBody>
@@ -346,6 +360,18 @@ const ProgramsList = ({ onEdit, onPreview, onCreate, creator }: ProgramsListProp
           )}
         </CardContent>
       </Card>
+
+      <ArchiveProgramSheet
+        open={archiveTarget !== null}
+        onOpenChange={open => !open && setArchiveTarget(null)}
+        programTitle={archiveTarget?.title}
+        pending={lifecycle.pending === 'archive'}
+        onConfirm={async () => {
+          if (archiveTarget && (await lifecycle.run('archive', archiveTarget.uuid))) {
+            setArchiveTarget(null);
+          }
+        }}
+      />
 
       {/* Delete Confirmation Dialog */}
       <Dialog open={!!deleteConfirm} onOpenChange={open => !open && setDeleteConfirm(null)}>
@@ -383,13 +409,19 @@ interface ProgramRowProps {
   onEdit: (program: Program) => void;
   onPreview: (uuid: string) => void;
   onDelete: (uuid: string) => void;
+  onLifecycle: (action: ProgramLifecycleAction, program: Program) => void;
+  lifecycleBusy: boolean;
 }
 
-function ProgramRow({ program, onEdit, onPreview, onDelete }: ProgramRowProps) {
-  const statusMeta = STATUS_BADGE[program.status] ?? {
-    label: program.status,
-    variant: 'secondary' as const,
-  };
+function ProgramRow({
+  program,
+  onEdit,
+  onPreview,
+  onDelete,
+  onLifecycle,
+  lifecycleBusy,
+}: ProgramRowProps) {
+  const actions = availableProgramActions(program);
 
   return (
     <TableRow className='hover:bg-muted/50 cursor-pointer'>
@@ -402,7 +434,7 @@ function ProgramRow({ program, onEdit, onPreview, onDelete }: ProgramRowProps) {
         </div>
       </TableCell>
       <TableCell onClick={() => onPreview(program.uuid)}>
-        <Badge variant={statusMeta.variant}>{statusMeta.label}</Badge>
+        <ProgramLifecycleBadge program={program} />
       </TableCell>
       <TableCell onClick={() => onPreview(program.uuid)}>
         <span className='font-medium'>{program.class_limit} spots</span>
@@ -417,6 +449,37 @@ function ProgramRow({ program, onEdit, onPreview, onDelete }: ProgramRowProps) {
       </TableCell>
       <TableCell className='text-right'>
         <div className='flex items-center justify-end gap-2'>
+          {actions.length > 0 && (
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button
+                  size='sm'
+                  variant='ghost'
+                  aria-label={`Lifecycle actions for ${program.title}`}
+                  disabled={lifecycleBusy}
+                  onClick={e => e.stopPropagation()}
+                >
+                  <MoreHorizontal className='h-4 w-4' />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align='end'>
+                <DropdownMenuLabel>Program</DropdownMenuLabel>
+                {actions.map(action => {
+                  const Icon = PROGRAM_ACTION_ICON[action];
+                  return (
+                    <DropdownMenuItem
+                      key={action}
+                      onSelect={() => onLifecycle(action, program)}
+                      className={action === 'archive' ? 'text-destructive' : undefined}
+                    >
+                      <Icon className='h-4 w-4' />
+                      {PROGRAM_ACTION_COPY[action].label}
+                    </DropdownMenuItem>
+                  );
+                })}
+              </DropdownMenuContent>
+            </DropdownMenu>
+          )}
           <Button
             size='sm'
             variant='ghost'

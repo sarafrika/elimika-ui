@@ -8,10 +8,17 @@ import Spinner from '@/components/ui/spinner';
 import { useCoursesByIds } from '@/hooks/use-batched-lookups';
 import { useUserProfile } from '@/context/profile-context';
 import { STALE_TIMES } from '@/lib/query-client';
-import { getAllCategoriesInfiniteOptions } from '@/services/client/@tanstack/react-query.gen';
+import {
+  getAllCategoriesInfiniteOptions,
+  getTrainingProgramByUuidOptions,
+} from '@/services/client/@tanstack/react-query.gen';
+import {
+  ProgramLifecycleActions,
+  ProgramLifecycleBadge,
+} from '@/components/programs/program-lifecycle';
 import type { TrainingProgram } from '@/services/client/types.gen';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { useInfiniteQuery } from '@tanstack/react-query';
+import { useInfiniteQuery, useQuery } from '@tanstack/react-query';
 import {
   ArrowLeft,
   ArrowRight,
@@ -116,6 +123,14 @@ export default function ProgramEditor({
     return () => subscription.unsubscribe();
   }, [creatorUuid, program?.uuid, form]);
   const save = useSaveProgram(form, creatorUuid, program);
+  // The lifecycle actions change the program outside this form; read it live so the
+  // badge and the available actions follow.
+  const liveProgramQuery = useQuery({
+    ...getTrainingProgramByUuidOptions({ path: { uuid: program?.uuid ?? '' } }),
+    enabled: Boolean(program?.uuid),
+    staleTime: STALE_TIMES.entity,
+  });
+  const liveProgram = liveProgramQuery.data?.data ?? program;
   const categoriesQuery = useInfiniteQuery({
     ...getAllCategoriesInfiniteOptions({ query: { pageable: { size: 100 } } }),
     initialPageParam: 0,
@@ -150,14 +165,15 @@ export default function ProgramEditor({
   };
   const onSave = async (values: ProgramFormValues) => {
     try {
-      const publish = values.status === 'published';
-      const uuid = await save.mutateAsync({ values, publish });
+      const uuid = await save.mutateAsync({ values });
       if (!writeProgramDraft(creatorUuid, uuid, form.getValues())) {
         toast.warning('Program saved, but browser-only draft fields could not be stored.');
       } else if (!program?.uuid) {
         clearNewProgramDraft(creatorUuid);
       }
-      toast.success(publish ? 'Program saved and published' : 'Program saved');
+      toast.success(
+        program?.uuid ? 'Program saved' : 'Program saved as a draft. Publish it from its page.'
+      );
       router.push(`/dashboard/course-creator/course-management/programs/${uuid}`);
     } catch (cause) {
       toast.error(
@@ -197,6 +213,11 @@ export default function ProgramEditor({
                 <div className='border-border border-b p-5'>
                   <div className='flex flex-wrap items-baseline justify-between gap-2'>
                     <ProgramTitle />
+                    {liveProgram?.uuid ? (
+                      <ProgramLifecycleActions program={liveProgram} />
+                    ) : (
+                      <ProgramLifecycleBadge program={undefined} />
+                    )}
                     <span
                       className='text-muted-foreground text-xs font-semibold uppercase'
                       aria-live='polite'
@@ -283,11 +304,7 @@ export default function ProgramEditor({
                           description='A category is needed to save a program. Try again once categories are available.'
                         />
                       ) : null}
-                      <ProgramSetup
-                        categories={categories}
-                        published={program?.published ?? false}
-                        currentStatus={program?.status}
-                      />
+                      <ProgramSetup categories={categories} />
                       {categoriesQuery.hasNextPage && (
                         <Button
                           type='button'

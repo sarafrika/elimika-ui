@@ -1,9 +1,5 @@
 import { z } from 'zod';
-import {
-  RequirementTypeEnum,
-  SchemaEnum4,
-  type TrainingProgram,
-} from '@/services/client/types.gen';
+import { RequirementTypeEnum, type TrainingProgram } from '@/services/client/types.gen';
 
 const optionalPrice = z
   .string()
@@ -49,7 +45,6 @@ export const programFormSchema = z
     description: z.string().trim().min(1, 'Describe the program'),
     objectives: z.string().trim(),
     prerequisites: z.string().trim(),
-    status: z.nativeEnum(SchemaEnum4),
     classLimit: z
       .string()
       .trim()
@@ -100,22 +95,6 @@ export const programFormSchema = z
       }
       seen.add(course.courseUuid);
     });
-    if (values.status === 'published') {
-      if (values.courses.length < 2) {
-        ctx.addIssue({
-          code: 'custom',
-          path: ['courses'],
-          message: 'Select at least two courses to publish the program',
-        });
-      }
-      if (!values.price.trim()) {
-        ctx.addIssue({
-          code: 'custom',
-          path: ['price'],
-          message: 'Set a program price before publishing (use 0 for free)',
-        });
-      }
-    }
   });
 
 export type ProgramFormValues = z.infer<typeof programFormSchema>;
@@ -130,7 +109,6 @@ export function defaultProgramValues(program?: TrainingProgram): ProgramFormValu
     description: program?.description ?? '',
     objectives: program?.objectives ?? '',
     prerequisites: program?.prerequisites ?? '',
-    status: program?.status ?? 'draft',
     classLimit: String(program?.class_limit ?? 1),
     totalDurationHours: program?.total_duration_hours ?? 0,
     totalDurationMinutes: program?.total_duration_minutes ?? 0,
@@ -140,7 +118,12 @@ export function defaultProgramValues(program?: TrainingProgram): ProgramFormValu
   };
 }
 
-// Publishing is performed only after the core, requirements and curriculum are saved.
+/**
+ * The program's content. Lifecycle (`status`, `published`, `active`) is changed only
+ * through the publish, unpublish and archive endpoints: the generated type still lists
+ * those fields, so they are filled from the loaded record and stripped when the body is
+ * serialized (`withoutProgramLifecycle`).
+ */
 export function programBody(
   values: ProgramFormValues,
   creatorUuid: string,

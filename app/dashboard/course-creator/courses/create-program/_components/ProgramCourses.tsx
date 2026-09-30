@@ -40,7 +40,7 @@ export default function ProgramCourses({ creatorUuid }: { creatorUuid: string })
   const coursesQuery = useInfiniteQuery({
     ...searchCoursesInfiniteOptions({
       query: {
-        searchParams: { is_published: true },
+        searchParams: { status: 'published' },
         pageable: { size: 24 },
       },
     }),

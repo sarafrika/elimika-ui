@@ -74,10 +74,9 @@ type MutationVariables<T> = T extends {
 }
   ? TVariables
   : never;
-type ProgramPayload = Partial<TrainingProgram> & {
+type ProgramPayload = Omit<Partial<TrainingProgram>, 'status' | 'published' | 'active'> & {
   instructor_uuid?: string;
   is_free?: boolean;
-  is_published?: boolean;
   total_duration_display?: string;
   program_type?: string;
 };
@@ -171,10 +170,8 @@ function ProgramCreationForm({
       total_duration_display: `${values.total_duration_hours} hours ${values.total_duration_minutes} minutes`,
       created_by: session?.user?.email,
       updated_by: session?.user?.email,
-      is_published: false,
-      published: false,
-      active: false,
-      status: 'draft',
+      // No lifecycle fields: create and update ignore them. Programs are published,
+      // unpublished and archived through their own endpoints.
     } as ProgramPayload;
 
     const commonOnSuccess = () => {
