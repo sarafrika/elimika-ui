@@ -2,7 +2,7 @@
 
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { Trash2, UserPlus, Users } from 'lucide-react';
-import { useMemo, useState } from 'react';
+import { useDeferredValue, useMemo, useState } from 'react';
 import { toast } from 'sonner';
 
 import {
@@ -15,6 +15,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
+import { SearchInput } from '@/components/search/search-input';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -115,6 +116,18 @@ export function GroupMembersSheet({
     [students, existing]
   );
 
+  // A client-side filter over this organisation's students: the list is already loaded
+  // and belongs to one organisation, so it does not need the search index.
+  const [filter, setFilter] = useState('');
+  const deferredFilter = useDeferredValue(filter);
+  const visibleStudents = useMemo(() => {
+    const needle = deferredFilter.trim().toLowerCase();
+    if (!needle) return addableStudents;
+    return addableStudents.filter(student =>
+      [fullName(student), student.email].some(value => value?.toLowerCase().includes(needle))
+    );
+  }, [addableStudents, deferredFilter]);
+
   const addMembers = useMutation(addMembersMutation());
   const removeMember = useMutation(removeMemberMutation());
 
@@ -172,7 +185,10 @@ export function GroupMembersSheet({
         open={open}
         onOpenChange={next => {
           onOpenChange(next);
-          if (!next) setSelected([]);
+          if (!next) {
+            setSelected([]);
+            setFilter('');
+          }
         }}
       >
         <SheetContent className='w-full gap-0 sm:max-w-lg'>
@@ -270,9 +286,20 @@ export function GroupMembersSheet({
                   Every student in this organisation is already in this group.
                 </p>
               ) : (
+                <>
+                <SearchInput
+                  value={filter}
+                  onValueChange={setFilter}
+                  placeholder='Filter students by name or email'
+                />
+                {visibleStudents.length === 0 ? (
+                  <p className='text-muted-foreground border-border/70 rounded-md border border-dashed py-6 text-center text-sm'>
+                    No student matches this filter.
+                  </p>
+                ) : (
                 <ScrollArea className='h-[280px] pr-3'>
                   <div className='space-y-1'>
-                    {addableStudents.map(student => {
+                    {visibleStudents.map(student => {
                       const uuid = student.uuid as string;
                       const isSelected = selected.includes(uuid);
                       return (
@@ -294,6 +321,8 @@ export function GroupMembersSheet({
                     })}
                   </div>
                 </ScrollArea>
+                )}
+                </>
               )}
             </section>
           </div>
