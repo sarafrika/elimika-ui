@@ -1,9 +1,9 @@
 'use client';
 
-import { Search, X } from 'lucide-react';
+import { X } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
+import { SearchInput } from '@/components/search/search-input';
 import {
   Select,
   SelectContent,
@@ -12,7 +12,7 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { cn } from '@/lib/utils';
-import { useSearchStatePatch } from '../state/use-search-state';
+import { useSearchStatePatch } from '@/hooks/use-search-state';
 
 export interface FilterOption {
   value: string;
@@ -72,16 +72,13 @@ export function FilterBar({
 
   return (
     <div className={cn('flex flex-wrap items-center gap-2', className)}>
-      <div className='relative min-w-[240px] flex-1'>
-        <Search className='text-muted-foreground pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2' />
-        <Input
-          value={term}
-          onChange={event => setTerm(event.target.value)}
-          placeholder={searchPlaceholder}
-          aria-label={searchPlaceholder}
-          className='border-border/70 rounded-md pl-9'
-        />
-      </div>
+      <SearchInput
+        value={term}
+        onValueChange={setTerm}
+        isPending={term.trim() !== (values[searchKey] ?? '').trim()}
+        placeholder={searchPlaceholder}
+        wrapperClassName='min-w-[240px]'
+      />
 
       {filters.map(filter => {
         const anyValue = filter.anyValue ?? 'any';

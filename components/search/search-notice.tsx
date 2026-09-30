@@ -4,9 +4,11 @@ import { SearchX } from 'lucide-react';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
 import type { SearchIssue } from '@/lib/search/query';
+import { SEARCH_UNAVAILABLE_TITLE } from './search-unavailable';
 
 /**
- * A non-blocking line above a searchable list. When the search index is down the list
+ * A non-blocking banner above a searchable list; `SearchUnavailable` is the empty-state
+ * form for surfaces that have nothing else to show. When the search index is down the list
  * keeps working without the term; when a search is refused the user can reset it.
  */
 export function SearchNotice({
@@ -26,7 +28,7 @@ export function SearchNotice({
     <Alert className={className}>
       <SearchX className='text-warning' />
       <AlertTitle>
-        {unavailable ? 'Search is temporarily unavailable' : 'This search could not be run'}
+        {unavailable ? SEARCH_UNAVAILABLE_TITLE : 'This search could not be run'}
       </AlertTitle>
       <AlertDescription>
         <p>
