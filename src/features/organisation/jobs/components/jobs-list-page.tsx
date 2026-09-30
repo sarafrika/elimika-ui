@@ -1,8 +1,8 @@
 'use client';
 
-import { Briefcase, Building2, CircleCheck, Clock, MapPin, Plus, Search, X } from 'lucide-react';
+import { Briefcase, Building2, CircleCheck, Clock, MapPin, Plus, X } from 'lucide-react';
 import Link from 'next/link';
-import { useDeferredValue, useMemo, useState } from 'react';
+import { useMemo, useState } from 'react';
 
 import { OrgPage } from '@/app/dashboard/organisation/_components/org-page';
 import { useOrganisationBranches } from '@/components/class-form';
@@ -11,7 +11,8 @@ import { AsyncSection } from '@/components/data/async-section';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { EmptyState } from '@/components/ui/empty-state';
-import { Input } from '@/components/ui/input';
+import { SearchQueryInput } from '@/components/search/search-input';
+import { SearchNotice } from '@/components/search/search-notice';
 import {
   Select,
   SelectContent,
@@ -27,6 +28,8 @@ import {
   useInstructorsByIds,
   useProgramsByIds,
 } from '@/hooks/use-batched-lookups';
+import { useSearchIssue } from '@/hooks/use-search-query';
+import { useUrlSearchQuery } from '@/hooks/use-url-search-query';
 import { formatDate, formatDateTime } from '@/lib/date';
 import { cn } from '@/lib/utils';
 import type { ClassMarketplaceJob, Instructor } from '@/services/client';
@@ -68,11 +71,15 @@ export function JobsListPage() {
   const [now] = useState(() => Date.now());
   const [stageFilter, setStageFilter] = useState<StageFilter>('all');
   const [branchFilter, setBranchFilter] = useState(ALL_BRANCHES);
-  const [search, setSearch] = useState('');
-  const deferredSearch = useDeferredValue(search);
+  const search = useUrlSearchQuery();
 
   const branchUuid = branchFilter === ALL_BRANCHES ? undefined : branchFilter;
-  const { jobs: fetchedJobs, query: jobsQuery } = useOrganisationJobs(organisationUuid, branchUuid);
+  const { jobs: fetchedJobs, query: jobsQuery } = useOrganisationJobs(
+    organisationUuid,
+    branchUuid,
+    search.q
+  );
+  const searchIssue = useSearchIssue(search, jobsQuery.error);
   const { branches } = useOrganisationBranches(organisationUuid);
 
   // The server filters by branch; this guards against a backend that ignores the parameter.
@@ -103,31 +110,15 @@ export function JobsListPage() {
     return counts;
   }, [jobs, now]);
 
+  // Free text is matched on the server; the stage tab narrows what came back. With a
+  // search the server's relevance order is kept, otherwise newest first.
   const rows = useMemo(() => {
-    const query = deferredSearch.trim().toLowerCase();
-    return jobs
-      .filter(job => stageFilter === 'all' || jobStage(job, now) === stageFilter)
-      .filter(job => {
-        if (!query) return true;
-        const hired = hiredInstructorUuid(job);
-        return [
-          job.title,
-          job.branch_name,
-          job.location_name,
-          job.course_uuid ? courseMap[job.course_uuid]?.name : null,
-          job.program_uuid ? programMap[job.program_uuid]?.title : null,
-          hired ? instructorMap[hired]?.full_name : null,
-          ...(job.resources ?? []).map(resource => resource.resource_name),
-        ]
-          .filter(Boolean)
-          .join(' ')
-          .toLowerCase()
-          .includes(query);
-      })
-      .sort(
-        (a, b) => new Date(b.created_date ?? 0).getTime() - new Date(a.created_date ?? 0).getTime()
-      );
-  }, [jobs, stageFilter, deferredSearch, now, courseMap, programMap, instructorMap]);
+    const staged = jobs.filter(job => stageFilter === 'all' || jobStage(job, now) === stageFilter);
+    if (search.q) return staged;
+    return staged.sort(
+      (a, b) => new Date(b.created_date ?? 0).getTime() - new Date(a.created_date ?? 0).getTime()
+    );
+  }, [jobs, stageFilter, now, search.q]);
 
   const kpiLoading = jobsQuery.isLoading && !jobsQuery.data;
   const kpiValue = (value: number) => (kpiLoading ? <Skeleton className='h-7 w-10' /> : value);
@@ -206,26 +197,23 @@ export function JobsListPage() {
                 ))}
             </SelectContent>
           </Select>
-          <div className='relative w-full sm:w-64'>
-            <Search className='text-muted-foreground pointer-events-none absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2' />
-            <Input
-              value={search}
-              onChange={event => setSearch(event.target.value)}
-              placeholder='Search jobs'
-              aria-label='Search jobs'
-              className='pl-9'
-            />
-          </div>
+          <SearchQueryInput
+            search={search}
+            placeholder='Search jobs'
+            wrapperClassName='w-full sm:w-64'
+          />
         </div>
       </div>
 
+      <SearchNotice issue={searchIssue} onReset={search.clear} />
+
       <AsyncSection
         loading={jobsQuery.isLoading && !jobsQuery.data}
-        error={jobsQuery.error}
+        error={searchIssue ? null : jobsQuery.error}
         onRetry={() => jobsQuery.refetch()}
         errorTitle='Couldn’t load your jobs'
         skeleton={<JobRowsSkeleton />}
-        empty={jobs.length === 0}
+        empty={jobs.length === 0 && !search.q}
         emptyState={
           <EmptyState
             variant='card'
@@ -260,7 +248,7 @@ export function JobsListPage() {
           </div>
           {rows.length === 0 ? (
             <p className='text-muted-foreground px-4 py-10 text-center text-sm'>
-              No jobs match these filters.
+              {search.q ? 'No job matches this search.' : 'No jobs match these filters.'}
             </p>
           ) : (
             rows.map(job => (

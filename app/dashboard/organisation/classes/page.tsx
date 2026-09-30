@@ -1,7 +1,7 @@
 // @ts-nocheck -- 1:1 Lovable port; @hey-api generated-client type drift
 'use client';
 
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { keepPreviousData, useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import dayjs from 'dayjs';
 import { Eye, LayoutList, MoreHorizontal, PauseCircle, Plus, Send, Users } from 'lucide-react';
 import Link from 'next/link';
@@ -33,7 +33,12 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
+import { SearchQueryInput } from '@/components/search/search-input';
+import { SearchNotice } from '@/components/search/search-notice';
 import { useOrganisation } from '@/context/organisation-context';
+import { useSearchIssue } from '@/hooks/use-search-query';
+import { useUrlSearchQuery } from '@/hooks/use-url-search-query';
+import { retryUnlessClientOrSearchError } from '@/lib/api-errors';
 import { useInstructorsByIds } from '@/hooks/use-batched-lookups';
 import { extractList, extractPage } from '@/lib/api-helpers';
 import { cn } from '@/lib/utils';
@@ -85,10 +90,18 @@ export default function ClassesPage() {
   const queryClient = useQueryClient();
   const highlight = useSearchParams().get('highlight');
 
+  const search = useUrlSearchQuery();
+  // `q` is served by the search index; without it the endpoint lists every class.
   const classesQuery = useQuery({
-    ...getClassDefinitionsForOrganisationOptions({ path: { organisationUuid } }),
+    ...getClassDefinitionsForOrganisationOptions({
+      path: { organisationUuid },
+      ...(search.q ? { query: { q: search.q } } : {}),
+    }),
     enabled: Boolean(organisationUuid),
+    placeholderData: keepPreviousData,
+    retry: retryUnlessClientOrSearchError,
   });
+  const searchIssue = useSearchIssue(search, classesQuery.error);
   const countsQuery = useQuery({
     ...getClassEnrolmentCountsOptions({ path: { organisationUuid } }),
     enabled: Boolean(organisationUuid),
@@ -311,6 +324,15 @@ export default function ClassesPage() {
         </Card>
       </div>
 
+      <div className='space-y-2'>
+        <SearchQueryInput
+          search={search}
+          placeholder='Search classes by title, course or venue…'
+          wrapperClassName='max-w-md'
+        />
+        <SearchNotice issue={searchIssue} onReset={search.clear} />
+      </div>
+
       {rows.length > 0 && (
         <CategoryTabs
           items={rows}
@@ -326,6 +348,15 @@ export default function ClassesPage() {
           {[...Array(6)].map((_, i) => (
             <Skeleton key={i} className='h-14 w-full' />
           ))}
+        </div>
+      ) : rows.length === 0 && search.q ? (
+        <div className='rounded-lg border border-dashed p-12 text-center'>
+          <LayoutList className='text-muted-foreground mx-auto h-8 w-8' />
+          <div className='mt-2 font-medium'>No class matches this search</div>
+          <p className='text-muted-foreground text-sm'>Try another word, or clear the search.</p>
+          <Button variant='outline' className='mt-4' onClick={search.clear}>
+            Clear search
+          </Button>
         </div>
       ) : rows.length === 0 ? (
         <div className='rounded-lg border border-dashed p-12 text-center'>

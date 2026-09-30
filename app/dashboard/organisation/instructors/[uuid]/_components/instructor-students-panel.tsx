@@ -3,14 +3,17 @@
 import { keepPreviousData, useQuery } from '@tanstack/react-query';
 import { ArrowLeft, ArrowRight, Mail, Search, Users } from 'lucide-react';
 import Link from 'next/link';
-import { useEffect, useId, useState } from 'react';
+import { useId, useState } from 'react';
 
 import { AsyncSection } from '@/components/data/async-section';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { EmptyState } from '@/components/ui/empty-state';
-import { Input } from '@/components/ui/input';
+import { SearchQueryInput } from '@/components/search/search-input';
+import { SearchNotice } from '@/components/search/search-notice';
+import { useSearchIssue, useSearchQuery } from '@/hooks/use-search-query';
+import { retryUnlessClientOrSearchError } from '@/lib/api-errors';
 import { Label } from '@/components/ui/label';
 import {
   Select,
@@ -42,7 +45,6 @@ import { dashboardUrl } from '@/src/features/dashboard/lib/dashboard-url';
 import { StatusBadge, StatusTone } from '@/components/data-display';
 
 const PAGE_SIZE = 8;
-const SEARCH_DEBOUNCE_MS = 300;
 const ALL_CLASSES = 'all';
 const TABLE_MIN_WIDTH = 'min-w-[920px]';
 
@@ -114,16 +116,11 @@ export function InstructorStudentsPanel({
   const enabled = Boolean(organisationUuid && instructorUuid);
   const path = { organisationUuid, instructorUuid };
 
-  const [searchInput, setSearchInput] = useState('');
-  const [search, setSearch] = useState('');
+  // The roster's `search` is answered by the people index: two characters minimum, and a
+  // 503 drops the term so the roster still lists.
+  const searchState = useSearchQuery();
+  const search = searchState.q ?? '';
   const [classUuid, setClassUuid] = useState('');
-
-  useEffect(() => {
-    const next = searchInput.trim();
-    if (next === search) return;
-    const timer = setTimeout(() => setSearch(next), SEARCH_DEBOUNCE_MS);
-    return () => clearTimeout(timer);
-  }, [searchInput, search]);
 
   // Paging is keyed to the filters, so a new search or class starts again on page 1.
   const filterKey = `${search}|${classUuid}`;
@@ -151,7 +148,9 @@ export function InstructorStudentsPanel({
     enabled,
     staleTime: STALE_TIMES.live,
     placeholderData: keepPreviousData,
+    retry: retryUnlessClientOrSearchError,
   });
+  const searchIssue = useSearchIssue(searchState, rosterQuery.error);
 
   const overview = overviewQuery.data?.data;
   const overviewTotal = toNumber(overview?.metadata?.totalElements, overview?.content?.length ?? 0);
@@ -173,8 +172,7 @@ export function InstructorStudentsPanel({
   const lastRow = shownPage * PAGE_SIZE + rows.length;
 
   const clearFilters = () => {
-    setSearchInput('');
-    setSearch('');
+    searchState.clear();
     setClassUuid('');
   };
 
@@ -231,17 +229,12 @@ export function InstructorStudentsPanel({
         }
       >
         <div className='border-border/60 flex flex-col gap-3 border-b px-5 py-3.5 sm:flex-row sm:flex-wrap sm:items-center'>
-          <div className='relative w-full sm:max-w-xs'>
-            <Search className='text-muted-foreground pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2' />
-            <Input
-              type='search'
-              value={searchInput}
-              onChange={event => setSearchInput(event.target.value)}
-              placeholder='Search by student name'
-              aria-label='Search students'
-              className='pl-9'
-            />
-          </div>
+          <SearchQueryInput
+            search={searchState}
+            placeholder='Search by student name'
+            aria-label='Search students'
+            wrapperClassName='w-full sm:max-w-xs'
+          />
           <div className='flex w-full items-center gap-2 sm:w-auto'>
             <Label htmlFor={classSelectId} className='text-muted-foreground shrink-0 font-normal'>
               Class
@@ -268,9 +261,16 @@ export function InstructorStudentsPanel({
           </div>
         </div>
 
+        {searchIssue ? (
+          <SearchNotice
+            issue={searchIssue}
+            onReset={searchState.clear}
+            className='rounded-none border-x-0 border-t-0'
+          />
+        ) : null}
         <AsyncSection
           loading={rosterQuery.isPending}
-          error={rosterQuery.error}
+          error={searchIssue ? null : rosterQuery.error}
           empty={rows.length === 0}
           onRetry={() => void rosterQuery.refetch()}
           errorTitle='Couldn’t load these students'
