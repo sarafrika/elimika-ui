@@ -3343,13 +3343,6 @@ export const zCourse = z
       .describe('**[READ-ONLY]** Indicates if the course is published and discoverable.')
       .readonly()
       .optional(),
-    accepts_new_enrollments: z
-      .boolean()
-      .describe(
-        '**[READ-ONLY]** Indicates if the course is currently accepting new student enrollments.'
-      )
-      .readonly()
-      .optional(),
     is_draft: z
       .boolean()
       .describe('**[READ-ONLY]** Indicates if the course is still in draft mode.')
@@ -3365,15 +3358,22 @@ export const zCourse = z
       .describe('**[READ-ONLY]** Indicates if the course is currently under review.')
       .readonly()
       .optional(),
-    total_duration_display: z
-      .string()
-      .describe('**[READ-ONLY]** Human-readable format of total course duration.')
+    accepts_new_enrollments: z
+      .boolean()
+      .describe(
+        '**[READ-ONLY]** Indicates if the course is currently accepting new student enrollments.'
+      )
       .readonly()
       .optional(),
     category_count: z
       .number()
       .int()
       .describe('**[READ-ONLY]** Number of categories this course belongs to.')
+      .readonly()
+      .optional(),
+    total_duration_display: z
+      .string()
+      .describe('**[READ-ONLY]** Human-readable format of total course duration.')
       .readonly()
       .optional(),
     has_multiple_categories: z
@@ -4056,6 +4056,16 @@ export const zCourseAssessment = z
       )
       .readonly()
       .optional(),
+    assessment_category: z
+      .string()
+      .describe('**[READ-ONLY]** Category classification of the assessment type.')
+      .readonly()
+      .optional(),
+    weight_display: z
+      .string()
+      .describe('**[READ-ONLY]** Human-readable format of the weight percentage.')
+      .readonly()
+      .optional(),
     is_major_assessment: z
       .boolean()
       .describe('**[READ-ONLY]** Indicates if this is a major assessment component.')
@@ -4071,16 +4081,6 @@ export const zCourseAssessment = z
       .describe(
         '**[READ-ONLY]** Human-readable description of how line items are combined for this component.'
       )
-      .readonly()
-      .optional(),
-    assessment_category: z
-      .string()
-      .describe('**[READ-ONLY]** Category classification of the assessment type.')
-      .readonly()
-      .optional(),
-    weight_display: z
-      .string()
-      .describe('**[READ-ONLY]** Human-readable format of the weight percentage.')
       .readonly()
       .optional(),
   })
@@ -5314,16 +5314,16 @@ export const zClassDefinition = z
       )
       .readonly()
       .optional(),
+    duration_formatted: z
+      .string()
+      .describe('**[READ-ONLY]** Human-readable formatted duration.')
+      .readonly()
+      .optional(),
     capacity_info: z
       .string()
       .describe(
         '**[READ-ONLY]** Human-readable capacity information including waitlist availability.'
       )
-      .readonly()
-      .optional(),
-    duration_formatted: z
-      .string()
-      .describe('**[READ-ONLY]** Human-readable formatted duration.')
       .readonly()
       .optional(),
   })
@@ -7543,16 +7543,6 @@ export const zEnrollment = z
       .describe('**[READ-ONLY]** Indicates if the enrollment is still active (not cancelled).')
       .readonly()
       .optional(),
-    can_be_cancelled: z
-      .boolean()
-      .describe('**[READ-ONLY]** Indicates if the enrollment can be cancelled.')
-      .readonly()
-      .optional(),
-    is_attendance_marked: z
-      .boolean()
-      .describe('**[READ-ONLY]** Indicates if attendance has been marked for this enrollment.')
-      .readonly()
-      .optional(),
     did_attend: z
       .boolean()
       .describe('**[READ-ONLY]** Indicates if the student attended the class.')
@@ -7561,6 +7551,16 @@ export const zEnrollment = z
     status_description: z
       .string()
       .describe('**[READ-ONLY]** Human-readable description of the enrollment status.')
+      .readonly()
+      .optional(),
+    is_attendance_marked: z
+      .boolean()
+      .describe('**[READ-ONLY]** Indicates if attendance has been marked for this enrollment.')
+      .readonly()
+      .optional(),
+    can_be_cancelled: z
+      .boolean()
+      .describe('**[READ-ONLY]** Indicates if the enrollment can be cancelled.')
       .readonly()
       .optional(),
   })
@@ -8977,6 +8977,18 @@ export const zAdminCreateUserRequestDto = z.object({
   phone_number: z.string().min(0).max(50).describe('Optional phone number').optional(),
 });
 
+export const zSearchRebuildResponse = z.object({
+  queued: z.array(z.string()).optional(),
+  skipped: z.array(z.string()).optional(),
+});
+
+export const zApiResponseSearchRebuildResponse = z.object({
+  success: z.boolean().optional(),
+  data: zSearchRebuildResponse.optional(),
+  message: z.string().optional(),
+  error: z.unknown().optional(),
+});
+
 /**
  * The decision to apply.
  */
@@ -9511,6 +9523,40 @@ export const zPage = z.object({
   numberOfElements: z.number().int().optional(),
   pageable: zPageableObject.optional(),
   empty: z.boolean().optional(),
+});
+
+export const zGlobalSearchHit = z.object({
+  type: z.string().optional(),
+  uuid: z.string().uuid().optional(),
+  title: z.string().optional(),
+  subtitle: z.string().optional(),
+  image_url: z.string().optional(),
+  highlight: z.string().optional(),
+});
+
+export const zGlobalSearchResponse = z.object({
+  hits: z.array(zGlobalSearchHit).optional(),
+  totals: z.record(z.coerce.bigint()).optional(),
+});
+
+export const zApiResponseGlobalSearchResponse = z.object({
+  success: z.boolean().optional(),
+  data: zGlobalSearchResponse.optional(),
+  message: z.string().optional(),
+  error: z.unknown().optional(),
+});
+
+export const zTypeSearchResponse = z.object({
+  content: z.array(zGlobalSearchHit).optional(),
+  metadata: zPageMetadata.optional(),
+  facets: z.record(z.record(z.coerce.bigint())).optional(),
+});
+
+export const zApiResponseTypeSearchResponse = z.object({
+  success: z.boolean().optional(),
+  data: zTypeSearchResponse.optional(),
+  message: z.string().optional(),
+  error: z.unknown().optional(),
 });
 
 export const zPagedDtoAssessmentRubric = z.object({
@@ -12985,6 +13031,32 @@ export const zPagedDtoAdminUserActivityEvent = z.object({
 export const zApiResponsePagedDtoAdminUserActivityEvent = z.object({
   success: z.boolean().optional(),
   data: zPagedDtoAdminUserActivityEvent.optional(),
+  message: z.string().optional(),
+  error: z.unknown().optional(),
+});
+
+export const zSearchIndexStatusResponse = z.object({
+  index_name: z.string().optional(),
+  module: z.string().optional(),
+  definition_schema_version: z.number().int().optional(),
+  built_schema_version: z.number().int().optional(),
+  status: z.string().optional(),
+  read_enabled: z.boolean().optional(),
+  build_index_name: z.string().optional(),
+  rebuild_checkpoint_id: z.coerce.bigint().optional(),
+  last_built_at: z.string().datetime().optional(),
+  last_reconciled_at: z.string().datetime().optional(),
+  recorded_document_count: z.coerce.bigint().optional(),
+  drift: z.coerce.bigint().optional(),
+  last_error: z.string().optional(),
+  engine_document_count: z.coerce.bigint().optional(),
+  engine_indexing: z.boolean().optional(),
+  engine_error: z.string().optional(),
+});
+
+export const zApiResponseListSearchIndexStatusResponse = z.object({
+  success: z.boolean().optional(),
+  data: z.array(zSearchIndexStatusResponse).optional(),
   message: z.string().optional(),
   error: z.unknown().optional(),
 });
@@ -16519,6 +16591,12 @@ export const zGetAllTrainingProgramsData = z.object({
   body: z.never().optional(),
   path: z.never().optional(),
   query: z.object({
+    q: z
+      .string()
+      .describe(
+        'Optional free-text query over title, member course names, category, creator and description'
+      )
+      .optional(),
     pageable: zPageable,
   }),
 });
@@ -16539,6 +16617,19 @@ export const zCreateTrainingProgramData = z.object({
  */
 export const zCreateTrainingProgramResponse = zTrainingProgram;
 
+export const zUnpublishProgramData = z.object({
+  body: z.never().optional(),
+  path: z.object({
+    uuid: z.string().uuid(),
+  }),
+  query: z.never().optional(),
+});
+
+/**
+ * Program unpublished successfully
+ */
+export const zUnpublishProgramResponse = zApiResponseTrainingProgram;
+
 export const zPublishProgramData = z.object({
   body: z.never().optional(),
   path: z.object({
@@ -16551,6 +16642,19 @@ export const zPublishProgramData = z.object({
  * Program published successfully
  */
 export const zPublishProgramResponse = zApiResponseTrainingProgram;
+
+export const zArchiveProgramData = z.object({
+  body: z.never().optional(),
+  path: z.object({
+    uuid: z.string().uuid(),
+  }),
+  query: z.never().optional(),
+});
+
+/**
+ * Program archived successfully
+ */
+export const zArchiveProgramResponse = zApiResponseTrainingProgram;
 
 export const zListProgramTrainingApplicationsData = z.object({
   body: z.never().optional(),
@@ -17276,6 +17380,7 @@ export const zGetAllInstructorsData = z.object({
   body: z.never().optional(),
   path: z.never().optional(),
   query: z.object({
+    q: z.string().describe('Optional free-text query; see the operation description.').optional(),
     pageable: zPageable,
   }),
 });
@@ -17628,6 +17733,12 @@ export const zGetAllCoursesData = z.object({
   body: z.never().optional(),
   path: z.never().optional(),
   query: z.object({
+    q: z
+      .string()
+      .describe(
+        'Optional free-text query over name, categories, creator, difficulty, description and objectives'
+      )
+      .optional(),
     pageable: zPageable,
   }),
 });
@@ -18691,6 +18802,7 @@ export const zGetAllClassDefinitionsData = z.object({
   body: z.never().optional(),
   path: z.never().optional(),
   query: z.object({
+    q: z.string().describe('Free-text search; omit to list every visible class').optional(),
     pageable: zPageable,
   }),
 });
@@ -18889,6 +19001,7 @@ export const zListJobsData = z.object({
   body: z.never().optional(),
   path: z.never().optional(),
   query: z.object({
+    q: z.string().describe('Free-text search; omit to list every visible job').optional(),
     organisation_uuid: z.string().uuid().optional(),
     course_uuid: z.string().uuid().optional(),
     program_uuid: z.string().uuid().optional(),
@@ -19390,6 +19503,48 @@ export const zCreateAdminUserData = z.object({
  * Admin user created and activation email sent
  */
 export const zCreateAdminUserResponse = zApiResponseUser;
+
+export const zRebuildData = z.object({
+  body: z.never().optional(),
+  path: z.never().optional(),
+  query: z
+    .object({
+      module: z.string().optional(),
+    })
+    .optional(),
+});
+
+/**
+ * OK
+ */
+export const zRebuildResponse = zApiResponseSearchRebuildResponse;
+
+export const zRebuildIndexData = z.object({
+  body: z.never().optional(),
+  path: z.object({
+    index: z.string(),
+  }),
+  query: z.never().optional(),
+});
+
+/**
+ * OK
+ */
+export const zRebuildIndexResponse = zApiResponseSearchRebuildResponse;
+
+export const zSyncDocumentData = z.object({
+  body: z.never().optional(),
+  path: z.object({
+    index: z.string(),
+    uuid: z.string().uuid(),
+  }),
+  query: z.never().optional(),
+});
+
+/**
+ * OK
+ */
+export const zSyncDocumentResponse = zApiResponseSearchRebuildResponse;
 
 export const zModerateProgramData = z.object({
   body: zContentModerationDecisionRequest,
@@ -19925,6 +20080,45 @@ export const zSearchStudentsData = z.object({
  */
 export const zSearchStudentsResponse = zPage;
 
+export const zGlobalSearchData = z.object({
+  body: z.never().optional(),
+  path: z.never().optional(),
+  query: z.object({
+    q: z.string().describe('Query text, at least 2 characters'),
+    types: z
+      .string()
+      .describe('Comma-separated types, e.g. courses,programs; every type when omitted')
+      .optional(),
+    limit: z.number().int().describe('Hits per type, 1-20 (default 5)').optional(),
+  }),
+});
+
+/**
+ * Hits grouped by type
+ */
+export const zGlobalSearchResponse2 = zApiResponseGlobalSearchResponse;
+
+export const zSearchByTypeData = z.object({
+  body: z.never().optional(),
+  path: z.object({
+    type: z.string(),
+  }),
+  query: z
+    .object({
+      q: z.string().optional(),
+      facets: z.string().optional(),
+      sort: z.string().optional(),
+      page: z.number().int().optional(),
+      size: z.number().int().optional(),
+    })
+    .optional(),
+});
+
+/**
+ * A page of hits with facets
+ */
+export const zSearchByTypeResponse = zApiResponseTypeSearchResponse;
+
 export const zValidateMatrixData = z.object({
   body: z.never().optional(),
   path: z.object({
@@ -20103,16 +20297,11 @@ export const zSearchPublicRubricsData = z.object({
   body: z.never().optional(),
   path: z.never().optional(),
   query: z.object({
-    q: z.string().describe('Search term to match in title or description').optional(),
-    type: z.string().describe('Filter by rubric type').optional(),
+    q: z.string().describe('Free-text query, served by the search index').optional(),
+    type: z.string().describe('Exact rubric type, case-insensitive').optional(),
     pageable: zPageable,
   }),
 });
-
-/**
- * OK
- */
-export const zSearchPublicRubricsResponse = zApiResponsePagedDtoAssessmentRubric;
 
 export const zGetPublicRubricsData = z.object({
   body: z.never().optional(),
@@ -20641,6 +20830,10 @@ export const zGetUsersByOrganisationData = z.object({
       ),
   }),
   query: z.object({
+    q: z
+      .string()
+      .describe("Optional free-text name search over the organisation's members")
+      .optional(),
     pageable: zPageable,
   }),
 });
@@ -20854,7 +21047,12 @@ export const zListInstructorStudentsData = z.object({
   }),
   query: z
     .object({
-      search: z.string().describe("Case-insensitive part of the student's name").optional(),
+      search: z
+        .string()
+        .describe(
+          "Free-text match on the student's name, served by the people search index (503 when search is unavailable)"
+        )
+        .optional(),
       class_definition_uuid: z.string().uuid().describe('Only students of this class').optional(),
       page: z.number().int().describe('Zero-based page number').optional().default(0),
       size: z.number().int().describe('Page size, at most 100').optional().default(20),
@@ -21811,15 +22009,21 @@ export const zSearchCoursesResponse = zApiResponsePagedDtoCourse;
 export const zGetCourseRecommendationsData = z.object({
   body: z.never().optional(),
   path: z.never().optional(),
-  query: z.object({
-    user_uuid: z.string().uuid().describe('UUID of the user to recommend for'),
-    limit: z
-      .number()
-      .int()
-      .describe('Maximum number of recommendations to return (default 6, max 50)')
-      .optional()
-      .default(6),
-  }),
+  query: z
+    .object({
+      user_uuid: z
+        .string()
+        .uuid()
+        .describe('UUID of the user to recommend for; defaults to the caller')
+        .optional(),
+      limit: z
+        .number()
+        .int()
+        .describe('Maximum number of recommendations to return (default 6, max 50)')
+        .optional()
+        .default(6),
+    })
+    .optional(),
 });
 
 /**
@@ -21831,6 +22035,12 @@ export const zGetPublishedCoursesData = z.object({
   body: z.never().optional(),
   path: z.never().optional(),
   query: z.object({
+    q: z
+      .string()
+      .describe(
+        'Optional free-text query over name, categories, creator, difficulty, description and objectives'
+      )
+      .optional(),
     pageable: zPageable,
   }),
 });
@@ -22272,7 +22482,11 @@ export const zGetClassDefinitionsForOrganisationData = z.object({
   path: z.object({
     organisationUuid: z.string().uuid().describe('UUID of the organisation'),
   }),
-  query: z.never().optional(),
+  query: z
+    .object({
+      q: z.string().describe('Free-text search; omit to list every visible class').optional(),
+    })
+    .optional(),
 });
 
 /**
@@ -22424,7 +22638,14 @@ export const zGetClassDefinitionsForCourseResponse = zApiResponseListClassDefini
 export const zGetAllActiveClassDefinitionsData = z.object({
   body: z.never().optional(),
   path: z.never().optional(),
-  query: z.never().optional(),
+  query: z
+    .object({
+      q: z
+        .string()
+        .describe('Free-text search; omit to list every visible active class')
+        .optional(),
+    })
+    .optional(),
 });
 
 /**
@@ -22804,6 +23025,17 @@ export const zGetAdminEligibleUsersData = z.object({
  */
 export const zGetAdminEligibleUsersResponse = zApiResponsePagedDtoUser;
 
+export const zListIndexesData = z.object({
+  body: z.never().optional(),
+  path: z.never().optional(),
+  query: z.never().optional(),
+});
+
+/**
+ * OK
+ */
+export const zListIndexesResponse = zApiResponseListSearchIndexStatusResponse;
+
 export const zGetProgramModerationHistoryData = z.object({
   body: z.never().optional(),
   path: z.object({
@@ -22862,6 +23094,7 @@ export const zGetPendingOrganisationsData = z.object({
   body: z.never().optional(),
   path: z.never().optional(),
   query: z.object({
+    q: z.string().describe('Optional free-text search over the pending organisations').optional(),
     pageable: zPageable,
   }),
 });

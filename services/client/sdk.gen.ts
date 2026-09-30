@@ -541,9 +541,15 @@ import type {
   CreateTrainingProgramData,
   CreateTrainingProgramResponses,
   CreateTrainingProgramErrors,
+  UnpublishProgramData,
+  UnpublishProgramResponses,
+  UnpublishProgramErrors,
   PublishProgramData,
   PublishProgramResponses,
   PublishProgramErrors,
+  ArchiveProgramData,
+  ArchiveProgramResponses,
+  ArchiveProgramErrors,
   ListProgramTrainingApplicationsData,
   ListProgramTrainingApplicationsResponses,
   ListProgramTrainingApplicationsErrors,
@@ -1129,6 +1135,15 @@ import type {
   CreateAdminUserData,
   CreateAdminUserResponses,
   CreateAdminUserErrors,
+  RebuildData,
+  RebuildResponses,
+  RebuildErrors,
+  RebuildIndexData,
+  RebuildIndexResponses,
+  RebuildIndexErrors,
+  SyncDocumentData,
+  SyncDocumentResponses,
+  SyncDocumentErrors,
   ModerateProgramData,
   ModerateProgramResponses,
   ModerateProgramErrors,
@@ -1240,6 +1255,12 @@ import type {
   SearchStudentsData,
   SearchStudentsResponses,
   SearchStudentsErrors,
+  GlobalSearchData,
+  GlobalSearchResponses,
+  GlobalSearchErrors,
+  SearchByTypeData,
+  SearchByTypeResponses,
+  SearchByTypeErrors,
   ValidateMatrixData,
   ValidateMatrixResponses,
   ValidateMatrixErrors,
@@ -1280,7 +1301,6 @@ import type {
   GetCourseCreatorRubricStatisticsResponses,
   GetCourseCreatorRubricStatisticsErrors,
   SearchPublicRubricsData,
-  SearchPublicRubricsResponses,
   SearchPublicRubricsErrors,
   GetPublicRubricsData,
   GetPublicRubricsResponses,
@@ -1834,6 +1854,9 @@ import type {
   GetAdminEligibleUsersData,
   GetAdminEligibleUsersResponses,
   GetAdminEligibleUsersErrors,
+  ListIndexesData,
+  ListIndexesResponses,
+  ListIndexesErrors,
   GetProgramModerationHistoryData,
   GetProgramModerationHistoryResponses,
   GetProgramModerationHistoryErrors,
@@ -2049,7 +2072,9 @@ import {
   gradeQuizTextResponseResponseTransformer,
   getAllTrainingProgramsResponseTransformer,
   createTrainingProgramResponseTransformer,
+  unpublishProgramResponseTransformer,
   publishProgramResponseTransformer,
+  archiveProgramResponseTransformer,
   listProgramTrainingApplicationsResponseTransformer,
   submitProgramTrainingApplicationResponseTransformer,
   listProgramTrainingApplicationRateUpdatesResponseTransformer,
@@ -2249,6 +2274,7 @@ import {
   getInstructorScheduleResponseTransformer,
   getStudentBookingsResponseTransformer,
   searchStudentsResponseTransformer,
+  searchByTypeResponseTransformer,
   getPassingScoringLevelsResponseTransformer,
   getHighestScoringLevelResponseTransformer,
   getRubricMatrixResponseTransformer,
@@ -2256,7 +2282,6 @@ import {
   searchAssessmentRubricsResponseTransformer,
   getRubricsByTypeResponseTransformer,
   getRubricsByStatusResponseTransformer,
-  searchPublicRubricsResponseTransformer,
   getPublicRubricsResponseTransformer,
   getPopularRubricsResponseTransformer,
   getGeneralRubricsResponseTransformer,
@@ -2404,6 +2429,7 @@ import {
   getSystemAdminUsersResponseTransformer,
   getOrganizationAdminUsersResponseTransformer,
   getAdminEligibleUsersResponseTransformer,
+  listIndexesResponseTransformer,
   getProgramModerationHistoryResponseTransformer,
   listPendingProgramsResponseTransformer,
   getPendingOrganisationsResponseTransformer,
@@ -3386,7 +3412,7 @@ export const deleteTrainingProgram = <ThrowOnError extends boolean = false>(
 
 /**
  * Get program by UUID
- * Retrieves a complete program profile including computed properties and analytics.
+ * Retrieves a complete program profile including computed properties and analytics. Published-and-approved and archived programs are readable by anyone; a draft, in-review or unapproved program only by platform admins, its author, enrolled learners and approved trainers.
  */
 export const getTrainingProgramByUuid = <ThrowOnError extends boolean = false>(
   options: Options<GetTrainingProgramByUuidData, ThrowOnError>
@@ -6896,7 +6922,7 @@ export const createRule = <ThrowOnError extends boolean = false>(
 
 /**
  * Get all students
- * Fetches a paginated list of students. Guardian contacts, demographic tag and audit fields appear only on the records the caller is related to.
+ * Fetches a paginated list of students. Guardian contacts, demographic tag and audit fields appear only on the records the caller is related to. Results are scoped to learners the caller is related to: a platform admin sees everyone; organisation staff see students of the organisations they staff; instructors see students enrolled on classes they teach; course creators see students enrolled on their courses or programs; guardians see their wards; a student sees themselves; anyone else receives an empty page.
  */
 export const getAllStudents = <ThrowOnError extends boolean = false>(
   options: Options<GetAllStudentsData, ThrowOnError>
@@ -7016,7 +7042,7 @@ export const addMembers = <ThrowOnError extends boolean = false>(
 
 /**
  * Get all assessment rubrics
- * Retrieves a paginated list of all assessment rubrics.
+ * Retrieves a paginated list of assessment rubrics. Non-admin callers see public rubrics plus their own.
  */
 export const getAllAssessmentRubrics = <ThrowOnError extends boolean = false>(
   options: Options<GetAllAssessmentRubricsData, ThrowOnError>
@@ -7646,7 +7672,17 @@ export const gradeQuizTextResponse = <ThrowOnError extends boolean = false>(
 
 /**
  * Get all programs
- * Retrieves paginated list of all training programs with filtering support.
+ * Retrieves paginated list of training programs. Non-admin callers see live programs (published, admin-approved, active) plus the programs they author.
+ * **Free-text search (`q`):** served only by the programs search index. The query is matched
+ * typo-tolerantly and ranked by relevance (unless `sort` names a sortable field: title,
+ * created_date). With `q` the other parameters must be filterable on the index (status,
+ * is_published, admin_approved, active, is_public, course_creator_uuid, category_uuid,
+ * is_free, uuid, created_at; `lifecycle_stage` is accepted as `status`) or the request is a
+ * 400 naming the key; visibility rules still apply. There is no database fallback: with
+ * search or the index's reads off, or the engine down, `q` answers 503 ("Search is
+ * unavailable"). The `_like`, `_startswith` and `_endswith` operators were removed and
+ * answer 400.
+ *
  */
 export const getAllTrainingPrograms = <ThrowOnError extends boolean = false>(
   options: Options<GetAllTrainingProgramsData, ThrowOnError>
@@ -7705,6 +7741,34 @@ export const createTrainingProgram = <ThrowOnError extends boolean = false>(
 };
 
 /**
+ * Unpublish training program
+ * Returns a program to draft and removes it from the catalogue. It stays active while learners are actively enrolled. Restricted to the program's creator and platform admins.
+ */
+export const unpublishProgram = <ThrowOnError extends boolean = false>(
+  options: Options<UnpublishProgramData, ThrowOnError>
+) => {
+  return (options.client ?? _heyApiClient).post<
+    UnpublishProgramResponses,
+    UnpublishProgramErrors,
+    ThrowOnError
+  >({
+    responseTransformer: unpublishProgramResponseTransformer,
+    security: [
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+    ],
+    url: '/api/v1/programs/{uuid}/unpublish',
+    ...options,
+  });
+};
+
+/**
  * Publish training program
  * Publishes a program making it available for enrollment. Restricted to the program's creator and platform admins.
  */
@@ -7728,6 +7792,34 @@ export const publishProgram = <ThrowOnError extends boolean = false>(
       },
     ],
     url: '/api/v1/programs/{uuid}/publish',
+    ...options,
+  });
+};
+
+/**
+ * Archive training program
+ * Archives a program: it leaves the catalogue and becomes inactive but stays readable. Restricted to the program's creator and platform admins.
+ */
+export const archiveProgram = <ThrowOnError extends boolean = false>(
+  options: Options<ArchiveProgramData, ThrowOnError>
+) => {
+  return (options.client ?? _heyApiClient).post<
+    ArchiveProgramResponses,
+    ArchiveProgramErrors,
+    ThrowOnError
+  >({
+    responseTransformer: archiveProgramResponseTransformer,
+    security: [
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+    ],
+    url: '/api/v1/programs/{uuid}/archive',
     ...options,
   });
 };
@@ -9125,7 +9217,18 @@ export const acceptInvitationByToken = <ThrowOnError extends boolean = false>(
 
 /**
  * Get all instructors
- * Fetches a paginated list of instructors.
+ *  Fetches a paginated list of instructors.
+ *
+ * **Free-text search (`q`):** optional, and served only by the instructors search index:
+ * `q` is matched typo-tolerantly against name, headline, skills, experience, location and
+ * bio, and results come back in relevance order (or by `sort` over `full_name`,
+ * `rating_avg`, `review_count`, `created_at`). There is no database fallback: when search
+ * or the index's reads are off, or the engine is down, a request with `q` answers 503
+ * ("Search is unavailable").
+ *
+ * **Visibility:** the same with or without `q`. Platform admins see every instructor;
+ * everyone else sees admin-verified instructors plus their own profile.
+ *
  */
 export const getAllInstructors = <ThrowOnError extends boolean = false>(
   options: Options<GetAllInstructorsData, ThrowOnError>
@@ -9884,6 +9987,17 @@ export const joinWaitlist = <ThrowOnError extends boolean = false>(
 /**
  * Get all courses
  * Retrieves paginated list of all courses with category information and filtering support.
+ * **Free-text search (`q`):** served only by the courses search index. The query is matched
+ * typo-tolerantly and ranked by relevance (unless `sort` names a sortable field: name,
+ * created_date, price, rating_avg, enrolment_count). With `q` the other parameters must be
+ * filterable on the index (status, active, admin_approved, is_public, course_creator_uuid,
+ * category_uuids, difficulty_uuid, is_free, price, uuid, created_at; `lifecycle_stage` and
+ * `is_published` / `is_draft` / `is_archived` / `is_in_review` are accepted as `status`) or the
+ * request is a 400 naming the key; visibility rules still apply. There is no database
+ * fallback: with search or the index's reads off, or the engine down, `q` answers 503
+ * ("Search is unavailable"). The `_like`, `_startswith` and `_endswith` operators were
+ * removed and answer 400.
+ *
  */
 export const getAllCourses = <ThrowOnError extends boolean = false>(
   options: Options<GetAllCoursesData, ThrowOnError>
@@ -12287,7 +12401,7 @@ export const completeCart = <ThrowOnError extends boolean = false>(
 
 /**
  * Get all class definitions
- * instructor_pay is included only for the parties to it, as on every other class read. Sorting by it is rejected with 400 for everyone, parties included: ordering a listing by a figure it does not print would disclose the same figure one comparison at a time.
+ * Platform admins see every class; other callers see active PUBLIC classes plus those of organisations they staff, those they teach and those they are enrolled in. instructor_pay is included only for the parties to it, as on every other class read. Sortable by title, created_date, last_modified_date, default_start_time, default_end_time and the academic and registration period dates; any other sort is rejected with 400, because ordering a listing by a figure it does not print would disclose it one comparison at a time. With q, only classes matching the text are returned, under the same visibility. When search is enabled the match is typo-tolerant over title, course, program, organisation, branch, instructor, location and description, ranked by relevance unless sorted by title, created_date or default_start_time, and pages hold at most 100 classes. With or without search, other query parameters filter on uuid, course_uuid, program_uuid, organisation_uuid, branch_uuid, default_instructor_uuid, category_uuid, is_active, class_visibility, content_approved, location_type, session_format, starts_at, registration_closes_at, sale_price and created_at (field or field_op, op one of eq, noteq, in, notin, gt, gte, lt, lte, between; any other parameter is rejected with 400). q is served only by the classes search index: when search or the index's reads are off, or the engine is down, a request with q answers 503 ("Search is unavailable"); there is no database fallback.
  */
 export const getAllClassDefinitions = <ThrowOnError extends boolean = false>(
   options: Options<GetAllClassDefinitionsData, ThrowOnError>
@@ -12673,7 +12787,7 @@ export const createClassDefinitionForProgramMultipart = <ThrowOnError extends bo
 
 /**
  * List marketplace class jobs
- * instructor_pay is included only for admin-verified instructors, managers of the posting organisation and platform admins; other callers receive the advert without it
+ * Platform admins see every job; staff of the organisation named by organisation_uuid see that organisation's jobs in any status; everyone else sees OPEN jobs only (a non-open status filter returns an empty page). instructor_pay is included only for admin-verified instructors, managers of the posting organisation and platform admins; other callers receive the advert without it. With q, only jobs matching the text are returned, under the same visibility and filters, from the marketplace_jobs search index: the match is typo-tolerant over title, course, program, organisation, branch, location, target groups and description, ranked by relevance unless sorted by created_date or default_start_time, and pages hold at most 100 jobs. There is no database fallback: when search or the index's reads are off, or the engine is down, a request with q answers 503 ("Search is unavailable").
  */
 export const listJobs = <ThrowOnError extends boolean = false>(
   options: Options<ListJobsData, ThrowOnError>
@@ -13719,6 +13833,83 @@ export const createAdminUser = <ThrowOnError extends boolean = false>(
 };
 
 /**
+ * Rebuild many indexes
+ * Rebuilds every index, or only those owned by the given module
+ */
+export const rebuild = <ThrowOnError extends boolean = false>(
+  options?: Options<RebuildData, ThrowOnError>
+) => {
+  return (options?.client ?? _heyApiClient).post<RebuildResponses, RebuildErrors, ThrowOnError>({
+    security: [
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+    ],
+    url: '/api/v1/admin/search/rebuild',
+    ...options,
+  });
+};
+
+/**
+ * Rebuild one index
+ * Blue/green rebuild from the source tables, in the background
+ */
+export const rebuildIndex = <ThrowOnError extends boolean = false>(
+  options: Options<RebuildIndexData, ThrowOnError>
+) => {
+  return (options.client ?? _heyApiClient).post<
+    RebuildIndexResponses,
+    RebuildIndexErrors,
+    ThrowOnError
+  >({
+    security: [
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+    ],
+    url: '/api/v1/admin/search/indexes/{index}/rebuild',
+    ...options,
+  });
+};
+
+/**
+ * Sync one document
+ * Reloads one document from its source and writes or deletes it in the index
+ */
+export const syncDocument = <ThrowOnError extends boolean = false>(
+  options: Options<SyncDocumentData, ThrowOnError>
+) => {
+  return (options.client ?? _heyApiClient).post<
+    SyncDocumentResponses,
+    SyncDocumentErrors,
+    ThrowOnError
+  >({
+    security: [
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+    ],
+    url: '/api/v1/admin/search/indexes/{index}/documents/{uuid}/sync',
+    ...options,
+  });
+};
+
+/**
  * Moderate training program approval
  */
 export const moderateProgram = <ThrowOnError extends boolean = false>(
@@ -14401,6 +14592,8 @@ export const getAllUsers = <ThrowOnError extends boolean = false>(
 /**
  * Search users
  * Fetches a paginated list of users based on optional filters. Supports pagination and sorting. Restricted to platform administrators — callers looking up their own record should use GET /api/v1/users/me.
+ *
+ * `q` - optional free-text search over name, email, username and user number, served only by the people search index: typo-tolerant on names (exact on email, username and user number) and ordered by relevance; other parameters then filter on the index attributes `domains` (`user_domain` is accepted as an alias), `organisation_uuids`, `branch_uuids`, `active`, `is_platform_admin`, `is_org_admin`, `uuid` and `created_at`, and `sort` accepts `full_name` and `created_at`; anything else is a 400. There is no database fallback: with search or the index's reads off, or the engine down, `q` answers 503 ("Search is unavailable"). Without `q` the endpoint behaves exactly as before.
  */
 export const search = <ThrowOnError extends boolean = false>(
   options: Options<SearchData, ThrowOnError>
@@ -14718,7 +14911,7 @@ export const getStudentBookings = <ThrowOnError extends boolean = false>(
 
 /**
  * Search students
- * Search for students based on criteria. Guardian contacts, demographic tag and audit fields appear only on the records the caller is related to.
+ * Search for students based on criteria. A request whose only filters are explicit identifiers (uuid / user_uuid, eq or in, at most 100) is not scoped but is still projected to display identity for unrelated callers; more than 100 identifiers is rejected with 400. Guardian contacts, demographic tag and audit fields appear only on the records the caller is related to. Results are scoped to learners the caller is related to: a platform admin sees everyone; organisation staff see students of the organisations they staff; instructors see students enrolled on classes they teach; course creators see students enrolled on their courses or programs; guardians see their wards; a student sees themselves; anyone else receives an empty page.
  */
 export const searchStudents = <ThrowOnError extends boolean = false>(
   options: Options<SearchStudentsData, ThrowOnError>
@@ -14740,6 +14933,75 @@ export const searchStudents = <ThrowOnError extends boolean = false>(
       },
     ],
     url: '/api/v1/students/search',
+    ...options,
+  });
+};
+
+/**
+ * Global search
+ * Searches every type the caller may see (or those named in types) and returns up to limit hits per type, grouped by type in the order requested, plus the total per type. Types: courses, programs, classes, marketplace_jobs, instructors, organisations, people, rubrics. A type the caller may not see, or whose index is not read-enabled, is skipped silently; an unknown type is a 400. Anonymous callers see public courses, programs, organisations and classes. People are visible to platform admins, and to organisation managers by name within their organisations. Results come from the index without a database round trip, so a change can take a few seconds to show. 503 when search is disabled or unavailable.
+ */
+export const globalSearch = <ThrowOnError extends boolean = false>(
+  options: Options<GlobalSearchData, ThrowOnError>
+) => {
+  return (options.client ?? _heyApiClient).get<
+    GlobalSearchResponses,
+    GlobalSearchErrors,
+    ThrowOnError
+  >({
+    security: [
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+    ],
+    url: '/api/v1/search',
+    ...options,
+  });
+};
+
+/**
+ * Search one type
+ * One page of one type, for a "see all results" view. q is optional (at least 2 characters when present). Other parameters filter in the field_op vocabulary (op one of eq, noteq, in, notin, gt, gte, lt, lte, between) over the type's filterable attributes; facets names filterable attributes to count values of; sort is field[,asc|desc] over sortable attributes. Anything outside those allow-lists is a 400. 403 when the caller may not see the type; 503 when search or the type is not enabled. The filterable and sortable attributes of every type are listed in the filter map below.
+ *
+ * **Filter map** (filters use `field` or `field_op`, op one of eq, noteq, in, notin, gt, gte, lt, lte, between):
+ *
+ * | type | filterable (also valid in `facets`) | sortable |
+ * |---|---|---|
+ * | `classes` | `uuid`, `course_uuid`, `program_uuid`, `organisation_uuid`, `branch_uuid`, `default_instructor_uuid`, `category_uuid`, `is_active`, `class_visibility`, `content_approved`, `location_type`, `session_format`, `starts_at`, `registration_closes_at`, `sale_price`, `created_at` | `starts_at`, `sale_price`, `created_at`, `title` |
+ * | `courses` | `status`, `active`, `admin_approved`, `is_public`, `course_creator_uuid`, `category_uuids`, `difficulty_uuid`, `is_free`, `price`, `uuid`, `created_at` | `name`, `created_at`, `price`, `rating_avg`, `enrolment_count` |
+ * | `instructors` | `admin_verified`, `active`, `skills`, `skill_levels`, `location_name`, `uuid`, `created_at` | `full_name`, `rating_avg`, `review_count`, `created_at` |
+ * | `marketplace_jobs` | `status`, `organisation_uuid`, `branch_uuid`, `course_uuid`, `program_uuid`, `category_uuid`, `location_type`, `session_format`, `starts_at`, `registration_closes_at`, `uuid`, `created_at` | `created_at`, `starts_at` |
+ * | `organisations` | `active`, `admin_verified`, `country`, `uuid`, `created_at` | `name`, `created_at` |
+ * | `people` | `domains`, `organisation_uuids`, `branch_uuids`, `active`, `is_platform_admin`, `is_org_admin`, `uuid`, `created_at` | `full_name`, `created_at` |
+ * | `programs` | `status`, `is_published`, `admin_approved`, `active`, `is_public`, `course_creator_uuid`, `category_uuid`, `is_free`, `uuid`, `created_at` | `title`, `created_at` |
+ * | `rubrics` | `is_public`, `is_active`, `status`, `course_creator_uuid`, `rubric_type`, `usage_count`, `uuid`, `created_at` | `title`, `created_at`, `usage_count` |
+ *
+ */
+export const searchByType = <ThrowOnError extends boolean = false>(
+  options: Options<SearchByTypeData, ThrowOnError>
+) => {
+  return (options.client ?? _heyApiClient).get<
+    SearchByTypeResponses,
+    SearchByTypeErrors,
+    ThrowOnError
+  >({
+    responseTransformer: searchByTypeResponseTransformer,
+    security: [
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+    ],
+    url: '/api/v1/search/{type}',
     ...options,
   });
 };
@@ -14966,7 +15228,9 @@ export const getRubricMatrixView = <ThrowOnError extends boolean = false>(
 
 /**
  * Search for assessment rubrics
- * Searches for assessment rubrics based on a set of filter criteria.
+ * Searches for assessment rubrics based on a set of filter criteria. Non-admin callers see public rubrics plus their own.
+ *
+ * **Free-text search (`q`):** served only by the rubrics search index. `q` is matched typo-tolerantly against title, rubric type and description and ranked by relevance (unless `sort` names a sortable field: title, created_date, usage_count); the other parameters must be filterable on the index (is_public, is_active, status, course_creator_uuid, rubric_type, usage_count, uuid, created_at) or the request is a 400 naming the key, and visibility rules still apply. There is no database fallback: with search or the index's reads off, or the engine down, `q` answers 503 ("Search is unavailable"). The `_like`, `_startswith` and `_endswith` operators were removed and answer 400.
  */
 export const searchAssessmentRubrics = <ThrowOnError extends boolean = false>(
   options: Options<SearchAssessmentRubricsData, ThrowOnError>
@@ -15022,7 +15286,7 @@ export const getRubricsByType = <ThrowOnError extends boolean = false>(
 
 /**
  * Get rubrics by status
- * Retrieves rubrics filtered by their content status (e.g., DRAFT, PUBLISHED, ARCHIVED).
+ * Retrieves rubrics filtered by their content status (e.g., DRAFT, PUBLISHED, ARCHIVED). Non-admin callers only see public rubrics.
  */
 export const getRubricsByStatus = <ThrowOnError extends boolean = false>(
   options: Options<GetRubricsByStatusData, ThrowOnError>
@@ -15104,17 +15368,14 @@ export const getCourseCreatorRubricStatistics = <ThrowOnError extends boolean = 
 
 /**
  * Search public rubrics
- * Searches public rubrics by title, description, and optionally by rubric type.
+ * Searches public, active rubrics.
+ *
+ * `q` is served by the rubrics search index only: it is matched typo-tolerantly against title, rubric type and description and results are ranked by relevance. There is no database fallback - with search or the rubrics index's reads off, or the engine down, a request with `q` answers 503. `type` is an exact, case-insensitive rubric type match; without `q` it is served from the database, newest first.
  */
 export const searchPublicRubrics = <ThrowOnError extends boolean = false>(
   options: Options<SearchPublicRubricsData, ThrowOnError>
 ) => {
-  return (options.client ?? _heyApiClient).get<
-    SearchPublicRubricsResponses,
-    SearchPublicRubricsErrors,
-    ThrowOnError
-  >({
-    responseTransformer: searchPublicRubricsResponseTransformer,
+  return (options.client ?? _heyApiClient).get<unknown, SearchPublicRubricsErrors, ThrowOnError>({
     security: [
       {
         scheme: 'bearer',
@@ -15216,7 +15477,7 @@ export const getGeneralRubrics = <ThrowOnError extends boolean = false>(
 
 /**
  * Get course creator's rubrics
- * Retrieves rubrics defined by a specific course creator, with option to include private rubrics.
+ * Retrieves rubrics defined by a specific course creator, with option to include private rubrics. Private rubrics are only included for that course creator or a platform admin.
  */
 export const getCourseCreatorRubrics = <ThrowOnError extends boolean = false>(
   options: Options<GetCourseCreatorRubricsData, ThrowOnError>
@@ -15512,7 +15773,6 @@ export const getStudentQuizReview = <ThrowOnError extends boolean = false>(
  * Advanced quiz search with flexible criteria and operators.
  *
  * **Common Quiz Search Examples:**
- * - `title_like=midterm` - Quizzes with "midterm" in title
  * - `lessonUuid=uuid` - Quizzes for specific lesson
  * - `status=PUBLISHED` - Only published quizzes
  * - `active=true` - Only active quizzes
@@ -15553,7 +15813,6 @@ export const searchQuizzes = <ThrowOnError extends boolean = false>(
  * - `quizUuid=uuid` - All questions for specific quiz
  * - `questionType=MULTIPLE_CHOICE` - Only multiple choice questions
  * - `points_gte=2` - Questions worth 2+ points
- * - `questionText_like=calculate` - Questions containing "calculate"
  *
  */
 export const searchQuestions = <ThrowOnError extends boolean = false>(
@@ -15705,7 +15964,7 @@ export const getProgramRatingSummary = <ThrowOnError extends boolean = false>(
 
 /**
  * Get program enrollments
- * Retrieves enrollment data for a specific program with completion analytics.
+ * Retrieves enrollment data for a specific program. Platform admins and the program's staff (author or approved trainer) get the named roster; an enrolled learner gets their own rows; anyone else gets an anonymised tally (program and status only).
  */
 export const getProgramEnrollments = <ThrowOnError extends boolean = false>(
   options: Options<GetProgramEnrollmentsData, ThrowOnError>
@@ -15882,15 +16141,13 @@ export const searchProgramTrainingApplications = <ThrowOnError extends boolean =
 
 /**
  * Search training programs
- * Advanced program search with flexible criteria and operators.
+ * Advanced program search with flexible criteria and operators. Non-admin callers only
+ * see live programs (published, admin-approved, active) plus the programs they author.
  *
  * **Common Program Search Examples:**
- * - `title_like=data science` - Programs with titles containing "data science"
  * - `status=PUBLISHED` - Only published programs
  * - `active=true` - Only active programs
  * - `status_in=PUBLISHED,ACTIVE` - Published or active programs
- * - `price_lte=500.00` - Programs priced at $500 or less
- * - `price=null` - Free programs
  * - `courseCreatorUuid=uuid` - Programs by specific course creator
  * - `categoryUuid=uuid` - Programs in specific category
  * - `totalDurationHours_gte=40` - Programs 40+ hours long
@@ -15898,11 +16155,21 @@ export const searchProgramTrainingApplications = <ThrowOnError extends boolean =
  * - `createdDate_gte=2024-01-01T00:00:00` - Programs created after Jan 1, 2024
  *
  * **Advanced Program Queries:**
- * - `status=PUBLISHED&active=true&price_lte=100` - Published, active programs under $100
- * - `title_like=certification&totalDurationHours_gte=50` - Certification programs 50+ hours
+ * - `status=PUBLISHED&active=true` - Published, active programs
  * - `courseCreatorUuid=uuid&status=PUBLISHED` - Published programs by specific course creator
  *
+ * Price is not a search filter; use `GET /programs/free` for free programs.
+ *
  * For complete operator documentation, see the instructor search endpoint.
+ * **Free-text search (`q`):** served only by the programs search index. The query is matched
+ * typo-tolerantly and ranked by relevance (unless `sort` names a sortable field: title,
+ * created_date). With `q` the other parameters must be filterable on the index (status,
+ * is_published, admin_approved, active, is_public, course_creator_uuid, category_uuid,
+ * is_free, uuid, created_at; `lifecycle_stage` is accepted as `status`) or the request is a
+ * 400 naming the key; visibility rules still apply. There is no database fallback: with
+ * search or the index's reads off, or the engine down, `q` answers 503 ("Search is
+ * unavailable"). The `_like`, `_startswith` and `_endswith` operators were removed and
+ * answer 400.
  *
  */
 export const searchTrainingPrograms = <ThrowOnError extends boolean = false>(
@@ -15937,7 +16204,6 @@ export const searchTrainingPrograms = <ThrowOnError extends boolean = false>(
  * - `programUuid=uuid` - All requirements for specific program
  * - `requirementType=PREREQUISITE` - Only prerequisites
  * - `isMandatory=true` - Only mandatory requirements
- * - `requirementText_like=certification` - Requirements mentioning "certification"
  *
  */
 export const searchProgramRequirements = <ThrowOnError extends boolean = false>(
@@ -15994,7 +16260,7 @@ export const getPublishedPrograms = <ThrowOnError extends boolean = false>(
 
 /**
  * Get free programs
- * Retrieves all programs available at no cost.
+ * Retrieves all programs available at no cost (no price, or a price of 0).
  */
 export const getFreePrograms = <ThrowOnError extends boolean = false>(
   options: Options<GetFreeProgramsData, ThrowOnError>
@@ -16022,7 +16288,8 @@ export const getFreePrograms = <ThrowOnError extends boolean = false>(
 
 /**
  * Search program enrollments
- * Search enrollment records across all programs.
+ * Search enrollment records across all programs. Non-admin callers only see rows of programs
+ * they author or are approved to deliver, plus their own rows as a learner.
  *
  * **Common Program Enrollment Search Examples:**
  * - `programUuid=uuid` - All enrollments for specific program
@@ -16178,6 +16445,7 @@ export const getActivePrograms = <ThrowOnError extends boolean = false>(
 
 /**
  * Get users by organisation ID
+ * Pages the organisation's active members. `q` optionally narrows them by name: organisation managers match on full, first and last name only (never email); platform administrators may also match email, username and user number. `q` is served only by the people search index: typo-tolerant and relevance-ordered, and `sort` accepts `full_name` and `created_at`; with search or the index's reads off, or the engine down, it answers 503 ("Search is unavailable"). Without `q` the members are paged from the database.
  */
 export const getUsersByOrganisation = <ThrowOnError extends boolean = false>(
   options: Options<GetUsersByOrganisationData, ThrowOnError>
@@ -16557,7 +16825,7 @@ export const getMonthlySettlements = <ThrowOnError extends boolean = false>(
 /**
  * Search organisations
  * Fetches a paginated list of organisations based on optional filters. Supports pagination and sorting. Available filters include:
- * - `name` - Filter by organisation name (partial match)
+ * - `name` - Filter by organisation name (exact match; use `q` for text search)
  * - `active` - Filter by active status (true/false)
  * - `admin_verified` - Filter by verification status (true/false)
  * - `country` - Filter by country
@@ -16567,6 +16835,8 @@ export const getMonthlySettlements = <ThrowOnError extends boolean = false>(
  * - `/search?admin_verified=true` - Get verified organisations
  * - `/search?admin_verified=false` - Get unverified organisations
  * - `/search?active=true&admin_verified=true` - Get active verified organisations
+ *
+ * `q` - optional free-text search over name, slug, location and description (typo-tolerant, relevance-ordered), served only by the organisations search index: with search or the index's reads off, or the engine down, `q` answers 503 ("Search is unavailable"). With `q`, callers other than platform administrators only find active, verified organisations, and the other parameters filter on `active`, `admin_verified`, `country`, `uuid` and `created_at`; `sort` accepts `name` and `created_at`. Without `q` the endpoint behaves exactly as before.
  */
 export const search2 = <ThrowOnError extends boolean = false>(
   options: Options<Search2Data, ThrowOnError>
@@ -16882,14 +17152,11 @@ export const listInstructorObligations = <ThrowOnError extends boolean = false>(
  *
  * **Common Skills Search Examples:**
  * - `instructorUuid=uuid` - All skills for specific instructor
- * - `skillName_like=java` - Skills containing "java"
  * - `proficiencyLevel=EXPERT` - Expert level skills only
  * - `proficiencyLevel_in=ADVANCED,EXPERT` - Advanced or expert skills
- * - `skillName_startswith=Data` - Skills starting with "Data"
  * - `proficiencyLevel_noteq=BEGINNER` - Non-beginner skills
  *
  * **Skills Analysis Queries:**
- * - `skillName_like=programming&proficiencyLevel_in=ADVANCED,EXPERT` - Advanced programming skills
  * - `createdDate_gte=2024-01-01&proficiencyLevel=EXPERT` - Recently added expert skills
  *
  * **Proficiency Levels:** BEGINNER, INTERMEDIATE, ADVANCED, EXPERT
@@ -16939,11 +17206,9 @@ export const searchSkills = <ThrowOnError extends boolean = false>(
  * - `field_lte=value` - Less than or equal
  * - `createdDate_gte=2024-01-01T00:00:00` - Created after Jan 1, 2024
  *
- * **String Operations:**
- * - `field_like=value` - Contains (case-insensitive)
- * - `field_startswith=value` - Starts with (case-insensitive)
- * - `field_endswith=value` - Ends with (case-insensitive)
- * - `lastName_like=smith` - Last name contains "smith"
+ * **Text search:**
+ * - The `_like`, `_startswith` and `_endswith` operators were removed and answer 400;
+ * free text goes through the `q` parameter where an endpoint offers it.
  *
  * **List Operations:**
  * - `field_in=val1,val2,val3` - Field is in list
@@ -16968,10 +17233,26 @@ export const searchSkills = <ThrowOnError extends boolean = false>(
  * - String, UUID, Boolean (true/false or 1/0), Integer, Long, Double, Float, BigDecimal
  * - Date (YYYY-MM-DD), Timestamp, LocalDateTime (ISO format)
  *
+ * **Free-text search (`q`):**
+ * - `q=python` - Optional. Served only by the instructor search index: `q` is matched
+ * typo-tolerantly against name, headline, skills, experience, location and bio, in
+ * relevance order. Alongside `q` the other keys filter the index and are limited to
+ * `admin_verified`, `active`, `skills`, `skill_levels`, `location_name`, `uuid` and
+ * `created_at` (operators `eq, noteq, in, notin, gt, gte, lt, lte, between`); `sort` is
+ * limited to `full_name`, `rating_avg`, `review_count`, `created_at`. Anything else is a
+ * 400.
+ * - When search is disabled or unavailable, a request with `q` answers 503 ("Search is
+ * unavailable"); there is no database fallback. Without `q` the keys filter the database.
+ *
+ * **Visibility** (the same with or without `q`): platform admins see every instructor.
+ * Everyone else sees admin-verified instructors plus their own profile, except in an exact
+ * identity lookup - a request pinned with `uuid`/`uuid_in` or `user_uuid`/`user_uuid_in` -
+ * which resolves the named instructors whatever their verification state, as
+ * `GET /instructors/{uuid}` does.
+ *
  * **Examples:**
- * - `/search?firstName_like=john&isActive=true&createdDate_gte=2024-01-01T00:00:00`
+ * - `/search?q=pyhton&skill_levels=EXPERT`
  * - `/search?experience_gt=5&status_in=ACTIVE,VERIFIED`
- * - `/search?email_endswith=@company.com&department_noteq=IT`
  *
  */
 export const searchInstructors = <ThrowOnError extends boolean = false>(
@@ -17033,10 +17314,8 @@ export const getOrganisationInstructorSummaries = <ThrowOnError extends boolean 
  * **Common Membership Search Examples:**
  * - `instructorUuid=uuid` - All memberships for specific instructor
  * - `isActive=true` - Active memberships only
- * - `organizationName_like=professional` - Organizations with "professional" in name
  * - `startDate_gte=2023-01-01` - Memberships started in 2023 or later
  * - `endDate=null` - Ongoing memberships (no end date)
- * - `membershipNumber_startswith=PRO` - Numbers starting with "PRO"
  *
  * **Membership Analysis Queries:**
  * - `isActive=true&endDate=null` - Currently active ongoing memberships
@@ -17084,12 +17363,9 @@ export const searchMemberships = <ThrowOnError extends boolean = false>(
  * **Common Experience Search Examples:**
  * - `instructorUuid=uuid` - All experience for specific instructor
  * - `isCurrentPosition=true` - Current positions only
- * - `position_like=manager` - Positions containing "manager"
- * - `organizationName_endswith=Ltd` - Organizations ending with "Ltd"
  * - `yearsOfExperience_gte=5` - 5+ years experience
  * - `startDate_gte=2020-01-01` - Started in 2020 or later
  * - `endDate=null` - Ongoing positions (no end date)
- * - `responsibilities_like=team` - Responsibilities mentioning "team"
  *
  * **Experience Analysis Queries:**
  * - `isCurrentPosition=false&endDate_gte=2023-01-01` - Recent past positions
@@ -17134,8 +17410,6 @@ export const searchExperience = <ThrowOnError extends boolean = false>(
  *
  * **Common Education Search Examples:**
  * - `instructorUuid=uuid` - All education for specific instructor
- * - `qualification_like=degree` - Qualifications containing "degree"
- * - `schoolName_startswith=University` - Schools starting with "University"
  * - `startYear_gte=2015` - Started in 2015 or later
  * - `yearCompleted_gte=2020` - Completed in 2020 or later
  * - `yearCompleted_between=2015,2020` - Completed between 2015-2020
@@ -17185,9 +17459,7 @@ export const searchEducation = <ThrowOnError extends boolean = false>(
  * - `status=PENDING` - Documents with pending status
  * - `status_in=APPROVED,VERIFIED` - Approved or verified documents
  * - `expiryDate_lte=2025-12-31` - Documents expiring by end of 2025
- * - `mimeType_like=pdf` - PDF documents
  * - `fileSizeBytes_gt=1048576` - Files larger than 1MB
- * - `title_startswith=Certificate` - Titles starting with "Certificate"
  * - `createdDate_between=2024-01-01T00:00:00,2024-12-31T23:59:59` - Created in 2024
  *
  * **Special Document Queries:**
@@ -18543,15 +18815,23 @@ export const searchTrainingApplications = <ThrowOnError extends boolean = false>
  * **Category-Specific Search Examples:**
  * - `categoryUuids_in=uuid1,uuid2` - Courses in any of these categories
  * - `categoryUuids_contains=uuid` - Courses containing specific category
- * - `categoryNames_like=programming` - Courses in categories with "programming" in the name
  * - `categoryCount_gte=2` - Courses assigned to 2 or more categories
  * - `hasMultipleCategories=true` - Courses with multiple category assignments
  *
  * **Combined Search Examples:**
  * - `status=PUBLISHED&categoryUuids_in=uuid1,uuid2&price_lte=100` - Published courses under $100 in specific categories
- * - `name_like=java&categoryNames_like=programming&active=true` - Active Java courses in programming categories
  *
  * For complete operator documentation, see the general course search endpoint.
+ * **Free-text search (`q`):** served only by the courses search index. The query is matched
+ * typo-tolerantly and ranked by relevance (unless `sort` names a sortable field: name,
+ * created_date, price, rating_avg, enrolment_count). With `q` the other parameters must be
+ * filterable on the index (status, active, admin_approved, is_public, course_creator_uuid,
+ * category_uuids, difficulty_uuid, is_free, price, uuid, created_at; `lifecycle_stage` and
+ * `is_published` / `is_draft` / `is_archived` / `is_in_review` are accepted as `status`) or the
+ * request is a 400 naming the key; visibility rules still apply. There is no database
+ * fallback: with search or the index's reads off, or the engine down, `q` answers 503
+ * ("Search is unavailable"). The `_like`, `_startswith` and `_endswith` operators were
+ * removed and answer 400.
  *
  */
 export const searchCourses = <ThrowOnError extends boolean = false>(
@@ -18585,11 +18865,13 @@ export const searchCourses = <ThrowOnError extends boolean = false>(
  * excluding courses already taken. Falls back to the most recently published courses
  * when the user has no usable history. Each result carries a short reason.
  *
+ * `user_uuid` defaults to the caller; only a platform admin may request another user's.
+ *
  */
 export const getCourseRecommendations = <ThrowOnError extends boolean = false>(
-  options: Options<GetCourseRecommendationsData, ThrowOnError>
+  options?: Options<GetCourseRecommendationsData, ThrowOnError>
 ) => {
-  return (options.client ?? _heyApiClient).get<
+  return (options?.client ?? _heyApiClient).get<
     GetCourseRecommendationsResponses,
     GetCourseRecommendationsErrors,
     ThrowOnError
@@ -18612,6 +18894,17 @@ export const getCourseRecommendations = <ThrowOnError extends boolean = false>(
 /**
  * Get published courses
  * Retrieves all published courses available for enrollment.
+ * **Free-text search (`q`):** served only by the courses search index. The query is matched
+ * typo-tolerantly and ranked by relevance (unless `sort` names a sortable field: name,
+ * created_date, price, rating_avg, enrolment_count). With `q` the other parameters must be
+ * filterable on the index (status, active, admin_approved, is_public, course_creator_uuid,
+ * category_uuids, difficulty_uuid, is_free, price, uuid, created_at; `lifecycle_stage` and
+ * `is_published` / `is_draft` / `is_archived` / `is_in_review` are accepted as `status`) or the
+ * request is a 400 naming the key; visibility rules still apply. There is no database
+ * fallback: with search or the index's reads off, or the engine down, `q` answers 503
+ * ("Search is unavailable"). The `_like`, `_startswith` and `_endswith` operators were
+ * removed and answer 400.
+ *
  */
 export const getPublishedCourses = <ThrowOnError extends boolean = false>(
   options: Options<GetPublishedCoursesData, ThrowOnError>
@@ -18684,7 +18977,10 @@ export const getCourseMedia = <ThrowOnError extends boolean = false>(
 
 /**
  * Get courses by instructor
- * Retrieves all courses created by a specific instructor.
+ * Retrieves the courses an instructor may deliver: courses authored by the instructor's
+ * user, approved for them personally, approved for an organisation they teach for, or
+ * inside a programme approved on either footing. Limited to the courses the caller may see.
+ *
  */
 export const getCoursesByInstructor = <ThrowOnError extends boolean = false>(
   options: Options<GetCoursesByInstructorData, ThrowOnError>
@@ -18954,11 +19250,9 @@ export const searchCourseCreatorSkills = <ThrowOnError extends boolean = false>(
  * - `field_lte=value` - Less than or equal
  * - `createdDate_gte=2024-01-01T00:00:00` - Created after Jan 1, 2024
  *
- * **String Operations:**
- * - `field_like=value` - Contains (case-insensitive)
- * - `field_startswith=value` - Starts with (case-insensitive)
- * - `field_endswith=value` - Ends with (case-insensitive)
- * - `fullName_like=alice` - Full name contains "alice"
+ * **Text search:**
+ * - The `_like`, `_startswith` and `_endswith` operators were removed and answer 400;
+ * free text goes through the `q` parameter where an endpoint offers it.
  *
  * **Boolean Operations:**
  * - `adminVerified=true` - Only verified course creators
@@ -18972,9 +19266,7 @@ export const searchCourseCreatorSkills = <ThrowOnError extends boolean = false>(
  * - `field_noteq=value` - Not equal to value
  *
  * **Examples:**
- * - `/search?fullName_like=john&adminVerified=true`
  * - `/search?createdDate_gte=2024-01-01T00:00:00`
- * - `/search?professionalHeadline_like=content`
  *
  */
 export const searchCourseCreators = <ThrowOnError extends boolean = false>(
@@ -19146,8 +19438,6 @@ export const searchCourseCreatorCertifications = <ThrowOnError extends boolean =
  * Search content types with filtering options.
  *
  * **Common Content Type Search Examples:**
- * - `name_like=video` - Content types with "video" in name
- * - `mimeTypes_like=image/` - Image content types
  * - `maxFileSizeMb_gte=100` - Large file content types
  *
  */
@@ -19260,10 +19550,12 @@ export const getSubCategories = <ThrowOnError extends boolean = false>(
 
 /**
  * Search categories
- * Search categories with filtering options.
+ * Search categories with relational filters (eq, noteq, in, notin, gt, gte, lt, lte,
+ * between). Categories are not in the search index, so there is no text search by name:
+ * `name_like` and the other `_like`, `_startswith` and `_endswith` operators were removed
+ * and answer 400. List the categories (`GET /config/categories`) and filter them client-side.
  *
  * **Common Category Search Examples:**
- * - `name_like=technology` - Categories with "technology" in name
  * - `parentUuid=null` - Root categories only
  * - `parentUuid=uuid` - Subcategories of specific parent
  * - `isActive=true` - Only active categories
@@ -19408,7 +19700,6 @@ export const getPaymentStatus = <ThrowOnError extends boolean = false>(
  * - `courseUuid=<uuid>` — catalogue entries for a course
  * - `programUuid=<uuid>` — catalogue entries for a training program
  * - `classDefinitionUuid=<uuid>&active=true` — active class-level entries
- * - `variantCode_like=starter` — variant codes containing `starter`
  *
  * Supports all comparison operators accepted by the platform-wide search builder.
  *
@@ -19576,6 +19867,7 @@ export const getEnrollmentsForClass = <ThrowOnError extends boolean = false>(
 
 /**
  * Get class definitions for an organisation
+ * The organisation's staff and platform admins see all of its classes; other callers see only its active PUBLIC classes and the ones they teach or are enrolled in. With q, only classes matching the text are returned, under the same visibility, ranked by relevance (typo-tolerant over title, course, program, organisation, branch, instructor, location and description) by the classes search index only; at most 100 classes are returned. There is no database fallback: when search or the index's reads are off, or the engine is down, a request with q answers 503 ("Search is unavailable").
  */
 export const getClassDefinitionsForOrganisation = <ThrowOnError extends boolean = false>(
   options: Options<GetClassDefinitionsForOrganisationData, ThrowOnError>
@@ -19851,6 +20143,7 @@ export const getClassDefinitionsForCourse = <ThrowOnError extends boolean = fals
 
 /**
  * Get all active class definitions
+ * Platform admins see every active class; other callers see active PUBLIC classes plus active classes those of organisations they staff, those they teach and those they are enrolled in. With q, only classes matching the text are returned, under the same visibility, ranked by relevance (typo-tolerant over title, course, program, organisation, branch, instructor, location and description) by the classes search index only; at most 100 classes are returned. There is no database fallback: when search or the index's reads are off, or the engine is down, a request with q answers 503 ("Search is unavailable").
  */
 export const getAllActiveClassDefinitions = <ThrowOnError extends boolean = false>(
   options?: Options<GetAllActiveClassDefinitionsData, ThrowOnError>
@@ -19912,7 +20205,6 @@ export const verifyCertificate = <ThrowOnError extends boolean = false>(
  * - `templateType=PROGRAM` - Program certificate templates
  * - `status=PUBLISHED` - Published templates
  * - `active=true` - Active templates
- * - `name_like=modern` - Templates with "modern" in name
  *
  */
 export const searchCertificateTemplates = <ThrowOnError extends boolean = false>(
@@ -20007,7 +20299,6 @@ export const getDownloadableCertificates = <ThrowOnError extends boolean = false
  * - `isValid=false` - Only revoked certificates
  * - `finalGrade_gte=85` - Certificates with grade 85%+
  * - `issuedDate_gte=2024-01-01T00:00:00` - Certificates issued from 2024
- * - `certificateNumber_like=CERT-2024` - Certificates from 2024
  *
  * **Certificate Analytics Queries:**
  * - `courseUuid_noteq=null&isValid=true` - Valid course certificates
@@ -20442,7 +20733,6 @@ export const getSubmissionMedia = <ThrowOnError extends boolean = false>(
  * Advanced assignment search with flexible criteria and operators.
  *
  * **Common Assignment Search Examples:**
- * - `title_like=essay` - Assignments with "essay" in title
  * - `lessonUuid=uuid` - Assignments for specific lesson
  * - `is_published=true` - Only published assignments
  * - `dueDate_gte=2024-12-01T00:00:00` - Assignments due from Dec 1, 2024
@@ -20668,7 +20958,7 @@ export const getOrganizationAdminUsers = <ThrowOnError extends boolean = false>(
 
 /**
  * Get users eligible for admin promotion
- * Retrieves a paginated list of users who can be promoted to administrator roles. Excludes users who already have administrative privileges. Supports search by name or email.
+ * Retrieves a paginated list of users who can be promoted to administrator roles. Excludes users who already have administrative privileges. Supports search by name or email: `search` is served only by the people search index (typo-tolerant, relevance-ordered); with search or the index's reads off, or the engine down, it answers 503 ("Search is unavailable"). Without `search` the full eligible list is paged from the database.
  */
 export const getAdminEligibleUsers = <ThrowOnError extends boolean = false>(
   options: Options<GetAdminEligibleUsersData, ThrowOnError>
@@ -20690,6 +20980,34 @@ export const getAdminEligibleUsers = <ThrowOnError extends boolean = false>(
       },
     ],
     url: '/api/v1/admin/users/eligible',
+    ...options,
+  });
+};
+
+/**
+ * List search indexes
+ * Definition, recorded sync state and live engine stats of every index
+ */
+export const listIndexes = <ThrowOnError extends boolean = false>(
+  options?: Options<ListIndexesData, ThrowOnError>
+) => {
+  return (options?.client ?? _heyApiClient).get<
+    ListIndexesResponses,
+    ListIndexesErrors,
+    ThrowOnError
+  >({
+    responseTransformer: listIndexesResponseTransformer,
+    security: [
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+    ],
+    url: '/api/v1/admin/search/indexes',
     ...options,
   });
 };
@@ -20803,7 +21121,7 @@ export const isOrganisationVerified = <ThrowOnError extends boolean = false>(
 
 /**
  * Get pending organisation approvals
- * Retrieves a paginated list of organisations that are awaiting admin verification. Results include organisations where the admin_verified flag is false or not yet set.
+ * Retrieves a paginated list of organisations that are awaiting admin verification. Results include organisations where the admin_verified flag is false or not yet set. `q` optionally narrows the queue: over name, slug, location and description, served only by the organisations search index (503 "Search is unavailable" when search cannot answer).
  */
 export const getPendingOrganisations = <ThrowOnError extends boolean = false>(
   options: Options<GetPendingOrganisationsData, ThrowOnError>

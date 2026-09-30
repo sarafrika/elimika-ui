@@ -1833,11 +1833,11 @@ export type Instructor = {
    */
   location_name?: string | null;
   /**
-   * **[OPTIONAL]** Geographical latitude coordinate of instructor's primary training location. Used for location-based instructor matching and distance calculations.
+   * **[OPTIONAL]** Geographical latitude coordinate of instructor's primary training location. Used for location-based instructor matching and distance calculations. Rounded to 2 decimal places (about 1 km) for anyone other than the profile owner, except a platform admin reading the single profile by UUID.
    */
   latitude?: number | null;
   /**
-   * **[OPTIONAL]** Geographical longitude coordinate of instructor's primary training location. Used for location-based instructor matching and distance calculations.
+   * **[OPTIONAL]** Geographical longitude coordinate of instructor's primary training location. Used for location-based instructor matching and distance calculations. Rounded to 2 decimal places (about 1 km) for anyone other than the profile owner, except a platform admin reading the single profile by UUID.
    */
   longitude?: number | null;
   /**
@@ -2598,10 +2598,6 @@ export type Course = {
    */
   readonly is_published?: boolean;
   /**
-   * **[READ-ONLY]** Indicates if the course is currently accepting new student enrollments.
-   */
-  readonly accepts_new_enrollments?: boolean;
-  /**
    * **[READ-ONLY]** Indicates if the course is still in draft mode.
    */
   readonly is_draft?: boolean;
@@ -2614,13 +2610,17 @@ export type Course = {
    */
   readonly is_in_review?: boolean;
   /**
-   * **[READ-ONLY]** Human-readable format of total course duration.
+   * **[READ-ONLY]** Indicates if the course is currently accepting new student enrollments.
    */
-  readonly total_duration_display?: string;
+  readonly accepts_new_enrollments?: boolean;
   /**
    * **[READ-ONLY]** Number of categories this course belongs to.
    */
   readonly category_count?: number;
+  /**
+   * **[READ-ONLY]** Human-readable format of total course duration.
+   */
+  readonly total_duration_display?: string;
   /**
    * **[READ-ONLY]** Indicates if the course belongs to multiple categories.
    */
@@ -3182,6 +3182,14 @@ export type CourseAssessment = {
    */
   readonly updated_by?: string;
   /**
+   * **[READ-ONLY]** Category classification of the assessment type.
+   */
+  readonly assessment_category?: string;
+  /**
+   * **[READ-ONLY]** Human-readable format of the weight percentage.
+   */
+  readonly weight_display?: string;
+  /**
    * **[READ-ONLY]** Indicates if this is a major assessment component.
    */
   readonly is_major_assessment?: boolean;
@@ -3193,14 +3201,6 @@ export type CourseAssessment = {
    * **[READ-ONLY]** Human-readable description of how line items are combined for this component.
    */
   readonly aggregation_strategy_display?: string;
-  /**
-   * **[READ-ONLY]** Category classification of the assessment type.
-   */
-  readonly assessment_category?: string;
-  /**
-   * **[READ-ONLY]** Human-readable format of the weight percentage.
-   */
-  readonly weight_display?: string;
 };
 
 export type ApiResponseCourseAssessment = {
@@ -3330,11 +3330,11 @@ export type CourseCreator = {
    */
   location_name?: string | null;
   /**
-   * **[OPTIONAL]** Geographical latitude of the course creator's primary location.
+   * **[OPTIONAL]** Geographical latitude of the course creator's primary location. Rounded to 2 decimal places (about 1 km) for anyone other than the profile owner, except a platform admin reading the single profile by UUID.
    */
   latitude?: number | null;
   /**
-   * **[OPTIONAL]** Geographical longitude of the course creator's primary location.
+   * **[OPTIONAL]** Geographical longitude of the course creator's primary location. Rounded to 2 decimal places (about 1 km) for anyone other than the profile owner, except a platform admin reading the single profile by UUID.
    */
   longitude?: number | null;
   /**
@@ -4206,13 +4206,13 @@ export type ClassDefinition = {
    */
   readonly duration_minutes?: bigint;
   /**
-   * **[READ-ONLY]** Human-readable capacity information including waitlist availability.
-   */
-  readonly capacity_info?: string;
-  /**
    * **[READ-ONLY]** Human-readable formatted duration.
    */
   readonly duration_formatted?: string;
+  /**
+   * **[READ-ONLY]** Human-readable capacity information including waitlist availability.
+   */
+  readonly capacity_info?: string;
 };
 
 /**
@@ -6495,14 +6495,6 @@ export type Enrollment = {
    */
   readonly is_active?: boolean;
   /**
-   * **[READ-ONLY]** Indicates if the enrollment can be cancelled.
-   */
-  readonly can_be_cancelled?: boolean;
-  /**
-   * **[READ-ONLY]** Indicates if attendance has been marked for this enrollment.
-   */
-  readonly is_attendance_marked?: boolean;
-  /**
    * **[READ-ONLY]** Indicates if the student attended the class.
    */
   readonly did_attend?: boolean;
@@ -6510,6 +6502,14 @@ export type Enrollment = {
    * **[READ-ONLY]** Human-readable description of the enrollment status.
    */
   readonly status_description?: string;
+  /**
+   * **[READ-ONLY]** Indicates if attendance has been marked for this enrollment.
+   */
+  readonly is_attendance_marked?: boolean;
+  /**
+   * **[READ-ONLY]** Indicates if the enrollment can be cancelled.
+   */
+  readonly can_be_cancelled?: boolean;
 };
 
 export type ApiResponse = {
@@ -7950,6 +7950,18 @@ export type AdminCreateUserRequestDto = {
   phone_number?: string;
 };
 
+export type ApiResponseSearchRebuildResponse = {
+  success?: boolean;
+  data?: SearchRebuildResponse;
+  message?: string;
+  error?: unknown;
+};
+
+export type SearchRebuildResponse = {
+  queued?: Array<string>;
+  skipped?: Array<string>;
+};
+
 /**
  * Payload for a moderation decision on a course or training program.
  *
@@ -8440,6 +8452,46 @@ export type SortObject = {
   empty?: boolean;
   sorted?: boolean;
   unsorted?: boolean;
+};
+
+export type ApiResponseGlobalSearchResponse = {
+  success?: boolean;
+  data?: GlobalSearchResponse;
+  message?: string;
+  error?: unknown;
+};
+
+export type GlobalSearchHit = {
+  type?: string;
+  uuid?: string;
+  title?: string;
+  subtitle?: string;
+  image_url?: string;
+  highlight?: string;
+};
+
+export type GlobalSearchResponse = {
+  hits?: Array<GlobalSearchHit>;
+  totals?: {
+    [key: string]: bigint;
+  };
+};
+
+export type ApiResponseTypeSearchResponse = {
+  success?: boolean;
+  data?: TypeSearchResponse;
+  message?: string;
+  error?: unknown;
+};
+
+export type TypeSearchResponse = {
+  content?: Array<GlobalSearchHit>;
+  metadata?: PageMetadata;
+  facets?: {
+    [key: string]: {
+      [key: string]: bigint;
+    };
+  };
 };
 
 export type ApiResponsePagedDtoAssessmentRubric = {
@@ -11977,6 +12029,32 @@ export type PagedDtoAdminUserActivityEvent = {
   content?: Array<AdminUserActivityEvent>;
   metadata?: PageMetadata;
   links?: PageLinks;
+};
+
+export type ApiResponseListSearchIndexStatusResponse = {
+  success?: boolean;
+  data?: Array<SearchIndexStatusResponse>;
+  message?: string;
+  error?: unknown;
+};
+
+export type SearchIndexStatusResponse = {
+  index_name?: string;
+  module?: string;
+  definition_schema_version?: number;
+  built_schema_version?: number;
+  status?: string;
+  read_enabled?: boolean;
+  build_index_name?: string;
+  rebuild_checkpoint_id?: bigint;
+  last_built_at?: Date;
+  last_reconciled_at?: Date;
+  recorded_document_count?: bigint;
+  drift?: bigint;
+  last_error?: string;
+  engine_document_count?: bigint;
+  engine_indexing?: boolean;
+  engine_error?: string;
 };
 
 export type ApiResponsePagedDtoContentModerationHistory = {
@@ -16120,7 +16198,7 @@ export type GetTrainingProgramByUuidData = {
 
 export type GetTrainingProgramByUuidErrors = {
   /**
-   * Program not found
+   * Program not found or not visible to the caller
    */
   404: unknown;
   /**
@@ -20997,6 +21075,10 @@ export type GetAllTrainingProgramsData = {
   body?: never;
   path?: never;
   query: {
+    /**
+     * Optional free-text query over title, member course names, category, creator and description
+     */
+    q?: string;
     pageable: Pageable;
   };
   url: '/api/v1/programs';
@@ -21061,6 +21143,41 @@ export type CreateTrainingProgramResponses = {
 export type CreateTrainingProgramResponse =
   CreateTrainingProgramResponses[keyof CreateTrainingProgramResponses];
 
+export type UnpublishProgramData = {
+  body?: never;
+  path: {
+    uuid: string;
+  };
+  query?: never;
+  url: '/api/v1/programs/{uuid}/unpublish';
+};
+
+export type UnpublishProgramErrors = {
+  /**
+   * Caller does not own the program
+   */
+  403: ApiResponseTrainingProgram;
+  /**
+   * Not Found
+   */
+  404: ResponseDtoVoid;
+  /**
+   * Internal Server Error
+   */
+  500: ResponseDtoVoid;
+};
+
+export type UnpublishProgramError = UnpublishProgramErrors[keyof UnpublishProgramErrors];
+
+export type UnpublishProgramResponses = {
+  /**
+   * Program unpublished successfully
+   */
+  200: ApiResponseTrainingProgram;
+};
+
+export type UnpublishProgramResponse = UnpublishProgramResponses[keyof UnpublishProgramResponses];
+
 export type PublishProgramData = {
   body?: never;
   path: {
@@ -21099,6 +21216,41 @@ export type PublishProgramResponses = {
 };
 
 export type PublishProgramResponse = PublishProgramResponses[keyof PublishProgramResponses];
+
+export type ArchiveProgramData = {
+  body?: never;
+  path: {
+    uuid: string;
+  };
+  query?: never;
+  url: '/api/v1/programs/{uuid}/archive';
+};
+
+export type ArchiveProgramErrors = {
+  /**
+   * Caller does not own the program
+   */
+  403: ApiResponseTrainingProgram;
+  /**
+   * Not Found
+   */
+  404: ResponseDtoVoid;
+  /**
+   * Internal Server Error
+   */
+  500: ResponseDtoVoid;
+};
+
+export type ArchiveProgramError = ArchiveProgramErrors[keyof ArchiveProgramErrors];
+
+export type ArchiveProgramResponses = {
+  /**
+   * Program archived successfully
+   */
+  200: ApiResponseTrainingProgram;
+};
+
+export type ArchiveProgramResponse = ArchiveProgramResponses[keyof ArchiveProgramResponses];
 
 export type ListProgramTrainingApplicationsData = {
   body?: never;
@@ -22797,6 +22949,10 @@ export type GetAllInstructorsData = {
   body?: never;
   path?: never;
   query: {
+    /**
+     * Optional free-text query; see the operation description.
+     */
+    q?: string;
     pageable: Pageable;
   };
   url: '/api/v1/instructors';
@@ -23657,6 +23813,10 @@ export type GetAllCoursesData = {
   body?: never;
   path?: never;
   query: {
+    /**
+     * Optional free-text query over name, categories, creator, difficulty, description and objectives
+     */
+    q?: string;
     pageable: Pageable;
   };
   url: '/api/v1/courses';
@@ -26232,6 +26392,10 @@ export type GetAllClassDefinitionsData = {
   body?: never;
   path?: never;
   query: {
+    /**
+     * Free-text search; omit to list every visible class
+     */
+    q?: string;
     pageable: Pageable;
   };
   url: '/api/v1/classes';
@@ -26239,7 +26403,7 @@ export type GetAllClassDefinitionsData = {
 
 export type GetAllClassDefinitionsErrors = {
   /**
-   * Sort names a field the listing withholds
+   * Sort names a property outside the allow-list, or a search filter names an unsupported field
    */
   400: ApiResponsePagedDtoClassDefinitionResponse;
   /**
@@ -26742,6 +26906,10 @@ export type ListJobsData = {
   body?: never;
   path?: never;
   query: {
+    /**
+     * Free-text search; omit to list every visible job
+     */
+    q?: string;
     organisation_uuid?: string;
     course_uuid?: string;
     program_uuid?: string;
@@ -27945,6 +28113,100 @@ export type CreateAdminUserResponses = {
 };
 
 export type CreateAdminUserResponse = CreateAdminUserResponses[keyof CreateAdminUserResponses];
+
+export type RebuildData = {
+  body?: never;
+  path?: never;
+  query?: {
+    module?: string;
+  };
+  url: '/api/v1/admin/search/rebuild';
+};
+
+export type RebuildErrors = {
+  /**
+   * Not Found
+   */
+  404: ResponseDtoVoid;
+  /**
+   * Internal Server Error
+   */
+  500: ResponseDtoVoid;
+};
+
+export type RebuildError = RebuildErrors[keyof RebuildErrors];
+
+export type RebuildResponses = {
+  /**
+   * OK
+   */
+  200: ApiResponseSearchRebuildResponse;
+};
+
+export type RebuildResponse = RebuildResponses[keyof RebuildResponses];
+
+export type RebuildIndexData = {
+  body?: never;
+  path: {
+    index: string;
+  };
+  query?: never;
+  url: '/api/v1/admin/search/indexes/{index}/rebuild';
+};
+
+export type RebuildIndexErrors = {
+  /**
+   * Not Found
+   */
+  404: ResponseDtoVoid;
+  /**
+   * Internal Server Error
+   */
+  500: ResponseDtoVoid;
+};
+
+export type RebuildIndexError = RebuildIndexErrors[keyof RebuildIndexErrors];
+
+export type RebuildIndexResponses = {
+  /**
+   * OK
+   */
+  200: ApiResponseSearchRebuildResponse;
+};
+
+export type RebuildIndexResponse = RebuildIndexResponses[keyof RebuildIndexResponses];
+
+export type SyncDocumentData = {
+  body?: never;
+  path: {
+    index: string;
+    uuid: string;
+  };
+  query?: never;
+  url: '/api/v1/admin/search/indexes/{index}/documents/{uuid}/sync';
+};
+
+export type SyncDocumentErrors = {
+  /**
+   * Not Found
+   */
+  404: ResponseDtoVoid;
+  /**
+   * Internal Server Error
+   */
+  500: ResponseDtoVoid;
+};
+
+export type SyncDocumentError = SyncDocumentErrors[keyof SyncDocumentErrors];
+
+export type SyncDocumentResponses = {
+  /**
+   * OK
+   */
+  200: ApiResponseSearchRebuildResponse;
+};
+
+export type SyncDocumentResponse = SyncDocumentResponses[keyof SyncDocumentResponses];
 
 export type ModerateProgramData = {
   body: ContentModerationDecisionRequest;
@@ -29360,6 +29622,105 @@ export type SearchStudentsResponses = {
 
 export type SearchStudentsResponse = SearchStudentsResponses[keyof SearchStudentsResponses];
 
+export type GlobalSearchData = {
+  body?: never;
+  path?: never;
+  query: {
+    /**
+     * Query text, at least 2 characters
+     */
+    q: string;
+    /**
+     * Comma-separated types, e.g. courses,programs; every type when omitted
+     */
+    types?: string;
+    /**
+     * Hits per type, 1-20 (default 5)
+     */
+    limit?: number;
+  };
+  url: '/api/v1/search';
+};
+
+export type GlobalSearchErrors = {
+  /**
+   * q shorter than 2 characters, limit outside 1-20, or an unknown type
+   */
+  400: ApiResponseGlobalSearchResponse;
+  /**
+   * Not Found
+   */
+  404: ResponseDtoVoid;
+  /**
+   * Internal Server Error
+   */
+  500: ResponseDtoVoid;
+  /**
+   * Search is disabled or unavailable
+   */
+  503: ApiResponseGlobalSearchResponse;
+};
+
+export type GlobalSearchError = GlobalSearchErrors[keyof GlobalSearchErrors];
+
+export type GlobalSearchResponses = {
+  /**
+   * Hits grouped by type
+   */
+  200: ApiResponseGlobalSearchResponse;
+};
+
+export type GlobalSearchResponse2 = GlobalSearchResponses[keyof GlobalSearchResponses];
+
+export type SearchByTypeData = {
+  body?: never;
+  path: {
+    type: string;
+  };
+  query?: {
+    q?: string;
+    facets?: string;
+    sort?: string;
+    page?: number;
+    size?: number;
+  };
+  url: '/api/v1/search/{type}';
+};
+
+export type SearchByTypeErrors = {
+  /**
+   * Unknown type, filter, facet or sort
+   */
+  400: ApiResponseTypeSearchResponse;
+  /**
+   * The caller may not search this type
+   */
+  403: ApiResponseTypeSearchResponse;
+  /**
+   * Not Found
+   */
+  404: ResponseDtoVoid;
+  /**
+   * Internal Server Error
+   */
+  500: ResponseDtoVoid;
+  /**
+   * Search is disabled or unavailable
+   */
+  503: ApiResponseTypeSearchResponse;
+};
+
+export type SearchByTypeError = SearchByTypeErrors[keyof SearchByTypeErrors];
+
+export type SearchByTypeResponses = {
+  /**
+   * A page of hits with facets
+   */
+  200: ApiResponseTypeSearchResponse;
+};
+
+export type SearchByTypeResponse = SearchByTypeResponses[keyof SearchByTypeResponses];
+
 export type ValidateMatrixData = {
   body?: never;
   path: {
@@ -29816,11 +30177,11 @@ export type SearchPublicRubricsData = {
   path?: never;
   query: {
     /**
-     * Search term to match in title or description
+     * Free-text query, served by the search index
      */
     q?: string;
     /**
-     * Filter by rubric type
+     * Exact rubric type, case-insensitive
      */
     type?: string;
     pageable: Pageable;
@@ -29837,19 +30198,13 @@ export type SearchPublicRubricsErrors = {
    * Internal Server Error
    */
   500: ResponseDtoVoid;
+  /**
+   * q was sent and search is unavailable
+   */
+  503: ApiResponsePagedDtoAssessmentRubric;
 };
 
 export type SearchPublicRubricsError = SearchPublicRubricsErrors[keyof SearchPublicRubricsErrors];
-
-export type SearchPublicRubricsResponses = {
-  /**
-   * OK
-   */
-  200: ApiResponsePagedDtoAssessmentRubric;
-};
-
-export type SearchPublicRubricsResponse =
-  SearchPublicRubricsResponses[keyof SearchPublicRubricsResponses];
 
 export type GetPublicRubricsData = {
   body?: never;
@@ -31083,6 +31438,10 @@ export type GetUsersByOrganisationData = {
     uuid: string;
   };
   query: {
+    /**
+     * Optional free-text name search over the organisation's members
+     */
+    q?: string;
     pageable: Pageable;
   };
   url: '/api/v1/organisations/{uuid}/users';
@@ -31500,7 +31859,7 @@ export type ListInstructorStudentsData = {
   };
   query?: {
     /**
-     * Case-insensitive part of the student's name
+     * Free-text match on the student's name, served by the people search index (503 when search is unavailable)
      */
     search?: string;
     /**
@@ -33975,11 +34334,11 @@ export type SearchCoursesResponse = SearchCoursesResponses[keyof SearchCoursesRe
 export type GetCourseRecommendationsData = {
   body?: never;
   path?: never;
-  query: {
+  query?: {
     /**
-     * UUID of the user to recommend for
+     * UUID of the user to recommend for; defaults to the caller
      */
-    user_uuid: string;
+    user_uuid?: string;
     /**
      * Maximum number of recommendations to return (default 6, max 50)
      */
@@ -33989,6 +34348,10 @@ export type GetCourseRecommendationsData = {
 };
 
 export type GetCourseRecommendationsErrors = {
+  /**
+   * Requested another user's recommendations
+   */
+  403: ApiResponseListRecommendedCourse;
   /**
    * Not Found
    */
@@ -34016,6 +34379,10 @@ export type GetPublishedCoursesData = {
   body?: never;
   path?: never;
   query: {
+    /**
+     * Optional free-text query over name, categories, creator, difficulty, description and objectives
+     */
+    q?: string;
     pageable: Pageable;
   };
   url: '/api/v1/courses/published';
@@ -35120,7 +35487,12 @@ export type GetClassDefinitionsForOrganisationData = {
      */
     organisationUuid: string;
   };
-  query?: never;
+  query?: {
+    /**
+     * Free-text search; omit to list every visible class
+     */
+    q?: string;
+  };
   url: '/api/v1/classes/organisation/{organisationUuid}';
 };
 
@@ -35473,7 +35845,12 @@ export type GetClassDefinitionsForCourseResponse =
 export type GetAllActiveClassDefinitionsData = {
   body?: never;
   path?: never;
-  query?: never;
+  query?: {
+    /**
+     * Free-text search; omit to list every visible active class
+     */
+    q?: string;
+  };
   url: '/api/v1/classes/active';
 };
 
@@ -36468,6 +36845,35 @@ export type GetAdminEligibleUsersResponses = {
 export type GetAdminEligibleUsersResponse =
   GetAdminEligibleUsersResponses[keyof GetAdminEligibleUsersResponses];
 
+export type ListIndexesData = {
+  body?: never;
+  path?: never;
+  query?: never;
+  url: '/api/v1/admin/search/indexes';
+};
+
+export type ListIndexesErrors = {
+  /**
+   * Not Found
+   */
+  404: ResponseDtoVoid;
+  /**
+   * Internal Server Error
+   */
+  500: ResponseDtoVoid;
+};
+
+export type ListIndexesError = ListIndexesErrors[keyof ListIndexesErrors];
+
+export type ListIndexesResponses = {
+  /**
+   * OK
+   */
+  200: ApiResponseListSearchIndexStatusResponse;
+};
+
+export type ListIndexesResponse = ListIndexesResponses[keyof ListIndexesResponses];
+
 export type GetProgramModerationHistoryData = {
   body?: never;
   path: {
@@ -36608,6 +37014,10 @@ export type GetPendingOrganisationsData = {
   body?: never;
   path?: never;
   query: {
+    /**
+     * Optional free-text search over the pending organisations
+     */
+    q?: string;
     pageable: Pageable;
   };
   url: '/api/v1/admin/organisations/pending';

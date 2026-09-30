@@ -3583,7 +3583,7 @@ export const InstructorSchema = {
     latitude: {
       type: ['number', 'null'],
       description:
-        "**[OPTIONAL]** Geographical latitude coordinate of instructor's primary training location. Used for location-based instructor matching and distance calculations.",
+        "**[OPTIONAL]** Geographical latitude coordinate of instructor's primary training location. Used for location-based instructor matching and distance calculations. Rounded to 2 decimal places (about 1 km) for anyone other than the profile owner, except a platform admin reading the single profile by UUID.",
       example: -1.2921,
       maximum: 90,
       minimum: -90,
@@ -3591,7 +3591,7 @@ export const InstructorSchema = {
     longitude: {
       type: ['number', 'null'],
       description:
-        "**[OPTIONAL]** Geographical longitude coordinate of instructor's primary training location. Used for location-based instructor matching and distance calculations.",
+        "**[OPTIONAL]** Geographical longitude coordinate of instructor's primary training location. Used for location-based instructor matching and distance calculations. Rounded to 2 decimal places (about 1 km) for anyone other than the profile owner, except a platform admin reading the single profile by UUID.",
       example: 36.8219,
       maximum: 180,
       minimum: -180,
@@ -5180,13 +5180,6 @@ export const CourseSchema = {
       example: true,
       readOnly: true,
     },
-    accepts_new_enrollments: {
-      type: 'boolean',
-      description:
-        '**[READ-ONLY]** Indicates if the course is currently accepting new student enrollments.',
-      example: true,
-      readOnly: true,
-    },
     is_draft: {
       type: 'boolean',
       description: '**[READ-ONLY]** Indicates if the course is still in draft mode.',
@@ -5205,10 +5198,11 @@ export const CourseSchema = {
       example: false,
       readOnly: true,
     },
-    total_duration_display: {
-      type: 'string',
-      description: '**[READ-ONLY]** Human-readable format of total course duration.',
-      example: '40 hours 30 minutes',
+    accepts_new_enrollments: {
+      type: 'boolean',
+      description:
+        '**[READ-ONLY]** Indicates if the course is currently accepting new student enrollments.',
+      example: true,
       readOnly: true,
     },
     category_count: {
@@ -5216,6 +5210,12 @@ export const CourseSchema = {
       format: 'int32',
       description: '**[READ-ONLY]** Number of categories this course belongs to.',
       example: 2,
+      readOnly: true,
+    },
+    total_duration_display: {
+      type: 'string',
+      description: '**[READ-ONLY]** Human-readable format of total course duration.',
+      example: '40 hours 30 minutes',
       readOnly: true,
     },
     has_multiple_categories: {
@@ -6342,6 +6342,18 @@ export const CourseAssessmentSchema = {
       example: 'instructor@sarafrika.com',
       readOnly: true,
     },
+    assessment_category: {
+      type: 'string',
+      description: '**[READ-ONLY]** Category classification of the assessment type.',
+      example: 'Participation Component',
+      readOnly: true,
+    },
+    weight_display: {
+      type: 'string',
+      description: '**[READ-ONLY]** Human-readable format of the weight percentage.',
+      example: '20% of final grade',
+      readOnly: true,
+    },
     is_major_assessment: {
       type: 'boolean',
       description: '**[READ-ONLY]** Indicates if this is a major assessment component.',
@@ -6359,18 +6371,6 @@ export const CourseAssessmentSchema = {
       description:
         '**[READ-ONLY]** Human-readable description of how line items are combined for this component.',
       example: 'Weighted line items',
-      readOnly: true,
-    },
-    assessment_category: {
-      type: 'string',
-      description: '**[READ-ONLY]** Category classification of the assessment type.',
-      example: 'Participation Component',
-      readOnly: true,
-    },
-    weight_display: {
-      type: 'string',
-      description: '**[READ-ONLY]** Human-readable format of the weight percentage.',
-      example: '20% of final grade',
       readOnly: true,
     },
   },
@@ -6775,13 +6775,14 @@ export const CourseCreatorSchema = {
     },
     latitude: {
       type: ['number', 'null'],
-      description: "**[OPTIONAL]** Geographical latitude of the course creator's primary location.",
+      description:
+        "**[OPTIONAL]** Geographical latitude of the course creator's primary location. Rounded to 2 decimal places (about 1 km) for anyone other than the profile owner, except a platform admin reading the single profile by UUID.",
       example: -1.2921,
     },
     longitude: {
       type: ['number', 'null'],
       description:
-        "**[OPTIONAL]** Geographical longitude of the course creator's primary location.",
+        "**[OPTIONAL]** Geographical longitude of the course creator's primary location. Rounded to 2 decimal places (about 1 km) for anyone other than the profile owner, except a platform admin reading the single profile by UUID.",
       example: 36.8219,
     },
     bio: {
@@ -8686,17 +8687,17 @@ conflict_resolution per template:
       example: 90,
       readOnly: true,
     },
+    duration_formatted: {
+      type: 'string',
+      description: '**[READ-ONLY]** Human-readable formatted duration.',
+      example: '1h 30m',
+      readOnly: true,
+    },
     capacity_info: {
       type: 'string',
       description:
         '**[READ-ONLY]** Human-readable capacity information including waitlist availability.',
       example: 'Max 25 participants (waitlist enabled)',
-      readOnly: true,
-    },
-    duration_formatted: {
-      type: 'string',
-      description: '**[READ-ONLY]** Human-readable formatted duration.',
-      example: '1h 30m',
       readOnly: true,
     },
   },
@@ -12769,18 +12770,6 @@ export const EnrollmentSchema = {
       example: true,
       readOnly: true,
     },
-    can_be_cancelled: {
-      type: 'boolean',
-      description: '**[READ-ONLY]** Indicates if the enrollment can be cancelled.',
-      example: true,
-      readOnly: true,
-    },
-    is_attendance_marked: {
-      type: 'boolean',
-      description: '**[READ-ONLY]** Indicates if attendance has been marked for this enrollment.',
-      example: false,
-      readOnly: true,
-    },
     did_attend: {
       type: 'boolean',
       description: '**[READ-ONLY]** Indicates if the student attended the class.',
@@ -12791,6 +12780,18 @@ export const EnrollmentSchema = {
       type: 'string',
       description: '**[READ-ONLY]** Human-readable description of the enrollment status.',
       example: 'Student is enrolled in the class',
+      readOnly: true,
+    },
+    is_attendance_marked: {
+      type: 'boolean',
+      description: '**[READ-ONLY]** Indicates if attendance has been marked for this enrollment.',
+      example: false,
+      readOnly: true,
+    },
+    can_be_cancelled: {
+      type: 'boolean',
+      description: '**[READ-ONLY]** Indicates if the enrollment can be cancelled.',
+      example: true,
       readOnly: true,
     },
   },
@@ -15217,6 +15218,40 @@ export const AdminCreateUserRequestDTOSchema = {
   required: ['email', 'first_name', 'last_name'],
 } as const;
 
+export const ApiResponseSearchRebuildResponseSchema = {
+  type: 'object',
+  properties: {
+    success: {
+      type: 'boolean',
+    },
+    data: {
+      $ref: '#/components/schemas/SearchRebuildResponse',
+    },
+    message: {
+      type: 'string',
+    },
+    error: {},
+  },
+} as const;
+
+export const SearchRebuildResponseSchema = {
+  type: 'object',
+  properties: {
+    queued: {
+      type: 'array',
+      items: {
+        type: 'string',
+      },
+    },
+    skipped: {
+      type: 'array',
+      items: {
+        type: 'string',
+      },
+    },
+  },
+} as const;
+
 export const ContentModerationDecisionRequestSchema = {
   type: 'object',
   description: `Payload for a moderation decision on a course or training program.
@@ -16209,6 +16244,107 @@ export const SortObjectSchema = {
     },
     unsorted: {
       type: 'boolean',
+    },
+  },
+} as const;
+
+export const ApiResponseGlobalSearchResponseSchema = {
+  type: 'object',
+  properties: {
+    success: {
+      type: 'boolean',
+    },
+    data: {
+      $ref: '#/components/schemas/GlobalSearchResponse',
+    },
+    message: {
+      type: 'string',
+    },
+    error: {},
+  },
+} as const;
+
+export const GlobalSearchHitSchema = {
+  type: 'object',
+  properties: {
+    type: {
+      type: 'string',
+    },
+    uuid: {
+      type: 'string',
+      format: 'uuid',
+    },
+    title: {
+      type: 'string',
+    },
+    subtitle: {
+      type: 'string',
+    },
+    image_url: {
+      type: 'string',
+    },
+    highlight: {
+      type: 'string',
+    },
+  },
+} as const;
+
+export const GlobalSearchResponseSchema = {
+  type: 'object',
+  properties: {
+    hits: {
+      type: 'array',
+      items: {
+        $ref: '#/components/schemas/GlobalSearchHit',
+      },
+    },
+    totals: {
+      type: 'object',
+      additionalProperties: {
+        type: 'integer',
+        format: 'int64',
+      },
+    },
+  },
+} as const;
+
+export const ApiResponseTypeSearchResponseSchema = {
+  type: 'object',
+  properties: {
+    success: {
+      type: 'boolean',
+    },
+    data: {
+      $ref: '#/components/schemas/TypeSearchResponse',
+    },
+    message: {
+      type: 'string',
+    },
+    error: {},
+  },
+} as const;
+
+export const TypeSearchResponseSchema = {
+  type: 'object',
+  properties: {
+    content: {
+      type: 'array',
+      items: {
+        $ref: '#/components/schemas/GlobalSearchHit',
+      },
+    },
+    metadata: {
+      $ref: '#/components/schemas/PageMetadata',
+    },
+    facets: {
+      type: 'object',
+      additionalProperties: {
+        type: 'object',
+        additionalProperties: {
+          type: 'integer',
+          format: 'int64',
+        },
+      },
     },
   },
 } as const;
@@ -23313,6 +23449,87 @@ export const PagedDTOAdminUserActivityEventSchema = {
     },
     links: {
       $ref: '#/components/schemas/PageLinks',
+    },
+  },
+} as const;
+
+export const ApiResponseListSearchIndexStatusResponseSchema = {
+  type: 'object',
+  properties: {
+    success: {
+      type: 'boolean',
+    },
+    data: {
+      type: 'array',
+      items: {
+        $ref: '#/components/schemas/SearchIndexStatusResponse',
+      },
+    },
+    message: {
+      type: 'string',
+    },
+    error: {},
+  },
+} as const;
+
+export const SearchIndexStatusResponseSchema = {
+  type: 'object',
+  properties: {
+    index_name: {
+      type: 'string',
+    },
+    module: {
+      type: 'string',
+    },
+    definition_schema_version: {
+      type: 'integer',
+      format: 'int32',
+    },
+    built_schema_version: {
+      type: 'integer',
+      format: 'int32',
+    },
+    status: {
+      type: 'string',
+    },
+    read_enabled: {
+      type: 'boolean',
+    },
+    build_index_name: {
+      type: 'string',
+    },
+    rebuild_checkpoint_id: {
+      type: 'integer',
+      format: 'int64',
+    },
+    last_built_at: {
+      type: 'string',
+      format: 'date-time',
+    },
+    last_reconciled_at: {
+      type: 'string',
+      format: 'date-time',
+    },
+    recorded_document_count: {
+      type: 'integer',
+      format: 'int64',
+    },
+    drift: {
+      type: 'integer',
+      format: 'int64',
+    },
+    last_error: {
+      type: 'string',
+    },
+    engine_document_count: {
+      type: 'integer',
+      format: 'int64',
+    },
+    engine_indexing: {
+      type: 'boolean',
+    },
+    engine_error: {
+      type: 'string',
     },
   },
 } as const;

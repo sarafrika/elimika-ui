@@ -123,7 +123,9 @@ import type {
   GradeQuizTextResponseResponse,
   GetAllTrainingProgramsResponse,
   CreateTrainingProgramResponse,
+  UnpublishProgramResponse,
   PublishProgramResponse,
+  ArchiveProgramResponse,
   ListProgramTrainingApplicationsResponse,
   SubmitProgramTrainingApplicationResponse,
   ListProgramTrainingApplicationRateUpdatesResponse,
@@ -323,6 +325,7 @@ import type {
   GetInstructorScheduleResponse,
   GetStudentBookingsResponse,
   SearchStudentsResponse,
+  SearchByTypeResponse,
   GetPassingScoringLevelsResponse,
   GetHighestScoringLevelResponse,
   GetRubricMatrixResponse,
@@ -330,7 +333,6 @@ import type {
   SearchAssessmentRubricsResponse,
   GetRubricsByTypeResponse,
   GetRubricsByStatusResponse,
-  SearchPublicRubricsResponse,
   GetPublicRubricsResponse,
   GetPopularRubricsResponse,
   GetGeneralRubricsResponse,
@@ -478,6 +480,7 @@ import type {
   GetSystemAdminUsersResponse,
   GetOrganizationAdminUsersResponse,
   GetAdminEligibleUsersResponse,
+  ListIndexesResponse,
   GetProgramModerationHistoryResponse,
   ListPendingProgramsResponse,
   GetPendingOrganisationsResponse,
@@ -2804,9 +2807,23 @@ export const createTrainingProgramResponseTransformer = async (
   return data;
 };
 
+export const unpublishProgramResponseTransformer = async (
+  data: any
+): Promise<UnpublishProgramResponse> => {
+  data = apiResponseTrainingProgramSchemaResponseTransformer(data);
+  return data;
+};
+
 export const publishProgramResponseTransformer = async (
   data: any
 ): Promise<PublishProgramResponse> => {
+  data = apiResponseTrainingProgramSchemaResponseTransformer(data);
+  return data;
+};
+
+export const archiveProgramResponseTransformer = async (
+  data: any
+): Promise<ArchiveProgramResponse> => {
   data = apiResponseTrainingProgramSchemaResponseTransformer(data);
   return data;
 };
@@ -5697,6 +5714,25 @@ export const searchStudentsResponseTransformer = async (
   return data;
 };
 
+const typeSearchResponseSchemaResponseTransformer = (data: any) => {
+  if (data.metadata) {
+    data.metadata = pageMetadataSchemaResponseTransformer(data.metadata);
+  }
+  return data;
+};
+
+const apiResponseTypeSearchResponseSchemaResponseTransformer = (data: any) => {
+  if (data.data) {
+    data.data = typeSearchResponseSchemaResponseTransformer(data.data);
+  }
+  return data;
+};
+
+export const searchByTypeResponseTransformer = async (data: any): Promise<SearchByTypeResponse> => {
+  data = apiResponseTypeSearchResponseSchemaResponseTransformer(data);
+  return data;
+};
+
 export const getPassingScoringLevelsResponseTransformer = async (
   data: any
 ): Promise<GetPassingScoringLevelsResponse> => {
@@ -5742,13 +5778,6 @@ export const getRubricsByTypeResponseTransformer = async (
 export const getRubricsByStatusResponseTransformer = async (
   data: any
 ): Promise<GetRubricsByStatusResponse> => {
-  data = apiResponsePagedDtoAssessmentRubricSchemaResponseTransformer(data);
-  return data;
-};
-
-export const searchPublicRubricsResponseTransformer = async (
-  data: any
-): Promise<SearchPublicRubricsResponse> => {
   data = apiResponsePagedDtoAssessmentRubricSchemaResponseTransformer(data);
   return data;
 };
@@ -8164,6 +8193,42 @@ export const getAdminEligibleUsersResponseTransformer = async (
   data: any
 ): Promise<GetAdminEligibleUsersResponse> => {
   data = apiResponsePagedDtoUserSchemaResponseTransformer(data);
+  return data;
+};
+
+const searchIndexStatusResponseSchemaResponseTransformer = (data: any) => {
+  if (data.rebuild_checkpoint_id) {
+    data.rebuild_checkpoint_id = BigInt(data.rebuild_checkpoint_id.toString());
+  }
+  if (data.last_built_at) {
+    data.last_built_at = new Date(data.last_built_at);
+  }
+  if (data.last_reconciled_at) {
+    data.last_reconciled_at = new Date(data.last_reconciled_at);
+  }
+  if (data.recorded_document_count) {
+    data.recorded_document_count = BigInt(data.recorded_document_count.toString());
+  }
+  if (data.drift) {
+    data.drift = BigInt(data.drift.toString());
+  }
+  if (data.engine_document_count) {
+    data.engine_document_count = BigInt(data.engine_document_count.toString());
+  }
+  return data;
+};
+
+const apiResponseListSearchIndexStatusResponseSchemaResponseTransformer = (data: any) => {
+  if (data.data) {
+    data.data = data.data.map((item: any) => {
+      return searchIndexStatusResponseSchemaResponseTransformer(item);
+    });
+  }
+  return data;
+};
+
+export const listIndexesResponseTransformer = async (data: any): Promise<ListIndexesResponse> => {
+  data = apiResponseListSearchIndexStatusResponseSchemaResponseTransformer(data);
   return data;
 };
 
