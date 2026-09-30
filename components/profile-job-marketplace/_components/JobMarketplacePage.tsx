@@ -87,6 +87,13 @@ const STATUS_OPTIONS: { label: string; value: StatusFilter }[] = [
   { label: 'Expired', value: 'expired' },
 ];
 
+/**
+ * Students, parents and course creators only ever receive OPEN jobs from the API (other
+ * statuses are visible to the posting organisation's staff and to admins), so their
+ * marketplace offers no other status and no Filled count.
+ */
+const OPEN_ONLY_ROLES: readonly JobMarketplaceRole[] = ['student', 'parent', 'course_creator'];
+
 const LOCATION_OPTIONS = ['IN_PERSON', 'ONLINE', 'HYBRID'] as const;
 
 const BASIS_TABS = [
@@ -206,6 +213,10 @@ function JobDetailsSheet({
 /** The marketplace for roles that watch class jobs without applying: students, parents, creators, admins. */
 export function JobMarketplacePage({ role }: { role: JobMarketplaceRole }) {
   const config = getJobMarketplaceRoleConfig(role);
+  const openOnly = OPEN_ONLY_ROLES.includes(role);
+  const statusOptions = openOnly
+    ? STATUS_OPTIONS.filter(option => option.value === 'open')
+    : STATUS_OPTIONS;
   const [search, setSearch] = useState('');
   const deferredSearch = useDeferredValue(search.trim().toLowerCase());
   const [statusFilter, setStatusFilter] = useState<StatusFilter>('open');
@@ -225,7 +236,7 @@ export function JobMarketplacePage({ role }: { role: JobMarketplaceRole }) {
       query: {
         pageable: { page: 0, size: JOB_PAGE_SIZE },
         // Filter on the server so closed postings can't crowd open ones out of the first page.
-        ...(statusFilter !== 'all' ? { status: statusFilter } : {}),
+        ...(openOnly ? { status: 'open' } : statusFilter !== 'all' ? { status: statusFilter } : {}),
       },
     }),
   });
@@ -323,12 +334,16 @@ export function JobMarketplacePage({ role }: { role: JobMarketplaceRole }) {
       icon: Building2,
       tone: 'info' as const,
     },
-    {
-      label: 'Filled',
-      value: jobs.filter(job => job.status === 'filled').length,
-      icon: CheckCircle2,
-      tone: 'neutral' as const,
-    },
+    ...(openOnly
+      ? []
+      : [
+          {
+            label: 'Filled',
+            value: jobs.filter(job => job.status === 'filled').length,
+            icon: CheckCircle2,
+            tone: 'neutral' as const,
+          },
+        ]),
     {
       label: 'Online',
       value: jobs.filter(job => job.location_type === 'ONLINE').length,
@@ -341,7 +356,7 @@ export function JobMarketplacePage({ role }: { role: JobMarketplaceRole }) {
     {
       title: 'Status',
       icon: Filter,
-      items: STATUS_OPTIONS.map(option => ({
+      items: statusOptions.map(option => ({
         label: option.label,
         count:
           option.value === statusFilter || statusFilter === 'all'
@@ -386,7 +401,9 @@ export function JobMarketplacePage({ role }: { role: JobMarketplaceRole }) {
       <div className={surfaceTheme.pageStack}>
         <PageHeader title='Opportunities' description={config.description} />
 
-        <div className='grid gap-4 sm:grid-cols-2 xl:grid-cols-4'>
+        <div
+          className={cn('grid gap-4 sm:grid-cols-2', openOnly ? 'xl:grid-cols-3' : 'xl:grid-cols-4')}
+        >
           {jobsLoading
             ? kpis.map(kpi => <StatCardSkeleton key={kpi.label} />)
             : kpis.map(kpi => <StatCard key={kpi.label} {...kpi} />)}
