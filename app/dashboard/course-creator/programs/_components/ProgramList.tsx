@@ -1,6 +1,12 @@
 'use client';
 
-import { useMutation, useQueries, useQuery, useQueryClient } from '@tanstack/react-query';
+import {
+  keepPreviousData,
+  useMutation,
+  useQueries,
+  useQuery,
+  useQueryClient,
+} from '@tanstack/react-query';
 import { format } from 'date-fns';
 import { MoreHorizontal, PlusCircle, Trash2 } from 'lucide-react';
 import Link from 'next/link';
@@ -39,7 +45,11 @@ import {
   DialogHeader,
   DialogTitle,
 } from '../../../../../components/ui/dialog';
-import { Input } from '../../../../../components/ui/input';
+import { SearchQueryInput } from '@/components/search/search-input';
+import { SearchNotice } from '@/components/search/search-notice';
+import { useSearchIssue, useSearchQuery } from '@/hooks/use-search-query';
+import { retryUnlessClientOrSearchError } from '@/lib/api-errors';
+import { withQ } from '@/lib/search/params';
 import {
   Select,
   SelectContent,
@@ -97,7 +107,7 @@ const ProgramsList = ({ onEdit, onPreview, onCreate, creator }: ProgramsListProp
   const router = useRouter();
 
   const [deleteConfirm, setDeleteConfirm] = useState<string | null>(null);
-  const [searchTerm, setSearchTerm] = useState('');
+  const search = useSearchQuery();
   const [statusFilter, setStatusFilter] = useState<ProgramStatusFilter>('all');
   const [selectedCategory, setSelectedCategory] = useState('all');
   const lifecycle = useProgramLifecycle();
@@ -107,14 +117,27 @@ const ProgramsList = ({ onEdit, onPreview, onCreate, creator }: ProgramsListProp
     else void lifecycle.run(action, program.uuid);
   };
 
-  const { data: programsData, isLoading } = useQuery(
-    searchTrainingProgramsOptions({
+  // Title and description are matched by the search index (`q`); status is filtered on the
+  // server too, so a search never shows a page the browser had to narrow.
+  const programsQuery = useQuery({
+    ...searchTrainingProgramsOptions({
       query: {
         pageable: {},
-        searchParams: { course_creator_uuid_eq: creator?.profile?.uuid },
+        searchParams: withQ(
+          {
+            course_creator_uuid_eq: creator?.profile?.uuid,
+            ...(statusFilter !== 'all' ? { status: statusFilter } : {}),
+          },
+          search.q
+        ),
       },
-    })
-  );
+    }),
+    enabled: Boolean(creator?.profile?.uuid),
+    placeholderData: keepPreviousData,
+    retry: retryUnlessClientOrSearchError,
+  });
+  const { data: programsData, isLoading } = programsQuery;
+  const searchIssue = useSearchIssue(search, programsQuery.error);
   const programs = (programsData?.data?.content ?? []).filter(
     (program): program is Program =>
       typeof program.uuid === 'string' &&
@@ -161,21 +184,14 @@ const ProgramsList = ({ onEdit, onPreview, onCreate, creator }: ProgramsListProp
   }, [programCoursesByProgramUuid, programs]);
 
   const filteredPrograms = useMemo(() => {
-    return programs.filter(program => {
-      const matchesSearch =
-        program.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        program.description?.toLowerCase().includes(searchTerm.toLowerCase());
-
-      const matchesStatus = statusFilter === 'all' || program.status === statusFilter;
-      const matchesCategory =
+    return programs.filter(
+      program =>
         selectedCategory === 'all' ||
         (programCoursesByProgramUuid.get(program.uuid) ?? []).some(course =>
           course.category_names?.includes(selectedCategory)
-        );
-
-      return matchesSearch && matchesStatus && matchesCategory;
-    });
-  }, [programCoursesByProgramUuid, programs, searchTerm, selectedCategory, statusFilter]);
+        )
+    );
+  }, [programCoursesByProgramUuid, programs, selectedCategory]);
 
   const deleteProgramMut = useMutation(deleteTrainingProgramMutation());
   const handleDelete = (uuid: string) => {
@@ -273,12 +289,10 @@ const ProgramsList = ({ onEdit, onPreview, onCreate, creator }: ProgramsListProp
 
           <div className='flex w-full flex-row gap-2'>
             {/* Search Input */}
-            <Input
-              type='text'
-              placeholder='Search programs...'
-              value={searchTerm}
-              onChange={e => setSearchTerm(e.target.value)}
-              className='md:text-md w-full text-sm'
+            <SearchQueryInput
+              search={search}
+              placeholder='Search programs…'
+              className='md:text-md text-sm'
             />
 
             {/* Status Filter */}
@@ -305,18 +319,19 @@ const ProgramsList = ({ onEdit, onPreview, onCreate, creator }: ProgramsListProp
               </Select>
             </div>
           </div>
+          <SearchNotice issue={searchIssue} onReset={search.clear} />
         </CardHeader>
 
         <CardContent className='p-0'>
           {filteredPrograms.length === 0 ? (
             <div className='flex flex-col items-center justify-center space-y-3 px-4 py-12 text-center md:space-y-4 md:py-16'>
               <p className='text-base font-medium md:text-lg'>
-                {searchTerm || statusFilter !== 'all' || selectedCategory !== 'all'
+                {search.q || statusFilter !== 'all' || selectedCategory !== 'all'
                   ? 'No programs match this filter.'
                   : 'No programs found.'}
               </p>
               <p className='text-muted-foreground text-xs md:text-sm'>
-                {searchTerm || statusFilter !== 'all' || selectedCategory !== 'all'
+                {search.q || statusFilter !== 'all' || selectedCategory !== 'all'
                   ? 'Try adjusting your search or filter criteria.'
                   : 'Create your first training program to get started.'}
               </p>

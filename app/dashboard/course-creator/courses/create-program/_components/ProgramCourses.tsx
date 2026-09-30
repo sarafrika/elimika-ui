@@ -5,7 +5,8 @@ import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
 import { EmptyState } from '@/components/ui/empty-state';
 import { FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
-import { Input } from '@/components/ui/input';
+import { SearchQueryInput } from '@/components/search/search-input';
+import { SearchNotice } from '@/components/search/search-notice';
 import {
   Select,
   SelectContent,
@@ -16,13 +17,16 @@ import {
 import { Skeleton } from '@/components/ui/skeleton';
 import Spinner from '@/components/ui/spinner';
 import { useCoursesByIds } from '@/hooks/use-batched-lookups';
+import { useSearchIssue, useSearchQuery } from '@/hooks/use-search-query';
+import { retryUnlessClientOrSearchError } from '@/lib/api-errors';
+import { withQ } from '@/lib/search/params';
 import { STALE_TIMES } from '@/lib/query-client';
 import { searchCoursesInfiniteOptions } from '@/services/client/@tanstack/react-query.gen';
 import type { Course } from '@/services/client/types.gen';
-import { useInfiniteQuery } from '@tanstack/react-query';
-import { ArrowDown, ArrowUp, BookOpen, Check, Search, X } from 'lucide-react';
+import { keepPreviousData, useInfiniteQuery } from '@tanstack/react-query';
+import { ArrowDown, ArrowUp, BookOpen, Check, X } from 'lucide-react';
 import Link from 'next/link';
-import { useDeferredValue, useMemo, useState } from 'react';
+import { useMemo, useState } from 'react';
 import { useFieldArray, useFormContext, useWatch } from 'react-hook-form';
 import type { ProgramFormValues } from '../program-schema';
 
@@ -35,15 +39,17 @@ export default function ProgramCourses({ creatorUuid }: { creatorUuid: string })
     name: 'courses',
   });
   const categoryUuids = useWatch({ control: form.control, name: 'categoryUuids' });
-  const [search, setSearch] = useState('');
-  const deferredSearch = useDeferredValue(search.trim().toLowerCase());
+  // Titles are matched by the search index (`q`, typo-tolerant), not in the browser.
+  const search = useSearchQuery();
   const coursesQuery = useInfiniteQuery({
     ...searchCoursesInfiniteOptions({
       query: {
-        searchParams: { status: 'published' },
+        searchParams: withQ({ status: 'published' }, search.q),
         pageable: { size: 24 },
       },
     }),
+    placeholderData: keepPreviousData,
+    retry: retryUnlessClientOrSearchError,
     initialPageParam: 0,
     getNextPageParam: (lastPage, pages) => {
       if (lastPage.error || lastPage.success === false) return undefined;
@@ -55,8 +61,9 @@ export default function ProgramCourses({ creatorUuid }: { creatorUuid: string })
     enabled: Boolean(creatorUuid),
     staleTime: STALE_TIMES.reference,
   });
+  const searchIssue = useSearchIssue(search, coursesQuery.error);
   const hasError =
-    coursesQuery.isError ||
+    (coursesQuery.isError && !searchIssue) ||
     coursesQuery.data?.pages.some(
       response => Boolean(response.error) || response.success === false
     );
@@ -72,12 +79,10 @@ export default function ProgramCourses({ creatorUuid }: { creatorUuid: string })
   }, [coursesQuery.data]);
   const availableCourses = useMemo(
     () =>
-      loadedCourses.filter(
-        course =>
-          course.category_uuids?.some(uuid => categoryUuids.includes(uuid)) &&
-          course.name.toLowerCase().includes(deferredSearch)
+      loadedCourses.filter(course =>
+        course.category_uuids?.some(uuid => categoryUuids.includes(uuid))
       ),
-    [loadedCourses, categoryUuids, deferredSearch]
+    [loadedCourses, categoryUuids]
   );
   const selectedIds = useMemo(() => new Set(fields.map(row => row.courseUuid)), [fields]);
   const missingIds = useMemo(
@@ -126,16 +131,13 @@ export default function ProgramCourses({ creatorUuid }: { creatorUuid: string })
           {fields.length} selected
         </Badge>
       </div>
-      <div className='relative max-w-sm'>
-        <Search className='text-muted-foreground absolute top-2.5 left-3 h-4 w-4' />
-        <Input
-          value={search}
-          onChange={event => setSearch(event.target.value)}
-          className='pl-9'
-          placeholder='Search published courses'
-          aria-label='Search published courses'
-        />
-      </div>
+      <SearchQueryInput
+        search={search}
+        placeholder='Search published courses'
+        aria-label='Search published courses'
+        wrapperClassName='max-w-sm'
+      />
+      <SearchNotice issue={searchIssue} onReset={search.clear} />
       {hasError ? (
         <EmptyState
           variant='compact'
@@ -171,7 +173,7 @@ export default function ProgramCourses({ creatorUuid }: { creatorUuid: string })
               : 'Try another course title or change the categories in Program set-up.'
           }
           action={
-            !search &&
+            !search.input &&
             !coursesQuery.hasNextPage && (
               <Button asChild type='button' variant='outline'>
                 <Link href='/dashboard/course-creator/courses/create-course'>
