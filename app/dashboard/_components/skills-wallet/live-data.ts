@@ -40,7 +40,7 @@ import {
 } from '@/services/client/@tanstack/react-query.gen';
 import { SharedCredentialSummary, SharedSkill, SharedTimelineItem, SuggestedSkill, VerifiedSkill, VerifiedSkillCategory, VerifiedSkillGroup, VerifiedSkillLevel, VerifiedSkillRecord, VerifiedSkillsContent, VerifiedSkillsRole } from './types';
 
-const PAGEABLE = { page: 0, size: 200, sort: ['desc'] };
+const PAGEABLE = { page: 0, size: 200 };
 
 type LiveCredentialItem = ReturnType<
   typeof buildCredentialsContent

@@ -26,7 +26,7 @@ import type { ApiResponseWallet, CartResponse } from '@/services/client';
 import { getCartOptions, getWalletOptions } from '@/services/client/@tanstack/react-query.gen';
 import { useLogout } from '@/src/features/auth/logout';
 import {
-  CreateAction,
+  type CreateAction,
   dashboardDomainDisplayConfig,
   useCreateMenuActions,
 } from '@/src/features/dashboard/config/domain-display';
@@ -138,9 +138,6 @@ export default function DashboardTopBar() {
   const activeDomainConfig = activeDomain
     ? dashboardDomainDisplayConfig[activeDomain as keyof typeof dashboardDomainDisplayConfig]
     : null;
-  const isCourseCreator = activeDomain === 'course_creator';
-  const isInstructor = activeDomain === 'instructor';
-  const isOrganisation = activeDomain === 'organisation';
   const isStudent = activeDomain === 'student';
   const canUseStudentCart = isStudent && Boolean(profile?.student?.uuid);
 
@@ -202,11 +199,6 @@ export default function DashboardTopBar() {
   };
 
   const notificationHref = roleScopedDashboardPath(activeDomain, '/dashboard/notifications');
-  const createCourseHref = roleScopedDashboardPath(
-    activeDomain,
-    '/dashboard/courses/create-course'
-  );
-  const createClassHref = roleScopedDashboardPath(activeDomain, '/dashboard/classes/new');
   const walletHref = roleScopedDashboardPath(activeDomain, '/dashboard/wallet');
   const withdrawHref = `${walletHref}/withdraw`;
 
@@ -230,49 +222,7 @@ export default function DashboardTopBar() {
           </div>
 
           <div className='ml-auto flex items-center gap-2 sm:gap-3'>
-            {isCourseCreator && (
-              <Button
-                asChild
-                size='sm'
-                className='h-9 rounded-md px-4 font-semibold md:inline-flex'
-              >
-                <Link href={createCourseHref}>
-                  <Sparkles className='h-4 w-4' />
-                  Create Course
-                  <ChevronDown className='hidden h-4 w-4 sm:flex' />
-                </Link>
-              </Button>
-            )}
-
-            {(isInstructor || isOrganisation) && (
-              <Button
-                asChild
-                size='sm'
-                className='h-9 rounded-md px-4 font-semibold md:inline-flex'
-              >
-                <Link href={createClassHref} className='flex flex-row items-center'>
-                  <Sparkles className='h-4 w-4' />
-                  Create Class
-                  <ChevronDown className='hidden h-4 w-4 sm:flex' />
-                </Link>
-              </Button>
-            )}
-
-            {isStudent && (
-              <Button
-                asChild
-                size='sm'
-                className='h-9 rounded-md px-4 text-sm font-semibold md:inline-flex'
-              >
-                <Link className='flex flex-row items-center' href='/dashboard/student/courses'>
-                  <Sparkles className='hidden h-3 w-3 sm:flex' />
-                  Enroll Course
-                  <ChevronDown className='hidden h-3 w-3 sm:flex' />
-                </Link>
-              </Button>
-            )}
-
-            {/* <CreateMenu actions={createActions} compact /> */}
+            <CreateMenu actions={createActions} compact />
 
             <DashboardNotifications
               notificationHref={notificationHref}
@@ -763,27 +713,6 @@ function DepositMethodSheet({
   );
 }
 
-
-// CREATE FUNCTIONS
-// INSTRUCTORS
-// - create a class
-// - add course (apply to train)
-
-// ORGANISATIONS
-// - create a class
-// - add course (apply to train)  
-// - search an instructor
-// - post a job
-// - add classroom
-// - add equipment
-
-// COURSE CREATORS
-// - create a course
-
-// STUDENTS
-// - enroll in a class
-// - search instructors
-
 function CreateMenu({ actions, compact = false }: { actions: CreateAction[]; compact?: boolean }) {
   if (actions.length === 0) return null;
 
@@ -796,8 +725,7 @@ function CreateMenu({ actions, compact = false }: { actions: CreateAction[]; com
     return (
       <Button size='sm' className='h-9 gap-2 rounded-md px-4 font-semibold' onClick={only.onSelect}>
         <Icon className='h-4 w-4' />
-        <span className={compact ? 'hidden sm:inline' : ''}>{only.label}</span>
-        {!compact && <ChevronDown className='h-4 w-4' />}
+        <span className={compact ? 'sr-only sm:not-sr-only' : ''}>{only.label}</span>
       </Button>
     );
   }
@@ -807,28 +735,25 @@ function CreateMenu({ actions, compact = false }: { actions: CreateAction[]; com
       <DropdownMenuTrigger asChild>
         <Button size='sm' className='h-9 gap-2 rounded-md px-3 font-semibold'>
           <Sparkles className='h-4 w-4' />
-          <span className={compact ? 'hidden sm:inline' : ''}>Create</span>
+          <span className={compact ? 'sr-only sm:not-sr-only' : ''}>Create</span>
           <ChevronDown className='h-4 w-4' />
         </Button>
       </DropdownMenuTrigger>
-      <DropdownMenuContent align='end' className='w-64'>
+      <DropdownMenuContent align='end' className='w-72'>
         <DropdownMenuLabel>Quick actions</DropdownMenuLabel>
         <DropdownMenuSeparator />
         {actions.map(a => (
           <DropdownMenuItem
             key={a.label}
-            onSelect={e => {
-              e.preventDefault();
-              a.onSelect();
-            }}
-            className='flex items-start gap-3 py-2'
+            onSelect={a.onSelect}
+            className='flex items-start gap-3 py-2 min-w-fit'
           >
             <span className='bg-primary/10 text-primary mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-md'>
-              <a.icon className='h-4 w-4' />
+              <a.icon className='h-3.5 w-3.5' />
             </span>
             <span className='flex flex-col'>
-              <span className='text-sm leading-tight font-medium'>{a.label}</span>
-              <span className='text-muted-foreground text-xs'>{a.description}</span>
+              <span className='text-[13px] leading-tight font-medium'>{a.label}</span>
+              <span className='text-muted-foreground text-[11px]'>{a.description}</span>
             </span>
           </DropdownMenuItem>
         ))}

@@ -11,7 +11,16 @@ import { WorkbookPage } from '@/app/dashboard/instructor/classes/training/compon
 import RichTextRenderer from '@/components/editors/richTextRenders';
 import { Button } from '@/components/ui/button';
 import { EmptyState } from '@/components/ui/empty-state';
+import { Label } from '@/components/ui/label';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 import Spinner from '@/components/ui/spinner';
+import { dayjs } from '@/lib/date';
 import { STALE_TIMES } from '@/lib/query-client';
 import {
   getAllContentTypesOptions,
@@ -23,29 +32,20 @@ import {
 import type { ClassDefinition, ContentType, Course, Lesson } from '@/services/client/types.gen';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { Video } from 'lucide-react';
+import { useRouter } from 'next/navigation';
 import { useMemo, useState, type ReactNode } from 'react';
 import { toast } from 'sonner';
-import { useRouter } from 'next/navigation';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
-import { Label } from '@/components/ui/label';
-import { dayjs } from '@/lib/date';
+import { EvaluationPanel } from './EvaluationPanel';
+import { useWorkbookNavigation } from './useWorkbookNavigation';
 import { useWorkbookSession } from './useWorkbookSession';
 import {
   getWorkbookSessionAvailability,
   useWorkbookSessionAvailability,
 } from './useWorkbookSessionAvailability';
+import { hasApiError, type WorkbookRole } from './workbook-data';
 import { WorkbookClassRegister } from './WorkbookClassRegister';
-import { EvaluationPanel } from './EvaluationPanel';
 import { WorkbookError } from './WorkbookError';
 import { WorkbookLoading } from './WorkbookLoading';
-import { useWorkbookNavigation } from './useWorkbookNavigation';
-import { hasApiError, type WorkbookRole } from './workbook-data';
 
 export function ClassLessonWorkbook(props: {
   classId: string;
@@ -145,10 +145,10 @@ function SelectedLessonWorkbook({
           ? 'summary'
           : 'grading'
         : requestedTab === 'practice' ||
-            requestedTab === 'quiz' ||
-            requestedTab === 'assignment' ||
-            requestedTab === 'grading' ||
-            requestedTab === 'resources'
+          requestedTab === 'quiz' ||
+          requestedTab === 'assignment' ||
+          requestedTab === 'grading' ||
+          requestedTab === 'resources'
           ? requestedTab
           : 'lesson';
   const showList = searchParams.get('view') === 'lessons';
@@ -166,8 +166,8 @@ function SelectedLessonWorkbook({
       hasApiError(contentQuery.data)
         ? []
         : [...(contentQuery.data?.data ?? [])].sort(
-            (a, b) => (a.display_order ?? 0) - (b.display_order ?? 0)
-          ),
+          (a, b) => (a.display_order ?? 0) - (b.display_order ?? 0)
+        ),
     [contentQuery.data]
   );
   const contentTypes = useMemo(
@@ -211,6 +211,9 @@ function SelectedLessonWorkbook({
       onOpen={id => navigate({ content: id, tab: 'lesson', view: null })}
     />
   );
+
+  const progressPercentage = 0;
+
   let body: ReactNode;
   if (showList)
     body = (
@@ -383,37 +386,91 @@ function SelectedLessonWorkbook({
       onPageChange={index => navigate({ content: contents[index]?.uuid ?? null })}
       onNextLesson={nextLesson?.uuid ? () => selectLesson(nextLesson.uuid!) : undefined}
       actions={
-        role === 'instructor' && (
-          <Button
-            variant='outline'
-            disabled={
-              !availability.canStart ||
-              classStarted ||
-              startClass.isPending ||
-              sessionState.isLoading ||
-              Boolean(sessionState.isError)
-            }
-            title='Available from 15 minutes before the session starts until it ends.'
-            onClick={() => {
-              const session = sessionState.session;
-              if (
-                !session?.uuid ||
-                startClass.isPending ||
+        <div className='flex items-center gap-3'>
+
+          {/* Visible to all roles */}
+          <div className='flex items-center gap-2'>
+            <div
+              className='relative h-10 w-10'
+              title={`${progressPercentage}% completed`}
+            >
+              <svg
+                className='h-10 w-10 -rotate-90'
+                viewBox='0 0 36 36'
+              >
+                <circle
+                  cx='18'
+                  cy='18'
+                  r='15.5'
+                  fill='none'
+                  stroke='currentColor'
+                  strokeWidth='3'
+                  className='text-muted'
+                />
+
+                <circle
+                  cx='18'
+                  cy='18'
+                  r='15.5'
+                  fill='none'
+                  stroke='currentColor'
+                  strokeWidth='3'
+                  strokeLinecap='round'
+                  className='text-primary'
+                  strokeDasharray={`${progressPercentage} 100`}
+                />
+              </svg>
+
+              <span className='absolute inset-0 flex items-center justify-center text-[10px] font-semibold'>
+                {progressPercentage}%
+              </span>
+            </div>
+          </div>
+
+          {/* Instructor-only action */}
+          {role === 'instructor' && (
+            <Button
+              variant='outline'
+              disabled={
+                !availability.canStart ||
                 classStarted ||
-                !getWorkbookSessionAvailability(session).canStart
-              )
-                return;
-              startClass.mutate({ path: { instanceUuid: session.uuid } });
-            }}
-          >
-            {startClass.isPending ? <Spinner /> : <Video className='h-4 w-4' />}
-            {startClass.isPending
-              ? 'Starting class…'
-              : classStarted
-                ? 'Class started'
-                : 'Start Class'}
-          </Button>
-        )
+                startClass.isPending ||
+                sessionState.isLoading ||
+                Boolean(sessionState.isError)
+              }
+              title='Available from 15 minutes before the session starts until it ends.'
+              onClick={() => {
+                const session = sessionState.session;
+
+                if (
+                  !session?.uuid ||
+                  startClass.isPending ||
+                  classStarted ||
+                  !getWorkbookSessionAvailability(session).canStart
+                ) {
+                  return;
+                }
+
+                startClass.mutate({
+                  path: { instanceUuid: session.uuid },
+                });
+              }}
+            >
+              {startClass.isPending ? (
+                <Spinner />
+              ) : (
+                <Video className='h-4 w-4' />
+              )}
+
+              {startClass.isPending
+                ? 'Starting class…'
+                : classStarted
+                  ? 'Class started'
+                  : 'Start Class'}
+            </Button>
+          )}
+
+        </div>
       }
     >
       {body}

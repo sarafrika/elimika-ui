@@ -10,7 +10,7 @@ import {
   Target,
   Trophy,
 } from 'lucide-react';
-import { useState } from 'react';
+import { useWalletTab } from '@/app/dashboard/_components/skills-wallet/use-wallet-tab';
 
 import { SkillsWalletAchievementsTab } from './_components/SkillsWalletAchievementsTab';
 import { SkillsWalletCompetenciesTab } from './_components/SkillsWalletCompetenciesTab';
@@ -38,14 +38,14 @@ const TABS = [
 type TabId = (typeof TABS)[number]['id'];
 
 export default function SkillsWallet() {
-  const [tab, setTab] = useState<TabId>('overview');
+  const [tab, setTab] = useWalletTab(TABS);
   const data = useStudentSkillsWalletData();
 
   return (
     <div className='min-h-screen'>
       <div className='border-b'>
         <div className='mx-auto px-4 py-5'>
-          <div className='flex flex-row items-center justify-between' >
+          <div className='flex flex-row items-center justify-between'>
             <div>
               <h1 className='text-foreground text-2xl font-bold'>Skills Wallet</h1>
               <p className='text-muted-foreground text-sm'>
@@ -55,21 +55,33 @@ export default function SkillsWallet() {
             <WalletIdCard />
           </div>
 
-          <SkillsWalletTabs tabs={TABS} activeTab={tab} onTabChange={value => setTab(value as TabId)} />
+          <SkillsWalletTabs
+            tabs={TABS}
+            activeTab={tab}
+            onTabChange={value => setTab(value as TabId)}
+          />
         </div>
       </div>
 
       <div className='mx-auto px-4 py-6'>
         {tab === 'overview' ? (
-          <SkillsWalletOverviewTab data={data} onNavigateToTab={value => setTab(value as TabId)} />
+          <SkillsWalletOverviewTab
+            data={data}
+            isLoading={data.isLoading}
+            onNavigateToTab={value => setTab(value as TabId)}
+          />
         ) : null}
         {tab === 'skills' ? <SkillsWalletMySkillsTab data={data} /> : null}
         {tab === 'portfolio' ? <SkillsWalletPortfolioTab data={data} /> : null}
         {tab === 'credentials' ? <SkillsWalletCredentialsVaultTab data={data} /> : null}
         {tab === 'competencies' ? <SkillsWalletCompetenciesTab data={data} /> : null}
         {tab === 'experience' ? <SkillsWalletExperienceTab experiences={data.experiences} /> : null}
-        {tab === 'achievements' ? <SkillsWalletAchievementsTab achievements={data.achievements} /> : null}
-        {tab === 'verification' ? <SkillsWalletVerficationTab events={data.verificationEvents} /> : null}
+        {tab === 'achievements' ? (
+          <SkillsWalletAchievementsTab achievements={data.achievements} />
+        ) : null}
+        {tab === 'verification' ? (
+          <SkillsWalletVerficationTab events={data.verificationEvents} />
+        ) : null}
       </div>
     </div>
   );

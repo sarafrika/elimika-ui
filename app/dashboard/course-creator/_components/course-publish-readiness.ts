@@ -71,7 +71,6 @@ export function getCoursePublishReadiness({
   if (!difficulty?.trim()) missingFields.push('Please select a difficulty level for this course');
   if (!stripHtml(description ?? '').length) missingFields.push('Please enter a description for the course');
   if (!stripHtml(objectives ?? '').length) missingFields.push('Please enter the course objectives');
-  if (!numberProvided(durationHours)) missingFields.push('Please enter the estimated duration of the course in hours');
   if (!numberProvided(classLimit)) missingFields.push('Please enter the maximum number of students allowed in the course');
   if (!isFree && !numberProvided(minimumTrainingFee)) missingFields.push('Please enter the minimum fee for the course');
 

@@ -23,6 +23,7 @@ import {
     publishCourseMutation,
     searchAssignmentsOptions,
     searchQuizzesOptions,
+    unpublishCourseMutation,
 } from '@/services/client/@tanstack/react-query.gen';
 import type {
     ApiResponseCourse,
@@ -34,8 +35,9 @@ import type {
     PagedDtoLesson,
     Quiz,
 } from '@/services/client/types.gen';
+import { invalidateContentModerationWorkflowQueries } from '@/src/features/dashboard/workflow-query-invalidation';
 import { skipToken, useMutation, useQueries, useQuery, useQueryClient } from '@tanstack/react-query';
-import { ArrowLeft, ChevronDown, ChevronUp, Eye, Pencil, PlusCircle, Sparkles, Trash } from 'lucide-react';
+import { ArrowLeft, ChevronDown, ChevronUp, Eye, Pencil, PlusCircle, Sparkles, Trash, Undo2 } from 'lucide-react';
 import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
@@ -81,6 +83,7 @@ type StepNavProps = {
     previousDisabled?: boolean;
     nextDisabled?: boolean;
     nextLoading?: boolean;
+    nextLoadingLabel?: string;
 };
 
 function StepNav({
@@ -91,6 +94,7 @@ function StepNav({
     previousDisabled,
     nextDisabled,
     nextLoading,
+    nextLoadingLabel = 'Saving...',
 }: StepNavProps) {
     return (
         <div className='flex flex-wrap items-center justify-between gap-3 pt-6'>
@@ -98,7 +102,7 @@ function StepNav({
                 {previousLabel}
             </Button>
             <Button type='button' onClick={onNext} disabled={nextDisabled}>
-                {nextLoading ? <><Spinner className='h-4 w-4' /> Saving...</> : nextLabel}
+                {nextLoading ? <><Spinner className='h-4 w-4' /> {nextLoadingLabel}</> : nextLabel}
             </Button>
         </div>
     );
@@ -217,6 +221,7 @@ export default function CreateCoursePage() {
     const [step, setStep] = useState(0);
     const [createdCourseId, setCreatedCourseId] = useState<string | null>(null);
     const [isSavingSection, setIsSavingSection] = useState(false);
+    const [finishedPricingCourseId, setFinishedPricingCourseId] = useState<string | null>(null);
     const [requirementDrafts, setRequirementDrafts] = useState(createEmptyDraftsByProvider());
     const [activeRequirementProvider, setActiveRequirementProvider] =
         useState<Provider | null>(null);
@@ -236,6 +241,8 @@ export default function CreateCoursePage() {
     const queryCourseId = searchParams.get('id');
 
     const resolvedCourseId = queryCourseId || createdCourseId;
+    const hasFinishedPricing = Boolean(resolvedCourseId && finishedPricingCourseId === resolvedCourseId);
+    const handlePricingChange = useCallback(() => setFinishedPricingCourseId(null), []);
 
     const navigateToStep = useCallback((nextStep: number) => {
         if (nextStep === 1 && !resolvedCourseId) {
@@ -270,10 +277,11 @@ export default function CreateCoursePage() {
             const formRef = section === 'branding' ? brandingFormRef : pricingFormRef;
             const saved = await formRef.current?.submit();
             if (saved && section === 'branding') setStep(7);
+            if (saved && section === 'pricing') setFinishedPricingCourseId(resolvedCourseId);
         } finally {
             setIsSavingSection(false);
         }
-    }, [isSavingSection]);
+    }, [isSavingSection, resolvedCourseId]);
 
     const lessonsQuery = resolvedCourseId
         ? getCourseLessonsOptions({
@@ -639,11 +647,19 @@ export default function CreateCoursePage() {
     const canRenderCourseSections = Boolean(resolvedCourseId && courseApiResponse);
 
     const PublishCourse = useMutation(publishCourseMutation());
+    const UnpublishCourse = useMutation(unpublishCourseMutation());
+    const isPublished = course?.is_published === true;
+    const isCourseActionPending = PublishCourse.isPending || UnpublishCourse.isPending;
+    const [isUpdatingPublication, setIsUpdatingPublication] = useState(false);
+    const publicationDisabled = isCourseActionPending || isUpdatingPublication || isSavingSection || !resolvedCourseId;
+    const publicationLoadingLabel = isPublished ? 'Unpublishing...' : 'Publishing...';
     const handleSaveDraft = useCallback(() => {
         courseFormRef.current?.submit();
     }, []);
 
     const handlePublishCourse = useCallback(async () => {
+        if (publicationDisabled || isPublished) return;
+
         if (!resolvedCourseId) {
             toast.error('Save the draft before publishing.');
             return;
@@ -656,19 +672,47 @@ export default function CreateCoursePage() {
             return;
         }
 
+        setIsUpdatingPublication(true);
         try {
             const data = await PublishCourse.mutateAsync({
                 path: { uuid: resolvedCourseId },
             });
 
-            toast.success(data?.message || 'Course published successfully.');
-            await queryClient.invalidateQueries({
-                queryKey: getCourseByUuidQueryKey({ path: { uuid: resolvedCourseId } }),
-            });
+            if (data.error || data.success === false) {
+                toast.error(data.message || 'Failed to publish course.');
+                return;
+            }
+
+            toast.success(data.message || 'Course published successfully.');
+            await invalidateContentModerationWorkflowQueries(queryClient);
         } catch (err) {
             toast.error(err instanceof Error ? err.message : 'Failed to publish course.');
+        } finally {
+            setIsUpdatingPublication(false);
         }
-    }, [PublishCourse, publishReadiness, queryClient, resolvedCourseId]);
+    }, [PublishCourse, isPublished, publicationDisabled, publishReadiness, queryClient, resolvedCourseId]);
+
+    const handleUnpublishCourse = useCallback(async () => {
+        if (!resolvedCourseId || !isPublished || publicationDisabled) return;
+
+        setIsUpdatingPublication(true);
+        try {
+            const data = await UnpublishCourse.mutateAsync({
+                path: { uuid: resolvedCourseId },
+            });
+            if (data.error || data.success === false) {
+                toast.error(data.message || 'Failed to unpublish course.');
+                return;
+            }
+
+            toast.success(data.message || 'Course unpublished successfully.');
+            await invalidateContentModerationWorkflowQueries(queryClient);
+        } catch (err) {
+            toast.error(err instanceof Error ? err.message : 'Failed to unpublish course.');
+        } finally {
+            setIsUpdatingPublication(false);
+        }
+    }, [UnpublishCourse, isPublished, publicationDisabled, queryClient, resolvedCourseId]);
 
 
     if (creator.isLoading) {
@@ -692,23 +736,36 @@ export default function CreateCoursePage() {
                 <div className='flex flex-wrap items-center gap-2'>
                     <Button
                         type='button'
+                        className='px-4 rounded-sm'
                         variant='outline'
                         onClick={handleSaveDraft}
                     >
                         Save Draft
                     </Button>
+
                     <Button
                         type='button'
-                        onClick={handlePublishCourse}
-                        disabled={PublishCourse.isPending || !resolvedCourseId}
+                        className='rounded-sm px-4'
+                        variant={isPublished ? 'outline' : 'default'}
+                        onClick={isPublished ? handleUnpublishCourse : handlePublishCourse}
+                        disabled={publicationDisabled}
                         title={
                             !resolvedCourseId
                                 ? 'Save the draft before publishing.'
-                                : publishReadiness.missingFields.join(' • ')
+                                : isPublished ? 'Unpublish this course' : publishReadiness.missingFields.join(' • ')
                         }
                     >
-                        <Sparkles className='mr-2 h-4 w-4' />
-                        Publish
+                        {isCourseActionPending || isUpdatingPublication ? (
+                            <>
+                                <Spinner className='h-4 w-4' />
+                                {publicationLoadingLabel}
+                            </>
+                        ) : (
+                            <>
+                                {isPublished ? <Undo2 className='h-4 w-4' /> : <Sparkles className='h-4 w-4' />}
+                                {isPublished ? 'Unpublish' : 'Publish'}
+                            </>
+                        )}
                     </Button>
                 </div>
             </div>
@@ -1260,19 +1317,24 @@ export default function CreateCoursePage() {
                                     <Card className='max-w-5xl p-6'>
                                         <CoursePricingForm
                                             ref={pricingFormRef}
+                                            onValuesChange={handlePricingChange}
                                             showSubmitButton={false}
                                             courseId={resolvedCourseId || undefined}
                                             editingCourseId={resolvedCourseId || undefined}
                                             initialValues={courseInitialValues}
                                         />
                                     </Card>
+
                                     <StepNav
                                         previousLabel='Previous step'
-                                        nextLabel='Save and finish'
+                                        nextLabel={hasFinishedPricing ? (isPublished ? 'Unpublish' : 'Publish') : 'Save and finish'}
                                         onPrevious={() => setStep(6)}
-                                        onNext={() => void handleSaveSection('pricing')}
-                                        nextDisabled={isSavingSection}
-                                        nextLoading={isSavingSection}
+                                        onNext={hasFinishedPricing
+                                            ? (isPublished ? handleUnpublishCourse : handlePublishCourse)
+                                            : () => void handleSaveSection('pricing')}
+                                        nextDisabled={publicationDisabled}
+                                        nextLoading={isSavingSection || isCourseActionPending || isUpdatingPublication}
+                                        nextLoadingLabel={isSavingSection ? 'Saving...' : publicationLoadingLabel}
                                     />
                                 </SectionGuard>
                             </TabsContent>
