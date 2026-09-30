@@ -8,14 +8,15 @@ import {
   searchCoursesOptions,
 } from '@/services/client/@tanstack/react-query.gen';
 import { useQuery } from '@tanstack/react-query';
+import { useUserProfile } from '@/context/profile-context';
 import { Award, BadgeCheck, BookOpen, CalendarClock, FileEdit } from 'lucide-react';
 import { Badge } from '../../../../components/ui/badge';
 import { StatValue } from './components/profile-stat-strip';
-import { creatorTabs } from './course-creator-tab';
+import { creatorPublicTabs, creatorTabs } from './course-creator-tab';
 import { ProfilePage } from './profile-page';
 import type { DomainProfilePageProps, StatDescriptor } from './types';
 
-function useCourseCountByStatus(courseCreatorUuid: string, status: string) {
+function useCourseCountByStatus(courseCreatorUuid: string, status: string, enabled = true) {
   return useQuery({
     ...searchCoursesOptions({
       query: {
@@ -23,7 +24,7 @@ function useCourseCountByStatus(courseCreatorUuid: string, status: string) {
         pageable: { page: 0, size: 1 },
       },
     }),
-    enabled: Boolean(courseCreatorUuid),
+    enabled: enabled && Boolean(courseCreatorUuid),
     retry: false,
   });
 }
@@ -35,16 +36,23 @@ export default function CourseCreatorProfilePage({
   isPublic = false,
 }: DomainProfilePageProps) {
   const courseCreatorUuid = profile.uuid;
+  const viewer = useUserProfile();
+  const isOwner = !isPublic || viewer?.courseCreator?.uuid === courseCreatorUuid;
+  const isAdmin = Boolean(viewer?.user_domain?.includes('admin'));
+  // Certifications answer 403 to anyone but the owner or an admin, and drafts are the
+  // owner's business: other viewers neither see those stats nor request them.
+  const canSeeCredentials = isOwner || isAdmin;
+  const showDrafts = !isPublic;
 
   const publishedQuery = useCourseCountByStatus(courseCreatorUuid, 'published');
-  const draftQuery = useCourseCountByStatus(courseCreatorUuid, 'draft');
+  const draftQuery = useCourseCountByStatus(courseCreatorUuid, 'draft', showDrafts);
 
   const certificationsQuery = useQuery({
     ...getCourseCreatorCertificationsOptions({
       path: { courseCreatorUuid },
       query: { pageable: { page: 0, size: 1 } },
     }),
-    enabled: Boolean(courseCreatorUuid),
+    enabled: canSeeCredentials && Boolean(courseCreatorUuid),
     retry: false,
   });
 
@@ -95,8 +103,13 @@ export default function CourseCreatorProfilePage({
     },
   ];
 
+  const visibleStats = stats.filter(
+    stat =>
+      (stat.id !== 'drafts' || showDrafts) && (stat.id !== 'certifications' || canSeeCredentials)
+  );
+
   if (memberSince) {
-    stats.push({
+    visibleStats.push({
       id: 'member-since',
       label: 'Member since',
       icon: <CalendarClock className='h-4 w-4' />,
@@ -106,13 +119,13 @@ export default function CourseCreatorProfilePage({
 
   return (
     <ProfilePage
-      tabs={creatorTabs}
+      tabs={isOwner ? creatorTabs : creatorPublicTabs}
       profile={profile}
       domain='course_creator'
       profileSource={profileSource}
       headerBadge={headerBadge}
       isPublic={isPublic}
-      stats={stats}
+      stats={visibleStats}
       sidebar={
         <div className='flex flex-col gap-6' >
           <Card>
@@ -129,15 +142,17 @@ export default function CourseCreatorProfilePage({
                   />
                 </span>
               </div>
-              <div className='flex items-center justify-between gap-3'>
-                <span className='text-muted-foreground'>Drafts</span>
-                <span className='font-medium'>
-                  <StatValue
-                    loading={draftQuery.isLoading}
-                    value={draftQuery.isError ? undefined : String(draftTotal)}
-                  />
-                </span>
-              </div>
+              {showDrafts && (
+                <div className='flex items-center justify-between gap-3'>
+                  <span className='text-muted-foreground'>Drafts</span>
+                  <span className='font-medium'>
+                    <StatValue
+                      loading={draftQuery.isLoading}
+                      value={draftQuery.isError ? undefined : String(draftTotal)}
+                    />
+                  </span>
+                </div>
+              )}
               <div className='flex items-center justify-between gap-3'>
                 <span className='text-muted-foreground'>Profile</span>
                 <span className='font-medium'>

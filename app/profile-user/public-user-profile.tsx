@@ -18,7 +18,7 @@ import {
   searchInstructorsOptions,
   searchStudentsOptions,
 } from '../../services/client/@tanstack/react-query.gen';
-import { creatorTabs } from '../dashboard/_profile-components/course-creator-tab';
+import { creatorPublicTabs } from '../dashboard/_profile-components/course-creator-tab';
 import { instructorTabs } from '../dashboard/_profile-components/instructors-tab';
 import { ProfilePage } from '../dashboard/_profile-components/profile-page';
 import { studentTabs } from '../dashboard/_profile-components/students-tab';
@@ -30,7 +30,8 @@ import {
 
 const TAB_REGISTRY: Record<UserDomain, TabDefinition[]> = {
   instructor: instructorTabs,
-  course_creator: creatorTabs,
+  // Public views never carry the owner-only education tab (it would answer 403).
+  course_creator: creatorPublicTabs,
   student: studentTabs,
   admin: instructorTabs,
   organization: instructorTabs,

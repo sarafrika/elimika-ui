@@ -64,6 +64,7 @@ import type {
 } from '@/services/client/types.gen';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { isForbidden } from '@/lib/api-errors';
 import {
   Briefcase,
   FileText,
@@ -981,6 +982,8 @@ function creatorcertificatestab({ sharedProfile, isPublic }: DomainTabProps) {
       query: { pageable: {} },
     }),
     enabled: !!sharedProfile?.uuid,
+    // Education is private to its owner; a 403 will not change on retry.
+    retry: (failureCount, error) => !isForbidden(error) && failureCount < 3,
   });
 
   const serverEducations: CourseCreatorEducationRecord[] = data?.data?.content ?? [];
@@ -2258,3 +2261,9 @@ export const creatorTabs: TabDefinition[] = [
   // { id: 'gallery', label: 'Gallery', component: CreatorGalleryTab },
   // { id: 'friends', label: 'Connections', component: CreatorFriendsTab },
 ];
+
+/**
+ * A creator's education and certificates are private to the owner (the API answers 403
+ * to anyone else), so other viewers never get the tab and never make the request.
+ */
+export const creatorPublicTabs: TabDefinition[] = creatorTabs.filter(tab => tab.id !== 'certs');
