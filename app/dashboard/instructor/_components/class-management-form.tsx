@@ -45,6 +45,7 @@ import {
 } from '@/services/client/@tanstack/react-query.gen';
 import { LocationTypeEnum, type StatusEnum3 } from '@/services/client/types.gen';
 import type { RecurrenceValue } from '@/lib/recurrence';
+import { OptionCombobox } from '@/components/search/entity-combobox';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useEffect, useState } from 'react';
@@ -196,7 +197,7 @@ function ClassForm({
 
   const [_openAddRecurrenceModal, setOpenAddRecurrenceModal] = useState(false);
 
-  const { data: courses } = useQuery({
+  const { data: courses, isLoading: coursesLoading } = useQuery({
     // Courses this instructor may deliver (the endpoint's meaning since the visibility
     // change), not the first page of the whole catalogue.
     ...getCoursesByInstructorOptions({
@@ -205,6 +206,10 @@ function ClassForm({
     }),
     enabled: Boolean(instructor?.uuid),
   });
+
+  const courseOptions = (courses?.data?.content ?? []).flatMap(course =>
+    course.uuid ? [{ value: course.uuid, label: course.name }] : []
+  );
 
   const createAssignment = useMutation(createClassDefinitionMultipartMutation());
   const updateAssignment = useMutation(updateClassDefinitionMutation());
@@ -292,18 +297,18 @@ function ClassForm({
           render={({ field }) => (
             <FormItem className='w-full flex-1'>
               <FormLabel>Assign Course</FormLabel>
-              <Select onValueChange={field.onChange} value={field.value}>
-                <SelectTrigger className='w-full'>
-                  <SelectValue placeholder='Select course' />
-                </SelectTrigger>
-                <SelectContent>
-                  {courses?.data?.content?.map(course => (
-                    <SelectItem key={course.uuid} value={course.uuid as string}>
-                      {course.name}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+              <FormControl>
+                <OptionCombobox
+                  value={field.value}
+                  onChange={value => field.onChange(value)}
+                  options={courseOptions}
+                  loading={coursesLoading}
+                  placeholder='Select course'
+                  searchPlaceholder='Filter your courses…'
+                  emptyText='No course you can deliver matches'
+                  aria-label='Assign course'
+                />
+              </FormControl>
               <FormMessage />
             </FormItem>
           )}

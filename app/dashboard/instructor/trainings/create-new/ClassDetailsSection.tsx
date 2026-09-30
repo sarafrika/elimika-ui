@@ -3,6 +3,7 @@
 
 import { Card } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
+import { OptionCombobox } from '@/components/search/entity-combobox';
 import {
   Select,
   SelectContent,
@@ -293,29 +294,17 @@ export const ClassDetailsSection = ({
           </div>
           <div className='bg-card col-span-2 px-6 py-4'>
             {classFor === 'course' ? (
-              <Select
+              <OptionCombobox
                 value={data.course_uuid}
-                onValueChange={value => onChange({ course_uuid: value })}
-              >
-                <SelectTrigger className='w-full'>
-                  <SelectValue>
-                    {selectedCourse ? selectedCourse.name : 'Select a course'}
-                  </SelectValue>
-                </SelectTrigger>
-                <SelectContent>
-                  {approvedCourses.length === 0 ? (
-                    <div className='text-muted-foreground p-4 text-center text-sm'>
-                      No approved courses available
-                    </div>
-                  ) : (
-                    approvedCourses.map(course => (
-                      <SelectItem key={course.uuid} value={course.uuid as string}>
-                        {course.name}
-                      </SelectItem>
-                    ))
-                  )}
-                </SelectContent>
-              </Select>
+                onChange={value => onChange({ course_uuid: value })}
+                options={approvedCourses.flatMap(course =>
+                  course.uuid ? [{ value: course.uuid, label: course.name }] : []
+                )}
+                placeholder='Select a course'
+                searchPlaceholder='Filter your approved courses…'
+                emptyText='No approved courses available'
+                aria-label='Course'
+              />
             ) : (
               <Select
                 value={data.program_uuid}

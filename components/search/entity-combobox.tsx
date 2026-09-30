@@ -166,3 +166,94 @@ export function EntityCombobox<TData>({
     </Popover>
   );
 }
+
+/**
+ * The same picker over a list that is already loaded and bounded (e.g. the courses an
+ * instructor may deliver): the endpoint has no `q`, so cmdk filters the labels in the
+ * browser. Use `EntityCombobox` whenever the endpoint can search.
+ */
+export function OptionCombobox({
+  value,
+  onChange,
+  options,
+  placeholder = 'Select…',
+  searchPlaceholder = 'Filter…',
+  emptyText = 'No matches',
+  loading,
+  disabled,
+  className,
+  'aria-label': ariaLabel,
+}: {
+  value: string | null | undefined;
+  onChange: (value: string, option: EntityOption | undefined) => void;
+  options: EntityOption[];
+  placeholder?: string;
+  searchPlaceholder?: string;
+  emptyText?: string;
+  loading?: boolean;
+  disabled?: boolean;
+  className?: string;
+  'aria-label'?: string;
+}) {
+  const [open, setOpen] = useState(false);
+  const selected = options.find(option => option.value === value);
+
+  return (
+    <Popover open={open} onOpenChange={setOpen}>
+      <PopoverTrigger asChild>
+        <Button
+          type='button'
+          variant='outline'
+          role='combobox'
+          aria-expanded={open}
+          aria-label={ariaLabel}
+          disabled={disabled}
+          className={cn('w-full justify-between font-normal', !selected && 'text-muted-foreground', className)}
+        >
+          <span className='truncate'>{selected?.label ?? placeholder}</span>
+          <ChevronsUpDown className='ml-2 size-4 shrink-0 opacity-50' />
+        </Button>
+      </PopoverTrigger>
+      <PopoverContent className='w-[--radix-popover-trigger-width] min-w-[280px] p-0' align='start'>
+        <Command>
+          <CommandInput placeholder={searchPlaceholder} />
+          <CommandList>
+            {loading ? (
+              <div className='text-muted-foreground flex items-center gap-2 px-3 py-4 text-sm'>
+                <Spinner /> Loading…
+              </div>
+            ) : (
+              <CommandEmpty>{emptyText}</CommandEmpty>
+            )}
+            {options.length > 0 ? (
+              <CommandGroup>
+                {options.map(option => (
+                  <CommandItem
+                    key={option.value}
+                    value={option.value}
+                    keywords={[option.label, option.description ?? '']}
+                    disabled={option.disabled}
+                    onSelect={() => {
+                      onChange(option.value, option);
+                      setOpen(false);
+                    }}
+                  >
+                    <Check
+                      className={cn('size-4', option.value === value ? 'opacity-100' : 'opacity-0')}
+                    />
+                    <div className='min-w-0'>
+                      <p className='truncate'>{option.label}</p>
+                      {option.description ? (
+                        <p className='text-muted-foreground truncate text-xs'>{option.description}</p>
+                      ) : null}
+                    </div>
+                  </CommandItem>
+                ))}
+              </CommandGroup>
+            ) : null}
+          </CommandList>
+        </Command>
+      </PopoverContent>
+    </Popover>
+  );
+}
