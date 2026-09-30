@@ -4,7 +4,11 @@ import { CustomPagination } from '@/components/pagination';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { EmptyState } from '@/components/ui/empty-state';
-import { Input } from '@/components/ui/input';
+import { SearchQueryInput } from '@/components/search/search-input';
+import { SearchNotice } from '@/components/search/search-notice';
+import { useSearchIssue } from '@/hooks/use-search-query';
+import { useUrlSearchQuery } from '@/hooks/use-url-search-query';
+import { retryUnlessClientOrSearchError } from '@/lib/api-errors';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import {
@@ -16,13 +20,10 @@ import type { Course, TrainingProgram } from '@/services/client/types.gen';
 import { useUserDomain } from '@/src/features/dashboard/context/user-domain-context';
 import { CourseCard } from '@/src/features/dashboard/courses/components/CourseCard';
 import { roleScopedDashboardPath } from '@/src/features/dashboard/lib/active-domain-storage';
-import { useQuery } from '@tanstack/react-query';
-import { BookOpen, Layers, Search } from 'lucide-react';
+import { keepPreviousData, useQuery } from '@tanstack/react-query';
+import { BookOpen, Layers } from 'lucide-react';
 import { useRouter } from 'next/navigation';
-import { useDeferredValue, useMemo, useState } from 'react';
-
-const matchesSearchQuery = (value: string | undefined, query: string) =>
-  query === '' || (value ?? '').toLowerCase().includes(query.toLowerCase());
+import { useMemo, useState } from 'react';
 
 const matchesSelectedCategory = (
   categories: string[] | undefined,
@@ -37,31 +38,43 @@ export default function AllCoursesPage() {
   const router = useRouter();
   const { activeDomain } = useUserDomain();
   const [selectedCategory, setSelectedCategory] = useState('All');
-  const [searchQuery, setSearchQuery] = useState('');
+  // Free text goes to the server as `q` (search index, typo-tolerant, relevance order);
+  // ?q= survives a reload and a new term starts again at page 1.
+  const search = useUrlSearchQuery();
+  const term = search.q;
 
   const size = 20;
-  const [page, setPage] = useState(0);
+  const [paging, setPaging] = useState({ term, page: 0 });
+  const page = paging.term === term ? paging.page : 0;
+  const setPage = (next: number) => setPaging({ term, page: next });
 
   // Moderation publishes and withdraws catalogue entries behind this page, so the
   // stale window has to be the throttle rather than a dead refetchOnMount.
-  const { data, isLoading } = useQuery({
-    ...getPublishedCoursesOptions({ query: { pageable: { page, size } } }),
+  const coursesQuery = useQuery({
+    ...getPublishedCoursesOptions({
+      query: { pageable: { page, size }, ...(term ? { q: term } : {}) },
+    }),
     refetchOnWindowFocus: false,
     refetchOnReconnect: false,
+    placeholderData: keepPreviousData,
+    retry: retryUnlessClientOrSearchError,
   });
+  const { data, isLoading } = coursesQuery;
 
-  const { data: programsData } = useQuery({
-    ...getAllTrainingProgramsOptions({ query: { pageable: {} } }),
+  const programsQuery = useQuery({
+    ...getAllTrainingProgramsOptions({
+      query: { pageable: {}, ...(term ? { q: term } : {}) },
+    }),
     refetchOnWindowFocus: false,
     refetchOnReconnect: false,
+    placeholderData: keepPreviousData,
+    retry: retryUnlessClientOrSearchError,
   });
+  const { data: programsData } = programsQuery;
+  const searchIssue = useSearchIssue(search, coursesQuery.error, programsQuery.error);
 
   const courses = useMemo(() => data?.data?.content ?? [], [data]);
   const programs = useMemo(() => programsData?.data?.content ?? [], [programsData]);
-
-  // Defer filtering so typing in the search box stays responsive even while
-  // large lists re-filter.
-  const deferredQuery = useDeferredValue(searchQuery);
 
   const totalCoursePages = Number(data?.data?.metadata?.totalPages ?? 0);
   const totalProgramPages = Number(programsData?.data?.metadata?.totalPages ?? 0);
@@ -81,47 +94,25 @@ export default function AllCoursesPage() {
 
   const filteredCourses = useMemo(
     () =>
-      courses.filter((course: Course) => {
-        const matchesSearch =
-          matchesSearchQuery(course?.name, deferredQuery) ||
-          matchesSearchQuery(course?.description, deferredQuery);
-
-        const matchesCategory = matchesSelectedCategory(
-          course?.category_names,
-          selectedCategory,
-          currentCategory?.name
-        );
-
-        return matchesSearch && matchesCategory;
-      }),
-    [courses, deferredQuery, selectedCategory, currentCategory?.name]
+      courses.filter((course: Course) =>
+        matchesSelectedCategory(course?.category_names, selectedCategory, currentCategory?.name)
+      ),
+    [courses, selectedCategory, currentCategory?.name]
   );
 
   const filteredPrograms = useMemo(
     () =>
-      programs.filter((program: TrainingProgram) => {
-        const matchesSearch =
-          matchesSearchQuery(program?.title, deferredQuery) ||
-          matchesSearchQuery(program?.description, deferredQuery);
-
-        const matchesCategory = matchesSelectedCategory(
-          undefined,
-          selectedCategory,
-          currentCategory?.name
-        );
-
-        return matchesSearch && matchesCategory;
-      }),
-    [programs, deferredQuery, selectedCategory, currentCategory?.name]
+      programs.filter((program: TrainingProgram) =>
+        matchesSelectedCategory(undefined, selectedCategory, currentCategory?.name)
+      ),
+    [programs, selectedCategory, currentCategory?.name]
   );
 
   const [activeTab, setActiveTab] = useState<'courses' | 'programs'>('courses');
 
-  // Reset filters when switching tabs
+  // The same term searches both tabs, so switching keeps it.
   const handleTabChange = (value: string) => {
     setActiveTab(value as 'courses' | 'programs');
-    setSearchQuery('');
-    // setStatusFilter('all');
   };
 
   if (isLoading) {
@@ -168,16 +159,12 @@ export default function AllCoursesPage() {
           {/* Search and Filters */}
           <div className='mb-8'>
             <div className='mb-6 flex gap-4'>
-              <div className='relative flex-1'>
-                <Search className='text-muted-foreground absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2 transform' />
-                <Input
-                  placeholder='Search courses...'
-                  className='pl-10'
-                  value={searchQuery}
-                  onChange={e => setSearchQuery(e.target.value)}
-                />
-              </div>
+              <SearchQueryInput
+                search={search}
+                placeholder={activeTab === 'courses' ? 'Search courses…' : 'Search programs…'}
+              />
             </div>
+            <SearchNotice issue={searchIssue} onReset={search.clear} className='mb-4' />
 
             {/* Category Tabs */}
             <div className='scrollbar-hidden w-auto overflow-hidden overflow-x-auto lg:max-w-5xl 2xl:max-w-[110rem]'>
@@ -254,7 +241,7 @@ export default function AllCoursesPage() {
                   <Button
                     variant='outline'
                     onClick={() => {
-                      setSearchQuery('');
+                      search.clear();
                       setSelectedCategory('all');
                     }}
                   >
@@ -320,7 +307,7 @@ export default function AllCoursesPage() {
                 <Button
                   variant='outline'
                   onClick={() => {
-                    setSearchQuery('');
+                    search.clear();
                     setSelectedCategory('all');
                   }}
                 >
