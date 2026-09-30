@@ -1,6 +1,6 @@
 'use client';
 
-import { useQuery } from '@tanstack/react-query';
+import { keepPreviousData, useQuery } from '@tanstack/react-query';
 import {
   ArrowDownWideNarrow,
   ArrowUpWideNarrow,
@@ -14,17 +14,18 @@ import {
   GraduationCap,
   Layers,
   MapPin,
-  Search,
   SlidersHorizontal,
   Users,
 } from 'lucide-react';
-import { useDeferredValue, useMemo, useState } from 'react';
+import { useSearchParams } from 'next/navigation';
+import { useMemo, useState } from 'react';
 
 import { PageHeader } from '@/components/dashboard';
 import { AsyncSection } from '@/components/data/async-section';
 import { Badge } from '@/components/ui/badge';
 import { EmptyState } from '@/components/ui/empty-state';
-import { Input } from '@/components/ui/input';
+import { SearchQueryInput } from '@/components/search/search-input';
+import { SearchNotice } from '@/components/search/search-notice';
 import {
   Select,
   SelectContent,
@@ -47,10 +48,14 @@ import {
   useOrganisationsByIds,
   useProgramsByIds,
 } from '@/hooks/use-batched-lookups';
+import { useSearchIssue } from '@/hooks/use-search-query';
+import { useUrlSearchQuery } from '@/hooks/use-url-search-query';
+import { retryUnlessClientOrSearchError } from '@/lib/api-errors';
 import { formatDate, formatDateOnly } from '@/lib/date';
 import { formatRate, RATE_BASES } from '@/lib/rate-card';
 import { cn } from '@/lib/utils';
-import { listJobsOptions } from '@/services/client/@tanstack/react-query.gen';
+import { getJobOptions, listJobsOptions } from '@/services/client/@tanstack/react-query.gen';
+import { useTypeSearch } from '@/src/features/search/hooks/use-type-search';
 import type { ClassMarketplaceJob } from '@/services/client/types.gen';
 import { jobFacts, sessionsLabel, timesLabel } from '@/src/features/instructor-jobs/job-facts';
 import {
@@ -217,8 +222,8 @@ export function JobMarketplacePage({ role }: { role: JobMarketplaceRole }) {
   const statusOptions = openOnly
     ? STATUS_OPTIONS.filter(option => option.value === 'open')
     : STATUS_OPTIONS;
-  const [search, setSearch] = useState('');
-  const deferredSearch = useDeferredValue(search.trim().toLowerCase());
+  // Free text is matched by the search index on the server (`q`); ?q= comes from links.
+  const search = useUrlSearchQuery();
   const [statusFilter, setStatusFilter] = useState<StatusFilter>('open');
   const [formatFilter, setFormatFilter] = useState<'all' | 'INDIVIDUAL' | 'GROUP'>('all');
   const [locationFilter, setLocationFilter] = useState<'all' | (typeof LOCATION_OPTIONS)[number]>(
@@ -228,18 +233,37 @@ export function JobMarketplacePage({ role }: { role: JobMarketplaceRole }) {
   const [organisationFilter, setOrganisationFilter] = useState('all');
   const [contentFilter, setContentFilter] = useState('all');
   const [sortDirection, setSortDirection] = useState<SortDirection>('newest');
-  const [selectedJobUuid, setSelectedJobUuid] = useState<string | null>(null);
+  // ?job= opens one posting directly, e.g. from the search palette.
+  const linkedJob = useSearchParams().get('job');
+  const [selectedJobUuid, setSelectedJobUuid] = useState<string | null>(linkedJob);
   const [now] = useState(() => Date.now());
+  const serverStatus = openOnly ? 'open' : statusFilter !== 'all' ? statusFilter : undefined;
 
   const jobsQuery = useQuery({
     ...listJobsOptions({
       query: {
         pageable: { page: 0, size: JOB_PAGE_SIZE },
         // Filter on the server so closed postings can't crowd open ones out of the first page.
-        ...(openOnly ? { status: 'open' } : statusFilter !== 'all' ? { status: statusFilter } : {}),
+        ...(serverStatus ? { status: serverStatus } : {}),
+        ...(search.q ? { q: search.q } : {}),
       },
     }),
+    placeholderData: keepPreviousData,
+    retry: retryUnlessClientOrSearchError,
   });
+  const searchIssue = useSearchIssue(search, jobsQuery.error);
+
+  // One facet request counts delivery modes and formats across every matching job, not
+  // just the loaded page. When search is down the counts are hidden rather than guessed.
+  const facetQuery = useTypeSearch({
+    type: 'marketplace_jobs',
+    q: search.q,
+    filters: serverStatus ? { status: serverStatus } : undefined,
+    facets: 'location_type,session_format',
+    size: 1,
+    enabled: !searchIssue,
+  });
+  const facetCounts = facetQuery.isError ? undefined : facetQuery.facets;
   const content = jobsQuery.data?.data?.content;
   const jobs = useMemo(
     () => (content ?? []).map(job => ({ ...job, status: getEffectiveJobStatus(job, now) })),
@@ -290,22 +314,10 @@ export function JobMarketplacePage({ role }: { role: JobMarketplaceRole }) {
   });
 
   const beforeLocation = jobs.filter(job => {
-    const searchable = [
-      job.title,
-      job.description,
-      job.location_name,
-      job.branch_name,
-      organisationName(job),
-      contentTitle(job),
-    ]
-      .filter(Boolean)
-      .join(' ')
-      .toLowerCase();
     const contentKey = job.program_uuid
       ? `program:${job.program_uuid}`
       : `course:${job.course_uuid}`;
     return (
-      (!deferredSearch || searchable.includes(deferredSearch)) &&
       (formatFilter === 'all' || job.session_format === formatFilter) &&
       (organisationFilter === 'all' || job.organisation_uuid === organisationFilter) &&
       (contentFilter === 'all' || contentKey === contentFilter) &&
@@ -352,6 +364,23 @@ export function JobMarketplacePage({ role }: { role: JobMarketplaceRole }) {
     },
   ];
 
+  // The facet counts describe the server's matches; they only stand for this list while
+  // no filter narrows it in the browser.
+  const clientNarrowed =
+    formatFilter !== 'all' || organisationFilter !== 'all' || contentFilter !== 'all';
+  const locationCount = (option: (typeof LOCATION_OPTIONS)[number] | 'all') => {
+    const counts = facetCounts?.location_type;
+    if (!clientNarrowed && counts) {
+      return option === 'all'
+        ? Object.values(counts).reduce((sum, count) => sum + count, 0)
+        : (counts[option] ?? 0);
+    }
+    if (!clientNarrowed && facetQuery.isError) return undefined;
+    return option === 'all'
+      ? beforeLocation.length
+      : beforeLocation.filter(job => job.location_type === option).length;
+  };
+
   const filterGroups: FilterGroup[] = [
     {
       title: 'Status',
@@ -373,13 +402,13 @@ export function JobMarketplacePage({ role }: { role: JobMarketplaceRole }) {
       items: [
         {
           label: 'Any location',
-          count: beforeLocation.length,
+          count: locationCount('all'),
           active: locationFilter === 'all',
           onSelect: () => setLocationFilter('all'),
         },
         ...LOCATION_OPTIONS.map(option => ({
           label: deliveryLabel(option),
-          count: beforeLocation.filter(job => job.location_type === option).length,
+          count: locationCount(option),
           active: locationFilter === option,
           onSelect: () => setLocationFilter(option),
         })),
@@ -394,7 +423,14 @@ export function JobMarketplacePage({ role }: { role: JobMarketplaceRole }) {
     />
   );
 
-  const selectedJob = jobs.find(job => job.uuid === selectedJobUuid) ?? null;
+  const listedSelection = jobs.find(job => job.uuid === selectedJobUuid) ?? null;
+  // A linked job that is not on the loaded page is read on its own.
+  const linkedJobQuery = useQuery({
+    ...getJobOptions({ path: { jobUuid: selectedJobUuid ?? '' } }),
+    enabled: Boolean(selectedJobUuid) && !listedSelection && !jobsLoading,
+    retry: retryUnlessClientOrSearchError,
+  });
+  const selectedJob = listedSelection ?? linkedJobQuery.data?.data ?? null;
 
   return (
     <main className={cn(surfaceTheme.page, 'pb-16')}>
@@ -436,20 +472,13 @@ export function JobMarketplacePage({ role }: { role: JobMarketplaceRole }) {
               }
               bodyClassName='space-y-3'
             >
-              <label className='relative block min-w-0'>
-                <span className='sr-only'>Search jobs</span>
-                <Input
-                  type='search'
-                  value={search}
-                  onChange={event => setSearch(event.target.value)}
-                  placeholder='Search job title, organisation, course, or location'
-                  className='h-10 pl-10'
-                />
-                <Search
-                  aria-hidden
-                  className='text-muted-foreground pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2'
-                />
-              </label>
+              <SearchQueryInput
+                search={search}
+                aria-label='Search jobs'
+                placeholder='Search job title, organisation, course, or location'
+                className='h-10'
+              />
+              <SearchNotice issue={searchIssue} onReset={search.clear} />
 
               <div className='flex flex-wrap items-center gap-3'>
                 <div className='min-w-[200px] flex-1'>
@@ -538,7 +567,7 @@ export function JobMarketplacePage({ role }: { role: JobMarketplaceRole }) {
 
                 <AsyncSection
                   loading={jobsLoading}
-                  error={jobsQuery.error}
+                  error={searchIssue ? null : jobsQuery.error}
                   empty={listed.length === 0}
                   onRetry={() => jobsQuery.refetch()}
                   skeleton={<JobListSkeleton />}
@@ -546,8 +575,17 @@ export function JobMarketplacePage({ role }: { role: JobMarketplaceRole }) {
                   emptyState={
                     <EmptyState
                       icon={BriefcaseBusiness}
-                      title='No class jobs found'
-                      description={config.emptyStateLabel}
+                      title={search.q ? 'No job matches this search' : 'No class jobs found'}
+                      description={
+                        search.q ? 'Try another word, or clear the search.' : config.emptyStateLabel
+                      }
+                      action={
+                        search.q ? (
+                          <Button variant='outline' size='sm' onClick={search.clear}>
+                            Clear search
+                          </Button>
+                        ) : undefined
+                      }
                       variant='compact'
                     />
                   }
