@@ -160,14 +160,16 @@ export default function OrganisationDetails({ organisationUuid }: { organisation
             </CardContent>
           </Card>
           <div className='space-y-1'>
-            <h2 className='text-xl font-semibold'>Approved courses & attached instructors</h2>
+            <h2 className='text-xl font-semibold'>Public classes</h2>
             <p className='text-muted-foreground text-sm'>
-              Instructors assigned to this organisation’s classes for each course.
+              Instructors assigned to this organisation’s public classes, for each course it is
+              approved to train. Private and invitation-only classes are visible only to the
+              organisation’s staff, so they are not listed here.
             </p>
           </div>
           {classesFailed && (
             <EmptyState
-              title='Could not load attached instructors'
+              title='Could not load public classes'
               description='Class assignments are currently unavailable.'
               action={
                 <Button variant='outline' onClick={() => classesQuery.refetch()}>
@@ -196,8 +198,8 @@ export default function OrganisationDetails({ organisationUuid }: { organisation
                     <EmptyState
                       variant='compact'
                       icon={GraduationCap}
-                      title='No instructor attached yet'
-                      description='Instructors will appear when the organisation assigns them to a class for this course.'
+                      title='No public class for this course'
+                      description='The organisation may run this course in private or invitation-only classes, which are not shown here. Instructors appear once a public class for this course has one assigned.'
                     />
                   ) : (
                     <div className='grid gap-4 xl:grid-cols-2'>
