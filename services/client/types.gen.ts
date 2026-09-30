@@ -306,6 +306,49 @@ export type ApiResponseStudent = {
 };
 
 /**
+ * Replaces the learner's skill goals
+ */
+export type LearnerSkillGoalsUpdateRequest = {
+  /**
+   * Skill uuids from GET /api/v1/skills, at most 20
+   */
+  skill_uuids: Array<string>;
+};
+
+export type ApiResponseListLearnerSkillGoal = {
+  success?: boolean;
+  data?: Array<LearnerSkillGoal>;
+  message?: string;
+  error?: unknown;
+};
+
+/**
+ * A skill the learner has declared as a learning goal
+ */
+export type LearnerSkillGoal = {
+  /**
+   * Skill uuid from the skills taxonomy
+   */
+  skill_uuid?: string;
+  /**
+   * Skill name
+   */
+  name?: string;
+  /**
+   * Skill slug
+   */
+  slug?: string;
+  /**
+   * Who declared the goal: self, guardian or admin
+   */
+  source?: string;
+  /**
+   * When the goal was declared (UTC)
+   */
+  created_date?: Date;
+};
+
+/**
  * Payload to replace an organisation student group's editable attributes.
  */
 export type UpdateStudentGroupRequest = {
@@ -1877,6 +1920,11 @@ export type Instructor = {
    */
   readonly updated_by?: string;
   /**
+   * **[READ-ONLY]** Whether the instructor has opted in to near-me search. Present only on the owner's own profile; change it with PUT /api/v1/instructors/{uuid}/location-search.
+   */
+  readonly location_search_opt_in?: boolean | null;
+  distance_band?: DistanceBandEnum;
+  /**
    * **[READ-ONLY]** Indicates if the instructor profile is considered complete. Requires bio and professional headline.
    */
   readonly is_profile_complete?: boolean;
@@ -1888,6 +1936,23 @@ export type Instructor = {
    * **[READ-ONLY]** Formatted location coordinates as a string. Returns null if location coordinates are not available.
    */
   readonly formatted_location?: string | null;
+};
+
+/**
+ * Turns an instructor's near-me search opt-in on or off
+ */
+export type LocationSearchOptInRequest = {
+  /**
+   * **[REQUIRED]** true to appear in near-me search (location rounded to about 1 km, only while verified and with coordinates set); false to leave it
+   */
+  enabled: boolean;
+};
+
+export type ApiResponseInstructor = {
+  success?: boolean;
+  data?: Instructor;
+  message?: string;
+  error?: unknown;
 };
 
 /**
@@ -1907,6 +1972,10 @@ export type InstructorSkill = {
    */
   skill_name: string;
   proficiency_level: ProficiencyLevelEnum;
+  /**
+   * **[READ-ONLY]** The skills-taxonomy entry the skill name resolves to (matched by slug or alias). Null when the name is free text that matches no curated skill.
+   */
+  readonly skill_uuid?: string;
   /**
    * **[READ-ONLY]** Timestamp when the skill record was first created. Automatically set by the system.
    */
@@ -2614,10 +2683,6 @@ export type Course = {
    */
   readonly accepts_new_enrollments?: boolean;
   /**
-   * **[READ-ONLY]** Number of categories this course belongs to.
-   */
-  readonly category_count?: number;
-  /**
    * **[READ-ONLY]** Human-readable format of total course duration.
    */
   readonly total_duration_display?: string;
@@ -2625,6 +2690,10 @@ export type Course = {
    * **[READ-ONLY]** Indicates if the course belongs to multiple categories.
    */
   readonly has_multiple_categories?: boolean;
+  /**
+   * **[READ-ONLY]** Number of categories this course belongs to.
+   */
+  readonly category_count?: number;
   /**
    * **[READ-ONLY]** Human-readable description of the course's current lifecycle stage.
    */
@@ -2688,6 +2757,101 @@ export type ApiResponseCourse = {
   data?: Course;
   message?: string;
   error?: unknown;
+};
+
+export type CourseSkillItem = {
+  skill_uuid: string;
+  level?: LevelEnum;
+  /**
+   * 1-5, defaults to 1
+   */
+  weight?: number;
+};
+
+/**
+ * The course's complete skill tag list; it replaces the current one. An empty list clears the tags.
+ */
+export type CourseSkillsUpdateRequest = {
+  skills: Array<CourseSkillItem>;
+};
+
+export type ApiResponseListCourseSkill = {
+  success?: boolean;
+  data?: Array<CourseSkill>;
+  message?: string;
+  error?: unknown;
+};
+
+/**
+ * A skill the course teaches, from the skills taxonomy
+ */
+export type CourseSkill = {
+  skill_uuid?: string;
+  skill_name?: string;
+  skill_slug?: string;
+  level?: LevelEnum;
+  /**
+   * 1-5, how central the skill is to the course
+   */
+  weight?: number;
+  /**
+   * False when an admin has since retired the skill; the tag stays until the owner removes it
+   */
+  skill_active?: boolean;
+};
+
+/**
+ * Replaces a course's prerequisite set
+ */
+export type CoursePrerequisitesRequest = {
+  /**
+   * **[REQUIRED]** Every prior course the course should have; an empty list clears them.
+   */
+  prerequisites: Array<CoursePrerequisitesRequestItem>;
+};
+
+export type CoursePrerequisitesRequestItem = {
+  /**
+   * **[REQUIRED]** A published course, or one of the author's own courses.
+   */
+  prerequisite_course_uuid: string;
+  /**
+   * **[OPTIONAL]** true (default): required; false: recommended only.
+   */
+  is_mandatory?: boolean;
+};
+
+export type ApiResponseListCoursePrerequisite = {
+  success?: boolean;
+  data?: Array<CoursePrerequisite>;
+  message?: string;
+  error?: unknown;
+};
+
+/**
+ * A prior course that a course requires or recommends
+ */
+export type CoursePrerequisite = {
+  /**
+   * **[READ-ONLY]** Identifier of the prerequisite link.
+   */
+  readonly uuid?: string;
+  /**
+   * **[READ-ONLY]** The course that has the prerequisite. On a live course with a pending edit this is the draft course after a PUT.
+   */
+  readonly course_uuid?: string;
+  /**
+   * The prior course.
+   */
+  prerequisite_course_uuid?: string;
+  /**
+   * **[READ-ONLY]** Name of the prior course.
+   */
+  readonly prerequisite_course_name?: string;
+  /**
+   * true: required before starting; false: recommended only.
+   */
+  is_mandatory?: boolean;
 };
 
 export type ApiResponseCourseTrainingRequirement = {
@@ -3382,7 +3546,7 @@ export type CourseCreatorSkill = {
   readonly uuid?: string;
   course_creator_uuid: string;
   skill_name: string;
-  proficiency_level: ProficiencyLevelEnum2;
+  proficiency_level: LevelEnum;
   readonly created_date?: Date;
   readonly created_by?: string;
   readonly updated_date?: Date;
@@ -4223,6 +4387,7 @@ export type ClassDefinitionResponse = {
    * Persisted class definition
    */
   class_definition?: ClassDefinition;
+  distance_band?: DistanceBandEnum;
 };
 
 /**
@@ -4539,7 +4704,63 @@ export type ClassMarketplaceJob = {
    * **[READ-ONLY]** The contact person's email; same visibility as contact_name.
    */
   readonly contact_email?: string | null;
+  distance_band?: DistanceBandEnum;
   readonly duration_minutes?: bigint;
+};
+
+export type ClassMarketplaceJobRequiredSkillItem = {
+  skill_uuid: string;
+  min_proficiency?: LevelEnum;
+  /**
+   * Defaults to true
+   */
+  is_mandatory?: boolean;
+};
+
+/**
+ * The job's complete required-skill list; it replaces the current one. [] clears it, and the job inherits its course's skills again.
+ */
+export type ClassMarketplaceJobRequiredSkillsRequest = {
+  skills: Array<ClassMarketplaceJobRequiredSkillItem>;
+};
+
+export type ApiResponseClassMarketplaceJobRequiredSkills = {
+  success?: boolean;
+  data?: ClassMarketplaceJobRequiredSkills;
+  message?: string;
+  error?: unknown;
+};
+
+export type ClassMarketplaceJobRequiredSkill = {
+  skill_uuid?: string;
+  skill_name?: string;
+  skill_slug?: string;
+  min_proficiency?: LevelEnum;
+  /**
+   * Inherited skills are all mandatory
+   */
+  is_mandatory?: boolean;
+  inherited?: boolean;
+  /**
+   * False when an admin has since retired the skill
+   */
+  skill_active?: boolean;
+};
+
+/**
+ * The skills a marketplace job asks for: its own tags, or its course's when it has none
+ */
+export type ClassMarketplaceJobRequiredSkills = {
+  job_uuid?: string;
+  /**
+   * True when the job has no tags of its own and these are its course's skills
+   */
+  inherited?: boolean;
+  /**
+   * The course the skills were inherited from; null when not inherited
+   */
+  inherited_from_course_uuid?: string;
+  skills?: Array<ClassMarketplaceJobRequiredSkill>;
 };
 
 /**
@@ -4786,6 +5007,59 @@ export type ApiResponseAssignment = {
   data?: Assignment;
   message?: string;
   error?: unknown;
+};
+
+/**
+ * Creates or replaces a skills taxonomy entry
+ */
+export type SkillRequest = {
+  name: string;
+  /**
+   * Optional; derived from the name when omitted. Normalised to lower-case words joined by hyphens
+   */
+  slug?: string;
+  /**
+   * Optional broader skill; may not be the skill itself or one of its descendants
+   */
+  parent_uuid?: string;
+  aliases?: Array<string>;
+  /**
+   * Defaults to true
+   */
+  active?: boolean;
+};
+
+export type ApiResponseSkill = {
+  success?: boolean;
+  data?: Skill;
+  message?: string;
+  error?: unknown;
+};
+
+/**
+ * An entry of the admin-curated skills taxonomy
+ */
+export type Skill = {
+  uuid?: string;
+  name?: string;
+  /**
+   * Unique, lower-case, hyphenated; derived from the name unless set
+   */
+  slug?: string;
+  /**
+   * Broader skill this one sits under, if any
+   */
+  parent_uuid?: string;
+  /**
+   * Alternative names; they resolve to this skill and act as search synonyms
+   */
+  aliases?: Array<string>;
+  /**
+   * False once retired: existing tags keep it, it can no longer be picked
+   */
+  active?: boolean;
+  created_date?: Date;
+  updated_date?: Date;
 };
 
 /**
@@ -6254,13 +6528,6 @@ export type PublicInvitation = {
   expires_at?: Date;
 };
 
-export type ApiResponseInstructor = {
-  success?: boolean;
-  data?: Instructor;
-  message?: string;
-  error?: unknown;
-};
-
 /**
  * Student review and rating for an instructor, scoped to a specific enrollment.
  */
@@ -6495,6 +6762,10 @@ export type Enrollment = {
    */
   readonly is_active?: boolean;
   /**
+   * **[READ-ONLY]** Indicates if attendance has been marked for this enrollment.
+   */
+  readonly is_attendance_marked?: boolean;
+  /**
    * **[READ-ONLY]** Indicates if the student attended the class.
    */
   readonly did_attend?: boolean;
@@ -6503,13 +6774,32 @@ export type Enrollment = {
    */
   readonly status_description?: string;
   /**
-   * **[READ-ONLY]** Indicates if attendance has been marked for this enrollment.
-   */
-  readonly is_attendance_marked?: boolean;
-  /**
    * **[READ-ONLY]** Indicates if the enrollment can be cancelled.
    */
   readonly can_be_cancelled?: boolean;
+};
+
+/**
+ * A click or dismissal of an item from a recommendation response
+ */
+export type DiscoveryEventRequest = {
+  /**
+   * The recommendation_id returned with the recommendations
+   */
+  recommendation_id: string;
+  /**
+   * The UUID of the item acted on
+   */
+  item_uuid: string;
+  /**
+   * The item's type as returned with the recommendation, e.g. course
+   */
+  item_type: string;
+  event_type: EventTypeEnum;
+  /**
+   * 0-based position the item was shown at
+   */
+  position: number;
 };
 
 export type ApiResponse = {
@@ -8454,6 +8744,13 @@ export type SortObject = {
   unsorted?: boolean;
 };
 
+export type ApiResponseListSkill = {
+  success?: boolean;
+  data?: Array<Skill>;
+  message?: string;
+  error?: unknown;
+};
+
 export type ApiResponseGlobalSearchResponse = {
   success?: boolean;
   data?: GlobalSearchResponse;
@@ -8468,6 +8765,7 @@ export type GlobalSearchHit = {
   subtitle?: string;
   image_url?: string;
   highlight?: string;
+  distance_band?: string;
 };
 
 export type GlobalSearchResponse = {
@@ -8954,7 +9252,7 @@ export type TrainingApplicationEvent = {
    * **[READ-ONLY]** The application the event belongs to.
    */
   readonly application_uuid?: string;
-  event_type?: EventTypeEnum;
+  event_type?: EventTypeEnum2;
   /**
    * **[READ-ONLY]** The user who took the step; null for system actions.
    */
@@ -10597,6 +10895,77 @@ export type ApiResponseListContentStatus = {
   error?: unknown;
 };
 
+export type ApiResponseListRecommendedCourse = {
+  success?: boolean;
+  data?: Array<RecommendedCourse>;
+  message?: string;
+  error?: unknown;
+};
+
+/**
+ * Why a course was recommended
+ */
+export type RecommendationReason = {
+  /**
+   * Stable reason code: NEXT_STEP, PREREQUISITE_PENDING, CO_ENROLLED, CATEGORY, SKILL_GAP, AFFILIATION, SIMILAR_CONTENT or POPULAR
+   */
+  code?: string;
+  /**
+   * Display text
+   */
+  text?: string;
+  /**
+   * The course, category, organisation or instructor the reason refers to, if any
+   */
+  related_uuid?: string;
+};
+
+/**
+ * A recommended course with an explanation
+ */
+export type RecommendedCourse = {
+  /**
+   * UUID of the recommended course
+   */
+  course_uuid?: string;
+  /**
+   * Course name
+   */
+  name?: string;
+  /**
+   * Course description
+   */
+  description?: string;
+  /**
+   * Course thumbnail URL
+   */
+  thumbnail_url?: string;
+  /**
+   * The main reason, as display text (the first of `reasons`)
+   */
+  reason?: string;
+  /**
+   * Ranking score; higher is a stronger match. Comparable only within one response
+   */
+  score?: number;
+  /**
+   * Why the course was recommended, strongest first
+   */
+  reasons?: Array<RecommendationReason>;
+  /**
+   * Identifies this response; quote it back on discovery events
+   */
+  recommendation_id?: string;
+  /**
+   * Where the list is shown: for_you, next_steps or similar
+   */
+  surface?: string;
+  /**
+   * The scoring version that produced the ranking
+   */
+  model_version?: string;
+};
+
 export type ApiResponseCoursePendingEdit = {
   success?: boolean;
   data?: CoursePendingEdit;
@@ -11290,6 +11659,32 @@ export type PagedDtoCourseEnrollment = {
   links?: PageLinks;
 };
 
+export type ApiResponsePagedDtoCourseContentSearchHit = {
+  success?: boolean;
+  data?: PagedDtoCourseContentSearchHit;
+  message?: string;
+  error?: unknown;
+};
+
+/**
+ * A lesson, content item, quiz or assignment matching an in-course search
+ */
+export type CourseContentSearchHit = {
+  type?: string;
+  uuid?: string;
+  lesson_uuid?: string;
+  lesson_number?: number;
+  lesson_title?: string;
+  title?: string;
+  highlight?: string;
+};
+
+export type PagedDtoCourseContentSearchHit = {
+  content?: Array<CourseContentSearchHit>;
+  metadata?: PageMetadata;
+  links?: PageLinks;
+};
+
 export type ApiResponseListCourseCategoryMapping = {
   success?: boolean;
   data?: Array<CourseCategoryMapping>;
@@ -11365,43 +11760,6 @@ export type ApiResponseListCourseAssessmentLineItem = {
   data?: Array<CourseAssessmentLineItem>;
   message?: string;
   error?: unknown;
-};
-
-export type ApiResponseListRecommendedCourse = {
-  success?: boolean;
-  data?: Array<RecommendedCourse>;
-  message?: string;
-  error?: unknown;
-};
-
-/**
- * A recommended course with an explanation
- */
-export type RecommendedCourse = {
-  /**
-   * UUID of the recommended course
-   */
-  course_uuid?: string;
-  /**
-   * Course name
-   */
-  name?: string;
-  /**
-   * Course description
-   */
-  description?: string;
-  /**
-   * Course thumbnail URL
-   */
-  thumbnail_url?: string;
-  /**
-   * Short explanation of why this course was recommended
-   */
-  reason?: string;
-  /**
-   * Internal ranking score (higher is a stronger match)
-   */
-  score?: number;
 };
 
 export type ApiResponsePagedDtoCourseCreator = {
@@ -11807,6 +12165,53 @@ export type ClassMarketplaceJobEligibility = {
   readonly schedule_conflicts?: Array<ClassSchedulingConflict> | null;
 };
 
+export type ApiResponseJobCandidateList = {
+  success?: boolean;
+  data?: JobCandidateList;
+  message?: string;
+  error?: unknown;
+};
+
+/**
+ * A verified, approved instructor suggested for a marketplace job
+ */
+export type JobCandidate = {
+  match?: JobCandidateMatch;
+  readonly instructor_uuid?: string;
+  readonly display_name?: string;
+  readonly location_name?: string;
+  readonly admin_verified?: boolean;
+};
+
+export type JobCandidateList = {
+  readonly items?: Array<JobCandidate>;
+  /**
+   * Send back as recommendation_id to POST /api/v1/discovery/events
+   */
+  readonly recommendation_id?: string;
+  readonly model_version?: string;
+  readonly job_uuid?: string;
+};
+
+export type JobCandidateMatch = {
+  /**
+   * Fit score 0..1 (rules-v1)
+   */
+  readonly score?: number;
+  /**
+   * Plain-language reasons; never mention rates or clashes
+   */
+  readonly reasons?: Array<string>;
+  /**
+   * Whether every session of the job is free in the instructor's schedule
+   */
+  readonly schedule_clear?: boolean;
+  /**
+   * Whether the job's pay covers the instructor's approved rate
+   */
+  readonly rate_within_budget?: boolean;
+};
+
 export type ApiResponsePagedDtoClassMarketplaceJobApplication = {
   success?: boolean;
   data?: PagedDtoClassMarketplaceJobApplication;
@@ -11847,7 +12252,7 @@ export type ClassMarketplaceJobApplicationEvent = {
    * **[READ-ONLY]** The job the application was made to.
    */
   readonly job_uuid?: string;
-  event_type?: EventTypeEnum2;
+  event_type?: EventTypeEnum3;
   /**
    * **[READ-ONLY]** The user who took the step; null for system actions such as expiry.
    */
@@ -11864,6 +12269,146 @@ export type ClassMarketplaceJobApplicationEvent = {
    * **[READ-ONLY]** When it happened (UTC).
    */
   readonly created_date?: Date;
+};
+
+export type ApiResponseJobMatchList = {
+  success?: boolean;
+  data?: JobMatchList;
+  message?: string;
+  error?: unknown;
+};
+
+/**
+ * A marketplace job matched to the current instructor, with its fit
+ */
+export type JobMatch = {
+  readonly uuid?: string;
+  readonly title?: string;
+  readonly description?: string;
+  status?: StatusEnum8;
+  readonly resources?: Array<ClassMarketplaceJobResource>;
+  readonly organisation_uuid?: string;
+  readonly course_uuid?: string;
+  readonly program_uuid?: string;
+  readonly sale_price?: number;
+  /**
+   * **[READ-ONLY]** Per-session pay offered to the eventual instructor.
+   */
+  readonly instructor_pay?: number;
+  rate_basis?: RateBasisEnum2;
+  class_visibility?: ClassVisibilityEnum;
+  session_format?: SessionFormatEnum;
+  readonly default_start_time?: Date;
+  readonly default_end_time?: Date;
+  readonly academic_period_start_date?: Date;
+  readonly academic_period_end_date?: Date;
+  readonly registration_period_start_date?: Date;
+  readonly registration_period_end_date?: Date;
+  readonly class_reminder_minutes?: number;
+  readonly class_color?: string;
+  /**
+   * Public URL to the class advert thumbnail image, if uploaded.
+   */
+  readonly thumbnail_url?: string;
+  location_type?: LocationTypeEnum;
+  readonly location_name?: string;
+  readonly location_latitude?: number;
+  readonly location_longitude?: number;
+  readonly meeting_link?: string;
+  readonly max_participants?: number;
+  readonly allow_waitlist?: boolean;
+  readonly assigned_instructor_uuid?: string;
+  readonly assigned_application_uuid?: string;
+  readonly assigned_class_definition_uuid?: string;
+  readonly filled_at?: Date;
+  readonly session_templates?: Array<ClassSessionTemplate>;
+  readonly created_date?: Date;
+  readonly updated_date?: Date;
+  readonly created_by?: string;
+  readonly updated_by?: string;
+  service_type?: ServiceTypeEnum2;
+  readonly preferred_instructor_uuid?: string;
+  readonly target_groups?: Array<string>;
+  readonly target_group_uuids?: Array<string>;
+  readonly category_uuid?: string;
+  readonly remind_students?: boolean;
+  readonly remind_instructor?: boolean;
+  readonly remind_via_email?: boolean;
+  readonly remind_via_sms?: boolean;
+  readonly remind_via_push?: boolean;
+  /**
+   * **[READ-ONLY]** Training branch the class is delivered at (null only on legacy jobs).
+   */
+  readonly branch_uuid?: string | null;
+  /**
+   * **[READ-ONLY]** Name of the job's training branch.
+   */
+  readonly branch_name?: string | null;
+  /**
+   * **[READ-ONLY]** Applications received for the job, not counting withdrawn ones.
+   */
+  readonly application_count?: bigint;
+  /**
+   * **[READ-ONLY]** Instructor hired for the job; null until someone is hired.
+   */
+  readonly hired_instructor_uuid?: string | null;
+  /**
+   * **[READ-ONLY]** The branch's contact person; only for the hired instructor, the organisation's managers and platform admins.
+   */
+  readonly contact_name?: string | null;
+  /**
+   * **[READ-ONLY]** The contact person's phone; same visibility as contact_name.
+   */
+  readonly contact_phone?: string | null;
+  /**
+   * **[READ-ONLY]** The contact person's email; same visibility as contact_name.
+   */
+  readonly contact_email?: string | null;
+  distance_band?: DistanceBandEnum;
+  readonly duration_minutes?: bigint;
+  /**
+   * Why and how well the job fits
+   */
+  match?: JobMatchDetails;
+};
+
+export type JobMatchDetails = {
+  /**
+   * Fit score 0..1 (rules-v1)
+   */
+  readonly score?: number;
+  /**
+   * Plain-language reasons, strongest first
+   */
+  readonly reasons?: Array<string>;
+  /**
+   * The same answer as GET /api/v1/classes/jobs/{jobUuid}/eligibility; ineligible jobs are listed last
+   */
+  eligibility?: ClassMarketplaceJobEligibility;
+  /**
+   * Required skills the instructor holds at or above the minimum proficiency
+   */
+  readonly matched_skills?: Array<JobMatchSkill>;
+  /**
+   * The job's effective required skills (its own tags, or its course's)
+   */
+  readonly required_skills?: Array<JobMatchSkill>;
+};
+
+export type JobMatchList = {
+  readonly items?: Array<JobMatch>;
+  /**
+   * Send back as recommendation_id to POST /api/v1/discovery/events
+   */
+  readonly recommendation_id?: string;
+  readonly model_version?: string;
+};
+
+export type JobMatchSkill = {
+  readonly skill_uuid?: string;
+  readonly skill_name?: string;
+  min_proficiency?: LevelEnum;
+  readonly is_mandatory?: boolean;
 };
 
 export type ApiResponseListClassMarketplaceJobEligibility = {
@@ -12055,6 +12600,58 @@ export type SearchIndexStatusResponse = {
   engine_document_count?: bigint;
   engine_indexing?: boolean;
   engine_error?: string;
+};
+
+export type ApiResponseRecommendationEvaluation = {
+  success?: boolean;
+  data?: RecommendationEvaluation;
+  message?: string;
+  error?: unknown;
+};
+
+/**
+ * Leave-last-out recall and coverage of the course recommenders
+ */
+export type RecommendationEvaluation = {
+  /**
+   * Cut-off rank
+   */
+  k?: number;
+  /**
+   * Learners with at least two enrolments whose latest enrolment is a public course
+   */
+  learners_evaluated?: number;
+  /**
+   * Public courses in the catalogue
+   */
+  catalogue_size?: number;
+  /**
+   * One row per model
+   */
+  models?: Array<RecommendationModelScore>;
+  /**
+   * When the evaluation ran (UTC)
+   */
+  evaluated_at?: Date;
+};
+
+export type RecommendationModelScore = {
+  /**
+   * rules-v2, popularity or legacy-newest
+   */
+  model?: string;
+  /**
+   * Share of learners whose hidden enrolment is in the top k
+   */
+  recall_at_k?: number;
+  /**
+   * Mean nDCG@k with one relevant item
+   */
+  ndcg_at_k?: number;
+  /**
+   * Distinct courses recommended across learners / catalogue size
+   */
+  coverage?: number;
 };
 
 export type ApiResponsePagedDtoContentModerationHistory = {
@@ -12878,6 +13475,22 @@ export const RuleTypeEnum = {
 export type RuleTypeEnum = (typeof RuleTypeEnum)[keyof typeof RuleTypeEnum];
 
 /**
+ * **[READ-ONLY]** On a near-me search (near=lat,lng) only: how far the instructor is from the searched point, as a coarse band. Never metres.
+ */
+export const DistanceBandEnum = {
+  '<2_KM': '<2 km',
+  '2_5_KM': '2-5 km',
+  '5_10_KM': '5-10 km',
+  '10_25_KM': '10-25 km',
+  '>25_KM': '>25 km',
+} as const;
+
+/**
+ * **[READ-ONLY]** On a near-me search (near=lat,lng) only: how far the instructor is from the searched point, as a coarse band. Never metres.
+ */
+export type DistanceBandEnum = (typeof DistanceBandEnum)[keyof typeof DistanceBandEnum];
+
+/**
  * **[REQUIRED]** Level of proficiency in this skill. Indicates instructor's competency and teaching capability.
  */
 export const ProficiencyLevelEnum = {
@@ -13036,6 +13649,21 @@ export const ProvidedByEnum = {
 export type ProvidedByEnum = (typeof ProvidedByEnum)[keyof typeof ProvidedByEnum];
 
 /**
+ * Defaults to beginner; accepted in any case
+ */
+export const LevelEnum = {
+  BEGINNER: 'beginner',
+  INTERMEDIATE: 'intermediate',
+  ADVANCED: 'advanced',
+  EXPERT: 'expert',
+} as const;
+
+/**
+ * Defaults to beginner; accepted in any case
+ */
+export type LevelEnum = (typeof LevelEnum)[keyof typeof LevelEnum];
+
+/**
  * **[READ-ONLY]** Current status of the application.
  */
 export const StatusEnum5 = {
@@ -13123,16 +13751,6 @@ export const AttendanceStatusEnum = {
 } as const;
 
 export type AttendanceStatusEnum = (typeof AttendanceStatusEnum)[keyof typeof AttendanceStatusEnum];
-
-export const ProficiencyLevelEnum2 = {
-  BEGINNER: 'beginner',
-  INTERMEDIATE: 'intermediate',
-  ADVANCED: 'advanced',
-  EXPERT: 'expert',
-} as const;
-
-export type ProficiencyLevelEnum2 =
-  (typeof ProficiencyLevelEnum2)[keyof typeof ProficiencyLevelEnum2];
 
 export const StatusEnum7 = {
   PENDING_REVIEW: 'Pending Review',
@@ -13564,6 +14182,19 @@ export const StatusEnum14 = {
 export type StatusEnum14 = (typeof StatusEnum14)[keyof typeof StatusEnum14];
 
 /**
+ * CLICK or DISMISS; impressions are recorded by the server
+ */
+export const EventTypeEnum = {
+  CLICK: 'CLICK',
+  DISMISS: 'DISMISS',
+} as const;
+
+/**
+ * CLICK or DISMISS; impressions are recorded by the server
+ */
+export type EventTypeEnum = (typeof EventTypeEnum)[keyof typeof EventTypeEnum];
+
+/**
  * How the platform fee was configured
  */
 export const ModeEnum = {
@@ -13775,7 +14406,7 @@ export type StatusEnum19 = (typeof StatusEnum19)[keyof typeof StatusEnum19];
 /**
  * **[READ-ONLY]** What happened.
  */
-export const EventTypeEnum = {
+export const EventTypeEnum2 = {
   SUBMITTED: 'submitted',
   EDITED: 'edited',
   OPENED_BY_CREATOR: 'opened_by_creator',
@@ -13792,7 +14423,7 @@ export const EventTypeEnum = {
 /**
  * **[READ-ONLY]** What happened.
  */
-export type EventTypeEnum = (typeof EventTypeEnum)[keyof typeof EventTypeEnum];
+export type EventTypeEnum2 = (typeof EventTypeEnum2)[keyof typeof EventTypeEnum2];
 
 /**
  * **[REQUIRED]** Current status of the student's enrollment in the program.
@@ -13957,7 +14588,7 @@ export type ApplicationStatusEnum =
 /**
  * **[READ-ONLY]** What happened. interviewing is an interview invitation and assigned is the class being created.
  */
-export const EventTypeEnum2 = {
+export const EventTypeEnum3 = {
   APPLIED: 'applied',
   REAPPLIED: 'reapplied',
   SHORTLISTED: 'shortlisted',
@@ -13973,7 +14604,7 @@ export const EventTypeEnum2 = {
 /**
  * **[READ-ONLY]** What happened. interviewing is an interview invitation and assigned is the class being created.
  */
-export type EventTypeEnum2 = (typeof EventTypeEnum2)[keyof typeof EventTypeEnum2];
+export type EventTypeEnum3 = (typeof EventTypeEnum3)[keyof typeof EventTypeEnum3];
 
 /**
  * **[READ-ONLY]** Type of the moderated content.
@@ -14393,6 +15024,21 @@ export type ProvidedByEnumWritable =
   (typeof ProvidedByEnumWritable)[keyof typeof ProvidedByEnumWritable];
 
 /**
+ * Defaults to beginner; accepted in any case
+ */
+export const LevelEnumWritable = {
+  BEGINNER: 'beginner',
+  INTERMEDIATE: 'intermediate',
+  ADVANCED: 'advanced',
+  EXPERT: 'expert',
+} as const;
+
+/**
+ * Defaults to beginner; accepted in any case
+ */
+export type LevelEnumWritable = (typeof LevelEnumWritable)[keyof typeof LevelEnumWritable];
+
+/**
  * **[OPTIONAL]** Practice activity format.
  */
 export const ActivityTypeEnumWritable = {
@@ -14453,16 +15099,6 @@ export const ItemTypeEnumWritable = {
 } as const;
 
 export type ItemTypeEnumWritable = (typeof ItemTypeEnumWritable)[keyof typeof ItemTypeEnumWritable];
-
-export const ProficiencyLevelEnum2Writable = {
-  BEGINNER: 'beginner',
-  INTERMEDIATE: 'intermediate',
-  ADVANCED: 'advanced',
-  EXPERT: 'expert',
-} as const;
-
-export type ProficiencyLevelEnum2Writable =
-  (typeof ProficiencyLevelEnum2Writable)[keyof typeof ProficiencyLevelEnum2Writable];
 
 /**
  * **[REQUIRED]** Class visibility.
@@ -14821,6 +15457,20 @@ export const StatusEnum14Writable = {
  * **[OPTIONAL]** Current enrollment and attendance status.
  */
 export type StatusEnum14Writable = (typeof StatusEnum14Writable)[keyof typeof StatusEnum14Writable];
+
+/**
+ * CLICK or DISMISS; impressions are recorded by the server
+ */
+export const EventTypeEnumWritable = {
+  CLICK: 'CLICK',
+  DISMISS: 'DISMISS',
+} as const;
+
+/**
+ * CLICK or DISMISS; impressions are recorded by the server
+ */
+export type EventTypeEnumWritable =
+  (typeof EventTypeEnumWritable)[keyof typeof EventTypeEnumWritable];
 
 /**
  * How the platform fee was configured
@@ -15453,6 +16103,72 @@ export type UpdateStudentResponses = {
 };
 
 export type UpdateStudentResponse = UpdateStudentResponses[keyof UpdateStudentResponses];
+
+export type GetLearnerSkillGoalsData = {
+  body?: never;
+  path: {
+    uuid: string;
+  };
+  query?: never;
+  url: '/api/v1/students/{uuid}/skill-goals';
+};
+
+export type GetLearnerSkillGoalsErrors = {
+  /**
+   * Not Found
+   */
+  404: ResponseDtoVoid;
+  /**
+   * Internal Server Error
+   */
+  500: ResponseDtoVoid;
+};
+
+export type GetLearnerSkillGoalsError =
+  GetLearnerSkillGoalsErrors[keyof GetLearnerSkillGoalsErrors];
+
+export type GetLearnerSkillGoalsResponses = {
+  /**
+   * OK
+   */
+  200: ApiResponseListLearnerSkillGoal;
+};
+
+export type GetLearnerSkillGoalsResponse =
+  GetLearnerSkillGoalsResponses[keyof GetLearnerSkillGoalsResponses];
+
+export type ReplaceLearnerSkillGoalsData = {
+  body: LearnerSkillGoalsUpdateRequest;
+  path: {
+    uuid: string;
+  };
+  query?: never;
+  url: '/api/v1/students/{uuid}/skill-goals';
+};
+
+export type ReplaceLearnerSkillGoalsErrors = {
+  /**
+   * Not Found
+   */
+  404: ResponseDtoVoid;
+  /**
+   * Internal Server Error
+   */
+  500: ResponseDtoVoid;
+};
+
+export type ReplaceLearnerSkillGoalsError =
+  ReplaceLearnerSkillGoalsErrors[keyof ReplaceLearnerSkillGoalsErrors];
+
+export type ReplaceLearnerSkillGoalsResponses = {
+  /**
+   * OK
+   */
+  200: ApiResponseListLearnerSkillGoal;
+};
+
+export type ReplaceLearnerSkillGoalsResponse =
+  ReplaceLearnerSkillGoalsResponses[keyof ReplaceLearnerSkillGoalsResponses];
 
 export type DeleteGroupData = {
   body?: never;
@@ -17081,6 +17797,43 @@ export type UpdateInstructorResponses = {
 
 export type UpdateInstructorResponse = UpdateInstructorResponses[keyof UpdateInstructorResponses];
 
+export type SetLocationSearchOptInData = {
+  body: LocationSearchOptInRequest;
+  path: {
+    uuid: string;
+  };
+  query?: never;
+  url: '/api/v1/instructors/{uuid}/location-search';
+};
+
+export type SetLocationSearchOptInErrors = {
+  /**
+   * Not the profile owner
+   */
+  403: ApiResponseInstructor;
+  /**
+   * Instructor not found
+   */
+  404: unknown;
+  /**
+   * Internal Server Error
+   */
+  500: ResponseDtoVoid;
+};
+
+export type SetLocationSearchOptInError =
+  SetLocationSearchOptInErrors[keyof SetLocationSearchOptInErrors];
+
+export type SetLocationSearchOptInResponses = {
+  /**
+   * Opt-in updated
+   */
+  200: Instructor;
+};
+
+export type SetLocationSearchOptInResponse =
+  SetLocationSearchOptInResponses[keyof SetLocationSearchOptInResponses];
+
 export type DeleteInstructorSkillData = {
   body?: never;
   path: {
@@ -17586,6 +18339,135 @@ export type UpdateCourseResponses = {
 };
 
 export type UpdateCourseResponse = UpdateCourseResponses[keyof UpdateCourseResponses];
+
+export type GetCourseSkillsData = {
+  body?: never;
+  path: {
+    uuid: string;
+  };
+  query?: never;
+  url: '/api/v1/courses/{uuid}/skills';
+};
+
+export type GetCourseSkillsErrors = {
+  /**
+   * Not Found
+   */
+  404: ResponseDtoVoid;
+  /**
+   * Internal Server Error
+   */
+  500: ResponseDtoVoid;
+};
+
+export type GetCourseSkillsError = GetCourseSkillsErrors[keyof GetCourseSkillsErrors];
+
+export type GetCourseSkillsResponses = {
+  /**
+   * OK
+   */
+  200: ApiResponseListCourseSkill;
+};
+
+export type GetCourseSkillsResponse = GetCourseSkillsResponses[keyof GetCourseSkillsResponses];
+
+export type ReplaceCourseSkillsData = {
+  body: CourseSkillsUpdateRequest;
+  path: {
+    uuid: string;
+  };
+  query?: never;
+  url: '/api/v1/courses/{uuid}/skills';
+};
+
+export type ReplaceCourseSkillsErrors = {
+  /**
+   * Not Found
+   */
+  404: ResponseDtoVoid;
+  /**
+   * Internal Server Error
+   */
+  500: ResponseDtoVoid;
+};
+
+export type ReplaceCourseSkillsError = ReplaceCourseSkillsErrors[keyof ReplaceCourseSkillsErrors];
+
+export type ReplaceCourseSkillsResponses = {
+  /**
+   * OK
+   */
+  200: ApiResponseListCourseSkill;
+};
+
+export type ReplaceCourseSkillsResponse =
+  ReplaceCourseSkillsResponses[keyof ReplaceCourseSkillsResponses];
+
+export type GetCoursePrerequisitesData = {
+  body?: never;
+  path: {
+    uuid: string;
+  };
+  query?: never;
+  url: '/api/v1/courses/{uuid}/prerequisites';
+};
+
+export type GetCoursePrerequisitesErrors = {
+  /**
+   * Not Found
+   */
+  404: ResponseDtoVoid;
+  /**
+   * Internal Server Error
+   */
+  500: ResponseDtoVoid;
+};
+
+export type GetCoursePrerequisitesError =
+  GetCoursePrerequisitesErrors[keyof GetCoursePrerequisitesErrors];
+
+export type GetCoursePrerequisitesResponses = {
+  /**
+   * OK
+   */
+  200: ApiResponseListCoursePrerequisite;
+};
+
+export type GetCoursePrerequisitesResponse =
+  GetCoursePrerequisitesResponses[keyof GetCoursePrerequisitesResponses];
+
+export type ReplaceCoursePrerequisitesData = {
+  body: CoursePrerequisitesRequest;
+  path: {
+    uuid: string;
+  };
+  query?: never;
+  url: '/api/v1/courses/{uuid}/prerequisites';
+};
+
+export type ReplaceCoursePrerequisitesErrors = {
+  /**
+   * Not Found
+   */
+  404: ResponseDtoVoid;
+  /**
+   * Internal Server Error
+   */
+  500: ResponseDtoVoid;
+};
+
+export type ReplaceCoursePrerequisitesError =
+  ReplaceCoursePrerequisitesErrors[keyof ReplaceCoursePrerequisitesErrors];
+
+export type ReplaceCoursePrerequisitesResponses = {
+  /**
+   * OK
+   */
+  200: ApiResponseListCoursePrerequisite;
+};
+
+export type ReplaceCoursePrerequisitesResponse =
+  ReplaceCoursePrerequisitesResponses[keyof ReplaceCoursePrerequisitesResponses];
 
 export type DeleteCourseTrainingRequirementData = {
   body?: never;
@@ -19449,6 +20331,72 @@ export type UpdateJobResponses = {
 
 export type UpdateJobResponse = UpdateJobResponses[keyof UpdateJobResponses];
 
+export type GetMarketplaceJobRequiredSkillsData = {
+  body?: never;
+  path: {
+    jobUuid: string;
+  };
+  query?: never;
+  url: '/api/v1/classes/jobs/{jobUuid}/required-skills';
+};
+
+export type GetMarketplaceJobRequiredSkillsErrors = {
+  /**
+   * Not Found
+   */
+  404: ResponseDtoVoid;
+  /**
+   * Internal Server Error
+   */
+  500: ResponseDtoVoid;
+};
+
+export type GetMarketplaceJobRequiredSkillsError =
+  GetMarketplaceJobRequiredSkillsErrors[keyof GetMarketplaceJobRequiredSkillsErrors];
+
+export type GetMarketplaceJobRequiredSkillsResponses = {
+  /**
+   * OK
+   */
+  200: ApiResponseClassMarketplaceJobRequiredSkills;
+};
+
+export type GetMarketplaceJobRequiredSkillsResponse =
+  GetMarketplaceJobRequiredSkillsResponses[keyof GetMarketplaceJobRequiredSkillsResponses];
+
+export type ReplaceMarketplaceJobRequiredSkillsData = {
+  body: ClassMarketplaceJobRequiredSkillsRequest;
+  path: {
+    jobUuid: string;
+  };
+  query?: never;
+  url: '/api/v1/classes/jobs/{jobUuid}/required-skills';
+};
+
+export type ReplaceMarketplaceJobRequiredSkillsErrors = {
+  /**
+   * Not Found
+   */
+  404: ResponseDtoVoid;
+  /**
+   * Internal Server Error
+   */
+  500: ResponseDtoVoid;
+};
+
+export type ReplaceMarketplaceJobRequiredSkillsError =
+  ReplaceMarketplaceJobRequiredSkillsErrors[keyof ReplaceMarketplaceJobRequiredSkillsErrors];
+
+export type ReplaceMarketplaceJobRequiredSkillsResponses = {
+  /**
+   * OK
+   */
+  200: ApiResponseClassMarketplaceJobRequiredSkills;
+};
+
+export type ReplaceMarketplaceJobRequiredSkillsResponse =
+  ReplaceMarketplaceJobRequiredSkillsResponses[keyof ReplaceMarketplaceJobRequiredSkillsResponses];
+
 export type DeleteCertificateData = {
   body?: never;
   path: {
@@ -19706,6 +20654,97 @@ export type UpdateAssignmentResponses = {
 };
 
 export type UpdateAssignmentResponse = UpdateAssignmentResponses[keyof UpdateAssignmentResponses];
+
+export type AdminDeleteSkillData = {
+  body?: never;
+  path: {
+    uuid: string;
+  };
+  query?: never;
+  url: '/api/v1/admin/skills/{uuid}';
+};
+
+export type AdminDeleteSkillErrors = {
+  /**
+   * Not Found
+   */
+  404: ResponseDtoVoid;
+  /**
+   * Internal Server Error
+   */
+  500: ResponseDtoVoid;
+};
+
+export type AdminDeleteSkillError = AdminDeleteSkillErrors[keyof AdminDeleteSkillErrors];
+
+export type AdminDeleteSkillResponses = {
+  /**
+   * OK
+   */
+  200: unknown;
+};
+
+export type AdminGetSkillData = {
+  body?: never;
+  path: {
+    uuid: string;
+  };
+  query?: never;
+  url: '/api/v1/admin/skills/{uuid}';
+};
+
+export type AdminGetSkillErrors = {
+  /**
+   * Not Found
+   */
+  404: ResponseDtoVoid;
+  /**
+   * Internal Server Error
+   */
+  500: ResponseDtoVoid;
+};
+
+export type AdminGetSkillError = AdminGetSkillErrors[keyof AdminGetSkillErrors];
+
+export type AdminGetSkillResponses = {
+  /**
+   * OK
+   */
+  200: ApiResponseSkill;
+};
+
+export type AdminGetSkillResponse = AdminGetSkillResponses[keyof AdminGetSkillResponses];
+
+export type AdminUpdateSkillData = {
+  body: SkillRequest;
+  path: {
+    uuid: string;
+  };
+  query?: never;
+  url: '/api/v1/admin/skills/{uuid}';
+};
+
+export type AdminUpdateSkillErrors = {
+  /**
+   * Not Found
+   */
+  404: ResponseDtoVoid;
+  /**
+   * Internal Server Error
+   */
+  500: ResponseDtoVoid;
+};
+
+export type AdminUpdateSkillError = AdminUpdateSkillErrors[keyof AdminUpdateSkillErrors];
+
+export type AdminUpdateSkillResponses = {
+  /**
+   * OK
+   */
+  200: ApiResponseSkill;
+};
+
+export type AdminUpdateSkillResponse = AdminUpdateSkillResponses[keyof AdminUpdateSkillResponses];
 
 export type UpdateCurrencyData = {
   body: CurrencyUpdateRequest;
@@ -22953,6 +23992,14 @@ export type GetAllInstructorsData = {
      * Optional free-text query; see the operation description.
      */
     q?: string;
+    /**
+     * Optional near-me point as lat,lng in decimal degrees; rounded to 2 decimals.
+     */
+    near?: string;
+    /**
+     * Near-me radius in km, clamped to 2-100 (default 10); needs near.
+     */
+    radius_km?: string;
     pageable: Pageable;
   };
   url: '/api/v1/instructors';
@@ -23808,6 +24855,42 @@ export type JoinWaitlistResponses = {
 };
 
 export type JoinWaitlistResponse = JoinWaitlistResponses[keyof JoinWaitlistResponses];
+
+export type RecordDiscoveryEventData = {
+  body: DiscoveryEventRequest;
+  path?: never;
+  query?: never;
+  url: '/api/v1/discovery/events';
+};
+
+export type RecordDiscoveryEventErrors = {
+  /**
+   * Malformed body, or an event_type other than CLICK or DISMISS
+   */
+  400: unknown;
+  /**
+   * Not authenticated
+   */
+  401: unknown;
+  /**
+   * Not Found
+   */
+  404: ResponseDtoVoid;
+  /**
+   * Internal Server Error
+   */
+  500: ResponseDtoVoid;
+};
+
+export type RecordDiscoveryEventError =
+  RecordDiscoveryEventErrors[keyof RecordDiscoveryEventErrors];
+
+export type RecordDiscoveryEventResponses = {
+  /**
+   * Accepted
+   */
+  202: unknown;
+};
 
 export type GetAllCoursesData = {
   body?: never;
@@ -26396,6 +27479,14 @@ export type GetAllClassDefinitionsData = {
      * Free-text search; omit to list every visible class
      */
     q?: string;
+    /**
+     * Near-me point as lat,lng in decimal degrees, with or without q. Only IN_PERSON and HYBRID classes (located by their own or their branch's coordinates) within radius_km are returned, nearest first without q; each carries distance_band and coordinates rounded to 2 decimals. near is rounded to 2 decimals on the server and never stored or logged. Served only by the search index: 503 ("Search is unavailable") when it cannot answer.
+     */
+    near?: string;
+    /**
+     * Near-me radius in km, clamped to 2-100 (default 10); needs near
+     */
+    radius_km?: string;
     pageable: Pageable;
   };
   url: '/api/v1/classes';
@@ -26918,6 +28009,14 @@ export type ListJobsData = {
      */
     branch_uuid?: string;
     status?: string;
+    /**
+     * Near-me point as lat,lng in decimal degrees, with or without q. Only IN_PERSON and HYBRID jobs (located by their own or their branch's coordinates) within radius_km are returned, nearest first without q; each carries distance_band and coordinates rounded to 2 decimals. near is rounded to 2 decimals on the server and never stored or logged. Served only by the search index: 503 ("Search is unavailable") when it cannot answer.
+     */
+    near?: string;
+    /**
+     * Near-me radius in km, clamped to 2-100 (default 10); needs near
+     */
+    radius_km?: string;
     pageable: Pageable;
   };
   url: '/api/v1/classes/jobs';
@@ -28113,6 +29212,70 @@ export type CreateAdminUserResponses = {
 };
 
 export type CreateAdminUserResponse = CreateAdminUserResponses[keyof CreateAdminUserResponses];
+
+export type AdminListSkillsData = {
+  body?: never;
+  path?: never;
+  query?: {
+    /**
+     * Optional text matched against name, slug and aliases
+     */
+    q?: string;
+    active?: boolean;
+  };
+  url: '/api/v1/admin/skills';
+};
+
+export type AdminListSkillsErrors = {
+  /**
+   * Not Found
+   */
+  404: ResponseDtoVoid;
+  /**
+   * Internal Server Error
+   */
+  500: ResponseDtoVoid;
+};
+
+export type AdminListSkillsError = AdminListSkillsErrors[keyof AdminListSkillsErrors];
+
+export type AdminListSkillsResponses = {
+  /**
+   * OK
+   */
+  200: ApiResponseListSkill;
+};
+
+export type AdminListSkillsResponse = AdminListSkillsResponses[keyof AdminListSkillsResponses];
+
+export type AdminCreateSkillData = {
+  body: SkillRequest;
+  path?: never;
+  query?: never;
+  url: '/api/v1/admin/skills';
+};
+
+export type AdminCreateSkillErrors = {
+  /**
+   * Not Found
+   */
+  404: ResponseDtoVoid;
+  /**
+   * Internal Server Error
+   */
+  500: ResponseDtoVoid;
+};
+
+export type AdminCreateSkillError = AdminCreateSkillErrors[keyof AdminCreateSkillErrors];
+
+export type AdminCreateSkillResponses = {
+  /**
+   * OK
+   */
+  200: ApiResponseSkill;
+};
+
+export type AdminCreateSkillResponse = AdminCreateSkillResponses[keyof AdminCreateSkillResponses];
 
 export type RebuildData = {
   body?: never;
@@ -29622,6 +30785,41 @@ export type SearchStudentsResponses = {
 
 export type SearchStudentsResponse = SearchStudentsResponses[keyof SearchStudentsResponses];
 
+export type ListSkillsData = {
+  body?: never;
+  path?: never;
+  query?: {
+    /**
+     * Optional text; at most 200 characters
+     */
+    q?: string;
+    limit?: number;
+  };
+  url: '/api/v1/skills';
+};
+
+export type ListSkillsErrors = {
+  /**
+   * Not Found
+   */
+  404: ResponseDtoVoid;
+  /**
+   * Internal Server Error
+   */
+  500: ResponseDtoVoid;
+};
+
+export type ListSkillsError = ListSkillsErrors[keyof ListSkillsErrors];
+
+export type ListSkillsResponses = {
+  /**
+   * OK
+   */
+  200: ApiResponseListSkill;
+};
+
+export type ListSkillsResponse = ListSkillsResponses[keyof ListSkillsResponses];
+
 export type GlobalSearchData = {
   body?: never;
   path?: never;
@@ -29683,6 +30881,14 @@ export type SearchByTypeData = {
     sort?: string;
     page?: number;
     size?: number;
+    /**
+     * Near-me point as lat,lng (instructors, classes, marketplace_jobs; signed-in only)
+     */
+    near?: string;
+    /**
+     * Near-me radius in km, clamped to 2-100 (default 10); needs near
+     */
+    radius_km?: string;
   };
   url: '/api/v1/search/{type}';
 };
@@ -33695,6 +34901,43 @@ export type GetStatusTransitionsResponses = {
 export type GetStatusTransitionsResponse =
   GetStatusTransitionsResponses[keyof GetStatusTransitionsResponses];
 
+export type GetSimilarCoursesData = {
+  body?: never;
+  path: {
+    uuid: string;
+  };
+  query?: {
+    /**
+     * Maximum number of courses (default 6, max 50)
+     */
+    limit?: number;
+  };
+  url: '/api/v1/courses/{uuid}/similar';
+};
+
+export type GetSimilarCoursesErrors = {
+  /**
+   * Not Found
+   */
+  404: ResponseDtoVoid;
+  /**
+   * Internal Server Error
+   */
+  500: ResponseDtoVoid;
+};
+
+export type GetSimilarCoursesError = GetSimilarCoursesErrors[keyof GetSimilarCoursesErrors];
+
+export type GetSimilarCoursesResponses = {
+  /**
+   * OK
+   */
+  200: ApiResponseListRecommendedCourse;
+};
+
+export type GetSimilarCoursesResponse =
+  GetSimilarCoursesResponses[keyof GetSimilarCoursesResponses];
+
 export type WithdrawPendingEditData = {
   body?: never;
   path: {
@@ -34160,6 +35403,67 @@ export type GetCourseContentResponses = {
 
 export type GetCourseContentResponse = GetCourseContentResponses[keyof GetCourseContentResponses];
 
+export type SearchCourseContentData = {
+  body?: never;
+  path: {
+    courseUuid: string;
+  };
+  query: {
+    /**
+     * Query text
+     */
+    q: string;
+    /**
+     * Comma-separated item types: lesson, content, quiz, assignment; all when omitted
+     */
+    types?: string;
+    /**
+     * 0-based page number (default 0)
+     */
+    page?: number;
+    /**
+     * Page size, 1-100 (default 20)
+     */
+    size?: number;
+  };
+  url: '/api/v1/courses/{courseUuid}/content/search';
+};
+
+export type SearchCourseContentErrors = {
+  /**
+   * Missing q, unknown type or bad page
+   */
+  400: ApiResponsePagedDtoCourseContentSearchHit;
+  /**
+   * The caller may not read this course
+   */
+  403: ApiResponsePagedDtoCourseContentSearchHit;
+  /**
+   * Not Found
+   */
+  404: ResponseDtoVoid;
+  /**
+   * Internal Server Error
+   */
+  500: ResponseDtoVoid;
+  /**
+   * Search is unavailable
+   */
+  503: ApiResponsePagedDtoCourseContentSearchHit;
+};
+
+export type SearchCourseContentError = SearchCourseContentErrors[keyof SearchCourseContentErrors];
+
+export type SearchCourseContentResponses = {
+  /**
+   * Matching items
+   */
+  200: ApiResponsePagedDtoCourseContentSearchHit;
+};
+
+export type SearchCourseContentResponse =
+  SearchCourseContentResponses[keyof SearchCourseContentResponses];
+
 export type GetCourseCompletionRateData = {
   body?: never;
   path: {
@@ -34340,6 +35644,14 @@ export type GetCourseRecommendationsData = {
      */
     user_uuid?: string;
     /**
+     * Student profile to recommend for (the learner, a guardian with a FULL or ACADEMICS share, or an admin)
+     */
+    student_uuid?: string;
+    /**
+     * for_you (default) or next_steps
+     */
+    surface?: string;
+    /**
      * Maximum number of recommendations to return (default 6, max 50)
      */
     limit?: number;
@@ -34349,7 +35661,11 @@ export type GetCourseRecommendationsData = {
 
 export type GetCourseRecommendationsErrors = {
   /**
-   * Requested another user's recommendations
+   * Unknown surface, or both user_uuid and student_uuid
+   */
+  400: ApiResponseListRecommendedCourse;
+  /**
+   * Requested a learner the caller may not see
    */
   403: ApiResponseListRecommendedCourse;
   /**
@@ -35622,6 +36938,42 @@ export type GetJobEligibilityResponses = {
 export type GetJobEligibilityResponse =
   GetJobEligibilityResponses[keyof GetJobEligibilityResponses];
 
+export type GetJobCandidatesData = {
+  body?: never;
+  path: {
+    jobUuid: string;
+  };
+  query?: {
+    /**
+     * How many candidates, 1-20 (default 20)
+     */
+    limit?: number;
+  };
+  url: '/api/v1/classes/jobs/{jobUuid}/candidates';
+};
+
+export type GetJobCandidatesErrors = {
+  /**
+   * Not Found
+   */
+  404: ResponseDtoVoid;
+  /**
+   * Internal Server Error
+   */
+  500: ResponseDtoVoid;
+};
+
+export type GetJobCandidatesError = GetJobCandidatesErrors[keyof GetJobCandidatesErrors];
+
+export type GetJobCandidatesResponses = {
+  /**
+   * OK
+   */
+  200: ApiResponseJobCandidateList;
+};
+
+export type GetJobCandidatesResponse = GetJobCandidatesResponses[keyof GetJobCandidatesResponses];
+
 export type ListJobApplicationEventsData = {
   body?: never;
   path: {
@@ -35655,6 +37007,44 @@ export type ListJobApplicationEventsResponses = {
 
 export type ListJobApplicationEventsResponse =
   ListJobApplicationEventsResponses[keyof ListJobApplicationEventsResponses];
+
+export type GetJobMatchesData = {
+  body?: never;
+  path?: never;
+  query?: {
+    /**
+     * How many matches, 1-50 (default 20)
+     */
+    limit?: number;
+    /**
+     * Only jobs within this many km of the instructor; ignored unless they opted in to location search
+     */
+    radius_km?: number;
+  };
+  url: '/api/v1/classes/jobs/matches';
+};
+
+export type GetJobMatchesErrors = {
+  /**
+   * Not Found
+   */
+  404: ResponseDtoVoid;
+  /**
+   * Internal Server Error
+   */
+  500: ResponseDtoVoid;
+};
+
+export type GetJobMatchesError = GetJobMatchesErrors[keyof GetJobMatchesErrors];
+
+export type GetJobMatchesResponses = {
+  /**
+   * OK
+   */
+  200: ApiResponseJobMatchList;
+};
+
+export type GetJobMatchesResponse = GetJobMatchesResponses[keyof GetJobMatchesResponses];
 
 export type GetJobsEligibilityData = {
   body?: never;
@@ -36873,6 +38263,37 @@ export type ListIndexesResponses = {
 };
 
 export type ListIndexesResponse = ListIndexesResponses[keyof ListIndexesResponses];
+
+export type EvaluateCourseRecommendationsData = {
+  body?: never;
+  path?: never;
+  query?: never;
+  url: '/api/v1/admin/recommendations/evaluation';
+};
+
+export type EvaluateCourseRecommendationsErrors = {
+  /**
+   * Not Found
+   */
+  404: ResponseDtoVoid;
+  /**
+   * Internal Server Error
+   */
+  500: ResponseDtoVoid;
+};
+
+export type EvaluateCourseRecommendationsError =
+  EvaluateCourseRecommendationsErrors[keyof EvaluateCourseRecommendationsErrors];
+
+export type EvaluateCourseRecommendationsResponses = {
+  /**
+   * OK
+   */
+  200: ApiResponseRecommendationEvaluation;
+};
+
+export type EvaluateCourseRecommendationsResponse =
+  EvaluateCourseRecommendationsResponses[keyof EvaluateCourseRecommendationsResponses];
 
 export type GetProgramModerationHistoryData = {
   body?: never;

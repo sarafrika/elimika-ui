@@ -428,6 +428,39 @@ export const zApiResponseStudent = z.object({
 });
 
 /**
+ * Replaces the learner's skill goals
+ */
+export const zLearnerSkillGoalsUpdateRequest = z
+  .object({
+    skill_uuids: z
+      .array(z.string().uuid())
+      .min(0)
+      .max(20)
+      .describe('Skill uuids from GET /api/v1/skills, at most 20'),
+  })
+  .describe("Replaces the learner's skill goals");
+
+/**
+ * A skill the learner has declared as a learning goal
+ */
+export const zLearnerSkillGoal = z
+  .object({
+    skill_uuid: z.string().uuid().describe('Skill uuid from the skills taxonomy').optional(),
+    name: z.string().describe('Skill name').optional(),
+    slug: z.string().describe('Skill slug').optional(),
+    source: z.string().describe('Who declared the goal: self, guardian or admin').optional(),
+    created_date: z.string().datetime().describe('When the goal was declared (UTC)').optional(),
+  })
+  .describe('A skill the learner has declared as a learning goal');
+
+export const zApiResponseListLearnerSkillGoal = z.object({
+  success: z.boolean().optional(),
+  data: z.array(zLearnerSkillGoal).optional(),
+  message: z.string().optional(),
+  error: z.unknown().optional(),
+});
+
+/**
  * Payload to replace an organisation student group's editable attributes.
  */
 export const zUpdateStudentGroupRequest = z
@@ -2281,6 +2314,15 @@ export const zApiResponseResourceAvailabilityRule = z.object({
 });
 
 /**
+ * **[READ-ONLY]** On a near-me search (near=lat,lng) only: how far the instructor is from the searched point, as a coarse band. Never metres.
+ */
+export const zDistanceBandEnum = z
+  .enum(['<2 km', '2-5 km', '5-10 km', '10-25 km', '>25 km'])
+  .describe(
+    '**[READ-ONLY]** On a near-me search (near=lat,lng) only: how far the instructor is from the searched point, as a coarse band. Never metres.'
+  );
+
+/**
  * Instructor profile including location data for educational service delivery
  */
 export const zInstructor = z
@@ -2343,6 +2385,8 @@ export const zInstructor = z
       )
       .readonly()
       .optional(),
+    location_search_opt_in: z.union([z.boolean().readonly(), z.null()]).readonly().optional(),
+    distance_band: zDistanceBandEnum.optional(),
     is_profile_complete: z
       .boolean()
       .describe(
@@ -2360,6 +2404,26 @@ export const zInstructor = z
     formatted_location: z.union([z.string().readonly(), z.null()]).readonly().optional(),
   })
   .describe('Instructor profile including location data for educational service delivery');
+
+/**
+ * Turns an instructor's near-me search opt-in on or off
+ */
+export const zLocationSearchOptInRequest = z
+  .object({
+    enabled: z
+      .boolean()
+      .describe(
+        '**[REQUIRED]** true to appear in near-me search (location rounded to about 1 km, only while verified and with coordinates set); false to leave it'
+      ),
+  })
+  .describe("Turns an instructor's near-me search opt-in on or off");
+
+export const zApiResponseInstructor = z.object({
+  success: z.boolean().optional(),
+  data: zInstructor.optional(),
+  message: z.string().optional(),
+  error: z.unknown().optional(),
+});
 
 /**
  * **[REQUIRED]** Level of proficiency in this skill. Indicates instructor's competency and teaching capability.
@@ -2397,6 +2461,14 @@ export const zInstructorSkill = z
         '**[REQUIRED]** Name of the technical or professional skill. Should be specific and standardized for consistency.'
       ),
     proficiency_level: zProficiencyLevelEnum,
+    skill_uuid: z
+      .string()
+      .uuid()
+      .describe(
+        '**[READ-ONLY]** The skills-taxonomy entry the skill name resolves to (matched by slug or alias). Null when the name is free text that matches no curated skill.'
+      )
+      .readonly()
+      .optional(),
     created_date: z
       .string()
       .datetime()
@@ -3365,12 +3437,6 @@ export const zCourse = z
       )
       .readonly()
       .optional(),
-    category_count: z
-      .number()
-      .int()
-      .describe('**[READ-ONLY]** Number of categories this course belongs to.')
-      .readonly()
-      .optional(),
     total_duration_display: z
       .string()
       .describe('**[READ-ONLY]** Human-readable format of total course duration.')
@@ -3379,6 +3445,12 @@ export const zCourse = z
     has_multiple_categories: z
       .boolean()
       .describe('**[READ-ONLY]** Indicates if the course belongs to multiple categories.')
+      .readonly()
+      .optional(),
+    category_count: z
+      .number()
+      .int()
+      .describe('**[READ-ONLY]** Number of categories this course belongs to.')
       .readonly()
       .optional(),
     lifecycle_stage: z
@@ -3396,6 +3468,121 @@ export const zCourse = z
 export const zApiResponseCourse = z.object({
   success: z.boolean().optional(),
   data: zCourse.optional(),
+  message: z.string().optional(),
+  error: z.unknown().optional(),
+});
+
+/**
+ * Defaults to beginner; accepted in any case
+ */
+export const zLevelEnum = z
+  .enum(['beginner', 'intermediate', 'advanced', 'expert'])
+  .describe('Defaults to beginner; accepted in any case');
+
+export const zCourseSkillItem = z.object({
+  skill_uuid: z.string().uuid(),
+  level: zLevelEnum.optional(),
+  weight: z.number().int().gte(1).lte(5).describe('1-5, defaults to 1').optional(),
+});
+
+/**
+ * The course's complete skill tag list; it replaces the current one. An empty list clears the tags.
+ */
+export const zCourseSkillsUpdateRequest = z
+  .object({
+    skills: z.array(zCourseSkillItem).min(0).max(30),
+  })
+  .describe(
+    "The course's complete skill tag list; it replaces the current one. An empty list clears the tags."
+  );
+
+/**
+ * A skill the course teaches, from the skills taxonomy
+ */
+export const zCourseSkill = z
+  .object({
+    skill_uuid: z.string().uuid().optional(),
+    skill_name: z.string().optional(),
+    skill_slug: z.string().optional(),
+    level: zLevelEnum.optional(),
+    weight: z.number().int().describe('1-5, how central the skill is to the course').optional(),
+    skill_active: z
+      .boolean()
+      .describe(
+        'False when an admin has since retired the skill; the tag stays until the owner removes it'
+      )
+      .optional(),
+  })
+  .describe('A skill the course teaches, from the skills taxonomy');
+
+export const zApiResponseListCourseSkill = z.object({
+  success: z.boolean().optional(),
+  data: z.array(zCourseSkill).optional(),
+  message: z.string().optional(),
+  error: z.unknown().optional(),
+});
+
+export const zCoursePrerequisitesRequestItem = z.object({
+  prerequisite_course_uuid: z
+    .string()
+    .uuid()
+    .describe("**[REQUIRED]** A published course, or one of the author's own courses."),
+  is_mandatory: z
+    .boolean()
+    .describe('**[OPTIONAL]** true (default): required; false: recommended only.')
+    .optional(),
+});
+
+/**
+ * Replaces a course's prerequisite set
+ */
+export const zCoursePrerequisitesRequest = z
+  .object({
+    prerequisites: z
+      .array(zCoursePrerequisitesRequestItem)
+      .min(0)
+      .max(50)
+      .describe(
+        '**[REQUIRED]** Every prior course the course should have; an empty list clears them.'
+      ),
+  })
+  .describe("Replaces a course's prerequisite set");
+
+/**
+ * A prior course that a course requires or recommends
+ */
+export const zCoursePrerequisite = z
+  .object({
+    uuid: z
+      .string()
+      .uuid()
+      .describe('**[READ-ONLY]** Identifier of the prerequisite link.')
+      .readonly()
+      .optional(),
+    course_uuid: z
+      .string()
+      .uuid()
+      .describe(
+        '**[READ-ONLY]** The course that has the prerequisite. On a live course with a pending edit this is the draft course after a PUT.'
+      )
+      .readonly()
+      .optional(),
+    prerequisite_course_uuid: z.string().uuid().describe('The prior course.').optional(),
+    prerequisite_course_name: z
+      .string()
+      .describe('**[READ-ONLY]** Name of the prior course.')
+      .readonly()
+      .optional(),
+    is_mandatory: z
+      .boolean()
+      .describe('true: required before starting; false: recommended only.')
+      .optional(),
+  })
+  .describe('A prior course that a course requires or recommends');
+
+export const zApiResponseListCoursePrerequisite = z.object({
+  success: z.boolean().optional(),
+  data: z.array(zCoursePrerequisite).optional(),
   message: z.string().optional(),
   error: z.unknown().optional(),
 });
@@ -4296,8 +4483,6 @@ export const zCourseCreator = z
   })
   .describe('Course creator profile for users dedicated to educational content creation');
 
-export const zProficiencyLevelEnum2 = z.enum(['beginner', 'intermediate', 'advanced', 'expert']);
-
 /**
  * Technical or creative competency declared by a course creator with proficiency metadata
  */
@@ -4306,7 +4491,7 @@ export const zCourseCreatorSkill = z
     uuid: z.string().uuid().readonly().optional(),
     course_creator_uuid: z.string().uuid(),
     skill_name: z.string().min(0).max(100),
-    proficiency_level: zProficiencyLevelEnum2,
+    proficiency_level: zLevelEnum,
     created_date: z.string().datetime().readonly().optional(),
     created_by: z.string().readonly().optional(),
     updated_date: z.string().datetime().readonly().optional(),
@@ -5335,6 +5520,7 @@ export const zClassDefinition = z
 export const zClassDefinitionResponse = z
   .object({
     class_definition: zClassDefinition.optional(),
+    distance_band: zDistanceBandEnum.optional(),
   })
   .describe('Response payload for class definition operations');
 
@@ -5546,6 +5732,7 @@ export const zClassMarketplaceJob = z
     contact_name: z.union([z.string().readonly(), z.null()]).readonly().optional(),
     contact_phone: z.union([z.string().readonly(), z.null()]).readonly().optional(),
     contact_email: z.union([z.string().readonly(), z.null()]).readonly().optional(),
+    distance_band: zDistanceBandEnum.optional(),
     duration_minutes: z.coerce.bigint().readonly().optional(),
   })
   .describe(
@@ -5555,6 +5742,61 @@ export const zClassMarketplaceJob = z
 export const zApiResponseClassMarketplaceJob = z.object({
   success: z.boolean().optional(),
   data: zClassMarketplaceJob.optional(),
+  message: z.string().optional(),
+  error: z.unknown().optional(),
+});
+
+export const zClassMarketplaceJobRequiredSkillItem = z.object({
+  skill_uuid: z.string().uuid(),
+  min_proficiency: zLevelEnum.optional(),
+  is_mandatory: z.boolean().describe('Defaults to true').optional(),
+});
+
+/**
+ * The job's complete required-skill list; it replaces the current one. [] clears it, and the job inherits its course's skills again.
+ */
+export const zClassMarketplaceJobRequiredSkillsRequest = z
+  .object({
+    skills: z.array(zClassMarketplaceJobRequiredSkillItem).min(0).max(30),
+  })
+  .describe(
+    "The job's complete required-skill list; it replaces the current one. [] clears it, and the job inherits its course's skills again."
+  );
+
+export const zClassMarketplaceJobRequiredSkill = z.object({
+  skill_uuid: z.string().uuid().optional(),
+  skill_name: z.string().optional(),
+  skill_slug: z.string().optional(),
+  min_proficiency: zLevelEnum.optional(),
+  is_mandatory: z.boolean().describe('Inherited skills are all mandatory').optional(),
+  inherited: z.boolean().optional(),
+  skill_active: z.boolean().describe('False when an admin has since retired the skill').optional(),
+});
+
+/**
+ * The skills a marketplace job asks for: its own tags, or its course's when it has none
+ */
+export const zClassMarketplaceJobRequiredSkills = z
+  .object({
+    job_uuid: z.string().uuid().optional(),
+    inherited: z
+      .boolean()
+      .describe("True when the job has no tags of its own and these are its course's skills")
+      .optional(),
+    inherited_from_course_uuid: z
+      .string()
+      .uuid()
+      .describe('The course the skills were inherited from; null when not inherited')
+      .optional(),
+    skills: z.array(zClassMarketplaceJobRequiredSkill).optional(),
+  })
+  .describe(
+    "The skills a marketplace job asks for: its own tags, or its course's when it has none"
+  );
+
+export const zApiResponseClassMarketplaceJobRequiredSkills = z.object({
+  success: z.boolean().optional(),
+  data: zClassMarketplaceJobRequiredSkills.optional(),
   message: z.string().optional(),
   error: z.unknown().optional(),
 });
@@ -5895,6 +6137,62 @@ export const zAssignment = z
 export const zApiResponseAssignment = z.object({
   success: z.boolean().optional(),
   data: zAssignment.optional(),
+  message: z.string().optional(),
+  error: z.unknown().optional(),
+});
+
+/**
+ * Creates or replaces a skills taxonomy entry
+ */
+export const zSkillRequest = z
+  .object({
+    name: z.string().min(0).max(255),
+    slug: z
+      .string()
+      .min(0)
+      .max(255)
+      .describe(
+        'Optional; derived from the name when omitted. Normalised to lower-case words joined by hyphens'
+      )
+      .optional(),
+    parent_uuid: z
+      .string()
+      .uuid()
+      .describe('Optional broader skill; may not be the skill itself or one of its descendants')
+      .optional(),
+    aliases: z.array(z.string().min(0).max(255)).min(0).max(50).optional(),
+    active: z.boolean().describe('Defaults to true').optional(),
+  })
+  .describe('Creates or replaces a skills taxonomy entry');
+
+/**
+ * An entry of the admin-curated skills taxonomy
+ */
+export const zSkill = z
+  .object({
+    uuid: z.string().uuid().optional(),
+    name: z.string().optional(),
+    slug: z
+      .string()
+      .describe('Unique, lower-case, hyphenated; derived from the name unless set')
+      .optional(),
+    parent_uuid: z.string().uuid().describe('Broader skill this one sits under, if any').optional(),
+    aliases: z
+      .array(z.string())
+      .describe('Alternative names; they resolve to this skill and act as search synonyms')
+      .optional(),
+    active: z
+      .boolean()
+      .describe('False once retired: existing tags keep it, it can no longer be picked')
+      .optional(),
+    created_date: z.string().datetime().optional(),
+    updated_date: z.string().datetime().optional(),
+  })
+  .describe('An entry of the admin-curated skills taxonomy');
+
+export const zApiResponseSkill = z.object({
+  success: z.boolean().optional(),
+  data: zSkill.optional(),
   message: z.string().optional(),
   error: z.unknown().optional(),
 });
@@ -7282,13 +7580,6 @@ export const zApiResponsePublicInvitation = z.object({
   error: z.unknown().optional(),
 });
 
-export const zApiResponseInstructor = z.object({
-  success: z.boolean().optional(),
-  data: zInstructor.optional(),
-  message: z.string().optional(),
-  error: z.unknown().optional(),
-});
-
 /**
  * Student review and rating for an instructor, scoped to a specific enrollment.
  */
@@ -7543,6 +7834,11 @@ export const zEnrollment = z
       .describe('**[READ-ONLY]** Indicates if the enrollment is still active (not cancelled).')
       .readonly()
       .optional(),
+    is_attendance_marked: z
+      .boolean()
+      .describe('**[READ-ONLY]** Indicates if attendance has been marked for this enrollment.')
+      .readonly()
+      .optional(),
     did_attend: z
       .boolean()
       .describe('**[READ-ONLY]** Indicates if the student attended the class.')
@@ -7551,11 +7847,6 @@ export const zEnrollment = z
     status_description: z
       .string()
       .describe('**[READ-ONLY]** Human-readable description of the enrollment status.')
-      .readonly()
-      .optional(),
-    is_attendance_marked: z
-      .boolean()
-      .describe('**[READ-ONLY]** Indicates if attendance has been marked for this enrollment.')
       .readonly()
       .optional(),
     can_be_cancelled: z
@@ -7572,6 +7863,32 @@ export const zApiResponseListEnrollment = z.object({
   message: z.string().optional(),
   error: z.unknown().optional(),
 });
+
+/**
+ * CLICK or DISMISS; impressions are recorded by the server
+ */
+export const zEventTypeEnum = z
+  .enum(['CLICK', 'DISMISS'])
+  .describe('CLICK or DISMISS; impressions are recorded by the server');
+
+/**
+ * A click or dismissal of an item from a recommendation response
+ */
+export const zDiscoveryEventRequest = z
+  .object({
+    recommendation_id: z
+      .string()
+      .uuid()
+      .describe('The recommendation_id returned with the recommendations'),
+    item_uuid: z.string().uuid().describe('The UUID of the item acted on'),
+    item_type: z
+      .string()
+      .min(1)
+      .describe("The item's type as returned with the recommendation, e.g. course"),
+    event_type: zEventTypeEnum,
+    position: z.number().int().gte(0).lte(10000).describe('0-based position the item was shown at'),
+  })
+  .describe('A click or dismissal of an item from a recommendation response');
 
 export const zApiResponse = z.object({
   success: z.boolean().optional(),
@@ -9525,6 +9842,13 @@ export const zPage = z.object({
   empty: z.boolean().optional(),
 });
 
+export const zApiResponseListSkill = z.object({
+  success: z.boolean().optional(),
+  data: z.array(zSkill).optional(),
+  message: z.string().optional(),
+  error: z.unknown().optional(),
+});
+
 export const zGlobalSearchHit = z.object({
   type: z.string().optional(),
   uuid: z.string().uuid().optional(),
@@ -9532,6 +9856,7 @@ export const zGlobalSearchHit = z.object({
   subtitle: z.string().optional(),
   image_url: z.string().optional(),
   highlight: z.string().optional(),
+  distance_band: z.string().optional(),
 });
 
 export const zGlobalSearchResponse = z.object({
@@ -10011,7 +10336,7 @@ export const zApiResponseListTrainingRateUpdate = z.object({
 /**
  * **[READ-ONLY]** What happened.
  */
-export const zEventTypeEnum = z
+export const zEventTypeEnum2 = z
   .enum([
     'submitted',
     'edited',
@@ -10046,7 +10371,7 @@ export const zTrainingApplicationEvent = z
       .describe('**[READ-ONLY]** The application the event belongs to.')
       .readonly()
       .optional(),
-    event_type: zEventTypeEnum.optional(),
+    event_type: zEventTypeEnum2.optional(),
     actor_uuid: z.union([z.string().uuid().readonly(), z.null()]).readonly().optional(),
     actor_name: z.union([z.string().readonly(), z.null()]).readonly().optional(),
     created_date: z
@@ -11531,6 +11856,67 @@ export const zApiResponseListContentStatus = z.object({
 });
 
 /**
+ * Why a course was recommended
+ */
+export const zRecommendationReason = z
+  .object({
+    code: z
+      .string()
+      .describe(
+        'Stable reason code: NEXT_STEP, PREREQUISITE_PENDING, CO_ENROLLED, CATEGORY, SKILL_GAP, AFFILIATION, SIMILAR_CONTENT or POPULAR'
+      )
+      .optional(),
+    text: z.string().describe('Display text').optional(),
+    related_uuid: z
+      .string()
+      .uuid()
+      .describe('The course, category, organisation or instructor the reason refers to, if any')
+      .optional(),
+  })
+  .describe('Why a course was recommended');
+
+/**
+ * A recommended course with an explanation
+ */
+export const zRecommendedCourse = z
+  .object({
+    course_uuid: z.string().uuid().describe('UUID of the recommended course').optional(),
+    name: z.string().describe('Course name').optional(),
+    description: z.string().describe('Course description').optional(),
+    thumbnail_url: z.string().describe('Course thumbnail URL').optional(),
+    reason: z
+      .string()
+      .describe('The main reason, as display text (the first of `reasons`)')
+      .optional(),
+    score: z
+      .number()
+      .describe('Ranking score; higher is a stronger match. Comparable only within one response')
+      .optional(),
+    reasons: z
+      .array(zRecommendationReason)
+      .describe('Why the course was recommended, strongest first')
+      .optional(),
+    recommendation_id: z
+      .string()
+      .uuid()
+      .describe('Identifies this response; quote it back on discovery events')
+      .optional(),
+    surface: z
+      .string()
+      .describe('Where the list is shown: for_you, next_steps or similar')
+      .optional(),
+    model_version: z.string().describe('The scoring version that produced the ranking').optional(),
+  })
+  .describe('A recommended course with an explanation');
+
+export const zApiResponseListRecommendedCourse = z.object({
+  success: z.boolean().optional(),
+  data: z.array(zRecommendedCourse).optional(),
+  message: z.string().optional(),
+  error: z.unknown().optional(),
+});
+
+/**
  * An edit to a published course that is awaiting admin review.
  *
  * The live course is unaffected while the edit is pending: it stays published,
@@ -12278,6 +12664,34 @@ export const zApiResponsePagedDtoCourseEnrollment = z.object({
 });
 
 /**
+ * A lesson, content item, quiz or assignment matching an in-course search
+ */
+export const zCourseContentSearchHit = z
+  .object({
+    type: z.string().optional(),
+    uuid: z.string().uuid().optional(),
+    lesson_uuid: z.string().uuid().optional(),
+    lesson_number: z.number().int().optional(),
+    lesson_title: z.string().optional(),
+    title: z.string().optional(),
+    highlight: z.string().optional(),
+  })
+  .describe('A lesson, content item, quiz or assignment matching an in-course search');
+
+export const zPagedDtoCourseContentSearchHit = z.object({
+  content: z.array(zCourseContentSearchHit).optional(),
+  metadata: zPageMetadata.optional(),
+  links: zPageLinks.optional(),
+});
+
+export const zApiResponsePagedDtoCourseContentSearchHit = z.object({
+  success: z.boolean().optional(),
+  data: zPagedDtoCourseContentSearchHit.optional(),
+  message: z.string().optional(),
+  error: z.unknown().optional(),
+});
+
+/**
  * Represents the many-to-many relationship between courses and categories
  */
 export const zCourseCategoryMapping = z
@@ -12380,27 +12794,6 @@ export const zApiResponsePagedDtoCourseAssessment = z.object({
 export const zApiResponseListCourseAssessmentLineItem = z.object({
   success: z.boolean().optional(),
   data: z.array(zCourseAssessmentLineItem).optional(),
-  message: z.string().optional(),
-  error: z.unknown().optional(),
-});
-
-/**
- * A recommended course with an explanation
- */
-export const zRecommendedCourse = z
-  .object({
-    course_uuid: z.string().uuid().describe('UUID of the recommended course').optional(),
-    name: z.string().describe('Course name').optional(),
-    description: z.string().describe('Course description').optional(),
-    thumbnail_url: z.string().describe('Course thumbnail URL').optional(),
-    reason: z.string().describe('Short explanation of why this course was recommended').optional(),
-    score: z.number().describe('Internal ranking score (higher is a stronger match)').optional(),
-  })
-  .describe('A recommended course with an explanation');
-
-export const zApiResponseListRecommendedCourse = z.object({
-  success: z.boolean().optional(),
-  data: z.array(zRecommendedCourse).optional(),
   message: z.string().optional(),
   error: z.unknown().optional(),
 });
@@ -12824,6 +13217,57 @@ export const zApiResponseClassMarketplaceJobEligibility = z.object({
   error: z.unknown().optional(),
 });
 
+export const zJobCandidateMatch = z.object({
+  score: z.number().describe('Fit score 0..1 (rules-v1)').readonly().optional(),
+  reasons: z
+    .array(z.string())
+    .describe('Plain-language reasons; never mention rates or clashes')
+    .readonly()
+    .optional(),
+  schedule_clear: z
+    .boolean()
+    .describe("Whether every session of the job is free in the instructor's schedule")
+    .readonly()
+    .optional(),
+  rate_within_budget: z
+    .boolean()
+    .describe("Whether the job's pay covers the instructor's approved rate")
+    .readonly()
+    .optional(),
+});
+
+/**
+ * A verified, approved instructor suggested for a marketplace job
+ */
+export const zJobCandidate = z
+  .object({
+    match: zJobCandidateMatch.optional(),
+    instructor_uuid: z.string().uuid().readonly().optional(),
+    display_name: z.string().readonly().optional(),
+    location_name: z.string().readonly().optional(),
+    admin_verified: z.boolean().readonly().optional(),
+  })
+  .describe('A verified, approved instructor suggested for a marketplace job');
+
+export const zJobCandidateList = z.object({
+  items: z.array(zJobCandidate).readonly().optional(),
+  recommendation_id: z
+    .string()
+    .uuid()
+    .describe('Send back as recommendation_id to POST /api/v1/discovery/events')
+    .readonly()
+    .optional(),
+  model_version: z.string().readonly().optional(),
+  job_uuid: z.string().uuid().readonly().optional(),
+});
+
+export const zApiResponseJobCandidateList = z.object({
+  success: z.boolean().optional(),
+  data: zJobCandidateList.optional(),
+  message: z.string().optional(),
+  error: z.unknown().optional(),
+});
+
 export const zPagedDtoClassMarketplaceJobApplication = z.object({
   content: z.array(zClassMarketplaceJobApplication).optional(),
   metadata: zPageMetadata.optional(),
@@ -12840,7 +13284,7 @@ export const zApiResponsePagedDtoClassMarketplaceJobApplication = z.object({
 /**
  * **[READ-ONLY]** What happened. interviewing is an interview invitation and assigned is the class being created.
  */
-export const zEventTypeEnum2 = z
+export const zEventTypeEnum3 = z
   .enum([
     'applied',
     'reapplied',
@@ -12881,7 +13325,7 @@ export const zClassMarketplaceJobApplicationEvent = z
       .describe('**[READ-ONLY]** The job the application was made to.')
       .readonly()
       .optional(),
-    event_type: zEventTypeEnum2.optional(),
+    event_type: zEventTypeEnum3.optional(),
     actor_uuid: z.union([z.string().uuid().readonly(), z.null()]).readonly().optional(),
     actor_name: z.union([z.string().readonly(), z.null()]).readonly().optional(),
     interview_at: z.union([z.string().datetime().readonly(), z.null()]).readonly().optional(),
@@ -12897,6 +13341,129 @@ export const zClassMarketplaceJobApplicationEvent = z
 export const zApiResponseListClassMarketplaceJobApplicationEvent = z.object({
   success: z.boolean().optional(),
   data: z.array(zClassMarketplaceJobApplicationEvent).optional(),
+  message: z.string().optional(),
+  error: z.unknown().optional(),
+});
+
+export const zJobMatchSkill = z.object({
+  skill_uuid: z.string().uuid().readonly().optional(),
+  skill_name: z.string().readonly().optional(),
+  min_proficiency: zLevelEnum.optional(),
+  is_mandatory: z.boolean().readonly().optional(),
+});
+
+export const zJobMatchDetails = z.object({
+  score: z.number().describe('Fit score 0..1 (rules-v1)').readonly().optional(),
+  reasons: z
+    .array(z.string())
+    .describe('Plain-language reasons, strongest first')
+    .readonly()
+    .optional(),
+  eligibility: zClassMarketplaceJobEligibility.optional(),
+  matched_skills: z
+    .array(zJobMatchSkill)
+    .describe('Required skills the instructor holds at or above the minimum proficiency')
+    .readonly()
+    .optional(),
+  required_skills: z
+    .array(zJobMatchSkill)
+    .describe("The job's effective required skills (its own tags, or its course's)")
+    .readonly()
+    .optional(),
+});
+
+/**
+ * A marketplace job matched to the current instructor, with its fit
+ */
+export const zJobMatch = z
+  .object({
+    uuid: z.string().uuid().readonly().optional(),
+    title: z.string().readonly().optional(),
+    description: z.string().readonly().optional(),
+    status: zStatusEnum8.optional(),
+    resources: z.array(zClassMarketplaceJobResource).readonly().optional(),
+    organisation_uuid: z.string().uuid().readonly().optional(),
+    course_uuid: z.string().uuid().readonly().optional(),
+    program_uuid: z.string().uuid().readonly().optional(),
+    sale_price: z.number().readonly().optional(),
+    instructor_pay: z
+      .number()
+      .describe('**[READ-ONLY]** Per-session pay offered to the eventual instructor.')
+      .readonly()
+      .optional(),
+    rate_basis: zRateBasisEnum2.optional(),
+    class_visibility: zClassVisibilityEnum.optional(),
+    session_format: zSessionFormatEnum.optional(),
+    default_start_time: z.string().datetime().readonly().optional(),
+    default_end_time: z.string().datetime().readonly().optional(),
+    academic_period_start_date: z.string().date().readonly().optional(),
+    academic_period_end_date: z.string().date().readonly().optional(),
+    registration_period_start_date: z.string().date().readonly().optional(),
+    registration_period_end_date: z.string().date().readonly().optional(),
+    class_reminder_minutes: z.number().int().readonly().optional(),
+    class_color: z.string().readonly().optional(),
+    thumbnail_url: z
+      .string()
+      .describe('Public URL to the class advert thumbnail image, if uploaded.')
+      .readonly()
+      .optional(),
+    location_type: zLocationTypeEnum.optional(),
+    location_name: z.string().readonly().optional(),
+    location_latitude: z.number().readonly().optional(),
+    location_longitude: z.number().readonly().optional(),
+    meeting_link: z.string().readonly().optional(),
+    max_participants: z.number().int().readonly().optional(),
+    allow_waitlist: z.boolean().readonly().optional(),
+    assigned_instructor_uuid: z.string().uuid().readonly().optional(),
+    assigned_application_uuid: z.string().uuid().readonly().optional(),
+    assigned_class_definition_uuid: z.string().uuid().readonly().optional(),
+    filled_at: z.string().datetime().readonly().optional(),
+    session_templates: z.array(zClassSessionTemplate).readonly().optional(),
+    created_date: z.string().datetime().readonly().optional(),
+    updated_date: z.string().datetime().readonly().optional(),
+    created_by: z.string().readonly().optional(),
+    updated_by: z.string().readonly().optional(),
+    service_type: zServiceTypeEnum2.optional(),
+    preferred_instructor_uuid: z.string().uuid().readonly().optional(),
+    target_groups: z.array(z.string()).readonly().optional(),
+    target_group_uuids: z.array(z.string().uuid()).readonly().optional(),
+    category_uuid: z.string().uuid().readonly().optional(),
+    remind_students: z.boolean().readonly().optional(),
+    remind_instructor: z.boolean().readonly().optional(),
+    remind_via_email: z.boolean().readonly().optional(),
+    remind_via_sms: z.boolean().readonly().optional(),
+    remind_via_push: z.boolean().readonly().optional(),
+    branch_uuid: z.union([z.string().uuid().readonly(), z.null()]).readonly().optional(),
+    branch_name: z.union([z.string().readonly(), z.null()]).readonly().optional(),
+    application_count: z.coerce
+      .bigint()
+      .describe('**[READ-ONLY]** Applications received for the job, not counting withdrawn ones.')
+      .readonly()
+      .optional(),
+    hired_instructor_uuid: z.union([z.string().uuid().readonly(), z.null()]).readonly().optional(),
+    contact_name: z.union([z.string().readonly(), z.null()]).readonly().optional(),
+    contact_phone: z.union([z.string().readonly(), z.null()]).readonly().optional(),
+    contact_email: z.union([z.string().readonly(), z.null()]).readonly().optional(),
+    distance_band: zDistanceBandEnum.optional(),
+    duration_minutes: z.coerce.bigint().readonly().optional(),
+    match: zJobMatchDetails.optional(),
+  })
+  .describe('A marketplace job matched to the current instructor, with its fit');
+
+export const zJobMatchList = z.object({
+  items: z.array(zJobMatch).readonly().optional(),
+  recommendation_id: z
+    .string()
+    .uuid()
+    .describe('Send back as recommendation_id to POST /api/v1/discovery/events')
+    .readonly()
+    .optional(),
+  model_version: z.string().readonly().optional(),
+});
+
+export const zApiResponseJobMatchList = z.object({
+  success: z.boolean().optional(),
+  data: zJobMatchList.optional(),
   message: z.string().optional(),
   error: z.unknown().optional(),
 });
@@ -13057,6 +13624,43 @@ export const zSearchIndexStatusResponse = z.object({
 export const zApiResponseListSearchIndexStatusResponse = z.object({
   success: z.boolean().optional(),
   data: z.array(zSearchIndexStatusResponse).optional(),
+  message: z.string().optional(),
+  error: z.unknown().optional(),
+});
+
+export const zRecommendationModelScore = z.object({
+  model: z.string().describe('rules-v2, popularity or legacy-newest').optional(),
+  recall_at_k: z
+    .number()
+    .describe('Share of learners whose hidden enrolment is in the top k')
+    .optional(),
+  ndcg_at_k: z.number().describe('Mean nDCG@k with one relevant item').optional(),
+  coverage: z
+    .number()
+    .describe('Distinct courses recommended across learners / catalogue size')
+    .optional(),
+});
+
+/**
+ * Leave-last-out recall and coverage of the course recommenders
+ */
+export const zRecommendationEvaluation = z
+  .object({
+    k: z.number().int().describe('Cut-off rank').optional(),
+    learners_evaluated: z
+      .number()
+      .int()
+      .describe('Learners with at least two enrolments whose latest enrolment is a public course')
+      .optional(),
+    catalogue_size: z.number().int().describe('Public courses in the catalogue').optional(),
+    models: z.array(zRecommendationModelScore).describe('One row per model').optional(),
+    evaluated_at: z.string().datetime().describe('When the evaluation ran (UTC)').optional(),
+  })
+  .describe('Leave-last-out recall and coverage of the course recommenders');
+
+export const zApiResponseRecommendationEvaluation = z.object({
+  success: z.boolean().optional(),
+  data: zRecommendationEvaluation.optional(),
   message: z.string().optional(),
   error: z.unknown().optional(),
 });
@@ -13845,6 +14449,13 @@ export const zProvidedByEnumWritable = z
   .describe('**[OPTIONAL]** Party responsible for providing this requirement.');
 
 /**
+ * Defaults to beginner; accepted in any case
+ */
+export const zLevelEnumWritable = z
+  .enum(['beginner', 'intermediate', 'advanced', 'expert'])
+  .describe('Defaults to beginner; accepted in any case');
+
+/**
  * **[OPTIONAL]** Practice activity format.
  */
 export const zActivityTypeEnumWritable = z
@@ -13878,13 +14489,6 @@ export const zItemTypeEnumWritable = z.enum([
   'performance',
   'participation',
   'manual',
-]);
-
-export const zProficiencyLevelEnum2Writable = z.enum([
-  'beginner',
-  'intermediate',
-  'advanced',
-  'expert',
 ]);
 
 /**
@@ -14092,6 +14696,13 @@ export const zShareScopeEnum2Writable = z
 export const zStatusEnum14Writable = z
   .enum(['ENROLLED', 'WAITLISTED', 'ATTENDED', 'ABSENT', 'CANCELLED'])
   .describe('**[OPTIONAL]** Current enrollment and attendance status.');
+
+/**
+ * CLICK or DISMISS; impressions are recorded by the server
+ */
+export const zEventTypeEnumWritable = z
+  .enum(['CLICK', 'DISMISS'])
+  .describe('CLICK or DISMISS; impressions are recorded by the server');
 
 /**
  * How the platform fee was configured
@@ -14392,6 +15003,32 @@ export const zUpdateStudentData = z.object({
  * Student updated successfully
  */
 export const zUpdateStudentResponse = zStudent;
+
+export const zGetLearnerSkillGoalsData = z.object({
+  body: z.never().optional(),
+  path: z.object({
+    uuid: z.string().uuid(),
+  }),
+  query: z.never().optional(),
+});
+
+/**
+ * OK
+ */
+export const zGetLearnerSkillGoalsResponse = zApiResponseListLearnerSkillGoal;
+
+export const zReplaceLearnerSkillGoalsData = z.object({
+  body: zLearnerSkillGoalsUpdateRequest,
+  path: z.object({
+    uuid: z.string().uuid(),
+  }),
+  query: z.never().optional(),
+});
+
+/**
+ * OK
+ */
+export const zReplaceLearnerSkillGoalsResponse = zApiResponseListLearnerSkillGoal;
 
 export const zDeleteGroupData = z.object({
   body: z.never().optional(),
@@ -15068,6 +15705,19 @@ export const zUpdateInstructorData = z.object({
  */
 export const zUpdateInstructorResponse = zInstructor;
 
+export const zSetLocationSearchOptInData = z.object({
+  body: zLocationSearchOptInRequest,
+  path: z.object({
+    uuid: z.string().uuid(),
+  }),
+  query: z.never().optional(),
+});
+
+/**
+ * Opt-in updated
+ */
+export const zSetLocationSearchOptInResponse = zInstructor;
+
 export const zDeleteInstructorSkillData = z.object({
   body: z.never().optional(),
   path: z.object({
@@ -15249,6 +15899,58 @@ export const zUpdateCourseData = z.object({
  * Course updated successfully
  */
 export const zUpdateCourseResponse = zApiResponseCourse;
+
+export const zGetCourseSkillsData = z.object({
+  body: z.never().optional(),
+  path: z.object({
+    uuid: z.string().uuid(),
+  }),
+  query: z.never().optional(),
+});
+
+/**
+ * OK
+ */
+export const zGetCourseSkillsResponse = zApiResponseListCourseSkill;
+
+export const zReplaceCourseSkillsData = z.object({
+  body: zCourseSkillsUpdateRequest,
+  path: z.object({
+    uuid: z.string().uuid(),
+  }),
+  query: z.never().optional(),
+});
+
+/**
+ * OK
+ */
+export const zReplaceCourseSkillsResponse = zApiResponseListCourseSkill;
+
+export const zGetCoursePrerequisitesData = z.object({
+  body: z.never().optional(),
+  path: z.object({
+    uuid: z.string().uuid(),
+  }),
+  query: z.never().optional(),
+});
+
+/**
+ * OK
+ */
+export const zGetCoursePrerequisitesResponse = zApiResponseListCoursePrerequisite;
+
+export const zReplaceCoursePrerequisitesData = z.object({
+  body: zCoursePrerequisitesRequest,
+  path: z.object({
+    uuid: z.string().uuid(),
+  }),
+  query: z.never().optional(),
+});
+
+/**
+ * OK
+ */
+export const zReplaceCoursePrerequisitesResponse = zApiResponseListCoursePrerequisite;
 
 export const zDeleteCourseTrainingRequirementData = z.object({
   body: z.never().optional(),
@@ -15949,6 +16651,34 @@ export const zUpdateJobData = z.object({
  */
 export const zUpdateJobResponse = zApiResponseClassMarketplaceJob;
 
+export const zGetMarketplaceJobRequiredSkillsData = z.object({
+  body: z.never().optional(),
+  path: z.object({
+    jobUuid: z.string().uuid(),
+  }),
+  query: z.never().optional(),
+});
+
+/**
+ * OK
+ */
+export const zGetMarketplaceJobRequiredSkillsResponse =
+  zApiResponseClassMarketplaceJobRequiredSkills;
+
+export const zReplaceMarketplaceJobRequiredSkillsData = z.object({
+  body: zClassMarketplaceJobRequiredSkillsRequest,
+  path: z.object({
+    jobUuid: z.string().uuid(),
+  }),
+  query: z.never().optional(),
+});
+
+/**
+ * OK
+ */
+export const zReplaceMarketplaceJobRequiredSkillsResponse =
+  zApiResponseClassMarketplaceJobRequiredSkills;
+
 export const zDeleteCertificateData = z.object({
   body: z.never().optional(),
   path: z.object({
@@ -16047,6 +16777,40 @@ export const zUpdateAssignmentData = z.object({
  * Assignment updated successfully
  */
 export const zUpdateAssignmentResponse = zApiResponseAssignment;
+
+export const zAdminDeleteSkillData = z.object({
+  body: z.never().optional(),
+  path: z.object({
+    uuid: z.string().uuid(),
+  }),
+  query: z.never().optional(),
+});
+
+export const zAdminGetSkillData = z.object({
+  body: z.never().optional(),
+  path: z.object({
+    uuid: z.string().uuid(),
+  }),
+  query: z.never().optional(),
+});
+
+/**
+ * OK
+ */
+export const zAdminGetSkillResponse = zApiResponseSkill;
+
+export const zAdminUpdateSkillData = z.object({
+  body: zSkillRequest,
+  path: z.object({
+    uuid: z.string().uuid(),
+  }),
+  query: z.never().optional(),
+});
+
+/**
+ * OK
+ */
+export const zAdminUpdateSkillResponse = zApiResponseSkill;
 
 export const zUpdateCurrencyData = z.object({
   body: zCurrencyUpdateRequest,
@@ -17381,6 +18145,14 @@ export const zGetAllInstructorsData = z.object({
   path: z.never().optional(),
   query: z.object({
     q: z.string().describe('Optional free-text query; see the operation description.').optional(),
+    near: z
+      .string()
+      .describe('Optional near-me point as lat,lng in decimal degrees; rounded to 2 decimals.')
+      .optional(),
+    radius_km: z
+      .string()
+      .describe('Near-me radius in km, clamped to 2-100 (default 10); needs near.')
+      .optional(),
     pageable: zPageable,
   }),
 });
@@ -17728,6 +18500,12 @@ export const zJoinWaitlistData = z.object({
  * Student added to waitlist
  */
 export const zJoinWaitlistResponse = zApiResponseListEnrollment;
+
+export const zRecordDiscoveryEventData = z.object({
+  body: zDiscoveryEventRequest,
+  path: z.never().optional(),
+  query: z.never().optional(),
+});
 
 export const zGetAllCoursesData = z.object({
   body: z.never().optional(),
@@ -18803,6 +19581,16 @@ export const zGetAllClassDefinitionsData = z.object({
   path: z.never().optional(),
   query: z.object({
     q: z.string().describe('Free-text search; omit to list every visible class').optional(),
+    near: z
+      .string()
+      .describe(
+        'Near-me point as lat,lng in decimal degrees, with or without q. Only IN_PERSON and HYBRID classes (located by their own or their branch\'s coordinates) within radius_km are returned, nearest first without q; each carries distance_band and coordinates rounded to 2 decimals. near is rounded to 2 decimals on the server and never stored or logged. Served only by the search index: 503 ("Search is unavailable") when it cannot answer.'
+      )
+      .optional(),
+    radius_km: z
+      .string()
+      .describe('Near-me radius in km, clamped to 2-100 (default 10); needs near')
+      .optional(),
     pageable: zPageable,
   }),
 });
@@ -19011,6 +19799,16 @@ export const zListJobsData = z.object({
       .describe('Only jobs delivered at this training branch')
       .optional(),
     status: z.string().optional(),
+    near: z
+      .string()
+      .describe(
+        'Near-me point as lat,lng in decimal degrees, with or without q. Only IN_PERSON and HYBRID jobs (located by their own or their branch\'s coordinates) within radius_km are returned, nearest first without q; each carries distance_band and coordinates rounded to 2 decimals. near is rounded to 2 decimals on the server and never stored or logged. Served only by the search index: 503 ("Search is unavailable") when it cannot answer.'
+      )
+      .optional(),
+    radius_km: z
+      .string()
+      .describe('Near-me radius in km, clamped to 2-100 (default 10); needs near')
+      .optional(),
     pageable: zPageable,
   }),
 });
@@ -19503,6 +20301,33 @@ export const zCreateAdminUserData = z.object({
  * Admin user created and activation email sent
  */
 export const zCreateAdminUserResponse = zApiResponseUser;
+
+export const zAdminListSkillsData = z.object({
+  body: z.never().optional(),
+  path: z.never().optional(),
+  query: z
+    .object({
+      q: z.string().describe('Optional text matched against name, slug and aliases').optional(),
+      active: z.boolean().optional(),
+    })
+    .optional(),
+});
+
+/**
+ * OK
+ */
+export const zAdminListSkillsResponse = zApiResponseListSkill;
+
+export const zAdminCreateSkillData = z.object({
+  body: zSkillRequest,
+  path: z.never().optional(),
+  query: z.never().optional(),
+});
+
+/**
+ * OK
+ */
+export const zAdminCreateSkillResponse = zApiResponseSkill;
 
 export const zRebuildData = z.object({
   body: z.never().optional(),
@@ -20080,6 +20905,22 @@ export const zSearchStudentsData = z.object({
  */
 export const zSearchStudentsResponse = zPage;
 
+export const zListSkillsData = z.object({
+  body: z.never().optional(),
+  path: z.never().optional(),
+  query: z
+    .object({
+      q: z.string().describe('Optional text; at most 200 characters').optional(),
+      limit: z.number().int().optional(),
+    })
+    .optional(),
+});
+
+/**
+ * OK
+ */
+export const zListSkillsResponse = zApiResponseListSkill;
+
 export const zGlobalSearchData = z.object({
   body: z.never().optional(),
   path: z.never().optional(),
@@ -20110,6 +20951,16 @@ export const zSearchByTypeData = z.object({
       sort: z.string().optional(),
       page: z.number().int().optional(),
       size: z.number().int().optional(),
+      near: z
+        .string()
+        .describe(
+          'Near-me point as lat,lng (instructors, classes, marketplace_jobs; signed-in only)'
+        )
+        .optional(),
+      radius_km: z
+        .string()
+        .describe('Near-me radius in km, clamped to 2-100 (default 10); needs near')
+        .optional(),
     })
     .optional(),
 });
@@ -21756,6 +22607,28 @@ export const zGetStatusTransitionsData = z.object({
  */
 export const zGetStatusTransitionsResponse = zApiResponseListContentStatus;
 
+export const zGetSimilarCoursesData = z.object({
+  body: z.never().optional(),
+  path: z.object({
+    uuid: z.string().uuid(),
+  }),
+  query: z
+    .object({
+      limit: z
+        .number()
+        .int()
+        .describe('Maximum number of courses (default 6, max 50)')
+        .optional()
+        .default(6),
+    })
+    .optional(),
+});
+
+/**
+ * OK
+ */
+export const zGetSimilarCoursesResponse = zApiResponseListRecommendedCourse;
+
 export const zWithdrawPendingEditData = z.object({
   body: z.never().optional(),
   path: z.object({
@@ -21939,6 +22812,27 @@ export const zGetCourseContentData = z.object({
  */
 export const zGetCourseContentResponse = zApiResponseOrganisationCourseContent;
 
+export const zSearchCourseContentData = z.object({
+  body: z.never().optional(),
+  path: z.object({
+    courseUuid: z.string().uuid(),
+  }),
+  query: z.object({
+    q: z.string().describe('Query text'),
+    types: z
+      .string()
+      .describe('Comma-separated item types: lesson, content, quiz, assignment; all when omitted')
+      .optional(),
+    page: z.number().int().describe('0-based page number (default 0)').optional(),
+    size: z.number().int().describe('Page size, 1-100 (default 20)').optional(),
+  }),
+});
+
+/**
+ * Matching items
+ */
+export const zSearchCourseContentResponse = zApiResponsePagedDtoCourseContentSearchHit;
+
 export const zGetCourseCompletionRateData = z.object({
   body: z.never().optional(),
   path: z.object({
@@ -22016,6 +22910,14 @@ export const zGetCourseRecommendationsData = z.object({
         .uuid()
         .describe('UUID of the user to recommend for; defaults to the caller')
         .optional(),
+      student_uuid: z
+        .string()
+        .uuid()
+        .describe(
+          'Student profile to recommend for (the learner, a guardian with a FULL or ACADEMICS share, or an admin)'
+        )
+        .optional(),
+      surface: z.string().describe('for_you (default) or next_steps').optional(),
       limit: z
         .number()
         .int()
@@ -22534,6 +23436,23 @@ export const zGetJobEligibilityData = z.object({
  */
 export const zGetJobEligibilityResponse = zApiResponseClassMarketplaceJobEligibility;
 
+export const zGetJobCandidatesData = z.object({
+  body: z.never().optional(),
+  path: z.object({
+    jobUuid: z.string().uuid(),
+  }),
+  query: z
+    .object({
+      limit: z.number().int().describe('How many candidates, 1-20 (default 20)').optional(),
+    })
+    .optional(),
+});
+
+/**
+ * OK
+ */
+export const zGetJobCandidatesResponse = zApiResponseJobCandidateList;
+
 export const zListJobApplicationEventsData = z.object({
   body: z.never().optional(),
   path: z.object({
@@ -22548,6 +23467,28 @@ export const zListJobApplicationEventsData = z.object({
  */
 export const zListJobApplicationEventsResponse =
   zApiResponseListClassMarketplaceJobApplicationEvent;
+
+export const zGetJobMatchesData = z.object({
+  body: z.never().optional(),
+  path: z.never().optional(),
+  query: z
+    .object({
+      limit: z.number().int().describe('How many matches, 1-50 (default 20)').optional(),
+      radius_km: z
+        .number()
+        .int()
+        .describe(
+          'Only jobs within this many km of the instructor; ignored unless they opted in to location search'
+        )
+        .optional(),
+    })
+    .optional(),
+});
+
+/**
+ * OK
+ */
+export const zGetJobMatchesResponse = zApiResponseJobMatchList;
 
 export const zGetJobsEligibilityData = z.object({
   body: z.never().optional(),
@@ -23035,6 +23976,17 @@ export const zListIndexesData = z.object({
  * OK
  */
 export const zListIndexesResponse = zApiResponseListSearchIndexStatusResponse;
+
+export const zEvaluateCourseRecommendationsData = z.object({
+  body: z.never().optional(),
+  path: z.never().optional(),
+  query: z.never().optional(),
+});
+
+/**
+ * OK
+ */
+export const zEvaluateCourseRecommendationsResponse = zApiResponseRecommendationEvaluation;
 
 export const zGetProgramModerationHistoryData = z.object({
   body: z.never().optional(),

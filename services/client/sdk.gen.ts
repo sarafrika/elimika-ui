@@ -40,6 +40,12 @@ import type {
   UpdateStudentData,
   UpdateStudentResponses,
   UpdateStudentErrors,
+  GetLearnerSkillGoalsData,
+  GetLearnerSkillGoalsResponses,
+  GetLearnerSkillGoalsErrors,
+  ReplaceLearnerSkillGoalsData,
+  ReplaceLearnerSkillGoalsResponses,
+  ReplaceLearnerSkillGoalsErrors,
   DeleteGroupData,
   DeleteGroupResponses,
   DeleteGroupErrors,
@@ -181,6 +187,9 @@ import type {
   UpdateInstructorData,
   UpdateInstructorResponses,
   UpdateInstructorErrors,
+  SetLocationSearchOptInData,
+  SetLocationSearchOptInResponses,
+  SetLocationSearchOptInErrors,
   DeleteInstructorSkillData,
   DeleteInstructorSkillResponses,
   DeleteInstructorSkillErrors,
@@ -226,6 +235,18 @@ import type {
   UpdateCourseData,
   UpdateCourseResponses,
   UpdateCourseErrors,
+  GetCourseSkillsData,
+  GetCourseSkillsResponses,
+  GetCourseSkillsErrors,
+  ReplaceCourseSkillsData,
+  ReplaceCourseSkillsResponses,
+  ReplaceCourseSkillsErrors,
+  GetCoursePrerequisitesData,
+  GetCoursePrerequisitesResponses,
+  GetCoursePrerequisitesErrors,
+  ReplaceCoursePrerequisitesData,
+  ReplaceCoursePrerequisitesResponses,
+  ReplaceCoursePrerequisitesErrors,
   DeleteCourseTrainingRequirementData,
   DeleteCourseTrainingRequirementResponses,
   DeleteCourseTrainingRequirementErrors,
@@ -391,6 +412,12 @@ import type {
   UpdateJobData,
   UpdateJobResponses,
   UpdateJobErrors,
+  GetMarketplaceJobRequiredSkillsData,
+  GetMarketplaceJobRequiredSkillsResponses,
+  GetMarketplaceJobRequiredSkillsErrors,
+  ReplaceMarketplaceJobRequiredSkillsData,
+  ReplaceMarketplaceJobRequiredSkillsResponses,
+  ReplaceMarketplaceJobRequiredSkillsErrors,
   DeleteCertificateData,
   DeleteCertificateResponses,
   DeleteCertificateErrors,
@@ -415,6 +442,15 @@ import type {
   UpdateAssignmentData,
   UpdateAssignmentResponses,
   UpdateAssignmentErrors,
+  AdminDeleteSkillData,
+  AdminDeleteSkillResponses,
+  AdminDeleteSkillErrors,
+  AdminGetSkillData,
+  AdminGetSkillResponses,
+  AdminGetSkillErrors,
+  AdminUpdateSkillData,
+  AdminUpdateSkillResponses,
+  AdminUpdateSkillErrors,
   UpdateCurrencyData,
   UpdateCurrencyResponses,
   UpdateCurrencyErrors,
@@ -766,6 +802,9 @@ import type {
   JoinWaitlistData,
   JoinWaitlistResponses,
   JoinWaitlistErrors,
+  RecordDiscoveryEventData,
+  RecordDiscoveryEventResponses,
+  RecordDiscoveryEventErrors,
   GetAllCoursesData,
   GetAllCoursesResponses,
   GetAllCoursesErrors,
@@ -1135,6 +1174,12 @@ import type {
   CreateAdminUserData,
   CreateAdminUserResponses,
   CreateAdminUserErrors,
+  AdminListSkillsData,
+  AdminListSkillsResponses,
+  AdminListSkillsErrors,
+  AdminCreateSkillData,
+  AdminCreateSkillResponses,
+  AdminCreateSkillErrors,
   RebuildData,
   RebuildResponses,
   RebuildErrors,
@@ -1255,6 +1300,9 @@ import type {
   SearchStudentsData,
   SearchStudentsResponses,
   SearchStudentsErrors,
+  ListSkillsData,
+  ListSkillsResponses,
+  ListSkillsErrors,
   GlobalSearchData,
   GlobalSearchResponses,
   GlobalSearchErrors,
@@ -1584,6 +1632,9 @@ import type {
   GetStatusTransitionsData,
   GetStatusTransitionsResponses,
   GetStatusTransitionsErrors,
+  GetSimilarCoursesData,
+  GetSimilarCoursesResponses,
+  GetSimilarCoursesErrors,
   WithdrawPendingEditData,
   WithdrawPendingEditResponses,
   WithdrawPendingEditErrors,
@@ -1623,6 +1674,9 @@ import type {
   GetCourseContentData,
   GetCourseContentResponses,
   GetCourseContentErrors,
+  SearchCourseContentData,
+  SearchCourseContentResponses,
+  SearchCourseContentErrors,
   GetCourseCompletionRateData,
   GetCourseCompletionRateResponses,
   GetCourseCompletionRateErrors,
@@ -1749,9 +1803,15 @@ import type {
   GetJobEligibilityData,
   GetJobEligibilityResponses,
   GetJobEligibilityErrors,
+  GetJobCandidatesData,
+  GetJobCandidatesResponses,
+  GetJobCandidatesErrors,
   ListJobApplicationEventsData,
   ListJobApplicationEventsResponses,
   ListJobApplicationEventsErrors,
+  GetJobMatchesData,
+  GetJobMatchesResponses,
+  GetJobMatchesErrors,
   GetJobsEligibilityData,
   GetJobsEligibilityResponses,
   GetJobsEligibilityErrors,
@@ -1857,6 +1917,9 @@ import type {
   ListIndexesData,
   ListIndexesResponses,
   ListIndexesErrors,
+  EvaluateCourseRecommendationsData,
+  EvaluateCourseRecommendationsResponses,
+  EvaluateCourseRecommendationsErrors,
   GetProgramModerationHistoryData,
   GetProgramModerationHistoryResponses,
   GetProgramModerationHistoryErrors,
@@ -1957,6 +2020,8 @@ import {
   updateRuleResponseTransformer,
   getStudentByIdResponseTransformer,
   updateStudentResponseTransformer,
+  getLearnerSkillGoalsResponseTransformer,
+  replaceLearnerSkillGoalsResponseTransformer,
   updateGroupResponseTransformer,
   getAssessmentRubricByUuidResponseTransformer,
   updateAssessmentRubricResponseTransformer,
@@ -1987,6 +2052,7 @@ import {
   updateAvailabilityRuleResponseTransformer,
   getInstructorByUuidResponseTransformer,
   updateInstructorResponseTransformer,
+  setLocationSearchOptInResponseTransformer,
   updateInstructorSkillResponseTransformer,
   updateInstructorMembershipResponseTransformer,
   updateInstructorExperienceResponseTransformer,
@@ -2035,6 +2101,8 @@ import {
   updateCertificateTemplateResponseTransformer,
   getAssignmentByUuidResponseTransformer,
   updateAssignmentResponseTransformer,
+  adminGetSkillResponseTransformer,
+  adminUpdateSkillResponseTransformer,
   transferResponseTransformer,
   creditSaleResponseTransformer,
   depositResponseTransformer,
@@ -2250,6 +2318,8 @@ import {
   assignAdminDomainResponseTransformer,
   getAdminUsersResponseTransformer,
   createAdminUserResponseTransformer,
+  adminListSkillsResponseTransformer,
+  adminCreateSkillResponseTransformer,
   moderateProgramResponseTransformer,
   createOrganisationUserResponseTransformer,
   moderateOrganisationResponseTransformer,
@@ -2274,6 +2344,7 @@ import {
   getInstructorScheduleResponseTransformer,
   getStudentBookingsResponseTransformer,
   searchStudentsResponseTransformer,
+  listSkillsResponseTransformer,
   searchByTypeResponseTransformer,
   getPassingScoringLevelsResponseTransformer,
   getHighestScoringLevelResponseTransformer,
@@ -2371,6 +2442,7 @@ import {
   getEnrollmentGradeBookResponseTransformer,
   getCourseEnrollmentsResponseTransformer,
   getCourseContentResponseTransformer,
+  searchCourseContentResponseTransformer,
   getCourseCategoriesResponseTransformer,
   searchTrainingApplicationsResponseTransformer,
   searchCoursesResponseTransformer,
@@ -2403,6 +2475,7 @@ import {
   getInstructorPayablesForOrganisationResponseTransformer,
   getJobEligibilityResponseTransformer,
   listJobApplicationEventsResponseTransformer,
+  getJobMatchesResponseTransformer,
   getJobsEligibilityResponseTransformer,
   listMyApplicationsResponseTransformer,
   listInstructorApplicationsResponseTransformer,
@@ -2430,6 +2503,7 @@ import {
   getOrganizationAdminUsersResponseTransformer,
   getAdminEligibleUsersResponseTransformer,
   listIndexesResponseTransformer,
+  evaluateCourseRecommendationsResponseTransformer,
   getProgramModerationHistoryResponseTransformer,
   listPendingProgramsResponseTransformer,
   getPendingOrganisationsResponseTransformer,
@@ -2757,6 +2831,66 @@ export const updateStudent = <ThrowOnError extends boolean = false>(
       },
     ],
     url: '/api/v1/students/{uuid}',
+    ...options,
+    headers: {
+      'Content-Type': 'application/json',
+      ...options.headers,
+    },
+  });
+};
+
+/**
+ * Get a learner's skill goals
+ * The learner, a platform admin, or a guardian whose share scope is FULL or ACADEMICS. Oldest first.
+ */
+export const getLearnerSkillGoals = <ThrowOnError extends boolean = false>(
+  options: Options<GetLearnerSkillGoalsData, ThrowOnError>
+) => {
+  return (options.client ?? _heyApiClient).get<
+    GetLearnerSkillGoalsResponses,
+    GetLearnerSkillGoalsErrors,
+    ThrowOnError
+  >({
+    responseTransformer: getLearnerSkillGoalsResponseTransformer,
+    security: [
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+    ],
+    url: '/api/v1/students/{uuid}/skill-goals',
+    ...options,
+  });
+};
+
+/**
+ * Replace a learner's skill goals
+ * The learner only. The body is the complete list (at most 20); [] clears it. Skills come from GET /api/v1/skills: an unknown skill, a duplicate or a newly added retired skill is a 400.
+ */
+export const replaceLearnerSkillGoals = <ThrowOnError extends boolean = false>(
+  options: Options<ReplaceLearnerSkillGoalsData, ThrowOnError>
+) => {
+  return (options.client ?? _heyApiClient).put<
+    ReplaceLearnerSkillGoalsResponses,
+    ReplaceLearnerSkillGoalsErrors,
+    ThrowOnError
+  >({
+    responseTransformer: replaceLearnerSkillGoalsResponseTransformer,
+    security: [
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+    ],
+    url: '/api/v1/students/{uuid}/skill-goals',
     ...options,
     headers: {
       'Content-Type': 'application/json',
@@ -4148,6 +4282,42 @@ export const updateInstructor = <ThrowOnError extends boolean = false>(
 };
 
 /**
+ * Opt in to or out of near-me search
+ * The profile owner only. With `enabled: true` a verified instructor with coordinates appears
+ * in near-me search (`near=lat,lng`), located to about 1 km (2 decimal places); with `false`
+ * they are dropped from it. The flag is returned as `location_search_opt_in` on the owner's
+ * own profile only.
+ *
+ */
+export const setLocationSearchOptIn = <ThrowOnError extends boolean = false>(
+  options: Options<SetLocationSearchOptInData, ThrowOnError>
+) => {
+  return (options.client ?? _heyApiClient).put<
+    SetLocationSearchOptInResponses,
+    SetLocationSearchOptInErrors,
+    ThrowOnError
+  >({
+    responseTransformer: setLocationSearchOptInResponseTransformer,
+    security: [
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+    ],
+    url: '/api/v1/instructors/{uuid}/location-search',
+    ...options,
+    headers: {
+      'Content-Type': 'application/json',
+      ...options.headers,
+    },
+  });
+};
+
+/**
  * Delete instructor skill
  * Removes a skill from an instructor
  */
@@ -4597,6 +4767,135 @@ export const updateCourse = <ThrowOnError extends boolean = false>(
       },
     ],
     url: '/api/v1/courses/{uuid}',
+    ...options,
+    headers: {
+      'Content-Type': 'application/json',
+      ...options.headers,
+    },
+  });
+};
+
+/**
+ * Get a course's skill tags
+ * Readable by anyone who can read the course (404 otherwise). Heaviest first.
+ */
+export const getCourseSkills = <ThrowOnError extends boolean = false>(
+  options: Options<GetCourseSkillsData, ThrowOnError>
+) => {
+  return (options.client ?? _heyApiClient).get<
+    GetCourseSkillsResponses,
+    GetCourseSkillsErrors,
+    ThrowOnError
+  >({
+    security: [
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+    ],
+    url: '/api/v1/courses/{uuid}/skills',
+    ...options,
+  });
+};
+
+/**
+ * Replace a course's skill tags
+ * Course owner only. The body is the complete list; [] clears it. Skills must come from GET /api/v1/skills: an unknown skill, a duplicate, or a newly added retired skill is a 400. Tags go on the live course, never on a pending shadow draft (400). Marketplace jobs of the course without tags of their own inherit these.
+ */
+export const replaceCourseSkills = <ThrowOnError extends boolean = false>(
+  options: Options<ReplaceCourseSkillsData, ThrowOnError>
+) => {
+  return (options.client ?? _heyApiClient).put<
+    ReplaceCourseSkillsResponses,
+    ReplaceCourseSkillsErrors,
+    ThrowOnError
+  >({
+    security: [
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+    ],
+    url: '/api/v1/courses/{uuid}/skills',
+    ...options,
+    headers: {
+      'Content-Type': 'application/json',
+      ...options.headers,
+    },
+  });
+};
+
+/**
+ * List a course's prerequisites
+ * The prior courses this course requires (`is_mandatory: true`) or recommends. Readable by anyone
+ * who can read the course; a course the caller may not read answers 404.
+ *
+ * On a live course with a pending edit this returns the live set. The author reads the proposed
+ * set from the draft course (`draft_course_uuid` on the pending edit).
+ *
+ */
+export const getCoursePrerequisites = <ThrowOnError extends boolean = false>(
+  options: Options<GetCoursePrerequisitesData, ThrowOnError>
+) => {
+  return (options.client ?? _heyApiClient).get<
+    GetCoursePrerequisitesResponses,
+    GetCoursePrerequisitesErrors,
+    ThrowOnError
+  >({
+    security: [
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+    ],
+    url: '/api/v1/courses/{uuid}/prerequisites',
+    ...options,
+  });
+};
+
+/**
+ * Replace a course's prerequisites
+ * Replaces the whole prerequisite set; an empty list clears it. Course owner only.
+ *
+ * Each prior course must be a published course or one of the author's own courses. A course
+ * cannot require itself, list a course twice, or close a cycle (A requires B requires A): all
+ * answer 400.
+ *
+ * On a live, approved course the change lands on the course's draft and goes through review like
+ * any other edit; the response is then the draft's set, and `course_uuid` is the draft.
+ *
+ */
+export const replaceCoursePrerequisites = <ThrowOnError extends boolean = false>(
+  options: Options<ReplaceCoursePrerequisitesData, ThrowOnError>
+) => {
+  return (options.client ?? _heyApiClient).put<
+    ReplaceCoursePrerequisitesResponses,
+    ReplaceCoursePrerequisitesErrors,
+    ThrowOnError
+  >({
+    security: [
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+    ],
+    url: '/api/v1/courses/{uuid}/prerequisites',
     ...options,
     headers: {
       'Content-Type': 'application/json',
@@ -6252,6 +6551,64 @@ export const updateJob = <ThrowOnError extends boolean = false>(
 };
 
 /**
+ * Get a marketplace job's required skills
+ * Managers of the posting organisation and platform admins (403 otherwise). A job with no tags of its own returns its course's skills with inherited=true (all mandatory, the course's level as min_proficiency).
+ */
+export const getMarketplaceJobRequiredSkills = <ThrowOnError extends boolean = false>(
+  options: Options<GetMarketplaceJobRequiredSkillsData, ThrowOnError>
+) => {
+  return (options.client ?? _heyApiClient).get<
+    GetMarketplaceJobRequiredSkillsResponses,
+    GetMarketplaceJobRequiredSkillsErrors,
+    ThrowOnError
+  >({
+    security: [
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+    ],
+    url: '/api/v1/classes/jobs/{jobUuid}/required-skills',
+    ...options,
+  });
+};
+
+/**
+ * Replace a marketplace job's required skills
+ * Managers of the posting organisation and platform admins, the same rule as editing the job. The body is the complete list; [] clears it and the job inherits its course's skills again. Skills come from GET /api/v1/skills: an unknown skill, a duplicate or a newly added retired skill is a 400. Tags are optional and never block publishing.
+ */
+export const replaceMarketplaceJobRequiredSkills = <ThrowOnError extends boolean = false>(
+  options: Options<ReplaceMarketplaceJobRequiredSkillsData, ThrowOnError>
+) => {
+  return (options.client ?? _heyApiClient).put<
+    ReplaceMarketplaceJobRequiredSkillsResponses,
+    ReplaceMarketplaceJobRequiredSkillsErrors,
+    ThrowOnError
+  >({
+    security: [
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+    ],
+    url: '/api/v1/classes/jobs/{jobUuid}/required-skills',
+    ...options,
+    headers: {
+      'Content-Type': 'application/json',
+      ...options.headers,
+    },
+  });
+};
+
+/**
  * Delete certificate
  * Permanently removes a certificate record. Platform administrators only - course staff withdraw a certificate by revoking it, which leaves the record and its reason behind.
  */
@@ -6476,6 +6833,92 @@ export const updateAssignment = <ThrowOnError extends boolean = false>(
       },
     ],
     url: '/api/v1/assignments/{uuid}',
+    ...options,
+    headers: {
+      'Content-Type': 'application/json',
+      ...options.headers,
+    },
+  });
+};
+
+/**
+ * Delete a skill
+ * Removes it from every course and job tag list and unlinks instructor skills (their free text stays). Prefer retiring it with active=false.
+ */
+export const adminDeleteSkill = <ThrowOnError extends boolean = false>(
+  options: Options<AdminDeleteSkillData, ThrowOnError>
+) => {
+  return (options.client ?? _heyApiClient).delete<
+    AdminDeleteSkillResponses,
+    AdminDeleteSkillErrors,
+    ThrowOnError
+  >({
+    security: [
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+    ],
+    url: '/api/v1/admin/skills/{uuid}',
+    ...options,
+  });
+};
+
+/**
+ * Get a skill
+ */
+export const adminGetSkill = <ThrowOnError extends boolean = false>(
+  options: Options<AdminGetSkillData, ThrowOnError>
+) => {
+  return (options.client ?? _heyApiClient).get<
+    AdminGetSkillResponses,
+    AdminGetSkillErrors,
+    ThrowOnError
+  >({
+    responseTransformer: adminGetSkillResponseTransformer,
+    security: [
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+    ],
+    url: '/api/v1/admin/skills/{uuid}',
+    ...options,
+  });
+};
+
+/**
+ * Replace a skill
+ * Every field is replaced; set active=false to retire a skill while keeping existing tags
+ */
+export const adminUpdateSkill = <ThrowOnError extends boolean = false>(
+  options: Options<AdminUpdateSkillData, ThrowOnError>
+) => {
+  return (options.client ?? _heyApiClient).put<
+    AdminUpdateSkillResponses,
+    AdminUpdateSkillErrors,
+    ThrowOnError
+  >({
+    responseTransformer: adminUpdateSkillResponseTransformer,
+    security: [
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+    ],
+    url: '/api/v1/admin/skills/{uuid}',
     ...options,
     headers: {
       'Content-Type': 'application/json',
@@ -9229,6 +9672,14 @@ export const acceptInvitationByToken = <ThrowOnError extends boolean = false>(
  * **Visibility:** the same with or without `q`. Platform admins see every instructor;
  * everyone else sees admin-verified instructors plus their own profile.
  *
+ * **Near me (`near=lat,lng&radius_km=`):** optional, with or without `q`, signed-in callers
+ * only. Returns only verified instructors who opted in (`PUT /{uuid}/location-search`) and
+ * have a location, within the radius (clamped to 2-100 km, default 10). `near` is rounded
+ * to 2 decimals on the server and never stored or logged. Without `q` results are nearest
+ * first; with `q`, by relevance. Each row carries `distance_band` (`<2 km`, `2-5 km`,
+ * `5-10 km`, `10-25 km`, `>25 km`) and coordinates rounded to 2 decimals; never metres.
+ * Served only by the index: 503 ("Search is unavailable") when it cannot answer.
+ *
  */
 export const getAllInstructors = <ThrowOnError extends boolean = false>(
   options: Options<GetAllInstructorsData, ThrowOnError>
@@ -9976,6 +10427,37 @@ export const joinWaitlist = <ThrowOnError extends boolean = false>(
       },
     ],
     url: '/api/v1/enrollment/waitlist',
+    ...options,
+    headers: {
+      'Content-Type': 'application/json',
+      ...options.headers,
+    },
+  });
+};
+
+/**
+ * Record a click or dismissal of a recommended item
+ * Reports that the signed-in user clicked or dismissed an item from a recommendation response. The user is always the authenticated principal. The event is kept only when it matches an item that response really showed this user; otherwise it is dropped silently. Always 202 for a well-formed request. Events are kept for 180 days.
+ */
+export const recordDiscoveryEvent = <ThrowOnError extends boolean = false>(
+  options: Options<RecordDiscoveryEventData, ThrowOnError>
+) => {
+  return (options.client ?? _heyApiClient).post<
+    RecordDiscoveryEventResponses,
+    RecordDiscoveryEventErrors,
+    ThrowOnError
+  >({
+    security: [
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+    ],
+    url: '/api/v1/discovery/events',
     ...options,
     headers: {
       'Content-Type': 'application/json',
@@ -13833,6 +14315,66 @@ export const createAdminUser = <ThrowOnError extends boolean = false>(
 };
 
 /**
+ * List every skill
+ * The whole taxonomy in name order, retired skills included unless active is given. q matches names, slugs and aliases in memory (no database text search).
+ */
+export const adminListSkills = <ThrowOnError extends boolean = false>(
+  options?: Options<AdminListSkillsData, ThrowOnError>
+) => {
+  return (options?.client ?? _heyApiClient).get<
+    AdminListSkillsResponses,
+    AdminListSkillsErrors,
+    ThrowOnError
+  >({
+    responseTransformer: adminListSkillsResponseTransformer,
+    security: [
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+    ],
+    url: '/api/v1/admin/skills',
+    ...options,
+  });
+};
+
+/**
+ * Create a skill
+ * 409 when the slug, or an alias, already names another skill
+ */
+export const adminCreateSkill = <ThrowOnError extends boolean = false>(
+  options: Options<AdminCreateSkillData, ThrowOnError>
+) => {
+  return (options.client ?? _heyApiClient).post<
+    AdminCreateSkillResponses,
+    AdminCreateSkillErrors,
+    ThrowOnError
+  >({
+    responseTransformer: adminCreateSkillResponseTransformer,
+    security: [
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+    ],
+    url: '/api/v1/admin/skills',
+    ...options,
+    headers: {
+      'Content-Type': 'application/json',
+      ...options.headers,
+    },
+  });
+};
+
+/**
  * Rebuild many indexes
  * Rebuilds every index, or only those owned by the given module
  */
@@ -14938,8 +15480,36 @@ export const searchStudents = <ThrowOnError extends boolean = false>(
 };
 
 /**
+ * List active skills
+ * Active skills only, for tag pickers. q matches names, slugs and aliases in memory over the small curated list: an exact match first, then names starting with q, then any containing it. Without q, skills are in name order. limit is 1-500 (default 50).
+ */
+export const listSkills = <ThrowOnError extends boolean = false>(
+  options?: Options<ListSkillsData, ThrowOnError>
+) => {
+  return (options?.client ?? _heyApiClient).get<
+    ListSkillsResponses,
+    ListSkillsErrors,
+    ThrowOnError
+  >({
+    responseTransformer: listSkillsResponseTransformer,
+    security: [
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+    ],
+    url: '/api/v1/skills',
+    ...options,
+  });
+};
+
+/**
  * Global search
- * Searches every type the caller may see (or those named in types) and returns up to limit hits per type, grouped by type in the order requested, plus the total per type. Types: courses, programs, classes, marketplace_jobs, instructors, organisations, people, rubrics. A type the caller may not see, or whose index is not read-enabled, is skipped silently; an unknown type is a 400. Anonymous callers see public courses, programs, organisations and classes. People are visible to platform admins, and to organisation managers by name within their organisations. Results come from the index without a database round trip, so a change can take a few seconds to show. 503 when search is disabled or unavailable.
+ * Searches every type the caller may see (or those named in types) and returns up to limit hits per type, grouped by type in the order requested, plus the total per type. Types: courses, programs, classes, marketplace_jobs, instructors, organisations, people, rubrics, course_content. A type the caller may not see, or whose index is not read-enabled, is skipped silently; an unknown type is a 400. Anonymous callers see public courses, programs, organisations and classes. course_content (lessons, content, quizzes, assignments) covers the courses the caller manages and the published material of the courses they are enrolled in. People are visible to platform admins, and to organisation managers by name within their organisations. Results come from the index without a database round trip, so a change can take a few seconds to show. 503 when search is disabled or unavailable.
  */
 export const globalSearch = <ThrowOnError extends boolean = false>(
   options: Options<GlobalSearchData, ThrowOnError>
@@ -14966,18 +15536,19 @@ export const globalSearch = <ThrowOnError extends boolean = false>(
 
 /**
  * Search one type
- * One page of one type, for a "see all results" view. q is optional (at least 2 characters when present). Other parameters filter in the field_op vocabulary (op one of eq, noteq, in, notin, gt, gte, lt, lte, between) over the type's filterable attributes; facets names filterable attributes to count values of; sort is field[,asc|desc] over sortable attributes. Anything outside those allow-lists is a 400. 403 when the caller may not see the type; 503 when search or the type is not enabled. The filterable and sortable attributes of every type are listed in the filter map below.
+ * One page of one type, for a "see all results" view. q is optional (at least 2 characters when present). Other parameters filter in the field_op vocabulary (op one of eq, noteq, in, notin, gt, gte, lt, lte, between) over the type's filterable attributes; facets names filterable attributes to count values of; sort is field[,asc|desc] over sortable attributes. Anything outside those allow-lists is a 400. 403 when the caller may not see the type; 503 when search or the type is not enabled. The filterable and sortable attributes of every type are listed in the filter map below. Near me: near=lat,lng with optional radius_km (clamped to 2-100, default 10), with or without q, for instructors, classes and marketplace_jobs only (any other type is a 400) and for signed-in callers only (403 otherwise). near is rounded to 2 decimals on the server and never stored or logged. Without q hits are nearest first. Each hit carries distance_band (<2 km, 2-5 km, 5-10 km, 10-25 km, >25 km), never metres or coordinates. Instructors appear only when verified and opted in.
  *
  * **Filter map** (filters use `field` or `field_op`, op one of eq, noteq, in, notin, gt, gte, lt, lte, between):
  *
  * | type | filterable (also valid in `facets`) | sortable |
  * |---|---|---|
- * | `classes` | `uuid`, `course_uuid`, `program_uuid`, `organisation_uuid`, `branch_uuid`, `default_instructor_uuid`, `category_uuid`, `is_active`, `class_visibility`, `content_approved`, `location_type`, `session_format`, `starts_at`, `registration_closes_at`, `sale_price`, `created_at` | `starts_at`, `sale_price`, `created_at`, `title` |
- * | `courses` | `status`, `active`, `admin_approved`, `is_public`, `course_creator_uuid`, `category_uuids`, `difficulty_uuid`, `is_free`, `price`, `uuid`, `created_at` | `name`, `created_at`, `price`, `rating_avg`, `enrolment_count` |
- * | `instructors` | `admin_verified`, `active`, `skills`, `skill_levels`, `location_name`, `uuid`, `created_at` | `full_name`, `rating_avg`, `review_count`, `created_at` |
- * | `marketplace_jobs` | `status`, `organisation_uuid`, `branch_uuid`, `course_uuid`, `program_uuid`, `category_uuid`, `location_type`, `session_format`, `starts_at`, `registration_closes_at`, `uuid`, `created_at` | `created_at`, `starts_at` |
+ * | `classes` | `uuid`, `course_uuid`, `program_uuid`, `organisation_uuid`, `branch_uuid`, `default_instructor_uuid`, `category_uuid`, `is_active`, `class_visibility`, `content_approved`, `location_type`, `session_format`, `starts_at`, `registration_closes_at`, `sale_price`, `created_at`, `_geo` | `starts_at`, `sale_price`, `created_at`, `title`, `_geo` |
+ * | `course_content` | `type`, `course_uuid`, `lesson_uuid`, `published`, `scope`, `class_definition_uuid`, `content_type`, `uuid` | `lesson_number`, `display_order`, `updated_at` |
+ * | `courses` | `status`, `active`, `admin_approved`, `is_public`, `course_creator_uuid`, `category_uuids`, `difficulty_uuid`, `is_free`, `price`, `uuid`, `created_at`, `level_order`, `prerequisite_uuids`, `age_lower_limit`, `age_upper_limit`, `skill_uuids` | `name`, `created_at`, `price`, `rating_avg`, `enrolment_count`, `completion_rate`, `popularity_30d`, `rating_bayes` |
+ * | `instructors` | `admin_verified`, `active`, `skills`, `skill_levels`, `skill_uuids`, `location_name`, `uuid`, `created_at`, `_geo` | `full_name`, `rating_avg`, `review_count`, `created_at`, `_geo` |
+ * | `marketplace_jobs` | `status`, `organisation_uuid`, `branch_uuid`, `course_uuid`, `program_uuid`, `category_uuid`, `location_type`, `session_format`, `starts_at`, `registration_closes_at`, `uuid`, `created_at`, `required_skill_uuids`, `_geo` | `created_at`, `starts_at`, `_geo` |
  * | `organisations` | `active`, `admin_verified`, `country`, `uuid`, `created_at` | `name`, `created_at` |
- * | `people` | `domains`, `organisation_uuids`, `branch_uuids`, `active`, `is_platform_admin`, `is_org_admin`, `uuid`, `created_at` | `full_name`, `created_at` |
+ * | `people` | `domains`, `organisation_uuids`, `branch_uuids`, `active`, `is_platform_admin`, `is_org_admin`, `uuid`, `created_at`, `email_normalized` | `full_name`, `created_at` |
  * | `programs` | `status`, `is_published`, `admin_approved`, `active`, `is_public`, `course_creator_uuid`, `category_uuid`, `is_free`, `uuid`, `created_at` | `title`, `created_at` |
  * | `rubrics` | `is_public`, `is_active`, `status`, `course_creator_uuid`, `rubric_type`, `usage_count`, `uuid`, `created_at` | `title`, `created_at`, `usage_count` |
  *
@@ -16445,7 +17016,7 @@ export const getActivePrograms = <ThrowOnError extends boolean = false>(
 
 /**
  * Get users by organisation ID
- * Pages the organisation's active members. `q` optionally narrows them by name: organisation managers match on full, first and last name only (never email); platform administrators may also match email, username and user number. `q` is served only by the people search index: typo-tolerant and relevance-ordered, and `sort` accepts `full_name` and `created_at`; with search or the index's reads off, or the engine down, it answers 503 ("Search is unavailable"). Without `q` the members are paged from the database.
+ * Pages the organisation's active members. `q` optionally narrows them: organisation managers match on full, first and last name and email (a `q` containing `@` matches one address exactly, case-insensitively); platform administrators may also match username and user number. `q` is served only by the people search index: typo-tolerant and relevance-ordered, and `sort` accepts `full_name` and `created_at`; with search or the index's reads off, or the engine down, it answers 503 ("Search is unavailable"). Without `q` the members are paged from the database.
  */
 export const getUsersByOrganisation = <ThrowOnError extends boolean = false>(
   options: Options<GetUsersByOrganisationData, ThrowOnError>
@@ -18244,6 +18815,33 @@ export const getStatusTransitions = <ThrowOnError extends boolean = false>(
 };
 
 /**
+ * Courses similar to a public course
+ * Anyone, signed in or not. Not personal: co-enrolment neighbours (pairs shared by at least 5 learners, 10 when a minor is involved), the same categories, and "more like this" on the course text. Only public courses; 404 when the course itself is not public. Same item shape as the recommendations endpoint, with surface `similar`.
+ */
+export const getSimilarCourses = <ThrowOnError extends boolean = false>(
+  options: Options<GetSimilarCoursesData, ThrowOnError>
+) => {
+  return (options.client ?? _heyApiClient).get<
+    GetSimilarCoursesResponses,
+    GetSimilarCoursesErrors,
+    ThrowOnError
+  >({
+    security: [
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+    ],
+    url: '/api/v1/courses/{uuid}/similar',
+    ...options,
+  });
+};
+
+/**
  * Withdraw this course's pending edit
  * Abandons the edit awaiting review and discards the draft. The live course is
  * not affected — it was never modified while the edit was pending.
@@ -18689,6 +19287,50 @@ export const getCourseContent = <ThrowOnError extends boolean = false>(
 };
 
 /**
+ * Search inside a course
+ * Full-text, typo-tolerant search over one course's lessons, lesson content, quizzes and
+ * assignments. Quiz questions and answers, rubrics, submissions and file URLs are never
+ * searched.
+ *
+ * - Staff who manage the course (its author, instructors and organisations approved to
+ * train it) see every item, drafts included.
+ * - Enrolled learners see published, course-level items only; class-specific quizzes and
+ * assignments are not searchable yet.
+ *
+ * Hits come back in relevance order with the item `type` (`lesson`, `content`, `quiz`,
+ * `assignment`), its `uuid`, its lesson (`lesson_uuid`, `lesson_number`,
+ * `lesson_title`), its `title` and a `highlight` excerpt with `<em>` markers.
+ *
+ * **403** when the caller may not read the course. **400** when `q` is missing, a type is
+ * unknown or the page is out of range. **503** `Search is unavailable` when search, or
+ * the `course_content` index's reads, are off or the engine fails.
+ *
+ */
+export const searchCourseContent = <ThrowOnError extends boolean = false>(
+  options: Options<SearchCourseContentData, ThrowOnError>
+) => {
+  return (options.client ?? _heyApiClient).get<
+    SearchCourseContentResponses,
+    SearchCourseContentErrors,
+    ThrowOnError
+  >({
+    responseTransformer: searchCourseContentResponseTransformer,
+    security: [
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+    ],
+    url: '/api/v1/courses/{courseUuid}/content/search',
+    ...options,
+  });
+};
+
+/**
  * Get course completion rate
  * Returns the completion rate percentage for a course.
  */
@@ -18859,13 +19501,22 @@ export const searchCourses = <ThrowOnError extends boolean = false>(
 };
 
 /**
- * Get course recommendations for a user
- * Returns published courses recommended for the given user, ranked by topic and
- * level overlap with the user's past courses (authored and/or approved-to-train),
- * excluding courses already taken. Falls back to the most recently published courses
- * when the user has no usable history. Each result carries a short reason.
+ * Get course recommendations for a learner
+ * Public courses recommended for a learner ("rules-v2"), built from their enrolments and
+ * progress, prerequisites, co-enrolment, categories, declared skill goals and the
+ * organisations and instructors they learn with. Courses the learner is enrolled in and
+ * courses outside their age band never appear. Each item carries `reasons[]`
+ * (`code`, `text`, `related_uuid`), a `score`, the response's `recommendation_id`
+ * (quote it on `POST /api/v1/discovery/events`), `surface` and `model_version`.
+ * A learner with no history gets the most enrolled courses of the last 30 days.
  *
- * `user_uuid` defaults to the caller; only a platform admin may request another user's.
+ * - `surface=for_you` (default): the personal list, at most 2 per category in the top 6
+ * plus one course from a category the learner has not tried.
+ * - `surface=next_steps`: courses that follow on from the learner's own, including
+ * ones with a prerequisite still to finish ("Complete X first").
+ * - `student_uuid`: a learner's list, for the learner, a guardian whose share scope is
+ * FULL or ACADEMICS, or a platform admin.
+ * - `user_uuid` defaults to the caller; only a platform admin may name another user.
  *
  */
 export const getCourseRecommendations = <ThrowOnError extends boolean = false>(
@@ -19976,6 +20627,33 @@ export const getJobEligibility = <ThrowOnError extends boolean = false>(
 };
 
 /**
+ * Suggested instructors for a marketplace class job
+ * Verified instructors approved to teach the job's course or training program, best fit first. A fit summary only: score, reasons, schedule_clear and rate_within_budget - never rates, clash details or the diary. Restricted to managers of the organisation that posted the job, and to platform admins. 503 when search is unavailable
+ */
+export const getJobCandidates = <ThrowOnError extends boolean = false>(
+  options: Options<GetJobCandidatesData, ThrowOnError>
+) => {
+  return (options.client ?? _heyApiClient).get<
+    GetJobCandidatesResponses,
+    GetJobCandidatesErrors,
+    ThrowOnError
+  >({
+    security: [
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+    ],
+    url: '/api/v1/classes/jobs/{jobUuid}/candidates',
+    ...options,
+  });
+};
+
+/**
  * List a marketplace class job application's activity
  * Every step the application has taken, newest first: applied, reapplied, shortlisted, interviewing (an interview invitation, with interview_at), offered, hired, assigned (the class was created), rejected, not_selected and withdrawn, each with its actor and note. Same access as reading the application
  */
@@ -19999,6 +20677,34 @@ export const listJobApplicationEvents = <ThrowOnError extends boolean = false>(
       },
     ],
     url: '/api/v1/classes/jobs/{jobUuid}/applications/{applicationUuid}/events',
+    ...options,
+  });
+};
+
+/**
+ * Open marketplace jobs matched to the current instructor
+ * Open jobs whose course or training program the instructor is approved to teach and whose registration has not closed, scored rules-v1 (skills 0.35, location 0.20, pay above rate 0.15, experience 0.10, rating 0.10, urgency 0.10; a missing mandatory skill multiplies by 0.3). Each item is the job plus match {score, matched_skills, required_skills, reasons, eligibility}; ineligible jobs come last with the eligibility reason. radius_km (2-100) only applies when the instructor has opted in to location search. Callers without an instructor profile are refused. 503 when search is unavailable
+ */
+export const getJobMatches = <ThrowOnError extends boolean = false>(
+  options?: Options<GetJobMatchesData, ThrowOnError>
+) => {
+  return (options?.client ?? _heyApiClient).get<
+    GetJobMatchesResponses,
+    GetJobMatchesErrors,
+    ThrowOnError
+  >({
+    responseTransformer: getJobMatchesResponseTransformer,
+    security: [
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+    ],
+    url: '/api/v1/classes/jobs/matches',
     ...options,
   });
 };
@@ -21008,6 +21714,34 @@ export const listIndexes = <ThrowOnError extends boolean = false>(
       },
     ],
     url: '/api/v1/admin/search/indexes',
+    ...options,
+  });
+};
+
+/**
+ * Offline evaluation of course recommendations
+ * Platform admin. Leave-last-out over course enrolments: recall@6, nDCG@6 and coverage for rules-v2, a popularity baseline and the legacy newest-first list. A regression gate, not a tuning target. Aggregates only.
+ */
+export const evaluateCourseRecommendations = <ThrowOnError extends boolean = false>(
+  options?: Options<EvaluateCourseRecommendationsData, ThrowOnError>
+) => {
+  return (options?.client ?? _heyApiClient).get<
+    EvaluateCourseRecommendationsResponses,
+    EvaluateCourseRecommendationsErrors,
+    ThrowOnError
+  >({
+    responseTransformer: evaluateCourseRecommendationsResponseTransformer,
+    security: [
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+    ],
+    url: '/api/v1/admin/recommendations/evaluation',
     ...options,
   });
 };

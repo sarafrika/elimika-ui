@@ -687,6 +687,73 @@ export const ApiResponseStudentSchema = {
   },
 } as const;
 
+export const LearnerSkillGoalsUpdateRequestSchema = {
+  type: 'object',
+  description: "Replaces the learner's skill goals",
+  properties: {
+    skill_uuids: {
+      type: 'array',
+      description: 'Skill uuids from GET /api/v1/skills, at most 20',
+      items: {
+        type: 'string',
+        format: 'uuid',
+      },
+      maxItems: 20,
+      minItems: 0,
+    },
+  },
+  required: ['skill_uuids'],
+} as const;
+
+export const ApiResponseListLearnerSkillGoalSchema = {
+  type: 'object',
+  properties: {
+    success: {
+      type: 'boolean',
+    },
+    data: {
+      type: 'array',
+      items: {
+        $ref: '#/components/schemas/LearnerSkillGoal',
+      },
+    },
+    message: {
+      type: 'string',
+    },
+    error: {},
+  },
+} as const;
+
+export const LearnerSkillGoalSchema = {
+  type: 'object',
+  description: 'A skill the learner has declared as a learning goal',
+  properties: {
+    skill_uuid: {
+      type: 'string',
+      format: 'uuid',
+      description: 'Skill uuid from the skills taxonomy',
+    },
+    name: {
+      type: 'string',
+      description: 'Skill name',
+    },
+    slug: {
+      type: 'string',
+      description: 'Skill slug',
+    },
+    source: {
+      type: 'string',
+      description: 'Who declared the goal: self, guardian or admin',
+      example: 'self',
+    },
+    created_date: {
+      type: 'string',
+      format: 'date-time',
+      description: 'When the goal was declared (UTC)',
+    },
+  },
+} as const;
+
 export const UpdateStudentGroupRequestSchema = {
   type: 'object',
   description: "Payload to replace an organisation student group's editable attributes.",
@@ -3666,6 +3733,16 @@ export const InstructorSchema = {
       example: 'admin@sarafrika.com',
       readOnly: true,
     },
+    location_search_opt_in: {
+      type: ['boolean', 'null'],
+      description:
+        "**[READ-ONLY]** Whether the instructor has opted in to near-me search. Present only on the owner's own profile; change it with PUT /api/v1/instructors/{uuid}/location-search.",
+      example: false,
+      readOnly: true,
+    },
+    distance_band: {
+      $ref: '#/components/schemas/DistanceBandEnum',
+    },
     is_profile_complete: {
       type: 'boolean',
       description:
@@ -3689,6 +3766,36 @@ export const InstructorSchema = {
     },
   },
   required: ['user_uuid'],
+} as const;
+
+export const LocationSearchOptInRequestSchema = {
+  type: 'object',
+  description: "Turns an instructor's near-me search opt-in on or off",
+  properties: {
+    enabled: {
+      type: 'boolean',
+      description:
+        '**[REQUIRED]** true to appear in near-me search (location rounded to about 1 km, only while verified and with coordinates set); false to leave it',
+      example: true,
+    },
+  },
+  required: ['enabled'],
+} as const;
+
+export const ApiResponseInstructorSchema = {
+  type: 'object',
+  properties: {
+    success: {
+      type: 'boolean',
+    },
+    data: {
+      $ref: '#/components/schemas/Instructor',
+    },
+    message: {
+      type: 'string',
+    },
+    error: {},
+  },
 } as const;
 
 export const InstructorSkillSchema = {
@@ -3739,6 +3846,13 @@ export const InstructorSkillSchema = {
     },
     proficiency_level: {
       $ref: '#/components/schemas/ProficiencyLevelEnum',
+    },
+    skill_uuid: {
+      type: 'string',
+      format: 'uuid',
+      description:
+        '**[READ-ONLY]** The skills-taxonomy entry the skill name resolves to (matched by slug or alias). Null when the name is free text that matches no curated skill.',
+      readOnly: true,
     },
     created_date: {
       type: 'string',
@@ -5205,13 +5319,6 @@ export const CourseSchema = {
       example: true,
       readOnly: true,
     },
-    category_count: {
-      type: 'integer',
-      format: 'int32',
-      description: '**[READ-ONLY]** Number of categories this course belongs to.',
-      example: 2,
-      readOnly: true,
-    },
     total_duration_display: {
       type: 'string',
       description: '**[READ-ONLY]** Human-readable format of total course duration.',
@@ -5222,6 +5329,13 @@ export const CourseSchema = {
       type: 'boolean',
       description: '**[READ-ONLY]** Indicates if the course belongs to multiple categories.',
       example: true,
+      readOnly: true,
+    },
+    category_count: {
+      type: 'integer',
+      format: 'int32',
+      description: '**[READ-ONLY]** Number of categories this course belongs to.',
+      example: 2,
       readOnly: true,
     },
     lifecycle_stage: {
@@ -5349,6 +5463,192 @@ export const ApiResponseCourseSchema = {
       type: 'string',
     },
     error: {},
+  },
+} as const;
+
+export const CourseSkillItemSchema = {
+  type: 'object',
+  properties: {
+    skill_uuid: {
+      type: 'string',
+      format: 'uuid',
+    },
+    level: {
+      $ref: '#/components/schemas/LevelEnum',
+    },
+    weight: {
+      type: 'integer',
+      format: 'int32',
+      description: '1-5, defaults to 1',
+      maximum: 5,
+      minimum: 1,
+    },
+  },
+  required: ['skill_uuid'],
+} as const;
+
+export const CourseSkillsUpdateRequestSchema = {
+  type: 'object',
+  description:
+    "The course's complete skill tag list; it replaces the current one. An empty list clears the tags.",
+  properties: {
+    skills: {
+      type: 'array',
+      items: {
+        $ref: '#/components/schemas/CourseSkillItem',
+      },
+      maxItems: 30,
+      minItems: 0,
+    },
+  },
+  required: ['skills'],
+} as const;
+
+export const ApiResponseListCourseSkillSchema = {
+  type: 'object',
+  properties: {
+    success: {
+      type: 'boolean',
+    },
+    data: {
+      type: 'array',
+      items: {
+        $ref: '#/components/schemas/CourseSkill',
+      },
+    },
+    message: {
+      type: 'string',
+    },
+    error: {},
+  },
+} as const;
+
+export const CourseSkillSchema = {
+  type: 'object',
+  description: 'A skill the course teaches, from the skills taxonomy',
+  properties: {
+    skill_uuid: {
+      type: 'string',
+      format: 'uuid',
+    },
+    skill_name: {
+      type: 'string',
+    },
+    skill_slug: {
+      type: 'string',
+    },
+    level: {
+      $ref: '#/components/schemas/LevelEnum',
+    },
+    weight: {
+      type: 'integer',
+      format: 'int32',
+      description: '1-5, how central the skill is to the course',
+    },
+    skill_active: {
+      type: 'boolean',
+      description:
+        'False when an admin has since retired the skill; the tag stays until the owner removes it',
+    },
+  },
+} as const;
+
+export const CoursePrerequisitesRequestSchema = {
+  type: 'object',
+  description: "Replaces a course's prerequisite set",
+  example: {
+    prerequisites: [
+      {
+        prerequisite_course_uuid: '0f8fad5b-d9cb-469f-a165-70867728950e',
+        is_mandatory: true,
+      },
+      {
+        prerequisite_course_uuid: '7c9e6679-7425-40de-944b-e07fc1f90ae7',
+        is_mandatory: false,
+      },
+    ],
+  },
+  properties: {
+    prerequisites: {
+      type: 'array',
+      description:
+        '**[REQUIRED]** Every prior course the course should have; an empty list clears them.',
+      items: {
+        $ref: '#/components/schemas/CoursePrerequisitesRequestItem',
+      },
+      maxItems: 50,
+      minItems: 0,
+    },
+  },
+  required: ['prerequisites'],
+} as const;
+
+export const CoursePrerequisitesRequestItemSchema = {
+  type: 'object',
+  properties: {
+    prerequisite_course_uuid: {
+      type: 'string',
+      format: 'uuid',
+      description: "**[REQUIRED]** A published course, or one of the author's own courses.",
+    },
+    is_mandatory: {
+      type: 'boolean',
+      description: '**[OPTIONAL]** true (default): required; false: recommended only.',
+    },
+  },
+  required: ['prerequisite_course_uuid'],
+} as const;
+
+export const ApiResponseListCoursePrerequisiteSchema = {
+  type: 'object',
+  properties: {
+    success: {
+      type: 'boolean',
+    },
+    data: {
+      type: 'array',
+      items: {
+        $ref: '#/components/schemas/CoursePrerequisite',
+      },
+    },
+    message: {
+      type: 'string',
+    },
+    error: {},
+  },
+} as const;
+
+export const CoursePrerequisiteSchema = {
+  type: 'object',
+  description: 'A prior course that a course requires or recommends',
+  properties: {
+    uuid: {
+      type: 'string',
+      format: 'uuid',
+      description: '**[READ-ONLY]** Identifier of the prerequisite link.',
+      readOnly: true,
+    },
+    course_uuid: {
+      type: 'string',
+      format: 'uuid',
+      description:
+        '**[READ-ONLY]** The course that has the prerequisite. On a live course with a pending edit this is the draft course after a PUT.',
+      readOnly: true,
+    },
+    prerequisite_course_uuid: {
+      type: 'string',
+      format: 'uuid',
+      description: 'The prior course.',
+    },
+    prerequisite_course_name: {
+      type: 'string',
+      description: '**[READ-ONLY]** Name of the prior course.',
+      readOnly: true,
+    },
+    is_mandatory: {
+      type: 'boolean',
+      description: 'true: required before starting; false: recommended only.',
+    },
   },
 } as const;
 
@@ -6889,7 +7189,7 @@ export const CourseCreatorSkillSchema = {
       minLength: 0,
     },
     proficiency_level: {
-      $ref: '#/components/schemas/ProficiencyLevelEnum2',
+      $ref: '#/components/schemas/LevelEnum',
     },
     created_date: {
       type: 'string',
@@ -8720,6 +9020,9 @@ export const ClassDefinitionResponseSchema = {
       $ref: '#/components/schemas/ClassDefinition',
       description: 'Persisted class definition',
     },
+    distance_band: {
+      $ref: '#/components/schemas/DistanceBandEnum',
+    },
   },
 } as const;
 
@@ -9384,10 +9687,121 @@ export const ClassMarketplaceJobSchema = {
       description: "**[READ-ONLY]** The contact person's email; same visibility as contact_name.",
       readOnly: true,
     },
+    distance_band: {
+      $ref: '#/components/schemas/DistanceBandEnum',
+    },
     duration_minutes: {
       type: 'integer',
       format: 'int64',
       readOnly: true,
+    },
+  },
+} as const;
+
+export const ClassMarketplaceJobRequiredSkillItemSchema = {
+  type: 'object',
+  properties: {
+    skill_uuid: {
+      type: 'string',
+      format: 'uuid',
+    },
+    min_proficiency: {
+      $ref: '#/components/schemas/LevelEnum',
+    },
+    is_mandatory: {
+      type: 'boolean',
+      description: 'Defaults to true',
+    },
+  },
+  required: ['skill_uuid'],
+} as const;
+
+export const ClassMarketplaceJobRequiredSkillsRequestSchema = {
+  type: 'object',
+  description:
+    "The job's complete required-skill list; it replaces the current one. [] clears it, and the job inherits its course's skills again.",
+  properties: {
+    skills: {
+      type: 'array',
+      items: {
+        $ref: '#/components/schemas/ClassMarketplaceJobRequiredSkillItem',
+      },
+      maxItems: 30,
+      minItems: 0,
+    },
+  },
+  required: ['skills'],
+} as const;
+
+export const ApiResponseClassMarketplaceJobRequiredSkillsSchema = {
+  type: 'object',
+  properties: {
+    success: {
+      type: 'boolean',
+    },
+    data: {
+      $ref: '#/components/schemas/ClassMarketplaceJobRequiredSkills',
+    },
+    message: {
+      type: 'string',
+    },
+    error: {},
+  },
+} as const;
+
+export const ClassMarketplaceJobRequiredSkillSchema = {
+  type: 'object',
+  properties: {
+    skill_uuid: {
+      type: 'string',
+      format: 'uuid',
+    },
+    skill_name: {
+      type: 'string',
+    },
+    skill_slug: {
+      type: 'string',
+    },
+    min_proficiency: {
+      $ref: '#/components/schemas/LevelEnum',
+    },
+    is_mandatory: {
+      type: 'boolean',
+      description: 'Inherited skills are all mandatory',
+    },
+    inherited: {
+      type: 'boolean',
+    },
+    skill_active: {
+      type: 'boolean',
+      description: 'False when an admin has since retired the skill',
+    },
+  },
+} as const;
+
+export const ClassMarketplaceJobRequiredSkillsSchema = {
+  type: 'object',
+  description:
+    "The skills a marketplace job asks for: its own tags, or its course's when it has none",
+  properties: {
+    job_uuid: {
+      type: 'string',
+      format: 'uuid',
+    },
+    inherited: {
+      type: 'boolean',
+      description: "True when the job has no tags of its own and these are its course's skills",
+    },
+    inherited_from_course_uuid: {
+      type: 'string',
+      format: 'uuid',
+      description: 'The course the skills were inherited from; null when not inherited',
+    },
+    skills: {
+      type: 'array',
+      items: {
+        $ref: '#/components/schemas/ClassMarketplaceJobRequiredSkill',
+      },
     },
   },
 } as const;
@@ -9894,6 +10308,104 @@ export const ApiResponseAssignmentSchema = {
       type: 'string',
     },
     error: {},
+  },
+} as const;
+
+export const SkillRequestSchema = {
+  type: 'object',
+  description: 'Creates or replaces a skills taxonomy entry',
+  properties: {
+    name: {
+      type: 'string',
+      maxLength: 255,
+      minLength: 0,
+    },
+    slug: {
+      type: 'string',
+      description:
+        'Optional; derived from the name when omitted. Normalised to lower-case words joined by hyphens',
+      maxLength: 255,
+      minLength: 0,
+    },
+    parent_uuid: {
+      type: 'string',
+      format: 'uuid',
+      description: 'Optional broader skill; may not be the skill itself or one of its descendants',
+    },
+    aliases: {
+      type: 'array',
+      items: {
+        type: 'string',
+        maxLength: 255,
+        minLength: 0,
+      },
+      maxItems: 50,
+      minItems: 0,
+    },
+    active: {
+      type: 'boolean',
+      description: 'Defaults to true',
+    },
+  },
+  required: ['name'],
+} as const;
+
+export const ApiResponseSkillSchema = {
+  type: 'object',
+  properties: {
+    success: {
+      type: 'boolean',
+    },
+    data: {
+      $ref: '#/components/schemas/Skill',
+    },
+    message: {
+      type: 'string',
+    },
+    error: {},
+  },
+} as const;
+
+export const SkillSchema = {
+  type: 'object',
+  description: 'An entry of the admin-curated skills taxonomy',
+  properties: {
+    uuid: {
+      type: 'string',
+      format: 'uuid',
+    },
+    name: {
+      type: 'string',
+    },
+    slug: {
+      type: 'string',
+      description: 'Unique, lower-case, hyphenated; derived from the name unless set',
+      example: 'java-programming',
+    },
+    parent_uuid: {
+      type: 'string',
+      format: 'uuid',
+      description: 'Broader skill this one sits under, if any',
+    },
+    aliases: {
+      type: 'array',
+      description: 'Alternative names; they resolve to this skill and act as search synonyms',
+      items: {
+        type: 'string',
+      },
+    },
+    active: {
+      type: 'boolean',
+      description: 'False once retired: existing tags keep it, it can no longer be picked',
+    },
+    created_date: {
+      type: 'string',
+      format: 'date-time',
+    },
+    updated_date: {
+      type: 'string',
+      format: 'date-time',
+    },
   },
 } as const;
 
@@ -12267,22 +12779,6 @@ export const PublicInvitationSchema = {
   },
 } as const;
 
-export const ApiResponseInstructorSchema = {
-  type: 'object',
-  properties: {
-    success: {
-      type: 'boolean',
-    },
-    data: {
-      $ref: '#/components/schemas/Instructor',
-    },
-    message: {
-      type: 'string',
-    },
-    error: {},
-  },
-} as const;
-
 export const InstructorReviewSchema = {
   type: 'object',
   description: 'Student review and rating for an instructor, scoped to a specific enrollment.',
@@ -12770,6 +13266,12 @@ export const EnrollmentSchema = {
       example: true,
       readOnly: true,
     },
+    is_attendance_marked: {
+      type: 'boolean',
+      description: '**[READ-ONLY]** Indicates if attendance has been marked for this enrollment.',
+      example: false,
+      readOnly: true,
+    },
     did_attend: {
       type: 'boolean',
       description: '**[READ-ONLY]** Indicates if the student attended the class.',
@@ -12782,12 +13284,6 @@ export const EnrollmentSchema = {
       example: 'Student is enrolled in the class',
       readOnly: true,
     },
-    is_attendance_marked: {
-      type: 'boolean',
-      description: '**[READ-ONLY]** Indicates if attendance has been marked for this enrollment.',
-      example: false,
-      readOnly: true,
-    },
     can_be_cancelled: {
       type: 'boolean',
       description: '**[READ-ONLY]** Indicates if the enrollment can be cancelled.',
@@ -12796,6 +13292,41 @@ export const EnrollmentSchema = {
     },
   },
   required: ['scheduled_instance_uuid', 'student_uuid'],
+} as const;
+
+export const DiscoveryEventRequestSchema = {
+  type: 'object',
+  description: 'A click or dismissal of an item from a recommendation response',
+  properties: {
+    recommendation_id: {
+      type: 'string',
+      format: 'uuid',
+      description: 'The recommendation_id returned with the recommendations',
+    },
+    item_uuid: {
+      type: 'string',
+      format: 'uuid',
+      description: 'The UUID of the item acted on',
+    },
+    item_type: {
+      type: 'string',
+      description: "The item's type as returned with the recommendation, e.g. course",
+      example: 'course',
+      minLength: 1,
+    },
+    event_type: {
+      $ref: '#/components/schemas/EventTypeEnum',
+    },
+    position: {
+      type: 'integer',
+      format: 'int32',
+      description: '0-based position the item was shown at',
+      example: 0,
+      maximum: 10000,
+      minimum: 0,
+    },
+  },
+  required: ['event_type', 'item_type', 'item_uuid', 'position', 'recommendation_id'],
 } as const;
 
 export const ApiResponseSchema = {
@@ -16248,6 +16779,25 @@ export const SortObjectSchema = {
   },
 } as const;
 
+export const ApiResponseListSkillSchema = {
+  type: 'object',
+  properties: {
+    success: {
+      type: 'boolean',
+    },
+    data: {
+      type: 'array',
+      items: {
+        $ref: '#/components/schemas/Skill',
+      },
+    },
+    message: {
+      type: 'string',
+    },
+    error: {},
+  },
+} as const;
+
 export const ApiResponseGlobalSearchResponseSchema = {
   type: 'object',
   properties: {
@@ -16284,6 +16834,9 @@ export const GlobalSearchHitSchema = {
       type: 'string',
     },
     highlight: {
+      type: 'string',
+    },
+    distance_band: {
       type: 'string',
     },
   },
@@ -17590,7 +18143,7 @@ export const TrainingApplicationEventSchema = {
       readOnly: true,
     },
     event_type: {
-      $ref: '#/components/schemas/EventTypeEnum',
+      $ref: '#/components/schemas/EventTypeEnum2',
     },
     actor_uuid: {
       type: ['string', 'null'],
@@ -20634,6 +21187,102 @@ export const ApiResponseListContentStatusSchema = {
   },
 } as const;
 
+export const ApiResponseListRecommendedCourseSchema = {
+  type: 'object',
+  properties: {
+    success: {
+      type: 'boolean',
+    },
+    data: {
+      type: 'array',
+      items: {
+        $ref: '#/components/schemas/RecommendedCourse',
+      },
+    },
+    message: {
+      type: 'string',
+    },
+    error: {},
+  },
+} as const;
+
+export const RecommendationReasonSchema = {
+  type: 'object',
+  description: 'Why a course was recommended',
+  properties: {
+    code: {
+      type: 'string',
+      description:
+        'Stable reason code: NEXT_STEP, PREREQUISITE_PENDING, CO_ENROLLED, CATEGORY, SKILL_GAP, AFFILIATION, SIMILAR_CONTENT or POPULAR',
+      example: 'NEXT_STEP',
+    },
+    text: {
+      type: 'string',
+      description: 'Display text',
+      example: 'Next step after Python Basics',
+    },
+    related_uuid: {
+      type: 'string',
+      format: 'uuid',
+      description: 'The course, category, organisation or instructor the reason refers to, if any',
+    },
+  },
+} as const;
+
+export const RecommendedCourseSchema = {
+  type: 'object',
+  description: 'A recommended course with an explanation',
+  properties: {
+    course_uuid: {
+      type: 'string',
+      format: 'uuid',
+      description: 'UUID of the recommended course',
+    },
+    name: {
+      type: 'string',
+      description: 'Course name',
+    },
+    description: {
+      type: 'string',
+      description: 'Course description',
+    },
+    thumbnail_url: {
+      type: 'string',
+      description: 'Course thumbnail URL',
+    },
+    reason: {
+      type: 'string',
+      description: 'The main reason, as display text (the first of `reasons`)',
+    },
+    score: {
+      type: 'number',
+      format: 'double',
+      description: 'Ranking score; higher is a stronger match. Comparable only within one response',
+    },
+    reasons: {
+      type: 'array',
+      description: 'Why the course was recommended, strongest first',
+      items: {
+        $ref: '#/components/schemas/RecommendationReason',
+      },
+    },
+    recommendation_id: {
+      type: 'string',
+      format: 'uuid',
+      description: 'Identifies this response; quote it back on discovery events',
+    },
+    surface: {
+      type: 'string',
+      description: 'Where the list is shown: for_you, next_steps or similar',
+    },
+    model_version: {
+      type: 'string',
+      description: 'The scoring version that produced the ranking',
+      example: 'rules-v2',
+    },
+  },
+} as const;
+
 export const ApiResponseCoursePendingEditSchema = {
   type: 'object',
   properties: {
@@ -21896,6 +22545,71 @@ export const PagedDTOCourseEnrollmentSchema = {
   },
 } as const;
 
+export const ApiResponsePagedDTOCourseContentSearchHitSchema = {
+  type: 'object',
+  properties: {
+    success: {
+      type: 'boolean',
+    },
+    data: {
+      $ref: '#/components/schemas/PagedDTOCourseContentSearchHit',
+    },
+    message: {
+      type: 'string',
+    },
+    error: {},
+  },
+} as const;
+
+export const CourseContentSearchHitSchema = {
+  type: 'object',
+  description: 'A lesson, content item, quiz or assignment matching an in-course search',
+  properties: {
+    type: {
+      type: 'string',
+    },
+    uuid: {
+      type: 'string',
+      format: 'uuid',
+    },
+    lesson_uuid: {
+      type: 'string',
+      format: 'uuid',
+    },
+    lesson_number: {
+      type: 'integer',
+      format: 'int32',
+    },
+    lesson_title: {
+      type: 'string',
+    },
+    title: {
+      type: 'string',
+    },
+    highlight: {
+      type: 'string',
+    },
+  },
+} as const;
+
+export const PagedDTOCourseContentSearchHitSchema = {
+  type: 'object',
+  properties: {
+    content: {
+      type: 'array',
+      items: {
+        $ref: '#/components/schemas/CourseContentSearchHit',
+      },
+    },
+    metadata: {
+      $ref: '#/components/schemas/PageMetadata',
+    },
+    links: {
+      $ref: '#/components/schemas/PageLinks',
+    },
+  },
+} as const;
+
 export const ApiResponseListCourseCategoryMappingSchema = {
   type: 'object',
   properties: {
@@ -22059,58 +22773,6 @@ export const ApiResponseListCourseAssessmentLineItemSchema = {
       type: 'string',
     },
     error: {},
-  },
-} as const;
-
-export const ApiResponseListRecommendedCourseSchema = {
-  type: 'object',
-  properties: {
-    success: {
-      type: 'boolean',
-    },
-    data: {
-      type: 'array',
-      items: {
-        $ref: '#/components/schemas/RecommendedCourse',
-      },
-    },
-    message: {
-      type: 'string',
-    },
-    error: {},
-  },
-} as const;
-
-export const RecommendedCourseSchema = {
-  type: 'object',
-  description: 'A recommended course with an explanation',
-  properties: {
-    course_uuid: {
-      type: 'string',
-      format: 'uuid',
-      description: 'UUID of the recommended course',
-    },
-    name: {
-      type: 'string',
-      description: 'Course name',
-    },
-    description: {
-      type: 'string',
-      description: 'Course description',
-    },
-    thumbnail_url: {
-      type: 'string',
-      description: 'Course thumbnail URL',
-    },
-    reason: {
-      type: 'string',
-      description: 'Short explanation of why this course was recommended',
-    },
-    score: {
-      type: 'number',
-      format: 'double',
-      description: 'Internal ranking score (higher is a stronger match)',
-    },
   },
 } as const;
 
@@ -23025,6 +23687,108 @@ export const ClassMarketplaceJobEligibilitySchema = {
   },
 } as const;
 
+export const ApiResponseJobCandidateListSchema = {
+  type: 'object',
+  properties: {
+    success: {
+      type: 'boolean',
+    },
+    data: {
+      $ref: '#/components/schemas/JobCandidateList',
+    },
+    message: {
+      type: 'string',
+    },
+    error: {},
+  },
+} as const;
+
+export const JobCandidateSchema = {
+  type: 'object',
+  description: 'A verified, approved instructor suggested for a marketplace job',
+  properties: {
+    match: {
+      $ref: '#/components/schemas/JobCandidateMatch',
+      readOnly: true,
+    },
+    instructor_uuid: {
+      type: 'string',
+      format: 'uuid',
+      readOnly: true,
+    },
+    display_name: {
+      type: 'string',
+      readOnly: true,
+    },
+    location_name: {
+      type: 'string',
+      readOnly: true,
+    },
+    admin_verified: {
+      type: 'boolean',
+      readOnly: true,
+    },
+  },
+} as const;
+
+export const JobCandidateListSchema = {
+  type: 'object',
+  properties: {
+    items: {
+      type: 'array',
+      items: {
+        $ref: '#/components/schemas/JobCandidate',
+      },
+      readOnly: true,
+    },
+    recommendation_id: {
+      type: 'string',
+      format: 'uuid',
+      description: 'Send back as recommendation_id to POST /api/v1/discovery/events',
+      readOnly: true,
+    },
+    model_version: {
+      type: 'string',
+      readOnly: true,
+    },
+    job_uuid: {
+      type: 'string',
+      format: 'uuid',
+      readOnly: true,
+    },
+  },
+} as const;
+
+export const JobCandidateMatchSchema = {
+  type: 'object',
+  properties: {
+    score: {
+      type: 'number',
+      format: 'double',
+      description: 'Fit score 0..1 (rules-v1)',
+      readOnly: true,
+    },
+    reasons: {
+      type: 'array',
+      description: 'Plain-language reasons; never mention rates or clashes',
+      items: {
+        type: 'string',
+      },
+      readOnly: true,
+    },
+    schedule_clear: {
+      type: 'boolean',
+      description: "Whether every session of the job is free in the instructor's schedule",
+      readOnly: true,
+    },
+    rate_within_budget: {
+      type: 'boolean',
+      description: "Whether the job's pay covers the instructor's approved rate",
+      readOnly: true,
+    },
+  },
+} as const;
+
 export const ApiResponsePagedDTOClassMarketplaceJobApplicationSchema = {
   type: 'object',
   properties: {
@@ -23107,7 +23871,7 @@ export const ClassMarketplaceJobApplicationEventSchema = {
       readOnly: true,
     },
     event_type: {
-      $ref: '#/components/schemas/EventTypeEnum2',
+      $ref: '#/components/schemas/EventTypeEnum3',
     },
     actor_uuid: {
       type: ['string', 'null'],
@@ -23131,6 +23895,391 @@ export const ClassMarketplaceJobApplicationEventSchema = {
       type: 'string',
       format: 'date-time',
       description: '**[READ-ONLY]** When it happened (UTC).',
+      readOnly: true,
+    },
+  },
+} as const;
+
+export const ApiResponseJobMatchListSchema = {
+  type: 'object',
+  properties: {
+    success: {
+      type: 'boolean',
+    },
+    data: {
+      $ref: '#/components/schemas/JobMatchList',
+    },
+    message: {
+      type: 'string',
+    },
+    error: {},
+  },
+} as const;
+
+export const JobMatchSchema = {
+  type: 'object',
+  description: 'A marketplace job matched to the current instructor, with its fit',
+  properties: {
+    uuid: {
+      type: 'string',
+      format: 'uuid',
+      readOnly: true,
+    },
+    title: {
+      type: 'string',
+      readOnly: true,
+    },
+    description: {
+      type: 'string',
+      readOnly: true,
+    },
+    status: {
+      $ref: '#/components/schemas/StatusEnum8',
+    },
+    resources: {
+      type: 'array',
+      items: {
+        $ref: '#/components/schemas/ClassMarketplaceJobResource',
+      },
+      readOnly: true,
+    },
+    organisation_uuid: {
+      type: 'string',
+      format: 'uuid',
+      readOnly: true,
+    },
+    course_uuid: {
+      type: 'string',
+      format: 'uuid',
+      readOnly: true,
+    },
+    program_uuid: {
+      type: 'string',
+      format: 'uuid',
+      readOnly: true,
+    },
+    sale_price: {
+      type: 'number',
+      readOnly: true,
+    },
+    instructor_pay: {
+      type: 'number',
+      description: '**[READ-ONLY]** Per-session pay offered to the eventual instructor.',
+      readOnly: true,
+    },
+    rate_basis: {
+      $ref: '#/components/schemas/RateBasisEnum2',
+    },
+    class_visibility: {
+      $ref: '#/components/schemas/ClassVisibilityEnum',
+    },
+    session_format: {
+      $ref: '#/components/schemas/SessionFormatEnum',
+    },
+    default_start_time: {
+      type: 'string',
+      format: 'date-time',
+      readOnly: true,
+    },
+    default_end_time: {
+      type: 'string',
+      format: 'date-time',
+      readOnly: true,
+    },
+    academic_period_start_date: {
+      type: 'string',
+      format: 'date',
+      readOnly: true,
+    },
+    academic_period_end_date: {
+      type: 'string',
+      format: 'date',
+      readOnly: true,
+    },
+    registration_period_start_date: {
+      type: 'string',
+      format: 'date',
+      readOnly: true,
+    },
+    registration_period_end_date: {
+      type: 'string',
+      format: 'date',
+      readOnly: true,
+    },
+    class_reminder_minutes: {
+      type: 'integer',
+      format: 'int32',
+      readOnly: true,
+    },
+    class_color: {
+      type: 'string',
+      readOnly: true,
+    },
+    thumbnail_url: {
+      type: 'string',
+      description: 'Public URL to the class advert thumbnail image, if uploaded.',
+      readOnly: true,
+    },
+    location_type: {
+      $ref: '#/components/schemas/LocationTypeEnum',
+    },
+    location_name: {
+      type: 'string',
+      readOnly: true,
+    },
+    location_latitude: {
+      type: 'number',
+      readOnly: true,
+    },
+    location_longitude: {
+      type: 'number',
+      readOnly: true,
+    },
+    meeting_link: {
+      type: 'string',
+      readOnly: true,
+    },
+    max_participants: {
+      type: 'integer',
+      format: 'int32',
+      readOnly: true,
+    },
+    allow_waitlist: {
+      type: 'boolean',
+      readOnly: true,
+    },
+    assigned_instructor_uuid: {
+      type: 'string',
+      format: 'uuid',
+      readOnly: true,
+    },
+    assigned_application_uuid: {
+      type: 'string',
+      format: 'uuid',
+      readOnly: true,
+    },
+    assigned_class_definition_uuid: {
+      type: 'string',
+      format: 'uuid',
+      readOnly: true,
+    },
+    filled_at: {
+      type: 'string',
+      format: 'date-time',
+      readOnly: true,
+    },
+    session_templates: {
+      type: 'array',
+      items: {
+        $ref: '#/components/schemas/ClassSessionTemplate',
+      },
+      readOnly: true,
+    },
+    created_date: {
+      type: 'string',
+      format: 'date-time',
+      readOnly: true,
+    },
+    updated_date: {
+      type: 'string',
+      format: 'date-time',
+      readOnly: true,
+    },
+    created_by: {
+      type: 'string',
+      readOnly: true,
+    },
+    updated_by: {
+      type: 'string',
+      readOnly: true,
+    },
+    service_type: {
+      $ref: '#/components/schemas/ServiceTypeEnum2',
+    },
+    preferred_instructor_uuid: {
+      type: 'string',
+      format: 'uuid',
+      readOnly: true,
+    },
+    target_groups: {
+      type: 'array',
+      items: {
+        type: 'string',
+      },
+      readOnly: true,
+    },
+    target_group_uuids: {
+      type: 'array',
+      items: {
+        type: 'string',
+        format: 'uuid',
+      },
+      readOnly: true,
+    },
+    category_uuid: {
+      type: 'string',
+      format: 'uuid',
+      readOnly: true,
+    },
+    remind_students: {
+      type: 'boolean',
+      readOnly: true,
+    },
+    remind_instructor: {
+      type: 'boolean',
+      readOnly: true,
+    },
+    remind_via_email: {
+      type: 'boolean',
+      readOnly: true,
+    },
+    remind_via_sms: {
+      type: 'boolean',
+      readOnly: true,
+    },
+    remind_via_push: {
+      type: 'boolean',
+      readOnly: true,
+    },
+    branch_uuid: {
+      type: ['string', 'null'],
+      format: 'uuid',
+      description:
+        '**[READ-ONLY]** Training branch the class is delivered at (null only on legacy jobs).',
+      readOnly: true,
+    },
+    branch_name: {
+      type: ['string', 'null'],
+      description: "**[READ-ONLY]** Name of the job's training branch.",
+      readOnly: true,
+    },
+    application_count: {
+      type: 'integer',
+      format: 'int64',
+      description:
+        '**[READ-ONLY]** Applications received for the job, not counting withdrawn ones.',
+      readOnly: true,
+    },
+    hired_instructor_uuid: {
+      type: ['string', 'null'],
+      format: 'uuid',
+      description: '**[READ-ONLY]** Instructor hired for the job; null until someone is hired.',
+      readOnly: true,
+    },
+    contact_name: {
+      type: ['string', 'null'],
+      description:
+        "**[READ-ONLY]** The branch's contact person; only for the hired instructor, the organisation's managers and platform admins.",
+      readOnly: true,
+    },
+    contact_phone: {
+      type: ['string', 'null'],
+      description: "**[READ-ONLY]** The contact person's phone; same visibility as contact_name.",
+      readOnly: true,
+    },
+    contact_email: {
+      type: ['string', 'null'],
+      description: "**[READ-ONLY]** The contact person's email; same visibility as contact_name.",
+      readOnly: true,
+    },
+    distance_band: {
+      $ref: '#/components/schemas/DistanceBandEnum',
+    },
+    duration_minutes: {
+      type: 'integer',
+      format: 'int64',
+      readOnly: true,
+    },
+    match: {
+      $ref: '#/components/schemas/JobMatchDetails',
+      description: 'Why and how well the job fits',
+      readOnly: true,
+    },
+  },
+} as const;
+
+export const JobMatchDetailsSchema = {
+  type: 'object',
+  properties: {
+    score: {
+      type: 'number',
+      format: 'double',
+      description: 'Fit score 0..1 (rules-v1)',
+      readOnly: true,
+    },
+    reasons: {
+      type: 'array',
+      description: 'Plain-language reasons, strongest first',
+      items: {
+        type: 'string',
+      },
+      readOnly: true,
+    },
+    eligibility: {
+      $ref: '#/components/schemas/ClassMarketplaceJobEligibility',
+      description:
+        'The same answer as GET /api/v1/classes/jobs/{jobUuid}/eligibility; ineligible jobs are listed last',
+      readOnly: true,
+    },
+    matched_skills: {
+      type: 'array',
+      description: 'Required skills the instructor holds at or above the minimum proficiency',
+      items: {
+        $ref: '#/components/schemas/JobMatchSkill',
+      },
+      readOnly: true,
+    },
+    required_skills: {
+      type: 'array',
+      description: "The job's effective required skills (its own tags, or its course's)",
+      items: {
+        $ref: '#/components/schemas/JobMatchSkill',
+      },
+      readOnly: true,
+    },
+  },
+} as const;
+
+export const JobMatchListSchema = {
+  type: 'object',
+  properties: {
+    items: {
+      type: 'array',
+      items: {
+        $ref: '#/components/schemas/JobMatch',
+      },
+      readOnly: true,
+    },
+    recommendation_id: {
+      type: 'string',
+      format: 'uuid',
+      description: 'Send back as recommendation_id to POST /api/v1/discovery/events',
+      readOnly: true,
+    },
+    model_version: {
+      type: 'string',
+      readOnly: true,
+    },
+  },
+} as const;
+
+export const JobMatchSkillSchema = {
+  type: 'object',
+  properties: {
+    skill_uuid: {
+      type: 'string',
+      format: 'uuid',
+      readOnly: true,
+    },
+    skill_name: {
+      type: 'string',
+      readOnly: true,
+    },
+    min_proficiency: {
+      $ref: '#/components/schemas/LevelEnum',
+    },
+    is_mandatory: {
+      type: 'boolean',
       readOnly: true,
     },
   },
@@ -23530,6 +24679,82 @@ export const SearchIndexStatusResponseSchema = {
     },
     engine_error: {
       type: 'string',
+    },
+  },
+} as const;
+
+export const ApiResponseRecommendationEvaluationSchema = {
+  type: 'object',
+  properties: {
+    success: {
+      type: 'boolean',
+    },
+    data: {
+      $ref: '#/components/schemas/RecommendationEvaluation',
+    },
+    message: {
+      type: 'string',
+    },
+    error: {},
+  },
+} as const;
+
+export const RecommendationEvaluationSchema = {
+  type: 'object',
+  description: 'Leave-last-out recall and coverage of the course recommenders',
+  properties: {
+    k: {
+      type: 'integer',
+      format: 'int32',
+      description: 'Cut-off rank',
+    },
+    learners_evaluated: {
+      type: 'integer',
+      format: 'int32',
+      description:
+        'Learners with at least two enrolments whose latest enrolment is a public course',
+    },
+    catalogue_size: {
+      type: 'integer',
+      format: 'int32',
+      description: 'Public courses in the catalogue',
+    },
+    models: {
+      type: 'array',
+      description: 'One row per model',
+      items: {
+        $ref: '#/components/schemas/RecommendationModelScore',
+      },
+    },
+    evaluated_at: {
+      type: 'string',
+      format: 'date-time',
+      description: 'When the evaluation ran (UTC)',
+    },
+  },
+} as const;
+
+export const RecommendationModelScoreSchema = {
+  type: 'object',
+  properties: {
+    model: {
+      type: 'string',
+      description: 'rules-v2, popularity or legacy-newest',
+    },
+    recall_at_k: {
+      type: 'number',
+      format: 'double',
+      description: 'Share of learners whose hidden enrolment is in the top k',
+    },
+    ndcg_at_k: {
+      type: 'number',
+      format: 'double',
+      description: 'Mean nDCG@k with one relevant item',
+    },
+    coverage: {
+      type: 'number',
+      format: 'double',
+      description: 'Distinct courses recommended across learners / catalogue size',
     },
   },
 } as const;
@@ -24654,6 +25879,15 @@ export const RuleTypeEnumSchema = {
   example: 'OPEN_HOURS',
 } as const;
 
+export const DistanceBandEnumSchema = {
+  type: ['string', 'null'],
+  description:
+    '**[READ-ONLY]** On a near-me search (near=lat,lng) only: how far the instructor is from the searched point, as a coarse band. Never metres.',
+  enum: ['<2 km', '2-5 km', '5-10 km', '10-25 km', '>25 km'],
+  example: '2-5 km',
+  readOnly: true,
+} as const;
+
 export const ProficiencyLevelEnumSchema = {
   type: 'string',
   description:
@@ -24739,6 +25973,12 @@ export const ProvidedByEnumSchema = {
   example: 'organisation',
 } as const;
 
+export const LevelEnumSchema = {
+  type: 'string',
+  description: 'Defaults to beginner; accepted in any case',
+  enum: ['beginner', 'intermediate', 'advanced', 'expert'],
+} as const;
+
 export const StatusEnum5Schema = {
   type: 'string',
   description: '**[READ-ONLY]** Current status of the application.',
@@ -24794,11 +26034,6 @@ export const AttendanceStatusEnumSchema = {
   type: 'string',
   enum: ['attended', 'absent'],
   readOnly: true,
-} as const;
-
-export const ProficiencyLevelEnum2Schema = {
-  type: 'string',
-  enum: ['beginner', 'intermediate', 'advanced', 'expert'],
 } as const;
 
 export const StatusEnum7Schema = {
@@ -25071,6 +26306,14 @@ export const StatusEnum14Schema = {
   example: 'ENROLLED',
 } as const;
 
+export const EventTypeEnumSchema = {
+  type: 'string',
+  description: 'CLICK or DISMISS; impressions are recorded by the server',
+  enum: ['CLICK', 'DISMISS'],
+  example: 'CLICK',
+  minLength: 1,
+} as const;
+
 export const ModeEnumSchema = {
   type: 'string',
   description: 'How the platform fee was configured',
@@ -25195,7 +26438,7 @@ export const StatusEnum19Schema = {
   enum: ['in_progress', 'submitted', 'graded'],
 } as const;
 
-export const EventTypeEnumSchema = {
+export const EventTypeEnum2Schema = {
   type: 'string',
   description: '**[READ-ONLY]** What happened.',
   enum: [
@@ -25306,7 +26549,7 @@ export const ApplicationStatusEnumSchema = {
   readOnly: true,
 } as const;
 
-export const EventTypeEnum2Schema = {
+export const EventTypeEnum3Schema = {
   type: 'string',
   description:
     '**[READ-ONLY]** What happened. interviewing is an interview invitation and assigned is the class being created.',
@@ -25597,6 +26840,12 @@ export const ProvidedByEnumWritableSchema = {
   example: 'organisation',
 } as const;
 
+export const LevelEnumWritableSchema = {
+  type: 'string',
+  description: 'Defaults to beginner; accepted in any case',
+  enum: ['beginner', 'intermediate', 'advanced', 'expert'],
+} as const;
+
 export const ActivityTypeEnumWritableSchema = {
   type: 'string',
   description: '**[OPTIONAL]** Practice activity format.',
@@ -25633,11 +26882,6 @@ export const ItemTypeEnumWritableSchema = {
     'participation',
     'manual',
   ],
-} as const;
-
-export const ProficiencyLevelEnum2WritableSchema = {
-  type: 'string',
-  enum: ['beginner', 'intermediate', 'advanced', 'expert'],
 } as const;
 
 export const ClassVisibilityEnumWritableSchema = {
@@ -25861,6 +27105,14 @@ export const StatusEnum14WritableSchema = {
   description: '**[OPTIONAL]** Current enrollment and attendance status.',
   enum: ['ENROLLED', 'WAITLISTED', 'ATTENDED', 'ABSENT', 'CANCELLED'],
   example: 'ENROLLED',
+} as const;
+
+export const EventTypeEnumWritableSchema = {
+  type: 'string',
+  description: 'CLICK or DISMISS; impressions are recorded by the server',
+  enum: ['CLICK', 'DISMISS'],
+  example: 'CLICK',
+  minLength: 1,
 } as const;
 
 export const ModeEnumWritableSchema = {
