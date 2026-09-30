@@ -2,16 +2,19 @@
 
 import { Button } from '@/components/ui/button';
 import { EmptyState } from '@/components/ui/empty-state';
-import { Input } from '@/components/ui/input';
+import { SearchInput } from '@/components/search/search-input';
+import { useSearchErrors, useSearchQuery } from '@/hooks/use-search-query';
+import { retryUnlessClientOrSearchError } from '@/lib/api-errors';
+import { withQ } from '@/lib/search/params';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Skeleton } from '@/components/ui/skeleton';
 import Spinner from '@/components/ui/spinner';
 import { STALE_TIMES } from '@/lib/query-client';
 import { searchAssessmentRubricsOptions } from '@/services/client/@tanstack/react-query.gen';
 import type { AssessmentRubric } from '@/services/client/types.gen';
-import { useQuery } from '@tanstack/react-query';
+import { keepPreviousData, useQuery } from '@tanstack/react-query';
 import { Check, ChevronsUpDown, Eye } from 'lucide-react';
-import { useDeferredValue, useState } from 'react';
+import { useState } from 'react';
 import { nextEvaluationPage } from './course-evaluation-utils';
 
 export type SavedEvaluationRubric = AssessmentRubric & { uuid: string };
@@ -95,22 +98,22 @@ function RubricChoices({
   label: string;
   onSelect: (rubric: SavedEvaluationRubric | null) => void;
 }) {
-  const [search, setSearch] = useState('');
+  const search = useSearchQuery();
   const [page, setPage] = useState(0);
-  const deferredSearch = useDeferredValue(search.trim());
+  // Free text goes through `q` (the search index); `title_like` is gone and answers 400.
   const query = useQuery({
     ...searchAssessmentRubricsOptions({
       query: {
-        searchParams: {
-          course_creator_uuid_eq: creatorUuid,
-          ...(deferredSearch ? { title_like: deferredSearch } : {}),
-        },
+        searchParams: withQ({ course_creator_uuid_eq: creatorUuid }, search.q),
         pageable: { page, size: 20 },
       },
     }),
     enabled: Boolean(creatorUuid),
     staleTime: STALE_TIMES.entity,
+    placeholderData: keepPreviousData,
+    retry: retryUnlessClientOrSearchError,
   });
+  useSearchErrors(search.q, query.error);
   const failed = query.isError || Boolean(query.data?.error) || query.data?.success === false;
   const rubrics = failed
     ? []
@@ -121,12 +124,20 @@ function RubricChoices({
 
   return (
     <div className='space-y-2'>
-      <Input
-        value={search}
-        onChange={event => {
-          setSearch(event.target.value);
+      <SearchInput
+        value={search.input}
+        onValueChange={value => {
+          search.setInput(value);
           setPage(0);
         }}
+        isPending={search.isPending}
+        hint={
+          search.searchUnavailable
+            ? 'Search is temporarily unavailable. Showing all your rubrics.'
+            : search.tooShort
+              ? 'Type at least 2 characters'
+              : undefined
+        }
         aria-label={`Search rubrics for ${label}`}
         placeholder='Search rubrics…'
       />

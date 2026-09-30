@@ -1,6 +1,7 @@
 'use client';
 
 import useStudentClassDefinitions from '@/hooks/use-student-class-definition';
+import { isForbidden, retryUnlessClientOrSearchError } from '@/lib/api-errors';
 import { STALE_TIMES } from '@/lib/query-client';
 import {
   getCourseAssessmentsOptions,
@@ -183,12 +184,14 @@ function AssessmentSheet({
   courseRubrics,
   rubricMatrix,
   rubricLoading,
+  rubricNotShared,
   onClose,
 }: {
   row: AssessmentRow | null;
   courseRubrics: CourseRubricAssociation[];
   rubricMatrix: RubricMatrix | null;
   rubricLoading: boolean;
+  rubricNotShared: boolean;
   onClose: () => void;
 }) {
   const assessment = row?.assessment ?? null;
@@ -319,6 +322,13 @@ function AssessmentSheet({
                 <RubricMatrixTable matrix={rubricMatrix} />
               </div>
             </div>
+          ) : rubricNotShared ? (
+            <EmptyState
+              variant='card'
+              icon={FileCheck2}
+              title='Rubric not shared'
+              description='The rubric’s author has not shared it, so its criteria cannot be shown here. Your instructor can still grade against it.'
+            />
           ) : (
             <EmptyState
               variant='card'
@@ -429,9 +439,12 @@ export default function LessonHubAssessmentsTab() {
     enabled: Boolean(activeRubricUuid),
     staleTime: STALE_TIMES.entity,
     refetchOnWindowFocus: false,
+    // A rubric its author has not shared answers 403; that will not change on retry.
+    retry: retryUnlessClientOrSearchError,
   });
 
   const rubricMatrix = rubricMatrixQuery.data?.data ?? null;
+  const rubricNotShared = isForbidden(rubricMatrixQuery.error);
 
   const searchTerm = searchValue.trim().toLowerCase();
 
@@ -638,6 +651,7 @@ export default function LessonHubAssessmentsTab() {
         row={selectedAssessment}
         courseRubrics={courseRubrics}
         rubricMatrix={rubricMatrix}
+        rubricNotShared={rubricNotShared}
         rubricLoading={
           courseRubricsQuery.isLoading ||
           courseRubricsQuery.isFetching ||

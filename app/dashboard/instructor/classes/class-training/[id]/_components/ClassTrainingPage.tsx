@@ -1,6 +1,7 @@
 // @ts-nocheck -- pre-existing @hey-api generated-client type drift (see memory: elimika-ui-typecheck)
 'use client';
 
+import { isForbidden, retryUnlessClientOrSearchError } from '@/lib/api-errors';
 import { PracticeActivityList } from '@/app/dashboard/course-creator/_components/practice-activity-management';
 import { getPreferredScheduleInstance } from '@/app/dashboard/instructor/classes/_components/new-class-page.utils';
 import ConfirmModal from '@/components/custom-modals/confirm-modal';
@@ -1914,6 +1915,7 @@ function EvaluationSummary({
 function AssessmentRubricCard({
   assessment,
   rubric,
+  rubricNotShared = false,
 }: {
   assessment: {
     uuid?: string;
@@ -1925,6 +1927,7 @@ function AssessmentRubricCard({
     weight_percentage?: number;
   };
   rubric: RubricMatrix | null;
+  rubricNotShared?: boolean;
 }) {
   const { selections, setSelection } = useRubricGradeSelections();
 
@@ -1949,7 +1952,7 @@ function AssessmentRubricCard({
 
       <div className='space-y-2 rounded-md border border-dashed p-3'>
         <div className='flex items-center justify-between gap-3'>
-          <p className='text-xs font-medium'>{rubric?.rubric.title || 'No rubric attached'}</p>
+          <p className='text-xs font-medium'>{rubric?.rubric.title || (rubricNotShared ? 'Rubric not shared' : 'No rubric attached')}</p>
           {rubric?.rubric.max_score ? (
             <Badge variant='outline'>Max {rubric.rubric.max_score}</Badge>
           ) : null}
@@ -2296,6 +2299,10 @@ function SubmissionPanel({
                             key={assessment.uuid ?? assessment.title}
                             assessment={assessment}
                             rubric={rubric}
+                            rubricNotShared={
+                              !!assessment.rubric_uuid &&
+                              notSharedRubricUuids.has(assessment.rubric_uuid)
+                            }
                           />
                         );
                       })}
@@ -2878,8 +2885,15 @@ export default function ClassTrainingPage({
     queries: rubricUuids.map(rubricUuid => ({
       ...getRubricMatrixOptions({ path: { rubricUuid } }),
       enabled: !!rubricUuid,
+      // A rubric its author has not shared answers 403; that will not change on retry.
+      retry: retryUnlessClientOrSearchError,
     })),
   });
+  const notSharedRubricUuids = useMemo(
+    () =>
+      new Set(rubricUuids.filter((_, index) => isForbidden(rubricMatrixQueries[index]?.error))),
+    [rubricMatrixQueries, rubricUuids]
+  );
 
   const rubricMatrices = useMemo<Record<string, RubricMatrix | null>>(
     () =>

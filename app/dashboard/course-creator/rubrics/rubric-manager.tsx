@@ -17,6 +17,7 @@ import type {
   UpdateScoringLevelData,
 } from '@/services/client/types.gen';
 import { useMutation } from '@tanstack/react-query';
+import { isForbidden } from '@/lib/api-errors';
 import {
   AlertTriangle,
   Edit2,
@@ -300,6 +301,13 @@ function SectionLabel({
   );
 }
 
+const RUBRIC_AUTHOR_ONLY = 'Only the rubric’s author can change it';
+
+/** A write the API refused with 403 is someone else's rubric; say so instead of "failed". */
+function rubricWriteError(error: unknown, fallback: string) {
+  return isForbidden(error) ? RUBRIC_AUTHOR_ONLY : fallback;
+}
+
 // ─── Delete confirm modal ──────────────────────────────────────────────────────
 
 function DeleteConfirmModal({
@@ -350,6 +358,10 @@ const RubricManager: React.FC = () => {
   const { rubrics, isLoading, isError, isFetched, refetchAll } = useRubricsData(
     creator?.data?.profile?.uuid as string
   );
+  const creatorUuid = creator?.data?.profile?.uuid;
+  // Only a rubric's author may change it; public rubrics by other creators are read-only.
+  const canChangeRubric = (rubric: { course_creator_uuid?: string | null }) =>
+    !rubric.course_creator_uuid || rubric.course_creator_uuid === creatorUuid;
 
   const [isEditing, setIsEditing] = useState(false);
   const [currentRubric, setCurrentRubric] = useState<EditableRubric | null>(null);
@@ -388,6 +400,10 @@ const RubricManager: React.FC = () => {
   const handleEditRubric = (rubric: Rubric) => {
     if (!rubric?.uuid) {
       toast.error('Invalid rubric data');
+      return;
+    }
+    if (!canChangeRubric(rubric)) {
+      toast.error(RUBRIC_AUTHOR_ONLY);
       return;
     }
     const clonedRubric: EditableRubric = {
@@ -430,7 +446,7 @@ const RubricManager: React.FC = () => {
           await refetchAll();
           setDeletingUuid(null);
         },
-        onError: () => toast.error('Failed to delete rubric'),
+        onError: error => toast.error(rubricWriteError(error, 'Failed to delete rubric')),
       }
     );
   };
@@ -539,8 +555,8 @@ const RubricManager: React.FC = () => {
         setIsEditing(false);
         setCurrentRubric(null);
         toast.success('Rubric fully created with all links!');
-      } catch {
-        toast.error('Failed to create rubric');
+      } catch (error) {
+        toast.error(rubricWriteError(error, 'Failed to create rubric'));
       }
     } else {
       const rubricPayload: UpdateAssessmentRubricBody = {
@@ -689,8 +705,8 @@ const RubricManager: React.FC = () => {
         setDeletedScoring([]);
         setDeletedScoringLevels([]);
         toast.success('All changes saved successfully!');
-      } catch {
-        toast.error('Failed to update rubric');
+      } catch (error) {
+        toast.error(rubricWriteError(error, 'Failed to update rubric'));
       }
     }
   };
@@ -1414,6 +1430,8 @@ const RubricManager: React.FC = () => {
                           variant='outline'
                           size='sm'
                           onClick={() => handleEditRubric(rubric)}
+                          disabled={!canChangeRubric(rubric)}
+                          title={canChangeRubric(rubric) ? undefined : RUBRIC_AUTHOR_ONLY}
                           className='gap-1.5'
                         >
                           <Edit2 size={13} /> Edit
@@ -1422,7 +1440,8 @@ const RubricManager: React.FC = () => {
                           variant='outline'
                           size='sm'
                           onClick={() => setDeletingUuid(rubric.uuid)}
-                          disabled={deleteRubric.isPending}
+                          disabled={deleteRubric.isPending || !canChangeRubric(rubric)}
+                          title={canChangeRubric(rubric) ? undefined : RUBRIC_AUTHOR_ONLY}
                           className='text-destructive hover:bg-destructive hover:text-destructive-foreground gap-1.5'
                         >
                           <Trash2 size={13} /> Delete
@@ -1573,15 +1592,17 @@ const RubricManager: React.FC = () => {
                       <div className='flex items-center justify-end gap-1'>
                         <button
                           onClick={() => handleEditRubric(rubric)}
-                          className='text-muted-foreground hover:text-foreground hover:bg-muted rounded-lg p-1.5 transition-colors'
-                          title='Edit rubric'
+                          disabled={!canChangeRubric(rubric)}
+                          className='text-muted-foreground hover:text-foreground hover:bg-muted rounded-lg p-1.5 transition-colors disabled:pointer-events-none disabled:opacity-40'
+                          title={canChangeRubric(rubric) ? 'Edit rubric' : RUBRIC_AUTHOR_ONLY}
                         >
                           <Edit2 size={15} />
                         </button>
                         <button
                           onClick={() => setDeletingUuid(rubric.uuid)}
-                          className='text-muted-foreground hover:text-destructive hover:bg-destructive/10 rounded-lg p-1.5 transition-colors'
-                          title='Delete rubric'
+                          disabled={!canChangeRubric(rubric)}
+                          className='text-muted-foreground hover:text-destructive hover:bg-destructive/10 rounded-lg p-1.5 transition-colors disabled:pointer-events-none disabled:opacity-40'
+                          title={canChangeRubric(rubric) ? 'Delete rubric' : RUBRIC_AUTHOR_ONLY}
                         >
                           <Trash2 size={15} />
                         </button>

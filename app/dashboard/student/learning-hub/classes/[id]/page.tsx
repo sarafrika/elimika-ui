@@ -1,6 +1,7 @@
 // @ts-nocheck -- pre-existing @hey-api generated-client type drift (see memory: elimika-ui-typecheck)
 'use client';
 
+import { retryUnlessClientOrSearchError } from '@/lib/api-errors';
 import { PracticeActivityList } from '@/app/dashboard/course-creator/_components/practice-activity-management';
 import { AsyncSection } from '@/components/data/async-section';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
@@ -1215,6 +1216,8 @@ export default function StudentClassTrainingPage({
     queries: rubricUuids.map(rubricUuid => ({
       ...getRubricMatrixOptions({ path: { rubricUuid } }),
       enabled: !!rubricUuid,
+      // A rubric its author has not shared answers 403; that will not change on retry.
+      retry: retryUnlessClientOrSearchError,
     })),
   });
 
