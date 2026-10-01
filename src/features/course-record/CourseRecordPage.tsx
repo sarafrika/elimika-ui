@@ -77,7 +77,6 @@ import { AsyncSection } from '../../../components/data/async-section';
 import { CourseDetailsAsideCard } from '../catalogue/components/CourseDetailsAsideCard';
 import { CourseRecordView } from './CourseRecordView';
 import {
-  AccessCard,
   ActionsCard,
   ActivityTab,
   ApplicationStatusPanel,
@@ -526,8 +525,8 @@ export function CourseRecordPage({
           <GlanceCard access={access} vars={vars} {...asyncProps(record.course)} />
         </>
         )
-      case 'access':
-        return <AccessCard access={access} vars={vars} />;
+      // case 'access':
+      //   return <AccessCard access={access} vars={vars} />;
       case 'ownerDecisions':
         return (
           <OwnerDecisionsPanel

@@ -179,9 +179,9 @@ export function CourseReaderView({
     ...treeProps,
     onSelectItem: treeProps.onSelectItem
       ? (item: CourseReaderItem, lesson: CourseReaderLesson) => {
-          treeProps.onSelectItem?.(item, lesson);
-          setContentsOpen(false);
-        }
+        treeProps.onSelectItem?.(item, lesson);
+        setContentsOpen(false);
+      }
       : undefined,
   };
 

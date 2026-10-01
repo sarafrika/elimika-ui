@@ -178,7 +178,7 @@ export function CourseRecordView({
         : kpiBand && <div className='mb-[22px]'>{kpiBand}</div>}
 
       {/* ── gate banner ──────────────────────────────────────────────── */}
-      {capability.gate && gateBanner ? <div className='mb-[22px]'>{gateBanner}</div> : null}
+      {/* {capability.gate && gateBanner ? <div className='mb-[22px]'>{gateBanner}</div> : null} */}
 
       {/* ── body + rail ──────────────────────────────────────────────── */}
       <div className='grid items-start gap-[22px] lg:grid-cols-[minmax(0,1fr)_380px]'>

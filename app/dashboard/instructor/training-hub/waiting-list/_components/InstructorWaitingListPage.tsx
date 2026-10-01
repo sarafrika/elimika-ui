@@ -10,9 +10,10 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { useBreadcrumb } from '@/context/breadcrumb-provider';
-import { Search, Users } from 'lucide-react';
+import { ArrowLeft, Search, Users } from 'lucide-react';
 import Link from 'next/link';
 import { useEffect, useMemo, useState } from 'react';
+import { PageHeader } from '../../../../../../components/page-header';
 import { WaitingListItem } from '../../_components/WaitingListItem';
 import { useInstructorTrainingHubData } from '../../_components/useInstructorTrainingHubData';
 
@@ -69,24 +70,18 @@ export function InstructorWaitingListPage() {
   );
 
   return (
-    <main className='bg-background mx-auto flex w-full max-w-[1280px] flex-col gap-5 px-3 py-4 sm:px-4 lg:px-5'>
-      <section className='border-border/50 bg-card flex flex-col gap-4 rounded-[14px] border p-4 shadow-sm sm:flex-row sm:items-end sm:justify-between sm:p-5'>
-        <div className='space-y-1'>
-          <h1 className='text-foreground text-[1.6rem] font-semibold tracking-[-0.03em] sm:text-[1.85rem]'>
-            Class Waiting List
-          </h1>
-          <p className='text-muted-foreground text-sm sm:text-[0.95rem]'>
-            Students who enrolled after a class reached capacity appear here until a seat opens up.
-          </p>
-        </div>
+    <main className='bg-background mx-auto flex w-full flex-col gap-5 px-3 py-4 sm:px-4 lg:px-5'>
+      <Link
+        href='/dashboard/instructor/training-hub'
+        className='text-muted-foreground hover:text-foreground inline-flex items-center gap-1 text-sm'
+      >
+        <ArrowLeft className='h-4 w-4' /> Back to training Hub
+      </Link>
 
-        <Link
-          href='/dashboard/instructor/training-hub'
-          className='border-border text-foreground hover:border-primary/30 hover:text-primary inline-flex h-10 items-center justify-center rounded-[10px] border px-4 text-sm font-medium transition'
-        >
-          Back to Training Hub
-        </Link>
-      </section>
+      <PageHeader
+        title='Class Waiting List'
+        description='Students who enrolled after a class reached capacity appear here until a seat opens up.'
+      />
 
       <section className='border-border/50 bg-card rounded-[14px] border p-3 shadow-sm sm:p-4'>
         <div className='grid gap-3 lg:grid-cols-[minmax(0,1fr)_260px]'>

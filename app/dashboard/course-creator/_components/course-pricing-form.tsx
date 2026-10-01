@@ -81,6 +81,7 @@ export type CourseFormRef = {
 export const coursePricingSchema = z.object({
   is_free: z.boolean().default(false),
   currency: z.string().optional(),
+  price: z.coerce.number().min(0, 'Price must be zero or greater'),
   minimum_training_fee: z.coerce.number().min(0, 'Minimum training fee must be zero or greater'),
   creator_share_percentage: z.coerce
     .number()
@@ -162,6 +163,7 @@ export const CoursePricingForm = forwardRef<CourseFormRef, CourseFormProps>(
       defaultValues: {
         is_free: false,
         currency: 'KES',
+        price: 0,
         minimum_training_fee: 0,
         creator_share_percentage: 50,
         instructor_share_percentage: 50,
@@ -329,6 +331,7 @@ export const CoursePricingForm = forwardRef<CourseFormRef, CourseFormProps>(
             ...initialValues,
             is_free: data?.is_free,
             currency: data?.currency,
+            price: data.price,
             minimum_training_fee: data?.minimum_training_fee,
             creator_share_percentage: data?.creator_share_percentage,
             instructor_share_percentage: data?.instructor_share_percentage,
@@ -416,11 +419,38 @@ export const CoursePricingForm = forwardRef<CourseFormRef, CourseFormProps>(
                 <CardTitle className='text-base'>Course pricing</CardTitle>
               </div>
               <CardDescription>
-                Set the minimum learner fee and how course income is shared.
+                Set the course price, minimum learner fee, and how course income is shared.
               </CardDescription>
             </CardHeader>
             <CardContent className='grid gap-6'>
-              <div className='grid gap-4 sm:grid-cols-2'>
+              <div className='grid gap-4 sm:grid-cols-3'>
+                <FormField
+                  control={form.control}
+                  name='price'
+                  render={({ field }) => (
+                    <FormItem className='grid max-w-sm content-start gap-1.5 space-y-0'>
+                      <FormLabel>Course price</FormLabel>
+                      <div className='flex items-center gap-2'>
+                        <span className='text-muted-foreground text-sm font-medium'>
+                          <WatchedValue control={form.control} name='currency'>
+                            {currencyLabel}
+                          </WatchedValue>
+                        </span>
+                        <FormControl>
+                          <Input
+                            type='number'
+                            min={0}
+                            step='0.01'
+                            placeholder='0'
+                            {...field}
+                            value={field.value ?? 0}
+                          />
+                        </FormControl>
+                      </div>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
                 <FormField
                   control={form.control}
                   name='minimum_training_fee'
