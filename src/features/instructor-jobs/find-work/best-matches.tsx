@@ -1,7 +1,7 @@
 'use client';
 
 import { useQuery } from '@tanstack/react-query';
-import { CircleAlert, CircleCheck, Sparkles, X } from 'lucide-react';
+import { CircleAlert, CircleCheck, MapPin, Sparkles, X } from 'lucide-react';
 import Link from 'next/link';
 import { useMemo, useState } from 'react';
 
@@ -9,6 +9,13 @@ import { surfaceTheme } from '@/components/data-display';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { EmptyState } from '@/components/ui/empty-state';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 import { Skeleton } from '@/components/ui/skeleton';
 import { isForbidden, retryUnlessClientOrSearchError } from '@/lib/api-errors';
 import { getErrorMessage } from '@/lib/error-utils';
@@ -16,14 +23,20 @@ import { STALE_TIMES } from '@/lib/query-client';
 import { cn } from '@/lib/utils';
 import { getJobMatchesOptions } from '@/services/client/@tanstack/react-query.gen';
 import type { JobMatch, JobMatchSkill } from '@/services/client/types.gen';
+import { dashboardUrl } from '@/src/features/dashboard/lib/dashboard-url';
 import { useDiscoveryEvents } from '@/src/features/discovery/discovery-events';
 import { DistanceBandBadge } from '@/src/features/near-me/near-me-control';
 import { deliveryLabel } from '@/src/features/organisation/jobs/lib/job-stage';
+import { useUserProfile } from '@/src/features/profile/context/profile-context';
 
 import { payLabel } from '../job-facts';
 import { jobPageHref } from '../job-routes';
 
 const INITIAL_VISIBLE = 4;
+/** "Within X km of my location" choices; off sends no radius. */
+const RADIUS_OPTIONS = ['off', '10', '25', '50'] as const;
+type RadiusOption = (typeof RADIUS_OPTIONS)[number];
+const PROFILE_LOCATION_HREF = dashboardUrl('instructor', 'profile/general');
 
 function matchPercent(score: number | undefined) {
   if (typeof score !== 'number' || Number.isNaN(score)) return null;
@@ -77,8 +90,15 @@ export function BestMatches() {
   const track = useDiscoveryEvents();
   const [expanded, setExpanded] = useState(false);
   const [dismissed, setDismissed] = useState<ReadonlySet<string>>(() => new Set());
+  // The radius is measured from the instructor's saved location, and the API only uses it
+  // once they have opted in to location search, so the control appears only then.
+  const optedIn = useUserProfile()?.instructor?.location_search_opt_in === true;
+  const [radius, setRadius] = useState<RadiusOption>('off');
+  const radiusKm = optedIn && radius !== 'off' ? Number(radius) : undefined;
   const query = useQuery({
-    ...getJobMatchesOptions({ query: { limit: 20 } }),
+    ...getJobMatchesOptions({
+      query: { limit: 20, ...(radiusKm ? { radius_km: radiusKm } : {}) },
+    }),
     staleTime: STALE_TIMES.live,
     retry: retryUnlessClientOrSearchError,
   });
@@ -116,6 +136,31 @@ export function BestMatches() {
             Jobs that fit your skills, courses, rates and schedule.
           </p>
         </div>
+        {optedIn ? (
+          <Select value={radius} onValueChange={value => setRadius(value as RadiusOption)}>
+            <SelectTrigger
+              aria-label='Distance from my location'
+              className='h-9 w-auto min-w-[13rem]'
+            >
+              <MapPin aria-hidden className='text-muted-foreground size-4' />
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              {RADIUS_OPTIONS.map(option => (
+                <SelectItem key={option} value={option}>
+                  {option === 'off' ? 'Any distance' : `Within ${option} km of my location`}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        ) : (
+          <p className='text-muted-foreground text-xs'>
+            <Link href={PROFILE_LOCATION_HREF} className='text-primary hover:underline'>
+              Turn on location search
+            </Link>{' '}
+            in your profile to see matches near you.
+          </p>
+        )}
       </div>
 
       {query.isLoading ? (
@@ -133,12 +178,21 @@ export function BestMatches() {
           </Button>
         </div>
       ) : ranked.length === 0 ? (
-        <EmptyState
-          variant='plain'
-          icon={Sparkles}
-          title='No matches yet'
-          description='Add skills to your profile and get approved to train courses to see jobs picked for you.'
-        />
+        radiusKm ? (
+          <EmptyState
+            variant='plain'
+            icon={MapPin}
+            title={`No matches within ${radiusKm} km`}
+            description='Try a wider distance, or any distance.'
+          />
+        ) : (
+          <EmptyState
+            variant='plain'
+            icon={Sparkles}
+            title='No matches yet'
+            description='Add skills to your profile and get approved to train courses to see jobs picked for you.'
+          />
+        )
       ) : (
         <>
           <ol className='grid gap-3 md:grid-cols-2' aria-label='Best matching jobs'>
