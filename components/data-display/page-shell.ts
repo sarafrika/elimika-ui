@@ -24,10 +24,11 @@ export const surfaceTheme = {
    */
   cardGridWide: 'grid grid-cols-1 gap-4 xl:grid-cols-[repeat(auto-fill,minmax(520px,1fr))]',
   /**
-   * A stat or KPI row: two columns on tablets, then the columns follow the card count
-   * (auto-fit, 220px+ each), so three cards fill the row as well as five do.
+   * A stat or KPI row whose columns follow the card count: 160px+ each up to desktop (two
+   * per row on a phone), then 220px+ each, so three cards fill the row as well as five do.
    */
-  statGrid: 'grid gap-4 sm:grid-cols-2 xl:grid-cols-[repeat(auto-fit,minmax(220px,1fr))]',
+  statGrid:
+    'grid grid-cols-[repeat(auto-fit,minmax(min(100%,160px),1fr))] gap-3 sm:gap-4 xl:grid-cols-[repeat(auto-fit,minmax(220px,1fr))]',
 
   /** Card surfaces. */
   card: 'rounded-md border border-border/70 bg-card',

@@ -24,7 +24,6 @@ import Link from 'next/link';
 import { useParams } from 'next/navigation';
 import type { ComponentType, ReactNode } from 'react';
 import { useMemo } from 'react';
-
 import {
   EntityHeaderCard,
   type SectionTab,
@@ -36,6 +35,7 @@ import {
   surfaceTheme,
   useSectionTab,
 } from '@/components/data-display';
+import { surfaceTheme } from '@/components/data-display/page-shell';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { EmptyState } from '@/components/ui/empty-state';
@@ -380,7 +380,7 @@ function PageSkeleton() {
     <main className={cn(surfaceTheme.pageWide, 'space-y-6 py-4')}>
       <Skeleton className='h-8 w-48 rounded-md' />
       <Skeleton className='h-36 w-full rounded-md' />
-      <div className='grid gap-3 sm:grid-cols-2 xl:grid-cols-6'>
+      <div className={surfaceTheme.statGrid}>
         {Array.from({ length: 6 }).map((_, index) => (
           <Skeleton key={index} className='h-[88px] rounded-md' />
         ))}
@@ -723,7 +723,7 @@ export function InstructorDetailPage({ role }: { role: InstructorDetailRole }) {
         }
       />
 
-      <div className='grid gap-3 sm:grid-cols-2 xl:grid-cols-6'>
+      <div className={surfaceTheme.statGrid}>
         <MetricTile
           label='Assigned classes'
           value={formatCount(classCount, '0')}
