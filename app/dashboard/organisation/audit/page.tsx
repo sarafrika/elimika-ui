@@ -143,7 +143,7 @@ export default function ReportsPage() {
         description='Organisation performance — enrolments, completion and top classes.'
       />
 
-      <div className='grid gap-4 sm:grid-cols-2 lg:grid-cols-[repeat(auto-fit,minmax(200px,1fr))]'>
+      <div className={surfaceTheme.statGrid}>
         {kpis.map(k => {
           const Icon = k.icon;
           return (

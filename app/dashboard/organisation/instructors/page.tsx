@@ -49,6 +49,7 @@ import {
   getOrganisationInstructorSummariesOptions,
   listOrganisationInvitationsOptions,
 } from '@/services/client/@tanstack/react-query.gen';
+import { surfaceTheme } from '@/components/data-display';
 
 const initials = (name?: string) =>
   (name ?? '?')
@@ -172,7 +173,7 @@ export default function InstructorsPage() {
         }
       />
 
-      <div className='grid gap-4 sm:grid-cols-2 lg:grid-cols-[repeat(auto-fit,minmax(200px,1fr))]'>
+      <div className={surfaceTheme.statGrid}>
         <Card className='border-l-primary border-l-4'>
           <CardContent className='p-6'>
             <div className='text-2xl font-bold'>{formatCount(kpis.active, '0')}</div>

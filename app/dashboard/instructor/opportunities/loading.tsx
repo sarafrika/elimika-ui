@@ -11,7 +11,7 @@ export default function JobsLoading() {
           <Skeleton className='h-4 w-96 max-w-full' />
         </div>
         <Skeleton className='h-11 w-80 max-w-full' />
-        <div className='grid gap-4 sm:grid-cols-2 xl:grid-cols-[repeat(auto-fit,minmax(240px,1fr))]'>
+        <div className={surfaceTheme.statGrid}>
           {[0, 1, 2, 3].map(item => (
             <StatCardSkeleton key={item} />
           ))}

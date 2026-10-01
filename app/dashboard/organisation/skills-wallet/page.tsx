@@ -235,7 +235,7 @@ export default function SkillsWalletPage() {
         }
       />
 
-      <div className='grid gap-4 sm:grid-cols-2 lg:grid-cols-[repeat(auto-fit,minmax(200px,1fr))]'>
+      <div className={surfaceTheme.statGrid}>
         {statCards.map(stat => (
           <Card
             key={stat.label}

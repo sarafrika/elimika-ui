@@ -32,11 +32,7 @@ import {
   TableRow,
 } from '@/components/ui/table';
 import { useOrganisation } from '@/context/organisation-context';
-import {
-  useStudentsByIds,
-  useStudentsByUserIds,
-  useUsersByIds,
-} from '@/hooks/use-batched-lookups';
+import { useStudentsByIds, useStudentsByUserIds, useUsersByIds } from '@/hooks/use-batched-lookups';
 import { extractList, extractPage, getTotalFromMetadata } from '@/lib/api-helpers';
 import { getErrorMessage } from '@/lib/error-utils';
 import { formatCount, toNumber } from '@/lib/metrics';
@@ -55,6 +51,7 @@ import { toAuthenticatedMediaUrl } from '@/src/lib/media-url';
 import { generateWalletId, institutionRef } from '@/src/lib/wallet-id';
 
 import { PendingInvitations } from './_components/pending-invitations';
+import { surfaceTheme } from '@/components/data-display';
 
 const fullName = (student: StudentGroupRosterEntry) =>
   student.full_name?.trim() || student.email || null;
@@ -161,7 +158,9 @@ export default function StudentsPage() {
   const rosterUserUuids = useMemo(
     () =>
       Array.from(
-        new Set(roster.map(student => student.student_uuid).filter((uuid): uuid is string => !!uuid))
+        new Set(
+          roster.map(student => student.student_uuid).filter((uuid): uuid is string => !!uuid)
+        )
       ).sort((a, b) => a.localeCompare(b)),
     [roster]
   );
@@ -218,7 +217,8 @@ export default function StudentsPage() {
         id: student.student_uuid,
         name: fullName(student) ?? displayNameFromUser(user, profile),
         email: student.email ?? user?.email ?? null,
-        image: toAuthenticatedMediaUrl(user?.profile_image_url ?? student.profile_image_url) ?? null,
+        image:
+          toAuthenticatedMediaUrl(user?.profile_image_url ?? student.profile_image_url) ?? null,
         groupName: student.group_name ?? null,
         branch: branchByUserUuid.get(profile?.user_uuid ?? '') ?? null,
         tier: student.tier ?? null,
@@ -321,7 +321,7 @@ export default function StudentsPage() {
         }
       />
 
-      <div className='grid gap-4 sm:grid-cols-2 lg:grid-cols-[repeat(auto-fit,minmax(200px,1fr))]'>
+      <div className={surfaceTheme.statGrid}>
         <Card className='border-l-primary border-l-4'>
           <CardContent className='p-6'>
             <div className='text-2xl font-bold'>{formatCount(kpis.total, '0')}</div>
@@ -427,7 +427,7 @@ export default function StudentsPage() {
                     key={student.id}
                     role='link'
                     tabIndex={0}
-                    className='hover:bg-muted/40 cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2'
+                    className='hover:bg-muted/40 focus-visible:ring-ring cursor-pointer focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:outline-none'
                     onClick={() => openStudent(student.id)}
                     onKeyDown={event => handleRowKeyDown(event, student.id)}
                   >

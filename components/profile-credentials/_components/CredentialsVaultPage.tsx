@@ -54,6 +54,7 @@ import { VaultHighlights } from './VaultHighlights';
 import { useCoursesByIds, useProgramsByIds } from '../../../hooks/use-batched-lookups';
 import { useUserDomain } from '@/src/features/dashboard/context/user-domain-context';
 import { roleScopedDashboardPath } from '@/src/features/dashboard/lib/active-domain-storage';
+import { surfaceTheme } from '@/components/data-display';
 
 type CredentialsVaultPageProps = {
   role: CredentialsRole;
@@ -485,7 +486,7 @@ function CredentialsPanel({
             onStatusFilterChange={onStatusFilterChange}
           />
           {items.length > 0 ? (
-            <div className='grid gap-4 xl:grid-cols-[repeat(auto-fill,minmax(520px,1fr))]'>
+            <div className={surfaceTheme.cardGridWide}>
               {items.map(item => (
                 <CredentialCertificateCard
                   key={item.id}

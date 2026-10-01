@@ -10,7 +10,7 @@ export default function AdminOrganisationsLoading() {
           <Skeleton className='h-7 w-56' />
           <Skeleton className='h-4 w-96 max-w-full' />
         </div>
-        <div className='grid gap-4 sm:grid-cols-2 xl:grid-cols-[repeat(auto-fit,minmax(240px,1fr))]'>
+        <div className={surfaceTheme.statGrid}>
           {[0, 1, 2, 3].map(item => (
             <StatCardSkeleton key={item} />
           ))}

@@ -29,7 +29,10 @@ function leadCurrency(points: RevenueTimeSeriesPointDto[]): string | undefined {
   for (const point of points) {
     for (const amount of point.gross_totals ?? []) {
       if (!amount.currency_code) continue;
-      totals.set(amount.currency_code, (totals.get(amount.currency_code) ?? 0) + (amount.amount ?? 0));
+      totals.set(
+        amount.currency_code,
+        (totals.get(amount.currency_code) ?? 0) + (amount.amount ?? 0)
+      );
     }
   }
   return [...totals.entries()].sort((a, b) => b[1] - a[1])[0]?.[0];
@@ -79,14 +82,14 @@ export function RevenuePage() {
           error={dashboardQuery.error}
           onRetry={dashboardQuery.refetch}
           skeleton={
-            <div className='grid gap-4 sm:grid-cols-2 xl:grid-cols-[repeat(auto-fit,minmax(240px,1fr))]'>
+            <div className={surfaceTheme.statGrid}>
               {[0, 1, 2, 3].map(item => (
                 <StatCardSkeleton key={item} />
               ))}
             </div>
           }
         >
-          <div className='grid gap-4 sm:grid-cols-2 xl:grid-cols-[repeat(auto-fit,minmax(240px,1fr))]'>
+          <div className={surfaceTheme.statGrid}>
             <StatCard
               label='Gross sales'
               value={<MoneyList amounts={dashboard?.gross_totals} />}
@@ -177,8 +180,8 @@ export function RevenuePage() {
               </ul>
             </SectionBoundary>
             <p className='text-muted-foreground mt-3 text-xs'>
-              Scope is the only breakdown the revenue API returns. What each instructor,
-              creator or organisation earned is not in it.
+              Scope is the only breakdown the revenue API returns. What each instructor, creator or
+              organisation earned is not in it.
             </p>
           </SectionCard>
         </div>

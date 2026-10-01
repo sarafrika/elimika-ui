@@ -129,7 +129,7 @@ export default function AssignmentsPage() {
         }
       />
 
-      <div className='grid gap-4 sm:grid-cols-2 lg:grid-cols-[repeat(auto-fit,minmax(200px,1fr))]'>
+      <div className={surfaceTheme.statGrid}>
         <Card className='border-l-primary border-l-4'>
           <CardContent className='p-6'>
             <div className='text-2xl font-bold'>{kpis.total}</div>

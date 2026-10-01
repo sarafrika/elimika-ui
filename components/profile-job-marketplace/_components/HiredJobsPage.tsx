@@ -78,7 +78,7 @@ export function HiredJobsPage() {
           errorTitle='Couldn’t load your hired jobs'
           onRetry={() => void hires.refetch()}
           skeleton={
-            <div className='grid gap-4 lg:grid-cols-[repeat(auto-fill,minmax(480px,1fr))]'>
+            <div className={surfaceTheme.cardGridWide}>
               <HiredJobCardSkeleton />
               <HiredJobCardSkeleton />
             </div>
@@ -97,7 +97,7 @@ export function HiredJobsPage() {
             />
           }
         >
-          <ul className='grid gap-4 lg:grid-cols-[repeat(auto-fill,minmax(480px,1fr))]'>
+          <ul className={surfaceTheme.cardGridWide}>
             {applications.map(application => {
               const classUuid = application.job?.class_definition_uuid;
               return (

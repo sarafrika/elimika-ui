@@ -11,7 +11,7 @@ export default function ClassesLoading() {
         </div>
         <Skeleton className='h-9 w-32' />
       </div>
-      <div className='grid gap-4 sm:grid-cols-2 lg:grid-cols-[repeat(auto-fit,minmax(200px,1fr))]'>
+      <div className={surfaceTheme.statGrid}>
         {[0, 1, 2, 3].map(item => (
           <Skeleton key={item} className='h-24 rounded-xl' />
         ))}

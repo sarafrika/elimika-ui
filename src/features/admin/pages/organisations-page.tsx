@@ -45,9 +45,10 @@ export function OrganisationsPage() {
   const [active] = useSearchState('active', activeParam);
   const [page, setPage] = useSearchState('page', pageParam);
 
-  const [suspending, setSuspending] = useState<{ organisation: Organisation; next: boolean } | null>(
-    null
-  );
+  const [suspending, setSuspending] = useState<{
+    organisation: Organisation;
+    next: boolean;
+  } | null>(null);
 
   const { statistics, query: statisticsQuery } = useAdminStatistics();
   const patch = useSearchStatePatch();
@@ -76,14 +77,14 @@ export function OrganisationsPage() {
           error={statisticsQuery.error}
           onRetry={statisticsQuery.refetch}
           skeleton={
-            <div className='grid gap-4 sm:grid-cols-2 xl:grid-cols-[repeat(auto-fit,minmax(240px,1fr))]'>
+            <div className={surfaceTheme.statGrid}>
               {[0, 1, 2, 3].map(item => (
                 <StatCardSkeleton key={item} />
               ))}
             </div>
           }
         >
-          <div className='grid gap-4 sm:grid-cols-2 xl:grid-cols-[repeat(auto-fit,minmax(240px,1fr))]'>
+          <div className={surfaceTheme.statGrid}>
             <StatCard
               label='Organisations'
               value={toNumber(metrics?.total_organisations)}
@@ -95,7 +96,11 @@ export function OrganisationsPage() {
               tone='warning'
               hint='Unverified, whether or not they asked'
             />
-            <StatCard label='Active' value={toNumber(metrics?.active_organisations)} tone='success' />
+            <StatCard
+              label='Active'
+              value={toNumber(metrics?.active_organisations)}
+              tone='success'
+            />
             <StatCard
               label='Suspended'
               value={toNumber(metrics?.suspended_organisations)}
@@ -135,7 +140,9 @@ export function OrganisationsPage() {
           error={query.error}
           onRetry={query.refetch}
           empty={!query.isLoading && organisations.length === 0}
-          emptyTitle={q || verified !== 'any' || active !== 'any' ? 'Nothing matches' : 'No organisations yet'}
+          emptyTitle={
+            q || verified !== 'any' || active !== 'any' ? 'Nothing matches' : 'No organisations yet'
+          }
           emptyDescription={
             q || verified !== 'any' || active !== 'any'
               ? 'Try a different search or clear the filters.'
@@ -174,7 +181,8 @@ export function OrganisationsPage() {
                 header: 'Location',
                 cell: ({ row }) => (
                   <span className='text-muted-foreground text-sm'>
-                    {[row.original.location, row.original.country].filter(Boolean).join(', ') || '—'}
+                    {[row.original.location, row.original.country].filter(Boolean).join(', ') ||
+                      '—'}
                   </span>
                 ),
               },
@@ -234,7 +242,9 @@ export function OrganisationsPage() {
                         className='w-56'
                       >
                         <DropdownMenuItem
-                          onClick={() => router.push(adminRoutes.organisation(row.original.uuid ?? ''))}
+                          onClick={() =>
+                            router.push(adminRoutes.organisation(row.original.uuid ?? ''))
+                          }
                         >
                           Open record
                         </DropdownMenuItem>
@@ -250,7 +260,10 @@ export function OrganisationsPage() {
                         </DropdownMenuItem>
                         <DropdownMenuItem
                           onClick={() =>
-                            setSuspending({ organisation: row.original, next: !row.original.active })
+                            setSuspending({
+                              organisation: row.original,
+                              next: !row.original.active,
+                            })
                           }
                         >
                           {row.original.active ? (

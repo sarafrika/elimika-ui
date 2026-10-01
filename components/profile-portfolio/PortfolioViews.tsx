@@ -27,6 +27,7 @@ import { cn } from '@/lib/utils';
 
 import type { PortfolioAsset, PortfolioProject, PortfolioRole, PortfolioTabId } from './data';
 import { getPortfolioContent } from './data';
+import { surfaceTheme } from '@/components/data-display';
 
 const getPortfolioHref = (projectId?: string) =>
   projectId ? `/dashboard/portfolio/${projectId}` : '/dashboard/portfolio';
@@ -519,7 +520,7 @@ function AssetPanel({
   return (
     <div className='space-y-4 p-3 sm:p-5'>
       <SectionHeader title={title} description={description} actionLabel={actionLabel} />
-      <div className='grid gap-3 xl:grid-cols-[repeat(auto-fill,minmax(460px,1fr))]'>
+      <div className={cn(surfaceTheme.cardGridWide, 'gap-3')}>
         {items.map(item => (
           <CollectionItemCard key={item.id} item={item} />
         ))}

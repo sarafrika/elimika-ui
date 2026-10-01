@@ -332,7 +332,7 @@ export default function SkillsFundPage() {
         }
       />
 
-      <div className='grid gap-4 sm:grid-cols-2 lg:grid-cols-[repeat(auto-fit,minmax(200px,1fr))]'>
+      <div className={surfaceTheme.statGrid}>
         {kpis.map(k => (
           <Card key={k.label} className={`border-l-4 ${k.border}`}>
             <CardHeader className='pb-2'>

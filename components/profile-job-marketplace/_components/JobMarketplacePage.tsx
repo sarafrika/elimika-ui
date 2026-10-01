@@ -76,7 +76,14 @@ import { JobCard } from './JobMarketplaceCard';
 import { JobListSkeleton, MarketplaceSidebarSkeleton } from './JobMarketplaceSkeletons';
 import { MarketplaceSidebar } from './MarketplaceSidebar';
 import { MarketplaceTabs } from './MarketplaceTabs';
-import { DetailGrid, SectionCard, StatCard, StatCardSkeleton, StatusBadge, surfaceTheme } from '@/components/data-display';
+import {
+  DetailGrid,
+  SectionCard,
+  StatCard,
+  StatCardSkeleton,
+  StatusBadge,
+  surfaceTheme,
+} from '@/components/data-display';
 
 type StatusFilter = 'all' | 'open' | 'awaiting_class' | 'filled' | 'cancelled' | 'expired';
 type SortDirection = 'newest' | 'oldest';
@@ -106,7 +113,8 @@ const BASIS_TABS = [
   ...RATE_BASES.map(basis => ({
     id: basis.value as string,
     label: basis.label,
-    icon: basis.value === 'per_hour' ? Clock : basis.value === 'per_session' ? CalendarDays : Layers,
+    icon:
+      basis.value === 'per_hour' ? Clock : basis.value === 'per_session' ? CalendarDays : Layers,
   })),
 ];
 
@@ -437,7 +445,7 @@ export function JobMarketplacePage({ role }: { role: JobMarketplaceRole }) {
       <div className={surfaceTheme.pageStack}>
         <PageHeader title='Opportunities' description={config.description} />
 
-        <div className='grid gap-4 sm:grid-cols-2 xl:grid-cols-[repeat(auto-fit,minmax(240px,1fr))]'>
+        <div className={surfaceTheme.statGrid}>
           {jobsLoading
             ? kpis.map(kpi => <StatCardSkeleton key={kpi.label} />)
             : kpis.map(kpi => <StatCard key={kpi.label} {...kpi} />)}
@@ -499,7 +507,10 @@ export function JobMarketplacePage({ role }: { role: JobMarketplaceRole }) {
                 <div className='min-w-[200px] flex-1'>
                   <Select value={contentFilter} onValueChange={setContentFilter}>
                     <SelectTrigger aria-label='Course or program' className='h-10 w-full'>
-                      <GraduationCap aria-hidden className='text-muted-foreground size-4 shrink-0' />
+                      <GraduationCap
+                        aria-hidden
+                        className='text-muted-foreground size-4 shrink-0'
+                      />
                       <SelectValue placeholder='All content' />
                     </SelectTrigger>
                     <SelectContent>
@@ -559,7 +570,9 @@ export function JobMarketplacePage({ role }: { role: JobMarketplaceRole }) {
               />
               <TabsContent value={basisTab} className='mt-4 space-y-4'>
                 <p className='text-muted-foreground text-sm'>
-                  <span className='text-foreground font-semibold tabular-nums'>{listed.length}</span>{' '}
+                  <span className='text-foreground font-semibold tabular-nums'>
+                    {listed.length}
+                  </span>{' '}
                   job posting{listed.length === 1 ? '' : 's'}
                 </p>
 
@@ -588,7 +601,7 @@ export function JobMarketplacePage({ role }: { role: JobMarketplaceRole }) {
                     />
                   }
                 >
-                  <div className='grid gap-4 xl:grid-cols-[repeat(auto-fill,minmax(560px,1fr))]'>
+                  <div className={surfaceTheme.cardGridWide}>
                     {listed.map(job => (
                       <JobCard
                         key={job.uuid}

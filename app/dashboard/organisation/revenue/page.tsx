@@ -30,6 +30,7 @@ import {
   getRevenueDashboardOptions,
 } from '@/services/client/@tanstack/react-query.gen';
 import { OrgPage } from '../_components/org-page';
+import { surfaceTheme } from '@/components/data-display';
 
 /** Format the first (primary-currency) amount from a revenue amount list. */
 const money = (amounts?: RevenueAmountDto[]): string => {
@@ -144,7 +145,7 @@ export default function OrganisationEarningsPage() {
         description='Sales, earnings and platform fees for your organisation.'
       />
 
-      <div className='grid gap-4 sm:grid-cols-2 lg:grid-cols-[repeat(auto-fit,minmax(200px,1fr))]'>
+      <div className={surfaceTheme.statGrid}>
         {isLoading
           ? kpis.map(kpi => <KpiCardSkeleton key={kpi.label} />)
           : kpis.map(kpi => (
