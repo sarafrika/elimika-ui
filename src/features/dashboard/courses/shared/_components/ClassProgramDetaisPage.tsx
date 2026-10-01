@@ -4,16 +4,11 @@ import { useQuery } from '@tanstack/react-query';
 import {
   BookOpen,
   CalendarClock,
-  CheckCircle2,
-  ChevronDown,
-  ChevronUp,
   FileCheck,
   Layers3,
   MoveRight,
   Share2,
-  Sparkles,
   Star,
-  Target,
   Users,
 } from 'lucide-react';
 import { useRouter } from 'next/navigation';
@@ -27,7 +22,6 @@ import {
   SectionTabs,
   useSectionTab,
 } from '@/components/data-display/section-tabs';
-import HTMLTextPreview from '@/components/editors/html-text-preview';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import {
@@ -48,7 +42,13 @@ import {
   getProgramReviewsOptions,
   getTrainingProgramByUuidOptions,
 } from '@/services/client/@tanstack/react-query.gen';
-import { AssessmentTab, CurriculumTab, ReviewsTab } from '@/src/features/course-record';
+import {
+  AssessmentTab,
+  courseBulletLines,
+  OverviewTab,
+  ReviewsTab,
+} from '@/src/features/course-record';
+import { ProgramCurriculumPanel } from '@/src/features/program-record/ProgramCurriculumPanel';
 import { useUserDomain } from '@/src/features/dashboard/context/user-domain-context';
 import { EnrollmentLoadingState } from '@/src/features/dashboard/courses/components/EnrollmentLoadingState';
 import { roleScopedDashboardPath } from '@/src/features/dashboard/lib/active-domain-storage';
@@ -62,7 +62,6 @@ import {
   reviewerNameMap,
   reviewerUuids,
   toBlockReviews,
-  toCurriculumLessons,
 } from './class-hub';
 import {
   AssignmentQuizCounts,
@@ -240,14 +239,6 @@ export default function ClassProgramDetailsPage({
     useAssignmentsByLessonIds(lessonUuids);
   const { items: quizzes, isLoading: quizzesLoading } = useQuizzesByLessonIds(lessonUuids);
 
-  const curriculumByCourse = useMemo(() => {
-    const map: Record<string, ReturnType<typeof toCurriculumLessons>> = {};
-    for (const [uuid, lessons] of Object.entries(lessonsByCourse)) {
-      map[uuid] = toCurriculumLessons(lessons);
-    }
-    return map;
-  }, [lessonsByCourse]);
-
   const aggregatedRequirements = useMemo(
     () => programCourses.flatMap(course => course.training_requirements ?? []),
     [programCourses]
@@ -406,27 +397,25 @@ export default function ClassProgramDetailsPage({
         >
           <SectionTabPanel value='overview'>
             <div className='flex flex-col gap-[18px]'>
-              <ProgramAbout description={program.description} objectives={program.objectives} />
+              <OverviewTab
+                access={access}
+                description={program.description}
+                objectives={courseBulletLines(program.objectives)}
+                prerequisites={courseBulletLines(program.prerequisites)}
+                aboutHeading='About this program'
+                hideRequirements
+              />
               <ClassInstructorCard classData={classData} />
             </div>
           </SectionTabPanel>
 
           <SectionTabPanel value='curriculum'>
-            {programCourses.length === 0 ? (
-              <EmptyCard>No courses have been added to this program yet.</EmptyCard>
-            ) : (
-              <div className='flex flex-col gap-6'>
-                {programCourses.map((course, index) => (
-                  <section key={course.uuid ?? index} className='flex flex-col gap-3'>
-                    <CourseHeading index={index} name={course.name} />
-                    <CurriculumTab
-                      access={access}
-                      lessons={curriculumByCourse[course.uuid ?? ''] ?? []}
-                    />
-                  </section>
-                ))}
-              </div>
-            )}
+            <ProgramCurriculumPanel
+              courses={programCourses}
+              loading={programCoursesQuery.isLoading}
+              error={programCoursesQuery.error}
+              onRetry={() => programCoursesQuery.refetch()}
+            />
           </SectionTabPanel>
 
           <SectionTabPanel value='courses'>
@@ -507,76 +496,6 @@ export default function ClassProgramDetailsPage({
 }
 
 /* Panels ----------------------------------------------------------------------------- */
-
-function splitBullets(value?: string | null) {
-  if (!value) return [];
-  return value
-    .split(/\n|•|-/)
-    .map(item => item.trim())
-    .filter(Boolean)
-    .slice(0, 6);
-}
-
-function ProgramAbout({
-  description,
-  objectives,
-}: {
-  description?: string | null;
-  objectives?: string | null;
-}) {
-  const [expanded, setExpanded] = useState(false);
-  const learnings = splitBullets(objectives || description);
-  const long = (description?.length ?? 0) > 260;
-
-  return (
-    <div className='grid gap-[18px] xl:grid-cols-2'>
-      <section className='bg-card rounded-xl border px-5 py-[18px] shadow-sm'>
-        <h3 className='flex items-center gap-2 text-[15px] font-bold'>
-          <Sparkles className='text-primary size-4' aria-hidden />
-          About this program
-        </h3>
-        <div className='text-muted-foreground mt-2.5 max-w-prose text-sm leading-relaxed'>
-          <HTMLTextPreview
-            htmlContent={expanded || !long ? description || '' : (description ?? '').slice(0, 260)}
-          />
-          {long ? (
-            <button
-              type='button'
-              onClick={() => setExpanded(prev => !prev)}
-              className='text-primary hover:text-primary/80 mt-2 inline-flex items-center gap-1 text-sm font-medium transition-colors'
-            >
-              {expanded ? 'Show less' : 'Show more'}
-              {expanded ? (
-                <ChevronUp className='h-3.5 w-3.5' />
-              ) : (
-                <ChevronDown className='h-3.5 w-3.5' />
-              )}
-            </button>
-          ) : null}
-        </div>
-      </section>
-
-      <section className='bg-card rounded-xl border px-5 py-[18px] shadow-sm'>
-        <h3 className='mb-3 flex items-center gap-2 text-[15px] font-bold'>
-          <Target className='text-primary size-4' aria-hidden />
-          What you&apos;ll learn
-        </h3>
-        <ul className='grid gap-2 sm:grid-cols-2'>
-          {(learnings.length > 0 ? learnings : ['Learn the key concepts across this program']).map(
-            item => (
-              <li key={item} className='flex items-start gap-2'>
-                <CheckCircle2 className='text-success mt-0.5 h-4 w-4 shrink-0' />
-                <div className='text-muted-foreground text-sm'>
-                  <HTMLTextPreview htmlContent={item} />
-                </div>
-              </li>
-            )
-          )}
-        </ul>
-      </section>
-    </div>
-  );
-}
 
 function CourseHeading({ index, name }: { index: number; name?: string }) {
   return (

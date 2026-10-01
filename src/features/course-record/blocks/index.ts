@@ -17,62 +17,31 @@ export {
   type CourseClassFormatTone,
   type CourseClassRow,
   formatCourseDate,
-  formatCourseMoney
+  formatCourseMoney,
 } from './_shared';
-export {
-  AccessCard
-} from './AccessCard';
+export { AccessCard } from './AccessCard';
 export { ActionsCard, type CourseRailActionItem } from './ActionsCard';
-export {
-  ActivityTab
-} from './ActivityTab';
-export {
-  ApplicationStatusPanel
-} from './ApplicationStatusPanel';
+export { ActivityTab } from './ActivityTab';
+export { ApplicationStatusPanel } from './ApplicationStatusPanel';
 export { AssessmentTab } from './AssessmentTab';
-export {
-  ClassesTab
-} from './ClassesTab';
-export {
-  CommercialsTab,
-  type CourseOrderRow
-} from './CommercialsTab';
+export { ClassesTab } from './ClassesTab';
+export { CommercialsTab, type CourseOrderRow } from './CommercialsTab';
 export { CourseHero } from './CourseHero';
 export {
   courseContentKind,
   type CourseCurriculumItem,
   type CourseCurriculumLesson,
-  CurriculumTab
+  CurriculumTab,
 } from './CurriculumTab';
-export {
-  DeliveryTab
-} from './DeliveryTab';
-export {
-  EnrolPanel
-} from './EnrolPanel';
+export { DeliveryTab } from './DeliveryTab';
+export { EnrolPanel } from './EnrolPanel';
 export { GateBanner } from './GateBanner';
-export {
-  GlanceCard
-} from './GlanceCard';
-export {
-  KpiBand
-} from './KpiBand';
+export { GlanceCard } from './GlanceCard';
+export { KpiBand } from './KpiBand';
 export { LicenceCard } from './LicenceCard';
-export {
-  OpportunityPanel
-} from './OpportunityPanel';
-export {
-  courseBulletLines,
-  OverviewTab
-} from './OverviewTab';
-export {
-  type CourseApplicationRow,
-  OwnerDecisionsPanel
-} from './OwnerDecisionsPanel';
-export {
-  ProgressStrip
-} from './ProgressStrip';
-export {
-  ReviewsTab,
-  summarise,
-} from './ReviewsTab';
+export { OpportunityPanel } from './OpportunityPanel';
+export { courseBulletLines, OverviewTab } from './OverviewTab';
+export { type CourseApplicationRow, OwnerDecisionsPanel } from './OwnerDecisionsPanel';
+export { type ProgramCurriculumCourse, ProgramsCurriculumTab } from './ProgramsCurriculumTab';
+export { ProgressStrip } from './ProgressStrip';
+export { ReviewsTab, summarise } from './ReviewsTab';

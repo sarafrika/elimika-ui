@@ -231,6 +231,11 @@ interface OverviewTabProps extends CourseBlockAsyncProps {
   requirements?: readonly CourseTrainingRequirement[];
   /** Async state of the requirements query; it is a separate call from the course. */
   requirementsAsync?: CourseBlockAsyncProps;
+  /** Leaves out the training requirements card, for a page that gives them their own tab. */
+  hideRequirements?: boolean;
+
+  /** Heading of the description card. Defaults to "About this course". */
+  aboutHeading?: string;
 
   className?: string;
 }
@@ -244,6 +249,8 @@ export function OverviewTab({
   fitCards,
   requirements,
   requirementsAsync,
+  hideRequirements = false,
+  aboutHeading = 'About this course',
   loading,
   error,
   onRetry,
@@ -275,7 +282,7 @@ export function OverviewTab({
         <div className='flex flex-col gap-[18px]'>
           {description ? (
             <OverviewCard>
-              <CardHeading icon={<Sparkles className='size-4' />}>About this course</CardHeading>
+              <CardHeading icon={<Sparkles className='size-4' />}>{aboutHeading}</CardHeading>
               <HTMLTextPreview
                 htmlContent={description}
                 className='text-foreground/80 mt-2.5 text-sm leading-[1.65]'
@@ -345,41 +352,43 @@ export function OverviewTab({
       ) : null}
 
       {/* ── training requirements ───────────────────────────────────── */}
-      <OverviewCard>
-        <div className='mb-1 flex flex-wrap items-center justify-between gap-3'>
-          <CardHeading icon={<Briefcase className='size-4' />}>Training requirements</CardHeading>
-          <span className='text-muted-foreground text-xs'>What a delivery site must provide</span>
-        </div>
-
-        <AsyncSection
-          loading={requirementsAsync?.loading}
-          error={requirementsAsync?.error}
-          onRetry={requirementsAsync?.onRetry}
-          empty={groups.length === 0}
-          skeleton={<RequirementsSkeleton />}
-          errorTitle='Couldn’t load the training requirements'
-          emptyTitle='No requirements listed'
-          emptyDescription='The creator has not said what a delivery site must provide.'
-        >
-          <div className='mt-3 flex flex-col gap-4'>
-            {groups.map(group => (
-              <div key={group.key}>
-                <div className='text-muted-foreground mb-2 text-[11px] font-semibold tracking-[0.06em] uppercase'>
-                  {group.heading}
-                </div>
-                <div className='grid gap-2.5 sm:grid-cols-2'>
-                  {group.items.map((requirement, index) => (
-                    <RequirementCard
-                      key={requirement.uuid ?? `${group.key}-${index}`}
-                      requirement={requirement}
-                    />
-                  ))}
-                </div>
-              </div>
-            ))}
+      {hideRequirements ? null : (
+        <OverviewCard>
+          <div className='mb-1 flex flex-wrap items-center justify-between gap-3'>
+            <CardHeading icon={<Briefcase className='size-4' />}>Training requirements</CardHeading>
+            <span className='text-muted-foreground text-xs'>What a delivery site must provide</span>
           </div>
-        </AsyncSection>
-      </OverviewCard>
+
+          <AsyncSection
+            loading={requirementsAsync?.loading}
+            error={requirementsAsync?.error}
+            onRetry={requirementsAsync?.onRetry}
+            empty={groups.length === 0}
+            skeleton={<RequirementsSkeleton />}
+            errorTitle='Couldn’t load the training requirements'
+            emptyTitle='No requirements listed'
+            emptyDescription='The creator has not said what a delivery site must provide.'
+          >
+            <div className='mt-3 flex flex-col gap-4'>
+              {groups.map(group => (
+                <div key={group.key}>
+                  <div className='text-muted-foreground mb-2 text-[11px] font-semibold tracking-[0.06em] uppercase'>
+                    {group.heading}
+                  </div>
+                  <div className='grid gap-2.5 sm:grid-cols-2'>
+                    {group.items.map((requirement, index) => (
+                      <RequirementCard
+                        key={requirement.uuid ?? `${group.key}-${index}`}
+                        requirement={requirement}
+                      />
+                    ))}
+                  </div>
+                </div>
+              ))}
+            </div>
+          </AsyncSection>
+        </OverviewCard>
+      )}
     </div>
   );
 }
@@ -390,9 +399,7 @@ export function OverviewTab({
 
 function OverviewCard({ children, className }: { children: ReactNode; className?: string }) {
   return (
-    <section
-      className={cn('bg-card rounded-xl border px-5 py-[18px] shadow-sm', className)}
-    >
+    <section className={cn('bg-card rounded-xl border px-5 py-[18px] shadow-sm', className)}>
       {children}
     </section>
   );
@@ -586,10 +593,7 @@ function formatQuantity(quantity: number | undefined, unit: string | undefined):
   return `${quantity} ${quantity === 1 ? 'unit' : 'units'}`;
 }
 
-function hasAll(
-  required: readonly string[] | undefined,
-  vars: CourseFitVars | undefined
-): boolean {
+function hasAll(required: readonly string[] | undefined, vars: CourseFitVars | undefined): boolean {
   if (!required || required.length === 0) return true;
   if (!vars) return false;
   return required.every(name => {
