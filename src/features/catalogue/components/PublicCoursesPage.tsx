@@ -59,6 +59,7 @@ import {
 } from '@/src/features/catalogue/catalogue-search';
 import type { PublicCatalogueCourse } from '@/src/features/catalogue/types';
 import { useCatalogueSearch } from '@/src/features/catalogue/use-catalogue-search';
+import { WIDE_PUBLIC_CONTAINER } from '@/src/features/marketing/components/MarketingTopNav';
 import { CatalogueItemCard, CatalogueItemCardSkeleton } from './CatalogueItemCard';
 
 const SHOW_OPTIONS: { value: CatalogueShow; label: string }[] = [
@@ -78,7 +79,10 @@ const PRICE_OPTIONS = [
   { value: 'paid', label: 'Paid' },
 ] as const;
 
-const GRID = 'grid grid-cols-1 gap-4 sm:grid-cols-2 sm:gap-5 xl:grid-cols-3';
+// Phones get one column and tablets two; from desktop up the grid fits as many cards as
+// the width allows, so large and high-resolution screens fill out instead of crowding the middle.
+const GRID =
+  'grid grid-cols-1 gap-4 sm:grid-cols-2 sm:gap-5 xl:grid-cols-[repeat(auto-fill,minmax(290px,1fr))] 2xl:gap-6';
 
 type Totals = { courses?: number; programmes?: number };
 
@@ -388,7 +392,7 @@ export function PublicCoursesPage({
   }
 
   return (
-    <main className={cn(surfaceTheme.page, 'max-w-7xl px-4 pt-7 pb-14 sm:px-6 lg:px-6')}>
+    <main className={cn(surfaceTheme.page, WIDE_PUBLIC_CONTAINER, 'pt-7 pb-14')}>
       <div className='flex w-full flex-col gap-5'>
         <PageHeader
           eyebrow='Catalogue'
@@ -424,7 +428,7 @@ export function PublicCoursesPage({
         <div
           className={cn(
             'grid items-start gap-5',
-            !fallback && 'lg:grid-cols-[280px_minmax(0,1fr)]'
+            !fallback && 'lg:grid-cols-[280px_minmax(0,1fr)] 2xl:grid-cols-[300px_minmax(0,1fr)]'
           )}
         >
           {fallback ? null : <div className='hidden lg:sticky lg:top-24 lg:block'>{sidebar}</div>}

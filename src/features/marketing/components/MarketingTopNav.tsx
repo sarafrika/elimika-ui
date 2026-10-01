@@ -1,6 +1,5 @@
 'use client';
 
-import { useQuery } from '@tanstack/react-query';
 import { ShoppingCart } from 'lucide-react';
 import Image from 'next/image';
 import Link from 'next/link';
@@ -9,20 +8,17 @@ import LoginButton from '@/components/LoginButton';
 import { ThemeSwitcher } from '@/components/theme-switcher';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
+import { useSavedCart } from '@/hooks/use-saved-cart';
 import { cn } from '@/lib/utils';
-import { getCartOptions } from '@/services/client/@tanstack/react-query.gen';
 import { PublicSearch } from '@/src/features/search/components/public-search';
-import { useCartStore } from '@/store/cart-store';
 
-export function MarketingTopNav() {
+/** Wide public pages (the catalogue) use the screen up to 2400px instead of a 1280px column. */
+export const WIDE_PUBLIC_CONTAINER = 'max-w-[2400px] px-4 sm:px-6 xl:px-10 2xl:px-14';
+
+export function MarketingTopNav({ wide = false }: { wide?: boolean }) {
   const pathname = usePathname();
 
-  const { cartId: savedCartId } = useCartStore();
-  const { data: cartData } = useQuery({
-    ...getCartOptions({ path: { cartId: savedCartId ?? 'unset' } }),
-    enabled: !!savedCartId,
-    retry: 1,
-  });
+  const { data: cartData } = useSavedCart();
   const cartItemCount = cartData?.items?.length ?? 0;
 
   const navLinks: { label: string; href: string; external?: boolean }[] = [
@@ -36,7 +32,12 @@ export function MarketingTopNav() {
 
   return (
     <nav className='border-border bg-background/80 sticky top-0 z-40 border-b shadow-sm backdrop-blur-md'>
-      <div className='mx-auto flex w-full max-w-7xl items-center justify-between gap-4 px-6 py-4'>
+      <div
+        className={cn(
+          'mx-auto flex w-full items-center justify-between gap-4 py-4',
+          wide ? WIDE_PUBLIC_CONTAINER : 'max-w-7xl px-6'
+        )}
+      >
         <Link href='/' className='flex shrink-0 items-center gap-4 transition hover:opacity-90'>
           <Image
             alt='Elimika logo'
