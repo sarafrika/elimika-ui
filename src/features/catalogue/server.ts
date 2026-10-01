@@ -245,6 +245,7 @@ export const getPublicCourseDetail = async (
       thumbnail_url: record?.thumbnail_url ?? profile?.thumbnail_url ?? snapshot?.thumbnail_url,
       banner_url: record?.banner_url ?? profile?.banner_url,
       intro_video_url: record?.intro_video_url ?? profile?.intro_video_url,
+      difficulty_uuid: record?.difficulty_uuid ?? undefined,
       duration_hours: record?.duration_hours ?? profile?.duration_hours ?? snapshot?.duration_hours,
       duration_minutes:
         record?.duration_minutes ?? profile?.duration_minutes ?? snapshot?.duration_minutes,

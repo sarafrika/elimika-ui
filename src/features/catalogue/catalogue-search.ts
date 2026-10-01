@@ -42,6 +42,10 @@ export type CatalogueItem = {
   age_label?: string | null;
   price?: number | null;
   is_free?: boolean | null;
+  /** The lowest fee across the course's open classes; null or absent when none is open. */
+  price_from?: number | null;
+  /** How many classes of the course a learner can still join. */
+  open_class_count?: number | null;
   /** The title with `<em>` around the matches. Render with `<Highlight>`, never as HTML. */
   highlight?: string | null;
 };
