@@ -1,5 +1,4 @@
-import { Button, buttonVariants } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
+import { buttonVariants } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 import { CatalogueStatusCard } from '@/src/features/catalogue/components/CatalogueStatusCard';
 import {
@@ -11,6 +10,7 @@ import {
   toneFor,
 } from '@/src/features/marketing/components/discipline-tone';
 import { DISPLAY } from '@/src/features/marketing/components/display-font';
+import { HeroCourseSearch } from '@/src/features/marketing/components/HeroCourseSearch';
 import {
   HomeCatalogueFilterProvider,
   HomeCategoryChips,
@@ -31,7 +31,6 @@ import {
   CreditCard,
   GraduationCap,
   School,
-  Search,
   Users,
   Wallet,
 } from 'lucide-react';
@@ -226,29 +225,7 @@ export async function MarketingHomePage() {
                 Kenya. Enrol, pay in KES, and every skill you finish lands in your Skills Wallet.
               </p>
 
-              <form
-                action='/courses'
-                method='get'
-                role='search'
-                className='mt-7 flex max-w-[620px] flex-col gap-2.5 sm:flex-row 2xl:max-w-[720px]'
-              >
-                <div className='relative flex-1'>
-                  <Search
-                    className='text-muted-foreground pointer-events-none absolute top-1/2 left-4 size-[18px] -translate-y-1/2'
-                    aria-hidden='true'
-                  />
-                  <Input
-                    type='search'
-                    name='q'
-                    aria-label='Search courses, skills or trainers'
-                    placeholder='Search courses, skills or trainers'
-                    className='bg-card h-13 rounded-xl pr-4 pl-11 text-[15px] shadow-sm'
-                  />
-                </div>
-                <Button type='submit' className='h-13 rounded-xl px-7 text-[15px] font-semibold'>
-                  Search
-                </Button>
-              </form>
+              <HeroCourseSearch className='mt-7 flex max-w-[620px] flex-col gap-2.5 sm:flex-row 2xl:max-w-[720px]' />
 
               <div className='mt-6'>
                 <HomeCategoryChips />
