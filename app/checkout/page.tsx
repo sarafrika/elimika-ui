@@ -24,7 +24,6 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import { useForm, useWatch } from 'react-hook-form';
 import { toast } from 'sonner';
 import { z } from 'zod';
-
 import { PublicTopNav } from '@/components/PublicTopNav';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Badge } from '@/components/ui/badge';
@@ -37,11 +36,11 @@ import { Separator } from '@/components/ui/separator';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useUserProfile } from '@/context/profile-context';
 import { usePaymentMode } from '@/hooks/use-payment-mode';
+import { useSavedCart } from '@/hooks/use-saved-cart';
 import type { CartItemResponse } from '@/services/client';
 import {
   completeCheckoutMutation,
   getClassEnrolmentEligibilityOptions,
-  getCartOptions,
   getPaymentStatusOptions,
   payWithMpesaMutation,
   selectPaymentSessionMutation,
@@ -148,13 +147,7 @@ export default function CheckoutPage() {
     },
   });
 
-  // HeyAPI's path serializer leaves `{cartId}` literal in the URL when path value is null/empty.
-  // Use a sentinel string when no cartId; `enabled: false` blocks the actual fetch.
-  const cartQuery = useQuery({
-    ...getCartOptions({ path: { cartId: cartId ?? 'unset' } }),
-    enabled: !!cartId,
-    retry: 1,
-  });
+  const cartQuery = useSavedCart();
 
   const cart = cartQuery.data?.data ?? null;
   const cartItems = cart?.items ?? [];

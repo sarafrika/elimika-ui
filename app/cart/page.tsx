@@ -1,27 +1,7 @@
 // @ts-nocheck -- pre-existing @hey-api generated-client type drift (see memory: elimika-ui-typecheck)
 'use client';
 
-import { AsyncSection } from '@/components/data/async-section';
-import { PublicTopNav } from '@/components/PublicTopNav';
-import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
-import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Separator } from '@/components/ui/separator';
-import { Skeleton } from '@/components/ui/skeleton';
-import { useUserProfile } from '@/context/profile-context';
-import { usePaymentMode } from '@/hooks/use-payment-mode';
-import { getErrorMessage } from '@/lib/error-utils';
-import type { CartItemResponse } from '@/services/client';
-import {
-  completeCheckoutMutation,
-  getClassEnrolmentEligibilityOptions,
-  getCartOptions,
-  getCartQueryKey,
-  removeItemMutation,
-} from '@/services/client/@tanstack/react-query.gen';
-import { invalidateEnrollmentSuccessQueries } from '@/src/features/dashboard/courses/shared/enrollment-query-invalidation';
-import { useCartStore } from '@/store/cart-store';
-import { useMutation, useQueries, useQuery, useQueryClient } from '@tanstack/react-query';
+import { useMutation, useQueries, useQueryClient } from '@tanstack/react-query';
 import {
   ArrowLeft,
   ArrowRight,
@@ -35,6 +15,26 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useMemo, useState } from 'react';
 import { toast } from 'sonner';
+import { AsyncSection } from '@/components/data/async-section';
+import { PublicTopNav } from '@/components/PublicTopNav';
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Separator } from '@/components/ui/separator';
+import { Skeleton } from '@/components/ui/skeleton';
+import { useUserProfile } from '@/context/profile-context';
+import { usePaymentMode } from '@/hooks/use-payment-mode';
+import { useSavedCart } from '@/hooks/use-saved-cart';
+import { getErrorMessage } from '@/lib/error-utils';
+import type { CartItemResponse } from '@/services/client';
+import {
+  completeCheckoutMutation,
+  getCartQueryKey,
+  getClassEnrolmentEligibilityOptions,
+  removeItemMutation,
+} from '@/services/client/@tanstack/react-query.gen';
+import { invalidateEnrollmentSuccessQueries } from '@/src/features/dashboard/courses/shared/enrollment-query-invalidation';
+import { useCartStore } from '@/store/cart-store';
 
 const DEFAULT_CURRENCY = 'KES';
 const UUID_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
@@ -67,13 +67,7 @@ export default function CartPage() {
   const { paymentRequired } = usePaymentMode();
   const [enrolling, setEnrolling] = useState(false);
 
-  // HeyAPI's path serializer leaves `{cartId}` literal in the URL when path value is null/empty.
-  // Use a sentinel string when no cartId; `enabled: false` blocks the actual fetch.
-  const cartQuery = useQuery({
-    ...getCartOptions({ path: { cartId: cartId ?? 'unset' } }),
-    enabled: !!cartId,
-    retry: 1,
-  });
+  const cartQuery = useSavedCart();
 
   const cart = cartQuery?.data?.data ?? null;
   const cartItems = useMemo(() => cart?.items ?? [], [cart?.items]);
