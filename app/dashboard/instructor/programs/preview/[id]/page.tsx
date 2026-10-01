@@ -1,11 +1,25 @@
 // @ts-nocheck -- pre-existing @hey-api generated-client type drift (see memory: elimika-ui-typecheck)
 'use client';
 
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { BookOpen, CheckCheck, Clock, CoinsIcon, Trash, Users } from 'lucide-react';
+import { useParams } from 'next/navigation';
+import { useEffect, useState } from 'react';
+import { toast } from 'sonner';
 import DeleteModal from '@/components/custom-modals/delete-modal';
+import { type EntityFact, EntityHeaderCard } from '@/components/data-display/entity-header-card';
+import { surfaceTheme } from '@/components/data-display/page-shell';
+import {
+  type SectionTab,
+  SectionTabPanel,
+  SectionTabs,
+  useSectionTab,
+} from '@/components/data-display/section-tabs';
 import HTMLTextPreview from '@/components/editors/html-text-preview';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Skeleton } from '@/components/ui/skeleton';
 import Spinner from '@/components/ui/spinner';
 import { useBreadcrumb } from '@/context/breadcrumb-provider';
 import { useUserProfile } from '@/context/profile-context';
@@ -20,20 +34,19 @@ import {
   publishProgramMutation,
   removeProgramCourseMutation,
 } from '@/services/client/@tanstack/react-query.gen';
-import { invalidateContentModerationWorkflowQueries } from '@/src/features/dashboard/workflow-query-invalidation';
 import type { Course } from '@/services/client/types.gen';
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { BookOpen, Check, CheckCheck, Clock, CoinsIcon, Trash, Users } from 'lucide-react';
-import { useParams } from 'next/navigation';
-import { useEffect, useState } from 'react';
-import { toast } from 'sonner';
+import { invalidateContentModerationWorkflowQueries } from '@/src/features/dashboard/workflow-query-invalidation';
 import { AddProgramCourseDialog } from '../../../../course-creator/_components/program-management-form';
+
+const PREVIEW_TABS = ['overview', 'courses'] as const;
+type PreviewTab = (typeof PREVIEW_TABS)[number];
 
 export default function ProgramPreviewPage() {
   const params = useParams();
   const programId = params?.id as string;
   const qc = useQueryClient();
   const user = useUserProfile();
+  const { value: tab, setValue: setTab, hrefFor } = useSectionTab(PREVIEW_TABS, 'overview');
 
   // GET TRAINING PROGRAM BY ID
   const { data, isLoading, isFetching } = useQuery(
@@ -149,220 +162,226 @@ export default function ProgramPreviewPage() {
 
   if (isLoading)
     return (
-      <div className='flex flex-col gap-4 text-[12px] sm:text-[14px]'>
-        <div className='bg-muted h-20 w-full animate-pulse rounded'></div>
-        <div className='mt-10 flex items-center justify-center'>{/* <Spinner /> */}</div>
-        <div className='bg-muted h-16 w-full animate-pulse rounded'></div>
-        <div className='bg-muted h-12 w-full animate-pulse rounded'></div>
+      <div className='flex flex-col gap-4'>
+        <Skeleton className='h-44 w-full rounded-2xl' />
+        <Skeleton className='h-12 w-full rounded-2xl' />
+        <Skeleton className='h-64 w-full rounded-2xl' />
       </div>
     );
 
+  const courses = programCourses?.data ?? [];
+  const requirements = programRequirement?.data?.content ?? [];
+
+  const facts: EntityFact[] = [
+    {
+      key: 'size',
+      icon: Users,
+      label:
+        programData?.class_limit === 0
+          ? 'Unlimited students'
+          : `Up to ${programData?.class_limit ?? '—'} students`,
+    },
+  ];
+  if (programData?.total_duration_display) {
+    facts.push({
+      key: 'duration',
+      icon: Clock,
+      label: `Approx. ${programData.total_duration_display}`,
+    });
+  }
+  if (programData?.price != null) {
+    facts.push({ key: 'price', icon: CoinsIcon, value: programData.price, label: 'KES' });
+  }
+  facts.push({
+    key: 'courses',
+    icon: BookOpen,
+    value: courses.length,
+    label: courses.length === 1 ? 'course' : 'courses',
+  });
+
+  const tabs: SectionTab<PreviewTab>[] = [
+    { id: 'overview', label: 'Overview' },
+    { id: 'courses', label: 'Courses', count: courses.length },
+  ];
+
   return (
-    <div className='mx-auto mb-10 max-w-5xl space-y-10 sm:p-4'>
-      {/* Banner */}
-      {/* {cls.banner_url && (
-        <div className='overflow-hidden rounded-md shadow-md'>
-          <Image
-            src={"https://cdn.sarafrika.com/courses/java-advanced-thumb.jpg"}
-            alt={`${cls.name} banner`}
-            className='h-64 w-full bg-muted object-cover'
-            width={64}
-            height={64}
-          />
-        </div>
-      )} */}
-
-      {/* Header section */}
-      <div className='space-y-2'>
-        <h1 className='text-4xl font-bold tracking-tight'>{programData?.title}</h1>
-        <div className='text-muted-foreground text-sm'>
-          <HTMLTextPreview htmlContent={programData?.description as string} />
-        </div>
-        <div className='text-muted-foreground flex items-center gap-2 text-sm'>
-          <span>Instructor:</span>
-          <Badge variant='outline'>{user?.display_name}</Badge>
-          <span className='text-muted-foreground text-xs'>
-            ({user?.instructor?.professional_headline})
-          </span>
-        </div>
-      </div>
-
-      <div className='flex flex-col gap-4'>
-        <div className='text-muted-foreground flex items-center gap-2 text-sm'>
-          <span className='text-foreground font-semibold'>Program Size:</span>
-          <span className='flex items-center gap-1'>
-            <Users className='text-muted-foreground h-4 w-4' />
-            {programData?.class_limit === 0
-              ? 'Unlimited students'
-              : `Up to ${programData?.class_limit} students`}
-          </span>
-        </div>
-
-        <div className='text-muted-foreground flex items-center gap-2 text-sm'>
-          <span className='text-foreground font-semibold'>Duration:</span>
-          <span className='flex items-center gap-1'>
-            <Clock className='text-muted-foreground h-4 w-4' />
-            Approx. {programData?.total_duration_display}
-          </span>
-        </div>
-
-        <div className='text-muted-foreground flex items-center gap-2 text-sm'>
-          <span className='text-foreground font-semibold'>Price:</span>
-          <span className='flex items-center gap-1'>
-            <CoinsIcon className='text-muted-foreground h-3 w-3' />
-            {programData?.price} KES
-          </span>
-        </div>
-
-        <div className='text-muted-foreground flex flex-col items-start gap-2 text-sm'>
-          <span className='text-foreground font-semibold'>Pre-requisites:</span>
-          <span className='flex items-center gap-2'>
-            <Check className='text-muted-foreground h-4 w-4 min-w-4 self-start' />
-            {programData?.prerequisites}
-          </span>
-        </div>
-
-        <div className='text-muted-foreground flex w-full flex-col items-start gap-2 text-sm'>
-          <span className='text-foreground font-semibold'>Requirements:</span>
-          <div className='flex w-full flex-col gap-2'>
-            {programRequirement?.data?.content?.map((r, i) => (
-              <div key={i} className='group relative flex items-center gap-2 py-1'>
-                <CheckCheck className='text-muted-foreground h-4 w-4 min-w-4 self-start' />
-                <div>
-                  {r?.requirement_type} - {r.requirement_text}
-                </div>
-
-                {/* Delete Button (shown on hover) */}
-                <button
-                  onClick={() => handleDeleteRequirement(r.uuid)}
-                  className='text-muted-foreground hover:text-destructive absolute right-0 px-2 opacity-0 transition group-hover:opacity-100 hover:p-2'
-                  aria-label='Delete requirement'
-                >
-                  <Trash className='h-4 w-4' />
-                </button>
-              </div>
-            ))}
+    <div className='mb-10 flex flex-col gap-[18px]'>
+      <EntityHeaderCard
+        title={programData?.title ?? '—'}
+        eyebrow='Programme preview'
+        badges={
+          programData?.status ? (
+            <Badge variant='outline' className='capitalize'>
+              {String(programData.status).toLowerCase()}
+            </Badge>
+          ) : null
+        }
+        description={
+          programData?.description ? (
+            <div className='line-clamp-3'>
+              <HTMLTextPreview htmlContent={programData.description as string} />
+            </div>
+          ) : null
+        }
+        context={
+          <div className='text-muted-foreground flex flex-wrap items-center gap-2'>
+            <span>Instructor:</span>
+            <Badge variant='outline'>{user?.display_name}</Badge>
+            {user?.instructor?.professional_headline ? (
+              <span className='text-xs'>({user.instructor.professional_headline})</span>
+            ) : null}
           </div>
-        </div>
-      </div>
+        }
+        facts={facts}
+        aside={
+          <div className='bg-muted/40 flex h-full flex-col gap-3 rounded-[14px] border p-[18px]'>
+            <span className={surfaceTheme.sectionLabel}>Ready to go live?</span>
+            <p className='text-muted-foreground text-sm'>
+              Publishing sends the programme for review and lists it once approved.
+            </p>
+            <div className='grow' />
+            <Button onClick={handlePublishProgram} className='h-10 w-full rounded-[10px]'>
+              {publishProgram?.isPending ? <Spinner /> : 'Publish Program'}
+            </Button>
+          </div>
+        }
+      />
 
-      {/* Main Content */}
-      <div className='col-span-1 space-y-6 md:col-span-3'>
-        {/* Objectives */}
-        <Card>
-          <CardHeader>
-            <CardTitle>What You’ll Learn</CardTitle>
-            <CardDescription>Key learning outcomes of this program</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <HTMLTextPreview htmlContent={programData?.objectives as string} />
-          </CardContent>
-        </Card>
+      <SectionTabs
+        tabs={tabs}
+        value={tab}
+        onValueChange={setTab}
+        hrefFor={hrefFor}
+        label='Programme sections'
+        variant='pill'
+        sticky
+        listClassName='print:hidden'
+      >
+        <SectionTabPanel value='overview' className='print:data-[state=inactive]:block!'>
+          <div className='grid items-start gap-[22px] xl:grid-cols-2'>
+            <Card>
+              <CardHeader>
+                <CardTitle>What You’ll Learn</CardTitle>
+                <CardDescription>Key learning outcomes of this program</CardDescription>
+              </CardHeader>
+              <CardContent className='max-w-prose'>
+                <HTMLTextPreview htmlContent={programData?.objectives as string} />
+              </CardContent>
+            </Card>
 
-        {/* Courses */}
-        <Card>
-          <CardHeader>
-            <CardTitle>Course Content</CardTitle>
-            <CardDescription>A breakdown of courses in this program</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className='space-y-6'>
-              {programCourses?.data?.length === 0 ? (
-                <div className='bg-muted/20 rounded-md border py-4 text-center'>
-                  <BookOpen className='text-muted-foreground mx-auto h-8 w-8' />
-                  <h3 className='mt-4 text-base font-medium'>No added courses</h3>
-                  <p className='text-muted-foreground mt-2 text-sm'>
-                    You don&apos;t have any courses added to this program.
-                  </p>
-                  <Button className='mt-4' onClick={openAddClassCourseDialog} asChild>
-                    <p>Add Your First Course</p>
-                  </Button>
+            <Card>
+              <CardHeader>
+                <CardTitle>Before you start</CardTitle>
+                <CardDescription>Prerequisites and requirements</CardDescription>
+              </CardHeader>
+              <CardContent className='flex max-w-prose flex-col gap-4 text-sm'>
+                <div className='flex flex-col gap-1.5'>
+                  <span className='text-foreground font-semibold'>Pre-requisites</span>
+                  <span className='text-muted-foreground'>
+                    {programData?.prerequisites || 'None specified'}
+                  </span>
                 </div>
-              ) : (
-                programCourses?.data?.map((c, i) => (
-                  <div key={i} className='border-b pb-4 last:border-none last:pb-0'>
-                    <div className='flex items-center justify-between'>
+                <div className='flex flex-col gap-1.5'>
+                  <span className='text-foreground font-semibold'>Requirements</span>
+                  {requirements.length === 0 ? (
+                    <span className='text-muted-foreground'>None specified</span>
+                  ) : (
+                    requirements.map((r, i) => (
+                      <div
+                        key={r.uuid ?? i}
+                        className='group text-muted-foreground relative flex items-center gap-2 py-1 pr-8'
+                      >
+                        <CheckCheck className='h-4 w-4 min-w-4 self-start' />
+                        <div>
+                          {r?.requirement_type} - {r.requirement_text}
+                        </div>
+                        <button
+                          type='button'
+                          onClick={() => handleDeleteRequirement(r.uuid)}
+                          className='text-muted-foreground hover:text-destructive absolute right-0 px-2 opacity-0 transition group-hover:opacity-100 focus-visible:opacity-100'
+                          aria-label='Delete requirement'
+                        >
+                          <Trash className='h-4 w-4' />
+                        </button>
+                      </div>
+                    ))
+                  )}
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+        </SectionTabPanel>
+
+        <SectionTabPanel value='courses' className='print:data-[state=inactive]:block!'>
+          {courses.length === 0 ? (
+            <div className='bg-muted/20 rounded-md border py-8 text-center'>
+              <BookOpen className='text-muted-foreground mx-auto h-8 w-8' />
+              <h3 className='mt-4 text-base font-medium'>No added courses</h3>
+              <p className='text-muted-foreground mt-2 text-sm'>
+                You don&apos;t have any courses added to this program.
+              </p>
+              <Button className='mt-4' onClick={openAddClassCourseDialog}>
+                Add Your First Course
+              </Button>
+            </div>
+          ) : (
+            <div className={surfaceTheme.cardGrid}>
+              {courses.map((c, i) => (
+                <Card key={c.uuid ?? i} className='gap-3 py-4'>
+                  <CardContent className='flex flex-col gap-2 px-4'>
+                    <div className='flex items-start justify-between gap-2'>
                       <h3 className='flex items-center gap-2 text-base font-semibold'>
-                        <BookOpen className='text-primary h-4 w-4' />
+                        <BookOpen className='text-primary h-4 w-4 shrink-0' />
                         {c?.name}
                       </h3>
                       <button
+                        type='button'
                         onClick={() => confirmDelete(c)}
-                        className='text-destructive hover:text-destructive/80 mx-2 cursor-pointer'
+                        className='text-destructive hover:text-destructive/80 cursor-pointer'
                         aria-label='Remove course'
                       >
                         <Trash className='h-4 w-4' />
                       </button>
                     </div>
-
-                    <div className='text-muted-foreground line-clamp-3 w-[95%] text-sm'>
+                    <div className='text-muted-foreground line-clamp-3 text-sm'>
                       <HTMLTextPreview htmlContent={c?.description as string} />
                     </div>
-
-                    <Badge className='mt-1' variant='secondary'>
-                      {c?.total_duration_display}
-                    </Badge>
-                  </div>
-                ))
-              )}
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* Lessons */}
-        {/* <Card>
-          <CardHeader>
-            <CardTitle>Class Content</CardTitle>
-            <CardDescription>A breakdown of lessons in this program</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className='space-y-6'>
-              {cls.lessons.map((lesson, i) => (
-                <div key={i} className='border-b pb-4 last:border-none last:pb-0'>
-                  <h3 className='flex items-center gap-2 text-base font-semibold'>
-                    <Video className='h-4 w-4 text-primary' />
-                    {lesson.title}
-                  </h3>
-                  <p className='text-muted-foreground text-sm'>{lesson.description}</p>
-                  <Badge className='mt-1' variant='secondary'>
-                    {lesson.duration_display}
-                  </Badge>
-                </div>
+                    {c?.total_duration_display ? (
+                      <Badge className='w-fit' variant='secondary'>
+                        {c.total_duration_display}
+                      </Badge>
+                    ) : null}
+                  </CardContent>
+                </Card>
               ))}
             </div>
-          </CardContent>
-        </Card> */}
+          )}
+        </SectionTabPanel>
+      </SectionTabs>
 
-        <div className='flex w-full justify-end'>
-          <Button onClick={handlePublishProgram} className='min-w-30'>
-            {publishProgram?.isPending ? <Spinner /> : 'Publish Program'}
-          </Button>
-        </div>
+      <AddProgramCourseDialog
+        isOpen={isAddClassCourseDialog}
+        onOpenChange={setIsAddClassCourseDialog}
+        programId={programId}
+        onSuccess={() => {}}
+      />
 
-        <AddProgramCourseDialog
-          isOpen={isAddClassCourseDialog}
-          onOpenChange={setIsAddClassCourseDialog}
-          programId={programId}
-          onSuccess={() => {}}
-        />
-
-        {/* Confirm Remove Program Course Modal */}
-        <DeleteModal
-          open={isDialogOpen}
-          setOpen={setIsDialogOpen}
-          title='Confirm Deletion'
-          description={
-            <>
-              Are you sure you want to remove{' '}
-              <span className='font-semibold'>&quot;{courseToDelete?.name}&quot;</span> from this
-              program? This action cannot be undone.
-            </>
-          }
-          onConfirm={handleConfirm}
-          isLoading={removeProgramCourse?.isPending}
-          confirmText='Delete'
-        />
-      </div>
+      {/* Confirm Remove Program Course Modal */}
+      <DeleteModal
+        open={isDialogOpen}
+        setOpen={setIsDialogOpen}
+        title='Confirm Deletion'
+        description={
+          <>
+            Are you sure you want to remove{' '}
+            <span className='font-semibold'>&quot;{courseToDelete?.name}&quot;</span> from this
+            program? This action cannot be undone.
+          </>
+        }
+        onConfirm={handleConfirm}
+        isLoading={removeProgramCourse?.isPending}
+        confirmText='Delete'
+      />
     </div>
   );
 }
