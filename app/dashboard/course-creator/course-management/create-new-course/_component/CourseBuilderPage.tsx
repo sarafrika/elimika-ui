@@ -1,6 +1,25 @@
 // @ts-nocheck -- pre-existing @hey-api generated-client type drift (see memory: elimika-ui-typecheck)
 'use client';
 
+import { useMutation, useQueries, useQuery, useQueryClient } from '@tanstack/react-query';
+import {
+  AlertCircle,
+  BadgeDollarSign,
+  BookOpen,
+  CheckCheck,
+  CheckCircle,
+  CheckCircle2, Clock3,
+  File,
+  FileCheck,
+  GraduationCap,
+  Palette,
+  SlidersHorizontal,
+} from 'lucide-react';
+import Image from 'next/image';
+import { useRouter, useSearchParams } from 'next/navigation';
+import { useEffect, useRef, useState } from 'react';
+import { toast } from 'sonner';
+import illustration from '@/assets/illustration.jpg';
 import HTMLTextPreview from '@/components/editors/html-text-preview';
 import RichTextRenderer from '@/components/editors/richTextRenders';
 import { DifficultyLabel } from '@/components/labels/difficulty-label';
@@ -21,24 +40,6 @@ import {
 import type { Lesson } from '@/services/client/types.gen';
 import { invalidateContentModerationWorkflowQueries } from '@/src/features/dashboard/workflow-query-invalidation';
 import { isAuthenticatedMediaUrl, toAuthenticatedMediaUrl } from '@/src/lib/media-url';
-import { useMutation, useQueries, useQuery, useQueryClient } from '@tanstack/react-query';
-import {
-  AlertCircle,
-  BadgeDollarSign,
-  BookOpen,
-  CheckCheck,
-  CheckCircle,
-  CheckCircle2, Clock3,
-  File,
-  FileCheck,
-  GraduationCap,
-  Palette,
-  SlidersHorizontal,
-} from 'lucide-react';
-import Image from 'next/image';
-import { useRouter, useSearchParams } from 'next/navigation';
-import { useEffect, useRef, useState } from 'react';
-import { toast } from 'sonner';
 import AssessmentCreationForm from '../../../_components/assessment-creation-form';
 import CourseBrandingForm from '../../../_components/course-branding-form';
 import { CourseCreationForm, type CourseFormRef } from '../../../_components/course-creation-form';
@@ -512,8 +513,7 @@ export default function CourseBuilderPage() {
                     <div>
                       <Image
                         src={
-                          toAuthenticatedMediaUrl(course?.data?.banner_url as string) ||
-                          '/illustration.png'
+                          toAuthenticatedMediaUrl(course?.data?.banner_url as string) || illustration
                         }
                         alt='upload-banner'
                         width={128}

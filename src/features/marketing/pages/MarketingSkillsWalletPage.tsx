@@ -1,10 +1,11 @@
+import Image from 'next/image';
+import Link from 'next/link';
+import illustration from '@/assets/illustration.jpg';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
 import { HelpSection, SkillsFundSection } from '@/src/features/marketing/sections/PublicSections';
-import Image from 'next/image';
-import Link from 'next/link';
 
 const featureCards = [
   {
@@ -101,7 +102,7 @@ function Hero() {
       </div>
       <div className='border-border/60 bg-card relative overflow-hidden rounded-[32px] border shadow-xl'>
         <Image
-          src='/assets/illustration.jpg'
+          src={illustration}
           alt='Digital wallet illustration'
           width={800}
           height={600}

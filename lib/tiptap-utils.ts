@@ -2,6 +2,7 @@ import type { Node as TiptapNode } from '@tiptap/pm/model';
 import { NodeSelection } from '@tiptap/pm/state';
 import type { Editor } from '@tiptap/react';
 import { toast } from 'sonner';
+import illustration from '@/assets/illustration.jpg';
 
 export const MAX_FILE_SIZE = 5 * 1024 * 1024; // 5MB
 
@@ -244,7 +245,7 @@ export const handleImageUpload = async (
 
   if (typeof window === 'undefined' || typeof FileReader === 'undefined') {
     onProgress?.({ progress: 100 });
-    return '/logos/tiptap-ui-placeholder-image.jpg';
+    return illustration.src;
   }
 
   const readAsDataUrl = () =>
