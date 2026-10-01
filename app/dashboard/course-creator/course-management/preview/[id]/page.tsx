@@ -1,10 +1,12 @@
 'use client';
 
-import { useBreadcrumb } from '@/context/breadcrumb-provider';
-import { useCourseCreator } from '@/context/course-creator-context';
-import { CourseRecordPage } from '@/src/features/course-record';
 import { useParams } from 'next/navigation';
 import { useEffect } from 'react';
+import { surfaceTheme } from '@/components/data-display/page-shell';
+import { useBreadcrumb } from '@/context/breadcrumb-provider';
+import { useCourseCreator } from '@/context/course-creator-context';
+import { cn } from '@/lib/utils';
+import { CourseRecordPage } from '@/src/features/course-record';
 import { CourseCreatorEmptyState } from '../../../_components/loading-state';
 
 const COURSE_MANAGEMENT_HREF = '/dashboard/course-creator/course-management';
@@ -38,8 +40,11 @@ function Page() {
     return <CourseCreatorEmptyState />;
   }
 
-  return <CourseRecordPage className='my-6' courseUuid={courseUuid} backHref={COURSE_MANAGEMENT_HREF} />
-    ;
+  return (
+    <div className={cn(surfaceTheme.pageWide, 'flex flex-col gap-4 py-4 pb-10')}>
+      <CourseRecordPage courseUuid={courseUuid} backHref={COURSE_MANAGEMENT_HREF} />
+    </div>
+  );
 }
 
 export default Page;

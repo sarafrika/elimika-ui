@@ -17,11 +17,12 @@ import { Briefcase, Building2, CalendarPlus } from 'lucide-react';
 import Link from 'next/link';
 import { useParams } from 'next/navigation';
 import { useEffect } from 'react';
-
+import { surfaceTheme } from '@/components/data-display/page-shell';
 import { Button } from '@/components/ui/button';
 import { EmptyState } from '@/components/ui/empty-state';
 import { useBreadcrumb } from '@/context/breadcrumb-provider';
 import { useOrganisation } from '@/context/organisation-context';
+import { cn } from '@/lib/utils';
 import { CourseRecordPage } from '@/src/features/course-record';
 
 const COURSES_HREF = '/dashboard/organisation/courses';
@@ -61,7 +62,7 @@ export default function OrganisationCourseRecordRoute() {
   }
 
   return (
-    <div className='mx-auto w-full max-w-[1400px] space-y-4 px-3 py-4 sm:px-5 lg:px-6'>
+    <div className={cn(surfaceTheme.pageWide, 'flex flex-col gap-4 py-4 pb-10')}>
       <div className='flex flex-wrap items-center justify-end gap-2'>
         <Button asChild size='sm' variant='outline'>
           <Link href={NEW_CLASS_HREF}>

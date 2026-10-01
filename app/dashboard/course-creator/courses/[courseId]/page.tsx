@@ -17,7 +17,9 @@
 import { useParams } from 'next/navigation';
 import { useEffect } from 'react';
 
+import { surfaceTheme } from '@/components/data-display/page-shell';
 import { useBreadcrumb } from '@/context/breadcrumb-provider';
+import { cn } from '@/lib/utils';
 import { CourseRecordPage } from '@/src/features/course-record';
 import { CourseRecordRouteActions } from '@/src/features/dashboard/courses/components/CourseRecordRouteActions';
 
@@ -43,13 +45,13 @@ export default function CourseCreatorCatalogueCourseRecordRoute() {
   }, [replaceBreadcrumbs, courseUuid]);
 
   return (
-    <>
+    <div className={cn(surfaceTheme.pageWide, 'flex flex-col gap-4 py-4 pb-10')}>
       <CourseRecordRouteActions
         courseUuid={courseUuid}
         classesHref={`${CATALOGUE_HREF}/available-classes/${courseUuid}`}
         instructorsHref={`${CATALOGUE_HREF}/instructor?courseId=${courseUuid}`}
       />
       <CourseRecordPage courseUuid={courseUuid} backHref={CATALOGUE_HREF} />
-    </>
+    </div>
   );
 }

@@ -15,18 +15,20 @@
  * those sit beside it.
  */
 
-import { Button } from '@/components/ui/button';
-import { Card, CardContent } from '@/components/ui/card';
-import { useBreadcrumb } from '@/context/breadcrumb-provider';
-import { useInstructor } from '@/context/instructor-context';
-import { useUserProfile } from '@/context/profile-context';
-import { CourseRecordPage } from '@/src/features/course-record';
-import { absoluteUrl, publicCourseUrl } from '@/src/features/dashboard/lib/dashboard-url';
 import { CalendarPlus, Share2 } from 'lucide-react';
 import Link from 'next/link';
 import { useParams } from 'next/navigation';
 import { useEffect } from 'react';
 import { toast } from 'sonner';
+import { surfaceTheme } from '@/components/data-display/page-shell';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent } from '@/components/ui/card';
+import { useBreadcrumb } from '@/context/breadcrumb-provider';
+import { useInstructor } from '@/context/instructor-context';
+import { useUserProfile } from '@/context/profile-context';
+import { cn } from '@/lib/utils';
+import { CourseRecordPage } from '@/src/features/course-record';
+import { absoluteUrl, publicCourseUrl } from '@/src/features/dashboard/lib/dashboard-url';
 
 const MY_COURSES_HREF = '/dashboard/instructor/my-courses';
 
@@ -94,8 +96,8 @@ export default function InstructorMyCourseDetailsPage() {
   }
 
   return (
-    <div className='mx-auto w-full px-3 py-4 sm:px-5 lg:px-6'>
-      <div className='mb-4 flex flex-wrap items-center justify-end gap-2'>
+    <div className={cn(surfaceTheme.pageWide, 'flex flex-col gap-4 py-4 pb-10')}>
+      <div className='flex flex-wrap items-center justify-end gap-2'>
         <Button variant='outline' size='sm' className='h-8 rounded-[10px]' onClick={shareCourse}>
           <Share2 className='size-4' />
           Share

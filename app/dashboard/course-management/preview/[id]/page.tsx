@@ -33,7 +33,9 @@
 import { useParams } from 'next/navigation';
 import { useEffect } from 'react';
 
+import { surfaceTheme } from '@/components/data-display/page-shell';
 import { useBreadcrumb } from '@/context/breadcrumb-provider';
+import { cn } from '@/lib/utils';
 import { CourseRecordPage } from '@/src/features/course-record';
 
 export default function CourseManagementPreviewPage() {
@@ -53,5 +55,9 @@ export default function CourseManagementPreviewPage() {
     ]);
   }, [replaceBreadcrumbs, courseUuid]);
 
-  return <CourseRecordPage courseUuid={courseUuid} />;
+  return (
+    <div className={cn(surfaceTheme.pageWide, 'flex flex-col gap-4 py-4 pb-10')}>
+      <CourseRecordPage courseUuid={courseUuid} />
+    </div>
+  );
 }
