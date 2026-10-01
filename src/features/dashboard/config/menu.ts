@@ -206,6 +206,11 @@ export default {
           icon: Rocket,
         },
         {
+          title: 'Find classes',
+          url: '/dashboard/find-classes',
+          icon: MapPin,
+        },
+        {
           title: 'Learning Hub',
           url: '/dashboard/learning-hub',
           icon: BookOpen,
@@ -651,6 +656,11 @@ export default {
           title: 'Home - All courses',
           url: '/dashboard/all-courses',
           icon: School,
+        },
+        {
+          title: 'Find classes',
+          url: '/dashboard/find-classes',
+          icon: MapPin,
         },
         {
           title: 'Overview',
