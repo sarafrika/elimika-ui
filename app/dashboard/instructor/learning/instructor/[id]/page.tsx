@@ -1,6 +1,11 @@
 // @ts-nocheck -- pre-existing @hey-api generated-client type drift (see memory: elimika-ui-typecheck)
 'use client';
 
+import { useQueries, useQuery } from '@tanstack/react-query';
+import { BookOpen, Users } from 'lucide-react';
+import { useParams } from 'next/navigation';
+import type React from 'react';
+import { useEffect, useState } from 'react';
 import type { SearchInstructor } from '@/app/dashboard/_components/types';
 import { Card } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -8,13 +13,7 @@ import {
   getAllInstructorsOptions,
   getBookingOptions,
 } from '@/services/client/@tanstack/react-query.gen';
-import { useQueries, useQuery } from '@tanstack/react-query';
-import { BookOpen, Users } from 'lucide-react';
-import { useParams } from 'next/navigation';
-import type React from 'react';
-import { useEffect, useState } from 'react';
 import { useBreadcrumb } from '../../../../../../context/breadcrumb-provider';
-import type { ClassData } from '../../../../instructor/trainings/create-new/academic-period-form';
 import { InstructorDirectory } from '../../../../_components/instructor-directory';
 import { ManageBookings } from '../../../../_components/manage-bookings';
 
@@ -102,11 +101,7 @@ export type Booking = {
   notes?: string;
 };
 
-type Props = {
-  classes: ClassData[];
-};
-
-const InstructorBookingDashboard: React.FC<Props> = ({ classes }) => {
+const InstructorBookingDashboard = () => {
   const params = useParams();
   const courseId = params?.id as string;
   const { replaceBreadcrumbs } = useBreadcrumb();
@@ -562,7 +557,6 @@ const InstructorBookingDashboard: React.FC<Props> = ({ classes }) => {
         <TabsContent value='browse' className='mt-6'>
           <InstructorDirectory
             instructors={instructorDirectoryInstructors}
-            classes={classes}
             onBookingComplete={handleBookingComplete}
             courseId={courseId as string}
           />

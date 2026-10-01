@@ -1,6 +1,8 @@
 // @ts-nocheck -- pre-existing @hey-api generated-client type drift (see memory: elimika-ui-typecheck)
 'use client';
 
+import { Calendar, ChevronLeft, ChevronRight, Clock, Lock } from 'lucide-react';
+import { useState } from 'react';
 import {
   JOB_TIME_STYLES,
   type JobTimeDetail,
@@ -11,8 +13,6 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { dayjs } from '@/lib/date';
 import { JOB_TIME_LABELS, jobTimeKind } from '@/lib/instructor-job-time';
-import { Calendar, ChevronLeft, ChevronRight, Clock, Lock } from 'lucide-react';
-import { useState } from 'react';
 import { Badge } from '../../../../../components/ui/badge';
 import { EventModal } from './event-modal';
 import {
@@ -29,7 +29,6 @@ interface DailyAvailabilityGridProps {
   availabilityData: AvailabilityData;
   onAvailabilityUpdate: (data: AvailabilityData) => void;
   isEditing: boolean;
-  classes: unknown[];
 }
 
 type AvailabilitySlot = CalendarEvent & {
@@ -58,7 +57,6 @@ const SLOT_COLOR_MAP = {
 export function DailyAvailabilityGrid({
   availabilityData,
   onAvailabilityUpdate,
-  classes,
 }: DailyAvailabilityGridProps) {
   const [currentDate, setCurrentDate] = useState(new Date());
   const [isEventModalOpen, setIsEventModalOpen] = useState(false);
@@ -98,19 +96,6 @@ export function DailyAvailabilityGrid({
 
     if (slot) return mapEventTypeToStatus(slot.entry_type || 'SCHEDULED_INSTANCE');
 
-    const hasClass = classes.some(classItem => {
-      if (classItem.status !== 'published') return false;
-      return classItem.timetable.timeSlots.some(timeSlot => {
-        const classDate = new Date(date);
-        const isCorrectTime = timeSlot.startTime === time;
-        const isWithinPeriod =
-          classDate >= new Date(classItem.academicPeriod.startDate) &&
-          classDate <= new Date(classItem.academicPeriod.endDate);
-        return isCorrectTime && isWithinPeriod;
-      });
-    });
-
-    if (hasClass) return 'booked';
     return null;
   };
 

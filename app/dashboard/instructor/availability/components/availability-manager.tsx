@@ -31,7 +31,7 @@ import {
 import Spinner from '../../../../../components/ui/spinner';
 import { AvailabilityBooking } from './availability-booking';
 import { MonthlyAvailabilityGrid } from './monthly-availability-grid';
-import type { AvailabilityClassData, AvailabilityData } from './types';
+import type { AvailabilityData } from './types';
 import { WeeklyAvailabilityGrid } from './weekly-availability-grid';
 import { YearlyAvailabilityGrid } from './yearly-availability-grid';
 
@@ -56,13 +56,11 @@ const availabilitySettings = {
 interface AvailabilityManagerProps {
   availabilityData: AvailabilityData;
   onAvailabilityUpdate: (data: AvailabilityData) => void;
-  classes: AvailabilityClassData[];
 }
 
 export default function AvailabilityManager({
   availabilityData,
   onAvailabilityUpdate,
-  classes: _classes,
 }: AvailabilityManagerProps) {
   const user = useUserProfile();
   const qc = useQueryClient();
@@ -382,7 +380,6 @@ export default function AvailabilityManager({
                 availabilityData={availabilityData}
                 onAvailabilityUpdate={onAvailabilityUpdate}
                 isEditing={isEditing}
-                classes={[]}
               />
             </TabsContent>
 
@@ -391,7 +388,6 @@ export default function AvailabilityManager({
                 availabilityData={availabilityData}
                 onAvailabilityUpdate={onAvailabilityUpdate}
                 isEditing={isEditing}
-                classes={[]}
               />
             </TabsContent>
 

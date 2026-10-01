@@ -1,5 +1,5 @@
-import { type ApiDateInput, dayjs, parseApiDate, resolveDisplayZone } from '@/lib/date';
 import type { JobTimeDetail } from '@/components/instructor/job-time';
+import { type ApiDateInput, dayjs, parseApiDate, resolveDisplayZone } from '@/lib/date';
 import { JOB_HOLD_ENTRY, jobTimeKind, jobTimeTitle } from '@/lib/instructor-job-time';
 import type {
   EntryTypeEnum2 as EntryTypeEnum,
@@ -63,60 +63,6 @@ export type ClassScheduleItem = {
   organisation_name?: string | null;
   job_uuid?: string | null;
 };
-
-export type AvailabilityClassData = {
-  status?: string;
-  classTitle: string;
-  timetable: {
-    timeSlots: Array<{
-      day: string;
-    }>;
-  };
-  academicPeriod: {
-    startDate: string;
-    endDate: string;
-  };
-};
-
-// export function transformAvailabilityArray(dataArray: unknown[]): AvailabilitySlot[] {
-//   const dayMap = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
-
-//   return dataArray?.map(data => {
-//     let day: string;
-
-//     if (data.specific_date) {
-//       const date = new Date(data.specific_date);
-//       day = dayMap[date.getDay()] || 'Unknown';
-//     } else if (data.day_of_week !== null && data.day_of_week !== undefined) {
-//       day = dayMap[data.day_of_week] || 'Unknown';
-//     } else {
-//       day = 'Unknown';
-//     }
-
-//     const startDateTime = data.specific_date
-//       ? `${new Date(data.specific_date).toISOString().slice(0, 10)}T${data.start_time?.slice(0, 5)}:00`
-//       : undefined;
-
-//     const endDateTime = data.specific_date
-//       ? `${new Date(data.specific_date).toISOString().slice(0, 10)}T${data.end_time?.slice(0, 5)}:00`
-//       : undefined;
-
-//     return {
-//       id: data.uuid,
-//       day,
-//       startTime: data.start_time?.slice(0, 5),
-//       endTime: data.end_time?.slice(0, 5),
-//       status: data.is_available ? 'available' : 'unavailable',
-//       recurring: data.availability_type === 'weekly' || data.availability_type === 'daily',
-//       note: data.availability_description || '',
-//       is_available: data.is_available,
-//       custom_pattern: data.custom_pattern || '',
-//       date: data.specific_date ? new Date(data.specific_date) : undefined,
-//       startDateTime,
-//       endDateTime,
-//     };
-//   });
-// }
 
 type CalendarInstants = Pick<
   CalendarEvent,

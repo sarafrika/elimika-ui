@@ -1,10 +1,10 @@
 'use client';
 
+import { Calendar, Info } from 'lucide-react';
+import { useState } from 'react';
 import { JobTimeLegend } from '@/components/instructor/job-time';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Calendar, Info } from 'lucide-react';
-import { useState } from 'react';
 import { DailyAvailabilityGrid } from '../../availability/components/daily-availability-grid';
 import { MonthlyAvailabilityGrid } from '../../availability/components/monthly-availability-grid';
 import type { AvailabilityData } from '../../availability/components/types';
@@ -88,7 +88,6 @@ export default function TimetableManager({
                 availabilityData={availabilityData}
                 onAvailabilityUpdate={onAvailabilityUpdate}
                 isEditing={isEditing}
-                classes={[]}
               />
             </TabsContent>
 
@@ -97,7 +96,6 @@ export default function TimetableManager({
                 availabilityData={availabilityData}
                 onAvailabilityUpdate={onAvailabilityUpdate}
                 isEditing={isEditing}
-                classes={[]}
               />
             </TabsContent>
 
@@ -106,7 +104,6 @@ export default function TimetableManager({
                 availabilityData={availabilityData}
                 onAvailabilityUpdate={onAvailabilityUpdate}
                 isEditing={isEditing}
-                classes={[]}
               />
             </TabsContent>
           </Tabs>
