@@ -1,6 +1,15 @@
 // @ts-nocheck -- pre-existing @hey-api generated-client type drift (see memory: elimika-ui-typecheck)
 'use client';
 
+import {
+  type EntityFact,
+  EntityHeaderCard,
+  type SectionTab,
+  SectionTabPanel,
+  SectionTabs,
+  surfaceTheme,
+  useSectionTab,
+} from '@/components/data-display';
 import { Badge } from '@/components/ui/badge';
 import { Card } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -13,7 +22,7 @@ import {
   TableRow,
 } from '@/components/ui/table';
 import { useInstructor } from '@/context/instructor-context';
-import { elimikaDesignSystem } from '@/lib/design-system';
+import { cn } from '@/lib/utils';
 import type { ClassDefinition, Enrollment } from '@/services/client';
 import {
   getClassDefinitionsForInstructorOptions,
@@ -23,7 +32,17 @@ import {
 } from '@/services/client/@tanstack/react-query.gen';
 import { useQueries, useQuery } from '@tanstack/react-query';
 import { format } from 'date-fns';
-import { BookOpen, Calendar, CheckCircle2, Clock, MoveLeft, Users, XCircle } from 'lucide-react';
+import {
+  BookOpen,
+  Calendar,
+  CheckCircle2,
+  ClipboardList,
+  Clock,
+  MoveLeft,
+  Percent,
+  Users,
+  XCircle,
+} from 'lucide-react';
 import Link from 'next/link';
 import { useParams, useSearchParams } from 'next/navigation';
 import { useEffect, useMemo, useState } from 'react';
@@ -52,6 +71,12 @@ type StudentEnrollmentDetail = {
   markedSessions: number;
   pendingSessions: number;
 };
+
+const ENROLLMENT_TABS = ['courses', 'summary'] as const;
+type EnrollmentTab = (typeof ENROLLMENT_TABS)[number];
+
+/** Hidden panels still print. */
+const PANEL = 'print:block!';
 
 type InstructorClass = ClassDefinition;
 type EnrollmentRecord = Enrollment;
@@ -108,6 +133,9 @@ const getAttendanceBadge = (session: EnrollmentSession) => {
   );
 };
 
+/** Course list beside the selected course's sessions; the list keeps a readable width. */
+const MASTER_DETAIL = 'grid items-start gap-6 xl:grid-cols-[minmax(340px,1fr)_minmax(0,2fr)]';
+
 const EnrollmentDetails = () => {
   const instructor = useInstructor();
   const params = useParams();
@@ -117,6 +145,7 @@ const EnrollmentDetails = () => {
   const studentId = params?.id as string;
   const initialCourseId = searchParams.get('courseId');
   const [selectedCourseId, setSelectedCourseId] = useState<string | null>(initialCourseId);
+  const { value: tab, setValue: setTab, hrefFor } = useSectionTab(ENROLLMENT_TABS, 'courses');
 
   useEffect(() => {
     replaceBreadcrumbs([
@@ -276,9 +305,22 @@ const EnrollmentDetails = () => {
     scheduleQueries.some(query => query.isError);
 
   const student = studentData?.data;
+  const overallRate =
+    markedSessions > 0 ? `${Math.round((attendedSessions / markedSessions) * 100)}%` : 'N/A';
+  const facts: EntityFact[] = [
+    { key: 'courses', icon: BookOpen, value: enrollmentDetails.length, label: 'courses' },
+    { key: 'sessions', icon: Calendar, value: totalSessions, label: 'total sessions' },
+    { key: 'attended', icon: CheckCircle2, value: attendedSessions, label: 'attended' },
+    { key: 'pending', icon: Clock, value: pendingSessions, label: 'pending' },
+    { key: 'rate', icon: Percent, value: overallRate, label: 'attendance rate' },
+  ];
+  const tabs: SectionTab<EnrollmentTab>[] = [
+    { id: 'courses', label: 'Courses', icon: BookOpen, count: enrollmentDetails.length },
+    { id: 'summary', label: 'Summary', icon: ClipboardList },
+  ];
 
   return (
-    <div className={`${elimikaDesignSystem.components.pageContainer} space-y-6 px-4 sm:px-6`}>
+    <div className={cn(surfaceTheme.pageWide, 'flex flex-col gap-[18px] pt-4 pb-10 sm:pt-6')}>
       <Link
         className='text-muted-foreground hover:text-foreground flex max-w-fit items-center gap-2 py-1.5 text-sm'
         href='/dashboard/instructor/enrollments'
@@ -286,73 +328,16 @@ const EnrollmentDetails = () => {
         <MoveLeft className='h-4 w-4' /> Back
       </Link>
 
-      <section>
-        {isLoading ? (
-          <div className='space-y-2'>
-            <Skeleton className='h-8 w-64' />
-            <Skeleton className='h-4 w-80' />
-          </div>
-        ) : (
-          <div className='space-y-1'>
-            <h1 className='text-foreground text-xl font-bold sm:text-2xl'>
-              {student?.full_name || 'Student Enrollment'}
-            </h1>
-            <p className='text-muted-foreground text-sm'>
-              Courses this student is enrolled in under your instruction.
-            </p>
-          </div>
-        )}
-      </section>
-
-      <div className='grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4'>
-        <Card className='p-4'>
-          <div className='flex items-center gap-3'>
-            <div className='bg-primary/10 rounded-full p-3'>
-              <BookOpen className='text-primary h-5 w-5' />
-            </div>
-            <div>
-              <p className='text-muted-foreground text-xs'>Courses</p>
-              <p className='text-foreground text-2xl font-bold'>{enrollmentDetails.length}</p>
-            </div>
-          </div>
-        </Card>
-
-        <Card className='p-4'>
-          <div className='flex items-center gap-3'>
-            <div className='bg-chart-1/10 rounded-full p-3'>
-              <Calendar className='text-chart-1 h-5 w-5' />
-            </div>
-            <div>
-              <p className='text-muted-foreground text-xs'>Total Sessions</p>
-              <p className='text-foreground text-2xl font-bold'>{totalSessions}</p>
-            </div>
-          </div>
-        </Card>
-
-        <Card className='p-4'>
-          <div className='flex items-center gap-3'>
-            <div className='bg-success/10 rounded-full p-3'>
-              <CheckCircle2 className='text-success h-5 w-5' />
-            </div>
-            <div>
-              <p className='text-muted-foreground text-xs'>Attended</p>
-              <p className='text-foreground text-2xl font-bold'>{attendedSessions}</p>
-            </div>
-          </div>
-        </Card>
-
-        <Card className='p-4'>
-          <div className='flex items-center gap-3'>
-            <div className='bg-warning/10 rounded-full p-3'>
-              <Clock className='text-warning h-5 w-5' />
-            </div>
-            <div>
-              <p className='text-muted-foreground text-xs'>Pending</p>
-              <p className='text-foreground text-2xl font-bold'>{pendingSessions}</p>
-            </div>
-          </div>
-        </Card>
-      </div>
+      {isLoading ? (
+        <Skeleton className='h-[150px] w-full rounded-2xl' />
+      ) : (
+        <EntityHeaderCard
+          eyebrow='Student enrollment'
+          title={student?.full_name || 'Student Enrollment'}
+          description='Courses this student is enrolled in under your instruction.'
+          facts={facts}
+        />
+      )}
 
       {hasError ? (
         <Card className='p-8 text-center'>
@@ -367,7 +352,7 @@ const EnrollmentDetails = () => {
           </p>
         </Card>
       ) : isLoading ? (
-        <div className='grid gap-6 xl:grid-cols-[1.1fr_1.4fr]'>
+        <div className={MASTER_DETAIL}>
           <Card className='p-4'>
             <div className='space-y-3'>
               {Array.from({ length: 3 }).map((_, index) => (
@@ -394,193 +379,208 @@ const EnrollmentDetails = () => {
           </p>
         </Card>
       ) : (
-        <div className='grid gap-6 xl:grid-cols-[1.1fr_1.4fr]'>
-          <Card className='p-4'>
-            <div className='mb-4'>
-              <h2 className='text-foreground text-lg font-semibold'>Enrolled Courses</h2>
-              <p className='text-muted-foreground text-sm'>
-                Select a course to inspect its enrollment sessions and attendance.
-              </p>
-            </div>
-
-            <div className='space-y-3'>
-              {enrollmentDetails.map(enrollment => {
-                const attendanceRate =
-                  enrollment.markedSessions > 0
-                    ? Math.round((enrollment.attendedSessions / enrollment.markedSessions) * 100)
-                    : null;
-
-                return (
-                  <button
-                    key={enrollment.courseId}
-                    type='button'
-                    onClick={() => setSelectedCourseId(enrollment.courseId)}
-                    className={`border-border/50 w-full rounded-xl border p-4 text-left transition-colors ${
-                      selectedEnrollment?.courseId === enrollment.courseId
-                        ? 'border-primary bg-primary/5'
-                        : 'hover:bg-accent/5'
-                    }`}
-                  >
-                    <div className='flex items-start justify-between gap-3'>
-                      <div className='min-w-0 space-y-2'>
-                        <h3 className='text-foreground truncate font-semibold'>
-                          {enrollment.courseName}
-                        </h3>
-                        <div>{getEnrollmentBadge(enrollment.status)}</div>
-                      </div>
-                      <span className='text-muted-foreground text-xs'>
-                        {enrollment.sessionCount} session
-                        {enrollment.sessionCount === 1 ? '' : 's'}
-                      </span>
-                    </div>
-
-                    <div className='text-muted-foreground mt-3 grid gap-2 text-xs sm:grid-cols-3'>
-                      <div className='bg-muted/50 rounded-lg px-3 py-2'>
-                        <span className='block'>Attendance</span>
-                        <span className='text-foreground font-medium'>
-                          {enrollment.attendedSessions}/{enrollment.markedSessions || 0} marked
-                        </span>
-                      </div>
-                      <div className='bg-muted/50 rounded-lg px-3 py-2'>
-                        <span className='block'>Pending</span>
-                        <span className='text-foreground font-medium'>
-                          {enrollment.pendingSessions} session
-                          {enrollment.pendingSessions === 1 ? '' : 's'}
-                        </span>
-                      </div>
-                      <div className='bg-muted/50 rounded-lg px-3 py-2'>
-                        <span className='block'>Rate</span>
-                        <span className='text-foreground font-medium'>
-                          {attendanceRate === null ? 'N/A' : `${attendanceRate}%`}
-                        </span>
-                      </div>
-                    </div>
-                  </button>
-                );
-              })}
-            </div>
-          </Card>
-
-          <Card>
-            <div className='p-4 sm:p-6'>
-              <div className='mb-4 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between'>
-                <div>
-                  <h2 className='text-foreground text-lg font-semibold'>
-                    {selectedEnrollment?.courseName || 'Course Details'}
-                  </h2>
+        <SectionTabs
+          tabs={tabs}
+          value={tab}
+          onValueChange={setTab}
+          hrefFor={hrefFor}
+          label='Enrollment sections'
+          sticky
+          listClassName='bg-background'
+        >
+          <SectionTabPanel value='courses' className={PANEL}>
+            <div className={MASTER_DETAIL}>
+              <Card className='p-4'>
+                <div className='mb-4'>
+                  <h2 className='text-foreground text-lg font-semibold'>Enrolled Courses</h2>
                   <p className='text-muted-foreground text-sm'>
-                    Session-level attendance and enrollment history.
+                    Select a course to inspect its enrollment sessions and attendance.
                   </p>
                 </div>
-                {selectedEnrollment ? getEnrollmentBadge(selectedEnrollment.status) : null}
-              </div>
 
-              {selectedEnrollment ? (
-                <>
-                  <div className='mb-4 grid gap-3 sm:grid-cols-3'>
-                    <div className='bg-muted/50 rounded-xl p-3'>
-                      <p className='text-muted-foreground text-xs'>Sessions</p>
-                      <p className='text-foreground text-xl font-semibold'>
-                        {selectedEnrollment.sessionCount}
+                <div className='space-y-3'>
+                  {enrollmentDetails.map(enrollment => {
+                    const attendanceRate =
+                      enrollment.markedSessions > 0
+                        ? Math.round(
+                            (enrollment.attendedSessions / enrollment.markedSessions) * 100
+                          )
+                        : null;
+
+                    return (
+                      <button
+                        key={enrollment.courseId}
+                        type='button'
+                        onClick={() => setSelectedCourseId(enrollment.courseId)}
+                        className={`border-border/50 w-full rounded-xl border p-4 text-left transition-colors ${
+                          selectedEnrollment?.courseId === enrollment.courseId
+                            ? 'border-primary bg-primary/5'
+                            : 'hover:bg-accent/5'
+                        }`}
+                      >
+                        <div className='flex items-start justify-between gap-3'>
+                          <div className='min-w-0 space-y-2'>
+                            <h3 className='text-foreground truncate font-semibold'>
+                              {enrollment.courseName}
+                            </h3>
+                            <div>{getEnrollmentBadge(enrollment.status)}</div>
+                          </div>
+                          <span className='text-muted-foreground text-xs'>
+                            {enrollment.sessionCount} session
+                            {enrollment.sessionCount === 1 ? '' : 's'}
+                          </span>
+                        </div>
+
+                        <div className='text-muted-foreground mt-3 grid gap-2 text-xs sm:grid-cols-3'>
+                          <div className='bg-muted/50 rounded-lg px-3 py-2'>
+                            <span className='block'>Attendance</span>
+                            <span className='text-foreground font-medium'>
+                              {enrollment.attendedSessions}/{enrollment.markedSessions || 0} marked
+                            </span>
+                          </div>
+                          <div className='bg-muted/50 rounded-lg px-3 py-2'>
+                            <span className='block'>Pending</span>
+                            <span className='text-foreground font-medium'>
+                              {enrollment.pendingSessions} session
+                              {enrollment.pendingSessions === 1 ? '' : 's'}
+                            </span>
+                          </div>
+                          <div className='bg-muted/50 rounded-lg px-3 py-2'>
+                            <span className='block'>Rate</span>
+                            <span className='text-foreground font-medium'>
+                              {attendanceRate === null ? 'N/A' : `${attendanceRate}%`}
+                            </span>
+                          </div>
+                        </div>
+                      </button>
+                    );
+                  })}
+                </div>
+              </Card>
+
+              <Card>
+                <div className='p-4 sm:p-6'>
+                  <div className='mb-4 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between'>
+                    <div>
+                      <h2 className='text-foreground text-lg font-semibold'>
+                        {selectedEnrollment?.courseName || 'Course Details'}
+                      </h2>
+                      <p className='text-muted-foreground text-sm'>
+                        Session-level attendance and enrollment history.
                       </p>
                     </div>
-                    <div className='bg-muted/50 rounded-xl p-3'>
-                      <p className='text-muted-foreground text-xs'>Marked</p>
-                      <p className='text-foreground text-xl font-semibold'>
-                        {selectedEnrollment.markedSessions}
-                      </p>
-                    </div>
-                    <div className='bg-muted/50 rounded-xl p-3'>
-                      <p className='text-muted-foreground text-xs'>Attendance Rate</p>
-                      <p className='text-foreground text-xl font-semibold'>
-                        {selectedEnrollment.markedSessions > 0
-                          ? `${Math.round(
-                              (selectedEnrollment.attendedSessions /
-                                selectedEnrollment.markedSessions) *
-                                100
-                            )}%`
-                          : 'N/A'}
-                      </p>
-                    </div>
+                    {selectedEnrollment ? getEnrollmentBadge(selectedEnrollment.status) : null}
                   </div>
 
-                  {selectedEnrollment.sessions.length === 0 ? (
+                  {selectedEnrollment ? (
+                    <>
+                      <div className='mb-4 grid gap-3 sm:grid-cols-3'>
+                        <div className='bg-muted/50 rounded-xl p-3'>
+                          <p className='text-muted-foreground text-xs'>Sessions</p>
+                          <p className='text-foreground text-xl font-semibold'>
+                            {selectedEnrollment.sessionCount}
+                          </p>
+                        </div>
+                        <div className='bg-muted/50 rounded-xl p-3'>
+                          <p className='text-muted-foreground text-xs'>Marked</p>
+                          <p className='text-foreground text-xl font-semibold'>
+                            {selectedEnrollment.markedSessions}
+                          </p>
+                        </div>
+                        <div className='bg-muted/50 rounded-xl p-3'>
+                          <p className='text-muted-foreground text-xs'>Attendance Rate</p>
+                          <p className='text-foreground text-xl font-semibold'>
+                            {selectedEnrollment.markedSessions > 0
+                              ? `${Math.round(
+                                  (selectedEnrollment.attendedSessions /
+                                    selectedEnrollment.markedSessions) *
+                                    100
+                                )}%`
+                              : 'N/A'}
+                          </p>
+                        </div>
+                      </div>
+
+                      {selectedEnrollment.sessions.length === 0 ? (
+                        <div className='py-10 text-center'>
+                          <Calendar className='text-muted-foreground mx-auto mb-3 h-10 w-10' />
+                          <p className='text-foreground text-lg font-medium'>
+                            No session records yet
+                          </p>
+                          <p className='text-muted-foreground text-sm'>
+                            Session details will appear here once attendance records are available.
+                          </p>
+                        </div>
+                      ) : (
+                        <div className='overflow-x-auto'>
+                          <Table>
+                            <TableHeader>
+                              <TableRow>
+                                <TableHead className='w-[50px]'>#</TableHead>
+                                <TableHead>Session ID</TableHead>
+                                <TableHead>Enrollment</TableHead>
+                                <TableHead>Attendance</TableHead>
+                                <TableHead>Marked Date</TableHead>
+                              </TableRow>
+                            </TableHeader>
+                            <TableBody>
+                              {selectedEnrollment.sessions.map((session, index) => (
+                                <TableRow
+                                  key={session.uuid || session.scheduledInstanceUuid || index}
+                                >
+                                  <TableCell className='font-medium'>{index + 1}</TableCell>
+                                  <TableCell className='font-mono text-xs'>
+                                    {session.scheduledInstanceUuid
+                                      ? `${session.scheduledInstanceUuid.slice(0, 8)}...`
+                                      : 'Unavailable'}
+                                  </TableCell>
+                                  <TableCell>{getEnrollmentBadge(session.status)}</TableCell>
+                                  <TableCell>{getAttendanceBadge(session)}</TableCell>
+                                  <TableCell>
+                                    {session.attendanceMarkedAt ? (
+                                      <span className='text-sm'>
+                                        {format(session.attendanceMarkedAt, 'MMM dd, yyyy HH:mm')}
+                                      </span>
+                                    ) : (
+                                      <span className='text-muted-foreground text-sm'>
+                                        Not marked
+                                      </span>
+                                    )}
+                                  </TableCell>
+                                </TableRow>
+                              ))}
+                            </TableBody>
+                          </Table>
+                        </div>
+                      )}
+                    </>
+                  ) : (
                     <div className='py-10 text-center'>
-                      <Calendar className='text-muted-foreground mx-auto mb-3 h-10 w-10' />
-                      <p className='text-foreground text-lg font-medium'>No session records yet</p>
+                      <BookOpen className='text-muted-foreground mx-auto mb-3 h-10 w-10' />
+                      <p className='text-foreground text-lg font-medium'>Select a course</p>
                       <p className='text-muted-foreground text-sm'>
-                        Session details will appear here once attendance records are available.
+                        Choose one of the enrolled courses to inspect session details.
                       </p>
                     </div>
-                  ) : (
-                    <div className='overflow-x-auto'>
-                      <Table>
-                        <TableHeader>
-                          <TableRow>
-                            <TableHead className='w-[50px]'>#</TableHead>
-                            <TableHead>Session ID</TableHead>
-                            <TableHead>Enrollment</TableHead>
-                            <TableHead>Attendance</TableHead>
-                            <TableHead>Marked Date</TableHead>
-                          </TableRow>
-                        </TableHeader>
-                        <TableBody>
-                          {selectedEnrollment.sessions.map((session, index) => (
-                            <TableRow key={session.uuid || session.scheduledInstanceUuid || index}>
-                              <TableCell className='font-medium'>{index + 1}</TableCell>
-                              <TableCell className='font-mono text-xs'>
-                                {session.scheduledInstanceUuid
-                                  ? `${session.scheduledInstanceUuid.slice(0, 8)}...`
-                                  : 'Unavailable'}
-                              </TableCell>
-                              <TableCell>{getEnrollmentBadge(session.status)}</TableCell>
-                              <TableCell>{getAttendanceBadge(session)}</TableCell>
-                              <TableCell>
-                                {session.attendanceMarkedAt ? (
-                                  <span className='text-sm'>
-                                    {format(session.attendanceMarkedAt, 'MMM dd, yyyy HH:mm')}
-                                  </span>
-                                ) : (
-                                  <span className='text-muted-foreground text-sm'>Not marked</span>
-                                )}
-                              </TableCell>
-                            </TableRow>
-                          ))}
-                        </TableBody>
-                      </Table>
-                    </div>
                   )}
-                </>
-              ) : (
-                <div className='py-10 text-center'>
-                  <BookOpen className='text-muted-foreground mx-auto mb-3 h-10 w-10' />
-                  <p className='text-foreground text-lg font-medium'>Select a course</p>
-                  <p className='text-muted-foreground text-sm'>
-                    Choose one of the enrolled courses to inspect session details.
-                  </p>
                 </div>
-              )}
+              </Card>
             </div>
-          </Card>
-        </div>
-      )}
+          </SectionTabPanel>
 
-      {!isLoading && !hasError && enrollmentDetails.length > 0 ? (
-        <Card className='p-4'>
-          <h3 className='text-foreground mb-2 font-semibold'>Notes</h3>
-          <ul className='text-muted-foreground space-y-1 text-sm'>
-            <li>• Courses under this instructor: {enrollmentDetails.length}</li>
-            <li>• Sessions with attendance marked: {markedSessions}</li>
-            <li>• Sessions awaiting attendance: {pendingSessions}</li>
-            <li>
-              • Overall attendance rate:{' '}
-              {markedSessions > 0
-                ? `${Math.round((attendedSessions / markedSessions) * 100)}%`
-                : 'N/A'}
-            </li>
-          </ul>
-        </Card>
-      ) : null}
+          <SectionTabPanel value='summary' className={PANEL}>
+            <Card className='max-w-3xl p-4'>
+              <h3 className='text-foreground mb-2 font-semibold'>Notes</h3>
+              <ul className='text-muted-foreground space-y-1 text-sm'>
+                <li>• Courses under this instructor: {enrollmentDetails.length}</li>
+                <li>• Sessions with attendance marked: {markedSessions}</li>
+                <li>• Sessions awaiting attendance: {pendingSessions}</li>
+                <li>• Overall attendance rate: {overallRate}</li>
+              </ul>
+            </Card>
+          </SectionTabPanel>
+        </SectionTabs>
+      )}
     </div>
   );
 };
