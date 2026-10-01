@@ -10,17 +10,14 @@
  * knows whether this instructor's training application is approved *today*.
  *
  * What stays with the route is the route's own business: the uuid, the
- * breadcrumbs, the back link, the instructor guard, and creating a class, the
- * one thing a trainer *does* from this screen beyond the record's own Share. The
- * record view is read-only by design, so that sits beside it.
+ * breadcrumbs, the back link and the instructor guard. The record's own header
+ * carries "Create class", so the route adds no second copy of it.
  */
 
-import { CalendarPlus } from 'lucide-react';
 import Link from 'next/link';
 import { useParams } from 'next/navigation';
 import { useEffect } from 'react';
 import { surfaceTheme } from '@/components/data-display/page-shell';
-import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { useBreadcrumb } from '@/context/breadcrumb-provider';
 import { useInstructor } from '@/context/instructor-context';
@@ -29,16 +26,6 @@ import { cn } from '@/lib/utils';
 import { CourseRecordPage } from '@/src/features/course-record';
 
 const MY_COURSES_HREF = '/dashboard/instructor/my-courses';
-
-/**
- * The class builder, with no `id`.
- *
- * `?id=` on that route is a **class** uuid and puts the form into edit mode; the
- * page this replaced passed the *course* uuid into it, which hydrated the
- * builder from a class that does not exist. The builder has no course-preselect
- * parameter, so the honest link is the plain create route.
- */
-const NEW_CLASS_HREF = '/dashboard/instructor/classes/new';
 
 export default function InstructorMyCourseDetailsPage() {
   const params = useParams();
@@ -86,15 +73,6 @@ export default function InstructorMyCourseDetailsPage() {
 
   return (
     <div className={cn(surfaceTheme.pageWide, 'flex flex-col gap-4 py-4 pb-10')}>
-      <div className='flex flex-wrap items-center justify-end gap-2'>
-        <Button asChild size='sm' className='h-8 rounded-[10px]'>
-          <Link href={NEW_CLASS_HREF}>
-            <CalendarPlus className='size-4' />
-            Create a class
-          </Link>
-        </Button>
-      </div>
-
       <CourseRecordPage courseUuid={courseUuid} backHref={MY_COURSES_HREF} />
     </div>
   );
