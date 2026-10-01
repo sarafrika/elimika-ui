@@ -1,7 +1,21 @@
 'use client';
 
 import { useQuery } from '@tanstack/react-query';
-import { ArrowLeft, ArrowRight, BriefcaseBusiness, Mail, Phone, UserRound } from 'lucide-react';
+import {
+  ArrowLeft,
+  ArrowRight,
+  BookOpen,
+  BriefcaseBusiness,
+  Building2,
+  CalendarDays,
+  Contact,
+  LayoutGrid,
+  Mail,
+  MapPin,
+  Phone,
+  UserRound,
+  Wallet,
+} from 'lucide-react';
 import Link from 'next/link';
 import { useEffect, useMemo } from 'react';
 import { AsyncSection } from '@/components/data/async-section';
@@ -33,22 +47,40 @@ import { useUserProfile } from '@/src/features/profile/context/profile-context';
 import { hiredJobData, isHiredApplication, jobLabel, jobPay } from '../hired-jobs';
 import { jobPlaceLabel } from '../job-place';
 import { HiredClassSchedule, PlannedJobSchedule } from './HiredJobSchedule';
-import { DetailGrid, SectionCard, SectionCardSkeleton, surfaceTheme } from '@/components/data-display';
+import {
+  DetailGrid,
+  type EntityFact,
+  EntityHeaderCard,
+  type SectionTab,
+  SectionCard,
+  SectionCardSkeleton,
+  SectionTabPanel,
+  SectionTabs,
+  surfaceTheme,
+  useSectionTab,
+} from '@/components/data-display';
+import { cn } from '@/lib/utils';
+
+const HIRED_JOB_TABS = ['overview', 'location', 'rates', 'class', 'contact'] as const;
+type HiredJobTab = (typeof HIRED_JOB_TABS)[number];
+
+const HIRED_JOB_TAB_META: Record<HiredJobTab, Pick<SectionTab, 'label' | 'icon'>> = {
+  overview: { label: 'Overview', icon: LayoutGrid },
+  location: { label: 'Location', icon: MapPin },
+  rates: { label: 'Rates', icon: Wallet },
+  class: { label: 'Class', icon: CalendarDays },
+  contact: { label: 'Contact', icon: Contact },
+};
+
+/** Hidden panels still print. */
+const PANEL = 'print:block!';
 
 export function HiredJobDetailsSkeleton() {
   return (
     <div className='flex flex-col gap-4' aria-hidden>
-      <div className='space-y-2'>
-        <Skeleton className='h-8 w-2/3 max-w-lg' />
-        <Skeleton className='h-4 w-1/2 max-w-md' />
-      </div>
-      <div className='grid items-start gap-5 xl:grid-cols-[minmax(0,1fr)_360px]'>
-        <div className='space-y-5'>
-          <SectionCardSkeleton rows={6} />
-          <SectionCardSkeleton rows={4} />
-        </div>
-        <SectionCardSkeleton rows={4} />
-      </div>
+      <Skeleton className='h-[150px] w-full rounded-2xl' />
+      <Skeleton className='h-11 w-full max-w-xl' />
+      <SectionCardSkeleton rows={6} />
     </div>
   );
 }
@@ -85,7 +117,7 @@ export function HiredJobDetailsPage({ jobUuid }: { jobUuid: string }) {
   }, [replaceBreadcrumbs, job.data?.title, jobUuid]);
 
   return (
-    <div className={surfaceTheme.page}>
+    <div className={cn(surfaceTheme.pageWide, 'py-4')}>
       <div className={surfaceTheme.pageStack}>
         <Button variant='ghost' size='sm' className='-ml-2 w-fit' asChild>
           <Link href={hiredJobsHref()}>
@@ -127,13 +159,22 @@ function ContactPerson({ job }: { job: ClassMarketplaceJob }) {
   const name = job.contact_name?.trim();
   const phone = job.contact_phone?.trim();
   const email = job.contact_email?.trim();
-  if (!name && !phone && !email) return null;
+  if (!name && !phone && !email) {
+    return (
+      <EmptyState
+        icon={UserRound}
+        title='No contact person yet'
+        description='The organisation has not named who to reach at the branch about this class.'
+      />
+    );
+  }
 
   return (
     <SectionCard
       title='Contact person'
       description='Who to reach at the branch about this class.'
       bodyClassName='space-y-2 text-sm'
+      className='max-w-xl'
     >
       {name ? (
         <p className='text-foreground flex items-center gap-2 font-medium'>
@@ -188,56 +229,86 @@ function HiredJobDetails({ job }: { job: ClassMarketplaceJob }) {
   const classUuid = job.assigned_class_definition_uuid;
   const meetingLink =
     job.meeting_link && /^https?:\/\//i.test(job.meeting_link) ? job.meeting_link : null;
+  const { value: tab, setValue: setTab, hrefFor } = useSectionTab(HIRED_JOB_TABS, 'overview');
+  const hasContact = Boolean(
+    job.contact_name?.trim() || job.contact_phone?.trim() || job.contact_email?.trim()
+  );
+  const tabs: SectionTab<HiredJobTab>[] = HIRED_JOB_TABS.map(id => ({
+    id,
+    ...HIRED_JOB_TAB_META[id],
+    count: id === 'contact' && !hasContact ? 0 : undefined,
+  }));
+  const courseLabel =
+    program?.title ??
+    course?.name ??
+    (courses.isLoading || programs.isLoading ? 'Loading…' : 'Not available');
+  const courseName = program?.title ?? course?.name;
+  const facts: EntityFact[] = [];
+  if (organisation?.name) facts.push({ key: 'org', icon: Building2, label: organisation.name });
+  if (courseName) facts.push({ key: 'course', icon: BookOpen, label: courseName });
+  if (job.academic_period_start_date) {
+    facts.push({
+      key: 'starts',
+      icon: CalendarDays,
+      label: `Starts ${formatDateOnly(job.academic_period_start_date)}`,
+    });
+  }
+  facts.push({ key: 'pay', icon: Wallet, label: jobPay(job) });
 
   return (
     <>
-      <header className='flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between'>
-        <div className='min-w-0 space-y-2'>
-          <h1 className='text-foreground text-2xl font-bold tracking-tight break-words sm:text-3xl'>
-            {job.title || 'Hire details'}
-          </h1>
-          <p className='text-muted-foreground text-sm'>
-            {[organisation?.name, jobLabel(job.location_type), jobPay(job)]
-              .filter(Boolean)
-              .join(' · ')}
-          </p>
-        </div>
-        <div className='flex shrink-0 flex-wrap items-center gap-2'>
+      <EntityHeaderCard
+        eyebrow='Hired job'
+        title={job.title || 'Hire details'}
+        badges={
           <ReadinessChip
             label={classUuid ? 'Class created' : 'Class not created yet'}
             tone={classUuid ? 'success' : 'warning'}
           />
-          {classUuid ? (
+        }
+        context={
+          <span className='text-muted-foreground'>
+            {[organisation?.name, jobLabel(job.location_type), jobPay(job)]
+              .filter(Boolean)
+              .join(' · ')}
+          </span>
+        }
+        actions={
+          classUuid ? (
             <Button asChild>
               <Link href={instructorClassHref(classUuid)}>
                 Open class
                 <ArrowRight aria-hidden className='size-4' />
               </Link>
             </Button>
-          ) : null}
-        </div>
-      </header>
+          ) : null
+        }
+        facts={facts}
+      />
 
-      <div className='grid items-start gap-5 xl:grid-cols-[minmax(0,1fr)_360px]'>
-        <div className='min-w-0 space-y-5'>
+      <SectionTabs
+        tabs={tabs}
+        value={tab}
+        onValueChange={setTab}
+        hrefFor={hrefFor}
+        label='Hire sections'
+        sticky
+        listClassName='bg-background'
+      >
+        <SectionTabPanel value='overview' className={PANEL}>
           <SectionCard title='Job overview'>
-            <p className='text-muted-foreground mb-5 text-sm leading-relaxed break-words whitespace-pre-wrap'>
+            <p className='text-muted-foreground mb-5 max-w-prose text-sm leading-relaxed break-words whitespace-pre-wrap'>
               {job.description || 'No job description provided.'}
             </p>
             <DetailGrid
+              columns={3}
               items={[
                 {
                   label: 'Organisation',
                   value:
                     organisation?.name ?? (organisations.isLoading ? 'Loading…' : 'Not available'),
                 },
-                {
-                  label: job.program_uuid ? 'Training program' : 'Course',
-                  value:
-                    program?.title ??
-                    course?.name ??
-                    (courses.isLoading || programs.isLoading ? 'Loading…' : 'Not available'),
-                },
+                { label: job.program_uuid ? 'Training program' : 'Course', value: courseLabel },
                 { label: 'Job status', value: jobLabel(job.status) },
                 { label: 'Service type', value: jobLabel(job.service_type) },
                 { label: 'Training starts', value: formatDateOnly(job.academic_period_start_date) },
@@ -260,13 +331,12 @@ function HiredJobDetails({ job }: { job: ClassMarketplaceJob }) {
               ]}
             />
           </SectionCard>
-          {classUuid ? (
-            <HiredClassSchedule key={classUuid} classUuid={classUuid} />
-          ) : (
-            <PlannedJobSchedule job={job} />
-          )}
+        </SectionTabPanel>
+
+        <SectionTabPanel value='location' className={PANEL}>
           <SectionCard title='Location and delivery'>
             <DetailGrid
+              columns={3}
               items={[
                 { label: 'Delivery mode', value: jobLabel(job.location_type) },
                 { label: 'Venue / location', value: jobPlaceLabel(job, 'Not provided') },
@@ -295,16 +365,19 @@ function HiredJobDetails({ job }: { job: ClassMarketplaceJob }) {
               ]}
             />
           </SectionCard>
-        </div>
-        <aside className='space-y-5' aria-label='About this hire'>
-          <ContactPerson job={job} />
-          <SectionCard title='Agreed job rates' description='Rates set for this job.'>
+        </SectionTabPanel>
+
+        <SectionTabPanel value='rates' className={PANEL}>
+          <SectionCard
+            title='Agreed job rates'
+            description='Rates set for this job.'
+            className='max-w-3xl'
+          >
             <div className='border-success/30 bg-success/10 mb-4 rounded-md border p-4'>
               <p className='text-muted-foreground text-sm'>Instructor pay</p>
               <p className='text-foreground mt-2 text-xl font-semibold'>{jobPay(job)}</p>
             </div>
             <DetailGrid
-              columns={1}
               items={[
                 { label: 'Rate basis', value: jobLabel(job.rate_basis) },
                 { label: 'Session format', value: jobLabel(job.session_format) },
@@ -317,37 +390,53 @@ function HiredJobDetails({ job }: { job: ClassMarketplaceJob }) {
               ]}
             />
           </SectionCard>
-          <SectionCard title='Class information'>
-            <p className='text-muted-foreground text-sm'>
-              {classUuid
-                ? 'Your class has been created. Open it to access the teaching workspace.'
-                : 'You have been hired. The organisation will create the class and confirm the sessions.'}
-            </p>
-            <DetailGrid
-              columns={1}
-              className='mt-4'
-              items={[
-                { label: 'Class created on', value: formatDateTimeWithZone(job.filled_at) },
-                {
-                  label: 'Registration opens',
-                  value: formatDateOnly(job.registration_period_start_date),
-                },
-                {
-                  label: 'Registration closes',
-                  value: formatDateOnly(job.registration_period_end_date),
-                },
-                {
-                  label: 'Reminder',
-                  value:
-                    job.class_reminder_minutes == null
-                      ? 'Not set'
-                      : `${job.class_reminder_minutes} minutes before class`,
-                },
-              ]}
-            />
-          </SectionCard>
-        </aside>
-      </div>
+        </SectionTabPanel>
+
+        <SectionTabPanel value='class' className={PANEL}>
+          <div className='grid items-start gap-5 xl:grid-cols-[minmax(0,1fr)_400px]'>
+            <div className='min-w-0'>
+              {classUuid ? (
+                <HiredClassSchedule key={classUuid} classUuid={classUuid} />
+              ) : (
+                <PlannedJobSchedule job={job} />
+              )}
+            </div>
+            <SectionCard title='Class information'>
+              <p className='text-muted-foreground text-sm'>
+                {classUuid
+                  ? 'Your class has been created. Open it to access the teaching workspace.'
+                  : 'You have been hired. The organisation will create the class and confirm the sessions.'}
+              </p>
+              <DetailGrid
+                columns={1}
+                className='mt-4'
+                items={[
+                  { label: 'Class created on', value: formatDateTimeWithZone(job.filled_at) },
+                  {
+                    label: 'Registration opens',
+                    value: formatDateOnly(job.registration_period_start_date),
+                  },
+                  {
+                    label: 'Registration closes',
+                    value: formatDateOnly(job.registration_period_end_date),
+                  },
+                  {
+                    label: 'Reminder',
+                    value:
+                      job.class_reminder_minutes == null
+                        ? 'Not set'
+                        : `${job.class_reminder_minutes} minutes before class`,
+                  },
+                ]}
+              />
+            </SectionCard>
+          </div>
+        </SectionTabPanel>
+
+        <SectionTabPanel value='contact' className={PANEL}>
+          <ContactPerson job={job} />
+        </SectionTabPanel>
+      </SectionTabs>
     </>
   );
 }
