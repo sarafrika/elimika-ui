@@ -90,14 +90,6 @@ type AddProgramRequirementVariables = MutationVariables<
 type UpdateProgramRequirementVariables = MutationVariables<
   ReturnType<typeof updateProgramRequirementMutation>
 >;
-
-const getMutationMessage = (value: unknown, fallback: string) => {
-  if (typeof value === 'object' && value !== null && 'message' in value) {
-    const message = (value as { message?: string }).message;
-    if (message) return message;
-  }
-  return fallback;
-};
 const getErrorMessage = (error: unknown) => {
   if (typeof error !== 'object' || error === null) return undefined;
   const message = 'message' in error ? (error as { message?: string }).message : undefined;
@@ -636,7 +628,7 @@ const programRequirementSchema = z.object({
   // is_optional: z.boolean(),
 });
 
-export type ProgramRequirementFormValues = z.infer<typeof programRequirementSchema>;
+type ProgramRequirementFormValues = z.infer<typeof programRequirementSchema>;
 
 function ProgramRequirementForm({
   programUuid,

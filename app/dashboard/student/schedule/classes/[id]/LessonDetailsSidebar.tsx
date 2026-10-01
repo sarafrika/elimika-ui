@@ -4,7 +4,7 @@ import { Award, BookOpen, FileText, Video } from 'lucide-react';
 
 import type { ContentTypeMap } from './CourseProgram';
 
-export type LessonContent = {
+type LessonContent = {
   uuid: string;
   title: string;
   type: string;

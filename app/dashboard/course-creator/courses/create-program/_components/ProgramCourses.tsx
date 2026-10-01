@@ -26,7 +26,7 @@ import type { Course } from '@/services/client/types.gen';
 import { keepPreviousData, useInfiniteQuery } from '@tanstack/react-query';
 import { ArrowDown, ArrowUp, BookOpen, Check, X } from 'lucide-react';
 import Link from 'next/link';
-import { useMemo, useState } from 'react';
+import { useMemo, } from 'react';
 import { useFieldArray, useFormContext, useWatch } from 'react-hook-form';
 import type { ProgramFormValues } from '../program-schema';
 

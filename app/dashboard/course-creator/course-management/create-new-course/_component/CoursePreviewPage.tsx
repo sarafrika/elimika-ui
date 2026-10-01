@@ -1,12 +1,13 @@
 'use client';
 
-import { CourseTrainingRequirements } from '@/app/dashboard/_components/course-training-requirements';
-import { useDifficultyLevels } from '@/hooks/use-difficultyLevels';
-import { getCourseByUuidOptions } from '@/services/client/@tanstack/react-query.gen';
 import { useQuery } from '@tanstack/react-query';
 import { AlertCircle, Clock, Play, Target, Users } from 'lucide-react';
 import { useSearchParams } from 'next/navigation';
 import { useState } from 'react';
+import { CourseTrainingRequirements } from '@/app/dashboard/_components/course-training-requirements';
+import illustration from '@/assets/illustration.jpg';
+import { useDifficultyLevels } from '@/hooks/use-difficultyLevels';
+import { getCourseByUuidOptions } from '@/services/client/@tanstack/react-query.gen';
 import type { CourseTrainingRequirement } from '@/services/client/types.gen';
 import { toAuthenticatedMediaUrl } from '@/src/lib/media-url';
 
@@ -58,7 +59,7 @@ export default function CustomCoursePreview() {
       {/* Hero Section with Banner */}
       <div className='relative mt-4 h-96 overflow-hidden rounded-lg'>
         <img
-          src={toAuthenticatedMediaUrl(course?.banner_url) || '/illustration.png'}
+          src={toAuthenticatedMediaUrl(course?.banner_url) || illustration.src}
           alt='Course Banner'
           className='h-full w-full object-cover opacity-40'
         />
@@ -108,7 +109,7 @@ export default function CustomCoursePreview() {
                 {!isPlaying ? (
                   <div className='absolute inset-0 flex items-center justify-center'>
                     <img
-                      src={toAuthenticatedMediaUrl(course?.thumbnail_url) || '/illustration.png'}
+                      src={toAuthenticatedMediaUrl(course?.thumbnail_url) || illustration.src}
                       alt='Course Thumbnail'
                       className='h-full w-full object-cover opacity-60'
                     />

@@ -1,6 +1,8 @@
 // @ts-nocheck -- pre-existing @hey-api generated-client type drift (see memory: elimika-ui-typecheck)
 'use client';
 
+import { ChevronLeft, ChevronRight, Clock, Edit2, Lock, Plus } from 'lucide-react';
+import { useState } from 'react';
 import {
   JOB_TIME_STYLES,
   type JobTimeDetail,
@@ -12,9 +14,6 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { dayjs } from '@/lib/date';
 import { JOB_TIME_LABELS, jobTimeKind } from '@/lib/instructor-job-time';
-import { ChevronLeft, ChevronRight, Clock, Edit2, Lock, Plus } from 'lucide-react';
-import { useState } from 'react';
-import type { ClassData } from '../../trainings/create-new/academic-period-form';
 import { EventModal, EventType } from './event-modal';
 import {
   type AvailabilityData,
@@ -29,7 +28,6 @@ interface WeeklyAvailabilityGridProps {
   availabilityData: AvailabilityData;
   onAvailabilityUpdate: (data: AvailabilityData) => void;
   isEditing: boolean;
-  classes: ClassData[];
 }
 
 type AvailabilitySlot = CalendarEvent & {
@@ -71,7 +69,6 @@ export function WeeklyAvailabilityGrid({
   availabilityData,
   onAvailabilityUpdate,
   isEditing,
-  classes,
 }: WeeklyAvailabilityGridProps) {
   const [currentWeek, setCurrentWeek] = useState(new Date());
   const [selectedSlots, setSelectedSlots] = useState<string[]>([]);
@@ -126,20 +123,6 @@ export function WeeklyAvailabilityGrid({
 
     if (slot) return mapEventTypeToStatus(slot.entry_type || 'SCHEDULED_INSTANCE');
 
-    const hasClass = classes.some(classItem => {
-      if (classItem.status !== 'published') return false;
-      return classItem.timetable.timeSlots.some(timeSlot => {
-        const classDate = new Date(date);
-        const isCorrectDay = timeSlot.day.toLowerCase() === day.toLowerCase();
-        const isCorrectTime = timeSlot.startTime === time;
-        const isWithinPeriod =
-          classDate >= new Date(classItem.academicPeriod.startDate) &&
-          classDate <= new Date(classItem.academicPeriod.endDate);
-        return isCorrectDay && isCorrectTime && isWithinPeriod;
-      });
-    });
-
-    if (hasClass) return 'booked';
     return null;
   };
 

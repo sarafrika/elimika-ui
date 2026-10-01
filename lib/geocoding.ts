@@ -69,7 +69,7 @@ export function composePlaceLabel(name?: string | null, placeFormatted?: string 
 }
 
 /** Photon serves reverse lookups beside its search endpoint: `/api/` becomes `/reverse`. */
-export function photonReverseUrl(baseUrl: string = GEOCODER_URL) {
+function photonReverseUrl(baseUrl: string = GEOCODER_URL) {
   return baseUrl.replace(/\/api\/?$/, '/reverse');
 }
 

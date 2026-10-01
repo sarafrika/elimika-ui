@@ -19,7 +19,7 @@ import { SectionCard } from '@/components/data-display';
 
 const FIRST_ROWS = 6;
 
-export type ScheduleFit = { checking: boolean; checked: boolean; conflicts: SchedulingConflict[] };
+type ScheduleFit = { checking: boolean; checked: boolean; conflicts: SchedulingConflict[] };
 
 /** Every session with its fit against the instructor's calendar, clashes first to hand. */
 export function SchedulePanel({

@@ -65,20 +65,6 @@ function formatDate(value?: string | Date | null): string {
     });
 }
 
-function formatDateTime(value?: string | Date | null): string {
-  if (!value) return '—';
-  const parsed = value instanceof Date ? value : new Date(value);
-  return Number.isNaN(parsed.getTime())
-    ? '—'
-    : parsed.toLocaleString(undefined, {
-      day: 'numeric',
-      month: 'short',
-      year: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit',
-    });
-}
-
 function ApplicantTypePill({ type }: { type: ApplicantType }) {
   return type === 'instructor' ? (
     <span className='bg-primary/10 text-primary inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-semibold'>

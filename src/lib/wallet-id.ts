@@ -50,7 +50,7 @@ function checkDigit(body: string): string {
   return ALPHABET[sum % ALPHABET.length];
 }
 
-export type WalletIdOptions = {
+type WalletIdOptions = {
   /** ISO country code (default KE — matches the KSh currency used across the app). */
   country?: string;
   /** Year the wallet was first issued (defaults to 2024 so IDs are stable across renders). */

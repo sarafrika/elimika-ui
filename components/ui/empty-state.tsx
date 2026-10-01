@@ -1,7 +1,7 @@
 import type { ComponentType, ReactNode } from 'react';
 import { cn } from '@/lib/utils';
 
-export type EmptyStateProps = {
+type EmptyStateProps = {
   icon?: ComponentType<{ className?: string }>;
   title: string;
   description?: ReactNode;

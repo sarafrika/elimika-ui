@@ -151,7 +151,7 @@ export function BranchPinNote({ branch }: { branch: TrainingBranch }) {
   );
 }
 
-export type ResourceFormDialogProps = {
+type ResourceFormDialogProps = {
   organisationUuid: string;
   resourceType: ResourceType;
   branches: TrainingBranch[];

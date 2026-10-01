@@ -15,7 +15,7 @@ import {
   useReactTable,
   type VisibilityState,
 } from '@tanstack/react-table';
-import { ArrowDown, ArrowUp, ChevronsUpDown, Columns3, Rows2, Rows3, Search } from 'lucide-react';
+import { ArrowDown, ArrowUp, ChevronsUpDown, Columns3, Rows2, Rows3 } from 'lucide-react';
 import { type ReactNode, useMemo, useState } from 'react';
 import { SearchInput } from '@/components/search/search-input';
 import { Badge } from '@/components/ui/badge';
@@ -30,7 +30,6 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { EmptyState } from '@/components/ui/empty-state';
-import { Input } from '@/components/ui/input';
 import { Skeleton } from '@/components/ui/skeleton';
 import {
   Table,
@@ -42,14 +41,14 @@ import {
 } from '@/components/ui/table';
 import { cn } from '@/lib/utils';
 
-export interface FacetedFilter {
+interface FacetedFilter {
   columnId: string;
   title: string;
   options: { label: string; value: string }[];
 }
 
 /** Paging handled by the server: the table renders one page and asks for the next. */
-export interface ServerPagination {
+interface ServerPagination {
   page: number;
   pageCount: number;
   totalRows?: number;

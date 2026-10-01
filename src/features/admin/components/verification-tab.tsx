@@ -16,7 +16,6 @@ import {
 } from '@/components/data-display';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
-import { Label } from '@/components/ui/label';
 import { formatDate } from '@/lib/date';
 import { cn } from '@/lib/utils';
 import type { DocumentTypeOption, Instructor, InstructorDocument, User } from '@/services/client';

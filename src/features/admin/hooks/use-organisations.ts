@@ -12,9 +12,9 @@ import {
 } from '@/services/client/@tanstack/react-query.gen';
 import { listQuery } from '../lib/admin-queries';
 
-export const ORGANISATIONS_PAGE_SIZE = 20;
+const ORGANISATIONS_PAGE_SIZE = 20;
 
-export interface OrganisationFilters {
+interface OrganisationFilters {
   q?: string;
   /** 'verified' | 'unverified' — anything else means no filter. */
   verified?: string;

@@ -25,7 +25,7 @@ type MapboxRetrieveFeature = {
   properties?: MapboxRetrieveProperties;
 };
 
-export type MapboxRetrieveResponse = {
+type MapboxRetrieveResponse = {
   features: MapboxRetrieveFeature[];
 };
 

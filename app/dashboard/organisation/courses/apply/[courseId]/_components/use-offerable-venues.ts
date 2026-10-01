@@ -22,7 +22,7 @@ const VENUE_QUERY = {
 };
 const BRANCH_QUERY = { pageable: { page: 0, size: 100 } };
 
-export type VenueGroup = { branchUuid: string; branchName: string; venues: OrganisationResource[] };
+type VenueGroup = { branchUuid: string; branchName: string; venues: OrganisationResource[] };
 
 /** The organisation's active venues, grouped by branch, for the application's venue picker. */
 export function useOfferableVenues(organisationUuid: string, enabled: boolean) {

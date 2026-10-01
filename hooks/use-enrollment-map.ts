@@ -8,7 +8,7 @@ import {
   getEnrollmentsForClassOptions,
 } from '../services/client/@tanstack/react-query.gen';
 
-export type EnrollmentMap = Record<
+type EnrollmentMap = Record<
   string,
   {
     enrollments: CourseEnrollment[] | null;
@@ -63,7 +63,7 @@ export function useCourseEnrollmentsMap(courseUuids: string[]) {
   return { courseEnrollmentMap, isLoading };
 }
 
-export type ClassEnrollmentMap = Map<string, Enrollment[]>;
+type ClassEnrollmentMap = Map<string, Enrollment[]>;
 
 export function useClassEnrollmentsMap(classUuids: string[]) {
   const enrollmentQueries = useQueries({

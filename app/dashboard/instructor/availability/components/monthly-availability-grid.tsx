@@ -1,19 +1,18 @@
 'use client';
 
+import { Calendar, ChevronLeft, ChevronRight, Clock } from 'lucide-react';
+import { useMemo, useState } from 'react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { dayjs } from '@/lib/date';
-import { Calendar, ChevronLeft, ChevronRight, Clock } from 'lucide-react';
-import { useMemo, useState } from 'react';
-import type { AvailabilityClassData, AvailabilityData, CalendarEvent } from './types';
+import type { AvailabilityData, CalendarEvent } from './types';
 
 interface MonthlyAvailabilityGridProps {
   availabilityData: AvailabilityData;
   onAvailabilityUpdate: (data: AvailabilityData) => void;
   isEditing: boolean;
-  classes: AvailabilityClassData[];
 }
 
 const eventColorMap: Record<
@@ -56,7 +55,6 @@ export function MonthlyAvailabilityGrid({
   availabilityData,
   onAvailabilityUpdate: _onAvailabilityUpdate,
   isEditing: _isEditing,
-  classes,
 }: MonthlyAvailabilityGridProps) {
   const [currentMonth, setCurrentMonth] = useState(new Date());
   const [_isEventModalOpen, setIsEventModalOpen] = useState(false);
@@ -110,18 +108,6 @@ export function MonthlyAvailabilityGrid({
       return slot.day === dayName;
     });
 
-    const dayClasses = classes.filter(classItem => {
-      if (classItem.status !== 'published') return false;
-      return classItem.timetable.timeSlots.some(timeSlot => {
-        const currentSlotDay = timeSlot.day;
-        const isCorrectDay = timeSlot.day.toLowerCase() === dayName.toLowerCase();
-        const isWithinPeriod =
-          date >= new Date(classItem.academicPeriod.startDate) &&
-          date <= new Date(classItem.academicPeriod.endDate);
-        return Boolean(currentSlotDay) && isCorrectDay && isWithinPeriod;
-      });
-    });
-
     const dayEvents = [
       ...availabilityData.events.filter(event => {
         const eventDate = new Date(event.date);
@@ -136,7 +122,6 @@ export function MonthlyAvailabilityGrid({
       blocked: blockedEvents,
       booked: bookedEvents,
       total: daySlots.length,
-      classes: dayClasses,
       events: dayEvents,
     };
   };
@@ -362,15 +347,6 @@ export function MonthlyAvailabilityGrid({
                               • {e.title} ({e.startTime}-{e.endTime})
                             </div>
                           ))}
-                        </div>
-                      )}
-
-                      {status.classes.length > 0 && (
-                        <div className='border-border border-t pt-2 text-xs'>
-                          <div className='text-foreground font-medium'>Classes:</div>
-                          <div className='text-muted-foreground'>
-                            {status.classes.map(c => c.classTitle).join(', ')}
-                          </div>
                         </div>
                       )}
 

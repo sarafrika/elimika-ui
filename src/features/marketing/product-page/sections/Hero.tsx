@@ -1,10 +1,7 @@
 'use client';
 
 import { ArrowRight, Circle, Play, Sparkles, Users, Wallet } from 'lucide-react';
-import { signIn } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
-
-const DASHBOARD_ENTRY_PATH = '/dashboard';
 
 const BADGES = ['Verified certificates', 'Skills funding', 'Talent verifying'] as const;
 
@@ -52,11 +49,7 @@ export function Hero() {
           <button
             type='button'
             className='button button--outline'
-            onClick={() =>
-              signIn('keycloak', {
-                redirectTo: `${window.location.origin}${DASHBOARD_ENTRY_PATH}`,
-              })
-            }
+            onClick={() => router.push('/courses')}
           >
             {/* The source's .product-demo-button play circle, rebuilt on the shared tokens. */}
             <span className='inline-flex h-6 w-6 items-center justify-center rounded-full bg-[var(--sw-accent)] text-[color:white]'>

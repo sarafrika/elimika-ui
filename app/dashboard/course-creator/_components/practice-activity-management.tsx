@@ -592,7 +592,7 @@ function SortablePracticeActivityCard({
   );
 }
 
-export type PracticeActivityManagerProps = {
+type PracticeActivityManagerProps = {
   courseUuid: string | null | undefined;
   lessonUuid: string | null | undefined;
   showHeader?: boolean;
@@ -900,7 +900,7 @@ export function PracticeActivityManager({
   );
 }
 
-export type PracticeActivityListProps = {
+type PracticeActivityListProps = {
   courseUuid: string | null | undefined;
   lessonUuid: string | null | undefined;
   variant?: 'instructor' | 'student';

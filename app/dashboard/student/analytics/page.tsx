@@ -89,22 +89,6 @@ function formatDateTime(value?: Date | string | null) {
   }).format(date);
 }
 
-function formatDate(value?: Date | string | null) {
-  if (!value) {
-    return '—';
-  }
-
-  const date = value instanceof Date ? value : new Date(value);
-
-  if (Number.isNaN(date.getTime())) {
-    return '—';
-  }
-
-  return new Intl.DateTimeFormat(undefined, {
-    dateStyle: 'medium',
-  }).format(date);
-}
-
 function formatPercent(value?: number | null) {
   if (value === null || value === undefined || Number.isNaN(value)) {
     return '—';
@@ -305,24 +289,6 @@ function MetricCard({
         </div>
       </div>
     </Card>
-  );
-}
-
-function ProgressRow({ label, value, total }: { label: string; value: number; total: number }) {
-  const percent = total > 0 ? Math.round((value / total) * 100) : 0;
-
-  return (
-    <div className='space-y-2'>
-      <div className='flex items-center justify-between gap-3 text-sm'>
-        <span className='text-foreground font-medium'>{label}</span>
-        <span className='text-muted-foreground'>
-          {metricValue(value)} {total > 0 ? `(${percent}%)` : ''}
-        </span>
-      </div>
-      <div className='bg-muted h-2 overflow-hidden rounded-full'>
-        <div className='bg-primary h-full rounded-full' style={{ width: `${percent}%` }} />
-      </div>
-    </div>
   );
 }
 

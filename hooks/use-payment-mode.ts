@@ -18,7 +18,7 @@ import { API_BASE_URL } from '@/services/api/base-url';
 
 const PAYMENT_MODE_PATH = '/api/v1/commerce/payment-mode';
 
-export const paymentModeQueryKey = ['commerce', 'payment-mode'] as const;
+const paymentModeQueryKey = ['commerce', 'payment-mode'] as const;
 
 async function fetchPaymentRequired(): Promise<boolean> {
   const response = await fetch(`${API_BASE_URL}${PAYMENT_MODE_PATH}`, {

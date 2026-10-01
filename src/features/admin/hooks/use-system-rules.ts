@@ -20,7 +20,7 @@ import {
 import { getRuleOptions, listRulesOptions } from '@/services/client/@tanstack/react-query.gen';
 import { configQuery, listQuery } from '../lib/admin-queries';
 
-export const RULES_PAGE_SIZE = 50;
+const RULES_PAGE_SIZE = 50;
 
 const RULE_QUERY_IDS = ['listRules', 'getRule'] as const;
 
@@ -36,7 +36,7 @@ const SCOPE_WEIGHT: Record<string, number> = {
   GLOBAL: 1,
 };
 
-export interface RuleFilters {
+interface RuleFilters {
   category?: string;
   status?: string;
   /** Filtered in the browser: the API has no key search. */
@@ -159,7 +159,7 @@ export function useSaveRule() {
   });
 }
 
-export interface FeePayload {
+interface FeePayload {
   mode: 'PERCENTAGE' | 'FLAT';
   amount: number;
   currency?: string;

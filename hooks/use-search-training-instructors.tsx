@@ -26,11 +26,31 @@ import { useUsersByIds } from './use-batched-lookups';
  * 20-instructor page). Now: 1 instructor page + 1 batched user lookup +
  * 1 experience search + 1 skills search + N small rating summaries.
  */
+/**
+ * The rating the instructor list carries itself (`rating_avg`, `review_count`), when the
+ * API sends it. The generated types do not know these fields yet, so they are read through
+ * a guard rather than a cast.
+ */
+function listRating(instructor: unknown): { rating: number; reviewCount: number } | null {
+  if (!instructor || typeof instructor !== 'object') return null;
+  const record = instructor as Record<string, unknown>;
+  const average = record.rating_avg;
+  const count = record.review_count;
+  if (average === undefined && count === undefined) return null;
+  const rating = typeof average === 'number' ? average : Number(average ?? 0);
+  const reviewCount = typeof count === 'number' ? count : Number(count ?? 0);
+  return {
+    rating: Number.isFinite(rating) ? rating : 0,
+    reviewCount: Number.isFinite(reviewCount) ? reviewCount : 0,
+  };
+}
+
 function useSearchTrainingInstructors({
   q,
   near,
   page = 0,
   size = 20,
+  ratings = 'eager',
 }: {
   /** Debounced term (2+ characters): names, headlines and skills via the search index. */
   q?: string;
@@ -41,6 +61,12 @@ function useSearchTrainingInstructors({
   near?: { near?: string; radius_km?: string };
   page?: number;
   size?: number;
+  /**
+   * `eager` loads a rating summary and the reviews per listed instructor. `lazy` loads
+   * neither: each card fetches its own summary when it is shown. Either way, ratings the
+   * list already carries (`rating_avg`, `review_count`) win and nothing is fetched for them.
+   */
+  ratings?: 'eager' | 'lazy';
 } = {}) {
   const {
     data,
@@ -122,13 +148,19 @@ function useSearchTrainingInstructors({
     return map;
   }, [skillsData]);
 
+  const ratingsInline = useMemo(
+    () => instructors.length > 0 && instructors.every(instructor => listRating(instructor)),
+    [instructors]
+  );
+  const fetchRatings = ratings === 'eager';
+
   // No batch endpoint for rating summaries; payloads are tiny.
   const ratingSummaryQueries = useQueries({
     queries: instructors.map(instructor => ({
       ...getInstructorRatingSummaryOptions({
         path: { instructorUuid: instructor.uuid as string },
       }),
-      enabled: !!instructor.uuid,
+      enabled: fetchRatings && !!instructor.uuid && !listRating(instructor),
       staleTime: STALE_TIMES.entity,
     })),
   });
@@ -139,7 +171,7 @@ function useSearchTrainingInstructors({
       ...getInstructorReviewsOptions({
         path: { instructorUuid: instructor.uuid as string },
       }),
-      enabled: !!instructor.uuid,
+      enabled: ratings === 'eager' && !!instructor.uuid,
       staleTime: STALE_TIMES.entity,
     })),
   });
@@ -154,11 +186,15 @@ function useSearchTrainingInstructors({
     );
     const ratingSummary = ratingSummaries[i];
     const review = reviews[i];
-    const reviewCount = ratingSummary?.review_count ? Number(ratingSummary.review_count) : 0;
+    const inline = listRating(instructor);
+    const reviewCount =
+      inline?.reviewCount ??
+      (ratingSummary?.review_count ? Number(ratingSummary.review_count) : 0);
     const averageRating =
-      typeof ratingSummary?.average_rating === 'number'
+      inline?.rating ??
+      (typeof ratingSummary?.average_rating === 'number'
         ? ratingSummary.average_rating
-        : ((instructor as Instructor & { rating?: number }).rating ?? null);
+        : ((instructor as Instructor & { rating?: number }).rating ?? null));
 
     const skillArray = skillsByInstructor.get(instructor.uuid ?? '') ?? [];
     const skillCategories = skillArray.reduce<Record<string, InstructorSkill[]>>((acc, skill) => {
@@ -186,6 +222,7 @@ function useSearchTrainingInstructors({
       rating: averageRating ?? (instructor as Instructor & { rating?: number }).rating ?? 0,
       review_count: reviewCount,
       reviews: review,
+      ratings_inline: inline !== null,
     };
   });
 
@@ -205,6 +242,8 @@ function useSearchTrainingInstructors({
     error,
     isSearching: isFetching && Boolean(data),
     totalPages: Number(data?.data?.metadata?.totalPages ?? 1),
+    /** Every listed instructor carries its rating, so the list can be filtered and sorted by it. */
+    ratingsKnown: ratingsInline || fetchRatings,
   };
 }
 

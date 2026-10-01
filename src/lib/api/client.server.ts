@@ -5,7 +5,7 @@ type GeneratedResult<T> = {
   error?: unknown;
 };
 
-export class ServerApiError extends Error {
+class ServerApiError extends Error {
   constructor(
     message: string,
     readonly details?: unknown

@@ -8,7 +8,7 @@ export type SchedulingConflict = {
   reasons: string[];
 };
 
-export type SchedulingConflictReport = {
+type SchedulingConflictReport = {
   message: string;
   conflicts: SchedulingConflict[];
 };

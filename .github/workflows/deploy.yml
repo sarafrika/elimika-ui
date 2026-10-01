@@ -15,6 +15,11 @@ on:
         default: 'Manual deployment'
         type: string
 
+# Deploys recreate the same container, so they run one at a time instead of racing on its name.
+concurrency:
+  group: deploy-staging
+  cancel-in-progress: false
+
 jobs:
   deploy:
     name: Deploy to Staging VPS

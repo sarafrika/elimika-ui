@@ -4,7 +4,7 @@ import { createContext, type ReactNode, useContext, useEffect, useMemo, useState
 import type { UserDomain } from '@/lib/types';
 import { useUserDomain } from '@/src/features/dashboard/context/user-domain-context';
 
-export const AvailableViews = [
+const AvailableViews = [
   'student',
   'admin',
   'parent',

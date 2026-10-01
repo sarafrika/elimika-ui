@@ -26,16 +26,7 @@ export type AssignmentCardData = {
   uniqueEnrollmentCount?: number;
   taskType?: 'assignment' | 'quiz';
 };
-
-export type InsightMetric = {
-  changeText?: string;
-  progress: number;
-  title: string;
-  trendLabel?: string;
-  value: string;
-};
-
-export type SubmissionMetric = {
+type SubmissionMetric = {
   label: string;
   note?: string;
   score: number;

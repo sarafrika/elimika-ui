@@ -80,7 +80,7 @@ function RecordOpened({ entry }: { entry: TrainingApplicationEntry }) {
   return null;
 }
 
-export type CreatorApplicationReviewProps = {
+type CreatorApplicationReviewProps = {
   entry: TrainingApplicationEntry;
   heading: ReactNode;
   subheading?: ReactNode;
@@ -188,7 +188,7 @@ export function CreatorApplicationReview({
   );
 }
 
-export function DecisionPanel({
+function DecisionPanel({
   entry,
   onDecided,
   onPendingChange,

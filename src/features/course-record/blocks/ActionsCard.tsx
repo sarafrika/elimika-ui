@@ -53,7 +53,7 @@ export interface CourseRailActionItem extends CourseRailAction {
   disabled?: boolean;
 }
 
-export interface ActionsCardProps {
+interface ActionsCardProps {
   /** From the API. Supplies the title and the actions through the capability map. */
   access: CourseAccess;
   /**

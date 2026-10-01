@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useState } from "react";
 
-export const STORAGE_KEY = "elimika:creator-journey";
+const STORAGE_KEY = "elimika:creator-journey";
 
 export type WalletSectionKey =
     | "skills"
@@ -19,7 +19,7 @@ export type WalletField = {
     options?: string[];
 };
 
-export type WalletSection = {
+type WalletSection = {
     key: WalletSectionKey;
     label: string;
     summary: string;
@@ -177,18 +177,18 @@ export const COURSE_CATEGORIES = [
     "Trades & Technical Skills",
 ];
 
-export type WalletItem = { id: string; values: Record<string, string> };
+type WalletItem = { id: string; values: Record<string, string> };
 
-export type CoursePageKind = "lesson" | "video" | "audio" | "quiz" | "assignment";
+type CoursePageKind = "lesson" | "video" | "audio" | "quiz" | "assignment";
 
-export type CoursePage = {
+type CoursePage = {
     id: string;
     kind: CoursePageKind;
     title: string;
     body: string;
 };
 
-export type CourseLesson = {
+type CourseLesson = {
     id: string;
     title: string;
     pages: CoursePage[];
@@ -211,24 +211,9 @@ export type CourseDraft = {
     status: "draft" | "submitted" | "approved";
     submittedAt: string | null;
 };
+type ReviewStatus = "not_submitted" | "submitted" | "approved";
 
-export function courseStats(course: CourseDraft) {
-    const modules = course.modules?.length ?? 0;
-    const lessons = (course.modules ?? []).reduce((sum, m) => sum + m.lessons.length, 0);
-    const pages = (course.modules ?? []).reduce(
-        (sum, m) => sum + m.lessons.reduce((inner, l) => inner + l.pages.length, 0),
-        0,
-    );
-    return { modules, lessons, pages };
-}
-
-export function courseReadyForApproval(course: CourseDraft) {
-    return course.title.trim().length > 0 && (course.modules ?? []).some((m) => m.lessons.length > 0);
-}
-
-export type ReviewStatus = "not_submitted" | "submitted" | "approved";
-
-export type SarafrikaAccount = {
+type SarafrikaAccount = {
     fullName: string;
     email: string;
     connectedAt: string;
@@ -240,7 +225,7 @@ export const SAMPLE_SARAFRIKA_ACCOUNT: Omit<SarafrikaAccount, "connectedAt"> = {
     email: "amina.otieno@sarafrika.com",
 };
 
-export type CreatorJourney = {
+type CreatorJourney = {
     step: number;
     account: SarafrikaAccount | null;
     product: string | null;
@@ -254,7 +239,7 @@ export type CreatorJourney = {
     courses: CourseDraft[];
 };
 
-export const EMPTY_JOURNEY: CreatorJourney = {
+const EMPTY_JOURNEY: CreatorJourney = {
     step: 0,
     account: null,
     product: null,

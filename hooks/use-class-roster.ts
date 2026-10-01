@@ -22,7 +22,7 @@ export type RosterEntry = {
 
 const START_ELIGIBLE_ENROLLMENT_STATUSES = new Set(['ENROLLED', 'ATTENDED', 'ABSENT']);
 
-export function isStartEligibleEnrollmentStatus(status: string | null | undefined) {
+function isStartEligibleEnrollmentStatus(status: string | null | undefined) {
   return START_ELIGIBLE_ENROLLMENT_STATUSES.has(String(status ?? '').toUpperCase());
 }
 

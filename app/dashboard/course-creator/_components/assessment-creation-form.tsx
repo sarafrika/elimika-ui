@@ -166,7 +166,7 @@ const getApiErrorMessage = (error: unknown): string => {
   ) ?? 'Request failed';
 };
 
-export type QuizState = Record<string, Question[]>;
+type QuizState = Record<string, Question[]>;
 
 const AssessmentCreationForm = ({
   course,

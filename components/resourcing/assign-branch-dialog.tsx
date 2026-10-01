@@ -26,7 +26,7 @@ import type { OrganisationResource, TrainingBranch } from '@/services/client';
 import { updateResourceMutation } from '@/services/client/@tanstack/react-query.gen';
 import { invalidateGeneratedQueryIds } from '@/src/features/dashboard/workflow-query-invalidation';
 
-export type AssignBranchDialogProps = {
+type AssignBranchDialogProps = {
   organisationUuid: string;
   resource: OrganisationResource | null;
   branches: TrainingBranch[];

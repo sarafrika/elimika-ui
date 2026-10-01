@@ -1,10 +1,5 @@
 // @ts-nocheck -- pre-existing @hey-api generated-client type drift (see memory: elimika-ui-typecheck)
-import type {
-  AssignmentCardData,
-  AssignmentStatus,
-  InsightMetric,
-  SubmissionStudent,
-} from './assignment-types';
+import type { AssignmentCardData, AssignmentStatus } from './assignment-types';
 
 export const assignmentFilters: Array<{ label: string; value: AssignmentStatus }> = [
   { label: 'Pending', value: 'pending' },
@@ -14,7 +9,7 @@ export const assignmentFilters: Array<{ label: string; value: AssignmentStatus }
   { label: 'All', value: 'all' },
 ];
 
-export const assignments: AssignmentCardData[] = [
+const assignments: AssignmentCardData[] = [
   {
     ctaLabel: 'View Submissions',
     dueLabel: 'Due 04/10/24',
@@ -116,158 +111,5 @@ export const assignments: AssignmentCardData[] = [
     status: 'graded',
     statusLabel: 'Graded',
     subtitle: 'Google Ads Fundamentals',
-  },
-];
-
-export function getAssignmentById(id: string) {
-  return assignments.find(assignment => assignment.id === id) ?? null;
-}
-
-export const insightMetrics: InsightMetric[] = [
-  {
-    changeText: 'Last 7 days 8.71',
-    progress: 78,
-    title: 'Avg Score',
-    trendLabel: '89%',
-    value: '78%',
-  },
-  {
-    progress: 64,
-    title: 'Completion Rate',
-    value: '64%',
-  },
-  {
-    progress: 0,
-    title: 'Avg Submission Time',
-    value: '2h 14m',
-  },
-];
-
-export const submissionStudents: SubmissionStudent[] = [
-  {
-    attendanceLabel: 'Present 1',
-    comments: [
-      'Thesis is clear and the examples are strong.',
-      'Citations need a bit more consistency in the final section.',
-      'Presentation flow felt confident and well-timed.',
-    ],
-    id: 'jacob-jones',
-    insightLabel: 'Competent',
-    name: 'Jacob Jones',
-    roleLabel: 'Present 1',
-    score: 24,
-    sections: [
-      {
-        gradeLabel: 'Excellent',
-        gradeScore: 5,
-        metrics: [
-          { label: 'Research depth', note: 'Covers the required sources', score: 4, total: 5 },
-          { label: 'Evidence quality', note: 'Good examples and support', score: 5, total: 5 },
-          { label: 'Argument structure', note: 'Minor transitions to refine', score: 4, total: 5 },
-        ],
-        title: 'Assignment Quality',
-        weight: '10%',
-      },
-      {
-        gradeLabel: 'Good',
-        gradeScore: 4,
-        metrics: [{ label: 'Interpretation and originality', score: 4, total: 5 }],
-        title: 'Interpretation',
-      },
-      {
-        gradeLabel: 'Good',
-        gradeScore: 4,
-        metrics: [
-          { label: 'Clarity', note: 'Mostly confident', score: 4, total: 5 },
-          { label: 'Organization', note: 'Mostly controlled', score: 4, total: 5 },
-          { label: 'Completion', note: 'Strong submission quality', score: 5, total: 5 },
-        ],
-        title: 'Submission Readiness',
-      },
-    ],
-  },
-  {
-    attendanceLabel: 'Review 2',
-    comments: [
-      'Good effort overall, but the conclusion feels abrupt.',
-      'There is room to improve keyword coverage.',
-      'Formatting is clean and easy to follow.',
-    ],
-    id: 'eleanor-pena',
-    insightLabel: 'Intermediate',
-    name: 'Eleanor Pena',
-    roleLabel: 'Present 1',
-    score: 22,
-    sections: [
-      {
-        gradeLabel: 'Good',
-        gradeScore: 4,
-        metrics: [
-          { label: 'Research depth', note: 'Missing one supporting reference', score: 4, total: 5 },
-          { label: 'Evidence quality', note: 'Moderate support for one claim', score: 4, total: 5 },
-          { label: 'Argument structure', note: 'Transitions can be tighter', score: 4, total: 5 },
-        ],
-        title: 'Assignment Quality',
-        weight: '10%',
-      },
-      {
-        gradeLabel: 'Fair',
-        gradeScore: 3,
-        metrics: [{ label: 'Interpretation and originality', score: 3, total: 5 }],
-        title: 'Interpretation',
-      },
-      {
-        gradeLabel: 'Good',
-        gradeScore: 4,
-        metrics: [
-          { label: 'Clarity', note: 'Clear in most sections', score: 4, total: 5 },
-          { label: 'Organization', note: 'Submission is mostly structured', score: 4, total: 5 },
-          { label: 'Completion', note: 'Minor missing detail', score: 3, total: 5 },
-        ],
-        title: 'Submission Readiness',
-      },
-    ],
-  },
-  {
-    attendanceLabel: 'Pending',
-    comments: [
-      'Submission is incomplete and needs revision.',
-      'Support claims with clearer examples.',
-      'Revisit the assignment brief before resubmitting.',
-    ],
-    id: 'brooklyn-simmons',
-    insightLabel: 'Beginner',
-    name: 'Brooklyn Simmons',
-    roleLabel: 'Absent',
-    score: 18,
-    sections: [
-      {
-        gradeLabel: 'Fair',
-        gradeScore: 3,
-        metrics: [
-          { label: 'Research depth', note: 'Limited sources included', score: 3, total: 5 },
-          { label: 'Evidence quality', note: 'Examples are too broad', score: 3, total: 5 },
-          { label: 'Argument structure', note: 'Needs stronger sequencing', score: 3, total: 5 },
-        ],
-        title: 'Assignment Quality',
-        weight: '10%',
-      },
-      {
-        gradeLabel: 'Fair',
-        gradeScore: 3,
-        metrics: [{ label: 'Interpretation and originality', score: 3, total: 5 }],
-        title: 'Interpretation',
-      },
-      {
-        gradeLabel: 'Needs work',
-        gradeScore: 2,
-        metrics: [
-          { label: 'Clarity', note: 'Several rough sections', score: 2, total: 5 },
-          { label: 'Organization', note: 'Structure needs improvement', score: 2, total: 5 },
-          { label: 'Completion', note: 'Missing expected sections', score: 2, total: 5 },
-        ],
-        title: 'Submission Readiness',
-      },
-    ],
   },
 ];

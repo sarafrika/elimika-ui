@@ -11,10 +11,12 @@ export function GlobalSearchTrigger({
   onOpen,
   className,
   compact = false,
+  placeholder = 'Search courses, programs, jobs and more…',
 }: {
   onOpen: () => void;
   className?: string;
   compact?: boolean;
+  placeholder?: string;
 }) {
   return (
     <button
@@ -29,7 +31,7 @@ export function GlobalSearchTrigger({
       )}
     >
       <Search aria-hidden className='size-4 shrink-0' />
-      <span className='flex-1 truncate'>Search courses, programs, jobs and more…</span>
+      <span className='flex-1 truncate'>{placeholder}</span>
       <kbd className='border-border bg-muted pointer-events-none hidden rounded border px-1.5 py-0.5 font-mono text-[10px] font-medium sm:inline-block'>
         ⌘K
       </kbd>

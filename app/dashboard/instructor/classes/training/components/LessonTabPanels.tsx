@@ -21,7 +21,7 @@ import { getPracticeActivitiesInfiniteOptions } from '@/services/client/@tanstac
 import type { Lesson } from '@/services/client/types.gen';
 import { STALE_TIMES } from '@/lib/query-client';
 export { MaterialsPanel as ResourcesPanel } from './MaterialsPanel';
-export { EvaluationPanel as AssessmentPanel } from '@/components/lesson/EvaluationPanel';
+export * from '@/components/lesson/EvaluationPanel';
 
 export type LessonTabKey =
   | 'lesson'

@@ -41,14 +41,14 @@ import type {
 } from '@/services/client/types.gen';
 import { SkillPicker } from '@/src/features/skills/components/skill-picker';
 
-export const SKILL_LEVELS: ReadonlyArray<{ value: LevelEnum; label: string }> = [
+const SKILL_LEVELS: ReadonlyArray<{ value: LevelEnum; label: string }> = [
   { value: 'beginner', label: 'Beginner' },
   { value: 'intermediate', label: 'Intermediate' },
   { value: 'advanced', label: 'Advanced' },
   { value: 'expert', label: 'Expert' },
 ];
 
-export function skillLevelLabel(level: LevelEnum | string | null | undefined) {
+function skillLevelLabel(level: LevelEnum | string | null | undefined) {
   return SKILL_LEVELS.find(item => item.value === level?.toLowerCase())?.label ?? 'Beginner';
 }
 

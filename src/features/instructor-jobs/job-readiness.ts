@@ -90,7 +90,7 @@ export type JobReadiness = {
   cta: { label: string; kind: ReadinessCtaKind };
 };
 
-export type JobReadinessInput = {
+type JobReadinessInput = {
   job: ClassMarketplaceJob;
   eligibility: ClassMarketplaceJobEligibility | undefined;
   application?: Pick<ClassMarketplaceJobApplication, 'status'> | null;

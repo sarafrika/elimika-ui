@@ -51,10 +51,10 @@ type TrainersResponses = {
   200: { success?: boolean; data?: CourseTrainersEnvelope; message?: string; error?: unknown };
 };
 
-export const courseStatsQueryKey = (courseUuid: string | undefined) =>
+const courseStatsQueryKey = (courseUuid: string | undefined) =>
   ['course-record', 'stats', courseUuid ?? null] as const;
 
-export const courseTrainersQueryKey = (courseUuid: string | undefined) =>
+const courseTrainersQueryKey = (courseUuid: string | undefined) =>
   ['course-record', 'trainers', courseUuid ?? null] as const;
 
 /**

@@ -49,20 +49,20 @@ const sampleOptions = ['Option A', 'Option B', 'Option C', 'Option D'];
 
 const randomItem = <T,>(arr: T[]) => arr[Math.floor(Math.random() * arr.length)]!;
 
-export type QuestionType = 'MULTIPLE_CHOICE' | 'TRUE_FALSE' | 'ESSAY' | 'MATCHING' | 'SHORT_ANSWER';
+type QuestionType = 'MULTIPLE_CHOICE' | 'TRUE_FALSE' | 'ESSAY' | 'MATCHING' | 'SHORT_ANSWER';
 
-export type Option = {
+type Option = {
     uuid?: string;
     text: string;
     isCorrect: boolean;
 };
 
-export type MatchingPair = {
+type MatchingPair = {
     left: string;
     right: string;
 };
 
-export type Question = {
+type Question = {
     uuid?: string;
     text: string;
     type: QuestionType;
@@ -112,16 +112,8 @@ const isQuestionTypeWithOptions = (type: QuestionType) =>
 
 const isQuestionType = (value: string): value is QuestionType =>
     ['MULTIPLE_CHOICE', 'TRUE_FALSE', 'ESSAY', 'MATCHING', 'SHORT_ANSWER'].includes(value);
-
-const getQuestionByIndex = (questions: Question[] | undefined, index: number) => questions?.[index];
-const getOptionByIndex = (options: Option[] | undefined, index: number) => options?.[index];
-
 type AddQuizQuestionVariables = MutationVariables<ReturnType<typeof addQuizQuestionMutation>>;
-type UpdateQuizQuestionVariables = MutationVariables<ReturnType<typeof updateQuizQuestionMutation>>;
 type AddQuestionOptionVariables = MutationVariables<ReturnType<typeof addQuestionOptionMutation>>;
-type UpdateQuestionOptionVariables = MutationVariables<
-    ReturnType<typeof updateQuestionOptionMutation>
->;
 type CreateAssignmentVariables = MutationVariables<ReturnType<typeof createAssignmentMutation>>;
 type UpdateAssignmentVariables = MutationVariables<ReturnType<typeof updateAssignmentMutation>>;
 type CreateQuizVariables = MutationVariables<ReturnType<typeof createQuizMutation>>;
@@ -149,7 +141,7 @@ const getApiErrorMessage = (error: unknown): string => {
     ) ?? 'Request failed';
 };
 
-export type QuizState = Record<string, Question[]>;
+type QuizState = Record<string, Question[]>;
 
 // NOTE: `mode` replaces the old internal tab state — the parent (AssessmentTasksSection)
 // now owns whether we're creating/editing a Quiz or an Assignment, since it also drives the

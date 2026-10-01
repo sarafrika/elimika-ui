@@ -86,7 +86,7 @@ import ShareClassCourse, {
 // Shared types
 // ════════════════════════════════════════════════════════════════════════
 
-export type LessonContentItem = {
+type LessonContentItem = {
   lesson: {
     uuid?: string;
     title: string;
@@ -103,7 +103,7 @@ export type LessonContentItem = {
   };
 };
 
-export type LessonsByCourse = Record<string, LessonContentItem[]>;
+type LessonsByCourse = Record<string, LessonContentItem[]>;
 
 // ════════════════════════════════════════════════════════════════════════
 // Reusable helper: aggregate useCourseLessonsWithContent across N courses

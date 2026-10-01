@@ -4,9 +4,7 @@ import { useMemo } from 'react';
 
 import {
   type CourseAccess,
-  type CourseAccessCapability,
   type CourseRecordContent,
-  courseCapability,
   DEFAULT_COURSE_ACCESS,
   isCourseAccess,
 } from './types';
@@ -43,13 +41,4 @@ export function useCourseAccess(content: CourseRecordContent | undefined): Cours
 export function resolveCourseAccess(content: CourseRecordContent | undefined): CourseAccess {
   const access = content?.access;
   return isCourseAccess(access) ? access : DEFAULT_COURSE_ACCESS;
-}
-
-/** Convenience: the resolved access level *and* its capability row. */
-export function useCourseCapability(content: CourseRecordContent | undefined): {
-  access: CourseAccess;
-  capability: CourseAccessCapability;
-} {
-  const access = useCourseAccess(content);
-  return useMemo(() => ({ access, capability: courseCapability(access) }), [access]);
 }

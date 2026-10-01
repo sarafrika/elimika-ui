@@ -1,4 +1,4 @@
-import { Document, Image, Page, pdf, StyleSheet, Text, View } from '@react-pdf/renderer';
+import { Document, Image, Page, StyleSheet, Text, View } from '@react-pdf/renderer';
 
 export type CertificateType =
   | 'diploma'
@@ -262,16 +262,3 @@ export const CertificateDocument = (data: CertificateData) => {
     </Document>
   );
 };
-
-/** Download helper */
-export async function downloadCertificatePdf(data: CertificateData) {
-  const blob = await pdf(<CertificateDocument {...data} />).toBlob();
-  const url = URL.createObjectURL(blob);
-
-  const a = document.createElement('a');
-  a.href = url;
-  a.download = `${data.studentName}_certificate.pdf`;
-  a.click();
-
-  URL.revokeObjectURL(url);
-}

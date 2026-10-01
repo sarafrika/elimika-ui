@@ -28,7 +28,7 @@ function useCountryOptions() {
   );
 }
 
-export type CountrySelectProps = {
+type CountrySelectProps = {
   /** Stored as the English country name, matching what the API already holds. */
   value?: string | null;
   onChange?: (value: string | undefined) => void;

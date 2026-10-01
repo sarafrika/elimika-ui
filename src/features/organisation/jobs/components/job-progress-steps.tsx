@@ -2,7 +2,7 @@ import { Check } from 'lucide-react';
 
 import { cn } from '@/lib/utils';
 
-export type ProgressStep = { title: string; detail: string; done: boolean };
+type ProgressStep = { title: string; detail: string; done: boolean };
 
 /** Done steps get a tick; the first unfinished one is current unless the job has closed. */
 export function JobProgressSteps({ steps, closed }: { steps: ProgressStep[]; closed?: boolean }) {

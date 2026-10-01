@@ -4,7 +4,6 @@ import {
   REGISTRATION_WINDOW_HINT,
   validateRegistrationWindow,
 } from '@/components/class-form/class-form-shared';
-import { RecurrenceEditor } from '@/components/scheduling/recurrence-editor';
 import { SimpleEditor } from '@/components/tiptap-templates/simple/simple-editor-lazy';
 import { Button } from '@/components/ui/button';
 import {
@@ -44,26 +43,13 @@ import {
   updateScheduledInstanceStatusMutation,
 } from '@/services/client/@tanstack/react-query.gen';
 import { LocationTypeEnum, type StatusEnum3 } from '@/services/client/types.gen';
-import type { RecurrenceValue } from '@/lib/recurrence';
 import { OptionCombobox } from '@/components/search/entity-combobox';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { useEffect, useState } from 'react';
-import { useForm, useWatch } from 'react-hook-form';
+import { useState } from 'react';
+import { useForm } from 'react-hook-form';
 import { toast } from 'sonner';
 import z from 'zod';
-
-const _SUBMISSION_TYPES = ['PDF', 'AUDIO', 'TEXT'];
-const WEEK_DAYS = [
-  'SUNDAY',
-  'MONDAY',
-  'TUESDAY',
-  'WEDNESDAY',
-  'THURSDAY',
-  'FRIDAY',
-  'SATURDAY',
-] as const;
-
 type MutationVariables<T> = T extends {
   mutationFn?: (variables: infer TVariables) => Promise<unknown>;
 }
@@ -76,11 +62,6 @@ type SubmitCallback<T = void> = (data: T) => void;
 type OptionalClassName = string | undefined;
 type MessageLike = { message?: string };
 type ErrorLike = { message?: string };
-type DayOfWeek = (typeof WEEK_DAYS)[number];
-type RecurrenceInitialValues = Partial<Omit<RecurrenceFormValues, 'days_of_week'>> & {
-  days_of_week?: string | DayOfWeek[];
-};
-
 type CreateClassDefinitionVariables = MutationVariables<
   ReturnType<typeof createClassDefinitionMultipartMutation>
 >;
@@ -111,10 +92,7 @@ const getErrorMessage = (value: unknown) =>
   typeof value === 'object' && value !== null && 'message' in value
     ? (value as ErrorLike).message
     : undefined;
-
-const isDayOfWeek = (value: string): value is DayOfWeek => WEEK_DAYS.includes(value as DayOfWeek);
-
-export const classSchema = z.object({
+const classSchema = z.object({
   title: z.string().min(1, 'Title is required'),
   description: z.string().optional(),
   categories: z.string().array().optional(),
@@ -167,7 +145,7 @@ const classSchemaFor = (isEdit: boolean) =>
     }
   });
 
-export type ClassFormValues = z.infer<typeof classSchema>;
+type ClassFormValues = z.infer<typeof classSchema>;
 
 function ClassForm({
   onSuccess,
@@ -508,171 +486,13 @@ function ClassForm({
   );
 }
 
-export const recurrenceSchema = z.object({
-  recurrence_type: z.string().min(1, 'Recurrence type is required'),
-  interval_value: z.coerce.number().optional(),
-  days_of_week: z.array(z.enum(WEEK_DAYS)).optional(),
-  day_of_month: z.coerce.number().optional(),
-  end_date: z.string().optional(),
-  occurrence_count: z.number().int().positive().optional(),
-});
-
-export type RecurrenceFormValues = z.infer<typeof recurrenceSchema>;
-
-function RecurrencForm({
-  onSuccess,
-  recurrenceId,
-  initialValues,
-  onCancel,
-  className,
-}: {
-  recurrenceId?: string;
-  onSuccess: SubmitCallback;
-  onCancel: () => void;
-  initialValues?: RecurrenceInitialValues;
-  className?: OptionalClassName;
-}) {
-  function normalizeInitialValues(data?: RecurrenceInitialValues): RecurrenceFormValues {
-    return {
-      ...data,
-      recurrence_type: data?.recurrence_type ?? '',
-      days_of_week:
-        typeof data?.days_of_week === 'string'
-          ? data.days_of_week
-              .split(',')
-              .map(day => day.trim())
-              .filter(isDayOfWeek)
-          : (data?.days_of_week ?? []),
-      end_date: data?.end_date ? new Date(data.end_date).toISOString().split('T')[0] : '',
-    };
-  }
-
-  const form = useForm<RecurrenceFormValues>({
-    resolver: zodResolver(recurrenceSchema),
-    defaultValues: normalizeInitialValues(initialValues) || {},
-  });
-
-  const watchedRecurrence = useWatch({ control: form.control });
-  const recurrenceValue: RecurrenceValue = {
-    frequency: (watchedRecurrence.recurrence_type as RecurrenceValue['frequency']) || 'WEEKLY',
-    interval: watchedRecurrence.interval_value ?? 1,
-    daysOfWeek: (watchedRecurrence.days_of_week ?? []) as RecurrenceValue['daysOfWeek'],
-    dayOfMonth: watchedRecurrence.day_of_month,
-    end: watchedRecurrence.end_date
-      ? { mode: 'on', date: watchedRecurrence.end_date }
-      : watchedRecurrence.occurrence_count
-        ? { mode: 'after', count: watchedRecurrence.occurrence_count }
-        : { mode: 'never' },
-  };
-
-  // Seed a default recurrence type on mount so the required-field validation passes without the
-  // user having to re-pick the frequency the editor already shows.
-  useEffect(() => {
-    if (!form.getValues('recurrence_type')) {
-      form.setValue('recurrence_type', 'WEEKLY');
-      if (!form.getValues('interval_value')) form.setValue('interval_value', 1);
-    }
-  }, [form]);
-
-  const qc = useQueryClient();
-  const _user = useUserProfile();
-
-  // const createClassRecurrence = useMutation(createClassRecurrencePatternMutation());
-  // const updateClassRecurrence = useMutation(updateClassRecurrencePatternMutation());
-
-  const handleSubmit = async (values: RecurrenceFormValues) => {
-    const payload = {
-      ...values,
-      days_of_week: Array.isArray(values.days_of_week)
-        ? values.days_of_week.join(',')
-        : values.days_of_week,
-    };
-
-    if (recurrenceId) {
-      // updateClassRecurrence.mutate(
-      //   { path: { uuid: recurrenceId }, body: payload },
-      //   {
-      //     onSuccess: data => {
-      //       qc.invalidateQueries({
-      //         queryKey: getClassRecurrencePatternQueryKey({
-      //           path: { uuid: recurrenceId as string },
-      //         }),
-      //       });
-      //       toast.success(data?.message);
-      //       onCancel();
-      //       onSuccess(data);
-      //     },
-      //   }
-      // );
-    } else {
-      // createClassRecurrence.mutate(
-      //   { body: payload },
-      //   {
-      //     onSuccess: data => {
-      //       qc.invalidateQueries({
-      //         queryKey: getClassRecurrencePatternQueryKey({
-      //           path: { uuid: recurrenceId as string },
-      //         }),
-      //       });
-      //       toast.success(data?.message);
-      //       onCancel();
-      //       onSuccess(data);
-      //     },
-      //   }
-      // );
-    }
-  };
-
-  return (
-    <Form {...form}>
-      <form onSubmit={form.handleSubmit(handleSubmit)} className={`space-y-8 ${className}`}>
-        <RecurrenceEditor
-          allowNone={false}
-          value={recurrenceValue}
-          onChange={next => {
-            form.setValue('recurrence_type', next.frequency, { shouldValidate: true });
-            form.setValue('interval_value', next.interval);
-            form.setValue(
-              'days_of_week',
-              next.frequency === 'WEEKLY' ? (next.daysOfWeek as DayOfWeek[]) : []
-            );
-            form.setValue(
-              'day_of_month',
-              next.frequency === 'MONTHLY' ? next.dayOfMonth : undefined
-            );
-            form.setValue('end_date', next.end.mode === 'on' ? (next.end.date ?? '') : '');
-            form.setValue(
-              'occurrence_count',
-              next.end.mode === 'after' ? next.end.count : undefined
-            );
-          }}
-        />
-
-        <div className='flex justify-end gap-2 pt-6'>
-          <Button type='button' variant='outline' onClick={onCancel}>
-            Cancel
-          </Button>
-          <Button
-            type='submit'
-            className='flex min-w-[120px] items-center justify-center gap-2'
-            // disabled={createClassRecurrence.isPending || updateClassRecurrence.isPending}
-          >
-            {/* {(createClassRecurrence.isPending || updateClassRecurrence.isPending) && <Spinner />} */}
-            {initialValues ? 'Update Recurrence' : 'Create Recurrence'}
-          </Button>
-        </div>
-      </form>
-    </Form>
-  );
-}
-
-export const scheduleSchema = z.object({
+const scheduleSchema = z.object({
   uuid: z.string().optional(),
   start_date: z.string().optional(),
   end_date: z.string().optional(),
 });
 
-export type ScheduleFormValues = z.infer<typeof scheduleSchema>;
+type ScheduleFormValues = z.infer<typeof scheduleSchema>;
 
 function ScheduleForm({
   onSuccess,
@@ -796,13 +616,13 @@ function ScheduleForm({
   );
 }
 
-export const timetableScheduleSchema = z.object({
+const timetableScheduleSchema = z.object({
   start_time: z.string(),
   end_time: z.string(),
   timezone: z.string(),
 });
 
-export type TimetableScheduleFormValues = z.infer<typeof timetableScheduleSchema>;
+type TimetableScheduleFormValues = z.infer<typeof timetableScheduleSchema>;
 
 function TimetableScheduleForm({
   onSuccess,
@@ -1001,49 +821,6 @@ function ClassDialog({
   );
 }
 
-interface RecurrenceDialogProps {
-  isOpen: boolean;
-  setOpen: (open: boolean) => void;
-  onSuccess?: SubmitCallback;
-  editingRecurrenceId?: string;
-  initialValues?: RecurrenceInitialValues;
-  onCancel: () => void;
-}
-
-function RecurrenceDialog({
-  isOpen,
-  setOpen,
-  onSuccess,
-  editingRecurrenceId,
-  initialValues,
-  onCancel,
-}: RecurrenceDialogProps) {
-  return (
-    <Dialog open={isOpen} onOpenChange={setOpen}>
-      <DialogContent className='flex max-w-6xl flex-col p-0'>
-        <DialogHeader className='border-b px-6 py-4'>
-          <DialogTitle className='text-xl'>
-            {editingRecurrenceId ? 'Edit Recurrence' : 'Add Recurrence'}
-          </DialogTitle>
-          <DialogDescription className='text-muted-foreground text-sm'>
-            {editingRecurrenceId ? 'Edit Recurrence' : 'Create a new recurrence'}
-          </DialogDescription>
-        </DialogHeader>
-
-        <ScrollArea className='h-[calc(90vh-12rem)]'>
-          <RecurrencForm
-            onCancel={onCancel}
-            initialValues={initialValues}
-            className='px-6 pb-6'
-            recurrenceId={editingRecurrenceId}
-            onSuccess={onSuccess ?? (() => {})}
-          />
-        </ScrollArea>
-      </DialogContent>
-    </Dialog>
-  );
-}
-
 interface ScheduleDialogProps {
   isOpen: boolean;
   setOpen: (open: boolean) => void;
@@ -1147,4 +924,4 @@ function TimetableScheduleDialog({
   );
 }
 
-export { ClassDialog, RecurrenceDialog, ScheduleDialog, TimetableScheduleDialog };
+export { ClassDialog, ScheduleDialog, TimetableScheduleDialog };

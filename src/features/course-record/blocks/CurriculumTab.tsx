@@ -46,7 +46,7 @@ import {
  * Content items
  * ────────────────────────────────────────────────────────────────────────── */
 
-export const COURSE_CONTENT_KINDS = ['video', 'document', 'quiz', 'audio', 'link'] as const;
+const COURSE_CONTENT_KINDS = ['video', 'document', 'quiz', 'audio', 'link'] as const;
 
 export type CourseContentKind = (typeof COURSE_CONTENT_KINDS)[number];
 
@@ -141,7 +141,7 @@ const LOCKED_NOTE: Record<Exclude<CourseContentLevel, 'full'>, string> = {
  * Block
  * ────────────────────────────────────────────────────────────────────────── */
 
-export interface CurriculumTabProps extends CourseBlockAsyncProps {
+interface CurriculumTabProps extends CourseBlockAsyncProps {
   /** From the API. Decides the badge, the lock and the read-only note. */
   access: CourseAccess;
   lessons?: readonly CourseCurriculumLesson[];
@@ -456,22 +456,6 @@ function ExpandButton({
 /* ────────────────────────────────────────────────────────────────────────────
  * Skeletons
  * ────────────────────────────────────────────────────────────────────────── */
-
-export function CurriculumTabSkeleton({ className }: { className?: string }) {
-  return (
-    <div className={cn('min-w-0', className)}>
-      <div className='mb-3 flex items-center justify-between gap-3'>
-        <div className='flex items-center gap-2'>
-          <Skeleton className='h-[26px] w-36 rounded-[10px]' />
-          <Skeleton className='h-[26px] w-28 rounded-[10px]' />
-        </div>
-        <Skeleton className='h-[26px] w-40 rounded-[10px]' />
-      </div>
-      <CurriculumListSkeleton />
-      <Skeleton className='mt-3 h-3 w-72' />
-    </div>
-  );
-}
 
 function CurriculumListSkeleton() {
   return (

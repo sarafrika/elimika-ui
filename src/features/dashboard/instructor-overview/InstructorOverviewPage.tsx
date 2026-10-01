@@ -1,8 +1,6 @@
 'use client';
 
-import { CalendarDays } from 'lucide-react';
 import { WelcomeBanner } from '../../../../components/dashboard';
-import { Button } from '../../../../components/ui/button';
 import { Skeleton } from '../../../../components/ui/skeleton';
 import { OverviewClassInvitesPanel } from './_components/OverviewClassInvitesPanel';
 import { OverviewCourseListPanel } from './_components/OverviewCourseListPanel';

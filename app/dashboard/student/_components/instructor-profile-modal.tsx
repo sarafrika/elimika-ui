@@ -336,8 +336,6 @@ export const InstructorProfileComponent: React.FC<Props> = ({ instructor, onClos
     </div>
   );
 };
-
-const skills: Array<{ skill_name: string; uuid?: string }> = [];
 const certifications = [
   { id: 'cert-3', name: 'Deep Learning Specialization', issuer: 'DeepLearning.AI', year: 2020 },
   { id: 'cert-4', name: 'Google Cloud Professional Data Engineer', issuer: 'Google', year: 2021 },

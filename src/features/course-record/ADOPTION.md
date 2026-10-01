@@ -69,7 +69,7 @@ The blocks in `blocks/` correspond one-for-one to the design's regions: `CourseH
 `GlanceCard`, `AccessCard`, `LicenceCard`, `GateBanner`, `EnrolPanel`, `OpportunityPanel`,
 `ApplicationStatusPanel`, `OwnerDecisionsPanel`, `ProgressStrip`, `ActionsCard`, the tab panels
 (`OverviewTab`, `CurriculumTab`, `ClassesTab`, `DeliveryTab`, `CommercialsTab`, `ActivityTab`,
-`ReviewsTab`) and the reader (`ReaderPane`, `ReaderRail`, `ReaderTree`).
+`ReviewsTab`).
 
 You do not compose these yourself. `CourseRecordPage` does, from the capability map.
 

@@ -1,12 +1,12 @@
 'use client';
 
-import { useUserProfile } from '@/context/profile-context';
-import { localDate, resolveDisplayZone } from '@/lib/date';
-import { getInstructorCalendarOptions } from '@/services/client/@tanstack/react-query.gen';
-import { jobTimeKind, jobTimeTitle } from '@/lib/instructor-job-time';
-import type { InstructorCalendarEntry } from '@/services/client/types.gen';
 import { useQuery } from '@tanstack/react-query';
 import { useEffect, useMemo, useState } from 'react';
+import { useUserProfile } from '@/context/profile-context';
+import { localDate, resolveDisplayZone } from '@/lib/date';
+import { jobTimeKind, jobTimeTitle } from '@/lib/instructor-job-time';
+import { getInstructorCalendarOptions } from '@/services/client/@tanstack/react-query.gen';
+import type { InstructorCalendarEntry } from '@/services/client/types.gen';
 import AvailabilityManager from './components/availability-manager';
 import { type AvailabilityData, type CalendarEvent, toCalendarInstants } from './components/types';
 
@@ -80,7 +80,6 @@ const Page = () => {
     <AvailabilityManager
       availabilityData={availabilityData}
       onAvailabilityUpdate={setAvailabilityData}
-      classes={[]}
     />
   );
 };

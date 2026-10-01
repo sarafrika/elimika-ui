@@ -20,7 +20,7 @@ interface DomainOverviewShellProps {
   className?: string;
 }
 
-export function DomainOverviewShell({
+function DomainOverviewShell({
   domainLabel,
   title,
   subtitle,

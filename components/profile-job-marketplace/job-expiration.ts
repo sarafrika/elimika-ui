@@ -1,6 +1,6 @@
 import type { ClassMarketplaceJob } from '@/services/client/types.gen';
 
-export function hasJobStarted(startTime: Date | string | null | undefined, now = Date.now()) {
+function hasJobStarted(startTime: Date | string | null | undefined, now = Date.now()) {
   if (!startTime) return false;
   const timestamp = new Date(startTime).getTime();
   return Number.isFinite(timestamp) && timestamp <= now;

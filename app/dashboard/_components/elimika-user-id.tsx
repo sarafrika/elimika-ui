@@ -11,7 +11,7 @@ import { UserDomain, UserProfileType } from "../../../lib/types"
 import { toAuthenticatedMediaUrl } from "../../../src/lib/media-url"
 import { ProfileQrCode } from "./skills-wallet/ProfileQrCode"
 
-export interface ElimikaUserIdProps {
+interface ElimikaUserIdProps {
     profile: (Partial<UserProfileType> & {
         isLoading: boolean;
         invalidateQuery: () => void;

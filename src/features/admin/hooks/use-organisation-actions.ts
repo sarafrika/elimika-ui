@@ -9,7 +9,7 @@ import { invalidateAfterVerification } from '../lib/admin-queries';
 
 export type OrganisationDecision = SchemaEnum3Writable;
 
-export interface ModerateOrganisationVariables {
+interface ModerateOrganisationVariables {
   uuid: string;
   action: OrganisationDecision;
   reason: string;

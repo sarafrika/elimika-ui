@@ -22,7 +22,7 @@ import type { LearnerSkillGoal } from '@/services/client/types.gen';
 import { type PickedSkill, SkillPicker } from '@/src/features/skills/components/skill-picker';
 
 /** The API accepts at most 20 goals. */
-export const MAX_SKILL_GOALS = 20;
+const MAX_SKILL_GOALS = 20;
 
 type GoalChip = { uuid: string; name: string };
 

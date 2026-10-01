@@ -25,7 +25,7 @@ async function withBackendMessage<T>(call: () => Promise<T>, fallback: string): 
   }
 }
 
-export type SubmitRateUpdateVariables = { rateCard: RateCardInput; note?: string | null };
+type SubmitRateUpdateVariables = { rateCard: RateCardInput; note?: string | null };
 
 /** Applicant proposes a full replacement card; the card is normalised before sending. */
 export function useSubmitRateUpdate(
@@ -81,7 +81,7 @@ export function useWithdrawRateUpdate(
   });
 }
 
-export type DecideRateUpdateVariables = {
+type DecideRateUpdateVariables = {
   applicationUuid: string;
   updateUuid: string;
   action: RateUpdateDecision;

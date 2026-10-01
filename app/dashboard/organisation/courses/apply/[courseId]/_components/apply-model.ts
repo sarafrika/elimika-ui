@@ -169,7 +169,7 @@ export function offersInPerson(card: RateCard): boolean {
 }
 
 /** The provider vocabulary, spelled every way the API has spelled it. */
-export function normalizeRequirementProvider(provider?: string | null) {
+function normalizeRequirementProvider(provider?: string | null) {
   switch (provider?.toLowerCase()) {
     case 'organisation':
     case 'organization':
@@ -198,7 +198,7 @@ export function isApplicantTrainingRequirement(
 }
 
 /** The applicant's own note, or null; nothing else is folded into it. */
-export function composeApplicationNotes(note: string): string | null {
+function composeApplicationNotes(note: string): string | null {
   return note.trim() || null;
 }
 

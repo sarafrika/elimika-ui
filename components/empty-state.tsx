@@ -12,7 +12,7 @@ import { EmptyState as UiEmptyState } from '@/components/ui/empty-state';
  * existing call sites pixel-identical. Prefer importing the canonical component
  * directly and choosing a variant explicitly.
  */
-export interface EmptyStateProps {
+interface EmptyStateProps {
   icon: LucideIcon;
   title: string;
   description?: ReactNode;

@@ -33,7 +33,7 @@ const rowHeight = 58;
 // sticky header.
 const scrollAnchorPadding = 24;
 
-export type SchedulerWorkingHours = { start: string; end: string };
+type SchedulerWorkingHours = { start: string; end: string };
 
 // Time gutter + day columns. The day columns share `minmax(0,1fr)` so they
 // always divide the remaining width equally, regardless of viewport size.
@@ -232,10 +232,6 @@ function getEventStartMs(event: SchedulerEvent) {
 
 function getEventEndMs(event: SchedulerEvent) {
   return event.endTime.getTime();
-}
-
-function overlapsInTime(left: SchedulerEvent, right: SchedulerEvent) {
-  return getEventStartMs(left) < getEventEndMs(right) && getEventEndMs(left) > getEventStartMs(right);
 }
 
 function sortByStartThenEnd(events: SchedulerEvent[]) {

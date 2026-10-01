@@ -6,7 +6,7 @@ import { Button } from '@/components/ui/button';
 import type { GuardianShareScope } from '@/services/guardian';
 import Link from 'next/link';
 import { formatDistanceToNow } from 'date-fns';
-import { CalendarDays, FileDown } from 'lucide-react';
+import { CalendarDays, } from 'lucide-react';
 
 interface GuardianLearnerSummaryProps {
   studentName?: string;

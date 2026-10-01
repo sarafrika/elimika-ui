@@ -1,56 +1,35 @@
-import { PublicTopNav } from '@/components/PublicTopNav';
+import { surfaceTheme } from '@/components/data-display/page-shell';
 import { Skeleton } from '@/components/ui/skeleton';
+import { cn } from '@/lib/utils';
 
 /**
- * The public course record's loading shape.
- *
- * It traces the real page — back bar, hero band and stat strip, gate banner,
- * body column and 380px rail — so the skeleton settles into the record rather
- * than reflowing into it.
+ * The public course page's loading shape: breadcrumb, the three-column header card, the
+ * tab bar and an overview grid, so the skeleton settles into the page rather than
+ * reflowing into it.
  */
 export default function CourseDetailLoading() {
   return (
-    <div className='bg-background text-foreground min-h-screen'>
-      <PublicTopNav />
-      <div className='mx-auto flex w-full max-w-6xl flex-col px-6 py-10 lg:py-12'>
-        <div className='mb-5 flex items-center justify-between gap-4'>
-          <Skeleton className='h-8 w-40' />
-          <Skeleton className='h-[26px] w-48 rounded-[10px]' />
+    <div className={cn(surfaceTheme.pageWide, 'flex flex-col gap-[18px] pt-5 pb-14')}>
+      <Skeleton className='h-4 w-56' />
+
+      <div className='bg-card grid gap-5 rounded-2xl border p-4 sm:p-5 md:grid-cols-[240px_minmax(0,1fr)] lg:grid-cols-[300px_minmax(0,1fr)_340px] lg:gap-6'>
+        <Skeleton className='h-[160px] w-full rounded-xl md:h-full md:min-h-[180px]' />
+        <div className='flex flex-col gap-3'>
+          <Skeleton className='h-4 w-48' />
+          <Skeleton className='h-8 w-3/4' />
+          <Skeleton className='h-4 w-full max-w-prose' />
+          <Skeleton className='h-4 w-2/3 max-w-prose' />
+          <Skeleton className='h-6 w-56' />
+          <Skeleton className='mt-auto h-5 w-full max-w-xl' />
         </div>
+        <Skeleton className='hidden h-[220px] w-full rounded-[14px] md:col-span-2 md:block lg:col-span-1' />
+      </div>
 
-        <div className='bg-card mb-5 overflow-hidden rounded-xl border shadow-sm'>
-          <Skeleton className='h-[172px] w-full rounded-none sm:h-[200px] lg:h-[244px]' />
-          <div className='bg-border grid grid-cols-2 gap-px sm:grid-cols-4'>
-            {[0, 1, 2, 3].map(cell => (
-              <div key={cell} className='bg-card flex items-center gap-3 px-4 py-4 sm:px-6'>
-                <Skeleton className='size-10 rounded-xl' />
-                <div className='flex-1 space-y-1.5'>
-                  <Skeleton className='h-2.5 w-20' />
-                  <Skeleton className='h-4 w-12' />
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
+      <Skeleton className='h-[58px] w-full rounded-2xl' />
 
-        <Skeleton className='mb-[22px] h-[86px] w-full rounded-xl' />
-
-        <div className='grid items-start gap-[22px] lg:grid-cols-[minmax(0,1fr)_380px]'>
-          <div className='flex min-w-0 flex-col gap-[18px]'>
-            <Skeleton className='h-[168px] rounded-xl' />
-            <div className='grid gap-[18px] md:grid-cols-2'>
-              <Skeleton className='h-[196px] rounded-xl' />
-              <Skeleton className='h-[196px] rounded-xl' />
-            </div>
-            <Skeleton className='h-[240px] rounded-xl' />
-          </div>
-
-          <div className='flex flex-col gap-4'>
-            <Skeleton className='h-[212px] rounded-xl' />
-            <Skeleton className='h-[152px] rounded-xl' />
-            <Skeleton className='h-[228px] rounded-xl' />
-          </div>
-        </div>
+      <div className='grid items-start gap-[18px] lg:grid-cols-3'>
+        <Skeleton className='h-64 w-full rounded-[14px] lg:col-span-2' />
+        <Skeleton className='h-64 w-full rounded-[14px]' />
       </div>
     </div>
   );

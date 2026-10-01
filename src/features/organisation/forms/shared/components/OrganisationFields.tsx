@@ -173,34 +173,3 @@ export function OrganisationCountryField<TFieldValues extends FieldValues>({
     />
   );
 }
-
-type OrganisationWebsiteFieldProps<TFieldValues extends FieldValues> =
-  SharedFormProps<TFieldValues> & {
-    label?: string;
-    placeholder: string;
-    description?: string;
-  };
-
-export function OrganisationWebsiteField<TFieldValues extends FieldValues>({
-  form,
-  label = 'Website',
-  placeholder,
-  description,
-}: OrganisationWebsiteFieldProps<TFieldValues>) {
-  return (
-    <FormField
-      control={form.control}
-      name={'website' as Path<TFieldValues>}
-      render={({ field }) => (
-        <FormItem>
-          <FormLabel>{label}</FormLabel>
-          <FormControl>
-            <Input placeholder={placeholder} {...field} />
-          </FormControl>
-          {description ? <FormDescription>{description}</FormDescription> : null}
-          <FormMessage />
-        </FormItem>
-      )}
-    />
-  );
-}

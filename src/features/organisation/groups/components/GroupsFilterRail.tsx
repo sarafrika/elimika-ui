@@ -14,7 +14,7 @@ import { cn } from '@/lib/utils';
 import type { TierOption } from '@/src/features/organisation/groups/lib/roster';
 import type { TrainingBranch } from '@/services/client';
 
-export type GroupsFilterRailProps = {
+type GroupsFilterRailProps = {
   branches: TrainingBranch[];
   tiers: TierOption[];
   branchUuid: string | null;

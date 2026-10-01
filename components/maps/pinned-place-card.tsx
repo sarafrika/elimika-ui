@@ -6,7 +6,7 @@ import { Badge } from '@/components/ui/badge';
 import { googleMapsUrl } from '@/lib/geocoding';
 import { cn } from '@/lib/utils';
 
-export type PinnedPlaceCardProps = {
+type PinnedPlaceCardProps = {
   name: string;
   address?: string | null;
   latitude: number;

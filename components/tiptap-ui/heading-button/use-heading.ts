@@ -114,7 +114,7 @@ export function isHeadingActive(editor: Editor | null, level?: Level | Level[]):
 /**
  * Toggles heading in the editor
  */
-export function toggleHeading(editor: Editor | null, level: Level | Level[]): boolean {
+function toggleHeading(editor: Editor | null, level: Level | Level[]): boolean {
   if (!editor || !editor.isEditable) return false;
 
   const levels = Array.isArray(level) ? level : [level];

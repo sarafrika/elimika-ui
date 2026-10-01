@@ -4,7 +4,7 @@ import { Pencil } from 'lucide-react';
 
 import { Button } from '@/components/ui/button';
 
-export type ReviewRow = { title: string; value: string; onEdit: () => void };
+type ReviewRow = { title: string; value: string; onEdit: () => void };
 
 export function ReviewRows({ rows }: { rows: ReviewRow[] }) {
   return (

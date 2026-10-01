@@ -48,7 +48,7 @@ import type { DashboardClass } from './types';
 import { useUserDomain } from '@/src/features/dashboard/context/user-domain-context';
 import { roleScopedDashboardPath } from '@/src/features/dashboard/lib/active-domain-storage';
 
-export const getLocationBadgeColor = (location: string) => {
+const getLocationBadgeColor = (location: string) => {
   switch (location) {
     case 'ONLINE':
       return 'bg-success/10 text-success border-success/20';
@@ -61,7 +61,7 @@ export const getLocationBadgeColor = (location: string) => {
   }
 };
 
-export const getDifficultyColor = (difficulty: string) => {
+const getDifficultyColor = (difficulty: string) => {
   switch (difficulty?.toLowerCase()) {
     case 'beginner':
       return 'bg-success/70';

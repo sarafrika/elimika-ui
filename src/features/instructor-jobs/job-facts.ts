@@ -11,7 +11,7 @@ import {
 } from '@/src/features/organisation/jobs/lib/job-stage';
 
 /** Open-ended series stop here, matching the organisation's own job pages. */
-export const SESSION_CAP = 200;
+const SESSION_CAP = 200;
 
 const DAY_MS = 24 * 60 * 60 * 1000;
 
@@ -80,7 +80,7 @@ export function hoursLabel(hours: number) {
 }
 
 /** "12 sessions", "24 hours", "3 days": the units the estimated total multiplies. */
-export function billedUnitsLabel(job: ClassMarketplaceJob, facts: JobFacts) {
+function billedUnitsLabel(job: ClassMarketplaceJob, facts: JobFacts) {
   const suffix = facts.capped ? '+' : '';
   if (job.rate_basis === 'per_hour') {
     const hours = Math.round(facts.totalHours * 10) / 10;
@@ -113,7 +113,7 @@ const SHORT_DAYS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
 const LONG_DAYS = ['Sundays', 'Mondays', 'Tuesdays', 'Wednesdays', 'Thursdays', 'Fridays', 'Saturdays'];
 
 /** "Mon & Wed", "Saturdays", or null once the sessions spread over more than three weekdays. */
-export function weekdaysLabel(windows: JobSessionWindow[]) {
+function weekdaysLabel(windows: JobSessionWindow[]) {
   if (windows.length < 2) return null;
   const days = Array.from(
     new Set(windows.map(window => dayjs(window.start).tz(window.timezone).day()))
@@ -143,7 +143,7 @@ export function sessionDate(window: JobSessionWindow | null, format = 'ddd D MMM
   return window ? dayjs(window.start).tz(window.timezone).format(format) : '—';
 }
 
-export function daysUntil(at: Date | null, now: number) {
+function daysUntil(at: Date | null, now: number) {
   if (!at) return null;
   return Math.ceil((at.getTime() - now) / DAY_MS);
 }
@@ -168,7 +168,7 @@ export function inDaysLabel(facts: JobFacts, now: number) {
   return `in ${plural(days, 'day')}`;
 }
 
-export function venueName(job: ClassMarketplaceJob) {
+function venueName(job: ClassMarketplaceJob) {
   return (
     job.resources?.find(resource => resource.resource_type === 'VENUE' && resource.resource_name)
       ?.resource_name ?? null

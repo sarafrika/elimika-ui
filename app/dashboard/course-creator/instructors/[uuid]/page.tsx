@@ -112,14 +112,6 @@ function formatDateTime(value?: Date | string | null) {
   });
 }
 
-function formatSize(value?: bigint | number | string | null) {
-  const bytes = toNumber(value, Number.NaN);
-  if (!Number.isFinite(bytes) || bytes <= 0) return '0 B';
-  if (bytes < 1024) return `${bytes} B`;
-  if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
-  return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
-}
-
 function instructorInitials(name?: string | null) {
   return (
     (name ?? '')

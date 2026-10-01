@@ -1,16 +1,6 @@
 import { dayjs, normalizeTimeZone, resolveDisplayZone, UTC_ZONE } from '@/lib/date';
-import type {
-  ClassDefinition,
-  Course,
-  ScheduledInstance,
-  StudentSchedule,
-} from '@/services/client/types.gen';
-import type {
-  SchedulerCategory,
-  SchedulerEvent,
-  SchedulerFilterValues,
-  SchedulerProfile,
-} from './types';
+import type { ClassDefinition, Course, StudentSchedule } from '@/services/client/types.gen';
+import type { SchedulerCategory, SchedulerEvent } from './types';
 
 /** Only settings the calendar actually honours live here - the panel offers nothing else. */
 export type SchedulePreferences = {
@@ -35,13 +25,6 @@ export type StudentSummary = {
   enrollmentUuid?: string;
   studentEnrollmentKey?: string;
 };
-
-export type LocationSummary = {
-  label: string;
-  detail: string;
-  meetingLink?: string;
-};
-
 export type SchedulerCalendarData = {
   allInstructors: InstructorSummary[];
   events: SchedulerEvent[];
@@ -132,27 +115,10 @@ export const persistSchedulerPreferences = (preferences: SchedulePreferences) =>
     // Storage can be blocked (private mode, embedded frames) - the calendar still works.
   }
 };
-
-export const DEFAULT_FILTERS: SchedulerFilterValues = {
-  category: '',
-  course: '',
-  instructor: '',
-  location: '',
-  statuses: [],
-};
-
 export const TIME_OPTIONS = Array.from({ length: 18 }, (_, index) => {
   const hour = index + 5;
   return `${hour.toString().padStart(2, '0')}:00`;
 });
-
-export const toApiDate = (date: Date) => {
-  const year = date.getFullYear();
-  const month = String(date.getMonth() + 1).padStart(2, '0');
-  const day = String(date.getDate()).padStart(2, '0');
-  return `${year}-${month}-${day}` as unknown as Date;
-};
-
 export const formatDateRange = (date: Date, view: 'day' | 'week' | 'month' | 'year') => {
   if (view === 'day') {
     return dayjs(date).format('dddd, MMMM D, YYYY');
@@ -234,7 +200,7 @@ export const findClosestDate = (reference: Date, events: SchedulerEvent[]) => {
   }).startTime;
 };
 
-export const makeInitials = (value?: string | null) =>
+const makeInitials = (value?: string | null) =>
   (value || 'NA')
     .split(' ')
     .map(part => part.charAt(0))
@@ -251,7 +217,7 @@ export const formatStatus = (status?: string | null) =>
         .join(' ')
     : 'Scheduled';
 
-export const inferCategory = (value?: string | null): SchedulerCategory => {
+const inferCategory = (value?: string | null): SchedulerCategory => {
   const normalized = value?.toLowerCase() ?? '';
   if (normalized.includes('sport') || normalized.includes('basket')) return 'Sports';
   if (normalized.includes('cert') || normalized.includes('aws')) return 'Certifications';
@@ -299,44 +265,6 @@ export const toStudentInitialsByClass = (students: StudentSummary[]) => {
 
   return map;
 };
-
-export const mapScheduledInstance = (
-  instance: ScheduledInstance,
-  instructorDetails: InstructorSummary,
-  classDetails?: ClassWithScheduleInput | null,
-  enrolledInitials?: string[]
-): SchedulerEvent | null => {
-  if (!instance.start_time || !instance.end_time) return null;
-
-  const title =
-    instance.title || classDetails?.title || classDetails?.course?.name || 'Scheduled class';
-  const courseName = classDetails?.course?.name || classDetails?.title || 'Class';
-  const instructorName = instructorDetails.fullName || 'Instructor pending';
-  const locationName = instance.location_name || classDetails?.location_name || '';
-
-  return {
-    id: instance.uuid || `${instance.class_definition_uuid}-${instance.start_time}`,
-    instanceUuid: instance.uuid || undefined,
-    classCode: '',
-    classDefinitionUuid: instance.class_definition_uuid || undefined,
-    title,
-    course: courseName,
-    instructor: instructorName,
-    instructorUuid: instance.instructor_uuid || instructorDetails.uuid || undefined,
-    location: locationName,
-    meetingLink: classDetails?.meeting_link || undefined,
-    locationType: instance.location_type || undefined,
-    organisationUuid: instance.organisation_uuid || classDetails?.organisation_uuid || undefined,
-    organisationName: instance.organisation_name || classDetails?.organisation_name || undefined,
-    startTime: new Date(instance.start_time),
-    endTime: new Date(instance.end_time),
-    status: formatStatus(instance.status),
-    category: inferCategory(title),
-    students: enrolledInitials ?? [],
-    maxParticipants: instance.max_participants || undefined,
-  };
-};
-
 export const mapStudentSchedule = (
   item: StudentSchedule,
   instructorDetails: InstructorSummary,
@@ -489,6 +417,3 @@ export const mapClassDefinitionDetails = (classDef: ClassDefinition, course?: Co
   course: course ? { uuid: course.uuid ?? null, name: course.name } : null,
   schedule: [],
 });
-
-export const normalizeProfileLabel = (profile: SchedulerProfile) =>
-  profile.charAt(0).toUpperCase() + profile.slice(1);

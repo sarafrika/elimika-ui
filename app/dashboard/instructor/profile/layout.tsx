@@ -2,18 +2,6 @@
 
 import type { ReactNode } from 'react';
 
-const sections = [
-  { label: 'Overview', href: '/dashboard/instructor/profile', exact: true },
-  { label: 'General', href: '/dashboard/instructor/profile/general' },
-  { label: 'Education', href: '/dashboard/instructor/profile/education' },
-  { label: 'Experience', href: '/dashboard/instructor/profile/experience' },
-  { label: 'Certificates', href: '/dashboard/instructor/profile/certificates' },
-  {
-    label: 'Professional Memberships',
-    href: '/dashboard/instructor/profile/professional-membership',
-  },
-];
-
 export default function ProfileLayout({ children }: { children: ReactNode }) {
   return (
     <div className='flex min-h-screen flex-col gap-4 pt-4 pb-14'>

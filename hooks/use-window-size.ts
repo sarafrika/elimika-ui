@@ -3,7 +3,7 @@
 import * as React from 'react';
 import { useThrottledCallback } from './use-throttled-callback';
 
-export interface WindowSizeState {
+interface WindowSizeState {
   /**
    * The width of the window's visual viewport in pixels.
    */

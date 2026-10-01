@@ -202,11 +202,7 @@ export const elimikaThemeRoles = {
   },
 } as const;
 
-export type ElimikaThemeMode = keyof typeof elimikaThemeRoles;
-
-export const getBrandShade = (shade: Shade) => brand[shade];
-export const getNeutralShade = (shade: Shade) => neutrals[shade];
-
+type ElimikaThemeMode = keyof typeof elimikaThemeRoles;
 // Helper to get chart colors array for the current theme mode
 export const getChartColors = (mode: ElimikaThemeMode = 'light') => [
   charts[mode].primary,

@@ -53,7 +53,6 @@ import {
   type CourseRecordSection,
   type CourseReview,
   type CourseStats,
-  type CourseTrainerSummary,
   type CourseTrainingApplication,
   type CourseTrainingRequirement,
   courseCapability,
@@ -64,7 +63,7 @@ import { useCourseStats, useCourseTrainers, CourseTrainersEnvelope } from './use
 /** How many rows of a paged collection the record ever needs on screen at once. */
 const PAGE_SIZE = 100;
 
-export const COURSE_RECORD_SECTIONS = [
+const COURSE_RECORD_SECTIONS = [
   'course',
   'content',
   'stats',
@@ -78,21 +77,21 @@ export const COURSE_RECORD_SECTIONS = [
   'myApplication',
 ] as const;
 
-export type CourseRecordSectionId = (typeof COURSE_RECORD_SECTIONS)[number];
+type CourseRecordSectionId = (typeof COURSE_RECORD_SECTIONS)[number];
 
-export interface CourseEnrollmentPage {
+interface CourseEnrollmentPage {
   items: CourseEnrollment[];
   /** Total across every page — the enrolment count, without fetching them all. */
   total: number | undefined;
 }
 
-export interface UseCourseRecordOptions {
+interface UseCourseRecordOptions {
   courseUuid: string | undefined;
   /** Set false to hold every query (e.g. while a route param is still resolving). */
   enabled?: boolean;
 }
 
-export interface CourseRecord {
+interface CourseRecord {
   /** Blocking. Everything on the page hangs off the course itself. */
   course: CourseRecordSection<Course>;
   /** Carries the authoritative `access` string as well as the lessons. */

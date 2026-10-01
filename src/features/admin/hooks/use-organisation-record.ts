@@ -39,7 +39,7 @@ import type { InstructorPayable, MonthlySettlement } from '../components/finance
 import { configQuery, listQuery } from '../lib/admin-queries';
 
 const BRANCH_PAGE = { page: 0, size: 20 };
-export const MEMBER_PAGE_SIZE = 20;
+const MEMBER_PAGE_SIZE = 20;
 
 /** The organisation record itself — the one read every tab needs. */
 export function useOrganisation(uuid: string) {

@@ -1,6 +1,6 @@
 export type SharePlatform = 'facebook' | 'twitter' | 'linkedin' | 'whatsapp' | 'email';
 
-export type ShareTarget = {
+type ShareTarget = {
   description?: string;
   recipients?: string[];
   title?: string;

@@ -3820,11 +3820,11 @@ export const createAvailabilitySlotResponseTransformer = async (
 };
 
 const guardianStudentLinkSchemaResponseTransformer = (data: any) => {
-  if (data.linkedDate) {
-    data.linkedDate = new Date(data.linkedDate);
+  if (data.linked_date) {
+    data.linked_date = new Date(data.linked_date);
   }
-  if (data.revokedDate) {
-    data.revokedDate = new Date(data.revokedDate);
+  if (data.revoked_date) {
+    data.revoked_date = new Date(data.revoked_date);
   }
   return data;
 };

@@ -25,6 +25,10 @@ import {
   SheetTrigger,
 } from '@/components/ui/sheet';
 import { Slider } from '@/components/ui/slider';
+import { SearchUnavailable } from '@/components/search/search-unavailable';
+import { isSearchUnavailable } from '@/lib/api-errors';
+import type { NearMeState } from '@/src/features/near-me/near-me';
+import { DistanceBandBadge, NearMeControl } from '@/src/features/near-me/near-me-control';
 import { searchSkillsOptions } from '@/services/client/@tanstack/react-query.gen';
 import { useQuery } from '@tanstack/react-query';
 import { DollarSign, Filter, MapPin, Search, SlidersHorizontal, Star, X } from 'lucide-react';
@@ -36,6 +40,15 @@ type Props = {
   instructors: SearchInstructor[];
   classes: BundledClass[];
   courseId: string;
+  /** Near-me state of the page that loads `instructors`; shows the control when given. */
+  nearMe?: NearMeState;
+  /** The instructor list's error, to tell a near-me outage apart from no results. */
+  nearMeError?: unknown;
+  /**
+   * Whether `rating` is known for every listed instructor. When ratings load per card,
+   * the list cannot be filtered or sorted by them.
+   */
+  ratingsKnown?: boolean;
 };
 
 type Filters = {
@@ -76,7 +89,11 @@ export const InstructorDirectory: React.FC<Props> = ({
   instructors,
   classes: _classes,
   courseId,
+  nearMe,
+  nearMeError,
+  ratingsKnown = true,
 }) => {
+  const nearActive = Boolean(nearMe?.active);
   const [selectedInstructor, setSelectedInstructor] = useState<SearchInstructor | null>(null);
   const [filters, setFilters] = useState<Filters>(defaultFilters);
   const [visibleInstructorCount, setVisibleInstructorCount] = useState(6);
@@ -148,7 +165,7 @@ export const InstructorDirectory: React.FC<Props> = ({
             return false;
           }
 
-          if ((instructor.rating ?? 0) < filters.minRating) {
+          if (ratingsKnown && (instructor.rating ?? 0) < filters.minRating) {
             return false;
           }
 
@@ -185,7 +202,10 @@ export const InstructorDirectory: React.FC<Props> = ({
           return true;
         })
         ?.sort((left, right) => {
-          if ((right.rating ?? 0) !== (left.rating ?? 0)) {
+          // Near me: the server's order is nearest first; keep it.
+          if (nearActive) return 0;
+
+          if (ratingsKnown && (right.rating ?? 0) !== (left.rating ?? 0)) {
             return (right.rating ?? 0) - (left.rating ?? 0);
           }
 
@@ -198,7 +218,7 @@ export const InstructorDirectory: React.FC<Props> = ({
 
           return rightSpecs - leftSpecs;
         }),
-    [filters, instructors]
+    [filters, instructors, nearActive, ratingsKnown]
   );
 
   const visibleInstructors = filteredInstructors.slice(0, visibleInstructorCount);
@@ -239,7 +259,7 @@ export const InstructorDirectory: React.FC<Props> = ({
     filters.mode.length +
     (filters.instructorType !== 'all' ? 1 : 0) +
     (filters.gender !== 'all' ? 1 : 0) +
-    (filters.minRating > 0 ? 1 : 0) +
+    (ratingsKnown && filters.minRating > 0 ? 1 : 0) +
     (filters.location ? 1 : 0);
 
   const filterPanel = (
@@ -307,7 +327,7 @@ export const InstructorDirectory: React.FC<Props> = ({
       </div>
 
       <div className='grid gap-4 sm:grid-cols-2 xl:grid-cols-1'>
-        <div className='space-y-2'>
+        <div className={ratingsKnown ? 'space-y-2' : 'hidden'}>
           <div className='flex items-center justify-between gap-3'>
             <Label className='text-xs font-medium'>Minimum Rating</Label>
             <span className='text-muted-foreground text-xs'>{filters.minRating.toFixed(1)}</span>
@@ -434,25 +454,28 @@ export const InstructorDirectory: React.FC<Props> = ({
                   </p>
                 </div>
 
-                <Sheet>
-                  <SheetTrigger asChild>
-                    <Button variant='outline' className='gap-2 rounded-xl shadow-none xl:hidden'>
-                      <SlidersHorizontal className='h-4 w-4' />
-                      Filters
-                      {activeFilterCount > 0 ? ` (${activeFilterCount})` : ''}
-                    </Button>
-                  </SheetTrigger>
-                  <SheetContent side='left' className='w-[88vw] max-w-sm overflow-y-auto p-0'>
-                    <SheetHeader className='border-b px-4 py-4'>
-                      <SheetTitle>Filter Instructors</SheetTitle>
-                      <SheetDescription>
-                        Refine the instructor list by search, experience, rating, mode and
-                        specialization.
-                      </SheetDescription>
-                    </SheetHeader>
-                    <div className='p-4'>{filterPanel}</div>
-                  </SheetContent>
-                </Sheet>
+                <div className='flex flex-wrap items-center gap-2'>
+                  {nearMe ? <NearMeControl nearMe={nearMe} /> : null}
+                  <Sheet>
+                    <SheetTrigger asChild>
+                      <Button variant='outline' className='gap-2 rounded-xl shadow-none xl:hidden'>
+                        <SlidersHorizontal className='h-4 w-4' />
+                        Filters
+                        {activeFilterCount > 0 ? ` (${activeFilterCount})` : ''}
+                      </Button>
+                    </SheetTrigger>
+                    <SheetContent side='left' className='w-[88vw] max-w-sm overflow-y-auto p-0'>
+                      <SheetHeader className='border-b px-4 py-4'>
+                        <SheetTitle>Filter Instructors</SheetTitle>
+                        <SheetDescription>
+                          Refine the instructor list by search, experience, rating, mode and
+                          specialization.
+                        </SheetDescription>
+                      </SheetHeader>
+                      <div className='p-4'>{filterPanel}</div>
+                    </SheetContent>
+                  </Sheet>
+                </div>
               </div>
             </Card>
 
@@ -491,7 +514,7 @@ export const InstructorDirectory: React.FC<Props> = ({
                     />
                   </Badge>
                 ) : null}
-                {filters.minRating > 0 ? (
+                {ratingsKnown && filters.minRating > 0 ? (
                   <Badge variant='secondary' className='gap-1 rounded-full px-3 py-1'>
                     {filters.minRating}+ rating
                     <X
@@ -503,31 +526,59 @@ export const InstructorDirectory: React.FC<Props> = ({
               </div>
             ) : null}
 
-            {filteredInstructors.length === 0 ? (
-              <Card className='rounded-[22px] border border-dashed p-12 text-center shadow-none'>
-                <Search className='text-muted-foreground mx-auto mb-4 h-12 w-12' />
-                <h3>No instructors found</h3>
-                <p className='text-muted-foreground mt-2'>
-                  Try adjusting your filters to see more results.
-                </p>
-                <Button
-                  onClick={clearFilters}
-                  variant='outline'
-                  className='max-auto mt-4 max-w-fit self-center rounded-md px-4 shadow-none'
-                >
-                  Clear Filters
-                </Button>
-              </Card>
+            {nearActive && isSearchUnavailable(nearMeError) ? (
+              <SearchUnavailable
+                variant='card'
+                description='Near-me search is unavailable right now. Clear it to see every instructor, or try again in a moment.'
+                onClear={nearMe?.clear}
+              />
+            ) : filteredInstructors.length === 0 ? (
+              nearActive ? (
+                <Card className='rounded-[22px] border border-dashed p-12 text-center shadow-none'>
+                  <MapPin className='text-muted-foreground mx-auto mb-4 h-12 w-12' />
+                  <h3>
+                    No instructors near {nearMe?.point?.label} within {nearMe?.radiusKm} km
+                  </h3>
+                  <p className='text-muted-foreground mt-2'>
+                    Only instructors who share their location appear here. Try a wider radius, or
+                    clear near me.
+                  </p>
+                  <Button
+                    onClick={nearMe?.clear}
+                    variant='outline'
+                    className='mt-4 max-w-fit self-center rounded-md px-4 shadow-none'
+                  >
+                    Clear near me
+                  </Button>
+                </Card>
+              ) : (
+                <Card className='rounded-[22px] border border-dashed p-12 text-center shadow-none'>
+                  <Search className='text-muted-foreground mx-auto mb-4 h-12 w-12' />
+                  <h3>No instructors found</h3>
+                  <p className='text-muted-foreground mt-2'>
+                    Try adjusting your filters to see more results.
+                  </p>
+                  <Button
+                    onClick={clearFilters}
+                    variant='outline'
+                    className='max-auto mt-4 max-w-fit self-center rounded-md px-4 shadow-none'
+                  >
+                    Clear Filters
+                  </Button>
+                </Card>
+              )
             ) : (
               <>
                 <div className='grid grid-cols-1 gap-4 md:grid-cols-2 2xl:grid-cols-3'>
                   {visibleInstructors.map(instructor => (
-                    <InstructorCard
-                      key={instructor.uuid}
-                      instructor={instructor}
-                      onViewProfile={() => setSelectedInstructor(instructor)}
-                      courseId={courseId}
-                    />
+                    <div key={instructor.uuid} className='flex flex-col gap-2'>
+                      {nearActive ? <DistanceBandBadge band={instructor.distance_band} /> : null}
+                      <InstructorCard
+                        instructor={instructor}
+                        onViewProfile={() => setSelectedInstructor(instructor)}
+                        courseId={courseId}
+                      />
+                    </div>
                   ))}
                 </div>
 

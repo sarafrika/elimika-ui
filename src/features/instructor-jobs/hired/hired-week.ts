@@ -17,7 +17,7 @@ export type WeekBlock = {
   href: string | null;
 };
 
-export type WeekDay = {
+type WeekDay = {
   key: string;
   weekday: string;
   date: string;

@@ -91,7 +91,7 @@ const getFormErrorMessage = (value: unknown) => {
   return undefined;
 };
 
-export type FormSectionProps = {
+type FormSectionProps = {
   title: string;
   description: string;
   children: ReactNode;
@@ -114,7 +114,7 @@ export const FormSection = ({ title, description, children }: FormSectionProps) 
   </section>
 );
 
-export type CourseFormProps = {
+type CourseFormProps = {
   showSubmitButton?: boolean;
   initialValues?: Partial<CourseCreationFormValues>;
   editingCourseId?: string;
@@ -1095,5 +1095,3 @@ export const CourseCreationForm = forwardRef<CourseFormRef, CourseFormProps>(
     );
   }
 );
-
-export default CourseCreationForm;

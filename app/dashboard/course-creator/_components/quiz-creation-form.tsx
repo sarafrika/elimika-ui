@@ -11,13 +11,6 @@ import { Checkbox } from '../../../../components/ui/checkbox';
 import { DeleteConfirmationDialog } from '../../../../components/ui/delete-confirmation-dialog';
 import { Input } from '../../../../components/ui/input';
 import { Label } from '../../../../components/ui/label';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '../../../../components/ui/select';
 import Spinner from '../../../../components/ui/spinner';
 import { Switch } from '../../../../components/ui/switch';
 import { Textarea } from '../../../../components/ui/textarea';
@@ -32,7 +25,7 @@ import {
   getAssessmentRubricByUuidOptions,
   searchQuizzesOptions,
 } from '../../../../services/client/@tanstack/react-query.gen';
-import type { AssessmentRubric, Quiz } from '../../../../services/client/types.gen';
+import type { AssessmentRubric, } from '../../../../services/client/types.gen';
 import { Question, QuestionType } from './assessment-creation-form';
 
 type LessonItem = {
@@ -42,18 +35,6 @@ type LessonItem = {
 };
 type LessonList = { content?: LessonItem[] } | undefined;
 type RubricItem = Pick<AssessmentRubric, 'uuid' | 'title' | 'description'>;
-type QuizSummary = Pick<
-  Quiz,
-  | 'uuid'
-  | 'title'
-  | 'instructions'
-  | 'time_limit_minutes'
-  | 'attempts_allowed'
-  | 'passing_score'
-  | 'active'
-  | 'status'
-  | 'rubric_uuid'
->;
 type QuizStatus = 'DRAFT' | 'IN_REVIEW' | 'PUBLISHED' | 'ARCHIVED';
 
 const getApiErrorMessage = (error: unknown): string => {
@@ -101,7 +82,7 @@ const normalizeQuizStatus = (status?: string | null): QuizStatus => {
   }
 };
 
-export type QuizCreationFormProps = {
+type QuizCreationFormProps = {
   lessons?: LessonList;
   quizId?: string | null;
   questions: Question[];

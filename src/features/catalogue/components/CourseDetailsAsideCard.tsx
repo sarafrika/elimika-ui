@@ -15,7 +15,7 @@ import { useQuery } from '@tanstack/react-query';
 import { Briefcase, PlusSquare } from 'lucide-react';
 import { useSession } from 'next-auth/react';
 import Link from 'next/link';
-import { formatCourseDuration, formatPricingLabel } from '../format';
+import { formatPricingLabel } from '../format';
 import type { PublicCourseDetail, PublicCourseSummary } from '../types';
 
 type CourseDetailsCardProps = {
@@ -176,7 +176,6 @@ function CourseDetailsCard({
         <dl className='space-y-3 text-sm'>
           {[
             ['Created', createdLabel],
-            ['Duration', formatCourseDuration(course) ?? '—'],
             ['Level', level ?? '—'],
             // This record represents a standalone course; the API has no program type field.
             ['Program type', 'Course'],

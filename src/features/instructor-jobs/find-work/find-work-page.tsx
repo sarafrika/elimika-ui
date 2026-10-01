@@ -83,7 +83,7 @@ import {
   sortRows,
 } from './find-work-filters';
 import { FindWorkJobCard, FindWorkJobCardSkeleton } from './find-work-job-card';
-import { type FindWorkRow, useFindWorkJobs } from './use-find-work-jobs';
+import { useFindWorkJobs } from './use-find-work-jobs';
 import { StatCard, StatCardSkeleton, surfaceTheme } from '@/components/data-display';
 
 const BASIS_ICONS = { all: BriefcaseBusiness, per_hour: Clock, per_session: CalendarDays, per_day: Layers };
@@ -169,14 +169,12 @@ export function FindWorkPage() {
       ),
     [base, filters.ready, filters.delivery]
   );
-  const listed = useMemo(
-    () =>
-      sortRows(
-        sidebarRows.filter(row => matchesBasis(filters.basis, row.job)),
-        filters.sort
-      ),
-    [sidebarRows, filters.basis, filters.sort]
-  );
+  // Near me answers nearest first: keep the server's order, and the client sorts stay off
+  // until near me is cleared.
+  const listed = useMemo(() => {
+    const matching = sidebarRows.filter(row => matchesBasis(filters.basis, row.job));
+    return nearMe.active ? matching : sortRows(matching, filters.sort);
+  }, [sidebarRows, filters.basis, filters.sort, nearMe.active]);
 
   const stats = useMemo(() => {
     const groups = rows.map(row => readyGroupOf(row.readiness));
@@ -441,22 +439,38 @@ export function FindWorkPage() {
                   </SelectContent>
                 </Select>
 
-                <Select
-                  value={filters.sort}
-                  onValueChange={value => setFilters({ sort: value as SortOption })}
-                >
-                  <SelectTrigger aria-label='Sort jobs' className='h-10 w-full'>
-                    <SlidersHorizontal aria-hidden className='text-muted-foreground size-4' />
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {SORT_OPTIONS.map(option => (
-                      <SelectItem key={option.value} value={option.value}>
-                        {option.label}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+                {nearMe.active ? (
+                  <Select value='nearest' disabled>
+                    <SelectTrigger
+                      aria-label='Sorted by distance while near me is on'
+                      title='Clear near me to sort another way'
+                      className='h-10 w-full'
+                    >
+                      <SlidersHorizontal aria-hidden className='text-muted-foreground size-4' />
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value='nearest'>Nearest</SelectItem>
+                    </SelectContent>
+                  </Select>
+                ) : (
+                  <Select
+                    value={filters.sort}
+                    onValueChange={value => setFilters({ sort: value as SortOption })}
+                  >
+                    <SelectTrigger aria-label='Sort jobs' className='h-10 w-full'>
+                      <SlidersHorizontal aria-hidden className='text-muted-foreground size-4' />
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {SORT_OPTIONS.map(option => (
+                        <SelectItem key={option.value} value={option.value}>
+                          {option.label}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                )}
               </div>
             </section>
 

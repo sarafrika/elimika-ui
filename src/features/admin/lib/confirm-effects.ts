@@ -6,9 +6,9 @@
  * `warnings` are the honest caveats: things the API ignores, does not store, or cannot
  * undo. They render in the modal's amber strip.
  */
-export type ConfirmTone = 'default' | 'danger';
+type ConfirmTone = 'default' | 'danger';
 
-export interface ConfirmContent {
+interface ConfirmContent {
   title: string;
   description?: string;
   confirmLabel: string;

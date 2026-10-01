@@ -116,7 +116,7 @@ export function cellKey(method: MethodRef, basis: BasisRef): RateCellKey {
 }
 
 /** Every cell key, methods × bases in grid order. */
-export const RATE_CELL_KEYS: readonly RateCellKey[] = TRAINING_METHODS.flatMap(method =>
+const RATE_CELL_KEYS: readonly RateCellKey[] = TRAINING_METHODS.flatMap(method =>
   RATE_BASES.map(basis => cellKey(method, basis))
 );
 
@@ -148,7 +148,7 @@ export function missingCells(card: RateCardInput | null | undefined): RateCellKe
   );
 }
 
-export type RateCardErrors = {
+type RateCardErrors = {
   cells: Partial<Record<RateCellKey, string>>;
   card: string[];
   valid: boolean;
@@ -234,7 +234,7 @@ export function formatRateBasis(basis: RateBasis | string | null | undefined) {
   return getRateBasis(basis).phrase;
 }
 
-export type RateCellChange =
+type RateCellChange =
   | { key: RateCellKey; kind: 'added'; to: number }
   | { key: RateCellKey; kind: 'removed'; from: number }
   | { key: RateCellKey; kind: 'changed'; from: number; to: number; delta: number };

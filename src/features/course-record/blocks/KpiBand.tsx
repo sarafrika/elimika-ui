@@ -3,7 +3,6 @@ import type { ReactNode } from 'react';
 import { KpiCard, KpiCardSkeleton, type KpiCardVariant } from '@/components/dashboard/kpi-card';
 import { AsyncSection } from '@/components/data/async-section';
 import { Progress } from '@/components/ui/progress';
-import { Skeleton } from '@/components/ui/skeleton';
 
 import {
   type CourseAccess,
@@ -26,7 +25,7 @@ import {
  * the hover lift stay identical to every other dashboard.
  */
 
-export interface KpiBandProps extends CourseBlockAsyncProps {
+interface KpiBandProps extends CourseBlockAsyncProps {
   access: CourseAccess;
   stats?: CourseStats;
   /**
@@ -56,7 +55,7 @@ interface Tile {
 }
 
 /** The band's grid. Exported so a page-level skeleton can match it exactly. */
-export const KPI_BAND_GRID = 'grid grid-cols-2 gap-3.5 md:grid-cols-3 xl:grid-cols-5';
+const KPI_BAND_GRID = 'grid grid-cols-2 gap-3.5 md:grid-cols-3 xl:grid-cols-5';
 
 export function KpiBand({
   access,
@@ -220,26 +219,13 @@ export function KpiBand({
   );
 }
 
-export function KpiBandSkeleton() {
+function KpiBandSkeleton() {
   return (
     <div className={KPI_BAND_GRID}>
       {[0, 1, 2, 3, 4].map(cell => (
         <KpiCardSkeleton key={cell} />
       ))}
     </div>
-  );
-}
-
-/** Header + tiles, for callers that skeleton the whole band including its title. */
-export function KpiBandHeaderSkeleton() {
-  return (
-    <section>
-      <div className='mb-2.5 flex items-baseline justify-between gap-4'>
-        <Skeleton className='h-4 w-44' />
-        <Skeleton className='h-3 w-56' />
-      </div>
-      <KpiBandSkeleton />
-    </section>
   );
 }
 

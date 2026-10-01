@@ -4,7 +4,6 @@
 import { useQuery } from '@tanstack/react-query';
 import {
   ArrowLeft,
-  BadgeCheck,
   BookOpen,
   CheckCircle2,
   GraduationCap,
@@ -17,7 +16,6 @@ import { useParams, useRouter } from 'next/navigation';
 import { useMemo, useState } from 'react';
 
 import { AsyncSection } from '@/components/data/async-section';
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';

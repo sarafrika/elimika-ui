@@ -75,5 +75,3 @@ export function AccountTypeSelector() {
     </div>
   );
 }
-
-export default AccountTypeSelector;

@@ -4,9 +4,9 @@ import { useCallback } from 'react';
 import { recordDiscoveryEvent } from '@/services/client/sdk.gen';
 import type { EventTypeEnum } from '@/services/client/types.gen';
 
-export type DiscoveryItemType = 'course' | 'job' | 'instructor';
+type DiscoveryItemType = 'course' | 'job' | 'instructor';
 
-export type DiscoveryEvent = {
+type DiscoveryEvent = {
   /** The `recommendation_id` the list came back with. Nothing is sent without it. */
   recommendationId: string | null | undefined;
   itemUuid: string | null | undefined;

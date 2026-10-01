@@ -38,7 +38,7 @@ const iconVariants: Record<string, string> = {
 
 export type KpiCardVariant = NonNullable<VariantProps<typeof kpiCardVariants>['variant']>;
 
-export interface KpiCardProps extends VariantProps<typeof kpiCardVariants> {
+interface KpiCardProps extends VariantProps<typeof kpiCardVariants> {
   title: string;
   value: ReactNode;
   icon: ReactNode;

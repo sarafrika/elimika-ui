@@ -11,9 +11,6 @@ import type {
   TrainingProgram,
   User,
 } from '@/services/client/types.gen';
-
-export type CourseListItem = Course | TrainingProgram;
-
 export type BundledClass = ClassDefinition & {
   course: Course | null;
   instructor: Instructor | null;
@@ -47,6 +44,8 @@ export type SearchInstructor = Instructor & {
   rating?: number;
   review_count?: number;
   reviews?: InstructorReview[] | undefined | null;
+  /** `rating` and `review_count` came with the list, so no card needs to fetch them. */
+  ratings_inline?: boolean;
   location?: {
     city?: string;
   } | null;

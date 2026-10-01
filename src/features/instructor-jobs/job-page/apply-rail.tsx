@@ -15,7 +15,6 @@ import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
 import { formatDate, formatDateTime } from '@/lib/date';
 import { cn } from '@/lib/utils';
-import type { ClassMarketplaceJob } from '@/services/client/types.gen';
 
 import { ReadinessChip } from '../components/readiness-chip';
 import { findWorkFilteredHref } from '../find-work/find-work-filters';
@@ -51,7 +50,7 @@ function stageSentence(status: string | null | undefined, organisation: string, 
 }
 
 /** Five bars for applied → hired; the current stage is outlined. */
-export function StageTracker({ status }: { status: string | null | undefined }) {
+function StageTracker({ status }: { status: string | null | undefined }) {
   const index = isClassCreatedStatus(status) ? HIRING_STAGES.length : stageIndexOf(status);
   return (
     <div

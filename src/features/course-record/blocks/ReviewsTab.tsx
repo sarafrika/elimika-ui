@@ -32,7 +32,7 @@ import { courseInitials, formatCourseCount, formatCourseDate } from './_shared';
 /** How many stars are drawn in the row under the average. */
 const STAR_SCALE = 5;
 
-export interface ReviewsTabProps extends CourseBlockAsyncProps {
+interface ReviewsTabProps extends CourseBlockAsyncProps {
   /** Every review on the course. Ordering is fixed here, newest first. */
   reviews?: readonly CourseReview[];
   /**
@@ -88,7 +88,7 @@ export function ReviewsTab({
  * ────────────────────────────────────────────────────────────────────────── */
 
 /** One row of the 5→1 distribution. */
-export interface CourseRatingBar {
+interface CourseRatingBar {
   /** 5 down to 1. */
   star: number;
   /** How many reviews carried that score. */
@@ -97,7 +97,7 @@ export interface CourseRatingBar {
   percent: number;
 }
 
-export interface CourseRatingSummary {
+interface CourseRatingSummary {
   /** Mean of every score, or `undefined` when nothing has been scored. */
   average: number | undefined;
   total: number;
@@ -105,12 +105,12 @@ export interface CourseRatingSummary {
   bars: CourseRatingBar[];
 }
 
-export interface RatingSummaryProps {
+interface RatingSummaryProps {
   summary: CourseRatingSummary;
   className?: string;
 }
 
-export function RatingSummary({ summary, className }: RatingSummaryProps) {
+function RatingSummary({ summary, className }: RatingSummaryProps) {
   const { average, total, bars } = summary;
 
   return (
@@ -213,7 +213,7 @@ function ReviewCard({ review, name }: { review: CourseReview; name: string }) {
  * Skeleton
  * ────────────────────────────────────────────────────────────────────────── */
 
-export function ReviewsTabSkeleton({ className }: { className?: string }) {
+function ReviewsTabSkeleton({ className }: { className?: string }) {
   return (
     <div className={cn('flex flex-col gap-[18px]', className)}>
       <Card className='grid items-center gap-7 px-5 py-[18px] sm:grid-cols-[190px_minmax(0,1fr)]'>

@@ -1,6 +1,5 @@
 'use client';
 
-import Link from 'next/link';
 import type { ReactNode } from 'react';
 import { StatusBadge } from '@/components/data-display';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
@@ -70,14 +69,5 @@ export function RecordHeader({
 
       {actions ? <div className='flex flex-wrap items-center gap-2'>{actions}</div> : null}
     </div>
-  );
-}
-
-/** A link rendered inside the facts row, e.g. to the record's organisation. */
-export function RecordLink({ href, children }: { href: string; children: ReactNode }) {
-  return (
-    <Link href={href} className='text-primary font-medium hover:underline'>
-      {children}
-    </Link>
   );
 }

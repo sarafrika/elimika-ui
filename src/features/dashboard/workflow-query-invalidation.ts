@@ -228,10 +228,6 @@ function invalidateQueryKeyPrefixes(queryClient: QueryClient, queryKeys: readonl
   return Promise.all(queryKeys.map(queryKey => queryClient.invalidateQueries({ queryKey })));
 }
 
-export function invalidateNotificationQueries(queryClient: QueryClient) {
-  return queryClient.invalidateQueries({ queryKey: notificationQueryKey });
-}
-
 export async function invalidateContentModerationWorkflowQueries(queryClient: QueryClient) {
   await Promise.all([
     invalidateGeneratedQueryIds(queryClient, contentModerationQueryIds),
@@ -309,21 +305,21 @@ export async function invalidateReviewWorkflowQueries(queryClient: QueryClient) 
   ]);
 }
 
-export async function invalidateAssessmentWorkflowQueries(queryClient: QueryClient) {
+async function invalidateAssessmentWorkflowQueries(queryClient: QueryClient) {
   await Promise.all([
     invalidateGeneratedQueryIds(queryClient, assessmentQueryIds),
     invalidateQueryKeyPrefixes(queryClient, [notificationQueryKey, ['class-details-related']]),
   ]);
 }
 
-export async function invalidateCertificateWorkflowQueries(queryClient: QueryClient) {
+async function invalidateCertificateWorkflowQueries(queryClient: QueryClient) {
   await Promise.all([
     invalidateGeneratedQueryIds(queryClient, certificateQueryIds),
     invalidateQueryKeyPrefixes(queryClient, [notificationQueryKey]),
   ]);
 }
 
-export async function invalidateInvitationWorkflowQueries(queryClient: QueryClient) {
+async function invalidateInvitationWorkflowQueries(queryClient: QueryClient) {
   await Promise.all([
     invalidateGeneratedQueryIds(queryClient, invitationQueryIds),
     invalidateQueryKeyPrefixes(queryClient, [notificationQueryKey, ['organization']]),

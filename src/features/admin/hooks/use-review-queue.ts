@@ -49,7 +49,7 @@ export interface InboxItem {
   documentUuid?: string;
 }
 
-export interface QueueResult {
+interface QueueResult {
   items: InboxItem[];
   isLoading: boolean;
   error: unknown;

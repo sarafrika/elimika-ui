@@ -3,7 +3,7 @@
  * straight from a generated hook (queues, dossiers, joined lists). Generated queries keep
  * their own keys — never re-key those here, or invalidation stops matching.
  */
-export const adminKeys = {
+const adminKeys = {
   all: ['admin'] as const,
 
   dashboard: () => [...adminKeys.all, 'dashboard'] as const,

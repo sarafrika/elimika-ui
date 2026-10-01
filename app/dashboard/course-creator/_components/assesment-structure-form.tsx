@@ -58,7 +58,7 @@ import { CATEGORY_META, LinkItemsModal, TaskItemType } from './assesment-link-it
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
-export type CourseAssessmentStructureProps = {
+type CourseAssessmentStructureProps = {
   courseUuid: string;
   createdBy: string;
 };
@@ -211,7 +211,7 @@ function AssessmentLineItems({
   );
 }
 
-export function LabelInfo({ text }: { text: string }) {
+function LabelInfo({ text }: { text: string }) {
   return (
     <TooltipProvider>
       <Tooltip>

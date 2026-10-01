@@ -19,7 +19,7 @@ import { configQuery, invalidateAdminOverview, listQuery } from '../lib/admin-qu
 
 export const RUBRICS_PAGE_SIZE = 20;
 
-export interface RubricFilters {
+interface RubricFilters {
   q?: string;
   /** Matches the rubric_type column, e.g. "assignment". */
   type?: string;

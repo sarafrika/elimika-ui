@@ -730,5 +730,3 @@ const AwardCertificatesPage = () => {
     </div>
   );
 };
-
-export default AwardCertificatesPage;

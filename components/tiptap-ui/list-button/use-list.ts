@@ -53,7 +53,7 @@ export const listIcons = {
   taskList: ListTodoIcon,
 };
 
-export const listLabels: Record<ListType, string> = {
+const listLabels: Record<ListType, string> = {
   bulletList: 'Bullet List',
   orderedList: 'Ordered List',
   taskList: 'Task List',
@@ -129,7 +129,7 @@ export function isListActive(editor: Editor | null, type: ListType): boolean {
 /**
  * Toggles list in the editor
  */
-export function toggleList(editor: Editor | null, type: ListType): boolean {
+function toggleList(editor: Editor | null, type: ListType): boolean {
   if (!editor || !editor.isEditable) return false;
   if (!canToggleList(editor, type)) return false;
 
@@ -195,7 +195,7 @@ export function toggleList(editor: Editor | null, type: ListType): boolean {
 /**
  * Determines if the list button should be shown
  */
-export function shouldShowButton(props: {
+function shouldShowButton(props: {
   editor: Editor | null;
   type: ListType;
   hideWhenUnavailable: boolean;

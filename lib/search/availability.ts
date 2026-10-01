@@ -3,7 +3,7 @@
  * the engine is down it is down for all of them, so one 503 keeps `q` off every request
  * for a minute instead of each list discovering it separately.
  */
-export const SEARCH_UNAVAILABLE_COOLDOWN_MS = 60_000;
+const SEARCH_UNAVAILABLE_COOLDOWN_MS = 60_000;
 
 let unavailableUntil = 0;
 const listeners = new Set<() => void>();

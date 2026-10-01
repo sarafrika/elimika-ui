@@ -92,7 +92,7 @@ export function FundUtilizationChart({
   );
 }
 
-export interface EnrollmentTrendSeries {
+interface EnrollmentTrendSeries {
   key: string;
   name: string;
   color: string;
@@ -138,7 +138,7 @@ export function EnrollmentTrendsChart({
   );
 }
 
-export interface WeeklyGrowthSeries {
+interface WeeklyGrowthSeries {
   key: string;
   name: string;
   color: string;

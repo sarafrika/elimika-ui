@@ -30,7 +30,7 @@ const NEXT_UP_LABEL = 'Next up';
 const ASSESSMENTS_LABEL = 'Assessments passed';
 const CLASS_LABEL = 'Class';
 
-export interface ProgressStripProps extends CourseBlockAsyncProps {
+interface ProgressStripProps extends CourseBlockAsyncProps {
   /** Completion of the enrolment, 0–100. */
   percent?: number;
   completedLessons?: number;
@@ -121,7 +121,7 @@ function Field({ label, children }: { label: string; children: ReactNode }) {
   );
 }
 
-export function ProgressStripSkeleton() {
+function ProgressStripSkeleton() {
   return (
     <div className='grid gap-6 sm:grid-cols-2 xl:grid-cols-[minmax(0,1fr)_200px_200px_200px] xl:items-center'>
       <div>

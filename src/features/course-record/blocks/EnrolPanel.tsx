@@ -31,7 +31,7 @@ const COMPARE_CTA_PLAIN = 'Compare the open classes';
 const PRICE_PER_BLOCK = 'or from {priceFrom} per class block';
 const PAYMENT_NOTE = 'Pay by M-Pesa or card. Lessons open as soon as the payment is confirmed.';
 
-export interface CourseEnrolInclusion {
+interface CourseEnrolInclusion {
   text: string;
   /** Tokens the line needs. A line missing one is dropped. */
   requires?: readonly string[];
@@ -46,10 +46,10 @@ export interface CourseEnrolInclusion {
  * | `assessments` / `majorAssessments` | count of `CourseAssessment` rows, and how many are major |
  * | `practical` | the practical block in one line, as the overview's fit card uses it |
  */
-export type CourseEnrolVars = Record<string, string | number | null | undefined>;
+type CourseEnrolVars = Record<string, string | number | null | undefined>;
 
 /** Transcribed from the artboard's `included` list. */
-export const COURSE_ENROL_INCLUSIONS: readonly CourseEnrolInclusion[] = [
+const COURSE_ENROL_INCLUSIONS: readonly CourseEnrolInclusion[] = [
   {
     text: '{lessons} lessons · {contentItems} items · {duration}',
     requires: ['lessons', 'contentItems', 'duration'],
@@ -66,7 +66,7 @@ export const COURSE_ENROL_INCLUSIONS: readonly CourseEnrolInclusion[] = [
  * Block
  * ────────────────────────────────────────────────────────────────────────── */
 
-export interface EnrolPanelProps extends CourseBlockAsyncProps {
+interface EnrolPanelProps extends CourseBlockAsyncProps {
   /** The course price. Absent means unpublished — never render it as a zero. */
   price?: number;
   currency?: string;
@@ -203,7 +203,7 @@ export function EnrolPanel({
   );
 }
 
-export function EnrolPanelSkeleton() {
+function EnrolPanelSkeleton() {
   return (
     <div>
       <div className='flex items-baseline justify-between gap-2.5'>

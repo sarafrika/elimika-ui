@@ -19,7 +19,7 @@ import { jobSessionWindows } from '../lib/job-stage';
 
 const BOOKING_PAGE = { page: 0, size: 200 };
 
-export type ResourceHolds = {
+type ResourceHolds = {
   resource: ClassMarketplaceJobResource;
   bookings: ResourceBooking[];
   isLoading: boolean;

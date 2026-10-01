@@ -1,5 +1,28 @@
 'use client';
 
+import { type UseQueryOptions, useQuery } from '@tanstack/react-query';
+import {
+  ArrowLeftRight,
+  Check,
+  ChevronDown,
+  Download,
+  ExternalLink,
+  Eye,
+  EyeOff,
+  Laptop2,
+  LayoutDashboard,
+  MoonStar,
+  Send,
+  ShoppingCart,
+  Sparkles,
+  SunMedium,
+  Upload,
+  Wallet,
+} from 'lucide-react';
+import Link from 'next/link';
+import { useRouter } from 'next/navigation';
+import { useTheme } from 'next-themes';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { buildWalletAccounts } from '@/app/dashboard/student/wallet/page';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
@@ -12,7 +35,6 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import { Input } from '@/components/ui/input';
 import {
   Sheet,
   SheetContent,
@@ -20,10 +42,11 @@ import {
   SheetHeader,
   SheetTitle,
 } from '@/components/ui/sheet';
+import { useSavedCart } from '@/hooks/use-saved-cart';
 import type { UserDomain } from '@/lib/types';
 import { cn } from '@/lib/utils';
 import type { ApiResponseWallet, CartResponse } from '@/services/client';
-import { getCartOptions, getWalletOptions } from '@/services/client/@tanstack/react-query.gen';
+import { getWalletOptions } from '@/services/client/@tanstack/react-query.gen';
 import { useLogout } from '@/src/features/auth/logout';
 import {
   type CreateAction,
@@ -32,42 +55,16 @@ import {
 } from '@/src/features/dashboard/config/domain-display';
 import { useUserDomain } from '@/src/features/dashboard/context/user-domain-context';
 import {
-  GlobalSearchSheet,
-  useGlobalSearchShortcut,
-} from '@/src/features/search/components/global-search-sheet';
-import { GlobalSearchTrigger } from '@/src/features/search/components/global-search-trigger';
-import {
   buildDashboardSwitchPath,
   roleScopedDashboardPath,
 } from '@/src/features/dashboard/lib/active-domain-storage';
 import { useUserProfile } from '@/src/features/profile/context/profile-context';
-import { toAuthenticatedMediaUrl } from '@/src/lib/media-url';
-import { useQuery, type UseQueryOptions } from '@tanstack/react-query';
 import {
-  ArrowLeftRight,
-  Check,
-  ChevronDown,
-  Download,
-  ExternalLink,
-  Eye,
-  EyeOff,
-  Laptop2,
-  LayoutDashboard,
-  MoonStar,
-  Search,
-  Send,
-  ShoppingCart,
-  Sparkles,
-  SunMedium,
-  Upload,
-  Wallet,
-} from 'lucide-react';
-import { useTheme } from 'next-themes';
-import Link from 'next/link';
-import { useRouter } from 'next/navigation';
-import { useCallback, useEffect, useMemo, useState } from 'react';
-import { Label } from '../../../../components/ui/label';
-import { useCartStore } from '../../../../store/cart-store';
+  GlobalSearchSheet,
+  useGlobalSearchShortcut,
+} from '@/src/features/search/components/global-search-sheet';
+import { GlobalSearchTrigger } from '@/src/features/search/components/global-search-trigger';
+import { toAuthenticatedMediaUrl } from '@/src/lib/media-url';
 import { DashboardNotifications } from './dashboard-notifications';
 
 const dashboardLabelByDomain = (domain?: string | null) => {
@@ -284,12 +281,7 @@ export default function DashboardTopBar() {
 }
 
 function DashboardCartButton() {
-  const { cartId } = useCartStore();
-  const cartQuery = useQuery({
-    ...getCartOptions({ path: { cartId: cartId ?? 'disabled-cart' } }),
-    enabled: Boolean(cartId),
-    retry: 1,
-  });
+  const cartQuery = useSavedCart();
 
   const cart = resolveCartResponse(cartQuery.data);
   const itemCount = cart?.items?.length ?? 0;

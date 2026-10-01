@@ -3,7 +3,7 @@ import { hiredJobHref, myApplicationsHref } from '@/src/features/instructor-jobs
 /** Time an instructor was hired for while the job's class does not exist yet. Blocks booking. */
 export const JOB_HOLD_ENTRY = 'JOB_HOLD';
 /** Time an instructor applied for. Advisory only, and only ever shown to the instructor. */
-export const JOB_APPLICATION_ENTRY = 'JOB_APPLICATION';
+const JOB_APPLICATION_ENTRY = 'JOB_APPLICATION';
 
 export type JobTimeKind = 'hold' | 'application';
 
@@ -18,7 +18,7 @@ export const JOB_TIME_LABELS: Record<JobTimeKind, { legend: string; status: stri
   application: { legend: 'Applied for a job, not blocking', status: 'Applied' },
 };
 
-export const UNAVAILABLE_LABEL = 'Unavailable';
+const UNAVAILABLE_LABEL = 'Unavailable';
 
 export const JOB_HOLD_BLOCK_REASON =
   'This time is held for a class job you were hired for, so nothing else can be booked into it.';
@@ -38,7 +38,7 @@ type TimeWindow = { start: Date | number | string; end: Date | number | string }
 
 const instant = (value: Date | number | string) => new Date(value).getTime();
 
-export function windowsOverlap(left: TimeWindow, right: TimeWindow) {
+function windowsOverlap(left: TimeWindow, right: TimeWindow) {
   return instant(left.start) < instant(right.end) && instant(right.start) < instant(left.end);
 }
 

@@ -1,6 +1,5 @@
 'use client';
 
-import { useQuery } from '@tanstack/react-query';
 import { ShoppingCart } from 'lucide-react';
 import Image from 'next/image';
 import Link from 'next/link';
@@ -8,34 +7,38 @@ import { usePathname } from 'next/navigation';
 import LoginButton from '@/components/LoginButton';
 import { ThemeSwitcher } from '@/components/theme-switcher';
 import { Badge } from '@/components/ui/badge';
+import { surfaceTheme } from '@/components/data-display/page-shell';
 import { Button } from '@/components/ui/button';
+import { useSavedCart } from '@/hooks/use-saved-cart';
 import { cn } from '@/lib/utils';
-import { getCartOptions } from '@/services/client/@tanstack/react-query.gen';
-import { useCartStore } from '@/store/cart-store';
+import { PublicSearch } from '@/src/features/search/components/public-search';
 
-export function MarketingTopNav() {
+/** Wide public pages (the catalogue) use the screen up to 2400px instead of a 1280px column. */
+export const WIDE_PUBLIC_CONTAINER = surfaceTheme.pageWide;
+
+export function MarketingTopNav({ wide = false }: { wide?: boolean }) {
   const pathname = usePathname();
 
-  const { cartId: savedCartId } = useCartStore();
-  const { data: cartData } = useQuery({
-    ...getCartOptions({ path: { cartId: savedCartId ?? 'unset' } }),
-    enabled: !!savedCartId,
-    retry: 1,
-  });
+  const { data: cartData } = useSavedCart();
   const cartItemCount = cartData?.items?.length ?? 0;
 
-  // The public catalogue and help routes were retired; the header is the brand,
-  // the cart and the way in.
-  const navLinks: { label: string; href: string; external?: boolean }[] = [];
+  const navLinks: { label: string; href: string; external?: boolean }[] = [
+    { label: 'Courses', href: '/courses' },
+  ];
 
   const isActive = (href: string) => {
-    const [path] = href.split('#');
-    return pathname === path;
+    const [path = ''] = href.split('#');
+    return pathname === path || pathname.startsWith(`${path}/`);
   };
 
   return (
     <nav className='border-border bg-background/80 sticky top-0 z-40 border-b shadow-sm backdrop-blur-md'>
-      <div className='mx-auto flex w-full max-w-7xl items-center justify-between gap-4 px-6 py-4'>
+      <div
+        className={cn(
+          'mx-auto flex w-full items-center justify-between gap-4 py-4',
+          wide ? WIDE_PUBLIC_CONTAINER : 'max-w-7xl px-6'
+        )}
+      >
         <Link href='/' className='flex shrink-0 items-center gap-4 transition hover:opacity-90'>
           <Image
             alt='Elimika logo'
@@ -56,6 +59,7 @@ export function MarketingTopNav() {
         </Link>
 
         <div className='flex flex-1 items-center justify-end gap-2 md:gap-3'>
+          <PublicSearch />
           <div className='hidden items-center gap-2 md:flex'>
             {navLinks.map(link => (
               <Link

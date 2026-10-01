@@ -404,7 +404,7 @@ const EXPORT_ACTION: CourseRailAction = { label: COURSE_EXPORT_ACTION_LABEL, ico
  * here and nothing else; a `switch (access)` anywhere in a block means this map
  * is missing a field.
  */
-export const COURSE_ACCESS_CAPABILITIES: Record<CourseAccess, CourseAccessCapability> = {
+const COURSE_ACCESS_CAPABILITIES: Record<CourseAccess, CourseAccessCapability> = {
   creator: {
     access: 'creator',
     breadcrumbRoot: 'Course management',
@@ -784,11 +784,6 @@ export const COURSE_ACCESS_CAPABILITIES: Record<CourseAccess, CourseAccessCapabi
 /** The one way to read the map. */
 export function courseCapability(access: CourseAccess): CourseAccessCapability {
   return COURSE_ACCESS_CAPABILITIES[access];
-}
-
-/** True when this viewer's rail includes the named card. */
-export function hasRailCard(access: CourseAccess, card: CourseRailCardId): boolean {
-  return COURSE_ACCESS_CAPABILITIES[access].rail.includes(card);
 }
 
 /** True when this viewer's tab row includes the named tab. */

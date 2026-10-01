@@ -7655,16 +7655,16 @@ export const zStatusEnum13 = z.enum(['PENDING', 'ACTIVE', 'REVOKED']);
 export const zGuardianStudentLink = z
   .object({
     uuid: z.string().uuid().optional(),
-    studentUuid: z.string().uuid().optional(),
-    guardianUserUuid: z.string().uuid().optional(),
-    studentName: z.string().optional(),
-    guardianDisplayName: z.string().optional(),
-    relationshipType: zGuardianRelationshipTypeEnum.optional(),
-    shareScope: zShareScopeEnum.optional(),
+    student_uuid: z.string().uuid().optional(),
+    guardian_user_uuid: z.string().uuid().optional(),
+    student_name: z.string().optional(),
+    guardian_display_name: z.string().optional(),
+    relationship_type: zGuardianRelationshipTypeEnum.optional(),
+    share_scope: zShareScopeEnum.optional(),
     status: zStatusEnum13.optional(),
-    primaryGuardian: z.boolean().optional(),
-    linkedDate: z.string().datetime().optional(),
-    revokedDate: z.string().datetime().optional(),
+    primary_guardian: z.boolean().optional(),
+    linked_date: z.string().datetime().optional(),
+    revoked_date: z.string().datetime().optional(),
     notes: z.string().optional(),
   })
   .describe("Represents a guardian's access rights to a learner profile.");
@@ -7674,11 +7674,11 @@ export const zGuardianStudentLink = z
  */
 export const zGuardianStudentLinkRequest = z
   .object({
-    studentUuid: z.string().uuid().describe('UUID for the student profile to be monitored'),
-    guardianUserUuid: z.string().uuid().describe("UUID for the guardian's user account"),
-    relationshipType: zGuardianRelationshipTypeEnum,
-    shareScope: zShareScopeEnum,
-    isPrimary: z
+    student_uuid: z.string().uuid().describe('UUID for the student profile to be monitored'),
+    guardian_user_uuid: z.string().uuid().describe("UUID for the guardian's user account"),
+    relationship_type: zGuardianRelationshipTypeEnum,
+    share_scope: zShareScopeEnum,
+    is_primary: z
       .boolean()
       .describe('Marks this guardian as the primary contact')
       .optional()

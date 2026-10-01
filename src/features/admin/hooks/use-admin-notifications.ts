@@ -145,7 +145,7 @@ export function useMarkAllRead() {
   return { markAllRead, isPending: mutation.isPending };
 }
 
-export interface AnnouncementInput {
+interface AnnouncementInput {
   organisationUuid: string;
   organisationName: string;
   audience: string;

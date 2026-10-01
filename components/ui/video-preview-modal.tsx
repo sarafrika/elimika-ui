@@ -72,26 +72,31 @@ function getVideoSource(videoUrl?: string | null) {
   }
 }
 
-export function VideoPreviewModal({
-  open,
-  onOpenChange,
+/** The player itself: an embed, a native video, or the "no playable preview" notice. */
+export function VideoPreviewPlayer({
+  active,
   title,
-  description,
   videoUrl,
   emptyMessage = 'This item does not have a video preview attached.',
-}: VideoPreviewModalProps) {
+}: {
+  /** Resolve the source only while the surrounding overlay is open. */
+  active: boolean;
+  title?: string;
+  videoUrl?: string | null;
+  emptyMessage?: string;
+}) {
   const [videoSource, setVideoSource] = useState<VideoSource>('unsupported');
   const [embedUrl, setEmbedUrl] = useState('');
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    if (!open) return;
+    if (!active) return;
 
     const result = getVideoSource(videoUrl);
     setVideoSource(result.source);
     setEmbedUrl(result.url);
     setError(result.error);
-  }, [open, videoUrl]);
+  }, [active, videoUrl]);
 
   const handleVideoError = () => {
     setVideoSource('unsupported');
@@ -100,6 +105,61 @@ export function VideoPreviewModal({
 
   const hasError = Boolean(error) || videoSource === 'unsupported';
 
+  if (hasError) {
+    return (
+      <div className='flex min-h-[260px] flex-col items-center justify-center gap-3 px-6 py-12 text-center'>
+        <div className='bg-destructive/10 text-destructive inline-flex size-14 items-center justify-center rounded-full'>
+          <AlertCircle className='size-7' />
+        </div>
+        <div className='space-y-1'>
+          <p className='text-foreground text-base font-semibold'>No playable preview</p>
+          <p className='text-muted-foreground max-w-md text-sm'>{error || emptyMessage}</p>
+        </div>
+        {videoUrl ? (
+          <div className='border-border bg-background/70 text-muted-foreground max-w-2xl rounded-md border px-3 py-2 text-left text-xs break-all'>
+            {videoUrl}
+          </div>
+        ) : null}
+      </div>
+    );
+  }
+
+  if (videoSource === 'direct') {
+    return (
+      <video
+        key={embedUrl}
+        className='bg-background aspect-video h-auto w-full object-contain'
+        controls
+        autoPlay
+        playsInline
+        preload='metadata'
+        src={embedUrl}
+        onError={handleVideoError}
+      >
+        Your browser does not support the video tag.
+      </video>
+    );
+  }
+
+  return (
+    <iframe
+      className='bg-background aspect-video h-auto w-full'
+      src={embedUrl}
+      title={title || 'Video preview'}
+      allow='accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share'
+      allowFullScreen
+    />
+  );
+}
+
+export function VideoPreviewModal({
+  open,
+  onOpenChange,
+  title,
+  description,
+  videoUrl,
+  emptyMessage,
+}: VideoPreviewModalProps) {
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className='border-border bg-card overflow-hidden p-0 sm:max-w-5xl'>
@@ -113,45 +173,12 @@ export function VideoPreviewModal({
         </DialogHeader>
 
         <div className='bg-muted/20'>
-          {hasError ? (
-            <div className='flex min-h-[260px] flex-col items-center justify-center gap-3 px-6 py-12 text-center'>
-              <div className='bg-destructive/10 text-destructive inline-flex size-14 items-center justify-center rounded-full'>
-                <AlertCircle className='size-7' />
-              </div>
-              <div className='space-y-1'>
-                <p className='text-foreground text-base font-semibold'>No playable preview</p>
-                <p className='text-muted-foreground max-w-md text-sm'>
-                  {error || emptyMessage}
-                </p>
-              </div>
-              {videoUrl ? (
-                <div className='border-border bg-background/70 text-muted-foreground max-w-2xl rounded-md border px-3 py-2 text-left text-xs break-all'>
-                  {videoUrl}
-                </div>
-              ) : null}
-            </div>
-          ) : videoSource === 'direct' ? (
-            <video
-              key={embedUrl}
-              className='bg-background aspect-video h-auto w-full object-contain'
-              controls
-              autoPlay
-              playsInline
-              preload='metadata'
-              src={embedUrl}
-              onError={handleVideoError}
-            >
-              Your browser does not support the video tag.
-            </video>
-          ) : (
-            <iframe
-              className='bg-background aspect-video h-auto w-full'
-              src={embedUrl}
-              title={title || 'Video preview'}
-              allow='accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share'
-              allowFullScreen
-            />
-          )}
+          <VideoPreviewPlayer
+            active={open}
+            title={title}
+            videoUrl={videoUrl}
+            emptyMessage={emptyMessage}
+          />
         </div>
 
         <div className='border-border border-t px-6 py-4'>

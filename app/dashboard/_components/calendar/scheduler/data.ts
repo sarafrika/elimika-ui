@@ -1,7 +1,6 @@
 // Scheduler presentation config (labels, icons, tones, styles). Values are computed
 // from real data by the calendar view/grid — nothing here is sample content.
 import {
-  Building2,
   CalendarCheck,
   CalendarDays,
   GraduationCap,

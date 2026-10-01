@@ -17,7 +17,7 @@ function DetailRow({ icon, label, value }: { icon: ReactNode; label: string; val
   );
 }
 
-export interface ProfileSidebarProps {
+interface ProfileSidebarProps {
   headline?: string;
   website?: string;
   location?: string;

@@ -12927,37 +12927,37 @@ export const GuardianStudentLinkSchema = {
       type: 'string',
       format: 'uuid',
     },
-    studentUuid: {
+    student_uuid: {
       type: 'string',
       format: 'uuid',
     },
-    guardianUserUuid: {
+    guardian_user_uuid: {
       type: 'string',
       format: 'uuid',
     },
-    studentName: {
+    student_name: {
       type: 'string',
     },
-    guardianDisplayName: {
+    guardian_display_name: {
       type: 'string',
     },
-    relationshipType: {
+    relationship_type: {
       $ref: '#/components/schemas/GuardianRelationshipTypeEnum',
     },
-    shareScope: {
+    share_scope: {
       $ref: '#/components/schemas/ShareScopeEnum',
     },
     status: {
       $ref: '#/components/schemas/StatusEnum13',
     },
-    primaryGuardian: {
+    primary_guardian: {
       type: 'boolean',
     },
-    linkedDate: {
+    linked_date: {
       type: 'string',
       format: 'date-time',
     },
-    revokedDate: {
+    revoked_date: {
       type: 'string',
       format: 'date-time',
     },
@@ -12971,23 +12971,23 @@ export const GuardianStudentLinkRequestSchema = {
   type: 'object',
   description: 'Request payload to link a guardian/parent to a learner profile.',
   properties: {
-    studentUuid: {
+    student_uuid: {
       type: 'string',
       format: 'uuid',
       description: 'UUID for the student profile to be monitored',
     },
-    guardianUserUuid: {
+    guardian_user_uuid: {
       type: 'string',
       format: 'uuid',
       description: "UUID for the guardian's user account",
     },
-    relationshipType: {
+    relationship_type: {
       $ref: '#/components/schemas/GuardianRelationshipTypeEnum',
     },
-    shareScope: {
+    share_scope: {
       $ref: '#/components/schemas/ShareScopeEnum',
     },
-    isPrimary: {
+    is_primary: {
       type: 'boolean',
       default: false,
       description: 'Marks this guardian as the primary contact',
@@ -12997,7 +12997,7 @@ export const GuardianStudentLinkRequestSchema = {
       description: 'Optional note shown in audits or invitation emails',
     },
   },
-  required: ['guardianUserUuid', 'relationshipType', 'shareScope', 'studentUuid'],
+  required: ['guardian_user_uuid', 'relationship_type', 'share_scope', 'student_uuid'],
 } as const;
 
 export const ApiResponseGuardianStudentLinkSchema = {

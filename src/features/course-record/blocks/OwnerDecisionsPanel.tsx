@@ -59,7 +59,7 @@ export interface CourseApplicationRow {
   appliedAt?: string;
 }
 
-export interface OwnerDecisionsPanelProps extends CourseBlockAsyncProps {
+interface OwnerDecisionsPanelProps extends CourseBlockAsyncProps {
   /** Applications still pending, oldest first. */
   applications?: readonly CourseApplicationRow[];
   onApprove?: (row: CourseApplicationRow) => void;
@@ -171,7 +171,7 @@ function DecisionRow({
   );
 }
 
-export function OwnerDecisionsPanelSkeleton() {
+function OwnerDecisionsPanelSkeleton() {
   return (
     <div className='mt-3 flex flex-col gap-2.5'>
       {[0, 1].map(row => (

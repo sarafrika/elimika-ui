@@ -263,4 +263,4 @@ const config: NextAuthConfig = {
   },
 };
 
-export const { auth, handlers, signIn, signOut } = NextAuth(config);
+export const { auth, handlers } = NextAuth(config);

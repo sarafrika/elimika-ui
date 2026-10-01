@@ -41,6 +41,7 @@ export type PublicCourseSummary = {
   prerequisites?: string;
   class_limit?: number;
   intro_video_url?: string;
+  difficulty_uuid?: string;
   banner_url?: string;
   training_requirements?: PublicCourseProfile['training_requirements'];
   updated_date?: string;

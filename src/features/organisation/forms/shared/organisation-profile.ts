@@ -9,9 +9,6 @@ export const organisationProfileSchema = zOrganisation.omit({
   created_date: true,
   updated_date: true,
 });
-
-export type OrganisationProfileFormData = z.infer<typeof organisationProfileSchema>;
-
 const optionalTrimmedString = (maxLength: number) =>
   z
     .string()

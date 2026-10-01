@@ -11,12 +11,12 @@ export type PortfolioTabId =
   | 'files'
   | 'skill-badges';
 
-export type PortfolioTab = {
+type PortfolioTab = {
   id: PortfolioTabId;
   label: string;
 };
 
-export type EvidenceItem = {
+type EvidenceItem = {
   label: string;
   value: number;
 };
@@ -39,7 +39,7 @@ export type PortfolioProject = {
   outcome: string;
 };
 
-export type Highlight = {
+type Highlight = {
   title: string;
   icon: LucideIcon;
   rating: number;
@@ -58,7 +58,7 @@ export type PortfolioAsset = {
   rating?: number;
 };
 
-export type PortfolioCopy = {
+type PortfolioCopy = {
   pageTitle: string;
   ownerName: string;
   ownerLabel: string;
@@ -88,7 +88,7 @@ export type PortfolioCopy = {
   sidebarUploadAction: string;
 };
 
-export type PortfolioDataset = {
+type PortfolioDataset = {
   tabs: PortfolioTab[];
   projects: PortfolioProject[];
   videos: PortfolioAsset[];
@@ -100,7 +100,7 @@ export type PortfolioDataset = {
   insightHighlight: Highlight;
 };
 
-export type PortfolioContent = PortfolioDataset & {
+type PortfolioContent = PortfolioDataset & {
   role: PortfolioRole;
   copy: PortfolioCopy;
 };

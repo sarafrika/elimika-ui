@@ -8,6 +8,11 @@ on:
       - '.github/**'
       - '**/*.md'
 
+# A duplicate run for the same branch replaces the older one, so only one image is pushed per change.
+concurrency:
+  group: build-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
   build_and_push:
     name: Build & Push Docker Image

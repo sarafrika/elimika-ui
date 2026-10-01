@@ -17,7 +17,7 @@ import { mergeUserBody } from '../lib/user-body';
 import { listQuery } from '../lib/admin-queries';
 
 /** Largest photo the console will send; the API itself only caps at the global limit. */
-export const MAX_PROFILE_IMAGE_BYTES = 5 * 1024 * 1024;
+const MAX_PROFILE_IMAGE_BYTES = 5 * 1024 * 1024;
 
 const OWN_ACCOUNT_QUERY_IDS = ['getCurrentUser', 'getUserByUuid'] as const;
 

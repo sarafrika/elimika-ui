@@ -5,8 +5,6 @@ import { STALE_TIMES } from '@/lib/query-client';
 import {
   ClassDefinition,
   CourseAssessment,
-  CourseTrainingApplication,
-  ProgramTrainingApplication,
   searchCourses,
   type Assignment,
   type Course,
@@ -36,10 +34,8 @@ import {
   searchCoursesQueryKey,
   searchEnrollmentsOptions,
   searchInstructorsOptions,
-  searchProgramTrainingApplicationsOptions,
   searchQuizzesOptions,
   searchStudentsOptions,
-  searchTrainingApplicationsOptions,
   searchTrainingProgramsOptions,
 } from '@/services/client/@tanstack/react-query.gen';
 import { useQueries } from '@tanstack/react-query';
@@ -433,28 +429,6 @@ export function useOrganisationsByIds(ids: string[]) {
     STALE_TIMES.reference
   );
   return { organisationMap: map, isLoading };
-}
-
-export function useTrainingApplicationsByCourseCreatorIds(courseCreatorIds: string[]) {
-  return useSearchByField<CourseTrainingApplication>(
-    courseCreatorIds,
-    chunk => ({
-      course_creator_uuid: chunk[0],
-    }),
-    searchTrainingApplicationsOptions,
-    STALE_TIMES.entity,
-    100
-  );
-}
-
-export function useProgramTrainingApplicationsByCourseCreatorIds() {
-  return useSearchByField<ProgramTrainingApplication>(
-    [],
-    () => ({}),
-    searchProgramTrainingApplicationsOptions,
-    STALE_TIMES.entity,
-    100
-  );
 }
 
 export function useQuizzesByLessonIds(lessonUuids: string[]) {

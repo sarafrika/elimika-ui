@@ -30,7 +30,6 @@ import type {
   ExperienceRecord,
   PortfolioRecord,
   SkillRecord,
-  SkillsWalletData,
   VerificationEventRecord,
 } from './SkillsWalletShared';
 import { ICON_MAP, fmtMonth } from './SkillsWalletShared';
@@ -760,5 +759,3 @@ export function useStudentSkillsWalletData() {
     categoryMap,
   };
 }
-
-export type { SkillsWalletData };

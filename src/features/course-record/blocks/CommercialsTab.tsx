@@ -85,7 +85,7 @@ export interface CourseOrderRow {
  * Tab
  * ────────────────────────────────────────────────────────────────────────── */
 
-export interface CommercialsTabProps {
+interface CommercialsTabProps {
   /** From the API. The capability map decides whether this tab exists at all. */
   access: CourseAccess;
   /** Carries the list price, the fee floor and the two share percentages. */
@@ -105,14 +105,6 @@ export interface CommercialsTabProps {
   /** Platform currency for the terms cards and the sales summary. */
   currency?: string;
   className?: string;
-}
-
-/** True when this viewer has the tab *and* the response carried its figures. */
-export function courseCommercialsVisible(
-  access: CourseAccess,
-  stats: CourseStats | undefined
-): boolean {
-  return hasTab(access, 'commercials') && Boolean(stats?.owner);
 }
 
 export function CommercialsTab({
@@ -185,14 +177,14 @@ function ConfidentialityBanner() {
  * Terms
  * ────────────────────────────────────────────────────────────────────────── */
 
-export interface CommercialTermsProps {
+interface CommercialTermsProps {
   course?: Course;
   currency?: string;
   className?: string;
 }
 
 /** List price, fee floor and the split — the three numbers a rate card obeys. */
-export function CommercialTerms({
+function CommercialTerms({
   course,
   currency = COURSE_DEFAULT_CURRENCY,
   className,
@@ -275,13 +267,13 @@ function RevenueSplitBar({
  * Rate cards
  * ────────────────────────────────────────────────────────────────────────── */
 
-export interface ApprovedRateCardsProps extends CourseBlockAsyncProps {
+interface ApprovedRateCardsProps extends CourseBlockAsyncProps {
   trainers?: readonly CourseTrainerSummary[];
   currency?: string;
   className?: string;
 }
 
-export function ApprovedRateCards({
+function ApprovedRateCards({
   trainers,
   currency = COURSE_DEFAULT_CURRENCY,
   loading,
@@ -352,7 +344,7 @@ export function ApprovedRateCards({
  * Purchases
  * ────────────────────────────────────────────────────────────────────────── */
 
-export interface RecentPurchasesProps extends CourseBlockAsyncProps {
+interface RecentPurchasesProps extends CourseBlockAsyncProps {
   orders?: readonly CourseOrderRow[];
   /** Supplies the summary line; the tab does not render without it. */
   owner?: CourseStatsOwner;
@@ -372,7 +364,7 @@ const ORDER_STATUS_TONE: Record<CourseOrderStatusTone, string> = {
   failed: 'bg-destructive/10 text-destructive',
 };
 
-export function RecentPurchases({
+function RecentPurchases({
   orders,
   owner,
   currency = COURSE_DEFAULT_CURRENCY,
@@ -489,42 +481,6 @@ function OrderStatusChip({
 /* ────────────────────────────────────────────────────────────────────────────
  * Skeletons
  * ────────────────────────────────────────────────────────────────────────── */
-
-export function CommercialsTabSkeleton() {
-  return (
-    <div className='flex flex-col gap-[18px]'>
-      <div className='border-destructive/25 bg-destructive/5 flex items-center gap-3 rounded-[14px] border px-4 py-[13px]'>
-        <Skeleton className='h-[26px] w-28 flex-none rounded-[10px]' />
-        <Skeleton className='h-3 w-full max-w-md' />
-      </div>
-
-      <div className='grid gap-3.5 sm:grid-cols-3'>
-        {[0, 1, 2].map(cell => (
-          <Card key={cell} className='gap-0 px-[18px] py-4'>
-            <Skeleton className='h-3 w-24' />
-            <Skeleton className='mt-2.5 h-6 w-32 max-w-full' />
-            <Skeleton className='mt-2 h-2.5 w-36 max-w-full' />
-          </Card>
-        ))}
-      </div>
-
-      <Card className='gap-0 overflow-hidden py-0'>
-        <div className='px-5 pt-4 pb-3.5'>
-          <Skeleton className='h-4 w-40' />
-          <Skeleton className='mt-2 h-3 w-72 max-w-full' />
-        </div>
-        <div className='px-5 pb-5'>
-          <RateCardGridSkeleton />
-        </div>
-      </Card>
-
-      <Card className='gap-0 px-5 py-4'>
-        <Skeleton className='mb-3 h-4 w-36' />
-        <PurchasesSkeleton />
-      </Card>
-    </div>
-  );
-}
 
 function PurchasesSkeleton() {
   return (

@@ -89,7 +89,7 @@ export interface NotificationListParams {
   popupSeen?: boolean;
 }
 
-export interface NotificationListResult {
+interface NotificationListResult {
   items: UserNotification[];
   page: number;
   size: number;
@@ -99,7 +99,7 @@ export interface NotificationListResult {
   hasPrevious: boolean;
 }
 
-export interface NotificationCounts {
+interface NotificationCounts {
   unread_count: number;
   popup_count: number;
 }
@@ -109,10 +109,10 @@ const defaultListParams = {
   size: 20,
 } satisfies NotificationListParams;
 
-export const notificationListQueryKey = (params: NotificationListParams = {}) =>
+const notificationListQueryKey = (params: NotificationListParams = {}) =>
   ['notifications', 'list', normalizeListParams(params)] as const;
 
-export const notificationCountsQueryKey = (domain?: string) =>
+const notificationCountsQueryKey = (domain?: string) =>
   ['notifications', 'counts', domain ?? null] as const;
 
 function normalizeListParams(params: NotificationListParams = {}): NotificationListParams {
@@ -122,7 +122,7 @@ function normalizeListParams(params: NotificationListParams = {}): NotificationL
   };
 }
 
-export async function fetchNotifications(
+async function fetchNotifications(
   params: NotificationListParams = {}
 ): Promise<NotificationListResult> {
   const normalizedParams = normalizeListParams(params);
@@ -177,7 +177,7 @@ export async function fetchNotifications(
   };
 }
 
-export async function fetchNotificationCounts(domain?: string): Promise<NotificationCounts> {
+async function fetchNotificationCounts(domain?: string): Promise<NotificationCounts> {
   const response = await fetchClient.GET(
     '/api/v1/notifications/counts' as never,
     {

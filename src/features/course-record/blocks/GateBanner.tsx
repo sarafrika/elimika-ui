@@ -33,7 +33,7 @@ const GATE_TONES = {
   },
 } as const;
 
-export interface GateBannerProps {
+interface GateBannerProps {
   /** From the API. Carries the whole banner through the capability map. */
   access: CourseAccess;
   /**

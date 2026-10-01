@@ -35,10 +35,6 @@ export function isForbidden(error: unknown): boolean {
   return httpStatusOf(error) === 403;
 }
 
-export function isNotFound(error: unknown): boolean {
-  return httpStatusOf(error) === 404;
-}
-
 export function isConflict(error: unknown): boolean {
   return httpStatusOf(error) === 409;
 }

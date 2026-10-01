@@ -87,7 +87,7 @@ function toFormValues(branch?: TrainingBranch): Partial<BranchFormValues> {
   };
 }
 
-export type CreateEditBranchformProps = {
+type CreateEditBranchformProps = {
   branch?: TrainingBranch;
   /**
    * Called with the saved branch. Supplying it also suppresses the

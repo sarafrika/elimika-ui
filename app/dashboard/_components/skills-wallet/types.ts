@@ -7,7 +7,6 @@ export type VerifiedSkillGroup =
   | 'Technical Skills'
   | 'Soft Skills'
   | 'Micro-Credentials';
-export type ProficiencyFilter = 'All Levels' | VerifiedSkillLevel;
 export type VerifiedSkillsRole = 'student' | 'instructor' | 'course_creator';
 
 export type VerifiedSkill = {
@@ -105,25 +104,3 @@ export type SharedTimelineItem = {
   metric?: string;
   timestamp?: number;
 };
-
-export type SharedOpportunity = {
-  id: string;
-  title: string;
-  provider: string;
-  mode: string;
-  match: number;
-  status?: string;
-  href?: string;
-};
-
-export type SharedMySkillsProfile = {
-  name: string;
-  title: string;
-  location?: string;
-  avatarUrl?: string;
-  email?: string;
-  phone?: string;
-  website?: string;
-  joinedLabel?: string;
-};
-

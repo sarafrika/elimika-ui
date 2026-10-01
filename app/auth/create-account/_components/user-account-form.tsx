@@ -20,7 +20,7 @@ import {
 import { Input } from '@/components/ui/input';
 import { PhoneInput } from '@/components/ui/phone-input';
 
-export const ProfessionalBodySchema = z.object({
+const ProfessionalBodySchema = z.object({
   id: z.string().nullish(),
   body_name: z.string().min(1, 'Professional body name is required'),
   membership_no: z.string().min(1, 'Membership number is required'),

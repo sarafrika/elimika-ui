@@ -23,7 +23,7 @@ import { type JobFacts, jobFacts } from '../job-facts';
 import type { FindWorkFilters } from './find-work-filters';
 
 /** Matches the eligibility batch limit, so each loaded page is one eligibility call. */
-export const FIND_WORK_PAGE_SIZE = 50;
+const FIND_WORK_PAGE_SIZE = 50;
 
 export type FindWorkRow = JobReadinessRow & {
   job: ClassMarketplaceJob;
@@ -32,7 +32,7 @@ export type FindWorkRow = JobReadinessRow & {
   contentTitle: string | null;
 };
 
-export type FacetOption = { value: string; label: string };
+type FacetOption = { value: string; label: string };
 
 const byLabel = (a: FacetOption, b: FacetOption) => a.label.localeCompare(b.label);
 

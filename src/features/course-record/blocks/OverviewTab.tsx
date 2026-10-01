@@ -38,13 +38,13 @@ import {
  * tokens the row's value depends on; a row whose tokens are not all supplied is
  * **dropped**, because a half-filled sentence is worse than a shorter card.
  */
-export interface CourseFitRow {
+interface CourseFitRow {
   k: string;
   v: string;
   requires?: readonly string[];
 }
 
-export interface CourseFitCard {
+interface CourseFitCard {
   title: string;
   sub: string;
   /** Tokens the subtitle needs; the subtitle is dropped when one is missing. */
@@ -78,14 +78,14 @@ export interface CourseFitCard {
  * | `skills`, `evidence`, `standards` | `course.objectives`, summarised by the caller |
  * | `rating`, `reviews` | `stats.public.average_rating` / `total_reviews` |
  */
-export type CourseFitVars = Record<string, string | number | null | undefined>;
+type CourseFitVars = Record<string, string | number | null | undefined>;
 
 /**
  * The two fit cards per audience, transcribed from `Main.dc.html`'s `FIT` table.
  * The capability map names the set (`fitSet`); the copy lives here, with the
  * artboard's live figures kept as `{token}`s.
  */
-export const COURSE_FIT_CARDS: Record<CourseFitSetId, readonly CourseFitCard[]> = {
+const COURSE_FIT_CARDS: Record<CourseFitSetId, readonly CourseFitCard[]> = {
   trainer: [
     {
       title: 'How it is delivered',
@@ -183,7 +183,7 @@ export const COURSE_FIT_CARDS: Record<CourseFitSetId, readonly CourseFitCard[]> 
  * ────────────────────────────────────────────────────────────────────────── */
 
 /** Who has to bring a training requirement, in the order the tab groups them. */
-export const COURSE_REQUIREMENT_PROVIDER_ORDER: readonly ProvidedByEnum[] = [
+const COURSE_REQUIREMENT_PROVIDER_ORDER: readonly ProvidedByEnum[] = [
   'organisation',
   'instructor',
   'course_creator',
@@ -191,14 +191,14 @@ export const COURSE_REQUIREMENT_PROVIDER_ORDER: readonly ProvidedByEnum[] = [
 ];
 
 /** Reads into "Provided by …", as the artboard's meta line does. */
-export const COURSE_REQUIREMENT_PROVIDER_LABELS: Record<ProvidedByEnum, string> = {
+const COURSE_REQUIREMENT_PROVIDER_LABELS: Record<ProvidedByEnum, string> = {
   organisation: 'the training provider (organisation)',
   instructor: 'the instructor',
   course_creator: 'the course creator',
   student: 'the learner (student)',
 };
 
-export const COURSE_REQUIREMENT_TYPE_LABELS: Record<RequirementTypeEnum2, string> = {
+const COURSE_REQUIREMENT_TYPE_LABELS: Record<RequirementTypeEnum2, string> = {
   material: 'Material',
   equipment: 'Equipment',
   facility: 'Facility',
@@ -209,7 +209,7 @@ export const COURSE_REQUIREMENT_TYPE_LABELS: Record<RequirementTypeEnum2, string
  * Block
  * ────────────────────────────────────────────────────────────────────────── */
 
-export interface OverviewTabProps extends CourseBlockAsyncProps {
+interface OverviewTabProps extends CourseBlockAsyncProps {
   /** From the API. Decides whether the fit cards appear, via the capability map. */
   access: CourseAccess;
 
@@ -491,18 +491,6 @@ function RequirementCard({ requirement }: { requirement: CourseTrainingRequireme
  * Skeletons
  * ────────────────────────────────────────────────────────────────────────── */
 
-export function OverviewTabSkeleton({ className }: { className?: string }) {
-  return (
-    <div className={cn('flex flex-col gap-[18px]', className)}>
-      <OverviewCourseSkeleton />
-      <div className='bg-card rounded-xl border px-5 py-[18px] shadow-sm'>
-        <Skeleton className='h-4 w-44' />
-        <RequirementsSkeleton />
-      </div>
-    </div>
-  );
-}
-
 function OverviewCourseSkeleton() {
   return (
     <div className='flex flex-col gap-[18px]'>
@@ -561,7 +549,7 @@ interface RequirementGroup {
  * rows that name no provider last under their own heading. Exported so a caller
  * can count the groups without re-deriving them.
  */
-export function groupRequirements(
+function groupRequirements(
   requirements: readonly CourseTrainingRequirement[] | undefined
 ): RequirementGroup[] {
   if (!requirements || requirements.length === 0) return [];

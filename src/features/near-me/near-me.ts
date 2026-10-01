@@ -5,7 +5,7 @@ import type { DistanceBandEnum } from '@/services/client/types.gen';
 
 /** Radius choices offered by the near-me control; the API clamps to 2-100 km. */
 export const NEAR_ME_RADII = [2, 5, 10, 25, 50, 100] as const;
-export const DEFAULT_NEAR_ME_RADIUS_KM = 10;
+const DEFAULT_NEAR_ME_RADIUS_KM = 10;
 
 export type NearMePoint = {
   latitude: number;
@@ -26,11 +26,11 @@ export type NearMeState = {
 };
 
 /** Two decimals is about 1 km: the precision the API keeps and all we ever send. */
-export function roundCoordinate(value: number): number {
+function roundCoordinate(value: number): number {
   return Math.round(value * 100) / 100;
 }
 
-export function toNearParam(point: Pick<NearMePoint, 'latitude' | 'longitude'>): string {
+function toNearParam(point: Pick<NearMePoint, 'latitude' | 'longitude'>): string {
   return `${roundCoordinate(point.latitude).toFixed(2)},${roundCoordinate(point.longitude).toFixed(2)}`;
 }
 

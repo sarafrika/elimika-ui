@@ -10,7 +10,7 @@ import { getInstructorCalendarOptions } from '@/services/client/@tanstack/react-
 import { useUserProfile } from '@/src/features/profile/context/profile-context';
 
 /** How far ahead a class-created card looks for its next session. */
-export const NEXT_SESSION_WINDOW_DAYS = 60;
+const NEXT_SESSION_WINDOW_DAYS = 60;
 
 const LIVE_SESSION_STATUSES = ['SCHEDULED', 'ONGOING'];
 

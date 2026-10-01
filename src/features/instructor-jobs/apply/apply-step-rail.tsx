@@ -1,6 +1,6 @@
 import { cn } from '@/lib/utils';
 
-export const APPLY_STEPS = ['Availability', 'Your note', 'Review'] as const;
+const APPLY_STEPS = ['Availability', 'Your note', 'Review'] as const;
 
 /** Three progress bars with their labels; the current step is marked for assistive tech. */
 export function ApplyStepRail({ step }: { step: number }) {

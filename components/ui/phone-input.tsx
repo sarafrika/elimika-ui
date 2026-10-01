@@ -1,12 +1,11 @@
 'use client';
 
-import type * as React from 'react';
 import PhoneInputBase, { type Country, type Value } from 'react-phone-number-input';
 import 'react-phone-number-input/style.css';
 
 import { cn } from '@/lib/utils';
 
-export type PhoneInputProps = {
+type PhoneInputProps = {
   value?: string | null;
   onChange?: (value: string | undefined) => void;
   onBlur?: () => void;
@@ -61,4 +60,4 @@ export function PhoneInput({
   );
 }
 
-export { formatPhoneNumberIntl, isValidPhoneNumber } from 'react-phone-number-input';
+export * from 'react-phone-number-input';

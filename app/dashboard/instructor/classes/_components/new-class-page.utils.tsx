@@ -1,7 +1,6 @@
 import type { CourseLessonWithContent } from '@/hooks/use-courselessonwithcontent';
 import type { InstructorClassWithSchedule } from '@/hooks/use-instructor-classes-with-schedules';
 import type { ProgramCourseLike } from '@/hooks/use-programlessonwithcontent';
-import type { Student } from '@/services/client';
 import { useMemo } from 'react';
 
 export type ClassTab =
@@ -15,28 +14,12 @@ export type ClassTab =
   | 'tasks';
 
 export type DateFilter = 'current-day' | 'current-week' | 'upcoming' | 'all';
-
-export const dateFilterHeadings: Record<DateFilter, string> = {
-  'current-day': "Today's Classes",
-  'current-week': "This Week's Classes",
-  upcoming: 'Upcoming Classes',
-  all: 'All Upcoming Scheduled Classes',
-};
-
 export const dateFilterDescriptions: Record<DateFilter, string> = {
   'current-day': 'Classes with sessions scheduled for today are listed here.',
   'current-week': 'Classes with sessions scheduled for this week are listed here.',
   upcoming: 'Upcoming instructor class schedules are listed here.',
   all: 'All of your future scheduled classes are listed here.',
 };
-
-export type StudentTableRow = {
-  studentUuid: string;
-  fullName: string;
-  status: string;
-  enrolledOn: string;
-};
-
 export type LessonContentItem = NonNullable<
   NonNullable<CourseLessonWithContent['content']>['data']
 >[number];
@@ -44,21 +27,6 @@ export type LessonContentItem = NonNullable<
 export type LessonModule = CourseLessonWithContent & {
   course?: ProgramCourseLike | null;
 };
-
-export type ClassInstanceItem = {
-  instanceUuid: string;
-  classUuid: string;
-  title: string;
-  courseName: string;
-  difficulty: string;
-  sessionFormat: string;
-  start_time?: string | Date;
-  end_time?: string | Date;
-  location_name?: string | null;
-  classItem: InstructorClassWithSchedule;
-  instance: NonNullable<InstructorClassWithSchedule['schedule']>[number];
-};
-
 export const classTabs: { value: ClassTab; label: string }[] = [
   { value: 'overview', label: 'Overview' },
   { value: 'lessons', label: 'Lessons' },
@@ -67,14 +35,6 @@ export const classTabs: { value: ClassTab; label: string }[] = [
   { value: 'delivery', label: 'Delivery' },
   { value: 'announcements', label: 'Announcements' },
 ];
-
-export const studentClassTabs: { value: ClassTab; label: string }[] = [
-  { value: 'overview', label: 'Overview' },
-  { value: 'lessons', label: 'Lessons' },
-  { value: 'schedule', label: 'Schedule' },
-  { value: 'announcements', label: 'Announcements' },
-];
-
 const isNonCancelledInstance = (
   instance: NonNullable<InstructorClassWithSchedule['schedule']>[number]
 ) => instance.status?.toUpperCase() !== 'CANCELLED';
@@ -134,23 +94,6 @@ export const formatPreferredScheduleLabel = (classItem: InstructorClassWithSched
     minute: '2-digit',
   });
 };
-
-const getStartOfWeek = (date: Date) => {
-  const result = new Date(date);
-  const day = result.getDay();
-  const diff = day === 0 ? -6 : 1 - day;
-  result.setDate(result.getDate() + diff);
-  result.setHours(0, 0, 0, 0);
-  return result;
-};
-
-const getEndOfWeek = (date: Date) => {
-  const result = getStartOfWeek(date);
-  result.setDate(result.getDate() + 6);
-  result.setHours(23, 59, 59, 999);
-  return result;
-};
-
 export const formatLabel = (value?: string | null) => {
   if (!value) return 'Not available';
   return value
@@ -234,30 +177,6 @@ export const getContentTypeLabel = (contentTypeMap: Record<string, string>, uuid
   const typeName = uuid ? contentTypeMap[uuid] : '';
   return typeName ? formatLabel(typeName) : 'Content';
 };
-
-export const isCurrentDay = (value?: string | Date | null) => {
-  if (!value) return false;
-  const date = new Date(value);
-  if (Number.isNaN(date.getTime())) return false;
-
-  const now = new Date();
-
-  return (
-    date.getFullYear() === now.getFullYear() &&
-    date.getMonth() === now.getMonth() &&
-    date.getDate() === now.getDate()
-  );
-};
-
-export const isWithinCurrentWeek = (value?: string | Date | null) => {
-  if (!value) return false;
-  const date = new Date(value);
-  if (Number.isNaN(date.getTime())) return false;
-
-  const now = new Date();
-  return date >= getStartOfWeek(now) && date <= getEndOfWeek(now);
-};
-
 export const isUpcoming = (value?: string | Date | null) => {
   if (!value) return false;
   const date = new Date(value);
@@ -280,85 +199,6 @@ export const getInstanceStatus = (
   if (start <= now && end >= now) return 'In progress';
   return 'Upcoming';
 };
-
-export const useFilteredClassInstances = ({
-  classes,
-  difficultyMap,
-  searchTerm,
-  dateFilter,
-}: {
-  classes: InstructorClassWithSchedule[];
-  difficultyMap: Record<string, string>;
-  searchTerm: string;
-  dateFilter: DateFilter;
-}) =>
-  useMemo<ClassInstanceItem[]>(() => {
-    const normalizedSearch = searchTerm.trim().toLowerCase();
-
-    return classes
-      .flatMap(classItem =>
-        (classItem.schedule ?? []).map((instance, instanceIndex) => ({
-          instanceUuid:
-            instance.uuid ??
-            `${classItem.uuid ?? 'class'}-${instance.start_time?.toString() ?? instanceIndex}`,
-
-          classUuid: classItem.uuid ?? '',
-
-          title: classItem.title,
-
-          courseName: classItem.course?.name || 'No linked course',
-
-          difficulty: classItem.course?.difficulty_uuid
-            ? (difficultyMap[classItem.course.difficulty_uuid] ?? 'General')
-            : 'General',
-
-          sessionFormat: formatLabel(classItem.session_format),
-
-          start_time: instance.start_time,
-
-          end_time: instance.end_time,
-
-          location_name: instance.location_name ?? classItem.location_name,
-
-          classItem,
-
-          instance,
-        }))
-      )
-
-      .filter(instanceItem => {
-        // Exclude cancelled instances
-        const isNotCancelled = instanceItem.instance.status?.toUpperCase() !== 'CANCELLED';
-
-        const matchesSearch =
-          !normalizedSearch ||
-          [
-            instanceItem.title,
-            instanceItem.courseName,
-            instanceItem.sessionFormat,
-            instanceItem.difficulty,
-            formatDateTime(instanceItem.start_time),
-            formatLabel(getInstanceStatus(instanceItem.start_time, instanceItem.end_time)),
-          ]
-            .join(' ')
-            .toLowerCase()
-            .includes(normalizedSearch);
-
-        const matchesDateFilter =
-          (dateFilter === 'all' && isUpcoming(instanceItem.start_time)) ||
-          (dateFilter === 'current-day' && isCurrentDay(instanceItem.start_time)) ||
-          (dateFilter === 'current-week' && isWithinCurrentWeek(instanceItem.start_time)) ||
-          (dateFilter === 'upcoming' && isUpcoming(instanceItem.start_time));
-
-        return isNotCancelled && matchesSearch && matchesDateFilter;
-      })
-
-      .sort(
-        (left, right) =>
-          new Date(left.start_time ?? 0).getTime() - new Date(right.start_time ?? 0).getTime()
-      );
-  }, [classes, dateFilter, difficultyMap, searchTerm]);
-
 export const useFilteredInstructorClasses = ({
   classes,
   searchTerm,
@@ -438,35 +278,3 @@ export const useFilteredInstructorClasses = ({
         return left.title.localeCompare(right.title);
       });
   }, [classes, dateFilter, searchTerm]);
-
-export const buildStudentRows = ({
-  enrollments,
-  studentMap,
-}: {
-  enrollments: Array<{
-    student_uuid?: string | null;
-    status?: string | null;
-    created_date?: string | Date | null;
-  }>;
-  studentMap: Map<string, Student>;
-}) => {
-  const rows = new Map<string, StudentTableRow>();
-
-  enrollments.forEach(enrollment => {
-    if (!enrollment.student_uuid || enrollment.status === 'CANCELLED') return;
-    if (rows.has(enrollment.student_uuid)) return;
-
-    const student = studentMap.get(enrollment.student_uuid);
-
-    rows.set(enrollment.student_uuid, {
-      studentUuid: enrollment.student_uuid,
-      fullName: student?.full_name || 'Unknown student',
-      status: formatLabel(enrollment.status),
-      enrolledOn: formatDateOnly(enrollment.created_date),
-    });
-  });
-
-  return Array.from(rows.values()).sort((left, right) =>
-    left.fullName.localeCompare(right.fullName)
-  );
-};

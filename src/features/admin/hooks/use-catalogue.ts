@@ -16,9 +16,9 @@ import { searchCatalogueOptions } from '@/services/client/@tanstack/react-query.
 import { invalidateGeneratedQueryIds } from '@/src/features/dashboard/workflow-query-invalidation';
 import { invalidateAdminOverview, listQuery } from '../lib/admin-queries';
 
-export const CATALOGUE_PAGE_SIZE = 20;
+const CATALOGUE_PAGE_SIZE = 20;
 
-export interface CatalogueFilters {
+interface CatalogueFilters {
   active: string;
   visible: string;
   page: number;
@@ -68,7 +68,7 @@ export function catalogueItemName(item: CommerceCatalogueItem): string {
   return item.course?.name || item.product_code || 'Catalogue entry';
 }
 
-export interface CatalogueUpsertVariables {
+interface CatalogueUpsertVariables {
   /** Present when editing; absent when creating. */
   catalogUuid?: string;
   body: CommerceCatalogueItemUpsertRequest;

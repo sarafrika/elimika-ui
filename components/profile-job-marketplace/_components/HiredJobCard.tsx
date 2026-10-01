@@ -31,7 +31,7 @@ function initialsOf(name: string) {
   return letters.join('') || '?';
 }
 
-export type NextSession = { start: number | null; loading: boolean; failed: boolean };
+type NextSession = { start: number | null; loading: boolean; failed: boolean };
 
 function nextSessionText(application: HiredApplication, next: NextSession | undefined) {
   if (next?.loading) return 'Checking…';

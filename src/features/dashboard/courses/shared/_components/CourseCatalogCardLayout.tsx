@@ -7,15 +7,35 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
 import { cn } from '@/lib/utils';
 import { isAuthenticatedMediaUrl, toAuthenticatedMediaUrl } from '@/src/lib/media-url';
-import { BookOpen, GraduationCap, Play, Star } from 'lucide-react';
+import { BookOpen, GraduationCap, type LucideIcon, Play, Star } from 'lucide-react';
 import Link from 'next/link';
 import { type ReactNode, useState } from 'react';
 import type { CoursesCatalogCardData } from './courses-data';
 import { CourseVideoPreviewModal } from './CourseVideoPreviewModal';
 import { StarRatingSummary } from './StarRating';
 
+/**
+ * What the card shell reads. `CoursesCatalogCardData` satisfies it, and so does the public
+ * catalogue's item card, which shares this shell rather than restyling it.
+ */
+export type CourseCatalogCardView = Pick<
+  CoursesCatalogCardData,
+  'contentKind' | 'title' | 'provider' | 'icon' | 'imageTone' | 'imageUrl' | 'videoUrl'
+> & {
+  description?: string;
+  secondaryMeta?: string;
+  rating?: number;
+  reviewCount?: number;
+  /** Where the card opens. Without it the card has no whole-card link; its buttons act. */
+  detailsHref?: string;
+};
+
 type CourseCatalogCardLayoutProps = {
-  card: CoursesCatalogCardData;
+  card: CourseCatalogCardView;
+  /** Replaces the plain title text, e.g. a search highlight. */
+  titleContent?: ReactNode;
+  /** The round badge's icon; defaults to a book, or a cap for a programme. */
+  badgeIcon?: LucideIcon;
   badges?: ReactNode;
   stats: ReactNode;
   children: ReactNode;
@@ -29,6 +49,8 @@ const imageToneClasses = {
 
 export function CourseCatalogCardLayout({
   card,
+  titleContent,
+  badgeIcon,
   badges,
   stats,
   children,
@@ -37,17 +59,19 @@ export function CourseCatalogCardLayout({
   const videoUrl = toAuthenticatedMediaUrl(card.videoUrl);
   const [videoPreviewOpen, setVideoPreviewOpen] = useState(false);
   const title = card.title || 'Untitled Course';
-  const CourseIcon = card.contentKind === 'program' ? GraduationCap : BookOpen;
+  const CourseIcon = badgeIcon ?? (card.contentKind === 'program' ? GraduationCap : BookOpen);
 
   return (
     <Card className='group border-border relative h-full min-w-0 gap-0 overflow-hidden rounded-2xl py-0 shadow-sm transition-all hover:-translate-y-0.5 hover:shadow-md'>
       {/* Keep the card keyboard accessible while allowing the controls above it to act independently. */}
-      <Link
-        href={card.detailsHref}
-        className='focus-visible:ring-ring absolute inset-0 z-[1] rounded-[inherit] focus-visible:ring-2 focus-visible:outline-none'
-      >
-        <span className='sr-only'>Open {title}</span>
-      </Link>
+      {card.detailsHref ? (
+        <Link
+          href={card.detailsHref}
+          className='focus-visible:ring-ring absolute inset-0 z-[1] rounded-[inherit] focus-visible:ring-2 focus-visible:outline-none'
+        >
+          <span className='sr-only'>Open {title}</span>
+        </Link>
+      ) : null}
 
       <div className='relative shrink-0'>
         <div className='bg-muted relative aspect-[16/10] w-full overflow-hidden'>
@@ -91,17 +115,23 @@ export function CourseCatalogCardLayout({
         <div className='min-w-0'>
           <div className='flex items-start justify-between gap-2'>
             <h3 className='min-w-0 text-base leading-snug font-semibold'>
-              <Link
-                href={card.detailsHref}
-                className='text-foreground hover:text-primary relative z-10 line-clamp-2 hover:underline'
-                title={title}
-              >
-                {title}
-              </Link>
+              {card.detailsHref ? (
+                <Link
+                  href={card.detailsHref}
+                  className='text-foreground hover:text-primary relative z-10 line-clamp-2 hover:underline'
+                  title={title}
+                >
+                  {titleContent ?? title}
+                </Link>
+              ) : (
+                <span className='text-foreground line-clamp-2' title={title}>
+                  {titleContent ?? title}
+                </span>
+              )}
             </h3>
             {card.contentKind === 'program' && (
               <span className='bg-primary/10 text-primary shrink-0 rounded-full px-2 py-0.5 text-[10px] font-medium tracking-wide uppercase'>
-                Program
+                Programme
               </span>
             )}
           </div>

@@ -27,10 +27,10 @@ import { COURSE_PLACEHOLDER, formatCourseDate } from './_shared';
  */
 
 /** How an entry is marked. Semantic, so it survives the domain re-hue. */
-export type CourseActivityTone = 'primary' | 'success' | 'warning' | 'destructive' | 'muted';
+type CourseActivityTone = 'primary' | 'success' | 'warning' | 'destructive' | 'muted';
 
 /** One entry on the record's history. */
-export interface CourseActivityEvent {
+interface CourseActivityEvent {
   id: string;
   title: string;
   /** ISO date, or a string already formatted for display. */
@@ -49,7 +49,7 @@ const ACTIVITY_DOT_TONE: Record<CourseActivityTone, string> = {
   muted: 'bg-muted-foreground/40',
 };
 
-export interface ActivityTabProps extends CourseBlockAsyncProps {
+interface ActivityTabProps extends CourseBlockAsyncProps {
   /** From the API. The capability map decides whether this tab exists at all. */
   access: CourseAccess;
   /** Newest first — the order the timeline reads in. */
@@ -124,16 +124,6 @@ export function ActivityTab({
 /* ────────────────────────────────────────────────────────────────────────────
  * Skeleton
  * ────────────────────────────────────────────────────────────────────────── */
-
-export function ActivityTabSkeleton({ className }: { className?: string }) {
-  return (
-    <Card className={cn('gap-0 px-5 py-[18px]', className)}>
-      <Skeleton className='h-4 w-44' />
-      <Skeleton className='mt-2.5 mb-4 h-3 w-80 max-w-full' />
-      <TimelineSkeleton />
-    </Card>
-  );
-}
 
 function TimelineSkeleton() {
   return (

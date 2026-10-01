@@ -1,7 +1,7 @@
 import { formatRate, type RateBasis } from '@/lib/rate-card';
 import { cn } from '@/lib/utils';
 
-export function MoneyRow({
+function MoneyRow({
   label,
   value,
   accent,

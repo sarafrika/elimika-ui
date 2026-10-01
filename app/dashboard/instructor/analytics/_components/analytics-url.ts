@@ -14,7 +14,7 @@ type SearchParamsLike = {
   get(name: string): string | null;
 };
 
-export const DEFAULT_ANALYTICS_TAB: AnalyticsTab = 'Overview';
+const DEFAULT_ANALYTICS_TAB: AnalyticsTab = 'Overview';
 
 const VALID_TABS: AnalyticsTab[] = [
   'Overview',

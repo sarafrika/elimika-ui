@@ -13,7 +13,7 @@ import { sessionTimeRange } from '@/src/features/organisation/jobs/lib/job-stage
 
 import { clashesBySession, clashReason, type JobFacts, sessionDate } from '../job-facts';
 
-export type AvailabilityCheck = {
+type AvailabilityCheck = {
   loading: boolean;
   error: unknown;
   onRetry: () => void;

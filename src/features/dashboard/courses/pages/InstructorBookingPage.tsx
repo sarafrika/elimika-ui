@@ -15,62 +15,11 @@ import {
   listTrainingApplicationsOptions,
 } from '@/services/client/@tanstack/react-query.gen';
 import { InstructorDirectory } from '@/src/features/dashboard/courses/components/instructor-directory';
+import { useNearMe } from '@/src/features/near-me/near-me';
 import { useUserDomain } from '@/src/features/dashboard/context/user-domain-context';
 import { roleScopedDashboardPath } from '@/src/features/dashboard/lib/active-domain-storage';
 import { ManageBookings } from '@/src/features/dashboard/courses/components/manage-bookings';
 import type { BookingRecord, BundledClass, SearchInstructor } from '../types';
-
-export type Instructor = {
-  id: string;
-  name: string;
-  title: string;
-  bio: string;
-  profileImage?: string;
-  type: 'individual' | 'organization';
-  gender?: 'male' | 'female' | 'other';
-  rating: number;
-  totalReviews: number;
-  totalStudents: number;
-  experience: number; // years
-  specializations: string[];
-  courses: string[];
-  skills: string[];
-  certifications: Array<{
-    id: string;
-    name: string;
-    issuer: string;
-    year: number;
-  }>;
-  availability: Array<{
-    id: string;
-    date: Date;
-    startTime: string;
-    endTime: string;
-    status: 'available' | 'booked';
-  }>;
-  rateCard: {
-    hourly: number;
-    halfDay: number;
-    fullDay: number;
-    currency: string;
-  };
-  mode: ('online' | 'onsite')[];
-  location?: {
-    city: string;
-    country: string;
-    coordinates?: { lat: number; lng: number };
-  };
-  reviews: Array<{
-    id: string;
-    studentName: string;
-    studentImage?: string;
-    rating: number;
-    comment: string;
-    date: Date;
-    course: string;
-  }>;
-};
-
 type Props = {
   classes: BundledClass[];
 };
@@ -92,7 +41,14 @@ const InstructorBookingDashboard: React.FC<Props> = ({ classes }) => {
 
   const bookings = studentsBookings || [];
   const [activeTab, setActiveTab] = useState('browse');
-  const { data: trainingInstructors, loading } = useSearchTrainingInstructors();
+  // Near me narrows the directory on the server (nearest first, with a distance band).
+  // Ratings load lazily: from the list when it carries them, else per card on screen.
+  const nearMe = useNearMe();
+  const {
+    data: trainingInstructors,
+    ratingsKnown,
+    error: instructorsError,
+  } = useSearchTrainingInstructors({ near: nearMe.params, ratings: 'lazy' });
 
   const { data: applications } = useQuery(
     listTrainingApplicationsOptions({
@@ -217,6 +173,9 @@ const InstructorBookingDashboard: React.FC<Props> = ({ classes }) => {
             instructors={filteredInstructors}
             classes={classes}
             courseId={courseId as string}
+            nearMe={nearMe}
+            nearMeError={instructorsError}
+            ratingsKnown={ratingsKnown}
           />
         </TabsContent>
 

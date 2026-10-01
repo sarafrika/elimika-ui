@@ -6,7 +6,7 @@ import { cn } from '@/lib/utils';
 
 export type RailStepState = 'current' | 'done' | 'open' | 'locked';
 
-export type RailStep = { title: string; summary: string; state: RailStepState };
+type RailStep = { title: string; summary: string; state: RailStepState };
 
 /** Steps with their status; finished steps reopen, steps after an unfinished one stay locked. */
 export function StepRail({

@@ -14,7 +14,6 @@ import {
     Clock,
     FileCheck2,
     Flame,
-    Sparkles
 } from 'lucide-react';
 import Link from 'next/link';
 import { useMemo, useState, type ComponentType, type ReactNode } from 'react';
@@ -620,22 +619,6 @@ export function LessonHubDashboardTab({ learningHubData }: LearningHubDataProps)
                         <p className='mt-1 text-xs text-muted-foreground'>Target: 10 h / week</p>
                     </CardContent>
                 </Card>
-                <Card className='hidden'>
-                    <CardHeader className='pb-3'>
-                        <CardTitle className='flex items-center gap-2 text-base'>
-                            <Sparkles className='text-primary h-4 w-4' /> AI Recommendations
-                        </CardTitle>
-                        <CardDescription>Personalised to your interests</CardDescription>
-                    </CardHeader>
-                    <CardContent className='space-y-2 text-sm'>
-                        {learningHubData.recommendedCourses.slice(0, 3).map(course => (
-                            <RecommendItem
-                                key={course.id}
-                                label={`Try: ${course.title} (${course.level})`}
-                            />
-                        ))}
-                    </CardContent>
-                </Card>
             </div>
 
             <Card>
@@ -872,15 +855,6 @@ function EmptyBrowse({ activeDomain }: { activeDomain: UserDomain | null }) {
             <Button asChild>
                 <Link href={roleScopedDashboardPath(activeDomain, '/dashboard/courses')}>Browse courses</Link>
             </Button>
-        </div>
-    );
-}
-
-function RecommendItem({ label }: { label: string }) {
-    return (
-        <div className='flex items-center justify-between rounded-md border p-2'>
-            <span className='truncate'>{label}</span>
-            <ArrowRight className='h-3.5 w-3.5 text-muted-foreground' />
         </div>
     );
 }

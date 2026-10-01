@@ -25,9 +25,6 @@ import {
   statusLabel,
 } from '../application-status';
 import { StatusBadge } from '@/components/data-display';
-
-export { APPLICATION_STATUSES };
-
 export type ApplicationStatusFilter = 'ALL' | ApplicationStatus;
 
 function formatDate(value?: string | Date | null) {

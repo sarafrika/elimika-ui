@@ -6,7 +6,6 @@ import type { ApiResponse, ApiResponseWithPagination, UserDomain } from '@/lib/t
 import { getServerApiBaseUrl } from '@/services/api/base-url';
 
 const DEFAULT_PAGE_SIZE = 10;
-const EVERY_THIRTY_MINUTES = 60 * 30; // 1,800 seconds
 
 export async function createUser(user: User, userDomain: UserDomain, profileImage?: File) {
   try {
@@ -31,49 +30,6 @@ export async function createUser(user: User, userDomain: UserDomain, profileImag
   }
 }
 
-export async function updateUser(user: User) {
-  try {
-    const baseUrl = getServerApiBaseUrl();
-    const headers = new Headers();
-    headers.set('Content-Type', 'application/json');
-
-    const url = `${baseUrl}/users/${user.uuid}`;
-
-    const response = await fetch(url, {
-      method: 'PUT',
-      headers,
-      body: JSON.stringify(user),
-    });
-
-    return (await response.json()) as ApiResponse<User>;
-  } catch (_error) {
-    throw new Error('Something went wrong while updating user');
-  }
-}
-
-export async function fetchUsers(page: number = 0, searchParams?: string) {
-  try {
-    const baseUrl = getServerApiBaseUrl();
-    const headers = new Headers();
-
-    headers.set('Content-Type', 'application/json');
-
-    const paginationParams = new URLSearchParams({
-      page: page.toString(),
-      size: DEFAULT_PAGE_SIZE.toString(),
-    });
-
-    const endpoint = searchParams ? `/search?${searchParams}&` : `?`;
-    const url = `${baseUrl}/users${endpoint}${paginationParams}`;
-
-    const response = await fetch(url, { headers });
-
-    return (await response.json()) as ApiResponseWithPagination<User>;
-  } catch (_error) {
-    throw new Error('Something went wrong while fetching users. Please contact support.');
-  }
-}
-
 export async function fetchTrainingCenters(page: number, params?: string) {
   try {
     const baseUrl = getServerApiBaseUrl();
@@ -91,25 +47,6 @@ export async function fetchTrainingCenters(page: number, params?: string) {
 
     return (await response.json()) as ApiResponseWithPagination<TrainingCenter>;
   } catch (_error) {
-    throw new Error(
-      'Something went wrong while fetching training centers. Please contact support.'
-    );
-  }
-}
-
-export async function fetchTrainingCenter(trainingCenterId: string) {
-  try {
-    const baseUrl = getServerApiBaseUrl();
-    const headers = new Headers();
-
-    const response = await fetch(`${baseUrl}/organisations/${trainingCenterId}`, {
-      headers,
-      next: { revalidate: EVERY_THIRTY_MINUTES },
-    });
-
-    return (await response.json()) as ApiResponse<TrainingCenter>;
-  } catch (_error) {
-    //console.log('Error fetching training centers:', error);
     throw new Error(
       'Something went wrong while fetching training centers. Please contact support.'
     );

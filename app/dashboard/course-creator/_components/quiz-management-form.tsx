@@ -36,7 +36,6 @@ import {
   addQuestionOptionMutation,
   addQuizQuestionMutation,
   createQuizMutation,
-  deleteQuizMutation,
   getCourseLessonsOptions,
   getQuestionOptionsQueryKey,
   getQuizQuestionsQueryKey,
@@ -45,32 +44,12 @@ import {
   updateQuizMutation,
   updateQuizQuestionMutation,
 } from '@/services/client/@tanstack/react-query.gen';
-import type { Quiz } from '@/services/client/types.gen';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import {
-  BookOpen,
-  BookOpenCheck,
-  ClipboardCheck,
-  Clock,
-  Grip,
-  MoreVertical,
-  PlusCircle,
-  Trash,
-} from 'lucide-react';
-import { useEffect, useState } from 'react';
+import { useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { toast } from 'sonner';
 import z from 'zod';
-import DeleteModal from '../../../../components/custom-modals/delete-modal';
-import RichTextRenderer from '../../../../components/editors/richTextRenders';
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from '../../../../components/ui/dropdown-menu';
 import { CustomLoadingState } from './loading-state';
 
 export const quizSchema = z.object({
@@ -100,14 +79,6 @@ type MutationVariables<T> = T extends {
 type SubmitCallback = () => void;
 type QuestionSubmitCallback = () => void;
 type OptionSubmitCallback = () => void;
-type QuizListItem = Partial<Quiz> & { uuid?: string; lesson_uuid?: string; status?: string };
-type ErrorLike = { message?: string };
-
-const getErrorMessage = (error: unknown) =>
-  typeof error === 'object' && error !== null && 'message' in error
-    ? (error as ErrorLike).message
-    : undefined;
-
 type CreateQuizVariables = MutationVariables<ReturnType<typeof createQuizMutation>>;
 type UpdateQuizVariables = MutationVariables<ReturnType<typeof updateQuizMutation>>;
 type AddQuizQuestionVariables = MutationVariables<ReturnType<typeof addQuizQuestionMutation>>;
@@ -593,7 +564,7 @@ function QuestionForm({
   );
 }
 
-export const optionSchema = z.object({
+const optionSchema = z.object({
   question_uuid: z.string().optional(),
   option_text: z.string().min(1, 'Option text is required'),
   is_correct: z.boolean().default(false),
@@ -601,7 +572,7 @@ export const optionSchema = z.object({
   option_category: z.string().optional(),
 });
 
-export type OptionFormValues = z.infer<typeof optionSchema>;
+type OptionFormValues = z.infer<typeof optionSchema>;
 
 function OptionForm({
   onSuccess,
@@ -770,214 +741,6 @@ function OptionForm({
   );
 }
 
-type QuizListProps = {
-  courseTitle: string;
-  quizzes: QuizListItem[];
-  isLoading: boolean;
-  courseId?: string;
-  onAddQuiz: () => void;
-};
-
-function QuizList({ courseTitle, quizzes, isLoading, courseId, onAddQuiz }: QuizListProps) {
-  const [selectedQuiz, setSelectedQuiz] = useState<QuizListItem | null>(null);
-  const [isModalOpen, setIsModalOpen] = useState(false);
-
-  const handleEditQuiz = (q: QuizListItem) => {
-    setSelectedQuiz(q);
-    setIsModalOpen(true);
-  };
-
-  const handleCancel = () => {
-    setIsModalOpen(false);
-    setSelectedQuiz(null);
-  };
-
-  // DELETE QUIZ MUTATION
-  const queryClient = useQueryClient();
-  const deleteQuiz = useMutation(deleteQuizMutation());
-
-  const [deletingQuizData, setDeletingQuizData] = useState<QuizListItem | null>(null);
-  const [deletingQuizId, setDeletingQuizId] = useState<string | null>(null);
-  const [openDeleteModal, setOpenDeleteModal] = useState(false);
-
-  const handleDelete = (q: QuizListItem) => {
-    setDeletingQuizData(q);
-    setDeletingQuizId(q.uuid as string);
-    setOpenDeleteModal(true);
-  };
-
-  const confirmDelete = () => {
-    if (!deletingQuizId) return;
-
-    deleteQuiz.mutate(
-      { path: { uuid: deletingQuizId as string } },
-      {
-        onSuccess: () => {
-          toast.success('Quiz deleted successfully');
-          queryClient.invalidateQueries({
-            queryKey: searchQuizzesQueryKey({
-              query: {
-                pageable: {},
-                searchParams: { lesson_uuid_eq: deletingQuizData?.lesson_uuid },
-              },
-            }),
-          });
-          setOpenDeleteModal(false);
-          setDeletingQuizId(null);
-        },
-        onError: error => toast.error(getErrorMessage(error) || 'Failed to delete quiz'),
-      }
-    );
-  };
-
-  return (
-    <div className='border-border bg-card w-full space-y-8 rounded-[32px] border p-6 shadow-xl transition lg:p-10'>
-      <div className='flex flex-row items-center justify-between'>
-        <div className='space-y-1'>
-          <h1 className='text-2xl font-semibold'>{courseTitle}</h1>
-          <p className='text-muted-foreground text-sm'>
-            You have {quizzes?.length} {quizzes?.length === 1 ? 'quiz' : 'quizzes'} created under
-            this course.
-          </p>
-        </div>
-        <Button onClick={onAddQuiz} className='self-start sm:self-end lg:self-center'>
-          <PlusCircle className='h-4 w-4' />
-          Add Quiz
-        </Button>
-      </div>
-
-      {isLoading ? (
-        <Spinner />
-      ) : quizzes?.length === 0 ? (
-        <div className='text-muted-foreground rounded-lg border border-dashed p-12 text-center'>
-          <BookOpenCheck className='text-muted-foreground mx-auto h-12 w-12' />
-          <h3 className='mt-4 text-lg font-medium'>No quizzes found for this course.</h3>
-          <p className='text-muted-foreground mt-2'>You can create new quiz for this course.</p>
-        </div>
-      ) : (
-        <div className='w-full space-y-8'>
-          {quizzes?.map((q, index) => (
-            <div
-              key={q?.uuid || index}
-              className='group border-border bg-card/90 relative flex w-full items-start gap-4 rounded-[20px] border p-4 shadow-xl backdrop-blur transition-all lg:p-8'
-            >
-              <Grip className='text-muted-foreground mt-1 h-5 w-5 cursor-move opacity-0 transition-opacity group-hover:opacity-100' />
-
-              <div className='w-full flex-1 space-y-3'>
-                <div className='flex w-full items-start justify-between'>
-                  <div className='flex w-full flex-col items-start'>
-                    <div className='flex w-full flex-row items-center justify-between'>
-                      <h3 className='text-lg font-medium'>{q.title}</h3>
-                      <span className='border-primary/40 bg-primary/10 text-primary mr-2 inline-flex items-center gap-2 rounded-full border px-4 py-1 text-xs font-semibold'>
-                        {(q.status ?? 'draft').charAt(0).toUpperCase() +
-                          (q.status ?? 'draft').slice(1)}
-                      </span>
-                    </div>
-                    <div className='text-muted-foreground text-sm'>
-                      <RichTextRenderer htmlString={q.description ?? ''} maxChars={400} />
-                    </div>
-                  </div>
-                  <DropdownMenu>
-                    <DropdownMenuTrigger asChild>
-                      <Button
-                        variant='ghost'
-                        size='icon'
-                        className='opacity-0 transition-opacity group-hover:opacity-100'
-                      >
-                        <MoreVertical className='h-4 w-4' />
-                      </Button>
-                    </DropdownMenuTrigger>
-                    <DropdownMenuContent align='end'>
-                      <DropdownMenuItem onClick={() => handleEditQuiz(q)}>
-                        <ClipboardCheck className='mr-2 h-4 w-4' />
-                        Edit Quiz
-                      </DropdownMenuItem>
-
-                      <DropdownMenuSeparator />
-                      <DropdownMenuItem
-                        className='text-destructive'
-                        onClick={() => {
-                          if (q.uuid) {
-                            handleDelete(q);
-                          }
-                        }}
-                      >
-                        <Trash className='mr-2 h-4 w-4' />
-                        Delete Quiz
-                      </DropdownMenuItem>
-                    </DropdownMenuContent>
-                  </DropdownMenu>
-                </div>
-
-                <div className='text-muted-foreground flex items-center gap-4 text-sm'>
-                  <div className='flex items-center gap-1.5'>
-                    <Clock className='h-4 w-4' />
-                    <span className='font-semibold'>Time limit: {'  '}</span>
-                    <span>{q?.time_limit_display}</span>
-                  </div>
-
-                  <div className='flex items-center gap-1.5'>
-                    <BookOpen className='h-4 w-4' />
-                    <span className='font-semibold'>Attempts allowed: {'  '}</span>
-
-                    <span>{q?.attempts_allowed || 'N/A'}</span>
-                  </div>
-                </div>
-              </div>
-            </div>
-          ))}
-        </div>
-      )}
-
-      <Dialog
-        open={isModalOpen}
-        onOpenChange={open => {
-          if (!open) {
-            handleCancel();
-          }
-        }}
-      >
-        <DialogContent className='flex max-w-6xl flex-col p-0'>
-          <DialogHeader className='border-b px-6 py-4'>
-            <DialogTitle className='text-xl'>Edit Quiz</DialogTitle>
-            <DialogDescription className='text-muted-foreground text-sm'>
-              Edit quiz
-            </DialogDescription>
-          </DialogHeader>
-
-          <ScrollArea className='h-[calc(90vh-16rem)]'>
-            {selectedQuiz && (
-              <QuizForm
-                onCancel={handleCancel}
-                initialValues={{
-                  ...selectedQuiz,
-                  rubric_uuid: selectedQuiz.rubric_uuid ?? undefined,
-                  time_limit_minutes: selectedQuiz.time_limit_minutes ?? undefined,
-                }}
-                className='px-6 pb-6'
-                quizId={selectedQuiz?.uuid}
-                lessonId={''}
-                courseId={courseId as string}
-                onSuccess={() => {}}
-              />
-            )}
-          </ScrollArea>
-        </DialogContent>
-      </Dialog>
-
-      <DeleteModal
-        open={openDeleteModal}
-        setOpen={setOpenDeleteModal}
-        title='Delete Quiz'
-        description='Are you sure you want to delete this quiz? This action cannot be undone'
-        onConfirm={confirmDelete}
-        isLoading={deleteQuiz.isPending}
-        confirmText='Delete Quiz'
-      />
-    </div>
-  );
-}
-
 interface AddQuizDialogProps {
   isOpen: boolean;
   setOpen: (open: boolean) => void;
@@ -1119,4 +882,4 @@ function OptionDialog({
   );
 }
 
-export { OptionDialog, QuestionDialog, QuizDialog, QuizList };
+export { OptionDialog, QuestionDialog, QuizDialog };
