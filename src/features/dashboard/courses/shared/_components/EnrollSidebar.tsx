@@ -40,7 +40,6 @@ import {
   getClassDefinitionsForInstructorQueryKey,
 } from '@/services/client/@tanstack/react-query.gen';
 import { PreviewRow } from '@/app/dashboard/instructor/classes/new/_components/class-creation-preview-rail';
-import { useUserDomain } from '@/src/features/dashboard/context/user-domain-context';
 import { roleScopedDashboardPath } from '@/src/features/dashboard/lib/active-domain-storage';
 
 type Props = {

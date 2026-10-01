@@ -23,7 +23,7 @@ import { toast } from 'sonner';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Card, CardContent } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
-import type { Student, StudentSchedule } from '@/services/client';
+import type { Student, } from '@/services/client';
 import {
   getStudentScheduleOptions,
   getUserByUuidOptions,

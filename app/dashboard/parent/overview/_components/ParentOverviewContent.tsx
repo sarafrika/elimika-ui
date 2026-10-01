@@ -22,7 +22,6 @@ import type {
 } from '@/services/guardian';
 import { useGuardianDashboard, useGuardianStudents } from '@/services/guardian';
 import { RefreshCw } from 'lucide-react';
-import Link from 'next/link';
 import { useEffect, useMemo, useState } from 'react';
 import { GuardianStudentSelector } from './GuardianStudentSelector';
 import { GuardianLearnerSummary } from './GuardianLearnerSummary';

@@ -1,7 +1,7 @@
 // @ts-nocheck -- 1:1 Lovable port; @hey-api generated-client type drift
 'use client';
 
-import { useMutation, useQuery } from '@tanstack/react-query';
+import { useQuery } from '@tanstack/react-query';
 import { Coins, Download, Eye, Inbox, MoreHorizontal, Plus, Wallet } from 'lucide-react';
 import { useState } from 'react';
 import { toast } from 'sonner';
@@ -9,7 +9,6 @@ import { toast } from 'sonner';
 import { EmptyState } from '@/components/empty-state';
 import { PageHeader } from '@/components/page-header';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
-import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import {
@@ -29,7 +28,6 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Progress } from '@/components/ui/progress';
 import {
   Select,
   SelectContent,

@@ -83,7 +83,7 @@ import {
   sortRows,
 } from './find-work-filters';
 import { FindWorkJobCard, FindWorkJobCardSkeleton } from './find-work-job-card';
-import { type FindWorkRow, useFindWorkJobs } from './use-find-work-jobs';
+import { useFindWorkJobs } from './use-find-work-jobs';
 import { StatCard, StatCardSkeleton, surfaceTheme } from '@/components/data-display';
 
 const BASIS_ICONS = { all: BriefcaseBusiness, per_hour: Clock, per_session: CalendarDays, per_day: Layers };

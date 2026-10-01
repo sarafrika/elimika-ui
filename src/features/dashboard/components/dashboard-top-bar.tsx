@@ -12,7 +12,6 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import { Input } from '@/components/ui/input';
 import {
   Sheet,
   SheetContent,
@@ -54,7 +53,6 @@ import {
   Laptop2,
   LayoutDashboard,
   MoonStar,
-  Search,
   Send,
   ShoppingCart,
   Sparkles,
@@ -66,7 +64,6 @@ import { useTheme } from 'next-themes';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { Label } from '../../../../components/ui/label';
 import { useCartStore } from '../../../../store/cart-store';
 import { DashboardNotifications } from './dashboard-notifications';
 
