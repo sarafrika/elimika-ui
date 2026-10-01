@@ -2,14 +2,18 @@
 'use client';
 
 import {
+  Activity,
   ArrowLeft,
+  BookOpen,
+  CalendarCheck,
   CalendarDays,
   CheckCircle2,
   Clock,
   GraduationCap,
+  LayoutGrid,
   Mail,
-  MoreVertical,
   Phone,
+  ShieldCheck,
   Users,
   Wallet,
   XCircle,
@@ -17,6 +21,15 @@ import {
 import { useParams, useRouter, useSearchParams } from 'next/navigation';
 import { useMemo } from 'react';
 
+import {
+  type EntityFact,
+  EntityHeaderCard,
+  type SectionTab,
+  SectionTabPanel,
+  SectionTabs,
+  surfaceTheme,
+  useSectionTab,
+} from '@/components/data-display';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -28,6 +41,8 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
+import { cn } from '@/lib/utils';
+import { toAuthenticatedMediaUrl } from '@/src/lib/media-url';
 
 import { useInstructorStudentsData } from '../data';
 
@@ -112,6 +127,28 @@ type StudentDetail = {
   levels: string[];
   latestActivityAt: string;
 };
+
+const STUDENT_TABS = ['overview', 'courses', 'attendance', 'guardians', 'activity'] as const;
+type StudentTab = (typeof STUDENT_TABS)[number];
+
+const STUDENT_TAB_LABELS: Record<StudentTab, string> = {
+  overview: 'Overview',
+  courses: 'Courses',
+  attendance: 'Attendance',
+  guardians: 'Guardians',
+  activity: 'Activity',
+};
+
+const STUDENT_TAB_ICONS = {
+  overview: LayoutGrid,
+  courses: BookOpen,
+  attendance: CalendarCheck,
+  guardians: ShieldCheck,
+  activity: Activity,
+} as const;
+
+/** Hidden panels still print. */
+const PANEL = 'print:block!';
 
 const STATUS_STYLES: Record<string, string> = {
   ENROLLED: 'bg-primary/10 text-primary border-primary/20',
@@ -210,6 +247,7 @@ const InstructorStudentsDetailPage = () => {
   const studentId = searchParams.get('sId');
 
   const { students, loading } = useInstructorStudentsData();
+  const { value: tab, setValue: setTab, hrefFor } = useSectionTab(STUDENT_TABS, 'overview');
 
   const student = useMemo(() => {
     return (students as unknown as StudentDetail[])?.find(
@@ -271,8 +309,9 @@ const InstructorStudentsDetailPage = () => {
 
   if (loading) {
     return (
-      <div className='space-y-4 p-4 sm:p-6'>
-        <Skeleton className='h-28 w-full rounded-md' />
+      <div className={cn(surfaceTheme.pageWide, 'space-y-4 pt-4 pb-10 sm:pt-6')}>
+        <Skeleton className='h-28 w-full rounded-2xl' />
+        <Skeleton className='h-11 w-full max-w-xl' />
         <div className='grid grid-cols-2 gap-3 sm:grid-cols-4'>
           {Array.from({ length: 4 }).map((_, i) => (
             <Skeleton key={i} className='h-20 rounded-md' />
@@ -297,113 +336,144 @@ const InstructorStudentsDetailPage = () => {
 
   // ── Derived metrics ──────────────────────────────────────────────────
   const totalCourses = student.courseEnrollments?.length ?? 0;
+  const guardians = [
+    student.profile.first_guardian_name
+      ? { name: student.profile.first_guardian_name, mobile: student.profile.first_guardian_mobile }
+      : null,
+    student.profile.second_guardian_name
+      ? {
+          name: student.profile.second_guardian_name,
+          mobile: student.profile.second_guardian_mobile,
+        }
+      : null,
+  ].filter(Boolean) as { name: string; mobile?: string | null }[];
+
+  const counts: Partial<Record<StudentTab, number>> = {
+    courses: totalCourses,
+    attendance: student.classes?.length ?? 0,
+    guardians: guardians.length,
+    activity: recentActivity.length,
+  };
+  const tabs: SectionTab<StudentTab>[] = STUDENT_TABS.map(id => ({
+    id,
+    label: STUDENT_TAB_LABELS[id],
+    icon: STUDENT_TAB_ICONS[id],
+    count: counts[id],
+  }));
+
+  const facts: EntityFact[] = [
+    student.user.user_no ? { key: 'id', label: `ID: ${student.user.user_no}` } : null,
+    { key: 'email', icon: Mail, label: student.student.email },
+    student.user.phone_number
+      ? { key: 'phone', icon: Phone, label: student.user.phone_number }
+      : null,
+    { key: 'joined', icon: CalendarDays, label: `Joined ${formatDate(student.student.joinedAt)}` },
+  ].filter(Boolean) as EntityFact[];
 
   return (
-    <div className='space-y-4 p-4 sm:p-6'>
+    <div className={cn(surfaceTheme.pageWide, 'flex flex-col gap-[18px] pt-4 pb-10 sm:pt-6')}>
       <Button
         variant='ghost'
         size='sm'
-        className='mb-2 -ml-2 rounded'
+        className='-ml-2 w-fit rounded'
         onClick={() => router.push('/dashboard/instructor/students')}
       >
         <ArrowLeft className='mr-2 h-4 w-4' />
         All students
       </Button>
 
-      {/* ── Header ── */}
-      <div className='border-border bg-card flex flex-col gap-4 rounded-md border p-4 sm:flex-row sm:items-start sm:justify-between sm:p-5'>
-        <div className='flex items-start gap-4'>
-          <div
-            className={`flex h-14 w-14 shrink-0 items-center justify-center rounded-full text-lg font-semibold ${student.student.avatarColor ?? 'bg-primary/10 text-primary'}`}
-          >
-            {student.user.profile_image_url ? (
-              <img
-                src={student.user.profile_image_url}
-                alt={student.student.full_name}
-                className='h-full w-full rounded-full object-cover'
-              />
-            ) : (
-              student.student.initials
-            )}
+      <EntityHeaderCard
+        eyebrow='Student'
+        title={student.student.full_name}
+        initials={student.student.initials}
+        imageUrl={toAuthenticatedMediaUrl(student.user.profile_image_url)}
+        badges={
+          <>
+            <StatusPill status={student.status} />
+            {student.levels?.map(level => (
+              <Badge key={level} variant='outline' className='text-[11px]'>
+                {level}
+              </Badge>
+            ))}
+          </>
+        }
+        facts={facts}
+      />
+
+      <SectionTabs
+        tabs={tabs}
+        value={tab}
+        onValueChange={setTab}
+        hrefFor={hrefFor}
+        label='Student sections'
+        sticky
+        listClassName='bg-background'
+      >
+        <SectionTabPanel value='overview' className={cn(PANEL, 'flex flex-col gap-4')}>
+          <div className={surfaceTheme.cardGrid}>
+            <StatCard
+              icon={GraduationCap}
+              value={totalCourses}
+              label='Courses Enrolled'
+              tint='primary'
+            />
+            <StatCard
+              icon={CheckCircle2}
+              value={`${student.progress}%`}
+              label='Overall Progress'
+              tint='success'
+            />
+            <StatCard
+              icon={Wallet}
+              value={`KSh ${student.walletBalance.toLocaleString()}`}
+              label='Skills Wallet'
+              tint='accent'
+            />
+            <StatCard
+              icon={Clock}
+              value={`${attendanceStats.rate}%`}
+              label={`Attendance · ${attendanceStats.attended}/${attendanceStats.total}`}
+              tint='primary'
+            />
           </div>
 
-          <div className='space-y-1.5'>
-            <div className='flex flex-wrap items-center gap-2'>
-              <h1 className='text-foreground text-lg font-semibold'>{student.student.full_name}</h1>
-              <StatusPill status={student.status} />
-            </div>
-
-            <div className='text-muted-foreground flex flex-wrap items-center gap-x-4 gap-y-1 text-xs'>
-              {student.user.user_no ? <span>ID: {student.user.user_no}</span> : null}
-              <span className='flex items-center gap-1'>
-                <Mail className='h-3 w-3' />
-                {student.student.email}
-              </span>
-              {student.user.phone_number ? (
-                <span className='flex items-center gap-1'>
-                  <Phone className='h-3 w-3' />
-                  {student.user.phone_number}
-                </span>
-              ) : null}
-              <span className='flex items-center gap-1'>
-                <CalendarDays className='h-3 w-3' />
-                Joined {formatDate(student.student.joinedAt)}
-              </span>
-            </div>
-
-            {student.levels?.length ? (
-              <div className='flex flex-wrap gap-1.5 pt-0.5'>
-                {student.levels.map(level => (
-                  <Badge key={level} variant='outline' className='text-[11px]'>
-                    {level}
-                  </Badge>
-                ))}
+          <div className='border-border bg-card max-w-xl rounded-md border p-4'>
+            <h2 className='text-foreground mb-3 text-sm font-semibold'>Personal Information</h2>
+            <dl className='space-y-2.5 text-xs'>
+              <div className='flex items-center justify-between'>
+                <dt className='text-muted-foreground'>Date of birth</dt>
+                <dd className='text-foreground font-medium'>{formatDate(student.user.dob)}</dd>
               </div>
-            ) : null}
+              <div className='flex items-center justify-between'>
+                <dt className='text-muted-foreground'>Gender</dt>
+                <dd className='text-foreground font-medium capitalize'>
+                  {student.user.gender?.toLowerCase() ?? '—'}
+                </dd>
+              </div>
+              <div className='flex items-center justify-between'>
+                <dt className='text-muted-foreground'>Account status</dt>
+                <dd>
+                  <Badge
+                    variant={student.user.active ? 'success' : 'outline'}
+                    className='text-[10px]'
+                  >
+                    {student.user.active ? 'Active' : 'Inactive'}
+                  </Badge>
+                </dd>
+              </div>
+            </dl>
           </div>
-        </div>
+        </SectionTabPanel>
 
-        <Button variant='outline' size='icon' className='self-start sm:self-auto'>
-          <MoreVertical className='h-4 w-4' />
-        </Button>
-      </div>
-
-      {/* ── Overview stats ── */}
-      <div className='grid grid-cols-2 gap-3 sm:grid-cols-4'>
-        <StatCard
-          icon={GraduationCap}
-          value={totalCourses}
-          label='Courses Enrolled'
-          tint='primary'
-        />
-        <StatCard
-          icon={CheckCircle2}
-          value={`${student.progress}%`}
-          label='Overall Progress'
-          tint='success'
-        />
-        <StatCard
-          icon={Wallet}
-          value={`KSh ${student.walletBalance.toLocaleString()}`}
-          label='Skills Wallet'
-          tint='accent'
-        />
-        <StatCard
-          icon={Clock}
-          value={`${attendanceStats.rate}%`}
-          label={`Attendance · ${attendanceStats.attended}/${attendanceStats.total}`}
-          tint='primary'
-        />
-      </div>
-
-      <div className='flex flex-col gap-4 lg:flex-row'>
-        {/* ── Main column: courses & classes ── */}
-        <div className='min-w-0 flex-1 space-y-4'>
-          {/* Course progress */}
+        <SectionTabPanel value='courses' className={PANEL}>
           <div className='border-border bg-card rounded-md border'>
             <div className='border-border flex items-center justify-between border-b px-4 py-3'>
               <h2 className='text-foreground text-sm font-semibold'>Course Progress</h2>
             </div>
+
+            {totalCourses === 0 ? (
+              <p className='text-muted-foreground p-4 text-xs'>Not enrolled in any course yet.</p>
+            ) : null}
 
             <div className='hidden sm:block'>
               <Table>
@@ -470,12 +540,21 @@ const InstructorStudentsDetailPage = () => {
               ))}
             </div>
           </div>
+        </SectionTabPanel>
 
-          {/* Class enrollments & attendance */}
+        <SectionTabPanel value='attendance' className={PANEL}>
           <div className='border-border bg-card rounded-md border'>
             <div className='border-border flex items-center justify-between border-b px-4 py-3'>
               <h2 className='text-foreground text-sm font-semibold'>Classes &amp; Attendance</h2>
+              <span className='text-muted-foreground text-xs'>
+                {attendanceStats.rate}% overall · {attendanceStats.attended}/{attendanceStats.total}{' '}
+                attended
+              </span>
             </div>
+
+            {student.classes.length === 0 ? (
+              <p className='text-muted-foreground p-4 text-xs'>No classes with you yet.</p>
+            ) : null}
 
             <div className='divide-y'>
               {student.classes.map(cls => {
@@ -526,75 +605,39 @@ const InstructorStudentsDetailPage = () => {
               })}
             </div>
           </div>
-        </div>
+        </SectionTabPanel>
 
-        {/* ── Sidebar ── */}
-        <div className='w-full space-y-4 lg:w-80 lg:shrink-0'>
-          {/* Guardian contacts */}
-          <div className='border-border bg-card rounded-md border p-4'>
-            <h2 className='text-foreground mb-3 text-sm font-semibold'>Guardian Contacts</h2>
-            <div className='space-y-3'>
-              {student.profile.first_guardian_name ? (
-                <div>
-                  <p className='text-foreground text-xs font-medium'>
-                    {student.profile.first_guardian_name}
-                  </p>
-                  <p className='text-muted-foreground flex items-center gap-1 text-xs'>
-                    <Phone className='h-3 w-3' />
-                    {student.profile.first_guardian_mobile}
-                  </p>
-                </div>
-              ) : null}
-              {student.profile.second_guardian_name ? (
-                <div>
-                  <p className='text-foreground text-xs font-medium'>
-                    {student.profile.second_guardian_name}
-                  </p>
-                  <p className='text-muted-foreground flex items-center gap-1 text-xs'>
-                    <Phone className='h-3 w-3' />
-                    {student.profile.second_guardian_mobile}
-                  </p>
-                </div>
-              ) : null}
-              {!student.profile.first_guardian_name && !student.profile.second_guardian_name && (
-                <p className='text-muted-foreground text-xs'>No guardian contacts on file.</p>
-              )}
+        <SectionTabPanel value='guardians' className={PANEL}>
+          {guardians.length === 0 ? (
+            <div className='border-border bg-card rounded-md border p-4'>
+              <p className='text-muted-foreground text-xs'>No guardian contacts on file.</p>
             </div>
-          </div>
+          ) : (
+            <ul className={surfaceTheme.cardGrid}>
+              {guardians.map(guardian => (
+                <li
+                  key={`${guardian.name}-${guardian.mobile ?? ''}`}
+                  className='border-border bg-card rounded-md border p-4'
+                >
+                  <p className='text-foreground text-sm font-medium'>{guardian.name}</p>
+                  {guardian.mobile ? (
+                    <a
+                      href={`tel:${guardian.mobile.replace(/\s+/g, '')}`}
+                      className='text-primary mt-1 flex items-center gap-1 text-xs underline-offset-4 hover:underline'
+                    >
+                      <Phone className='h-3 w-3' />
+                      {guardian.mobile}
+                    </a>
+                  ) : null}
+                </li>
+              ))}
+            </ul>
+          )}
+        </SectionTabPanel>
 
-          {/* Personal info */}
-          <div className='border-border bg-card rounded-md border p-4'>
-            <h2 className='text-foreground mb-3 text-sm font-semibold'>Personal Information</h2>
-            <dl className='space-y-2.5 text-xs'>
-              <div className='flex items-center justify-between'>
-                <dt className='text-muted-foreground'>Date of birth</dt>
-                <dd className='text-foreground font-medium'>{formatDate(student.user.dob)}</dd>
-              </div>
-              <div className='flex items-center justify-between'>
-                <dt className='text-muted-foreground'>Gender</dt>
-                <dd className='text-foreground font-medium capitalize'>
-                  {student.user.gender?.toLowerCase() ?? '—'}
-                </dd>
-              </div>
-              <div className='flex items-center justify-between'>
-                <dt className='text-muted-foreground'>Account status</dt>
-                <dd>
-                  <Badge
-                    variant={student.user.active ? 'success' : 'outline'}
-                    className='text-[10px]'
-                  >
-                    {student.user.active ? 'Active' : 'Inactive'}
-                  </Badge>
-                </dd>
-              </div>
-            </dl>
-          </div>
-
-          {/* Recent activity */}
-          <div className='border-border bg-card rounded-md border p-4'>
-            <div className='mb-3 flex items-center justify-between'>
-              <h2 className='text-foreground text-sm font-semibold'>Recent Activity</h2>
-            </div>
+        <SectionTabPanel value='activity' className={PANEL}>
+          <div className='border-border bg-card max-w-3xl rounded-md border p-4'>
+            <h2 className='text-foreground mb-3 text-sm font-semibold'>Recent Activity</h2>
             <div className='space-y-3'>
               {recentActivity.length === 0 ? (
                 <p className='text-muted-foreground text-xs'>No recent activity yet.</p>
@@ -626,8 +669,8 @@ const InstructorStudentsDetailPage = () => {
               )}
             </div>
           </div>
-        </div>
-      </div>
+        </SectionTabPanel>
+      </SectionTabs>
     </div>
   );
 };
