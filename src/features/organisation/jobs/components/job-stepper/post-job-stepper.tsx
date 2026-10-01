@@ -543,7 +543,7 @@ export function PostJobStepper() {
   const sourceLoading = Boolean(sourceJobUuid) && jobQuery.isLoading && !sourceJob;
 
   return (
-    <OrgPage className='space-y-5'>
+    <OrgPage width='standard' className='space-y-5'>
       <PageHeader
         title={isEditMode ? 'Edit job' : 'Post a job'}
         description={

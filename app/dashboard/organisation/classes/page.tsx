@@ -60,6 +60,7 @@ import {
   listResourcesOptions,
 } from '@/services/client/@tanstack/react-query.gen';
 import { dashboardUrl } from '@/src/features/dashboard/lib/dashboard-url';
+import { surfaceTheme } from '@/components/data-display';
 
 const NEW_CLASS_HREF = dashboardUrl('organisation', 'classes/new');
 
@@ -290,14 +291,14 @@ export default function ClassesPage() {
   );
 
   return (
-    <div className='mx-auto w-full max-w-[1600px] space-y-6 px-3 py-4 sm:px-5 lg:px-6 2xl:max-w-[1840px]'>
+    <div className={`${surfaceTheme.pageWide} space-y-6 py-4`}>
       <PageHeader
         title='Classes'
         description='Schedule cohorts, assign instructors, and track capacity.'
         action={createButton}
       />
 
-      <div className='grid gap-4 sm:grid-cols-2 lg:grid-cols-4'>
+      <div className='grid gap-4 sm:grid-cols-2 lg:grid-cols-[repeat(auto-fit,minmax(200px,1fr))]'>
         <Card className='border-l-primary border-l-4'>
           <CardContent className='p-6'>
             <div className='text-2xl font-bold'>{kpis.total}</div>

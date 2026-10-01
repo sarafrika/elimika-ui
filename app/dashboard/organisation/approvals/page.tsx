@@ -148,7 +148,7 @@ export default function OrganisationApprovalsPage() {
         description='Your organisation’s applications to train courses and programs. Open one to see where it is, its rate card and its history.'
       />
 
-      <div className='grid gap-4 sm:grid-cols-2 lg:grid-cols-4'>
+      <div className='grid gap-4 sm:grid-cols-2 lg:grid-cols-[repeat(auto-fit,minmax(200px,1fr))]'>
         {loading ? (
           [0, 1, 2, 3].map(index => <KpiCardSkeleton key={index} />)
         ) : (

@@ -46,6 +46,7 @@ import {
   getCourseByUuidOptions,
   searchTrainingApplicationsOptions,
 } from '@/services/client/@tanstack/react-query.gen';
+import { surfaceTheme } from '@/components/data-display';
 
 const statusVariant = (status?: string) => {
   const s = (status ?? '').toLowerCase();
@@ -178,7 +179,7 @@ export default function MyApplicationsPage() {
   });
 
   return (
-    <div className='mx-auto w-full max-w-[1600px] space-y-6 px-3 py-4 sm:px-5 lg:px-6 2xl:max-w-[1840px]'>
+    <div className={`${surfaceTheme.pageWide} space-y-6 py-4`}>
       <PageHeader
         title='My Applications'
         description='Track applications to train courses and their review status.'

@@ -22,7 +22,7 @@ export default function OrganisationCreateClassPage() {
   const current = createdFor && createdFor === jobUuid ? 2 : jobUuid ? 1 : 0;
 
   return (
-    <OrgPage className='space-y-5'>
+    <OrgPage width='standard' className='space-y-5'>
       <PageHeader
         title='Create a class'
         description="A class starts from a job you've hired for. It takes everything from that job, so nothing is entered twice and the job's holds become the class's bookings."

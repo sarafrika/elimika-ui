@@ -56,6 +56,7 @@ import {
 import { offeredMethods, type TrainingMethod } from '@/lib/rate-card';
 import { lowestRatesLabel } from '@/src/features/rate-card/application-display';
 import { toAuthenticatedMediaUrl } from '@/src/lib/media-url';
+import { surfaceTheme } from '@/components/data-display';
 
 const PROGRAM_TYPES = [
   'Short courses',
@@ -323,7 +324,7 @@ export default function CoursesPage() {
   const loading = applicationsQuery.isLoading;
 
   return (
-    <div className='mx-auto w-full max-w-[1600px] space-y-6 px-3 py-4 sm:px-5 lg:px-6 2xl:max-w-[1840px]'>
+    <div className={`${surfaceTheme.pageWide} space-y-6 py-4`}>
       <PageHeader
         title='Courses & Programs'
         description='Approved courses your organisation is running.'

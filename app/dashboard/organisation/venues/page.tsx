@@ -6,6 +6,7 @@ import { useMemo, useState } from 'react';
 import { toast } from 'sonner';
 
 import { AsyncSection } from '@/components/data/async-section';
+import { surfaceTheme } from '@/components/data-display';
 import { PageHeader } from '@/components/dashboard';
 import { AssignBranchDialog } from '@/components/resourcing/assign-branch-dialog';
 import { getErrorMessage } from '@/lib/error-utils';
@@ -156,7 +157,7 @@ export default function VenuesPage() {
         errorTitle='Couldn’t load venues'
         empty={venues.length === 0}
         skeleton={
-          <div className='grid gap-4 sm:grid-cols-2 lg:grid-cols-3'>
+          <div className={surfaceTheme.cardGrid}>
             {Array.from({ length: 3 }).map((_, index) => (
               <Skeleton key={index} className='h-36 w-full rounded-lg' />
             ))}
@@ -190,7 +191,7 @@ export default function VenuesPage() {
                   {list.length} venue{list.length === 1 ? '' : 's'}
                 </Badge>
               </div>
-              <div className='grid gap-4 sm:grid-cols-2 lg:grid-cols-3'>
+              <div className={surfaceTheme.cardGrid}>
                 {list.map(venue => (
                   <Card key={venue.uuid} className='gap-0 overflow-hidden py-0'>
                     <CardContent className='space-y-3 p-4'>

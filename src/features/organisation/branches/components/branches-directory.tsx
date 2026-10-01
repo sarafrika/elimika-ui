@@ -19,6 +19,7 @@ import { toast } from 'sonner';
 
 import { PageHeader } from '@/components/dashboard';
 import { AsyncSection } from '@/components/data/async-section';
+import { surfaceTheme } from '@/components/data-display';
 import { StaticMap } from '@/components/maps/static-map';
 import {
   AlertDialog,
@@ -182,7 +183,7 @@ export function BranchesDirectory() {
       >
         <div className='space-y-3'>
           {summary ? <p className='text-muted-foreground text-sm'>{summary}</p> : null}
-          <div className='grid gap-4 sm:grid-cols-2 xl:grid-cols-3'>
+          <div className={surfaceTheme.cardGrid}>
             {branches.map(branch => (
               <BranchCard
                 key={branch.uuid}
@@ -347,7 +348,7 @@ function BranchCard({
 
 function BranchCardsSkeleton() {
   return (
-    <div className='grid gap-4 sm:grid-cols-2 xl:grid-cols-3'>
+    <div className={surfaceTheme.cardGrid}>
       {[0, 1, 2].map(index => (
         <div key={index} className='border-border/70 overflow-hidden rounded-xl border'>
           <Skeleton className='h-32 w-full rounded-none' />

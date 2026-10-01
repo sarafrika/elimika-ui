@@ -144,7 +144,7 @@ export default function OrganisationEarningsPage() {
         description='Sales, earnings and platform fees for your organisation.'
       />
 
-      <div className='grid gap-4 sm:grid-cols-2 lg:grid-cols-4'>
+      <div className='grid gap-4 sm:grid-cols-2 lg:grid-cols-[repeat(auto-fit,minmax(200px,1fr))]'>
         {isLoading
           ? kpis.map(kpi => <KpiCardSkeleton key={kpi.label} />)
           : kpis.map(kpi => (

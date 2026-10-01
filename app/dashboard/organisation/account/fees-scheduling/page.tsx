@@ -271,7 +271,7 @@ export default function OrganisationFeesSchedulingPage() {
   );
 
   return (
-    <OrgPage className='space-y-6'>
+    <OrgPage width='standard' className='space-y-6'>
       <PageHeader
         title='Fees & scheduling'
         description='Set the fee, class type and delivery method for each class.'

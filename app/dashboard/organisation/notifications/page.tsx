@@ -61,6 +61,7 @@ import {
   listSentQueryKey,
   sendMutation,
 } from '@/services/client/@tanstack/react-query.gen';
+import { surfaceTheme } from '@/components/data-display';
 
 dayjs.extend(relativeTime);
 
@@ -424,7 +425,7 @@ export default function NotificationsPage() {
   );
 
   return (
-    <div className='mx-auto w-full max-w-[1600px] space-y-6 px-3 py-4 sm:px-5 lg:px-6 2xl:max-w-[1840px]'>
+    <div className={`${surfaceTheme.pageWide} space-y-6 py-4`}>
       <PageHeader
         title='Notifications'
         description='Alerts, reminders and announcements for your organisation.'
