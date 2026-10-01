@@ -10,6 +10,7 @@ import { STALE_TIMES } from '@/lib/query-client';
 import type { CourseReview } from '@/services/client';
 import {
   getCategoryByUuidOptions,
+  getCourseCreatorByUuidOptions,
   getProgramCoursesOptions,
   getProgramEnrollmentsOptions,
   getProgramReviewsOptions,
@@ -134,6 +135,15 @@ export function ProgramRecordPage({
     staleTime: STALE_TIMES.reference,
   });
   const categoryName = categoryQ.data?.data?.name;
+
+  // The byline names the creator, as the course record does; `created_by` is an email.
+  const creatorUuid = program?.course_creator_uuid;
+  const creatorQ = useQuery({
+    ...getCourseCreatorByUuidOptions({ path: { uuid: creatorUuid ?? '' } }),
+    enabled: Boolean(creatorUuid),
+    staleTime: STALE_TIMES.entity,
+  });
+  const creator = creatorQ.data;
 
   const segment = routeSegmentFromPath(usePathname());
 
@@ -432,8 +442,8 @@ export function ProgramRecordPage({
           summary: program?.description ?? undefined,
           categories: categoryName ? [categoryName] : undefined,
           status: program?.status,
-          creatorName: program?.created_by ?? undefined,
-          creatorRole: undefined,
+          creatorName: creator?.full_name,
+          creatorRole: creator?.professional_headline ?? undefined,
           averageRating: ratings.average,
           totalReviews: ratings.total,
           enrolledCount,
