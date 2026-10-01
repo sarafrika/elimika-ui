@@ -1,6 +1,6 @@
 import type { Category } from '@/services/client';
 
-export function categoryAncestors(category: Category, byId: ReadonlyMap<string, Category>) {
+function categoryAncestors(category: Category, byId: ReadonlyMap<string, Category>) {
   const ancestors: Category[] = [];
   const visited = new Set<Category>();
   let current: Category | undefined = category;

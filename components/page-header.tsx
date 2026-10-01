@@ -13,7 +13,7 @@ import {
  * This module only exists so the existing call sites that pass the singular
  * `action` prop keep working; prefer importing the canonical component directly.
  */
-export interface PageHeaderProps extends Omit<DashboardPageHeaderProps, 'actions'> {
+interface PageHeaderProps extends Omit<DashboardPageHeaderProps, 'actions'> {
   /** @deprecated Use `actions`. */
   action?: ReactNode;
   actions?: ReactNode;

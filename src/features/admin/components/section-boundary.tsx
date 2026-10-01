@@ -6,7 +6,7 @@ import { AsyncSection, type AsyncSectionProps } from '@/components/data/async-se
 import { Button } from '@/components/ui/button';
 
 /** How long a section may load before it says so and offers a retry. */
-export const SECTION_TIMEOUT_MS = 10_000;
+const SECTION_TIMEOUT_MS = 10_000;
 
 interface SectionBoundaryProps extends AsyncSectionProps {
   /** What this section is, used in the timeout message. */

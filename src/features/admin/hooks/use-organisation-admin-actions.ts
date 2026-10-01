@@ -32,7 +32,7 @@ function statusOf(error: unknown): number | undefined {
   return typeof status === 'number' ? status : undefined;
 }
 
-export interface BranchFormValues {
+interface BranchFormValues {
   branch_name: string;
   address?: string;
   poc_name: string;

@@ -1,6 +1,6 @@
 // Shared types, catalogues, and pure helpers for the organisation create-class form.
 // Kept UI-free so every section component and the container page import from one place.
-import { scheduleTimeZoneOptions, toUtcIsoDateTime } from '@/lib/date';
+import { toUtcIsoDateTime } from '@/lib/date';
 import {
   type DeliveryMode,
   formatRateAmount,
@@ -12,11 +12,10 @@ import {
   rateFor,
   type TrainingFormat,
 } from '@/lib/rate-card';
-import type { User } from '@/services/client';
 
 // ─── Services (drive the session format; each is priced from one rate card cell) ─
 export type ServiceKey = '1on1' | 'group' | 'online' | 'private-online';
-export type Service = {
+type Service = {
   key: ServiceKey;
   title: string;
   subtitle: string;
@@ -24,7 +23,7 @@ export type Service = {
   online: boolean;
 };
 
-export const SERVICES: readonly Service[] = [
+const SERVICES: readonly Service[] = [
   {
     key: '1on1',
     title: '1-on-1 session',
@@ -116,7 +115,7 @@ export function unitsLabel(units: number, basis: RateBasis): string {
   return `${count} ${unit}${units === 1 ? '' : 's'}`;
 }
 
-export type PriceAndPayIssue = { message: string; incomplete: boolean };
+type PriceAndPayIssue = { message: string; incomplete: boolean };
 
 /** The first reason a sale price and instructor pay can't be saved, or null when they can. */
 export function priceAndPayIssue({
@@ -166,7 +165,7 @@ export type DayRow = {
   allDay: boolean;
 };
 
-export const DAY_TO_ISO: Record<DayKey, number> = {
+const DAY_TO_ISO: Record<DayKey, number> = {
   Mon: 1,
   Tue: 2,
   Wed: 3,
@@ -213,8 +212,6 @@ export const REMINDER_MINUTES: Record<string, number> = {
   '48h': 2880,
 };
 export { scheduleTimeZoneLabel, scheduleTimeZoneOptions } from '@/lib/date';
-export const TIMEZONES = scheduleTimeZoneOptions();
-
 export type ScheduleMode = 'standard' | 'pick' | 'academic';
 export type PeriodSlot = { day: DayKey; start: string; end: string };
 export type AcademicPeriod = {
@@ -426,7 +423,7 @@ export function computeUpcomingSessions(
   return out.sort((a, b) => a.date.getTime() - b.date.getTime());
 }
 
-export type SessionWindow = { start: Date; end: Date };
+type SessionWindow = { start: Date; end: Date };
 
 export function computeSessionWindows(
   startDate: string,
@@ -553,14 +550,6 @@ export function fmtShortDate(iso: string) {
   return d.toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
 }
 
-export const instructorInitials = (u?: User) =>
-  u
-    ? `${u.first_name?.[0] ?? ''}${u.last_name?.[0] ?? ''}`.toUpperCase() ||
-      (u.email?.[0] ?? '?').toUpperCase()
-    : '?';
-export const instructorName = (u?: User) =>
-  u ? `${u.first_name ?? ''} ${u.last_name ?? ''}`.trim() || u.email || 'Instructor' : 'Unassigned';
-
 /**
  * One instructor the organisation may assign a class to. `uuid` is the **instructor profile**
  * uuid, not the user uuid — `default_instructor_uuid` on a class definition is checked against
@@ -571,13 +560,3 @@ export type InstructorOption = {
   name: string;
   avatarUrl?: string;
 };
-
-export const instructorOptionInitials = (option?: InstructorOption) =>
-  option
-    ? option.name
-        .split(/\s+/)
-        .slice(0, 2)
-        .map(part => part[0] ?? '')
-        .join('')
-        .toUpperCase() || '?'
-    : '?';

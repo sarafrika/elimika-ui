@@ -13,7 +13,7 @@ import {
 import { rosterDisplayName } from '@/src/features/organisation/groups/lib/roster';
 import type { StudentGroupRosterEntry } from '@/services/client';
 
-export type RemoveFromGroupDialogProps = {
+type RemoveFromGroupDialogProps = {
   entry: StudentGroupRosterEntry | null;
   pending: boolean;
   onClose: () => void;

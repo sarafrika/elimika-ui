@@ -8,23 +8,23 @@ export type DashboardSettingsVariant =
   | 'organisation'
   | 'course_creator';
 
-export type SettingsTabConfig = {
+type SettingsTabConfig = {
   value: string;
   label: string;
 };
 
-export type SettingsSummaryItem = {
+type SettingsSummaryItem = {
   label: string;
   value: string;
 };
 
-export type SettingsAccessItem = {
+type SettingsAccessItem = {
   title: string;
   description: string;
   href?: string;
 };
 
-export type SettingsVariantConfig = {
+type SettingsVariantConfig = {
   title: string;
   subtitle: string;
   tabs: SettingsTabConfig[];

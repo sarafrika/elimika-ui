@@ -37,7 +37,7 @@ import { StepPricing } from './step-pricing';
 import { StepRequirements } from './step-requirements';
 import { StepReview } from './step-review';
 
-export type ApplyWizardProps = {
+type ApplyWizardProps = {
   trainingId: string;
   isProgram: boolean;
   /** Course name or program title, for the confirmation toast. */

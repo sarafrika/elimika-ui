@@ -35,7 +35,7 @@ import {
 } from '@/services/client/@tanstack/react-query.gen';
 import { configQuery } from '../lib/admin-queries';
 
-export const CONFIG_PAGE_SIZE = 25;
+const CONFIG_PAGE_SIZE = 25;
 
 const CONFIG_QUERY_IDS = [
   'getAllContentTypes',

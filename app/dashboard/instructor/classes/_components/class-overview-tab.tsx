@@ -84,7 +84,7 @@ function getInitials(value?: string | null) {
   );
 }
 
-export function CourseArtwork({
+function CourseArtwork({
   imageUrl,
   courseName,
 }: {

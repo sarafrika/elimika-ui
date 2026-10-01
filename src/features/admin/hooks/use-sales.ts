@@ -14,12 +14,12 @@ import {
 import { listQuery } from '../lib/admin-queries';
 import { revenueWindow, type RevenueRange } from './use-revenue';
 
-export const SALES_PAGE_SIZE = 20;
+const SALES_PAGE_SIZE = 20;
 
 /** The API applies one of these at a time, in this order, so the UI offers one. */
 export type SalesSubjectKind = 'none' | 'course' | 'class' | 'student';
 
-export interface SalesFilters {
+interface SalesFilters {
   range: RevenueRange;
   status?: string;
   scope?: string;

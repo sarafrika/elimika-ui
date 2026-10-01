@@ -21,7 +21,6 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { useStudent } from '@/context/student-context';
 import useStudentClassDefinitions from '@/hooks/use-student-class-definition';
 import { STALE_TIMES } from '@/lib/query-client';
-import { cn } from '@/lib/utils';
 import {
     getEnrollmentsForClassOptions,
     getQuizAttemptsOptions,
@@ -143,42 +142,6 @@ function getQuizStatus(attempt?: QuizAttempt | null) {
         chip: 'bg-primary/10 text-primary',
         filter: 'not-started' as const,
     };
-}
-
-function StatTile({
-    icon: Icon,
-    label,
-    value,
-    helper,
-    tone = 'primary',
-}: {
-    icon: React.ComponentType<{ className?: string }>;
-    label: string;
-    value: string | number;
-    helper: string;
-    tone?: 'primary' | 'success' | 'warning';
-}) {
-    const chip =
-        tone === 'success'
-            ? 'bg-success/10 text-success'
-            : tone === 'warning'
-                ? 'bg-warning/10 text-warning'
-                : 'bg-primary/10 text-primary';
-
-    return (
-        <div className='border-border/70 bg-card hover:border-primary/30 rounded-2xl border p-5 shadow-sm transition-all duration-200 hover:shadow-md'>
-            <div className='flex items-center gap-4'>
-                <div className={cn('flex h-11 w-11 shrink-0 items-center justify-center rounded-xl', chip)}>
-                    <Icon className='h-5 w-5' />
-                </div>
-                <div className='min-w-0'>
-                    <p className='text-muted-foreground text-sm'>{label}</p>
-                    <p className='text-foreground text-2xl font-bold tracking-tight'>{value}</p>
-                    <p className='text-muted-foreground truncate text-xs'>{helper}</p>
-                </div>
-            </div>
-        </div>
-    );
 }
 
 function QuizDetailSheet({

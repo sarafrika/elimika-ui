@@ -12,7 +12,7 @@ const SIZES: Record<StaticMapSize, { width: number; height: number; className: s
   lg: { width: 1200, height: 400, className: 'h-56 sm:h-64' },
 };
 
-export type StaticMapProps = {
+type StaticMapProps = {
   latitude?: number | null;
   longitude?: number | null;
   zoom?: number;

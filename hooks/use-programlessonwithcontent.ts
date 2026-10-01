@@ -1,10 +1,6 @@
 import { useQueries, useQuery } from '@tanstack/react-query';
 import { useMemo } from 'react';
-import type {
-  GetAllContentTypesResponse,
-  GetCourseLessonsResponse,
-  GetLessonContentResponse,
-} from '../services/client';
+import type { GetCourseLessonsResponse, GetLessonContentResponse } from '../services/client';
 import type { Course, ContentType } from '../services/client/types.gen';
 import {
   getAllContentTypesOptions,
@@ -22,7 +18,7 @@ export type ProgramCourseLessonWithContent = {
 export type ProgramLessonModule = ProgramCourseLessonWithContent & {
   course?: ProgramCourseLike | null;
 };
-export type ProgramCourseWithLessons = {
+type ProgramCourseWithLessons = {
   course: ProgramCourseLike;
   lessons: ProgramCourseLessonWithContent[];
 };

@@ -2,7 +2,6 @@
 
 import HTMLTextPreview from '@/components/editors/html-text-preview';
 import { Badge } from '@/components/ui/badge';
-import { Button } from '@/components/ui/button';
 import { EmptyState } from '@/components/ui/empty-state';
 import {
     Sheet,
@@ -16,10 +15,8 @@ import {
     getAssignmentAttachmentsOptions,
     getAssignmentByUuidOptions,
 } from '@/services/client/@tanstack/react-query.gen';
-import type { AssignmentAttachment } from '@/services/client/types.gen';
-import { toAuthenticatedMediaUrl } from '@/src/lib/media-url';
 import { useQuery } from '@tanstack/react-query';
-import { Eye, FileText } from 'lucide-react';
+import { Eye, } from 'lucide-react';
 import { AssignmentContentPreview } from '../../../../components/content-preview/AssignmentContentPreview';
 import {
     assessmentLabel,
@@ -31,45 +28,12 @@ import {
     PreviewStat,
 } from './AssessmentPreviewPrimitives';
 
-export type AssignmentPreviewSheetProps = {
+type AssignmentPreviewSheetProps = {
     open: boolean;
     onOpenChange: (open: boolean) => void;
     assignmentUuid: string;
     lessonTitle?: string;
 };
-
-function AttachmentRow({ attachment }: { attachment: AssignmentAttachment }) {
-    const url = toAuthenticatedMediaUrl(attachment.file_url);
-    const canOpen =
-        url && (/^https?:\/\//i.test(url) || (url.startsWith('/') && !url.startsWith('//')));
-    return (
-        <li className='border-border flex items-center gap-3 rounded-lg border px-3 py-2'>
-            <FileText className='text-muted-foreground h-5 w-5 shrink-0' />
-            <div className='min-w-0 flex-1'>
-                <p className='truncate text-sm font-medium'>
-                    {attachment.original_filename || 'Attachment'}
-                </p>
-                <p className='text-muted-foreground text-xs'>
-                    {attachment.mime_type}
-                    {attachment.file_size_bytes != null &&
-                        ` · ${(Number(attachment.file_size_bytes) / 1024).toLocaleString(undefined, { maximumFractionDigits: 1 })} KB`}
-                </p>
-            </div>
-            {canOpen && (
-                <Button asChild variant='outline' size='sm'>
-                    <a
-                        href={url}
-                        target='_blank'
-                        rel='noopener noreferrer'
-                        aria-label={`Open ${attachment.original_filename || 'attachment'}`}
-                    >
-                        Open
-                    </a>
-                </Button>
-            )}
-        </li>
-    );
-}
 
 export function AssignmentPreviewSheet({
     open,

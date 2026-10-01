@@ -28,9 +28,9 @@ interface StepperProviderProps {
   nextStep(event?: () => Promise<void>): Promise<void>;
 }
 
-export const StepperContext = createContext<StepperProviderProps | null>(null);
+const StepperContext = createContext<StepperProviderProps | null>(null);
 
-export const useStepper = () => {
+const useStepper = () => {
   const context = useContext(StepperContext);
 
   if (!context) {
@@ -106,7 +106,7 @@ export function StepperList({ children }: { children: ReactNode }) {
   );
 }
 
-export interface TriggerProps {
+interface TriggerProps {
   step: number;
   title: string;
   icon?: ComponentType<{ className?: string }>;

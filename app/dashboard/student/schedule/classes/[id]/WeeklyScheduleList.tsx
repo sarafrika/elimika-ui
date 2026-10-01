@@ -11,7 +11,7 @@ import { addDays, format, isBefore, isSameDay, isWithinInterval, startOfDay } fr
 import { Calendar, ChevronRight, Clock, MapPin, Video } from 'lucide-react';
 import { useMemo, useState } from 'react';
 
-export type ClassScheduleItem = {
+type ClassScheduleItem = {
   uuid: string;
   start_time: string;
   end_time: string;

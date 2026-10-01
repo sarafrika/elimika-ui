@@ -67,7 +67,7 @@ const getErrorStatus = (value: unknown) => {
   return response?.status;
 };
 
-export type CourseFormProps = {
+type CourseFormProps = {
   showSubmitButton?: boolean;
   initialValues?: Partial<CourseCreationFormValues>;
   editingCourseId?: string;
@@ -76,7 +76,7 @@ export type CourseFormProps = {
   nextStepAfterSave?: number;
 };
 
-export type CourseFormRef = {
+type CourseFormRef = {
   submit: () => Promise<boolean>;
 };
 
@@ -136,7 +136,7 @@ function UploadIndicator({ isUploading }: { isUploading: boolean }) {
   );
 }
 
-export const brandingSchema = courseCreationSchema.pick({
+const brandingSchema = courseCreationSchema.pick({
   welcome_message: true,
   theme_color: true,
   intro_video_url: true,
@@ -146,7 +146,7 @@ export const brandingSchema = courseCreationSchema.pick({
 
 type BrandingFormValues = z.infer<typeof brandingSchema>;
 
-export const CourseBrandingForm = forwardRef<CourseFormRef, CourseFormProps>(
+const CourseBrandingForm = forwardRef<CourseFormRef, CourseFormProps>(
   ({ showSubmitButton, initialValues, editingCourseId, successResponse, nextStepAfterSave = 7 }, ref) => {
     const form = useForm<BrandingFormValues>({
       resolver: zodResolver(brandingSchema),

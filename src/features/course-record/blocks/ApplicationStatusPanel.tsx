@@ -38,7 +38,7 @@ const APPROVED_DETAIL = 'You may then create classes for this course';
  * Block
  * ────────────────────────────────────────────────────────────────────────── */
 
-export interface ApplicationStatusPanelProps extends CourseBlockAsyncProps {
+interface ApplicationStatusPanelProps extends CourseBlockAsyncProps {
   /** ISO date the application was submitted. */
   submittedOn?: string;
   /** True when a rate card went with the submission. */
@@ -130,7 +130,7 @@ function Step({
   );
 }
 
-export function ApplicationStatusPanelSkeleton() {
+function ApplicationStatusPanelSkeleton() {
   return (
     <div className='mt-3 flex flex-col'>
       {[0, 1, 2].map(step => (

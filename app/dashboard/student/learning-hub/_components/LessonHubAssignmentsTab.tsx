@@ -10,7 +10,6 @@ import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle } from '
 import { Skeleton } from '@/components/ui/skeleton';
 import { Textarea } from '@/components/ui/textarea';
 import { useStudent } from '@/context/student-context';
-import { cn } from '@/lib/utils';
 import {
     getAssignmentSubmissionsQueryKey,
     submitAssignmentQueryMutation,
@@ -57,50 +56,6 @@ function formatDate(value?: string | Date | null) {
     const date = value instanceof Date ? value : new Date(value);
     if (Number.isNaN(date.getTime())) return 'No deadline';
     return new Intl.DateTimeFormat('en-US', { dateStyle: 'medium', timeStyle: 'short' }).format(date);
-}
-
-function getGradeTone(percentage?: number | null) {
-    if (percentage == null) return 'text-muted-foreground';
-    if (percentage >= 80) return 'text-success';
-    if (percentage >= 60) return 'text-primary';
-    if (percentage >= 40) return 'text-warning';
-    return 'text-destructive';
-}
-
-function StatTile({
-    icon: Icon,
-    label,
-    value,
-    helper,
-    tone = 'primary',
-}: {
-    icon: React.ComponentType<{ className?: string }>;
-    label: string;
-    value: string | number;
-    helper: string;
-    tone?: 'primary' | 'success' | 'warning';
-}) {
-    const chip =
-        tone === 'success'
-            ? 'bg-success/10 text-success'
-            : tone === 'warning'
-                ? 'bg-warning/10 text-warning'
-                : 'bg-primary/10 text-primary';
-
-    return (
-        <div className='border-border/70 bg-card hover:border-primary/30 rounded-sm border p-5 shadow-sm transition-all duration-200 hover:shadow-md'>
-            <div className='flex items-center gap-4'>
-                <div className={cn('sm', chip)}>
-                    <Icon className='h-5 w-5' />
-                </div>
-                <div className='min-w-0'>
-                    <p className='text-muted-foreground text-sm'>{label}</p>
-                    <p className='text-foreground text-2xl font-bold tracking-tight'>{value}</p>
-                    <p className='text-muted-foreground truncate text-xs'>{helper}</p>
-                </div>
-            </div>
-        </div>
-    );
 }
 
 function AssignmentDetailSheet({

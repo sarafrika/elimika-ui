@@ -17,7 +17,7 @@ import type { ButtonProps } from '@/components/tiptap-ui-primitive/button';
 import { Button } from '@/components/tiptap-ui-primitive/button';
 import { Badge } from '@/components/tiptap-ui-primitive/badge';
 
-export interface UndoRedoButtonProps extends Omit<ButtonProps, 'type'>, UseUndoRedoConfig {
+interface UndoRedoButtonProps extends Omit<ButtonProps, 'type'>, UseUndoRedoConfig {
   /**
    * Optional text to display alongside the icon.
    */
@@ -29,7 +29,7 @@ export interface UndoRedoButtonProps extends Omit<ButtonProps, 'type'>, UseUndoR
   showShortcut?: boolean;
 }
 
-export function HistoryShortcutBadge({
+function HistoryShortcutBadge({
   action,
   shortcutKeys = UNDO_REDO_SHORTCUT_KEYS[action],
 }: {

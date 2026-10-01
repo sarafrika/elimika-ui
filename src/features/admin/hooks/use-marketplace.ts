@@ -14,7 +14,7 @@ import {
 import { listQuery } from '../lib/admin-queries';
 
 export const JOBS_PAGE_SIZE = 20;
-export const APPLICATIONS_PAGE_SIZE = 50;
+const APPLICATIONS_PAGE_SIZE = 50;
 
 /** The lifecycle a marketplace job moves through, in the order the API reports it. */
 export const JOB_STATUSES = [
@@ -37,7 +37,7 @@ export const APPLICATION_PIPELINE = [
 
 export const APPLICATION_CLOSED = ['rejected', 'not_selected', 'withdrawn'] as const;
 
-export interface JobFilters {
+interface JobFilters {
   organisationUuid?: string;
   courseUuid?: string;
   programUuid?: string;

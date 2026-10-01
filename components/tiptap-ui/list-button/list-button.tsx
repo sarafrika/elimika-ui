@@ -17,7 +17,7 @@ import { Badge } from '@/components/tiptap-ui-primitive/badge';
 import type { ListType, UseListConfig } from '@/components/tiptap-ui/list-button';
 import { LIST_SHORTCUT_KEYS, useList } from '@/components/tiptap-ui/list-button';
 
-export interface ListButtonProps extends Omit<ButtonProps, 'type'>, UseListConfig {
+interface ListButtonProps extends Omit<ButtonProps, 'type'>, UseListConfig {
   /**
    * Optional text to display alongside the icon.
    */
@@ -29,7 +29,7 @@ export interface ListButtonProps extends Omit<ButtonProps, 'type'>, UseListConfi
   showShortcut?: boolean;
 }
 
-export function ListShortcutBadge({
+function ListShortcutBadge({
   type,
   shortcutKeys = LIST_SHORTCUT_KEYS[type],
 }: {

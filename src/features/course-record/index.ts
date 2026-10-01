@@ -27,26 +27,9 @@
  */
 
 export * from './blocks';
-export { CourseRecordPage, type CourseRecordPageProps } from './CourseRecordPage';
-export { CourseRecordView, type CourseRecordViewProps } from './CourseRecordView';
+export { CourseRecordPage } from './CourseRecordPage';
+export * from './CourseRecordView';
 export * from './types';
-export {
-  resolveCourseAccess,
-  useCourseAccess,
-  useCourseCapability,
-} from './use-course-access';
-export {
-  courseStatsQueryKey,
-  courseTrainersQueryKey,
-  useCourseStats,
-  useCourseTrainers,
-} from './use-course-metrics';
-export {
-  asyncProps,
-  COURSE_RECORD_SECTIONS,
-  type CourseEnrollmentPage,
-  type CourseRecord,
-  type CourseRecordSectionId,
-  type UseCourseRecordOptions,
-  useCourseRecord,
-} from './use-course-record';
+export * from './use-course-access';
+export * from './use-course-metrics';
+export * from './use-course-record';

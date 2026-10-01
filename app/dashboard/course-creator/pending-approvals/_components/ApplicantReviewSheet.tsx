@@ -262,12 +262,3 @@ function ApplicationReview({
     </div>
   );
 }
-
-function Detail({ label, value }: { label: string; value?: string | null }) {
-  return (
-    <div>
-      <dt className='text-muted-foreground text-xs'>{label}</dt>
-      <dd className='mt-1 font-medium break-words'>{value || 'Not provided'}</dd>
-    </div>
-  );
-}

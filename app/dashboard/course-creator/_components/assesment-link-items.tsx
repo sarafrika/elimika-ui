@@ -48,7 +48,7 @@ export type TaskItemType =
   | 'presentation'
   | 'reflection';
 
-export type TaskItem = {
+type TaskItem = {
   uuid: string;
   title: string;
   description?: string;
@@ -60,14 +60,14 @@ export type TaskItem = {
   lesson_uuid: string;
 };
 
-export type LinkedLineItem = {
+type LinkedLineItem = {
   uuid: string;
   task_uuid: string;
   title: string;
   item_type: TaskItemType;
 };
 
-export type LinkItemsModalProps = {
+type LinkItemsModalProps = {
   open: boolean;
   onClose: () => void;
   courseUuid: string;

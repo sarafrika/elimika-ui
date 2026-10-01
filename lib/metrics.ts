@@ -1,6 +1,6 @@
-export type NumericLike = number | bigint | string | null | undefined;
+type NumericLike = number | bigint | string | null | undefined;
 
-export const hasValue = (value: NumericLike): boolean =>
+const hasValue = (value: NumericLike): boolean =>
   value !== null && value !== undefined && value !== '';
 
 export const toNumber = (value: NumericLike, fallback = 0): number => {
@@ -45,27 +45,4 @@ export const formatCount = (value: NumericLike, fallback = '—'): string => {
   }
 
   return fallback;
-};
-
-export const formatPercentage = (
-  value: number | string | null | undefined,
-  { fractionDigits = 1, fallback = '—', suffix = '%' } = {}
-): string => {
-  if (!hasValue(value)) {
-    return fallback;
-  }
-
-  const numeric =
-    typeof value === 'number'
-      ? value
-      : typeof value === 'string'
-        ? Number.parseFloat(value.replace(/%/g, ''))
-        : null;
-
-  if (numeric === null || Number.isNaN(numeric)) {
-    return fallback;
-  }
-
-  const formatted = numeric.toFixed(fractionDigits);
-  return `${formatted}${suffix}`;
 };

@@ -15,7 +15,7 @@ import type { Category } from '@/services/client';
 
 export const ALL_CATEGORIES = 'All';
 
-export type CategoryTabsProps = {
+type CategoryTabsProps = {
   /** Full source data used to derive the list of categories/subjects/program types. */
   items?: ReadonlyArray<{
     category: string;

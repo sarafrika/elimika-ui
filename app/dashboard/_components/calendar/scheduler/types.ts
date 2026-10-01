@@ -31,17 +31,6 @@ export type SchedulerEvent = {
   maxParticipants?: number;
   classCode: string;
 };
-
-export type SchedulerFilterKey = 'course' | 'instructor' | 'location' | 'category';
-
-export type SchedulerFilterValues = Record<SchedulerFilterKey, string> & {
-  statuses: string[];
-};
-
-export type SchedulerFilterOptions = Record<SchedulerFilterKey, string[]> & {
-  statuses: string[];
-};
-
 export type SchedulerFilterItem = {
   id: string;
   name: string;

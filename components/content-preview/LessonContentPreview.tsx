@@ -35,7 +35,7 @@ export type LessonContentPreviewItem = PreviewableLessonContent & {
   duration?: string | null;
 };
 
-export type LessonContentViewerType =
+type LessonContentViewerType =
   | 'text'
   | 'pdf'
   | 'video'
@@ -57,7 +57,7 @@ function getFileExtension(source?: string | null) {
   return match?.[1] ?? '';
 }
 
-export function inferLessonContentType(
+function inferLessonContentType(
   content: LessonContentPreviewItem | null | undefined,
   contentTypeDetailsMap?: ContentTypeDetailsMap
 ): LessonContentViewerType {
@@ -203,27 +203,6 @@ function getContentTypeName(
 }
 
 type SpreadsheetCell = string | number | boolean | Date | null;
-
-const SPREADSHEET_PREVIEW_ROWS = 100;
-const SPREADSHEET_PREVIEW_COLUMNS = 50;
-
-function toSpreadsheetCell(value: unknown): SpreadsheetCell {
-  if (
-    value === null ||
-    value instanceof Date ||
-    typeof value === 'string' ||
-    typeof value === 'number' ||
-    typeof value === 'boolean'
-  ) {
-    return value;
-  }
-
-  if (value === undefined) {
-    return null;
-  }
-
-  return String(value);
-}
 
 function formatSpreadsheetCell(value: SpreadsheetCell) {
   if (value === null) {
@@ -512,7 +491,7 @@ function MediaFilePreview({
   );
 }
 
-export function RichTextPreview({ html }: { html: string }) {
+function RichTextPreview({ html }: { html: string }) {
   return (
     <div
       className='text-foreground /* Headings */ /* Paragraphs */ [&_p]:text-foreground/80 /* Lists */ [&_li]:text-foreground/80 /* Blockquotes */ [&_blockquote]:border-border [&_blockquote]:text-muted-foreground /* Links */ [&_a]:text-primary /* Divider */ [&_hr]:bg-border /* Code blocks */ [&_pre]:bg-muted/60 [&_pre]:border-border/70 /* Inline code */ [&_code]:bg-muted [&_code]:border-border/60 /* Images */ [&_img]:border-border/60 /* Figures */ /* Tables */ [&_th]:bg-muted [&_th]:border-border [&_td]:border-border /* Embeds */ mx-auto block w-full max-w-full min-w-0 overflow-hidden text-[13.5px] leading-6 [overflow-wrap:anywhere] break-words sm:text-sm sm:leading-7 md:text-[15px] [&_*]:max-w-full [&_*]:min-w-0 [&_a]:break-all [&_a]:underline [&_a]:underline-offset-4 [&_blockquote]:my-5 [&_blockquote]:border-l-4 [&_blockquote]:pl-3 [&_blockquote]:italic sm:[&_blockquote]:pl-4 [&_code]:rounded-md [&_code]:border [&_code]:px-1 [&_code]:py-0.5 [&_code]:font-mono [&_code]:text-[0.82em] [&_code]:break-all sm:[&_code]:px-1.5 [&_figure]:my-5 sm:[&_figure]:my-6 md:[&_figure]:my-8 [&_h1]:mt-8 [&_h1]:mb-4 [&_h1]:text-[1.5rem] [&_h1]:leading-tight [&_h1]:font-bold sm:[&_h1]:mt-10 sm:[&_h1]:text-2xl md:[&_h1]:mt-12 md:[&_h1]:text-[1.7rem] [&_h1:first-child]:mt-0 [&_h2]:mt-7 [&_h2]:mb-3 [&_h2]:text-[1.2rem] [&_h2]:leading-snug [&_h2]:font-bold sm:[&_h2]:mt-8 sm:[&_h2]:text-xl md:[&_h2]:mt-10 md:[&_h2]:text-[1.35rem] [&_h2:first-child]:mt-0 [&_h3]:mt-6 [&_h3]:mb-2 [&_h3]:text-base [&_h3]:font-semibold sm:[&_h3]:text-lg md:[&_h3]:text-[1.15rem] [&_h4]:mt-6 [&_h4]:mb-2 [&_h4]:text-sm [&_h4]:font-semibold sm:[&_h4]:text-base [&_hr]:my-6 [&_hr]:h-px [&_hr]:border-0 sm:[&_hr]:my-8 md:[&_hr]:my-10 [&_iframe]:block [&_iframe]:w-full [&_iframe]:max-w-full [&_img]:my-5 [&_img]:block [&_img]:h-auto [&_img]:w-full [&_img]:max-w-full [&_img]:rounded-xl [&_img]:border [&_img]:object-contain [&_img]:shadow-sm sm:[&_img]:my-6 sm:[&_img]:rounded-2xl md:[&_img]:my-8 [&_li]:leading-6 sm:[&_li]:leading-7 [&_li_p]:mt-0 [&_li:not(:first-child)]:mt-1 [&_ol]:my-4 [&_ol]:list-decimal [&_ol]:pl-4 sm:[&_ol]:pl-5 [&_p]:leading-6 sm:[&_p]:leading-7 [&_p:not(:first-child)]:mt-3 sm:[&_p:not(:first-child)]:mt-4 md:[&_p:not(:first-child)]:mt-5 [&_pre]:my-5 [&_pre]:w-full [&_pre]:max-w-full [&_pre]:overflow-x-auto [&_pre]:rounded-xl [&_pre]:border [&_pre]:p-3 [&_pre]:text-[12px] [&_pre]:leading-6 sm:[&_pre]:my-6 sm:[&_pre]:rounded-2xl sm:[&_pre]:p-4 sm:[&_pre]:text-sm sm:[&_pre]:leading-7 md:[&_pre]:my-8 md:[&_pre]:p-5 md:[&_pre]:text-[0.95rem] [&_pre_code]:border-0 [&_pre_code]:bg-transparent [&_pre_code]:p-0 [&_table]:my-5 [&_table]:block [&_table]:w-full [&_table]:border-collapse [&_table]:overflow-x-auto [&_table]:text-[12px] sm:[&_table]:my-6 sm:[&_table]:table sm:[&_table]:text-sm md:[&_table]:my-8 [&_td]:border [&_td]:px-2 [&_td]:py-2 [&_td]:break-words sm:[&_td]:px-3 [&_th]:border [&_th]:px-2 [&_th]:py-2 [&_th]:text-left [&_th]:font-semibold [&_th]:break-words sm:[&_th]:px-3 [&_ul]:my-4 [&_ul]:list-disc [&_ul]:pl-4 sm:[&_ul]:pl-5 [&_video]:block [&_video]:w-full [&_video]:max-w-full'

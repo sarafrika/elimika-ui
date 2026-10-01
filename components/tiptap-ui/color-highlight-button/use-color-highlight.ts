@@ -103,31 +103,28 @@ export function pickHighlightColorsByValue(values: string[]) {
     .filter((color): color is (typeof HIGHLIGHT_COLORS)[number] => !!color);
 }
 
-export function canColorHighlight(editor: Editor | null): boolean {
+function canColorHighlight(editor: Editor | null): boolean {
   if (!editor || !editor.isEditable) return false;
   if (!isMarkInSchema('highlight', editor) || isNodeTypeSelected(editor, ['image'])) return false;
 
   return editor.can().setMark('highlight');
 }
 
-export function isColorHighlightActive(editor: Editor | null, highlightColor?: string): boolean {
+function isColorHighlightActive(editor: Editor | null, highlightColor?: string): boolean {
   if (!editor || !editor.isEditable) return false;
   return highlightColor
     ? editor.isActive('highlight', { color: highlightColor })
     : editor.isActive('highlight');
 }
 
-export function removeHighlight(editor: Editor | null): boolean {
+function removeHighlight(editor: Editor | null): boolean {
   if (!editor || !editor.isEditable) return false;
   if (!canColorHighlight(editor)) return false;
 
   return editor.chain().focus().unsetMark('highlight').run();
 }
 
-export function shouldShowButton(props: {
-  editor: Editor | null;
-  hideWhenUnavailable: boolean;
-}): boolean {
+function shouldShowButton(props: { editor: Editor | null; hideWhenUnavailable: boolean }): boolean {
   const { editor, hideWhenUnavailable } = props;
 
   if (!editor || !editor.isEditable) return false;

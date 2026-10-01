@@ -50,14 +50,14 @@ export const TEXT_ALIGN_SHORTCUT_KEYS: Record<TextAlign, string> = {
   justify: 'mod+shift+j',
 };
 
-export const textAlignIcons = {
+const textAlignIcons = {
   left: AlignLeftIcon,
   center: AlignCenterIcon,
   right: AlignRightIcon,
   justify: AlignJustifyIcon,
 };
 
-export const textAlignLabels: Record<TextAlign, string> = {
+const textAlignLabels: Record<TextAlign, string> = {
   left: 'Align left',
   center: 'Align center',
   right: 'Align right',
@@ -67,7 +67,7 @@ export const textAlignLabels: Record<TextAlign, string> = {
 /**
  * Checks if text alignment can be performed in the current editor state
  */
-export function canSetTextAlign(editor: Editor | null, align: TextAlign): boolean {
+function canSetTextAlign(editor: Editor | null, align: TextAlign): boolean {
   if (!editor || !editor.isEditable) return false;
   if (!isExtensionAvailable(editor, 'textAlign') || isNodeTypeSelected(editor, ['image']))
     return false;
@@ -75,7 +75,7 @@ export function canSetTextAlign(editor: Editor | null, align: TextAlign): boolea
   return editor.can().setTextAlign(align);
 }
 
-export function hasSetTextAlign(commands: ChainedCommands): commands is ChainedCommands & {
+function hasSetTextAlign(commands: ChainedCommands): commands is ChainedCommands & {
   setTextAlign: (align: TextAlign) => ChainedCommands;
 } {
   return 'setTextAlign' in commands;
@@ -84,7 +84,7 @@ export function hasSetTextAlign(commands: ChainedCommands): commands is ChainedC
 /**
  * Checks if the text alignment is currently active
  */
-export function isTextAlignActive(editor: Editor | null, align: TextAlign): boolean {
+function isTextAlignActive(editor: Editor | null, align: TextAlign): boolean {
   if (!editor || !editor.isEditable) return false;
   return editor.isActive({ textAlign: align });
 }
@@ -92,7 +92,7 @@ export function isTextAlignActive(editor: Editor | null, align: TextAlign): bool
 /**
  * Sets text alignment in the editor
  */
-export function setTextAlign(editor: Editor | null, align: TextAlign): boolean {
+function setTextAlign(editor: Editor | null, align: TextAlign): boolean {
   if (!editor || !editor.isEditable) return false;
   if (!canSetTextAlign(editor, align)) return false;
 
@@ -107,7 +107,7 @@ export function setTextAlign(editor: Editor | null, align: TextAlign): boolean {
 /**
  * Determines if the text align button should be shown
  */
-export function shouldShowButton(props: {
+function shouldShowButton(props: {
   editor: Editor | null;
   hideWhenUnavailable: boolean;
   align: TextAlign;

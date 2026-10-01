@@ -20,7 +20,7 @@ import type { ButtonProps } from '@/components/tiptap-ui-primitive/button';
 import { Button } from '@/components/tiptap-ui-primitive/button';
 import { Badge } from '@/components/tiptap-ui-primitive/badge';
 
-export interface ImageUploadButtonProps extends Omit<ButtonProps, 'type'>, UseImageUploadConfig {
+interface ImageUploadButtonProps extends Omit<ButtonProps, 'type'>, UseImageUploadConfig {
   /**
    * Optional text to display alongside the icon.
    */
@@ -32,7 +32,7 @@ export interface ImageUploadButtonProps extends Omit<ButtonProps, 'type'>, UseIm
   showShortcut?: boolean;
 }
 
-export function ImageShortcutBadge({
+function ImageShortcutBadge({
   shortcutKeys = IMAGE_UPLOAD_SHORTCUT_KEY,
 }: {
   shortcutKeys?: string;

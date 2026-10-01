@@ -4,7 +4,7 @@ import { localDate } from '@/lib/date';
 import { useQueries, useQuery } from '@tanstack/react-query';
 import { FileText, Mail, Phone, Shield, Tag, User, Users, VenusIcon } from 'lucide-react';
 import Link from 'next/link';
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useMemo } from 'react';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Progress } from '@/components/ui/progress';
@@ -17,7 +17,6 @@ import {
   getTrainingProgramByUuidOptions,
 } from '@/services/client/@tanstack/react-query.gen';
 import type {
-  Certificate,
   ClassDefinition,
   Course,
   StudentSchedule,
@@ -479,133 +478,7 @@ function StudentCoursesTab({ userUuid, sharedProfile }: DomainTabProps) {
 }
 
 // ─── Achievements Tab ─────────────────────────────────────────────────────────
-
-interface Achievement {
-  uuid: string;
-  title: string;
-  description: string;
-  badge_emoji: string;
-  earned_date: string;
-}
-
-function StudentAchievementsTab({ userUuid }: DomainTabProps) {
-  const [achievements, setAchievements] = useState<Achievement[]>([]);
-
-  useEffect(() => {
-    // Replace with: fetch(`/api/students/${userUuid}/achievements`)
-    setAchievements([
-      {
-        uuid: '1',
-        title: 'First Course Complete',
-        description: 'Completed your first course',
-        badge_emoji: '🎓',
-        earned_date: 'Jan 2026',
-      },
-      {
-        uuid: '2',
-        title: '7-Day Streak',
-        description: 'Logged in 7 days in a row',
-        badge_emoji: '🔥',
-        earned_date: 'Feb 2026',
-      },
-      {
-        uuid: '3',
-        title: 'Top Performer',
-        description: 'Scored 95%+ on an assessment',
-        badge_emoji: '⭐',
-        earned_date: 'Feb 2026',
-      },
-    ]);
-  }, [userUuid]);
-
-  return (
-    <TabShell>
-      <div className='grid grid-cols-1 gap-4 md:grid-cols-3'>
-        {achievements.map(a => (
-          <Card key={a.uuid} className='text-center'>
-            <CardContent className='pt-6 pb-5'>
-              <div className='mb-3 text-5xl'>{a.badge_emoji}</div>
-              <p className='text-foreground text-sm font-bold'>{a.title}</p>
-              <p className='text-muted-foreground mt-1 text-xs'>{a.description}</p>
-              <p className='text-muted-foreground/60 mt-2 text-xs'>{a.earned_date}</p>
-            </CardContent>
-          </Card>
-        ))}
-      </div>
-    </TabShell>
-  );
-}
-
 // ─── Schedule Tab ─────────────────────────────────────────────────────────────
-
-interface ScheduleItem {
-  uuid: string;
-  title: string;
-  time: string;
-  instructor: string;
-  color: string;
-}
-
-function StudentScheduleTab({ userUuid }: DomainTabProps) {
-  const [schedule, setSchedule] = useState<ScheduleItem[]>([]);
-
-  useEffect(() => {
-    // Replace with: fetch(`/api/students/${userUuid}/schedule`)
-    setSchedule([
-      {
-        uuid: '1',
-        title: 'Music Theory — Module 3',
-        time: 'Mon, 10:00 AM',
-        instructor: 'Ayomhi Ayo',
-        color: '#',
-      },
-      {
-        uuid: '2',
-        title: 'Guitar Practice Session',
-        time: 'Wed, 2:00 PM',
-        instructor: 'Jane Doe',
-        color: '#',
-      },
-      {
-        uuid: '3',
-        title: 'Audio Production Lab',
-        time: 'Fri, 4:00 PM',
-        instructor: 'Mark Bell',
-        color: '#',
-      },
-    ]);
-  }, [userUuid]);
-
-  return (
-    <TabShell>
-      <Card>
-        <CardHeader className='pb-3'>
-          <CardTitle className='text-sm font-semibold'>Upcoming Sessions</CardTitle>
-        </CardHeader>
-        <CardContent className='space-y-3 pt-0'>
-          {schedule.map(item => (
-            <div key={item.uuid} className='flex items-center gap-3'>
-              <div
-                className='w-1 shrink-0 self-stretch rounded-full'
-                style={{ background: item.color }}
-              />
-              <div className='flex-1'>
-                <p className='text-foreground text-sm font-semibold'>{item.title}</p>
-                <p className='text-muted-foreground text-xs'>
-                  {item.instructor} · {item.time}
-                </p>
-              </div>
-              <Badge variant='outline' className='shrink-0 text-xs'>
-                Upcoming
-              </Badge>
-            </div>
-          ))}
-        </CardContent>
-      </Card>
-    </TabShell>
-  );
-}
-
 // ─── Tab Registry Export ──────────────────────────────────────────────────────
 
 export const studentTabs: TabDefinition[] = [

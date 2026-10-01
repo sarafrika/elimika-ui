@@ -46,7 +46,7 @@ import { ProgramCurriculumPanel } from './ProgramCurriculumPanel';
 import { extractPage } from '@/lib/api-helpers';
 import type { CourseReview } from '@/services/client';
 
-export interface ProgramRecordPageProps {
+interface ProgramRecordPageProps {
   programUuid: string;
   /** Where the shell's back link goes. Omitted, the link is not rendered. */
   backHref?: string;
@@ -421,5 +421,3 @@ export function ProgramRecordPage({
     </>
   );
 }
-
-export default ProgramRecordPage;

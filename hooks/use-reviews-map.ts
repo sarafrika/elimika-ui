@@ -5,7 +5,7 @@ import { useMemo } from 'react';
 import { CourseReview } from '../services/client';
 import { getCourseReviewsOptions } from '../services/client/@tanstack/react-query.gen';
 
-export type ReviewMap = Record<
+type ReviewMap = Record<
   string,
   {
     reviews: CourseReview[] | null;
@@ -49,10 +49,6 @@ export function useCourseReviewsMap(courseUuids: string[]) {
 
   return { reviewMap, isLoading };
 }
-
-type Review = {
-  rating?: number | null;
-};
 
 export function averageRating(reviews: CourseReview[] = []): number | undefined {
   if (!reviews.length) return undefined;

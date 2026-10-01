@@ -178,7 +178,7 @@ const CLASS_RELATED_ASSESSMENT_TYPES = [
   'General',
 ];
 
-export const GRACE_PERIOD_MS = 60 * 60 * 1000;
+const GRACE_PERIOD_MS = 60 * 60 * 1000;
 
 function formatPercentage(value?: number | null) {
   if (typeof value !== 'number' || Number.isNaN(value)) return 'N/A';
@@ -240,7 +240,7 @@ function formatEnum(value?: string | null) {
     .join(' ');
 }
 
-export function toSortableNumber(value: unknown) {
+function toSortableNumber(value: unknown) {
   const numericValue = Number(value);
   return Number.isFinite(numericValue) ? numericValue : 0;
 }
@@ -1623,7 +1623,7 @@ function RosterListSkeleton() {
   );
 }
 
-export function RosterPanel({
+function RosterPanel({
   activeInstanceStudentsCount,
   filteredRoster,
   activeInstanceStudents,

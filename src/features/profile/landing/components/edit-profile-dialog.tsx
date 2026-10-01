@@ -29,7 +29,7 @@ export type EditableProfileDetails = {
 
 export type EditableProfileErrors = Partial<Record<keyof EditableProfileDetails, string>>;
 
-export interface EditProfileDialogProps {
+interface EditProfileDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   values: EditableProfileDetails;

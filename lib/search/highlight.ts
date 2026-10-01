@@ -3,7 +3,7 @@
  * so highlight strings are never rendered as HTML. This splits on the literal tags only;
  * anything else, including other markup, stays plain text.
  */
-export type HighlightPart = { text: string; match: boolean };
+type HighlightPart = { text: string; match: boolean };
 
 const OPEN = '<em>';
 const CLOSE = '</em>';

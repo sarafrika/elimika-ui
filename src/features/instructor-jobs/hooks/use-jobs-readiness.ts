@@ -27,14 +27,14 @@ import { myApplicationsQueryArgs } from '../job-queries';
 import { type JobReadiness, jobReadiness, type PendingRate } from '../job-readiness';
 
 /** The batch eligibility endpoint refuses more than this many ids per call. */
-export const ELIGIBILITY_BATCH_SIZE = 50;
+const ELIGIBILITY_BATCH_SIZE = 50;
 
 const NO_PENDING: PendingRate = { loading: false, awaiting: false, creatorName: null };
 
 const time = (value?: Date | string | null) => (value ? new Date(value).getTime() : 0);
 
 /** One eligibility call per group of on-screen job ids (a list page), each at most 50 ids. */
-export function useJobsEligibility(idGroups: string[][], enabled = true) {
+function useJobsEligibility(idGroups: string[][], enabled = true) {
   const groups = useMemo(
     () =>
       idGroups.flatMap(group => {

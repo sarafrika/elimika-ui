@@ -14,12 +14,12 @@ import {
 import { cn } from '@/lib/utils';
 import { useSearchStatePatch } from '@/hooks/use-search-state';
 
-export interface FilterOption {
+interface FilterOption {
   value: string;
   label: string;
 }
 
-export interface FilterSpec {
+interface FilterSpec {
   /** Query-string key this filter writes. */
   key: string;
   label: string;

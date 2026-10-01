@@ -11,7 +11,7 @@ import { mergeUserBody } from '../lib/user-body';
 import { invalidateAdminOverview } from '../lib/admin-queries';
 
 /** The fields an admin may change on someone else's record. */
-export type IdentityChanges = Pick<
+type IdentityChanges = Pick<
   User,
   'first_name' | 'middle_name' | 'last_name' | 'email' | 'username' | 'dob' | 'phone_number' | 'gender'
 >;

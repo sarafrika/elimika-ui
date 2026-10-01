@@ -47,25 +47,12 @@ import z from 'zod';
 import { type CourseCreationFormValues, CURRENCIES } from './course-creation-types';
 
 type MutationPayload = Record<string, unknown>;
-type CategoryPayload = { name: string };
-type CourseMutationResult = {
-  data?: { message?: string };
-  error?: Record<string, unknown>;
-  message?: string;
-};
-
-const getFormErrorMessage = (value: unknown) => {
-  if (typeof value === 'string') return value;
-  if (Array.isArray(value)) return value.find(item => typeof item === 'string');
-  return undefined;
-};
-
 const getErrorMessage = (error: unknown) =>
   typeof error === 'object' && error !== null && 'message' in error
     ? String(error.message)
     : undefined;
 
-export type CourseFormProps = {
+type CourseFormProps = {
   showSubmitButton?: boolean;
   initialValues?: Partial<CourseCreationFormValues>;
   editingCourseId?: string;
@@ -74,11 +61,11 @@ export type CourseFormProps = {
   onValuesChange?: () => void;
 };
 
-export type CourseFormRef = {
+type CourseFormRef = {
   submit: () => Promise<boolean>;
 };
 
-export const coursePricingSchema = z.object({
+const coursePricingSchema = z.object({
   is_free: z.boolean().default(false),
   currency: z.string().optional(),
   minimum_training_fee: z.coerce.number().min(0, 'Minimum training fee must be zero or greater'),
@@ -765,5 +752,3 @@ export const CoursePricingForm = forwardRef<CourseFormRef, CourseFormProps>(
     );
   }
 );
-
-export default CoursePricingForm;

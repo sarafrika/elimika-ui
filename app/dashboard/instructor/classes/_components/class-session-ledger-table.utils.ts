@@ -17,7 +17,7 @@ export type ClassSessionLedgerRow = {
   statusTone: 'success' | 'warning' | 'info' | 'muted';
 };
 
-export type BuildClassSessionLedgerRowsParams = {
+type BuildClassSessionLedgerRowsParams = {
   selectedClass: InstructorClassWithSchedule;
   visibleInstances: EnrichedScheduleInstance[];
   assignmentSchedules?: ClassAssignmentSchedule[];

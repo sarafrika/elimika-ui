@@ -5,7 +5,7 @@ import { format } from 'date-fns';
 import { Calendar, Clock, MapPin, User, Video } from 'lucide-react';
 import Link from 'next/link';
 
-export type ClassScheduleItem = {
+type ClassScheduleItem = {
   uuid: string;
   start_time: string;
   end_time: string;

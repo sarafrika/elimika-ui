@@ -13,7 +13,7 @@ import {
 import { cn } from '@/lib/utils';
 import { PAGE_SIZES } from '@/src/features/organisation/groups/lib/roster';
 
-export type RosterPaginationProps = {
+type RosterPaginationProps = {
   /** 1-based current page. */
   page: number;
   pageSize: number;

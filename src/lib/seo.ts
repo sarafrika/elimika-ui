@@ -13,12 +13,12 @@ const getValidSiteUrl = (value?: string) => {
   }
 };
 
-export const metadataBase =
+const metadataBase =
   getValidSiteUrl(process.env.NEXT_PUBLIC_SITE_URL) ??
   getValidSiteUrl(process.env.AUTH_URL) ??
   new URL(`http://127.0.0.1:${process.env.PORT ?? '3000'}`);
 
-export const defaultSeoDescription =
+const defaultSeoDescription =
   'Elimika helps learners, instructors, course creators, and organisations discover courses, build skills wallets, and manage modern learning journeys.';
 
 export const siteMetadata: Metadata = {

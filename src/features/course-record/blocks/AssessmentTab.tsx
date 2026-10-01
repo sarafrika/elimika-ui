@@ -8,7 +8,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 
 import type { CourseAssessment, CourseBlockAsyncProps } from '../types';
 
-export interface AssessmentTabProps extends CourseBlockAsyncProps {
+interface AssessmentTabProps extends CourseBlockAsyncProps {
   assessments?: readonly CourseAssessment[];
 }
 

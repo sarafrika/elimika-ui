@@ -42,5 +42,3 @@ export function useThrottledCallback<T extends (...args: unknown[]) => unknown>(
 
   return handler;
 }
-
-export default useThrottledCallback;

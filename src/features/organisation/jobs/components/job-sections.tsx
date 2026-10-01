@@ -1,6 +1,6 @@
 'use client';
 
-import { Building2, CalendarClock, Presentation, UserRound, Wrench } from 'lucide-react';
+import { CalendarClock, Presentation, UserRound, Wrench } from 'lucide-react';
 import { type ReactNode, useState } from 'react';
 
 import { useBranchResources } from '@/components/class-form';
@@ -8,7 +8,6 @@ import { PinnedPlaceCard } from '@/components/maps/pinned-place-card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
-import { formatDate } from '@/lib/date';
 import type {
   ClassMarketplaceJob,
   ClassMarketplaceJobResource,
@@ -65,7 +64,7 @@ export function resourceName(row: JobResourceRow) {
   return row.resource.resource_name || row.details?.name || 'Held resource';
 }
 
-export function resourceMeta(row: JobResourceRow) {
+function resourceMeta(row: JobResourceRow) {
   const quantity = row.resource.quantity ?? 1;
   if (row.kind === 'VENUE') {
     const seats = row.details?.seat_capacity;
@@ -268,7 +267,7 @@ export function JobResourceList({
   );
 }
 
-export function initialsOf(name?: string | null) {
+function initialsOf(name?: string | null) {
   return (
     (name ?? '')
       .split(/\s+/)
@@ -319,14 +318,3 @@ export function HiredInstructorRow({
     </div>
   );
 }
-
-export function BranchLine({ job }: { job: ClassMarketplaceJob }) {
-  return (
-    <span className='inline-flex items-center gap-1.5'>
-      <Building2 className='h-3.5 w-3.5' />
-      {job.branch_name || 'No branch'}
-    </span>
-  );
-}
-
-export const postedLabel = (job: ClassMarketplaceJob) => `Posted ${formatDate(job.created_date)}`;

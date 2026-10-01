@@ -26,7 +26,7 @@ function clearPersistedStores() {
   void useStudentStore.persist.clearStorage();
 }
 
-export function clearClientAuthCache(queryClient: QueryClient) {
+function clearClientAuthCache(queryClient: QueryClient) {
   queryClient.clear();
   clearPersistedStores();
   clearAllPersistedDashboardDomains();

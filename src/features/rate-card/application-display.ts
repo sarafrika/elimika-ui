@@ -9,10 +9,7 @@ import {
 } from '@/lib/rate-card';
 import type { UserOrganisationAffiliationDto } from '@/services/client';
 import type { TrainingApplicationEvent, TrainingApplicationKind } from './types';
-
-export type ApplicationStatus = 'pending' | 'approved' | 'rejected' | 'revoked';
-
-export type StatusTone = 'warning' | 'success' | 'destructive' | 'muted' | 'primary';
+type StatusTone = 'warning' | 'success' | 'destructive' | 'muted' | 'primary';
 
 /** The status pill's words and colour; an approved card with a pending update reads as such. */
 export function applicationStatusDisplay(

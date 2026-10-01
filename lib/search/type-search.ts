@@ -30,7 +30,7 @@ export function isSearchType(value: unknown): value is SearchType {
 }
 
 /** A filter value. Arrays are sent comma-separated, as `_in` and `_between` expect. */
-export type SearchFilterValue = string | number | boolean | ReadonlyArray<string | number>;
+type SearchFilterValue = string | number | boolean | ReadonlyArray<string | number>;
 
 export type SearchFilters = Record<string, SearchFilterValue | null | undefined>;
 
@@ -51,7 +51,7 @@ type TypeSearchQuery = NonNullable<SearchByTypeData['query']> & {
 };
 
 /** Drop empty values and join arrays, so no `field=` or repeated keys reach the API. */
-export function toSearchParams(
+function toSearchParams(
   filters: SearchFilters | undefined
 ): Record<string, string | number | boolean> | undefined {
   if (!filters) return undefined;

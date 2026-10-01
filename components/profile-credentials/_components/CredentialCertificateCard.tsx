@@ -59,7 +59,7 @@ function getStatusTone(status: string) {
   };
 }
 
-export function GeneralPdfPreview({
+function GeneralPdfPreview({
   documentUrl,
   documentLabel,
 }: {

@@ -33,7 +33,7 @@ import {
     PreviewStat,
 } from './AssessmentPreviewPrimitives';
 
-export type QuizPreviewSheetProps = {
+type QuizPreviewSheetProps = {
     open: boolean;
     onOpenChange: (open: boolean) => void;
     quizUuid: string;

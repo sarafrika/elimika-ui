@@ -110,7 +110,7 @@ export type DraftRow = {
   description: string;
 };
 
-export const emptyDraft = (): DraftRow => ({
+const emptyDraft = (): DraftRow => ({
   id: crypto.randomUUID(),
   name: '',
   requirement_type: requirementTypes[0] ?? 'material',

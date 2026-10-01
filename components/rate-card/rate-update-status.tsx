@@ -10,7 +10,7 @@ import { cn } from '@/lib/utils';
 import { useWithdrawRateUpdate } from '@/src/features/rate-card/hooks/use-rate-update-mutations';
 import type { TrainingApplicationKind } from '@/src/features/rate-card/types';
 
-export type RateUpdateStatusProps = {
+type RateUpdateStatusProps = {
   kind: TrainingApplicationKind;
   parentUuid: string;
   applicationUuid: string;

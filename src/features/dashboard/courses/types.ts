@@ -11,9 +11,6 @@ import type {
   TrainingProgram,
   User,
 } from '@/services/client/types.gen';
-
-export type CourseListItem = Course | TrainingProgram;
-
 export type BundledClass = ClassDefinition & {
   course: Course | null;
   instructor: Instructor | null;

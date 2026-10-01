@@ -1,6 +1,6 @@
 import type { Course, CourseCreator } from '@/services/client';
 
-export interface CourseCreatorAssignment {
+interface CourseCreatorAssignment {
   organisationUuid?: string;
   organisationName?: string;
   branchUuid?: string;

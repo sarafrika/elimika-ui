@@ -205,14 +205,6 @@ export function jobSessionWindows(job: ClassMarketplaceJob, cap = 200): JobSessi
     .slice(0, cap);
 }
 
-export function firstSession(job: ClassMarketplaceJob) {
-  return jobSessionWindows(job, 200)[0] ?? null;
-}
-
-export function sessionCount(job: ClassMarketplaceJob) {
-  return jobSessionWindows(job).length;
-}
-
 export function sessionCountLabel(count: number, cap = 200) {
   if (count >= cap) return `${cap}+ sessions`;
   return `${count} session${count === 1 ? '' : 's'}`;

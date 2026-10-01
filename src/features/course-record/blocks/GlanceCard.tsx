@@ -28,7 +28,7 @@ import {
  * Copy
  * ────────────────────────────────────────────────────────────────────────── */
 
-export interface CourseGlanceRow {
+interface CourseGlanceRow {
   /** The label. Copy — transcribed from the artboard. */
   k: string;
   /** The value, as a `{token}` template. */
@@ -65,9 +65,9 @@ export interface CourseGlanceRow {
  * | `className` / `trainerName` | the learner's class and who delivers it |
  * | `enrolledOn` / `lastOpened` / `classEnds` | the learner's dates, formatted |
  */
-export type CourseGlanceVars = Record<string, string | number | null | undefined>;
+type CourseGlanceVars = Record<string, string | number | null | undefined>;
 
-export const COURSE_GLANCE_ROWS: Record<CourseGlanceSetId, readonly CourseGlanceRow[]> = {
+const COURSE_GLANCE_ROWS: Record<CourseGlanceSetId, readonly CourseGlanceRow[]> = {
   full: [
     { k: 'Lifecycle stage', v: '{lifecycle}', requires: ['lifecycle'] },
     { k: 'Enrolment', v: '{enrolment}', requires: ['enrolment'] },
@@ -141,7 +141,7 @@ export const COURSE_GLANCE_ROWS: Record<CourseGlanceSetId, readonly CourseGlance
  * Block
  * ────────────────────────────────────────────────────────────────────────── */
 
-export interface GlanceCardProps extends CourseBlockAsyncProps {
+interface GlanceCardProps extends CourseBlockAsyncProps {
   /** From the API. Names the row set through the capability map. */
   access: CourseAccess;
   /** Values the rows interpolate. See {@link CourseGlanceVars}. */
@@ -197,7 +197,7 @@ export function GlanceCard({
 }
 
 /** Seven rows, the height the card settles at. */
-export function GlanceCardSkeleton() {
+function GlanceCardSkeleton() {
   return (
     <div className='flex flex-col'>
       {[0, 1, 2, 3, 4, 5, 6].map(row => (

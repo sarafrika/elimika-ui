@@ -13,7 +13,7 @@ import { sessionCountLabel } from '@/src/features/organisation/jobs/lib/job-stag
 import { HireClashAlert } from './HireClashAlert';
 import { SectionCard } from '@/components/data-display';
 
-export type HireCheck = { ok: boolean; message: string };
+type HireCheck = { ok: boolean; message: string };
 
 type RateApplication = Pick<ClassMarketplaceJobApplication, 'approved_rate' | 'rate_covers_pay'>;
 type RateJob = Pick<
@@ -31,7 +31,7 @@ const rateIn = (amount: number, basis?: string | null) =>
   basis ? `${formatRateAmount(amount)} ${formatRateBasis(basis)}` : formatRateAmount(amount);
 
 /** The one approved rate that applies to this job, checked against its pay as the server does. */
-export function hireRateCheck(
+function hireRateCheck(
   application: RateApplication | null | undefined,
   job: RateJob | null | undefined,
   instructorName?: string | null

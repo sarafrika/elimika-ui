@@ -8,7 +8,7 @@ import {
   type ProgramLessonModule,
 } from './use-programlessonwithcontent';
 
-export type UseClassLessonContentParams = {
+type UseClassLessonContentParams = {
   courseUuid?: string | null;
   programUuid?: string | null;
 };

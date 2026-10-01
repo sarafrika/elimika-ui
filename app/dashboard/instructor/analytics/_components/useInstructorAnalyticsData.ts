@@ -16,7 +16,7 @@ import { useMemo } from 'react';
 import { DEFAULT_ANALYTICS_FILTERS, type InstructorAnalyticsFilters } from './analytics-filters';
 import { useAnalyticsFilters } from './analytics-filters-context';
 
-export type AnalyticsSession = {
+type AnalyticsSession = {
   id: string;
   classUuid?: string;
   program: string;
@@ -47,40 +47,27 @@ export type AnalyticsSession = {
     endTime: Date | null;
   }>;
 };
-
-export type PerformancePoint = {
-  label: string;
-  sessions: number;
-  participants: number;
-  completion: number;
-};
-
-export type ProgramCompletionRate = {
-  name: string;
-  rate: number;
-};
-
-export type StatusBreakdownItem = {
+type StatusBreakdownItem = {
   label: string;
   value: number;
   pct: number;
   color: string;
 };
 
-export type LocationSummary = {
+type LocationSummary = {
   name: string;
   sessions: number;
   pct: number;
 };
 
-export type SatisfactionBucket = {
+type SatisfactionBucket = {
   label: string;
   count: number;
   pct: number;
   color: string;
 };
 
-export type AnalyticsMetrics = {
+type AnalyticsMetrics = {
   totalSessions: number;
   completedSessions: number;
   participantsTrained: number;

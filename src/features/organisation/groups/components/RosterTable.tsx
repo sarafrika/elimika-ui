@@ -22,7 +22,7 @@ import {
 } from '@/src/features/organisation/groups/lib/roster';
 import type { StudentGroupRosterEntry } from '@/services/client';
 
-export type RosterTableProps = {
+type RosterTableProps = {
   entries: StudentGroupRosterEntry[];
   /** 0-based index of the first row on this page, so `#` counts across pages. */
   startIndex: number;

@@ -31,7 +31,7 @@ import type { TrainingRateUpdate } from '@/services/client';
 import { useSubmitRateUpdate } from '@/src/features/rate-card/hooks/use-rate-update-mutations';
 import type { TrainingApplicationKind } from '@/src/features/rate-card/types';
 
-export type UpdateRatesDialogProps = {
+type UpdateRatesDialogProps = {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   kind: TrainingApplicationKind;

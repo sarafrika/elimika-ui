@@ -30,7 +30,7 @@ import { listQuery, queueQuery } from '../lib/admin-queries';
 
 export const PROGRAMS_PAGE_SIZE = 20;
 
-export interface ProgramFilters {
+interface ProgramFilters {
   q?: string;
   /** A ContentStatus value: draft | in_review | published | archived. */
   status?: string;

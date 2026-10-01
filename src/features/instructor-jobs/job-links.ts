@@ -26,7 +26,7 @@ export function applyToTrainHref(job: ClassMarketplaceJob) {
 export const verificationHref = () => dashboardUrl('instructor', 'profile');
 
 /** The job page's Schedule tab, optionally narrowed to the clashing sessions. */
-export const jobScheduleHref = (jobUuid: string, clashesOnly = false) =>
+const jobScheduleHref = (jobUuid: string, clashesOnly = false) =>
   `${jobPageHref(jobUuid)}?tab=schedule${clashesOnly ? '&clashes=1' : ''}`;
 
 /** Where a readiness CTA goes; null for `apply`, which opens the apply dialog instead. */

@@ -36,7 +36,7 @@ import { invalidateReviewWorkflowQueries } from '@/src/features/dashboard/workfl
 
 import { FeedbackDialog } from './review-instructor-modal';
 
-export interface CourseRecordRouteActionsProps {
+interface CourseRecordRouteActionsProps {
   courseUuid: string;
   /** Where "View available classes" goes — the route's own classes list. */
   classesHref: string;

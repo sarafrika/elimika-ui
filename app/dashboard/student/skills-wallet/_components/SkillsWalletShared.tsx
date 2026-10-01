@@ -3,39 +3,24 @@
 import type { LucideIcon } from 'lucide-react';
 import {
   ArrowUpRight,
-  BadgeCheck,
   BarChart3,
   BookOpen,
-  Bookmark,
-  Briefcase,
-  CheckCircle2,
   Cloud,
   Copy,
   Globe,
-  GraduationCap,
-  LayoutDashboard,
   Megaphone,
   Mic,
   Palette,
   Rocket,
-  ShieldCheck,
   Sparkles,
-  Star,
-  Target,
-  Trophy,
-  Users,
 } from 'lucide-react';
 import type { ReactNode } from 'react';
 
 import { TOKEN } from '@/app/dashboard/_components/color-charts';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
-import { Progress } from '@/components/ui/progress';
 import type { Certificate } from '@/services/client/types.gen';
 import { useUserProfile } from '../../../../../context/profile-context';
-
-export const WALLET_ID = 'ELM-SW-2026-000245';
-
 export const ICON_MAP: Record<string, LucideIcon> = {
   Code2: Sparkles,
   BarChart3,
@@ -320,58 +305,3 @@ export function LegendRow({
     </div>
   );
 }
-
-export function SkillProgressRow({
-  icon: Icon,
-  name,
-  level,
-  pct,
-  tint,
-}: {
-  icon: LucideIcon;
-  name: string;
-  level: string;
-  pct: number;
-  tint: string;
-}) {
-  return (
-    <div className='flex items-center gap-3'>
-      <div className={`grid h-8 w-8 place-items-center rounded-md ${tint}`}>
-        <Icon className='h-4 w-4' />
-      </div>
-      <div className='min-w-0 flex-1'>
-        <div className='flex items-center justify-between'>
-          <p className='truncate text-sm font-medium'>{name}</p>
-          <span className='text-muted-foreground text-xs'>{level}</span>
-        </div>
-        <div className='mt-1 flex items-center gap-2'>
-          <Progress value={pct} className='h-1.5 flex-1' />
-          <span className='w-9 text-right text-xs tabular-nums'>{pct}%</span>
-        </div>
-      </div>
-    </div>
-  );
-}
-
-export const SkillsWalletIcons = {
-  ArrowUpRight,
-  BadgeCheck,
-  BarChart3,
-  BookOpen,
-  Bookmark,
-  Briefcase,
-  CheckCircle2,
-  Cloud,
-  GraduationCap,
-  LayoutDashboard,
-  Megaphone,
-  Mic,
-  Palette,
-  Rocket,
-  ShieldCheck,
-  Sparkles,
-  Star,
-  Target,
-  Trophy,
-  Users,
-} as const;

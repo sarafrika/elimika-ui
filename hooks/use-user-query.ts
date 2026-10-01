@@ -11,7 +11,7 @@ import { useQuery } from '@tanstack/react-query';
 import { useSession } from 'next-auth/react';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 
-export function useUserQuery() {
+function useUserQuery() {
   const { data: session, status } = useSession();
 
   return useQuery({

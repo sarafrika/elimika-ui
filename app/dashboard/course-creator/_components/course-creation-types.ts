@@ -1,6 +1,4 @@
 import z from 'zod';
-
-export const MAX_FILE_SIZE = 15 * 1024 * 1024; // 4MB
 export const MAX_VIDEO_SIZE_MB = 150; // Adjust according to your backend limit
 export const MAX_VIDEO_SIZE_BYTES = MAX_VIDEO_SIZE_MB * 1024 * 1024;
 
@@ -11,22 +9,6 @@ export const providedByOptions = [
   'organisation',
   'student',
 ] as const;
-
-export const trainingRequirementSchema = z.object({
-  name: z.string().min(1, 'Requirement name is required'),
-  requirement_type: z.string().min(1, 'Requirement type is required'),
-  quantity: z
-    .number({
-      required_error: 'Quantity is required',
-      invalid_type_error: 'Quantity must be a number',
-    })
-    .min(1, 'Quantity must be at least 1'),
-  unit: z.string().min(1, 'Unit is required'),
-  provided_by: z.string().min(1, 'Provided by is required'),
-  is_mandatory: z.boolean(),
-  description: z.string().min(1, 'Description is required'),
-});
-
 export const courseCreationSchema = z.object({
   name: z.string().min(1, 'Course name is required'),
   course_code: z.string().trim().optional(),

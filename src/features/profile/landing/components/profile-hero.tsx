@@ -15,7 +15,7 @@ function MetaItem({ icon, value }: { icon: ReactNode; value?: string }) {
   );
 }
 
-export interface ProfileHeroProps {
+interface ProfileHeroProps {
   name: string;
   initials: string;
   avatarUrl?: string;

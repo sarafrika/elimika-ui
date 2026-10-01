@@ -24,9 +24,7 @@ import {
 } from '@/components/tiptap-ui-primitive/dropdown-menu';
 import { Card, CardBody } from '@/components/tiptap-ui-primitive/card';
 
-export interface HeadingDropdownMenuProps
-  extends Omit<ButtonProps, 'type'>,
-    UseHeadingDropdownMenuConfig {
+interface HeadingDropdownMenuProps extends Omit<ButtonProps, 'type'>, UseHeadingDropdownMenuConfig {
   /**
    * Whether to render the dropdown menu in a portal
    * @default false
@@ -122,5 +120,3 @@ export const HeadingDropdownMenu = React.forwardRef<HTMLButtonElement, HeadingDr
 );
 
 HeadingDropdownMenu.displayName = 'HeadingDropdownMenu';
-
-export default HeadingDropdownMenu;

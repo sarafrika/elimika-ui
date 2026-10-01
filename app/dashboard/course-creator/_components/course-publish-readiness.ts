@@ -1,6 +1,6 @@
 import type { Course, CourseAssessment, Lesson, LessonContent } from '@/services/client/types.gen';
 
-export type PublishReadinessState = {
+type PublishReadinessState = {
   canPublish: boolean;
   missingFields: string[];
 };
@@ -12,7 +12,7 @@ type CourseStructure = {
   assessments: readonly CourseAssessment[];
 };
 
-export type CoursePublishReadinessInput = {
+type CoursePublishReadinessInput = {
   course?: Partial<Course> | null;
   name?: string;
   courseCreatorUuid?: string;

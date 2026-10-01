@@ -48,7 +48,7 @@ export interface CourseGrant {
 }
 
 /** Transcribed from the artboard's `grantSets`. Named by `capability.grantSet`. */
-export const COURSE_ACCESS_GRANTS: Record<CourseGrantSetId, readonly CourseGrant[]> = {
+const COURSE_ACCESS_GRANTS: Record<CourseGrantSetId, readonly CourseGrant[]> = {
   owner: [
     { label: 'All lessons and content items', tone: 'granted' },
     { label: 'Course-wide performance and sales', tone: 'granted' },
@@ -117,7 +117,7 @@ export function CourseGrantIcon({
 }
 
 /** Only what you actually have reads at full strength. */
-export function courseGrantLabelClass(tone: CourseGrantTone): string {
+function courseGrantLabelClass(tone: CourseGrantTone): string {
   return tone === 'granted' ? 'text-foreground/80' : 'text-muted-foreground';
 }
 
@@ -136,7 +136,7 @@ const ACCESS_CARD_TONES = {
   warning: { card: 'border-warning/35 bg-warning/10', icon: 'bg-warning/20 text-warning' },
 } as const;
 
-export interface AccessCardProps {
+interface AccessCardProps {
   /** From the API. Chooses the label, the blurb and the grant set. */
   access: CourseAccess;
   /**

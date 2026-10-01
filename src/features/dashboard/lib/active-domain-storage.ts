@@ -122,7 +122,7 @@ export function buildDashboardSwitchPath(domain: UserDomain, nextPath = '/dashbo
   return `/dashboard/switch/${domain}?${searchParams.toString()}`;
 }
 
-export function isInternalDashboardPath(path?: string | null) {
+function isInternalDashboardPath(path?: string | null) {
   return Boolean(path?.startsWith('/dashboard'));
 }
 
@@ -139,7 +139,7 @@ function splitDashboardPath(path: string) {
   };
 }
 
-export function normalizeRequestedDashboardPath(path?: string | null) {
+function normalizeRequestedDashboardPath(path?: string | null) {
   if (!path || !isInternalDashboardPath(path)) {
     return '/dashboard/overview';
   }

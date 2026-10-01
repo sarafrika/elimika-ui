@@ -31,7 +31,7 @@ import {
  * row never advertises an empty page.
  */
 
-export interface CourseRecordViewProps {
+interface CourseRecordViewProps {
   /** From the API. See `use-course-access.ts`. */
   access: CourseAccess;
   /** Props for the hero block; the shell renders `<CourseHero>` itself. */

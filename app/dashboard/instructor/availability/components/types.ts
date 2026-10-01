@@ -118,7 +118,7 @@ export type AvailabilityClassData = {
 //   });
 // }
 
-export type CalendarInstants = Pick<
+type CalendarInstants = Pick<
   CalendarEvent,
   'timeZone' | 'startTime' | 'endTime' | 'startDateTime' | 'endDateTime' | 'date' | 'day'
 >;

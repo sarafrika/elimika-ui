@@ -16,7 +16,7 @@ export const HIRING_STAGES = [
 
 export type HiringStage = (typeof HIRING_STAGES)[number];
 
-export type HiringStep = {
+type HiringStep = {
   action: 'shortlist' | 'interview' | 'offer' | 'hire';
   label: string;
   leadsTo: HiringStage;
@@ -66,26 +66,14 @@ export const APPLICATION_STATUSES = [
 ] as const;
 
 export type ApplicationStatus = (typeof APPLICATION_STATUSES)[number];
-
-/** Still moving through the funnel — the organisation owes this candidate an answer. */
-export const LIVE_STATUSES: readonly string[] = HIRING_STAGES;
-
 /** Stages a candidate can still be moved on from, before the hire ends the funnel. */
-export const MOVABLE_STAGES: readonly string[] = HIRING_STAGES.filter(stage => NEXT_STEP[stage]);
-
-export const REAPPLICABLE_STATUSES = EXIT_STATUSES;
-
+const MOVABLE_STAGES: readonly string[] = HIRING_STAGES.filter(stage => NEXT_STEP[stage]);
 export const isLiveApplication = (status?: string | null): boolean => stageIndexOf(status) >= 0;
 
 export const canReapply = (status?: string | null): boolean => isExitStatus(status);
 
 /** An instructor may pull out while the application is live; a class-backed one no longer is. */
 export const canWithdraw = (status?: string | null): boolean => isLiveApplication(status);
-
-/** The organisation can still act on this candidate (shortlist / interview / offer / hire). */
-export const canReviewApplication = (status?: string | null): boolean =>
-  nextStepFor(status) !== null;
-
 /**
  * Rejection closes only where the funnel still moves: the hire takes the job out of OPEN, and the
  * server refuses every decision on a job that has left it. Unwinding a hire is the job's own move.

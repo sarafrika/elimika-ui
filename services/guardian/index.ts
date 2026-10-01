@@ -84,7 +84,6 @@ const guardianDashboardSchema = z
   .passthrough();
 
 export type GuardianShareScope = z.infer<typeof guardianShareScopeSchema>;
-export type GuardianLinkStatus = z.infer<typeof guardianLinkStatusSchema>;
 export type GuardianLinkedStudent = z.infer<typeof guardianStudentSchema>;
 export type GuardianCourseProgress = z.infer<typeof guardianCourseProgressSchema>;
 export type GuardianProgramProgress = z.infer<typeof guardianProgramProgressSchema>;
@@ -114,7 +113,7 @@ function normalizeGuardianStudents(payload: unknown): GuardianLinkedStudent[] {
   return [];
 }
 
-export async function fetchGuardianStudents(): Promise<GuardianLinkedStudent[]> {
+async function fetchGuardianStudents(): Promise<GuardianLinkedStudent[]> {
   const response = await fetchClient.GET(GUARDIAN_STUDENTS_PATH);
 
   if (response.error) {
@@ -128,9 +127,7 @@ export async function fetchGuardianStudents(): Promise<GuardianLinkedStudent[]> 
   return normalizeGuardianStudents(response.data);
 }
 
-export async function fetchGuardianDashboard(
-  studentUuid: string
-): Promise<GuardianDashboardSnapshot> {
+async function fetchGuardianDashboard(studentUuid: string): Promise<GuardianDashboardSnapshot> {
   const response = await fetchClient.GET(GUARDIAN_DASHBOARD_PATH, {
     params: {
       path: { studentUuid },
@@ -153,8 +150,8 @@ export async function fetchGuardianDashboard(
   return guardianDashboardSchema.parse(response.data);
 }
 
-export const guardianStudentsQueryKey = ['guardian', 'students'] as const;
-export const guardianDashboardQueryKey = (studentUuid?: string) =>
+const guardianStudentsQueryKey = ['guardian', 'students'] as const;
+const guardianDashboardQueryKey = (studentUuid?: string) =>
   ['guardian', 'dashboard', studentUuid ?? 'unselected'] as const;
 
 export function useGuardianStudents(

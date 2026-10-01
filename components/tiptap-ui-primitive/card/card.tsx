@@ -56,4 +56,4 @@ const CardFooter = React.forwardRef<HTMLDivElement, React.ComponentProps<'div'>>
 );
 CardFooter.displayName = 'CardFooter';
 
-export { Card, CardHeader, CardFooter, CardBody, CardItemGroup, CardGroupLabel };
+export { Card, CardBody, CardItemGroup };

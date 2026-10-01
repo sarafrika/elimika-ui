@@ -25,7 +25,7 @@ import {
 } from '@/components/tiptap-ui-primitive/dropdown-menu';
 import { Card, CardBody } from '@/components/tiptap-ui-primitive/card';
 
-export interface ListDropdownMenuProps extends Omit<ButtonProps, 'type'> {
+interface ListDropdownMenuProps extends Omit<ButtonProps, 'type'> {
   /**
    * The Tiptap editor instance.
    */
@@ -120,5 +120,3 @@ export function ListDropdownMenu({
     </DropdownMenu>
   );
 }
-
-export default ListDropdownMenu;

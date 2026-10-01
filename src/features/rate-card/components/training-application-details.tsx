@@ -51,7 +51,7 @@ import {
 import { ApplicationStatusBadge } from './application-status-badge';
 import { ApplicationTracker, type TrackStep } from './application-tracker';
 
-export type TrainingApplicationDetailsProps = {
+type TrainingApplicationDetailsProps = {
   kind: TrainingApplicationKind;
   parentUuid: string;
   applicationUuid: string;
@@ -430,7 +430,7 @@ function submitterName(events: { event_type?: string; actor_name?: string | null
 }
 
 /** Submitted → Opened → Decision → Rate card active; an update swaps in its own two stages. */
-export function trackSteps(
+function trackSteps(
   application: TrainingApplication,
   pendingUpdate: TrainingRateUpdate | null,
   kind: TrainingApplicationKind

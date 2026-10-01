@@ -28,9 +28,9 @@ import {
 } from '@/lib/rate-card';
 import { cn } from '@/lib/utils';
 
-export type RateCardGridMode = 'view' | 'edit' | 'diff';
+type RateCardGridMode = 'view' | 'edit' | 'diff';
 
-export type RateCardGridProps = {
+type RateCardGridProps = {
   /** view: read-only; edit: inputs + per-method offer toggles; diff: `value` against `compareTo`. */
   mode: RateCardGridMode;
   /** The card shown; in diff mode, the proposed card. */

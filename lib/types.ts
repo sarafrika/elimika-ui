@@ -11,7 +11,6 @@ import type {
   TrainingBranch,
   User,
 } from '@/services/client';
-import type { ReactNode } from 'react';
 
 export type UserDomain =
   | 'student'
@@ -29,7 +28,7 @@ export interface ApiResponse<T> {
   error?: unknown;
 }
 
-export interface PageMetadata {
+interface PageMetadata {
   pageNumber: number;
   pageSize: number;
   totalElements: number;
@@ -40,8 +39,6 @@ export interface PageMetadata {
   last: boolean;
 }
 
-export type SchemaType = unknown;
-
 export interface PagedData<T> {
   content: T[];
   metadata: PageMetadata;
@@ -50,11 +47,6 @@ export interface PagedData<T> {
 export type AllSchemaTypes = unknown;
 
 export type ApiResponseWithPagination<T> = ApiResponse<PagedData<T>>;
-
-export type DashboardChildrenTypes = {
-  [key: string]: ReactNode;
-};
-
 export type TrainingCenter = Organisation & {
   branches?: TrainingBranch[];
   users?: User[];

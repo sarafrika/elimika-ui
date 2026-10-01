@@ -165,7 +165,7 @@ const INSTRUCTOR_NEW_CLASS_HREF = '/dashboard/instructor/classes/new';
 const INSTRUCTOR_RATE_CARD_HREF = '/dashboard/instructor/rate-card';
 const ORGANISATION_NEW_CLASS_HREF = '/dashboard/organisation/classes/new';
 
-export interface CourseRecordPageProps {
+interface CourseRecordPageProps {
   courseUuid: string;
   /** Where the shell's back link goes. Omitted, the link is not rendered. */
   backHref?: string;

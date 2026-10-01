@@ -8,7 +8,7 @@ const WEEK_WINDOW_DAYS = 7;
 
 type StudyActivityStore = Record<string, number>;
 
-export type StudyMetrics = {
+type StudyMetrics = {
   weeklyStudyMinutes: number;
   studyStreakDays: number;
 };

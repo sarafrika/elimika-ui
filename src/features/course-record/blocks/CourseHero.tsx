@@ -211,7 +211,7 @@ export function CourseHero({
   );
 }
 
-export function CourseHeroSkeleton({ className }: { className?: string }) {
+function CourseHeroSkeleton({ className }: { className?: string }) {
   return (
     <Card className={cn('gap-0 overflow-hidden py-0', className)}>
       <div className='bg-muted h-[172px] animate-pulse sm:h-[200px] lg:h-[244px]' />

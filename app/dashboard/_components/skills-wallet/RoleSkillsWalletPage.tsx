@@ -90,7 +90,7 @@ import { SKILL_PROFICIENCY, toWalletSkill } from './skill-proficiency';
 import { useWalletTab } from './use-wallet-tab';
 import { RoleSkillsWalletMySkillsTab } from './RoleSkillsWalletMySkillsTab';
 
-export type SkillsWalletRole = Extract<VerifiedSkillsRole, 'instructor' | 'course_creator'>;
+type SkillsWalletRole = Extract<VerifiedSkillsRole, 'instructor' | 'course_creator'>;
 
 type RoleSkillsWalletPageProps = {
   role: SkillsWalletRole;
@@ -111,7 +111,7 @@ const TABS = [
 
 type TabId = (typeof TABS)[number]['id'];
 
-export function getRoleLabel(role: SkillsWalletRole) {
+function getRoleLabel(role: SkillsWalletRole) {
   return role === 'instructor' ? 'Instructor' : 'Course creator';
 }
 
@@ -120,13 +120,6 @@ function formatDate(value?: Date | string | null) {
   const parsed = value instanceof Date ? value : new Date(value);
   if (Number.isNaN(parsed.getTime())) return 'Recently';
   return parsed.toLocaleDateString('en-US', { month: 'short', year: 'numeric' });
-}
-
-function formatLongDate(value?: Date | string | null) {
-  if (!value) return '—';
-  const parsed = value instanceof Date ? value : new Date(value);
-  if (Number.isNaN(parsed.getTime())) return '—';
-  return parsed.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
 }
 
 function getCertificationStatus(status?: string | null) {
@@ -328,7 +321,7 @@ function mapAchievements({
   ];
 }
 
-export function buildRoleWalletData({
+function buildRoleWalletData({
   role,
   profileName,
   skillsWalletContent,
@@ -416,7 +409,7 @@ export function buildRoleWalletData({
   };
 }
 
-export type RoleWalletData = SkillsWalletData & {
+type RoleWalletData = SkillsWalletData & {
   experiences: ExperienceRecord[];
   achievements: AchievementRecord[];
   verificationEvents: VerificationEventRecord[];

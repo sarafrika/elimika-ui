@@ -1,7 +1,7 @@
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
 
-export type CredentialRow = {
+type CredentialRow = {
     name: string;
     org: string;
     issued_at?: string | null;
@@ -9,7 +9,7 @@ export type CredentialRow = {
     status?: string | null;
 };
 
-export type VerificationRow = {
+type VerificationRow = {
     source: string;
     title: string;
     skill?: string | null;

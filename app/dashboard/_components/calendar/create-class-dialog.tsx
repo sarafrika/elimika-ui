@@ -22,7 +22,7 @@ type DayScheduleValue = {
   allDay?: boolean;
 };
 
-export type CreateClassPrefill = {
+type CreateClassPrefill = {
   category?: string;
   subject?: string;
   courseId?: string;

@@ -98,8 +98,6 @@ export const programFormSchema = z
   });
 
 export type ProgramFormValues = z.infer<typeof programFormSchema>;
-export type ProgramRequirementValues = ProgramFormValues['requirements'][number];
-export type ProgramCourseValues = ProgramFormValues['courses'][number];
 
 export function defaultProgramValues(program?: TrainingProgram): ProgramFormValues {
   return {

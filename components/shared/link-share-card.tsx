@@ -14,13 +14,13 @@ import {
 } from '@/components/ui/card';
 import { cn } from '@/lib/utils';
 
-export type LinkShareCardSharePayload = {
+type LinkShareCardSharePayload = {
   description?: string;
   title: string;
   url: string;
 };
 
-export type LinkShareCardProps = {
+type LinkShareCardProps = {
   children?: React.ReactNode;
   className?: string;
   copyLabel?: string;

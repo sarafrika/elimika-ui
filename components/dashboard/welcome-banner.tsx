@@ -5,7 +5,7 @@ import { cn } from '../../lib/utils';
  * Gradient welcome banner ported from the Lovable dashboard. Presentational —
  * the greeting, summary line and CTAs are all passed in as props.
  */
-export interface WelcomeBannerProps {
+interface WelcomeBannerProps {
   /** Small uppercase line, e.g. the current date. */
   eyebrow?: string;
   title: string;

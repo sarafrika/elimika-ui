@@ -43,7 +43,7 @@ import {
  * never what they charge.
  */
 
-export interface DeliveryTabProps {
+interface DeliveryTabProps {
   /** From the API. The capability map, not a domain check, shapes the table. */
   access: CourseAccess;
   /** Approved and pending trainers, newest decision last. */
@@ -84,7 +84,7 @@ export function DeliveryTab({
  * Approved trainers
  * ────────────────────────────────────────────────────────────────────────── */
 
-export interface DeliveryTrainerTableProps extends CourseBlockAsyncProps {
+interface DeliveryTrainerTableProps extends CourseBlockAsyncProps {
   access: CourseAccess;
   trainers?: readonly CourseTrainerSummary[];
   className?: string;
@@ -97,7 +97,7 @@ const TRAINER_GRID =
 /** Below `md` the grid is dropped for stacked cards, so it never has to scroll. */
 const TRAINER_TABLE_MIN_WIDTH = 'min-w-[680px]';
 
-export function DeliveryTrainerTable({
+function DeliveryTrainerTable({
   access,
   trainers,
   loading,
@@ -252,7 +252,7 @@ export function DeliveryTrainerTable({
  * Live classes
  * ────────────────────────────────────────────────────────────────────────── */
 
-export interface DeliveryClassGridProps extends CourseBlockAsyncProps {
+interface DeliveryClassGridProps extends CourseBlockAsyncProps {
   classes?: readonly CourseClassRow[];
   /** How many of them are still taking learners. Omitted when unknown. */
   acceptingCount?: number;
@@ -262,7 +262,7 @@ export interface DeliveryClassGridProps extends CourseBlockAsyncProps {
 /** A class this full is the one to watch; below it there are seats to sell. */
 const HEALTHY_FILL_PERCENT = 50;
 
-export function DeliveryClassGrid({
+function DeliveryClassGrid({
   classes,
   acceptingCount,
   loading,
@@ -350,24 +350,6 @@ export function DeliveryClassGrid({
 /* ────────────────────────────────────────────────────────────────────────────
  * Skeletons
  * ────────────────────────────────────────────────────────────────────────── */
-
-export function DeliveryTabSkeleton() {
-  return (
-    <div className='flex flex-col gap-[18px]'>
-      <Card className='gap-0 overflow-hidden py-0'>
-        <div className='px-5 pt-4 pb-3.5'>
-          <Skeleton className='h-4 w-52' />
-          <Skeleton className='mt-2 h-3 w-80 max-w-full' />
-        </div>
-        <TrainerTableSkeleton />
-      </Card>
-      <Card className='gap-0 px-5 py-4'>
-        <Skeleton className='mb-3 h-4 w-56' />
-        <ClassGridSkeleton />
-      </Card>
-    </div>
-  );
-}
 
 function TrainerTableSkeleton() {
   return (

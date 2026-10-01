@@ -38,7 +38,7 @@ export interface UseImageUploadConfig {
 /**
  * Checks if image can be inserted in the current editor state
  */
-export function canInsertImage(editor: Editor | null): boolean {
+function canInsertImage(editor: Editor | null): boolean {
   if (!editor || !editor.isEditable) return false;
   if (!isExtensionAvailable(editor, 'imageUpload') || isNodeTypeSelected(editor, ['image']))
     return false;
@@ -49,7 +49,7 @@ export function canInsertImage(editor: Editor | null): boolean {
 /**
  * Checks if image is currently active
  */
-export function isImageActive(editor: Editor | null): boolean {
+function isImageActive(editor: Editor | null): boolean {
   if (!editor || !editor.isEditable) return false;
   return editor.isActive('imageUpload');
 }
@@ -57,7 +57,7 @@ export function isImageActive(editor: Editor | null): boolean {
 /**
  * Inserts an image in the editor
  */
-export function insertImage(editor: Editor | null): boolean {
+function insertImage(editor: Editor | null): boolean {
   if (!editor || !editor.isEditable) return false;
   if (!canInsertImage(editor)) return false;
 
@@ -77,10 +77,7 @@ export function insertImage(editor: Editor | null): boolean {
 /**
  * Determines if the image button should be shown
  */
-export function shouldShowButton(props: {
-  editor: Editor | null;
-  hideWhenUnavailable: boolean;
-}): boolean {
+function shouldShowButton(props: { editor: Editor | null; hideWhenUnavailable: boolean }): boolean {
   const { editor, hideWhenUnavailable } = props;
 
   if (!editor || !editor.isEditable) return false;

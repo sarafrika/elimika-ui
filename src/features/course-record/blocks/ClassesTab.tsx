@@ -33,7 +33,7 @@ import {
  * will accept anyone, whichever class they pick.
  */
 
-export interface ClassesTabProps extends CourseBlockAsyncProps {
+interface ClassesTabProps extends CourseBlockAsyncProps {
   /** From the API. Supplies the tab's heading copy through the capability map. */
   access: CourseAccess;
   /** Every class on the course the viewer may see. */
@@ -262,18 +262,12 @@ function ClassPickerRow({
  * Eligibility
  * ────────────────────────────────────────────────────────────────────────── */
 
-export interface EligibilityCardProps extends CourseBlockAsyncProps {
+interface EligibilityCardProps extends CourseBlockAsyncProps {
   checks?: readonly CourseEligibilityCheck[];
   className?: string;
 }
 
-export function EligibilityCard({
-  checks,
-  loading,
-  error,
-  onRetry,
-  className,
-}: EligibilityCardProps) {
+function EligibilityCard({ checks, loading, error, onRetry, className }: EligibilityCardProps) {
   const rows = checks ?? [];
 
   return (
@@ -324,25 +318,6 @@ export function EligibilityCard({
 /* ────────────────────────────────────────────────────────────────────────────
  * Skeletons
  * ────────────────────────────────────────────────────────────────────────── */
-
-export function ClassesTabSkeleton() {
-  return (
-    <div className='flex flex-col gap-4'>
-      <div className='flex items-start justify-between gap-3'>
-        <div className='min-w-0 flex-1 space-y-2'>
-          <Skeleton className='h-4 w-48' />
-          <Skeleton className='h-3 w-80 max-w-full' />
-        </div>
-        <Skeleton className='h-9 w-40 flex-none rounded-full' />
-      </div>
-      <ClassPickerSkeleton />
-      <Card className='gap-0 px-5 py-4'>
-        <Skeleton className='mb-[11px] h-3.5 w-44' />
-        <EligibilitySkeleton />
-      </Card>
-    </div>
-  );
-}
 
 function ClassPickerSkeleton() {
   return (

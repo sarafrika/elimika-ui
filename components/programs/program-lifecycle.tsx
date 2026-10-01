@@ -31,11 +31,11 @@ import { invalidateContentModerationWorkflowQueries } from '@/src/features/dashb
  * `active`, so forms never send them and show the state read-only.
  */
 
-export type ProgramLifecycleState = 'draft' | 'awaiting_approval' | 'live' | 'archived';
+type ProgramLifecycleState = 'draft' | 'awaiting_approval' | 'live' | 'archived';
 
 type LifecycleFields = Pick<TrainingProgram, 'status' | 'published' | 'admin_approved'>;
 
-export function programLifecycleState(program: Partial<LifecycleFields> | undefined | null) {
+function programLifecycleState(program: Partial<LifecycleFields> | undefined | null) {
   const status = program?.status;
   if (status === 'archived') return 'archived' satisfies ProgramLifecycleState;
   if (status === 'published' || program?.published) {

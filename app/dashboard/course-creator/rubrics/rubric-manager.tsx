@@ -4,7 +4,6 @@ import { Button } from '@/components/ui/button';
 import { SearchQueryInput } from '@/components/search/search-input';
 import { SearchNotice } from '@/components/search/search-notice';
 import { useSearchIssue, useSearchQuery } from '@/hooks/use-search-query';
-import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useCourseCreator } from '@/context/course-creator-context';
@@ -94,7 +93,7 @@ export const ASSESSMENT_TYPES = [
   'General',
 ];
 
-export const ASSESSMENT_CATEGORIES = [
+const ASSESSMENT_CATEGORIES = [
   'Class',
   'Lesson',
   'Module',

@@ -11,7 +11,6 @@ import type {
   ClassDefinition,
   ClassDefinitionResponse,
   ClassMarketplaceJobApplication,
-  CourseCreator,
   DocumentTypeOption,
   Enrollment,
   Instructor,
@@ -43,7 +42,6 @@ import {
   listInstructorApplicationsOptions,
   listSalesOptions,
   listTransactions1Options,
-  searchCourseCreatorsOptions,
   searchInstructorsOptions,
   searchStudentsOptions,
 } from '@/services/client/@tanstack/react-query.gen';
@@ -82,23 +80,6 @@ export function useInstructorProfile(userUuid: string) {
     [query.data]
   );
   return { instructor, query };
-}
-
-/** The course-creator profile for a user, if they have one. */
-export function useCourseCreatorProfile(userUuid: string) {
-  const query = useQuery({
-    ...searchCourseCreatorsOptions({
-      query: { searchParams: { user_uuid: userUuid }, pageable: SINGLE_PROFILE_PAGE },
-    }),
-    ...listQuery,
-    enabled: Boolean(userUuid),
-  });
-
-  const courseCreator = useMemo(
-    () => extractPage<CourseCreator>(query.data).items[0] ?? null,
-    [query.data]
-  );
-  return { courseCreator, query };
 }
 
 /** Every document the instructor has uploaded, verified or not. */

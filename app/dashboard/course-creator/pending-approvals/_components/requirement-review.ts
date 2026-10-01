@@ -22,10 +22,10 @@ export const REVIEW_ITEMS = [
   { id: 'rate-card', title: 'Rate card', summary: 'Proposed training rates per learner.' },
 ] as const;
 
-export type ReviewItemId = (typeof REVIEW_ITEMS)[number]['id'];
+type ReviewItemId = (typeof REVIEW_ITEMS)[number]['id'];
 export type RequirementStatus = 'under_review' | 'approved' | 'declined' | 'information_requested';
 export type RequirementReview = { status: RequirementStatus; comment: string };
-export type ReviewDraft = { note: string; requirements: Record<ReviewItemId, RequirementReview> };
+type ReviewDraft = { note: string; requirements: Record<ReviewItemId, RequirementReview> };
 
 export const REVIEW_STATUS: Record<RequirementStatus, { label: string; style: string }> = {
   under_review: { label: 'Under review', style: 'border-border bg-muted text-muted-foreground' },

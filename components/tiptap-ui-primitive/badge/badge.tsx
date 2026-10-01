@@ -5,7 +5,7 @@ import '@/components/tiptap-ui-primitive/badge/badge-colors.scss';
 import '@/components/tiptap-ui-primitive/badge/badge-group.scss';
 import '@/components/tiptap-ui-primitive/badge/badge.scss';
 
-export interface BadgeProps extends React.HTMLAttributes<HTMLDivElement> {
+interface BadgeProps extends React.HTMLAttributes<HTMLDivElement> {
   variant?: 'ghost' | 'white' | 'gray' | 'green' | 'default';
   size?: 'default' | 'small';
   appearance?: 'default' | 'subdued' | 'emphasized';
@@ -42,5 +42,3 @@ export const Badge = React.forwardRef<HTMLDivElement, BadgeProps>(
 );
 
 Badge.displayName = 'Badge';
-
-export default Badge;

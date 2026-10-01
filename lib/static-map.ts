@@ -2,17 +2,13 @@ const MAPBOX_TOKEN = process.env.NEXT_PUBLIC_MAPBOX_TOKEN;
 const STATIC_MAP_BASE_URL = 'https://api.mapbox.com/styles/v1/mapbox/streets-v12/static';
 const PIN_COLOR = '0061ed';
 
-export type StaticMapOptions = {
+type StaticMapOptions = {
   lat: number;
   lng: number;
   zoom?: number;
   width?: number;
   height?: number;
 };
-
-export function hasStaticMapToken() {
-  return Boolean(MAPBOX_TOKEN);
-}
 
 /** Mapbox static image with a pin at the coordinates, or null when there is no token to sign it. */
 export function buildStaticMapUrl({

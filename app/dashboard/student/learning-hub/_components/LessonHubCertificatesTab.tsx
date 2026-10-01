@@ -172,7 +172,7 @@ type LessonHubCertificatesTabProps = {
     learningHubData: LearningHubData;
 };
 
-export function LessonHubCertificatesTab({ learningHubData }: LessonHubCertificatesTabProps) {
+function LessonHubCertificatesTab({ learningHubData }: LessonHubCertificatesTabProps) {
     const certificateRows = useMemo<CertificateViewModel[]>(() => {
         return [...learningHubData.certificates]
             .sort((a, b) => {

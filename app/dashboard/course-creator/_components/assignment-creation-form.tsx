@@ -48,7 +48,7 @@ import type {
   SubmissionTypesEnum,
 } from '../../../../services/client/types.gen';
 
-export type AssignmentCreationFormProps = {
+type AssignmentCreationFormProps = {
   courseId: string;
   lessons: PagedDtoLesson | undefined;
   assignmentId?: string | null;
@@ -85,7 +85,7 @@ const EMPTY_ASSIGNMENT = {
   lesson_uuid: '',
 };
 
-export const ASSIGNMENT_CATEGORIES = [
+const ASSIGNMENT_CATEGORIES = [
   { value: 'HOMEWORK', label: 'Homework' },
   { value: 'PROJECT', label: 'Project' },
   { value: 'QUIZ', label: 'Quiz' },
@@ -867,7 +867,7 @@ export const AssignmentCreationForm = (props: AssignmentCreationFormProps) => {
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
-export function formatFileSize(bytes: number): string {
+function formatFileSize(bytes: number): string {
   if (bytes === 0) return '0 B';
   const k = 1024;
   const sizes = ['B', 'KB', 'MB', 'GB'];
@@ -875,7 +875,7 @@ export function formatFileSize(bytes: number): string {
   return `${(bytes / Math.pow(k, i)).toFixed(1)} ${sizes[i]}`;
 }
 
-export function getFileIcon(mime: string) {
+function getFileIcon(mime: string) {
   if (mime?.includes('pdf')) return <FileSpreadsheet className='h-5 w-5' />;
   if (mime?.includes('image')) return <Image className='h-5 w-5' />;
   if (mime?.includes('word')) return <FileText className='h-5 w-5' />;

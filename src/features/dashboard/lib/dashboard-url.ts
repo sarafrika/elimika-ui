@@ -43,8 +43,6 @@ const SEGMENT_TO_DOMAIN: Record<RoleSegment, UserDomain> = {
   organisation: 'organisation',
 };
 
-export const ROLE_SEGMENTS = Object.keys(SEGMENT_TO_DOMAIN) as RoleSegment[];
-
 /** Map a `user_domain` value to its URL segment. */
 export function domainToRouteSegment(domain: UserDomain): RoleSegment {
   return DOMAIN_TO_SEGMENT[domain];
@@ -56,7 +54,7 @@ export function routeSegmentToDomain(segment: string): UserDomain | null {
 }
 
 /** True when `segment` is one of the known role segments. */
-export function isRoleSegment(segment: string): segment is RoleSegment {
+function isRoleSegment(segment: string): segment is RoleSegment {
   return Object.prototype.hasOwnProperty.call(SEGMENT_TO_DOMAIN, segment);
 }
 
@@ -125,25 +123,6 @@ export function toBareDashboardPath(pathname?: string | null): string {
 /** Public, role-independent, shareable course URL. Works outside any dashboard. */
 export function publicCourseUrl(courseUuid: string): string {
   return `/courses/${encodeURIComponent(courseUuid)}`;
-}
-
-/** Domains the public profile page understands via its `?domain=` query param. */
-export type ProfileShareDomain =
-  | 'instructor'
-  | 'student'
-  | 'course_creator'
-  | 'admin'
-  | 'organisation';
-
-/**
- * Public, role-independent, shareable profile URL (`/profile-user/<id>?domain=<d>`).
- * Mirrors the existing `useProfileShareUrl` helper so both stay in sync.
- */
-export function publicProfileUrl(
-  userId: string,
-  domain: ProfileShareDomain = 'instructor'
-): string {
-  return `/profile-user/${encodeURIComponent(userId)}?domain=${domain}`;
 }
 
 /** Absolute variant for copy-to-clipboard "Share" actions (client only). */

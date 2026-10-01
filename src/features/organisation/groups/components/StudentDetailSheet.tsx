@@ -23,7 +23,7 @@ import {
 } from '@/src/features/organisation/groups/lib/roster';
 import type { StudentGroupRosterEntry } from '@/services/client';
 
-export type StudentDetailSheetProps = {
+type StudentDetailSheetProps = {
   entry: StudentGroupRosterEntry | null;
   onClose: () => void;
 };

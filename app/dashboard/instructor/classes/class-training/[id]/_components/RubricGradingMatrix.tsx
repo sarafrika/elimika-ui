@@ -9,7 +9,7 @@ import { useMemo, useState } from 'react';
 // from the API (rubric + criteria[] + scoring_levels[] + matrix_cells{}).
 // ════════════════════════════════════════════════════════════════════════
 
-export type RubricCriteria = {
+type RubricCriteria = {
   uuid: string;
   component_name: string;
   description?: string | null;
@@ -20,7 +20,7 @@ export type RubricCriteria = {
   criteria_category?: string;
 };
 
-export type RubricScoringLevel = {
+type RubricScoringLevel = {
   uuid: string;
   name: string;
   display_name?: string;
@@ -34,14 +34,14 @@ export type RubricScoringLevel = {
   color_code?: string | null;
 };
 
-export type RubricMatrixCell = {
+type RubricMatrixCell = {
   criteria_uuid?: string;
   scoring_level_uuid?: string;
   description?: string | null;
   [key: string]: unknown;
 };
 
-export type RubricInfo = {
+type RubricInfo = {
   uuid: string;
   title: string;
   description?: string | null;
@@ -54,7 +54,7 @@ export type RubricInfo = {
   total_weight?: number;
 };
 
-export type RubricMatrix = {
+type RubricMatrix = {
   rubric: RubricInfo;
   criteria: RubricCriteria[];
   scoring_levels: RubricScoringLevel[];
@@ -73,7 +73,7 @@ export type RubricMatrix = {
 // Selections the instructor has made so far: one chosen scoring-level uuid
 // per criteria uuid. Lives in the parent (e.g. per-student grading state)
 // so it can be persisted/submitted; this component is controlled.
-export type RubricGradeSelections = Record<string, string>;
+type RubricGradeSelections = Record<string, string>;
 
 const cellKey = (criteriaUuid: string, levelUuid: string) => `${criteriaUuid}_${levelUuid}`;
 

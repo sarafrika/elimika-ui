@@ -54,7 +54,7 @@ import Link from 'next/link';
 import { useMemo, useState } from 'react';
 import { useUserProfile } from '../../context/profile-context';
 
-export type AssessmentWorkspaceRole = 'student' | 'instructor';
+type AssessmentWorkspaceRole = 'student' | 'instructor';
 type AssessmentTab = 'active' | 'completed' | 'competencies';
 type AssessmentSort = 'newest' | 'due-soon' | 'title';
 type AssessmentStatus = 'in-progress' | 'pending-review' | 'completed' | 'overdue';
@@ -188,13 +188,13 @@ const competencies: Competency[] = [];
 //   },
 // ];
 
-export type TopStudent = {
+type TopStudent = {
   name: string;
   profile_image?: string;
   due: string;
 };
 
-export const topStudents: TopStudent[] = [];
+const topStudents: TopStudent[] = [];
 // [ // { avatar: '', due: 'Overdue', initials: 'SO', name: 'Sarah Otieno' }, // { avatar: '', due: '1 day', initials: 'NA', name: 'Nathaniel' }, // { avatar: '', due: '3 days', initials: 'DA', name: 'Daniel' }, // ];
 
 function formatDate(value?: string | Date | null, options?: Intl.DateTimeFormatOptions) {

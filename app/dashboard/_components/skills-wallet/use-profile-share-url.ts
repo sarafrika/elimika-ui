@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react';
 
-export type ProfileShareDomain = 'instructor' | 'student' | 'course_creator';
+type ProfileShareDomain = 'instructor' | 'student' | 'course_creator';
 
 export function useProfileShareUrl(
   userUuid?: string | null,

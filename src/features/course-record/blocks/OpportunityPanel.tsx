@@ -38,9 +38,9 @@ const APPLY_CTA = 'Apply to train';
  * - `muted`     — a deduction the trainer does not negotiate.
  * - `highlight` — the one line that is the applicant's own to fill in.
  */
-export type CourseOpportunityTone = 'value' | 'muted' | 'highlight';
+type CourseOpportunityTone = 'value' | 'muted' | 'highlight';
 
-export interface CourseOpportunityTerm {
+interface CourseOpportunityTerm {
   k: string;
   /** The value, as a `{token}` template. */
   v: string;
@@ -58,10 +58,10 @@ export interface CourseOpportunityTerm {
  * | `creatorShare` / `trainerShare` | the revenue split, e.g. "40" / "60" |
  * | `platformFee` | the platform's cut, e.g. "10%" |
  */
-export type CourseOpportunityVars = Record<string, string | number | null | undefined>;
+type CourseOpportunityVars = Record<string, string | number | null | undefined>;
 
 /** Transcribed from the artboard's `earnings` table. */
-export const COURSE_OPPORTUNITY_TERMS: readonly CourseOpportunityTerm[] = [
+const COURSE_OPPORTUNITY_TERMS: readonly CourseOpportunityTerm[] = [
   {
     k: 'Minimum training fee',
     v: '{minimumFee} per learner, on every rate',
@@ -98,7 +98,7 @@ const TERM_VALUE: Record<CourseOpportunityTone, string> = {
  * Block
  * ────────────────────────────────────────────────────────────────────────── */
 
-export interface OpportunityPanelProps extends CourseBlockAsyncProps {
+interface OpportunityPanelProps extends CourseBlockAsyncProps {
   /** Values the terms interpolate. See {@link CourseOpportunityVars}. */
   vars?: CourseOpportunityVars;
   /** Overrides the transcribed term list. */
@@ -187,7 +187,7 @@ export function OpportunityPanel({
   );
 }
 
-export function OpportunityPanelSkeleton() {
+function OpportunityPanelSkeleton() {
   return (
     <div className='mt-3 flex flex-col gap-2'>
       {[0, 1, 2, 3].map(row => (

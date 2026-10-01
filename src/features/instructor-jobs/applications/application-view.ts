@@ -100,7 +100,7 @@ export function trackerStates(status?: string | null): TrackerState[] {
   });
 }
 
-export type NotSelectedReason = 'another-instructor' | 'job-closed';
+type NotSelectedReason = 'another-instructor' | 'job-closed';
 
 function reasonFromNote(note: string | null | undefined): NotSelectedReason | null {
   const text = (note ?? '').toLowerCase();
@@ -110,7 +110,7 @@ function reasonFromNote(note: string | null | undefined): NotSelectedReason | nu
 }
 
 /** The backend writes the closing reason into the note; the job status settles anything else. */
-export function notSelectedReason(
+function notSelectedReason(
   note: string | null | undefined,
   job?: ClassMarketplaceJobSummary | null
 ): NotSelectedReason {
@@ -121,10 +121,10 @@ export function notSelectedReason(
     : 'job-closed';
 }
 
-export type NextStep = { title: string; detail: string | null; emphasis: boolean };
+type NextStep = { title: string; detail: string | null; emphasis: boolean };
 
 /** When the application closed: the last review stamp, else the last update. */
-export const closedAt = (application: Application) =>
+const closedAt = (application: Application) =>
   application.reviewed_at ?? application.updated_date ?? null;
 
 /** The Next step column of My applications. */
@@ -212,7 +212,7 @@ export function soonestInterview(applications: Application[], now = Date.now()) 
 }
 
 /** Events from the newest application or reapplication onwards, newest first. */
-export function currentCycle(events: ApplicationEvent[]) {
+function currentCycle(events: ApplicationEvent[]) {
   const start = events.findIndex(
     event => event.event_type === 'applied' || event.event_type === 'reapplied'
   );
@@ -279,7 +279,7 @@ const EVENT_TITLES: Record<string, string> = {
 const APPLICANT_EVENTS = ['applied', 'reapplied', 'withdrawn'];
 const DEFAULT_WITHDRAWAL_NOTE = 'The instructor withdrew this application.';
 
-export type TimelineEntry = {
+type TimelineEntry = {
   key: string;
   title: string;
   date: string | null;
@@ -329,7 +329,7 @@ export function sessionsAre(count: number | null | undefined, participle: string
 
 export type NoteTone = 'info' | 'success' | 'warning' | 'muted';
 
-export type ApplicationNote = { tone: NoteTone; title: string; body: string };
+type ApplicationNote = { tone: NoteTone; title: string; body: string };
 
 /** The note under the progress stepper: what happens next, or how the application ended. */
 export function applicationNote(

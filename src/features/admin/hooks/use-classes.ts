@@ -17,18 +17,16 @@ import {
 } from '@/services/client';
 import {
   getClassDefinitionOptions,
-  getClassEnrolmentCountsOptions,
   getClassRatingSummaryOptions,
   getClassScheduleOptions,
   getAllClassDefinitionsOptions,
-  getClassDefinitionsForOrganisationOptions,
   getEnrollmentsForInstanceOptions,
   getInstructorScheduleOptions,
 } from '@/services/client/@tanstack/react-query.gen';
 import { invalidateGeneratedQueryIds } from '@/src/features/dashboard/workflow-query-invalidation';
 import { invalidateAdminOverview, listQuery, queueQuery } from '../lib/admin-queries';
 
-export const CLASS_PAGE_SIZE = 20;
+const CLASS_PAGE_SIZE = 20;
 const SCHEDULE_PAGE = { page: 0, size: 50 };
 
 /** Longest window the instructor calendar will ask for in one go. */
@@ -127,42 +125,6 @@ export function useInstructorCalendar(instructorUuid: string, start: Date, end: 
 
   const instances = useMemo(() => extractList<ScheduledInstance>(query.data), [query.data]);
   return { instances, query };
-}
-
-/** An organisation's classes, with enrolment counts from one extra query. */
-export function useOrganisationClassLoad(organisationUuid: string) {
-  const classesQuery = useQuery({
-    ...getClassDefinitionsForOrganisationOptions({ path: { organisationUuid } }),
-    ...listQuery,
-    enabled: Boolean(organisationUuid),
-  });
-
-  const countsQuery = useQuery({
-    ...getClassEnrolmentCountsOptions({ path: { organisationUuid } }),
-    ...listQuery,
-    enabled: Boolean(organisationUuid),
-  });
-
-  const classes = useMemo(
-    () => extractList<{ class_definition?: ClassDefinition }>(classesQuery.data),
-    [classesQuery.data]
-  );
-
-  const enrolmentCounts = useMemo(() => {
-    const rows = extractList<{ class_definition_uuid?: string; enrolled?: number }>(
-      countsQuery.data
-    );
-    return Object.fromEntries(
-      rows.map(row => [row.class_definition_uuid ?? '', Number(row.enrolled ?? 0)])
-    );
-  }, [countsQuery.data]);
-
-  return {
-    classes: classes.map(row => row.class_definition ?? (row as ClassDefinition)),
-    enrolmentCounts,
-    classesQuery,
-    countsQuery,
-  };
 }
 
 function statusOf(error: unknown): number | undefined {

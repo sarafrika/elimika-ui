@@ -10,8 +10,8 @@ import {
 } from '../services/client/@tanstack/react-query.gen';
 import { ClassScheduleInstance } from './use-instructor-classes';
 
-export type ScheduleMap = Record<string, ClassScheduleInstance[] | null>;
-export type EnrollmentMap = Record<string, Enrollment[] | null>;
+type ScheduleMap = Record<string, ClassScheduleInstance[] | null>;
+type EnrollmentMap = Record<string, Enrollment[] | null>;
 
 export function useClassSchedulesMap(classUuids: string[]) {
   const scheduleQueries = useQueries({

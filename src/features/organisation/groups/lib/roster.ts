@@ -27,7 +27,7 @@ export type TierOption = {
  * The label a group contributes to its tier's stream dropdown. Groups created
  * before streams existed have no `group_type`, so fall back to the group name.
  */
-export function streamLabelOf(group: StudentGroup): string {
+function streamLabelOf(group: StudentGroup): string {
   return group.group_type?.trim() || group.name?.trim() || 'Unnamed group';
 }
 

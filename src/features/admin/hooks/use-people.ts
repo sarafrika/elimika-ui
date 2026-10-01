@@ -21,7 +21,7 @@ export type PeopleRole =
 
 export type PeopleStatus = 'any' | 'active' | 'inactive';
 
-export interface PeopleFilters {
+interface PeopleFilters {
   role: PeopleRole;
   q: string;
   status: PeopleStatus;
@@ -43,7 +43,7 @@ function buildFilterParams({ role, status }: Pick<PeopleFilters, 'role' | 'statu
   return params;
 }
 
-export interface PeopleResult {
+interface PeopleResult {
   people: User[];
   total: number;
   pageCount: number;

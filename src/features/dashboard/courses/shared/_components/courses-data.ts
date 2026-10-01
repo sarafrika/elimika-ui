@@ -2,30 +2,15 @@ import type { UserDomain } from '@/lib/types';
 import type { CourseTrainingRateCard } from '@/services/client';
 import type { LucideIcon } from 'lucide-react';
 import {
-  BadgeCheck,
   BookOpen,
   BriefcaseBusiness,
   Camera,
-  GraduationCap,
   Headphones,
   Lightbulb,
   MonitorSmartphone,
   Music4,
-  Palette,
-  Rocket,
-  Search,
-  Trophy,
   Users,
 } from 'lucide-react';
-
-export type CoursesHeroAction = {
-  title: string;
-  subtitle: string;
-  href: string;
-  icon: LucideIcon;
-  tone: 'primary' | 'warning' | 'success';
-};
-
 export type CoursesCatalogTab = 'programs' | 'short-courses' | 'all-courses' | 'my-courses';
 
 export type CoursesFilterSection = {
@@ -36,13 +21,6 @@ export type CoursesFilterSection = {
     value: string;
   }>;
 };
-
-export type CoursesCategoryTileData = {
-  title: string;
-  icon: LucideIcon;
-  tone: 'rose' | 'amber' | 'sky' | 'violet' | 'green';
-};
-
 export type CoursesCatalogCardData = {
   id: string;
   contentKind: 'course' | 'program';
@@ -109,49 +87,6 @@ export type CoursesRecommendationCardData = {
   imageUrl?: string;
   reason?: string;
 };
-
-export const heroActions: CoursesHeroAction[] = [
-  {
-    title: 'Apply to Train',
-    subtitle: 'Structured training made practical.',
-    href: '#',
-    icon: Rocket,
-    tone: 'primary',
-  },
-  {
-    title: 'Take a Short Course',
-    subtitle: 'Fast skill boosts with concise lessons.',
-    href: '#',
-    icon: BadgeCheck,
-    tone: 'warning',
-  },
-  {
-    title: 'Explore All Courses',
-    subtitle: 'Browse role-ready learning paths.',
-    href: '#',
-    icon: Search,
-    tone: 'success',
-  },
-];
-
-export const catalogTabs: Array<{ value: CoursesCatalogTab; label: string }> = [
-  { value: 'all-courses', label: 'All Courses' },
-  { value: 'programs', label: 'Programs' },
-  { value: 'short-courses', label: 'Short Courses' },
-  { value: 'my-courses', label: 'My Courses' },
-];
-
-const tileIcons = [
-  Music4,
-  Trophy,
-  MonitorSmartphone,
-  Palette,
-  BookOpen,
-  GraduationCap,
-  Lightbulb,
-  Camera,
-];
-
 const cardIcons = [
   Headphones,
   MonitorSmartphone,
@@ -162,17 +97,7 @@ const cardIcons = [
   Music4,
   BookOpen,
 ];
-
-const tones = ['rose', 'amber', 'sky', 'violet', 'green'] as const;
 const imageTones = ['primary', 'warning', 'success'] as const;
-
-export function getCategoryTilePresentation(title: string, index: number): CoursesCategoryTileData {
-  return {
-    title,
-    icon: tileIcons[index % tileIcons.length] ?? BookOpen,
-    tone: tones[index % tones.length] ?? 'sky',
-  };
-}
 
 export function getCardPresentation(index: number) {
   return {
@@ -256,10 +181,6 @@ export function stripHtml(value?: string | null) {
       .replace(/\s+/g, ' ')
       .trim() ?? ''
   );
-}
-
-export function isShortCourse(totalMinutes: number) {
-  return totalMinutes > 0 && totalMinutes <= 20 * 60;
 }
 
 type TrainingApplicationLike = {

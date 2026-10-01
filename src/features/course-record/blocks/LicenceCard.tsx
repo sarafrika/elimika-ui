@@ -23,7 +23,7 @@ import { type CourseGrant, CourseGrantIcon } from './AccessCard';
  */
 
 /** Transcribed from the artboard's `licenceSets`. Named by `capability.licenceSet`. */
-export const COURSE_LICENCE_TERMS: Record<CourseLicenceSetId, readonly CourseGrant[]> = {
+const COURSE_LICENCE_TERMS: Record<CourseLicenceSetId, readonly CourseGrant[]> = {
   admin: [
     { label: 'Read in place — no source download', tone: 'withheld' },
     { label: 'Every open written to the audit log', tone: 'granted' },
@@ -46,7 +46,7 @@ export const COURSE_LICENCE_TERMS: Record<CourseLicenceSetId, readonly CourseGra
   ],
 };
 
-export interface LicenceCardProps {
+interface LicenceCardProps {
   /** From the API. Names the term set, and carries the blurb above it. */
   access: CourseAccess;
   /** Overrides the transcribed set the capability map names. */

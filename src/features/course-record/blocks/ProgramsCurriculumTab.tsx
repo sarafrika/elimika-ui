@@ -56,7 +56,7 @@ const COURSE_TONES = [
   },
 ] as const;
 
-export type ProgramsCurriculumTabProps = CourseBlockAsyncProps & {
+type ProgramsCurriculumTabProps = CourseBlockAsyncProps & {
   courses: readonly ProgramCurriculumCourse[];
   onSelectLesson: (course: ProgramCurriculumCourse, lessonIndex: number) => void;
   className?: string;

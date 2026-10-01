@@ -2,7 +2,6 @@
 
 import { useQuery } from '@tanstack/react-query'
 import type { LucideIcon } from 'lucide-react'
-import { Banknote, BarChart3, CheckCircle2, Clock3, FileText, GraduationCap, Info, ShieldAlert } from 'lucide-react'
 import { useMemo } from 'react'
 
 import { useUserProfile } from '@/context/profile-context'
@@ -25,7 +24,7 @@ import {
 import { Badge } from '../../../../../components/ui/badge'
 import { Card, CardContent } from '../../../../../components/ui/card'
 
-export type FundingCategory =
+type FundingCategory =
   | 'Tuition Fees'
   | 'Stipend'
   | 'Assessments'
@@ -34,7 +33,7 @@ export type FundingCategory =
   | 'Transport'
   | 'Other Support'
 
-export type SkillsFundData = {
+type SkillsFundData = {
   organisationUuid: string | null
   organisationName: string
   currencyCode: string
@@ -48,7 +47,7 @@ export type SkillsFundData = {
 
 export const NOT_AVAILABLE = 'Not available'
 
-export const STATUS_TONE: Record<string, string> = {
+const STATUS_TONE: Record<string, string> = {
   PENDING: 'bg-warning/10 text-warning border-warning/20',
   ALLOCATED: 'bg-primary/10 text-primary border-primary/20',
   APPROVED: 'bg-info/10 text-info border-info/20',
@@ -80,7 +79,7 @@ export const STATUS_TONE: Record<string, string> = {
   WAITLISTED: 'bg-warning/10 text-warning border-warning/20',
 }
 
-export const STATUS_LABEL: Record<string, string> = {
+const STATUS_LABEL: Record<string, string> = {
   PENDING: 'Pending',
   ALLOCATED: 'Allocated',
   APPROVED: 'Approved',
@@ -278,63 +277,4 @@ export function StatusBadge({ status }: { status: string }) {
       {STATUS_LABEL[status] ?? status}
     </Badge>
   )
-}
-
-export function LiveDataHint({
-  title,
-  description,
-}: {
-  title: string
-  description: string
-}) {
-  return (
-    <div className='rounded-md border bg-info/10 p-3 text-sm text-info'>
-      <div className='flex items-start gap-2'>
-        <Info className='mt-0.5 h-4 w-4' />
-        <div>
-          <p className='font-medium'>{title}</p>
-          <p className='text-info/80'>{description}</p>
-        </div>
-      </div>
-    </div>
-  )
-}
-
-export function EmptyCard({
-  icon: Icon = FileText,
-  title,
-  description,
-}: {
-  icon?: LucideIcon
-  title: string
-  description: string
-}) {
-  return (
-    <Card>
-      <CardContent className='flex flex-col items-center justify-center gap-2 py-10 text-center'>
-        <Icon className='h-8 w-8 text-muted-foreground' />
-        <p className='font-medium text-foreground'>{title}</p>
-        <p className='max-w-md text-sm text-muted-foreground'>{description}</p>
-      </CardContent>
-    </Card>
-  )
-}
-
-export function fundingCategoryIcon(category: FundingCategory): LucideIcon {
-  switch (category) {
-    case 'Tuition Fees':
-      return GraduationCap
-    case 'Stipend':
-      return Banknote
-    case 'Assessments':
-      return CheckCircle2
-    case 'Equipment':
-      return ShieldAlert
-    case 'Learning Materials':
-      return FileText
-    case 'Transport':
-      return Clock3
-    default:
-      return BarChart3
-  }
 }

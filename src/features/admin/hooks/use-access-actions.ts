@@ -101,7 +101,7 @@ export function useRemoveAdmin() {
   return { remove, isPending: mutation.isPending };
 }
 
-export interface CreateAdminInput {
+interface CreateAdminInput {
   first_name: string;
   middle_name?: string;
   last_name: string;

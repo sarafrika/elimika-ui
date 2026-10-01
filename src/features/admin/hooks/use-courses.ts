@@ -36,7 +36,7 @@ export const COURSE_PAGE_SIZE = 20;
 export type CourseStatusFilter = 'all' | 'in_review' | 'published' | 'draft' | 'archived';
 export type CourseApprovalFilter = 'any' | 'approved' | 'awaiting';
 
-export interface CourseFilters {
+interface CourseFilters {
   status: CourseStatusFilter;
   approval: CourseApprovalFilter;
   q: string;
@@ -57,7 +57,7 @@ function buildFilterParams({ status, approval }: Pick<CourseFilters, 'status' | 
   return params;
 }
 
-export interface CoursesResult {
+interface CoursesResult {
   courses: Course[];
   total: number;
   pageCount: number;

@@ -23,7 +23,7 @@ export type FilterGroup = {
   items: FilterItem[];
 };
 
-export type JobMarketplaceRoleConfig = {
+type JobMarketplaceRoleConfig = {
   description: string;
   emptyStateLabel: string;
 };

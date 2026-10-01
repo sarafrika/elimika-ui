@@ -28,7 +28,3 @@ export async function fetchCurrentUser(): Promise<User | null> {
 
   return data.data ?? null;
 }
-
-/** React Query key for {@link fetchCurrentUser}. Kept per-session so sign-out cannot serve a stale identity. */
-export const currentUserQueryKey = (sessionKey?: string | null) =>
-  ['current-user', sessionKey ?? null] as const;

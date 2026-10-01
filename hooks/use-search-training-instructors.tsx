@@ -31,7 +31,7 @@ import { useUsersByIds } from './use-batched-lookups';
  * API sends it. The generated types do not know these fields yet, so they are read through
  * a guard rather than a cast.
  */
-export function listRating(instructor: unknown): { rating: number; reviewCount: number } | null {
+function listRating(instructor: unknown): { rating: number; reviewCount: number } | null {
   if (!instructor || typeof instructor !== 'object') return null;
   const record = instructor as Record<string, unknown>;
   const average = record.rating_avg;

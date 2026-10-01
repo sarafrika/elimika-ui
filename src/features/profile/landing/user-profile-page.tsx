@@ -30,7 +30,6 @@ function normalizeDob(value: unknown): string | undefined {
   return undefined;
 }
 
-type UserProfileContextValue = ReturnType<typeof useUserProfile>;
 type LocationProfileFields = {
   formatted_location?: string;
   location?: string;

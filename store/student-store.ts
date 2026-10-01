@@ -4,7 +4,7 @@ import { useSession } from 'next-auth/react';
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 
-export type StudentStoreType = {
+type StudentStoreType = {
   student: Student | null;
   loading: boolean;
   getStudent: () => Promise<void>;

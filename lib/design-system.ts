@@ -154,9 +154,7 @@ export function cx(...classes: (string | undefined | null | false)[]): string {
 }
 
 // Export reusable component class generators
-export const getFormSectionClasses = () => elimikaDesignSystem.components.formSection.wrapper;
 export const getCardClasses = () => elimikaDesignSystem.components.card.base;
 export const getHeaderClasses = () => elimikaDesignSystem.components.header.base;
 export const getEmptyStateClasses = () => elimikaDesignSystem.components.emptyState.container;
-export const getListCardClasses = () => elimikaDesignSystem.components.listCard.base;
 export const getStatCardClasses = () => elimikaDesignSystem.components.statCard.base;

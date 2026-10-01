@@ -34,7 +34,7 @@ type ListProps = {
 };
 
 /** "Mwangaza Learning Centre · Westlands · KES 4,500 / session" */
-export function applicationJobMeta(application: Application) {
+function applicationJobMeta(application: Application) {
   const job = application.job;
   const place = job?.branch_name || (job?.location_type === 'ONLINE' ? 'Online' : null);
   const pay =

@@ -811,27 +811,3 @@ export function SessionTableSummary() {
     </div>
   );
 }
-
-function PagBtn({
-  label,
-  active,
-  disabled,
-}: {
-  label: string;
-  active?: boolean;
-  disabled?: boolean;
-}) {
-  return (
-    <button
-      disabled={disabled}
-      className={`flex h-6 w-6 items-center justify-center rounded text-xs transition-colors ${active
-        ? 'bg-primary/20 text-card-foreground'
-        : disabled
-          ? 'text-muted-foreground cursor-default'
-          : 'text-foreground hover:bg-muted/10'
-        }`}
-    >
-      {label}
-    </button>
-  );
-}

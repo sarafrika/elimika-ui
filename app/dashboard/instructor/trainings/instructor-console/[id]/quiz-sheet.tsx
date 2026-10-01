@@ -145,7 +145,7 @@ function QuestionCard({ question, index }: { question: QuizQuestionWithOptions; 
   );
 }
 
-export function QuizDetailPanel({
+function QuizDetailPanel({
   quizUuid,
   scheduleItem,
 }: {

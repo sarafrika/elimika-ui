@@ -19,7 +19,7 @@ import { getCourseRecommendationsOptions } from '@/services/client/@tanstack/rea
 import type { RecommendedCourse } from '@/services/client/types.gen';
 import { useDiscoveryEvents } from '@/src/features/discovery/discovery-events';
 
-export type RecommendationSurface = 'for_you' | 'next_steps';
+type RecommendationSurface = 'for_you' | 'next_steps';
 
 const SURFACE_COPY: Record<RecommendationSurface, { title: string; description: string }> = {
   for_you: { title: 'For you', description: 'Courses picked from your interests and goals' },
@@ -95,7 +95,7 @@ function RecommendationCard({
  * Pass `studentUuid` for a guardian viewing a ward: a 403 means the ward has not shared
  * their academics.
  */
-export function CourseRecommendationRail({
+function CourseRecommendationRail({
   surface,
   courseHref,
   studentUuid,

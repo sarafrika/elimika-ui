@@ -8,7 +8,7 @@ import { CloseIcon } from '@/components/tiptap-icons/close-icon';
 import '@/components/tiptap-node/image-upload-node/image-upload-node.scss';
 import { isValidPosition } from '@/lib/tiptap-utils';
 
-export interface FileItem {
+interface FileItem {
   /**
    * Unique identifier for the file item
    */
@@ -39,7 +39,7 @@ export interface FileItem {
   abortController?: AbortController;
 }
 
-export interface UploadOptions {
+interface UploadOptions {
   /**
    * Maximum allowed file size in bytes
    */
