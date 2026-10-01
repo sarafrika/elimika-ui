@@ -17,7 +17,9 @@ export type PaletteHit = { type: SearchType; uuid: string; title?: string };
 export type HitDestination =
   | { kind: 'href'; href: string }
   /** Resolve the instructor's user uuid, then build the href from it. */
-  | { kind: 'instructor-user'; build: (userUuid: string) => string };
+  | { kind: 'instructor-user'; build: (userUuid: string) => string }
+  /** Signed-out palette: sign in, then land on `callbackUrl`. */
+  | { kind: 'sign-in'; callbackUrl: string };
 
 const withQuery = (path: string, query: Record<string, string | undefined>) => {
   const params = new URLSearchParams();
@@ -39,10 +41,26 @@ export function toPaletteDomain(domain: UserDomain | null | undefined): PaletteD
 }
 
 /**
+ * Who the palette serves: a signed-in dashboard, or `public` for a signed-out visitor on
+ * the public pages.
+ */
+export type PaletteAudience = PaletteDomain | 'public';
+
+/**
+ * Signed-out hits other than courses need an account, so they sign in first and land on
+ * the learner dashboard: a visitor who signs up from the public pages starts as a learner.
+ */
+const PUBLIC_SIGN_IN_DOMAIN: PaletteDomain = 'student';
+
+const signInTo = (path: string): HitDestination => ({ kind: 'sign-in', callbackUrl: path });
+
+/**
  * The types each dashboard searches: those it has somewhere to open. The server also
  * leaves out what the caller may not see (a student never gets people).
  */
-export const PALETTE_TYPES: Record<PaletteDomain, readonly SearchType[]> = {
+export const PALETTE_TYPES: Record<PaletteAudience, readonly SearchType[]> = {
+  // What the API returns to an anonymous caller.
+  public: ['courses', 'programs', 'classes', 'organisations'],
   admin: [
     'courses',
     'programs',
@@ -75,9 +93,10 @@ export const PALETTE_TYPES: Record<PaletteDomain, readonly SearchType[]> = {
   parent: ['courses', 'programs', 'marketplace_jobs', 'instructors'],
 };
 
-export function hitDestination(domain: PaletteDomain, hit: PaletteHit): HitDestination | null {
+export function hitDestination(domain: PaletteAudience, hit: PaletteHit): HitDestination | null {
   const { type, uuid } = hit;
   if (!uuid) return null;
+  if (domain === 'public') return publicHitDestination(type, uuid, hit.title);
   const url = (path: string) => dashboardUrl(domain, path);
 
   switch (domain) {
@@ -191,8 +210,32 @@ export function hitDestination(domain: PaletteDomain, hit: PaletteHit): HitDesti
   return null;
 }
 
+/**
+ * A signed-out hit: courses open the public course page; programs, classes and
+ * organisations sign in first and land on the matching learner page.
+ */
+function publicHitDestination(
+  type: SearchType,
+  uuid: string,
+  title: string | undefined
+): HitDestination | null {
+  const url = (path: string) => dashboardUrl(PUBLIC_SIGN_IN_DOMAIN, path);
+  switch (type) {
+    case 'courses':
+      return href(`/courses/${encodeURIComponent(uuid)}`);
+    case 'programs':
+      return signInTo(url(`courses/available-programs/${uuid}`));
+    case 'classes':
+      return signInTo(withQuery(url('find-classes'), { q: title }));
+    case 'organisations':
+      return signInTo(withQuery(url('find-classes'), { organisation: uuid }));
+  }
+  return null;
+}
+
 /** "See all {n}": the type's list page carrying the term as `?q=`, where one takes it. */
-export function seeAllHref(domain: PaletteDomain, type: SearchType, q: string): string | null {
+export function seeAllHref(domain: PaletteAudience, type: SearchType, q: string): string | null {
+  if (domain === 'public') return type === 'courses' ? withQuery('/courses', { q }) : null;
   const url = (path: string) => withQuery(dashboardUrl(domain, path), { q });
 
   switch (domain) {
@@ -270,7 +313,14 @@ export function seeAllHref(domain: PaletteDomain, type: SearchType, q: string): 
 }
 
 /** Where to go when search is down: the role's home, catalogue and opportunities. */
-export function quickLinks(domain: PaletteDomain): { label: string; href: string }[] {
+export function quickLinks(domain: PaletteAudience): { label: string; href: string }[] {
+  if (domain === 'public') {
+    return [
+      { label: 'Home', href: '/' },
+      { label: 'Course catalogue', href: '/courses' },
+      { label: 'Skills Wallet', href: '/skills-wallet' },
+    ];
+  }
   const home = { label: 'Home', href: dashboardUrl(domain, 'overview') };
   switch (domain) {
     case 'admin':

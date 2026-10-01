@@ -11,6 +11,7 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 import { getCartOptions } from '@/services/client/@tanstack/react-query.gen';
+import { PublicSearch } from '@/src/features/search/components/public-search';
 import { useCartStore } from '@/store/cart-store';
 
 export function MarketingTopNav() {
@@ -56,6 +57,7 @@ export function MarketingTopNav() {
         </Link>
 
         <div className='flex flex-1 items-center justify-end gap-2 md:gap-3'>
+          <PublicSearch />
           <div className='hidden items-center gap-2 md:flex'>
             {navLinks.map(link => (
               <Link

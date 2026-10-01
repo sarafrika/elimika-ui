@@ -2,6 +2,7 @@
 
 import { useQueryClient } from '@tanstack/react-query';
 import { ArrowRight, Clock, Search, SearchX } from 'lucide-react';
+import { signIn } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
 import { useCallback, useEffect, useState } from 'react';
 import { toast } from 'sonner';
@@ -35,7 +36,7 @@ import { useGlobalSearch } from '../hooks/use-global-search';
 import {
   hitDestination,
   PALETTE_TYPES,
-  type PaletteDomain,
+  type PaletteAudience,
   quickLinks,
   seeAllHref,
   TYPE_LABELS,
@@ -116,15 +117,21 @@ export function GlobalSearchSheet({
 }: {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  domain: UserDomain | null;
+  /** The signed-in dashboard, or `public` for a signed-out visitor. */
+  domain: UserDomain | 'public' | null;
 }) {
-  const paletteDomain = toPaletteDomain(domain);
+  const paletteDomain: PaletteAudience | null =
+    domain === 'public' ? 'public' : toPaletteDomain(domain);
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
       <SheetContent side='right' className='flex w-full flex-col gap-0 p-0 sm:max-w-xl'>
         <SheetHeader className='sr-only'>
           <SheetTitle>Search</SheetTitle>
-          <SheetDescription>Search courses, programs, classes, jobs and people.</SheetDescription>
+          <SheetDescription>
+            {domain === 'public'
+              ? 'Search courses, programs, classes and organisations.'
+              : 'Search courses, programs, classes, jobs and people.'}
+          </SheetDescription>
         </SheetHeader>
         {open && paletteDomain ? (
           <Palette domain={paletteDomain} onClose={() => onOpenChange(false)} />
@@ -134,7 +141,7 @@ export function GlobalSearchSheet({
   );
 }
 
-function Palette({ domain, onClose }: { domain: PaletteDomain; onClose: () => void }) {
+function Palette({ domain, onClose }: { domain: PaletteAudience; onClose: () => void }) {
   const router = useRouter();
   const queryClient = useQueryClient();
   const search = useSearchQuery({ delay: PALETTE_DEBOUNCE_MS });
@@ -160,6 +167,15 @@ function Palette({ domain, onClose }: { domain: PaletteDomain; onClose: () => vo
     if (!destination) return;
     if (destination.kind === 'href') {
       go(destination.href);
+      return;
+    }
+    if (destination.kind === 'sign-in') {
+      // Signed out: these need an account. Sign in, then land on the matching page.
+      if (search.q) writeRecent(search.q);
+      setResolving(true);
+      void signIn('keycloak', {
+        redirectTo: `${window.location.origin}${destination.callbackUrl}`,
+      });
       return;
     }
     // The one lookup the palette makes on select: an instructor's user, for person pages.
@@ -192,7 +208,11 @@ function Palette({ domain, onClose }: { domain: PaletteDomain; onClose: () => vo
         <CommandInput
           value={search.input}
           onValueChange={search.setInput}
-          placeholder='Search courses, programs, jobs and people…'
+          placeholder={
+            domain === 'public'
+              ? 'Search courses, programs, classes and organisations…'
+              : 'Search courses, programs, jobs and people…'
+          }
           aria-label='Search'
           className='h-12'
           autoFocus
@@ -288,6 +308,11 @@ function Palette({ domain, onClose }: { domain: PaletteDomain; onClose: () => vo
                         <p className='text-muted-foreground truncate text-xs'>{hit.subtitle}</p>
                       ) : null}
                     </div>
+                    {domain === 'public' && hit.type !== 'courses' ? (
+                      <span className='text-muted-foreground shrink-0 text-[11px]'>
+                        Sign in to view
+                      </span>
+                    ) : null}
                   </CommandItem>
                 ))}
                 {seeAll && group.total > group.hits.length ? (
@@ -307,7 +332,7 @@ function Palette({ domain, onClose }: { domain: PaletteDomain; onClose: () => vo
       </CommandList>
       {resolving || (results.isFetching && !results.isLoading) ? (
         <div className='text-muted-foreground flex items-center gap-2 border-t px-4 py-2 text-xs'>
-          <Spinner /> {resolving ? 'Opening…' : 'Searching…'}
+          <Spinner /> {resolving ? (domain === 'public' ? 'Signing in…' : 'Opening…') : 'Searching…'}
         </div>
       ) : null}
     </Command>
