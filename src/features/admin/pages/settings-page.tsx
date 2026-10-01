@@ -5,6 +5,12 @@ import Link from 'next/link';
 import { useEffect, useMemo, useRef, useState } from 'react';
 
 import { DetailGrid, SectionCard, StatusBadge, surfaceTheme } from '@/components/data-display';
+import {
+  type SectionTab,
+  SectionTabPanel,
+  SectionTabs,
+  useSectionTab,
+} from '@/components/data-display/section-tabs';
 import { PageHeader } from '@/components/page-header';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
@@ -31,6 +37,10 @@ import {
   type ProfileFormValues,
 } from '../hooks/use-admin-settings';
 import { adminRoutes } from '../lib/admin-routes';
+import { type AccountFieldErrors, accountFieldErrors } from '../lib/settings-validation';
+
+const SETTINGS_TABS = ['profile', 'times', 'security', 'roles'] as const;
+type SettingsTab = (typeof SETTINGS_TABS)[number];
 
 const GENDERS = [
   { value: 'MALE', label: 'Male' },
@@ -58,14 +68,20 @@ export function AdminSettingsPage() {
     setValues(baseline);
   }, [baseline]);
 
+  const { value: tab, setValue: setTab, hrefFor } = useSectionTab(SETTINGS_TABS, 'profile');
+
   const changes = changedFields(baseline, values);
-  const canSave =
-    changes.length > 0 &&
-    values.first_name.trim().length > 0 &&
-    values.last_name.trim().length > 0 &&
-    values.username.trim().length > 0 &&
-    /.+@.+\..+/.test(values.email.trim()) &&
-    values.dob.length > 0;
+  // Errors show once the admin starts editing; an untouched record is never flagged.
+  const fieldErrors: AccountFieldErrors = changes.length > 0 ? accountFieldErrors(values) : {};
+  const errorCount = Object.keys(fieldErrors).length;
+  const canSave = changes.length > 0 && errorCount === 0;
+
+  const tabs: SectionTab<SettingsTab>[] = [
+    { id: 'profile', label: 'Profile', errorCount },
+    { id: 'times', label: 'Times and dates' },
+    { id: 'security', label: 'Security' },
+    { id: 'roles', label: 'Roles' },
+  ];
 
   const set = (key: keyof ProfileFormValues) => (value: string) =>
     setValues(current => ({ ...current, [key]: value }));
@@ -73,7 +89,7 @@ export function AdminSettingsPage() {
   const accountConsole = keycloakAccountUrl();
 
   return (
-    <div className={surfaceTheme.page}>
+    <div className={`${surfaceTheme.pageWide} py-4`}>
       <div className={surfaceTheme.pageStack}>
         <PageHeader
           eyebrow='Settings'
@@ -96,225 +112,248 @@ export function AdminSettingsPage() {
             </div>
           }
         >
-          <div className='flex flex-col gap-4'>
-            <SectionCard title='Photo' description='Shown next to your name across Elimika.'>
-              <div className='flex flex-wrap items-center gap-4'>
-                <Avatar className='size-16'>
-                  {account?.profile_image_url ? (
-                    <AvatarImage src={account.profile_image_url} alt='' />
-                  ) : null}
-                  <AvatarFallback className='bg-primary/10 text-primary text-base font-semibold'>
-                    {[account?.first_name?.[0], account?.last_name?.[0]]
-                      .filter(Boolean)
-                      .join('')
-                      .toUpperCase() || 'AD'}
-                  </AvatarFallback>
-                </Avatar>
-                <div className='space-y-1'>
-                  <Button
-                    variant='outline'
-                    className='rounded-md'
-                    disabled={isUploading || !account?.uuid}
-                    onClick={() => fileInput.current?.click()}
-                  >
-                    {isUploading ? 'Uploading…' : 'Change photo'}
-                  </Button>
-                  <p className='text-muted-foreground text-xs'>JPEG or PNG, up to 5 MB.</p>
-                </div>
-                <input
-                  ref={fileInput}
-                  type='file'
-                  accept='image/*'
-                  className='hidden'
-                  onChange={event => {
-                    const file = event.target.files?.[0];
-                    if (file && account?.uuid) {
-                      upload({ userUuid: account.uuid, file }, () => {
-                        if (fileInput.current) fileInput.current.value = '';
-                      });
-                    }
-                  }}
-                />
-              </div>
-            </SectionCard>
-
-            <SectionCard
-              title='Your details'
-              description='Saved to Elimika and to your sign-in account.'
-              actions={
-                <Button
-                  className='rounded-md'
-                  disabled={!canSave || isSaving}
-                  onClick={() => setConfirming(true)}
-                >
-                  Save changes
-                </Button>
-              }
+          <SectionTabs
+            tabs={tabs}
+            value={tab}
+            onValueChange={setTab}
+            hrefFor={hrefFor}
+            label='Account settings sections'
+            sticky
+          >
+            <SectionTabPanel
+              value='profile'
+              className='grid max-w-[1400px] items-start gap-4 xl:grid-cols-[minmax(260px,320px)_minmax(0,1fr)]'
             >
-              <div className='grid gap-3 sm:grid-cols-2'>
-                <TextField
-                  id='settings-first-name'
-                  label='First name'
-                  required
-                  maxLength={50}
-                  value={values.first_name}
-                  onChange={set('first_name')}
-                />
-                <TextField
-                  id='settings-middle-name'
-                  label='Middle name'
-                  maxLength={50}
-                  value={values.middle_name}
-                  onChange={set('middle_name')}
-                />
-                <TextField
-                  id='settings-last-name'
-                  label='Last name'
-                  required
-                  maxLength={50}
-                  value={values.last_name}
-                  onChange={set('last_name')}
-                />
-                <TextField
-                  id='settings-email'
-                  label='Email'
-                  required
-                  type='email'
-                  maxLength={100}
-                  value={values.email}
-                  onChange={set('email')}
-                />
-                <TextField
-                  id='settings-username'
-                  label='Username'
-                  required
-                  maxLength={50}
-                  value={values.username}
-                  onChange={set('username')}
-                />
-                <TextField
-                  id='settings-dob'
-                  label='Date of birth'
-                  required
-                  type='date'
-                  value={values.dob}
-                  onChange={set('dob')}
-                />
-                <TextField
-                  id='settings-phone'
-                  label='Phone number'
-                  maxLength={20}
-                  value={values.phone_number}
-                  onChange={set('phone_number')}
-                />
-                <div className='space-y-1.5'>
-                  <Label htmlFor='settings-gender' className='text-sm font-semibold'>
-                    Gender
-                  </Label>
-                  <Select
-                    value={values.gender || 'unset'}
-                    onValueChange={value => set('gender')(value === 'unset' ? '' : value)}
-                  >
-                    <SelectTrigger id='settings-gender' className='h-9 rounded-md'>
-                      <SelectValue placeholder='Not specified' />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value='unset'>Not specified</SelectItem>
-                      {GENDERS.map(entry => (
-                        <SelectItem key={entry.value} value={entry.value}>
-                          {entry.label}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-              </div>
-            </SectionCard>
-
-            <TimeZoneCard />
-
-            <SectionCard
-              title='Security'
-              description='Passwords, two-factor and sessions live with the sign-in service.'
-            >
-              <div className='space-y-3 text-sm'>
-                {accountConsole ? (
-                  <a
-                    href={accountConsole}
-                    target='_blank'
-                    rel='noreferrer'
-                    className='text-primary inline-flex items-center gap-1.5 font-medium hover:underline'
-                  >
-                    Open your sign-in account settings
-                    <ExternalLink className='size-3.5' />
-                  </a>
-                ) : (
-                  <Button variant='outline' className='rounded-md' disabled>
-                    Sign-in account settings unavailable
-                  </Button>
-                )}
-                <p className='text-muted-foreground'>
-                  {accountConsole
-                    ? 'Change your password or set up two-factor there; Elimika has no API for either.'
-                    : 'The sign-in service address is not configured in this environment, so the link is hidden rather than guessed.'}
-                </p>
-                <p className='text-muted-foreground'>
-                  Your session now renews its own token, so a long day in the console no longer
-                  ends in failed requests.
-                </p>
-              </div>
-            </SectionCard>
-
-            <SectionCard
-              title='Roles'
-              description='What you can reach. Changing access happens on Admins & access.'
-            >
-              <div className='space-y-3'>
-                <div className='flex flex-wrap gap-1.5'>
-                  {(Array.isArray(account?.user_domain)
-                    ? account?.user_domain
-                    : [account?.user_domain]
-                  )
-                    ?.filter(Boolean)
-                    .map(domain => (
-                      <StatusBadge key={String(domain)} tone='neutral' label={String(domain)} />
-                    ))}
-                </div>
-
-                {account?.organisation_affiliations?.length ? (
-                  <DetailGrid
-                    columns={2}
-                    items={account.organisation_affiliations.map(affiliation => ({
-                      label: affiliation.organisation_name ?? 'Organisation',
-                      value: `${affiliation.domain_in_organisation ?? '—'}${
-                        affiliation.branch_name ? ` · ${affiliation.branch_name}` : ''
-                      }`,
-                    }))}
+              <SectionCard title='Photo' description='Shown next to your name across Elimika.'>
+                <div className='flex flex-wrap items-center gap-4'>
+                  <Avatar className='size-16'>
+                    {account?.profile_image_url ? (
+                      <AvatarImage src={account.profile_image_url} alt='' />
+                    ) : null}
+                    <AvatarFallback className='bg-primary/10 text-primary text-base font-semibold'>
+                      {[account?.first_name?.[0], account?.last_name?.[0]]
+                        .filter(Boolean)
+                        .join('')
+                        .toUpperCase() || 'AD'}
+                    </AvatarFallback>
+                  </Avatar>
+                  <div className='space-y-1'>
+                    <Button
+                      variant='outline'
+                      className='rounded-md'
+                      disabled={isUploading || !account?.uuid}
+                      onClick={() => fileInput.current?.click()}
+                    >
+                      {isUploading ? 'Uploading…' : 'Change photo'}
+                    </Button>
+                    <p className='text-muted-foreground text-xs'>JPEG or PNG, up to 5 MB.</p>
+                  </div>
+                  <input
+                    ref={fileInput}
+                    type='file'
+                    accept='image/*'
+                    className='hidden'
+                    onChange={event => {
+                      const file = event.target.files?.[0];
+                      if (file && account?.uuid) {
+                        upload({ userUuid: account.uuid, file }, () => {
+                          if (fileInput.current) fileInput.current.value = '';
+                        });
+                      }
+                    }}
                   />
-                ) : (
-                  <p className='text-muted-foreground text-sm'>
-                    You are not attached to any organisation.
+                </div>
+              </SectionCard>
+
+              <SectionCard
+                title='Your details'
+                description='Saved to Elimika and to your sign-in account.'
+                actions={
+                  <Button
+                    className='rounded-md'
+                    disabled={!canSave || isSaving}
+                    onClick={() => setConfirming(true)}
+                  >
+                    Save changes
+                  </Button>
+                }
+              >
+                <div className='grid gap-3 sm:grid-cols-2'>
+                  <TextField
+                    id='settings-first-name'
+                    label='First name'
+                    required
+                    maxLength={50}
+                    value={values.first_name}
+                    error={fieldErrors.first_name}
+                    onChange={set('first_name')}
+                  />
+                  <TextField
+                    id='settings-middle-name'
+                    label='Middle name'
+                    maxLength={50}
+                    value={values.middle_name}
+                    onChange={set('middle_name')}
+                  />
+                  <TextField
+                    id='settings-last-name'
+                    label='Last name'
+                    required
+                    maxLength={50}
+                    value={values.last_name}
+                    error={fieldErrors.last_name}
+                    onChange={set('last_name')}
+                  />
+                  <TextField
+                    id='settings-email'
+                    label='Email'
+                    required
+                    type='email'
+                    maxLength={100}
+                    value={values.email}
+                    error={fieldErrors.email}
+                    onChange={set('email')}
+                  />
+                  <TextField
+                    id='settings-username'
+                    label='Username'
+                    required
+                    maxLength={50}
+                    value={values.username}
+                    error={fieldErrors.username}
+                    onChange={set('username')}
+                  />
+                  <TextField
+                    id='settings-dob'
+                    label='Date of birth'
+                    required
+                    type='date'
+                    value={values.dob}
+                    error={fieldErrors.dob}
+                    onChange={set('dob')}
+                  />
+                  <TextField
+                    id='settings-phone'
+                    label='Phone number'
+                    maxLength={20}
+                    value={values.phone_number}
+                    onChange={set('phone_number')}
+                  />
+                  <div className='space-y-1.5'>
+                    <Label htmlFor='settings-gender' className='text-sm font-semibold'>
+                      Gender
+                    </Label>
+                    <Select
+                      value={values.gender || 'unset'}
+                      onValueChange={value => set('gender')(value === 'unset' ? '' : value)}
+                    >
+                      <SelectTrigger id='settings-gender' className='h-9 rounded-md'>
+                        <SelectValue placeholder='Not specified' />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value='unset'>Not specified</SelectItem>
+                        {GENDERS.map(entry => (
+                          <SelectItem key={entry.value} value={entry.value}>
+                            {entry.label}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </div>
+              </SectionCard>
+            </SectionTabPanel>
+
+            <SectionTabPanel value='times' className='max-w-3xl'>
+              <TimeZoneCard />
+            </SectionTabPanel>
+
+            <SectionTabPanel value='security' className='max-w-3xl'>
+              <SectionCard
+                title='Security'
+                description='Passwords, two-factor and sessions live with the sign-in service.'
+              >
+                <div className='space-y-3 text-sm'>
+                  {accountConsole ? (
+                    <a
+                      href={accountConsole}
+                      target='_blank'
+                      rel='noreferrer'
+                      className='text-primary inline-flex items-center gap-1.5 font-medium hover:underline'
+                    >
+                      Open your sign-in account settings
+                      <ExternalLink className='size-3.5' />
+                    </a>
+                  ) : (
+                    <Button variant='outline' className='rounded-md' disabled>
+                      Sign-in account settings unavailable
+                    </Button>
+                  )}
+                  <p className='text-muted-foreground'>
+                    {accountConsole
+                      ? 'Change your password or set up two-factor there; Elimika has no API for either.'
+                      : 'The sign-in service address is not configured in this environment, so the link is hidden rather than guessed.'}
                   </p>
-                )}
+                  <p className='text-muted-foreground'>
+                    Your session now renews its own token, so a long day in the console no longer
+                    ends in failed requests.
+                  </p>
+                </div>
+              </SectionCard>
+            </SectionTabPanel>
 
-                <DetailGrid
-                  columns={3}
-                  items={[
-                    { label: 'User number', value: account?.user_no ?? '—' },
-                    { label: 'Joined', value: formatDate(account?.created_date) || '—' },
-                    { label: 'Last updated', value: formatDate(account?.updated_date) || '—' },
-                  ]}
-                />
+            <SectionTabPanel value='roles'>
+              <SectionCard
+                title='Roles'
+                description='What you can reach. Changing access happens on Admins & access.'
+              >
+                <div className='space-y-3'>
+                  <div className='flex flex-wrap gap-1.5'>
+                    {(Array.isArray(account?.user_domain)
+                      ? account?.user_domain
+                      : [account?.user_domain]
+                    )
+                      ?.filter(Boolean)
+                      .map(domain => (
+                        <StatusBadge key={String(domain)} tone='neutral' label={String(domain)} />
+                      ))}
+                  </div>
 
-                <Link
-                  href={adminRoutes.access()}
-                  className='text-primary text-sm font-medium hover:underline'
-                >
-                  Open Admins &amp; access
-                </Link>
-              </div>
-            </SectionCard>
-          </div>
+                  {account?.organisation_affiliations?.length ? (
+                    <DetailGrid
+                      columns={2}
+                      items={account.organisation_affiliations.map(affiliation => ({
+                        label: affiliation.organisation_name ?? 'Organisation',
+                        value: `${affiliation.domain_in_organisation ?? '—'}${
+                          affiliation.branch_name ? ` · ${affiliation.branch_name}` : ''
+                        }`,
+                      }))}
+                    />
+                  ) : (
+                    <p className='text-muted-foreground text-sm'>
+                      You are not attached to any organisation.
+                    </p>
+                  )}
+
+                  <DetailGrid
+                    columns={3}
+                    items={[
+                      { label: 'User number', value: account?.user_no ?? '—' },
+                      { label: 'Joined', value: formatDate(account?.created_date) || '—' },
+                      { label: 'Last updated', value: formatDate(account?.updated_date) || '—' },
+                    ]}
+                  />
+
+                  <Link
+                    href={adminRoutes.access()}
+                    className='text-primary text-sm font-medium hover:underline'
+                  >
+                    Open Admins &amp; access
+                  </Link>
+                </div>
+              </SectionCard>
+            </SectionTabPanel>
+          </SectionTabs>
         </SectionBoundary>
       </div>
 
@@ -393,6 +432,7 @@ function TextField({
   onChange,
   required,
   maxLength,
+  error,
   type = 'text',
 }: {
   id: string;
@@ -401,8 +441,11 @@ function TextField({
   onChange: (value: string) => void;
   required?: boolean;
   maxLength?: number;
+  /** Shown under the field and announced with it. */
+  error?: string;
   type?: string;
 }) {
+  const errorId = `${id}-error`;
   return (
     <div className='space-y-1.5'>
       <Label htmlFor={id} className='text-sm font-semibold'>
@@ -417,7 +460,14 @@ function TextField({
         onChange={event => onChange(event.target.value)}
         className='rounded-md'
         autoComplete='off'
+        aria-invalid={error ? true : undefined}
+        aria-describedby={error ? errorId : undefined}
       />
+      {error ? (
+        <p id={errorId} className='text-destructive text-xs'>
+          {error}
+        </p>
+      ) : null}
     </div>
   );
 }
