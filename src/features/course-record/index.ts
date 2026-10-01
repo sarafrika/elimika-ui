@@ -9,8 +9,8 @@
  *   back as a `CourseRecordSection` ready for an `<AsyncSection>`.
  * - `use-course-access.ts` — reads `access` off the API response. Never derives
  *   it from the signed-in user's domain.
- * - `CourseRecordView.tsx` — the shell: back bar, hero, KPI band, gate banner,
- *   tabs, body and rail. Slots, not implementations.
+ * - `CourseRecordView.tsx` — the shell: back bar, header card, gate banner,
+ *   sticky URL-synced tabs (KPI band in Overview), body and rail. Slots.
  * - `blocks/` — presentational blocks. Props in, markup out.
  *
  * ## House rules
@@ -29,6 +29,7 @@
 export * from './blocks';
 export { CourseRecordPage } from './CourseRecordPage';
 export * from './CourseRecordView';
+export * from './record-tabs';
 export * from './types';
 export * from './use-course-access';
 export * from './use-course-metrics';
