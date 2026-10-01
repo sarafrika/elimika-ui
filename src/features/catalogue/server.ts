@@ -196,9 +196,14 @@ export const getPublicCourseDetail = async (
   courseUuid: string
 ): Promise<PublicCourseDetail | null> => {
   try {
-    // One public call. The course record and the lesson listing are both
-    // authenticated, so fetching them here 404'd the page for logged-out visitors.
-    const [contentResult, catalogueItemResult] = await Promise.allSettled([
+    // Three public reads, settled independently so one failing never blanks the page:
+    // - `GET /courses/{uuid}`: the course record, served anonymously for public courses.
+    //   Until that backend change is deployed it answers 401 to a logged-out visitor,
+    //   and the page reads from the other two instead.
+    // - `GET /courses/{uuid}/content`: the public profile and the lesson outline.
+    // - the catalogue entry: price, and proof the course is listed publicly.
+    const [recordResult, contentResult, catalogueItemResult] = await Promise.allSettled([
+      fetchCourse(courseUuid),
       resolveGeneratedData(
         getCourseContent({ path: { courseUuid } }),
         'Failed to load course content'
@@ -206,6 +211,7 @@ export const getPublicCourseDetail = async (
       fetchCatalogueItem(courseUuid),
     ]);
 
+    const record = recordResult.status === 'fulfilled' ? recordResult.value : null;
     const content =
       contentResult.status === 'fulfilled'
         ? extractEntity<OrganisationCourseContent>(contentResult.value)
@@ -214,32 +220,51 @@ export const getPublicCourseDetail = async (
       catalogueItemResult.status === 'fulfilled' ? catalogueItemResult.value : null;
 
     const profile = content?.course;
+    // The catalogue snapshot is the last resort: it carries the card fields only.
+    const snapshot = catalogueItem?.course;
 
-    if (!profile || profile.published === false || !catalogueItem) {
+    // Listed publicly, or served by the anonymous-capable record read.
+    if (!catalogueItem && !record) return null;
+    if (!record && !profile && !snapshot) return null;
+    if (
+      record?.is_published === false ||
+      profile?.published === false ||
+      snapshot?.published === false
+    ) {
       return null;
     }
 
     const course: PublicCourseSummary = {
       uuid: courseUuid,
-      name: profile.name,
-      description: profile.description,
-      objectives: profile.objectives,
-      prerequisites: profile.prerequisites,
-      thumbnail_url: profile.thumbnail_url,
-      banner_url: profile.banner_url,
-      intro_video_url: profile.intro_video_url,
-      duration_hours: profile.duration_hours,
-      duration_minutes: profile.duration_minutes,
-      category_names: profile.category_names,
-      price: profile.price,
-      class_limit: profile.class_limit,
-      age_lower_limit: profile.age_lower_limit,
-      age_upper_limit: profile.age_upper_limit,
-      is_published: profile.published,
-      accepts_new_enrollments: profile.accepts_new_enrollments,
-      course_creator_uuid: profile.creator_uuid,
-      training_requirements: profile.training_requirements,
-      updated_date: profile.updated_date,
+      name: record?.name ?? profile?.name ?? snapshot?.name,
+      description: record?.description ?? profile?.description ?? snapshot?.description,
+      objectives: record?.objectives ?? profile?.objectives,
+      prerequisites: record?.prerequisites ?? profile?.prerequisites,
+      thumbnail_url: record?.thumbnail_url ?? profile?.thumbnail_url ?? snapshot?.thumbnail_url,
+      banner_url: record?.banner_url ?? profile?.banner_url,
+      intro_video_url: record?.intro_video_url ?? profile?.intro_video_url,
+      duration_hours: record?.duration_hours ?? profile?.duration_hours ?? snapshot?.duration_hours,
+      duration_minutes:
+        record?.duration_minutes ?? profile?.duration_minutes ?? snapshot?.duration_minutes,
+      total_duration_display: record?.total_duration_display,
+      category_names:
+        record?.category_names ?? profile?.category_names ?? snapshot?.category_names,
+      price: record?.price ?? profile?.price ?? snapshot?.price,
+      class_limit: record?.class_limit ?? profile?.class_limit,
+      age_lower_limit:
+        record?.age_lower_limit ?? profile?.age_lower_limit ?? snapshot?.age_lower_limit,
+      age_upper_limit:
+        record?.age_upper_limit ?? profile?.age_upper_limit ?? snapshot?.age_upper_limit,
+      status: record?.status,
+      is_published: record?.is_published ?? profile?.published ?? snapshot?.published,
+      accepts_new_enrollments:
+        record?.accepts_new_enrollments ??
+        profile?.accepts_new_enrollments ??
+        snapshot?.accepts_new_enrollments,
+      course_creator_uuid:
+        record?.course_creator_uuid ?? profile?.creator_uuid ?? snapshot?.creator_uuid,
+      training_requirements: profile?.training_requirements,
+      updated_date: profile?.updated_date,
     };
 
     const priceAmount = derivePrice(course, catalogueItem);
@@ -247,7 +272,7 @@ export const getPublicCourseDetail = async (
     return {
       course,
       creator: null,
-      creatorName: profile.creator_name ?? undefined,
+      creatorName: profile?.creator_name ?? snapshot?.creator_name ?? undefined,
       catalogueItem,
       lessons: content?.lessons ?? [],
       priceAmount,

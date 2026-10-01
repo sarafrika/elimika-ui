@@ -24,13 +24,13 @@ export function MarketingTopNav() {
   });
   const cartItemCount = cartData?.items?.length ?? 0;
 
-  // The public catalogue and help routes were retired; the header is the brand,
-  // the cart and the way in.
-  const navLinks: { label: string; href: string; external?: boolean }[] = [];
+  const navLinks: { label: string; href: string; external?: boolean }[] = [
+    { label: 'Courses', href: '/courses' },
+  ];
 
   const isActive = (href: string) => {
-    const [path] = href.split('#');
-    return pathname === path;
+    const [path = ''] = href.split('#');
+    return pathname === path || pathname.startsWith(`${path}/`);
   };
 
   return (

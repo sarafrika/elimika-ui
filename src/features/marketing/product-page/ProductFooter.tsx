@@ -7,6 +7,7 @@ const SARAFRIKA_HOME = 'https://sarafrika.com';
 // Elimika destinations, not the Sarafrika site map — the chrome belongs to
 // this product even though the body mirrors the marketing page.
 const EXPLORE_LINKS = [
+  { label: 'Course catalogue', href: '/courses' },
   { label: 'Skills Wallet', href: '/skills-wallet' },
   { label: 'Cart', href: '/cart' },
 ] as const;

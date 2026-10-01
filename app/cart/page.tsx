@@ -281,7 +281,7 @@ export default function CartPage() {
                   Looks like you haven't added any courses yet. Start exploring our catalogue to
                   find courses that match your goals.
                 </CardDescription>
-                <Link href='/' className='inline-block pt-4'>
+                <Link href='/courses' className='inline-block pt-4'>
                   <Button
                     size='lg'
                     className='bg-primary hover:bg-primary/90 rounded-full px-8 shadow-lg transition'
@@ -461,7 +461,7 @@ export default function CartPage() {
                       className='w-full rounded-full text-base font-medium'
                       asChild
                     >
-                      <Link href='/'>Continue Shopping</Link>
+                      <Link href='/courses'>Continue Shopping</Link>
                     </Button>
                   </div>
 

@@ -22,6 +22,7 @@ import Link from 'next/link';
 import { CataloguePageShell } from './CataloguePageShell';
 import { CatalogueStatusCard } from './CatalogueStatusCard';
 import { CourseDetailsAsideCard } from './CourseDetailsAsideCard';
+import { PublicSimilarCourses } from './PublicSimilarCourses';
 
 /**
  * The public course record, as a prospect sees it.
@@ -135,6 +136,8 @@ export function PublicCourseDetailPage({ detail }: { detail: PublicCourseDetail 
           />
         </aside>
       </div>
+
+      {course.uuid ? <PublicSimilarCourses courseUuid={course.uuid} /> : null}
     </CataloguePageShell>
   );
 }

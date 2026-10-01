@@ -15,6 +15,15 @@ export default auth(req => {
   const { pathname } = req.nextUrl;
   const isAuth = !!req.auth;
 
+  // The old, un-shareable org-only course URL now resolves to the public,
+  // role-independent course page so shared links work for anyone. Checked before the
+  // sign-in guard: a logged-out visitor with a shared link belongs on the public page,
+  // not on the home page.
+  const courseMatch = pathname.match(/^\/dashboard\/courses\/([^/]+)\/?$/);
+  if (courseMatch?.[1] && UUID_RE.test(courseMatch[1])) {
+    return redirectToPath(req, `/courses/${courseMatch[1]}`);
+  }
+
   // Define protected routes that require authentication
   const protectedRoutes = ['/dashboard', '/onboarding'];
 
@@ -39,13 +48,6 @@ export default auth(req => {
       const target = `/dashboard/${segment}${rest ? `/${rest}` : '/overview'}${search}`;
       return redirectToPath(req, target);
     }
-  }
-
-  // The old, un-shareable org-only course URL now resolves to the public,
-  // role-independent course page so shared links work for anyone.
-  const courseMatch = pathname.match(/^\/dashboard\/courses\/([^/]+)\/?$/);
-  if (courseMatch && courseMatch[1] && UUID_RE.test(courseMatch[1])) {
-    return redirectToPath(req, `/courses/${courseMatch[1]}`);
   }
 
   // Allow the request to continue
