@@ -6606,16 +6606,16 @@ export type ApiResponseInstructorReview = {
  */
 export type GuardianStudentLink = {
   uuid?: string;
-  studentUuid?: string;
-  guardianUserUuid?: string;
-  studentName?: string;
-  guardianDisplayName?: string;
-  relationshipType?: GuardianRelationshipTypeEnum;
-  shareScope?: ShareScopeEnum;
+  student_uuid?: string;
+  guardian_user_uuid?: string;
+  student_name?: string;
+  guardian_display_name?: string;
+  relationship_type?: GuardianRelationshipTypeEnum;
+  share_scope?: ShareScopeEnum;
   status?: StatusEnum13;
-  primaryGuardian?: boolean;
-  linkedDate?: Date;
-  revokedDate?: Date;
+  primary_guardian?: boolean;
+  linked_date?: Date;
+  revoked_date?: Date;
   notes?: string;
 };
 
@@ -6626,17 +6626,17 @@ export type GuardianStudentLinkRequest = {
   /**
    * UUID for the student profile to be monitored
    */
-  studentUuid: string;
+  student_uuid: string;
   /**
    * UUID for the guardian's user account
    */
-  guardianUserUuid: string;
-  relationshipType: GuardianRelationshipTypeEnum;
-  shareScope: ShareScopeEnum;
+  guardian_user_uuid: string;
+  relationship_type: GuardianRelationshipTypeEnum;
+  share_scope: ShareScopeEnum;
   /**
    * Marks this guardian as the primary contact
    */
-  isPrimary?: boolean;
+  is_primary?: boolean;
   /**
    * Optional note shown in audits or invitation emails
    */
