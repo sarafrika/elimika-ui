@@ -19,6 +19,15 @@ import {
 } from '@/services/client/@tanstack/react-query.gen';
 import type { Instructor } from '@/services/client/types.gen';
 import { StatusBadge, surfaceTheme } from '@/components/data-display';
+import {
+  type SectionTab,
+  SectionTabPanel,
+  SectionTabs,
+  useSectionTab,
+} from '@/components/data-display/section-tabs';
+
+const PROFILE_TABS = ['skills', 'experience', 'education', 'documents', 'reviews'] as const;
+type ProfileTab = (typeof PROFILE_TABS)[number];
 
 function formatEnumLabel(value?: string | null) {
   if (!value) return '';
@@ -97,6 +106,8 @@ export function InstructorReviewProfile({
   const documentsQuery = useQuery({ ...getInstructorDocumentsOptions(pathOptions), enabled });
   const reviewsQuery = useQuery({ ...getInstructorReviewsOptions(pathOptions), enabled });
 
+  const { value: tab, setValue: setTab, hrefFor } = useSectionTab(PROFILE_TABS, 'skills');
+
   const profile = instructor ?? instructorQuery.data ?? null;
   const rating = ratingQuery.data?.data;
   const skills = skillsQuery.data?.data?.content ?? [];
@@ -104,6 +115,19 @@ export function InstructorReviewProfile({
   const experience = experienceQuery.data?.data?.content ?? [];
   const documents = documentsQuery.data?.data ?? [];
   const reviews = reviewsQuery.data?.data ?? [];
+
+  const countOf = (loading: boolean, items: readonly unknown[]) => (loading ? null : items.length);
+  const tabs: SectionTab<ProfileTab>[] = [
+    { id: 'skills', label: 'Skills', count: countOf(skillsQuery.isLoading, skills) },
+    {
+      id: 'experience',
+      label: 'Experience',
+      count: countOf(experienceQuery.isLoading, experience),
+    },
+    { id: 'education', label: 'Education', count: countOf(educationQuery.isLoading, education) },
+    { id: 'documents', label: 'Documents', count: countOf(documentsQuery.isLoading, documents) },
+    { id: 'reviews', label: 'Reviews', count: countOf(reviewsQuery.isLoading, reviews) },
+  ];
 
   const displayName = profile?.full_name || 'Instructor';
   const initials =
@@ -156,107 +180,138 @@ export function InstructorReviewProfile({
         </div>
 
         {profile?.bio ? (
-          <p className='text-muted-foreground mt-3 text-sm leading-6 whitespace-pre-line'>
+          <p className='text-muted-foreground mt-3 max-w-prose text-sm leading-6 whitespace-pre-line'>
             {profile.bio}
           </p>
         ) : null}
       </div>
 
-      <ProfileSection
-        title='Skills'
-        icon={Star}
-        isLoading={skillsQuery.isLoading}
-        isEmpty={skills.length === 0}
-        emptyLabel='No skills listed.'
+      <SectionTabs
+        tabs={tabs}
+        value={tab}
+        onValueChange={setTab}
+        hrefFor={hrefFor}
+        label='Applicant profile sections'
+        sticky
       >
-        <div className='flex flex-wrap gap-2'>
-          {skills.map(skill => (
-            <Badge key={skill.uuid ?? skill.skill_name} variant='outline' className='rounded-md'>
-              {skill.skill_name}
-              {skill.proficiency_level ? ` · ${formatEnumLabel(skill.proficiency_level)}` : ''}
-            </Badge>
-          ))}
-        </div>
-      </ProfileSection>
-
-      <ProfileSection
-        title='Experience'
-        icon={BriefcaseBusiness}
-        isLoading={experienceQuery.isLoading}
-        isEmpty={experience.length === 0}
-        emptyLabel='No work experience listed.'
-      >
-        {experience.map(item => (
-          <div key={item.uuid ?? `${item.position}-${item.organisation_name}`} className='text-sm'>
-            <p className='text-foreground font-medium'>
-              {item.position} · {item.organisation_name}
-            </p>
-            <p className='text-muted-foreground'>
-              {typeof item.years_of_experience === 'number'
-                ? `${item.years_of_experience} year${item.years_of_experience === 1 ? '' : 's'}`
-                : 'Duration not provided'}
-            </p>
-          </div>
-        ))}
-      </ProfileSection>
-
-      <ProfileSection
-        title='Education'
-        icon={GraduationCap}
-        isLoading={educationQuery.isLoading}
-        isEmpty={education.length === 0}
-        emptyLabel='No education records listed.'
-      >
-        {education.map(item => (
-          <div key={item.uuid ?? `${item.qualification}-${item.school_name}`} className='text-sm'>
-            <p className='text-foreground font-medium'>{item.qualification}</p>
-            <p className='text-muted-foreground'>
-              {item.school_name}
-              {item.year_completed ? ` · ${item.year_completed}` : ''}
-            </p>
-          </div>
-        ))}
-      </ProfileSection>
-
-      <ProfileSection
-        title='Documents'
-        icon={FileText}
-        isLoading={documentsQuery.isLoading}
-        isEmpty={documents.length === 0}
-        emptyLabel='No documents uploaded.'
-      >
-        {documents.map(document => (
-          <div key={document.uuid ?? document.original_filename} className='text-sm'>
-            <p className='text-foreground font-medium'>
-              {document.title || document.original_filename}
-            </p>
-          </div>
-        ))}
-      </ProfileSection>
-
-      <ProfileSection
-        title='Reviews'
-        icon={Star}
-        isLoading={reviewsQuery.isLoading}
-        isEmpty={reviews.length === 0}
-        emptyLabel='No student reviews yet.'
-      >
-        {reviews.slice(0, 5).map(review => (
-          <div
-            key={review.uuid}
-            className='border-border/60 bg-muted/20 rounded-md border p-3 text-sm'
+        <SectionTabPanel value='skills'>
+          <ProfileSection
+            title='Skills'
+            icon={Star}
+            isLoading={skillsQuery.isLoading}
+            isEmpty={skills.length === 0}
+            emptyLabel='No skills listed.'
           >
-            <div className='flex items-center gap-2'>
-              <Star className='fill-warning text-warning size-3.5' />
-              <span className='font-medium'>{review.rating}/5</span>
-              {review.headline ? <span className='text-foreground'>{review.headline}</span> : null}
+            <div className='flex flex-wrap gap-2'>
+              {skills.map(skill => (
+                <Badge
+                  key={skill.uuid ?? skill.skill_name}
+                  variant='outline'
+                  className='rounded-md'
+                >
+                  {skill.skill_name}
+                  {skill.proficiency_level ? ` · ${formatEnumLabel(skill.proficiency_level)}` : ''}
+                </Badge>
+              ))}
             </div>
-            {review.comments ? (
-              <p className='text-muted-foreground mt-1'>{review.comments}</p>
-            ) : null}
-          </div>
-        ))}
-      </ProfileSection>
+          </ProfileSection>
+        </SectionTabPanel>
+
+        <SectionTabPanel value='experience'>
+          <ProfileSection
+            title='Experience'
+            icon={BriefcaseBusiness}
+            isLoading={experienceQuery.isLoading}
+            isEmpty={experience.length === 0}
+            emptyLabel='No work experience listed.'
+          >
+            {experience.map(item => (
+              <div
+                key={item.uuid ?? `${item.position}-${item.organisation_name}`}
+                className='text-sm'
+              >
+                <p className='text-foreground font-medium'>
+                  {item.position} · {item.organisation_name}
+                </p>
+                <p className='text-muted-foreground'>
+                  {typeof item.years_of_experience === 'number'
+                    ? `${item.years_of_experience} year${item.years_of_experience === 1 ? '' : 's'}`
+                    : 'Duration not provided'}
+                </p>
+              </div>
+            ))}
+          </ProfileSection>
+        </SectionTabPanel>
+
+        <SectionTabPanel value='education'>
+          <ProfileSection
+            title='Education'
+            icon={GraduationCap}
+            isLoading={educationQuery.isLoading}
+            isEmpty={education.length === 0}
+            emptyLabel='No education records listed.'
+          >
+            {education.map(item => (
+              <div
+                key={item.uuid ?? `${item.qualification}-${item.school_name}`}
+                className='text-sm'
+              >
+                <p className='text-foreground font-medium'>{item.qualification}</p>
+                <p className='text-muted-foreground'>
+                  {item.school_name}
+                  {item.year_completed ? ` · ${item.year_completed}` : ''}
+                </p>
+              </div>
+            ))}
+          </ProfileSection>
+        </SectionTabPanel>
+
+        <SectionTabPanel value='documents'>
+          <ProfileSection
+            title='Documents'
+            icon={FileText}
+            isLoading={documentsQuery.isLoading}
+            isEmpty={documents.length === 0}
+            emptyLabel='No documents uploaded.'
+          >
+            {documents.map(document => (
+              <div key={document.uuid ?? document.original_filename} className='text-sm'>
+                <p className='text-foreground font-medium'>
+                  {document.title || document.original_filename}
+                </p>
+              </div>
+            ))}
+          </ProfileSection>
+        </SectionTabPanel>
+
+        <SectionTabPanel value='reviews'>
+          <ProfileSection
+            title='Reviews'
+            icon={Star}
+            isLoading={reviewsQuery.isLoading}
+            isEmpty={reviews.length === 0}
+            emptyLabel='No student reviews yet.'
+          >
+            {reviews.slice(0, 5).map(review => (
+              <div
+                key={review.uuid}
+                className='border-border/60 bg-muted/20 rounded-md border p-3 text-sm'
+              >
+                <div className='flex items-center gap-2'>
+                  <Star className='fill-warning text-warning size-3.5' />
+                  <span className='font-medium'>{review.rating}/5</span>
+                  {review.headline ? (
+                    <span className='text-foreground'>{review.headline}</span>
+                  ) : null}
+                </div>
+                {review.comments ? (
+                  <p className='text-muted-foreground mt-1'>{review.comments}</p>
+                ) : null}
+              </div>
+            ))}
+          </ProfileSection>
+        </SectionTabPanel>
+      </SectionTabs>
     </div>
   );
 }

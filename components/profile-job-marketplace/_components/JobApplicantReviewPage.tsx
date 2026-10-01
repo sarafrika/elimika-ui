@@ -320,7 +320,7 @@ export function JobApplicantReviewPage({
           : rateCheck.message;
 
   return (
-    <div className={surfaceTheme.page}>
+    <div className={`${surfaceTheme.pageWide} py-4`}>
       <div className={surfaceTheme.pageStack}>
         <Button variant='ghost' size='sm' className='text-muted-foreground w-fit px-0' asChild>
           <Link href={jobHref(jobUuid, 'applicants')}>
@@ -353,7 +353,7 @@ export function JobApplicantReviewPage({
         ) : null}
 
         {isLoading ? (
-          <div className='grid gap-4 md:grid-cols-[minmax(0,1fr)_360px]'>
+          <div className='grid gap-4 md:grid-cols-[minmax(0,1fr)_360px] 2xl:grid-cols-[minmax(0,1fr)_420px]'>
             <Skeleton className='h-96 rounded-md' />
             <Skeleton className='h-96 rounded-md' />
           </div>
@@ -365,7 +365,7 @@ export function JobApplicantReviewPage({
             </p>
           </div>
         ) : (
-          <div className='grid gap-4 md:grid-cols-[minmax(0,1fr)_360px]'>
+          <div className='grid gap-4 md:grid-cols-[minmax(0,1fr)_360px] 2xl:grid-cols-[minmax(0,1fr)_420px]'>
             <InstructorReviewProfile
               instructorUuid={instructorUuid}
               instructor={instructor}
@@ -396,6 +396,8 @@ export function JobApplicantReviewPage({
               }
             />
 
+            {/* The decision and the application's standing sit outside the profile tabs, so they
+                stay on screen whichever section is open. */}
             <div className='h-fit space-y-4'>
               {forwardStep ? (
                 <HireChecksPanel
