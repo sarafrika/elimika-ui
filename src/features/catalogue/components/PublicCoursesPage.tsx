@@ -81,8 +81,7 @@ const PRICE_OPTIONS = [
 
 // Phones get one column and tablets two; from desktop up the grid fits as many cards as
 // the width allows, so large and high-resolution screens fill out instead of crowding the middle.
-const GRID =
-  'grid grid-cols-1 gap-4 sm:grid-cols-2 sm:gap-5 xl:grid-cols-[repeat(auto-fill,minmax(290px,1fr))] 2xl:gap-6';
+const GRID = surfaceTheme.cardGrid;
 
 type Totals = { courses?: number; programmes?: number };
 

@@ -7,13 +7,14 @@ import { usePathname } from 'next/navigation';
 import LoginButton from '@/components/LoginButton';
 import { ThemeSwitcher } from '@/components/theme-switcher';
 import { Badge } from '@/components/ui/badge';
+import { surfaceTheme } from '@/components/data-display/page-shell';
 import { Button } from '@/components/ui/button';
 import { useSavedCart } from '@/hooks/use-saved-cart';
 import { cn } from '@/lib/utils';
 import { PublicSearch } from '@/src/features/search/components/public-search';
 
 /** Wide public pages (the catalogue) use the screen up to 2400px instead of a 1280px column. */
-export const WIDE_PUBLIC_CONTAINER = 'max-w-[2400px] px-4 sm:px-6 xl:px-10 2xl:px-14';
+export const WIDE_PUBLIC_CONTAINER = surfaceTheme.pageWide;
 
 export function MarketingTopNav({ wide = false }: { wide?: boolean }) {
   const pathname = usePathname();

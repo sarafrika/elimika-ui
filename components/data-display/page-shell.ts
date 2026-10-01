@@ -6,6 +6,17 @@ export const surfaceTheme = {
   /** Centered page shell. */
   page: 'mx-auto w-full max-w-[1520px] px-3 py-4 sm:px-5 lg:px-7',
   pageStack: 'flex w-full flex-col gap-4',
+  /**
+   * Opt-in wide container for pages that should use a large screen (the public catalogue
+   * and course pages): up to 2400px instead of a centred 1520px column.
+   */
+  pageWide: 'mx-auto w-full max-w-[2400px] px-4 sm:px-6 xl:px-10 2xl:px-14',
+  /**
+   * Opt-in card grid: one column on phones, two on tablets, then as many 290px+ cards as
+   * the width allows, so large screens fill out instead of crowding the middle.
+   */
+  cardGrid:
+    'grid grid-cols-1 gap-4 sm:grid-cols-2 sm:gap-5 xl:grid-cols-[repeat(auto-fill,minmax(290px,1fr))] 2xl:gap-6',
 
   /** Card surfaces. */
   card: 'rounded-md border border-border/70 bg-card',
