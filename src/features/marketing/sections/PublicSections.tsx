@@ -1,7 +1,6 @@
 'use client';
 
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import {
   Dialog,
   DialogContent,
@@ -11,12 +10,7 @@ import {
   DialogTrigger,
 } from '@/components/ui/dialog';
 import { Send } from 'lucide-react';
-import { signIn } from 'next-auth/react';
-import Link from 'next/link';
 import { SupportContactForm } from '../pages/SupportContactForm';
-
-/** Job openings for learners; anonymous visitors sign in and land here. */
-const OPENINGS_PATH = '/dashboard/student/opportunities';
 
 export function SkillsFundSection() {
   return (
@@ -46,61 +40,6 @@ export function SkillsFundSection() {
             Fund Student
           </Button>
         </div>
-      </div>
-    </section>
-  );
-}
-
-export function OpportunitiesSection() {
-  return (
-    <section id='opportunities' className='space-y-6'>
-      <div className='space-y-2 text-center'>
-        <p className='text-primary text-xs font-semibold tracking-[0.4em] uppercase'>
-          Opportunities
-        </p>
-        <h2 className='text-3xl font-semibold sm:text-4xl'>Unlock jobs and learning offers</h2>
-        <p className='text-muted-foreground mx-auto max-w-3xl text-base'>
-          Access jobs and consultancy opportunities in your industry that match your verified skills
-          profile. Supports global mobility - your skills are portable and recognized locally and
-          abroad.
-        </p>
-      </div>
-      <div className='grid gap-4 md:grid-cols-2'>
-        <Card className='border-border/60 bg-card rounded-[24px] border shadow-sm'>
-          <CardHeader>
-            <CardTitle className='text-lg font-semibold'>Job matches</CardTitle>
-            <CardDescription className='text-muted-foreground'>
-              Get notified when roles align with your verified skills and credentials.
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            {/* Openings live behind the learner dashboard, so the button signs in first. */}
-            <Button
-              variant='outline'
-              className='rounded-full'
-              onClick={() =>
-                void signIn('keycloak', {
-                  redirectTo: `${window.location.origin}${OPENINGS_PATH}`,
-                })
-              }
-            >
-              Search openings
-            </Button>
-          </CardContent>
-        </Card>
-        <Card className='border-border/60 bg-card rounded-[24px] border shadow-sm'>
-          <CardHeader>
-            <CardTitle className='text-lg font-semibold'>Learning offers</CardTitle>
-            <CardDescription className='text-muted-foreground'>
-              Explore scholarships, bursaries, and employer-funded upskilling programs.
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <Button variant='outline' className='rounded-full'>
-              View offers
-            </Button>
-          </CardContent>
-        </Card>
       </div>
     </section>
   );
