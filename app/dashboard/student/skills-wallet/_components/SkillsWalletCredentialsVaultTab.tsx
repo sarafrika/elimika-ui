@@ -6,6 +6,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { toast } from 'sonner';
 import { WalletShareButton } from '@/app/dashboard/_components/skills-wallet/WalletShareButton';
 import { downloadCredential } from '@/app/dashboard/_components/skills-wallet/credential-download';
+import { credentialShareHref } from '@/app/dashboard/_components/skills-wallet/wallet-tab-hash';
 import { toAuthenticatedMediaUrl } from '@/src/lib/media-url';
 import Spinner from '@/components/ui/spinner';
 import { Badge } from '@/components/ui/badge';
@@ -210,7 +211,11 @@ export function SkillsWalletCredentialsVaultTab({
                       const url = toAuthenticatedMediaUrl(item.document_url);
                       return url
                         ? new URL(url, window.location.origin).href
-                        : `${window.location.origin}${window.location.pathname}#credentials/${encodeURIComponent(item.id)}`;
+                        : credentialShareHref(
+                            window.location.origin,
+                            window.location.pathname,
+                            item.id
+                          );
                     }}
                   />
                   <Button

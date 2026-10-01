@@ -35,9 +35,9 @@ import type {
   VerificationEventRecord,
 } from '@/app/dashboard/student/skills-wallet/_components/SkillsWalletShared';
 import { WalletIdCard } from '@/app/dashboard/student/skills-wallet/_components/SkillsWalletShared';
-import { SkillsWalletTabs } from '@/app/dashboard/student/skills-wallet/_components/SkillsWalletTabs';
 import { SkillsWalletVerficationTab } from '@/app/dashboard/student/skills-wallet/_components/SkillsWalletVerficationTab';
 import DeleteModal from '@/components/custom-modals/delete-modal';
+import { SectionTabPanel, SectionTabs, surfaceTheme } from '@/components/data-display';
 import { EmptyState } from '@/components/ui/empty-state';
 import { Button } from '@/components/ui/button';
 import {
@@ -56,6 +56,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { useUserProfile } from '@/context/profile-context';
 import { extractPage } from '@/lib/api-helpers';
 import { STALE_TIMES } from '@/lib/query-client';
+import { cn } from '@/lib/utils';
 import {
   deleteCourseCreatorExperienceMutation,
   deleteInstructorExperienceMutation,
@@ -110,6 +111,8 @@ const TABS = [
 ] as const;
 
 type TabId = (typeof TABS)[number]['id'];
+
+const TAB_IDS: readonly TabId[] = TABS.map(item => item.id);
 
 function getRoleLabel(role: SkillsWalletRole) {
   return role === 'instructor' ? 'Instructor' : 'Course creator';
@@ -465,25 +468,31 @@ function AddExperienceDialog({
     const payload =
       role === 'instructor'
         ? {
-          instructor_uuid: profileUuid,
-          position: draft.position.trim(),
-          organisation_name: draft.organisation_name.trim(),
-          responsibilities: draft.responsibilities.trim() || undefined,
-          years_of_experience: draft.years_of_experience ? Number(draft.years_of_experience) : undefined,
-          start_date: draft.start_date ? new Date(draft.start_date) : undefined,
-          end_date: draft.is_current_position || !draft.end_date ? undefined : new Date(draft.end_date),
-          is_current_position: draft.is_current_position,
-        }
+            instructor_uuid: profileUuid,
+            position: draft.position.trim(),
+            organisation_name: draft.organisation_name.trim(),
+            responsibilities: draft.responsibilities.trim() || undefined,
+            years_of_experience: draft.years_of_experience
+              ? Number(draft.years_of_experience)
+              : undefined,
+            start_date: draft.start_date ? new Date(draft.start_date) : undefined,
+            end_date:
+              draft.is_current_position || !draft.end_date ? undefined : new Date(draft.end_date),
+            is_current_position: draft.is_current_position,
+          }
         : {
-          course_creator_uuid: profileUuid,
-          position: draft.position.trim(),
-          organisation_name: draft.organisation_name.trim(),
-          responsibilities: draft.responsibilities.trim() || undefined,
-          years_of_experience: draft.years_of_experience ? Number(draft.years_of_experience) : undefined,
-          start_date: draft.start_date ? new Date(draft.start_date) : undefined,
-          end_date: draft.is_current_position || !draft.end_date ? undefined : new Date(draft.end_date),
-          is_current_position: draft.is_current_position,
-        };
+            course_creator_uuid: profileUuid,
+            position: draft.position.trim(),
+            organisation_name: draft.organisation_name.trim(),
+            responsibilities: draft.responsibilities.trim() || undefined,
+            years_of_experience: draft.years_of_experience
+              ? Number(draft.years_of_experience)
+              : undefined,
+            start_date: draft.start_date ? new Date(draft.start_date) : undefined,
+            end_date:
+              draft.is_current_position || !draft.end_date ? undefined : new Date(draft.end_date),
+            is_current_position: draft.is_current_position,
+          };
 
     const response = await mutation.mutateAsync({
       path:
@@ -496,8 +505,14 @@ function AddExperienceDialog({
     if (response) {
       const queryKey =
         role === 'instructor'
-          ? getInstructorExperienceQueryKey({ path: { instructorUuid: profileUuid }, query: { pageable: { page: 0, size: 200 } } })
-          : getCourseCreatorExperienceQueryKey({ path: { courseCreatorUuid: profileUuid }, query: { pageable: { page: 0, size: 200 } } });
+          ? getInstructorExperienceQueryKey({
+              path: { instructorUuid: profileUuid },
+              query: { pageable: { page: 0, size: 200 } },
+            })
+          : getCourseCreatorExperienceQueryKey({
+              path: { courseCreatorUuid: profileUuid },
+              query: { pageable: { page: 0, size: 200 } },
+            });
       await queryClient.invalidateQueries({ queryKey });
       toast.success('Experience saved');
       reset();
@@ -507,44 +522,102 @@ function AddExperienceDialog({
   };
 
   return (
-    <Dialog open={open} onOpenChange={nextOpen => (nextOpen ? onOpenChange(true) : (reset(), onOpenChange(false)))}>
+    <Dialog
+      open={open}
+      onOpenChange={nextOpen => (nextOpen ? onOpenChange(true) : (reset(), onOpenChange(false)))}
+    >
       <DialogContent className='max-w-2xl'>
         <DialogHeader>
           <DialogTitle>Add experience</DialogTitle>
-          <DialogDescription>Record your work history, internships, volunteering and life experiences.</DialogDescription>
+          <DialogDescription>
+            Record your work history, internships, volunteering and life experiences.
+          </DialogDescription>
         </DialogHeader>
         <form className='grid gap-4 md:grid-cols-2' onSubmit={submit}>
           <div className='space-y-2'>
             <Label htmlFor='position'>Position</Label>
-            <Input id='position' value={draft.position} onChange={e => setDraft(current => ({ ...current, position: e.target.value }))} required />
+            <Input
+              id='position'
+              value={draft.position}
+              onChange={e => setDraft(current => ({ ...current, position: e.target.value }))}
+              required
+            />
           </div>
           <div className='space-y-2'>
             <Label htmlFor='org'>Organisation</Label>
-            <Input id='org' value={draft.organisation_name} onChange={e => setDraft(current => ({ ...current, organisation_name: e.target.value }))} required />
+            <Input
+              id='org'
+              value={draft.organisation_name}
+              onChange={e =>
+                setDraft(current => ({ ...current, organisation_name: e.target.value }))
+              }
+              required
+            />
           </div>
           <div className='space-y-2 md:col-span-2'>
             <Label htmlFor='responsibilities'>Responsibilities</Label>
-            <Textarea id='responsibilities' rows={4} value={draft.responsibilities} onChange={e => setDraft(current => ({ ...current, responsibilities: e.target.value }))} />
+            <Textarea
+              id='responsibilities'
+              rows={4}
+              value={draft.responsibilities}
+              onChange={e =>
+                setDraft(current => ({ ...current, responsibilities: e.target.value }))
+              }
+            />
           </div>
           <div className='space-y-2'>
             <Label htmlFor='years'>Years of experience</Label>
-            <Input id='years' type='number' min='0' step='0.1' value={draft.years_of_experience} onChange={e => setDraft(current => ({ ...current, years_of_experience: e.target.value }))} />
+            <Input
+              id='years'
+              type='number'
+              min='0'
+              step='0.1'
+              value={draft.years_of_experience}
+              onChange={e =>
+                setDraft(current => ({ ...current, years_of_experience: e.target.value }))
+              }
+            />
           </div>
           <div className='space-y-2'>
             <Label htmlFor='start'>Start date</Label>
-            <Input id='start' type='date' value={draft.start_date} onChange={e => setDraft(current => ({ ...current, start_date: e.target.value }))} />
+            <Input
+              id='start'
+              type='date'
+              value={draft.start_date}
+              onChange={e => setDraft(current => ({ ...current, start_date: e.target.value }))}
+            />
           </div>
           <div className='space-y-2'>
             <Label htmlFor='end'>End date</Label>
-            <Input id='end' type='date' value={draft.end_date} disabled={draft.is_current_position} onChange={e => setDraft(current => ({ ...current, end_date: e.target.value }))} />
+            <Input
+              id='end'
+              type='date'
+              value={draft.end_date}
+              disabled={draft.is_current_position}
+              onChange={e => setDraft(current => ({ ...current, end_date: e.target.value }))}
+            />
           </div>
           <label className='flex items-center gap-2 text-sm md:col-span-2'>
-            <input type='checkbox' checked={draft.is_current_position} onChange={e => setDraft(current => ({ ...current, is_current_position: e.target.checked, end_date: e.target.checked ? '' : current.end_date }))} />
+            <input
+              type='checkbox'
+              checked={draft.is_current_position}
+              onChange={e =>
+                setDraft(current => ({
+                  ...current,
+                  is_current_position: e.target.checked,
+                  end_date: e.target.checked ? '' : current.end_date,
+                }))
+              }
+            />
             This is my current position
           </label>
           <DialogFooter className='md:col-span-2'>
-            <Button type='button' variant='outline' onClick={() => onOpenChange(false)}>Cancel</Button>
-            <Button type='submit' disabled={mutation.isPending || !profileUuid}>{mutation.isPending ? 'Saving...' : 'Save experience'}</Button>
+            <Button type='button' variant='outline' onClick={() => onOpenChange(false)}>
+              Cancel
+            </Button>
+            <Button type='submit' disabled={mutation.isPending || !profileUuid}>
+              {mutation.isPending ? 'Saving...' : 'Save experience'}
+            </Button>
           </DialogFooter>
         </form>
       </DialogContent>
@@ -603,23 +676,41 @@ function AddCredentialDialog({
 
   const membershipQuery = useQuery({
     ...(role === 'instructor'
-      ? getInstructorMembershipsOptions({ path: { instructorUuid: profileUuid ?? '' }, query: { pageable: { page: 0, size: 200 } } })
-      : getCourseCreatorMembershipsOptions({ path: { courseCreatorUuid: profileUuid ?? '' }, query: { pageable: { page: 0, size: 200 } } })),
+      ? getInstructorMembershipsOptions({
+          path: { instructorUuid: profileUuid ?? '' },
+          query: { pageable: { page: 0, size: 200 } },
+        })
+      : getCourseCreatorMembershipsOptions({
+          path: { courseCreatorUuid: profileUuid ?? '' },
+          query: { pageable: { page: 0, size: 200 } },
+        })),
     enabled: Boolean(profileUuid),
     staleTime: STALE_TIMES.reference,
   });
 
   const relatedExperienceQuery = useQuery({
     ...(role === 'instructor'
-      ? getInstructorExperienceOptions({ path: { instructorUuid: profileUuid ?? '' }, query: { pageable: { page: 0, size: 200 } } })
-      : getCourseCreatorExperienceOptions({ path: { courseCreatorUuid: profileUuid ?? '' }, query: { pageable: { page: 0, size: 200 } } })),
+      ? getInstructorExperienceOptions({
+          path: { instructorUuid: profileUuid ?? '' },
+          query: { pageable: { page: 0, size: 200 } },
+        })
+      : getCourseCreatorExperienceOptions({
+          path: { courseCreatorUuid: profileUuid ?? '' },
+          query: { pageable: { page: 0, size: 200 } },
+        })),
     enabled: Boolean(profileUuid),
     staleTime: STALE_TIMES.reference,
   });
 
-  const educations = (educationQuery.data?.data?.content ?? educationQuery.data?.data ?? []) as InstructorEducation[];
-  const memberships = (membershipQuery.data?.data?.content ?? membershipQuery.data?.data ?? []) as InstructorProfessionalMembership[];
-  const experiences = (relatedExperienceQuery.data?.data?.content ?? relatedExperienceQuery.data?.data ?? []) as InstructorExperience[];
+  const educations = (educationQuery.data?.data?.content ??
+    educationQuery.data?.data ??
+    []) as InstructorEducation[];
+  const memberships = (membershipQuery.data?.data?.content ??
+    membershipQuery.data?.data ??
+    []) as InstructorProfessionalMembership[];
+  const experiences = (relatedExperienceQuery.data?.data?.content ??
+    relatedExperienceQuery.data?.data ??
+    []) as InstructorExperience[];
 
   function RelatedRecordSelector() {
     return (
@@ -630,7 +721,9 @@ function AddCredentialDialog({
             id='related_kind'
             className='border-input bg-background h-10 w-full rounded-md border px-3 text-sm'
             value={draft.related_kind}
-            onChange={e => setDraft(current => ({ ...current, related_kind: e.target.value, related_uuid: '' }))}
+            onChange={e =>
+              setDraft(current => ({ ...current, related_kind: e.target.value, related_uuid: '' }))
+            }
           >
             <option value='none'>None</option>
             <option value='education'>Education</option>
@@ -650,21 +743,26 @@ function AddCredentialDialog({
               required={draft.related_kind !== 'none'}
             >
               <option value=''>Select a record</option>
-              {draft.related_kind === 'education' && educations.map(ed => (
-                <option key={ed.uuid ?? ed.id} value={ed.uuid ?? ed.id}>
-                  {ed.school_name ?? ed.qualification ?? ed.title ?? ed.name ?? ed.uuid}
-                </option>
-              ))}
-              {draft.related_kind === 'membership' && memberships.map(mb => (
-                <option key={mb.uuid ?? mb.id} value={mb.uuid ?? mb.id}>
-                  {mb.organisation_name ?? mb.name ?? mb.title ?? mb.uuid}
-                </option>
-              ))}
-              {draft.related_kind === 'experience' && experiences.map(ex => (
-                <option key={ex.uuid ?? ex.id} value={ex.uuid ?? ex.id}>
-                  {ex.position ?? ex.title ?? `${ex.organisation_name ?? ''} ${ex.position ?? ''}`}
-                </option>
-              ))}
+              {draft.related_kind === 'education' &&
+                educations.map(ed => (
+                  <option key={ed.uuid ?? ed.id} value={ed.uuid ?? ed.id}>
+                    {ed.school_name ?? ed.qualification ?? ed.title ?? ed.name ?? ed.uuid}
+                  </option>
+                ))}
+              {draft.related_kind === 'membership' &&
+                memberships.map(mb => (
+                  <option key={mb.uuid ?? mb.id} value={mb.uuid ?? mb.id}>
+                    {mb.organisation_name ?? mb.name ?? mb.title ?? mb.uuid}
+                  </option>
+                ))}
+              {draft.related_kind === 'experience' &&
+                experiences.map(ex => (
+                  <option key={ex.uuid ?? ex.id} value={ex.uuid ?? ex.id}>
+                    {ex.position ??
+                      ex.title ??
+                      `${ex.organisation_name ?? ''} ${ex.position ?? ''}`}
+                  </option>
+                ))}
             </select>
           </div>
         ) : null}
@@ -688,20 +786,13 @@ function AddCredentialDialog({
         description: draft.description.trim() || undefined,
         expiry_date: draft.expiry_date || undefined,
         education_uuid:
-          draft.related_kind === 'education'
-            ? draft.related_uuid || undefined
-            : undefined,
+          draft.related_kind === 'education' ? draft.related_uuid || undefined : undefined,
         experience_uuid:
-          draft.related_kind === 'experience'
-            ? draft.related_uuid || undefined
-            : undefined,
+          draft.related_kind === 'experience' ? draft.related_uuid || undefined : undefined,
         membership_uuid:
-          draft.related_kind === 'membership'
-            ? draft.related_uuid || undefined
-            : undefined,
+          draft.related_kind === 'membership' ? draft.related_uuid || undefined : undefined,
       },
     } as never);
-
 
     if (response) {
       const queryKey =
@@ -717,11 +808,16 @@ function AddCredentialDialog({
   };
 
   return (
-    <Dialog open={open} onOpenChange={nextOpen => (nextOpen ? onOpenChange(true) : (reset(), onOpenChange(false)))}>
+    <Dialog
+      open={open}
+      onOpenChange={nextOpen => (nextOpen ? onOpenChange(true) : (reset(), onOpenChange(false)))}
+    >
       <DialogContent className='max-w-2xl'>
         <DialogHeader>
           <DialogTitle>Add credential</DialogTitle>
-          <DialogDescription>Upload a PDF credential or supporting document for your profile.</DialogDescription>
+          <DialogDescription>
+            Upload a PDF credential or supporting document for your profile.
+          </DialogDescription>
         </DialogHeader>
         <form className='grid gap-4 md:grid-cols-2' onSubmit={submit}>
           <div className='space-y-2 md:col-span-2'>
@@ -730,7 +826,9 @@ function AddCredentialDialog({
               id='file'
               type='file'
               accept='.pdf,image/*,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document'
-              onChange={e => setDraft(current => ({ ...current, file: e.target.files?.[0] ?? null }))}
+              onChange={e =>
+                setDraft(current => ({ ...current, file: e.target.files?.[0] ?? null }))
+              }
               required
             />
           </div>
@@ -738,14 +836,15 @@ function AddCredentialDialog({
           {/* Related record selector: education / membership / experience */}
           <RelatedRecordSelector />
 
-
           <div className='space-y-2'>
             <Label htmlFor='document_type_uuid'>Document type</Label>
             <select
               id='document_type_uuid'
               className='border-input bg-background h-10 w-full rounded-md border px-3 text-sm'
               value={draft.document_type_uuid}
-              onChange={e => setDraft(current => ({ ...current, document_type_uuid: e.target.value }))}
+              onChange={e =>
+                setDraft(current => ({ ...current, document_type_uuid: e.target.value }))
+              }
               required
             >
               <option value='' disabled>
@@ -759,7 +858,7 @@ function AddCredentialDialog({
                   const aScore = prefs.findIndex(p => aText.includes(p)) === -1 ? 1 : 0;
                   const bScore = prefs.findIndex(p => bText.includes(p)) === -1 ? 1 : 0;
                   if (aScore !== bScore) return aScore - bScore;
-                  return (aText > bText) ? 1 : -1;
+                  return aText > bText ? 1 : -1;
                 });
                 return sorted.map(type => (
                   <option key={type.uuid} value={type.uuid ?? ''}>
@@ -771,18 +870,36 @@ function AddCredentialDialog({
           </div>
           <div className='space-y-2'>
             <Label htmlFor='expiry_date'>Expiry date</Label>
-            <Input id='expiry_date' type='date' value={draft.expiry_date} onChange={e => setDraft(current => ({ ...current, expiry_date: e.target.value }))} />
+            <Input
+              id='expiry_date'
+              type='date'
+              value={draft.expiry_date}
+              onChange={e => setDraft(current => ({ ...current, expiry_date: e.target.value }))}
+            />
           </div>
           <div className='space-y-2 md:col-span-2'>
             <Label htmlFor='title'>Title</Label>
-            <Input id='title' value={draft.title} onChange={e => setDraft(current => ({ ...current, title: e.target.value }))} required />
+            <Input
+              id='title'
+              value={draft.title}
+              onChange={e => setDraft(current => ({ ...current, title: e.target.value }))}
+              required
+            />
           </div>
           <div className='space-y-2 md:col-span-2'>
             <Label htmlFor='description'>Description</Label>
-            <Textarea id='description' rows={4} value={draft.description} onChange={e => setDraft(current => ({ ...current, description: e.target.value }))} required />
+            <Textarea
+              id='description'
+              rows={4}
+              value={draft.description}
+              onChange={e => setDraft(current => ({ ...current, description: e.target.value }))}
+              required
+            />
           </div>
           <DialogFooter className='md:col-span-2'>
-            <Button type='button' variant='outline' onClick={() => onOpenChange(false)}>Cancel</Button>
+            <Button type='button' variant='outline' onClick={() => onOpenChange(false)}>
+              Cancel
+            </Button>
             <Button type='submit' disabled={mutation.isPending || !profileUuid}>
               <UploadCloud className='mr-2 size-4' />
               {mutation.isPending ? 'Uploading...' : 'Upload credential'}
@@ -803,12 +920,22 @@ export function RoleSkillsWalletPage({ role }: RoleSkillsWalletPageProps) {
         <Skeleton className='h-24 w-full' />
         <Skeleton className='h-64 w-full' />
       </div>
-    ) : <EmptyState title='Skills wallet unavailable' description='Complete your role profile to access your skills wallet.' />;
+    ) : (
+      <EmptyState
+        title='Skills wallet unavailable'
+        description='Complete your role profile to access your skills wallet.'
+      />
+    );
   }
-  return <ProfileSkillsWalletPage key={`${role}-${profileUuid}`} role={role} profileUuid={profileUuid} />;
+  return (
+    <ProfileSkillsWalletPage key={`${role}-${profileUuid}`} role={role} profileUuid={profileUuid} />
+  );
 }
 
-function ProfileSkillsWalletPage({ role, profileUuid }: RoleSkillsWalletPageProps & { profileUuid: string }) {
+function ProfileSkillsWalletPage({
+  role,
+  profileUuid,
+}: RoleSkillsWalletPageProps & { profileUuid: string }) {
   const profile = useUserProfile();
   const roleProfile = role === 'instructor' ? profile?.instructor : profile?.courseCreator;
   const profileName =
@@ -823,12 +950,18 @@ function ProfileSkillsWalletPage({ role, profileUuid }: RoleSkillsWalletPageProp
   const [deletingExperience, setDeletingExperience] = useState<ExperienceRecord | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
   const instructorSkillsQuery = useQuery({
-    ...getInstructorSkillsOptions({ path: { instructorUuid: profileUuid }, query: { pageable: { page: 0, size: 20 } } }),
+    ...getInstructorSkillsOptions({
+      path: { instructorUuid: profileUuid },
+      query: { pageable: { page: 0, size: 20 } },
+    }),
     enabled: Boolean(profileUuid) && role === 'instructor',
     staleTime: STALE_TIMES.entity,
   });
   const creatorSkillsQuery = useQuery({
-    ...getCourseCreatorSkillsOptions({ path: { courseCreatorUuid: profileUuid }, query: { pageable: { page: 0, size: 20 } } }),
+    ...getCourseCreatorSkillsOptions({
+      path: { courseCreatorUuid: profileUuid },
+      query: { pageable: { page: 0, size: 20 } },
+    }),
     enabled: Boolean(profileUuid) && role === 'course_creator',
     staleTime: STALE_TIMES.entity,
   });
@@ -856,14 +989,15 @@ function ProfileSkillsWalletPage({ role, profileUuid }: RoleSkillsWalletPageProp
     staleTime: STALE_TIMES.reference,
   });
 
-  const [tab, setTab] = useWalletTab(TABS);
+  const { value: tab, setValue: setTab, hrefFor } = useWalletTab(TAB_IDS, 'overview');
   const [experienceOpen, setExperienceOpen] = useState(false);
   const [credentialOpen, setCredentialOpen] = useState(false);
 
   const experiences = useMemo(
-    () => experienceQuery.data?.error || experienceQuery.data?.success === false
-      ? []
-      : extractPage<WalletExperience>(experienceQuery.data).items,
+    () =>
+      experienceQuery.data?.error || experienceQuery.data?.success === false
+        ? []
+        : extractPage<WalletExperience>(experienceQuery.data).items,
     [experienceQuery.data]
   );
   const documentTypes = (documentTypesQuery.data?.data ?? []) as DocumentTypeOption[];
@@ -947,7 +1081,7 @@ function ProfileSkillsWalletPage({ role, profileUuid }: RoleSkillsWalletPageProp
   return (
     <div className='min-h-screen'>
       <div className='border-b'>
-        <div className='mx-auto px-4 py-5'>
+        <div className={cn(surfaceTheme.pageWide, 'py-5')}>
           <div className='flex flex-row items-center justify-between'>
             <div>
               <h1 className='text-foreground text-2xl font-bold'>Skills Wallet</h1>
@@ -957,84 +1091,104 @@ function ProfileSkillsWalletPage({ role, profileUuid }: RoleSkillsWalletPageProp
             </div>
             <WalletIdCard label={`${getRoleLabel(role)} Wallet ID`} />
           </div>
-
-          <SkillsWalletTabs
-            tabs={TABS}
-            activeTab={tab}
-            onTabChange={value => setTab(value as TabId)}
-          />
         </div>
       </div>
 
-      <div className='mx-auto px-4 py-6'>
-        {tab === 'overview' ? (
-          skillsFailed ? (
-            <EmptyState
-              title='Unable to load wallet skills'
-              action={
-                <Button variant='outline' onClick={() => void skillsQuery.refetch()}>
-                  Try again
-                </Button>
-              }
-            />
-          ) : (
-            <SkillsWalletOverviewTab
-              data={data}
-              isLoading={
-                skillsQuery.isLoading ||
-                verifiedSkillsContent.isLoading ||
-                experienceQuery.isLoading
-              }
-              onNavigateToTab={value => setTab(value as TabId)}
-            />
-          )
-        ) : null}
-        {tab === 'skills' ? (
-          profileUuid ? (
-            <RoleSkillsWalletMySkillsTab
-              key={`${role}-${profileUuid}`}
-              role={role}
-              profileUuid={profileUuid}
-            />
-          ) : (
-            <SkillsWalletMySkillsTab data={{ skills: [], categoryCounts: [] }} />
-          )
-        ) : null}
-        {tab === 'portfolio' ? <SkillsWalletPortfolioTab data={data} /> : null}
-        {tab === 'credentials' ? (
-          <SkillsWalletCredentialsVaultTab
-            data={credentialData}
-            onAddCredential={() => setCredentialOpen(true)}
-          />
-        ) : null}
-        {tab === 'competencies' ? <SkillsWalletCompetenciesTab data={data} /> : null}
-        {tab === 'experience' ? (
-          <SkillsWalletExperienceTab
-            experiences={data.experiences}
-            title={`${getRoleLabel(role)} Experience`}
-            onAddExperience={() => setExperienceOpen(true)}
-            onDeleteExperience={setDeletingExperience}
-          />
-        ) : null}
-        {tab === 'achievements' ? (
-          <SkillsWalletAchievementsTab
-            achievements={data.achievements}
-            title='Achievements'
-            description={
-              role === 'instructor'
-                ? 'Track your milestones, teaching progress, and profile verification.'
-                : 'Track your milestones, course creation progress, and profile verification.'
-            }
-          />
-        ) : null}
-        {tab === 'verification' ? (
-          <SkillsWalletVerficationTab
-            events={data.verificationEvents}
-            title='Verification'
-            description='Automatically updated after trusted profile records are completed.'
-            onAddProof={() => setCredentialOpen(true)}
-          />
-        ) : null}
+      <div className={cn(surfaceTheme.pageWide, 'py-6')}>
+        <SectionTabs
+          tabs={TABS}
+          value={tab}
+          onValueChange={setTab}
+          hrefFor={hrefFor}
+          label='Wallet sections'
+          variant='pill'
+          sticky
+        >
+          <SectionTabPanel value='overview' className='print:block'>
+            {tab === 'overview' ? (
+              skillsFailed ? (
+                <EmptyState
+                  title='Unable to load wallet skills'
+                  action={
+                    <Button variant='outline' onClick={() => void skillsQuery.refetch()}>
+                      Try again
+                    </Button>
+                  }
+                />
+              ) : (
+                <SkillsWalletOverviewTab
+                  data={data}
+                  isLoading={
+                    skillsQuery.isLoading ||
+                    verifiedSkillsContent.isLoading ||
+                    experienceQuery.isLoading
+                  }
+                  onNavigateToTab={value => setTab(value as TabId)}
+                />
+              )
+            ) : null}
+          </SectionTabPanel>
+          <SectionTabPanel value='skills' className='print:block'>
+            {tab === 'skills' ? (
+              profileUuid ? (
+                <RoleSkillsWalletMySkillsTab
+                  key={`${role}-${profileUuid}`}
+                  role={role}
+                  profileUuid={profileUuid}
+                />
+              ) : (
+                <SkillsWalletMySkillsTab data={{ skills: [], categoryCounts: [] }} />
+              )
+            ) : null}
+          </SectionTabPanel>
+          <SectionTabPanel value='portfolio' className='print:block'>
+            {tab === 'portfolio' ? <SkillsWalletPortfolioTab data={data} /> : null}
+          </SectionTabPanel>
+          <SectionTabPanel value='credentials' className='print:block'>
+            {tab === 'credentials' ? (
+              <SkillsWalletCredentialsVaultTab
+                data={credentialData}
+                onAddCredential={() => setCredentialOpen(true)}
+              />
+            ) : null}
+          </SectionTabPanel>
+          <SectionTabPanel value='competencies' className='print:block'>
+            {tab === 'competencies' ? <SkillsWalletCompetenciesTab data={data} /> : null}
+          </SectionTabPanel>
+          <SectionTabPanel value='experience' className='print:block'>
+            {tab === 'experience' ? (
+              <SkillsWalletExperienceTab
+                experiences={data.experiences}
+                title={`${getRoleLabel(role)} Experience`}
+                onAddExperience={() => setExperienceOpen(true)}
+                onDeleteExperience={setDeletingExperience}
+              />
+            ) : null}
+          </SectionTabPanel>
+          <SectionTabPanel value='achievements' className='print:block'>
+            {tab === 'achievements' ? (
+              <SkillsWalletAchievementsTab
+                achievements={data.achievements}
+                title='Achievements'
+                description={
+                  role === 'instructor'
+                    ? 'Track your milestones, teaching progress, and profile verification.'
+                    : 'Track your milestones, course creation progress, and profile verification.'
+                }
+              />
+            ) : null}
+          </SectionTabPanel>
+          <SectionTabPanel value='verification' className='print:block'>
+            {tab === 'verification' ? (
+              <SkillsWalletVerficationTab
+                events={data.verificationEvents}
+                title='Verification'
+                description='Automatically updated after trusted profile records are completed.'
+                onAddProof={() => setCredentialOpen(true)}
+              />
+            ) : null}
+          </SectionTabPanel>
+        </SectionTabs>
       </div>
 
       <DeleteModal

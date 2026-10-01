@@ -38,7 +38,19 @@ import {
   getStudentCertificatesOptions,
   listDocumentTypesOptions,
 } from '@/services/client/@tanstack/react-query.gen';
-import { SharedCredentialSummary, SharedSkill, SharedTimelineItem, SuggestedSkill, VerifiedSkill, VerifiedSkillCategory, VerifiedSkillGroup, VerifiedSkillLevel, VerifiedSkillRecord, VerifiedSkillsContent, VerifiedSkillsRole } from './types';
+import {
+  SharedCredentialSummary,
+  SharedSkill,
+  SharedTimelineItem,
+  SuggestedSkill,
+  VerifiedSkill,
+  VerifiedSkillCategory,
+  VerifiedSkillGroup,
+  VerifiedSkillLevel,
+  VerifiedSkillRecord,
+  VerifiedSkillsContent,
+  VerifiedSkillsRole,
+} from './types';
 
 const PAGEABLE = { page: 0, size: 200 };
 
@@ -446,10 +458,10 @@ export function useVerifiedSkillsContent(role?: VerifiedSkillsRole): VerifiedSki
     const membershipRecords =
       resolvedRole === 'instructor'
         ? ((instructorMembershipQuery.data?.data?.content ??
-          []) as InstructorProfessionalMembership[])
+            []) as InstructorProfessionalMembership[])
         : resolvedRole === 'course_creator'
           ? ((courseCreatorMembershipQuery.data?.data?.content ??
-            []) as CourseCreatorProfessionalMembership[])
+              []) as CourseCreatorProfessionalMembership[])
           : [];
 
     const experienceRecords =
