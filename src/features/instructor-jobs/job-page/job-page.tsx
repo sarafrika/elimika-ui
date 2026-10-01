@@ -106,7 +106,7 @@ export function JobPage({ jobUuid }: { jobUuid: string }) {
 
   if (!jobQuery.isLoading && !jobQuery.error && !job) {
     return (
-      <main className={cn(surfaceTheme.page, 'flex flex-col gap-5')}>
+      <main className={cn(surfaceTheme.pageWide, 'flex flex-col gap-5 py-4')}>
         <BackLink />
         <EmptyState
           variant='card'
@@ -127,7 +127,7 @@ export function JobPage({ jobUuid }: { jobUuid: string }) {
   const ready = readiness?.state === 'ready';
 
   return (
-    <main className={cn(surfaceTheme.page, 'flex flex-col gap-5 pb-28 lg:pb-8')}>
+    <main className={cn(surfaceTheme.pageWide, 'flex flex-col gap-5 pt-4 pb-28 lg:pb-8')}>
       <div className='flex flex-col gap-3.5'>
         <BackLink />
         {job && facts && !data.open ? <ClosedBanner job={job} facts={facts} /> : null}
@@ -154,32 +154,46 @@ export function JobPage({ jobUuid }: { jobUuid: string }) {
       {job && facts ? (
         <div className='grid gap-5 lg:grid-cols-[minmax(0,1fr)_380px]'>
           <div className='flex min-w-0 flex-col gap-5'>
-            <Tabs value={tab} onValueChange={value => updateQuery({ tab: value as JobTab })} className='gap-5'>
-              <TabsList
-                aria-label='Job sections'
-                className='h-auto w-full justify-start gap-1 overflow-x-auto rounded-none border-b bg-transparent p-0'
-              >
-                {TABS.map(id => (
-                  <TabsTrigger
-                    key={id}
-                    value={id}
-                    className='data-[state=active]:border-primary data-[state=active]:text-foreground -mb-px h-11 flex-none gap-2 rounded-none border-0 border-b-2 border-transparent px-3.5 text-sm font-medium data-[state=active]:bg-transparent data-[state=active]:font-semibold data-[state=active]:shadow-none'
-                  >
-                    {TAB_LABELS[id]}
-                    {id === 'schedule' ? (
-                      clashCount > 0 ? (
-                        <TabFlag tone='danger'>{`${clashCount} clash${clashCount === 1 ? '' : 'es'}`}</TabFlag>
-                      ) : (
-                        <TabFlag tone='count'>{`${facts.sessionCount}`}</TabFlag>
-                      )
-                    ) : null}
-                    {id === 'pay' && noRate ? <TabFlag tone='warning'>No rate yet</TabFlag> : null}
-                  </TabsTrigger>
-                ))}
-              </TabsList>
+            <Tabs
+              value={tab}
+              onValueChange={value => updateQuery({ tab: value as JobTab })}
+              className='gap-5'
+            >
+              {/* SectionTabs has no text/tone flags (clashes, "No rate yet") yet, so this strip
+                  keeps its own triggers and only borrows the sticky bar. */}
+              <div className='bg-background sticky top-0 z-30'>
+                <TabsList
+                  aria-label='Job sections'
+                  className='h-auto w-full justify-start gap-1 overflow-x-auto rounded-none border-b bg-transparent p-0'
+                >
+                  {TABS.map(id => (
+                    <TabsTrigger
+                      key={id}
+                      value={id}
+                      className='data-[state=active]:border-primary data-[state=active]:text-foreground -mb-px h-11 flex-none gap-2 rounded-none border-0 border-b-2 border-transparent px-3.5 text-sm font-medium data-[state=active]:bg-transparent data-[state=active]:font-semibold data-[state=active]:shadow-none'
+                    >
+                      {TAB_LABELS[id]}
+                      {id === 'schedule' ? (
+                        clashCount > 0 ? (
+                          <TabFlag tone='danger'>{`${clashCount} clash${clashCount === 1 ? '' : 'es'}`}</TabFlag>
+                        ) : (
+                          <TabFlag tone='count'>{`${facts.sessionCount}`}</TabFlag>
+                        )
+                      ) : null}
+                      {id === 'pay' && noRate ? (
+                        <TabFlag tone='warning'>No rate yet</TabFlag>
+                      ) : null}
+                    </TabsTrigger>
+                  ))}
+                </TabsList>
+              </div>
 
               <TabsContent value='overview' className='flex flex-col gap-5'>
-                <OverviewPanel job={job} contentTitle={data.contentTitle} creatorName={data.creatorName} />
+                <OverviewPanel
+                  job={job}
+                  contentTitle={data.contentTitle}
+                  creatorName={data.creatorName}
+                />
                 <MoreJobsForCourse job={job} contentTitle={data.contentTitle} now={now} />
               </TabsContent>
               <TabsContent value='schedule'>
