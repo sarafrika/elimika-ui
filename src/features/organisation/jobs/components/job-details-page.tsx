@@ -11,11 +11,9 @@ import {
   XCircle,
 } from 'lucide-react';
 import Link from 'next/link';
-import { usePathname, useRouter, useSearchParams } from 'next/navigation';
 import { useMemo, useState } from 'react';
 import { toast } from 'sonner';
 
-import { OrgPage } from '@/app/dashboard/organisation/_components/org-page';
 import type { RateBasis } from '@/components/class-form';
 import { AsyncSection } from '@/components/data/async-section';
 import {
@@ -43,7 +41,6 @@ import {
 import { EmptyState } from '@/components/ui/empty-state';
 import { Skeleton } from '@/components/ui/skeleton';
 import Spinner from '@/components/ui/spinner';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import {
   useCoursesByIds,
   useInstructorsByIds,
@@ -54,7 +51,7 @@ import { getErrorMessage } from '@/lib/error-utils';
 import type { ClassMarketplaceJob } from '@/services/client';
 import { cancelJobMutation, getJobOptions } from '@/services/client/@tanstack/react-query.gen';
 import { invalidateJobApplicationWorkflowQueries } from '@/src/features/dashboard/workflow-query-invalidation';
-import { editJobHref, JOB_TABS, type JobTab, jobApplicantHref, jobsHref } from '../lib/job-routes';
+import { editJobHref, JOB_TABS, jobApplicantHref, jobsHref } from '../lib/job-routes';
 import {
   deliveryLabel,
   hiredApplicationFor,
@@ -81,7 +78,16 @@ import {
   useJobResourceRows,
 } from './job-sections';
 import { JobSuggestedInstructors } from './job-suggested-instructors';
-import { DetailRow, SectionCard, SectionCardSkeleton } from '@/components/data-display';
+import { cn } from '@/lib/utils';
+import {
+  DetailRow,
+  SectionCard,
+  SectionCardSkeleton,
+  SectionTabPanel,
+  SectionTabs,
+  surfaceTheme,
+  useSectionTab,
+} from '@/components/data-display';
 
 function nextStepCopy(
   stage: JobStage,
@@ -106,22 +112,11 @@ function nextStepCopy(
 }
 
 export function JobDetailsPage({ jobUuid }: { jobUuid: string }) {
-  const router = useRouter();
-  const pathname = usePathname();
-  const searchParams = useSearchParams();
   const queryClient = useQueryClient();
   const [now] = useState(() => Date.now());
   const [confirmCancel, setConfirmCancel] = useState(false);
 
-  const requestedTab = searchParams.get('tab') as JobTab | null;
-  const tab: JobTab = requestedTab && JOB_TABS.includes(requestedTab) ? requestedTab : 'overview';
-  const changeTab = (next: string) => {
-    const params = new URLSearchParams(searchParams.toString());
-    if (next === 'overview') params.delete('tab');
-    else params.set('tab', next);
-    const query = params.toString();
-    router.replace(query ? `${pathname}?${query}` : pathname, { scroll: false });
-  };
+  const { value: tab, setValue: changeTab, hrefFor } = useSectionTab(JOB_TABS, 'overview');
 
   const jobQuery = useQuery({ ...getJobOptions({ path: { jobUuid } }), enabled: Boolean(jobUuid) });
   const job = jobQuery.data?.data ?? null;
@@ -172,7 +167,7 @@ export function JobDetailsPage({ jobUuid }: { jobUuid: string }) {
 
   if (!jobLoading && !jobQuery.error && !job) {
     return (
-      <OrgPage className='space-y-6'>
+      <div className={cn(surfaceTheme.pageWide, 'space-y-6 py-4')}>
         <BackLink />
         <EmptyState
           variant='card'
@@ -185,7 +180,7 @@ export function JobDetailsPage({ jobUuid }: { jobUuid: string }) {
             </Button>
           }
         />
-      </OrgPage>
+      </div>
     );
   }
 
@@ -199,7 +194,7 @@ export function JobDetailsPage({ jobUuid }: { jobUuid: string }) {
   const venue = resourceRows.find(row => row.kind === 'VENUE') ?? null;
 
   return (
-    <OrgPage className='space-y-5'>
+    <div className={cn(surfaceTheme.pageWide, 'space-y-5 py-4')}>
       <BackLink />
 
       <div className='relative flex flex-col gap-3 border-b pb-4 sm:flex-row sm:items-end sm:justify-between'>
@@ -307,25 +302,21 @@ export function JobDetailsPage({ jobUuid }: { jobUuid: string }) {
         <Skeleton className='h-16 w-full rounded-md' />
       ) : null}
 
-      <Tabs value={tab} onValueChange={changeTab} className='gap-4'>
-        <div className='max-w-full overflow-x-auto'>
-          <TabsList>
-            <TabsTrigger value='overview' className='px-3'>
-              Overview
-            </TabsTrigger>
-            <TabsTrigger value='applicants' className='px-3'>
-              Applicants ({applicantCount})
-            </TabsTrigger>
-            <TabsTrigger value='holds' className='px-3'>
-              Holds &amp; bookings
-            </TabsTrigger>
-            <TabsTrigger value='activity' className='px-3'>
-              Activity
-            </TabsTrigger>
-          </TabsList>
-        </div>
-
-        <TabsContent value='overview'>
+      <SectionTabs
+        tabs={[
+          { id: 'overview', label: 'Overview' },
+          { id: 'applicants', label: 'Applicants', count: applicantCount },
+          { id: 'holds', label: 'Holds & bookings' },
+          { id: 'activity', label: 'Activity' },
+        ]}
+        value={tab}
+        onValueChange={changeTab}
+        hrefFor={hrefFor}
+        label='Job sections'
+        sticky
+        listClassName='bg-background'
+      >
+        <SectionTabPanel value='overview' className='print:block'>
           {job && resourcesHold && sessionsHold && cta ? (
             <div className='grid gap-5 lg:grid-cols-[minmax(0,1fr)_360px]'>
               <div className='flex min-w-0 flex-col gap-5'>
@@ -414,7 +405,9 @@ export function JobDetailsPage({ jobUuid }: { jobUuid: string }) {
                   </div>
                 </SectionCard>
 
-                {stage === 'open' && !hiredUuid ? <JobSuggestedInstructors jobUuid={jobUuid} /> : null}
+                {stage === 'open' && !hiredUuid ? (
+                  <JobSuggestedInstructors jobUuid={jobUuid} />
+                ) : null}
 
                 <SectionCard title='Venue & equipment'>
                   <JobResourceList
@@ -468,17 +461,20 @@ export function JobDetailsPage({ jobUuid }: { jobUuid: string }) {
               </div>
             </div>
           ) : null}
-        </TabsContent>
+        </SectionTabPanel>
 
-        <TabsContent value='applicants'>
-          <JobApplicantsPanel
-            jobUuid={jobUuid}
-            job={job}
-            applicantHref={application => jobApplicantHref(jobUuid, application.uuid ?? '')}
-          />
-        </TabsContent>
+        <SectionTabPanel value='applicants' className='print:block'>
+          {/* Fetches its own rows, so it mounts only when opened. */}
+          {tab === 'applicants' ? (
+            <JobApplicantsPanel
+              jobUuid={jobUuid}
+              job={job}
+              applicantHref={application => jobApplicantHref(jobUuid, application.uuid ?? '')}
+            />
+          ) : null}
+        </SectionTabPanel>
 
-        <TabsContent value='holds'>
+        <SectionTabPanel value='holds' className='print:block'>
           {job && resourcesHold ? (
             <JobHoldsTab
               job={job}
@@ -490,9 +486,9 @@ export function JobDetailsPage({ jobUuid }: { jobUuid: string }) {
           ) : jobLoading ? (
             <SectionCardSkeleton rows={4} />
           ) : null}
-        </TabsContent>
+        </SectionTabPanel>
 
-        <TabsContent value='activity'>
+        <SectionTabPanel value='activity' className='print:block'>
           {job ? (
             <JobActivityTab
               job={job}
@@ -504,8 +500,8 @@ export function JobDetailsPage({ jobUuid }: { jobUuid: string }) {
           ) : jobLoading ? (
             <SectionCardSkeleton rows={4} />
           ) : null}
-        </TabsContent>
-      </Tabs>
+        </SectionTabPanel>
+      </SectionTabs>
 
       <AlertDialog
         open={confirmCancel}
@@ -533,7 +529,7 @@ export function JobDetailsPage({ jobUuid }: { jobUuid: string }) {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
-    </OrgPage>
+    </div>
   );
 }
 
