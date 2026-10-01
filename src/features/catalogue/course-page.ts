@@ -168,15 +168,18 @@ export const formatDay = (value?: string | null) => {
   return date ? DAY_YEAR.format(date) : null;
 };
 
-/** "12 Oct – 20 Dec 2026", "From 12 Oct 2026", or the announced-later line. */
-export function classDatesLabel(item: Pick<OpenClassSummary, 'starts_on' | 'ends_on'>) {
+/** "12 Oct – 20 Dec 2026", "From 12 Oct 2026" ("Started …" once that day has passed), or the announced-later line. */
+export function classDatesLabel(
+  item: Pick<OpenClassSummary, 'starts_on' | 'ends_on'>,
+  now: Date = new Date()
+) {
   const start = toDate(item.starts_on);
   const end = toDate(item.ends_on);
   if (start && end) {
     const sameYear = start.getUTCFullYear() === end.getUTCFullYear();
     return `${(sameYear ? DAY : DAY_YEAR).format(start)} – ${DAY_YEAR.format(end)}`;
   }
-  if (start) return `From ${DAY_YEAR.format(start)}`;
+  if (start) return `${start.getTime() < now.getTime() ? 'Started' : 'From'} ${DAY_YEAR.format(start)}`;
   if (end) return `Until ${DAY_YEAR.format(end)}`;
   return 'Dates to be announced';
 }

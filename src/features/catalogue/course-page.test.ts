@@ -173,6 +173,9 @@ test('availability and dates read honestly', () => {
   assert.deepEqual(availabilityChip({ availability: 'FULL' }), { label: 'Full', tone: 'muted' });
   assert.equal(availabilityChip({}), null);
   assert.equal(classDatesLabel({}), 'Dates to be announced');
+  const today = new Date('2026-10-01T00:00:00Z');
+  assert.equal(classDatesLabel({ starts_on: '2026-08-28' }, today), 'Started 28 Aug 2026');
+  assert.equal(classDatesLabel({ starts_on: '2026-10-12' }, today), 'From 12 Oct 2026');
   assert.equal(
     classDatesLabel({ starts_on: '2026-10-12', ends_on: '2026-12-20' }),
     '12 Oct – 20 Dec 2026'
