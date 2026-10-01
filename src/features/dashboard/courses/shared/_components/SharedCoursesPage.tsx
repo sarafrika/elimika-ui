@@ -56,8 +56,6 @@ import {
   getAllTrainingProgramsOptions,
   getClassDefinitionsForProgramOptions,
   getCourseLessonsOptions,
-  getCourseRecommendationsOptions,
-  getCourseReviewsOptions,
   getProgramCoursesOptions,
   getProgramEnrollmentsOptions,
   getPublishedCoursesOptions,
@@ -86,7 +84,6 @@ import {
 } from '@/src/features/dashboard/courses/shared/_components/courses-data';
 import { CoursesCatalogCard } from '@/src/features/dashboard/courses/shared/_components/CoursesCatalogCard';
 import { CoursesCategoryFilters } from '@/src/features/dashboard/courses/shared/_components/CoursesCategoryFilters';
-import { CoursesRecommendationCard } from '@/src/features/dashboard/courses/shared/_components/CoursesRecommendationCard';
 import { StudentCoursesCard } from '@/src/features/dashboard/courses/shared/_components/StudentCoursesCard';
 import { roleScopedDashboardPath } from '@/src/features/dashboard/lib/active-domain-storage';
 import { invalidateTrainingApplicationWorkflowQueries } from '@/src/features/dashboard/workflow-query-invalidation';
@@ -98,15 +95,12 @@ import {
   useQueryClient,
 } from '@tanstack/react-query';
 import {
-  ArrowRight,
   GraduationCap,
   Layers,
   type LucideIcon,
   SlidersHorizontal,
-  SquareDashedMousePointer,
   Users,
 } from 'lucide-react';
-import Link from 'next/link';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { toast } from 'sonner';
 
@@ -436,39 +430,6 @@ const createCatalogCards = (
       // a skills-fund flag, so the card is told "unknown" and leaves the badge
       // off rather than asserting a course is not eligible.
       skillsFundEligible: null,
-    };
-  });
-
-const createRecommendationCards = (
-  items: UnifiedContentItem[],
-  domain: UserDomain,
-  creatorMap: Map<string, string>,
-  ratingsMap: Map<string, string>,
-  isInstructorDomain: boolean,
-  reasonMap?: Map<string, string>
-): CoursesRecommendationCardData[] =>
-  items.map((item, index) => {
-    const presentation = getCardPresentation(index + 2);
-    const shouldApplyToTrain = isInstructorDomain && item.kind === 'course';
-
-    return {
-      id: item.id,
-      title: item.title,
-      provider: creatorMap.get(item.creatorUuid) ?? item.creatorName ?? 'Course Creator',
-      rating: ratingsMap.get(item.id) ?? 'New',
-      weeks: item.durationLabel,
-      secondaryMeta: item.categoryLabels[0] ?? item.secondaryMeta ?? 'Published Course',
-      minimumRate: item.minimumRate,
-      ctaLabel: shouldApplyToTrain ? 'Apply to Train' : 'Enroll',
-      ctaHref: shouldApplyToTrain
-        ? getApplyToTrainHref(item.kind, item.id)
-        : roleScopedDashboardPath(domain, getEnrollHref(domain, item.kind, item.id)),
-      ctaKind: shouldApplyToTrain ? 'apply-to-train' : 'enroll',
-      detailsHref: roleScopedDashboardPath(domain, item.href),
-      icon: presentation.icon,
-      imageTone: presentation.imageTone,
-      imageUrl: item.imageUrl,
-      reason: reasonMap?.get(item.id),
     };
   });
 
@@ -1238,56 +1199,14 @@ export function SharedCoursesPage({ domain }: SharedCoursesPageProps) {
       ? organisationCourseApplicationsFetching || organisationProgramApplicationsFetching
       : false;
 
-  const recommendationsQuery = useQuery({
-    // No user_uuid: the endpoint recommends for the caller, and a guardian sending a
-    // ward's id would be refused.
-    ...getCourseRecommendationsOptions({ query: { limit: 6 } }),
-    enabled: Boolean(user?.uuid),
-  });
-
-  const recommendationReasonMap = useMemo(() => {
-    const map = new Map<string, string>();
-    for (const rec of recommendationsQuery.data?.data ?? []) {
-      if (rec.course_uuid && rec.reason) {
-        map.set(rec.course_uuid, rec.reason);
-      }
-    }
-    return map;
-  }, [recommendationsQuery.data]);
-
-  const recommendedBase = useMemo(() => {
-    const feedById = new Map(allCoursesFeed.map(item => [item.id, item]));
-    const personalised = (recommendationsQuery.data?.data ?? [])
-      .map(rec => (rec.course_uuid ? feedById.get(rec.course_uuid) : undefined))
-      .filter((item): item is UnifiedContentItem => Boolean(item));
-
-    if (personalised.length > 0) {
-      return personalised.slice(0, 6);
-    }
-
-    // Fallback while recommendations load or when the user has no history yet.
-    if (isInstructorDomain) {
-      return allCoursesFeed
-        .filter(item => item.kind === 'course' && !instructorCourseApplicationMap.has(item.id))
-        .slice(0, 6);
-    }
-
-    return allCoursesFeed.slice(0, 6);
-  }, [
-    allCoursesFeed,
-    instructorCourseApplicationMap,
-    isInstructorDomain,
-    recommendationsQuery.data,
-  ]);
-
   const creatorIds = useMemo(
     () =>
       Array.from(
         new Set(
-          [...filteredItems, ...recommendedBase].map(item => item.creatorUuid).filter(Boolean)
+          filteredItems.map(item => item.creatorUuid).filter(Boolean)
         )
       ),
-    [filteredItems, recommendedBase]
+    [filteredItems]
   );
 
   const creatorQuery = useQuery({
@@ -1317,40 +1236,6 @@ export function SharedCoursesPage({ domain }: SharedCoursesPageProps) {
 
   const applyToTrainCourseMut = useMutation(submitTrainingApplicationMutation());
   const applyToTrainProgramMut = useMutation(submitProgramTrainingApplicationMutation());
-
-  const recommendationReviewQueries = useQueries({
-    queries: recommendedBase.map(item => ({
-      ...getCourseReviewsOptions({ path: { courseUuid: item.id } }),
-      enabled: Boolean(item.id) && item.kind === 'course',
-      refetchOnWindowFocus: false,
-    })),
-  });
-
-  const ratingsMap = useMemo(() => {
-    const map = new Map<string, string>();
-
-    recommendationReviewQueries.forEach((query, index) => {
-      const item = recommendedBase[index];
-      const ratings =
-        query.data?.data
-          ?.map(review => review.rating)
-          .filter((rating): rating is number => typeof rating === 'number') ?? [];
-
-      if (!item) {
-        return;
-      }
-
-      if (ratings.length === 0) {
-        map.set(item.id, 'New');
-        return;
-      }
-
-      const average = ratings.reduce((total, value) => total + value, 0) / ratings.length;
-      map.set(item.id, average.toFixed(1));
-    });
-
-    return map;
-  }, [recommendationReviewQueries, recommendedBase]);
 
   const courseUuids = useMemo(
     () =>
@@ -1536,19 +1421,6 @@ export function SharedCoursesPage({ domain }: SharedCoursesPageProps) {
     ]
   );
 
-  const recommendationCards = useMemo(
-    () =>
-      createRecommendationCards(
-        recommendedBase,
-        domain,
-        creatorMap,
-        ratingsMap,
-        isInstructorDomain,
-        recommendationReasonMap
-      ),
-    [creatorMap, domain, isInstructorDomain, ratingsMap, recommendationReasonMap, recommendedBase]
-  );
-
   const isLoading =
     coursesLoading ||
     programsLoading ||
@@ -1626,13 +1498,6 @@ export function SharedCoursesPage({ domain }: SharedCoursesPageProps) {
         ? 'review'
         : 'apply'
     );
-    setApplyModalOpen(true);
-  };
-
-  const handleRecommendedApply = (card: CoursesRecommendationCardData) => {
-    setSelectedApplicationCard(card);
-    setSelectedApplicationRecord(null);
-    setApplicationSheetMode('apply');
     setApplyModalOpen(true);
   };
 
@@ -1784,17 +1649,6 @@ export function SharedCoursesPage({ domain }: SharedCoursesPageProps) {
             />
           </div>
         </header>
-
-        {/* <CoursesCategoryTabs
-          activeFilter={activeFilter}
-          onActiveChange={setActiveFilter}
-          sections={filterSections}
-          selectedValues={filters}
-          onSelect={(key, value) => {
-            setFilterValue(key, value);
-            setOpen(false);
-          }}
-        /> */}
 
         <CategoryTabs
           categories={categories}
@@ -2039,79 +1893,6 @@ export function SharedCoursesPage({ domain }: SharedCoursesPageProps) {
               </div>
             </div>
           </div>
-        </section>
-
-        {/* // Recommended courses and Career path banner - hidden */}
-        <section className='hidden'>
-          <section className='space-y-4'>
-            <div className='flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between'>
-              <h2 className='text-foreground text-[clamp(1.1rem,1.5vw,1.35rem)] font-semibold tracking-[-0.02em]'>
-                Recommended for You
-              </h2>
-              <Link
-                href={roleScopedDashboardPath(domain, '/dashboard/courses')}
-                className='text-muted-foreground hover:text-foreground inline-flex items-center gap-1.5 text-xs font-semibold sm:text-sm'
-              >
-                View All
-                <ArrowRight className='size-3.5' />
-              </Link>
-            </div>
-
-            {isLoading ? (
-              <div className='grid grid-cols-[repeat(auto-fit,minmax(270px,270px))] gap-4'>
-                {Array.from({ length: 3 }).map((_, index) => (
-                  <div key={index} className='space-y-4 rounded-2xl border p-4'>
-                    <Skeleton className='h-28 w-full rounded-xl' />
-                    <Skeleton className='h-6 w-3/4' />
-                    <div className='space-y-2'>
-                      <Skeleton className='h-4 w-full' />
-                      <Skeleton className='h-4 w-5/6' />
-                    </div>
-                    <div className='flex items-center justify-between pt-2'>
-                      <Skeleton className='h-5 w-20' />
-                      <Skeleton className='h-10 w-28 rounded-lg' />
-                    </div>
-                  </div>
-                ))}
-              </div>
-            ) : recommendationCards.length > 0 ? (
-              <div className='scrollbar-hidden flex gap-4 overflow-x-auto pb-2'>
-                {recommendationCards.map(card => (
-                  <CoursesRecommendationCard
-                    onApplyToTrain={handleRecommendedApply}
-                    key={card.id}
-                    card={card}
-                  />
-                ))}
-              </div>
-            ) : null}
-          </section>
-
-          <section className='border-border bg-primary text-primary-foreground flex flex-col gap-4 rounded-[12px] border px-4 py-4 sm:px-5 md:flex-row md:items-center md:justify-between'>
-            <div className='flex items-start gap-3'>
-              <span className='bg-background/15 mt-1 inline-flex size-9 shrink-0 items-center justify-center rounded-xl'>
-                <SquareDashedMousePointer className='size-4' />
-              </span>
-              <div>
-                <h2 className='text-[clamp(1rem,1.3vw,1.2rem)] font-semibold tracking-[-0.02em]'>
-                  Want a structured career path?
-                </h2>
-                <p className='text-primary-foreground/85 mt-1 text-sm sm:text-[0.95rem]'>
-                  Apply for a certified training program with funding opportunities.
-                </p>
-              </div>
-            </div>
-
-            <Button
-              asChild
-              variant='warning'
-              className='h-10 w-full rounded-xl px-5 text-sm font-semibold shadow-none sm:w-auto'
-            >
-              <Link href={roleScopedDashboardPath(domain, '/dashboard/skills-fund')}>
-                Apply Now
-              </Link>
-            </Button>
-          </section>
         </section>
       </div>
 

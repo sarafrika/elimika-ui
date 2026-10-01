@@ -8,7 +8,6 @@ import {
   getAssignmentSubmissionsOptions,
   getEnrollmentOverviewForStudentOptions,
   getInstructorByUuidOptions,
-  getPublishedCoursesOptions,
   getScheduledInstanceEnrollmentsForStudentOptions,
   getStudentCertificatesOptions,
 } from '@/services/client/@tanstack/react-query.gen';
@@ -103,13 +102,6 @@ export type LearningHubAssignment = {
   href: string;
 };
 
-export type LearningHubRecommendedCourse = {
-  id: string;
-  title: string;
-  level: string;
-  duration: string;
-};
-
 export type LearningHubInvite = {
   id: string;
   title: string;
@@ -133,7 +125,6 @@ export type LearningHubData = {
   upcomingClasses: LearningHubUpcomingClass[];
   nextClass: LearningHubNextClass | null;
   assignments: LearningHubAssignment[];
-  recommendedCourses: LearningHubRecommendedCourse[];
   invite: LearningHubInvite | null;
   loading: boolean;
 };
@@ -161,25 +152,6 @@ export type LearningHubClassEnrollment = StudentClassEnrollmentSummary & {
   lastLessonId?: string;
   nextLessonId?: string;
 };
-
-const MOCK_RECOMMENDED_COURSES: LearningHubRecommendedCourse[] = [
-  // { id: 'seo', title: 'SEO Essentials', level: 'Beginner', duration: '6 h' },
-  // { id: 'excel', title: 'Advanced Excel Analysis', level: 'Intermediate', duration: '5 h' },
-  // { id: 'product-design', title: 'Product Design Foundations', level: 'Beginner', duration: '4 h' },
-  // {
-  //   id: 'data-visualization',
-  //   title: 'Data Visualization Studio',
-  //   level: 'Intermediate',
-  //   duration: '7 h',
-  // },
-  // { id: 'copywriting', title: 'Copywriting for Creators', level: 'Beginner', duration: '3 h' },
-  // {
-  //   id: 'project-management',
-  //   title: 'Project Management Essentials',
-  //   level: 'Intermediate',
-  //   duration: '8 h',
-  // },
-];
 
 const MOCK_INVITE: LearningHubInvite = {
   id: 'mock-vocal-training-level-2',
@@ -364,18 +336,6 @@ export function useStudentLearningHubData(): LearningHubData {
     staleTime: 5 * 60 * 1000,
   });
 
-  const { data: publishedCoursesResponse, isLoading: publishedCoursesLoading } = useQuery({
-    ...getPublishedCoursesOptions({
-      query: {
-        pageable: {
-          page: 0,
-          size: 8,
-        },
-      },
-    }),
-    refetchOnWindowFocus: false,
-  });
-
   const assignmentScheduleQueries = useQueries({
     queries: classDefinitions.map(item => ({
       ...getAssignmentSchedulesOptions({ path: { classUuid: item.uuid } }),
@@ -455,7 +415,6 @@ export function useStudentLearningHubData(): LearningHubData {
   }, [assignmentIds, assignmentSubmissionsQueries]);
 
   const certificates = studentCertificatesResponse?.data ?? [];
-  const publishedCourses = publishedCoursesResponse?.data?.content ?? [];
   const scheduledInstanceEnrollments =
     studentScheduledInstanceEnrollmentsResponse?.data?.content ?? [];
   const courseEnrollmentSummaries =
@@ -886,22 +845,6 @@ export function useStudentLearningHubData(): LearningHubData {
     return rows.length > 0 ? rows : [];
   }, [assignmentSchedules, assignmentsMap, submissionsMap]);
 
-  const enrolledCourseIds = new Set(
-    classDefinitions.map(item => item.course?.uuid).filter(Boolean)
-  );
-
-  const recommendedCourses = useMemo(() => {
-    return publishedCourses
-      .filter(course => course?.name && !enrolledCourseIds.has(course.uuid))
-      .slice(0, 6)
-      .map(course => ({
-        id: course.uuid ?? course.name,
-        title: course.name,
-        level: (course.duration_hours ?? 0) >= 5 ? 'Intermediate' : 'Beginner',
-        duration: formatHours((course.duration_hours ?? 0) * 60 + (course.duration_minutes ?? 0)),
-      }));
-  }, [publishedCourses, enrolledCourseIds]);
-
   const invite = useMemo<LearningHubInvite | null>(() => {
     const item = upcomingClassesList[1] ?? upcomingClassesList[0];
     if (!item) return MOCK_INVITE;
@@ -973,14 +916,12 @@ export function useStudentLearningHubData(): LearningHubData {
     upcomingClasses: upcomingClassesList,
     nextClass,
     assignments,
-    recommendedCourses,
     invite,
     loading:
       classDefinitionsLoading ||
       scheduledInstanceEnrollmentsLoading ||
       certificatesLoading ||
       enrollmentOverviewLoading ||
-      publishedCoursesLoading ||
       instructorQueries.some(query => query.isLoading) ||
       assignmentScheduleQueries.some(query => query.isLoading) ||
       assignmentQueries.some(query => query.isLoading) ||
