@@ -8,7 +8,6 @@ import { useMemo, useState } from 'react';
 import { SectionError } from '@/components/data/async-section';
 import { Button } from '@/components/ui/button';
 import { EmptyState } from '@/components/ui/empty-state';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { toSchedulingConflicts } from '@/lib/scheduling-conflicts';
 import { cn } from '@/lib/utils';
 
@@ -24,7 +23,13 @@ import { PayPanel } from './pay-panel';
 import { SchedulePanel } from './schedule-panel';
 import { useJobPage } from './use-job-page';
 import { WherePanel } from './where-panel';
-import { SectionCardSkeleton, surfaceTheme } from '@/components/data-display';
+import {
+  SectionCardSkeleton,
+  type SectionTab,
+  SectionTabPanel,
+  SectionTabs,
+  surfaceTheme,
+} from '@/components/data-display';
 
 const TABS = ['overview', 'schedule', 'where', 'pay', 'dates'] as const;
 type JobTab = (typeof TABS)[number];
@@ -49,21 +54,6 @@ function BackLink() {
   );
 }
 
-function TabFlag({ tone, children }: { tone: 'danger' | 'warning' | 'count'; children: string }) {
-  return (
-    <span
-      className={cn(
-        'rounded-full px-2 text-[11px] leading-5 font-semibold tabular-nums',
-        tone === 'danger' && 'bg-destructive/10 text-destructive',
-        tone === 'warning' && 'bg-warning/15 text-warning',
-        tone === 'count' && 'bg-muted text-muted-foreground'
-      )}
-    >
-      {children}
-    </span>
-  );
-}
-
 /** The instructor's page for one job: facts, sections in tabs, and the "Can you apply?" rail. */
 export function JobPage({ jobUuid }: { jobUuid: string }) {
   const router = useRouter();
@@ -78,7 +68,8 @@ export function JobPage({ jobUuid }: { jobUuid: string }) {
   const tab: JobTab = requested && TABS.includes(requested) ? requested : 'overview';
   const clashesOnly = searchParams.get('clashes') === '1';
 
-  const updateQuery = (patch: { tab?: JobTab; clashes?: boolean }) => {
+  /** The address for a tab and clash filter: `clashes` only lives on the schedule tab. */
+  const hrefFor = (patch: { tab?: JobTab; clashes?: boolean }) => {
     const params = new URLSearchParams(searchParams.toString());
     const nextTab = patch.tab ?? tab;
     if (nextTab === 'overview') params.delete('tab');
@@ -87,8 +78,10 @@ export function JobPage({ jobUuid }: { jobUuid: string }) {
     if (nextClashes && nextTab === 'schedule') params.set('clashes', '1');
     else params.delete('clashes');
     const query = params.toString();
-    router.replace(query ? `${pathname}?${query}` : pathname, { scroll: false });
+    return query ? `${pathname}?${query}` : pathname;
   };
+  const updateQuery = (patch: { tab?: JobTab; clashes?: boolean }) =>
+    router.replace(hrefFor(patch), { scroll: false });
 
   const conflicts = useMemo(
     () =>
@@ -124,6 +117,21 @@ export function JobPage({ jobUuid }: { jobUuid: string }) {
   }
 
   const seeClashes = () => updateQuery({ tab: 'schedule', clashes: true });
+  const tabs = TABS.map((id): SectionTab<JobTab> => {
+    if (id === 'schedule' && facts) {
+      return clashCount > 0
+        ? {
+            id,
+            label: TAB_LABELS[id],
+            flag: { label: `${clashCount} clash${clashCount === 1 ? '' : 'es'}`, tone: 'danger' },
+          }
+        : { id, label: TAB_LABELS[id], count: facts.sessionCount };
+    }
+    if (id === 'pay' && noRate) {
+      return { id, label: TAB_LABELS[id], flag: { label: 'No rate yet', tone: 'warning' } };
+    }
+    return { id, label: TAB_LABELS[id] };
+  });
   const ready = readiness?.state === 'ready';
 
   return (
@@ -154,49 +162,24 @@ export function JobPage({ jobUuid }: { jobUuid: string }) {
       {job && facts ? (
         <div className='grid gap-5 lg:grid-cols-[minmax(0,1fr)_380px]'>
           <div className='flex min-w-0 flex-col gap-5'>
-            <Tabs
+            <SectionTabs
+              tabs={tabs}
               value={tab}
-              onValueChange={value => updateQuery({ tab: value as JobTab })}
+              onValueChange={value => updateQuery({ tab: value })}
+              hrefFor={value => hrefFor({ tab: value })}
+              label='Job sections'
+              sticky
               className='gap-5'
             >
-              {/* SectionTabs has no text/tone flags (clashes, "No rate yet") yet, so this strip
-                  keeps its own triggers and only borrows the sticky bar. */}
-              <div className='bg-background sticky top-0 z-30'>
-                <TabsList
-                  aria-label='Job sections'
-                  className='h-auto w-full justify-start gap-1 overflow-x-auto rounded-none border-b bg-transparent p-0'
-                >
-                  {TABS.map(id => (
-                    <TabsTrigger
-                      key={id}
-                      value={id}
-                      className='data-[state=active]:border-primary data-[state=active]:text-foreground -mb-px h-11 flex-none gap-2 rounded-none border-0 border-b-2 border-transparent px-3.5 text-sm font-medium data-[state=active]:bg-transparent data-[state=active]:font-semibold data-[state=active]:shadow-none'
-                    >
-                      {TAB_LABELS[id]}
-                      {id === 'schedule' ? (
-                        clashCount > 0 ? (
-                          <TabFlag tone='danger'>{`${clashCount} clash${clashCount === 1 ? '' : 'es'}`}</TabFlag>
-                        ) : (
-                          <TabFlag tone='count'>{`${facts.sessionCount}`}</TabFlag>
-                        )
-                      ) : null}
-                      {id === 'pay' && noRate ? (
-                        <TabFlag tone='warning'>No rate yet</TabFlag>
-                      ) : null}
-                    </TabsTrigger>
-                  ))}
-                </TabsList>
-              </div>
-
-              <TabsContent value='overview' className='flex flex-col gap-5'>
+              <SectionTabPanel value='overview' className='flex flex-col gap-5'>
                 <OverviewPanel
                   job={job}
                   contentTitle={data.contentTitle}
                   creatorName={data.creatorName}
                 />
                 <MoreJobsForCourse job={job} contentTitle={data.contentTitle} now={now} />
-              </TabsContent>
-              <TabsContent value='schedule'>
+              </SectionTabPanel>
+              <SectionTabPanel value='schedule'>
                 <SchedulePanel
                   facts={facts}
                   fit={{
@@ -207,22 +190,22 @@ export function JobPage({ jobUuid }: { jobUuid: string }) {
                   clashesOnly={clashesOnly}
                   onClashesOnlyChange={value => updateQuery({ clashes: value })}
                 />
-              </TabsContent>
-              <TabsContent value='where'>
+              </SectionTabPanel>
+              <SectionTabPanel value='where'>
                 <WherePanel job={job} />
-              </TabsContent>
-              <TabsContent value='pay'>
+              </SectionTabPanel>
+              <SectionTabPanel value='pay'>
                 <PayPanel
                   job={job}
                   facts={facts}
                   rate={data.rate}
                   rateLoading={eligibilityChecking || data.rate?.kind === 'resolving'}
                 />
-              </TabsContent>
-              <TabsContent value='dates'>
+              </SectionTabPanel>
+              <SectionTabPanel value='dates'>
                 <DatesPanel job={job} facts={facts} />
-              </TabsContent>
-            </Tabs>
+              </SectionTabPanel>
+            </SectionTabs>
           </div>
 
           <aside
