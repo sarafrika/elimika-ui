@@ -768,7 +768,8 @@ export function InstructorDetailPage({ role }: { role: InstructorDetailRole }) {
         />
       </div>
 
-      {bio ? (
+      {/* Organisations read the bio in Overview; course creators have no Overview tab. */}
+      {!isOrganisation && bio ? (
         <SectionPanel title='Bio' description='Professional background and teaching profile.'>
           <p className='text-muted-foreground max-w-prose text-sm leading-6 whitespace-pre-line'>
             {bio}
@@ -785,7 +786,14 @@ export function InstructorDetailPage({ role }: { role: InstructorDetailRole }) {
         sticky
       >
         {isOrganisation ? (
-          <SectionTabPanel value='overview'>
+          <SectionTabPanel value='overview' className='space-y-4'>
+            {bio ? (
+              <SectionPanel title='Bio' description='Professional background and teaching profile.'>
+                <p className='text-muted-foreground max-w-prose text-sm leading-6 whitespace-pre-line'>
+                  {bio}
+                </p>
+              </SectionPanel>
+            ) : null}
             <div className='grid gap-4 xl:grid-cols-2'>
               <SectionPanel
                 title='Identity data'
