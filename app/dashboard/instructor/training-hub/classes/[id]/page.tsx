@@ -72,13 +72,7 @@ export default function TrainingHubClassCoursePage({ params }: Props) {
   }
 
   if (classData?.course?.uuid) {
-    return (
-      <ClassCourseDetailsPage
-        courseId={classData.course.uuid}
-        classData={classData}
-        type={'class'}
-      />
-    );
+    return <ClassCourseDetailsPage classData={classData} viewer='instructor' />;
   }
 
   if (classData?.program?.uuid) {
@@ -86,7 +80,7 @@ export default function TrainingHubClassCoursePage({ params }: Props) {
       <ClassProgramDetailsPage
         programId={classData.program.uuid}
         classData={classData}
-        type={'class'}
+        viewer='instructor'
       />
     );
   }

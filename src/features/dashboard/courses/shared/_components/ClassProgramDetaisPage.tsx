@@ -1,142 +1,99 @@
-// @ts-nocheck -- pre-existing @hey-api generated-client type drift (see memory: elimika-ui-typecheck)
 'use client';
 
-import { useCourseLessonsWithContent } from '@/hooks/use-courselessonwithcontent';
-import type {
-  Assignment,
-  Course,
-  CourseAssessment,
-  ProgramReview,
-  Quiz,
-  TrainingProgram,
-} from '@/services/client';
+import { useQuery } from '@tanstack/react-query';
 import {
-  getAllDifficultyLevelsOptions,
-  getClassDefinitionsForInstructorOptions,
-  getInstructorRatingSummaryOptions,
-  getProgramCoursesOptions,
-  getProgramReviewsOptions,
-  getTrainingProgramByUuidOptions,
-  submitInstructorReviewMutation,
-  submitProgramReviewMutation,
-} from '@/services/client/@tanstack/react-query.gen';
-import { useUserDomain } from '@/src/features/dashboard/context/user-domain-context';
-import { EnrollmentLoadingState } from '@/src/features/dashboard/courses/components/EnrollmentLoadingState';
-import { roleScopedDashboardPath } from '@/src/features/dashboard/lib/active-domain-storage';
-import { invalidateReviewWorkflowQueries } from '@/src/features/dashboard/workflow-query-invalidation';
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import {
-  Award,
-  BadgeCheck,
   BookOpen,
   CalendarClock,
   CheckCircle2,
   ChevronDown,
   ChevronUp,
-  Download,
   FileCheck,
-  Globe,
-  GraduationCap,
-  Heart,
-  Infinity as InfinityIcon,
   Layers3,
-  MonitorPlay,
   MoveRight,
-  Play,
   Share2,
+  Sparkles,
   Star,
-  User2,
+  Target,
   Users,
-  Wrench,
 } from 'lucide-react';
-import { useParams, useRouter } from 'next/navigation';
-import { useCallback, useEffect, useMemo, useState } from 'react';
-import { toast } from 'sonner';
-
+import { useRouter } from 'next/navigation';
+import { type ReactNode, useCallback, useEffect, useMemo, useState } from 'react';
 import { CourseTrainingRequirements } from '@/app/dashboard/_components/course-training-requirements';
-import { FeedbackDialog } from '@/app/dashboard/_components/review-instructor-modal';
-import { socialShareActions } from '@/app/dashboard/instructor/classes/overview/[id]/page';
-import HTMLTextPreview from '@/components/editors/html-text-preview';
-import { LinkShareCard } from '@/components/shared/link-share-card';
-import { Button } from '@/components/ui/button';
+import { type EntityFact, EntityHeaderCard } from '@/components/data-display/entity-header-card';
+import { surfaceTheme } from '@/components/data-display/page-shell';
 import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
-} from '@/components/ui/dialog';
-import { useUserProfile } from '@/context/profile-context';
+  type SectionTab,
+  SectionTabPanel,
+  SectionTabs,
+  useSectionTab,
+} from '@/components/data-display/section-tabs';
+import HTMLTextPreview from '@/components/editors/html-text-preview';
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
 import {
   useAssignmentsByLessonIds,
   useCourseAssessmentsByCourseUuids,
-  useCoursesByIds,
   useQuizzesByLessonIds,
+  useStudentsByIds,
 } from '@/hooks/use-batched-lookups';
-import { CombinedClassDetailsData } from '@/hooks/use-class-details';
-import { useCourseEnrollmentsMap } from '@/hooks/use-enrollment-map';
-import { buildSocialShareUrl, openShareWindow } from '@/lib/share';
-import CourseFaq from '@/src/features/dashboard/courses/shared/_components/CourseFaq';
-import ClassCourseTabNav from '@/src/features/dashboard/courses/shared/_components/CourseTabNav';
-import ShareClassCourse, {
-  ShareClass,
-} from '@/src/features/dashboard/courses/shared/_components/ShareClassCourse';
+import type { CombinedClassDetailsData } from '@/hooks/use-class-details';
+import {
+  type CourseLessonWithContent,
+  useCourseLessonsWithContent,
+} from '@/hooks/use-courselessonwithcontent';
+import { cn } from '@/lib/utils';
+import type { Course, ProgramReview } from '@/services/client';
+import {
+  getProgramCoursesOptions,
+  getProgramReviewsOptions,
+  getTrainingProgramByUuidOptions,
+} from '@/services/client/@tanstack/react-query.gen';
+import { AssessmentTab, CurriculumTab, ReviewsTab } from '@/src/features/course-record';
+import { useUserDomain } from '@/src/features/dashboard/context/user-domain-context';
+import { EnrollmentLoadingState } from '@/src/features/dashboard/courses/components/EnrollmentLoadingState';
+import { roleScopedDashboardPath } from '@/src/features/dashboard/lib/active-domain-storage';
+import { toAuthenticatedMediaUrl } from '@/src/lib/media-url';
+import {
+  averageRating,
+  CLASS_HUB_TAB_LABELS,
+  CLASS_PROGRAM_TABS,
+  type ClassHubViewer,
+  type ClassProgramTab,
+  reviewerNameMap,
+  reviewerUuids,
+  toBlockReviews,
+  toCurriculumLessons,
+} from './class-hub';
+import {
+  AssignmentQuizCounts,
+  ClassHeaderMedia,
+  ClassInstructorCard,
+  ClassSchedulePanel,
+  DeleteClassButton,
+  ShareLinkSheet,
+  WriteReviewButton,
+} from './class-hub-parts';
 
-// ════════════════════════════════════════════════════════════════════════
-// Shared types
-// ════════════════════════════════════════════════════════════════════════
+type LessonsByCourse = Record<string, CourseLessonWithContent[]>;
 
-type LessonContentItem = {
-  lesson: {
-    uuid?: string;
-    title: string;
-    description?: string | null;
-    lesson_number?: number;
-  };
-  content?: {
-    data?: Array<{
-      uuid?: string;
-      title: string;
-      file_size_display?: string | null;
-      description?: string | null;
-    }>;
-  };
-};
-
-type LessonsByCourse = Record<string, LessonContentItem[]>;
-
-// ════════════════════════════════════════════════════════════════════════
-// Reusable helper: aggregate useCourseLessonsWithContent across N courses
-// ════════════════════════════════════════════════════════════════════════
+/* Lessons across every bundled course ------------------------------------------------- */
 //
-// useCourseLessonsWithContent is a hook, so it can never be called inside
-// a .map() over a dynamic list of course uuids — the number of hook calls
-// would change whenever the course list changes, breaking the rules of
-// hooks. Instead, each course uuid gets its own tiny invisible "runner"
-// component that calls the hook exactly once and reports the result up to
-// a parent aggregator via a stable callback. Because each runner is its
-// own component instance (keyed by uuid), React can safely mount/unmount
-// runners as the course list changes without violating hook rules.
+// `useCourseLessonsWithContent` is a hook, so it cannot run inside a `.map()` over a list
+// of course uuids that changes size. Each course gets an invisible runner component that
+// calls the hook once and reports up through a stable callback; React mounts and unmounts
+// runners with the list without breaking the rules of hooks.
 
 type RunnerState = {
-  lessons: LessonContentItem[];
+  lessons: CourseLessonWithContent[];
   isLoading: boolean;
   isFetching: boolean;
 };
 
 /**
- * useCourseLessonsWithContent rebuilds its `lessons` array on every render
- * (it derives from useQueries, which always returns a fresh array
- * reference even when the underlying data hasn't changed). Using that
- * array directly as a useEffect dependency below would re-fire the effect
- * every render, which calls onChange -> setState in the parent -> re-render
- * -> new array reference -> effect fires again -> infinite loop.
- *
- * To break the cycle, we derive a small stable "signature" string from the
- * actual lesson/content data and only forward it to the parent when that
- * signature changes, ignoring reference identity entirely.
+ * The hook returns a fresh `lessons` array every render, so the runner forwards a
+ * content-derived signature instead of the array identity, or it would loop forever.
  */
-function getLessonsSignature(lessons: LessonContentItem[]): string {
+function getLessonsSignature(lessons: CourseLessonWithContent[]): string {
   return lessons
     .map(item => `${item.lesson?.uuid ?? ''}:${item.content?.data?.length ?? 0}`)
     .join('|');
@@ -149,12 +106,9 @@ function CourseLessonsRunner({
   courseUuid: string;
   onChange: (uuid: string, state: RunnerState) => void;
 }) {
-  const { isLoading, isFetching, lessons } = useCourseLessonsWithContent({
-    courseUuid,
-  });
-
-  const typedLessons = (lessons ?? []) as LessonContentItem[];
-  const signature = useMemo(() => getLessonsSignature(typedLessons), [typedLessons]);
+  const { isLoading, isFetching, lessons } = useCourseLessonsWithContent({ courseUuid });
+  const typedLessons = lessons ?? [];
+  const signature = getLessonsSignature(typedLessons);
 
   useEffect(() => {
     onChange(courseUuid, {
@@ -162,35 +116,12 @@ function CourseLessonsRunner({
       isLoading: Boolean(isLoading),
       isFetching: Boolean(isFetching),
     });
-    // typedLessons is intentionally excluded: it's a new array reference
-    // every render, so we depend on `signature` (content-based) plus the
-    // loading flags instead, to avoid re-firing on reference changes alone.
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [courseUuid, signature, isLoading, isFetching, onChange]);
 
   return null;
 }
 
-/**
- * Render-prop component that aggregates lesson+content data across every
- * course bundled in a program.
- *
- * Usage:
- *   <AggregatedCourseLessons courseUuids={courseUuids}>
- *     {({ lessonsByCourse, isLoading }) => (...)}
- *   </AggregatedCourseLessons>
- */
-function AggregatedCourseLessons({
-  courseUuids,
-  children,
-}: {
-  courseUuids: string[];
-  children: (result: {
-    lessonsByCourse: LessonsByCourse;
-    isLoading: boolean;
-    isFetching: boolean;
-  }) => React.ReactNode;
-}) {
+function useAggregatedCourseLessons(courseUuids: string[]) {
   const [stateByUuid, setStateByUuid] = useState<Record<string, RunnerState>>({});
 
   const handleChange = useCallback((uuid: string, state: RunnerState) => {
@@ -200,233 +131,383 @@ function AggregatedCourseLessons({
         existing?.isLoading === state.isLoading && existing?.isFetching === state.isFetching;
       const sameLessons =
         existing && getLessonsSignature(existing.lessons) === getLessonsSignature(state.lessons);
-
-      if (existing && sameLoading && sameLessons) {
-        return prev;
-      }
+      if (existing && sameLoading && sameLessons) return prev;
       return { ...prev, [uuid]: state };
     });
   }, []);
 
   const lessonsByCourse = useMemo(() => {
     const map: LessonsByCourse = {};
-    courseUuids.forEach(uuid => {
-      map[uuid] = stateByUuid[uuid]?.lessons ?? [];
-    });
+    for (const uuid of courseUuids) map[uuid] = stateByUuid[uuid]?.lessons ?? [];
     return map;
   }, [courseUuids, stateByUuid]);
 
   const isLoading =
     courseUuids.length > 0 && courseUuids.some(uuid => stateByUuid[uuid]?.isLoading ?? true);
-
   const isFetching =
     courseUuids.length > 0 && courseUuids.some(uuid => stateByUuid[uuid]?.isFetching ?? true);
 
-  return (
-    <>
-      {courseUuids.map(uuid => (
-        <CourseLessonsRunner key={uuid} courseUuid={uuid} onChange={handleChange} />
-      ))}
-      {children({ lessonsByCourse, isLoading, isFetching })}
-    </>
-  );
+  const runners = courseUuids.map(uuid => (
+    <CourseLessonsRunner key={uuid} courseUuid={uuid} onChange={handleChange} />
+  ));
+
+  return { lessonsByCourse, isLoading, isFetching, runners };
 }
 
-// ════════════════════════════════════════════════════════════════════════
-// Small local StarRating (mirrors the course page's ./StarRating shape)
-// ════════════════════════════════════════════════════════════════════════
+/* Page ------------------------------------------------------------------------------- */
 
-function StarRatingDisplay({
-  rating,
-  reviewCount,
-  size = 'md',
-  showCount = true,
+/**
+ * A class that runs a programme: header card, then Overview · Curriculum · Courses ·
+ * Assessment · Requirements · Schedule · Reviews.
+ */
+export default function ClassProgramDetailsPage({
+  programId,
+  classData,
+  viewer,
 }: {
-  rating: number;
-  reviewCount?: number;
-  size?: 'sm' | 'md';
-  showCount?: boolean;
+  programId: string;
+  classData: CombinedClassDetailsData;
+  viewer: ClassHubViewer;
 }) {
-  const starSize = size === 'sm' ? 'h-3.5 w-3.5' : 'h-4 w-4';
-  return (
-    <div className='flex items-center gap-1.5'>
-      <div className='flex items-center gap-0.5'>
-        {Array.from({ length: 5 }).map((_, i) => (
-          <Star
-            key={i}
-            className={`${starSize} ${i < Math.round(rating)
-              ? 'fill-warning text-warning'
-              : 'fill-muted text-muted-foreground'
-              }`}
-          />
-        ))}
+  const router = useRouter();
+  const { activeDomain } = useUserDomain();
+  const { value: tab, setValue: setTab, hrefFor } = useSectionTab(CLASS_PROGRAM_TABS, 'overview');
+  const [shareOpen, setShareOpen] = useState(false);
+  const [siteOrigin, setSiteOrigin] = useState('');
+
+  useEffect(() => {
+    setSiteOrigin(window.location.origin);
+  }, []);
+
+  /* ── data ──────────────────────────────────────────────────────────── */
+
+  const programQuery = useQuery({
+    ...getTrainingProgramByUuidOptions({ path: { uuid: programId } }),
+    enabled: !!programId,
+  });
+  const program = programQuery.data?.data;
+
+  const programCoursesQuery = useQuery({
+    ...getProgramCoursesOptions({ path: { programUuid: programId } }),
+    enabled: !!programId,
+  });
+  const programCourses: Course[] = useMemo(
+    () => programCoursesQuery.data?.data ?? [],
+    [programCoursesQuery.data]
+  );
+  const courseUuids = useMemo(
+    () => programCourses.map(course => course.uuid).filter((uuid): uuid is string => !!uuid),
+    [programCourses]
+  );
+
+  const { assessmentMap, isLoading: assessmentsLoading } =
+    useCourseAssessmentsByCourseUuids(courseUuids);
+
+  const reviewsQuery = useQuery({
+    ...getProgramReviewsOptions({ path: { programUuid: programId }, query: { pageable: {} } }),
+    enabled: !!programId,
+    staleTime: 5 * 60 * 1000,
+    refetchOnWindowFocus: false,
+  });
+  // The generated type drops the response envelope; the page sits under `data`.
+  const reviews = useMemo(
+    () =>
+      (reviewsQuery.data as unknown as { data?: { content?: ProgramReview[] } } | undefined)?.data
+        ?.content ?? [],
+    [reviewsQuery.data]
+  );
+  const blockReviews = useMemo(() => toBlockReviews(reviews), [reviews]);
+  const reviewerIds = useMemo(() => reviewerUuids(reviews), [reviews]);
+  const { studentMap } = useStudentsByIds(reviewerIds);
+  const avgRating = averageRating(reviews);
+
+  const {
+    lessonsByCourse,
+    isLoading: lessonsLoading,
+    isFetching: lessonsFetching,
+    runners,
+  } = useAggregatedCourseLessons(courseUuids);
+
+  const lessonUuids = useMemo(
+    () =>
+      Object.values(lessonsByCourse)
+        .flat()
+        .map(item => item.lesson?.uuid)
+        .filter((uuid): uuid is string => !!uuid),
+    [lessonsByCourse]
+  );
+  const { items: assignments, isLoading: assignmentLoading } =
+    useAssignmentsByLessonIds(lessonUuids);
+  const { items: quizzes, isLoading: quizzesLoading } = useQuizzesByLessonIds(lessonUuids);
+
+  const curriculumByCourse = useMemo(() => {
+    const map: Record<string, ReturnType<typeof toCurriculumLessons>> = {};
+    for (const [uuid, lessons] of Object.entries(lessonsByCourse)) {
+      map[uuid] = toCurriculumLessons(lessons);
+    }
+    return map;
+  }, [lessonsByCourse]);
+
+  const aggregatedRequirements = useMemo(
+    () => programCourses.flatMap(course => course.training_requirements ?? []),
+    [programCourses]
+  );
+
+  const programShareLink = siteOrigin
+    ? `${siteOrigin}${roleScopedDashboardPath(
+        activeDomain,
+        `/dashboard/courses/available-programs/${programId}`
+      )}`
+    : '';
+
+  const isEverythingReady = !(
+    programQuery.isLoading ||
+    programQuery.isFetching ||
+    programCoursesQuery.isLoading ||
+    reviewsQuery.isLoading ||
+    assignmentLoading ||
+    quizzesLoading ||
+    lessonsLoading ||
+    lessonsFetching
+  );
+
+  let body: ReactNode;
+  if (!isEverythingReady) {
+    body = (
+      <EnrollmentLoadingState
+        title='Loading your program details'
+        description='We are gathering courses, lessons, tasks, quizzes, and program information so the full learning overview is ready when the page opens.'
+      />
+    );
+  } else if (!program) {
+    body = (
+      <div className='border-border mx-auto max-w-3xl rounded-xl border border-dashed p-10 text-center'>
+        <h1 className='text-foreground text-xl font-semibold'>Program not found</h1>
+        <p className='text-muted-foreground mt-2 text-sm'>
+          The program you are trying to open could not be found.
+        </p>
       </div>
-      <span className='text-foreground text-sm font-semibold'>{rating.toFixed(1)}</span>
-      {showCount && typeof reviewCount === 'number' && (
-        <span className='text-muted-foreground text-xs'>
-          ({reviewCount.toLocaleString()} review{reviewCount === 1 ? '' : 's'})
-        </span>
-      )}
-    </div>
+    );
+  } else {
+    const totalLessons = lessonUuids.length;
+    const assessmentCount = assignments.length + quizzes.length;
+    const assessmentRowCount = Object.values(assessmentMap).flat().length;
+    const enrolledCount = new Set((classData.enrollments ?? []).map(item => item.student_uuid))
+      .size;
+    const sessionCount = classData.schedule?.length ?? 0;
+    const priceLabel =
+      typeof program.price === 'number' && program.price > 0
+        ? `From Ksh ${program.price.toLocaleString()}`
+        : 'Pricing not set';
+
+    const facts: EntityFact[] = [
+      { key: 'courses', icon: Layers3, value: programCourses.length, label: 'courses' },
+      { key: 'lessons', icon: BookOpen, value: totalLessons, label: 'lessons' },
+      { key: 'assessments', icon: FileCheck, value: assessmentCount, label: 'assessments' },
+      { key: 'sessions', icon: CalendarClock, value: sessionCount, label: 'sessions' },
+      {
+        key: 'enrolled',
+        icon: Users,
+        value: enrolledCount,
+        label: `enrolled · limit ${program.class_limit ?? 'open'}`,
+      },
+    ];
+    if (avgRating !== null) {
+      facts.push({
+        key: 'rating',
+        icon: Star,
+        value: avgRating.toFixed(1),
+        label: `from ${reviews.length} ${reviews.length === 1 ? 'review' : 'reviews'}`,
+      });
+    }
+
+    const tabCounts: Partial<Record<ClassProgramTab, number>> = {
+      curriculum: totalLessons,
+      courses: programCourses.length,
+      assessment: assessmentRowCount,
+      requirements: aggregatedRequirements.length,
+      schedule: sessionCount,
+      reviews: reviews.length,
+    };
+    const tabs: SectionTab<ClassProgramTab>[] = CLASS_PROGRAM_TABS.map(id => ({
+      id,
+      label: CLASS_HUB_TAB_LABELS[id],
+      count: tabCounts[id] ?? null,
+    }));
+    const access = viewer === 'instructor' ? 'instructor' : 'student';
+
+    body = (
+      <>
+        <EntityHeaderCard
+          title={classData.class?.title ?? program.title}
+          eyebrow='Programme class'
+          badges={
+            <>
+              <Badge variant='secondary'>{program.program_type || 'General'}</Badge>
+              {program.status === 'published' ? (
+                <Badge variant='outline'>Published programme</Badge>
+              ) : null}
+            </>
+          }
+          context={
+            <span className='text-muted-foreground'>
+              Programme <b className='text-foreground font-semibold'>{program.title}</b>
+            </span>
+          }
+          facts={facts}
+          media={
+            <ClassHeaderMedia classData={classData} fallbackIcon={Layers3} label='Programme' />
+          }
+          aside={
+            <div className='bg-muted/30 flex h-full flex-col gap-3 rounded-xl border p-4'>
+              <p className='text-muted-foreground text-sm font-medium'>Enroll in this program</p>
+              <p className='text-foreground text-2xl font-black'>{priceLabel}</p>
+              <Button
+                className='gap-2'
+                onClick={() =>
+                  router.push(
+                    roleScopedDashboardPath(
+                      activeDomain,
+                      `/dashboard/courses/available-programs/${programId}`
+                    )
+                  )
+                }
+              >
+                Enroll Now
+                <MoveRight className='h-4 w-4' />
+              </Button>
+            </div>
+          }
+          actions={
+            <>
+              <Button
+                variant='outline'
+                size='sm'
+                className='gap-2'
+                onClick={() => setShareOpen(true)}
+              >
+                <Share2 className='h-4 w-4' />
+                Share
+              </Button>
+              {viewer === 'instructor' ? (
+                <DeleteClassButton classData={classData} activeDomain={activeDomain ?? null} />
+              ) : null}
+            </>
+          }
+        />
+
+        <SectionTabs
+          tabs={tabs}
+          value={tab}
+          onValueChange={setTab}
+          hrefFor={hrefFor}
+          label='Programme class sections'
+          sticky
+          listClassName='bg-background print:hidden'
+        >
+          <SectionTabPanel value='overview' className='print:block!'>
+            <div className='flex flex-col gap-[18px]'>
+              <ProgramAbout description={program.description} objectives={program.objectives} />
+              <ClassInstructorCard classData={classData} />
+            </div>
+          </SectionTabPanel>
+
+          <SectionTabPanel value='curriculum' className='print:block!'>
+            {programCourses.length === 0 ? (
+              <EmptyCard>No courses have been added to this program yet.</EmptyCard>
+            ) : (
+              <div className='flex flex-col gap-6'>
+                {programCourses.map((course, index) => (
+                  <section key={course.uuid ?? index} className='flex flex-col gap-3'>
+                    <CourseHeading index={index} name={course.name} />
+                    <CurriculumTab
+                      access={access}
+                      lessons={curriculumByCourse[course.uuid ?? ''] ?? []}
+                    />
+                  </section>
+                ))}
+              </div>
+            )}
+          </SectionTabPanel>
+
+          <SectionTabPanel value='courses' className='print:block!'>
+            <ProgramBundledCourses courses={programCourses} lessonsByCourse={lessonsByCourse} />
+          </SectionTabPanel>
+
+          <SectionTabPanel value='assessment' className='print:block!'>
+            <div className='flex flex-col gap-6'>
+              {programCourses.map((course, index) => (
+                <section key={course.uuid ?? index} className='flex flex-col gap-3'>
+                  <CourseHeading index={index} name={course.name} />
+                  <AssessmentTab
+                    assessments={assessmentMap[course.uuid ?? ''] ?? []}
+                    loading={assessmentsLoading}
+                  />
+                </section>
+              ))}
+              <AssignmentQuizCounts assignments={assignments.length} quizzes={quizzes.length} />
+            </div>
+          </SectionTabPanel>
+
+          <SectionTabPanel value='requirements' className='print:block!'>
+            <CourseTrainingRequirements
+              requirements={aggregatedRequirements}
+              title='Program Training Requirements'
+              description='Review what you need to prepare before registering for this program, combined across all its courses.'
+              className='rounded-xl'
+              viewerRole={viewer}
+            />
+          </SectionTabPanel>
+
+          <SectionTabPanel value='schedule' className='print:block!'>
+            <ClassSchedulePanel
+              classData={classData}
+              viewer={viewer}
+              activeDomain={activeDomain ?? null}
+            />
+          </SectionTabPanel>
+
+          <SectionTabPanel value='reviews' className='print:block!'>
+            <div className='flex flex-col gap-[18px]'>
+              {viewer === 'student' ? (
+                <div className='flex justify-end'>
+                  <WriteReviewButton subject='program' subjectUuid={programId} />
+                </div>
+              ) : null}
+              <ReviewsTab
+                reviews={blockReviews}
+                reviewerNames={reviewerNameMap(studentMap)}
+                loading={reviewsQuery.isLoading}
+                error={reviewsQuery.error}
+                onRetry={() => reviewsQuery.refetch()}
+              />
+            </div>
+          </SectionTabPanel>
+        </SectionTabs>
+
+        <ShareLinkSheet
+          open={shareOpen}
+          onOpenChange={setShareOpen}
+          title='Share Program'
+          description='Share this program with other learners and instructors.'
+          linkTitle='Program Link'
+          url={programShareLink}
+          shareTitle={program.title ?? 'Program'}
+          shareDescription={`Check out this program: ${program.title}`}
+        />
+      </>
+    );
+  }
+
+  return (
+    <main className={cn(surfaceTheme.pageWide, 'flex flex-col gap-[18px] py-5')}>
+      {runners}
+      {body}
+    </main>
   );
 }
 
-// ════════════════════════════════════════════════════════════════════════
-// Hero
-// ════════════════════════════════════════════════════════════════════════
-
-function ProgramDetailsHero({
-  program,
-  courseCount,
-  reviewCount,
-  averageRating,
-  lessonCount,
-  assignmentCount,
-  quizCount,
-}: {
-  program: TrainingProgram;
-  courseCount: number;
-  reviewCount: number;
-  averageRating: string | null;
-  lessonCount: number;
-  assignmentCount: number;
-  quizCount: number;
-}) {
-  const totalAssessments = assignmentCount + quizCount;
-  const displayRating = averageRating ? Number(averageRating) : 0;
-
-  return (
-    <div className='flex flex-col gap-4 sm:gap-6'>
-      <div className='bg-primary text-primary-foreground group relative aspect-video overflow-hidden rounded-xl shadow-lg'>
-        <div className='absolute inset-0 flex items-center justify-center'>
-          <div className='text-center'>
-            <div className='mb-3 flex items-center justify-center'>
-              <Layers3 className='h-16 w-16 drop-shadow-lg sm:h-20 sm:w-20 lg:h-24 lg:w-24' />
-            </div>
-
-            <p className='text-lg font-black tracking-tight drop-shadow sm:text-xl lg:text-2xl'>
-              {program.program_type?.toUpperCase() || 'PROGRAM'}
-            </p>
-
-            <p className='text-base font-bold sm:text-lg lg:text-xl'>{program.title}</p>
-
-            <p className='text-primary-foreground/80 text-xs sm:text-sm'>
-              {courseCount} bundled course{courseCount === 1 ? '' : 's'}
-            </p>
-          </div>
-        </div>
-
-        <div className='bg-background/20 text-primary-foreground absolute top-3 right-3 flex items-center gap-1 rounded-md px-2 py-1 text-xs backdrop-blur-sm'>
-          <Play className='h-3 w-3 fill-current' />
-          Preview
-        </div>
-      </div>
-
-      <div className='flex flex-col gap-3 sm:gap-4'>
-        <h1 className='text-foreground text-xl leading-tight font-black sm:text-2xl lg:text-3xl'>
-          {program.title}
-        </h1>
-
-        <div className='flex flex-wrap items-center gap-2'>
-          <span className='bg-success/5 text-success border-border flex items-center gap-1.5 rounded-full border px-3 py-1 text-xs font-semibold sm:text-sm'>
-            <Award className='h-3.5 w-3.5' />
-            {program.status === 'published' ? 'Published Program' : 'Training Program'}
-          </span>
-
-          <span className='bg-secondary text-secondary-foreground border-border flex items-center gap-1.5 rounded-full border px-3 py-1 text-xs font-semibold sm:text-sm'>
-            <BadgeCheck className='h-3.5 w-3.5' />
-            {program.program_type || 'General'}
-          </span>
-        </div>
-
-        <StarRatingDisplay rating={displayRating || 0} reviewCount={reviewCount} size='md' />
-
-        <div className='text-muted-foreground text-sm leading-relaxed sm:text-base'>
-          <HTMLTextPreview htmlContent={program.description || ''} />
-        </div>
-
-        <div className='flex w-full flex-wrap items-center gap-12 text-sm'>
-          <div className='flex flex-col items-start gap-1.5'>
-            <div className='flex gap-2'>
-              <Layers3 className='text-muted-foreground h-4 w-4 shrink-0' />
-              <p className='text-muted-foreground text-xs'>Courses</p>
-            </div>
-            <p className='text-foreground text-xs font-semibold sm:text-sm'>
-              {courseCount} included
-            </p>
-          </div>
-
-          <div className='flex flex-col items-start gap-1.5'>
-            <div className='flex gap-2'>
-              <Users className='text-muted-foreground h-4 w-4 shrink-0' />
-              <p className='text-muted-foreground text-xs'>Class limit</p>
-            </div>
-            <p className='text-foreground text-xs font-semibold sm:text-sm'>
-              {program.class_limit ?? 'Open'}
-            </p>
-          </div>
-
-          <div className='flex flex-col items-start gap-1.5'>
-            <div className='flex gap-2'>
-              <Globe className='text-muted-foreground h-4 w-4 shrink-0' />
-              <p className='text-muted-foreground text-xs'>Price</p>
-            </div>
-            <p className='text-foreground text-xs font-semibold sm:text-sm'>
-              {typeof program.price === 'number' ? `KES ${program.price}` : 'Flexible'}
-            </p>
-          </div>
-        </div>
-      </div>
-
-      <div className='border-border flex flex-wrap gap-6 border-y py-3 sm:gap-12 sm:py-4'>
-        {[
-          {
-            icon: <BookOpen className='text-primary h-4 w-4' />,
-            label: `${lessonCount}`,
-            sub: 'Lessons',
-            bg: 'bg-primary/5',
-          },
-          {
-            icon: <FileCheck className='text-success h-4 w-4' />,
-            label: `${totalAssessments}`,
-            sub: 'Assessments',
-            bg: 'bg-success/5',
-          },
-          {
-            icon: <MonitorPlay className='text-warning h-4 w-4' />,
-            label: 'Hands-on',
-            sub: 'Projects',
-            bg: 'bg-warning/5',
-          },
-          {
-            icon: <Award className='h-4 w-4 text-balance' />,
-            label: 'Certificate',
-            sub: 'of Completion',
-            bg: 'bg-muted/50',
-          },
-          {
-            icon: <Globe className='text-accent h-4 w-4' />,
-            label: 'English',
-            sub: 'Language',
-            bg: 'bg-accent/5',
-          },
-        ].map((item, i) => (
-          <div key={i} className='flex min-w-fit flex-row items-center gap-2'>
-            <div className={`${item.bg} rounded-full p-2`}>{item.icon}</div>
-            <div className='flex flex-col'>
-              <span className='text-foreground text-xs font-bold sm:text-sm'>{item.label}</span>
-              <span className='text-muted-foreground -mt-1 text-xs'>{item.sub}</span>
-            </div>
-          </div>
-        ))}
-      </div>
-    </div>
-  );
-}
-
-// ════════════════════════════════════════════════════════════════════════
-// Overview tab (about / what you'll learn / curriculum / instructors)
-// ════════════════════════════════════════════════════════════════════════
+/* Panels ----------------------------------------------------------------------------- */
 
 function splitBullets(value?: string | null) {
   if (!value) return [];
@@ -437,283 +518,29 @@ function splitBullets(value?: string | null) {
     .slice(0, 6);
 }
 
-function ProgramCurriculum({
-  programCourses,
-  lessonsByCourse,
+function ProgramAbout({
+  description,
+  objectives,
 }: {
-  programCourses: Course[];
-  lessonsByCourse: LessonsByCourse;
+  description?: string | null;
+  objectives?: string | null;
 }) {
-  const [openModules, setOpenModules] = useState<string[]>([]);
-
-  const toggle = (key: string) => {
-    setOpenModules(prev =>
-      prev.includes(key) ? prev.filter(item => item !== key) : [...prev, key]
-    );
-  };
-
-  const totalLessons = useMemo(
-    () => Object.values(lessonsByCourse).flat().length,
-    [lessonsByCourse]
-  );
-
-  const allKeys = useMemo(
-    () =>
-      programCourses.flatMap((course, ci) =>
-        (lessonsByCourse[course.uuid ?? ''] ?? []).map((_, li) => `${course.uuid ?? ci}-${li}`)
-      ),
-    [programCourses, lessonsByCourse]
-  );
-
-  if (programCourses.length === 0) {
-    return (
-      <section className='text-muted-foreground py-10 text-center'>
-        <h2 className='text-foreground text-base font-semibold'>Program Curriculum</h2>
-        <p className='mt-2 text-sm'>No courses have been added to this program yet.</p>
-      </section>
-    );
-  }
-
-  return (
-    <section>
-      <div className='mb-3 flex flex-wrap items-center justify-between gap-2 sm:mb-4'>
-        <h2 className='text-foreground text-base font-bold sm:text-lg'>Program Curriculum</h2>
-
-        <button
-          type='button'
-          onClick={() => setOpenModules(openModules.length === allKeys.length ? [] : allKeys)}
-          className='text-primary hover:text-primary/80 text-xs font-medium transition-colors sm:text-sm'
-        >
-          {openModules.length === allKeys.length ? 'Collapse All' : 'Expand All'}
-        </button>
-      </div>
-
-      <div className='flex flex-col gap-5'>
-        {programCourses.map((course, ci) => {
-          const courseLessons = lessonsByCourse[course.uuid ?? ''] ?? [];
-
-          return (
-            <div key={course.uuid ?? ci} className='space-y-2'>
-              <div className='flex items-center gap-2'>
-                <span className='bg-primary/10 text-primary inline-flex size-6 shrink-0 items-center justify-center rounded-full text-xs font-semibold'>
-                  {ci + 1}
-                </span>
-                <h3 className='text-foreground text-sm font-bold sm:text-base'>
-                  {course.name || 'Untitled course'}
-                </h3>
-              </div>
-
-              <div className='border-border divide-border divide-y overflow-hidden rounded-sm border'>
-                {courseLessons.length === 0 ? (
-                  <div className='text-muted-foreground px-4 py-3 text-xs sm:px-5 sm:text-sm'>
-                    No lessons added for this course yet.
-                  </div>
-                ) : (
-                  courseLessons
-                    .slice()
-                    .sort((a, b) => (a.lesson?.lesson_number ?? 0) - (b.lesson?.lesson_number ?? 0))
-                    .map((mod, li) => {
-                      const key = `${course.uuid ?? ci}-${li}`;
-                      const isOpen = openModules.includes(key);
-
-                      return (
-                        <div key={key}>
-                          <button
-                            type='button'
-                            onClick={() => toggle(key)}
-                            className='hover:bg-muted flex w-full items-center justify-between gap-2 px-4 py-3 text-left transition-colors sm:px-5 sm:py-4'
-                          >
-                            <div className='flex min-w-0 items-center gap-2'>
-                              <ChevronDown
-                                className={`text-muted-foreground h-4 w-4 shrink-0 transition-transform ${isOpen ? 'rotate-180' : ''
-                                  }`}
-                              />
-                              <span className='text-foreground truncate text-xs font-semibold sm:text-sm'>
-                                {mod.lesson?.title}
-                              </span>
-                            </div>
-
-                            <div className='text-muted-foreground flex shrink-0 items-center gap-3 text-xs sm:gap-5 sm:text-sm'>
-                              <span>{mod.content?.data?.length || 0} Lessons</span>
-                            </div>
-                          </button>
-
-                          {isOpen &&
-                            mod.content?.data?.map((lesson, index) => (
-                              <div
-                                key={index}
-                                className='border-border text-muted-foreground border-t px-4 py-3 text-xs sm:px-6 sm:text-sm'
-                              >
-                                <div className='flex items-center gap-2'>
-                                  <span className='bg-primary inline-flex h-1.5 w-1.5 flex-shrink-0 items-center justify-center rounded-full'>
-                                    <svg
-                                      xmlns='http://www.w3.org/2000/svg'
-                                      viewBox='0 0 24 24'
-                                      fill='currentColor'
-                                      className='text-on-primary h-2 w-2'
-                                    >
-                                      <circle cx='12' cy='12' r='6' />
-                                    </svg>
-                                  </span>
-                                  <p>{lesson.title}</p>
-                                </div>
-                              </div>
-                            ))}
-                        </div>
-                      );
-                    })
-                )}
-              </div>
-            </div>
-          );
-        })}
-      </div>
-
-      <div className='text-muted-foreground mt-4 flex flex-wrap gap-6 text-xs sm:gap-6 sm:text-sm'>
-        <span className='flex gap-2'>
-          <strong className='text-foreground text-sm'>Total Lessons:</strong>
-          <p>{totalLessons}</p>
-        </span>
-        <span className='flex gap-2'>
-          <strong className='text-foreground text-sm'>Total Courses:</strong>
-          <p>{programCourses.length}</p>
-        </span>
-      </div>
-    </section>
-  );
-}
-
-function ProgramOverview({
-  program,
-  classData,
-  programCourses,
-  lessonsByCourse,
-  type,
-}: {
-  program: TrainingProgram;
-  classData: CombinedClassDetailsData;
-  programCourses: Course[];
-  lessonsByCourse: LessonsByCourse;
-  type: string | undefined;
-}) {
-  const userProfile = useUserProfile();
   const [expanded, setExpanded] = useState(false);
-  const [showFullBio, setShowFullBio] = useState(false);
-
-  const learnings = useMemo(
-    () => splitBullets(program.objectives || program.description),
-    [program.description, program.objectives]
-  );
-
-  const instructor = classData?.instructor?.data;
-
-  const { data: instructorClassResp } = useQuery({
-    ...getClassDefinitionsForInstructorOptions({
-      path: { instructorUuid: instructor?.uuid as string },
-    }),
-    enabled: !!instructor?.uuid,
-  });
-  const instructorClasses =
-    instructorClassResp?.data?.filter(item => item.class_definition?.is_active) || [];
-  const { data: instructorReviewResp } = useQuery({
-    ...getInstructorRatingSummaryOptions({
-      path: { instructorUuid: instructor?.uuid as string },
-    }),
-    enabled: !!instructor?.uuid,
-  });
-
-  const profile = {
-    name: instructor?.full_name,
-    headline: instructor?.professional_headline,
-    bio: instructor?.bio,
-    courses: instructorClasses?.length,
-    rating: instructorReviewResp?.data?.average_rating,
-  };
-
-  const stats = [
-    { val: profile.courses, label: 'Courses' },
-    { val: 0, label: 'Students' },
-    { val: profile?.rating, label: 'Rating' },
-  ];
-
-  const studentUuid = userProfile?.student?.uuid as string;
-  const { courseEnrollmentMap } = useCourseEnrollmentsMap([classData?.course?.uuid as string]);
-  const courseEnrollments = courseEnrollmentMap?.[classData?.course?.uuid as string] || [];
-
-  const enrollment = courseEnrollments?.enrollments?.find(e => e.student_uuid === studentUuid);
-
-  const enrollmentUuid = enrollment?.uuid;
-
-  const [showFeedbackDialog, setShowFeedbackDialog] = useState(false);
-  const [rating, setRating] = useState(0);
-  const [clarityRating, setClarityRating] = useState(0);
-  const [engagementRating, setEngagementRating] = useState(0);
-  const [punctualityRating, setPunctualityRating] = useState(0);
-  const [feedbackComment, setFeedbackComment] = useState('');
-  const [headline, setHeadline] = useState('');
-
-  const reviewInstructor = useMutation(submitInstructorReviewMutation());
-  const handleSubmitFeedback = () => {
-    if (!classData?.class || !classData?.class?.uuid || !instructor?.uuid || !studentUuid) {
-      toast.error('Class or student enrollment not found');
-      return;
-    }
-
-    const instructorUuid = instructor.uuid;
-
-    reviewInstructor.mutate(
-      {
-        body: {
-          enrollment_uuid: enrollmentUuid,
-          instructor_uuid: instructorUuid,
-          student_uuid: studentUuid,
-          comments: feedbackComment,
-          headline: headline,
-          is_anonymous: false,
-          rating: rating,
-          clarity_rating: clarityRating,
-          engagement_rating: engagementRating,
-          punctuality_rating: punctualityRating,
-        },
-        path: { instructorUuid },
-      },
-      {
-        async onSuccess(data) {
-          toast.success(data?.message);
-          setShowFeedbackDialog(false);
-          setFeedbackComment('');
-          setHeadline('');
-          setRating(0);
-          setClarityRating(0);
-          setEngagementRating(0);
-          setPunctualityRating(0);
-          await invalidateReviewWorkflowQueries(qc);
-        },
-        onError: data => {
-          toast.error(data?.message);
-        },
-      }
-    );
-  };
+  const learnings = splitBullets(objectives || description);
+  const long = (description?.length ?? 0) > 260;
 
   return (
-    <div className='flex flex-col gap-6 sm:gap-8'>
-      {/* ABOUT */}
-      <section>
-        <h2 className='text-foreground mb-2 text-base font-bold sm:mb-3 sm:text-lg'>
+    <div className='grid gap-[18px] xl:grid-cols-2'>
+      <section className='bg-card rounded-xl border px-5 py-[18px] shadow-sm'>
+        <h3 className='flex items-center gap-2 text-[15px] font-bold'>
+          <Sparkles className='text-primary size-4' aria-hidden />
           About this program
-        </h2>
-
-        <div className='text-muted-foreground text-sm leading-relaxed'>
+        </h3>
+        <div className='text-muted-foreground mt-2.5 max-w-prose text-sm leading-relaxed'>
           <HTMLTextPreview
-            htmlContent={
-              expanded
-                ? program.description || 'This program is now driven by live API data.'
-                : (program.description || '').slice(0, 260)
-            }
+            htmlContent={expanded || !long ? description || '' : (description ?? '').slice(0, 260)}
           />
-
-          {program.description && program.description.length > 260 && (
+          {long ? (
             <button
               type='button'
               onClick={() => setExpanded(prev => !prev)}
@@ -726,175 +553,51 @@ function ProgramOverview({
                 <ChevronDown className='h-3.5 w-3.5' />
               )}
             </button>
-          )}
+          ) : null}
         </div>
       </section>
 
-      {/* WHAT YOU'LL LEARN */}
-      <section>
-        <h2 className='text-foreground mb-3 text-base font-bold sm:mb-4 sm:text-lg'>
-          What you'll learn
-        </h2>
-
-        <div className='grid grid-cols-1 gap-2 sm:grid-cols-2 sm:gap-3'>
+      <section className='bg-card rounded-xl border px-5 py-[18px] shadow-sm'>
+        <h3 className='mb-3 flex items-center gap-2 text-[15px] font-bold'>
+          <Target className='text-primary size-4' aria-hidden />
+          What you&apos;ll learn
+        </h3>
+        <ul className='grid gap-2 sm:grid-cols-2'>
           {(learnings.length > 0 ? learnings : ['Learn the key concepts across this program']).map(
-            (item, i) => (
-              <div key={i} className='flex items-start gap-2'>
+            item => (
+              <li key={item} className='flex items-start gap-2'>
                 <CheckCircle2 className='text-success mt-0.5 h-4 w-4 shrink-0' />
                 <div className='text-muted-foreground text-sm'>
                   <HTMLTextPreview htmlContent={item} />
                 </div>
-              </div>
+              </li>
             )
           )}
-        </div>
+        </ul>
       </section>
-
-      {/* CURRICULUM (collapsed view, grouped by course) */}
-      <ProgramCurriculum programCourses={programCourses} lessonsByCourse={lessonsByCourse} />
-
-      {/* COURSES IN PROGRAM */}
-      <section>
-        <h2 className='text-foreground mb-3 text-base font-bold sm:mb-4 sm:text-lg'>
-          Courses in this program
-        </h2>
-
-        {programCourses.length === 0 ? (
-          <div className='border-border text-muted-foreground rounded-md border border-dashed p-6 text-center text-sm'>
-            No courses have been bundled into this program yet.
-          </div>
-        ) : (
-          <div className='grid grid-cols-1 gap-3 sm:grid-cols-2'>
-            {programCourses.map((course, i) => (
-              <div
-                key={course.uuid ?? i}
-                className='border-border bg-muted/30 flex items-start gap-3 rounded-md border p-4'
-              >
-                <span className='bg-primary/10 text-primary inline-flex size-8 shrink-0 items-center justify-center rounded-full text-sm font-semibold'>
-                  {i + 1}
-                </span>
-                <div className='min-w-0'>
-                  <h3 className='text-foreground truncate text-sm font-semibold'>
-                    {course.name || 'Untitled course'}
-                  </h3>
-                  <p className='text-muted-foreground mt-1 line-clamp-2 text-xs'>
-                    {course.description
-                      ? course.description.replace(/<[^>]*>/g, '')
-                      : 'No description available.'}
-                  </p>
-                </div>
-              </div>
-            ))}
-          </div>
-        )}
-      </section>
-
-      {/* INSTRUCTOR */}
-      {type === 'class' && (
-        <section>
-          <div className='flex flex-row items-center justify-between'>
-            <h2 className='text-foreground mb-3 text-base font-bold sm:mb-4 sm:text-lg'>
-              Meet your Instructor
-            </h2>
-            <Button
-              variant='outline'
-              size='sm'
-              onClick={() => setShowFeedbackDialog(true)}
-              className='gap-2 rounded-sm shadow-none'
-            >
-              <Star className='h-4 w-4' />
-              Write a Review
-            </Button>
-          </div>
-
-          <div className='border-border bg-muted/40 flex flex-col items-start gap-4 rounded-md border p-4 sm:flex-row sm:gap-6 sm:p-5'>
-            <div className='bg-muted flex h-16 w-16 shrink-0 items-center justify-center rounded-full sm:h-20 sm:w-20'>
-              <User2 className='text-muted-foreground h-6 w-6' />
-            </div>
-
-            <div className='min-w-0 flex-1'>
-              <h3 className='text-foreground text-sm font-bold sm:text-base'>{profile.name}</h3>
-
-              <p className='text-muted-foreground mb-2 text-xs sm:text-sm'>{profile.headline}</p>
-
-              <div className='mb-3 sm:mb-4'>
-                <div
-                  className={`text-muted-foreground text-xs leading-relaxed sm:text-sm ${showFullBio ? '' : 'line-clamp-2'
-                    }`}
-                >
-                  <HTMLTextPreview htmlContent={profile.bio} />
-                </div>
-
-                {profile.bio && (
-                  <Button
-                    variant='link'
-                    className='mt-1 h-auto p-0 text-xs sm:text-sm'
-                    onClick={() => setShowFullBio(prev => !prev)}
-                  >
-                    {showFullBio ? 'Show less' : 'Show more'}
-                  </Button>
-                )}
-              </div>
-
-              {/* <div className="mb-3 text-xs leading-relaxed text-muted-foreground sm:mb-4 sm:text-sm">
-                                <HTMLTextPreview htmlContent={profile.bio} />
-                            </div> */}
-
-              <div className='flex flex-wrap gap-6 sm:gap-12'>
-                {stats.map(stat => (
-                  <div key={stat.label} className='text-start'>
-                    <p className='text-foreground text-sm font-black sm:text-base'>
-                      {stat.label === 'Rating' ? (
-                        <span className='inline-flex items-center gap-1'>
-                          {stat.val}
-                          <svg
-                            xmlns='http://www.w3.org/2000/svg'
-                            viewBox='0 0 24 24'
-                            fill='currentColor'
-                            className='text-warning h-4 w-4'
-                          >
-                            <path d='M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z' />
-                          </svg>
-                        </span>
-                      ) : (
-                        stat.val
-                      )}
-                    </p>
-
-                    <p className='text-muted-foreground text-xs'>{stat.label}</p>
-                  </div>
-                ))}
-              </div>
-            </div>
-          </div>
-
-          <FeedbackDialog
-            open={showFeedbackDialog}
-            onOpenChange={setShowFeedbackDialog}
-            headline={headline}
-            onHeadlineChange={setHeadline}
-            feedback={feedbackComment}
-            onFeedbackChange={setFeedbackComment}
-            rating={rating}
-            onRatingChange={setRating}
-            clarityRating={clarityRating}
-            onClarityRatingChange={setClarityRating}
-            engagementRating={engagementRating}
-            onEngagementRatingChange={setEngagementRating}
-            punctualityRating={punctualityRating}
-            onPunctualityRatingChange={setPunctualityRating}
-            isSubmitting={reviewInstructor.isPending}
-            onSubmit={handleSubmitFeedback}
-          />
-        </section>
-      )}
     </div>
   );
 }
 
-// ════════════════════════════════════════════════════════════════════════
-// Courses tab — full bundled-course list
-// ════════════════════════════════════════════════════════════════════════
+function CourseHeading({ index, name }: { index: number; name?: string }) {
+  return (
+    <div className='flex items-center gap-2'>
+      <span className='bg-primary/10 text-primary inline-flex size-7 shrink-0 items-center justify-center rounded-full text-xs font-semibold'>
+        {index + 1}
+      </span>
+      <h3 className='text-foreground text-base font-bold'>{name || 'Untitled course'}</h3>
+    </div>
+  );
+}
+
+function EmptyCard({ children }: { children: ReactNode }) {
+  return (
+    <div className='text-muted-foreground rounded-xl border border-dashed p-8 text-center text-sm'>
+      <BookOpen className='text-muted-foreground/40 mx-auto mb-3 h-8 w-8' />
+      {children}
+    </div>
+  );
+}
 
 function ProgramBundledCourses({
   courses,
@@ -904,39 +607,30 @@ function ProgramBundledCourses({
   lessonsByCourse: LessonsByCourse;
 }) {
   if (courses.length === 0) {
-    return (
-      <div className='border-border text-muted-foreground rounded-md border border-dashed p-8 text-center text-sm'>
-        <BookOpen className='text-muted-foreground/40 mx-auto mb-3 h-8 w-8' />
-        No courses have been bundled into this program yet.
-      </div>
-    );
+    return <EmptyCard>No courses have been bundled into this program yet.</EmptyCard>;
   }
 
   return (
-    <div className='grid grid-cols-1 gap-4 sm:grid-cols-2'>
-      {courses.map((course, i) => {
+    <div className={surfaceTheme.cardGrid}>
+      {courses.map((course, index) => {
         const lessonCount = (lessonsByCourse[course.uuid ?? ''] ?? []).length;
+        const image = toAuthenticatedMediaUrl(course.banner_url || course.thumbnail_url);
 
         return (
-          <div
-            key={course.uuid ?? i}
-            className='border-border bg-card overflow-hidden rounded-xl border transition-shadow hover:shadow-md'
+          <article
+            key={course.uuid ?? index}
+            className='bg-card overflow-hidden rounded-xl border transition-shadow hover:shadow-md'
           >
             <div className='bg-muted relative aspect-video overflow-hidden'>
-              {course.banner_url || course.thumbnail_url ? (
-                <img
-                  src={course.banner_url || course.thumbnail_url || ''}
-                  alt={course.name || 'Course banner'}
-                  className='h-full w-full object-cover'
-                />
+              {image ? (
+                <img src={image} alt='' className='h-full w-full object-cover' />
               ) : (
                 <div className='flex h-full w-full items-center justify-center'>
                   <BookOpen className='text-muted-foreground/40 h-8 w-8' />
                 </div>
               )}
-
               <span className='bg-primary/90 text-primary-foreground absolute top-2 left-2 inline-flex size-6 items-center justify-center rounded-full text-xs font-semibold'>
-                {i + 1}
+                {index + 1}
               </span>
             </div>
 
@@ -944,915 +638,26 @@ function ProgramBundledCourses({
               <h3 className='text-foreground text-sm font-bold sm:text-base'>
                 {course.name || 'Untitled course'}
               </h3>
-
               <p className='text-muted-foreground mt-1.5 line-clamp-2 text-xs sm:text-sm'>
                 {course.description
                   ? course.description.replace(/<[^>]*>/g, '')
                   : 'No description available.'}
               </p>
-
               <div className='text-muted-foreground mt-3 flex flex-wrap items-center gap-4 text-xs'>
                 <span className='flex items-center gap-1'>
                   <BookOpen className='h-3.5 w-3.5' />
                   {lessonCount} lessons
                 </span>
-
-                {typeof course.minimum_training_fee === 'number' && (
+                {typeof course.minimum_training_fee === 'number' ? (
                   <span className='text-foreground font-semibold'>
                     From Ksh {course.minimum_training_fee.toLocaleString()}
                   </span>
-                )}
+                ) : null}
               </div>
             </div>
-          </div>
+          </article>
         );
       })}
     </div>
-  );
-}
-
-// ════════════════════════════════════════════════════════════════════════
-// Assessments tab
-// ════════════════════════════════════════════════════════════════════════
-
-function ProgramAssessments({
-  assignments = [],
-  quizzes = [],
-  assessmentScheme = {},
-  courseMap = {},
-}: {
-  assignments: Assignment[];
-  quizzes: Quiz[];
-  assessmentScheme: Record<string, CourseAssessment[]>;
-  courseMap: Record<string, Course>;
-}) {
-  return (
-    <div className='space-y-8'>
-      {/* Assessment Breakdown */}
-      <div className='space-y-6'>
-        {Object.entries(assessmentScheme).map(([courseUuid, assessments]) => {
-          const course = courseMap[courseUuid];
-
-          return (
-            <section key={courseUuid} className='bg-card rounded-lg border'>
-              <div className='border-b px-4 py-3'>
-                <h2 className='text-lg font-semibold'>{course?.name}</h2>
-                <p className='text-muted-foreground mt-1 text-sm'>
-                  Your final grade is calculated using the following assessment components.
-                </p>
-              </div>
-
-              <div className='overflow-x-auto'>
-                <table className='w-full text-sm'>
-                  <thead className='bg-muted/50'>
-                    <tr>
-                      <th className='px-4 py-3 text-left font-medium'>Component</th>
-
-                      <th className='px-4 py-3 text-left font-medium'>Category</th>
-
-                      <th className='px-4 py-3 text-right font-medium'>Weight</th>
-                    </tr>
-                  </thead>
-
-                  <tbody>
-                    {assessments.map(item => (
-                      <tr key={item.uuid} className='border-t'>
-                        <td className='px-4 py-3'>
-                          <div className='font-medium'>{item.title}</div>
-
-                          {!item.is_required && (
-                            <span className='text-muted-foreground text-xs'>Optional</span>
-                          )}
-                        </td>
-
-                        <td className='px-4 py-3'>{item.assessment_category}</td>
-
-                        <td className='px-4 py-3 text-right font-medium'>{item.weight_display}</td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-            </section>
-          );
-        })}
-      </div>
-
-      <div className='mb-4'>
-        <h2 className='text-lg font-semibold'>Assignments ({assignments.length})</h2>
-
-        <ul className='text-muted-foreground mt-2 list-disc space-y-1 pl-8 text-sm'>
-          <li>
-            {assignments.length} {assignments.length === 1 ? 'assignment' : 'assignments'} available
-          </li>
-          <li>Graded coursework that contributes to your final grade.</li>
-        </ul>
-      </div>
-
-      <div className='border-t' />
-
-      <div className='mb-4 pt-4'>
-        <h2 className='text-lg font-semibold'>Quizzes ({quizzes.length})</h2>
-
-        <ul className='text-muted-foreground mt-2 list-disc space-y-1 pl-8 text-sm'>
-          <li>
-            {quizzes.length} {quizzes.length === 1 ? 'quiz' : 'quizzes'} available
-          </li>
-          <li>Complete these quizzes to assess your understanding of the course material.</li>
-        </ul>
-      </div>
-
-      {/* <section>
-                <div className="mb-4 flex items-center gap-2">
-                    <h2 className="text-lg font-semibold">Assignments</h2>
-                    <span className="rounded-full bg-muted px-2 py-0.5 text-xs text-muted-foreground">
-                        {assignments.length}
-                    </span>
-                </div>
-
-                {assignments.length === 0 ? (
-                    <div className="rounded-lg border border-dashed p-6 text-center text-sm text-muted-foreground">
-                        No assignments available.
-                    </div>
-                ) : (
-                    <div className="space-y-4">
-                        {assignments.map(assignment => (
-                            <div key={assignment.uuid} className="rounded-lg border bg-card p-4">
-                                <div className="flex items-start justify-between gap-4">
-                                    <div>
-                                        <h3 className="font-semibold">{assignment.title}</h3>
-                                        {assignment.due_date && (
-                                            <p className="mt-1 text-sm text-muted-foreground">
-                                                Due {new Date(assignment.due_date).toLocaleDateString()}
-                                            </p>
-                                        )}
-                                    </div>
-                                    <div className="text-sm text-muted-foreground">
-                                        {assignment.max_points} pts
-                                    </div>
-                                </div>
-
-                                {assignment.description && (
-                                    <div
-                                        className="prose prose-sm mt-4 max-w-none"
-                                        dangerouslySetInnerHTML={{ __html: assignment.description }}
-                                    />
-                                )}
-                            </div>
-                        ))}
-                    </div>
-                )}
-            </section> */}
-
-      {/* <section>
-                <div className="mb-4 flex items-center gap-2">
-                    <h2 className="text-lg font-semibold">Quizzes</h2>
-                    <span className="rounded-full bg-muted px-2 py-0.5 text-xs text-muted-foreground">
-                        {quizzes.length}
-                    </span>
-                </div>
-
-                {quizzes.length === 0 ? (
-                    <div className="rounded-lg border border-dashed p-6 text-center text-sm text-muted-foreground">
-                        No quizzes available.
-                    </div>
-                ) : (
-                    <div className="space-y-4">
-                        {quizzes.map(quiz => (
-                            <div key={quiz.uuid} className="rounded-lg bg-card">
-                                <QuizContentPreview
-                                    quizUuid={quiz.uuid}
-                                    role="preview"
-                                    questionsOpen={false}
-                                />
-                            </div>
-                        ))}
-                    </div>
-                )}
-            </section> */}
-    </div>
-  );
-}
-
-// ════════════════════════════════════════════════════════════════════════
-// Schedule tab
-// ════════════════════════════════════════════════════════════════════════
-
-function ProgramScheduleInfo() {
-  return (
-    <div className='border-muted/50 bg-muted/30 rounded-lg border p-6'>
-      <div className='flex items-start gap-4'>
-        <div className='bg-primary/10 text-primary flex h-10 w-10 shrink-0 items-center justify-center rounded-full'>
-          <CalendarClock className='h-5 w-5' />
-        </div>
-
-        <div className='space-y-3'>
-          <h3 className='text-base font-semibold'>
-            Your Class Schedules Will Be Provided After Enrollment
-          </h3>
-
-          <p className='text-muted-foreground text-sm leading-relaxed'>
-            Hello! 😊 Once you enroll in this program, you'll receive full scheduling details for
-            each bundled course. This includes:
-          </p>
-
-          <ul className='text-muted-foreground ml-5 list-disc space-y-1 text-sm leading-relaxed'>
-            <li>Class dates and start times for every course in the program</li>
-            <li>Frequency and duration of sessions</li>
-            <li>How to join each session</li>
-          </ul>
-
-          <p className='text-muted-foreground text-sm leading-relaxed'>
-            Make sure your contact information is up to date so you don't miss any updates. You'll
-            have everything you need to plan and prepare right after enrollment.
-          </p>
-        </div>
-      </div>
-    </div>
-  );
-}
-
-// ════════════════════════════════════════════════════════════════════════
-// Sidebar
-// ════════════════════════════════════════════════════════════════════════
-
-function ProgramSidebar({
-  program,
-  lessonCount,
-  assessmentCount,
-  onEnroll,
-}: {
-  program: TrainingProgram;
-  lessonCount: number;
-  assessmentCount: number;
-  onEnroll: () => void;
-}) {
-  const priceLabel =
-    typeof program.price === 'number' && program.price > 0
-      ? `From Ksh ${program.price.toLocaleString()}`
-      : 'Pricing not set';
-
-  return (
-    <div className='flex flex-col gap-4 sm:gap-5'>
-      <div className='border-border bg-card text-card-foreground rounded-xl border p-4 sm:p-5'>
-        <p className='text-muted-foreground mb-1 text-sm font-medium'>Enroll in this program</p>
-
-        <p className='text-foreground mb-4 text-xl font-black sm:text-2xl lg:text-3xl'>
-          {priceLabel}
-        </p>
-
-        <div className='flex flex-col gap-2.5 sm:gap-3'>
-          <Button
-            onClick={onEnroll}
-            className='bg-primary text-primary-foreground hover:bg-primary/90 inline-flex h-10 items-center justify-center gap-2 rounded-md text-sm font-semibold shadow-sm transition sm:text-base'
-          >
-            Enroll Now
-            <MoveRight className='h-4 w-4' />
-          </Button>
-        </div>
-
-        {/* <div className="mt-4 flex flex-col gap-3 pt-1">
-                    {[
-                        {
-                            icon: <Shield className="h-4 w-4 text-muted-foreground" />,
-                            text: '30-Day Money-Back Guarantee',
-                        },
-                        {
-                            icon: <InfinityIcon className="h-4 w-4 text-muted-foreground" />,
-                            text: 'Full Lifetime Access',
-                        },
-                        {
-                            icon: <Globe className="h-4 w-4 text-muted-foreground" />,
-                            text: 'Access on Mobile & Desktop',
-                        },
-                    ].map((item, i) => (
-                        <div key={i} className="flex items-center gap-2">
-                            {item.icon}
-                            <span className="text-sm text-muted-foreground">{item.text}</span>
-                        </div>
-                    ))}
-                </div> */}
-      </div>
-
-      <div className='border-border bg-card rounded-xl border p-4 shadow-sm sm:p-5'>
-        <h3 className='text-foreground mb-3 text-sm font-semibold'>This program includes:</h3>
-
-        <div className='flex flex-col gap-3'>
-          {[
-            {
-              icon: <BookOpen className='text-muted-foreground h-4 w-4' />,
-              text: `${lessonCount} Lessons`,
-            },
-            {
-              icon: <FileCheck className='text-muted-foreground h-4 w-4' />,
-              text: `${assessmentCount} Assessments`,
-            },
-            {
-              icon: <Wrench className='text-muted-foreground h-4 w-4' />,
-              text: 'Hands-on Projects',
-            },
-            {
-              icon: <Download className='text-muted-foreground h-4 w-4' />,
-              text: 'Downloadable Resources',
-            },
-            {
-              icon: <InfinityIcon className='text-muted-foreground h-4 w-4' />,
-              text: 'Full Lifetime Access',
-            },
-            {
-              icon: <Award className='text-muted-foreground h-4 w-4' />,
-              text: 'Certificate of Completion',
-            },
-          ].map((item, i) => (
-            <div key={i} className='flex items-center gap-2'>
-              {item.icon}
-              <span className='text-muted-foreground text-sm'>{item.text}</span>
-            </div>
-          ))}
-        </div>
-      </div>
-    </div>
-  );
-}
-
-// ════════════════════════════════════════════════════════════════════════
-// Rating sidebar card
-// ════════════════════════════════════════════════════════════════════════
-
-function ProgramRating({
-  reviewCount,
-  averageRating,
-  reviews,
-  programId,
-}: {
-  reviewCount: number;
-  averageRating: string | null;
-  reviews: ProgramReview[];
-  programId: string;
-}) {
-  const profile = useUserProfile();
-  const student_uuid = profile?.student?.uuid;
-
-  const rating = averageRating ? Number(averageRating) : 0;
-
-  const dynamicBreakdown = [5, 4, 3, 2, 1].map(stars => {
-    const matched = reviews.filter(review => Math.round(review.rating || 0) === stars).length;
-
-    const pct = reviewCount > 0 ? Math.round((matched / reviewCount) * 100) : 0;
-
-    return { stars, pct };
-  });
-
-  const qc = useQueryClient();
-
-  const [showFeedbackDialog, setShowFeedbackDialog] = useState(false);
-  const [newRating, setNewRating] = useState(0);
-  const [feedbackComment, setFeedbackComment] = useState('');
-  const [headline, setHeadline] = useState('');
-
-  const reviewProgramMut = useMutation(submitProgramReviewMutation());
-
-  const handleSubmitFeedback = () => {
-    reviewProgramMut.mutate(
-      {
-        body: {
-          student_uuid: student_uuid as string,
-          rating: newRating,
-          comments: feedbackComment,
-          headline,
-          is_anonymous: false,
-        },
-        path: {
-          programUuid: programId,
-        },
-      },
-      {
-        async onSuccess() {
-          toast.success('Review added successfully');
-
-          setShowFeedbackDialog(false);
-
-          await invalidateReviewWorkflowQueries(qc);
-        },
-        onError: error => {
-          toast.error(error?.message);
-          setShowFeedbackDialog(false);
-        },
-      }
-    );
-  };
-
-  return (
-    <>
-      <div className='border-border bg-card rounded-xl border p-4 shadow-sm sm:p-5'>
-        <h3 className='text-foreground mb-4 text-sm font-semibold sm:text-base'>Program Rating</h3>
-
-        <div className='mb-4 flex flex-col gap-4 sm:gap-6'>
-          <div className='flex flex-row items-center gap-3 text-center'>
-            <p className='text-foreground text-3xl font-black sm:text-4xl'>
-              {rating ? rating.toFixed(1) : '0.0'}
-            </p>
-
-            <StarRatingDisplay rating={rating} size='sm' showCount={false} />
-
-            <p className='text-muted-foreground mt-1 text-xs'>
-              {reviewCount.toLocaleString()} review
-              {reviewCount === 1 ? '' : 's'}
-            </p>
-          </div>
-
-          <div className='flex min-w-0 flex-1 flex-col gap-1.5'>
-            {dynamicBreakdown.map(row => (
-              <div key={row.stars} className='flex items-center gap-2 text-xs'>
-                <div className='text-muted-foreground flex shrink-0 items-center gap-0.5'>
-                  <span>★</span>
-                  <span>{row.stars}</span>
-                </div>
-
-                <div className='bg-muted h-1.5 flex-1 overflow-hidden rounded-full'>
-                  <div
-                    className='bg-primary h-full rounded-full transition-all'
-                    style={{ width: `${row.pct}%` }}
-                  />
-                </div>
-
-                <span className='text-muted-foreground w-6 shrink-0 text-right'>{row.pct}%</span>
-              </div>
-            ))}
-          </div>
-        </div>
-
-        <Button
-          onClick={() => setShowFeedbackDialog(true)}
-          className='border-border bg-background text-foreground hover:bg-accent hover:text-accent-foreground h-10 w-full rounded-lg border px-4 py-2 text-xs font-medium transition sm:text-sm'
-        >
-          Write a Review
-        </Button>
-      </div>
-
-      <FeedbackDialog
-        type='others'
-        open={showFeedbackDialog}
-        onOpenChange={setShowFeedbackDialog}
-        headline={headline}
-        onHeadlineChange={setHeadline}
-        feedback={feedbackComment}
-        onFeedbackChange={setFeedbackComment}
-        rating={newRating}
-        onRatingChange={setNewRating}
-        isSubmitting={reviewProgramMut.isPending}
-        onSubmit={handleSubmitFeedback}
-      />
-    </>
-  );
-}
-
-function ProgramReviewsList({ reviews }: { reviews: ProgramReview[] }) {
-  if (!reviews.length) {
-    return (
-      <div className='text-muted-foreground rounded-lg border border-dashed p-10 text-center text-sm'>
-        <GraduationCap className='text-muted-foreground/40 mx-auto mb-3 h-8 w-8' />
-        No reviews yet. Be the first!
-      </div>
-    );
-  }
-
-  return (
-    <div className='grid gap-4 sm:grid-cols-2'>
-      {reviews.map(review => (
-        <div key={review.uuid} className='border-border bg-card rounded-lg border p-4'>
-          <div className='mb-1 flex items-center justify-between'>
-            <p className='text-foreground text-sm font-semibold'>
-              {review.is_anonymous ? 'Anonymous' : (review?.student_uuid ?? '')}
-            </p>
-            <span className='text-muted-foreground text-xs'>{review.rating ?? 0}★</span>
-          </div>
-          {review.headline && (
-            <p className='text-foreground text-sm font-medium'>{review.headline}</p>
-          )}
-          {review.comments && (
-            <p className='text-muted-foreground mt-1 text-sm leading-relaxed'>{review.comments}</p>
-          )}
-        </div>
-      ))}
-    </div>
-  );
-}
-
-// ════════════════════════════════════════════════════════════════════════
-// Page
-// ════════════════════════════════════════════════════════════════════════
-
-export default function ClassProgramDetailsPage({
-  programId,
-  classData,
-  type,
-}: {
-  programId: string;
-  classData?: CombinedClassDetailsData;
-  type: string | undefined;
-}) {
-  const router = useRouter();
-  const params = useParams();
-  const { activeDomain } = useUserDomain();
-  const qc = useQueryClient();
-
-  const [activeTab, setActiveTab] = useState('Overview');
-  const [shareOpen, setShareOpen] = useState(false);
-  const [showFeedbackDialog, setShowFeedbackDialog] = useState(false);
-  const [rating, setRating] = useState(0);
-  const [feedbackComment, setFeedbackComment] = useState('');
-  const [headline, setHeadline] = useState('');
-  const [siteOrigin, setSiteOrigin] = useState('');
-
-  const resolvedProgramId = programId || (params?.id as string);
-  const isInstructorDomain = activeDomain === 'instructor';
-
-  useEffect(() => {
-    setSiteOrigin(window.location.origin);
-  }, []);
-
-  // ── Program ──────────────────────────────────────────────────────
-  const {
-    data: programResponse,
-    isLoading: programLoading,
-    isFetching: programFetching,
-  } = useQuery({
-    ...getTrainingProgramByUuidOptions({ path: { uuid: resolvedProgramId } }),
-    enabled: !!resolvedProgramId,
-  });
-  const program = programResponse?.data;
-
-  // ── Bundled courses ─────────────────────────────────────────────
-  const { data: programCoursesResponse, isLoading: coursesLoading } = useQuery({
-    ...getProgramCoursesOptions({ path: { programUuid: resolvedProgramId } }),
-    enabled: !!resolvedProgramId,
-  });
-  const programCourses: Course[] = useMemo(
-    () => programCoursesResponse?.data ?? [],
-    [programCoursesResponse]
-  );
-  const courseUuids = useMemo(
-    () => programCourses.map(c => c.uuid).filter((u): u is string => !!u),
-    [programCourses]
-  );
-
-  const {
-    assessmentMap,
-    items: allAssessments,
-    isLoading,
-  } = useCourseAssessmentsByCourseUuids(courseUuids);
-  const { courseMap } = useCoursesByIds(courseUuids as string[]);
-
-  // ── Reviews (program-level) ─────────────────────────────────────
-  const { data: reviewsResponse, isLoading: reviewsLoading } = useQuery({
-    ...getProgramReviewsOptions({
-      path: { programUuid: resolvedProgramId },
-      query: { pageable: {} },
-    }),
-    enabled: !!resolvedProgramId,
-    staleTime: 5 * 60 * 1000,
-    refetchOnWindowFocus: false,
-  });
-
-  const reviews: ProgramReview[] = reviewsResponse?.data?.content ?? [];
-  const reviewCount = reviews.length;
-  const avgRating =
-    reviewCount > 0
-      ? (reviews.reduce((sum, review) => sum + (review.rating || 0), 0) / reviewCount).toFixed(1)
-      : null;
-
-  const reviewProgramMut = useMutation(submitProgramReviewMutation());
-
-  const handleSubmitFeedback = () => {
-    reviewProgramMut.mutate(
-      {
-        body: {
-          rating,
-          comments: feedbackComment,
-          headline,
-          is_anonymous: false,
-        },
-        path: { programUuid: resolvedProgramId },
-      },
-      {
-        async onSuccess() {
-          toast.success('Review submitted successfully');
-          setShowFeedbackDialog(false);
-          await invalidateReviewWorkflowQueries(qc);
-        },
-        onError: () => {
-          toast.error('An error occurred. Contact support');
-          setShowFeedbackDialog(false);
-        },
-      }
-    );
-  };
-
-  // ── Difficulty levels (kept for parity; bundled courses may use these) ──
-  const { isLoading: difficultyLoading } = useQuery(getAllDifficultyLevelsOptions());
-
-  const aggregatedRequirements = useMemo(
-    () => programCourses.flatMap(c => c.training_requirements ?? []),
-    [programCourses]
-  );
-
-  const totalDurationMinutes = useMemo(
-    () =>
-      programCourses.reduce(
-        (sum, c) => sum + (c.duration_hours ?? 0) * 60 + (c.duration_minutes ?? 0),
-        0
-      ),
-    [programCourses]
-  );
-  const durationLabel = totalDurationMinutes
-    ? `${Math.floor(totalDurationMinutes / 60)} hours / ${totalDurationMinutes % 60} minutes`
-    : 'N/A';
-
-  const programShareLink = useMemo(() => {
-    if (!siteOrigin) return '';
-    return `${siteOrigin}${roleScopedDashboardPath(
-      activeDomain,
-      `/dashboard/courses/available-programs/${resolvedProgramId}`
-    )}`;
-  }, [activeDomain, resolvedProgramId, siteOrigin]);
-
-  const classId = classData?.class?.uuid;
-
-  const registrationLink = useMemo(() => {
-    if (!siteOrigin) return '';
-
-    if (program?.uuid) {
-      return `${siteOrigin}/dashboard/student/courses/available-programs/${program.uuid}/enroll?id=${classId}`;
-    }
-
-    return '';
-  }, [classId, program?.uuid, siteOrigin]);
-
-  return (
-    <AggregatedCourseLessons courseUuids={courseUuids}>
-      {({ lessonsByCourse, isLoading: lessonsLoading, isFetching: lessonsFetching }) => {
-        const allLessonsWithContent = Object.values(lessonsByCourse).flat();
-        const lessonUuids = allLessonsWithContent
-          .map(item => item.lesson?.uuid)
-          .filter((uuid): uuid is string => !!uuid);
-
-        const { items: filteredAssignments, isLoading: assignmentLoading } =
-          useAssignmentsByLessonIds(lessonUuids);
-
-        const { items: filteredQuizzes, isLoading: quizzesLoading } =
-          useQuizzesByLessonIds(lessonUuids);
-
-        const totalLessons = allLessonsWithContent.length;
-
-        const isEverythingReady = !(
-          programLoading ||
-          programFetching ||
-          coursesLoading ||
-          reviewsLoading ||
-          difficultyLoading ||
-          assignmentLoading ||
-          quizzesLoading ||
-          lessonsLoading ||
-          lessonsFetching
-        );
-
-        if (!isEverythingReady) {
-          return (
-            <main className='mx-auto max-w-6xl items-center'>
-              <EnrollmentLoadingState
-                title='Loading your program details'
-                description='We are gathering courses, lessons, tasks, quizzes, and program information so the full learning overview is ready when the page opens.'
-              />
-            </main>
-          );
-        }
-
-        if (!program) {
-          return (
-            <div className='border-border mx-auto max-w-3xl rounded-xl border border-dashed p-10 text-center'>
-              <h1 className='text-foreground text-xl font-semibold'>Program not found</h1>
-              <p className='text-muted-foreground mt-2 text-sm'>
-                The program you are trying to open could not be found.
-              </p>
-            </div>
-          );
-        }
-
-        const tabs = [
-          'Overview',
-          `Courses (${programCourses.length})`,
-          `Lessons (${totalLessons})`,
-          `Assessment (${filteredAssignments.length + filteredQuizzes.length})`,
-          `Requirements (${aggregatedRequirements.length})`,
-          'Schedule',
-          `Reviews (${reviewCount})`,
-          'FAQs',
-        ];
-
-        return (
-          <div className='min-h-screen font-sans'>
-            <main className='mx-auto w-full px-4 py-4 sm:px-6 sm:py-6 lg:px-8 lg:py-8'>
-              <div className='mb-4 flex justify-end gap-2 sm:mb-6'>
-                <Button
-                  onClick={() => setShareOpen(true)}
-                  className='border-border bg-card text-muted-foreground hover:bg-muted/50 hover:border-primary/45 hover:text-foreground flex items-center gap-1.5 rounded-sm border px-3 py-1.5 text-xs shadow-sm transition-colors duration-200 ease-in-out sm:text-sm'
-                >
-                  <Share2 className='h-3.5 w-3.5' />
-                  Share
-                </Button>
-
-                <Button className='border-border bg-card text-muted-foreground hover:bg-destructive/10 hover:border-destructive hover:text-destructive flex items-center gap-1.5 rounded-sm border px-3 py-1.5 text-xs shadow-sm transition-colors duration-200 ease-in-out sm:text-sm'>
-                  <Heart className='h-3.5 w-3.5' />
-                  Wishlist
-                </Button>
-              </div>
-
-              <div className='flex flex-col items-start gap-6 lg:flex-row lg:gap-8 xl:gap-10'>
-                <div className='flex w-full min-w-0 flex-1 flex-col gap-5 sm:gap-6'>
-                  <div className='border-border bg-card rounded-xl border p-4 shadow-sm sm:p-5 lg:p-6'>
-                    <ProgramDetailsHero
-                      program={program}
-                      courseCount={programCourses.length}
-                      reviewCount={reviewCount}
-                      averageRating={avgRating}
-                      lessonCount={totalLessons}
-                      assignmentCount={filteredAssignments.length}
-                      quizCount={filteredQuizzes.length}
-                    />
-                  </div>
-
-                  <div className='border-border bg-card overflow-hidden rounded-xl border shadow-sm'>
-                    <div className='px-4 pt-4 sm:px-5 sm:pt-5 lg:px-6'>
-                      <ClassCourseTabNav
-                        tabs={tabs}
-                        activeTab={activeTab}
-                        onTabChange={setActiveTab}
-                      />
-                    </div>
-
-                    <div className='px-4 py-4 sm:px-5 sm:py-5 lg:px-6 lg:py-6'>
-                      {activeTab === 'Overview' && (
-                        <ProgramOverview
-                          program={program}
-                          classData={classData}
-                          programCourses={programCourses}
-                          lessonsByCourse={lessonsByCourse}
-                          type={type}
-                        />
-                      )}
-
-                      {activeTab === `Courses (${programCourses.length})` && (
-                        <ProgramBundledCourses
-                          courses={programCourses}
-                          lessonsByCourse={lessonsByCourse}
-                        />
-                      )}
-
-                      {activeTab === `Lessons (${totalLessons})` && (
-                        <ProgramCurriculum
-                          programCourses={programCourses}
-                          lessonsByCourse={lessonsByCourse}
-                        />
-                      )}
-
-                      {activeTab ===
-                        `Assessment (${filteredAssignments.length + filteredQuizzes.length})` && (
-                          <ProgramAssessments
-                            assignments={filteredAssignments}
-                            quizzes={filteredQuizzes}
-                            assessmentScheme={assessmentMap}
-                            courseMap={courseMap}
-                          />
-                        )}
-
-                      {activeTab === `Requirements (${aggregatedRequirements.length})` && (
-                        <CourseTrainingRequirements
-                          requirements={aggregatedRequirements}
-                          title='Program Training Requirements'
-                          description='Review what you need to prepare before registering for this program, combined across all its courses.'
-                          className='border-none shadow-none'
-                          viewerRole={activeDomain as string}
-                        />
-                      )}
-
-                      {activeTab === 'Schedule' && <ProgramScheduleInfo />}
-
-                      {activeTab === `Reviews (${reviewCount})` && (
-                        <ProgramReviewsList reviews={reviews} />
-                      )}
-
-                      {activeTab === 'FAQs' && <CourseFaq faqs={[]} />}
-                    </div>
-                  </div>
-                </div>
-
-                <div className='flex w-full shrink-0 flex-col gap-4 sm:gap-5 lg:sticky lg:top-20 lg:w-80 xl:w-96'>
-                  <ProgramSidebar
-                    program={program}
-                    lessonCount={totalLessons}
-                    assessmentCount={filteredAssignments.length + filteredQuizzes.length}
-                    onEnroll={() =>
-                      router.push(
-                        roleScopedDashboardPath(
-                          activeDomain,
-                          `/dashboard/courses/available-programs/${resolvedProgramId}`
-                        )
-                      )
-                    }
-                  />
-
-                  <ProgramRating
-                    reviewCount={reviewCount}
-                    averageRating={avgRating}
-                    reviews={reviews}
-                    onWriteReview={() => setShowFeedbackDialog(true)}
-                    canReview={!isInstructorDomain}
-                    programId={programId as string}
-                  />
-
-                  {type === 'program' ? (
-                    <ShareClassCourse
-                      courseTitle={program?.title ?? ''}
-                      courseUrl={`${window.location.origin}${roleScopedDashboardPath(
-                        activeDomain,
-                        `/dashboard/courses/programs/${program?.uuid}`
-                      )}`}
-                      type={type}
-                    />
-                  ) : (
-                    <ShareClass
-                      classTitle={program?.title ?? ''}
-                      classUrl={registrationLink}
-                      type={type}
-                    />
-                  )}
-                </div>
-              </div>
-            </main>
-
-            <Dialog open={shareOpen} onOpenChange={setShareOpen}>
-              <DialogContent className='sm:max-w-lg'>
-                <DialogHeader>
-                  <DialogTitle>Share Program</DialogTitle>
-                  <DialogDescription>
-                    Share this program with other learners and instructors.
-                  </DialogDescription>
-                </DialogHeader>
-
-                <LinkShareCard
-                  title='Program Link'
-                  description='Copy or share this program link.'
-                  url={programShareLink}
-                  footer={
-                    <div className='space-y-3'>
-                      <h4 className='text-sm font-medium'>Share via</h4>
-
-                      <div className='flex flex-wrap gap-2'>
-                        {socialShareActions.map(({ icon: Icon, label, platform }) => (
-                          <Button
-                            key={label}
-                            size='sm'
-                            variant='outline'
-                            className='gap-2'
-                            disabled={!programShareLink}
-                            onClick={() =>
-                              openShareWindow(
-                                buildSocialShareUrl(platform, {
-                                  title: program?.title ?? 'Program',
-                                  url: programShareLink,
-                                  description: `Check out this program: ${program?.title}`,
-                                })
-                              )
-                            }
-                          >
-                            <Icon className='h-4 w-4' />
-                            {label}
-                          </Button>
-                        ))}
-                      </div>
-                    </div>
-                  }
-                />
-              </DialogContent>
-            </Dialog>
-
-            <FeedbackDialog
-              type='others'
-              open={showFeedbackDialog}
-              onOpenChange={setShowFeedbackDialog}
-              headline={headline}
-              onHeadlineChange={setHeadline}
-              feedback={feedbackComment}
-              onFeedbackChange={setFeedbackComment}
-              rating={rating}
-              onRatingChange={setRating}
-              isSubmitting={reviewProgramMut.isPending}
-              onSubmit={handleSubmitFeedback}
-            />
-          </div>
-        );
-      }}
-    </AggregatedCourseLessons>
   );
 }

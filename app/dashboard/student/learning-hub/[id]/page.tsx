@@ -82,13 +82,7 @@ export default function StudentClassCoursePage({ params }: Props) {
   }
 
   if (classData?.course?.uuid) {
-    return (
-      <ClassCourseDetailsPage
-        courseId={classData.course.uuid}
-        classData={classData}
-        type={'class'}
-      />
-    );
+    return <ClassCourseDetailsPage classData={classData} viewer='student' />;
   }
 
   if (classData?.program?.uuid) {
@@ -96,7 +90,7 @@ export default function StudentClassCoursePage({ params }: Props) {
       <ClassProgramDetailsPage
         programId={classData.program.uuid}
         classData={classData}
-        type={'class'}
+        viewer='student'
       />
     );
   }
