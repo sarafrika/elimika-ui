@@ -10,16 +10,15 @@
  * knows whether this instructor's training application is approved *today*.
  *
  * What stays with the route is the route's own business: the uuid, the
- * breadcrumbs, the back link, the instructor guard, and the two things a trainer
- * actually *does* from this screen. The record view is read-only by design, so
- * those sit beside it.
+ * breadcrumbs, the back link, the instructor guard, and creating a class, the
+ * one thing a trainer *does* from this screen beyond the record's own Share. The
+ * record view is read-only by design, so that sits beside it.
  */
 
-import { CalendarPlus, Share2 } from 'lucide-react';
+import { CalendarPlus } from 'lucide-react';
 import Link from 'next/link';
 import { useParams } from 'next/navigation';
 import { useEffect } from 'react';
-import { toast } from 'sonner';
 import { surfaceTheme } from '@/components/data-display/page-shell';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
@@ -28,7 +27,6 @@ import { useInstructor } from '@/context/instructor-context';
 import { useUserProfile } from '@/context/profile-context';
 import { cn } from '@/lib/utils';
 import { CourseRecordPage } from '@/src/features/course-record';
-import { absoluteUrl, publicCourseUrl } from '@/src/features/dashboard/lib/dashboard-url';
 
 const MY_COURSES_HREF = '/dashboard/instructor/my-courses';
 
@@ -65,15 +63,6 @@ export default function InstructorMyCourseDetailsPage() {
     ]);
   }, [replaceBreadcrumbs, courseUuid]);
 
-  const shareCourse = async () => {
-    try {
-      await navigator.clipboard.writeText(absoluteUrl(publicCourseUrl(courseUuid)));
-      toast.success('Link copied to clipboard');
-    } catch {
-      toast.error('Could not copy link');
-    }
-  };
-
   // Don't gate the record on the profile query — every region resolves itself.
   // Only a resolved "no instructor profile" is a reason not to render.
   if (!instructor && !profileLoading) {
@@ -98,10 +87,6 @@ export default function InstructorMyCourseDetailsPage() {
   return (
     <div className={cn(surfaceTheme.pageWide, 'flex flex-col gap-4 py-4 pb-10')}>
       <div className='flex flex-wrap items-center justify-end gap-2'>
-        <Button variant='outline' size='sm' className='h-8 rounded-[10px]' onClick={shareCourse}>
-          <Share2 className='size-4' />
-          Share
-        </Button>
         <Button asChild size='sm' className='h-8 rounded-[10px]'>
           <Link href={NEW_CLASS_HREF}>
             <CalendarPlus className='size-4' />
