@@ -8,14 +8,15 @@ import { createPageMetadata } from '@/src/lib/seo';
 export const metadata: Metadata = createPageMetadata({
   title: 'Courses',
   description:
-    'Browse public Elimika courses, compare training options, and discover the next learning experience for your skills journey.',
+    'Browse public Elimika courses and programmes, compare training options, and discover the next learning experience for your skills journey.',
   path: '/courses',
   keywords: ['courses', 'catalogue', 'training', 'learning programs', 'Elimika courses'],
 });
 
 /**
  * The public catalogue. The server renders the catalogue's first page (crawlable, and
- * the fallback when search is down); the client searches it through `/search/courses`.
+ * the fallback when search is down); the client searches courses and programmes through
+ * `/api/v1/catalogue/search`.
  */
 export default async function PublicCoursesRoute() {
   let catalogue: PublicCatalogueCourse[] = [];

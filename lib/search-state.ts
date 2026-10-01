@@ -57,6 +57,7 @@ export const PAGE_RESETTING_KEYS = [
   'active',
   'scope',
   'type',
+  'show',
   'category',
   'level',
   'price',
