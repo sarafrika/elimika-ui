@@ -18,8 +18,8 @@ import { type ReactNode, useEffect, useMemo, useState } from 'react';
 import { PageHeader } from '@/components/dashboard';
 import { SectionError } from '@/components/data/async-section';
 import { surfaceTheme } from '@/components/data-display';
-import type { FilterGroup } from '@/components/profile-job-marketplace/data';
 import { MarketplaceSidebar } from '@/components/profile-job-marketplace/_components/MarketplaceSidebar';
+import type { FilterGroup } from '@/components/profile-job-marketplace/data';
 import { SearchQueryInput } from '@/components/search/search-input';
 import { SearchNotice } from '@/components/search/search-notice';
 import { Button } from '@/components/ui/button';
@@ -39,6 +39,7 @@ import {
   SheetTitle,
   SheetTrigger,
 } from '@/components/ui/sheet';
+import { useIsMobile } from '@/hooks/use-mobile';
 import { useSearchState, useSearchStatePatch } from '@/hooks/use-search-state';
 import { useUrlSearchQuery } from '@/hooks/use-url-search-query';
 import { classifySearchError } from '@/lib/search/query';
@@ -124,6 +125,7 @@ export function PublicCoursesPage({
   const [sort] = useSearchState('sort', catalogueParams.sort);
   const [page, setPage] = useSearchState('page', catalogueParams.page);
   const [filtersOpen, setFiltersOpen] = useState(false);
+  const isMobile = useIsMobile();
 
   const filters: CatalogueFilters = { q: search.q, show, category, level, price, sort, page };
   const query = toCatalogueSearchQuery(filters);
@@ -440,7 +442,11 @@ export function PublicCoursesPage({
               <SearchQueryInput
                 search={search}
                 aria-label='Search courses and programmes'
-                placeholder='Search courses and programmes by title, skill or creator'
+                placeholder={
+                  isMobile
+                    ? 'Search courses and programmes'
+                    : 'Search courses and programmes by title, skill or creator'
+                }
                 className='h-10'
                 wrapperClassName='min-w-0'
               />
@@ -476,7 +482,7 @@ export function PublicCoursesPage({
                     }
                   >
                     <SelectTrigger aria-label='Sort' className='h-10 w-full'>
-                      <ArrowDownUp aria-hidden className='text-muted-foreground size-4' />
+                      <ArrowDownUp aria-hidden className='text-muted-foreground hidden size-4 lg:block' />
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
