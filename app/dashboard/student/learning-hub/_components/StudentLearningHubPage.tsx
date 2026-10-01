@@ -150,12 +150,6 @@ export function StudentLearningHubPage() {
         {tab === "quizzes" && <LessonHubQuizzesTab />}
         {tab === "assessments" && <LessonHubAssessmentsTab />}
         {tab === "certificates" && <LessonHubCertificatesTab learningHubData={data} />}
-        {/* {tab === "calendar" && <PlaceholderTab title="Learning Calendar" description="Classes, deadlines, and events unified in one calendar." />} */}
-      </div>
-
-      <div className='space-y-4'>
-        {/* <LearningHubContinueLearning classes={data.continueLearning} loading={data.loading} /> */}
-        {/* <LearningHubAssignments assignments={data.assignments} loading={data.loading} /> */}
       </div>
     </main>
   );
