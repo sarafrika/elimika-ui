@@ -235,8 +235,8 @@ export type ItemLinks = {
 };
 
 /**
- * Where a card's buttons go. A course opens its public page, and "See classes" its classes
- * there. There is no public programme page: a programme opens the learner programme page,
+ * Where a card's buttons go. A course opens its public page, and "See classes" opens Find
+ * classes filtered to that course, through sign-in for a visitor. There is no public programme page: a programme opens the learner programme page,
  * through sign-in for a visitor (the palette's convention in `hit-href.ts`).
  */
 export function itemLinks(item: CatalogueItem, signedIn: boolean): ItemLinks {
@@ -244,7 +244,11 @@ export function itemLinks(item: CatalogueItem, signedIn: boolean): ItemLinks {
   if (item.type === 'course') {
     return {
       primary: { label: 'View course', href: `/courses/${uuid}`, signIn: false },
-      secondary: { label: 'See classes', href: `/courses/${uuid}#classes`, signIn: false },
+      secondary: {
+        label: 'See classes',
+        href: `/dashboard/student/find-classes?course=${uuid}`,
+        signIn: !signedIn,
+      },
     };
   }
   const destination = hitDestination('public', { type: 'programs', uuid: item.uuid });

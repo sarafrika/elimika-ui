@@ -121,7 +121,7 @@ test('a programme counts its courses and lessons', () => {
 test('a course opens its public page; a programme signs a visitor in first', () => {
   const courseLinks = itemLinks(course, false);
   assert.equal(courseLinks.primary.href, '/courses/c1');
-  assert.equal(courseLinks.secondary.href, '/courses/c1#classes');
+  assert.equal(courseLinks.secondary.href, '/dashboard/student/find-classes?course=c1');
   assert.equal(courseLinks.secondary.label, 'See classes');
 
   const visitor = itemLinks(programme, false);
