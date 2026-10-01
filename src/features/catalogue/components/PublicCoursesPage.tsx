@@ -45,11 +45,12 @@ const fromHit = (hit: GlobalSearchHit): PublicCatalogueCourse => ({
   course: {
     uuid: hit.uuid,
     name: hit.title,
-    description: hit.subtitle,
     thumbnail_url: hit.image_url ?? null,
     is_published: true,
   },
   creator: null,
+  // A course hit's subtitle is its creator.
+  creatorName: hit.subtitle,
   catalogueItem: null,
   priceAmount: null,
   currencyCode: null,
@@ -96,7 +97,13 @@ export function PublicCoursesPage({
     [catalogue]
   );
 
+  // Before the first search answers (and in the server-rendered HTML), an unfiltered first
+  // page shows the catalogue the server loaded, so the list is crawlable and never blank.
+  const unfilteredFirstPage = !search.q && price === 'all' && sortKey === 'relevance' && page === 0;
+  const showServerCatalogue = !courseSearch.data && unfilteredFirstPage && catalogue.length > 0;
+
   const items = useMemo<PublicCatalogueCourse[]>(() => {
+    if (showServerCatalogue) return catalogue.slice(0, PAGE_SIZE);
     if (searchDown) {
       const narrowed = filterCatalogueCourses(catalogue, search.input.trim());
       return price === 'all'
@@ -106,13 +113,14 @@ export function PublicCoursesPage({
     return courseSearch.hits.flatMap(hit =>
       hit.uuid ? [byUuid.get(hit.uuid) ?? fromHit(hit)] : []
     );
-  }, [searchDown, catalogue, search.input, price, courseSearch.hits, byUuid]);
+  }, [showServerCatalogue, searchDown, catalogue, search.input, price, courseSearch.hits, byUuid]);
 
-  const total = searchDown ? items.length : Number(courseSearch.metadata?.totalElements ?? 0);
-  const totalPages = searchDown ? 1 : (courseSearch.metadata?.totalPages ?? 1);
+  const localList = searchDown || showServerCatalogue;
+  const total = localList ? items.length : Number(courseSearch.metadata?.totalElements ?? 0);
+  const totalPages = localList ? 1 : (courseSearch.metadata?.totalPages ?? 1);
   const freeCounts = courseSearch.facets.is_free ?? {};
   const isSearching = search.input.trim().length > 0 || price !== 'all';
-  const loading = !searchDown && courseSearch.isLoading;
+  const loading = !searchDown && !showServerCatalogue && courseSearch.isLoading;
 
   return (
     <CataloguePageShell>
@@ -125,8 +133,8 @@ export function PublicCoursesPage({
             {search.q ? `Courses matching “${search.q}”` : 'Browse our course catalogue'}
           </h1>
           <p className='text-muted-foreground max-w-3xl text-base'>
-            Explore courses created by expert instructors and organisations. Find the right
-            course to advance your skills and learning goals.
+            Explore courses created by expert instructors and organisations. Find the right course
+            to advance your skills and learning goals.
           </p>
         </div>
         <div className='flex flex-col gap-3 sm:flex-row sm:items-start'>

@@ -223,8 +223,10 @@ export const getPublicCourseDetail = async (
     // The catalogue snapshot is the last resort: it carries the card fields only.
     const snapshot = catalogueItem?.course;
 
-    // Listed publicly, or served by the anonymous-capable record read.
-    if (!catalogueItem && !record) return null;
+    // Listed in the catalogue, served by the anonymous-capable record read, or published
+    // per its public profile (anonymous course search lists courses that are not sold
+    // through the catalogue, and their links must not 404).
+    if (!catalogueItem && !record && profile?.published !== true) return null;
     if (!record && !profile && !snapshot) return null;
     if (
       record?.is_published === false ||
@@ -247,8 +249,7 @@ export const getPublicCourseDetail = async (
       duration_minutes:
         record?.duration_minutes ?? profile?.duration_minutes ?? snapshot?.duration_minutes,
       total_duration_display: record?.total_duration_display,
-      category_names:
-        record?.category_names ?? profile?.category_names ?? snapshot?.category_names,
+      category_names: record?.category_names ?? profile?.category_names ?? snapshot?.category_names,
       price: record?.price ?? profile?.price ?? snapshot?.price,
       class_limit: record?.class_limit ?? profile?.class_limit,
       age_lower_limit:
