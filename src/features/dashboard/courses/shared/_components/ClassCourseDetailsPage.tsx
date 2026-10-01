@@ -31,7 +31,6 @@ import {
 import type { CombinedClassDetailsData } from '@/hooks/use-class-details';
 import { useCourseLessonsWithContent } from '@/hooks/use-courselessonwithcontent';
 import { cn } from '@/lib/utils';
-import { allCourseTrainingRequirementsOptions } from '@/services/course-training-requirements';
 import {
   getAllCoursesOptions,
   getAllDifficultyLevelsOptions,
@@ -39,6 +38,8 @@ import {
   getCourseAssessmentsOptions,
   getCourseCreatorByUuidOptions,
 } from '@/services/client/@tanstack/react-query.gen';
+import { allCourseTrainingRequirementsOptions } from '@/services/course-training-requirements';
+import { LOCATION_TYPE_LABELS, SESSION_FORMAT_LABELS } from '@/src/features/catalogue/course-page';
 import {
   AssessmentTab,
   CurriculumTab,
@@ -50,23 +51,22 @@ import { useUserDomain } from '@/src/features/dashboard/context/user-domain-cont
 import { EnrollmentLoadingState } from '@/src/features/dashboard/courses/components/EnrollmentLoadingState';
 import StudentsAlsoBought from '@/src/features/dashboard/courses/shared/_components/StudentsAlsoBought';
 import { roleScopedDashboardPath } from '@/src/features/dashboard/lib/active-domain-storage';
-import {
+import { 
   averageRating,
   CLASS_COURSE_TABS,
   CLASS_HUB_TAB_LABELS,
   type ClassCourseTab,
-  type ClassHubViewer,
+  type ClassHubViewer,enumLabel, 
   reviewerNameMap,
   reviewerUuids,
   scheduleTotalDuration,
   scheduleWeekSpan,
   toBlockReviews,
-  toCurriculumLessons,
-} from './class-hub';
+  toCurriculumLessons,} from './class-hub';
 import {
+  AssignmentQuizCounts,
   ClassHeaderMedia,
   ClassInstructorCard,
-  AssignmentQuizCounts,
   ClassSchedulePanel,
   DeleteClassButton,
   ShareLinkSheet,
@@ -285,10 +285,14 @@ export default function ClassCourseDetailsPage({
           <>
             {difficultyName ? <Badge variant='secondary'>{difficultyName}</Badge> : null}
             {classData.class?.location_type ? (
-              <Badge variant='outline'>{classData.class.location_type}</Badge>
+              <Badge variant='outline'>
+                {enumLabel(LOCATION_TYPE_LABELS, classData.class.location_type)}
+              </Badge>
             ) : null}
             {classData.class?.session_format ? (
-              <Badge variant='outline'>{classData.class.session_format}</Badge>
+              <Badge variant='outline'>
+                {enumLabel(SESSION_FORMAT_LABELS, classData.class.session_format)}
+              </Badge>
             ) : null}
           </>
         }
@@ -335,6 +339,10 @@ export default function ClassCourseDetailsPage({
               objectives={courseBulletLines(course?.objectives)}
               prerequisites={courseBulletLines(course?.prerequisites)}
               requirements={requirementsQuery.data?.data?.content}
+              // A learner gains nothing from an empty "no requirements" note meant for providers.
+              hideRequirements={
+                requirementsQuery.isSuccess && !requirementsQuery.data?.data?.content?.length
+              }
               requirementsAsync={{
                 loading: requirementsQuery.isLoading,
                 error: requirementsQuery.error,

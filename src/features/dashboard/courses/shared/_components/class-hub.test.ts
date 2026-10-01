@@ -5,6 +5,7 @@ import {
   CLASS_COURSE_TABS,
   CLASS_HUB_TAB_LABELS,
   CLASS_PROGRAM_TABS,
+  enumLabel,
   reviewerNameMap,
   reviewerUuids,
   scheduleTotalDuration,
@@ -111,4 +112,11 @@ test('averageRating rounds to one decimal and is null with nothing rated', () =>
   assert.equal(averageRating([]), null);
   assert.equal(averageRating([{ rating: 4 }, { rating: 5 }, { rating: 5 }]), 4.7);
   assert.equal(averageRating([{ rating: 3 }, {}]), 3);
+});
+
+test('enumLabel reads known values and humanises the rest', () => {
+  const labels = { IN_PERSON: 'In person' };
+  assert.equal(enumLabel(labels, 'IN_PERSON'), 'In person');
+  assert.equal(enumLabel(labels, 'in_person'), 'In person');
+  assert.equal(enumLabel(labels, 'SELF_PACED'), 'Self paced');
 });

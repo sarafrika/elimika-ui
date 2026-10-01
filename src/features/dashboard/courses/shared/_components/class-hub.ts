@@ -4,8 +4,8 @@
  */
 
 import type { CourseCurriculumLesson, CourseReview } from '@/src/features/course-record';
-import { courseBulletLines } from '@/src/features/course-record/blocks/OverviewTab';
 import { courseContentKind } from '@/src/features/course-record/blocks/CurriculumTab';
+import { courseBulletLines } from '@/src/features/course-record/blocks/OverviewTab';
 
 /* Tabs ------------------------------------------------------------------------------- */
 
@@ -189,4 +189,12 @@ export function averageRating(reviews: readonly ReviewLike[] | null | undefined)
   if (rated.length === 0) return null;
   const sum = rated.reduce((total, review) => total + (review.rating ?? 0), 0);
   return Math.round((sum / rated.length) * 10) / 10;
+}
+
+/** A readable label for an API enum value ("IN_PERSON" → "In person"), from a map, else humanised. */
+export function enumLabel(labels: Readonly<Record<string, string>>, value: string): string {
+  const known = labels[value.toUpperCase()];
+  if (known) return known;
+  const words = value.toLowerCase().replace(/_/g, ' ');
+  return words.charAt(0).toUpperCase() + words.slice(1);
 }
