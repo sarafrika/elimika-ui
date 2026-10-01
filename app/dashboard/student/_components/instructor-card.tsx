@@ -44,11 +44,15 @@ export const InstructorCard = ({ instructor, onViewProfile, courseId }: Props) =
   const instructorSkills = skills?.data?.content || [];
   const skillNames = instructorSkills.map(skill => skill.skill_name);
 
+  // The rating comes with the list when the API sends it; otherwise this card, and only
+  // a card that is on screen, asks for its own summary.
   const { data: reviews } = useQuery({
     ...getInstructorRatingSummaryOptions({ path: { instructorUuid: instructor?.uuid as string } }),
-    enabled: !!instructor.uuid,
+    enabled: !!instructor.uuid && !instructor.ratings_inline,
   });
-  const instructorReviews = reviews?.data;
+  const instructorReviews = instructor.ratings_inline
+    ? { review_count: instructor.review_count ?? 0, average_rating: instructor.rating ?? 0 }
+    : reviews?.data;
 
   const { data: appliedCourses } = useQuery({
     ...searchTrainingApplicationsOptions({

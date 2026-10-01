@@ -47,6 +47,8 @@ export type SearchInstructor = Instructor & {
   rating?: number;
   review_count?: number;
   reviews?: InstructorReview[] | undefined | null;
+  /** `rating` and `review_count` came with the list, so no card needs to fetch them. */
+  ratings_inline?: boolean;
   location?: {
     city?: string;
   } | null;

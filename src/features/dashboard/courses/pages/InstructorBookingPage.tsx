@@ -15,6 +15,7 @@ import {
   listTrainingApplicationsOptions,
 } from '@/services/client/@tanstack/react-query.gen';
 import { InstructorDirectory } from '@/src/features/dashboard/courses/components/instructor-directory';
+import { useNearMe } from '@/src/features/near-me/near-me';
 import { useUserDomain } from '@/src/features/dashboard/context/user-domain-context';
 import { roleScopedDashboardPath } from '@/src/features/dashboard/lib/active-domain-storage';
 import { ManageBookings } from '@/src/features/dashboard/courses/components/manage-bookings';
@@ -92,7 +93,14 @@ const InstructorBookingDashboard: React.FC<Props> = ({ classes }) => {
 
   const bookings = studentsBookings || [];
   const [activeTab, setActiveTab] = useState('browse');
-  const { data: trainingInstructors, loading } = useSearchTrainingInstructors();
+  // Near me narrows the directory on the server (nearest first, with a distance band).
+  // Ratings load lazily: from the list when it carries them, else per card on screen.
+  const nearMe = useNearMe();
+  const {
+    data: trainingInstructors,
+    ratingsKnown,
+    error: instructorsError,
+  } = useSearchTrainingInstructors({ near: nearMe.params, ratings: 'lazy' });
 
   const { data: applications } = useQuery(
     listTrainingApplicationsOptions({
@@ -217,6 +225,9 @@ const InstructorBookingDashboard: React.FC<Props> = ({ classes }) => {
             instructors={filteredInstructors}
             classes={classes}
             courseId={courseId as string}
+            nearMe={nearMe}
+            nearMeError={instructorsError}
+            ratingsKnown={ratingsKnown}
           />
         </TabsContent>
 
