@@ -25,10 +25,10 @@ export function taskGradeLabel(record: TaskGradeRecord | undefined, maxPoints?: 
   if (status !== 'GRADED') return 'Not graded';
   if (record.score == null) return record.grade_display || 'Grade unavailable';
   const maximum = record.max_score ?? maxPoints;
-  return (
-    record.grade_display ||
-    (maximum == null ? String(record.score) : `${record.score} / ${maximum}`)
-  );
+  // A known score and maximum always read "6 / 8", whether or not the server also sent its
+  // own formatted `grade_display` ("6.00 / 8.00 (75.00%)"), so one list never mixes formats.
+  if (maximum != null) return `${record.score} / ${maximum}`;
+  return record.grade_display || String(record.score);
 }
 
 export function isValidGrade(value: string, maximum: number) {
