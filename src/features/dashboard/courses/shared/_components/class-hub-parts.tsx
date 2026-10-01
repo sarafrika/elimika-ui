@@ -22,7 +22,7 @@ import {
 import { useRouter } from 'next/navigation';
 import { type ComponentType, useState } from 'react';
 import { toast } from 'sonner';
-import { FeedbackDialog } from '@/app/dashboard/_components/review-instructor-modal';
+import { FeedbackSheet } from '@/src/features/dashboard/courses/components/feedback-sheet';
 import { PreviewRow } from '@/app/dashboard/instructor/classes/new/_components/class-creation-preview-rail';
 import { socialShareActions } from '@/app/dashboard/instructor/classes/overview/[id]/page';
 import { ImageWithFallback } from '@/components/data/image-with-fallback';
@@ -403,7 +403,7 @@ export function ClassInstructorCard({
     enrollment => enrollment.student_uuid === studentUuid
   )?.uuid;
 
-  const [showFeedbackDialog, setShowFeedbackDialog] = useState(false);
+  const [showFeedbackSheet, setShowFeedbackSheet] = useState(false);
   const [rating, setRating] = useState(0);
   const [clarityRating, setClarityRating] = useState(0);
   const [engagementRating, setEngagementRating] = useState(0);
@@ -438,7 +438,7 @@ export function ClassInstructorCard({
       {
         async onSuccess(data) {
           toast.success(data?.message);
-          setShowFeedbackDialog(false);
+          setShowFeedbackSheet(false);
           setFeedbackComment('');
           setHeadline('');
           setRating(0);
@@ -470,7 +470,7 @@ export function ClassInstructorCard({
         <Button
           variant='outline'
           size='sm'
-          onClick={() => setShowFeedbackDialog(true)}
+          onClick={() => setShowFeedbackSheet(true)}
           className='gap-2'
         >
           <Star className='h-4 w-4' />
@@ -526,9 +526,9 @@ export function ClassInstructorCard({
         </div>
       </div>
 
-      <FeedbackDialog
-        open={showFeedbackDialog}
-        onOpenChange={setShowFeedbackDialog}
+      <FeedbackSheet
+        open={showFeedbackSheet}
+        onOpenChange={setShowFeedbackSheet}
         headline={headline}
         onHeadlineChange={setHeadline}
         feedback={feedbackComment}
@@ -615,7 +615,7 @@ export function WriteReviewButton({
         <Star className='h-4 w-4' />
         Write a Review
       </Button>
-      <FeedbackDialog
+      <FeedbackSheet
         type='others'
         open={form.open}
         onOpenChange={form.setOpen}

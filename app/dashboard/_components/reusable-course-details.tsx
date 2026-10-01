@@ -42,7 +42,7 @@ import { useState } from 'react';
 import { toast } from 'sonner';
 import { ReviewCard } from '../instructor/reviews/review-card';
 import { VideoPlayer } from '../student/schedule/classes/[id]/VideoPlayer';
-import { FeedbackDialog } from './review-instructor-modal';
+import { FeedbackSheet } from '@/src/features/dashboard/courses/components/feedback-sheet';
 
 type CourseDetailsProps = {
   courseId?: string;
@@ -73,7 +73,7 @@ export default function ReusableCourseDetailsPage({
   const courseId = propCourseId || (params?.id as string);
   const { activeDomain } = useUserDomain();
 
-  const [showFeedbackDialog, setShowFeedbackDialog] = useState(false);
+  const [showFeedbackSheet, setShowFeedbackSheet] = useState(false);
   const [rating, setRating] = useState(0);
   const [feedbackComment, setFeedbackComment] = useState('');
   const [headline, setHeadline] = useState('');
@@ -98,12 +98,12 @@ export default function ReusableCourseDetailsPage({
       {
         async onSuccess(data) {
           toast.success(data?.message);
-          setShowFeedbackDialog(false);
+          setShowFeedbackSheet(false);
           await invalidateReviewWorkflowQueries(qc);
         },
         onError: error => {
           toast.error(error?.message);
-          setShowFeedbackDialog(false);
+          setShowFeedbackSheet(false);
         },
       }
     );
@@ -428,7 +428,7 @@ export default function ReusableCourseDetailsPage({
                 <Button
                   variant='outline'
                   size='sm'
-                  onClick={() => setShowFeedbackDialog(true)}
+                  onClick={() => setShowFeedbackSheet(true)}
                   className='gap-2 rounded-xl shadow-none'
                 >
                   <Star className='h-4 w-4' />
@@ -503,10 +503,10 @@ export default function ReusableCourseDetailsPage({
         title={selectedLesson?.title}
       />
 
-      <FeedbackDialog
+      <FeedbackSheet
         type='others'
-        open={showFeedbackDialog}
-        onOpenChange={setShowFeedbackDialog}
+        open={showFeedbackSheet}
+        onOpenChange={setShowFeedbackSheet}
         headline={headline}
         onHeadlineChange={setHeadline}
         feedback={feedbackComment}

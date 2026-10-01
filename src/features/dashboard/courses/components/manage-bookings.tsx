@@ -30,7 +30,7 @@ import {
 import { type BookingRecord, getErrorMessage, type SearchInstructor } from '../types';
 import { invalidateReviewWorkflowQueries } from '@/src/features/dashboard/workflow-query-invalidation';
 import { BookingDetailsModal } from './booking-details-modal';
-import { FeedbackDialog } from './review-instructor-modal';
+import { FeedbackSheet } from './feedback-sheet';
 
 // "cancelled" | "expired" | "confirmed" | "payment_required" | "payment_failed"
 export const getStatusColor = (status?: BookingRecord['status']): string => {
@@ -66,7 +66,7 @@ export const ManageBookings: React.FC<Props> = ({
   const qc = useQueryClient();
   const [selectedBooking, setSelectedBooking] = useState<BookingRecord | null>(null);
   const [showCancelDialog, setShowCancelDialog] = useState(false);
-  const [showFeedbackDialog, setShowFeedbackDialog] = useState(false);
+  const [showFeedbackSheet, setShowFeedbackSheet] = useState(false);
   const [openBookingDetails, setOpenBookingDetails] = useState(false);
 
   const [cancelReason, setCancelReason] = useState('');
@@ -147,7 +147,7 @@ export const ManageBookings: React.FC<Props> = ({
       {
         async onSuccess(data) {
           toast.success(data?.message);
-          setShowFeedbackDialog(false);
+          setShowFeedbackSheet(false);
           setSelectedBooking(null);
           setFeedbackComment('');
           await invalidateReviewWorkflowQueries(qc);
@@ -314,7 +314,7 @@ export const ManageBookings: React.FC<Props> = ({
             onClick={() => {
               setOpenBookingDetails(false);
               setSelectedBooking(booking);
-              setShowFeedbackDialog(true);
+              setShowFeedbackSheet(true);
             }}
           >
             <Star className='h-4 w-4' />
@@ -419,9 +419,9 @@ export const ManageBookings: React.FC<Props> = ({
       </Dialog>
 
       {/* Feedback Dialog */}
-      <FeedbackDialog
-        open={showFeedbackDialog}
-        onOpenChange={setShowFeedbackDialog}
+      <FeedbackSheet
+        open={showFeedbackSheet}
+        onOpenChange={setShowFeedbackSheet}
         headline={headline}
         onHeadlineChange={setHeadline}
         feedback={feedbackComment}

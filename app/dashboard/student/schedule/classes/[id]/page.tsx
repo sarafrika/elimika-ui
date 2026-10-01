@@ -30,7 +30,7 @@ import {
   submitInstructorReviewMutation,
 } from '@/services/client/@tanstack/react-query.gen';
 import { LessonContentViewerDialog } from '../../../../../../components/content-preview/LessonContentPreview';
-import { FeedbackDialog } from '../../../../_components/review-instructor-modal';
+import { FeedbackSheet } from '@/src/features/dashboard/courses/components/feedback-sheet';
 import { ClassPageHeader } from './ClassPageHeader';
 import { CourseProgramSection, type LessonContent, type LessonModule } from './CourseProgram';
 import { LessonDetailsSidebar } from './LessonDetailsSidebar';
@@ -121,7 +121,7 @@ export default function ClassDetailsPage() {
   const [isContentViewerOpen, setIsContentViewerOpen] = useState(false);
 
   // Feedback/Rating states
-  const [showFeedbackDialog, setShowFeedbackDialog] = useState(false);
+  const [showFeedbackSheet, setShowFeedbackSheet] = useState(false);
   const [rating, setRating] = useState(0);
   const [clarityRating, setClarityRating] = useState(0);
   const [engagementRating, setEngagementRating] = useState(0);
@@ -354,7 +354,7 @@ export default function ClassDetailsPage() {
       {
         async onSuccess(data) {
           toast.success(data?.message);
-          setShowFeedbackDialog(false);
+          setShowFeedbackSheet(false);
           setFeedbackComment('');
           setHeadline('');
           setRating(0);
@@ -434,7 +434,7 @@ export default function ClassDetailsPage() {
             : 'N/A'
         }
         instructorName={instructor?.full_name || ''}
-        onRateInstructor={() => setShowFeedbackDialog(true)}
+        onRateInstructor={() => setShowFeedbackSheet(true)}
       />
 
       {/* Progress Bar */}
@@ -587,9 +587,9 @@ export default function ClassDetailsPage() {
         }}
       />
 
-      <FeedbackDialog
-        open={showFeedbackDialog}
-        onOpenChange={setShowFeedbackDialog}
+      <FeedbackSheet
+        open={showFeedbackSheet}
+        onOpenChange={setShowFeedbackSheet}
         headline={headline}
         onHeadlineChange={setHeadline}
         feedback={feedbackComment}

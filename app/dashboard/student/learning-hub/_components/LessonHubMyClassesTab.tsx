@@ -23,7 +23,7 @@ import { formatSessionSchedule } from '../../../../../src/features/dashboard/cou
 import { stripHtml } from '../../../../../src/features/dashboard/courses/shared/_components/courses-data';
 import { invalidateReviewWorkflowQueries } from '../../../../../src/features/dashboard/workflow-query-invalidation';
 import { toAuthenticatedMediaUrl } from '../../../../../src/lib/media-url';
-import { FeedbackDialog } from '../../../_components/review-instructor-modal';
+import { FeedbackSheet } from '@/src/features/dashboard/courses/components/feedback-sheet';
 import type {
   LearningHubClassEnrollment,
   LearningHubData,
@@ -378,7 +378,7 @@ function ClassCard({
         </Button>
       </CardContent>
 
-      <FeedbackDialog
+      <FeedbackSheet
         type='others'
         open={isReviewModalOpen}
         onOpenChange={setIsReviewModalOpen}

@@ -21,7 +21,7 @@ import { submitCourseReviewMutation } from '../../../../../services/client/@tans
 import { invalidateReviewWorkflowQueries } from '../../../../../src/features/dashboard/workflow-query-invalidation';
 import { stripHtml } from '../../../../../src/features/dashboard/courses/shared/_components/courses-data';
 import { toAuthenticatedMediaUrl } from '../../../../../src/lib/media-url';
-import { FeedbackDialog } from '../../../_components/review-instructor-modal';
+import { FeedbackSheet } from '@/src/features/dashboard/courses/components/feedback-sheet';
 import type {
   LearningHubCourseEnrollment,
   LearningHubData,
@@ -308,7 +308,7 @@ function CourseCard({ course }: { course: LearningHubCourseEnrollment }) {
       </CardContent>
 
 
-      <FeedbackDialog
+      <FeedbackSheet
         type='others'
         open={isReviewModalOpen}
         onOpenChange={setIsReviewModalOpen}
