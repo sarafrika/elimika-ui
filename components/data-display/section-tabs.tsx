@@ -55,10 +55,10 @@ export function useSectionTab<const T extends string>(
   return { value, setValue, hrefFor } as const;
 }
 
-/** Form section tabs: map react-hook-form errors to tab badges and jump to the first. */
-export { useTabErrors } from './use-tab-errors';
 export { type FieldToTab } from './tab-errors';
 export { usePinnedNavHeight } from './use-pinned-nav-height';
+/** Form section tabs: map react-hook-form errors to tab badges and jump to the first. */
+export { useTabErrors } from './use-tab-errors';
 
 /* Tabs ------------------------------------------------------------------------------- */
 
@@ -125,13 +125,13 @@ type SectionTabsProps<T extends string> = {
 
 const LIST = {
   underline:
-    'border-border/70 h-auto w-full justify-start gap-6 overflow-x-auto rounded-none border-b bg-transparent p-0',
-  pill: 'bg-card h-auto w-full justify-start gap-1 overflow-x-auto rounded-2xl border p-1.5 shadow-sm',
+    'h-auto w-full justify-start gap-6 overflow-x-auto overflow-y-hidden rounded-none bg-transparent p-0 shadow-[inset_0_-1px_0_0_var(--color-border)]',
+  pill: 'bg-card h-auto w-full justify-start gap-1 overflow-x-auto overflow-y-hidden rounded-2xl border p-1.5 shadow-sm',
 } as const;
 
 const TRIGGER = {
   underline:
-    'group text-muted-foreground hover:text-foreground data-[state=active]:border-primary data-[state=active]:text-primary -mb-px h-11 flex-none gap-2 rounded-none border-0 border-b-2 border-transparent px-0 text-sm font-medium data-[state=active]:bg-transparent data-[state=active]:font-semibold data-[state=active]:shadow-none',
+    'group text-muted-foreground hover:text-foreground data-[state=active]:border-primary data-[state=active]:text-primary h-11 flex-none gap-2 rounded-none border-0 border-b-2 border-transparent px-0 text-sm font-medium data-[state=active]:bg-transparent data-[state=active]:font-semibold data-[state=active]:shadow-none',
   pill: 'group text-muted-foreground hover:text-foreground data-[state=active]:bg-primary/10 data-[state=active]:text-primary h-11 flex-none gap-2 rounded-[10px] px-4 text-sm font-medium data-[state=active]:font-semibold data-[state=active]:shadow-none',
 } as const;
 
@@ -349,7 +349,7 @@ export function UnderlineTabs({
   className?: string;
 }) {
   return (
-    <div className={cn('border-border/70 flex gap-6 overflow-x-auto border-b', className)}>
+    <div className={cn('flex gap-6 overflow-x-auto overflow-y-hidden shadow-[inset_0_-1px_0_0_var(--color-border)]', className)}>
       {tabs.map(tab => {
         const isActive = tab.id === active;
         return (
@@ -359,7 +359,7 @@ export function UnderlineTabs({
             scroll={false}
             aria-current={isActive ? 'page' : undefined}
             className={cn(
-              '-mb-px flex h-11 shrink-0 items-center gap-2 border-b-2 text-sm whitespace-nowrap transition-colors',
+              'flex h-11 shrink-0 items-center gap-2 border-b-2 text-sm whitespace-nowrap transition-colors',
               isActive
                 ? 'border-primary text-primary font-semibold'
                 : 'text-muted-foreground hover:text-foreground border-transparent font-medium'
