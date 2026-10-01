@@ -585,9 +585,8 @@ export default function OrganisationStudentDetailPage() {
         hrefFor={hrefFor}
         label='Student sections'
         sticky
-        listClassName='bg-background'
       >
-        <SectionTabPanel value='overview' className='print:block'>
+        <SectionTabPanel value='overview'>
           <div className='grid gap-4 xl:grid-cols-2'>
             <SectionPanel
               title='Identity data'
@@ -733,7 +732,7 @@ export default function OrganisationStudentDetailPage() {
           </div>
         </SectionTabPanel>
 
-        <SectionTabPanel value='performance' className='print:block'>
+        <SectionTabPanel value='performance'>
           <SectionPanel
             title='Organisation class performance'
             description="Attendance and participation in this organisation's own classes only."
@@ -820,7 +819,7 @@ export default function OrganisationStudentDetailPage() {
           </SectionPanel>
         </SectionTabPanel>
 
-        <SectionTabPanel value='guardians' className='print:block'>
+        <SectionTabPanel value='guardians'>
           <div className='grid gap-4 xl:grid-cols-[0.9fr_1.1fr]'>
             <SectionPanel title='Primary guardian' description='Main emergency contact.'>
               {student?.first_guardian_name || student?.first_guardian_mobile ? (
@@ -891,7 +890,7 @@ export default function OrganisationStudentDetailPage() {
           </div>
         </SectionTabPanel>
 
-        <SectionTabPanel value='certificates' className='print:block'>
+        <SectionTabPanel value='certificates'>
           <SectionPanel
             title='Certificates'
             description='Issued credentials connected to the student profile.'
@@ -983,7 +982,7 @@ export default function OrganisationStudentDetailPage() {
           </SectionPanel>
         </SectionTabPanel>
 
-        <SectionTabPanel value='audit' className='print:block'>
+        <SectionTabPanel value='audit'>
           <div className='grid gap-4 xl:grid-cols-2'>
             <SectionPanel
               title='Identifiers'

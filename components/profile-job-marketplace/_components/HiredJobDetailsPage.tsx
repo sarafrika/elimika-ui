@@ -73,7 +73,6 @@ const HIRED_JOB_TAB_META: Record<HiredJobTab, Pick<SectionTab, 'label' | 'icon'>
 };
 
 /** Hidden panels still print. */
-const PANEL = 'print:block!';
 
 export function HiredJobDetailsSkeleton() {
   return (
@@ -293,9 +292,8 @@ function HiredJobDetails({ job }: { job: ClassMarketplaceJob }) {
         hrefFor={hrefFor}
         label='Hire sections'
         sticky
-        listClassName='bg-background'
       >
-        <SectionTabPanel value='overview' className={PANEL}>
+        <SectionTabPanel value='overview'>
           <SectionCard title='Job overview'>
             <p className='text-muted-foreground mb-5 max-w-prose text-sm leading-relaxed break-words whitespace-pre-wrap'>
               {job.description || 'No job description provided.'}
@@ -333,7 +331,7 @@ function HiredJobDetails({ job }: { job: ClassMarketplaceJob }) {
           </SectionCard>
         </SectionTabPanel>
 
-        <SectionTabPanel value='location' className={PANEL}>
+        <SectionTabPanel value='location'>
           <SectionCard title='Location and delivery'>
             <DetailGrid
               columns={3}
@@ -367,7 +365,7 @@ function HiredJobDetails({ job }: { job: ClassMarketplaceJob }) {
           </SectionCard>
         </SectionTabPanel>
 
-        <SectionTabPanel value='rates' className={PANEL}>
+        <SectionTabPanel value='rates'>
           <SectionCard
             title='Agreed job rates'
             description='Rates set for this job.'
@@ -392,7 +390,7 @@ function HiredJobDetails({ job }: { job: ClassMarketplaceJob }) {
           </SectionCard>
         </SectionTabPanel>
 
-        <SectionTabPanel value='class' className={PANEL}>
+        <SectionTabPanel value='class'>
           <div className='grid items-start gap-5 xl:grid-cols-[minmax(0,1fr)_400px]'>
             <div className='min-w-0'>
               {classUuid ? (
@@ -433,7 +431,7 @@ function HiredJobDetails({ job }: { job: ClassMarketplaceJob }) {
           </div>
         </SectionTabPanel>
 
-        <SectionTabPanel value='contact' className={PANEL}>
+        <SectionTabPanel value='contact'>
           <ContactPerson job={job} />
         </SectionTabPanel>
       </SectionTabs>

@@ -148,7 +148,6 @@ const STUDENT_TAB_ICONS = {
 } as const;
 
 /** Hidden panels still print. */
-const PANEL = 'print:block!';
 
 const STATUS_STYLES: Record<string, string> = {
   ENROLLED: 'bg-primary/10 text-primary border-primary/20',
@@ -407,9 +406,8 @@ const InstructorStudentsDetailPage = () => {
         hrefFor={hrefFor}
         label='Student sections'
         sticky
-        listClassName='bg-background'
       >
-        <SectionTabPanel value='overview' className={cn(PANEL, 'flex flex-col gap-4')}>
+        <SectionTabPanel value='overview' className='flex flex-col gap-4'>
           <div className={surfaceTheme.cardGrid}>
             <StatCard
               icon={GraduationCap}
@@ -465,7 +463,7 @@ const InstructorStudentsDetailPage = () => {
           </div>
         </SectionTabPanel>
 
-        <SectionTabPanel value='courses' className={PANEL}>
+        <SectionTabPanel value='courses'>
           <div className='border-border bg-card rounded-md border'>
             <div className='border-border flex items-center justify-between border-b px-4 py-3'>
               <h2 className='text-foreground text-sm font-semibold'>Course Progress</h2>
@@ -542,7 +540,7 @@ const InstructorStudentsDetailPage = () => {
           </div>
         </SectionTabPanel>
 
-        <SectionTabPanel value='attendance' className={PANEL}>
+        <SectionTabPanel value='attendance'>
           <div className='border-border bg-card rounded-md border'>
             <div className='border-border flex items-center justify-between border-b px-4 py-3'>
               <h2 className='text-foreground text-sm font-semibold'>Classes &amp; Attendance</h2>
@@ -607,7 +605,7 @@ const InstructorStudentsDetailPage = () => {
           </div>
         </SectionTabPanel>
 
-        <SectionTabPanel value='guardians' className={PANEL}>
+        <SectionTabPanel value='guardians'>
           {guardians.length === 0 ? (
             <div className='border-border bg-card rounded-md border p-4'>
               <p className='text-muted-foreground text-xs'>No guardian contacts on file.</p>
@@ -635,7 +633,7 @@ const InstructorStudentsDetailPage = () => {
           )}
         </SectionTabPanel>
 
-        <SectionTabPanel value='activity' className={PANEL}>
+        <SectionTabPanel value='activity'>
           <div className='border-border bg-card max-w-3xl rounded-md border p-4'>
             <h2 className='text-foreground mb-3 text-sm font-semibold'>Recent Activity</h2>
             <div className='space-y-3'>

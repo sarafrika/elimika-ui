@@ -403,16 +403,15 @@ export default function ClassProgramDetailsPage({
           hrefFor={hrefFor}
           label='Programme class sections'
           sticky
-          listClassName='bg-background print:hidden'
         >
-          <SectionTabPanel value='overview' className='print:block!'>
+          <SectionTabPanel value='overview'>
             <div className='flex flex-col gap-[18px]'>
               <ProgramAbout description={program.description} objectives={program.objectives} />
               <ClassInstructorCard classData={classData} />
             </div>
           </SectionTabPanel>
 
-          <SectionTabPanel value='curriculum' className='print:block!'>
+          <SectionTabPanel value='curriculum'>
             {programCourses.length === 0 ? (
               <EmptyCard>No courses have been added to this program yet.</EmptyCard>
             ) : (
@@ -430,11 +429,11 @@ export default function ClassProgramDetailsPage({
             )}
           </SectionTabPanel>
 
-          <SectionTabPanel value='courses' className='print:block!'>
+          <SectionTabPanel value='courses'>
             <ProgramBundledCourses courses={programCourses} lessonsByCourse={lessonsByCourse} />
           </SectionTabPanel>
 
-          <SectionTabPanel value='assessment' className='print:block!'>
+          <SectionTabPanel value='assessment'>
             <div className='flex flex-col gap-6'>
               {programCourses.map((course, index) => (
                 <section key={course.uuid ?? index} className='flex flex-col gap-3'>
@@ -449,7 +448,7 @@ export default function ClassProgramDetailsPage({
             </div>
           </SectionTabPanel>
 
-          <SectionTabPanel value='requirements' className='print:block!'>
+          <SectionTabPanel value='requirements'>
             <CourseTrainingRequirements
               requirements={aggregatedRequirements}
               title='Program Training Requirements'
@@ -459,7 +458,7 @@ export default function ClassProgramDetailsPage({
             />
           </SectionTabPanel>
 
-          <SectionTabPanel value='schedule' className='print:block!'>
+          <SectionTabPanel value='schedule'>
             <ClassSchedulePanel
               classData={classData}
               viewer={viewer}
@@ -467,7 +466,7 @@ export default function ClassProgramDetailsPage({
             />
           </SectionTabPanel>
 
-          <SectionTabPanel value='reviews' className='print:block!'>
+          <SectionTabPanel value='reviews'>
             <div className='flex flex-col gap-[18px]'>
               {viewer === 'student' ? (
                 <div className='flex justify-end'>

@@ -457,9 +457,8 @@ export default function ResourceDetailPage() {
         hrefFor={hrefFor}
         label='Resource sections'
         sticky
-        listClassName='bg-background'
       >
-        <SectionTabPanel value='calendar' className='space-y-4 print:block'>
+        <SectionTabPanel value='calendar' className='space-y-4'>
           <div className='flex flex-wrap items-center justify-between gap-3'>
             <div className='flex items-center gap-2'>
               <Button
@@ -565,7 +564,7 @@ export default function ResourceDetailPage() {
           </p>
         </SectionTabPanel>
 
-        <SectionTabPanel value='rules' className='space-y-4 print:block'>
+        <SectionTabPanel value='rules' className='space-y-4'>
           <div className='flex items-center justify-between'>
             <p className='text-muted-foreground text-sm'>
               Define when this resource can be booked. Blackouts always win over open hours.
@@ -658,7 +657,7 @@ export default function ResourceDetailPage() {
           )}
         </SectionTabPanel>
 
-        <SectionTabPanel value='bookings' className='space-y-4 print:block'>
+        <SectionTabPanel value='bookings' className='space-y-4'>
           <div className='flex flex-wrap items-center justify-between gap-3'>
             <Select
               value={bookingStatusFilter}

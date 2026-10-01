@@ -143,9 +143,8 @@ export function AdminPersonPage({ userUuid }: { userUuid: string }) {
           hrefFor={hrefFor}
           label='Person sections'
           sticky
-          listClassName='bg-background'
         >
-          <SectionTabPanel value='overview' className='print:block'>
+          <SectionTabPanel value='overview'>
             {tab === 'overview' ? (
               <OverviewTab
                 person={person}
@@ -156,7 +155,7 @@ export function AdminPersonPage({ userUuid }: { userUuid: string }) {
             ) : null}
           </SectionTabPanel>
 
-          <SectionTabPanel value='verification' className='print:block'>
+          <SectionTabPanel value='verification'>
             {tab === 'verification' ? (
               <VerificationTab
                 person={person}
@@ -180,7 +179,7 @@ export function AdminPersonPage({ userUuid }: { userUuid: string }) {
             ) : null}
           </SectionTabPanel>
 
-          <SectionTabPanel value='teaching' className='print:block'>
+          <SectionTabPanel value='teaching'>
             {tab === 'teaching' ? (
               <TeachingTab
                 instructor={instructor}
@@ -190,7 +189,7 @@ export function AdminPersonPage({ userUuid }: { userUuid: string }) {
             ) : null}
           </SectionTabPanel>
 
-          <SectionTabPanel value='learning' className='print:block'>
+          <SectionTabPanel value='learning'>
             {tab === 'learning' ? (
               <LearningTab
                 student={student}
@@ -200,7 +199,7 @@ export function AdminPersonPage({ userUuid }: { userUuid: string }) {
             ) : null}
           </SectionTabPanel>
 
-          <SectionTabPanel value='money' className='print:block'>
+          <SectionTabPanel value='money'>
             {tab === 'money' ? (
               <MoneyTab
                 userUuid={userUuid}
@@ -210,7 +209,7 @@ export function AdminPersonPage({ userUuid }: { userUuid: string }) {
             ) : null}
           </SectionTabPanel>
 
-          <SectionTabPanel value='audit' className='print:block'>
+          <SectionTabPanel value='audit'>
             {tab === 'audit' ? (
               <AuditTab
                 userUuid={userUuid}

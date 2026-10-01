@@ -76,7 +76,6 @@ const ENROLLMENT_TABS = ['courses', 'summary'] as const;
 type EnrollmentTab = (typeof ENROLLMENT_TABS)[number];
 
 /** Hidden panels still print. */
-const PANEL = 'print:block!';
 
 type InstructorClass = ClassDefinition;
 type EnrollmentRecord = Enrollment;
@@ -386,9 +385,8 @@ const EnrollmentDetails = () => {
           hrefFor={hrefFor}
           label='Enrollment sections'
           sticky
-          listClassName='bg-background'
         >
-          <SectionTabPanel value='courses' className={PANEL}>
+          <SectionTabPanel value='courses'>
             <div className={MASTER_DETAIL}>
               <Card className='p-4'>
                 <div className='mb-4'>
@@ -568,7 +566,7 @@ const EnrollmentDetails = () => {
             </div>
           </SectionTabPanel>
 
-          <SectionTabPanel value='summary' className={PANEL}>
+          <SectionTabPanel value='summary'>
             <Card className='max-w-3xl p-4'>
               <h3 className='text-foreground mb-2 font-semibold'>Notes</h3>
               <ul className='text-muted-foreground space-y-1 text-sm'>

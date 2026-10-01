@@ -783,10 +783,9 @@ export function InstructorDetailPage({ role }: { role: InstructorDetailRole }) {
         hrefFor={hrefFor}
         label='Instructor sections'
         sticky
-        listClassName='bg-background'
       >
         {isOrganisation ? (
-          <SectionTabPanel value='overview' className='print:block'>
+          <SectionTabPanel value='overview'>
             <div className='grid gap-4 xl:grid-cols-2'>
               <SectionPanel
                 title='Identity data'
@@ -943,7 +942,7 @@ export function InstructorDetailPage({ role }: { role: InstructorDetailRole }) {
           </SectionTabPanel>
         ) : null}
 
-        <SectionTabPanel value='classes' className='print:block'>
+        <SectionTabPanel value='classes'>
           <SectionPanel
             title={config.classesTitle}
             description={config.classesDescription}
@@ -1048,7 +1047,7 @@ export function InstructorDetailPage({ role }: { role: InstructorDetailRole }) {
         </SectionTabPanel>
 
         {isOrganisation ? (
-          <SectionTabPanel value='students' className='print:block'>
+          <SectionTabPanel value='students'>
             {/* Fetches its own roster, so it mounts only when opened. */}
             {tab === 'students' ? (
               <InstructorStudentsPanel
@@ -1059,7 +1058,7 @@ export function InstructorDetailPage({ role }: { role: InstructorDetailRole }) {
           </SectionTabPanel>
         ) : null}
 
-        <SectionTabPanel value='credentials' className='print:block'>
+        <SectionTabPanel value='credentials'>
           <div className='grid gap-4 xl:grid-cols-[0.85fr_1.15fr]'>
             <SectionPanel title='Skills' description='Listed professional and teaching skills.'>
               {skillsQuery.isLoading ? (
@@ -1176,7 +1175,7 @@ export function InstructorDetailPage({ role }: { role: InstructorDetailRole }) {
           </div>
         </SectionTabPanel>
 
-        <SectionTabPanel value='history' className='print:block'>
+        <SectionTabPanel value='history'>
           <SectionPanel
             title='Work history'
             description='Roles and work experience connected to this profile.'
@@ -1223,7 +1222,7 @@ export function InstructorDetailPage({ role }: { role: InstructorDetailRole }) {
           </SectionPanel>
         </SectionTabPanel>
 
-        <SectionTabPanel value='reviews' className='print:block'>
+        <SectionTabPanel value='reviews'>
           <div className='grid gap-4 xl:grid-cols-[0.65fr_1.35fr]'>
             <SectionPanel title='Rating summary' description='Student feedback aggregate.'>
               <DetailGrid
@@ -1294,7 +1293,7 @@ export function InstructorDetailPage({ role }: { role: InstructorDetailRole }) {
         </SectionTabPanel>
 
         {isOrganisation ? (
-          <SectionTabPanel value='documents' className='print:block'>
+          <SectionTabPanel value='documents'>
             <SectionPanel
               title='Documents'
               description='Uploaded instructor verification documents.'
@@ -1385,7 +1384,7 @@ export function InstructorDetailPage({ role }: { role: InstructorDetailRole }) {
           </SectionTabPanel>
         ) : null}
 
-        <SectionTabPanel value='payables' className='print:block'>
+        <SectionTabPanel value='payables'>
           <SectionPanel title='Instructor payables' description={config.payablesDescription}>
             {isOrganisation && payablesQuery.isLoading ? (
               <Skeleton className='h-32 w-full rounded-md' />

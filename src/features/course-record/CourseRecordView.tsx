@@ -212,12 +212,7 @@ export function CourseRecordView({
               </Button>
             ) : null}
             {onExport ? (
-              <Button
-                variant='outline'
-                size='sm'
-                className='h-8 rounded-[10px]'
-                onClick={onExport}
-              >
+              <Button variant='outline' size='sm' className='h-8 rounded-[10px]' onClick={onExport}>
                 <Download className='size-4' />
                 Export record
               </Button>
@@ -307,7 +302,6 @@ export function CourseRecordView({
           label='Course sections'
           variant='pill'
           sticky={{ top: stickyTop }}
-          listClassName='print:hidden'
         >
           <div
             className={cn(

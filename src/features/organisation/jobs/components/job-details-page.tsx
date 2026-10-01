@@ -314,9 +314,8 @@ export function JobDetailsPage({ jobUuid }: { jobUuid: string }) {
         hrefFor={hrefFor}
         label='Job sections'
         sticky
-        listClassName='bg-background'
       >
-        <SectionTabPanel value='overview' className='print:block'>
+        <SectionTabPanel value='overview'>
           {job && resourcesHold && sessionsHold && cta ? (
             <div className='grid gap-5 lg:grid-cols-[minmax(0,1fr)_360px]'>
               <div className='flex min-w-0 flex-col gap-5'>
@@ -463,7 +462,7 @@ export function JobDetailsPage({ jobUuid }: { jobUuid: string }) {
           ) : null}
         </SectionTabPanel>
 
-        <SectionTabPanel value='applicants' className='print:block'>
+        <SectionTabPanel value='applicants'>
           {/* Fetches its own rows, so it mounts only when opened. */}
           {tab === 'applicants' ? (
             <JobApplicantsPanel
@@ -474,7 +473,7 @@ export function JobDetailsPage({ jobUuid }: { jobUuid: string }) {
           ) : null}
         </SectionTabPanel>
 
-        <SectionTabPanel value='holds' className='print:block'>
+        <SectionTabPanel value='holds'>
           {job && resourcesHold ? (
             <JobHoldsTab
               job={job}
@@ -488,7 +487,7 @@ export function JobDetailsPage({ jobUuid }: { jobUuid: string }) {
           ) : null}
         </SectionTabPanel>
 
-        <SectionTabPanel value='activity' className='print:block'>
+        <SectionTabPanel value='activity'>
           {job ? (
             <JobActivityTab
               job={job}

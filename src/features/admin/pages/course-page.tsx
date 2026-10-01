@@ -123,12 +123,11 @@ export function AdminCoursePage({ uuid }: { uuid: string }) {
           hrefFor={hrefFor}
           label='Course sections'
           sticky
-          listClassName='bg-background'
         >
           {course ? (
             <div className='grid gap-4 xl:grid-cols-[minmax(0,1fr)_360px]'>
               <div className='flex flex-col gap-4'>
-                <SectionTabPanel value='changes' className='print:block'>
+                <SectionTabPanel value='changes'>
                   {tab === 'changes' ? (
                     <SectionCard
                       title='Proposed changes'
@@ -201,7 +200,7 @@ export function AdminCoursePage({ uuid }: { uuid: string }) {
                   ) : null}
                 </SectionTabPanel>
 
-                <SectionTabPanel value='curriculum' className='print:block'>
+                <SectionTabPanel value='curriculum'>
                   {tab === 'curriculum' ? (
                     <SectionCard title='Curriculum' description='Lessons on the live course.'>
                       <SectionBoundary
@@ -240,7 +239,7 @@ export function AdminCoursePage({ uuid }: { uuid: string }) {
                   ) : null}
                 </SectionTabPanel>
 
-                <SectionTabPanel value='assessments' className='print:block'>
+                <SectionTabPanel value='assessments'>
                   {tab === 'assessments' ? (
                     <SectionCard title='Assessments' description='How learners are graded.'>
                       <SectionBoundary
@@ -275,7 +274,7 @@ export function AdminCoursePage({ uuid }: { uuid: string }) {
                   ) : null}
                 </SectionTabPanel>
 
-                <SectionTabPanel value='requirements' className='print:block'>
+                <SectionTabPanel value='requirements'>
                   {tab === 'requirements' ? (
                     <SectionCard
                       title='Enrollment requirements'
@@ -310,7 +309,7 @@ export function AdminCoursePage({ uuid }: { uuid: string }) {
                   ) : null}
                 </SectionTabPanel>
 
-                <SectionTabPanel value='history' className='print:block'>
+                <SectionTabPanel value='history'>
                   {tab === 'history' ? (
                     <SectionCard title='Moderation history' description='Every past decision.'>
                       <SectionBoundary

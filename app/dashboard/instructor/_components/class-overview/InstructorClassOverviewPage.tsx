@@ -126,7 +126,6 @@ const TAB_ICONS = {
 } as const;
 
 /** Hidden panels still print. */
-const PANEL = 'print:block!';
 
 const infoTile = 'border-border bg-muted/50 rounded-lg border p-4';
 const infoLabel = 'text-muted-foreground text-xs font-medium tracking-wide uppercase';
@@ -419,9 +418,8 @@ export function InstructorClassOverviewPage({ route }: { route: InstructorClassO
         hrefFor={hrefFor}
         label='Class sections'
         sticky
-        listClassName='bg-background'
       >
-        <SectionTabPanel value='overview' className={cn(PANEL, 'flex flex-col gap-5')}>
+        <SectionTabPanel value='overview' className='flex flex-col gap-5'>
           <div className={surfaceTheme.cardGrid}>
             <div className={infoTile}>
               <span className={infoLabel}>{program?.uuid ? 'Program courses' : 'Course'}</span>
@@ -581,11 +579,11 @@ export function InstructorClassOverviewPage({ route }: { route: InstructorClassO
           ) : null}
         </SectionTabPanel>
 
-        <SectionTabPanel value='schedule' className={PANEL}>
+        <SectionTabPanel value='schedule'>
           <ClassScheduleCalendar schedules={calendarSchedules} />
         </SectionTabPanel>
 
-        <SectionTabPanel value='curriculum' className={PANEL}>
+        <SectionTabPanel value='curriculum'>
           <Card>
             <CardContent className='space-y-3 p-4'>
               {(isAllLessonsDataLoading || isLoading) && <Spinner />}
@@ -660,7 +658,7 @@ export function InstructorClassOverviewPage({ route }: { route: InstructorClassO
           </Card>
         </SectionTabPanel>
 
-        <SectionTabPanel value='students' className={PANEL}>
+        <SectionTabPanel value='students'>
           <Card>
             <CardHeader>
               <CardTitle>Enrolled Students</CardTitle>
@@ -717,7 +715,7 @@ export function InstructorClassOverviewPage({ route }: { route: InstructorClassO
           </Card>
         </SectionTabPanel>
 
-        <SectionTabPanel value='skills' className={PANEL}>
+        <SectionTabPanel value='skills'>
           {skillsLoading ? (
             <div className={surfaceTheme.cardGrid}>
               <Skeleton className='h-[72px]' />

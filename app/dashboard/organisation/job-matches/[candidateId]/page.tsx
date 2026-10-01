@@ -599,9 +599,8 @@ export default function CandidateDetailPage() {
             hrefFor={hrefFor}
             label='Candidate sections'
             sticky
-            listClassName='bg-background'
           >
-            <SectionTabPanel value='overview' className='space-y-4 print:block'>
+            <SectionTabPanel value='overview' className='space-y-4'>
               <Card>
                 <CardContent className='space-y-4 p-5'>
                   <div>
@@ -650,7 +649,7 @@ export default function CandidateDetailPage() {
               </Card>
             </SectionTabPanel>
 
-            <SectionTabPanel value='skills' className='space-y-4 print:block'>
+            <SectionTabPanel value='skills' className='space-y-4'>
               <Card>
                 <CardHeader>
                   <CardTitle className='text-base'>Skills</CardTitle>
@@ -707,7 +706,7 @@ export default function CandidateDetailPage() {
               </Card>
             </SectionTabPanel>
 
-            <SectionTabPanel value='experience' className='space-y-4 print:block'>
+            <SectionTabPanel value='experience' className='space-y-4'>
               <Card>
                 <CardHeader>
                   <CardTitle className='text-base'>Experience</CardTitle>
@@ -782,7 +781,7 @@ export default function CandidateDetailPage() {
               </Card>
             </SectionTabPanel>
 
-            <SectionTabPanel value='actions' className='print:block'>
+            <SectionTabPanel value='actions'>
               <Card>
                 <CardHeader>
                   <CardTitle className='text-base'>

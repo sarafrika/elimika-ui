@@ -547,11 +547,7 @@ export function ProfilePage({
               sticky={{ top: navHeight }}
             >
               {tabs.map(({ id, component: TabComponent }) => (
-                <SectionTabPanel
-                  key={id}
-                  value={id}
-                  className='animate-in fade-in-0 duration-200 print:block'
-                >
+                <SectionTabPanel key={id} value={id} className='animate-in fade-in-0 duration-200'>
                   {/* Each section fetches its own data, so only the open one mounts. */}
                   {id === currentTabId ? (
                     <TabComponent

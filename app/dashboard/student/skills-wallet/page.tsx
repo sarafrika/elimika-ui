@@ -73,7 +73,7 @@ export default function SkillsWallet() {
           variant='pill'
           sticky
         >
-          <SectionTabPanel value='overview' className='print:block'>
+          <SectionTabPanel value='overview'>
             {tab === 'overview' ? (
               <SkillsWalletOverviewTab
                 data={data}
@@ -82,7 +82,7 @@ export default function SkillsWallet() {
               />
             ) : null}
           </SectionTabPanel>
-          <SectionTabPanel value='skills' className='print:block'>
+          <SectionTabPanel value='skills'>
             {tab === 'skills' ? (
               <div className='space-y-6'>
                 <LearnerSkillGoalsCard studentUuid={student?.uuid} />
@@ -90,26 +90,26 @@ export default function SkillsWallet() {
               </div>
             ) : null}
           </SectionTabPanel>
-          <SectionTabPanel value='portfolio' className='print:block'>
+          <SectionTabPanel value='portfolio'>
             {tab === 'portfolio' ? <SkillsWalletPortfolioTab data={data} /> : null}
           </SectionTabPanel>
-          <SectionTabPanel value='credentials' className='print:block'>
+          <SectionTabPanel value='credentials'>
             {tab === 'credentials' ? <SkillsWalletCredentialsVaultTab data={data} /> : null}
           </SectionTabPanel>
-          <SectionTabPanel value='competencies' className='print:block'>
+          <SectionTabPanel value='competencies'>
             {tab === 'competencies' ? <SkillsWalletCompetenciesTab data={data} /> : null}
           </SectionTabPanel>
-          <SectionTabPanel value='experience' className='print:block'>
+          <SectionTabPanel value='experience'>
             {tab === 'experience' ? (
               <SkillsWalletExperienceTab experiences={data.experiences} />
             ) : null}
           </SectionTabPanel>
-          <SectionTabPanel value='achievements' className='print:block'>
+          <SectionTabPanel value='achievements'>
             {tab === 'achievements' ? (
               <SkillsWalletAchievementsTab achievements={data.achievements} />
             ) : null}
           </SectionTabPanel>
-          <SectionTabPanel value='verification' className='print:block'>
+          <SectionTabPanel value='verification'>
             {tab === 'verification' ? (
               <SkillsWalletVerficationTab events={data.verificationEvents} />
             ) : null}

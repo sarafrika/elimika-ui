@@ -177,9 +177,8 @@ export function AdminOrganisationPage({ uuid }: { uuid: string }) {
           hrefFor={hrefFor}
           label='Organisation sections'
           sticky
-          listClassName='bg-background'
         >
-          <SectionTabPanel value='overview' className='print:block'>
+          <SectionTabPanel value='overview'>
             {organisation && tab === 'overview' ? (
               <div className='flex flex-col gap-4'>
                 <SectionBoundary
@@ -289,7 +288,7 @@ export function AdminOrganisationPage({ uuid }: { uuid: string }) {
             ) : null}
           </SectionTabPanel>
 
-          <SectionTabPanel value='verification' className='print:block'>
+          <SectionTabPanel value='verification'>
             {organisation && tab === 'verification' ? (
               <OrganisationVerificationTab
                 organisation={organisation}
@@ -303,7 +302,7 @@ export function AdminOrganisationPage({ uuid }: { uuid: string }) {
             ) : null}
           </SectionTabPanel>
 
-          <SectionTabPanel value='branches' className='print:block'>
+          <SectionTabPanel value='branches'>
             {organisation && tab === 'branches' ? (
               <BranchesTab
                 organisation={organisation}
@@ -313,7 +312,7 @@ export function AdminOrganisationPage({ uuid }: { uuid: string }) {
             ) : null}
           </SectionTabPanel>
 
-          <SectionTabPanel value='members' className='print:block'>
+          <SectionTabPanel value='members'>
             {organisation && tab === 'members' ? (
               <MembersTab
                 organisation={organisation}
@@ -336,7 +335,7 @@ export function AdminOrganisationPage({ uuid }: { uuid: string }) {
             ) : null}
           </SectionTabPanel>
 
-          <SectionTabPanel value='classes' className='print:block'>
+          <SectionTabPanel value='classes'>
             {organisation && tab === 'classes' ? (
               <ClassesTab
                 classes={classes}
@@ -348,7 +347,7 @@ export function AdminOrganisationPage({ uuid }: { uuid: string }) {
             ) : null}
           </SectionTabPanel>
 
-          <SectionTabPanel value='finance' className='print:block'>
+          <SectionTabPanel value='finance'>
             {organisation && tab === 'finance' ? (
               <FinanceTab
                 organisation={organisation}

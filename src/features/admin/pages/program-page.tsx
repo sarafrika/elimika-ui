@@ -259,9 +259,8 @@ export function AdminProgramPage({ uuid }: { uuid: string }) {
           hrefFor={hrefFor}
           label='Program sections'
           sticky
-          listClassName='bg-background'
         >
-          <SectionTabPanel value='overview' className='print:block'>
+          <SectionTabPanel value='overview'>
             {program && tab === 'overview' ? (
               <div className='grid gap-4 lg:grid-cols-[minmax(0,1.6fr)_minmax(0,1fr)]'>
                 <div className='flex flex-col gap-4'>
@@ -417,7 +416,7 @@ export function AdminProgramPage({ uuid }: { uuid: string }) {
             ) : null}
           </SectionTabPanel>
 
-          <SectionTabPanel value='courses' className='print:block'>
+          <SectionTabPanel value='courses'>
             {program && tab === 'courses' ? (
               <SectionCard
                 title='Courses in this program'
@@ -458,7 +457,7 @@ export function AdminProgramPage({ uuid }: { uuid: string }) {
             ) : null}
           </SectionTabPanel>
 
-          <SectionTabPanel value='applications' className='print:block'>
+          <SectionTabPanel value='applications'>
             {program && tab === 'applications' ? (
               <div className='flex flex-col gap-4'>
                 <SectionCard
@@ -588,7 +587,7 @@ export function AdminProgramPage({ uuid }: { uuid: string }) {
             ) : null}
           </SectionTabPanel>
 
-          <SectionTabPanel value='history' className='print:block'>
+          <SectionTabPanel value='history'>
             {program && tab === 'history' ? (
               <SectionCard
                 title='Moderation history'

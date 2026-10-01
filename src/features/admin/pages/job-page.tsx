@@ -169,9 +169,8 @@ export function AdminJobPage({ jobUuid }: { jobUuid: string }) {
               hrefFor={hrefFor}
               label='Job sections'
               sticky
-              listClassName='bg-background'
             >
-              <SectionTabPanel value='job' className='print:block'>
+              <SectionTabPanel value='job'>
                 <SectionCard title='The job' description='What the organisation is asking for.'>
                   <DetailGrid
                     columns={3}
@@ -225,7 +224,7 @@ export function AdminJobPage({ jobUuid }: { jobUuid: string }) {
                 </SectionCard>
               </SectionTabPanel>
 
-              <SectionTabPanel value='applicants' className='print:block'>
+              <SectionTabPanel value='applicants'>
                 <SectionCard
                   title='Applicants'
                   description='Where each instructor sits in the hiring pipeline.'

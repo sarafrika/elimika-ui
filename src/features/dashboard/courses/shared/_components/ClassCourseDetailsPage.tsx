@@ -326,9 +326,8 @@ export default function ClassCourseDetailsPage({
         hrefFor={hrefFor}
         label='Class sections'
         sticky
-        listClassName='bg-background print:hidden'
       >
-        <SectionTabPanel value='overview' className='print:block!'>
+        <SectionTabPanel value='overview'>
           <div className='flex flex-col gap-[18px]'>
             <OverviewTab
               access={access}
@@ -355,7 +354,7 @@ export default function ClassCourseDetailsPage({
           </div>
         </SectionTabPanel>
 
-        <SectionTabPanel value='curriculum' className='print:block!'>
+        <SectionTabPanel value='curriculum'>
           <CurriculumTab
             access={access}
             lessons={curriculumLessons}
@@ -363,7 +362,7 @@ export default function ClassCourseDetailsPage({
           />
         </SectionTabPanel>
 
-        <SectionTabPanel value='assessment' className='print:block!'>
+        <SectionTabPanel value='assessment'>
           <div className='flex flex-col gap-[18px]'>
             <AssessmentTab
               assessments={assessmentScheme}
@@ -378,7 +377,7 @@ export default function ClassCourseDetailsPage({
           </div>
         </SectionTabPanel>
 
-        <SectionTabPanel value='schedule' className='print:block!'>
+        <SectionTabPanel value='schedule'>
           <ClassSchedulePanel
             classData={classData}
             viewer={viewer}
@@ -386,7 +385,7 @@ export default function ClassCourseDetailsPage({
           />
         </SectionTabPanel>
 
-        <SectionTabPanel value='reviews' className='print:block!'>
+        <SectionTabPanel value='reviews'>
           <div className='flex flex-col gap-[18px]'>
             {viewer === 'student' ? (
               <div className='flex justify-end'>

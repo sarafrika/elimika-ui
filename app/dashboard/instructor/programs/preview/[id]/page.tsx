@@ -255,7 +255,6 @@ export default function ProgramPreviewPage() {
         label='Programme sections'
         variant='pill'
         sticky
-        listClassName='print:hidden'
       >
         <SectionTabPanel value='overview' className='print:data-[state=inactive]:block!'>
           <div className='grid items-start gap-[22px] xl:grid-cols-2'>
