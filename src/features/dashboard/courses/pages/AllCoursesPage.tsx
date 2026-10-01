@@ -1,5 +1,6 @@
 'use client';
 
+import { surfaceTheme } from '@/components/data-display';
 import { CustomPagination } from '@/components/pagination';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -132,7 +133,7 @@ export default function AllCoursesPage() {
 
   return (
     <div className='min-h-screen'>
-      <div className='container mx-auto py-2'>
+      <div className='w-full py-2'>
         {/* Tabs */}
         <Tabs value={activeTab} onValueChange={handleTabChange} className='w-full'>
           <TabsList className='mb-2 grid w-full max-w-md grid-cols-2'>
@@ -167,7 +168,7 @@ export default function AllCoursesPage() {
             <SearchNotice issue={searchIssue} onReset={search.clear} className='mb-4' />
 
             {/* Category Tabs */}
-            <div className='scrollbar-hidden w-auto overflow-hidden overflow-x-auto lg:max-w-5xl 2xl:max-w-[110rem]'>
+            <div className='scrollbar-hidden w-full overflow-hidden overflow-x-auto'>
               <Tabs
                 value={selectedCategory}
                 onValueChange={val => {
@@ -201,7 +202,7 @@ export default function AllCoursesPage() {
 
           <TabsContent value='courses' className='mt-0'>
             {/* Course Grid */}
-            <div className='grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-4'>
+            <div className={surfaceTheme.cardGrid}>
               {filteredCourses.map(course => (
                 <CourseCard
                   key={course.uuid}
@@ -265,7 +266,7 @@ export default function AllCoursesPage() {
           <TabsContent value='programs' className='mt-0'>
             {/* Program grid. A training program has no record view — opening one
                 goes to the list of classes running it, which is its own surface. */}
-            <div className='grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-4'>
+            <div className={surfaceTheme.cardGrid}>
               {filteredPrograms.map(program => (
                 <CourseCard
                   key={program.uuid}

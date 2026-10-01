@@ -433,13 +433,11 @@ export function JobMarketplacePage({ role }: { role: JobMarketplaceRole }) {
   const selectedJob = listedSelection ?? linkedJobQuery.data?.data ?? null;
 
   return (
-    <main className={cn(surfaceTheme.page, 'pb-16')}>
+    <main className={cn(surfaceTheme.pageWide, 'py-4 pb-16')}>
       <div className={surfaceTheme.pageStack}>
         <PageHeader title='Opportunities' description={config.description} />
 
-        <div
-          className={cn('grid gap-4 sm:grid-cols-2', openOnly ? 'xl:grid-cols-3' : 'xl:grid-cols-4')}
-        >
+        <div className='grid gap-4 sm:grid-cols-2 xl:grid-cols-[repeat(auto-fit,minmax(240px,1fr))]'>
           {jobsLoading
             ? kpis.map(kpi => <StatCardSkeleton key={kpi.label} />)
             : kpis.map(kpi => <StatCard key={kpi.label} {...kpi} />)}
@@ -590,7 +588,7 @@ export function JobMarketplacePage({ role }: { role: JobMarketplaceRole }) {
                     />
                   }
                 >
-                  <div className='3xl:grid-cols-2 grid gap-4'>
+                  <div className='grid gap-4 xl:grid-cols-[repeat(auto-fill,minmax(560px,1fr))]'>
                     {listed.map(job => (
                       <JobCard
                         key={job.uuid}

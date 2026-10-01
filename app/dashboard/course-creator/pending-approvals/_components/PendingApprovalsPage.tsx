@@ -337,7 +337,7 @@ export default function PendingApprovalsPage() {
   ).length;
 
   return (
-    <main className={surfaceTheme.page}>
+    <main className={`${surfaceTheme.pageWide} py-4`}>
       <div className={surfaceTheme.pageStack}>
         <PageHeader
           title='Pending approvals'

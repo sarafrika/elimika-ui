@@ -3,7 +3,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 
 export default function Loading() {
   return (
-    <main className={surfaceTheme.page}>
+    <main className={`${surfaceTheme.pageWide} py-4`}>
       <div className={surfaceTheme.pageStack}>
         <Skeleton className='h-28 w-full rounded-md' />
         <div className='grid gap-3 md:grid-cols-4'>

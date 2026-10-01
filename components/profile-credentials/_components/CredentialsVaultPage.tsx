@@ -383,7 +383,7 @@ export function CredentialsVaultPage({ role }: CredentialsVaultPageProps) {
 
   return (
     <main className='min-h-screen bg-[linear-gradient(180deg,color-mix(in_srgb,var(--background)_96%,var(--el-accent-azure)_4%),color-mix(in_srgb,var(--background)_94%,white_6%))] px-3 py-4 sm:px-5 lg:px-7'>
-      <div className='mx-auto flex w-full max-w-[1520px] flex-col gap-4'>
+      <div className='mx-auto flex w-full max-w-[2400px] flex-col gap-4'>
         <Link href={roleScopedDashboardPath(activeDomain, '/dashboard/credentials/certificate')}>
           View sample certificate
         </Link>
@@ -485,7 +485,7 @@ function CredentialsPanel({
             onStatusFilterChange={onStatusFilterChange}
           />
           {items.length > 0 ? (
-            <div className='grid gap-4 xl:grid-cols-2'>
+            <div className='grid gap-4 xl:grid-cols-[repeat(auto-fill,minmax(520px,1fr))]'>
               {items.map(item => (
                 <CredentialCertificateCard
                   key={item.id}

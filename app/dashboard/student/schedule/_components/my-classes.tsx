@@ -5,6 +5,7 @@ import { BookOpen, CalendarDays, Filter, GraduationCap, Search, Sparkles } from 
 import { useRouter } from 'next/navigation';
 import { useEffect, useMemo, useState } from 'react';
 import { AsyncSection } from '@/components/data/async-section';
+import { surfaceTheme } from '@/components/data-display';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
@@ -17,7 +18,7 @@ import { getClassData, type StudentClassRecord } from './schedule-data';
 
 function ClassCardsSkeleton() {
   return (
-    <section className='grid grid-cols-1 gap-6 md:grid-cols-2 2xl:grid-cols-3'>
+    <section className={surfaceTheme.cardGrid}>
       {Array.from({ length: 6 }).map((_, index) => (
         <Card key={index} className={cx(getCardClasses(), 'p-5')}>
           <CardContent className='space-y-4 p-0'>
@@ -259,7 +260,7 @@ export default function MyClassesPage({ classDefinitions, isError, loading }: Pr
         skeleton={<ClassCardsSkeleton />}
       >
         {filteredClasses.length > 0 ? (
-          <section className='grid grid-cols-1 gap-6 md:grid-cols-2 2xl:grid-cols-3'>
+          <section className={surfaceTheme.cardGrid}>
             {filteredClasses.map(item => (
               <EnrolledClassCard
                 key={item.uuid}

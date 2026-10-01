@@ -4,14 +4,14 @@ import { StatCardSkeleton, surfaceTheme } from '@/components/data-display';
 /** Shared by the Jobs tabs that have no loading state of their own. */
 export default function JobsLoading() {
   return (
-    <div className={surfaceTheme.page}>
+    <div className={`${surfaceTheme.pageWide} py-4`}>
       <div className={surfaceTheme.pageStack}>
         <div className='space-y-2 border-b pb-4'>
           <Skeleton className='h-8 w-32' />
           <Skeleton className='h-4 w-96 max-w-full' />
         </div>
         <Skeleton className='h-11 w-80 max-w-full' />
-        <div className='grid gap-4 sm:grid-cols-2 xl:grid-cols-4'>
+        <div className='grid gap-4 sm:grid-cols-2 xl:grid-cols-[repeat(auto-fit,minmax(240px,1fr))]'>
           {[0, 1, 2, 3].map(item => (
             <StatCardSkeleton key={item} />
           ))}

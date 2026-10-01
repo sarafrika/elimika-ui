@@ -102,6 +102,9 @@ function joinOr(words: string[]) {
 
 const capitalise = (text: string) => text.charAt(0).toUpperCase() + text.slice(1);
 
+/** Job cards stack on narrow screens and sit side by side once a row fits two 560px cards. */
+const JOB_LIST_GRID = 'grid gap-4 xl:grid-cols-[repeat(auto-fill,minmax(560px,1fr))]';
+
 function FilterStatCard({
   active,
   onClick,
@@ -275,7 +278,7 @@ export function FindWorkPage() {
     Boolean(search.q) || nearMe.active || findWorkQuery({ ...filters, sort: 'soonest' }) !== '';
 
   return (
-    <main className={cn(surfaceTheme.page, 'pb-16')}>
+    <main className={cn(surfaceTheme.pageWide, 'py-4 pb-16')}>
       <div className={surfaceTheme.pageStack}>
         <PageHeader
           title='Jobs'
@@ -291,7 +294,10 @@ export function FindWorkPage() {
         />
         <JobsSectionTabs />
 
-        <section aria-label='Job summary' className='grid gap-4 sm:grid-cols-2 xl:grid-cols-4'>
+        <section
+          aria-label='Job summary'
+          className='grid gap-4 sm:grid-cols-2 xl:grid-cols-[repeat(auto-fit,minmax(240px,1fr))]'
+        >
           {data.loading ? (
             <StatCardSkeleton />
           ) : (
@@ -512,7 +518,7 @@ export function FindWorkPage() {
                   onRetry={() => list.refetch()}
                   errorTitle='Couldn’t load open jobs'
                   skeleton={
-                    <div className='flex flex-col gap-4'>
+                    <div className={JOB_LIST_GRID}>
                       <FindWorkJobCardSkeleton />
                       <FindWorkJobCardSkeleton />
                       <FindWorkJobCardSkeleton />
@@ -547,7 +553,7 @@ export function FindWorkPage() {
                     />
                   }
                 >
-                  <ul className='flex flex-col gap-4'>
+                  <ul className={JOB_LIST_GRID}>
                     {listed.map(row => (
                       <li key={row.job.uuid}>
                         <FindWorkJobCard row={row} now={now} onApply={setApplyJob} />

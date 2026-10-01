@@ -4,6 +4,7 @@ import { CalendarDays, Clock3, GraduationCap, MapPin, Users } from 'lucide-react
 import Link from 'next/link';
 import { useMemo, useState } from 'react';
 
+import { surfaceTheme } from '@/components/data-display';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -173,7 +174,7 @@ export function LessonHubMyClassesTab({ learningHubData }: LessonHubMyClassesTab
           }
         />
       ) : (
-        <div className='grid gap-4 md:grid-cols-2 xl:grid-cols-3'>
+        <div className={surfaceTheme.cardGrid}>
           {filteredRows.map(item => (
             <ClassCard key={item.id} item={item} classDefinitionMap={classDefinitionMap} />
           ))}
@@ -410,7 +411,7 @@ function ClassTabSkeleton() {
         ))}
       </div>
 
-      <div className='grid gap-4 md:grid-cols-2 xl:grid-cols-3'>
+      <div className={surfaceTheme.cardGrid}>
         {Array.from({ length: 6 }).map((_, index) => (
           <Card key={index} className='border-border/70'>
             <Skeleton className='h-24 w-full rounded-b-none rounded-t-lg' />
