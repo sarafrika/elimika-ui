@@ -7,6 +7,9 @@ import { useQuery } from '@tanstack/react-query';
 import { useEffect } from 'react';
 import { ReviewCard, ReviewCardSkeleton } from './review-card';
 
+/** Reviews fill the width in ~420px columns instead of one long stack. */
+const REVIEW_GRID = 'grid grid-cols-1 gap-4 lg:grid-cols-[repeat(auto-fill,minmax(420px,1fr))]';
+
 export default function ReviewsPage() {
   const instructor = useInstructor();
   const { replaceBreadcrumbs } = useBreadcrumb();
@@ -35,7 +38,7 @@ export default function ReviewsPage() {
   return (
     <div className='space-y-6'>
       {isLoading ? (
-        <div className='space-y-4'>
+        <div className={REVIEW_GRID}>
           {Array.from({ length: 3 }).map((_, i) => (
             <ReviewCardSkeleton key={i} />
           ))}
@@ -46,7 +49,7 @@ export default function ReviewsPage() {
           <p className='text-sm'>Once students start leaving feedback, you&apos;ll see it here.</p>
         </div>
       ) : (
-        <div className='space-y-4'>
+        <div className={REVIEW_GRID}>
           {reviews.map(review => (
             <ReviewCard key={review.uuid} review={review} />
           ))}

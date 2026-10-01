@@ -20,7 +20,7 @@ export default function LearningLayout({ children }: LearningLayoutProps) {
       </div>
       <Separator />
       <div className='flex flex-col space-y-8 lg:flex-row lg:space-y-0 lg:space-x-12'>
-        <div className='mx-auto max-w-7xl flex-1'>{children}</div>
+        <div className='w-full max-w-[2400px] min-w-0 flex-1'>{children}</div>
       </div>
     </div>
   );
