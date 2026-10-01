@@ -8,13 +8,17 @@ import {
   SectionCardSkeleton,
   StatCard,
   StatCardSkeleton,
+  SectionTabPanel,
+  SectionTabs,
   StatusBadge,
   surfaceTheme,
+  useSectionTab,
 } from '@/components/data-display';
 import { formatDate } from '@/lib/date';
 import { toNumber } from '@/lib/metrics';
-import { adminRoutes, type OrganisationTab } from '../lib/admin-routes';
-import { enumParam, numberParam, stringParam } from '@/lib/search-state';
+import type { OrganisationTab } from '../lib/admin-routes';
+import { numberParam, stringParam } from '@/lib/search-state';
+import { cn } from '@/lib/utils';
 import { useSearchState } from '@/hooks/use-search-state';
 import { useSearchIssue } from '@/hooks/use-search-query';
 import { useUrlSearchQuery } from '@/hooks/use-url-search-query';
@@ -25,7 +29,6 @@ import { MembersTab } from '../components/members-tab';
 import { OrganisationVerificationTab } from '../components/organisation-verification-tab';
 import { RecordHeader } from '../components/record-header';
 import { SectionBoundary } from '../components/section-boundary';
-import { UnderlineTabs } from '../components/underline-tabs';
 import {
   useDocumentTypes,
   useOrganisation,
@@ -61,7 +64,6 @@ const TAB_LABELS: Record<OrganisationTab, string> = {
   finance: 'Finance',
 };
 
-const tabParam = enumParam(TAB_IDS, 'overview');
 const memberPageParam = numberParam(0);
 const obligationStatusParam = stringParam('any');
 
@@ -78,7 +80,7 @@ function monogram(name: string) {
 }
 
 export function AdminOrganisationPage({ uuid }: { uuid: string }) {
-  const [tab] = useSearchState<OrganisationTab>('tab', tabParam);
+  const { value: tab, setValue: setTab, hrefFor } = useSectionTab(TAB_IDS, 'overview');
   const [memberPage, setMemberPage] = useSearchState('page', memberPageParam);
   const [obligationStatus, setObligationStatus] = useSearchState('status', obligationStatusParam);
 
@@ -127,14 +129,10 @@ export function AdminOrganisationPage({ uuid }: { uuid: string }) {
   const { payables, query: payablesQuery } = useOrganisationPayables(uuid, financeEnabled);
   const { skillsFund, query: skillsFundQuery } = useOrganisationSkillsFund(uuid, financeEnabled);
 
-  const tabs = TAB_IDS.map(id => ({
-    id,
-    label: TAB_LABELS[id],
-    href: adminRoutes.organisation(uuid, id),
-  }));
+  const tabs = TAB_IDS.map(id => ({ id, label: TAB_LABELS[id] }));
 
   return (
-    <div className={surfaceTheme.page}>
+    <div className={cn(surfaceTheme.pageWide, 'py-4')}>
       <div className={surfaceTheme.pageStack}>
         <SectionBoundary
           label='this organisation'
@@ -172,173 +170,202 @@ export function AdminOrganisationPage({ uuid }: { uuid: string }) {
           ) : null}
         </SectionBoundary>
 
-        <UnderlineTabs tabs={tabs} active={tab} />
+        <SectionTabs
+          tabs={tabs}
+          value={tab}
+          onValueChange={setTab}
+          hrefFor={hrefFor}
+          label='Organisation sections'
+          sticky
+          listClassName='bg-background'
+        >
+          <SectionTabPanel value='overview' className='print:block'>
+            {organisation && tab === 'overview' ? (
+              <div className='flex flex-col gap-4'>
+                <SectionBoundary
+                  label='the membership counts'
+                  loading={statisticsQuery.isLoading}
+                  error={statisticsQuery.error}
+                  onRetry={statisticsQuery.refetch}
+                  skeleton={
+                    <div className={surfaceTheme.cardGrid}>
+                      {[0, 1, 2, 3].map(item => (
+                        <StatCardSkeleton key={item} />
+                      ))}
+                    </div>
+                  }
+                >
+                  <div className={surfaceTheme.cardGrid}>
+                    <StatCard
+                      label='Members'
+                      value={toNumber(statistics?.total_members)}
+                      icon={Building2}
+                    />
+                    <StatCard label='Students' value={toNumber(statistics?.total_students)} />
+                    <StatCard label='Instructors' value={toNumber(statistics?.total_instructors)} />
+                    <StatCard label='Branches' value={toNumber(statistics?.total_branches)} />
+                  </div>
+                </SectionBoundary>
 
-        {organisation && tab === 'overview' ? (
-          <div className='flex flex-col gap-4'>
-            <SectionBoundary
-              label='the membership counts'
-              loading={statisticsQuery.isLoading}
-              error={statisticsQuery.error}
-              onRetry={statisticsQuery.refetch}
-              skeleton={
-                <div className='grid gap-4 sm:grid-cols-2 xl:grid-cols-4'>
-                  {[0, 1, 2, 3].map(item => (
-                    <StatCardSkeleton key={item} />
-                  ))}
-                </div>
-              }
-            >
-              <div className='grid gap-4 sm:grid-cols-2 xl:grid-cols-4'>
-                <StatCard
-                  label='Members'
-                  value={toNumber(statistics?.total_members)}
-                  icon={Building2}
-                />
-                <StatCard label='Students' value={toNumber(statistics?.total_students)} />
-                <StatCard label='Instructors' value={toNumber(statistics?.total_instructors)} />
-                <StatCard label='Branches' value={toNumber(statistics?.total_branches)} />
+                <SectionCard title='Organisation details'>
+                  <DetailGrid
+                    columns={3}
+                    items={[
+                      { label: 'Name', value: organisation.name },
+                      { label: 'Licence no.', value: organisation.licence_no || '—' },
+                      { label: 'Location', value: organisation.location || '—' },
+                      { label: 'Country', value: organisation.country || '—' },
+                      {
+                        label: 'Slug',
+                        value: (
+                          <span className='font-mono text-xs'>{organisation.slug || '—'}</span>
+                        ),
+                      },
+                      {
+                        label: 'Coordinates',
+                        value:
+                          organisation.latitude !== null && organisation.longitude !== null ? (
+                            <span className='font-mono text-xs'>
+                              {organisation.latitude}, {organisation.longitude}
+                            </span>
+                          ) : (
+                            'No pin set'
+                          ),
+                      },
+                      { label: 'Registered', value: formatDate(organisation.created_date) || '—' },
+                      {
+                        label: 'Verification requested',
+                        value: organisation.verification_requested_at
+                          ? formatDate(organisation.verification_requested_at)
+                          : 'Never submitted',
+                      },
+                      {
+                        label: 'Last updated',
+                        value: formatDate(organisation.updated_date) || '—',
+                      },
+                    ]}
+                  />
+                  {organisation.description ? (
+                    <p className='text-muted-foreground mt-4 max-w-prose text-sm'>
+                      {organisation.description}
+                    </p>
+                  ) : null}
+                </SectionCard>
+
+                <SectionCard title='Branches' description='Where this organisation teaches.'>
+                  <SectionBoundary
+                    label='the branches'
+                    loading={branchesQuery.isLoading}
+                    error={branchesQuery.error}
+                    empty={branches.length === 0}
+                    onRetry={branchesQuery.refetch}
+                    emptyTitle='No branches yet'
+                    emptyDescription='This organisation has not registered a training branch.'
+                  >
+                    <ul className='flex flex-col gap-2'>
+                      {branches.map(branch => (
+                        <li
+                          key={branch.uuid}
+                          className='border-border/60 flex flex-wrap items-center gap-3 rounded-md border px-3 py-2.5'
+                        >
+                          <div className='min-w-0 flex-1'>
+                            <p className='text-foreground text-sm font-medium'>
+                              {branch.branch_name}
+                            </p>
+                            <p className='text-muted-foreground text-xs'>
+                              {branch.address || 'No address recorded'}
+                            </p>
+                          </div>
+                          {branch.latitude === null || branch.longitude === null ? (
+                            <StatusBadge label='Pin missing' tone='warning' />
+                          ) : null}
+                          <StatusBadge status={branch.active ? 'active' : 'inactive'} />
+                        </li>
+                      ))}
+                    </ul>
+                  </SectionBoundary>
+                </SectionCard>
               </div>
-            </SectionBoundary>
+            ) : null}
+          </SectionTabPanel>
 
-            <SectionCard title='Organisation details'>
-              <DetailGrid
-                columns={3}
-                items={[
-                  { label: 'Name', value: organisation.name },
-                  { label: 'Licence no.', value: organisation.licence_no || '—' },
-                  { label: 'Location', value: organisation.location || '—' },
-                  { label: 'Country', value: organisation.country || '—' },
-                  {
-                    label: 'Slug',
-                    value: <span className='font-mono text-xs'>{organisation.slug || '—'}</span>,
-                  },
-                  {
-                    label: 'Coordinates',
-                    value:
-                      organisation.latitude !== null && organisation.longitude !== null ? (
-                        <span className='font-mono text-xs'>
-                          {organisation.latitude}, {organisation.longitude}
-                        </span>
-                      ) : (
-                        'No pin set'
-                      ),
-                  },
-                  { label: 'Registered', value: formatDate(organisation.created_date) || '—' },
-                  {
-                    label: 'Verification requested',
-                    value: organisation.verification_requested_at
-                      ? formatDate(organisation.verification_requested_at)
-                      : 'Never submitted',
-                  },
-                  { label: 'Last updated', value: formatDate(organisation.updated_date) || '—' },
-                ]}
+          <SectionTabPanel value='verification' className='print:block'>
+            {organisation && tab === 'verification' ? (
+              <OrganisationVerificationTab
+                organisation={organisation}
+                documents={documents}
+                documentTypes={documentTypes}
+                branches={branches}
+                statistics={statistics}
+                documentsQuery={documentsQuery}
+                branchesQuery={branchesQuery}
               />
-              {organisation.description ? (
-                <p className='text-muted-foreground mt-4 text-sm'>{organisation.description}</p>
-              ) : null}
-            </SectionCard>
+            ) : null}
+          </SectionTabPanel>
 
-            <SectionCard title='Branches' description='Where this organisation teaches.'>
-              <SectionBoundary
-                label='the branches'
-                loading={branchesQuery.isLoading}
-                error={branchesQuery.error}
-                empty={branches.length === 0}
-                onRetry={branchesQuery.refetch}
-                emptyTitle='No branches yet'
-                emptyDescription='This organisation has not registered a training branch.'
-              >
-                <ul className='flex flex-col gap-2'>
-                  {branches.map(branch => (
-                    <li
-                      key={branch.uuid}
-                      className='border-border/60 flex flex-wrap items-center gap-3 rounded-md border px-3 py-2.5'
-                    >
-                      <div className='min-w-0 flex-1'>
-                        <p className='text-foreground text-sm font-medium'>{branch.branch_name}</p>
-                        <p className='text-muted-foreground text-xs'>
-                          {branch.address || 'No address recorded'}
-                        </p>
-                      </div>
-                      {branch.latitude === null || branch.longitude === null ? (
-                        <StatusBadge label='Pin missing' tone='warning' />
-                      ) : null}
-                      <StatusBadge status={branch.active ? 'active' : 'inactive'} />
-                    </li>
-                  ))}
-                </ul>
-              </SectionBoundary>
-            </SectionCard>
-          </div>
-        ) : null}
+          <SectionTabPanel value='branches' className='print:block'>
+            {organisation && tab === 'branches' ? (
+              <BranchesTab
+                organisation={organisation}
+                branches={branches}
+                branchesQuery={branchesQuery}
+              />
+            ) : null}
+          </SectionTabPanel>
 
-        {organisation && tab === 'verification' ? (
-          <OrganisationVerificationTab
-            organisation={organisation}
-            documents={documents}
-            documentTypes={documentTypes}
-            branches={branches}
-            statistics={statistics}
-            documentsQuery={documentsQuery}
-            branchesQuery={branchesQuery}
-          />
-        ) : null}
+          <SectionTabPanel value='members' className='print:block'>
+            {organisation && tab === 'members' ? (
+              <MembersTab
+                organisation={organisation}
+                members={members}
+                branches={memberBranches}
+                invitations={invitations}
+                membersQuery={{
+                  isLoading: membersQuery.isLoading,
+                  error: memberSearchIssue ? null : membersQuery.error,
+                  refetch: membersQuery.refetch,
+                  page: memberPage,
+                  pageCount: memberPages,
+                  totalRows: memberTotal,
+                  onPageChange: setMemberPage,
+                }}
+                invitationsQuery={invitationsQuery}
+                search={memberSearch}
+                searchIssue={memberSearchIssue}
+              />
+            ) : null}
+          </SectionTabPanel>
 
-        {organisation && tab === 'branches' ? (
-          <BranchesTab
-            organisation={organisation}
-            branches={branches}
-            branchesQuery={branchesQuery}
-          />
-        ) : null}
+          <SectionTabPanel value='classes' className='print:block'>
+            {organisation && tab === 'classes' ? (
+              <ClassesTab
+                classes={classes}
+                enrolmentCounts={enrolmentCounts}
+                instructors={instructors}
+                classesQuery={classesQuery}
+                instructorsQuery={instructorsQuery}
+              />
+            ) : null}
+          </SectionTabPanel>
 
-        {organisation && tab === 'members' ? (
-          <MembersTab
-            organisation={organisation}
-            members={members}
-            branches={memberBranches}
-            invitations={invitations}
-            membersQuery={{
-              isLoading: membersQuery.isLoading,
-              error: memberSearchIssue ? null : membersQuery.error,
-              refetch: membersQuery.refetch,
-              page: memberPage,
-              pageCount: memberPages,
-              totalRows: memberTotal,
-              onPageChange: setMemberPage,
-            }}
-            invitationsQuery={invitationsQuery}
-            search={memberSearch}
-            searchIssue={memberSearchIssue}
-          />
-        ) : null}
-
-        {organisation && tab === 'classes' ? (
-          <ClassesTab
-            classes={classes}
-            enrolmentCounts={enrolmentCounts}
-            instructors={instructors}
-            classesQuery={classesQuery}
-            instructorsQuery={instructorsQuery}
-          />
-        ) : null}
-
-        {organisation && tab === 'finance' ? (
-          <FinanceTab
-            organisation={organisation}
-            obligations={obligations}
-            settlements={settlements}
-            payables={payables}
-            skillsFund={skillsFund}
-            status={obligationStatus}
-            onStatusChange={setObligationStatus}
-            obligationsQuery={obligationsQuery}
-            settlementsQuery={settlementsQuery}
-            payablesQuery={payablesQuery}
-            skillsFundQuery={skillsFundQuery}
-          />
-        ) : null}
+          <SectionTabPanel value='finance' className='print:block'>
+            {organisation && tab === 'finance' ? (
+              <FinanceTab
+                organisation={organisation}
+                obligations={obligations}
+                settlements={settlements}
+                payables={payables}
+                skillsFund={skillsFund}
+                status={obligationStatus}
+                onStatusChange={setObligationStatus}
+                obligationsQuery={obligationsQuery}
+                settlementsQuery={settlementsQuery}
+                payablesQuery={payablesQuery}
+                skillsFundQuery={skillsFundQuery}
+              />
+            ) : null}
+          </SectionTabPanel>
+        </SectionTabs>
       </div>
     </div>
   );
