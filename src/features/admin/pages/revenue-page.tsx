@@ -79,14 +79,14 @@ export function RevenuePage() {
           error={dashboardQuery.error}
           onRetry={dashboardQuery.refetch}
           skeleton={
-            <div className='grid gap-4 sm:grid-cols-2 xl:grid-cols-4'>
+            <div className='grid gap-4 sm:grid-cols-2 xl:grid-cols-[repeat(auto-fit,minmax(240px,1fr))]'>
               {[0, 1, 2, 3].map(item => (
                 <StatCardSkeleton key={item} />
               ))}
             </div>
           }
         >
-          <div className='grid gap-4 sm:grid-cols-2 xl:grid-cols-4'>
+          <div className='grid gap-4 sm:grid-cols-2 xl:grid-cols-[repeat(auto-fit,minmax(240px,1fr))]'>
             <StatCard
               label='Gross sales'
               value={<MoneyList amounts={dashboard?.gross_totals} />}

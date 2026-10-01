@@ -3,14 +3,14 @@ import { Skeleton } from '@/components/ui/skeleton';
 
 export default function AdminClassesLoading() {
   return (
-    <div className={surfaceTheme.page}>
+    <div className={`${surfaceTheme.pageWide} py-4`}>
       <div className={surfaceTheme.pageStack}>
         <div className='space-y-2'>
           <Skeleton className='h-4 w-24' />
           <Skeleton className='h-7 w-64' />
           <Skeleton className='h-4 w-96 max-w-full' />
         </div>
-        <div className='grid gap-4 sm:grid-cols-2 xl:grid-cols-4'>
+        <div className='grid gap-4 sm:grid-cols-2 xl:grid-cols-[repeat(auto-fit,minmax(240px,1fr))]'>
           {[0, 1, 2, 3].map(item => (
             <StatCardSkeleton key={item} />
           ))}

@@ -10,7 +10,7 @@ export default function AdminRevenueLoading() {
           <Skeleton className='h-7 w-40' />
           <Skeleton className='h-4 w-80 max-w-full' />
         </div>
-        <div className='grid gap-4 sm:grid-cols-2 xl:grid-cols-4'>
+        <div className='grid gap-4 sm:grid-cols-2 xl:grid-cols-[repeat(auto-fit,minmax(240px,1fr))]'>
           {[0, 1, 2, 3].map(item => (
             <StatCardSkeleton key={item} />
           ))}

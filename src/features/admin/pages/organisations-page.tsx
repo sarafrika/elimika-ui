@@ -62,7 +62,7 @@ export function OrganisationsPage() {
   const metrics = statistics?.organisation_metrics;
 
   return (
-    <div className={surfaceTheme.page}>
+    <div className={`${surfaceTheme.pageWide} py-4`}>
       <div className={surfaceTheme.pageStack}>
         <PageHeader
           eyebrow='Organisations'
@@ -76,14 +76,14 @@ export function OrganisationsPage() {
           error={statisticsQuery.error}
           onRetry={statisticsQuery.refetch}
           skeleton={
-            <div className='grid gap-4 sm:grid-cols-2 xl:grid-cols-4'>
+            <div className='grid gap-4 sm:grid-cols-2 xl:grid-cols-[repeat(auto-fit,minmax(240px,1fr))]'>
               {[0, 1, 2, 3].map(item => (
                 <StatCardSkeleton key={item} />
               ))}
             </div>
           }
         >
-          <div className='grid gap-4 sm:grid-cols-2 xl:grid-cols-4'>
+          <div className='grid gap-4 sm:grid-cols-2 xl:grid-cols-[repeat(auto-fit,minmax(240px,1fr))]'>
             <StatCard
               label='Organisations'
               value={toNumber(metrics?.total_organisations)}
