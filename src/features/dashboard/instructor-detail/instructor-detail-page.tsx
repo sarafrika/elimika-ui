@@ -35,7 +35,6 @@ import {
   surfaceTheme,
   useSectionTab,
 } from '@/components/data-display';
-import { surfaceTheme } from '@/components/data-display/page-shell';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { EmptyState } from '@/components/ui/empty-state';
