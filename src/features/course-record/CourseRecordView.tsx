@@ -14,7 +14,6 @@ import {
 import Link from 'next/link';
 import { type ReactNode, useState } from 'react';
 
-import { AsyncSection } from '@/components/data/async-section';
 import { type EntityFact, EntityHeaderCard } from '@/components/data-display/entity-header-card';
 import { surfaceTheme } from '@/components/data-display/page-shell';
 import {
@@ -23,6 +22,7 @@ import {
   SectionTabs,
   useSectionTab,
 } from '@/components/data-display/section-tabs';
+import { AsyncSection } from '@/components/data/async-section';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
 import { cn } from '@/lib/utils';
@@ -38,8 +38,8 @@ import {
   COURSE_RECORD_TAB_LABELS,
   COURSE_RECORD_TABS,
   type CourseAccess,
-  type CourseRecordTabId,
   courseCapability,
+  type CourseRecordTabId,
   fillCourseCopy,
 } from './types';
 

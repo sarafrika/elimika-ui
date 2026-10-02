@@ -332,7 +332,6 @@ export default function InstructorApprovedCoursesPage() {
                     <TableHead className='w-24 whitespace-nowrap'>Image</TableHead>
                     <TableHead className='whitespace-nowrap'>Course</TableHead>
                     <TableHead className='min-w-[120px] whitespace-nowrap'>Subject</TableHead>
-                    <TableHead className='whitespace-nowrap'>Duration</TableHead>
                     <TableHead className='whitespace-nowrap'>Class limit</TableHead>
                     <TableHead className='text-right whitespace-nowrap'>Rate</TableHead>
                     <TableHead className='whitespace-nowrap'>Status</TableHead>
@@ -362,7 +361,6 @@ export default function InstructorApprovedCoursesPage() {
                         <TableCell className='min-w-[120px] whitespace-nowrap'>
                           {row.subjectLabel.join(', ')}
                         </TableCell>
-                        <TableCell className='whitespace-nowrap'>{row.durationLabel}</TableCell>
                         <TableCell className='whitespace-nowrap'>
                           {row.classLimit ?? 'Open'}
                         </TableCell>

@@ -1253,6 +1253,11 @@ export const zQuizQuestion = z
       )
       .readonly()
       .optional(),
+    question_number: z
+      .string()
+      .describe('**[READ-ONLY]** Formatted question number for display in quiz interface.')
+      .readonly()
+      .optional(),
     requires_options: z
       .boolean()
       .describe(
@@ -1268,11 +1273,6 @@ export const zQuizQuestion = z
     points_display: z
       .string()
       .describe('**[READ-ONLY]** Human-readable format of the points value.')
-      .readonly()
-      .optional(),
-    question_number: z
-      .string()
-      .describe('**[READ-ONLY]** Formatted question number for display in quiz interface.')
       .readonly()
       .optional(),
   })
@@ -1347,11 +1347,6 @@ export const zQuizQuestionOption = z
       )
       .readonly()
       .optional(),
-    option_category: z
-      .string()
-      .describe('**[READ-ONLY]** Formatted category of the option based on its correctness status.')
-      .readonly()
-      .optional(),
     is_incorrect: z
       .boolean()
       .describe('**[READ-ONLY]** Indicates if this option is an incorrect answer choice.')
@@ -1374,6 +1369,11 @@ export const zQuizQuestionOption = z
       .describe(
         '**[READ-ONLY]** Comprehensive summary of the option including correctness and position.'
       )
+      .readonly()
+      .optional(),
+    option_category: z
+      .string()
+      .describe('**[READ-ONLY]** Formatted category of the option based on its correctness status.')
       .readonly()
       .optional(),
   })
@@ -1524,11 +1524,6 @@ export const zQuizAttempt = z
       )
       .readonly()
       .optional(),
-    grade_display: z
-      .string()
-      .describe('**[READ-ONLY]** Formatted display of the grade information.')
-      .readonly()
-      .optional(),
     time_display: z
       .string()
       .describe('**[READ-ONLY]** Formatted display of the time taken to complete the quiz.')
@@ -1542,6 +1537,11 @@ export const zQuizAttempt = z
     performance_summary: z
       .string()
       .describe('**[READ-ONLY]** Comprehensive summary of the quiz attempt performance.')
+      .readonly()
+      .optional(),
+    grade_display: z
+      .string()
+      .describe('**[READ-ONLY]** Formatted display of the grade information.')
       .readonly()
       .optional(),
   })
@@ -2387,6 +2387,8 @@ export const zInstructor = z
       .optional(),
     location_search_opt_in: z.union([z.boolean().readonly(), z.null()]).readonly().optional(),
     distance_band: zDistanceBandEnum.optional(),
+    rating_avg: z.union([z.number().readonly(), z.null()]).readonly().optional(),
+    review_count: z.union([z.coerce.bigint().readonly(), z.null()]).readonly().optional(),
     is_profile_complete: z
       .boolean()
       .describe(
@@ -5007,16 +5009,16 @@ export const zCategory = z
       )
       .readonly()
       .optional(),
-    is_root_category: z
-      .boolean()
-      .describe('**[READ-ONLY]** Indicates if this is a root category with no parent.')
-      .readonly()
-      .optional(),
     category_path: z
       .string()
       .describe(
         '**[READ-ONLY]** Hierarchical path showing category position in the tree structure.'
       )
+      .readonly()
+      .optional(),
+    is_root_category: z
+      .boolean()
+      .describe('**[READ-ONLY]** Indicates if this is a root category with no parent.')
       .readonly()
       .optional(),
   })
@@ -7834,11 +7836,6 @@ export const zEnrollment = z
       .describe('**[READ-ONLY]** Indicates if the enrollment is still active (not cancelled).')
       .readonly()
       .optional(),
-    is_attendance_marked: z
-      .boolean()
-      .describe('**[READ-ONLY]** Indicates if attendance has been marked for this enrollment.')
-      .readonly()
-      .optional(),
     did_attend: z
       .boolean()
       .describe('**[READ-ONLY]** Indicates if the student attended the class.')
@@ -7847,6 +7844,11 @@ export const zEnrollment = z
     status_description: z
       .string()
       .describe('**[READ-ONLY]** Human-readable description of the enrollment status.')
+      .readonly()
+      .optional(),
+    is_attendance_marked: z
+      .boolean()
+      .describe('**[READ-ONLY]** Indicates if attendance has been marked for this enrollment.')
       .readonly()
       .optional(),
     can_be_cancelled: z
@@ -9261,7 +9263,7 @@ export const zApiResponseAssignmentAttachment = z.object({
   error: z.unknown().optional(),
 });
 
-export const zSchemaEnum8 = z.enum(['admin', 'organisation_user']);
+export const zSchemaEnum10 = z.enum(['admin', 'organisation_user']);
 
 /**
  * Type of assignment - global or organization-specific
@@ -9275,7 +9277,7 @@ export const zAssignmentTypeEnum = z
  */
 export const zAdminDomainAssignmentRequest = z
   .object({
-    domain_name: zSchemaEnum8,
+    domain_name: zSchemaEnum10,
     assignment_type: zAssignmentTypeEnum,
     reason: z.string().min(0).max(500).describe('Reason for assigning admin privileges').optional(),
     effective_date: z
@@ -9589,6 +9591,27 @@ export const zUserSummary = z
     'Reduced user projection for directory lookups: display identity only, no contact details'
   );
 
+/**
+ * A user resolved from their exact user number, with a masked display name.
+ */
+export const zUserRecipient = z
+  .object({
+    user_uuid: z
+      .string()
+      .uuid()
+      .describe("The user's UUID, to use as the transfer recipient.")
+      .optional(),
+    display_name: z.string().describe('First name plus the initial of the last name.').optional(),
+  })
+  .describe('A user resolved from their exact user number, with a masked display name.');
+
+export const zApiResponseUserRecipient = z.object({
+  success: z.boolean().optional(),
+  data: zUserRecipient.optional(),
+  message: z.string().optional(),
+  error: z.unknown().optional(),
+});
+
 export const zApiResponseListUserSummary = z.object({
   success: z.boolean().optional(),
   data: z.array(zUserSummary).optional(),
@@ -9822,10 +9845,10 @@ export const zSortObject = z.object({
 export const zPageableObject = z.object({
   offset: z.coerce.bigint().optional(),
   sort: zSortObject.optional(),
+  unpaged: z.boolean().optional(),
   paged: z.boolean().optional(),
   pageNumber: z.number().int().optional(),
   pageSize: z.number().int().optional(),
-  unpaged: z.boolean().optional(),
 });
 
 export const zPage = z.object({
@@ -9849,6 +9872,11 @@ export const zApiResponseListSkill = z.object({
   error: z.unknown().optional(),
 });
 
+export const zContext = z.object({
+  course_uuid: z.string().uuid().optional(),
+  lesson_uuid: z.string().uuid().optional(),
+});
+
 export const zGlobalSearchHit = z.object({
   type: z.string().optional(),
   uuid: z.string().uuid().optional(),
@@ -9857,6 +9885,7 @@ export const zGlobalSearchHit = z.object({
   image_url: z.string().optional(),
   highlight: z.string().optional(),
   distance_band: z.string().optional(),
+  context: zContext.optional(),
 });
 
 export const zGlobalSearchResponse = z.object({
@@ -12361,6 +12390,96 @@ export const zApiResponseOrganisationCourseContent = z.object({
   error: z.unknown().optional(),
 });
 
+/**
+ * How easy the class is to get into. FULL: no seats left (listed, but not counted in open_class_count or price_from, and sorted last). FEW_LEFT: at most max(5, 20% of capacity) seats left. OPEN: otherwise, or when capacity is unknown. Seat counts are never published.
+ */
+export const zAvailabilityEnum = z
+  .enum(['OPEN', 'FEW_LEFT', 'FULL'])
+  .describe(
+    'How easy the class is to get into. FULL: no seats left (listed, but not counted in open_class_count or price_from, and sorted last). FEW_LEFT: at most max(5, 20% of capacity) seats left. OPEN: otherwise, or when capacity is unknown. Seat counts are never published.'
+  );
+
+/**
+ * A class on a course that a visitor can still join.
+ */
+export const zOpenClassSummary = z
+  .object({
+    uuid: z.string().uuid().describe('Class definition UUID.').optional(),
+    title: z.string().describe('Class title.').optional(),
+    location_type: zLocationTypeEnum.optional(),
+    session_format: zSessionFormatEnum.optional(),
+    place_name: z
+      .string()
+      .describe(
+        "The venue: the first comma-separated part of the class's location label. Null when the class has no location label (typically online)."
+      )
+      .optional(),
+    area: z
+      .string()
+      .describe(
+        'The rest of the location label after the place name, with a trailing country removed. Null when nothing remains.'
+      )
+      .optional(),
+    fee: z
+      .number()
+      .describe('The class fee a learner pays (the class sale price). Null when not set.')
+      .optional(),
+    currency_code: z.string().describe('ISO 4217 currency of the fee.').optional(),
+    availability: zAvailabilityEnum.optional(),
+    starts_on: z
+      .string()
+      .date()
+      .describe(
+        "First teaching day (the academic period start, else the first session's day). Null when unknown."
+      )
+      .optional(),
+    ends_on: z.string().date().describe('Last teaching day. Null when open-ended.').optional(),
+    registration_closes_on: z
+      .string()
+      .date()
+      .describe('Last day, inclusive, on which enrolments are accepted. Null when open-ended.')
+      .optional(),
+    branch_name: z
+      .string()
+      .describe('The training branch the class is delivered at. Null when none.')
+      .optional(),
+  })
+  .describe('A class on a course that a visitor can still join.');
+
+/**
+ * The joinable classes of a public course and the cheapest fee.
+ */
+export const zCourseOpenClasses = z
+  .object({
+    price_from: z
+      .number()
+      .describe(
+        "The lowest class fee among the classes that are not FULL. Null when there are none or none has a fee. This, not the course's own price, is what a learner pays."
+      )
+      .optional(),
+    currency_code: z
+      .string()
+      .describe('ISO 4217 currency of the fees. Null when the list is empty.')
+      .optional(),
+    open_class_count: z
+      .number()
+      .int()
+      .describe('Number of listed classes that are not FULL.')
+      .optional(),
+    classes: z
+      .array(zOpenClassSummary)
+      .describe('The classes: joinable ones cheapest first, then soonest start; FULL ones last.')
+      .optional(),
+  })
+  .describe('The joinable classes of a public course and the cheapest fee.');
+
+export const zApiResponseCourseOpenClasses = z.object({
+  success: z.boolean().optional(),
+  data: zCourseOpenClasses.optional(),
+  message: z.string().optional(),
+  error: z.unknown().optional(),
+});
+
 export const zPagedDtoLesson = z.object({
   content: z.array(zLesson).optional(),
   metadata: zPageMetadata.optional(),
@@ -13495,6 +13614,168 @@ export const zApiResponseListCertificate = z.object({
   error: z.unknown().optional(),
 });
 
+/**
+ * Result type.
+ */
+export const zTypeEnum2 = z.enum(['course', 'programme']).describe('Result type.');
+
+/**
+ * A course or programme card on the public catalogue page.
+ */
+export const zCatalogueItem = z
+  .object({
+    type: zTypeEnum2.optional(),
+    uuid: z.string().uuid().describe('Course or programme UUID.').optional(),
+    title: z.string().describe('Course name or programme title.').optional(),
+    description: z
+      .string()
+      .describe('Description as authored, truncated to 2000 characters.')
+      .optional(),
+    thumbnail_url: z
+      .string()
+      .describe(
+        "Public thumbnail URL (/api/v1/files/... or an external URL). A programme shows its first member course's thumbnail. Null when there is none."
+      )
+      .optional(),
+    category_names: z
+      .array(z.string())
+      .describe('Category names, alphabetical. A programme has at most one.')
+      .optional(),
+    category_uuids: z
+      .array(z.string().uuid())
+      .describe('Category UUIDs, in the order of category_names.')
+      .optional(),
+    creator_uuid: z.string().uuid().describe('Course creator UUID.').optional(),
+    creator_name: z.string().describe('Course creator display name.').optional(),
+    level: z
+      .string()
+      .describe(
+        'Course: its difficulty name. Programme: the range over its member courses ("Beginner → Advanced", or one name when they agree); null when unknown.'
+      )
+      .optional(),
+    rating_avg: z.number().describe('Average review rating 1-5, null when unrated.').optional(),
+    review_count: z.coerce.bigint().describe('Number of reviews.').optional(),
+    lesson_count: z.coerce
+      .bigint()
+      .describe('Published lessons (programme: across its member courses).')
+      .optional(),
+    course_count: z.coerce
+      .bigint()
+      .describe('Programme: member course count. Null for a course.')
+      .optional(),
+    learner_count: z.coerce
+      .bigint()
+      .describe('Distinct learners with an active or completed enrolment.')
+      .optional(),
+    class_count: z.coerce
+      .bigint()
+      .describe('Course: active public classes delivering it. Null for a programme.')
+      .optional(),
+    price_from: z
+      .number()
+      .describe(
+        'Course: the lowest class fee among its open classes (active, public, not full, registration and teaching not ended) - what a learner actually pays. Null when it has no open class with a fee, and always null for a programme.'
+      )
+      .optional(),
+    open_class_count: z.coerce
+      .bigint()
+      .describe(
+        'Course: its open classes (active, public, not full, registration and teaching not ended). Always 0 for a programme.'
+      )
+      .optional(),
+    age_label: z
+      .string()
+      .describe(
+        'Age band label such as "18+" when the course\'s lower age limit is 18 or more; null otherwise and for programmes.'
+      )
+      .optional(),
+    price: z.number().describe('List price; null when not set.').optional(),
+    is_free: z.boolean().describe('True when the price is missing or zero.').optional(),
+    highlight: z
+      .string()
+      .describe(
+        'When q matched the title: the HTML-escaped title with matches wrapped in <em>...</em> (the only markup). Null otherwise.'
+      )
+      .optional(),
+  })
+  .describe('A course or programme card on the public catalogue page.');
+
+/**
+ * Matches per result type, ignoring the show selection.
+ */
+export const zCatalogueShowFacet = z
+  .object({
+    all: z.coerce.bigint().optional(),
+    courses: z.coerce.bigint().optional(),
+    programmes: z.coerce.bigint().optional(),
+  })
+  .describe('Matches per result type, ignoring the show selection.');
+
+/**
+ * A category and how many results it would show.
+ */
+export const zCatalogueCategoryFacet = z
+  .object({
+    uuid: z.string().uuid().optional(),
+    name: z.string().optional(),
+    count: z.coerce.bigint().optional(),
+  })
+  .describe('A category and how many results it would show.');
+
+/**
+ * Matches per level, ignoring the level selection.
+ */
+export const zCatalogueLevelFacet = z
+  .object({
+    beginner: z.coerce.bigint().optional(),
+    intermediate: z.coerce.bigint().optional(),
+    advanced: z.coerce.bigint().optional(),
+  })
+  .describe('Matches per level, ignoring the level selection.');
+
+/**
+ * Free and paid matches, ignoring the price selection.
+ */
+export const zCataloguePriceFacet = z
+  .object({
+    free: z.coerce.bigint().optional(),
+    paid: z.coerce.bigint().optional(),
+  })
+  .describe('Free and paid matches, ignoring the price selection.');
+
+/**
+ * Counts per filter value; each group ignores its own selection.
+ */
+export const zCatalogueFacets = z
+  .object({
+    show: zCatalogueShowFacet.optional(),
+    category: z
+      .array(zCatalogueCategoryFacet)
+      .describe('Categories with at least one match, plus any selected ones; most matches first.')
+      .optional(),
+    level: zCatalogueLevelFacet.optional(),
+    price: zCataloguePriceFacet.optional(),
+  })
+  .describe('Counts per filter value; each group ignores its own selection.');
+
+/**
+ * A page of the public catalogue with facet counts.
+ */
+export const zCatalogueSearchResponse = z
+  .object({
+    content: z.array(zCatalogueItem).optional(),
+    metadata: zPageMetadata.optional(),
+    facets: zCatalogueFacets.optional(),
+  })
+  .describe('A page of the public catalogue with facet counts.');
+
+export const zApiResponseCatalogueSearchResponse = z.object({
+  success: z.boolean().optional(),
+  data: zCatalogueSearchResponse.optional(),
+  message: z.string().optional(),
+  error: z.unknown().optional(),
+});
+
 export const zPagedDtoAssignment = z.object({
   content: z.array(zAssignment).optional(),
   metadata: zPageMetadata.optional(),
@@ -14199,7 +14480,15 @@ export const zSchemaEnum5 = z.enum([
   'course_creator',
 ]);
 
-export const zSchemaEnum7 = z.enum(['actor', 'target', 'all']);
+export const zSchemaEnum7 = z.enum(['all', 'courses', 'programmes']);
+
+export const zItemsEnum2 = z.enum(['beginner', 'intermediate', 'advanced']);
+
+export const zItemsEnum3 = z.enum(['free', 'paid']);
+
+export const zSchemaEnum8 = z.enum(['relevance', 'newest', 'rating', 'popular']);
+
+export const zSchemaEnum9 = z.enum(['actor', 'target', 'all']);
 
 export const zJsonNodeWritable = z.unknown();
 
@@ -14319,9 +14608,17 @@ export const zSchemaEnum5Writable = z.enum([
 
 export const zSchemaEnum6Writable = z.enum(['ACCRUED', 'SETTLED', 'CANCELLED', 'DISPUTED']);
 
-export const zSchemaEnum7Writable = z.enum(['actor', 'target', 'all']);
+export const zSchemaEnum7Writable = z.enum(['all', 'courses', 'programmes']);
 
-export const zSchemaEnum8Writable = z.enum(['admin', 'organisation_user']);
+export const zItemsEnum2Writable = z.enum(['beginner', 'intermediate', 'advanced']);
+
+export const zItemsEnum3Writable = z.enum(['free', 'paid']);
+
+export const zSchemaEnum8Writable = z.enum(['relevance', 'newest', 'rating', 'popular']);
+
+export const zSchemaEnum9Writable = z.enum(['actor', 'target', 'all']);
+
+export const zSchemaEnum10Writable = z.enum(['admin', 'organisation_user']);
 
 /**
  * **[OPTIONAL]** User's gender information. Used for demographic analytics and personalization. Can be null if not specified or preferred not to disclose.
@@ -14841,6 +15138,20 @@ export const zAccessEnumWritable = z
   .describe(
     'The footing the caller views this course on. Resolved server-side; never re-derived by the client.'
   );
+
+/**
+ * How easy the class is to get into. FULL: no seats left (listed, but not counted in open_class_count or price_from, and sorted last). FEW_LEFT: at most max(5, 20% of capacity) seats left. OPEN: otherwise, or when capacity is unknown. Seat counts are never published.
+ */
+export const zAvailabilityEnumWritable = z
+  .enum(['OPEN', 'FEW_LEFT', 'FULL'])
+  .describe(
+    'How easy the class is to get into. FULL: no seats left (listed, but not counted in open_class_count or price_from, and sorted last). FEW_LEFT: at most max(5, 20% of capacity) seats left. OPEN: otherwise, or when capacity is unknown. Seat counts are never published.'
+  );
+
+/**
+ * Result type.
+ */
+export const zTypeEnum2Writable = z.enum(['course', 'programme']).describe('Result type.');
 
 export const zDeleteUserData = z.object({
   body: z.never().optional(),
@@ -20750,6 +21061,19 @@ export const zGetCurrentUserData = z.object({
  */
 export const zGetCurrentUserResponse = zApiResponseUser;
 
+export const zLookupUserByUserNoData = z.object({
+  body: z.never().optional(),
+  path: z.never().optional(),
+  query: z.object({
+    user_no: z.string().describe("The recipient's exact user number."),
+  }),
+});
+
+/**
+ * User found
+ */
+export const zLookupUserByUserNoResponse = zApiResponseUserRecipient;
+
 export const zGetUserDirectoryData = z.object({
   body: z.never().optional(),
   path: z.never().optional(),
@@ -22770,6 +23094,19 @@ export const zGetOrganisationCourseContentData = z.object({
  */
 export const zGetOrganisationCourseContentResponse = zApiResponseOrganisationCourseContent;
 
+export const zGetCourseOpenClassesData = z.object({
+  body: z.never().optional(),
+  path: z.object({
+    courseUuid: z.string().uuid(),
+  }),
+  query: z.never().optional(),
+});
+
+/**
+ * Open classes retrieved
+ */
+export const zGetCourseOpenClassesResponse = zApiResponseCourseOpenClasses;
+
 export const zGetEnrollmentGradeBookData = z.object({
   body: z.never().optional(),
   path: z.object({
@@ -23720,6 +24057,42 @@ export const zGetCourseCertificatesData = z.object({
  */
 export const zGetCourseCertificatesResponse = zApiResponseListCertificate;
 
+export const zSearchCoursesAndProgrammesData = z.object({
+  body: z.never().optional(),
+  path: z.never().optional(),
+  query: z
+    .object({
+      q: z.string().describe('Free-text query; empty or absent browses the catalogue').optional(),
+      show: zSchemaEnum7Writable.optional(),
+      category_uuid: z
+        .array(z.string().uuid())
+        .describe(
+          'Category UUIDs; repeat the parameter or pass a comma-separated list. A result matches when it is in any of them.'
+        )
+        .optional(),
+      level: z
+        .array(zItemsEnum2Writable)
+        .describe(
+          'Levels; repeatable or comma-separated. A course matches its difficulty; a programme matches when any member course has the level.'
+        )
+        .optional(),
+      price: z
+        .array(zItemsEnum3Writable)
+        .describe('free or paid; both (or none) means no price filter')
+        .optional(),
+      creator_uuid: z.string().uuid().describe('Only results by this course creator').optional(),
+      sort: zSchemaEnum8Writable.optional(),
+      page: z.string().describe('0-based page number').optional().default(0),
+      size: z.string().describe('Page size, 1-48').optional().default('24'),
+    })
+    .optional(),
+});
+
+/**
+ * A page of catalogue items with facets
+ */
+export const zSearchCoursesAndProgrammesResponse = zApiResponseCatalogueSearchResponse;
+
 export const zGetBookingData = z.object({
   body: z.never().optional(),
   path: z.object({
@@ -23911,7 +24284,7 @@ export const zGetUserActivityData = z.object({
     uuid: z.string().uuid().describe('UUID of the user dossier to inspect'),
   }),
   query: z.object({
-    scope: zSchemaEnum7Writable.optional(),
+    scope: zSchemaEnum9Writable.optional(),
     category: z.string().describe('Optional endpoint category filter').optional(),
     target_uuids: z
       .string()
@@ -24020,6 +24393,7 @@ export const zListPendingProgramsData = z.object({
   body: z.never().optional(),
   path: z.never().optional(),
   query: z.object({
+    q: z.string().describe('Optional free text, served by the programs search index').optional(),
     pageable: zPageable,
   }),
 });
@@ -24377,7 +24751,7 @@ export const zRemoveAdminDomainData = z.object({
   body: z.never().optional(),
   path: z.object({
     uuid: z.string().uuid().describe('UUID of the user to remove admin domain from'),
-    domain: zSchemaEnum8Writable,
+    domain: zSchemaEnum10Writable,
   }),
   query: z
     .object({

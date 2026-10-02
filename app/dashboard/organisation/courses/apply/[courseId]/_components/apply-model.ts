@@ -14,21 +14,22 @@ import type { TrainingApplication } from '@/src/features/rate-card/types';
 
 export type TrainingContentKind = 'course' | 'program';
 
-export type StepId = 'venues' | 'requirements' | 'pricing' | 'review';
+export type StepId = 'venues' | 'requirements' | 'target-group' | 'pricing' | 'review';
 
 export type ApplyStep = { id: StepId; label: string };
 
-/** Wizard order; instructors skip venues. */
-const APPLY_STEPS: readonly ApplyStep[] = [
+/** Wizard order; instructors skip venues and add a lesson-plan step before pricing. */
+export const APPLY_STEPS: readonly ApplyStep[] = [
   { id: 'venues', label: 'Classrooms & labs' },
   { id: 'requirements', label: 'Requirements' },
+  { id: 'target-group', label: 'Target group' },
   { id: 'pricing', label: 'Pricing' },
   { id: 'review', label: 'Review' },
 ];
 
 export function visibleSteps(applicantType: CourseTrainerApplicantType): readonly ApplyStep[] {
   return applicantType === 'organisation'
-    ? APPLY_STEPS
+    ? APPLY_STEPS.filter(step => step.id !== 'target-group')
     : APPLY_STEPS.filter(step => step.id !== 'venues');
 }
 
@@ -111,10 +112,10 @@ export function applyReducer(state: ApplyState, action: ApplyAction): ApplyState
         answers: state.answers.map(answer =>
           answer.requirementUuid === action.uuid
             ? {
-                ...answer,
-                has: action.has,
-                acquisition: action.has === 'yes' ? undefined : answer.acquisition,
-              }
+              ...answer,
+              has: action.has,
+              acquisition: action.has === 'yes' ? undefined : answer.acquisition,
+            }
             : answer
         ),
       };
@@ -153,8 +154,8 @@ export function validatePricing(card: RateCard, minimumFee?: number | null): str
     ...cardErrors,
     ...(empty > 0
       ? [
-          `${empty} ${empty === 1 ? 'rate is' : 'rates are'} still empty. Every method you offer needs a price per hour, per session and per day.`,
-        ]
+        `${empty} ${empty === 1 ? 'rate is' : 'rates are'} still empty. Every method you offer needs a price per hour, per session and per day.`,
+      ]
       : []),
     ...(tooLow > 0
       ? [`${tooLow} ${tooLow === 1 ? 'rate is' : 'rates are'} below the minimum training fee.`]

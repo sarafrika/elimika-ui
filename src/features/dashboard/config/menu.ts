@@ -36,6 +36,7 @@ import {
   UserCheck,
   UserIcon,
   UserPlus,
+  UserRoundPlus,
   Users,
   UsersRound,
   Wallet,
@@ -337,6 +338,11 @@ export default {
           title: 'Students',
           url: '/dashboard/students',
           icon: Users,
+        },
+        {
+          title: 'Waiting List',
+          url: '/dashboard/training-hub/waiting-list',
+          icon: UserRoundPlus,
         },
         {
           title: 'Assignments',

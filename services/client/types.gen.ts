@@ -973,6 +973,10 @@ export type QuizQuestion = {
    */
   readonly updated_by?: string;
   /**
+   * **[READ-ONLY]** Formatted question number for display in quiz interface.
+   */
+  readonly question_number?: string;
+  /**
    * **[READ-ONLY]** Indicates if this question type requires predefined answer options.
    */
   readonly requires_options?: boolean;
@@ -984,10 +988,6 @@ export type QuizQuestion = {
    * **[READ-ONLY]** Human-readable format of the points value.
    */
   readonly points_display?: string;
-  /**
-   * **[READ-ONLY]** Formatted question number for display in quiz interface.
-   */
-  readonly question_number?: string;
 };
 
 export type ApiResponseQuizQuestion = {
@@ -1038,10 +1038,6 @@ export type QuizQuestionOption = {
    */
   readonly updated_by?: string;
   /**
-   * **[READ-ONLY]** Formatted category of the option based on its correctness status.
-   */
-  readonly option_category?: string;
-  /**
    * **[READ-ONLY]** Indicates if this option is an incorrect answer choice.
    */
   readonly is_incorrect?: boolean;
@@ -1057,6 +1053,10 @@ export type QuizQuestionOption = {
    * **[READ-ONLY]** Comprehensive summary of the option including correctness and position.
    */
   readonly option_summary?: string;
+  /**
+   * **[READ-ONLY]** Formatted category of the option based on its correctness status.
+   */
+  readonly option_category?: string;
 };
 
 export type ApiResponseQuizQuestionOption = {
@@ -1169,10 +1169,6 @@ export type QuizAttempt = {
    */
   readonly is_completed?: boolean;
   /**
-   * **[READ-ONLY]** Formatted display of the grade information.
-   */
-  readonly grade_display?: string;
-  /**
    * **[READ-ONLY]** Formatted display of the time taken to complete the quiz.
    */
   readonly time_display?: string;
@@ -1184,6 +1180,10 @@ export type QuizAttempt = {
    * **[READ-ONLY]** Comprehensive summary of the quiz attempt performance.
    */
   readonly performance_summary?: string;
+  /**
+   * **[READ-ONLY]** Formatted display of the grade information.
+   */
+  readonly grade_display?: string;
 };
 
 /**
@@ -1924,6 +1924,14 @@ export type Instructor = {
    */
   readonly location_search_opt_in?: boolean | null;
   distance_band?: DistanceBandEnum;
+  /**
+   * **[READ-ONLY]** On list and search rows only: the instructor's mean review rating, or null when they have no reviews.
+   */
+  readonly rating_avg?: number | null;
+  /**
+   * **[READ-ONLY]** On list and search rows only: how many reviews the instructor has (0 when none).
+   */
+  readonly review_count?: bigint | null;
   /**
    * **[READ-ONLY]** Indicates if the instructor profile is considered complete. Requires bio and professional headline.
    */
@@ -3933,13 +3941,13 @@ export type Category = {
    */
   readonly updated_by?: string;
   /**
-   * **[READ-ONLY]** Indicates if this is a root category with no parent.
-   */
-  readonly is_root_category?: boolean;
-  /**
    * **[READ-ONLY]** Hierarchical path showing category position in the tree structure.
    */
   readonly category_path?: string;
+  /**
+   * **[READ-ONLY]** Indicates if this is a root category with no parent.
+   */
+  readonly is_root_category?: boolean;
 };
 
 export type ApiResponseCategory = {
@@ -6762,10 +6770,6 @@ export type Enrollment = {
    */
   readonly is_active?: boolean;
   /**
-   * **[READ-ONLY]** Indicates if attendance has been marked for this enrollment.
-   */
-  readonly is_attendance_marked?: boolean;
-  /**
    * **[READ-ONLY]** Indicates if the student attended the class.
    */
   readonly did_attend?: boolean;
@@ -6773,6 +6777,10 @@ export type Enrollment = {
    * **[READ-ONLY]** Human-readable description of the enrollment status.
    */
   readonly status_description?: string;
+  /**
+   * **[READ-ONLY]** Indicates if attendance has been marked for this enrollment.
+   */
+  readonly is_attendance_marked?: boolean;
   /**
    * **[READ-ONLY]** Indicates if the enrollment can be cancelled.
    */
@@ -8205,7 +8213,7 @@ export type AssignmentAttachment = {
  * Admin domain assignment request containing domain type, reason, and effective date
  */
 export type AdminDomainAssignmentRequest = {
-  domain_name: SchemaEnum8;
+  domain_name: SchemaEnum10;
   assignment_type: AssignmentTypeEnum;
   /**
    * Reason for assigning admin privileges
@@ -8511,6 +8519,27 @@ export type UserSummary = {
   readonly full_name?: string;
 };
 
+export type ApiResponseUserRecipient = {
+  success?: boolean;
+  data?: UserRecipient;
+  message?: string;
+  error?: unknown;
+};
+
+/**
+ * A user resolved from their exact user number, with a masked display name.
+ */
+export type UserRecipient = {
+  /**
+   * The user's UUID, to use as the transfer recipient.
+   */
+  user_uuid?: string;
+  /**
+   * First name plus the initial of the last name.
+   */
+  display_name?: string;
+};
+
 export type ApiResponseListUserSummary = {
   success?: boolean;
   data?: Array<UserSummary>;
@@ -8732,10 +8761,10 @@ export type Page = {
 export type PageableObject = {
   offset?: bigint;
   sort?: SortObject;
+  unpaged?: boolean;
   paged?: boolean;
   pageNumber?: number;
   pageSize?: number;
-  unpaged?: boolean;
 };
 
 export type SortObject = {
@@ -8758,6 +8787,11 @@ export type ApiResponseGlobalSearchResponse = {
   error?: unknown;
 };
 
+export type Context = {
+  course_uuid?: string;
+  lesson_uuid?: string;
+};
+
 export type GlobalSearchHit = {
   type?: string;
   uuid?: string;
@@ -8766,6 +8800,7 @@ export type GlobalSearchHit = {
   image_url?: string;
   highlight?: string;
   distance_band?: string;
+  context?: Context;
 };
 
 export type GlobalSearchResponse = {
@@ -11429,6 +11464,84 @@ export type PublicCourseTrainingRequirement = {
   is_mandatory?: boolean;
 };
 
+export type ApiResponseCourseOpenClasses = {
+  success?: boolean;
+  data?: CourseOpenClasses;
+  message?: string;
+  error?: unknown;
+};
+
+/**
+ * The joinable classes of a public course and the cheapest fee.
+ */
+export type CourseOpenClasses = {
+  /**
+   * The lowest class fee among the classes that are not FULL. Null when there are none or none has a fee. This, not the course's own price, is what a learner pays.
+   */
+  price_from?: number;
+  /**
+   * ISO 4217 currency of the fees. Null when the list is empty.
+   */
+  currency_code?: string;
+  /**
+   * Number of listed classes that are not FULL.
+   */
+  open_class_count?: number;
+  /**
+   * The classes: joinable ones cheapest first, then soonest start; FULL ones last.
+   */
+  classes?: Array<OpenClassSummary>;
+};
+
+/**
+ * A class on a course that a visitor can still join.
+ */
+export type OpenClassSummary = {
+  /**
+   * Class definition UUID.
+   */
+  uuid?: string;
+  /**
+   * Class title.
+   */
+  title?: string;
+  location_type?: LocationTypeEnum;
+  session_format?: SessionFormatEnum;
+  /**
+   * The venue: the first comma-separated part of the class's location label. Null when the class has no location label (typically online).
+   */
+  place_name?: string;
+  /**
+   * The rest of the location label after the place name, with a trailing country removed. Null when nothing remains.
+   */
+  area?: string;
+  /**
+   * The class fee a learner pays (the class sale price). Null when not set.
+   */
+  fee?: number;
+  /**
+   * ISO 4217 currency of the fee.
+   */
+  currency_code?: string;
+  availability?: AvailabilityEnum;
+  /**
+   * First teaching day (the academic period start, else the first session's day). Null when unknown.
+   */
+  starts_on?: Date;
+  /**
+   * Last teaching day. Null when open-ended.
+   */
+  ends_on?: Date;
+  /**
+   * Last day, inclusive, on which enrolments are accepted. Null when open-ended.
+   */
+  registration_closes_on?: Date;
+  /**
+   * The training branch the class is delivered at. Null when none.
+   */
+  branch_name?: string;
+};
+
 export type ApiResponsePagedDtoLesson = {
   success?: boolean;
   data?: PagedDtoLesson;
@@ -12438,6 +12551,164 @@ export type ApiResponseListCertificate = {
   error?: unknown;
 };
 
+export type ApiResponseCatalogueSearchResponse = {
+  success?: boolean;
+  data?: CatalogueSearchResponse;
+  message?: string;
+  error?: unknown;
+};
+
+/**
+ * A category and how many results it would show.
+ */
+export type CatalogueCategoryFacet = {
+  uuid?: string;
+  name?: string;
+  count?: bigint;
+};
+
+/**
+ * Counts per filter value; each group ignores its own selection.
+ */
+export type CatalogueFacets = {
+  show?: CatalogueShowFacet;
+  /**
+   * Categories with at least one match, plus any selected ones; most matches first.
+   */
+  category?: Array<CatalogueCategoryFacet>;
+  level?: CatalogueLevelFacet;
+  price?: CataloguePriceFacet;
+};
+
+/**
+ * A course or programme card on the public catalogue page.
+ */
+export type CatalogueItem = {
+  type?: TypeEnum2;
+  /**
+   * Course or programme UUID.
+   */
+  uuid?: string;
+  /**
+   * Course name or programme title.
+   */
+  title?: string;
+  /**
+   * Description as authored, truncated to 2000 characters.
+   */
+  description?: string;
+  /**
+   * Public thumbnail URL (/api/v1/files/... or an external URL). A programme shows its first member course's thumbnail. Null when there is none.
+   */
+  thumbnail_url?: string;
+  /**
+   * Category names, alphabetical. A programme has at most one.
+   */
+  category_names?: Array<string>;
+  /**
+   * Category UUIDs, in the order of category_names.
+   */
+  category_uuids?: Array<string>;
+  /**
+   * Course creator UUID.
+   */
+  creator_uuid?: string;
+  /**
+   * Course creator display name.
+   */
+  creator_name?: string;
+  /**
+   * Course: its difficulty name. Programme: the range over its member courses ("Beginner → Advanced", or one name when they agree); null when unknown.
+   */
+  level?: string;
+  /**
+   * Average review rating 1-5, null when unrated.
+   */
+  rating_avg?: number;
+  /**
+   * Number of reviews.
+   */
+  review_count?: bigint;
+  /**
+   * Published lessons (programme: across its member courses).
+   */
+  lesson_count?: bigint;
+  /**
+   * Programme: member course count. Null for a course.
+   */
+  course_count?: bigint;
+  /**
+   * Distinct learners with an active or completed enrolment.
+   */
+  learner_count?: bigint;
+  /**
+   * Course: active public classes delivering it. Null for a programme.
+   */
+  class_count?: bigint;
+  /**
+   * Course: the lowest class fee among its open classes (active, public, not full, registration and teaching not ended) - what a learner actually pays. Null when it has no open class with a fee, and always null for a programme.
+   */
+  price_from?: number;
+  /**
+   * Course: its open classes (active, public, not full, registration and teaching not ended). Always 0 for a programme.
+   */
+  open_class_count?: bigint;
+  /**
+   * Age band label such as "18+" when the course's lower age limit is 18 or more; null otherwise and for programmes.
+   */
+  age_label?: string;
+  /**
+   * List price; null when not set.
+   */
+  price?: number;
+  /**
+   * True when the price is missing or zero.
+   */
+  is_free?: boolean;
+  /**
+   * When q matched the title: the HTML-escaped title with matches wrapped in <em>...</em> (the only markup). Null otherwise.
+   */
+  highlight?: string;
+};
+
+/**
+ * Matches per level, ignoring the level selection.
+ */
+export type CatalogueLevelFacet = {
+  beginner?: bigint;
+  intermediate?: bigint;
+  advanced?: bigint;
+};
+
+/**
+ * Free and paid matches, ignoring the price selection.
+ */
+export type CataloguePriceFacet = {
+  free?: bigint;
+  paid?: bigint;
+};
+
+/**
+ * A page of the public catalogue with facet counts.
+ */
+export type CatalogueSearchResponse = {
+  content?: Array<CatalogueItem>;
+  /**
+   * Paging metadata, the same shape as PagedDTO's.
+   */
+  metadata?: PageMetadata;
+  facets?: CatalogueFacets;
+};
+
+/**
+ * Matches per result type, ignoring the show selection.
+ */
+export type CatalogueShowFacet = {
+  all?: bigint;
+  courses?: bigint;
+  programmes?: bigint;
+};
+
 export type ApiResponsePagedDtoAssignment = {
   success?: boolean;
   data?: PagedDtoAssignment;
@@ -13230,19 +13501,51 @@ export const SchemaEnum6 = {
 export type SchemaEnum6 = (typeof SchemaEnum6)[keyof typeof SchemaEnum6];
 
 export const SchemaEnum7 = {
+  ALL: 'all',
+  COURSES: 'courses',
+  PROGRAMMES: 'programmes',
+} as const;
+
+export type SchemaEnum7 = (typeof SchemaEnum7)[keyof typeof SchemaEnum7];
+
+export const ItemsEnum2 = {
+  BEGINNER: 'beginner',
+  INTERMEDIATE: 'intermediate',
+  ADVANCED: 'advanced',
+} as const;
+
+export type ItemsEnum2 = (typeof ItemsEnum2)[keyof typeof ItemsEnum2];
+
+export const ItemsEnum3 = {
+  FREE: 'free',
+  PAID: 'paid',
+} as const;
+
+export type ItemsEnum3 = (typeof ItemsEnum3)[keyof typeof ItemsEnum3];
+
+export const SchemaEnum8 = {
+  RELEVANCE: 'relevance',
+  NEWEST: 'newest',
+  RATING: 'rating',
+  POPULAR: 'popular',
+} as const;
+
+export type SchemaEnum8 = (typeof SchemaEnum8)[keyof typeof SchemaEnum8];
+
+export const SchemaEnum9 = {
   ACTOR: 'actor',
   TARGET: 'target',
   ALL: 'all',
 } as const;
 
-export type SchemaEnum7 = (typeof SchemaEnum7)[keyof typeof SchemaEnum7];
+export type SchemaEnum9 = (typeof SchemaEnum9)[keyof typeof SchemaEnum9];
 
-export const SchemaEnum8 = {
+export const SchemaEnum10 = {
   ADMIN: 'admin',
   ORGANISATION_USER: 'organisation_user',
 } as const;
 
-export type SchemaEnum8 = (typeof SchemaEnum8)[keyof typeof SchemaEnum8];
+export type SchemaEnum10 = (typeof SchemaEnum10)[keyof typeof SchemaEnum10];
 
 /**
  * **[OPTIONAL]** User's gender information. Used for demographic analytics and personalization. Can be null if not specified or preferred not to disclose.
@@ -14565,6 +14868,20 @@ export const AccessEnum = {
 export type AccessEnum = (typeof AccessEnum)[keyof typeof AccessEnum];
 
 /**
+ * How easy the class is to get into. FULL: no seats left (listed, but not counted in open_class_count or price_from, and sorted last). FEW_LEFT: at most max(5, 20% of capacity) seats left. OPEN: otherwise, or when capacity is unknown. Seat counts are never published.
+ */
+export const AvailabilityEnum = {
+  OPEN: 'OPEN',
+  FEW_LEFT: 'FEW_LEFT',
+  FULL: 'FULL',
+} as const;
+
+/**
+ * How easy the class is to get into. FULL: no seats left (listed, but not counted in open_class_count or price_from, and sorted last). FEW_LEFT: at most max(5, 20% of capacity) seats left. OPEN: otherwise, or when capacity is unknown. Seat counts are never published.
+ */
+export type AvailabilityEnum = (typeof AvailabilityEnum)[keyof typeof AvailabilityEnum];
+
+/**
  * Status of the instructor's existing application, when they have one
  */
 export const ApplicationStatusEnum = {
@@ -14605,6 +14922,19 @@ export const EventTypeEnum3 = {
  * **[READ-ONLY]** What happened. interviewing is an interview invitation and assigned is the class being created.
  */
 export type EventTypeEnum3 = (typeof EventTypeEnum3)[keyof typeof EventTypeEnum3];
+
+/**
+ * Result type.
+ */
+export const TypeEnum2 = {
+  COURSE: 'course',
+  PROGRAMME: 'programme',
+} as const;
+
+/**
+ * Result type.
+ */
+export type TypeEnum2 = (typeof TypeEnum2)[keyof typeof TypeEnum2];
 
 /**
  * **[READ-ONLY]** Type of the moderated content.
@@ -14752,19 +15082,51 @@ export const SchemaEnum6Writable = {
 export type SchemaEnum6Writable = (typeof SchemaEnum6Writable)[keyof typeof SchemaEnum6Writable];
 
 export const SchemaEnum7Writable = {
+  ALL: 'all',
+  COURSES: 'courses',
+  PROGRAMMES: 'programmes',
+} as const;
+
+export type SchemaEnum7Writable = (typeof SchemaEnum7Writable)[keyof typeof SchemaEnum7Writable];
+
+export const ItemsEnum2Writable = {
+  BEGINNER: 'beginner',
+  INTERMEDIATE: 'intermediate',
+  ADVANCED: 'advanced',
+} as const;
+
+export type ItemsEnum2Writable = (typeof ItemsEnum2Writable)[keyof typeof ItemsEnum2Writable];
+
+export const ItemsEnum3Writable = {
+  FREE: 'free',
+  PAID: 'paid',
+} as const;
+
+export type ItemsEnum3Writable = (typeof ItemsEnum3Writable)[keyof typeof ItemsEnum3Writable];
+
+export const SchemaEnum8Writable = {
+  RELEVANCE: 'relevance',
+  NEWEST: 'newest',
+  RATING: 'rating',
+  POPULAR: 'popular',
+} as const;
+
+export type SchemaEnum8Writable = (typeof SchemaEnum8Writable)[keyof typeof SchemaEnum8Writable];
+
+export const SchemaEnum9Writable = {
   ACTOR: 'actor',
   TARGET: 'target',
   ALL: 'all',
 } as const;
 
-export type SchemaEnum7Writable = (typeof SchemaEnum7Writable)[keyof typeof SchemaEnum7Writable];
+export type SchemaEnum9Writable = (typeof SchemaEnum9Writable)[keyof typeof SchemaEnum9Writable];
 
-export const SchemaEnum8Writable = {
+export const SchemaEnum10Writable = {
   ADMIN: 'admin',
   ORGANISATION_USER: 'organisation_user',
 } as const;
 
-export type SchemaEnum8Writable = (typeof SchemaEnum8Writable)[keyof typeof SchemaEnum8Writable];
+export type SchemaEnum10Writable = (typeof SchemaEnum10Writable)[keyof typeof SchemaEnum10Writable];
 
 /**
  * **[OPTIONAL]** User's gender information. Used for demographic analytics and personalization. Can be null if not specified or preferred not to disclose.
@@ -15723,6 +16085,34 @@ export const AccessEnumWritable = {
  * The footing the caller views this course on. Resolved server-side; never re-derived by the client.
  */
 export type AccessEnumWritable = (typeof AccessEnumWritable)[keyof typeof AccessEnumWritable];
+
+/**
+ * How easy the class is to get into. FULL: no seats left (listed, but not counted in open_class_count or price_from, and sorted last). FEW_LEFT: at most max(5, 20% of capacity) seats left. OPEN: otherwise, or when capacity is unknown. Seat counts are never published.
+ */
+export const AvailabilityEnumWritable = {
+  OPEN: 'OPEN',
+  FEW_LEFT: 'FEW_LEFT',
+  FULL: 'FULL',
+} as const;
+
+/**
+ * How easy the class is to get into. FULL: no seats left (listed, but not counted in open_class_count or price_from, and sorted last). FEW_LEFT: at most max(5, 20% of capacity) seats left. OPEN: otherwise, or when capacity is unknown. Seat counts are never published.
+ */
+export type AvailabilityEnumWritable =
+  (typeof AvailabilityEnumWritable)[keyof typeof AvailabilityEnumWritable];
+
+/**
+ * Result type.
+ */
+export const TypeEnum2Writable = {
+  COURSE: 'course',
+  PROGRAMME: 'programme',
+} as const;
+
+/**
+ * Result type.
+ */
+export type TypeEnum2Writable = (typeof TypeEnum2Writable)[keyof typeof TypeEnum2Writable];
 
 export type DeleteUserData = {
   body?: never;
@@ -30378,6 +30768,49 @@ export type GetCurrentUserResponses = {
 
 export type GetCurrentUserResponse = GetCurrentUserResponses[keyof GetCurrentUserResponses];
 
+export type LookupUserByUserNoData = {
+  body?: never;
+  path?: never;
+  query: {
+    /**
+     * The recipient's exact user number.
+     */
+    user_no: string;
+  };
+  url: '/api/v1/users/lookup';
+};
+
+export type LookupUserByUserNoErrors = {
+  /**
+   * No authenticated caller
+   */
+  401: ApiResponseUserRecipient;
+  /**
+   * No active user with that user number
+   */
+  404: ResponseDtoVoid;
+  /**
+   * Too many lookups; try again in a minute
+   */
+  429: ApiResponseUserRecipient;
+  /**
+   * Internal Server Error
+   */
+  500: ResponseDtoVoid;
+};
+
+export type LookupUserByUserNoError = LookupUserByUserNoErrors[keyof LookupUserByUserNoErrors];
+
+export type LookupUserByUserNoResponses = {
+  /**
+   * User found
+   */
+  200: ApiResponseUserRecipient;
+};
+
+export type LookupUserByUserNoResponse =
+  LookupUserByUserNoResponses[keyof LookupUserByUserNoResponses];
+
 export type GetUserDirectoryData = {
   body?: never;
   path?: never;
@@ -35303,6 +35736,39 @@ export type GetOrganisationCourseContentResponses = {
 export type GetOrganisationCourseContentResponse =
   GetOrganisationCourseContentResponses[keyof GetOrganisationCourseContentResponses];
 
+export type GetCourseOpenClassesData = {
+  body?: never;
+  path: {
+    courseUuid: string;
+  };
+  query?: never;
+  url: '/api/v1/courses/{courseUuid}/open-classes';
+};
+
+export type GetCourseOpenClassesErrors = {
+  /**
+   * Course not found or not publicly visible
+   */
+  404: unknown;
+  /**
+   * Internal Server Error
+   */
+  500: ResponseDtoVoid;
+};
+
+export type GetCourseOpenClassesError =
+  GetCourseOpenClassesErrors[keyof GetCourseOpenClassesErrors];
+
+export type GetCourseOpenClassesResponses = {
+  /**
+   * Open classes retrieved
+   */
+  200: ApiResponseCourseOpenClasses;
+};
+
+export type GetCourseOpenClassesResponse =
+  GetCourseOpenClassesResponses[keyof GetCourseOpenClassesResponses];
+
 export type GetEnrollmentGradeBookData = {
   body?: never;
   path: {
@@ -37601,6 +38067,82 @@ export type GetCourseCertificatesResponses = {
 export type GetCourseCertificatesResponse =
   GetCourseCertificatesResponses[keyof GetCourseCertificatesResponses];
 
+export type SearchCoursesAndProgrammesData = {
+  body?: never;
+  path?: never;
+  query?: {
+    /**
+     * Free-text query; empty or absent browses the catalogue
+     */
+    q?: string;
+    /**
+     * Which types to list (default all)
+     */
+    show?: SchemaEnum7Writable;
+    /**
+     * Category UUIDs; repeat the parameter or pass a comma-separated list. A result matches when it is in any of them.
+     */
+    category_uuid?: Array<string>;
+    /**
+     * Levels; repeatable or comma-separated. A course matches its difficulty; a programme matches when any member course has the level.
+     */
+    level?: Array<ItemsEnum2Writable>;
+    /**
+     * free or paid; both (or none) means no price filter
+     */
+    price?: Array<ItemsEnum3Writable>;
+    /**
+     * Only results by this course creator
+     */
+    creator_uuid?: string;
+    /**
+     * Ordering (default relevance with q, popular without). newest: created first; rating: Bayesian-smoothed review rating; popular: enrolments in the last 30 days
+     */
+    sort?: SchemaEnum8Writable;
+    /**
+     * 0-based page number
+     */
+    page?: string;
+    /**
+     * Page size, 1-48
+     */
+    size?: string;
+  };
+  url: '/api/v1/catalogue/search';
+};
+
+export type SearchCoursesAndProgrammesErrors = {
+  /**
+   * An unknown show, level, price or sort value, a malformed UUID, or page/size out of range
+   */
+  400: ApiResponseCatalogueSearchResponse;
+  /**
+   * Not Found
+   */
+  404: ResponseDtoVoid;
+  /**
+   * Internal Server Error
+   */
+  500: ResponseDtoVoid;
+  /**
+   * Search is disabled or unavailable
+   */
+  503: ApiResponseCatalogueSearchResponse;
+};
+
+export type SearchCoursesAndProgrammesError =
+  SearchCoursesAndProgrammesErrors[keyof SearchCoursesAndProgrammesErrors];
+
+export type SearchCoursesAndProgrammesResponses = {
+  /**
+   * A page of catalogue items with facets
+   */
+  200: ApiResponseCatalogueSearchResponse;
+};
+
+export type SearchCoursesAndProgrammesResponse =
+  SearchCoursesAndProgrammesResponses[keyof SearchCoursesAndProgrammesResponses];
+
 export type GetBookingData = {
   body?: never;
   path: {
@@ -38085,7 +38627,7 @@ export type GetUserActivityData = {
     /**
      * Audit scope to return
      */
-    scope?: SchemaEnum7Writable;
+    scope?: SchemaEnum9Writable;
     /**
      * Optional endpoint category filter
      */
@@ -38367,6 +38909,10 @@ export type ListPendingProgramsData = {
   body?: never;
   path?: never;
   query: {
+    /**
+     * Optional free text, served by the programs search index
+     */
+    q?: string;
     pageable: Pageable;
   };
   url: '/api/v1/admin/programs/pending';
@@ -39301,7 +39847,7 @@ export type RemoveAdminDomainData = {
     /**
      * Domain name to remove
      */
-    domain: SchemaEnum8Writable;
+    domain: SchemaEnum10Writable;
   };
   query?: {
     /**

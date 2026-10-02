@@ -2,14 +2,10 @@
 'use client';
 
 import { Card, CardContent } from '@/components/ui/card';
-import { CalendarDays } from 'lucide-react';
 import { useMemo, useState } from 'react';
-import { Button } from '../../../../../components/ui/button';
-import { BookingCard } from './BookingCard';
 import { LiveClassCard } from './LiveClassCard';
 import { TrainingHubSectionHeader } from './TrainingHubSectionHeader';
 import { TrainingHubToolbar } from './TrainingHubToolbar';
-import { WaitingListItem } from './WaitingListItem';
 import { useInstructorTrainingHubData } from './useInstructorTrainingHubData';
 
 function getLiveClassCompletionRate(liveClass: {
@@ -251,7 +247,7 @@ export function InstructorTrainingHubPage() {
           </div>
         </div>
 
-        <aside className='min-w-0 space-y-5 overflow-hidden'>
+        {/* <aside className='min-w-0 space-y-5 overflow-hidden'>
           <section className='space-y-3'>
             <TrainingHubSectionHeader
               actionLabel={`Show All (${waitingList.length})`}
@@ -310,7 +306,7 @@ export function InstructorTrainingHubPage() {
             <span className='truncate'>Invite Students</span>
             <span aria-hidden='true'>›</span>
           </Button>
-        </aside>
+        </aside> */}
       </section>
     </main>
   );

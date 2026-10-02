@@ -162,6 +162,10 @@ export default function ApplyPage() {
     requirements,
     programRequirements,
     minimumFee,
+    courseAgeRange: {
+      min: course?.age_lower_limit ?? null,
+      max: course?.age_upper_limit ?? null,
+    },
     requirementsLoading: requirementsQuery.isLoading && requirementRowCount === 0,
     requirementsError: requirementsQuery.error,
     onRetryRequirements: () => void requirementsQuery.refetch(),

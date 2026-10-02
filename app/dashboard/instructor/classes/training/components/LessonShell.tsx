@@ -94,7 +94,7 @@ export function LessonShell({
   const previousSection = PREVIOUS_SECTION[tab];
   const hasNextContent = tab === 'lesson' && pageIndex < pageCount - 1;
   const nextAction = hasNextContent
-    ? { label: 'Next content', onClick: () => onPageChange(pageIndex + 1) }
+    ? { label: 'Next page', onClick: () => onPageChange(pageIndex + 1) }
     : nextSection
       ? { label: nextSection.label, onClick: () => onTabChange(nextSection.tab) }
       : tab === 'grading'

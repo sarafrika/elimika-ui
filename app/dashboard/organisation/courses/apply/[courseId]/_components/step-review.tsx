@@ -29,6 +29,7 @@ export function StepReview({
   applicantType,
   organisationUuid,
   programRequirements,
+  lessonPlanGroups,
 }: {
   state: ApplyState;
   dispatch: Dispatch<ApplyAction>;
@@ -36,6 +37,14 @@ export function StepReview({
   applicantType: CourseTrainerApplicantType;
   organisationUuid: string;
   programRequirements: ProgramRequirement[];
+  lessonPlanGroups?: Array<{
+    id: string;
+    name: string;
+    minAge: string;
+    maxAge: string;
+    hours: Record<string, string>;
+    lessons: Array<{ id: string; title: string }>;
+  }>;
 }) {
   const noteId = useId();
   const isOrganisation = applicantType === 'organisation';
@@ -91,6 +100,60 @@ export function StepReview({
               teach.
             </p>
           ) : null}
+        </section>
+      ) : null}
+
+      {applicantType === 'instructor' && !contentKind.includes('program') && lessonPlanGroups?.length ? (
+        <section className='space-y-2'>
+          <SectionHeader title='Target groups & lesson plan' onEdit={() => goTo('target-group')} />
+          <div className='space-y-3'>
+            {lessonPlanGroups.map(group => {
+              const lessonEntries = Object.entries(group.hours ?? {}).filter(
+                ([, value]) => value.trim() !== ''
+              );
+              const totalHours = lessonEntries.reduce((sum, [, value]) => {
+                const hours = Number.parseFloat(value);
+                return sum + (Number.isFinite(hours) ? hours : 0);
+              }, 0);
+
+              return (
+                <div key={group.id} className='rounded-md border p-3'>
+                  <div className='mb-2 flex items-center justify-between gap-3'>
+                    <div>
+                      <p className='font-medium'>{group.name}</p>
+                      <p className='text-muted-foreground text-xs'>
+                        {group.minAge || '—'} to {group.maxAge || '—'} years
+                      </p>
+                    </div>
+                    <Badge variant='outline' className='border-primary/40 bg-primary/10 text-primary'>
+                      {totalHours.toFixed(2)} hrs total
+                    </Badge>
+                  </div>
+
+                  {lessonEntries.length === 0 ? (
+                    <p className='text-muted-foreground text-xs'>No lesson hours entered yet.</p>
+                  ) : (
+                    <ul className='space-y-2'>
+                      {lessonEntries.map(([lessonId, hours]) => {
+                        const lesson = group.lessons.find(item => item.id === lessonId);
+                        return (
+                          <li
+                            key={`${group.id}-${lessonId}`}
+                            className='flex items-center justify-between gap-3 border-b border-dashed pb-2 last:border-0 last:pb-0'
+                          >
+                            <span className='text-sm'>{lesson?.title ?? 'Lesson'}</span>
+                            <span className='text-muted-foreground text-sm'>
+                              {Number.parseFloat(hours || '0').toFixed(2)} hrs
+                            </span>
+                          </li>
+                        );
+                      })}
+                    </ul>
+                  )}
+                </div>
+              );
+            })}
+          </div>
         </section>
       ) : null}
 
