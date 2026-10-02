@@ -1276,3 +1276,45 @@
 .sw-page .brand img {
   filter: brightness(0) invert();
 }
+
+/*
+ * Large and high-resolution screens. Below 1600px the page is unchanged. Above it the
+ * whole page scales (type, spacing and imagery together, via zoom) and its column widens,
+ * so the content lines up with the wide top nav instead of sitting in a narrow centre band.
+ * Each width x zoom matches the nav's inner width at that breakpoint.
+ */
+@media (min-width: 1600px) {
+  .sw-page {
+    zoom: 1.1;
+  }
+
+  .sw-page .site-container,
+  .sw-page .site-footer__inner,
+  .sw-page .site-footer__bottom {
+    max-width: 1340px;
+  }
+}
+
+@media (min-width: 1920px) {
+  .sw-page {
+    zoom: 1.25;
+  }
+
+  .sw-page .site-container,
+  .sw-page .site-footer__inner,
+  .sw-page .site-footer__bottom {
+    max-width: 1446px;
+  }
+}
+
+@media (min-width: 2400px) {
+  .sw-page {
+    zoom: 1.45;
+  }
+
+  .sw-page .site-container,
+  .sw-page .site-footer__inner,
+  .sw-page .site-footer__bottom {
+    max-width: 1578px;
+  }
+}

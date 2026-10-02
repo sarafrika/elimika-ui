@@ -15,8 +15,8 @@ import {
   Sparkles,
   Star,
 } from 'lucide-react';
-import { useSession } from 'next-auth/react';
 import Link from 'next/link';
+import { useSession } from 'next-auth/react';
 import { useMemo, useRef, useState } from 'react';
 import type { EntityFact } from '@/components/data-display/entity-header-card';
 import { EntityHeaderCard } from '@/components/data-display/entity-header-card';
@@ -31,10 +31,11 @@ import { usePinnedNavHeight } from '@/components/data-display/use-pinned-nav-hei
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
-import { VideoPreviewSheet } from '@/components/ui/video-preview-sheet';
+import { VideoPreviewModal } from '@/components/ui/video-preview-modal';
 import { STALE_TIMES } from '@/lib/query-client';
 import { cn } from '@/lib/utils';
 import { getAllDifficultyLevelsOptions } from '@/services/client/@tanstack/react-query.gen';
+import { levelLabel } from '@/src/features/catalogue/catalogue-search';
 import {
   COURSE_TAB_LABELS,
   COURSE_TABS,
@@ -44,7 +45,6 @@ import {
   priceFromLabel,
   splitRequirements,
 } from '@/src/features/catalogue/course-page';
-import { levelLabel } from '@/src/features/catalogue/catalogue-search';
 import type { CourseOpenClasses } from '@/src/features/catalogue/open-classes';
 import { useCourseOpenClasses } from '@/src/features/catalogue/use-course-open-classes';
 import { toAuthenticatedMediaUrl } from '@/src/lib/media-url';
@@ -330,7 +330,7 @@ function CourseHeader({
         asideClassName='hidden md:block'
       />
       {model.introVideoUrl ? (
-        <VideoPreviewSheet
+        <VideoPreviewModal
           open={introOpen}
           onOpenChange={setIntroOpen}
           title={model.title}

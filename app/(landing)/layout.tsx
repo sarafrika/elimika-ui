@@ -9,7 +9,7 @@ import '@/styles/elimika-product.css';
 export default function LandingLayout({ children }: { children: ReactNode }) {
   return (
     <div className='bg-background text-foreground min-h-screen'>
-      <PublicTopNav />
+      <PublicTopNav wide />
       <div className={`sw-page ${productFontVariables}`}>
         <main>{children}</main>
         <ProductFooter />
