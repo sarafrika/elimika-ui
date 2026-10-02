@@ -34,7 +34,7 @@ import { cn } from '@/lib/utils';
 import { submitCourseReviewMutation } from '@/services/client/@tanstack/react-query.gen';
 import { invalidateReviewWorkflowQueries } from '@/src/features/dashboard/workflow-query-invalidation';
 
-import { FeedbackDialog } from './review-instructor-modal';
+import { FeedbackSheet } from './feedback-sheet';
 
 interface CourseRecordRouteActionsProps {
   courseUuid: string;
@@ -121,7 +121,7 @@ export function CourseRecordRouteActions({
         </Button>
       ) : null}
 
-      <FeedbackDialog
+      <FeedbackSheet
         type='others'
         open={reviewOpen}
         onOpenChange={setReviewOpen}

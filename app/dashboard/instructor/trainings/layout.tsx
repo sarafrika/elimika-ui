@@ -9,7 +9,7 @@ interface TrainingLayoutProps {
 export default function TrainingLayout({ children }: TrainingLayoutProps) {
   return (
     <div className='space-y-8 p-4 pb-16 md:p-10'>
-      <div className='flex w-full items-center justify-between xl:max-w-[1200px]'>
+      <div className='flex w-full items-center justify-between'>
         <div>
           <h2 className='text-2xl font-bold tracking-tight'>Manage Classes</h2>
           <p className='text-muted-foreground'>
@@ -19,7 +19,7 @@ export default function TrainingLayout({ children }: TrainingLayoutProps) {
       </div>
       <Separator />
       <div className='flex flex-col space-y-8 lg:flex-row lg:space-y-0 lg:space-x-12'>
-        <div className='flex-1 lg:max-w-7xl xl:max-w-[110rem] 2xl:max-w-[130rem]'>{children}</div>
+        <div className='w-full max-w-[2400px] min-w-0 flex-1'>{children}</div>
       </div>
     </div>
   );

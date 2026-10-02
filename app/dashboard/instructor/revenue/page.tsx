@@ -503,7 +503,7 @@ const RevenuePage = () => {
         </div>
       </section>
 
-      <section className='mx-auto max-w-7xl space-y-6'>
+      <section className='w-full space-y-6'>
         <div className='border-border bg-card max-w-[300px] rounded-xl border p-6 shadow-sm sm:max-w-2/5'>
           <div className='flex items-start justify-between'>
             <div>

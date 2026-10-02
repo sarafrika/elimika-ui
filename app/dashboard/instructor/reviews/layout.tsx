@@ -19,7 +19,7 @@ export default function ReviewLayout({ children }: ReviewLayoutProps) {
       </div>
       <Separator />
       <div className='flex flex-col space-y-8 lg:flex-row lg:space-y-0 lg:space-x-12'>
-        <div className='flex-1 lg:max-w-6xl'>{children}</div>
+        <div className='w-full max-w-[2400px] min-w-0 flex-1'>{children}</div>
       </div>
     </div>
   );

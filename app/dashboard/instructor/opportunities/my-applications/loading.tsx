@@ -4,7 +4,7 @@ import { surfaceTheme } from '@/components/data-display';
 
 export default function InstructorApplicationsLoading() {
   return (
-    <div className={surfaceTheme.page}>
+    <div className={`${surfaceTheme.pageWide} py-4`}>
       <div className={surfaceTheme.pageStack}>
         <div className='space-y-2 border-b pb-4'>
           <Skeleton className='h-8 w-32' />

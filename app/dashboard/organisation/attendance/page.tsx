@@ -38,6 +38,7 @@ import {
   getUsersByOrganisationAndDomainOptions,
   markAttendanceMutation,
 } from '@/services/client/@tanstack/react-query.gen';
+import { surfaceTheme } from '@/components/data-display';
 
 type Status = 'Present' | 'Absent' | 'Not marked';
 
@@ -152,7 +153,7 @@ export default function AttendancePage() {
   const loading = classesQuery.isLoading || enrollmentsQuery.isLoading;
 
   return (
-    <div className='mx-auto w-full max-w-[1600px] space-y-6 px-3 py-4 sm:px-5 lg:px-6 2xl:max-w-[1840px]'>
+    <div className={`${surfaceTheme.pageWide} space-y-6 py-4`}>
       <PageHeader
         title='Attendance'
         description='Track student attendance across classes and sessions.'
@@ -174,7 +175,7 @@ export default function AttendancePage() {
         }
       />
 
-      <div className='grid gap-4 sm:grid-cols-2 lg:grid-cols-4'>
+      <div className={surfaceTheme.statGrid}>
         <Card className='border-l-primary border-l-4'>
           <CardContent className='p-6'>
             <div className='text-2xl font-bold'>{totals.enrolled}</div>

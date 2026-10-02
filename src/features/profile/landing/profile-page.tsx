@@ -3,14 +3,19 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { Camera, Upload, X } from 'lucide-react';
 import type React from 'react';
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { toast } from 'sonner';
+import { SectionTabPanel, SectionTabs, useSectionTab } from '@/components/data-display';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { parseApiDate } from '@/lib/date';
-import { updateCourseCreator, updateInstructor, updateStudent, updateUser } from '@/services/client';
+import {
+  updateCourseCreator,
+  updateInstructor,
+  updateStudent,
+  updateUser,
+} from '@/services/client';
 import { uploadProfileImageMutation } from '@/services/client/@tanstack/react-query.gen';
 import type {
   CourseCreator,
@@ -31,6 +36,7 @@ import { ProfileHero } from './components/profile-hero';
 import { ProfileSidebar } from './components/profile-sidebar';
 import { ProfileStatStrip } from './components/profile-stat-strip';
 import type { ProfilePageProps } from './types';
+import { usePinnedNavHeight } from './use-pinned-nav-height';
 
 function ProfileLayoutSkeleton() {
   return (
@@ -156,7 +162,16 @@ export function ProfilePage({
   stats = [],
   sidebar,
 }: ProfilePageProps) {
-  const [activeTabId, setActiveTabId] = useState(defaultTab ?? tabs[0]?.id ?? '');
+  // `tabs` arrives as a fresh array from each domain page; key the URL spec on the ids.
+  const tabKey = tabs.map(tab => tab.id).join('|');
+  const tabIds = useMemo(() => (tabKey ? tabKey.split('|') : []), [tabKey]);
+  const {
+    value: currentTabId,
+    setValue: setActiveTabId,
+    hrefFor,
+  } = useSectionTab(tabIds, defaultTab ?? tabIds[0] ?? '');
+  // The public profile sits under the pinned marketing nav; a dashboard scrolls under nothing.
+  const navHeight = usePinnedNavHeight(isPublic);
   const [selectedImage, setSelectedImage] = useState<File | null>(null);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const [isEditingDetails, setIsEditingDetails] = useState(false);
@@ -429,8 +444,6 @@ export function ProfilePage({
     .slice(0, 2);
   const bioPreview = stripHtml(profile.bio ?? profile.student_profile?.bio);
   const memberSince = parseApiDate(profile.created_date)?.format('MMM YYYY');
-  const activeTab = tabs.find(tab => tab.id === activeTabId) ?? tabs[0];
-  const currentTabId = activeTab?.id ?? '';
 
   return (
     <div className='space-y-6 font-sans'>
@@ -524,30 +537,29 @@ export function ProfilePage({
       <div className='grid gap-6 lg:grid-cols-[minmax(0,1fr)_320px]'>
         <div className='min-w-0'>
           {tabs.length > 0 ? (
-            <Tabs value={currentTabId} onValueChange={setActiveTabId}>
-              <TabsList className='bg-muted/50 flex h-auto flex-wrap gap-1 rounded-full p-1'>
-                {tabs.map(tab => (
-                  <TabsTrigger
-                    key={tab.id}
-                    value={tab.id}
-                    className='data-[state=active]:bg-background data-[state=active]:text-primary rounded-full data-[state=active]:shadow-sm'
-                  >
-                    {tab.label}
-                  </TabsTrigger>
-                ))}
-              </TabsList>
-
+            <SectionTabs
+              tabs={tabs.map(tab => ({ id: tab.id, label: tab.label }))}
+              value={currentTabId}
+              onValueChange={setActiveTabId}
+              hrefFor={hrefFor}
+              label='Profile sections'
+              variant='pill'
+              sticky={{ top: navHeight }}
+            >
               {tabs.map(({ id, component: TabComponent }) => (
-                <TabsContent key={id} value={id} className='animate-in fade-in-0 duration-200'>
-                  <TabComponent
-                    userUuid={profile.user_uuid}
-                    domain={domain ?? 'student'}
-                    sharedProfile={profile}
-                    isPublic={isPublic}
-                  />
-                </TabsContent>
+                <SectionTabPanel key={id} value={id} className='animate-in fade-in-0 duration-200'>
+                  {/* Each section fetches its own data, so only the open one mounts. */}
+                  {id === currentTabId ? (
+                    <TabComponent
+                      userUuid={profile.user_uuid}
+                      domain={domain ?? 'student'}
+                      sharedProfile={profile}
+                      isPublic={isPublic}
+                    />
+                  ) : null}
+                </SectionTabPanel>
               ))}
-            </Tabs>
+            </SectionTabs>
           ) : (
             <Card>
               <CardContent className='text-muted-foreground py-10 text-center text-sm'>

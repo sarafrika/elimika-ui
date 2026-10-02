@@ -27,6 +27,7 @@ import { cn } from '@/lib/utils';
 
 import type { PortfolioAsset, PortfolioProject, PortfolioRole, PortfolioTabId } from './data';
 import { getPortfolioContent } from './data';
+import { surfaceTheme } from '@/components/data-display';
 
 const getPortfolioHref = (projectId?: string) =>
   projectId ? `/dashboard/portfolio/${projectId}` : '/dashboard/portfolio';
@@ -457,7 +458,7 @@ function ProjectSections({
             <ChevronRight className='size-4' />
           </Button>
         </div>
-        <div className='grid gap-4 lg:grid-cols-2'>
+        <div className='grid gap-4 lg:grid-cols-[repeat(auto-fill,minmax(420px,1fr))]'>
           {featuredProjects.map(project => (
             <FeaturedProjectCard key={project.id} project={project} />
           ))}
@@ -519,13 +520,13 @@ function AssetPanel({
   return (
     <div className='space-y-4 p-3 sm:p-5'>
       <SectionHeader title={title} description={description} actionLabel={actionLabel} />
-      <div className='grid gap-3'>
+      <div className={cn(surfaceTheme.cardGridWide, 'gap-3')}>
         {items.map(item => (
           <CollectionItemCard key={item.id} item={item} />
         ))}
 
         {items.length === 0 && (
-          <div className='flex min-h-[400px] flex-col items-center justify-center p-6 text-center'>
+          <div className='col-span-full flex min-h-[400px] flex-col items-center justify-center p-6 text-center'>
             <div className='bg-muted mb-4 flex size-14 items-center justify-center rounded-full'>
               <Video className='text-muted-foreground size-7' />
             </div>

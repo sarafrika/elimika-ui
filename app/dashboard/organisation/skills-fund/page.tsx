@@ -46,6 +46,7 @@ import {
   listTransactionsOptions,
   listTransactionsQueryKey,
 } from '@/services/client/@tanstack/react-query.gen';
+import { surfaceTheme } from '@/components/data-display';
 
 const money = (v?: number | string | null) => {
   const n = Number(v ?? 0);
@@ -308,7 +309,7 @@ export default function SkillsFundPage() {
   ];
 
   return (
-    <div className='mx-auto w-full max-w-[1600px] space-y-6 px-3 py-4 sm:px-5 lg:px-6 2xl:max-w-[1840px]'>
+    <div className={`${surfaceTheme.pageWide} space-y-6 py-4`}>
       <PageHeader
         title='Skills Fund'
         description='Financial overview, funding sources, and recent transactions.'
@@ -331,7 +332,7 @@ export default function SkillsFundPage() {
         }
       />
 
-      <div className='grid gap-4 sm:grid-cols-2 lg:grid-cols-5'>
+      <div className={surfaceTheme.statGrid}>
         {kpis.map(k => (
           <Card key={k.label} className={`border-l-4 ${k.border}`}>
             <CardHeader className='pb-2'>

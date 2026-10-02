@@ -6,7 +6,7 @@ export default function AdminProgramsRoute() {
   return (
     <Suspense
       fallback={
-        <div className={surfaceTheme.page}>
+        <div className={`${surfaceTheme.pageWide} py-4`}>
           <div className={surfaceTheme.pageStack}>
             <SectionCardSkeleton rows={2} />
             <SectionCardSkeleton rows={6} />

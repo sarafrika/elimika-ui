@@ -1,9 +1,13 @@
 'use client';
 
+
+import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { CalendarDays, Clock3, GraduationCap, MapPin, Users } from 'lucide-react';
 import Link from 'next/link';
 import { useMemo, useState } from 'react';
+import { toast } from 'sonner';
 
+import { surfaceTheme } from '@/components/data-display';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -11,9 +15,9 @@ import { EmptyState } from '@/components/ui/empty-state';
 import { Skeleton } from '@/components/ui/skeleton';
 
 import { cn } from '@/lib/utils';
-
-import { useMutation, useQueryClient } from '@tanstack/react-query';
-import { toast } from 'sonner';
+import { SESSION_FORMAT_LABELS } from '@/src/features/catalogue/course-page';
+import { FeedbackSheet } from '@/src/features/dashboard/courses/components/feedback-sheet';
+import { enumLabel } from '@/src/features/dashboard/courses/shared/_components/class-hub';
 import { useUserProfile } from '../../../../../context/profile-context';
 import { useClassesByIds } from '../../../../../hooks/use-batched-lookups';
 import { ClassDefinition } from '../../../../../services/client';
@@ -22,7 +26,6 @@ import { formatSessionSchedule } from '../../../../../src/features/dashboard/cou
 import { stripHtml } from '../../../../../src/features/dashboard/courses/shared/_components/courses-data';
 import { invalidateReviewWorkflowQueries } from '../../../../../src/features/dashboard/workflow-query-invalidation';
 import { toAuthenticatedMediaUrl } from '../../../../../src/lib/media-url';
-import { FeedbackDialog } from '../../../_components/review-instructor-modal';
 import type {
   LearningHubClassEnrollment,
   LearningHubData,
@@ -173,7 +176,7 @@ export function LessonHubMyClassesTab({ learningHubData }: LessonHubMyClassesTab
           }
         />
       ) : (
-        <div className='grid gap-4 md:grid-cols-2 xl:grid-cols-3'>
+        <div className={surfaceTheme.cardGrid}>
           {filteredRows.map(item => (
             <ClassCard key={item.id} item={item} classDefinitionMap={classDefinitionMap} />
           ))}
@@ -333,7 +336,9 @@ function ClassCard({
 
         <div className='flex flex-wrap items-center justify-between gap-2'>
           <Badge variant='outline' className='rounded-full text-success'>
-            {classObj?.session_format}
+            {classObj?.session_format
+              ? enumLabel(SESSION_FORMAT_LABELS, classObj.session_format)
+              : null}
           </Badge>
 
           <span className='min-w-0 line-clamp-2 text-sm leading-5 text-muted-foreground'>
@@ -377,7 +382,7 @@ function ClassCard({
         </Button>
       </CardContent>
 
-      <FeedbackDialog
+      <FeedbackSheet
         type='others'
         open={isReviewModalOpen}
         onOpenChange={setIsReviewModalOpen}
@@ -410,7 +415,7 @@ function ClassTabSkeleton() {
         ))}
       </div>
 
-      <div className='grid gap-4 md:grid-cols-2 xl:grid-cols-3'>
+      <div className={surfaceTheme.cardGrid}>
         {Array.from({ length: 6 }).map((_, index) => (
           <Card key={index} className='border-border/70'>
             <Skeleton className='h-24 w-full rounded-b-none rounded-t-lg' />

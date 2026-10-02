@@ -27,6 +27,12 @@ import { toast } from 'sonner';
 
 import { AsyncSection } from '@/components/data/async-section';
 import {
+  SectionTabPanel,
+  SectionTabs,
+  surfaceTheme,
+  useSectionTab,
+} from '@/components/data-display';
+import {
   HireClashAlert,
   hireClashTitle,
 } from '@/components/profile-job-marketplace/_components/HireClashAlert';
@@ -59,7 +65,6 @@ import { Label } from '@/components/ui/label';
 import { Progress } from '@/components/ui/progress';
 import { Separator } from '@/components/ui/separator';
 import { Skeleton } from '@/components/ui/skeleton';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Textarea } from '@/components/ui/textarea';
 import { extractEntity, extractList } from '@/lib/api-helpers';
 import { getErrorMessage } from '@/lib/error-utils';
@@ -252,6 +257,15 @@ function TransitionError({ message }: { message: string | null }) {
   );
 }
 
+const CANDIDATE_TABS = ['overview', 'skills', 'experience', 'actions'] as const;
+
+const CANDIDATE_TAB_LABELS: Record<(typeof CANDIDATE_TABS)[number], string> = {
+  overview: 'Overview',
+  skills: 'Skills & Credentials',
+  experience: 'Experience',
+  actions: 'Actions',
+};
+
 /** A disabled control owes the organisation the reason, so the gate is named where the button is. */
 function HireBlockedNotice({ reason }: { reason: string | null }) {
   if (!reason) return null;
@@ -271,6 +285,7 @@ export default function CandidateDetailPage() {
   const applicationUuid = search.get('application') ?? '';
   const router = useRouter();
   const queryClient = useQueryClient();
+  const { value: tab, setValue: setTab, hrefFor } = useSectionTab(CANDIDATE_TABS, 'overview');
   const [interviewDialogOpen, setInterviewDialogOpen] = useState(false);
   const [interviewAt, setInterviewAt] = useState('');
   const [interviewNote, setInterviewNote] = useState('');
@@ -442,7 +457,7 @@ export default function CandidateDetailPage() {
 
   if (instructorQuery.isLoading) {
     return (
-      <div className='mx-auto w-full max-w-[1400px] space-y-6 px-3 py-4 sm:px-5 lg:px-6'>
+      <div className={cn(surfaceTheme.pageWide, 'space-y-6 py-4')}>
         <Skeleton className='h-10 w-40' />
         <Skeleton className='h-48 w-full rounded-2xl' />
       </div>
@@ -460,7 +475,7 @@ export default function CandidateDetailPage() {
   }
 
   return (
-    <div className='mx-auto w-full max-w-[1400px] space-y-6 px-3 py-4 sm:px-5 lg:px-6'>
+    <div className={cn(surfaceTheme.pageWide, 'space-y-6 py-4')}>
       <div className='flex items-center gap-2'>
         <Button
           variant='ghost'
@@ -577,25 +592,15 @@ export default function CandidateDetailPage() {
       <div className='grid gap-6 lg:grid-cols-[minmax(0,1fr)_320px]'>
         {/* Main */}
         <div>
-          <Tabs defaultValue='overview'>
-            <TabsList className='bg-muted/50 flex h-auto flex-wrap gap-1 rounded-full p-1'>
-              {[
-                { v: 'overview', l: 'Overview' },
-                { v: 'skills', l: 'Skills & Credentials' },
-                { v: 'experience', l: 'Experience' },
-                { v: 'actions', l: 'Actions' },
-              ].map(t => (
-                <TabsTrigger
-                  key={t.v}
-                  value={t.v}
-                  className='data-[state=active]:bg-card rounded-full data-[state=active]:text-teal-700 data-[state=active]:shadow-sm'
-                >
-                  {t.l}
-                </TabsTrigger>
-              ))}
-            </TabsList>
-
-            <TabsContent value='overview' className='mt-4 space-y-4'>
+          <SectionTabs
+            tabs={CANDIDATE_TABS.map(id => ({ id, label: CANDIDATE_TAB_LABELS[id] }))}
+            value={tab}
+            onValueChange={setTab}
+            hrefFor={hrefFor}
+            label='Candidate sections'
+            sticky
+          >
+            <SectionTabPanel value='overview' className='space-y-4'>
               <Card>
                 <CardContent className='space-y-4 p-5'>
                   <div>
@@ -642,9 +647,9 @@ export default function CandidateDetailPage() {
                   )}
                 </CardContent>
               </Card>
-            </TabsContent>
+            </SectionTabPanel>
 
-            <TabsContent value='skills' className='mt-4 space-y-4'>
+            <SectionTabPanel value='skills' className='space-y-4'>
               <Card>
                 <CardHeader>
                   <CardTitle className='text-base'>Skills</CardTitle>
@@ -699,9 +704,9 @@ export default function CandidateDetailPage() {
                   </AsyncSection>
                 </CardContent>
               </Card>
-            </TabsContent>
+            </SectionTabPanel>
 
-            <TabsContent value='experience' className='mt-4 space-y-4'>
+            <SectionTabPanel value='experience' className='space-y-4'>
               <Card>
                 <CardHeader>
                   <CardTitle className='text-base'>Experience</CardTitle>
@@ -774,9 +779,9 @@ export default function CandidateDetailPage() {
                   </AsyncSection>
                 </CardContent>
               </Card>
-            </TabsContent>
+            </SectionTabPanel>
 
-            <TabsContent value='actions' className='mt-4'>
+            <SectionTabPanel value='actions'>
               <Card>
                 <CardHeader>
                   <CardTitle className='text-base'>
@@ -828,8 +833,8 @@ export default function CandidateDetailPage() {
                   </p>
                 </CardContent>
               </Card>
-            </TabsContent>
-          </Tabs>
+            </SectionTabPanel>
+          </SectionTabs>
         </div>
 
         {/* Sidebar */}

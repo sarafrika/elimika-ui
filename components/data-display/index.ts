@@ -9,12 +9,16 @@ export {
 export { surfaceTheme } from './page-shell';
 export { SectionCard, SectionCardSkeleton } from './section-card';
 export {
+  type FieldToTab,
   type SectionTab,
+  type SectionTabFlag,
   SectionTabPanel,
   SectionTabs,
   type UnderlineTab,
   UnderlineTabs,
+  usePinnedNavHeight,
   useSectionTab,
+  useTabErrors,
 } from './section-tabs';
 export { StatCard, StatCardSkeleton } from './stat-tile';
 export { StatusBadge } from './status-badge';

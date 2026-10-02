@@ -2,7 +2,14 @@
 
 import { useMemo, useState } from 'react';
 
-import { SectionCardSkeleton, surfaceTheme } from '@/components/data-display';
+import {
+  type SectionTab,
+  SectionCardSkeleton,
+  SectionTabPanel,
+  SectionTabs,
+  surfaceTheme,
+  useSectionTab,
+} from '@/components/data-display';
 import { Button } from '@/components/ui/button';
 import { formatDate } from '@/lib/date';
 import type { User } from '@/services/client';
@@ -14,7 +21,6 @@ import { OverviewTab } from '../components/overview-tab';
 import { SectionBoundary } from '../components/section-boundary';
 import { RecordHeader, type RecordBadge } from '../components/record-header';
 import { TeachingTab } from '../components/teaching-tab';
-import { UnderlineTabs, type UnderlineTab } from '../components/underline-tabs';
 import { VerificationTab } from '../components/verification-tab';
 import { useSavePerson } from '../hooks/use-person-actions';
 import {
@@ -24,11 +30,12 @@ import {
   usePersonRecord,
   useStudentProfile,
 } from '../hooks/use-person-record';
-import { adminRoutes, type PersonTab } from '../lib/admin-routes';
-import { enumParam, stringParam } from '@/lib/search-state';
+import type { PersonTab } from '../lib/admin-routes';
+import { stringParam } from '@/lib/search-state';
+import { cn } from '@/lib/utils';
 import { useSearchState } from '@/hooks/use-search-state';
 
-const PERSON_TABS: PersonTab[] = [
+const PERSON_TABS: readonly PersonTab[] = [
   'overview',
   'verification',
   'teaching',
@@ -53,7 +60,7 @@ const initialsOf = (person: User | null) => {
 };
 
 export function AdminPersonPage({ userUuid }: { userUuid: string }) {
-  const [tab, setTab] = useSearchState('tab', enumParam(PERSON_TABS, 'overview'));
+  const { value: tab, setValue: setTab, hrefFor } = useSectionTab(PERSON_TABS, 'overview');
   const [reviewQueue] = useSearchState('review', stringParam());
   const [selectedItem, setSelectedItem] = useSearchState('item', stringParam());
 
@@ -62,7 +69,10 @@ export function AdminPersonPage({ userUuid }: { userUuid: string }) {
   const { documents, query: documentsQuery } = useInstructorDocuments(instructor?.uuid);
   const { byUuid, documentTypes } = useDocumentTypes();
   // Only the tabs that need a learner profile ask for one.
-  const { student } = useStudentProfile(userUuid, tab === 'learning' || tab === 'money' || tab === 'audit');
+  const { student } = useStudentProfile(
+    userUuid,
+    tab === 'learning' || tab === 'money' || tab === 'audit'
+  );
   const { save, isPending: isSaving } = useSavePerson(person);
   const [accountAction, setAccountAction] = useState<'deactivate' | 'reactivate' | null>(null);
 
@@ -86,15 +96,14 @@ export function AdminPersonPage({ userUuid }: { userUuid: string }) {
     });
   }
 
-  const tabs: UnderlineTab[] = PERSON_TABS.map(id => ({
+  const tabs: SectionTab<PersonTab>[] = PERSON_TABS.map(id => ({
     id,
     label: TAB_LABELS[id],
-    count: id === 'verification' ? pendingDocuments : undefined,
-    href: adminRoutes.person(userUuid, id),
+    count: id === 'verification' && pendingDocuments > 0 ? pendingDocuments : undefined,
   }));
 
   return (
-    <div className={surfaceTheme.page}>
+    <div className={cn(surfaceTheme.pageWide, 'py-4')}>
       <div className={surfaceTheme.pageStack}>
         <SectionBoundary
           label='this person'
@@ -127,73 +136,88 @@ export function AdminPersonPage({ userUuid }: { userUuid: string }) {
           />
         </SectionBoundary>
 
-        <UnderlineTabs
+        <SectionTabs
           tabs={tabs}
-          active={tab}
-          className='sticky top-0 z-10 bg-background'
-        />
+          value={tab}
+          onValueChange={setTab}
+          hrefFor={hrefFor}
+          label='Person sections'
+          sticky
+        >
+          <SectionTabPanel value='overview'>
+            {tab === 'overview' ? (
+              <OverviewTab
+                person={person}
+                loading={personQuery.isLoading && !personQuery.data}
+                error={personQuery.error}
+                onRetry={() => personQuery.refetch()}
+              />
+            ) : null}
+          </SectionTabPanel>
 
-        {tab === 'overview' ? (
-          <OverviewTab
-            person={person}
-            loading={personQuery.isLoading && !personQuery.data}
-            error={personQuery.error}
-            onRetry={() => personQuery.refetch()}
-          />
-        ) : null}
+          <SectionTabPanel value='verification'>
+            {tab === 'verification' ? (
+              <VerificationTab
+                person={person}
+                instructor={instructor}
+                documents={documents}
+                documentTypesByUuid={byUuid}
+                requiredTypeUuids={requiredTypeUuids}
+                loading={
+                  (instructorQuery.isLoading && !instructorQuery.data) ||
+                  (documentsQuery.isLoading && !documentsQuery.data)
+                }
+                error={instructorQuery.error ?? documentsQuery.error}
+                onRetry={() => {
+                  void instructorQuery.refetch();
+                  void documentsQuery.refetch();
+                }}
+                selectedDocumentUuid={selectedItem}
+                onSelectDocument={setSelectedItem}
+                reviewQueue={reviewQueue}
+              />
+            ) : null}
+          </SectionTabPanel>
 
-        {tab === 'verification' ? (
-          <VerificationTab
-            person={person}
-            instructor={instructor}
-            documents={documents}
-            documentTypesByUuid={byUuid}
-            requiredTypeUuids={requiredTypeUuids}
-            loading={
-              (instructorQuery.isLoading && !instructorQuery.data) ||
-              (documentsQuery.isLoading && !documentsQuery.data)
-            }
-            error={instructorQuery.error ?? documentsQuery.error}
-            onRetry={() => {
-              void instructorQuery.refetch();
-              void documentsQuery.refetch();
-            }}
-            selectedDocumentUuid={selectedItem}
-            onSelectDocument={setSelectedItem}
-            reviewQueue={reviewQueue}
-          />
-        ) : null}
+          <SectionTabPanel value='teaching'>
+            {tab === 'teaching' ? (
+              <TeachingTab
+                instructor={instructor}
+                loading={instructorQuery.isLoading && !instructorQuery.data}
+                personName={name}
+              />
+            ) : null}
+          </SectionTabPanel>
 
-        {tab === 'teaching' ? (
-          <TeachingTab
-            instructor={instructor}
-            loading={instructorQuery.isLoading && !instructorQuery.data}
-            personName={name}
-          />
-        ) : null}
+          <SectionTabPanel value='learning'>
+            {tab === 'learning' ? (
+              <LearningTab
+                student={student}
+                loading={personQuery.isLoading && !personQuery.data}
+                personName={name}
+              />
+            ) : null}
+          </SectionTabPanel>
 
-        {tab === 'learning' ? (
-          <LearningTab
-            student={student}
-            loading={personQuery.isLoading && !personQuery.data}
-            personName={name}
-          />
-        ) : null}
+          <SectionTabPanel value='money'>
+            {tab === 'money' ? (
+              <MoneyTab
+                userUuid={userUuid}
+                student={student}
+                loading={personQuery.isLoading && !personQuery.data}
+              />
+            ) : null}
+          </SectionTabPanel>
 
-        {tab === 'money' ? (
-          <MoneyTab
-            userUuid={userUuid}
-            student={student}
-            loading={personQuery.isLoading && !personQuery.data}
-          />
-        ) : null}
-
-        {tab === 'audit' ? (
-          <AuditTab
-            userUuid={userUuid}
-            targetUuids={[student?.uuid, instructor?.uuid].filter(Boolean) as string[]}
-          />
-        ) : null}
+          <SectionTabPanel value='audit'>
+            {tab === 'audit' ? (
+              <AuditTab
+                userUuid={userUuid}
+                targetUuids={[student?.uuid, instructor?.uuid].filter(Boolean) as string[]}
+              />
+            ) : null}
+          </SectionTabPanel>
+        </SectionTabs>
 
         {person ? (
           <ConfirmDialog
@@ -218,4 +242,3 @@ export function AdminPersonPage({ userUuid }: { userUuid: string }) {
     </div>
   );
 }
-

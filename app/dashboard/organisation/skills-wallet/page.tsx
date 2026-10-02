@@ -53,6 +53,7 @@ import {
   getUsersByOrganisationAndDomainOptions,
   getWalletOptions,
 } from '@/services/client/@tanstack/react-query.gen';
+import { surfaceTheme } from '@/components/data-display';
 
 const initials = (u: User) =>
   `${u.first_name?.[0] ?? ''}${u.last_name?.[0] ?? ''}`.toUpperCase() ||
@@ -220,7 +221,7 @@ export default function SkillsWalletPage() {
   ];
 
   return (
-    <div className='mx-auto w-full max-w-[1600px] space-y-6 px-3 py-4 sm:px-5 lg:px-6 2xl:max-w-[1840px]'>
+    <div className={`${surfaceTheme.pageWide} space-y-6 py-4`}>
       <PageHeader
         title='Skills Wallet'
         description='Wallet balances, funding, and disbursement history.'
@@ -234,7 +235,7 @@ export default function SkillsWalletPage() {
         }
       />
 
-      <div className='grid gap-4 sm:grid-cols-2 lg:grid-cols-4'>
+      <div className={surfaceTheme.statGrid}>
         {statCards.map(stat => (
           <Card
             key={stat.label}

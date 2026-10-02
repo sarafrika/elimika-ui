@@ -86,7 +86,12 @@ import { FindWorkJobCard, FindWorkJobCardSkeleton } from './find-work-job-card';
 import { useFindWorkJobs } from './use-find-work-jobs';
 import { StatCard, StatCardSkeleton, surfaceTheme } from '@/components/data-display';
 
-const BASIS_ICONS = { all: BriefcaseBusiness, per_hour: Clock, per_session: CalendarDays, per_day: Layers };
+const BASIS_ICONS = {
+  all: BriefcaseBusiness,
+  per_hour: Clock,
+  per_session: CalendarDays,
+  per_day: Layers,
+};
 
 const FIX_NOUNS: Record<string, string> = {
   rate: 'a rate',
@@ -156,8 +161,7 @@ export function FindWorkPage() {
     () =>
       rows.filter(
         row =>
-          matchesFormat(filters.format, row.job) &&
-          matchesStarts(filters.starts, row.facts, now)
+          matchesFormat(filters.format, row.job) && matchesStarts(filters.starts, row.facts, now)
       ),
     [rows, filters.format, filters.starts, now]
   );
@@ -179,7 +183,11 @@ export function FindWorkPage() {
   const stats = useMemo(() => {
     const groups = rows.map(row => readyGroupOf(row.readiness));
     const fixStates = Array.from(
-      new Set(rows.filter(row => readyGroupOf(row.readiness) === 'fix').map(row => row.readiness?.state ?? ''))
+      new Set(
+        rows
+          .filter(row => readyGroupOf(row.readiness) === 'fix')
+          .map(row => row.readiness?.state ?? '')
+      )
     );
     const appliedStages = Array.from(
       new Set(
@@ -196,7 +204,8 @@ export function FindWorkPage() {
       fixHint: capitalise(
         joinOr(fixStates.flatMap(state => (FIX_NOUNS[state] ? [FIX_NOUNS[state]] : [])))
       ),
-      appliedHint: appliedStages.length > 2 ? `${appliedStages.length} stages` : appliedStages.join(' · '),
+      appliedHint:
+        appliedStages.length > 2 ? `${appliedStages.length} stages` : appliedStages.join(' · '),
     };
   }, [rows]);
 
@@ -212,7 +221,8 @@ export function FindWorkPage() {
       items: READY_OPTIONS.map(option => ({
         label: option.label,
         count: base.filter(
-          row => matchesDelivery(filters.delivery, row.job) && matchesReady(option.value, row.readiness)
+          row =>
+            matchesDelivery(filters.delivery, row.job) && matchesReady(option.value, row.readiness)
         ).length,
         active: filters.ready === option.value,
         onSelect: () => setFilters({ ready: option.value }),
@@ -224,7 +234,8 @@ export function FindWorkPage() {
       items: DELIVERY_OPTIONS.map(option => ({
         label: option.label,
         count: base.filter(
-          row => matchesReady(filters.ready, row.readiness) && matchesDelivery(option.value, row.job)
+          row =>
+            matchesReady(filters.ready, row.readiness) && matchesDelivery(option.value, row.job)
         ).length,
         active: filters.delivery === option.value,
         onSelect: () => setFilters({ delivery: option.value }),
@@ -275,7 +286,7 @@ export function FindWorkPage() {
     Boolean(search.q) || nearMe.active || findWorkQuery({ ...filters, sort: 'soonest' }) !== '';
 
   return (
-    <main className={cn(surfaceTheme.page, 'pb-16')}>
+    <main className={cn(surfaceTheme.pageWide, 'py-4 pb-16')}>
       <div className={surfaceTheme.pageStack}>
         <PageHeader
           title='Jobs'
@@ -291,7 +302,7 @@ export function FindWorkPage() {
         />
         <JobsSectionTabs />
 
-        <section aria-label='Job summary' className='grid gap-4 sm:grid-cols-2 xl:grid-cols-4'>
+        <section aria-label='Job summary' className={surfaceTheme.statGrid}>
           {data.loading ? (
             <StatCardSkeleton />
           ) : (
@@ -484,7 +495,9 @@ export function FindWorkPage() {
               <MarketplaceTabs tabs={basisTabs} label='Billing basis' />
               <TabsContent value={filters.basis} className='mt-4 flex flex-col gap-4'>
                 <p className='text-muted-foreground text-sm' aria-live='polite'>
-                  <span className='text-foreground font-semibold tabular-nums'>{listed.length}</span>{' '}
+                  <span className='text-foreground font-semibold tabular-nums'>
+                    {listed.length}
+                  </span>{' '}
                   {listed.length === 1 ? 'job' : 'jobs'}
                   {list.hasNextPage ? ` of ${data.totalOpen ?? 'more'} open` : ''}
                 </p>
@@ -512,7 +525,7 @@ export function FindWorkPage() {
                   onRetry={() => list.refetch()}
                   errorTitle='Couldn’t load open jobs'
                   skeleton={
-                    <div className='flex flex-col gap-4'>
+                    <div className={surfaceTheme.cardGridWide}>
                       <FindWorkJobCardSkeleton />
                       <FindWorkJobCardSkeleton />
                       <FindWorkJobCardSkeleton />
@@ -547,7 +560,7 @@ export function FindWorkPage() {
                     />
                   }
                 >
-                  <ul className='flex flex-col gap-4'>
+                  <ul className={surfaceTheme.cardGridWide}>
                     {listed.map(row => (
                       <li key={row.job.uuid}>
                         <FindWorkJobCard row={row} now={now} onApply={setApplyJob} />

@@ -1,21 +1,21 @@
 import { Button } from '@/components/ui/button';
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from '@/components/ui/dialog';
+import { Checkbox } from '@/components/ui/checkbox';
 import { Label } from '@/components/ui/label';
+import {
+  Sheet,
+  SheetContent,
+  SheetDescription,
+  SheetFooter,
+  SheetHeader,
+  SheetTitle,
+} from '@/components/ui/sheet';
 import Spinner from '@/components/ui/spinner';
 import { Textarea } from '@/components/ui/textarea';
-import { Checkbox } from '../../../../../components/ui/checkbox';
 import { StarRating } from './star-rating';
 
 type FeedbackType = 'instructor' | 'others';
 
-type FeedbackDialogProps = {
+type FeedbackSheetProps = {
   type?: FeedbackType; // default = 'instructor'
 
   open: boolean;
@@ -47,7 +47,8 @@ type FeedbackDialogProps = {
   isSubmitting?: boolean;
 };
 
-export function FeedbackDialog({
+/** The review form for a class, course or instructor, in a right-side sheet. */
+export function FeedbackSheet({
   type = 'instructor',
   open,
   onOpenChange,
@@ -67,25 +68,26 @@ export function FeedbackDialog({
   onPunctualityRatingChange,
   onSubmit,
   isSubmitting = false,
-}: FeedbackDialogProps) {
+}: FeedbackSheetProps) {
   const isInstructor = type === 'instructor';
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent>
-        <DialogHeader>
-          <DialogTitle>Rate Your Experience</DialogTitle>
-          <DialogDescription>
+    <Sheet open={open} onOpenChange={onOpenChange}>
+      <SheetContent side='right' className='w-full overflow-y-auto sm:max-w-lg'>
+        <SheetHeader>
+          <SheetTitle>Rate Your Experience</SheetTitle>
+          <SheetDescription>
             {isInstructor
               ? 'Help others by sharing your experience with this instructor'
               : 'Help others by sharing your experience'}
-          </DialogDescription>
-        </DialogHeader>
+          </SheetDescription>
+        </SheetHeader>
 
-        <div className='space-y-4'>
+        <div className='space-y-5 px-4'>
           <div>
-            <Label>Headline</Label>
+            <Label htmlFor='feedback-headline'>Headline</Label>
             <Textarea
+              id='feedback-headline'
               placeholder='Title your review...'
               value={headline}
               onChange={e => onHeadlineChange(e.target.value)}
@@ -95,8 +97,9 @@ export function FeedbackDialog({
           </div>
 
           <div>
-            <Label>Your Feedback</Label>
+            <Label htmlFor='feedback-body'>Your Feedback</Label>
             <Textarea
+              id='feedback-body'
               placeholder='Share your experience...'
               value={feedback}
               onChange={e => onFeedbackChange(e.target.value)}
@@ -105,72 +108,55 @@ export function FeedbackDialog({
             />
           </div>
 
-          <div
-            className={`mb-8 grid gap-4 ${isInstructor ? 'grid-cols-1 md:grid-cols-2' : 'grid-cols-1'
-              }`}
-          >
-            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between space-y-4">
+          <RatingField label='Overall Rating' value={rating} onChange={onRatingChange} />
+
+          {isInstructor ? (
+            <div className='grid grid-cols-1 gap-4 sm:grid-cols-2'>
               <RatingField
-                label="Overall Rating"
-                value={rating}
-                onChange={onRatingChange}
+                label='Clarity'
+                value={clarityRating ?? 0}
+                onChange={value => onClarityRatingChange?.(value)}
               />
-
-              <div className="flex flex-col items-start space-x-3">
-                <div className='flex flex-row items-center gap-2'>
-                  <Checkbox
-                    id="anonymous-review"
-                    checked={anonymous ?? false}
-                    onCheckedChange={(checked) => onAnonymousChange?.(checked === true)}
-                  />
-                  <Label
-                    htmlFor="anonymous-review"
-                    className="cursor-pointer text-sm font-medium"
-                  >
-                    Submit anonymously
-                  </Label>
-                </div>
-
-                <p className="text-xs text-muted-foreground">
-                  Your name will not be shown with this review.
-                </p>
-              </div>
+              <RatingField
+                label='Engagement'
+                value={engagementRating ?? 0}
+                onChange={value => onEngagementRatingChange?.(value)}
+              />
+              <RatingField
+                label='Punctuality'
+                value={punctualityRating ?? 0}
+                onChange={value => onPunctualityRatingChange?.(value)}
+              />
             </div>
+          ) : null}
 
-
-            {isInstructor && (
-              <>
-                <RatingField
-                  label='Clarity'
-                  value={clarityRating ?? 0}
-                  onChange={onClarityRatingChange!}
-                />
-                <RatingField
-                  label='Engagement'
-                  value={engagementRating ?? 0}
-                  onChange={onEngagementRatingChange!}
-                />
-                <RatingField
-                  label='Punctuality'
-                  value={punctualityRating ?? 0}
-                  onChange={onPunctualityRatingChange!}
-                />
-              </>
-            )}
+          <div className='flex flex-col gap-1'>
+            <div className='flex flex-row items-center gap-2'>
+              <Checkbox
+                id='anonymous-review'
+                checked={anonymous ?? false}
+                onCheckedChange={checked => onAnonymousChange?.(checked === true)}
+              />
+              <Label htmlFor='anonymous-review' className='cursor-pointer text-sm font-medium'>
+                Submit anonymously
+              </Label>
+            </div>
+            <p className='text-muted-foreground text-xs'>
+              Your name will not be shown with this review.
+            </p>
           </div>
         </div>
 
-        <DialogFooter>
+        <SheetFooter className='flex-row justify-end gap-2 border-t'>
           <Button variant='outline' onClick={() => onOpenChange(false)}>
             Cancel
           </Button>
-
           <Button onClick={onSubmit} disabled={isSubmitting} className='min-w-[120px]'>
             {isSubmitting ? <Spinner /> : 'Submit Feedback'}
           </Button>
-        </DialogFooter>
-      </DialogContent>
-    </Dialog>
+        </SheetFooter>
+      </SheetContent>
+    </Sheet>
   );
 }
 

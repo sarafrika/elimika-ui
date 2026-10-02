@@ -1,6 +1,7 @@
 // @ts-nocheck -- pre-existing @hey-api generated-client type drift (see memory: elimika-ui-typecheck)
 'use client';
 
+import { surfaceTheme } from '@/components/data-display';
 import { CustomPagination } from '@/components/pagination';
 import { Button } from '@/components/ui/button';
 import { SearchQueryInput } from '@/components/search/search-input';
@@ -87,7 +88,7 @@ export default function CourseMangementPage() {
         </div>
 
         {/* Course Grid */}
-        <div className='grid grid-cols-1 gap-6 md:grid-cols-2 xl:grid-cols-3'>
+        <div className={surfaceTheme.cardGrid}>
           {filteredCourses.map(course => (
             <CourseCard
               key={course.uuid}

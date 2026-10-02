@@ -1,497 +1,202 @@
 'use client';
 
-import { allCourseTrainingRequirementsOptions } from '@/services/course-training-requirements';
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { CalendarClock, Heart, Share2 } from 'lucide-react';
-import { useParams, useRouter } from 'next/navigation';
-import { type ComponentProps, useEffect, useMemo, useState } from 'react';
-import { toast } from 'sonner';
-import { CourseTrainingRequirements } from '@/app/dashboard/_components/course-training-requirements';
-import { socialShareActions } from '@/app/dashboard/instructor/classes/overview/[id]/page';
-import NotesModal from '@/components/custom-modals/notes-modal';
-import { LinkShareCard } from '@/components/shared/link-share-card';
+import { useQuery } from '@tanstack/react-query';
+import {
+  BookOpen,
+  CalendarClock,
+  Clock,
+  FileCheck,
+  MoveRight,
+  Share2,
+  Star,
+  Users,
+} from 'lucide-react';
+import { useRouter } from 'next/navigation';
+import { useEffect, useMemo, useState } from 'react';
+import { type EntityFact, EntityHeaderCard } from '@/components/data-display/entity-header-card';
+import { surfaceTheme } from '@/components/data-display/page-shell';
+import {
+  type SectionTab,
+  SectionTabPanel,
+  SectionTabs,
+  useSectionTab,
+} from '@/components/data-display/section-tabs';
+import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
-} from '@/components/ui/dialog';
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from '@/components/ui/table';
-import { useInstructor } from '@/context/instructor-context';
-import { useOrganisation } from '@/context/organisation-context';
-import { useAssignmentsByLessonIds, useQuizzesByLessonIds } from '@/hooks/use-batched-lookups';
-import { ClassDetailsScheduleItem, CombinedClassDetailsData } from '@/hooks/use-class-details';
+  useAssignmentsByLessonIds,
+  useQuizzesByLessonIds,
+  useStudentsByIds,
+} from '@/hooks/use-batched-lookups';
+import type { CombinedClassDetailsData } from '@/hooks/use-class-details';
 import { useCourseLessonsWithContent } from '@/hooks/use-courselessonwithcontent';
-import type { RateCard } from '@/lib/rate-card';
-import { buildSocialShareUrl, openShareWindow } from '@/lib/share';
-import type {
-  Assignment,
-  ClassReview,
-  Course,
-  CourseAssessment,
-  CourseReview,
-  DifficultyLevel,
-  Lesson,
-  Quiz,
-} from '@/services/client';
-import { ApplicantTypeEnum } from '@/services/client';
+import { cn } from '@/lib/utils';
 import {
   getAllCoursesOptions,
   getAllDifficultyLevelsOptions,
-  getAllTrainingProgramsOptions,
   getClassReviewsOptions,
   getCourseAssessmentsOptions,
   getCourseCreatorByUuidOptions,
-  getCourseReviewsOptions,
-  getPublishedCoursesOptions,
-  searchTrainingApplicationsOptions,
-  submitTrainingApplicationMutation,
 } from '@/services/client/@tanstack/react-query.gen';
+import { allCourseTrainingRequirementsOptions } from '@/services/course-training-requirements';
+import { LOCATION_TYPE_LABELS, SESSION_FORMAT_LABELS } from '@/src/features/catalogue/course-page';
+import {
+  AssessmentTab,
+  CurriculumTab,
+  courseBulletLines,
+  OverviewTab,
+  ReviewsTab,
+} from '@/src/features/course-record';
 import { useUserDomain } from '@/src/features/dashboard/context/user-domain-context';
 import { EnrollmentLoadingState } from '@/src/features/dashboard/courses/components/EnrollmentLoadingState';
-import { invalidateTrainingApplicationWorkflowQueries } from '@/src/features/dashboard/workflow-query-invalidation';
-import CourseDetailsHero from '@/src/features/dashboard/courses/shared/_components/CourseDetailsHero';
-import CourseFaq from '@/src/features/dashboard/courses/shared/_components/CourseFaq';
-import CourseOverview, {
-  ClassCourseCurriculum,
-} from '@/src/features/dashboard/courses/shared/_components/CourseOverview';
-import CourseRating, {
-  ClassRating,
-} from '@/src/features/dashboard/courses/shared/_components/CourseRating';
-import CourseReviews from '@/src/features/dashboard/courses/shared/_components/CourseReviews';
-import ClassCourseTabNav from '@/src/features/dashboard/courses/shared/_components/CourseTabNav';
-import {
-  decisiveTrainingApplication,
-  formatDurationFromParts,
-  getContentHref,
-  getEnrollHref,
-  stripHtml,
-} from '@/src/features/dashboard/courses/shared/_components/courses-data';
-import EnrollSidebar from '@/src/features/dashboard/courses/shared/_components/EnrollSidebar';
-import ShareClassCourse, {
-  ShareClass,
-} from '@/src/features/dashboard/courses/shared/_components/ShareClassCourse';
-import { UnifiedContentItem } from '@/src/features/dashboard/courses/shared/_components/SharedCoursesPage';
 import StudentsAlsoBought from '@/src/features/dashboard/courses/shared/_components/StudentsAlsoBought';
 import { roleScopedDashboardPath } from '@/src/features/dashboard/lib/active-domain-storage';
-import { useUserProfile } from '@/src/features/profile/context/profile-context';
+import { 
+  averageRating,
+  CLASS_COURSE_TABS,
+  CLASS_HUB_TAB_LABELS,
+  type ClassCourseTab,
+  type ClassHubViewer,enumLabel, 
+  reviewerNameMap,
+  reviewerUuids,
+  scheduleTotalDuration,
+  scheduleWeekSpan,
+  toBlockReviews,
+  toCurriculumLessons,} from './class-hub';
+import {
+  AssignmentQuizCounts,
+  ClassHeaderMedia,
+  ClassInstructorCard,
+  ClassSchedulePanel,
+  DeleteClassButton,
+  ShareLinkSheet,
+  WriteReviewButton,
+} from './class-hub-parts';
 
-const trainingApplicationStatusQueryOptions = {
-  staleTime: 0,
-  refetchOnMount: 'always' as const,
-  refetchOnWindowFocus: true,
-  refetchOnReconnect: true,
-};
-
-function getDurationLabel(course?: Course) {
-  if (!course) return 'N/A';
-  if (!course.duration_hours && !course.duration_minutes) {
-    return 'N/A';
-  }
-
-  const hours = course.duration_hours ?? 0;
-  const minutes = course.duration_minutes ?? 0;
-
-  return `${hours} hours / ${minutes} minutes`;
-}
-
+/** A class that runs one course: header card, then Overview · Curriculum · Assessment · Schedule · Reviews. */
 export default function ClassCourseDetailsPage({
-  courseId,
   classData,
-  type,
+  viewer,
 }: {
-  courseId: string;
-  classData?: CombinedClassDetailsData;
-  type: string | undefined;
+  classData: CombinedClassDetailsData;
+  viewer: ClassHubViewer;
 }) {
   const router = useRouter();
-  const params = useParams();
   const { activeDomain } = useUserDomain();
-
-  const [activeTab, setActiveTab] = useState('Overview');
-
-  const instructor = useInstructor();
-  const organisation = useOrganisation();
-  const qc = useQueryClient();
-
-  const resolvedCourseId = courseId || (params?.id as string);
-  const classId = classData?.class?.uuid as string;
-
-  const [applyModalOpen, setApplyModalOpen] = useState(false);
-  const [shareOpen, setShareOpen] = useState(false);
+  const { value: tab, setValue: setTab, hrefFor } = useSectionTab(CLASS_COURSE_TABS, 'overview');
   const [inviteOpen, setInviteOpen] = useState(false);
 
-  const applyToTrainCourseMut = useMutation(submitTrainingApplicationMutation());
-  const isInstructorDomain = activeDomain === 'instructor';
-  const isOrganisationDomain =
-    activeDomain === 'organisation' || activeDomain === 'organisation_user';
-  // Both instructors and organisations may apply to train an approved course.
-  const canApplyToTrain = isInstructorDomain || isOrganisationDomain;
-  const userProfile = useUserProfile();
-  const profileOrganisationUuid = useMemo(() => {
-    const affiliations = userProfile?.organisation_affiliations ?? [];
-    return (affiliations.find(a => a.active) ?? affiliations[0])?.organisation_uuid;
-  }, [userProfile?.organisation_affiliations]);
-  const organisationUuid = organisation?.uuid ?? profileOrganisationUuid;
-  const applicantUuid = isOrganisationDomain ? organisationUuid : instructor?.uuid;
-  const applicantType = isOrganisationDomain
-    ? ApplicantTypeEnum.ORGANISATION
-    : ApplicantTypeEnum.INSTRUCTOR;
+  const course = classData.course;
+  const courseUuid = course?.uuid ?? '';
+  const classId = classData.class?.uuid ?? '';
 
-  const { data: coursesResponse, isLoading: coursesLoading } = useQuery({
-    ...getPublishedCoursesOptions({
-      query: {
-        pageable: {
-          page: 0,
-          size: 18,
-        },
-      },
-    }),
-    refetchOnWindowFocus: false,
+  /* ── data ──────────────────────────────────────────────────────────── */
+
+  const requirementsQuery = useQuery({
+    ...allCourseTrainingRequirementsOptions(courseUuid),
+    enabled: !!courseUuid,
   });
 
-  const { data: programsResponse, isLoading: programsLoading } = useQuery({
-    ...getAllTrainingProgramsOptions({
-      query: {
-        pageable: {
-          page: 0,
-          size: 12,
-        },
-      },
-    }),
-    refetchOnWindowFocus: false,
-  });
-
-  const courses = useMemo(() => coursesResponse?.data?.content ?? [], [coursesResponse]);
-  const programs = useMemo(() => programsResponse?.data?.content ?? [], [programsResponse]);
-
-  const mappedPrograms = useMemo<UnifiedContentItem[]>(
-    () =>
-      programs.map(program => {
-        const durationLabel = formatDurationFromParts(
-          program.total_duration_hours,
-          program.total_duration_minutes,
-          program.total_duration_display
-        );
-
-        return {
-          id: program.uuid ?? '',
-          kind: 'program',
-          title: program.title,
-          description: stripHtml(program.description),
-          createdAt: program.created_date ? new Date(program.created_date).getTime() : 0,
-          durationMinutes: program.total_duration_hours * 60 + program.total_duration_minutes,
-          durationLabel,
-          categoryLabels: [],
-          creatorUuid: program.course_creator_uuid,
-          creatorName: '',
-          price: program.price as string | number | undefined,
-          minimumRate: program.price as number,
-          imageUrl: undefined,
-          href: getContentHref('course_creator', 'program', program.uuid ?? ''),
-          enrolledClasses: 1,
-          secondaryMeta:
-            program.program_type ??
-            (program.price && program.price > 0 ? 'Paid Program' : 'Free Program'),
-          bundledCourseCount: 0,
-        };
-      }),
-    [programs]
-  );
-
-  const mappedCourses = useMemo<UnifiedContentItem[]>(
-    () =>
-      courses.map(course => ({
-        id: course.uuid ?? '',
-        kind: 'course',
-        title: course.name,
-        description: stripHtml(course.description),
-        createdAt: course.created_date ? new Date(course.created_date).getTime() : 0,
-        durationMinutes: course.duration_hours * 60 + course.duration_minutes,
-        durationLabel: formatDurationFromParts(
-          course.duration_hours,
-          course.duration_minutes,
-          course.total_duration_display
-        ),
-        categoryLabels: course.category_names ?? [],
-        creatorUuid: course.course_creator_uuid,
-        creatorName: '',
-        levelLabel: '',
-        price: course.price as string | number | undefined,
-        minimumRate: (course.minimum_training_fee as number) ?? (course.price as number),
-        imageUrl: (course.banner_url as string) ?? (course.thumbnail_url as string),
-        href: getContentHref('course_creator', 'course', course.uuid ?? ''),
-        enrolledClasses: 1,
-        secondaryMeta:
-          course.category_names?.[0] ??
-          (course.price && course.price > 0 ? 'Paid Course' : 'Free Course'),
-      })),
-    [courses]
-  );
-
-  const course = useMemo(() => {
-    if (!resolvedCourseId) return undefined;
-
-    return courses.find(c => c.uuid === resolvedCourseId);
-  }, [courses, resolvedCourseId]);
-
-  const { data: cReqData } = useQuery({
-    ...allCourseTrainingRequirementsOptions(resolvedCourseId),
-    enabled: !!resolvedCourseId,
-  });
-  const requirementCount = Number(cReqData?.data?.content?.length) ?? 0;
-
-  const { data: cAssessmentsResp } = useQuery({
+  const assessmentsQuery = useQuery({
     ...getCourseAssessmentsOptions({
-      path: { courseUuid: resolvedCourseId as string },
+      path: { courseUuid },
       query: { pageable: {} },
     }),
+    enabled: !!courseUuid,
   });
-
-  const courseShareLink =
-    typeof window !== 'undefined'
-      ? `${window.location.origin}${roleScopedDashboardPath(
-          activeDomain,
-          `/dashboard/courses/${course?.uuid}`
-        )}`
-      : '';
+  const assessmentScheme = assessmentsQuery.data?.data?.content ?? [];
 
   const { data: creatorResponse, isLoading: creatorLoading } = useQuery({
     ...getCourseCreatorByUuidOptions({ path: { uuid: course?.course_creator_uuid as string } }),
     enabled: !!course?.course_creator_uuid,
   });
-  const creator = (creatorResponse as unknown as { data?: typeof creatorResponse })?.data;
+  // The generated type drops the response envelope; the payload sits under `data`.
+  const creatorName =
+    (creatorResponse as unknown as { data?: { full_name?: string } } | undefined)?.data
+      ?.full_name ?? '';
 
-  const myCourseItems = useMemo<UnifiedContentItem[]>(() => {
-    const courseCreatorUuid = course?.course_creator_uuid;
-
-    if (!courseCreatorUuid) {
-      return [];
-    }
-
-    const creatorCourses = mappedCourses.filter(course => course.creatorUuid === courseCreatorUuid);
-    const creatorPrograms = mappedPrograms.filter(
-      program => program.creatorUuid === courseCreatorUuid
-    );
-
-    return [...creatorCourses, ...creatorPrograms].sort((a, b) => b.createdAt - a.createdAt);
-  }, [mappedCourses, mappedPrograms, course?.course_creator_uuid]);
-
-  const { data: reviewsResponse, isLoading: reviewsLoading } = useQuery({
-    ...getCourseReviewsOptions({ path: { courseUuid: resolvedCourseId } }),
-    enabled: !!resolvedCourseId,
+  const classReviewsQuery = useQuery({
+    ...getClassReviewsOptions({ path: { uuid: classId }, query: { pageable: {} } }),
+    enabled: !!classId,
     staleTime: 5 * 60 * 1000,
     refetchOnWindowFocus: false,
   });
-  const courseReviews: CourseReview[] = reviewsResponse?.data ?? [];
-
-  const { data: classReviewsResponse, isLoading: classReviewsLoading } = useQuery({
-    ...getClassReviewsOptions({ path: { uuid: classId as string }, query: { pageable: {} } }),
-    enabled: !!resolvedCourseId,
-    staleTime: 5 * 60 * 1000,
-    refetchOnWindowFocus: false,
-  });
-  const classReviews: ClassReview[] = classReviewsResponse?.data?.content ?? [];
+  const classReviews = useMemo(
+    () => classReviewsQuery.data?.data?.content ?? [],
+    [classReviewsQuery.data]
+  );
+  const blockReviews = useMemo(() => toBlockReviews(classReviews), [classReviews]);
+  const reviewerIds = useMemo(() => reviewerUuids(classReviews), [classReviews]);
+  const { studentMap } = useStudentsByIds(reviewerIds);
+  const avgRating = averageRating(classReviews);
 
   const { data: difficultyResponse, isLoading: difficultyLoading } = useQuery(
     getAllDifficultyLevelsOptions()
   );
-
-  const difficultyLevels: DifficultyLevel[] = difficultyResponse?.data ?? [];
+  const difficultyName =
+    (difficultyResponse?.data ?? []).find(level => level.uuid === course?.difficulty_uuid)?.name ??
+    null;
 
   const {
     isLoading: lessonsLoading,
     isFetching: lessonsFetching,
     lessons: lessonsWithContent,
-  } = useCourseLessonsWithContent({
-    courseUuid: resolvedCourseId,
-  });
+  } = useCourseLessonsWithContent({ courseUuid });
 
-  const lessons: Lesson[] = useMemo(
-    () => lessonsWithContent?.map(item => item.lesson).filter(Boolean) ?? [],
+  const curriculumLessons = useMemo(
+    () => toCurriculumLessons(lessonsWithContent),
     [lessonsWithContent]
   );
-
   const lessonUuids = useMemo(
-    () => lessons.map(lesson => lesson.uuid).filter((uuid): uuid is string => !!uuid),
-    [lessons]
+    () =>
+      (lessonsWithContent ?? [])
+        .map(item => item.lesson?.uuid)
+        .filter((uuid): uuid is string => !!uuid),
+    [lessonsWithContent]
+  );
+  const contentItemCount = useMemo(
+    () =>
+      lessonsWithContent?.some(item => item.content)
+        ? lessonsWithContent.reduce((sum, item) => sum + (item.content?.data?.length ?? 0), 0)
+        : undefined,
+    [lessonsWithContent]
   );
 
   const { items: quizzes, isLoading: quizzesLoading } = useQuizzesByLessonIds(lessonUuids);
   const { items: assignments, isLoading: assignmentLoading } =
     useAssignmentsByLessonIds(lessonUuids);
+  const filteredAssignments = assignments.filter(item => lessonUuids.includes(item.lesson_uuid));
+  const filteredQuizzes = quizzes.filter(item => lessonUuids.includes(item.lesson_uuid));
 
   const { data: relatedCoursesResponse, isLoading: relatedCoursesLoading } = useQuery({
-    ...getAllCoursesOptions({
-      query: {
-        pageable: {
-          page: 0,
-          size: 12,
-        },
-      },
-    }),
+    ...getAllCoursesOptions({ query: { pageable: { page: 0, size: 12 } } }),
     enabled: !!course?.course_creator_uuid,
   });
-
-  const { data: trainingApplicationsResponse, isFetching: trainingApplicationsFetching } = useQuery(
-    {
-      ...searchTrainingApplicationsOptions({
-        query: {
-          pageable: {},
-          searchParams: {
-            applicant_uuid_eq: applicantUuid ?? '',
-            applicant_type_eq: applicantType,
-            course_uuid_eq: course?.uuid ?? '',
-          },
-        },
-      }),
-      enabled: canApplyToTrain && Boolean(applicantUuid) && Boolean(course?.uuid),
-      ...trainingApplicationStatusQueryOptions,
-    }
+  const relatedCourses = useMemo(
+    () =>
+      (relatedCoursesResponse?.data?.content ?? [])
+        .filter(
+          item =>
+            item.uuid &&
+            item.uuid !== course?.uuid &&
+            item.course_creator_uuid === course?.course_creator_uuid
+        )
+        .slice(0, 3),
+    [course?.course_creator_uuid, course?.uuid, relatedCoursesResponse?.data?.content]
   );
-
-  const filteredAssignments = useMemo(
-    () => assignments.filter(assignment => lessonUuids.includes(assignment.lesson_uuid)),
-    [assignments, lessonUuids]
-  );
-
-  const filteredQuizzes = useMemo(
-    () => quizzes.filter(quiz => lessonUuids.includes(quiz.lesson_uuid)),
-    [lessonUuids, quizzes]
-  );
-
-  const difficultyName = useMemo(
-    () => difficultyLevels.find(level => level.uuid === course?.difficulty_uuid)?.name ?? null,
-    [course?.difficulty_uuid, difficultyLevels]
-  );
-
-  const courseReviewCount = courseReviews.length;
-  const courseAvgRating =
-    courseReviewCount > 0
-      ? (
-          courseReviews.reduce((sum, review) => sum + (review.rating || 0), 0) / courseReviewCount
-        ).toFixed(1)
-      : null;
-
-  const classReviewCount = classReviews.length;
-  const classAvgRating =
-    classReviewCount > 0
-      ? (
-          classReviews.reduce((sum, review) => sum + (review.rating || 0), 0) / classReviewCount
-        ).toFixed(1)
-      : null;
-
-  const reviewCount = type === 'course' ? courseReviewCount : classReviewCount;
-  const avgRating = type === 'course' ? courseAvgRating : classAvgRating;
-
-  const creatorName = creator?.full_name ?? '';
-  const creatorBio = creator?.bio ?? '';
-
-  const creatorHeadline = creator?.professional_headline ?? '';
-
-  const durationLabel = getDurationLabel(course);
-  // Several rows can exist for one course (reapply after a rejection, re-approval after a
-  // revocation); the decisive one — not whichever the API listed first — sets the button state.
-  const currentTrainingApplication =
-    decisiveTrainingApplication(trainingApplicationsResponse?.data?.content ?? []) ?? null;
-  const currentTrainingApplicationStatus = currentTrainingApplication?.status ?? null;
-  const trainingApplicationStatusRefreshing =
-    canApplyToTrain &&
-    Boolean(applicantUuid) &&
-    Boolean(course?.uuid) &&
-    trainingApplicationsFetching;
-  const instructorActionLabel = trainingApplicationStatusRefreshing
-    ? 'Checking status'
-    : currentTrainingApplicationStatus === 'approved'
-      ? 'Approved'
-      : currentTrainingApplicationStatus === 'pending'
-        ? 'Pending'
-        : (currentTrainingApplicationStatus as string) === 'revoked' ||
-            currentTrainingApplicationStatus === 'rejected'
-          ? 'Reapply to Train'
-          : 'Apply to Train';
-  const instructorActionDisabled =
-    trainingApplicationStatusRefreshing ||
-    currentTrainingApplicationStatus === 'approved' ||
-    currentTrainingApplicationStatus === 'pending';
-
-  const relatedCourses = useMemo(() => {
-    const courses = relatedCoursesResponse?.data?.content ?? [];
-
-    return courses
-      .filter(
-        item =>
-          item.uuid &&
-          item.uuid !== course?.uuid &&
-          item.course_creator_uuid === course?.course_creator_uuid
-      )
-      .slice(0, 3);
-  }, [course?.course_creator_uuid, course?.uuid, relatedCoursesResponse?.data?.content]);
-
-  const handleApplyToTrain = (data: { notes: string; rate_card: RateCard }) => {
-    if (!course?.uuid) {
-      toast.error('Course details are not ready yet.');
-      return;
-    }
-
-    if (!applicantUuid) {
-      toast.error('Please wait for your profile to load.');
-      return;
-    }
-
-    const submitterUuid = applicantUuid;
-    const submitCourseUuid = course.uuid;
-
-    applyToTrainCourseMut.mutate(
-      {
-        body: {
-          applicant_type: applicantType,
-          applicant_uuid: submitterUuid,
-          rate_card: data.rate_card,
-          application_notes: data.notes,
-        },
-        path: { courseUuid: course.uuid },
-      },
-      {
-        onSuccess: async response => {
-          await invalidateTrainingApplicationWorkflowQueries(qc);
-          toast.success(response?.message ?? 'Application submitted successfully.');
-          setApplyModalOpen(false);
-        },
-        onError: error => {
-          toast.error(error?.message ?? 'Unable to submit course application');
-        },
-      }
-    );
-  };
 
   const [siteOrigin, setSiteOrigin] = useState('');
   useEffect(() => {
     setSiteOrigin(window.location.origin);
   }, []);
-
-  const registrationLink = useMemo(() => {
-    if (!siteOrigin) return '';
-
-    if (course?.uuid) {
-      return `${siteOrigin}/dashboard/student/courses/available-classes/${course.uuid}/enroll?id=${classId}`;
-    }
-
-    return '';
-  }, [classId, course?.uuid, siteOrigin]);
+  const registrationLink =
+    siteOrigin && course?.uuid
+      ? `${siteOrigin}/dashboard/student/courses/available-classes/${course.uuid}/enroll?id=${classId}`
+      : '';
 
   const isEverythingReady = !(
     creatorLoading ||
-    reviewsLoading ||
+    classReviewsQuery.isLoading ||
     difficultyLoading ||
     assignmentLoading ||
     quizzesLoading ||
@@ -503,635 +208,219 @@ export default function ClassCourseDetailsPage({
   if (!isEverythingReady) {
     return (
       <EnrollmentLoadingState
-        title={`Loading your ${type === 'course' ? 'course' : 'class'} details`}
+        title='Loading your class details'
         description='We are gathering lessons, tasks, quizzes, and course information so the full learning overview is ready when the page opens.'
       />
     );
   }
 
-  const tabs = [
-    'Overview',
-    `Lessons (${lessons.length})`,
-    `Assessment (${filteredAssignments?.length + filteredQuizzes?.length})`,
-    `Requirements (${requirementCount})`,
-    'Schedule',
-    `Reviews (${reviewCount})`,
-    'FAQs',
+  /* ── header ────────────────────────────────────────────────────────── */
+
+  const access = viewer === 'instructor' ? 'instructor' : 'student';
+  const enrolledCount = new Set((classData.enrollments ?? []).map(item => item.student_uuid)).size;
+  const sessionCount = classData.schedule?.length ?? 0;
+  const assessmentCount = filteredAssignments.length + filteredQuizzes.length;
+
+  const facts: EntityFact[] = [
+    {
+      key: 'schedule',
+      icon: CalendarClock,
+      value: sessionCount,
+      label: `${sessionCount === 1 ? 'session' : 'sessions'} · ${scheduleTotalDuration(classData.schedule)}`,
+    },
+    { key: 'weeks', icon: Clock, value: scheduleWeekSpan(classData.schedule), label: 'weeks' },
+    { key: 'enrolled', icon: Users, value: enrolledCount, label: 'enrolled' },
+    { key: 'lessons', icon: BookOpen, value: curriculumLessons.length, label: 'lessons' },
+    { key: 'assessments', icon: FileCheck, value: assessmentCount, label: 'assessments' },
   ];
+  if (avgRating !== null) {
+    facts.push({
+      key: 'rating',
+      icon: Star,
+      value: avgRating.toFixed(1),
+      label: `from ${classReviews.length} ${classReviews.length === 1 ? 'review' : 'reviews'}`,
+    });
+  }
+
+  const tabCounts: Partial<Record<ClassCourseTab, number>> = {
+    curriculum: curriculumLessons.length,
+    assessment: assessmentScheme.length,
+    schedule: sessionCount,
+    reviews: classReviews.length,
+  };
+  const tabs: SectionTab<ClassCourseTab>[] = CLASS_COURSE_TABS.map(id => ({
+    id,
+    label: CLASS_HUB_TAB_LABELS[id],
+    count: tabCounts[id] ?? null,
+  }));
+
+  const instructorAside =
+    viewer === 'instructor' ? (
+      <div className='bg-muted/30 flex h-full flex-col gap-3 rounded-xl border p-4'>
+        <p className='text-muted-foreground text-sm font-medium'>Enroll students in this class</p>
+        <p className='text-foreground text-2xl font-black'>
+          From Ksh {classData.class?.sale_price ?? 0}
+        </p>
+        <Button className='gap-2' onClick={() => setInviteOpen(true)}>
+          Invite Students
+          <MoveRight className='h-4 w-4' />
+        </Button>
+        <Button
+          variant='outline'
+          onClick={() =>
+            router.push(roleScopedDashboardPath(activeDomain, '/dashboard/skills-fund'))
+          }
+        >
+          Apply for funding
+        </Button>
+      </div>
+    ) : undefined;
 
   return (
-    <div className='min-h-screen font-sans'>
-      <main className='mx-auto w-full px-4 py-4 sm:px-6 sm:py-6 lg:px-8 lg:py-8'>
-        <div className='mb-4 flex justify-end gap-2 sm:mb-6'>
-          <Button
-            onClick={() => {
-              if (type === 'course') {
-                setShareOpen(true);
-              } else {
-                setInviteOpen(true);
+    <main className={cn(surfaceTheme.pageWide, 'flex flex-col gap-[18px] py-5')}>
+      <EntityHeaderCard
+        title={classData.class?.title ?? course?.name ?? 'Class'}
+        eyebrow='Class'
+        badges={
+          <>
+            {difficultyName ? <Badge variant='secondary'>{difficultyName}</Badge> : null}
+            {classData.class?.location_type ? (
+              <Badge variant='outline'>
+                {enumLabel(LOCATION_TYPE_LABELS, classData.class.location_type)}
+              </Badge>
+            ) : null}
+            {classData.class?.session_format ? (
+              <Badge variant='outline'>
+                {enumLabel(SESSION_FORMAT_LABELS, classData.class.session_format)}
+              </Badge>
+            ) : null}
+          </>
+        }
+        context={
+          <span className='text-muted-foreground'>
+            Course <b className='text-foreground font-semibold'>{course?.name}</b>
+            {creatorName ? <> · by {creatorName}</> : null}
+          </span>
+        }
+        facts={facts}
+        media={<ClassHeaderMedia classData={classData} fallbackIcon={BookOpen} label='Class' />}
+        aside={instructorAside}
+        actions={
+          <>
+            <Button
+              variant='outline'
+              size='sm'
+              className='gap-2'
+              onClick={() => setInviteOpen(true)}
+            >
+              <Share2 className='h-4 w-4' />
+              Share
+            </Button>
+            {viewer === 'instructor' ? (
+              <DeleteClassButton classData={classData} activeDomain={activeDomain ?? null} />
+            ) : null}
+          </>
+        }
+      />
+
+      <SectionTabs
+        tabs={tabs}
+        value={tab}
+        onValueChange={setTab}
+        hrefFor={hrefFor}
+        label='Class sections'
+        sticky
+      >
+        <SectionTabPanel value='overview'>
+          <div className='flex flex-col gap-[18px]'>
+            <OverviewTab
+              access={access}
+              description={course?.description}
+              objectives={courseBulletLines(course?.objectives)}
+              prerequisites={courseBulletLines(course?.prerequisites)}
+              requirements={requirementsQuery.data?.data?.content}
+              // A learner gains nothing from an empty "no requirements" note meant for providers.
+              hideRequirements={
+                requirementsQuery.isSuccess && !requirementsQuery.data?.data?.content?.length
               }
-            }}
-            className='border-border bg-card text-muted-foreground hover:bg-muted/50 hover:border-primary/45 hover:text-foreground flex items-center gap-1.5 rounded-sm border px-3 py-1.5 text-xs shadow-sm transition-colors duration-200 ease-in-out sm:text-sm'
-          >
-            <Share2 className='h-3.5 w-3.5' />
-            Share
-          </Button>
-
-          <Button className='border-border bg-card text-muted-foreground hover:bg-destructive/10 hover:border-destructive hover:text-destructive flex items-center gap-1.5 rounded-sm border px-3 py-1.5 text-xs shadow-sm transition-colors duration-200 ease-in-out sm:text-sm'>
-            <Heart className='h-3.5 w-3.5' />
-            Wishlist
-          </Button>
-        </div>
-
-        <div className='flex flex-col items-start gap-6 lg:flex-row lg:gap-8 xl:gap-10'>
-          <div className='flex w-full min-w-0 flex-1 flex-col gap-5 sm:gap-6'>
-            <div className='border-border bg-card rounded-xl border p-4 shadow-sm sm:p-5 lg:p-6'>
-              <CourseDetailsHero
-                course={course!}
-                classData={classData!}
-                type={type}
-                creatorName={creatorName}
-                creatorHeadline={creatorHeadline}
-                difficultyName={difficultyName}
-                reviewCount={reviewCount}
-                averageRating={avgRating}
-                lessonCount={lessons.length}
-                assignmentCount={filteredAssignments.length}
-                quizCount={filteredQuizzes.length}
-                durationLabel={durationLabel}
-              />
-            </div>
-
-            <div className='border-border bg-card overflow-hidden rounded-xl border shadow-sm'>
-              <div className='px-4 pt-4 sm:px-5 sm:pt-5 lg:px-6'>
-                <ClassCourseTabNav tabs={tabs} activeTab={activeTab} onTabChange={setActiveTab} />
-              </div>
-
-              <div className='px-4 py-4 sm:px-5 sm:py-5 lg:px-6 lg:py-6'>
-                {activeTab === 'Overview' && (
-                  <CourseOverview
-                    course={course!}
-                    classData={classData!}
-                    type={type as 'course' | 'class' | undefined}
-                    creatorName={creatorName}
-                    creatorHeadline={creatorHeadline}
-                    creatorBio={creatorBio}
-                    lessons={lessons}
-                    creatorCourseItems={myCourseItems}
-                    lessonsWithContent={lessonsWithContent ?? []}
-                    reviewCount={reviewCount}
-                    averageRating={avgRating}
-                  />
-                )}
-
-                {activeTab === `Lessons (${lessons.length})` && (
-                  <ClassCourseCurriculum lessonsWithContent={lessonsWithContent ?? []} />
-                )}
-
-                {activeTab ===
-                  `Assessment (${filteredAssignments?.length + filteredQuizzes?.length})` && (
-                  <CourseAssessments
-                    assignments={filteredAssignments}
-                    quizzes={filteredQuizzes}
-                    assessmentScheme={cAssessmentsResp?.data?.content ?? []}
-                  />
-                )}
-
-                {activeTab === `Requirements (${requirementCount})` && (
-                  <CourseTrainingRequirements
-                    requirements={cReqData?.data?.content}
-                    title='Course Training Requirements'
-                    description='Review what you need to prepare before registering for this class.'
-                    className='border-none shadow-none'
-                    viewerRole={
-                      activeDomain as unknown as ComponentProps<
-                        typeof CourseTrainingRequirements
-                      >['viewerRole']
-                    }
-                  />
-                )}
-
-                {activeTab === 'Schedule' && (
-                  <CourseScheduleInfo
-                    type={type as 'course' | 'class' | undefined}
-                    schedule={
-                      classData?.schedule as unknown as ComponentProps<
-                        typeof CourseScheduleInfo
-                      >['schedule']
-                    }
-                    classData={classData!}
-                  />
-                )}
-
-                {activeTab === `Reviews (${reviewCount})` &&
-                  (type === 'course' ? (
-                    <CourseReviews reviews={courseReviews} />
-                  ) : (
-                    <CourseReviews
-                      reviews={
-                        classReviews as unknown as ComponentProps<typeof CourseReviews>['reviews']
-                      }
-                    />
-                  ))}
-
-                {activeTab === 'FAQs' && <CourseFaq faqs={[]} />}
-              </div>
-            </div>
-
-            <div className='border-border bg-card rounded-xl border p-4 shadow-sm sm:p-5 lg:p-6'>
-              <StudentsAlsoBought
-                courses={relatedCourses}
-                activeDomain={activeDomain}
-                creatorName={creatorName}
-              />
-            </div>
-          </div>
-
-          <div className='flex w-full shrink-0 flex-col gap-4 sm:gap-5 lg:sticky lg:top-20 lg:w-80 xl:w-96'>
-            <EnrollSidebar
-              course={course!}
-              classData={classData!}
-              creatorName={creatorName}
-              activeDomain={activeDomain}
-              difficultyName={difficultyName}
-              type={type as 'course' | 'class' | undefined}
-              lessonCount={lessons.length}
-              assessmentCount={filteredAssignments.length + filteredQuizzes.length}
-              durationLabel={durationLabel}
-              becomeInstructorLabel={instructorActionLabel}
-              becomeInstructorDisabled={instructorActionDisabled}
-              handleBecomeInstructor={() => {
-                if (!canApplyToTrain) {
-                  return;
-                }
-
-                if (!applicantUuid) {
-                  toast.error('Please wait for your profile to load.');
-                  return;
-                }
-
-                setApplyModalOpen(true);
-              }}
-              onEnroll={() =>
-                router.push(
-                  roleScopedDashboardPath(
-                    activeDomain,
-                    getEnrollHref(activeDomain!, 'course', course?.uuid as string)
-                  )
-                )
-              }
-              onSearchInstructor={() =>
-                router.push(
-                  roleScopedDashboardPath(
-                    activeDomain,
-                    `/dashboard/courses/instructor?courseId=${course?.uuid}`
-                  )
-                )
-              }
-              onInviteStudents={() => setInviteOpen(true)}
-              onApplyForFunding={() => {
-                router.push(roleScopedDashboardPath(activeDomain, '/dashboard/skills-fund'));
+              requirementsAsync={{
+                loading: requirementsQuery.isLoading,
+                error: requirementsQuery.error,
+                onRetry: () => requirementsQuery.refetch(),
               }}
             />
-
-            {type === 'course' ? (
-              <CourseRating
-                reviewCount={courseReviewCount}
-                averageRating={courseAvgRating}
-                reviews={courseReviews}
-                courseId={resolvedCourseId}
-              />
-            ) : (
-              <ClassRating
-                reviewCount={classReviewCount}
-                averageRating={classAvgRating}
-                reviews={classReviews as unknown as ComponentProps<typeof ClassRating>['reviews']}
-                courseId={resolvedCourseId}
-                classId={classId}
-              />
-            )}
-
-            {type === 'course' ? (
-              <ShareClassCourse
-                courseTitle={course?.name ?? ''}
-                courseUrl={`${window.location.origin}${roleScopedDashboardPath(
-                  activeDomain,
-                  `/dashboard/courses/${course?.uuid}`
-                )}`}
-              />
-            ) : (
-              <ShareClass classTitle={classData?.class?.title ?? ''} classUrl={registrationLink} />
-            )}
+            <ClassInstructorCard classData={classData} />
+            {relatedCourses.length > 0 ? (
+              <section className='bg-card rounded-xl border px-5 py-[18px] shadow-sm'>
+                <StudentsAlsoBought
+                  courses={relatedCourses}
+                  activeDomain={activeDomain ?? null}
+                  creatorName={creatorName}
+                />
+              </section>
+            ) : null}
           </div>
-        </div>
+        </SectionTabPanel>
 
-        {canApplyToTrain && course ? (
-          <NotesModal
-            open={applyModalOpen}
-            setOpen={setApplyModalOpen}
-            title='Apply to Train a Course'
-            description={
-              <div className='space-y-2'>
-                <p>
-                  You are applying to train the course titled{' '}
-                  <span className='font-semibold'>&ldquo;{course.name}&rdquo;</span>.
-                </p>
-                <p>
-                  Provider: <span className='font-medium'>{creatorName || 'Course Creator'}</span>
-                  {durationLabel ? ` · Duration: ${durationLabel}` : ''}
-                  {course?.category_names?.[0] ? ` · Focus: ${course?.category_names[0]}` : ''}
-                </p>
-                <p>
-                  Submit your application notes and price each training method you offer per hour,
-                  per session and per day, at or above the creator-set minimum.
-                </p>
-              </div>
-            }
-            onSave={handleApplyToTrain}
-            saveText='Submit application'
-            cancelText='Cancel'
-            placeholder='Enter your application notes here...'
-            isLoading={applyToTrainCourseMut.isPending}
-            minimum_rate={course.minimum_training_fee ?? 0}
-            contentKind='course'
-            contentId={course.uuid}
-            applicantRole={isOrganisationDomain ? 'organisation_user' : 'instructor'}
+        <SectionTabPanel value='curriculum'>
+          <CurriculumTab
+            access={access}
+            lessons={curriculumLessons}
+            contentItemCount={contentItemCount}
           />
-        ) : null}
-      </main>
+        </SectionTabPanel>
 
-      <Dialog open={shareOpen} onOpenChange={setShareOpen}>
-        <DialogContent className='sm:max-w-lg'>
-          <DialogHeader>
-            <DialogTitle>Share Course</DialogTitle>
-            <DialogDescription>
-              Share this course with other learners and instructors.
-            </DialogDescription>
-          </DialogHeader>
-
-          <LinkShareCard
-            title='Course Link'
-            description='Copy or share this course link.'
-            url={courseShareLink}
-            footer={
-              <div className='space-y-3'>
-                <h4 className='text-sm font-medium'>Share via</h4>
-
-                <div className='flex flex-wrap gap-2'>
-                  {socialShareActions.map(({ icon: Icon, label, platform }) => (
-                    <Button
-                      key={label}
-                      size='sm'
-                      variant='outline'
-                      className='gap-2'
-                      disabled={!courseShareLink}
-                      onClick={() =>
-                        openShareWindow(
-                          buildSocialShareUrl(platform, {
-                            title: course?.name ?? 'Course',
-                            url: courseShareLink,
-                            description: `Check out this course: ${course?.name}`,
-                          })
-                        )
-                      }
-                    >
-                      <Icon className='h-4 w-4' />
-                      {label}
-                    </Button>
-                  ))}
-                </div>
-              </div>
-            }
-          />
-        </DialogContent>
-      </Dialog>
-
-      <Dialog open={inviteOpen} onOpenChange={setInviteOpen}>
-        <DialogContent className='sm:max-w-lg'>
-          <DialogHeader>
-            <DialogTitle>Invite Student</DialogTitle>
-            <DialogDescription>Share this class with learners.</DialogDescription>
-          </DialogHeader>
-
-          <LinkShareCard
-            title='Class Registration Link'
-            description='Copy or share this class link.'
-            url={registrationLink}
-            footer={
-              <div className='space-y-3'>
-                <h4 className='text-sm font-medium'>Share via</h4>
-
-                <div className='flex flex-wrap gap-2'>
-                  {socialShareActions.map(({ icon: Icon, label, platform }) => (
-                    <Button
-                      key={label}
-                      size='sm'
-                      variant='outline'
-                      className='gap-2'
-                      disabled={!registrationLink}
-                      onClick={() =>
-                        openShareWindow(
-                          buildSocialShareUrl(platform, {
-                            title: classData?.class?.title ?? 'Class',
-                            url: registrationLink,
-                            description: `Check out this class: ${classData?.class?.title}`,
-                          })
-                        )
-                      }
-                    >
-                      <Icon className='h-4 w-4' />
-                      {label}
-                    </Button>
-                  ))}
-                </div>
-              </div>
-            }
-          />
-        </DialogContent>
-      </Dialog>
-    </div>
-  );
-}
-
-function CourseScheduleInfo({
-  type,
-  classData,
-  schedule,
-}: {
-  type: 'course' | 'class' | undefined;
-  classData: CombinedClassDetailsData;
-  schedule: ClassDetailsScheduleItem;
-}) {
-  const getDuration = (start?: string, end?: string) => {
-    if (!start || !end) return '-';
-
-    const diff = new Date(end).getTime() - new Date(start).getTime();
-
-    if (isNaN(diff) || diff < 0) return '-';
-
-    const minutes = Math.floor(diff / (1000 * 60));
-    const hours = Math.floor(minutes / 60);
-    const remainingMinutes = minutes % 60;
-
-    return hours > 0 ? `${hours}h ${remainingMinutes}m` : `${remainingMinutes}m`;
-  };
-
-  return (
-    <>
-      {type === 'course' ? (
-        <div className='border-muted/50 bg-muted/30 rounded-lg border p-6'>
-          <div className='flex items-start gap-4'>
-            <div className='bg-primary/10 text-primary flex h-10 w-10 shrink-0 items-center justify-center rounded-full'>
-              <CalendarClock className='h-5 w-5' />
-            </div>
-
-            <div className='space-y-3'>
-              <h3 className='text-base font-semibold'>
-                Your Class Schedule Will Be Provided After Enrollment
-              </h3>
-
-              <p className='text-muted-foreground text-sm leading-relaxed'>
-                Hello! 😊 Once you enroll in this course, you’ll receive full details about your
-                class schedule. This includes:
-              </p>
-
-              <ul className='text-muted-foreground ml-5 list-disc space-y-1 text-sm leading-relaxed'>
-                <li>Class dates and start times</li>
-                <li>Frequency and duration of sessions</li>
-                <li>How to join each session</li>
-              </ul>
-
-              <p className='text-muted-foreground text-sm leading-relaxed'>
-                Make sure your contact information is up to date so you don’t miss any updates.
-                You’ll have everything you need to plan and prepare for your classes right after
-                enrollment.
-              </p>
-            </div>
+        <SectionTabPanel value='assessment'>
+          <div className='flex flex-col gap-[18px]'>
+            <AssessmentTab
+              assessments={assessmentScheme}
+              loading={assessmentsQuery.isLoading}
+              error={assessmentsQuery.error}
+              onRetry={() => assessmentsQuery.refetch()}
+            />
+            <AssignmentQuizCounts
+              assignments={filteredAssignments.length}
+              quizzes={filteredQuizzes.length}
+            />
           </div>
-        </div>
-      ) : (
-        <div className='overflow-x-auto'>
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>#</TableHead>
-                <TableHead>Title</TableHead>
-                <TableHead>Date & Time</TableHead>
-                <TableHead>Status</TableHead>
-                <TableHead>Time Spent</TableHead>
-              </TableRow>
-            </TableHeader>
+        </SectionTabPanel>
 
-            <TableBody>
-              {Array.isArray(schedule) && schedule.length > 0 ? (
-                [...schedule]
-                  .sort(
-                    (a, b) => new Date(a.start_time).getTime() - new Date(b.start_time).getTime()
-                  )
-                  .map((instance, index) => (
-                    <TableRow key={instance.uuid}>
-                      <TableCell>{index + 1}</TableCell>
-                      <TableCell>{classData?.class?.title}</TableCell>
+        <SectionTabPanel value='schedule'>
+          <ClassSchedulePanel
+            classData={classData}
+            viewer={viewer}
+            activeDomain={activeDomain ?? null}
+          />
+        </SectionTabPanel>
 
-                      <TableCell>
-                        <div className='flex flex-col'>
-                          <span className='font-medium'>
-                            {new Date(instance.start_time).toLocaleDateString()}
-                          </span>
+        <SectionTabPanel value='reviews'>
+          <div className='flex flex-col gap-[18px]'>
+            {viewer === 'student' ? (
+              <div className='flex justify-end'>
+                <WriteReviewButton subject='class' subjectUuid={classId} />
+              </div>
+            ) : null}
+            <ReviewsTab
+              reviews={blockReviews}
+              reviewerNames={reviewerNameMap(studentMap)}
+              loading={classReviewsQuery.isLoading}
+              error={classReviewsQuery.error}
+              onRetry={() => classReviewsQuery.refetch()}
+            />
+          </div>
+        </SectionTabPanel>
+      </SectionTabs>
 
-                          <span className='text-muted-foreground text-xs'>
-                            {new Date(instance.start_time).toLocaleTimeString([], {
-                              hour: '2-digit',
-                              minute: '2-digit',
-                            })}
-                            {' - '}
-                            {new Date(instance.end_time).toLocaleTimeString([], {
-                              hour: '2-digit',
-                              minute: '2-digit',
-                            })}
-                            {'   '}({instance.duration_formatted})
-                          </span>
-                        </div>
-                      </TableCell>
-
-                      <TableCell>{instance.status}</TableCell>
-
-                      <TableCell>
-                        {instance.status === 'scheduled' ||
-                        !instance.started_at ||
-                        !instance.concluded_at
-                          ? 'Pending'
-                          : getDuration(instance.started_at, instance.concluded_at)}
-                      </TableCell>
-                    </TableRow>
-                  ))
-              ) : (
-                <TableRow>
-                  <TableCell colSpan={7} className='text-muted-foreground py-10 text-center'>
-                    No scheduled sessions for this class yet.
-                  </TableCell>
-                </TableRow>
-              )}
-            </TableBody>
-          </Table>
-        </div>
-      )}
-    </>
-  );
-}
-
-function CourseAssessments({
-  assignments = [],
-  quizzes = [],
-  assessmentScheme = [],
-}: {
-  assignments: Assignment[];
-  quizzes: Quiz[];
-  assessmentScheme: CourseAssessment[];
-}) {
-  return (
-    <div className='space-y-8'>
-      {/* Course Grading Breakdown */}
-      <section className='bg-card rounded-lg border'>
-        <div className='border-b px-4 py-3'>
-          <h2 className='text-lg font-semibold'>Course Grading Breakdown</h2>
-          <p className='text-muted-foreground text-sm'>
-            Your final grade is calculated using the following assessment components.
-          </p>
-        </div>
-
-        <div className='overflow-x-auto'>
-          <table className='w-full text-sm'>
-            <thead className='bg-muted/50'>
-              <tr>
-                <th className='px-4 py-3 text-left font-medium'>Component</th>
-                {/* <th className="px-4 py-3 text-left font-medium">Type</th> */}
-                <th className='px-4 py-3 text-left font-medium'>Category</th>
-                <th className='px-4 py-3 text-right font-medium'>Weight</th>
-              </tr>
-            </thead>
-
-            <tbody>
-              {assessmentScheme.map(item => (
-                <tr key={item.uuid} className='border-t'>
-                  <td className='px-4 py-3'>
-                    <div className='font-medium'>{item.title}</div>
-                    {!item.is_required && (
-                      <span className='text-muted-foreground text-xs'>Optional</span>
-                    )}
-                  </td>
-
-                  {/* <td className="px-4 py-3">{item.assessment_type}</td> */}
-
-                  <td className='px-4 py-3'>{item.assessment_category}</td>
-
-                  <td className='px-4 py-3 text-right font-medium'>{item.weight_display}</td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      </section>
-
-      <div className='mb-4'>
-        <h2 className='text-lg font-semibold'>Assignments ({assignments.length})</h2>
-
-        <ul className='text-muted-foreground mt-2 list-disc space-y-1 pl-8 text-sm'>
-          <li>
-            {assignments.length} {assignments.length === 1 ? 'assignment' : 'assignments'} available
-          </li>
-          <li>Graded coursework that contributes to your final grade.</li>
-        </ul>
-      </div>
-
-      <div className='border-t' />
-
-      <div className='mb-4 pt-4'>
-        <h2 className='text-lg font-semibold'>Quizzes ({quizzes.length})</h2>
-
-        <ul className='text-muted-foreground mt-2 list-disc space-y-1 pl-8 text-sm'>
-          <li>
-            {quizzes.length} {quizzes.length === 1 ? 'quiz' : 'quizzes'} available
-          </li>
-          <li>Complete these quizzes to assess your understanding of the course material.</li>
-        </ul>
-      </div>
-
-      {/* Assignments */}
-      {/* <section>
-                <div className="mb-4 flex items-center gap-2">
-                    <h2 className="text-lg font-semibold">Assignments</h2>
-                    <span className="rounded-full bg-muted px-2 py-0.5 text-xs text-muted-foreground">
-                        {assignments.length}
-                    </span>
-                </div>
-
-                {assignments.length === 0 ? (
-                    <div className="rounded-lg border border-dashed p-6 text-center text-sm text-muted-foreground">
-                        No assignments available.
-                    </div>
-                ) : (
-                    <div className="space-y-4">
-                        {assignments.map((assignment) => (
-                            <div
-                                key={assignment.uuid}
-                                className="rounded-lg border bg-card p-4"
-                            >
-                                <div className="flex items-start justify-between gap-4">
-                                    <div>
-                                        <h3 className="font-semibold">{assignment.title}</h3>
-
-                                        {assignment.due_date && (
-                                            <p className="mt-1 text-sm text-muted-foreground">
-                                                Due {new Date(assignment.due_date).toLocaleDateString()}
-                                            </p>
-                                        )}
-                                    </div>
-
-                                    <div className="text-sm text-muted-foreground">
-                                        {assignment.max_points} pts
-                                    </div>
-                                </div>
-
-                                {assignment.description && (
-                                    <div
-                                        className="prose prose-sm mt-4 max-w-none"
-                                        dangerouslySetInnerHTML={{ __html: assignment.description }}
-                                    />
-                                )}
-                            </div>
-                        ))}
-                    </div>
-                )}
-            </section> */}
-
-      {/* Quizzes */}
-      {/* <section>
-                <div className="mb-4 flex items-center gap-2">
-                    <h2 className="text-lg font-semibold">Quizzes</h2>
-                    <span className="rounded-full bg-muted px-2 py-0.5 text-xs text-muted-foreground">
-                        {quizzes.length}
-                    </span>
-                </div>
-
-                {quizzes.length === 0 ? (
-                    <div className="rounded-lg border border-dashed p-6 text-center text-sm text-muted-foreground">
-                        No quizzes available.
-                    </div>
-                ) : (
-                    <div className="space-y-4">
-                        {quizzes.map((quiz) => (
-                            <div key={quiz.uuid} className="rounded-lg bg-card">
-                                <QuizContentPreview
-                                    quizUuid={quiz.uuid}
-                                    role="preview"
-                                    questionsOpen={false}
-                                />
-                            </div>
-                        ))}
-                    </div>
-                )}
-            </section> */}
-    </div>
+      <ShareLinkSheet
+        open={inviteOpen}
+        onOpenChange={setInviteOpen}
+        title='Invite Student'
+        description='Share this class with learners.'
+        linkTitle='Class Registration Link'
+        url={registrationLink}
+        shareTitle={classData.class?.title ?? 'Class'}
+        shareDescription={`Check out this class: ${classData.class?.title ?? ''}`}
+      />
+    </main>
   );
 }

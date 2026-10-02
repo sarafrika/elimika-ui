@@ -80,7 +80,7 @@ export function ClassesPage() {
   }, [start]);
 
   return (
-    <div className={surfaceTheme.page}>
+    <div className={`${surfaceTheme.pageWide} py-4`}>
       <div className={surfaceTheme.pageStack}>
         <PageHeader
           eyebrow='Classes'
@@ -116,14 +116,14 @@ export function ClassesPage() {
           error={statisticsQuery.error}
           onRetry={statisticsQuery.refetch}
           skeleton={
-            <div className='grid gap-4 sm:grid-cols-2 xl:grid-cols-4'>
+            <div className={surfaceTheme.statGrid}>
               {[0, 1, 2, 3].map(item => (
                 <StatCardSkeleton key={item} />
               ))}
             </div>
           }
         >
-          <div className='grid gap-4 sm:grid-cols-2 xl:grid-cols-4'>
+          <div className={surfaceTheme.statGrid}>
             <StatCard
               label='Sessions next 7 days'
               value={toNumber(metrics?.sessions_next_7d)}
@@ -147,7 +147,10 @@ export function ClassesPage() {
         </SectionBoundary>
 
         {view === 'list' ? (
-          <FilterBar values={{ q: urlTerm }} searchPlaceholder='Search classes by title, course or location…' />
+          <FilterBar
+            values={{ q: urlTerm }}
+            searchPlaceholder='Search classes by title, course or location…'
+          />
         ) : null}
         {view === 'list' ? (
           <SearchNotice issue={searchIssue} onReset={() => patch({ q: undefined })} />
@@ -262,8 +265,8 @@ export function ClassesPage() {
 
         <p className='text-muted-foreground text-xs'>
           There is no platform-wide schedule by date range yet, so the calendar is scoped to one
-          instructor at a time. A ranged endpoint that returns sessions with their class, course
-          and enrolment counts is on the backend list.
+          instructor at a time. A ranged endpoint that returns sessions with their class, course and
+          enrolment counts is on the backend list.
         </p>
       </div>
 

@@ -1,6 +1,13 @@
 'use client';
 
+import {
+  SectionTabPanel,
+  SectionTabs,
+  surfaceTheme,
+  useSectionTab,
+} from '@/components/data-display';
 import { getErrorMessage } from '@/lib/error-utils';
+import { cn } from '@/lib/utils';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import {
@@ -27,7 +34,6 @@ import {
   SheetTitle,
 } from '@/components/ui/sheet';
 import { Skeleton } from '@/components/ui/skeleton';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Textarea } from '@/components/ui/textarea';
 import { useOrganisation } from '@/context/organisation-context';
 import { extractPage, getTotalFromMetadata } from '@/lib/api-helpers';
@@ -72,7 +78,6 @@ import Link from 'next/link';
 import { useParams } from 'next/navigation';
 import { useMemo, useState } from 'react';
 import { toast } from 'sonner';
-import { OrgPage } from '../../_components/org-page';
 
 const weekdayOptions: Array<{ value: string; label: string }> = [
   { value: 'MONDAY', label: 'Mon' },
@@ -177,12 +182,15 @@ function startOfWeek(reference: dayjs.Dayjs): dayjs.Dayjs {
   return reference.subtract(day === 0 ? 6 : day - 1, 'day').startOf('day');
 }
 
+const RESOURCE_TABS = ['calendar', 'rules', 'bookings'] as const;
+
 export default function ResourceDetailPage() {
   const organisation = useOrganisation();
   const organisationUuid = organisation?.uuid ?? '';
   const params = useParams<{ resourceUuid: string }>();
   const resourceUuid = params?.resourceUuid ?? '';
   const queryClient = useQueryClient();
+  const { value: tab, setValue: setTab, hrefFor } = useSectionTab(RESOURCE_TABS, 'calendar');
 
   const resourceQuery = useQuery({
     ...getResourceOptions({ path: { organisationUuid, resourceUuid } }),
@@ -380,7 +388,7 @@ export default function ResourceDetailPage() {
   const ResourceIcon = isVenue ? DoorOpen : Boxes;
 
   return (
-    <OrgPage className='space-y-6'>
+    <div className={cn(surfaceTheme.pageWide, 'space-y-6 py-4')}>
       <div className='space-y-4'>
         <Link
           href='/dashboard/organisation/resources'
@@ -430,14 +438,27 @@ export default function ResourceDetailPage() {
         )}
       </div>
 
-      <Tabs defaultValue='calendar'>
-        <TabsList>
-          <TabsTrigger value='calendar'>Calendar</TabsTrigger>
-          <TabsTrigger value='rules'>Availability rules</TabsTrigger>
-          <TabsTrigger value='bookings'>Bookings</TabsTrigger>
-        </TabsList>
-
-        <TabsContent value='calendar' className='space-y-4'>
+      <SectionTabs
+        tabs={[
+          { id: 'calendar', label: 'Calendar' },
+          {
+            id: 'rules',
+            label: 'Availability rules',
+            count: rulesQuery.isLoading ? null : rules.length,
+          },
+          {
+            id: 'bookings',
+            label: 'Bookings',
+            count: bookingsQuery.isLoading ? null : totalBookings,
+          },
+        ]}
+        value={tab}
+        onValueChange={setTab}
+        hrefFor={hrefFor}
+        label='Resource sections'
+        sticky
+      >
+        <SectionTabPanel value='calendar' className='space-y-4'>
           <div className='flex flex-wrap items-center justify-between gap-3'>
             <div className='flex items-center gap-2'>
               <Button
@@ -541,9 +562,9 @@ export default function ResourceDetailPage() {
             Job holds reserve this resource while recruitment runs and convert to bookings when an
             instructor is assigned. Without open-hours rules the resource is bookable at any time.
           </p>
-        </TabsContent>
+        </SectionTabPanel>
 
-        <TabsContent value='rules' className='space-y-4'>
+        <SectionTabPanel value='rules' className='space-y-4'>
           <div className='flex items-center justify-between'>
             <p className='text-muted-foreground text-sm'>
               Define when this resource can be booked. Blackouts always win over open hours.
@@ -634,9 +655,9 @@ export default function ResourceDetailPage() {
               ))}
             </div>
           )}
-        </TabsContent>
+        </SectionTabPanel>
 
-        <TabsContent value='bookings' className='space-y-4'>
+        <SectionTabPanel value='bookings' className='space-y-4'>
           <div className='flex flex-wrap items-center justify-between gap-3'>
             <Select
               value={bookingStatusFilter}
@@ -741,8 +762,8 @@ export default function ResourceDetailPage() {
               </Button>
             </div>
           ) : null}
-        </TabsContent>
-      </Tabs>
+        </SectionTabPanel>
+      </SectionTabs>
 
       <Sheet open={isRuleSheetOpen} onOpenChange={setIsRuleSheetOpen}>
         <SheetContent
@@ -903,6 +924,6 @@ export default function ResourceDetailPage() {
           </div>
         </SheetContent>
       </Sheet>
-    </OrgPage>
+    </div>
   );
 }

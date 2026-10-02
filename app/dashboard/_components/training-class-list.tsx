@@ -18,6 +18,7 @@ import Image from 'next/image';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useState } from 'react';
+import { surfaceTheme } from '@/components/data-display';
 import { AsyncSection } from '@/components/data/async-section';
 import RichTextRenderer from '@/components/editors/richTextRenders';
 import { Badge } from '@/components/ui/badge';
@@ -147,7 +148,7 @@ export function TrainingClassList({
   });
 
   return (
-    <div className='container mx-auto space-y-6'>
+    <div className='w-full space-y-6'>
       {/* Stats degrade independently — the shell and filters render immediately. */}
       <div className='grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3'>
         {loading ? (
@@ -249,11 +250,11 @@ export function TrainingClassList({
         loading={loading}
         empty={filteredClasses.length === 0}
         skeleton={
-          <div className='grid grid-cols-1 gap-6 lg:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4'>
+          <div className={surfaceTheme.cardGrid}>
             {Array.from({ length: 8 }).map((_, index) => (
               <div
                 key={index}
-                className='border-primary/40 bg-card h-full max-w-[380px] rounded-2xl border p-[2px] shadow-lg'
+                className='border-primary/40 bg-card h-full rounded-2xl border p-[2px] shadow-lg'
               >
                 <div className='overflow-hidden rounded-2xl'>
                   <Skeleton className='h-48 w-full rounded-none' />
@@ -279,7 +280,7 @@ export function TrainingClassList({
           </div>
         }
       >
-        <div className='grid grid-cols-1 gap-6 lg:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4'>
+        <div className={surfaceTheme.cardGrid}>
           {filteredClasses.map((cls, index) => {
             const isFull = (cls.current_enrollments ?? 0) >= (cls.max_participants ?? 0);
             const difficultyName = cls.course?.difficulty_uuid
@@ -298,7 +299,7 @@ export function TrainingClassList({
 
             return (
               <div key={cls.uuid} className='group cursor-pointer'>
-                <div className='border-primary/40 bg-card relative h-full max-w-[380px] rounded-2xl border p-[2px] shadow-lg transition-all duration-300 hover:scale-[1.02] hover:shadow-2xl dark:bg-inherit'>
+                <div className='border-primary/40 bg-card relative h-full rounded-2xl border p-[2px] shadow-lg transition-all duration-300 hover:scale-[1.02] hover:shadow-2xl dark:bg-inherit'>
                   <div className='h-full overflow-hidden rounded-2xl'>
                     {/* Image Header */}
                     <div className='relative h-48 overflow-hidden'>

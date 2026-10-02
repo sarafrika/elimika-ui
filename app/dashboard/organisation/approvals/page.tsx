@@ -34,6 +34,7 @@ import { dashboardUrl } from '@/src/features/dashboard/lib/dashboard-url';
 import { ApplicationStatusBadge } from '@/src/features/rate-card/components/application-status-badge';
 import type { TrainingApplication, TrainingApplicationKind } from '@/src/features/rate-card/types';
 import { OrgPage } from '../_components/org-page';
+import { surfaceTheme } from '@/components/data-display';
 
 type Row = {
   kind: TrainingApplicationKind;
@@ -148,7 +149,7 @@ export default function OrganisationApprovalsPage() {
         description='Your organisation’s applications to train courses and programs. Open one to see where it is, its rate card and its history.'
       />
 
-      <div className='grid gap-4 sm:grid-cols-2 lg:grid-cols-4'>
+      <div className={surfaceTheme.statGrid}>
         {loading ? (
           [0, 1, 2, 3].map(index => <KpiCardSkeleton key={index} />)
         ) : (

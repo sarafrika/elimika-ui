@@ -1,8 +1,9 @@
 import { Skeleton } from '@/components/ui/skeleton';
+import { surfaceTheme } from '@/components/data-display';
 
 export default function ResourcesLoading() {
   return (
-    <main className='mx-auto w-full max-w-[1520px] space-y-6 px-4 py-6 sm:px-6'>
+    <main className={`${surfaceTheme.pageWide} space-y-6 py-6`}>
       <div className='flex items-start justify-between gap-4'>
         <div className='space-y-2'>
           <Skeleton className='h-8 w-44' />

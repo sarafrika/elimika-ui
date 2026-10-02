@@ -115,7 +115,7 @@ export function CataloguePage() {
     form.scope_uuid.trim().length > 0;
 
   return (
-    <div className={surfaceTheme.page}>
+    <div className={`${surfaceTheme.pageWide} py-4`}>
       <div className={surfaceTheme.pageStack}>
         <PageHeader
           eyebrow='Catalogue'

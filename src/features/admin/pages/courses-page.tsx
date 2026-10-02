@@ -184,7 +184,7 @@ export function CoursesPage() {
   );
 
   return (
-    <div className={surfaceTheme.page}>
+    <div className={`${surfaceTheme.pageWide} py-4`}>
       <div className={surfaceTheme.pageStack}>
         <PageHeader
           eyebrow='Learning'

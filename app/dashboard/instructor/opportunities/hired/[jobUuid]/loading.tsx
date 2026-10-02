@@ -3,7 +3,7 @@ import { surfaceTheme } from '@/components/data-display';
 
 export default function HiredJobLoading() {
   return (
-    <div className={surfaceTheme.page}>
+    <div className={`${surfaceTheme.pageWide} py-4`}>
       <div className={surfaceTheme.pageStack}>
         <HiredJobDetailsSkeleton />
       </div>

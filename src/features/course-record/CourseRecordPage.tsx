@@ -52,15 +52,6 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { Fragment, type ReactNode, useCallback, useMemo, useState } from 'react';
 import { toast } from 'sonner';
-
-import {
-  absoluteUrl,
-  publicCourseUrl,
-  type RoleSegment,
-  routeSegmentFromPath,
-  routeSegmentToDomain,
-} from '@/src/features/dashboard/lib/dashboard-url';
-
 import {
   type LessonContentPreviewItem,
   LessonContentViewerDialog,
@@ -72,28 +63,35 @@ import { STALE_TIMES } from '@/lib/query-client';
 import { getCourseCreatorByUuidOptions } from '@/services/client/@tanstack/react-query.gen';
 import type { LessonContent } from '@/services/client/types.gen';
 import { roleScopedDashboardPath } from '@/src/features/dashboard/lib/active-domain-storage';
+import {
+  absoluteUrl,
+  publicCourseUrl,
+  type RoleSegment,
+  routeSegmentFromPath,
+  routeSegmentToDomain,
+} from '@/src/features/dashboard/lib/dashboard-url';
+import { toAuthenticatedMediaUrl } from '@/src/lib/media-url';
 
 import { AsyncSection } from '../../../components/data/async-section';
 import { CourseDetailsAsideCard } from '../catalogue/components/CourseDetailsAsideCard';
-import { CourseRecordView } from './CourseRecordView';
 import {
   ActionsCard,
   ActivityTab,
   ApplicationStatusPanel,
   AssessmentTab,
   ClassesTab,
-  CommercialsTab,
   COURSE_DEFAULT_CURRENCY,
+  CommercialsTab,
   type CourseApplicationRow,
-  courseBulletLines,
   type CourseClassFormatTone,
   type CourseClassRow,
-  courseContentKind,
   type CourseCurriculumItem,
   type CourseCurriculumLesson,
   type CourseOrderRow,
   type CourseRailActionItem,
   CurriculumTab,
+  courseBulletLines,
+  courseContentKind,
   DeliveryTab,
   EnrolPanel,
   formatCourseDate,
@@ -109,10 +107,11 @@ import {
   ReviewsTab,
   summarise
 } from './blocks';
+import { CourseRecordView } from './CourseRecordView';
 import {
   type ClassDefinition,
-  type Course,
   COURSE_EXPORT_ACTION_LABEL,
+  type Course,
   type CourseAccess,
   type CourseRailCardId,
   type CourseRecordTabId,
@@ -449,7 +448,7 @@ export function CourseRecordPage({
   const resolvedPrimaryAction =
     primaryAction ??
     (onPrimaryAction || !defaultPrimaryHref ? undefined : (
-      <Button asChild size='sm' className='h-8 rounded-[10px]'>
+      <Button asChild className='h-10 w-full rounded-[10px]'>
         <Link href={defaultPrimaryHref}>
           {fillCourseCopy(capability.primaryAction, { price: priceLabel })}
         </Link>
@@ -712,6 +711,7 @@ export function CourseRecordPage({
           contentCountNote: capability.content.countNote,
           duration,
           level,
+          imageUrl: toAuthenticatedMediaUrl(course?.thumbnail_url) ?? undefined,
           ...asyncProps(record.course),
         }}
         kpiBand={kpiBand}

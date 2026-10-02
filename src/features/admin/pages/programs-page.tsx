@@ -57,7 +57,7 @@ export function ProgramsPage() {
   const isFiltered = Boolean(q) || status !== 'any' || approval !== 'any';
 
   return (
-    <div className={surfaceTheme.page}>
+    <div className={`${surfaceTheme.pageWide} py-4`}>
       <div className={surfaceTheme.pageStack}>
         <PageHeader
           eyebrow='Learning'

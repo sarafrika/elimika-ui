@@ -8,7 +8,8 @@ export const surfaceTheme = {
   pageStack: 'flex w-full flex-col gap-4',
   /**
    * Opt-in wide container for pages that should use a large screen (the public catalogue
-   * and course pages): up to 2400px instead of a centred 1520px column.
+   * and course pages): up to 2400px instead of a centred 1520px column. Horizontal gutters
+   * only: pages add their own vertical padding (`py-*`).
    */
   pageWide: 'mx-auto w-full max-w-[2400px] px-4 sm:px-6 xl:px-10 2xl:px-14',
   /**
@@ -17,6 +18,17 @@ export const surfaceTheme = {
    */
   cardGrid:
     'grid grid-cols-1 gap-4 sm:grid-cols-2 sm:gap-5 xl:grid-cols-[repeat(auto-fill,minmax(290px,1fr))] 2xl:gap-6',
+  /**
+   * Opt-in grid for wide horizontal cards (jobs, credentials, hired jobs): one column until
+   * the width fits two 520px cards, then as many as fit.
+   */
+  cardGridWide: 'grid grid-cols-1 gap-4 xl:grid-cols-[repeat(auto-fill,minmax(520px,1fr))]',
+  /**
+   * A stat or KPI row whose columns follow the card count: 160px+ each up to desktop (two
+   * per row on a phone), then 220px+ each, so three cards fill the row as well as five do.
+   */
+  statGrid:
+    'grid grid-cols-[repeat(auto-fit,minmax(min(100%,160px),1fr))] gap-3 sm:gap-4 xl:grid-cols-[repeat(auto-fit,minmax(220px,1fr))]',
 
   /** Card surfaces. */
   card: 'rounded-md border border-border/70 bg-card',

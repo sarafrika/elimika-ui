@@ -1,6 +1,8 @@
 'use client';
 
+import { surfaceTheme } from '@/components/data-display/page-shell';
 import { Separator } from '@/components/ui/separator';
+import { cn } from '@/lib/utils';
 
 interface ProgramManagementLayoutProps {
   children: React.ReactNode;
@@ -8,7 +10,7 @@ interface ProgramManagementLayoutProps {
 
 export default function ProgramManagementLayout({ children }: ProgramManagementLayoutProps) {
   return (
-    <div className='space-y-6 p-4 pb-16 md:py-10'>
+    <div className={cn(surfaceTheme.pageWide, 'space-y-6 py-4 pb-16 md:py-10')}>
       <div className='flex items-center justify-between'>
         <div>
           <h2 className='text-[22px] font-bold tracking-tight'>Training Programs</h2>
@@ -18,9 +20,7 @@ export default function ProgramManagementLayout({ children }: ProgramManagementL
         </div>
       </div>
       <Separator />
-      <div className='mx-auto mb-10 flex max-w-7xl flex-col space-y-8 lg:flex-col lg:space-y-0 lg:space-x-6'>
-        {children}
-      </div>
+      <div className='mb-10 flex min-w-0 flex-col'>{children}</div>
     </div>
   );
 }

@@ -50,6 +50,11 @@ export interface CourseHeroProps extends CourseBlockAsyncProps {
   duration?: string;
   /** Difficulty label, e.g. "Intermediate". */
   level?: string;
+  /**
+   * Thumbnail for the record shell's compact header card, already resolved
+   * through `toAuthenticatedMediaUrl`. The hero band itself does not draw it.
+   */
+  imageUrl?: string;
 
   className?: string;
 }

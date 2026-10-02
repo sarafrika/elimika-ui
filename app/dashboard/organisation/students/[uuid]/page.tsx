@@ -23,7 +23,7 @@ import {
 import Link from 'next/link';
 import { useParams } from 'next/navigation';
 import type { ComponentType, ReactNode } from 'react';
-import { useMemo, useState } from 'react';
+import { useMemo } from 'react';
 
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
@@ -31,7 +31,6 @@ import { Button } from '@/components/ui/button';
 import { EmptyState } from '@/components/ui/empty-state';
 import { Progress } from '@/components/ui/progress';
 import { Skeleton } from '@/components/ui/skeleton';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useOrganisation } from '@/context/organisation-context';
 import { extractEntity, extractList, extractPage } from '@/lib/api-helpers';
 import { formatCount, toNumber } from '@/lib/metrics';
@@ -55,14 +54,29 @@ import {
 } from '@/services/client/@tanstack/react-query.gen';
 import { toAuthenticatedMediaUrl } from '@/src/lib/media-url';
 import { generateWalletId, institutionRef } from '@/src/lib/wallet-id';
-import { StatusBadge, StatusTone, statusToneClass } from '@/components/data-display';
+import {
+  type SectionTab,
+  SectionTabPanel,
+  SectionTabs,
+  StatusBadge,
+  type StatusTone,
+  statusToneClass,
+  surfaceTheme,
+  useSectionTab,
+} from '@/components/data-display';
+
+const STUDENT_TABS = ['overview', 'performance', 'guardians', 'certificates', 'audit'] as const;
+type StudentTab = (typeof STUDENT_TABS)[number];
+
+const TAB_META: Record<StudentTab, Omit<SectionTab<StudentTab>, 'id'>> = {
+  overview: { label: 'Overview', icon: ClipboardList },
+  performance: { label: 'Performance', icon: BookOpen },
+  guardians: { label: 'Guardians', icon: Shield },
+  certificates: { label: 'Certificates', icon: Award },
+  audit: { label: 'Audit', icon: FileCheck },
+};
 
 const EMPTY_UUID = '00000000-0000-0000-0000-000000000000';
-const tabListClass =
-  'h-auto w-full justify-start gap-7 overflow-x-auto rounded-none border-b border-border/70 bg-transparent p-0';
-const tabTriggerClass =
-  'rounded-none border-b-2 border-transparent bg-transparent px-0 pb-3 pt-1 text-muted-foreground shadow-none data-[state=active]:border-primary data-[state=active]:bg-transparent data-[state=active]:text-foreground data-[state=active]:shadow-none';
-
 type DetailItem = {
   label: ReactNode;
   value: ReactNode;
@@ -203,8 +217,10 @@ function DetailGrid({ items, columns = 2 }: { items: DetailItem[]; columns?: 1 |
     <div className={cn('grid gap-3', cols)}>
       {items.map((item, index) => (
         <div key={index} className='border-border/60 bg-muted/20 rounded-md border px-3 py-2.5'>
-          <p className='text-muted-foreground text-xs uppercase tracking-wide'>{item.label}</p>
-          <div className='text-foreground mt-1 min-w-0 text-sm font-medium'>{item.value ?? '-'}</div>
+          <p className='text-muted-foreground text-xs tracking-wide uppercase'>{item.label}</p>
+          <div className='text-foreground mt-1 min-w-0 text-sm font-medium'>
+            {item.value ?? '-'}
+          </div>
         </div>
       ))}
     </div>
@@ -251,7 +267,7 @@ export default function OrganisationStudentDetailPage() {
   const routeUuid = decodeURIComponent(params?.uuid ?? '');
   const organisation = useOrganisation();
   const organisationUuid = organisation?.uuid ?? '';
-  const [tab, setTab] = useState('overview');
+  const { value: tab, setValue: setTab, hrefFor } = useSectionTab(STUDENT_TABS, 'overview');
 
   const rosterQuery = useQuery({
     ...listRosterOptions({
@@ -360,7 +376,9 @@ export default function OrganisationStudentDetailPage() {
         ? Math.round((toNumber(summary?.completed) / toNumber(summary?.total)) * 100)
         : 0;
   const name = displayName(rosterEntry, student, user);
-  const avatarUrl = toAuthenticatedMediaUrl(user?.profile_image_url ?? rosterEntry?.profile_image_url);
+  const avatarUrl = toAuthenticatedMediaUrl(
+    user?.profile_image_url ?? rosterEntry?.profile_image_url
+  );
   const joinedDate = rosterEntry?.joined_date ?? student?.created_date ?? user?.created_date;
   const primaryLoading =
     routeUserQuery.isLoading ||
@@ -377,7 +395,7 @@ export default function OrganisationStudentDetailPage() {
 
   if ((primaryLoading || secondaryLoading) && !hasOrganisationRecord) {
     return (
-      <main className='mx-auto w-full max-w-[2200px] space-y-6 px-3 py-4 sm:px-5 lg:px-6 2xl:max-w-[2400px]'>
+      <main className={cn(surfaceTheme.pageWide, 'space-y-6 py-4')}>
         <Skeleton className='h-8 w-44 rounded-md' />
         <Skeleton className='h-36 w-full rounded-md' />
         <div className='grid gap-3 sm:grid-cols-2 xl:grid-cols-6'>
@@ -395,7 +413,7 @@ export default function OrganisationStudentDetailPage() {
 
   if (notFound) {
     return (
-      <main className='mx-auto w-full max-w-[2200px] px-3 py-8 sm:px-5 lg:px-6 2xl:max-w-[2400px]'>
+      <main className={cn(surfaceTheme.pageWide, 'py-8')}>
         <EmptyState
           icon={UserRound}
           title='Student not found in this organisation'
@@ -414,7 +432,7 @@ export default function OrganisationStudentDetailPage() {
   }
 
   return (
-    <main className='mx-auto w-full max-w-[2200px] space-y-6 px-3 py-4 sm:px-5 lg:px-6 2xl:max-w-[2400px]'>
+    <main className={cn(surfaceTheme.pageWide, 'space-y-6 py-4')}>
       <Button variant='ghost' size='sm' asChild className='text-muted-foreground -ml-2'>
         <Link href='/dashboard/organisation/students'>
           <ArrowLeft className='size-4' />
@@ -472,7 +490,7 @@ export default function OrganisationStudentDetailPage() {
             </div>
           </div>
           <div className='flex flex-wrap gap-2'>
-            {user?.email ?? rosterEntry?.email ? (
+            {(user?.email ?? rosterEntry?.email) ? (
               <Button asChild variant='outline'>
                 <a href={`mailto:${user?.email ?? rosterEntry?.email}`}>
                   <Mail className='size-4' />
@@ -480,7 +498,7 @@ export default function OrganisationStudentDetailPage() {
                 </a>
               </Button>
             ) : null}
-            {user?.phone_number ?? rosterEntry?.phone_number ? (
+            {(user?.phone_number ?? rosterEntry?.phone_number) ? (
               <Button asChild variant='outline'>
                 <a href={`tel:${user?.phone_number ?? rosterEntry?.phone_number}`}>
                   <Phone className='size-4' />
@@ -545,33 +563,35 @@ export default function OrganisationStudentDetailPage() {
         />
       </div>
 
-      <Tabs value={tab} onValueChange={setTab} className='space-y-4'>
-        <TabsList className={tabListClass}>
-          <TabsTrigger value='overview' className={tabTriggerClass}>
-            <ClipboardList className='size-4' />
-            Overview
-          </TabsTrigger>
-          <TabsTrigger value='performance' className={tabTriggerClass}>
-            <BookOpen className='size-4' />
-            Performance
-          </TabsTrigger>
-          <TabsTrigger value='guardians' className={tabTriggerClass}>
-            <Shield className='size-4' />
-            Guardians
-          </TabsTrigger>
-          <TabsTrigger value='certificates' className={tabTriggerClass}>
-            <Award className='size-4' />
-            Certificates
-          </TabsTrigger>
-          <TabsTrigger value='audit' className={tabTriggerClass}>
-            <FileCheck className='size-4' />
-            Audit
-          </TabsTrigger>
-        </TabsList>
-
-        <TabsContent value='overview' className='mt-0'>
+      <SectionTabs
+        tabs={STUDENT_TABS.map(id => ({
+          id,
+          ...TAB_META[id],
+          count:
+            id === 'performance'
+              ? performanceQuery.isLoading
+                ? null
+                : performance.length
+              : id === 'guardians'
+                ? guardianContacts.length
+                : id === 'certificates'
+                  ? certificatesQuery.isLoading
+                    ? null
+                    : certificates.length
+                  : null,
+        }))}
+        value={tab}
+        onValueChange={setTab}
+        hrefFor={hrefFor}
+        label='Student sections'
+        sticky
+      >
+        <SectionTabPanel value='overview'>
           <div className='grid gap-4 xl:grid-cols-2'>
-            <SectionPanel title='Identity data' description='Bio data from the linked user account.'>
+            <SectionPanel
+              title='Identity data'
+              description='Bio data from the linked user account.'
+            >
               <DetailGrid
                 columns={3}
                 items={[
@@ -587,14 +607,19 @@ export default function OrganisationStudentDetailPage() {
                   {
                     label: 'User UUID',
                     value: (
-                      <span className='font-mono text-xs break-all'>{userUuidForDisplay || '-'}</span>
+                      <span className='font-mono text-xs break-all'>
+                        {userUuidForDisplay || '-'}
+                      </span>
                     ),
                   },
                 ]}
               />
             </SectionPanel>
 
-            <SectionPanel title='Organisation relationship' description='School, group, and class placement.'>
+            <SectionPanel
+              title='Organisation relationship'
+              description='School, group, and class placement.'
+            >
               <DetailGrid
                 columns={3}
                 items={[
@@ -619,12 +644,18 @@ export default function OrganisationStudentDetailPage() {
                       </span>
                     ),
                   },
-                  { label: 'Roster status', value: rosterEntry ? 'Member' : 'Not assigned to group' },
+                  {
+                    label: 'Roster status',
+                    value: rosterEntry ? 'Member' : 'Not assigned to group',
+                  },
                 ]}
               />
             </SectionPanel>
 
-            <SectionPanel title='Student profile' description='Student-domain fields and profile metadata.'>
+            <SectionPanel
+              title='Student profile'
+              description='Student-domain fields and profile metadata.'
+            >
               <DetailGrid
                 columns={3}
                 items={[
@@ -643,7 +674,11 @@ export default function OrganisationStudentDetailPage() {
                   { label: 'Joined organisation', value: formatDateTime(joinedDate) },
                   {
                     label: 'Wallet ID',
-                    value: <span className='font-mono text-xs'>{generateWalletId(userUuidForDisplay)}</span>,
+                    value: (
+                      <span className='font-mono text-xs'>
+                        {generateWalletId(userUuidForDisplay)}
+                      </span>
+                    ),
                   },
                   {
                     label: 'Institution ref',
@@ -658,7 +693,10 @@ export default function OrganisationStudentDetailPage() {
               />
             </SectionPanel>
 
-            <SectionPanel title='Contact channels' description='Primary student and guardian contact points.'>
+            <SectionPanel
+              title='Contact channels'
+              description='Primary student and guardian contact points.'
+            >
               <DetailGrid
                 columns={2}
                 items={[
@@ -692,9 +730,9 @@ export default function OrganisationStudentDetailPage() {
               />
             </SectionPanel>
           </div>
-        </TabsContent>
+        </SectionTabPanel>
 
-        <TabsContent value='performance' className='mt-0'>
+        <SectionTabPanel value='performance'>
           <SectionPanel
             title='Organisation class performance'
             description="Attendance and participation in this organisation's own classes only."
@@ -750,7 +788,9 @@ export default function OrganisationStudentDetailPage() {
                           className='border-border/60 border-b last:border-0'
                         >
                           <td className='px-3 py-3'>
-                            <p className='text-foreground font-medium'>{item.class_title ?? 'Class'}</p>
+                            <p className='text-foreground font-medium'>
+                              {item.class_title ?? 'Class'}
+                            </p>
                             <p className='text-muted-foreground text-xs break-all'>
                               {item.class_definition_uuid ?? '-'}
                             </p>
@@ -777,9 +817,9 @@ export default function OrganisationStudentDetailPage() {
               </div>
             )}
           </SectionPanel>
-        </TabsContent>
+        </SectionTabPanel>
 
-        <TabsContent value='guardians' className='mt-0'>
+        <SectionTabPanel value='guardians'>
           <div className='grid gap-4 xl:grid-cols-[0.9fr_1.1fr]'>
             <SectionPanel title='Primary guardian' description='Main emergency contact.'>
               {student?.first_guardian_name || student?.first_guardian_mobile ? (
@@ -789,7 +829,8 @@ export default function OrganisationStudentDetailPage() {
                     { label: 'Name', value: student?.first_guardian_name ?? '-' },
                     {
                       label: 'Mobile',
-                      value: student?.first_guardian_mobile ?? student?.primaryGuardianContact ?? '-',
+                      value:
+                        student?.first_guardian_mobile ?? student?.primaryGuardianContact ?? '-',
                     },
                   ]}
                 />
@@ -810,7 +851,8 @@ export default function OrganisationStudentDetailPage() {
                     { label: 'Name', value: student?.second_guardian_name ?? '-' },
                     {
                       label: 'Mobile',
-                      value: student?.second_guardian_mobile ?? student?.secondaryGuardianContact ?? '-',
+                      value:
+                        student?.second_guardian_mobile ?? student?.secondaryGuardianContact ?? '-',
                     },
                   ]}
                 />
@@ -846,10 +888,13 @@ export default function OrganisationStudentDetailPage() {
               )}
             </SectionPanel>
           </div>
-        </TabsContent>
+        </SectionTabPanel>
 
-        <TabsContent value='certificates' className='mt-0'>
-          <SectionPanel title='Certificates' description='Issued credentials connected to the student profile.'>
+        <SectionTabPanel value='certificates'>
+          <SectionPanel
+            title='Certificates'
+            description='Issued credentials connected to the student profile.'
+          >
             {certificatesQuery.isLoading ? (
               <div className='space-y-2'>
                 {Array.from({ length: 5 }).map((_, index) => (
@@ -884,7 +929,10 @@ export default function OrganisationStudentDetailPage() {
                   </thead>
                   <tbody>
                     {certificates.map(item => (
-                      <tr key={item.uuid ?? item.certificate_number} className='border-border/60 border-b last:border-0'>
+                      <tr
+                        key={item.uuid ?? item.certificate_number}
+                        className='border-border/60 border-b last:border-0'
+                      >
                         <td className='px-3 py-3'>
                           <p className='text-foreground font-medium'>
                             {item.certificate_number ?? 'Certificate'}
@@ -903,11 +951,15 @@ export default function OrganisationStudentDetailPage() {
                           {formatDateTime(item.issued_date)}
                         </td>
                         <td className='px-3 py-3'>
-                          {item.grade_letter ?? (item.final_grade == null ? '-' : `${item.final_grade}%`)}
+                          {item.grade_letter ??
+                            (item.final_grade == null ? '-' : `${item.final_grade}%`)}
                         </td>
                         <td className='px-3 py-3'>
                           <StatusBadge
-                            status={item.validity_status ?? (item.is_valid === false ? 'revoked' : 'valid')}
+                            status={
+                              item.validity_status ??
+                              (item.is_valid === false ? 'revoked' : 'valid')
+                            }
                           />
                         </td>
                         <td className='px-3 py-3'>
@@ -928,11 +980,14 @@ export default function OrganisationStudentDetailPage() {
               </div>
             )}
           </SectionPanel>
-        </TabsContent>
+        </SectionTabPanel>
 
-        <TabsContent value='audit' className='mt-0'>
+        <SectionTabPanel value='audit'>
           <div className='grid gap-4 xl:grid-cols-2'>
-            <SectionPanel title='Identifiers' description='Cross-domain identifiers for support and audit.'>
+            <SectionPanel
+              title='Identifiers'
+              description='Cross-domain identifiers for support and audit.'
+            >
               <DetailGrid
                 columns={2}
                 items={[
@@ -943,7 +998,11 @@ export default function OrganisationStudentDetailPage() {
                         Wallet ID
                       </span>
                     ),
-                    value: <span className='font-mono text-xs'>{generateWalletId(userUuidForDisplay)}</span>,
+                    value: (
+                      <span className='font-mono text-xs'>
+                        {generateWalletId(userUuidForDisplay)}
+                      </span>
+                    ),
                   },
                   {
                     label: 'Institution ref',
@@ -968,7 +1027,9 @@ export default function OrganisationStudentDetailPage() {
                   {
                     label: 'User UUID',
                     value: (
-                      <span className='font-mono text-xs break-all'>{userUuidForDisplay || '-'}</span>
+                      <span className='font-mono text-xs break-all'>
+                        {userUuidForDisplay || '-'}
+                      </span>
                     ),
                   },
                   {
@@ -983,7 +1044,10 @@ export default function OrganisationStudentDetailPage() {
               />
             </SectionPanel>
 
-            <SectionPanel title='Audit trail' description='Created and updated timestamps from user and student records.'>
+            <SectionPanel
+              title='Audit trail'
+              description='Created and updated timestamps from user and student records.'
+            >
               <DetailGrid
                 columns={2}
                 items={[
@@ -991,16 +1055,22 @@ export default function OrganisationStudentDetailPage() {
                   { label: 'User updated', value: formatDateTime(user?.updated_date) },
                   { label: 'User created by', value: user?.created_by ?? '-' },
                   { label: 'User updated by', value: user?.updated_by ?? '-' },
-                  { label: 'Student profile created', value: formatDateTime(student?.created_date) },
-                  { label: 'Student profile updated', value: formatDateTime(student?.updated_date) },
+                  {
+                    label: 'Student profile created',
+                    value: formatDateTime(student?.created_date),
+                  },
+                  {
+                    label: 'Student profile updated',
+                    value: formatDateTime(student?.updated_date),
+                  },
                   { label: 'Student created by', value: student?.created_by ?? '-' },
                   { label: 'Student updated by', value: student?.updated_by ?? '-' },
                 ]}
               />
             </SectionPanel>
           </div>
-        </TabsContent>
-      </Tabs>
+        </SectionTabPanel>
+      </SectionTabs>
     </main>
   );
 }

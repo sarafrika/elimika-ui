@@ -4,6 +4,7 @@ import { BookOpen, CheckCircle2 } from 'lucide-react';
 import Link from 'next/link';
 import { useMemo, useState } from 'react';
 
+import { surfaceTheme } from '@/components/data-display';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -20,7 +21,7 @@ import { submitCourseReviewMutation } from '../../../../../services/client/@tans
 import { invalidateReviewWorkflowQueries } from '../../../../../src/features/dashboard/workflow-query-invalidation';
 import { stripHtml } from '../../../../../src/features/dashboard/courses/shared/_components/courses-data';
 import { toAuthenticatedMediaUrl } from '../../../../../src/lib/media-url';
-import { FeedbackDialog } from '../../../_components/review-instructor-modal';
+import { FeedbackSheet } from '@/src/features/dashboard/courses/components/feedback-sheet';
 import type {
   LearningHubCourseEnrollment,
   LearningHubData,
@@ -148,7 +149,7 @@ export function LessonHubMyCoursesTab({ learningHubData }: LessonHubMyCoursesTab
           }
         />
       ) : (
-        <div className='grid gap-4 md:grid-cols-2 xl:grid-cols-3'>
+        <div className={surfaceTheme.cardGrid}>
           {filteredRows.map(course => (
             <CourseCard key={course.id} course={course} />
           ))}
@@ -307,7 +308,7 @@ function CourseCard({ course }: { course: LearningHubCourseEnrollment }) {
       </CardContent>
 
 
-      <FeedbackDialog
+      <FeedbackSheet
         type='others'
         open={isReviewModalOpen}
         onOpenChange={setIsReviewModalOpen}
@@ -340,7 +341,7 @@ function CourseTabSkeleton() {
         ))}
       </div>
 
-      <div className='grid gap-4 md:grid-cols-2 xl:grid-cols-3'>
+      <div className={surfaceTheme.cardGrid}>
         {Array.from({ length: 6 }).map((_, index) => (
           <Card key={index} className='border-border/70'>
             <Skeleton className='h-24 w-full rounded-b-none rounded-t-lg' />

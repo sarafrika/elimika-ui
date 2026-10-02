@@ -6,7 +6,7 @@ import { surfaceTheme } from '@/components/data-display';
 
 export default function EnrollmentsPage() {
   return (
-    <main className={surfaceTheme.page}>
+    <main className={`${surfaceTheme.pageWide} py-4`}>
       <div className={surfaceTheme.pageStack}>
         <PageHeader
           title='Students'

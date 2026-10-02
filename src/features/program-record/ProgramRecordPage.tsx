@@ -2,33 +2,30 @@
 
 import { useQuery } from '@tanstack/react-query';
 import { usePathname } from 'next/navigation';
-import { useCallback, useMemo, type ReactNode } from 'react';
+import { type ReactNode, useCallback, useMemo } from 'react';
 import { toast } from 'sonner';
-
-import {
-  absoluteUrl,
-  publicCourseUrl,
-  routeSegmentFromPath,
-} from '@/src/features/dashboard/lib/dashboard-url';
-
 import { useStudentsByIds } from '@/hooks/use-batched-lookups';
+import { extractPage } from '@/lib/api-helpers';
 import { STALE_TIMES } from '@/lib/query-client';
+import type { CourseReview } from '@/services/client';
 import {
   getCategoryByUuidOptions,
+  getCourseCreatorByUuidOptions,
   getProgramCoursesOptions,
   getProgramEnrollmentsOptions,
   getProgramReviewsOptions,
   getTrainingProgramByUuidOptions,
 } from '@/services/client/@tanstack/react-query.gen';
 import type { Course } from '@/services/client/types.gen';
-
-import { CourseRecordView } from '@/src/features/course-record/CourseRecordView';
 import {
   AccessCard,
   ActionsCard,
   ActivityTab,
-  CommercialsTab,
   COURSE_DEFAULT_CURRENCY,
+  CommercialsTab,
+  type CourseCurriculumItem,
+  type CourseCurriculumLesson,
+  type CourseRailActionItem,
   DeliveryTab,
   GateBanner,
   GlanceCard,
@@ -37,19 +34,23 @@ import {
   OwnerDecisionsPanel,
   ReviewsTab,
   summarise,
-  type CourseCurriculumItem,
-  type CourseCurriculumLesson,
-  type CourseRailActionItem,
 } from '@/src/features/course-record/blocks';
+import { CourseRecordView } from '@/src/features/course-record/CourseRecordView';
 import type { CourseStats } from '@/src/features/course-record/types';
+import {
+  absoluteUrl,
+  publicCourseUrl,
+  routeSegmentFromPath,
+} from '@/src/features/dashboard/lib/dashboard-url';
 import { ProgramCurriculumPanel } from './ProgramCurriculumPanel';
-import { extractPage } from '@/lib/api-helpers';
-import type { CourseReview } from '@/services/client';
+import { ProgramEnrollmentsPanel } from './ProgramEnrollmentsPanel';
 
 interface ProgramRecordPageProps {
   programUuid: string;
   /** Where the shell's back link goes. Omitted, the link is not rendered. */
   backHref?: string;
+  /** The back link's text. */
+  backLabel?: string;
 
   /* — actions the route may own; each one defaults to the table above — */
   /** Replaces the capability map's primary button outright. */
@@ -79,6 +80,7 @@ interface ProgramRecordPageProps {
 export function ProgramRecordPage({
   programUuid,
   backHref,
+  backLabel = 'Back to programmes',
   primaryAction,
   onPrimaryAction,
   enrolHref,
@@ -115,7 +117,10 @@ export function ProgramRecordPage({
     ...getProgramEnrollmentsOptions({ path: { programUuid }, query: { pageable: {} } }),
     enabled: !!programUuid,
   });
-  const enrollments = enrollmentsQ.data?.data?.content ?? [];
+  const enrollments = useMemo(
+    () => enrollmentsQ.data?.data?.content ?? [],
+    [enrollmentsQ.data]
+  );
 
   const reviewsQ = useQuery({
     ...getProgramReviewsOptions({ path: { programUuid }, query: { pageable: {} } }),
@@ -131,20 +136,41 @@ export function ProgramRecordPage({
   });
   const categoryName = categoryQ.data?.data?.name;
 
+  // The byline names the creator, as the course record does; `created_by` is an email.
+  const creatorUuid = program?.course_creator_uuid;
+  const creatorQ = useQuery({
+    ...getCourseCreatorByUuidOptions({ path: { uuid: creatorUuid ?? '' } }),
+    enabled: Boolean(creatorUuid),
+    staleTime: STALE_TIMES.entity,
+  });
+  const creator = creatorQ.data;
+
+  const segment = routeSegmentFromPath(usePathname());
+
   // Simple derived figures
   const enrolledCount = enrollments.length;
 
   // Reviews summary
   const ratings = useMemo(() => summarise(reviews), [reviews]);
 
-  // reviewer names: try to resolve student ids carried on reviews
-  const reviewerIds = reviews
-    .filter(
-      (review: { is_anonymous?: boolean; student_uuid?: string | null }) => !review.is_anonymous
-    )
-    .map((review: { student_uuid?: string | null }) => review.student_uuid)
-    .filter((studentUuid): studentUuid is string => Boolean(studentUuid));
-  const { studentMap } = useStudentsByIds(reviewerIds ?? []);
+  // Student names, in one batched lookup: the non-anonymous reviewers, and the
+  // enrolled learners for the viewers who see the enrolment list.
+  const showsEnrollments = segment !== 'student' && segment !== 'parent' && segment !== null;
+  const studentIds = useMemo(() => {
+    const ids = reviews
+      .filter(
+        (review: { is_anonymous?: boolean; student_uuid?: string | null }) => !review.is_anonymous
+      )
+      .map((review: { student_uuid?: string | null }) => review.student_uuid)
+      .filter((studentUuid): studentUuid is string => Boolean(studentUuid));
+    if (showsEnrollments) {
+      for (const enrollment of enrollments) {
+        if (enrollment.student_uuid) ids.push(enrollment.student_uuid);
+      }
+    }
+    return [...new Set(ids)];
+  }, [reviews, enrollments, showsEnrollments]);
+  const { studentMap } = useStudentsByIds(studentIds);
   const resolvedReviewerNames = useMemo(() => {
     const m: Record<string, string> = {};
     for (const [k, v] of Object.entries(studentMap)) if (v?.full_name) m[k] = v.full_name;
@@ -154,7 +180,6 @@ export function ProgramRecordPage({
   // Derive viewer access from the current dashboard path segment so the
   // ProgramRecordPage mirrors CourseRecordPage behaviour and shows creator/
   // instructor/admin views when opened on those dashboards.
-  const segment = routeSegmentFromPath(usePathname());
   const access = (() => {
     switch (segment) {
       case 'course-creator':
@@ -279,14 +304,26 @@ export function ProgramRecordPage({
   );
 
   const deliveryPanel = (
-    <DeliveryTab
-      access={access}
-      trainers={[]}
-      trainersAsync={{ loading: false }}
-      classes={[]}
-      classesAsync={{ loading: false }}
-      classesAcceptingCount={0}
-    />
+    <div className='flex flex-col gap-[22px]'>
+      <DeliveryTab
+        access={access}
+        trainers={[]}
+        trainersAsync={{ loading: false }}
+        classes={[]}
+        classesAsync={{ loading: false }}
+        classesAcceptingCount={0}
+      />
+      {showsEnrollments ? (
+        <ProgramEnrollmentsPanel
+          enrollments={enrollments}
+          studentNames={resolvedReviewerNames}
+          total={enrollmentsTotal}
+          loading={enrollmentsQ.isLoading}
+          error={enrollmentsQ.error}
+          onRetry={() => void enrollmentsQ.refetch()}
+        />
+      ) : null}
+    </div>
   );
 
   const programCommercialCourse = useMemo<Course | undefined>(
@@ -359,6 +396,7 @@ export function ProgramRecordPage({
   };
 
   const tabCounts: Partial<Record<string, number>> = {
+    curriculum: coursesQ.isLoading ? undefined : courses.length,
     reviews: reviews.length,
   };
 
@@ -391,8 +429,10 @@ export function ProgramRecordPage({
       <CourseRecordView
         access={access}
         className={className}
+        eyebrow='Programme'
         courseName={program?.title}
         backHref={backHref}
+        backLabel={backLabel}
         onShare={onShare ?? handleShare}
         onExport={onExport}
         primaryAction={primaryAction}
@@ -402,14 +442,17 @@ export function ProgramRecordPage({
           summary: program?.description ?? undefined,
           categories: categoryName ? [categoryName] : undefined,
           status: program?.status,
-          creatorName: program?.created_by ?? undefined,
-          creatorRole: undefined,
+          creatorName: creator?.full_name,
+          creatorRole: creator?.professional_headline ?? undefined,
           averageRating: ratings.average,
           totalReviews: ratings.total,
           enrolledCount,
           contentCountNote: undefined,
           duration: program?.total_duration_display ?? undefined,
           level: program?.program_type ?? undefined,
+          loading: programQ.isLoading,
+          error: programQ.error ?? undefined,
+          onRetry: () => void programQ.refetch(),
         }}
         kpiBand={kpiBand}
         progressStrip={undefined}

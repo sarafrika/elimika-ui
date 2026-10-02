@@ -3,6 +3,7 @@
 import { useQuery } from '@tanstack/react-query';
 import { BookOpen, Sparkles } from 'lucide-react';
 import Link from 'next/link';
+import { surfaceTheme } from '@/components/data-display';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { EmptyState } from '@/components/ui/empty-state';
@@ -62,7 +63,7 @@ export function SimilarCoursesRail({
       </div>
 
       {query.isLoading ? (
-        <div className='grid gap-3 sm:grid-cols-2 lg:grid-cols-3' aria-busy='true'>
+        <div className={surfaceTheme.cardGrid} aria-busy='true'>
           {Array.from({ length: 3 }).map((_, index) => (
             <Skeleton key={index} className='h-28 w-full rounded-xl' />
           ))}
@@ -79,7 +80,7 @@ export function SimilarCoursesRail({
           }
         />
       ) : (
-        <ul className='grid gap-3 sm:grid-cols-2 lg:grid-cols-3'>
+        <ul className={surfaceTheme.cardGrid}>
           {courses.map((course, position) => {
             const thumbnail = toAuthenticatedMediaUrl(course.thumbnail_url);
             const reason = course.reasons?.[0]?.text ?? course.reason;

@@ -84,7 +84,8 @@ export const toSafeHref = (value?: string | null) => {
 export const formatCourseDuration = (course?: PublicCourseSummary | null) => {
   if (!course) return null;
 
-  if (course.total_duration_display) {
+  // The API spells out a missing duration ("Duration not specified"); show nothing for it.
+  if (course.total_duration_display && !/not specified/i.test(course.total_duration_display)) {
     return course.total_duration_display;
   }
 

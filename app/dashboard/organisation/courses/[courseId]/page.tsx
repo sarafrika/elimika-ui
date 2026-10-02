@@ -5,27 +5,22 @@
  *
  * The whole body is `CourseRecordPage`. It asks the API who is looking and the
  * API answers `organisation` — the route never asserts it. What stays here is
- * what belongs to a route: the uuid, the breadcrumbs, the back link, the "no
- * organisation" guard, and the two delivery actions the legacy screen owned.
- *
- * Those actions sit beside the record rather than inside it, as ADOPTION.md
- * asks: the record view is read-only, and navigating to the class builder or
- * the job board is the route's business, not the record's.
+ * what belongs to a route: the uuid, the breadcrumbs, the back link and the "no
+ * organisation" guard. The record's own side panel carries "Create class" and
+ * "Post a job", so the route adds no second copy of them.
  */
 
-import { Briefcase, Building2, CalendarPlus } from 'lucide-react';
-import Link from 'next/link';
+import { Building2 } from 'lucide-react';
 import { useParams } from 'next/navigation';
 import { useEffect } from 'react';
-
-import { Button } from '@/components/ui/button';
+import { surfaceTheme } from '@/components/data-display/page-shell';
 import { EmptyState } from '@/components/ui/empty-state';
 import { useBreadcrumb } from '@/context/breadcrumb-provider';
 import { useOrganisation } from '@/context/organisation-context';
+import { cn } from '@/lib/utils';
 import { CourseRecordPage } from '@/src/features/course-record';
 
 const COURSES_HREF = '/dashboard/organisation/courses';
-const NEW_CLASS_HREF = '/dashboard/organisation/classes/new';
 
 export default function OrganisationCourseRecordRoute() {
   const params = useParams<{ courseId: string }>();
@@ -61,22 +56,7 @@ export default function OrganisationCourseRecordRoute() {
   }
 
   return (
-    <div className='mx-auto w-full max-w-[1400px] space-y-4 px-3 py-4 sm:px-5 lg:px-6'>
-      <div className='flex flex-wrap items-center justify-end gap-2'>
-        <Button asChild size='sm' variant='outline'>
-          <Link href={NEW_CLASS_HREF}>
-            <CalendarPlus className='mr-2 h-4 w-4' />
-            Create a class
-          </Link>
-        </Button>
-        <Button asChild size='sm'>
-          <Link href={`/dashboard/organisation/jobs/new?courseUuid=${courseUuid}`}>
-            <Briefcase className='mr-2 h-4 w-4' />
-            Post a job
-          </Link>
-        </Button>
-      </div>
-
+    <div className={cn(surfaceTheme.pageWide, 'flex flex-col gap-4 py-4 pb-10')}>
       <CourseRecordPage courseUuid={courseUuid} backHref={COURSES_HREF} />
     </div>
   );

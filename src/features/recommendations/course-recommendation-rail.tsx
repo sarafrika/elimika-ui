@@ -4,6 +4,7 @@ import { useQuery } from '@tanstack/react-query';
 import { BookOpen, Lock, SearchX, Sparkles, X } from 'lucide-react';
 import Link from 'next/link';
 import { type ReactNode, useState } from 'react';
+import { surfaceTheme } from '@/components/data-display';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { EmptyState } from '@/components/ui/empty-state';
@@ -127,7 +128,7 @@ function CourseRecommendationRail({
   let body: ReactNode;
   if (query.isLoading) {
     body = (
-      <div className='grid gap-3 sm:grid-cols-2 lg:grid-cols-3' aria-busy='true'>
+      <div className={surfaceTheme.cardGrid} aria-busy='true'>
         {[0, 1, 2].map(key => (
           <Skeleton key={key} className='h-44 w-full rounded-lg' />
         ))}
@@ -179,7 +180,7 @@ function CourseRecommendationRail({
   } else {
     const all = query.data?.data ?? [];
     body = (
-      <ul className='grid gap-3 sm:grid-cols-2 lg:grid-cols-3'>
+      <ul className={surfaceTheme.cardGrid}>
         {courses.map(course => {
           const uuid = course.course_uuid as string;
           const position = all.indexOf(course);

@@ -52,7 +52,7 @@ export function HiredJobsPage() {
   const empty = !hires.isPending && !hires.error && applications.length === 0;
 
   return (
-    <div className={surfaceTheme.page}>
+    <div className={`${surfaceTheme.pageWide} py-4`}>
       <div className={surfaceTheme.pageStack}>
         <PageHeader
           title='Jobs'
@@ -78,7 +78,7 @@ export function HiredJobsPage() {
           errorTitle='Couldn’t load your hired jobs'
           onRetry={() => void hires.refetch()}
           skeleton={
-            <div className='grid gap-4 lg:grid-cols-2'>
+            <div className={surfaceTheme.cardGridWide}>
               <HiredJobCardSkeleton />
               <HiredJobCardSkeleton />
             </div>
@@ -97,7 +97,7 @@ export function HiredJobsPage() {
             />
           }
         >
-          <ul className='grid gap-4 lg:grid-cols-2'>
+          <ul className={surfaceTheme.cardGridWide}>
             {applications.map(application => {
               const classUuid = application.job?.class_definition_uuid;
               return (

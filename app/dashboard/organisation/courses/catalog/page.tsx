@@ -63,6 +63,7 @@ import {
   searchTrainingApplicationsOptions,
 } from '@/services/client/@tanstack/react-query.gen';
 import { toAuthenticatedMediaUrl } from '@/src/lib/media-url';
+import { surfaceTheme } from '@/components/data-display';
 
 const stripHtml = (html?: string) =>
   (html ?? '')
@@ -515,7 +516,7 @@ export default function CatalogPage() {
   const priceFacet = courseSearch.facets.is_free ?? {};
 
   return (
-    <div className='mx-auto w-full max-w-[1600px] space-y-5 px-3 py-4 sm:px-5 lg:px-6 2xl:max-w-[1840px]'>
+    <div className={`${surfaceTheme.pageWide} space-y-5 py-4`}>
       {/* Header */}
       <div>
         <h1 className='text-foreground text-2xl font-semibold tracking-tight sm:text-3xl'>
@@ -584,13 +585,13 @@ export default function CatalogPage() {
 
       {/* Grid */}
       {loading ? (
-        <div className='grid gap-4 sm:grid-cols-2 sm:gap-5 lg:grid-cols-3 xl:grid-cols-4'>
+        <div className={surfaceTheme.cardGrid}>
           {[...Array(pageSizeNumber > 8 ? 8 : pageSizeNumber)].map((_, i) => (
             <Skeleton key={i} className='h-80 w-full rounded-2xl' />
           ))}
         </div>
       ) : (
-        <div className='grid gap-4 sm:grid-cols-2 sm:gap-5 lg:grid-cols-3 xl:grid-cols-4'>
+        <div className={surfaceTheme.cardGrid}>
           {paginatedItems.map(item => {
             const isFav = !!favorites[item.id];
             const isSelected = selectedIds.includes(item.id);

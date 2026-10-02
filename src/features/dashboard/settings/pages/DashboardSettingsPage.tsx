@@ -4,12 +4,20 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { ChevronRight, LayoutPanelLeft, Pencil, ShieldCheck, Wallet } from 'lucide-react';
 import Link from 'next/link';
-import { usePathname, useRouter, useSearchParams } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import type React from 'react';
 import { Suspense, useEffect, useMemo, useRef, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { toast } from 'sonner';
 import * as z from 'zod';
+import {
+  type FieldToTab,
+  SectionTabPanel,
+  SectionTabs,
+  useSectionTab,
+  useTabErrors,
+} from '@/components/data-display/section-tabs';
+import { surfaceTheme } from '@/components/data-display';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -25,7 +33,6 @@ import {
 import { Input } from '@/components/ui/input';
 import { Separator } from '@/components/ui/separator';
 import Spinner from '@/components/ui/spinner';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Textarea } from '@/components/ui/textarea';
 import type { User } from '@/services/client';
 import {
@@ -78,6 +85,11 @@ const userDetailsSchema = z.object({
 
 type UserDetailsFormValues = z.infer<typeof userDetailsSchema>;
 
+/** Every editable profile field lives on the Profile tab. */
+const PROFILE_FIELD_TABS: FieldToTab<string> = Object.fromEntries(
+  Object.keys(userDetailsSchema.shape).map(field => [field, 'profile'])
+);
+
 function getMutationErrorMessage(error: unknown) {
   if (typeof error === 'object' && error !== null) {
     if ('message' in error && typeof error.message === 'string') {
@@ -129,18 +141,17 @@ function SettingsPageFallback() {
 function DashboardSettingsPageBody({ variant }: DashboardSettingsPageProps) {
   const qc = useQueryClient();
   const router = useRouter();
-  const pathname = usePathname();
   const searchParams = useSearchParams();
-  const { activeDomain } = useUserDomain()
+  const { activeDomain } = useUserDomain();
   const profile = useUserProfile();
   const organisation = useOrganisation();
   const fileInputRef = useRef<HTMLInputElement | null>(null);
 
   const normalizedDomain =
-    activeDomain === "course_creator"
-      ? "course-creator"
-      : activeDomain === "organisation_user"
-        ? "organisation"
+    activeDomain === 'course_creator'
+      ? 'course-creator'
+      : activeDomain === 'organisation_user'
+        ? 'organisation'
         : activeDomain;
 
   const PROFILE_ROUTE = `/dashboard/${normalizedDomain}/profile`;
@@ -288,11 +299,22 @@ function DashboardSettingsPageBody({ variant }: DashboardSettingsPageProps) {
   );
 
   // Tabs are URL-driven so panels can be deep-linked.
-  const defaultTab = config.tabs[0]?.value ?? 'profile';
+  const tabValues = useMemo(() => config.tabs.map(tab => tab.value), [config.tabs]);
+  const sectionTabs = useMemo(
+    () => config.tabs.map(tab => ({ id: tab.value, label: tab.label })),
+    [config.tabs]
+  );
+  const {
+    value: activeTab,
+    setValue: setActiveTab,
+    hrefFor,
+  } = useSectionTab(tabValues, tabValues[0] ?? 'profile');
   const requestedTab = searchParams.get('tab');
-  const activeTab = config.tabs.some(tab => tab.value === requestedTab)
-    ? (requestedTab as string)
-    : defaultTab;
+  const tabErrors = useTabErrors(form, {
+    fieldToTab: PROFILE_FIELD_TABS,
+    tabs: tabValues,
+    onTabChange: setActiveTab,
+  });
 
   // Branches and rate cards moved to their own pages; forward old tab links there.
   useEffect(() => {
@@ -303,12 +325,6 @@ function DashboardSettingsPageBody({ variant }: DashboardSettingsPageProps) {
       router.replace(dashboardUrl('instructor', 'rate-card'));
     }
   }, [variant, requestedTab, router]);
-
-  const handleTabChange = (nextTab: string) => {
-    const params = new URLSearchParams(searchParams.toString());
-    params.set('tab', nextTab);
-    router.replace(`${pathname}?${params.toString()}`, { scroll: false });
-  };
 
   const roleLabel = String(normalizeUserDomainValue(profile?.user_domain) ?? variant).replace(
     /_/g,
@@ -511,7 +527,7 @@ function DashboardSettingsPageBody({ variant }: DashboardSettingsPageProps) {
     variant === 'admin' ? '/dashboard/admin/platform/rules' : config.supportHref;
 
   return (
-    <div className='mb-8 w-full max-w-[1500px] overflow-x-clip px-2 py-3 sm:px-3 sm:py-4 lg:px-4'>
+    <div className={`${surfaceTheme.pageWide} mb-8 overflow-x-clip py-3 sm:py-4`}>
       <div className='space-y-4 sm:space-y-5'>
         <SettingsPageHeader
           title={config.title}
@@ -521,20 +537,17 @@ function DashboardSettingsPageBody({ variant }: DashboardSettingsPageProps) {
           initials={profileInitials}
         />
 
-        <Tabs value={activeTab} onValueChange={handleTabChange} className='space-y-4'>
-          <TabsList className='bg-card/80 border-border/70 h-auto w-full flex-wrap justify-start rounded-[16px] border p-1.5'>
-            {config.tabs.map(tab => (
-              <TabsTrigger
-                key={tab.value}
-                value={tab.value}
-                className='min-h-10 flex-1 rounded-[12px] px-4 py-2.5 text-[0.8rem] font-medium sm:flex-none sm:text-sm'
-              >
-                {tab.label}
-              </TabsTrigger>
-            ))}
-          </TabsList>
-
-          <TabsContent value='profile' className='mt-0'>
+        <SectionTabs
+          tabs={sectionTabs}
+          value={activeTab}
+          onValueChange={setActiveTab}
+          hrefFor={hrefFor}
+          label='Settings sections'
+          variant='pill'
+          sticky
+          errorCounts={tabErrors.counts}
+        >
+          <SectionTabPanel value='profile'>
             {variant === 'organisation' ? (
               <InstitutionProfilePanel />
             ) : (
@@ -542,16 +555,14 @@ function DashboardSettingsPageBody({ variant }: DashboardSettingsPageProps) {
                 <Card className='border-border/70 rounded-md p-0 shadow-sm'>
                   <CardHeader className='border-border/60 border-b px-4 py-4 sm:px-5'>
                     <div className='flex flex-wrap items-start justify-between gap-4'>
-                      <div className="min-w-0 space-y-2">
-                        <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
-                          <CardTitle className="text-base font-semibold sm:text-lg">
+                      <div className='min-w-0 space-y-2'>
+                        <div className='flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between'>
+                          <CardTitle className='text-base font-semibold sm:text-lg'>
                             Profile Details
                           </CardTitle>
-
-
                         </div>
 
-                        <div className="text-sm leading-6 text-muted-foreground sm:text-base">
+                        <div className='text-muted-foreground text-sm leading-6 sm:text-base'>
                           <RichTextRenderer htmlString={descriptionByVariant[variant]} />
                         </div>
                       </div>
@@ -574,7 +585,7 @@ function DashboardSettingsPageBody({ variant }: DashboardSettingsPageProps) {
                             type='button'
                             onClick={openProfileImagePicker}
                             disabled={!profile?.uuid || uploadProfileImage.isPending}
-                            className='group relative rounded-full focus:outline-none focus:ring-2 focus:ring-primary/40 focus:ring-offset-2'
+                            className='group focus:ring-primary/40 relative rounded-full focus:ring-2 focus:ring-offset-2 focus:outline-none'
                             aria-label='Change profile photo'
                           >
                             <Avatar className='border-border/70 size-20 border sm:size-24'>
@@ -599,7 +610,7 @@ function DashboardSettingsPageBody({ variant }: DashboardSettingsPageProps) {
                             type='button'
                             variant='ghost'
                             size='sm'
-                            className='h-7 px-2 text-xs text-muted-foreground hover:text-foreground'
+                            className='text-muted-foreground hover:text-foreground h-7 px-2 text-xs'
                             onClick={openProfileImagePicker}
                             disabled={!profile?.uuid || uploadProfileImage.isPending}
                           >
@@ -621,17 +632,11 @@ function DashboardSettingsPageBody({ variant }: DashboardSettingsPageProps) {
                           </p>
 
                           <div className='flex flex-wrap gap-2 pt-1'>
-                            <Badge
-                              variant='secondary'
-                              className='rounded-md px-3 py-1 text-xs'
-                            >
+                            <Badge variant='secondary' className='rounded-md px-3 py-1 text-xs'>
                               {roleLabel}
                             </Badge>
 
-                            <Badge
-                              variant='outline'
-                              className='rounded-md px-3 py-1 text-xs'
-                            >
+                            <Badge variant='outline' className='rounded-md px-3 py-1 text-xs'>
                               Joined {joinedDate}
                             </Badge>
                           </div>
@@ -639,27 +644,26 @@ function DashboardSettingsPageBody({ variant }: DashboardSettingsPageProps) {
                       </div>
 
                       {/* Subtle edit action */}
-                      <div className='flex flex-col gap-2 items-end' >
+                      <div className='flex flex-col items-end gap-2'>
                         <Button
-                          type="button"
-                          variant="ghost"
-                          size="sm"
-                          className="h-8 w-fit gap-1.5 px-2.5 text-xs font-medium text-muted-foreground hover:bg-muted hover:text-foreground"
+                          type='button'
+                          variant='ghost'
+                          size='sm'
+                          className='text-muted-foreground hover:bg-muted hover:text-foreground h-8 w-fit gap-1.5 px-2.5 text-xs font-medium'
                           onClick={handleStartEditing}
                           disabled={isEditing || !profile?.uuid}
                         >
-                          <Pencil className="h-3.5 w-3.5" />
+                          <Pencil className='h-3.5 w-3.5' />
                           Edit info
                         </Button>
 
                         <Link
                           href={PROFILE_ROUTE}
-                          className="text-sm font-medium text-primary transition-colors hover:text-primary/80"
+                          className='text-primary hover:text-primary/80 text-sm font-medium transition-colors'
                         >
                           View full profile →
                         </Link>
                       </div>
-
 
                       <input
                         ref={fileInputRef}
@@ -671,7 +675,10 @@ function DashboardSettingsPageBody({ variant }: DashboardSettingsPageProps) {
                     </div>
 
                     <Form {...form}>
-                      <form onSubmit={form.handleSubmit(handleSaveProfile)} className='space-y-5'>
+                      <form
+                        onSubmit={form.handleSubmit(handleSaveProfile, tabErrors.onInvalid)}
+                        className='max-w-5xl space-y-5'
+                      >
                         <div className='space-y-4'>
                           <div className='grid gap-4 sm:grid-cols-2'>
                             {isEditing ? (
@@ -940,10 +947,10 @@ function DashboardSettingsPageBody({ variant }: DashboardSettingsPageProps) {
                               }
                             >
                               {updateUser.isPending ||
-                                updateStudentProfile.isPending ||
-                                updateInstructorProfile.isPending ||
-                                updateCourseCreatorProfile.isPending ||
-                                isSubmitting ? (
+                              updateStudentProfile.isPending ||
+                              updateInstructorProfile.isPending ||
+                              updateCourseCreatorProfile.isPending ||
+                              isSubmitting ? (
                                 <span className='flex items-center gap-2'>
                                   <Spinner className='h-4 w-4' />
                                   Saving...
@@ -1064,17 +1071,22 @@ function DashboardSettingsPageBody({ variant }: DashboardSettingsPageProps) {
                 </div>
               </div>
             )}
-          </TabsContent>
+          </SectionTabPanel>
 
-          <TabsContent value='groups' className='mt-0'>
-            <AcademicGroupsPanel />
-          </TabsContent>
+          {variant === 'organisation' ? (
+            <>
+              {/* These panels hold no profile fields and fetch on mount, so they load on first open. */}
+              <SectionTabPanel value='groups'>
+                {activeTab === 'groups' ? <AcademicGroupsPanel /> : null}
+              </SectionTabPanel>
 
-          <TabsContent value='roles' className='mt-0'>
-            <RolesPermissionsPanel />
-          </TabsContent>
+              <SectionTabPanel value='roles'>
+                {activeTab === 'roles' ? <RolesPermissionsPanel /> : null}
+              </SectionTabPanel>
+            </>
+          ) : null}
 
-          <TabsContent value='support' className='mt-0'>
+          <SectionTabPanel value='support'>
             <div className='grid gap-4 xl:grid-cols-[minmax(0,1.12fr)_minmax(0,0.88fr)]'>
               <Card className='border-border/70 rounded-md p-0 shadow-sm'>
                 <CardHeader className='border-border/60 border-b px-4 py-4 sm:px-5'>
@@ -1114,9 +1126,9 @@ function DashboardSettingsPageBody({ variant }: DashboardSettingsPageProps) {
                 </CardContent>
               </Card>
             </div>
-          </TabsContent>
+          </SectionTabPanel>
 
-          <TabsContent value='advanced-settings' className='mt-0'>
+          <SectionTabPanel value='advanced-settings'>
             <>
               <div className='grid gap-4 xl:grid-cols-[minmax(0,1.1fr)_minmax(320px,0.9fr)]'>
                 <Card className='border-border/70 rounded-md p-0 shadow-sm'>
@@ -1183,9 +1195,7 @@ function DashboardSettingsPageBody({ variant }: DashboardSettingsPageProps) {
                           className='h-10 w-full rounded-md text-sm'
                         >
                           {/* Repoint to /dashboard/admin/people/{uuid}?tab=audit once Person 360 lands. */}
-                          <Link href='/dashboard/admin/overview'>
-                            View account activity
-                          </Link>
+                          <Link href='/dashboard/admin/overview'>View account activity</Link>
                         </Button>
                       </CardContent>
                     </Card>
@@ -1197,8 +1207,8 @@ function DashboardSettingsPageBody({ variant }: DashboardSettingsPageProps) {
                 <ManageProfileActions />
               </Card>
             </>
-          </TabsContent>
-        </Tabs>
+          </SectionTabPanel>
+        </SectionTabs>
       </div>
     </div>
   );

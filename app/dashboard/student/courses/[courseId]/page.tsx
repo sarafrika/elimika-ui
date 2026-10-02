@@ -22,7 +22,9 @@
 import { useParams } from 'next/navigation';
 import { useEffect } from 'react';
 
+import { surfaceTheme } from '@/components/data-display/page-shell';
 import { useBreadcrumb } from '@/context/breadcrumb-provider';
+import { cn } from '@/lib/utils';
 import { CoursePrerequisitesNotice } from '@/src/features/course-prerequisites/course-prerequisites-notice';
 import { CourseRecordPage } from '@/src/features/course-record';
 import { CourseRecordRouteActions } from '@/src/features/dashboard/courses/components/CourseRecordRouteActions';
@@ -51,15 +53,15 @@ export default function StudentCatalogueCourseRecordRoute() {
   }, [replaceBreadcrumbs, courseUuid]);
 
   return (
-    <>
+    <div className={cn(surfaceTheme.pageWide, 'flex flex-col gap-4 py-4 pb-10')}>
       <CourseRecordRouteActions
         courseUuid={courseUuid}
         classesHref={`${CATALOGUE_HREF}/available-classes/${courseUuid}`}
         instructorsHref={`${CATALOGUE_HREF}/instructor?courseId=${courseUuid}`}
       />
-      <CoursePrerequisitesNotice courseUuid={courseUuid} hrefFor={courseHref} className='mb-4' />
+      <CoursePrerequisitesNotice courseUuid={courseUuid} hrefFor={courseHref} />
       <CourseRecordPage courseUuid={courseUuid} backHref={CATALOGUE_HREF} />
-      <SimilarCoursesRail courseUuid={courseUuid} hrefFor={courseHref} className='mt-8' />
-    </>
+      <SimilarCoursesRail courseUuid={courseUuid} hrefFor={courseHref} className='mt-4' />
+    </div>
   );
 }

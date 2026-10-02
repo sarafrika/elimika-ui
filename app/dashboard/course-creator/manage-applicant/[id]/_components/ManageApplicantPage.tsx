@@ -5,7 +5,6 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { EmptyState } from '@/components/ui/empty-state';
 import { Skeleton } from '@/components/ui/skeleton';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useCourseCreator } from '@/context/course-creator-context';
 import { dayjs } from '@/lib/date';
 import type {
@@ -46,10 +45,31 @@ import {
   Users,
 } from 'lucide-react';
 import Link from 'next/link';
-import { useMemo, useState } from 'react';
+import { useMemo } from 'react';
 import { toast } from 'sonner';
 import { stripHtml } from '../../../../../../src/features/dashboard/courses/shared/_components/courses-data';
 import { DetailGrid, SectionCard, StatusBadge, surfaceTheme } from '@/components/data-display';
+import {
+  type SectionTab,
+  SectionTabPanel,
+  SectionTabs,
+  useSectionTab,
+} from '@/components/data-display/section-tabs';
+
+const DOSSIER_TABS = ['profile', 'background', 'documents', 'course', 'program'] as const;
+type DossierTab = (typeof DOSSIER_TABS)[number];
+/** Sections an organisation applicant has no records for. */
+const INSTRUCTOR_ONLY_TABS: readonly DossierTab[] = ['background', 'documents'];
+
+/** Only the creator who owns the course or program decides; a rate-floor flag also opens it. */
+function canDecideEntry(entry: TrainingApplicationEntry, creatorUuid: string) {
+  return entry.creatorUuid
+    ? entry.creatorUuid === creatorUuid
+    : Boolean(entry.application.rate_floor_flags);
+}
+
+const isAwaitingDecision = (entry: TrainingApplicationEntry, creatorUuid: string) =>
+  entry.application.status === 'pending' && canDecideEntry(entry, creatorUuid);
 
 type ApplicantType = 'instructor' | 'organisation';
 
@@ -59,10 +79,10 @@ function formatDate(value?: string | Date | null): string {
   return Number.isNaN(parsed.getTime())
     ? '—'
     : parsed.toLocaleDateString(undefined, {
-      day: 'numeric',
-      month: 'short',
-      year: 'numeric',
-    });
+        day: 'numeric',
+        month: 'short',
+        year: 'numeric',
+      });
 }
 
 function ApplicantTypePill({ type }: { type: ApplicantType }) {
@@ -79,201 +99,214 @@ function ApplicantTypePill({ type }: { type: ApplicantType }) {
   );
 }
 
-function ProfileCard({
-  uuid,
-  type,
-  instructor,
-  organisation,
-  instructorUser,
-  skills,
-  education,
-  documents,
-  reviews,
-}: {
-  uuid: string;
-  type: ApplicantType;
-  instructor?: Instructor;
-  organisation?: Organisation;
-  instructorUser?: Instructor;
-  skills: InstructorSkill[];
-  education: InstructorEducation[];
-  documents: InstructorDocument[];
-  reviews: InstructorReview[];
-}) {
-  if (type === 'organisation' && organisation) {
-    return (
-      <div className='space-y-4'>
-        <SectionCard title='Organisation overview' description='Core details for this applicant.'>
-          <div className='space-y-4'>
-            <DetailGrid
-              columns={3}
-              items={[
-                { label: 'Name', value: organisation.name || '-' },
-                { label: 'Location', value: organisation.location || '-' },
-                { label: 'Country', value: organisation.country || '-' },
-                { label: 'Licence', value: organisation.licence_no || '-' },
-                { label: 'Website', value: organisation.website || '-' },
-                { label: 'Created', value: formatDate(organisation.created_date) },
-              ]}
-            />
-            <div>
-              <p className={surfaceTheme.sectionLabel}>Description</p>
-              <p className='text-foreground mt-2 text-sm leading-6'>
-                {organisation.description || 'No description provided.'}
-              </p>
-            </div>
-          </div>
-        </SectionCard>
-
-        <SectionCard title='Application summary' description='Where this organisation is in the queue.'>
-          <DetailGrid
-            columns={2}
-            items={[
-              { label: 'Applicant UUID', value: <span className='font-mono text-xs'>{uuid}</span> },
-              {
-                label: 'Verification',
-                value: organisation.admin_verified ? 'Verified' : 'Pending',
-              },
-            ]}
-          />
-        </SectionCard>
-      </div>
-    );
-  }
-
+function OrganisationProfile({ uuid, organisation }: { uuid: string; organisation: Organisation }) {
   return (
-    <div className='space-y-4'>
-      <SectionCard title='User profile' description='Identity and contact details for this applicant.'>
+    <div className='grid items-start gap-4 xl:grid-cols-[minmax(0,2fr)_minmax(320px,1fr)]'>
+      <SectionCard title='Organisation overview' description='Core details for this applicant.'>
         <div className='space-y-4'>
           <DetailGrid
             columns={3}
             items={[
-              { label: 'Full name', value: instructor?.full_name || '-' },
-              { label: 'Email', value: instructorUser?.email || '-' },
-              { label: 'Phone', value: instructorUser?.phone_number || '-' },
-              {
-                label: 'Location',
-                value: instructor?.formatted_location || instructor?.location || '-',
-              },
-              { label: 'Organisation', value: instructor?.organisation || '-' },
-              { label: 'Created', value: formatDate(instructor?.created_date) },
+              { label: 'Name', value: organisation.name || '-' },
+              { label: 'Location', value: organisation.location || '-' },
+              { label: 'Country', value: organisation.country || '-' },
+              { label: 'Licence', value: organisation.licence_no || '-' },
+              { label: 'Website', value: organisation.website || '-' },
+              { label: 'Created', value: formatDate(organisation.created_date) },
             ]}
           />
-
-          <div className='flex flex-wrap gap-2'>
-            <StatusBadge
-              status={instructor?.admin_verified ? 'approved' : 'pending'}
-              label={instructor?.admin_verified ? 'Verified' : 'Pending'}
-            />
-            <StatusBadge
-              status={instructor?.is_profile_complete ? 'approved' : 'pending'}
-              label={instructor?.is_profile_complete ? 'Profile complete' : 'Profile incomplete'}
-            />
-          </div>
-
           <div>
-            <p className={surfaceTheme.sectionLabel}>Professional headline</p>
-            <p className='text-foreground mt-2 text-sm'>
-              {instructor?.professional_headline || 'No headline provided.'}
-            </p>
-          </div>
-
-          <div>
-            <p className={surfaceTheme.sectionLabel}>Bio</p>
-            <p className='text-foreground mt-2 text-sm leading-6'>
-              {stripHtml(instructor?.bio) || 'No bio provided.'}
+            <p className={surfaceTheme.sectionLabel}>Description</p>
+            <p className='text-foreground mt-2 max-w-prose text-sm leading-6'>
+              {organisation.description || 'No description provided.'}
             </p>
           </div>
         </div>
       </SectionCard>
 
-      <div className='grid gap-4 lg:grid-cols-2'>
-        <SectionCard title='Education' description='Education history and qualifications.'>
-          {education.length ? (
-            <div className='space-y-3'>
-              {education.map(item => (
-                <div key={item.uuid} className='border-border/60 bg-muted/20 rounded-md border p-3'>
-                  <p className='text-foreground text-sm font-semibold'>
-                    {item.qualification || 'Qualification not specified'}
-                  </p>
-                  <p className='text-muted-foreground text-xs'>
-                    {item.school_name || 'Institution not specified'}
-                  </p>
-                  <p className='text-muted-foreground mt-1 text-xs'>
-                    {item.year_completed ? `Completed ${item.year_completed}` : 'Year not specified'}
-                  </p>
-                </div>
-              ))}
-            </div>
-          ) : (
-            <EmptyState icon={GraduationCap} title='No education records' variant='compact' />
-          )}
-        </SectionCard>
+      <SectionCard
+        title='Application summary'
+        description='Where this organisation is in the queue.'
+      >
+        <DetailGrid
+          columns={2}
+          items={[
+            { label: 'Applicant UUID', value: <span className='font-mono text-xs'>{uuid}</span> },
+            {
+              label: 'Verification',
+              value: organisation.admin_verified ? 'Verified' : 'Pending',
+            },
+          ]}
+        />
+      </SectionCard>
+    </div>
+  );
+}
 
-        <SectionCard title='Skills' description='Declared teaching and professional skills.'>
-          {skills.length ? (
-            <div className='flex flex-wrap gap-2'>
-              {skills.map(skill => (
-                <Badge key={skill.uuid} variant='secondary'>
-                  {skill.skill_name} ({skill.proficiency_level})
-                </Badge>
-              ))}
-            </div>
-          ) : (
-            <EmptyState icon={Award} title='No skills listed' variant='compact' />
-          )}
-        </SectionCard>
+function InstructorProfile({
+  instructor,
+  instructorUser,
+}: {
+  instructor?: Instructor;
+  instructorUser?: Instructor;
+}) {
+  return (
+    <SectionCard
+      title='User profile'
+      description='Identity and contact details for this applicant.'
+    >
+      <div className='space-y-4'>
+        <DetailGrid
+          columns={3}
+          items={[
+            { label: 'Full name', value: instructor?.full_name || '-' },
+            { label: 'Email', value: instructorUser?.email || '-' },
+            { label: 'Phone', value: instructorUser?.phone_number || '-' },
+            {
+              label: 'Location',
+              value: instructor?.formatted_location || instructor?.location || '-',
+            },
+            { label: 'Organisation', value: instructor?.organisation || '-' },
+            { label: 'Created', value: formatDate(instructor?.created_date) },
+          ]}
+        />
+
+        <div className='flex flex-wrap gap-2'>
+          <StatusBadge
+            status={instructor?.admin_verified ? 'approved' : 'pending'}
+            label={instructor?.admin_verified ? 'Verified' : 'Pending'}
+          />
+          <StatusBadge
+            status={instructor?.is_profile_complete ? 'approved' : 'pending'}
+            label={instructor?.is_profile_complete ? 'Profile complete' : 'Profile incomplete'}
+          />
+        </div>
+
+        <div>
+          <p className={surfaceTheme.sectionLabel}>Professional headline</p>
+          <p className='text-foreground mt-2 text-sm'>
+            {instructor?.professional_headline || 'No headline provided.'}
+          </p>
+        </div>
+
+        <div>
+          <p className={surfaceTheme.sectionLabel}>Bio</p>
+          <p className='text-foreground mt-2 max-w-prose text-sm leading-6'>
+            {stripHtml(instructor?.bio) || 'No bio provided.'}
+          </p>
+        </div>
       </div>
+    </SectionCard>
+  );
+}
 
-      <div className='grid gap-4 lg:grid-cols-2'>
-        <SectionCard title='Documents' description='Uploaded supporting documents.'>
-          {documents.length ? (
-            <div className='space-y-3'>
-              {documents.map(document => (
-                <div key={document.uuid} className='border-border/60 bg-muted/20 rounded-md border p-3'>
-                  <p className='text-foreground text-sm font-medium'>
-                    {document.title || document.original_filename}
-                  </p>
-                  <p className='text-muted-foreground mt-1 text-xs'>
-                    {document.verification_status || document.status || 'Document'}
-                  </p>
-                </div>
-              ))}
-            </div>
-          ) : (
-            <EmptyState icon={FileText} title='No documents uploaded' variant='compact' />
-          )}
-        </SectionCard>
+function InstructorBackground({
+  skills,
+  education,
+}: {
+  skills: InstructorSkill[];
+  education: InstructorEducation[];
+}) {
+  return (
+    <div className='grid items-start gap-4 lg:grid-cols-2'>
+      <SectionCard title='Education' description='Education history and qualifications.'>
+        {education.length ? (
+          <div className='space-y-3'>
+            {education.map(item => (
+              <div key={item.uuid} className='border-border/60 bg-muted/20 rounded-md border p-3'>
+                <p className='text-foreground text-sm font-semibold'>
+                  {item.qualification || 'Qualification not specified'}
+                </p>
+                <p className='text-muted-foreground text-xs'>
+                  {item.school_name || 'Institution not specified'}
+                </p>
+                <p className='text-muted-foreground mt-1 text-xs'>
+                  {item.year_completed ? `Completed ${item.year_completed}` : 'Year not specified'}
+                </p>
+              </div>
+            ))}
+          </div>
+        ) : (
+          <EmptyState icon={GraduationCap} title='No education records' variant='compact' />
+        )}
+      </SectionCard>
 
-        <SectionCard title='Reviews' description='Public reviews and ratings for this applicant.'>
-          {reviews.length ? (
-            <div className='space-y-3'>
-              {reviews.map(review => (
-                <div key={review.uuid} className='border-border/60 bg-muted/20 rounded-md border p-3'>
-                  <div className='flex items-center justify-between gap-3'>
-                    <p className='text-foreground text-sm font-semibold'>{review.headline}</p>
-                    <div className='flex items-center gap-1'>
-                      {Array.from({ length: 5 }).map((_, index) => (
-                        <Star
-                          key={index}
-                          className={
-                            index < (review.rating ?? 0)
-                              ? 'text-warning size-3.5 fill-warning'
-                              : 'text-muted-foreground size-3.5'
-                          }
-                        />
-                      ))}
-                    </div>
+      <SectionCard title='Skills' description='Declared teaching and professional skills.'>
+        {skills.length ? (
+          <div className='flex flex-wrap gap-2'>
+            {skills.map(skill => (
+              <Badge key={skill.uuid} variant='secondary'>
+                {skill.skill_name} ({skill.proficiency_level})
+              </Badge>
+            ))}
+          </div>
+        ) : (
+          <EmptyState icon={Award} title='No skills listed' variant='compact' />
+        )}
+      </SectionCard>
+    </div>
+  );
+}
+
+function InstructorDocumentsAndReviews({
+  documents,
+  reviews,
+}: {
+  documents: InstructorDocument[];
+  reviews: InstructorReview[];
+}) {
+  return (
+    <div className='grid items-start gap-4 lg:grid-cols-2'>
+      <SectionCard title='Documents' description='Uploaded supporting documents.'>
+        {documents.length ? (
+          <div className='space-y-3'>
+            {documents.map(document => (
+              <div
+                key={document.uuid}
+                className='border-border/60 bg-muted/20 rounded-md border p-3'
+              >
+                <p className='text-foreground text-sm font-medium'>
+                  {document.title || document.original_filename}
+                </p>
+                <p className='text-muted-foreground mt-1 text-xs'>
+                  {document.verification_status || document.status || 'Document'}
+                </p>
+              </div>
+            ))}
+          </div>
+        ) : (
+          <EmptyState icon={FileText} title='No documents uploaded' variant='compact' />
+        )}
+      </SectionCard>
+
+      <SectionCard title='Reviews' description='Public reviews and ratings for this applicant.'>
+        {reviews.length ? (
+          <div className='space-y-3'>
+            {reviews.map(review => (
+              <div key={review.uuid} className='border-border/60 bg-muted/20 rounded-md border p-3'>
+                <div className='flex items-center justify-between gap-3'>
+                  <p className='text-foreground text-sm font-semibold'>{review.headline}</p>
+                  <div className='flex items-center gap-1'>
+                    {Array.from({ length: 5 }).map((_, index) => (
+                      <Star
+                        key={index}
+                        className={
+                          index < (review.rating ?? 0)
+                            ? 'text-warning fill-warning size-3.5'
+                            : 'text-muted-foreground size-3.5'
+                        }
+                      />
+                    ))}
                   </div>
-                  <p className='text-muted-foreground mt-1 text-sm'>{review.comments}</p>
                 </div>
-              ))}
-            </div>
-          ) : (
-            <EmptyState icon={Star} title='No reviews yet' variant='compact' />
-          )}
-        </SectionCard>
-      </div>
+                <p className='text-muted-foreground mt-1 text-sm'>{review.comments}</p>
+              </div>
+            ))}
+          </div>
+        ) : (
+          <EmptyState icon={Star} title='No reviews yet' variant='compact' />
+        )}
+      </SectionCard>
     </div>
   );
 }
@@ -284,12 +317,16 @@ function ApplicationsSection({
   entries,
   creatorUuid,
   loading,
+  emptyTitle = 'No applications yet',
+  emptyDescription = 'This applicant has not submitted any applications for this category.',
 }: {
   title: string;
   description: string;
   entries: TrainingApplicationEntry[];
   creatorUuid: string;
   loading: boolean;
+  emptyTitle?: string;
+  emptyDescription?: string;
 }) {
   return (
     <SectionCard title={title} description={description}>
@@ -301,11 +338,7 @@ function ApplicationsSection({
             <CreatorApplicationReview
               key={entry.uuid}
               entry={entry}
-              canDecide={
-                entry.creatorUuid
-                  ? entry.creatorUuid === creatorUuid
-                  : Boolean(entry.application.rate_floor_flags)
-              }
+              canDecide={canDecideEntry(entry, creatorUuid)}
               heading={entry.title ?? (entry.kind === 'program' ? 'Program' : 'Course')}
               subheading={
                 entry.application.created_date
@@ -318,8 +351,8 @@ function ApplicationsSection({
       ) : (
         <EmptyState
           icon={Users}
-          title='No applications yet'
-          description='This applicant has not submitted any applications for this category.'
+          title={emptyTitle}
+          description={emptyDescription}
           variant='compact'
         />
       )}
@@ -330,7 +363,7 @@ function ApplicationsSection({
 export default function ManageApplicantPage({ uuid }: { uuid: string }) {
   const { profile: courseCreator } = useCourseCreator();
   const creatorUuid = courseCreator?.uuid ?? '';
-  const [tab, setTab] = useState<'profile' | 'course' | 'program'>('profile');
+  const { value: requestedTab, setValue: setTab, hrefFor } = useSectionTab(DOSSIER_TABS, 'profile');
 
   const { data: instructorData, isLoading: isInstructorLoading } = useQuery({
     ...getInstructorByUuidOptions({ path: { uuid } }),
@@ -372,6 +405,19 @@ export default function ManageApplicantPage({ uuid }: { uuid: string }) {
     () => applications.entries.filter(entry => entry.kind === 'program'),
     [applications.entries]
   );
+  // Decisions sit above the tabs; the tabs keep the rest of each history.
+  const awaitingDecision = useMemo(
+    () => applications.entries.filter(entry => isAwaitingDecision(entry, creatorUuid)),
+    [applications.entries, creatorUuid]
+  );
+  const courseHistory = useMemo(
+    () => courseApplications.filter(entry => !isAwaitingDecision(entry, creatorUuid)),
+    [courseApplications, creatorUuid]
+  );
+  const programHistory = useMemo(
+    () => programApplications.filter(entry => !isAwaitingDecision(entry, creatorUuid)),
+    [programApplications, creatorUuid]
+  );
 
   const skillsQuery = useQuery({
     ...getInstructorSkillsOptions({
@@ -410,8 +456,10 @@ export default function ManageApplicantPage({ uuid }: { uuid: string }) {
   const applicantLocation =
     applicantType === 'instructor'
       ? instructor?.formatted_location || instructor?.location || 'Location not listed'
-      : [organisation?.location, organisation?.country].filter(Boolean).join(', ') || 'Location not listed';
-  const applicantAvatar = applicantType === 'instructor' ? instructor?.profile_picture_url : undefined;
+      : [organisation?.location, organisation?.country].filter(Boolean).join(', ') ||
+        'Location not listed';
+  const applicantAvatar =
+    applicantType === 'instructor' ? instructor?.profile_picture_url : undefined;
   const applicantInitials = (applicantName || 'AP')
     .split(' ')
     .map(part => part[0])
@@ -423,11 +471,43 @@ export default function ManageApplicantPage({ uuid }: { uuid: string }) {
     () => ({
       course: courseApplications.length,
       program: programApplications.length,
-      pending:
-        applications.entries.filter(entry => entry.application.status === 'pending').length,
+      pending: applications.entries.filter(entry => entry.application.status === 'pending').length,
     }),
     [courseApplications, programApplications]
   );
+
+  const isOrganisationApplicant = displayApplicantType === 'organisation';
+  const tab: DossierTab =
+    isOrganisationApplicant && INSTRUCTOR_ONLY_TABS.includes(requestedTab)
+      ? 'profile'
+      : requestedTab;
+  const tabs: SectionTab<DossierTab>[] = [
+    { id: 'profile', label: 'Profile' },
+    ...(isOrganisationApplicant
+      ? []
+      : [
+          {
+            id: 'background' as const,
+            label: 'Education & skills',
+            count: educationQuery.isLoading ? null : education.length + skills.length,
+          },
+          {
+            id: 'documents' as const,
+            label: 'Documents & reviews',
+            count: documentsQuery.isLoading ? null : documents.length + reviews.length,
+          },
+        ]),
+    {
+      id: 'course',
+      label: 'Course applications',
+      count: applications.loading ? null : courseHistory.length,
+    },
+    {
+      id: 'program',
+      label: 'Program applications',
+      count: applications.loading ? null : programHistory.length,
+    },
+  ];
 
   const loading =
     isInstructorLoading ||
@@ -437,7 +517,7 @@ export default function ManageApplicantPage({ uuid }: { uuid: string }) {
 
   if (!loading && !applicantType) {
     return (
-      <main className={surfaceTheme.page}>
+      <main className={`${surfaceTheme.pageWide} py-4`}>
         <div className='flex min-h-[40vh] flex-col items-center justify-center gap-3 text-center'>
           <Building2 className='text-muted-foreground size-10' />
           <p className='text-lg font-semibold'>Applicant not found</p>
@@ -450,9 +530,14 @@ export default function ManageApplicantPage({ uuid }: { uuid: string }) {
   }
 
   return (
-    <main className={surfaceTheme.page}>
+    <main className={`${surfaceTheme.pageWide} py-4`}>
       <div className={surfaceTheme.pageStack}>
-        <Button variant='ghost' size='sm' asChild className='text-muted-foreground -ml-2 self-start'>
+        <Button
+          variant='ghost'
+          size='sm'
+          asChild
+          className='text-muted-foreground -ml-2 self-start'
+        >
           <Link href='/dashboard/course-creator/pending-approvals'>
             <ArrowLeft className='size-4' />
             Back to approvals
@@ -475,7 +560,9 @@ export default function ManageApplicantPage({ uuid }: { uuid: string }) {
                 </p>
               </div>
               <div className='text-right'>
-                <p className='text-muted-foreground text-xs font-medium uppercase'>Pending reviews</p>
+                <p className='text-muted-foreground text-xs font-medium uppercase'>
+                  Pending reviews
+                </p>
                 <p className='text-foreground mt-1 text-2xl font-semibold tabular-nums'>
                   {stats.pending}
                 </p>
@@ -553,66 +640,83 @@ export default function ManageApplicantPage({ uuid }: { uuid: string }) {
 
         <div className=''>
           <div className='min-w-0 space-y-4'>
-            <SectionCard title='Applicant dossier' description='Profile details and application history.'>
-              <Tabs value={tab} onValueChange={value => setTab(value as typeof tab)} className='gap-4'>
-                <TabsList className='bg-muted/60 h-auto w-full justify-start gap-1 rounded-2xl p-1'>
-                  <TabsTrigger value='profile' className='rounded-xl px-4 py-2.5'>
-                    Profile
-                  </TabsTrigger>
-                  <TabsTrigger value='course' className='rounded-xl px-4 py-2.5'>
-                    Course applications
-                  </TabsTrigger>
-                  <TabsTrigger value='program' className='rounded-xl px-4 py-2.5'>
-                    Program applications
-                  </TabsTrigger>
-                </TabsList>
+            {awaitingDecision.length > 0 ? (
+              <ApplicationsSection
+                title='Awaiting your decision'
+                description='Pending applications for your courses and programs. Decide here whichever section is open below.'
+                entries={awaitingDecision}
+                creatorUuid={creatorUuid}
+                loading={false}
+              />
+            ) : null}
 
-                {/* // manage applicant page
-                // we need to 
-                
-                
-                
-                
-                */}
-
-                <TabsContent value='profile' className='mt-0'>
-                  <ProfileCard
-                    uuid={uuid}
-                    type={displayApplicantType}
+            <SectionTabs
+              tabs={tabs}
+              value={tab}
+              onValueChange={setTab}
+              hrefFor={hrefFor}
+              label='Applicant dossier sections'
+              sticky
+            >
+              <SectionTabPanel value='profile'>
+                {isOrganisationApplicant && organisation ? (
+                  <OrganisationProfile uuid={uuid} organisation={organisation} />
+                ) : (
+                  <InstructorProfile
                     instructor={instructor}
-                    organisation={organisation}
                     instructorUser={instructorUserData?.data as Instructor | undefined}
-                    skills={skills}
-                    education={education}
-                    documents={documents}
-                    reviews={reviews}
                   />
-                </TabsContent>
+                )}
+              </SectionTabPanel>
 
-                <TabsContent value='course' className='mt-0'>
-                  <ApplicationsSection
-                    title='Course applications'
-                    description='Training applications submitted for courses owned by this course creator.'
-                    entries={courseApplications}
-                    creatorUuid={creatorUuid}
-                    loading={applications.loading}
-                  />
-                </TabsContent>
+              {isOrganisationApplicant ? null : (
+                <>
+                  <SectionTabPanel value='background'>
+                    <InstructorBackground skills={skills} education={education} />
+                  </SectionTabPanel>
+                  <SectionTabPanel value='documents'>
+                    <InstructorDocumentsAndReviews documents={documents} reviews={reviews} />
+                  </SectionTabPanel>
+                </>
+              )}
 
-                <TabsContent value='program' className='mt-0'>
-                  <ApplicationsSection
-                    title='Program applications'
-                    description='Training applications submitted for programs owned by this course creator.'
-                    entries={programApplications}
-                    creatorUuid={creatorUuid}
-                    loading={applications.loading}
-                  />
-                </TabsContent>
-              </Tabs>
-            </SectionCard>
+              <SectionTabPanel value='course'>
+                <ApplicationsSection
+                  title='Course applications'
+                  description='Training applications submitted for courses owned by this course creator.'
+                  entries={courseHistory}
+                  creatorUuid={creatorUuid}
+                  loading={applications.loading}
+                  {...(courseApplications.length > 0
+                    ? {
+                        emptyTitle: 'Nothing else to show',
+                        emptyDescription:
+                          'Every course application is awaiting your decision above.',
+                      }
+                    : {})}
+                />
+              </SectionTabPanel>
+
+              <SectionTabPanel value='program'>
+                <ApplicationsSection
+                  title='Program applications'
+                  description='Training applications submitted for programs owned by this course creator.'
+                  entries={programHistory}
+                  creatorUuid={creatorUuid}
+                  loading={applications.loading}
+                  {...(programApplications.length > 0
+                    ? {
+                        emptyTitle: 'Nothing else to show',
+                        emptyDescription:
+                          'Every program application is awaiting your decision above.',
+                      }
+                    : {})}
+                />
+              </SectionTabPanel>
+            </SectionTabs>
 
             {loading ? (
-              <div className='border-border/60 bg-muted/20 rounded-md border p-4 text-sm text-muted-foreground'>
+              <div className='border-border/60 bg-muted/20 text-muted-foreground rounded-md border p-4 text-sm'>
                 Loading applicant records...
               </div>
             ) : null}

@@ -2,6 +2,7 @@
 
 import { ALL_CATEGORIES, CategoryTabs } from '@/components/category-tabs';
 import NotesModal from '@/components/custom-modals/notes-modal';
+import { surfaceTheme } from '@/components/data-display';
 import { Button } from '@/components/ui/button';
 import {
   Pagination,
@@ -1581,7 +1582,7 @@ export function SharedCoursesPage({ domain }: SharedCoursesPageProps) {
           : 'Discover courses and programmes across the platform.';
 
   return (
-    <div className='bg-background mx-auto w-full max-w-[1680px] px-3 py-4 sm:px-4 lg:px-6 2xl:px-8'>
+    <div className={`bg-background ${surfaceTheme.pageWide} py-4`}>
       <div className='space-y-6'>
         <header className='bg-card'>
           <div className='flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between'>
@@ -1775,7 +1776,7 @@ export function SharedCoursesPage({ domain }: SharedCoursesPageProps) {
                 </div>
 
                 {isLoading ? (
-                  <div className='grid gap-4 sm:grid-cols-2 sm:gap-5 lg:grid-cols-3 xl:grid-cols-4'>
+                  <div className={surfaceTheme.cardGrid}>
                     {Array.from({ length: 6 }).map((_, index) => (
                       <div key={index} className='space-y-4 rounded-2xl border p-4'>
                         <Skeleton className='h-40 w-full rounded-xl' />
@@ -1793,7 +1794,7 @@ export function SharedCoursesPage({ domain }: SharedCoursesPageProps) {
                   </div>
                 ) : catalogCards.length > 0 ? (
                   <div className=''>
-                    <div className='grid gap-4 sm:grid-cols-2 sm:gap-5 lg:grid-cols-3 xl:grid-cols-4'>
+                    <div className={surfaceTheme.cardGrid}>
                       {!isStudentDomain &&
                         catalogCards.map(card => (
                           <CoursesCatalogCard

@@ -12,7 +12,7 @@ import { OverviewWelcome } from './_components/overview-welcome';
 
 export default function OrganizationOverviewPage() {
   return (
-    <OrgPage>
+    <OrgPage width='standard'>
       <div className={orgStack}>
         <OverviewWelcome />
 

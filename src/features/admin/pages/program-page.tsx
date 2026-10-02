@@ -10,10 +10,13 @@ import {
   DetailGrid,
   SectionCard,
   SectionCardSkeleton,
+  SectionTabPanel,
+  SectionTabs,
   StatCard,
   StatCardSkeleton,
   StatusBadge,
   surfaceTheme,
+  useSectionTab,
 } from '@/components/data-display';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -29,7 +32,6 @@ import { ConfirmDialog } from '../components/confirm-dialog';
 import { NoteField, noteToPlainText } from '../components/note-field';
 import { RecordHeader } from '../components/record-header';
 import { SectionBoundary } from '../components/section-boundary';
-import { UnderlineTabs } from '../components/underline-tabs';
 import {
   type ApplicationDecision,
   type ProgramDecision,
@@ -43,11 +45,17 @@ import {
   useProgramInsights,
   useProgramModerationHistory,
 } from '../hooks/use-programs';
-import { adminRoutes, type ProgramTab } from '../lib/admin-routes';
-import { enumParam, stringParam } from '@/lib/search-state';
+import type { ProgramTab } from '../lib/admin-routes';
+import { stringParam } from '@/lib/search-state';
+import { cn } from '@/lib/utils';
 import { useSearchState } from '@/hooks/use-search-state';
 
-const TAB_IDS = ['overview', 'courses', 'applications', 'history'] as const satisfies readonly ProgramTab[];
+const TAB_IDS = [
+  'overview',
+  'courses',
+  'applications',
+  'history',
+] as const satisfies readonly ProgramTab[];
 
 const TAB_LABELS: Record<ProgramTab, string> = {
   overview: 'Overview',
@@ -56,7 +64,6 @@ const TAB_LABELS: Record<ProgramTab, string> = {
   history: 'Moderation history',
 };
 
-const tabParam = enumParam(TAB_IDS, 'overview');
 const applicationStatusParam = stringParam('any');
 
 const reasonSchema = z.object({
@@ -97,7 +104,7 @@ function rateSummary(card?: CourseTrainingRateCard) {
 }
 
 export function AdminProgramPage({ uuid }: { uuid: string }) {
-  const [tab] = useSearchState<ProgramTab>('tab', tabParam);
+  const { value: tab, setValue: setTab, hrefFor } = useSectionTab(TAB_IDS, 'overview');
   const [applicationStatus, setApplicationStatus] = useSearchState(
     'status',
     applicationStatusParam
@@ -178,11 +185,7 @@ export function AdminProgramPage({ uuid }: { uuid: string }) {
     return instructorMap[id]?.full_name ?? 'This instructor';
   };
 
-  const tabs = TAB_IDS.map(id => ({
-    id,
-    label: TAB_LABELS[id],
-    href: adminRoutes.program(uuid, id),
-  }));
+  const tabs = TAB_IDS.map(id => ({ id, label: TAB_LABELS[id] }));
 
   const askForDecision = async (action: ProgramDecision) => {
     const valid = await decisionForm.trigger('reason');
@@ -214,7 +217,7 @@ export function AdminProgramPage({ uuid }: { uuid: string }) {
         : 'revokeTrainingApplication';
 
   return (
-    <div className={surfaceTheme.page}>
+    <div className={cn(surfaceTheme.pageWide, 'py-4')}>
       <div className={surfaceTheme.pageStack}>
         <SectionBoundary
           label='this program'
@@ -249,363 +252,387 @@ export function AdminProgramPage({ uuid }: { uuid: string }) {
           ) : null}
         </SectionBoundary>
 
-        <UnderlineTabs tabs={tabs} active={tab} />
-
-        {program && tab === 'overview' ? (
-          <div className='grid gap-4 lg:grid-cols-[minmax(0,1.6fr)_minmax(0,1fr)]'>
-            <div className='flex flex-col gap-4'>
-              <SectionBoundary
-                label='the program figures'
-                loading={insights.ratingQuery.isLoading || insights.completionQuery.isLoading}
-                error={insights.ratingQuery.error}
-                onRetry={insights.ratingQuery.refetch}
-                skeleton={
-                  <div className='grid gap-4 sm:grid-cols-3'>
-                    {[0, 1, 2].map(item => (
-                      <StatCardSkeleton key={item} />
-                    ))}
-                  </div>
-                }
-              >
-                <div className='grid gap-4 sm:grid-cols-3'>
-                  <StatCard
-                    label='Rating'
-                    value={
-                      insights.rating?.average_rating ? insights.rating.average_rating.toFixed(1) : '—'
-                    }
-                    hint={`${formatCount(insights.rating?.review_count, '0')} review(s)`}
-                    icon={GraduationCap}
-                  />
-                  <StatCard
-                    label='Completion'
-                    value={
-                      typeof insights.completionRate === 'number'
-                        ? `${Math.round(insights.completionRate)}%`
-                        : '—'
-                    }
-                  />
-                  <StatCard label='Certificates issued' value={insights.certificateCount} />
-                </div>
-              </SectionBoundary>
-
-              <SectionCard title='Program details'>
-                <DetailGrid
-                  columns={3}
-                  items={[
-                    { label: 'Title', value: program.title },
-                    { label: 'Creator', value: creator?.full_name ?? '—' },
-                    { label: 'Duration', value: program.total_duration_display || '—' },
-                    {
-                      label: 'Class limit',
-                      value: program.class_limit ? String(program.class_limit) : 'No limit',
-                    },
-                    {
-                      label: 'Price',
-                      value:
-                        program.price === null || program.price === undefined
-                          ? 'Free'
-                          : `KES ${Number(program.price).toLocaleString('en-KE')}`,
-                    },
-                    { label: 'Type', value: program.program_type || '—' },
-                    { label: 'Created', value: formatDate(program.created_date) || '—' },
-                    { label: 'Updated', value: formatDate(program.updated_date) || '—' },
-                    {
-                      label: 'Category',
-                      value: program.category_uuid ? (
-                        <span className='font-mono text-xs'>{program.category_uuid}</span>
-                      ) : (
-                        'Uncategorised'
-                      ),
-                    },
-                  ]}
-                />
-                {program.description ? (
-                  <p className='text-muted-foreground mt-4 text-sm'>{program.description}</p>
-                ) : null}
-              </SectionCard>
-
-              <SectionCard title='Objectives and prerequisites'>
-                <div className='grid gap-4 sm:grid-cols-2'>
-                  <div>
-                    <p className={surfaceTheme.sectionLabel}>Objectives</p>
-                    <p className='text-foreground mt-1 text-sm'>
-                      {program.objectives || 'None recorded.'}
-                    </p>
-                  </div>
-                  <div>
-                    <p className={surfaceTheme.sectionLabel}>Prerequisites</p>
-                    <p className='text-foreground mt-1 text-sm'>
-                      {program.prerequisites || 'None recorded.'}
-                    </p>
-                  </div>
-                </div>
-              </SectionCard>
-            </div>
-
-            <SectionCard
-              title='Decision'
-              description='Approving publishes it to learners; sending it back tells the creator what to fix.'
-            >
-              <div className='flex flex-col gap-4'>
-                <Controller
-                  control={decisionForm.control}
-                  name='reason'
-                  render={({ field }) => (
-                    <NoteField
-                      id='program-decision-reason'
-                      label='Reason'
-                      required
-                      value={field.value}
-                      onChange={field.onChange}
-                      error={decisionForm.formState.errors.reason?.message}
-                      helper='Stored in the moderation history and sent to the creator.'
-                    />
-                  )}
-                />
-
-                <div className='flex flex-col gap-2'>
-                  {program.admin_approved ? (
-                    <Button
-                      type='button'
-                      variant='outline'
-                      className='border-destructive/40 text-destructive rounded-md'
-                      onClick={() => askForDecision('revoked')}
-                    >
-                      <Undo2 className='mr-2 size-4' />
-                      Revoke approval
-                    </Button>
-                  ) : (
-                    <>
-                      <Button
-                        type='button'
-                        className='rounded-md'
-                        onClick={() => askForDecision('approved')}
-                      >
-                        <Check className='mr-2 size-4' />
-                        Approve program
-                      </Button>
-                      <Button
-                        type='button'
-                        variant='outline'
-                        className='rounded-md'
-                        onClick={() => askForDecision('rejected')}
-                      >
-                        <X className='mr-2 size-4' />
-                        Send back for changes
-                      </Button>
-                    </>
-                  )}
-                </div>
-              </div>
-            </SectionCard>
-          </div>
-        ) : null}
-
-        {program && tab === 'courses' ? (
-          <SectionCard
-            title='Courses in this program'
-            description='Required and optional courses, in the order a learner meets them.'
-          >
-            <SectionBoundary
-              label='the program courses'
-              loading={programCourses.allQuery.isLoading}
-              error={programCourses.allQuery.error}
-              empty={programCourses.courses.length === 0}
-              onRetry={programCourses.allQuery.refetch}
-              emptyTitle='No courses yet'
-              emptyDescription='This program has no courses attached.'
-            >
-              <ul className='flex flex-col gap-2'>
-                {programCourses.courses.map(course => (
-                  <li
-                    key={course.uuid}
-                    className='border-border/60 flex flex-wrap items-center gap-3 rounded-md border px-3 py-2.5'
-                  >
-                    <div className='min-w-0 flex-1'>
-                      <p className='text-foreground text-sm font-medium'>{course.name}</p>
-                      <p className='text-muted-foreground text-xs'>
-                        {course.category_names?.join(', ') || 'Uncategorised'}
-                      </p>
-                    </div>
-                    {programCourses.requiredUuids.has(course.uuid) ? (
-                      <StatusBadge label='Required' tone='info' />
-                    ) : programCourses.optionalUuids.has(course.uuid) ? (
-                      <StatusBadge label='Optional' tone='neutral' />
-                    ) : null}
-                    <StatusBadge status={course.status} />
-                  </li>
-                ))}
-              </ul>
-            </SectionBoundary>
-          </SectionCard>
-        ) : null}
-
-        {program && tab === 'applications' ? (
-          <div className='flex flex-col gap-4'>
-            <SectionCard
-              title='Applications to train'
-              description='Instructors and organisations asking to deliver this program.'
-              actions={
-                <select
-                  aria-label='Filter by status'
-                  className='border-border/70 bg-background h-9 rounded-md border px-2 text-sm'
-                  value={applicationStatus}
-                  onChange={event => setApplicationStatus(event.target.value)}
-                >
-                  <option value='any'>Any status</option>
-                  <option value='pending'>Pending</option>
-                  <option value='approved'>Approved</option>
-                  <option value='rejected'>Rejected</option>
-                  <option value='revoked'>Revoked</option>
-                </select>
-              }
-            >
-              <SectionBoundary
-                label='the applications'
-                loading={applicationsQuery.isLoading}
-                error={applicationsQuery.error}
-                empty={applications.length === 0}
-                onRetry={applicationsQuery.refetch}
-                emptyTitle='Nothing waiting'
-                emptyDescription='No one has applied to deliver this program under this filter.'
-              >
+        <SectionTabs
+          tabs={tabs}
+          value={tab}
+          onValueChange={setTab}
+          hrefFor={hrefFor}
+          label='Program sections'
+          sticky
+        >
+          <SectionTabPanel value='overview'>
+            {program && tab === 'overview' ? (
+              <div className='grid gap-4 lg:grid-cols-[minmax(0,1.6fr)_minmax(0,1fr)]'>
                 <div className='flex flex-col gap-4'>
-                  <Controller
-                    control={applicationForm.control}
-                    name='notes'
-                    render={({ field }) => (
-                      <NoteField
-                        id='application-decision-notes'
-                        label='Decision notes'
-                        required
-                        value={field.value}
-                        onChange={field.onChange}
-                        error={applicationForm.formState.errors.notes?.message}
-                        helper='Sent to the applicant with the decision and kept on the application.'
-                      />
-                    )}
-                  />
-
-                  <ul className='flex flex-col gap-2'>
-                    {applications.map(application => {
-                      const rates = rateSummary(application.rate_card);
-                      const isPending = application.status === 'pending';
-                      const isApproved = application.status === 'approved';
-
-                      return (
-                        <li
-                          key={application.uuid}
-                          className='border-border/60 flex flex-wrap items-start gap-3 rounded-md border px-3 py-3'
-                        >
-                          <div className='min-w-0 flex-1'>
-                            <p className='text-foreground text-sm font-medium'>
-                              {applicantName(application)}
-                            </p>
-                            <p className='text-muted-foreground text-xs'>
-                              {application.applicant_type === 'organisation'
-                                ? 'Organisation'
-                                : 'Instructor'}{' '}
-                              · applied {formatDate(application.created_date) || '—'}
-                              {application.reviewed_at
-                                ? ` · reviewed ${formatDate(application.reviewed_at)}`
-                                : ''}
-                            </p>
-                            <p className='text-muted-foreground mt-1 text-xs'>
-                              {rates
-                                ? `${rates.currency} ${rates.range} across ${rates.count} rate(s)`
-                                : 'No rate card set'}
-                            </p>
-                          </div>
-
-                          <StatusBadge status={application.status} />
-
-                          <div className='flex flex-wrap gap-2'>
-                            {isPending ? (
-                              <>
-                                <Button
-                                  type='button'
-                                  size='sm'
-                                  className='rounded-md'
-                                  onClick={() => askForApplication(application, 'approve')}
-                                >
-                                  Approve
-                                </Button>
-                                <Button
-                                  type='button'
-                                  size='sm'
-                                  variant='outline'
-                                  className='rounded-md'
-                                  onClick={() => askForApplication(application, 'reject')}
-                                >
-                                  Reject
-                                </Button>
-                              </>
-                            ) : null}
-                            {isApproved ? (
-                              <Button
-                                type='button'
-                                size='sm'
-                                variant='outline'
-                                className='border-destructive/40 text-destructive rounded-md'
-                                onClick={() => askForApplication(application, 'revoke')}
-                              >
-                                Revoke
-                              </Button>
-                            ) : null}
-                          </div>
-                        </li>
-                      );
-                    })}
-                  </ul>
-                </div>
-              </SectionBoundary>
-            </SectionCard>
-
-            <p className='text-muted-foreground text-xs'>
-              Admins may decide program applications, but course applications are owner-only — an
-              asymmetry in the API rather than a rule of the console.
-            </p>
-          </div>
-        ) : null}
-
-        {program && tab === 'history' ? (
-          <SectionCard title='Moderation history' description='Every decision taken on this program.'>
-            <SectionBoundary
-              label='the moderation history'
-              loading={historyQuery.isLoading}
-              error={historyQuery.error}
-              empty={history.length === 0}
-              onRetry={historyQuery.refetch}
-              emptyTitle='No decisions yet'
-              emptyDescription='Nothing has been approved, rejected or revoked on this program.'
-              skeleton={
-                <div className='space-y-2'>
-                  {[0, 1, 2].map(item => (
-                    <Skeleton key={item} className='h-12 w-full' />
-                  ))}
-                </div>
-              }
-            >
-              <ul className='flex flex-col gap-2'>
-                {history.map(entry => (
-                  <li
-                    key={entry.uuid}
-                    className='border-border/60 flex flex-wrap items-start gap-3 rounded-md border px-3 py-2.5'
+                  <SectionBoundary
+                    label='the program figures'
+                    loading={insights.ratingQuery.isLoading || insights.completionQuery.isLoading}
+                    error={insights.ratingQuery.error}
+                    onRetry={insights.ratingQuery.refetch}
+                    skeleton={
+                      <div className='grid gap-4 sm:grid-cols-3'>
+                        {[0, 1, 2].map(item => (
+                          <StatCardSkeleton key={item} />
+                        ))}
+                      </div>
+                    }
                   >
-                    <StatusBadge status={entry.action} />
-                    <div className='min-w-0 flex-1'>
-                      <p className='text-foreground text-sm'>{entry.reason || 'No reason given'}</p>
-                      <p className='text-muted-foreground text-xs'>
-                        {entry.created_by || 'Unknown admin'} ·{' '}
-                        {formatDate(entry.created_date) || '—'}
-                      </p>
+                    <div className='grid gap-4 sm:grid-cols-3'>
+                      <StatCard
+                        label='Rating'
+                        value={
+                          insights.rating?.average_rating
+                            ? insights.rating.average_rating.toFixed(1)
+                            : '—'
+                        }
+                        hint={`${formatCount(insights.rating?.review_count, '0')} review(s)`}
+                        icon={GraduationCap}
+                      />
+                      <StatCard
+                        label='Completion'
+                        value={
+                          typeof insights.completionRate === 'number'
+                            ? `${Math.round(insights.completionRate)}%`
+                            : '—'
+                        }
+                      />
+                      <StatCard label='Certificates issued' value={insights.certificateCount} />
                     </div>
-                  </li>
-                ))}
-              </ul>
-            </SectionBoundary>
-          </SectionCard>
-        ) : null}
+                  </SectionBoundary>
+
+                  <SectionCard title='Program details'>
+                    <DetailGrid
+                      columns={3}
+                      items={[
+                        { label: 'Title', value: program.title },
+                        { label: 'Creator', value: creator?.full_name ?? '—' },
+                        { label: 'Duration', value: program.total_duration_display || '—' },
+                        {
+                          label: 'Class limit',
+                          value: program.class_limit ? String(program.class_limit) : 'No limit',
+                        },
+                        {
+                          label: 'Price',
+                          value:
+                            program.price === null || program.price === undefined
+                              ? 'Free'
+                              : `KES ${Number(program.price).toLocaleString('en-KE')}`,
+                        },
+                        { label: 'Type', value: program.program_type || '—' },
+                        { label: 'Created', value: formatDate(program.created_date) || '—' },
+                        { label: 'Updated', value: formatDate(program.updated_date) || '—' },
+                        {
+                          label: 'Category',
+                          value: program.category_uuid ? (
+                            <span className='font-mono text-xs'>{program.category_uuid}</span>
+                          ) : (
+                            'Uncategorised'
+                          ),
+                        },
+                      ]}
+                    />
+                    {program.description ? (
+                      <p className='text-muted-foreground mt-4 max-w-prose text-sm'>
+                        {program.description}
+                      </p>
+                    ) : null}
+                  </SectionCard>
+
+                  <SectionCard title='Objectives and prerequisites'>
+                    <div className='grid gap-4 sm:grid-cols-2'>
+                      <div>
+                        <p className={surfaceTheme.sectionLabel}>Objectives</p>
+                        <p className='text-foreground mt-1 text-sm'>
+                          {program.objectives || 'None recorded.'}
+                        </p>
+                      </div>
+                      <div>
+                        <p className={surfaceTheme.sectionLabel}>Prerequisites</p>
+                        <p className='text-foreground mt-1 text-sm'>
+                          {program.prerequisites || 'None recorded.'}
+                        </p>
+                      </div>
+                    </div>
+                  </SectionCard>
+                </div>
+
+                <SectionCard
+                  title='Decision'
+                  description='Approving publishes it to learners; sending it back tells the creator what to fix.'
+                >
+                  <div className='flex flex-col gap-4'>
+                    <Controller
+                      control={decisionForm.control}
+                      name='reason'
+                      render={({ field }) => (
+                        <NoteField
+                          id='program-decision-reason'
+                          label='Reason'
+                          required
+                          value={field.value}
+                          onChange={field.onChange}
+                          error={decisionForm.formState.errors.reason?.message}
+                          helper='Stored in the moderation history and sent to the creator.'
+                        />
+                      )}
+                    />
+
+                    <div className='flex flex-col gap-2'>
+                      {program.admin_approved ? (
+                        <Button
+                          type='button'
+                          variant='outline'
+                          className='border-destructive/40 text-destructive rounded-md'
+                          onClick={() => askForDecision('revoked')}
+                        >
+                          <Undo2 className='mr-2 size-4' />
+                          Revoke approval
+                        </Button>
+                      ) : (
+                        <>
+                          <Button
+                            type='button'
+                            className='rounded-md'
+                            onClick={() => askForDecision('approved')}
+                          >
+                            <Check className='mr-2 size-4' />
+                            Approve program
+                          </Button>
+                          <Button
+                            type='button'
+                            variant='outline'
+                            className='rounded-md'
+                            onClick={() => askForDecision('rejected')}
+                          >
+                            <X className='mr-2 size-4' />
+                            Send back for changes
+                          </Button>
+                        </>
+                      )}
+                    </div>
+                  </div>
+                </SectionCard>
+              </div>
+            ) : null}
+          </SectionTabPanel>
+
+          <SectionTabPanel value='courses'>
+            {program && tab === 'courses' ? (
+              <SectionCard
+                title='Courses in this program'
+                description='Required and optional courses, in the order a learner meets them.'
+              >
+                <SectionBoundary
+                  label='the program courses'
+                  loading={programCourses.allQuery.isLoading}
+                  error={programCourses.allQuery.error}
+                  empty={programCourses.courses.length === 0}
+                  onRetry={programCourses.allQuery.refetch}
+                  emptyTitle='No courses yet'
+                  emptyDescription='This program has no courses attached.'
+                >
+                  <ul className='flex flex-col gap-2'>
+                    {programCourses.courses.map(course => (
+                      <li
+                        key={course.uuid}
+                        className='border-border/60 flex flex-wrap items-center gap-3 rounded-md border px-3 py-2.5'
+                      >
+                        <div className='min-w-0 flex-1'>
+                          <p className='text-foreground text-sm font-medium'>{course.name}</p>
+                          <p className='text-muted-foreground text-xs'>
+                            {course.category_names?.join(', ') || 'Uncategorised'}
+                          </p>
+                        </div>
+                        {programCourses.requiredUuids.has(course.uuid) ? (
+                          <StatusBadge label='Required' tone='info' />
+                        ) : programCourses.optionalUuids.has(course.uuid) ? (
+                          <StatusBadge label='Optional' tone='neutral' />
+                        ) : null}
+                        <StatusBadge status={course.status} />
+                      </li>
+                    ))}
+                  </ul>
+                </SectionBoundary>
+              </SectionCard>
+            ) : null}
+          </SectionTabPanel>
+
+          <SectionTabPanel value='applications'>
+            {program && tab === 'applications' ? (
+              <div className='flex flex-col gap-4'>
+                <SectionCard
+                  title='Applications to train'
+                  description='Instructors and organisations asking to deliver this program.'
+                  actions={
+                    <select
+                      aria-label='Filter by status'
+                      className='border-border/70 bg-background h-9 rounded-md border px-2 text-sm'
+                      value={applicationStatus}
+                      onChange={event => setApplicationStatus(event.target.value)}
+                    >
+                      <option value='any'>Any status</option>
+                      <option value='pending'>Pending</option>
+                      <option value='approved'>Approved</option>
+                      <option value='rejected'>Rejected</option>
+                      <option value='revoked'>Revoked</option>
+                    </select>
+                  }
+                >
+                  <SectionBoundary
+                    label='the applications'
+                    loading={applicationsQuery.isLoading}
+                    error={applicationsQuery.error}
+                    empty={applications.length === 0}
+                    onRetry={applicationsQuery.refetch}
+                    emptyTitle='Nothing waiting'
+                    emptyDescription='No one has applied to deliver this program under this filter.'
+                  >
+                    <div className='flex flex-col gap-4'>
+                      <Controller
+                        control={applicationForm.control}
+                        name='notes'
+                        render={({ field }) => (
+                          <NoteField
+                            id='application-decision-notes'
+                            label='Decision notes'
+                            required
+                            value={field.value}
+                            onChange={field.onChange}
+                            error={applicationForm.formState.errors.notes?.message}
+                            helper='Sent to the applicant with the decision and kept on the application.'
+                          />
+                        )}
+                      />
+
+                      <ul className='flex flex-col gap-2'>
+                        {applications.map(application => {
+                          const rates = rateSummary(application.rate_card);
+                          const isPending = application.status === 'pending';
+                          const isApproved = application.status === 'approved';
+
+                          return (
+                            <li
+                              key={application.uuid}
+                              className='border-border/60 flex flex-wrap items-start gap-3 rounded-md border px-3 py-3'
+                            >
+                              <div className='min-w-0 flex-1'>
+                                <p className='text-foreground text-sm font-medium'>
+                                  {applicantName(application)}
+                                </p>
+                                <p className='text-muted-foreground text-xs'>
+                                  {application.applicant_type === 'organisation'
+                                    ? 'Organisation'
+                                    : 'Instructor'}{' '}
+                                  · applied {formatDate(application.created_date) || '—'}
+                                  {application.reviewed_at
+                                    ? ` · reviewed ${formatDate(application.reviewed_at)}`
+                                    : ''}
+                                </p>
+                                <p className='text-muted-foreground mt-1 text-xs'>
+                                  {rates
+                                    ? `${rates.currency} ${rates.range} across ${rates.count} rate(s)`
+                                    : 'No rate card set'}
+                                </p>
+                              </div>
+
+                              <StatusBadge status={application.status} />
+
+                              <div className='flex flex-wrap gap-2'>
+                                {isPending ? (
+                                  <>
+                                    <Button
+                                      type='button'
+                                      size='sm'
+                                      className='rounded-md'
+                                      onClick={() => askForApplication(application, 'approve')}
+                                    >
+                                      Approve
+                                    </Button>
+                                    <Button
+                                      type='button'
+                                      size='sm'
+                                      variant='outline'
+                                      className='rounded-md'
+                                      onClick={() => askForApplication(application, 'reject')}
+                                    >
+                                      Reject
+                                    </Button>
+                                  </>
+                                ) : null}
+                                {isApproved ? (
+                                  <Button
+                                    type='button'
+                                    size='sm'
+                                    variant='outline'
+                                    className='border-destructive/40 text-destructive rounded-md'
+                                    onClick={() => askForApplication(application, 'revoke')}
+                                  >
+                                    Revoke
+                                  </Button>
+                                ) : null}
+                              </div>
+                            </li>
+                          );
+                        })}
+                      </ul>
+                    </div>
+                  </SectionBoundary>
+                </SectionCard>
+
+                <p className='text-muted-foreground text-xs'>
+                  Admins may decide program applications, but course applications are owner-only —
+                  an asymmetry in the API rather than a rule of the console.
+                </p>
+              </div>
+            ) : null}
+          </SectionTabPanel>
+
+          <SectionTabPanel value='history'>
+            {program && tab === 'history' ? (
+              <SectionCard
+                title='Moderation history'
+                description='Every decision taken on this program.'
+              >
+                <SectionBoundary
+                  label='the moderation history'
+                  loading={historyQuery.isLoading}
+                  error={historyQuery.error}
+                  empty={history.length === 0}
+                  onRetry={historyQuery.refetch}
+                  emptyTitle='No decisions yet'
+                  emptyDescription='Nothing has been approved, rejected or revoked on this program.'
+                  skeleton={
+                    <div className='space-y-2'>
+                      {[0, 1, 2].map(item => (
+                        <Skeleton key={item} className='h-12 w-full' />
+                      ))}
+                    </div>
+                  }
+                >
+                  <ul className='flex flex-col gap-2'>
+                    {history.map(entry => (
+                      <li
+                        key={entry.uuid}
+                        className='border-border/60 flex flex-wrap items-start gap-3 rounded-md border px-3 py-2.5'
+                      >
+                        <StatusBadge status={entry.action} />
+                        <div className='min-w-0 flex-1'>
+                          <p className='text-foreground text-sm'>
+                            {entry.reason || 'No reason given'}
+                          </p>
+                          <p className='text-muted-foreground text-xs'>
+                            {entry.created_by || 'Unknown admin'} ·{' '}
+                            {formatDate(entry.created_date) || '—'}
+                          </p>
+                        </div>
+                      </li>
+                    ))}
+                  </ul>
+                </SectionBoundary>
+              </SectionCard>
+            ) : null}
+          </SectionTabPanel>
+        </SectionTabs>
 
         <ConfirmDialog
           open={pendingDecision !== null}

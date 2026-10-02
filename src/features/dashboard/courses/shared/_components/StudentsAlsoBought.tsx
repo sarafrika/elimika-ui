@@ -1,14 +1,14 @@
 'use client';
 
+import { useQueries } from '@tanstack/react-query';
+import { BookOpen } from 'lucide-react';
+import Link from 'next/link';
 import type { UserDomain } from '@/lib/types';
 import type { Course, CourseReview } from '@/services/client';
 import { getCourseReviewsOptions } from '@/services/client/@tanstack/react-query.gen';
 import { getContentHref } from '@/src/features/dashboard/courses/shared/_components/courses-data';
 import StarRating from '@/src/features/dashboard/courses/shared/_components/StarRating';
 import { roleScopedDashboardPath } from '@/src/features/dashboard/lib/active-domain-storage';
-import { useQueries } from '@tanstack/react-query';
-import { BookOpen } from 'lucide-react';
-import Link from 'next/link';
 import { toAuthenticatedMediaUrl } from '../../../../../lib/media-url';
 
 type Props = {
@@ -43,7 +43,7 @@ export default function StudentsAlsoBought({ courses, creatorName, activeDomain 
     <section className='space-y-4'>
       <h2 className='text-foreground text-base font-bold sm:text-lg'>Students also bought</h2>
 
-      <div className='xs:grid-cols-2 grid grid-cols-1 gap-3 sm:grid-cols-3 sm:gap-4'>
+      <div className={surfaceTheme.cardGrid}>
         {courses.map((course, i) => {
           const reviews = (reviewQueries[i]?.data?.data ?? []) as CourseReview[];
           const reviewCount = reviews.length;

@@ -17,7 +17,7 @@ import {
 } from 'lucide-react';
 import { useSession } from 'next-auth/react';
 import Link from 'next/link';
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useMemo, useRef, useState } from 'react';
 import type { EntityFact } from '@/components/data-display/entity-header-card';
 import { EntityHeaderCard } from '@/components/data-display/entity-header-card';
 import { surfaceTheme } from '@/components/data-display/page-shell';
@@ -27,6 +27,7 @@ import {
   SectionTabs,
   useSectionTab,
 } from '@/components/data-display/section-tabs';
+import { usePinnedNavHeight } from '@/components/data-display/use-pinned-nav-height';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -51,24 +52,6 @@ import { CourseClassesPanel } from './CourseClassesPanel';
 import { OverviewPanel, RequirementsPanel, SyllabusPanel } from './CoursePanels';
 import { CourseSimilarPanel } from './CourseSimilarPanel';
 import { SeeClassesAction } from './course-actions';
-
-/** The public nav's height on desktop; on phones it wraps to two rows and is measured. */
-const PUBLIC_NAV_HEIGHT = 73;
-
-/** Tracks the pinned public nav's height so the sticky tab bar sits just under it. */
-function usePinnedNavHeight() {
-  const [height, setHeight] = useState(PUBLIC_NAV_HEIGHT);
-  useEffect(() => {
-    const nav = document.querySelector<HTMLElement>('nav.sticky');
-    if (!nav || typeof ResizeObserver === 'undefined') return;
-    const update = () => setHeight(Math.round(nav.getBoundingClientRect().height));
-    update();
-    const observer = new ResizeObserver(update);
-    observer.observe(nav);
-    return () => observer.disconnect();
-  }, []);
-  return height;
-}
 
 const TAB_ICONS = {
   overview: LayoutList,
