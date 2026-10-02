@@ -1950,6 +1950,12 @@ export const QuizQuestionSchema = {
       example: 'instructor@sarafrika.com',
       readOnly: true,
     },
+    question_number: {
+      type: 'string',
+      description: '**[READ-ONLY]** Formatted question number for display in quiz interface.',
+      example: 'Question 1',
+      readOnly: true,
+    },
     requires_options: {
       type: 'boolean',
       description:
@@ -1967,12 +1973,6 @@ export const QuizQuestionSchema = {
       type: 'string',
       description: '**[READ-ONLY]** Human-readable format of the points value.',
       example: '2.0 points',
-      readOnly: true,
-    },
-    question_number: {
-      type: 'string',
-      description: '**[READ-ONLY]** Formatted question number for display in quiz interface.',
-      example: 'Question 1',
       readOnly: true,
     },
   },
@@ -2083,13 +2083,6 @@ export const QuizQuestionOptionSchema = {
       example: 'instructor@sarafrika.com',
       readOnly: true,
     },
-    option_category: {
-      type: 'string',
-      description:
-        '**[READ-ONLY]** Formatted category of the option based on its correctness status.',
-      example: 'Correct Answer Option',
-      readOnly: true,
-    },
     is_incorrect: {
       type: 'boolean',
       description: '**[READ-ONLY]** Indicates if this option is an incorrect answer choice.',
@@ -2115,6 +2108,13 @@ export const QuizQuestionOptionSchema = {
       description:
         '**[READ-ONLY]** Comprehensive summary of the option including correctness and position.',
       example: 'Correct answer option in position 2',
+      readOnly: true,
+    },
+    option_category: {
+      type: 'string',
+      description:
+        '**[READ-ONLY]** Formatted category of the option based on its correctness status.',
+      example: 'Correct Answer Option',
       readOnly: true,
     },
   },
@@ -2331,12 +2331,6 @@ export const QuizAttemptSchema = {
       example: true,
       readOnly: true,
     },
-    grade_display: {
-      type: 'string',
-      description: '**[READ-ONLY]** Formatted display of the grade information.',
-      example: '85.00 / 100.00 (85%)',
-      readOnly: true,
-    },
     time_display: {
       type: 'string',
       description: '**[READ-ONLY]** Formatted display of the time taken to complete the quiz.',
@@ -2353,6 +2347,12 @@ export const QuizAttemptSchema = {
       type: 'string',
       description: '**[READ-ONLY]** Comprehensive summary of the quiz attempt performance.',
       example: 'Passed on attempt 2 with 85% score',
+      readOnly: true,
+    },
+    grade_display: {
+      type: 'string',
+      description: '**[READ-ONLY]** Formatted display of the grade information.',
+      example: '85.00 / 100.00 (85%)',
       readOnly: true,
     },
   },
@@ -3742,6 +3742,22 @@ export const InstructorSchema = {
     },
     distance_band: {
       $ref: '#/components/schemas/DistanceBandEnum',
+    },
+    rating_avg: {
+      type: ['number', 'null'],
+      format: 'double',
+      description:
+        "**[READ-ONLY]** On list and search rows only: the instructor's mean review rating, or null when they have no reviews.",
+      example: 4.6,
+      readOnly: true,
+    },
+    review_count: {
+      type: ['integer', 'null'],
+      format: 'int64',
+      description:
+        '**[READ-ONLY]** On list and search rows only: how many reviews the instructor has (0 when none).',
+      example: 12,
+      readOnly: true,
     },
     is_profile_complete: {
       type: 'boolean',
@@ -8226,17 +8242,17 @@ export const CategorySchema = {
       example: 'admin@sarafrika.com',
       readOnly: true,
     },
-    is_root_category: {
-      type: 'boolean',
-      description: '**[READ-ONLY]** Indicates if this is a root category with no parent.',
-      example: false,
-      readOnly: true,
-    },
     category_path: {
       type: 'string',
       description:
         '**[READ-ONLY]** Hierarchical path showing category position in the tree structure.',
       example: 'Technology > Programming',
+      readOnly: true,
+    },
+    is_root_category: {
+      type: 'boolean',
+      description: '**[READ-ONLY]** Indicates if this is a root category with no parent.',
+      example: false,
       readOnly: true,
     },
   },
@@ -13266,12 +13282,6 @@ export const EnrollmentSchema = {
       example: true,
       readOnly: true,
     },
-    is_attendance_marked: {
-      type: 'boolean',
-      description: '**[READ-ONLY]** Indicates if attendance has been marked for this enrollment.',
-      example: false,
-      readOnly: true,
-    },
     did_attend: {
       type: 'boolean',
       description: '**[READ-ONLY]** Indicates if the student attended the class.',
@@ -13282,6 +13292,12 @@ export const EnrollmentSchema = {
       type: 'string',
       description: '**[READ-ONLY]** Human-readable description of the enrollment status.',
       example: 'Student is enrolled in the class',
+      readOnly: true,
+    },
+    is_attendance_marked: {
+      type: 'boolean',
+      description: '**[READ-ONLY]** Indicates if attendance has been marked for this enrollment.',
+      example: false,
       readOnly: true,
     },
     can_be_cancelled: {
@@ -15684,7 +15700,7 @@ export const AdminDomainAssignmentRequestSchema = {
   description: 'Admin domain assignment request containing domain type, reason, and effective date',
   properties: {
     domain_name: {
-      $ref: '#/components/schemas/SchemaEnum8',
+      $ref: '#/components/schemas/SchemaEnum10',
     },
     assignment_type: {
       $ref: '#/components/schemas/AssignmentTypeEnum',
@@ -16264,6 +16280,40 @@ export const UserSummarySchema = {
   },
 } as const;
 
+export const ApiResponseUserRecipientSchema = {
+  type: 'object',
+  properties: {
+    success: {
+      type: 'boolean',
+    },
+    data: {
+      $ref: '#/components/schemas/UserRecipient',
+    },
+    message: {
+      type: 'string',
+    },
+    error: {},
+  },
+} as const;
+
+export const UserRecipientSchema = {
+  type: 'object',
+  description: 'A user resolved from their exact user number, with a masked display name.',
+  properties: {
+    user_uuid: {
+      type: 'string',
+      format: 'uuid',
+      description: "The user's UUID, to use as the transfer recipient.",
+      example: '550e8400-e29b-41d4-a716-446655440001',
+    },
+    display_name: {
+      type: 'string',
+      description: 'First name plus the initial of the last name.',
+      example: 'Wilfred N.',
+    },
+  },
+} as const;
+
 export const ApiResponseListUserSummarySchema = {
   type: 'object',
   properties: {
@@ -16747,6 +16797,9 @@ export const PageableObjectSchema = {
     sort: {
       $ref: '#/components/schemas/SortObject',
     },
+    unpaged: {
+      type: 'boolean',
+    },
     paged: {
       type: 'boolean',
     },
@@ -16757,9 +16810,6 @@ export const PageableObjectSchema = {
     pageSize: {
       type: 'integer',
       format: 'int32',
-    },
-    unpaged: {
-      type: 'boolean',
     },
   },
 } as const;
@@ -16814,6 +16864,20 @@ export const ApiResponseGlobalSearchResponseSchema = {
   },
 } as const;
 
+export const ContextSchema = {
+  type: 'object',
+  properties: {
+    course_uuid: {
+      type: 'string',
+      format: 'uuid',
+    },
+    lesson_uuid: {
+      type: 'string',
+      format: 'uuid',
+    },
+  },
+} as const;
+
 export const GlobalSearchHitSchema = {
   type: 'object',
   properties: {
@@ -16838,6 +16902,9 @@ export const GlobalSearchHitSchema = {
     },
     distance_band: {
       type: 'string',
+    },
+    context: {
+      $ref: '#/components/schemas/Context',
     },
   },
 } as const;
@@ -22045,6 +22112,125 @@ export const PublicCourseTrainingRequirementSchema = {
   },
 } as const;
 
+export const ApiResponseCourseOpenClassesSchema = {
+  type: 'object',
+  properties: {
+    success: {
+      type: 'boolean',
+    },
+    data: {
+      $ref: '#/components/schemas/CourseOpenClasses',
+    },
+    message: {
+      type: 'string',
+    },
+    error: {},
+  },
+} as const;
+
+export const CourseOpenClassesSchema = {
+  type: 'object',
+  description: 'The joinable classes of a public course and the cheapest fee.',
+  properties: {
+    price_from: {
+      type: 'number',
+      description:
+        "The lowest class fee among the classes that are not FULL. Null when there are none or none has a fee. This, not the course's own price, is what a learner pays.",
+      example: 2500,
+    },
+    currency_code: {
+      type: 'string',
+      description: 'ISO 4217 currency of the fees. Null when the list is empty.',
+      example: 'KES',
+    },
+    open_class_count: {
+      type: 'integer',
+      format: 'int32',
+      description: 'Number of listed classes that are not FULL.',
+      example: 3,
+    },
+    classes: {
+      type: 'array',
+      description: 'The classes: joinable ones cheapest first, then soonest start; FULL ones last.',
+      items: {
+        $ref: '#/components/schemas/OpenClassSummary',
+      },
+    },
+  },
+} as const;
+
+export const OpenClassSummarySchema = {
+  type: 'object',
+  description: 'A class on a course that a visitor can still join.',
+  properties: {
+    uuid: {
+      type: 'string',
+      format: 'uuid',
+      description: 'Class definition UUID.',
+    },
+    title: {
+      type: 'string',
+      description: 'Class title.',
+      example: 'Weekend cohort - Nairobi',
+    },
+    location_type: {
+      $ref: '#/components/schemas/LocationTypeEnum',
+    },
+    session_format: {
+      $ref: '#/components/schemas/SessionFormatEnum',
+    },
+    place_name: {
+      type: 'string',
+      description:
+        "The venue: the first comma-separated part of the class's location label. Null when the class has no location label (typically online).",
+      example: 'Kenya School of Government',
+    },
+    area: {
+      type: 'string',
+      description:
+        'The rest of the location label after the place name, with a trailing country removed. Null when nothing remains.',
+      example: 'Lower Kabete Road, Nairobi',
+    },
+    fee: {
+      type: 'number',
+      description: 'The class fee a learner pays (the class sale price). Null when not set.',
+      example: 2500,
+    },
+    currency_code: {
+      type: 'string',
+      description: 'ISO 4217 currency of the fee.',
+      example: 'KES',
+    },
+    availability: {
+      $ref: '#/components/schemas/AvailabilityEnum',
+    },
+    starts_on: {
+      type: 'string',
+      format: 'date',
+      description:
+        "First teaching day (the academic period start, else the first session's day). Null when unknown.",
+      example: '2026-10-12',
+    },
+    ends_on: {
+      type: 'string',
+      format: 'date',
+      description: 'Last teaching day. Null when open-ended.',
+      example: '2026-12-18',
+    },
+    registration_closes_on: {
+      type: 'string',
+      format: 'date',
+      description: 'Last day, inclusive, on which enrolments are accepted. Null when open-ended.',
+      example: '2026-10-10',
+    },
+    branch_name: {
+      type: 'string',
+      description: 'The training branch the class is delivered at. Null when none.',
+      example: 'Westlands branch',
+    },
+  },
+} as const;
+
 export const ApiResponsePagedDTOLessonSchema = {
   type: 'object',
   properties: {
@@ -24357,6 +24543,266 @@ export const ApiResponseListCertificateSchema = {
   },
 } as const;
 
+export const ApiResponseCatalogueSearchResponseSchema = {
+  type: 'object',
+  properties: {
+    success: {
+      type: 'boolean',
+    },
+    data: {
+      $ref: '#/components/schemas/CatalogueSearchResponse',
+    },
+    message: {
+      type: 'string',
+    },
+    error: {},
+  },
+} as const;
+
+export const CatalogueCategoryFacetSchema = {
+  type: 'object',
+  description: 'A category and how many results it would show.',
+  properties: {
+    uuid: {
+      type: 'string',
+      format: 'uuid',
+    },
+    name: {
+      type: 'string',
+    },
+    count: {
+      type: 'integer',
+      format: 'int64',
+    },
+  },
+} as const;
+
+export const CatalogueFacetsSchema = {
+  type: 'object',
+  description: 'Counts per filter value; each group ignores its own selection.',
+  properties: {
+    show: {
+      $ref: '#/components/schemas/CatalogueShowFacet',
+    },
+    category: {
+      type: 'array',
+      description:
+        'Categories with at least one match, plus any selected ones; most matches first.',
+      items: {
+        $ref: '#/components/schemas/CatalogueCategoryFacet',
+      },
+    },
+    level: {
+      $ref: '#/components/schemas/CatalogueLevelFacet',
+    },
+    price: {
+      $ref: '#/components/schemas/CataloguePriceFacet',
+    },
+  },
+} as const;
+
+export const CatalogueItemSchema = {
+  type: 'object',
+  description: 'A course or programme card on the public catalogue page.',
+  properties: {
+    type: {
+      $ref: '#/components/schemas/TypeEnum2',
+    },
+    uuid: {
+      type: 'string',
+      format: 'uuid',
+      description: 'Course or programme UUID.',
+    },
+    title: {
+      type: 'string',
+      description: 'Course name or programme title.',
+      example: 'Python for data analysis',
+    },
+    description: {
+      type: 'string',
+      description: 'Description as authored, truncated to 2000 characters.',
+    },
+    thumbnail_url: {
+      type: 'string',
+      description:
+        "Public thumbnail URL (/api/v1/files/... or an external URL). A programme shows its first member course's thumbnail. Null when there is none.",
+    },
+    category_names: {
+      type: 'array',
+      description: 'Category names, alphabetical. A programme has at most one.',
+      items: {
+        type: 'string',
+      },
+    },
+    category_uuids: {
+      type: 'array',
+      description: 'Category UUIDs, in the order of category_names.',
+      items: {
+        type: 'string',
+        format: 'uuid',
+      },
+    },
+    creator_uuid: {
+      type: 'string',
+      format: 'uuid',
+      description: 'Course creator UUID.',
+    },
+    creator_name: {
+      type: 'string',
+      description: 'Course creator display name.',
+      example: 'Grace Hopper',
+    },
+    level: {
+      type: 'string',
+      description:
+        'Course: its difficulty name. Programme: the range over its member courses ("Beginner → Advanced", or one name when they agree); null when unknown.',
+      example: 'Beginner',
+    },
+    rating_avg: {
+      type: 'number',
+      format: 'double',
+      description: 'Average review rating 1-5, null when unrated.',
+      example: 4.5,
+    },
+    review_count: {
+      type: 'integer',
+      format: 'int64',
+      description: 'Number of reviews.',
+      example: 12,
+    },
+    lesson_count: {
+      type: 'integer',
+      format: 'int64',
+      description: 'Published lessons (programme: across its member courses).',
+      example: 8,
+    },
+    course_count: {
+      type: 'integer',
+      format: 'int64',
+      description: 'Programme: member course count. Null for a course.',
+      example: 3,
+    },
+    learner_count: {
+      type: 'integer',
+      format: 'int64',
+      description: 'Distinct learners with an active or completed enrolment.',
+      example: 120,
+    },
+    class_count: {
+      type: 'integer',
+      format: 'int64',
+      description: 'Course: active public classes delivering it. Null for a programme.',
+      example: 2,
+    },
+    price_from: {
+      type: 'number',
+      description:
+        'Course: the lowest class fee among its open classes (active, public, not full, registration and teaching not ended) - what a learner actually pays. Null when it has no open class with a fee, and always null for a programme.',
+      example: 2500,
+    },
+    open_class_count: {
+      type: 'integer',
+      format: 'int64',
+      description:
+        'Course: its open classes (active, public, not full, registration and teaching not ended). Always 0 for a programme.',
+      example: 2,
+    },
+    age_label: {
+      type: 'string',
+      description: `Age band label such as "18+" when the course's lower age limit is 18 or more; null otherwise and for programmes.`,
+      example: '18+',
+    },
+    price: {
+      type: 'number',
+      description: 'List price; null when not set.',
+      example: 1500,
+    },
+    is_free: {
+      type: 'boolean',
+      description: 'True when the price is missing or zero.',
+    },
+    highlight: {
+      type: 'string',
+      description:
+        'When q matched the title: the HTML-escaped title with matches wrapped in <em>...</em> (the only markup). Null otherwise.',
+      example: '<em>Python</em> for data analysis',
+    },
+  },
+} as const;
+
+export const CatalogueLevelFacetSchema = {
+  type: 'object',
+  description: 'Matches per level, ignoring the level selection.',
+  properties: {
+    beginner: {
+      type: 'integer',
+      format: 'int64',
+    },
+    intermediate: {
+      type: 'integer',
+      format: 'int64',
+    },
+    advanced: {
+      type: 'integer',
+      format: 'int64',
+    },
+  },
+} as const;
+
+export const CataloguePriceFacetSchema = {
+  type: 'object',
+  description: 'Free and paid matches, ignoring the price selection.',
+  properties: {
+    free: {
+      type: 'integer',
+      format: 'int64',
+    },
+    paid: {
+      type: 'integer',
+      format: 'int64',
+    },
+  },
+} as const;
+
+export const CatalogueSearchResponseSchema = {
+  type: 'object',
+  description: 'A page of the public catalogue with facet counts.',
+  properties: {
+    content: {
+      type: 'array',
+      items: {
+        $ref: '#/components/schemas/CatalogueItem',
+      },
+    },
+    metadata: {
+      $ref: '#/components/schemas/PageMetadata',
+      description: "Paging metadata, the same shape as PagedDTO's.",
+    },
+    facets: {
+      $ref: '#/components/schemas/CatalogueFacets',
+    },
+  },
+} as const;
+
+export const CatalogueShowFacetSchema = {
+  type: 'object',
+  description: 'Matches per result type, ignoring the show selection.',
+  properties: {
+    all: {
+      type: 'integer',
+      format: 'int64',
+    },
+    courses: {
+      type: 'integer',
+      format: 'int64',
+    },
+    programmes: {
+      type: 'integer',
+      format: 'int64',
+    },
+  },
+} as const;
+
 export const ApiResponsePagedDTOAssignmentSchema = {
   type: 'object',
   properties: {
@@ -25750,10 +26196,31 @@ export const SchemaEnum6Schema = {
 
 export const SchemaEnum7Schema = {
   type: 'string',
-  enum: ['actor', 'target', 'all'],
+  default: 'all',
+  enum: ['all', 'courses', 'programmes'],
+} as const;
+
+export const ItemsEnum2Schema = {
+  type: 'string',
+  enum: ['beginner', 'intermediate', 'advanced'],
+} as const;
+
+export const ItemsEnum3Schema = {
+  type: 'string',
+  enum: ['free', 'paid'],
 } as const;
 
 export const SchemaEnum8Schema = {
+  type: 'string',
+  enum: ['relevance', 'newest', 'rating', 'popular'],
+} as const;
+
+export const SchemaEnum9Schema = {
+  type: 'string',
+  enum: ['actor', 'target', 'all'],
+} as const;
+
+export const SchemaEnum10Schema = {
   type: 'string',
   enum: ['admin', 'organisation_user'],
 } as const;
@@ -26532,6 +26999,14 @@ export const AccessEnumSchema = {
   example: 'prospect',
 } as const;
 
+export const AvailabilityEnumSchema = {
+  type: 'string',
+  description:
+    'How easy the class is to get into. FULL: no seats left (listed, but not counted in open_class_count or price_from, and sorted last). FEW_LEFT: at most max(5, 20% of capacity) seats left. OPEN: otherwise, or when capacity is unknown. Seat counts are never published.',
+  enum: ['OPEN', 'FEW_LEFT', 'FULL'],
+  example: 'OPEN',
+} as const;
+
 export const ApplicationStatusEnumSchema = {
   type: ['string', 'null'],
   description: "Status of the instructor's existing application, when they have one",
@@ -26566,6 +27041,13 @@ export const EventTypeEnum3Schema = {
     'withdrawn',
   ],
   readOnly: true,
+} as const;
+
+export const TypeEnum2Schema = {
+  type: 'string',
+  description: 'Result type.',
+  enum: ['course', 'programme'],
+  example: 'course',
 } as const;
 
 export const ContentTypeEnumSchema = {
@@ -26708,10 +27190,31 @@ export const SchemaEnum6WritableSchema = {
 
 export const SchemaEnum7WritableSchema = {
   type: 'string',
-  enum: ['actor', 'target', 'all'],
+  default: 'all',
+  enum: ['all', 'courses', 'programmes'],
+} as const;
+
+export const ItemsEnum2WritableSchema = {
+  type: 'string',
+  enum: ['beginner', 'intermediate', 'advanced'],
+} as const;
+
+export const ItemsEnum3WritableSchema = {
+  type: 'string',
+  enum: ['free', 'paid'],
 } as const;
 
 export const SchemaEnum8WritableSchema = {
+  type: 'string',
+  enum: ['relevance', 'newest', 'rating', 'popular'],
+} as const;
+
+export const SchemaEnum9WritableSchema = {
+  type: 'string',
+  enum: ['actor', 'target', 'all'],
+} as const;
+
+export const SchemaEnum10WritableSchema = {
   type: 'string',
   enum: ['admin', 'organisation_user'],
 } as const;
@@ -27250,4 +27753,19 @@ export const AccessEnumWritableSchema = {
     'student',
   ],
   example: 'prospect',
+} as const;
+
+export const AvailabilityEnumWritableSchema = {
+  type: 'string',
+  description:
+    'How easy the class is to get into. FULL: no seats left (listed, but not counted in open_class_count or price_from, and sorted last). FEW_LEFT: at most max(5, 20% of capacity) seats left. OPEN: otherwise, or when capacity is unknown. Seat counts are never published.',
+  enum: ['OPEN', 'FEW_LEFT', 'FULL'],
+  example: 'OPEN',
+} as const;
+
+export const TypeEnum2WritableSchema = {
+  type: 'string',
+  description: 'Result type.',
+  enum: ['course', 'programme'],
+  example: 'course',
 } as const;

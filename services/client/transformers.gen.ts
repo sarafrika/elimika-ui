@@ -427,6 +427,7 @@ import type {
   GetPrimaryRubricResponse,
   GetRubricsByContextResponse,
   GetOrganisationCourseContentResponse,
+  GetCourseOpenClassesResponse,
   GetEnrollmentGradeBookResponse,
   GetCourseEnrollmentsResponse,
   GetCourseContentResponse,
@@ -478,6 +479,7 @@ import type {
   GetProgramCertificates1Response,
   GetCertificateByNumberResponse,
   GetCourseCertificatesResponse,
+  SearchCoursesAndProgrammesResponse,
   GetBookingResponse,
   GetAssignmentSubmissionsResponse,
   GetSubmissionAttachmentsResponse,
@@ -1173,6 +1175,9 @@ const instructorSchemaResponseTransformer = (data: any) => {
   }
   if (data.updated_date) {
     data.updated_date = new Date(data.updated_date);
+  }
+  if (data.review_count) {
+    data.review_count = BigInt(data.review_count.toString());
   }
   return data;
 };
@@ -7533,6 +7538,42 @@ export const getOrganisationCourseContentResponseTransformer = async (
   return data;
 };
 
+const openClassSummarySchemaResponseTransformer = (data: any) => {
+  if (data.starts_on) {
+    data.starts_on = new Date(data.starts_on);
+  }
+  if (data.ends_on) {
+    data.ends_on = new Date(data.ends_on);
+  }
+  if (data.registration_closes_on) {
+    data.registration_closes_on = new Date(data.registration_closes_on);
+  }
+  return data;
+};
+
+const courseOpenClassesSchemaResponseTransformer = (data: any) => {
+  if (data.classes) {
+    data.classes = data.classes.map((item: any) => {
+      return openClassSummarySchemaResponseTransformer(item);
+    });
+  }
+  return data;
+};
+
+const apiResponseCourseOpenClassesSchemaResponseTransformer = (data: any) => {
+  if (data.data) {
+    data.data = courseOpenClassesSchemaResponseTransformer(data.data);
+  }
+  return data;
+};
+
+export const getCourseOpenClassesResponseTransformer = async (
+  data: any
+): Promise<GetCourseOpenClassesResponse> => {
+  data = apiResponseCourseOpenClassesSchemaResponseTransformer(data);
+  return data;
+};
+
 const courseAssessmentScoreSchemaResponseTransformer = (data: any) => {
   if (data.graded_at) {
     data.graded_at = new Date(data.graded_at);
@@ -8239,6 +8280,118 @@ export const getCourseCertificatesResponseTransformer = async (
   data: any
 ): Promise<GetCourseCertificatesResponse> => {
   data = apiResponseListCertificateSchemaResponseTransformer(data);
+  return data;
+};
+
+const catalogueItemSchemaResponseTransformer = (data: any) => {
+  if (data.review_count) {
+    data.review_count = BigInt(data.review_count.toString());
+  }
+  if (data.lesson_count) {
+    data.lesson_count = BigInt(data.lesson_count.toString());
+  }
+  if (data.course_count) {
+    data.course_count = BigInt(data.course_count.toString());
+  }
+  if (data.learner_count) {
+    data.learner_count = BigInt(data.learner_count.toString());
+  }
+  if (data.class_count) {
+    data.class_count = BigInt(data.class_count.toString());
+  }
+  if (data.open_class_count) {
+    data.open_class_count = BigInt(data.open_class_count.toString());
+  }
+  return data;
+};
+
+const catalogueShowFacetSchemaResponseTransformer = (data: any) => {
+  if (data.all) {
+    data.all = BigInt(data.all.toString());
+  }
+  if (data.courses) {
+    data.courses = BigInt(data.courses.toString());
+  }
+  if (data.programmes) {
+    data.programmes = BigInt(data.programmes.toString());
+  }
+  return data;
+};
+
+const catalogueCategoryFacetSchemaResponseTransformer = (data: any) => {
+  if (data.count) {
+    data.count = BigInt(data.count.toString());
+  }
+  return data;
+};
+
+const catalogueLevelFacetSchemaResponseTransformer = (data: any) => {
+  if (data.beginner) {
+    data.beginner = BigInt(data.beginner.toString());
+  }
+  if (data.intermediate) {
+    data.intermediate = BigInt(data.intermediate.toString());
+  }
+  if (data.advanced) {
+    data.advanced = BigInt(data.advanced.toString());
+  }
+  return data;
+};
+
+const cataloguePriceFacetSchemaResponseTransformer = (data: any) => {
+  if (data.free) {
+    data.free = BigInt(data.free.toString());
+  }
+  if (data.paid) {
+    data.paid = BigInt(data.paid.toString());
+  }
+  return data;
+};
+
+const catalogueFacetsSchemaResponseTransformer = (data: any) => {
+  if (data.show) {
+    data.show = catalogueShowFacetSchemaResponseTransformer(data.show);
+  }
+  if (data.category) {
+    data.category = data.category.map((item: any) => {
+      return catalogueCategoryFacetSchemaResponseTransformer(item);
+    });
+  }
+  if (data.level) {
+    data.level = catalogueLevelFacetSchemaResponseTransformer(data.level);
+  }
+  if (data.price) {
+    data.price = cataloguePriceFacetSchemaResponseTransformer(data.price);
+  }
+  return data;
+};
+
+const catalogueSearchResponseSchemaResponseTransformer = (data: any) => {
+  if (data.content) {
+    data.content = data.content.map((item: any) => {
+      return catalogueItemSchemaResponseTransformer(item);
+    });
+  }
+  if (data.metadata) {
+    data.metadata = pageMetadataSchemaResponseTransformer(data.metadata);
+  }
+  if (data.facets) {
+    data.facets = catalogueFacetsSchemaResponseTransformer(data.facets);
+  }
+  return data;
+};
+
+const apiResponseCatalogueSearchResponseSchemaResponseTransformer = (data: any) => {
+  if (data.data) {
+    data.data = catalogueSearchResponseSchemaResponseTransformer(data.data);
+  }
+  return data;
+};
+
+export const searchCoursesAndProgrammesResponseTransformer = async (
+  data: any
+): Promise<SearchCoursesAndProgrammesResponse> => {
+  data = apiResponseCatalogueSearchResponseSchemaResponseTransformer(data);
   return data;
 };
 

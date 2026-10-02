@@ -424,6 +424,7 @@ import {
   search,
   getProfileImage,
   getCurrentUser,
+  lookupUserByUserNo,
   getUserDirectory,
   search1,
   getTrainingBranchesByOrganisation1,
@@ -556,6 +557,7 @@ import {
   getPrimaryRubric,
   getRubricsByContext,
   getOrganisationCourseContent,
+  getCourseOpenClasses,
   getEnrollmentGradeBook,
   getCourseEnrollments,
   getCourseContent,
@@ -621,6 +623,7 @@ import {
   getCertificateByNumber,
   getCertificateFile,
   getCourseCertificates,
+  searchCoursesAndProgrammes,
   getBooking,
   getAssignmentSubmissions,
   getSubmissionAttachments,
@@ -1787,6 +1790,7 @@ import type {
   SearchResponse,
   GetProfileImageData,
   GetCurrentUserData,
+  LookupUserByUserNoData,
   GetUserDirectoryData,
   Search1Data,
   Search1Error,
@@ -2044,6 +2048,7 @@ import type {
   GetRubricsByContextError,
   GetRubricsByContextResponse,
   GetOrganisationCourseContentData,
+  GetCourseOpenClassesData,
   GetEnrollmentGradeBookData,
   GetCourseEnrollmentsData,
   GetCourseEnrollmentsError,
@@ -2161,6 +2166,9 @@ import type {
   GetCertificateByNumberData,
   GetCertificateFileData,
   GetCourseCertificatesData,
+  SearchCoursesAndProgrammesData,
+  SearchCoursesAndProgrammesError,
+  SearchCoursesAndProgrammesResponse,
   GetBookingData,
   GetAssignmentSubmissionsData,
   GetSubmissionAttachmentsData,
@@ -4278,6 +4286,12 @@ export const getCourseByUuidQueryKey = (options: Options<GetCourseByUuidData>) =
  * - `category_count`: Number of categories assigned to the course
  * - `has_multiple_categories`: Boolean indicating if course has multiple categories
  *
+ * **Anonymous callers** (no token) may read public courses only - published, active,
+ * admin-approved and not a pending-edit draft - and get 404 for anything else. Their copy
+ * leaves out `minimum_training_fee`, `creator_share_percentage`,
+ * `instructor_share_percentage`, `revenue_share_notes`, `created_by` and `updated_by`.
+ * Signed-in callers are unaffected.
+ *
  */
 export const getCourseByUuidOptions = (options: Options<GetCourseByUuidData>) => {
   return queryOptions({
@@ -4332,7 +4346,7 @@ export const getCourseSkillsQueryKey = (options: Options<GetCourseSkillsData>) =
 
 /**
  * Get a course's skill tags
- * Readable by anyone who can read the course (404 otherwise). Heaviest first.
+ * Readable by anyone who can read the course (404 otherwise), including anonymous visitors on a public course (published, active, admin-approved). Heaviest first.
  */
 export const getCourseSkillsOptions = (options: Options<GetCourseSkillsData>) => {
   return queryOptions({
@@ -4383,7 +4397,8 @@ export const getCoursePrerequisitesQueryKey = (options: Options<GetCoursePrerequ
 /**
  * List a course's prerequisites
  * The prior courses this course requires (`is_mandatory: true`) or recommends. Readable by anyone
- * who can read the course; a course the caller may not read answers 404.
+ * who can read the course; a course the caller may not read answers 404. Anonymous visitors
+ * may read the prerequisites of a public course (published, active, admin-approved).
  *
  * On a live course with a pending edit this returns the live set. The author reads the proposed
  * set from the draft course (`draft_course_uuid` on the pending edit).
@@ -19987,6 +20002,28 @@ export const getCurrentUserOptions = (options?: Options<GetCurrentUserData>) => 
   });
 };
 
+export const lookupUserByUserNoQueryKey = (options: Options<LookupUserByUserNoData>) =>
+  createQueryKey('lookupUserByUserNo', options);
+
+/**
+ * Look up a user by their exact user number
+ * Resolves an exact nine-digit user number to the user's UUID and a masked display name (first name plus last-name initial, e.g. "Wilfred N."). No partial matching, no other fields, and never email, phone or the full name. Unknown or inactive users answer 404. Limited to 20 lookups per minute per caller.
+ */
+export const lookupUserByUserNoOptions = (options: Options<LookupUserByUserNoData>) => {
+  return queryOptions({
+    queryFn: async ({ queryKey, signal }) => {
+      const { data } = await lookupUserByUserNo({
+        ...options,
+        ...queryKey[0],
+        signal,
+        throwOnError: true,
+      });
+      return data;
+    },
+    queryKey: lookupUserByUserNoQueryKey(options),
+  });
+};
+
 export const getUserDirectoryQueryKey = (options: Options<GetUserDirectoryData>) =>
   createQueryKey('getUserDirectory', options);
 
@@ -20582,7 +20619,7 @@ export const searchByTypeQueryKey = (options: Options<SearchByTypeData>) =>
  * | `marketplace_jobs` | `status`, `organisation_uuid`, `branch_uuid`, `course_uuid`, `program_uuid`, `category_uuid`, `location_type`, `session_format`, `starts_at`, `registration_closes_at`, `uuid`, `created_at`, `required_skill_uuids`, `_geo` | `created_at`, `starts_at`, `_geo` |
  * | `organisations` | `active`, `admin_verified`, `country`, `uuid`, `created_at` | `name`, `created_at` |
  * | `people` | `domains`, `organisation_uuids`, `branch_uuids`, `active`, `is_platform_admin`, `is_org_admin`, `uuid`, `created_at`, `email_normalized` | `full_name`, `created_at` |
- * | `programs` | `status`, `is_published`, `admin_approved`, `active`, `is_public`, `course_creator_uuid`, `category_uuid`, `is_free`, `uuid`, `created_at` | `title`, `created_at` |
+ * | `programs` | `status`, `is_published`, `admin_approved`, `active`, `is_public`, `course_creator_uuid`, `category_uuid`, `is_free`, `uuid`, `created_at`, `difficulty_uuids` | `title`, `created_at`, `rating_avg`, `rating_bayes`, `popularity_30d`, `enrolment_count` |
  * | `rubrics` | `is_public`, `is_active`, `status`, `course_creator_uuid`, `rubric_type`, `usage_count`, `uuid`, `created_at` | `title`, `created_at`, `usage_count` |
  *
  */
@@ -20620,7 +20657,7 @@ export const searchByTypeInfiniteQueryKey = (
  * | `marketplace_jobs` | `status`, `organisation_uuid`, `branch_uuid`, `course_uuid`, `program_uuid`, `category_uuid`, `location_type`, `session_format`, `starts_at`, `registration_closes_at`, `uuid`, `created_at`, `required_skill_uuids`, `_geo` | `created_at`, `starts_at`, `_geo` |
  * | `organisations` | `active`, `admin_verified`, `country`, `uuid`, `created_at` | `name`, `created_at` |
  * | `people` | `domains`, `organisation_uuids`, `branch_uuids`, `active`, `is_platform_admin`, `is_org_admin`, `uuid`, `created_at`, `email_normalized` | `full_name`, `created_at` |
- * | `programs` | `status`, `is_published`, `admin_approved`, `active`, `is_public`, `course_creator_uuid`, `category_uuid`, `is_free`, `uuid`, `created_at` | `title`, `created_at` |
+ * | `programs` | `status`, `is_published`, `admin_approved`, `active`, `is_public`, `course_creator_uuid`, `category_uuid`, `is_free`, `uuid`, `created_at`, `difficulty_uuids` | `title`, `created_at`, `rating_avg`, `rating_bayes`, `popularity_30d`, `enrolment_count` |
  * | `rubrics` | `is_public`, `is_active`, `status`, `course_creator_uuid`, `rubric_type`, `usage_count`, `uuid`, `created_at` | `title`, `created_at`, `usage_count` |
  *
  */
@@ -26320,6 +26357,48 @@ export const getOrganisationCourseContentOptions = (
   });
 };
 
+export const getCourseOpenClassesQueryKey = (options: Options<GetCourseOpenClassesData>) =>
+  createQueryKey('getCourseOpenClasses', options);
+
+/**
+ * List the classes a visitor can still join on a public course
+ * Readable without a token. Answers only for a publicly visible course (root, published,
+ * active and admin-approved); any other course is a 404 for every caller.
+ *
+ * Lists the course's classes that are active, `PUBLIC`, and whose registration window
+ * and teaching period have not ended (a missing end date counts as open), cheapest
+ * first, then soonest start, with `FULL` classes last.
+ *
+ * Each class carries `availability` instead of seat numbers: `FULL` when no seat is
+ * left, `FEW_LEFT` at or under max(5, 20% of capacity) seats left, otherwise (or when
+ * capacity is unknown) `OPEN`. Seat counts are never published: beside a fee they
+ * give away a class's revenue.
+ *
+ * `price_from` is the lowest class fee among the classes that are not `FULL`, and
+ * `open_class_count` counts those. That class fee (`fee`, the class sale price) is what
+ * a learner pays; the course's own `price` is not. `price_from` is null when no class
+ * can be joined.
+ *
+ * Never carries coordinates, meeting links, instructor or organisation identifiers,
+ * instructor pay, seat counts or revenue terms. `place_name` and `area` come from the class's
+ * location label only.
+ *
+ */
+export const getCourseOpenClassesOptions = (options: Options<GetCourseOpenClassesData>) => {
+  return queryOptions({
+    queryFn: async ({ queryKey, signal }) => {
+      const { data } = await getCourseOpenClasses({
+        ...options,
+        ...queryKey[0],
+        signal,
+        throwOnError: true,
+      });
+      return data;
+    },
+    queryKey: getCourseOpenClassesQueryKey(options),
+  });
+};
+
 export const getEnrollmentGradeBookQueryKey = (options: Options<GetEnrollmentGradeBookData>) =>
   createQueryKey('getEnrollmentGradeBook', options);
 
@@ -29334,6 +29413,81 @@ export const getCourseCertificatesOptions = (options?: Options<GetCourseCertific
   });
 };
 
+export const searchCoursesAndProgrammesQueryKey = (
+  options?: Options<SearchCoursesAndProgrammesData>
+) => createQueryKey('searchCoursesAndProgrammes', options);
+
+/**
+ * Search the public catalogue
+ * One ranked list of public courses and programmes (is_public courses; published, active, admin-approved programmes) for every caller, signed in or not. With q the two types are merged by relevance (typo-tolerant); without q it is a browse. Filters: show, category_uuid, level, price, creator_uuid. Facet counts reflect every other active filter with each group's own selection left out, so they stay useful while filtering; show narrows the category, level and price counts to the shown types. A programme matches a level when any of its member courses has it. Counts (lessons, learners, classes) are live from the database; hits that are no longer public are dropped and the total restated. 503 "Search is unavailable" when search is disabled or unavailable; there is no database fallback.
+ */
+export const searchCoursesAndProgrammesOptions = (
+  options?: Options<SearchCoursesAndProgrammesData>
+) => {
+  return queryOptions({
+    queryFn: async ({ queryKey, signal }) => {
+      const { data } = await searchCoursesAndProgrammes({
+        ...options,
+        ...queryKey[0],
+        signal,
+        throwOnError: true,
+      });
+      return data;
+    },
+    queryKey: searchCoursesAndProgrammesQueryKey(options),
+  });
+};
+
+export const searchCoursesAndProgrammesInfiniteQueryKey = (
+  options?: Options<SearchCoursesAndProgrammesData>
+): QueryKey<Options<SearchCoursesAndProgrammesData>> =>
+  createQueryKey('searchCoursesAndProgrammes', options, true);
+
+/**
+ * Search the public catalogue
+ * One ranked list of public courses and programmes (is_public courses; published, active, admin-approved programmes) for every caller, signed in or not. With q the two types are merged by relevance (typo-tolerant); without q it is a browse. Filters: show, category_uuid, level, price, creator_uuid. Facet counts reflect every other active filter with each group's own selection left out, so they stay useful while filtering; show narrows the category, level and price counts to the shown types. A programme matches a level when any of its member courses has it. Counts (lessons, learners, classes) are live from the database; hits that are no longer public are dropped and the total restated. 503 "Search is unavailable" when search is disabled or unavailable; there is no database fallback.
+ */
+export const searchCoursesAndProgrammesInfiniteOptions = (
+  options?: Options<SearchCoursesAndProgrammesData>
+) => {
+  return infiniteQueryOptions<
+    SearchCoursesAndProgrammesResponse,
+    SearchCoursesAndProgrammesError,
+    InfiniteData<SearchCoursesAndProgrammesResponse>,
+    QueryKey<Options<SearchCoursesAndProgrammesData>>,
+    | string
+    | Pick<
+        QueryKey<Options<SearchCoursesAndProgrammesData>>[0],
+        'body' | 'headers' | 'path' | 'query'
+      >
+  >(
+    {
+      queryFn: async ({ pageParam, queryKey, signal }) => {
+        const page: Pick<
+          QueryKey<Options<SearchCoursesAndProgrammesData>>[0],
+          'body' | 'headers' | 'path' | 'query'
+        > =
+          typeof pageParam === 'object'
+            ? pageParam
+            : {
+                query: {
+                  page: pageParam,
+                },
+              };
+        const params = createInfiniteParams(queryKey, page);
+        const { data } = await searchCoursesAndProgrammes({
+          ...options,
+          ...params,
+          signal,
+          throwOnError: true,
+        });
+        return data;
+      },
+      queryKey: searchCoursesAndProgrammesInfiniteQueryKey(options),
+    }
+  );
+};
+
 export const getBookingQueryKey = (options: Options<GetBookingData>) =>
   createQueryKey('getBooking', options);
 
@@ -30186,6 +30340,13 @@ export const listPendingProgramsQueryKey = (options: Options<ListPendingPrograms
 
 /**
  * List training programs pending approval
+ * Programs never approved that are in review or published.
+ *
+ * `q` (optional) searches the queue through the programs index (title, course names,
+ * category, creator, description) with typo tolerance. It is served only by search:
+ * when search or the programs index's reads are off, a request with `q` answers 503
+ * ("Search is unavailable"). Without `q` the listing is unchanged.
+ *
  */
 export const listPendingProgramsOptions = (options: Options<ListPendingProgramsData>) => {
   return queryOptions({
@@ -30209,6 +30370,13 @@ export const listPendingProgramsInfiniteQueryKey = (
 
 /**
  * List training programs pending approval
+ * Programs never approved that are in review or published.
+ *
+ * `q` (optional) searches the queue through the programs index (title, course names,
+ * category, creator, description) with typo tolerance. It is served only by search:
+ * when search or the programs index's reads are off, a request with `q` answers 503
+ * ("Search is unavailable"). Without `q` the listing is unchanged.
+ *
  */
 export const listPendingProgramsInfiniteOptions = (options: Options<ListPendingProgramsData>) => {
   return infiniteQueryOptions<
