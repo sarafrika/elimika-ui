@@ -1,10 +1,10 @@
 'use client';
 
-import { AlertCircle, Play } from 'lucide-react';
+import * as DialogPrimitive from '@radix-ui/react-dialog';
+import { AlertCircle, XIcon } from 'lucide-react';
 import { useEffect, useState } from 'react';
 
 import { toAuthenticatedMediaUrl } from '@/src/lib/media-url';
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from './dialog';
 
 type VideoSource = 'youtube' | 'vimeo' | 'direct' | 'unsupported';
 
@@ -107,19 +107,14 @@ export function VideoPreviewPlayer({
 
   if (hasError) {
     return (
-      <div className='flex min-h-[260px] flex-col items-center justify-center gap-3 px-6 py-12 text-center'>
-        <div className='bg-destructive/10 text-destructive inline-flex size-14 items-center justify-center rounded-full'>
+      <div className='flex aspect-video w-full flex-col items-center justify-center gap-3 px-6 text-center'>
+        <div className='inline-flex size-14 items-center justify-center rounded-full bg-white/10 text-white/80'>
           <AlertCircle className='size-7' />
         </div>
         <div className='space-y-1'>
-          <p className='text-foreground text-base font-semibold'>No playable preview</p>
-          <p className='text-muted-foreground max-w-md text-sm'>{error || emptyMessage}</p>
+          <p className='text-base font-semibold text-white/95'>No playable preview</p>
+          <p className='max-w-md text-sm text-white/65'>{error || emptyMessage}</p>
         </div>
-        {videoUrl ? (
-          <div className='border-border bg-background/70 text-muted-foreground max-w-2xl rounded-md border px-3 py-2 text-left text-xs break-all'>
-            {videoUrl}
-          </div>
-        ) : null}
       </div>
     );
   }
@@ -128,7 +123,7 @@ export function VideoPreviewPlayer({
     return (
       <video
         key={embedUrl}
-        className='bg-background aspect-video h-auto w-full object-contain'
+        className='aspect-video h-auto w-full bg-black/90 object-contain'
         controls
         autoPlay
         playsInline
@@ -143,7 +138,7 @@ export function VideoPreviewPlayer({
 
   return (
     <iframe
-      className='bg-background aspect-video h-auto w-full'
+      className='aspect-video h-auto w-full bg-black/90'
       src={embedUrl}
       title={title || 'Video preview'}
       allow='accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share'
@@ -152,6 +147,10 @@ export function VideoPreviewPlayer({
   );
 }
 
+/**
+ * A pop-up video player: the video centred over a dimmed page, like a lightbox. The page
+ * stays where it was; Esc, the close button or a click on the backdrop closes it.
+ */
 export function VideoPreviewModal({
   open,
   onOpenChange,
@@ -161,33 +160,34 @@ export function VideoPreviewModal({
   emptyMessage,
 }: VideoPreviewModalProps) {
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className='border-border bg-card overflow-hidden p-0 sm:max-w-5xl'>
-        <DialogHeader className='border-border border-b px-6 py-4 text-left'>
-          <DialogTitle className='text-foreground text-lg'>
-            {title ? `Preview: ${title}` : 'Video Preview'}
-          </DialogTitle>
-          <DialogDescription>
-            {description || 'Watch this video without leaving the current page.'}
-          </DialogDescription>
-        </DialogHeader>
-
-        <div className='bg-muted/20'>
-          <VideoPreviewPlayer
-            active={open}
-            title={title}
-            videoUrl={videoUrl}
-            emptyMessage={emptyMessage}
-          />
-        </div>
-
-        <div className='border-border border-t px-6 py-4'>
-          <div className='text-muted-foreground flex items-center gap-2 text-sm'>
-            <Play className='text-primary size-4' />
-            <span>Preview mode opens the video in a lightweight player.</span>
+    <DialogPrimitive.Root open={open} onOpenChange={onOpenChange}>
+      <DialogPrimitive.Portal>
+        <DialogPrimitive.Overlay className='data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 fixed inset-0 z-50 bg-black/85 backdrop-blur-sm' />
+        <DialogPrimitive.Content className='data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95 fixed top-1/2 left-1/2 z-50 flex w-[min(92vw,calc(82vh*16/9),1600px)] -translate-x-1/2 -translate-y-1/2 flex-col gap-3 outline-none'>
+          <div className='flex items-center gap-3'>
+            <DialogPrimitive.Title className='min-w-0 flex-1 truncate text-base font-semibold text-white/95'>
+              {title || 'Video'}
+            </DialogPrimitive.Title>
+            <DialogPrimitive.Close
+              aria-label='Close video'
+              className='inline-flex size-10 shrink-0 items-center justify-center rounded-full bg-white/10 text-white/90 transition-colors hover:bg-white/20 focus-visible:ring-2 focus-visible:ring-white/70 focus-visible:outline-none'
+            >
+              <XIcon className='size-5' />
+            </DialogPrimitive.Close>
           </div>
-        </div>
-      </DialogContent>
-    </Dialog>
+          <DialogPrimitive.Description className='sr-only'>
+            {description || 'Video player.'}
+          </DialogPrimitive.Description>
+          <div className='overflow-hidden rounded-2xl bg-black/60 shadow-2xl ring-1 ring-white/10'>
+            <VideoPreviewPlayer
+              active={open}
+              title={title}
+              videoUrl={videoUrl}
+              emptyMessage={emptyMessage}
+            />
+          </div>
+        </DialogPrimitive.Content>
+      </DialogPrimitive.Portal>
+    </DialogPrimitive.Root>
   );
 }
