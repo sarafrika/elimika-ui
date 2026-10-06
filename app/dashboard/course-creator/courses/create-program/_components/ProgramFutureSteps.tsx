@@ -13,6 +13,8 @@ import { useFieldArray, useFormContext, useWatch } from 'react-hook-form';
 import { formatProgramTrainingFee } from '../program-pricing';
 import type { ProgramFormValues } from '../program-schema';
 import { DraftField, ProgramTextField } from './ProgramFields';
+import { ProgramMediaUpload } from './ProgramMediaUpload';
+import type { PendingProgramMedia, ProgramMediaKey } from '../save-program-media';
 
 export function ProgramAssessment() {
   const { control } = useFormContext<ProgramFormValues>();
@@ -21,6 +23,14 @@ export function ProgramAssessment() {
   const totalWeight = assessments.reduce((total, row) => total + (Number(row.weight) || 0), 0);
   return (
     <section className='space-y-4' aria-label='Program assessment'>
+      <ProgramTextField
+        name='passMark'
+        label='Pass mark (%) (optional)'
+        type='number'
+        min={0}
+        max={100}
+        placeholder='e.g. 50'
+      />
       <div className='flex flex-wrap items-end justify-between gap-3'>
         <div>
           <h3 className='text-sm font-medium'>Program assessment</h3>
@@ -161,7 +171,13 @@ export function ProgramEvaluation() {
   );
 }
 
-export function ProgramBranding() {
+export function ProgramBranding({
+  files,
+  onSelect,
+}: {
+  files: PendingProgramMedia;
+  onSelect: (key: ProgramMediaKey, file?: File) => void;
+}) {
   return (
     <div className='space-y-6'>
       <div className='space-y-2'>
@@ -177,27 +193,7 @@ export function ProgramBranding() {
           <DraftField name='coverUrl' label='Cover image URL' placeholder='https://…' type='url' />
         </div>
       </div>
-      <div className='space-y-2'>
-        <h3 className='text-sm font-medium'>Media</h3>
-        <p className='text-muted-foreground text-xs'>
-          Draft media for the program card and information page.
-        </p>
-        <div className='grid gap-4 md:grid-cols-3'>
-          <DraftField
-            name='thumbnailUrl'
-            label='Thumbnail URL'
-            placeholder='https://…'
-            type='url'
-          />
-          <DraftField name='bannerUrl' label='Banner URL' placeholder='https://…' type='url' />
-          <DraftField
-            name='videoUrl'
-            label='Promotional video URL'
-            placeholder='https://… (mp4 or embed link)'
-            type='url'
-          />
-        </div>
-      </div>
+      <ProgramMediaUpload files={files} onSelect={onSelect} />
     </div>
   );
 }
@@ -231,7 +227,7 @@ export function ProgramPricing({
       <p className='text-muted-foreground text-xs'>
         This is the total program price. Leave it blank for an unpriced draft, or enter 0 for free.
       </p>
-      <div className='grid gap-4 md:grid-cols-3 items-start'>
+      <div className='grid items-start gap-4 md:grid-cols-3'>
         <div className='space-y-2'>
           <FormField
             control={control}
@@ -272,8 +268,7 @@ export function ProgramPricing({
             />
           ) : (
             <p role='status' className='text-muted-foreground text-xs'>
-              Combined minimum: {formatProgramTrainingFee(minimumTrainingFee)} per student
-              per hour.
+              Combined minimum: {formatProgramTrainingFee(minimumTrainingFee)} per student per hour.
             </p>
           )}
         </div>

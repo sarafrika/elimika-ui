@@ -1,16 +1,11 @@
 import type { SkillRecord } from '@/app/dashboard/student/skills-wallet/_components/SkillsWalletShared';
-import type {
-  CourseCreatorSkill,
-  InstructorSkill,
-  LevelEnum,
-  ProficiencyLevelEnum,
-} from '@/services/client/types.gen';
+import type { CourseCreatorSkill, InstructorSkill } from '@/services/client/types.gen';
 
 // The two profile APIs use different enum casing.
 export const SKILL_PROFICIENCY: ReadonlyArray<{
   label: string;
-  instructor: ProficiencyLevelEnum;
-  courseCreator: LevelEnum;
+  instructor: InstructorSkill['proficiency_level'];
+  courseCreator: CourseCreatorSkill['proficiency_level'];
   percentage: number;
 }> = [
   { label: 'Beginner', instructor: 'BEGINNER', courseCreator: 'beginner', percentage: 25 },

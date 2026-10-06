@@ -40,6 +40,8 @@ import {
   deleteTrainingProgram,
   getTrainingProgramByUuid,
   updateTrainingProgram,
+  deleteProgramAssessment,
+  updateProgramAssessment,
   withdrawProgramTrainingApplication,
   getProgramTrainingApplication,
   decideOnProgramTrainingApplication,
@@ -60,6 +62,26 @@ import {
   updateResource,
   deleteAvailabilityRule,
   updateAvailabilityRule,
+  getSummary,
+  updateBasics,
+  deleteSkill,
+  updateSkill,
+  deletePortfolioItem,
+  updatePortfolioItem,
+  deleteMembership,
+  updateMembership,
+  deleteExperience,
+  updateExperience,
+  deleteEducation,
+  updateEducation,
+  deleteDocument,
+  updateDocument,
+  deleteCompetency,
+  updateCompetency,
+  deleteCertification,
+  updateCertification,
+  deleteAchievement,
+  updateAchievement,
   deleteInstructor,
   getInstructorByUuid,
   updateInstructor,
@@ -101,6 +123,8 @@ import {
   updatePracticeActivity,
   deleteLessonContent,
   updateLessonContent,
+  getCourseEvaluationPlan,
+  updateCourseEvaluationPlan,
   deleteCourseAssessment,
   updateCourseAssessment,
   deleteLineItem,
@@ -113,6 +137,8 @@ import {
   updateCourseCreator,
   deleteCourseCreatorSkill,
   updateCourseCreatorSkill,
+  deleteCourseCreatorPortfolioItem,
+  updateCourseCreatorPortfolioItem,
   deleteCourseCreatorMembership,
   updateCourseCreatorMembership,
   deleteCourseCreatorExperience,
@@ -121,8 +147,13 @@ import {
   updateCourseCreatorEducation,
   deleteCourseCreatorDocument,
   updateCourseCreatorDocument,
+  deleteCourseCreatorCompetency,
+  updateCourseCreatorCompetency,
   deleteCourseCreatorCertification,
   updateCourseCreatorCertification,
+  deleteCourseCreatorAchievement,
+  updateCourseCreatorAchievement,
+  updateCategories,
   deleteGradingLevel,
   updateGradingLevel,
   deleteDifficultyLevel,
@@ -168,18 +199,28 @@ import {
   createRule,
   getAllStudents,
   createStudent,
+  resendInvitation,
+  declineByUuid,
+  acceptByUuid,
+  registerAndAccept,
+  declineByToken,
+  acceptByToken,
   listMembers,
   addMembers,
   getAllAssessmentRubrics,
   createAssessmentRubric,
   getScoringLevelsByRubric,
   createRubricScoringLevel,
+  createStandardRubricScoringLevels,
   createRubricScoringLevelsBatch,
   recalculateScores,
   getRubricCriteria,
   addRubricCriterion,
   getRubricScoring,
   addRubricScoring,
+  register,
+  resendRegistrationEmail,
+  applyForDomain,
   getAllQuizzes,
   createQuiz,
   getQuizQuestions,
@@ -194,7 +235,12 @@ import {
   getAllTrainingPrograms,
   createTrainingProgram,
   unpublishProgram,
+  uploadProgramThumbnail,
   publishProgram,
+  uploadProgramIntroVideo,
+  uploadProgramBanner,
+  getProgramAssessments,
+  createProgramAssessment,
   archiveProgram,
   listProgramTrainingApplications,
   submitProgramTrainingApplication,
@@ -238,6 +284,24 @@ import {
   listNotifications,
   applyBulkAction,
   applyAction,
+  listSkills,
+  addSkill,
+  listPortfolio,
+  addPortfolioItem,
+  listMemberships,
+  addMembership,
+  listExperience,
+  addExperience,
+  listEducation,
+  addEducation,
+  listDocuments,
+  uploadDocument,
+  listCompetencies,
+  addCompetency,
+  listCertifications,
+  addCertification,
+  listAchievements,
+  addAchievement,
   declineInvitationFromInbox,
   acceptInvitationFromInbox,
   submitGuardianDetails,
@@ -311,6 +375,8 @@ import {
   unverifyCourseCreator,
   getCourseCreatorSkills,
   addCourseCreatorSkill,
+  getCourseCreatorPortfolio,
+  addCourseCreatorPortfolioItem,
   getCourseCreatorMemberships,
   addCourseCreatorMembership,
   getCourseCreatorExperience,
@@ -321,8 +387,13 @@ import {
   addCourseCreatorDocument,
   verifyCourseCreatorDocument,
   uploadCourseCreatorDocument,
+  getCourseCreatorCompetencies,
+  addCourseCreatorCompetency,
   getCourseCreatorCertifications,
   addCourseCreatorCertification,
+  getCourseCreatorAchievements,
+  addCourseCreatorAchievement,
+  submitCurrentForVerification,
   getAllGradingLevels,
   createGradingLevel,
   getAllDifficultyLevels,
@@ -390,6 +461,8 @@ import {
   uploadSubmissionAttachment,
   uploadAssignmentAttachment,
   assignAdminDomain,
+  verify,
+  moderateUserDomain,
   getAdminUsers,
   createAdminUser,
   adminListSkills,
@@ -408,8 +481,11 @@ import {
   deactivate,
   activate,
   moderateCourse,
+  verifyWalletItem,
+  moderateCourseCreator,
   rescheduleScheduledInstance,
   updateScheduledInstanceStatus,
+  assignScheduledInstanceLesson,
   reorderScoringLevels,
   markAttendance,
   getCart,
@@ -421,9 +497,21 @@ import {
   getWallet,
   listTransactions1,
   getAllUsers,
+  getSummary1,
+  skills,
+  portfolio,
+  memberships,
+  experience,
+  education,
+  documents,
+  documentFile,
+  competencies,
+  certifications,
+  achievements,
   search,
   getProfileImage,
   getCurrentUser,
+  getCurrentAccountStatus,
   lookupUserByUserNo,
   getUserDirectory,
   search1,
@@ -433,9 +521,12 @@ import {
   getScheduledInstance,
   getInstructorTimeHolds,
   getInstructorSchedule,
+  getGuardians,
   getStudentBookings,
   searchStudents,
-  listSkills,
+  getByToken,
+  getMine,
+  listSkills1,
   globalSearch,
   searchByType,
   validateMatrix,
@@ -494,7 +585,7 @@ import {
   getOrganisationStatistics,
   getOrganisationDocuments,
   listRoster,
-  getSummary,
+  getSummary2,
   getCalendar,
   listBookings,
   listSent,
@@ -503,6 +594,7 @@ import {
   getMonthlySettlements,
   search2,
   getCounts,
+  getDocumentFile,
   getInvitationByToken,
   listMyInvitations,
   getInstructorRatingSummary,
@@ -581,6 +673,7 @@ import {
   searchCourseCreatorSkills,
   searchCourseCreators,
   searchCourseCreatorMemberships,
+  getCurrentOnboarding,
   searchCourseCreatorExperience,
   searchCourseCreatorEducation,
   countCourseCreatorsByVerificationStatus,
@@ -643,6 +736,7 @@ import {
   getOrganizationAdminUsers,
   getAdminEligibleUsers,
   listIndexes,
+  getRegistrationQueue,
   evaluateCourseRecommendations,
   getProgramModerationHistory,
   getProgramApprovalStatus,
@@ -770,6 +864,11 @@ import type {
   UpdateTrainingProgramData,
   UpdateTrainingProgramError,
   UpdateTrainingProgramResponse,
+  DeleteProgramAssessmentData,
+  DeleteProgramAssessmentError,
+  UpdateProgramAssessmentData,
+  UpdateProgramAssessmentError,
+  UpdateProgramAssessmentResponse,
   WithdrawProgramTrainingApplicationData,
   WithdrawProgramTrainingApplicationError,
   GetProgramTrainingApplicationData,
@@ -821,6 +920,55 @@ import type {
   UpdateAvailabilityRuleData,
   UpdateAvailabilityRuleError,
   UpdateAvailabilityRuleResponse,
+  GetSummaryData,
+  UpdateBasicsData,
+  UpdateBasicsError,
+  UpdateBasicsResponse,
+  DeleteSkillData,
+  DeleteSkillError,
+  UpdateSkillData,
+  UpdateSkillError,
+  UpdateSkillResponse,
+  DeletePortfolioItemData,
+  DeletePortfolioItemError,
+  UpdatePortfolioItemData,
+  UpdatePortfolioItemError,
+  UpdatePortfolioItemResponse,
+  DeleteMembershipData,
+  DeleteMembershipError,
+  UpdateMembershipData,
+  UpdateMembershipError,
+  UpdateMembershipResponse,
+  DeleteExperienceData,
+  DeleteExperienceError,
+  UpdateExperienceData,
+  UpdateExperienceError,
+  UpdateExperienceResponse,
+  DeleteEducationData,
+  DeleteEducationError,
+  UpdateEducationData,
+  UpdateEducationError,
+  UpdateEducationResponse,
+  DeleteDocumentData,
+  DeleteDocumentError,
+  UpdateDocumentData,
+  UpdateDocumentError,
+  UpdateDocumentResponse,
+  DeleteCompetencyData,
+  DeleteCompetencyError,
+  UpdateCompetencyData,
+  UpdateCompetencyError,
+  UpdateCompetencyResponse,
+  DeleteCertificationData,
+  DeleteCertificationError,
+  UpdateCertificationData,
+  UpdateCertificationError,
+  UpdateCertificationResponse,
+  DeleteAchievementData,
+  DeleteAchievementError,
+  UpdateAchievementData,
+  UpdateAchievementError,
+  UpdateAchievementResponse,
   DeleteInstructorData,
   DeleteInstructorError,
   DeleteInstructorResponse,
@@ -919,6 +1067,10 @@ import type {
   UpdateLessonContentData,
   UpdateLessonContentError,
   UpdateLessonContentResponse,
+  GetCourseEvaluationPlanData,
+  UpdateCourseEvaluationPlanData,
+  UpdateCourseEvaluationPlanError,
+  UpdateCourseEvaluationPlanResponse,
   DeleteCourseAssessmentData,
   DeleteCourseAssessmentError,
   UpdateCourseAssessmentData,
@@ -948,6 +1100,11 @@ import type {
   UpdateCourseCreatorSkillData,
   UpdateCourseCreatorSkillError,
   UpdateCourseCreatorSkillResponse,
+  DeleteCourseCreatorPortfolioItemData,
+  DeleteCourseCreatorPortfolioItemError,
+  UpdateCourseCreatorPortfolioItemData,
+  UpdateCourseCreatorPortfolioItemError,
+  UpdateCourseCreatorPortfolioItemResponse,
   DeleteCourseCreatorMembershipData,
   DeleteCourseCreatorMembershipError,
   UpdateCourseCreatorMembershipData,
@@ -968,11 +1125,24 @@ import type {
   UpdateCourseCreatorDocumentData,
   UpdateCourseCreatorDocumentError,
   UpdateCourseCreatorDocumentResponse,
+  DeleteCourseCreatorCompetencyData,
+  DeleteCourseCreatorCompetencyError,
+  UpdateCourseCreatorCompetencyData,
+  UpdateCourseCreatorCompetencyError,
+  UpdateCourseCreatorCompetencyResponse,
   DeleteCourseCreatorCertificationData,
   DeleteCourseCreatorCertificationError,
   UpdateCourseCreatorCertificationData,
   UpdateCourseCreatorCertificationError,
   UpdateCourseCreatorCertificationResponse,
+  DeleteCourseCreatorAchievementData,
+  DeleteCourseCreatorAchievementError,
+  UpdateCourseCreatorAchievementData,
+  UpdateCourseCreatorAchievementError,
+  UpdateCourseCreatorAchievementResponse,
+  UpdateCategoriesData,
+  UpdateCategoriesError,
+  UpdateCategoriesResponse,
   DeleteGradingLevelData,
   DeleteGradingLevelError,
   UpdateGradingLevelData,
@@ -1091,6 +1261,24 @@ import type {
   CreateStudentData,
   CreateStudentError,
   CreateStudentResponse,
+  ResendInvitationData,
+  ResendInvitationError,
+  ResendInvitationResponse,
+  DeclineByUuidData,
+  DeclineByUuidError,
+  DeclineByUuidResponse,
+  AcceptByUuidData,
+  AcceptByUuidError,
+  AcceptByUuidResponse,
+  RegisterAndAcceptData,
+  RegisterAndAcceptError,
+  RegisterAndAcceptResponse,
+  DeclineByTokenData,
+  DeclineByTokenError,
+  DeclineByTokenResponse,
+  AcceptByTokenData,
+  AcceptByTokenError,
+  AcceptByTokenResponse,
   ListMembersData,
   AddMembersData,
   AddMembersError,
@@ -1107,6 +1295,9 @@ import type {
   CreateRubricScoringLevelData,
   CreateRubricScoringLevelError,
   CreateRubricScoringLevelResponse,
+  CreateStandardRubricScoringLevelsData,
+  CreateStandardRubricScoringLevelsError,
+  CreateStandardRubricScoringLevelsResponse,
   CreateRubricScoringLevelsBatchData,
   CreateRubricScoringLevelsBatchError,
   CreateRubricScoringLevelsBatchResponse,
@@ -1125,6 +1316,15 @@ import type {
   AddRubricScoringData,
   AddRubricScoringError,
   AddRubricScoringResponse,
+  RegisterData,
+  RegisterError,
+  RegisterResponse,
+  ResendRegistrationEmailData,
+  ResendRegistrationEmailError,
+  ResendRegistrationEmailResponse,
+  ApplyForDomainData,
+  ApplyForDomainError,
+  ApplyForDomainResponse,
   GetAllQuizzesData,
   GetAllQuizzesError,
   GetAllQuizzesResponse,
@@ -1165,9 +1365,22 @@ import type {
   UnpublishProgramData,
   UnpublishProgramError,
   UnpublishProgramResponse,
+  UploadProgramThumbnailData,
+  UploadProgramThumbnailError,
+  UploadProgramThumbnailResponse,
   PublishProgramData,
   PublishProgramError,
   PublishProgramResponse,
+  UploadProgramIntroVideoData,
+  UploadProgramIntroVideoError,
+  UploadProgramIntroVideoResponse,
+  UploadProgramBannerData,
+  UploadProgramBannerError,
+  UploadProgramBannerResponse,
+  GetProgramAssessmentsData,
+  CreateProgramAssessmentData,
+  CreateProgramAssessmentError,
+  CreateProgramAssessmentResponse,
   ArchiveProgramData,
   ArchiveProgramError,
   ArchiveProgramResponse,
@@ -1280,6 +1493,42 @@ import type {
   ApplyActionData,
   ApplyActionError,
   ApplyActionResponse,
+  ListSkillsData,
+  AddSkillData,
+  AddSkillError,
+  AddSkillResponse,
+  ListPortfolioData,
+  AddPortfolioItemData,
+  AddPortfolioItemError,
+  AddPortfolioItemResponse,
+  ListMembershipsData,
+  AddMembershipData,
+  AddMembershipError,
+  AddMembershipResponse,
+  ListExperienceData,
+  AddExperienceData,
+  AddExperienceError,
+  AddExperienceResponse,
+  ListEducationData,
+  AddEducationData,
+  AddEducationError,
+  AddEducationResponse,
+  ListDocumentsData,
+  UploadDocumentData,
+  UploadDocumentError,
+  UploadDocumentResponse,
+  ListCompetenciesData,
+  AddCompetencyData,
+  AddCompetencyError,
+  AddCompetencyResponse,
+  ListCertificationsData,
+  AddCertificationData,
+  AddCertificationError,
+  AddCertificationResponse,
+  ListAchievementsData,
+  AddAchievementData,
+  AddAchievementError,
+  AddAchievementResponse,
   DeclineInvitationFromInboxData,
   DeclineInvitationFromInboxError,
   DeclineInvitationFromInboxResponse,
@@ -1481,6 +1730,10 @@ import type {
   AddCourseCreatorSkillData,
   AddCourseCreatorSkillError,
   AddCourseCreatorSkillResponse,
+  GetCourseCreatorPortfolioData,
+  AddCourseCreatorPortfolioItemData,
+  AddCourseCreatorPortfolioItemError,
+  AddCourseCreatorPortfolioItemResponse,
   GetCourseCreatorMembershipsData,
   GetCourseCreatorMembershipsError,
   GetCourseCreatorMembershipsResponse,
@@ -1509,12 +1762,23 @@ import type {
   UploadCourseCreatorDocumentData,
   UploadCourseCreatorDocumentError,
   UploadCourseCreatorDocumentResponse,
+  GetCourseCreatorCompetenciesData,
+  AddCourseCreatorCompetencyData,
+  AddCourseCreatorCompetencyError,
+  AddCourseCreatorCompetencyResponse,
   GetCourseCreatorCertificationsData,
   GetCourseCreatorCertificationsError,
   GetCourseCreatorCertificationsResponse,
   AddCourseCreatorCertificationData,
   AddCourseCreatorCertificationError,
   AddCourseCreatorCertificationResponse,
+  GetCourseCreatorAchievementsData,
+  AddCourseCreatorAchievementData,
+  AddCourseCreatorAchievementError,
+  AddCourseCreatorAchievementResponse,
+  SubmitCurrentForVerificationData,
+  SubmitCurrentForVerificationError,
+  SubmitCurrentForVerificationResponse,
   GetAllGradingLevelsData,
   GetAllGradingLevelsError,
   GetAllGradingLevelsResponse,
@@ -1702,6 +1966,12 @@ import type {
   AssignAdminDomainData,
   AssignAdminDomainError,
   AssignAdminDomainResponse,
+  VerifyData,
+  VerifyError,
+  VerifyResponse,
+  ModerateUserDomainData,
+  ModerateUserDomainError,
+  ModerateUserDomainResponse,
   GetAdminUsersData,
   GetAdminUsersError,
   GetAdminUsersResponse,
@@ -1752,12 +2022,21 @@ import type {
   ModerateCourseData,
   ModerateCourseError,
   ModerateCourseResponse,
+  VerifyWalletItemData,
+  VerifyWalletItemError,
+  VerifyWalletItemResponse,
+  ModerateCourseCreatorData,
+  ModerateCourseCreatorError,
+  ModerateCourseCreatorResponse,
   RescheduleScheduledInstanceData,
   RescheduleScheduledInstanceError,
   RescheduleScheduledInstanceResponse,
   UpdateScheduledInstanceStatusData,
   UpdateScheduledInstanceStatusError,
   UpdateScheduledInstanceStatusResponse,
+  AssignScheduledInstanceLessonData,
+  AssignScheduledInstanceLessonError,
+  AssignScheduledInstanceLessonResponse,
   ReorderScoringLevelsData,
   ReorderScoringLevelsError,
   ReorderScoringLevelsResponse,
@@ -1785,11 +2064,23 @@ import type {
   GetAllUsersData,
   GetAllUsersError,
   GetAllUsersResponse,
+  GetSummary1Data,
+  SkillsData,
+  PortfolioData,
+  MembershipsData,
+  ExperienceData,
+  EducationData,
+  DocumentsData,
+  DocumentFileData,
+  CompetenciesData,
+  CertificationsData,
+  AchievementsData,
   SearchData,
   SearchError,
   SearchResponse,
   GetProfileImageData,
   GetCurrentUserData,
+  GetCurrentAccountStatusData,
   LookupUserByUserNoData,
   GetUserDirectoryData,
   Search1Data,
@@ -1811,13 +2102,16 @@ import type {
   GetInstructorScheduleData,
   GetInstructorScheduleError,
   GetInstructorScheduleResponse,
+  GetGuardiansData,
   GetStudentBookingsData,
   GetStudentBookingsError,
   GetStudentBookingsResponse,
   SearchStudentsData,
   SearchStudentsError,
   SearchStudentsResponse,
-  ListSkillsData,
+  GetByTokenData,
+  GetMineData,
+  ListSkills1Data,
   GlobalSearchData,
   SearchByTypeData,
   SearchByTypeError,
@@ -1935,7 +2229,7 @@ import type {
   ListRosterData,
   ListRosterError,
   ListRosterResponse,
-  GetSummaryData,
+  GetSummary2Data,
   GetCalendarData,
   ListBookingsData,
   ListBookingsError,
@@ -1952,6 +2246,7 @@ import type {
   Search2Error,
   Search2Response,
   GetCountsData,
+  GetDocumentFileData,
   GetInvitationByTokenData,
   ListMyInvitationsData,
   GetInstructorRatingSummaryData,
@@ -2100,6 +2395,7 @@ import type {
   SearchCourseCreatorMembershipsData,
   SearchCourseCreatorMembershipsError,
   SearchCourseCreatorMembershipsResponse,
+  GetCurrentOnboardingData,
   SearchCourseCreatorExperienceData,
   SearchCourseCreatorExperienceError,
   SearchCourseCreatorExperienceResponse,
@@ -2200,6 +2496,7 @@ import type {
   GetAdminEligibleUsersError,
   GetAdminEligibleUsersResponse,
   ListIndexesData,
+  GetRegistrationQueueData,
   EvaluateCourseRecommendationsData,
   GetProgramModerationHistoryData,
   GetProgramModerationHistoryError,
@@ -2551,7 +2848,7 @@ export const getStudentByIdOptions = (options: Options<GetStudentByIdData>) => {
 
 /**
  * Update a student
- * Updates an existing student record. Restricted to the learner, an active guardian, a manager of one of the learner's organisations, or a platform admin; the record cannot be re-pointed at a different user account.
+ * Updates an existing student record. Restricted to the learner, an active guardian, a manager of one of the learner's organisations, or a platform admin; the record cannot be re-pointed at a different user account. Sending `guardians` (linking or inviting parents) is not open to existing guardians.
  */
 export const updateStudentMutation = (
   options?: Partial<Options<UpdateStudentData>>
@@ -3243,6 +3540,60 @@ export const updateTrainingProgramMutation = (
 };
 
 /**
+ * Delete a program assessment component
+ */
+export const deleteProgramAssessmentMutation = (
+  options?: Partial<Options<DeleteProgramAssessmentData>>
+): UseMutationOptions<
+  unknown,
+  DeleteProgramAssessmentError,
+  Options<DeleteProgramAssessmentData>
+> => {
+  const mutationOptions: UseMutationOptions<
+    unknown,
+    DeleteProgramAssessmentError,
+    Options<DeleteProgramAssessmentData>
+  > = {
+    mutationFn: async localOptions => {
+      const { data } = await deleteProgramAssessment({
+        ...options,
+        ...localOptions,
+        throwOnError: true,
+      });
+      return data;
+    },
+  };
+  return mutationOptions;
+};
+
+/**
+ * Update a program assessment component
+ */
+export const updateProgramAssessmentMutation = (
+  options?: Partial<Options<UpdateProgramAssessmentData>>
+): UseMutationOptions<
+  UpdateProgramAssessmentResponse,
+  UpdateProgramAssessmentError,
+  Options<UpdateProgramAssessmentData>
+> => {
+  const mutationOptions: UseMutationOptions<
+    UpdateProgramAssessmentResponse,
+    UpdateProgramAssessmentError,
+    Options<UpdateProgramAssessmentData>
+  > = {
+    mutationFn: async localOptions => {
+      const { data } = await updateProgramAssessment({
+        ...options,
+        ...localOptions,
+        throwOnError: true,
+      });
+      return data;
+    },
+  };
+  return mutationOptions;
+};
+
+/**
  * Withdraw program training application
  * Allows the applicant (instructor or organisation) to withdraw their own program training
  * application while it is still PENDING. Only pending applications owned by the caller can be withdrawn.
@@ -3796,6 +4147,444 @@ export const updateAvailabilityRuleMutation = (
   > = {
     mutationFn: async localOptions => {
       const { data } = await updateAvailabilityRule({
+        ...options,
+        ...localOptions,
+        throwOnError: true,
+      });
+      return data;
+    },
+  };
+  return mutationOptions;
+};
+
+export const getSummaryQueryKey = (options?: Options<GetSummaryData>) =>
+  createQueryKey('getSummary', options);
+
+/**
+ * Get my professional profile
+ * Basics, item count per section and completeness.
+ */
+export const getSummaryOptions = (options?: Options<GetSummaryData>) => {
+  return queryOptions({
+    queryFn: async ({ queryKey, signal }) => {
+      const { data } = await getSummary({
+        ...options,
+        ...queryKey[0],
+        signal,
+        throwOnError: true,
+      });
+      return data;
+    },
+    queryKey: getSummaryQueryKey(options),
+  });
+};
+
+/**
+ * Update my profile basics
+ * Replaces bio, headline, website and location. Every domain profile shows the new values.
+ */
+export const updateBasicsMutation = (
+  options?: Partial<Options<UpdateBasicsData>>
+): UseMutationOptions<UpdateBasicsResponse, UpdateBasicsError, Options<UpdateBasicsData>> => {
+  const mutationOptions: UseMutationOptions<
+    UpdateBasicsResponse,
+    UpdateBasicsError,
+    Options<UpdateBasicsData>
+  > = {
+    mutationFn: async localOptions => {
+      const { data } = await updateBasics({
+        ...options,
+        ...localOptions,
+        throwOnError: true,
+      });
+      return data;
+    },
+  };
+  return mutationOptions;
+};
+
+export const deleteSkillMutation = (
+  options?: Partial<Options<DeleteSkillData>>
+): UseMutationOptions<unknown, DeleteSkillError, Options<DeleteSkillData>> => {
+  const mutationOptions: UseMutationOptions<unknown, DeleteSkillError, Options<DeleteSkillData>> = {
+    mutationFn: async localOptions => {
+      const { data } = await deleteSkill({
+        ...options,
+        ...localOptions,
+        throwOnError: true,
+      });
+      return data;
+    },
+  };
+  return mutationOptions;
+};
+
+/**
+ * Update a skill
+ * Changing the name or evidence sends the skill back to PENDING verification.
+ */
+export const updateSkillMutation = (
+  options?: Partial<Options<UpdateSkillData>>
+): UseMutationOptions<UpdateSkillResponse, UpdateSkillError, Options<UpdateSkillData>> => {
+  const mutationOptions: UseMutationOptions<
+    UpdateSkillResponse,
+    UpdateSkillError,
+    Options<UpdateSkillData>
+  > = {
+    mutationFn: async localOptions => {
+      const { data } = await updateSkill({
+        ...options,
+        ...localOptions,
+        throwOnError: true,
+      });
+      return data;
+    },
+  };
+  return mutationOptions;
+};
+
+export const deletePortfolioItemMutation = (
+  options?: Partial<Options<DeletePortfolioItemData>>
+): UseMutationOptions<unknown, DeletePortfolioItemError, Options<DeletePortfolioItemData>> => {
+  const mutationOptions: UseMutationOptions<
+    unknown,
+    DeletePortfolioItemError,
+    Options<DeletePortfolioItemData>
+  > = {
+    mutationFn: async localOptions => {
+      const { data } = await deletePortfolioItem({
+        ...options,
+        ...localOptions,
+        throwOnError: true,
+      });
+      return data;
+    },
+  };
+  return mutationOptions;
+};
+
+export const updatePortfolioItemMutation = (
+  options?: Partial<Options<UpdatePortfolioItemData>>
+): UseMutationOptions<
+  UpdatePortfolioItemResponse,
+  UpdatePortfolioItemError,
+  Options<UpdatePortfolioItemData>
+> => {
+  const mutationOptions: UseMutationOptions<
+    UpdatePortfolioItemResponse,
+    UpdatePortfolioItemError,
+    Options<UpdatePortfolioItemData>
+  > = {
+    mutationFn: async localOptions => {
+      const { data } = await updatePortfolioItem({
+        ...options,
+        ...localOptions,
+        throwOnError: true,
+      });
+      return data;
+    },
+  };
+  return mutationOptions;
+};
+
+export const deleteMembershipMutation = (
+  options?: Partial<Options<DeleteMembershipData>>
+): UseMutationOptions<unknown, DeleteMembershipError, Options<DeleteMembershipData>> => {
+  const mutationOptions: UseMutationOptions<
+    unknown,
+    DeleteMembershipError,
+    Options<DeleteMembershipData>
+  > = {
+    mutationFn: async localOptions => {
+      const { data } = await deleteMembership({
+        ...options,
+        ...localOptions,
+        throwOnError: true,
+      });
+      return data;
+    },
+  };
+  return mutationOptions;
+};
+
+export const updateMembershipMutation = (
+  options?: Partial<Options<UpdateMembershipData>>
+): UseMutationOptions<
+  UpdateMembershipResponse,
+  UpdateMembershipError,
+  Options<UpdateMembershipData>
+> => {
+  const mutationOptions: UseMutationOptions<
+    UpdateMembershipResponse,
+    UpdateMembershipError,
+    Options<UpdateMembershipData>
+  > = {
+    mutationFn: async localOptions => {
+      const { data } = await updateMembership({
+        ...options,
+        ...localOptions,
+        throwOnError: true,
+      });
+      return data;
+    },
+  };
+  return mutationOptions;
+};
+
+export const deleteExperienceMutation = (
+  options?: Partial<Options<DeleteExperienceData>>
+): UseMutationOptions<unknown, DeleteExperienceError, Options<DeleteExperienceData>> => {
+  const mutationOptions: UseMutationOptions<
+    unknown,
+    DeleteExperienceError,
+    Options<DeleteExperienceData>
+  > = {
+    mutationFn: async localOptions => {
+      const { data } = await deleteExperience({
+        ...options,
+        ...localOptions,
+        throwOnError: true,
+      });
+      return data;
+    },
+  };
+  return mutationOptions;
+};
+
+export const updateExperienceMutation = (
+  options?: Partial<Options<UpdateExperienceData>>
+): UseMutationOptions<
+  UpdateExperienceResponse,
+  UpdateExperienceError,
+  Options<UpdateExperienceData>
+> => {
+  const mutationOptions: UseMutationOptions<
+    UpdateExperienceResponse,
+    UpdateExperienceError,
+    Options<UpdateExperienceData>
+  > = {
+    mutationFn: async localOptions => {
+      const { data } = await updateExperience({
+        ...options,
+        ...localOptions,
+        throwOnError: true,
+      });
+      return data;
+    },
+  };
+  return mutationOptions;
+};
+
+export const deleteEducationMutation = (
+  options?: Partial<Options<DeleteEducationData>>
+): UseMutationOptions<unknown, DeleteEducationError, Options<DeleteEducationData>> => {
+  const mutationOptions: UseMutationOptions<
+    unknown,
+    DeleteEducationError,
+    Options<DeleteEducationData>
+  > = {
+    mutationFn: async localOptions => {
+      const { data } = await deleteEducation({
+        ...options,
+        ...localOptions,
+        throwOnError: true,
+      });
+      return data;
+    },
+  };
+  return mutationOptions;
+};
+
+export const updateEducationMutation = (
+  options?: Partial<Options<UpdateEducationData>>
+): UseMutationOptions<
+  UpdateEducationResponse,
+  UpdateEducationError,
+  Options<UpdateEducationData>
+> => {
+  const mutationOptions: UseMutationOptions<
+    UpdateEducationResponse,
+    UpdateEducationError,
+    Options<UpdateEducationData>
+  > = {
+    mutationFn: async localOptions => {
+      const { data } = await updateEducation({
+        ...options,
+        ...localOptions,
+        throwOnError: true,
+      });
+      return data;
+    },
+  };
+  return mutationOptions;
+};
+
+export const deleteDocumentMutation = (
+  options?: Partial<Options<DeleteDocumentData>>
+): UseMutationOptions<unknown, DeleteDocumentError, Options<DeleteDocumentData>> => {
+  const mutationOptions: UseMutationOptions<
+    unknown,
+    DeleteDocumentError,
+    Options<DeleteDocumentData>
+  > = {
+    mutationFn: async localOptions => {
+      const { data } = await deleteDocument({
+        ...options,
+        ...localOptions,
+        throwOnError: true,
+      });
+      return data;
+    },
+  };
+  return mutationOptions;
+};
+
+/**
+ * Update document details
+ * Changes the type, title, description, expiry and linked record; the file stays.
+ */
+export const updateDocumentMutation = (
+  options?: Partial<Options<UpdateDocumentData>>
+): UseMutationOptions<UpdateDocumentResponse, UpdateDocumentError, Options<UpdateDocumentData>> => {
+  const mutationOptions: UseMutationOptions<
+    UpdateDocumentResponse,
+    UpdateDocumentError,
+    Options<UpdateDocumentData>
+  > = {
+    mutationFn: async localOptions => {
+      const { data } = await updateDocument({
+        ...options,
+        ...localOptions,
+        throwOnError: true,
+      });
+      return data;
+    },
+  };
+  return mutationOptions;
+};
+
+export const deleteCompetencyMutation = (
+  options?: Partial<Options<DeleteCompetencyData>>
+): UseMutationOptions<unknown, DeleteCompetencyError, Options<DeleteCompetencyData>> => {
+  const mutationOptions: UseMutationOptions<
+    unknown,
+    DeleteCompetencyError,
+    Options<DeleteCompetencyData>
+  > = {
+    mutationFn: async localOptions => {
+      const { data } = await deleteCompetency({
+        ...options,
+        ...localOptions,
+        throwOnError: true,
+      });
+      return data;
+    },
+  };
+  return mutationOptions;
+};
+
+export const updateCompetencyMutation = (
+  options?: Partial<Options<UpdateCompetencyData>>
+): UseMutationOptions<
+  UpdateCompetencyResponse,
+  UpdateCompetencyError,
+  Options<UpdateCompetencyData>
+> => {
+  const mutationOptions: UseMutationOptions<
+    UpdateCompetencyResponse,
+    UpdateCompetencyError,
+    Options<UpdateCompetencyData>
+  > = {
+    mutationFn: async localOptions => {
+      const { data } = await updateCompetency({
+        ...options,
+        ...localOptions,
+        throwOnError: true,
+      });
+      return data;
+    },
+  };
+  return mutationOptions;
+};
+
+export const deleteCertificationMutation = (
+  options?: Partial<Options<DeleteCertificationData>>
+): UseMutationOptions<unknown, DeleteCertificationError, Options<DeleteCertificationData>> => {
+  const mutationOptions: UseMutationOptions<
+    unknown,
+    DeleteCertificationError,
+    Options<DeleteCertificationData>
+  > = {
+    mutationFn: async localOptions => {
+      const { data } = await deleteCertification({
+        ...options,
+        ...localOptions,
+        throwOnError: true,
+      });
+      return data;
+    },
+  };
+  return mutationOptions;
+};
+
+export const updateCertificationMutation = (
+  options?: Partial<Options<UpdateCertificationData>>
+): UseMutationOptions<
+  UpdateCertificationResponse,
+  UpdateCertificationError,
+  Options<UpdateCertificationData>
+> => {
+  const mutationOptions: UseMutationOptions<
+    UpdateCertificationResponse,
+    UpdateCertificationError,
+    Options<UpdateCertificationData>
+  > = {
+    mutationFn: async localOptions => {
+      const { data } = await updateCertification({
+        ...options,
+        ...localOptions,
+        throwOnError: true,
+      });
+      return data;
+    },
+  };
+  return mutationOptions;
+};
+
+export const deleteAchievementMutation = (
+  options?: Partial<Options<DeleteAchievementData>>
+): UseMutationOptions<unknown, DeleteAchievementError, Options<DeleteAchievementData>> => {
+  const mutationOptions: UseMutationOptions<
+    unknown,
+    DeleteAchievementError,
+    Options<DeleteAchievementData>
+  > = {
+    mutationFn: async localOptions => {
+      const { data } = await deleteAchievement({
+        ...options,
+        ...localOptions,
+        throwOnError: true,
+      });
+      return data;
+    },
+  };
+  return mutationOptions;
+};
+
+export const updateAchievementMutation = (
+  options?: Partial<Options<UpdateAchievementData>>
+): UseMutationOptions<
+  UpdateAchievementResponse,
+  UpdateAchievementError,
+  Options<UpdateAchievementData>
+> => {
+  const mutationOptions: UseMutationOptions<
+    UpdateAchievementResponse,
+    UpdateAchievementError,
+    Options<UpdateAchievementData>
+  > = {
+    mutationFn: async localOptions => {
+      const { data } = await updateAchievement({
         ...options,
         ...localOptions,
         throwOnError: true,
@@ -4992,6 +5781,55 @@ export const updateLessonContentMutation = (
   return mutationOptions;
 };
 
+export const getCourseEvaluationPlanQueryKey = (options: Options<GetCourseEvaluationPlanData>) =>
+  createQueryKey('getCourseEvaluationPlan', options);
+
+/**
+ * Get the lesson x component evaluation plan
+ */
+export const getCourseEvaluationPlanOptions = (options: Options<GetCourseEvaluationPlanData>) => {
+  return queryOptions({
+    queryFn: async ({ queryKey, signal }) => {
+      const { data } = await getCourseEvaluationPlan({
+        ...options,
+        ...queryKey[0],
+        signal,
+        throwOnError: true,
+      });
+      return data;
+    },
+    queryKey: getCourseEvaluationPlanQueryKey(options),
+  });
+};
+
+/**
+ * Turn evaluation plan cells on or off
+ * Each cell grades one lesson for one per-lesson component, optionally with a rubric, quiz or assignment from that lesson. A disabled cell is the plan's "None".
+ */
+export const updateCourseEvaluationPlanMutation = (
+  options?: Partial<Options<UpdateCourseEvaluationPlanData>>
+): UseMutationOptions<
+  UpdateCourseEvaluationPlanResponse,
+  UpdateCourseEvaluationPlanError,
+  Options<UpdateCourseEvaluationPlanData>
+> => {
+  const mutationOptions: UseMutationOptions<
+    UpdateCourseEvaluationPlanResponse,
+    UpdateCourseEvaluationPlanError,
+    Options<UpdateCourseEvaluationPlanData>
+  > = {
+    mutationFn: async localOptions => {
+      const { data } = await updateCourseEvaluationPlan({
+        ...options,
+        ...localOptions,
+        throwOnError: true,
+      });
+      return data;
+    },
+  };
+  return mutationOptions;
+};
+
 /**
  * Delete course assessment
  * Removes an assessment from a course.
@@ -5312,6 +6150,60 @@ export const updateCourseCreatorSkillMutation = (
 };
 
 /**
+ * Delete a portfolio item
+ */
+export const deleteCourseCreatorPortfolioItemMutation = (
+  options?: Partial<Options<DeleteCourseCreatorPortfolioItemData>>
+): UseMutationOptions<
+  unknown,
+  DeleteCourseCreatorPortfolioItemError,
+  Options<DeleteCourseCreatorPortfolioItemData>
+> => {
+  const mutationOptions: UseMutationOptions<
+    unknown,
+    DeleteCourseCreatorPortfolioItemError,
+    Options<DeleteCourseCreatorPortfolioItemData>
+  > = {
+    mutationFn: async localOptions => {
+      const { data } = await deleteCourseCreatorPortfolioItem({
+        ...options,
+        ...localOptions,
+        throwOnError: true,
+      });
+      return data;
+    },
+  };
+  return mutationOptions;
+};
+
+/**
+ * Update a portfolio item
+ */
+export const updateCourseCreatorPortfolioItemMutation = (
+  options?: Partial<Options<UpdateCourseCreatorPortfolioItemData>>
+): UseMutationOptions<
+  UpdateCourseCreatorPortfolioItemResponse,
+  UpdateCourseCreatorPortfolioItemError,
+  Options<UpdateCourseCreatorPortfolioItemData>
+> => {
+  const mutationOptions: UseMutationOptions<
+    UpdateCourseCreatorPortfolioItemResponse,
+    UpdateCourseCreatorPortfolioItemError,
+    Options<UpdateCourseCreatorPortfolioItemData>
+  > = {
+    mutationFn: async localOptions => {
+      const { data } = await updateCourseCreatorPortfolioItem({
+        ...options,
+        ...localOptions,
+        throwOnError: true,
+      });
+      return data;
+    },
+  };
+  return mutationOptions;
+};
+
+/**
  * Delete membership record
  * Deletes a course creator membership record.
  */
@@ -5536,6 +6428,61 @@ export const updateCourseCreatorDocumentMutation = (
 };
 
 /**
+ * Delete a competency
+ */
+export const deleteCourseCreatorCompetencyMutation = (
+  options?: Partial<Options<DeleteCourseCreatorCompetencyData>>
+): UseMutationOptions<
+  unknown,
+  DeleteCourseCreatorCompetencyError,
+  Options<DeleteCourseCreatorCompetencyData>
+> => {
+  const mutationOptions: UseMutationOptions<
+    unknown,
+    DeleteCourseCreatorCompetencyError,
+    Options<DeleteCourseCreatorCompetencyData>
+  > = {
+    mutationFn: async localOptions => {
+      const { data } = await deleteCourseCreatorCompetency({
+        ...options,
+        ...localOptions,
+        throwOnError: true,
+      });
+      return data;
+    },
+  };
+  return mutationOptions;
+};
+
+/**
+ * Update a competency
+ * Changing the evidence sends the competency back for verification.
+ */
+export const updateCourseCreatorCompetencyMutation = (
+  options?: Partial<Options<UpdateCourseCreatorCompetencyData>>
+): UseMutationOptions<
+  UpdateCourseCreatorCompetencyResponse,
+  UpdateCourseCreatorCompetencyError,
+  Options<UpdateCourseCreatorCompetencyData>
+> => {
+  const mutationOptions: UseMutationOptions<
+    UpdateCourseCreatorCompetencyResponse,
+    UpdateCourseCreatorCompetencyError,
+    Options<UpdateCourseCreatorCompetencyData>
+  > = {
+    mutationFn: async localOptions => {
+      const { data } = await updateCourseCreatorCompetency({
+        ...options,
+        ...localOptions,
+        throwOnError: true,
+      });
+      return data;
+    },
+  };
+  return mutationOptions;
+};
+
+/**
  * Delete certification record
  * Deletes a certification entry from a course creator profile.
  */
@@ -5581,6 +6528,87 @@ export const updateCourseCreatorCertificationMutation = (
   > = {
     mutationFn: async localOptions => {
       const { data } = await updateCourseCreatorCertification({
+        ...options,
+        ...localOptions,
+        throwOnError: true,
+      });
+      return data;
+    },
+  };
+  return mutationOptions;
+};
+
+/**
+ * Delete an achievement
+ */
+export const deleteCourseCreatorAchievementMutation = (
+  options?: Partial<Options<DeleteCourseCreatorAchievementData>>
+): UseMutationOptions<
+  unknown,
+  DeleteCourseCreatorAchievementError,
+  Options<DeleteCourseCreatorAchievementData>
+> => {
+  const mutationOptions: UseMutationOptions<
+    unknown,
+    DeleteCourseCreatorAchievementError,
+    Options<DeleteCourseCreatorAchievementData>
+  > = {
+    mutationFn: async localOptions => {
+      const { data } = await deleteCourseCreatorAchievement({
+        ...options,
+        ...localOptions,
+        throwOnError: true,
+      });
+      return data;
+    },
+  };
+  return mutationOptions;
+};
+
+/**
+ * Update an achievement
+ */
+export const updateCourseCreatorAchievementMutation = (
+  options?: Partial<Options<UpdateCourseCreatorAchievementData>>
+): UseMutationOptions<
+  UpdateCourseCreatorAchievementResponse,
+  UpdateCourseCreatorAchievementError,
+  Options<UpdateCourseCreatorAchievementData>
+> => {
+  const mutationOptions: UseMutationOptions<
+    UpdateCourseCreatorAchievementResponse,
+    UpdateCourseCreatorAchievementError,
+    Options<UpdateCourseCreatorAchievementData>
+  > = {
+    mutationFn: async localOptions => {
+      const { data } = await updateCourseCreatorAchievement({
+        ...options,
+        ...localOptions,
+        throwOnError: true,
+      });
+      return data;
+    },
+  };
+  return mutationOptions;
+};
+
+/**
+ * Save categories for current user's course creator onboarding
+ */
+export const updateCategoriesMutation = (
+  options?: Partial<Options<UpdateCategoriesData>>
+): UseMutationOptions<
+  UpdateCategoriesResponse,
+  UpdateCategoriesError,
+  Options<UpdateCategoriesData>
+> => {
+  const mutationOptions: UseMutationOptions<
+    UpdateCategoriesResponse,
+    UpdateCategoriesError,
+    Options<UpdateCategoriesData>
+  > = {
+    mutationFn: async localOptions => {
+      const { data } = await updateCategories({
         ...options,
         ...localOptions,
         throwOnError: true,
@@ -7179,6 +8207,286 @@ export const createStudentMutation = (
   return mutationOptions;
 };
 
+export const resendInvitationQueryKey = (options: Options<ResendInvitationData>) =>
+  createQueryKey('resendInvitation', options);
+
+/**
+ * Resend a guardian invitation
+ * Issues a fresh link (the old one stops working) and restarts the expiry. Refused for a guardian who is already linked. Restricted to the learner, a manager of one of the learner's organisations, or a platform admin.
+ */
+export const resendInvitationOptions = (options: Options<ResendInvitationData>) => {
+  return queryOptions({
+    queryFn: async ({ queryKey, signal }) => {
+      const { data } = await resendInvitation({
+        ...options,
+        ...queryKey[0],
+        signal,
+        throwOnError: true,
+      });
+      return data;
+    },
+    queryKey: resendInvitationQueryKey(options),
+  });
+};
+
+/**
+ * Resend a guardian invitation
+ * Issues a fresh link (the old one stops working) and restarts the expiry. Refused for a guardian who is already linked. Restricted to the learner, a manager of one of the learner's organisations, or a platform admin.
+ */
+export const resendInvitationMutation = (
+  options?: Partial<Options<ResendInvitationData>>
+): UseMutationOptions<
+  ResendInvitationResponse,
+  ResendInvitationError,
+  Options<ResendInvitationData>
+> => {
+  const mutationOptions: UseMutationOptions<
+    ResendInvitationResponse,
+    ResendInvitationError,
+    Options<ResendInvitationData>
+  > = {
+    mutationFn: async localOptions => {
+      const { data } = await resendInvitation({
+        ...options,
+        ...localOptions,
+        throwOnError: true,
+      });
+      return data;
+    },
+  };
+  return mutationOptions;
+};
+
+export const declineByUuidQueryKey = (options: Options<DeclineByUuidData>) =>
+  createQueryKey('declineByUuid', options);
+
+/**
+ * Decline a guardian invitation sent to my email
+ */
+export const declineByUuidOptions = (options: Options<DeclineByUuidData>) => {
+  return queryOptions({
+    queryFn: async ({ queryKey, signal }) => {
+      const { data } = await declineByUuid({
+        ...options,
+        ...queryKey[0],
+        signal,
+        throwOnError: true,
+      });
+      return data;
+    },
+    queryKey: declineByUuidQueryKey(options),
+  });
+};
+
+/**
+ * Decline a guardian invitation sent to my email
+ */
+export const declineByUuidMutation = (
+  options?: Partial<Options<DeclineByUuidData>>
+): UseMutationOptions<DeclineByUuidResponse, DeclineByUuidError, Options<DeclineByUuidData>> => {
+  const mutationOptions: UseMutationOptions<
+    DeclineByUuidResponse,
+    DeclineByUuidError,
+    Options<DeclineByUuidData>
+  > = {
+    mutationFn: async localOptions => {
+      const { data } = await declineByUuid({
+        ...options,
+        ...localOptions,
+        throwOnError: true,
+      });
+      return data;
+    },
+  };
+  return mutationOptions;
+};
+
+export const acceptByUuidQueryKey = (options: Options<AcceptByUuidData>) =>
+  createQueryKey('acceptByUuid', options);
+
+/**
+ * Accept a guardian invitation sent to my email
+ */
+export const acceptByUuidOptions = (options: Options<AcceptByUuidData>) => {
+  return queryOptions({
+    queryFn: async ({ queryKey, signal }) => {
+      const { data } = await acceptByUuid({
+        ...options,
+        ...queryKey[0],
+        signal,
+        throwOnError: true,
+      });
+      return data;
+    },
+    queryKey: acceptByUuidQueryKey(options),
+  });
+};
+
+/**
+ * Accept a guardian invitation sent to my email
+ */
+export const acceptByUuidMutation = (
+  options?: Partial<Options<AcceptByUuidData>>
+): UseMutationOptions<AcceptByUuidResponse, AcceptByUuidError, Options<AcceptByUuidData>> => {
+  const mutationOptions: UseMutationOptions<
+    AcceptByUuidResponse,
+    AcceptByUuidError,
+    Options<AcceptByUuidData>
+  > = {
+    mutationFn: async localOptions => {
+      const { data } = await acceptByUuid({
+        ...options,
+        ...localOptions,
+        throwOnError: true,
+      });
+      return data;
+    },
+  };
+  return mutationOptions;
+};
+
+export const registerAndAcceptQueryKey = (options: Options<RegisterAndAcceptData>) =>
+  createQueryKey('registerAndAccept', options);
+
+/**
+ * Create an account from a guardian invitation and accept it
+ * Public. Creates the account for the invited email (a set-password email follows), then links the guardian. 409 when the email already has an account: sign in and accept instead.
+ */
+export const registerAndAcceptOptions = (options: Options<RegisterAndAcceptData>) => {
+  return queryOptions({
+    queryFn: async ({ queryKey, signal }) => {
+      const { data } = await registerAndAccept({
+        ...options,
+        ...queryKey[0],
+        signal,
+        throwOnError: true,
+      });
+      return data;
+    },
+    queryKey: registerAndAcceptQueryKey(options),
+  });
+};
+
+/**
+ * Create an account from a guardian invitation and accept it
+ * Public. Creates the account for the invited email (a set-password email follows), then links the guardian. 409 when the email already has an account: sign in and accept instead.
+ */
+export const registerAndAcceptMutation = (
+  options?: Partial<Options<RegisterAndAcceptData>>
+): UseMutationOptions<
+  RegisterAndAcceptResponse,
+  RegisterAndAcceptError,
+  Options<RegisterAndAcceptData>
+> => {
+  const mutationOptions: UseMutationOptions<
+    RegisterAndAcceptResponse,
+    RegisterAndAcceptError,
+    Options<RegisterAndAcceptData>
+  > = {
+    mutationFn: async localOptions => {
+      const { data } = await registerAndAccept({
+        ...options,
+        ...localOptions,
+        throwOnError: true,
+      });
+      return data;
+    },
+  };
+  return mutationOptions;
+};
+
+export const declineByTokenQueryKey = (options: Options<DeclineByTokenData>) =>
+  createQueryKey('declineByToken', options);
+
+/**
+ * Decline a guardian invitation
+ * Public; the link stops working.
+ */
+export const declineByTokenOptions = (options: Options<DeclineByTokenData>) => {
+  return queryOptions({
+    queryFn: async ({ queryKey, signal }) => {
+      const { data } = await declineByToken({
+        ...options,
+        ...queryKey[0],
+        signal,
+        throwOnError: true,
+      });
+      return data;
+    },
+    queryKey: declineByTokenQueryKey(options),
+  });
+};
+
+/**
+ * Decline a guardian invitation
+ * Public; the link stops working.
+ */
+export const declineByTokenMutation = (
+  options?: Partial<Options<DeclineByTokenData>>
+): UseMutationOptions<DeclineByTokenResponse, DeclineByTokenError, Options<DeclineByTokenData>> => {
+  const mutationOptions: UseMutationOptions<
+    DeclineByTokenResponse,
+    DeclineByTokenError,
+    Options<DeclineByTokenData>
+  > = {
+    mutationFn: async localOptions => {
+      const { data } = await declineByToken({
+        ...options,
+        ...localOptions,
+        throwOnError: true,
+      });
+      return data;
+    },
+  };
+  return mutationOptions;
+};
+
+export const acceptByTokenQueryKey = (options: Options<AcceptByTokenData>) =>
+  createQueryKey('acceptByToken', options);
+
+/**
+ * Accept a guardian invitation
+ * The signed-in account's email must be the invited one. Links the guardian and grants the parent domain.
+ */
+export const acceptByTokenOptions = (options: Options<AcceptByTokenData>) => {
+  return queryOptions({
+    queryFn: async ({ queryKey, signal }) => {
+      const { data } = await acceptByToken({
+        ...options,
+        ...queryKey[0],
+        signal,
+        throwOnError: true,
+      });
+      return data;
+    },
+    queryKey: acceptByTokenQueryKey(options),
+  });
+};
+
+/**
+ * Accept a guardian invitation
+ * The signed-in account's email must be the invited one. Links the guardian and grants the parent domain.
+ */
+export const acceptByTokenMutation = (
+  options?: Partial<Options<AcceptByTokenData>>
+): UseMutationOptions<AcceptByTokenResponse, AcceptByTokenError, Options<AcceptByTokenData>> => {
+  const mutationOptions: UseMutationOptions<
+    AcceptByTokenResponse,
+    AcceptByTokenError,
+    Options<AcceptByTokenData>
+  > = {
+    mutationFn: async localOptions => {
+      const { data } = await acceptByToken({
+        ...options,
+        ...localOptions,
+        throwOnError: true,
+      });
+      return data;
+    },
+  };
+  return mutationOptions;
+};
+
 export const listMembersQueryKey = (options: Options<ListMembersData>) =>
   createQueryKey('listMembers', options);
 
@@ -7478,6 +8786,59 @@ export const createRubricScoringLevelMutation = (
   > = {
     mutationFn: async localOptions => {
       const { data } = await createRubricScoringLevel({
+        ...options,
+        ...localOptions,
+        throwOnError: true,
+      });
+      return data;
+    },
+  };
+  return mutationOptions;
+};
+
+export const createStandardRubricScoringLevelsQueryKey = (
+  options: Options<CreateStandardRubricScoringLevelsData>
+) => createQueryKey('createStandardRubricScoringLevels', options);
+
+/**
+ * Add the standard five scoring levels to a rubric
+ * Distinction (5), Merit (4), Pass (3), Fail (2) and No Effort (1); the first three count as passing.
+ */
+export const createStandardRubricScoringLevelsOptions = (
+  options: Options<CreateStandardRubricScoringLevelsData>
+) => {
+  return queryOptions({
+    queryFn: async ({ queryKey, signal }) => {
+      const { data } = await createStandardRubricScoringLevels({
+        ...options,
+        ...queryKey[0],
+        signal,
+        throwOnError: true,
+      });
+      return data;
+    },
+    queryKey: createStandardRubricScoringLevelsQueryKey(options),
+  });
+};
+
+/**
+ * Add the standard five scoring levels to a rubric
+ * Distinction (5), Merit (4), Pass (3), Fail (2) and No Effort (1); the first three count as passing.
+ */
+export const createStandardRubricScoringLevelsMutation = (
+  options?: Partial<Options<CreateStandardRubricScoringLevelsData>>
+): UseMutationOptions<
+  CreateStandardRubricScoringLevelsResponse,
+  CreateStandardRubricScoringLevelsError,
+  Options<CreateStandardRubricScoringLevelsData>
+> => {
+  const mutationOptions: UseMutationOptions<
+    CreateStandardRubricScoringLevelsResponse,
+    CreateStandardRubricScoringLevelsError,
+    Options<CreateStandardRubricScoringLevelsData>
+  > = {
+    mutationFn: async localOptions => {
+      const { data } = await createStandardRubricScoringLevels({
         ...options,
         ...localOptions,
         throwOnError: true,
@@ -7812,6 +9173,148 @@ export const addRubricScoringMutation = (
   > = {
     mutationFn: async localOptions => {
       const { data } = await addRubricScoring({
+        ...options,
+        ...localOptions,
+        throwOnError: true,
+      });
+      return data;
+    },
+  };
+  return mutationOptions;
+};
+
+export const registerQueryKey = (options: Options<RegisterData>) =>
+  createQueryKey('register', options);
+
+/**
+ * Register a new account
+ * Creates the Keycloak account, which emails a set-password link, and records the chosen domain as pending approval. Answers the same way when the email is already registered.
+ */
+export const registerOptions = (options: Options<RegisterData>) => {
+  return queryOptions({
+    queryFn: async ({ queryKey, signal }) => {
+      const { data } = await register({
+        ...options,
+        ...queryKey[0],
+        signal,
+        throwOnError: true,
+      });
+      return data;
+    },
+    queryKey: registerQueryKey(options),
+  });
+};
+
+/**
+ * Register a new account
+ * Creates the Keycloak account, which emails a set-password link, and records the chosen domain as pending approval. Answers the same way when the email is already registered.
+ */
+export const registerMutation = (
+  options?: Partial<Options<RegisterData>>
+): UseMutationOptions<RegisterResponse, RegisterError, Options<RegisterData>> => {
+  const mutationOptions: UseMutationOptions<
+    RegisterResponse,
+    RegisterError,
+    Options<RegisterData>
+  > = {
+    mutationFn: async localOptions => {
+      const { data } = await register({
+        ...options,
+        ...localOptions,
+        throwOnError: true,
+      });
+      return data;
+    },
+  };
+  return mutationOptions;
+};
+
+export const resendRegistrationEmailQueryKey = (options: Options<ResendRegistrationEmailData>) =>
+  createQueryKey('resendRegistrationEmail', options);
+
+/**
+ * Resend the set-password email
+ * Sends the email again while the account still has its password or email verification outstanding. Answers the same way whether or not anything was sent.
+ */
+export const resendRegistrationEmailOptions = (options: Options<ResendRegistrationEmailData>) => {
+  return queryOptions({
+    queryFn: async ({ queryKey, signal }) => {
+      const { data } = await resendRegistrationEmail({
+        ...options,
+        ...queryKey[0],
+        signal,
+        throwOnError: true,
+      });
+      return data;
+    },
+    queryKey: resendRegistrationEmailQueryKey(options),
+  });
+};
+
+/**
+ * Resend the set-password email
+ * Sends the email again while the account still has its password or email verification outstanding. Answers the same way whether or not anything was sent.
+ */
+export const resendRegistrationEmailMutation = (
+  options?: Partial<Options<ResendRegistrationEmailData>>
+): UseMutationOptions<
+  ResendRegistrationEmailResponse,
+  ResendRegistrationEmailError,
+  Options<ResendRegistrationEmailData>
+> => {
+  const mutationOptions: UseMutationOptions<
+    ResendRegistrationEmailResponse,
+    ResendRegistrationEmailError,
+    Options<ResendRegistrationEmailData>
+  > = {
+    mutationFn: async localOptions => {
+      const { data } = await resendRegistrationEmail({
+        ...options,
+        ...localOptions,
+        throwOnError: true,
+      });
+      return data;
+    },
+  };
+  return mutationOptions;
+};
+
+export const applyForDomainQueryKey = (options: Options<ApplyForDomainData>) =>
+  createQueryKey('applyForDomain', options);
+
+/**
+ * Apply for another domain
+ * For a signed-in account, such as an existing Sarafrika user joining Elimika. The domain stays pending until a platform admin approves it.
+ */
+export const applyForDomainOptions = (options: Options<ApplyForDomainData>) => {
+  return queryOptions({
+    queryFn: async ({ queryKey, signal }) => {
+      const { data } = await applyForDomain({
+        ...options,
+        ...queryKey[0],
+        signal,
+        throwOnError: true,
+      });
+      return data;
+    },
+    queryKey: applyForDomainQueryKey(options),
+  });
+};
+
+/**
+ * Apply for another domain
+ * For a signed-in account, such as an existing Sarafrika user joining Elimika. The domain stays pending until a platform admin approves it.
+ */
+export const applyForDomainMutation = (
+  options?: Partial<Options<ApplyForDomainData>>
+): UseMutationOptions<ApplyForDomainResponse, ApplyForDomainError, Options<ApplyForDomainData>> => {
+  const mutationOptions: UseMutationOptions<
+    ApplyForDomainResponse,
+    ApplyForDomainError,
+    Options<ApplyForDomainData>
+  > = {
+    mutationFn: async localOptions => {
+      const { data } = await applyForDomain({
         ...options,
         ...localOptions,
         throwOnError: true,
@@ -8575,6 +10078,56 @@ export const unpublishProgramMutation = (
   return mutationOptions;
 };
 
+export const uploadProgramThumbnailQueryKey = (options: Options<UploadProgramThumbnailData>) =>
+  createQueryKey('uploadProgramThumbnail', options);
+
+/**
+ * Upload the program thumbnail image
+ * Replaces the program's thumbnail image; the file is stored once and served through /api/v1/files.
+ */
+export const uploadProgramThumbnailOptions = (options: Options<UploadProgramThumbnailData>) => {
+  return queryOptions({
+    queryFn: async ({ queryKey, signal }) => {
+      const { data } = await uploadProgramThumbnail({
+        ...options,
+        ...queryKey[0],
+        signal,
+        throwOnError: true,
+      });
+      return data;
+    },
+    queryKey: uploadProgramThumbnailQueryKey(options),
+  });
+};
+
+/**
+ * Upload the program thumbnail image
+ * Replaces the program's thumbnail image; the file is stored once and served through /api/v1/files.
+ */
+export const uploadProgramThumbnailMutation = (
+  options?: Partial<Options<UploadProgramThumbnailData>>
+): UseMutationOptions<
+  UploadProgramThumbnailResponse,
+  UploadProgramThumbnailError,
+  Options<UploadProgramThumbnailData>
+> => {
+  const mutationOptions: UseMutationOptions<
+    UploadProgramThumbnailResponse,
+    UploadProgramThumbnailError,
+    Options<UploadProgramThumbnailData>
+  > = {
+    mutationFn: async localOptions => {
+      const { data } = await uploadProgramThumbnail({
+        ...options,
+        ...localOptions,
+        throwOnError: true,
+      });
+      return data;
+    },
+  };
+  return mutationOptions;
+};
+
 export const publishProgramQueryKey = (options: Options<PublishProgramData>) =>
   createQueryKey('publishProgram', options);
 
@@ -8611,6 +10164,177 @@ export const publishProgramMutation = (
   > = {
     mutationFn: async localOptions => {
       const { data } = await publishProgram({
+        ...options,
+        ...localOptions,
+        throwOnError: true,
+      });
+      return data;
+    },
+  };
+  return mutationOptions;
+};
+
+export const uploadProgramIntroVideoQueryKey = (options: Options<UploadProgramIntroVideoData>) =>
+  createQueryKey('uploadProgramIntroVideo', options);
+
+/**
+ * Upload the program intro video
+ * Replaces the program's intro video; the file is stored once and served through /api/v1/files.
+ */
+export const uploadProgramIntroVideoOptions = (options: Options<UploadProgramIntroVideoData>) => {
+  return queryOptions({
+    queryFn: async ({ queryKey, signal }) => {
+      const { data } = await uploadProgramIntroVideo({
+        ...options,
+        ...queryKey[0],
+        signal,
+        throwOnError: true,
+      });
+      return data;
+    },
+    queryKey: uploadProgramIntroVideoQueryKey(options),
+  });
+};
+
+/**
+ * Upload the program intro video
+ * Replaces the program's intro video; the file is stored once and served through /api/v1/files.
+ */
+export const uploadProgramIntroVideoMutation = (
+  options?: Partial<Options<UploadProgramIntroVideoData>>
+): UseMutationOptions<
+  UploadProgramIntroVideoResponse,
+  UploadProgramIntroVideoError,
+  Options<UploadProgramIntroVideoData>
+> => {
+  const mutationOptions: UseMutationOptions<
+    UploadProgramIntroVideoResponse,
+    UploadProgramIntroVideoError,
+    Options<UploadProgramIntroVideoData>
+  > = {
+    mutationFn: async localOptions => {
+      const { data } = await uploadProgramIntroVideo({
+        ...options,
+        ...localOptions,
+        throwOnError: true,
+      });
+      return data;
+    },
+  };
+  return mutationOptions;
+};
+
+export const uploadProgramBannerQueryKey = (options: Options<UploadProgramBannerData>) =>
+  createQueryKey('uploadProgramBanner', options);
+
+/**
+ * Upload the program banner image
+ * Replaces the program's banner image; the file is stored once and served through /api/v1/files.
+ */
+export const uploadProgramBannerOptions = (options: Options<UploadProgramBannerData>) => {
+  return queryOptions({
+    queryFn: async ({ queryKey, signal }) => {
+      const { data } = await uploadProgramBanner({
+        ...options,
+        ...queryKey[0],
+        signal,
+        throwOnError: true,
+      });
+      return data;
+    },
+    queryKey: uploadProgramBannerQueryKey(options),
+  });
+};
+
+/**
+ * Upload the program banner image
+ * Replaces the program's banner image; the file is stored once and served through /api/v1/files.
+ */
+export const uploadProgramBannerMutation = (
+  options?: Partial<Options<UploadProgramBannerData>>
+): UseMutationOptions<
+  UploadProgramBannerResponse,
+  UploadProgramBannerError,
+  Options<UploadProgramBannerData>
+> => {
+  const mutationOptions: UseMutationOptions<
+    UploadProgramBannerResponse,
+    UploadProgramBannerError,
+    Options<UploadProgramBannerData>
+  > = {
+    mutationFn: async localOptions => {
+      const { data } = await uploadProgramBanner({
+        ...options,
+        ...localOptions,
+        throwOnError: true,
+      });
+      return data;
+    },
+  };
+  return mutationOptions;
+};
+
+export const getProgramAssessmentsQueryKey = (options: Options<GetProgramAssessmentsData>) =>
+  createQueryKey('getProgramAssessments', options);
+
+/**
+ * List a program's assessment components
+ */
+export const getProgramAssessmentsOptions = (options: Options<GetProgramAssessmentsData>) => {
+  return queryOptions({
+    queryFn: async ({ queryKey, signal }) => {
+      const { data } = await getProgramAssessments({
+        ...options,
+        ...queryKey[0],
+        signal,
+        throwOnError: true,
+      });
+      return data;
+    },
+    queryKey: getProgramAssessmentsQueryKey(options),
+  });
+};
+
+export const createProgramAssessmentQueryKey = (options: Options<CreateProgramAssessmentData>) =>
+  createQueryKey('createProgramAssessment', options);
+
+/**
+ * Add a weighted assessment component to a program
+ * Active component weights may not exceed 100% and must total exactly 100% before publishing.
+ */
+export const createProgramAssessmentOptions = (options: Options<CreateProgramAssessmentData>) => {
+  return queryOptions({
+    queryFn: async ({ queryKey, signal }) => {
+      const { data } = await createProgramAssessment({
+        ...options,
+        ...queryKey[0],
+        signal,
+        throwOnError: true,
+      });
+      return data;
+    },
+    queryKey: createProgramAssessmentQueryKey(options),
+  });
+};
+
+/**
+ * Add a weighted assessment component to a program
+ * Active component weights may not exceed 100% and must total exactly 100% before publishing.
+ */
+export const createProgramAssessmentMutation = (
+  options?: Partial<Options<CreateProgramAssessmentData>>
+): UseMutationOptions<
+  CreateProgramAssessmentResponse,
+  CreateProgramAssessmentError,
+  Options<CreateProgramAssessmentData>
+> => {
+  const mutationOptions: UseMutationOptions<
+    CreateProgramAssessmentResponse,
+    CreateProgramAssessmentError,
+    Options<CreateProgramAssessmentData>
+  > = {
+    mutationFn: async localOptions => {
+      const { data } = await createProgramAssessment({
         ...options,
         ...localOptions,
         throwOnError: true,
@@ -10640,6 +12364,534 @@ export const applyActionMutation = (
   > = {
     mutationFn: async localOptions => {
       const { data } = await applyAction({
+        ...options,
+        ...localOptions,
+        throwOnError: true,
+      });
+      return data;
+    },
+  };
+  return mutationOptions;
+};
+
+export const listSkillsQueryKey = (options?: Options<ListSkillsData>) =>
+  createQueryKey('listSkills', options);
+
+export const listSkillsOptions = (options?: Options<ListSkillsData>) => {
+  return queryOptions({
+    queryFn: async ({ queryKey, signal }) => {
+      const { data } = await listSkills({
+        ...options,
+        ...queryKey[0],
+        signal,
+        throwOnError: true,
+      });
+      return data;
+    },
+    queryKey: listSkillsQueryKey(options),
+  });
+};
+
+export const addSkillQueryKey = (options: Options<AddSkillData>) =>
+  createQueryKey('addSkill', options);
+
+/**
+ * Add a skill
+ * Adding a skill already listed (any spelling or spacing) updates it instead.
+ */
+export const addSkillOptions = (options: Options<AddSkillData>) => {
+  return queryOptions({
+    queryFn: async ({ queryKey, signal }) => {
+      const { data } = await addSkill({
+        ...options,
+        ...queryKey[0],
+        signal,
+        throwOnError: true,
+      });
+      return data;
+    },
+    queryKey: addSkillQueryKey(options),
+  });
+};
+
+/**
+ * Add a skill
+ * Adding a skill already listed (any spelling or spacing) updates it instead.
+ */
+export const addSkillMutation = (
+  options?: Partial<Options<AddSkillData>>
+): UseMutationOptions<AddSkillResponse, AddSkillError, Options<AddSkillData>> => {
+  const mutationOptions: UseMutationOptions<
+    AddSkillResponse,
+    AddSkillError,
+    Options<AddSkillData>
+  > = {
+    mutationFn: async localOptions => {
+      const { data } = await addSkill({
+        ...options,
+        ...localOptions,
+        throwOnError: true,
+      });
+      return data;
+    },
+  };
+  return mutationOptions;
+};
+
+export const listPortfolioQueryKey = (options?: Options<ListPortfolioData>) =>
+  createQueryKey('listPortfolio', options);
+
+export const listPortfolioOptions = (options?: Options<ListPortfolioData>) => {
+  return queryOptions({
+    queryFn: async ({ queryKey, signal }) => {
+      const { data } = await listPortfolio({
+        ...options,
+        ...queryKey[0],
+        signal,
+        throwOnError: true,
+      });
+      return data;
+    },
+    queryKey: listPortfolioQueryKey(options),
+  });
+};
+
+export const addPortfolioItemQueryKey = (options: Options<AddPortfolioItemData>) =>
+  createQueryKey('addPortfolioItem', options);
+
+export const addPortfolioItemOptions = (options: Options<AddPortfolioItemData>) => {
+  return queryOptions({
+    queryFn: async ({ queryKey, signal }) => {
+      const { data } = await addPortfolioItem({
+        ...options,
+        ...queryKey[0],
+        signal,
+        throwOnError: true,
+      });
+      return data;
+    },
+    queryKey: addPortfolioItemQueryKey(options),
+  });
+};
+
+export const addPortfolioItemMutation = (
+  options?: Partial<Options<AddPortfolioItemData>>
+): UseMutationOptions<
+  AddPortfolioItemResponse,
+  AddPortfolioItemError,
+  Options<AddPortfolioItemData>
+> => {
+  const mutationOptions: UseMutationOptions<
+    AddPortfolioItemResponse,
+    AddPortfolioItemError,
+    Options<AddPortfolioItemData>
+  > = {
+    mutationFn: async localOptions => {
+      const { data } = await addPortfolioItem({
+        ...options,
+        ...localOptions,
+        throwOnError: true,
+      });
+      return data;
+    },
+  };
+  return mutationOptions;
+};
+
+export const listMembershipsQueryKey = (options?: Options<ListMembershipsData>) =>
+  createQueryKey('listMemberships', options);
+
+export const listMembershipsOptions = (options?: Options<ListMembershipsData>) => {
+  return queryOptions({
+    queryFn: async ({ queryKey, signal }) => {
+      const { data } = await listMemberships({
+        ...options,
+        ...queryKey[0],
+        signal,
+        throwOnError: true,
+      });
+      return data;
+    },
+    queryKey: listMembershipsQueryKey(options),
+  });
+};
+
+export const addMembershipQueryKey = (options: Options<AddMembershipData>) =>
+  createQueryKey('addMembership', options);
+
+export const addMembershipOptions = (options: Options<AddMembershipData>) => {
+  return queryOptions({
+    queryFn: async ({ queryKey, signal }) => {
+      const { data } = await addMembership({
+        ...options,
+        ...queryKey[0],
+        signal,
+        throwOnError: true,
+      });
+      return data;
+    },
+    queryKey: addMembershipQueryKey(options),
+  });
+};
+
+export const addMembershipMutation = (
+  options?: Partial<Options<AddMembershipData>>
+): UseMutationOptions<AddMembershipResponse, AddMembershipError, Options<AddMembershipData>> => {
+  const mutationOptions: UseMutationOptions<
+    AddMembershipResponse,
+    AddMembershipError,
+    Options<AddMembershipData>
+  > = {
+    mutationFn: async localOptions => {
+      const { data } = await addMembership({
+        ...options,
+        ...localOptions,
+        throwOnError: true,
+      });
+      return data;
+    },
+  };
+  return mutationOptions;
+};
+
+export const listExperienceQueryKey = (options?: Options<ListExperienceData>) =>
+  createQueryKey('listExperience', options);
+
+export const listExperienceOptions = (options?: Options<ListExperienceData>) => {
+  return queryOptions({
+    queryFn: async ({ queryKey, signal }) => {
+      const { data } = await listExperience({
+        ...options,
+        ...queryKey[0],
+        signal,
+        throwOnError: true,
+      });
+      return data;
+    },
+    queryKey: listExperienceQueryKey(options),
+  });
+};
+
+export const addExperienceQueryKey = (options: Options<AddExperienceData>) =>
+  createQueryKey('addExperience', options);
+
+export const addExperienceOptions = (options: Options<AddExperienceData>) => {
+  return queryOptions({
+    queryFn: async ({ queryKey, signal }) => {
+      const { data } = await addExperience({
+        ...options,
+        ...queryKey[0],
+        signal,
+        throwOnError: true,
+      });
+      return data;
+    },
+    queryKey: addExperienceQueryKey(options),
+  });
+};
+
+export const addExperienceMutation = (
+  options?: Partial<Options<AddExperienceData>>
+): UseMutationOptions<AddExperienceResponse, AddExperienceError, Options<AddExperienceData>> => {
+  const mutationOptions: UseMutationOptions<
+    AddExperienceResponse,
+    AddExperienceError,
+    Options<AddExperienceData>
+  > = {
+    mutationFn: async localOptions => {
+      const { data } = await addExperience({
+        ...options,
+        ...localOptions,
+        throwOnError: true,
+      });
+      return data;
+    },
+  };
+  return mutationOptions;
+};
+
+export const listEducationQueryKey = (options?: Options<ListEducationData>) =>
+  createQueryKey('listEducation', options);
+
+export const listEducationOptions = (options?: Options<ListEducationData>) => {
+  return queryOptions({
+    queryFn: async ({ queryKey, signal }) => {
+      const { data } = await listEducation({
+        ...options,
+        ...queryKey[0],
+        signal,
+        throwOnError: true,
+      });
+      return data;
+    },
+    queryKey: listEducationQueryKey(options),
+  });
+};
+
+export const addEducationQueryKey = (options: Options<AddEducationData>) =>
+  createQueryKey('addEducation', options);
+
+export const addEducationOptions = (options: Options<AddEducationData>) => {
+  return queryOptions({
+    queryFn: async ({ queryKey, signal }) => {
+      const { data } = await addEducation({
+        ...options,
+        ...queryKey[0],
+        signal,
+        throwOnError: true,
+      });
+      return data;
+    },
+    queryKey: addEducationQueryKey(options),
+  });
+};
+
+export const addEducationMutation = (
+  options?: Partial<Options<AddEducationData>>
+): UseMutationOptions<AddEducationResponse, AddEducationError, Options<AddEducationData>> => {
+  const mutationOptions: UseMutationOptions<
+    AddEducationResponse,
+    AddEducationError,
+    Options<AddEducationData>
+  > = {
+    mutationFn: async localOptions => {
+      const { data } = await addEducation({
+        ...options,
+        ...localOptions,
+        throwOnError: true,
+      });
+      return data;
+    },
+  };
+  return mutationOptions;
+};
+
+export const listDocumentsQueryKey = (options?: Options<ListDocumentsData>) =>
+  createQueryKey('listDocuments', options);
+
+export const listDocumentsOptions = (options?: Options<ListDocumentsData>) => {
+  return queryOptions({
+    queryFn: async ({ queryKey, signal }) => {
+      const { data } = await listDocuments({
+        ...options,
+        ...queryKey[0],
+        signal,
+        throwOnError: true,
+      });
+      return data;
+    },
+    queryKey: listDocumentsQueryKey(options),
+  });
+};
+
+export const uploadDocumentQueryKey = (options: Options<UploadDocumentData>) =>
+  createQueryKey('uploadDocument', options);
+
+/**
+ * Upload a credential document
+ * Stores the file under the user and files it on the profile, optionally backing an education, experience or membership record.
+ */
+export const uploadDocumentOptions = (options: Options<UploadDocumentData>) => {
+  return queryOptions({
+    queryFn: async ({ queryKey, signal }) => {
+      const { data } = await uploadDocument({
+        ...options,
+        ...queryKey[0],
+        signal,
+        throwOnError: true,
+      });
+      return data;
+    },
+    queryKey: uploadDocumentQueryKey(options),
+  });
+};
+
+/**
+ * Upload a credential document
+ * Stores the file under the user and files it on the profile, optionally backing an education, experience or membership record.
+ */
+export const uploadDocumentMutation = (
+  options?: Partial<Options<UploadDocumentData>>
+): UseMutationOptions<UploadDocumentResponse, UploadDocumentError, Options<UploadDocumentData>> => {
+  const mutationOptions: UseMutationOptions<
+    UploadDocumentResponse,
+    UploadDocumentError,
+    Options<UploadDocumentData>
+  > = {
+    mutationFn: async localOptions => {
+      const { data } = await uploadDocument({
+        ...options,
+        ...localOptions,
+        throwOnError: true,
+      });
+      return data;
+    },
+  };
+  return mutationOptions;
+};
+
+export const listCompetenciesQueryKey = (options?: Options<ListCompetenciesData>) =>
+  createQueryKey('listCompetencies', options);
+
+export const listCompetenciesOptions = (options?: Options<ListCompetenciesData>) => {
+  return queryOptions({
+    queryFn: async ({ queryKey, signal }) => {
+      const { data } = await listCompetencies({
+        ...options,
+        ...queryKey[0],
+        signal,
+        throwOnError: true,
+      });
+      return data;
+    },
+    queryKey: listCompetenciesQueryKey(options),
+  });
+};
+
+export const addCompetencyQueryKey = (options: Options<AddCompetencyData>) =>
+  createQueryKey('addCompetency', options);
+
+export const addCompetencyOptions = (options: Options<AddCompetencyData>) => {
+  return queryOptions({
+    queryFn: async ({ queryKey, signal }) => {
+      const { data } = await addCompetency({
+        ...options,
+        ...queryKey[0],
+        signal,
+        throwOnError: true,
+      });
+      return data;
+    },
+    queryKey: addCompetencyQueryKey(options),
+  });
+};
+
+export const addCompetencyMutation = (
+  options?: Partial<Options<AddCompetencyData>>
+): UseMutationOptions<AddCompetencyResponse, AddCompetencyError, Options<AddCompetencyData>> => {
+  const mutationOptions: UseMutationOptions<
+    AddCompetencyResponse,
+    AddCompetencyError,
+    Options<AddCompetencyData>
+  > = {
+    mutationFn: async localOptions => {
+      const { data } = await addCompetency({
+        ...options,
+        ...localOptions,
+        throwOnError: true,
+      });
+      return data;
+    },
+  };
+  return mutationOptions;
+};
+
+export const listCertificationsQueryKey = (options?: Options<ListCertificationsData>) =>
+  createQueryKey('listCertifications', options);
+
+export const listCertificationsOptions = (options?: Options<ListCertificationsData>) => {
+  return queryOptions({
+    queryFn: async ({ queryKey, signal }) => {
+      const { data } = await listCertifications({
+        ...options,
+        ...queryKey[0],
+        signal,
+        throwOnError: true,
+      });
+      return data;
+    },
+    queryKey: listCertificationsQueryKey(options),
+  });
+};
+
+export const addCertificationQueryKey = (options: Options<AddCertificationData>) =>
+  createQueryKey('addCertification', options);
+
+export const addCertificationOptions = (options: Options<AddCertificationData>) => {
+  return queryOptions({
+    queryFn: async ({ queryKey, signal }) => {
+      const { data } = await addCertification({
+        ...options,
+        ...queryKey[0],
+        signal,
+        throwOnError: true,
+      });
+      return data;
+    },
+    queryKey: addCertificationQueryKey(options),
+  });
+};
+
+export const addCertificationMutation = (
+  options?: Partial<Options<AddCertificationData>>
+): UseMutationOptions<
+  AddCertificationResponse,
+  AddCertificationError,
+  Options<AddCertificationData>
+> => {
+  const mutationOptions: UseMutationOptions<
+    AddCertificationResponse,
+    AddCertificationError,
+    Options<AddCertificationData>
+  > = {
+    mutationFn: async localOptions => {
+      const { data } = await addCertification({
+        ...options,
+        ...localOptions,
+        throwOnError: true,
+      });
+      return data;
+    },
+  };
+  return mutationOptions;
+};
+
+export const listAchievementsQueryKey = (options?: Options<ListAchievementsData>) =>
+  createQueryKey('listAchievements', options);
+
+export const listAchievementsOptions = (options?: Options<ListAchievementsData>) => {
+  return queryOptions({
+    queryFn: async ({ queryKey, signal }) => {
+      const { data } = await listAchievements({
+        ...options,
+        ...queryKey[0],
+        signal,
+        throwOnError: true,
+      });
+      return data;
+    },
+    queryKey: listAchievementsQueryKey(options),
+  });
+};
+
+export const addAchievementQueryKey = (options: Options<AddAchievementData>) =>
+  createQueryKey('addAchievement', options);
+
+export const addAchievementOptions = (options: Options<AddAchievementData>) => {
+  return queryOptions({
+    queryFn: async ({ queryKey, signal }) => {
+      const { data } = await addAchievement({
+        ...options,
+        ...queryKey[0],
+        signal,
+        throwOnError: true,
+      });
+      return data;
+    },
+    queryKey: addAchievementQueryKey(options),
+  });
+};
+
+export const addAchievementMutation = (
+  options?: Partial<Options<AddAchievementData>>
+): UseMutationOptions<AddAchievementResponse, AddAchievementError, Options<AddAchievementData>> => {
+  const mutationOptions: UseMutationOptions<
+    AddAchievementResponse,
+    AddAchievementError,
+    Options<AddAchievementData>
+  > = {
+    mutationFn: async localOptions => {
+      const { data } = await addAchievement({
         ...options,
         ...localOptions,
         throwOnError: true,
@@ -14663,6 +16915,81 @@ export const addCourseCreatorSkillMutation = (
   return mutationOptions;
 };
 
+export const getCourseCreatorPortfolioQueryKey = (
+  options: Options<GetCourseCreatorPortfolioData>
+) => createQueryKey('getCourseCreatorPortfolio', options);
+
+/**
+ * List portfolio items
+ */
+export const getCourseCreatorPortfolioOptions = (
+  options: Options<GetCourseCreatorPortfolioData>
+) => {
+  return queryOptions({
+    queryFn: async ({ queryKey, signal }) => {
+      const { data } = await getCourseCreatorPortfolio({
+        ...options,
+        ...queryKey[0],
+        signal,
+        throwOnError: true,
+      });
+      return data;
+    },
+    queryKey: getCourseCreatorPortfolioQueryKey(options),
+  });
+};
+
+export const addCourseCreatorPortfolioItemQueryKey = (
+  options: Options<AddCourseCreatorPortfolioItemData>
+) => createQueryKey('addCourseCreatorPortfolioItem', options);
+
+/**
+ * Add a portfolio item
+ */
+export const addCourseCreatorPortfolioItemOptions = (
+  options: Options<AddCourseCreatorPortfolioItemData>
+) => {
+  return queryOptions({
+    queryFn: async ({ queryKey, signal }) => {
+      const { data } = await addCourseCreatorPortfolioItem({
+        ...options,
+        ...queryKey[0],
+        signal,
+        throwOnError: true,
+      });
+      return data;
+    },
+    queryKey: addCourseCreatorPortfolioItemQueryKey(options),
+  });
+};
+
+/**
+ * Add a portfolio item
+ */
+export const addCourseCreatorPortfolioItemMutation = (
+  options?: Partial<Options<AddCourseCreatorPortfolioItemData>>
+): UseMutationOptions<
+  AddCourseCreatorPortfolioItemResponse,
+  AddCourseCreatorPortfolioItemError,
+  Options<AddCourseCreatorPortfolioItemData>
+> => {
+  const mutationOptions: UseMutationOptions<
+    AddCourseCreatorPortfolioItemResponse,
+    AddCourseCreatorPortfolioItemError,
+    Options<AddCourseCreatorPortfolioItemData>
+  > = {
+    mutationFn: async localOptions => {
+      const { data } = await addCourseCreatorPortfolioItem({
+        ...options,
+        ...localOptions,
+        throwOnError: true,
+      });
+      return data;
+    },
+  };
+  return mutationOptions;
+};
+
 export const getCourseCreatorMembershipsQueryKey = (
   options: Options<GetCourseCreatorMembershipsData>
 ) => createQueryKey('getCourseCreatorMemberships', options);
@@ -15249,6 +17576,81 @@ export const uploadCourseCreatorDocumentMutation = (
   return mutationOptions;
 };
 
+export const getCourseCreatorCompetenciesQueryKey = (
+  options: Options<GetCourseCreatorCompetenciesData>
+) => createQueryKey('getCourseCreatorCompetencies', options);
+
+/**
+ * List competencies
+ */
+export const getCourseCreatorCompetenciesOptions = (
+  options: Options<GetCourseCreatorCompetenciesData>
+) => {
+  return queryOptions({
+    queryFn: async ({ queryKey, signal }) => {
+      const { data } = await getCourseCreatorCompetencies({
+        ...options,
+        ...queryKey[0],
+        signal,
+        throwOnError: true,
+      });
+      return data;
+    },
+    queryKey: getCourseCreatorCompetenciesQueryKey(options),
+  });
+};
+
+export const addCourseCreatorCompetencyQueryKey = (
+  options: Options<AddCourseCreatorCompetencyData>
+) => createQueryKey('addCourseCreatorCompetency', options);
+
+/**
+ * Add a competency
+ */
+export const addCourseCreatorCompetencyOptions = (
+  options: Options<AddCourseCreatorCompetencyData>
+) => {
+  return queryOptions({
+    queryFn: async ({ queryKey, signal }) => {
+      const { data } = await addCourseCreatorCompetency({
+        ...options,
+        ...queryKey[0],
+        signal,
+        throwOnError: true,
+      });
+      return data;
+    },
+    queryKey: addCourseCreatorCompetencyQueryKey(options),
+  });
+};
+
+/**
+ * Add a competency
+ */
+export const addCourseCreatorCompetencyMutation = (
+  options?: Partial<Options<AddCourseCreatorCompetencyData>>
+): UseMutationOptions<
+  AddCourseCreatorCompetencyResponse,
+  AddCourseCreatorCompetencyError,
+  Options<AddCourseCreatorCompetencyData>
+> => {
+  const mutationOptions: UseMutationOptions<
+    AddCourseCreatorCompetencyResponse,
+    AddCourseCreatorCompetencyError,
+    Options<AddCourseCreatorCompetencyData>
+  > = {
+    mutationFn: async localOptions => {
+      const { data } = await addCourseCreatorCompetency({
+        ...options,
+        ...localOptions,
+        throwOnError: true,
+      });
+      return data;
+    },
+  };
+  return mutationOptions;
+};
+
 export const getCourseCreatorCertificationsQueryKey = (
   options: Options<GetCourseCreatorCertificationsData>
 ) => createQueryKey('getCourseCreatorCertifications', options);
@@ -15367,6 +17769,132 @@ export const addCourseCreatorCertificationMutation = (
   > = {
     mutationFn: async localOptions => {
       const { data } = await addCourseCreatorCertification({
+        ...options,
+        ...localOptions,
+        throwOnError: true,
+      });
+      return data;
+    },
+  };
+  return mutationOptions;
+};
+
+export const getCourseCreatorAchievementsQueryKey = (
+  options: Options<GetCourseCreatorAchievementsData>
+) => createQueryKey('getCourseCreatorAchievements', options);
+
+/**
+ * List achievements
+ */
+export const getCourseCreatorAchievementsOptions = (
+  options: Options<GetCourseCreatorAchievementsData>
+) => {
+  return queryOptions({
+    queryFn: async ({ queryKey, signal }) => {
+      const { data } = await getCourseCreatorAchievements({
+        ...options,
+        ...queryKey[0],
+        signal,
+        throwOnError: true,
+      });
+      return data;
+    },
+    queryKey: getCourseCreatorAchievementsQueryKey(options),
+  });
+};
+
+export const addCourseCreatorAchievementQueryKey = (
+  options: Options<AddCourseCreatorAchievementData>
+) => createQueryKey('addCourseCreatorAchievement', options);
+
+/**
+ * Add an achievement
+ */
+export const addCourseCreatorAchievementOptions = (
+  options: Options<AddCourseCreatorAchievementData>
+) => {
+  return queryOptions({
+    queryFn: async ({ queryKey, signal }) => {
+      const { data } = await addCourseCreatorAchievement({
+        ...options,
+        ...queryKey[0],
+        signal,
+        throwOnError: true,
+      });
+      return data;
+    },
+    queryKey: addCourseCreatorAchievementQueryKey(options),
+  });
+};
+
+/**
+ * Add an achievement
+ */
+export const addCourseCreatorAchievementMutation = (
+  options?: Partial<Options<AddCourseCreatorAchievementData>>
+): UseMutationOptions<
+  AddCourseCreatorAchievementResponse,
+  AddCourseCreatorAchievementError,
+  Options<AddCourseCreatorAchievementData>
+> => {
+  const mutationOptions: UseMutationOptions<
+    AddCourseCreatorAchievementResponse,
+    AddCourseCreatorAchievementError,
+    Options<AddCourseCreatorAchievementData>
+  > = {
+    mutationFn: async localOptions => {
+      const { data } = await addCourseCreatorAchievement({
+        ...options,
+        ...localOptions,
+        throwOnError: true,
+      });
+      return data;
+    },
+  };
+  return mutationOptions;
+};
+
+export const submitCurrentForVerificationQueryKey = (
+  options?: Options<SubmitCurrentForVerificationData>
+) => createQueryKey('submitCurrentForVerification', options);
+
+/**
+ * Submit current user's course creator onboarding for verification
+ */
+export const submitCurrentForVerificationOptions = (
+  options?: Options<SubmitCurrentForVerificationData>
+) => {
+  return queryOptions({
+    queryFn: async ({ queryKey, signal }) => {
+      const { data } = await submitCurrentForVerification({
+        ...options,
+        ...queryKey[0],
+        signal,
+        throwOnError: true,
+      });
+      return data;
+    },
+    queryKey: submitCurrentForVerificationQueryKey(options),
+  });
+};
+
+/**
+ * Submit current user's course creator onboarding for verification
+ */
+export const submitCurrentForVerificationMutation = (
+  options?: Partial<Options<SubmitCurrentForVerificationData>>
+): UseMutationOptions<
+  SubmitCurrentForVerificationResponse,
+  SubmitCurrentForVerificationError,
+  Options<SubmitCurrentForVerificationData>
+> => {
+  const mutationOptions: UseMutationOptions<
+    SubmitCurrentForVerificationResponse,
+    SubmitCurrentForVerificationError,
+    Options<SubmitCurrentForVerificationData>
+  > = {
+    mutationFn: async localOptions => {
+      const { data } = await submitCurrentForVerification({
         ...options,
         ...localOptions,
         throwOnError: true,
@@ -18651,6 +21179,97 @@ export const assignAdminDomainMutation = (
   return mutationOptions;
 };
 
+export const verifyQueryKey = (options: Options<VerifyData>) => createQueryKey('verify', options);
+
+/**
+ * Verify a profile item
+ * Marks a skill, certification, competency or document VERIFIED or REJECTED. The verdict holds for every domain the user has; editing the claim later sends it back to PENDING.
+ */
+export const verifyOptions = (options: Options<VerifyData>) => {
+  return queryOptions({
+    queryFn: async ({ queryKey, signal }) => {
+      const { data } = await verify({
+        ...options,
+        ...queryKey[0],
+        signal,
+        throwOnError: true,
+      });
+      return data;
+    },
+    queryKey: verifyQueryKey(options),
+  });
+};
+
+/**
+ * Verify a profile item
+ * Marks a skill, certification, competency or document VERIFIED or REJECTED. The verdict holds for every domain the user has; editing the claim later sends it back to PENDING.
+ */
+export const verifyMutation = (
+  options?: Partial<Options<VerifyData>>
+): UseMutationOptions<VerifyResponse, VerifyError, Options<VerifyData>> => {
+  const mutationOptions: UseMutationOptions<VerifyResponse, VerifyError, Options<VerifyData>> = {
+    mutationFn: async localOptions => {
+      const { data } = await verify({
+        ...options,
+        ...localOptions,
+        throwOnError: true,
+      });
+      return data;
+    },
+  };
+  return mutationOptions;
+};
+
+export const moderateUserDomainQueryKey = (options: Options<ModerateUserDomainData>) =>
+  createQueryKey('moderateUserDomain', options);
+
+/**
+ * Approve, reject or revoke a user's domain
+ * For domains without a profile review (instructor; students and parents need no approval). Approval opens the domain's dashboard; reject and revoke keep the user on the pending-approval screen.
+ */
+export const moderateUserDomainOptions = (options: Options<ModerateUserDomainData>) => {
+  return queryOptions({
+    queryFn: async ({ queryKey, signal }) => {
+      const { data } = await moderateUserDomain({
+        ...options,
+        ...queryKey[0],
+        signal,
+        throwOnError: true,
+      });
+      return data;
+    },
+    queryKey: moderateUserDomainQueryKey(options),
+  });
+};
+
+/**
+ * Approve, reject or revoke a user's domain
+ * For domains without a profile review (instructor; students and parents need no approval). Approval opens the domain's dashboard; reject and revoke keep the user on the pending-approval screen.
+ */
+export const moderateUserDomainMutation = (
+  options?: Partial<Options<ModerateUserDomainData>>
+): UseMutationOptions<
+  ModerateUserDomainResponse,
+  ModerateUserDomainError,
+  Options<ModerateUserDomainData>
+> => {
+  const mutationOptions: UseMutationOptions<
+    ModerateUserDomainResponse,
+    ModerateUserDomainError,
+    Options<ModerateUserDomainData>
+  > = {
+    mutationFn: async localOptions => {
+      const { data } = await moderateUserDomain({
+        ...options,
+        ...localOptions,
+        throwOnError: true,
+      });
+      return data;
+    },
+  };
+  return mutationOptions;
+};
+
 export const getAdminUsersQueryKey = (options: Options<GetAdminUsersData>) =>
   createQueryKey('getAdminUsers', options);
 
@@ -19489,6 +22108,106 @@ export const moderateCourseMutation = (
   return mutationOptions;
 };
 
+export const verifyWalletItemQueryKey = (options: Options<VerifyWalletItemData>) =>
+  createQueryKey('verifyWalletItem', options);
+
+/**
+ * Verify a skills wallet item
+ * Marks a skill, competency or certification VERIFIED or REJECTED after checking its evidence.
+ */
+export const verifyWalletItemOptions = (options: Options<VerifyWalletItemData>) => {
+  return queryOptions({
+    queryFn: async ({ queryKey, signal }) => {
+      const { data } = await verifyWalletItem({
+        ...options,
+        ...queryKey[0],
+        signal,
+        throwOnError: true,
+      });
+      return data;
+    },
+    queryKey: verifyWalletItemQueryKey(options),
+  });
+};
+
+/**
+ * Verify a skills wallet item
+ * Marks a skill, competency or certification VERIFIED or REJECTED after checking its evidence.
+ */
+export const verifyWalletItemMutation = (
+  options?: Partial<Options<VerifyWalletItemData>>
+): UseMutationOptions<
+  VerifyWalletItemResponse,
+  VerifyWalletItemError,
+  Options<VerifyWalletItemData>
+> => {
+  const mutationOptions: UseMutationOptions<
+    VerifyWalletItemResponse,
+    VerifyWalletItemError,
+    Options<VerifyWalletItemData>
+  > = {
+    mutationFn: async localOptions => {
+      const { data } = await verifyWalletItem({
+        ...options,
+        ...localOptions,
+        throwOnError: true,
+      });
+      return data;
+    },
+  };
+  return mutationOptions;
+};
+
+export const moderateCourseCreatorQueryKey = (options: Options<ModerateCourseCreatorData>) =>
+  createQueryKey('moderateCourseCreator', options);
+
+/**
+ * Moderate course creator verification
+ * Approves, rejects or revokes a course creator onboarding submission.
+ */
+export const moderateCourseCreatorOptions = (options: Options<ModerateCourseCreatorData>) => {
+  return queryOptions({
+    queryFn: async ({ queryKey, signal }) => {
+      const { data } = await moderateCourseCreator({
+        ...options,
+        ...queryKey[0],
+        signal,
+        throwOnError: true,
+      });
+      return data;
+    },
+    queryKey: moderateCourseCreatorQueryKey(options),
+  });
+};
+
+/**
+ * Moderate course creator verification
+ * Approves, rejects or revokes a course creator onboarding submission.
+ */
+export const moderateCourseCreatorMutation = (
+  options?: Partial<Options<ModerateCourseCreatorData>>
+): UseMutationOptions<
+  ModerateCourseCreatorResponse,
+  ModerateCourseCreatorError,
+  Options<ModerateCourseCreatorData>
+> => {
+  const mutationOptions: UseMutationOptions<
+    ModerateCourseCreatorResponse,
+    ModerateCourseCreatorError,
+    Options<ModerateCourseCreatorData>
+  > = {
+    mutationFn: async localOptions => {
+      const { data } = await moderateCourseCreator({
+        ...options,
+        ...localOptions,
+        throwOnError: true,
+      });
+      return data;
+    },
+  };
+  return mutationOptions;
+};
+
 /**
  * Reschedule a scheduled class instance
  */
@@ -19533,6 +22252,34 @@ export const updateScheduledInstanceStatusMutation = (
   > = {
     mutationFn: async localOptions => {
       const { data } = await updateScheduledInstanceStatus({
+        ...options,
+        ...localOptions,
+        throwOnError: true,
+      });
+      return data;
+    },
+  };
+  return mutationOptions;
+};
+
+/**
+ * Set the lesson a scheduled class instance teaches
+ * Attendance for the session is graded on that lesson. Without one, the session's position in the class schedule picks the lesson with the same number.
+ */
+export const assignScheduledInstanceLessonMutation = (
+  options?: Partial<Options<AssignScheduledInstanceLessonData>>
+): UseMutationOptions<
+  AssignScheduledInstanceLessonResponse,
+  AssignScheduledInstanceLessonError,
+  Options<AssignScheduledInstanceLessonData>
+> => {
+  const mutationOptions: UseMutationOptions<
+    AssignScheduledInstanceLessonResponse,
+    AssignScheduledInstanceLessonError,
+    Options<AssignScheduledInstanceLessonData>
+  > = {
+    mutationFn: async localOptions => {
+      const { data } = await assignScheduledInstanceLesson({
         ...options,
         ...localOptions,
         throwOnError: true,
@@ -19894,6 +22641,207 @@ export const getAllUsersInfiniteOptions = (options: Options<GetAllUsersData>) =>
   );
 };
 
+export const getSummary1QueryKey = (options: Options<GetSummary1Data>) =>
+  createQueryKey('getSummary1', options);
+
+/**
+ * Get a user's professional profile
+ * Answered to the user, a platform admin, staff of an organisation the user belongs to, and whoever is reviewing an application the user lodged.
+ */
+export const getSummary1Options = (options: Options<GetSummary1Data>) => {
+  return queryOptions({
+    queryFn: async ({ queryKey, signal }) => {
+      const { data } = await getSummary1({
+        ...options,
+        ...queryKey[0],
+        signal,
+        throwOnError: true,
+      });
+      return data;
+    },
+    queryKey: getSummary1QueryKey(options),
+  });
+};
+
+export const skillsQueryKey = (options: Options<SkillsData>) => createQueryKey('skills', options);
+
+export const skillsOptions = (options: Options<SkillsData>) => {
+  return queryOptions({
+    queryFn: async ({ queryKey, signal }) => {
+      const { data } = await skills({
+        ...options,
+        ...queryKey[0],
+        signal,
+        throwOnError: true,
+      });
+      return data;
+    },
+    queryKey: skillsQueryKey(options),
+  });
+};
+
+export const portfolioQueryKey = (options: Options<PortfolioData>) =>
+  createQueryKey('portfolio', options);
+
+export const portfolioOptions = (options: Options<PortfolioData>) => {
+  return queryOptions({
+    queryFn: async ({ queryKey, signal }) => {
+      const { data } = await portfolio({
+        ...options,
+        ...queryKey[0],
+        signal,
+        throwOnError: true,
+      });
+      return data;
+    },
+    queryKey: portfolioQueryKey(options),
+  });
+};
+
+export const membershipsQueryKey = (options: Options<MembershipsData>) =>
+  createQueryKey('memberships', options);
+
+export const membershipsOptions = (options: Options<MembershipsData>) => {
+  return queryOptions({
+    queryFn: async ({ queryKey, signal }) => {
+      const { data } = await memberships({
+        ...options,
+        ...queryKey[0],
+        signal,
+        throwOnError: true,
+      });
+      return data;
+    },
+    queryKey: membershipsQueryKey(options),
+  });
+};
+
+export const experienceQueryKey = (options: Options<ExperienceData>) =>
+  createQueryKey('experience', options);
+
+export const experienceOptions = (options: Options<ExperienceData>) => {
+  return queryOptions({
+    queryFn: async ({ queryKey, signal }) => {
+      const { data } = await experience({
+        ...options,
+        ...queryKey[0],
+        signal,
+        throwOnError: true,
+      });
+      return data;
+    },
+    queryKey: experienceQueryKey(options),
+  });
+};
+
+export const educationQueryKey = (options: Options<EducationData>) =>
+  createQueryKey('education', options);
+
+export const educationOptions = (options: Options<EducationData>) => {
+  return queryOptions({
+    queryFn: async ({ queryKey, signal }) => {
+      const { data } = await education({
+        ...options,
+        ...queryKey[0],
+        signal,
+        throwOnError: true,
+      });
+      return data;
+    },
+    queryKey: educationQueryKey(options),
+  });
+};
+
+export const documentsQueryKey = (options: Options<DocumentsData>) =>
+  createQueryKey('documents', options);
+
+export const documentsOptions = (options: Options<DocumentsData>) => {
+  return queryOptions({
+    queryFn: async ({ queryKey, signal }) => {
+      const { data } = await documents({
+        ...options,
+        ...queryKey[0],
+        signal,
+        throwOnError: true,
+      });
+      return data;
+    },
+    queryKey: documentsQueryKey(options),
+  });
+};
+
+export const documentFileQueryKey = (options: Options<DocumentFileData>) =>
+  createQueryKey('documentFile', options);
+
+export const documentFileOptions = (options: Options<DocumentFileData>) => {
+  return queryOptions({
+    queryFn: async ({ queryKey, signal }) => {
+      const { data } = await documentFile({
+        ...options,
+        ...queryKey[0],
+        signal,
+        throwOnError: true,
+      });
+      return data;
+    },
+    queryKey: documentFileQueryKey(options),
+  });
+};
+
+export const competenciesQueryKey = (options: Options<CompetenciesData>) =>
+  createQueryKey('competencies', options);
+
+export const competenciesOptions = (options: Options<CompetenciesData>) => {
+  return queryOptions({
+    queryFn: async ({ queryKey, signal }) => {
+      const { data } = await competencies({
+        ...options,
+        ...queryKey[0],
+        signal,
+        throwOnError: true,
+      });
+      return data;
+    },
+    queryKey: competenciesQueryKey(options),
+  });
+};
+
+export const certificationsQueryKey = (options: Options<CertificationsData>) =>
+  createQueryKey('certifications', options);
+
+export const certificationsOptions = (options: Options<CertificationsData>) => {
+  return queryOptions({
+    queryFn: async ({ queryKey, signal }) => {
+      const { data } = await certifications({
+        ...options,
+        ...queryKey[0],
+        signal,
+        throwOnError: true,
+      });
+      return data;
+    },
+    queryKey: certificationsQueryKey(options),
+  });
+};
+
+export const achievementsQueryKey = (options: Options<AchievementsData>) =>
+  createQueryKey('achievements', options);
+
+export const achievementsOptions = (options: Options<AchievementsData>) => {
+  return queryOptions({
+    queryFn: async ({ queryKey, signal }) => {
+      const { data } = await achievements({
+        ...options,
+        ...queryKey[0],
+        signal,
+        throwOnError: true,
+      });
+      return data;
+    },
+    queryKey: achievementsQueryKey(options),
+  });
+};
+
 export const searchQueryKey = (options: Options<SearchData>) => createQueryKey('search', options);
 
 /**
@@ -19999,6 +22947,28 @@ export const getCurrentUserOptions = (options?: Options<GetCurrentUserData>) => 
       return data;
     },
     queryKey: getCurrentUserQueryKey(options),
+  });
+};
+
+export const getCurrentAccountStatusQueryKey = (options?: Options<GetCurrentAccountStatusData>) =>
+  createQueryKey('getCurrentAccountStatus', options);
+
+/**
+ * Get the caller's account approval status
+ * Returns ACTIVE once any domain is approved, PENDING_APPROVAL while every requested domain awaits a platform admin, and the state of each requested domain.
+ */
+export const getCurrentAccountStatusOptions = (options?: Options<GetCurrentAccountStatusData>) => {
+  return queryOptions({
+    queryFn: async ({ queryKey, signal }) => {
+      const { data } = await getCurrentAccountStatus({
+        ...options,
+        ...queryKey[0],
+        signal,
+        throwOnError: true,
+      });
+      return data;
+    },
+    queryKey: getCurrentAccountStatusQueryKey(options),
   });
 };
 
@@ -20428,6 +23398,28 @@ export const getInstructorScheduleInfiniteOptions = (
   );
 };
 
+export const getGuardiansQueryKey = (options: Options<GetGuardiansData>) =>
+  createQueryKey('getGuardians', options);
+
+/**
+ * List a student's guardians
+ * Each guardian with status linked, invited, expired, declined or revoked. Includes guardians linked another way (uuid null). Restricted to the learner, an active guardian, a manager of one of the learner's organisations, or a platform admin.
+ */
+export const getGuardiansOptions = (options: Options<GetGuardiansData>) => {
+  return queryOptions({
+    queryFn: async ({ queryKey, signal }) => {
+      const { data } = await getGuardians({
+        ...options,
+        ...queryKey[0],
+        signal,
+        throwOnError: true,
+      });
+      return data;
+    },
+    queryKey: getGuardiansQueryKey(options),
+  });
+};
+
 export const getStudentBookingsQueryKey = (options: Options<GetStudentBookingsData>) =>
   createQueryKey('getStudentBookings', options);
 
@@ -20557,17 +23549,17 @@ export const searchStudentsInfiniteOptions = (options: Options<SearchStudentsDat
   );
 };
 
-export const listSkillsQueryKey = (options?: Options<ListSkillsData>) =>
-  createQueryKey('listSkills', options);
+export const getByTokenQueryKey = (options: Options<GetByTokenData>) =>
+  createQueryKey('getByToken', options);
 
 /**
- * List active skills
- * Active skills only, for tag pickers. q matches names, slugs and aliases in memory over the small curated list: an exact match first, then names starting with q, then any containing it. Without q, skills are in name order. limit is 1-500 (default 50).
+ * Read a guardian invitation from its link
+ * Public. has_account tells the UI whether to ask the guardian to sign in or to register.
  */
-export const listSkillsOptions = (options?: Options<ListSkillsData>) => {
+export const getByTokenOptions = (options: Options<GetByTokenData>) => {
   return queryOptions({
     queryFn: async ({ queryKey, signal }) => {
-      const { data } = await listSkills({
+      const { data } = await getByToken({
         ...options,
         ...queryKey[0],
         signal,
@@ -20575,7 +23567,50 @@ export const listSkillsOptions = (options?: Options<ListSkillsData>) => {
       });
       return data;
     },
-    queryKey: listSkillsQueryKey(options),
+    queryKey: getByTokenQueryKey(options),
+  });
+};
+
+export const getMineQueryKey = (options?: Options<GetMineData>) =>
+  createQueryKey('getMine', options);
+
+/**
+ * List open guardian invitations sent to my email
+ */
+export const getMineOptions = (options?: Options<GetMineData>) => {
+  return queryOptions({
+    queryFn: async ({ queryKey, signal }) => {
+      const { data } = await getMine({
+        ...options,
+        ...queryKey[0],
+        signal,
+        throwOnError: true,
+      });
+      return data;
+    },
+    queryKey: getMineQueryKey(options),
+  });
+};
+
+export const listSkills1QueryKey = (options?: Options<ListSkills1Data>) =>
+  createQueryKey('listSkills1', options);
+
+/**
+ * List active skills
+ * Active skills only, for tag pickers. q matches names, slugs and aliases in memory over the small curated list: an exact match first, then names starting with q, then any containing it. Without q, skills are in name order. limit is 1-500 (default 50).
+ */
+export const listSkills1Options = (options?: Options<ListSkills1Data>) => {
+  return queryOptions({
+    queryFn: async ({ queryKey, signal }) => {
+      const { data } = await listSkills1({
+        ...options,
+        ...queryKey[0],
+        signal,
+        throwOnError: true,
+      });
+      return data;
+    },
+    queryKey: listSkills1QueryKey(options),
   });
 };
 
@@ -20614,12 +23649,12 @@ export const searchByTypeQueryKey = (options: Options<SearchByTypeData>) =>
  * |---|---|---|
  * | `classes` | `uuid`, `course_uuid`, `program_uuid`, `organisation_uuid`, `branch_uuid`, `default_instructor_uuid`, `category_uuid`, `is_active`, `class_visibility`, `content_approved`, `location_type`, `session_format`, `starts_at`, `registration_closes_at`, `sale_price`, `created_at`, `_geo` | `starts_at`, `sale_price`, `created_at`, `title`, `_geo` |
  * | `course_content` | `type`, `course_uuid`, `lesson_uuid`, `published`, `scope`, `class_definition_uuid`, `content_type`, `uuid` | `lesson_number`, `display_order`, `updated_at` |
- * | `courses` | `status`, `active`, `admin_approved`, `is_public`, `course_creator_uuid`, `category_uuids`, `difficulty_uuid`, `is_free`, `price`, `uuid`, `created_at`, `level_order`, `prerequisite_uuids`, `age_lower_limit`, `age_upper_limit`, `skill_uuids` | `name`, `created_at`, `price`, `rating_avg`, `enrolment_count`, `completion_rate`, `popularity_30d`, `rating_bayes` |
+ * | `courses` | `status`, `active`, `admin_approved`, `is_public`, `course_creator_uuid`, `category_uuids`, `course_code`, `difficulty_uuid`, `is_free`, `price`, `uuid`, `created_at`, `level_order`, `prerequisite_uuids`, `age_lower_limit`, `age_upper_limit`, `skill_uuids` | `name`, `created_at`, `price`, `rating_avg`, `enrolment_count`, `completion_rate`, `popularity_30d`, `rating_bayes` |
  * | `instructors` | `admin_verified`, `active`, `skills`, `skill_levels`, `skill_uuids`, `location_name`, `uuid`, `created_at`, `_geo` | `full_name`, `rating_avg`, `review_count`, `created_at`, `_geo` |
  * | `marketplace_jobs` | `status`, `organisation_uuid`, `branch_uuid`, `course_uuid`, `program_uuid`, `category_uuid`, `location_type`, `session_format`, `starts_at`, `registration_closes_at`, `uuid`, `created_at`, `required_skill_uuids`, `_geo` | `created_at`, `starts_at`, `_geo` |
  * | `organisations` | `active`, `admin_verified`, `country`, `uuid`, `created_at` | `name`, `created_at` |
  * | `people` | `domains`, `organisation_uuids`, `branch_uuids`, `active`, `is_platform_admin`, `is_org_admin`, `uuid`, `created_at`, `email_normalized` | `full_name`, `created_at` |
- * | `programs` | `status`, `is_published`, `admin_approved`, `active`, `is_public`, `course_creator_uuid`, `category_uuid`, `is_free`, `uuid`, `created_at`, `difficulty_uuids` | `title`, `created_at`, `rating_avg`, `rating_bayes`, `popularity_30d`, `enrolment_count` |
+ * | `programs` | `status`, `is_published`, `admin_approved`, `active`, `is_public`, `course_creator_uuid`, `category_uuid`, `is_free`, `uuid`, `created_at`, `difficulty_uuids`, `program_code` | `title`, `created_at`, `rating_avg`, `rating_bayes`, `popularity_30d`, `enrolment_count` |
  * | `rubrics` | `is_public`, `is_active`, `status`, `course_creator_uuid`, `rubric_type`, `usage_count`, `uuid`, `created_at` | `title`, `created_at`, `usage_count` |
  *
  */
@@ -20652,12 +23687,12 @@ export const searchByTypeInfiniteQueryKey = (
  * |---|---|---|
  * | `classes` | `uuid`, `course_uuid`, `program_uuid`, `organisation_uuid`, `branch_uuid`, `default_instructor_uuid`, `category_uuid`, `is_active`, `class_visibility`, `content_approved`, `location_type`, `session_format`, `starts_at`, `registration_closes_at`, `sale_price`, `created_at`, `_geo` | `starts_at`, `sale_price`, `created_at`, `title`, `_geo` |
  * | `course_content` | `type`, `course_uuid`, `lesson_uuid`, `published`, `scope`, `class_definition_uuid`, `content_type`, `uuid` | `lesson_number`, `display_order`, `updated_at` |
- * | `courses` | `status`, `active`, `admin_approved`, `is_public`, `course_creator_uuid`, `category_uuids`, `difficulty_uuid`, `is_free`, `price`, `uuid`, `created_at`, `level_order`, `prerequisite_uuids`, `age_lower_limit`, `age_upper_limit`, `skill_uuids` | `name`, `created_at`, `price`, `rating_avg`, `enrolment_count`, `completion_rate`, `popularity_30d`, `rating_bayes` |
+ * | `courses` | `status`, `active`, `admin_approved`, `is_public`, `course_creator_uuid`, `category_uuids`, `course_code`, `difficulty_uuid`, `is_free`, `price`, `uuid`, `created_at`, `level_order`, `prerequisite_uuids`, `age_lower_limit`, `age_upper_limit`, `skill_uuids` | `name`, `created_at`, `price`, `rating_avg`, `enrolment_count`, `completion_rate`, `popularity_30d`, `rating_bayes` |
  * | `instructors` | `admin_verified`, `active`, `skills`, `skill_levels`, `skill_uuids`, `location_name`, `uuid`, `created_at`, `_geo` | `full_name`, `rating_avg`, `review_count`, `created_at`, `_geo` |
  * | `marketplace_jobs` | `status`, `organisation_uuid`, `branch_uuid`, `course_uuid`, `program_uuid`, `category_uuid`, `location_type`, `session_format`, `starts_at`, `registration_closes_at`, `uuid`, `created_at`, `required_skill_uuids`, `_geo` | `created_at`, `starts_at`, `_geo` |
  * | `organisations` | `active`, `admin_verified`, `country`, `uuid`, `created_at` | `name`, `created_at` |
  * | `people` | `domains`, `organisation_uuids`, `branch_uuids`, `active`, `is_platform_admin`, `is_org_admin`, `uuid`, `created_at`, `email_normalized` | `full_name`, `created_at` |
- * | `programs` | `status`, `is_published`, `admin_approved`, `active`, `is_public`, `course_creator_uuid`, `category_uuid`, `is_free`, `uuid`, `created_at`, `difficulty_uuids` | `title`, `created_at`, `rating_avg`, `rating_bayes`, `popularity_30d`, `enrolment_count` |
+ * | `programs` | `status`, `is_published`, `admin_approved`, `active`, `is_public`, `course_creator_uuid`, `category_uuid`, `is_free`, `uuid`, `created_at`, `difficulty_uuids`, `program_code` | `title`, `created_at`, `rating_avg`, `rating_bayes`, `popularity_30d`, `enrolment_count` |
  * | `rubrics` | `is_public`, `is_active`, `status`, `course_creator_uuid`, `rubric_type`, `usage_count`, `uuid`, `created_at` | `title`, `created_at`, `usage_count` |
  *
  */
@@ -23449,16 +26484,16 @@ export const listRosterInfiniteOptions = (options: Options<ListRosterData>) => {
   );
 };
 
-export const getSummaryQueryKey = (options: Options<GetSummaryData>) =>
-  createQueryKey('getSummary', options);
+export const getSummary2QueryKey = (options: Options<GetSummary2Data>) =>
+  createQueryKey('getSummary2', options);
 
 /**
  * Get skills fund summary (KPIs)
  */
-export const getSummaryOptions = (options: Options<GetSummaryData>) => {
+export const getSummary2Options = (options: Options<GetSummary2Data>) => {
   return queryOptions({
     queryFn: async ({ queryKey, signal }) => {
-      const { data } = await getSummary({
+      const { data } = await getSummary2({
         ...options,
         ...queryKey[0],
         signal,
@@ -23466,7 +26501,7 @@ export const getSummaryOptions = (options: Options<GetSummaryData>) => {
       });
       return data;
     },
-    queryKey: getSummaryQueryKey(options),
+    queryKey: getSummary2QueryKey(options),
   });
 };
 
@@ -23837,6 +26872,24 @@ export const getCountsOptions = (options?: Options<GetCountsData>) => {
       return data;
     },
     queryKey: getCountsQueryKey(options),
+  });
+};
+
+export const getDocumentFileQueryKey = (options: Options<GetDocumentFileData>) =>
+  createQueryKey('getDocumentFile', options);
+
+export const getDocumentFileOptions = (options: Options<GetDocumentFileData>) => {
+  return queryOptions({
+    queryFn: async ({ queryKey, signal }) => {
+      const { data } = await getDocumentFile({
+        ...options,
+        ...queryKey[0],
+        signal,
+        throwOnError: true,
+      });
+      return data;
+    },
+    queryKey: getDocumentFileQueryKey(options),
   });
 };
 
@@ -27802,6 +30855,27 @@ export const searchCourseCreatorMembershipsInfiniteOptions = (
   );
 };
 
+export const getCurrentOnboardingQueryKey = (options?: Options<GetCurrentOnboardingData>) =>
+  createQueryKey('getCurrentOnboarding', options);
+
+/**
+ * Get current user's course creator onboarding state
+ */
+export const getCurrentOnboardingOptions = (options?: Options<GetCurrentOnboardingData>) => {
+  return queryOptions({
+    queryFn: async ({ queryKey, signal }) => {
+      const { data } = await getCurrentOnboarding({
+        ...options,
+        ...queryKey[0],
+        signal,
+        throwOnError: true,
+      });
+      return data;
+    },
+    queryKey: getCurrentOnboardingQueryKey(options),
+  });
+};
+
 export const searchCourseCreatorExperienceQueryKey = (
   options: Options<SearchCourseCreatorExperienceData>
 ) => createQueryKey('searchCourseCreatorExperience', options);
@@ -30213,6 +33287,28 @@ export const listIndexesOptions = (options?: Options<ListIndexesData>) => {
       return data;
     },
     queryKey: listIndexesQueryKey(options),
+  });
+};
+
+export const getRegistrationQueueQueryKey = (options?: Options<GetRegistrationQueueData>) =>
+  createQueryKey('getRegistrationQueue', options);
+
+/**
+ * List domain requests awaiting review
+ * Self-registrations and domain applications by approval status, oldest first. Course creator and organisation requests are decided through their own profile review.
+ */
+export const getRegistrationQueueOptions = (options?: Options<GetRegistrationQueueData>) => {
+  return queryOptions({
+    queryFn: async ({ queryKey, signal }) => {
+      const { data } = await getRegistrationQueue({
+        ...options,
+        ...queryKey[0],
+        signal,
+        throwOnError: true,
+      });
+      return data;
+    },
+    queryKey: getRegistrationQueueQueryKey(options),
   });
 };
 

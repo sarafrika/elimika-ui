@@ -104,6 +104,8 @@ export default function CourseBuilderPage() {
 
     setCourseInitialValues({
       name: c.name || '',
+      course_code: c.course_code ?? '',
+      pass_mark: c.pass_mark ?? '',
       description: c.description || '',
       instructor: c.course_creator_uuid || '',
       price: c.price ?? 0,

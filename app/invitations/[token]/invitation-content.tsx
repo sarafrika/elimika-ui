@@ -31,7 +31,7 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { Skeleton } from '@/components/ui/skeleton';
-import type { GuardianDetailsRequest, GuardianRelationshipTypeEnum } from '@/services/client';
+import type { GuardianDetailsRequest } from '@/services/client';
 import {
   acceptInvitationByTokenMutation,
   declineInvitationByTokenMutation,
@@ -372,7 +372,7 @@ function GuardianForm({
           <Select
             value={value.guardian_relationship_type}
             onValueChange={v =>
-              onChange({ ...value, guardian_relationship_type: v as GuardianRelationshipTypeEnum })
+              onChange({ ...value, guardian_relationship_type: v as GuardianDetailsRequest['guardian_relationship_type'] })
             }
           >
             <SelectTrigger id='g-rel'>

@@ -547,6 +547,14 @@ export const StudentSchema = {
     second_guardian_name: 'Jane Doe',
     second_guardian_mobile: '+254787654321',
     bio: 'Curious learner who loves science and robotics clubs.',
+    guardians: [
+      {
+        name: 'John Doe',
+        email: 'john@example.com',
+        phone: '+254712345678',
+        relationship_type: 'PARENT',
+      },
+    ],
     created_date: '2024-04-01T12:00:00',
     created_by: 'admin@sarafrika.com',
     updated_date: '2024-04-15T15:30:00',
@@ -669,6 +677,41 @@ export const StudentSchema = {
     },
   },
   required: ['user_uuid'],
+} as const;
+
+export const StudentGuardianRequestSchema = {
+  type: 'object',
+  description: 'A parent or guardian named during student onboarding.',
+  properties: {
+    name: {
+      type: 'string',
+      description: "**[REQUIRED]** Guardian's full name.",
+      example: 'Mary Doe',
+      maxLength: 100,
+      minLength: 0,
+    },
+    email: {
+      type: 'string',
+      format: 'email',
+      description:
+        "**[REQUIRED]** Guardian's email. An existing account is linked straight away; otherwise an invitation is emailed here.",
+      example: 'mary@example.com',
+      maxLength: 150,
+      minLength: 0,
+    },
+    phone: {
+      type: ['string', 'null'],
+      description: "**[OPTIONAL]** Guardian's mobile number, including country code.",
+      example: '+254712345678',
+      maxLength: 20,
+      minLength: 0,
+      pattern: '^(\\+254|0)?[17]\\d{8}$',
+    },
+    relationship_type: {
+      $ref: '#/components/schemas/RelationshipTypeEnum',
+    },
+  },
+  required: ['email', 'name'],
 } as const;
 
 export const ApiResponseStudentSchema = {
@@ -1950,12 +1993,6 @@ export const QuizQuestionSchema = {
       example: 'instructor@sarafrika.com',
       readOnly: true,
     },
-    question_number: {
-      type: 'string',
-      description: '**[READ-ONLY]** Formatted question number for display in quiz interface.',
-      example: 'Question 1',
-      readOnly: true,
-    },
     requires_options: {
       type: 'boolean',
       description:
@@ -1973,6 +2010,12 @@ export const QuizQuestionSchema = {
       type: 'string',
       description: '**[READ-ONLY]** Human-readable format of the points value.',
       example: '2.0 points',
+      readOnly: true,
+    },
+    question_number: {
+      type: 'string',
+      description: '**[READ-ONLY]** Formatted question number for display in quiz interface.',
+      example: 'Question 1',
       readOnly: true,
     },
   },
@@ -2083,6 +2126,13 @@ export const QuizQuestionOptionSchema = {
       example: 'instructor@sarafrika.com',
       readOnly: true,
     },
+    option_category: {
+      type: 'string',
+      description:
+        '**[READ-ONLY]** Formatted category of the option based on its correctness status.',
+      example: 'Correct Answer Option',
+      readOnly: true,
+    },
     is_incorrect: {
       type: 'boolean',
       description: '**[READ-ONLY]** Indicates if this option is an incorrect answer choice.',
@@ -2108,13 +2158,6 @@ export const QuizQuestionOptionSchema = {
       description:
         '**[READ-ONLY]** Comprehensive summary of the option including correctness and position.',
       example: 'Correct answer option in position 2',
-      readOnly: true,
-    },
-    option_category: {
-      type: 'string',
-      description:
-        '**[READ-ONLY]** Formatted category of the option based on its correctness status.',
-      example: 'Correct Answer Option',
       readOnly: true,
     },
   },
@@ -2331,6 +2374,12 @@ export const QuizAttemptSchema = {
       example: true,
       readOnly: true,
     },
+    grade_display: {
+      type: 'string',
+      description: '**[READ-ONLY]** Formatted display of the grade information.',
+      example: '85.00 / 100.00 (85%)',
+      readOnly: true,
+    },
     time_display: {
       type: 'string',
       description: '**[READ-ONLY]** Formatted display of the time taken to complete the quiz.',
@@ -2347,12 +2396,6 @@ export const QuizAttemptSchema = {
       type: 'string',
       description: '**[READ-ONLY]** Comprehensive summary of the quiz attempt performance.',
       example: 'Passed on attempt 2 with 85% score',
-      readOnly: true,
-    },
-    grade_display: {
-      type: 'string',
-      description: '**[READ-ONLY]** Formatted display of the grade information.',
-      example: '85.00 / 100.00 (85%)',
       readOnly: true,
     },
   },
@@ -2403,6 +2446,12 @@ export const TrainingProgramSchema = {
       maxLength: 255,
       minLength: 0,
     },
+    program_code: {
+      type: ['string', 'null'],
+      description: '**[OPTIONAL]** Short unique code for the program, stored upper case.',
+      example: 'PRG-MUSIC-01',
+      pattern: '^[A-Za-z0-9][A-Za-z0-9-]{1,29}$',
+    },
     course_creator_uuid: {
       type: 'string',
       format: 'uuid',
@@ -2436,7 +2485,7 @@ export const TrainingProgramSchema = {
       minLength: 0,
     },
     status: {
-      $ref: '#/components/schemas/SchemaEnum4',
+      $ref: '#/components/schemas/SchemaEnum6',
     },
     prerequisites: {
       type: 'string',
@@ -2475,6 +2524,31 @@ export const TrainingProgramSchema = {
         '**[OPTIONAL]** Program price in the system currency. Set to null or 0 for free programs.',
       example: 899.99,
       minimum: 0,
+    },
+    pass_mark: {
+      type: ['number', 'null'],
+      description: '**[OPTIONAL]** Final grade percentage a learner needs to pass the program.',
+      example: 80,
+      maximum: 100,
+      minimum: 0,
+    },
+    thumbnail_url: {
+      type: ['string', 'null'],
+      description: '**[OPTIONAL]** Program thumbnail; upload through POST /{uuid}/thumbnail.',
+      maxLength: 500,
+      minLength: 0,
+    },
+    banner_url: {
+      type: ['string', 'null'],
+      description: '**[OPTIONAL]** Program banner; upload through POST /{uuid}/banner.',
+      maxLength: 500,
+      minLength: 0,
+    },
+    intro_video_url: {
+      type: ['string', 'null'],
+      description: '**[OPTIONAL]** Program intro video; upload through POST /{uuid}/intro-video.',
+      maxLength: 500,
+      minLength: 0,
     },
     active: {
       type: 'boolean',
@@ -2555,6 +2629,76 @@ export const ApiResponseTrainingProgramSchema = {
     },
     data: {
       $ref: '#/components/schemas/TrainingProgram',
+    },
+    message: {
+      type: 'string',
+    },
+    error: {},
+  },
+} as const;
+
+export const ProgramAssessmentSchema = {
+  type: 'object',
+  description: 'A weighted assessment component of a training program',
+  properties: {
+    uuid: {
+      type: 'string',
+      format: 'uuid',
+      readOnly: true,
+    },
+    title: {
+      type: 'string',
+      example: 'Practical',
+      maxLength: 255,
+      minLength: 0,
+    },
+    assessment_type: {
+      type: 'string',
+      example: 'PRACTICAL',
+      maxLength: 50,
+      minLength: 0,
+    },
+    description: {
+      type: 'string',
+    },
+    weight_percentage: {
+      type: 'number',
+      example: 40,
+      maximum: 100,
+      minimum: 0.01,
+    },
+    rubric_uuid: {
+      type: 'string',
+      format: 'uuid',
+    },
+    is_required: {
+      type: 'boolean',
+    },
+    active: {
+      type: 'boolean',
+    },
+    program_uuid: {
+      type: 'string',
+      format: 'uuid',
+      readOnly: true,
+    },
+    created_date: {
+      type: 'string',
+      format: 'date-time',
+      readOnly: true,
+    },
+  },
+  required: ['assessment_type', 'title', 'weight_percentage'],
+} as const;
+
+export const ApiResponseProgramAssessmentSchema = {
+  type: 'object',
+  properties: {
+    success: {
+      type: 'boolean',
+    },
+    data: {
+      $ref: '#/components/schemas/ProgramAssessment',
     },
     message: {
       type: 'string',
@@ -3605,6 +3749,859 @@ export const ApiResponseResourceAvailabilityRuleSchema = {
   },
 } as const;
 
+export const ProfessionalProfileSchema = {
+  type: 'object',
+  description: 'User-owned professional basics shared by every domain',
+  properties: {
+    bio: {
+      type: 'string',
+      maxLength: 10000,
+      minLength: 0,
+    },
+    professional_headline: {
+      type: 'string',
+      maxLength: 500,
+      minLength: 0,
+    },
+    website: {
+      type: 'string',
+      maxLength: 500,
+      minLength: 0,
+    },
+    location_name: {
+      type: 'string',
+      maxLength: 255,
+      minLength: 0,
+    },
+    latitude: {
+      type: 'number',
+      maximum: 90,
+      minimum: -90,
+    },
+    longitude: {
+      type: 'number',
+      maximum: 180,
+      minimum: -180,
+    },
+    user_uuid: {
+      type: 'string',
+      format: 'uuid',
+      readOnly: true,
+    },
+    updated_date: {
+      type: 'string',
+      format: 'date-time',
+      readOnly: true,
+    },
+    basics_complete: {
+      type: 'boolean',
+      readOnly: true,
+    },
+  },
+} as const;
+
+export const ApiResponseProfessionalProfileSchema = {
+  type: 'object',
+  properties: {
+    success: {
+      type: 'boolean',
+    },
+    data: {
+      $ref: '#/components/schemas/ProfessionalProfile',
+    },
+    message: {
+      type: 'string',
+    },
+    error: {},
+  },
+} as const;
+
+export const UserSkillSchema = {
+  type: 'object',
+  description: 'A skill in the user-owned skills wallet',
+  properties: {
+    uuid: {
+      type: 'string',
+      format: 'uuid',
+      readOnly: true,
+    },
+    skill_name: {
+      type: 'string',
+      maxLength: 255,
+      minLength: 0,
+    },
+    proficiency_level: {
+      $ref: '#/components/schemas/ProficiencyLevelEnum',
+    },
+    evidence: {
+      type: 'string',
+    },
+    last_assessed_on: {
+      type: 'string',
+      format: 'date',
+    },
+    user_uuid: {
+      type: 'string',
+      format: 'uuid',
+      readOnly: true,
+    },
+    skill_uuid: {
+      type: 'string',
+      format: 'uuid',
+      readOnly: true,
+    },
+    verification_status: {
+      $ref: '#/components/schemas/VerificationStatusEnum',
+    },
+    verified_at: {
+      type: 'string',
+      format: 'date-time',
+      readOnly: true,
+    },
+    verification_notes: {
+      type: 'string',
+      readOnly: true,
+    },
+    created_date: {
+      type: 'string',
+      format: 'date-time',
+      readOnly: true,
+    },
+    created_by: {
+      type: 'string',
+      readOnly: true,
+    },
+    updated_date: {
+      type: 'string',
+      format: 'date-time',
+      readOnly: true,
+    },
+    updated_by: {
+      type: 'string',
+      readOnly: true,
+    },
+  },
+  required: ['skill_name'],
+} as const;
+
+export const ApiResponseUserSkillSchema = {
+  type: 'object',
+  properties: {
+    success: {
+      type: 'boolean',
+    },
+    data: {
+      $ref: '#/components/schemas/UserSkill',
+    },
+    message: {
+      type: 'string',
+    },
+    error: {},
+  },
+} as const;
+
+export const UserPortfolioItemSchema = {
+  type: 'object',
+  description: 'A portfolio item in the user-owned skills wallet',
+  properties: {
+    uuid: {
+      type: 'string',
+      format: 'uuid',
+      readOnly: true,
+    },
+    title: {
+      type: 'string',
+      maxLength: 255,
+      minLength: 0,
+    },
+    item_type: {
+      $ref: '#/components/schemas/ItemTypeEnum',
+    },
+    link_url: {
+      type: 'string',
+      maxLength: 2048,
+      minLength: 0,
+    },
+    completed_on: {
+      type: 'string',
+      format: 'date',
+    },
+    description: {
+      type: 'string',
+    },
+    user_uuid: {
+      type: 'string',
+      format: 'uuid',
+      readOnly: true,
+    },
+    created_date: {
+      type: 'string',
+      format: 'date-time',
+      readOnly: true,
+    },
+    created_by: {
+      type: 'string',
+      readOnly: true,
+    },
+    updated_date: {
+      type: 'string',
+      format: 'date-time',
+      readOnly: true,
+    },
+    updated_by: {
+      type: 'string',
+      readOnly: true,
+    },
+  },
+  required: ['item_type', 'title'],
+} as const;
+
+export const ApiResponseUserPortfolioItemSchema = {
+  type: 'object',
+  properties: {
+    success: {
+      type: 'boolean',
+    },
+    data: {
+      $ref: '#/components/schemas/UserPortfolioItem',
+    },
+    message: {
+      type: 'string',
+    },
+    error: {},
+  },
+} as const;
+
+export const UserMembershipSchema = {
+  type: 'object',
+  description: 'A professional membership on the user-owned professional profile',
+  properties: {
+    uuid: {
+      type: 'string',
+      format: 'uuid',
+      readOnly: true,
+    },
+    organisation_name: {
+      type: 'string',
+      maxLength: 255,
+      minLength: 0,
+    },
+    membership_number: {
+      type: 'string',
+      maxLength: 100,
+      minLength: 0,
+    },
+    start_date: {
+      type: 'string',
+      format: 'date',
+    },
+    end_date: {
+      type: 'string',
+      format: 'date',
+    },
+    is_active: {
+      type: 'boolean',
+    },
+    user_uuid: {
+      type: 'string',
+      format: 'uuid',
+      readOnly: true,
+    },
+    created_date: {
+      type: 'string',
+      format: 'date-time',
+      readOnly: true,
+    },
+    created_by: {
+      type: 'string',
+      readOnly: true,
+    },
+    updated_date: {
+      type: 'string',
+      format: 'date-time',
+      readOnly: true,
+    },
+    updated_by: {
+      type: 'string',
+      readOnly: true,
+    },
+  },
+  required: ['organisation_name'],
+} as const;
+
+export const ApiResponseUserMembershipSchema = {
+  type: 'object',
+  properties: {
+    success: {
+      type: 'boolean',
+    },
+    data: {
+      $ref: '#/components/schemas/UserMembership',
+    },
+    message: {
+      type: 'string',
+    },
+    error: {},
+  },
+} as const;
+
+export const UserExperienceSchema = {
+  type: 'object',
+  description: 'An experience record on the user-owned professional profile',
+  properties: {
+    uuid: {
+      type: 'string',
+      format: 'uuid',
+      readOnly: true,
+    },
+    position: {
+      type: 'string',
+      maxLength: 255,
+      minLength: 0,
+    },
+    organisation_name: {
+      type: 'string',
+      maxLength: 255,
+      minLength: 0,
+    },
+    responsibilities: {
+      type: 'string',
+    },
+    years_of_experience: {
+      type: 'number',
+      maximum: 60,
+      minimum: 0,
+    },
+    start_date: {
+      type: 'string',
+      format: 'date',
+    },
+    end_date: {
+      type: 'string',
+      format: 'date',
+    },
+    is_current_position: {
+      type: 'boolean',
+    },
+    experience_type: {
+      $ref: '#/components/schemas/ExperienceTypeEnum',
+    },
+    user_uuid: {
+      type: 'string',
+      format: 'uuid',
+      readOnly: true,
+    },
+    created_date: {
+      type: 'string',
+      format: 'date-time',
+      readOnly: true,
+    },
+    created_by: {
+      type: 'string',
+      readOnly: true,
+    },
+    updated_date: {
+      type: 'string',
+      format: 'date-time',
+      readOnly: true,
+    },
+    updated_by: {
+      type: 'string',
+      readOnly: true,
+    },
+  },
+  required: ['organisation_name', 'position'],
+} as const;
+
+export const ApiResponseUserExperienceSchema = {
+  type: 'object',
+  properties: {
+    success: {
+      type: 'boolean',
+    },
+    data: {
+      $ref: '#/components/schemas/UserExperience',
+    },
+    message: {
+      type: 'string',
+    },
+    error: {},
+  },
+} as const;
+
+export const UserEducationSchema = {
+  type: 'object',
+  description: 'An education record on the user-owned professional profile',
+  properties: {
+    uuid: {
+      type: 'string',
+      format: 'uuid',
+      readOnly: true,
+    },
+    qualification: {
+      type: 'string',
+      maxLength: 255,
+      minLength: 0,
+    },
+    field_of_study: {
+      type: 'string',
+      maxLength: 255,
+      minLength: 0,
+    },
+    school_name: {
+      type: 'string',
+      maxLength: 255,
+      minLength: 0,
+    },
+    start_year: {
+      type: 'integer',
+      format: 'int32',
+      maximum: 2100,
+      minimum: 1950,
+    },
+    year_completed: {
+      type: 'integer',
+      format: 'int32',
+      maximum: 2100,
+      minimum: 1950,
+    },
+    certificate_number: {
+      type: 'string',
+      maxLength: 100,
+      minLength: 0,
+    },
+    user_uuid: {
+      type: 'string',
+      format: 'uuid',
+      readOnly: true,
+    },
+    created_date: {
+      type: 'string',
+      format: 'date-time',
+      readOnly: true,
+    },
+    created_by: {
+      type: 'string',
+      readOnly: true,
+    },
+    updated_date: {
+      type: 'string',
+      format: 'date-time',
+      readOnly: true,
+    },
+    updated_by: {
+      type: 'string',
+      readOnly: true,
+    },
+  },
+  required: ['qualification', 'school_name'],
+} as const;
+
+export const ApiResponseUserEducationSchema = {
+  type: 'object',
+  properties: {
+    success: {
+      type: 'boolean',
+    },
+    data: {
+      $ref: '#/components/schemas/UserEducation',
+    },
+    message: {
+      type: 'string',
+    },
+    error: {},
+  },
+} as const;
+
+export const UserDocumentSchema = {
+  type: 'object',
+  description: 'A credential document on the user-owned professional profile',
+  properties: {
+    uuid: {
+      type: 'string',
+      format: 'uuid',
+      readOnly: true,
+    },
+    document_type_uuid: {
+      type: 'string',
+      format: 'uuid',
+    },
+    education_uuid: {
+      type: 'string',
+      format: 'uuid',
+    },
+    experience_uuid: {
+      type: 'string',
+      format: 'uuid',
+    },
+    membership_uuid: {
+      type: 'string',
+      format: 'uuid',
+    },
+    title: {
+      type: 'string',
+      maxLength: 255,
+      minLength: 0,
+    },
+    description: {
+      type: 'string',
+      maxLength: 2000,
+      minLength: 0,
+    },
+    status: {
+      $ref: '#/components/schemas/StatusEnum4',
+    },
+    expiry_date: {
+      type: 'string',
+      format: 'date',
+    },
+    user_uuid: {
+      type: 'string',
+      format: 'uuid',
+      readOnly: true,
+    },
+    original_filename: {
+      type: 'string',
+      readOnly: true,
+    },
+    stored_filename: {
+      type: 'string',
+      readOnly: true,
+    },
+    file_path: {
+      type: 'string',
+      readOnly: true,
+    },
+    file_size_bytes: {
+      type: 'integer',
+      format: 'int64',
+      readOnly: true,
+    },
+    mime_type: {
+      type: 'string',
+      readOnly: true,
+    },
+    file_hash: {
+      type: 'string',
+      readOnly: true,
+    },
+    upload_date: {
+      type: 'string',
+      format: 'date-time',
+      readOnly: true,
+    },
+    is_verified: {
+      type: 'boolean',
+      readOnly: true,
+    },
+    verified_by: {
+      type: 'string',
+      readOnly: true,
+    },
+    verified_at: {
+      type: 'string',
+      format: 'date-time',
+      readOnly: true,
+    },
+    verification_notes: {
+      type: 'string',
+      readOnly: true,
+    },
+    created_date: {
+      type: 'string',
+      format: 'date-time',
+      readOnly: true,
+    },
+    created_by: {
+      type: 'string',
+      readOnly: true,
+    },
+    updated_date: {
+      type: 'string',
+      format: 'date-time',
+      readOnly: true,
+    },
+    updated_by: {
+      type: 'string',
+      readOnly: true,
+    },
+    file_url: {
+      type: 'string',
+      readOnly: true,
+    },
+  },
+  required: ['document_type_uuid'],
+} as const;
+
+export const ApiResponseUserDocumentSchema = {
+  type: 'object',
+  properties: {
+    success: {
+      type: 'boolean',
+    },
+    data: {
+      $ref: '#/components/schemas/UserDocument',
+    },
+    message: {
+      type: 'string',
+    },
+    error: {},
+  },
+} as const;
+
+export const UserCompetencySchema = {
+  type: 'object',
+  description: 'A competency in the user-owned skills wallet',
+  properties: {
+    uuid: {
+      type: 'string',
+      format: 'uuid',
+      readOnly: true,
+    },
+    competency: {
+      type: 'string',
+      maxLength: 255,
+      minLength: 0,
+    },
+    framework: {
+      type: 'string',
+      maxLength: 255,
+      minLength: 0,
+    },
+    level: {
+      type: 'integer',
+      format: 'int32',
+      maximum: 5,
+      minimum: 1,
+    },
+    evidence: {
+      type: 'string',
+    },
+    user_uuid: {
+      type: 'string',
+      format: 'uuid',
+      readOnly: true,
+    },
+    verification_status: {
+      $ref: '#/components/schemas/VerificationStatusEnum',
+    },
+    verified_at: {
+      type: 'string',
+      format: 'date-time',
+      readOnly: true,
+    },
+    verification_notes: {
+      type: 'string',
+      readOnly: true,
+    },
+    created_date: {
+      type: 'string',
+      format: 'date-time',
+      readOnly: true,
+    },
+    created_by: {
+      type: 'string',
+      readOnly: true,
+    },
+    updated_date: {
+      type: 'string',
+      format: 'date-time',
+      readOnly: true,
+    },
+    updated_by: {
+      type: 'string',
+      readOnly: true,
+    },
+  },
+  required: ['competency'],
+} as const;
+
+export const ApiResponseUserCompetencySchema = {
+  type: 'object',
+  properties: {
+    success: {
+      type: 'boolean',
+    },
+    data: {
+      $ref: '#/components/schemas/UserCompetency',
+    },
+    message: {
+      type: 'string',
+    },
+    error: {},
+  },
+} as const;
+
+export const UserCertificationSchema = {
+  type: 'object',
+  description: 'A credential in the user-owned skills wallet',
+  properties: {
+    uuid: {
+      type: 'string',
+      format: 'uuid',
+      readOnly: true,
+    },
+    certification_name: {
+      type: 'string',
+      maxLength: 255,
+      minLength: 0,
+    },
+    issuing_organization: {
+      type: 'string',
+      maxLength: 255,
+      minLength: 0,
+    },
+    issued_date: {
+      type: 'string',
+      format: 'date',
+    },
+    expiry_date: {
+      type: 'string',
+      format: 'date',
+    },
+    credential_id: {
+      type: 'string',
+      maxLength: 120,
+      minLength: 0,
+    },
+    credential_url: {
+      type: 'string',
+      maxLength: 500,
+      minLength: 0,
+    },
+    description: {
+      type: 'string',
+    },
+    credential_type: {
+      $ref: '#/components/schemas/CredentialTypeEnum',
+    },
+    user_uuid: {
+      type: 'string',
+      format: 'uuid',
+      readOnly: true,
+    },
+    verification_status: {
+      $ref: '#/components/schemas/VerificationStatusEnum',
+    },
+    verified_at: {
+      type: 'string',
+      format: 'date-time',
+      readOnly: true,
+    },
+    verification_notes: {
+      type: 'string',
+      readOnly: true,
+    },
+    created_date: {
+      type: 'string',
+      format: 'date-time',
+      readOnly: true,
+    },
+    created_by: {
+      type: 'string',
+      readOnly: true,
+    },
+    updated_date: {
+      type: 'string',
+      format: 'date-time',
+      readOnly: true,
+    },
+    updated_by: {
+      type: 'string',
+      readOnly: true,
+    },
+  },
+  required: ['certification_name', 'issuing_organization'],
+} as const;
+
+export const ApiResponseUserCertificationSchema = {
+  type: 'object',
+  properties: {
+    success: {
+      type: 'boolean',
+    },
+    data: {
+      $ref: '#/components/schemas/UserCertification',
+    },
+    message: {
+      type: 'string',
+    },
+    error: {},
+  },
+} as const;
+
+export const UserAchievementSchema = {
+  type: 'object',
+  description: 'An achievement in the user-owned skills wallet',
+  properties: {
+    uuid: {
+      type: 'string',
+      format: 'uuid',
+      readOnly: true,
+    },
+    title: {
+      type: 'string',
+      maxLength: 255,
+      minLength: 0,
+    },
+    achievement_type: {
+      $ref: '#/components/schemas/AchievementTypeEnum',
+    },
+    awarded_by: {
+      type: 'string',
+      maxLength: 255,
+      minLength: 0,
+    },
+    awarded_on: {
+      type: 'string',
+      format: 'date',
+    },
+    description: {
+      type: 'string',
+    },
+    user_uuid: {
+      type: 'string',
+      format: 'uuid',
+      readOnly: true,
+    },
+    created_date: {
+      type: 'string',
+      format: 'date-time',
+      readOnly: true,
+    },
+    created_by: {
+      type: 'string',
+      readOnly: true,
+    },
+    updated_date: {
+      type: 'string',
+      format: 'date-time',
+      readOnly: true,
+    },
+    updated_by: {
+      type: 'string',
+      readOnly: true,
+    },
+  },
+  required: ['achievement_type', 'title'],
+} as const;
+
+export const ApiResponseUserAchievementSchema = {
+  type: 'object',
+  properties: {
+    success: {
+      type: 'boolean',
+    },
+    data: {
+      $ref: '#/components/schemas/UserAchievement',
+    },
+    message: {
+      type: 'string',
+    },
+    error: {},
+  },
+} as const;
+
 export const InstructorSchema = {
   type: 'object',
   description: 'Instructor profile including location data for educational service delivery',
@@ -3861,7 +4858,7 @@ export const InstructorSkillSchema = {
       minLength: 0,
     },
     proficiency_level: {
-      $ref: '#/components/schemas/ProficiencyLevelEnum',
+      $ref: '#/components/schemas/ProficiencyLevelEnum2',
     },
     skill_uuid: {
       type: 'string',
@@ -4069,14 +5066,6 @@ export const InstructorProfessionalMembershipSchema = {
       example: '4 years, 3 months',
       readOnly: true,
     },
-    membership_duration_months: {
-      type: ['integer', 'null'],
-      format: 'int32',
-      description:
-        '**[READ-ONLY]** Duration of membership calculated from start and end dates, in months.',
-      example: 51,
-      readOnly: true,
-    },
     membership_status: {
       $ref: '#/components/schemas/MembershipStatusEnum',
     },
@@ -4115,6 +5104,14 @@ export const InstructorProfessionalMembershipSchema = {
       description:
         '**[READ-ONLY]** Indicates if this membership was started within the last 3 years.',
       example: true,
+      readOnly: true,
+    },
+    membership_duration_months: {
+      type: ['integer', 'null'],
+      format: 'int32',
+      description:
+        '**[READ-ONLY]** Duration of membership calculated from start and end dates, in months.',
+      example: 51,
       readOnly: true,
     },
   },
@@ -4634,7 +5631,7 @@ export const InstructorDocumentSchema = {
       minLength: 0,
     },
     status: {
-      $ref: '#/components/schemas/StatusEnum4',
+      $ref: '#/components/schemas/StatusEnum5',
     },
     expiry_date: {
       type: ['string', 'null'],
@@ -4762,11 +5759,8 @@ export const InstructorDocumentSchema = {
         '/api/v1/instructors/i1s2t3r4-5u6c-7t8o-9r10-abcdefghijkl/documents/files/profile_documents/instructors/i1s2t3r4-5u6c-7t8o-9r10-abcdefghijkl/550e8400-e29b-41d4-a716-446655440000.pdf',
       readOnly: true,
     },
-    file_size_formatted: {
-      type: 'string',
-      description: '**[READ-ONLY]** Human-readable formatted file size.',
-      example: '2.0 MB',
-      readOnly: true,
+    verification_status: {
+      $ref: '#/components/schemas/VerificationStatusEnum2',
     },
     days_until_expiry: {
       type: ['integer', 'null'],
@@ -4788,8 +5782,11 @@ export const InstructorDocumentSchema = {
       example: true,
       readOnly: true,
     },
-    verification_status: {
-      $ref: '#/components/schemas/VerificationStatusEnum',
+    file_size_formatted: {
+      type: 'string',
+      description: '**[READ-ONLY]** Human-readable formatted file size.',
+      example: '2.0 MB',
+      readOnly: true,
     },
   },
   required: ['document_type_uuid', 'instructor_uuid', 'original_filename', 'title'],
@@ -5087,6 +6084,12 @@ export const CourseSchema = {
       maxLength: 255,
       minLength: 0,
     },
+    course_code: {
+      type: ['string', 'null'],
+      description: '**[OPTIONAL]** Short unique code for the course, stored upper case.',
+      example: 'MUS-101',
+      pattern: '^[A-Za-z0-9][A-Za-z0-9-]{1,29}$',
+    },
     course_creator_uuid: {
       type: 'string',
       format: 'uuid',
@@ -5140,18 +6143,27 @@ export const CourseSchema = {
       minLength: 0,
     },
     duration_hours: {
-      type: 'integer',
+      type: ['integer', 'null'],
       format: 'int32',
-      description: '**[REQUIRED]** Course duration in hours.',
+      description:
+        '**[OPTIONAL]** Legacy course duration in hours; course creators no longer set it.',
       example: 40,
       minimum: 0,
     },
     duration_minutes: {
-      type: 'integer',
+      type: ['integer', 'null'],
       format: 'int32',
-      description: '**[REQUIRED]** Additional course duration in minutes (0-59).',
+      description:
+        '**[OPTIONAL]** Legacy additional duration in minutes (0-59); course creators no longer set it.',
       example: 30,
       maximum: 59,
+      minimum: 0,
+    },
+    pass_mark: {
+      type: ['number', 'null'],
+      description: '**[OPTIONAL]** Final grade percentage a learner needs to pass the course.',
+      example: 80,
+      maximum: 100,
       minimum: 0,
     },
     class_limit: {
@@ -5240,7 +6252,7 @@ export const CourseSchema = {
       minLength: 0,
     },
     status: {
-      $ref: '#/components/schemas/SchemaEnum4',
+      $ref: '#/components/schemas/SchemaEnum6',
     },
     active: {
       type: 'boolean',
@@ -5365,8 +6377,6 @@ export const CourseSchema = {
   required: [
     'course_creator_uuid',
     'creator_share_percentage',
-    'duration_hours',
-    'duration_minutes',
     'instructor_share_percentage',
     'name',
     'status',
@@ -5490,7 +6500,7 @@ export const CourseSkillItemSchema = {
       format: 'uuid',
     },
     level: {
-      $ref: '#/components/schemas/LevelEnum',
+      $ref: '#/components/schemas/ProficiencyLevelEnum',
     },
     weight: {
       type: 'integer',
@@ -5554,7 +6564,7 @@ export const CourseSkillSchema = {
       type: 'string',
     },
     level: {
-      $ref: '#/components/schemas/LevelEnum',
+      $ref: '#/components/schemas/ProficiencyLevelEnum',
     },
     weight: {
       type: 'integer',
@@ -5780,7 +6790,7 @@ export const CourseTrainingApplicationSchema = {
       readOnly: true,
     },
     status: {
-      $ref: '#/components/schemas/StatusEnum5',
+      $ref: '#/components/schemas/StatusEnum6',
     },
     application_notes: {
       type: ['string', 'null'],
@@ -6312,7 +7322,7 @@ export const LessonPracticeActivitySchema = {
       minimum: 1,
     },
     status: {
-      $ref: '#/components/schemas/SchemaEnum4',
+      $ref: '#/components/schemas/SchemaEnum6',
     },
     active: {
       type: 'boolean',
@@ -6538,6 +7548,255 @@ export const ApiResponseLessonContentSchema = {
   },
 } as const;
 
+export const CourseEvaluationPlanCellSchema = {
+  type: 'object',
+  description: 'Turns one lesson x component cell on (with its rubric) or off',
+  properties: {
+    lesson_uuid: {
+      type: 'string',
+      format: 'uuid',
+    },
+    assessment_uuid: {
+      type: 'string',
+      format: 'uuid',
+    },
+    enabled: {
+      type: 'boolean',
+      description: 'false removes the cell from the plan ("None")',
+    },
+    rubric_uuid: {
+      type: 'string',
+      format: 'uuid',
+    },
+    quiz_uuid: {
+      type: 'string',
+      format: 'uuid',
+      description: 'Optional quiz from the same lesson that this cell grades',
+    },
+    assignment_uuid: {
+      type: 'string',
+      format: 'uuid',
+      description: 'Optional assignment from the same lesson that this cell grades',
+    },
+  },
+  required: ['assessment_uuid', 'lesson_uuid'],
+} as const;
+
+export const CourseEvaluationPlanUpdateSchema = {
+  type: 'object',
+  description: 'Cells to change; cells not listed are left as they are',
+  properties: {
+    cells: {
+      type: 'array',
+      items: {
+        $ref: '#/components/schemas/CourseEvaluationPlanCell',
+      },
+    },
+  },
+  required: ['cells'],
+} as const;
+
+export const ApiResponseCourseEvaluationPlanSchema = {
+  type: 'object',
+  properties: {
+    success: {
+      type: 'boolean',
+    },
+    data: {
+      $ref: '#/components/schemas/CourseEvaluationPlan',
+    },
+    message: {
+      type: 'string',
+    },
+    error: {},
+  },
+} as const;
+
+export const ComponentSchema = {
+  type: 'object',
+  properties: {
+    assessment_uuid: {
+      type: 'string',
+      format: 'uuid',
+    },
+    title: {
+      type: 'string',
+    },
+    assessment_type: {
+      type: 'string',
+    },
+    weight_percentage: {
+      type: 'number',
+    },
+    rubric_uuid: {
+      type: 'string',
+      format: 'uuid',
+    },
+    sync_class_attendance: {
+      type: 'boolean',
+    },
+  },
+} as const;
+
+export const CourseAssessmentLineItemSchema = {
+  type: 'object',
+  description: 'Gradebook line item nested under a weighted course assessment component',
+  example: {
+    uuid: 'li1a2n3e-4i5t-6e7m-8a9b-abcdefghijkl',
+    course_assessment_uuid: 'c1a2s3s4-5e6s-7s8m-9e10-abcdefghijkl',
+    title: 'Quiz 1',
+    description: 'Foundational knowledge check',
+    item_type: 'discussion',
+    quiz_uuid: 'q1u2i3z4-5u6u-7i8d-9q10-abcdefghijkl',
+    max_score: 20,
+    weight_percentage: 25,
+    display_order: 1,
+    active: true,
+    due_at: '2024-04-20T09:00:00',
+  },
+  properties: {
+    uuid: {
+      type: 'string',
+      format: 'uuid',
+      readOnly: true,
+    },
+    course_assessment_uuid: {
+      type: 'string',
+      format: 'uuid',
+    },
+    title: {
+      type: 'string',
+      maxLength: 255,
+      minLength: 0,
+    },
+    description: {
+      type: 'string',
+      maxLength: 1000,
+      minLength: 0,
+    },
+    item_type: {
+      $ref: '#/components/schemas/ItemTypeEnum2',
+    },
+    assignment_uuid: {
+      type: 'string',
+      format: 'uuid',
+    },
+    quiz_uuid: {
+      type: 'string',
+      format: 'uuid',
+    },
+    rubric_uuid: {
+      type: 'string',
+      format: 'uuid',
+    },
+    scheduled_instance_uuid: {
+      type: 'string',
+      format: 'uuid',
+    },
+    max_score: {
+      type: 'number',
+      minimum: 0.01,
+    },
+    weight_percentage: {
+      type: 'number',
+      maximum: 100,
+      minimum: 0.01,
+    },
+    display_order: {
+      type: 'integer',
+      format: 'int32',
+    },
+    active: {
+      type: 'boolean',
+    },
+    due_at: {
+      type: 'string',
+      format: 'date-time',
+    },
+    lesson_uuid: {
+      type: 'string',
+      format: 'uuid',
+      description: '**[OPTIONAL]** Lesson this item grades, for a per-lesson component.',
+    },
+    created_date: {
+      type: 'string',
+      format: 'date-time',
+      readOnly: true,
+    },
+    created_by: {
+      type: 'string',
+      readOnly: true,
+    },
+    updated_date: {
+      type: 'string',
+      format: 'date-time',
+      readOnly: true,
+    },
+    updated_by: {
+      type: 'string',
+      readOnly: true,
+    },
+    item_type_display: {
+      type: 'string',
+      example: 'Quiz line item',
+      readOnly: true,
+    },
+  },
+  required: ['item_type', 'title'],
+} as const;
+
+export const CourseEvaluationPlanSchema = {
+  type: 'object',
+  description:
+    'Lessons by per-lesson assessment components; each cell is the line item grading that lesson, or null',
+  properties: {
+    course_uuid: {
+      type: 'string',
+      format: 'uuid',
+    },
+    pass_mark: {
+      type: 'number',
+    },
+    components: {
+      type: 'array',
+      items: {
+        $ref: '#/components/schemas/Component',
+      },
+    },
+    lessons: {
+      type: 'array',
+      items: {
+        $ref: '#/components/schemas/LessonRow',
+      },
+    },
+  },
+} as const;
+
+export const LessonRowSchema = {
+  type: 'object',
+  properties: {
+    lesson_uuid: {
+      type: 'string',
+      format: 'uuid',
+    },
+    lesson_number: {
+      type: 'integer',
+      format: 'int32',
+    },
+    title: {
+      type: 'string',
+    },
+    cells: {
+      type: 'array',
+      description:
+        'One entry per component, in component order; null where the lesson is not graded',
+      items: {
+        $ref: '#/components/schemas/CourseAssessmentLineItem',
+      },
+    },
+  },
+} as const;
+
 export const CourseAssessmentSchema = {
   type: 'object',
   description: 'Course-level assessment component with weighting for final grade calculation',
@@ -6628,6 +7887,17 @@ export const CourseAssessmentSchema = {
       description: '**[OPTIONAL]** Indicates if this assessment is required for course completion.',
       example: true,
     },
+    per_lesson: {
+      type: 'boolean',
+      description:
+        '**[OPTIONAL]** Graded lesson by lesson: each lesson gets its own cell in the evaluation plan.',
+    },
+    program_assessment_uuid: {
+      type: 'string',
+      format: 'uuid',
+      description:
+        '**[OPTIONAL]** Program component this course component feeds, for a course inside a program',
+    },
     created_date: {
       type: 'string',
       format: 'date-time',
@@ -6707,108 +7977,6 @@ export const ApiResponseCourseAssessmentSchema = {
     },
     error: {},
   },
-} as const;
-
-export const CourseAssessmentLineItemSchema = {
-  type: 'object',
-  description: 'Gradebook line item nested under a weighted course assessment component',
-  example: {
-    uuid: 'li1a2n3e-4i5t-6e7m-8a9b-abcdefghijkl',
-    course_assessment_uuid: 'c1a2s3s4-5e6s-7s8m-9e10-abcdefghijkl',
-    title: 'Quiz 1',
-    description: 'Foundational knowledge check',
-    item_type: 'discussion',
-    quiz_uuid: 'q1u2i3z4-5u6u-7i8d-9q10-abcdefghijkl',
-    max_score: 20,
-    weight_percentage: 25,
-    display_order: 1,
-    active: true,
-    due_at: '2024-04-20T09:00:00',
-  },
-  properties: {
-    uuid: {
-      type: 'string',
-      format: 'uuid',
-      readOnly: true,
-    },
-    course_assessment_uuid: {
-      type: 'string',
-      format: 'uuid',
-    },
-    title: {
-      type: 'string',
-      maxLength: 255,
-      minLength: 0,
-    },
-    description: {
-      type: 'string',
-      maxLength: 1000,
-      minLength: 0,
-    },
-    item_type: {
-      $ref: '#/components/schemas/ItemTypeEnum',
-    },
-    assignment_uuid: {
-      type: 'string',
-      format: 'uuid',
-    },
-    quiz_uuid: {
-      type: 'string',
-      format: 'uuid',
-    },
-    rubric_uuid: {
-      type: 'string',
-      format: 'uuid',
-    },
-    scheduled_instance_uuid: {
-      type: 'string',
-      format: 'uuid',
-    },
-    max_score: {
-      type: 'number',
-      minimum: 0.01,
-    },
-    weight_percentage: {
-      type: 'number',
-      maximum: 100,
-      minimum: 0.01,
-    },
-    display_order: {
-      type: 'integer',
-      format: 'int32',
-    },
-    active: {
-      type: 'boolean',
-    },
-    due_at: {
-      type: 'string',
-      format: 'date-time',
-    },
-    created_date: {
-      type: 'string',
-      format: 'date-time',
-      readOnly: true,
-    },
-    created_by: {
-      type: 'string',
-      readOnly: true,
-    },
-    updated_date: {
-      type: 'string',
-      format: 'date-time',
-      readOnly: true,
-    },
-    updated_by: {
-      type: 'string',
-      readOnly: true,
-    },
-    item_type_display: {
-      type: 'string',
-      example: 'Quiz line item',
-      readOnly: true,
-    },
-  },
-  required: ['item_type', 'title'],
 } as const;
 
 export const ApiResponseCourseAssessmentLineItemSchema = {
@@ -6939,7 +8107,7 @@ export const CourseAssessmentLineItemRubricEvaluationSchema = {
       format: 'uuid',
     },
     status: {
-      $ref: '#/components/schemas/StatusEnum6',
+      $ref: '#/components/schemas/StatusEnum7',
     },
     score: {
       type: 'number',
@@ -7183,6 +8351,7 @@ export const CourseCreatorSkillSchema = {
     uuid: 'skill123-4567-89ab-cdef-0123456789ab',
     course_creator_uuid: 'c1r2e3a4-5t6o-7r89-0abc-defghijklmno',
     skill_name: 'Instructional Design',
+    skill_uuid: '8e63c021-f640-4e7f-9f89-4d219f2d1ef0',
     proficiency_level: 'EXPERT',
     created_date: '2024-06-15T14:30:22',
     created_by: 'creator@example.com',
@@ -7205,7 +8374,32 @@ export const CourseCreatorSkillSchema = {
       minLength: 0,
     },
     proficiency_level: {
-      $ref: '#/components/schemas/LevelEnum',
+      $ref: '#/components/schemas/ProficiencyLevelEnum',
+    },
+    evidence: {
+      type: 'string',
+      description: 'Link to or description of evidence for the skill',
+    },
+    last_assessed_on: {
+      type: 'string',
+      format: 'date',
+    },
+    skill_uuid: {
+      type: 'string',
+      format: 'uuid',
+      readOnly: true,
+    },
+    verification_status: {
+      $ref: '#/components/schemas/VerificationStatusEnum',
+    },
+    verified_at: {
+      type: 'string',
+      format: 'date-time',
+      readOnly: true,
+    },
+    verification_notes: {
+      type: 'string',
+      readOnly: true,
     },
     created_date: {
       type: 'string',
@@ -7245,6 +8439,65 @@ export const ApiResponseCourseCreatorSkillSchema = {
     },
     data: {
       $ref: '#/components/schemas/CourseCreatorSkill',
+    },
+    message: {
+      type: 'string',
+    },
+    error: {},
+  },
+} as const;
+
+export const CourseCreatorPortfolioItemSchema = {
+  type: 'object',
+  description: 'Work a course creator shows in the Portfolio tab of the skills wallet',
+  properties: {
+    uuid: {
+      type: 'string',
+      format: 'uuid',
+      readOnly: true,
+    },
+    title: {
+      type: 'string',
+      maxLength: 255,
+      minLength: 0,
+    },
+    item_type: {
+      $ref: '#/components/schemas/ItemTypeEnum',
+    },
+    link_url: {
+      type: 'string',
+      maxLength: 2048,
+      minLength: 0,
+    },
+    completed_on: {
+      type: 'string',
+      format: 'date',
+    },
+    description: {
+      type: 'string',
+    },
+    course_creator_uuid: {
+      type: 'string',
+      format: 'uuid',
+      readOnly: true,
+    },
+    created_date: {
+      type: 'string',
+      format: 'date-time',
+      readOnly: true,
+    },
+  },
+  required: ['item_type', 'title'],
+} as const;
+
+export const ApiResponseCourseCreatorPortfolioItemSchema = {
+  type: 'object',
+  properties: {
+    success: {
+      type: 'boolean',
+    },
+    data: {
+      $ref: '#/components/schemas/CourseCreatorPortfolioItem',
     },
     message: {
       type: 'string',
@@ -7391,6 +8644,9 @@ export const CourseCreatorExperienceSchema = {
     },
     is_current_position: {
       type: 'boolean',
+    },
+    experience_type: {
+      $ref: '#/components/schemas/ExperienceTypeEnum',
     },
     created_date: {
       type: 'string',
@@ -7579,7 +8835,7 @@ export const CourseCreatorDocumentDTOSchema = {
       minLength: 0,
     },
     status: {
-      $ref: '#/components/schemas/StatusEnum7',
+      $ref: '#/components/schemas/StatusEnum4',
     },
     expiry_date: {
       type: 'string',
@@ -7661,11 +8917,8 @@ export const CourseCreatorDocumentDTOSchema = {
         '/api/v1/course-creators/c1e2a3t4-5o6r-7c8r-9e10-abcdefghijkl/documents/files/profile_documents/course-creators/c1e2a3t4-5o6r-7c8r-9e10-abcdefghijkl/550e8400-e29b-41d4-a716-446655440000.pdf',
       readOnly: true,
     },
-    file_size_formatted: {
-      type: 'string',
-      description: '**[READ-ONLY]** Human-readable formatted file size.',
-      example: '2.0 MB',
-      readOnly: true,
+    verification_status: {
+      $ref: '#/components/schemas/VerificationStatusEnum2',
     },
     days_until_expiry: {
       type: ['integer', 'null'],
@@ -7687,8 +8940,11 @@ export const CourseCreatorDocumentDTOSchema = {
       example: true,
       readOnly: true,
     },
-    verification_status: {
-      $ref: '#/components/schemas/VerificationStatusEnum',
+    file_size_formatted: {
+      type: 'string',
+      description: '**[READ-ONLY]** Human-readable formatted file size.',
+      example: '2.0 MB',
+      readOnly: true,
     },
   },
   required: ['course_creator_uuid', 'document_type_uuid', 'original_filename'],
@@ -7702,6 +8958,76 @@ export const ApiResponseCourseCreatorDocumentDTOSchema = {
     },
     data: {
       $ref: '#/components/schemas/CourseCreatorDocumentDTO',
+    },
+    message: {
+      type: 'string',
+    },
+    error: {},
+  },
+} as const;
+
+export const CourseCreatorCompetencySchema = {
+  type: 'object',
+  description: 'A competency against a framework, with evidence an admin verifies',
+  properties: {
+    uuid: {
+      type: 'string',
+      format: 'uuid',
+      readOnly: true,
+    },
+    competency: {
+      type: 'string',
+      maxLength: 255,
+      minLength: 0,
+    },
+    framework: {
+      type: 'string',
+      maxLength: 255,
+      minLength: 0,
+    },
+    level: {
+      type: 'integer',
+      format: 'int32',
+      maximum: 5,
+      minimum: 1,
+    },
+    evidence: {
+      type: 'string',
+    },
+    course_creator_uuid: {
+      type: 'string',
+      format: 'uuid',
+      readOnly: true,
+    },
+    verification_status: {
+      $ref: '#/components/schemas/VerificationStatusEnum',
+    },
+    verified_at: {
+      type: 'string',
+      format: 'date-time',
+      readOnly: true,
+    },
+    verification_notes: {
+      type: 'string',
+      readOnly: true,
+    },
+    created_date: {
+      type: 'string',
+      format: 'date-time',
+      readOnly: true,
+    },
+  },
+  required: ['competency'],
+} as const;
+
+export const ApiResponseCourseCreatorCompetencySchema = {
+  type: 'object',
+  properties: {
+    success: {
+      type: 'boolean',
+    },
+    data: {
+      $ref: '#/components/schemas/CourseCreatorCompetency',
     },
     message: {
       type: 'string',
@@ -7767,8 +9093,13 @@ export const CourseCreatorCertificationSchema = {
     description: {
       type: 'string',
     },
+    credential_type: {
+      $ref: '#/components/schemas/CredentialTypeEnum',
+    },
     is_verified: {
       type: 'boolean',
+      description: 'Set by a platform admin when the credential is checked',
+      readOnly: true,
     },
     created_date: {
       type: 'string',
@@ -7809,6 +9140,153 @@ export const ApiResponseCourseCreatorCertificationSchema = {
       type: 'string',
     },
     error: {},
+  },
+} as const;
+
+export const CourseCreatorAchievementSchema = {
+  type: 'object',
+  description: 'An award, milestone or recognition in the skills wallet',
+  properties: {
+    uuid: {
+      type: 'string',
+      format: 'uuid',
+      readOnly: true,
+    },
+    title: {
+      type: 'string',
+      maxLength: 255,
+      minLength: 0,
+    },
+    achievement_type: {
+      $ref: '#/components/schemas/AchievementTypeEnum',
+    },
+    awarded_by: {
+      type: 'string',
+      maxLength: 255,
+      minLength: 0,
+    },
+    awarded_on: {
+      type: 'string',
+      format: 'date',
+    },
+    description: {
+      type: 'string',
+    },
+    course_creator_uuid: {
+      type: 'string',
+      format: 'uuid',
+      readOnly: true,
+    },
+    created_date: {
+      type: 'string',
+      format: 'date-time',
+      readOnly: true,
+    },
+  },
+  required: ['achievement_type', 'title'],
+} as const;
+
+export const ApiResponseCourseCreatorAchievementSchema = {
+  type: 'object',
+  properties: {
+    success: {
+      type: 'boolean',
+    },
+    data: {
+      $ref: '#/components/schemas/CourseCreatorAchievement',
+    },
+    message: {
+      type: 'string',
+    },
+    error: {},
+  },
+} as const;
+
+export const CourseCreatorCategoriesRequestSchema = {
+  type: 'object',
+  properties: {
+    category_uuids: {
+      type: 'array',
+      items: {
+        type: 'string',
+        format: 'uuid',
+      },
+    },
+  },
+  required: ['category_uuids'],
+} as const;
+
+export const ApiResponseCourseCreatorOnboardingStateDTOSchema = {
+  type: 'object',
+  properties: {
+    success: {
+      type: 'boolean',
+    },
+    data: {
+      $ref: '#/components/schemas/CourseCreatorOnboardingStateDTO',
+    },
+    message: {
+      type: 'string',
+    },
+    error: {},
+  },
+} as const;
+
+export const CourseCreatorCategoryPreferenceDTOSchema = {
+  type: 'object',
+  properties: {
+    category_uuid: {
+      type: 'string',
+      format: 'uuid',
+    },
+  },
+} as const;
+
+export const CourseCreatorOnboardingStateDTOSchema = {
+  type: 'object',
+  properties: {
+    course_creator_uuid: {
+      type: 'string',
+      format: 'uuid',
+    },
+    categories: {
+      type: 'array',
+      items: {
+        $ref: '#/components/schemas/CourseCreatorCategoryPreferenceDTO',
+      },
+    },
+    skills_wallet_sections_completed: {
+      type: 'integer',
+      format: 'int32',
+    },
+    skills_wallet_sections_total: {
+      type: 'integer',
+      format: 'int32',
+    },
+    verification_status: {
+      $ref: '#/components/schemas/VerificationStatusEnum3',
+    },
+    admin_verified: {
+      type: 'boolean',
+    },
+    verification_requested_at: {
+      type: 'string',
+      format: 'date-time',
+    },
+    submitted_at: {
+      type: 'string',
+      format: 'date-time',
+    },
+    reviewed_at: {
+      type: 'string',
+      format: 'date-time',
+    },
+    review_reason: {
+      type: 'string',
+    },
+    ready_for_submission: {
+      type: 'boolean',
+    },
   },
 } as const;
 
@@ -8242,17 +9720,17 @@ export const CategorySchema = {
       example: 'admin@sarafrika.com',
       readOnly: true,
     },
+    is_root_category: {
+      type: 'boolean',
+      description: '**[READ-ONLY]** Indicates if this is a root category with no parent.',
+      example: false,
+      readOnly: true,
+    },
     category_path: {
       type: 'string',
       description:
         '**[READ-ONLY]** Hierarchical path showing category position in the tree structure.',
       example: 'Technology > Programming',
-      readOnly: true,
-    },
-    is_root_category: {
-      type: 'boolean',
-      description: '**[READ-ONLY]** Indicates if this is a root category with no parent.',
-      example: false,
       readOnly: true,
     },
   },
@@ -9722,7 +11200,7 @@ export const ClassMarketplaceJobRequiredSkillItemSchema = {
       format: 'uuid',
     },
     min_proficiency: {
-      $ref: '#/components/schemas/LevelEnum',
+      $ref: '#/components/schemas/ProficiencyLevelEnum',
     },
     is_mandatory: {
       type: 'boolean',
@@ -9779,7 +11257,7 @@ export const ClassMarketplaceJobRequiredSkillSchema = {
       type: 'string',
     },
     min_proficiency: {
-      $ref: '#/components/schemas/LevelEnum',
+      $ref: '#/components/schemas/ProficiencyLevelEnum',
     },
     is_mandatory: {
       type: 'boolean',
@@ -10952,25 +12430,6 @@ export const ScheduledInstanceSchema = {
       example: 90,
       readOnly: true,
     },
-    duration_formatted: {
-      type: 'string',
-      description: '**[READ-ONLY]** Human-readable formatted duration.',
-      example: '1h 30m',
-      readOnly: true,
-    },
-    time_range: {
-      type: 'string',
-      description: '**[READ-ONLY]** Human-readable date and time range.',
-      example: '2024-09-15 09:00 - 10:30',
-      readOnly: true,
-    },
-    is_currently_active: {
-      type: 'boolean',
-      description:
-        '**[READ-ONLY]** Indicates if the scheduled instance is currently active (ongoing).',
-      example: false,
-      readOnly: true,
-    },
     can_be_cancelled: {
       type: 'boolean',
       description: '**[READ-ONLY]** Indicates if the scheduled instance can be cancelled.',
@@ -10987,6 +12446,25 @@ export const ScheduledInstanceSchema = {
       type: 'boolean',
       description:
         '**[READ-ONLY]** Indicates if the scheduled instance can be explicitly concluded.',
+      example: false,
+      readOnly: true,
+    },
+    duration_formatted: {
+      type: 'string',
+      description: '**[READ-ONLY]** Human-readable formatted duration.',
+      example: '1h 30m',
+      readOnly: true,
+    },
+    time_range: {
+      type: 'string',
+      description: '**[READ-ONLY]** Human-readable date and time range.',
+      example: '2024-09-15 09:00 - 10:30',
+      readOnly: true,
+    },
+    is_currently_active: {
+      type: 'boolean',
+      description:
+        '**[READ-ONLY]** Indicates if the scheduled instance is currently active (ongoing).',
       example: false,
       readOnly: true,
     },
@@ -11035,6 +12513,199 @@ export const PeriodSchema = {
     },
   },
   required: ['end_time', 'start_time'],
+} as const;
+
+export const ApiResponseStudentGuardianSchema = {
+  type: 'object',
+  properties: {
+    success: {
+      type: 'boolean',
+    },
+    data: {
+      $ref: '#/components/schemas/StudentGuardian',
+    },
+    message: {
+      type: 'string',
+    },
+    error: {},
+  },
+} as const;
+
+export const StudentGuardianSchema = {
+  type: 'object',
+  description: "A student's guardian with link or invitation status.",
+  properties: {
+    uuid: {
+      type: ['string', 'null'],
+      format: 'uuid',
+      description:
+        'Guardian entry id, used to resend an invitation. Null for a guardian linked outside onboarding (for example through organisation consent).',
+    },
+    student_uuid: {
+      type: 'string',
+      format: 'uuid',
+      description: 'The student profile',
+    },
+    name: {
+      type: 'string',
+      description: "Guardian's name",
+      example: 'Mary Doe',
+    },
+    email: {
+      type: 'string',
+      description: "Guardian's email",
+      example: 'mary@example.com',
+    },
+    phone: {
+      type: ['string', 'null'],
+      description: "Guardian's mobile number",
+    },
+    relationship_type: {
+      $ref: '#/components/schemas/RelationshipTypeEnum2',
+    },
+    status: {
+      $ref: '#/components/schemas/StatusEnum10',
+    },
+    guardian_user_uuid: {
+      type: ['string', 'null'],
+      format: 'uuid',
+      description: "Guardian's account, once known",
+    },
+    link_uuid: {
+      type: ['string', 'null'],
+      format: 'uuid',
+      description: 'The guardian link granting access, once linked',
+    },
+    invitation_sent_at: {
+      type: ['string', 'null'],
+      format: 'date-time',
+      description: 'When the latest invitation was emailed',
+    },
+    invitation_expires_at: {
+      type: ['string', 'null'],
+      format: 'date-time',
+      description: 'When the latest invitation lapses',
+    },
+    linked_at: {
+      type: ['string', 'null'],
+      format: 'date-time',
+      description: 'When access was granted',
+    },
+  },
+} as const;
+
+export const ApiResponseVoidSchema = {
+  type: 'object',
+  properties: {
+    success: {
+      type: 'boolean',
+    },
+    data: {},
+    message: {
+      type: 'string',
+    },
+    error: {},
+  },
+} as const;
+
+export const ApiResponseGuardianStudentLinkSchema = {
+  type: 'object',
+  properties: {
+    success: {
+      type: 'boolean',
+    },
+    data: {
+      $ref: '#/components/schemas/GuardianStudentLink',
+    },
+    message: {
+      type: 'string',
+    },
+    error: {},
+  },
+} as const;
+
+export const GuardianStudentLinkSchema = {
+  type: 'object',
+  description: "Represents a guardian's access rights to a learner profile.",
+  properties: {
+    uuid: {
+      type: 'string',
+      format: 'uuid',
+    },
+    student_uuid: {
+      type: 'string',
+      format: 'uuid',
+    },
+    guardian_user_uuid: {
+      type: 'string',
+      format: 'uuid',
+    },
+    student_name: {
+      type: 'string',
+    },
+    guardian_display_name: {
+      type: 'string',
+    },
+    relationship_type: {
+      $ref: '#/components/schemas/RelationshipTypeEnum2',
+    },
+    share_scope: {
+      $ref: '#/components/schemas/ShareScopeEnum',
+    },
+    status: {
+      $ref: '#/components/schemas/StatusEnum11',
+    },
+    primary_guardian: {
+      type: 'boolean',
+    },
+    linked_date: {
+      type: 'string',
+      format: 'date-time',
+    },
+    revoked_date: {
+      type: 'string',
+      format: 'date-time',
+    },
+    notes: {
+      type: 'string',
+    },
+  },
+} as const;
+
+export const GuardianInvitationRegistrationRequestSchema = {
+  type: 'object',
+  description:
+    'Details an invited guardian supplies to create their account from the invitation link.',
+  properties: {
+    first_name: {
+      type: 'string',
+      description: '**[REQUIRED]** First name',
+      example: 'Mary',
+      maxLength: 100,
+      minLength: 0,
+    },
+    last_name: {
+      type: 'string',
+      description: '**[REQUIRED]** Last name',
+      example: 'Doe',
+      maxLength: 100,
+      minLength: 0,
+    },
+    phone_number: {
+      type: ['string', 'null'],
+      description: '**[OPTIONAL]** Mobile number',
+      example: '+254712345678',
+      maxLength: 20,
+      minLength: 0,
+      pattern: '^(\\+254|0)?[17]\\d{8}$',
+    },
+    terms_accepted: {
+      type: 'boolean',
+      description: '**[REQUIRED]** Terms of use accepted',
+      example: true,
+    },
+  },
+  required: ['first_name', 'last_name', 'terms_accepted'],
 } as const;
 
 export const AddGroupMembersRequestSchema = {
@@ -11132,6 +12803,158 @@ export const ApiResponseObjectSchema = {
       type: 'string',
     },
     error: {},
+  },
+} as const;
+
+export const RegistrationRequestSchema = {
+  type: 'object',
+  description: `Starts a self-registration. Personal details are written to Keycloak only; Elimika records the
+chosen domain, which a platform admin approves before any dashboard opens. Keycloak then emails
+a link to set a password and verify the address.
+`,
+  properties: {
+    first_name: {
+      type: 'string',
+      maxLength: 50,
+      minLength: 0,
+    },
+    middle_name: {
+      type: 'string',
+      maxLength: 50,
+      minLength: 0,
+    },
+    last_name: {
+      type: 'string',
+      maxLength: 50,
+      minLength: 0,
+    },
+    email: {
+      type: 'string',
+      format: 'email',
+      maxLength: 50,
+      minLength: 0,
+    },
+    phone_number: {
+      type: 'string',
+      minLength: 1,
+      pattern: '^\\+?[0-9 ]{7,20}$',
+    },
+    dob: {
+      type: 'string',
+      format: 'date',
+    },
+    gender: {
+      $ref: '#/components/schemas/GenderEnum2',
+    },
+    domain: {
+      $ref: '#/components/schemas/DomainEnum',
+    },
+    terms_accepted: {
+      type: 'boolean',
+    },
+    captcha_token: {
+      type: 'string',
+      description: 'Turnstile token, required when captcha verification is enabled',
+    },
+  },
+  required: ['domain', 'email', 'first_name', 'last_name', 'phone_number'],
+} as const;
+
+export const ApiResponseRegistrationAcceptedSchema = {
+  type: 'object',
+  properties: {
+    success: {
+      type: 'boolean',
+    },
+    data: {
+      $ref: '#/components/schemas/RegistrationAccepted',
+    },
+    message: {
+      type: 'string',
+    },
+    error: {},
+  },
+} as const;
+
+export const RegistrationAcceptedSchema = {
+  type: 'object',
+  properties: {
+    message: {
+      type: 'string',
+      example: 'If the address can be registered, a link to set your password is on its way.',
+    },
+  },
+} as const;
+
+export const RegistrationResendRequestSchema = {
+  type: 'object',
+  description: 'Asks for the set-password email again',
+  properties: {
+    email: {
+      type: 'string',
+      format: 'email',
+      minLength: 1,
+    },
+    captcha_token: {
+      type: 'string',
+    },
+  },
+  required: ['email'],
+} as const;
+
+export const DomainApplicationRequestSchema = {
+  type: 'object',
+  description: 'A signed-in account asking for another domain',
+  properties: {
+    domain: {
+      $ref: '#/components/schemas/DomainEnum',
+    },
+  },
+  required: ['domain'],
+} as const;
+
+export const ApiResponseDomainApplicationSchema = {
+  type: 'object',
+  properties: {
+    success: {
+      type: 'boolean',
+    },
+    data: {
+      $ref: '#/components/schemas/DomainApplication',
+    },
+    message: {
+      type: 'string',
+    },
+    error: {},
+  },
+} as const;
+
+export const DomainApplicationSchema = {
+  type: 'object',
+  description: 'A domain a user holds or has asked for, with its approval state',
+  properties: {
+    user_uuid: {
+      type: 'string',
+      format: 'uuid',
+    },
+    domain: {
+      type: 'string',
+      example: 'course_creator',
+    },
+    status: {
+      $ref: '#/components/schemas/SchemaEnum12',
+    },
+    requested_at: {
+      type: 'string',
+      format: 'date-time',
+    },
+    reviewed_at: {
+      type: 'string',
+      format: 'date-time',
+    },
+    review_reason: {
+      type: 'string',
+    },
   },
 } as const;
 
@@ -11329,7 +13152,7 @@ export const TrainingRateUpdateSchema = {
       readOnly: true,
     },
     status: {
-      $ref: '#/components/schemas/StatusEnum10',
+      $ref: '#/components/schemas/StatusEnum12',
     },
     application_uuid: {
       type: 'string',
@@ -11574,20 +13397,6 @@ export const ApiResponseProgramReviewSchema = {
   },
 } as const;
 
-export const ApiResponseVoidSchema = {
-  type: 'object',
-  properties: {
-    success: {
-      type: 'boolean',
-    },
-    data: {},
-    message: {
-      type: 'string',
-    },
-    error: {},
-  },
-} as const;
-
 export const ApiResponseOrganisationDocumentSchema = {
   type: 'object',
   properties: {
@@ -11665,7 +13474,7 @@ export const OrganisationDocumentSchema = {
       readOnly: true,
     },
     status: {
-      $ref: '#/components/schemas/StatusEnum7',
+      $ref: '#/components/schemas/StatusEnum4',
     },
     expiry_date: {
       type: 'string',
@@ -11748,7 +13557,7 @@ export const CreateSkillsFundTransactionRequestSchema = {
       description: 'Type: Allocation, Disbursement, Adjustment. Defaults to Allocation.',
     },
     status: {
-      $ref: '#/components/schemas/StatusEnum11',
+      $ref: '#/components/schemas/StatusEnum13',
     },
     transaction_date: {
       type: 'string',
@@ -11814,7 +13623,7 @@ export const SkillsFundTransactionSchema = {
       description: 'Type: Allocation, Disbursement, Adjustment.',
     },
     status: {
-      $ref: '#/components/schemas/StatusEnum11',
+      $ref: '#/components/schemas/StatusEnum13',
     },
     transaction_date: {
       type: ['string', 'null'],
@@ -12335,7 +14144,7 @@ export const InstructorObligationSchema = {
       description: 'Currency the obligation was accrued in',
     },
     status: {
-      $ref: '#/components/schemas/SchemaEnum6',
+      $ref: '#/components/schemas/SchemaEnum8',
     },
     accrued_at: {
       type: 'string',
@@ -12563,7 +14372,7 @@ export const NotificationDTOSchema = {
       $ref: '#/components/schemas/PresentationEnum',
     },
     status: {
-      $ref: '#/components/schemas/StatusEnum12',
+      $ref: '#/components/schemas/StatusEnum14',
     },
     title: {
       type: 'string',
@@ -12699,7 +14508,7 @@ export const GuardianDetailsRequestSchema = {
       minLength: 0,
     },
     guardian_relationship_type: {
-      $ref: '#/components/schemas/GuardianRelationshipTypeEnum',
+      $ref: '#/components/schemas/RelationshipTypeEnum2',
     },
     guardian_phone: {
       type: ['string', 'null'],
@@ -12935,54 +14744,6 @@ export const ApiResponseInstructorReviewSchema = {
   },
 } as const;
 
-export const GuardianStudentLinkSchema = {
-  type: 'object',
-  description: "Represents a guardian's access rights to a learner profile.",
-  properties: {
-    uuid: {
-      type: 'string',
-      format: 'uuid',
-    },
-    student_uuid: {
-      type: 'string',
-      format: 'uuid',
-    },
-    guardian_user_uuid: {
-      type: 'string',
-      format: 'uuid',
-    },
-    student_name: {
-      type: 'string',
-    },
-    guardian_display_name: {
-      type: 'string',
-    },
-    relationship_type: {
-      $ref: '#/components/schemas/GuardianRelationshipTypeEnum',
-    },
-    share_scope: {
-      $ref: '#/components/schemas/ShareScopeEnum',
-    },
-    status: {
-      $ref: '#/components/schemas/StatusEnum13',
-    },
-    primary_guardian: {
-      type: 'boolean',
-    },
-    linked_date: {
-      type: 'string',
-      format: 'date-time',
-    },
-    revoked_date: {
-      type: 'string',
-      format: 'date-time',
-    },
-    notes: {
-      type: 'string',
-    },
-  },
-} as const;
-
 export const GuardianStudentLinkRequestSchema = {
   type: 'object',
   description: 'Request payload to link a guardian/parent to a learner profile.',
@@ -12998,7 +14759,7 @@ export const GuardianStudentLinkRequestSchema = {
       description: "UUID for the guardian's user account",
     },
     relationship_type: {
-      $ref: '#/components/schemas/GuardianRelationshipTypeEnum',
+      $ref: '#/components/schemas/RelationshipTypeEnum2',
     },
     share_scope: {
       $ref: '#/components/schemas/ShareScopeEnum',
@@ -13014,22 +14775,6 @@ export const GuardianStudentLinkRequestSchema = {
     },
   },
   required: ['guardian_user_uuid', 'relationship_type', 'share_scope', 'student_uuid'],
-} as const;
-
-export const ApiResponseGuardianStudentLinkSchema = {
-  type: 'object',
-  properties: {
-    success: {
-      type: 'boolean',
-    },
-    data: {
-      $ref: '#/components/schemas/GuardianStudentLink',
-    },
-    message: {
-      type: 'string',
-    },
-    error: {},
-  },
 } as const;
 
 export const GuardianConsentRequestSchema = {
@@ -13239,7 +14984,7 @@ export const EnrollmentSchema = {
       example: 'st123456-7890-abcd-ef01-234567890abc',
     },
     status: {
-      $ref: '#/components/schemas/StatusEnum14',
+      $ref: '#/components/schemas/StatusEnum15',
     },
     attendance_marked_at: {
       type: ['string', 'null'],
@@ -13288,16 +15033,16 @@ export const EnrollmentSchema = {
       example: false,
       readOnly: true,
     },
-    status_description: {
-      type: 'string',
-      description: '**[READ-ONLY]** Human-readable description of the enrollment status.',
-      example: 'Student is enrolled in the class',
-      readOnly: true,
-    },
     is_attendance_marked: {
       type: 'boolean',
       description: '**[READ-ONLY]** Indicates if attendance has been marked for this enrollment.',
       example: false,
+      readOnly: true,
+    },
+    status_description: {
+      type: 'string',
+      description: '**[READ-ONLY]** Human-readable description of the enrollment status.',
+      example: 'Student is enrolled in the class',
       readOnly: true,
     },
     can_be_cancelled: {
@@ -14755,7 +16500,7 @@ export const ClassMarketplaceJobApplicationSchema = {
       readOnly: true,
     },
     status: {
-      $ref: '#/components/schemas/StatusEnum15',
+      $ref: '#/components/schemas/StatusEnum16',
     },
     job: {
       type: 'null',
@@ -15081,7 +16826,7 @@ export const BookingResponseSchema = {
       description: 'End time for the session',
     },
     status: {
-      $ref: '#/components/schemas/StatusEnum16',
+      $ref: '#/components/schemas/StatusEnum17',
     },
     price_amount: {
       type: 'number',
@@ -15339,7 +17084,7 @@ export const AssignmentSubmissionSchema = {
       example: '2024-04-10T14:30:00Z',
     },
     status: {
-      $ref: '#/components/schemas/StatusEnum17',
+      $ref: '#/components/schemas/StatusEnum18',
     },
     score: {
       type: 'number',
@@ -15700,7 +17445,7 @@ export const AdminDomainAssignmentRequestSchema = {
   description: 'Admin domain assignment request containing domain type, reason, and effective date',
   properties: {
     domain_name: {
-      $ref: '#/components/schemas/SchemaEnum10',
+      $ref: '#/components/schemas/SchemaEnum13',
     },
     assignment_type: {
       $ref: '#/components/schemas/AssignmentTypeEnum',
@@ -15720,6 +17465,20 @@ export const AdminDomainAssignmentRequestSchema = {
     },
   },
   required: ['assignment_type', 'domain_name'],
+} as const;
+
+export const ProfileVerificationRequestSchema = {
+  type: 'object',
+  description: 'Marks a profile item VERIFIED or REJECTED',
+  properties: {
+    status: {
+      $ref: '#/components/schemas/StatusEnum19',
+    },
+    notes: {
+      type: 'string',
+    },
+  },
+  required: ['status'],
 } as const;
 
 export const AdminCreateUserRequestDTOSchema = {
@@ -15931,6 +17690,31 @@ export const CurrencyCreateRequestSchema = {
     },
   },
   required: ['code', 'decimal_places', 'name'],
+} as const;
+
+export const WalletVerificationRequestSchema = {
+  type: 'object',
+  description: "A platform admin's check of one skills wallet item",
+  properties: {
+    status: {
+      $ref: '#/components/schemas/StatusEnum19',
+    },
+    notes: {
+      type: 'string',
+    },
+  },
+  required: ['status'],
+} as const;
+
+export const CourseCreatorModerationRequestSchema = {
+  type: 'object',
+  properties: {
+    reason: {
+      type: 'string',
+      maxLength: 1000,
+      minLength: 0,
+    },
+  },
 } as const;
 
 export const ScheduledInstanceRescheduleRequestSchema = {
@@ -16280,6 +18064,277 @@ export const UserSummarySchema = {
   },
 } as const;
 
+export const ApiResponseProfessionalProfileSummarySchema = {
+  type: 'object',
+  properties: {
+    success: {
+      type: 'boolean',
+    },
+    data: {
+      $ref: '#/components/schemas/ProfessionalProfileSummary',
+    },
+    message: {
+      type: 'string',
+    },
+    error: {},
+  },
+} as const;
+
+export const ProfessionalProfileSummarySchema = {
+  type: 'object',
+  description: 'Professional profile basics with per-section counts and completeness',
+  properties: {
+    user_uuid: {
+      type: 'string',
+      format: 'uuid',
+    },
+    basics: {
+      $ref: '#/components/schemas/ProfessionalProfile',
+    },
+    section_counts: {
+      type: 'object',
+      additionalProperties: {
+        type: 'integer',
+        format: 'int64',
+      },
+      description:
+        "Item count per section, keyed by the section's path name (skills, education, ...)",
+    },
+    verified_items: {
+      type: 'integer',
+      format: 'int64',
+    },
+    completed_sections: {
+      type: 'integer',
+      format: 'int32',
+    },
+    total_sections: {
+      type: 'integer',
+      format: 'int32',
+    },
+    completeness_percent: {
+      type: 'integer',
+      format: 'int32',
+    },
+  },
+} as const;
+
+export const ApiResponseListUserSkillSchema = {
+  type: 'object',
+  properties: {
+    success: {
+      type: 'boolean',
+    },
+    data: {
+      type: 'array',
+      items: {
+        $ref: '#/components/schemas/UserSkill',
+      },
+    },
+    message: {
+      type: 'string',
+    },
+    error: {},
+  },
+} as const;
+
+export const ApiResponseListUserPortfolioItemSchema = {
+  type: 'object',
+  properties: {
+    success: {
+      type: 'boolean',
+    },
+    data: {
+      type: 'array',
+      items: {
+        $ref: '#/components/schemas/UserPortfolioItem',
+      },
+    },
+    message: {
+      type: 'string',
+    },
+    error: {},
+  },
+} as const;
+
+export const ApiResponseListUserMembershipSchema = {
+  type: 'object',
+  properties: {
+    success: {
+      type: 'boolean',
+    },
+    data: {
+      type: 'array',
+      items: {
+        $ref: '#/components/schemas/UserMembership',
+      },
+    },
+    message: {
+      type: 'string',
+    },
+    error: {},
+  },
+} as const;
+
+export const ApiResponseListUserExperienceSchema = {
+  type: 'object',
+  properties: {
+    success: {
+      type: 'boolean',
+    },
+    data: {
+      type: 'array',
+      items: {
+        $ref: '#/components/schemas/UserExperience',
+      },
+    },
+    message: {
+      type: 'string',
+    },
+    error: {},
+  },
+} as const;
+
+export const ApiResponseListUserEducationSchema = {
+  type: 'object',
+  properties: {
+    success: {
+      type: 'boolean',
+    },
+    data: {
+      type: 'array',
+      items: {
+        $ref: '#/components/schemas/UserEducation',
+      },
+    },
+    message: {
+      type: 'string',
+    },
+    error: {},
+  },
+} as const;
+
+export const ApiResponseListUserDocumentSchema = {
+  type: 'object',
+  properties: {
+    success: {
+      type: 'boolean',
+    },
+    data: {
+      type: 'array',
+      items: {
+        $ref: '#/components/schemas/UserDocument',
+      },
+    },
+    message: {
+      type: 'string',
+    },
+    error: {},
+  },
+} as const;
+
+export const ApiResponseListUserCompetencySchema = {
+  type: 'object',
+  properties: {
+    success: {
+      type: 'boolean',
+    },
+    data: {
+      type: 'array',
+      items: {
+        $ref: '#/components/schemas/UserCompetency',
+      },
+    },
+    message: {
+      type: 'string',
+    },
+    error: {},
+  },
+} as const;
+
+export const ApiResponseListUserCertificationSchema = {
+  type: 'object',
+  properties: {
+    success: {
+      type: 'boolean',
+    },
+    data: {
+      type: 'array',
+      items: {
+        $ref: '#/components/schemas/UserCertification',
+      },
+    },
+    message: {
+      type: 'string',
+    },
+    error: {},
+  },
+} as const;
+
+export const ApiResponseListUserAchievementSchema = {
+  type: 'object',
+  properties: {
+    success: {
+      type: 'boolean',
+    },
+    data: {
+      type: 'array',
+      items: {
+        $ref: '#/components/schemas/UserAchievement',
+      },
+    },
+    message: {
+      type: 'string',
+    },
+    error: {},
+  },
+} as const;
+
+export const AccountStatusSchema = {
+  type: 'object',
+  description:
+    'Whether the caller may use a dashboard yet, and the state of each domain they asked for',
+  properties: {
+    user_uuid: {
+      type: 'string',
+      format: 'uuid',
+    },
+    account_state: {
+      $ref: '#/components/schemas/AccountStateEnum',
+    },
+    approved_domains: {
+      type: 'array',
+      description: 'Domains the caller may act in now',
+      example: ['student'],
+      items: {
+        type: 'string',
+      },
+    },
+    domain_applications: {
+      type: 'array',
+      items: {
+        $ref: '#/components/schemas/DomainApplication',
+      },
+    },
+  },
+} as const;
+
+export const ApiResponseAccountStatusSchema = {
+  type: 'object',
+  properties: {
+    success: {
+      type: 'boolean',
+    },
+    data: {
+      $ref: '#/components/schemas/AccountStatus',
+    },
+    message: {
+      type: 'string',
+    },
+    error: {},
+  },
+} as const;
+
 export const ApiResponseUserRecipientSchema = {
   type: 'object',
   properties: {
@@ -16600,7 +18655,7 @@ export const InstructorTimeHoldSchema = {
       example: 'UTC',
     },
     status: {
-      $ref: '#/components/schemas/StatusEnum18',
+      $ref: '#/components/schemas/StatusEnum20',
     },
     class_definition_uuid: {
       type: ['string', 'null'],
@@ -16708,6 +18763,25 @@ export const PagedDTOStudentSchema = {
   },
 } as const;
 
+export const ApiResponseListStudentGuardianSchema = {
+  type: 'object',
+  properties: {
+    success: {
+      type: 'boolean',
+    },
+    data: {
+      type: 'array',
+      items: {
+        $ref: '#/components/schemas/StudentGuardian',
+      },
+    },
+    message: {
+      type: 'string',
+    },
+    error: {},
+  },
+} as const;
+
 export const ApiResponsePagedDTOBookingResponseSchema = {
   type: 'object',
   properties: {
@@ -16753,12 +18827,6 @@ export const PageSchema = {
       type: 'integer',
       format: 'int32',
     },
-    first: {
-      type: 'boolean',
-    },
-    last: {
-      type: 'boolean',
-    },
     size: {
       type: 'integer',
       format: 'int32',
@@ -16771,15 +18839,21 @@ export const PageSchema = {
       type: 'integer',
       format: 'int32',
     },
-    sort: {
-      $ref: '#/components/schemas/SortObject',
-    },
     numberOfElements: {
       type: 'integer',
       format: 'int32',
     },
+    sort: {
+      $ref: '#/components/schemas/SortObject',
+    },
     pageable: {
       $ref: '#/components/schemas/PageableObject',
+    },
+    first: {
+      type: 'boolean',
+    },
+    last: {
+      type: 'boolean',
     },
     empty: {
       type: 'boolean',
@@ -16797,9 +18871,6 @@ export const PageableObjectSchema = {
     sort: {
       $ref: '#/components/schemas/SortObject',
     },
-    unpaged: {
-      type: 'boolean',
-    },
     paged: {
       type: 'boolean',
     },
@@ -16810,6 +18881,9 @@ export const PageableObjectSchema = {
     pageSize: {
       type: 'integer',
       format: 'int32',
+    },
+    unpaged: {
+      type: 'boolean',
     },
   },
 } as const;
@@ -16825,6 +18899,108 @@ export const SortObjectSchema = {
     },
     unsorted: {
       type: 'boolean',
+    },
+  },
+} as const;
+
+export const ApiResponsePublicStudentGuardianInvitationSchema = {
+  type: 'object',
+  properties: {
+    success: {
+      type: 'boolean',
+    },
+    data: {
+      $ref: '#/components/schemas/PublicStudentGuardianInvitation',
+    },
+    message: {
+      type: 'string',
+    },
+    error: {},
+  },
+} as const;
+
+export const PublicStudentGuardianInvitationSchema = {
+  type: 'object',
+  description: 'Publicly readable view of a guardian invitation link.',
+  properties: {
+    student_name: {
+      type: 'string',
+      description: 'The student who named the guardian',
+      example: 'Sam Doe',
+    },
+    guardian_name: {
+      type: 'string',
+      description: "Guardian's name as the student gave it",
+      example: 'Mary Doe',
+    },
+    masked_guardian_email: {
+      type: 'string',
+      description: 'Masked invited address, to confirm it is theirs',
+      example: 'm***y@example.com',
+    },
+    relationship_type: {
+      $ref: '#/components/schemas/RelationshipTypeEnum2',
+    },
+    status: {
+      $ref: '#/components/schemas/StatusEnum10',
+    },
+    actionable: {
+      type: 'boolean',
+      description: 'Whether the invitation can still be accepted or declined',
+    },
+    has_account: {
+      type: 'boolean',
+      description:
+        'Whether the invited address already has an account: sign in to accept, else register',
+    },
+    expires_at: {
+      type: 'string',
+      format: 'date-time',
+      description: 'When the invitation lapses',
+    },
+  },
+} as const;
+
+export const ApiResponseListMyStudentGuardianInvitationSchema = {
+  type: 'object',
+  properties: {
+    success: {
+      type: 'boolean',
+    },
+    data: {
+      type: 'array',
+      items: {
+        $ref: '#/components/schemas/MyStudentGuardianInvitation',
+      },
+    },
+    message: {
+      type: 'string',
+    },
+    error: {},
+  },
+} as const;
+
+export const MyStudentGuardianInvitationSchema = {
+  type: 'object',
+  description: "An open invitation to become a student's guardian.",
+  properties: {
+    uuid: {
+      type: 'string',
+      format: 'uuid',
+      description: 'Invitation id, used to accept or decline',
+    },
+    student_name: {
+      type: 'string',
+      description: 'The student who named you',
+      example: 'Sam Doe',
+    },
+    relationship_type: {
+      $ref: '#/components/schemas/RelationshipTypeEnum2',
+    },
+    expires_at: {
+      type: 'string',
+      format: 'date-time',
+      description: 'When the invitation lapses',
     },
   },
 } as const;
@@ -17987,7 +20163,7 @@ export const StudentQuizReviewSchema = {
       format: 'uuid',
     },
     status: {
-      $ref: '#/components/schemas/StatusEnum19',
+      $ref: '#/components/schemas/StatusEnum21',
     },
     score: {
       type: 'number',
@@ -18075,6 +20251,25 @@ export const PagedDTOTrainingProgramSchema = {
     links: {
       $ref: '#/components/schemas/PageLinks',
     },
+  },
+} as const;
+
+export const ApiResponseListProgramAssessmentSchema = {
+  type: 'object',
+  properties: {
+    success: {
+      type: 'boolean',
+    },
+    data: {
+      type: 'array',
+      items: {
+        $ref: '#/components/schemas/ProgramAssessment',
+      },
+    },
+    message: {
+      type: 'string',
+    },
+    error: {},
   },
 } as const;
 
@@ -18405,7 +20600,7 @@ export const ProgramEnrollmentSchema = {
       example: '2024-06-30T16:45:00Z',
     },
     status: {
-      $ref: '#/components/schemas/StatusEnum20',
+      $ref: '#/components/schemas/StatusEnum22',
     },
     progress_percentage: {
       type: 'number',
@@ -19074,7 +21269,7 @@ export const ResourceBookingSchema = {
       description: 'Organisation owning the resource',
     },
     status: {
-      $ref: '#/components/schemas/StatusEnum21',
+      $ref: '#/components/schemas/StatusEnum23',
     },
     quantity: {
       type: 'integer',
@@ -20158,7 +22353,7 @@ export const GuardianStudentDashboardDTOSchema = {
       $ref: '#/components/schemas/ShareScopeEnum',
     },
     status: {
-      $ref: '#/components/schemas/StatusEnum13',
+      $ref: '#/components/schemas/StatusEnum11',
     },
     courseProgress: {
       type: 'array',
@@ -20263,13 +22458,13 @@ export const GuardianStudentSummaryDTOSchema = {
       type: 'string',
     },
     relationshipType: {
-      $ref: '#/components/schemas/GuardianRelationshipTypeEnum',
+      $ref: '#/components/schemas/RelationshipTypeEnum2',
     },
     shareScope: {
       $ref: '#/components/schemas/ShareScopeEnum',
     },
     status: {
-      $ref: '#/components/schemas/StatusEnum13',
+      $ref: '#/components/schemas/StatusEnum11',
     },
     primaryGuardian: {
       type: 'boolean',
@@ -21244,7 +23439,7 @@ export const ApiResponseListContentStatusSchema = {
     data: {
       type: 'array',
       items: {
-        $ref: '#/components/schemas/SchemaEnum4',
+        $ref: '#/components/schemas/SchemaEnum6',
       },
     },
     message: {
@@ -21394,7 +23589,7 @@ The proposed content lives on the draft course referenced by \`draft_course_uuid
       readOnly: true,
     },
     status: {
-      $ref: '#/components/schemas/StatusEnum10',
+      $ref: '#/components/schemas/StatusEnum12',
     },
     course_uuid: {
       type: 'string',
@@ -22523,6 +24718,13 @@ export const CourseGradeBookSchema = {
     final_grade: {
       type: 'number',
     },
+    pass_mark: {
+      type: 'number',
+      description: 'Final grade needed to pass; null means completing every required item passes',
+    },
+    result_status: {
+      $ref: '#/components/schemas/ResultStatusEnum',
+    },
     graded_weight_percentage: {
       type: 'number',
     },
@@ -22623,7 +24825,7 @@ export const CourseEnrollmentSchema = {
       example: '2024-04-30T16:45:00Z',
     },
     status: {
-      $ref: '#/components/schemas/StatusEnum20',
+      $ref: '#/components/schemas/StatusEnum22',
     },
     progress_percentage: {
       type: 'number',
@@ -23030,6 +25232,25 @@ export const PagedDTOCourseCreatorSkillSchema = {
   },
 } as const;
 
+export const ApiResponseListCourseCreatorPortfolioItemSchema = {
+  type: 'object',
+  properties: {
+    success: {
+      type: 'boolean',
+    },
+    data: {
+      type: 'array',
+      items: {
+        $ref: '#/components/schemas/CourseCreatorPortfolioItem',
+      },
+    },
+    message: {
+      type: 'string',
+    },
+    error: {},
+  },
+} as const;
+
 export const ApiResponsePagedDTOCourseCreatorProfessionalMembershipSchema = {
   type: 'object',
   properties: {
@@ -23151,6 +25372,25 @@ export const ApiResponseListCourseCreatorDocumentDTOSchema = {
   },
 } as const;
 
+export const ApiResponseListCourseCreatorCompetencySchema = {
+  type: 'object',
+  properties: {
+    success: {
+      type: 'boolean',
+    },
+    data: {
+      type: 'array',
+      items: {
+        $ref: '#/components/schemas/CourseCreatorCompetency',
+      },
+    },
+    message: {
+      type: 'string',
+    },
+    error: {},
+  },
+} as const;
+
 export const ApiResponsePagedDTOCourseCreatorCertificationSchema = {
   type: 'object',
   properties: {
@@ -23182,6 +25422,25 @@ export const PagedDTOCourseCreatorCertificationSchema = {
     links: {
       $ref: '#/components/schemas/PageLinks',
     },
+  },
+} as const;
+
+export const ApiResponseListCourseCreatorAchievementSchema = {
+  type: 'object',
+  properties: {
+    success: {
+      type: 'boolean',
+    },
+    data: {
+      type: 'array',
+      items: {
+        $ref: '#/components/schemas/CourseCreatorAchievement',
+      },
+    },
+    message: {
+      type: 'string',
+    },
+    error: {},
   },
 } as const;
 
@@ -24462,7 +26721,7 @@ export const JobMatchSkillSchema = {
       readOnly: true,
     },
     min_proficiency: {
-      $ref: '#/components/schemas/LevelEnum',
+      $ref: '#/components/schemas/ProficiencyLevelEnum',
     },
     is_mandatory: {
       type: 'boolean',
@@ -25129,6 +27388,59 @@ export const SearchIndexStatusResponseSchema = {
   },
 } as const;
 
+export const AdminDomainApplicationSchema = {
+  type: 'object',
+  description: 'A domain request in the platform admin approval queue',
+  properties: {
+    user_uuid: {
+      type: 'string',
+      format: 'uuid',
+    },
+    full_name: {
+      type: 'string',
+    },
+    email: {
+      type: 'string',
+    },
+    domain: {
+      type: 'string',
+    },
+    status: {
+      $ref: '#/components/schemas/SchemaEnum12',
+    },
+    requested_at: {
+      type: 'string',
+      format: 'date-time',
+    },
+    reviewed_at: {
+      type: 'string',
+      format: 'date-time',
+    },
+    review_reason: {
+      type: 'string',
+    },
+  },
+} as const;
+
+export const ApiResponseListAdminDomainApplicationSchema = {
+  type: 'object',
+  properties: {
+    success: {
+      type: 'boolean',
+    },
+    data: {
+      type: 'array',
+      items: {
+        $ref: '#/components/schemas/AdminDomainApplication',
+      },
+    },
+    message: {
+      type: 'string',
+    },
+    error: {},
+  },
+} as const;
+
 export const ApiResponseRecommendationEvaluationSchema = {
   type: 'object',
   properties: {
@@ -25742,6 +28054,11 @@ export const UserMetricsSchema = {
       type: 'integer',
       format: 'int64',
     },
+    pending_domain_approvals: {
+      type: 'integer',
+      format: 'int64',
+      description: 'Domain requests awaiting platform admin approval',
+    },
   },
 } as const;
 
@@ -26176,25 +28493,35 @@ export const ItemsEnumSchema = {
 
 export const SchemaEnum3Schema = {
   type: 'string',
-  enum: ['approve', 'reject', 'revoke'],
+  enum: ['skills', 'certifications', 'competencies', 'documents'],
 } as const;
 
 export const SchemaEnum4Schema = {
   type: 'string',
-  enum: ['draft', 'in_review', 'published', 'archived'],
+  enum: ['approve', 'reject', 'revoke'],
 } as const;
 
 export const SchemaEnum5Schema = {
   type: 'string',
-  enum: ['student', 'instructor', 'admin', 'parent', 'organisation_user', 'course_creator'],
+  enum: ['skills', 'competencies', 'certifications'],
 } as const;
 
 export const SchemaEnum6Schema = {
   type: 'string',
-  enum: ['ACCRUED', 'SETTLED', 'CANCELLED', 'DISPUTED'],
+  enum: ['draft', 'in_review', 'published', 'archived'],
 } as const;
 
 export const SchemaEnum7Schema = {
+  type: 'string',
+  enum: ['student', 'instructor', 'admin', 'parent', 'organisation_user', 'course_creator'],
+} as const;
+
+export const SchemaEnum8Schema = {
+  type: 'string',
+  enum: ['ACCRUED', 'SETTLED', 'CANCELLED', 'DISPUTED'],
+} as const;
+
+export const SchemaEnum9Schema = {
   type: 'string',
   default: 'all',
   enum: ['all', 'courses', 'programmes'],
@@ -26210,17 +28537,23 @@ export const ItemsEnum3Schema = {
   enum: ['free', 'paid'],
 } as const;
 
-export const SchemaEnum8Schema = {
+export const SchemaEnum10Schema = {
   type: 'string',
   enum: ['relevance', 'newest', 'rating', 'popular'],
 } as const;
 
-export const SchemaEnum9Schema = {
+export const SchemaEnum11Schema = {
   type: 'string',
   enum: ['actor', 'target', 'all'],
 } as const;
 
-export const SchemaEnum10Schema = {
+export const SchemaEnum12Schema = {
+  type: 'string',
+  default: 'PENDING',
+  enum: ['PENDING', 'APPROVED', 'REJECTED', 'SUSPENDED'],
+} as const;
+
+export const SchemaEnum13Schema = {
   type: 'string',
   enum: ['admin', 'organisation_user'],
 } as const;
@@ -26257,6 +28590,14 @@ export const ValueTypeEnumSchema = {
   default: 'JSON',
   description: 'Payload interpretation hint',
   enum: ['JSON', 'DECIMAL', 'INTEGER', 'BOOLEAN', 'STRING'],
+} as const;
+
+export const RelationshipTypeEnumSchema = {
+  type: ['string', 'null'],
+  description: '**[OPTIONAL]** Relationship to the student. Defaults to GUARDIAN.',
+  enum: ['PARENT', 'GUARDIAN', 'SPONSOR'],
+  example: 'PARENT',
+  pattern: '(?i)PARENT|GUARDIAN|SPONSOR',
 } as const;
 
 export const StatusEnumSchema = {
@@ -26346,6 +28687,43 @@ export const RuleTypeEnumSchema = {
   example: 'OPEN_HOURS',
 } as const;
 
+export const ProficiencyLevelEnumSchema = {
+  type: 'string',
+  enum: ['beginner', 'intermediate', 'advanced', 'expert'],
+} as const;
+
+export const VerificationStatusEnumSchema = {
+  type: 'string',
+  enum: ['PENDING', 'VERIFIED', 'REJECTED'],
+  readOnly: true,
+} as const;
+
+export const ItemTypeEnumSchema = {
+  type: 'string',
+  enum: ['PROJECT', 'PERFORMANCE', 'WORK_SAMPLE', 'MEDIA', 'OTHER'],
+} as const;
+
+export const ExperienceTypeEnumSchema = {
+  type: 'string',
+  enum: ['TRAINING', 'WORK', 'VOLUNTEERING', 'PROJECT'],
+} as const;
+
+export const StatusEnum4Schema = {
+  type: 'string',
+  enum: ['Pending Review', 'Approved', 'Rejected', 'Expired'],
+  readOnly: true,
+} as const;
+
+export const CredentialTypeEnumSchema = {
+  type: 'string',
+  enum: ['CERTIFICATE', 'BADGE', 'AWARD', 'EXTERNAL_CREDENTIAL'],
+} as const;
+
+export const AchievementTypeEnumSchema = {
+  type: 'string',
+  enum: ['AWARD', 'MILESTONE', 'COMPETITION', 'UNLOCKED_SKILL', 'RECOGNITION'],
+} as const;
+
 export const DistanceBandEnumSchema = {
   type: ['string', 'null'],
   description:
@@ -26355,7 +28733,7 @@ export const DistanceBandEnumSchema = {
   readOnly: true,
 } as const;
 
-export const ProficiencyLevelEnumSchema = {
+export const ProficiencyLevelEnum2Schema = {
   type: 'string',
   description:
     "**[REQUIRED]** Level of proficiency in this skill. Indicates instructor's competency and teaching capability.",
@@ -26403,7 +28781,7 @@ export const EducationLevelEnumSchema = {
   readOnly: true,
 } as const;
 
-export const StatusEnum4Schema = {
+export const StatusEnum5Schema = {
   type: 'string',
   description: '**[READ-ONLY]** Current status of the document in the verification workflow.',
   enum: ['PENDING', 'APPROVED', 'REJECTED', 'EXPIRED', 'UNDER_REVIEW'],
@@ -26411,7 +28789,7 @@ export const StatusEnum4Schema = {
   readOnly: true,
 } as const;
 
-export const VerificationStatusEnumSchema = {
+export const VerificationStatusEnum2Schema = {
   type: 'string',
   description: '**[READ-ONLY]** Human-readable verification status of the document.',
   enum: ['VERIFIED', 'PENDING', 'REJECTED', 'EXPIRED'],
@@ -26440,13 +28818,7 @@ export const ProvidedByEnumSchema = {
   example: 'organisation',
 } as const;
 
-export const LevelEnumSchema = {
-  type: 'string',
-  description: 'Defaults to beginner; accepted in any case',
-  enum: ['beginner', 'intermediate', 'advanced', 'expert'],
-} as const;
-
-export const StatusEnum5Schema = {
+export const StatusEnum6Schema = {
   type: 'string',
   description: '**[READ-ONLY]** Current status of the application.',
   enum: ['pending', 'approved', 'rejected'],
@@ -26467,15 +28839,7 @@ export const GroupingEnumSchema = {
   example: 'PAIR',
 } as const;
 
-export const AggregationStrategyEnumSchema = {
-  type: 'string',
-  description:
-    '**[OPTIONAL]** Strategy used to aggregate gradebook line items for this assessment component.',
-  enum: ['points_sum', 'weighted_average'],
-  example: 'weighted_average',
-} as const;
-
-export const ItemTypeEnumSchema = {
+export const ItemTypeEnum2Schema = {
   type: 'string',
   enum: [
     'assignment',
@@ -26491,7 +28855,15 @@ export const ItemTypeEnumSchema = {
   ],
 } as const;
 
-export const StatusEnum6Schema = {
+export const AggregationStrategyEnumSchema = {
+  type: 'string',
+  description:
+    '**[OPTIONAL]** Strategy used to aggregate gradebook line items for this assessment component.',
+  enum: ['points_sum', 'weighted_average'],
+  example: 'weighted_average',
+} as const;
+
+export const StatusEnum7Schema = {
   type: 'string',
   enum: ['pending', 'completed'],
   readOnly: true,
@@ -26503,10 +28875,9 @@ export const AttendanceStatusEnumSchema = {
   readOnly: true,
 } as const;
 
-export const StatusEnum7Schema = {
+export const VerificationStatusEnum3Schema = {
   type: 'string',
-  enum: ['Pending Review', 'Approved', 'Rejected', 'Expired'],
-  readOnly: true,
+  enum: ['DRAFT', 'SUBMITTED', 'APPROVED', 'REJECTED', 'REVOKED'],
 } as const;
 
 export const ClassVisibilityEnumSchema = {
@@ -26615,7 +28986,44 @@ export const StatusEnum9Schema = {
   example: 'SCHEDULED',
 } as const;
 
+export const RelationshipTypeEnum2Schema = {
+  type: 'string',
+  description: 'Relationship to the student',
+  enum: ['PARENT', 'GUARDIAN', 'SPONSOR'],
+  example: 'PARENT',
+} as const;
+
 export const StatusEnum10Schema = {
+  type: 'string',
+  description: 'linked, invited, expired, declined or revoked',
+  enum: ['linked', 'invited', 'expired', 'declined', 'revoked'],
+  example: 'invited',
+} as const;
+
+export const ShareScopeEnumSchema = {
+  type: 'string',
+  enum: ['FULL', 'ACADEMICS', 'ATTENDANCE'],
+} as const;
+
+export const StatusEnum11Schema = {
+  type: 'string',
+  enum: ['PENDING', 'ACTIVE', 'REVOKED'],
+} as const;
+
+export const GenderEnum2Schema = {
+  type: 'string',
+  enum: ['MALE', 'FEMALE', 'PREFER_NOT_TO_SAY'],
+} as const;
+
+export const DomainEnumSchema = {
+  type: 'string',
+  description: 'The domain to register into',
+  enum: ['student', 'instructor', 'course_creator', 'organisation_user'],
+  example: 'course_creator',
+  minLength: 1,
+} as const;
+
+export const StatusEnum12Schema = {
   type: 'string',
   description: '**[READ-ONLY]** Review status.',
   enum: ['pending', 'approved', 'rejected', 'withdrawn'],
@@ -26629,7 +29037,7 @@ export const ApplicationTypeEnumSchema = {
   readOnly: true,
 } as const;
 
-export const StatusEnum11Schema = {
+export const StatusEnum13Schema = {
   type: 'string',
   description:
     "PENDING, ALLOCATED, APPROVED or DISBURSED. The legacy value 'Completed' is accepted and stored as DISBURSED. Defaults to PENDING.",
@@ -26704,8 +29112,13 @@ export const TypeEnumSchema = {
     'PROFILE_COMPLETION_REMINDER',
     'ORGANISATION_INVITATION',
     'GUARDIAN_CONSENT_REQUEST',
+    'GUARDIAN_LINK_INVITATION',
+    'GUARDIAN_LINK_ESTABLISHED',
     'ORGANISATION_INVITATION_ACCEPTED',
     'ORGANISATION_ANNOUNCEMENT',
+    'DOMAIN_APPROVAL_REQUESTED',
+    'DOMAIN_APPROVAL_GRANTED',
+    'DOMAIN_APPROVAL_DECLINED',
     'WEEKLY_PROGRESS_SUMMARY',
     'LEARNING_STREAK_ACHIEVEMENT',
     'PEER_ACHIEVEMENT_CELEBRATION',
@@ -26733,28 +29146,9 @@ export const PresentationEnumSchema = {
   enum: ['POPUP', 'INBOX'],
 } as const;
 
-export const StatusEnum12Schema = {
+export const StatusEnum14Schema = {
   type: 'string',
   enum: ['UNREAD', 'READ', 'ARCHIVED'],
-} as const;
-
-export const GuardianRelationshipTypeEnumSchema = {
-  type: 'string',
-  description: '**[REQUIRED]** Nature of the relationship.',
-  enum: ['PARENT', 'GUARDIAN', 'SPONSOR'],
-  example: 'PARENT',
-  minLength: 1,
-  pattern: '(?i)PARENT|GUARDIAN|SPONSOR',
-} as const;
-
-export const ShareScopeEnumSchema = {
-  type: 'string',
-  enum: ['FULL', 'ACADEMICS', 'ATTENDANCE'],
-} as const;
-
-export const StatusEnum13Schema = {
-  type: 'string',
-  enum: ['PENDING', 'ACTIVE', 'REVOKED'],
 } as const;
 
 export const ShareScopeEnum2Schema = {
@@ -26766,7 +29160,7 @@ export const ShareScopeEnum2Schema = {
   pattern: '(?i)FULL|ACADEMICS|ATTENDANCE',
 } as const;
 
-export const StatusEnum14Schema = {
+export const StatusEnum15Schema = {
   type: 'string',
   description: '**[OPTIONAL]** Current enrollment and attendance status.',
   enum: ['ENROLLED', 'WAITLISTED', 'ATTENDED', 'ABSENT', 'CANCELLED'],
@@ -26796,7 +29190,7 @@ export const ReleaseStrategyEnumSchema = {
   example: 'CUSTOM',
 } as const;
 
-export const StatusEnum15Schema = {
+export const StatusEnum16Schema = {
   type: 'string',
   enum: [
     'pending',
@@ -26812,7 +29206,7 @@ export const StatusEnum15Schema = {
   readOnly: true,
 } as const;
 
-export const StatusEnum16Schema = {
+export const StatusEnum17Schema = {
   type: 'string',
   description: 'Current status of the booking',
   enum: [
@@ -26835,7 +29229,7 @@ export const PaymentStatusEnumSchema = {
   pattern: '^(succeeded|failed)$',
 } as const;
 
-export const StatusEnum17Schema = {
+export const StatusEnum18Schema = {
   type: 'string',
   description: '**[REQUIRED]** Current status of the submission in the grading workflow.',
   enum: ['DRAFT', 'SUBMITTED', 'IN_REVIEW', 'GRADED', 'RETURNED'],
@@ -26848,6 +29242,11 @@ export const AssignmentTypeEnumSchema = {
   enum: ['global', 'organization'],
   example: 'global',
   minLength: 1,
+} as const;
+
+export const StatusEnum19Schema = {
+  type: 'string',
+  enum: ['VERIFIED', 'REJECTED'],
 } as const;
 
 export const ActionEnumSchema = {
@@ -26872,6 +29271,13 @@ export const TransactionTypeEnumSchema = {
   readOnly: true,
 } as const;
 
+export const AccountStateEnumSchema = {
+  type: 'string',
+  description:
+    'ACTIVE once any domain is approved; PENDING_APPROVAL while every requested domain awaits review',
+  enum: ['ACTIVE', 'PENDING_APPROVAL', 'SUSPENDED', 'REJECTED', 'NO_DOMAIN'],
+} as const;
+
 export const SchedulingStatusEnumSchema = {
   type: 'string',
   description: '**[READ-ONLY]** Current status of the scheduled instance.',
@@ -26888,7 +29294,7 @@ export const EnrollmentStatusEnumSchema = {
   readOnly: true,
 } as const;
 
-export const StatusEnum18Schema = {
+export const StatusEnum20Schema = {
   type: 'string',
   description: 'Hold lifecycle state; only FIRM counts as a scheduling clash',
   enum: ['TENTATIVE', 'FIRM', 'CONFIRMED', 'RELEASED'],
@@ -26900,7 +29306,7 @@ export const QuestionTypeEnum2Schema = {
   enum: ['multiple_choice', 'true_false', 'short_answer', 'essay'],
 } as const;
 
-export const StatusEnum19Schema = {
+export const StatusEnum21Schema = {
   type: 'string',
   enum: ['in_progress', 'submitted', 'graded'],
 } as const;
@@ -26924,7 +29330,7 @@ export const EventTypeEnum2Schema = {
   readOnly: true,
 } as const;
 
-export const StatusEnum20Schema = {
+export const StatusEnum22Schema = {
   type: 'string',
   description: "**[REQUIRED]** Current status of the student's enrollment in the program.",
   enum: ['ACTIVE', 'COMPLETED', 'DROPPED', 'SUSPENDED'],
@@ -26938,7 +29344,7 @@ export const EntryTypeEnumSchema = {
   example: 'HOLD',
 } as const;
 
-export const StatusEnum21Schema = {
+export const StatusEnum23Schema = {
   type: 'string',
   description: 'Booking lifecycle state',
   enum: ['HOLD', 'CONFIRMED', 'RELEASED', 'CANCELLED'],
@@ -27007,6 +29413,12 @@ export const AvailabilityEnumSchema = {
   example: 'OPEN',
 } as const;
 
+export const ResultStatusEnumSchema = {
+  type: 'string',
+  description: 'IN_PROGRESS until every required item is graded, then PASSED or FAILED',
+  enum: ['IN_PROGRESS', 'PASSED', 'FAILED'],
+} as const;
+
 export const ApplicationStatusEnumSchema = {
   type: ['string', 'null'],
   description: "Status of the instructor's existing application, when they have one",
@@ -27059,6 +29471,168 @@ export const ContentTypeEnumSchema = {
 } as const;
 
 export const JsonNodeWritableSchema = {} as const;
+
+export const StudentWritableSchema = {
+  type: 'object',
+  description:
+    'Student profile information including guardian contacts and academic details. Links to a base user account.',
+  example: {
+    uuid: 's1e2d3c4-5f6g-7h8i-9j0k-lmnopqrstuv',
+    user_uuid: 'd2e6f6c4-3d44-11ee-be56-0242ac120002',
+    full_name: 'Amani Njeri',
+    demographic_tag: 'youth_female',
+    first_guardian_name: 'John Doe',
+    first_guardian_mobile: '+254712345678',
+    second_guardian_name: 'Jane Doe',
+    second_guardian_mobile: '+254787654321',
+    bio: 'Curious learner who loves science and robotics clubs.',
+    guardians: [
+      {
+        name: 'John Doe',
+        email: 'john@example.com',
+        phone: '+254712345678',
+        relationship_type: 'PARENT',
+      },
+    ],
+    created_date: '2024-04-01T12:00:00',
+    created_by: 'admin@sarafrika.com',
+    updated_date: '2024-04-15T15:30:00',
+    updated_by: 'admin@sarafrika.com',
+  },
+  properties: {
+    user_uuid: {
+      type: 'string',
+      format: 'uuid',
+      description:
+        '**[REQUIRED]** Reference to the base user account UUID. Links student profile to user authentication and personal details.',
+      example: 'd2e6f6c4-3d44-11ee-be56-0242ac120002',
+    },
+    demographic_tag: {
+      type: 'string',
+      description:
+        '**[OPTIONAL]** Demographic tag used for growth controls (e.g., youth_female, adult).',
+      example: 'youth_female',
+      maxLength: 64,
+      minLength: 0,
+    },
+    first_guardian_name: {
+      type: 'string',
+      description:
+        '**[OPTIONAL]** Full name of the primary guardian/parent. This is the main emergency contact for the student.',
+      example: 'John Doe',
+      maxLength: 100,
+      minLength: 0,
+    },
+    first_guardian_mobile: {
+      type: 'string',
+      description:
+        '**[OPTIONAL]** Mobile phone number of the primary guardian. Used for emergency contacts and notifications. Should include country code.',
+      example: '+254712345678',
+      maxLength: 20,
+      minLength: 0,
+      pattern: '^(\\+254|0)?[17]\\d{8}$',
+    },
+    second_guardian_name: {
+      type: ['string', 'null'],
+      description:
+        '**[OPTIONAL]** Full name of the secondary guardian/parent. Additional emergency contact for the student.',
+      example: 'Jane Doe',
+      maxLength: 100,
+      minLength: 0,
+    },
+    second_guardian_mobile: {
+      type: ['string', 'null'],
+      description:
+        '**[OPTIONAL]** Mobile phone number of the secondary guardian. Alternative contact for emergencies and notifications. Should include country code.',
+      example: '+254787654321',
+      maxLength: 20,
+      minLength: 0,
+      pattern: '^(\\+254|0)?[17]\\d{8}$',
+    },
+    bio: {
+      type: ['string', 'null'],
+      description:
+        '**[OPTIONAL]** Short biography or notes about the student. Used in student profiles.',
+      example: 'Curious learner who loves science and robotics clubs.',
+      maxLength: 2000,
+      minLength: 0,
+    },
+    guardians: {
+      type: 'array',
+      description:
+        '**[OPTIONAL, WRITE-ONLY]** Parents or guardians, at most two. A guardian whose email already has an account is linked at once; anyone else is emailed an invitation. Omit to leave guardians unchanged; send an empty list to withdraw pending invitations. Read them back from GET /api/v1/students/{uuid}/guardians. The first two also fill the legacy guardian name/mobile fields.',
+      items: {
+        $ref: '#/components/schemas/StudentGuardianRequest',
+      },
+      maxItems: 2,
+      minItems: 0,
+      writeOnly: true,
+    },
+    primaryGuardianContact: {
+      type: 'string',
+    },
+    secondaryGuardianContact: {
+      type: 'string',
+    },
+    allGuardianContacts: {
+      type: 'array',
+      items: {
+        type: 'string',
+      },
+    },
+  },
+  required: ['user_uuid'],
+} as const;
+
+export const ApiResponseStudentWritableSchema = {
+  type: 'object',
+  properties: {
+    success: {
+      type: 'boolean',
+    },
+    data: {
+      $ref: '#/components/schemas/StudentWritable',
+    },
+    message: {
+      type: 'string',
+    },
+    error: {},
+  },
+} as const;
+
+export const ApiResponsePagedDTOStudentWritableSchema = {
+  type: 'object',
+  properties: {
+    success: {
+      type: 'boolean',
+    },
+    data: {
+      $ref: '#/components/schemas/PagedDTOStudentWritable',
+    },
+    message: {
+      type: 'string',
+    },
+    error: {},
+  },
+} as const;
+
+export const PagedDTOStudentWritableSchema = {
+  type: 'object',
+  properties: {
+    content: {
+      type: 'array',
+      items: {
+        $ref: '#/components/schemas/StudentWritable',
+      },
+    },
+    metadata: {
+      $ref: '#/components/schemas/PageMetadata',
+    },
+    links: {
+      $ref: '#/components/schemas/PageLinks',
+    },
+  },
+} as const;
 
 export const AfricanPhoneNumberWritableSchema = {
   format: 'phone',
@@ -27170,25 +29744,35 @@ export const ItemsEnumWritableSchema = {
 
 export const SchemaEnum3WritableSchema = {
   type: 'string',
-  enum: ['approve', 'reject', 'revoke'],
+  enum: ['skills', 'certifications', 'competencies', 'documents'],
 } as const;
 
 export const SchemaEnum4WritableSchema = {
   type: 'string',
-  enum: ['draft', 'in_review', 'published', 'archived'],
+  enum: ['approve', 'reject', 'revoke'],
 } as const;
 
 export const SchemaEnum5WritableSchema = {
   type: 'string',
-  enum: ['student', 'instructor', 'admin', 'parent', 'organisation_user', 'course_creator'],
+  enum: ['skills', 'competencies', 'certifications'],
 } as const;
 
 export const SchemaEnum6WritableSchema = {
   type: 'string',
-  enum: ['ACCRUED', 'SETTLED', 'CANCELLED', 'DISPUTED'],
+  enum: ['draft', 'in_review', 'published', 'archived'],
 } as const;
 
 export const SchemaEnum7WritableSchema = {
+  type: 'string',
+  enum: ['student', 'instructor', 'admin', 'parent', 'organisation_user', 'course_creator'],
+} as const;
+
+export const SchemaEnum8WritableSchema = {
+  type: 'string',
+  enum: ['ACCRUED', 'SETTLED', 'CANCELLED', 'DISPUTED'],
+} as const;
+
+export const SchemaEnum9WritableSchema = {
   type: 'string',
   default: 'all',
   enum: ['all', 'courses', 'programmes'],
@@ -27204,17 +29788,23 @@ export const ItemsEnum3WritableSchema = {
   enum: ['free', 'paid'],
 } as const;
 
-export const SchemaEnum8WritableSchema = {
+export const SchemaEnum10WritableSchema = {
   type: 'string',
   enum: ['relevance', 'newest', 'rating', 'popular'],
 } as const;
 
-export const SchemaEnum9WritableSchema = {
+export const SchemaEnum11WritableSchema = {
   type: 'string',
   enum: ['actor', 'target', 'all'],
 } as const;
 
-export const SchemaEnum10WritableSchema = {
+export const SchemaEnum12WritableSchema = {
+  type: 'string',
+  default: 'PENDING',
+  enum: ['PENDING', 'APPROVED', 'REJECTED', 'SUSPENDED'],
+} as const;
+
+export const SchemaEnum13WritableSchema = {
   type: 'string',
   enum: ['admin', 'organisation_user'],
 } as const;
@@ -27239,6 +29829,14 @@ export const ValueTypeEnumWritableSchema = {
   default: 'JSON',
   description: 'Payload interpretation hint',
   enum: ['JSON', 'DECIMAL', 'INTEGER', 'BOOLEAN', 'STRING'],
+} as const;
+
+export const RelationshipTypeEnumWritableSchema = {
+  type: ['string', 'null'],
+  description: '**[OPTIONAL]** Relationship to the student. Defaults to GUARDIAN.',
+  enum: ['PARENT', 'GUARDIAN', 'SPONSOR'],
+  example: 'PARENT',
+  pattern: '(?i)PARENT|GUARDIAN|SPONSOR',
 } as const;
 
 export const StatusEnumWritableSchema = {
@@ -27316,6 +29914,31 @@ export const RuleTypeEnumWritableSchema = {
 
 export const ProficiencyLevelEnumWritableSchema = {
   type: 'string',
+  enum: ['beginner', 'intermediate', 'advanced', 'expert'],
+} as const;
+
+export const ItemTypeEnumWritableSchema = {
+  type: 'string',
+  enum: ['PROJECT', 'PERFORMANCE', 'WORK_SAMPLE', 'MEDIA', 'OTHER'],
+} as const;
+
+export const ExperienceTypeEnumWritableSchema = {
+  type: 'string',
+  enum: ['TRAINING', 'WORK', 'VOLUNTEERING', 'PROJECT'],
+} as const;
+
+export const CredentialTypeEnumWritableSchema = {
+  type: 'string',
+  enum: ['CERTIFICATE', 'BADGE', 'AWARD', 'EXTERNAL_CREDENTIAL'],
+} as const;
+
+export const AchievementTypeEnumWritableSchema = {
+  type: 'string',
+  enum: ['AWARD', 'MILESTONE', 'COMPETITION', 'UNLOCKED_SKILL', 'RECOGNITION'],
+} as const;
+
+export const ProficiencyLevelEnum2WritableSchema = {
+  type: 'string',
   description:
     "**[REQUIRED]** Level of proficiency in this skill. Indicates instructor's competency and teaching capability.",
   enum: ['BEGINNER', 'INTERMEDIATE', 'ADVANCED', 'EXPERT'],
@@ -27343,12 +29966,6 @@ export const ProvidedByEnumWritableSchema = {
   example: 'organisation',
 } as const;
 
-export const LevelEnumWritableSchema = {
-  type: 'string',
-  description: 'Defaults to beginner; accepted in any case',
-  enum: ['beginner', 'intermediate', 'advanced', 'expert'],
-} as const;
-
 export const ActivityTypeEnumWritableSchema = {
   type: 'string',
   description: '**[OPTIONAL]** Practice activity format.',
@@ -27363,15 +29980,7 @@ export const GroupingEnumWritableSchema = {
   example: 'PAIR',
 } as const;
 
-export const AggregationStrategyEnumWritableSchema = {
-  type: 'string',
-  description:
-    '**[OPTIONAL]** Strategy used to aggregate gradebook line items for this assessment component.',
-  enum: ['points_sum', 'weighted_average'],
-  example: 'weighted_average',
-} as const;
-
-export const ItemTypeEnumWritableSchema = {
+export const ItemTypeEnum2WritableSchema = {
   type: 'string',
   enum: [
     'assignment',
@@ -27385,6 +29994,19 @@ export const ItemTypeEnumWritableSchema = {
     'participation',
     'manual',
   ],
+} as const;
+
+export const AggregationStrategyEnumWritableSchema = {
+  type: 'string',
+  description:
+    '**[OPTIONAL]** Strategy used to aggregate gradebook line items for this assessment component.',
+  enum: ['points_sum', 'weighted_average'],
+  example: 'weighted_average',
+} as const;
+
+export const VerificationStatusEnum3WritableSchema = {
+  type: 'string',
+  enum: ['DRAFT', 'SUBMITTED', 'APPROVED', 'REJECTED', 'REVOKED'],
 } as const;
 
 export const ClassVisibilityEnumWritableSchema = {
@@ -27466,7 +30088,44 @@ export const StatusEnum9WritableSchema = {
   example: 'SCHEDULED',
 } as const;
 
+export const RelationshipTypeEnum2WritableSchema = {
+  type: 'string',
+  description: 'Relationship to the student',
+  enum: ['PARENT', 'GUARDIAN', 'SPONSOR'],
+  example: 'PARENT',
+} as const;
+
+export const StatusEnum10WritableSchema = {
+  type: 'string',
+  description: 'linked, invited, expired, declined or revoked',
+  enum: ['linked', 'invited', 'expired', 'declined', 'revoked'],
+  example: 'invited',
+} as const;
+
+export const ShareScopeEnumWritableSchema = {
+  type: 'string',
+  enum: ['FULL', 'ACADEMICS', 'ATTENDANCE'],
+} as const;
+
 export const StatusEnum11WritableSchema = {
+  type: 'string',
+  enum: ['PENDING', 'ACTIVE', 'REVOKED'],
+} as const;
+
+export const GenderEnum2WritableSchema = {
+  type: 'string',
+  enum: ['MALE', 'FEMALE', 'PREFER_NOT_TO_SAY'],
+} as const;
+
+export const DomainEnumWritableSchema = {
+  type: 'string',
+  description: 'The domain to register into',
+  enum: ['student', 'instructor', 'course_creator', 'organisation_user'],
+  example: 'course_creator',
+  minLength: 1,
+} as const;
+
+export const StatusEnum13WritableSchema = {
   type: 'string',
   description:
     "PENDING, ALLOCATED, APPROVED or DISBURSED. The legacy value 'Completed' is accepted and stored as DISBURSED. Defaults to PENDING.",
@@ -27541,8 +30200,13 @@ export const TypeEnumWritableSchema = {
     'PROFILE_COMPLETION_REMINDER',
     'ORGANISATION_INVITATION',
     'GUARDIAN_CONSENT_REQUEST',
+    'GUARDIAN_LINK_INVITATION',
+    'GUARDIAN_LINK_ESTABLISHED',
     'ORGANISATION_INVITATION_ACCEPTED',
     'ORGANISATION_ANNOUNCEMENT',
+    'DOMAIN_APPROVAL_REQUESTED',
+    'DOMAIN_APPROVAL_GRANTED',
+    'DOMAIN_APPROVAL_DECLINED',
     'WEEKLY_PROGRESS_SUMMARY',
     'LEARNING_STREAK_ACHIEVEMENT',
     'PEER_ACHIEVEMENT_CELEBRATION',
@@ -27570,28 +30234,9 @@ export const PresentationEnumWritableSchema = {
   enum: ['POPUP', 'INBOX'],
 } as const;
 
-export const StatusEnum12WritableSchema = {
+export const StatusEnum14WritableSchema = {
   type: 'string',
   enum: ['UNREAD', 'READ', 'ARCHIVED'],
-} as const;
-
-export const GuardianRelationshipTypeEnumWritableSchema = {
-  type: 'string',
-  description: '**[REQUIRED]** Nature of the relationship.',
-  enum: ['PARENT', 'GUARDIAN', 'SPONSOR'],
-  example: 'PARENT',
-  minLength: 1,
-  pattern: '(?i)PARENT|GUARDIAN|SPONSOR',
-} as const;
-
-export const ShareScopeEnumWritableSchema = {
-  type: 'string',
-  enum: ['FULL', 'ACADEMICS', 'ATTENDANCE'],
-} as const;
-
-export const StatusEnum13WritableSchema = {
-  type: 'string',
-  enum: ['PENDING', 'ACTIVE', 'REVOKED'],
 } as const;
 
 export const ShareScopeEnum2WritableSchema = {
@@ -27603,7 +30248,7 @@ export const ShareScopeEnum2WritableSchema = {
   pattern: '(?i)FULL|ACADEMICS|ATTENDANCE',
 } as const;
 
-export const StatusEnum14WritableSchema = {
+export const StatusEnum15WritableSchema = {
   type: 'string',
   description: '**[OPTIONAL]** Current enrollment and attendance status.',
   enum: ['ENROLLED', 'WAITLISTED', 'ATTENDED', 'ABSENT', 'CANCELLED'],
@@ -27633,7 +30278,7 @@ export const ReleaseStrategyEnumWritableSchema = {
   example: 'CUSTOM',
 } as const;
 
-export const StatusEnum16WritableSchema = {
+export const StatusEnum17WritableSchema = {
   type: 'string',
   description: 'Current status of the booking',
   enum: [
@@ -27656,7 +30301,7 @@ export const PaymentStatusEnumWritableSchema = {
   pattern: '^(succeeded|failed)$',
 } as const;
 
-export const StatusEnum17WritableSchema = {
+export const StatusEnum18WritableSchema = {
   type: 'string',
   description: '**[REQUIRED]** Current status of the submission in the grading workflow.',
   enum: ['DRAFT', 'SUBMITTED', 'IN_REVIEW', 'GRADED', 'RETURNED'],
@@ -27669,6 +30314,11 @@ export const AssignmentTypeEnumWritableSchema = {
   enum: ['global', 'organization'],
   example: 'global',
   minLength: 1,
+} as const;
+
+export const StatusEnum19WritableSchema = {
+  type: 'string',
+  enum: ['VERIFIED', 'REJECTED'],
 } as const;
 
 export const ActionEnumWritableSchema = {
@@ -27685,7 +30335,14 @@ export const DomainNameEnum2WritableSchema = {
   minLength: 1,
 } as const;
 
-export const StatusEnum18WritableSchema = {
+export const AccountStateEnumWritableSchema = {
+  type: 'string',
+  description:
+    'ACTIVE once any domain is approved; PENDING_APPROVAL while every requested domain awaits review',
+  enum: ['ACTIVE', 'PENDING_APPROVAL', 'SUSPENDED', 'REJECTED', 'NO_DOMAIN'],
+} as const;
+
+export const StatusEnum20WritableSchema = {
   type: 'string',
   description: 'Hold lifecycle state; only FIRM counts as a scheduling clash',
   enum: ['TENTATIVE', 'FIRM', 'CONFIRMED', 'RELEASED'],
@@ -27697,12 +30354,12 @@ export const QuestionTypeEnum2WritableSchema = {
   enum: ['multiple_choice', 'true_false', 'short_answer', 'essay'],
 } as const;
 
-export const StatusEnum19WritableSchema = {
+export const StatusEnum21WritableSchema = {
   type: 'string',
   enum: ['in_progress', 'submitted', 'graded'],
 } as const;
 
-export const StatusEnum20WritableSchema = {
+export const StatusEnum22WritableSchema = {
   type: 'string',
   description: "**[REQUIRED]** Current status of the student's enrollment in the program.",
   enum: ['ACTIVE', 'COMPLETED', 'DROPPED', 'SUSPENDED'],
@@ -27716,7 +30373,7 @@ export const EntryTypeEnumWritableSchema = {
   example: 'HOLD',
 } as const;
 
-export const StatusEnum21WritableSchema = {
+export const StatusEnum23WritableSchema = {
   type: 'string',
   description: 'Booking lifecycle state',
   enum: ['HOLD', 'CONFIRMED', 'RELEASED', 'CANCELLED'],
@@ -27761,6 +30418,12 @@ export const AvailabilityEnumWritableSchema = {
     'How easy the class is to get into. FULL: no seats left (listed, but not counted in open_class_count or price_from, and sorted last). FEW_LEFT: at most max(5, 20% of capacity) seats left. OPEN: otherwise, or when capacity is unknown. Seat counts are never published.',
   enum: ['OPEN', 'FEW_LEFT', 'FULL'],
   example: 'OPEN',
+} as const;
+
+export const ResultStatusEnumWritableSchema = {
+  type: 'string',
+  description: 'IN_PROGRESS until every required item is graded, then PASSED or FAILED',
+  enum: ['IN_PROGRESS', 'PASSED', 'FAILED'],
 } as const;
 
 export const TypeEnum2WritableSchema = {

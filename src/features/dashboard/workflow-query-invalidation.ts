@@ -33,6 +33,11 @@ const workflowQueryIds = {
     'getProgramApprovalStatus',
   ],
   domainVerification: [
+    'getCurrentAccountStatus',
+    'getCurrentOnboarding',
+    'getRegistrationQueue',
+    'getUserByUuid',
+    'searchUsers',
     'getInstructorByUuid',
     'getCourseCreatorByUuid',
     'getOrganisationByUuid',
@@ -177,6 +182,10 @@ const workflowQueryIds = {
     'getStudentDashboard',
   ],
   invitation: [
+    'getGuardians',
+    'getMine',
+    'getMyStudents',
+    'getStudentDashboard',
     'listMyInvitations',
     'listOrganisationInvitations',
     'getOrganisationInstructorSummaries',
@@ -349,7 +358,11 @@ export function invalidateWorkflowQueriesForNotification(
     return invalidateTrainingApplicationWorkflowQueries(queryClient);
   }
 
-  if (type.includes('VERIFICATION') || type === 'PROFILE_DOCUMENT_VERIFIED') {
+  if (
+    type.includes('VERIFICATION') ||
+    type.includes('DOMAIN_APPROVAL') ||
+    type === 'PROFILE_DOCUMENT_VERIFIED'
+  ) {
     return invalidateDomainVerificationWorkflowQueries(queryClient);
   }
 
@@ -383,7 +396,11 @@ export function invalidateWorkflowQueriesForNotification(
     return invalidateCertificateWorkflowQueries(queryClient);
   }
 
-  if (type.includes('INVITATION') || type.includes('CONSENT')) {
+  if (
+    type.includes('INVITATION') ||
+    type.includes('CONSENT') ||
+    type === 'GUARDIAN_LINK_ESTABLISHED'
+  ) {
     return invalidateInvitationWorkflowQueries(queryClient);
   }
 

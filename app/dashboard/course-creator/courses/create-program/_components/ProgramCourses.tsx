@@ -100,7 +100,8 @@ export default function ProgramCourses({ creatorUuid }: { creatorUuid: string })
   }, [loadedCourses, selectedLookup.courseMap]);
 
   const removeCourse = (index: number) => {
-    const removedUuid = fields[index].courseUuid;
+    const removedUuid = fields[index]?.courseUuid;
+    if (!removedUuid) return;
     remove(index);
     form.getValues('courses').forEach((row, rowIndex) => {
       if (row.prerequisiteCourseUuid === removedUuid)

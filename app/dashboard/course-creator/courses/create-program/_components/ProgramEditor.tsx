@@ -46,6 +46,7 @@ import { clearNewProgramDraft, readProgramDraft, writeProgramDraft } from '../pr
 import type { ProgramFormValues } from '../program-schema';
 import { minimumProgramTrainingFee, programPricingSchema } from '../program-pricing';
 import { useSaveProgram } from '../use-save-program';
+import type { PendingProgramMedia, ProgramMediaKey } from '../save-program-media';
 import ProgramCourses from './ProgramCourses';
 import { ProgramSetup } from './ProgramFields';
 import {
@@ -66,6 +67,7 @@ const STEPS = [
 
 const SETUP_FIELDS: FieldPath<ProgramFormValues>[] = [
   'title',
+  'programCode',
   'categoryUuids',
   'description',
   'objectives',
@@ -87,6 +89,10 @@ export default function ProgramEditor({
   const profile = useUserProfile();
   const creatorUuid = profile?.courseCreator?.uuid ?? '';
   const [step, setStep] = useState(0);
+  const [pendingMedia, setPendingMedia] = useState<PendingProgramMedia>({});
+  const selectMedia = (key: ProgramMediaKey, file?: File) => {
+    setPendingMedia(current => ({ ...current, [key]: file }));
+  };
   const form = useForm<ProgramFormValues>({
     resolver: (values, context, options) =>
       zodResolver(programPricingSchema(minimumTrainingFee))(values, context, options),
@@ -113,6 +119,8 @@ export default function ProgramEditor({
     const draft = readProgramDraft(creatorUuid, program?.uuid);
     if (draft) {
       form.setValue('draft', draft.draft);
+      if (!program && !form.getValues('programCode'))
+        form.setValue('programCode', draft.programCode ?? draft.draft.programCode);
       form.setValue('categoryUuids', draft.categoryUuids);
     }
     // The callback overload subscribes inside this effect without watching during render.
@@ -121,7 +129,7 @@ export default function ProgramEditor({
       setDraftStorageFailed(!writeProgramDraft(creatorUuid, program?.uuid, getValues()));
     });
     return () => subscription.unsubscribe();
-  }, [creatorUuid, program?.uuid, form]);
+  }, [creatorUuid, program, form]);
   const save = useSaveProgram(form, creatorUuid, program);
   // The lifecycle actions change the program outside this form; read it live so the
   // badge and the available actions follow.
@@ -130,7 +138,11 @@ export default function ProgramEditor({
     enabled: Boolean(program?.uuid),
     staleTime: STALE_TIMES.entity,
   });
-  const liveProgram = liveProgramQuery.data?.data ?? program;
+  const liveResponse = liveProgramQuery.data;
+  const liveProgram =
+    liveResponse?.error || liveResponse?.success === false
+      ? program
+      : (liveResponse?.data ?? program);
   const categoriesQuery = useInfiniteQuery({
     ...getAllCategoriesInfiniteOptions({ query: { pageable: { size: 100 } } }),
     initialPageParam: 0,
@@ -160,12 +172,20 @@ export default function ProgramEditor({
   };
   const onInvalid = (errors: FieldErrors<ProgramFormValues>) => {
     const setupInvalid = SETUP_FIELDS.some(name => name in errors);
-    setStep(setupInvalid ? 0 : errors.courses ? 1 : 5);
+    setStep(setupInvalid ? 0 : errors.courses ? 1 : errors.passMark ? 2 : 5);
     toast.error('Please correct the highlighted fields before saving.');
   };
   const onSave = async (values: ProgramFormValues) => {
     try {
-      const uuid = await save.mutateAsync({ values });
+      const uuid = await save.mutateAsync({
+        values,
+        media: pendingMedia,
+        onMediaUploaded: (key, file) => {
+          setPendingMedia(current =>
+            current[key] === file ? { ...current, [key]: undefined } : current
+          );
+        },
+      });
       if (!writeProgramDraft(creatorUuid, uuid, form.getValues())) {
         toast.warning('Program saved, but browser-only draft fields could not be stored.');
       } else if (!program?.uuid) {
@@ -261,8 +281,8 @@ export default function ProgramEditor({
                 <div className='space-y-6 p-5'>
                   <p className='text-muted-foreground text-xs' role='status'>
                     {draftStorageFailed
-                      ? 'Browser draft storage is unavailable. Extra categories, program code, subject, award, assessment, evaluation, branding, and revenue shares will be lost when you leave.'
-                      : 'Extra categories, program code, subject, award, assessment, evaluation, branding, and revenue shares are saved only in this browser for now. They are not included in the published program.'}
+                      ? 'Browser draft storage is unavailable. Extra categories, subject, award, assessment components, evaluation, brand identity, and revenue shares will be lost when you leave.'
+                      : 'Extra categories, subject, award, assessment components, evaluation, brand identity, and revenue shares are saved only in this browser for now. They are not included in the published program.'}
                   </p>
                   {save.isError && (
                     <div
@@ -320,7 +340,7 @@ export default function ProgramEditor({
                   {step === 1 && <ProgramCourses creatorUuid={creatorUuid} />}
                   {step === 2 && <ProgramAssessment />}
                   {step === 3 && <ProgramEvaluation />}
-                  {step === 4 && <ProgramBranding />}
+                  {step === 4 && <ProgramBranding files={pendingMedia} onSelect={selectMedia} />}
                   {step === 5 && (
                     <ProgramPricing
                       minimumTrainingFee={minimumTrainingFee}

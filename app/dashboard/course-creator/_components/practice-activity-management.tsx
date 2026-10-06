@@ -42,7 +42,7 @@ import {
   GroupingEnum,
   type LessonPracticeActivity,
   type PageMetadata,
-  SchemaEnum4,
+  SchemaEnum6 as PracticeActivityStatus,
 } from '@/services/client/types.gen';
 import {
   closestCenter,
@@ -104,7 +104,7 @@ const defaultPracticeActivityFormValues = (): PracticeActivityFormValues => ({
   materials: '',
   expected_output: '',
   display_order: '',
-  status: SchemaEnum4.DRAFT,
+  status: PracticeActivityStatus.DRAFT,
   active: false,
 });
 
@@ -122,7 +122,7 @@ const getPracticeActivityFormValues = (
     materials: activity.materials?.join('\n') ?? '',
     expected_output: activity.expected_output ?? '',
     display_order: activity.display_order?.toString() ?? '',
-    status: activity.status ?? SchemaEnum4.DRAFT,
+    status: activity.status ?? PracticeActivityStatus.DRAFT,
     active: activity.active ?? false,
   };
 };
@@ -162,7 +162,7 @@ const buildPracticeActivityPayload = (
   expected_output: values.expected_output.trim() || undefined,
   display_order: values.display_order ? Number(values.display_order) : undefined,
   status: values.status,
-  active: values.status === SchemaEnum4.PUBLISHED ? values.active : false,
+  active: values.status === PracticeActivityStatus.PUBLISHED ? values.active : false,
 });
 
 type PracticeActivityDialogProps = {
@@ -223,7 +223,7 @@ function PracticeActivityDialog({
     await onSubmit(buildPracticeActivityPayload(values));
   };
 
-  const isPublished = values.status === SchemaEnum4.PUBLISHED;
+  const isPublished = values.status === PracticeActivityStatus.PUBLISHED;
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -340,7 +340,7 @@ function PracticeActivityDialog({
                     </SelectTrigger>
 
                     <SelectContent>
-                      {Object.values(SchemaEnum4).map(option => (
+                      {Object.values(PracticeActivityStatus).map(option => (
                         <SelectItem key={option} value={option}>
                           {getDisplayLabel(option)}
                         </SelectItem>

@@ -2,6 +2,7 @@ import { z } from 'zod';
 import { programDraftSchema, type ProgramFormValues } from './program-schema';
 
 const localDraftSchema = z.object({
+  programCode: z.string().optional(),
   categoryUuids: z.array(z.string().min(1)),
   draft: programDraftSchema,
 });
@@ -30,6 +31,7 @@ export function writeProgramDraft(
     localStorage.setItem(
       draftKey(creatorUuid, programUuid),
       JSON.stringify({
+        programCode: values.programCode,
         categoryUuids: values.categoryUuids,
         draft: values.draft,
       })

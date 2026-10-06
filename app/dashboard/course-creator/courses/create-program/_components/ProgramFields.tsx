@@ -28,6 +28,8 @@ import type { ProgramFormValues } from '../program-schema';
 
 type TextFieldName =
   | 'title'
+  | 'programCode'
+  | 'passMark'
   | 'description'
   | 'objectives'
   | 'prerequisites'
@@ -72,7 +74,7 @@ export function ProgramTextField({
                 type={type}
                 min={min}
                 max={max}
-                step={name === 'price' ? 'any' : 1}
+                step={name === 'price' || name === 'passMark' ? 'any' : 1}
                 placeholder={placeholder}
               />
             )}
@@ -135,7 +137,11 @@ export function ProgramSetup({ categories }: { categories: Category[] }) {
           placeholder='e.g. Piano Course School Programs'
           className='lg:col-span-2'
         />
-        <DraftField name='programCode' label='Program code' placeholder='e.g. MUSIC-101' />
+        <ProgramTextField
+          name='programCode'
+          label='Program code (optional)'
+          placeholder='e.g. MUSIC-101'
+        />
         <FormField
           control={control}
           name='categoryUuids'
@@ -210,8 +216,8 @@ export function ProgramSetup({ categories }: { categories: Category[] }) {
         <DraftField name='award' label='Program award' />
       </div>
       <p className='text-muted-foreground text-xs'>
-        Program code, subject, and award are kept in your browser draft. Saving keeps the program
-        in its current state; publish, unpublish or archive it with the actions above.
+        Subject and award are kept in your browser draft. Saving keeps the program in its current
+        state; publish, unpublish or archive it with the actions above.
       </p>
       <div className='grid gap-4 md:grid-cols-2'>
         <ProgramTextField

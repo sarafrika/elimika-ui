@@ -2,6 +2,7 @@
 'use client';
 
 import { RubricCombobox } from './rubric-combobox';
+import { CoursePassMarkForm } from './course-pass-mark-form';
 import { AsyncSection } from '@/components/data/async-section';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
@@ -869,6 +870,9 @@ export const CourseAssessmentStructure = ({
 
   return (
     <>
+      <div className='mb-4'>
+        <CoursePassMarkForm courseUuid={courseUuid} />
+      </div>
       <div className='bg-card rounded-xl border shadow-sm'>
         {/* Header */}
         <div className='flex flex-col gap-1 border-b px-6 py-5 sm:flex-row sm:items-center sm:justify-between'>

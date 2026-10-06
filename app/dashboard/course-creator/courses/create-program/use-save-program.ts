@@ -18,10 +18,25 @@ import {
   updateProgramCourseMutation,
   updateProgramRequirementMutation,
   updateTrainingProgramMutation,
+  uploadProgramThumbnailMutation,
+  uploadProgramBannerMutation,
+  uploadProgramIntroVideoMutation,
 } from '@/services/client/@tanstack/react-query.gen';
 import type { TrainingProgram } from '@/services/client/types.gen';
 import { withoutProgramLifecycle } from '@/components/programs/program-lifecycle';
 import { assertProgramResponse, programBody, type ProgramFormValues } from './program-schema';
+import {
+  saveProgramMedia,
+  PROGRAM_MEDIA_FIELDS,
+  type PendingProgramMedia,
+  type ProgramMediaKey,
+} from './save-program-media';
+
+const MEDIA_FORM_FIELDS = {
+  thumbnail: 'thumbnailUrl',
+  banner: 'bannerUrl',
+  intro_video: 'videoUrl',
+} as const;
 
 export function useSaveProgram(
   form: UseFormReturn<ProgramFormValues>,
@@ -42,9 +57,20 @@ export function useSaveProgram(
   const addCourse = useMutation(addProgramCourseMutation());
   const updateCourse = useMutation(updateProgramCourseMutation());
   const removeCourse = useMutation(removeProgramCourseMutation());
+  const uploadThumbnail = useMutation(uploadProgramThumbnailMutation());
+  const uploadBanner = useMutation(uploadProgramBannerMutation());
+  const uploadVideo = useMutation(uploadProgramIntroVideoMutation());
 
   return useMutation({
-    mutationFn: async ({ values }: { values: ProgramFormValues }) => {
+    mutationFn: async ({
+      values,
+      media = {},
+      onMediaUploaded,
+    }: {
+      values: ProgramFormValues;
+      media?: PendingProgramMedia;
+      onMediaUploaded?: (key: ProgramMediaKey, file: File) => void;
+    }) => {
       if (!creatorUuid)
         throw new Error('Your course creator profile is still loading. Please try again.');
       const body = programBody(values, creatorUuid, savedProgram.current);
@@ -133,6 +159,22 @@ export function useSaveProgram(
         assertProgramResponse(response, 'Unable to remove course');
         savedCourses.current.delete(courseUuid);
       }
+      await saveProgramMedia(
+        uuid,
+        media,
+        (key, uuid, file) => {
+          if (key === 'thumbnail')
+            return uploadThumbnail.mutateAsync({ path: { uuid }, body: { thumbnail: file } });
+          if (key === 'banner')
+            return uploadBanner.mutateAsync({ path: { uuid }, body: { banner: file } });
+          return uploadVideo.mutateAsync({ path: { uuid }, body: { intro_video: file } });
+        },
+        (key, file, url) => {
+          form.setValue(MEDIA_FORM_FIELDS[key], url);
+          if (savedProgram.current) savedProgram.current[PROGRAM_MEDIA_FIELDS[key]] = url;
+          onMediaUploaded?.(key, file);
+        }
+      );
       return uuid;
     },
     onSettled: async () => {

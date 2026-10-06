@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { passMarkSchema, toPassMark } from '@/lib/pass-mark';
 import { RequirementTypeEnum, type TrainingProgram } from '@/services/client/types.gen';
 
 const optionalPrice = z
@@ -40,6 +41,11 @@ export const programDraftSchema = z.object({
 export const programFormSchema = z
   .object({
     title: z.string().trim().min(1, 'Program title is required'),
+    programCode: z.string().trim().default(''),
+    passMark: passMarkSchema.default(''),
+    thumbnailUrl: z.string().default(''),
+    bannerUrl: z.string().default(''),
+    videoUrl: z.string().default(''),
     categoryUuids: z.array(z.string().min(1)).min(1, 'Select at least one category'),
     draft: programDraftSchema,
     description: z.string().trim().min(1, 'Describe the program'),
@@ -102,6 +108,11 @@ export type ProgramFormValues = z.infer<typeof programFormSchema>;
 export function defaultProgramValues(program?: TrainingProgram): ProgramFormValues {
   return {
     title: program?.title ?? '',
+    programCode: program?.program_code ?? '',
+    passMark: program?.pass_mark ?? '',
+    thumbnailUrl: program?.thumbnail_url ?? '',
+    bannerUrl: program?.banner_url ?? '',
+    videoUrl: program?.intro_video_url ?? '',
     categoryUuids: program?.category_uuid ? [program.category_uuid] : [],
     draft: programDraftSchema.parse({}),
     description: program?.description ?? '',
@@ -129,6 +140,8 @@ export function programBody(
 ): TrainingProgram {
   return {
     title: values.title.trim(),
+    program_code: values.programCode.trim().toUpperCase() || null,
+    pass_mark: toPassMark(values.passMark),
     course_creator_uuid: existing?.course_creator_uuid ?? creatorUuid,
     category_uuid: values.categoryUuids[0],
     description: values.description.trim(),
