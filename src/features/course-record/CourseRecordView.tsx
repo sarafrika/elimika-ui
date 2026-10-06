@@ -288,7 +288,7 @@ export function CourseRecordView({
       </AsyncSection>
 
       {/* ── gate banner: outside the tabs, so it stays in view ────────── */}
-      {capability.gate && gateBanner ? gateBanner : null}
+      {/* {capability.gate && gateBanner ? gateBanner : null} */}
 
       {band && !bandInOverview ? band : null}
 

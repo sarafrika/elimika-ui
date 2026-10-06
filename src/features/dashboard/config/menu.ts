@@ -442,11 +442,11 @@ export default {
           url: '/dashboard/rubrics',
           icon: ClipboardList,
         },
-        {
-          title: 'Assessments',
-          url: '/dashboard/assessments',
-          icon: ClipboardList,
-        },
+        // {
+        //   title: 'Assessments',
+        //   url: '/dashboard/assessments',
+        //   icon: ClipboardList,
+        // },
         {
           title: 'Wallet',
           url: '/dashboard/wallet',
