@@ -211,7 +211,7 @@ export function InstructorTrainingHubPage() {
         selectedType={selectedType}
       />
 
-      <section className='grid w-full max-w-full min-w-0 gap-4 overflow-hidden xl:grid-cols-[minmax(0,2fr)_minmax(320px,1fr)]'>
+      <section className='grid w-full max-w-full min-w-0 gap-4 overflow-hidden sm:w-full 2xl:max-w-[80%]'>
         <div className='min-w-0 space-y-3 overflow-hidden'>
           <TrainingHubSectionHeader
             actionLabel={``}

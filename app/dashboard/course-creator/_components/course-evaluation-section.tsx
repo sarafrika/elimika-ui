@@ -1,9 +1,5 @@
 'use client';
 
-import { useMemo, useRef, useState } from 'react';
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import Link from 'next/link';
-import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Checkbox } from '@/components/ui/checkbox';
@@ -48,6 +44,10 @@ import type {
   CourseAssessmentLineItem,
   Lesson,
 } from '@/services/client/types.gen';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import Link from 'next/link';
+import { useMemo, useRef, useState } from 'react';
+import { toast } from 'sonner';
 import { EvaluationRubricPicker } from './evaluation-rubric-picker';
 import { EvaluationRubricPreview } from './evaluation-rubric-preview';
 
@@ -100,8 +100,8 @@ function SavedCourseEvaluationSection({
       assessmentsFailed
         ? []
         : (assessmentQuery.data?.data?.content ?? []).filter((item): item is SavedAssessment =>
-            Boolean(item.uuid)
-          ),
+          Boolean(item.uuid)
+        ),
     [assessmentQuery.data, assessmentsFailed]
   );
   const plan = planFailed ? undefined : planQuery.data?.data;
@@ -190,12 +190,12 @@ function SavedCourseEvaluationSection({
               enabled,
               ...(enabled
                 ? {
-                    ...(rubricUuid ? { rubric_uuid: rubricUuid } : {}),
-                    ...(existing?.quiz_uuid ? { quiz_uuid: existing.quiz_uuid } : {}),
-                    ...(existing?.assignment_uuid
-                      ? { assignment_uuid: existing.assignment_uuid }
-                      : {}),
-                  }
+                  ...(rubricUuid ? { rubric_uuid: rubricUuid } : {}),
+                  ...(existing?.quiz_uuid ? { quiz_uuid: existing.quiz_uuid } : {}),
+                  ...(existing?.assignment_uuid
+                    ? { assignment_uuid: existing.assignment_uuid }
+                    : {}),
+                }
                 : {}),
             },
           ],

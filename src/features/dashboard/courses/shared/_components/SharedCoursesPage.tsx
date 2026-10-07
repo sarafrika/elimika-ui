@@ -3,6 +3,9 @@
 import { ALL_CATEGORIES, CategoryTabs } from '@/components/category-tabs';
 import NotesModal from '@/components/custom-modals/notes-modal';
 import { surfaceTheme } from '@/components/data-display';
+import { FacetChips, FacetChipsSkeleton } from '@/components/search/facet-chips';
+import { SearchQueryInput } from '@/components/search/search-input';
+import { SearchNotice } from '@/components/search/search-notice';
 import { Button } from '@/components/ui/button';
 import {
   Pagination,
@@ -13,6 +16,13 @@ import {
   PaginationNext,
   PaginationPrevious,
 } from '@/components/ui/pagination';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 import {
   Sheet,
   SheetContent,
@@ -25,30 +35,19 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { useInstructor } from '@/context/instructor-context';
 import { useOrganisation } from '@/context/organisation-context';
 import { useUserProfile } from '@/context/profile-context';
-import { FacetChips, FacetChipsSkeleton } from '@/components/search/facet-chips';
-import { SearchQueryInput } from '@/components/search/search-input';
-import { SearchNotice } from '@/components/search/search-notice';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
 import { useCourseClasses, useCoursesByIds } from '@/hooks/use-batched-lookups';
-import { useSearchErrors } from '@/hooks/use-search-query';
-import { useSearchState, useSearchStatePatch } from '@/hooks/use-search-state';
-import { useUrlSearchQuery } from '@/hooks/use-url-search-query';
-import { retryUnlessClientOrSearchError } from '@/lib/api-errors';
-import { classifySearchError } from '@/lib/search/query';
-import { enumParam, numberParam, stringParam } from '@/lib/search-state';
-import { useTypeSearch } from '@/src/features/search/hooks/use-type-search';
 import { useCourseEnrollmentsMap } from '@/hooks/use-enrollment-map';
 import { averageRating, useCourseReviewsMap } from '@/hooks/use-reviews-map';
+import { useSearchErrors } from '@/hooks/use-search-query';
+import { useSearchState, useSearchStatePatch } from '@/hooks/use-search-state';
 import useStudentClassDefinitions from '@/hooks/use-student-class-definition';
+import { useUrlSearchQuery } from '@/hooks/use-url-search-query';
+import { retryUnlessClientOrSearchError } from '@/lib/api-errors';
 import { categoryWithDescendants, matchesCategoryFilter } from '@/lib/category-filters';
 import { STALE_TIMES } from '@/lib/query-client';
 import type { RateCard } from '@/lib/rate-card';
+import { enumParam, numberParam, stringParam } from '@/lib/search-state';
+import { classifySearchError } from '@/lib/search/query';
 import type { UserDomain } from '@/lib/types';
 import { ApplicantTypeEnum } from '@/services/client';
 import {
@@ -84,16 +83,11 @@ import {
   stripHtml,
 } from '@/src/features/dashboard/courses/shared/_components/courses-data';
 import { CoursesCatalogCard } from '@/src/features/dashboard/courses/shared/_components/CoursesCatalogCard';
-import {
-  catalogPriceOptions,
-  catalogResultCount,
-  matchesCatalogContentType,
-  matchesCatalogPrice,
-} from './catalog-filters';
 import { CoursesCategoryFilters } from '@/src/features/dashboard/courses/shared/_components/CoursesCategoryFilters';
 import { StudentCoursesCard } from '@/src/features/dashboard/courses/shared/_components/StudentCoursesCard';
 import { roleScopedDashboardPath } from '@/src/features/dashboard/lib/active-domain-storage';
 import { invalidateTrainingApplicationWorkflowQueries } from '@/src/features/dashboard/workflow-query-invalidation';
+import { useTypeSearch } from '@/src/features/search/hooks/use-type-search';
 import {
   keepPreviousData,
   useMutation,
@@ -104,6 +98,12 @@ import {
 import { GraduationCap, Layers, type LucideIcon, SlidersHorizontal, Users } from 'lucide-react';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { toast } from 'sonner';
+import {
+  catalogPriceOptions,
+  catalogResultCount,
+  matchesCatalogContentType,
+  matchesCatalogPrice,
+} from './catalog-filters';
 
 type SharedCoursesPageProps = {
   domain: UserDomain;
@@ -369,7 +369,7 @@ const createCatalogCards = (
         : isInstructorApplyCard
           ? isOrganisationDomain
             ? !canOrganisationApply ||
-              Boolean(applicationStatus && !REAPPLYABLE_OR_APPROVED.has(applicationStatus))
+            Boolean(applicationStatus && !REAPPLYABLE_OR_APPROVED.has(applicationStatus))
             : Boolean(applicationStatus && !REAPPLYABLE.has(applicationStatus))
           : false,
 
@@ -406,7 +406,7 @@ const createCatalogCards = (
       icon: presentation.icon,
       imageTone: presentation.imageTone,
       imageUrl: item.imageUrl,
-      videoUrl: item.kind === 'program' ? undefined : item.videoUrl,
+      videoUrl: item.kind === 'program' ? item.videoUrl : item.videoUrl,
 
       rating: item.rating,
       reviewCount: item.reviewCount,
@@ -719,8 +719,8 @@ export function SharedCoursesPage({ domain }: SharedCoursesPageProps) {
           creatorName: '',
           price: program.price ?? undefined,
           minimumRate: program.price ?? undefined,
-          imageUrl: undefined,
-          videoUrl: undefined,
+          imageUrl: program.thumbnail_url ?? undefined,
+          videoUrl: program.intro_video_url ?? undefined,
           href: getContentHref(domain, 'program', program.uuid ?? ''),
           enrolledClasses: 1,
           secondaryMeta:
@@ -732,7 +732,7 @@ export function SharedCoursesPage({ domain }: SharedCoursesPageProps) {
           reviewCount: 0,
           rating: averageRating(reviews?.reviews as CourseReview[]) ?? 0,
           enrollmentCount: enrollments?.count,
-          category: '',
+          category: program.category_uuid ? categoryMap.get(program.category_uuid) ?? '' : '',
           subject: '',
           programType: '',
           // A training program carries no age limits of its own — the range comes
@@ -757,10 +757,10 @@ export function SharedCoursesPage({ domain }: SharedCoursesPageProps) {
           is_published: course.is_published as boolean,
           description: stripHtml(course.description),
           createdAt: course.created_date ? new Date(course.created_date).getTime() : 0,
-          durationMinutes: course.duration_hours * 60 + course.duration_minutes,
+          durationMinutes: course.duration_hours! * 60 + course.duration_minutes!,
           durationLabel: formatDurationFromParts(
-            course.duration_hours,
-            course.duration_minutes,
+            course.duration_hours!,
+            course.duration_minutes!,
             course.total_duration_display
           ),
           categoryLabels: course.category_names ?? [],
@@ -878,10 +878,10 @@ export function SharedCoursesPage({ domain }: SharedCoursesPageProps) {
           is_published: course.is_published as boolean,
           description: stripHtml(course.description),
           createdAt: course.created_date ? new Date(course.created_date).getTime() : 0,
-          durationMinutes: course.duration_hours * 60 + course.duration_minutes,
+          durationMinutes: course.duration_hours! * 60 + course.duration_minutes!,
           durationLabel: formatDurationFromParts(
-            course.duration_hours,
-            course.duration_minutes,
+            course.duration_hours!,
+            course.duration_minutes!,
             course.total_duration_display
           ),
           categoryLabels: course.category_names ?? [],
@@ -1108,9 +1108,9 @@ export function SharedCoursesPage({ domain }: SharedCoursesPageProps) {
       facetMode
         ? filteredItems.filter(item => item.kind === 'course' || currentCatalogPage === 1)
         : filteredItems.slice(
-            (currentCatalogPage - 1) * CATALOG_PAGE_SIZE,
-            currentCatalogPage * CATALOG_PAGE_SIZE
-          ),
+          (currentCatalogPage - 1) * CATALOG_PAGE_SIZE,
+          currentCatalogPage * CATALOG_PAGE_SIZE
+        ),
     [currentCatalogPage, facetMode, filteredItems]
   );
   const resultCount = catalogResultCount(

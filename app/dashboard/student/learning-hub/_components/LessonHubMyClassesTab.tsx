@@ -348,7 +348,7 @@ function ClassCard({
 
         <div className="flex flex-row flex-wrap items-center gap-2 pt-1">
           <Button asChild size="sm" className="flex-1 min-w-32 text-[13px]">
-            <Link href={item.href}>
+            <Link href={`/dashboard/student/learning/${item.id}`}>
               Open class
             </Link>
           </Button>
@@ -365,11 +365,7 @@ function ClassCard({
           </Button>
         </div>
 
-        <Link href={`/dashboard/student/learning/${item.id}`}
-          className='text-primary mt-2 text-sm underline underline-offset-2 transition-colors hover:text-primary/80'
-        >
-          New Learning View
-        </Link>
+        {/* /student/learning-hub/classes */}
 
         <Button
           type="button"
