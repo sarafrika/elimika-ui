@@ -292,7 +292,7 @@ export default function CreateCoursePage() {
             query: { pageable: { page: 0, size: 100 } },
         })
         : null;
-    const { data: lessonsResponse, isLoading: lessonsLoading, isError: lessonsError, refetch: refetchLessons } = useQuery({
+    const { data: lessonsResponse, isLoading: lessonsLoading, isError: lessonsError, error: lessonsQueryError, refetch: refetchLessons } = useQuery({
         ...(lessonsQuery ?? {
             queryKey: getCourseLessonsQueryKey({ path: { courseUuid: resolvedCourseId ?? '' }, query: { pageable: { page: 0, size: 100 } } }),
             queryFn: skipToken,
@@ -1267,10 +1267,9 @@ export default function CreateCoursePage() {
                                             key={resolvedCourseId}
                                             courseUuid={resolvedCourseId}
                                             courseCreatorUuid={creator.profile.uuid}
-                                            associatedBy={creator.data.userUuid ?? undefined}
                                             lessons={lessonsWithUuid}
                                             lessonsLoading={lessonsLoading}
-                                            lessonsError={lessonsError || Boolean(lessonsResponse?.error) || lessonsResponse?.success === false}
+                                            lessonsError={lessonsQueryError ?? lessonsResponse?.error ?? (lessonsResponse?.success === false ? lessonsResponse : lessonsError)}
                                             onRetryLessons={() => void refetchLessons()}
                                         />
                                     )}

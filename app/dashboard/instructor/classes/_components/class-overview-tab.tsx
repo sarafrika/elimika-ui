@@ -178,12 +178,14 @@ export function ClassHero({
         )}
 
         {/* // edit class button here */}
-        {roleLabel === 'Instructor view' && (
+        {(roleLabel === 'Instructor view' || roleLabel === 'instructor') && (
           <Button
             type='button'
             variant='outline'
             size='sm'
             onClick={onAddClasses}
+            disabled={selectedClass.enrollments.length > 0}
+            title={selectedClass.enrollments.length > 0 ? 'Classes with enrollments cannot be edited' : undefined}
             className='inline-flex h-9 items-center justify-center gap-2 rounded-lg px-4 text-xs font-medium'
           >
             <Pen className='h-4 w-4' />

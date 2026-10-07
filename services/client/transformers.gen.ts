@@ -2029,6 +2029,7 @@ export const updateLessonContentResponseTransformer = async (
 };
 
 const courseAssessmentLineItemSchemaResponseTransformer = (data: any) => {
+  if (data == null) return data;
   if (data.due_at) {
     data.due_at = new Date(data.due_at);
   }

@@ -68,6 +68,8 @@ import {
 import { RichTextPreview } from '../../classes/class-training/[id]/_components/ClassTrainingPage';
 import { socialShareActions } from '../../classes/overview/[id]/page';
 import { InviteStudentsSheetContent } from './InviteStudentsSheetContent';
+import { LessonPlanModal } from './LessonPlanModal';
+import { assignedLesson, AUTOMATIC_LESSON } from './lesson-plan';
 import type { TrainingHubLiveClass } from './training-hub-data';
 
 type LiveClassCardProps = {
@@ -118,6 +120,11 @@ export function LiveClassCard({
   const [deleteOpen, setDeleteOpen] = useState(false);
   const [inviteOpen, setInviteOpen] = useState(false);
   const [shareOpen, setShareOpen] = useState(false);
+  const [lessonPlanOpen, setLessonPlanOpen] = useState(false);
+  const [lessonPlanSaved, setLessonPlanSaved] = useState(false);
+  const hasLessonPlan = lessonPlanSaved || liveClass.class.schedule.some(
+    session => assignedLesson(session) !== AUTOMATIC_LESSON
+  );
 
 
   const registrationLink =
@@ -172,7 +179,7 @@ export function LiveClassCard({
   );
 
   const totalMinutes = liveClass?.class?.schedule?.reduce(
-    (sum, item) => sum + Number(item?.duration_minutes || 0),
+    (sum, item) => sum + (item.status === 'CANCELLED' ? 0 : Number(item?.duration_minutes || 0)),
     0
   );
 
@@ -272,7 +279,7 @@ export function LiveClassCard({
                     <DropdownMenuContent align='end' className='w-52'>
                       <DropdownMenuItem asChild>
                         <Link
-                          href={`/dashboard/instructor/classes/new?id=${liveClass?.classUuid}`}
+                          href='/dashboard/instructor/classes/new'
                           className='flex items-center gap-2'
                         >
                           <Plus className='size-4' />
@@ -290,14 +297,14 @@ export function LiveClassCard({
                         </Link>
                       </DropdownMenuItem>
 
-                      <DropdownMenuItem asChild>
-                        <Link
-                          href={`/dashboard/instructor/classes/new?id=${liveClass?.classUuid}`}
-                          className='flex items-center gap-2'
-                        >
-                          <Pencil className='size-4' />
-                          Edit class
-                        </Link>
+                      <DropdownMenuItem
+                        disabled={liveClass.class.enrollments.length > 0}
+                        title={liveClass.class.enrollments.length > 0 ? 'Classes with enrollments cannot be edited' : undefined}
+                        onSelect={() => router.push(`/dashboard/instructor/classes/new?id=${liveClass.classUuid}`)}
+                        className='flex items-center gap-2'
+                      >
+                        <Pencil className='size-4' />
+                        Edit class
                       </DropdownMenuItem>
 
                       <DropdownMenuSeparator />
@@ -314,32 +321,46 @@ export function LiveClassCard({
                 </div>
               </div>
 
-              <div className='mt-2 flex flex-wrap items-center gap-2'>
-                <span className='bg-muted text-muted-foreground inline-flex items-center rounded-full px-2.5 py-1 text-[11px] font-medium'>
-                  {liveClass.provider}
-                </span>
-
-                <span className='bg-muted text-muted-foreground inline-flex items-center rounded-full px-2.5 py-1 text-[11px] font-medium'>
-                  {timeHrsMinutes}
-                </span>
-
-                <span className='bg-muted text-muted-foreground inline-flex items-center rounded-full px-2.5 py-1 text-[11px] font-medium'>
-                  {liveClass.class.rate_basis
-                    ? formatRate(liveClass.class.sale_price ?? 0, liveClass.class.rate_basis)
-                    : liveClass.fee}{' '}
-                  per student
-                </span>
-
+              <div className='mt-2 flex flex-wrap items-center justify-between gap-2'>
                 <div className='flex flex-wrap items-center gap-2'>
-                  {topDifficultyLabels.map(difficulty => (
-                    <span
-                      key={difficulty}
-                      className='bg-muted text-muted-foreground inline-flex items-center rounded-full px-2.5 py-1 text-[11px] font-medium'
-                    >
-                      {difficulty}
-                    </span>
-                  ))}
+                  <span className='bg-muted text-muted-foreground inline-flex items-center rounded-full px-2.5 py-1 text-[11px] font-medium'>
+                    {liveClass.provider}
+                  </span>
+
+                  <span className='bg-muted text-muted-foreground inline-flex items-center rounded-full px-2.5 py-1 text-[11px] font-medium'>
+                    {timeHrsMinutes}
+                  </span>
+
+                  <span className='bg-muted text-muted-foreground inline-flex items-center rounded-full px-2.5 py-1 text-[11px] font-medium'>
+                    {liveClass.class.rate_basis
+                      ? formatRate(liveClass.class.sale_price ?? 0, liveClass.class.rate_basis)
+                      : liveClass.fee}{' '}
+                    per student
+                  </span>
+
+                  <div className='flex flex-wrap items-center gap-2'>
+                    {topDifficultyLabels.map(difficulty => (
+                      <span
+                        key={difficulty}
+                        className='bg-muted text-muted-foreground inline-flex items-center rounded-full px-2.5 py-1 text-[11px] font-medium'
+                      >
+                        {difficulty}
+                      </span>
+                    ))}
+                  </div>
                 </div>
+
+                <Button
+                  variant='ghost'
+                  className='text-primary mt-2 border'
+                  onClick={() => setLessonPlanOpen(true)}
+                  disabled={!liveClass.classUuid}
+                >
+                  {hasLessonPlan ? <Eye className='size-3.5' /> : <Plus className='size-3.5' />}
+                  <p className='text-[13px]'>
+                    {hasLessonPlan ? 'View Lesson Plan' : 'Add Lesson Plan'}
+                  </p>
+                </Button>
               </div>
 
               {bundledCourses.length > 0 && (
@@ -543,6 +564,14 @@ export function LiveClassCard({
           )}
         </div>
       </CardContent>
+
+      <LessonPlanModal
+        liveClass={liveClass}
+        open={lessonPlanOpen}
+        onOpenChange={setLessonPlanOpen}
+        onPlanSaved={() => setLessonPlanSaved(true)}
+        initialView={hasLessonPlan}
+      />
 
       <Dialog open={shareOpen} onOpenChange={setShareOpen}>
         <DialogContent className='sm:max-w-lg'>

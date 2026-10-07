@@ -35,6 +35,7 @@ import {
 import { useBreadcrumb } from '@/context/breadcrumb-provider';
 import { type ClassDetailsScheduleItem, useClassDetails } from '@/hooks/use-class-details';
 import { useClassRoster } from '@/hooks/use-class-roster';
+import { useClassEditEligibility } from '@/hooks/use-class-edit-eligibility';
 import { useCourseLessonsWithContent } from '@/hooks/use-courselessonwithcontent';
 import { useInstructorInfo } from '@/hooks/use-instructor-info';
 import { useProgramLessonsWithContent } from '@/hooks/use-programlessonwithcontent';
@@ -163,6 +164,7 @@ export function InstructorClassOverviewPage({ route }: { route: InstructorClassO
 
   const { data: combinedClass, isLoading: classIsLoading } = useClassDetails(classId as string);
   const classData = combinedClass?.class;
+  const editEligibility = useClassEditEligibility(classId as string);
   const course = combinedClass?.course;
   const programCourses = combinedClass?.pCourses;
   const program = combinedClass?.program;
@@ -400,6 +402,8 @@ export function InstructorClassOverviewPage({ route }: { route: InstructorClassO
         actions={
           <Button
             onClick={() => router.push(route.editHref(classData?.uuid))}
+            disabled={!classData?.uuid || !editEligibility.canEdit}
+            title={editEligibility.hasEnrollments ? 'Classes with enrollments cannot be edited' : undefined}
             variant='outline'
             size='sm'
             className='gap-2'

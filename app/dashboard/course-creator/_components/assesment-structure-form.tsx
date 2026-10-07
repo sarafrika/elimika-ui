@@ -42,6 +42,7 @@ import {
   deleteCourseAssessmentMutation,
   deleteLineItemMutation,
   getCourseAssessmentsOptions,
+  getCourseEvaluationPlanQueryKey,
   getLineItemsOptions,
   getLineItemsQueryKey,
   getAssessmentRubricByUuidOptions,
@@ -863,6 +864,9 @@ export const CourseAssessmentStructure = ({
     qc.invalidateQueries({
       queryKey: getCourseAssessmentsOptions({ path: { courseUuid }, query: { pageable: {} } })
         .queryKey,
+    });
+    void qc.invalidateQueries({
+      queryKey: getCourseEvaluationPlanQueryKey({ path: { courseUuid } }),
     });
     closeModal();
     setDeletingAssessment(undefined);

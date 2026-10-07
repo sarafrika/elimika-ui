@@ -26,6 +26,7 @@ import { STALE_TIMES } from '@/lib/query-client';
 import {
   getCourseByUuidOptions,
   getCourseByUuidQueryKey,
+  getCourseEvaluationPlanQueryKey,
   searchCoursesQueryKey,
   updateCourseMutation,
 } from '@/services/client/@tanstack/react-query.gen';
@@ -72,6 +73,9 @@ function SavedCoursePassMark({ courseUuid }: { courseUuid: string }) {
         client.setQueryData(getCourseByUuidQueryKey({ path: { uuid: courseUuid } }), result);
       await client.invalidateQueries({
         queryKey: getCourseByUuidQueryKey({ path: { uuid: courseUuid } }),
+      });
+      void client.invalidateQueries({
+        queryKey: getCourseEvaluationPlanQueryKey({ path: { courseUuid } }),
       });
       const searchKey = searchCoursesQueryKey({ query: { searchParams: {}, pageable: {} } });
       void client.invalidateQueries({ queryKey: [{ _id: searchKey[0]._id }] });

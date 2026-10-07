@@ -3,6 +3,7 @@ import { readFileSync, writeFileSync } from 'node:fs';
 const reactQueryFilePath = './services/client/@tanstack/react-query.gen.ts';
 const zodFilePath = './services/client/zod.gen.ts';
 const clientFilePath = './services/client/client.gen.ts';
+const transformersFilePath = './services/client/transformers.gen.ts';
 
 const replaceOrThrow = (content, searchValue, replaceValue, label) => {
   if (content.includes(replaceValue)) {
@@ -70,6 +71,15 @@ const fixZodGeneration = content =>
     .replaceAll(".default('true')", '.default(true)')
     .replaceAll(".default('false')", '.default(false)');
 
+// Empty evaluation-plan cells are null; preserve them when transforming line items.
+const fixTransformersGeneration = content =>
+  replaceOrThrow(
+    content,
+    'const courseAssessmentLineItemSchemaResponseTransformer = (data: any) => {\n',
+    'const courseAssessmentLineItemSchemaResponseTransformer = (data: any) => {\n  if (data == null) return data;\n',
+    'course assessment line item response transformer'
+  );
+
 // Every error from the generated client carries its HTTP status (see
 // services/api/error-interceptor.ts). Installed here so a regeneration keeps it.
 const fixClientGeneration = content => {
@@ -103,3 +113,4 @@ const updateFile = (filePath, transform) => {
 updateFile(reactQueryFilePath, fixReactQueryGeneration);
 updateFile(zodFilePath, fixZodGeneration);
 updateFile(clientFilePath, fixClientGeneration);
+updateFile(transformersFilePath, fixTransformersGeneration);

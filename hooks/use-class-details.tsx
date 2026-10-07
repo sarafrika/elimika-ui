@@ -149,7 +149,7 @@ export const useClassDetails = (classId?: string) => {
       pCourses: related?.pCourses ?? [],
       program: related?.program,
       lessons: related?.lessons ?? [],
-      enrollments: classEnrollments?.data ?? [],
+      enrollments: classEnrollments?.data?.data ?? [],
       instructor: related?.instructor,
       instructorProfile: related?.instructorProfile,
     },
