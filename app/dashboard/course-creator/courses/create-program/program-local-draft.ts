@@ -4,7 +4,15 @@ import { programDraftSchema, type ProgramFormValues } from './program-schema';
 const localDraftSchema = z.object({
   programCode: z.string().optional(),
   categoryUuids: z.array(z.string().min(1)),
-  draft: programDraftSchema,
+  draft: programDraftSchema.omit({
+    assessments: true,
+    evaluationCriteria: true,
+    rubric: true,
+    evaluationNotes: true,
+    hourlyFee: true,
+    instructorShare: true,
+    creatorShare: true,
+  }),
 });
 
 function draftKey(creatorUuid: string, programUuid?: string) {
@@ -33,7 +41,18 @@ export function writeProgramDraft(
       JSON.stringify({
         programCode: values.programCode,
         categoryUuids: values.categoryUuids,
-        draft: values.draft,
+        draft: {
+          programCode: values.draft.programCode,
+          subject: values.draft.subject,
+          award: values.draft.award,
+          brandName: values.draft.brandName,
+          tagline: values.draft.tagline,
+          logoUrl: values.draft.logoUrl,
+          coverUrl: values.draft.coverUrl,
+          thumbnailUrl: values.draft.thumbnailUrl,
+          bannerUrl: values.draft.bannerUrl,
+          videoUrl: values.draft.videoUrl,
+        },
       })
     );
     return true;

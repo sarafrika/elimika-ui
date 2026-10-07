@@ -20,6 +20,7 @@ import {
 import { Input } from '@/components/ui/input';
 import { Skeleton } from '@/components/ui/skeleton';
 import Spinner from '@/components/ui/spinner';
+import { getErrorMessage } from '@/lib/error-utils';
 import { passMarkSchema, toPassMark } from '@/lib/pass-mark';
 import { STALE_TIMES } from '@/lib/query-client';
 import {
@@ -60,12 +61,12 @@ function SavedCoursePassMark({ courseUuid }: { courseUuid: string }) {
         path: { uuid: courseUuid },
         body: { ...course, pass_mark: toPassMark(values.pass_mark) },
         bodySerializer: body => {
-          const { status, active, is_published, is_draft, ...content } = body;
+          const { active, is_published, is_draft, ...content } = body;
           return JSON.stringify(content);
         },
       });
       if (result.error || result.success === false)
-        throw new Error(result.message || 'Unable to save pass mark');
+        throw new Error(getErrorMessage(result, 'Unable to save pass mark'));
       form.reset(values);
       if (result.data)
         client.setQueryData(getCourseByUuidQueryKey({ path: { uuid: courseUuid } }), result);
@@ -76,7 +77,7 @@ function SavedCoursePassMark({ courseUuid }: { courseUuid: string }) {
       void client.invalidateQueries({ queryKey: [{ _id: searchKey[0]._id }] });
       toast.success('Course pass mark saved');
     } catch (cause) {
-      toast.error(cause instanceof Error ? cause.message : 'Unable to save pass mark');
+      toast.error(getErrorMessage(cause, 'Unable to save pass mark'));
     }
   }
 

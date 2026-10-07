@@ -590,71 +590,71 @@ function AssessmentSheet({
               </p>
 
               <>
-                  <RubricCombobox
-                    creatorUuid={creator?.profile?.uuid}
-                    value={form.rubric_uuid}
-                    onChange={uuid => set('rubric_uuid', uuid)}
-                    placeholder='Select a rubric (optional)'
-                    className='sm:max-w-[650px]'
-                    aria-label='Assessment rubric'
-                  />
+                <RubricCombobox
+                  creatorUuid={creator?.profile?.uuid}
+                  value={form.rubric_uuid}
+                  onChange={uuid => set('rubric_uuid', uuid)}
+                  placeholder='Select a rubric (optional)'
+                  className='sm:max-w-[650px]'
+                  aria-label='Assessment rubric'
+                />
 
-                  {selectedRubric ? (
-                    <div className='bg-muted/50 mt-1 flex items-start justify-between gap-2 rounded-lg border px-3 py-2'>
-                      <div className='min-w-0'>
-                        <p className='text-foreground truncate text-xs font-semibold'>
-                          {selectedRubric.title}
+                {selectedRubric ? (
+                  <div className='bg-muted/50 mt-1 flex items-start justify-between gap-2 rounded-lg border px-3 py-2'>
+                    <div className='min-w-0'>
+                      <p className='text-foreground truncate text-xs font-semibold'>
+                        {selectedRubric.title}
+                      </p>
+
+                      {selectedRubric.description && (
+                        <p className='text-muted-foreground mt-0.5 line-clamp-5 text-xs'>
+                          {selectedRubric.description}
+                        </p>
+                      )}
+                    </div>
+
+                    <button
+                      type='button'
+                      onClick={() => set('rubric_uuid', '')}
+                      className='text-muted-foreground hover:text-foreground hover:bg-muted mt-0.5 shrink-0 rounded p-0.5 transition-colors'
+                      title='Clear rubric'
+                    >
+                      <X size={13} />
+                    </button>
+                  </div>
+                ) : (
+                  <div className='bg-warning/20 border-warning/40 flex flex-col gap-3 rounded-lg border p-4'>
+                    <div className='flex items-start gap-2'>
+                      <AlertTriangle className='text-warning-foreground mt-0.5 h-4 w-4 shrink-0' />
+
+                      <div className='text-sm'>
+                        <p className='text-warning-foreground font-medium'>
+                          No rubric selected
                         </p>
 
-                        {selectedRubric.description && (
-                          <p className='text-muted-foreground mt-0.5 line-clamp-5 text-xs'>
-                            {selectedRubric.description}
-                          </p>
-                        )}
+                        <p className='text-warning-foreground/80 text-xs'>
+                          If none of the available rubrics fit,
+                          you can create a new one.
+                        </p>
                       </div>
+                    </div>
 
-                      <button
+                    <Link
+                      href='/dashboard/course-creator/rubrics'
+                      target='_blank'
+                    >
+                      <Button
                         type='button'
-                        onClick={() => set('rubric_uuid', '')}
-                        className='text-muted-foreground hover:text-foreground hover:bg-muted mt-0.5 shrink-0 rounded p-0.5 transition-colors'
-                        title='Clear rubric'
+                        variant='outline'
+                        size='sm'
+                        className='border-warning text-warning-foreground hover:bg-warning/100 w-fit self-center'
+                        onClick={onClose}
                       >
-                        <X size={13} />
-                      </button>
-                    </div>
-                  ) : (
-                    <div className='bg-warning/20 border-warning/40 flex flex-col gap-3 rounded-lg border p-4'>
-                      <div className='flex items-start gap-2'>
-                        <AlertTriangle className='text-warning-foreground mt-0.5 h-4 w-4 shrink-0' />
-
-                        <div className='text-sm'>
-                          <p className='text-warning-foreground font-medium'>
-                            No rubric selected
-                          </p>
-
-                          <p className='text-warning-foreground/80 text-xs'>
-                            If none of the available rubrics fit,
-                            you can create a new one.
-                          </p>
-                        </div>
-                      </div>
-
-                      <Link
-                        href='/dashboard/course-creator/rubrics'
-                        target='_blank'
-                      >
-                        <Button
-                          type='button'
-                          variant='outline'
-                          size='sm'
-                          className='border-warning text-warning-foreground hover:bg-warning/100 w-fit self-center'
-                          onClick={onClose}
-                        >
-                          Create New Rubric
-                        </Button>
-                      </Link>
-                    </div>
-                  )}
+                        Create New Rubric
+                      </Button>
+                    </Link>
+                  </div>
+                )}
               </>
             </div>
 
@@ -873,6 +873,7 @@ export const CourseAssessmentStructure = ({
       <div className='mb-4'>
         <CoursePassMarkForm courseUuid={courseUuid} />
       </div>
+
       <div className='bg-card rounded-xl border shadow-sm'>
         {/* Header */}
         <div className='flex flex-col gap-1 border-b px-6 py-5 sm:flex-row sm:items-center sm:justify-between'>

@@ -103,7 +103,10 @@ export function useProgramLifecycle() {
 
   const run = async (action: ProgramLifecycleAction, uuid: string) => {
     try {
-      await mutations[action].mutateAsync({ path: { uuid } });
+      const response = await mutations[action].mutateAsync({ path: { uuid } });
+      if (response.error || response.success === false) {
+        throw new Error(response.message || ACTION_COPY[action].fail);
+      }
       toast.success(ACTION_COPY[action].done);
       return true;
     } catch (error) {
@@ -166,7 +169,13 @@ export function ArchiveProgramSheet({
 const ACTION_ICON = { publish: Send, unpublish: EyeOff, archive: Archive } as const;
 
 /** Buttons for a program's detail or edit page: badge, then the actions its state allows. */
-export function ProgramLifecycleActions({ program }: { program: TrainingProgram }) {
+export function ProgramLifecycleActions({
+  program,
+  onPublished,
+}: {
+  program: TrainingProgram;
+  onPublished?: (uuid: string) => void;
+}) {
   const { run, pending } = useProgramLifecycle();
   const [confirmArchive, setConfirmArchive] = useState(false);
   const uuid = program.uuid;
@@ -185,9 +194,13 @@ export function ProgramLifecycleActions({ program }: { program: TrainingProgram 
               size='sm'
               variant={action === 'publish' ? 'default' : 'outline'}
               disabled={pending !== null}
-              onClick={() =>
-                action === 'archive' ? setConfirmArchive(true) : void run(action, uuid)
-              }
+              onClick={async () => {
+                if (action === 'archive') {
+                  setConfirmArchive(true);
+                  return;
+                }
+                if ((await run(action, uuid)) && action === 'publish') onPublished?.(uuid);
+              }}
             >
               {pending === action ? <Spinner /> : <Icon />}
               {ACTION_COPY[action].label}

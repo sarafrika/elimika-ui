@@ -32,7 +32,8 @@ export function ProgramMediaUpload({
     <section className='space-y-3' aria-label='Program media'>
       <h3 className='text-sm font-medium'>Media</h3>
       <p className='text-muted-foreground text-xs'>
-        Choose or replace your program media. Selected files upload when you save the program.
+        Choose or replace your program media. Selected files upload when you save and continue from
+        Branding.
       </p>
       <div className='grid gap-4 md:grid-cols-3'>
         {MEDIA.map(media => (

@@ -2,6 +2,11 @@ import { z } from 'zod';
 import { passMarkSchema, toPassMark } from '@/lib/pass-mark';
 import { RequirementTypeEnum, type TrainingProgram } from '@/services/client/types.gen';
 
+export const programRequirementTypeSchema = z.preprocess(
+  value => (typeof value === 'string' ? value.trim().toUpperCase() : value),
+  z.nativeEnum(RequirementTypeEnum)
+);
+
 const optionalPrice = z
   .string()
   .trim()
@@ -20,8 +25,23 @@ export const programDraftSchema = z.object({
   assessments: z
     .array(
       z.object({
-        name: z.string(),
-        weight: z.string(),
+        uuid: z.string().optional(),
+        assessmentType: z.string().default('exam'),
+        rubricUuid: z.string().nullish().transform(value => value ?? undefined),
+        isRequired: z.boolean().default(true),
+        active: z.boolean().default(true),
+        name: z.string().trim().min(1, 'Enter a component name'),
+        weight: z
+          .string()
+          .trim()
+          .refine(
+            value =>
+              value !== '' &&
+              Number.isFinite(Number(value)) &&
+              Number(value) > 0 &&
+              Number(value) <= 100,
+            'Enter a weight above 0 and at most 100%'
+          ),
         criteria: z.string(),
       })
     )
@@ -38,70 +58,147 @@ export const programDraftSchema = z.object({
   creatorShare: z.string().default(''),
 });
 
-export const programFormSchema = z
-  .object({
-    title: z.string().trim().min(1, 'Program title is required'),
-    programCode: z.string().trim().default(''),
-    passMark: passMarkSchema.default(''),
-    thumbnailUrl: z.string().default(''),
-    bannerUrl: z.string().default(''),
-    videoUrl: z.string().default(''),
-    categoryUuids: z.array(z.string().min(1)).min(1, 'Select at least one category'),
-    draft: programDraftSchema,
-    description: z.string().trim().min(1, 'Describe the program'),
-    objectives: z.string().trim(),
-    prerequisites: z.string().trim(),
-    classLimit: z
-      .string()
-      .trim()
-      .refine(
-        value => value !== '' && Number.isInteger(Number(value)) && Number(value) >= 1,
-        'Class limit must be a whole number of at least 1'
-      ),
-    totalDurationHours: z.coerce.number().int().min(0, 'Hours cannot be negative'),
-    totalDurationMinutes: z.coerce
-      .number()
-      .int()
-      .min(0)
-      .max(59, 'Minutes must be between 0 and 59'),
-    price: optionalPrice,
-    requirements: z.array(
-      z.object({
-        uuid: z.string().optional(),
-        requirementText: z.string().trim().min(1, 'Enter a requirement or remove this row'),
-        requirementType: z.nativeEnum(RequirementTypeEnum),
-        isMandatory: z.boolean(),
-      })
+const programFieldsSchema = z.object({
+  title: z.string().trim().min(1, 'Program title is required'),
+  programCode: z.string().trim().default(''),
+  passMark: passMarkSchema.default(''),
+  thumbnailUrl: z.string().default(''),
+  bannerUrl: z.string().default(''),
+  videoUrl: z.string().default(''),
+  categoryUuids: z.array(z.string().min(1)).min(1, 'Select at least one category'),
+  draft: programDraftSchema,
+  description: z.string().trim().min(1, 'Describe the program'),
+  objectives: z.string().trim(),
+  prerequisites: z.string().trim(),
+  classLimit: z
+    .string()
+    .trim()
+    .refine(
+      value => value !== '' && Number.isInteger(Number(value)) && Number(value) >= 1,
+      'Class limit must be a whole number of at least 1'
     ),
-    courses: z.array(
-      z.object({
-        associationUuid: z.string().optional(),
-        courseUuid: z.string().min(1),
-        isRequired: z.boolean(),
-        prerequisiteCourseUuid: z.string(),
-      })
-    ),
-  })
-  .superRefine((values, ctx) => {
-    const seen = new Set<string>();
-    values.courses.forEach((course, index) => {
-      if (seen.has(course.courseUuid)) {
-        ctx.addIssue({
-          code: 'custom',
-          path: ['courses', index, 'courseUuid'],
-          message: 'Course is already selected',
-        });
-      }
-      if (course.prerequisiteCourseUuid && !seen.has(course.prerequisiteCourseUuid)) {
-        ctx.addIssue({
-          code: 'custom',
-          path: ['courses', index, 'prerequisiteCourseUuid'],
-          message: 'Choose a prerequisite earlier in the curriculum',
-        });
-      }
-      seen.add(course.courseUuid);
+  totalDurationHours: z.coerce.number().int().min(0, 'Hours cannot be negative'),
+  totalDurationMinutes: z.coerce.number().int().min(0).max(59, 'Minutes must be between 0 and 59'),
+  price: optionalPrice,
+  requirements: z.array(
+    z.object({
+      uuid: z.string().optional(),
+      requirementText: z.string().trim().min(1, 'Enter a requirement or remove this row'),
+      requirementType: programRequirementTypeSchema,
+      isMandatory: z.boolean(),
+      resource: z
+        .object({
+          name: z.string().trim().min(1, 'Enter a requirement name'),
+          requirement_type: z.string(),
+          quantity: z
+            .string()
+            .refine(
+              value => value === '' || (Number.isFinite(Number(value)) && Number(value) >= 0),
+              'Quantity must be zero or greater'
+            ),
+          unit: z.string(),
+          description: z.string(),
+          is_mandatory: z.boolean(),
+        })
+        .optional(),
+    })
+  ),
+  courses: z.array(
+    z.object({
+      associationUuid: z.string().optional(),
+      courseUuid: z.string().min(1),
+      isRequired: z.boolean(),
+      prerequisiteCourseUuid: z.string(),
+    })
+  ),
+});
+function refineAssessmentWeights(
+  rows: z.infer<typeof programDraftSchema>['assessments'],
+  ctx: z.RefinementCtx
+) {
+  if (rows.reduce((total, row) => total + Number(row.weight), 0) > 100)
+    ctx.addIssue({
+      code: 'custom',
+      path: ['draft', 'assessments'],
+      message: 'Assessment weights cannot total more than 100%',
     });
+}
+
+function refineCurriculum(
+  courses: z.infer<typeof programFieldsSchema>['courses'],
+  ctx: z.RefinementCtx
+) {
+  const seen = new Set<string>();
+  courses.forEach((course, index) => {
+    if (seen.has(course.courseUuid))
+      ctx.addIssue({
+        code: 'custom',
+        path: ['courses', index, 'courseUuid'],
+        message: 'Course is already selected',
+      });
+    if (course.prerequisiteCourseUuid && !seen.has(course.prerequisiteCourseUuid))
+      ctx.addIssue({
+        code: 'custom',
+        path: ['courses', index, 'prerequisiteCourseUuid'],
+        message: 'Choose a prerequisite earlier in the curriculum',
+      });
+    seen.add(course.courseUuid);
   });
+}
+
+export const programFormSchema = programFieldsSchema.superRefine((values, ctx) => {
+  refineAssessmentWeights(values.draft.assessments, ctx);
+  refineCurriculum(values.courses, ctx);
+});
+
+// Validate the fields on the active step without requiring unfinished later steps.
+export const PROGRAM_STEP_FIELDS = [
+  [
+    'title',
+    'programCode',
+    'categoryUuids',
+    'description',
+    'objectives',
+    'prerequisites',
+    'classLimit',
+    'requirements',
+  ],
+  ['courses'],
+  ['passMark', 'draft.assessments'],
+  [],
+  [],
+  ['price'],
+] as const;
+
+export function programStepSchema(step: number | 'requirements' | 'assessments') {
+  const fields = programFieldsSchema.shape;
+  if (step === 'requirements') return programFieldsSchema.pick({ requirements: true });
+  if (step === 'assessments')
+    return z
+      .object({ draft: programDraftSchema.pick({ assessments: true }) })
+      .superRefine((values, ctx) => refineAssessmentWeights(values.draft.assessments, ctx));
+  if (step === 0)
+    return programFieldsSchema.pick({
+      title: true,
+      programCode: true,
+      categoryUuids: true,
+      description: true,
+      objectives: true,
+      prerequisites: true,
+      classLimit: true,
+      requirements: true,
+    });
+  if (step === 1)
+    return programFieldsSchema
+      .pick({ courses: true })
+      .superRefine((values, ctx) => refineCurriculum(values.courses, ctx));
+  if (step === 2)
+    return z
+      .object({ passMark: fields.passMark, draft: programDraftSchema.pick({ assessments: true }) })
+      .superRefine((values, ctx) => refineAssessmentWeights(values.draft.assessments, ctx));
+  if (step === 5) return programFieldsSchema.pick({ price: true });
+  return z.object({});
+}
 
 export type ProgramFormValues = z.infer<typeof programFormSchema>;
 
@@ -141,14 +238,14 @@ export function programBody(
   return {
     title: values.title.trim(),
     program_code: values.programCode.trim().toUpperCase() || null,
-    pass_mark: toPassMark(values.passMark),
+    pass_mark: toPassMark(passMarkSchema.parse(values.passMark)),
     course_creator_uuid: existing?.course_creator_uuid ?? creatorUuid,
     category_uuid: values.categoryUuids[0],
     description: values.description.trim(),
     objectives: values.objectives.trim(),
     prerequisites: values.prerequisites.trim(),
-    total_duration_hours: values.totalDurationHours,
-    total_duration_minutes: values.totalDurationMinutes,
+    total_duration_hours: 0,
+    total_duration_minutes: 0,
     class_limit: Number(values.classLimit),
     price: values.price.trim() === '' ? null : Number(values.price),
     status: existing?.status ?? 'draft',

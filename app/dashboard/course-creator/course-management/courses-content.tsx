@@ -1,5 +1,6 @@
 'use client';
 
+import { SearchNotice } from '@/components/search/search-notice';
 import {
   AlertDialog,
   AlertDialogContent,
@@ -17,7 +18,6 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import { SearchNotice } from '@/components/search/search-notice';
 import { EmptyState } from '@/components/ui/empty-state';
 import { Input } from '@/components/ui/input';
 import {
@@ -47,8 +47,8 @@ import { isSearchUnavailable, retryUnlessClientOrSearchError } from '@/lib/api-e
 import { STALE_TIMES } from '@/lib/query-client';
 import {
   classifySearchError,
-  type SearchIssue,
   toSearchTerm,
+  type SearchIssue,
 } from '@/lib/search/query';
 import { cn } from '@/lib/utils';
 import type { Course, PageMetadata, TrainingProgram } from '@/services/client';
@@ -762,8 +762,7 @@ function OfferingRow({
   const title = titleOf(offering);
   const status = item.status.toLowerCase();
   const updated = item.updated_date ? new Date(item.updated_date) : null;
-  const thumbnail =
-    offering.type === 'courses' ? toAuthenticatedMediaUrl(offering.item.thumbnail_url) : null;
+  const thumbnail = toAuthenticatedMediaUrl(offering.item.thumbnail_url);
   const [failedImage, setFailedImage] = useState<string | null>(null);
   const description = item.description
     ?.replace(/<[^>]*>/g, ' ')
@@ -855,7 +854,7 @@ function OfferingRow({
           )}
         </span>
         <span className='text-muted-foreground mt-1 block text-xs whitespace-nowrap'>
-          {offering.type === 'courses' ? 'min. per learner, any basis' : 'program price'}
+          {offering.type === 'courses' ? 'min. per learner, any basis' : 'min. per learner, any basis'}
         </span>
       </TableCell>
       <TableCell>

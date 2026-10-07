@@ -153,7 +153,6 @@ const mapCourseValues = (course?: Course | null): Partial<CourseCreationFormValu
     return {
         name: course.name || '',
         course_code: course.course_code ?? '',
-        pass_mark: course.pass_mark ?? '',
         description: course.description || '',
         instructor: course.course_creator_uuid || '',
         price: course.price ?? 0,

@@ -24,7 +24,6 @@ import {
 } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { EmptyState } from '@/components/ui/empty-state';
-import { toPassMark } from '@/lib/pass-mark';
 import { Label } from '@/components/ui/label';
 import {
   Select,
@@ -236,7 +235,6 @@ export const CourseCreationForm = forwardRef<CourseFormRef, CourseFormProps>(
       defaultValues: {
         name: '',
         course_code: '',
-        pass_mark: '',
         description: '',
         is_free: false,
         objectives: '',
@@ -446,7 +444,6 @@ export const CourseCreationForm = forwardRef<CourseFormRef, CourseFormProps>(
           course_creator_uuid: resolvedCourseCreatorUuid,
           name: data?.name,
           course_code: data.course_code?.trim().toUpperCase() || null,
-          pass_mark: toPassMark(data.pass_mark),
           description: data?.description,
           objectives: data?.objectives,
           thumbnail_url: data?.thumbnail_url,
@@ -522,7 +519,6 @@ export const CourseCreationForm = forwardRef<CourseFormRef, CourseFormProps>(
             course_creator_uuid: resolvedCourseCreatorUuid,
             name: data?.name,
             course_code: data.course_code?.trim().toUpperCase() || null,
-            pass_mark: toPassMark(data.pass_mark),
             description: data?.description,
             objectives: data?.objectives,
             category_uuids: data?.categories,
@@ -656,35 +652,6 @@ export const CourseCreationForm = forwardRef<CourseFormRef, CourseFormProps>(
                       </FormLabel>
                       <FormControl>
                         <Input placeholder='e.g. DATA101' {...field} value={field.value ?? ''} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-
-                <FormField
-                  control={form.control}
-                  name='pass_mark'
-                  render={({ field }) => (
-                    <FormItem className='grid gap-1.5'>
-                      <FormLabel className='text-base font-semibold'>
-                        Pass mark (%) (optional)
-                      </FormLabel>
-                      <FormControl>
-                        <Input
-                          {...field}
-                          type='number'
-                          min={0}
-                          max={100}
-                          step='any'
-                          placeholder='e.g. 50'
-                          value={field.value ?? ''}
-                          onChange={event =>
-                            field.onChange(
-                              event.target.value === '' ? '' : Number(event.target.value)
-                            )
-                          }
-                        />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
