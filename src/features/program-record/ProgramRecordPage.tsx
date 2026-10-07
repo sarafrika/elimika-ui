@@ -1,9 +1,5 @@
 'use client';
 
-import { useQuery } from '@tanstack/react-query';
-import { usePathname } from 'next/navigation';
-import { type ReactNode, useCallback, useMemo } from 'react';
-import { toast } from 'sonner';
 import { useStudentsByIds } from '@/hooks/use-batched-lookups';
 import { extractPage } from '@/lib/api-helpers';
 import { STALE_TIMES } from '@/lib/query-client';
@@ -42,6 +38,10 @@ import {
   publicCourseUrl,
   routeSegmentFromPath,
 } from '@/src/features/dashboard/lib/dashboard-url';
+import { useQuery } from '@tanstack/react-query';
+import { usePathname } from 'next/navigation';
+import { type ReactNode, useCallback, useMemo } from 'react';
+import { toast } from 'sonner';
 import { ProgramCurriculumPanel } from './ProgramCurriculumPanel';
 import { ProgramEnrollmentsPanel } from './ProgramEnrollmentsPanel';
 
@@ -330,15 +330,15 @@ export function ProgramRecordPage({
     () =>
       program
         ? {
-            ...program,
-            name: program.title,
-            duration_hours: program.total_duration_hours,
-            duration_minutes: program.total_duration_minutes,
-            price: program.price ?? 0,
-            minimum_training_fee: program.price ?? 0,
-            creator_share_percentage: 60,
-            instructor_share_percentage: 40,
-          }
+          ...program,
+          name: program.title,
+          duration_hours: program.total_duration_hours,
+          duration_minutes: program.total_duration_minutes,
+          price: program.price ?? 0,
+          minimum_training_fee: program.price ?? 0,
+          creator_share_percentage: 60,
+          instructor_share_percentage: 40,
+        }
         : undefined,
     [program]
   );
@@ -451,6 +451,7 @@ export function ProgramRecordPage({
           duration: program?.total_duration_display ?? undefined,
           level: program?.program_type ?? undefined,
           loading: programQ.isLoading,
+          imageUrl: program?.thumbnail_url ?? undefined,
           error: programQ.error ?? undefined,
           onRetry: () => void programQ.refetch(),
         }}

@@ -4,7 +4,9 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Progress } from '@/components/ui/progress';
-import type { Instructor, InstructorSkill, ProficiencyLevelEnum } from '@/services/client';
+import type { Instructor, InstructorSkill } from '@/services/client';
+
+type ProficiencyLevel = InstructorSkill['proficiency_level'];
 
 type InstructorSummary = Pick<Instructor, 'full_name' | 'professional_headline'> & {
   profile_image_url?: string | null;
@@ -13,7 +15,7 @@ type InstructorSummary = Pick<Instructor, 'full_name' | 'professional_headline'>
 type NormalizedSkill = {
   uuid?: string;
   skill_name: string;
-  proficiency_level: ProficiencyLevelEnum;
+  proficiency_level: ProficiencyLevel;
   proficiency_description: string;
   summary: string;
   proficiency_percentage: number;
@@ -23,14 +25,14 @@ type NormalizedSkill = {
   updated_date: Date | string;
 };
 
-const proficiencyMap: Record<ProficiencyLevelEnum, number> = {
+const proficiencyMap: Record<ProficiencyLevel, number> = {
   BEGINNER: 25,
   INTERMEDIATE: 50,
   ADVANCED: 75,
   EXPERT: 90,
 };
 
-const normalizeProficiencyLevel = (level?: string | null): ProficiencyLevelEnum => {
+const normalizeProficiencyLevel = (level?: string | null): ProficiencyLevel => {
   switch ((level ?? '').toUpperCase()) {
     case 'INTERMEDIATE':
       return 'INTERMEDIATE';

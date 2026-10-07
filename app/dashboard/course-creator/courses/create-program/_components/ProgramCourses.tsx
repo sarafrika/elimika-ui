@@ -26,8 +26,8 @@ import type { Course } from '@/services/client/types.gen';
 import { keepPreviousData, useInfiniteQuery } from '@tanstack/react-query';
 import { ArrowDown, ArrowUp, BookOpen, Check, X } from 'lucide-react';
 import Link from 'next/link';
-import { useMemo, } from 'react';
-import { useFieldArray, useFormContext, useWatch } from 'react-hook-form';
+import { useMemo } from 'react';
+import { useFieldArray, useFormContext } from 'react-hook-form';
 import type { ProgramFormValues } from '../program-schema';
 
 const EMPTY_COURSES: Course[] = [];
@@ -38,7 +38,6 @@ export default function ProgramCourses({ creatorUuid }: { creatorUuid: string })
     control: form.control,
     name: 'courses',
   });
-  const categoryUuids = useWatch({ control: form.control, name: 'categoryUuids' });
   // Titles are matched by the search index (`q`, typo-tolerant), not in the browser.
   const search = useSearchQuery();
   const coursesQuery = useInfiniteQuery({
@@ -77,13 +76,7 @@ export default function ProgramCourses({ creatorUuid }: { creatorUuid: string })
     }
     return [...courses.values()];
   }, [coursesQuery.data]);
-  const availableCourses = useMemo(
-    () =>
-      loadedCourses.filter(course =>
-        course.category_uuids?.some(uuid => categoryUuids.includes(uuid))
-      ),
-    [loadedCourses, categoryUuids]
-  );
+  const availableCourses = loadedCourses;
   const selectedIds = useMemo(() => new Set(fields.map(row => row.courseUuid)), [fields]);
   const missingIds = useMemo(
     () =>
@@ -100,7 +93,8 @@ export default function ProgramCourses({ creatorUuid }: { creatorUuid: string })
   }, [loadedCourses, selectedLookup.courseMap]);
 
   const removeCourse = (index: number) => {
-    const removedUuid = fields[index].courseUuid;
+    const removedUuid = fields[index]?.courseUuid;
+    if (!removedUuid) return;
     remove(index);
     form.getValues('courses').forEach((row, rowIndex) => {
       if (row.prerequisiteCourseUuid === removedUuid)
@@ -123,7 +117,7 @@ export default function ProgramCourses({ creatorUuid }: { creatorUuid: string })
         <div>
           <h3 className='text-sm font-medium'>Courses in this program</h3>
           <p className='text-muted-foreground mt-1 text-xs'>
-            Showing published courses in any selected category. Tap a course tile to add or remove
+            Showing all published courses available to bundle. Tap a course tile to add or remove
             it. Selected courses appear in the curriculum table.
           </p>
         </div>
@@ -155,22 +149,14 @@ export default function ProgramCourses({ creatorUuid }: { creatorUuid: string })
             <Skeleton key={index} className='h-40' />
           ))}
         </div>
-      ) : !categoryUuids.length ? (
-        <EmptyState
-          variant='compact'
-          title='Select program categories'
-          description='Choose categories in Program set-up to see matching courses.'
-        />
       ) : !availableCourses.length ? (
         <EmptyState
           variant='compact'
-          title={
-            coursesQuery.hasNextPage ? 'No matching courses loaded yet' : 'No matching courses'
-          }
+          title={coursesQuery.hasNextPage ? 'No courses loaded yet' : 'No matching courses'}
           description={
             coursesQuery.hasNextPage
-              ? 'Load more courses below to find matches in the selected categories.'
-              : 'Try another course title or change the categories in Program set-up.'
+              ? 'Load more published courses below.'
+              : 'Try another course title.'
           }
           action={
             !search.input &&

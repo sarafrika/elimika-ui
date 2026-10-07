@@ -20,6 +20,9 @@ import {
 import { AsyncSection } from '@/components/data/async-section';
 import { SchedulingConflictAlert } from '@/components/scheduling/scheduling-conflict-alert';
 import { Skeleton } from '@/components/ui/skeleton';
+import { EmptyState } from '@/components/ui/empty-state';
+import Spinner from '@/components/ui/spinner';
+import { useClassEditEligibility } from '@/hooks/use-class-edit-eligibility';
 import { type DeliveryMode, formatRateBasis, rateFor } from '@/lib/rate-card';
 import { dashboardUrl } from '@/src/features/dashboard/lib/dashboard-url';
 import { parseSchedulingConflicts, type SchedulingConflict } from '@/lib/scheduling-conflicts';
@@ -103,6 +106,7 @@ import {
   NotificationSettings,
   ScheduleSettings,
 } from '../../trainings/create-new/page';
+import { ClassScheduleEditor, type ClassScheduleEditState } from './_components/ClassScheduleEditor';
 
 const LOCAL_CLASS_DRAFT_KEY = 'training-class-create-draft:new-class-creation';
 const DAY_NAMES = ['MONDAY', 'TUESDAY', 'WEDNESDAY', 'THURSDAY', 'FRIDAY', 'SATURDAY', 'SUNDAY'];
@@ -753,6 +757,11 @@ const InstructorClassCreationPage = () => {
   const [perDayOccurrences, setPerDayOccurrences] = useState<Record<number, PerDayOccurrence>>({});
 
   const resolvedId = classId || savedClassUuid;
+  const editEligibility = useClassEditEligibility(resolvedId);
+  const [checkingEnrollments, setCheckingEnrollments] = useState(false);
+  const [scheduleEditState, setScheduleEditState] = useState<ClassScheduleEditState>({
+    saving: false, dirty: false, sessions: 0, minutes: 0, days: 0,
+  });
   const {
     data: combinedClass,
     isLoading,
@@ -788,6 +797,7 @@ const InstructorClassCreationPage = () => {
   // 409 with the windows it refused and why. Keep them on screen, not in a vanishing toast.
   const [refusedWindows, setRefusedWindows] = useState<SchedulingConflict[]>([]);
   const isSubmitting =
+    checkingEnrollments || scheduleEditState.saving ||
     createClassDefinition.isPending ||
     updateClassDefinition.isPending ||
     uploadThumbnail.isPending ||
@@ -946,11 +956,14 @@ const InstructorClassCreationPage = () => {
     );
   }, [deliveryMode, rateCard, rateBasis, service]);
 
-  const totalSessions = sessionsForConflictCheck.length || classData?.scheduled_session_count;
+  const totalSessions = resolvedId
+    ? scheduleEditState.sessions
+    : sessionsForConflictCheck.length || classData?.scheduled_session_count;
 
   const hasPerDayOccurrenceData = Object.keys(perDayOccurrences).length > 0;
 
   const totalHours = useMemo(() => {
+    if (resolvedId) return scheduleEditState.minutes / 60;
     if (
       hasPerDayOccurrenceData &&
       schedulePreset === 'standard' &&
@@ -977,12 +990,14 @@ const InstructorClassCreationPage = () => {
     scheduleSettings.allDay,
     scheduleSettings.repeat.unit,
     sessionsForConflictCheck,
+    resolvedId,
+    scheduleEditState.minutes,
   ]);
 
   /** Distinct calendar days holding a session — two sessions in one day bill once on a daily rate. */
   const totalDays = useMemo(
-    () => new Set(sessionsForConflictCheck.map(session => session.date)).size,
-    [sessionsForConflictCheck]
+    () => resolvedId ? scheduleEditState.days : new Set(sessionsForConflictCheck.map(session => session.date)).size,
+    [sessionsForConflictCheck, resolvedId, scheduleEditState.days]
   );
 
   useEffect(() => {
@@ -1527,16 +1542,16 @@ const InstructorClassCreationPage = () => {
         return false;
       }
     }
-    if (schedulePreset === 'pick-dates' && pickedDates.length === 0) {
+    if (!resolvedId && schedulePreset === 'pick-dates' && pickedDates.length === 0) {
       toast.error('Please select at least one date');
       return false;
     }
-    const missingStartTime = findMissingStartTime(schedulePreset, scheduleSettings, pickedDates);
+    const missingStartTime = !resolvedId && findMissingStartTime(schedulePreset, scheduleSettings, pickedDates);
     if (missingStartTime) {
       toast.error(missingStartTime.message, { description: missingStartTime.description });
       return false;
     }
-    if (schedulePreset === 'pick-dates' && !scheduleSettings.allDay) {
+    if (!resolvedId && schedulePreset === 'pick-dates' && !scheduleSettings.allDay) {
       const invalidPickedSession = pickedDates.find(
         item => !hasValidSessionTimeRange({ ...item, durationMinutes: undefined })
       );
@@ -1547,7 +1562,7 @@ const InstructorClassCreationPage = () => {
         return false;
       }
     }
-    if (!scheduleSettings.allDay) {
+    if (!resolvedId && !scheduleSettings.allDay) {
       const invalidSession = sessionsForConflictCheck.find(
         session => !hasValidSessionTimeRange(session)
       );
@@ -1558,11 +1573,11 @@ const InstructorClassCreationPage = () => {
         return false;
       }
     }
-    if (schedulePreset !== 'pick-dates' && sessionsForConflictCheck.length === 0) {
+    if (!resolvedId && schedulePreset !== 'pick-dates' && sessionsForConflictCheck.length === 0) {
       toast.error('Please set at least one class session');
       return false;
     }
-    if (schedulePreset === 'academic-period') {
+    if (!resolvedId && schedulePreset === 'academic-period') {
       if (!scheduleSettings.academicPeriod.start || !scheduleSettings.academicPeriod.end) {
         toast.error('Please set the academic period dates');
         return false;
@@ -1599,7 +1614,25 @@ const InstructorClassCreationPage = () => {
   };
 
   // ── Submit ─────────────────────────────────────────────────────────────────
-  const submitClass = (isDraft = false) => {
+  const submitClass = async (isDraft = false) => {
+    if (isSubmitting) return;
+    if (resolvedId) {
+      if (!editEligibility.canEdit || scheduleEditState.dirty) {
+        toast.error(scheduleEditState.dirty
+          ? 'Save your schedule changes before saving class details.'
+          : 'This class can only be edited before learners enroll.');
+        return;
+      }
+      setCheckingEnrollments(true);
+      try {
+        await editEligibility.assertCanEdit();
+      } catch (error) {
+        toast.error(error instanceof Error ? error.message : 'Unable to check class enrollments.');
+        return;
+      } finally {
+        setCheckingEnrollments(false);
+      }
+    }
     if (!isFormValid()) return;
     if (!rateBasis || !service) return;
     if (approvedRate === undefined) {
@@ -1691,7 +1724,7 @@ const InstructorClassCreationPage = () => {
       return;
     }
 
-    const invalidSession = sessionsForConflictCheck.find(
+    const invalidSession = !resolvedId && sessionsForConflictCheck.find(
       session => !hasValidSessionTimeRange(session)
     );
     if (invalidSession) {
@@ -1990,16 +2023,28 @@ const InstructorClassCreationPage = () => {
     };
 
     if (resolvedId) {
+      // Existing instances are edited through the timetable API above. The class
+      // update endpoint does not accept session templates or generated counts.
+      const { session_templates: _templates, scheduled_session_count: _count, rate_basis: _basis, ...updatePayload } = payload;
       updateClassDefinition.mutate(
-        { path: { uuid: resolvedId }, body: payload },
+        { path: { uuid: resolvedId }, body: {
+          ...updatePayload,
+          default_start_time: classData.default_start_time,
+          default_end_time: classData.default_end_time,
+          is_active: classData.is_active,
+        } },
         {
-          onSuccess: async () => {
+          onSuccess: async response => {
+            if (response.error || response.success === false) {
+              toast.error(response.message || 'Failed to update class');
+              return;
+            }
             try {
               await uploadClassMedia(resolvedId);
             } catch (error) {
               toast.error(error instanceof Error ? error.message : 'Class media upload failed.');
             }
-            onSuccess();
+            await onSuccess();
           },
           onError: error => handleSubmitError(error, 'Failed to update class'),
         }
@@ -2028,7 +2073,7 @@ const InstructorClassCreationPage = () => {
 
   const handleSubmit = (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    submitClass(false);
+    void submitClass(false);
   };
 
   const clearDraft = () => {
@@ -2395,16 +2440,27 @@ const InstructorClassCreationPage = () => {
     <div className='mx-auto w-full max-w-[1200px] space-y-6 px-3 py-4 sm:px-5 lg:px-6'>
       <form onSubmit={handleSubmit} className='space-y-6'>
         <PageHeader
-          title='Create a class'
-          description='For an approved offering you can deliver. The class is scheduled immediately on your calendar and can be published for learners to join.'
+          title={resolvedId ? 'Edit class' : 'Create a class'}
+          description={resolvedId
+            ? 'Update class details and scheduled sessions before any learners enroll.'
+            : 'For an approved offering you can deliver. The class is scheduled immediately on your calendar and can be published for learners to join.'}
         />
 
         {/* Editing hydrates every field below from the class record, so they wait on it. */}
         <AsyncSection
-          loading={isLoading}
-          error={classLoadFailed}
+          loading={isLoading || editEligibility.isLoading}
+          error={classLoadFailed || editEligibility.error}
+          empty={Boolean(resolvedId && editEligibility.hasEnrollments)}
+          emptyState={<EmptyState
+            title='This class has enrollments'
+            description='Class details and schedules can only be edited before learners enroll.'
+            action={<Button type='button' variant='outline' onClick={() => router.push('/dashboard/instructor/training-hub')}>Back to classes</Button>}
+          />}
           errorTitle='Couldn’t load this class'
-          onRetry={() => void refetchClass()}
+          onRetry={() => {
+            void refetchClass();
+            void editEligibility.refetch();
+          }}
           skeleton={<ClassFormSkeleton />}
         >
           <AsyncSection
@@ -2481,7 +2537,7 @@ const InstructorClassCreationPage = () => {
               allowWaitlist={allowWaitlist}
               onAllowWaitlistChange={setAllowWaitlist}
               totals={{
-                sessions: sessionsForConflictCheck.length,
+                sessions: totalSessions,
                 minutes: totalHours * 60,
                 days: totalDays,
               }}
@@ -2506,6 +2562,18 @@ const InstructorClassCreationPage = () => {
             onLocationLongitudeChange={setLocationLongitude}
           />
 
+          {resolvedId ? (
+            <ClassScheduleEditor
+              key={resolvedId}
+              classUuid={resolvedId}
+              instructorUuid={instructor?.uuid}
+              timezone={scheduleSettings.timezone}
+              assertCanEdit={editEligibility.assertCanEdit}
+              onStateChange={setScheduleEditState}
+              disabled={checkingEnrollments || updateClassDefinition.isPending || uploadThumbnail.isPending || uploadPromotionalVideo.isPending}
+            />
+          ) : (
+          <>
           <ScheduleModeCards
             value={scheduleMode}
             onChange={value =>
@@ -2576,6 +2644,8 @@ const InstructorClassCreationPage = () => {
           )}
 
           <ScheduleResolution summary={scheduleSummary} />
+          </>
+          )}
 
           {/* Outside the preset switch: the window is required however the sessions are laid out. */}
           <RegistrationWindow
@@ -2600,11 +2670,11 @@ const InstructorClassCreationPage = () => {
 
           <ReminderOptions value={sharedReminder} onChange={handleReminderChange} />
 
-          <UpcomingSessions sessions={sharedUpcomingSessions} />
+          {!resolvedId && <UpcomingSessions sessions={sharedUpcomingSessions} />}
 
           <SchedulingConflictAlert
             title='These sessions conflict with existing instructor classes'
-            conflicts={sharedConflicts}
+            conflicts={resolvedId ? [] : sharedConflicts}
             timeZone={scheduleSettings.timezone}
           />
 
@@ -2623,9 +2693,12 @@ const InstructorClassCreationPage = () => {
           >
             Cancel
           </Button>
-          <Button type='submit' disabled={isSubmitting || isLoading || classLoadFailed}>
-            {isSubmitting ? <Loader2 className='mr-2 size-4 animate-spin' /> : null}
-            {isSubmitting ? 'Publishing...' : 'Publish Class'}
+          {resolvedId && scheduleEditState.dirty && (
+            <p className='self-center text-xs text-muted-foreground'>Save schedule changes before saving class details.</p>
+          )}
+          <Button type='submit' disabled={isSubmitting || isLoading || classLoadFailed || Boolean(resolvedId && (!editEligibility.canEdit || !isEditHydrated || scheduleEditState.dirty))}>
+            {isSubmitting ? <Spinner /> : null}
+            {isSubmitting ? 'Saving…' : resolvedId ? 'Save changes' : 'Publish Class'}
           </Button>
         </div>
       </form>

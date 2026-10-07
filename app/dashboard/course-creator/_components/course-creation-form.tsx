@@ -23,6 +23,7 @@ import {
   FormMessage,
 } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
+import { EmptyState } from '@/components/ui/empty-state';
 import { Label } from '@/components/ui/label';
 import {
   Select,
@@ -82,7 +83,6 @@ import {
 
 type MutationPayload = Record<string, unknown>;
 type CategoryItem = { uuid?: string; name?: string };
-type DifficultyLevelItem = { uuid?: string; name?: string };
 type CategoryMutationResponse = { error?: Record<string, unknown>; message?: string };
 
 const getFormErrorMessage = (value: unknown) => {
@@ -161,8 +161,9 @@ function SavingOverlay({ stage }: { stage: SaveStage }) {
             return (
               <div
                 key={step.key}
-                className={`flex items-center gap-3 transition-opacity duration-300 ${isActive ? 'opacity-100' : isDone ? 'opacity-60' : 'opacity-25'
-                  }`}
+                className={`flex items-center gap-3 transition-opacity duration-300 ${
+                  isActive ? 'opacity-100' : isDone ? 'opacity-60' : 'opacity-25'
+                }`}
               >
                 {isDone ? (
                   <CheckCircle2 className='text-success h-4 w-4 shrink-0' />
@@ -309,7 +310,12 @@ export const CourseCreationForm = forwardRef<CourseFormRef, CourseFormProps>(
     const authorUuid = courseCreatorProfile?.uuid ?? instructor?.uuid ?? '';
     const stepper = useOptionalStepper();
     const setActiveStep = stepper?.setActiveStep ?? (() => undefined);
-    const { difficultyLevels, isLoading: difficultyIsLoading } = useDifficultyLevels();
+    const {
+      difficultyLevels,
+      isLoading: difficultyIsLoading,
+      error: difficultyError,
+      refetch: refetchDifficulty,
+    } = useDifficultyLevels();
 
     const { data: categories } = useQuery(
       getAllCategoriesOptions({ query: { pageable: { page: 0, size: 100 } } })
@@ -437,6 +443,7 @@ export const CourseCreationForm = forwardRef<CourseFormRef, CourseFormProps>(
           updated_by: authorName,
           course_creator_uuid: resolvedCourseCreatorUuid,
           name: data?.name,
+          course_code: data.course_code?.trim().toUpperCase() || null,
           description: data?.description,
           objectives: data?.objectives,
           thumbnail_url: data?.thumbnail_url,
@@ -511,6 +518,7 @@ export const CourseCreationForm = forwardRef<CourseFormRef, CourseFormProps>(
             created_by: authorName,
             course_creator_uuid: resolvedCourseCreatorUuid,
             name: data?.name,
+            course_code: data.course_code?.trim().toUpperCase() || null,
             description: data?.description,
             objectives: data?.objectives,
             category_uuids: data?.categories,
@@ -607,7 +615,10 @@ export const CourseCreationForm = forwardRef<CourseFormRef, CourseFormProps>(
         <SavingOverlay stage={saveStage} />
 
         <Form {...form}>
-          <form onSubmit={form.handleSubmit(onSubmit, onError)} className='m-0 flex flex-col gap-6 pt-2'>
+          <form
+            onSubmit={form.handleSubmit(onSubmit, onError)}
+            className='m-0 flex flex-col gap-6 pt-2'
+          >
             <section className='space-y-4'>
               <CardHeader>
                 <CardTitle className='text-base'>Course details</CardTitle>
@@ -653,7 +664,15 @@ export const CourseCreationForm = forwardRef<CourseFormRef, CourseFormProps>(
                   render={({ field }) => (
                     <FormItem className='grid gap-1.5'>
                       <CardTitle className='text-base'>Difficulty level</CardTitle>
-                      <Select onValueChange={field.onChange} value={field.value ?? ''}>
+                      <Select
+                        onValueChange={field.onChange}
+                        value={field.value ?? ''}
+                        disabled={
+                          difficultyIsLoading ||
+                          Boolean(difficultyError) ||
+                          !difficultyLevels.length
+                        }
+                      >
                         <FormControl className='w-full'>
                           <SelectTrigger>
                             <SelectValue placeholder='Select difficulty level' />
@@ -665,15 +684,38 @@ export const CourseCreationForm = forwardRef<CourseFormRef, CourseFormProps>(
                           </SelectContent>
                         ) : (
                           <SelectContent>
-                            {Array.isArray(difficultyLevels) &&
-                              difficultyLevels.map((level: DifficultyLevelItem) => (
-                                <SelectItem key={level.uuid} value={level.uuid as string}>
-                                  {level.name}
+                            {difficultyLevels.flatMap(level =>
+                              level.uuid ? (
+                                <SelectItem key={level.uuid} value={level.uuid}>
+                                  {level.display_name || level.name}
                                 </SelectItem>
-                              ))}
+                              ) : (
+                                []
+                              )
+                            )}
                           </SelectContent>
                         )}
                       </Select>
+                      {difficultyError ? (
+                        <EmptyState
+                          variant='compact'
+                          title='Unable to load difficulty levels'
+                          action={
+                            <Button
+                              type='button'
+                              variant='outline'
+                              size='sm'
+                              onClick={() => void refetchDifficulty()}
+                            >
+                              Try again
+                            </Button>
+                          }
+                        />
+                      ) : !difficultyIsLoading && !difficultyLevels.length ? (
+                        <p className='text-muted-foreground text-sm' role='status'>
+                          No difficulty levels are available.
+                        </p>
+                      ) : null}
                       <FormMessage />
                     </FormItem>
                   )}
@@ -693,10 +735,7 @@ export const CourseCreationForm = forwardRef<CourseFormRef, CourseFormProps>(
                           setSelectedSubjectUuid('');
                         }}
                       >
-                        <SelectTrigger
-                          id='parent-category-select'
-                          className='w-full'
-                        >
+                        <SelectTrigger id='parent-category-select' className='w-full'>
                           <SelectValue placeholder='Select category' />
                         </SelectTrigger>
 
@@ -736,10 +775,7 @@ export const CourseCreationForm = forwardRef<CourseFormRef, CourseFormProps>(
                             }}
                             disabled={!selectedParentCategoryUuid}
                           >
-                            <SelectTrigger
-                              id='subject-select'
-                              className='w-full'
-                            >
+                            <SelectTrigger id='subject-select' className='w-full'>
                               <SelectValue
                                 placeholder={
                                   selectedParentCategoryUuid
@@ -757,10 +793,7 @@ export const CourseCreationForm = forwardRef<CourseFormRef, CourseFormProps>(
                                       !categoriesSelected.includes(cat.uuid ?? '')
                                   )
                                   .map((cat: CategoryItem) => (
-                                    <SelectItem
-                                      key={cat.uuid}
-                                      value={cat.uuid as string}
-                                    >
+                                    <SelectItem key={cat.uuid} value={cat.uuid as string}>
                                       {cat.name}
                                     </SelectItem>
                                   ))
@@ -798,29 +831,19 @@ export const CourseCreationForm = forwardRef<CourseFormRef, CourseFormProps>(
 
                             <div className='grid gap-5 py-2'>
                               <div className='space-y-1.5'>
-                                <Label htmlFor='parent-category-name'>
-                                  Parent category
-                                </Label>
+                                <Label htmlFor='parent-category-name'>Parent category</Label>
 
                                 <Select
                                   value={selectedParentCategoryUuid}
-                                  onValueChange={value =>
-                                    setSelectedParentCategoryUuid(value)
-                                  }
+                                  onValueChange={value => setSelectedParentCategoryUuid(value)}
                                 >
-                                  <SelectTrigger
-                                    className='w-full'
-                                    id='parent-category-name'
-                                  >
+                                  <SelectTrigger className='w-full' id='parent-category-name'>
                                     <SelectValue placeholder='Choose parent category' />
                                   </SelectTrigger>
 
                                   <SelectContent>
                                     {rootCategories.map((cat: CategoryItem) => (
-                                      <SelectItem
-                                        key={cat.uuid}
-                                        value={cat.uuid as string}
-                                      >
+                                      <SelectItem key={cat.uuid} value={cat.uuid as string}>
                                         {cat.name}
                                       </SelectItem>
                                     ))}
@@ -829,9 +852,7 @@ export const CourseCreationForm = forwardRef<CourseFormRef, CourseFormProps>(
                               </div>
 
                               <div className='space-y-1.5'>
-                                <Label htmlFor='subcategory-name'>
-                                  Subcategory name
-                                </Label>
+                                <Label htmlFor='subcategory-name'>Subcategory name</Label>
 
                                 <Input
                                   id='subcategory-name'
@@ -865,10 +886,7 @@ export const CourseCreationForm = forwardRef<CourseFormRef, CourseFormProps>(
                                     },
                                   });
                                 }}
-                                disabled={
-                                  createCategoryPending ||
-                                  !selectedParentCategoryUuid
-                                }
+                                disabled={createCategoryPending || !selectedParentCategoryUuid}
                               >
                                 {createCategoryPending ? <Spinner /> : 'Add'}
                               </Button>
@@ -914,7 +932,7 @@ export const CourseCreationForm = forwardRef<CourseFormRef, CourseFormProps>(
                           return (
                             <div
                               key={uuid}
-                              className='bg-muted/50 border-border/70 inline-flex max-w-full items-center gap-2 rounded-md border py-1 pl-2.5 pr-1'
+                              className='bg-muted/50 border-border/70 inline-flex max-w-full items-center gap-2 rounded-md border py-1 pr-1 pl-2.5'
                             >
                               <span className='text-foreground max-w-[240px] truncate text-xs font-medium'>
                                 {cat.name}
@@ -938,8 +956,6 @@ export const CourseCreationForm = forwardRef<CourseFormRef, CourseFormProps>(
                     </div>
                   )}
                 </div>
-
-
 
                 <FormField
                   control={form.control}
@@ -986,7 +1002,7 @@ export const CourseCreationForm = forwardRef<CourseFormRef, CourseFormProps>(
               </CardContent>
             </section>
 
-            <section className='px-6' >
+            <section className='px-6'>
               <FormField
                 control={form.control}
                 name='objectives'

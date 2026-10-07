@@ -1,8 +1,8 @@
 'use client';
 
 import { EntityCombobox, type EntityOption } from '@/components/search/entity-combobox';
-import { listSkillsOptions } from '@/services/client/@tanstack/react-query.gen';
-import type { ListSkillsResponse, Skill } from '@/services/client/types.gen';
+import { listSkills1Options } from '@/services/client/@tanstack/react-query.gen';
+import type { ListSkills1Response, Skill } from '@/services/client/types.gen';
 
 export type PickedSkill = { uuid: string; name: string; slug?: string };
 
@@ -40,9 +40,9 @@ export function SkillPicker({
         if (!value || !option) return;
         onPick({ uuid: value, name: option.label });
       }}
-      queryOptions={q => listSkillsOptions({ query: { ...(q ? { q } : {}), limit: 20 } })}
-      toOptions={(data: ListSkillsResponse) =>
-        (data.data ?? [])
+      queryOptions={q => listSkills1Options({ query: { ...(q ? { q } : {}), limit: 20 } })}
+      toOptions={(data: ListSkills1Response) =>
+        (data.error || data.success === false ? [] : (data.data ?? []))
           .map(toOption)
           .filter((option): option is EntityOption => option !== null)
           .map(option =>

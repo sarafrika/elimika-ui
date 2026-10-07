@@ -118,6 +118,12 @@ import type {
   UpdateTrainingProgramData,
   UpdateTrainingProgramResponses,
   UpdateTrainingProgramErrors,
+  DeleteProgramAssessmentData,
+  DeleteProgramAssessmentResponses,
+  DeleteProgramAssessmentErrors,
+  UpdateProgramAssessmentData,
+  UpdateProgramAssessmentResponses,
+  UpdateProgramAssessmentErrors,
   WithdrawProgramTrainingApplicationData,
   WithdrawProgramTrainingApplicationResponses,
   WithdrawProgramTrainingApplicationErrors,
@@ -178,6 +184,66 @@ import type {
   UpdateAvailabilityRuleData,
   UpdateAvailabilityRuleResponses,
   UpdateAvailabilityRuleErrors,
+  GetSummaryData,
+  GetSummaryResponses,
+  GetSummaryErrors,
+  UpdateBasicsData,
+  UpdateBasicsResponses,
+  UpdateBasicsErrors,
+  DeleteSkillData,
+  DeleteSkillResponses,
+  DeleteSkillErrors,
+  UpdateSkillData,
+  UpdateSkillResponses,
+  UpdateSkillErrors,
+  DeletePortfolioItemData,
+  DeletePortfolioItemResponses,
+  DeletePortfolioItemErrors,
+  UpdatePortfolioItemData,
+  UpdatePortfolioItemResponses,
+  UpdatePortfolioItemErrors,
+  DeleteMembershipData,
+  DeleteMembershipResponses,
+  DeleteMembershipErrors,
+  UpdateMembershipData,
+  UpdateMembershipResponses,
+  UpdateMembershipErrors,
+  DeleteExperienceData,
+  DeleteExperienceResponses,
+  DeleteExperienceErrors,
+  UpdateExperienceData,
+  UpdateExperienceResponses,
+  UpdateExperienceErrors,
+  DeleteEducationData,
+  DeleteEducationResponses,
+  DeleteEducationErrors,
+  UpdateEducationData,
+  UpdateEducationResponses,
+  UpdateEducationErrors,
+  DeleteDocumentData,
+  DeleteDocumentResponses,
+  DeleteDocumentErrors,
+  UpdateDocumentData,
+  UpdateDocumentResponses,
+  UpdateDocumentErrors,
+  DeleteCompetencyData,
+  DeleteCompetencyResponses,
+  DeleteCompetencyErrors,
+  UpdateCompetencyData,
+  UpdateCompetencyResponses,
+  UpdateCompetencyErrors,
+  DeleteCertificationData,
+  DeleteCertificationResponses,
+  DeleteCertificationErrors,
+  UpdateCertificationData,
+  UpdateCertificationResponses,
+  UpdateCertificationErrors,
+  DeleteAchievementData,
+  DeleteAchievementResponses,
+  DeleteAchievementErrors,
+  UpdateAchievementData,
+  UpdateAchievementResponses,
+  UpdateAchievementErrors,
   DeleteInstructorData,
   DeleteInstructorResponses,
   DeleteInstructorErrors,
@@ -301,6 +367,12 @@ import type {
   UpdateLessonContentData,
   UpdateLessonContentResponses,
   UpdateLessonContentErrors,
+  GetCourseEvaluationPlanData,
+  GetCourseEvaluationPlanResponses,
+  GetCourseEvaluationPlanErrors,
+  UpdateCourseEvaluationPlanData,
+  UpdateCourseEvaluationPlanResponses,
+  UpdateCourseEvaluationPlanErrors,
   DeleteCourseAssessmentData,
   DeleteCourseAssessmentResponses,
   DeleteCourseAssessmentErrors,
@@ -337,6 +409,12 @@ import type {
   UpdateCourseCreatorSkillData,
   UpdateCourseCreatorSkillResponses,
   UpdateCourseCreatorSkillErrors,
+  DeleteCourseCreatorPortfolioItemData,
+  DeleteCourseCreatorPortfolioItemResponses,
+  DeleteCourseCreatorPortfolioItemErrors,
+  UpdateCourseCreatorPortfolioItemData,
+  UpdateCourseCreatorPortfolioItemResponses,
+  UpdateCourseCreatorPortfolioItemErrors,
   DeleteCourseCreatorMembershipData,
   DeleteCourseCreatorMembershipResponses,
   DeleteCourseCreatorMembershipErrors,
@@ -361,12 +439,27 @@ import type {
   UpdateCourseCreatorDocumentData,
   UpdateCourseCreatorDocumentResponses,
   UpdateCourseCreatorDocumentErrors,
+  DeleteCourseCreatorCompetencyData,
+  DeleteCourseCreatorCompetencyResponses,
+  DeleteCourseCreatorCompetencyErrors,
+  UpdateCourseCreatorCompetencyData,
+  UpdateCourseCreatorCompetencyResponses,
+  UpdateCourseCreatorCompetencyErrors,
   DeleteCourseCreatorCertificationData,
   DeleteCourseCreatorCertificationResponses,
   DeleteCourseCreatorCertificationErrors,
   UpdateCourseCreatorCertificationData,
   UpdateCourseCreatorCertificationResponses,
   UpdateCourseCreatorCertificationErrors,
+  DeleteCourseCreatorAchievementData,
+  DeleteCourseCreatorAchievementResponses,
+  DeleteCourseCreatorAchievementErrors,
+  UpdateCourseCreatorAchievementData,
+  UpdateCourseCreatorAchievementResponses,
+  UpdateCourseCreatorAchievementErrors,
+  UpdateCategoriesData,
+  UpdateCategoriesResponses,
+  UpdateCategoriesErrors,
   DeleteGradingLevelData,
   DeleteGradingLevelResponses,
   DeleteGradingLevelErrors,
@@ -502,6 +595,24 @@ import type {
   CreateStudentData,
   CreateStudentResponses,
   CreateStudentErrors,
+  ResendInvitationData,
+  ResendInvitationResponses,
+  ResendInvitationErrors,
+  DeclineByUuidData,
+  DeclineByUuidResponses,
+  DeclineByUuidErrors,
+  AcceptByUuidData,
+  AcceptByUuidResponses,
+  AcceptByUuidErrors,
+  RegisterAndAcceptData,
+  RegisterAndAcceptResponses,
+  RegisterAndAcceptErrors,
+  DeclineByTokenData,
+  DeclineByTokenResponses,
+  DeclineByTokenErrors,
+  AcceptByTokenData,
+  AcceptByTokenResponses,
+  AcceptByTokenErrors,
   ListMembersData,
   ListMembersResponses,
   ListMembersErrors,
@@ -520,6 +631,9 @@ import type {
   CreateRubricScoringLevelData,
   CreateRubricScoringLevelResponses,
   CreateRubricScoringLevelErrors,
+  CreateStandardRubricScoringLevelsData,
+  CreateStandardRubricScoringLevelsResponses,
+  CreateStandardRubricScoringLevelsErrors,
   CreateRubricScoringLevelsBatchData,
   CreateRubricScoringLevelsBatchResponses,
   CreateRubricScoringLevelsBatchErrors,
@@ -538,6 +652,15 @@ import type {
   AddRubricScoringData,
   AddRubricScoringResponses,
   AddRubricScoringErrors,
+  RegisterData,
+  RegisterResponses,
+  RegisterErrors,
+  ResendRegistrationEmailData,
+  ResendRegistrationEmailResponses,
+  ResendRegistrationEmailErrors,
+  ApplyForDomainData,
+  ApplyForDomainResponses,
+  ApplyForDomainErrors,
   GetAllQuizzesData,
   GetAllQuizzesResponses,
   GetAllQuizzesErrors,
@@ -580,9 +703,24 @@ import type {
   UnpublishProgramData,
   UnpublishProgramResponses,
   UnpublishProgramErrors,
+  UploadProgramThumbnailData,
+  UploadProgramThumbnailResponses,
+  UploadProgramThumbnailErrors,
   PublishProgramData,
   PublishProgramResponses,
   PublishProgramErrors,
+  UploadProgramIntroVideoData,
+  UploadProgramIntroVideoResponses,
+  UploadProgramIntroVideoErrors,
+  UploadProgramBannerData,
+  UploadProgramBannerResponses,
+  UploadProgramBannerErrors,
+  GetProgramAssessmentsData,
+  GetProgramAssessmentsResponses,
+  GetProgramAssessmentsErrors,
+  CreateProgramAssessmentData,
+  CreateProgramAssessmentResponses,
+  CreateProgramAssessmentErrors,
   ArchiveProgramData,
   ArchiveProgramResponses,
   ArchiveProgramErrors,
@@ -712,6 +850,60 @@ import type {
   ApplyActionData,
   ApplyActionResponses,
   ApplyActionErrors,
+  ListSkillsData,
+  ListSkillsResponses,
+  ListSkillsErrors,
+  AddSkillData,
+  AddSkillResponses,
+  AddSkillErrors,
+  ListPortfolioData,
+  ListPortfolioResponses,
+  ListPortfolioErrors,
+  AddPortfolioItemData,
+  AddPortfolioItemResponses,
+  AddPortfolioItemErrors,
+  ListMembershipsData,
+  ListMembershipsResponses,
+  ListMembershipsErrors,
+  AddMembershipData,
+  AddMembershipResponses,
+  AddMembershipErrors,
+  ListExperienceData,
+  ListExperienceResponses,
+  ListExperienceErrors,
+  AddExperienceData,
+  AddExperienceResponses,
+  AddExperienceErrors,
+  ListEducationData,
+  ListEducationResponses,
+  ListEducationErrors,
+  AddEducationData,
+  AddEducationResponses,
+  AddEducationErrors,
+  ListDocumentsData,
+  ListDocumentsResponses,
+  ListDocumentsErrors,
+  UploadDocumentData,
+  UploadDocumentResponses,
+  UploadDocumentErrors,
+  ListCompetenciesData,
+  ListCompetenciesResponses,
+  ListCompetenciesErrors,
+  AddCompetencyData,
+  AddCompetencyResponses,
+  AddCompetencyErrors,
+  ListCertificationsData,
+  ListCertificationsResponses,
+  ListCertificationsErrors,
+  AddCertificationData,
+  AddCertificationResponses,
+  AddCertificationErrors,
+  ListAchievementsData,
+  ListAchievementsResponses,
+  ListAchievementsErrors,
+  AddAchievementData,
+  AddAchievementResponses,
+  AddAchievementErrors,
   DeclineInvitationFromInboxData,
   DeclineInvitationFromInboxResponses,
   DeclineInvitationFromInboxErrors,
@@ -931,6 +1123,12 @@ import type {
   AddCourseCreatorSkillData,
   AddCourseCreatorSkillResponses,
   AddCourseCreatorSkillErrors,
+  GetCourseCreatorPortfolioData,
+  GetCourseCreatorPortfolioResponses,
+  GetCourseCreatorPortfolioErrors,
+  AddCourseCreatorPortfolioItemData,
+  AddCourseCreatorPortfolioItemResponses,
+  AddCourseCreatorPortfolioItemErrors,
   GetCourseCreatorMembershipsData,
   GetCourseCreatorMembershipsResponses,
   GetCourseCreatorMembershipsErrors,
@@ -961,12 +1159,27 @@ import type {
   UploadCourseCreatorDocumentData,
   UploadCourseCreatorDocumentResponses,
   UploadCourseCreatorDocumentErrors,
+  GetCourseCreatorCompetenciesData,
+  GetCourseCreatorCompetenciesResponses,
+  GetCourseCreatorCompetenciesErrors,
+  AddCourseCreatorCompetencyData,
+  AddCourseCreatorCompetencyResponses,
+  AddCourseCreatorCompetencyErrors,
   GetCourseCreatorCertificationsData,
   GetCourseCreatorCertificationsResponses,
   GetCourseCreatorCertificationsErrors,
   AddCourseCreatorCertificationData,
   AddCourseCreatorCertificationResponses,
   AddCourseCreatorCertificationErrors,
+  GetCourseCreatorAchievementsData,
+  GetCourseCreatorAchievementsResponses,
+  GetCourseCreatorAchievementsErrors,
+  AddCourseCreatorAchievementData,
+  AddCourseCreatorAchievementResponses,
+  AddCourseCreatorAchievementErrors,
+  SubmitCurrentForVerificationData,
+  SubmitCurrentForVerificationResponses,
+  SubmitCurrentForVerificationErrors,
   GetAllGradingLevelsData,
   GetAllGradingLevelsResponses,
   GetAllGradingLevelsErrors,
@@ -1168,6 +1381,12 @@ import type {
   AssignAdminDomainData,
   AssignAdminDomainResponses,
   AssignAdminDomainErrors,
+  VerifyData,
+  VerifyResponses,
+  VerifyErrors,
+  ModerateUserDomainData,
+  ModerateUserDomainResponses,
+  ModerateUserDomainErrors,
   GetAdminUsersData,
   GetAdminUsersResponses,
   GetAdminUsersErrors,
@@ -1222,12 +1441,21 @@ import type {
   ModerateCourseData,
   ModerateCourseResponses,
   ModerateCourseErrors,
+  VerifyWalletItemData,
+  VerifyWalletItemResponses,
+  VerifyWalletItemErrors,
+  ModerateCourseCreatorData,
+  ModerateCourseCreatorResponses,
+  ModerateCourseCreatorErrors,
   RescheduleScheduledInstanceData,
   RescheduleScheduledInstanceResponses,
   RescheduleScheduledInstanceErrors,
   UpdateScheduledInstanceStatusData,
   UpdateScheduledInstanceStatusResponses,
   UpdateScheduledInstanceStatusErrors,
+  AssignScheduledInstanceLessonData,
+  AssignScheduledInstanceLessonResponses,
+  AssignScheduledInstanceLessonErrors,
   ReorderScoringLevelsData,
   ReorderScoringLevelsResponses,
   ReorderScoringLevelsErrors,
@@ -1261,6 +1489,39 @@ import type {
   GetAllUsersData,
   GetAllUsersResponses,
   GetAllUsersErrors,
+  GetSummary1Data,
+  GetSummary1Responses,
+  GetSummary1Errors,
+  SkillsData,
+  SkillsResponses,
+  SkillsErrors,
+  PortfolioData,
+  PortfolioResponses,
+  PortfolioErrors,
+  MembershipsData,
+  MembershipsResponses,
+  MembershipsErrors,
+  ExperienceData,
+  ExperienceResponses,
+  ExperienceErrors,
+  EducationData,
+  EducationResponses,
+  EducationErrors,
+  DocumentsData,
+  DocumentsResponses,
+  DocumentsErrors,
+  DocumentFileData,
+  DocumentFileResponses,
+  DocumentFileErrors,
+  CompetenciesData,
+  CompetenciesResponses,
+  CompetenciesErrors,
+  CertificationsData,
+  CertificationsResponses,
+  CertificationsErrors,
+  AchievementsData,
+  AchievementsResponses,
+  AchievementsErrors,
   SearchData,
   SearchResponses,
   SearchErrors,
@@ -1270,6 +1531,9 @@ import type {
   GetCurrentUserData,
   GetCurrentUserResponses,
   GetCurrentUserErrors,
+  GetCurrentAccountStatusData,
+  GetCurrentAccountStatusResponses,
+  GetCurrentAccountStatusErrors,
   LookupUserByUserNoData,
   LookupUserByUserNoResponses,
   LookupUserByUserNoErrors,
@@ -1297,15 +1561,24 @@ import type {
   GetInstructorScheduleData,
   GetInstructorScheduleResponses,
   GetInstructorScheduleErrors,
+  GetGuardiansData,
+  GetGuardiansResponses,
+  GetGuardiansErrors,
   GetStudentBookingsData,
   GetStudentBookingsResponses,
   GetStudentBookingsErrors,
   SearchStudentsData,
   SearchStudentsResponses,
   SearchStudentsErrors,
-  ListSkillsData,
-  ListSkillsResponses,
-  ListSkillsErrors,
+  GetByTokenData,
+  GetByTokenResponses,
+  GetByTokenErrors,
+  GetMineData,
+  GetMineResponses,
+  GetMineErrors,
+  ListSkills1Data,
+  ListSkills1Responses,
+  ListSkills1Errors,
   GlobalSearchData,
   GlobalSearchResponses,
   GlobalSearchErrors,
@@ -1479,9 +1752,9 @@ import type {
   ListRosterData,
   ListRosterResponses,
   ListRosterErrors,
-  GetSummaryData,
-  GetSummaryResponses,
-  GetSummaryErrors,
+  GetSummary2Data,
+  GetSummary2Responses,
+  GetSummary2Errors,
   GetCalendarData,
   GetCalendarResponses,
   GetCalendarErrors,
@@ -1506,6 +1779,9 @@ import type {
   GetCountsData,
   GetCountsResponses,
   GetCountsErrors,
+  GetDocumentFileData,
+  GetDocumentFileResponses,
+  GetDocumentFileErrors,
   GetInvitationByTokenData,
   GetInvitationByTokenResponses,
   GetInvitationByTokenErrors,
@@ -1740,6 +2016,9 @@ import type {
   SearchCourseCreatorMembershipsData,
   SearchCourseCreatorMembershipsResponses,
   SearchCourseCreatorMembershipsErrors,
+  GetCurrentOnboardingData,
+  GetCurrentOnboardingResponses,
+  GetCurrentOnboardingErrors,
   SearchCourseCreatorExperienceData,
   SearchCourseCreatorExperienceResponses,
   SearchCourseCreatorExperienceErrors,
@@ -1926,6 +2205,9 @@ import type {
   ListIndexesData,
   ListIndexesResponses,
   ListIndexesErrors,
+  GetRegistrationQueueData,
+  GetRegistrationQueueResponses,
+  GetRegistrationQueueErrors,
   EvaluateCourseRecommendationsData,
   EvaluateCourseRecommendationsResponses,
   EvaluateCourseRecommendationsErrors,
@@ -2046,6 +2328,7 @@ import {
   saveQuizResponsesResponseTransformer,
   getTrainingProgramByUuidResponseTransformer,
   updateTrainingProgramResponseTransformer,
+  updateProgramAssessmentResponseTransformer,
   getProgramTrainingApplicationResponseTransformer,
   decideOnProgramTrainingApplicationResponseTransformer,
   updateProgramTrainingApplicationResponseTransformer,
@@ -2059,6 +2342,17 @@ import {
   getResourceResponseTransformer,
   updateResourceResponseTransformer,
   updateAvailabilityRuleResponseTransformer,
+  getSummaryResponseTransformer,
+  updateBasicsResponseTransformer,
+  updateSkillResponseTransformer,
+  updatePortfolioItemResponseTransformer,
+  updateMembershipResponseTransformer,
+  updateExperienceResponseTransformer,
+  updateEducationResponseTransformer,
+  updateDocumentResponseTransformer,
+  updateCompetencyResponseTransformer,
+  updateCertificationResponseTransformer,
+  updateAchievementResponseTransformer,
   getInstructorByUuidResponseTransformer,
   updateInstructorResponseTransformer,
   setLocationSearchOptInResponseTransformer,
@@ -2082,6 +2376,8 @@ import {
   getPracticeActivityResponseTransformer,
   updatePracticeActivityResponseTransformer,
   updateLessonContentResponseTransformer,
+  getCourseEvaluationPlanResponseTransformer,
+  updateCourseEvaluationPlanResponseTransformer,
   updateCourseAssessmentResponseTransformer,
   updateLineItemResponseTransformer,
   upsertLineItemScoreResponseTransformer,
@@ -2090,11 +2386,15 @@ import {
   getCourseCreatorByUuidResponseTransformer,
   updateCourseCreatorResponseTransformer,
   updateCourseCreatorSkillResponseTransformer,
+  updateCourseCreatorPortfolioItemResponseTransformer,
   updateCourseCreatorMembershipResponseTransformer,
   updateCourseCreatorExperienceResponseTransformer,
   updateCourseCreatorEducationResponseTransformer,
   updateCourseCreatorDocumentResponseTransformer,
+  updateCourseCreatorCompetencyResponseTransformer,
   updateCourseCreatorCertificationResponseTransformer,
+  updateCourseCreatorAchievementResponseTransformer,
+  updateCategoriesResponseTransformer,
   updateGradingLevelResponseTransformer,
   updateDifficultyLevelResponseTransformer,
   updateContentTypeResponseTransformer,
@@ -2126,17 +2426,23 @@ import {
   createRuleResponseTransformer,
   getAllStudentsResponseTransformer,
   createStudentResponseTransformer,
+  resendInvitationResponseTransformer,
+  acceptByUuidResponseTransformer,
+  registerAndAcceptResponseTransformer,
+  acceptByTokenResponseTransformer,
   listMembersResponseTransformer,
   addMembersResponseTransformer,
   getAllAssessmentRubricsResponseTransformer,
   createAssessmentRubricResponseTransformer,
   getScoringLevelsByRubricResponseTransformer,
   createRubricScoringLevelResponseTransformer,
+  createStandardRubricScoringLevelsResponseTransformer,
   createRubricScoringLevelsBatchResponseTransformer,
   recalculateScoresResponseTransformer,
   getRubricCriteriaResponseTransformer,
   getRubricScoringResponseTransformer,
   addRubricScoringResponseTransformer,
+  applyForDomainResponseTransformer,
   getAllQuizzesResponseTransformer,
   createQuizResponseTransformer,
   getQuizQuestionsResponseTransformer,
@@ -2150,7 +2456,12 @@ import {
   getAllTrainingProgramsResponseTransformer,
   createTrainingProgramResponseTransformer,
   unpublishProgramResponseTransformer,
+  uploadProgramThumbnailResponseTransformer,
   publishProgramResponseTransformer,
+  uploadProgramIntroVideoResponseTransformer,
+  uploadProgramBannerResponseTransformer,
+  getProgramAssessmentsResponseTransformer,
+  createProgramAssessmentResponseTransformer,
   archiveProgramResponseTransformer,
   listProgramTrainingApplicationsResponseTransformer,
   submitProgramTrainingApplicationResponseTransformer,
@@ -2190,6 +2501,24 @@ import {
   createCompetitionResponseTransformer,
   listNotificationsResponseTransformer,
   applyActionResponseTransformer,
+  listSkillsResponseTransformer,
+  addSkillResponseTransformer,
+  listPortfolioResponseTransformer,
+  addPortfolioItemResponseTransformer,
+  listMembershipsResponseTransformer,
+  addMembershipResponseTransformer,
+  listExperienceResponseTransformer,
+  addExperienceResponseTransformer,
+  listEducationResponseTransformer,
+  addEducationResponseTransformer,
+  listDocumentsResponseTransformer,
+  uploadDocumentResponseTransformer,
+  listCompetenciesResponseTransformer,
+  addCompetencyResponseTransformer,
+  listCertificationsResponseTransformer,
+  addCertificationResponseTransformer,
+  listAchievementsResponseTransformer,
+  addAchievementResponseTransformer,
   submitGuardianDetailsResponseTransformer,
   getAllInstructorsResponseTransformer,
   createInstructorResponseTransformer,
@@ -2251,6 +2580,8 @@ import {
   unverifyCourseCreatorResponseTransformer,
   getCourseCreatorSkillsResponseTransformer,
   addCourseCreatorSkillResponseTransformer,
+  getCourseCreatorPortfolioResponseTransformer,
+  addCourseCreatorPortfolioItemResponseTransformer,
   getCourseCreatorMembershipsResponseTransformer,
   addCourseCreatorMembershipResponseTransformer,
   getCourseCreatorExperienceResponseTransformer,
@@ -2261,8 +2592,13 @@ import {
   addCourseCreatorDocumentResponseTransformer,
   verifyCourseCreatorDocumentResponseTransformer,
   uploadCourseCreatorDocumentResponseTransformer,
+  getCourseCreatorCompetenciesResponseTransformer,
+  addCourseCreatorCompetencyResponseTransformer,
   getCourseCreatorCertificationsResponseTransformer,
   addCourseCreatorCertificationResponseTransformer,
+  getCourseCreatorAchievementsResponseTransformer,
+  addCourseCreatorAchievementResponseTransformer,
+  submitCurrentForVerificationResponseTransformer,
   getAllGradingLevelsResponseTransformer,
   createGradingLevelResponseTransformer,
   getAllDifficultyLevelsResponseTransformer,
@@ -2325,6 +2661,7 @@ import {
   uploadSubmissionAttachmentResponseTransformer,
   uploadAssignmentAttachmentResponseTransformer,
   assignAdminDomainResponseTransformer,
+  moderateUserDomainResponseTransformer,
   getAdminUsersResponseTransformer,
   createAdminUserResponseTransformer,
   adminListSkillsResponseTransformer,
@@ -2335,6 +2672,7 @@ import {
   verifyInstructorResponseTransformer,
   unverifyInstructorResponseTransformer,
   moderateCourseResponseTransformer,
+  moderateCourseCreatorResponseTransformer,
   rescheduleScheduledInstanceResponseTransformer,
   getCartResponseTransformer,
   updateCartResponseTransformer,
@@ -2343,17 +2681,31 @@ import {
   getWalletResponseTransformer,
   listTransactions1ResponseTransformer,
   getAllUsersResponseTransformer,
+  getSummary1ResponseTransformer,
+  skillsResponseTransformer,
+  portfolioResponseTransformer,
+  membershipsResponseTransformer,
+  experienceResponseTransformer,
+  educationResponseTransformer,
+  documentsResponseTransformer,
+  competenciesResponseTransformer,
+  certificationsResponseTransformer,
+  achievementsResponseTransformer,
   searchResponseTransformer,
   getCurrentUserResponseTransformer,
+  getCurrentAccountStatusResponseTransformer,
   search1ResponseTransformer,
   getTrainingBranchesByOrganisation1ResponseTransformer,
   getStudentScheduleResponseTransformer,
   getScheduledInstanceResponseTransformer,
   getInstructorTimeHoldsResponseTransformer,
   getInstructorScheduleResponseTransformer,
+  getGuardiansResponseTransformer,
   getStudentBookingsResponseTransformer,
   searchStudentsResponseTransformer,
-  listSkillsResponseTransformer,
+  getByTokenResponseTransformer,
+  getMineResponseTransformer,
+  listSkills1ResponseTransformer,
   searchByTypeResponseTransformer,
   getPassingScoringLevelsResponseTransformer,
   getHighestScoringLevelResponseTransformer,
@@ -2465,6 +2817,7 @@ import {
   searchCourseCreatorSkillsResponseTransformer,
   searchCourseCreatorsResponseTransformer,
   searchCourseCreatorMembershipsResponseTransformer,
+  getCurrentOnboardingResponseTransformer,
   searchCourseCreatorExperienceResponseTransformer,
   searchCourseCreatorEducationResponseTransformer,
   countCourseCreatorsByVerificationStatusResponseTransformer,
@@ -2514,6 +2867,7 @@ import {
   getOrganizationAdminUsersResponseTransformer,
   getAdminEligibleUsersResponseTransformer,
   listIndexesResponseTransformer,
+  getRegistrationQueueResponseTransformer,
   evaluateCourseRecommendationsResponseTransformer,
   getProgramModerationHistoryResponseTransformer,
   listPendingProgramsResponseTransformer,
@@ -2820,7 +3174,7 @@ export const getStudentById = <ThrowOnError extends boolean = false>(
 
 /**
  * Update a student
- * Updates an existing student record. Restricted to the learner, an active guardian, a manager of one of the learner's organisations, or a platform admin; the record cannot be re-pointed at a different user account.
+ * Updates an existing student record. Restricted to the learner, an active guardian, a manager of one of the learner's organisations, or a platform admin; the record cannot be re-pointed at a different user account. Sending `guardians` (linking or inviting parents) is not open to existing guardians.
  */
 export const updateStudent = <ThrowOnError extends boolean = false>(
   options: Options<UpdateStudentData, ThrowOnError>
@@ -3616,6 +3970,63 @@ export const updateTrainingProgram = <ThrowOnError extends boolean = false>(
 };
 
 /**
+ * Delete a program assessment component
+ */
+export const deleteProgramAssessment = <ThrowOnError extends boolean = false>(
+  options: Options<DeleteProgramAssessmentData, ThrowOnError>
+) => {
+  return (options.client ?? _heyApiClient).delete<
+    DeleteProgramAssessmentResponses,
+    DeleteProgramAssessmentErrors,
+    ThrowOnError
+  >({
+    security: [
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+    ],
+    url: '/api/v1/programs/{uuid}/assessments/{assessmentUuid}',
+    ...options,
+  });
+};
+
+/**
+ * Update a program assessment component
+ */
+export const updateProgramAssessment = <ThrowOnError extends boolean = false>(
+  options: Options<UpdateProgramAssessmentData, ThrowOnError>
+) => {
+  return (options.client ?? _heyApiClient).put<
+    UpdateProgramAssessmentResponses,
+    UpdateProgramAssessmentErrors,
+    ThrowOnError
+  >({
+    responseTransformer: updateProgramAssessmentResponseTransformer,
+    security: [
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+    ],
+    url: '/api/v1/programs/{uuid}/assessments/{assessmentUuid}',
+    ...options,
+    headers: {
+      'Content-Type': 'application/json',
+      ...options.headers,
+    },
+  });
+};
+
+/**
  * Withdraw program training application
  * Allows the applicant (instructor or organisation) to withdraw their own program training
  * application while it is still PENDING. Only pending applications owned by the caller can be withdrawn.
@@ -4197,6 +4608,533 @@ export const updateAvailabilityRule = <ThrowOnError extends boolean = false>(
       },
     ],
     url: '/api/v1/organisations/{organisationUuid}/resources/{resourceUuid}/availability-rules/{ruleUuid}',
+    ...options,
+    headers: {
+      'Content-Type': 'application/json',
+      ...options.headers,
+    },
+  });
+};
+
+/**
+ * Get my professional profile
+ * Basics, item count per section and completeness.
+ */
+export const getSummary = <ThrowOnError extends boolean = false>(
+  options?: Options<GetSummaryData, ThrowOnError>
+) => {
+  return (options?.client ?? _heyApiClient).get<
+    GetSummaryResponses,
+    GetSummaryErrors,
+    ThrowOnError
+  >({
+    responseTransformer: getSummaryResponseTransformer,
+    security: [
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+    ],
+    url: '/api/v1/me/profile',
+    ...options,
+  });
+};
+
+/**
+ * Update my profile basics
+ * Replaces bio, headline, website and location. Every domain profile shows the new values.
+ */
+export const updateBasics = <ThrowOnError extends boolean = false>(
+  options: Options<UpdateBasicsData, ThrowOnError>
+) => {
+  return (options.client ?? _heyApiClient).put<
+    UpdateBasicsResponses,
+    UpdateBasicsErrors,
+    ThrowOnError
+  >({
+    responseTransformer: updateBasicsResponseTransformer,
+    security: [
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+    ],
+    url: '/api/v1/me/profile',
+    ...options,
+    headers: {
+      'Content-Type': 'application/json',
+      ...options.headers,
+    },
+  });
+};
+
+export const deleteSkill = <ThrowOnError extends boolean = false>(
+  options: Options<DeleteSkillData, ThrowOnError>
+) => {
+  return (options.client ?? _heyApiClient).delete<
+    DeleteSkillResponses,
+    DeleteSkillErrors,
+    ThrowOnError
+  >({
+    security: [
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+    ],
+    url: '/api/v1/me/profile/skills/{itemUuid}',
+    ...options,
+  });
+};
+
+/**
+ * Update a skill
+ * Changing the name or evidence sends the skill back to PENDING verification.
+ */
+export const updateSkill = <ThrowOnError extends boolean = false>(
+  options: Options<UpdateSkillData, ThrowOnError>
+) => {
+  return (options.client ?? _heyApiClient).put<
+    UpdateSkillResponses,
+    UpdateSkillErrors,
+    ThrowOnError
+  >({
+    responseTransformer: updateSkillResponseTransformer,
+    security: [
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+    ],
+    url: '/api/v1/me/profile/skills/{itemUuid}',
+    ...options,
+    headers: {
+      'Content-Type': 'application/json',
+      ...options.headers,
+    },
+  });
+};
+
+export const deletePortfolioItem = <ThrowOnError extends boolean = false>(
+  options: Options<DeletePortfolioItemData, ThrowOnError>
+) => {
+  return (options.client ?? _heyApiClient).delete<
+    DeletePortfolioItemResponses,
+    DeletePortfolioItemErrors,
+    ThrowOnError
+  >({
+    security: [
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+    ],
+    url: '/api/v1/me/profile/portfolio/{itemUuid}',
+    ...options,
+  });
+};
+
+export const updatePortfolioItem = <ThrowOnError extends boolean = false>(
+  options: Options<UpdatePortfolioItemData, ThrowOnError>
+) => {
+  return (options.client ?? _heyApiClient).put<
+    UpdatePortfolioItemResponses,
+    UpdatePortfolioItemErrors,
+    ThrowOnError
+  >({
+    responseTransformer: updatePortfolioItemResponseTransformer,
+    security: [
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+    ],
+    url: '/api/v1/me/profile/portfolio/{itemUuid}',
+    ...options,
+    headers: {
+      'Content-Type': 'application/json',
+      ...options.headers,
+    },
+  });
+};
+
+export const deleteMembership = <ThrowOnError extends boolean = false>(
+  options: Options<DeleteMembershipData, ThrowOnError>
+) => {
+  return (options.client ?? _heyApiClient).delete<
+    DeleteMembershipResponses,
+    DeleteMembershipErrors,
+    ThrowOnError
+  >({
+    security: [
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+    ],
+    url: '/api/v1/me/profile/memberships/{itemUuid}',
+    ...options,
+  });
+};
+
+export const updateMembership = <ThrowOnError extends boolean = false>(
+  options: Options<UpdateMembershipData, ThrowOnError>
+) => {
+  return (options.client ?? _heyApiClient).put<
+    UpdateMembershipResponses,
+    UpdateMembershipErrors,
+    ThrowOnError
+  >({
+    responseTransformer: updateMembershipResponseTransformer,
+    security: [
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+    ],
+    url: '/api/v1/me/profile/memberships/{itemUuid}',
+    ...options,
+    headers: {
+      'Content-Type': 'application/json',
+      ...options.headers,
+    },
+  });
+};
+
+export const deleteExperience = <ThrowOnError extends boolean = false>(
+  options: Options<DeleteExperienceData, ThrowOnError>
+) => {
+  return (options.client ?? _heyApiClient).delete<
+    DeleteExperienceResponses,
+    DeleteExperienceErrors,
+    ThrowOnError
+  >({
+    security: [
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+    ],
+    url: '/api/v1/me/profile/experience/{itemUuid}',
+    ...options,
+  });
+};
+
+export const updateExperience = <ThrowOnError extends boolean = false>(
+  options: Options<UpdateExperienceData, ThrowOnError>
+) => {
+  return (options.client ?? _heyApiClient).put<
+    UpdateExperienceResponses,
+    UpdateExperienceErrors,
+    ThrowOnError
+  >({
+    responseTransformer: updateExperienceResponseTransformer,
+    security: [
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+    ],
+    url: '/api/v1/me/profile/experience/{itemUuid}',
+    ...options,
+    headers: {
+      'Content-Type': 'application/json',
+      ...options.headers,
+    },
+  });
+};
+
+export const deleteEducation = <ThrowOnError extends boolean = false>(
+  options: Options<DeleteEducationData, ThrowOnError>
+) => {
+  return (options.client ?? _heyApiClient).delete<
+    DeleteEducationResponses,
+    DeleteEducationErrors,
+    ThrowOnError
+  >({
+    security: [
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+    ],
+    url: '/api/v1/me/profile/education/{itemUuid}',
+    ...options,
+  });
+};
+
+export const updateEducation = <ThrowOnError extends boolean = false>(
+  options: Options<UpdateEducationData, ThrowOnError>
+) => {
+  return (options.client ?? _heyApiClient).put<
+    UpdateEducationResponses,
+    UpdateEducationErrors,
+    ThrowOnError
+  >({
+    responseTransformer: updateEducationResponseTransformer,
+    security: [
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+    ],
+    url: '/api/v1/me/profile/education/{itemUuid}',
+    ...options,
+    headers: {
+      'Content-Type': 'application/json',
+      ...options.headers,
+    },
+  });
+};
+
+export const deleteDocument = <ThrowOnError extends boolean = false>(
+  options: Options<DeleteDocumentData, ThrowOnError>
+) => {
+  return (options.client ?? _heyApiClient).delete<
+    DeleteDocumentResponses,
+    DeleteDocumentErrors,
+    ThrowOnError
+  >({
+    security: [
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+    ],
+    url: '/api/v1/me/profile/documents/{itemUuid}',
+    ...options,
+  });
+};
+
+/**
+ * Update document details
+ * Changes the type, title, description, expiry and linked record; the file stays.
+ */
+export const updateDocument = <ThrowOnError extends boolean = false>(
+  options: Options<UpdateDocumentData, ThrowOnError>
+) => {
+  return (options.client ?? _heyApiClient).put<
+    UpdateDocumentResponses,
+    UpdateDocumentErrors,
+    ThrowOnError
+  >({
+    responseTransformer: updateDocumentResponseTransformer,
+    security: [
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+    ],
+    url: '/api/v1/me/profile/documents/{itemUuid}',
+    ...options,
+    headers: {
+      'Content-Type': 'application/json',
+      ...options.headers,
+    },
+  });
+};
+
+export const deleteCompetency = <ThrowOnError extends boolean = false>(
+  options: Options<DeleteCompetencyData, ThrowOnError>
+) => {
+  return (options.client ?? _heyApiClient).delete<
+    DeleteCompetencyResponses,
+    DeleteCompetencyErrors,
+    ThrowOnError
+  >({
+    security: [
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+    ],
+    url: '/api/v1/me/profile/competencies/{itemUuid}',
+    ...options,
+  });
+};
+
+export const updateCompetency = <ThrowOnError extends boolean = false>(
+  options: Options<UpdateCompetencyData, ThrowOnError>
+) => {
+  return (options.client ?? _heyApiClient).put<
+    UpdateCompetencyResponses,
+    UpdateCompetencyErrors,
+    ThrowOnError
+  >({
+    responseTransformer: updateCompetencyResponseTransformer,
+    security: [
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+    ],
+    url: '/api/v1/me/profile/competencies/{itemUuid}',
+    ...options,
+    headers: {
+      'Content-Type': 'application/json',
+      ...options.headers,
+    },
+  });
+};
+
+export const deleteCertification = <ThrowOnError extends boolean = false>(
+  options: Options<DeleteCertificationData, ThrowOnError>
+) => {
+  return (options.client ?? _heyApiClient).delete<
+    DeleteCertificationResponses,
+    DeleteCertificationErrors,
+    ThrowOnError
+  >({
+    security: [
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+    ],
+    url: '/api/v1/me/profile/certifications/{itemUuid}',
+    ...options,
+  });
+};
+
+export const updateCertification = <ThrowOnError extends boolean = false>(
+  options: Options<UpdateCertificationData, ThrowOnError>
+) => {
+  return (options.client ?? _heyApiClient).put<
+    UpdateCertificationResponses,
+    UpdateCertificationErrors,
+    ThrowOnError
+  >({
+    responseTransformer: updateCertificationResponseTransformer,
+    security: [
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+    ],
+    url: '/api/v1/me/profile/certifications/{itemUuid}',
+    ...options,
+    headers: {
+      'Content-Type': 'application/json',
+      ...options.headers,
+    },
+  });
+};
+
+export const deleteAchievement = <ThrowOnError extends boolean = false>(
+  options: Options<DeleteAchievementData, ThrowOnError>
+) => {
+  return (options.client ?? _heyApiClient).delete<
+    DeleteAchievementResponses,
+    DeleteAchievementErrors,
+    ThrowOnError
+  >({
+    security: [
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+    ],
+    url: '/api/v1/me/profile/achievements/{itemUuid}',
+    ...options,
+  });
+};
+
+export const updateAchievement = <ThrowOnError extends boolean = false>(
+  options: Options<UpdateAchievementData, ThrowOnError>
+) => {
+  return (options.client ?? _heyApiClient).put<
+    UpdateAchievementResponses,
+    UpdateAchievementErrors,
+    ThrowOnError
+  >({
+    responseTransformer: updateAchievementResponseTransformer,
+    security: [
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+    ],
+    url: '/api/v1/me/profile/achievements/{itemUuid}',
     ...options,
     headers: {
       'Content-Type': 'application/json',
@@ -5485,6 +6423,65 @@ export const updateLessonContent = <ThrowOnError extends boolean = false>(
 };
 
 /**
+ * Get the lesson x component evaluation plan
+ */
+export const getCourseEvaluationPlan = <ThrowOnError extends boolean = false>(
+  options: Options<GetCourseEvaluationPlanData, ThrowOnError>
+) => {
+  return (options.client ?? _heyApiClient).get<
+    GetCourseEvaluationPlanResponses,
+    GetCourseEvaluationPlanErrors,
+    ThrowOnError
+  >({
+    responseTransformer: getCourseEvaluationPlanResponseTransformer,
+    security: [
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+    ],
+    url: '/api/v1/courses/{courseUuid}/evaluation-plan',
+    ...options,
+  });
+};
+
+/**
+ * Turn evaluation plan cells on or off
+ * Each cell grades one lesson for one per-lesson component, optionally with a rubric, quiz or assignment from that lesson. A disabled cell is the plan's "None".
+ */
+export const updateCourseEvaluationPlan = <ThrowOnError extends boolean = false>(
+  options: Options<UpdateCourseEvaluationPlanData, ThrowOnError>
+) => {
+  return (options.client ?? _heyApiClient).put<
+    UpdateCourseEvaluationPlanResponses,
+    UpdateCourseEvaluationPlanErrors,
+    ThrowOnError
+  >({
+    responseTransformer: updateCourseEvaluationPlanResponseTransformer,
+    security: [
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+    ],
+    url: '/api/v1/courses/{courseUuid}/evaluation-plan',
+    ...options,
+    headers: {
+      'Content-Type': 'application/json',
+      ...options.headers,
+    },
+  });
+};
+
+/**
  * Delete course assessment
  * Removes an assessment from a course.
  */
@@ -5841,6 +6838,63 @@ export const updateCourseCreatorSkill = <ThrowOnError extends boolean = false>(
 };
 
 /**
+ * Delete a portfolio item
+ */
+export const deleteCourseCreatorPortfolioItem = <ThrowOnError extends boolean = false>(
+  options: Options<DeleteCourseCreatorPortfolioItemData, ThrowOnError>
+) => {
+  return (options.client ?? _heyApiClient).delete<
+    DeleteCourseCreatorPortfolioItemResponses,
+    DeleteCourseCreatorPortfolioItemErrors,
+    ThrowOnError
+  >({
+    security: [
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+    ],
+    url: '/api/v1/course-creators/{courseCreatorUuid}/portfolio/{itemUuid}',
+    ...options,
+  });
+};
+
+/**
+ * Update a portfolio item
+ */
+export const updateCourseCreatorPortfolioItem = <ThrowOnError extends boolean = false>(
+  options: Options<UpdateCourseCreatorPortfolioItemData, ThrowOnError>
+) => {
+  return (options.client ?? _heyApiClient).put<
+    UpdateCourseCreatorPortfolioItemResponses,
+    UpdateCourseCreatorPortfolioItemErrors,
+    ThrowOnError
+  >({
+    responseTransformer: updateCourseCreatorPortfolioItemResponseTransformer,
+    security: [
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+    ],
+    url: '/api/v1/course-creators/{courseCreatorUuid}/portfolio/{itemUuid}',
+    ...options,
+    headers: {
+      'Content-Type': 'application/json',
+      ...options.headers,
+    },
+  });
+};
+
+/**
  * Delete membership record
  * Deletes a course creator membership record.
  */
@@ -6077,6 +7131,64 @@ export const updateCourseCreatorDocument = <ThrowOnError extends boolean = false
 };
 
 /**
+ * Delete a competency
+ */
+export const deleteCourseCreatorCompetency = <ThrowOnError extends boolean = false>(
+  options: Options<DeleteCourseCreatorCompetencyData, ThrowOnError>
+) => {
+  return (options.client ?? _heyApiClient).delete<
+    DeleteCourseCreatorCompetencyResponses,
+    DeleteCourseCreatorCompetencyErrors,
+    ThrowOnError
+  >({
+    security: [
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+    ],
+    url: '/api/v1/course-creators/{courseCreatorUuid}/competencies/{itemUuid}',
+    ...options,
+  });
+};
+
+/**
+ * Update a competency
+ * Changing the evidence sends the competency back for verification.
+ */
+export const updateCourseCreatorCompetency = <ThrowOnError extends boolean = false>(
+  options: Options<UpdateCourseCreatorCompetencyData, ThrowOnError>
+) => {
+  return (options.client ?? _heyApiClient).put<
+    UpdateCourseCreatorCompetencyResponses,
+    UpdateCourseCreatorCompetencyErrors,
+    ThrowOnError
+  >({
+    responseTransformer: updateCourseCreatorCompetencyResponseTransformer,
+    security: [
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+    ],
+    url: '/api/v1/course-creators/{courseCreatorUuid}/competencies/{itemUuid}',
+    ...options,
+    headers: {
+      'Content-Type': 'application/json',
+      ...options.headers,
+    },
+  });
+};
+
+/**
  * Delete certification record
  * Deletes a certification entry from a course creator profile.
  */
@@ -6127,6 +7239,94 @@ export const updateCourseCreatorCertification = <ThrowOnError extends boolean = 
       },
     ],
     url: '/api/v1/course-creators/{courseCreatorUuid}/certifications/{certificationUuid}',
+    ...options,
+    headers: {
+      'Content-Type': 'application/json',
+      ...options.headers,
+    },
+  });
+};
+
+/**
+ * Delete an achievement
+ */
+export const deleteCourseCreatorAchievement = <ThrowOnError extends boolean = false>(
+  options: Options<DeleteCourseCreatorAchievementData, ThrowOnError>
+) => {
+  return (options.client ?? _heyApiClient).delete<
+    DeleteCourseCreatorAchievementResponses,
+    DeleteCourseCreatorAchievementErrors,
+    ThrowOnError
+  >({
+    security: [
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+    ],
+    url: '/api/v1/course-creators/{courseCreatorUuid}/achievements/{itemUuid}',
+    ...options,
+  });
+};
+
+/**
+ * Update an achievement
+ */
+export const updateCourseCreatorAchievement = <ThrowOnError extends boolean = false>(
+  options: Options<UpdateCourseCreatorAchievementData, ThrowOnError>
+) => {
+  return (options.client ?? _heyApiClient).put<
+    UpdateCourseCreatorAchievementResponses,
+    UpdateCourseCreatorAchievementErrors,
+    ThrowOnError
+  >({
+    responseTransformer: updateCourseCreatorAchievementResponseTransformer,
+    security: [
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+    ],
+    url: '/api/v1/course-creators/{courseCreatorUuid}/achievements/{itemUuid}',
+    ...options,
+    headers: {
+      'Content-Type': 'application/json',
+      ...options.headers,
+    },
+  });
+};
+
+/**
+ * Save categories for current user's course creator onboarding
+ */
+export const updateCategories = <ThrowOnError extends boolean = false>(
+  options: Options<UpdateCategoriesData, ThrowOnError>
+) => {
+  return (options.client ?? _heyApiClient).put<
+    UpdateCategoriesResponses,
+    UpdateCategoriesErrors,
+    ThrowOnError
+  >({
+    responseTransformer: updateCategoriesResponseTransformer,
+    security: [
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+    ],
+    url: '/api/v1/course-creators/me/onboarding/categories',
     ...options,
     headers: {
       'Content-Type': 'application/json',
@@ -7442,6 +8642,174 @@ export const createStudent = <ThrowOnError extends boolean = false>(
 };
 
 /**
+ * Resend a guardian invitation
+ * Issues a fresh link (the old one stops working) and restarts the expiry. Refused for a guardian who is already linked. Restricted to the learner, a manager of one of the learner's organisations, or a platform admin.
+ */
+export const resendInvitation = <ThrowOnError extends boolean = false>(
+  options: Options<ResendInvitationData, ThrowOnError>
+) => {
+  return (options.client ?? _heyApiClient).post<
+    ResendInvitationResponses,
+    ResendInvitationErrors,
+    ThrowOnError
+  >({
+    responseTransformer: resendInvitationResponseTransformer,
+    security: [
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+    ],
+    url: '/api/v1/students/{studentUuid}/guardians/{guardianUuid}/resend-invitation',
+    ...options,
+  });
+};
+
+/**
+ * Decline a guardian invitation sent to my email
+ */
+export const declineByUuid = <ThrowOnError extends boolean = false>(
+  options: Options<DeclineByUuidData, ThrowOnError>
+) => {
+  return (options.client ?? _heyApiClient).post<
+    DeclineByUuidResponses,
+    DeclineByUuidErrors,
+    ThrowOnError
+  >({
+    security: [
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+    ],
+    url: '/api/v1/student-guardian-invitations/{invitationUuid}/decline',
+    ...options,
+  });
+};
+
+/**
+ * Accept a guardian invitation sent to my email
+ */
+export const acceptByUuid = <ThrowOnError extends boolean = false>(
+  options: Options<AcceptByUuidData, ThrowOnError>
+) => {
+  return (options.client ?? _heyApiClient).post<
+    AcceptByUuidResponses,
+    AcceptByUuidErrors,
+    ThrowOnError
+  >({
+    responseTransformer: acceptByUuidResponseTransformer,
+    security: [
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+    ],
+    url: '/api/v1/student-guardian-invitations/{invitationUuid}/accept',
+    ...options,
+  });
+};
+
+/**
+ * Create an account from a guardian invitation and accept it
+ * Public. Creates the account for the invited email (a set-password email follows), then links the guardian. 409 when the email already has an account: sign in and accept instead.
+ */
+export const registerAndAccept = <ThrowOnError extends boolean = false>(
+  options: Options<RegisterAndAcceptData, ThrowOnError>
+) => {
+  return (options.client ?? _heyApiClient).post<
+    RegisterAndAcceptResponses,
+    RegisterAndAcceptErrors,
+    ThrowOnError
+  >({
+    responseTransformer: registerAndAcceptResponseTransformer,
+    security: [
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+    ],
+    url: '/api/v1/student-guardian-invitations/token/{token}/register',
+    ...options,
+    headers: {
+      'Content-Type': 'application/json',
+      ...options.headers,
+    },
+  });
+};
+
+/**
+ * Decline a guardian invitation
+ * Public; the link stops working.
+ */
+export const declineByToken = <ThrowOnError extends boolean = false>(
+  options: Options<DeclineByTokenData, ThrowOnError>
+) => {
+  return (options.client ?? _heyApiClient).post<
+    DeclineByTokenResponses,
+    DeclineByTokenErrors,
+    ThrowOnError
+  >({
+    security: [
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+    ],
+    url: '/api/v1/student-guardian-invitations/token/{token}/decline',
+    ...options,
+  });
+};
+
+/**
+ * Accept a guardian invitation
+ * The signed-in account's email must be the invited one. Links the guardian and grants the parent domain.
+ */
+export const acceptByToken = <ThrowOnError extends boolean = false>(
+  options: Options<AcceptByTokenData, ThrowOnError>
+) => {
+  return (options.client ?? _heyApiClient).post<
+    AcceptByTokenResponses,
+    AcceptByTokenErrors,
+    ThrowOnError
+  >({
+    responseTransformer: acceptByTokenResponseTransformer,
+    security: [
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+    ],
+    url: '/api/v1/student-guardian-invitations/token/{token}/accept',
+    ...options,
+  });
+};
+
+/**
  * List group members
  * Returns the student membership rows for a group.
  */
@@ -7622,6 +8990,34 @@ export const createRubricScoringLevel = <ThrowOnError extends boolean = false>(
 };
 
 /**
+ * Add the standard five scoring levels to a rubric
+ * Distinction (5), Merit (4), Pass (3), Fail (2) and No Effort (1); the first three count as passing.
+ */
+export const createStandardRubricScoringLevels = <ThrowOnError extends boolean = false>(
+  options: Options<CreateStandardRubricScoringLevelsData, ThrowOnError>
+) => {
+  return (options.client ?? _heyApiClient).post<
+    CreateStandardRubricScoringLevelsResponses,
+    CreateStandardRubricScoringLevelsErrors,
+    ThrowOnError
+  >({
+    responseTransformer: createStandardRubricScoringLevelsResponseTransformer,
+    security: [
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+    ],
+    url: '/api/v1/rubrics/{rubricUuid}/scoring-levels/standard',
+    ...options,
+  });
+};
+
+/**
  * Create multiple scoring levels for a rubric (batch)
  * Creates multiple custom scoring levels at once for efficient rubric setup.
  */
@@ -7792,6 +9188,96 @@ export const addRubricScoring = <ThrowOnError extends boolean = false>(
       },
     ],
     url: '/api/v1/rubrics/{rubricUuid}/criteria/{criteriaUuid}/scoring',
+    ...options,
+    headers: {
+      'Content-Type': 'application/json',
+      ...options.headers,
+    },
+  });
+};
+
+/**
+ * Register a new account
+ * Creates the Keycloak account, which emails a set-password link, and records the chosen domain as pending approval. Answers the same way when the email is already registered.
+ */
+export const register = <ThrowOnError extends boolean = false>(
+  options: Options<RegisterData, ThrowOnError>
+) => {
+  return (options.client ?? _heyApiClient).post<RegisterResponses, RegisterErrors, ThrowOnError>({
+    security: [
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+    ],
+    url: '/api/v1/registrations',
+    ...options,
+    headers: {
+      'Content-Type': 'application/json',
+      ...options.headers,
+    },
+  });
+};
+
+/**
+ * Resend the set-password email
+ * Sends the email again while the account still has its password or email verification outstanding. Answers the same way whether or not anything was sent.
+ */
+export const resendRegistrationEmail = <ThrowOnError extends boolean = false>(
+  options: Options<ResendRegistrationEmailData, ThrowOnError>
+) => {
+  return (options.client ?? _heyApiClient).post<
+    ResendRegistrationEmailResponses,
+    ResendRegistrationEmailErrors,
+    ThrowOnError
+  >({
+    security: [
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+    ],
+    url: '/api/v1/registrations/resend',
+    ...options,
+    headers: {
+      'Content-Type': 'application/json',
+      ...options.headers,
+    },
+  });
+};
+
+/**
+ * Apply for another domain
+ * For a signed-in account, such as an existing Sarafrika user joining Elimika. The domain stays pending until a platform admin approves it.
+ */
+export const applyForDomain = <ThrowOnError extends boolean = false>(
+  options: Options<ApplyForDomainData, ThrowOnError>
+) => {
+  return (options.client ?? _heyApiClient).post<
+    ApplyForDomainResponses,
+    ApplyForDomainErrors,
+    ThrowOnError
+  >({
+    responseTransformer: applyForDomainResponseTransformer,
+    security: [
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+    ],
+    url: '/api/v1/registrations/me/domains',
     ...options,
     headers: {
       'Content-Type': 'application/json',
@@ -8230,6 +9716,39 @@ export const unpublishProgram = <ThrowOnError extends boolean = false>(
 };
 
 /**
+ * Upload the program thumbnail image
+ * Replaces the program's thumbnail image; the file is stored once and served through /api/v1/files.
+ */
+export const uploadProgramThumbnail = <ThrowOnError extends boolean = false>(
+  options: Options<UploadProgramThumbnailData, ThrowOnError>
+) => {
+  return (options.client ?? _heyApiClient).post<
+    UploadProgramThumbnailResponses,
+    UploadProgramThumbnailErrors,
+    ThrowOnError
+  >({
+    ...formDataBodySerializer,
+    responseTransformer: uploadProgramThumbnailResponseTransformer,
+    security: [
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+    ],
+    url: '/api/v1/programs/{uuid}/thumbnail',
+    ...options,
+    headers: {
+      'Content-Type': null,
+      ...options.headers,
+    },
+  });
+};
+
+/**
  * Publish training program
  * Publishes a program making it available for enrollment. Restricted to the program's creator and platform admins.
  */
@@ -8254,6 +9773,131 @@ export const publishProgram = <ThrowOnError extends boolean = false>(
     ],
     url: '/api/v1/programs/{uuid}/publish',
     ...options,
+  });
+};
+
+/**
+ * Upload the program intro video
+ * Replaces the program's intro video; the file is stored once and served through /api/v1/files.
+ */
+export const uploadProgramIntroVideo = <ThrowOnError extends boolean = false>(
+  options: Options<UploadProgramIntroVideoData, ThrowOnError>
+) => {
+  return (options.client ?? _heyApiClient).post<
+    UploadProgramIntroVideoResponses,
+    UploadProgramIntroVideoErrors,
+    ThrowOnError
+  >({
+    ...formDataBodySerializer,
+    responseTransformer: uploadProgramIntroVideoResponseTransformer,
+    security: [
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+    ],
+    url: '/api/v1/programs/{uuid}/intro-video',
+    ...options,
+    headers: {
+      'Content-Type': null,
+      ...options.headers,
+    },
+  });
+};
+
+/**
+ * Upload the program banner image
+ * Replaces the program's banner image; the file is stored once and served through /api/v1/files.
+ */
+export const uploadProgramBanner = <ThrowOnError extends boolean = false>(
+  options: Options<UploadProgramBannerData, ThrowOnError>
+) => {
+  return (options.client ?? _heyApiClient).post<
+    UploadProgramBannerResponses,
+    UploadProgramBannerErrors,
+    ThrowOnError
+  >({
+    ...formDataBodySerializer,
+    responseTransformer: uploadProgramBannerResponseTransformer,
+    security: [
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+    ],
+    url: '/api/v1/programs/{uuid}/banner',
+    ...options,
+    headers: {
+      'Content-Type': null,
+      ...options.headers,
+    },
+  });
+};
+
+/**
+ * List a program's assessment components
+ */
+export const getProgramAssessments = <ThrowOnError extends boolean = false>(
+  options: Options<GetProgramAssessmentsData, ThrowOnError>
+) => {
+  return (options.client ?? _heyApiClient).get<
+    GetProgramAssessmentsResponses,
+    GetProgramAssessmentsErrors,
+    ThrowOnError
+  >({
+    responseTransformer: getProgramAssessmentsResponseTransformer,
+    security: [
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+    ],
+    url: '/api/v1/programs/{uuid}/assessments',
+    ...options,
+  });
+};
+
+/**
+ * Add a weighted assessment component to a program
+ * Active component weights may not exceed 100% and must total exactly 100% before publishing.
+ */
+export const createProgramAssessment = <ThrowOnError extends boolean = false>(
+  options: Options<CreateProgramAssessmentData, ThrowOnError>
+) => {
+  return (options.client ?? _heyApiClient).post<
+    CreateProgramAssessmentResponses,
+    CreateProgramAssessmentErrors,
+    ThrowOnError
+  >({
+    responseTransformer: createProgramAssessmentResponseTransformer,
+    security: [
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+    ],
+    url: '/api/v1/programs/{uuid}/assessments',
+    ...options,
+    headers: {
+      'Content-Type': 'application/json',
+      ...options.headers,
+    },
   });
 };
 
@@ -9528,6 +11172,479 @@ export const applyAction = <ThrowOnError extends boolean = false>(
     ],
     url: '/api/v1/notifications/{uuid}',
     ...options,
+  });
+};
+
+export const listSkills = <ThrowOnError extends boolean = false>(
+  options?: Options<ListSkillsData, ThrowOnError>
+) => {
+  return (options?.client ?? _heyApiClient).get<
+    ListSkillsResponses,
+    ListSkillsErrors,
+    ThrowOnError
+  >({
+    responseTransformer: listSkillsResponseTransformer,
+    security: [
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+    ],
+    url: '/api/v1/me/profile/skills',
+    ...options,
+  });
+};
+
+/**
+ * Add a skill
+ * Adding a skill already listed (any spelling or spacing) updates it instead.
+ */
+export const addSkill = <ThrowOnError extends boolean = false>(
+  options: Options<AddSkillData, ThrowOnError>
+) => {
+  return (options.client ?? _heyApiClient).post<AddSkillResponses, AddSkillErrors, ThrowOnError>({
+    responseTransformer: addSkillResponseTransformer,
+    security: [
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+    ],
+    url: '/api/v1/me/profile/skills',
+    ...options,
+    headers: {
+      'Content-Type': 'application/json',
+      ...options.headers,
+    },
+  });
+};
+
+export const listPortfolio = <ThrowOnError extends boolean = false>(
+  options?: Options<ListPortfolioData, ThrowOnError>
+) => {
+  return (options?.client ?? _heyApiClient).get<
+    ListPortfolioResponses,
+    ListPortfolioErrors,
+    ThrowOnError
+  >({
+    responseTransformer: listPortfolioResponseTransformer,
+    security: [
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+    ],
+    url: '/api/v1/me/profile/portfolio',
+    ...options,
+  });
+};
+
+export const addPortfolioItem = <ThrowOnError extends boolean = false>(
+  options: Options<AddPortfolioItemData, ThrowOnError>
+) => {
+  return (options.client ?? _heyApiClient).post<
+    AddPortfolioItemResponses,
+    AddPortfolioItemErrors,
+    ThrowOnError
+  >({
+    responseTransformer: addPortfolioItemResponseTransformer,
+    security: [
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+    ],
+    url: '/api/v1/me/profile/portfolio',
+    ...options,
+    headers: {
+      'Content-Type': 'application/json',
+      ...options.headers,
+    },
+  });
+};
+
+export const listMemberships = <ThrowOnError extends boolean = false>(
+  options?: Options<ListMembershipsData, ThrowOnError>
+) => {
+  return (options?.client ?? _heyApiClient).get<
+    ListMembershipsResponses,
+    ListMembershipsErrors,
+    ThrowOnError
+  >({
+    responseTransformer: listMembershipsResponseTransformer,
+    security: [
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+    ],
+    url: '/api/v1/me/profile/memberships',
+    ...options,
+  });
+};
+
+export const addMembership = <ThrowOnError extends boolean = false>(
+  options: Options<AddMembershipData, ThrowOnError>
+) => {
+  return (options.client ?? _heyApiClient).post<
+    AddMembershipResponses,
+    AddMembershipErrors,
+    ThrowOnError
+  >({
+    responseTransformer: addMembershipResponseTransformer,
+    security: [
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+    ],
+    url: '/api/v1/me/profile/memberships',
+    ...options,
+    headers: {
+      'Content-Type': 'application/json',
+      ...options.headers,
+    },
+  });
+};
+
+export const listExperience = <ThrowOnError extends boolean = false>(
+  options?: Options<ListExperienceData, ThrowOnError>
+) => {
+  return (options?.client ?? _heyApiClient).get<
+    ListExperienceResponses,
+    ListExperienceErrors,
+    ThrowOnError
+  >({
+    responseTransformer: listExperienceResponseTransformer,
+    security: [
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+    ],
+    url: '/api/v1/me/profile/experience',
+    ...options,
+  });
+};
+
+export const addExperience = <ThrowOnError extends boolean = false>(
+  options: Options<AddExperienceData, ThrowOnError>
+) => {
+  return (options.client ?? _heyApiClient).post<
+    AddExperienceResponses,
+    AddExperienceErrors,
+    ThrowOnError
+  >({
+    responseTransformer: addExperienceResponseTransformer,
+    security: [
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+    ],
+    url: '/api/v1/me/profile/experience',
+    ...options,
+    headers: {
+      'Content-Type': 'application/json',
+      ...options.headers,
+    },
+  });
+};
+
+export const listEducation = <ThrowOnError extends boolean = false>(
+  options?: Options<ListEducationData, ThrowOnError>
+) => {
+  return (options?.client ?? _heyApiClient).get<
+    ListEducationResponses,
+    ListEducationErrors,
+    ThrowOnError
+  >({
+    responseTransformer: listEducationResponseTransformer,
+    security: [
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+    ],
+    url: '/api/v1/me/profile/education',
+    ...options,
+  });
+};
+
+export const addEducation = <ThrowOnError extends boolean = false>(
+  options: Options<AddEducationData, ThrowOnError>
+) => {
+  return (options.client ?? _heyApiClient).post<
+    AddEducationResponses,
+    AddEducationErrors,
+    ThrowOnError
+  >({
+    responseTransformer: addEducationResponseTransformer,
+    security: [
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+    ],
+    url: '/api/v1/me/profile/education',
+    ...options,
+    headers: {
+      'Content-Type': 'application/json',
+      ...options.headers,
+    },
+  });
+};
+
+export const listDocuments = <ThrowOnError extends boolean = false>(
+  options?: Options<ListDocumentsData, ThrowOnError>
+) => {
+  return (options?.client ?? _heyApiClient).get<
+    ListDocumentsResponses,
+    ListDocumentsErrors,
+    ThrowOnError
+  >({
+    responseTransformer: listDocumentsResponseTransformer,
+    security: [
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+    ],
+    url: '/api/v1/me/profile/documents',
+    ...options,
+  });
+};
+
+/**
+ * Upload a credential document
+ * Stores the file under the user and files it on the profile, optionally backing an education, experience or membership record.
+ */
+export const uploadDocument = <ThrowOnError extends boolean = false>(
+  options: Options<UploadDocumentData, ThrowOnError>
+) => {
+  return (options.client ?? _heyApiClient).post<
+    UploadDocumentResponses,
+    UploadDocumentErrors,
+    ThrowOnError
+  >({
+    ...formDataBodySerializer,
+    responseTransformer: uploadDocumentResponseTransformer,
+    security: [
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+    ],
+    url: '/api/v1/me/profile/documents',
+    ...options,
+    headers: {
+      'Content-Type': null,
+      ...options.headers,
+    },
+  });
+};
+
+export const listCompetencies = <ThrowOnError extends boolean = false>(
+  options?: Options<ListCompetenciesData, ThrowOnError>
+) => {
+  return (options?.client ?? _heyApiClient).get<
+    ListCompetenciesResponses,
+    ListCompetenciesErrors,
+    ThrowOnError
+  >({
+    responseTransformer: listCompetenciesResponseTransformer,
+    security: [
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+    ],
+    url: '/api/v1/me/profile/competencies',
+    ...options,
+  });
+};
+
+export const addCompetency = <ThrowOnError extends boolean = false>(
+  options: Options<AddCompetencyData, ThrowOnError>
+) => {
+  return (options.client ?? _heyApiClient).post<
+    AddCompetencyResponses,
+    AddCompetencyErrors,
+    ThrowOnError
+  >({
+    responseTransformer: addCompetencyResponseTransformer,
+    security: [
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+    ],
+    url: '/api/v1/me/profile/competencies',
+    ...options,
+    headers: {
+      'Content-Type': 'application/json',
+      ...options.headers,
+    },
+  });
+};
+
+export const listCertifications = <ThrowOnError extends boolean = false>(
+  options?: Options<ListCertificationsData, ThrowOnError>
+) => {
+  return (options?.client ?? _heyApiClient).get<
+    ListCertificationsResponses,
+    ListCertificationsErrors,
+    ThrowOnError
+  >({
+    responseTransformer: listCertificationsResponseTransformer,
+    security: [
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+    ],
+    url: '/api/v1/me/profile/certifications',
+    ...options,
+  });
+};
+
+export const addCertification = <ThrowOnError extends boolean = false>(
+  options: Options<AddCertificationData, ThrowOnError>
+) => {
+  return (options.client ?? _heyApiClient).post<
+    AddCertificationResponses,
+    AddCertificationErrors,
+    ThrowOnError
+  >({
+    responseTransformer: addCertificationResponseTransformer,
+    security: [
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+    ],
+    url: '/api/v1/me/profile/certifications',
+    ...options,
+    headers: {
+      'Content-Type': 'application/json',
+      ...options.headers,
+    },
+  });
+};
+
+export const listAchievements = <ThrowOnError extends boolean = false>(
+  options?: Options<ListAchievementsData, ThrowOnError>
+) => {
+  return (options?.client ?? _heyApiClient).get<
+    ListAchievementsResponses,
+    ListAchievementsErrors,
+    ThrowOnError
+  >({
+    responseTransformer: listAchievementsResponseTransformer,
+    security: [
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+    ],
+    url: '/api/v1/me/profile/achievements',
+    ...options,
+  });
+};
+
+export const addAchievement = <ThrowOnError extends boolean = false>(
+  options: Options<AddAchievementData, ThrowOnError>
+) => {
+  return (options.client ?? _heyApiClient).post<
+    AddAchievementResponses,
+    AddAchievementErrors,
+    ThrowOnError
+  >({
+    responseTransformer: addAchievementResponseTransformer,
+    security: [
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+    ],
+    url: '/api/v1/me/profile/achievements',
+    ...options,
+    headers: {
+      'Content-Type': 'application/json',
+      ...options.headers,
+    },
   });
 };
 
@@ -11909,6 +14026,64 @@ export const addCourseCreatorSkill = <ThrowOnError extends boolean = false>(
 };
 
 /**
+ * List portfolio items
+ */
+export const getCourseCreatorPortfolio = <ThrowOnError extends boolean = false>(
+  options: Options<GetCourseCreatorPortfolioData, ThrowOnError>
+) => {
+  return (options.client ?? _heyApiClient).get<
+    GetCourseCreatorPortfolioResponses,
+    GetCourseCreatorPortfolioErrors,
+    ThrowOnError
+  >({
+    responseTransformer: getCourseCreatorPortfolioResponseTransformer,
+    security: [
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+    ],
+    url: '/api/v1/course-creators/{courseCreatorUuid}/portfolio',
+    ...options,
+  });
+};
+
+/**
+ * Add a portfolio item
+ */
+export const addCourseCreatorPortfolioItem = <ThrowOnError extends boolean = false>(
+  options: Options<AddCourseCreatorPortfolioItemData, ThrowOnError>
+) => {
+  return (options.client ?? _heyApiClient).post<
+    AddCourseCreatorPortfolioItemResponses,
+    AddCourseCreatorPortfolioItemErrors,
+    ThrowOnError
+  >({
+    responseTransformer: addCourseCreatorPortfolioItemResponseTransformer,
+    security: [
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+    ],
+    url: '/api/v1/course-creators/{courseCreatorUuid}/portfolio',
+    ...options,
+    headers: {
+      'Content-Type': 'application/json',
+      ...options.headers,
+    },
+  });
+};
+
+/**
  * Get professional memberships
  * Retrieves memberships for a specific course creator.
  */
@@ -12222,6 +14397,64 @@ export const uploadCourseCreatorDocument = <ThrowOnError extends boolean = false
 };
 
 /**
+ * List competencies
+ */
+export const getCourseCreatorCompetencies = <ThrowOnError extends boolean = false>(
+  options: Options<GetCourseCreatorCompetenciesData, ThrowOnError>
+) => {
+  return (options.client ?? _heyApiClient).get<
+    GetCourseCreatorCompetenciesResponses,
+    GetCourseCreatorCompetenciesErrors,
+    ThrowOnError
+  >({
+    responseTransformer: getCourseCreatorCompetenciesResponseTransformer,
+    security: [
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+    ],
+    url: '/api/v1/course-creators/{courseCreatorUuid}/competencies',
+    ...options,
+  });
+};
+
+/**
+ * Add a competency
+ */
+export const addCourseCreatorCompetency = <ThrowOnError extends boolean = false>(
+  options: Options<AddCourseCreatorCompetencyData, ThrowOnError>
+) => {
+  return (options.client ?? _heyApiClient).post<
+    AddCourseCreatorCompetencyResponses,
+    AddCourseCreatorCompetencyErrors,
+    ThrowOnError
+  >({
+    responseTransformer: addCourseCreatorCompetencyResponseTransformer,
+    security: [
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+    ],
+    url: '/api/v1/course-creators/{courseCreatorUuid}/competencies',
+    ...options,
+    headers: {
+      'Content-Type': 'application/json',
+      ...options.headers,
+    },
+  });
+};
+
+/**
  * Get certifications
  * Retrieves certification records for a course creator.
  */
@@ -12278,6 +14511,91 @@ export const addCourseCreatorCertification = <ThrowOnError extends boolean = fal
       'Content-Type': 'application/json',
       ...options.headers,
     },
+  });
+};
+
+/**
+ * List achievements
+ */
+export const getCourseCreatorAchievements = <ThrowOnError extends boolean = false>(
+  options: Options<GetCourseCreatorAchievementsData, ThrowOnError>
+) => {
+  return (options.client ?? _heyApiClient).get<
+    GetCourseCreatorAchievementsResponses,
+    GetCourseCreatorAchievementsErrors,
+    ThrowOnError
+  >({
+    responseTransformer: getCourseCreatorAchievementsResponseTransformer,
+    security: [
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+    ],
+    url: '/api/v1/course-creators/{courseCreatorUuid}/achievements',
+    ...options,
+  });
+};
+
+/**
+ * Add an achievement
+ */
+export const addCourseCreatorAchievement = <ThrowOnError extends boolean = false>(
+  options: Options<AddCourseCreatorAchievementData, ThrowOnError>
+) => {
+  return (options.client ?? _heyApiClient).post<
+    AddCourseCreatorAchievementResponses,
+    AddCourseCreatorAchievementErrors,
+    ThrowOnError
+  >({
+    responseTransformer: addCourseCreatorAchievementResponseTransformer,
+    security: [
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+    ],
+    url: '/api/v1/course-creators/{courseCreatorUuid}/achievements',
+    ...options,
+    headers: {
+      'Content-Type': 'application/json',
+      ...options.headers,
+    },
+  });
+};
+
+/**
+ * Submit current user's course creator onboarding for verification
+ */
+export const submitCurrentForVerification = <ThrowOnError extends boolean = false>(
+  options?: Options<SubmitCurrentForVerificationData, ThrowOnError>
+) => {
+  return (options?.client ?? _heyApiClient).post<
+    SubmitCurrentForVerificationResponses,
+    SubmitCurrentForVerificationErrors,
+    ThrowOnError
+  >({
+    responseTransformer: submitCurrentForVerificationResponseTransformer,
+    security: [
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+    ],
+    url: '/api/v1/course-creators/me/onboarding/submit',
+    ...options,
   });
 };
 
@@ -14273,6 +16591,61 @@ export const assignAdminDomain = <ThrowOnError extends boolean = false>(
 };
 
 /**
+ * Verify a profile item
+ * Marks a skill, certification, competency or document VERIFIED or REJECTED. The verdict holds for every domain the user has; editing the claim later sends it back to PENDING.
+ */
+export const verify = <ThrowOnError extends boolean = false>(
+  options: Options<VerifyData, ThrowOnError>
+) => {
+  return (options.client ?? _heyApiClient).post<VerifyResponses, VerifyErrors, ThrowOnError>({
+    security: [
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+    ],
+    url: '/api/v1/admin/users/{userUuid}/profile/{section}/{itemUuid}/verification',
+    ...options,
+    headers: {
+      'Content-Type': 'application/json',
+      ...options.headers,
+    },
+  });
+};
+
+/**
+ * Approve, reject or revoke a user's domain
+ * For domains without a profile review (instructor; students and parents need no approval). Approval opens the domain's dashboard; reject and revoke keep the user on the pending-approval screen.
+ */
+export const moderateUserDomain = <ThrowOnError extends boolean = false>(
+  options: Options<ModerateUserDomainData, ThrowOnError>
+) => {
+  return (options.client ?? _heyApiClient).post<
+    ModerateUserDomainResponses,
+    ModerateUserDomainErrors,
+    ThrowOnError
+  >({
+    responseTransformer: moderateUserDomainResponseTransformer,
+    security: [
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+    ],
+    url: '/api/v1/admin/users/{userUuid}/domains/{domain}/moderate',
+    ...options,
+  });
+};
+
+/**
  * Get all admin users
  * Retrieves a paginated list of all users with administrative privileges. Includes both system administrators and organisation administrators. Supports filtering by admin level, status, and other criteria.
  */
@@ -14788,6 +17161,69 @@ export const moderateCourse = <ThrowOnError extends boolean = false>(
 };
 
 /**
+ * Verify a skills wallet item
+ * Marks a skill, competency or certification VERIFIED or REJECTED after checking its evidence.
+ */
+export const verifyWalletItem = <ThrowOnError extends boolean = false>(
+  options: Options<VerifyWalletItemData, ThrowOnError>
+) => {
+  return (options.client ?? _heyApiClient).post<
+    VerifyWalletItemResponses,
+    VerifyWalletItemErrors,
+    ThrowOnError
+  >({
+    security: [
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+    ],
+    url: '/api/v1/admin/course-creators/{uuid}/wallet/{section}/{itemUuid}/verification',
+    ...options,
+    headers: {
+      'Content-Type': 'application/json',
+      ...options.headers,
+    },
+  });
+};
+
+/**
+ * Moderate course creator verification
+ * Approves, rejects or revokes a course creator onboarding submission.
+ */
+export const moderateCourseCreator = <ThrowOnError extends boolean = false>(
+  options: Options<ModerateCourseCreatorData, ThrowOnError>
+) => {
+  return (options.client ?? _heyApiClient).post<
+    ModerateCourseCreatorResponses,
+    ModerateCourseCreatorErrors,
+    ThrowOnError
+  >({
+    responseTransformer: moderateCourseCreatorResponseTransformer,
+    security: [
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+    ],
+    url: '/api/v1/admin/course-creators/{uuid}/moderate',
+    ...options,
+    headers: {
+      'Content-Type': 'application/json',
+      ...options.headers,
+    },
+  });
+};
+
+/**
  * Reschedule a scheduled class instance
  */
 export const rescheduleScheduledInstance = <ThrowOnError extends boolean = false>(
@@ -14840,6 +17276,33 @@ export const updateScheduledInstanceStatus = <ThrowOnError extends boolean = fal
       },
     ],
     url: '/api/v1/timetable/schedule/{instanceUuid}/status',
+    ...options,
+  });
+};
+
+/**
+ * Set the lesson a scheduled class instance teaches
+ * Attendance for the session is graded on that lesson. Without one, the session's position in the class schedule picks the lesson with the same number.
+ */
+export const assignScheduledInstanceLesson = <ThrowOnError extends boolean = false>(
+  options: Options<AssignScheduledInstanceLessonData, ThrowOnError>
+) => {
+  return (options.client ?? _heyApiClient).patch<
+    AssignScheduledInstanceLessonResponses,
+    AssignScheduledInstanceLessonErrors,
+    ThrowOnError
+  >({
+    security: [
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+    ],
+    url: '/api/v1/timetable/schedule/{instanceUuid}/lesson',
     ...options,
   });
 };
@@ -15150,6 +17613,255 @@ export const getAllUsers = <ThrowOnError extends boolean = false>(
 };
 
 /**
+ * Get a user's professional profile
+ * Answered to the user, a platform admin, staff of an organisation the user belongs to, and whoever is reviewing an application the user lodged.
+ */
+export const getSummary1 = <ThrowOnError extends boolean = false>(
+  options: Options<GetSummary1Data, ThrowOnError>
+) => {
+  return (options.client ?? _heyApiClient).get<
+    GetSummary1Responses,
+    GetSummary1Errors,
+    ThrowOnError
+  >({
+    responseTransformer: getSummary1ResponseTransformer,
+    security: [
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+    ],
+    url: '/api/v1/users/{userUuid}/profile',
+    ...options,
+  });
+};
+
+export const skills = <ThrowOnError extends boolean = false>(
+  options: Options<SkillsData, ThrowOnError>
+) => {
+  return (options.client ?? _heyApiClient).get<SkillsResponses, SkillsErrors, ThrowOnError>({
+    responseTransformer: skillsResponseTransformer,
+    security: [
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+    ],
+    url: '/api/v1/users/{userUuid}/profile/skills',
+    ...options,
+  });
+};
+
+export const portfolio = <ThrowOnError extends boolean = false>(
+  options: Options<PortfolioData, ThrowOnError>
+) => {
+  return (options.client ?? _heyApiClient).get<PortfolioResponses, PortfolioErrors, ThrowOnError>({
+    responseTransformer: portfolioResponseTransformer,
+    security: [
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+    ],
+    url: '/api/v1/users/{userUuid}/profile/portfolio',
+    ...options,
+  });
+};
+
+export const memberships = <ThrowOnError extends boolean = false>(
+  options: Options<MembershipsData, ThrowOnError>
+) => {
+  return (options.client ?? _heyApiClient).get<
+    MembershipsResponses,
+    MembershipsErrors,
+    ThrowOnError
+  >({
+    responseTransformer: membershipsResponseTransformer,
+    security: [
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+    ],
+    url: '/api/v1/users/{userUuid}/profile/memberships',
+    ...options,
+  });
+};
+
+export const experience = <ThrowOnError extends boolean = false>(
+  options: Options<ExperienceData, ThrowOnError>
+) => {
+  return (options.client ?? _heyApiClient).get<ExperienceResponses, ExperienceErrors, ThrowOnError>(
+    {
+      responseTransformer: experienceResponseTransformer,
+      security: [
+        {
+          scheme: 'bearer',
+          type: 'http',
+        },
+        {
+          scheme: 'bearer',
+          type: 'http',
+        },
+      ],
+      url: '/api/v1/users/{userUuid}/profile/experience',
+      ...options,
+    }
+  );
+};
+
+export const education = <ThrowOnError extends boolean = false>(
+  options: Options<EducationData, ThrowOnError>
+) => {
+  return (options.client ?? _heyApiClient).get<EducationResponses, EducationErrors, ThrowOnError>({
+    responseTransformer: educationResponseTransformer,
+    security: [
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+    ],
+    url: '/api/v1/users/{userUuid}/profile/education',
+    ...options,
+  });
+};
+
+export const documents = <ThrowOnError extends boolean = false>(
+  options: Options<DocumentsData, ThrowOnError>
+) => {
+  return (options.client ?? _heyApiClient).get<DocumentsResponses, DocumentsErrors, ThrowOnError>({
+    responseTransformer: documentsResponseTransformer,
+    security: [
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+    ],
+    url: '/api/v1/users/{userUuid}/profile/documents',
+    ...options,
+  });
+};
+
+export const documentFile = <ThrowOnError extends boolean = false>(
+  options: Options<DocumentFileData, ThrowOnError>
+) => {
+  return (options.client ?? _heyApiClient).get<
+    DocumentFileResponses,
+    DocumentFileErrors,
+    ThrowOnError
+  >({
+    security: [
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+    ],
+    url: '/api/v1/users/{userUuid}/profile/documents/{documentUuid}/file',
+    ...options,
+  });
+};
+
+export const competencies = <ThrowOnError extends boolean = false>(
+  options: Options<CompetenciesData, ThrowOnError>
+) => {
+  return (options.client ?? _heyApiClient).get<
+    CompetenciesResponses,
+    CompetenciesErrors,
+    ThrowOnError
+  >({
+    responseTransformer: competenciesResponseTransformer,
+    security: [
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+    ],
+    url: '/api/v1/users/{userUuid}/profile/competencies',
+    ...options,
+  });
+};
+
+export const certifications = <ThrowOnError extends boolean = false>(
+  options: Options<CertificationsData, ThrowOnError>
+) => {
+  return (options.client ?? _heyApiClient).get<
+    CertificationsResponses,
+    CertificationsErrors,
+    ThrowOnError
+  >({
+    responseTransformer: certificationsResponseTransformer,
+    security: [
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+    ],
+    url: '/api/v1/users/{userUuid}/profile/certifications',
+    ...options,
+  });
+};
+
+export const achievements = <ThrowOnError extends boolean = false>(
+  options: Options<AchievementsData, ThrowOnError>
+) => {
+  return (options.client ?? _heyApiClient).get<
+    AchievementsResponses,
+    AchievementsErrors,
+    ThrowOnError
+  >({
+    responseTransformer: achievementsResponseTransformer,
+    security: [
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+    ],
+    url: '/api/v1/users/{userUuid}/profile/achievements',
+    ...options,
+  });
+};
+
+/**
  * Search users
  * Fetches a paginated list of users based on optional filters. Supports pagination and sorting. Restricted to platform administrators — callers looking up their own record should use GET /api/v1/users/me.
  *
@@ -15225,6 +17937,34 @@ export const getCurrentUser = <ThrowOnError extends boolean = false>(
       },
     ],
     url: '/api/v1/users/me',
+    ...options,
+  });
+};
+
+/**
+ * Get the caller's account approval status
+ * Returns ACTIVE once any domain is approved, PENDING_APPROVAL while every requested domain awaits a platform admin, and the state of each requested domain.
+ */
+export const getCurrentAccountStatus = <ThrowOnError extends boolean = false>(
+  options?: Options<GetCurrentAccountStatusData, ThrowOnError>
+) => {
+  return (options?.client ?? _heyApiClient).get<
+    GetCurrentAccountStatusResponses,
+    GetCurrentAccountStatusErrors,
+    ThrowOnError
+  >({
+    responseTransformer: getCurrentAccountStatusResponseTransformer,
+    security: [
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+    ],
+    url: '/api/v1/users/me/account-status',
     ...options,
   });
 };
@@ -15470,6 +18210,34 @@ export const getInstructorSchedule = <ThrowOnError extends boolean = false>(
 };
 
 /**
+ * List a student's guardians
+ * Each guardian with status linked, invited, expired, declined or revoked. Includes guardians linked another way (uuid null). Restricted to the learner, an active guardian, a manager of one of the learner's organisations, or a platform admin.
+ */
+export const getGuardians = <ThrowOnError extends boolean = false>(
+  options: Options<GetGuardiansData, ThrowOnError>
+) => {
+  return (options.client ?? _heyApiClient).get<
+    GetGuardiansResponses,
+    GetGuardiansErrors,
+    ThrowOnError
+  >({
+    responseTransformer: getGuardiansResponseTransformer,
+    security: [
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+    ],
+    url: '/api/v1/students/{studentUuid}/guardians',
+    ...options,
+  });
+};
+
+/**
  * Get student bookings
  */
 export const getStudentBookings = <ThrowOnError extends boolean = false>(
@@ -15525,18 +18293,67 @@ export const searchStudents = <ThrowOnError extends boolean = false>(
 };
 
 /**
+ * Read a guardian invitation from its link
+ * Public. has_account tells the UI whether to ask the guardian to sign in or to register.
+ */
+export const getByToken = <ThrowOnError extends boolean = false>(
+  options: Options<GetByTokenData, ThrowOnError>
+) => {
+  return (options.client ?? _heyApiClient).get<GetByTokenResponses, GetByTokenErrors, ThrowOnError>(
+    {
+      responseTransformer: getByTokenResponseTransformer,
+      security: [
+        {
+          scheme: 'bearer',
+          type: 'http',
+        },
+        {
+          scheme: 'bearer',
+          type: 'http',
+        },
+      ],
+      url: '/api/v1/student-guardian-invitations/token/{token}',
+      ...options,
+    }
+  );
+};
+
+/**
+ * List open guardian invitations sent to my email
+ */
+export const getMine = <ThrowOnError extends boolean = false>(
+  options?: Options<GetMineData, ThrowOnError>
+) => {
+  return (options?.client ?? _heyApiClient).get<GetMineResponses, GetMineErrors, ThrowOnError>({
+    responseTransformer: getMineResponseTransformer,
+    security: [
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+    ],
+    url: '/api/v1/student-guardian-invitations/me',
+    ...options,
+  });
+};
+
+/**
  * List active skills
  * Active skills only, for tag pickers. q matches names, slugs and aliases in memory over the small curated list: an exact match first, then names starting with q, then any containing it. Without q, skills are in name order. limit is 1-500 (default 50).
  */
-export const listSkills = <ThrowOnError extends boolean = false>(
-  options?: Options<ListSkillsData, ThrowOnError>
+export const listSkills1 = <ThrowOnError extends boolean = false>(
+  options?: Options<ListSkills1Data, ThrowOnError>
 ) => {
   return (options?.client ?? _heyApiClient).get<
-    ListSkillsResponses,
-    ListSkillsErrors,
+    ListSkills1Responses,
+    ListSkills1Errors,
     ThrowOnError
   >({
-    responseTransformer: listSkillsResponseTransformer,
+    responseTransformer: listSkills1ResponseTransformer,
     security: [
       {
         scheme: 'bearer',
@@ -15589,12 +18406,12 @@ export const globalSearch = <ThrowOnError extends boolean = false>(
  * |---|---|---|
  * | `classes` | `uuid`, `course_uuid`, `program_uuid`, `organisation_uuid`, `branch_uuid`, `default_instructor_uuid`, `category_uuid`, `is_active`, `class_visibility`, `content_approved`, `location_type`, `session_format`, `starts_at`, `registration_closes_at`, `sale_price`, `created_at`, `_geo` | `starts_at`, `sale_price`, `created_at`, `title`, `_geo` |
  * | `course_content` | `type`, `course_uuid`, `lesson_uuid`, `published`, `scope`, `class_definition_uuid`, `content_type`, `uuid` | `lesson_number`, `display_order`, `updated_at` |
- * | `courses` | `status`, `active`, `admin_approved`, `is_public`, `course_creator_uuid`, `category_uuids`, `difficulty_uuid`, `is_free`, `price`, `uuid`, `created_at`, `level_order`, `prerequisite_uuids`, `age_lower_limit`, `age_upper_limit`, `skill_uuids` | `name`, `created_at`, `price`, `rating_avg`, `enrolment_count`, `completion_rate`, `popularity_30d`, `rating_bayes` |
+ * | `courses` | `status`, `active`, `admin_approved`, `is_public`, `course_creator_uuid`, `category_uuids`, `course_code`, `difficulty_uuid`, `is_free`, `price`, `uuid`, `created_at`, `level_order`, `prerequisite_uuids`, `age_lower_limit`, `age_upper_limit`, `skill_uuids` | `name`, `created_at`, `price`, `rating_avg`, `enrolment_count`, `completion_rate`, `popularity_30d`, `rating_bayes` |
  * | `instructors` | `admin_verified`, `active`, `skills`, `skill_levels`, `skill_uuids`, `location_name`, `uuid`, `created_at`, `_geo` | `full_name`, `rating_avg`, `review_count`, `created_at`, `_geo` |
  * | `marketplace_jobs` | `status`, `organisation_uuid`, `branch_uuid`, `course_uuid`, `program_uuid`, `category_uuid`, `location_type`, `session_format`, `starts_at`, `registration_closes_at`, `uuid`, `created_at`, `required_skill_uuids`, `_geo` | `created_at`, `starts_at`, `_geo` |
  * | `organisations` | `active`, `admin_verified`, `country`, `uuid`, `created_at` | `name`, `created_at` |
  * | `people` | `domains`, `organisation_uuids`, `branch_uuids`, `active`, `is_platform_admin`, `is_org_admin`, `uuid`, `created_at`, `email_normalized` | `full_name`, `created_at` |
- * | `programs` | `status`, `is_published`, `admin_approved`, `active`, `is_public`, `course_creator_uuid`, `category_uuid`, `is_free`, `uuid`, `created_at`, `difficulty_uuids` | `title`, `created_at`, `rating_avg`, `rating_bayes`, `popularity_30d`, `enrolment_count` |
+ * | `programs` | `status`, `is_published`, `admin_approved`, `active`, `is_public`, `course_creator_uuid`, `category_uuid`, `is_free`, `uuid`, `created_at`, `difficulty_uuids`, `program_code` | `title`, `created_at`, `rating_avg`, `rating_bayes`, `popularity_30d`, `enrolment_count` |
  * | `rubrics` | `is_public`, `is_active`, `status`, `course_creator_uuid`, `rubric_type`, `usage_count`, `uuid`, `created_at` | `title`, `created_at`, `usage_count` |
  *
  */
@@ -17255,25 +20072,27 @@ export const listRoster = <ThrowOnError extends boolean = false>(
 /**
  * Get skills fund summary (KPIs)
  */
-export const getSummary = <ThrowOnError extends boolean = false>(
-  options: Options<GetSummaryData, ThrowOnError>
+export const getSummary2 = <ThrowOnError extends boolean = false>(
+  options: Options<GetSummary2Data, ThrowOnError>
 ) => {
-  return (options.client ?? _heyApiClient).get<GetSummaryResponses, GetSummaryErrors, ThrowOnError>(
-    {
-      security: [
-        {
-          scheme: 'bearer',
-          type: 'http',
-        },
-        {
-          scheme: 'bearer',
-          type: 'http',
-        },
-      ],
-      url: '/api/v1/organisations/{organisationUuid}/skills-fund/summary',
-      ...options,
-    }
-  );
+  return (options.client ?? _heyApiClient).get<
+    GetSummary2Responses,
+    GetSummary2Errors,
+    ThrowOnError
+  >({
+    security: [
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+    ],
+    url: '/api/v1/organisations/{organisationUuid}/skills-fund/summary',
+    ...options,
+  });
 };
 
 /**
@@ -17493,6 +20312,29 @@ export const getCounts = <ThrowOnError extends boolean = false>(
       },
     ],
     url: '/api/v1/notifications/counts',
+    ...options,
+  });
+};
+
+export const getDocumentFile = <ThrowOnError extends boolean = false>(
+  options: Options<GetDocumentFileData, ThrowOnError>
+) => {
+  return (options.client ?? _heyApiClient).get<
+    GetDocumentFileResponses,
+    GetDocumentFileErrors,
+    ThrowOnError
+  >({
+    security: [
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+    ],
+    url: '/api/v1/me/profile/documents/{itemUuid}/file',
     ...options,
   });
 };
@@ -20056,6 +22898,33 @@ export const searchCourseCreatorMemberships = <ThrowOnError extends boolean = fa
 };
 
 /**
+ * Get current user's course creator onboarding state
+ */
+export const getCurrentOnboarding = <ThrowOnError extends boolean = false>(
+  options?: Options<GetCurrentOnboardingData, ThrowOnError>
+) => {
+  return (options?.client ?? _heyApiClient).get<
+    GetCurrentOnboardingResponses,
+    GetCurrentOnboardingErrors,
+    ThrowOnError
+  >({
+    responseTransformer: getCurrentOnboardingResponseTransformer,
+    security: [
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+    ],
+    url: '/api/v1/course-creators/me/onboarding',
+    ...options,
+  });
+};
+
+/**
  * Search course creator experience
  * Advanced search endpoint for course creator experience history.
  */
@@ -21825,6 +24694,34 @@ export const listIndexes = <ThrowOnError extends boolean = false>(
       },
     ],
     url: '/api/v1/admin/search/indexes',
+    ...options,
+  });
+};
+
+/**
+ * List domain requests awaiting review
+ * Self-registrations and domain applications by approval status, oldest first. Course creator and organisation requests are decided through their own profile review.
+ */
+export const getRegistrationQueue = <ThrowOnError extends boolean = false>(
+  options?: Options<GetRegistrationQueueData, ThrowOnError>
+) => {
+  return (options?.client ?? _heyApiClient).get<
+    GetRegistrationQueueResponses,
+    GetRegistrationQueueErrors,
+    ThrowOnError
+  >({
+    responseTransformer: getRegistrationQueueResponseTransformer,
+    security: [
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+    ],
+    url: '/api/v1/admin/registrations',
     ...options,
   });
 };

@@ -1,9 +1,5 @@
 'use client';
 
-import { useQuery } from '@tanstack/react-query';
-import { BookOpen, Lock, SearchX, Sparkles, X } from 'lucide-react';
-import Link from 'next/link';
-import { type ReactNode, useState } from 'react';
 import { surfaceTheme } from '@/components/data-display';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -15,10 +11,14 @@ import {
   retryUnlessClientOrSearchError,
 } from '@/lib/api-errors';
 import { STALE_TIMES } from '@/lib/query-client';
-import { toAuthenticatedMediaUrl } from '@/src/lib/media-url';
 import { getCourseRecommendationsOptions } from '@/services/client/@tanstack/react-query.gen';
 import type { RecommendedCourse } from '@/services/client/types.gen';
 import { useDiscoveryEvents } from '@/src/features/discovery/discovery-events';
+import { toAuthenticatedMediaUrl } from '@/src/lib/media-url';
+import { useQuery } from '@tanstack/react-query';
+import { BookOpen, Lock, SearchX, Sparkles, X } from 'lucide-react';
+import Link from 'next/link';
+import { type ReactNode, useState } from 'react';
 
 type RecommendationSurface = 'for_you' | 'next_steps';
 

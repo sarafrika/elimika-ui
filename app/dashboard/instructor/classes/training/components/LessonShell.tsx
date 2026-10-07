@@ -14,6 +14,7 @@ import {
   Home,
   List,
   ListChecks,
+  Menu,
 } from 'lucide-react';
 import Link from 'next/link';
 import { useEffect, useRef, type ReactNode } from 'react';
@@ -144,63 +145,81 @@ export function LessonShell({
 
   return (
     <div ref={shellStart} className='bg-muted/40 text-foreground flex min-h-screen'>
-      <aside className='bg-background border-border hidden w-[4.5rem] shrink-0 flex-col items-center gap-4 border-r py-4 md:flex'>
-        <Button asChild size='icon'>
-          <Link href={homeHref} aria-label='Back to classes'>
-            <Home className='h-5 w-5' />
-          </Link>
-        </Button>
-        <Button variant='ghost' size='icon' onClick={onBrowseLessons} aria-label='All lessons'>
-          <BookOpen className='h-5 w-5' />
-        </Button>
-      </aside>
       <div className='flex min-w-0 flex-1 flex-col'>
-        <header className='bg-background border-border border-b px-4 sm:px-7'>
-          <nav
-            aria-label='Lesson sections'
-            className='border-border flex gap-1 overflow-x-auto border-b'
-          >
-            {TABS.filter(item => item.key !== 'summary' || isCompleted).map(
-              ({ key, label, icon: Icon }) => (
-                <Button
-                  key={key}
-                  variant='ghost'
-                  onClick={() => onTabChange(key)}
-                  aria-current={!showList && tab === key ? 'page' : undefined}
-                  className={`h-12 shrink-0 rounded-none border-b-2 px-3 ${!showList && tab === key ? 'border-primary text-primary' : 'text-muted-foreground border-transparent'}`}
-                >
-                  <Icon className='h-4 w-4' />
-                  {label}
-                </Button>
-              )
-            )}
-          </nav>
+        <header className='bg-background pt-2 border-border border-b px-4 sm:px-7'>
+          <div className='flex items-center mr-2'>
+            <div
+              className='hover:bg-primary/20 bg-primary/10 shrink-0 cursor-pointer rounded-sm p-1.5 mr-2 -ml-6'
+            >
+              <Link href={homeHref} aria-label='Back to classes'>
+                <Menu className='h-5 w-5' />
+              </Link>
+            </div>
+
+            <nav
+              aria-label='Lesson sections'
+              className='flex min-w-0 flex-1 gap-1 overflow-x-auto'
+            >
+              {TABS.filter(item => item.key !== 'summary' || isCompleted).map(
+                ({ key, label, icon: Icon }) => (
+                  <Button
+                    key={key}
+                    variant='ghost'
+                    onClick={() => onTabChange(key)}
+                    aria-current={!showList && tab === key ? 'page' : undefined}
+                    className={`h-12 shrink-0 rounded-none border-b-2 px-3 ${!showList && tab === key
+                      ? 'border-primary text-primary'
+                      : 'text-muted-foreground border-transparent'
+                      }`}
+                  >
+                    <Icon className='h-4 w-4' />
+                    {label}
+                  </Button>
+                )
+              )}
+            </nav>
+          </div>
+
           <div className='flex flex-wrap items-center justify-between gap-4 py-4'>
             <div className='min-w-0'>
               <p className='text-muted-foreground text-xs'>
                 {courseTitle} / {classTitle}
               </p>
+
               <h1 className='mt-1 text-lg font-bold sm:text-xl'>
-                {lessonTitle ? `Lesson ${lessonNumber}: ${lessonTitle}` : 'All lessons'}
+                {lessonTitle
+                  ? `Lesson ${lessonNumber}: ${lessonTitle}`
+                  : 'All lessons'}
               </h1>
+
               <Badge className='mt-2' variant='secondary'>
                 {roleLabel}
               </Badge>
             </div>
+
             <div className='flex flex-wrap items-center gap-2'>
-              <Button asChild variant='ghost' size='icon' className='md:hidden'>
+              <Button
+                asChild
+                variant='ghost'
+                size='icon'
+                className='md:hidden'
+              >
                 <Link href={homeHref} aria-label='Back to classes'>
                   <Home className='h-4 w-4' />
                 </Link>
               </Button>
+
               <Button variant='outline' onClick={onBrowseLessons}>
                 <List className='h-4 w-4' />
                 All lessons
               </Button>
+
               {actions}
             </div>
           </div>
         </header>
+
+
         <main className='flex min-w-0 flex-1 flex-col px-3 py-4 sm:px-7 sm:py-6'>
           <div className='mx-auto flex w-full flex-col items-start gap-6 lg:flex-row'>
             <div className='w-full min-w-0 flex-1'>

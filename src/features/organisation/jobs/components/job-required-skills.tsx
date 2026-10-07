@@ -2,7 +2,7 @@
 
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { Pencil, Sparkles, Trash2 } from 'lucide-react';
-import { useId, useState } from 'react';
+import { useId, useMemo, useState } from 'react';
 import { toast } from 'sonner';
 
 import { SectionCard, SectionCardSkeleton } from '@/components/data-display';
@@ -29,43 +29,37 @@ import {
 import Spinner from '@/components/ui/spinner';
 import { isForbidden } from '@/lib/api-errors';
 import { getErrorMessage } from '@/lib/error-utils';
+import { useDifficultyLevels } from '@/hooks/use-difficultyLevels';
+import { skillDifficultyOptions } from '@/lib/skill-difficulty';
 import { STALE_TIMES } from '@/lib/query-client';
 import {
   getMarketplaceJobRequiredSkillsOptions,
   getMarketplaceJobRequiredSkillsQueryKey,
   replaceMarketplaceJobRequiredSkillsMutation,
 } from '@/services/client/@tanstack/react-query.gen';
-import type {
-  ClassMarketplaceJobRequiredSkill,
-  LevelEnum,
-} from '@/services/client/types.gen';
+import type { ClassMarketplaceJobRequiredSkill } from '@/services/client/types.gen';
 import { SkillPicker } from '@/src/features/skills/components/skill-picker';
 
-const SKILL_LEVELS: ReadonlyArray<{ value: LevelEnum; label: string }> = [
-  { value: 'beginner', label: 'Beginner' },
-  { value: 'intermediate', label: 'Intermediate' },
-  { value: 'advanced', label: 'Advanced' },
-  { value: 'expert', label: 'Expert' },
-];
-
-function skillLevelLabel(level: LevelEnum | string | null | undefined) {
-  return SKILL_LEVELS.find(item => item.value === level?.toLowerCase())?.label ?? 'Beginner';
+function skillLevelLabel(
+  level: ClassMarketplaceJobRequiredSkill['min_proficiency'],
+  levels: ReturnType<typeof skillDifficultyOptions>
+) {
+  return levels.find(item => item.value === level)?.label ?? level ?? 'Unspecified';
 }
 
 type DraftSkill = {
   skill_uuid: string;
   name: string;
-  min_proficiency: LevelEnum;
+  min_proficiency: ClassMarketplaceJobRequiredSkill['min_proficiency'];
   is_mandatory: boolean;
 };
 
 function toDraft(skill: ClassMarketplaceJobRequiredSkill): DraftSkill | null {
   if (!skill.skill_uuid) return null;
-  const level = SKILL_LEVELS.find(item => item.value === skill.min_proficiency?.toLowerCase());
   return {
     skill_uuid: skill.skill_uuid,
     name: skill.skill_name ?? skill.skill_slug ?? 'Skill',
-    min_proficiency: level?.value ?? 'beginner',
+    min_proficiency: skill.min_proficiency,
     is_mandatory: skill.is_mandatory ?? true,
   };
 }
@@ -83,12 +77,21 @@ export function JobRequiredSkillsSection({
   canEdit: boolean;
 }) {
   const [editing, setEditing] = useState(false);
+  const difficulty = useDifficultyLevels();
+  const levels = useMemo(
+    () => skillDifficultyOptions(difficulty.difficultyLevels),
+    [difficulty.difficultyLevels]
+  );
   const query = useQuery({
     ...getMarketplaceJobRequiredSkillsOptions({ path: { jobUuid } }),
     enabled: Boolean(jobUuid),
     staleTime: STALE_TIMES.entity,
   });
-  const data = query.data?.data;
+  const responseError =
+    query.data?.error || query.data?.success === false
+      ? new Error(query.data.message || 'Could not load required skills')
+      : null;
+  const data = responseError ? undefined : query.data?.data;
   const skills = data?.skills ?? [];
   const inherited = Boolean(data?.inherited);
 
@@ -113,10 +116,10 @@ export function JobRequiredSkillsSection({
     >
       {query.isLoading ? (
         <SectionCardSkeleton rows={2} withHeader={false} />
-      ) : query.error ? (
+      ) : query.error || responseError ? (
         <div className='flex flex-wrap items-center gap-3 text-sm' role='alert'>
           <span className='text-destructive'>
-            {getErrorMessage(query.error, 'Couldn’t load the required skills.')}
+            {getErrorMessage(query.error ?? responseError, 'Couldn’t load the required skills.')}
           </span>
           <Button variant='ghost' size='sm' onClick={() => query.refetch()}>
             Try again
@@ -136,7 +139,7 @@ export function JobRequiredSkillsSection({
               <Badge variant='outline' className='gap-1.5 py-1 font-normal'>
                 <span className='text-foreground font-medium'>{skill.skill_name}</span>
                 <span className='text-muted-foreground'>
-                  {skillLevelLabel(skill.min_proficiency)}+
+                  {skillLevelLabel(skill.min_proficiency, levels)}+
                 </span>
                 {skill.is_mandatory === false ? (
                   <span className='text-muted-foreground'>· nice to have</span>
@@ -160,6 +163,10 @@ export function JobRequiredSkillsSection({
           jobUuid={jobUuid}
           initial={inherited ? [] : skills}
           inheritedSkills={inherited ? skills : []}
+          levels={levels}
+          levelsLoading={difficulty.isLoading}
+          levelsError={difficulty.error}
+          onRetryLevels={() => void difficulty.refetch()}
           onClose={() => setEditing(false)}
         />
       ) : null}
@@ -171,11 +178,19 @@ function RequiredSkillsSheet({
   jobUuid,
   initial,
   inheritedSkills,
+  levels,
+  levelsLoading,
+  levelsError,
+  onRetryLevels,
   onClose,
 }: {
   jobUuid: string;
   initial: ClassMarketplaceJobRequiredSkill[];
   inheritedSkills: ClassMarketplaceJobRequiredSkill[];
+  levels: ReturnType<typeof skillDifficultyOptions>;
+  levelsLoading: boolean;
+  levelsError: unknown;
+  onRetryLevels: () => void;
   onClose: () => void;
 }) {
   const queryClient = useQueryClient();
@@ -186,8 +201,14 @@ function RequiredSkillsSheet({
 
   const save = useMutation({
     ...replaceMarketplaceJobRequiredSkillsMutation(),
-    onSuccess: async () => {
-      toast.success(draft.length ? 'Required skills saved.' : 'The job now uses its course’s skills.');
+    onSuccess: async response => {
+      if (response.error || response.success === false) {
+        toast.error(response.message || 'Unable to save the required skills.');
+        return;
+      }
+      toast.success(
+        draft.length ? 'Required skills saved.' : 'The job now uses its course’s skills.'
+      );
       await queryClient.invalidateQueries({
         queryKey: getMarketplaceJobRequiredSkillsQueryKey({ path: { jobUuid } }),
       });
@@ -205,8 +226,8 @@ function RequiredSkillsSheet({
         <SheetHeader>
           <SheetTitle>Required skills</SheetTitle>
           <SheetDescription>
-            Set the skills an instructor needs for this job and the minimum level. Removing
-            every skill falls back to the course’s skills.
+            Set the skills an instructor needs for this job and the minimum level. Removing every
+            skill falls back to the course’s skills.
           </SheetDescription>
         </SheetHeader>
 
@@ -218,7 +239,7 @@ function RequiredSkillsSheet({
                 {inheritedSkills.map(skill => (
                   <li key={skill.skill_uuid}>
                     <Badge variant='secondary' className='font-normal'>
-                      {skill.skill_name} · {skillLevelLabel(skill.min_proficiency)}+
+                      {skill.skill_name} · {skillLevelLabel(skill.min_proficiency, levels)}+
                     </Badge>
                   </li>
                 ))}
@@ -231,19 +252,39 @@ function RequiredSkillsSheet({
 
           <SkillPicker
             excludeUuids={draft.map(item => item.skill_uuid)}
-            disabled={draft.length >= 20}
+            disabled={draft.length >= 20 || save.isPending || levelsLoading || levels.length === 0}
             onPick={skill =>
               setDraft(items => [
                 ...items,
                 {
                   skill_uuid: skill.uuid,
                   name: skill.name,
-                  min_proficiency: 'beginner',
+                  min_proficiency: levels[0]?.value,
                   is_mandatory: true,
                 },
               ])
             }
           />
+          {levelsLoading ? (
+            <p className='text-muted-foreground flex items-center gap-2 text-sm' role='status'>
+              <Spinner />
+              Loading difficulty levels…
+            </p>
+          ) : levelsError ? (
+            <EmptyState
+              variant='compact'
+              title='Could not load difficulty levels'
+              action={
+                <Button variant='outline' size='sm' onClick={onRetryLevels}>
+                  Try again
+                </Button>
+              }
+            />
+          ) : levels.length === 0 ? (
+            <p className='text-muted-foreground text-sm' role='status'>
+              No difficulty levels supported by required skills are available.
+            </p>
+          ) : null}
 
           {draft.length === 0 ? (
             <p className='text-muted-foreground text-sm'>
@@ -268,6 +309,7 @@ function RequiredSkillsSheet({
                             items.filter(entry => entry.skill_uuid !== item.skill_uuid)
                           )
                         }
+                        disabled={save.isPending}
                       >
                         <Trash2 className='h-4 w-4' />
                       </Button>
@@ -278,16 +320,20 @@ function RequiredSkillsSheet({
                           Minimum level
                         </Label>
                         <Select
-                          value={item.min_proficiency}
-                          onValueChange={value =>
-                            update(item.skill_uuid, { min_proficiency: value as LevelEnum })
-                          }
+                          value={item.min_proficiency ?? ''}
+                          disabled={save.isPending || levelsLoading || levels.length === 0}
+                          onValueChange={value => {
+                            const level = levels.find(option => option.value === value);
+                            if (level) update(item.skill_uuid, { min_proficiency: level.value });
+                          }}
                         >
                           <SelectTrigger id={levelId} size='sm' className='w-36'>
-                            <SelectValue />
+                            <SelectValue placeholder='Select level'>
+                              {skillLevelLabel(item.min_proficiency, levels)}
+                            </SelectValue>
                           </SelectTrigger>
                           <SelectContent>
-                            {SKILL_LEVELS.map(level => (
+                            {levels.map(level => (
                               <SelectItem key={level.value} value={level.value}>
                                 {level.label}
                               </SelectItem>
@@ -299,6 +345,7 @@ function RequiredSkillsSheet({
                         <Checkbox
                           id={mandatoryId}
                           checked={item.is_mandatory}
+                          disabled={save.isPending}
                           onCheckedChange={checked =>
                             update(item.skill_uuid, { is_mandatory: checked === true })
                           }

@@ -27,6 +27,7 @@ import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
 import { cn } from '@/lib/utils';
 
+import { toAuthenticatedMediaUrl } from '../../lib/media-url';
 import type { CourseHeroProps } from './blocks/CourseHero';
 import {
   type CourseHeaderFactKey,
@@ -288,7 +289,7 @@ export function CourseRecordView({
       </AsyncSection>
 
       {/* ── gate banner: outside the tabs, so it stays in view ────────── */}
-      {capability.gate && gateBanner ? gateBanner : null}
+      {/* {capability.gate && gateBanner ? gateBanner : null} */}
 
       {band && !bandInOverview ? band : null}
 
@@ -364,7 +365,7 @@ function HeaderMedia({ imageUrl }: { imageUrl?: string }) {
     <div className='from-primary/15 via-primary/5 to-muted relative flex h-[140px] items-center justify-center overflow-hidden rounded-xl bg-gradient-to-br md:h-full md:min-h-[160px]'>
       {src ? (
         <img
-          src={src}
+          src={toAuthenticatedMediaUrl(src) as string}
           alt=''
           onError={() => setFailed(true)}
           className='absolute inset-0 size-full object-cover'

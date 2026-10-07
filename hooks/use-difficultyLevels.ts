@@ -1,32 +1,37 @@
 import { useQuery } from '@tanstack/react-query';
 import { useMemo } from 'react';
+import { STALE_TIMES } from '@/lib/query-client';
 import { getAllDifficultyLevelsOptions } from '../services/client/@tanstack/react-query.gen';
 
-function buildDifficultyMap(
-  difficultyLevels: { uuid: string; name: string }[]
-): Record<string, string> {
-  return difficultyLevels.reduce(
-    (map, level) => {
-      map[level.uuid] = level.name;
-      return map;
-    },
-    {} as Record<string, string>
-  );
-}
-
 export function useDifficultyLevels() {
-  const { data, isLoading, error } = useQuery(getAllDifficultyLevelsOptions());
+  const { data, isLoading, error, refetch } = useQuery({
+    ...getAllDifficultyLevelsOptions(),
+    staleTime: STALE_TIMES.reference,
+  });
+  const responseError =
+    data?.error || data?.success === false
+      ? new Error(data.message || 'Unable to load difficulty levels')
+      : null;
+  const difficultyLevels = useMemo(
+    () =>
+      data?.error || data?.success === false
+        ? []
+        : [...(data?.data ?? [])].sort((a, b) => a.level_order - b.level_order),
+    [data]
+  );
 
   const difficultyMap = useMemo(() => {
-    if (!data?.data) return {};
-    // @ts-expect-error
-    return buildDifficultyMap(data?.data);
-  }, [data]);
+    return difficultyLevels.reduce<Record<string, string>>((map, level) => {
+      if (level.uuid) map[level.uuid] = level.name;
+      return map;
+    }, {});
+  }, [difficultyLevels]);
 
   return {
-    difficultyLevels: data?.data ?? [],
+    difficultyLevels,
     difficultyMap,
     isLoading,
-    error,
+    error: error ?? responseError,
+    refetch,
   };
 }

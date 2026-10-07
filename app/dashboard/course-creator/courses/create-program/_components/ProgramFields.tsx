@@ -1,11 +1,7 @@
 'use client';
 
-import { useFieldArray, useFormContext } from 'react-hook-form';
-import { Plus, X } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Checkbox } from '@/components/ui/checkbox';
-import { EmptyState } from '@/components/ui/empty-state';
 import {
   FormControl,
   FormDescription,
@@ -24,10 +20,16 @@ import {
 } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
 import type { Category } from '@/services/client/types.gen';
+import { X } from 'lucide-react';
+import { useFormContext } from 'react-hook-form';
+import { CourseLearningOutcomes } from '../../../_components/course-learning-outcomes';
 import type { ProgramFormValues } from '../program-schema';
+import { ProgramRequirements } from './ProgramRequirements';
 
 type TextFieldName =
   | 'title'
+  | 'programCode'
+  | 'passMark'
   | 'description'
   | 'objectives'
   | 'prerequisites'
@@ -72,7 +74,7 @@ export function ProgramTextField({
                 type={type}
                 min={min}
                 max={max}
-                step={name === 'price' ? 'any' : 1}
+                step={name === 'price' || name === 'passMark' ? 'any' : 1}
                 placeholder={placeholder}
               />
             )}
@@ -124,7 +126,15 @@ export function DraftField({
   );
 }
 
-export function ProgramSetup({ categories }: { categories: Category[] }) {
+export function ProgramSetup({
+  categories,
+  programUuid,
+  onSaveRequirements,
+}: {
+  categories: Category[];
+  programUuid?: string;
+  onSaveRequirements: (requirements: ProgramFormValues['requirements']) => Promise<boolean>;
+}) {
   const { control } = useFormContext<ProgramFormValues>();
   return (
     <>
@@ -135,7 +145,11 @@ export function ProgramSetup({ categories }: { categories: Category[] }) {
           placeholder='e.g. Piano Course School Programs'
           className='lg:col-span-2'
         />
-        <DraftField name='programCode' label='Program code' placeholder='e.g. MUSIC-101' />
+        <ProgramTextField
+          name='programCode'
+          label='Program code (optional)'
+          placeholder='e.g. MUSIC-101'
+        />
         <FormField
           control={control}
           name='categoryUuids'
@@ -210,8 +224,8 @@ export function ProgramSetup({ categories }: { categories: Category[] }) {
         <DraftField name='award' label='Program award' />
       </div>
       <p className='text-muted-foreground text-xs'>
-        Program code, subject, and award are kept in your browser draft. Saving keeps the program
-        in its current state; publish, unpublish or archive it with the actions above.
+        Subject and award are kept in your browser draft. Saving keeps the program in its current
+        state; publish, unpublish or archive it with the actions above.
       </p>
       <div className='grid gap-4 md:grid-cols-2'>
         <ProgramTextField
@@ -221,136 +235,27 @@ export function ProgramSetup({ categories }: { categories: Category[] }) {
           multiline
         />
         <ProgramTextField
-          name='objectives'
-          label='Expected outcomes'
-          placeholder='What learners will achieve'
-          multiline
-        />
-        <ProgramTextField
           name='prerequisites'
           label='Prerequisites'
           placeholder='Knowledge needed before starting'
           multiline
         />
-        <Requirements />
-      </div>
-      <div className='grid max-w-lg gap-4 sm:grid-cols-2'>
-        <ProgramTextField
-          name='totalDurationHours'
-          label='Total duration (hours)'
-          type='number'
-          min={0}
-        />
-        <ProgramTextField
-          name='totalDurationMinutes'
-          label='Additional minutes'
-          type='number'
-          min={0}
-          max={59}
-        />
-      </div>
-    </>
-  );
-}
 
-function Requirements() {
-  const { control } = useFormContext<ProgramFormValues>();
-  const { fields, append, remove } = useFieldArray({ control, name: 'requirements' });
-  return (
-    <section className='space-y-3' aria-label='Requirements'>
-      <div className='flex items-center justify-between gap-2'>
-        <h3 className='text-sm font-medium'>Requirements</h3>
-        <Button
-          type='button'
-          variant='outline'
-          size='sm'
-          onClick={() =>
-            append({ requirementText: '', requirementType: 'STUDENT', isMandatory: true })
-          }
-        >
-          <Plus />
-          Add requirement
-        </Button>
-      </div>
-      {!fields.length && (
-        <EmptyState
-          variant='compact'
-          title='No requirements yet'
-          description='Add materials, equipment, or access required.'
+        <FormField
+          control={control}
+          name='objectives'
+          render={({ field, fieldState }) => (
+            <CourseLearningOutcomes
+              value={field.value}
+              onChange={field.onChange}
+              onBlur={field.onBlur}
+              error={fieldState.error?.message}
+              entity='program'
+            />
+          )}
         />
-      )}
-      {fields.map((row, index) => (
-        <div key={row.id} className='border-border space-y-3 border p-3'>
-          <div className='flex items-start gap-2'>
-            <FormField
-              control={control}
-              name={`requirements.${index}.requirementText`}
-              render={({ field }) => (
-                <FormItem className='flex-1'>
-                  <FormLabel className='sr-only'>Requirement {index + 1}</FormLabel>
-                  <FormControl>
-                    <Textarea
-                      {...field}
-                      rows={3}
-                      placeholder='Materials, equipment or access required'
-                    />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            <Button
-              type='button'
-              variant='ghost'
-              size='icon'
-              aria-label={`Remove requirement ${index + 1}`}
-              onClick={() => remove(index)}
-            >
-              <X />
-            </Button>
-          </div>
-          <div className='flex flex-wrap items-end gap-4'>
-            <FormField
-              control={control}
-              name={`requirements.${index}.requirementType`}
-              render={({ field }) => (
-                <FormItem className='min-w-36 flex-1'>
-                  <FormLabel>Required from</FormLabel>
-                  <Select value={field.value} onValueChange={field.onChange}>
-                    <FormControl>
-                      <SelectTrigger className='w-full'>
-                        <SelectValue />
-                      </SelectTrigger>
-                    </FormControl>
-                    <SelectContent>
-                      <SelectItem value='STUDENT'>Student</SelectItem>
-                      <SelectItem value='INSTRUCTOR'>Instructor</SelectItem>
-                      <SelectItem value='TRAINING_CENTER'>Training center</SelectItem>
-                    </SelectContent>
-                  </Select>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            <FormField
-              control={control}
-              name={`requirements.${index}.isMandatory`}
-              render={({ field }) => (
-                <FormItem className='flex items-center gap-2 pb-2'>
-                  <FormControl>
-                    <Checkbox
-                      checked={field.value}
-                      onCheckedChange={checked => field.onChange(checked === true)}
-                    />
-                  </FormControl>
-                  <FormLabel>Mandatory</FormLabel>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-          </div>
-        </div>
-      ))}
-    </section>
+      </div>
+      <ProgramRequirements programUuid={programUuid} onSave={onSaveRequirements} />
+    </>
   );
 }

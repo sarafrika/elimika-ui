@@ -6,6 +6,7 @@ import { SearchNotice } from '@/components/search/search-notice';
 import { useSearchIssue, useSearchQuery } from '@/hooks/use-search-query';
 import { Label } from '@/components/ui/label';
 import { Skeleton } from '@/components/ui/skeleton';
+import Spinner from '@/components/ui/spinner';
 import { useCourseCreator } from '@/context/course-creator-context';
 import type {
   CreateAssessmentRubricData,
@@ -49,6 +50,7 @@ import {
   addRubricScoringMutation,
   createAssessmentRubricMutation,
   createRubricScoringLevelMutation,
+  createStandardRubricScoringLevelsMutation,
   deleteAssessmentRubricMutation,
   deleteRubricCriterionMutation,
   deleteRubricScoringMutation,
@@ -377,6 +379,9 @@ const RubricManager: React.FC = () => {
     !rubric.course_creator_uuid || rubric.course_creator_uuid === creatorUuid;
 
   const [isEditing, setIsEditing] = useState(false);
+  const [isCreatingRubric, setIsCreatingRubric] = useState(false);
+  const [isApplyingStandardLevels, setIsApplyingStandardLevels] = useState(false);
+  const [hasAppliedStandardLevels, setHasAppliedStandardLevels] = useState(false);
   const [currentRubric, setCurrentRubric] = useState<EditableRubric | null>(null);
   const [deletedCriteria, setDeletedCriteria] = useState<string[]>([]);
   const [deletedScoring, setDeletedScoring] = useState<DeletedScoringLink[]>([]);
@@ -392,6 +397,7 @@ const RubricManager: React.FC = () => {
   const deleteCriteriaApi = useMutation(deleteRubricCriterionMutation());
 
   const addRubricScoringLevel = useMutation(createRubricScoringLevelMutation());
+  const addStandardScoringLevels = useMutation(createStandardRubricScoringLevelsMutation());
   const updateRubricScoringLevel = useMutation(updateScoringLevelMutation());
   const deleteRubricScoringLevel = useMutation(deleteScoringLevelMutation());
 
@@ -405,6 +411,8 @@ const RubricManager: React.FC = () => {
     const newRubric = createEmptyRubric();
     setCurrentRubric(newRubric);
     setIsEditing(true);
+    setIsCreatingRubric(true);
+    setHasAppliedStandardLevels(false);
     setDeletedCriteria([]);
     setDeletedScoring([]);
     setDeletedScoringLevels([]);
@@ -444,6 +452,8 @@ const RubricManager: React.FC = () => {
     };
     setCurrentRubric(clonedRubric);
     setIsEditing(true);
+    setIsCreatingRubric(false);
+    setHasAppliedStandardLevels(false);
     setDeletedCriteria([]);
     setDeletedScoring([]);
     setDeletedScoringLevels([]);
@@ -464,6 +474,115 @@ const RubricManager: React.FC = () => {
     );
   };
 
+  const getCreateRubricPayload = (rubric: EditableRubric): CreateAssessmentRubricBody => ({
+    title: rubric.title,
+    description: rubric.description,
+    rubric_type: rubric.rubric_type,
+    rubric_category: rubric.rubric_category,
+    assessment_scope: rubric.assessment_scope,
+    course_creator_uuid: creatorUuid || '',
+    is_public: rubric.is_public,
+    is_published: rubric.is_published,
+    active: rubric.active,
+    status: toApiStatus(rubric.status),
+    total_weight: Number(rubric.total_weight),
+    weight_unit: rubric.weight_unit,
+    max_score: Number(rubric.max_score),
+    min_passing_score: Number(rubric.min_passing_score),
+  });
+
+  const handleUseStandardLevels = async () => {
+    if (!currentRubric || isApplyingStandardLevels || hasAppliedStandardLevels) return;
+    if (!currentRubric.title.trim() || !currentRubric.rubric_type.trim()) {
+      toast.error('Enter a rubric title and type before using standard levels');
+      return;
+    }
+    if (!creatorUuid) {
+      toast.error('Your course creator profile is not ready. Please try again.');
+      return;
+    }
+
+    setIsApplyingStandardLevels(true);
+    try {
+      let rubricUuid = currentRubric.uuid;
+      if (!rubricUuid) {
+        const response = await createRubric.mutateAsync({
+          body: getCreateRubricPayload(currentRubric),
+        });
+        if (response.error || response.success === false || !response.data?.uuid) {
+          throw new Error('Failed to create rubric draft');
+        }
+        rubricUuid = response.data.uuid;
+        // Retain the draft ID even if the standard-level request fails, so retries reuse it.
+        setCurrentRubric(rubric => (rubric ? { ...rubric, uuid: rubricUuid } : rubric));
+      }
+
+      const response = await addStandardScoringLevels.mutateAsync({ path: { rubricUuid } });
+      if (response.error || response.success === false || !response.data?.length) {
+        throw new Error('Failed to create standard scoring levels');
+      }
+      const scoringLevels: RubricScoringLevel[] = [...response.data]
+        .sort((a, b) => a.level_order - b.level_order)
+        .map(level => ({
+          uuid: level.uuid || '',
+          rubric_uuid: rubricUuid,
+          name: level.name,
+          description: level.description || level.name,
+          points: String(level.points),
+          score_range: String(level.points),
+          level_order: level.level_order,
+          is_passing: level.is_passing,
+          is_passing_level: level.is_passing,
+          created_by: level.created_by || creatorUuid,
+          created_date: level.created_date || new Date(),
+          updated_by: level.updated_by || null,
+          updated_date: level.updated_date || null,
+        }));
+      if (scoringLevels.some(level => !level.uuid)) {
+        throw new Error('Standard scoring levels are missing identifiers');
+      }
+
+      setCurrentRubric(rubric => {
+        if (!rubric) return rubric;
+        return {
+          ...rubric,
+          scoringLevels,
+          criteria: rubric.criteria.map(criterion => ({
+            ...criterion,
+            scoring: scoringLevels.map(level => {
+              const previousIndex = rubric.scoringLevels.findIndex(
+                previous => (previous.name || previous.description) === level.name
+              );
+              return {
+                uuid: '',
+                rubric_scoring_level_uuid: level.uuid,
+                criteria_uuid: criterion.uuid,
+                description: criterion.scoring[previousIndex]?.description || '',
+                performance_expectation: '',
+                feedback_category: '',
+                points: level.points,
+                score_range: level.score_range,
+                is_passing_level: level.is_passing_level,
+                created_by: creatorUuid,
+                created_date: new Date(),
+                updated_by: null,
+                updated_date: null,
+              };
+            }),
+          })),
+        };
+      });
+      setHasAppliedStandardLevels(true);
+      toast.success('Standard scoring levels applied. Save the rubric to finish the matrix.');
+    } catch (error) {
+      toast.error(
+        rubricWriteError(error, 'Failed to apply standard scoring levels. Please try again.')
+      );
+    } finally {
+      setIsApplyingStandardLevels(false);
+    }
+  };
+
   const handleSaveRubric = async () => {
     if (!currentRubric) return;
 
@@ -478,26 +597,10 @@ const RubricManager: React.FC = () => {
       return;
     }
 
-    const existingRubric = rubrics.find(r => r.uuid === currentRubric.uuid);
-    const isNewRubric = !existingRubric;
+    const isNewRubric = !currentRubric.uuid;
 
     if (isNewRubric) {
-      const rubricPayload: CreateAssessmentRubricBody = {
-        title: currentRubric.title,
-        description: currentRubric.description,
-        rubric_type: currentRubric.rubric_type,
-        rubric_category: currentRubric.rubric_category,
-        assessment_scope: currentRubric.assessment_scope,
-        course_creator_uuid: creator?.data?.profile?.uuid as string,
-        is_public: currentRubric.is_public,
-        is_published: currentRubric.is_published,
-        active: currentRubric.active,
-        status: toApiStatus(currentRubric.status),
-        total_weight: Number(currentRubric.total_weight),
-        weight_unit: currentRubric.weight_unit,
-        max_score: Number(currentRubric.max_score),
-        min_passing_score: Number(currentRubric.min_passing_score),
-      };
+      const rubricPayload = getCreateRubricPayload(currentRubric);
 
       try {
         const rubricResponse = await createRubric.mutateAsync({ body: rubricPayload });
@@ -513,7 +616,7 @@ const RubricManager: React.FC = () => {
           addRubricScoringLevel.mutateAsync({
             body: {
               rubric_uuid: newRubricUuid,
-              name: level.description,
+              name: level.name || level.description,
               description: level.description,
               points: Number(level.points || 0),
               is_passing: level.is_passing_level,
@@ -624,11 +727,11 @@ const RubricManager: React.FC = () => {
 
             const payload: UpdateRubricScoringLevelBody = {
               rubric_uuid: currentRubric.uuid,
-              name: level.description,
+              name: level.name || level.description,
               description: level.description,
               points: Number(level.points || 0),
               level_order: resolvedLevelOrder,
-              is_passing: level.is_passing_level || true,
+              is_passing: level.is_passing_level ?? level.is_passing ?? false,
             };
             if (!level.uuid)
               return addRubricScoringLevel.mutateAsync({
@@ -935,6 +1038,7 @@ const RubricManager: React.FC = () => {
   const filtered = rubrics;
 
   const isSaving =
+    isApplyingStandardLevels ||
     createRubric.isPending ||
     updateRubric.isPending ||
     addCriteria.isPending ||
@@ -955,18 +1059,18 @@ const RubricManager: React.FC = () => {
         <div className='flex flex-col gap-3 border-b px-6 py-5 sm:flex-row sm:items-center sm:justify-between'>
           <div>
             <h3 className='text-foreground text-lg font-bold'>
-              {currentRubric.uuid ? 'Edit Rubric' : 'Create New Rubric'}
+              {isCreatingRubric ? 'Create New Rubric' : 'Edit Rubric'}
             </h3>
             <p className='text-muted-foreground mt-0.5 text-sm'>
-              {currentRubric.uuid
-                ? 'Update rubric details, criteria, and scoring levels'
-                : 'Define criteria and scoring levels for this rubric'}
+              {isCreatingRubric
+                ? 'Define criteria and scoring levels for this rubric'
+                : 'Update rubric details, criteria, and scoring levels'}
             </p>
           </div>
           <div className='flex gap-2'>
             <Button onClick={handleSaveRubric} disabled={isSaving} size='sm' className='gap-2'>
               <Save size={15} />
-              {isSaving ? 'Saving…' : currentRubric.uuid ? 'Update Rubric' : 'Save Rubric'}
+              {isSaving ? 'Saving…' : isCreatingRubric ? 'Save Rubric' : 'Update Rubric'}
             </Button>
             <Button
               variant='outline'
@@ -980,7 +1084,7 @@ const RubricManager: React.FC = () => {
           </div>
         </div>
 
-        <div className='divide-y'>
+        <fieldset disabled={isSaving} className='min-w-0 divide-y'>
           {/* ── Section 1: Details ── */}
           <div className='px-6 py-6'>
             <SectionLabel
@@ -1108,16 +1212,41 @@ const RubricManager: React.FC = () => {
 
           {/* ── Section 2: Criteria Matrix ── */}
           <div className='px-6 py-6'>
-            <div className='flex items-center justify-between'>
+            <div className='flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between'>
               <SectionLabel
                 number={2}
                 title='Criteria & Scoring Matrix'
                 description='Define criteria rows and scoring level columns'
               />
-              <Button onClick={addLevel} size='sm' variant='outline' className='shrink-0 gap-1.5'>
-                <Plus size={14} /> Add Level
-              </Button>
+              <div className='flex flex-wrap gap-2'>
+                {isCreatingRubric && (
+                  <Button
+                    type='button'
+                    onClick={handleUseStandardLevels}
+                    size='sm'
+                    variant='outline'
+                    disabled={isSaving || hasAppliedStandardLevels || !creatorUuid}
+                    className='gap-1.5'
+                  >
+                    {isApplyingStandardLevels && <Spinner />}
+                    {isApplyingStandardLevels
+                      ? 'Applying standard levels…'
+                      : hasAppliedStandardLevels
+                        ? 'Standard Levels Applied'
+                        : 'Use Standard Levels'}
+                  </Button>
+                )}
+                <Button onClick={addLevel} size='sm' variant='outline' className='shrink-0 gap-1.5'>
+                  <Plus size={14} /> Add Level
+                </Button>
+              </div>
             </div>
+            {isCreatingRubric && (
+              <p className='text-muted-foreground mt-3 text-xs'>
+                Distinction (5), Merit (4), Pass (3), Fail (2), and No Effort (1). Using standard
+                levels saves a draft and replaces the current scoring columns.
+              </p>
+            )}
 
             {(currentRubric.scoringLevels || []).length === 0 ? (
               <div className='mt-4 flex flex-col items-center justify-center gap-2 rounded-xl border border-dashed py-8 text-center'>
@@ -1142,7 +1271,7 @@ const RubricManager: React.FC = () => {
                             <div className='flex items-center gap-1'>
                               <input
                                 className='border-input bg-background text-foreground placeholder:text-muted-foreground focus-visible:ring-ring min-w-0 flex-1 rounded-md border px-2 py-1.5 text-xs font-medium shadow-sm focus-visible:ring-1 focus-visible:outline-none'
-                                value={level.description}
+                                value={level.name || level.description}
                                 onChange={e => updateScoringLevelName(idx, e.target.value)}
                                 placeholder='Level name'
                               />
@@ -1249,7 +1378,7 @@ const RubricManager: React.FC = () => {
               </Button>
             </div>
           </div>
-        </div>
+        </fieldset>
 
         {/* Footer save bar */}
         <div className='bg-muted/20 flex items-center justify-end gap-3 border-t px-6 py-4'>
@@ -1258,7 +1387,7 @@ const RubricManager: React.FC = () => {
           </Button>
           <Button onClick={handleSaveRubric} disabled={isSaving} className='min-w-[140px]'>
             <Save size={15} className='mr-2' />
-            {isSaving ? 'Saving…' : currentRubric.uuid ? 'Update Rubric' : 'Save Rubric'}
+            {isSaving ? 'Saving…' : isCreatingRubric ? 'Save Rubric' : 'Update Rubric'}
           </Button>
         </div>
       </div>

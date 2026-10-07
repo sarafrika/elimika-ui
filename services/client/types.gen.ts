@@ -298,6 +298,25 @@ export type Student = {
   readonly updated_by?: string;
 };
 
+/**
+ * A parent or guardian named during student onboarding.
+ */
+export type StudentGuardianRequest = {
+  /**
+   * **[REQUIRED]** Guardian's full name.
+   */
+  name: string;
+  /**
+   * **[REQUIRED]** Guardian's email. An existing account is linked straight away; otherwise an invitation is emailed here.
+   */
+  email: string;
+  /**
+   * **[OPTIONAL]** Guardian's mobile number, including country code.
+   */
+  phone?: string | null;
+  relationship_type?: RelationshipTypeEnum;
+};
+
 export type ApiResponseStudent = {
   success?: boolean;
   data?: Student;
@@ -973,10 +992,6 @@ export type QuizQuestion = {
    */
   readonly updated_by?: string;
   /**
-   * **[READ-ONLY]** Formatted question number for display in quiz interface.
-   */
-  readonly question_number?: string;
-  /**
    * **[READ-ONLY]** Indicates if this question type requires predefined answer options.
    */
   readonly requires_options?: boolean;
@@ -988,6 +1003,10 @@ export type QuizQuestion = {
    * **[READ-ONLY]** Human-readable format of the points value.
    */
   readonly points_display?: string;
+  /**
+   * **[READ-ONLY]** Formatted question number for display in quiz interface.
+   */
+  readonly question_number?: string;
 };
 
 export type ApiResponseQuizQuestion = {
@@ -1038,6 +1057,10 @@ export type QuizQuestionOption = {
    */
   readonly updated_by?: string;
   /**
+   * **[READ-ONLY]** Formatted category of the option based on its correctness status.
+   */
+  readonly option_category?: string;
+  /**
    * **[READ-ONLY]** Indicates if this option is an incorrect answer choice.
    */
   readonly is_incorrect?: boolean;
@@ -1053,10 +1076,6 @@ export type QuizQuestionOption = {
    * **[READ-ONLY]** Comprehensive summary of the option including correctness and position.
    */
   readonly option_summary?: string;
-  /**
-   * **[READ-ONLY]** Formatted category of the option based on its correctness status.
-   */
-  readonly option_category?: string;
 };
 
 export type ApiResponseQuizQuestionOption = {
@@ -1169,6 +1188,10 @@ export type QuizAttempt = {
    */
   readonly is_completed?: boolean;
   /**
+   * **[READ-ONLY]** Formatted display of the grade information.
+   */
+  readonly grade_display?: string;
+  /**
    * **[READ-ONLY]** Formatted display of the time taken to complete the quiz.
    */
   readonly time_display?: string;
@@ -1180,10 +1203,6 @@ export type QuizAttempt = {
    * **[READ-ONLY]** Comprehensive summary of the quiz attempt performance.
    */
   readonly performance_summary?: string;
-  /**
-   * **[READ-ONLY]** Formatted display of the grade information.
-   */
-  readonly grade_display?: string;
 };
 
 /**
@@ -1198,6 +1217,10 @@ export type TrainingProgram = {
    * **[REQUIRED]** Title of the training program that clearly describes the learning pathway.
    */
   title: string;
+  /**
+   * **[OPTIONAL]** Short unique code for the program, stored upper case.
+   */
+  program_code?: string | null;
   /**
    * **[REQUIRED]** Reference to the course creator UUID who created and manages this program.
    */
@@ -1214,7 +1237,7 @@ export type TrainingProgram = {
    * **[OPTIONAL]** Learning objectives and goals students will achieve upon program completion.
    */
   objectives?: string;
-  status: SchemaEnum4;
+  status: SchemaEnum6;
   /**
    * **[OPTIONAL]** Required knowledge and skills students should have before starting this program.
    */
@@ -1235,6 +1258,22 @@ export type TrainingProgram = {
    * **[OPTIONAL]** Program price in the system currency. Set to null or 0 for free programs.
    */
   price?: number | null;
+  /**
+   * **[OPTIONAL]** Final grade percentage a learner needs to pass the program.
+   */
+  pass_mark?: number | null;
+  /**
+   * **[OPTIONAL]** Program thumbnail; upload through POST /{uuid}/thumbnail.
+   */
+  thumbnail_url?: string | null;
+  /**
+   * **[OPTIONAL]** Program banner; upload through POST /{uuid}/banner.
+   */
+  banner_url?: string | null;
+  /**
+   * **[OPTIONAL]** Program intro video; upload through POST /{uuid}/intro-video.
+   */
+  intro_video_url?: string | null;
   /**
    * **[OPTIONAL]** Indicates if the program is actively available to students. Can only be true for published programs.
    */
@@ -1276,6 +1315,29 @@ export type TrainingProgram = {
 export type ApiResponseTrainingProgram = {
   success?: boolean;
   data?: TrainingProgram;
+  message?: string;
+  error?: unknown;
+};
+
+/**
+ * A weighted assessment component of a training program
+ */
+export type ProgramAssessment = {
+  readonly uuid?: string;
+  title: string;
+  assessment_type: string;
+  description?: string;
+  weight_percentage: number;
+  rubric_uuid?: string;
+  is_required?: boolean;
+  active?: boolean;
+  readonly program_uuid?: string;
+  readonly created_date?: Date;
+};
+
+export type ApiResponseProgramAssessment = {
+  success?: boolean;
+  data?: ProgramAssessment;
   message?: string;
   error?: unknown;
 };
@@ -1860,6 +1922,274 @@ export type ApiResponseResourceAvailabilityRule = {
 };
 
 /**
+ * User-owned professional basics shared by every domain
+ */
+export type ProfessionalProfile = {
+  bio?: string;
+  professional_headline?: string;
+  website?: string;
+  location_name?: string;
+  latitude?: number;
+  longitude?: number;
+  readonly user_uuid?: string;
+  readonly updated_date?: Date;
+  readonly basics_complete?: boolean;
+};
+
+export type ApiResponseProfessionalProfile = {
+  success?: boolean;
+  data?: ProfessionalProfile;
+  message?: string;
+  error?: unknown;
+};
+
+/**
+ * A skill in the user-owned skills wallet
+ */
+export type UserSkill = {
+  readonly uuid?: string;
+  skill_name: string;
+  proficiency_level?: ProficiencyLevelEnum;
+  evidence?: string;
+  last_assessed_on?: Date;
+  readonly user_uuid?: string;
+  readonly skill_uuid?: string;
+  verification_status?: VerificationStatusEnum;
+  readonly verified_at?: Date;
+  readonly verification_notes?: string;
+  readonly created_date?: Date;
+  readonly created_by?: string;
+  readonly updated_date?: Date;
+  readonly updated_by?: string;
+};
+
+export type ApiResponseUserSkill = {
+  success?: boolean;
+  data?: UserSkill;
+  message?: string;
+  error?: unknown;
+};
+
+/**
+ * A portfolio item in the user-owned skills wallet
+ */
+export type UserPortfolioItem = {
+  readonly uuid?: string;
+  title: string;
+  item_type: ItemTypeEnum;
+  link_url?: string;
+  completed_on?: Date;
+  description?: string;
+  readonly user_uuid?: string;
+  readonly created_date?: Date;
+  readonly created_by?: string;
+  readonly updated_date?: Date;
+  readonly updated_by?: string;
+};
+
+export type ApiResponseUserPortfolioItem = {
+  success?: boolean;
+  data?: UserPortfolioItem;
+  message?: string;
+  error?: unknown;
+};
+
+/**
+ * A professional membership on the user-owned professional profile
+ */
+export type UserMembership = {
+  readonly uuid?: string;
+  organisation_name: string;
+  membership_number?: string;
+  start_date?: Date;
+  end_date?: Date;
+  is_active?: boolean;
+  readonly user_uuid?: string;
+  readonly created_date?: Date;
+  readonly created_by?: string;
+  readonly updated_date?: Date;
+  readonly updated_by?: string;
+};
+
+export type ApiResponseUserMembership = {
+  success?: boolean;
+  data?: UserMembership;
+  message?: string;
+  error?: unknown;
+};
+
+/**
+ * An experience record on the user-owned professional profile
+ */
+export type UserExperience = {
+  readonly uuid?: string;
+  position: string;
+  organisation_name: string;
+  responsibilities?: string;
+  years_of_experience?: number;
+  start_date?: Date;
+  end_date?: Date;
+  is_current_position?: boolean;
+  experience_type?: ExperienceTypeEnum;
+  readonly user_uuid?: string;
+  readonly created_date?: Date;
+  readonly created_by?: string;
+  readonly updated_date?: Date;
+  readonly updated_by?: string;
+};
+
+export type ApiResponseUserExperience = {
+  success?: boolean;
+  data?: UserExperience;
+  message?: string;
+  error?: unknown;
+};
+
+/**
+ * An education record on the user-owned professional profile
+ */
+export type UserEducation = {
+  readonly uuid?: string;
+  qualification: string;
+  field_of_study?: string;
+  school_name: string;
+  start_year?: number;
+  year_completed?: number;
+  certificate_number?: string;
+  readonly user_uuid?: string;
+  readonly created_date?: Date;
+  readonly created_by?: string;
+  readonly updated_date?: Date;
+  readonly updated_by?: string;
+};
+
+export type ApiResponseUserEducation = {
+  success?: boolean;
+  data?: UserEducation;
+  message?: string;
+  error?: unknown;
+};
+
+/**
+ * A credential document on the user-owned professional profile
+ */
+export type UserDocument = {
+  readonly uuid?: string;
+  document_type_uuid: string;
+  education_uuid?: string;
+  experience_uuid?: string;
+  membership_uuid?: string;
+  title?: string;
+  description?: string;
+  status?: StatusEnum4;
+  expiry_date?: Date;
+  readonly user_uuid?: string;
+  readonly original_filename?: string;
+  readonly stored_filename?: string;
+  readonly file_path?: string;
+  readonly file_size_bytes?: bigint;
+  readonly mime_type?: string;
+  readonly file_hash?: string;
+  readonly upload_date?: Date;
+  readonly is_verified?: boolean;
+  readonly verified_by?: string;
+  readonly verified_at?: Date;
+  readonly verification_notes?: string;
+  readonly created_date?: Date;
+  readonly created_by?: string;
+  readonly updated_date?: Date;
+  readonly updated_by?: string;
+  readonly file_url?: string;
+};
+
+export type ApiResponseUserDocument = {
+  success?: boolean;
+  data?: UserDocument;
+  message?: string;
+  error?: unknown;
+};
+
+/**
+ * A competency in the user-owned skills wallet
+ */
+export type UserCompetency = {
+  readonly uuid?: string;
+  competency: string;
+  framework?: string;
+  level?: number;
+  evidence?: string;
+  readonly user_uuid?: string;
+  verification_status?: VerificationStatusEnum;
+  readonly verified_at?: Date;
+  readonly verification_notes?: string;
+  readonly created_date?: Date;
+  readonly created_by?: string;
+  readonly updated_date?: Date;
+  readonly updated_by?: string;
+};
+
+export type ApiResponseUserCompetency = {
+  success?: boolean;
+  data?: UserCompetency;
+  message?: string;
+  error?: unknown;
+};
+
+/**
+ * A credential in the user-owned skills wallet
+ */
+export type UserCertification = {
+  readonly uuid?: string;
+  certification_name: string;
+  issuing_organization: string;
+  issued_date?: Date;
+  expiry_date?: Date;
+  credential_id?: string;
+  credential_url?: string;
+  description?: string;
+  credential_type?: CredentialTypeEnum;
+  readonly user_uuid?: string;
+  verification_status?: VerificationStatusEnum;
+  readonly verified_at?: Date;
+  readonly verification_notes?: string;
+  readonly created_date?: Date;
+  readonly created_by?: string;
+  readonly updated_date?: Date;
+  readonly updated_by?: string;
+};
+
+export type ApiResponseUserCertification = {
+  success?: boolean;
+  data?: UserCertification;
+  message?: string;
+  error?: unknown;
+};
+
+/**
+ * An achievement in the user-owned skills wallet
+ */
+export type UserAchievement = {
+  readonly uuid?: string;
+  title: string;
+  achievement_type: AchievementTypeEnum;
+  awarded_by?: string;
+  awarded_on?: Date;
+  description?: string;
+  readonly user_uuid?: string;
+  readonly created_date?: Date;
+  readonly created_by?: string;
+  readonly updated_date?: Date;
+  readonly updated_by?: string;
+};
+
+export type ApiResponseUserAchievement = {
+  success?: boolean;
+  data?: UserAchievement;
+  message?: string;
+  error?: unknown;
+};
+
+/**
  * Instructor profile including location data for educational service delivery
  */
 export type Instructor = {
@@ -1979,7 +2309,7 @@ export type InstructorSkill = {
    * **[REQUIRED]** Name of the technical or professional skill. Should be specific and standardized for consistency.
    */
   skill_name: string;
-  proficiency_level: ProficiencyLevelEnum;
+  proficiency_level: ProficiencyLevelEnum2;
   /**
    * **[READ-ONLY]** The skills-taxonomy entry the skill name resolves to (matched by slug or alias). Null when the name is free text that matches no curated skill.
    */
@@ -2085,10 +2415,6 @@ export type InstructorProfessionalMembership = {
    * **[READ-ONLY]** Human-readable formatted duration of membership.
    */
   readonly formatted_duration?: string | null;
-  /**
-   * **[READ-ONLY]** Duration of membership calculated from start and end dates, in months.
-   */
-  readonly membership_duration_months?: number | null;
   membership_status?: MembershipStatusEnum;
   /**
    * **[READ-ONLY]** Formatted membership period showing start and end dates.
@@ -2111,6 +2437,10 @@ export type InstructorProfessionalMembership = {
    * **[READ-ONLY]** Indicates if this membership was started within the last 3 years.
    */
   readonly is_recent_membership?: boolean;
+  /**
+   * **[READ-ONLY]** Duration of membership calculated from start and end dates, in months.
+   */
+  readonly membership_duration_months?: number | null;
 };
 
 export type ApiResponseInstructorProfessionalMembership = {
@@ -2348,7 +2678,7 @@ export type InstructorDocument = {
    * **[OPTIONAL]** Detailed description of the document content and its relevance to instructor qualifications.
    */
   description?: string | null;
-  status?: StatusEnum4;
+  status?: StatusEnum5;
   /**
    * **[OPTIONAL]** Expiry date of the document if applicable. Used for certificates and time-limited credentials.
    */
@@ -2417,10 +2747,7 @@ export type InstructorDocument = {
    * **[READ-ONLY]** API-relative URL for previewing or downloading the uploaded document.
    */
   readonly file_url?: string;
-  /**
-   * **[READ-ONLY]** Human-readable formatted file size.
-   */
-  readonly file_size_formatted?: string;
+  verification_status?: VerificationStatusEnum2;
   /**
    * **[READ-ONLY]** Number of days until document expiry. Returns null if no expiry date or already expired.
    */
@@ -2433,7 +2760,10 @@ export type InstructorDocument = {
    * **[READ-ONLY]** Indicates if the document has an expiry date configured.
    */
   readonly has_expiry_date?: boolean;
-  verification_status?: VerificationStatusEnum;
+  /**
+   * **[READ-ONLY]** Human-readable formatted file size.
+   */
+  readonly file_size_formatted?: string;
 };
 
 export type ApiResponseInstructorDocument = {
@@ -2562,6 +2892,10 @@ export type Course = {
    */
   name: string;
   /**
+   * **[OPTIONAL]** Short unique code for the course, stored upper case.
+   */
+  course_code?: string | null;
+  /**
    * **[REQUIRED]** Reference to the course creator's UUID who created and owns this course.
    */
   course_creator_uuid: string;
@@ -2586,13 +2920,17 @@ export type Course = {
    */
   prerequisites?: string;
   /**
-   * **[REQUIRED]** Course duration in hours.
+   * **[OPTIONAL]** Legacy course duration in hours; course creators no longer set it.
    */
-  duration_hours: number;
+  duration_hours?: number | null;
   /**
-   * **[REQUIRED]** Additional course duration in minutes (0-59).
+   * **[OPTIONAL]** Legacy additional duration in minutes (0-59); course creators no longer set it.
    */
-  duration_minutes: number;
+  duration_minutes?: number | null;
+  /**
+   * **[OPTIONAL]** Final grade percentage a learner needs to pass the course.
+   */
+  pass_mark?: number | null;
   /**
    * **[OPTIONAL]** Maximum number of students that can enroll in the course.
    */
@@ -2637,7 +2975,7 @@ export type Course = {
    * **[OPTIONAL]** URL to course banner image for detailed course pages.
    */
   banner_url?: string | null;
-  status: SchemaEnum4;
+  status: SchemaEnum6;
   /**
    * **[OPTIONAL]** Indicates if the course is actively available to students. Can only be true for published courses.
    */
@@ -2769,7 +3107,7 @@ export type ApiResponseCourse = {
 
 export type CourseSkillItem = {
   skill_uuid: string;
-  level?: LevelEnum;
+  level?: ProficiencyLevelEnum;
   /**
    * 1-5, defaults to 1
    */
@@ -2797,7 +3135,7 @@ export type CourseSkill = {
   skill_uuid?: string;
   skill_name?: string;
   skill_slug?: string;
-  level?: LevelEnum;
+  level?: ProficiencyLevelEnum;
   /**
    * 1-5, how central the skill is to the course
    */
@@ -2906,7 +3244,7 @@ export type CourseTrainingApplication = {
    * **[READ-ONLY]** Unique identifier for this application.
    */
   readonly uuid?: string;
-  status?: StatusEnum5;
+  status?: StatusEnum6;
   /**
    * Submission notes provided by the applicant.
    */
@@ -3177,7 +3515,7 @@ export type LessonPracticeActivity = {
    * **[OPTIONAL]** Display order within the lesson. If omitted, the system appends the activity.
    */
   display_order?: number;
-  status?: SchemaEnum4;
+  status?: SchemaEnum6;
   /**
    * **[OPTIONAL]** Whether the practice activity is visible for use. Can only be true when status is published.
    */
@@ -3297,6 +3635,99 @@ export type ApiResponseLessonContent = {
 };
 
 /**
+ * Turns one lesson x component cell on (with its rubric) or off
+ */
+export type CourseEvaluationPlanCell = {
+  lesson_uuid: string;
+  assessment_uuid: string;
+  /**
+   * false removes the cell from the plan ("None")
+   */
+  enabled?: boolean;
+  rubric_uuid?: string;
+  /**
+   * Optional quiz from the same lesson that this cell grades
+   */
+  quiz_uuid?: string;
+  /**
+   * Optional assignment from the same lesson that this cell grades
+   */
+  assignment_uuid?: string;
+};
+
+/**
+ * Cells to change; cells not listed are left as they are
+ */
+export type CourseEvaluationPlanUpdate = {
+  cells: Array<CourseEvaluationPlanCell>;
+};
+
+export type ApiResponseCourseEvaluationPlan = {
+  success?: boolean;
+  data?: CourseEvaluationPlan;
+  message?: string;
+  error?: unknown;
+};
+
+export type Component = {
+  assessment_uuid?: string;
+  title?: string;
+  assessment_type?: string;
+  weight_percentage?: number;
+  rubric_uuid?: string;
+  sync_class_attendance?: boolean;
+};
+
+/**
+ * Gradebook line item nested under a weighted course assessment component
+ */
+export type CourseAssessmentLineItem = {
+  readonly uuid?: string;
+  course_assessment_uuid?: string;
+  title: string;
+  description?: string;
+  item_type: ItemTypeEnum2;
+  assignment_uuid?: string;
+  quiz_uuid?: string;
+  rubric_uuid?: string;
+  scheduled_instance_uuid?: string;
+  max_score?: number;
+  weight_percentage?: number;
+  display_order?: number;
+  active?: boolean;
+  due_at?: Date;
+  /**
+   * **[OPTIONAL]** Lesson this item grades, for a per-lesson component.
+   */
+  lesson_uuid?: string;
+  readonly created_date?: Date;
+  readonly created_by?: string;
+  readonly updated_date?: Date;
+  readonly updated_by?: string;
+  readonly item_type_display?: string;
+};
+
+/**
+ * Lessons by per-lesson assessment components; each cell is the line item grading that lesson, or null
+ */
+export type CourseEvaluationPlan = {
+  course_uuid?: string;
+  pass_mark?: number;
+  components?: Array<Component>;
+  lessons?: Array<LessonRow>;
+};
+
+export type LessonRow = {
+  lesson_uuid?: string;
+  lesson_number?: number;
+  title?: string;
+  /**
+   * One entry per component, in component order; null where the lesson is not graded
+   */
+  cells?: Array<CourseAssessmentLineItem>;
+};
+
+/**
  * Course-level assessment component with weighting for final grade calculation
  */
 export type CourseAssessment = {
@@ -3337,6 +3768,14 @@ export type CourseAssessment = {
    * **[OPTIONAL]** Indicates if this assessment is required for course completion.
    */
   is_required?: boolean;
+  /**
+   * **[OPTIONAL]** Graded lesson by lesson: each lesson gets its own cell in the evaluation plan.
+   */
+  per_lesson?: boolean;
+  /**
+   * **[OPTIONAL]** Program component this course component feeds, for a course inside a program
+   */
+  program_assessment_uuid?: string;
   /**
    * **[READ-ONLY]** Timestamp when the assessment was created. Automatically set by the system.
    */
@@ -3382,31 +3821,6 @@ export type ApiResponseCourseAssessment = {
   error?: unknown;
 };
 
-/**
- * Gradebook line item nested under a weighted course assessment component
- */
-export type CourseAssessmentLineItem = {
-  readonly uuid?: string;
-  course_assessment_uuid?: string;
-  title: string;
-  description?: string;
-  item_type: ItemTypeEnum;
-  assignment_uuid?: string;
-  quiz_uuid?: string;
-  rubric_uuid?: string;
-  scheduled_instance_uuid?: string;
-  max_score?: number;
-  weight_percentage?: number;
-  display_order?: number;
-  active?: boolean;
-  due_at?: Date;
-  readonly created_date?: Date;
-  readonly created_by?: string;
-  readonly updated_date?: Date;
-  readonly updated_by?: string;
-  readonly item_type_display?: string;
-};
-
 export type ApiResponseCourseAssessmentLineItem = {
   success?: boolean;
   data?: CourseAssessmentLineItem;
@@ -3448,7 +3862,7 @@ export type CourseAssessmentLineItemRubricEvaluation = {
   readonly uuid?: string;
   line_item_uuid?: string;
   enrollment_uuid?: string;
-  status?: StatusEnum6;
+  status?: StatusEnum7;
   readonly score?: number;
   readonly percentage?: number;
   comments?: string;
@@ -3554,7 +3968,16 @@ export type CourseCreatorSkill = {
   readonly uuid?: string;
   course_creator_uuid: string;
   skill_name: string;
-  proficiency_level: LevelEnum;
+  proficiency_level: ProficiencyLevelEnum;
+  /**
+   * Link to or description of evidence for the skill
+   */
+  evidence?: string;
+  last_assessed_on?: Date;
+  readonly skill_uuid?: string;
+  verification_status?: VerificationStatusEnum;
+  readonly verified_at?: Date;
+  readonly verification_notes?: string;
   readonly created_date?: Date;
   readonly created_by?: string;
   readonly updated_date?: Date;
@@ -3566,6 +3989,27 @@ export type CourseCreatorSkill = {
 export type ApiResponseCourseCreatorSkill = {
   success?: boolean;
   data?: CourseCreatorSkill;
+  message?: string;
+  error?: unknown;
+};
+
+/**
+ * Work a course creator shows in the Portfolio tab of the skills wallet
+ */
+export type CourseCreatorPortfolioItem = {
+  readonly uuid?: string;
+  title: string;
+  item_type: ItemTypeEnum;
+  link_url?: string;
+  completed_on?: Date;
+  description?: string;
+  readonly course_creator_uuid?: string;
+  readonly created_date?: Date;
+};
+
+export type ApiResponseCourseCreatorPortfolioItem = {
+  success?: boolean;
+  data?: CourseCreatorPortfolioItem;
   message?: string;
   error?: unknown;
 };
@@ -3608,6 +4052,7 @@ export type CourseCreatorExperience = {
   start_date?: Date;
   end_date?: Date;
   is_current_position?: boolean;
+  experience_type?: ExperienceTypeEnum;
   readonly created_date?: Date;
   readonly created_by?: string;
   readonly updated_date?: Date;
@@ -3659,7 +4104,7 @@ export type CourseCreatorDocumentDto = {
   original_filename: string;
   title?: string;
   description?: string;
-  status?: StatusEnum7;
+  status?: StatusEnum4;
   expiry_date?: Date;
   readonly stored_filename?: string;
   readonly file_path?: string;
@@ -3683,10 +4128,7 @@ export type CourseCreatorDocumentDto = {
    * **[READ-ONLY]** API-relative URL for previewing or downloading the uploaded document.
    */
   readonly file_url?: string;
-  /**
-   * **[READ-ONLY]** Human-readable formatted file size.
-   */
-  readonly file_size_formatted?: string;
+  verification_status?: VerificationStatusEnum2;
   /**
    * **[READ-ONLY]** Number of days until document expiry. Returns null if no expiry date or already expired.
    */
@@ -3699,12 +4141,38 @@ export type CourseCreatorDocumentDto = {
    * **[READ-ONLY]** Indicates if the document has an expiry date configured.
    */
   readonly has_expiry_date?: boolean;
-  verification_status?: VerificationStatusEnum;
+  /**
+   * **[READ-ONLY]** Human-readable formatted file size.
+   */
+  readonly file_size_formatted?: string;
 };
 
 export type ApiResponseCourseCreatorDocumentDto = {
   success?: boolean;
   data?: CourseCreatorDocumentDto;
+  message?: string;
+  error?: unknown;
+};
+
+/**
+ * A competency against a framework, with evidence an admin verifies
+ */
+export type CourseCreatorCompetency = {
+  readonly uuid?: string;
+  competency: string;
+  framework?: string;
+  level?: number;
+  evidence?: string;
+  readonly course_creator_uuid?: string;
+  verification_status?: VerificationStatusEnum;
+  readonly verified_at?: Date;
+  readonly verification_notes?: string;
+  readonly created_date?: Date;
+};
+
+export type ApiResponseCourseCreatorCompetency = {
+  success?: boolean;
+  data?: CourseCreatorCompetency;
   message?: string;
   error?: unknown;
 };
@@ -3722,7 +4190,11 @@ export type CourseCreatorCertification = {
   credential_id?: string;
   credential_url?: string;
   description?: string;
-  is_verified?: boolean;
+  credential_type?: CredentialTypeEnum;
+  /**
+   * Set by a platform admin when the credential is checked
+   */
+  readonly is_verified?: boolean;
   readonly created_date?: Date;
   readonly created_by?: string;
   readonly updated_date?: Date;
@@ -3735,6 +4207,56 @@ export type ApiResponseCourseCreatorCertification = {
   data?: CourseCreatorCertification;
   message?: string;
   error?: unknown;
+};
+
+/**
+ * An award, milestone or recognition in the skills wallet
+ */
+export type CourseCreatorAchievement = {
+  readonly uuid?: string;
+  title: string;
+  achievement_type: AchievementTypeEnum;
+  awarded_by?: string;
+  awarded_on?: Date;
+  description?: string;
+  readonly course_creator_uuid?: string;
+  readonly created_date?: Date;
+};
+
+export type ApiResponseCourseCreatorAchievement = {
+  success?: boolean;
+  data?: CourseCreatorAchievement;
+  message?: string;
+  error?: unknown;
+};
+
+export type CourseCreatorCategoriesRequest = {
+  category_uuids: Array<string>;
+};
+
+export type ApiResponseCourseCreatorOnboardingStateDto = {
+  success?: boolean;
+  data?: CourseCreatorOnboardingStateDto;
+  message?: string;
+  error?: unknown;
+};
+
+export type CourseCreatorCategoryPreferenceDto = {
+  category_uuid?: string;
+};
+
+export type CourseCreatorOnboardingStateDto = {
+  course_creator_uuid?: string;
+  categories?: Array<CourseCreatorCategoryPreferenceDto>;
+  skills_wallet_sections_completed?: number;
+  skills_wallet_sections_total?: number;
+  verification_status?: VerificationStatusEnum3;
+  admin_verified?: boolean;
+  verification_requested_at?: Date;
+  submitted_at?: Date;
+  reviewed_at?: Date;
+  review_reason?: string;
+  ready_for_submission?: boolean;
 };
 
 /**
@@ -3941,13 +4463,13 @@ export type Category = {
    */
   readonly updated_by?: string;
   /**
-   * **[READ-ONLY]** Hierarchical path showing category position in the tree structure.
-   */
-  readonly category_path?: string;
-  /**
    * **[READ-ONLY]** Indicates if this is a root category with no parent.
    */
   readonly is_root_category?: boolean;
+  /**
+   * **[READ-ONLY]** Hierarchical path showing category position in the tree structure.
+   */
+  readonly category_path?: string;
 };
 
 export type ApiResponseCategory = {
@@ -4718,7 +5240,7 @@ export type ClassMarketplaceJob = {
 
 export type ClassMarketplaceJobRequiredSkillItem = {
   skill_uuid: string;
-  min_proficiency?: LevelEnum;
+  min_proficiency?: ProficiencyLevelEnum;
   /**
    * Defaults to true
    */
@@ -4743,7 +5265,7 @@ export type ClassMarketplaceJobRequiredSkill = {
   skill_uuid?: string;
   skill_name?: string;
   skill_slug?: string;
-  min_proficiency?: LevelEnum;
+  min_proficiency?: ProficiencyLevelEnum;
   /**
    * Inherited skills are all mandatory
    */
@@ -5383,18 +5905,6 @@ export type ScheduledInstance = {
    */
   readonly duration_minutes?: bigint;
   /**
-   * **[READ-ONLY]** Human-readable formatted duration.
-   */
-  readonly duration_formatted?: string;
-  /**
-   * **[READ-ONLY]** Human-readable date and time range.
-   */
-  readonly time_range?: string;
-  /**
-   * **[READ-ONLY]** Indicates if the scheduled instance is currently active (ongoing).
-   */
-  readonly is_currently_active?: boolean;
-  /**
    * **[READ-ONLY]** Indicates if the scheduled instance can be cancelled.
    */
   readonly can_be_cancelled?: boolean;
@@ -5406,6 +5916,18 @@ export type ScheduledInstance = {
    * **[READ-ONLY]** Indicates if the scheduled instance can be explicitly concluded.
    */
   readonly can_be_ended?: boolean;
+  /**
+   * **[READ-ONLY]** Human-readable formatted duration.
+   */
+  readonly duration_formatted?: string;
+  /**
+   * **[READ-ONLY]** Human-readable date and time range.
+   */
+  readonly time_range?: string;
+  /**
+   * **[READ-ONLY]** Indicates if the scheduled instance is currently active (ongoing).
+   */
+  readonly is_currently_active?: boolean;
 };
 
 /**
@@ -5434,6 +5956,115 @@ export type Period = {
    * Optional reason shown on the calendar
    */
   reason?: string;
+};
+
+export type ApiResponseStudentGuardian = {
+  success?: boolean;
+  data?: StudentGuardian;
+  message?: string;
+  error?: unknown;
+};
+
+/**
+ * A student's guardian with link or invitation status.
+ */
+export type StudentGuardian = {
+  /**
+   * Guardian entry id, used to resend an invitation. Null for a guardian linked outside onboarding (for example through organisation consent).
+   */
+  uuid?: string | null;
+  /**
+   * The student profile
+   */
+  student_uuid?: string;
+  /**
+   * Guardian's name
+   */
+  name?: string;
+  /**
+   * Guardian's email
+   */
+  email?: string;
+  /**
+   * Guardian's mobile number
+   */
+  phone?: string | null;
+  relationship_type?: RelationshipTypeEnum2;
+  status?: StatusEnum10;
+  /**
+   * Guardian's account, once known
+   */
+  guardian_user_uuid?: string | null;
+  /**
+   * The guardian link granting access, once linked
+   */
+  link_uuid?: string | null;
+  /**
+   * When the latest invitation was emailed
+   */
+  invitation_sent_at?: Date | null;
+  /**
+   * When the latest invitation lapses
+   */
+  invitation_expires_at?: Date | null;
+  /**
+   * When access was granted
+   */
+  linked_at?: Date | null;
+};
+
+export type ApiResponseVoid = {
+  success?: boolean;
+  data?: unknown;
+  message?: string;
+  error?: unknown;
+};
+
+export type ApiResponseGuardianStudentLink = {
+  success?: boolean;
+  data?: GuardianStudentLink;
+  message?: string;
+  error?: unknown;
+};
+
+/**
+ * Represents a guardian's access rights to a learner profile.
+ */
+export type GuardianStudentLink = {
+  uuid?: string;
+  student_uuid?: string;
+  guardian_user_uuid?: string;
+  student_name?: string;
+  guardian_display_name?: string;
+  relationship_type?: RelationshipTypeEnum2;
+  share_scope?: ShareScopeEnum;
+  status?: StatusEnum11;
+  primary_guardian?: boolean;
+  linked_date?: Date;
+  revoked_date?: Date;
+  notes?: string;
+};
+
+/**
+ * Details an invited guardian supplies to create their account from the invitation link.
+ */
+export type GuardianInvitationRegistrationRequest = {
+  /**
+   * **[REQUIRED]** First name
+   */
+  first_name: string;
+  /**
+   * **[REQUIRED]** Last name
+   */
+  last_name: string;
+  /**
+   * **[OPTIONAL]** Mobile number
+   */
+  phone_number?: string | null;
+  /**
+   * **[REQUIRED]** Terms of use accepted
+   */
+  terms_accepted: boolean;
 };
 
 /**
@@ -5487,6 +6118,73 @@ export type ApiResponseObject = {
   data?: unknown;
   message?: string;
   error?: unknown;
+};
+
+/**
+ * Starts a self-registration. Personal details are written to Keycloak only; Elimika records the
+ * chosen domain, which a platform admin approves before any dashboard opens. Keycloak then emails
+ * a link to set a password and verify the address.
+ *
+ */
+export type RegistrationRequest = {
+  first_name: string;
+  middle_name?: string;
+  last_name: string;
+  email: string;
+  phone_number: string;
+  dob?: Date;
+  gender?: GenderEnum2;
+  domain: DomainEnum;
+  terms_accepted?: boolean;
+  /**
+   * Turnstile token, required when captcha verification is enabled
+   */
+  captcha_token?: string;
+};
+
+export type ApiResponseRegistrationAccepted = {
+  success?: boolean;
+  data?: RegistrationAccepted;
+  message?: string;
+  error?: unknown;
+};
+
+export type RegistrationAccepted = {
+  message?: string;
+};
+
+/**
+ * Asks for the set-password email again
+ */
+export type RegistrationResendRequest = {
+  email: string;
+  captcha_token?: string;
+};
+
+/**
+ * A signed-in account asking for another domain
+ */
+export type DomainApplicationRequest = {
+  domain: DomainEnum;
+};
+
+export type ApiResponseDomainApplication = {
+  success?: boolean;
+  data?: DomainApplication;
+  message?: string;
+  error?: unknown;
+};
+
+/**
+ * A domain a user holds or has asked for, with its approval state
+ */
+export type DomainApplication = {
+  user_uuid?: string;
+  domain?: string;
+  status?: SchemaEnum12;
+  requested_at?: Date;
+  reviewed_at?: Date;
+  review_reason?: string;
 };
 
 export type ApiResponseString = {
@@ -5598,7 +6296,7 @@ export type TrainingRateUpdate = {
    * **[READ-ONLY]** The applicant's reason for the change.
    */
   readonly note?: string | null;
-  status?: StatusEnum10;
+  status?: StatusEnum12;
   /**
    * **[READ-ONLY]** The training application whose rates would change.
    */
@@ -5740,13 +6438,6 @@ export type ApiResponseProgramReview = {
   error?: unknown;
 };
 
-export type ApiResponseVoid = {
-  success?: boolean;
-  data?: unknown;
-  message?: string;
-  error?: unknown;
-};
-
 export type ApiResponseOrganisationDocument = {
   success?: boolean;
   data?: OrganisationDocument;
@@ -5806,7 +6497,7 @@ export type OrganisationDocument = {
    * Whether a reviewer has verified the document
    */
   readonly is_verified?: boolean;
-  status?: StatusEnum7;
+  status?: StatusEnum4;
   /**
    * Expiry date, where the document type carries one
    */
@@ -5869,7 +6560,7 @@ export type CreateSkillsFundTransactionRequest = {
    * Type: Allocation, Disbursement, Adjustment. Defaults to Allocation.
    */
   transaction_type?: string;
-  status?: StatusEnum11;
+  status?: StatusEnum13;
   transaction_date?: Date;
 };
 
@@ -5910,7 +6601,7 @@ export type SkillsFundTransaction = {
    * Type: Allocation, Disbursement, Adjustment.
    */
   transaction_type?: string;
-  status?: StatusEnum11;
+  status?: StatusEnum13;
   transaction_date?: Date | null;
   readonly created_date?: Date;
 };
@@ -6238,7 +6929,7 @@ export type InstructorObligation = {
    * Currency the obligation was accrued in
    */
   currency_code?: string;
-  status?: SchemaEnum6;
+  status?: SchemaEnum8;
   /**
    * When the session completed and the obligation arose (UTC)
    */
@@ -6389,7 +7080,7 @@ export type NotificationDto = {
   category?: CategoryEnum;
   priority?: PriorityEnum;
   presentation?: PresentationEnum;
-  status?: StatusEnum12;
+  status?: StatusEnum14;
   title?: string;
   body?: string;
   action_url?: string;
@@ -6467,7 +7158,7 @@ export type GuardianDetailsRequest = {
    * **[REQUIRED]** Guardian's full name.
    */
   guardian_name: string;
-  guardian_relationship_type: GuardianRelationshipTypeEnum;
+  guardian_relationship_type: RelationshipTypeEnum2;
   /**
    * **[OPTIONAL]** Guardian's phone number, used only if the email bounces.
    */
@@ -6610,24 +7301,6 @@ export type ApiResponseInstructorReview = {
 };
 
 /**
- * Represents a guardian's access rights to a learner profile.
- */
-export type GuardianStudentLink = {
-  uuid?: string;
-  student_uuid?: string;
-  guardian_user_uuid?: string;
-  student_name?: string;
-  guardian_display_name?: string;
-  relationship_type?: GuardianRelationshipTypeEnum;
-  share_scope?: ShareScopeEnum;
-  status?: StatusEnum13;
-  primary_guardian?: boolean;
-  linked_date?: Date;
-  revoked_date?: Date;
-  notes?: string;
-};
-
-/**
  * Request payload to link a guardian/parent to a learner profile.
  */
 export type GuardianStudentLinkRequest = {
@@ -6639,7 +7312,7 @@ export type GuardianStudentLinkRequest = {
    * UUID for the guardian's user account
    */
   guardian_user_uuid: string;
-  relationship_type: GuardianRelationshipTypeEnum;
+  relationship_type: RelationshipTypeEnum2;
   share_scope: ShareScopeEnum;
   /**
    * Marks this guardian as the primary contact
@@ -6649,13 +7322,6 @@ export type GuardianStudentLinkRequest = {
    * Optional note shown in audits or invitation emails
    */
   notes?: string;
-};
-
-export type ApiResponseGuardianStudentLink = {
-  success?: boolean;
-  data?: GuardianStudentLink;
-  message?: string;
-  error?: unknown;
 };
 
 /**
@@ -6744,7 +7410,7 @@ export type Enrollment = {
    * **[REQUIRED]** Reference to the student UUID who is enrolling.
    */
   student_uuid: string;
-  status?: StatusEnum14;
+  status?: StatusEnum15;
   /**
    * **[OPTIONAL]** Timestamp when attendance was marked for this enrollment.
    */
@@ -6774,13 +7440,13 @@ export type Enrollment = {
    */
   readonly did_attend?: boolean;
   /**
-   * **[READ-ONLY]** Human-readable description of the enrollment status.
-   */
-  readonly status_description?: string;
-  /**
    * **[READ-ONLY]** Indicates if attendance has been marked for this enrollment.
    */
   readonly is_attendance_marked?: boolean;
+  /**
+   * **[READ-ONLY]** Human-readable description of the enrollment status.
+   */
+  readonly status_description?: string;
   /**
    * **[READ-ONLY]** Indicates if the enrollment can be cancelled.
    */
@@ -7671,7 +8337,7 @@ export type ApiResponseClassMarketplaceJobApplication = {
  */
 export type ClassMarketplaceJobApplication = {
   readonly uuid?: string;
-  status?: StatusEnum15;
+  status?: StatusEnum16;
   /**
    * Summary of the job applied to; present on an instructor's application lists and the single application read
    */
@@ -7859,7 +8525,7 @@ export type BookingResponse = {
    * End time for the session
    */
   end_time: Date;
-  status: StatusEnum16;
+  status: StatusEnum17;
   /**
    * Price charged for the booking, computed by the server from the approved rate
    */
@@ -8010,7 +8676,7 @@ export type AssignmentSubmission = {
    * **[OPTIONAL]** Timestamp when the submission was made by the student.
    */
   submitted_at?: Date;
-  status: StatusEnum17;
+  status: StatusEnum18;
   /**
    * **[OPTIONAL]** Score awarded to this submission by the instructor.
    */
@@ -8213,7 +8879,7 @@ export type AssignmentAttachment = {
  * Admin domain assignment request containing domain type, reason, and effective date
  */
 export type AdminDomainAssignmentRequest = {
-  domain_name: SchemaEnum10;
+  domain_name: SchemaEnum13;
   assignment_type: AssignmentTypeEnum;
   /**
    * Reason for assigning admin privileges
@@ -8223,6 +8889,14 @@ export type AdminDomainAssignmentRequest = {
    * Effective date for the admin assignment
    */
   effective_date?: Date;
+};
+
+/**
+ * Marks a profile item VERIFIED or REJECTED
+ */
+export type ProfileVerificationRequest = {
+  status: StatusEnum19;
+  notes?: string;
 };
 
 export type AdminCreateUserRequestDto = {
@@ -8336,6 +9010,18 @@ export type CurrencyCreateRequest = {
    * Whether to set this currency as the platform default
    */
   default_currency?: boolean;
+};
+
+/**
+ * A platform admin's check of one skills wallet item
+ */
+export type WalletVerificationRequest = {
+  status: StatusEnum19;
+  notes?: string;
+};
+
+export type CourseCreatorModerationRequest = {
+  reason?: string;
 };
 
 /**
@@ -8519,6 +9205,114 @@ export type UserSummary = {
   readonly full_name?: string;
 };
 
+export type ApiResponseProfessionalProfileSummary = {
+  success?: boolean;
+  data?: ProfessionalProfileSummary;
+  message?: string;
+  error?: unknown;
+};
+
+/**
+ * Professional profile basics with per-section counts and completeness
+ */
+export type ProfessionalProfileSummary = {
+  user_uuid?: string;
+  basics?: ProfessionalProfile;
+  /**
+   * Item count per section, keyed by the section's path name (skills, education, ...)
+   */
+  section_counts?: {
+    [key: string]: bigint;
+  };
+  verified_items?: bigint;
+  completed_sections?: number;
+  total_sections?: number;
+  completeness_percent?: number;
+};
+
+export type ApiResponseListUserSkill = {
+  success?: boolean;
+  data?: Array<UserSkill>;
+  message?: string;
+  error?: unknown;
+};
+
+export type ApiResponseListUserPortfolioItem = {
+  success?: boolean;
+  data?: Array<UserPortfolioItem>;
+  message?: string;
+  error?: unknown;
+};
+
+export type ApiResponseListUserMembership = {
+  success?: boolean;
+  data?: Array<UserMembership>;
+  message?: string;
+  error?: unknown;
+};
+
+export type ApiResponseListUserExperience = {
+  success?: boolean;
+  data?: Array<UserExperience>;
+  message?: string;
+  error?: unknown;
+};
+
+export type ApiResponseListUserEducation = {
+  success?: boolean;
+  data?: Array<UserEducation>;
+  message?: string;
+  error?: unknown;
+};
+
+export type ApiResponseListUserDocument = {
+  success?: boolean;
+  data?: Array<UserDocument>;
+  message?: string;
+  error?: unknown;
+};
+
+export type ApiResponseListUserCompetency = {
+  success?: boolean;
+  data?: Array<UserCompetency>;
+  message?: string;
+  error?: unknown;
+};
+
+export type ApiResponseListUserCertification = {
+  success?: boolean;
+  data?: Array<UserCertification>;
+  message?: string;
+  error?: unknown;
+};
+
+export type ApiResponseListUserAchievement = {
+  success?: boolean;
+  data?: Array<UserAchievement>;
+  message?: string;
+  error?: unknown;
+};
+
+/**
+ * Whether the caller may use a dashboard yet, and the state of each domain they asked for
+ */
+export type AccountStatus = {
+  user_uuid?: string;
+  account_state?: AccountStateEnum;
+  /**
+   * Domains the caller may act in now
+   */
+  approved_domains?: Array<string>;
+  domain_applications?: Array<DomainApplication>;
+};
+
+export type ApiResponseAccountStatus = {
+  success?: boolean;
+  data?: AccountStatus;
+  message?: string;
+  error?: unknown;
+};
+
 export type ApiResponseUserRecipient = {
   success?: boolean;
   data?: UserRecipient;
@@ -8683,7 +9477,7 @@ export type InstructorTimeHold = {
    * Timezone the window was authored in
    */
   timezone?: string;
-  status?: StatusEnum18;
+  status?: StatusEnum20;
   /**
    * Class definition the hold became, once confirmed
    */
@@ -8731,6 +9525,13 @@ export type PagedDtoStudent = {
   links?: PageLinks;
 };
 
+export type ApiResponseListStudentGuardian = {
+  success?: boolean;
+  data?: Array<StudentGuardian>;
+  message?: string;
+  error?: unknown;
+};
+
 export type ApiResponsePagedDtoBookingResponse = {
   success?: boolean;
   data?: PagedDtoBookingResponse;
@@ -8747,30 +9548,95 @@ export type PagedDtoBookingResponse = {
 export type Page = {
   totalElements?: bigint;
   totalPages?: number;
-  first?: boolean;
-  last?: boolean;
   size?: number;
   content?: Array<unknown>;
   number?: number;
-  sort?: SortObject;
   numberOfElements?: number;
+  sort?: SortObject;
   pageable?: PageableObject;
+  first?: boolean;
+  last?: boolean;
   empty?: boolean;
 };
 
 export type PageableObject = {
   offset?: bigint;
   sort?: SortObject;
-  unpaged?: boolean;
   paged?: boolean;
   pageNumber?: number;
   pageSize?: number;
+  unpaged?: boolean;
 };
 
 export type SortObject = {
   empty?: boolean;
   sorted?: boolean;
   unsorted?: boolean;
+};
+
+export type ApiResponsePublicStudentGuardianInvitation = {
+  success?: boolean;
+  data?: PublicStudentGuardianInvitation;
+  message?: string;
+  error?: unknown;
+};
+
+/**
+ * Publicly readable view of a guardian invitation link.
+ */
+export type PublicStudentGuardianInvitation = {
+  /**
+   * The student who named the guardian
+   */
+  student_name?: string;
+  /**
+   * Guardian's name as the student gave it
+   */
+  guardian_name?: string;
+  /**
+   * Masked invited address, to confirm it is theirs
+   */
+  masked_guardian_email?: string;
+  relationship_type?: RelationshipTypeEnum2;
+  status?: StatusEnum10;
+  /**
+   * Whether the invitation can still be accepted or declined
+   */
+  actionable?: boolean;
+  /**
+   * Whether the invited address already has an account: sign in to accept, else register
+   */
+  has_account?: boolean;
+  /**
+   * When the invitation lapses
+   */
+  expires_at?: Date;
+};
+
+export type ApiResponseListMyStudentGuardianInvitation = {
+  success?: boolean;
+  data?: Array<MyStudentGuardianInvitation>;
+  message?: string;
+  error?: unknown;
+};
+
+/**
+ * An open invitation to become a student's guardian.
+ */
+export type MyStudentGuardianInvitation = {
+  /**
+   * Invitation id, used to accept or decline
+   */
+  uuid?: string;
+  /**
+   * The student who named you
+   */
+  student_name?: string;
+  relationship_type?: RelationshipTypeEnum2;
+  /**
+   * When the invitation lapses
+   */
+  expires_at?: Date;
 };
 
 export type ApiResponseListSkill = {
@@ -9196,7 +10062,7 @@ export type StudentQuizReview = {
   quiz_uuid?: string;
   attempt_uuid?: string;
   enrollment_uuid?: string;
-  status?: StatusEnum19;
+  status?: StatusEnum21;
   score?: number;
   max_score?: number;
   percentage?: number;
@@ -9228,6 +10094,13 @@ export type PagedDtoTrainingProgram = {
   content?: Array<TrainingProgram>;
   metadata?: PageMetadata;
   links?: PageLinks;
+};
+
+export type ApiResponseListProgramAssessment = {
+  success?: boolean;
+  data?: Array<ProgramAssessment>;
+  message?: string;
+  error?: unknown;
 };
 
 export type ApiResponsePagedDtoTrainingRateUpdate = {
@@ -9376,7 +10249,7 @@ export type ProgramEnrollment = {
    * **[OPTIONAL]** Timestamp when the student completed the program. Null if not yet completed.
    */
   completion_date?: Date | null;
-  status: StatusEnum20;
+  status: StatusEnum22;
   /**
    * **[OPTIONAL]** Percentage of program content completed by the student.
    */
@@ -9740,7 +10613,7 @@ export type ResourceBooking = {
    * Organisation owning the resource
    */
   organisation_uuid?: string;
-  status?: StatusEnum21;
+  status?: StatusEnum23;
   /**
    * Units reserved (1 for venues)
    */
@@ -10311,7 +11184,7 @@ export type GuardianStudentDashboardDto = {
   studentUuid?: string;
   studentName?: string;
   shareScope?: ShareScopeEnum;
-  status?: StatusEnum13;
+  status?: StatusEnum11;
   courseProgress?: Array<LearnerCourseProgressView>;
   programProgress?: Array<LearnerProgramProgressView>;
 };
@@ -10345,9 +11218,9 @@ export type GuardianStudentSummaryDto = {
   linkUuid?: string;
   studentUuid?: string;
   studentName?: string;
-  relationshipType?: GuardianRelationshipTypeEnum;
+  relationshipType?: RelationshipTypeEnum2;
   shareScope?: ShareScopeEnum;
-  status?: StatusEnum13;
+  status?: StatusEnum11;
   primaryGuardian?: boolean;
 };
 
@@ -10925,7 +11798,7 @@ export type PagedDtoCourseVersionSnapshot = {
 
 export type ApiResponseListContentStatus = {
   success?: boolean;
-  data?: Array<SchemaEnum4>;
+  data?: Array<SchemaEnum6>;
   message?: string;
   error?: unknown;
 };
@@ -11021,7 +11894,7 @@ export type CoursePendingEdit = {
    * **[READ-ONLY]** Unique identifier for the pending edit.
    */
   readonly uuid?: string;
-  status?: StatusEnum10;
+  status?: StatusEnum12;
   /**
    * **[READ-ONLY]** The live course this edit applies to.
    */
@@ -11674,6 +12547,11 @@ export type CourseGradeBook = {
   course_uuid?: string;
   enrollment_uuid?: string;
   final_grade?: number;
+  /**
+   * Final grade needed to pass; null means completing every required item passes
+   */
+  pass_mark?: number;
+  result_status?: ResultStatusEnum;
   graded_weight_percentage?: number;
   configured_weight_percentage?: number;
   components?: Array<ComponentDto>;
@@ -11715,7 +12593,7 @@ export type CourseEnrollment = {
    * **[OPTIONAL]** Timestamp when the student completed the course. Null if not yet completed.
    */
   completion_date?: Date | null;
-  status: StatusEnum20;
+  status: StatusEnum22;
   /**
    * **[OPTIONAL]** Percentage of course content completed by the student.
    */
@@ -11901,6 +12779,13 @@ export type PagedDtoCourseCreatorSkill = {
   links?: PageLinks;
 };
 
+export type ApiResponseListCourseCreatorPortfolioItem = {
+  success?: boolean;
+  data?: Array<CourseCreatorPortfolioItem>;
+  message?: string;
+  error?: unknown;
+};
+
 export type ApiResponsePagedDtoCourseCreatorProfessionalMembership = {
   success?: boolean;
   data?: PagedDtoCourseCreatorProfessionalMembership;
@@ -11947,6 +12832,13 @@ export type ApiResponseListCourseCreatorDocumentDto = {
   error?: unknown;
 };
 
+export type ApiResponseListCourseCreatorCompetency = {
+  success?: boolean;
+  data?: Array<CourseCreatorCompetency>;
+  message?: string;
+  error?: unknown;
+};
+
 export type ApiResponsePagedDtoCourseCreatorCertification = {
   success?: boolean;
   data?: PagedDtoCourseCreatorCertification;
@@ -11958,6 +12850,13 @@ export type PagedDtoCourseCreatorCertification = {
   content?: Array<CourseCreatorCertification>;
   metadata?: PageMetadata;
   links?: PageLinks;
+};
+
+export type ApiResponseListCourseCreatorAchievement = {
+  success?: boolean;
+  data?: Array<CourseCreatorAchievement>;
+  message?: string;
+  error?: unknown;
 };
 
 export type ApiResponsePagedDtoGradingLevel = {
@@ -12520,7 +13419,7 @@ export type JobMatchList = {
 export type JobMatchSkill = {
   readonly skill_uuid?: string;
   readonly skill_name?: string;
-  min_proficiency?: LevelEnum;
+  min_proficiency?: ProficiencyLevelEnum;
   readonly is_mandatory?: boolean;
 };
 
@@ -12873,6 +13772,27 @@ export type SearchIndexStatusResponse = {
   engine_error?: string;
 };
 
+/**
+ * A domain request in the platform admin approval queue
+ */
+export type AdminDomainApplication = {
+  user_uuid?: string;
+  full_name?: string;
+  email?: string;
+  domain?: string;
+  status?: SchemaEnum12;
+  requested_at?: Date;
+  reviewed_at?: Date;
+  review_reason?: string;
+};
+
+export type ApiResponseListAdminDomainApplication = {
+  success?: boolean;
+  data?: Array<AdminDomainApplication>;
+  message?: string;
+  error?: unknown;
+};
+
 export type ApiResponseRecommendationEvaluation = {
   success?: boolean;
   data?: RecommendationEvaluation;
@@ -13179,6 +14099,10 @@ export type UserMetrics = {
   active_users_24h?: bigint;
   new_registrations_7d?: bigint;
   suspended_accounts?: bigint;
+  /**
+   * Domain requests awaiting platform admin approval
+   */
+  pending_domain_approvals?: bigint;
 };
 
 /**
@@ -13464,23 +14388,40 @@ export const ItemsEnum = {
 export type ItemsEnum = (typeof ItemsEnum)[keyof typeof ItemsEnum];
 
 export const SchemaEnum3 = {
-  APPROVE: 'approve',
-  REJECT: 'reject',
-  REVOKE: 'revoke',
+  SKILLS: 'skills',
+  CERTIFICATIONS: 'certifications',
+  COMPETENCIES: 'competencies',
+  DOCUMENTS: 'documents',
 } as const;
 
 export type SchemaEnum3 = (typeof SchemaEnum3)[keyof typeof SchemaEnum3];
 
 export const SchemaEnum4 = {
+  APPROVE: 'approve',
+  REJECT: 'reject',
+  REVOKE: 'revoke',
+} as const;
+
+export type SchemaEnum4 = (typeof SchemaEnum4)[keyof typeof SchemaEnum4];
+
+export const SchemaEnum5 = {
+  SKILLS: 'skills',
+  COMPETENCIES: 'competencies',
+  CERTIFICATIONS: 'certifications',
+} as const;
+
+export type SchemaEnum5 = (typeof SchemaEnum5)[keyof typeof SchemaEnum5];
+
+export const SchemaEnum6 = {
   DRAFT: 'draft',
   IN_REVIEW: 'in_review',
   PUBLISHED: 'published',
   ARCHIVED: 'archived',
 } as const;
 
-export type SchemaEnum4 = (typeof SchemaEnum4)[keyof typeof SchemaEnum4];
+export type SchemaEnum6 = (typeof SchemaEnum6)[keyof typeof SchemaEnum6];
 
-export const SchemaEnum5 = {
+export const SchemaEnum7 = {
   STUDENT: 'student',
   INSTRUCTOR: 'instructor',
   ADMIN: 'admin',
@@ -13489,24 +14430,24 @@ export const SchemaEnum5 = {
   COURSE_CREATOR: 'course_creator',
 } as const;
 
-export type SchemaEnum5 = (typeof SchemaEnum5)[keyof typeof SchemaEnum5];
+export type SchemaEnum7 = (typeof SchemaEnum7)[keyof typeof SchemaEnum7];
 
-export const SchemaEnum6 = {
+export const SchemaEnum8 = {
   ACCRUED: 'ACCRUED',
   SETTLED: 'SETTLED',
   CANCELLED: 'CANCELLED',
   DISPUTED: 'DISPUTED',
 } as const;
 
-export type SchemaEnum6 = (typeof SchemaEnum6)[keyof typeof SchemaEnum6];
+export type SchemaEnum8 = (typeof SchemaEnum8)[keyof typeof SchemaEnum8];
 
-export const SchemaEnum7 = {
+export const SchemaEnum9 = {
   ALL: 'all',
   COURSES: 'courses',
   PROGRAMMES: 'programmes',
 } as const;
 
-export type SchemaEnum7 = (typeof SchemaEnum7)[keyof typeof SchemaEnum7];
+export type SchemaEnum9 = (typeof SchemaEnum9)[keyof typeof SchemaEnum9];
 
 export const ItemsEnum2 = {
   BEGINNER: 'beginner',
@@ -13523,29 +14464,38 @@ export const ItemsEnum3 = {
 
 export type ItemsEnum3 = (typeof ItemsEnum3)[keyof typeof ItemsEnum3];
 
-export const SchemaEnum8 = {
+export const SchemaEnum10 = {
   RELEVANCE: 'relevance',
   NEWEST: 'newest',
   RATING: 'rating',
   POPULAR: 'popular',
 } as const;
 
-export type SchemaEnum8 = (typeof SchemaEnum8)[keyof typeof SchemaEnum8];
+export type SchemaEnum10 = (typeof SchemaEnum10)[keyof typeof SchemaEnum10];
 
-export const SchemaEnum9 = {
+export const SchemaEnum11 = {
   ACTOR: 'actor',
   TARGET: 'target',
   ALL: 'all',
 } as const;
 
-export type SchemaEnum9 = (typeof SchemaEnum9)[keyof typeof SchemaEnum9];
+export type SchemaEnum11 = (typeof SchemaEnum11)[keyof typeof SchemaEnum11];
 
-export const SchemaEnum10 = {
+export const SchemaEnum12 = {
+  PENDING: 'PENDING',
+  APPROVED: 'APPROVED',
+  REJECTED: 'REJECTED',
+  SUSPENDED: 'SUSPENDED',
+} as const;
+
+export type SchemaEnum12 = (typeof SchemaEnum12)[keyof typeof SchemaEnum12];
+
+export const SchemaEnum13 = {
   ADMIN: 'admin',
   ORGANISATION_USER: 'organisation_user',
 } as const;
 
-export type SchemaEnum10 = (typeof SchemaEnum10)[keyof typeof SchemaEnum10];
+export type SchemaEnum13 = (typeof SchemaEnum13)[keyof typeof SchemaEnum13];
 
 /**
  * **[OPTIONAL]** User's gender information. Used for demographic analytics and personalization. Can be null if not specified or preferred not to disclose.
@@ -13609,6 +14559,20 @@ export const ValueTypeEnum = {
  * Payload interpretation hint
  */
 export type ValueTypeEnum = (typeof ValueTypeEnum)[keyof typeof ValueTypeEnum];
+
+/**
+ * **[OPTIONAL]** Relationship to the student. Defaults to GUARDIAN.
+ */
+export const RelationshipTypeEnum = {
+  PARENT: 'PARENT',
+  GUARDIAN: 'GUARDIAN',
+  SPONSOR: 'SPONSOR',
+} as const;
+
+/**
+ * **[OPTIONAL]** Relationship to the student. Defaults to GUARDIAN.
+ */
+export type RelationshipTypeEnum = (typeof RelationshipTypeEnum)[keyof typeof RelationshipTypeEnum];
 
 /**
  * **[REQUIRED]** Rubric publication status in the content workflow.
@@ -13777,6 +14741,71 @@ export const RuleTypeEnum = {
  */
 export type RuleTypeEnum = (typeof RuleTypeEnum)[keyof typeof RuleTypeEnum];
 
+export const ProficiencyLevelEnum = {
+  BEGINNER: 'beginner',
+  INTERMEDIATE: 'intermediate',
+  ADVANCED: 'advanced',
+  EXPERT: 'expert',
+} as const;
+
+export type ProficiencyLevelEnum = (typeof ProficiencyLevelEnum)[keyof typeof ProficiencyLevelEnum];
+
+export const VerificationStatusEnum = {
+  PENDING: 'PENDING',
+  VERIFIED: 'VERIFIED',
+  REJECTED: 'REJECTED',
+} as const;
+
+export type VerificationStatusEnum =
+  (typeof VerificationStatusEnum)[keyof typeof VerificationStatusEnum];
+
+export const ItemTypeEnum = {
+  PROJECT: 'PROJECT',
+  PERFORMANCE: 'PERFORMANCE',
+  WORK_SAMPLE: 'WORK_SAMPLE',
+  MEDIA: 'MEDIA',
+  OTHER: 'OTHER',
+} as const;
+
+export type ItemTypeEnum = (typeof ItemTypeEnum)[keyof typeof ItemTypeEnum];
+
+export const ExperienceTypeEnum = {
+  TRAINING: 'TRAINING',
+  WORK: 'WORK',
+  VOLUNTEERING: 'VOLUNTEERING',
+  PROJECT: 'PROJECT',
+} as const;
+
+export type ExperienceTypeEnum = (typeof ExperienceTypeEnum)[keyof typeof ExperienceTypeEnum];
+
+export const StatusEnum4 = {
+  PENDING_REVIEW: 'Pending Review',
+  APPROVED: 'Approved',
+  REJECTED: 'Rejected',
+  EXPIRED: 'Expired',
+} as const;
+
+export type StatusEnum4 = (typeof StatusEnum4)[keyof typeof StatusEnum4];
+
+export const CredentialTypeEnum = {
+  CERTIFICATE: 'CERTIFICATE',
+  BADGE: 'BADGE',
+  AWARD: 'AWARD',
+  EXTERNAL_CREDENTIAL: 'EXTERNAL_CREDENTIAL',
+} as const;
+
+export type CredentialTypeEnum = (typeof CredentialTypeEnum)[keyof typeof CredentialTypeEnum];
+
+export const AchievementTypeEnum = {
+  AWARD: 'AWARD',
+  MILESTONE: 'MILESTONE',
+  COMPETITION: 'COMPETITION',
+  UNLOCKED_SKILL: 'UNLOCKED_SKILL',
+  RECOGNITION: 'RECOGNITION',
+} as const;
+
+export type AchievementTypeEnum = (typeof AchievementTypeEnum)[keyof typeof AchievementTypeEnum];
+
 /**
  * **[READ-ONLY]** On a near-me search (near=lat,lng) only: how far the instructor is from the searched point, as a coarse band. Never metres.
  */
@@ -13796,7 +14825,7 @@ export type DistanceBandEnum = (typeof DistanceBandEnum)[keyof typeof DistanceBa
 /**
  * **[REQUIRED]** Level of proficiency in this skill. Indicates instructor's competency and teaching capability.
  */
-export const ProficiencyLevelEnum = {
+export const ProficiencyLevelEnum2 = {
   BEGINNER: 'BEGINNER',
   INTERMEDIATE: 'INTERMEDIATE',
   ADVANCED: 'ADVANCED',
@@ -13806,7 +14835,8 @@ export const ProficiencyLevelEnum = {
 /**
  * **[REQUIRED]** Level of proficiency in this skill. Indicates instructor's competency and teaching capability.
  */
-export type ProficiencyLevelEnum = (typeof ProficiencyLevelEnum)[keyof typeof ProficiencyLevelEnum];
+export type ProficiencyLevelEnum2 =
+  (typeof ProficiencyLevelEnum2)[keyof typeof ProficiencyLevelEnum2];
 
 /**
  * **[READ-ONLY]** Current status of the membership.
@@ -13877,7 +14907,7 @@ export type EducationLevelEnum = (typeof EducationLevelEnum)[keyof typeof Educat
 /**
  * **[READ-ONLY]** Current status of the document in the verification workflow.
  */
-export const StatusEnum4 = {
+export const StatusEnum5 = {
   PENDING: 'PENDING',
   APPROVED: 'APPROVED',
   REJECTED: 'REJECTED',
@@ -13888,12 +14918,12 @@ export const StatusEnum4 = {
 /**
  * **[READ-ONLY]** Current status of the document in the verification workflow.
  */
-export type StatusEnum4 = (typeof StatusEnum4)[keyof typeof StatusEnum4];
+export type StatusEnum5 = (typeof StatusEnum5)[keyof typeof StatusEnum5];
 
 /**
  * **[READ-ONLY]** Human-readable verification status of the document.
  */
-export const VerificationStatusEnum = {
+export const VerificationStatusEnum2 = {
   VERIFIED: 'VERIFIED',
   PENDING: 'PENDING',
   REJECTED: 'REJECTED',
@@ -13903,8 +14933,8 @@ export const VerificationStatusEnum = {
 /**
  * **[READ-ONLY]** Human-readable verification status of the document.
  */
-export type VerificationStatusEnum =
-  (typeof VerificationStatusEnum)[keyof typeof VerificationStatusEnum];
+export type VerificationStatusEnum2 =
+  (typeof VerificationStatusEnum2)[keyof typeof VerificationStatusEnum2];
 
 /**
  * **[REQUIRED]** Type of availability pattern.
@@ -13952,24 +14982,9 @@ export const ProvidedByEnum = {
 export type ProvidedByEnum = (typeof ProvidedByEnum)[keyof typeof ProvidedByEnum];
 
 /**
- * Defaults to beginner; accepted in any case
- */
-export const LevelEnum = {
-  BEGINNER: 'beginner',
-  INTERMEDIATE: 'intermediate',
-  ADVANCED: 'advanced',
-  EXPERT: 'expert',
-} as const;
-
-/**
- * Defaults to beginner; accepted in any case
- */
-export type LevelEnum = (typeof LevelEnum)[keyof typeof LevelEnum];
-
-/**
  * **[READ-ONLY]** Current status of the application.
  */
-export const StatusEnum5 = {
+export const StatusEnum6 = {
   PENDING: 'pending',
   APPROVED: 'approved',
   REJECTED: 'rejected',
@@ -13978,7 +14993,7 @@ export const StatusEnum5 = {
 /**
  * **[READ-ONLY]** Current status of the application.
  */
-export type StatusEnum5 = (typeof StatusEnum5)[keyof typeof StatusEnum5];
+export type StatusEnum6 = (typeof StatusEnum6)[keyof typeof StatusEnum6];
 
 /**
  * **[OPTIONAL]** Practice activity format.
@@ -14012,6 +15027,21 @@ export const GroupingEnum = {
  */
 export type GroupingEnum = (typeof GroupingEnum)[keyof typeof GroupingEnum];
 
+export const ItemTypeEnum2 = {
+  ASSIGNMENT: 'assignment',
+  QUIZ: 'quiz',
+  ATTENDANCE: 'attendance',
+  PROJECT: 'project',
+  DISCUSSION: 'discussion',
+  EXAM: 'exam',
+  PRACTICAL: 'practical',
+  PERFORMANCE: 'performance',
+  PARTICIPATION: 'participation',
+  MANUAL: 'manual',
+} as const;
+
+export type ItemTypeEnum2 = (typeof ItemTypeEnum2)[keyof typeof ItemTypeEnum2];
+
 /**
  * **[OPTIONAL]** Strategy used to aggregate gradebook line items for this assessment component.
  */
@@ -14026,27 +15056,12 @@ export const AggregationStrategyEnum = {
 export type AggregationStrategyEnum =
   (typeof AggregationStrategyEnum)[keyof typeof AggregationStrategyEnum];
 
-export const ItemTypeEnum = {
-  ASSIGNMENT: 'assignment',
-  QUIZ: 'quiz',
-  ATTENDANCE: 'attendance',
-  PROJECT: 'project',
-  DISCUSSION: 'discussion',
-  EXAM: 'exam',
-  PRACTICAL: 'practical',
-  PERFORMANCE: 'performance',
-  PARTICIPATION: 'participation',
-  MANUAL: 'manual',
-} as const;
-
-export type ItemTypeEnum = (typeof ItemTypeEnum)[keyof typeof ItemTypeEnum];
-
-export const StatusEnum6 = {
+export const StatusEnum7 = {
   PENDING: 'pending',
   COMPLETED: 'completed',
 } as const;
 
-export type StatusEnum6 = (typeof StatusEnum6)[keyof typeof StatusEnum6];
+export type StatusEnum7 = (typeof StatusEnum7)[keyof typeof StatusEnum7];
 
 export const AttendanceStatusEnum = {
   ATTENDED: 'attended',
@@ -14055,14 +15070,16 @@ export const AttendanceStatusEnum = {
 
 export type AttendanceStatusEnum = (typeof AttendanceStatusEnum)[keyof typeof AttendanceStatusEnum];
 
-export const StatusEnum7 = {
-  PENDING_REVIEW: 'Pending Review',
-  APPROVED: 'Approved',
-  REJECTED: 'Rejected',
-  EXPIRED: 'Expired',
+export const VerificationStatusEnum3 = {
+  DRAFT: 'DRAFT',
+  SUBMITTED: 'SUBMITTED',
+  APPROVED: 'APPROVED',
+  REJECTED: 'REJECTED',
+  REVOKED: 'REVOKED',
 } as const;
 
-export type StatusEnum7 = (typeof StatusEnum7)[keyof typeof StatusEnum7];
+export type VerificationStatusEnum3 =
+  (typeof VerificationStatusEnum3)[keyof typeof VerificationStatusEnum3];
 
 /**
  * **[REQUIRED]** Class visibility.
@@ -14271,9 +15288,79 @@ export const StatusEnum9 = {
 export type StatusEnum9 = (typeof StatusEnum9)[keyof typeof StatusEnum9];
 
 /**
- * **[READ-ONLY]** Review status.
+ * Relationship to the student
+ */
+export const RelationshipTypeEnum2 = {
+  PARENT: 'PARENT',
+  GUARDIAN: 'GUARDIAN',
+  SPONSOR: 'SPONSOR',
+} as const;
+
+/**
+ * Relationship to the student
+ */
+export type RelationshipTypeEnum2 =
+  (typeof RelationshipTypeEnum2)[keyof typeof RelationshipTypeEnum2];
+
+/**
+ * linked, invited, expired, declined or revoked
  */
 export const StatusEnum10 = {
+  LINKED: 'linked',
+  INVITED: 'invited',
+  EXPIRED: 'expired',
+  DECLINED: 'declined',
+  REVOKED: 'revoked',
+} as const;
+
+/**
+ * linked, invited, expired, declined or revoked
+ */
+export type StatusEnum10 = (typeof StatusEnum10)[keyof typeof StatusEnum10];
+
+export const ShareScopeEnum = {
+  FULL: 'FULL',
+  ACADEMICS: 'ACADEMICS',
+  ATTENDANCE: 'ATTENDANCE',
+} as const;
+
+export type ShareScopeEnum = (typeof ShareScopeEnum)[keyof typeof ShareScopeEnum];
+
+export const StatusEnum11 = {
+  PENDING: 'PENDING',
+  ACTIVE: 'ACTIVE',
+  REVOKED: 'REVOKED',
+} as const;
+
+export type StatusEnum11 = (typeof StatusEnum11)[keyof typeof StatusEnum11];
+
+export const GenderEnum2 = {
+  MALE: 'MALE',
+  FEMALE: 'FEMALE',
+  PREFER_NOT_TO_SAY: 'PREFER_NOT_TO_SAY',
+} as const;
+
+export type GenderEnum2 = (typeof GenderEnum2)[keyof typeof GenderEnum2];
+
+/**
+ * The domain to register into
+ */
+export const DomainEnum = {
+  STUDENT: 'student',
+  INSTRUCTOR: 'instructor',
+  COURSE_CREATOR: 'course_creator',
+  ORGANISATION_USER: 'organisation_user',
+} as const;
+
+/**
+ * The domain to register into
+ */
+export type DomainEnum = (typeof DomainEnum)[keyof typeof DomainEnum];
+
+/**
+ * **[READ-ONLY]** Review status.
+ */
+export const StatusEnum12 = {
   PENDING: 'pending',
   APPROVED: 'approved',
   REJECTED: 'rejected',
@@ -14283,7 +15370,7 @@ export const StatusEnum10 = {
 /**
  * **[READ-ONLY]** Review status.
  */
-export type StatusEnum10 = (typeof StatusEnum10)[keyof typeof StatusEnum10];
+export type StatusEnum12 = (typeof StatusEnum12)[keyof typeof StatusEnum12];
 
 /**
  * **[READ-ONLY]** Whether the application targets a course or a program.
@@ -14301,7 +15388,7 @@ export type ApplicationTypeEnum = (typeof ApplicationTypeEnum)[keyof typeof Appl
 /**
  * PENDING, ALLOCATED, APPROVED or DISBURSED. The legacy value 'Completed' is accepted and stored as DISBURSED. Defaults to PENDING.
  */
-export const StatusEnum11 = {
+export const StatusEnum13 = {
   PENDING: 'PENDING',
   ALLOCATED: 'ALLOCATED',
   APPROVED: 'APPROVED',
@@ -14311,7 +15398,7 @@ export const StatusEnum11 = {
 /**
  * PENDING, ALLOCATED, APPROVED or DISBURSED. The legacy value 'Completed' is accepted and stored as DISBURSED. Defaults to PENDING.
  */
-export type StatusEnum11 = (typeof StatusEnum11)[keyof typeof StatusEnum11];
+export type StatusEnum13 = (typeof StatusEnum13)[keyof typeof StatusEnum13];
 
 export const TypeEnum = {
   COURSE_ENROLLMENT_WELCOME: 'COURSE_ENROLLMENT_WELCOME',
@@ -14380,8 +15467,13 @@ export const TypeEnum = {
   PROFILE_COMPLETION_REMINDER: 'PROFILE_COMPLETION_REMINDER',
   ORGANISATION_INVITATION: 'ORGANISATION_INVITATION',
   GUARDIAN_CONSENT_REQUEST: 'GUARDIAN_CONSENT_REQUEST',
+  GUARDIAN_LINK_INVITATION: 'GUARDIAN_LINK_INVITATION',
+  GUARDIAN_LINK_ESTABLISHED: 'GUARDIAN_LINK_ESTABLISHED',
   ORGANISATION_INVITATION_ACCEPTED: 'ORGANISATION_INVITATION_ACCEPTED',
   ORGANISATION_ANNOUNCEMENT: 'ORGANISATION_ANNOUNCEMENT',
+  DOMAIN_APPROVAL_REQUESTED: 'DOMAIN_APPROVAL_REQUESTED',
+  DOMAIN_APPROVAL_GRANTED: 'DOMAIN_APPROVAL_GRANTED',
+  DOMAIN_APPROVAL_DECLINED: 'DOMAIN_APPROVAL_DECLINED',
   WEEKLY_PROGRESS_SUMMARY: 'WEEKLY_PROGRESS_SUMMARY',
   LEARNING_STREAK_ACHIEVEMENT: 'LEARNING_STREAK_ACHIEVEMENT',
   PEER_ACHIEVEMENT_CELEBRATION: 'PEER_ACHIEVEMENT_CELEBRATION',
@@ -14415,44 +15507,13 @@ export const PresentationEnum = {
 
 export type PresentationEnum = (typeof PresentationEnum)[keyof typeof PresentationEnum];
 
-export const StatusEnum12 = {
+export const StatusEnum14 = {
   UNREAD: 'UNREAD',
   READ: 'READ',
   ARCHIVED: 'ARCHIVED',
 } as const;
 
-export type StatusEnum12 = (typeof StatusEnum12)[keyof typeof StatusEnum12];
-
-/**
- * **[REQUIRED]** Nature of the relationship.
- */
-export const GuardianRelationshipTypeEnum = {
-  PARENT: 'PARENT',
-  GUARDIAN: 'GUARDIAN',
-  SPONSOR: 'SPONSOR',
-} as const;
-
-/**
- * **[REQUIRED]** Nature of the relationship.
- */
-export type GuardianRelationshipTypeEnum =
-  (typeof GuardianRelationshipTypeEnum)[keyof typeof GuardianRelationshipTypeEnum];
-
-export const ShareScopeEnum = {
-  FULL: 'FULL',
-  ACADEMICS: 'ACADEMICS',
-  ATTENDANCE: 'ATTENDANCE',
-} as const;
-
-export type ShareScopeEnum = (typeof ShareScopeEnum)[keyof typeof ShareScopeEnum];
-
-export const StatusEnum13 = {
-  PENDING: 'PENDING',
-  ACTIVE: 'ACTIVE',
-  REVOKED: 'REVOKED',
-} as const;
-
-export type StatusEnum13 = (typeof StatusEnum13)[keyof typeof StatusEnum13];
+export type StatusEnum14 = (typeof StatusEnum14)[keyof typeof StatusEnum14];
 
 /**
  * **[OPTIONAL]** How much of the child's learning the guardian will see. Defaults to FULL.
@@ -14471,7 +15532,7 @@ export type ShareScopeEnum2 = (typeof ShareScopeEnum2)[keyof typeof ShareScopeEn
 /**
  * **[OPTIONAL]** Current enrollment and attendance status.
  */
-export const StatusEnum14 = {
+export const StatusEnum15 = {
   ENROLLED: 'ENROLLED',
   WAITLISTED: 'WAITLISTED',
   ATTENDED: 'ATTENDED',
@@ -14482,7 +15543,7 @@ export const StatusEnum14 = {
 /**
  * **[OPTIONAL]** Current enrollment and attendance status.
  */
-export type StatusEnum14 = (typeof StatusEnum14)[keyof typeof StatusEnum14];
+export type StatusEnum15 = (typeof StatusEnum15)[keyof typeof StatusEnum15];
 
 /**
  * CLICK or DISMISS; impressions are recorded by the server
@@ -14524,7 +15585,7 @@ export const ReleaseStrategyEnum = {
  */
 export type ReleaseStrategyEnum = (typeof ReleaseStrategyEnum)[keyof typeof ReleaseStrategyEnum];
 
-export const StatusEnum15 = {
+export const StatusEnum16 = {
   PENDING: 'pending',
   SHORTLISTED: 'shortlisted',
   INTERVIEWING: 'interviewing',
@@ -14536,12 +15597,12 @@ export const StatusEnum15 = {
   WITHDRAWN: 'withdrawn',
 } as const;
 
-export type StatusEnum15 = (typeof StatusEnum15)[keyof typeof StatusEnum15];
+export type StatusEnum16 = (typeof StatusEnum16)[keyof typeof StatusEnum16];
 
 /**
  * Current status of the booking
  */
-export const StatusEnum16 = {
+export const StatusEnum17 = {
   PAYMENT_REQUIRED: 'payment_required',
   CONFIRMED: 'confirmed',
   CANCELLED: 'cancelled',
@@ -14555,7 +15616,7 @@ export const StatusEnum16 = {
 /**
  * Current status of the booking
  */
-export type StatusEnum16 = (typeof StatusEnum16)[keyof typeof StatusEnum16];
+export type StatusEnum17 = (typeof StatusEnum17)[keyof typeof StatusEnum17];
 
 /**
  * Payment status reported by the engine
@@ -14573,7 +15634,7 @@ export type PaymentStatusEnum = (typeof PaymentStatusEnum)[keyof typeof PaymentS
 /**
  * **[REQUIRED]** Current status of the submission in the grading workflow.
  */
-export const StatusEnum17 = {
+export const StatusEnum18 = {
   DRAFT: 'DRAFT',
   SUBMITTED: 'SUBMITTED',
   IN_REVIEW: 'IN_REVIEW',
@@ -14584,7 +15645,7 @@ export const StatusEnum17 = {
 /**
  * **[REQUIRED]** Current status of the submission in the grading workflow.
  */
-export type StatusEnum17 = (typeof StatusEnum17)[keyof typeof StatusEnum17];
+export type StatusEnum18 = (typeof StatusEnum18)[keyof typeof StatusEnum18];
 
 /**
  * Type of assignment - global or organization-specific
@@ -14598,6 +15659,13 @@ export const AssignmentTypeEnum = {
  * Type of assignment - global or organization-specific
  */
 export type AssignmentTypeEnum = (typeof AssignmentTypeEnum)[keyof typeof AssignmentTypeEnum];
+
+export const StatusEnum19 = {
+  VERIFIED: 'VERIFIED',
+  REJECTED: 'REJECTED',
+} as const;
+
+export type StatusEnum19 = (typeof StatusEnum19)[keyof typeof StatusEnum19];
 
 /**
  * The decision to apply.
@@ -14645,6 +15713,22 @@ export const TransactionTypeEnum = {
 export type TransactionTypeEnum = (typeof TransactionTypeEnum)[keyof typeof TransactionTypeEnum];
 
 /**
+ * ACTIVE once any domain is approved; PENDING_APPROVAL while every requested domain awaits review
+ */
+export const AccountStateEnum = {
+  ACTIVE: 'ACTIVE',
+  PENDING_APPROVAL: 'PENDING_APPROVAL',
+  SUSPENDED: 'SUSPENDED',
+  REJECTED: 'REJECTED',
+  NO_DOMAIN: 'NO_DOMAIN',
+} as const;
+
+/**
+ * ACTIVE once any domain is approved; PENDING_APPROVAL while every requested domain awaits review
+ */
+export type AccountStateEnum = (typeof AccountStateEnum)[keyof typeof AccountStateEnum];
+
+/**
  * **[READ-ONLY]** Current status of the scheduled instance.
  */
 export const SchedulingStatusEnum = {
@@ -14677,7 +15761,7 @@ export type EnrollmentStatusEnum = (typeof EnrollmentStatusEnum)[keyof typeof En
 /**
  * Hold lifecycle state; only FIRM counts as a scheduling clash
  */
-export const StatusEnum18 = {
+export const StatusEnum20 = {
   TENTATIVE: 'TENTATIVE',
   FIRM: 'FIRM',
   CONFIRMED: 'CONFIRMED',
@@ -14687,7 +15771,7 @@ export const StatusEnum18 = {
 /**
  * Hold lifecycle state; only FIRM counts as a scheduling clash
  */
-export type StatusEnum18 = (typeof StatusEnum18)[keyof typeof StatusEnum18];
+export type StatusEnum20 = (typeof StatusEnum20)[keyof typeof StatusEnum20];
 
 export const QuestionTypeEnum2 = {
   MULTIPLE_CHOICE: 'multiple_choice',
@@ -14698,13 +15782,13 @@ export const QuestionTypeEnum2 = {
 
 export type QuestionTypeEnum2 = (typeof QuestionTypeEnum2)[keyof typeof QuestionTypeEnum2];
 
-export const StatusEnum19 = {
+export const StatusEnum21 = {
   IN_PROGRESS: 'in_progress',
   SUBMITTED: 'submitted',
   GRADED: 'graded',
 } as const;
 
-export type StatusEnum19 = (typeof StatusEnum19)[keyof typeof StatusEnum19];
+export type StatusEnum21 = (typeof StatusEnum21)[keyof typeof StatusEnum21];
 
 /**
  * **[READ-ONLY]** What happened.
@@ -14731,7 +15815,7 @@ export type EventTypeEnum2 = (typeof EventTypeEnum2)[keyof typeof EventTypeEnum2
 /**
  * **[REQUIRED]** Current status of the student's enrollment in the program.
  */
-export const StatusEnum20 = {
+export const StatusEnum22 = {
   ACTIVE: 'ACTIVE',
   COMPLETED: 'COMPLETED',
   DROPPED: 'DROPPED',
@@ -14741,7 +15825,7 @@ export const StatusEnum20 = {
 /**
  * **[REQUIRED]** Current status of the student's enrollment in the program.
  */
-export type StatusEnum20 = (typeof StatusEnum20)[keyof typeof StatusEnum20];
+export type StatusEnum22 = (typeof StatusEnum22)[keyof typeof StatusEnum22];
 
 /**
  * Entry kind
@@ -14761,7 +15845,7 @@ export type EntryTypeEnum = (typeof EntryTypeEnum)[keyof typeof EntryTypeEnum];
 /**
  * Booking lifecycle state
  */
-export const StatusEnum21 = {
+export const StatusEnum23 = {
   HOLD: 'HOLD',
   CONFIRMED: 'CONFIRMED',
   RELEASED: 'RELEASED',
@@ -14771,7 +15855,7 @@ export const StatusEnum21 = {
 /**
  * Booking lifecycle state
  */
-export type StatusEnum21 = (typeof StatusEnum21)[keyof typeof StatusEnum21];
+export type StatusEnum23 = (typeof StatusEnum23)[keyof typeof StatusEnum23];
 
 /**
  * What created the booking
@@ -14882,6 +15966,20 @@ export const AvailabilityEnum = {
 export type AvailabilityEnum = (typeof AvailabilityEnum)[keyof typeof AvailabilityEnum];
 
 /**
+ * IN_PROGRESS until every required item is graded, then PASSED or FAILED
+ */
+export const ResultStatusEnum = {
+  IN_PROGRESS: 'IN_PROGRESS',
+  PASSED: 'PASSED',
+  FAILED: 'FAILED',
+} as const;
+
+/**
+ * IN_PROGRESS until every required item is graded, then PASSED or FAILED
+ */
+export type ResultStatusEnum = (typeof ResultStatusEnum)[keyof typeof ResultStatusEnum];
+
+/**
  * Status of the instructor's existing application, when they have one
  */
 export const ApplicationStatusEnum = {
@@ -14950,6 +16048,67 @@ export const ContentTypeEnum = {
 export type ContentTypeEnum = (typeof ContentTypeEnum)[keyof typeof ContentTypeEnum];
 
 export type JsonNodeWritable = unknown;
+
+/**
+ * Student profile information including guardian contacts and academic details. Links to a base user account.
+ */
+export type StudentWritable = {
+  /**
+   * **[REQUIRED]** Reference to the base user account UUID. Links student profile to user authentication and personal details.
+   */
+  user_uuid: string;
+  /**
+   * **[OPTIONAL]** Demographic tag used for growth controls (e.g., youth_female, adult).
+   */
+  demographic_tag?: string;
+  /**
+   * **[OPTIONAL]** Full name of the primary guardian/parent. This is the main emergency contact for the student.
+   */
+  first_guardian_name?: string;
+  /**
+   * **[OPTIONAL]** Mobile phone number of the primary guardian. Used for emergency contacts and notifications. Should include country code.
+   */
+  first_guardian_mobile?: string;
+  /**
+   * **[OPTIONAL]** Full name of the secondary guardian/parent. Additional emergency contact for the student.
+   */
+  second_guardian_name?: string | null;
+  /**
+   * **[OPTIONAL]** Mobile phone number of the secondary guardian. Alternative contact for emergencies and notifications. Should include country code.
+   */
+  second_guardian_mobile?: string | null;
+  /**
+   * **[OPTIONAL]** Short biography or notes about the student. Used in student profiles.
+   */
+  bio?: string | null;
+  /**
+   * **[OPTIONAL, WRITE-ONLY]** Parents or guardians, at most two. A guardian whose email already has an account is linked at once; anyone else is emailed an invitation. Omit to leave guardians unchanged; send an empty list to withdraw pending invitations. Read them back from GET /api/v1/students/{uuid}/guardians. The first two also fill the legacy guardian name/mobile fields.
+   */
+  guardians?: Array<StudentGuardianRequest>;
+  primaryGuardianContact?: string;
+  secondaryGuardianContact?: string;
+  allGuardianContacts?: Array<string>;
+};
+
+export type ApiResponseStudentWritable = {
+  success?: boolean;
+  data?: StudentWritable;
+  message?: string;
+  error?: unknown;
+};
+
+export type ApiResponsePagedDtoStudentWritable = {
+  success?: boolean;
+  data?: PagedDtoStudentWritable;
+  message?: string;
+  error?: unknown;
+};
+
+export type PagedDtoStudentWritable = {
+  content?: Array<StudentWritable>;
+  metadata?: PageMetadata;
+  links?: PageLinks;
+};
 
 /**
  * Valid African phone number in international or local format
@@ -15045,23 +16204,40 @@ export const ItemsEnumWritable = {
 export type ItemsEnumWritable = (typeof ItemsEnumWritable)[keyof typeof ItemsEnumWritable];
 
 export const SchemaEnum3Writable = {
-  APPROVE: 'approve',
-  REJECT: 'reject',
-  REVOKE: 'revoke',
+  SKILLS: 'skills',
+  CERTIFICATIONS: 'certifications',
+  COMPETENCIES: 'competencies',
+  DOCUMENTS: 'documents',
 } as const;
 
 export type SchemaEnum3Writable = (typeof SchemaEnum3Writable)[keyof typeof SchemaEnum3Writable];
 
 export const SchemaEnum4Writable = {
+  APPROVE: 'approve',
+  REJECT: 'reject',
+  REVOKE: 'revoke',
+} as const;
+
+export type SchemaEnum4Writable = (typeof SchemaEnum4Writable)[keyof typeof SchemaEnum4Writable];
+
+export const SchemaEnum5Writable = {
+  SKILLS: 'skills',
+  COMPETENCIES: 'competencies',
+  CERTIFICATIONS: 'certifications',
+} as const;
+
+export type SchemaEnum5Writable = (typeof SchemaEnum5Writable)[keyof typeof SchemaEnum5Writable];
+
+export const SchemaEnum6Writable = {
   DRAFT: 'draft',
   IN_REVIEW: 'in_review',
   PUBLISHED: 'published',
   ARCHIVED: 'archived',
 } as const;
 
-export type SchemaEnum4Writable = (typeof SchemaEnum4Writable)[keyof typeof SchemaEnum4Writable];
+export type SchemaEnum6Writable = (typeof SchemaEnum6Writable)[keyof typeof SchemaEnum6Writable];
 
-export const SchemaEnum5Writable = {
+export const SchemaEnum7Writable = {
   STUDENT: 'student',
   INSTRUCTOR: 'instructor',
   ADMIN: 'admin',
@@ -15070,24 +16246,24 @@ export const SchemaEnum5Writable = {
   COURSE_CREATOR: 'course_creator',
 } as const;
 
-export type SchemaEnum5Writable = (typeof SchemaEnum5Writable)[keyof typeof SchemaEnum5Writable];
+export type SchemaEnum7Writable = (typeof SchemaEnum7Writable)[keyof typeof SchemaEnum7Writable];
 
-export const SchemaEnum6Writable = {
+export const SchemaEnum8Writable = {
   ACCRUED: 'ACCRUED',
   SETTLED: 'SETTLED',
   CANCELLED: 'CANCELLED',
   DISPUTED: 'DISPUTED',
 } as const;
 
-export type SchemaEnum6Writable = (typeof SchemaEnum6Writable)[keyof typeof SchemaEnum6Writable];
+export type SchemaEnum8Writable = (typeof SchemaEnum8Writable)[keyof typeof SchemaEnum8Writable];
 
-export const SchemaEnum7Writable = {
+export const SchemaEnum9Writable = {
   ALL: 'all',
   COURSES: 'courses',
   PROGRAMMES: 'programmes',
 } as const;
 
-export type SchemaEnum7Writable = (typeof SchemaEnum7Writable)[keyof typeof SchemaEnum7Writable];
+export type SchemaEnum9Writable = (typeof SchemaEnum9Writable)[keyof typeof SchemaEnum9Writable];
 
 export const ItemsEnum2Writable = {
   BEGINNER: 'beginner',
@@ -15104,29 +16280,38 @@ export const ItemsEnum3Writable = {
 
 export type ItemsEnum3Writable = (typeof ItemsEnum3Writable)[keyof typeof ItemsEnum3Writable];
 
-export const SchemaEnum8Writable = {
+export const SchemaEnum10Writable = {
   RELEVANCE: 'relevance',
   NEWEST: 'newest',
   RATING: 'rating',
   POPULAR: 'popular',
 } as const;
 
-export type SchemaEnum8Writable = (typeof SchemaEnum8Writable)[keyof typeof SchemaEnum8Writable];
+export type SchemaEnum10Writable = (typeof SchemaEnum10Writable)[keyof typeof SchemaEnum10Writable];
 
-export const SchemaEnum9Writable = {
+export const SchemaEnum11Writable = {
   ACTOR: 'actor',
   TARGET: 'target',
   ALL: 'all',
 } as const;
 
-export type SchemaEnum9Writable = (typeof SchemaEnum9Writable)[keyof typeof SchemaEnum9Writable];
+export type SchemaEnum11Writable = (typeof SchemaEnum11Writable)[keyof typeof SchemaEnum11Writable];
 
-export const SchemaEnum10Writable = {
+export const SchemaEnum12Writable = {
+  PENDING: 'PENDING',
+  APPROVED: 'APPROVED',
+  REJECTED: 'REJECTED',
+  SUSPENDED: 'SUSPENDED',
+} as const;
+
+export type SchemaEnum12Writable = (typeof SchemaEnum12Writable)[keyof typeof SchemaEnum12Writable];
+
+export const SchemaEnum13Writable = {
   ADMIN: 'admin',
   ORGANISATION_USER: 'organisation_user',
 } as const;
 
-export type SchemaEnum10Writable = (typeof SchemaEnum10Writable)[keyof typeof SchemaEnum10Writable];
+export type SchemaEnum13Writable = (typeof SchemaEnum13Writable)[keyof typeof SchemaEnum13Writable];
 
 /**
  * **[OPTIONAL]** User's gender information. Used for demographic analytics and personalization. Can be null if not specified or preferred not to disclose.
@@ -15175,6 +16360,21 @@ export const ValueTypeEnumWritable = {
  */
 export type ValueTypeEnumWritable =
   (typeof ValueTypeEnumWritable)[keyof typeof ValueTypeEnumWritable];
+
+/**
+ * **[OPTIONAL]** Relationship to the student. Defaults to GUARDIAN.
+ */
+export const RelationshipTypeEnumWritable = {
+  PARENT: 'PARENT',
+  GUARDIAN: 'GUARDIAN',
+  SPONSOR: 'SPONSOR',
+} as const;
+
+/**
+ * **[OPTIONAL]** Relationship to the student. Defaults to GUARDIAN.
+ */
+export type RelationshipTypeEnumWritable =
+  (typeof RelationshipTypeEnumWritable)[keyof typeof RelationshipTypeEnumWritable];
 
 /**
  * **[REQUIRED]** Rubric publication status in the content workflow.
@@ -15321,10 +16521,61 @@ export const RuleTypeEnumWritable = {
  */
 export type RuleTypeEnumWritable = (typeof RuleTypeEnumWritable)[keyof typeof RuleTypeEnumWritable];
 
+export const ProficiencyLevelEnumWritable = {
+  BEGINNER: 'beginner',
+  INTERMEDIATE: 'intermediate',
+  ADVANCED: 'advanced',
+  EXPERT: 'expert',
+} as const;
+
+export type ProficiencyLevelEnumWritable =
+  (typeof ProficiencyLevelEnumWritable)[keyof typeof ProficiencyLevelEnumWritable];
+
+export const ItemTypeEnumWritable = {
+  PROJECT: 'PROJECT',
+  PERFORMANCE: 'PERFORMANCE',
+  WORK_SAMPLE: 'WORK_SAMPLE',
+  MEDIA: 'MEDIA',
+  OTHER: 'OTHER',
+} as const;
+
+export type ItemTypeEnumWritable = (typeof ItemTypeEnumWritable)[keyof typeof ItemTypeEnumWritable];
+
+export const ExperienceTypeEnumWritable = {
+  TRAINING: 'TRAINING',
+  WORK: 'WORK',
+  VOLUNTEERING: 'VOLUNTEERING',
+  PROJECT: 'PROJECT',
+} as const;
+
+export type ExperienceTypeEnumWritable =
+  (typeof ExperienceTypeEnumWritable)[keyof typeof ExperienceTypeEnumWritable];
+
+export const CredentialTypeEnumWritable = {
+  CERTIFICATE: 'CERTIFICATE',
+  BADGE: 'BADGE',
+  AWARD: 'AWARD',
+  EXTERNAL_CREDENTIAL: 'EXTERNAL_CREDENTIAL',
+} as const;
+
+export type CredentialTypeEnumWritable =
+  (typeof CredentialTypeEnumWritable)[keyof typeof CredentialTypeEnumWritable];
+
+export const AchievementTypeEnumWritable = {
+  AWARD: 'AWARD',
+  MILESTONE: 'MILESTONE',
+  COMPETITION: 'COMPETITION',
+  UNLOCKED_SKILL: 'UNLOCKED_SKILL',
+  RECOGNITION: 'RECOGNITION',
+} as const;
+
+export type AchievementTypeEnumWritable =
+  (typeof AchievementTypeEnumWritable)[keyof typeof AchievementTypeEnumWritable];
+
 /**
  * **[REQUIRED]** Level of proficiency in this skill. Indicates instructor's competency and teaching capability.
  */
-export const ProficiencyLevelEnumWritable = {
+export const ProficiencyLevelEnum2Writable = {
   BEGINNER: 'BEGINNER',
   INTERMEDIATE: 'INTERMEDIATE',
   ADVANCED: 'ADVANCED',
@@ -15334,8 +16585,8 @@ export const ProficiencyLevelEnumWritable = {
 /**
  * **[REQUIRED]** Level of proficiency in this skill. Indicates instructor's competency and teaching capability.
  */
-export type ProficiencyLevelEnumWritable =
-  (typeof ProficiencyLevelEnumWritable)[keyof typeof ProficiencyLevelEnumWritable];
+export type ProficiencyLevelEnum2Writable =
+  (typeof ProficiencyLevelEnum2Writable)[keyof typeof ProficiencyLevelEnum2Writable];
 
 /**
  * **[REQUIRED]** Type of availability pattern.
@@ -15386,21 +16637,6 @@ export type ProvidedByEnumWritable =
   (typeof ProvidedByEnumWritable)[keyof typeof ProvidedByEnumWritable];
 
 /**
- * Defaults to beginner; accepted in any case
- */
-export const LevelEnumWritable = {
-  BEGINNER: 'beginner',
-  INTERMEDIATE: 'intermediate',
-  ADVANCED: 'advanced',
-  EXPERT: 'expert',
-} as const;
-
-/**
- * Defaults to beginner; accepted in any case
- */
-export type LevelEnumWritable = (typeof LevelEnumWritable)[keyof typeof LevelEnumWritable];
-
-/**
  * **[OPTIONAL]** Practice activity format.
  */
 export const ActivityTypeEnumWritable = {
@@ -15433,6 +16669,22 @@ export const GroupingEnumWritable = {
  */
 export type GroupingEnumWritable = (typeof GroupingEnumWritable)[keyof typeof GroupingEnumWritable];
 
+export const ItemTypeEnum2Writable = {
+  ASSIGNMENT: 'assignment',
+  QUIZ: 'quiz',
+  ATTENDANCE: 'attendance',
+  PROJECT: 'project',
+  DISCUSSION: 'discussion',
+  EXAM: 'exam',
+  PRACTICAL: 'practical',
+  PERFORMANCE: 'performance',
+  PARTICIPATION: 'participation',
+  MANUAL: 'manual',
+} as const;
+
+export type ItemTypeEnum2Writable =
+  (typeof ItemTypeEnum2Writable)[keyof typeof ItemTypeEnum2Writable];
+
 /**
  * **[OPTIONAL]** Strategy used to aggregate gradebook line items for this assessment component.
  */
@@ -15447,20 +16699,16 @@ export const AggregationStrategyEnumWritable = {
 export type AggregationStrategyEnumWritable =
   (typeof AggregationStrategyEnumWritable)[keyof typeof AggregationStrategyEnumWritable];
 
-export const ItemTypeEnumWritable = {
-  ASSIGNMENT: 'assignment',
-  QUIZ: 'quiz',
-  ATTENDANCE: 'attendance',
-  PROJECT: 'project',
-  DISCUSSION: 'discussion',
-  EXAM: 'exam',
-  PRACTICAL: 'practical',
-  PERFORMANCE: 'performance',
-  PARTICIPATION: 'participation',
-  MANUAL: 'manual',
+export const VerificationStatusEnum3Writable = {
+  DRAFT: 'DRAFT',
+  SUBMITTED: 'SUBMITTED',
+  APPROVED: 'APPROVED',
+  REJECTED: 'REJECTED',
+  REVOKED: 'REVOKED',
 } as const;
 
-export type ItemTypeEnumWritable = (typeof ItemTypeEnumWritable)[keyof typeof ItemTypeEnumWritable];
+export type VerificationStatusEnum3Writable =
+  (typeof VerificationStatusEnum3Writable)[keyof typeof VerificationStatusEnum3Writable];
 
 /**
  * **[REQUIRED]** Class visibility.
@@ -15632,9 +16880,80 @@ export const StatusEnum9Writable = {
 export type StatusEnum9Writable = (typeof StatusEnum9Writable)[keyof typeof StatusEnum9Writable];
 
 /**
+ * Relationship to the student
+ */
+export const RelationshipTypeEnum2Writable = {
+  PARENT: 'PARENT',
+  GUARDIAN: 'GUARDIAN',
+  SPONSOR: 'SPONSOR',
+} as const;
+
+/**
+ * Relationship to the student
+ */
+export type RelationshipTypeEnum2Writable =
+  (typeof RelationshipTypeEnum2Writable)[keyof typeof RelationshipTypeEnum2Writable];
+
+/**
+ * linked, invited, expired, declined or revoked
+ */
+export const StatusEnum10Writable = {
+  LINKED: 'linked',
+  INVITED: 'invited',
+  EXPIRED: 'expired',
+  DECLINED: 'declined',
+  REVOKED: 'revoked',
+} as const;
+
+/**
+ * linked, invited, expired, declined or revoked
+ */
+export type StatusEnum10Writable = (typeof StatusEnum10Writable)[keyof typeof StatusEnum10Writable];
+
+export const ShareScopeEnumWritable = {
+  FULL: 'FULL',
+  ACADEMICS: 'ACADEMICS',
+  ATTENDANCE: 'ATTENDANCE',
+} as const;
+
+export type ShareScopeEnumWritable =
+  (typeof ShareScopeEnumWritable)[keyof typeof ShareScopeEnumWritable];
+
+export const StatusEnum11Writable = {
+  PENDING: 'PENDING',
+  ACTIVE: 'ACTIVE',
+  REVOKED: 'REVOKED',
+} as const;
+
+export type StatusEnum11Writable = (typeof StatusEnum11Writable)[keyof typeof StatusEnum11Writable];
+
+export const GenderEnum2Writable = {
+  MALE: 'MALE',
+  FEMALE: 'FEMALE',
+  PREFER_NOT_TO_SAY: 'PREFER_NOT_TO_SAY',
+} as const;
+
+export type GenderEnum2Writable = (typeof GenderEnum2Writable)[keyof typeof GenderEnum2Writable];
+
+/**
+ * The domain to register into
+ */
+export const DomainEnumWritable = {
+  STUDENT: 'student',
+  INSTRUCTOR: 'instructor',
+  COURSE_CREATOR: 'course_creator',
+  ORGANISATION_USER: 'organisation_user',
+} as const;
+
+/**
+ * The domain to register into
+ */
+export type DomainEnumWritable = (typeof DomainEnumWritable)[keyof typeof DomainEnumWritable];
+
+/**
  * PENDING, ALLOCATED, APPROVED or DISBURSED. The legacy value 'Completed' is accepted and stored as DISBURSED. Defaults to PENDING.
  */
-export const StatusEnum11Writable = {
+export const StatusEnum13Writable = {
   PENDING: 'PENDING',
   ALLOCATED: 'ALLOCATED',
   APPROVED: 'APPROVED',
@@ -15644,7 +16963,7 @@ export const StatusEnum11Writable = {
 /**
  * PENDING, ALLOCATED, APPROVED or DISBURSED. The legacy value 'Completed' is accepted and stored as DISBURSED. Defaults to PENDING.
  */
-export type StatusEnum11Writable = (typeof StatusEnum11Writable)[keyof typeof StatusEnum11Writable];
+export type StatusEnum13Writable = (typeof StatusEnum13Writable)[keyof typeof StatusEnum13Writable];
 
 export const TypeEnumWritable = {
   COURSE_ENROLLMENT_WELCOME: 'COURSE_ENROLLMENT_WELCOME',
@@ -15713,8 +17032,13 @@ export const TypeEnumWritable = {
   PROFILE_COMPLETION_REMINDER: 'PROFILE_COMPLETION_REMINDER',
   ORGANISATION_INVITATION: 'ORGANISATION_INVITATION',
   GUARDIAN_CONSENT_REQUEST: 'GUARDIAN_CONSENT_REQUEST',
+  GUARDIAN_LINK_INVITATION: 'GUARDIAN_LINK_INVITATION',
+  GUARDIAN_LINK_ESTABLISHED: 'GUARDIAN_LINK_ESTABLISHED',
   ORGANISATION_INVITATION_ACCEPTED: 'ORGANISATION_INVITATION_ACCEPTED',
   ORGANISATION_ANNOUNCEMENT: 'ORGANISATION_ANNOUNCEMENT',
+  DOMAIN_APPROVAL_REQUESTED: 'DOMAIN_APPROVAL_REQUESTED',
+  DOMAIN_APPROVAL_GRANTED: 'DOMAIN_APPROVAL_GRANTED',
+  DOMAIN_APPROVAL_DECLINED: 'DOMAIN_APPROVAL_DECLINED',
   WEEKLY_PROGRESS_SUMMARY: 'WEEKLY_PROGRESS_SUMMARY',
   LEARNING_STREAK_ACHIEVEMENT: 'LEARNING_STREAK_ACHIEVEMENT',
   PEER_ACHIEVEMENT_CELEBRATION: 'PEER_ACHIEVEMENT_CELEBRATION',
@@ -15749,45 +17073,13 @@ export const PresentationEnumWritable = {
 export type PresentationEnumWritable =
   (typeof PresentationEnumWritable)[keyof typeof PresentationEnumWritable];
 
-export const StatusEnum12Writable = {
+export const StatusEnum14Writable = {
   UNREAD: 'UNREAD',
   READ: 'READ',
   ARCHIVED: 'ARCHIVED',
 } as const;
 
-export type StatusEnum12Writable = (typeof StatusEnum12Writable)[keyof typeof StatusEnum12Writable];
-
-/**
- * **[REQUIRED]** Nature of the relationship.
- */
-export const GuardianRelationshipTypeEnumWritable = {
-  PARENT: 'PARENT',
-  GUARDIAN: 'GUARDIAN',
-  SPONSOR: 'SPONSOR',
-} as const;
-
-/**
- * **[REQUIRED]** Nature of the relationship.
- */
-export type GuardianRelationshipTypeEnumWritable =
-  (typeof GuardianRelationshipTypeEnumWritable)[keyof typeof GuardianRelationshipTypeEnumWritable];
-
-export const ShareScopeEnumWritable = {
-  FULL: 'FULL',
-  ACADEMICS: 'ACADEMICS',
-  ATTENDANCE: 'ATTENDANCE',
-} as const;
-
-export type ShareScopeEnumWritable =
-  (typeof ShareScopeEnumWritable)[keyof typeof ShareScopeEnumWritable];
-
-export const StatusEnum13Writable = {
-  PENDING: 'PENDING',
-  ACTIVE: 'ACTIVE',
-  REVOKED: 'REVOKED',
-} as const;
-
-export type StatusEnum13Writable = (typeof StatusEnum13Writable)[keyof typeof StatusEnum13Writable];
+export type StatusEnum14Writable = (typeof StatusEnum14Writable)[keyof typeof StatusEnum14Writable];
 
 /**
  * **[OPTIONAL]** How much of the child's learning the guardian will see. Defaults to FULL.
@@ -15807,7 +17099,7 @@ export type ShareScopeEnum2Writable =
 /**
  * **[OPTIONAL]** Current enrollment and attendance status.
  */
-export const StatusEnum14Writable = {
+export const StatusEnum15Writable = {
   ENROLLED: 'ENROLLED',
   WAITLISTED: 'WAITLISTED',
   ATTENDED: 'ATTENDED',
@@ -15818,7 +17110,7 @@ export const StatusEnum14Writable = {
 /**
  * **[OPTIONAL]** Current enrollment and attendance status.
  */
-export type StatusEnum14Writable = (typeof StatusEnum14Writable)[keyof typeof StatusEnum14Writable];
+export type StatusEnum15Writable = (typeof StatusEnum15Writable)[keyof typeof StatusEnum15Writable];
 
 /**
  * CLICK or DISMISS; impressions are recorded by the server
@@ -15865,7 +17157,7 @@ export type ReleaseStrategyEnumWritable =
 /**
  * Current status of the booking
  */
-export const StatusEnum16Writable = {
+export const StatusEnum17Writable = {
   PAYMENT_REQUIRED: 'payment_required',
   CONFIRMED: 'confirmed',
   CANCELLED: 'cancelled',
@@ -15879,7 +17171,7 @@ export const StatusEnum16Writable = {
 /**
  * Current status of the booking
  */
-export type StatusEnum16Writable = (typeof StatusEnum16Writable)[keyof typeof StatusEnum16Writable];
+export type StatusEnum17Writable = (typeof StatusEnum17Writable)[keyof typeof StatusEnum17Writable];
 
 /**
  * Payment status reported by the engine
@@ -15898,7 +17190,7 @@ export type PaymentStatusEnumWritable =
 /**
  * **[REQUIRED]** Current status of the submission in the grading workflow.
  */
-export const StatusEnum17Writable = {
+export const StatusEnum18Writable = {
   DRAFT: 'DRAFT',
   SUBMITTED: 'SUBMITTED',
   IN_REVIEW: 'IN_REVIEW',
@@ -15909,7 +17201,7 @@ export const StatusEnum17Writable = {
 /**
  * **[REQUIRED]** Current status of the submission in the grading workflow.
  */
-export type StatusEnum17Writable = (typeof StatusEnum17Writable)[keyof typeof StatusEnum17Writable];
+export type StatusEnum18Writable = (typeof StatusEnum18Writable)[keyof typeof StatusEnum18Writable];
 
 /**
  * Type of assignment - global or organization-specific
@@ -15924,6 +17216,13 @@ export const AssignmentTypeEnumWritable = {
  */
 export type AssignmentTypeEnumWritable =
   (typeof AssignmentTypeEnumWritable)[keyof typeof AssignmentTypeEnumWritable];
+
+export const StatusEnum19Writable = {
+  VERIFIED: 'VERIFIED',
+  REJECTED: 'REJECTED',
+} as const;
+
+export type StatusEnum19Writable = (typeof StatusEnum19Writable)[keyof typeof StatusEnum19Writable];
 
 /**
  * The decision to apply.
@@ -15957,9 +17256,26 @@ export type DomainNameEnum2Writable =
   (typeof DomainNameEnum2Writable)[keyof typeof DomainNameEnum2Writable];
 
 /**
+ * ACTIVE once any domain is approved; PENDING_APPROVAL while every requested domain awaits review
+ */
+export const AccountStateEnumWritable = {
+  ACTIVE: 'ACTIVE',
+  PENDING_APPROVAL: 'PENDING_APPROVAL',
+  SUSPENDED: 'SUSPENDED',
+  REJECTED: 'REJECTED',
+  NO_DOMAIN: 'NO_DOMAIN',
+} as const;
+
+/**
+ * ACTIVE once any domain is approved; PENDING_APPROVAL while every requested domain awaits review
+ */
+export type AccountStateEnumWritable =
+  (typeof AccountStateEnumWritable)[keyof typeof AccountStateEnumWritable];
+
+/**
  * Hold lifecycle state; only FIRM counts as a scheduling clash
  */
-export const StatusEnum18Writable = {
+export const StatusEnum20Writable = {
   TENTATIVE: 'TENTATIVE',
   FIRM: 'FIRM',
   CONFIRMED: 'CONFIRMED',
@@ -15969,7 +17285,7 @@ export const StatusEnum18Writable = {
 /**
  * Hold lifecycle state; only FIRM counts as a scheduling clash
  */
-export type StatusEnum18Writable = (typeof StatusEnum18Writable)[keyof typeof StatusEnum18Writable];
+export type StatusEnum20Writable = (typeof StatusEnum20Writable)[keyof typeof StatusEnum20Writable];
 
 export const QuestionTypeEnum2Writable = {
   MULTIPLE_CHOICE: 'multiple_choice',
@@ -15981,18 +17297,18 @@ export const QuestionTypeEnum2Writable = {
 export type QuestionTypeEnum2Writable =
   (typeof QuestionTypeEnum2Writable)[keyof typeof QuestionTypeEnum2Writable];
 
-export const StatusEnum19Writable = {
+export const StatusEnum21Writable = {
   IN_PROGRESS: 'in_progress',
   SUBMITTED: 'submitted',
   GRADED: 'graded',
 } as const;
 
-export type StatusEnum19Writable = (typeof StatusEnum19Writable)[keyof typeof StatusEnum19Writable];
+export type StatusEnum21Writable = (typeof StatusEnum21Writable)[keyof typeof StatusEnum21Writable];
 
 /**
  * **[REQUIRED]** Current status of the student's enrollment in the program.
  */
-export const StatusEnum20Writable = {
+export const StatusEnum22Writable = {
   ACTIVE: 'ACTIVE',
   COMPLETED: 'COMPLETED',
   DROPPED: 'DROPPED',
@@ -16002,7 +17318,7 @@ export const StatusEnum20Writable = {
 /**
  * **[REQUIRED]** Current status of the student's enrollment in the program.
  */
-export type StatusEnum20Writable = (typeof StatusEnum20Writable)[keyof typeof StatusEnum20Writable];
+export type StatusEnum22Writable = (typeof StatusEnum22Writable)[keyof typeof StatusEnum22Writable];
 
 /**
  * Entry kind
@@ -16023,7 +17339,7 @@ export type EntryTypeEnumWritable =
 /**
  * Booking lifecycle state
  */
-export const StatusEnum21Writable = {
+export const StatusEnum23Writable = {
   HOLD: 'HOLD',
   CONFIRMED: 'CONFIRMED',
   RELEASED: 'RELEASED',
@@ -16033,7 +17349,7 @@ export const StatusEnum21Writable = {
 /**
  * Booking lifecycle state
  */
-export type StatusEnum21Writable = (typeof StatusEnum21Writable)[keyof typeof StatusEnum21Writable];
+export type StatusEnum23Writable = (typeof StatusEnum23Writable)[keyof typeof StatusEnum23Writable];
 
 /**
  * What created the booking
@@ -16100,6 +17416,21 @@ export const AvailabilityEnumWritable = {
  */
 export type AvailabilityEnumWritable =
   (typeof AvailabilityEnumWritable)[keyof typeof AvailabilityEnumWritable];
+
+/**
+ * IN_PROGRESS until every required item is graded, then PASSED or FAILED
+ */
+export const ResultStatusEnumWritable = {
+  IN_PROGRESS: 'IN_PROGRESS',
+  PASSED: 'PASSED',
+  FAILED: 'FAILED',
+} as const;
+
+/**
+ * IN_PROGRESS until every required item is graded, then PASSED or FAILED
+ */
+export type ResultStatusEnumWritable =
+  (typeof ResultStatusEnumWritable)[keyof typeof ResultStatusEnumWritable];
 
 /**
  * Result type.
@@ -16460,7 +17791,7 @@ export type GetStudentByIdResponses = {
 export type GetStudentByIdResponse = GetStudentByIdResponses[keyof GetStudentByIdResponses];
 
 export type UpdateStudentData = {
-  body: Student;
+  body: StudentWritable;
   path: {
     uuid: string;
   };
@@ -17363,6 +18694,71 @@ export type UpdateTrainingProgramResponses = {
 export type UpdateTrainingProgramResponse =
   UpdateTrainingProgramResponses[keyof UpdateTrainingProgramResponses];
 
+export type DeleteProgramAssessmentData = {
+  body?: never;
+  path: {
+    uuid: string;
+    assessmentUuid: string;
+  };
+  query?: never;
+  url: '/api/v1/programs/{uuid}/assessments/{assessmentUuid}';
+};
+
+export type DeleteProgramAssessmentErrors = {
+  /**
+   * Not Found
+   */
+  404: ResponseDtoVoid;
+  /**
+   * Internal Server Error
+   */
+  500: ResponseDtoVoid;
+};
+
+export type DeleteProgramAssessmentError =
+  DeleteProgramAssessmentErrors[keyof DeleteProgramAssessmentErrors];
+
+export type DeleteProgramAssessmentResponses = {
+  /**
+   * OK
+   */
+  200: unknown;
+};
+
+export type UpdateProgramAssessmentData = {
+  body: ProgramAssessment;
+  path: {
+    uuid: string;
+    assessmentUuid: string;
+  };
+  query?: never;
+  url: '/api/v1/programs/{uuid}/assessments/{assessmentUuid}';
+};
+
+export type UpdateProgramAssessmentErrors = {
+  /**
+   * Not Found
+   */
+  404: ResponseDtoVoid;
+  /**
+   * Internal Server Error
+   */
+  500: ResponseDtoVoid;
+};
+
+export type UpdateProgramAssessmentError =
+  UpdateProgramAssessmentErrors[keyof UpdateProgramAssessmentErrors];
+
+export type UpdateProgramAssessmentResponses = {
+  /**
+   * OK
+   */
+  200: ApiResponseProgramAssessment;
+};
+
+export type UpdateProgramAssessmentResponse =
+  UpdateProgramAssessmentResponses[keyof UpdateProgramAssessmentResponses];
+
 export type WithdrawProgramTrainingApplicationData = {
   body?: never;
   path: {
@@ -18092,6 +19488,607 @@ export type UpdateAvailabilityRuleResponses = {
 
 export type UpdateAvailabilityRuleResponse =
   UpdateAvailabilityRuleResponses[keyof UpdateAvailabilityRuleResponses];
+
+export type GetSummaryData = {
+  body?: never;
+  path?: never;
+  query?: never;
+  url: '/api/v1/me/profile';
+};
+
+export type GetSummaryErrors = {
+  /**
+   * Not Found
+   */
+  404: ResponseDtoVoid;
+  /**
+   * Internal Server Error
+   */
+  500: ResponseDtoVoid;
+};
+
+export type GetSummaryError = GetSummaryErrors[keyof GetSummaryErrors];
+
+export type GetSummaryResponses = {
+  /**
+   * OK
+   */
+  200: ApiResponseProfessionalProfileSummary;
+};
+
+export type GetSummaryResponse = GetSummaryResponses[keyof GetSummaryResponses];
+
+export type UpdateBasicsData = {
+  body: ProfessionalProfile;
+  path?: never;
+  query?: never;
+  url: '/api/v1/me/profile';
+};
+
+export type UpdateBasicsErrors = {
+  /**
+   * Not Found
+   */
+  404: ResponseDtoVoid;
+  /**
+   * Internal Server Error
+   */
+  500: ResponseDtoVoid;
+};
+
+export type UpdateBasicsError = UpdateBasicsErrors[keyof UpdateBasicsErrors];
+
+export type UpdateBasicsResponses = {
+  /**
+   * OK
+   */
+  200: ApiResponseProfessionalProfile;
+};
+
+export type UpdateBasicsResponse = UpdateBasicsResponses[keyof UpdateBasicsResponses];
+
+export type DeleteSkillData = {
+  body?: never;
+  path: {
+    itemUuid: string;
+  };
+  query?: never;
+  url: '/api/v1/me/profile/skills/{itemUuid}';
+};
+
+export type DeleteSkillErrors = {
+  /**
+   * Not Found
+   */
+  404: ResponseDtoVoid;
+  /**
+   * Internal Server Error
+   */
+  500: ResponseDtoVoid;
+};
+
+export type DeleteSkillError = DeleteSkillErrors[keyof DeleteSkillErrors];
+
+export type DeleteSkillResponses = {
+  /**
+   * OK
+   */
+  200: unknown;
+};
+
+export type UpdateSkillData = {
+  body: UserSkill;
+  path: {
+    itemUuid: string;
+  };
+  query?: never;
+  url: '/api/v1/me/profile/skills/{itemUuid}';
+};
+
+export type UpdateSkillErrors = {
+  /**
+   * Not Found
+   */
+  404: ResponseDtoVoid;
+  /**
+   * Internal Server Error
+   */
+  500: ResponseDtoVoid;
+};
+
+export type UpdateSkillError = UpdateSkillErrors[keyof UpdateSkillErrors];
+
+export type UpdateSkillResponses = {
+  /**
+   * OK
+   */
+  200: ApiResponseUserSkill;
+};
+
+export type UpdateSkillResponse = UpdateSkillResponses[keyof UpdateSkillResponses];
+
+export type DeletePortfolioItemData = {
+  body?: never;
+  path: {
+    itemUuid: string;
+  };
+  query?: never;
+  url: '/api/v1/me/profile/portfolio/{itemUuid}';
+};
+
+export type DeletePortfolioItemErrors = {
+  /**
+   * Not Found
+   */
+  404: ResponseDtoVoid;
+  /**
+   * Internal Server Error
+   */
+  500: ResponseDtoVoid;
+};
+
+export type DeletePortfolioItemError = DeletePortfolioItemErrors[keyof DeletePortfolioItemErrors];
+
+export type DeletePortfolioItemResponses = {
+  /**
+   * OK
+   */
+  200: unknown;
+};
+
+export type UpdatePortfolioItemData = {
+  body: UserPortfolioItem;
+  path: {
+    itemUuid: string;
+  };
+  query?: never;
+  url: '/api/v1/me/profile/portfolio/{itemUuid}';
+};
+
+export type UpdatePortfolioItemErrors = {
+  /**
+   * Not Found
+   */
+  404: ResponseDtoVoid;
+  /**
+   * Internal Server Error
+   */
+  500: ResponseDtoVoid;
+};
+
+export type UpdatePortfolioItemError = UpdatePortfolioItemErrors[keyof UpdatePortfolioItemErrors];
+
+export type UpdatePortfolioItemResponses = {
+  /**
+   * OK
+   */
+  200: ApiResponseUserPortfolioItem;
+};
+
+export type UpdatePortfolioItemResponse =
+  UpdatePortfolioItemResponses[keyof UpdatePortfolioItemResponses];
+
+export type DeleteMembershipData = {
+  body?: never;
+  path: {
+    itemUuid: string;
+  };
+  query?: never;
+  url: '/api/v1/me/profile/memberships/{itemUuid}';
+};
+
+export type DeleteMembershipErrors = {
+  /**
+   * Not Found
+   */
+  404: ResponseDtoVoid;
+  /**
+   * Internal Server Error
+   */
+  500: ResponseDtoVoid;
+};
+
+export type DeleteMembershipError = DeleteMembershipErrors[keyof DeleteMembershipErrors];
+
+export type DeleteMembershipResponses = {
+  /**
+   * OK
+   */
+  200: unknown;
+};
+
+export type UpdateMembershipData = {
+  body: UserMembership;
+  path: {
+    itemUuid: string;
+  };
+  query?: never;
+  url: '/api/v1/me/profile/memberships/{itemUuid}';
+};
+
+export type UpdateMembershipErrors = {
+  /**
+   * Not Found
+   */
+  404: ResponseDtoVoid;
+  /**
+   * Internal Server Error
+   */
+  500: ResponseDtoVoid;
+};
+
+export type UpdateMembershipError = UpdateMembershipErrors[keyof UpdateMembershipErrors];
+
+export type UpdateMembershipResponses = {
+  /**
+   * OK
+   */
+  200: ApiResponseUserMembership;
+};
+
+export type UpdateMembershipResponse = UpdateMembershipResponses[keyof UpdateMembershipResponses];
+
+export type DeleteExperienceData = {
+  body?: never;
+  path: {
+    itemUuid: string;
+  };
+  query?: never;
+  url: '/api/v1/me/profile/experience/{itemUuid}';
+};
+
+export type DeleteExperienceErrors = {
+  /**
+   * Not Found
+   */
+  404: ResponseDtoVoid;
+  /**
+   * Internal Server Error
+   */
+  500: ResponseDtoVoid;
+};
+
+export type DeleteExperienceError = DeleteExperienceErrors[keyof DeleteExperienceErrors];
+
+export type DeleteExperienceResponses = {
+  /**
+   * OK
+   */
+  200: unknown;
+};
+
+export type UpdateExperienceData = {
+  body: UserExperience;
+  path: {
+    itemUuid: string;
+  };
+  query?: never;
+  url: '/api/v1/me/profile/experience/{itemUuid}';
+};
+
+export type UpdateExperienceErrors = {
+  /**
+   * Not Found
+   */
+  404: ResponseDtoVoid;
+  /**
+   * Internal Server Error
+   */
+  500: ResponseDtoVoid;
+};
+
+export type UpdateExperienceError = UpdateExperienceErrors[keyof UpdateExperienceErrors];
+
+export type UpdateExperienceResponses = {
+  /**
+   * OK
+   */
+  200: ApiResponseUserExperience;
+};
+
+export type UpdateExperienceResponse = UpdateExperienceResponses[keyof UpdateExperienceResponses];
+
+export type DeleteEducationData = {
+  body?: never;
+  path: {
+    itemUuid: string;
+  };
+  query?: never;
+  url: '/api/v1/me/profile/education/{itemUuid}';
+};
+
+export type DeleteEducationErrors = {
+  /**
+   * Not Found
+   */
+  404: ResponseDtoVoid;
+  /**
+   * Internal Server Error
+   */
+  500: ResponseDtoVoid;
+};
+
+export type DeleteEducationError = DeleteEducationErrors[keyof DeleteEducationErrors];
+
+export type DeleteEducationResponses = {
+  /**
+   * OK
+   */
+  200: unknown;
+};
+
+export type UpdateEducationData = {
+  body: UserEducation;
+  path: {
+    itemUuid: string;
+  };
+  query?: never;
+  url: '/api/v1/me/profile/education/{itemUuid}';
+};
+
+export type UpdateEducationErrors = {
+  /**
+   * Not Found
+   */
+  404: ResponseDtoVoid;
+  /**
+   * Internal Server Error
+   */
+  500: ResponseDtoVoid;
+};
+
+export type UpdateEducationError = UpdateEducationErrors[keyof UpdateEducationErrors];
+
+export type UpdateEducationResponses = {
+  /**
+   * OK
+   */
+  200: ApiResponseUserEducation;
+};
+
+export type UpdateEducationResponse = UpdateEducationResponses[keyof UpdateEducationResponses];
+
+export type DeleteDocumentData = {
+  body?: never;
+  path: {
+    itemUuid: string;
+  };
+  query?: never;
+  url: '/api/v1/me/profile/documents/{itemUuid}';
+};
+
+export type DeleteDocumentErrors = {
+  /**
+   * Not Found
+   */
+  404: ResponseDtoVoid;
+  /**
+   * Internal Server Error
+   */
+  500: ResponseDtoVoid;
+};
+
+export type DeleteDocumentError = DeleteDocumentErrors[keyof DeleteDocumentErrors];
+
+export type DeleteDocumentResponses = {
+  /**
+   * OK
+   */
+  200: unknown;
+};
+
+export type UpdateDocumentData = {
+  body: UserDocument;
+  path: {
+    itemUuid: string;
+  };
+  query?: never;
+  url: '/api/v1/me/profile/documents/{itemUuid}';
+};
+
+export type UpdateDocumentErrors = {
+  /**
+   * Not Found
+   */
+  404: ResponseDtoVoid;
+  /**
+   * Internal Server Error
+   */
+  500: ResponseDtoVoid;
+};
+
+export type UpdateDocumentError = UpdateDocumentErrors[keyof UpdateDocumentErrors];
+
+export type UpdateDocumentResponses = {
+  /**
+   * OK
+   */
+  200: ApiResponseUserDocument;
+};
+
+export type UpdateDocumentResponse = UpdateDocumentResponses[keyof UpdateDocumentResponses];
+
+export type DeleteCompetencyData = {
+  body?: never;
+  path: {
+    itemUuid: string;
+  };
+  query?: never;
+  url: '/api/v1/me/profile/competencies/{itemUuid}';
+};
+
+export type DeleteCompetencyErrors = {
+  /**
+   * Not Found
+   */
+  404: ResponseDtoVoid;
+  /**
+   * Internal Server Error
+   */
+  500: ResponseDtoVoid;
+};
+
+export type DeleteCompetencyError = DeleteCompetencyErrors[keyof DeleteCompetencyErrors];
+
+export type DeleteCompetencyResponses = {
+  /**
+   * OK
+   */
+  200: unknown;
+};
+
+export type UpdateCompetencyData = {
+  body: UserCompetency;
+  path: {
+    itemUuid: string;
+  };
+  query?: never;
+  url: '/api/v1/me/profile/competencies/{itemUuid}';
+};
+
+export type UpdateCompetencyErrors = {
+  /**
+   * Not Found
+   */
+  404: ResponseDtoVoid;
+  /**
+   * Internal Server Error
+   */
+  500: ResponseDtoVoid;
+};
+
+export type UpdateCompetencyError = UpdateCompetencyErrors[keyof UpdateCompetencyErrors];
+
+export type UpdateCompetencyResponses = {
+  /**
+   * OK
+   */
+  200: ApiResponseUserCompetency;
+};
+
+export type UpdateCompetencyResponse = UpdateCompetencyResponses[keyof UpdateCompetencyResponses];
+
+export type DeleteCertificationData = {
+  body?: never;
+  path: {
+    itemUuid: string;
+  };
+  query?: never;
+  url: '/api/v1/me/profile/certifications/{itemUuid}';
+};
+
+export type DeleteCertificationErrors = {
+  /**
+   * Not Found
+   */
+  404: ResponseDtoVoid;
+  /**
+   * Internal Server Error
+   */
+  500: ResponseDtoVoid;
+};
+
+export type DeleteCertificationError = DeleteCertificationErrors[keyof DeleteCertificationErrors];
+
+export type DeleteCertificationResponses = {
+  /**
+   * OK
+   */
+  200: unknown;
+};
+
+export type UpdateCertificationData = {
+  body: UserCertification;
+  path: {
+    itemUuid: string;
+  };
+  query?: never;
+  url: '/api/v1/me/profile/certifications/{itemUuid}';
+};
+
+export type UpdateCertificationErrors = {
+  /**
+   * Not Found
+   */
+  404: ResponseDtoVoid;
+  /**
+   * Internal Server Error
+   */
+  500: ResponseDtoVoid;
+};
+
+export type UpdateCertificationError = UpdateCertificationErrors[keyof UpdateCertificationErrors];
+
+export type UpdateCertificationResponses = {
+  /**
+   * OK
+   */
+  200: ApiResponseUserCertification;
+};
+
+export type UpdateCertificationResponse =
+  UpdateCertificationResponses[keyof UpdateCertificationResponses];
+
+export type DeleteAchievementData = {
+  body?: never;
+  path: {
+    itemUuid: string;
+  };
+  query?: never;
+  url: '/api/v1/me/profile/achievements/{itemUuid}';
+};
+
+export type DeleteAchievementErrors = {
+  /**
+   * Not Found
+   */
+  404: ResponseDtoVoid;
+  /**
+   * Internal Server Error
+   */
+  500: ResponseDtoVoid;
+};
+
+export type DeleteAchievementError = DeleteAchievementErrors[keyof DeleteAchievementErrors];
+
+export type DeleteAchievementResponses = {
+  /**
+   * OK
+   */
+  200: unknown;
+};
+
+export type UpdateAchievementData = {
+  body: UserAchievement;
+  path: {
+    itemUuid: string;
+  };
+  query?: never;
+  url: '/api/v1/me/profile/achievements/{itemUuid}';
+};
+
+export type UpdateAchievementErrors = {
+  /**
+   * Not Found
+   */
+  404: ResponseDtoVoid;
+  /**
+   * Internal Server Error
+   */
+  500: ResponseDtoVoid;
+};
+
+export type UpdateAchievementError = UpdateAchievementErrors[keyof UpdateAchievementErrors];
+
+export type UpdateAchievementResponses = {
+  /**
+   * OK
+   */
+  200: ApiResponseUserAchievement;
+};
+
+export type UpdateAchievementResponse =
+  UpdateAchievementResponses[keyof UpdateAchievementResponses];
 
 export type DeleteInstructorData = {
   body?: never;
@@ -19508,6 +21505,72 @@ export type UpdateLessonContentResponses = {
 export type UpdateLessonContentResponse =
   UpdateLessonContentResponses[keyof UpdateLessonContentResponses];
 
+export type GetCourseEvaluationPlanData = {
+  body?: never;
+  path: {
+    courseUuid: string;
+  };
+  query?: never;
+  url: '/api/v1/courses/{courseUuid}/evaluation-plan';
+};
+
+export type GetCourseEvaluationPlanErrors = {
+  /**
+   * Not Found
+   */
+  404: ResponseDtoVoid;
+  /**
+   * Internal Server Error
+   */
+  500: ResponseDtoVoid;
+};
+
+export type GetCourseEvaluationPlanError =
+  GetCourseEvaluationPlanErrors[keyof GetCourseEvaluationPlanErrors];
+
+export type GetCourseEvaluationPlanResponses = {
+  /**
+   * OK
+   */
+  200: ApiResponseCourseEvaluationPlan;
+};
+
+export type GetCourseEvaluationPlanResponse =
+  GetCourseEvaluationPlanResponses[keyof GetCourseEvaluationPlanResponses];
+
+export type UpdateCourseEvaluationPlanData = {
+  body: CourseEvaluationPlanUpdate;
+  path: {
+    courseUuid: string;
+  };
+  query?: never;
+  url: '/api/v1/courses/{courseUuid}/evaluation-plan';
+};
+
+export type UpdateCourseEvaluationPlanErrors = {
+  /**
+   * Not Found
+   */
+  404: ResponseDtoVoid;
+  /**
+   * Internal Server Error
+   */
+  500: ResponseDtoVoid;
+};
+
+export type UpdateCourseEvaluationPlanError =
+  UpdateCourseEvaluationPlanErrors[keyof UpdateCourseEvaluationPlanErrors];
+
+export type UpdateCourseEvaluationPlanResponses = {
+  /**
+   * OK
+   */
+  200: ApiResponseCourseEvaluationPlan;
+};
+
+export type UpdateCourseEvaluationPlanResponse =
+  UpdateCourseEvaluationPlanResponses[keyof UpdateCourseEvaluationPlanResponses];
+
 export type DeleteCourseAssessmentData = {
   body?: never;
   path: {
@@ -19906,6 +21969,71 @@ export type UpdateCourseCreatorSkillResponses = {
 export type UpdateCourseCreatorSkillResponse =
   UpdateCourseCreatorSkillResponses[keyof UpdateCourseCreatorSkillResponses];
 
+export type DeleteCourseCreatorPortfolioItemData = {
+  body?: never;
+  path: {
+    courseCreatorUuid: string;
+    itemUuid: string;
+  };
+  query?: never;
+  url: '/api/v1/course-creators/{courseCreatorUuid}/portfolio/{itemUuid}';
+};
+
+export type DeleteCourseCreatorPortfolioItemErrors = {
+  /**
+   * Not Found
+   */
+  404: ResponseDtoVoid;
+  /**
+   * Internal Server Error
+   */
+  500: ResponseDtoVoid;
+};
+
+export type DeleteCourseCreatorPortfolioItemError =
+  DeleteCourseCreatorPortfolioItemErrors[keyof DeleteCourseCreatorPortfolioItemErrors];
+
+export type DeleteCourseCreatorPortfolioItemResponses = {
+  /**
+   * OK
+   */
+  200: unknown;
+};
+
+export type UpdateCourseCreatorPortfolioItemData = {
+  body: CourseCreatorPortfolioItem;
+  path: {
+    courseCreatorUuid: string;
+    itemUuid: string;
+  };
+  query?: never;
+  url: '/api/v1/course-creators/{courseCreatorUuid}/portfolio/{itemUuid}';
+};
+
+export type UpdateCourseCreatorPortfolioItemErrors = {
+  /**
+   * Not Found
+   */
+  404: ResponseDtoVoid;
+  /**
+   * Internal Server Error
+   */
+  500: ResponseDtoVoid;
+};
+
+export type UpdateCourseCreatorPortfolioItemError =
+  UpdateCourseCreatorPortfolioItemErrors[keyof UpdateCourseCreatorPortfolioItemErrors];
+
+export type UpdateCourseCreatorPortfolioItemResponses = {
+  /**
+   * OK
+   */
+  200: ApiResponseCourseCreatorPortfolioItem;
+};
+
+export type UpdateCourseCreatorPortfolioItemResponse =
+  UpdateCourseCreatorPortfolioItemResponses[keyof UpdateCourseCreatorPortfolioItemResponses];
+
 export type DeleteCourseCreatorMembershipData = {
   body?: never;
   path: {
@@ -20166,6 +22294,71 @@ export type UpdateCourseCreatorDocumentResponses = {
 export type UpdateCourseCreatorDocumentResponse =
   UpdateCourseCreatorDocumentResponses[keyof UpdateCourseCreatorDocumentResponses];
 
+export type DeleteCourseCreatorCompetencyData = {
+  body?: never;
+  path: {
+    courseCreatorUuid: string;
+    itemUuid: string;
+  };
+  query?: never;
+  url: '/api/v1/course-creators/{courseCreatorUuid}/competencies/{itemUuid}';
+};
+
+export type DeleteCourseCreatorCompetencyErrors = {
+  /**
+   * Not Found
+   */
+  404: ResponseDtoVoid;
+  /**
+   * Internal Server Error
+   */
+  500: ResponseDtoVoid;
+};
+
+export type DeleteCourseCreatorCompetencyError =
+  DeleteCourseCreatorCompetencyErrors[keyof DeleteCourseCreatorCompetencyErrors];
+
+export type DeleteCourseCreatorCompetencyResponses = {
+  /**
+   * OK
+   */
+  200: unknown;
+};
+
+export type UpdateCourseCreatorCompetencyData = {
+  body: CourseCreatorCompetency;
+  path: {
+    courseCreatorUuid: string;
+    itemUuid: string;
+  };
+  query?: never;
+  url: '/api/v1/course-creators/{courseCreatorUuid}/competencies/{itemUuid}';
+};
+
+export type UpdateCourseCreatorCompetencyErrors = {
+  /**
+   * Not Found
+   */
+  404: ResponseDtoVoid;
+  /**
+   * Internal Server Error
+   */
+  500: ResponseDtoVoid;
+};
+
+export type UpdateCourseCreatorCompetencyError =
+  UpdateCourseCreatorCompetencyErrors[keyof UpdateCourseCreatorCompetencyErrors];
+
+export type UpdateCourseCreatorCompetencyResponses = {
+  /**
+   * OK
+   */
+  200: ApiResponseCourseCreatorCompetency;
+};
+
+export type UpdateCourseCreatorCompetencyResponse =
+  UpdateCourseCreatorCompetencyResponses[keyof UpdateCourseCreatorCompetencyResponses];
+
 export type DeleteCourseCreatorCertificationData = {
   body?: never;
   path: {
@@ -20230,6 +22423,100 @@ export type UpdateCourseCreatorCertificationResponses = {
 
 export type UpdateCourseCreatorCertificationResponse =
   UpdateCourseCreatorCertificationResponses[keyof UpdateCourseCreatorCertificationResponses];
+
+export type DeleteCourseCreatorAchievementData = {
+  body?: never;
+  path: {
+    courseCreatorUuid: string;
+    itemUuid: string;
+  };
+  query?: never;
+  url: '/api/v1/course-creators/{courseCreatorUuid}/achievements/{itemUuid}';
+};
+
+export type DeleteCourseCreatorAchievementErrors = {
+  /**
+   * Not Found
+   */
+  404: ResponseDtoVoid;
+  /**
+   * Internal Server Error
+   */
+  500: ResponseDtoVoid;
+};
+
+export type DeleteCourseCreatorAchievementError =
+  DeleteCourseCreatorAchievementErrors[keyof DeleteCourseCreatorAchievementErrors];
+
+export type DeleteCourseCreatorAchievementResponses = {
+  /**
+   * OK
+   */
+  200: unknown;
+};
+
+export type UpdateCourseCreatorAchievementData = {
+  body: CourseCreatorAchievement;
+  path: {
+    courseCreatorUuid: string;
+    itemUuid: string;
+  };
+  query?: never;
+  url: '/api/v1/course-creators/{courseCreatorUuid}/achievements/{itemUuid}';
+};
+
+export type UpdateCourseCreatorAchievementErrors = {
+  /**
+   * Not Found
+   */
+  404: ResponseDtoVoid;
+  /**
+   * Internal Server Error
+   */
+  500: ResponseDtoVoid;
+};
+
+export type UpdateCourseCreatorAchievementError =
+  UpdateCourseCreatorAchievementErrors[keyof UpdateCourseCreatorAchievementErrors];
+
+export type UpdateCourseCreatorAchievementResponses = {
+  /**
+   * OK
+   */
+  200: ApiResponseCourseCreatorAchievement;
+};
+
+export type UpdateCourseCreatorAchievementResponse =
+  UpdateCourseCreatorAchievementResponses[keyof UpdateCourseCreatorAchievementResponses];
+
+export type UpdateCategoriesData = {
+  body: CourseCreatorCategoriesRequest;
+  path?: never;
+  query?: never;
+  url: '/api/v1/course-creators/me/onboarding/categories';
+};
+
+export type UpdateCategoriesErrors = {
+  /**
+   * Not Found
+   */
+  404: ResponseDtoVoid;
+  /**
+   * Internal Server Error
+   */
+  500: ResponseDtoVoid;
+};
+
+export type UpdateCategoriesError = UpdateCategoriesErrors[keyof UpdateCategoriesErrors];
+
+export type UpdateCategoriesResponses = {
+  /**
+   * OK
+   */
+  200: ApiResponseCourseCreatorOnboardingStateDto;
+};
+
+export type UpdateCategoriesResponse = UpdateCategoriesResponses[keyof UpdateCategoriesResponses];
 
 export type DeleteGradingLevelData = {
   body?: never;
@@ -21690,7 +23977,7 @@ export type GetAllStudentsResponses = {
 export type GetAllStudentsResponse = GetAllStudentsResponses[keyof GetAllStudentsResponses];
 
 export type CreateStudentData = {
-  body: Student;
+  body: StudentWritable;
   path?: never;
   query?: never;
   url: '/api/v1/students';
@@ -21725,6 +24012,194 @@ export type CreateStudentResponses = {
 };
 
 export type CreateStudentResponse = CreateStudentResponses[keyof CreateStudentResponses];
+
+export type ResendInvitationData = {
+  body?: never;
+  path: {
+    studentUuid: string;
+    guardianUuid: string;
+  };
+  query?: never;
+  url: '/api/v1/students/{studentUuid}/guardians/{guardianUuid}/resend-invitation';
+};
+
+export type ResendInvitationErrors = {
+  /**
+   * Not Found
+   */
+  404: ResponseDtoVoid;
+  /**
+   * Internal Server Error
+   */
+  500: ResponseDtoVoid;
+};
+
+export type ResendInvitationError = ResendInvitationErrors[keyof ResendInvitationErrors];
+
+export type ResendInvitationResponses = {
+  /**
+   * OK
+   */
+  200: ApiResponseStudentGuardian;
+};
+
+export type ResendInvitationResponse = ResendInvitationResponses[keyof ResendInvitationResponses];
+
+export type DeclineByUuidData = {
+  body?: never;
+  path: {
+    invitationUuid: string;
+  };
+  query?: never;
+  url: '/api/v1/student-guardian-invitations/{invitationUuid}/decline';
+};
+
+export type DeclineByUuidErrors = {
+  /**
+   * Not Found
+   */
+  404: ResponseDtoVoid;
+  /**
+   * Internal Server Error
+   */
+  500: ResponseDtoVoid;
+};
+
+export type DeclineByUuidError = DeclineByUuidErrors[keyof DeclineByUuidErrors];
+
+export type DeclineByUuidResponses = {
+  /**
+   * OK
+   */
+  200: ApiResponseVoid;
+};
+
+export type DeclineByUuidResponse = DeclineByUuidResponses[keyof DeclineByUuidResponses];
+
+export type AcceptByUuidData = {
+  body?: never;
+  path: {
+    invitationUuid: string;
+  };
+  query?: never;
+  url: '/api/v1/student-guardian-invitations/{invitationUuid}/accept';
+};
+
+export type AcceptByUuidErrors = {
+  /**
+   * Not Found
+   */
+  404: ResponseDtoVoid;
+  /**
+   * Internal Server Error
+   */
+  500: ResponseDtoVoid;
+};
+
+export type AcceptByUuidError = AcceptByUuidErrors[keyof AcceptByUuidErrors];
+
+export type AcceptByUuidResponses = {
+  /**
+   * OK
+   */
+  200: ApiResponseGuardianStudentLink;
+};
+
+export type AcceptByUuidResponse = AcceptByUuidResponses[keyof AcceptByUuidResponses];
+
+export type RegisterAndAcceptData = {
+  body: GuardianInvitationRegistrationRequest;
+  path: {
+    token: string;
+  };
+  query?: never;
+  url: '/api/v1/student-guardian-invitations/token/{token}/register';
+};
+
+export type RegisterAndAcceptErrors = {
+  /**
+   * Not Found
+   */
+  404: ResponseDtoVoid;
+  /**
+   * Internal Server Error
+   */
+  500: ResponseDtoVoid;
+};
+
+export type RegisterAndAcceptError = RegisterAndAcceptErrors[keyof RegisterAndAcceptErrors];
+
+export type RegisterAndAcceptResponses = {
+  /**
+   * OK
+   */
+  200: ApiResponseGuardianStudentLink;
+};
+
+export type RegisterAndAcceptResponse =
+  RegisterAndAcceptResponses[keyof RegisterAndAcceptResponses];
+
+export type DeclineByTokenData = {
+  body?: never;
+  path: {
+    token: string;
+  };
+  query?: never;
+  url: '/api/v1/student-guardian-invitations/token/{token}/decline';
+};
+
+export type DeclineByTokenErrors = {
+  /**
+   * Not Found
+   */
+  404: ResponseDtoVoid;
+  /**
+   * Internal Server Error
+   */
+  500: ResponseDtoVoid;
+};
+
+export type DeclineByTokenError = DeclineByTokenErrors[keyof DeclineByTokenErrors];
+
+export type DeclineByTokenResponses = {
+  /**
+   * OK
+   */
+  200: ApiResponseVoid;
+};
+
+export type DeclineByTokenResponse = DeclineByTokenResponses[keyof DeclineByTokenResponses];
+
+export type AcceptByTokenData = {
+  body?: never;
+  path: {
+    token: string;
+  };
+  query?: never;
+  url: '/api/v1/student-guardian-invitations/token/{token}/accept';
+};
+
+export type AcceptByTokenErrors = {
+  /**
+   * Not Found
+   */
+  404: ResponseDtoVoid;
+  /**
+   * Internal Server Error
+   */
+  500: ResponseDtoVoid;
+};
+
+export type AcceptByTokenError = AcceptByTokenErrors[keyof AcceptByTokenErrors];
+
+export type AcceptByTokenResponses = {
+  /**
+   * OK
+   */
+  200: ApiResponseGuardianStudentLink;
+};
+
+export type AcceptByTokenResponse = AcceptByTokenResponses[keyof AcceptByTokenResponses];
 
 export type ListMembersData = {
   body?: never;
@@ -21925,6 +24400,42 @@ export type CreateRubricScoringLevelResponses = {
 
 export type CreateRubricScoringLevelResponse =
   CreateRubricScoringLevelResponses[keyof CreateRubricScoringLevelResponses];
+
+export type CreateStandardRubricScoringLevelsData = {
+  body?: never;
+  path: {
+    /**
+     * UUID of the rubric
+     */
+    rubricUuid: string;
+  };
+  query?: never;
+  url: '/api/v1/rubrics/{rubricUuid}/scoring-levels/standard';
+};
+
+export type CreateStandardRubricScoringLevelsErrors = {
+  /**
+   * Not Found
+   */
+  404: ResponseDtoVoid;
+  /**
+   * Internal Server Error
+   */
+  500: ResponseDtoVoid;
+};
+
+export type CreateStandardRubricScoringLevelsError =
+  CreateStandardRubricScoringLevelsErrors[keyof CreateStandardRubricScoringLevelsErrors];
+
+export type CreateStandardRubricScoringLevelsResponses = {
+  /**
+   * OK
+   */
+  200: ApiResponseListRubricScoringLevel;
+};
+
+export type CreateStandardRubricScoringLevelsResponse =
+  CreateStandardRubricScoringLevelsResponses[keyof CreateStandardRubricScoringLevelsResponses];
 
 export type CreateRubricScoringLevelsBatchData = {
   body: Array<RubricScoringLevel>;
@@ -22128,6 +24639,95 @@ export type AddRubricScoringResponses = {
 };
 
 export type AddRubricScoringResponse = AddRubricScoringResponses[keyof AddRubricScoringResponses];
+
+export type RegisterData = {
+  body: RegistrationRequest;
+  path?: never;
+  query?: never;
+  url: '/api/v1/registrations';
+};
+
+export type RegisterErrors = {
+  /**
+   * Not Found
+   */
+  404: ResponseDtoVoid;
+  /**
+   * Internal Server Error
+   */
+  500: ResponseDtoVoid;
+};
+
+export type RegisterError = RegisterErrors[keyof RegisterErrors];
+
+export type RegisterResponses = {
+  /**
+   * OK
+   */
+  200: ApiResponseRegistrationAccepted;
+};
+
+export type RegisterResponse = RegisterResponses[keyof RegisterResponses];
+
+export type ResendRegistrationEmailData = {
+  body: RegistrationResendRequest;
+  path?: never;
+  query?: never;
+  url: '/api/v1/registrations/resend';
+};
+
+export type ResendRegistrationEmailErrors = {
+  /**
+   * Not Found
+   */
+  404: ResponseDtoVoid;
+  /**
+   * Internal Server Error
+   */
+  500: ResponseDtoVoid;
+};
+
+export type ResendRegistrationEmailError =
+  ResendRegistrationEmailErrors[keyof ResendRegistrationEmailErrors];
+
+export type ResendRegistrationEmailResponses = {
+  /**
+   * OK
+   */
+  200: ApiResponseRegistrationAccepted;
+};
+
+export type ResendRegistrationEmailResponse =
+  ResendRegistrationEmailResponses[keyof ResendRegistrationEmailResponses];
+
+export type ApplyForDomainData = {
+  body: DomainApplicationRequest;
+  path?: never;
+  query?: never;
+  url: '/api/v1/registrations/me/domains';
+};
+
+export type ApplyForDomainErrors = {
+  /**
+   * Not Found
+   */
+  404: ResponseDtoVoid;
+  /**
+   * Internal Server Error
+   */
+  500: ResponseDtoVoid;
+};
+
+export type ApplyForDomainError = ApplyForDomainErrors[keyof ApplyForDomainErrors];
+
+export type ApplyForDomainResponses = {
+  /**
+   * OK
+   */
+  200: ApiResponseDomainApplication;
+};
+
+export type ApplyForDomainResponse = ApplyForDomainResponses[keyof ApplyForDomainResponses];
 
 export type GetAllQuizzesData = {
   body?: never;
@@ -22607,6 +25207,41 @@ export type UnpublishProgramResponses = {
 
 export type UnpublishProgramResponse = UnpublishProgramResponses[keyof UnpublishProgramResponses];
 
+export type UploadProgramThumbnailData = {
+  body?: {
+    thumbnail: Blob | File;
+  };
+  path: {
+    uuid: string;
+  };
+  query?: never;
+  url: '/api/v1/programs/{uuid}/thumbnail';
+};
+
+export type UploadProgramThumbnailErrors = {
+  /**
+   * Not Found
+   */
+  404: ResponseDtoVoid;
+  /**
+   * Internal Server Error
+   */
+  500: ResponseDtoVoid;
+};
+
+export type UploadProgramThumbnailError =
+  UploadProgramThumbnailErrors[keyof UploadProgramThumbnailErrors];
+
+export type UploadProgramThumbnailResponses = {
+  /**
+   * OK
+   */
+  200: ApiResponseTrainingProgram;
+};
+
+export type UploadProgramThumbnailResponse =
+  UploadProgramThumbnailResponses[keyof UploadProgramThumbnailResponses];
+
 export type PublishProgramData = {
   body?: never;
   path: {
@@ -22645,6 +25280,141 @@ export type PublishProgramResponses = {
 };
 
 export type PublishProgramResponse = PublishProgramResponses[keyof PublishProgramResponses];
+
+export type UploadProgramIntroVideoData = {
+  body?: {
+    intro_video: Blob | File;
+  };
+  path: {
+    uuid: string;
+  };
+  query?: never;
+  url: '/api/v1/programs/{uuid}/intro-video';
+};
+
+export type UploadProgramIntroVideoErrors = {
+  /**
+   * Not Found
+   */
+  404: ResponseDtoVoid;
+  /**
+   * Internal Server Error
+   */
+  500: ResponseDtoVoid;
+};
+
+export type UploadProgramIntroVideoError =
+  UploadProgramIntroVideoErrors[keyof UploadProgramIntroVideoErrors];
+
+export type UploadProgramIntroVideoResponses = {
+  /**
+   * OK
+   */
+  200: ApiResponseTrainingProgram;
+};
+
+export type UploadProgramIntroVideoResponse =
+  UploadProgramIntroVideoResponses[keyof UploadProgramIntroVideoResponses];
+
+export type UploadProgramBannerData = {
+  body?: {
+    banner: Blob | File;
+  };
+  path: {
+    uuid: string;
+  };
+  query?: never;
+  url: '/api/v1/programs/{uuid}/banner';
+};
+
+export type UploadProgramBannerErrors = {
+  /**
+   * Not Found
+   */
+  404: ResponseDtoVoid;
+  /**
+   * Internal Server Error
+   */
+  500: ResponseDtoVoid;
+};
+
+export type UploadProgramBannerError = UploadProgramBannerErrors[keyof UploadProgramBannerErrors];
+
+export type UploadProgramBannerResponses = {
+  /**
+   * OK
+   */
+  200: ApiResponseTrainingProgram;
+};
+
+export type UploadProgramBannerResponse =
+  UploadProgramBannerResponses[keyof UploadProgramBannerResponses];
+
+export type GetProgramAssessmentsData = {
+  body?: never;
+  path: {
+    uuid: string;
+  };
+  query?: never;
+  url: '/api/v1/programs/{uuid}/assessments';
+};
+
+export type GetProgramAssessmentsErrors = {
+  /**
+   * Not Found
+   */
+  404: ResponseDtoVoid;
+  /**
+   * Internal Server Error
+   */
+  500: ResponseDtoVoid;
+};
+
+export type GetProgramAssessmentsError =
+  GetProgramAssessmentsErrors[keyof GetProgramAssessmentsErrors];
+
+export type GetProgramAssessmentsResponses = {
+  /**
+   * OK
+   */
+  200: ApiResponseListProgramAssessment;
+};
+
+export type GetProgramAssessmentsResponse =
+  GetProgramAssessmentsResponses[keyof GetProgramAssessmentsResponses];
+
+export type CreateProgramAssessmentData = {
+  body: ProgramAssessment;
+  path: {
+    uuid: string;
+  };
+  query?: never;
+  url: '/api/v1/programs/{uuid}/assessments';
+};
+
+export type CreateProgramAssessmentErrors = {
+  /**
+   * Not Found
+   */
+  404: ResponseDtoVoid;
+  /**
+   * Internal Server Error
+   */
+  500: ResponseDtoVoid;
+};
+
+export type CreateProgramAssessmentError =
+  CreateProgramAssessmentErrors[keyof CreateProgramAssessmentErrors];
+
+export type CreateProgramAssessmentResponses = {
+  /**
+   * OK
+   */
+  200: ApiResponseProgramAssessment;
+};
+
+export type CreateProgramAssessmentResponse =
+  CreateProgramAssessmentResponses[keyof CreateProgramAssessmentResponses];
 
 export type ArchiveProgramData = {
   body?: never;
@@ -24196,6 +26966,539 @@ export type ApplyActionResponses = {
 };
 
 export type ApplyActionResponse = ApplyActionResponses[keyof ApplyActionResponses];
+
+export type ListSkillsData = {
+  body?: never;
+  path?: never;
+  query?: never;
+  url: '/api/v1/me/profile/skills';
+};
+
+export type ListSkillsErrors = {
+  /**
+   * Not Found
+   */
+  404: ResponseDtoVoid;
+  /**
+   * Internal Server Error
+   */
+  500: ResponseDtoVoid;
+};
+
+export type ListSkillsError = ListSkillsErrors[keyof ListSkillsErrors];
+
+export type ListSkillsResponses = {
+  /**
+   * OK
+   */
+  200: ApiResponseListUserSkill;
+};
+
+export type ListSkillsResponse = ListSkillsResponses[keyof ListSkillsResponses];
+
+export type AddSkillData = {
+  body: UserSkill;
+  path?: never;
+  query?: never;
+  url: '/api/v1/me/profile/skills';
+};
+
+export type AddSkillErrors = {
+  /**
+   * Not Found
+   */
+  404: ResponseDtoVoid;
+  /**
+   * Internal Server Error
+   */
+  500: ResponseDtoVoid;
+};
+
+export type AddSkillError = AddSkillErrors[keyof AddSkillErrors];
+
+export type AddSkillResponses = {
+  /**
+   * OK
+   */
+  200: ApiResponseUserSkill;
+};
+
+export type AddSkillResponse = AddSkillResponses[keyof AddSkillResponses];
+
+export type ListPortfolioData = {
+  body?: never;
+  path?: never;
+  query?: never;
+  url: '/api/v1/me/profile/portfolio';
+};
+
+export type ListPortfolioErrors = {
+  /**
+   * Not Found
+   */
+  404: ResponseDtoVoid;
+  /**
+   * Internal Server Error
+   */
+  500: ResponseDtoVoid;
+};
+
+export type ListPortfolioError = ListPortfolioErrors[keyof ListPortfolioErrors];
+
+export type ListPortfolioResponses = {
+  /**
+   * OK
+   */
+  200: ApiResponseListUserPortfolioItem;
+};
+
+export type ListPortfolioResponse = ListPortfolioResponses[keyof ListPortfolioResponses];
+
+export type AddPortfolioItemData = {
+  body: UserPortfolioItem;
+  path?: never;
+  query?: never;
+  url: '/api/v1/me/profile/portfolio';
+};
+
+export type AddPortfolioItemErrors = {
+  /**
+   * Not Found
+   */
+  404: ResponseDtoVoid;
+  /**
+   * Internal Server Error
+   */
+  500: ResponseDtoVoid;
+};
+
+export type AddPortfolioItemError = AddPortfolioItemErrors[keyof AddPortfolioItemErrors];
+
+export type AddPortfolioItemResponses = {
+  /**
+   * OK
+   */
+  200: ApiResponseUserPortfolioItem;
+};
+
+export type AddPortfolioItemResponse = AddPortfolioItemResponses[keyof AddPortfolioItemResponses];
+
+export type ListMembershipsData = {
+  body?: never;
+  path?: never;
+  query?: never;
+  url: '/api/v1/me/profile/memberships';
+};
+
+export type ListMembershipsErrors = {
+  /**
+   * Not Found
+   */
+  404: ResponseDtoVoid;
+  /**
+   * Internal Server Error
+   */
+  500: ResponseDtoVoid;
+};
+
+export type ListMembershipsError = ListMembershipsErrors[keyof ListMembershipsErrors];
+
+export type ListMembershipsResponses = {
+  /**
+   * OK
+   */
+  200: ApiResponseListUserMembership;
+};
+
+export type ListMembershipsResponse = ListMembershipsResponses[keyof ListMembershipsResponses];
+
+export type AddMembershipData = {
+  body: UserMembership;
+  path?: never;
+  query?: never;
+  url: '/api/v1/me/profile/memberships';
+};
+
+export type AddMembershipErrors = {
+  /**
+   * Not Found
+   */
+  404: ResponseDtoVoid;
+  /**
+   * Internal Server Error
+   */
+  500: ResponseDtoVoid;
+};
+
+export type AddMembershipError = AddMembershipErrors[keyof AddMembershipErrors];
+
+export type AddMembershipResponses = {
+  /**
+   * OK
+   */
+  200: ApiResponseUserMembership;
+};
+
+export type AddMembershipResponse = AddMembershipResponses[keyof AddMembershipResponses];
+
+export type ListExperienceData = {
+  body?: never;
+  path?: never;
+  query?: never;
+  url: '/api/v1/me/profile/experience';
+};
+
+export type ListExperienceErrors = {
+  /**
+   * Not Found
+   */
+  404: ResponseDtoVoid;
+  /**
+   * Internal Server Error
+   */
+  500: ResponseDtoVoid;
+};
+
+export type ListExperienceError = ListExperienceErrors[keyof ListExperienceErrors];
+
+export type ListExperienceResponses = {
+  /**
+   * OK
+   */
+  200: ApiResponseListUserExperience;
+};
+
+export type ListExperienceResponse = ListExperienceResponses[keyof ListExperienceResponses];
+
+export type AddExperienceData = {
+  body: UserExperience;
+  path?: never;
+  query?: never;
+  url: '/api/v1/me/profile/experience';
+};
+
+export type AddExperienceErrors = {
+  /**
+   * Not Found
+   */
+  404: ResponseDtoVoid;
+  /**
+   * Internal Server Error
+   */
+  500: ResponseDtoVoid;
+};
+
+export type AddExperienceError = AddExperienceErrors[keyof AddExperienceErrors];
+
+export type AddExperienceResponses = {
+  /**
+   * OK
+   */
+  200: ApiResponseUserExperience;
+};
+
+export type AddExperienceResponse = AddExperienceResponses[keyof AddExperienceResponses];
+
+export type ListEducationData = {
+  body?: never;
+  path?: never;
+  query?: never;
+  url: '/api/v1/me/profile/education';
+};
+
+export type ListEducationErrors = {
+  /**
+   * Not Found
+   */
+  404: ResponseDtoVoid;
+  /**
+   * Internal Server Error
+   */
+  500: ResponseDtoVoid;
+};
+
+export type ListEducationError = ListEducationErrors[keyof ListEducationErrors];
+
+export type ListEducationResponses = {
+  /**
+   * OK
+   */
+  200: ApiResponseListUserEducation;
+};
+
+export type ListEducationResponse = ListEducationResponses[keyof ListEducationResponses];
+
+export type AddEducationData = {
+  body: UserEducation;
+  path?: never;
+  query?: never;
+  url: '/api/v1/me/profile/education';
+};
+
+export type AddEducationErrors = {
+  /**
+   * Not Found
+   */
+  404: ResponseDtoVoid;
+  /**
+   * Internal Server Error
+   */
+  500: ResponseDtoVoid;
+};
+
+export type AddEducationError = AddEducationErrors[keyof AddEducationErrors];
+
+export type AddEducationResponses = {
+  /**
+   * OK
+   */
+  200: ApiResponseUserEducation;
+};
+
+export type AddEducationResponse = AddEducationResponses[keyof AddEducationResponses];
+
+export type ListDocumentsData = {
+  body?: never;
+  path?: never;
+  query?: never;
+  url: '/api/v1/me/profile/documents';
+};
+
+export type ListDocumentsErrors = {
+  /**
+   * Not Found
+   */
+  404: ResponseDtoVoid;
+  /**
+   * Internal Server Error
+   */
+  500: ResponseDtoVoid;
+};
+
+export type ListDocumentsError = ListDocumentsErrors[keyof ListDocumentsErrors];
+
+export type ListDocumentsResponses = {
+  /**
+   * OK
+   */
+  200: ApiResponseListUserDocument;
+};
+
+export type ListDocumentsResponse = ListDocumentsResponses[keyof ListDocumentsResponses];
+
+export type UploadDocumentData = {
+  body?: {
+    file: Blob | File;
+  };
+  path?: never;
+  query: {
+    document_type_uuid: string;
+    title?: string;
+    description?: string;
+    education_uuid?: string;
+    experience_uuid?: string;
+    membership_uuid?: string;
+    expiry_date?: Date;
+  };
+  url: '/api/v1/me/profile/documents';
+};
+
+export type UploadDocumentErrors = {
+  /**
+   * Not Found
+   */
+  404: ResponseDtoVoid;
+  /**
+   * Internal Server Error
+   */
+  500: ResponseDtoVoid;
+};
+
+export type UploadDocumentError = UploadDocumentErrors[keyof UploadDocumentErrors];
+
+export type UploadDocumentResponses = {
+  /**
+   * OK
+   */
+  200: ApiResponseUserDocument;
+};
+
+export type UploadDocumentResponse = UploadDocumentResponses[keyof UploadDocumentResponses];
+
+export type ListCompetenciesData = {
+  body?: never;
+  path?: never;
+  query?: never;
+  url: '/api/v1/me/profile/competencies';
+};
+
+export type ListCompetenciesErrors = {
+  /**
+   * Not Found
+   */
+  404: ResponseDtoVoid;
+  /**
+   * Internal Server Error
+   */
+  500: ResponseDtoVoid;
+};
+
+export type ListCompetenciesError = ListCompetenciesErrors[keyof ListCompetenciesErrors];
+
+export type ListCompetenciesResponses = {
+  /**
+   * OK
+   */
+  200: ApiResponseListUserCompetency;
+};
+
+export type ListCompetenciesResponse = ListCompetenciesResponses[keyof ListCompetenciesResponses];
+
+export type AddCompetencyData = {
+  body: UserCompetency;
+  path?: never;
+  query?: never;
+  url: '/api/v1/me/profile/competencies';
+};
+
+export type AddCompetencyErrors = {
+  /**
+   * Not Found
+   */
+  404: ResponseDtoVoid;
+  /**
+   * Internal Server Error
+   */
+  500: ResponseDtoVoid;
+};
+
+export type AddCompetencyError = AddCompetencyErrors[keyof AddCompetencyErrors];
+
+export type AddCompetencyResponses = {
+  /**
+   * OK
+   */
+  200: ApiResponseUserCompetency;
+};
+
+export type AddCompetencyResponse = AddCompetencyResponses[keyof AddCompetencyResponses];
+
+export type ListCertificationsData = {
+  body?: never;
+  path?: never;
+  query?: never;
+  url: '/api/v1/me/profile/certifications';
+};
+
+export type ListCertificationsErrors = {
+  /**
+   * Not Found
+   */
+  404: ResponseDtoVoid;
+  /**
+   * Internal Server Error
+   */
+  500: ResponseDtoVoid;
+};
+
+export type ListCertificationsError = ListCertificationsErrors[keyof ListCertificationsErrors];
+
+export type ListCertificationsResponses = {
+  /**
+   * OK
+   */
+  200: ApiResponseListUserCertification;
+};
+
+export type ListCertificationsResponse =
+  ListCertificationsResponses[keyof ListCertificationsResponses];
+
+export type AddCertificationData = {
+  body: UserCertification;
+  path?: never;
+  query?: never;
+  url: '/api/v1/me/profile/certifications';
+};
+
+export type AddCertificationErrors = {
+  /**
+   * Not Found
+   */
+  404: ResponseDtoVoid;
+  /**
+   * Internal Server Error
+   */
+  500: ResponseDtoVoid;
+};
+
+export type AddCertificationError = AddCertificationErrors[keyof AddCertificationErrors];
+
+export type AddCertificationResponses = {
+  /**
+   * OK
+   */
+  200: ApiResponseUserCertification;
+};
+
+export type AddCertificationResponse = AddCertificationResponses[keyof AddCertificationResponses];
+
+export type ListAchievementsData = {
+  body?: never;
+  path?: never;
+  query?: never;
+  url: '/api/v1/me/profile/achievements';
+};
+
+export type ListAchievementsErrors = {
+  /**
+   * Not Found
+   */
+  404: ResponseDtoVoid;
+  /**
+   * Internal Server Error
+   */
+  500: ResponseDtoVoid;
+};
+
+export type ListAchievementsError = ListAchievementsErrors[keyof ListAchievementsErrors];
+
+export type ListAchievementsResponses = {
+  /**
+   * OK
+   */
+  200: ApiResponseListUserAchievement;
+};
+
+export type ListAchievementsResponse = ListAchievementsResponses[keyof ListAchievementsResponses];
+
+export type AddAchievementData = {
+  body: UserAchievement;
+  path?: never;
+  query?: never;
+  url: '/api/v1/me/profile/achievements';
+};
+
+export type AddAchievementErrors = {
+  /**
+   * Not Found
+   */
+  404: ResponseDtoVoid;
+  /**
+   * Internal Server Error
+   */
+  500: ResponseDtoVoid;
+};
+
+export type AddAchievementError = AddAchievementErrors[keyof AddAchievementErrors];
+
+export type AddAchievementResponses = {
+  /**
+   * OK
+   */
+  200: ApiResponseUserAchievement;
+};
+
+export type AddAchievementResponse = AddAchievementResponses[keyof AddAchievementResponses];
 
 export type DeclineInvitationFromInboxData = {
   body?: never;
@@ -26783,6 +30086,72 @@ export type AddCourseCreatorSkillResponses = {
 export type AddCourseCreatorSkillResponse =
   AddCourseCreatorSkillResponses[keyof AddCourseCreatorSkillResponses];
 
+export type GetCourseCreatorPortfolioData = {
+  body?: never;
+  path: {
+    courseCreatorUuid: string;
+  };
+  query?: never;
+  url: '/api/v1/course-creators/{courseCreatorUuid}/portfolio';
+};
+
+export type GetCourseCreatorPortfolioErrors = {
+  /**
+   * Not Found
+   */
+  404: ResponseDtoVoid;
+  /**
+   * Internal Server Error
+   */
+  500: ResponseDtoVoid;
+};
+
+export type GetCourseCreatorPortfolioError =
+  GetCourseCreatorPortfolioErrors[keyof GetCourseCreatorPortfolioErrors];
+
+export type GetCourseCreatorPortfolioResponses = {
+  /**
+   * OK
+   */
+  200: ApiResponseListCourseCreatorPortfolioItem;
+};
+
+export type GetCourseCreatorPortfolioResponse =
+  GetCourseCreatorPortfolioResponses[keyof GetCourseCreatorPortfolioResponses];
+
+export type AddCourseCreatorPortfolioItemData = {
+  body: CourseCreatorPortfolioItem;
+  path: {
+    courseCreatorUuid: string;
+  };
+  query?: never;
+  url: '/api/v1/course-creators/{courseCreatorUuid}/portfolio';
+};
+
+export type AddCourseCreatorPortfolioItemErrors = {
+  /**
+   * Not Found
+   */
+  404: ResponseDtoVoid;
+  /**
+   * Internal Server Error
+   */
+  500: ResponseDtoVoid;
+};
+
+export type AddCourseCreatorPortfolioItemError =
+  AddCourseCreatorPortfolioItemErrors[keyof AddCourseCreatorPortfolioItemErrors];
+
+export type AddCourseCreatorPortfolioItemResponses = {
+  /**
+   * OK
+   */
+  200: ApiResponseCourseCreatorPortfolioItem;
+};
+
+export type AddCourseCreatorPortfolioItemResponse =
+  AddCourseCreatorPortfolioItemResponses[keyof AddCourseCreatorPortfolioItemResponses];
+
 export type GetCourseCreatorMembershipsData = {
   body?: never;
   path: {
@@ -27133,6 +30502,72 @@ export type UploadCourseCreatorDocumentResponses = {
 export type UploadCourseCreatorDocumentResponse =
   UploadCourseCreatorDocumentResponses[keyof UploadCourseCreatorDocumentResponses];
 
+export type GetCourseCreatorCompetenciesData = {
+  body?: never;
+  path: {
+    courseCreatorUuid: string;
+  };
+  query?: never;
+  url: '/api/v1/course-creators/{courseCreatorUuid}/competencies';
+};
+
+export type GetCourseCreatorCompetenciesErrors = {
+  /**
+   * Not Found
+   */
+  404: ResponseDtoVoid;
+  /**
+   * Internal Server Error
+   */
+  500: ResponseDtoVoid;
+};
+
+export type GetCourseCreatorCompetenciesError =
+  GetCourseCreatorCompetenciesErrors[keyof GetCourseCreatorCompetenciesErrors];
+
+export type GetCourseCreatorCompetenciesResponses = {
+  /**
+   * OK
+   */
+  200: ApiResponseListCourseCreatorCompetency;
+};
+
+export type GetCourseCreatorCompetenciesResponse =
+  GetCourseCreatorCompetenciesResponses[keyof GetCourseCreatorCompetenciesResponses];
+
+export type AddCourseCreatorCompetencyData = {
+  body: CourseCreatorCompetency;
+  path: {
+    courseCreatorUuid: string;
+  };
+  query?: never;
+  url: '/api/v1/course-creators/{courseCreatorUuid}/competencies';
+};
+
+export type AddCourseCreatorCompetencyErrors = {
+  /**
+   * Not Found
+   */
+  404: ResponseDtoVoid;
+  /**
+   * Internal Server Error
+   */
+  500: ResponseDtoVoid;
+};
+
+export type AddCourseCreatorCompetencyError =
+  AddCourseCreatorCompetencyErrors[keyof AddCourseCreatorCompetencyErrors];
+
+export type AddCourseCreatorCompetencyResponses = {
+  /**
+   * OK
+   */
+  200: ApiResponseCourseCreatorCompetency;
+};
+
+export type AddCourseCreatorCompetencyResponse =
+  AddCourseCreatorCompetencyResponses[keyof AddCourseCreatorCompetencyResponses];
+
 export type GetCourseCreatorCertificationsData = {
   body?: never;
   path: {
@@ -27200,6 +30635,103 @@ export type AddCourseCreatorCertificationResponses = {
 
 export type AddCourseCreatorCertificationResponse =
   AddCourseCreatorCertificationResponses[keyof AddCourseCreatorCertificationResponses];
+
+export type GetCourseCreatorAchievementsData = {
+  body?: never;
+  path: {
+    courseCreatorUuid: string;
+  };
+  query?: never;
+  url: '/api/v1/course-creators/{courseCreatorUuid}/achievements';
+};
+
+export type GetCourseCreatorAchievementsErrors = {
+  /**
+   * Not Found
+   */
+  404: ResponseDtoVoid;
+  /**
+   * Internal Server Error
+   */
+  500: ResponseDtoVoid;
+};
+
+export type GetCourseCreatorAchievementsError =
+  GetCourseCreatorAchievementsErrors[keyof GetCourseCreatorAchievementsErrors];
+
+export type GetCourseCreatorAchievementsResponses = {
+  /**
+   * OK
+   */
+  200: ApiResponseListCourseCreatorAchievement;
+};
+
+export type GetCourseCreatorAchievementsResponse =
+  GetCourseCreatorAchievementsResponses[keyof GetCourseCreatorAchievementsResponses];
+
+export type AddCourseCreatorAchievementData = {
+  body: CourseCreatorAchievement;
+  path: {
+    courseCreatorUuid: string;
+  };
+  query?: never;
+  url: '/api/v1/course-creators/{courseCreatorUuid}/achievements';
+};
+
+export type AddCourseCreatorAchievementErrors = {
+  /**
+   * Not Found
+   */
+  404: ResponseDtoVoid;
+  /**
+   * Internal Server Error
+   */
+  500: ResponseDtoVoid;
+};
+
+export type AddCourseCreatorAchievementError =
+  AddCourseCreatorAchievementErrors[keyof AddCourseCreatorAchievementErrors];
+
+export type AddCourseCreatorAchievementResponses = {
+  /**
+   * OK
+   */
+  200: ApiResponseCourseCreatorAchievement;
+};
+
+export type AddCourseCreatorAchievementResponse =
+  AddCourseCreatorAchievementResponses[keyof AddCourseCreatorAchievementResponses];
+
+export type SubmitCurrentForVerificationData = {
+  body?: never;
+  path?: never;
+  query?: never;
+  url: '/api/v1/course-creators/me/onboarding/submit';
+};
+
+export type SubmitCurrentForVerificationErrors = {
+  /**
+   * Not Found
+   */
+  404: ResponseDtoVoid;
+  /**
+   * Internal Server Error
+   */
+  500: ResponseDtoVoid;
+};
+
+export type SubmitCurrentForVerificationError =
+  SubmitCurrentForVerificationErrors[keyof SubmitCurrentForVerificationErrors];
+
+export type SubmitCurrentForVerificationResponses = {
+  /**
+   * OK
+   */
+  200: ApiResponseCourseCreatorOnboardingStateDto;
+};
+
+export type SubmitCurrentForVerificationResponse =
+  SubmitCurrentForVerificationResponses[keyof SubmitCurrentForVerificationResponses];
 
 export type GetAllGradingLevelsData = {
   body?: never;
@@ -29529,6 +33061,75 @@ export type AssignAdminDomainResponses = {
 export type AssignAdminDomainResponse =
   AssignAdminDomainResponses[keyof AssignAdminDomainResponses];
 
+export type VerifyData = {
+  body: ProfileVerificationRequest;
+  path: {
+    userUuid: string;
+    section: SchemaEnum3Writable;
+    itemUuid: string;
+  };
+  query?: never;
+  url: '/api/v1/admin/users/{userUuid}/profile/{section}/{itemUuid}/verification';
+};
+
+export type VerifyErrors = {
+  /**
+   * Not Found
+   */
+  404: ResponseDtoVoid;
+  /**
+   * Internal Server Error
+   */
+  500: ResponseDtoVoid;
+};
+
+export type VerifyError = VerifyErrors[keyof VerifyErrors];
+
+export type VerifyResponses = {
+  /**
+   * OK
+   */
+  200: ApiResponseVoid;
+};
+
+export type VerifyResponse = VerifyResponses[keyof VerifyResponses];
+
+export type ModerateUserDomainData = {
+  body?: never;
+  path: {
+    userUuid: string;
+    domain: string;
+  };
+  query: {
+    action: SchemaEnum4Writable;
+    reason?: string;
+  };
+  url: '/api/v1/admin/users/{userUuid}/domains/{domain}/moderate';
+};
+
+export type ModerateUserDomainErrors = {
+  /**
+   * Not Found
+   */
+  404: ResponseDtoVoid;
+  /**
+   * Internal Server Error
+   */
+  500: ResponseDtoVoid;
+};
+
+export type ModerateUserDomainError = ModerateUserDomainErrors[keyof ModerateUserDomainErrors];
+
+export type ModerateUserDomainResponses = {
+  /**
+   * OK
+   */
+  200: ApiResponseDomainApplication;
+};
+
+export type ModerateUserDomainResponse =
+  ModerateUserDomainResponses[keyof ModerateUserDomainResponses];
+
 export type GetAdminUsersData = {
   body?: never;
   path?: never;
@@ -29847,7 +33448,7 @@ export type ModerateOrganisationData = {
     /**
      * Moderation action to perform
      */
-    action: SchemaEnum3Writable;
+    action: SchemaEnum4Writable;
     /**
      * Optional reason for the chosen moderation action
      */
@@ -30164,6 +33765,80 @@ export type ModerateCourseResponses = {
 
 export type ModerateCourseResponse = ModerateCourseResponses[keyof ModerateCourseResponses];
 
+export type VerifyWalletItemData = {
+  body: WalletVerificationRequest;
+  path: {
+    uuid: string;
+    section: SchemaEnum5Writable;
+    itemUuid: string;
+  };
+  query?: never;
+  url: '/api/v1/admin/course-creators/{uuid}/wallet/{section}/{itemUuid}/verification';
+};
+
+export type VerifyWalletItemErrors = {
+  /**
+   * Not Found
+   */
+  404: ResponseDtoVoid;
+  /**
+   * Internal Server Error
+   */
+  500: ResponseDtoVoid;
+};
+
+export type VerifyWalletItemError = VerifyWalletItemErrors[keyof VerifyWalletItemErrors];
+
+export type VerifyWalletItemResponses = {
+  /**
+   * OK
+   */
+  200: ApiResponseVoid;
+};
+
+export type VerifyWalletItemResponse = VerifyWalletItemResponses[keyof VerifyWalletItemResponses];
+
+export type ModerateCourseCreatorData = {
+  body?: CourseCreatorModerationRequest;
+  path: {
+    /**
+     * Course creator UUID
+     */
+    uuid: string;
+  };
+  query: {
+    /**
+     * Moderation action
+     */
+    action: SchemaEnum4Writable;
+  };
+  url: '/api/v1/admin/course-creators/{uuid}/moderate';
+};
+
+export type ModerateCourseCreatorErrors = {
+  /**
+   * Not Found
+   */
+  404: ResponseDtoVoid;
+  /**
+   * Internal Server Error
+   */
+  500: ResponseDtoVoid;
+};
+
+export type ModerateCourseCreatorError =
+  ModerateCourseCreatorErrors[keyof ModerateCourseCreatorErrors];
+
+export type ModerateCourseCreatorResponses = {
+  /**
+   * OK
+   */
+  200: ApiResponseCourseCreatorOnboardingStateDto;
+};
+
+export type ModerateCourseCreatorResponse =
+  ModerateCourseCreatorResponses[keyof ModerateCourseCreatorResponses];
+
 export type RescheduleScheduledInstanceData = {
   body: ScheduledInstanceRescheduleRequest;
   path: {
@@ -30252,6 +33927,44 @@ export type UpdateScheduledInstanceStatusResponses = {
 
 export type UpdateScheduledInstanceStatusResponse =
   UpdateScheduledInstanceStatusResponses[keyof UpdateScheduledInstanceStatusResponses];
+
+export type AssignScheduledInstanceLessonData = {
+  body?: never;
+  path: {
+    instanceUuid: string;
+  };
+  query?: {
+    /**
+     * Lesson UUID; omit to clear
+     */
+    lessonUuid?: string;
+  };
+  url: '/api/v1/timetable/schedule/{instanceUuid}/lesson';
+};
+
+export type AssignScheduledInstanceLessonErrors = {
+  /**
+   * Not Found
+   */
+  404: ResponseDtoVoid;
+  /**
+   * Internal Server Error
+   */
+  500: ResponseDtoVoid;
+};
+
+export type AssignScheduledInstanceLessonError =
+  AssignScheduledInstanceLessonErrors[keyof AssignScheduledInstanceLessonErrors];
+
+export type AssignScheduledInstanceLessonResponses = {
+  /**
+   * OK
+   */
+  200: ApiResponseVoid;
+};
+
+export type AssignScheduledInstanceLessonResponse =
+  AssignScheduledInstanceLessonResponses[keyof AssignScheduledInstanceLessonResponses];
 
 export type ReorderScoringLevelsData = {
   body: {
@@ -30660,6 +34373,348 @@ export type GetAllUsersResponses = {
 
 export type GetAllUsersResponse = GetAllUsersResponses[keyof GetAllUsersResponses];
 
+export type GetSummary1Data = {
+  body?: never;
+  path: {
+    userUuid: string;
+  };
+  query?: never;
+  url: '/api/v1/users/{userUuid}/profile';
+};
+
+export type GetSummary1Errors = {
+  /**
+   * Not Found
+   */
+  404: ResponseDtoVoid;
+  /**
+   * Internal Server Error
+   */
+  500: ResponseDtoVoid;
+};
+
+export type GetSummary1Error = GetSummary1Errors[keyof GetSummary1Errors];
+
+export type GetSummary1Responses = {
+  /**
+   * OK
+   */
+  200: ApiResponseProfessionalProfileSummary;
+};
+
+export type GetSummary1Response = GetSummary1Responses[keyof GetSummary1Responses];
+
+export type SkillsData = {
+  body?: never;
+  path: {
+    userUuid: string;
+  };
+  query?: never;
+  url: '/api/v1/users/{userUuid}/profile/skills';
+};
+
+export type SkillsErrors = {
+  /**
+   * Not Found
+   */
+  404: ResponseDtoVoid;
+  /**
+   * Internal Server Error
+   */
+  500: ResponseDtoVoid;
+};
+
+export type SkillsError = SkillsErrors[keyof SkillsErrors];
+
+export type SkillsResponses = {
+  /**
+   * OK
+   */
+  200: ApiResponseListUserSkill;
+};
+
+export type SkillsResponse = SkillsResponses[keyof SkillsResponses];
+
+export type PortfolioData = {
+  body?: never;
+  path: {
+    userUuid: string;
+  };
+  query?: never;
+  url: '/api/v1/users/{userUuid}/profile/portfolio';
+};
+
+export type PortfolioErrors = {
+  /**
+   * Not Found
+   */
+  404: ResponseDtoVoid;
+  /**
+   * Internal Server Error
+   */
+  500: ResponseDtoVoid;
+};
+
+export type PortfolioError = PortfolioErrors[keyof PortfolioErrors];
+
+export type PortfolioResponses = {
+  /**
+   * OK
+   */
+  200: ApiResponseListUserPortfolioItem;
+};
+
+export type PortfolioResponse = PortfolioResponses[keyof PortfolioResponses];
+
+export type MembershipsData = {
+  body?: never;
+  path: {
+    userUuid: string;
+  };
+  query?: never;
+  url: '/api/v1/users/{userUuid}/profile/memberships';
+};
+
+export type MembershipsErrors = {
+  /**
+   * Not Found
+   */
+  404: ResponseDtoVoid;
+  /**
+   * Internal Server Error
+   */
+  500: ResponseDtoVoid;
+};
+
+export type MembershipsError = MembershipsErrors[keyof MembershipsErrors];
+
+export type MembershipsResponses = {
+  /**
+   * OK
+   */
+  200: ApiResponseListUserMembership;
+};
+
+export type MembershipsResponse = MembershipsResponses[keyof MembershipsResponses];
+
+export type ExperienceData = {
+  body?: never;
+  path: {
+    userUuid: string;
+  };
+  query?: never;
+  url: '/api/v1/users/{userUuid}/profile/experience';
+};
+
+export type ExperienceErrors = {
+  /**
+   * Not Found
+   */
+  404: ResponseDtoVoid;
+  /**
+   * Internal Server Error
+   */
+  500: ResponseDtoVoid;
+};
+
+export type ExperienceError = ExperienceErrors[keyof ExperienceErrors];
+
+export type ExperienceResponses = {
+  /**
+   * OK
+   */
+  200: ApiResponseListUserExperience;
+};
+
+export type ExperienceResponse = ExperienceResponses[keyof ExperienceResponses];
+
+export type EducationData = {
+  body?: never;
+  path: {
+    userUuid: string;
+  };
+  query?: never;
+  url: '/api/v1/users/{userUuid}/profile/education';
+};
+
+export type EducationErrors = {
+  /**
+   * Not Found
+   */
+  404: ResponseDtoVoid;
+  /**
+   * Internal Server Error
+   */
+  500: ResponseDtoVoid;
+};
+
+export type EducationError = EducationErrors[keyof EducationErrors];
+
+export type EducationResponses = {
+  /**
+   * OK
+   */
+  200: ApiResponseListUserEducation;
+};
+
+export type EducationResponse = EducationResponses[keyof EducationResponses];
+
+export type DocumentsData = {
+  body?: never;
+  path: {
+    userUuid: string;
+  };
+  query?: never;
+  url: '/api/v1/users/{userUuid}/profile/documents';
+};
+
+export type DocumentsErrors = {
+  /**
+   * Not Found
+   */
+  404: ResponseDtoVoid;
+  /**
+   * Internal Server Error
+   */
+  500: ResponseDtoVoid;
+};
+
+export type DocumentsError = DocumentsErrors[keyof DocumentsErrors];
+
+export type DocumentsResponses = {
+  /**
+   * OK
+   */
+  200: ApiResponseListUserDocument;
+};
+
+export type DocumentsResponse = DocumentsResponses[keyof DocumentsResponses];
+
+export type DocumentFileData = {
+  body?: never;
+  path: {
+    userUuid: string;
+    documentUuid: string;
+  };
+  query?: never;
+  url: '/api/v1/users/{userUuid}/profile/documents/{documentUuid}/file';
+};
+
+export type DocumentFileErrors = {
+  /**
+   * Not Found
+   */
+  404: ResponseDtoVoid;
+  /**
+   * Internal Server Error
+   */
+  500: ResponseDtoVoid;
+};
+
+export type DocumentFileError = DocumentFileErrors[keyof DocumentFileErrors];
+
+export type DocumentFileResponses = {
+  /**
+   * OK
+   */
+  200: Blob | File;
+};
+
+export type DocumentFileResponse = DocumentFileResponses[keyof DocumentFileResponses];
+
+export type CompetenciesData = {
+  body?: never;
+  path: {
+    userUuid: string;
+  };
+  query?: never;
+  url: '/api/v1/users/{userUuid}/profile/competencies';
+};
+
+export type CompetenciesErrors = {
+  /**
+   * Not Found
+   */
+  404: ResponseDtoVoid;
+  /**
+   * Internal Server Error
+   */
+  500: ResponseDtoVoid;
+};
+
+export type CompetenciesError = CompetenciesErrors[keyof CompetenciesErrors];
+
+export type CompetenciesResponses = {
+  /**
+   * OK
+   */
+  200: ApiResponseListUserCompetency;
+};
+
+export type CompetenciesResponse = CompetenciesResponses[keyof CompetenciesResponses];
+
+export type CertificationsData = {
+  body?: never;
+  path: {
+    userUuid: string;
+  };
+  query?: never;
+  url: '/api/v1/users/{userUuid}/profile/certifications';
+};
+
+export type CertificationsErrors = {
+  /**
+   * Not Found
+   */
+  404: ResponseDtoVoid;
+  /**
+   * Internal Server Error
+   */
+  500: ResponseDtoVoid;
+};
+
+export type CertificationsError = CertificationsErrors[keyof CertificationsErrors];
+
+export type CertificationsResponses = {
+  /**
+   * OK
+   */
+  200: ApiResponseListUserCertification;
+};
+
+export type CertificationsResponse = CertificationsResponses[keyof CertificationsResponses];
+
+export type AchievementsData = {
+  body?: never;
+  path: {
+    userUuid: string;
+  };
+  query?: never;
+  url: '/api/v1/users/{userUuid}/profile/achievements';
+};
+
+export type AchievementsErrors = {
+  /**
+   * Not Found
+   */
+  404: ResponseDtoVoid;
+  /**
+   * Internal Server Error
+   */
+  500: ResponseDtoVoid;
+};
+
+export type AchievementsError = AchievementsErrors[keyof AchievementsErrors];
+
+export type AchievementsResponses = {
+  /**
+   * OK
+   */
+  200: ApiResponseListUserAchievement;
+};
+
+export type AchievementsResponse = AchievementsResponses[keyof AchievementsResponses];
+
 export type SearchData = {
   body?: never;
   path?: never;
@@ -30767,6 +34822,37 @@ export type GetCurrentUserResponses = {
 };
 
 export type GetCurrentUserResponse = GetCurrentUserResponses[keyof GetCurrentUserResponses];
+
+export type GetCurrentAccountStatusData = {
+  body?: never;
+  path?: never;
+  query?: never;
+  url: '/api/v1/users/me/account-status';
+};
+
+export type GetCurrentAccountStatusErrors = {
+  /**
+   * Not Found
+   */
+  404: ResponseDtoVoid;
+  /**
+   * Internal Server Error
+   */
+  500: ResponseDtoVoid;
+};
+
+export type GetCurrentAccountStatusError =
+  GetCurrentAccountStatusErrors[keyof GetCurrentAccountStatusErrors];
+
+export type GetCurrentAccountStatusResponses = {
+  /**
+   * OK
+   */
+  200: ApiResponseAccountStatus;
+};
+
+export type GetCurrentAccountStatusResponse =
+  GetCurrentAccountStatusResponses[keyof GetCurrentAccountStatusResponses];
 
 export type LookupUserByUserNoData = {
   body?: never;
@@ -31140,6 +35226,37 @@ export type GetInstructorScheduleResponses = {
 export type GetInstructorScheduleResponse =
   GetInstructorScheduleResponses[keyof GetInstructorScheduleResponses];
 
+export type GetGuardiansData = {
+  body?: never;
+  path: {
+    studentUuid: string;
+  };
+  query?: never;
+  url: '/api/v1/students/{studentUuid}/guardians';
+};
+
+export type GetGuardiansErrors = {
+  /**
+   * Not Found
+   */
+  404: ResponseDtoVoid;
+  /**
+   * Internal Server Error
+   */
+  500: ResponseDtoVoid;
+};
+
+export type GetGuardiansError = GetGuardiansErrors[keyof GetGuardiansErrors];
+
+export type GetGuardiansResponses = {
+  /**
+   * OK
+   */
+  200: ApiResponseListStudentGuardian;
+};
+
+export type GetGuardiansResponse = GetGuardiansResponses[keyof GetGuardiansResponses];
+
 export type GetStudentBookingsData = {
   body?: never;
   path: {
@@ -31218,7 +35335,67 @@ export type SearchStudentsResponses = {
 
 export type SearchStudentsResponse = SearchStudentsResponses[keyof SearchStudentsResponses];
 
-export type ListSkillsData = {
+export type GetByTokenData = {
+  body?: never;
+  path: {
+    token: string;
+  };
+  query?: never;
+  url: '/api/v1/student-guardian-invitations/token/{token}';
+};
+
+export type GetByTokenErrors = {
+  /**
+   * Not Found
+   */
+  404: ResponseDtoVoid;
+  /**
+   * Internal Server Error
+   */
+  500: ResponseDtoVoid;
+};
+
+export type GetByTokenError = GetByTokenErrors[keyof GetByTokenErrors];
+
+export type GetByTokenResponses = {
+  /**
+   * OK
+   */
+  200: ApiResponsePublicStudentGuardianInvitation;
+};
+
+export type GetByTokenResponse = GetByTokenResponses[keyof GetByTokenResponses];
+
+export type GetMineData = {
+  body?: never;
+  path?: never;
+  query?: never;
+  url: '/api/v1/student-guardian-invitations/me';
+};
+
+export type GetMineErrors = {
+  /**
+   * Not Found
+   */
+  404: ResponseDtoVoid;
+  /**
+   * Internal Server Error
+   */
+  500: ResponseDtoVoid;
+};
+
+export type GetMineError = GetMineErrors[keyof GetMineErrors];
+
+export type GetMineResponses = {
+  /**
+   * OK
+   */
+  200: ApiResponseListMyStudentGuardianInvitation;
+};
+
+export type GetMineResponse = GetMineResponses[keyof GetMineResponses];
+
+export type ListSkills1Data = {
   body?: never;
   path?: never;
   query?: {
@@ -31231,7 +35408,7 @@ export type ListSkillsData = {
   url: '/api/v1/skills';
 };
 
-export type ListSkillsErrors = {
+export type ListSkills1Errors = {
   /**
    * Not Found
    */
@@ -31242,16 +35419,16 @@ export type ListSkillsErrors = {
   500: ResponseDtoVoid;
 };
 
-export type ListSkillsError = ListSkillsErrors[keyof ListSkillsErrors];
+export type ListSkills1Error = ListSkills1Errors[keyof ListSkills1Errors];
 
-export type ListSkillsResponses = {
+export type ListSkills1Responses = {
   /**
    * OK
    */
   200: ApiResponseListSkill;
 };
 
-export type ListSkillsResponse = ListSkillsResponses[keyof ListSkillsResponses];
+export type ListSkills1Response = ListSkills1Responses[keyof ListSkills1Responses];
 
 export type GlobalSearchData = {
   body?: never;
@@ -31714,7 +35891,7 @@ export type GetRubricsByStatusData = {
     /**
      * Content status to filter by
      */
-    status: SchemaEnum4Writable;
+    status: SchemaEnum6Writable;
   };
   query: {
     pageable: Pageable;
@@ -31986,7 +36163,7 @@ export type GetRevenueDashboardData = {
   body?: never;
   path?: never;
   query: {
-    domain: SchemaEnum5Writable;
+    domain: SchemaEnum7Writable;
     start_date?: Date;
     end_date?: Date;
   };
@@ -32054,7 +36231,7 @@ export type ListSalesData = {
   body?: never;
   path?: never;
   query: {
-    domain: SchemaEnum5Writable;
+    domain: SchemaEnum7Writable;
     start_date?: Date;
     end_date?: Date;
     payment_status?: string;
@@ -32127,7 +36304,7 @@ export type ListPaymentsData = {
   body?: never;
   path?: never;
   query: {
-    domain: SchemaEnum5Writable;
+    domain: SchemaEnum7Writable;
     start_date?: Date;
     end_date?: Date;
     status?: string;
@@ -32163,7 +36340,7 @@ export type GetRevenueDashboard1Data = {
   body?: never;
   path?: never;
   query: {
-    domain: SchemaEnum5Writable;
+    domain: SchemaEnum7Writable;
     start_date?: Date;
     end_date?: Date;
   };
@@ -33348,7 +37525,7 @@ export type ListRosterResponses = {
 
 export type ListRosterResponse = ListRosterResponses[keyof ListRosterResponses];
 
-export type GetSummaryData = {
+export type GetSummary2Data = {
   body?: never;
   path: {
     organisationUuid: string;
@@ -33357,7 +37534,7 @@ export type GetSummaryData = {
   url: '/api/v1/organisations/{organisationUuid}/skills-fund/summary';
 };
 
-export type GetSummaryErrors = {
+export type GetSummary2Errors = {
   /**
    * Not Found
    */
@@ -33368,16 +37545,16 @@ export type GetSummaryErrors = {
   500: ResponseDtoVoid;
 };
 
-export type GetSummaryError = GetSummaryErrors[keyof GetSummaryErrors];
+export type GetSummary2Error = GetSummary2Errors[keyof GetSummary2Errors];
 
-export type GetSummaryResponses = {
+export type GetSummary2Responses = {
   /**
    * OK
    */
   200: ApiResponseSkillsFundSummary;
 };
 
-export type GetSummaryResponse = GetSummaryResponses[keyof GetSummaryResponses];
+export type GetSummary2Response = GetSummary2Responses[keyof GetSummary2Responses];
 
 export type GetCalendarData = {
   body?: never;
@@ -33561,7 +37738,7 @@ export type ListObligationsData = {
     /**
      * Narrow to ACCRUED, SETTLED, CANCELLED or DISPUTED
      */
-    status?: SchemaEnum6Writable;
+    status?: SchemaEnum8Writable;
     pageable: Pageable;
   };
   url: '/api/v1/organisations/{organisationUuid}/instructor-obligations';
@@ -33697,6 +37874,37 @@ export type GetCountsResponses = {
 };
 
 export type GetCountsResponse = GetCountsResponses[keyof GetCountsResponses];
+
+export type GetDocumentFileData = {
+  body?: never;
+  path: {
+    itemUuid: string;
+  };
+  query?: never;
+  url: '/api/v1/me/profile/documents/{itemUuid}/file';
+};
+
+export type GetDocumentFileErrors = {
+  /**
+   * Not Found
+   */
+  404: ResponseDtoVoid;
+  /**
+   * Internal Server Error
+   */
+  500: ResponseDtoVoid;
+};
+
+export type GetDocumentFileError = GetDocumentFileErrors[keyof GetDocumentFileErrors];
+
+export type GetDocumentFileResponses = {
+  /**
+   * OK
+   */
+  200: Blob | File;
+};
+
+export type GetDocumentFileResponse = GetDocumentFileResponses[keyof GetDocumentFileResponses];
 
 export type GetInvitationByTokenData = {
   body?: never;
@@ -36605,6 +40813,37 @@ export type SearchCourseCreatorMembershipsResponses = {
 export type SearchCourseCreatorMembershipsResponse =
   SearchCourseCreatorMembershipsResponses[keyof SearchCourseCreatorMembershipsResponses];
 
+export type GetCurrentOnboardingData = {
+  body?: never;
+  path?: never;
+  query?: never;
+  url: '/api/v1/course-creators/me/onboarding';
+};
+
+export type GetCurrentOnboardingErrors = {
+  /**
+   * Not Found
+   */
+  404: ResponseDtoVoid;
+  /**
+   * Internal Server Error
+   */
+  500: ResponseDtoVoid;
+};
+
+export type GetCurrentOnboardingError =
+  GetCurrentOnboardingErrors[keyof GetCurrentOnboardingErrors];
+
+export type GetCurrentOnboardingResponses = {
+  /**
+   * OK
+   */
+  200: ApiResponseCourseCreatorOnboardingStateDto;
+};
+
+export type GetCurrentOnboardingResponse =
+  GetCurrentOnboardingResponses[keyof GetCurrentOnboardingResponses];
+
 export type SearchCourseCreatorExperienceData = {
   body?: never;
   path?: never;
@@ -38078,7 +42317,7 @@ export type SearchCoursesAndProgrammesData = {
     /**
      * Which types to list (default all)
      */
-    show?: SchemaEnum7Writable;
+    show?: SchemaEnum9Writable;
     /**
      * Category UUIDs; repeat the parameter or pass a comma-separated list. A result matches when it is in any of them.
      */
@@ -38098,7 +42337,7 @@ export type SearchCoursesAndProgrammesData = {
     /**
      * Ordering (default relevance with q, popular without). newest: created first; rating: Bayesian-smoothed review rating; popular: enrolments in the last 30 days
      */
-    sort?: SchemaEnum8Writable;
+    sort?: SchemaEnum10Writable;
     /**
      * 0-based page number
      */
@@ -38627,7 +42866,7 @@ export type GetUserActivityData = {
     /**
      * Audit scope to return
      */
-    scope?: SchemaEnum9Writable;
+    scope?: SchemaEnum11Writable;
     /**
      * Optional endpoint category filter
      */
@@ -38805,6 +43044,43 @@ export type ListIndexesResponses = {
 };
 
 export type ListIndexesResponse = ListIndexesResponses[keyof ListIndexesResponses];
+
+export type GetRegistrationQueueData = {
+  body?: never;
+  path?: never;
+  query?: {
+    status?: SchemaEnum12Writable;
+    /**
+     * Optional domain filter, e.g. student
+     */
+    domain?: string;
+  };
+  url: '/api/v1/admin/registrations';
+};
+
+export type GetRegistrationQueueErrors = {
+  /**
+   * Not Found
+   */
+  404: ResponseDtoVoid;
+  /**
+   * Internal Server Error
+   */
+  500: ResponseDtoVoid;
+};
+
+export type GetRegistrationQueueError =
+  GetRegistrationQueueErrors[keyof GetRegistrationQueueErrors];
+
+export type GetRegistrationQueueResponses = {
+  /**
+   * OK
+   */
+  200: ApiResponseListAdminDomainApplication;
+};
+
+export type GetRegistrationQueueResponse =
+  GetRegistrationQueueResponses[keyof GetRegistrationQueueResponses];
 
 export type EvaluateCourseRecommendationsData = {
   body?: never;
@@ -39847,7 +44123,7 @@ export type RemoveAdminDomainData = {
     /**
      * Domain name to remove
      */
-    domain: SchemaEnum10Writable;
+    domain: SchemaEnum13Writable;
   };
   query?: {
     /**

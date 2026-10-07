@@ -12,15 +12,33 @@ function getStringValue(value: unknown): string | undefined {
   return typeof value === 'string' && value.length > 0 ? value : undefined;
 }
 
+function getValidationMessages(value: unknown): string[] {
+  const message = getStringValue(value);
+  if (message) return [message];
+  if (Array.isArray(value)) return value.flatMap(getValidationMessages);
+
+  const record = asRecord(value);
+  if (!record) return [];
+  const nestedMessage = getStringValue(record.message);
+  if (nestedMessage) return [nestedMessage];
+  return Object.values(record).flatMap(getValidationMessages);
+}
+
 export function getErrorMessage(error: unknown, fallback: string): string {
   if (error instanceof Error) {
     return getStringValue(error.message) ?? fallback;
   }
 
+  const message = getStringValue(error);
+  if (message) return message;
+
   const errorRecord = asRecord(error);
   if (!errorRecord) {
     return fallback;
   }
+
+  const validationMessages = getValidationMessages(errorRecord.error ?? errorRecord.errors);
+  if (validationMessages.length > 0) return validationMessages.join('\n');
 
   return (
     getStringValue(errorRecord.message) ??

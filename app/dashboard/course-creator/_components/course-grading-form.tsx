@@ -1,200 +1,339 @@
 'use client';
 
-import { useQuery } from '@tanstack/react-query';
-import { useEffect, useMemo, useState } from 'react';
-import { Input } from '../../../../components/ui/input';
-import { getCourseAssessmentsOptions } from '../../../../services/client/@tanstack/react-query.gen';
-import type { CourseAssessment } from '../../../../services/client/types.gen';
+import { useMemo, useState } from 'react';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { toast } from 'sonner';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Checkbox } from '@/components/ui/checkbox';
+import { EmptyState } from '@/components/ui/empty-state';
+import { Label } from '@/components/ui/label';
+import {
+  Sheet,
+  SheetContent,
+  SheetDescription,
+  SheetHeader,
+  SheetTitle,
+} from '@/components/ui/sheet';
+import { Skeleton } from '@/components/ui/skeleton';
+import Spinner from '@/components/ui/spinner';
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from '@/components/ui/table';
+import { getErrorMessage } from '@/lib/error-utils';
+import { STALE_TIMES } from '@/lib/query-client';
+import {
+  getCourseEvaluationPlanOptions,
+  getCourseEvaluationPlanQueryKey,
+  getLineItemsQueryKey,
+  updateCourseEvaluationPlanMutation,
+} from '@/services/client/@tanstack/react-query.gen';
+import type { Component, CourseAssessmentLineItem, LessonRow } from '@/services/client/types.gen';
+import { EvaluationRubricPicker } from './evaluation-rubric-picker';
+import { EvaluationRubricPreview } from './evaluation-rubric-preview';
 
 type CourseGradingFormProps = {
-  courseUuid: string;
+  courseUuid?: string;
+  creatorUuid?: string;
+  title?: string;
 };
 
-type Assessment = Pick<
-  CourseAssessment,
-  'uuid' | 'title' | 'description' | 'weight_percentage' | 'is_required'
->;
+type PlanComponent = Component & { assessment_uuid: string; index: number };
+type CellDraft = {
+  lessonUuid: string;
+  lessonTitle: string;
+  component: PlanComponent;
+  original?: CourseAssessmentLineItem;
+  enabled: boolean;
+  rubricUuid: string;
+  rubricTitle?: string;
+};
 
-const DEFAULT_AUTO_PASS_RATE = 50;
+export default function CourseGradingForm({
+  courseUuid,
+  creatorUuid,
+  title = 'Course grading plan',
+}: CourseGradingFormProps) {
+  if (!courseUuid)
+    return <EmptyState variant='compact' title='Save the course to configure grading' />;
+  return (
+    <SavedCourseGradingForm
+      key={courseUuid}
+      courseUuid={courseUuid}
+      creatorUuid={creatorUuid}
+      title={title}
+    />
+  );
+}
 
-export default function CourseGradingForm({ courseUuid }: CourseGradingFormProps) {
-  const { data: assessmentsData, isLoading } = useQuery({
-    ...getCourseAssessmentsOptions({ path: { courseUuid }, query: { pageable: {} } }),
-    enabled: !!courseUuid,
+function SavedCourseGradingForm({
+  courseUuid,
+  creatorUuid,
+  title,
+}: {
+  courseUuid: string;
+  creatorUuid?: string;
+  title: string;
+}) {
+  const queryClient = useQueryClient();
+  const options = { path: { courseUuid } };
+  const query = useQuery({
+    ...getCourseEvaluationPlanOptions(options),
+    enabled: Boolean(courseUuid),
+    staleTime: STALE_TIMES.entity,
   });
-
-  const assessments: Assessment[] = assessmentsData?.data?.content ?? [];
-  const totalWeight = assessments.reduce(
-    (sum, assessment) => sum + (assessment.weight_percentage ?? 0),
-    0
+  const failed = query.isError || Boolean(query.data?.error) || query.data?.success === false;
+  const plan = failed ? undefined : query.data?.data;
+  const components = useMemo(
+    () =>
+      (plan?.components ?? []).flatMap((component, index): PlanComponent[] =>
+        component.assessment_uuid
+          ? [{ ...component, assessment_uuid: component.assessment_uuid, index }]
+          : []
+      ),
+    [plan?.components]
+  );
+  const lessons = useMemo(
+    () =>
+      (plan?.lessons ?? []).filter((lesson): lesson is LessonRow & { lesson_uuid: string } =>
+        Boolean(lesson.lesson_uuid)
+      ),
+    [plan?.lessons]
+  );
+  const [draft, setDraft] = useState<CellDraft | null>(null);
+  const [previewUuid, setPreviewUuid] = useState<string | null>(null);
+  const update = useMutation(updateCourseEvaluationPlanMutation());
+  const originalEnabled = Boolean(draft?.original && draft.original.active !== false);
+  const changed = Boolean(
+    draft &&
+      (draft.enabled !== originalEnabled ||
+        (draft.enabled && draft.rubricUuid !== (draft.original?.rubric_uuid ?? '')))
   );
 
-  const calculatedFormula = useMemo(() => {
-    if (assessments.length === 0) return '';
-
-    return assessments
-      .map(assessment => `(${assessment.title} × ${assessment.weight_percentage}%)`)
-      .join(' + ');
-  }, [assessments]);
-
-  const calculatedPassMark = useMemo(() => {
-    if (totalWeight <= 0) return 0;
-    return Math.round((totalWeight * DEFAULT_AUTO_PASS_RATE) / 100);
-  }, [totalWeight]);
-
-  const [finalGradeFormula, setFinalGradeFormula] = useState('');
-  const [useCalculatedPassMark, setUseCalculatedPassMark] = useState(true);
-  const [manualPassMark, setManualPassMark] = useState('');
-
-  useEffect(() => {
-    if (!calculatedFormula) {
-      setFinalGradeFormula('');
-      return;
+  async function save() {
+    if (!draft || !changed || update.isPending) return;
+    try {
+      const result = await update.mutateAsync({
+        path: { courseUuid },
+        body: {
+          cells: [
+            {
+              lesson_uuid: draft.lessonUuid,
+              assessment_uuid: draft.component.assessment_uuid,
+              enabled: draft.enabled,
+              ...(draft.enabled
+                ? {
+                    ...(draft.rubricUuid ? { rubric_uuid: draft.rubricUuid } : {}),
+                    ...(draft.original?.quiz_uuid ? { quiz_uuid: draft.original.quiz_uuid } : {}),
+                    ...(draft.original?.assignment_uuid
+                      ? { assignment_uuid: draft.original.assignment_uuid }
+                      : {}),
+                  }
+                : {}),
+            },
+          ],
+        },
+      });
+      if (result.error || result.success === false)
+        throw new Error(getErrorMessage(result, 'Unable to save evaluation plan'));
+      if (result.data) queryClient.setQueryData(getCourseEvaluationPlanQueryKey(options), result);
+      else
+        await queryClient.invalidateQueries({ queryKey: getCourseEvaluationPlanQueryKey(options) });
+      void queryClient.invalidateQueries({
+        queryKey: getLineItemsQueryKey({
+          path: { courseUuid, assessmentUuid: draft.component.assessment_uuid },
+        }),
+      });
+      setDraft(null);
+      setPreviewUuid(null);
+      toast.success('Course evaluation plan saved');
+    } catch (error) {
+      toast.error(getErrorMessage(error, 'Unable to save evaluation plan'));
     }
+  }
 
-    setFinalGradeFormula(previousFormula =>
-      previousFormula.trim().length === 0 ? calculatedFormula : previousFormula
+  if (query.isLoading) return <Skeleton className='h-64 w-full' />;
+  if (failed || !plan)
+    return (
+      <EmptyState
+        variant='compact'
+        title='Unable to load course evaluation plan'
+        description={getErrorMessage(query.error ?? query.data, 'No evaluation plan was returned.')}
+        action={
+          <Button type='button' variant='outline' onClick={() => void query.refetch()}>
+            Try again
+          </Button>
+        }
+      />
     );
-  }, [calculatedFormula]);
-
-  const resolvedPassMark = useCalculatedPassMark
-    ? calculatedPassMark
-    : manualPassMark === ''
-      ? ''
-      : Number(manualPassMark);
 
   return (
-    <div className='space-y-6'>
-      {/* <div className='bg-card rounded-xl border shadow-sm'>
-        <div className='flex flex-col gap-1 border-b px-6 py-5 sm:flex-row sm:items-center sm:justify-between'>
-          <div>
-            <h3 className='text-foreground text-lg font-bold'>Course Grading Components</h3>
-            <p className='text-muted-foreground mt-0.5 text-sm'>
-              Review the weighted components that make up the final course grade.
-            </p>
-          </div>
-        </div>
-
-        {isLoading ? (
-          <div className='flex items-center justify-center py-16'>
-            <Spinner className='h-6 w-6' />
-          </div>
-        ) : assessments.length === 0 ? (
-          <div className='flex flex-col items-center justify-center gap-3 py-16 text-center'>
-            <div className='bg-muted rounded-full p-4'>
-              <Plus size={24} className='text-muted-foreground' />
-            </div>
-            <p className='text-foreground font-medium'>No grading components yet</p>
-            <p className='text-muted-foreground max-w-xs text-sm'>
-              Add assessment structure items first to generate the course grading table.
-            </p>
-          </div>
-        ) : (
-          <div className='overflow-x-auto'>
-            <table className='w-full text-sm'>
-              <thead>
-                <tr className='bg-muted/40 border-b'>
-                  <th className='text-foreground px-6 py-3 text-left font-semibold'>
-                    Component Title
-                  </th>
-                  <th className='text-foreground px-4 py-3 text-left font-semibold'>Weight (%)</th>
-                </tr>
-              </thead>
-
-              <tbody className='divide-y'>
-                {assessments.map(assessment => (
-                  <tr key={assessment.uuid} className='hover:bg-muted/30 transition-colors'>
-                    <td className='px-6 py-4'>
-                      <p className='text-foreground font-medium'>{assessment.title}</p>
-                      {assessment.description && (
-                        <p className='text-muted-foreground mt-0.5 line-clamp-1 text-xs'>
-                          {assessment.description}
-                        </p>
-                      )}
-                    </td>
-
-                    <td className='px-4 py-4'>
-                      <div className='flex flex-col gap-1'>
-                        <span className='text-foreground font-semibold'>
-                          {assessment.weight_percentage}%
-                        </span>
-                        <span
-                          className={`inline-flex max-w-fit items-center rounded-full px-2.5 py-0.5 text-xs font-medium ${
-                            assessment.is_required
-                              ? 'bg-success/10 text-success/70'
-                              : 'bg-muted-foreground/10 text-muted-foreground'
-                          }`}
-                        >
-                          {assessment.is_required ? 'Required' : 'Optional'}
-                        </span>
-                      </div>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-
-              <tfoot>
-                <tr className='bg-muted/40 border-t'>
-                  <td className='text-foreground px-6 py-3 font-bold'>Final Grade Formula</td>
-                  <td
-                    className={`px-4 py-3 text-left font-bold ${totalWeight === 100 ? 'text-success' : totalWeight > 100 ? 'text-destructive' : 'text-primary'}`}
-                  >
-                    {totalWeight}%
-                  </td>
-                </tr>
-              </tfoot>
-            </table>
-          </div>
-        )}
-      </div> */}
-
-      <div className='flex flex-col gap-4'>
-        {/* <div className='bg-card rounded-xl border shadow-sm'>
-          <div className='border-b px-6 py-5'>
-            <div className='flex items-start gap-3'>
-              <div className='bg-primary/10 text-primary rounded-full p-2'>
-                <Calculator size={18} />
-              </div>
-              <div>
-                <h3 className='text-foreground text-base font-bold'>Final Grade Formula</h3>
-                <p className='text-muted-foreground mt-0.5 text-sm'>
-                  Use the generated formula or adjust it to reflect how the final grade should be
-                  computed.
-                </p>
-              </div>
-            </div>
-          </div>
-
-          <div className='space-y-4 px-6 py-5'>
-
-
-            {calculatedFormula && (
-              <div className='bg-muted/40 rounded-lg border px-4 py-3'>
-                <p className='text-foreground text-xs font-semibold uppercase tracking-wide'>
-                  Generated from assessment structure
-                </p>
-                <p className='text-muted-foreground mt-1 text-sm'>{calculatedFormula}</p>
-              </div>
-            )}
-          </div>
-        </div> */}
-
-        <div className='bg-card flex flex-col rounded-xl border shadow-sm px-6 py-5 gap-3'>
-          <h3 className='text-foreground text-sm font-bold'>Course Pass Mark (%)</h3>
-          <div className='space-y-1.5'>
-            <Input
-              id='course-pass-mark'
-              type='number'
-              min={0}
-              max={100}
-              value={resolvedPassMark}
-              onChange={event => setManualPassMark(event.target.value)}
-              disabled={useCalculatedPassMark}
-              placeholder='e.g. 50'
+    <>
+      <Card>
+        <CardHeader>
+          <CardTitle>{title}</CardTitle>
+          <CardDescription>
+            Select a lesson and assessment component to configure its grading.
+          </CardDescription>
+          <p className='text-sm'>
+            Course pass mark:{' '}
+            <span className='font-semibold'>
+              {plan.pass_mark == null ? 'Not set' : `${plan.pass_mark}%`}
+            </span>
+          </p>
+        </CardHeader>
+        <CardContent>
+          {components.length === 0 || lessons.length === 0 ? (
+            <EmptyState
+              variant='compact'
+              title='No lesson grading cells yet'
+              description='Add lessons and per-lesson assessment components to configure grading.'
             />
-          </div>
-        </div>
-      </div>
-    </div>
+          ) : (
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Lesson</TableHead>
+                  {components.map(component => (
+                    <TableHead key={component.assessment_uuid} className='min-w-48'>
+                      <span className='block'>{component.title || 'Untitled component'}</span>
+                      <span className='text-muted-foreground text-xs'>
+                        {component.weight_percentage ?? 0}%
+                      </span>
+                    </TableHead>
+                  ))}
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {lessons.map(lesson => (
+                  <TableRow key={lesson.lesson_uuid}>
+                    <TableCell className='min-w-48 font-medium'>
+                      {lesson.lesson_number != null && (
+                        <span className='text-muted-foreground mr-2'>{lesson.lesson_number}.</span>
+                      )}
+                      {lesson.title || 'Untitled lesson'}
+                    </TableCell>
+                    {components.map(component => {
+                      const cell = lesson.cells?.[component.index] ?? undefined;
+                      const enabled = Boolean(cell && cell.active !== false);
+                      return (
+                        <TableCell key={component.assessment_uuid}>
+                          <Button
+                            type='button'
+                            variant={enabled ? 'outline' : 'ghost'}
+                            className='w-full'
+                            disabled={update.isPending}
+                            aria-label={`Edit ${lesson.title || 'lesson'} — ${component.title || 'assessment'}`}
+                            onClick={() => {
+                              setPreviewUuid(null);
+                              setDraft({
+                                lessonUuid: lesson.lesson_uuid,
+                                lessonTitle: lesson.title || 'Untitled lesson',
+                                component,
+                                original: cell,
+                                enabled,
+                                rubricUuid: cell?.rubric_uuid ?? '',
+                              });
+                            }}
+                          >
+                            {enabled
+                              ? cell?.rubric_uuid || component.rubric_uuid
+                                ? 'Rubric assigned'
+                                : 'Included'
+                              : 'None'}
+                          </Button>
+                        </TableCell>
+                      );
+                    })}
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          )}
+        </CardContent>
+      </Card>
+      <Sheet
+        open={Boolean(draft)}
+        onOpenChange={open => {
+          if (!open && !update.isPending) {
+            setDraft(null);
+            setPreviewUuid(null);
+          }
+        }}
+      >
+        <SheetContent className='w-full overflow-y-auto sm:max-w-2xl'>
+          <SheetHeader>
+            <SheetTitle>Edit lesson grading</SheetTitle>
+            <SheetDescription>
+              {draft?.lessonTitle} — {draft?.component.title}
+            </SheetDescription>
+          </SheetHeader>
+          {draft && (
+            <div className='space-y-6 p-4'>
+              <div className='flex items-center gap-2'>
+                <Checkbox
+                  id='include-lesson-grading'
+                  checked={draft.enabled}
+                  disabled={update.isPending}
+                  onCheckedChange={checked => setDraft({ ...draft, enabled: checked === true })}
+                />
+                <Label htmlFor='include-lesson-grading'>
+                  Include this lesson in the assessment component
+                </Label>
+              </div>
+              {draft.enabled && (
+                <div className='space-y-2'>
+                  <Label>Grading rubric</Label>
+                  <EvaluationRubricPicker
+                    creatorUuid={creatorUuid}
+                    value={draft.rubricUuid}
+                    title={draft.rubricTitle}
+                    label='Lesson grading rubric'
+                    emptyLabel={draft.component.rubric_uuid ? 'Use component rubric' : 'No rubric'}
+                    disabled={update.isPending}
+                    onChange={rubric => {
+                      setPreviewUuid(null);
+                      setDraft({
+                        ...draft,
+                        rubricUuid: rubric?.uuid ?? '',
+                        rubricTitle: rubric?.title,
+                      });
+                    }}
+                    onPreview={setPreviewUuid}
+                  />
+                  <p className='text-muted-foreground text-sm'>
+                    Leave blank to use the assessment component’s rubric, if one is configured.
+                  </p>
+                </div>
+              )}
+              <div className='flex gap-2'>
+                <Button
+                  type='button'
+                  disabled={!changed || update.isPending}
+                  onClick={() => void save()}
+                >
+                  {update.isPending && <Spinner className='size-4' />}
+                  {update.isPending ? 'Saving…' : 'Save grading'}
+                </Button>
+                <Button
+                  type='button'
+                  variant='outline'
+                  disabled={update.isPending}
+                  onClick={() => setDraft(null)}
+                >
+                  Cancel
+                </Button>
+              </div>
+              {draft.enabled && previewUuid && <EvaluationRubricPreview rubricUuid={previewUuid} />}
+            </div>
+          )}
+        </SheetContent>
+      </Sheet>
+    </>
   );
 }

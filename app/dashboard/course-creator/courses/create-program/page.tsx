@@ -7,6 +7,7 @@ import { Button } from '@/components/ui/button';
 import { EmptyState } from '@/components/ui/empty-state';
 import { STALE_TIMES } from '@/lib/query-client';
 import {
+  getProgramAssessmentsOptions,
   getProgramRequirementsOptions,
   getTrainingProgramByUuidOptions,
   searchProgramCoursesOptions,
@@ -17,16 +18,19 @@ import type {
   TrainingProgram,
 } from '@/services/client/types.gen';
 import ProgramEditor from './_components/ProgramEditor';
+import { readProgramRequirementText } from './program-requirements';
 import ProgramLoading from './loading';
 import {
   assertProgramResponse,
   defaultProgramValues,
   type ProgramFormValues,
+  programRequirementTypeSchema,
 } from './program-schema';
 
 export default function CreateProgramPage() {
   const searchParams = useSearchParams();
-  const programId = searchParams.get('id');
+  // Keep the mounted editor when it adds its newly created ID to the URL.
+  const [programId] = useState(() => searchParams.get('id'));
   return programId ? (
     <ExistingProgram key={programId} programId={programId} />
   ) : (
@@ -81,15 +85,20 @@ function ExistingProgram({ programId }: { programId: string }) {
           }
           return rows;
         };
-        const [response, requirements, courses] = await Promise.all([
+        const [response, requirements, courses, assessments] = await Promise.all([
           queryClient.fetchQuery({
             ...getTrainingProgramByUuidOptions({ path: { uuid: programId } }),
             staleTime: STALE_TIMES.entity,
           }),
           loadRequirements(),
           loadCourses(),
+          queryClient.fetchQuery({
+            ...getProgramAssessmentsOptions({ path: { uuid: programId } }),
+            staleTime: STALE_TIMES.entity,
+          }),
         ]);
         assertProgramResponse(response, 'Unable to load program');
+        assertProgramResponse(assessments, 'Unable to load program assessments');
         if (!response.data) throw new Error('Program not found');
         const program = response.data;
         if (!cancelled)
@@ -97,10 +106,27 @@ function ExistingProgram({ programId }: { programId: string }) {
             program,
             values: {
               ...defaultProgramValues(program),
+              draft: {
+                ...defaultProgramValues().draft,
+                assessments: (assessments.data ?? []).map(row => ({
+                  uuid: row.uuid,
+                  name: row.title,
+                  weight: String(row.weight_percentage),
+                  criteria: row.description ?? '',
+                  assessmentType: row.assessment_type,
+                  rubricUuid: row.rubric_uuid ?? undefined,
+                  isRequired: row.is_required ?? true,
+                  active: row.active ?? true,
+                })),
+              },
               requirements: requirements.map(row => ({
                 uuid: row.uuid,
                 requirementText: row.requirement_text,
-                requirementType: row.requirement_type,
+                requirementType: programRequirementTypeSchema.parse(row.requirement_type),
+                resource: {
+                  ...readProgramRequirementText(row.requirement_text),
+                  is_mandatory: row.is_mandatory ?? !row.is_optional,
+                },
                 isMandatory: row.is_mandatory ?? !row.is_optional,
               })),
               courses: courses

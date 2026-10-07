@@ -2,7 +2,7 @@
 
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { Tags, Trash2 } from 'lucide-react';
-import { useId, useState } from 'react';
+import { useId, useMemo, useState } from 'react';
 import { toast } from 'sonner';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -20,21 +20,16 @@ import { Skeleton } from '@/components/ui/skeleton';
 import Spinner from '@/components/ui/spinner';
 import { isForbidden, retryUnlessClientOrSearchError } from '@/lib/api-errors';
 import { getErrorMessage } from '@/lib/error-utils';
+import { useDifficultyLevels } from '@/hooks/use-difficultyLevels';
+import { skillDifficultyOptions } from '@/lib/skill-difficulty';
 import { STALE_TIMES } from '@/lib/query-client';
 import {
   getCourseSkillsOptions,
   getCourseSkillsQueryKey,
   replaceCourseSkillsMutation,
 } from '@/services/client/@tanstack/react-query.gen';
-import { type CourseSkill, LevelEnum } from '@/services/client/types.gen';
+import type { CourseSkill } from '@/services/client/types.gen';
 import { SkillPicker } from '@/src/features/skills/components/skill-picker';
-
-const LEVELS: ReadonlyArray<{ value: LevelEnum; label: string }> = [
-  { value: LevelEnum.BEGINNER, label: 'Beginner' },
-  { value: LevelEnum.INTERMEDIATE, label: 'Intermediate' },
-  { value: LevelEnum.ADVANCED, label: 'Advanced' },
-  { value: LevelEnum.EXPERT, label: 'Expert' },
-];
 
 const WEIGHTS = [
   { value: 1, label: '1 · Touches on it' },
@@ -47,15 +42,10 @@ const WEIGHTS = [
 type SkillRow = {
   skillUuid: string;
   name: string;
-  level: LevelEnum;
+  level: CourseSkill['level'];
   weight: number;
   active: boolean;
 };
-
-function toLevel(value: string | undefined): LevelEnum {
-  const normalised = value?.toLowerCase();
-  return LEVELS.find(level => level.value === normalised)?.value ?? LevelEnum.BEGINNER;
-}
 
 function toRows(items: readonly CourseSkill[] | undefined): SkillRow[] {
   return (items ?? [])
@@ -63,7 +53,7 @@ function toRows(items: readonly CourseSkill[] | undefined): SkillRow[] {
     .map(item => ({
       skillUuid: item.skill_uuid,
       name: item.skill_name ?? item.skill_slug ?? 'Skill',
-      level: toLevel(item.level),
+      level: item.level,
       weight: item.weight ?? 1,
       active: item.skill_active !== false,
     }));
@@ -77,9 +67,19 @@ function toRows(items: readonly CourseSkill[] | undefined): SkillRow[] {
  * the owner removes it.
  */
 export function CourseSkillsEditor({ courseUuid }: { courseUuid: string }) {
+  if (!courseUuid) return null;
+  return <SavedCourseSkillsEditor key={courseUuid} courseUuid={courseUuid} />;
+}
+
+function SavedCourseSkillsEditor({ courseUuid }: { courseUuid: string }) {
   const queryClient = useQueryClient();
   const [rows, setRows] = useState<SkillRow[] | null>(null);
   const [saveError, setSaveError] = useState<string | null>(null);
+  const difficulty = useDifficultyLevels();
+  const levels = useMemo(
+    () => skillDifficultyOptions(difficulty.difficultyLevels),
+    [difficulty.difficultyLevels]
+  );
 
   const query = useQuery({
     ...getCourseSkillsOptions({ path: { uuid: courseUuid } }),
@@ -89,7 +89,11 @@ export function CourseSkillsEditor({ courseUuid }: { courseUuid: string }) {
   });
   const mutation = useMutation(replaceCourseSkillsMutation());
 
-  const current = rows ?? toRows(query.data?.data);
+  const responseError =
+    query.data?.error || query.data?.success === false
+      ? new Error(query.data.message || 'Could not load the course skills')
+      : null;
+  const current = rows ?? toRows(responseError ? undefined : query.data?.data);
   const dirty = rows !== null;
 
   const update = (next: SkillRow[]) => {
@@ -114,7 +118,16 @@ export function CourseSkillsEditor({ courseUuid }: { courseUuid: string }) {
       },
       {
         onSuccess: response => {
-          queryClient.setQueryData(getCourseSkillsQueryKey({ path: { uuid: courseUuid } }), response);
+          if (response.error || response.success === false) {
+            const message = response.message || 'Could not save the course skills.';
+            setSaveError(message);
+            toast.error(message);
+            return;
+          }
+          queryClient.setQueryData(
+            getCourseSkillsQueryKey({ path: { uuid: courseUuid } }),
+            response
+          );
           setRows(null);
           toast.success('Course skills saved');
         },
@@ -140,22 +153,34 @@ export function CourseSkillsEditor({ courseUuid }: { courseUuid: string }) {
         </CardDescription>
       </CardHeader>
       <CardContent className='space-y-4'>
-        {query.isLoading ? (
+        {query.isLoading || difficulty.isLoading ? (
           <div className='space-y-2' aria-busy='true'>
             <Skeleton className='h-10 w-full' />
             <Skeleton className='h-10 w-full' />
           </div>
-        ) : query.isError ? (
+        ) : query.isError || responseError || difficulty.error ? (
           <EmptyState
             variant='compact'
             title={
               isForbidden(query.error)
                 ? 'Only the course owner can manage skills'
-                : 'Could not load the course skills'
+                : difficulty.error
+                  ? 'Could not load difficulty levels'
+                  : 'Could not load the course skills'
             }
-            description={getErrorMessage(query.error, 'Try again in a moment.')}
+            description={getErrorMessage(
+              query.error ?? responseError ?? difficulty.error,
+              'Try again in a moment.'
+            )}
             action={
-              <Button variant='outline' size='sm' onClick={() => void query.refetch()}>
+              <Button
+                variant='outline'
+                size='sm'
+                onClick={() => {
+                  if (difficulty.error) void difficulty.refetch();
+                  else void query.refetch();
+                }}
+              >
                 Try again
               </Button>
             }
@@ -174,6 +199,8 @@ export function CourseSkillsEditor({ courseUuid }: { courseUuid: string }) {
                   <SkillRowItem
                     key={row.skillUuid}
                     row={row}
+                    levels={levels}
+                    disabled={mutation.isPending}
                     onLevel={level => patch(row.skillUuid, { level })}
                     onWeight={weight => patch(row.skillUuid, { weight })}
                     onRemove={() =>
@@ -187,6 +214,7 @@ export function CourseSkillsEditor({ courseUuid }: { courseUuid: string }) {
             <div className='space-y-1.5'>
               <Label>Add a skill</Label>
               <SkillPicker
+                disabled={mutation.isPending || levels.length === 0}
                 excludeUuids={current.map(row => row.skillUuid)}
                 onPick={skill =>
                   update([
@@ -194,13 +222,18 @@ export function CourseSkillsEditor({ courseUuid }: { courseUuid: string }) {
                     {
                       skillUuid: skill.uuid,
                       name: skill.name,
-                      level: LevelEnum.BEGINNER,
+                      level: levels[0]?.value,
                       weight: 1,
                       active: true,
                     },
                   ])
                 }
               />
+              {levels.length === 0 && (
+                <p className='text-muted-foreground text-sm' role='status'>
+                  No difficulty levels supported by course skills are available.
+                </p>
+              )}
             </div>
 
             {saveError ? (
@@ -236,12 +269,16 @@ export function CourseSkillsEditor({ courseUuid }: { courseUuid: string }) {
 
 function SkillRowItem({
   row,
+  levels,
+  disabled,
   onLevel,
   onWeight,
   onRemove,
 }: {
   row: SkillRow;
-  onLevel: (level: LevelEnum) => void;
+  levels: ReturnType<typeof skillDifficultyOptions>;
+  disabled: boolean;
+  onLevel: (level: CourseSkill['level']) => void;
   onWeight: (weight: number) => void;
   onRemove: () => void;
 }) {
@@ -261,12 +298,21 @@ function SkillRowItem({
         <Label htmlFor={levelId} className='sr-only'>
           Level taught for {row.name}
         </Label>
-        <Select value={row.level} onValueChange={value => onLevel(toLevel(value))}>
+        <Select
+          value={row.level ?? ''}
+          disabled={disabled || levels.length === 0}
+          onValueChange={value => {
+            const level = levels.find(option => option.value === value);
+            if (level) onLevel(level.value);
+          }}
+        >
           <SelectTrigger id={levelId} className='h-8 w-36'>
-            <SelectValue />
+            <SelectValue placeholder='Select level'>
+              {levels.find(level => level.value === row.level)?.label ?? row.level}
+            </SelectValue>
           </SelectTrigger>
           <SelectContent>
-            {LEVELS.map(level => (
+            {levels.map(level => (
               <SelectItem key={level.value} value={level.value}>
                 {level.label}
               </SelectItem>
@@ -276,7 +322,11 @@ function SkillRowItem({
         <Label htmlFor={weightId} className='sr-only'>
           How central {row.name} is to the course
         </Label>
-        <Select value={String(row.weight)} onValueChange={value => onWeight(Number(value))}>
+        <Select
+          value={String(row.weight)}
+          disabled={disabled}
+          onValueChange={value => onWeight(Number(value))}
+        >
           <SelectTrigger id={weightId} className='h-8 w-40'>
             <SelectValue />
           </SelectTrigger>
@@ -294,6 +344,7 @@ function SkillRowItem({
         size='icon'
         className='size-8'
         onClick={onRemove}
+        disabled={disabled}
         aria-label={`Remove ${row.name}`}
       >
         <Trash2 className='size-4' />

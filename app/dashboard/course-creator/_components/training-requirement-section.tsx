@@ -26,8 +26,8 @@ import type { QueryClient } from '@tanstack/react-query';
 import { CheckCircle2, Loader2, Pencil, Plus, Save, Trash2, X } from 'lucide-react';
 import { type Dispatch, type SetStateAction, useMemo, useState } from 'react';
 import { toast } from 'sonner';
-import { Textarea } from '../../../../components/ui/textarea';
 import { providedByOptions, requirementTypes } from './course-creation-types';
+import { REQUIREMENT_UNITS, TrainingRequirementFields } from './training-requirement-fields';
 
 type MutationVariables<T> = T extends {
   mutationFn?: (variables: infer TVariables) => Promise<unknown>;
@@ -84,21 +84,7 @@ const INSTRUCTOR_REQUIREMENT_TYPES = [...requirementTypes, 'education'] as const
 const requirementTypesForProvider = (provider?: Provider | null) =>
   provider === 'instructor' ? INSTRUCTOR_REQUIREMENT_TYPES : requirementTypes;
 
-const UNIT_OPTIONS = [
-  'pieces',
-  'units',
-  'sets',
-  'bundles',
-  'dozens',
-  'pairs',
-  'boxes',
-  'kits',
-  'seats',
-  'license',
-  'licenses',
-  'copies',
-  'other',
-];
+const UNIT_OPTIONS = REQUIREMENT_UNITS;
 
 export type DraftRow = {
   id: string; // temp local id
@@ -189,10 +175,10 @@ export function TrainingRequirementsSection({
           ...emptyDraft(),
           ...(education
             ? {
-              requirement_type: 'education',
-              quantity: String(EDUCATION_QUANTITY),
-              unit: EDUCATION_UNIT,
-            }
+                requirement_type: 'education',
+                quantity: String(EDUCATION_QUANTITY),
+                unit: EDUCATION_UNIT,
+              }
             : {}),
         },
       ],
@@ -233,9 +219,9 @@ export function TrainingRequirementsSection({
               ...(draft.requirement_type === 'education'
                 ? { quantity: EDUCATION_QUANTITY, unit: EDUCATION_UNIT }
                 : {
-                  quantity: draft.quantity ? Number(draft.quantity) : 0,
-                  unit: draft.unit,
-                }),
+                    quantity: draft.quantity ? Number(draft.quantity) : 0,
+                    unit: draft.unit,
+                  }),
               is_mandatory: draft.is_mandatory,
               description: draft.description,
               provided_by: provider,
@@ -318,9 +304,9 @@ export function TrainingRequirementsSection({
         ...(isEducation
           ? { quantity: EDUCATION_QUANTITY, unit: EDUCATION_UNIT }
           : {
-            quantity: editDraft.quantity ? Number(editDraft.quantity) : 0,
-            unit: editDraft.unit,
-          }),
+              quantity: editDraft.quantity ? Number(editDraft.quantity) : 0,
+              unit: editDraft.unit,
+            }),
         is_mandatory: editDraft.is_mandatory,
         description: editDraft.description,
         provided_by: req.provided_by,
@@ -527,117 +513,12 @@ export function TrainingRequirementsSection({
                     <tbody className='divide-border divide-y'>
                       {group.rows.map(row => (
                         <tr key={row.id} className='hover:bg-muted/20 transition-colors'>
-                          {/* Name */}
-                          <td className='px-3 py-2'>
-                            <Textarea
-                              disabled={!!savingProvider}
-                              placeholder={
-                                row.requirement_type === 'education'
-                                  ? 'e.g., Bachelor of Education'
-                                  : 'e.g., Piano room'
-                              }
-                              value={row.name}
-                              onChange={e =>
-                                updateDraftRow(activeProvider, row.id, { name: e.target.value })
-                              }
-                              className='h-8 min-w-[140px]'
-                            />
-                          </td>
-
-                          {/* Type */}
-                          <td className='px-3 py-2'>
-                            <Select
-                              disabled={!!savingProvider}
-                              value={row.requirement_type}
-                              onValueChange={v =>
-                                updateDraftRow(activeProvider, row.id, { requirement_type: v })
-                              }
-                            >
-                              <SelectTrigger className='h-8 min-w-[110px]'>
-                                <SelectValue />
-                              </SelectTrigger>
-                              <SelectContent>
-                                {requirementTypesForProvider(activeProvider).map(t => (
-                                  <SelectItem key={t} value={t}>
-                                    {t.charAt(0).toUpperCase() + t.slice(1)}
-                                  </SelectItem>
-                                ))}
-                              </SelectContent>
-                            </Select>
-                          </td>
-
-                          {/* Quantity */}
-                          <td className='px-3 py-2'>
-                            {row.requirement_type === 'education' ? (
-                              <span className='text-muted-foreground'>{EDUCATION_QUANTITY}</span>
-                            ) : (
-                              <Input
-                                disabled={!!savingProvider}
-                                type='number'
-                                min='0'
-                                placeholder='0'
-                                value={row.quantity}
-                                onChange={e =>
-                                  updateDraftRow(activeProvider, row.id, {
-                                    quantity: e.target.value,
-                                  })
-                                }
-                                className='h-8 w-20'
-                              />
-                            )}
-                          </td>
-
-                          {/* Unit */}
-                          <td className='px-3 py-2'>
-                            {row.requirement_type === 'education' ? (
-                              <span className='text-muted-foreground'>{EDUCATION_UNIT}</span>
-                            ) : (
-                              <Select
-                                disabled={!!savingProvider}
-                                value={row.unit}
-                                onValueChange={v =>
-                                  updateDraftRow(activeProvider, row.id, { unit: v })
-                                }
-                              >
-                                <SelectTrigger className='h-8 min-w-[100px]'>
-                                  <SelectValue />
-                                </SelectTrigger>
-                                <SelectContent>
-                                  {UNIT_OPTIONS.map(u => (
-                                    <SelectItem key={u} value={u}>
-                                      {u}
-                                    </SelectItem>
-                                  ))}
-                                </SelectContent>
-                              </Select>
-                            )}
-                          </td>
-
-                          {/* Mandatory */}
-                          <td className='px-3 py-2 text-center'>
-                            <Checkbox
-                              disabled={!!savingProvider}
-                              checked={row.is_mandatory}
-                              onCheckedChange={v =>
-                                updateDraftRow(activeProvider, row.id, { is_mandatory: !!v })
-                              }
-                            />
-                          </td>
-
-                          {/* Description */}
-                          <td className='px-3 py-2'>
-                            <Textarea
-                              disabled={!!savingProvider}
-                              placeholder='Optional'
-                              value={row.description}
-                              onChange={e =>
-                                updateDraftRow(activeProvider, row.id, {
-                                  description: e.target.value,
-                                })
-                              }
-                              className='h-8 min-w-[160px]'
-                            />
-                          </td>
+                          <TrainingRequirementFields
+                            value={row}
+                            disabled={!!savingProvider}
+                            instructor={activeProvider === 'instructor'}
+                            onChange={patch => updateDraftRow(activeProvider, row.id, patch)}
+                          />
 
                           {/* Remove row */}
                           <td className='px-3 py-2'>

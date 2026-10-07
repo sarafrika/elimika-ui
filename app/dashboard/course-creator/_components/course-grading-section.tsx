@@ -10,7 +10,12 @@ type CourseGradingSectionProps = {
 const CourseGradingSection = ({ course }: CourseGradingSectionProps) => {
   return (
     <div className='mb-10 w-full'>
-      <CourseGradingForm courseUuid={course?.data?.uuid as string} />
+      <CourseGradingForm
+        courseUuid={course?.error || course?.success === false ? undefined : course?.data?.uuid}
+        creatorUuid={
+          course?.error || course?.success === false ? undefined : course?.data?.course_creator_uuid
+        }
+      />
     </div>
   );
 };

@@ -39,11 +39,13 @@ export function CourseLearningOutcomes({
   onChange,
   onBlur,
   error,
+  entity = 'course',
 }: {
   value: string;
   onChange: (value: string) => void;
   onBlur: () => void;
   error?: string;
+  entity?: 'course' | 'program';
 }) {
   const [outcomes, setOutcomes] = useState<Outcome[]>([]);
   const nextId = useRef(0);
@@ -69,7 +71,7 @@ export function CourseLearningOutcomes({
           <Target className='text-primary h-4 w-4 shrink-0' />
           <div className='space-y-1'>
             <CardTitle className='text-base'>Learning outcomes</CardTitle>
-            <CardDescription>What learners can do by the end of the course.</CardDescription>
+            <CardDescription>What learners can do by the end of the {entity}.</CardDescription>
           </div>
         </div>
         <Button

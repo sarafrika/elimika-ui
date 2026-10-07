@@ -420,6 +420,41 @@ export const zStudent = z
     'Student profile information including guardian contacts and academic details. Links to a base user account.'
   );
 
+/**
+ * **[OPTIONAL]** Relationship to the student. Defaults to GUARDIAN.
+ */
+export const zRelationshipTypeEnum = z
+  .enum(['PARENT', 'GUARDIAN', 'SPONSOR'])
+  .describe('**[OPTIONAL]** Relationship to the student. Defaults to GUARDIAN.');
+
+/**
+ * A parent or guardian named during student onboarding.
+ */
+export const zStudentGuardianRequest = z
+  .object({
+    name: z.string().min(0).max(100).describe("**[REQUIRED]** Guardian's full name."),
+    email: z
+      .string()
+      .email()
+      .min(0)
+      .max(150)
+      .describe(
+        "**[REQUIRED]** Guardian's email. An existing account is linked straight away; otherwise an invitation is emailed here."
+      ),
+    phone: z
+      .union([
+        z
+          .string()
+          .min(0)
+          .max(20)
+          .regex(/^(\+254|0)?[17]\d{8}$/),
+        z.null(),
+      ])
+      .optional(),
+    relationship_type: zRelationshipTypeEnum.optional(),
+  })
+  .describe('A parent or guardian named during student onboarding.');
+
 export const zApiResponseStudent = z.object({
   success: z.boolean().optional(),
   data: zStudent.optional(),
@@ -1253,11 +1288,6 @@ export const zQuizQuestion = z
       )
       .readonly()
       .optional(),
-    question_number: z
-      .string()
-      .describe('**[READ-ONLY]** Formatted question number for display in quiz interface.')
-      .readonly()
-      .optional(),
     requires_options: z
       .boolean()
       .describe(
@@ -1273,6 +1303,11 @@ export const zQuizQuestion = z
     points_display: z
       .string()
       .describe('**[READ-ONLY]** Human-readable format of the points value.')
+      .readonly()
+      .optional(),
+    question_number: z
+      .string()
+      .describe('**[READ-ONLY]** Formatted question number for display in quiz interface.')
       .readonly()
       .optional(),
   })
@@ -1347,6 +1382,11 @@ export const zQuizQuestionOption = z
       )
       .readonly()
       .optional(),
+    option_category: z
+      .string()
+      .describe('**[READ-ONLY]** Formatted category of the option based on its correctness status.')
+      .readonly()
+      .optional(),
     is_incorrect: z
       .boolean()
       .describe('**[READ-ONLY]** Indicates if this option is an incorrect answer choice.')
@@ -1369,11 +1409,6 @@ export const zQuizQuestionOption = z
       .describe(
         '**[READ-ONLY]** Comprehensive summary of the option including correctness and position.'
       )
-      .readonly()
-      .optional(),
-    option_category: z
-      .string()
-      .describe('**[READ-ONLY]** Formatted category of the option based on its correctness status.')
       .readonly()
       .optional(),
   })
@@ -1524,6 +1559,11 @@ export const zQuizAttempt = z
       )
       .readonly()
       .optional(),
+    grade_display: z
+      .string()
+      .describe('**[READ-ONLY]** Formatted display of the grade information.')
+      .readonly()
+      .optional(),
     time_display: z
       .string()
       .describe('**[READ-ONLY]** Formatted display of the time taken to complete the quiz.')
@@ -1539,11 +1579,6 @@ export const zQuizAttempt = z
       .describe('**[READ-ONLY]** Comprehensive summary of the quiz attempt performance.')
       .readonly()
       .optional(),
-    grade_display: z
-      .string()
-      .describe('**[READ-ONLY]** Formatted display of the grade information.')
-      .readonly()
-      .optional(),
   })
   .describe('Student quiz attempt with timing, scoring, and completion tracking');
 
@@ -1554,7 +1589,7 @@ export const zApiResponseQuizAttempt = z.object({
   error: z.unknown().optional(),
 });
 
-export const zSchemaEnum4 = z.enum(['draft', 'in_review', 'published', 'archived']);
+export const zSchemaEnum6 = z.enum(['draft', 'in_review', 'published', 'archived']);
 
 /**
  * Training program bundling multiple courses into structured learning pathways
@@ -1576,6 +1611,9 @@ export const zTrainingProgram = z
       .describe(
         '**[REQUIRED]** Title of the training program that clearly describes the learning pathway.'
       ),
+    program_code: z
+      .union([z.string().regex(/^[A-Za-z0-9][A-Za-z0-9-]{1,29}$/), z.null()])
+      .optional(),
     course_creator_uuid: z
       .string()
       .uuid()
@@ -1599,7 +1637,7 @@ export const zTrainingProgram = z
         '**[OPTIONAL]** Learning objectives and goals students will achieve upon program completion.'
       )
       .optional(),
-    status: zSchemaEnum4,
+    status: zSchemaEnum6,
     prerequisites: z
       .string()
       .min(0)
@@ -1621,6 +1659,10 @@ export const zTrainingProgram = z
       .describe('**[REQUIRED]** Additional program duration in minutes (0-59).'),
     class_limit: z.union([z.number().int().gte(1), z.null()]).optional(),
     price: z.union([z.number().gte(0), z.null()]).optional(),
+    pass_mark: z.union([z.number().gte(0).lte(100), z.null()]).optional(),
+    thumbnail_url: z.union([z.string().min(0).max(500), z.null()]).optional(),
+    banner_url: z.union([z.string().min(0).max(500), z.null()]).optional(),
+    intro_video_url: z.union([z.string().min(0).max(500), z.null()]).optional(),
     active: z
       .boolean()
       .describe(
@@ -1681,6 +1723,31 @@ export const zTrainingProgram = z
 export const zApiResponseTrainingProgram = z.object({
   success: z.boolean().optional(),
   data: zTrainingProgram.optional(),
+  message: z.string().optional(),
+  error: z.unknown().optional(),
+});
+
+/**
+ * A weighted assessment component of a training program
+ */
+export const zProgramAssessment = z
+  .object({
+    uuid: z.string().uuid().readonly().optional(),
+    title: z.string().min(0).max(255),
+    assessment_type: z.string().min(0).max(50),
+    description: z.string().optional(),
+    weight_percentage: z.number().gte(0.01).lte(100),
+    rubric_uuid: z.string().uuid().optional(),
+    is_required: z.boolean().optional(),
+    active: z.boolean().optional(),
+    program_uuid: z.string().uuid().readonly().optional(),
+    created_date: z.string().datetime().readonly().optional(),
+  })
+  .describe('A weighted assessment component of a training program');
+
+export const zApiResponseProgramAssessment = z.object({
+  success: z.boolean().optional(),
+  data: zProgramAssessment.optional(),
   message: z.string().optional(),
   error: z.unknown().optional(),
 });
@@ -2314,6 +2381,314 @@ export const zApiResponseResourceAvailabilityRule = z.object({
 });
 
 /**
+ * User-owned professional basics shared by every domain
+ */
+export const zProfessionalProfile = z
+  .object({
+    bio: z.string().min(0).max(10000).optional(),
+    professional_headline: z.string().min(0).max(500).optional(),
+    website: z.string().min(0).max(500).optional(),
+    location_name: z.string().min(0).max(255).optional(),
+    latitude: z.number().gte(-90).lte(90).optional(),
+    longitude: z.number().gte(-180).lte(180).optional(),
+    user_uuid: z.string().uuid().readonly().optional(),
+    updated_date: z.string().datetime().readonly().optional(),
+    basics_complete: z.boolean().readonly().optional(),
+  })
+  .describe('User-owned professional basics shared by every domain');
+
+export const zApiResponseProfessionalProfile = z.object({
+  success: z.boolean().optional(),
+  data: zProfessionalProfile.optional(),
+  message: z.string().optional(),
+  error: z.unknown().optional(),
+});
+
+export const zProficiencyLevelEnum = z.enum(['beginner', 'intermediate', 'advanced', 'expert']);
+
+export const zVerificationStatusEnum = z.enum(['PENDING', 'VERIFIED', 'REJECTED']);
+
+/**
+ * A skill in the user-owned skills wallet
+ */
+export const zUserSkill = z
+  .object({
+    uuid: z.string().uuid().readonly().optional(),
+    skill_name: z.string().min(0).max(255),
+    proficiency_level: zProficiencyLevelEnum.optional(),
+    evidence: z.string().optional(),
+    last_assessed_on: z.string().date().optional(),
+    user_uuid: z.string().uuid().readonly().optional(),
+    skill_uuid: z.string().uuid().readonly().optional(),
+    verification_status: zVerificationStatusEnum.optional(),
+    verified_at: z.string().datetime().readonly().optional(),
+    verification_notes: z.string().readonly().optional(),
+    created_date: z.string().datetime().readonly().optional(),
+    created_by: z.string().readonly().optional(),
+    updated_date: z.string().datetime().readonly().optional(),
+    updated_by: z.string().readonly().optional(),
+  })
+  .describe('A skill in the user-owned skills wallet');
+
+export const zApiResponseUserSkill = z.object({
+  success: z.boolean().optional(),
+  data: zUserSkill.optional(),
+  message: z.string().optional(),
+  error: z.unknown().optional(),
+});
+
+export const zItemTypeEnum = z.enum(['PROJECT', 'PERFORMANCE', 'WORK_SAMPLE', 'MEDIA', 'OTHER']);
+
+/**
+ * A portfolio item in the user-owned skills wallet
+ */
+export const zUserPortfolioItem = z
+  .object({
+    uuid: z.string().uuid().readonly().optional(),
+    title: z.string().min(0).max(255),
+    item_type: zItemTypeEnum,
+    link_url: z.string().min(0).max(2048).optional(),
+    completed_on: z.string().date().optional(),
+    description: z.string().optional(),
+    user_uuid: z.string().uuid().readonly().optional(),
+    created_date: z.string().datetime().readonly().optional(),
+    created_by: z.string().readonly().optional(),
+    updated_date: z.string().datetime().readonly().optional(),
+    updated_by: z.string().readonly().optional(),
+  })
+  .describe('A portfolio item in the user-owned skills wallet');
+
+export const zApiResponseUserPortfolioItem = z.object({
+  success: z.boolean().optional(),
+  data: zUserPortfolioItem.optional(),
+  message: z.string().optional(),
+  error: z.unknown().optional(),
+});
+
+/**
+ * A professional membership on the user-owned professional profile
+ */
+export const zUserMembership = z
+  .object({
+    uuid: z.string().uuid().readonly().optional(),
+    organisation_name: z.string().min(0).max(255),
+    membership_number: z.string().min(0).max(100).optional(),
+    start_date: z.string().date().optional(),
+    end_date: z.string().date().optional(),
+    is_active: z.boolean().optional(),
+    user_uuid: z.string().uuid().readonly().optional(),
+    created_date: z.string().datetime().readonly().optional(),
+    created_by: z.string().readonly().optional(),
+    updated_date: z.string().datetime().readonly().optional(),
+    updated_by: z.string().readonly().optional(),
+  })
+  .describe('A professional membership on the user-owned professional profile');
+
+export const zApiResponseUserMembership = z.object({
+  success: z.boolean().optional(),
+  data: zUserMembership.optional(),
+  message: z.string().optional(),
+  error: z.unknown().optional(),
+});
+
+export const zExperienceTypeEnum = z.enum(['TRAINING', 'WORK', 'VOLUNTEERING', 'PROJECT']);
+
+/**
+ * An experience record on the user-owned professional profile
+ */
+export const zUserExperience = z
+  .object({
+    uuid: z.string().uuid().readonly().optional(),
+    position: z.string().min(0).max(255),
+    organisation_name: z.string().min(0).max(255),
+    responsibilities: z.string().optional(),
+    years_of_experience: z.number().gte(0).lte(60).optional(),
+    start_date: z.string().date().optional(),
+    end_date: z.string().date().optional(),
+    is_current_position: z.boolean().optional(),
+    experience_type: zExperienceTypeEnum.optional(),
+    user_uuid: z.string().uuid().readonly().optional(),
+    created_date: z.string().datetime().readonly().optional(),
+    created_by: z.string().readonly().optional(),
+    updated_date: z.string().datetime().readonly().optional(),
+    updated_by: z.string().readonly().optional(),
+  })
+  .describe('An experience record on the user-owned professional profile');
+
+export const zApiResponseUserExperience = z.object({
+  success: z.boolean().optional(),
+  data: zUserExperience.optional(),
+  message: z.string().optional(),
+  error: z.unknown().optional(),
+});
+
+/**
+ * An education record on the user-owned professional profile
+ */
+export const zUserEducation = z
+  .object({
+    uuid: z.string().uuid().readonly().optional(),
+    qualification: z.string().min(0).max(255),
+    field_of_study: z.string().min(0).max(255).optional(),
+    school_name: z.string().min(0).max(255),
+    start_year: z.number().int().gte(1950).lte(2100).optional(),
+    year_completed: z.number().int().gte(1950).lte(2100).optional(),
+    certificate_number: z.string().min(0).max(100).optional(),
+    user_uuid: z.string().uuid().readonly().optional(),
+    created_date: z.string().datetime().readonly().optional(),
+    created_by: z.string().readonly().optional(),
+    updated_date: z.string().datetime().readonly().optional(),
+    updated_by: z.string().readonly().optional(),
+  })
+  .describe('An education record on the user-owned professional profile');
+
+export const zApiResponseUserEducation = z.object({
+  success: z.boolean().optional(),
+  data: zUserEducation.optional(),
+  message: z.string().optional(),
+  error: z.unknown().optional(),
+});
+
+export const zStatusEnum4 = z.enum(['Pending Review', 'Approved', 'Rejected', 'Expired']);
+
+/**
+ * A credential document on the user-owned professional profile
+ */
+export const zUserDocument = z
+  .object({
+    uuid: z.string().uuid().readonly().optional(),
+    document_type_uuid: z.string().uuid(),
+    education_uuid: z.string().uuid().optional(),
+    experience_uuid: z.string().uuid().optional(),
+    membership_uuid: z.string().uuid().optional(),
+    title: z.string().min(0).max(255).optional(),
+    description: z.string().min(0).max(2000).optional(),
+    status: zStatusEnum4.optional(),
+    expiry_date: z.string().date().optional(),
+    user_uuid: z.string().uuid().readonly().optional(),
+    original_filename: z.string().readonly().optional(),
+    stored_filename: z.string().readonly().optional(),
+    file_path: z.string().readonly().optional(),
+    file_size_bytes: z.coerce.bigint().readonly().optional(),
+    mime_type: z.string().readonly().optional(),
+    file_hash: z.string().readonly().optional(),
+    upload_date: z.string().datetime().readonly().optional(),
+    is_verified: z.boolean().readonly().optional(),
+    verified_by: z.string().readonly().optional(),
+    verified_at: z.string().datetime().readonly().optional(),
+    verification_notes: z.string().readonly().optional(),
+    created_date: z.string().datetime().readonly().optional(),
+    created_by: z.string().readonly().optional(),
+    updated_date: z.string().datetime().readonly().optional(),
+    updated_by: z.string().readonly().optional(),
+    file_url: z.string().readonly().optional(),
+  })
+  .describe('A credential document on the user-owned professional profile');
+
+export const zApiResponseUserDocument = z.object({
+  success: z.boolean().optional(),
+  data: zUserDocument.optional(),
+  message: z.string().optional(),
+  error: z.unknown().optional(),
+});
+
+/**
+ * A competency in the user-owned skills wallet
+ */
+export const zUserCompetency = z
+  .object({
+    uuid: z.string().uuid().readonly().optional(),
+    competency: z.string().min(0).max(255),
+    framework: z.string().min(0).max(255).optional(),
+    level: z.number().int().gte(1).lte(5).optional(),
+    evidence: z.string().optional(),
+    user_uuid: z.string().uuid().readonly().optional(),
+    verification_status: zVerificationStatusEnum.optional(),
+    verified_at: z.string().datetime().readonly().optional(),
+    verification_notes: z.string().readonly().optional(),
+    created_date: z.string().datetime().readonly().optional(),
+    created_by: z.string().readonly().optional(),
+    updated_date: z.string().datetime().readonly().optional(),
+    updated_by: z.string().readonly().optional(),
+  })
+  .describe('A competency in the user-owned skills wallet');
+
+export const zApiResponseUserCompetency = z.object({
+  success: z.boolean().optional(),
+  data: zUserCompetency.optional(),
+  message: z.string().optional(),
+  error: z.unknown().optional(),
+});
+
+export const zCredentialTypeEnum = z.enum(['CERTIFICATE', 'BADGE', 'AWARD', 'EXTERNAL_CREDENTIAL']);
+
+/**
+ * A credential in the user-owned skills wallet
+ */
+export const zUserCertification = z
+  .object({
+    uuid: z.string().uuid().readonly().optional(),
+    certification_name: z.string().min(0).max(255),
+    issuing_organization: z.string().min(0).max(255),
+    issued_date: z.string().date().optional(),
+    expiry_date: z.string().date().optional(),
+    credential_id: z.string().min(0).max(120).optional(),
+    credential_url: z.string().min(0).max(500).optional(),
+    description: z.string().optional(),
+    credential_type: zCredentialTypeEnum.optional(),
+    user_uuid: z.string().uuid().readonly().optional(),
+    verification_status: zVerificationStatusEnum.optional(),
+    verified_at: z.string().datetime().readonly().optional(),
+    verification_notes: z.string().readonly().optional(),
+    created_date: z.string().datetime().readonly().optional(),
+    created_by: z.string().readonly().optional(),
+    updated_date: z.string().datetime().readonly().optional(),
+    updated_by: z.string().readonly().optional(),
+  })
+  .describe('A credential in the user-owned skills wallet');
+
+export const zApiResponseUserCertification = z.object({
+  success: z.boolean().optional(),
+  data: zUserCertification.optional(),
+  message: z.string().optional(),
+  error: z.unknown().optional(),
+});
+
+export const zAchievementTypeEnum = z.enum([
+  'AWARD',
+  'MILESTONE',
+  'COMPETITION',
+  'UNLOCKED_SKILL',
+  'RECOGNITION',
+]);
+
+/**
+ * An achievement in the user-owned skills wallet
+ */
+export const zUserAchievement = z
+  .object({
+    uuid: z.string().uuid().readonly().optional(),
+    title: z.string().min(0).max(255),
+    achievement_type: zAchievementTypeEnum,
+    awarded_by: z.string().min(0).max(255).optional(),
+    awarded_on: z.string().date().optional(),
+    description: z.string().optional(),
+    user_uuid: z.string().uuid().readonly().optional(),
+    created_date: z.string().datetime().readonly().optional(),
+    created_by: z.string().readonly().optional(),
+    updated_date: z.string().datetime().readonly().optional(),
+    updated_by: z.string().readonly().optional(),
+  })
+  .describe('An achievement in the user-owned skills wallet');
+
+export const zApiResponseUserAchievement = z.object({
+  success: z.boolean().optional(),
+  data: zUserAchievement.optional(),
+  message: z.string().optional(),
+  error: z.unknown().optional(),
+});
+
+/**
  * **[READ-ONLY]** On a near-me search (near=lat,lng) only: how far the instructor is from the searched point, as a coarse band. Never metres.
  */
 export const zDistanceBandEnum = z
@@ -2430,7 +2805,7 @@ export const zApiResponseInstructor = z.object({
 /**
  * **[REQUIRED]** Level of proficiency in this skill. Indicates instructor's competency and teaching capability.
  */
-export const zProficiencyLevelEnum = z
+export const zProficiencyLevelEnum2 = z
   .enum(['BEGINNER', 'INTERMEDIATE', 'ADVANCED', 'EXPERT'])
   .describe(
     "**[REQUIRED]** Level of proficiency in this skill. Indicates instructor's competency and teaching capability."
@@ -2462,7 +2837,7 @@ export const zInstructorSkill = z
       .describe(
         '**[REQUIRED]** Name of the technical or professional skill. Should be specific and standardized for consistency.'
       ),
-    proficiency_level: zProficiencyLevelEnum,
+    proficiency_level: zProficiencyLevelEnum2,
     skill_uuid: z
       .string()
       .uuid()
@@ -2621,10 +2996,6 @@ export const zInstructorProfessionalMembership = z
       .readonly()
       .optional(),
     formatted_duration: z.union([z.string().readonly(), z.null()]).readonly().optional(),
-    membership_duration_months: z
-      .union([z.number().int().readonly(), z.null()])
-      .readonly()
-      .optional(),
     membership_status: zMembershipStatusEnum.optional(),
     membership_period: z.union([z.string().readonly(), z.null()]).readonly().optional(),
     is_long_standing_member: z
@@ -2642,6 +3013,10 @@ export const zInstructorProfessionalMembership = z
     is_recent_membership: z
       .boolean()
       .describe('**[READ-ONLY]** Indicates if this membership was started within the last 3 years.')
+      .readonly()
+      .optional(),
+    membership_duration_months: z
+      .union([z.number().int().readonly(), z.null()])
       .readonly()
       .optional(),
   })
@@ -2889,14 +3264,14 @@ export const zApiResponseInstructorEducation = z.object({
 /**
  * **[READ-ONLY]** Current status of the document in the verification workflow.
  */
-export const zStatusEnum4 = z
+export const zStatusEnum5 = z
   .enum(['PENDING', 'APPROVED', 'REJECTED', 'EXPIRED', 'UNDER_REVIEW'])
   .describe('**[READ-ONLY]** Current status of the document in the verification workflow.');
 
 /**
  * **[READ-ONLY]** Human-readable verification status of the document.
  */
-export const zVerificationStatusEnum = z
+export const zVerificationStatusEnum2 = z
   .enum(['VERIFIED', 'PENDING', 'REJECTED', 'EXPIRED'])
   .describe('**[READ-ONLY]** Human-readable verification status of the document.');
 
@@ -2943,7 +3318,7 @@ export const zInstructorDocument = z
         '**[REQUIRED]** Descriptive title for the document. Used for identification and display in document lists.'
       ),
     description: z.union([z.string().min(0).max(2000), z.null()]).optional(),
-    status: zStatusEnum4.optional(),
+    status: zStatusEnum5.optional(),
     expiry_date: z.union([z.string().date(), z.null()]).optional(),
     stored_filename: z
       .string()
@@ -3047,11 +3422,7 @@ export const zInstructorDocument = z
       )
       .readonly()
       .optional(),
-    file_size_formatted: z
-      .string()
-      .describe('**[READ-ONLY]** Human-readable formatted file size.')
-      .readonly()
-      .optional(),
+    verification_status: zVerificationStatusEnum2.optional(),
     days_until_expiry: z.union([z.number().int().readonly(), z.null()]).readonly().optional(),
     is_pending_verification: z
       .boolean()
@@ -3063,7 +3434,11 @@ export const zInstructorDocument = z
       .describe('**[READ-ONLY]** Indicates if the document has an expiry date configured.')
       .readonly()
       .optional(),
-    verification_status: zVerificationStatusEnum.optional(),
+    file_size_formatted: z
+      .string()
+      .describe('**[READ-ONLY]** Human-readable formatted file size.')
+      .readonly()
+      .optional(),
   })
   .describe(
     'Document record for instructor credential verification including educational certificates, experience documents, and professional memberships'
@@ -3290,6 +3665,9 @@ export const zCourse = z
       .describe(
         '**[REQUIRED]** Course title. Should be descriptive and engaging for potential students.'
       ),
+    course_code: z
+      .union([z.string().regex(/^[A-Za-z0-9][A-Za-z0-9-]{1,29}$/), z.null()])
+      .optional(),
     course_creator_uuid: z
       .string()
       .uuid()
@@ -3327,13 +3705,9 @@ export const zCourse = z
         '**[OPTIONAL]** Required knowledge and skills students should have before taking this course.'
       )
       .optional(),
-    duration_hours: z.number().int().gte(0).describe('**[REQUIRED]** Course duration in hours.'),
-    duration_minutes: z
-      .number()
-      .int()
-      .gte(0)
-      .lte(59)
-      .describe('**[REQUIRED]** Additional course duration in minutes (0-59).'),
+    duration_hours: z.union([z.number().int().gte(0), z.null()]).optional(),
+    duration_minutes: z.union([z.number().int().gte(0).lte(59), z.null()]).optional(),
+    pass_mark: z.union([z.number().gte(0).lte(100), z.null()]).optional(),
     class_limit: z.union([z.number().int().gte(1), z.null()]).optional(),
     price: z.union([z.number().gte(0), z.null()]).optional(),
     minimum_training_fee: z.union([z.number().gte(0), z.null()]).optional(),
@@ -3357,7 +3731,7 @@ export const zCourse = z
     thumbnail_url: z.union([z.string().url().min(0).max(500), z.null()]).optional(),
     intro_video_url: z.union([z.string().url().min(0).max(500), z.null()]).optional(),
     banner_url: z.union([z.string().url().min(0).max(500), z.null()]).optional(),
-    status: zSchemaEnum4,
+    status: zSchemaEnum6,
     active: z
       .boolean()
       .describe(
@@ -3474,16 +3848,9 @@ export const zApiResponseCourse = z.object({
   error: z.unknown().optional(),
 });
 
-/**
- * Defaults to beginner; accepted in any case
- */
-export const zLevelEnum = z
-  .enum(['beginner', 'intermediate', 'advanced', 'expert'])
-  .describe('Defaults to beginner; accepted in any case');
-
 export const zCourseSkillItem = z.object({
   skill_uuid: z.string().uuid(),
-  level: zLevelEnum.optional(),
+  level: zProficiencyLevelEnum.optional(),
   weight: z.number().int().gte(1).lte(5).describe('1-5, defaults to 1').optional(),
 });
 
@@ -3506,7 +3873,7 @@ export const zCourseSkill = z
     skill_uuid: z.string().uuid().optional(),
     skill_name: z.string().optional(),
     skill_slug: z.string().optional(),
-    level: zLevelEnum.optional(),
+    level: zProficiencyLevelEnum.optional(),
     weight: z.number().int().describe('1-5, how central the skill is to the course').optional(),
     skill_active: z
       .boolean()
@@ -3613,7 +3980,7 @@ export const zCourseTrainingApplicationUpdateRequest = z
 /**
  * **[READ-ONLY]** Current status of the application.
  */
-export const zStatusEnum5 = z
+export const zStatusEnum6 = z
   .enum(['pending', 'approved', 'rejected'])
   .describe('**[READ-ONLY]** Current status of the application.');
 
@@ -3628,7 +3995,7 @@ export const zCourseTrainingApplication = z
       .describe('**[READ-ONLY]** Unique identifier for this application.')
       .readonly()
       .optional(),
-    status: zStatusEnum5.optional(),
+    status: zStatusEnum6.optional(),
     application_notes: z.union([z.string(), z.null()]).optional(),
     review_notes: z.union([z.string(), z.null()]).optional(),
     reviewed_by: z.union([z.string(), z.null()]).optional(),
@@ -3994,7 +4361,7 @@ export const zLessonPracticeActivity = z
         '**[OPTIONAL]** Display order within the lesson. If omitted, the system appends the activity.'
       )
       .optional(),
-    status: zSchemaEnum4.optional(),
+    status: zSchemaEnum6.optional(),
     active: z
       .boolean()
       .describe(
@@ -4153,6 +4520,122 @@ export const zApiResponseLessonContent = z.object({
 });
 
 /**
+ * Turns one lesson x component cell on (with its rubric) or off
+ */
+export const zCourseEvaluationPlanCell = z
+  .object({
+    lesson_uuid: z.string().uuid(),
+    assessment_uuid: z.string().uuid(),
+    enabled: z.boolean().describe('false removes the cell from the plan ("None")').optional(),
+    rubric_uuid: z.string().uuid().optional(),
+    quiz_uuid: z
+      .string()
+      .uuid()
+      .describe('Optional quiz from the same lesson that this cell grades')
+      .optional(),
+    assignment_uuid: z
+      .string()
+      .uuid()
+      .describe('Optional assignment from the same lesson that this cell grades')
+      .optional(),
+  })
+  .describe('Turns one lesson x component cell on (with its rubric) or off');
+
+/**
+ * Cells to change; cells not listed are left as they are
+ */
+export const zCourseEvaluationPlanUpdate = z
+  .object({
+    cells: z.array(zCourseEvaluationPlanCell),
+  })
+  .describe('Cells to change; cells not listed are left as they are');
+
+export const zComponent = z.object({
+  assessment_uuid: z.string().uuid().optional(),
+  title: z.string().optional(),
+  assessment_type: z.string().optional(),
+  weight_percentage: z.number().optional(),
+  rubric_uuid: z.string().uuid().optional(),
+  sync_class_attendance: z.boolean().optional(),
+});
+
+export const zItemTypeEnum2 = z.enum([
+  'assignment',
+  'quiz',
+  'attendance',
+  'project',
+  'discussion',
+  'exam',
+  'practical',
+  'performance',
+  'participation',
+  'manual',
+]);
+
+/**
+ * Gradebook line item nested under a weighted course assessment component
+ */
+export const zCourseAssessmentLineItem = z
+  .object({
+    uuid: z.string().uuid().readonly().optional(),
+    course_assessment_uuid: z.string().uuid().optional(),
+    title: z.string().min(0).max(255),
+    description: z.string().min(0).max(1000).optional(),
+    item_type: zItemTypeEnum2,
+    assignment_uuid: z.string().uuid().optional(),
+    quiz_uuid: z.string().uuid().optional(),
+    rubric_uuid: z.string().uuid().optional(),
+    scheduled_instance_uuid: z.string().uuid().optional(),
+    max_score: z.number().gte(0.01).optional(),
+    weight_percentage: z.number().gte(0.01).lte(100).optional(),
+    display_order: z.number().int().optional(),
+    active: z.boolean().optional(),
+    due_at: z.string().datetime().optional(),
+    lesson_uuid: z
+      .string()
+      .uuid()
+      .describe('**[OPTIONAL]** Lesson this item grades, for a per-lesson component.')
+      .optional(),
+    created_date: z.string().datetime().readonly().optional(),
+    created_by: z.string().readonly().optional(),
+    updated_date: z.string().datetime().readonly().optional(),
+    updated_by: z.string().readonly().optional(),
+    item_type_display: z.string().readonly().optional(),
+  })
+  .describe('Gradebook line item nested under a weighted course assessment component');
+
+export const zLessonRow = z.object({
+  lesson_uuid: z.string().uuid().optional(),
+  lesson_number: z.number().int().optional(),
+  title: z.string().optional(),
+  cells: z
+    .array(zCourseAssessmentLineItem)
+    .describe('One entry per component, in component order; null where the lesson is not graded')
+    .optional(),
+});
+
+/**
+ * Lessons by per-lesson assessment components; each cell is the line item grading that lesson, or null
+ */
+export const zCourseEvaluationPlan = z
+  .object({
+    course_uuid: z.string().uuid().optional(),
+    pass_mark: z.number().optional(),
+    components: z.array(zComponent).optional(),
+    lessons: z.array(zLessonRow).optional(),
+  })
+  .describe(
+    'Lessons by per-lesson assessment components; each cell is the line item grading that lesson, or null'
+  );
+
+export const zApiResponseCourseEvaluationPlan = z.object({
+  success: z.boolean().optional(),
+  data: zCourseEvaluationPlan.optional(),
+  message: z.string().optional(),
+  error: z.unknown().optional(),
+});
+
+/**
  * **[OPTIONAL]** Strategy used to aggregate gradebook line items for this assessment component.
  */
 export const zAggregationStrategyEnum = z
@@ -4214,6 +4697,19 @@ export const zCourseAssessment = z
     is_required: z
       .boolean()
       .describe('**[OPTIONAL]** Indicates if this assessment is required for course completion.')
+      .optional(),
+    per_lesson: z
+      .boolean()
+      .describe(
+        '**[OPTIONAL]** Graded lesson by lesson: each lesson gets its own cell in the evaluation plan.'
+      )
+      .optional(),
+    program_assessment_uuid: z
+      .string()
+      .uuid()
+      .describe(
+        '**[OPTIONAL]** Program component this course component feeds, for a course inside a program'
+      )
       .optional(),
     created_date: z
       .string()
@@ -4282,46 +4778,6 @@ export const zApiResponseCourseAssessment = z.object({
   error: z.unknown().optional(),
 });
 
-export const zItemTypeEnum = z.enum([
-  'assignment',
-  'quiz',
-  'attendance',
-  'project',
-  'discussion',
-  'exam',
-  'practical',
-  'performance',
-  'participation',
-  'manual',
-]);
-
-/**
- * Gradebook line item nested under a weighted course assessment component
- */
-export const zCourseAssessmentLineItem = z
-  .object({
-    uuid: z.string().uuid().readonly().optional(),
-    course_assessment_uuid: z.string().uuid().optional(),
-    title: z.string().min(0).max(255),
-    description: z.string().min(0).max(1000).optional(),
-    item_type: zItemTypeEnum,
-    assignment_uuid: z.string().uuid().optional(),
-    quiz_uuid: z.string().uuid().optional(),
-    rubric_uuid: z.string().uuid().optional(),
-    scheduled_instance_uuid: z.string().uuid().optional(),
-    max_score: z.number().gte(0.01).optional(),
-    weight_percentage: z.number().gte(0.01).lte(100).optional(),
-    display_order: z.number().int().optional(),
-    active: z.boolean().optional(),
-    due_at: z.string().datetime().optional(),
-    created_date: z.string().datetime().readonly().optional(),
-    created_by: z.string().readonly().optional(),
-    updated_date: z.string().datetime().readonly().optional(),
-    updated_by: z.string().readonly().optional(),
-    item_type_display: z.string().readonly().optional(),
-  })
-  .describe('Gradebook line item nested under a weighted course assessment component');
-
 export const zApiResponseCourseAssessmentLineItem = z.object({
   success: z.boolean().optional(),
   data: zCourseAssessmentLineItem.optional(),
@@ -4358,7 +4814,7 @@ export const zApiResponseCourseAssessmentLineItemScore = z.object({
   error: z.unknown().optional(),
 });
 
-export const zStatusEnum6 = z.enum(['pending', 'completed']);
+export const zStatusEnum7 = z.enum(['pending', 'completed']);
 
 /**
  * Selected rubric scoring level for one criterion in a line-item evaluation
@@ -4385,7 +4841,7 @@ export const zCourseAssessmentLineItemRubricEvaluation = z
     uuid: z.string().uuid().readonly().optional(),
     line_item_uuid: z.string().uuid().optional(),
     enrollment_uuid: z.string().uuid().optional(),
-    status: zStatusEnum6.optional(),
+    status: zStatusEnum7.optional(),
     score: z.number().readonly().optional(),
     percentage: z.number().readonly().optional(),
     comments: z.string().min(0).max(5000).optional(),
@@ -4493,7 +4949,13 @@ export const zCourseCreatorSkill = z
     uuid: z.string().uuid().readonly().optional(),
     course_creator_uuid: z.string().uuid(),
     skill_name: z.string().min(0).max(100),
-    proficiency_level: zLevelEnum,
+    proficiency_level: zProficiencyLevelEnum,
+    evidence: z.string().describe('Link to or description of evidence for the skill').optional(),
+    last_assessed_on: z.string().date().optional(),
+    skill_uuid: z.string().uuid().readonly().optional(),
+    verification_status: zVerificationStatusEnum.optional(),
+    verified_at: z.string().datetime().readonly().optional(),
+    verification_notes: z.string().readonly().optional(),
     created_date: z.string().datetime().readonly().optional(),
     created_by: z.string().readonly().optional(),
     updated_date: z.string().datetime().readonly().optional(),
@@ -4508,6 +4970,29 @@ export const zCourseCreatorSkill = z
 export const zApiResponseCourseCreatorSkill = z.object({
   success: z.boolean().optional(),
   data: zCourseCreatorSkill.optional(),
+  message: z.string().optional(),
+  error: z.unknown().optional(),
+});
+
+/**
+ * Work a course creator shows in the Portfolio tab of the skills wallet
+ */
+export const zCourseCreatorPortfolioItem = z
+  .object({
+    uuid: z.string().uuid().readonly().optional(),
+    title: z.string().min(0).max(255),
+    item_type: zItemTypeEnum,
+    link_url: z.string().min(0).max(2048).optional(),
+    completed_on: z.string().date().optional(),
+    description: z.string().optional(),
+    course_creator_uuid: z.string().uuid().readonly().optional(),
+    created_date: z.string().datetime().readonly().optional(),
+  })
+  .describe('Work a course creator shows in the Portfolio tab of the skills wallet');
+
+export const zApiResponseCourseCreatorPortfolioItem = z.object({
+  success: z.boolean().optional(),
+  data: zCourseCreatorPortfolioItem.optional(),
   message: z.string().optional(),
   error: z.unknown().optional(),
 });
@@ -4555,6 +5040,7 @@ export const zCourseCreatorExperience = z
     start_date: z.string().date().optional(),
     end_date: z.string().date().optional(),
     is_current_position: z.boolean().optional(),
+    experience_type: zExperienceTypeEnum.optional(),
     created_date: z.string().datetime().readonly().optional(),
     created_by: z.string().readonly().optional(),
     updated_date: z.string().datetime().readonly().optional(),
@@ -4599,8 +5085,6 @@ export const zApiResponseCourseCreatorEducation = z.object({
   error: z.unknown().optional(),
 });
 
-export const zStatusEnum7 = z.enum(['Pending Review', 'Approved', 'Rejected', 'Expired']);
-
 export const zCourseCreatorDocumentDto = z.object({
   uuid: z.string().uuid().readonly().optional(),
   course_creator_uuid: z.string().uuid(),
@@ -4611,7 +5095,7 @@ export const zCourseCreatorDocumentDto = z.object({
   original_filename: z.string().min(0).max(255),
   title: z.string().min(0).max(255).optional(),
   description: z.string().min(0).max(2000).optional(),
-  status: zStatusEnum7.optional(),
+  status: zStatusEnum4.optional(),
   expiry_date: z.string().date().optional(),
   stored_filename: z.string().readonly().optional(),
   file_path: z.string().readonly().optional(),
@@ -4639,11 +5123,7 @@ export const zCourseCreatorDocumentDto = z.object({
     )
     .readonly()
     .optional(),
-  file_size_formatted: z
-    .string()
-    .describe('**[READ-ONLY]** Human-readable formatted file size.')
-    .readonly()
-    .optional(),
+  verification_status: zVerificationStatusEnum2.optional(),
   days_until_expiry: z.union([z.number().int().readonly(), z.null()]).readonly().optional(),
   is_pending_verification: z
     .boolean()
@@ -4655,12 +5135,41 @@ export const zCourseCreatorDocumentDto = z.object({
     .describe('**[READ-ONLY]** Indicates if the document has an expiry date configured.')
     .readonly()
     .optional(),
-  verification_status: zVerificationStatusEnum.optional(),
+  file_size_formatted: z
+    .string()
+    .describe('**[READ-ONLY]** Human-readable formatted file size.')
+    .readonly()
+    .optional(),
 });
 
 export const zApiResponseCourseCreatorDocumentDto = z.object({
   success: z.boolean().optional(),
   data: zCourseCreatorDocumentDto.optional(),
+  message: z.string().optional(),
+  error: z.unknown().optional(),
+});
+
+/**
+ * A competency against a framework, with evidence an admin verifies
+ */
+export const zCourseCreatorCompetency = z
+  .object({
+    uuid: z.string().uuid().readonly().optional(),
+    competency: z.string().min(0).max(255),
+    framework: z.string().min(0).max(255).optional(),
+    level: z.number().int().gte(1).lte(5).optional(),
+    evidence: z.string().optional(),
+    course_creator_uuid: z.string().uuid().readonly().optional(),
+    verification_status: zVerificationStatusEnum.optional(),
+    verified_at: z.string().datetime().readonly().optional(),
+    verification_notes: z.string().readonly().optional(),
+    created_date: z.string().datetime().readonly().optional(),
+  })
+  .describe('A competency against a framework, with evidence an admin verifies');
+
+export const zApiResponseCourseCreatorCompetency = z.object({
+  success: z.boolean().optional(),
+  data: zCourseCreatorCompetency.optional(),
   message: z.string().optional(),
   error: z.unknown().optional(),
 });
@@ -4679,7 +5188,12 @@ export const zCourseCreatorCertification = z
     credential_id: z.string().min(0).max(120).optional(),
     credential_url: z.string().min(0).max(500).optional(),
     description: z.string().optional(),
-    is_verified: z.boolean().optional(),
+    credential_type: zCredentialTypeEnum.optional(),
+    is_verified: z
+      .boolean()
+      .describe('Set by a platform admin when the credential is checked')
+      .readonly()
+      .optional(),
     created_date: z.string().datetime().readonly().optional(),
     created_by: z.string().readonly().optional(),
     updated_date: z.string().datetime().readonly().optional(),
@@ -4693,6 +5207,66 @@ export const zCourseCreatorCertification = z
 export const zApiResponseCourseCreatorCertification = z.object({
   success: z.boolean().optional(),
   data: zCourseCreatorCertification.optional(),
+  message: z.string().optional(),
+  error: z.unknown().optional(),
+});
+
+/**
+ * An award, milestone or recognition in the skills wallet
+ */
+export const zCourseCreatorAchievement = z
+  .object({
+    uuid: z.string().uuid().readonly().optional(),
+    title: z.string().min(0).max(255),
+    achievement_type: zAchievementTypeEnum,
+    awarded_by: z.string().min(0).max(255).optional(),
+    awarded_on: z.string().date().optional(),
+    description: z.string().optional(),
+    course_creator_uuid: z.string().uuid().readonly().optional(),
+    created_date: z.string().datetime().readonly().optional(),
+  })
+  .describe('An award, milestone or recognition in the skills wallet');
+
+export const zApiResponseCourseCreatorAchievement = z.object({
+  success: z.boolean().optional(),
+  data: zCourseCreatorAchievement.optional(),
+  message: z.string().optional(),
+  error: z.unknown().optional(),
+});
+
+export const zCourseCreatorCategoriesRequest = z.object({
+  category_uuids: z.array(z.string().uuid()),
+});
+
+export const zCourseCreatorCategoryPreferenceDto = z.object({
+  category_uuid: z.string().uuid().optional(),
+});
+
+export const zVerificationStatusEnum3 = z.enum([
+  'DRAFT',
+  'SUBMITTED',
+  'APPROVED',
+  'REJECTED',
+  'REVOKED',
+]);
+
+export const zCourseCreatorOnboardingStateDto = z.object({
+  course_creator_uuid: z.string().uuid().optional(),
+  categories: z.array(zCourseCreatorCategoryPreferenceDto).optional(),
+  skills_wallet_sections_completed: z.number().int().optional(),
+  skills_wallet_sections_total: z.number().int().optional(),
+  verification_status: zVerificationStatusEnum3.optional(),
+  admin_verified: z.boolean().optional(),
+  verification_requested_at: z.string().datetime().optional(),
+  submitted_at: z.string().datetime().optional(),
+  reviewed_at: z.string().datetime().optional(),
+  review_reason: z.string().optional(),
+  ready_for_submission: z.boolean().optional(),
+});
+
+export const zApiResponseCourseCreatorOnboardingStateDto = z.object({
+  success: z.boolean().optional(),
+  data: zCourseCreatorOnboardingStateDto.optional(),
   message: z.string().optional(),
   error: z.unknown().optional(),
 });
@@ -5009,16 +5583,16 @@ export const zCategory = z
       )
       .readonly()
       .optional(),
+    is_root_category: z
+      .boolean()
+      .describe('**[READ-ONLY]** Indicates if this is a root category with no parent.')
+      .readonly()
+      .optional(),
     category_path: z
       .string()
       .describe(
         '**[READ-ONLY]** Hierarchical path showing category position in the tree structure.'
       )
-      .readonly()
-      .optional(),
-    is_root_category: z
-      .boolean()
-      .describe('**[READ-ONLY]** Indicates if this is a root category with no parent.')
       .readonly()
       .optional(),
   })
@@ -5750,7 +6324,7 @@ export const zApiResponseClassMarketplaceJob = z.object({
 
 export const zClassMarketplaceJobRequiredSkillItem = z.object({
   skill_uuid: z.string().uuid(),
-  min_proficiency: zLevelEnum.optional(),
+  min_proficiency: zProficiencyLevelEnum.optional(),
   is_mandatory: z.boolean().describe('Defaults to true').optional(),
 });
 
@@ -5769,7 +6343,7 @@ export const zClassMarketplaceJobRequiredSkill = z.object({
   skill_uuid: z.string().uuid().optional(),
   skill_name: z.string().optional(),
   skill_slug: z.string().optional(),
-  min_proficiency: zLevelEnum.optional(),
+  min_proficiency: zProficiencyLevelEnum.optional(),
   is_mandatory: z.boolean().describe('Inherited skills are all mandatory').optional(),
   inherited: z.boolean().optional(),
   skill_active: z.boolean().describe('False when an admin has since retired the skill').optional(),
@@ -6500,6 +7074,21 @@ export const zScheduledInstance = z
       .describe('**[READ-ONLY]** Duration of the scheduled instance in minutes.')
       .readonly()
       .optional(),
+    can_be_cancelled: z
+      .boolean()
+      .describe('**[READ-ONLY]** Indicates if the scheduled instance can be cancelled.')
+      .readonly()
+      .optional(),
+    can_be_started: z
+      .boolean()
+      .describe('**[READ-ONLY]** Indicates if the scheduled instance can be explicitly started.')
+      .readonly()
+      .optional(),
+    can_be_ended: z
+      .boolean()
+      .describe('**[READ-ONLY]** Indicates if the scheduled instance can be explicitly concluded.')
+      .readonly()
+      .optional(),
     duration_formatted: z
       .string()
       .describe('**[READ-ONLY]** Human-readable formatted duration.')
@@ -6515,21 +7104,6 @@ export const zScheduledInstance = z
       .describe(
         '**[READ-ONLY]** Indicates if the scheduled instance is currently active (ongoing).'
       )
-      .readonly()
-      .optional(),
-    can_be_cancelled: z
-      .boolean()
-      .describe('**[READ-ONLY]** Indicates if the scheduled instance can be cancelled.')
-      .readonly()
-      .optional(),
-    can_be_started: z
-      .boolean()
-      .describe('**[READ-ONLY]** Indicates if the scheduled instance can be explicitly started.')
-      .readonly()
-      .optional(),
-    can_be_ended: z
-      .boolean()
-      .describe('**[READ-ONLY]** Indicates if the scheduled instance can be explicitly concluded.')
       .readonly()
       .optional(),
   })
@@ -6564,6 +7138,108 @@ export const zBlockInstructorTimeRequest = z
   })
   .describe(
     "Request to block an instructor's calendar for non-teaching commitments (optional feature). Supports multiple periods."
+  );
+
+/**
+ * Relationship to the student
+ */
+export const zRelationshipTypeEnum2 = z
+  .enum(['PARENT', 'GUARDIAN', 'SPONSOR'])
+  .describe('Relationship to the student');
+
+/**
+ * linked, invited, expired, declined or revoked
+ */
+export const zStatusEnum10 = z
+  .enum(['linked', 'invited', 'expired', 'declined', 'revoked'])
+  .describe('linked, invited, expired, declined or revoked');
+
+/**
+ * A student's guardian with link or invitation status.
+ */
+export const zStudentGuardian = z
+  .object({
+    uuid: z.union([z.string().uuid(), z.null()]).optional(),
+    student_uuid: z.string().uuid().describe('The student profile').optional(),
+    name: z.string().describe("Guardian's name").optional(),
+    email: z.string().describe("Guardian's email").optional(),
+    phone: z.union([z.string(), z.null()]).optional(),
+    relationship_type: zRelationshipTypeEnum2.optional(),
+    status: zStatusEnum10.optional(),
+    guardian_user_uuid: z.union([z.string().uuid(), z.null()]).optional(),
+    link_uuid: z.union([z.string().uuid(), z.null()]).optional(),
+    invitation_sent_at: z.union([z.string().datetime(), z.null()]).optional(),
+    invitation_expires_at: z.union([z.string().datetime(), z.null()]).optional(),
+    linked_at: z.union([z.string().datetime(), z.null()]).optional(),
+  })
+  .describe("A student's guardian with link or invitation status.");
+
+export const zApiResponseStudentGuardian = z.object({
+  success: z.boolean().optional(),
+  data: zStudentGuardian.optional(),
+  message: z.string().optional(),
+  error: z.unknown().optional(),
+});
+
+export const zApiResponseVoid = z.object({
+  success: z.boolean().optional(),
+  data: z.unknown().optional(),
+  message: z.string().optional(),
+  error: z.unknown().optional(),
+});
+
+export const zShareScopeEnum = z.enum(['FULL', 'ACADEMICS', 'ATTENDANCE']);
+
+export const zStatusEnum11 = z.enum(['PENDING', 'ACTIVE', 'REVOKED']);
+
+/**
+ * Represents a guardian's access rights to a learner profile.
+ */
+export const zGuardianStudentLink = z
+  .object({
+    uuid: z.string().uuid().optional(),
+    student_uuid: z.string().uuid().optional(),
+    guardian_user_uuid: z.string().uuid().optional(),
+    student_name: z.string().optional(),
+    guardian_display_name: z.string().optional(),
+    relationship_type: zRelationshipTypeEnum2.optional(),
+    share_scope: zShareScopeEnum.optional(),
+    status: zStatusEnum11.optional(),
+    primary_guardian: z.boolean().optional(),
+    linked_date: z.string().datetime().optional(),
+    revoked_date: z.string().datetime().optional(),
+    notes: z.string().optional(),
+  })
+  .describe("Represents a guardian's access rights to a learner profile.");
+
+export const zApiResponseGuardianStudentLink = z.object({
+  success: z.boolean().optional(),
+  data: zGuardianStudentLink.optional(),
+  message: z.string().optional(),
+  error: z.unknown().optional(),
+});
+
+/**
+ * Details an invited guardian supplies to create their account from the invitation link.
+ */
+export const zGuardianInvitationRegistrationRequest = z
+  .object({
+    first_name: z.string().min(0).max(100).describe('**[REQUIRED]** First name'),
+    last_name: z.string().min(0).max(100).describe('**[REQUIRED]** Last name'),
+    phone_number: z
+      .union([
+        z
+          .string()
+          .min(0)
+          .max(20)
+          .regex(/^(\+254|0)?[17]\d{8}$/),
+        z.null(),
+      ])
+      .optional(),
+    terms_accepted: z.boolean().describe('**[REQUIRED]** Terms of use accepted'),
+  })
+  .describe(
+    'Details an invited guardian supplies to create their account from the invitation link.'
   );
 
 /**
@@ -6609,6 +7285,97 @@ export const zApiResponseListRubricScoringLevel = z.object({
 export const zApiResponseObject = z.object({
   success: z.boolean().optional(),
   data: z.unknown().optional(),
+  message: z.string().optional(),
+  error: z.unknown().optional(),
+});
+
+export const zGenderEnum2 = z.enum(['MALE', 'FEMALE', 'PREFER_NOT_TO_SAY']);
+
+/**
+ * The domain to register into
+ */
+export const zDomainEnum = z
+  .enum(['student', 'instructor', 'course_creator', 'organisation_user'])
+  .describe('The domain to register into');
+
+/**
+ * Starts a self-registration. Personal details are written to Keycloak only; Elimika records the
+ * chosen domain, which a platform admin approves before any dashboard opens. Keycloak then emails
+ * a link to set a password and verify the address.
+ *
+ */
+export const zRegistrationRequest = z
+  .object({
+    first_name: z.string().min(0).max(50),
+    middle_name: z.string().min(0).max(50).optional(),
+    last_name: z.string().min(0).max(50),
+    email: z.string().email().min(0).max(50),
+    phone_number: z
+      .string()
+      .min(1)
+      .regex(/^\+?[0-9 ]{7,20}$/),
+    dob: z.string().date().optional(),
+    gender: zGenderEnum2.optional(),
+    domain: zDomainEnum,
+    terms_accepted: z.boolean().optional(),
+    captcha_token: z
+      .string()
+      .describe('Turnstile token, required when captcha verification is enabled')
+      .optional(),
+  })
+  .describe(
+    'Starts a self-registration. Personal details are written to Keycloak only; Elimika records the\nchosen domain, which a platform admin approves before any dashboard opens. Keycloak then emails\na link to set a password and verify the address.\n'
+  );
+
+export const zRegistrationAccepted = z.object({
+  message: z.string().optional(),
+});
+
+export const zApiResponseRegistrationAccepted = z.object({
+  success: z.boolean().optional(),
+  data: zRegistrationAccepted.optional(),
+  message: z.string().optional(),
+  error: z.unknown().optional(),
+});
+
+/**
+ * Asks for the set-password email again
+ */
+export const zRegistrationResendRequest = z
+  .object({
+    email: z.string().email().min(1),
+    captcha_token: z.string().optional(),
+  })
+  .describe('Asks for the set-password email again');
+
+/**
+ * A signed-in account asking for another domain
+ */
+export const zDomainApplicationRequest = z
+  .object({
+    domain: zDomainEnum,
+  })
+  .describe('A signed-in account asking for another domain');
+
+export const zSchemaEnum12 = z.enum(['PENDING', 'APPROVED', 'REJECTED', 'SUSPENDED']);
+
+/**
+ * A domain a user holds or has asked for, with its approval state
+ */
+export const zDomainApplication = z
+  .object({
+    user_uuid: z.string().uuid().optional(),
+    domain: z.string().optional(),
+    status: zSchemaEnum12.optional(),
+    requested_at: z.string().datetime().optional(),
+    reviewed_at: z.string().datetime().optional(),
+    review_reason: z.string().optional(),
+  })
+  .describe('A domain a user holds or has asked for, with its approval state');
+
+export const zApiResponseDomainApplication = z.object({
+  success: z.boolean().optional(),
+  data: zDomainApplication.optional(),
   message: z.string().optional(),
   error: z.unknown().optional(),
 });
@@ -6690,7 +7457,7 @@ export const zTrainingRateUpdateRequest = z
 /**
  * **[READ-ONLY]** Review status.
  */
-export const zStatusEnum10 = z
+export const zStatusEnum12 = z
   .enum(['pending', 'approved', 'rejected', 'withdrawn'])
   .describe('**[READ-ONLY]** Review status.');
 
@@ -6713,7 +7480,7 @@ export const zTrainingRateUpdate = z
       .readonly()
       .optional(),
     note: z.union([z.string().readonly(), z.null()]).readonly().optional(),
-    status: zStatusEnum10.optional(),
+    status: zStatusEnum12.optional(),
     application_uuid: z
       .string()
       .uuid()
@@ -6847,13 +7614,6 @@ export const zApiResponseProgramReview = z.object({
   error: z.unknown().optional(),
 });
 
-export const zApiResponseVoid = z.object({
-  success: z.boolean().optional(),
-  data: z.unknown().optional(),
-  message: z.string().optional(),
-  error: z.unknown().optional(),
-});
-
 /**
  * Validation document attached to an organisation
  */
@@ -6884,7 +7644,7 @@ export const zOrganisationDocument = z
       .describe('Whether a reviewer has verified the document')
       .readonly()
       .optional(),
-    status: zStatusEnum7.optional(),
+    status: zStatusEnum4.optional(),
     expiry_date: z
       .string()
       .date()
@@ -6923,7 +7683,7 @@ export const zCreateStudentGroupRequest = z
 /**
  * PENDING, ALLOCATED, APPROVED or DISBURSED. The legacy value 'Completed' is accepted and stored as DISBURSED. Defaults to PENDING.
  */
-export const zStatusEnum11 = z
+export const zStatusEnum13 = z
   .enum(['PENDING', 'ALLOCATED', 'APPROVED', 'DISBURSED'])
   .describe(
     "PENDING, ALLOCATED, APPROVED or DISBURSED. The legacy value 'Completed' is accepted and stored as DISBURSED. Defaults to PENDING."
@@ -6957,7 +7717,7 @@ export const zCreateSkillsFundTransactionRequest = z
       .string()
       .describe('Type: Allocation, Disbursement, Adjustment. Defaults to Allocation.')
       .optional(),
-    status: zStatusEnum11.optional(),
+    status: zStatusEnum13.optional(),
     transaction_date: z.string().datetime().optional(),
   })
   .describe('Payload to record a skills fund movement.');
@@ -6978,7 +7738,7 @@ export const zSkillsFundTransaction = z
       .describe('ISO-4217 currency the amount is denominated in, e.g. KES.')
       .optional(),
     transaction_type: z.string().describe('Type: Allocation, Disbursement, Adjustment.').optional(),
-    status: zStatusEnum11.optional(),
+    status: zStatusEnum13.optional(),
     transaction_date: z.union([z.string().datetime(), z.null()]).optional(),
     created_date: z.string().datetime().readonly().optional(),
   })
@@ -7220,7 +7980,7 @@ export const zInstructorObligationSettlementRequest = z
   })
   .describe('Evidence that an organisation has paid an instructor outside the platform');
 
-export const zSchemaEnum6 = z.enum(['ACCRUED', 'SETTLED', 'CANCELLED', 'DISPUTED']);
+export const zSchemaEnum8 = z.enum(['ACCRUED', 'SETTLED', 'CANCELLED', 'DISPUTED']);
 
 /**
  * A single session's pay owed by an organisation to an instructor, at the rate snapshotted when the session completed
@@ -7246,7 +8006,7 @@ export const zInstructorObligation = z
       .describe('Per-session fee as it stood when the session completed; never recomputed')
       .optional(),
     currency_code: z.string().describe('Currency the obligation was accrued in').optional(),
-    status: zSchemaEnum6.optional(),
+    status: zSchemaEnum8.optional(),
     accrued_at: z
       .string()
       .datetime()
@@ -7414,8 +8174,13 @@ export const zTypeEnum = z.enum([
   'PROFILE_COMPLETION_REMINDER',
   'ORGANISATION_INVITATION',
   'GUARDIAN_CONSENT_REQUEST',
+  'GUARDIAN_LINK_INVITATION',
+  'GUARDIAN_LINK_ESTABLISHED',
   'ORGANISATION_INVITATION_ACCEPTED',
   'ORGANISATION_ANNOUNCEMENT',
+  'DOMAIN_APPROVAL_REQUESTED',
+  'DOMAIN_APPROVAL_GRANTED',
+  'DOMAIN_APPROVAL_DECLINED',
   'WEEKLY_PROGRESS_SUMMARY',
   'LEARNING_STREAK_ACHIEVEMENT',
   'PEER_ACHIEVEMENT_CELEBRATION',
@@ -7433,7 +8198,7 @@ export const zPriorityEnum = z.enum(['LOW', 'NORMAL', 'HIGH', 'CRITICAL']);
 
 export const zPresentationEnum = z.enum(['POPUP', 'INBOX']);
 
-export const zStatusEnum12 = z.enum(['UNREAD', 'READ', 'ARCHIVED']);
+export const zStatusEnum14 = z.enum(['UNREAD', 'READ', 'ARCHIVED']);
 
 export const zNotificationDto = z.object({
   uuid: z.string().uuid().optional(),
@@ -7443,7 +8208,7 @@ export const zNotificationDto = z.object({
   category: zCategoryEnum.optional(),
   priority: zPriorityEnum.optional(),
   presentation: zPresentationEnum.optional(),
-  status: zStatusEnum12.optional(),
+  status: zStatusEnum14.optional(),
   title: z.string().optional(),
   body: z.string().optional(),
   action_url: z.string().optional(),
@@ -7516,13 +8281,6 @@ export const zApiResponseAcceptInvitationResult = z.object({
 });
 
 /**
- * **[REQUIRED]** Nature of the relationship.
- */
-export const zGuardianRelationshipTypeEnum = z
-  .enum(['PARENT', 'GUARDIAN', 'SPONSOR'])
-  .describe('**[REQUIRED]** Nature of the relationship.');
-
-/**
  * Contact details for the guardian who will consent on a minor's behalf.
  */
 export const zGuardianDetailsRequest = z
@@ -7534,7 +8292,7 @@ export const zGuardianDetailsRequest = z
       .max(150)
       .describe("**[REQUIRED]** Guardian's email address. The consent link is sent here."),
     guardian_name: z.string().min(0).max(150).describe("**[REQUIRED]** Guardian's full name."),
-    guardian_relationship_type: zGuardianRelationshipTypeEnum,
+    guardian_relationship_type: zRelationshipTypeEnum2,
     guardian_phone: z.union([z.string().min(0).max(50), z.null()]).optional(),
   })
   .describe("Contact details for the guardian who will consent on a minor's behalf.");
@@ -7647,30 +8405,6 @@ export const zApiResponseInstructorReview = z.object({
   error: z.unknown().optional(),
 });
 
-export const zShareScopeEnum = z.enum(['FULL', 'ACADEMICS', 'ATTENDANCE']);
-
-export const zStatusEnum13 = z.enum(['PENDING', 'ACTIVE', 'REVOKED']);
-
-/**
- * Represents a guardian's access rights to a learner profile.
- */
-export const zGuardianStudentLink = z
-  .object({
-    uuid: z.string().uuid().optional(),
-    student_uuid: z.string().uuid().optional(),
-    guardian_user_uuid: z.string().uuid().optional(),
-    student_name: z.string().optional(),
-    guardian_display_name: z.string().optional(),
-    relationship_type: zGuardianRelationshipTypeEnum.optional(),
-    share_scope: zShareScopeEnum.optional(),
-    status: zStatusEnum13.optional(),
-    primary_guardian: z.boolean().optional(),
-    linked_date: z.string().datetime().optional(),
-    revoked_date: z.string().datetime().optional(),
-    notes: z.string().optional(),
-  })
-  .describe("Represents a guardian's access rights to a learner profile.");
-
 /**
  * Request payload to link a guardian/parent to a learner profile.
  */
@@ -7678,7 +8412,7 @@ export const zGuardianStudentLinkRequest = z
   .object({
     student_uuid: z.string().uuid().describe('UUID for the student profile to be monitored'),
     guardian_user_uuid: z.string().uuid().describe("UUID for the guardian's user account"),
-    relationship_type: zGuardianRelationshipTypeEnum,
+    relationship_type: zRelationshipTypeEnum2,
     share_scope: zShareScopeEnum,
     is_primary: z
       .boolean()
@@ -7688,13 +8422,6 @@ export const zGuardianStudentLinkRequest = z
     notes: z.string().describe('Optional note shown in audits or invitation emails').optional(),
   })
   .describe('Request payload to link a guardian/parent to a learner profile.');
-
-export const zApiResponseGuardianStudentLink = z.object({
-  success: z.boolean().optional(),
-  data: zGuardianStudentLink.optional(),
-  message: z.string().optional(),
-  error: z.unknown().optional(),
-});
 
 /**
  * **[OPTIONAL]** How much of the child's learning the guardian will see. Defaults to FULL.
@@ -7776,7 +8503,7 @@ export const zEnrollmentRequest = z
 /**
  * **[OPTIONAL]** Current enrollment and attendance status.
  */
-export const zStatusEnum14 = z
+export const zStatusEnum15 = z
   .enum(['ENROLLED', 'WAITLISTED', 'ATTENDED', 'ABSENT', 'CANCELLED'])
   .describe('**[OPTIONAL]** Current enrollment and attendance status.');
 
@@ -7803,7 +8530,7 @@ export const zEnrollment = z
       .string()
       .uuid()
       .describe('**[REQUIRED]** Reference to the student UUID who is enrolling.'),
-    status: zStatusEnum14.optional(),
+    status: zStatusEnum15.optional(),
     attendance_marked_at: z.union([z.string().datetime(), z.null()]).optional(),
     created_date: z
       .string()
@@ -7841,14 +8568,14 @@ export const zEnrollment = z
       .describe('**[READ-ONLY]** Indicates if the student attended the class.')
       .readonly()
       .optional(),
-    status_description: z
-      .string()
-      .describe('**[READ-ONLY]** Human-readable description of the enrollment status.')
-      .readonly()
-      .optional(),
     is_attendance_marked: z
       .boolean()
       .describe('**[READ-ONLY]** Indicates if attendance has been marked for this enrollment.')
+      .readonly()
+      .optional(),
+    status_description: z
+      .string()
+      .describe('**[READ-ONLY]** Human-readable description of the enrollment status.')
       .readonly()
       .optional(),
     can_be_cancelled: z
@@ -8684,7 +9411,7 @@ export const zClassMarketplaceJobApplicationRequest = z
   })
   .describe('Application submitted by an instructor against a marketplace class job');
 
-export const zStatusEnum15 = z.enum([
+export const zStatusEnum16 = z.enum([
   'pending',
   'shortlisted',
   'interviewing',
@@ -8743,7 +9470,7 @@ export const zClassMarketplaceJobSummary = z
 export const zClassMarketplaceJobApplication = z
   .object({
     uuid: z.string().uuid().readonly().optional(),
-    status: zStatusEnum15.optional(),
+    status: zStatusEnum16.optional(),
     job: zClassMarketplaceJobSummary.optional(),
     job_uuid: z.string().uuid().readonly().optional(),
     instructor_uuid: z.string().uuid().readonly().optional(),
@@ -8815,7 +9542,7 @@ export const zCreateBookingRequest = z
 /**
  * Current status of the booking
  */
-export const zStatusEnum16 = z
+export const zStatusEnum17 = z
   .enum([
     'payment_required',
     'confirmed',
@@ -8839,7 +9566,7 @@ export const zBookingResponse = z
     instructor_uuid: z.string().uuid().describe('UUID of the instructor for the session'),
     start_time: z.string().datetime().describe('Start time for the session'),
     end_time: z.string().datetime().describe('End time for the session'),
-    status: zStatusEnum16,
+    status: zStatusEnum17,
     price_amount: z
       .number()
       .describe('Price charged for the booking, computed by the server from the approved rate')
@@ -8951,7 +9678,7 @@ export const zBookingPaymentUpdateRequest = z
 /**
  * **[REQUIRED]** Current status of the submission in the grading workflow.
  */
-export const zStatusEnum17 = z
+export const zStatusEnum18 = z
   .enum(['DRAFT', 'SUBMITTED', 'IN_REVIEW', 'GRADED', 'RETURNED'])
   .describe('**[REQUIRED]** Current status of the submission in the grading workflow.');
 
@@ -8993,7 +9720,7 @@ export const zAssignmentSubmission = z
       .datetime()
       .describe('**[OPTIONAL]** Timestamp when the submission was made by the student.')
       .optional(),
-    status: zStatusEnum17,
+    status: zStatusEnum18,
     score: z
       .number()
       .gte(0)
@@ -9263,7 +9990,7 @@ export const zApiResponseAssignmentAttachment = z.object({
   error: z.unknown().optional(),
 });
 
-export const zSchemaEnum10 = z.enum(['admin', 'organisation_user']);
+export const zSchemaEnum13 = z.enum(['admin', 'organisation_user']);
 
 /**
  * Type of assignment - global or organization-specific
@@ -9277,7 +10004,7 @@ export const zAssignmentTypeEnum = z
  */
 export const zAdminDomainAssignmentRequest = z
   .object({
-    domain_name: zSchemaEnum10,
+    domain_name: zSchemaEnum13,
     assignment_type: zAssignmentTypeEnum,
     reason: z.string().min(0).max(500).describe('Reason for assigning admin privileges').optional(),
     effective_date: z
@@ -9287,6 +10014,18 @@ export const zAdminDomainAssignmentRequest = z
       .optional(),
   })
   .describe('Admin domain assignment request containing domain type, reason, and effective date');
+
+export const zStatusEnum19 = z.enum(['VERIFIED', 'REJECTED']);
+
+/**
+ * Marks a profile item VERIFIED or REJECTED
+ */
+export const zProfileVerificationRequest = z
+  .object({
+    status: zStatusEnum19,
+    notes: z.string().optional(),
+  })
+  .describe('Marks a profile item VERIFIED or REJECTED');
 
 export const zAdminCreateUserRequestDto = z.object({
   first_name: z.string().min(0).max(100).describe('First name of the admin user'),
@@ -9385,6 +10124,20 @@ export const zCurrencyCreateRequest = z
       .default(false),
   })
   .describe('Admin payload to register an additional platform currency');
+
+/**
+ * A platform admin's check of one skills wallet item
+ */
+export const zWalletVerificationRequest = z
+  .object({
+    status: zStatusEnum19,
+    notes: z.string().optional(),
+  })
+  .describe("A platform admin's check of one skills wallet item");
+
+export const zCourseCreatorModerationRequest = z.object({
+  reason: z.string().min(0).max(1000).optional(),
+});
 
 /**
  * Request payload for changing the date and time of a scheduled class instance
@@ -9592,6 +10345,124 @@ export const zUserSummary = z
   );
 
 /**
+ * Professional profile basics with per-section counts and completeness
+ */
+export const zProfessionalProfileSummary = z
+  .object({
+    user_uuid: z.string().uuid().optional(),
+    basics: zProfessionalProfile.optional(),
+    section_counts: z
+      .record(z.coerce.bigint())
+      .describe("Item count per section, keyed by the section's path name (skills, education, ...)")
+      .optional(),
+    verified_items: z.coerce.bigint().optional(),
+    completed_sections: z.number().int().optional(),
+    total_sections: z.number().int().optional(),
+    completeness_percent: z.number().int().optional(),
+  })
+  .describe('Professional profile basics with per-section counts and completeness');
+
+export const zApiResponseProfessionalProfileSummary = z.object({
+  success: z.boolean().optional(),
+  data: zProfessionalProfileSummary.optional(),
+  message: z.string().optional(),
+  error: z.unknown().optional(),
+});
+
+export const zApiResponseListUserSkill = z.object({
+  success: z.boolean().optional(),
+  data: z.array(zUserSkill).optional(),
+  message: z.string().optional(),
+  error: z.unknown().optional(),
+});
+
+export const zApiResponseListUserPortfolioItem = z.object({
+  success: z.boolean().optional(),
+  data: z.array(zUserPortfolioItem).optional(),
+  message: z.string().optional(),
+  error: z.unknown().optional(),
+});
+
+export const zApiResponseListUserMembership = z.object({
+  success: z.boolean().optional(),
+  data: z.array(zUserMembership).optional(),
+  message: z.string().optional(),
+  error: z.unknown().optional(),
+});
+
+export const zApiResponseListUserExperience = z.object({
+  success: z.boolean().optional(),
+  data: z.array(zUserExperience).optional(),
+  message: z.string().optional(),
+  error: z.unknown().optional(),
+});
+
+export const zApiResponseListUserEducation = z.object({
+  success: z.boolean().optional(),
+  data: z.array(zUserEducation).optional(),
+  message: z.string().optional(),
+  error: z.unknown().optional(),
+});
+
+export const zApiResponseListUserDocument = z.object({
+  success: z.boolean().optional(),
+  data: z.array(zUserDocument).optional(),
+  message: z.string().optional(),
+  error: z.unknown().optional(),
+});
+
+export const zApiResponseListUserCompetency = z.object({
+  success: z.boolean().optional(),
+  data: z.array(zUserCompetency).optional(),
+  message: z.string().optional(),
+  error: z.unknown().optional(),
+});
+
+export const zApiResponseListUserCertification = z.object({
+  success: z.boolean().optional(),
+  data: z.array(zUserCertification).optional(),
+  message: z.string().optional(),
+  error: z.unknown().optional(),
+});
+
+export const zApiResponseListUserAchievement = z.object({
+  success: z.boolean().optional(),
+  data: z.array(zUserAchievement).optional(),
+  message: z.string().optional(),
+  error: z.unknown().optional(),
+});
+
+/**
+ * ACTIVE once any domain is approved; PENDING_APPROVAL while every requested domain awaits review
+ */
+export const zAccountStateEnum = z
+  .enum(['ACTIVE', 'PENDING_APPROVAL', 'SUSPENDED', 'REJECTED', 'NO_DOMAIN'])
+  .describe(
+    'ACTIVE once any domain is approved; PENDING_APPROVAL while every requested domain awaits review'
+  );
+
+/**
+ * Whether the caller may use a dashboard yet, and the state of each domain they asked for
+ */
+export const zAccountStatus = z
+  .object({
+    user_uuid: z.string().uuid().optional(),
+    account_state: zAccountStateEnum.optional(),
+    approved_domains: z.array(z.string()).describe('Domains the caller may act in now').optional(),
+    domain_applications: z.array(zDomainApplication).optional(),
+  })
+  .describe(
+    'Whether the caller may use a dashboard yet, and the state of each domain they asked for'
+  );
+
+export const zApiResponseAccountStatus = z.object({
+  success: z.boolean().optional(),
+  data: zAccountStatus.optional(),
+  message: z.string().optional(),
+  error: z.unknown().optional(),
+});
+
+/**
  * A user resolved from their exact user number, with a masked display name.
  */
 export const zUserRecipient = z
@@ -9747,7 +10618,7 @@ export const zApiResponseListStudentSchedule = z.object({
 /**
  * Hold lifecycle state; only FIRM counts as a scheduling clash
  */
-export const zStatusEnum18 = z
+export const zStatusEnum20 = z
   .enum(['TENTATIVE', 'FIRM', 'CONFIRMED', 'RELEASED'])
   .describe('Hold lifecycle state; only FIRM counts as a scheduling clash');
 
@@ -9774,7 +10645,7 @@ export const zInstructorTimeHold = z
     start_time: z.string().datetime().describe('Held window start (UTC)').optional(),
     end_time: z.string().datetime().describe('Held window end (UTC)').optional(),
     timezone: z.string().describe('Timezone the window was authored in').optional(),
-    status: zStatusEnum18.optional(),
+    status: zStatusEnum20.optional(),
     class_definition_uuid: z.union([z.string().uuid(), z.null()]).optional(),
     scheduled_instance_uuid: z.union([z.string().uuid(), z.null()]).optional(),
     organisation_name: z.union([z.string().readonly(), z.null()]).readonly().optional(),
@@ -9823,6 +10694,13 @@ export const zApiResponsePagedDtoStudent = z.object({
   error: z.unknown().optional(),
 });
 
+export const zApiResponseListStudentGuardian = z.object({
+  success: z.boolean().optional(),
+  data: z.array(zStudentGuardian).optional(),
+  message: z.string().optional(),
+  error: z.unknown().optional(),
+});
+
 export const zPagedDtoBookingResponse = z.object({
   content: z.array(zBookingResponse).optional(),
   metadata: zPageMetadata.optional(),
@@ -9845,24 +10723,77 @@ export const zSortObject = z.object({
 export const zPageableObject = z.object({
   offset: z.coerce.bigint().optional(),
   sort: zSortObject.optional(),
-  unpaged: z.boolean().optional(),
   paged: z.boolean().optional(),
   pageNumber: z.number().int().optional(),
   pageSize: z.number().int().optional(),
+  unpaged: z.boolean().optional(),
 });
 
 export const zPage = z.object({
   totalElements: z.coerce.bigint().optional(),
   totalPages: z.number().int().optional(),
-  first: z.boolean().optional(),
-  last: z.boolean().optional(),
   size: z.number().int().optional(),
   content: z.array(z.unknown()).optional(),
   number: z.number().int().optional(),
-  sort: zSortObject.optional(),
   numberOfElements: z.number().int().optional(),
+  sort: zSortObject.optional(),
   pageable: zPageableObject.optional(),
+  first: z.boolean().optional(),
+  last: z.boolean().optional(),
   empty: z.boolean().optional(),
+});
+
+/**
+ * Publicly readable view of a guardian invitation link.
+ */
+export const zPublicStudentGuardianInvitation = z
+  .object({
+    student_name: z.string().describe('The student who named the guardian').optional(),
+    guardian_name: z.string().describe("Guardian's name as the student gave it").optional(),
+    masked_guardian_email: z
+      .string()
+      .describe('Masked invited address, to confirm it is theirs')
+      .optional(),
+    relationship_type: zRelationshipTypeEnum2.optional(),
+    status: zStatusEnum10.optional(),
+    actionable: z
+      .boolean()
+      .describe('Whether the invitation can still be accepted or declined')
+      .optional(),
+    has_account: z
+      .boolean()
+      .describe(
+        'Whether the invited address already has an account: sign in to accept, else register'
+      )
+      .optional(),
+    expires_at: z.string().datetime().describe('When the invitation lapses').optional(),
+  })
+  .describe('Publicly readable view of a guardian invitation link.');
+
+export const zApiResponsePublicStudentGuardianInvitation = z.object({
+  success: z.boolean().optional(),
+  data: zPublicStudentGuardianInvitation.optional(),
+  message: z.string().optional(),
+  error: z.unknown().optional(),
+});
+
+/**
+ * An open invitation to become a student's guardian.
+ */
+export const zMyStudentGuardianInvitation = z
+  .object({
+    uuid: z.string().uuid().describe('Invitation id, used to accept or decline').optional(),
+    student_name: z.string().describe('The student who named you').optional(),
+    relationship_type: zRelationshipTypeEnum2.optional(),
+    expires_at: z.string().datetime().describe('When the invitation lapses').optional(),
+  })
+  .describe("An open invitation to become a student's guardian.");
+
+export const zApiResponseListMyStudentGuardianInvitation = z.object({
+  success: z.boolean().optional(),
+  data: z.array(zMyStudentGuardianInvitation).optional(),
+  message: z.string().optional(),
+  error: z.unknown().optional(),
 });
 
 export const zApiResponseListSkill = z.object({
@@ -10248,7 +11179,7 @@ export const zApiResponsePagedDtoQuizAttempt = z.object({
   error: z.unknown().optional(),
 });
 
-export const zStatusEnum19 = z.enum(['in_progress', 'submitted', 'graded']);
+export const zStatusEnum21 = z.enum(['in_progress', 'submitted', 'graded']);
 
 export const zResponseReviewDto = z.object({
   uuid: z.string().uuid().optional(),
@@ -10287,7 +11218,7 @@ export const zStudentQuizReview = z
     quiz_uuid: z.string().uuid().optional(),
     attempt_uuid: z.string().uuid().optional(),
     enrollment_uuid: z.string().uuid().optional(),
-    status: zStatusEnum19.optional(),
+    status: zStatusEnum21.optional(),
     score: z.number().optional(),
     max_score: z.number().optional(),
     percentage: z.number().optional(),
@@ -10325,6 +11256,13 @@ export const zPagedDtoTrainingProgram = z.object({
 export const zApiResponsePagedDtoTrainingProgram = z.object({
   success: z.boolean().optional(),
   data: zPagedDtoTrainingProgram.optional(),
+  message: z.string().optional(),
+  error: z.unknown().optional(),
+});
+
+export const zApiResponseListProgramAssessment = z.object({
+  success: z.boolean().optional(),
+  data: z.array(zProgramAssessment).optional(),
   message: z.string().optional(),
   error: z.unknown().optional(),
 });
@@ -10455,7 +11393,7 @@ export const zApiResponsePagedDtoProgramRequirement = z.object({
 /**
  * **[REQUIRED]** Current status of the student's enrollment in the program.
  */
-export const zStatusEnum20 = z
+export const zStatusEnum22 = z
   .enum(['ACTIVE', 'COMPLETED', 'DROPPED', 'SUSPENDED'])
   .describe("**[REQUIRED]** Current status of the student's enrollment in the program.");
 
@@ -10486,7 +11424,7 @@ export const zProgramEnrollment = z
       .describe('**[OPTIONAL]** Timestamp when the student enrolled in the program.')
       .optional(),
     completion_date: z.union([z.string().datetime(), z.null()]).optional(),
-    status: zStatusEnum20,
+    status: zStatusEnum22,
     progress_percentage: z
       .number()
       .gte(0)
@@ -10815,7 +11753,7 @@ export const zApiResponseListResourceCalendarEntry = z.object({
 /**
  * Booking lifecycle state
  */
-export const zStatusEnum21 = z
+export const zStatusEnum23 = z
   .enum(['HOLD', 'CONFIRMED', 'RELEASED', 'CANCELLED'])
   .describe('Booking lifecycle state');
 
@@ -10839,7 +11777,7 @@ export const zResourceBooking = z
       .optional(),
     resource_uuid: z.string().uuid().describe('Resource booked').optional(),
     organisation_uuid: z.string().uuid().describe('Organisation owning the resource').optional(),
-    status: zStatusEnum21.optional(),
+    status: zStatusEnum23.optional(),
     quantity: z.number().int().describe('Units reserved (1 for venues)').optional(),
     start_time: z.string().datetime().describe('Reservation window start (UTC)').optional(),
     end_time: z.string().datetime().describe('Reservation window end (UTC)').optional(),
@@ -11371,7 +12309,7 @@ export const zGuardianStudentDashboardDto = z.object({
   studentUuid: z.string().uuid().optional(),
   studentName: z.string().optional(),
   shareScope: zShareScopeEnum.optional(),
-  status: zStatusEnum13.optional(),
+  status: zStatusEnum11.optional(),
   courseProgress: z.array(zLearnerCourseProgressView).optional(),
   programProgress: z.array(zLearnerProgramProgressView).optional(),
 });
@@ -11380,9 +12318,9 @@ export const zGuardianStudentSummaryDto = z.object({
   linkUuid: z.string().uuid().optional(),
   studentUuid: z.string().uuid().optional(),
   studentName: z.string().optional(),
-  relationshipType: zGuardianRelationshipTypeEnum.optional(),
+  relationshipType: zRelationshipTypeEnum2.optional(),
   shareScope: zShareScopeEnum.optional(),
-  status: zStatusEnum13.optional(),
+  status: zStatusEnum11.optional(),
   primaryGuardian: z.boolean().optional(),
 });
 
@@ -11879,7 +12817,7 @@ export const zApiResponsePagedDtoCourseVersionSnapshot = z.object({
 
 export const zApiResponseListContentStatus = z.object({
   success: z.boolean().optional(),
-  data: z.array(zSchemaEnum4).optional(),
+  data: z.array(zSchemaEnum6).optional(),
   message: z.string().optional(),
   error: z.unknown().optional(),
 });
@@ -11961,7 +12899,7 @@ export const zCoursePendingEdit = z
       .describe('**[READ-ONLY]** Unique identifier for the pending edit.')
       .readonly()
       .optional(),
-    status: zStatusEnum10.optional(),
+    status: zStatusEnum12.optional(),
     course_uuid: z
       .string()
       .uuid()
@@ -12514,6 +13452,13 @@ export const zApiResponseListLessonContent = z.object({
 });
 
 /**
+ * IN_PROGRESS until every required item is graded, then PASSED or FAILED
+ */
+export const zResultStatusEnum = z
+  .enum(['IN_PROGRESS', 'PASSED', 'FAILED'])
+  .describe('IN_PROGRESS until every required item is graded, then PASSED or FAILED');
+
+/**
  * Course assessment score with grading information and instructor feedback
  */
 export const zCourseAssessmentScore = z
@@ -12644,6 +13589,11 @@ export const zCourseGradeBook = z
     course_uuid: z.string().uuid().optional(),
     enrollment_uuid: z.string().uuid().optional(),
     final_grade: z.number().optional(),
+    pass_mark: z
+      .number()
+      .describe('Final grade needed to pass; null means completing every required item passes')
+      .optional(),
+    result_status: zResultStatusEnum.optional(),
     graded_weight_percentage: z.number().optional(),
     configured_weight_percentage: z.number().optional(),
     components: z.array(zComponentDto).optional(),
@@ -12686,7 +13636,7 @@ export const zCourseEnrollment = z
       .describe('**[OPTIONAL]** Timestamp when the student enrolled in the course.')
       .optional(),
     completion_date: z.union([z.string().datetime(), z.null()]).optional(),
-    status: zStatusEnum20,
+    status: zStatusEnum22,
     progress_percentage: z
       .number()
       .gte(0)
@@ -12943,6 +13893,13 @@ export const zApiResponsePagedDtoCourseCreatorSkill = z.object({
   error: z.unknown().optional(),
 });
 
+export const zApiResponseListCourseCreatorPortfolioItem = z.object({
+  success: z.boolean().optional(),
+  data: z.array(zCourseCreatorPortfolioItem).optional(),
+  message: z.string().optional(),
+  error: z.unknown().optional(),
+});
+
 export const zPagedDtoCourseCreatorProfessionalMembership = z.object({
   content: z.array(zCourseCreatorProfessionalMembership).optional(),
   metadata: zPageMetadata.optional(),
@@ -12989,6 +13946,13 @@ export const zApiResponseListCourseCreatorDocumentDto = z.object({
   error: z.unknown().optional(),
 });
 
+export const zApiResponseListCourseCreatorCompetency = z.object({
+  success: z.boolean().optional(),
+  data: z.array(zCourseCreatorCompetency).optional(),
+  message: z.string().optional(),
+  error: z.unknown().optional(),
+});
+
 export const zPagedDtoCourseCreatorCertification = z.object({
   content: z.array(zCourseCreatorCertification).optional(),
   metadata: zPageMetadata.optional(),
@@ -12998,6 +13962,13 @@ export const zPagedDtoCourseCreatorCertification = z.object({
 export const zApiResponsePagedDtoCourseCreatorCertification = z.object({
   success: z.boolean().optional(),
   data: zPagedDtoCourseCreatorCertification.optional(),
+  message: z.string().optional(),
+  error: z.unknown().optional(),
+});
+
+export const zApiResponseListCourseCreatorAchievement = z.object({
+  success: z.boolean().optional(),
+  data: z.array(zCourseCreatorAchievement).optional(),
   message: z.string().optional(),
   error: z.unknown().optional(),
 });
@@ -13467,7 +14438,7 @@ export const zApiResponseListClassMarketplaceJobApplicationEvent = z.object({
 export const zJobMatchSkill = z.object({
   skill_uuid: z.string().uuid().readonly().optional(),
   skill_name: z.string().readonly().optional(),
-  min_proficiency: zLevelEnum.optional(),
+  min_proficiency: zProficiencyLevelEnum.optional(),
   is_mandatory: z.boolean().readonly().optional(),
 });
 
@@ -13909,6 +14880,29 @@ export const zApiResponseListSearchIndexStatusResponse = z.object({
   error: z.unknown().optional(),
 });
 
+/**
+ * A domain request in the platform admin approval queue
+ */
+export const zAdminDomainApplication = z
+  .object({
+    user_uuid: z.string().uuid().optional(),
+    full_name: z.string().optional(),
+    email: z.string().optional(),
+    domain: z.string().optional(),
+    status: zSchemaEnum12.optional(),
+    requested_at: z.string().datetime().optional(),
+    reviewed_at: z.string().datetime().optional(),
+    review_reason: z.string().optional(),
+  })
+  .describe('A domain request in the platform admin approval queue');
+
+export const zApiResponseListAdminDomainApplication = z.object({
+  success: z.boolean().optional(),
+  data: z.array(zAdminDomainApplication).optional(),
+  message: z.string().optional(),
+  error: z.unknown().optional(),
+});
+
 export const zRecommendationModelScore = z.object({
   model: z.string().describe('rules-v2, popularity or legacy-newest').optional(),
   recall_at_k: z
@@ -14031,6 +15025,10 @@ export const zUserMetrics = z
     active_users_24h: z.coerce.bigint().optional(),
     new_registrations_7d: z.coerce.bigint().optional(),
     suspended_accounts: z.coerce.bigint().optional(),
+    pending_domain_approvals: z.coerce
+      .bigint()
+      .describe('Domain requests awaiting platform admin approval')
+      .optional(),
   })
   .describe('User metrics for dashboard');
 
@@ -14469,9 +15467,13 @@ export const zDocumentUrl = z.unknown().describe('A valid URL pointing to a docu
  */
 export const zSocialMediaUrl = z.unknown().describe('A valid social media profile URL');
 
-export const zSchemaEnum3 = z.enum(['approve', 'reject', 'revoke']);
+export const zSchemaEnum3 = z.enum(['skills', 'certifications', 'competencies', 'documents']);
 
-export const zSchemaEnum5 = z.enum([
+export const zSchemaEnum4 = z.enum(['approve', 'reject', 'revoke']);
+
+export const zSchemaEnum5 = z.enum(['skills', 'competencies', 'certifications']);
+
+export const zSchemaEnum7 = z.enum([
   'student',
   'instructor',
   'admin',
@@ -14480,17 +15482,101 @@ export const zSchemaEnum5 = z.enum([
   'course_creator',
 ]);
 
-export const zSchemaEnum7 = z.enum(['all', 'courses', 'programmes']);
+export const zSchemaEnum9 = z.enum(['all', 'courses', 'programmes']);
 
 export const zItemsEnum2 = z.enum(['beginner', 'intermediate', 'advanced']);
 
 export const zItemsEnum3 = z.enum(['free', 'paid']);
 
-export const zSchemaEnum8 = z.enum(['relevance', 'newest', 'rating', 'popular']);
+export const zSchemaEnum10 = z.enum(['relevance', 'newest', 'rating', 'popular']);
 
-export const zSchemaEnum9 = z.enum(['actor', 'target', 'all']);
+export const zSchemaEnum11 = z.enum(['actor', 'target', 'all']);
 
 export const zJsonNodeWritable = z.unknown();
+
+/**
+ * Student profile information including guardian contacts and academic details. Links to a base user account.
+ */
+export const zStudentWritable = z
+  .object({
+    user_uuid: z
+      .string()
+      .uuid()
+      .describe(
+        '**[REQUIRED]** Reference to the base user account UUID. Links student profile to user authentication and personal details.'
+      ),
+    demographic_tag: z
+      .string()
+      .min(0)
+      .max(64)
+      .describe(
+        '**[OPTIONAL]** Demographic tag used for growth controls (e.g., youth_female, adult).'
+      )
+      .optional(),
+    first_guardian_name: z
+      .string()
+      .min(0)
+      .max(100)
+      .describe(
+        '**[OPTIONAL]** Full name of the primary guardian/parent. This is the main emergency contact for the student.'
+      )
+      .optional(),
+    first_guardian_mobile: z
+      .string()
+      .min(0)
+      .max(20)
+      .regex(/^(\+254|0)?[17]\d{8}$/)
+      .describe(
+        '**[OPTIONAL]** Mobile phone number of the primary guardian. Used for emergency contacts and notifications. Should include country code.'
+      )
+      .optional(),
+    second_guardian_name: z.union([z.string().min(0).max(100), z.null()]).optional(),
+    second_guardian_mobile: z
+      .union([
+        z
+          .string()
+          .min(0)
+          .max(20)
+          .regex(/^(\+254|0)?[17]\d{8}$/),
+        z.null(),
+      ])
+      .optional(),
+    bio: z.union([z.string().min(0).max(2000), z.null()]).optional(),
+    guardians: z
+      .array(zStudentGuardianRequest)
+      .min(0)
+      .max(2)
+      .describe(
+        '**[OPTIONAL, WRITE-ONLY]** Parents or guardians, at most two. A guardian whose email already has an account is linked at once; anyone else is emailed an invitation. Omit to leave guardians unchanged; send an empty list to withdraw pending invitations. Read them back from GET /api/v1/students/{uuid}/guardians. The first two also fill the legacy guardian name/mobile fields.'
+      )
+      .optional(),
+    primaryGuardianContact: z.string().optional(),
+    secondaryGuardianContact: z.string().optional(),
+    allGuardianContacts: z.array(z.string()).optional(),
+  })
+  .describe(
+    'Student profile information including guardian contacts and academic details. Links to a base user account.'
+  );
+
+export const zApiResponseStudentWritable = z.object({
+  success: z.boolean().optional(),
+  data: zStudentWritable.optional(),
+  message: z.string().optional(),
+  error: z.unknown().optional(),
+});
+
+export const zPagedDtoStudentWritable = z.object({
+  content: z.array(zStudentWritable).optional(),
+  metadata: zPageMetadata.optional(),
+  links: zPageLinks.optional(),
+});
+
+export const zApiResponsePagedDtoStudentWritable = z.object({
+  success: z.boolean().optional(),
+  data: zPagedDtoStudentWritable.optional(),
+  message: z.string().optional(),
+  error: z.unknown().optional(),
+});
 
 /**
  * Valid African phone number in international or local format
@@ -14593,11 +15679,20 @@ export const zItemsEnumWritable = z.enum([
   'REVOKED',
 ]);
 
-export const zSchemaEnum3Writable = z.enum(['approve', 'reject', 'revoke']);
+export const zSchemaEnum3Writable = z.enum([
+  'skills',
+  'certifications',
+  'competencies',
+  'documents',
+]);
 
-export const zSchemaEnum4Writable = z.enum(['draft', 'in_review', 'published', 'archived']);
+export const zSchemaEnum4Writable = z.enum(['approve', 'reject', 'revoke']);
 
-export const zSchemaEnum5Writable = z.enum([
+export const zSchemaEnum5Writable = z.enum(['skills', 'competencies', 'certifications']);
+
+export const zSchemaEnum6Writable = z.enum(['draft', 'in_review', 'published', 'archived']);
+
+export const zSchemaEnum7Writable = z.enum([
   'student',
   'instructor',
   'admin',
@@ -14606,19 +15701,21 @@ export const zSchemaEnum5Writable = z.enum([
   'course_creator',
 ]);
 
-export const zSchemaEnum6Writable = z.enum(['ACCRUED', 'SETTLED', 'CANCELLED', 'DISPUTED']);
+export const zSchemaEnum8Writable = z.enum(['ACCRUED', 'SETTLED', 'CANCELLED', 'DISPUTED']);
 
-export const zSchemaEnum7Writable = z.enum(['all', 'courses', 'programmes']);
+export const zSchemaEnum9Writable = z.enum(['all', 'courses', 'programmes']);
 
 export const zItemsEnum2Writable = z.enum(['beginner', 'intermediate', 'advanced']);
 
 export const zItemsEnum3Writable = z.enum(['free', 'paid']);
 
-export const zSchemaEnum8Writable = z.enum(['relevance', 'newest', 'rating', 'popular']);
+export const zSchemaEnum10Writable = z.enum(['relevance', 'newest', 'rating', 'popular']);
 
-export const zSchemaEnum9Writable = z.enum(['actor', 'target', 'all']);
+export const zSchemaEnum11Writable = z.enum(['actor', 'target', 'all']);
 
-export const zSchemaEnum10Writable = z.enum(['admin', 'organisation_user']);
+export const zSchemaEnum12Writable = z.enum(['PENDING', 'APPROVED', 'REJECTED', 'SUSPENDED']);
+
+export const zSchemaEnum13Writable = z.enum(['admin', 'organisation_user']);
 
 /**
  * **[OPTIONAL]** User's gender information. Used for demographic analytics and personalization. Can be null if not specified or preferred not to disclose.
@@ -14642,6 +15739,13 @@ export const zScopeEnumWritable = z
 export const zValueTypeEnumWritable = z
   .enum(['JSON', 'DECIMAL', 'INTEGER', 'BOOLEAN', 'STRING'])
   .describe('Payload interpretation hint');
+
+/**
+ * **[OPTIONAL]** Relationship to the student. Defaults to GUARDIAN.
+ */
+export const zRelationshipTypeEnumWritable = z
+  .enum(['PARENT', 'GUARDIAN', 'SPONSOR'])
+  .describe('**[OPTIONAL]** Relationship to the student. Defaults to GUARDIAN.');
 
 /**
  * **[REQUIRED]** Rubric publication status in the content workflow.
@@ -14715,10 +15819,42 @@ export const zResourceTypeEnumWritable = z
  */
 export const zRuleTypeEnumWritable = z.enum(['OPEN_HOURS', 'BLACKOUT']).describe('Rule kind');
 
+export const zProficiencyLevelEnumWritable = z.enum([
+  'beginner',
+  'intermediate',
+  'advanced',
+  'expert',
+]);
+
+export const zItemTypeEnumWritable = z.enum([
+  'PROJECT',
+  'PERFORMANCE',
+  'WORK_SAMPLE',
+  'MEDIA',
+  'OTHER',
+]);
+
+export const zExperienceTypeEnumWritable = z.enum(['TRAINING', 'WORK', 'VOLUNTEERING', 'PROJECT']);
+
+export const zCredentialTypeEnumWritable = z.enum([
+  'CERTIFICATE',
+  'BADGE',
+  'AWARD',
+  'EXTERNAL_CREDENTIAL',
+]);
+
+export const zAchievementTypeEnumWritable = z.enum([
+  'AWARD',
+  'MILESTONE',
+  'COMPETITION',
+  'UNLOCKED_SKILL',
+  'RECOGNITION',
+]);
+
 /**
  * **[REQUIRED]** Level of proficiency in this skill. Indicates instructor's competency and teaching capability.
  */
-export const zProficiencyLevelEnumWritable = z
+export const zProficiencyLevelEnum2Writable = z
   .enum(['BEGINNER', 'INTERMEDIATE', 'ADVANCED', 'EXPERT'])
   .describe(
     "**[REQUIRED]** Level of proficiency in this skill. Indicates instructor's competency and teaching capability."
@@ -14746,13 +15882,6 @@ export const zProvidedByEnumWritable = z
   .describe('**[OPTIONAL]** Party responsible for providing this requirement.');
 
 /**
- * Defaults to beginner; accepted in any case
- */
-export const zLevelEnumWritable = z
-  .enum(['beginner', 'intermediate', 'advanced', 'expert'])
-  .describe('Defaults to beginner; accepted in any case');
-
-/**
  * **[OPTIONAL]** Practice activity format.
  */
 export const zActivityTypeEnumWritable = z
@@ -14766,16 +15895,7 @@ export const zGroupingEnumWritable = z
   .enum(['INDIVIDUAL', 'PAIR', 'SMALL_GROUP', 'WHOLE_CLASS'])
   .describe('**[OPTIONAL]** Student grouping mode for the activity.');
 
-/**
- * **[OPTIONAL]** Strategy used to aggregate gradebook line items for this assessment component.
- */
-export const zAggregationStrategyEnumWritable = z
-  .enum(['points_sum', 'weighted_average'])
-  .describe(
-    '**[OPTIONAL]** Strategy used to aggregate gradebook line items for this assessment component.'
-  );
-
-export const zItemTypeEnumWritable = z.enum([
+export const zItemTypeEnum2Writable = z.enum([
   'assignment',
   'quiz',
   'attendance',
@@ -14786,6 +15906,23 @@ export const zItemTypeEnumWritable = z.enum([
   'performance',
   'participation',
   'manual',
+]);
+
+/**
+ * **[OPTIONAL]** Strategy used to aggregate gradebook line items for this assessment component.
+ */
+export const zAggregationStrategyEnumWritable = z
+  .enum(['points_sum', 'weighted_average'])
+  .describe(
+    '**[OPTIONAL]** Strategy used to aggregate gradebook line items for this assessment component.'
+  );
+
+export const zVerificationStatusEnum3Writable = z.enum([
+  'DRAFT',
+  'SUBMITTED',
+  'APPROVED',
+  'REJECTED',
+  'REVOKED',
 ]);
 
 /**
@@ -14872,9 +16009,36 @@ export const zStatusEnum9Writable = z
   .describe('**[OPTIONAL]** Current status of the scheduled instance.');
 
 /**
+ * Relationship to the student
+ */
+export const zRelationshipTypeEnum2Writable = z
+  .enum(['PARENT', 'GUARDIAN', 'SPONSOR'])
+  .describe('Relationship to the student');
+
+/**
+ * linked, invited, expired, declined or revoked
+ */
+export const zStatusEnum10Writable = z
+  .enum(['linked', 'invited', 'expired', 'declined', 'revoked'])
+  .describe('linked, invited, expired, declined or revoked');
+
+export const zShareScopeEnumWritable = z.enum(['FULL', 'ACADEMICS', 'ATTENDANCE']);
+
+export const zStatusEnum11Writable = z.enum(['PENDING', 'ACTIVE', 'REVOKED']);
+
+export const zGenderEnum2Writable = z.enum(['MALE', 'FEMALE', 'PREFER_NOT_TO_SAY']);
+
+/**
+ * The domain to register into
+ */
+export const zDomainEnumWritable = z
+  .enum(['student', 'instructor', 'course_creator', 'organisation_user'])
+  .describe('The domain to register into');
+
+/**
  * PENDING, ALLOCATED, APPROVED or DISBURSED. The legacy value 'Completed' is accepted and stored as DISBURSED. Defaults to PENDING.
  */
-export const zStatusEnum11Writable = z
+export const zStatusEnum13Writable = z
   .enum(['PENDING', 'ALLOCATED', 'APPROVED', 'DISBURSED'])
   .describe(
     "PENDING, ALLOCATED, APPROVED or DISBURSED. The legacy value 'Completed' is accepted and stored as DISBURSED. Defaults to PENDING."
@@ -14946,8 +16110,13 @@ export const zTypeEnumWritable = z.enum([
   'PROFILE_COMPLETION_REMINDER',
   'ORGANISATION_INVITATION',
   'GUARDIAN_CONSENT_REQUEST',
+  'GUARDIAN_LINK_INVITATION',
+  'GUARDIAN_LINK_ESTABLISHED',
   'ORGANISATION_INVITATION_ACCEPTED',
   'ORGANISATION_ANNOUNCEMENT',
+  'DOMAIN_APPROVAL_REQUESTED',
+  'DOMAIN_APPROVAL_GRANTED',
+  'DOMAIN_APPROVAL_DECLINED',
   'WEEKLY_PROGRESS_SUMMARY',
   'LEARNING_STREAK_ACHIEVEMENT',
   'PEER_ACHIEVEMENT_CELEBRATION',
@@ -14965,18 +16134,7 @@ export const zPriorityEnumWritable = z.enum(['LOW', 'NORMAL', 'HIGH', 'CRITICAL'
 
 export const zPresentationEnumWritable = z.enum(['POPUP', 'INBOX']);
 
-export const zStatusEnum12Writable = z.enum(['UNREAD', 'READ', 'ARCHIVED']);
-
-/**
- * **[REQUIRED]** Nature of the relationship.
- */
-export const zGuardianRelationshipTypeEnumWritable = z
-  .enum(['PARENT', 'GUARDIAN', 'SPONSOR'])
-  .describe('**[REQUIRED]** Nature of the relationship.');
-
-export const zShareScopeEnumWritable = z.enum(['FULL', 'ACADEMICS', 'ATTENDANCE']);
-
-export const zStatusEnum13Writable = z.enum(['PENDING', 'ACTIVE', 'REVOKED']);
+export const zStatusEnum14Writable = z.enum(['UNREAD', 'READ', 'ARCHIVED']);
 
 /**
  * **[OPTIONAL]** How much of the child's learning the guardian will see. Defaults to FULL.
@@ -14990,7 +16148,7 @@ export const zShareScopeEnum2Writable = z
 /**
  * **[OPTIONAL]** Current enrollment and attendance status.
  */
-export const zStatusEnum14Writable = z
+export const zStatusEnum15Writable = z
   .enum(['ENROLLED', 'WAITLISTED', 'ATTENDED', 'ABSENT', 'CANCELLED'])
   .describe('**[OPTIONAL]** Current enrollment and attendance status.');
 
@@ -15020,7 +16178,7 @@ export const zReleaseStrategyEnumWritable = z
 /**
  * Current status of the booking
  */
-export const zStatusEnum16Writable = z
+export const zStatusEnum17Writable = z
   .enum([
     'payment_required',
     'confirmed',
@@ -15043,7 +16201,7 @@ export const zPaymentStatusEnumWritable = z
 /**
  * **[REQUIRED]** Current status of the submission in the grading workflow.
  */
-export const zStatusEnum17Writable = z
+export const zStatusEnum18Writable = z
   .enum(['DRAFT', 'SUBMITTED', 'IN_REVIEW', 'GRADED', 'RETURNED'])
   .describe('**[REQUIRED]** Current status of the submission in the grading workflow.');
 
@@ -15053,6 +16211,8 @@ export const zStatusEnum17Writable = z
 export const zAssignmentTypeEnumWritable = z
   .enum(['global', 'organization'])
   .describe('Type of assignment - global or organization-specific');
+
+export const zStatusEnum19Writable = z.enum(['VERIFIED', 'REJECTED']);
 
 /**
  * The decision to apply.
@@ -15069,9 +16229,18 @@ export const zDomainNameEnum2Writable = z
   .describe('Domain/role to assign within the organisation');
 
 /**
+ * ACTIVE once any domain is approved; PENDING_APPROVAL while every requested domain awaits review
+ */
+export const zAccountStateEnumWritable = z
+  .enum(['ACTIVE', 'PENDING_APPROVAL', 'SUSPENDED', 'REJECTED', 'NO_DOMAIN'])
+  .describe(
+    'ACTIVE once any domain is approved; PENDING_APPROVAL while every requested domain awaits review'
+  );
+
+/**
  * Hold lifecycle state; only FIRM counts as a scheduling clash
  */
-export const zStatusEnum18Writable = z
+export const zStatusEnum20Writable = z
   .enum(['TENTATIVE', 'FIRM', 'CONFIRMED', 'RELEASED'])
   .describe('Hold lifecycle state; only FIRM counts as a scheduling clash');
 
@@ -15082,12 +16251,12 @@ export const zQuestionTypeEnum2Writable = z.enum([
   'essay',
 ]);
 
-export const zStatusEnum19Writable = z.enum(['in_progress', 'submitted', 'graded']);
+export const zStatusEnum21Writable = z.enum(['in_progress', 'submitted', 'graded']);
 
 /**
  * **[REQUIRED]** Current status of the student's enrollment in the program.
  */
-export const zStatusEnum20Writable = z
+export const zStatusEnum22Writable = z
   .enum(['ACTIVE', 'COMPLETED', 'DROPPED', 'SUSPENDED'])
   .describe("**[REQUIRED]** Current status of the student's enrollment in the program.");
 
@@ -15101,7 +16270,7 @@ export const zEntryTypeEnumWritable = z
 /**
  * Booking lifecycle state
  */
-export const zStatusEnum21Writable = z
+export const zStatusEnum23Writable = z
   .enum(['HOLD', 'CONFIRMED', 'RELEASED', 'CANCELLED'])
   .describe('Booking lifecycle state');
 
@@ -15147,6 +16316,13 @@ export const zAvailabilityEnumWritable = z
   .describe(
     'How easy the class is to get into. FULL: no seats left (listed, but not counted in open_class_count or price_from, and sorted last). FEW_LEFT: at most max(5, 20% of capacity) seats left. OPEN: otherwise, or when capacity is unknown. Seat counts are never published.'
   );
+
+/**
+ * IN_PROGRESS until every required item is graded, then PASSED or FAILED
+ */
+export const zResultStatusEnumWritable = z
+  .enum(['IN_PROGRESS', 'PASSED', 'FAILED'])
+  .describe('IN_PROGRESS until every required item is graded, then PASSED or FAILED');
 
 /**
  * Result type.
@@ -15303,7 +16479,7 @@ export const zGetStudentByIdData = z.object({
 export const zGetStudentByIdResponse = zStudent;
 
 export const zUpdateStudentData = z.object({
-  body: zStudent,
+  body: zStudentWritable,
   path: z.object({
     uuid: z.string().uuid(),
   }),
@@ -15648,6 +16824,29 @@ export const zUpdateTrainingProgramData = z.object({
  */
 export const zUpdateTrainingProgramResponse = zApiResponseTrainingProgram;
 
+export const zDeleteProgramAssessmentData = z.object({
+  body: z.never().optional(),
+  path: z.object({
+    uuid: z.string().uuid(),
+    assessmentUuid: z.string().uuid(),
+  }),
+  query: z.never().optional(),
+});
+
+export const zUpdateProgramAssessmentData = z.object({
+  body: zProgramAssessment,
+  path: z.object({
+    uuid: z.string().uuid(),
+    assessmentUuid: z.string().uuid(),
+  }),
+  query: z.never().optional(),
+});
+
+/**
+ * OK
+ */
+export const zUpdateProgramAssessmentResponse = zApiResponseProgramAssessment;
+
 export const zWithdrawProgramTrainingApplicationData = z.object({
   body: z.never().optional(),
   path: z.object({
@@ -15976,6 +17175,217 @@ export const zUpdateAvailabilityRuleData = z.object({
  * OK
  */
 export const zUpdateAvailabilityRuleResponse = zApiResponseResourceAvailabilityRule;
+
+export const zGetSummaryData = z.object({
+  body: z.never().optional(),
+  path: z.never().optional(),
+  query: z.never().optional(),
+});
+
+/**
+ * OK
+ */
+export const zGetSummaryResponse = zApiResponseProfessionalProfileSummary;
+
+export const zUpdateBasicsData = z.object({
+  body: zProfessionalProfile,
+  path: z.never().optional(),
+  query: z.never().optional(),
+});
+
+/**
+ * OK
+ */
+export const zUpdateBasicsResponse = zApiResponseProfessionalProfile;
+
+export const zDeleteSkillData = z.object({
+  body: z.never().optional(),
+  path: z.object({
+    itemUuid: z.string().uuid(),
+  }),
+  query: z.never().optional(),
+});
+
+export const zUpdateSkillData = z.object({
+  body: zUserSkill,
+  path: z.object({
+    itemUuid: z.string().uuid(),
+  }),
+  query: z.never().optional(),
+});
+
+/**
+ * OK
+ */
+export const zUpdateSkillResponse = zApiResponseUserSkill;
+
+export const zDeletePortfolioItemData = z.object({
+  body: z.never().optional(),
+  path: z.object({
+    itemUuid: z.string().uuid(),
+  }),
+  query: z.never().optional(),
+});
+
+export const zUpdatePortfolioItemData = z.object({
+  body: zUserPortfolioItem,
+  path: z.object({
+    itemUuid: z.string().uuid(),
+  }),
+  query: z.never().optional(),
+});
+
+/**
+ * OK
+ */
+export const zUpdatePortfolioItemResponse = zApiResponseUserPortfolioItem;
+
+export const zDeleteMembershipData = z.object({
+  body: z.never().optional(),
+  path: z.object({
+    itemUuid: z.string().uuid(),
+  }),
+  query: z.never().optional(),
+});
+
+export const zUpdateMembershipData = z.object({
+  body: zUserMembership,
+  path: z.object({
+    itemUuid: z.string().uuid(),
+  }),
+  query: z.never().optional(),
+});
+
+/**
+ * OK
+ */
+export const zUpdateMembershipResponse = zApiResponseUserMembership;
+
+export const zDeleteExperienceData = z.object({
+  body: z.never().optional(),
+  path: z.object({
+    itemUuid: z.string().uuid(),
+  }),
+  query: z.never().optional(),
+});
+
+export const zUpdateExperienceData = z.object({
+  body: zUserExperience,
+  path: z.object({
+    itemUuid: z.string().uuid(),
+  }),
+  query: z.never().optional(),
+});
+
+/**
+ * OK
+ */
+export const zUpdateExperienceResponse = zApiResponseUserExperience;
+
+export const zDeleteEducationData = z.object({
+  body: z.never().optional(),
+  path: z.object({
+    itemUuid: z.string().uuid(),
+  }),
+  query: z.never().optional(),
+});
+
+export const zUpdateEducationData = z.object({
+  body: zUserEducation,
+  path: z.object({
+    itemUuid: z.string().uuid(),
+  }),
+  query: z.never().optional(),
+});
+
+/**
+ * OK
+ */
+export const zUpdateEducationResponse = zApiResponseUserEducation;
+
+export const zDeleteDocumentData = z.object({
+  body: z.never().optional(),
+  path: z.object({
+    itemUuid: z.string().uuid(),
+  }),
+  query: z.never().optional(),
+});
+
+export const zUpdateDocumentData = z.object({
+  body: zUserDocument,
+  path: z.object({
+    itemUuid: z.string().uuid(),
+  }),
+  query: z.never().optional(),
+});
+
+/**
+ * OK
+ */
+export const zUpdateDocumentResponse = zApiResponseUserDocument;
+
+export const zDeleteCompetencyData = z.object({
+  body: z.never().optional(),
+  path: z.object({
+    itemUuid: z.string().uuid(),
+  }),
+  query: z.never().optional(),
+});
+
+export const zUpdateCompetencyData = z.object({
+  body: zUserCompetency,
+  path: z.object({
+    itemUuid: z.string().uuid(),
+  }),
+  query: z.never().optional(),
+});
+
+/**
+ * OK
+ */
+export const zUpdateCompetencyResponse = zApiResponseUserCompetency;
+
+export const zDeleteCertificationData = z.object({
+  body: z.never().optional(),
+  path: z.object({
+    itemUuid: z.string().uuid(),
+  }),
+  query: z.never().optional(),
+});
+
+export const zUpdateCertificationData = z.object({
+  body: zUserCertification,
+  path: z.object({
+    itemUuid: z.string().uuid(),
+  }),
+  query: z.never().optional(),
+});
+
+/**
+ * OK
+ */
+export const zUpdateCertificationResponse = zApiResponseUserCertification;
+
+export const zDeleteAchievementData = z.object({
+  body: z.never().optional(),
+  path: z.object({
+    itemUuid: z.string().uuid(),
+  }),
+  query: z.never().optional(),
+});
+
+export const zUpdateAchievementData = z.object({
+  body: zUserAchievement,
+  path: z.object({
+    itemUuid: z.string().uuid(),
+  }),
+  query: z.never().optional(),
+});
+
+/**
+ * OK
+ */
+export const zUpdateAchievementResponse = zApiResponseUserAchievement;
 
 export const zDeleteInstructorData = z.object({
   body: z.never().optional(),
@@ -16494,6 +17904,32 @@ export const zUpdateLessonContentData = z.object({
  */
 export const zUpdateLessonContentResponse = zApiResponseLessonContent;
 
+export const zGetCourseEvaluationPlanData = z.object({
+  body: z.never().optional(),
+  path: z.object({
+    courseUuid: z.string().uuid(),
+  }),
+  query: z.never().optional(),
+});
+
+/**
+ * OK
+ */
+export const zGetCourseEvaluationPlanResponse = zApiResponseCourseEvaluationPlan;
+
+export const zUpdateCourseEvaluationPlanData = z.object({
+  body: zCourseEvaluationPlanUpdate,
+  path: z.object({
+    courseUuid: z.string().uuid(),
+  }),
+  query: z.never().optional(),
+});
+
+/**
+ * OK
+ */
+export const zUpdateCourseEvaluationPlanResponse = zApiResponseCourseEvaluationPlan;
+
 export const zDeleteCourseAssessmentData = z.object({
   body: z.never().optional(),
   path: z.object({
@@ -16656,6 +18092,29 @@ export const zUpdateCourseCreatorSkillData = z.object({
  */
 export const zUpdateCourseCreatorSkillResponse = zApiResponseCourseCreatorSkill;
 
+export const zDeleteCourseCreatorPortfolioItemData = z.object({
+  body: z.never().optional(),
+  path: z.object({
+    courseCreatorUuid: z.string().uuid(),
+    itemUuid: z.string().uuid(),
+  }),
+  query: z.never().optional(),
+});
+
+export const zUpdateCourseCreatorPortfolioItemData = z.object({
+  body: zCourseCreatorPortfolioItem,
+  path: z.object({
+    courseCreatorUuid: z.string().uuid(),
+    itemUuid: z.string().uuid(),
+  }),
+  query: z.never().optional(),
+});
+
+/**
+ * OK
+ */
+export const zUpdateCourseCreatorPortfolioItemResponse = zApiResponseCourseCreatorPortfolioItem;
+
 export const zDeleteCourseCreatorMembershipData = z.object({
   body: z.never().optional(),
   path: z.object({
@@ -16749,6 +18208,29 @@ export const zUpdateCourseCreatorDocumentData = z.object({
  */
 export const zUpdateCourseCreatorDocumentResponse = zApiResponseCourseCreatorDocumentDto;
 
+export const zDeleteCourseCreatorCompetencyData = z.object({
+  body: z.never().optional(),
+  path: z.object({
+    courseCreatorUuid: z.string().uuid(),
+    itemUuid: z.string().uuid(),
+  }),
+  query: z.never().optional(),
+});
+
+export const zUpdateCourseCreatorCompetencyData = z.object({
+  body: zCourseCreatorCompetency,
+  path: z.object({
+    courseCreatorUuid: z.string().uuid(),
+    itemUuid: z.string().uuid(),
+  }),
+  query: z.never().optional(),
+});
+
+/**
+ * OK
+ */
+export const zUpdateCourseCreatorCompetencyResponse = zApiResponseCourseCreatorCompetency;
+
 export const zDeleteCourseCreatorCertificationData = z.object({
   body: z.never().optional(),
   path: z.object({
@@ -16771,6 +18253,40 @@ export const zUpdateCourseCreatorCertificationData = z.object({
  * OK
  */
 export const zUpdateCourseCreatorCertificationResponse = zApiResponseCourseCreatorCertification;
+
+export const zDeleteCourseCreatorAchievementData = z.object({
+  body: z.never().optional(),
+  path: z.object({
+    courseCreatorUuid: z.string().uuid(),
+    itemUuid: z.string().uuid(),
+  }),
+  query: z.never().optional(),
+});
+
+export const zUpdateCourseCreatorAchievementData = z.object({
+  body: zCourseCreatorAchievement,
+  path: z.object({
+    courseCreatorUuid: z.string().uuid(),
+    itemUuid: z.string().uuid(),
+  }),
+  query: z.never().optional(),
+});
+
+/**
+ * OK
+ */
+export const zUpdateCourseCreatorAchievementResponse = zApiResponseCourseCreatorAchievement;
+
+export const zUpdateCategoriesData = z.object({
+  body: zCourseCreatorCategoriesRequest,
+  path: z.never().optional(),
+  query: z.never().optional(),
+});
+
+/**
+ * OK
+ */
+export const zUpdateCategoriesResponse = zApiResponseCourseCreatorOnboardingStateDto;
 
 export const zDeleteGradingLevelData = z.object({
   body: z.never().optional(),
@@ -17332,7 +18848,7 @@ export const zGetAllStudentsData = z.object({
 export const zGetAllStudentsResponse = zApiResponsePagedDtoStudent;
 
 export const zCreateStudentData = z.object({
-  body: zStudent,
+  body: zStudentWritable,
   path: z.never().optional(),
   query: z.never().optional(),
 });
@@ -17341,6 +18857,85 @@ export const zCreateStudentData = z.object({
  * Student created successfully
  */
 export const zCreateStudentResponse = zStudent;
+
+export const zResendInvitationData = z.object({
+  body: z.never().optional(),
+  path: z.object({
+    studentUuid: z.string().uuid(),
+    guardianUuid: z.string().uuid(),
+  }),
+  query: z.never().optional(),
+});
+
+/**
+ * OK
+ */
+export const zResendInvitationResponse = zApiResponseStudentGuardian;
+
+export const zDeclineByUuidData = z.object({
+  body: z.never().optional(),
+  path: z.object({
+    invitationUuid: z.string().uuid(),
+  }),
+  query: z.never().optional(),
+});
+
+/**
+ * OK
+ */
+export const zDeclineByUuidResponse = zApiResponseVoid;
+
+export const zAcceptByUuidData = z.object({
+  body: z.never().optional(),
+  path: z.object({
+    invitationUuid: z.string().uuid(),
+  }),
+  query: z.never().optional(),
+});
+
+/**
+ * OK
+ */
+export const zAcceptByUuidResponse = zApiResponseGuardianStudentLink;
+
+export const zRegisterAndAcceptData = z.object({
+  body: zGuardianInvitationRegistrationRequest,
+  path: z.object({
+    token: z.string(),
+  }),
+  query: z.never().optional(),
+});
+
+/**
+ * OK
+ */
+export const zRegisterAndAcceptResponse = zApiResponseGuardianStudentLink;
+
+export const zDeclineByTokenData = z.object({
+  body: z.never().optional(),
+  path: z.object({
+    token: z.string(),
+  }),
+  query: z.never().optional(),
+});
+
+/**
+ * OK
+ */
+export const zDeclineByTokenResponse = zApiResponseVoid;
+
+export const zAcceptByTokenData = z.object({
+  body: z.never().optional(),
+  path: z.object({
+    token: z.string(),
+  }),
+  query: z.never().optional(),
+});
+
+/**
+ * OK
+ */
+export const zAcceptByTokenResponse = zApiResponseGuardianStudentLink;
 
 export const zListMembersData = z.object({
   body: z.never().optional(),
@@ -17419,6 +19014,19 @@ export const zCreateRubricScoringLevelData = z.object({
  * OK
  */
 export const zCreateRubricScoringLevelResponse = zApiResponseRubricScoringLevel;
+
+export const zCreateStandardRubricScoringLevelsData = z.object({
+  body: z.never().optional(),
+  path: z.object({
+    rubricUuid: z.string().uuid().describe('UUID of the rubric'),
+  }),
+  query: z.never().optional(),
+});
+
+/**
+ * OK
+ */
+export const zCreateStandardRubricScoringLevelsResponse = zApiResponseListRubricScoringLevel;
 
 export const zCreateRubricScoringLevelsBatchData = z.object({
   body: z.array(zRubricScoringLevel),
@@ -17503,6 +19111,39 @@ export const zAddRubricScoringData = z.object({
  * OK
  */
 export const zAddRubricScoringResponse = zApiResponseRubricScoring;
+
+export const zRegisterData = z.object({
+  body: zRegistrationRequest,
+  path: z.never().optional(),
+  query: z.never().optional(),
+});
+
+/**
+ * OK
+ */
+export const zRegisterResponse = zApiResponseRegistrationAccepted;
+
+export const zResendRegistrationEmailData = z.object({
+  body: zRegistrationResendRequest,
+  path: z.never().optional(),
+  query: z.never().optional(),
+});
+
+/**
+ * OK
+ */
+export const zResendRegistrationEmailResponse = zApiResponseRegistrationAccepted;
+
+export const zApplyForDomainData = z.object({
+  body: zDomainApplicationRequest,
+  path: z.never().optional(),
+  query: z.never().optional(),
+});
+
+/**
+ * OK
+ */
+export const zApplyForDomainResponse = zApiResponseDomainApplication;
 
 export const zGetAllQuizzesData = z.object({
   body: z.never().optional(),
@@ -17705,6 +19346,23 @@ export const zUnpublishProgramData = z.object({
  */
 export const zUnpublishProgramResponse = zApiResponseTrainingProgram;
 
+export const zUploadProgramThumbnailData = z.object({
+  body: z
+    .object({
+      thumbnail: z.string(),
+    })
+    .optional(),
+  path: z.object({
+    uuid: z.string().uuid(),
+  }),
+  query: z.never().optional(),
+});
+
+/**
+ * OK
+ */
+export const zUploadProgramThumbnailResponse = zApiResponseTrainingProgram;
+
 export const zPublishProgramData = z.object({
   body: z.never().optional(),
   path: z.object({
@@ -17717,6 +19375,66 @@ export const zPublishProgramData = z.object({
  * Program published successfully
  */
 export const zPublishProgramResponse = zApiResponseTrainingProgram;
+
+export const zUploadProgramIntroVideoData = z.object({
+  body: z
+    .object({
+      intro_video: z.string(),
+    })
+    .optional(),
+  path: z.object({
+    uuid: z.string().uuid(),
+  }),
+  query: z.never().optional(),
+});
+
+/**
+ * OK
+ */
+export const zUploadProgramIntroVideoResponse = zApiResponseTrainingProgram;
+
+export const zUploadProgramBannerData = z.object({
+  body: z
+    .object({
+      banner: z.string(),
+    })
+    .optional(),
+  path: z.object({
+    uuid: z.string().uuid(),
+  }),
+  query: z.never().optional(),
+});
+
+/**
+ * OK
+ */
+export const zUploadProgramBannerResponse = zApiResponseTrainingProgram;
+
+export const zGetProgramAssessmentsData = z.object({
+  body: z.never().optional(),
+  path: z.object({
+    uuid: z.string().uuid(),
+  }),
+  query: z.never().optional(),
+});
+
+/**
+ * OK
+ */
+export const zGetProgramAssessmentsResponse = zApiResponseListProgramAssessment;
+
+export const zCreateProgramAssessmentData = z.object({
+  body: zProgramAssessment,
+  path: z.object({
+    uuid: z.string().uuid(),
+  }),
+  query: z.never().optional(),
+});
+
+/**
+ * OK
+ */
+export const zCreateProgramAssessmentResponse = zApiResponseProgramAssessment;
 
 export const zArchiveProgramData = z.object({
   body: z.never().optional(),
@@ -18385,6 +20103,216 @@ export const zApplyActionData = z.object({
  * OK
  */
 export const zApplyActionResponse = zApiResponseNotificationDto;
+
+export const zListSkillsData = z.object({
+  body: z.never().optional(),
+  path: z.never().optional(),
+  query: z.never().optional(),
+});
+
+/**
+ * OK
+ */
+export const zListSkillsResponse = zApiResponseListUserSkill;
+
+export const zAddSkillData = z.object({
+  body: zUserSkill,
+  path: z.never().optional(),
+  query: z.never().optional(),
+});
+
+/**
+ * OK
+ */
+export const zAddSkillResponse = zApiResponseUserSkill;
+
+export const zListPortfolioData = z.object({
+  body: z.never().optional(),
+  path: z.never().optional(),
+  query: z.never().optional(),
+});
+
+/**
+ * OK
+ */
+export const zListPortfolioResponse = zApiResponseListUserPortfolioItem;
+
+export const zAddPortfolioItemData = z.object({
+  body: zUserPortfolioItem,
+  path: z.never().optional(),
+  query: z.never().optional(),
+});
+
+/**
+ * OK
+ */
+export const zAddPortfolioItemResponse = zApiResponseUserPortfolioItem;
+
+export const zListMembershipsData = z.object({
+  body: z.never().optional(),
+  path: z.never().optional(),
+  query: z.never().optional(),
+});
+
+/**
+ * OK
+ */
+export const zListMembershipsResponse = zApiResponseListUserMembership;
+
+export const zAddMembershipData = z.object({
+  body: zUserMembership,
+  path: z.never().optional(),
+  query: z.never().optional(),
+});
+
+/**
+ * OK
+ */
+export const zAddMembershipResponse = zApiResponseUserMembership;
+
+export const zListExperienceData = z.object({
+  body: z.never().optional(),
+  path: z.never().optional(),
+  query: z.never().optional(),
+});
+
+/**
+ * OK
+ */
+export const zListExperienceResponse = zApiResponseListUserExperience;
+
+export const zAddExperienceData = z.object({
+  body: zUserExperience,
+  path: z.never().optional(),
+  query: z.never().optional(),
+});
+
+/**
+ * OK
+ */
+export const zAddExperienceResponse = zApiResponseUserExperience;
+
+export const zListEducationData = z.object({
+  body: z.never().optional(),
+  path: z.never().optional(),
+  query: z.never().optional(),
+});
+
+/**
+ * OK
+ */
+export const zListEducationResponse = zApiResponseListUserEducation;
+
+export const zAddEducationData = z.object({
+  body: zUserEducation,
+  path: z.never().optional(),
+  query: z.never().optional(),
+});
+
+/**
+ * OK
+ */
+export const zAddEducationResponse = zApiResponseUserEducation;
+
+export const zListDocumentsData = z.object({
+  body: z.never().optional(),
+  path: z.never().optional(),
+  query: z.never().optional(),
+});
+
+/**
+ * OK
+ */
+export const zListDocumentsResponse = zApiResponseListUserDocument;
+
+export const zUploadDocumentData = z.object({
+  body: z
+    .object({
+      file: z.string(),
+    })
+    .optional(),
+  path: z.never().optional(),
+  query: z.object({
+    document_type_uuid: z.string().uuid(),
+    title: z.string().optional(),
+    description: z.string().optional(),
+    education_uuid: z.string().uuid().optional(),
+    experience_uuid: z.string().uuid().optional(),
+    membership_uuid: z.string().uuid().optional(),
+    expiry_date: z.string().date().optional(),
+  }),
+});
+
+/**
+ * OK
+ */
+export const zUploadDocumentResponse = zApiResponseUserDocument;
+
+export const zListCompetenciesData = z.object({
+  body: z.never().optional(),
+  path: z.never().optional(),
+  query: z.never().optional(),
+});
+
+/**
+ * OK
+ */
+export const zListCompetenciesResponse = zApiResponseListUserCompetency;
+
+export const zAddCompetencyData = z.object({
+  body: zUserCompetency,
+  path: z.never().optional(),
+  query: z.never().optional(),
+});
+
+/**
+ * OK
+ */
+export const zAddCompetencyResponse = zApiResponseUserCompetency;
+
+export const zListCertificationsData = z.object({
+  body: z.never().optional(),
+  path: z.never().optional(),
+  query: z.never().optional(),
+});
+
+/**
+ * OK
+ */
+export const zListCertificationsResponse = zApiResponseListUserCertification;
+
+export const zAddCertificationData = z.object({
+  body: zUserCertification,
+  path: z.never().optional(),
+  query: z.never().optional(),
+});
+
+/**
+ * OK
+ */
+export const zAddCertificationResponse = zApiResponseUserCertification;
+
+export const zListAchievementsData = z.object({
+  body: z.never().optional(),
+  path: z.never().optional(),
+  query: z.never().optional(),
+});
+
+/**
+ * OK
+ */
+export const zListAchievementsResponse = zApiResponseListUserAchievement;
+
+export const zAddAchievementData = z.object({
+  body: zUserAchievement,
+  path: z.never().optional(),
+  query: z.never().optional(),
+});
+
+/**
+ * OK
+ */
+export const zAddAchievementResponse = zApiResponseUserAchievement;
 
 export const zDeclineInvitationFromInboxData = z.object({
   body: z.never().optional(),
@@ -19450,6 +21378,32 @@ export const zAddCourseCreatorSkillData = z.object({
  */
 export const zAddCourseCreatorSkillResponse = zApiResponseCourseCreatorSkill;
 
+export const zGetCourseCreatorPortfolioData = z.object({
+  body: z.never().optional(),
+  path: z.object({
+    courseCreatorUuid: z.string().uuid(),
+  }),
+  query: z.never().optional(),
+});
+
+/**
+ * OK
+ */
+export const zGetCourseCreatorPortfolioResponse = zApiResponseListCourseCreatorPortfolioItem;
+
+export const zAddCourseCreatorPortfolioItemData = z.object({
+  body: zCourseCreatorPortfolioItem,
+  path: z.object({
+    courseCreatorUuid: z.string().uuid(),
+  }),
+  query: z.never().optional(),
+});
+
+/**
+ * OK
+ */
+export const zAddCourseCreatorPortfolioItemResponse = zApiResponseCourseCreatorPortfolioItem;
+
 export const zGetCourseCreatorMembershipsData = z.object({
   body: z.never().optional(),
   path: z.object({
@@ -19603,6 +21557,32 @@ export const zUploadCourseCreatorDocumentData = z.object({
  */
 export const zUploadCourseCreatorDocumentResponse = zApiResponseCourseCreatorDocumentDto;
 
+export const zGetCourseCreatorCompetenciesData = z.object({
+  body: z.never().optional(),
+  path: z.object({
+    courseCreatorUuid: z.string().uuid(),
+  }),
+  query: z.never().optional(),
+});
+
+/**
+ * OK
+ */
+export const zGetCourseCreatorCompetenciesResponse = zApiResponseListCourseCreatorCompetency;
+
+export const zAddCourseCreatorCompetencyData = z.object({
+  body: zCourseCreatorCompetency,
+  path: z.object({
+    courseCreatorUuid: z.string().uuid(),
+  }),
+  query: z.never().optional(),
+});
+
+/**
+ * OK
+ */
+export const zAddCourseCreatorCompetencyResponse = zApiResponseCourseCreatorCompetency;
+
 export const zGetCourseCreatorCertificationsData = z.object({
   body: z.never().optional(),
   path: z.object({
@@ -19631,6 +21611,43 @@ export const zAddCourseCreatorCertificationData = z.object({
  * OK
  */
 export const zAddCourseCreatorCertificationResponse = zApiResponseCourseCreatorCertification;
+
+export const zGetCourseCreatorAchievementsData = z.object({
+  body: z.never().optional(),
+  path: z.object({
+    courseCreatorUuid: z.string().uuid(),
+  }),
+  query: z.never().optional(),
+});
+
+/**
+ * OK
+ */
+export const zGetCourseCreatorAchievementsResponse = zApiResponseListCourseCreatorAchievement;
+
+export const zAddCourseCreatorAchievementData = z.object({
+  body: zCourseCreatorAchievement,
+  path: z.object({
+    courseCreatorUuid: z.string().uuid(),
+  }),
+  query: z.never().optional(),
+});
+
+/**
+ * OK
+ */
+export const zAddCourseCreatorAchievementResponse = zApiResponseCourseCreatorAchievement;
+
+export const zSubmitCurrentForVerificationData = z.object({
+  body: z.never().optional(),
+  path: z.never().optional(),
+  query: z.never().optional(),
+});
+
+/**
+ * OK
+ */
+export const zSubmitCurrentForVerificationResponse = zApiResponseCourseCreatorOnboardingStateDto;
 
 export const zGetAllGradingLevelsData = z.object({
   body: z.never().optional(),
@@ -20588,6 +22605,38 @@ export const zAssignAdminDomainData = z.object({
  */
 export const zAssignAdminDomainResponse = zApiResponseUser;
 
+export const zVerifyData = z.object({
+  body: zProfileVerificationRequest,
+  path: z.object({
+    userUuid: z.string().uuid(),
+    section: zSchemaEnum3Writable,
+    itemUuid: z.string().uuid(),
+  }),
+  query: z.never().optional(),
+});
+
+/**
+ * OK
+ */
+export const zVerifyResponse = zApiResponseVoid;
+
+export const zModerateUserDomainData = z.object({
+  body: z.never().optional(),
+  path: z.object({
+    userUuid: z.string().uuid(),
+    domain: z.string(),
+  }),
+  query: z.object({
+    action: zSchemaEnum4Writable,
+    reason: z.string().optional(),
+  }),
+});
+
+/**
+ * OK
+ */
+export const zModerateUserDomainResponse = zApiResponseDomainApplication;
+
 export const zGetAdminUsersData = z.object({
   body: z.never().optional(),
   path: z.never().optional(),
@@ -20719,7 +22768,7 @@ export const zModerateOrganisationData = z.object({
       ),
   }),
   query: z.object({
-    action: zSchemaEnum3Writable,
+    action: zSchemaEnum4Writable,
     reason: z.string().describe('Optional reason for the chosen moderation action').optional(),
   }),
 });
@@ -20845,6 +22894,36 @@ export const zModerateCourseData = z.object({
  */
 export const zModerateCourseResponse = zApiResponseCourse;
 
+export const zVerifyWalletItemData = z.object({
+  body: zWalletVerificationRequest,
+  path: z.object({
+    uuid: z.string().uuid(),
+    section: zSchemaEnum5Writable,
+    itemUuid: z.string().uuid(),
+  }),
+  query: z.never().optional(),
+});
+
+/**
+ * OK
+ */
+export const zVerifyWalletItemResponse = zApiResponseVoid;
+
+export const zModerateCourseCreatorData = z.object({
+  body: zCourseCreatorModerationRequest.optional(),
+  path: z.object({
+    uuid: z.string().uuid().describe('Course creator UUID'),
+  }),
+  query: z.object({
+    action: zSchemaEnum4Writable,
+  }),
+});
+
+/**
+ * OK
+ */
+export const zModerateCourseCreatorResponse = zApiResponseCourseCreatorOnboardingStateDto;
+
 export const zRescheduleScheduledInstanceData = z.object({
   body: zScheduledInstanceRescheduleRequest,
   path: z.object({
@@ -20872,6 +22951,23 @@ export const zUpdateScheduledInstanceStatusData = z.object({
  * Status updated successfully
  */
 export const zUpdateScheduledInstanceStatusResponse = zApiResponseVoid;
+
+export const zAssignScheduledInstanceLessonData = z.object({
+  body: z.never().optional(),
+  path: z.object({
+    instanceUuid: z.string().uuid(),
+  }),
+  query: z
+    .object({
+      lessonUuid: z.string().uuid().describe('Lesson UUID; omit to clear').optional(),
+    })
+    .optional(),
+});
+
+/**
+ * OK
+ */
+export const zAssignScheduledInstanceLessonResponse = zApiResponseVoid;
 
 export const zReorderScoringLevelsData = z.object({
   body: z.record(z.number().int()),
@@ -21019,6 +23115,150 @@ export const zGetAllUsersData = z.object({
  */
 export const zGetAllUsersResponse = zApiResponsePagedDtoUser;
 
+export const zGetSummary1Data = z.object({
+  body: z.never().optional(),
+  path: z.object({
+    userUuid: z.string().uuid(),
+  }),
+  query: z.never().optional(),
+});
+
+/**
+ * OK
+ */
+export const zGetSummary1Response = zApiResponseProfessionalProfileSummary;
+
+export const zSkillsData = z.object({
+  body: z.never().optional(),
+  path: z.object({
+    userUuid: z.string().uuid(),
+  }),
+  query: z.never().optional(),
+});
+
+/**
+ * OK
+ */
+export const zSkillsResponse = zApiResponseListUserSkill;
+
+export const zPortfolioData = z.object({
+  body: z.never().optional(),
+  path: z.object({
+    userUuid: z.string().uuid(),
+  }),
+  query: z.never().optional(),
+});
+
+/**
+ * OK
+ */
+export const zPortfolioResponse = zApiResponseListUserPortfolioItem;
+
+export const zMembershipsData = z.object({
+  body: z.never().optional(),
+  path: z.object({
+    userUuid: z.string().uuid(),
+  }),
+  query: z.never().optional(),
+});
+
+/**
+ * OK
+ */
+export const zMembershipsResponse = zApiResponseListUserMembership;
+
+export const zExperienceData = z.object({
+  body: z.never().optional(),
+  path: z.object({
+    userUuid: z.string().uuid(),
+  }),
+  query: z.never().optional(),
+});
+
+/**
+ * OK
+ */
+export const zExperienceResponse = zApiResponseListUserExperience;
+
+export const zEducationData = z.object({
+  body: z.never().optional(),
+  path: z.object({
+    userUuid: z.string().uuid(),
+  }),
+  query: z.never().optional(),
+});
+
+/**
+ * OK
+ */
+export const zEducationResponse = zApiResponseListUserEducation;
+
+export const zDocumentsData = z.object({
+  body: z.never().optional(),
+  path: z.object({
+    userUuid: z.string().uuid(),
+  }),
+  query: z.never().optional(),
+});
+
+/**
+ * OK
+ */
+export const zDocumentsResponse = zApiResponseListUserDocument;
+
+export const zDocumentFileData = z.object({
+  body: z.never().optional(),
+  path: z.object({
+    userUuid: z.string().uuid(),
+    documentUuid: z.string().uuid(),
+  }),
+  query: z.never().optional(),
+});
+
+/**
+ * OK
+ */
+export const zDocumentFileResponse = z.string().describe('OK');
+
+export const zCompetenciesData = z.object({
+  body: z.never().optional(),
+  path: z.object({
+    userUuid: z.string().uuid(),
+  }),
+  query: z.never().optional(),
+});
+
+/**
+ * OK
+ */
+export const zCompetenciesResponse = zApiResponseListUserCompetency;
+
+export const zCertificationsData = z.object({
+  body: z.never().optional(),
+  path: z.object({
+    userUuid: z.string().uuid(),
+  }),
+  query: z.never().optional(),
+});
+
+/**
+ * OK
+ */
+export const zCertificationsResponse = zApiResponseListUserCertification;
+
+export const zAchievementsData = z.object({
+  body: z.never().optional(),
+  path: z.object({
+    userUuid: z.string().uuid(),
+  }),
+  query: z.never().optional(),
+});
+
+/**
+ * OK
+ */
+export const zAchievementsResponse = zApiResponseListUserAchievement;
+
 export const zSearchData = z.object({
   body: z.never().optional(),
   path: z.never().optional(),
@@ -21060,6 +23300,17 @@ export const zGetCurrentUserData = z.object({
  * Current user retrieved successfully
  */
 export const zGetCurrentUserResponse = zApiResponseUser;
+
+export const zGetCurrentAccountStatusData = z.object({
+  body: z.never().optional(),
+  path: z.never().optional(),
+  query: z.never().optional(),
+});
+
+/**
+ * OK
+ */
+export const zGetCurrentAccountStatusResponse = zApiResponseAccountStatus;
 
 export const zLookupUserByUserNoData = z.object({
   body: z.never().optional(),
@@ -21196,6 +23447,19 @@ export const zGetInstructorScheduleData = z.object({
  */
 export const zGetInstructorScheduleResponse = zApiResponseListScheduledInstance;
 
+export const zGetGuardiansData = z.object({
+  body: z.never().optional(),
+  path: z.object({
+    studentUuid: z.string().uuid(),
+  }),
+  query: z.never().optional(),
+});
+
+/**
+ * OK
+ */
+export const zGetGuardiansResponse = zApiResponseListStudentGuardian;
+
 export const zGetStudentBookingsData = z.object({
   body: z.never().optional(),
   path: z.object({
@@ -21229,7 +23493,31 @@ export const zSearchStudentsData = z.object({
  */
 export const zSearchStudentsResponse = zPage;
 
-export const zListSkillsData = z.object({
+export const zGetByTokenData = z.object({
+  body: z.never().optional(),
+  path: z.object({
+    token: z.string(),
+  }),
+  query: z.never().optional(),
+});
+
+/**
+ * OK
+ */
+export const zGetByTokenResponse = zApiResponsePublicStudentGuardianInvitation;
+
+export const zGetMineData = z.object({
+  body: z.never().optional(),
+  path: z.never().optional(),
+  query: z.never().optional(),
+});
+
+/**
+ * OK
+ */
+export const zGetMineResponse = zApiResponseListMyStudentGuardianInvitation;
+
+export const zListSkills1Data = z.object({
   body: z.never().optional(),
   path: z.never().optional(),
   query: z
@@ -21243,7 +23531,7 @@ export const zListSkillsData = z.object({
 /**
  * OK
  */
-export const zListSkillsResponse = zApiResponseListSkill;
+export const zListSkills1Response = zApiResponseListSkill;
 
 export const zGlobalSearchData = z.object({
   body: z.never().optional(),
@@ -21432,7 +23720,7 @@ export const zGetRubricsByTypeResponse = zApiResponsePagedDtoAssessmentRubric;
 export const zGetRubricsByStatusData = z.object({
   body: z.never().optional(),
   path: z.object({
-    status: zSchemaEnum4Writable,
+    status: zSchemaEnum6Writable,
   }),
   query: z.object({
     pageable: zPageable,
@@ -21541,7 +23829,7 @@ export const zGetRevenueDashboardData = z.object({
   body: z.never().optional(),
   path: z.never().optional(),
   query: z.object({
-    domain: zSchemaEnum5Writable,
+    domain: zSchemaEnum7Writable,
     start_date: z.string().date().optional(),
     end_date: z.string().date().optional(),
   }),
@@ -21572,7 +23860,7 @@ export const zListSalesData = z.object({
   body: z.never().optional(),
   path: z.never().optional(),
   query: z.object({
-    domain: zSchemaEnum5Writable,
+    domain: zSchemaEnum7Writable,
     start_date: z.string().date().optional(),
     end_date: z.string().date().optional(),
     payment_status: z.string().optional(),
@@ -21609,7 +23897,7 @@ export const zListPaymentsData = z.object({
   body: z.never().optional(),
   path: z.never().optional(),
   query: z.object({
-    domain: zSchemaEnum5Writable,
+    domain: zSchemaEnum7Writable,
     start_date: z.string().date().optional(),
     end_date: z.string().date().optional(),
     status: z.string().optional(),
@@ -21627,7 +23915,7 @@ export const zGetRevenueDashboard1Data = z.object({
   body: z.never().optional(),
   path: z.never().optional(),
   query: z.object({
-    domain: zSchemaEnum5Writable,
+    domain: zSchemaEnum7Writable,
     start_date: z.string().date().optional(),
     end_date: z.string().date().optional(),
   }),
@@ -22143,7 +24431,7 @@ export const zListRosterData = z.object({
  */
 export const zListRosterResponse = zApiResponsePagedDtoStudentGroupRosterEntry;
 
-export const zGetSummaryData = z.object({
+export const zGetSummary2Data = z.object({
   body: z.never().optional(),
   path: z.object({
     organisationUuid: z.string().uuid(),
@@ -22154,7 +24442,7 @@ export const zGetSummaryData = z.object({
 /**
  * OK
  */
-export const zGetSummaryResponse = zApiResponseSkillsFundSummary;
+export const zGetSummary2Response = zApiResponseSkillsFundSummary;
 
 export const zGetCalendarData = z.object({
   body: z.never().optional(),
@@ -22247,7 +24535,7 @@ export const zListObligationsData = z.object({
   }),
   query: z.object({
     instructorUuid: z.string().uuid().describe('Narrow to a single instructor profile').optional(),
-    status: zSchemaEnum6Writable.optional(),
+    status: zSchemaEnum8Writable.optional(),
     pageable: zPageable,
   }),
 });
@@ -22307,6 +24595,19 @@ export const zGetCountsData = z.object({
  * OK
  */
 export const zGetCountsResponse = zApiResponseNotificationCountsDto;
+
+export const zGetDocumentFileData = z.object({
+  body: z.never().optional(),
+  path: z.object({
+    itemUuid: z.string().uuid(),
+  }),
+  query: z.never().optional(),
+});
+
+/**
+ * OK
+ */
+export const zGetDocumentFileResponse = z.string().describe('OK');
 
 export const zGetInvitationByTokenData = z.object({
   body: z.never().optional(),
@@ -23460,6 +25761,17 @@ export const zSearchCourseCreatorMembershipsData = z.object({
 export const zSearchCourseCreatorMembershipsResponse =
   zApiResponsePagedDtoCourseCreatorProfessionalMembership;
 
+export const zGetCurrentOnboardingData = z.object({
+  body: z.never().optional(),
+  path: z.never().optional(),
+  query: z.never().optional(),
+});
+
+/**
+ * OK
+ */
+export const zGetCurrentOnboardingResponse = zApiResponseCourseCreatorOnboardingStateDto;
+
 export const zSearchCourseCreatorExperienceData = z.object({
   body: z.never().optional(),
   path: z.never().optional(),
@@ -24063,7 +26375,7 @@ export const zSearchCoursesAndProgrammesData = z.object({
   query: z
     .object({
       q: z.string().describe('Free-text query; empty or absent browses the catalogue').optional(),
-      show: zSchemaEnum7Writable.optional(),
+      show: zSchemaEnum9Writable.optional(),
       category_uuid: z
         .array(z.string().uuid())
         .describe(
@@ -24081,7 +26393,7 @@ export const zSearchCoursesAndProgrammesData = z.object({
         .describe('free or paid; both (or none) means no price filter')
         .optional(),
       creator_uuid: z.string().uuid().describe('Only results by this course creator').optional(),
-      sort: zSchemaEnum8Writable.optional(),
+      sort: zSchemaEnum10Writable.optional(),
       page: z.string().describe('0-based page number').optional().default(0),
       size: z.string().describe('Page size, 1-48').optional().default('24'),
     })
@@ -24284,7 +26596,7 @@ export const zGetUserActivityData = z.object({
     uuid: z.string().uuid().describe('UUID of the user dossier to inspect'),
   }),
   query: z.object({
-    scope: zSchemaEnum9Writable.optional(),
+    scope: zSchemaEnum11Writable.optional(),
     category: z.string().describe('Optional endpoint category filter').optional(),
     target_uuids: z
       .string()
@@ -24349,6 +26661,22 @@ export const zListIndexesData = z.object({
  * OK
  */
 export const zListIndexesResponse = zApiResponseListSearchIndexStatusResponse;
+
+export const zGetRegistrationQueueData = z.object({
+  body: z.never().optional(),
+  path: z.never().optional(),
+  query: z
+    .object({
+      status: zSchemaEnum12Writable.optional(),
+      domain: z.string().describe('Optional domain filter, e.g. student').optional(),
+    })
+    .optional(),
+});
+
+/**
+ * OK
+ */
+export const zGetRegistrationQueueResponse = zApiResponseListAdminDomainApplication;
 
 export const zEvaluateCourseRecommendationsData = z.object({
   body: z.never().optional(),
@@ -24751,7 +27079,7 @@ export const zRemoveAdminDomainData = z.object({
   body: z.never().optional(),
   path: z.object({
     uuid: z.string().uuid().describe('UUID of the user to remove admin domain from'),
-    domain: zSchemaEnum10Writable,
+    domain: zSchemaEnum13Writable,
   }),
   query: z
     .object({

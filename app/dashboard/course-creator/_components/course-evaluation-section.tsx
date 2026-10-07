@@ -1,7 +1,12 @@
 'use client';
 
+import { useMemo, useRef, useState } from 'react';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import Link from 'next/link';
+import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Checkbox } from '@/components/ui/checkbox';
 import { EmptyState } from '@/components/ui/empty-state';
 import { Label } from '@/components/ui/label';
 import {
@@ -19,6 +24,7 @@ import {
   SheetTitle,
 } from '@/components/ui/sheet';
 import { Skeleton } from '@/components/ui/skeleton';
+import Spinner from '@/components/ui/spinner';
 import {
   Table,
   TableBody,
@@ -27,106 +33,68 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
+import { getErrorMessage } from '@/lib/error-utils';
 import { STALE_TIMES } from '@/lib/query-client';
 import {
-  associateRubricMutation,
-  dissociateRubricByContextMutation,
   getCourseAssessmentsOptions,
-  getCourseAssessmentsQueryKey,
-  getCourseRubricsInfiniteOptions,
-  getCourseRubricsQueryKey,
+  getCourseEvaluationPlanOptions,
+  getCourseEvaluationPlanQueryKey,
+  getLineItemsQueryKey,
   searchAssessmentRubricsOptions,
-  updateAssociationMutation,
-  updateCourseAssessmentMutation,
+  updateCourseEvaluationPlanMutation,
 } from '@/services/client/@tanstack/react-query.gen';
 import type {
   CourseAssessment,
-  CourseRubricAssociation,
+  CourseAssessmentLineItem,
   Lesson,
 } from '@/services/client/types.gen';
-import { useInfiniteQuery, useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import Link from 'next/link';
-import { useEffect, useMemo, useRef, useState } from 'react';
-import { toast } from 'sonner';
-import {
-  assertEvaluationResponse,
-  COURSE_EVALUATION_CONTEXT,
-  getCourseEvaluationAssociation,
-  lessonEvaluationContext,
-  nextEvaluationPage,
-  persistEvaluationAssociation,
-  resolveEvaluationRubric,
-} from './course-evaluation-utils';
-import { EvaluationRubricPicker, type SavedEvaluationRubric } from './evaluation-rubric-picker';
+import { EvaluationRubricPicker } from './evaluation-rubric-picker';
 import { EvaluationRubricPreview } from './evaluation-rubric-preview';
 
 type Props = {
   courseUuid: string;
   courseCreatorUuid?: string;
-  associatedBy?: string;
   lessons: Array<Lesson & { uuid: string }>;
   lessonsLoading: boolean;
-  lessonsError?: boolean;
+  lessonsError?: unknown;
   onRetryLessons?: () => void;
 };
 
 type SavedAssessment = CourseAssessment & { uuid: string };
+const cellKey = (lessonUuid: string, assessmentUuid: string) => `${lessonUuid}:${assessmentUuid}`;
 
-export function CourseEvaluationSection({
+export function CourseEvaluationSection(props: Props) {
+  if (!props.courseUuid)
+    return <EmptyState variant='compact' title='Save the course to configure evaluation' />;
+  return <SavedCourseEvaluationSection key={props.courseUuid} {...props} />;
+}
+
+function SavedCourseEvaluationSection({
   courseUuid,
   courseCreatorUuid,
-  associatedBy,
   lessons,
   lessonsLoading,
   lessonsError,
   onRetryLessons,
 }: Props) {
   const queryClient = useQueryClient();
-  const [savingKey, setSavingKey] = useState<string | null>(null);
-  const saveLock = useRef(false);
-  const [previewUuid, setPreviewUuid] = useState<string | null>(null);
-  const [viewRubricUuid, setViewRubricUuid] = useState('');
-  const [chosenRubrics, setChosenRubrics] = useState<Map<string, SavedEvaluationRubric>>(new Map());
+  const planOptions = { path: { courseUuid } };
   const assessmentQuery = useQuery({
     ...getCourseAssessmentsOptions({ path: { courseUuid }, query: { pageable: {} } }),
     enabled: Boolean(courseUuid),
     staleTime: STALE_TIMES.entity,
   });
-  const associationQuery = useInfiniteQuery({
-    ...getCourseRubricsInfiniteOptions({
-      path: { courseUuid },
-      query: { pageable: { page: 0, size: 100 } },
-    }),
-    initialPageParam: 0,
-    getNextPageParam: (lastPage, pages) => {
-      if (lastPage.error || lastPage.success === false) return undefined;
-      const next = nextEvaluationPage(lastPage.data?.metadata, pages.length - 1);
-      return next === undefined
-        ? undefined
-        : { path: { courseUuid }, query: { pageable: { page: next, size: 100 } } };
-    },
+  const planQuery = useQuery({
+    ...getCourseEvaluationPlanOptions(planOptions),
     enabled: Boolean(courseUuid),
     staleTime: STALE_TIMES.entity,
   });
-  // The matrix needs all of this course's mappings before a cell can safely be edited.
-  useEffect(() => {
-    if (associationQuery.hasNextPage && !associationQuery.isFetching && !associationQuery.isError) {
-      void associationQuery.fetchNextPage();
-    }
-  }, [
-    associationQuery.hasNextPage,
-    associationQuery.isFetching,
-    associationQuery.isError,
-    associationQuery.fetchNextPage,
-  ]);
-
   const assessmentsFailed =
     assessmentQuery.isError ||
     Boolean(assessmentQuery.data?.error) ||
     assessmentQuery.data?.success === false;
-  const associationsFailed =
-    associationQuery.isError ||
-    Boolean(associationQuery.data?.pages.some(page => page.error || page.success === false));
+  const planFailed =
+    planQuery.isError || Boolean(planQuery.data?.error) || planQuery.data?.success === false;
   const assessments = useMemo(
     () =>
       assessmentsFailed
@@ -136,33 +104,37 @@ export function CourseEvaluationSection({
           ),
     [assessmentQuery.data, assessmentsFailed]
   );
-  const associations = useMemo(
-    () =>
-      associationsFailed
-        ? []
-        : (associationQuery.data?.pages.flatMap(page => page.data?.content ?? []) ?? []),
-    [associationQuery.data, associationsFailed]
-  );
-  const associationsByContext = useMemo(
-    () => new Map(associations.map(item => [item.usage_context, item])),
-    [associations]
-  );
-  const courseAssociation = getCourseEvaluationAssociation(associations);
+  const plan = planFailed ? undefined : planQuery.data?.data;
+  const cells = useMemo(() => {
+    const result = new Map<string, CourseAssessmentLineItem>();
+    plan?.lessons?.forEach(lesson => {
+      if (!lesson.lesson_uuid) return;
+      const lessonUuid = lesson.lesson_uuid;
+      lesson.cells?.forEach((cell, index) => {
+        if (!cell) return;
+        const assessmentUuid =
+          cell.course_assessment_uuid || plan.components?.[index]?.assessment_uuid;
+        if (assessmentUuid) result.set(cellKey(lessonUuid, assessmentUuid), cell);
+      });
+    });
+    return result;
+  }, [plan]);
   const orderedLessons = useMemo(
     () => [...lessons].sort((a, b) => (a.lesson_number ?? 0) - (b.lesson_number ?? 0)),
     [lessons]
   );
-  const rubricIds = useMemo(
-    () =>
-      [
-        ...new Set([
-          ...associations.map(item => item.rubric_uuid),
-          ...assessments.map(item => item.rubric_uuid).filter((id): id is string => Boolean(id)),
-        ]),
-      ].sort(),
-    [associations, assessments]
-  );
-  const rubricTitlesQuery = useQuery({
+  const rubricIds = useMemo(() => {
+    const ids = new Set<string>();
+    assessments.forEach(component => {
+      if (component.rubric_uuid) ids.add(component.rubric_uuid);
+      lessons.forEach(lesson => {
+        const rubricUuid = cells.get(cellKey(lesson.uuid, component.uuid))?.rubric_uuid;
+        if (rubricUuid) ids.add(rubricUuid);
+      });
+    });
+    return [...ids].sort();
+  }, [assessments, lessons, cells]);
+  const titlesQuery = useQuery({
     ...searchAssessmentRubricsOptions({
       query: {
         searchParams: { uuid_in: rubricIds.join(',') },
@@ -172,109 +144,81 @@ export function CourseEvaluationSection({
     enabled: rubricIds.length > 0,
     staleTime: STALE_TIMES.entity,
   });
+  const [chosenTitles, setChosenTitles] = useState<Map<string, string>>(new Map());
   const titlesFailed =
-    rubricTitlesQuery.isError ||
-    Boolean(rubricTitlesQuery.data?.error) ||
-    rubricTitlesQuery.data?.success === false;
+    titlesQuery.isError || Boolean(titlesQuery.data?.error) || titlesQuery.data?.success === false;
   const rubricTitles = useMemo(() => {
     const titles = new Map<string, string>();
     if (!titlesFailed)
-      rubricTitlesQuery.data?.data?.content?.forEach(rubric => {
+      titlesQuery.data?.data?.content?.forEach(rubric => {
         if (rubric.uuid) titles.set(rubric.uuid, rubric.title);
       });
-    chosenRubrics.forEach(rubric => titles.set(rubric.uuid, rubric.title));
+    chosenTitles.forEach((title, uuid) => titles.set(uuid, title));
     return titles;
-  }, [rubricTitlesQuery.data, titlesFailed, chosenRubrics]);
+  }, [titlesQuery.data, titlesFailed, chosenTitles]);
+  const [previewUuid, setPreviewUuid] = useState<string | null>(null);
+  const [viewRubricUuid, setViewRubricUuid] = useState('');
+  const [savingKey, setSavingKey] = useState<string | null>(null);
+  const saveLock = useRef(false);
+  const update = useMutation(updateCourseEvaluationPlanMutation());
+  const loading = lessonsLoading || assessmentQuery.isLoading || planQuery.isLoading;
+  const failed = assessmentsFailed || planFailed || Boolean(lessonsError);
+  const disabled = loading || Boolean(failed) || Boolean(savingKey);
 
-  const associate = useMutation(associateRubricMutation());
-  const updateAssociation = useMutation(updateAssociationMutation());
-  const dissociate = useMutation(dissociateRubricByContextMutation());
-  const updateAssessment = useMutation(updateCourseAssessmentMutation());
-  const loading =
-    lessonsLoading ||
-    assessmentQuery.isLoading ||
-    associationQuery.isLoading ||
-    associationQuery.hasNextPage;
-  const failed = assessmentsFailed || associationsFailed || lessonsError;
-  const disabled = Boolean(savingKey) || loading || failed;
-
-  function rememberRubric(rubric: SavedEvaluationRubric | null) {
-    if (rubric) setChosenRubrics(previous => new Map(previous).set(rubric.uuid, rubric));
-  }
-
-  async function save(key: string, action: () => Promise<void>) {
-    if (saveLock.current || disabled) return;
+  async function saveCell(
+    lessonUuid: string,
+    component: SavedAssessment,
+    enabled: boolean,
+    rubricUuid = ''
+  ) {
+    if (disabled || saveLock.current) return;
+    const key = cellKey(lessonUuid, component.uuid);
+    const existing = cells.get(key);
+    const wasEnabled = Boolean(existing && existing.active !== false);
+    if (enabled === wasEnabled && (!enabled || rubricUuid === (existing?.rubric_uuid ?? '')))
+      return;
     saveLock.current = true;
     setSavingKey(key);
     try {
-      await action();
-      await Promise.all([
-        queryClient.invalidateQueries({
-          queryKey: getCourseAssessmentsQueryKey({ path: { courseUuid }, query: { pageable: {} } }),
-        }),
-        queryClient.invalidateQueries({
-          queryKey: getCourseRubricsQueryKey({ path: { courseUuid }, query: { pageable: {} } }),
-        }),
-      ]);
-      toast.success('Evaluation rubric saved.');
+      const result = await update.mutateAsync({
+        path: { courseUuid },
+        body: {
+          cells: [
+            {
+              lesson_uuid: lessonUuid,
+              assessment_uuid: component.uuid,
+              enabled,
+              ...(enabled
+                ? {
+                    ...(rubricUuid ? { rubric_uuid: rubricUuid } : {}),
+                    ...(existing?.quiz_uuid ? { quiz_uuid: existing.quiz_uuid } : {}),
+                    ...(existing?.assignment_uuid
+                      ? { assignment_uuid: existing.assignment_uuid }
+                      : {}),
+                  }
+                : {}),
+            },
+          ],
+        },
+      });
+      if (result.error || result.success === false)
+        throw new Error(getErrorMessage(result, 'Unable to save evaluation plan'));
+      if (result.data)
+        queryClient.setQueryData(getCourseEvaluationPlanQueryKey(planOptions), result);
+      else
+        await queryClient.invalidateQueries({
+          queryKey: getCourseEvaluationPlanQueryKey(planOptions),
+        });
+      void queryClient.invalidateQueries({
+        queryKey: getLineItemsQueryKey({ path: { courseUuid, assessmentUuid: component.uuid } }),
+      });
+      toast.success('Lesson evaluation saved');
     } catch (error) {
-      toast.error(
-        error instanceof Error ? error.message : 'Unable to save the rubric. Please try again.'
-      );
+      toast.error(getErrorMessage(error, 'Unable to save evaluation plan'));
     } finally {
       saveLock.current = false;
       setSavingKey(null);
     }
-  }
-
-  async function saveAssociation(
-    context: string,
-    existing: CourseRubricAssociation | undefined,
-    rubric: SavedEvaluationRubric | null,
-    primary = false
-  ) {
-    rememberRubric(rubric);
-    if (existing?.rubric_uuid === rubric?.uuid || (!existing && !rubric)) return;
-    await save(context, () =>
-      persistEvaluationAssociation(
-        {
-          courseUuid,
-          associatedBy,
-          context,
-          existing,
-          rubricUuid: rubric?.uuid ?? null,
-          primary,
-        },
-        {
-          associate: input => associate.mutateAsync(input),
-          update: input => updateAssociation.mutateAsync(input),
-          remove: input => dissociate.mutateAsync(input),
-        }
-      )
-    );
-  }
-
-  async function saveComponent(assessment: SavedAssessment, rubric: SavedEvaluationRubric | null) {
-    rememberRubric(rubric);
-    if ((assessment.rubric_uuid || null) === (rubric?.uuid ?? null)) return;
-    await save(assessment.uuid, async () => {
-      assertEvaluationResponse(
-        await updateAssessment.mutateAsync({
-          path: { courseUuid, assessmentUuid: assessment.uuid },
-          body: {
-            course_uuid: courseUuid,
-            assessment_type: assessment.assessment_type,
-            title: assessment.title,
-            description: assessment.description,
-            weight_percentage: assessment.weight_percentage,
-            aggregation_strategy: assessment.aggregation_strategy,
-            sync_class_attendance: assessment.sync_class_attendance,
-            is_required: assessment.is_required,
-            rubric_uuid: rubric?.uuid ?? null,
-          },
-        })
-      );
-    });
   }
 
   return (
@@ -283,15 +227,22 @@ export function CourseEvaluationSection({
         <CardHeader>
           <CardTitle className='text-base'>Evaluation criteria per lesson</CardTitle>
           <CardDescription>
-            Set one rubric for the whole course per assessment component, or pick a different rubric
-            for each lesson. Selections save automatically.
+            Check Include to associate a lesson with an assessment component. Select its grading
+            rubric if needed. Changes save automatically.
           </CardDescription>
         </CardHeader>
-        <CardContent className='flex flex-col gap-4'>
+        <CardContent className='space-y-4'>
           {failed ? (
             <EmptyState
               title='Could not load evaluation criteria'
-              description='Reload the lessons, course assessments, and rubric associations to continue.'
+              description={getErrorMessage(
+                assessmentsFailed
+                  ? (assessmentQuery.error ?? assessmentQuery.data)
+                  : planFailed
+                    ? (planQuery.error ?? planQuery.data)
+                    : lessonsError,
+                'Could not load lessons.'
+              )}
               action={
                 <Button
                   type='button'
@@ -299,7 +250,7 @@ export function CourseEvaluationSection({
                   onClick={() => {
                     onRetryLessons?.();
                     void assessmentQuery.refetch();
-                    void associationQuery.refetch();
+                    void planQuery.refetch();
                   }}
                 >
                   Retry
@@ -308,159 +259,136 @@ export function CourseEvaluationSection({
             />
           ) : loading ? (
             <Skeleton className='h-64 w-full' />
+          ) : assessments.length === 0 ? (
+            <EmptyState
+              variant='compact'
+              title='Add assessment components first'
+              description='Add components in the Assessment tab to associate them with lessons.'
+            />
           ) : (
             <>
-              <div className='grid max-w-sm gap-1.5'>
-                <Label>Course rubric</Label>
-                <EvaluationRubricPicker
-                  creatorUuid={courseCreatorUuid}
-                  value={courseAssociation?.rubric_uuid}
-                  title={rubricTitles.get(courseAssociation?.rubric_uuid ?? '')}
-                  label='Course rubric'
-                  disabled={disabled}
-                  saving={savingKey === COURSE_EVALUATION_CONTEXT}
-                  onChange={rubric =>
-                    void saveAssociation(COURSE_EVALUATION_CONTEXT, courseAssociation, rubric, true)
-                  }
-                  onPreview={setPreviewUuid}
-                />
-                <p className='text-muted-foreground text-xs'>
-                  Used when no assessment or lesson rubric is selected.
-                </p>
-              </div>
-              {assessments.length === 0 ? (
-                <EmptyState
-                  variant='compact'
-                  title='Add assessment components first'
-                  description='Use the Assessment tab to add components such as Attendance, Practical assignments, Quiz assignments, or Performance.'
-                />
-              ) : (
-                <div className='border-border overflow-hidden rounded-md border'>
-                  <Table className='min-w-[720px]'>
-                    <TableHeader>
-                      <TableRow className='bg-muted/60'>
-                        <TableHead className='w-24 px-3 py-2'>Lesson</TableHead>
-                        <TableHead className='min-w-44 px-3 py-2'>Lesson title</TableHead>
-                        {assessments.map(component => (
-                          <TableHead
-                            key={component.uuid}
-                            className='min-w-64 border-l px-3 py-2 align-top whitespace-normal'
-                          >
-                            <div className='font-semibold'>
-                              {component.title || 'Untitled component'}
-                            </div>
-                            <div className='mt-2 grid gap-1 font-normal'>
-                              <span className='text-muted-foreground text-xs'>
-                                Whole-course rubric
-                              </span>
+              <div className='border-border overflow-hidden rounded-md border'>
+                <Table className='min-w-[720px]'>
+                  <TableHeader>
+                    <TableRow className='bg-muted/60'>
+                      <TableHead className='w-24 px-3 py-2'>Lesson</TableHead>
+                      <TableHead className='min-w-44 px-3 py-2'>Lesson title</TableHead>
+                      {assessments.map(component => (
+                        <TableHead
+                          key={component.uuid}
+                          className='min-w-64 border-l px-3 py-2 align-top whitespace-normal'
+                        >
+                          <div className='font-semibold'>
+                            {component.title || 'Untitled component'}
+                          </div>
+                          <p className='text-muted-foreground text-xs'>
+                            {component.weight_percentage}%
+                          </p>
+                          {component.rubric_uuid && (
+                            <Button
+                              type='button'
+                              variant='link'
+                              className='h-auto p-0 text-xs'
+                              onClick={() => setPreviewUuid(component.rubric_uuid ?? null)}
+                            >
+                              {rubricTitles.get(component.rubric_uuid) || 'View component rubric'}
+                            </Button>
+                          )}
+                        </TableHead>
+                      ))}
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {orderedLessons.map((lesson, index) => (
+                      <TableRow key={lesson.uuid}>
+                        <TableCell className='bg-muted/30 px-3 py-2 align-top font-medium'>
+                          Lesson {lesson.lesson_number ?? index + 1}
+                        </TableCell>
+                        <TableCell className='text-muted-foreground px-3 py-2 align-top whitespace-normal'>
+                          {lesson.title || 'Untitled lesson'}
+                        </TableCell>
+                        {assessments.map(component => {
+                          const key = cellKey(lesson.uuid, component.uuid);
+                          const cell = cells.get(key);
+                          const enabled = Boolean(cell && cell.active !== false);
+                          const label = `${lesson.title || `Lesson ${index + 1}`} — ${component.title}`;
+                          return (
+                            <TableCell
+                              key={component.uuid}
+                              className='space-y-2 border-l px-3 py-2 align-top whitespace-normal'
+                            >
+                              <div className='flex items-center gap-2'>
+                                <Checkbox
+                                  id={`include-${key}`}
+                                  checked={enabled}
+                                  disabled={disabled}
+                                  onCheckedChange={checked =>
+                                    void saveCell(
+                                      lesson.uuid,
+                                      component,
+                                      checked === true,
+                                      cell?.rubric_uuid ?? ''
+                                    )
+                                  }
+                                  aria-label={`Include ${label}`}
+                                />
+                                <Label htmlFor={`include-${key}`}>Include</Label>
+                                {savingKey === key && <Spinner className='size-4' />}
+                              </div>
                               <EvaluationRubricPicker
                                 creatorUuid={courseCreatorUuid}
-                                value={component.rubric_uuid}
-                                title={rubricTitles.get(component.rubric_uuid ?? '')}
-                                label={`${component.title} — whole course`}
-                                emptyLabel='Choose per lesson'
+                                value={enabled ? cell?.rubric_uuid : undefined}
+                                title={rubricTitles.get(cell?.rubric_uuid ?? '')}
+                                label={label}
+                                emptyLabel={
+                                  enabled
+                                    ? component.rubric_uuid
+                                      ? 'Use component rubric'
+                                      : 'No rubric'
+                                    : 'None'
+                                }
                                 disabled={disabled}
-                                saving={savingKey === component.uuid}
-                                onChange={rubric => void saveComponent(component, rubric)}
+                                saving={savingKey === key}
+                                onChange={rubric => {
+                                  if (rubric)
+                                    setChosenTitles(previous =>
+                                      new Map(previous).set(rubric.uuid, rubric.title)
+                                    );
+                                  void saveCell(
+                                    lesson.uuid,
+                                    component,
+                                    Boolean(rubric) || enabled,
+                                    rubric?.uuid ?? ''
+                                  );
+                                }}
                                 onPreview={setPreviewUuid}
                               />
-                            </div>
-                          </TableHead>
-                        ))}
+                            </TableCell>
+                          );
+                        })}
                       </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                      {orderedLessons.map((lesson, index) => (
-                        <TableRow key={lesson.uuid}>
-                          <TableCell className='bg-muted/30 px-3 py-2 align-top font-medium'>
-                            Lesson {lesson.lesson_number ?? index + 1}
-                          </TableCell>
-                          <TableCell className='text-muted-foreground px-3 py-2 align-top whitespace-normal'>
-                            {lesson.title || 'Untitled lesson'}
-                          </TableCell>
-                          {assessments.map(component => {
-                            const context = lessonEvaluationContext(component.uuid, lesson.uuid);
-                            const association = associationsByContext.get(context);
-                            const effectiveRubric = resolveEvaluationRubric(
-                              component.rubric_uuid,
-                              association?.rubric_uuid,
-                              courseAssociation?.rubric_uuid
-                            );
-                            return (
-                              <TableCell
-                                key={component.uuid}
-                                className='border-l px-3 py-2 align-top whitespace-normal'
-                              >
-                                {component.rubric_uuid ? (
-                                  <div className='space-y-1'>
-                                    <p className='text-muted-foreground text-xs'>
-                                      Uses whole-course rubric
-                                    </p>
-                                    <Button
-                                      type='button'
-                                      variant='link'
-                                      className='h-auto max-w-full justify-start p-0 text-left whitespace-normal'
-                                      onClick={() => setPreviewUuid(component.rubric_uuid ?? null)}
-                                    >
-                                      {rubricTitles.get(component.rubric_uuid) || 'View rubric'}
-                                    </Button>
-                                  </div>
-                                ) : (
-                                  <div className='space-y-1'>
-                                    <EvaluationRubricPicker
-                                      creatorUuid={courseCreatorUuid}
-                                      value={association?.rubric_uuid}
-                                      title={rubricTitles.get(association?.rubric_uuid ?? '')}
-                                      label={`${lesson.title || `Lesson ${index + 1}`} — ${component.title}`}
-                                      emptyLabel={
-                                        courseAssociation ? 'Use course rubric' : 'Select rubric'
-                                      }
-                                      disabled={disabled}
-                                      saving={savingKey === context}
-                                      onChange={rubric =>
-                                        void saveAssociation(context, association, rubric)
-                                      }
-                                      onPreview={setPreviewUuid}
-                                    />
-                                    {!association && effectiveRubric && (
-                                      <Button
-                                        type='button'
-                                        variant='link'
-                                        className='h-auto p-0 text-xs'
-                                        onClick={() => setPreviewUuid(effectiveRubric)}
-                                      >
-                                        View inherited course rubric
-                                      </Button>
-                                    )}
-                                  </div>
-                                )}
-                              </TableCell>
-                            );
-                          })}
-                        </TableRow>
-                      ))}
-                    </TableBody>
-                  </Table>
-                </div>
-              )}
-              {assessments.length > 0 && lessons.length === 0 && (
+                    ))}
+                  </TableBody>
+                </Table>
+              </div>
+              {lessons.length === 0 && (
                 <EmptyState
                   variant='compact'
                   title='Add lessons first'
-                  description='Whole-course rubrics are ready. Add lessons in Lesson content to attach individual lesson rubrics.'
+                  description='Add lessons in Lesson content to associate them with assessment components.'
                 />
               )}
-              <Button asChild variant='outline' size='sm' className='w-fit'>
-                <Link
-                  href='/dashboard/course-creator/rubrics'
-                  target='_blank'
-                  rel='noopener noreferrer'
-                >
-                  Manage rubrics
-                </Link>
-              </Button>
             </>
           )}
+          <Button asChild variant='outline' size='sm' className='w-fit'>
+            <Link
+              href='/dashboard/course-creator/rubrics'
+              target='_blank'
+              rel='noopener noreferrer'
+            >
+              Manage rubrics
+            </Link>
+          </Button>
         </CardContent>
       </Card>
       {!failed && !loading && (
@@ -468,28 +396,29 @@ export function CourseEvaluationSection({
           <CardHeader>
             <CardTitle className='text-base'>Course rubrics</CardTitle>
             <CardDescription>
-              Select a rubric associated with this course to see its criteria and scoring levels.
+              View the criteria and scoring levels for a rubric used by an assessment component or
+              lesson.
             </CardDescription>
           </CardHeader>
           <CardContent className='space-y-3'>
             {rubricIds.length === 0 ? (
-              <EmptyState
-                variant='compact'
-                title='No rubrics associated yet'
-                description='Attach a rubric to the course, an assessment component, or a lesson above.'
-              />
+              <EmptyState variant='compact' title='No rubrics associated yet' />
             ) : (
               <>
                 {titlesFailed && (
                   <EmptyState
                     variant='compact'
                     title='Could not load rubric names'
+                    description={getErrorMessage(
+                      titlesQuery.error ?? titlesQuery.data,
+                      'Unable to load rubric names'
+                    )}
                     action={
                       <Button
                         type='button'
-                        size='sm'
                         variant='outline'
-                        onClick={() => void rubricTitlesQuery.refetch()}
+                        size='sm'
+                        onClick={() => void titlesQuery.refetch()}
                       >
                         Retry
                       </Button>

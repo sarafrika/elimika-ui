@@ -52,7 +52,7 @@ export function getCoursePublishReadiness({
   difficulty = course?.difficulty_uuid ?? undefined,
   description = course?.description,
   objectives = course?.objectives,
-  durationHours = course?.duration_hours,
+  durationHours = course?.duration_hours ?? undefined,
   classLimit = course?.class_limit ?? undefined,
   minimumTrainingFee = course?.minimum_training_fee ?? undefined,
   creatorSharePercentage = course?.creator_share_percentage,

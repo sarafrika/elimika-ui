@@ -24,7 +24,9 @@ import Spinner from '@/components/ui/spinner';
 import { Textarea } from '@/components/ui/textarea';
 import { useBreadcrumb } from '@/context/breadcrumb-provider';
 import useMultiMutations from '@/hooks/use-multi-mutations';
-import type { Instructor, InstructorSkill, ProficiencyLevelEnum } from '@/services/client';
+import type { Instructor, InstructorSkill } from '@/services/client';
+
+type ProficiencyLevel = InstructorSkill['proficiency_level'];
 import {
   addInstructorSkillMutation,
   deleteInstructorSkillMutation,
@@ -55,14 +57,14 @@ const skillsSchema = z.object({
 type SkillType = z.infer<typeof SkillSchema>;
 type SkillsFormValues = z.infer<typeof skillsSchema>;
 
-const proficiencyLevels: Array<{ label: string; value: ProficiencyLevelEnum }> = [
+const proficiencyLevels: Array<{ label: string; value: ProficiencyLevel }> = [
   { label: 'Beginner', value: 'BEGINNER' },
   { label: 'Intermediate', value: 'INTERMEDIATE' },
   { label: 'Advanced', value: 'ADVANCED' },
   { label: 'Expert', value: 'EXPERT' },
 ];
 
-const normalizeProficiencyLevel = (level?: string | null): ProficiencyLevelEnum => {
+const normalizeProficiencyLevel = (level?: string | null): ProficiencyLevel => {
   switch ((level ?? '').toUpperCase()) {
     case 'INTERMEDIATE':
       return 'INTERMEDIATE';

@@ -1,21 +1,22 @@
 'use client';
 
+import {
+  ProgramLifecycleActions,
+  ProgramLifecycleBadge,
+  useProgramLifecycle,
+} from '@/components/programs/program-lifecycle';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { EmptyState } from '@/components/ui/empty-state';
 import { Form } from '@/components/ui/form';
 import Spinner from '@/components/ui/spinner';
-import { useCoursesByIds } from '@/hooks/use-batched-lookups';
 import { useUserProfile } from '@/context/profile-context';
+import { useCoursesByIds } from '@/hooks/use-batched-lookups';
 import { STALE_TIMES } from '@/lib/query-client';
 import {
   getAllCategoriesInfiniteOptions,
   getTrainingProgramByUuidOptions,
 } from '@/services/client/@tanstack/react-query.gen';
-import {
-  ProgramLifecycleActions,
-  ProgramLifecycleBadge,
-} from '@/components/programs/program-lifecycle';
 import type { TrainingProgram } from '@/services/client/types.gen';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useInfiniteQuery, useQuery } from '@tanstack/react-query';
@@ -29,22 +30,20 @@ import {
   ListChecks,
   Palette,
   Scale,
+  Send,
 } from 'lucide-react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { useEffect, useMemo, useState } from 'react';
-import {
-  useForm,
-  useFormContext,
-  useWatch,
-  type FieldErrors,
-  type FieldPath,
-} from 'react-hook-form';
+import { useEffect, useMemo, useRef, useState } from 'react';
+import { type FieldPath, useForm, useFormContext, useWatch } from 'react-hook-form';
 import { toast } from 'sonner';
 import { PageHeader } from '../../../../../../components/page-header';
 import { clearNewProgramDraft, readProgramDraft, writeProgramDraft } from '../program-local-draft';
+import { programRevenueShares } from '../program-pricing';
+import type { ProgramSaveStep } from '../program-save-state';
 import type { ProgramFormValues } from '../program-schema';
-import { minimumProgramTrainingFee, programPricingSchema } from '../program-pricing';
+import { PROGRAM_STEP_FIELDS, programFormSchema, programStepSchema } from '../program-schema';
+import type { PendingProgramMedia, ProgramMediaKey } from '../save-program-media';
 import { useSaveProgram } from '../use-save-program';
 import ProgramCourses from './ProgramCourses';
 import { ProgramSetup } from './ProgramFields';
@@ -64,18 +63,6 @@ const STEPS = [
   { key: 'pricing', label: 'Pricing', icon: BadgeDollarSign },
 ] as const;
 
-const SETUP_FIELDS: FieldPath<ProgramFormValues>[] = [
-  'title',
-  'categoryUuids',
-  'description',
-  'objectives',
-  'prerequisites',
-  'classLimit',
-  'totalDurationHours',
-  'totalDurationMinutes',
-  'requirements',
-];
-
 export default function ProgramEditor({
   initialValues,
   program,
@@ -86,10 +73,25 @@ export default function ProgramEditor({
   const router = useRouter();
   const profile = useUserProfile();
   const creatorUuid = profile?.courseCreator?.uuid ?? '';
-  const [step, setStep] = useState(0);
+  const [step, setStep] = useState(() => {
+    if (typeof window === 'undefined') return 0;
+    const requested = Number(new URLSearchParams(window.location.search).get('step') ?? 0);
+    return program?.uuid &&
+      Number.isInteger(requested) &&
+      requested >= 0 &&
+      requested < STEPS.length
+      ? requested
+      : 0;
+  });
+  const navigationLock = useRef(false);
+  const [validationMessage, setValidationMessage] = useState('');
+  const [evaluationPending, setEvaluationPending] = useState(false);
+  const [pendingMedia, setPendingMedia] = useState<PendingProgramMedia>({});
+  const selectMedia = (key: ProgramMediaKey, file?: File) => {
+    setPendingMedia(current => ({ ...current, [key]: file }));
+  };
   const form = useForm<ProgramFormValues>({
-    resolver: (values, context, options) =>
-      zodResolver(programPricingSchema(minimumTrainingFee))(values, context, options),
+    resolver: zodResolver(programFormSchema),
     defaultValues: initialValues,
     mode: 'onTouched',
     shouldUnregister: false,
@@ -100,37 +102,33 @@ export default function ProgramEditor({
     [selectedCourses]
   );
   const courseFees = useCoursesByIds(selectedCourseIds);
-  const minimumTrainingFee: number | undefined = useMemo(
+  const revenueShares = useMemo(
     () =>
       courseFees.isLoading || courseFees.isError
         ? undefined
-        : minimumProgramTrainingFee(selectedCourseIds, courseFees.courseMap),
+        : programRevenueShares(selectedCourseIds, courseFees.courseMap),
     [selectedCourseIds, courseFees.courseMap, courseFees.isLoading, courseFees.isError]
   );
+  const save = useSaveProgram(form, creatorUuid, program);
+  const lifecycle = useProgramLifecycle();
+  const [savedForPublication, setSavedForPublication] = useState<string>();
   const [draftStorageFailed, setDraftStorageFailed] = useState(false);
   useEffect(() => {
     if (!creatorUuid) return;
-    const draft = readProgramDraft(creatorUuid, program?.uuid);
+    const draft = readProgramDraft(creatorUuid, save.programUuid);
     if (draft) {
-      form.setValue('draft', draft.draft);
+      form.setValue('draft', { ...form.getValues('draft'), ...draft.draft });
+      if (!program && !form.getValues('programCode'))
+        form.setValue('programCode', draft.programCode ?? draft.draft.programCode);
       form.setValue('categoryUuids', draft.categoryUuids);
     }
     // The callback overload subscribes inside this effect without watching during render.
     const { watch, getValues } = form;
     const subscription = watch(() => {
-      setDraftStorageFailed(!writeProgramDraft(creatorUuid, program?.uuid, getValues()));
+      setDraftStorageFailed(!writeProgramDraft(creatorUuid, save.programUuid, getValues()));
     });
     return () => subscription.unsubscribe();
-  }, [creatorUuid, program?.uuid, form]);
-  const save = useSaveProgram(form, creatorUuid, program);
-  // The lifecycle actions change the program outside this form; read it live so the
-  // badge and the available actions follow.
-  const liveProgramQuery = useQuery({
-    ...getTrainingProgramByUuidOptions({ path: { uuid: program?.uuid ?? '' } }),
-    enabled: Boolean(program?.uuid),
-    staleTime: STALE_TIMES.entity,
-  });
-  const liveProgram = liveProgramQuery.data?.data ?? program;
+  }, [creatorUuid, program, save.programUuid, form]);
   const categoriesQuery = useInfiniteQuery({
     ...getAllCategoriesInfiniteOptions({ query: { pageable: { size: 100 } } }),
     initialPageParam: 0,
@@ -155,30 +153,136 @@ export default function ProgramEditor({
     [categoriesQuery.data]
   );
 
-  const goToStep = (target: number) => {
-    if (!save.isPending) setStep(target);
+  const updateUrl = (uuid: string, nextStep: number) => {
+    const url = new URL(window.location.href);
+    url.searchParams.set('id', uuid);
+    url.searchParams.set('step', String(nextStep));
+    window.history.replaceState(null, '', url);
   };
-  const onInvalid = (errors: FieldErrors<ProgramFormValues>) => {
-    const setupInvalid = SETUP_FIELDS.some(name => name in errors);
-    setStep(setupInvalid ? 0 : errors.courses ? 1 : 5);
-    toast.error('Please correct the highlighted fields before saving.');
+  const persistStep = async (saveStep: ProgramSaveStep = step) => {
+    const values = form.getValues();
+    const uuid =
+      save.programUuid && !save.hasChanges(values, saveStep, pendingMedia)
+        ? save.programUuid
+        : await save.mutateAsync({
+          values,
+          step: saveStep,
+          media: pendingMedia,
+          onCreated: uuid => updateUrl(uuid, step),
+          onMediaUploaded: (key, file) =>
+            setPendingMedia(current =>
+              current[key] === file ? { ...current, [key]: undefined } : current
+            ),
+        });
+    if (!writeProgramDraft(creatorUuid, uuid, form.getValues())) setDraftStorageFailed(true);
+    else clearNewProgramDraft(creatorUuid);
+    return uuid;
   };
-  const onSave = async (values: ProgramFormValues) => {
-    try {
-      const uuid = await save.mutateAsync({ values });
-      if (!writeProgramDraft(creatorUuid, uuid, form.getValues())) {
-        toast.warning('Program saved, but browser-only draft fields could not be stored.');
-      } else if (!program?.uuid) {
-        clearNewProgramDraft(creatorUuid);
-      }
-      toast.success(
-        program?.uuid ? 'Program saved' : 'Program saved as a draft. Publish it from its page.'
+  const validateStep = (target: number | 'requirements' | 'assessments') => {
+    const fields: FieldPath<ProgramFormValues>[] =
+      target === 'requirements'
+        ? ['requirements']
+        : target === 'assessments'
+          ? ['draft.assessments']
+          : [...(PROGRAM_STEP_FIELDS[target] ?? [])];
+    form.clearErrors(fields);
+    const result = programStepSchema(target).safeParse(form.getValues());
+    if (result.success) {
+      setValidationMessage('');
+      return true;
+    }
+    result.error.issues.forEach((issue, index) => {
+      form.setError(
+        issue.path.join('.') as FieldPath<ProgramFormValues>,
+        {
+          type: 'schema',
+          message: issue.message,
+        },
+        { shouldFocus: index === 0 }
       );
-      router.push(`/dashboard/course-creator/course-management/programs/${uuid}`);
+    });
+    const message = result.error.issues[0]?.message ?? 'Check the fields on this step.';
+    setValidationMessage(message);
+    toast.error(message);
+    return false;
+  };
+  const goToStep = async (target: number) => {
+    if (navigationLock.current || save.isPending || evaluationPending || target === step) return;
+    // Only setup can create the UUID. Once created, every step is reachable.
+    if (!save.programUuid && target !== step + 1) return;
+    navigationLock.current = true;
+    try {
+      const changed = save.hasChanges(form.getValues(), step, pendingMedia);
+      if (changed && !validateStep(step)) return;
+      const uuid = await persistStep();
+      updateUrl(uuid, target);
+      setValidationMessage('');
+      setStep(target);
+      if (changed) toast.success('Program step saved');
+    } catch (cause) {
+      toast.error(cause instanceof Error ? cause.message : 'Unable to save this step.');
+    } finally {
+      navigationLock.current = false;
+    }
+  };
+  const onInvalid = () => {
+    const result = programFormSchema.safeParse(form.getValues());
+    if (result.success) return;
+    const issue = result.error.issues[0];
+    if (!issue) return;
+    const field = issue.path.join('.');
+    const invalidStep = PROGRAM_STEP_FIELDS.findIndex(fields =>
+      fields.some(name => field === name || field.startsWith(`${name}.`))
+    );
+    const target = invalidStep >= 0 ? invalidStep : 0;
+    setStep(target);
+    if (save.programUuid) updateUrl(save.programUuid, target);
+    setValidationMessage(issue.message);
+    toast.error(issue.message);
+  };
+  const onSave = async () => {
+    if (navigationLock.current || save.isPending || evaluationPending || lifecycle.pending) return;
+    if (selectedCourseIds.length && !revenueShares) {
+      toast.error('Reload the selected course data before saving pricing.');
+      return;
+    }
+    navigationLock.current = true;
+    try {
+      const uuid = await persistStep('all');
+      setSavedForPublication(uuid);
+      updateUrl(uuid, step);
+      toast.success('Program saved');
     } catch (cause) {
       toast.error(
         cause instanceof Error ? cause.message : 'Unable to save program. Please try again.'
       );
+    } finally {
+      navigationLock.current = false;
+    }
+  };
+  const openProgram = (uuid: string) =>
+    router.push(`/dashboard/course-creator/course-management/programs/${uuid}`);
+  const onPublish = async () => {
+    if (
+      !savedForPublication ||
+      navigationLock.current ||
+      save.isPending ||
+      evaluationPending ||
+      lifecycle.pending
+    ) return;
+    if (selectedCourseIds.length && !revenueShares) {
+      toast.error('Reload the selected course data before publishing.');
+      return;
+    }
+    navigationLock.current = true;
+    try {
+      // Save any edits made after the final save; unchanged content sends no update.
+      const uuid = await persistStep('all');
+      if (await lifecycle.run('publish', uuid)) openProgram(uuid);
+    } catch (cause) {
+      toast.error(cause instanceof Error ? cause.message : 'Unable to publish program.');
+    } finally {
+      navigationLock.current = false;
     }
   };
   const backToPrograms = () => router.push('/dashboard/course-creator/course-management');
@@ -195,7 +299,7 @@ export default function ProgramEditor({
 
         <PageHeader
           title='Programs'
-          description='Build a program step by step, then open its information page.'
+          description='Build a program step by step, then publish it.'
         />
 
         <Form {...form}>
@@ -208,23 +312,34 @@ export default function ProgramEditor({
               } else void form.handleSubmit(onSave, onInvalid)(event);
             }}
           >
-            <fieldset disabled={save.isPending} className='min-w-0'>
+            <fieldset
+              disabled={save.isPending || evaluationPending || lifecycle.pending !== null}
+              className='min-w-0'
+            >
               <Card className='border-border bg-background gap-0 rounded-md py-0 shadow-sm'>
                 <div className='border-border border-b p-5'>
                   <div className='flex flex-wrap items-baseline justify-between gap-2'>
                     <ProgramTitle />
-                    {liveProgram?.uuid ? (
-                      <ProgramLifecycleActions program={liveProgram} />
+                    {save.programUuid ? (
+                      <SavedProgramActions
+                        uuid={save.programUuid}
+                        fallback={program}
+                        onPublished={step === STEPS.length - 1 ? openProgram : undefined}
+                      />
                     ) : (
                       <ProgramLifecycleBadge program={undefined} />
                     )}
-                    <span
-                      className='text-muted-foreground text-xs font-semibold uppercase'
-                      aria-live='polite'
-                    >
-                      Step {step + 1} of {STEPS.length}
-                    </span>
+
                   </div>
+
+
+                  <span
+                    className='text-muted-foreground text-xs font-semibold uppercase'
+                    aria-live='polite'
+                  >
+                    Step {step + 1} of {STEPS.length}
+                  </span>
+
                   <nav aria-label='Program setup steps'>
                     <ol className='mt-4 grid gap-2 sm:grid-cols-3 lg:grid-cols-6'>
                       {STEPS.map((entry, index) => {
@@ -236,6 +351,11 @@ export default function ProgramEditor({
                               type='button'
                               variant='ghost'
                               onClick={() => void goToStep(index)}
+                              disabled={
+                                (!save.programUuid && index !== 0) ||
+                                save.isPending ||
+                                evaluationPending
+                              }
                               aria-current={index === step ? 'step' : undefined}
                               className={`h-auto w-full justify-start gap-2 rounded-md border p-2.5 text-left text-xs font-medium ${state === 'current' ? 'border-primary bg-primary/5 text-foreground' : state === 'done' ? 'border-border bg-muted/40 text-foreground' : 'border-border text-muted-foreground hover:bg-muted/40'}`}
                             >
@@ -261,9 +381,14 @@ export default function ProgramEditor({
                 <div className='space-y-6 p-5'>
                   <p className='text-muted-foreground text-xs' role='status'>
                     {draftStorageFailed
-                      ? 'Browser draft storage is unavailable. Extra categories, program code, subject, award, assessment, evaluation, branding, and revenue shares will be lost when you leave.'
-                      : 'Extra categories, program code, subject, award, assessment, evaluation, branding, and revenue shares are saved only in this browser for now. They are not included in the published program.'}
+                      ? 'Browser draft storage is unavailable. Extra categories, subject, award, and brand identity cannot be stored in this browser.'
+                      : 'Changed steps are saved before you continue. Extra categories, subject, award, and brand identity are kept in this browser draft.'}
                   </p>
+                  {validationMessage && (
+                    <p role='alert' className='text-destructive text-sm'>
+                      {validationMessage}
+                    </p>
+                  )}
                   {save.isError && (
                     <div
                       role='alert'
@@ -290,13 +415,13 @@ export default function ProgramEditor({
                           }
                         />
                       ) : categoriesQuery.isLoading ? (
-                        <p
+                        <div
                           role='status'
                           className='text-muted-foreground flex items-center gap-2 text-sm'
                         >
                           <Spinner />
                           Loading categories…
-                        </p>
+                        </div>
                       ) : categories.length === 0 ? (
                         <EmptyState
                           variant='compact'
@@ -304,7 +429,23 @@ export default function ProgramEditor({
                           description='A category is needed to save a program. Try again once categories are available.'
                         />
                       ) : null}
-                      <ProgramSetup categories={categories} />
+                      <ProgramSetup
+                        categories={categories}
+                        programUuid={save.programUuid}
+                        onSaveRequirements={async requirements => {
+                          if (navigationLock.current || save.isPending || evaluationPending)
+                            return false;
+                          navigationLock.current = true;
+                          try {
+                            form.setValue('requirements', requirements, { shouldDirty: true });
+                            if (!validateStep('requirements')) return false;
+                            await persistStep('requirements');
+                            return true;
+                          } finally {
+                            navigationLock.current = false;
+                          }
+                        }}
+                      />
                       {categoriesQuery.hasNextPage && (
                         <Button
                           type='button'
@@ -318,15 +459,46 @@ export default function ProgramEditor({
                     </>
                   )}
                   {step === 1 && <ProgramCourses creatorUuid={creatorUuid} />}
-                  {step === 2 && <ProgramAssessment />}
-                  {step === 3 && <ProgramEvaluation />}
-                  {step === 4 && <ProgramBranding />}
-                  {step === 5 && (
-                    <ProgramPricing
-                      minimumTrainingFee={minimumTrainingFee}
-                      isLoading={courseFees.isLoading}
-                      onRetry={() => void courseFees.refetch()}
+                  {step === 2 && (
+                    <ProgramAssessment
+                      programUuid={save.programUuid}
+                      onSave={async assessments => {
+                        if (navigationLock.current || save.isPending || evaluationPending)
+                          return false;
+                        navigationLock.current = true;
+                        try {
+                          form.setValue('draft.assessments', assessments, { shouldDirty: true });
+                          if (!validateStep('assessments')) return false;
+                          await persistStep('assessments');
+                          return true;
+                        } finally {
+                          navigationLock.current = false;
+                        }
+                      }}
                     />
+                  )}
+                  {step === 3 && save.programUuid && (
+                    <ProgramEvaluation
+                      programUuid={save.programUuid}
+                      creatorUuid={creatorUuid}
+                      associatedBy={profile?.uuid}
+                      onPendingChange={setEvaluationPending}
+                    />
+                  )}
+                  {step === 4 && <ProgramBranding files={pendingMedia} onSelect={selectMedia} />}
+                  {step === 5 && (
+                    <>
+                      <ProgramPricing
+                        revenueShares={revenueShares}
+                        isLoading={courseFees.isLoading}
+                        onRetry={() => void courseFees.refetch()}
+                      />
+                      {savedForPublication && (
+                        <p role='status' className='text-success text-sm'>
+                          Program saved. You can now publish it.
+                        </p>
+                      )}
+                    </>
                   )}
                   <div className='border-border flex flex-wrap items-center justify-between gap-2 border-t pt-5'>
                     <Button type='button' variant='ghost' onClick={backToPrograms}>
@@ -344,14 +516,43 @@ export default function ProgramEditor({
                         </Button>
                       )}
                       {step === STEPS.length - 1 ? (
-                        <Button type='submit' disabled={!creatorUuid || save.isPending}>
-                          {save.isPending ? <Spinner /> : <Check />}
-                          {save.isPending ? 'Saving program…' : 'Save program'}
-                        </Button>
+                        <>
+                          <Button
+                            type='submit'
+                            variant={savedForPublication ? 'outline' : 'default'}
+                            disabled={!creatorUuid || save.isPending || evaluationPending}
+                          >
+                            {save.isPending ? <Spinner /> : <Check />}
+                            {save.isPending ? 'Saving program…' : 'Save program'}
+                          </Button>
+                          {savedForPublication && (
+                            <Button
+                              type='button'
+                              disabled={
+                                !creatorUuid || save.isPending || evaluationPending ||
+                                lifecycle.pending !== null
+                              }
+                              onClick={() => void form.handleSubmit(onPublish, onInvalid)()}
+                            >
+                              {save.isPending || lifecycle.pending === 'publish' ? (
+                                <Spinner />
+                              ) : (
+                                <Send />
+                              )}
+                              {save.isPending || lifecycle.pending === 'publish'
+                                ? 'Publishing…'
+                                : 'Publish program'}
+                            </Button>
+                          )}
+                        </>
                       ) : (
-                        <Button type='button' onClick={() => void goToStep(step + 1)}>
-                          Continue
-                          <ArrowRight />
+                        <Button
+                          type='button'
+                          disabled={!creatorUuid || save.isPending || evaluationPending}
+                          onClick={() => void goToStep(step + 1)}
+                        >
+                          {save.isPending ? <Spinner /> : <ArrowRight />}
+                          {save.isPending ? 'Saving…' : 'Save and continue'}
                         </Button>
                       )}
                     </div>
@@ -370,4 +571,27 @@ function ProgramTitle() {
   const { control } = useFormContext<ProgramFormValues>();
   const title = useWatch({ control, name: 'title' });
   return <h2 className='text-foreground text-xl font-bold'>{title.trim() || 'New program'}</h2>;
+}
+
+function SavedProgramActions({
+  uuid,
+  fallback,
+  onPublished,
+}: {
+  uuid: string;
+  fallback?: TrainingProgram;
+  onPublished?: (uuid: string) => void;
+}) {
+  const query = useQuery({
+    ...getTrainingProgramByUuidOptions({ path: { uuid } }),
+    enabled: Boolean(uuid),
+    staleTime: STALE_TIMES.entity,
+  });
+  const program =
+    query.data?.error || query.data?.success === false ? fallback : (query.data?.data ?? fallback);
+  return program ? (
+    <ProgramLifecycleActions program={program} onPublished={onPublished} />
+  ) : (
+    <ProgramLifecycleBadge program={undefined} />
+  );
 }
