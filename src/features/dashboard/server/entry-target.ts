@@ -55,6 +55,9 @@ function toIdentityUser(user: User): IdentityUser {
   };
 }
 
+/** One cookie decrypt (and token refresh) per request, shared by guard and layout. */
+export const getRequestSession = cache(async () => auth());
+
 function normalizeDomains(rawDomains: readonly unknown[]) {
   return Array.from(
     new Set(
@@ -83,7 +86,7 @@ const resolveIdentity = cache(async (): Promise<Identity> => {
   // `auth()` throws on a malformed cookie; one we cannot read means anonymous, not broken.
   let session: Session | null = null;
   try {
-    session = await auth();
+    session = await getRequestSession();
   } catch {
     return { status: 'anonymous' };
   }
