@@ -535,6 +535,12 @@ import type {
   UpdateAssignmentData,
   UpdateAssignmentResponses,
   UpdateAssignmentErrors,
+  DeleteAgeGroupData,
+  DeleteAgeGroupResponses,
+  DeleteAgeGroupErrors,
+  UpdateAgeGroupData,
+  UpdateAgeGroupResponses,
+  UpdateAgeGroupErrors,
   AdminDeleteSkillData,
   AdminDeleteSkillResponses,
   AdminDeleteSkillErrors,
@@ -841,6 +847,12 @@ import type {
   CreateCompetitionData,
   CreateCompetitionResponses,
   CreateCompetitionErrors,
+  ListOrganisationAgeGroupsData,
+  ListOrganisationAgeGroupsResponses,
+  ListOrganisationAgeGroupsErrors,
+  CreateOrganisationAgeGroupData,
+  CreateOrganisationAgeGroupResponses,
+  CreateOrganisationAgeGroupErrors,
   SubmitDomainOnboardingData,
   SubmitDomainOnboardingResponses,
   SubmitDomainOnboardingErrors,
@@ -976,6 +988,12 @@ import type {
   CreateAvailabilitySlotData,
   CreateAvailabilitySlotResponses,
   CreateAvailabilitySlotErrors,
+  ListMyAgeGroupsData,
+  ListMyAgeGroupsResponses,
+  ListMyAgeGroupsErrors,
+  CreateMyAgeGroupData,
+  CreateMyAgeGroupResponses,
+  CreateMyAgeGroupErrors,
   CreateLinkData,
   CreateLinkResponses,
   CreateLinkErrors,
@@ -1833,6 +1851,9 @@ import type {
   SearchMembershipsData,
   SearchMembershipsResponses,
   SearchMembershipsErrors,
+  ListMyAgeGroupPresetsData,
+  ListMyAgeGroupPresetsResponses,
+  ListMyAgeGroupPresetsErrors,
   SearchExperienceData,
   SearchExperienceResponses,
   SearchExperienceErrors,
@@ -8082,6 +8103,64 @@ export const updateAssignment = <ThrowOnError extends boolean = false>(
 };
 
 /**
+ * Delete a saved age group
+ * Only its owner. Applications that copied it keep their copy.
+ */
+export const deleteAgeGroup = <ThrowOnError extends boolean = false>(
+  options: Options<DeleteAgeGroupData, ThrowOnError>
+) => {
+  return (options.client ?? _heyApiClient).delete<
+    DeleteAgeGroupResponses,
+    DeleteAgeGroupErrors,
+    ThrowOnError
+  >({
+    security: [
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+    ],
+    url: '/api/v1/age-groups/{ageGroupUuid}',
+    ...options,
+  });
+};
+
+/**
+ * Update a saved age group
+ * Only its owner: the instructor, or the organisation's managers.
+ */
+export const updateAgeGroup = <ThrowOnError extends boolean = false>(
+  options: Options<UpdateAgeGroupData, ThrowOnError>
+) => {
+  return (options.client ?? _heyApiClient).put<
+    UpdateAgeGroupResponses,
+    UpdateAgeGroupErrors,
+    ThrowOnError
+  >({
+    security: [
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+    ],
+    url: '/api/v1/age-groups/{ageGroupUuid}',
+    ...options,
+    headers: {
+      'Content-Type': 'application/json',
+      ...options.headers,
+    },
+  });
+};
+
+/**
  * Delete a skill
  * Removes it from every course and job tag list and unlinks instructor skills (their free text stays). Prefer retiring it with active=false.
  */
@@ -11118,6 +11197,62 @@ export const createCompetition = <ThrowOnError extends boolean = false>(
 };
 
 /**
+ * List an organisation's saved age groups
+ */
+export const listOrganisationAgeGroups = <ThrowOnError extends boolean = false>(
+  options: Options<ListOrganisationAgeGroupsData, ThrowOnError>
+) => {
+  return (options.client ?? _heyApiClient).get<
+    ListOrganisationAgeGroupsResponses,
+    ListOrganisationAgeGroupsErrors,
+    ThrowOnError
+  >({
+    security: [
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+    ],
+    url: '/api/v1/organisations/{organisationUuid}/age-groups',
+    ...options,
+  });
+};
+
+/**
+ * Save an age group for an organisation
+ */
+export const createOrganisationAgeGroup = <ThrowOnError extends boolean = false>(
+  options: Options<CreateOrganisationAgeGroupData, ThrowOnError>
+) => {
+  return (options.client ?? _heyApiClient).post<
+    CreateOrganisationAgeGroupResponses,
+    CreateOrganisationAgeGroupErrors,
+    ThrowOnError
+  >({
+    security: [
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+    ],
+    url: '/api/v1/organisations/{organisationUuid}/age-groups',
+    ...options,
+    headers: {
+      'Content-Type': 'application/json',
+      ...options.headers,
+    },
+  });
+};
+
+/**
  * Submit a domain's onboarding
  * Validates the required steps. Domains that need approval move to submitted and admins are asked to review; others are recorded as complete and stay active. 409 when steps are missing, or the domain is already submitted or approved; 404 when the domain was never requested.
  */
@@ -12409,6 +12544,62 @@ export const createAvailabilitySlot = <ThrowOnError extends boolean = false>(
       },
     ],
     url: '/api/v1/instructors/{instructorUuid}/availability/slots',
+    ...options,
+    headers: {
+      'Content-Type': 'application/json',
+      ...options.headers,
+    },
+  });
+};
+
+/**
+ * List my saved age groups
+ */
+export const listMyAgeGroups = <ThrowOnError extends boolean = false>(
+  options?: Options<ListMyAgeGroupsData, ThrowOnError>
+) => {
+  return (options?.client ?? _heyApiClient).get<
+    ListMyAgeGroupsResponses,
+    ListMyAgeGroupsErrors,
+    ThrowOnError
+  >({
+    security: [
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+    ],
+    url: '/api/v1/instructors/me/age-groups',
+    ...options,
+  });
+};
+
+/**
+ * Save an age group of my own
+ */
+export const createMyAgeGroup = <ThrowOnError extends boolean = false>(
+  options: Options<CreateMyAgeGroupData, ThrowOnError>
+) => {
+  return (options.client ?? _heyApiClient).post<
+    CreateMyAgeGroupResponses,
+    CreateMyAgeGroupErrors,
+    ThrowOnError
+  >({
+    security: [
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+    ],
+    url: '/api/v1/instructors/me/age-groups',
     ...options,
     headers: {
       'Content-Type': 'application/json',
@@ -20954,6 +21145,33 @@ export const searchMemberships = <ThrowOnError extends boolean = false>(
 };
 
 /**
+ * Age groups to start an application from
+ * The caller's own saved age groups, then those of every organisation they belong to.
+ */
+export const listMyAgeGroupPresets = <ThrowOnError extends boolean = false>(
+  options?: Options<ListMyAgeGroupPresetsData, ThrowOnError>
+) => {
+  return (options?.client ?? _heyApiClient).get<
+    ListMyAgeGroupPresetsResponses,
+    ListMyAgeGroupPresetsErrors,
+    ThrowOnError
+  >({
+    security: [
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+    ],
+    url: '/api/v1/instructors/me/age-group-presets',
+    ...options,
+  });
+};
+
+/**
  * Search instructor experience
  * Search experience records with flexible criteria.
  *
@@ -21176,7 +21394,7 @@ export const getGuardianInvitationByToken = <ThrowOnError extends boolean = fals
 
 /**
  * Get a stored file by its storage key
- * Serves any stored file (images, videos, documents, certificates) by its canonical storage key.
+ * Serves any stored file (images, videos, documents, certificates) by its canonical storage key. Responses are immutable and carry an ETag. For JPEG/PNG/BMP images, w=320|640|1280 returns a downscaled variant (never upscaled), generated once and cached.
  */
 export const getFile = <ThrowOnError extends boolean = false>(
   options: Options<GetFileData, ThrowOnError>

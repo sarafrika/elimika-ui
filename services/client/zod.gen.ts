@@ -95,7 +95,7 @@ export const zUser = z
           .string()
           .min(0)
           .max(20)
-          .regex(/^(\+254|0)?[17]\d{8}$/),
+          .regex(/^\+[1-9]\d{6,14}$/),
         z.null(),
       ])
       .optional(),
@@ -214,7 +214,7 @@ export const zTrainingBranch = z
     poc_telephone: z
       .string()
       .max(20)
-      .regex(/^(\+254|0)?\d{8,9}$/)
+      .regex(/^\+[1-9]\d{6,14}$/)
       .describe('**[REQUIRED]** Telephone number of the point of contact for this branch.'),
     active: z
       .boolean()
@@ -358,7 +358,7 @@ export const zStudent = z
       .string()
       .min(0)
       .max(20)
-      .regex(/^(\+254|0)?[17]\d{8}$/)
+      .regex(/^\+[1-9]\d{6,14}$/)
       .describe(
         '**[OPTIONAL]** Mobile phone number of the primary guardian. Used for emergency contacts and notifications. Should include country code.'
       )
@@ -370,7 +370,7 @@ export const zStudent = z
           .string()
           .min(0)
           .max(20)
-          .regex(/^(\+254|0)?[17]\d{8}$/),
+          .regex(/^\+[1-9]\d{6,14}$/),
         z.null(),
       ])
       .optional(),
@@ -447,7 +447,7 @@ export const zStudentGuardianRequest = z
           .string()
           .min(0)
           .max(20)
-          .regex(/^(\+254|0)?[17]\d{8}$/),
+          .regex(/^\+[1-9]\d{6,14}$/),
         z.null(),
       ])
       .optional(),
@@ -1060,11 +1060,6 @@ export const zRubricScoring = z
       )
       .readonly()
       .optional(),
-    performance_expectation: z
-      .string()
-      .describe('**[READ-ONLY]** Classification of performance expectation level.')
-      .readonly()
-      .optional(),
     score_range: z
       .string()
       .describe('**[READ-ONLY]** Expected score range for this performance level.')
@@ -1078,6 +1073,11 @@ export const zRubricScoring = z
     feedback_category: z
       .string()
       .describe('**[READ-ONLY]** Feedback category for constructive assessment guidance.')
+      .readonly()
+      .optional(),
+    performance_expectation: z
+      .string()
+      .describe('**[READ-ONLY]** Classification of performance expectation level.')
       .readonly()
       .optional(),
   })
@@ -1187,6 +1187,11 @@ export const zQuiz = z
       )
       .readonly()
       .optional(),
+    is_published: z
+      .boolean()
+      .describe('**[READ-ONLY]** Indicates if the quiz is published and accessible to students.')
+      .readonly()
+      .optional(),
     time_limit_display: z
       .string()
       .describe('**[READ-ONLY]** Human-readable format of quiz time limit.')
@@ -1200,11 +1205,6 @@ export const zQuiz = z
     has_multiple_attempts: z
       .boolean()
       .describe('**[READ-ONLY]** Indicates if students can take the quiz multiple times.')
-      .readonly()
-      .optional(),
-    is_published: z
-      .boolean()
-      .describe('**[READ-ONLY]** Indicates if the quiz is published and accessible to students.')
       .readonly()
       .optional(),
   })
@@ -1288,11 +1288,6 @@ export const zQuizQuestion = z
       )
       .readonly()
       .optional(),
-    question_number: z
-      .string()
-      .describe('**[READ-ONLY]** Formatted question number for display in quiz interface.')
-      .readonly()
-      .optional(),
     requires_options: z
       .boolean()
       .describe(
@@ -1303,6 +1298,11 @@ export const zQuizQuestion = z
     question_category: z
       .string()
       .describe('**[READ-ONLY]** Human-readable category of the question type.')
+      .readonly()
+      .optional(),
+    question_number: z
+      .string()
+      .describe('**[READ-ONLY]** Formatted question number for display in quiz interface.')
       .readonly()
       .optional(),
     points_display: z
@@ -1752,28 +1752,8 @@ export const zApiResponseProgramAssessment = z.object({
   error: z.unknown().optional(),
 });
 
-export const zCourseTrainingRateCard = z.object({
-  currency: z
-    .union([
-      z
-        .string()
-        .max(3)
-        .regex(/^[A-Za-z]{3}$/),
-      z.null(),
-    ])
-    .optional(),
-  private_online_hourly_rate: z.union([z.number().gte(0), z.null()]).optional(),
-  private_inperson_hourly_rate: z.union([z.number().gte(0), z.null()]).optional(),
-  group_online_hourly_rate: z.union([z.number().gte(0), z.null()]).optional(),
-  group_inperson_hourly_rate: z.union([z.number().gte(0), z.null()]).optional(),
-  private_online_daily_rate: z.union([z.number().gte(0), z.null()]).optional(),
-  private_inperson_daily_rate: z.union([z.number().gte(0), z.null()]).optional(),
-  group_online_daily_rate: z.union([z.number().gte(0), z.null()]).optional(),
-  group_inperson_daily_rate: z.union([z.number().gte(0), z.null()]).optional(),
-});
-
 /**
- * Hours a learner group spends on one lesson of the course or program
+ * Hours an age group spends on one lesson of the course or program
  */
 export const zLessonHoursRequest = z
   .object({
@@ -1789,12 +1769,12 @@ export const zLessonHoursRequest = z
       .lte(24)
       .describe('**[REQUIRED]** Hours for this lesson, above zero and at most 24.'),
   })
-  .describe('Hours a learner group spends on one lesson of the course or program');
+  .describe('Hours an age group spends on one lesson of the course or program');
 
 /**
- * An instructor's learner group: a named age band with its own lesson plan
+ * An age group in an instructor's training application: a named age band with its own lesson plan
  */
-export const zLearnerGroupRequest = z
+export const zAgeGroupRequest = z
   .object({
     name: z
       .string()
@@ -1819,7 +1799,29 @@ export const zLearnerGroupRequest = z
         '**[REQUIRED]** Hours for every active lesson of the course (for programs, of all its courses).'
       ),
   })
-  .describe("An instructor's learner group: a named age band with its own lesson plan");
+  .describe(
+    "An age group in an instructor's training application: a named age band with its own lesson plan"
+  );
+
+export const zCourseTrainingRateCard = z.object({
+  currency: z
+    .union([
+      z
+        .string()
+        .max(3)
+        .regex(/^[A-Za-z]{3}$/),
+      z.null(),
+    ])
+    .optional(),
+  private_online_hourly_rate: z.union([z.number().gte(0), z.null()]).optional(),
+  private_inperson_hourly_rate: z.union([z.number().gte(0), z.null()]).optional(),
+  group_online_hourly_rate: z.union([z.number().gte(0), z.null()]).optional(),
+  group_inperson_hourly_rate: z.union([z.number().gte(0), z.null()]).optional(),
+  private_online_daily_rate: z.union([z.number().gte(0), z.null()]).optional(),
+  private_inperson_daily_rate: z.union([z.number().gte(0), z.null()]).optional(),
+  group_online_daily_rate: z.union([z.number().gte(0), z.null()]).optional(),
+  group_inperson_daily_rate: z.union([z.number().gte(0), z.null()]).optional(),
+});
 
 /**
  * How the applicant would obtain it: required when has_it is false, ignored when true.
@@ -1855,11 +1857,38 @@ export const zProgramTrainingApplicationUpdateRequest = z
     application_notes: z.union([z.string().min(0).max(2000), z.null()]).optional(),
     offered_venue_uuids: z.union([z.array(z.string().uuid()), z.null()]).optional(),
     requirement_answers: z.union([z.array(zTrainingRequirementAnswerRequest), z.null()]).optional(),
-    learner_groups: z.union([z.array(zLearnerGroupRequest), z.null()]).optional(),
+    age_groups: z.union([z.array(zAgeGroupRequest), z.null()]).optional(),
   })
   .describe(
     'Payload for an applicant editing the rate card or notes on a pending program training application'
   );
+
+/**
+ * Hours a learner group spends on one lesson
+ */
+export const zLessonHours = z
+  .object({
+    lesson_uuid: z.string().uuid().optional(),
+    course_uuid: z.string().uuid().optional(),
+    lesson_title: z.string().optional(),
+    lesson_number: z.number().int().optional(),
+    hours: z.number().optional(),
+  })
+  .describe('Hours a learner group spends on one lesson');
+
+/**
+ * An application age group: a named age band with its own lesson plan
+ */
+export const zAgeGroup = z
+  .object({
+    uuid: z.string().uuid().optional(),
+    name: z.string().optional(),
+    min_age: z.number().int().optional(),
+    max_age: z.number().int().optional(),
+    total_hours: z.number().describe("Sum of the group's lesson hours.").optional(),
+    lesson_hours: z.array(zLessonHours).optional(),
+  })
+  .describe('An application age group: a named age band with its own lesson plan');
 
 /**
  * **[READ-ONLY]** Current status of the application.
@@ -1940,33 +1969,6 @@ export const zTrainingRequirementAnswer = z
   .describe("The applicant's answer to one training requirement");
 
 /**
- * Hours a learner group spends on one lesson
- */
-export const zLessonHours = z
-  .object({
-    lesson_uuid: z.string().uuid().optional(),
-    course_uuid: z.string().uuid().optional(),
-    lesson_title: z.string().optional(),
-    lesson_number: z.number().int().optional(),
-    hours: z.number().optional(),
-  })
-  .describe('Hours a learner group spends on one lesson');
-
-/**
- * An instructor's learner group: a named age band with its own lesson plan
- */
-export const zLearnerGroup = z
-  .object({
-    uuid: z.string().uuid().optional(),
-    name: z.string().optional(),
-    min_age: z.number().int().optional(),
-    max_age: z.number().int().optional(),
-    total_hours: z.number().describe("Sum of the group's lesson hours.").optional(),
-    lesson_hours: z.array(zLessonHours).optional(),
-  })
-  .describe("An instructor's learner group: a named age band with its own lesson plan");
-
-/**
  * Represents an instructor or organisation request to deliver a training program
  */
 export const zProgramTrainingApplication = z
@@ -2023,8 +2025,8 @@ export const zProgramTrainingApplication = z
       .union([z.array(zTrainingRequirementAnswer).readonly(), z.null()])
       .readonly()
       .optional(),
-    learner_groups: z
-      .union([z.array(zLearnerGroup).readonly(), z.null()])
+    age_groups: z
+      .union([z.array(zAgeGroup).readonly(), z.null()])
       .readonly()
       .optional(),
   })
@@ -2208,13 +2210,6 @@ export const zProgramCourse = z
       )
       .readonly()
       .optional(),
-    curriculum_summary: z
-      .string()
-      .describe(
-        "**[READ-ONLY]** Comprehensive summary of the course's role within the program curriculum."
-      )
-      .readonly()
-      .optional(),
     association_category: z
       .string()
       .describe(
@@ -2237,6 +2232,13 @@ export const zProgramCourse = z
     requirement_status: z
       .string()
       .describe('**[READ-ONLY]** Requirement status of the course within the program.')
+      .readonly()
+      .optional(),
+    curriculum_summary: z
+      .string()
+      .describe(
+        "**[READ-ONLY]** Comprehensive summary of the course's role within the program curriculum."
+      )
       .readonly()
       .optional(),
   })
@@ -2844,7 +2846,6 @@ export const zInstructor = z
       )
       .readonly()
       .optional(),
-    formatted_location: z.union([z.string().readonly(), z.null()]).readonly().optional(),
     is_profile_complete: z
       .boolean()
       .describe(
@@ -2852,6 +2853,7 @@ export const zInstructor = z
       )
       .readonly()
       .optional(),
+    formatted_location: z.union([z.string().readonly(), z.null()]).readonly().optional(),
   })
   .describe('Instructor profile including location data for educational service delivery');
 
@@ -2975,13 +2977,6 @@ export const zApiResponseInstructorSkill = z.object({
 });
 
 /**
- * **[READ-ONLY]** Current status of the membership.
- */
-export const zMembershipStatusEnum = z
-  .enum(['ACTIVE', 'INACTIVE', 'EXPIRED', 'UNKNOWN'])
-  .describe('**[READ-ONLY]** Current status of the membership.');
-
-/**
  * **[READ-ONLY]** Classification of organisation type based on name keywords.
  */
 export const zOrganisationTypeEnum = z
@@ -2994,6 +2989,13 @@ export const zOrganisationTypeEnum = z
     'OTHER',
   ])
   .describe('**[READ-ONLY]** Classification of organisation type based on name keywords.');
+
+/**
+ * **[READ-ONLY]** Current status of the membership.
+ */
+export const zMembershipStatusEnum = z
+  .enum(['ACTIVE', 'INACTIVE', 'EXPIRED', 'UNKNOWN'])
+  .describe('**[READ-ONLY]** Current status of the membership.');
 
 /**
  * Professional membership record for instructors including associations, industry bodies, and certification organizations
@@ -3063,12 +3065,6 @@ export const zInstructorProfessionalMembership = z
       .describe('**[READ-ONLY]** Brief summary of the membership for display in listings.')
       .readonly()
       .optional(),
-    formatted_duration: z.union([z.string().readonly(), z.null()]).readonly().optional(),
-    membership_duration_months: z
-      .union([z.number().int().readonly(), z.null()])
-      .readonly()
-      .optional(),
-    membership_status: zMembershipStatusEnum.optional(),
     membership_period: z.union([z.string().readonly(), z.null()]).readonly().optional(),
     is_long_standing_member: z
       .boolean()
@@ -3092,6 +3088,12 @@ export const zInstructorProfessionalMembership = z
       .describe('**[READ-ONLY]** Indicates if the membership record has all essential information.')
       .readonly()
       .optional(),
+    membership_duration_months: z
+      .union([z.number().int().readonly(), z.null()])
+      .readonly()
+      .optional(),
+    membership_status: zMembershipStatusEnum.optional(),
+    formatted_duration: z.union([z.string().readonly(), z.null()]).readonly().optional(),
   })
   .describe(
     'Professional membership record for instructors including associations, industry bodies, and certification organizations'
@@ -3182,8 +3184,11 @@ export const zInstructorExperience = z
       .describe('**[READ-ONLY]** Brief summary of the experience for display in listings.')
       .readonly()
       .optional(),
-    duration_in_months: z.union([z.number().int().readonly(), z.null()]).readonly().optional(),
-    formatted_duration: z.union([z.string().readonly(), z.null()]).readonly().optional(),
+    is_complete: z
+      .boolean()
+      .describe('**[READ-ONLY]** Indicates if the experience record has all essential information.')
+      .readonly()
+      .optional(),
     employment_period: z.union([z.string().readonly(), z.null()]).readonly().optional(),
     is_long_term_position: z
       .boolean()
@@ -3202,11 +3207,8 @@ export const zInstructorExperience = z
       .readonly()
       .optional(),
     calculated_years: z.union([z.number().readonly(), z.null()]).readonly().optional(),
-    is_complete: z
-      .boolean()
-      .describe('**[READ-ONLY]** Indicates if the experience record has all essential information.')
-      .readonly()
-      .optional(),
+    duration_in_months: z.union([z.number().int().readonly(), z.null()]).readonly().optional(),
+    formatted_duration: z.union([z.string().readonly(), z.null()]).readonly().optional(),
   })
   .describe(
     'Professional work experience record for instructors including positions, organizations, responsibilities, and employment duration'
@@ -3296,13 +3298,9 @@ export const zInstructorEducation = z
       .describe('**[READ-ONLY]** Complete description combining qualification, school, and year.')
       .readonly()
       .optional(),
-    years_since_completion: z.union([z.number().int().readonly(), z.null()]).readonly().optional(),
-    education_level: zEducationLevelEnum.optional(),
-    has_certificate_number: z
+    is_complete: z
       .boolean()
-      .describe(
-        '**[READ-ONLY]** Indicates if the education record has a certificate number provided.'
-      )
+      .describe('**[READ-ONLY]** Indicates if the education record has all essential information.')
       .readonly()
       .optional(),
     is_recent_qualification: z
@@ -3317,9 +3315,13 @@ export const zInstructorEducation = z
       .describe('**[READ-ONLY]** Formatted string showing year of completion and school name.')
       .readonly()
       .optional(),
-    is_complete: z
+    years_since_completion: z.union([z.number().int().readonly(), z.null()]).readonly().optional(),
+    education_level: zEducationLevelEnum.optional(),
+    has_certificate_number: z
       .boolean()
-      .describe('**[READ-ONLY]** Indicates if the education record has all essential information.')
+      .describe(
+        '**[READ-ONLY]** Indicates if the education record has a certificate number provided.'
+      )
       .readonly()
       .optional(),
   })
@@ -4045,7 +4047,7 @@ export const zCourseTrainingApplicationUpdateRequest = z
     application_notes: z.union([z.string().min(0).max(2000), z.null()]).optional(),
     offered_venue_uuids: z.union([z.array(z.string().uuid()), z.null()]).optional(),
     requirement_answers: z.union([z.array(zTrainingRequirementAnswerRequest), z.null()]).optional(),
-    learner_groups: z.union([z.array(zLearnerGroupRequest), z.null()]).optional(),
+    age_groups: z.union([z.array(zAgeGroupRequest), z.null()]).optional(),
   })
   .describe(
     'Payload for an applicant editing the rate card or notes on a pending course training application'
@@ -4115,8 +4117,8 @@ export const zCourseTrainingApplication = z
       .union([z.array(zTrainingRequirementAnswer).readonly(), z.null()])
       .readonly()
       .optional(),
-    learner_groups: z
-      .union([z.array(zLearnerGroup).readonly(), z.null()])
+    age_groups: z
+      .union([z.array(zAgeGroup).readonly(), z.null()])
       .readonly()
       .optional(),
   })
@@ -4468,14 +4470,14 @@ export const zLessonPracticeActivity = z
       .describe('**[READ-ONLY]** User who last updated the practice activity.')
       .readonly()
       .optional(),
-    estimated_duration: z
-      .string()
-      .describe('**[READ-ONLY]** Human-readable estimated duration.')
-      .readonly()
-      .optional(),
     is_published: z
       .boolean()
       .describe('**[READ-ONLY]** Whether the activity is published.')
+      .readonly()
+      .optional(),
+    estimated_duration: z
+      .string()
+      .describe('**[READ-ONLY]** Human-readable estimated duration.')
       .readonly()
       .optional(),
   })
@@ -6153,16 +6155,16 @@ export const zClassDefinition = z
       )
       .readonly()
       .optional(),
-    duration_formatted: z
-      .string()
-      .describe('**[READ-ONLY]** Human-readable formatted duration.')
-      .readonly()
-      .optional(),
     capacity_info: z
       .string()
       .describe(
         '**[READ-ONLY]** Human-readable capacity information including waitlist availability.'
       )
+      .readonly()
+      .optional(),
+    duration_formatted: z
+      .string()
+      .describe('**[READ-ONLY]** Human-readable formatted duration.')
       .readonly()
       .optional(),
   })
@@ -6796,6 +6798,39 @@ export const zApiResponseAssignment = z.object({
 });
 
 /**
+ * A reusable age group: a named age band with no lesson plan
+ */
+export const zSavedAgeGroupRequest = z
+  .object({
+    name: z.string().min(0).max(80).describe('**[REQUIRED]** Name, unique for its owner.'),
+    min_age: z.number().int().gte(0).lte(120).describe('**[REQUIRED]** Youngest age.'),
+    max_age: z.number().int().gte(0).lte(120).describe('**[REQUIRED]** Oldest age.'),
+  })
+  .describe('A reusable age group: a named age band with no lesson plan');
+
+/**
+ * A reusable age group kept by an instructor or organisation
+ */
+export const zSavedAgeGroup = z
+  .object({
+    uuid: z.string().uuid().optional(),
+    name: z.string().optional(),
+    min_age: z.number().int().optional(),
+    max_age: z.number().int().optional(),
+    owner_type: zApplicantTypeEnum.optional(),
+    owner_uuid: z.string().uuid().optional(),
+    owner_name: z.union([z.string(), z.null()]).optional(),
+  })
+  .describe('A reusable age group kept by an instructor or organisation');
+
+export const zApiResponseSavedAgeGroup = z.object({
+  success: z.boolean().optional(),
+  data: zSavedAgeGroup.optional(),
+  message: z.string().optional(),
+  error: z.unknown().optional(),
+});
+
+/**
  * Creates or replaces a skills taxonomy entry
  */
 export const zSkillRequest = z
@@ -7310,7 +7345,7 @@ export const zGuardianInvitationRegistrationRequest = z
           .string()
           .min(0)
           .max(20)
-          .regex(/^(\+254|0)?[17]\d{8}$/),
+          .regex(/^\+[1-9]\d{6,14}$/),
         z.null(),
       ])
       .optional(),
@@ -7391,9 +7426,9 @@ export const zRegistrationRequest = z
     phone_number: z
       .string()
       .min(1)
-      .regex(/^(\+254|0)?[17]\d{8}$/)
+      .regex(/^\+[1-9]\d{6,14}$/)
       .describe(
-        '**Phone Number Validation:**\n- Country: KE\n- Type: Mobile only\n- Format: International (+country code) or local format supported'
+        '**Phone Number Validation:**\n- Type: Mobile only\n- Format: E.164 only (+ then country code and number, no spaces), e.g. +254712345678'
       ),
     dob: z.string().date().optional(),
     gender: zGenderEnum2.optional(),
@@ -7512,7 +7547,7 @@ export const zProgramTrainingApplicationRequest = z
     application_notes: z.union([z.string().min(0).max(2000), z.null()]).optional(),
     offered_venue_uuids: z.union([z.array(z.string().uuid()), z.null()]).optional(),
     requirement_answers: z.union([z.array(zTrainingRequirementAnswerRequest), z.null()]).optional(),
-    learner_groups: z.union([z.array(zLearnerGroupRequest), z.null()]).optional(),
+    age_groups: z.union([z.array(zAgeGroupRequest), z.null()]).optional(),
   })
   .describe('Payload for instructors or organisations applying to deliver a training program');
 
@@ -8447,7 +8482,7 @@ export const zGuardianDetailsRequest = z
           .string()
           .min(0)
           .max(50)
-          .regex(/^(\+254|0)?[17]\d{8}$/),
+          .regex(/^\+[1-9]\d{6,14}$/),
         z.null(),
       ])
       .optional(),
@@ -8730,14 +8765,14 @@ export const zEnrollment = z
       .describe('**[READ-ONLY]** Indicates if attendance has been marked for this enrollment.')
       .readonly()
       .optional(),
-    status_description: z
-      .string()
-      .describe('**[READ-ONLY]** Human-readable description of the enrollment status.')
-      .readonly()
-      .optional(),
     did_attend: z
       .boolean()
       .describe('**[READ-ONLY]** Indicates if the student attended the class.')
+      .readonly()
+      .optional(),
+    status_description: z
+      .string()
+      .describe('**[READ-ONLY]** Human-readable description of the enrollment status.')
       .readonly()
       .optional(),
   })
@@ -8797,7 +8832,7 @@ export const zCourseTrainingApplicationRequest = z
     application_notes: z.union([z.string().min(0).max(2000), z.null()]).optional(),
     offered_venue_uuids: z.union([z.array(z.string().uuid()), z.null()]).optional(),
     requirement_answers: z.union([z.array(zTrainingRequirementAnswerRequest), z.null()]).optional(),
-    learner_groups: z.union([z.array(zLearnerGroupRequest), z.null()]).optional(),
+    age_groups: z.union([z.array(zAgeGroupRequest), z.null()]).optional(),
   })
   .describe('Payload for instructors or organisations applying to deliver a course');
 
@@ -10194,7 +10229,7 @@ export const zAdminCreateUserRequestDto = z.object({
     .string()
     .min(0)
     .max(50)
-    .regex(/^(\+254|0)?[17]\d{8}$/)
+    .regex(/^\+[1-9]\d{6,14}$/)
     .describe('Optional phone number')
     .optional(),
 });
@@ -10251,7 +10286,7 @@ export const zOrganisationUserCreateRequestDto = z.object({
     .string()
     .min(0)
     .max(50)
-    .regex(/^(\+254|0)?[17]\d{8}$/)
+    .regex(/^\+[1-9]\d{6,14}$/)
     .describe('Optional phone number')
     .optional(),
   domain_name: zDomainNameEnum2,
@@ -10784,14 +10819,14 @@ export const zStudentSchedule = z
       .describe('**[READ-ONLY]** Duration of the scheduled class in minutes.')
       .readonly()
       .optional(),
-    did_attend: z
-      .boolean()
-      .describe('**[READ-ONLY]** Indicates if the student attended this class.')
-      .readonly()
-      .optional(),
     is_upcoming: z
       .boolean()
       .describe('**[READ-ONLY]** Indicates if this class is upcoming.')
+      .readonly()
+      .optional(),
+    did_attend: z
+      .boolean()
+      .describe('**[READ-ONLY]** Indicates if the student attended this class.')
       .readonly()
       .optional(),
   })
@@ -12145,6 +12180,13 @@ export const zApiResponseListMonthlyPayoutPoint = z.object({
 export const zApiResponseListCompetition = z.object({
   success: z.boolean().optional(),
   data: z.array(zCompetition).optional(),
+  message: z.string().optional(),
+  error: z.unknown().optional(),
+});
+
+export const zApiResponseListSavedAgeGroup = z.object({
+  success: z.boolean().optional(),
+  data: z.array(zSavedAgeGroup).optional(),
   message: z.string().optional(),
   error: z.unknown().optional(),
 });
@@ -13754,6 +13796,11 @@ export const zCourseAssessmentScore = z
       .describe('**[READ-ONLY]** Indicates if the score meets the passing criteria (60% or above).')
       .readonly()
       .optional(),
+    grade_display: z
+      .string()
+      .describe('**[READ-ONLY]** Formatted display of the grade information.')
+      .readonly()
+      .optional(),
     score_category: z
       .string()
       .describe('**[READ-ONLY]** Formatted category of the score based on performance level.')
@@ -13771,11 +13818,6 @@ export const zCourseAssessmentScore = z
       .describe(
         '**[READ-ONLY]** Summary indicating the availability and nature of instructor feedback.'
       )
-      .readonly()
-      .optional(),
-    grade_display: z
-      .string()
-      .describe('**[READ-ONLY]** Formatted display of the grade information.')
       .readonly()
       .optional(),
   })
@@ -15848,7 +15890,7 @@ export const zStudentWritable = z
       .string()
       .min(0)
       .max(20)
-      .regex(/^(\+254|0)?[17]\d{8}$/)
+      .regex(/^\+[1-9]\d{6,14}$/)
       .describe(
         '**[OPTIONAL]** Mobile phone number of the primary guardian. Used for emergency contacts and notifications. Should include country code.'
       )
@@ -15860,7 +15902,7 @@ export const zStudentWritable = z
           .string()
           .min(0)
           .max(20)
-          .regex(/^(\+254|0)?[17]\d{8}$/),
+          .regex(/^\+[1-9]\d{6,14}$/),
         z.null(),
       ])
       .optional(),
@@ -18937,6 +18979,27 @@ export const zUpdateAssignmentData = z.object({
  */
 export const zUpdateAssignmentResponse = zApiResponseAssignment;
 
+export const zDeleteAgeGroupData = z.object({
+  body: z.never().optional(),
+  path: z.object({
+    ageGroupUuid: z.string().uuid(),
+  }),
+  query: z.never().optional(),
+});
+
+export const zUpdateAgeGroupData = z.object({
+  body: zSavedAgeGroupRequest,
+  path: z.object({
+    ageGroupUuid: z.string().uuid(),
+  }),
+  query: z.never().optional(),
+});
+
+/**
+ * OK
+ */
+export const zUpdateAgeGroupResponse = zApiResponseSavedAgeGroup;
+
 export const zAdminDeleteSkillData = z.object({
   body: z.never().optional(),
   path: z.object({
@@ -20386,6 +20449,32 @@ export const zCreateCompetitionData = z.object({
  */
 export const zCreateCompetitionResponse = zApiResponseCompetition;
 
+export const zListOrganisationAgeGroupsData = z.object({
+  body: z.never().optional(),
+  path: z.object({
+    organisationUuid: z.string().uuid(),
+  }),
+  query: z.never().optional(),
+});
+
+/**
+ * OK
+ */
+export const zListOrganisationAgeGroupsResponse = zApiResponseListSavedAgeGroup;
+
+export const zCreateOrganisationAgeGroupData = z.object({
+  body: zSavedAgeGroupRequest,
+  path: z.object({
+    organisationUuid: z.string().uuid(),
+  }),
+  query: z.never().optional(),
+});
+
+/**
+ * OK
+ */
+export const zCreateOrganisationAgeGroupResponse = zApiResponseSavedAgeGroup;
+
 export const zSubmitDomainOnboardingData = z.object({
   body: z.never().optional(),
   path: z.object({
@@ -20987,6 +21076,28 @@ export const zCreateAvailabilitySlotData = z.object({
  * Availability slot created successfully
  */
 export const zCreateAvailabilitySlotResponse = zApiResponseAvailabilitySlot;
+
+export const zListMyAgeGroupsData = z.object({
+  body: z.never().optional(),
+  path: z.never().optional(),
+  query: z.never().optional(),
+});
+
+/**
+ * OK
+ */
+export const zListMyAgeGroupsResponse = zApiResponseListSavedAgeGroup;
+
+export const zCreateMyAgeGroupData = z.object({
+  body: zSavedAgeGroupRequest,
+  path: z.never().optional(),
+  query: z.never().optional(),
+});
+
+/**
+ * OK
+ */
+export const zCreateMyAgeGroupResponse = zApiResponseSavedAgeGroup;
 
 export const zCreateLinkData = z.object({
   body: zGuardianStudentLinkRequest,
@@ -25177,6 +25288,17 @@ export const zSearchMembershipsData = z.object({
  */
 export const zSearchMembershipsResponse = zApiResponsePagedDtoInstructorProfessionalMembership;
 
+export const zListMyAgeGroupPresetsData = z.object({
+  body: z.never().optional(),
+  path: z.never().optional(),
+  query: z.never().optional(),
+});
+
+/**
+ * OK
+ */
+export const zListMyAgeGroupPresetsResponse = zApiResponseListSavedAgeGroup;
+
 export const zSearchExperienceData = z.object({
   body: z.never().optional(),
   path: z.never().optional(),
@@ -25261,7 +25383,11 @@ export const zGetFileData = z.object({
   path: z.object({
     key: z.string().describe('Canonical storage key, e.g. course_thumbnails/uuid.jpg'),
   }),
-  query: z.never().optional(),
+  query: z
+    .object({
+      w: z.number().int().describe('Optional variant width in pixels: 320, 640 or 1280').optional(),
+    })
+    .optional(),
 });
 
 /**

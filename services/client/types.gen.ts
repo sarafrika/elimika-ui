@@ -831,10 +831,6 @@ export type RubricScoring = {
    */
   readonly updated_by?: string;
   /**
-   * **[READ-ONLY]** Classification of performance expectation level.
-   */
-  readonly performance_expectation?: string;
-  /**
    * **[READ-ONLY]** Expected score range for this performance level.
    */
   readonly score_range?: string;
@@ -846,6 +842,10 @@ export type RubricScoring = {
    * **[READ-ONLY]** Feedback category for constructive assessment guidance.
    */
   readonly feedback_category?: string;
+  /**
+   * **[READ-ONLY]** Classification of performance expectation level.
+   */
+  readonly performance_expectation?: string;
 };
 
 export type ApiResponseRubricScoring = {
@@ -926,6 +926,10 @@ export type Quiz = {
    */
   readonly updated_by?: string;
   /**
+   * **[READ-ONLY]** Indicates if the quiz is published and accessible to students.
+   */
+  readonly is_published?: boolean;
+  /**
    * **[READ-ONLY]** Human-readable format of quiz time limit.
    */
   readonly time_limit_display?: string;
@@ -937,10 +941,6 @@ export type Quiz = {
    * **[READ-ONLY]** Indicates if students can take the quiz multiple times.
    */
   readonly has_multiple_attempts?: boolean;
-  /**
-   * **[READ-ONLY]** Indicates if the quiz is published and accessible to students.
-   */
-  readonly is_published?: boolean;
 };
 
 export type ApiResponseQuiz = {
@@ -992,10 +992,6 @@ export type QuizQuestion = {
    */
   readonly updated_by?: string;
   /**
-   * **[READ-ONLY]** Formatted question number for display in quiz interface.
-   */
-  readonly question_number?: string;
-  /**
    * **[READ-ONLY]** Indicates if this question type requires predefined answer options.
    */
   readonly requires_options?: boolean;
@@ -1003,6 +999,10 @@ export type QuizQuestion = {
    * **[READ-ONLY]** Human-readable category of the question type.
    */
   readonly question_category?: string;
+  /**
+   * **[READ-ONLY]** Formatted question number for display in quiz interface.
+   */
+  readonly question_number?: string;
   /**
    * **[READ-ONLY]** Human-readable format of the points value.
    */
@@ -1342,6 +1342,28 @@ export type ApiResponseProgramAssessment = {
   error?: unknown;
 };
 
+/**
+ * An age group in an instructor's training application: a named age band with its own lesson plan
+ */
+export type AgeGroupRequest = {
+  /**
+   * **[REQUIRED]** Group name, unique within the application.
+   */
+  name: string;
+  /**
+   * **[REQUIRED]** Youngest age in the group, within the course's age range.
+   */
+  min_age: number;
+  /**
+   * **[REQUIRED]** Oldest age in the group, within the course's age range.
+   */
+  max_age: number;
+  /**
+   * **[REQUIRED]** Hours for every active lesson of the course (for programs, of all its courses).
+   */
+  lesson_hours: Array<LessonHoursRequest>;
+};
+
 export type CourseTrainingRateCard = {
   /**
    * **[OPTIONAL]** ISO currency applied to every rate entry in the card. Defaults to the platform currency when omitted.
@@ -1382,29 +1404,7 @@ export type CourseTrainingRateCard = {
 };
 
 /**
- * An instructor's learner group: a named age band with its own lesson plan
- */
-export type LearnerGroupRequest = {
-  /**
-   * **[REQUIRED]** Group name, unique within the application.
-   */
-  name: string;
-  /**
-   * **[REQUIRED]** Youngest age in the group, within the course's age range.
-   */
-  min_age: number;
-  /**
-   * **[REQUIRED]** Oldest age in the group, within the course's age range.
-   */
-  max_age: number;
-  /**
-   * **[REQUIRED]** Hours for every active lesson of the course (for programs, of all its courses).
-   */
-  lesson_hours: Array<LessonHoursRequest>;
-};
-
-/**
- * Hours a learner group spends on one lesson of the course or program
+ * Hours an age group spends on one lesson of the course or program
  */
 export type LessonHoursRequest = {
   /**
@@ -1438,9 +1438,9 @@ export type ProgramTrainingApplicationUpdateRequest = {
    */
   requirement_answers?: Array<TrainingRequirementAnswerRequest> | null;
   /**
-   * Instructor applicants only: learner groups, each a named age band with hours for every active lesson. Omit to keep what is stored. Organisations must omit it.
+   * Instructor applicants only: age groups, each a named age band with hours for every active lesson. Required on a new instructor application; on an update, omit to keep what is stored. Organisations must omit it.
    */
-  learner_groups?: Array<LearnerGroupRequest> | null;
+  age_groups?: Array<AgeGroupRequest> | null;
 };
 
 /**
@@ -1458,17 +1458,10 @@ export type TrainingRequirementAnswerRequest = {
   acquisition?: AcquisitionEnum;
 };
 
-export type ApiResponseProgramTrainingApplication = {
-  success?: boolean;
-  data?: ProgramTrainingApplication;
-  message?: string;
-  error?: unknown;
-};
-
 /**
- * An instructor's learner group: a named age band with its own lesson plan
+ * An application age group: a named age band with its own lesson plan
  */
-export type LearnerGroup = {
+export type AgeGroup = {
   uuid?: string;
   name?: string;
   min_age?: number;
@@ -1478,6 +1471,13 @@ export type LearnerGroup = {
    */
   total_hours?: number;
   lesson_hours?: Array<LessonHours>;
+};
+
+export type ApiResponseProgramTrainingApplication = {
+  success?: boolean;
+  data?: ProgramTrainingApplication;
+  message?: string;
+  error?: unknown;
 };
 
 /**
@@ -1566,9 +1566,9 @@ export type ProgramTrainingApplication = {
    */
   readonly requirement_answers?: Array<TrainingRequirementAnswer> | null;
   /**
-   * **[READ-ONLY]** An instructor applicant's learner groups and lesson plans, in their order. Null for non-parties.
+   * **[READ-ONLY]** An instructor applicant's age groups and lesson plans, in their order. Null for non-parties.
    */
-  readonly learner_groups?: Array<LearnerGroup> | null;
+  readonly age_groups?: Array<AgeGroup> | null;
 };
 
 /**
@@ -1749,10 +1749,6 @@ export type ProgramCourse = {
    */
   readonly updated_by?: string;
   /**
-   * **[READ-ONLY]** Comprehensive summary of the course's role within the program curriculum.
-   */
-  readonly curriculum_summary?: string;
-  /**
    * **[READ-ONLY]** Formatted category of the course association based on requirement status.
    */
   readonly association_category?: string;
@@ -1768,6 +1764,10 @@ export type ProgramCourse = {
    * **[READ-ONLY]** Requirement status of the course within the program.
    */
   readonly requirement_status?: string;
+  /**
+   * **[READ-ONLY]** Comprehensive summary of the course's role within the program curriculum.
+   */
+  readonly curriculum_summary?: string;
 };
 
 export type ApiResponseProgramCourse = {
@@ -2317,13 +2317,13 @@ export type Instructor = {
    */
   readonly has_location_coordinates?: boolean;
   /**
-   * **[READ-ONLY]** Formatted location coordinates as a string. Returns null if location coordinates are not available.
-   */
-  readonly formatted_location?: string | null;
-  /**
    * **[READ-ONLY]** Indicates if the instructor profile is considered complete. Requires bio and professional headline.
    */
   readonly is_profile_complete?: boolean;
+  /**
+   * **[READ-ONLY]** Formatted location coordinates as a string. Returns null if location coordinates are not available.
+   */
+  readonly formatted_location?: string | null;
 };
 
 /**
@@ -2458,15 +2458,6 @@ export type InstructorProfessionalMembership = {
    */
   readonly summary?: string;
   /**
-   * **[READ-ONLY]** Human-readable formatted duration of membership.
-   */
-  readonly formatted_duration?: string | null;
-  /**
-   * **[READ-ONLY]** Duration of membership calculated from start and end dates, in months.
-   */
-  readonly membership_duration_months?: number | null;
-  membership_status?: MembershipStatusEnum;
-  /**
    * **[READ-ONLY]** Formatted membership period showing start and end dates.
    */
   readonly membership_period?: string | null;
@@ -2491,6 +2482,15 @@ export type InstructorProfessionalMembership = {
    * **[READ-ONLY]** Indicates if the membership record has all essential information.
    */
   readonly is_complete?: boolean;
+  /**
+   * **[READ-ONLY]** Duration of membership calculated from start and end dates, in months.
+   */
+  readonly membership_duration_months?: number | null;
+  membership_status?: MembershipStatusEnum;
+  /**
+   * **[READ-ONLY]** Human-readable formatted duration of membership.
+   */
+  readonly formatted_duration?: string | null;
 };
 
 export type ApiResponseInstructorProfessionalMembership = {
@@ -2561,13 +2561,9 @@ export type InstructorExperience = {
    */
   readonly summary?: string;
   /**
-   * **[READ-ONLY]** Duration of employment calculated from start and end dates, in months.
+   * **[READ-ONLY]** Indicates if the experience record has all essential information.
    */
-  readonly duration_in_months?: number | null;
-  /**
-   * **[READ-ONLY]** Human-readable formatted duration of employment.
-   */
-  readonly formatted_duration?: string | null;
+  readonly is_complete?: boolean;
   /**
    * **[READ-ONLY]** Formatted employment period showing start and end dates.
    */
@@ -2590,9 +2586,13 @@ export type InstructorExperience = {
    */
   readonly calculated_years?: number | null;
   /**
-   * **[READ-ONLY]** Indicates if the experience record has all essential information.
+   * **[READ-ONLY]** Duration of employment calculated from start and end dates, in months.
    */
-  readonly is_complete?: boolean;
+  readonly duration_in_months?: number | null;
+  /**
+   * **[READ-ONLY]** Human-readable formatted duration of employment.
+   */
+  readonly formatted_duration?: string | null;
 };
 
 export type ApiResponseInstructorExperience = {
@@ -2659,14 +2659,9 @@ export type InstructorEducation = {
    */
   readonly full_description?: string;
   /**
-   * **[READ-ONLY]** Number of years since the qualification was completed.
+   * **[READ-ONLY]** Indicates if the education record has all essential information.
    */
-  readonly years_since_completion?: number | null;
-  education_level?: EducationLevelEnum;
-  /**
-   * **[READ-ONLY]** Indicates if the education record has a certificate number provided.
-   */
-  readonly has_certificate_number?: boolean;
+  readonly is_complete?: boolean;
   /**
    * **[READ-ONLY]** Indicates if this qualification was completed within the last 10 years.
    */
@@ -2676,9 +2671,14 @@ export type InstructorEducation = {
    */
   readonly formatted_completion?: string;
   /**
-   * **[READ-ONLY]** Indicates if the education record has all essential information.
+   * **[READ-ONLY]** Number of years since the qualification was completed.
    */
-  readonly is_complete?: boolean;
+  readonly years_since_completion?: number | null;
+  education_level?: EducationLevelEnum;
+  /**
+   * **[READ-ONLY]** Indicates if the education record has a certificate number provided.
+   */
+  readonly has_certificate_number?: boolean;
 };
 
 export type ApiResponseInstructorEducation = {
@@ -3278,9 +3278,9 @@ export type CourseTrainingApplicationUpdateRequest = {
    */
   requirement_answers?: Array<TrainingRequirementAnswerRequest> | null;
   /**
-   * Instructor applicants only: learner groups, each a named age band with hours for every active lesson. Omit to keep what is stored. Organisations must omit it.
+   * Instructor applicants only: age groups, each a named age band with hours for every active lesson. Required on a new instructor application; on an update, omit to keep what is stored. Organisations must omit it.
    */
-  learner_groups?: Array<LearnerGroupRequest> | null;
+  age_groups?: Array<AgeGroupRequest> | null;
 };
 
 export type ApiResponseCourseTrainingApplication = {
@@ -3365,9 +3365,9 @@ export type CourseTrainingApplication = {
    */
   readonly requirement_answers?: Array<TrainingRequirementAnswer> | null;
   /**
-   * **[READ-ONLY]** An instructor applicant's learner groups and lesson plans, in their order. Null for non-parties.
+   * **[READ-ONLY]** An instructor applicant's age groups and lesson plans, in their order. Null for non-parties.
    */
-  readonly learner_groups?: Array<LearnerGroup> | null;
+  readonly age_groups?: Array<AgeGroup> | null;
 };
 
 export type ApiResponseCourseRubricAssociation = {
@@ -3595,13 +3595,13 @@ export type LessonPracticeActivity = {
    */
   readonly updated_by?: string;
   /**
-   * **[READ-ONLY]** Human-readable estimated duration.
-   */
-  readonly estimated_duration?: string;
-  /**
    * **[READ-ONLY]** Whether the activity is published.
    */
   readonly is_published?: boolean;
+  /**
+   * **[READ-ONLY]** Human-readable estimated duration.
+   */
+  readonly estimated_duration?: string;
 };
 
 export type ApiResponseLessonPracticeActivity = {
@@ -4958,13 +4958,13 @@ export type ClassDefinition = {
    */
   readonly duration_minutes?: bigint;
   /**
-   * **[READ-ONLY]** Human-readable formatted duration.
-   */
-  readonly duration_formatted?: string;
-  /**
    * **[READ-ONLY]** Human-readable capacity information including waitlist availability.
    */
   readonly capacity_info?: string;
+  /**
+   * **[READ-ONLY]** Human-readable formatted duration.
+   */
+  readonly duration_formatted?: string;
 };
 
 /**
@@ -5598,6 +5598,47 @@ export type ApiResponseAssignment = {
 };
 
 /**
+ * A reusable age group: a named age band with no lesson plan
+ */
+export type SavedAgeGroupRequest = {
+  /**
+   * **[REQUIRED]** Name, unique for its owner.
+   */
+  name: string;
+  /**
+   * **[REQUIRED]** Youngest age.
+   */
+  min_age: number;
+  /**
+   * **[REQUIRED]** Oldest age.
+   */
+  max_age: number;
+};
+
+export type ApiResponseSavedAgeGroup = {
+  success?: boolean;
+  data?: SavedAgeGroup;
+  message?: string;
+  error?: unknown;
+};
+
+/**
+ * A reusable age group kept by an instructor or organisation
+ */
+export type SavedAgeGroup = {
+  uuid?: string;
+  name?: string;
+  min_age?: number;
+  max_age?: number;
+  owner_type?: ApplicantTypeEnum;
+  owner_uuid?: string;
+  /**
+   * The organisation's name for an organisation's group; null for the caller's own.
+   */
+  owner_name?: string | null;
+};
+
+/**
  * Creates or replaces a skills taxonomy entry
  */
 export type SkillRequest = {
@@ -6191,9 +6232,8 @@ export type RegistrationRequest = {
   email: string;
   /**
    * **Phone Number Validation:**
-   * - Country: KE
    * - Type: Mobile only
-   * - Format: International (+country code) or local format supported
+   * - Format: E.164 only (+ then country code and number, no spaces), e.g. +254712345678
    */
   phone_number: string;
   dob?: Date;
@@ -6317,9 +6357,9 @@ export type ProgramTrainingApplicationRequest = {
    */
   requirement_answers?: Array<TrainingRequirementAnswerRequest> | null;
   /**
-   * Instructor applicants only: learner groups, each a named age band with hours for every active lesson. Omit to keep what is stored. Organisations must omit it.
+   * Instructor applicants only: age groups, each a named age band with hours for every active lesson. Required on a new instructor application; on an update, omit to keep what is stored. Organisations must omit it.
    */
-  learner_groups?: Array<LearnerGroupRequest> | null;
+  age_groups?: Array<AgeGroupRequest> | null;
 };
 
 /**
@@ -7568,13 +7608,13 @@ export type Enrollment = {
    */
   readonly is_attendance_marked?: boolean;
   /**
-   * **[READ-ONLY]** Human-readable description of the enrollment status.
-   */
-  readonly status_description?: string;
-  /**
    * **[READ-ONLY]** Indicates if the student attended the class.
    */
   readonly did_attend?: boolean;
+  /**
+   * **[READ-ONLY]** Human-readable description of the enrollment status.
+   */
+  readonly status_description?: string;
 };
 
 /**
@@ -7633,9 +7673,9 @@ export type CourseTrainingApplicationRequest = {
    */
   requirement_answers?: Array<TrainingRequirementAnswerRequest> | null;
   /**
-   * Instructor applicants only: learner groups, each a named age band with hours for every active lesson. Omit to keep what is stored. Organisations must omit it.
+   * Instructor applicants only: age groups, each a named age band with hours for every active lesson. Required on a new instructor application; on an update, omit to keep what is stored. Organisations must omit it.
    */
-  learner_groups?: Array<LearnerGroupRequest> | null;
+  age_groups?: Array<AgeGroupRequest> | null;
 };
 
 /**
@@ -9568,13 +9608,13 @@ export type StudentSchedule = {
    */
   readonly duration_minutes?: bigint;
   /**
-   * **[READ-ONLY]** Indicates if the student attended this class.
-   */
-  readonly did_attend?: boolean;
-  /**
    * **[READ-ONLY]** Indicates if this class is upcoming.
    */
   readonly is_upcoming?: boolean;
+  /**
+   * **[READ-ONLY]** Indicates if the student attended this class.
+   */
+  readonly did_attend?: boolean;
 };
 
 export type ApiResponseListInstructorTimeHold = {
@@ -10945,6 +10985,13 @@ export type MonthlyPayoutPoint = {
 export type ApiResponseListCompetition = {
   success?: boolean;
   data?: Array<Competition>;
+  message?: string;
+  error?: unknown;
+};
+
+export type ApiResponseListSavedAgeGroup = {
+  success?: boolean;
+  data?: Array<SavedAgeGroup>;
   message?: string;
   error?: unknown;
 };
@@ -12691,6 +12738,10 @@ export type CourseAssessmentScore = {
    */
   readonly is_passing?: boolean;
   /**
+   * **[READ-ONLY]** Formatted display of the grade information.
+   */
+  readonly grade_display?: string;
+  /**
    * **[READ-ONLY]** Formatted category of the score based on performance level.
    */
   readonly score_category?: string;
@@ -12702,10 +12753,6 @@ export type CourseAssessmentScore = {
    * **[READ-ONLY]** Summary indicating the availability and nature of instructor feedback.
    */
   readonly feedback_summary?: string;
-  /**
-   * **[READ-ONLY]** Formatted display of the grade information.
-   */
-  readonly grade_display?: string;
 };
 
 /**
@@ -15123,21 +15170,6 @@ export type ProficiencyLevelEnum2 =
   (typeof ProficiencyLevelEnum2)[keyof typeof ProficiencyLevelEnum2];
 
 /**
- * **[READ-ONLY]** Current status of the membership.
- */
-export const MembershipStatusEnum = {
-  ACTIVE: 'ACTIVE',
-  INACTIVE: 'INACTIVE',
-  EXPIRED: 'EXPIRED',
-  UNKNOWN: 'UNKNOWN',
-} as const;
-
-/**
- * **[READ-ONLY]** Current status of the membership.
- */
-export type MembershipStatusEnum = (typeof MembershipStatusEnum)[keyof typeof MembershipStatusEnum];
-
-/**
  * **[READ-ONLY]** Classification of organisation type based on name keywords.
  */
 export const OrganisationTypeEnum = {
@@ -15153,6 +15185,21 @@ export const OrganisationTypeEnum = {
  * **[READ-ONLY]** Classification of organisation type based on name keywords.
  */
 export type OrganisationTypeEnum = (typeof OrganisationTypeEnum)[keyof typeof OrganisationTypeEnum];
+
+/**
+ * **[READ-ONLY]** Current status of the membership.
+ */
+export const MembershipStatusEnum = {
+  ACTIVE: 'ACTIVE',
+  INACTIVE: 'INACTIVE',
+  EXPIRED: 'EXPIRED',
+  UNKNOWN: 'UNKNOWN',
+} as const;
+
+/**
+ * **[READ-ONLY]** Current status of the membership.
+ */
+export type MembershipStatusEnum = (typeof MembershipStatusEnum)[keyof typeof MembershipStatusEnum];
 
 /**
  * **[READ-ONLY]** Classification of experience level based on position title and duration.
@@ -23658,6 +23705,66 @@ export type UpdateAssignmentResponses = {
 
 export type UpdateAssignmentResponse = UpdateAssignmentResponses[keyof UpdateAssignmentResponses];
 
+export type DeleteAgeGroupData = {
+  body?: never;
+  path: {
+    ageGroupUuid: string;
+  };
+  query?: never;
+  url: '/api/v1/age-groups/{ageGroupUuid}';
+};
+
+export type DeleteAgeGroupErrors = {
+  /**
+   * Not Found
+   */
+  404: ResponseDtoVoid;
+  /**
+   * Internal Server Error
+   */
+  500: ResponseDtoVoid;
+};
+
+export type DeleteAgeGroupError = DeleteAgeGroupErrors[keyof DeleteAgeGroupErrors];
+
+export type DeleteAgeGroupResponses = {
+  /**
+   * OK
+   */
+  200: unknown;
+};
+
+export type UpdateAgeGroupData = {
+  body: SavedAgeGroupRequest;
+  path: {
+    ageGroupUuid: string;
+  };
+  query?: never;
+  url: '/api/v1/age-groups/{ageGroupUuid}';
+};
+
+export type UpdateAgeGroupErrors = {
+  /**
+   * Not Found
+   */
+  404: ResponseDtoVoid;
+  /**
+   * Internal Server Error
+   */
+  500: ResponseDtoVoid;
+};
+
+export type UpdateAgeGroupError = UpdateAgeGroupErrors[keyof UpdateAgeGroupErrors];
+
+export type UpdateAgeGroupResponses = {
+  /**
+   * OK
+   */
+  200: ApiResponseSavedAgeGroup;
+};
+
+export type UpdateAgeGroupResponse = UpdateAgeGroupResponses[keyof UpdateAgeGroupResponses];
+
 export type AdminDeleteSkillData = {
   body?: never;
   path: {
@@ -27188,6 +27295,72 @@ export type CreateCompetitionResponses = {
 export type CreateCompetitionResponse =
   CreateCompetitionResponses[keyof CreateCompetitionResponses];
 
+export type ListOrganisationAgeGroupsData = {
+  body?: never;
+  path: {
+    organisationUuid: string;
+  };
+  query?: never;
+  url: '/api/v1/organisations/{organisationUuid}/age-groups';
+};
+
+export type ListOrganisationAgeGroupsErrors = {
+  /**
+   * Not Found
+   */
+  404: ResponseDtoVoid;
+  /**
+   * Internal Server Error
+   */
+  500: ResponseDtoVoid;
+};
+
+export type ListOrganisationAgeGroupsError =
+  ListOrganisationAgeGroupsErrors[keyof ListOrganisationAgeGroupsErrors];
+
+export type ListOrganisationAgeGroupsResponses = {
+  /**
+   * OK
+   */
+  200: ApiResponseListSavedAgeGroup;
+};
+
+export type ListOrganisationAgeGroupsResponse =
+  ListOrganisationAgeGroupsResponses[keyof ListOrganisationAgeGroupsResponses];
+
+export type CreateOrganisationAgeGroupData = {
+  body: SavedAgeGroupRequest;
+  path: {
+    organisationUuid: string;
+  };
+  query?: never;
+  url: '/api/v1/organisations/{organisationUuid}/age-groups';
+};
+
+export type CreateOrganisationAgeGroupErrors = {
+  /**
+   * Not Found
+   */
+  404: ResponseDtoVoid;
+  /**
+   * Internal Server Error
+   */
+  500: ResponseDtoVoid;
+};
+
+export type CreateOrganisationAgeGroupError =
+  CreateOrganisationAgeGroupErrors[keyof CreateOrganisationAgeGroupErrors];
+
+export type CreateOrganisationAgeGroupResponses = {
+  /**
+   * OK
+   */
+  200: ApiResponseSavedAgeGroup;
+};
+
+export type CreateOrganisationAgeGroupResponse =
+  CreateOrganisationAgeGroupResponses[keyof CreateOrganisationAgeGroupResponses];
+
 export type SubmitDomainOnboardingData = {
   body?: never;
   path: {
@@ -28662,6 +28835,64 @@ export type CreateAvailabilitySlotResponses = {
 
 export type CreateAvailabilitySlotResponse =
   CreateAvailabilitySlotResponses[keyof CreateAvailabilitySlotResponses];
+
+export type ListMyAgeGroupsData = {
+  body?: never;
+  path?: never;
+  query?: never;
+  url: '/api/v1/instructors/me/age-groups';
+};
+
+export type ListMyAgeGroupsErrors = {
+  /**
+   * Not Found
+   */
+  404: ResponseDtoVoid;
+  /**
+   * Internal Server Error
+   */
+  500: ResponseDtoVoid;
+};
+
+export type ListMyAgeGroupsError = ListMyAgeGroupsErrors[keyof ListMyAgeGroupsErrors];
+
+export type ListMyAgeGroupsResponses = {
+  /**
+   * OK
+   */
+  200: ApiResponseListSavedAgeGroup;
+};
+
+export type ListMyAgeGroupsResponse = ListMyAgeGroupsResponses[keyof ListMyAgeGroupsResponses];
+
+export type CreateMyAgeGroupData = {
+  body: SavedAgeGroupRequest;
+  path?: never;
+  query?: never;
+  url: '/api/v1/instructors/me/age-groups';
+};
+
+export type CreateMyAgeGroupErrors = {
+  /**
+   * Not Found
+   */
+  404: ResponseDtoVoid;
+  /**
+   * Internal Server Error
+   */
+  500: ResponseDtoVoid;
+};
+
+export type CreateMyAgeGroupError = CreateMyAgeGroupErrors[keyof CreateMyAgeGroupErrors];
+
+export type CreateMyAgeGroupResponses = {
+  /**
+   * OK
+   */
+  200: ApiResponseSavedAgeGroup;
+};
+
+export type CreateMyAgeGroupResponse = CreateMyAgeGroupResponses[keyof CreateMyAgeGroupResponses];
 
 export type CreateLinkData = {
   body: GuardianStudentLinkRequest;
@@ -38844,6 +39075,37 @@ export type SearchMembershipsResponses = {
 export type SearchMembershipsResponse =
   SearchMembershipsResponses[keyof SearchMembershipsResponses];
 
+export type ListMyAgeGroupPresetsData = {
+  body?: never;
+  path?: never;
+  query?: never;
+  url: '/api/v1/instructors/me/age-group-presets';
+};
+
+export type ListMyAgeGroupPresetsErrors = {
+  /**
+   * Not Found
+   */
+  404: ResponseDtoVoid;
+  /**
+   * Internal Server Error
+   */
+  500: ResponseDtoVoid;
+};
+
+export type ListMyAgeGroupPresetsError =
+  ListMyAgeGroupPresetsErrors[keyof ListMyAgeGroupPresetsErrors];
+
+export type ListMyAgeGroupPresetsResponses = {
+  /**
+   * OK
+   */
+  200: ApiResponseListSavedAgeGroup;
+};
+
+export type ListMyAgeGroupPresetsResponse =
+  ListMyAgeGroupPresetsResponses[keyof ListMyAgeGroupPresetsResponses];
+
 export type SearchExperienceData = {
   body?: never;
   path?: never;
@@ -39060,11 +39322,20 @@ export type GetFileData = {
      */
     key: string;
   };
-  query?: never;
+  query?: {
+    /**
+     * Optional variant width in pixels: 320, 640 or 1280
+     */
+    w?: number;
+  };
   url: '/api/v1/files/{key}';
 };
 
 export type GetFileErrors = {
+  /**
+   * Unsupported variant width
+   */
+  400: Blob | File;
   /**
    * File not found
    */
