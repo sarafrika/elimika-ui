@@ -2987,6 +2987,7 @@ export default function ClassTrainingPage({
       path: { courseUuid: course?.uuid as string },
       query: { pageable: {} },
     }),
+    enabled: !!course?.uuid,
   });
   const studentEnrollments = courseEnrollmentResp?.data?.content ?? [];
 
