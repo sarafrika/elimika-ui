@@ -1,6 +1,7 @@
 'use client';
 
 import CustomLoader from '@/components/custom-loader';
+import { RumShellMark } from '@/components/perf/rum-reporter';
 import { SidebarProvider } from '@/components/ui/sidebar';
 import { BreadcrumbProvider } from '@/context/breadcrumb-provider';
 import { DashboardProviders } from '@/context/profile-providers';
@@ -110,6 +111,7 @@ function DashboardLayoutContent({ children }: { children: ReactNode }) {
       >
         <BreadcrumbProvider>
           <div className='flex h-screen w-full'>
+            <RumShellMark />
             <AppSidebar activeDomain={sidebarDomain} />
 
             <div className='flex min-w-0 flex-1 flex-col'>

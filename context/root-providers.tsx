@@ -1,5 +1,6 @@
 'use client';
 
+import { RumReporter } from '@/components/perf/rum-reporter';
 import { TimeZoneProvider } from '@/context/timezone-context';
 import {
   CLIENT_QUERY_CACHE_BUSTER,
@@ -52,6 +53,7 @@ export function RootProviders({ children }: { children: ReactNode }) {
     >
       <SessionProvider>
         <TimeZoneProvider>{children}</TimeZoneProvider>
+        <RumReporter />
       </SessionProvider>
       {ReactQueryDevtools ? <ReactQueryDevtools initialIsOpen={false} /> : null}
     </PersistQueryClientProvider>
