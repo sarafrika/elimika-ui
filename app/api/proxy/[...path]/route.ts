@@ -182,8 +182,77 @@ async function refreshCachedGet(
   await upstreamResponse.body?.cancel().catch(() => undefined);
 }
 
+const PUBLIC_FILE_FORWARD_HEADERS = ['accept', 'if-modified-since', 'if-none-match', 'range'];
+
+// Course media is permitAll upstream and named by content uuid, so it can skip auth()
+// and the BFF cache and be cached publicly; profile documents stay on the private path.
+function isPublicFileRequest(request: NextRequest, path: string[]) {
+  if (request.method !== 'GET' || path.some(segment => segment === '..' || segment === '.')) {
+    return false;
+  }
+  const [api, version, files, bucket] = path.map(segment => segment.toLowerCase());
+  return (
+    api === 'api' &&
+    version === 'v1' &&
+    files === 'files' &&
+    Boolean(bucket) &&
+    bucket !== 'profile_documents'
+  );
+}
+
+function dropVary(headers: Headers, values: string[]) {
+  const drop = new Set(values.map(value => value.toLowerCase()));
+  const kept = (headers.get('vary') ?? '')
+    .split(',')
+    .map(value => value.trim())
+    .filter(value => value && !drop.has(value.toLowerCase()));
+  if (kept.length > 0) {
+    headers.set('vary', kept.join(', '));
+  } else {
+    headers.delete('vary');
+  }
+}
+
+async function proxyPublicFile(request: NextRequest, path: string[]) {
+  const headers = new Headers();
+  for (const name of PUBLIC_FILE_FORWARD_HEADERS) {
+    const value = request.headers.get(name);
+    if (value) headers.set(name, value);
+  }
+
+  const upstreamResponse = await fetch(buildUpstreamUrl(request, path), {
+    method: 'GET',
+    headers,
+    redirect: 'manual',
+  });
+  const responseHeaders = new Headers(upstreamResponse.headers);
+  sanitizeHeaders(responseHeaders);
+  responseHeaders.delete('set-cookie');
+  responseHeaders.delete('pragma');
+  responseHeaders.delete('expires');
+  dropVary(responseHeaders, ['Authorization', 'Cookie', ACTING_DOMAIN_HEADER]);
+  responseHeaders.set('x-bff-cache', 'BYPASS');
+
+  if (upstreamResponse.status === 200 || upstreamResponse.status === 304) {
+    responseHeaders.set('cache-control', 'public, max-age=31536000, immutable');
+  } else if (upstreamResponse.status === 404) {
+    responseHeaders.set('cache-control', 'public, max-age=3600');
+  } else {
+    responseHeaders.set('cache-control', 'no-store');
+  }
+
+  return new NextResponse(upstreamResponse.body, {
+    status: upstreamResponse.status,
+    headers: responseHeaders,
+  });
+}
+
 const proxyRequest = async (request: NextRequest, path: string[]) => {
   try {
+    if (isPublicFileRequest(request, path)) {
+      return await proxyPublicFile(request, path);
+    }
+
     const session = await auth();
     const cacheUserId = getCacheUserId(session);
     const upstreamUrl = buildUpstreamUrl(request, path);
