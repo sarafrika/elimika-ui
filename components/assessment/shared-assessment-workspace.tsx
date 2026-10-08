@@ -28,6 +28,7 @@ import type {
   AssignmentSubmission,
   ClassAssignmentSchedule,
 } from '@/services/client/types.gen';
+import { roleScopedDashboardPath } from '@/src/features/dashboard/lib/active-domain-storage';
 import {
   getStudentAssignmentSubmissionState,
   useStudentAssignmentData,
@@ -624,11 +625,14 @@ function AssessmentCard({
         : 'View Grade';
 
   const viewSubmissionHref = assessment.assignmentUuid
-    ? `/dashboard/assignment/assignment_${assessment.assignmentUuid}?course_uuid=${assessment.courseUuid}&classId=${assessment.classUuid}`
+    ? roleScopedDashboardPath(
+        role,
+        `/dashboard/assignment/assignment_${assessment.assignmentUuid}?course_uuid=${assessment.courseUuid}&classId=${assessment.classUuid}`
+      )
     : undefined;
 
   const viewGradeDetailsHref = assessment.assignmentUuid
-    ? `/dashboard/assignment/${assessment.assignmentUuid}`
+    ? roleScopedDashboardPath(role, `/dashboard/assignment/${assessment.assignmentUuid}`)
     : undefined;
 
   const actionHref = role === 'instructor' ? viewSubmissionHref : viewGradeDetailsHref;
