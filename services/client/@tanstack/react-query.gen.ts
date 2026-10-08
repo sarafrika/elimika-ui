@@ -281,6 +281,7 @@ import {
   cancelObligation,
   listCompetitions,
   createCompetition,
+  submitDomainOnboarding,
   listNotifications,
   applyBulkAction,
   applyAction,
@@ -473,6 +474,7 @@ import {
   moderateProgram,
   createOrganisationUser,
   moderateOrganisation,
+  sendTestEmails,
   verifyInstructor,
   unverifyInstructor,
   listAll,
@@ -593,6 +595,8 @@ import {
   listObligations,
   getMonthlySettlements,
   search2,
+  getMyOnboarding,
+  getDomainOnboarding,
   getCounts,
   getDocumentFile,
   getInvitationByToken,
@@ -717,6 +721,7 @@ import {
   getCertificateFile,
   getCourseCertificates,
   searchCoursesAndProgrammes,
+  searchApplyToTrainCatalogue,
   getBooking,
   getAssignmentSubmissions,
   getSubmissionAttachments,
@@ -743,6 +748,7 @@ import {
   listPendingPrograms,
   isOrganisationVerified,
   getPendingOrganisations,
+  listTestableEmails,
   isInstructorVerified,
   getOrganisationSupportedDomains,
   getDashboardStatistics,
@@ -1484,6 +1490,9 @@ import type {
   CreateCompetitionData,
   CreateCompetitionError,
   CreateCompetitionResponse,
+  SubmitDomainOnboardingData,
+  SubmitDomainOnboardingError,
+  SubmitDomainOnboardingResponse,
   ListNotificationsData,
   ListNotificationsError,
   ListNotificationsResponse,
@@ -2000,6 +2009,9 @@ import type {
   ModerateOrganisationData,
   ModerateOrganisationError,
   ModerateOrganisationResponse,
+  SendTestEmailsData,
+  SendTestEmailsError,
+  SendTestEmailsResponse,
   VerifyInstructorData,
   VerifyInstructorError,
   VerifyInstructorResponse,
@@ -2245,6 +2257,8 @@ import type {
   Search2Data,
   Search2Error,
   Search2Response,
+  GetMyOnboardingData,
+  GetDomainOnboardingData,
   GetCountsData,
   GetDocumentFileData,
   GetInvitationByTokenData,
@@ -2465,6 +2479,9 @@ import type {
   SearchCoursesAndProgrammesData,
   SearchCoursesAndProgrammesError,
   SearchCoursesAndProgrammesResponse,
+  SearchApplyToTrainCatalogueData,
+  SearchApplyToTrainCatalogueError,
+  SearchApplyToTrainCatalogueResponse,
   GetBookingData,
   GetAssignmentSubmissionsData,
   GetSubmissionAttachmentsData,
@@ -2509,6 +2526,7 @@ import type {
   GetPendingOrganisationsData,
   GetPendingOrganisationsError,
   GetPendingOrganisationsResponse,
+  ListTestableEmailsData,
   IsInstructorVerifiedData,
   GetOrganisationSupportedDomainsData,
   GetDashboardStatisticsData,
@@ -12218,6 +12236,56 @@ export const createCompetitionMutation = (
   return mutationOptions;
 };
 
+export const submitDomainOnboardingQueryKey = (options: Options<SubmitDomainOnboardingData>) =>
+  createQueryKey('submitDomainOnboarding', options);
+
+/**
+ * Submit a domain's onboarding
+ * Validates the required steps. Domains that need approval move to submitted and admins are asked to review; others are recorded as complete and stay active. 409 when steps are missing, or the domain is already submitted or approved; 404 when the domain was never requested.
+ */
+export const submitDomainOnboardingOptions = (options: Options<SubmitDomainOnboardingData>) => {
+  return queryOptions({
+    queryFn: async ({ queryKey, signal }) => {
+      const { data } = await submitDomainOnboarding({
+        ...options,
+        ...queryKey[0],
+        signal,
+        throwOnError: true,
+      });
+      return data;
+    },
+    queryKey: submitDomainOnboardingQueryKey(options),
+  });
+};
+
+/**
+ * Submit a domain's onboarding
+ * Validates the required steps. Domains that need approval move to submitted and admins are asked to review; others are recorded as complete and stay active. 409 when steps are missing, or the domain is already submitted or approved; 404 when the domain was never requested.
+ */
+export const submitDomainOnboardingMutation = (
+  options?: Partial<Options<SubmitDomainOnboardingData>>
+): UseMutationOptions<
+  SubmitDomainOnboardingResponse,
+  SubmitDomainOnboardingError,
+  Options<SubmitDomainOnboardingData>
+> => {
+  const mutationOptions: UseMutationOptions<
+    SubmitDomainOnboardingResponse,
+    SubmitDomainOnboardingError,
+    Options<SubmitDomainOnboardingData>
+  > = {
+    mutationFn: async localOptions => {
+      const { data } = await submitDomainOnboarding({
+        ...options,
+        ...localOptions,
+        throwOnError: true,
+      });
+      return data;
+    },
+  };
+  return mutationOptions;
+};
+
 export const listNotificationsQueryKey = (options: Options<ListNotificationsData>) =>
   createQueryKey('listNotifications', options);
 
@@ -17860,6 +17928,8 @@ export const submitCurrentForVerificationQueryKey = (
 
 /**
  * Submit current user's course creator onboarding for verification
+ * Delegates to POST /api/v1/onboarding/course_creator/submit (same rules and 409s); kept for one release.
+ * @deprecated
  */
 export const submitCurrentForVerificationOptions = (
   options?: Options<SubmitCurrentForVerificationData>
@@ -17880,6 +17950,8 @@ export const submitCurrentForVerificationOptions = (
 
 /**
  * Submit current user's course creator onboarding for verification
+ * Delegates to POST /api/v1/onboarding/course_creator/submit (same rules and 409s); kept for one release.
+ * @deprecated
  */
 export const submitCurrentForVerificationMutation = (
   options?: Partial<Options<SubmitCurrentForVerificationData>>
@@ -21225,7 +21297,7 @@ export const moderateUserDomainQueryKey = (options: Options<ModerateUserDomainDa
 
 /**
  * Approve, reject or revoke a user's domain
- * For domains without a profile review (instructor; students and parents need no approval). Approval opens the domain's dashboard; reject and revoke keep the user on the pending-approval screen.
+ * For domains without a profile review (instructor; students and parents need no approval). Approval opens the domain's dashboard; reject and revoke keep the user on the pending-approval screen. For the instructor domain the instructor profile's admin_verified follows the decision.
  */
 export const moderateUserDomainOptions = (options: Options<ModerateUserDomainData>) => {
   return queryOptions({
@@ -21244,7 +21316,7 @@ export const moderateUserDomainOptions = (options: Options<ModerateUserDomainDat
 
 /**
  * Approve, reject or revoke a user's domain
- * For domains without a profile review (instructor; students and parents need no approval). Approval opens the domain's dashboard; reject and revoke keep the user on the pending-approval screen.
+ * For domains without a profile review (instructor; students and parents need no approval). Approval opens the domain's dashboard; reject and revoke keep the user on the pending-approval screen. For the instructor domain the instructor profile's admin_verified follows the decision.
  */
 export const moderateUserDomainMutation = (
   options?: Partial<Options<ModerateUserDomainData>>
@@ -21733,6 +21805,52 @@ export const moderateOrganisationMutation = (
   > = {
     mutationFn: async localOptions => {
       const { data } = await moderateOrganisation({
+        ...options,
+        ...localOptions,
+        throwOnError: true,
+      });
+      return data;
+    },
+  };
+  return mutationOptions;
+};
+
+export const sendTestEmailsQueryKey = (options: Options<SendTestEmailsData>) =>
+  createQueryKey('sendTestEmails', options);
+
+/**
+ * Send sample emails to a test address
+ * Sends one sample of each requested type (all templated types when none are given) through the configured mail server and reports each delivery.
+ */
+export const sendTestEmailsOptions = (options: Options<SendTestEmailsData>) => {
+  return queryOptions({
+    queryFn: async ({ queryKey, signal }) => {
+      const { data } = await sendTestEmails({
+        ...options,
+        ...queryKey[0],
+        signal,
+        throwOnError: true,
+      });
+      return data;
+    },
+    queryKey: sendTestEmailsQueryKey(options),
+  });
+};
+
+/**
+ * Send sample emails to a test address
+ * Sends one sample of each requested type (all templated types when none are given) through the configured mail server and reports each delivery.
+ */
+export const sendTestEmailsMutation = (
+  options?: Partial<Options<SendTestEmailsData>>
+): UseMutationOptions<SendTestEmailsResponse, SendTestEmailsError, Options<SendTestEmailsData>> => {
+  const mutationOptions: UseMutationOptions<
+    SendTestEmailsResponse,
+    SendTestEmailsError,
+    Options<SendTestEmailsData>
+  > = {
+    mutationFn: async localOptions => {
+      const { data } = await sendTestEmails({
         ...options,
         ...localOptions,
         throwOnError: true,
@@ -23654,7 +23772,7 @@ export const searchByTypeQueryKey = (options: Options<SearchByTypeData>) =>
  * | `marketplace_jobs` | `status`, `organisation_uuid`, `branch_uuid`, `course_uuid`, `program_uuid`, `category_uuid`, `location_type`, `session_format`, `starts_at`, `registration_closes_at`, `uuid`, `created_at`, `required_skill_uuids`, `_geo` | `created_at`, `starts_at`, `_geo` |
  * | `organisations` | `active`, `admin_verified`, `country`, `uuid`, `created_at` | `name`, `created_at` |
  * | `people` | `domains`, `organisation_uuids`, `branch_uuids`, `active`, `is_platform_admin`, `is_org_admin`, `uuid`, `created_at`, `email_normalized` | `full_name`, `created_at` |
- * | `programs` | `status`, `is_published`, `admin_approved`, `active`, `is_public`, `course_creator_uuid`, `category_uuid`, `is_free`, `uuid`, `created_at`, `difficulty_uuids`, `program_code` | `title`, `created_at`, `rating_avg`, `rating_bayes`, `popularity_30d`, `enrolment_count` |
+ * | `programs` | `status`, `is_published`, `admin_approved`, `active`, `is_public`, `course_creator_uuid`, `category_uuid`, `is_free`, `uuid`, `created_at`, `difficulty_uuids`, `program_code`, `skill_uuids` | `title`, `created_at`, `rating_avg`, `rating_bayes`, `popularity_30d`, `enrolment_count` |
  * | `rubrics` | `is_public`, `is_active`, `status`, `course_creator_uuid`, `rubric_type`, `usage_count`, `uuid`, `created_at` | `title`, `created_at`, `usage_count` |
  *
  */
@@ -23692,7 +23810,7 @@ export const searchByTypeInfiniteQueryKey = (
  * | `marketplace_jobs` | `status`, `organisation_uuid`, `branch_uuid`, `course_uuid`, `program_uuid`, `category_uuid`, `location_type`, `session_format`, `starts_at`, `registration_closes_at`, `uuid`, `created_at`, `required_skill_uuids`, `_geo` | `created_at`, `starts_at`, `_geo` |
  * | `organisations` | `active`, `admin_verified`, `country`, `uuid`, `created_at` | `name`, `created_at` |
  * | `people` | `domains`, `organisation_uuids`, `branch_uuids`, `active`, `is_platform_admin`, `is_org_admin`, `uuid`, `created_at`, `email_normalized` | `full_name`, `created_at` |
- * | `programs` | `status`, `is_published`, `admin_approved`, `active`, `is_public`, `course_creator_uuid`, `category_uuid`, `is_free`, `uuid`, `created_at`, `difficulty_uuids`, `program_code` | `title`, `created_at`, `rating_avg`, `rating_bayes`, `popularity_30d`, `enrolment_count` |
+ * | `programs` | `status`, `is_published`, `admin_approved`, `active`, `is_public`, `course_creator_uuid`, `category_uuid`, `is_free`, `uuid`, `created_at`, `difficulty_uuids`, `program_code`, `skill_uuids` | `title`, `created_at`, `rating_avg`, `rating_bayes`, `popularity_30d`, `enrolment_count` |
  * | `rubrics` | `is_public`, `is_active`, `status`, `course_creator_uuid`, `rubric_type`, `usage_count`, `uuid`, `created_at` | `title`, `created_at`, `usage_count` |
  *
  */
@@ -26852,6 +26970,50 @@ export const search2InfiniteOptions = (options: Options<Search2Data>) => {
       queryKey: search2InfiniteQueryKey(options),
     }
   );
+};
+
+export const getMyOnboardingQueryKey = (options?: Options<GetMyOnboardingData>) =>
+  createQueryKey('getMyOnboarding', options);
+
+/**
+ * Onboarding state of each domain the caller holds
+ * Works while a domain is pending approval.
+ */
+export const getMyOnboardingOptions = (options?: Options<GetMyOnboardingData>) => {
+  return queryOptions({
+    queryFn: async ({ queryKey, signal }) => {
+      const { data } = await getMyOnboarding({
+        ...options,
+        ...queryKey[0],
+        signal,
+        throwOnError: true,
+      });
+      return data;
+    },
+    queryKey: getMyOnboardingQueryKey(options),
+  });
+};
+
+export const getDomainOnboardingQueryKey = (options: Options<GetDomainOnboardingData>) =>
+  createQueryKey('getDomainOnboarding', options);
+
+/**
+ * Ordered onboarding steps for one domain
+ * Steps marked shared hold user-owned data (account, professional profile, skills wallet), so they show as complete when another domain already filled them. A domain not yet requested returns a preview with requested=false.
+ */
+export const getDomainOnboardingOptions = (options: Options<GetDomainOnboardingData>) => {
+  return queryOptions({
+    queryFn: async ({ queryKey, signal }) => {
+      const { data } = await getDomainOnboarding({
+        ...options,
+        ...queryKey[0],
+        signal,
+        throwOnError: true,
+      });
+      return data;
+    },
+    queryKey: getDomainOnboardingQueryKey(options),
+  });
 };
 
 export const getCountsQueryKey = (options?: Options<GetCountsData>) =>
@@ -30860,6 +31022,8 @@ export const getCurrentOnboardingQueryKey = (options?: Options<GetCurrentOnboard
 
 /**
  * Get current user's course creator onboarding state
+ * Superseded by GET /api/v1/onboarding/course_creator; kept for one release.
+ * @deprecated
  */
 export const getCurrentOnboardingOptions = (options?: Options<GetCurrentOnboardingData>) => {
   return queryOptions({
@@ -32562,6 +32726,81 @@ export const searchCoursesAndProgrammesInfiniteOptions = (
   );
 };
 
+export const searchApplyToTrainCatalogueQueryKey = (
+  options?: Options<SearchApplyToTrainCatalogueData>
+) => createQueryKey('searchApplyToTrainCatalogue', options);
+
+/**
+ * Search courses and programmes to apply to train
+ * For instructors whose instructor domain is approved (403 with code DOMAIN_PENDING_APPROVAL while it awaits approval). The public catalogue's courses and programmes in one ranking, filtered by fit: open (not yet applied to, the default), skills (not yet applied to and sharing a skill with the caller's skills wallet) or applied (any application status). Applied items and wallet skills are always the caller's own. Facets: show, category and fit counts, each under every other active filter. my_application and minimum_training_fee are read live; hits no longer public are dropped and the total restated. 503 "Search is unavailable" when search is disabled or unavailable; there is no database fallback.
+ */
+export const searchApplyToTrainCatalogueOptions = (
+  options?: Options<SearchApplyToTrainCatalogueData>
+) => {
+  return queryOptions({
+    queryFn: async ({ queryKey, signal }) => {
+      const { data } = await searchApplyToTrainCatalogue({
+        ...options,
+        ...queryKey[0],
+        signal,
+        throwOnError: true,
+      });
+      return data;
+    },
+    queryKey: searchApplyToTrainCatalogueQueryKey(options),
+  });
+};
+
+export const searchApplyToTrainCatalogueInfiniteQueryKey = (
+  options?: Options<SearchApplyToTrainCatalogueData>
+): QueryKey<Options<SearchApplyToTrainCatalogueData>> =>
+  createQueryKey('searchApplyToTrainCatalogue', options, true);
+
+/**
+ * Search courses and programmes to apply to train
+ * For instructors whose instructor domain is approved (403 with code DOMAIN_PENDING_APPROVAL while it awaits approval). The public catalogue's courses and programmes in one ranking, filtered by fit: open (not yet applied to, the default), skills (not yet applied to and sharing a skill with the caller's skills wallet) or applied (any application status). Applied items and wallet skills are always the caller's own. Facets: show, category and fit counts, each under every other active filter. my_application and minimum_training_fee are read live; hits no longer public are dropped and the total restated. 503 "Search is unavailable" when search is disabled or unavailable; there is no database fallback.
+ */
+export const searchApplyToTrainCatalogueInfiniteOptions = (
+  options?: Options<SearchApplyToTrainCatalogueData>
+) => {
+  return infiniteQueryOptions<
+    SearchApplyToTrainCatalogueResponse,
+    SearchApplyToTrainCatalogueError,
+    InfiniteData<SearchApplyToTrainCatalogueResponse>,
+    QueryKey<Options<SearchApplyToTrainCatalogueData>>,
+    | string
+    | Pick<
+        QueryKey<Options<SearchApplyToTrainCatalogueData>>[0],
+        'body' | 'headers' | 'path' | 'query'
+      >
+  >(
+    {
+      queryFn: async ({ pageParam, queryKey, signal }) => {
+        const page: Pick<
+          QueryKey<Options<SearchApplyToTrainCatalogueData>>[0],
+          'body' | 'headers' | 'path' | 'query'
+        > =
+          typeof pageParam === 'object'
+            ? pageParam
+            : {
+                query: {
+                  page: pageParam,
+                },
+              };
+        const params = createInfiniteParams(queryKey, page);
+        const { data } = await searchApplyToTrainCatalogue({
+          ...options,
+          ...params,
+          signal,
+          throwOnError: true,
+        });
+        return data;
+      },
+      queryKey: searchApplyToTrainCatalogueInfiniteQueryKey(options),
+    }
+  );
+};
+
 export const getBookingQueryKey = (options: Options<GetBookingData>) =>
   createQueryKey('getBooking', options);
 
@@ -33295,7 +33534,7 @@ export const getRegistrationQueueQueryKey = (options?: Options<GetRegistrationQu
 
 /**
  * List domain requests awaiting review
- * Self-registrations and domain applications by approval status, oldest first. Course creator and organisation requests are decided through their own profile review.
+ * Self-registrations and domain applications by approval status, oldest first. `submitted=true` lists only applications whose onboarding was submitted for review, `submitted=false` only those still being filled in. Course creator and organisation requests are decided through their own profile review.
  */
 export const getRegistrationQueueOptions = (options?: Options<GetRegistrationQueueData>) => {
   return queryOptions({
@@ -33599,6 +33838,27 @@ export const getPendingOrganisationsInfiniteOptions = (
       queryKey: getPendingOrganisationsInfiniteQueryKey(options),
     }
   );
+};
+
+export const listTestableEmailsQueryKey = (options?: Options<ListTestableEmailsData>) =>
+  createQueryKey('listTestableEmails', options);
+
+/**
+ * List the notification types that have an email template
+ */
+export const listTestableEmailsOptions = (options?: Options<ListTestableEmailsData>) => {
+  return queryOptions({
+    queryFn: async ({ queryKey, signal }) => {
+      const { data } = await listTestableEmails({
+        ...options,
+        ...queryKey[0],
+        signal,
+        throwOnError: true,
+      });
+      return data;
+    },
+    queryKey: listTestableEmailsQueryKey(options),
+  });
 };
 
 export const isInstructorVerifiedQueryKey = (options: Options<IsInstructorVerifiedData>) =>

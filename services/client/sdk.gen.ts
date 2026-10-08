@@ -841,6 +841,9 @@ import type {
   CreateCompetitionData,
   CreateCompetitionResponses,
   CreateCompetitionErrors,
+  SubmitDomainOnboardingData,
+  SubmitDomainOnboardingResponses,
+  SubmitDomainOnboardingErrors,
   ListNotificationsData,
   ListNotificationsResponses,
   ListNotificationsErrors,
@@ -1417,6 +1420,9 @@ import type {
   ModerateOrganisationData,
   ModerateOrganisationResponses,
   ModerateOrganisationErrors,
+  SendTestEmailsData,
+  SendTestEmailsResponses,
+  SendTestEmailsErrors,
   VerifyInstructorData,
   VerifyInstructorResponses,
   VerifyInstructorErrors,
@@ -1776,6 +1782,12 @@ import type {
   Search2Data,
   Search2Responses,
   Search2Errors,
+  GetMyOnboardingData,
+  GetMyOnboardingResponses,
+  GetMyOnboardingErrors,
+  GetDomainOnboardingData,
+  GetDomainOnboardingResponses,
+  GetDomainOnboardingErrors,
   GetCountsData,
   GetCountsResponses,
   GetCountsErrors,
@@ -2148,6 +2160,9 @@ import type {
   SearchCoursesAndProgrammesData,
   SearchCoursesAndProgrammesResponses,
   SearchCoursesAndProgrammesErrors,
+  SearchApplyToTrainCatalogueData,
+  SearchApplyToTrainCatalogueResponses,
+  SearchApplyToTrainCatalogueErrors,
   GetBookingData,
   GetBookingResponses,
   GetBookingErrors,
@@ -2226,6 +2241,9 @@ import type {
   GetPendingOrganisationsData,
   GetPendingOrganisationsResponses,
   GetPendingOrganisationsErrors,
+  ListTestableEmailsData,
+  ListTestableEmailsResponses,
+  ListTestableEmailsErrors,
   IsInstructorVerifiedData,
   IsInstructorVerifiedResponses,
   IsInstructorVerifiedErrors,
@@ -2499,6 +2517,7 @@ import {
   cancelObligationResponseTransformer,
   listCompetitionsResponseTransformer,
   createCompetitionResponseTransformer,
+  submitDomainOnboardingResponseTransformer,
   listNotificationsResponseTransformer,
   applyActionResponseTransformer,
   listSkillsResponseTransformer,
@@ -2756,6 +2775,8 @@ import {
   listInstructorStudentsResponseTransformer,
   listObligationsResponseTransformer,
   search2ResponseTransformer,
+  getMyOnboardingResponseTransformer,
+  getDomainOnboardingResponseTransformer,
   getCountsResponseTransformer,
   getInvitationByTokenResponseTransformer,
   listMyInvitationsResponseTransformer,
@@ -2854,6 +2875,7 @@ import {
   getCertificateByNumberResponseTransformer,
   getCourseCertificatesResponseTransformer,
   searchCoursesAndProgrammesResponseTransformer,
+  searchApplyToTrainCatalogueResponseTransformer,
   getBookingResponseTransformer,
   getAssignmentSubmissionsResponseTransformer,
   getSubmissionAttachmentsResponseTransformer,
@@ -11096,6 +11118,34 @@ export const createCompetition = <ThrowOnError extends boolean = false>(
 };
 
 /**
+ * Submit a domain's onboarding
+ * Validates the required steps. Domains that need approval move to submitted and admins are asked to review; others are recorded as complete and stay active. 409 when steps are missing, or the domain is already submitted or approved; 404 when the domain was never requested.
+ */
+export const submitDomainOnboarding = <ThrowOnError extends boolean = false>(
+  options: Options<SubmitDomainOnboardingData, ThrowOnError>
+) => {
+  return (options.client ?? _heyApiClient).post<
+    SubmitDomainOnboardingResponses,
+    SubmitDomainOnboardingErrors,
+    ThrowOnError
+  >({
+    responseTransformer: submitDomainOnboardingResponseTransformer,
+    security: [
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+    ],
+    url: '/api/v1/onboarding/{domain}/submit',
+    ...options,
+  });
+};
+
+/**
  * List current user's notifications
  */
 export const listNotifications = <ThrowOnError extends boolean = false>(
@@ -14574,6 +14624,8 @@ export const addCourseCreatorAchievement = <ThrowOnError extends boolean = false
 
 /**
  * Submit current user's course creator onboarding for verification
+ * Delegates to POST /api/v1/onboarding/course_creator/submit (same rules and 409s); kept for one release.
+ * @deprecated
  */
 export const submitCurrentForVerification = <ThrowOnError extends boolean = false>(
   options?: Options<SubmitCurrentForVerificationData, ThrowOnError>
@@ -16619,7 +16671,7 @@ export const verify = <ThrowOnError extends boolean = false>(
 
 /**
  * Approve, reject or revoke a user's domain
- * For domains without a profile review (instructor; students and parents need no approval). Approval opens the domain's dashboard; reject and revoke keep the user on the pending-approval screen.
+ * For domains without a profile review (instructor; students and parents need no approval). Approval opens the domain's dashboard; reject and revoke keep the user on the pending-approval screen. For the instructor domain the instructor profile's admin_verified follows the decision.
  */
 export const moderateUserDomain = <ThrowOnError extends boolean = false>(
   options: Options<ModerateUserDomainData, ThrowOnError>
@@ -16932,6 +16984,37 @@ export const moderateOrganisation = <ThrowOnError extends boolean = false>(
     ],
     url: '/api/v1/admin/organisations/{uuid}/moderate',
     ...options,
+  });
+};
+
+/**
+ * Send sample emails to a test address
+ * Sends one sample of each requested type (all templated types when none are given) through the configured mail server and reports each delivery.
+ */
+export const sendTestEmails = <ThrowOnError extends boolean = false>(
+  options: Options<SendTestEmailsData, ThrowOnError>
+) => {
+  return (options.client ?? _heyApiClient).post<
+    SendTestEmailsResponses,
+    SendTestEmailsErrors,
+    ThrowOnError
+  >({
+    security: [
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+    ],
+    url: '/api/v1/admin/notifications/email-test',
+    ...options,
+    headers: {
+      'Content-Type': 'application/json',
+      ...options.headers,
+    },
   });
 };
 
@@ -18411,7 +18494,7 @@ export const globalSearch = <ThrowOnError extends boolean = false>(
  * | `marketplace_jobs` | `status`, `organisation_uuid`, `branch_uuid`, `course_uuid`, `program_uuid`, `category_uuid`, `location_type`, `session_format`, `starts_at`, `registration_closes_at`, `uuid`, `created_at`, `required_skill_uuids`, `_geo` | `created_at`, `starts_at`, `_geo` |
  * | `organisations` | `active`, `admin_verified`, `country`, `uuid`, `created_at` | `name`, `created_at` |
  * | `people` | `domains`, `organisation_uuids`, `branch_uuids`, `active`, `is_platform_admin`, `is_org_admin`, `uuid`, `created_at`, `email_normalized` | `full_name`, `created_at` |
- * | `programs` | `status`, `is_published`, `admin_approved`, `active`, `is_public`, `course_creator_uuid`, `category_uuid`, `is_free`, `uuid`, `created_at`, `difficulty_uuids`, `program_code` | `title`, `created_at`, `rating_avg`, `rating_bayes`, `popularity_30d`, `enrolment_count` |
+ * | `programs` | `status`, `is_published`, `admin_approved`, `active`, `is_public`, `course_creator_uuid`, `category_uuid`, `is_free`, `uuid`, `created_at`, `difficulty_uuids`, `program_code`, `skill_uuids` | `title`, `created_at`, `rating_avg`, `rating_bayes`, `popularity_30d`, `enrolment_count` |
  * | `rubrics` | `is_public`, `is_active`, `status`, `course_creator_uuid`, `rubric_type`, `usage_count`, `uuid`, `created_at` | `title`, `created_at`, `usage_count` |
  *
  */
@@ -20289,6 +20372,62 @@ export const search2 = <ThrowOnError extends boolean = false>(
       },
     ],
     url: '/api/v1/organisations/search',
+    ...options,
+  });
+};
+
+/**
+ * Onboarding state of each domain the caller holds
+ * Works while a domain is pending approval.
+ */
+export const getMyOnboarding = <ThrowOnError extends boolean = false>(
+  options?: Options<GetMyOnboardingData, ThrowOnError>
+) => {
+  return (options?.client ?? _heyApiClient).get<
+    GetMyOnboardingResponses,
+    GetMyOnboardingErrors,
+    ThrowOnError
+  >({
+    responseTransformer: getMyOnboardingResponseTransformer,
+    security: [
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+    ],
+    url: '/api/v1/onboarding',
+    ...options,
+  });
+};
+
+/**
+ * Ordered onboarding steps for one domain
+ * Steps marked shared hold user-owned data (account, professional profile, skills wallet), so they show as complete when another domain already filled them. A domain not yet requested returns a preview with requested=false.
+ */
+export const getDomainOnboarding = <ThrowOnError extends boolean = false>(
+  options: Options<GetDomainOnboardingData, ThrowOnError>
+) => {
+  return (options.client ?? _heyApiClient).get<
+    GetDomainOnboardingResponses,
+    GetDomainOnboardingErrors,
+    ThrowOnError
+  >({
+    responseTransformer: getDomainOnboardingResponseTransformer,
+    security: [
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+    ],
+    url: '/api/v1/onboarding/{domain}',
     ...options,
   });
 };
@@ -22899,6 +23038,8 @@ export const searchCourseCreatorMemberships = <ThrowOnError extends boolean = fa
 
 /**
  * Get current user's course creator onboarding state
+ * Superseded by GET /api/v1/onboarding/course_creator; kept for one release.
+ * @deprecated
  */
 export const getCurrentOnboarding = <ThrowOnError extends boolean = false>(
   options?: Options<GetCurrentOnboardingData, ThrowOnError>
@@ -24160,6 +24301,34 @@ export const searchCoursesAndProgrammes = <ThrowOnError extends boolean = false>
 };
 
 /**
+ * Search courses and programmes to apply to train
+ * For instructors whose instructor domain is approved (403 with code DOMAIN_PENDING_APPROVAL while it awaits approval). The public catalogue's courses and programmes in one ranking, filtered by fit: open (not yet applied to, the default), skills (not yet applied to and sharing a skill with the caller's skills wallet) or applied (any application status). Applied items and wallet skills are always the caller's own. Facets: show, category and fit counts, each under every other active filter. my_application and minimum_training_fee are read live; hits no longer public are dropped and the total restated. 503 "Search is unavailable" when search is disabled or unavailable; there is no database fallback.
+ */
+export const searchApplyToTrainCatalogue = <ThrowOnError extends boolean = false>(
+  options?: Options<SearchApplyToTrainCatalogueData, ThrowOnError>
+) => {
+  return (options?.client ?? _heyApiClient).get<
+    SearchApplyToTrainCatalogueResponses,
+    SearchApplyToTrainCatalogueErrors,
+    ThrowOnError
+  >({
+    responseTransformer: searchApplyToTrainCatalogueResponseTransformer,
+    security: [
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+    ],
+    url: '/api/v1/catalogue/apply-to-train',
+    ...options,
+  });
+};
+
+/**
  * Get booking details
  */
 export const getBooking = <ThrowOnError extends boolean = false>(
@@ -24700,7 +24869,7 @@ export const listIndexes = <ThrowOnError extends boolean = false>(
 
 /**
  * List domain requests awaiting review
- * Self-registrations and domain applications by approval status, oldest first. Course creator and organisation requests are decided through their own profile review.
+ * Self-registrations and domain applications by approval status, oldest first. `submitted=true` lists only applications whose onboarding was submitted for review, `submitted=false` only those still being filled in. Course creator and organisation requests are decided through their own profile review.
  */
 export const getRegistrationQueue = <ThrowOnError extends boolean = false>(
   options?: Options<GetRegistrationQueueData, ThrowOnError>
@@ -24892,6 +25061,32 @@ export const getPendingOrganisations = <ThrowOnError extends boolean = false>(
       },
     ],
     url: '/api/v1/admin/organisations/pending',
+    ...options,
+  });
+};
+
+/**
+ * List the notification types that have an email template
+ */
+export const listTestableEmails = <ThrowOnError extends boolean = false>(
+  options?: Options<ListTestableEmailsData, ThrowOnError>
+) => {
+  return (options?.client ?? _heyApiClient).get<
+    ListTestableEmailsResponses,
+    ListTestableEmailsErrors,
+    ThrowOnError
+  >({
+    security: [
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+    ],
+    url: '/api/v1/admin/notifications/email-test/types',
     ...options,
   });
 };
