@@ -10,10 +10,11 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { absoluteDateTime, relativeTimeFromNow } from '@/lib/date';
+import { absoluteDateTime, parseApiDate, relativeTimeFromNow } from '@/lib/date';
 import { cn } from '@/lib/utils';
 import {
   useMarkAllNotificationsRead,
+  useMarkPopupsSeen,
   useNotificationAction,
   useNotificationCounts,
   useNotifications,
@@ -56,6 +57,14 @@ const iconByType: Array<[RegExp, LucideIcon]> = [
 
 export function notificationIcon(type: string) {
   return iconByType.find(([pattern]) => pattern.test(type))?.[1] ?? Bell;
+}
+
+const POPUP_BATCH_SIZE = 20;
+const MAX_POPUP_TOASTS = 3;
+
+// Notifications that predate mount are already reflected in freshly fetched workflow data.
+function createdAt(notification: UserNotification) {
+  return parseApiDate(notification.occurred_at ?? notification.created_at)?.valueOf() ?? 0;
 }
 
 function notificationTime(notification: UserNotification) {
@@ -249,7 +258,9 @@ export function DashboardNotifications({
   const invalidatedWorkflowNotificationIds = useRef<Set<string>>(new Set());
   const queryClient = useQueryClient();
   const domain = activeDomain ?? undefined;
+  const mountedAt = useRef(Date.now());
   const actionMutation = useNotificationAction();
+  const { mutate: markPopupsSeen } = useMarkPopupsSeen();
   const markAllMutation = useMarkAllNotificationsRead(domain);
 
   const normalizeNotifications = (notifications: UserNotification[], activeDomain: string) => {
@@ -259,41 +270,39 @@ export function DashboardNotifications({
     }));
   };
 
-  // The badge needs counts and toasts need the popup feed, but the recent
-  // list is only visible inside the dropdown — fetch it when opened instead
-  // of on every page load. Every query is scoped to the active dashboard
-  // domain so a multi-domain user only sees the relevant notifications here.
+  // Counts drive the badge and gate the popup feed; the recent list only loads when the
+  // dropdown opens. Every query is scoped to the active dashboard domain.
   const countsQuery = useNotificationCounts(domain, { refetchInterval: 60_000 });
+  const popupCount = countsQuery.data?.popup_count ?? 0;
   const recentQuery = useNotifications(
     { page: 0, size: 6, domain },
-    { enabled: open, refetchInterval: open ? 30_000 : false }
+    { enabled: open, refetchInterval: open ? 60_000 : false }
   );
   const popupQuery = useNotifications(
     {
       page: 0,
-      size: 5,
+      size: POPUP_BATCH_SIZE,
       domain,
       presentation: 'POPUP',
       popupSeen: false,
     },
-    { refetchInterval: 60_000 }
+    { enabled: popupCount > 0, refetchInterval: 60_000 }
   );
 
   const unreadCount = countsQuery.data?.unread_count ?? 0;
-  const recentNotifications = recentQuery.data?.items ?? [];
-  const popupNotifications = popupQuery.data?.items ?? [];
+  const recentData = recentQuery.data;
+  const popupData = popupQuery.data;
   const normalizedNotifications = normalizeNotifications(
-    recentNotifications,
+    recentData?.items ?? [],
     activeDomain as string
   );
 
   useEffect(() => {
-    for (const notification of popupNotifications) {
-      if (shownPopupIds.current.has(notification.uuid)) {
-        continue;
-      }
+    const fresh = (popupData?.items ?? []).filter(item => !shownPopupIds.current.has(item.uuid));
+    if (fresh.length === 0) return;
 
-      shownPopupIds.current.add(notification.uuid);
+    for (const notification of fresh) shownPopupIds.current.add(notification.uuid);
+    for (const notification of fresh.slice(0, MAX_POPUP_TOASTS)) {
       const popupHref = getNotificationUrlPath(
         notification,
         notification.recipient_domain ?? activeDomain ?? ''
@@ -310,20 +319,40 @@ export function DashboardNotifications({
           }
           : undefined,
       });
-      actionMutation.mutate({ uuid: notification.uuid, action: 'popup_seen' });
     }
-  }, [actionMutation, notificationHref, popupNotifications]);
+
+    const backlog = Math.max(popupData?.totalItems ?? 0, fresh.length);
+    const hidden = backlog - Math.min(fresh.length, MAX_POPUP_TOASTS);
+    if (hidden > 0) {
+      toast(`+${hidden} more notification${hidden === 1 ? '' : 's'}`, {
+        action: {
+          label: 'View all',
+          onClick: () => {
+            window.location.href = notificationHref;
+          },
+        },
+      });
+    }
+
+    markPopupsSeen({
+      uuids: fresh.map(item => item.uuid),
+      domain,
+      drainAll: popupData?.hasNext ?? false,
+    });
+  }, [activeDomain, domain, markPopupsSeen, notificationHref, popupData]);
 
   useEffect(() => {
-    for (const notification of [...popupNotifications, ...recentNotifications]) {
+    const items = [...(popupData?.items ?? []), ...(recentData?.items ?? [])];
+    for (const notification of items) {
       if (invalidatedWorkflowNotificationIds.current.has(notification.uuid)) {
         continue;
       }
 
       invalidatedWorkflowNotificationIds.current.add(notification.uuid);
+      if (createdAt(notification) < mountedAt.current) continue;
       void invalidateWorkflowQueriesForNotification(queryClient, notification);
     }
-  }, [popupNotifications, queryClient, recentNotifications]);
+  }, [popupData, queryClient, recentData]);
 
   const handleRead = (notification: UserNotification) => {
     if (notification.status === 'UNREAD') {
