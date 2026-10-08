@@ -3,12 +3,14 @@ import { Agent, setGlobalDispatcher } from 'undici';
 const KEEP_ALIVE_TIMEOUT_MS = 60_000;
 const KEEP_ALIVE_MAX_TIMEOUT_MS = 10 * 60_000;
 const POOL_CONNECTIONS = 64;
-const HEADERS_TIMEOUT_MS = 20_000;
-const BODY_TIMEOUT_MS = 60_000;
+// Global and generous: slow exports and auth calls keep working; the proxy
+// enforces its own tighter per-request budget.
+const HEADERS_TIMEOUT_MS = 120_000;
+const BODY_TIMEOUT_MS = 120_000;
 
-// HTTP/2 is negotiated via ALPN and falls back to HTTP/1.1 when the ingress
-// does not offer it; API_HTTP2=false is the kill switch.
-const allowH2 = process.env.API_HTTP2 !== 'false';
+// undici's HTTP/2 client is experimental (duplex uploads, aborts), so it is
+// opt-in via API_HTTP2=true until an upload smoke test passes over h2.
+const allowH2 = process.env.API_HTTP2 === 'true';
 
 let installed = false;
 
