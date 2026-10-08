@@ -1338,13 +1338,15 @@ export function SharedCoursesPage({ domain }: SharedCoursesPageProps) {
 
   // The API has no bulk lesson-count endpoint. Request just one row per unique
   // visible course and use its pagination total, including bundled program courses.
+  // Students get 403 on this endpoint, so the counts are skipped for them.
   const courseLessonCountQueries = useQueries({
     queries: lessonCourseUuids.map(courseUuid => ({
       ...getCourseLessonsOptions({
         path: { courseUuid },
         query: { pageable: { page: 0, size: 1 } },
       }),
-      enabled: Boolean(courseUuid),
+      enabled: Boolean(courseUuid) && !isStudentDomain,
+      retry: false,
       staleTime: STALE_TIMES.entity,
     })),
   });
