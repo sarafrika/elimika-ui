@@ -34,7 +34,7 @@ import {
 
 /**
  * Creates a group without leaving the class form, then selects it. Mirrors the
- * dialog on the organisation Groups page so both entry points behave the same.
+ * dialog on the organisation Student Groups page so both entry points behave the same.
  */
 function NewGroupDialog({
   organisationUuid,
@@ -153,7 +153,7 @@ export function TargetGroupPicker({
     <div className='space-y-2'>
       <div className='flex items-center justify-between gap-2'>
         <Label className='flex items-center gap-1.5'>
-          Target Groups
+          Student groups
           <span className='text-muted-foreground text-[11px] font-normal'>(optional)</span>
         </Label>
         {groups.length > 0 && (
@@ -201,7 +201,7 @@ export function TargetGroupPicker({
       {targetGroupUuids.length === 0 ? (
         <div className='text-muted-foreground text-[11px]'>
           Optional — select as many cohorts or streams as apply, or leave empty to open the class to
-          everyone. Manage groups on the Groups page.
+          everyone. Manage them on the Student Groups page.
         </div>
       ) : (
         <div className='flex flex-wrap gap-1'>

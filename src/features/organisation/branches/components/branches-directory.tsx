@@ -227,7 +227,7 @@ export function BranchesDirectory() {
           <AlertDialogHeader>
             <AlertDialogTitle>Delete {pendingDelete?.branch_name || 'this branch'}?</AlertDialogTitle>
             <AlertDialogDescription>
-              This removes the branch from your organisation. Academic groups pointing at it become
+              This removes the branch from your organisation. Student groups pointing at it become
               unassigned.
             </AlertDialogDescription>
           </AlertDialogHeader>

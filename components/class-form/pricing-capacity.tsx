@@ -94,7 +94,7 @@ export function PricingCapacity({
   payHint?: ReactNode;
   /** The pay goes to the instructor whose approved rate this is, so it can't go below it. */
   payAtLeastRate?: boolean;
-  /** Extra capacity fields, e.g. target groups. */
+  /** extra capacity fields, e.g. student groups. */
   children?: ReactNode;
 }) {
   const fieldId = useId();

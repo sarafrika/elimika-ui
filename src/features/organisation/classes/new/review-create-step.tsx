@@ -302,7 +302,7 @@ export function ReviewCreateStep({
                       value={job.class_visibility === 'PRIVATE' ? 'Private' : 'Public'}
                     />
                     <DetailRow
-                      label='Target groups'
+                      label='Student groups'
                       value={
                         job.target_groups?.length
                           ? job.target_groups.join(', ')

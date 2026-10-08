@@ -857,7 +857,7 @@ export default function InviteStudentsPage() {
               <CardContent className='space-y-4 xl:grid xl:grid-cols-[minmax(0,1.15fr)_minmax(380px,0.85fr)] xl:gap-5 xl:space-y-0 2xl:grid-cols-[minmax(0,1.25fr)_minmax(440px,0.75fr)]'>
                 <div className='space-y-3'>
                   <Label className='text-muted-foreground mb-2 block text-xs uppercase'>
-                    Groups
+                    Student groups
                   </Label>
                   {groupsQuery.isLoading ? (
                     <div className='grid gap-2 sm:grid-cols-2 2xl:grid-cols-3'>
@@ -869,7 +869,7 @@ export default function InviteStudentsPage() {
                     <EmptyState
                       variant='compact'
                       icon={UsersRound}
-                      title='Could not load groups'
+                      title='Could not load student groups'
                       description={getErrorMessage(groupsQuery.error, 'Please try again.')}
                       action={
                         <Button variant='outline' size='sm' onClick={() => groupsQuery.refetch()}>
@@ -881,7 +881,7 @@ export default function InviteStudentsPage() {
                     <EmptyState
                       variant='compact'
                       icon={UsersRound}
-                      title='No groups yet'
+                      title='No student groups yet'
                       description='Paste recipient emails below to invite students directly.'
                     />
                   ) : (
