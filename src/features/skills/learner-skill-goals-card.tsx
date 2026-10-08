@@ -10,7 +10,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { EmptyState } from '@/components/ui/empty-state';
 import { Skeleton } from '@/components/ui/skeleton';
 import Spinner from '@/components/ui/spinner';
-import { isForbidden, retryUnlessClientOrSearchError } from '@/lib/api-errors';
+import { isForbidden } from '@/lib/api-errors';
 import { getErrorMessage } from '@/lib/error-utils';
 import { STALE_TIMES } from '@/lib/query-client';
 import {
@@ -54,7 +54,6 @@ export function LearnerSkillGoalsCard({
     ...getLearnerSkillGoalsOptions(options),
     enabled: Boolean(studentUuid),
     staleTime: STALE_TIMES.entity,
-    retry: retryUnlessClientOrSearchError,
   });
   const [draft, setDraft] = useState<GoalChip[] | null>(null);
   const save = useMutation({

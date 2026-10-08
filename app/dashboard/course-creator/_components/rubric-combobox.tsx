@@ -4,7 +4,6 @@ import { keepPreviousData, useQuery } from '@tanstack/react-query';
 import { Check, Globe } from 'lucide-react';
 import { type EntityOption, EntityCombobox } from '@/components/search/entity-combobox';
 import { CommandGroup, CommandItem } from '@/components/ui/command';
-import { retryUnlessClientOrSearchError } from '@/lib/api-errors';
 import { extractPage } from '@/lib/api-helpers';
 import { STALE_TIMES } from '@/lib/query-client';
 import { withQ } from '@/lib/search/params';
@@ -65,7 +64,6 @@ export function RubricCombobox({
     ...getAssessmentRubricByUuidOptions({ path: { uuid: value ?? '' } }),
     enabled: Boolean(value),
     staleTime: STALE_TIMES.entity,
-    retry: retryUnlessClientOrSearchError,
   });
   const selectedTitle = selectedQuery.data?.data?.title;
 
@@ -126,7 +124,6 @@ function PublicRubricsGroup({
     ...searchPublicRubricsOptions({ query: { ...(q ? { q } : {}), pageable: PAGE } }),
     placeholderData: keepPreviousData,
     staleTime: STALE_TIMES.entity,
-    retry: retryUnlessClientOrSearchError,
   });
   const options = rubricOptions(
     extractPage<AssessmentRubric>(query.data).items.filter(

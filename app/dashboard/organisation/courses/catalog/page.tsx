@@ -26,7 +26,6 @@ import { useCoursesByIds } from '@/hooks/use-batched-lookups';
 import { useSearchErrors } from '@/hooks/use-search-query';
 import { useSearchState, useSearchStatePatch } from '@/hooks/use-search-state';
 import { useUrlSearchQuery } from '@/hooks/use-url-search-query';
-import { retryUnlessClientOrSearchError } from '@/lib/api-errors';
 import { classifySearchError } from '@/lib/search/query';
 import { enumParam, stringParam } from '@/lib/search-state';
 import { useTypeSearch } from '@/src/features/search/hooks/use-type-search';
@@ -255,7 +254,6 @@ export default function CatalogPage() {
       },
     }),
     placeholderData: keepPreviousData,
-    retry: retryUnlessClientOrSearchError,
   });
   useSearchErrors(search.q, programsQuery.error);
   const searchIssue = searchDown

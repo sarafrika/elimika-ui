@@ -3,7 +3,7 @@
 import { Popover, PopoverTrigger } from '@/components/ui/popover';
 import useBundledClassInfo from '@/hooks/use-course-classes';
 import { SearchUnavailable } from '@/components/search/search-unavailable';
-import { isSearchUnavailable, retryUnlessClientOrSearchError } from '@/lib/api-errors';
+import { isSearchUnavailable } from '@/lib/api-errors';
 import { STALE_TIMES } from '@/lib/query-client';
 import {
   getAllClassDefinitionsOptions,
@@ -105,7 +105,6 @@ export default function AvailableClassesPage({
     }),
     enabled: nearMe.active,
     staleTime: STALE_TIMES.live,
-    retry: retryUnlessClientOrSearchError,
   });
   const nearUnavailable = nearMe.active && isSearchUnavailable(nearQuery.error);
   const nearBands = useMemo(() => {

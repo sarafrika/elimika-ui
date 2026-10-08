@@ -8,7 +8,7 @@ import { SectionCard, SectionCardSkeleton } from '@/components/data-display';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { EmptyState } from '@/components/ui/empty-state';
-import { isForbidden, retryUnlessClientOrSearchError } from '@/lib/api-errors';
+import { isForbidden } from '@/lib/api-errors';
 import { getErrorMessage } from '@/lib/error-utils';
 import { STALE_TIMES } from '@/lib/query-client';
 import { getJobCandidatesOptions } from '@/services/client/@tanstack/react-query.gen';
@@ -35,7 +35,6 @@ export function JobSuggestedInstructors({ jobUuid }: { jobUuid: string }) {
     ...getJobCandidatesOptions({ path: { jobUuid }, query: { limit: 10 } }),
     enabled: Boolean(jobUuid),
     staleTime: STALE_TIMES.entity,
-    retry: retryUnlessClientOrSearchError,
   });
 
   if (isForbidden(query.error)) return null;

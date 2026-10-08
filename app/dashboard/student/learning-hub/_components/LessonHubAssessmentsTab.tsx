@@ -1,7 +1,7 @@
 'use client';
 
 import useStudentClassDefinitions from '@/hooks/use-student-class-definition';
-import { isForbidden, retryUnlessClientOrSearchError } from '@/lib/api-errors';
+import { isForbidden } from '@/lib/api-errors';
 import { STALE_TIMES } from '@/lib/query-client';
 import {
   getCourseAssessmentsOptions,
@@ -439,8 +439,6 @@ export default function LessonHubAssessmentsTab() {
     enabled: Boolean(activeRubricUuid),
     staleTime: STALE_TIMES.entity,
     refetchOnWindowFocus: false,
-    // A rubric its author has not shared answers 403; that will not change on retry.
-    retry: retryUnlessClientOrSearchError,
   });
 
   const rubricMatrix = rubricMatrixQuery.data?.data ?? null;

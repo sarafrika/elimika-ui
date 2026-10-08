@@ -8,7 +8,6 @@ import { SearchQueryInput } from '@/components/search/search-input';
 import { SearchNotice } from '@/components/search/search-notice';
 import { useSearchIssue } from '@/hooks/use-search-query';
 import { useUrlSearchQuery } from '@/hooks/use-url-search-query';
-import { retryUnlessClientOrSearchError } from '@/lib/api-errors';
 import { Skeleton } from '@/components/ui/skeleton';
 import type { Course } from '@/services/client';
 import { getAllCoursesOptions } from '@/services/client/@tanstack/react-query.gen';
@@ -49,7 +48,6 @@ export default function CourseMangementPage() {
       query: { pageable: { page, size }, ...(search.q ? { q: search.q } : {}) },
     }),
     placeholderData: keepPreviousData,
-    retry: retryUnlessClientOrSearchError,
   });
   const { data, isSuccess, isFetched, isFetching } = coursesQuery;
   const searchIssue = useSearchIssue(search, coursesQuery.error);

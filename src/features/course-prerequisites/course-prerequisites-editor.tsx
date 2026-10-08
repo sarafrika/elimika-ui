@@ -13,7 +13,7 @@ import { Label } from '@/components/ui/label';
 import { Skeleton } from '@/components/ui/skeleton';
 import Spinner from '@/components/ui/spinner';
 import { Switch } from '@/components/ui/switch';
-import { isForbidden, retryUnlessClientOrSearchError } from '@/lib/api-errors';
+import { isForbidden } from '@/lib/api-errors';
 import { getErrorMessage } from '@/lib/error-utils';
 import type { CoursePrerequisiteDraft, CourseSetupDrafts, CourseSetupSectionRef } from '@/lib/course-setup';
 import { STALE_TIMES } from '@/lib/query-client';
@@ -78,7 +78,6 @@ export function CoursePrerequisitesEditor({
       : { queryKey: getCoursePrerequisitesQueryKey({ path: { uuid: '' } }), queryFn: skipToken }),
     enabled: Boolean(courseUuid),
     staleTime: STALE_TIMES.entity,
-    retry: retryUnlessClientOrSearchError,
   });
   const mutation = useMutation(replaceCoursePrerequisitesMutation());
   const busy = isSaving || mutation.isPending;

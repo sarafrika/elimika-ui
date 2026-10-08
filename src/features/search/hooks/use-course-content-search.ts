@@ -2,7 +2,7 @@
 
 import { keepPreviousData, useQuery } from '@tanstack/react-query';
 import { useSearchErrors } from '@/hooks/use-search-query';
-import { isSearchUnavailable, retryUnlessClientOrSearchError } from '@/lib/api-errors';
+import { isSearchUnavailable } from '@/lib/api-errors';
 import { STALE_TIMES } from '@/lib/query-client';
 import { toSearchTerm } from '@/lib/search/query';
 import { searchCourseContentOptions } from '@/services/client/@tanstack/react-query.gen';
@@ -48,7 +48,6 @@ export function useCourseContentSearch({
     enabled: enabled && Boolean(courseUuid) && Boolean(term),
     placeholderData: keepPreviousData,
     staleTime: STALE_TIMES.live,
-    retry: retryUnlessClientOrSearchError,
   });
   useSearchErrors(term, query.error);
 
