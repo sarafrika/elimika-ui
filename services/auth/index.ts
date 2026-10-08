@@ -80,6 +80,31 @@ function getTokenCacheUserId(token: unknown): string | undefined {
   return getFirstString(typedToken.id, typedToken.email);
 }
 
+// Stamp who the caller is into the token so server guards need no `/me` per navigation.
+// A failed lookup keeps what the token held; the guards then fall back to the API.
+async function stampIdentity(token: JWT): Promise<JWT> {
+  if (typeof token.accessToken !== 'string' || token.error) return token;
+  try {
+    // Imported lazily: the generated client imports this module for its auth hook.
+    const { fetchCurrentUser } = await import('@/services/user/current-user');
+    const user = await fetchCurrentUser(token.accessToken, AbortSignal.timeout(3_000));
+    if (!user?.uuid) return token;
+    const rawDomains: unknown[] = Array.isArray(user.user_domain)
+      ? user.user_domain
+      : [user.user_domain];
+    return {
+      ...token,
+      identity: {
+        uuid: user.uuid,
+        domains: rawDomains.filter((d): d is string => typeof d === 'string' && d.length > 0),
+        hasOrganisationAffiliation: (user.organisation_affiliations?.length ?? 0) > 0,
+      },
+    };
+  } catch {
+    return token;
+  }
+}
+
 /**
  * Swap the refresh token for a fresh access token. Without this an admin session dies
  * quietly after an hour: the expired token is still sent and every call returns 401.
@@ -157,14 +182,14 @@ const config: NextAuthConfig = {
   ],
   callbacks: {
     async jwt({ token, account, user, session, trigger }) {
-      if (trigger === 'update') {
+      if (trigger === 'update' && session) {
         session.user = user;
       }
 
       // Initial sign in
       if (account && user) {
         const decodedToken = decodeJWT(account.access_token!);
-        return {
+        return stampIdentity({
           ...token,
           id: account.providerAccountId,
           accessToken: account.access_token,
@@ -177,16 +202,17 @@ const config: NextAuthConfig = {
           resource_access: decodedToken.resource_access,
           organisation: decodedToken.organisation,
           'organisation-slug': decodedToken['organisation-slug'],
-        };
+        });
       }
 
       // Refresh a minute early so a call in flight never carries an expired token.
       const expiresAt = token.accessTokenExpires as number | undefined;
       if (typeof expiresAt === 'number' && Date.now() < expiresAt - 60_000) {
-        return token;
+        // Onboarding and role changes call `update()`; re-read identity so guards see the new domain.
+        return trigger === 'update' ? stampIdentity(token) : token;
       }
 
-      return refreshAccessToken(token);
+      return stampIdentity(await refreshAccessToken(token));
     },
     async session({ session, token }) {
       if (session.user) {
@@ -206,6 +232,10 @@ const config: NextAuthConfig = {
         organisation: token.organisation,
         'organisation-slug': token['organisation-slug'],
       };
+
+      if (token.identity) {
+        session.identity = token.identity;
+      }
 
       // Include error state if token refresh failed
       if (token.error) {
