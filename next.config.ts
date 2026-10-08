@@ -46,6 +46,7 @@ const remotePatterns = Array.from(
 const nextConfig: NextConfig = {
   /* config options here */
   output: 'standalone',
+  serverExternalPackages: ['undici'],
   experimental: {
     serverActions: {
       bodySizeLimit: '100mb',

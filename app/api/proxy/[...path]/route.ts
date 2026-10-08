@@ -22,6 +22,49 @@ export const revalidate = 0;
 type AuthSession = Session | null;
 type CacheState = 'BYPASS' | 'HIT' | 'MISS' | 'STALE';
 
+// Wall-clock budget for body-less requests only: with a streamed body it would
+// also cover the upload, so those rely on the dispatcher's per-phase timeouts.
+const UPSTREAM_TIMEOUT_MS = 20_000;
+const UNDICI_TIMEOUT_CODES = new Set(['UND_ERR_HEADERS_TIMEOUT', 'UND_ERR_BODY_TIMEOUT']);
+
+class UpstreamTimeoutError extends Error {}
+
+function isUpstreamTimeout(error: unknown) {
+  if (error instanceof UpstreamTimeoutError) {
+    return true;
+  }
+  const cause =
+    error instanceof Error ? (error.cause as { code?: unknown } | undefined) : undefined;
+  return typeof cause?.code === 'string' && UNDICI_TIMEOUT_CODES.has(cause.code);
+}
+
+async function fetchUpstream(
+  url: URL,
+  init: RequestInit & { duplex?: 'half' },
+  clientSignal?: AbortSignal
+) {
+  if (init.body) {
+    return fetch(url, clientSignal ? { ...init, signal: clientSignal } : init);
+  }
+
+  const controller = new AbortController();
+  const timer = setTimeout(
+    () => controller.abort(new UpstreamTimeoutError('Upstream API timed out')),
+    UPSTREAM_TIMEOUT_MS
+  );
+  const signal = clientSignal
+    ? AbortSignal.any([controller.signal, clientSignal])
+    : controller.signal;
+
+  try {
+    return await fetch(url, { ...init, signal });
+  } catch (error) {
+    throw controller.signal.aborted ? controller.signal.reason : error;
+  } finally {
+    clearTimeout(timer);
+  }
+}
+
 const HOP_BY_HOP_HEADERS = new Set([
   'connection',
   'keep-alive',
@@ -161,7 +204,7 @@ async function refreshCachedGet(
   cacheUserId: string,
   cacheKey: string
 ) {
-  const upstreamResponse = await fetch(upstreamUrl, {
+  const upstreamResponse = await fetchUpstream(upstreamUrl, {
     headers: new Headers(headers),
     method: 'GET',
     redirect: 'manual',
@@ -228,7 +271,7 @@ const proxyRequest = async (request: NextRequest, path: string[]) => {
       init.duplex = 'half';
     }
 
-    const upstreamResponse = await fetch(upstreamUrl, init);
+    const upstreamResponse = await fetchUpstream(upstreamUrl, init, request.signal);
     const responseHeaders = new Headers(upstreamResponse.headers);
     sanitizeHeaders(responseHeaders);
 
@@ -251,8 +294,13 @@ const proxyRequest = async (request: NextRequest, path: string[]) => {
       headers: applyPrivateResponseHeaders(responseHeaders, 'BYPASS'),
     });
   } catch (error) {
+    // The browser already went away; nobody reads this, so keep it out of 5xx counts.
+    if (request.signal.aborted) {
+      return new NextResponse(null, { status: 499 });
+    }
     const message = error instanceof Error ? error.message : 'Proxy request failed';
-    return NextResponse.json({ success: false, message }, { status: 500 });
+    const status = isUpstreamTimeout(error) ? 504 : 500;
+    return NextResponse.json({ success: false, message }, { status });
   }
 };
 
