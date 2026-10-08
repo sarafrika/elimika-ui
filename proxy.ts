@@ -14,6 +14,15 @@ function workspaceDomainToSegment(domain: string): string | null {
 export default auth(req => {
   const { pathname } = req.nextUrl;
   const isAuth = !!req.auth;
+  const refreshFailed = req.auth?.error === 'RefreshAccessTokenError';
+
+  // API calls run through here only so an access-token refresh lands in the cookie.
+  if (pathname.startsWith('/api/')) {
+    if (refreshFailed) {
+      return NextResponse.json({ success: false, message: 'Session expired' }, { status: 401 });
+    }
+    return NextResponse.next();
+  }
 
   // The old, un-shareable org-only course URL now resolves to the public,
   // role-independent course page so shared links work for anyone. Checked before the
@@ -31,7 +40,8 @@ export default auth(req => {
   const isProtectedRoute = protectedRoutes.some(route => pathname.startsWith(route));
 
   // If accessing protected route without authentication, redirect to home
-  if (!isAuth && isProtectedRoute) {
+  // A failed refresh sends the user to sign in once; the next request drops the session.
+  if ((!isAuth || refreshFailed) && isProtectedRoute) {
     return redirectToPath(req, '/');
   }
 
@@ -57,11 +67,12 @@ export default auth(req => {
 export const config = {
   matcher: [
     /*
-     * Match all request paths except:
-     * - API routes
-     * - Next.js internal files
+     * Pages plus the API proxy and media routes (so token refreshes are
+     * persisted), excluding other API routes and Next.js internal files.
      */
     '/',
+    '/api/proxy/:path*',
+    '/api/media',
     '/((?!api|_next/static|_next/image|favicon.ico).*)',
   ],
 };
