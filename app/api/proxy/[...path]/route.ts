@@ -22,6 +22,35 @@ export const revalidate = 0;
 type AuthSession = Session | null;
 type CacheState = 'BYPASS' | 'HIT' | 'MISS' | 'STALE';
 
+// Bounds the wait for upstream response headers; body streaming is bounded by
+// the dispatcher's bodyTimeout (lib/server/api-dispatcher.ts).
+const UPSTREAM_TIMEOUT_MS = 20_000;
+
+class UpstreamTimeoutError extends Error {}
+
+async function fetchUpstream(
+  url: URL,
+  init: RequestInit & { duplex?: 'half' },
+  clientSignal?: AbortSignal
+) {
+  const controller = new AbortController();
+  const timer = setTimeout(
+    () => controller.abort(new UpstreamTimeoutError('Upstream API timed out')),
+    UPSTREAM_TIMEOUT_MS
+  );
+  const signal = clientSignal
+    ? AbortSignal.any([controller.signal, clientSignal])
+    : controller.signal;
+
+  try {
+    return await fetch(url, { ...init, signal });
+  } catch (error) {
+    throw controller.signal.aborted ? controller.signal.reason : error;
+  } finally {
+    clearTimeout(timer);
+  }
+}
+
 const HOP_BY_HOP_HEADERS = new Set([
   'connection',
   'keep-alive',
@@ -161,7 +190,7 @@ async function refreshCachedGet(
   cacheUserId: string,
   cacheKey: string
 ) {
-  const upstreamResponse = await fetch(upstreamUrl, {
+  const upstreamResponse = await fetchUpstream(upstreamUrl, {
     headers: new Headers(headers),
     method: 'GET',
     redirect: 'manual',
@@ -228,7 +257,7 @@ const proxyRequest = async (request: NextRequest, path: string[]) => {
       init.duplex = 'half';
     }
 
-    const upstreamResponse = await fetch(upstreamUrl, init);
+    const upstreamResponse = await fetchUpstream(upstreamUrl, init, request.signal);
     const responseHeaders = new Headers(upstreamResponse.headers);
     sanitizeHeaders(responseHeaders);
 
@@ -252,7 +281,8 @@ const proxyRequest = async (request: NextRequest, path: string[]) => {
     });
   } catch (error) {
     const message = error instanceof Error ? error.message : 'Proxy request failed';
-    return NextResponse.json({ success: false, message }, { status: 500 });
+    const status = error instanceof UpstreamTimeoutError ? 504 : 500;
+    return NextResponse.json({ success: false, message }, { status });
   }
 };
 
