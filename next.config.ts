@@ -50,6 +50,8 @@ const nextConfig: NextConfig = {
     serverActions: {
       bodySizeLimit: '100mb',
     },
+    // /api/proxy runs through proxy.ts, which clones request bodies up to this cap (default 10mb).
+    proxyClientMaxBodySize: '100mb',
     optimizePackageImports: ['lucide-react', 'recharts', 'date-fns'],
   },
   images: {
