@@ -3,7 +3,7 @@
 import { keepPreviousData, useQuery } from '@tanstack/react-query';
 import { useMemo } from 'react';
 import { useSearchErrors } from '@/hooks/use-search-query';
-import { isBadRequest, isSearchUnavailable, retryUnlessClientOrSearchError } from '@/lib/api-errors';
+import { isBadRequest, isSearchUnavailable } from '@/lib/api-errors';
 import { STALE_TIMES } from '@/lib/query-client';
 import { toSearchTerm } from '@/lib/search/query';
 import { type TypeSearchArgs, typeSearchOptions } from '@/lib/search/type-search';
@@ -21,7 +21,6 @@ export function useTypeSearch({ enabled = true, ...args }: TypeSearchArgs & { en
     enabled,
     placeholderData: keepPreviousData,
     staleTime: STALE_TIMES.live,
-    retry: retryUnlessClientOrSearchError,
   });
   useSearchErrors(q, query.error);
 

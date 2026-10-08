@@ -38,7 +38,6 @@ import { SearchNotice } from '@/components/search/search-notice';
 import { useOrganisation } from '@/context/organisation-context';
 import { useSearchIssue } from '@/hooks/use-search-query';
 import { useUrlSearchQuery } from '@/hooks/use-url-search-query';
-import { retryUnlessClientOrSearchError } from '@/lib/api-errors';
 import { useInstructorsByIds } from '@/hooks/use-batched-lookups';
 import { extractList, extractPage } from '@/lib/api-helpers';
 import { cn } from '@/lib/utils';
@@ -100,7 +99,6 @@ export default function ClassesPage() {
     }),
     enabled: Boolean(organisationUuid),
     placeholderData: keepPreviousData,
-    retry: retryUnlessClientOrSearchError,
   });
   const searchIssue = useSearchIssue(search, classesQuery.error);
   const countsQuery = useQuery({

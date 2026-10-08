@@ -18,7 +18,6 @@ import { Skeleton } from '@/components/ui/skeleton';
 import Spinner from '@/components/ui/spinner';
 import { useCoursesByIds } from '@/hooks/use-batched-lookups';
 import { useSearchIssue, useSearchQuery } from '@/hooks/use-search-query';
-import { retryUnlessClientOrSearchError } from '@/lib/api-errors';
 import { withQ } from '@/lib/search/params';
 import { STALE_TIMES } from '@/lib/query-client';
 import { searchCoursesInfiniteOptions } from '@/services/client/@tanstack/react-query.gen';
@@ -48,7 +47,6 @@ export default function ProgramCourses({ creatorUuid }: { creatorUuid: string })
       },
     }),
     placeholderData: keepPreviousData,
-    retry: retryUnlessClientOrSearchError,
     initialPageParam: 0,
     getNextPageParam: (lastPage, pages) => {
       if (lastPage.error || lastPage.success === false) return undefined;

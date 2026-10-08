@@ -9,7 +9,6 @@ import { SearchQueryInput } from '@/components/search/search-input';
 import { SearchNotice } from '@/components/search/search-notice';
 import { useSearchIssue } from '@/hooks/use-search-query';
 import { useUrlSearchQuery } from '@/hooks/use-url-search-query';
-import { retryUnlessClientOrSearchError } from '@/lib/api-errors';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import {
@@ -58,7 +57,6 @@ export default function AllCoursesPage() {
     refetchOnWindowFocus: false,
     refetchOnReconnect: false,
     placeholderData: keepPreviousData,
-    retry: retryUnlessClientOrSearchError,
   });
   const { data, isLoading } = coursesQuery;
 
@@ -69,7 +67,6 @@ export default function AllCoursesPage() {
     refetchOnWindowFocus: false,
     refetchOnReconnect: false,
     placeholderData: keepPreviousData,
-    retry: retryUnlessClientOrSearchError,
   });
   const { data: programsData } = programsQuery;
   const searchIssue = useSearchIssue(search, coursesQuery.error, programsQuery.error);

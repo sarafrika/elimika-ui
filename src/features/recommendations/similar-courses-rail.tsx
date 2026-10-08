@@ -8,7 +8,6 @@ import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { EmptyState } from '@/components/ui/empty-state';
 import { Skeleton } from '@/components/ui/skeleton';
-import { retryUnlessClientOrSearchError } from '@/lib/api-errors';
 import { STALE_TIMES } from '@/lib/query-client';
 import { cn } from '@/lib/utils';
 import { getSimilarCoursesOptions } from '@/services/client/@tanstack/react-query.gen';
@@ -43,7 +42,6 @@ export function SimilarCoursesRail({
     }),
     enabled: Boolean(courseUuid),
     staleTime: STALE_TIMES.entity,
-    retry: retryUnlessClientOrSearchError,
   });
 
   const courses = (query.data?.data ?? []).filter(

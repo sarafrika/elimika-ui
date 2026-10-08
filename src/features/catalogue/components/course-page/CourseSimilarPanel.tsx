@@ -6,7 +6,6 @@ import type { MouseEvent } from 'react';
 import { surfaceTheme } from '@/components/data-display/page-shell';
 import { Button } from '@/components/ui/button';
 import { EmptyState } from '@/components/ui/empty-state';
-import { retryUnlessClientOrSearchError } from '@/lib/api-errors';
 import { STALE_TIMES } from '@/lib/query-client';
 import { getSimilarCoursesOptions } from '@/services/client/@tanstack/react-query.gen';
 import type { RecommendedCourse } from '@/services/client/types.gen';
@@ -44,7 +43,6 @@ export function CourseSimilarPanel({
     ...getSimilarCoursesOptions({ path: { uuid: courseUuid }, query: { limit: SIMILAR_LIMIT } }),
     enabled: Boolean(courseUuid),
     staleTime: STALE_TIMES.entity,
-    retry: retryUnlessClientOrSearchError,
   });
 
   const courses = (query.data?.data ?? []).filter(

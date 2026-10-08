@@ -42,7 +42,6 @@ import { useSearchErrors } from '@/hooks/use-search-query';
 import { useSearchState, useSearchStatePatch } from '@/hooks/use-search-state';
 import useStudentClassDefinitions from '@/hooks/use-student-class-definition';
 import { useUrlSearchQuery } from '@/hooks/use-url-search-query';
-import { retryUnlessClientOrSearchError } from '@/lib/api-errors';
 import { categoryWithDescendants, matchesCategoryFilter } from '@/lib/category-filters';
 import { STALE_TIMES } from '@/lib/query-client';
 import type { RateCard } from '@/lib/rate-card';
@@ -560,7 +559,6 @@ export function SharedCoursesPage({ domain }: SharedCoursesPageProps) {
     }),
     refetchOnWindowFocus: false,
     placeholderData: keepPreviousData,
-    retry: retryUnlessClientOrSearchError,
   });
   const { data: programsResponse, isLoading: programsLoading } = programsQuery;
   useSearchErrors(search.q, programsQuery.error);

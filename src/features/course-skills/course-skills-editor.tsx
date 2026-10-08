@@ -18,7 +18,7 @@ import {
 } from '@/components/ui/select';
 import { Skeleton } from '@/components/ui/skeleton';
 import Spinner from '@/components/ui/spinner';
-import { isForbidden, retryUnlessClientOrSearchError } from '@/lib/api-errors';
+import { isForbidden } from '@/lib/api-errors';
 import { getErrorMessage } from '@/lib/error-utils';
 import type { CourseSetupDrafts, CourseSetupSectionRef, CourseSkillDraft } from '@/lib/course-setup';
 import { useDifficultyLevels } from '@/hooks/use-difficultyLevels';
@@ -91,7 +91,6 @@ export function CourseSkillsEditor({
       : { queryKey: getCourseSkillsQueryKey({ path: { uuid: '' } }), queryFn: skipToken }),
     enabled: Boolean(courseUuid),
     staleTime: STALE_TIMES.entity,
-    retry: retryUnlessClientOrSearchError,
   });
   const mutation = useMutation(replaceCourseSkillsMutation());
   const busy = isSaving || mutation.isPending;
