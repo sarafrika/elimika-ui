@@ -1,5 +1,6 @@
 // @ts-nocheck -- pre-existing @hey-api generated-client type drift (see memory: elimika-ui-typecheck)
 import { toNumber } from '@/lib/metrics';
+import { STALE_TIMES } from '@/lib/query-client';
 import { fetchClient } from '@/services/api/fetch-client';
 import { useMutation, useQuery, useQueryClient, type UseQueryOptions } from '@tanstack/react-query';
 import { z } from 'zod';
@@ -238,6 +239,55 @@ async function markAllNotificationsRead(domain?: string) {
   return notificationActionResponseSchema.parse(response.data ?? {});
 }
 
+const MAX_BULK_POPUP_UUIDS = 200;
+
+async function markPopupsSeenInBulk(uuids: string[], domain?: string, drainAll = false) {
+  const response = await fetchClient.POST(
+    '/api/v1/notifications' as never,
+    {
+      params: {
+        query: {
+          action: 'popup_seen',
+          domain,
+          uuids: drainAll ? undefined : uuids.slice(0, MAX_BULK_POPUP_UUIDS),
+        },
+      },
+    } as never
+  );
+
+  if (response.error) {
+    throw new Error(
+      typeof response.error === 'string' ? response.error : 'Failed to mark popups seen'
+    );
+  }
+
+  return notificationActionResponseSchema.parse(response.data ?? {});
+}
+
+// One bulk request; backends without bulk popup_seen reject it, so fall back to per-item calls.
+async function markPopupsSeen({ uuids, domain, drainAll }: MarkPopupsSeenInput) {
+  if (uuids.length === 0 && !drainAll) return;
+  try {
+    await markPopupsSeenInBulk(uuids, domain, drainAll);
+  } catch {
+    await Promise.all(uuids.map(uuid => applyNotificationAction(uuid, 'popup_seen')));
+  }
+}
+
+interface MarkPopupsSeenInput {
+  uuids: string[];
+  domain?: string;
+  /** Stamp every unseen popup in the domain, not only `uuids` (bulk endpoint only). */
+  drainAll?: boolean;
+}
+
+const isPopupOrCountsKey = (queryKey: readonly unknown[]) => {
+  if (queryKey[0] !== 'notifications') return false;
+  if (queryKey[1] === 'counts') return true;
+  const params = queryKey[2] as NotificationListParams | undefined;
+  return queryKey[1] === 'list' && params?.presentation === 'POPUP';
+};
+
 export function useNotifications(
   params: NotificationListParams,
   options?: Partial<UseQueryOptions<NotificationListResult, Error>>
@@ -247,7 +297,8 @@ export function useNotifications(
   return useQuery({
     queryKey: notificationListQueryKey(normalizedParams),
     queryFn: () => fetchNotifications(normalizedParams),
-    refetchInterval: 30_000,
+    staleTime: STALE_TIMES.live,
+    refetchInterval: 60_000,
     ...options,
   });
 }
@@ -259,7 +310,8 @@ export function useNotificationCounts(
   return useQuery({
     queryKey: notificationCountsQueryKey(domain),
     queryFn: () => fetchNotificationCounts(domain),
-    refetchInterval: 30_000,
+    staleTime: STALE_TIMES.live,
+    refetchInterval: 60_000,
     ...options,
   });
 }
@@ -272,6 +324,17 @@ export function useNotificationAction() {
       applyNotificationAction(uuid, action),
     onSettled: () => {
       queryClient.invalidateQueries({ queryKey: ['notifications'] });
+    },
+  });
+}
+
+export function useMarkPopupsSeen() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: markPopupsSeen,
+    onSettled: () => {
+      queryClient.invalidateQueries({ predicate: query => isPopupOrCountsKey(query.queryKey) });
     },
   });
 }
