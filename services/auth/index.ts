@@ -86,8 +86,12 @@ type RefreshEntry = { promise: Promise<TokenPatch>; reuseUntil: number };
 const REFRESH_FAILED: TokenPatch = { error: 'RefreshAccessTokenError' };
 const REFRESH_EARLY_MS = 60_000;
 const FAILED_REFRESH_MEMORY_MS = 5 * 60_000;
+const TRANSIENT_FAILURE_MEMORY_MS = 10_000;
+const REFRESH_TIMEOUT_MS = 10_000;
+// Keycloak outage or timeout: keep the current token and retry shortly, never end the session.
+const REFRESH_DEFERRED: TokenPatch = {};
 
-// One map per process, shared by proxy.ts and route handlers even across bundles.
+// One map per process, shared by proxy.ts and route handlers; needs both on the Node runtime.
 const refreshesKey = Symbol.for('elimika.auth.refreshes');
 const refreshes: Map<string, RefreshEntry> =
   ((globalThis as Record<symbol, unknown>)[refreshesKey] as
@@ -96,8 +100,8 @@ const refreshes: Map<string, RefreshEntry> =
   ((globalThis as Record<symbol, unknown>)[refreshesKey] = new Map<string, RefreshEntry>());
 
 /**
- * Swap the refresh token for a fresh access token. On failure the patch carries
- * `RefreshAccessTokenError` so the session is marked and the user is sent to sign in.
+ * Swap the refresh token for a fresh access token. A rejected refresh token marks the
+ * session `RefreshAccessTokenError`; network errors and 5xx keep the current token.
  */
 async function refreshAccessToken(token: JWT): Promise<TokenPatch> {
   try {
@@ -119,9 +123,14 @@ async function refreshAccessToken(token: JWT): Promise<TokenPatch> {
         client_secret: clientSecret,
         refresh_token: refreshToken,
       }),
+      signal: AbortSignal.timeout(REFRESH_TIMEOUT_MS),
     });
 
-    const refreshed = (await response.json()) as {
+    if (!response.ok && response.status !== 400 && response.status !== 401) {
+      return REFRESH_DEFERRED;
+    }
+
+    const refreshed = (await response.json().catch(() => ({}))) as {
       access_token?: string;
       refresh_token?: string;
       expires_in?: number;
@@ -146,7 +155,7 @@ async function refreshAccessToken(token: JWT): Promise<TokenPatch> {
       error: undefined,
     };
   } catch {
-    return REFRESH_FAILED;
+    return REFRESH_DEFERRED;
   }
 }
 
@@ -178,7 +187,7 @@ async function refreshOnce(token: JWT): Promise<JWT> {
       pending.reuseUntil =
         typeof patch.accessTokenExpires === 'number'
           ? patch.accessTokenExpires - REFRESH_EARLY_MS
-          : Date.now() + FAILED_REFRESH_MEMORY_MS;
+          : Date.now() + (patch.error ? FAILED_REFRESH_MEMORY_MS : TRANSIENT_FAILURE_MEMORY_MS);
     });
   }
 
