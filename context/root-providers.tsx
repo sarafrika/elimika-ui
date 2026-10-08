@@ -1,5 +1,10 @@
 'use client';
 
+import { createSyncStoragePersister } from '@tanstack/query-sync-storage-persister';
+import { PersistQueryClientProvider } from '@tanstack/react-query-persist-client';
+import dynamic from 'next/dynamic';
+import { SessionProvider } from 'next-auth/react';
+import { type ReactNode, useState } from 'react';
 import { RumReporter } from '@/components/perf/rum-reporter';
 import { TimeZoneProvider } from '@/context/timezone-context';
 import {
@@ -9,19 +14,14 @@ import {
   makeQueryClient,
 } from '@/lib/query-client';
 import { isVolatileGeneratedQuery } from '@/src/features/dashboard/workflow-query-invalidation';
-import { createSyncStoragePersister } from '@tanstack/query-sync-storage-persister';
-import { PersistQueryClientProvider } from '@tanstack/react-query-persist-client';
-import { SessionProvider } from 'next-auth/react';
-import dynamic from 'next/dynamic';
-import { type ReactNode, useState } from 'react';
 
 const ReactQueryDevtools =
   process.env.NODE_ENV === 'development'
     ? dynamic(() =>
-      import('@tanstack/react-query-devtools').then(m => ({
-        default: m.ReactQueryDevtools,
-      }))
-    )
+        import('@tanstack/react-query-devtools').then(m => ({
+          default: m.ReactQueryDevtools,
+        }))
+      )
     : null;
 
 export function RootProviders({ children }: { children: ReactNode }) {
@@ -51,7 +51,7 @@ export function RootProviders({ children }: { children: ReactNode }) {
         });
       }}
     >
-      <SessionProvider>
+      <SessionProvider refetchOnWindowFocus={false}>
         <TimeZoneProvider>{children}</TimeZoneProvider>
         <RumReporter />
       </SessionProvider>
