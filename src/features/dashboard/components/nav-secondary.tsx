@@ -35,6 +35,7 @@ export function NavSecondary({
             <SidebarMenuItem key={`${item.title}-${index}`}>
               <SidebarMenuButton asChild size='sm' isActive={item.isActive} tooltip={item.title}>
                 <Link
+                  prefetch={false}
                   href={
                     item.launchInNewTab
                       ? item.url || '#'

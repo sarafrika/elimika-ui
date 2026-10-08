@@ -90,7 +90,7 @@ export function AppSidebar({
 
           <Link
             className='hover:bg-sidebar-accent flex min-w-0 flex-1 items-center gap-2 rounded-md px-2 py-1.5 transition-colors group-data-[collapsible=icon]:hidden'
-            prefetch
+            prefetch={false}
             href={roleScopedDashboardPath(activeDomain, '/dashboard/overview')}
           >
             <div className='bg-sidebar-primary text-sidebar-primary-foreground flex aspect-square size-8 items-center justify-center rounded-lg'>
