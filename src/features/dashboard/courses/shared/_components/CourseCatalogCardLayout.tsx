@@ -6,7 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
 import { cn } from '@/lib/utils';
-import { isAuthenticatedMediaUrl, toAuthenticatedMediaUrl } from '@/src/lib/media-url';
+import { toAuthenticatedMediaUrl } from '@/src/lib/media-url';
 import { BookOpen, GraduationCap, type LucideIcon, Play, Star } from 'lucide-react';
 import Link from 'next/link';
 import { type ReactNode, useState } from 'react';
@@ -81,7 +81,6 @@ export function CourseCatalogCardLayout({
             fill
             sizes='(max-width: 640px) 100vw, (max-width: 1024px) 50vw, (max-width: 1280px) 33vw, 25vw'
             className='object-cover transition-transform duration-500 group-hover:scale-105'
-            unoptimized={isAuthenticatedMediaUrl(imageUrl)}
             fallback={
               <div
                 className={cn(
@@ -172,7 +171,7 @@ export function CourseCatalogCardLayout({
         </div>
 
         {!card.reviewCount ? (
-          <span className='text-xs text-muted-foreground'>No reviews yet</span>
+          <span className='text-muted-foreground text-xs'>No reviews yet</span>
         ) : (
           <StarRatingSummary
             rating={card.rating ?? 0}

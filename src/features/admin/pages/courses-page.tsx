@@ -103,7 +103,6 @@ export function CoursesPage() {
                   fill
                   sizes='40px'
                   className='object-cover'
-                  unoptimized
                   fallback={
                     <span className='flex size-full items-center justify-center'>
                       <BookOpen className='text-muted-foreground size-4' />
