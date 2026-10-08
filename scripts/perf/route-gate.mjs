@@ -11,13 +11,14 @@ const flag = name => {
 };
 const baseUrl = (args.find(a => a.startsWith('http')) ?? 'http://localhost:3000').replace(/\/$/, '');
 const routesArg = flag('--routes') ?? 'scripts/perf/route-gate.routes.json';
-const baselinePath = flag('--baseline') ?? 'docs/perf/route-gate-baseline.json';
 const jsonPath = flag('--json');
 const domain = flag('--domain');
-const runs = Math.max(1, Number(flag('--runs') ?? 3));
+const baselinePath =
+  flag('--baseline') ?? `docs/perf/route-gate-baseline${domain ? `-${domain}` : ''}.json`;
+const runs = Math.max(1, Number(flag('--runs') ?? 5));
 const defaultBudget = Number(flag('--budget') ?? 12);
 const maxRegression = Number(flag('--max-regression') ?? 0.15);
-const minDeltaMs = Number(flag('--min-delta-ms') ?? 0);
+const minDeltaMs = Number(flag('--min-delta-ms') ?? 250);
 const updateBaseline = args.includes('--update-baseline');
 let storageState = flag('--storage-state') ?? '.perf/auth.json';
 
@@ -46,11 +47,24 @@ if (domain) {
   });
   state.origins = (state.origins ?? []).filter(o => !o.origin.includes(host));
   fs.mkdirSync('.perf', { recursive: true });
-  storageState = `.perf/route-gate-auth-${domain}.json`;
+  storageState = `.perf/route-gate-auth-${domain}-${process.pid}.json`;
   fs.writeFileSync(storageState, JSON.stringify(state));
 }
 
-/** Routes come from a JSON array (strings or { path, budget }), a text file, or a comma list. */
+// Mirrors DOMAIN_TO_SEGMENT in src/features/dashboard/lib/dashboard-url.ts.
+const DOMAIN_SEGMENT = {
+  student: 'student',
+  instructor: 'instructor',
+  admin: 'admin',
+  parent: 'parent',
+  course_creator: 'course-creator',
+  organisation: 'organisation',
+  organisation_user: 'organisation',
+};
+const gateDomain = domain ?? 'instructor';
+const toPath = p => (p.startsWith('/') ? p : `/dashboard/${DOMAIN_SEGMENT[gateDomain]}/${p}`);
+
+/** Routes: JSON array or { <domain>: [...] } map, a text file, or a comma list; bare paths are role-scoped. */
 function loadRoutes(source) {
   let entries;
   if (fs.existsSync(source)) {
@@ -61,9 +75,17 @@ function loadRoutes(source) {
   } else {
     entries = source.split(',').map(p => p.trim()).filter(Boolean);
   }
+  if (!Array.isArray(entries)) {
+    if (!DOMAIN_SEGMENT[gateDomain] || !entries[gateDomain]) {
+      console.error(`route-gate: no route list for domain "${gateDomain}" in ${source}.`);
+      process.exit(1);
+    }
+    entries = entries[gateDomain];
+  }
   return entries.map(e => (typeof e === 'string' ? { path: e } : e)).map(e => ({
-    path: e.path,
+    path: toPath(e.path),
     budget: Number(e.budget ?? defaultBudget),
+    allowRedirect: Boolean(e.allowRedirect),
   }));
 }
 
@@ -89,7 +111,13 @@ async function measure(browser, path) {
   page.on('request', req => {
     lastActivity = Date.now();
     if (isApiRequest(req.url())) {
-      requests.push({ key: `${req.method()} ${req.url()}`, url: req.url(), end: null, status: null });
+      requests.push({
+        key: `${req.method()} ${req.url()}`,
+        url: req.url(),
+        start: Date.now(),
+        end: null,
+        status: null,
+      });
     }
   });
   page.on('response', res => {
@@ -107,21 +135,22 @@ async function measure(browser, path) {
 
   const navStart = Date.now();
   try {
-    await page.goto(`${baseUrl}${path}`, { waitUntil: 'domcontentloaded', timeout: HARD_CAP_MS });
+    const doc = await page.goto(`${baseUrl}${path}`, { waitUntil: 'domcontentloaded', timeout: HARD_CAP_MS });
     while (Date.now() - lastActivity < QUIET_MS && Date.now() - navStart < HARD_CAP_MS) {
       await page.waitForTimeout(250);
     }
     const finalUrl = page.url();
     const settled = requests.filter(r => r.end !== null);
-    // A retried 4xx: the same method + URL requested again after a 4xx response.
+    // A retried 4xx: the same method + URL started again after the 4xx response arrived.
     const retried = new Set();
-    requests.forEach((r, i) => {
-      if (r.status >= 400 && r.status < 500 && requests.slice(i + 1).some(n => n.key === r.key)) {
+    requests.forEach(r => {
+      if (r.status >= 400 && r.status < 500 && requests.some(n => n !== r && n.key === r.key && n.start >= r.end)) {
         retried.add(`${r.status} ${label(r.key)}`);
       }
     });
     return {
       finalUrl,
+      status: doc?.status() ?? null,
       requests: requests.length,
       timeToDataMs: settled.length ? Math.max(...settled.map(r => r.end)) - navStart : null,
       retried4xx: [...retried],
@@ -158,8 +187,15 @@ for (const route of routes) {
   const finalPath = new URL(samples[0].finalUrl).pathname;
   if (!samples[0].finalUrl.startsWith(baseUrl)) {
     failures.push(`${route.path}: left the app (${samples[0].finalUrl}) — is the session still valid?`);
+  } else if (finalPath !== route.path && !route.allowRedirect) {
+    failures.push(`${route.path}: redirected to ${finalPath} (set "allowRedirect": true if expected)`);
   }
+  const badStatus = samples.find(s => s.status !== null && s.status >= 400);
+  if (badStatus) failures.push(`${route.path}: document returned HTTP ${badStatus.status}`);
   const requests = Math.max(...samples.map(s => s.requests));
+  if (requests === 0) {
+    failures.push(`${route.path}: 0 API requests — the page likely did not render real data`);
+  }
   const ttd = samples.map(s => s.timeToDataMs).filter(v => v !== null);
   const p95 = percentile(ttd, 95);
   allSamples.push(...ttd);
@@ -197,6 +233,7 @@ for (const route of routes) {
 }
 
 await browser.close();
+if (domain) fs.rmSync(storageState, { force: true });
 
 const overallP95 = percentile(allSamples, 95);
 const baseOverall = baseline?.overallP95TimeToDataMs ?? null;
