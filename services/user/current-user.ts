@@ -14,9 +14,15 @@ import { getCurrentUser } from '@/services/client/sdk.gen';
  * longer does, so it is the one-line delegation that comment always promised: the generated
  * `getCurrentUser` carries the URL, the `ApiResponse<User>` envelope and the date transformer.
  */
-export async function fetchCurrentUser(): Promise<User | null> {
+export async function fetchCurrentUser(
+  accessToken?: string,
+  signal?: AbortSignal
+): Promise<User | null> {
   const { data, error } = await getCurrentUser({
     security: [{ scheme: 'bearer', type: 'http' }],
+    // The Auth.js jwt callback has the token before any session cookie exists to read it from.
+    ...(accessToken ? { auth: accessToken } : {}),
+    ...(signal ? { signal } : {}),
     // Identity is per-caller but the URL is not, and it changes the moment a user finishes
     // onboarding into a new domain. Nothing about it should sit in Next's data cache.
     next: { revalidate: 0 },
