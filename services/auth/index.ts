@@ -87,6 +87,57 @@ function getTokenCacheUserId(token: unknown): string | undefined {
  * sign-in instead of showing empty pages.
  */
 async function refreshAccessToken(token: JWT): Promise<JWT> {
+  const refreshToken = token.refreshToken;
+  if (typeof refreshToken !== 'string') {
+    return requestAccessTokenRefresh(token);
+  }
+
+  const cached = refreshFlights.get(refreshToken);
+  if (cached && (cached.reuseUntil === null || Date.now() < cached.reuseUntil)) {
+    return mergeRefreshed(token, await cached.promise);
+  }
+
+  const flight: RefreshFlight = { promise: requestAccessTokenRefresh(token), reuseUntil: null };
+  refreshFlights.set(refreshToken, flight);
+  const refreshed = await flight.promise;
+  if (refreshed.error || typeof refreshed.accessTokenExpires !== 'number') {
+    refreshFlights.delete(refreshToken);
+  } else {
+    flight.reuseUntil = refreshed.accessTokenExpires - 60_000;
+    pruneRefreshFlights();
+  }
+  return refreshed;
+}
+
+type RefreshFlight = { promise: Promise<JWT>; reuseUntil: number | null };
+
+// One Keycloak refresh per old refresh token: concurrent route handlers cannot persist
+// the rotated cookie, so they share the result until the new token nears expiry.
+const refreshFlights = new Map<string, RefreshFlight>();
+
+function pruneRefreshFlights() {
+  const now = Date.now();
+  for (const [key, flight] of refreshFlights) {
+    if (flight.reuseUntil !== null && now >= flight.reuseUntil) refreshFlights.delete(key);
+  }
+}
+
+function mergeRefreshed(token: JWT, refreshed: JWT): JWT {
+  return {
+    ...token,
+    accessToken: refreshed.accessToken,
+    refreshToken: refreshed.refreshToken,
+    accessTokenExpires: refreshed.accessTokenExpires,
+    id_token: refreshed.id_token,
+    realm_access: refreshed.realm_access,
+    resource_access: refreshed.resource_access,
+    organisation: refreshed.organisation,
+    'organisation-slug': refreshed['organisation-slug'],
+    error: refreshed.error,
+  };
+}
+
+async function requestAccessTokenRefresh(token: JWT): Promise<JWT> {
   try {
     const issuer = process.env.KEYCLOAK_ISSUER;
     const clientId = process.env.KEYCLOAK_CLIENT_ID;
