@@ -1,5 +1,11 @@
 'use client';
 
+import { createSyncStoragePersister } from '@tanstack/query-sync-storage-persister';
+import { PersistQueryClientProvider } from '@tanstack/react-query-persist-client';
+import dynamic from 'next/dynamic';
+import { usePathname } from 'next/navigation';
+import { type ReactNode, useState } from 'react';
+import { AuthSessionProvider } from '@/context/auth-session-provider';
 import { TimeZoneProvider } from '@/context/timezone-context';
 import {
   CLIENT_QUERY_CACHE_BUSTER,
@@ -8,11 +14,6 @@ import {
   makeQueryClient,
 } from '@/lib/query-client';
 import { isVolatileGeneratedQuery } from '@/src/features/dashboard/workflow-query-invalidation';
-import { createSyncStoragePersister } from '@tanstack/query-sync-storage-persister';
-import { PersistQueryClientProvider } from '@tanstack/react-query-persist-client';
-import { SessionProvider } from 'next-auth/react';
-import dynamic from 'next/dynamic';
-import { type ReactNode, useState } from 'react';
 
 const ReactQueryDevtools =
   process.env.NODE_ENV === 'development'
@@ -24,6 +25,9 @@ const ReactQueryDevtools =
     : null;
 
 export function RootProviders({ children }: { children: ReactNode }) {
+  // The dashboard layout mounts its own provider seeded with the server session.
+  const pathname = usePathname() ?? '';
+  const ownsSession = pathname !== '/dashboard' && !pathname.startsWith('/dashboard/');
   const [queryClient] = useState(makeQueryClient);
   const [persister] = useState(() =>
     createSyncStoragePersister({
@@ -50,9 +54,13 @@ export function RootProviders({ children }: { children: ReactNode }) {
         });
       }}
     >
-      <SessionProvider>
+      {ownsSession ? (
+        <AuthSessionProvider>
+          <TimeZoneProvider>{children}</TimeZoneProvider>
+        </AuthSessionProvider>
+      ) : (
         <TimeZoneProvider>{children}</TimeZoneProvider>
-      </SessionProvider>
+      )}
       {ReactQueryDevtools ? <ReactQueryDevtools initialIsOpen={false} /> : null}
     </PersistQueryClientProvider>
   );
