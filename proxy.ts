@@ -3,6 +3,7 @@ import type { UserDomain } from '@/lib/types';
 import { domainToRouteSegment } from '@/src/features/dashboard/lib/dashboard-url';
 import { NextResponse } from 'next/server';
 import { redirectToPath } from '@/lib/site-redirect';
+import { SESSION_EXPIRED_HEADER } from '@/services/auth/session-expired';
 
 const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
@@ -19,7 +20,10 @@ export default auth(req => {
   // API calls run through here only so an access-token refresh lands in the cookie.
   if (pathname.startsWith('/api/')) {
     if (refreshFailed) {
-      return NextResponse.json({ success: false, message: 'Session expired' }, { status: 401 });
+      return NextResponse.json(
+        { success: false, message: 'Session expired' },
+        { status: 401, headers: { [SESSION_EXPIRED_HEADER]: '1' } }
+      );
     }
     return NextResponse.next();
   }
@@ -64,6 +68,7 @@ export default auth(req => {
   return NextResponse.next();
 });
 
+// Must stay on the Node runtime: the refresh dedupe map in services/auth is per process.
 export const config = {
   matcher: [
     /*

@@ -5,6 +5,7 @@ import {
 } from '@/src/features/dashboard/lib/active-domain-storage';
 import { API_BASE_URL } from './services/api/base-url';
 import { getAuthToken } from './services/auth/get-token';
+import { redirectIfSessionExpired } from './services/auth/session-expired';
 
 function appendQueryParam(parts: string[], name: string, value: unknown) {
   if (value === undefined || value === null) {
@@ -71,15 +72,18 @@ function serializeQuery(queryParams: unknown) {
  * is built once, when the module loads, while the answer changes every time the
  * user switches dashboards. Reading it per request is the point.
  */
-const actingDomainFetch: typeof globalThis.fetch = (input, init) => {
+const actingDomainFetch: typeof globalThis.fetch = async (input, init) => {
   const actingDomain = readActingDomain();
-  if (!actingDomain) {
-    return globalThis.fetch(input, init);
+  let requestInit = init;
+  if (actingDomain) {
+    const headers = new Headers(init?.headers);
+    headers.set(ACTING_DOMAIN_HEADER, actingDomain);
+    requestInit = { ...init, headers };
   }
 
-  const headers = new Headers(init?.headers);
-  headers.set(ACTING_DOMAIN_HEADER, actingDomain);
-  return globalThis.fetch(input, { ...init, headers });
+  const response = await globalThis.fetch(input, requestInit);
+  redirectIfSessionExpired(response);
+  return response;
 };
 
 export const createClientConfig: CreateClientConfig = config => ({
