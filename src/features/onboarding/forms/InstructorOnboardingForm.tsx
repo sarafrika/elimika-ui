@@ -13,6 +13,7 @@ import { Form } from '@/components/ui/form';
 import Spinner from '@/components/ui/spinner';
 import { getErrorMessage } from '@/lib/error-utils';
 import { createInstructor } from '@/services/client';
+import { useRefreshSessionIdentity } from '@/src/features/auth/use-refresh-session-identity';
 import { buildDashboardSwitchPath } from '@/src/features/dashboard/lib/active-domain-storage';
 import { useUserProfile } from '@/src/features/profile/context/profile-context';
 import { InstructorLocationFields } from '@/src/features/profile/forms/shared/components/InstructorLocationFields';
@@ -25,6 +26,7 @@ import {
 
 export function InstructorOnboardingForm() {
   const router = useRouter();
+  const refreshSessionIdentity = useRefreshSessionIdentity();
   const user = useUserProfile();
   const queryClient = useQueryClient();
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -83,6 +85,7 @@ export function InstructorOnboardingForm() {
       }
 
       toast.success('Instructor account created successfully!');
+      await refreshSessionIdentity();
       router.replace(buildDashboardSwitchPath('instructor'));
     } catch (error) {
       toast.error(getErrorMessage(error, 'Failed to create instructor account. Please try again.'));

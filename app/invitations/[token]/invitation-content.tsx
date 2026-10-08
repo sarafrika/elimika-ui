@@ -38,6 +38,7 @@ import {
   getInvitationByTokenOptions,
   submitGuardianDetailsMutation,
 } from '@/services/client/@tanstack/react-query.gen';
+import { useRefreshSessionIdentity } from '@/src/features/auth/use-refresh-session-identity';
 
 type Outcome = 'accepted' | 'declined' | 'guardian-requested';
 
@@ -51,6 +52,7 @@ export function InvitationContent() {
   const params = useParams<{ token: string }>();
   const token = params?.token ?? '';
   const { status } = useSession();
+  const refreshSessionIdentity = useRefreshSessionIdentity();
   const isAuthenticated = status === 'authenticated';
 
   const [acknowledged, setAcknowledged] = useState(false);
@@ -96,6 +98,7 @@ export function InvitationContent() {
         toast.info('We need a parent or guardian to approve this.');
         return;
       }
+      await refreshSessionIdentity();
       setOutcome('accepted');
       toast.success(result?.message ?? 'You have joined the organisation.');
     } catch (err) {
