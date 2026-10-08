@@ -1,4 +1,4 @@
-197
+194
 
 Raised from 247 on 2026-09-21. PR #458 (subject creation, assignment grading) merged
 before this ratchet ran in its checks and brought 11 new errors with it, in
