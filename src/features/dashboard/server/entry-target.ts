@@ -44,13 +44,16 @@ type DashboardGuardResolution = {
  * dashboard entry alone cost four `/me` round trips. React dedupes for the
  * lifetime of one render pass, so they now share a single call.
  */
+/** One cookie decrypt (and token refresh) per request, shared by guard and layout. */
+export const getRequestSession = cache(async () => auth());
+
 const resolveIdentity = cache(async (): Promise<Identity> => {
   // `auth()` decrypts the session cookie and throws on a malformed one. That throw
   // used to escape into the dashboard layout, above the error boundary, and 500 the
   // whole navigation; a cookie we cannot read means anonymous, not broken.
   let signedIn = false;
   try {
-    const session = await auth();
+    const session = await getRequestSession();
     signedIn = Boolean(session?.user?.email);
   } catch {
     return { status: 'anonymous' };
