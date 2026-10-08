@@ -15,16 +15,24 @@ type ImageWithFallbackProps = Omit<ImageProps, 'src' | 'onError'> & {
  * at files that were never persisted, so a hard <img> would render a broken icon
  * and spam 404s — this shows a neutral placeholder instead.
  */
+// Sources that already failed this session: remounts render the fallback instead of re-requesting.
+const failedSources = new Set<string>();
+
 export function ImageWithFallback({ src, fallback, alt, ...props }: ImageWithFallbackProps) {
-  const [errored, setErrored] = useState(false);
+  const [errored, setErrored] = useState(() => Boolean(src && failedSources.has(src)));
 
   useEffect(() => {
-    setErrored(false);
+    setErrored(Boolean(src && failedSources.has(src)));
   }, [src]);
 
   if (!src || errored) {
     return <>{fallback}</>;
   }
 
-  return <Image src={src} alt={alt} onError={() => setErrored(true)} {...props} />;
+  const handleError = () => {
+    failedSources.add(src);
+    setErrored(true);
+  };
+
+  return <Image src={src} alt={alt} onError={handleError} {...props} />;
 }
