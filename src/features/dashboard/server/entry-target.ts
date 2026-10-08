@@ -1,5 +1,6 @@
 import 'server-only';
 
+import type { Session } from 'next-auth';
 import { cache } from 'react';
 import type { UserDomain } from '@/lib/types';
 import { auth } from '@/services/auth';
@@ -12,6 +13,12 @@ import {
   type RoleSegment,
 } from '@/src/features/dashboard/lib/dashboard-url';
 
+/** The slice of the user record the guards route on. */
+type IdentityUser = {
+  domains: UserDomain[];
+  hasOrganisationAffiliation: boolean;
+};
+
 /**
  * Who is asking, and can we tell?
  *
@@ -21,7 +28,7 @@ import {
  */
 type Identity =
   | { status: 'anonymous' }
-  | { status: 'authenticated'; user: User }
+  | { status: 'authenticated'; user: IdentityUser; fromToken: boolean }
   | { status: 'unavailable' };
 
 type DashboardEntryResolution = {
@@ -36,52 +43,82 @@ type DashboardGuardResolution = {
   unavailable?: boolean;
 };
 
-/**
- * One identity lookup per request, shared by every layout and page in it.
- *
- * A dashboard render asks this question from the root layout, the role layout and
- * often the page as well. Without `cache` each asked the API separately — the
- * dashboard entry alone cost four `/me` round trips. React dedupes for the
- * lifetime of one render pass, so they now share a single call.
- */
-const resolveIdentity = cache(async (): Promise<Identity> => {
-  // `auth()` decrypts the session cookie and throws on a malformed one. That throw
-  // used to escape into the dashboard layout, above the error boundary, and 500 the
-  // whole navigation; a cookie we cannot read means anonymous, not broken.
-  let signedIn = false;
-  try {
-    const session = await auth();
-    signedIn = Boolean(session?.user?.email);
-  } catch {
-    return { status: 'anonymous' };
-  }
+function toIdentityUser(user: User): IdentityUser {
+  const rawDomains = Array.isArray(user.user_domain)
+    ? user.user_domain
+    : user.user_domain
+      ? [user.user_domain]
+      : [];
+  return {
+    domains: normalizeDomains(rawDomains),
+    hasOrganisationAffiliation: (user.organisation_affiliations?.length ?? 0) > 0,
+  };
+}
 
-  if (!signedIn) {
-    return { status: 'anonymous' };
-  }
+function normalizeDomains(rawDomains: readonly unknown[]) {
+  return Array.from(
+    new Set(
+      rawDomains
+        .map(domain => (typeof domain === 'string' ? normalizeStoredUserDomain(domain) : null))
+        .filter((domain): domain is UserDomain => Boolean(domain))
+    )
+  );
+}
 
+/** Ask the API directly. Shared per request by `cache`, like the token read. */
+const fetchIdentity = cache(async (): Promise<Identity> => {
   try {
     const user = await fetchCurrentUser();
-    return user ? { status: 'authenticated', user } : { status: 'unavailable' };
+    return user
+      ? { status: 'authenticated', user: toIdentityUser(user), fromToken: false }
+      : { status: 'unavailable' };
   } catch {
     return { status: 'unavailable' };
   }
 });
 
-function extractUserDomains(user: User | null) {
-  const rawDomains = Array.isArray(user?.user_domain)
-    ? user.user_domain
-    : user?.user_domain
-      ? [user.user_domain]
-      : [];
+// One lookup per request, read from the session token's stamped identity (no network).
+// Only a token issued before that stamp existed falls back to `/me`.
+const resolveIdentity = cache(async (): Promise<Identity> => {
+  // `auth()` throws on a malformed cookie; one we cannot read means anonymous, not broken.
+  let session: Session | null = null;
+  try {
+    session = await auth();
+  } catch {
+    return { status: 'anonymous' };
+  }
 
-  return Array.from(
-    new Set(
-      rawDomains
-        .map(normalizeStoredUserDomain)
-        .filter((domain): domain is UserDomain => Boolean(domain))
-    )
-  );
+  if (!session?.user?.email) {
+    return { status: 'anonymous' };
+  }
+
+  if (session.identity) {
+    return {
+      status: 'authenticated',
+      fromToken: true,
+      user: {
+        domains: normalizeDomains(session.identity.domains),
+        hasOrganisationAffiliation: session.identity.hasOrganisationAffiliation,
+      },
+    };
+  }
+
+  return fetchIdentity();
+});
+
+// Trust the token, but confirm a bounce against `/me`: the token can lag a fresh
+// onboarding, and a stale "no such role" must not redirect someone who now holds it.
+async function decide<T>(
+  evaluate: (identity: Identity) => T,
+  isBounce: (result: T) => boolean
+): Promise<T> {
+  const identity = await resolveIdentity();
+  const result = evaluate(identity);
+  if (identity.status !== 'authenticated' || !identity.fromToken || !isBounce(result)) {
+    return result;
+  }
+  const fresh = await fetchIdentity();
+  return fresh.status === 'authenticated' ? evaluate(fresh) : result;
 }
 
 /** The domain to act as, given what the viewer holds and what they last chose. */
@@ -90,10 +127,10 @@ function pickActiveDomain(domains: UserDomain[], preferred: UserDomain | null) {
   return domains[0] ?? null;
 }
 
-function needsOrganisationOnboarding(user: User, domain: UserDomain | null) {
+function needsOrganisationOnboarding(user: IdentityUser, domain: UserDomain | null) {
   return (
     (domain === 'organisation' || domain === 'organisation_user') &&
-    (!user.organisation_affiliations || user.organisation_affiliations.length === 0)
+    !user.hasOrganisationAffiliation
   );
 }
 
@@ -110,8 +147,17 @@ export async function resolveDashboardEntryTarget(
   preferredDomain: UserDomain | null,
   nextPath = 'overview'
 ): Promise<DashboardEntryResolution> {
-  const identity = await resolveIdentity();
+  return decide(
+    identity => evaluateEntryTarget(identity, preferredDomain, nextPath),
+    result => result.redirectTo.startsWith('/onboarding')
+  );
+}
 
+function evaluateEntryTarget(
+  identity: Identity,
+  preferredDomain: UserDomain | null,
+  nextPath: string
+): DashboardEntryResolution {
   if (identity.status === 'anonymous') {
     return { redirectTo: '/', activeDomain: null };
   }
@@ -123,7 +169,7 @@ export async function resolveDashboardEntryTarget(
   }
 
   const { user } = identity;
-  const domains = extractUserDomains(user);
+  const { domains } = user;
   if (!domains.length) {
     return { redirectTo: '/onboarding', activeDomain: null };
   }
@@ -147,8 +193,16 @@ export async function resolveDashboardEntryTarget(
 export async function resolveDashboardGuard(
   preferredDomain: UserDomain | null
 ): Promise<DashboardGuardResolution> {
-  const identity = await resolveIdentity();
+  return decide(
+    identity => evaluateGuard(identity, preferredDomain),
+    result => result.redirectTo !== null
+  );
+}
 
+function evaluateGuard(
+  identity: Identity,
+  preferredDomain: UserDomain | null
+): DashboardGuardResolution {
   if (identity.status === 'anonymous') {
     return { redirectTo: '/', activeDomain: null };
   }
@@ -160,7 +214,7 @@ export async function resolveDashboardGuard(
   }
 
   const { user } = identity;
-  const domains = extractUserDomains(user);
+  const { domains } = user;
   if (!domains.length) {
     return { redirectTo: '/onboarding', activeDomain: null };
   }
@@ -192,8 +246,13 @@ type RoleAccessResolution = {
  * dashboard rather than shown a 404.
  */
 export async function assertRoleAccess(segment: RoleSegment): Promise<RoleAccessResolution> {
-  const identity = await resolveIdentity();
+  return decide(
+    identity => evaluateRoleAccess(identity, segment),
+    result => result.redirectTo !== null
+  );
+}
 
+function evaluateRoleAccess(identity: Identity, segment: RoleSegment): RoleAccessResolution {
   if (identity.status === 'anonymous') {
     return { redirectTo: '/', matchedDomain: null };
   }
@@ -205,7 +264,7 @@ export async function assertRoleAccess(segment: RoleSegment): Promise<RoleAccess
   }
 
   const { user } = identity;
-  const domains = extractUserDomains(user);
+  const { domains } = user;
   if (!domains.length) {
     return { redirectTo: '/onboarding', matchedDomain: null };
   }
@@ -222,10 +281,7 @@ export async function assertRoleAccess(segment: RoleSegment): Promise<RoleAccess
     };
   }
 
-  if (
-    segment === 'organisation' &&
-    (!user.organisation_affiliations || user.organisation_affiliations.length === 0)
-  ) {
+  if (segment === 'organisation' && !user.hasOrganisationAffiliation) {
     return { redirectTo: '/onboarding/organisation', matchedDomain };
   }
 
