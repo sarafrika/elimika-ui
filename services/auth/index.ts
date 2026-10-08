@@ -80,13 +80,26 @@ function getTokenCacheUserId(token: unknown): string | undefined {
   return getFirstString(typedToken.id, typedToken.email);
 }
 
+type TokenPatch = Partial<JWT>;
+type RefreshEntry = { promise: Promise<TokenPatch>; reuseUntil: number };
+
+const REFRESH_FAILED: TokenPatch = { error: 'RefreshAccessTokenError' };
+const REFRESH_EARLY_MS = 60_000;
+const FAILED_REFRESH_MEMORY_MS = 5 * 60_000;
+
+// One map per process, shared by proxy.ts and route handlers even across bundles.
+const refreshesKey = Symbol.for('elimika.auth.refreshes');
+const refreshes: Map<string, RefreshEntry> =
+  ((globalThis as Record<symbol, unknown>)[refreshesKey] as
+    | Map<string, RefreshEntry>
+    | undefined) ??
+  ((globalThis as Record<symbol, unknown>)[refreshesKey] = new Map<string, RefreshEntry>());
+
 /**
- * Swap the refresh token for a fresh access token. Without this an admin session dies
- * quietly after an hour: the expired token is still sent and every call returns 401.
- * On failure the session carries `RefreshAccessTokenError` so the UI can ask for a new
- * sign-in instead of showing empty pages.
+ * Swap the refresh token for a fresh access token. On failure the patch carries
+ * `RefreshAccessTokenError` so the session is marked and the user is sent to sign in.
  */
-async function refreshAccessToken(token: JWT): Promise<JWT> {
+async function refreshAccessToken(token: JWT): Promise<TokenPatch> {
   try {
     const issuer = process.env.KEYCLOAK_ISSUER;
     const clientId = process.env.KEYCLOAK_CLIENT_ID;
@@ -94,7 +107,7 @@ async function refreshAccessToken(token: JWT): Promise<JWT> {
     const refreshToken = token.refreshToken;
 
     if (!issuer || !clientId || !clientSecret || typeof refreshToken !== 'string') {
-      return { ...token, error: 'RefreshAccessTokenError' };
+      return REFRESH_FAILED;
     }
 
     const response = await fetch(`${issuer}/protocol/openid-connect/token`, {
@@ -116,13 +129,12 @@ async function refreshAccessToken(token: JWT): Promise<JWT> {
     };
 
     if (!response.ok || !refreshed.access_token) {
-      return { ...token, error: 'RefreshAccessTokenError' };
+      return REFRESH_FAILED;
     }
 
     const decoded = decodeJWT(refreshed.access_token);
 
     return {
-      ...token,
       accessToken: refreshed.access_token,
       refreshToken: refreshed.refresh_token ?? refreshToken,
       accessTokenExpires: Date.now() + (refreshed.expires_in ?? 300) * 1000,
@@ -134,8 +146,43 @@ async function refreshAccessToken(token: JWT): Promise<JWT> {
       error: undefined,
     };
   } catch {
-    return { ...token, error: 'RefreshAccessTokenError' };
+    return REFRESH_FAILED;
   }
+}
+
+function pruneRefreshes(now: number) {
+  for (const [key, entry] of refreshes) {
+    if (entry.reuseUntil <= now) refreshes.delete(key);
+  }
+}
+
+/**
+ * Refresh at most once per refresh token: concurrent and later callers still holding
+ * the old cookie reuse the same result, so Keycloak sees one call and a rotated
+ * refresh token is never replayed. Failures are remembered too, so they are not retried.
+ */
+async function refreshOnce(token: JWT): Promise<JWT> {
+  const key = token.refreshToken;
+  if (typeof key !== 'string') return { ...token, ...REFRESH_FAILED };
+
+  const now = Date.now();
+  pruneRefreshes(now);
+
+  let entry = refreshes.get(key);
+  if (!entry) {
+    const promise = refreshAccessToken(token);
+    const pending: RefreshEntry = { promise, reuseUntil: Number.POSITIVE_INFINITY };
+    entry = pending;
+    refreshes.set(key, pending);
+    void promise.then(patch => {
+      pending.reuseUntil =
+        typeof patch.accessTokenExpires === 'number'
+          ? patch.accessTokenExpires - REFRESH_EARLY_MS
+          : Date.now() + FAILED_REFRESH_MEMORY_MS;
+    });
+  }
+
+  return { ...token, ...(await entry.promise) };
 }
 
 const config: NextAuthConfig = {
@@ -180,13 +227,18 @@ const config: NextAuthConfig = {
         };
       }
 
+      // A failed refresh was already reported once; drop the session instead of retrying.
+      if (token.error) {
+        return null;
+      }
+
       // Refresh a minute early so a call in flight never carries an expired token.
       const expiresAt = token.accessTokenExpires as number | undefined;
-      if (typeof expiresAt === 'number' && Date.now() < expiresAt - 60_000) {
+      if (typeof expiresAt === 'number' && Date.now() < expiresAt - REFRESH_EARLY_MS) {
         return token;
       }
 
-      return refreshAccessToken(token);
+      return refreshOnce(token);
     },
     async session({ session, token }) {
       if (session.user) {
