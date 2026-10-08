@@ -18,6 +18,7 @@ import {
   FormMessage,
 } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
+import { PhoneInput } from '@/components/ui/phone-input';
 import {
   Select,
   SelectContent,
@@ -403,7 +404,7 @@ export function MembersTab({
                 <FormItem>
                   <FormLabel>Phone number</FormLabel>
                   <FormControl>
-                    <Input {...field} className='rounded-md font-mono' />
+                    <PhoneInput {...field} className='rounded-md font-mono' />
                   </FormControl>
                   <FormMessage />
                 </FormItem>

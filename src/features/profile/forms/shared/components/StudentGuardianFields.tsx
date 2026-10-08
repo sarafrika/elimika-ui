@@ -9,6 +9,7 @@ import {
   FormMessage,
 } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
+import { PhoneInput } from '@/components/ui/phone-input';
 import type { StudentProfileFormData } from '@/src/features/profile/forms/shared/student-profile';
 
 type StudentGuardianFieldsProps = {
@@ -72,7 +73,7 @@ export function StudentGuardianFields({ form, variant }: StudentGuardianFieldsPr
         name='first_guardian_mobile'
         label='Primary Guardian Mobile (Optional)'
         placeholder='Phone number (optional)'
-        description='Phone number (any format accepted)'
+        description='Mobile number with country code'
       />
       <GuardianNameField
         form={form}
@@ -85,7 +86,7 @@ export function StudentGuardianFields({ form, variant }: StudentGuardianFieldsPr
         name='second_guardian_mobile'
         label='Secondary Guardian Mobile (Optional)'
         placeholder='Phone number (optional)'
-        description='Phone number (any format accepted)'
+        description='Mobile number with country code'
       />
     </>
   );
@@ -143,7 +144,7 @@ function GuardianMobileField({
         <FormItem>
           <FormLabel>{label}</FormLabel>
           <FormControl>
-            <Input placeholder={placeholder} {...field} />
+            <PhoneInput {...field} placeholder={placeholder} />
           </FormControl>
           {description ? <FormDescription>{description}</FormDescription> : null}
           <FormMessage />

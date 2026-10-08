@@ -18,6 +18,7 @@ import {
   FormMessage,
 } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
+import { PhoneInput } from '@/components/ui/phone-input';
 import { Switch } from '@/components/ui/switch';
 import type { Organisation, TrainingBranch } from '@/services/client';
 import { ConfirmDialog } from './confirm-dialog';
@@ -279,7 +280,7 @@ export function BranchesTab({ organisation, branches, branchesQuery }: BranchesT
                       Contact number <span className='text-destructive'>*</span>
                     </FormLabel>
                     <FormControl>
-                      <Input {...field} className='rounded-md font-mono' />
+                      <PhoneInput {...field} className='rounded-md font-mono' />
                     </FormControl>
                     <FormMessage />
                   </FormItem>

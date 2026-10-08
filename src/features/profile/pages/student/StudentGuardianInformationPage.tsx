@@ -16,6 +16,7 @@ import {
   FormMessage,
 } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
+import { PhoneInput } from '@/components/ui/phone-input';
 import { Skeleton } from '@/components/ui/skeleton';
 import Spinner from '@/components/ui/spinner';
 import { useBreadcrumb } from '@/context/breadcrumb-provider';
@@ -238,7 +239,7 @@ function CertificationsSettingsContent() {
                   <FormItem>
                     <FormLabel>Primary guardian mobile number</FormLabel>
                     <FormControl>
-                      <Input placeholder='+254700000000' {...field} />
+                      <PhoneInput {...field} placeholder='+254 700 000000' />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -267,7 +268,7 @@ function CertificationsSettingsContent() {
                   <FormItem>
                     <FormLabel>Secondary guardian mobile number</FormLabel>
                     <FormControl>
-                      <Input placeholder='+254711111111' {...field} />
+                      <PhoneInput {...field} placeholder='+254 711 111111' />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
