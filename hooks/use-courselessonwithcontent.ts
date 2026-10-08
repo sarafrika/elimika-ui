@@ -17,6 +17,8 @@ type Params = {
   courseUuid?: string;
   enabled?: boolean;
   includeContent?: boolean;
+  /** False defers every per-lesson content fetch, e.g. until a curriculum tab opens. */
+  contentEnabled?: boolean;
 };
 
 export type CourseLesson = NonNullable<
@@ -34,6 +36,7 @@ export function useCourseLessonsWithContent({
   courseUuid,
   enabled = true,
   includeContent = false,
+  contentEnabled = true,
 }: Params) {
   const { activeDomain } = useUserDomain();
   const isEnabled = enabled && !!courseUuid;
@@ -64,7 +67,11 @@ export function useCourseLessonsWithContent({
             lessonUuid: lesson.uuid as string,
           },
         }),
-        enabled: isEnabled && !!lesson.uuid && (includeContent || activeDomain !== 'student'),
+        enabled:
+          isEnabled &&
+          contentEnabled &&
+          !!lesson.uuid &&
+          (includeContent || activeDomain !== 'student'),
         staleTime: 10 * 60 * 1000,
         refetchOnWindowFocus: false,
         refetchOnMount: false,
@@ -120,6 +127,8 @@ export function useCourseLessonsWithContent({
     isLoading: isAllLessonsDataLoading,
     isFetching: isAllLessonsDataFetching || contentTypeFetching,
     isError: lessonsError,
+    isLessonListLoading: lessonsLoading,
+    isLessonListFetching: lessonsFetching,
     lessons: lessonsWithContent,
     contentTypes: contentTypeData,
     contentTypeMap,

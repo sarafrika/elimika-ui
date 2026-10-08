@@ -137,11 +137,12 @@ export default function ClassCourseDetailsPage({
     (difficultyResponse?.data ?? []).find(level => level.uuid === course?.difficulty_uuid)?.name ??
     null;
 
+  // Lesson bodies load only once the curriculum tab opens; the page waits on the list alone.
   const {
-    isLoading: lessonsLoading,
-    isFetching: lessonsFetching,
+    isLessonListLoading: lessonsLoading,
+    isLessonListFetching: lessonsFetching,
     lessons: lessonsWithContent,
-  } = useCourseLessonsWithContent({ courseUuid });
+  } = useCourseLessonsWithContent({ courseUuid, contentEnabled: tab === 'curriculum' });
 
   const curriculumLessons = useMemo(
     () => toCurriculumLessons(lessonsWithContent),
@@ -156,7 +157,7 @@ export default function ClassCourseDetailsPage({
   );
   const contentItemCount = useMemo(
     () =>
-      lessonsWithContent?.some(item => item.content)
+      lessonsWithContent?.length && lessonsWithContent.every(item => item.content)
         ? lessonsWithContent.reduce((sum, item) => sum + (item.content?.data?.length ?? 0), 0)
         : undefined,
     [lessonsWithContent]
