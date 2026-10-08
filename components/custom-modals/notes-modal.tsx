@@ -372,7 +372,7 @@ export default function NotesModal({
               <p className='text-muted-foreground text-sm'>
                 {readOnly
                   ? 'The rates in this application, per learner.'
-                  : 'Switch on each training method you offer and price it per hour, per session and per day.'}
+                  : 'Switch on each training method you offer and price it per hour and per day.'}
               </p>
               <RateCardGrid
                 mode={readOnly ? 'view' : 'edit'}

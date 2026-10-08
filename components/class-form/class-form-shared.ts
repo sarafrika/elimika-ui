@@ -6,6 +6,7 @@ import {
   formatRateAmount,
   formatRateBasis,
   getRateBasis,
+  isLegacyRateBasis,
   type RateBasis,
   type RateCard,
   type RateCardInput,
@@ -101,14 +102,15 @@ export const SERVICE_TYPE_ENUM: Record<
 // ─── Price and pay ────────────────────────────────────────────────────────────
 export type ScheduleTotals = { sessions: number; minutes: number; days: number };
 
-/** How many units of the basis a schedule bills: hours, sessions or distinct class days. */
+/** How many units of the basis a schedule bills: hours or distinct class days. */
 export function billableUnits(basis: RateBasis, totals: ScheduleTotals): number {
-  if (basis === 'per_session') return totals.sessions;
+  // Legacy per-session classes and jobs still display a session count.
+  if (isLegacyRateBasis(basis)) return totals.sessions;
   if (basis === 'per_day') return totals.days;
   return Math.round((totals.minutes / 60) * 100) / 100;
 }
 
-/** "12 sessions", "1.5 hours", "1 day". */
+/** "1.5 hours", "1 day"; "12 sessions" for legacy per-session records. */
 export function unitsLabel(units: number, basis: RateBasis): string {
   const { unit } = getRateBasis(basis);
   const count = Number.isInteger(units) ? String(units) : String(Number(units.toFixed(2)));

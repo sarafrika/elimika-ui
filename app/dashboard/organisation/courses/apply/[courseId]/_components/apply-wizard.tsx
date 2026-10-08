@@ -134,7 +134,7 @@ const STEP_DESCRIPTIONS: Record<StepId, (isProgram: boolean) => string> = {
       ? 'Review the published requirements for this program.'
       : 'Tell the course creator what you already have.',
   'target-group': () => 'Add named age groups, each with its own lesson plan.',
-  pricing: () => 'Choose your training methods and price each one on all three bases.',
+  pricing: () => 'Choose your training methods and price each one per hour and per day.',
   review: () => 'Check your application, then send it for approval.',
 };
 

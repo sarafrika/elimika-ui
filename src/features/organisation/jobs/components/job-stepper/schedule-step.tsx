@@ -28,7 +28,9 @@ function SessionsSummary({ schedule }: { schedule: JobSchedule }) {
           Sessions this creates
         </p>
         <div className='flex flex-wrap gap-1.5'>
-          <Badge>{unitsLabel(totals.sessions, 'per_session')}</Badge>
+          <Badge>
+            {totals.sessions} {totals.sessions === 1 ? 'session' : 'sessions'}
+          </Badge>
           <Badge variant='outline'>{unitsLabel(totals.minutes / 60, 'per_hour')}</Badge>
           <Badge variant='outline'>
             {totals.days} class {totals.days === 1 ? 'day' : 'days'}

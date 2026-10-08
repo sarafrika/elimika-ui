@@ -18,11 +18,11 @@ import {
   type MethodPrefix,
   parseRate,
   RATE_BASES,
-  type RateBasis,
   type RateBasisInfo,
   type RateCard,
   type RateCellKey,
   type RateFloorFlags,
+  type SelectableRateBasis,
   TRAINING_METHODS,
   type TrainingMethod,
 } from '@/lib/rate-card';
@@ -46,7 +46,7 @@ type RateCardGridProps = {
   /** Per-cell messages, e.g. `validateRateCard(card, minimum).cells`. */
   errors?: Partial<Record<RateCellKey, string>>;
   /** Draws attention to one basis column. */
-  highlightBasis?: RateBasis;
+  highlightBasis?: SelectableRateBasis;
   /** Which methods to show, in order; defaults to all four. */
   methods?: readonly MethodPrefix[];
   /** Defaults to the card's currency, then KES. */
@@ -54,9 +54,9 @@ type RateCardGridProps = {
   className?: string;
 };
 
-const ROW_GRID = 'sm:grid-cols-3 md:grid-cols-[minmax(10rem,1.1fr)_repeat(3,minmax(0,1fr))]';
+const ROW_GRID = 'sm:grid-cols-2 md:grid-cols-[minmax(10rem,1.1fr)_repeat(2,minmax(0,1fr))]';
 
-/** The 4 × 3 training rate card: methods as rows, rate bases as columns. */
+/** The 4 × 2 training rate card: methods as rows, rate bases as columns. */
 export function RateCardGrid({
   mode,
   value,
@@ -161,7 +161,7 @@ type MethodRowProps = {
   compareTo?: RateCard | null;
   floorFlags?: RateFloorFlags | null;
   errors?: Partial<Record<RateCellKey, string>>;
-  highlightBasis?: RateBasis;
+  highlightBasis?: SelectableRateBasis;
   currency: string;
   open: boolean;
   onToggle: (on: boolean) => void;
@@ -196,7 +196,7 @@ function MethodRow({
         ROW_GRID
       )}
     >
-      <div className='flex items-start justify-between gap-3 sm:col-span-3 md:col-span-1 md:flex-col md:justify-start'>
+      <div className='flex items-start justify-between gap-3 sm:col-span-2 md:col-span-1 md:flex-col md:justify-start'>
         <div>
           <p id={`${id}-label`} className='text-foreground text-sm font-semibold'>
             {method.label}
@@ -243,7 +243,7 @@ function MethodRow({
           return <ViewCell key={key} {...cellProps} value={card[key]} />;
         })
       ) : (
-        <p className='text-muted-foreground bg-muted/40 rounded-md px-3 py-2 text-sm sm:col-span-3'>
+        <p className='text-muted-foreground bg-muted/40 rounded-md px-3 py-2 text-sm sm:col-span-2'>
           Not offered
         </p>
       )}
@@ -431,7 +431,7 @@ export function RateCardGridSkeleton({ rows = 4 }: { rows?: number }) {
   return (
     <div className='border-border bg-card overflow-hidden rounded-lg border'>
       <div className={cn('bg-muted/50 hidden gap-4 px-4 py-3 md:grid', ROW_GRID)}>
-        {Array.from({ length: 4 }, (_, i) => (
+        {Array.from({ length: 3 }, (_, i) => (
           <Skeleton key={i} className='h-8 w-24' />
         ))}
       </div>
@@ -443,11 +443,11 @@ export function RateCardGridSkeleton({ rows = 4 }: { rows?: number }) {
             ROW_GRID
           )}
         >
-          <div className='space-y-1.5 sm:col-span-3 md:col-span-1'>
+          <div className='space-y-1.5 sm:col-span-2 md:col-span-1'>
             <Skeleton className='h-4 w-32' />
             <Skeleton className='h-3 w-24' />
           </div>
-          {Array.from({ length: 3 }, (_, cell) => (
+          {Array.from({ length: 2 }, (_, cell) => (
             <Skeleton key={cell} className='h-9 w-full' />
           ))}
         </div>

@@ -1,5 +1,5 @@
 import { dayjs } from '@/lib/date';
-import type { RateBasis } from '@/lib/rate-card';
+import type { SelectableRateBasis } from '@/lib/rate-card';
 import type { ClassMarketplaceJob, LocationTypeEnum } from '@/services/client/types.gen';
 
 import type { JobFacts } from '../job-facts';
@@ -10,7 +10,7 @@ export type ReadyFilter = 'all' | 'ready' | 'fix' | 'applied';
 export type DeliveryFilter = 'all' | LocationTypeEnum;
 export type StartsFilter = 'any' | '2w' | '1m';
 export type FormatFilter = 'all' | 'private' | 'group';
-export type BasisFilter = 'all' | RateBasis;
+export type BasisFilter = 'all' | SelectableRateBasis;
 export type SortOption = 'soonest' | 'newest' | 'pay';
 
 export type FindWorkFilters = {
@@ -60,7 +60,6 @@ export const SORT_OPTIONS: { value: SortOption; label: string }[] = [
 export const BASIS_OPTIONS: { value: BasisFilter; label: string }[] = [
   { value: 'all', label: 'All' },
   { value: 'per_hour', label: 'Per hour' },
-  { value: 'per_session', label: 'Per session' },
   { value: 'per_day', label: 'Per day' },
 ];
 

@@ -10,9 +10,10 @@ import type { JobFacts } from '../job-facts';
 import type { RateStanding } from '../job-readiness';
 import { SectionCard } from '@/components/data-display';
 
+// per_session is retired but older jobs still carry it.
 const PAID_FOR: Record<string, string> = {
   per_hour: 'You’re paid for every hour you teach.',
-  per_session: 'You’re paid per session delivered.',
+  per_session: 'You’re paid per session delivered (legacy billing).',
   per_day: 'You’re paid per class day.',
 };
 

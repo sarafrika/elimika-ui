@@ -23,7 +23,13 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { EmptyState } from '@/components/ui/empty-state';
 import Spinner from '@/components/ui/spinner';
 import { useClassEditEligibility } from '@/hooks/use-class-edit-eligibility';
-import { type DeliveryMode, formatRateBasis, rateFor } from '@/lib/rate-card';
+import {
+  type DeliveryMode,
+  formatRateBasis,
+  isSelectableRateBasis,
+  rateFor,
+  type SelectableRateBasis,
+} from '@/lib/rate-card';
 import { dashboardUrl } from '@/src/features/dashboard/lib/dashboard-url';
 import { parseSchedulingConflicts, type SchedulingConflict } from '@/lib/scheduling-conflicts';
 import {
@@ -701,7 +707,7 @@ const InstructorClassCreationPage = () => {
   const [schedulePreset, setSchedulePreset] = useState<SchedulePreset>('standard');
   const [service, setService] = useState<ServiceKey | null>(null);
   // Picked from the approved rate card after delivery; nothing is chosen for the instructor.
-  const [rateBasis, setRateBasis] = useState<RateBasis | null>(null);
+  const [rateBasis, setRateBasis] = useState<SelectableRateBasis | null>(null);
   const [salePrice, setSalePrice] = useState('');
   const [instructorPay, setInstructorPay] = useState('');
   const [classDetails, setClassDetails] = useState<ClassDetails>(() =>
@@ -1048,7 +1054,7 @@ const InstructorClassCreationPage = () => {
       };
       if (typeof parsed.salePrice === 'string') setSalePrice(parsed.salePrice);
       if (typeof parsed.instructorPay === 'string') setInstructorPay(parsed.instructorPay);
-      if (parsed.rateBasis) setRateBasis(parsed.rateBasis);
+      if (isSelectableRateBasis(parsed.rateBasis)) setRateBasis(parsed.rateBasis);
       if (parsed.service) setService(parsed.service);
       if (parsed.classDetails) {
         const saved = parsed.classDetails;
@@ -1186,7 +1192,8 @@ const InstructorClassCreationPage = () => {
 
     setSalePrice(classRecord.sale_price == null ? '' : String(classRecord.sale_price));
     setInstructorPay(classRecord.instructor_pay == null ? '' : String(classRecord.instructor_pay));
-    setRateBasis(classRecord.rate_basis ?? null);
+    // Legacy per-session classes must be re-billed per hour or per day.
+    setRateBasis(isSelectableRateBasis(classRecord.rate_basis) ? classRecord.rate_basis : null);
     setClassDetails({
       uuid: classRecord.uuid || '',
       course_uuid: classRecord.course_uuid ?? '',
@@ -2161,7 +2168,7 @@ const InstructorClassCreationPage = () => {
     }
   };
 
-  const handleBasisChange = (next: RateBasis) => {
+  const handleBasisChange = (next: SelectableRateBasis) => {
     if (next === rateBasis || !deliveryMode) return;
     setRateBasis(next);
     setSalePrice('');
@@ -2189,7 +2196,7 @@ const InstructorClassCreationPage = () => {
     if (rate !== null) setSalePrice(String(rate));
   };
 
-  const addRatesHref = (basis: RateBasis) => {
+  const addRatesHref = (basis: SelectableRateBasis) => {
     const { kind, parentUuid } = offeringTarget(selectedInstructorOffering);
     return dashboardUrl(
       'instructor',
