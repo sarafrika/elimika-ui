@@ -40,12 +40,12 @@ import {
 } from '@/components/ui/select';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useOrganisation } from '@/context/organisation-context';
-import { extractList, extractPage, getTotalFromMetadata } from '@/lib/api-helpers';
+import { extractList, extractPage } from '@/lib/api-helpers';
+import { STALE_TIMES } from '@/lib/query-client';
 import { cn } from '@/lib/utils';
 import type {
   Course,
   CourseCreator,
-  CourseReview,
   DifficultyLevel,
   TrainingProgram,
 } from '@/services/client';
@@ -54,10 +54,8 @@ import {
   getAllCourseCreatorsOptions,
   getAllDifficultyLevelsOptions,
   getAllTrainingProgramsOptions,
-  getCourseEnrollmentsOptions,
-  getCourseLessonsOptions,
-  getCourseReviewsOptions,
   getPublishedCoursesOptions,
+  searchCoursesAndProgrammesOptions,
   searchProgramTrainingApplicationsOptions,
   searchTrainingApplicationsOptions,
 } from '@/services/client/@tanstack/react-query.gen';
@@ -71,44 +69,12 @@ const stripHtml = (html?: string) =>
     .replace(/\s+/g, ' ')
     .trim();
 
-/** Lazily loads a course's real engagement stats (lessons, enrolments, ratings). */
-function useCourseStats(courseUuid?: string) {
-  const enabled = Boolean(courseUuid);
-  const lessons = useQuery({
-    ...getCourseLessonsOptions({
-      path: { courseUuid: courseUuid ?? '' },
-      query: { pageable: { page: 0, size: 1 } },
-    }),
-    enabled,
-    retry: false,
-  });
-  const enrolments = useQuery({
-    ...getCourseEnrollmentsOptions({
-      path: { courseUuid: courseUuid ?? '' },
-      query: { pageable: { page: 0, size: 1 } },
-    }),
-    enabled,
-    retry: false,
-  });
-  const reviews = useQuery({
-    ...getCourseReviewsOptions({ path: { courseUuid: courseUuid ?? '' } }),
-    enabled,
-    retry: false,
-  });
+type CardCounts = { rating: number; reviews: number; lessons?: number; enrolled?: number };
 
-  const reviewList = extractList<CourseReview>(reviews.data);
-  const reviewCount = reviewList.length;
-  const rating = reviewCount
-    ? reviewList.reduce((s, r) => s + (r.rating ?? 0), 0) / reviewCount
-    : 0;
-
-  return {
-    loading: lessons.isLoading || enrolments.isLoading || reviews.isLoading,
-    lessons: getTotalFromMetadata(extractPage(lessons.data).metadata),
-    enrolled: getTotalFromMetadata(extractPage(enrolments.data).metadata),
-    rating,
-    reviews: reviewCount,
-  };
+function toCount(value: bigint | number | null | undefined): number | undefined {
+  if (value == null) return undefined;
+  const count = Number(value);
+  return Number.isFinite(count) ? count : undefined;
 }
 
 function CourseImage({ src, alt }: { src?: string | null; alt: string }) {
@@ -129,8 +95,11 @@ function CourseImage({ src, alt }: { src?: string | null; alt: string }) {
   );
 }
 
-function CourseStats({ courseUuid }: { courseUuid: string }) {
-  const { loading, lessons, enrolled, rating, reviews } = useCourseStats(courseUuid);
+function CourseStats({ counts, loading }: { counts?: CardCounts; loading: boolean }) {
+  const rating = counts?.rating ?? 0;
+  const reviews = counts?.reviews ?? 0;
+  const lessons = counts?.lessons;
+  const enrolled = counts?.enrolled;
 
   return (
     <>
@@ -139,6 +108,8 @@ function CourseStats({ courseUuid }: { courseUuid: string }) {
         <span className='flex shrink-0 items-center gap-1'>
           {loading ? (
             <Skeleton className='h-3.5 w-16' />
+          ) : !counts ? (
+            <span className='text-muted-foreground font-medium'>—</span>
           ) : reviews > 0 ? (
             <>
               <Star className='fill-warning text-warning h-3.5 w-3.5' />
@@ -155,11 +126,15 @@ function CourseStats({ courseUuid }: { courseUuid: string }) {
       <div className='border-border/60 text-muted-foreground flex flex-wrap items-center justify-between gap-2 border-t pt-3 text-xs'>
         <span className='flex shrink-0 items-center gap-1.5'>
           <BookOpen className='h-3.5 w-3.5' />
-          {loading ? <Skeleton className='h-3 w-14' /> : `${lessons} Lessons`}
+          {loading ? <Skeleton className='h-3 w-14' /> : `${lessons ?? '—'} Lessons`}
         </span>
         <span className='flex shrink-0 items-center gap-1.5'>
           <Users className='h-3.5 w-3.5' />
-          {loading ? <Skeleton className='h-3 w-16' /> : `${enrolled.toLocaleString()} Enrolled`}
+          {loading ? (
+            <Skeleton className='h-3 w-16' />
+          ) : (
+            `${enrolled?.toLocaleString() ?? '—'} Enrolled`
+          )}
         </span>
       </div>
     </>
@@ -246,6 +221,26 @@ export default function CatalogPage() {
     }),
     enabled: searchDown,
   });
+  // One catalogue search carries every card's rating, lesson and learner counts.
+  const catalogueQuery = useQuery({
+    ...searchCoursesAndProgrammesOptions({
+      query: { show: 'courses', sort: 'newest', size: String(COURSE_HITS_SIZE) },
+    }),
+    staleTime: STALE_TIMES.reference,
+  });
+  const countsById = useMemo(() => {
+    const map = new Map<string, CardCounts>();
+    for (const item of catalogueQuery.data?.data?.content ?? []) {
+      if (!item.uuid) continue;
+      map.set(item.uuid, {
+        rating: item.rating_avg ?? 0,
+        reviews: toCount(item.review_count) ?? 0,
+        lessons: toCount(item.lesson_count),
+        enrolled: toCount(item.learner_count),
+      });
+    }
+    return map;
+  }, [catalogueQuery.data]);
   const programsQuery = useQuery({
     ...getAllTrainingProgramsOptions({
       query: {
@@ -635,12 +630,13 @@ export default function CatalogPage() {
                   <div className='min-w-0'>
                     <div className='flex items-start justify-between gap-2'>
                       <Link
+                        prefetch={false}
                         href={
                           item.kind === 'program'
                             ? `/dashboard/organisation/courses/available-programs/${item.id}`
                             : `/dashboard/organisation/courses/catalog/${item.id}`
                         }
-                        className='text-foreground line-clamp-2 text-base leading-snug font-semibold hover:text-teal-700 hover:underline'
+                        className='text-foreground line-clamp-2 text-base leading-snug font-semibold hover:text-primary hover:underline'
                       >
                         {item.name}
                       </Link>
@@ -673,7 +669,10 @@ export default function CatalogPage() {
                   </div>
 
                   {item.kind === 'course' ? (
-                    <CourseStats courseUuid={item.id} />
+                    <CourseStats
+                      counts={countsById.get(item.id)}
+                      loading={catalogueQuery.isLoading}
+                    />
                   ) : (
                     <div className='border-border/60 text-muted-foreground flex flex-wrap items-center justify-between gap-2 border-t pt-3 text-xs'>
                       <span className='flex shrink-0 items-center gap-1.5'>
