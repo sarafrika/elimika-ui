@@ -10,9 +10,11 @@ import { Skeleton } from '@/components/ui/skeleton';
 import Spinner from '@/components/ui/spinner';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useCourseCreator } from '@/context/course-creator-context';
+import type { CourseSetupDrafts } from '@/lib/course-setup';
 import {
     deleteAssignmentMutation,
     deleteQuizMutation,
+    getAssignmentByUuidQueryKey,
     getCourseAssessmentsOptions,
     getCourseAssessmentsQueryKey,
     getCourseByUuidOptions,
@@ -22,8 +24,10 @@ import {
     getLessonContentOptions,
     publishCourseMutation,
     searchAssignmentsOptions,
+    searchAssignmentsQueryKey,
     searchQuizzesOptions,
     unpublishCourseMutation,
+    updateAssignmentMutation,
 } from '@/services/client/@tanstack/react-query.gen';
 import type {
     ApiResponseCourse,
@@ -35,8 +39,6 @@ import type {
     PagedDtoLesson,
     Quiz,
 } from '@/services/client/types.gen';
-import { CoursePrerequisitesEditor } from '@/src/features/course-prerequisites/course-prerequisites-editor';
-import { CourseSkillsEditor } from '@/src/features/course-skills/course-skills-editor';
 import { invalidateContentModerationWorkflowQueries } from '@/src/features/dashboard/workflow-query-invalidation';
 import { skipToken, useMutation, useQueries, useQuery, useQueryClient } from '@tanstack/react-query';
 import { ArrowLeft, ChevronDown, ChevronUp, Eye, Pencil, PlusCircle, Sparkles, Trash, Undo2 } from 'lucide-react';
@@ -125,6 +127,7 @@ type AssessmentListItem = {
     statusLabel: string;
     statusTone: 'default' | 'secondary' | 'outline';
     meta: string[];
+    assignment?: Assignment;
 };
 
 
@@ -226,6 +229,7 @@ export default function CreateCoursePage() {
     const [isSavingSection, setIsSavingSection] = useState(false);
     const [finishedPricingCourseId, setFinishedPricingCourseId] = useState<string | null>(null);
     const courseDetailsDraftRef = useRef<CourseCreationFormValues | undefined>(undefined);
+    const courseSetupDraftRef = useRef<CourseSetupDrafts>({ skills: null, prerequisites: null });
     const [requirementDrafts, setRequirementDrafts] = useState(createEmptyDraftsByProvider());
     const [activeRequirementProvider, setActiveRequirementProvider] =
         useState<Provider | null>(null);
@@ -485,6 +489,7 @@ export default function CreateCoursePage() {
 
             return assignments.map((assignment: Assignment) => ({
                 kind: 'Assignment' as const,
+                assignment,
                 uuid: assignment.uuid ?? '',
                 lessonUuid: lesson.uuid,
                 lessonTitle: lessonMeta?.title ?? lesson.title ?? 'Untitled lesson',
@@ -625,6 +630,45 @@ export default function CreateCoursePage() {
 
     const deleteQuizMut = useMutation(deleteQuizMutation());
     const deleteAssignmentMut = useMutation(deleteAssignmentMutation());
+    const assignmentPublicationMut = useMutation({
+        ...updateAssignmentMutation(),
+        onSuccess: async (response, variables) => {
+            const action = variables.body.is_published ? 'publish' : 'unpublish';
+            if (response.error || response.success === false) {
+                toast.error(response.message || `Failed to ${action} assignment.`);
+                return;
+            }
+
+            await Promise.all([
+                queryClient.invalidateQueries({
+                    queryKey: searchAssignmentsQueryKey({
+                        query: { searchParams: { lesson_uuid_eq: variables.body.lesson_uuid }, pageable: {} },
+                    }),
+                }),
+                queryClient.invalidateQueries({
+                    queryKey: getAssignmentByUuidQueryKey({ path: { uuid: variables.path.uuid } }),
+                }),
+            ]);
+            toast.success(`Assignment ${action === 'publish' ? 'published' : 'unpublished'} successfully.`);
+        },
+        onError: (error, variables) => {
+            const action = variables.body.is_published ? 'publish' : 'unpublish';
+            toast.error(error instanceof Error ? error.message : `Failed to ${action} assignment.`);
+        },
+    });
+
+    const handleAssignmentPublication = (item: AssessmentListItem) => {
+        if (item.kind !== 'Assignment' || !item.uuid || !item.assignment || assignmentPublicationMut.isPending) return;
+
+        assignmentPublicationMut.mutate({
+            path: { uuid: item.uuid },
+            body: {
+                lesson_uuid: item.lessonUuid,
+                title: item.assignment.title,
+                is_published: !item.assignment.is_published,
+            },
+        });
+    };
 
     const handleDeleteAssessment = useCallback((item: AssessmentListItem) => {
         setAssessmentToDelete(item);
@@ -744,7 +788,7 @@ export default function CreateCoursePage() {
                         variant='outline'
                         onClick={handleSaveDraft}
                     >
-                        Save Draft
+                        {resolvedCourseId ? 'Save Draft' : 'Create Course'}
                     </Button>
 
                     <Button
@@ -819,8 +863,10 @@ export default function CreateCoursePage() {
                                             showSubmitButton
                                             courseId={resolvedCourseId || undefined}
                                             editingCourseId={resolvedCourseId || undefined}
+                                            isLive={course?.admin_approved === true && course?.is_published === true}
                                             initialValues={courseInitialValues}
                                             detailsDraftRef={courseDetailsDraftRef}
+                                            setupDraftRef={courseSetupDraftRef}
                                             requirementDrafts={requirementDrafts}
                                             setRequirementDrafts={setRequirementDrafts}
                                             activeRequirementProvider={activeRequirementProvider}
@@ -831,24 +877,6 @@ export default function CreateCoursePage() {
                                                     setCreatedCourseId(data.uuid);
                                                 }
                                             }}
-                                            skillsAndPrerequisites={
-                                                resolvedCourseId ? (
-                                                    <>
-                                                        <CourseSkillsEditor courseUuid={resolvedCourseId} />
-                                                        <CoursePrerequisitesEditor
-                                                            key={resolvedCourseId}
-                                                            courseUuid={resolvedCourseId}
-                                                            isLive={course?.admin_approved === true && course?.is_published === true}
-                                                        />
-                                                    </>
-                                                ) : (
-                                                    <EmptyState
-                                                        variant='compact'
-                                                        title='Skills and prerequisite courses'
-                                                        description='Save the course details above to add the skills this course teaches and any prerequisite courses.'
-                                                    />
-                                                )
-                                            }
                                         />
 
                                         <StepNav
@@ -1111,6 +1139,28 @@ export default function CreateCoursePage() {
                                                                                                         </Badge>
                                                                                                     ))}
                                                                                                 </div>
+
+                                                                                                {item.kind === 'Assignment' && (
+                                                                                                    <Button
+                                                                                                        type='button'
+                                                                                                        variant={item.assignment?.is_published ? 'outline' : 'default'}
+                                                                                                        size='sm'
+                                                                                                        className='ml-auto'
+                                                                                                        disabled={assignmentPublicationMut.isPending || !item.assignment}
+                                                                                                        onClick={event => {
+                                                                                                            event.stopPropagation();
+                                                                                                            handleAssignmentPublication(item);
+                                                                                                        }}
+                                                                                                        aria-label={`${item.assignment?.is_published ? 'Unpublish' : 'Publish'} assignment: ${item.title}`}
+                                                                                                    >
+                                                                                                        {assignmentPublicationMut.isPending && assignmentPublicationMut.variables?.path.uuid === item.uuid ? (
+                                                                                                            <>
+                                                                                                                <Spinner className='h-4 w-4' />
+                                                                                                                {item.assignment?.is_published ? 'Unpublishing...' : 'Publishing...'}
+                                                                                                            </>
+                                                                                                        ) : item.assignment?.is_published ? 'Unpublish' : 'Publish'}
+                                                                                                    </Button>
+                                                                                                )}
                                                                                             </div>
 
                                                                                             <div className='space-y-1'>

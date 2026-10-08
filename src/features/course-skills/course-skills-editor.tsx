@@ -1,8 +1,8 @@
 'use client';
 
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { skipToken, useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { Tags, Trash2 } from 'lucide-react';
-import { useId, useMemo, useState } from 'react';
+import { type Ref, type RefObject, useId, useImperativeHandle, useMemo, useState } from 'react';
 import { toast } from 'sonner';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -20,6 +20,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import Spinner from '@/components/ui/spinner';
 import { isForbidden, retryUnlessClientOrSearchError } from '@/lib/api-errors';
 import { getErrorMessage } from '@/lib/error-utils';
+import type { CourseSetupDrafts, CourseSetupSectionRef, CourseSkillDraft } from '@/lib/course-setup';
 import { useDifficultyLevels } from '@/hooks/use-difficultyLevels';
 import { skillDifficultyOptions } from '@/lib/skill-difficulty';
 import { STALE_TIMES } from '@/lib/query-client';
@@ -39,13 +40,7 @@ const WEIGHTS = [
   { value: 5, label: '5 · The core skill' },
 ] as const;
 
-type SkillRow = {
-  skillUuid: string;
-  name: string;
-  level: CourseSkill['level'];
-  weight: number;
-  active: boolean;
-};
+type SkillRow = CourseSkillDraft;
 
 function toRows(items: readonly CourseSkill[] | undefined): SkillRow[] {
   return (items ?? [])
@@ -66,14 +61,23 @@ function toRows(items: readonly CourseSkill[] | undefined): SkillRow[] {
  * whole list. A skill an admin has since retired keeps its tag, marked "Retired", until
  * the owner removes it.
  */
-export function CourseSkillsEditor({ courseUuid }: { courseUuid: string }) {
-  if (!courseUuid) return null;
-  return <SavedCourseSkillsEditor key={courseUuid} courseUuid={courseUuid} />;
-}
-
-function SavedCourseSkillsEditor({ courseUuid }: { courseUuid: string }) {
+export function CourseSkillsEditor({
+  courseUuid = '',
+  saveRef,
+  draftsRef,
+  isSaving = false,
+}: {
+  courseUuid?: string;
+  saveRef?: Ref<CourseSetupSectionRef>;
+  draftsRef?: RefObject<CourseSetupDrafts>;
+  isSaving?: boolean;
+}) {
   const queryClient = useQueryClient();
-  const [rows, setRows] = useState<SkillRow[] | null>(null);
+  const [rows, setLocalRows] = useState<SkillRow[] | null>(() => draftsRef?.current.skills ?? null);
+  const setRows = (next: SkillRow[] | null) => {
+    setLocalRows(next);
+    if (draftsRef) draftsRef.current.skills = next;
+  };
   const [saveError, setSaveError] = useState<string | null>(null);
   const difficulty = useDifficultyLevels();
   const levels = useMemo(
@@ -82,12 +86,15 @@ function SavedCourseSkillsEditor({ courseUuid }: { courseUuid: string }) {
   );
 
   const query = useQuery({
-    ...getCourseSkillsOptions({ path: { uuid: courseUuid } }),
+    ...(courseUuid
+      ? getCourseSkillsOptions({ path: { uuid: courseUuid } })
+      : { queryKey: getCourseSkillsQueryKey({ path: { uuid: '' } }), queryFn: skipToken }),
     enabled: Boolean(courseUuid),
     staleTime: STALE_TIMES.entity,
     retry: retryUnlessClientOrSearchError,
   });
   const mutation = useMutation(replaceCourseSkillsMutation());
+  const busy = isSaving || mutation.isPending;
 
   const responseError =
     query.data?.error || query.data?.success === false
@@ -103,11 +110,12 @@ function SavedCourseSkillsEditor({ courseUuid }: { courseUuid: string }) {
   const patch = (skillUuid: string, change: Partial<SkillRow>) =>
     update(current.map(row => (row.skillUuid === skillUuid ? { ...row, ...change } : row)));
 
-  const save = () => {
+  const save = async (uuid: string, queued = false) => {
+    if (!uuid) return;
     setSaveError(null);
-    mutation.mutate(
-      {
-        path: { uuid: courseUuid },
+    try {
+      const response = await mutation.mutateAsync({
+        path: { uuid },
         body: {
           skills: current.map(row => ({
             skill_uuid: row.skillUuid,
@@ -115,30 +123,26 @@ function SavedCourseSkillsEditor({ courseUuid }: { courseUuid: string }) {
             weight: row.weight,
           })),
         },
-      },
-      {
-        onSuccess: response => {
-          if (response.error || response.success === false) {
-            const message = response.message || 'Could not save the course skills.';
-            setSaveError(message);
-            toast.error(message);
-            return;
-          }
-          queryClient.setQueryData(
-            getCourseSkillsQueryKey({ path: { uuid: courseUuid } }),
-            response
-          );
-          setRows(null);
-          toast.success('Course skills saved');
-        },
-        onError: error => {
-          const message = getErrorMessage(error, 'Could not save the course skills.');
-          setSaveError(message);
-          toast.error(message);
-        },
+      });
+      if (response.error || response.success === false) {
+        throw new Error(response.message || 'Could not save the course skills.');
       }
-    );
+      queryClient.setQueryData(getCourseSkillsQueryKey({ path: { uuid } }), response);
+      setRows(null);
+      if (!queued) toast.success('Course skills saved');
+    } catch (error) {
+      const message = getErrorMessage(error, 'Could not save the course skills.');
+      setSaveError(message);
+      if (!queued) toast.error(message);
+      throw error;
+    }
   };
+
+  useImperativeHandle(saveRef, () => ({
+    savePending: async uuid => {
+      if (rows !== null) await save(uuid, true);
+    },
+  }));
 
   return (
     <Card>
@@ -201,7 +205,7 @@ function SavedCourseSkillsEditor({ courseUuid }: { courseUuid: string }) {
                     key={row.skillUuid}
                     row={row}
                     levels={levels}
-                    disabled={mutation.isPending}
+                    disabled={busy}
                     onLevel={level => patch(row.skillUuid, { level })}
                     onWeight={weight => patch(row.skillUuid, { weight })}
                     onRemove={() =>
@@ -215,7 +219,7 @@ function SavedCourseSkillsEditor({ courseUuid }: { courseUuid: string }) {
             <div className='space-y-1.5'>
               <Label>Add a skill</Label>
               <SkillPicker
-                disabled={mutation.isPending || levels.length === 0}
+                disabled={busy || levels.length === 0}
                 excludeUuids={current.map(row => row.skillUuid)}
                 onPick={skill =>
                   update([
@@ -243,6 +247,12 @@ function SavedCourseSkillsEditor({ courseUuid }: { courseUuid: string }) {
               </p>
             ) : null}
 
+            {!courseUuid && dirty ? (
+              <p className='text-muted-foreground flex items-center gap-2 text-sm' role='status'>
+                {isSaving ? <Spinner /> : null}
+                Skills will be saved after the course is created.
+              </p>
+            ) : null}
             <div className='flex flex-wrap justify-end gap-2'>
               {dirty ? (
                 <Button
@@ -252,15 +262,21 @@ function SavedCourseSkillsEditor({ courseUuid }: { courseUuid: string }) {
                     setRows(null);
                     setSaveError(null);
                   }}
-                  disabled={mutation.isPending}
+                  disabled={busy}
                 >
                   Discard changes
                 </Button>
               ) : null}
-              <Button type='button' onClick={save} disabled={!dirty || mutation.isPending}>
-                {mutation.isPending ? <Spinner /> : null}
-                Save skills
-              </Button>
+              {courseUuid ? (
+                <Button
+                  type='button'
+                  onClick={() => void save(courseUuid).catch(() => undefined)}
+                  disabled={!dirty || busy}
+                >
+                  {mutation.isPending ? <Spinner /> : null}
+                  Save skills
+                </Button>
+              ) : null}
             </div>
           </>
         )}

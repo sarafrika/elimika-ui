@@ -9,8 +9,8 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import { cn } from '@/lib/utils';
 import { buildCategoryTabOptions } from '@/lib/category-filters';
+import { cn } from '@/lib/utils';
 import type { Category } from '@/services/client';
 
 export const ALL_CATEGORIES = 'All';
@@ -69,20 +69,20 @@ export function CategoryTabs({
     const options = hierarchy
       ? buildCategoryTabOptions(hierarchy)
       : Array.from(new Set(items.map(item => item.category).filter(Boolean)))
-          .sort()
-          .map(category => ({
-            value: category,
-            label: category,
-            subjects: Array.from(
-              new Set(
-                items
-                  .filter(item => item.category === category)
-                  .flatMap(item => (item.subject ? [item.subject] : []))
-              )
+        .sort()
+        .map(category => ({
+          value: category,
+          label: category,
+          subjects: Array.from(
+            new Set(
+              items
+                .filter(item => item.category === category)
+                .flatMap(item => (item.subject ? [item.subject] : []))
             )
-              .sort()
-              .map(subject => ({ value: subject, label: subject })),
-          }));
+          )
+            .sort()
+            .map(subject => ({ value: subject, label: subject })),
+        }));
     return [{ value: ALL_CATEGORIES, label: ALL_CATEGORIES, subjects: [] }, ...options];
   }, [hierarchy, items]);
 
@@ -149,21 +149,21 @@ export function CategoryTabs({
         <div
           aria-hidden
           className={cn(
-            'from-background pointer-events-none absolute inset-y-0 left-0 z-[1] w-8 bg-gradient-to-r to-transparent transition-opacity',
+            'from-background pointer-events-none absolute inset-y-0 left-0 z-[1] w-4 bg-gradient-to-r to-transparent transition-opacity',
             !scrollState.canLeft && 'opacity-0'
           )}
         />
         <div
           aria-hidden
           className={cn(
-            'from-background pointer-events-none absolute inset-y-0 right-0 z-[1] w-8 bg-gradient-to-l to-transparent transition-opacity',
+            'from-background pointer-events-none absolute inset-y-0 right-0 z-[1] w-4 bg-gradient-to-l to-transparent transition-opacity',
             !scrollState.canRight && 'opacity-0'
           )}
         />
 
         <div
           ref={scrollerRef}
-          className='scrollbar-hide overflow-x-auto scroll-smooth md:px-10'
+          className='scrollbar-thin overflow-x-auto scroll-smooth md:px-10'
           style={{ WebkitOverflowScrolling: 'touch' }}
         >
           <div className='flex min-w-max items-center gap-2 py-1'>

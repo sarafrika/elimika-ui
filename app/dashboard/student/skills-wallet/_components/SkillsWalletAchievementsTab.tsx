@@ -1,12 +1,12 @@
 'use client';
 
-import { Award, Flag, Plus, Star, Trophy } from 'lucide-react';
 import { SkillsWalletAchievementMetrics } from '@/app/dashboard/_components/skills-wallet/SkillsWalletAchievementMetrics';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { EmptyState } from '@/components/ui/empty-state';
 import { Skeleton } from '@/components/ui/skeleton';
+import { Award, Flag, Plus, Star, Trophy } from 'lucide-react';
 import { StatCard, fmtDate, type AchievementRecord } from './SkillsWalletShared';
 
 const TYPE_LABELS = {
@@ -58,8 +58,9 @@ export function SkillsWalletAchievementsTab({
           </Button>
         )}
       </div>
-      <SkillsWalletAchievementMetrics />
+
       <h3 className='text-lg font-semibold'>Saved achievements</h3>
+
       {isLoading ? (
         <div className='space-y-4' aria-label='Loading achievements'>
           <Skeleton className='h-24 w-full' />
@@ -95,10 +96,14 @@ export function SkillsWalletAchievementsTab({
               ))}
             </div>
           ) : (
-            <EmptyState icon={Trophy} title='No achievements yet' description='Achievements saved to your profile will appear here.' />
+            // <EmptyState icon={Trophy} title='No achievements yet' description='Achievements saved to your profile will appear here.' />
+            <></>
           )}
         </>
       )}
+
+      <SkillsWalletAchievementMetrics />
+
     </div>
   );
 }

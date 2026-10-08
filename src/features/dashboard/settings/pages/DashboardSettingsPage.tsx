@@ -1,15 +1,6 @@
 'use client';
 
-import { zodResolver } from '@hookform/resolvers/zod';
-import { useMutation, useQueryClient } from '@tanstack/react-query';
-import { ChevronRight, LayoutPanelLeft, Pencil, ShieldCheck, Wallet } from 'lucide-react';
-import Link from 'next/link';
-import { useRouter, useSearchParams } from 'next/navigation';
-import type React from 'react';
-import { Suspense, useEffect, useMemo, useRef, useState } from 'react';
-import { useForm } from 'react-hook-form';
-import { toast } from 'sonner';
-import * as z from 'zod';
+import { surfaceTheme } from '@/components/data-display';
 import {
   type FieldToTab,
   SectionTabPanel,
@@ -17,11 +8,10 @@ import {
   useSectionTab,
   useTabErrors,
 } from '@/components/data-display/section-tabs';
-import { surfaceTheme } from '@/components/data-display';
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { EmptyState } from '@/components/ui/empty-state';
 import {
   Form,
   FormControl,
@@ -45,6 +35,17 @@ import {
 import { dashboardUrl } from '@/src/features/dashboard/lib/dashboard-url';
 import { useOrganisation } from '@/src/features/organisation/context/organisation-context';
 import { useUserProfile } from '@/src/features/profile/context/profile-context';
+import { ProfileHero } from '@/src/features/profile/landing/components/profile-hero';
+import { zodResolver } from '@hookform/resolvers/zod';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { ChevronRight, LayoutPanelLeft, ShieldCheck, Wallet } from 'lucide-react';
+import Link from 'next/link';
+import { useRouter, useSearchParams } from 'next/navigation';
+import type React from 'react';
+import { Suspense, useEffect, useMemo, useRef, useState } from 'react';
+import { useForm } from 'react-hook-form';
+import { toast } from 'sonner';
+import * as z from 'zod';
 import { ElimikaUserId } from '../../../../../app/dashboard/_components/elimika-user-id';
 import { useProfileShareUrl } from '../../../../../app/dashboard/_components/skills-wallet/use-profile-share-url';
 import RichTextRenderer from '../../../../../components/editors/richTextRenders';
@@ -286,7 +287,7 @@ function DashboardSettingsPageBody({ variant }: DashboardSettingsPageProps) {
     });
   }, [form, isEditing, profileFormSnapshot]);
 
-  const profileImage = profile?.profile_image_url ?? '';
+  const profileImage = toAuthenticatedMediaUrl(profile?.profile_image_url) ?? '';
   const profileName = getProfileDisplayName(profile);
   const profileInitials = getProfileInitials(profileName);
   const config = useMemo(
@@ -383,6 +384,8 @@ function DashboardSettingsPageBody({ variant }: DashboardSettingsPageProps) {
       phone_number: profile?.phone_number ?? '',
       bio: roleProfileBio,
       demographic_tag: roleProfileLocation,
+      professional_headline: roleProfileProfessionalHeadline,
+      website: roleProfileWebsite,
     });
     setIsEditing(false);
   };
@@ -526,6 +529,20 @@ function DashboardSettingsPageBody({ variant }: DashboardSettingsPageProps) {
   const accessActionHref =
     variant === 'admin' ? '/dashboard/admin/platform/rules' : config.supportHref;
 
+  if (profile?.isLoading) {
+    return <SettingsPageFallback />;
+  }
+
+  if (!profile?.uuid) {
+    return (
+      <EmptyState
+        title='Your profile is unavailable'
+        description='We could not load your account information. Please try again.'
+        action={<Button onClick={() => profile?.invalidateQuery()}>Try again</Button>}
+      />
+    );
+  }
+
   return (
     <div className={`${surfaceTheme.pageWide} mb-8 overflow-x-clip py-3 sm:py-4`}>
       <div className='space-y-4 sm:space-y-5'>
@@ -553,126 +570,51 @@ function DashboardSettingsPageBody({ variant }: DashboardSettingsPageProps) {
             ) : (
               <div className='grid min-w-0 gap-4 xl:grid-cols-[minmax(0,1.72fr)_minmax(320px,0.88fr)]'>
                 <Card className='border-border/70 rounded-md p-0 shadow-sm'>
-                  <CardHeader className='border-border/60 border-b px-4 py-4 sm:px-5'>
-                    <div className='flex flex-wrap items-start justify-between gap-4'>
-                      <div className='min-w-0 space-y-2'>
-                        <div className='flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between'>
-                          <CardTitle className='text-base font-semibold sm:text-lg'>
-                            Profile Details
-                          </CardTitle>
-                        </div>
-
-                        <div className='text-muted-foreground text-sm leading-6 sm:text-base'>
-                          <RichTextRenderer htmlString={descriptionByVariant[variant]} />
-                        </div>
-                      </div>
-
-                      <Badge
-                        variant='outline'
-                        className='rounded-md px-3 py-1 text-[10px] tracking-[0.16em] uppercase'
+                  <ProfileHero
+                    name={profileName}
+                    initials={profileInitials}
+                    avatarUrl={profileImage}
+                    headline={roleProfileProfessionalHeadline || undefined}
+                    location={roleProfileLocation || undefined}
+                    email={profile?.email}
+                    phone={profile?.phone_number ?? undefined}
+                    website={roleProfileWebsite || undefined}
+                    userNo={profile?.user_no}
+                    avatarActions={
+                      <Button
+                        type='button'
+                        variant='secondary'
+                        size='sm'
+                        className='mt-3 w-full text-xs'
+                        onClick={openProfileImagePicker}
+                        disabled={!profile?.uuid || uploadProfileImage.isPending}
                       >
-                        {roleLabel}
-                      </Badge>
-                    </div>
-                  </CardHeader>
+                        {uploadProfileImage.isPending ? (
+                          <>
+                            <Spinner className='h-4 w-4' />
+                            Uploading...
+                          </>
+                        ) : (
+                          'Change photo'
+                        )}
+                      </Button>
+                    }
+                    actions={
+                      <></>
+                    }
+                  />
 
                   <CardContent className='space-y-5 px-4 py-5 sm:px-5'>
-                    <div className='flex flex-col gap-5 sm:flex-row sm:items-center sm:justify-between'>
-                      <div className='flex min-w-0 items-center gap-4'>
-                        {/* Profile image */}
-                        <div className='flex shrink-0 flex-col items-center gap-1.5'>
-                          <button
-                            type='button'
-                            onClick={openProfileImagePicker}
-                            disabled={!profile?.uuid || uploadProfileImage.isPending}
-                            className='group focus:ring-primary/40 relative rounded-full focus:ring-2 focus:ring-offset-2 focus:outline-none'
-                            aria-label='Change profile photo'
-                          >
-                            <Avatar className='border-border/70 size-20 border sm:size-24'>
-                              <AvatarImage
-                                src={toAuthenticatedMediaUrl(profileImage) as string}
-                                alt={profileName}
-                              />
-                              <AvatarFallback className='bg-primary/10 text-primary text-xl font-semibold'>
-                                {profileInitials}
-                              </AvatarFallback>
-                            </Avatar>
-
-                            {/* Change photo indication */}
-                            <div className='absolute inset-0 flex items-center justify-center rounded-full bg-black/0 text-white transition group-hover:bg-black/40'>
-                              <span className='text-xs font-medium opacity-0 transition group-hover:opacity-100'>
-                                Change
-                              </span>
-                            </div>
-                          </button>
-
-                          <Button
-                            type='button'
-                            variant='ghost'
-                            size='sm'
-                            className='text-muted-foreground hover:text-foreground h-7 px-2 text-xs'
-                            onClick={openProfileImagePicker}
-                            disabled={!profile?.uuid || uploadProfileImage.isPending}
-                          >
-                            {uploadProfileImage.isPending ? 'Uploading...' : 'Change photo'}
-                          </Button>
-                        </div>
-
-                        {/* Profile details */}
-                        <div className='min-w-0 space-y-1'>
-                          <h2 className='text-foreground truncate text-xl font-semibold sm:text-2xl'>
-                            {profileName}
-                          </h2>
-
-                          <p className='text-muted-foreground truncate text-sm sm:text-base'>
-                            {profile?.courseCreator?.professional_headline ??
-                              profile?.instructor?.professional_headline ??
-                              organisation?.description ??
-                              profile?.email}
-                          </p>
-
-                          <div className='flex flex-wrap gap-2 pt-1'>
-                            <Badge variant='secondary' className='rounded-md px-3 py-1 text-xs'>
-                              {roleLabel}
-                            </Badge>
-
-                            <Badge variant='outline' className='rounded-md px-3 py-1 text-xs'>
-                              Joined {joinedDate}
-                            </Badge>
-                          </div>
-                        </div>
-                      </div>
-
-                      {/* Subtle edit action */}
-                      <div className='flex flex-col items-end gap-2'>
-                        <Button
-                          type='button'
-                          variant='ghost'
-                          size='sm'
-                          className='text-muted-foreground hover:bg-muted hover:text-foreground h-8 w-fit gap-1.5 px-2.5 text-xs font-medium'
-                          onClick={handleStartEditing}
-                          disabled={isEditing || !profile?.uuid}
-                        >
-                          <Pencil className='h-3.5 w-3.5' />
-                          Edit info
-                        </Button>
-
-                        <Link
-                          href={PROFILE_ROUTE}
-                          className='text-primary hover:text-primary/80 text-sm font-medium transition-colors'
-                        >
-                          View full profile →
-                        </Link>
-                      </div>
-
-                      <input
-                        ref={fileInputRef}
-                        type='file'
-                        accept='image/*'
-                        className='hidden'
-                        onChange={handleProfileImageUpload}
-                      />
+                    <div className='text-muted-foreground text-sm leading-6'>
+                      <RichTextRenderer htmlString={descriptionByVariant[variant]} />
                     </div>
+                    <Input
+                      ref={fileInputRef}
+                      type='file'
+                      accept='image/*'
+                      className='hidden'
+                      onChange={handleProfileImageUpload}
+                    />
 
                     <Form {...form}>
                       <form
@@ -947,10 +889,10 @@ function DashboardSettingsPageBody({ variant }: DashboardSettingsPageProps) {
                               }
                             >
                               {updateUser.isPending ||
-                              updateStudentProfile.isPending ||
-                              updateInstructorProfile.isPending ||
-                              updateCourseCreatorProfile.isPending ||
-                              isSubmitting ? (
+                                updateStudentProfile.isPending ||
+                                updateInstructorProfile.isPending ||
+                                updateCourseCreatorProfile.isPending ||
+                                isSubmitting ? (
                                 <span className='flex items-center gap-2'>
                                   <Spinner className='h-4 w-4' />
                                   Saving...
@@ -968,7 +910,7 @@ function DashboardSettingsPageBody({ variant }: DashboardSettingsPageProps) {
 
                 <div className='flex min-w-0 flex-col gap-4'>
                   <ElimikaUserId
-                    profile={profile}
+                    profile={{ ...profile, full_name: profileName }}
                     activeDomain={activeDomain}
                     photoUrl={profileImage}
                     shareUrl={shareUrl}

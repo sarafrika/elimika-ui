@@ -55,7 +55,7 @@ export function ProfileHero({
 
   return (
     <Card className='from-primary via-primary to-primary/80 text-primary-foreground relative overflow-hidden border-none bg-gradient-to-br shadow-xl'>
-      <CardContent className='relative flex flex-col gap-6 p-6 sm:flex-row sm:items-center sm:p-8'>
+      <CardContent className='relative flex flex-col gap-6 sm:flex-row sm:items-center'>
         <div className='w-28 shrink-0 self-center sm:self-auto'>
           <div className='group relative h-24 w-24'>
             <Avatar className='ring-primary-foreground/30 h-24 w-24 rounded-2xl shadow-2xl ring-4'>
