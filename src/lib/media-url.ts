@@ -39,7 +39,7 @@ export function toAuthenticatedMediaUrl(url?: string | null | undefined) {
     }
 
     if (parsedUrl.pathname.startsWith('/api/v1')) {
-      return toProxyMediaUrl(parsedUrl.pathname);
+      return toProxyMediaUrl(`${parsedUrl.pathname}${parsedUrl.search}`);
     }
 
     return `${AUTHENTICATED_MEDIA_ROUTE}?url=${encodeURIComponent(parsedUrl.toString())}`;

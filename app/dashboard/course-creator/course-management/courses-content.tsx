@@ -61,7 +61,7 @@ import {
   searchTrainingProgramsOptions,
   searchTrainingProgramsQueryKey,
 } from '@/services/client/@tanstack/react-query.gen';
-import { toAuthenticatedMediaUrl } from '@/src/lib/media-url';
+import { isAuthenticatedMediaUrl, toAuthenticatedMediaUrl } from '@/src/lib/media-url';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { format, isValid } from 'date-fns';
 import {
@@ -794,7 +794,7 @@ function OfferingRow({
                 src={thumbnail}
                 alt=''
                 fill
-                unoptimized
+                unoptimized={!isAuthenticatedMediaUrl(thumbnail)}
                 sizes='64px'
                 className='object-cover'
                 onError={() => setFailedImage(thumbnail)}

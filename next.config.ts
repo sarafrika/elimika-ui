@@ -57,6 +57,9 @@ const nextConfig: NextConfig = {
   },
   images: {
     remotePatterns,
+    // Proxied API media is optimised (AVIF/WebP at rendered width); query strings allowed there only.
+    localPatterns: [{ pathname: '/api/proxy/api/v1/**' }, { pathname: '/**', search: '' }],
+    formats: ['image/avif', 'image/webp'],
   },
   typescript: {
     ignoreBuildErrors: true,

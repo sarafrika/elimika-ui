@@ -1,5 +1,6 @@
 'use client';
 
+import { ImageWithFallback } from '@/components/data/image-with-fallback';
 import RichTextRenderer from '@/components/editors/richTextRenders';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
@@ -13,10 +14,9 @@ import {
   getCourseEnrollmentsOptions,
   getUserByUuidOptions,
 } from '@/services/client/@tanstack/react-query.gen';
-import { isAuthenticatedMediaUrl, toAuthenticatedMediaUrl } from '@/src/lib/media-url';
+import { toAuthenticatedMediaUrl } from '@/src/lib/media-url';
 import { useQuery } from '@tanstack/react-query';
 import { BookOpen, Play, Users } from 'lucide-react';
-import Image from 'next/image';
 
 interface CourseCardProps {
   course: Course | TrainingProgram;
@@ -110,18 +110,15 @@ export function CourseCard({
       <div className='relative'>
         {/* Course Image */}
         <div className='bg-muted relative flex h-48 w-full items-center justify-center overflow-hidden rounded-t-lg'>
-          {resolvedBannerUrl ? (
-            <Image
-              src={resolvedBannerUrl}
-              alt={courseName || 'banner'}
-              className='h-full w-full object-cover transition-transform duration-700 group-hover:scale-110'
-              width={400}
-              height={208}
-              unoptimized={isAuthenticatedMediaUrl(resolvedBannerUrl)}
-            />
-          ) : (
-            <BookOpen className='text-primary/40 h-16 w-16' />
-          )}
+          <ImageWithFallback
+            src={resolvedBannerUrl}
+            alt={courseName || 'banner'}
+            className='h-full w-full object-cover transition-transform duration-700 group-hover:scale-110'
+            width={400}
+            height={208}
+            sizes='(max-width: 640px) 100vw, 400px'
+            fallback={<BookOpen className='text-primary/40 h-16 w-16' />}
+          />
 
           {/* Video indicator */}
           {introVideoUrl && (

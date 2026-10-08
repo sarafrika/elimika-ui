@@ -40,7 +40,7 @@ import {
 } from '@/services/client/@tanstack/react-query.gen';
 import type { Lesson } from '@/services/client/types.gen';
 import { invalidateContentModerationWorkflowQueries } from '@/src/features/dashboard/workflow-query-invalidation';
-import { isAuthenticatedMediaUrl, toAuthenticatedMediaUrl } from '@/src/lib/media-url';
+import { toAuthenticatedMediaUrl } from '@/src/lib/media-url';
 import AssessmentCreationForm from '../../../_components/assessment-creation-form';
 import CourseBrandingForm from '../../../_components/course-branding-form';
 import { CourseCreationForm, type CourseFormRef } from '../../../_components/course-creation-form';
@@ -524,9 +524,7 @@ export default function CourseBuilderPage() {
                         width={128}
                         height={128}
                         className='bg-muted mb-8 max-h-[250px] w-full text-sm'
-                        unoptimized={isAuthenticatedMediaUrl(
-                          toAuthenticatedMediaUrl(course?.data?.banner_url as string)
-                        )}
+                        sizes='(max-width: 768px) 100vw, 768px'
                       />
                     </div>
 
