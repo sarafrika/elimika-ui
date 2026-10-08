@@ -451,7 +451,7 @@ export function useStudentOverviewData(): StudentOverviewData {
         progress: courseEnrollment?.progress_percentage ?? null,
         nextDateLabel: formatDateLabel(nextSchedule),
         scheduleCount: classEnrollment.scheduled_instance_count ?? 0,
-        href: `/dashboard/student/learning-hub/classes/${classId}`,
+        href: `/dashboard/student/learning/${classId}`,
         sortValue: nextSchedule?.getTime() ?? Number.MAX_SAFE_INTEGER,
       });
     });

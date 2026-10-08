@@ -15,8 +15,8 @@ import {
 import { type FormEvent, useMemo, useState } from 'react';
 import { toast } from 'sonner';
 
-import type { VerifiedSkillsRole } from '@/app/dashboard/_components/skills-wallet/types';
 import { useVerifiedSkillsContent } from '@/app/dashboard/_components/skills-wallet/live-data';
+import type { VerifiedSkillsRole } from '@/app/dashboard/_components/skills-wallet/types';
 import { SkillsWalletAchievementsTab } from '@/app/dashboard/student/skills-wallet/_components/SkillsWalletAchievementsTab';
 import { SkillsWalletCompetenciesTab } from '@/app/dashboard/student/skills-wallet/_components/SkillsWalletCompetenciesTab';
 import { SkillsWalletCredentialsVaultTab } from '@/app/dashboard/student/skills-wallet/_components/SkillsWalletCredentialsVaultTab';
@@ -30,15 +30,14 @@ import type {
   CredentialRecord,
   ExperienceRecord,
   PortfolioRecord,
-  SkillsWalletData,
   SkillRecord,
+  SkillsWalletData,
   VerificationEventRecord,
 } from '@/app/dashboard/student/skills-wallet/_components/SkillsWalletShared';
 import { WalletIdCard } from '@/app/dashboard/student/skills-wallet/_components/SkillsWalletShared';
 import { SkillsWalletVerficationTab } from '@/app/dashboard/student/skills-wallet/_components/SkillsWalletVerficationTab';
 import DeleteModal from '@/components/custom-modals/delete-modal';
 import { SectionTabPanel, SectionTabs, surfaceTheme } from '@/components/data-display';
-import { EmptyState } from '@/components/ui/empty-state';
 import { Button } from '@/components/ui/button';
 import {
   Dialog,
@@ -48,32 +47,33 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog';
+import { EmptyState } from '@/components/ui/empty-state';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Skeleton } from '@/components/ui/skeleton';
 import { Separator } from '@/components/ui/separator';
+import { Skeleton } from '@/components/ui/skeleton';
 import { Textarea } from '@/components/ui/textarea';
 import { useUserProfile } from '@/context/profile-context';
 import { extractPage } from '@/lib/api-helpers';
 import { STALE_TIMES } from '@/lib/query-client';
 import { cn } from '@/lib/utils';
 import {
-  deleteCourseCreatorExperienceMutation,
-  deleteInstructorExperienceMutation,
-  getCourseCreatorSkillsOptions,
-  getInstructorSkillsOptions,
   addCourseCreatorExperienceMutation,
   addInstructorExperienceMutation,
+  deleteCourseCreatorExperienceMutation,
+  deleteInstructorExperienceMutation,
   getCourseCreatorDocumentsQueryKey,
   getCourseCreatorEducationOptions,
   getCourseCreatorExperienceOptions,
   getCourseCreatorExperienceQueryKey,
   getCourseCreatorMembershipsOptions,
+  getCourseCreatorSkillsOptions,
   getInstructorDocumentsQueryKey,
   getInstructorEducationOptions,
   getInstructorExperienceOptions,
   getInstructorExperienceQueryKey,
   getInstructorMembershipsOptions,
+  getInstructorSkillsOptions,
   listDocumentTypesOptions,
   uploadCourseCreatorDocumentMutation,
   uploadInstructorDocumentMutation,
@@ -87,9 +87,11 @@ import type {
   InstructorProfessionalMembership,
 } from '@/services/client/types.gen';
 
+import { RoleSkillsWalletMySkillsTab } from './RoleSkillsWalletMySkillsTab';
+import { SkillsWalletEducationTab } from './SkillsWalletEducationTab';
+import { useSkillsWalletAchievements } from './useSkillsWalletAchievements';
 import { SKILL_PROFICIENCY, toWalletSkill } from './skill-proficiency';
 import { useWalletTab } from './use-wallet-tab';
-import { RoleSkillsWalletMySkillsTab } from './RoleSkillsWalletMySkillsTab';
 
 type SkillsWalletRole = Extract<VerifiedSkillsRole, 'instructor' | 'course_creator'>;
 
@@ -102,6 +104,7 @@ type WalletExperience = InstructorExperience | CourseCreatorExperience;
 const TABS = [
   { id: 'overview', label: 'Overview', icon: LayoutDashboard },
   { id: 'skills', label: 'My Skills', icon: Sparkles },
+  { id: 'education', label: 'Education', icon: GraduationCap },
   { id: 'portfolio', label: 'Portfolio', icon: Briefcase },
   { id: 'credentials', label: 'Credentials Vault', icon: ShieldCheck },
   { id: 'competencies', label: 'Competencies', icon: Target },
@@ -238,98 +241,13 @@ function mapVerificationEvents(
   }));
 }
 
-function mapAchievements({
-  role,
-  profileName,
-  skills,
-  credentials,
-  experiences,
-  verificationEvents,
-}: {
-  role: SkillsWalletRole;
-  profileName: string;
-  skills: SkillsWalletData['skills'];
-  credentials: CredentialRecord[];
-  experiences: ExperienceRecord[];
-  verificationEvents: VerificationEventRecord[];
-}): AchievementRecord[] {
-  const completedSkills = skills.filter(skill => skill.proficiency_pct === 100).length;
-  const completedExperience = experiences.length;
-  const verifiedCredentials = credentials.filter(item => item.status === 'Verified').length;
-  const verifiedEvents = verificationEvents.filter(item => item.status === 'verified').length;
-  const topSkill = [...skills].sort((a, b) => b.proficiency_pct - a.proficiency_pct)[0];
-
-  return [
-    {
-      id: `${role}-milestone-1`,
-      name: `${getRoleLabel(role)} Momentum`,
-      description: `${profileName} has ${completedSkills} skills at expert proficiency connected to the wallet.`,
-      points: completedSkills * 40,
-      achieved_at: completedSkills ? new Date().toISOString() : null,
-      status: completedSkills ? 'Completed' : 'In Progress',
-      color_key: 'bg-primary',
-      progress: completedSkills ? null : 20,
-    },
-    {
-      id: `${role}-milestone-2`,
-      name: 'Credential Vault',
-      description: `${verifiedCredentials} verified credentials are available in the wallet.`,
-      points: verifiedCredentials * 30,
-      achieved_at: verifiedCredentials ? new Date().toISOString() : null,
-      status: verifiedCredentials ? 'Completed' : 'In Progress',
-      color_key: 'bg-success',
-      progress: verifiedCredentials ? null : 25,
-    },
-    {
-      id: `${role}-milestone-3`,
-      name: `${getRoleLabel(role)} Experience`,
-      description: `${completedExperience} experience records showcase your professional journey.`,
-      points: completedExperience * 25,
-      achieved_at: completedExperience ? new Date().toISOString() : null,
-      status: completedExperience ? 'Completed' : 'In Progress',
-      color_key: 'bg-warning',
-      progress: completedExperience ? null : 35,
-    },
-    {
-      id: `${role}-milestone-4`,
-      name: 'Trusted Verification',
-      description: `${verifiedEvents} records have been updated from trusted sources.`,
-      points: verifiedEvents * 35,
-      achieved_at: verifiedEvents ? new Date().toISOString() : null,
-      status: verifiedEvents ? 'Completed' : 'In Progress',
-      color_key: 'bg-success/70',
-      progress: verifiedEvents ? null : 30,
-    },
-    topSkill
-      ? {
-          id: `${role}-milestone-5`,
-          name: `Top Skill: ${topSkill.name}`,
-          description: `Your strongest skill is currently at ${topSkill.proficiency_pct}% proficiency.`,
-          points: topSkill.proficiency_pct,
-          achieved_at: topSkill.proficiency_pct === 100 ? new Date().toISOString() : null,
-          status: topSkill.proficiency_pct === 100 ? 'Completed' : 'In Progress',
-          color_key: 'bg-primary/70',
-          progress: topSkill.proficiency_pct,
-        }
-      : {
-          id: `${role}-milestone-5`,
-          name: 'Top Skill Growth',
-          description: 'No skills are connected yet.',
-          points: 0,
-          achieved_at: null,
-          status: 'In Progress',
-          color_key: 'bg-warning/70',
-          progress: 0,
-        },
-  ];
-}
-
 function buildRoleWalletData({
   role,
   profileName,
   skillsWalletContent,
   experiences,
   skills,
+  achievements,
   totalSkills,
 }: {
   role: SkillsWalletRole;
@@ -337,20 +255,13 @@ function buildRoleWalletData({
   skillsWalletContent: ReturnType<typeof useVerifiedSkillsContent>;
   experiences: WalletExperience[];
   skills: SkillRecord[];
+  achievements: AchievementRecord[];
   totalSkills?: number;
 }): RoleWalletData {
   const credentialsByTab = skillsWalletContent.credentialsContent.credentialsByTab;
   const credentialItems = credentialsByTab.all;
   const mappedExperiences = mapExperiences(experiences, role);
   const verificationEvents = mapVerificationEvents(skillsWalletContent.credentialsContent.timeline);
-  const achievements = mapAchievements({
-    role,
-    profileName,
-    skills,
-    credentials: mapCredentials(credentialItems),
-    experiences: mappedExperiences,
-    verificationEvents,
-  });
   const topSkills = [...skills].sort((a, b) => b.proficiency_pct - a.proficiency_pct).slice(0, 5);
   const averageScore = skills.length
     ? Math.round(skills.reduce((sum, skill) => sum + skill.proficiency_pct, 0) / skills.length)
@@ -468,31 +379,31 @@ function AddExperienceDialog({
     const payload =
       role === 'instructor'
         ? {
-            instructor_uuid: profileUuid,
-            position: draft.position.trim(),
-            organisation_name: draft.organisation_name.trim(),
-            responsibilities: draft.responsibilities.trim() || undefined,
-            years_of_experience: draft.years_of_experience
-              ? Number(draft.years_of_experience)
-              : undefined,
-            start_date: draft.start_date ? new Date(draft.start_date) : undefined,
-            end_date:
-              draft.is_current_position || !draft.end_date ? undefined : new Date(draft.end_date),
-            is_current_position: draft.is_current_position,
-          }
+          instructor_uuid: profileUuid,
+          position: draft.position.trim(),
+          organisation_name: draft.organisation_name.trim(),
+          responsibilities: draft.responsibilities.trim() || undefined,
+          years_of_experience: draft.years_of_experience
+            ? Number(draft.years_of_experience)
+            : undefined,
+          start_date: draft.start_date ? new Date(draft.start_date) : undefined,
+          end_date:
+            draft.is_current_position || !draft.end_date ? undefined : new Date(draft.end_date),
+          is_current_position: draft.is_current_position,
+        }
         : {
-            course_creator_uuid: profileUuid,
-            position: draft.position.trim(),
-            organisation_name: draft.organisation_name.trim(),
-            responsibilities: draft.responsibilities.trim() || undefined,
-            years_of_experience: draft.years_of_experience
-              ? Number(draft.years_of_experience)
-              : undefined,
-            start_date: draft.start_date ? new Date(draft.start_date) : undefined,
-            end_date:
-              draft.is_current_position || !draft.end_date ? undefined : new Date(draft.end_date),
-            is_current_position: draft.is_current_position,
-          };
+          course_creator_uuid: profileUuid,
+          position: draft.position.trim(),
+          organisation_name: draft.organisation_name.trim(),
+          responsibilities: draft.responsibilities.trim() || undefined,
+          years_of_experience: draft.years_of_experience
+            ? Number(draft.years_of_experience)
+            : undefined,
+          start_date: draft.start_date ? new Date(draft.start_date) : undefined,
+          end_date:
+            draft.is_current_position || !draft.end_date ? undefined : new Date(draft.end_date),
+          is_current_position: draft.is_current_position,
+        };
 
     const response = await mutation.mutateAsync({
       path:
@@ -506,13 +417,13 @@ function AddExperienceDialog({
       const queryKey =
         role === 'instructor'
           ? getInstructorExperienceQueryKey({
-              path: { instructorUuid: profileUuid },
-              query: { pageable: { page: 0, size: 200 } },
-            })
+            path: { instructorUuid: profileUuid },
+            query: { pageable: { page: 0, size: 200 } },
+          })
           : getCourseCreatorExperienceQueryKey({
-              path: { courseCreatorUuid: profileUuid },
-              query: { pageable: { page: 0, size: 200 } },
-            });
+            path: { courseCreatorUuid: profileUuid },
+            query: { pageable: { page: 0, size: 200 } },
+          });
       await queryClient.invalidateQueries({ queryKey });
       toast.success('Experience saved');
       reset();
@@ -677,13 +588,13 @@ function AddCredentialDialog({
   const membershipQuery = useQuery({
     ...(role === 'instructor'
       ? getInstructorMembershipsOptions({
-          path: { instructorUuid: profileUuid ?? '' },
-          query: { pageable: { page: 0, size: 200 } },
-        })
+        path: { instructorUuid: profileUuid ?? '' },
+        query: { pageable: { page: 0, size: 200 } },
+      })
       : getCourseCreatorMembershipsOptions({
-          path: { courseCreatorUuid: profileUuid ?? '' },
-          query: { pageable: { page: 0, size: 200 } },
-        })),
+        path: { courseCreatorUuid: profileUuid ?? '' },
+        query: { pageable: { page: 0, size: 200 } },
+      })),
     enabled: Boolean(profileUuid),
     staleTime: STALE_TIMES.reference,
   });
@@ -691,13 +602,13 @@ function AddCredentialDialog({
   const relatedExperienceQuery = useQuery({
     ...(role === 'instructor'
       ? getInstructorExperienceOptions({
-          path: { instructorUuid: profileUuid ?? '' },
-          query: { pageable: { page: 0, size: 200 } },
-        })
+        path: { instructorUuid: profileUuid ?? '' },
+        query: { pageable: { page: 0, size: 200 } },
+      })
       : getCourseCreatorExperienceOptions({
-          path: { courseCreatorUuid: profileUuid ?? '' },
-          query: { pageable: { page: 0, size: 200 } },
-        })),
+        path: { courseCreatorUuid: profileUuid ?? '' },
+        query: { pageable: { page: 0, size: 200 } },
+      })),
     enabled: Boolean(profileUuid),
     staleTime: STALE_TIMES.reference,
   });
@@ -973,13 +884,13 @@ function ProfileSkillsWalletPage({
   const experienceQuery = useQuery({
     ...(role === 'instructor'
       ? getInstructorExperienceOptions({
-          path: { instructorUuid: profileUuid ?? '' },
-          query: { pageable: { page: 0, size: 200 } },
-        })
+        path: { instructorUuid: profileUuid ?? '' },
+        query: { pageable: { page: 0, size: 200 } },
+      })
       : getCourseCreatorExperienceOptions({
-          path: { courseCreatorUuid: profileUuid ?? '' },
-          query: { pageable: { page: 0, size: 200 } },
-        })),
+        path: { courseCreatorUuid: profileUuid ?? '' },
+        query: { pageable: { page: 0, size: 200 } },
+      })),
     enabled: Boolean(profileUuid),
     staleTime: STALE_TIMES.entity,
   });
@@ -990,6 +901,9 @@ function ProfileSkillsWalletPage({
   });
 
   const { value: tab, setValue: setTab, hrefFor } = useWalletTab(TAB_IDS, 'overview');
+  const achievementsQuery = useSkillsWalletAchievements(
+    Boolean(profileUuid) && (tab === 'overview' || tab === 'achievements')
+  );
   const [experienceOpen, setExperienceOpen] = useState(false);
   const [credentialOpen, setCredentialOpen] = useState(false);
 
@@ -1010,6 +924,7 @@ function ProfileSkillsWalletPage({
         skillsWalletContent: verifiedSkillsContent,
         experiences,
         skills,
+        achievements: achievementsQuery.achievements,
         totalSkills:
           skillPage?.metadata?.totalElements == null
             ? skills.length
@@ -1021,6 +936,7 @@ function ProfileSkillsWalletPage({
       role,
       verifiedSkillsContent,
       skills,
+      achievementsQuery.achievements,
       skillPage?.metadata?.totalElements,
     ]
   );
@@ -1034,11 +950,11 @@ function ProfileSkillsWalletPage({
       const result =
         role === 'instructor'
           ? await deleteInstructorExperience.mutateAsync({
-              path: { instructorUuid: profileUuid, experienceUuid },
-            })
+            path: { instructorUuid: profileUuid, experienceUuid },
+          })
           : await deleteCreatorExperience.mutateAsync({
-              path: { courseCreatorUuid: profileUuid, experienceUuid },
-            });
+            path: { courseCreatorUuid: profileUuid, experienceUuid },
+          });
       if (
         typeof result === 'object' &&
         result !== null &&
@@ -1050,13 +966,13 @@ function ProfileSkillsWalletPage({
         queryKey:
           role === 'instructor'
             ? getInstructorExperienceQueryKey({
-                path: { instructorUuid: profileUuid },
-                query: { pageable: {} },
-              })
+              path: { instructorUuid: profileUuid },
+              query: { pageable: {} },
+            })
             : getCourseCreatorExperienceQueryKey({
-                path: { courseCreatorUuid: profileUuid },
-                query: { pageable: {} },
-              }),
+              path: { courseCreatorUuid: profileUuid },
+              query: { pageable: {} },
+            }),
       });
       setDeletingExperience(null);
       toast.success('Experience deleted');
@@ -1121,8 +1037,10 @@ function ProfileSkillsWalletPage({
                   isLoading={
                     skillsQuery.isLoading ||
                     verifiedSkillsContent.isLoading ||
-                    experienceQuery.isLoading
+                    experienceQuery.isLoading || achievementsQuery.isLoading
                   }
+                  achievementsFailed={achievementsQuery.isError}
+                  onRetryAchievements={() => void achievementsQuery.refetch()}
                   onNavigateToTab={value => setTab(value as TabId)}
                 />
               )
@@ -1140,6 +1058,9 @@ function ProfileSkillsWalletPage({
                 <SkillsWalletMySkillsTab data={{ skills: [], categoryCounts: [] }} />
               )
             ) : null}
+          </SectionTabPanel>
+          <SectionTabPanel value='education'>
+            {tab === 'education' ? <SkillsWalletEducationTab /> : null}
           </SectionTabPanel>
           <SectionTabPanel value='portfolio'>
             {tab === 'portfolio' ? <SkillsWalletPortfolioTab data={data} /> : null}
@@ -1169,12 +1090,10 @@ function ProfileSkillsWalletPage({
             {tab === 'achievements' ? (
               <SkillsWalletAchievementsTab
                 achievements={data.achievements}
+                isLoading={achievementsQuery.isLoading}
+                failed={achievementsQuery.isError}
+                onRetry={() => void achievementsQuery.refetch()}
                 title='Achievements'
-                description={
-                  role === 'instructor'
-                    ? 'Track your milestones, teaching progress, and profile verification.'
-                    : 'Track your milestones, course creation progress, and profile verification.'
-                }
               />
             ) : null}
           </SectionTabPanel>

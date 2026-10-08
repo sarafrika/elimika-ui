@@ -2,16 +2,16 @@
 
 import { Award, CheckCircle2, Clock, Download, Plus, ShieldCheck, XCircle } from 'lucide-react';
 
-import { useEffect, useMemo, useState } from 'react';
-import { toast } from 'sonner';
 import { WalletShareButton } from '@/app/dashboard/_components/skills-wallet/WalletShareButton';
 import { downloadCredential } from '@/app/dashboard/_components/skills-wallet/credential-download';
 import { credentialShareHref } from '@/app/dashboard/_components/skills-wallet/wallet-tab-hash';
-import { toAuthenticatedMediaUrl } from '@/src/lib/media-url';
-import Spinner from '@/components/ui/spinner';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
+import Spinner from '@/components/ui/spinner';
+import { toAuthenticatedMediaUrl } from '@/src/lib/media-url';
+import { useEffect, useMemo, useState } from 'react';
+import { toast } from 'sonner';
 
 import {
   fmtDate,
@@ -22,7 +22,7 @@ import {
 
 type SkillsWalletCredentialsVaultTabProps = {
   data: Pick<SkillsWalletData, 'credentials' | 'externalCertificates' | 'studentName'> &
-    Partial<Pick<SkillsWalletData, 'verificationEvents'>>;
+  Partial<Pick<SkillsWalletData, 'verificationEvents'>>;
   onAddCredential?: () => void;
 };
 
@@ -212,10 +212,10 @@ export function SkillsWalletCredentialsVaultTab({
                       return url
                         ? new URL(url, window.location.origin).href
                         : credentialShareHref(
-                            window.location.origin,
-                            window.location.pathname,
-                            item.id
-                          );
+                          window.location.origin,
+                          window.location.pathname,
+                          item.id
+                        );
                     }}
                   />
                   <Button

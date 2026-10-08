@@ -84,9 +84,9 @@ export function AddSkillDialog({ role, profileUuid, onClose, skill }: AddSkillDi
           };
           return skill?.uuid
             ? updateInstructorMutation.mutateAsync({
-                path: { instructorUuid: profileUuid, skillUuid: skill.uuid },
-                body,
-              })
+              path: { instructorUuid: profileUuid, skillUuid: skill.uuid },
+              body,
+            })
             : instructorMutation.mutateAsync({ path: { instructorUuid: profileUuid }, body });
         }
         const body = {
@@ -96,9 +96,9 @@ export function AddSkillDialog({ role, profileUuid, onClose, skill }: AddSkillDi
         };
         return skill?.uuid
           ? updateCreatorMutation.mutateAsync({
-              path: { courseCreatorUuid: profileUuid, skillUuid: skill.uuid },
-              body,
-            })
+            path: { courseCreatorUuid: profileUuid, skillUuid: skill.uuid },
+            body,
+          })
           : creatorMutation.mutateAsync({ path: { courseCreatorUuid: profileUuid }, body });
       };
       const response = await saveSkill();
@@ -110,25 +110,25 @@ export function AddSkillDialog({ role, profileUuid, onClose, skill }: AddSkillDi
         queryKey:
           role === 'instructor'
             ? getInstructorSkillsQueryKey({
-                path: { instructorUuid: profileUuid },
-                query: { pageable: {} },
-              })
+              path: { instructorUuid: profileUuid },
+              query: { pageable: {} },
+            })
             : getCourseCreatorSkillsQueryKey({
-                path: { courseCreatorUuid: profileUuid },
-                query: { pageable: {} },
-              }),
+              path: { courseCreatorUuid: profileUuid },
+              query: { pageable: {} },
+            }),
       });
       toast.success(
         response.message ||
-          (isEditing ? 'Skill updated successfully.' : 'Skill added successfully.')
+        (isEditing ? 'Skill updated successfully.' : 'Skill added successfully.')
       );
       onClose();
     } catch (error) {
       const message =
         typeof error === 'object' &&
-        error !== null &&
-        'message' in error &&
-        typeof error.message === 'string'
+          error !== null &&
+          'message' in error &&
+          typeof error.message === 'string'
           ? error.message
           : failureMessage;
       setErrorMessage(message);
@@ -199,7 +199,7 @@ export function AddSkillDialog({ role, profileUuid, onClose, skill }: AddSkillDi
                 <Input id={`${id}-verification`} value='' disabled />
               </div>
               <div className='space-y-2'>
-                <Label htmlFor={`${id}-assessed`}>Last assessed date</Label>
+                <Label htmlFor={`${id}-assessed`}>Date acquired</Label>
                 <Input
                   id={`${id}-assessed`}
                   value={skill?.updated_date ? fmtDate(skill.updated_date) : ''}

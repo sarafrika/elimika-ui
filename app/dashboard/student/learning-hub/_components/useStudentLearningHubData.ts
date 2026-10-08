@@ -176,8 +176,8 @@ function buildClassLearningHref(
   const query = params.toString();
 
   return query
-    ? `/dashboard/student/learning-hub/classes/${classUuid}?${query}`
-    : `/dashboard/student/learning-hub/classes/${classUuid}`;
+    ? `/dashboard/student/learning/${classUuid}?${query}`
+    : `/dashboard/student/learning/${classUuid}`;
 }
 
 const formatDate = (value?: Date | string | null, options?: Intl.DateTimeFormatOptions) => {

@@ -165,7 +165,7 @@ export function LessonHubLessonsTab({ learningHubData }: LessonHubLessonsTabProp
                 const classTitle =
                     classDefinition?.title?.trim() ||
                     '';
-                const classHref = `/dashboard/student/learning-hub/classes/${item.class_definition_uuid}`;
+                const classHref = `/dashboard/student/learning/${item.class_definition_uuid}`;
 
                 return {
                     id: item.id,

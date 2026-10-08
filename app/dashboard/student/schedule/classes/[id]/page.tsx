@@ -1,25 +1,25 @@
 // @ts-nocheck -- pre-existing @hey-api generated-client type drift (see memory: elimika-ui-typecheck)
 'use client';
 
+import { AsyncSection } from '@/components/data/async-section';
+import { Button } from '@/components/ui/button';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Progress } from '@/components/ui/progress';
+import { Skeleton } from '@/components/ui/skeleton';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { format, isAfter } from 'date-fns';
 import { BookOpen, Calendar } from 'lucide-react';
 import { useParams } from 'next/navigation';
 import { useEffect, useMemo, useState } from 'react';
 import { toast } from 'sonner';
-import { AsyncSection } from '@/components/data/async-section';
-import { Button } from '@/components/ui/button';
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import { Progress } from '@/components/ui/progress';
-import { Skeleton } from '@/components/ui/skeleton';
 // Import hooks
 import { useBreadcrumb } from '@/context/breadcrumb-provider';
 import { useStudent } from '@/context/student-context';
-import { invalidateReviewWorkflowQueries } from '@/src/features/dashboard/workflow-query-invalidation';
 import { useCourseLessonsWithContent } from '@/hooks/use-courselessonwithcontent';
 import { useDifficultyLevels } from '@/hooks/use-difficultyLevels';
 import { resolveLessonContentSource } from '@/lib/lesson-content-preview';
 import type { GetClassScheduleResponse, GetEnrollmentsForClassResponse } from '@/services/client';
+import { invalidateReviewWorkflowQueries } from '@/src/features/dashboard/workflow-query-invalidation';
 // Import your API functions
 import {
   getClassDefinitionOptions,
@@ -29,8 +29,8 @@ import {
   getInstructorByUuidOptions,
   submitInstructorReviewMutation,
 } from '@/services/client/@tanstack/react-query.gen';
-import { LessonContentViewerDialog } from '../../../../../../components/content-preview/LessonContentPreview';
 import { FeedbackSheet } from '@/src/features/dashboard/courses/components/feedback-sheet';
+import { LessonContentViewerDialog } from '../../../../../../components/content-preview/LessonContentPreview';
 import { ClassPageHeader } from './ClassPageHeader';
 import { CourseProgramSection, type LessonContent, type LessonModule } from './CourseProgram';
 import { LessonDetailsSidebar } from './LessonDetailsSidebar';
@@ -291,7 +291,7 @@ export default function ClassDetailsPage() {
         {
           id: 'classes',
           title: 'Classes',
-          url: `/dashboard/student/learning-hub/classes/${classId}`,
+          url: `/dashboard/student/learning/${classId}`,
         },
         {
           id: 'training-page',

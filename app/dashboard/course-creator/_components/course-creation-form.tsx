@@ -57,6 +57,7 @@ import { useRouter } from 'next/navigation';
 import {
   type Dispatch,
   forwardRef,
+  type RefObject,
   type ReactNode,
   type SetStateAction,
   useEffect,
@@ -117,6 +118,8 @@ export const FormSection = ({ title, description, children }: FormSectionProps) 
 type CourseFormProps = {
   showSubmitButton?: boolean;
   initialValues?: Partial<CourseCreationFormValues>;
+  detailsDraftRef?: RefObject<CourseCreationFormValues | undefined>;
+  skillsAndPrerequisites?: ReactNode;
   editingCourseId?: string;
   courseId?: string;
   requirementDrafts?: DraftsByProvider;
@@ -197,6 +200,8 @@ export const CourseCreationForm = forwardRef<CourseFormRef, CourseFormProps>(
     {
       showSubmitButton,
       initialValues,
+      detailsDraftRef,
+      skillsAndPrerequisites,
       editingCourseId,
       courseId,
       requirementDrafts,
@@ -260,18 +265,35 @@ export const CourseCreationForm = forwardRef<CourseFormRef, CourseFormProps>(
         },
         training_requirement: emptyRequirement,
         ...initialValues,
+        ...detailsDraftRef?.current,
       },
       mode: 'onChange',
     });
 
+    const { watch, getValues } = form;
+    useEffect(() => {
+      if (!detailsDraftRef) return;
+
+      // The callback subscription keeps the page draft current without render-time watching.
+      detailsDraftRef.current = getValues();
+      const subscription = watch(() => {
+        detailsDraftRef.current = getValues();
+      });
+      return () => subscription.unsubscribe();
+    }, [detailsDraftRef, getValues, watch]);
+
     useEffect(() => {
       if (initialValues && Object.keys(initialValues).length > 0) {
-        form.reset({
-          ...form.getValues(),
-          ...initialValues,
-        });
+        form.reset(
+          {
+            ...form.getValues(),
+            ...initialValues,
+            ...detailsDraftRef?.current,
+          },
+          { keepDirtyValues: true }
+        );
       }
-    }, [initialValues, form]);
+    }, [initialValues, form, detailsDraftRef]);
 
     const appendCategory = (uuid: string) => {
       const existing = form.getValues('categories') ?? [];
@@ -473,6 +495,10 @@ export const CourseCreationForm = forwardRef<CourseFormRef, CourseFormProps>(
         updateCourseMutation(
           { body: editBody as MutationPayload, uuid: editingCourseId },
           {
+            onError(error) {
+              setSaveStage(null);
+              toast.error(error.message || 'Could not save the course.');
+            },
             onSuccess(data) {
               const respObj = data?.data;
               const errorObj = data?.error;
@@ -480,10 +506,10 @@ export const CourseCreationForm = forwardRef<CourseFormRef, CourseFormProps>(
               setSaveStage('redirecting');
               setTimeout(() => setSaveStage(null), 500);
 
-              if (respObj) {
+              if (!errorObj && data?.success !== false && respObj) {
                 toast.success(data?.data?.message);
                 queryClient.invalidateQueries({
-                  queryKey: getCourseByUuidQueryKey({ path: { uuid: courseId as string } }),
+                  queryKey: getCourseByUuidQueryKey({ path: { uuid: editingCourseId } }),
                 });
                 onSaveSuccess?.();
                 return;
@@ -549,7 +575,17 @@ export const CourseCreationForm = forwardRef<CourseFormRef, CourseFormProps>(
             toast.error(error?.message);
           },
           onSuccess: courseResponse => {
-            const newCourseUuid = courseResponse?.data?.uuid as string;
+            if (
+              courseResponse.error ||
+              courseResponse.success === false ||
+              !courseResponse.data?.uuid
+            ) {
+              setSaveStage(null);
+              toast.error(courseResponse.message || 'Could not create the course.');
+              return;
+            }
+
+            const newCourseUuid = courseResponse.data.uuid;
 
             router.replace(`/dashboard/course-creator/courses/create-course?id=${newCourseUuid}`);
 
@@ -566,7 +602,7 @@ export const CourseCreationForm = forwardRef<CourseFormRef, CourseFormProps>(
             });
 
             if (typeof successResponse === 'function') {
-              successResponse(courseResponse);
+              successResponse(courseResponse.data);
             }
             onSaveSuccess?.();
 
@@ -1016,6 +1052,10 @@ export const CourseCreationForm = forwardRef<CourseFormRef, CourseFormProps>(
                 )}
               />
             </section>
+
+            {skillsAndPrerequisites && (
+              <section className='grid gap-6 px-6'>{skillsAndPrerequisites}</section>
+            )}
 
             <section className='px-6'>
               <Card>

@@ -69,6 +69,7 @@ export function RubricCombobox({
   });
   const selectedTitle = selectedQuery.data?.data?.title;
 
+  // Builders open in a modal sheet; keep search and options within its focus boundary.
   return (
     <EntityCombobox
       value={value || ''}
@@ -89,6 +90,7 @@ export function RubricCombobox({
       emptyText='No rubric matches'
       groupHeading='Your rubrics'
       disabled={disabled || !creatorUuid}
+      portalled={false}
       className={className}
       aria-label={ariaLabel}
       extraGroups={({ q, select }) => (

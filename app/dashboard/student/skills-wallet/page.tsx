@@ -1,5 +1,11 @@
 'use client';
 
+import { useWalletTab } from '@/app/dashboard/_components/skills-wallet/use-wallet-tab';
+import { SkillsWalletEducationTab } from '@/app/dashboard/_components/skills-wallet/SkillsWalletEducationTab';
+import { SectionTabPanel, SectionTabs, surfaceTheme } from '@/components/data-display';
+import { useStudent } from '@/context/student-context';
+import { cn } from '@/lib/utils';
+import { LearnerSkillGoalsCard } from '@/src/features/skills/learner-skill-goals-card';
 import {
   BadgeCheck,
   Briefcase,
@@ -10,11 +16,6 @@ import {
   Target,
   Trophy,
 } from 'lucide-react';
-import { useWalletTab } from '@/app/dashboard/_components/skills-wallet/use-wallet-tab';
-import { SectionTabPanel, SectionTabs, surfaceTheme } from '@/components/data-display';
-import { useStudent } from '@/context/student-context';
-import { cn } from '@/lib/utils';
-import { LearnerSkillGoalsCard } from '@/src/features/skills/learner-skill-goals-card';
 
 import { SkillsWalletAchievementsTab } from './_components/SkillsWalletAchievementsTab';
 import { SkillsWalletCompetenciesTab } from './_components/SkillsWalletCompetenciesTab';
@@ -30,6 +31,7 @@ import { useStudentSkillsWalletData } from './_components/useStudentSkillsWallet
 const TABS = [
   { id: 'overview', label: 'Overview', icon: LayoutDashboard },
   { id: 'skills', label: 'My Skills', icon: Sparkles },
+  { id: 'education', label: 'Education', icon: GraduationCap },
   { id: 'portfolio', label: 'Portfolio', icon: Briefcase },
   { id: 'credentials', label: 'Credentials Vault', icon: ShieldCheck },
   { id: 'competencies', label: 'Competencies', icon: Target },
@@ -44,7 +46,7 @@ const TAB_IDS: readonly TabId[] = TABS.map(item => item.id);
 
 export default function SkillsWallet() {
   const { value: tab, setValue: setTab, hrefFor } = useWalletTab(TAB_IDS, 'overview');
-  const data = useStudentSkillsWalletData();
+  const data = useStudentSkillsWalletData(tab === 'overview' || tab === 'achievements');
   const student = useStudent();
 
   return (
@@ -78,6 +80,8 @@ export default function SkillsWallet() {
               <SkillsWalletOverviewTab
                 data={data}
                 isLoading={data.isLoading}
+                achievementsFailed={data.achievementsQuery.isError}
+                onRetryAchievements={() => void data.achievementsQuery.refetch()}
                 onNavigateToTab={value => setTab(value as TabId)}
               />
             ) : null}
@@ -89,6 +93,9 @@ export default function SkillsWallet() {
                 <SkillsWalletMySkillsTab data={data} />
               </div>
             ) : null}
+          </SectionTabPanel>
+          <SectionTabPanel value='education'>
+            {tab === 'education' ? <SkillsWalletEducationTab /> : null}
           </SectionTabPanel>
           <SectionTabPanel value='portfolio'>
             {tab === 'portfolio' ? <SkillsWalletPortfolioTab data={data} /> : null}
@@ -106,7 +113,12 @@ export default function SkillsWallet() {
           </SectionTabPanel>
           <SectionTabPanel value='achievements'>
             {tab === 'achievements' ? (
-              <SkillsWalletAchievementsTab achievements={data.achievements} />
+              <SkillsWalletAchievementsTab
+                achievements={data.achievements}
+                isLoading={data.achievementsQuery.isLoading}
+                failed={data.achievementsQuery.isError}
+                onRetry={() => void data.achievementsQuery.refetch()}
+              />
             ) : null}
           </SectionTabPanel>
           <SectionTabPanel value='verification'>
