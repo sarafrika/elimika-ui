@@ -148,11 +148,11 @@ async function proxyPublicFile(request: NextRequest, upstreamUrl: URL) {
   headers.delete('authorization');
   sanitizeHeaders(headers);
 
-  const upstreamResponse = await fetch(upstreamUrl, {
-    method: request.method,
-    headers,
-    redirect: 'manual',
-  });
+  const upstreamResponse = await fetchUpstream(
+    upstreamUrl,
+    { method: request.method, headers, redirect: 'manual' },
+    request.signal
+  );
   const responseHeaders = new Headers(upstreamResponse.headers);
   sanitizeHeaders(responseHeaders);
   responseHeaders.delete('set-cookie');
