@@ -110,6 +110,63 @@ function applyPrivateResponseHeaders(headers: Headers, cacheState: CacheState) {
   return headers;
 }
 
+const PUBLIC_FILES_PREFIX = '/api/v1/files/';
+const PUBLIC_FILE_CACHE_CONTROL = 'public, max-age=31536000, immutable';
+const PUBLIC_FILE_MISSING_CACHE_CONTROL = 'public, max-age=300';
+
+// Files are permitAll upstream except profile_documents, so the check runs on the
+// normalised upstream path to stop dot-segments from smuggling a private path through.
+function isPublicFileRead(request: NextRequest, upstreamUrl: URL) {
+  if (request.method !== 'GET' && request.method !== 'HEAD') {
+    return false;
+  }
+
+  const basePath = new URL(getServerApiBaseUrl()).pathname.replace(/\/$/, '');
+  const pathname = upstreamUrl.pathname.slice(basePath.length);
+  if (!pathname.startsWith(PUBLIC_FILES_PREFIX)) {
+    return false;
+  }
+
+  try {
+    return !decodeURIComponent(pathname).toLowerCase().includes('profile_documents');
+  } catch {
+    return false;
+  }
+}
+
+function getPublicFileCacheControl(status: number) {
+  if (status === 200 || status === 206 || status === 304) {
+    return PUBLIC_FILE_CACHE_CONTROL;
+  }
+  return status === 404 ? PUBLIC_FILE_MISSING_CACHE_CONTROL : 'no-store';
+}
+
+async function proxyPublicFile(request: NextRequest, upstreamUrl: URL) {
+  const headers = new Headers(request.headers);
+  headers.delete('host');
+  headers.delete('cookie');
+  headers.delete('authorization');
+  sanitizeHeaders(headers);
+
+  const upstreamResponse = await fetch(upstreamUrl, {
+    method: request.method,
+    headers,
+    redirect: 'manual',
+  });
+  const responseHeaders = new Headers(upstreamResponse.headers);
+  sanitizeHeaders(responseHeaders);
+  responseHeaders.delete('set-cookie');
+  responseHeaders.delete('pragma');
+  responseHeaders.delete('expires');
+  responseHeaders.set('cache-control', getPublicFileCacheControl(upstreamResponse.status));
+  responseHeaders.set('x-bff-cache', 'PUBLIC');
+
+  return new NextResponse(upstreamResponse.body, {
+    status: upstreamResponse.status,
+    headers: responseHeaders,
+  });
+}
+
 function getCacheUserId(session: AuthSession) {
   const userId = session?.user?.id ?? session?.user?.email;
   return typeof userId === 'string' && userId.trim().length > 0 ? userId : null;
@@ -227,9 +284,13 @@ async function refreshCachedGet(
 
 const proxyRequest = async (request: NextRequest, path: string[]) => {
   try {
+    const upstreamUrl = buildUpstreamUrl(request, path);
+    if (isPublicFileRead(request, upstreamUrl)) {
+      return await proxyPublicFile(request, upstreamUrl);
+    }
+
     const session = await auth();
     const cacheUserId = getCacheUserId(session);
-    const upstreamUrl = buildUpstreamUrl(request, path);
     const headers = getForwardHeaders(request, session);
     // Decision queues and platform counts are read fresh every time: a cached answer
     // would show one admin work that another has already cleared.
