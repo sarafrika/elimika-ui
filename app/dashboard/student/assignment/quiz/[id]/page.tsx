@@ -227,13 +227,18 @@ export default function StudentQuizSubmissionPage() {
     })),
   });
 
+  const courseUuids = useMemo(
+    () => Array.from(new Set(classItems.map(item => item.courseUuid).filter(Boolean))),
+    [classItems]
+  );
+
   const courseEnrollmentQueries = useQueries({
-    queries: classItems.map(classItem => ({
+    queries: courseUuids.map(courseUuid => ({
       ...getCourseEnrollmentsOptions({
-        path: { courseUuid: classItem.courseUuid },
+        path: { courseUuid },
         query: { pageable: {} },
       }),
-      enabled: !!classItem.classUuid,
+      enabled: !!courseUuid,
       staleTime: STALE_TIMES.live,
       refetchOnWindowFocus: false,
     })),
@@ -243,7 +248,8 @@ export default function StudentQuizSubmissionPage() {
     () =>
       classItems.map((classItem, index) => {
         const enrollments = classEnrollmentQueries[index]?.data?.data ?? [];
-        const courseEnrollments = courseEnrollmentQueries[index]?.data?.data ?? [];
+        const courseEnrollments =
+          courseEnrollmentQueries[courseUuids.indexOf(classItem.courseUuid)]?.data?.data ?? [];
         const matchingEnrollment =
           enrollments.find((e: Enrollment) => e.student_uuid === student?.uuid) ?? null;
         const courseEnrollment =
@@ -252,7 +258,7 @@ export default function StudentQuizSubmissionPage() {
 
         return { ...classItem, enrollmentUuid: matchingEnrollment?.uuid, courseEnrollment };
       }),
-    [classEnrollmentQueries, classItems, student?.uuid]
+    [classEnrollmentQueries, courseEnrollmentQueries, courseUuids, classItems, student?.uuid]
   );
 
   const quizScheduleQueries = useQueries({
