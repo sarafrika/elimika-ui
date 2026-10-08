@@ -1,6 +1,7 @@
 'use client';
 
 import { useWalletTab } from '@/app/dashboard/_components/skills-wallet/use-wallet-tab';
+import { SkillsWalletEducationTab } from '@/app/dashboard/_components/skills-wallet/SkillsWalletEducationTab';
 import { SectionTabPanel, SectionTabs, surfaceTheme } from '@/components/data-display';
 import { useStudent } from '@/context/student-context';
 import { cn } from '@/lib/utils';
@@ -45,7 +46,7 @@ const TAB_IDS: readonly TabId[] = TABS.map(item => item.id);
 
 export default function SkillsWallet() {
   const { value: tab, setValue: setTab, hrefFor } = useWalletTab(TAB_IDS, 'overview');
-  const data = useStudentSkillsWalletData();
+  const data = useStudentSkillsWalletData(tab === 'overview' || tab === 'achievements');
   const student = useStudent();
 
   return (
@@ -79,6 +80,8 @@ export default function SkillsWallet() {
               <SkillsWalletOverviewTab
                 data={data}
                 isLoading={data.isLoading}
+                achievementsFailed={data.achievementsQuery.isError}
+                onRetryAchievements={() => void data.achievementsQuery.refetch()}
                 onNavigateToTab={value => setTab(value as TabId)}
               />
             ) : null}
@@ -90,6 +93,9 @@ export default function SkillsWallet() {
                 <SkillsWalletMySkillsTab data={data} />
               </div>
             ) : null}
+          </SectionTabPanel>
+          <SectionTabPanel value='education'>
+            {tab === 'education' ? <SkillsWalletEducationTab /> : null}
           </SectionTabPanel>
           <SectionTabPanel value='portfolio'>
             {tab === 'portfolio' ? <SkillsWalletPortfolioTab data={data} /> : null}
@@ -107,7 +113,12 @@ export default function SkillsWallet() {
           </SectionTabPanel>
           <SectionTabPanel value='achievements'>
             {tab === 'achievements' ? (
-              <SkillsWalletAchievementsTab achievements={data.achievements} />
+              <SkillsWalletAchievementsTab
+                achievements={data.achievements}
+                isLoading={data.achievementsQuery.isLoading}
+                failed={data.achievementsQuery.isError}
+                onRetry={() => void data.achievementsQuery.refetch()}
+              />
             ) : null}
           </SectionTabPanel>
           <SectionTabPanel value='verification'>

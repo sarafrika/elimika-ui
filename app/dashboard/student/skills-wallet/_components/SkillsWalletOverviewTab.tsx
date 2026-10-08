@@ -33,6 +33,8 @@ type SkillsWalletOverviewTabProps = {
     | 'skills'
   >;
   isLoading?: boolean;
+  achievementsFailed?: boolean;
+  onRetryAchievements?: () => void;
   onNavigateToTab?: (
     tab: 'skills' | 'competencies' | 'credentials' | 'portfolio' | 'achievements'
   ) => void;
@@ -42,6 +44,8 @@ export function SkillsWalletOverviewTab({
   data,
   onNavigateToTab,
   isLoading,
+  achievementsFailed,
+  onRetryAchievements,
 }: SkillsWalletOverviewTabProps) {
   const stats = [
     {
@@ -79,15 +83,14 @@ export function SkillsWalletOverviewTab({
     {
       icon: Trophy,
       label: 'Achievements',
-      value: data.achievements.filter(item => item.status === 'Completed').length,
+      value: achievementsFailed ? '—' : data.achievements.length,
       tint: 'bg-muted text-foreground',
       actionLabel: 'View details',
       onAction: () => onNavigateToTab?.('achievements'),
     },
   ];
 
-  const recentAchievements = data.achievements
-    .filter(item => item.status === 'Completed')
+  const recentAchievements = [...data.achievements]
     .sort((a, b) => new Date(b.achieved_at ?? 0).getTime() - new Date(a.achieved_at ?? 0).getTime())
     .slice(0, 4);
 
@@ -220,7 +223,13 @@ export function SkillsWalletOverviewTab({
             </Button>
           </CardHeader>
           <CardContent className='space-y-3'>
-            {recentAchievements.length ? (
+            {achievementsFailed ? (
+              <EmptyState
+                variant='compact'
+                title='Unable to load achievements'
+                action={onRetryAchievements ? <Button type='button' variant='outline' size='sm' onClick={onRetryAchievements}>Try again</Button> : undefined}
+              />
+            ) : recentAchievements.length ? (
               recentAchievements.map(achievement => (
                 <div key={achievement.id} className='flex items-start gap-3'>
                   <div className='bg-success/10 text-success grid h-9 w-9 shrink-0 place-items-center rounded-md'>
@@ -239,7 +248,7 @@ export function SkillsWalletOverviewTab({
               <EmptyState
                 variant='compact'
                 title='No achievements yet'
-                description='Completed milestones will appear here.'
+                description='Achievements saved to your profile will appear here.'
               />
             )}
           </CardContent>

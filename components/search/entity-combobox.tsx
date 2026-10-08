@@ -63,6 +63,8 @@ export type EntityComboboxProps<TData, TKey extends QueryKey = QueryKey> = {
         select: (value: string, option: EntityOption | undefined) => void;
       }) => ReactNode);
   disabled?: boolean;
+  /** Keep the dropdown inside its parent sheet/dialog when false. */
+  portalled?: boolean;
   className?: string;
   'aria-label'?: string;
 };
@@ -85,6 +87,7 @@ export function EntityCombobox<TData, TKey extends QueryKey = QueryKey>({
   extraGroups,
   groupHeading,
   disabled,
+  portalled = true,
   className,
   'aria-label': ariaLabel,
 }: EntityComboboxProps<TData, TKey>) {
@@ -123,7 +126,11 @@ export function EntityCombobox<TData, TKey extends QueryKey = QueryKey>({
           <ChevronsUpDown className='ml-2 size-4 shrink-0 opacity-50' />
         </Button>
       </PopoverTrigger>
-      <PopoverContent className='w-[--radix-popover-trigger-width] min-w-[280px] p-0' align='start'>
+      <PopoverContent
+        portalled={portalled}
+        className='w-[--radix-popover-trigger-width] min-w-[280px] p-0'
+        align='start'
+      >
         <Command shouldFilter={false}>
           <CommandInput
             value={search.input}

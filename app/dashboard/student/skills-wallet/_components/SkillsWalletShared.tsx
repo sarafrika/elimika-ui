@@ -20,7 +20,7 @@ import { useState, type ReactNode } from 'react';
 import { TOKEN } from '@/app/dashboard/_components/color-charts';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
-import type { Certificate } from '@/services/client/types.gen';
+import type { AchievementTypeEnum, Certificate } from '@/services/client/types.gen';
 import { useUserProfile } from '../../../../../context/profile-context';
 export const ICON_MAP: Record<string, LucideIcon> = {
   Code2: Sparkles,
@@ -107,11 +107,9 @@ export type AchievementRecord = {
   id: string;
   name: string;
   description: string;
-  points: number;
+  achievement_type: AchievementTypeEnum;
+  awarded_by?: string;
   achieved_at: string | null;
-  status: 'Completed' | 'In Progress';
-  color_key: string;
-  progress: number | null;
 };
 
 export type VerificationEventRecord = {

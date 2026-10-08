@@ -88,6 +88,8 @@ import type {
 } from '@/services/client/types.gen';
 
 import { RoleSkillsWalletMySkillsTab } from './RoleSkillsWalletMySkillsTab';
+import { SkillsWalletEducationTab } from './SkillsWalletEducationTab';
+import { useSkillsWalletAchievements } from './useSkillsWalletAchievements';
 import { SKILL_PROFICIENCY, toWalletSkill } from './skill-proficiency';
 import { useWalletTab } from './use-wallet-tab';
 
@@ -239,98 +241,13 @@ function mapVerificationEvents(
   }));
 }
 
-function mapAchievements({
-  role,
-  profileName,
-  skills,
-  credentials,
-  experiences,
-  verificationEvents,
-}: {
-  role: SkillsWalletRole;
-  profileName: string;
-  skills: SkillsWalletData['skills'];
-  credentials: CredentialRecord[];
-  experiences: ExperienceRecord[];
-  verificationEvents: VerificationEventRecord[];
-}): AchievementRecord[] {
-  const completedSkills = skills.filter(skill => skill.proficiency_pct === 100).length;
-  const completedExperience = experiences.length;
-  const verifiedCredentials = credentials.filter(item => item.status === 'Verified').length;
-  const verifiedEvents = verificationEvents.filter(item => item.status === 'verified').length;
-  const topSkill = [...skills].sort((a, b) => b.proficiency_pct - a.proficiency_pct)[0];
-
-  return [
-    {
-      id: `${role}-milestone-1`,
-      name: `${getRoleLabel(role)} Momentum`,
-      description: `${profileName} has ${completedSkills} skills at expert proficiency connected to the wallet.`,
-      points: completedSkills * 40,
-      achieved_at: completedSkills ? new Date().toISOString() : null,
-      status: completedSkills ? 'Completed' : 'In Progress',
-      color_key: 'bg-primary',
-      progress: completedSkills ? null : 20,
-    },
-    {
-      id: `${role}-milestone-2`,
-      name: 'Credential Vault',
-      description: `${verifiedCredentials} verified credentials are available in the wallet.`,
-      points: verifiedCredentials * 30,
-      achieved_at: verifiedCredentials ? new Date().toISOString() : null,
-      status: verifiedCredentials ? 'Completed' : 'In Progress',
-      color_key: 'bg-success',
-      progress: verifiedCredentials ? null : 25,
-    },
-    {
-      id: `${role}-milestone-3`,
-      name: `${getRoleLabel(role)} Experience`,
-      description: `${completedExperience} experience records showcase your professional journey.`,
-      points: completedExperience * 25,
-      achieved_at: completedExperience ? new Date().toISOString() : null,
-      status: completedExperience ? 'Completed' : 'In Progress',
-      color_key: 'bg-warning',
-      progress: completedExperience ? null : 35,
-    },
-    {
-      id: `${role}-milestone-4`,
-      name: 'Trusted Verification',
-      description: `${verifiedEvents} records have been updated from trusted sources.`,
-      points: verifiedEvents * 35,
-      achieved_at: verifiedEvents ? new Date().toISOString() : null,
-      status: verifiedEvents ? 'Completed' : 'In Progress',
-      color_key: 'bg-success/70',
-      progress: verifiedEvents ? null : 30,
-    },
-    topSkill
-      ? {
-        id: `${role}-milestone-5`,
-        name: `Top Skill: ${topSkill.name}`,
-        description: `Your strongest skill is currently at ${topSkill.proficiency_pct}% proficiency.`,
-        points: topSkill.proficiency_pct,
-        achieved_at: topSkill.proficiency_pct === 100 ? new Date().toISOString() : null,
-        status: topSkill.proficiency_pct === 100 ? 'Completed' : 'In Progress',
-        color_key: 'bg-primary/70',
-        progress: topSkill.proficiency_pct,
-      }
-      : {
-        id: `${role}-milestone-5`,
-        name: 'Top Skill Growth',
-        description: 'No skills are connected yet.',
-        points: 0,
-        achieved_at: null,
-        status: 'In Progress',
-        color_key: 'bg-warning/70',
-        progress: 0,
-      },
-  ];
-}
-
 function buildRoleWalletData({
   role,
   profileName,
   skillsWalletContent,
   experiences,
   skills,
+  achievements,
   totalSkills,
 }: {
   role: SkillsWalletRole;
@@ -338,20 +255,13 @@ function buildRoleWalletData({
   skillsWalletContent: ReturnType<typeof useVerifiedSkillsContent>;
   experiences: WalletExperience[];
   skills: SkillRecord[];
+  achievements: AchievementRecord[];
   totalSkills?: number;
 }): RoleWalletData {
   const credentialsByTab = skillsWalletContent.credentialsContent.credentialsByTab;
   const credentialItems = credentialsByTab.all;
   const mappedExperiences = mapExperiences(experiences, role);
   const verificationEvents = mapVerificationEvents(skillsWalletContent.credentialsContent.timeline);
-  const achievements = mapAchievements({
-    role,
-    profileName,
-    skills,
-    credentials: mapCredentials(credentialItems),
-    experiences: mappedExperiences,
-    verificationEvents,
-  });
   const topSkills = [...skills].sort((a, b) => b.proficiency_pct - a.proficiency_pct).slice(0, 5);
   const averageScore = skills.length
     ? Math.round(skills.reduce((sum, skill) => sum + skill.proficiency_pct, 0) / skills.length)
@@ -991,6 +901,9 @@ function ProfileSkillsWalletPage({
   });
 
   const { value: tab, setValue: setTab, hrefFor } = useWalletTab(TAB_IDS, 'overview');
+  const achievementsQuery = useSkillsWalletAchievements(
+    Boolean(profileUuid) && (tab === 'overview' || tab === 'achievements')
+  );
   const [experienceOpen, setExperienceOpen] = useState(false);
   const [credentialOpen, setCredentialOpen] = useState(false);
 
@@ -1011,6 +924,7 @@ function ProfileSkillsWalletPage({
         skillsWalletContent: verifiedSkillsContent,
         experiences,
         skills,
+        achievements: achievementsQuery.achievements,
         totalSkills:
           skillPage?.metadata?.totalElements == null
             ? skills.length
@@ -1022,6 +936,7 @@ function ProfileSkillsWalletPage({
       role,
       verifiedSkillsContent,
       skills,
+      achievementsQuery.achievements,
       skillPage?.metadata?.totalElements,
     ]
   );
@@ -1122,8 +1037,10 @@ function ProfileSkillsWalletPage({
                   isLoading={
                     skillsQuery.isLoading ||
                     verifiedSkillsContent.isLoading ||
-                    experienceQuery.isLoading
+                    experienceQuery.isLoading || achievementsQuery.isLoading
                   }
+                  achievementsFailed={achievementsQuery.isError}
+                  onRetryAchievements={() => void achievementsQuery.refetch()}
                   onNavigateToTab={value => setTab(value as TabId)}
                 />
               )
@@ -1141,6 +1058,9 @@ function ProfileSkillsWalletPage({
                 <SkillsWalletMySkillsTab data={{ skills: [], categoryCounts: [] }} />
               )
             ) : null}
+          </SectionTabPanel>
+          <SectionTabPanel value='education'>
+            {tab === 'education' ? <SkillsWalletEducationTab /> : null}
           </SectionTabPanel>
           <SectionTabPanel value='portfolio'>
             {tab === 'portfolio' ? <SkillsWalletPortfolioTab data={data} /> : null}
@@ -1170,12 +1090,10 @@ function ProfileSkillsWalletPage({
             {tab === 'achievements' ? (
               <SkillsWalletAchievementsTab
                 achievements={data.achievements}
+                isLoading={achievementsQuery.isLoading}
+                failed={achievementsQuery.isError}
+                onRetry={() => void achievementsQuery.refetch()}
                 title='Achievements'
-                description={
-                  role === 'instructor'
-                    ? 'Track your milestones, teaching progress, and profile verification.'
-                    : 'Track your milestones, course creation progress, and profile verification.'
-                }
               />
             ) : null}
           </SectionTabPanel>

@@ -17,6 +17,7 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { type ReactNode, useEffect, useMemo, useState } from 'react';
 import { toast } from 'sonner';
+import { OnboardingSkillsWallet } from '@/src/features/onboarding/components/OnboardingSkillsWallet';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Checkbox } from '@/components/ui/checkbox';
@@ -40,6 +41,7 @@ import { cn } from '@/lib/utils';
 import {
   applyForDomainMutation,
   getAllCategoriesOptions,
+  getSummaryOptions,
   registerMutation,
   submitCurrentForVerificationMutation,
   updateCategoriesMutation,
@@ -60,6 +62,7 @@ import {
   requireApiData,
   requireApiSuccess,
 } from '@/src/features/onboarding/lib/user-onboarding';
+import { WALLET_SECTIONS } from '@/src/features/onboarding/lib/wallet-sections';
 
 const STEPS = [
   { label: 'Sarafrika account', icon: BadgeCheck },
@@ -119,6 +122,12 @@ export default function UserOnboardingPage() {
     staleTime: STALE_TIMES.reference,
   });
   const registration = useMutation(registerMutation());
+  const walletSummary = useQuery({
+    ...getSummaryOptions(),
+    select: requireApiData,
+    enabled: hydrated && authenticated && !wrongAccount && draft.step === 5,
+    staleTime: STALE_TIMES.entity,
+  });
   const application = useMutation(applyForDomainMutation(creatorOnboardingOptions));
   const saveCategories = useMutation(updateCategoriesMutation(creatorOnboardingOptions));
   const submit = useMutation(submitCurrentForVerificationMutation(creatorOnboardingOptions));
@@ -623,11 +632,7 @@ export default function UserOnboardingPage() {
             </>
           )}
           {draft.step === 4 && (
-            <EmptyState
-              icon={Wallet}
-              title='Add your skills and portfolio later'
-              description='Skills, portfolio and other supporting information are coming later. You can skip this step and continue to review.'
-            />
+            <OnboardingSkillsWallet key={userId} />
           )}
           {draft.step === 5 && (
             <>
@@ -646,7 +651,19 @@ export default function UserOnboardingPage() {
                     .map(category => category.name || category.uuid)
                     .join(', ')}
                 />
-                <SummaryRow label='Skills and portfolio' value='Skipped for now' />
+                {WALLET_SECTIONS.filter(section => section.key !== 'verification').map(section => (
+                  <SummaryRow
+                    key={section.key}
+                    label={section.label}
+                    value={
+                      walletSummary.isPending
+                        ? 'Loading…'
+                        : walletSummary.isError
+                          ? 'Unable to load wallet summary'
+                          : `${Number(walletSummary.data?.section_counts?.[section.key === 'credentials' ? 'certifications' : section.key] ?? 0) + (section.key === 'credentials' ? Number(walletSummary.data?.section_counts?.documents ?? 0) : 0)} record(s)`
+                    }
+                  />
+                ))}
               </dl>
               {onboarding.data?.review_reason && (
                 <p className='text-muted-foreground text-sm'>

@@ -14,6 +14,7 @@ import { getErrorMessage } from '@/lib/error-utils';
 import { buildDashboardSwitchPath } from '@/src/features/dashboard/lib/active-domain-storage';
 import { useCourseCreatorOnboarding } from '@/src/features/onboarding/hooks/useCourseCreatorOnboarding';
 import { ONBOARDING_VERIFICATION_PATH } from '@/src/features/onboarding/lib/user-onboarding';
+import { OnboardingSkillsWallet } from '@/src/features/onboarding/components/OnboardingSkillsWallet';
 
 const STATUS_CONTENT = {
   DRAFT: {
@@ -172,6 +173,13 @@ export default function OnboardingVerificationPage() {
           )}
         </CardContent>
       </Card>
+      {authenticated && state && (
+        <Card className='mx-auto mt-6 max-w-5xl'>
+          <CardContent className='p-4 sm:p-6'>
+            <OnboardingSkillsWallet readOnly initialTab='verification' />
+          </CardContent>
+        </Card>
+      )}
       <div className='mt-4 text-center'>
         <Button asChild variant='link'>
           <Link href='/'>Back home</Link>

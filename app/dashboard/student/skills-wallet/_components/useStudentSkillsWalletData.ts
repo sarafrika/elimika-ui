@@ -2,6 +2,7 @@
 
 import { useQueries, useQuery } from '@tanstack/react-query';
 import { useMemo } from 'react';
+import { useSkillsWalletAchievements } from '@/app/dashboard/_components/skills-wallet/useSkillsWalletAchievements';
 
 import { useUserProfile } from '@/context/profile-context';
 import { STALE_TIMES } from '@/lib/query-client';
@@ -25,7 +26,6 @@ import type {
 
 import type {
   CredentialRecord,
-  AchievementRecord,
   CompetencyRecord,
   ExperienceRecord,
   PortfolioRecord,
@@ -149,10 +149,12 @@ const inferVerificationSource = (title: string, category?: string | null) => {
   return 'assessment' as const;
 };
 
-export function useStudentSkillsWalletData() {
+export function useStudentSkillsWalletData(achievementsEnabled = true) {
   const profile = useUserProfile();
   const student = profile?.student;
   const studentUuid = student?.uuid;
+  const achievementsQuery = useSkillsWalletAchievements(Boolean(studentUuid) && achievementsEnabled);
+  const achievements = achievementsQuery.achievements;
 
   const overviewQuery = useOptionalGeneratedQuery(
     studentUuid
@@ -626,54 +628,6 @@ export function useStudentSkillsWalletData() {
     difficultyLevelMap,
   ]);
 
-  const achievements = useMemo<AchievementRecord[]>(() => {
-    const certificateAchievements = validCertificates.map((certificate, index) => {
-      const course = certificate.course_uuid ? courseMap.get(certificate.course_uuid) : undefined;
-      const categoryUuid = course?.category_uuids?.[0];
-      const category = categoryUuid ? categoryMap.get(categoryUuid) : undefined;
-      const points = clampPct(certificate.final_grade ?? 100);
-
-      return {
-        id: certificate.uuid ?? `achievement-${index}`,
-        name: course?.name ?? certificate.certificate_type ?? 'Learning Milestone',
-        description: course
-          ? `Completed ${course.name}${certificate.final_grade != null ? ` with a ${certificate.final_grade}% grade` : ''}.`
-          : `Issued on ${fmtMonth(certificate.issued_date ?? certificate.completion_date)}.`,
-        points,
-        achieved_at: certificate.completion_date?.toString() ?? certificate.issued_date?.toString() ?? null,
-        status: 'Completed' as const,
-        color_key:
-          category?.name?.toLowerCase().includes('design')
-            ? 'bg-secondary'
-            : category?.name?.toLowerCase().includes('data')
-              ? 'bg-primary'
-              : category?.name?.toLowerCase().includes('cloud')
-                ? 'bg-success'
-                : 'bg-warning',
-        progress: null,
-      } satisfies AchievementRecord;
-    });
-
-    const progressPct = overviewMetrics.totalSkills
-      ? Math.round((overviewMetrics.completedSkills / overviewMetrics.totalSkills) * 100)
-      : null;
-
-    const journeyAchievement = overviewMetrics.totalSkills > 0 || overviewMetrics.courseEnrollments > 0
-      ? [{
-        id: 'learning-journey',
-        name: 'Learning Journey',
-        description: `${overviewMetrics.completedSkills} of ${overviewMetrics.totalSkills} skills completed across ${overviewMetrics.courseEnrollments} live course enrolments.`,
-        points: overviewMetrics.completedSkills * 25,
-        achieved_at: null,
-        status: overviewMetrics.totalSkills > 0 && overviewMetrics.completedSkills === overviewMetrics.totalSkills ? 'Completed' as const : 'In Progress' as const,
-        color_key: 'bg-primary',
-        progress: progressPct,
-      } satisfies AchievementRecord]
-      : [];
-
-    return [...certificateAchievements, ...journeyAchievement];
-  }, [categoryMap, courseMap, overviewMetrics.completedSkills, overviewMetrics.courseEnrollments, overviewMetrics.totalSkills, validCertificates]);
-
   const verificationEvents = useMemo<VerificationEventRecord[]>(() => {
     const records: VerificationEventRecord[] = [];
 
@@ -730,6 +684,7 @@ export function useStudentSkillsWalletData() {
   const portfolio: PortfolioRecord[] = [];
 
   const isLoading =
+    achievementsQuery.isLoading ||
     overviewQuery.isLoading ||
     certificatesQuery.isLoading ||
     difficultyLevelsQuery.isLoading ||
@@ -749,6 +704,7 @@ export function useStudentSkillsWalletData() {
     externalCertificates,
     experiences,
     achievements,
+    achievementsQuery,
     verificationEvents,
     portfolio,
     isLoading,

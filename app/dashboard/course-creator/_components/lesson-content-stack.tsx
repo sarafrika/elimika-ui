@@ -23,7 +23,7 @@ import {
 import type { ContentType, Lesson, LessonContent } from '@/services/client/types.gen';
 import { toAuthenticatedMediaUrl } from '@/src/lib/media-url';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { ArrowDown, ArrowUp, Eye, FileIcon, Save, Trash2, UploadCloud, X } from 'lucide-react';
+import { ArrowDown, ArrowUp, Eye, FileIcon, Pencil, Save, Trash2, UploadCloud, X } from 'lucide-react';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { toast } from 'sonner';
 import { LessonOutline, type LessonHeaderRenderer } from './lesson-outline';
@@ -35,9 +35,14 @@ import {
 } from './lesson-page-utils';
 
 type CourseLesson = Lesson & { uuid: string };
-type PageEntry = { key: string; content?: LessonContent };
+type PageEntry = { key: string; createdAt: number; content?: LessonContent };
 type PageValues = { title: string; text: string; file: File | null; fileUrl: string };
 const EMPTY_CONTENTS: LessonContent[] = [];
+
+function pageCreatedAt(content: LessonContent) {
+  const timestamp = content.created_date ? new Date(content.created_date).getTime() : 0;
+  return Number.isFinite(timestamp) ? timestamp : 0;
+}
 
 function assertSuccess(
   result: { error?: unknown; success?: boolean; message?: string } | undefined
@@ -137,8 +142,17 @@ function LessonPages({
 }) {
   const [pages, setPages] = useState<PageEntry[]>(() =>
     sortLessonPages(contents).flatMap(content =>
-      content.uuid ? [{ key: content.uuid, content }] : []
+      content.uuid ? [{ key: content.uuid, createdAt: pageCreatedAt(content), content }] : []
     )
+  );
+  const [editingKeys, setEditingKeys] = useState<Set<string>>(() => new Set());
+  // Newest first in the editor; retain the lesson's learning order and page numbers.
+  const listedPages = useMemo(
+    () =>
+      pages
+        .map((entry, pageIndex) => ({ entry, pageIndex }))
+        .sort((a, b) => b.entry.createdAt - a.entry.createdAt || b.pageIndex - a.pageIndex),
+    [pages]
   );
   const [busy, setBusy] = useState<string | null>(null);
   const busyRef = useRef(false);
@@ -171,16 +185,23 @@ function LessonPages({
       const staged = new Set([...uploads.current.values()].map(item => item.content.uuid));
       const added = sortLessonPages(contents).flatMap(content =>
         content.uuid &&
-        !known.has(content.uuid) &&
-        !staged.has(content.uuid) &&
-        !removedIds.current.has(content.uuid)
-          ? [{ key: content.uuid, content }]
+          !known.has(content.uuid) &&
+          !staged.has(content.uuid) &&
+          !removedIds.current.has(content.uuid)
+          ? [{ key: content.uuid, createdAt: pageCreatedAt(content), content }]
           : []
       );
       return added.length ? [...current, ...added] : current;
     });
   }, [contents, busy]);
 
+  const closeEditor = (key: string) => {
+    setEditingKeys(current => {
+      const next = new Set(current);
+      next.delete(key);
+      return next;
+    });
+  };
   const refresh = () => qc.invalidateQueries({ queryKey });
   const removeContent = async (contentUuid: string) => {
     const result = await remove.mutateAsync({ path: { ...path, contentUuid } });
@@ -323,6 +344,7 @@ function LessonPages({
       if (deleteTarget.content?.uuid) await removeContent(deleteTarget.content.uuid);
       const next = pages.filter(page => page.key !== deleteTarget.key);
       setPages(next);
+      closeEditor(deleteTarget.key);
       setDeleteTarget(null);
       await persistOrder(next);
       await refresh();
@@ -340,7 +362,11 @@ function LessonPages({
       <CardContent className='space-y-3 p-3'>
         {renderHeader({
           pageCount: pages.length,
-          addPage: () => setPages(current => [...current, { key: crypto.randomUUID() }]),
+          addPage: () => {
+            const key = crypto.randomUUID();
+            setPages(current => [...current, { key, createdAt: Date.now() }]);
+            setEditingKeys(current => new Set(current).add(key));
+          },
           pagesBusy: !!busy || loading,
         })}
         {!pages.length && (
@@ -350,21 +376,61 @@ function LessonPages({
             description='Add a page to write lesson text and attach a file.'
           />
         )}
-        {pages.map((entry, pageIndex) => (
-          <LessonPageEditor
-            key={entry.key}
-            entry={entry}
-            pageIndex={pageIndex}
-            lessonIndex={index}
-            last={pageIndex === pages.length - 1}
-            types={types}
-            disabled={!!busy || loading}
-            saving={busy === entry.key && !deleteTarget}
-            onSave={values => savePage(entry, values)}
-            onMove={direction => void movePage(pageIndex, direction)}
-            onRemove={() => setDeleteTarget(entry)}
-            onPreview={entry.content ? () => setViewing(entry.content ?? null) : undefined}
-          />
+        {listedPages.map(({ entry, pageIndex }) => (
+          <div key={entry.key} className='space-y-2'>
+            {entry.content && (
+              <div className='border-border flex min-w-0 flex-wrap items-center gap-2 rounded-md border px-3 py-2'>
+                <Badge variant='outline' className='shrink-0'>Page {pageIndex + 1}</Badge>
+                <span className='min-w-0 flex-1 truncate text-sm font-medium' title={entry.content.title}>
+                  {entry.content.title}
+                </span>
+                <div className='ml-auto flex shrink-0 items-center gap-1'>
+                  <Button
+                    type='button'
+                    variant='ghost'
+                    size='sm'
+                    disabled={!!busy || loading}
+                    aria-label={`View page ${pageIndex + 1}: ${entry.content.title}`}
+                    onClick={() => setViewing(entry.content ?? null)}
+                  >
+                    <Eye className='size-4' /> View
+                  </Button>
+                  <Button
+                    type='button'
+                    variant='outline'
+                    size='sm'
+                    disabled={!!busy || loading || editingKeys.has(entry.key)}
+                    aria-label={`Edit page ${pageIndex + 1}: ${entry.content.title}`}
+                    aria-expanded={editingKeys.has(entry.key)}
+                    aria-controls={`page-editor-${entry.key}`}
+                    onClick={() => setEditingKeys(current => new Set(current).add(entry.key))}
+                  >
+                    <Pencil className='size-4' /> Edit
+                  </Button>
+                </div>
+              </div>
+            )}
+            {(!entry.content || editingKeys.has(entry.key)) && (
+              <LessonPageEditor
+                entry={entry}
+                pageIndex={pageIndex}
+                lessonIndex={index}
+                last={pageIndex === pages.length - 1}
+                types={types}
+                disabled={!!busy || loading}
+                saving={busy === entry.key && !deleteTarget}
+                onSave={async values => {
+                  const saved = await savePage(entry, values);
+                  if (saved) closeEditor(entry.key);
+                  return saved;
+                }}
+                onMove={direction => void movePage(pageIndex, direction)}
+                onRemove={() => setDeleteTarget(entry)}
+                onClose={entry.content ? () => closeEditor(entry.key) : undefined}
+                onPreview={entry.content ? () => setViewing(entry.content ?? null) : undefined}
+              />
+            )}
+          </div>
         ))}
         {orderFailed && (
           <div className='text-destructive flex items-center gap-2 text-sm' role='alert'>
@@ -425,6 +491,7 @@ function LessonPageEditor({
   onSave,
   onMove,
   onRemove,
+  onClose,
   onPreview,
 }: {
   entry: PageEntry;
@@ -437,6 +504,7 @@ function LessonPageEditor({
   onSave: (values: PageValues) => Promise<LessonContent | null>;
   onMove: (direction: -1 | 1) => void;
   onRemove: () => void;
+  onClose?: () => void;
   onPreview?: () => void;
 }) {
   const [title, setTitle] = useState(entry.content?.title ?? '');
@@ -497,6 +565,7 @@ function LessonPageEditor({
 
   return (
     <div
+      id={`page-editor-${entry.key}`}
       className='border-border bg-muted/20 flex min-w-0 flex-col gap-3 rounded-md border p-3'
       aria-busy={saving}
     >
@@ -511,7 +580,7 @@ function LessonPageEditor({
             setDirty(true);
           }}
           className='min-w-40 flex-1'
-          placeholder='Page title'
+          placeholder='Subtopic'
           aria-label={`Lesson ${lessonIndex + 1} page ${pageIndex + 1} title`}
         />
         <div className='flex items-center'>
@@ -619,7 +688,9 @@ function LessonPageEditor({
           <span className='min-w-0 flex-1 truncate text-sm'>{file?.name ?? 'Attached file'}</span>
           {file && (
             <span className='text-muted-foreground text-xs'>
-              {(file.size / 1024 / 1024).toFixed(1)} MB
+              {file.size < 1024 * 1024
+                ? `${(file.size / 1024).toFixed(1)} KB`
+                : `${(file.size / 1024 / 1024).toFixed(1)} MB`}
             </span>
           )}
           {!file && attachmentUrl && (
@@ -653,6 +724,11 @@ function LessonPageEditor({
       <div className='flex flex-wrap items-center justify-between gap-2'>
         <span className='text-muted-foreground text-xs'>{dirty ? 'Unsaved changes' : 'Saved'}</span>
         <div className='flex items-center gap-2'>
+          {onClose && (
+            <Button type='button' variant='ghost' size='sm' disabled={disabled} onClick={onClose}>
+              Cancel
+            </Button>
+          )}
           {onPreview && (
             <Button type='button' variant='ghost' size='sm' disabled={disabled} onClick={onPreview}>
               <Eye className='size-4' /> View saved page
