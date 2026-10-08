@@ -1,5 +1,6 @@
 'use client';
 
+import { isAuthenticatedMediaUrl } from '@/src/lib/media-url';
 import Image, { type ImageProps } from 'next/image';
 import { type ReactNode, useEffect, useState, useSyncExternalStore } from 'react';
 
@@ -71,6 +72,7 @@ export function ImageWithFallback({ src, fallback, alt, ...props }: ImageWithFal
         setErrored(true);
       }}
       {...props}
+      unoptimized={isAuthenticatedMediaUrl(src) || props.unoptimized}
     />
   );
 }
