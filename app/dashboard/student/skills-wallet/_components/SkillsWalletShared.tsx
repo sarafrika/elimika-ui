@@ -5,6 +5,7 @@ import {
   ArrowUpRight,
   BarChart3,
   BookOpen,
+  Check,
   Cloud,
   Copy,
   Globe,
@@ -14,7 +15,7 @@ import {
   Rocket,
   Sparkles,
 } from 'lucide-react';
-import type { ReactNode } from 'react';
+import { useState, type ReactNode } from 'react';
 
 import { TOKEN } from '@/app/dashboard/_components/color-charts';
 import { Button } from '@/components/ui/button';
@@ -166,24 +167,47 @@ export function fmtMonth(value?: string | Date | null) {
 export function WalletIdCard({
   label = 'Your Skills Wallet ID',
 }: {
-  label?: string;
+  label?: string
 }) {
   const profile = useUserProfile()
   const walletId = profile?.uuid?.slice(-12)
+  const [copied, setCopied] = useState(false)
+
+  const handleCopy = async () => {
+    if (!profile?.uuid) return
+
+    await navigator.clipboard.writeText(profile.uuid)
+
+    setCopied(true)
+    setTimeout(() => setCopied(false), 2000)
+  }
 
   return (
     <div className='flex flex-col items-end'>
       <p className='text-muted-foreground text-xs'>{label}</p>
+
       <div className='mt-1 flex items-center gap-2'>
         <div className='bg-background rounded-md border px-3 py-1.5 font-mono text-sm uppercase'>
           {walletId}
         </div>
-        <Button size='icon' variant='outline' className='h-8 w-8'>
-          <Copy className='h-3.5 w-3.5' />
+
+        <Button
+          size='icon'
+          variant='outline'
+          className='h-8 w-8'
+          onClick={handleCopy}
+          disabled={!profile?.uuid}
+          title='Copy full Wallet ID'
+        >
+          {copied ? (
+            <Check className='h-3.5 w-3.5' />
+          ) : (
+            <Copy className='h-3.5 w-3.5' />
+          )}
         </Button>
       </div>
     </div>
-  );
+  )
 }
 
 export function StatCard({

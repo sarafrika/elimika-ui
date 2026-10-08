@@ -174,6 +174,7 @@ function SavedCourseSkillsEditor({ courseUuid }: { courseUuid: string }) {
             )}
             action={
               <Button
+                type='button'
                 variant='outline'
                 size='sm'
                 onClick={() => {
@@ -245,6 +246,7 @@ function SavedCourseSkillsEditor({ courseUuid }: { courseUuid: string }) {
             <div className='flex flex-wrap justify-end gap-2'>
               {dirty ? (
                 <Button
+                  type='button'
                   variant='ghost'
                   onClick={() => {
                     setRows(null);
@@ -255,7 +257,7 @@ function SavedCourseSkillsEditor({ courseUuid }: { courseUuid: string }) {
                   Discard changes
                 </Button>
               ) : null}
-              <Button onClick={save} disabled={!dirty || mutation.isPending}>
+              <Button type='button' onClick={save} disabled={!dirty || mutation.isPending}>
                 {mutation.isPending ? <Spinner /> : null}
                 Save skills
               </Button>
@@ -340,6 +342,7 @@ function SkillRowItem({
         </Select>
       </div>
       <Button
+        type='button'
         variant='ghost'
         size='icon'
         className='size-8'

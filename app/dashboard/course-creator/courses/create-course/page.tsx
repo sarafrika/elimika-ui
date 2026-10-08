@@ -145,7 +145,7 @@ const getAssessmentStatusTone = (isActive?: boolean, isPublished?: boolean): Ass
     return 'secondary';
 };
 
-const COURSE_TABS = ['setup', 'lessons', 'practice', 'assignments', 'assessment', 'evaluation', 'branding', 'pricing', 'skills'];
+const COURSE_TABS = ['setup', 'lessons', 'practice', 'assignments', 'assessment', 'evaluation', 'branding', 'pricing'];
 
 const mapCourseValues = (course?: Course | null): Partial<CourseCreationFormValues> | undefined => {
     if (!course) return undefined;
@@ -225,6 +225,7 @@ export default function CreateCoursePage() {
     const [createdCourseId, setCreatedCourseId] = useState<string | null>(null);
     const [isSavingSection, setIsSavingSection] = useState(false);
     const [finishedPricingCourseId, setFinishedPricingCourseId] = useState<string | null>(null);
+    const courseDetailsDraftRef = useRef<CourseCreationFormValues | undefined>(undefined);
     const [requirementDrafts, setRequirementDrafts] = useState(createEmptyDraftsByProvider());
     const [activeRequirementProvider, setActiveRequirementProvider] =
         useState<Provider | null>(null);
@@ -803,14 +804,13 @@ export default function CreateCoursePage() {
                     <TabsTrigger className='max-w-fit px-4' value='evaluation'>Evaluation</TabsTrigger>
                     <TabsTrigger className='max-w-fit px-4' value='branding'>Branding</TabsTrigger>
                     <TabsTrigger className='max-w-fit px-4' value='pricing'>Pricing</TabsTrigger>
-                    <TabsTrigger className='max-w-fit px-4' value='skills'>Skills &amp; prerequisites</TabsTrigger>
                 </TabsList>
 
                 <section className='min-h-[calc(100vh-18rem)] rounded-2xl border-0 p-0 px-0'>
                     <section className='flex flex-col gap-10'>
                         <div className='grow'>
                             <TabsContent value='setup'>
-                                {resolvedCourseId && courseLoading ? (
+                                {resolvedCourseId && courseLoading && !courseDetailsDraftRef.current ? (
                                     <CourseCreatorLoadingState headline='Loading your course details…' />
                                 ) : (
                                     <Card className='space-y-6'>
@@ -820,6 +820,7 @@ export default function CreateCoursePage() {
                                             courseId={resolvedCourseId || undefined}
                                             editingCourseId={resolvedCourseId || undefined}
                                             initialValues={courseInitialValues}
+                                            detailsDraftRef={courseDetailsDraftRef}
                                             requirementDrafts={requirementDrafts}
                                             setRequirementDrafts={setRequirementDrafts}
                                             activeRequirementProvider={activeRequirementProvider}
@@ -828,9 +829,26 @@ export default function CreateCoursePage() {
                                             successResponse={data => {
                                                 if (data?.uuid) {
                                                     setCreatedCourseId(data.uuid);
-                                                    setStep(1);
                                                 }
                                             }}
+                                            skillsAndPrerequisites={
+                                                resolvedCourseId ? (
+                                                    <>
+                                                        <CourseSkillsEditor courseUuid={resolvedCourseId} />
+                                                        <CoursePrerequisitesEditor
+                                                            key={resolvedCourseId}
+                                                            courseUuid={resolvedCourseId}
+                                                            isLive={course?.admin_approved === true && course?.is_published === true}
+                                                        />
+                                                    </>
+                                                ) : (
+                                                    <EmptyState
+                                                        variant='compact'
+                                                        title='Skills and prerequisite courses'
+                                                        description='Save the course details above to add the skills this course teaches and any prerequisite courses.'
+                                                    />
+                                                )
+                                            }
                                         />
 
                                         <StepNav
@@ -1338,31 +1356,6 @@ export default function CreateCoursePage() {
                                         nextDisabled={publicationDisabled}
                                         nextLoading={isSavingSection || isCourseActionPending || isUpdatingPublication}
                                         nextLoadingLabel={isSavingSection ? 'Saving...' : publicationLoadingLabel}
-                                    />
-                                </SectionGuard>
-                            </TabsContent>
-
-                            <TabsContent value='skills'>
-                                <SectionGuard
-                                    isReady={canRenderCourseSections}
-                                    isLoading={Boolean(resolvedCourseId) && courseLoading}
-                                    title='Save the course first'
-                                    description='Skills and prerequisites are available after the course is created.'
-                                >
-                                    {resolvedCourseId ? (
-                                        <div className='grid max-w-5xl gap-6'>
-                                            <CourseSkillsEditor courseUuid={resolvedCourseId} />
-                                            <CoursePrerequisitesEditor
-                                                courseUuid={resolvedCourseId}
-                                                isLive={course?.admin_approved === true && course?.is_published === true}
-                                            />
-                                        </div>
-                                    ) : null}
-                                    <StepNav
-                                        previousLabel='Previous step'
-                                        nextLabel='Back to set-up'
-                                        onPrevious={() => setStep(7)}
-                                        onNext={() => setStep(0)}
                                     />
                                 </SectionGuard>
                             </TabsContent>

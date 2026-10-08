@@ -1,5 +1,10 @@
 'use client';
 
+import { useWalletTab } from '@/app/dashboard/_components/skills-wallet/use-wallet-tab';
+import { SectionTabPanel, SectionTabs, surfaceTheme } from '@/components/data-display';
+import { useStudent } from '@/context/student-context';
+import { cn } from '@/lib/utils';
+import { LearnerSkillGoalsCard } from '@/src/features/skills/learner-skill-goals-card';
 import {
   BadgeCheck,
   Briefcase,
@@ -10,11 +15,6 @@ import {
   Target,
   Trophy,
 } from 'lucide-react';
-import { useWalletTab } from '@/app/dashboard/_components/skills-wallet/use-wallet-tab';
-import { SectionTabPanel, SectionTabs, surfaceTheme } from '@/components/data-display';
-import { useStudent } from '@/context/student-context';
-import { cn } from '@/lib/utils';
-import { LearnerSkillGoalsCard } from '@/src/features/skills/learner-skill-goals-card';
 
 import { SkillsWalletAchievementsTab } from './_components/SkillsWalletAchievementsTab';
 import { SkillsWalletCompetenciesTab } from './_components/SkillsWalletCompetenciesTab';
@@ -30,6 +30,7 @@ import { useStudentSkillsWalletData } from './_components/useStudentSkillsWallet
 const TABS = [
   { id: 'overview', label: 'Overview', icon: LayoutDashboard },
   { id: 'skills', label: 'My Skills', icon: Sparkles },
+  { id: 'education', label: 'Education', icon: GraduationCap },
   { id: 'portfolio', label: 'Portfolio', icon: Briefcase },
   { id: 'credentials', label: 'Credentials Vault', icon: ShieldCheck },
   { id: 'competencies', label: 'Competencies', icon: Target },

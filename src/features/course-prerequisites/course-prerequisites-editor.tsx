@@ -142,8 +142,7 @@ export function CoursePrerequisitesEditor({
             <ClipboardCheck className='size-4' />
             <AlertTitle>Submitted for review</AlertTitle>
             <AlertDescription>
-              Learners keep seeing the current prerequisites until an admin approves this
-              change.
+              Learners keep seeing the current prerequisites until an admin approves this change.
             </AlertDescription>
           </Alert>
         ) : null}
@@ -163,7 +162,12 @@ export function CoursePrerequisitesEditor({
             }
             description={getErrorMessage(query.error, 'Try again in a moment.')}
             action={
-              <Button variant='outline' size='sm' onClick={() => void query.refetch()}>
+              <Button
+                type='button'
+                variant='outline'
+                size='sm'
+                onClick={() => void query.refetch()}
+              >
                 Try again
               </Button>
             }
@@ -204,7 +208,10 @@ export function CoursePrerequisitesEditor({
                 onChange={(value, option) => {
                   if (!value || !option) return;
                   if (current.some(row => row.courseUuid === value)) return;
-                  update([...current, { courseUuid: value, name: option.label, isMandatory: true }]);
+                  update([
+                    ...current,
+                    { courseUuid: value, name: option.label, isMandatory: true },
+                  ]);
                 }}
                 queryOptions={q =>
                   getPublishedCoursesOptions({
@@ -240,6 +247,7 @@ export function CoursePrerequisitesEditor({
             <div className='flex flex-wrap justify-end gap-2'>
               {dirty ? (
                 <Button
+                  type='button'
                   variant='ghost'
                   onClick={() => {
                     setRows(null);
@@ -251,7 +259,7 @@ export function CoursePrerequisitesEditor({
                   Discard changes
                 </Button>
               ) : null}
-              <Button onClick={save} disabled={!dirty || mutation.isPending}>
+              <Button type='button' onClick={save} disabled={!dirty || mutation.isPending}>
                 {mutation.isPending ? <Spinner /> : null}
                 {isLive ? 'Submit for review' : 'Save prerequisites'}
               </Button>
@@ -283,6 +291,7 @@ function PrerequisiteRowItem({
         </Label>
       </div>
       <Button
+        type='button'
         variant='ghost'
         size='icon'
         className='size-8'

@@ -4,6 +4,7 @@ const STORAGE_KEY = "elimika:creator-journey";
 
 export type WalletSectionKey =
     | "skills"
+    | "education"
     | "portfolio"
     | "credentials"
     | "competencies"
@@ -35,7 +36,7 @@ export const WALLET_SECTIONS: WalletSection[] = [
         key: "skills",
         label: "My Skills",
         summary:
-            "Skill taxonomy, proficiency level, evidence, verification and last assessed date.",
+            "Skill taxonomy, proficiency level, evidence, verification and date acquired.",
         addLabel: "Add skill",
         titleField: "skill",
         fields: [
@@ -49,7 +50,28 @@ export const WALLET_SECTIONS: WalletSection[] = [
             },
             { key: "evidence", label: "Evidence", placeholder: "Link or short description" },
             { key: "verificationStatus", label: "Verification status", type: "select", options: STATUS_OPTIONS },
-            { key: "lastAssessed", label: "Last assessed date", type: "date" },
+            { key: "dateAcquired", label: "Date acquired", type: "date" },
+        ],
+    },
+    {
+        key: "education",
+        label: "Education",
+        summary:
+            "Skill taxonomy, proficiency level, evidence, verification and date acquired.",
+        addLabel: "Add education",
+        titleField: "institution",
+        fields: [
+            { key: "skill", label: "Skill", placeholder: "e.g. Curriculum design" },
+            { key: "taxonomy", label: "Taxonomy / category", placeholder: "e.g. Teaching & Learning" },
+            {
+                key: "proficiency",
+                label: "Proficiency level",
+                type: "select",
+                options: ["Beginner", "Intermediate", "Advanced", "Expert"],
+            },
+            { key: "evidence", label: "Evidence", placeholder: "Link or short description" },
+            { key: "verificationStatus", label: "Verification status", type: "select", options: STATUS_OPTIONS },
+            { key: "dateAcquired", label: "Date acquired", type: "date" },
         ],
     },
     {

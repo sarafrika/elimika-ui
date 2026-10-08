@@ -1,722 +1,822 @@
-'use client'
+'use client';
 
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import {
-    ArrowLeft,
-    ArrowRight,
-    BadgeCheck,
-    BookOpen,
-    CheckCircle2,
-    ClipboardCheck,
-    Clock3,
-    LayoutGrid,
-    Plus,
-    ShieldCheck,
-    Trash2,
-    UserRound,
-    Wallet
-} from "lucide-react";
-import type { ReactNode } from "react";
-import { useMemo } from "react";
-import { toast } from "sonner";
-
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
+  ArrowLeft,
+  ArrowRight,
+  BadgeCheck,
+  BookOpen,
+  CheckCircle2,
+  LayoutGrid,
+  ShieldCheck,
+  UserRound,
+  Wallet,
+} from 'lucide-react';
+import { signIn, useSession } from 'next-auth/react';
+import Link from 'next/link';
+import { useRouter } from 'next/navigation';
+import { type ReactNode, useEffect, useMemo, useState } from 'react';
+import { toast } from 'sonner';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent } from '@/components/ui/card';
+import { Checkbox } from '@/components/ui/checkbox';
+import { EmptyState } from '@/components/ui/empty-state';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { PhoneInput } from '@/components/ui/phone-input';
 import {
-    Select,
-    SelectContent,
-    SelectItem,
-    SelectTrigger,
-    SelectValue,
-} from "@/components/ui/select";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Textarea } from "@/components/ui/textarea";
-import { cn } from "@/lib/utils";
-import Link from "next/link";
-import type { CourseDraft, WalletField, WalletSectionKey } from "../onboarding";
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
+import { Skeleton } from '@/components/ui/skeleton';
+import Spinner from '@/components/ui/spinner';
+import { getErrorMessage } from '@/lib/error-utils';
+import { httpStatusOf } from '@/lib/api-errors';
+import { STALE_TIMES } from '@/lib/query-client';
+import { cn } from '@/lib/utils';
 import {
-    COURSE_CATEGORIES,
-    SAMPLE_SARAFRIKA_ACCOUNT,
-    WALLET_SECTIONS,
-    newId,
-    useCreatorJourney,
-    walletFilledCount,
-} from "../onboarding";
+  applyForDomainMutation,
+  getAllCategoriesOptions,
+  registerMutation,
+  submitCurrentForVerificationMutation,
+  updateCategoriesMutation,
+} from '@/services/client/@tanstack/react-query.gen';
+import {
+  creatorOnboardingOptions,
+  creatorOnboardingQueryKey,
+  useCourseCreatorOnboarding,
+} from '@/src/features/onboarding/hooks/useCourseCreatorOnboarding';
+import {
+  buildRegistrationRequest,
+  emptyOnboardingDraft,
+  ONBOARDING_DRAFT_KEY,
+  ONBOARDING_VERIFICATION_PATH,
+  type OnboardingDraft,
+  personalDetailsSchema,
+  readOnboardingDraft,
+  requireApiData,
+  requireApiSuccess,
+} from '@/src/features/onboarding/lib/user-onboarding';
 
 const STEPS = [
-    { key: "connect", label: "Sarafrika account", icon: BadgeCheck },
-    { key: "product", label: "Sarafrika products", icon: LayoutGrid },
-    { key: "account", label: "Account type", icon: UserRound },
-    { key: "categories", label: "Categories", icon: BookOpen },
-    { key: "wallet", label: "Skills wallet", icon: Wallet },
-    { key: "review", label: "Submit for review", icon: ShieldCheck },
-] as const;
-
-const PRODUCTS = [
-    { id: "elimika", name: "Elimika", tagline: "Teaching, courses and digital workbooks.", available: true },
-    { id: "kazi", name: "Kazi", tagline: "Talent, gigs and creative bookings.", available: false },
-    { id: "soko", name: "Soko", tagline: "Marketplace for creative goods.", available: false },
+  { label: 'Sarafrika account', icon: BadgeCheck },
+  { label: 'Sarafrika products', icon: LayoutGrid },
+  { label: 'Account type', icon: UserRound },
+  { label: 'Categories', icon: BookOpen },
+  { label: 'Skills wallet', icon: Wallet },
+  { label: 'Submit for review', icon: ShieldCheck },
 ];
 
 const ACCOUNT_TYPES = [
-    {
-        id: "course-creator",
-        name: "Course Creator",
-        detail: "Design and publish courses. Creators do not run live classes.",
-        available: true,
-    },
-    { id: "instructor", name: "Instructor", detail: "Deliver live classes from published courses.", available: false },
-    { id: "student", name: "Student", detail: "Enrol and learn at your own pace.", available: false },
-    { id: "organisation", name: "Organisation", detail: "Manage instructors, offer learning programmes, and support learners as an organisation.", available: false, }, { id: "parent", name: "Parent", detail: "Monitor your child's learning progress, manage enrolments, and stay involved in their education.", available: false, },
+  {
+    id: 'course_creator',
+    name: 'Course Creator',
+    detail: 'Design and publish courses.',
+    available: true,
+  },
+  { id: 'instructor', name: 'Instructor', detail: 'Deliver live classes.', available: false },
+  { id: 'student', name: 'Student', detail: 'Enrol and learn at your own pace.', available: false },
+  {
+    id: 'organisation_user',
+    name: 'Organisation',
+    detail: 'Manage learning programmes.',
+    available: false,
+  },
+  { id: 'parent', name: 'Parent', detail: "Support your child's learning.", available: false },
 ];
 
-export default function CreatorOnboardingPage() {
-    const {
-        journey,
-        hydrated,
-        patch,
-        setJourney,
-        addWalletItem,
-        updateWalletItem,
-        removeWalletItem,
-        reset,
-    } = useCreatorJourney();
-
-    const step = journey.step;
-    const setStep = (value: number) => patch({ step: value });
-    const filled = walletFilledCount(journey);
-
-    const canAdvance = useMemo(() => {
-        if (step === 0) return journey.account !== null;
-        if (step === 1) return journey.product === "elimika";
-        if (step === 2) return journey.accountType === "course-creator";
-        if (step === 3) return journey.categories.length > 0;
-        if (step === 4) return journey.wallet.skills.length > 0;
-        return true;
-    }, [journey, step]);
-
-    const connectSarafrika = () => {
-        const account = { ...SAMPLE_SARAFRIKA_ACCOUNT, connectedAt: new Date().toISOString() };
-        patch({ account, displayName: account.fullName });
-        toast.success("Sarafrika account connected.");
-    };
-
-    if (!hydrated) {
-        return <OnboardingFrame step={0} hideProgress>{null}</OnboardingFrame>;
-    }
-
-    if (journey.reviewStatus !== "not_submitted") {
-        return (
-            <OnboardingFrame step={STEPS.length} hideProgress>
-                <ReviewState
-                    approved={journey.reviewStatus === "approved"}
-                    submittedAt={journey.submittedAt}
-                    approvedAt={journey.approvedAt}
-                    name={journey.displayName}
-                    categories={journey.categories}
-                    walletCount={filled}
-                    courses={journey.courses}
-                    onApprove={() =>
-                        patch({ reviewStatus: "approved", approvedAt: new Date().toISOString() })
-                    }
-                    onCreateCourse={(course) =>
-                        setJourney((current) => ({ ...current, courses: [...current.courses, course] }))
-                    }
-                    onUpdateCourse={(course) =>
-                        setJourney((current) => ({
-                            ...current,
-                            courses: current.courses.map((item) => (item.id === course.id ? course : item)),
-                        }))
-                    }
-                    onSubmitCourse={(id) =>
-                        setJourney((current) => ({
-                            ...current,
-                            courses: current.courses.map((course) =>
-                                course.id === id
-                                    ? { ...course, status: "submitted", submittedAt: new Date().toISOString() }
-                                    : course,
-                            ),
-                        }))
-                    }
-                    onReset={reset}
-                />
-            </OnboardingFrame>
-        );
-    }
-
-    return (
-        <OnboardingFrame step={step}>
-            {step === 0 ? (
-                <div className="space-y-5">
-                    <p className="text-sm leading-6 text-muted-foreground">
-                        Elimika is part of the Sarafrika ecosystem. Continue with your
-                        Sarafrika account and we will carry your details across — no need
-                        to type them again.
-                    </p>
-
-                    {journey.account ? (
-                        <div className="space-y-4">
-                            <div className="flex items-start gap-3 rounded-md border border-primary/40 bg-primary/5 p-4">
-                                <BadgeCheck className="mt-0.5 h-5 w-5 text-primary" />
-                                <div className="min-w-0">
-                                    <p className="text-sm font-medium text-foreground">
-                                        Sarafrika account connected
-                                    </p>
-                                    <p className="text-sm text-muted-foreground">
-                                        These details come from your Sarafrika profile and stay in sync.
-                                    </p>
-                                </div>
-                            </div>
-
-                            <dl className="divide-y divide-border overflow-hidden rounded-md border border-border">
-                                <SummaryDataRow label="Full name" value={journey.account.fullName} />
-                                <SummaryDataRow label="Email" value={journey.account.email} />
-                            </dl>
-
-                            <Button
-                                variant="outline"
-                                className="mt-4"
-                                size="sm"
-                                onClick={() => patch({ account: null, displayName: "" })}
-                            >
-                                <span className="text-sm">Use a different Sarafrika account</span>
-                            </Button>
-                        </div>
-                    ) : (
-                        <div className="rounded-md border border-border p-6 gap-2 text-center">
-                            <BadgeCheck className="mx-auto h-6 w-6 text-primary" />
-
-                            <p className="mt-3 text-sm text-muted-foreground">
-                                Your full name and email will be shared with Elimika.
-                            </p>
-
-                            <Button
-                                variant='default'
-                                size='sm'
-                                className='mt-2 bg-primary hover:bg-primary/90 relative gap-2 rounded-sm px-4 py-2 font-semibold shadow-lg transition hover:shadow-xl'
-                                onClick={connectSarafrika}
-                            >
-                                <span className="inline text-sm text-white">Continue with Sarafrika</span>
-                            </Button>
-
-                            <div className="mt-5 border-t border-border pt-4">
-                                <p className="text-xs text-muted-foreground">
-                                    Don&apos;t have a Sarafrika account?
-                                </p>
-
-                                <Button
-                                    variant="link"
-                                    className="mt-2 h-auto p-0 text-sm font-medium"
-                                    asChild
-                                >
-                                    <a
-                                        href="SARAFRIKA_SIGNUP_URL"
-                                        target="_blank"
-                                        rel="noopener noreferrer"
-                                    >
-                                        Create a Sarafrika account here
-                                    </a>
-                                </Button>
-                            </div>
-                        </div>
-                    )}
-                </div>
-            ) : null}
-
-            {step === 1 ? (
-                <div className="space-y-4">
-                    <p className="text-sm leading-6 text-muted-foreground">
-                        Your Sarafrika account gives you access to every product in the ecosystem. Choose the one you want to set up
-                        first.
-                    </p>
-                    <div className="grid gap-3 sm:grid-cols-3">
-                        {PRODUCTS.map((product) => (
-                            <ChoiceCard
-                                key={product.id}
-                                title={product.name}
-                                detail={product.tagline}
-                                selected={journey.product === product.id}
-                                disabled={!product.available}
-                                onSelect={() => patch({ product: product.id })}
-                            />
-                        ))}
-                    </div>
-                </div>
-            ) : null}
-
-            {step === 2 ? (
-                <div className="space-y-5">
-                    <p className="text-sm leading-6 text-muted-foreground">
-                        Pick how you want to take part in Elimika. Course creators build and publish courses; teaching is handled by
-                        instructors.
-                    </p>
-                    <div className="grid gap-3 sm:grid-cols-3">
-                        {ACCOUNT_TYPES.map((type) => (
-                            <ChoiceCard
-                                key={type.id}
-                                title={type.name}
-                                detail={type.detail}
-                                selected={journey.accountType === type.id}
-                                disabled={!type.available}
-                                onSelect={() => patch({ accountType: type.id })}
-                            />
-                        ))}
-                    </div>
-                    <dl className="divide-y divide-border overflow-hidden rounded-md border border-border">
-                        <SummaryDataRow label="Full name" value={journey.account?.fullName ?? null} />
-                        <SummaryDataRow label="Email" value={journey.account?.email ?? null} />
-                    </dl>
-                    <p className="text-xs text-muted-foreground">
-                        Shared from your Sarafrika account. Update it in your Sarafrika profile to change it here.
-                    </p>
-                </div>
-            ) : null}
-
-            {step === 3 ? (
-                <div className="space-y-4">
-                    <p className="text-sm leading-6 text-muted-foreground">
-                        Select the categories you want to offer courses in. You can change these later.
-                    </p>
-                    <div className="grid gap-2 sm:grid-cols-2">
-                        {COURSE_CATEGORIES.map((category) => {
-                            const selected = journey.categories.includes(category);
-                            return (
-                                <button
-                                    key={category}
-                                    type="button"
-                                    aria-pressed={selected}
-                                    onClick={() =>
-                                        patch({
-                                            categories: selected
-                                                ? journey.categories.filter((item) => item !== category)
-                                                : [...journey.categories, category],
-                                        })
-                                    }
-                                    className={cn(
-                                        "flex items-center justify-between rounded-md border px-4 py-3 text-left transition-colors",
-                                        selected
-                                            ? "border-primary bg-primary/5 font-medium text-foreground"
-                                            : "border-border bg-background text-muted-foreground hover:border-primary/40",
-                                    )}
-                                >
-                                    <span className="text-sm">{category}</span>
-                                    {selected ? <CheckCircle2 className="h-4 w-4 text-primary" /> : null}
-                                </button>
-                            );
-                        })}
-                    </div>
-                </div>
-            ) : null}
-
-            {step === 4 ? (
-                <div className="space-y-4">
-                    <p className="text-sm leading-6 text-muted-foreground">
-                        Your skills wallet is what the Elimika admin reviews. Add at least one skill; the richer the evidence, the
-                        faster the approval.
-                    </p>
-                    <Tabs defaultValue={WALLET_SECTIONS[0]!.key}>
-                        <TabsList className="flex h-auto w-full flex-wrap justify-start gap-1">
-                            {WALLET_SECTIONS.map((section) => (
-                                <TabsTrigger key={section.key} value={section.key} className="gap-1.5 text-sm">
-
-                                    <span className="text-sm">{section.label}</span>
-
-                                    {journey.wallet[section.key].length > 0 ? (
-                                        <span className="rounded-full bg-primary/15 px-1.5 text-[8px] font-semibold text-primary">
-                                            {journey.wallet[section.key].length}
-                                        </span>
-                                    ) : null}
-                                </TabsTrigger>
-                            ))}
-                        </TabsList>
-
-                        {WALLET_SECTIONS.map((section) => (
-                            <TabsContent key={section.key} value={section.key} className="mt-5 space-y-4">
-                                <p className="text-sm text-muted-foreground">{section.summary}</p>
-                                {journey.wallet[section.key].length === 0 ? (
-                                    <p className="rounded-md border border-dashed border-border px-4 py-6 text-center text-sm text-muted-foreground">
-                                        Nothing added yet.
-                                    </p>
-                                ) : null}
-                                {journey.wallet[section.key].map((item, index) => (
-                                    <div key={item.id} className="rounded-md border border-border p-4">
-                                        <div className="mb-3 flex items-center justify-between">
-                                            <p className="text-sm font-semibold text-foreground">
-                                                {item.values[section.titleField]?.trim() || `${section.label} ${index + 1}`}
-                                            </p>
-                                            <Button
-                                                variant="ghost"
-                                                size="sm"
-                                                aria-label="Remove entry"
-                                                onClick={() => removeWalletItem(section.key, item.id)}
-                                            >
-                                                <Trash2 className="h-4 w-4" />
-                                            </Button>
-                                        </div>
-                                        <div className="grid gap-4 sm:grid-cols-2">
-                                            {section.fields.map((field) => (
-                                                <SummaryInputRow
-                                                    key={field.key}
-                                                    field={field}
-                                                    value={item.values[field.key] ?? ""}
-                                                    onChange={(value) => updateWalletItem(section.key, item.id, field.key, value)}
-                                                />
-                                            ))}
-                                        </div>
-                                    </div>
-                                ))}
-                                <Button className="mt-4" variant="outline" size="sm" onClick={() => addWalletItem(section.key as WalletSectionKey)}>
-                                    <Plus />
-                                    <div className="text-sm">{section.addLabel}</div>
-                                </Button>
-                            </TabsContent>
-                        ))}
-                    </Tabs>
-                </div>
-            ) : null}
-
-            {step === 5 ? (
-                <div className="space-y-5">
-                    <p className="text-sm leading-6 text-muted-foreground">
-                        Check your details, then send your skills wallet to the Elimika admin. You can create courses once it is
-                        approved.
-                    </p>
-                    <dl className="divide-y divide-border overflow-hidden rounded-md border border-border">
-                        <SummaryDataRow label="Name" value={journey.account?.fullName || journey.displayName || null} />
-                        <SummaryDataRow label="Email" value={journey.account?.email ?? null} />
-                        <SummaryDataRow label="Product" value="Elimika" />
-                        <SummaryDataRow label="Account type" value="Course Creator" />
-                        <SummaryDataRow label="Categories" value={journey.categories.join(", ")} />
-                        <SummaryDataRow
-                            label="Skills wallet"
-                            value={`${filled} of ${WALLET_SECTIONS.length} sections completed`}
-                        />
-                    </dl>
-                </div>
-            ) : null}
-
-            <div className="mt-8 flex items-center justify-between border-t border-border pt-5">
-                <Button variant="outline" size="sm" disabled={step === 0} onClick={() => setStep(Math.max(0, step - 1))}>
-                    <ArrowLeft />
-                    <span className="text-sm" >Back</span>
-                </Button>
-                {step < STEPS.length - 1 ? (
-                    <Button
-                        disabled={!canAdvance} onClick={() => setStep(step + 1)}
-                        variant='default'
-                        size='sm'
-                        className='bg-primary text-primary-foreground hover:bg-primary/90 relative gap-2 rounded-sm px-5 py-2 text-sm font-semibold shadow-lg transition hover:shadow-xl'
-                    >
-                        <span className="inline text-sm text-primary-foreground">Continue</span>
-                        <ArrowRight className="text-primary-foreground" />
-                    </Button>
-                ) : (
-                    <Button
-                        disabled={!canAdvance}
-                        variant='default'
-                        size='sm'
-                        className='mt-2 bg-primary text-primary-foreground hover:bg-primary/90 relative gap-2 rounded-sm px-4 py-2 font-semibold shadow-lg transition hover:shadow-xl'
-                        onClick={() => {
-                            patch({ reviewStatus: "submitted", submittedAt: new Date().toISOString() });
-                            toast.success("Skills wallet submitted for verification.");
-                        }}
-                    >
-                        <ShieldCheck className="text-primary-foreground" />
-                        <span className="inline text-sm text-primary-foreground"> Submit for verification</span>
-                    </Button>
-                )}
-            </div>
-        </OnboardingFrame>
+export default function UserOnboardingPage() {
+  const router = useRouter();
+  const queryClient = useQueryClient();
+  const { data: session, status: sessionStatus } = useSession();
+  const [draft, setDraft] = useState(emptyOnboardingDraft);
+  const [hydrated, setHydrated] = useState(false);
+  const [captchaToken, setCaptchaToken] = useState('');
+  const [error, setError] = useState('');
+  const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
+  const [categoryPage, setCategoryPage] = useState(0);
+  const [signingIn, setSigningIn] = useState(false);
+  const authenticated = sessionStatus === 'authenticated' && !session?.error;
+  const userId = session?.user?.id ?? session?.user?.email ?? '';
+  const wrongAccount =
+    authenticated &&
+    Boolean(
+      (draft.ownerId && draft.ownerId !== userId) ||
+        (draft.registeredEmail &&
+          draft.registeredEmail.toLowerCase() !== session?.user?.email?.toLowerCase())
     );
-}
+  const needsSignIn = draft.step >= 3 && !authenticated;
+  const onboarding = useCourseCreatorOnboarding(
+    hydrated && authenticated && !wrongAccount && draft.step >= 2
+  );
+  const categoriesQuery = useQuery({
+    ...getAllCategoriesOptions({ query: { pageable: { page: categoryPage, size: 24 } } }),
+    select: response => requireApiData(response),
+    enabled: hydrated && authenticated && !wrongAccount && draft.step === 3,
+    staleTime: STALE_TIMES.reference,
+  });
+  const registration = useMutation(registerMutation());
+  const application = useMutation(applyForDomainMutation(creatorOnboardingOptions));
+  const saveCategories = useMutation(updateCategoriesMutation(creatorOnboardingOptions));
+  const submit = useMutation(submitCurrentForVerificationMutation(creatorOnboardingOptions));
+  const pending =
+    registration.isPending || application.isPending || saveCategories.isPending || submit.isPending;
+  const patch = (value: Partial<OnboardingDraft>) =>
+    setDraft(current => ({ ...current, ...value }));
 
-function ReviewState({
-    approved,
-    submittedAt,
-    approvedAt,
-    name,
-    categories,
-    walletCount,
-    courses,
-    onApprove,
-    onCreateCourse,
-    onUpdateCourse,
-    onSubmitCourse,
-    onReset,
-}: {
-    approved: boolean;
-    submittedAt: string | null;
-    approvedAt: string | null;
-    name: string;
-    categories: string[];
-    walletCount: number;
-    courses: CourseDraft[];
-    onApprove: () => void;
-    onCreateCourse: (course: CourseDraft) => void;
-    onUpdateCourse: (course: CourseDraft) => void;
-    onSubmitCourse: (id: string) => void;
-    onReset: () => void;
-}) {
-    const formatted = (value: string | null) =>
-        value ? new Date(value).toLocaleString(undefined, { dateStyle: "medium", timeStyle: "short" }) : null;
+  useEffect(() => {
+    try {
+      setDraft(readOnboardingDraft(sessionStorage.getItem(ONBOARDING_DRAFT_KEY)));
+    } catch {
+      /* Keep the in-memory draft if storage is unavailable. */
+    }
+    setHydrated(true);
+  }, []);
+  useEffect(() => {
+    if (!hydrated) return;
+    try {
+      sessionStorage.setItem(ONBOARDING_DRAFT_KEY, JSON.stringify(draft));
+    } catch {
+      /* Onboarding can still be completed in this tab. */
+    }
+  }, [draft, hydrated]);
+  useEffect(() => {
+    if (
+      onboarding.data?.verification_status === 'SUBMITTED' ||
+      onboarding.data?.verification_status === 'APPROVED'
+    )
+      router.replace(ONBOARDING_VERIFICATION_PATH);
+  }, [onboarding.data?.verification_status, router]);
+  useEffect(() => {
+    if (hydrated && authenticated && !wrongAccount && draft.step >= 3 && !draft.ownerId)
+      setDraft(current => ({ ...current, ownerId: userId }));
+  }, [hydrated, authenticated, wrongAccount, draft.step, draft.ownerId, userId]);
 
+  // Restore server selections once when resuming; refreshes must not overwrite edits.
+  const [restoredCreator, setRestoredCreator] = useState('');
+  useEffect(() => {
+    const state = onboarding.data;
+    if (!state?.course_creator_uuid || restoredCreator === state.course_creator_uuid) return;
+    setRestoredCreator(state.course_creator_uuid);
+    setDraft(current =>
+      current.categories.length
+        ? current
+        : {
+            ...current,
+            categories: (state.categories ?? []).flatMap(item =>
+              item.category_uuid ? [{ uuid: item.category_uuid, name: '' }] : []
+            ),
+          }
+    );
+  }, [onboarding.data, restoredCreator]);
+  useEffect(() => {
+    const page = categoriesQuery.data?.content;
+    if (!page?.length) return;
+    setDraft(current => ({
+      ...current,
+      categories: current.categories.map(selected => ({
+        ...selected,
+        name: page.find(category => category.uuid === selected.uuid)?.name ?? selected.name,
+      })),
+    }));
+  }, [categoriesQuery.data]);
+
+  const accountName = authenticated
+    ? session?.user?.name
+    : `${draft.personal.first_name} ${draft.personal.last_name}`.trim();
+  const accountEmail = authenticated ? session?.user?.email : draft.personal.email;
+  const hasCreatorProfile = Boolean(onboarding.data?.course_creator_uuid);
+  const canAdvance = useMemo(() => {
+    if (draft.step === 1) return draft.product === 'elimika';
+    if (draft.step === 2)
+      return (
+        draft.domain === 'course_creator' &&
+        (!authenticated ||
+          (!onboarding.isPending &&
+            (!onboarding.isError || httpStatusOf(onboarding.error) === 404)))
+      );
+    if (draft.step === 3)
+      return draft.categories.length > 0 && hasCreatorProfile && !onboarding.isError;
+    return true;
+  }, [
+    draft,
+    authenticated,
+    onboarding.isPending,
+    onboarding.isError,
+    onboarding.error,
+    hasCreatorProfile,
+  ]);
+
+  const handleSignIn = async () => {
+    setError('');
+    setSigningIn(true);
+    try {
+      await signIn(
+        'keycloak',
+        { redirectTo: `${window.location.origin}/user-onboarding` },
+        draft.registeredEmail
+          ? { login_hint: draft.registeredEmail, prompt: 'login' }
+          : { prompt: 'login' }
+      );
+    } catch (cause) {
+      setError(getErrorMessage(cause, 'Unable to sign in. Please try again.'));
+      setSigningIn(false);
+    }
+  };
+
+  const advance = async () => {
+    if (pending || !canAdvance) return;
+    setError('');
+    try {
+      if (draft.step === 0) {
+        if (!authenticated) {
+          const details = personalDetailsSchema.safeParse(draft.personal);
+          if (!details.success) {
+            setFieldErrors(
+              Object.fromEntries(
+                details.error.issues.map(issue => [String(issue.path[0]), issue.message])
+              )
+            );
+            return;
+          }
+          patch({ personal: details.data, step: 1 });
+        } else patch({ step: 1, ownerId: userId });
+        setFieldErrors({});
+        return;
+      }
+      if (draft.step === 2) {
+        if (!authenticated) {
+          // The selected domain completes the registration payload here.
+          const details = personalDetailsSchema.parse(draft.personal);
+          requireApiSuccess(
+            await registration.mutateAsync({
+              body: buildRegistrationRequest(details, captchaToken),
+            })
+          );
+          patch({ registeredEmail: details.email, step: 3 });
+          setCaptchaToken('');
+          toast.success('Check your email to set your password and verify your Sarafrika account.');
+        } else {
+          if (!hasCreatorProfile) {
+            requireApiSuccess(
+              await application.mutateAsync({ body: { domain: 'course_creator' } })
+            );
+            await queryClient.invalidateQueries({ queryKey: creatorOnboardingQueryKey() });
+          }
+          patch({ step: 3, ownerId: userId });
+        }
+        return;
+      }
+      if (draft.step === 3) {
+        const response = await saveCategories.mutateAsync({
+          body: { category_uuids: draft.categories.map(category => category.uuid) },
+        });
+        requireApiData(response);
+        queryClient.setQueryData(creatorOnboardingQueryKey(), response);
+        patch({ step: 4 });
+        toast.success('Categories saved.');
+        return;
+      }
+      if (draft.step === 5) {
+        const response = await submit.mutateAsync({});
+        requireApiData(response);
+        queryClient.setQueryData(creatorOnboardingQueryKey(), response);
+        try {
+          sessionStorage.removeItem(ONBOARDING_DRAFT_KEY);
+        } catch {
+          /* Server state remains canonical. */
+        }
+        router.push(ONBOARDING_VERIFICATION_PATH);
+        return;
+      }
+      patch({ step: draft.step + 1 });
+    } catch (cause) {
+      setError(getErrorMessage(cause, 'Unable to continue. Please try again.'));
+    }
+  };
+
+  if (!hydrated || sessionStatus === 'loading')
     return (
-        <div className="space-y-8">
-            <div className="flex flex-col items-center py-4 text-center">
-                <span
-                    className={cn(
-                        "grid h-16 w-16 place-items-center rounded-full",
-                        approved ? "bg-success/15 text-success" : "bg-warning/15 text-warning",
-                    )}
-                >
-                    {approved ? <BadgeCheck className="h-8 w-8" /> : <Clock3 className="h-8 w-8" />}
-                </span>
-                <h2 className="mt-5 text-2xl font-bold text-foreground">
-                    {approved ? `Verified — welcome, ${name.split(" ")[0] || "creator"}` : "Awaiting admin verification"}
-                </h2>
-                <p className="mt-2 max-w-md text-sm leading-6 text-muted-foreground">
-                    {approved
-                        ? "Your skills wallet has been verified. You can now create courses and submit each one for approval."
-                        : "Your skills wallet is with the Elimika admin. You will be able to create courses once it is verified."}
+      <OnboardingFrame step={0}>
+        <Skeleton className='h-64 w-full' />
+      </OnboardingFrame>
+    );
+  if (wrongAccount)
+    return (
+      <OnboardingFrame step={draft.step}>
+        <EmptyState
+          title='This draft belongs to a different account'
+          description={`Sign in with ${draft.registeredEmail || 'the account that started this onboarding'} to resume, or start onboarding for your signed-in account.`}
+          action={
+            <>
+              <Button onClick={() => void handleSignIn()} disabled={signingIn}>
+                {signingIn && <Spinner />}Use another account
+              </Button>
+              <Button
+                variant='outline'
+                onClick={() => {
+                  setDraft(emptyOnboardingDraft());
+                  setRestoredCreator('');
+                  queryClient.removeQueries({ queryKey: creatorOnboardingQueryKey() });
+                }}
+              >
+                Start with this account
+              </Button>
+            </>
+          }
+        />
+        {error && (
+          <p role='alert' className='text-destructive mt-4 text-sm'>
+            {error}
+          </p>
+        )}
+      </OnboardingFrame>
+    );
+  if (needsSignIn)
+    return (
+      <OnboardingFrame step={3}>
+        <EmptyState
+          icon={BadgeCheck}
+          title={draft.registeredEmail ? 'Verify your Sarafrika account' : 'Sign in to continue'}
+          description={
+            draft.registeredEmail
+              ? `Check ${draft.registeredEmail} for the link to set your password and verify your email. Then sign in to choose your categories. Your progress is saved in this tab.`
+              : 'Sign in with your Sarafrika account to resume onboarding.'
+          }
+          action={
+            <Button onClick={() => void handleSignIn()} disabled={signingIn}>
+              {signingIn && <Spinner />}Sign in and continue
+            </Button>
+          }
+        />
+        {error && (
+          <p role='alert' className='text-destructive mt-4 text-sm'>
+            {error}
+          </p>
+        )}
+      </OnboardingFrame>
+    );
+
+  const updatePersonal = (name: keyof OnboardingDraft['personal'], value: string | boolean) => {
+    setDraft(current => ({ ...current, personal: { ...current.personal, [name]: value } }));
+    setFieldErrors(current => ({ ...current, [name]: '' }));
+  };
+  return (
+    <OnboardingFrame step={draft.step}>
+      <form
+        onSubmit={event => {
+          event.preventDefault();
+          void advance();
+        }}
+      >
+        <fieldset disabled={pending} className='space-y-5'>
+          {draft.step === 0 &&
+            (authenticated ? (
+              <>
+                <p className='text-muted-foreground text-sm'>
+                  Continue with your existing Sarafrika account.
                 </p>
-
-                <dl className="mt-6 w-full divide-y divide-border overflow-hidden rounded-md border border-border text-left text-sm">
-                    <SummaryDataRow label="Categories" value={categories.join(", ")} />
-                    <SummaryDataRow label="Skills wallet" value={`${walletCount} of ${WALLET_SECTIONS.length} sections`} />
-                    <SummaryDataRow label="Submitted" value={formatted(submittedAt)} />
-                    <SummaryDataRow label="Verified" value={approved ? formatted(approvedAt) : null} emptyText={approved ? "—" : "Pending"} />
+                <dl>
+                  <SummaryRow label='Name' value={session?.user?.name} />
+                  <SummaryRow label='Email' value={session?.user?.email} />
                 </dl>
-                {!approved ? (
-                    <Button variant="outline" className="mt-6" onClick={onApprove}>
-                        <ClipboardCheck />
-                        Simulate admin approval
-                    </Button>
-                ) : null}
-            </div>
-
-            {approved ? (
-                <div>Go to dashboard</div>
-            ) : null}
-
-            <div className="flex flex-wrap justify-center gap-3 border-t border-border pt-6">
-                <Button asChild variant="outline">
-                    <Link href="/">
-                        <BookOpen />
-                        Back home
-                    </Link>
-                </Button>
-                <Button variant="ghost" size="sm" className="text-muted-foreground" onClick={onReset}>
-                    Start over
-                </Button>
-            </div>
-        </div>
-    );
-}
-
-function SummaryInputRow({
-    field,
-    value,
-    onChange,
-}: {
-    field: WalletField;
-    value: string;
-    onChange: (value: string) => void;
-}) {
-    const id = `${field.key}-${useMemo(newId, [])}`;
-    if (field.type === "select") {
-        return (
-            <Field label={field.label} htmlFor={id}>
-                <Select value={value} onValueChange={onChange}>
-                    <SelectTrigger
-                        id={id}
-                        className="text-sm text-foreground data-[placeholder]:text-sm data-[placeholder]:text-muted-foreground"
+              </>
+            ) : (
+              <>
+                <p className='text-muted-foreground text-sm'>
+                  Enter your details. Your account will be created after you choose Elimika and your
+                  account type.
+                </p>
+                <div className='grid gap-4 sm:grid-cols-2'>
+                  {(['first_name', 'last_name', 'email'] as const).map(name => (
+                    <Field
+                      key={name}
+                      label={
+                        { first_name: 'First name', last_name: 'Last name', email: 'Email' }[name]
+                      }
+                      id={name}
+                      error={fieldErrors[name]}
                     >
-                        <SelectValue
-                            placeholder={field.placeholder || "Select"}
-                        />
-                    </SelectTrigger>
-
-                    <SelectContent>
-                        {(field.options ?? []).map((option) => (
-                            <SelectItem key={option} value={option}>
-                                {option}
-                            </SelectItem>
-                        ))}
-                    </SelectContent>
-                </Select>
-            </Field>
-        );
-    }
-    if (field.type === "textarea") {
-        return (
-            <div className="sm:col-span-2">
-                <Field label={field.label} htmlFor={id}>
-                    <Textarea
-                        id={id}
-                        rows={3}
-                        className="text-[12px] text-foreground placeholder:text-xs"
-                        value={value}
-                        placeholder={field.placeholder}
-                        onChange={(e) => onChange(e.target.value)}
+                      <Input
+                        id={name}
+                        type={name === 'email' ? 'email' : 'text'}
+                        autoComplete={
+                          { first_name: 'given-name', last_name: 'family-name', email: 'email' }[
+                            name
+                          ]
+                        }
+                        required
+                        value={draft.personal[name]}
+                        onChange={event => updatePersonal(name, event.target.value)}
+                        aria-invalid={Boolean(fieldErrors[name])}
+                        aria-describedby={fieldErrors[name] ? `${name}-error` : undefined}
+                      />
+                    </Field>
+                  ))}
+                  <Field label='Phone number' id='phone_number' error={fieldErrors.phone_number}>
+                    <PhoneInput
+                      id='phone_number'
+                      value={draft.personal.phone_number}
+                      onChange={value => updatePersonal('phone_number', value ?? '')}
                     />
+                  </Field>
+                  <Field label='Date of birth' id='dob' error={fieldErrors.dob}>
+                    <Input
+                      id='dob'
+                      type='date'
+                      required
+                      max={new Date().toLocaleDateString('en-CA')}
+                      value={draft.personal.dob}
+                      onChange={event => updatePersonal('dob', event.target.value)}
+                      aria-invalid={Boolean(fieldErrors.dob)}
+                      aria-describedby={fieldErrors.dob ? 'dob-error' : undefined}
+                    />
+                  </Field>
+                  <Field label='Gender' id='gender' error={fieldErrors.gender}>
+                    <Select
+                      value={draft.personal.gender}
+                      onValueChange={value => updatePersonal('gender', value)}
+                    >
+                      <SelectTrigger
+                        id='gender'
+                        aria-invalid={Boolean(fieldErrors.gender)}
+                        aria-describedby={fieldErrors.gender ? 'gender-error' : undefined}
+                      >
+                        <SelectValue placeholder='Select gender' />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value='MALE'>Male</SelectItem>
+                        <SelectItem value='FEMALE'>Female</SelectItem>
+                        <SelectItem value='PREFER_NOT_TO_SAY'>Prefer not to say</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </Field>
+                </div>
+                <div className='flex items-center gap-2'>
+                  <Checkbox
+                    id='terms_accepted'
+                    checked={draft.personal.terms_accepted}
+                    onCheckedChange={value => updatePersonal('terms_accepted', value === true)}
+                    aria-describedby={
+                      fieldErrors.terms_accepted ? 'terms_accepted-error' : undefined
+                    }
+                  />
+                  <Label htmlFor='terms_accepted'>
+                    I accept the Sarafrika terms and conditions.
+                  </Label>
+                </div>
+                {fieldErrors.terms_accepted && (
+                  <p id='terms_accepted-error' role='alert' className='text-destructive text-sm'>
+                    {fieldErrors.terms_accepted}
+                  </p>
+                )}
+                <Field label='Captcha token (optional)' id='captcha_token'>
+                  <Input
+                    id='captcha_token'
+                    value={captchaToken}
+                    onChange={event => setCaptchaToken(event.target.value)}
+                    autoComplete='off'
+                  />
                 </Field>
-            </div>
-        );
-    }
-    return (
-        <Field label={field.label} htmlFor={id}>
-            <Input
-                id={id}
-                type={field.type === "date" ? "date" : "text"}
-                className="text-[10px] text-foreground placeholder:text-[14px]"
-                value={value}
-                placeholder={field.placeholder}
-                onChange={(event) => onChange(event.target.value)}
-            />
-        </Field>
-    );
-}
-
-function SummaryDataRow({
-    label,
-    value,
-    emptyText = "—",
-}: {
-    label: string;
-    value: string | null;
-    emptyText?: string;
-}) {
-    const hasValue = Boolean(value?.trim());
-
-    return (
-        <div className="flex items-start justify-between gap-4 bg-background px-4 py-3">
-            <dt className="text-sm text-muted-foreground">{label}</dt>
-            <dd className={cn("text-right font-medium", hasValue ? "text-foreground text-sm" : "text-muted-foreground text-sm")}>
-                {hasValue ? value : emptyText}
-            </dd>
-        </div>
-    );
-}
-
-function ChoiceCard({
-    title,
-    detail,
-    selected,
-    disabled,
-    onSelect,
-}: {
-    title: string;
-    detail: string;
-    selected: boolean;
-    disabled?: boolean;
-    onSelect: () => void;
-}) {
-    return (
-        <button
-            type="button"
-            disabled={disabled}
-            aria-pressed={selected}
-            onClick={onSelect}
-            className={cn(
-                "flex h-full flex-col rounded-md border p-4 text-left transition-colors",
-                selected ? "border-primary bg-primary/5" : "border-border bg-background hover:border-primary/40",
-                disabled && "cursor-not-allowed opacity-50 hover:border-border",
-            )}
-        >
-            <span className="flex items-center justify-between text-sm font-semibold text-foreground">
-                {title}
-                {selected ? <CheckCircle2 className="h-4 w-4 text-primary" /> : null}
-            </span>
-            <span className="mt-1 text-xs leading-5 text-muted-foreground">{detail}</span>
-            {disabled ? <span className="mt-2 text-[11px] font-medium uppercase text-muted-foreground">Coming soon</span> : null}
-        </button>
-    );
-}
-
-function OnboardingFrame({
-    step,
-    hideProgress,
-    children,
-}: {
-    step: number;
-    hideProgress?: boolean;
-    children: ReactNode;
-}) {
-    return (
-        <div className="min-h-screen bg-muted/40">
-            {/* <header className="border-b border-border bg-background">
-                <div className="mx-auto flex max-w-6xl items-center justify-between gap-4 px-4 py-4 sm:px-6">
-                    <Button asChild variant="ghost" size="sm">
-                        <Link href="/">
-                            <ArrowLeft />
-                            Home
-                        </Link>
+                <Button
+                  type='button'
+                  variant='link'
+                  onClick={() => void handleSignIn()}
+                  disabled={signingIn}
+                >
+                  {signingIn && <Spinner />}Already have a Sarafrika account? Sign in
+                </Button>
+              </>
+            ))}
+          {draft.step === 1 && (
+            <>
+              <p className='text-muted-foreground text-sm'>
+                Choose the Sarafrika product you want to join.
+              </p>
+              <ChoiceCard
+                title='Elimika'
+                detail='Teaching, courses and digital workbooks.'
+                selected={draft.product === 'elimika'}
+                onSelect={() => patch({ product: 'elimika' })}
+              />
+            </>
+          )}
+          {draft.step === 2 && (
+            <>
+              <p className='text-muted-foreground text-sm'>
+                Choose your account type. Course Creator is currently available for onboarding.
+              </p>
+              <div className='grid gap-3 sm:grid-cols-2 lg:grid-cols-3'>
+                {ACCOUNT_TYPES.map(type => (
+                  <ChoiceCard
+                    key={type.id}
+                    title={type.name}
+                    detail={type.detail}
+                    disabled={!type.available}
+                    selected={draft.domain === type.id}
+                    onSelect={() => patch({ domain: 'course_creator' })}
+                  />
+                ))}
+              </div>
+              <dl>
+                <SummaryRow label='Name' value={accountName} />
+                <SummaryRow label='Email' value={accountEmail} />
+              </dl>
+              {!authenticated && (
+                <p className='text-muted-foreground text-sm'>
+                  Continuing creates your Sarafrika account with the Course Creator domain. Check
+                  your email afterwards to set your password.
+                </p>
+              )}
+              {authenticated && onboarding.isPending && (
+                <p className='text-muted-foreground flex items-center gap-2 text-sm'>
+                  <Spinner />
+                  Checking your account…
+                </p>
+              )}
+              {authenticated && onboarding.isError && httpStatusOf(onboarding.error) !== 404 && (
+                <QueryError error={onboarding.error} retry={() => void onboarding.refetch()} />
+              )}
+            </>
+          )}
+          {draft.step === 3 && (
+            <>
+              <p className='text-muted-foreground text-sm'>
+                Select the categories you want to create courses in. Continue to save your
+                selections.
+              </p>
+              {onboarding.isPending ? (
+                <Skeleton className='h-24 w-full' />
+              ) : onboarding.isError ? (
+                <QueryError error={onboarding.error} retry={() => void onboarding.refetch()} />
+              ) : null}
+              {categoriesQuery.isPending ? (
+                <Skeleton className='h-48 w-full' />
+              ) : categoriesQuery.isError ? (
+                <QueryError
+                  error={categoriesQuery.error}
+                  retry={() => void categoriesQuery.refetch()}
+                />
+              ) : (
+                <>
+                  <div className='grid gap-2 sm:grid-cols-2'>
+                    {categoriesQuery.data?.content
+                      ?.filter(category => category.uuid && category.is_active !== false)
+                      .map(category => {
+                        const uuid = category.uuid;
+                        if (!uuid) return null;
+                        const selected = draft.categories.some(item => item.uuid === uuid);
+                        return (
+                          <ChoiceCard
+                            key={uuid}
+                            title={category.name}
+                            detail={category.description ?? ''}
+                            selected={selected}
+                            onSelect={() =>
+                              patch({
+                                categories: selected
+                                  ? draft.categories.filter(item => item.uuid !== uuid)
+                                  : [...draft.categories, { uuid, name: category.name }],
+                              })
+                            }
+                          />
+                        );
+                      })}
+                  </div>
+                  {!categoriesQuery.data?.content?.some(
+                    category => category.uuid && category.is_active !== false
+                  ) && (
+                    <EmptyState
+                      title='No categories available'
+                      description='Please try another page or check again later.'
+                    />
+                  )}
+                  <div className='flex items-center justify-between gap-3'>
+                    <Button
+                      type='button'
+                      variant='outline'
+                      disabled={categoryPage === 0 || categoriesQuery.isFetching}
+                      onClick={() => setCategoryPage(current => current - 1)}
+                    >
+                      Previous
                     </Button>
-                    <Badge variant="outline" className="gap-1.5">
-                        <GraduationCap className="h-3.5 w-3.5" />
-                        Sarafrika · Elimika
-                    </Badge>
-                </div>
-            </header> */}
-
-            <main className="mx-auto max-w-6xl px-4 py-10 sm:px-6">
-                <div className="mb-8">
-                    <h1 className="text-2xl font-bold text-foreground">User Onboarding</h1>
-                    <p className="mt-1 text-sm text-muted-foreground">
-                        From your Sarafrika account to a verified skills wallet — everything is saved on this device as you go.
-                    </p>
-                </div>
-
-                {!hideProgress ? (
-                    <ol className="mb-8 flex items-center gap-2" aria-label="Onboarding progress">
-                        {STEPS.map((item, index) => {
-                            const Icon = item.icon;
-                            const reached = step >= index;
-                            return (
-                                <li key={item.key} className="flex flex-1 items-center gap-2">
-                                    <span
-                                        className={cn(
-                                            "grid h-8 w-8 shrink-0 place-items-center rounded-full border text-xs font-semibold",
-                                            reached
-                                                ? "border-primary bg-primary text-primary-foreground"
-                                                : "border-border bg-background text-muted-foreground",
-                                        )}
-                                    >
-                                        {step > index ? <CheckCircle2 className="h-4 w-4" /> : <Icon className="h-4 w-4" />}
-                                    </span>
-                                    <span
-                                        className={cn(
-                                            "hidden text-sm font-medium lg:block",
-                                            reached ? "text-foreground" : "text-muted-foreground",
-                                        )}
-                                    >
-                                        {item.label}
-                                    </span>
-                                    {index < STEPS.length - 1 ? (
-                                        <span className={cn("mx-1 h-px flex-1", step > index ? "bg-primary" : "bg-border")} />
-                                    ) : null}
-                                </li>
-                            );
-                        })}
-                    </ol>
-                ) : null}
-
-                <section className="rounded-lg border border-border bg-background p-6 shadow-sm sm:p-8">
-                    {!hideProgress ? (
-                        <h2 className="mb-5 text-lg font-semibold text-foreground">{STEPS[step]?.label}</h2>
-                    ) : null}
-                    {children}
-                </section>
-            </main>
+                    <span className='text-muted-foreground text-sm'>Page {categoryPage + 1}</span>
+                    <Button
+                      type='button'
+                      variant='outline'
+                      disabled={
+                        !categoriesQuery.data?.metadata?.hasNext || categoriesQuery.isFetching
+                      }
+                      onClick={() => setCategoryPage(current => current + 1)}
+                    >
+                      Next
+                    </Button>
+                  </div>
+                </>
+              )}
+              <p className='text-muted-foreground text-sm'>
+                {draft.categories.length} categories selected
+              </p>
+            </>
+          )}
+          {draft.step === 4 && (
+            <EmptyState
+              icon={Wallet}
+              title='Add your skills and portfolio later'
+              description='Skills, portfolio and other supporting information are coming later. You can skip this step and continue to review.'
+            />
+          )}
+          {draft.step === 5 && (
+            <>
+              <p className='text-muted-foreground text-sm'>
+                Review your information and submit your course creator onboarding for admin
+                verification.
+              </p>
+              <dl className='divide-border divide-y'>
+                <SummaryRow label='Name' value={accountName} />
+                <SummaryRow label='Email' value={accountEmail} />
+                <SummaryRow label='Product' value='Elimika' />
+                <SummaryRow label='Account type' value='Course Creator' />
+                <SummaryRow
+                  label='Categories'
+                  value={draft.categories
+                    .map(category => category.name || category.uuid)
+                    .join(', ')}
+                />
+                <SummaryRow label='Skills and portfolio' value='Skipped for now' />
+              </dl>
+              {onboarding.data?.review_reason && (
+                <p className='text-muted-foreground text-sm'>
+                  Previous review: {onboarding.data.review_reason}
+                </p>
+              )}
+            </>
+          )}
+        </fieldset>
+        {error && (
+          <p role='alert' className='text-destructive mt-5 text-sm whitespace-pre-line'>
+            {error}
+          </p>
+        )}
+        <div className='border-border mt-8 flex items-center justify-between gap-3 border-t pt-5'>
+          <Button
+            type='button'
+            variant='outline'
+            disabled={pending || draft.step === 0 || draft.step === 3}
+            onClick={() => {
+              setError('');
+              patch({ step: draft.step - 1 });
+            }}
+          >
+            <ArrowLeft />
+            Back
+          </Button>
+          <Button type='submit' disabled={pending || !canAdvance}>
+            {pending ? <Spinner /> : draft.step === 5 ? <ShieldCheck /> : <ArrowRight />}
+            {draft.step === 5
+              ? pending
+                ? 'Submitting…'
+                : 'Submit for verification'
+              : draft.step === 4
+                ? 'Skip for now'
+                : pending
+                  ? 'Saving…'
+                  : 'Continue'}
+          </Button>
         </div>
-    );
+      </form>
+    </OnboardingFrame>
+  );
 }
 
-function Field({ label, htmlFor, children }: { label: string; htmlFor?: string; children: ReactNode }) {
-    return (
-        <div className="space-y-1.5">
-            <Label htmlFor={htmlFor}>{label}</Label>
+function QueryError({ error, retry }: { error: unknown; retry: () => void }) {
+  return (
+    <EmptyState
+      title='Unable to load onboarding information'
+      description={getErrorMessage(error, 'Please try again.')}
+      action={
+        <Button type='button' variant='outline' onClick={retry}>
+          Try again
+        </Button>
+      }
+    />
+  );
+}
+function Field({
+  label,
+  id,
+  error,
+  children,
+}: {
+  label: string;
+  id: string;
+  error?: string;
+  children: ReactNode;
+}) {
+  return (
+    <div className='space-y-1.5'>
+      <Label htmlFor={id}>{label}</Label>
+      {children}
+      {error && (
+        <p id={`${id}-error`} role='alert' className='text-destructive text-sm'>
+          {error}
+        </p>
+      )}
+    </div>
+  );
+}
+function SummaryRow({ label, value }: { label: string; value?: string | null }) {
+  return (
+    <div className='flex justify-between gap-4 py-3 text-sm'>
+      <dt className='text-muted-foreground'>{label}</dt>
+      <dd className='text-foreground text-right font-medium'>{value || '—'}</dd>
+    </div>
+  );
+}
+function ChoiceCard({
+  title,
+  detail,
+  selected,
+  disabled,
+  onSelect,
+}: {
+  title: string;
+  detail: string;
+  selected: boolean;
+  disabled?: boolean;
+  onSelect: () => void;
+}) {
+  return (
+    <Button
+      type='button'
+      variant='outline'
+      disabled={disabled}
+      aria-pressed={selected}
+      onClick={onSelect}
+      className={cn(
+        'h-auto w-full flex-col items-start p-4 text-left whitespace-normal',
+        selected && 'border-primary bg-primary/5'
+      )}
+    >
+      <span className='flex w-full items-center justify-between gap-2 font-semibold'>
+        {title}
+        {selected && <CheckCircle2 className='text-primary h-4 w-4 shrink-0' />}
+      </span>
+      <span className='text-muted-foreground text-xs leading-5'>{detail}</span>
+      {disabled && <span className='text-muted-foreground text-xs'>Coming soon</span>}
+    </Button>
+  );
+}
+function OnboardingFrame({ step, children }: { step: number; children: ReactNode }) {
+  return (
+    <div className='bg-muted/40 min-h-screen'>
+      <div className='mx-auto max-w-6xl px-4 py-10 sm:px-6'>
+        <h1 className='text-foreground text-2xl font-bold'>User Onboarding</h1>
+        <p className='text-muted-foreground mt-1 text-sm'>
+          Join Elimika with your Sarafrika account and submit your course creator profile for
+          review.
+        </p>
+        <ol className='my-8 flex items-center gap-2' aria-label='Onboarding progress'>
+          {STEPS.map((item, index) => {
+            const Icon = item.icon;
+            return (
+              <li
+                key={item.label}
+                aria-current={step === index ? 'step' : undefined}
+                className='flex flex-1 items-center gap-2'
+              >
+                <span
+                  className={cn(
+                    'grid h-8 w-8 shrink-0 place-items-center rounded-full border',
+                    step >= index
+                      ? 'border-primary bg-primary text-primary-foreground'
+                      : 'border-border bg-background text-muted-foreground'
+                  )}
+                >
+                  {step > index ? (
+                    <CheckCircle2 className='h-4 w-4' />
+                  ) : (
+                    <Icon className='h-4 w-4' />
+                  )}
+                </span>
+                <span className='hidden text-sm font-medium lg:block'>{item.label}</span>
+              </li>
+            );
+          })}
+        </ol>
+        <Card>
+          <CardContent className='p-6 sm:p-8'>
+            <h2 className='text-foreground mb-5 text-lg font-semibold'>{STEPS[step]?.label}</h2>
             {children}
-        </div>
-    );
+          </CardContent>
+        </Card>
+        <Button asChild variant='link' className='mt-4'>
+          <Link href='/'>Back home</Link>
+        </Button>
+      </div>
+    </div>
+  );
 }
