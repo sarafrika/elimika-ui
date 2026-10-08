@@ -1,6 +1,12 @@
 'use client';
 
+import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { ArrowRight, PlusIcon } from 'lucide-react';
+import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import type { ComponentProps } from 'react';
+import { useState } from 'react';
+import { toast } from 'sonner';
 import type { DashboardClass } from '@/app/dashboard/_components/types';
 import DeleteModal from '@/components/custom-modals/delete-modal';
 import { Button } from '@/components/ui/button';
@@ -9,12 +15,6 @@ import {
   deactivateClassDefinitionMutation,
   getClassDefinitionsForInstructorQueryKey,
 } from '@/services/client/@tanstack/react-query.gen';
-import { useMutation, useQueryClient } from '@tanstack/react-query';
-import { ArrowRight, PlusIcon } from 'lucide-react';
-import Link from 'next/link';
-import { useRouter } from 'next/navigation';
-import { useState } from 'react';
-import { toast } from 'sonner';
 import { cx, elimikaDesignSystem } from '../../../../../lib/design-system';
 import { TrainingClassList } from '../../../_components/training-class-list';
 import {
@@ -28,7 +28,7 @@ interface TrainingPageProps {
   loading: boolean;
 }
 
-export default function TrainingsPage({
+export default function TrainingsOverview({
   classesWithCourseAndInstructor,
   loading,
 }: TrainingPageProps) {
