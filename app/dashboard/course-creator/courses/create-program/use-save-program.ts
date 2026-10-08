@@ -41,8 +41,10 @@ import {
   programStepBody,
   requirementBody,
   sameProgramPayload,
+  type ProgramSaveProgress,
   type ProgramSaveStep,
 } from './program-save-state';
+import { requirementEntry } from './program-requirements';
 import {
   type PendingProgramMedia,
   PROGRAM_MEDIA_FIELDS,
@@ -72,6 +74,12 @@ export function useSaveProgram(
   const queryClient = useQueryClient();
   const savedProgram = useRef(program);
   const [programUuid, setProgramUuid] = useState(program?.uuid);
+  const [progress, setProgress] = useState<ProgramSaveProgress | null>(null);
+  const advanceProgress = (currentStep: string) => {
+    setProgress(current =>
+      current?.steps.some(step => step.key === currentStep) ? { ...current, currentStep } : current
+    );
+  };
   const savedContent = useRef(
     program ? programBody(defaultProgramValues(program), creatorUuid, program) : undefined
   );
@@ -133,6 +141,57 @@ export function useSaveProgram(
       didWrite.current = false;
       const body = programStepBody(values, creatorUuid, savedProgram.current, step);
       let uuid = savedProgram.current?.uuid ?? programUuid;
+      const steps: ProgramSaveProgress['steps'] = [];
+      if (!uuid || !sameProgramPayload(savedContent.current, body))
+        steps.push({ key: 'program', label: uuid ? 'Saving program details' : 'Creating program' });
+      if (step === 0 || step === 'requirements' || step === 'all') {
+        const current = new Set(values.requirements.flatMap(row => (row.uuid ? [row.uuid] : [])));
+        for (const requirementUuid of savedRequirements.current.keys()) {
+          if (!current.has(requirementUuid))
+            steps.push({
+              key: `remove-requirement:${requirementUuid}`,
+              label: 'Removing requirement',
+            });
+        }
+        values.requirements.forEach((row, index) => {
+          if (
+            row.uuid &&
+            sameProgramPayload(savedRequirements.current.get(row.uuid), requirementBody(row))
+          )
+            return;
+          steps.push({
+            key: `requirement:${index}`,
+            label: `${row.uuid ? 'Updating' : 'Creating'} requirement: ${requirementEntry(row).name || index + 1}`,
+          });
+        });
+      }
+      if (
+        (step === 1 || step === 'all') &&
+        changedProgramRows(savedCourses.current, values.courses, row => row.courseUuid, courseBody)
+      )
+        steps.push({ key: 'courses', label: 'Saving program courses' });
+      if (
+        (step === 2 || step === 'assessments' || step === 'all') &&
+        changedProgramRows(
+          savedAssessments.current,
+          values.draft.assessments,
+          row => row.uuid,
+          assessmentBody
+        )
+      )
+        steps.push({ key: 'assessments', label: 'Saving assessment components' });
+      if (step === 4 || step === 'all') {
+        const labels = {
+          thumbnail: 'Uploading thumbnail',
+          banner: 'Uploading banner',
+          intro_video: 'Uploading introduction video',
+        };
+        for (const key of ['thumbnail', 'banner', 'intro_video'] as const) {
+          if (media[key]) steps.push({ key: `media:${key}`, label: labels[key] });
+        }
+      }
+      steps.push({ key: 'refresh', label: 'Refreshing program' });
+      setProgress({ steps, currentStep: steps[0]?.key ?? 'refresh' });
       if (uuid && !sameProgramPayload(savedContent.current, body)) {
         didWrite.current = true;
         const response = await updateProgram.mutateAsync({
@@ -181,6 +240,7 @@ export function useSaveProgram(
         );
         for (const requirementUuid of savedRequirements.current.keys()) {
           if (currentRequirements.has(requirementUuid)) continue;
+          advanceProgress(`remove-requirement:${requirementUuid}`);
           didWrite.current = true;
           const response = await deleteRequirement.mutateAsync({
             path: { programUuid: uuid, requirementUuid },
@@ -192,6 +252,7 @@ export function useSaveProgram(
           const payload = requirementBody(row);
           if (row.uuid && sameProgramPayload(savedRequirements.current.get(row.uuid), payload))
             continue;
+          advanceProgress(`requirement:${index}`);
           const body = { program_uuid: uuid, ...payload };
           didWrite.current = true;
           const response = row.uuid
@@ -211,6 +272,7 @@ export function useSaveProgram(
         }
       }
       if (step === 1 || step === 'all') {
+        advanceProgress('courses');
         const currentCourses = new Set(values.courses.map(row => row.courseUuid));
         for (const [index, row] of values.courses.entries()) {
           const payload = courseBody(row, index);
@@ -240,6 +302,7 @@ export function useSaveProgram(
         }
       }
       if (step === 2 || step === 'assessments' || step === 'all') {
+        advanceProgress('assessments');
         const rows = values.draft.assessments;
         const current = new Set(rows.flatMap(row => (row.uuid ? [row.uuid] : [])));
         for (const uuidToRemove of savedAssessments.current.keys()) {
@@ -285,6 +348,7 @@ export function useSaveProgram(
           uuid,
           media,
           (key, uuid, file) => {
+            advanceProgress(`media:${key}`);
             didWrite.current = true;
             if (key === 'thumbnail')
               return uploadThumbnail.mutateAsync({ path: { uuid }, body: { thumbnail: file } });
@@ -300,24 +364,29 @@ export function useSaveProgram(
         );
       return uuid;
     },
-    onSettled: async () => {
-      const uuid = savedProgram.current?.uuid;
-      if (!uuid || !didWrite.current) return;
-      // Invalidate all parameter variants using prefixes from the canonical generated keys.
-      const keys = [
-        getTrainingProgramByUuidQueryKey({ path: { uuid } }),
-        getProgramAssessmentsQueryKey({ path: { uuid } }),
-        getProgramCoursesQueryKey({ path: { programUuid: uuid } }),
-        getProgramRequirementsQueryKey({ path: { programUuid: uuid }, query: { pageable: {} } }),
-        searchProgramCoursesQueryKey({ query: { searchParams: {}, pageable: {} } }),
-        searchTrainingProgramsQueryKey({ query: { searchParams: {}, pageable: {} } }),
-        getAllTrainingProgramsQueryKey({ query: { pageable: {} } }),
-      ];
-      await Promise.all(
-        keys.map(queryKey =>
-          queryClient.invalidateQueries({ queryKey: [{ _id: queryKey[0]._id }] })
-        )
-      );
+    onSettled: async (_data, error) => {
+      try {
+        const uuid = savedProgram.current?.uuid;
+        if (!uuid || !didWrite.current) return;
+        if (!error) advanceProgress('refresh');
+        // Invalidate all parameter variants using prefixes from the canonical generated keys.
+        const keys = [
+          getTrainingProgramByUuidQueryKey({ path: { uuid } }),
+          getProgramAssessmentsQueryKey({ path: { uuid } }),
+          getProgramCoursesQueryKey({ path: { programUuid: uuid } }),
+          getProgramRequirementsQueryKey({ path: { programUuid: uuid }, query: { pageable: {} } }),
+          searchProgramCoursesQueryKey({ query: { searchParams: {}, pageable: {} } }),
+          searchTrainingProgramsQueryKey({ query: { searchParams: {}, pageable: {} } }),
+          getAllTrainingProgramsQueryKey({ query: { pageable: {} } }),
+        ];
+        await Promise.all(
+          keys.map(queryKey =>
+            queryClient.invalidateQueries({ queryKey: [{ _id: queryKey[0]._id }] })
+          )
+        );
+      } finally {
+        setProgress(null);
+      }
     },
   });
   const hasChanges = (
@@ -365,5 +434,5 @@ export function useSaveProgram(
       return true;
     return (step === 4 || step === 'all') && Object.values(media).some(Boolean);
   };
-  return { ...mutation, programUuid, hasChanges };
+  return { ...mutation, programUuid, hasChanges, progress };
 }

@@ -1,5 +1,6 @@
 'use client';
 
+import { useQuery } from '@tanstack/react-query';
 import { ArrowUpRight, Briefcase, CheckCircle2, Sparkles, Target, Trophy } from 'lucide-react';
 
 import { WalletShareButton } from '@/app/dashboard/_components/skills-wallet/WalletShareButton';
@@ -9,6 +10,9 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Progress } from '@/components/ui/progress';
+import { STALE_TIMES } from '@/lib/query-client';
+import { listPortfolioOptions } from '@/services/client/@tanstack/react-query.gen';
+import { requireApiData } from '@/src/features/onboarding/lib/user-onboarding';
 
 import {
   Donut,
@@ -47,6 +51,11 @@ export function SkillsWalletOverviewTab({
   achievementsFailed,
   onRetryAchievements,
 }: SkillsWalletOverviewTabProps) {
+  const portfolioQuery = useQuery({
+    ...listPortfolioOptions(),
+    select: requireApiData,
+    staleTime: STALE_TIMES.entity,
+  });
   const stats = [
     {
       icon: Sparkles,
@@ -75,7 +84,7 @@ export function SkillsWalletOverviewTab({
     {
       icon: Briefcase,
       label: 'Projects',
-      value: data.portfolio.length,
+      value: portfolioQuery.isError ? '—' : portfolioQuery.isPending ? '…' : portfolioQuery.data?.length ?? 0,
       tint: 'bg-secondary text-secondary-foreground',
       actionLabel: 'View details',
       onAction: () => onNavigateToTab?.('portfolio'),
