@@ -12,6 +12,7 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import Spinner from '@/components/ui/spinner';
+import type { CourseSetupSectionRef } from '@/lib/course-setup';
 import {
   addCourseTrainingRequirementMutation,
   deleteCourseTrainingRequirementMutation,
@@ -22,15 +23,15 @@ import type {
   AddCourseTrainingRequirementResponse,
   CourseTrainingRequirement,
 } from '@/services/client/types.gen';
-import type { QueryClient } from '@tanstack/react-query';
+import type { MutationFunction, QueryClient } from '@tanstack/react-query';
 import { CheckCircle2, Loader2, Pencil, Plus, Save, Trash2, X } from 'lucide-react';
-import { type Dispatch, type SetStateAction, useMemo, useState } from 'react';
+import { type Dispatch, type Ref, type SetStateAction, useImperativeHandle, useMemo, useState } from 'react';
 import { toast } from 'sonner';
 import { providedByOptions, requirementTypes } from './course-creation-types';
 import { REQUIREMENT_UNITS, TrainingRequirementFields } from './training-requirement-fields';
 
 type MutationVariables<T> = T extends {
-  mutationFn?: (variables: infer TVariables) => Promise<unknown>;
+  mutationFn?: MutationFunction<unknown, infer TVariables>;
 }
   ? TVariables
   : never;
@@ -71,6 +72,7 @@ type RequirementMutation<TVariables> = {
 };
 
 const PROVIDERS: { value: Provider; label: string }[] = [
+  { value: 'course_creator', label: 'Course creator' },
   { value: 'instructor', label: 'Instructor' },
   { value: 'organisation', label: 'Organisation' },
   { value: 'student', label: 'Student' },
@@ -116,6 +118,8 @@ export const createEmptyDraftsByProvider = (): DraftsByProvider => ({
 });
 
 type Props = {
+  saveRef?: Ref<CourseSetupSectionRef>;
+  isSaving?: boolean;
   draftsByProvider: DraftsByProvider;
   setDraftsByProvider: Dispatch<SetStateAction<DraftsByProvider>>;
   activeProvider: Provider | null;
@@ -151,6 +155,8 @@ export function TrainingRequirementsSection({
   deletingId,
   setDeletingId,
   qc,
+  saveRef,
+  isSaving = false,
 }: Props) {
   const targetCourseUuid = editingCourseId ?? courseId;
 
@@ -192,12 +198,13 @@ export function TrainingRequirementsSection({
     }));
   };
 
-  const saveDraftsForProvider = async (provider: Provider) => {
+  const saveDraftsForProvider = async (
+    provider: Provider,
+    uuid = targetCourseUuid,
+    queued = false
+  ) => {
     if (savingProvider) return;
-    if (!targetCourseUuid) {
-      toast.error('Save the course first before adding requirements.');
-      return;
-    }
+    if (!uuid) return;
 
     const drafts = draftsByProvider[provider].filter(d => d.name.trim());
 
@@ -225,9 +232,9 @@ export function TrainingRequirementsSection({
               is_mandatory: draft.is_mandatory,
               description: draft.description,
               provided_by: provider,
-              course_uuid: targetCourseUuid,
+              course_uuid: uuid,
             } as AddRequirementVariables['body'],
-            path: { courseUuid: targetCourseUuid },
+            path: { courseUuid: uuid },
           });
           if (response.error || response.success === false || !response.data) {
             throw new Error(response.message || 'Failed to save requirement.');
@@ -245,7 +252,7 @@ export function TrainingRequirementsSection({
         setExistingRequirements(prev => [...prev, ...succeeded.map(item => item.requirement)]);
         qc.invalidateQueries({
           queryKey: getCourseTrainingRequirementsQueryKey({
-            path: { courseUuid: targetCourseUuid },
+            path: { courseUuid: uuid },
             query: { pageable: {} },
           }),
         });
@@ -257,18 +264,38 @@ export function TrainingRequirementsSection({
             [provider]: remaining.length > 0 ? remaining : [emptyDraft()],
           };
         });
-        toast.success(
-          `${succeeded.length} requirement${succeeded.length > 1 ? 's' : ''} saved for ${PROVIDERS.find(p => p.value === provider)?.label}.`
-        );
+        if (!queued) {
+          toast.success(
+            `${succeeded.length} requirement${succeeded.length > 1 ? 's' : ''} saved for ${PROVIDERS.find(p => p.value === provider)?.label}.`
+          );
+        }
         if (failed === 0) setActiveProvider(null);
       }
 
-      if (failed > 0)
-        toast.error(`${failed} requirement(s) failed to save. Retry the remaining rows.`);
+      if (failed > 0) {
+        const message = `${failed} requirement(s) failed to save. Retry the remaining rows.`;
+        if (queued) throw new Error(message);
+        toast.error(message);
+      }
     } finally {
       setSavingProvider(null);
     }
   };
+
+  useImperativeHandle(saveRef, () => ({
+    savePending: async uuid => {
+      const failures: string[] = [];
+      for (const provider of providedByOptions) {
+        if (!draftsByProvider[provider].some(draft => draft.name.trim())) continue;
+        try {
+          await saveDraftsForProvider(provider, uuid, true);
+        } catch {
+          failures.push(PROVIDERS.find(item => item.value === provider)?.label ?? provider);
+        }
+      }
+      if (failures.length) throw new Error(`Could not save requirements for ${failures.join(', ')}.`);
+    },
+  }));
 
   const startEdit = (req: RequirementRecord) => {
     if (!req.uuid) return;
@@ -419,20 +446,16 @@ export function TrainingRequirementsSection({
         <p className='text-muted-foreground mb-3 text-sm'>Select a provider to add requirements:</p>
         <div className='flex flex-wrap gap-2'>
           {PROVIDERS.map(p => (
-            <button
+            <Button
               key={p.value}
               type='button'
-              disabled={!!savingProvider}
+              disabled={isSaving || !!savingProvider}
+              variant={activeProvider === p.value ? 'default' : 'outline'}
               onClick={() => setActiveProvider(prev => (prev === p.value ? null : p.value))}
-              className={[
-                'rounded-full border px-4 py-1.5 text-sm font-medium transition-all',
-                activeProvider === p.value
-                  ? 'border-primary bg-primary text-primary-foreground shadow-sm'
-                  : 'border-border bg-background text-foreground hover:border-primary/50 hover:bg-muted',
-              ].join(' ')}
+              className='rounded-full'
             >
               {p.label}
-            </button>
+            </Button>
           ))}
         </div>
       </div>
@@ -554,24 +577,31 @@ export function TrainingRequirementsSection({
               >
                 Cancel
               </Button>
-              <Button
-                type='button'
-                size='sm'
-                disabled={!!savingProvider}
-                onClick={() => saveDraftsForProvider(activeProvider)}
-              >
-                {savingProvider === activeProvider ? (
-                  <span className='flex items-center gap-2'>
-                    <Spinner className='h-3.5 w-3.5' />
-                    Saving…
-                  </span>
-                ) : (
-                  <span className='flex items-center gap-2'>
-                    <Save className='h-3.5 w-3.5' />
-                    Save Requirements
-                  </span>
-                )}
-              </Button>
+              {targetCourseUuid ? (
+                <Button
+                  type='button'
+                  size='sm'
+                  disabled={isSaving || !!savingProvider}
+                  onClick={() => saveDraftsForProvider(activeProvider)}
+                >
+                  {savingProvider === activeProvider ? (
+                    <span className='flex items-center gap-2'>
+                      <Spinner className='h-3.5 w-3.5' />
+                      Saving…
+                    </span>
+                  ) : (
+                    <span className='flex items-center gap-2'>
+                      <Save className='h-3.5 w-3.5' />
+                      Save Requirements
+                    </span>
+                  )}
+                </Button>
+              ) : (
+                <p className='text-muted-foreground flex items-center gap-2 text-sm' role='status'>
+                  {isSaving ? <Spinner /> : null}
+                  Requirements will be saved after the course is created.
+                </p>
+              )}
             </div>
           </div>
         </div>

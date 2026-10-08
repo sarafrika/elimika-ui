@@ -29,6 +29,7 @@ import Spinner from '@/components/ui/spinner';
 import { StepperContent, StepperList, StepperRoot, StepperTrigger } from '@/components/ui/stepper';
 import { useBreadcrumb } from '@/context/breadcrumb-provider';
 import { useCourseCreator } from '@/context/course-creator-context';
+import type { CourseSetupDrafts } from '@/lib/course-setup';
 import { cn } from '@/lib/utils';
 import {
   getAllContentTypesOptions,
@@ -77,6 +78,7 @@ export default function CourseBuilderPage() {
   const { replaceBreadcrumbs } = useBreadcrumb();
 
   const formRef = useRef<CourseFormRef>(null);
+  const courseSetupDraftRef = useRef<CourseSetupDrafts>({ skills: null, prerequisites: null });
   const queryClient = useQueryClient();
 
   const sectionContainerClasses =
@@ -299,7 +301,9 @@ export default function CourseBuilderPage() {
                 showSubmitButton={true}
                 courseId={createdCourseId as string}
                 editingCourseId={courseId as string}
+                isLive={course?.data?.admin_approved === true && course?.data?.is_published === true}
                 initialValues={courseInitialValues}
+                setupDraftRef={courseSetupDraftRef}
                 requirementDrafts={requirementDrafts}
                 setRequirementDrafts={setRequirementDrafts}
                 activeRequirementProvider={activeRequirementProvider}

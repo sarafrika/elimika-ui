@@ -37,7 +37,9 @@ import { Textarea } from '@/components/ui/textarea';
 import { useOptionalCourseCreator } from '@/context/course-creator-context';
 import { useInstructor } from '@/context/instructor-context';
 import { useDifficultyLevels } from '@/hooks/use-difficultyLevels';
-import { createCategory, updateCourse } from '@/services/client';
+import { getCreatedCourse, type CourseSetupDrafts, type CourseSetupSectionRef } from '@/lib/course-setup';
+import { getErrorMessage } from '@/lib/error-utils';
+import { createCategory } from '@/services/client';
 import {
   addCourseTrainingRequirementMutation,
   createCourseMutation,
@@ -46,10 +48,13 @@ import {
   getAllCategoriesQueryKey,
   getCourseByUuidQueryKey,
   searchCoursesQueryKey,
+  updateCourseMutation as updateCourseMutationOptions,
   updateCourseTrainingRequirementMutation,
 } from '@/services/client/@tanstack/react-query.gen';
 import type { Course, CourseTrainingRequirement } from '@/services/client/types.gen';
 import { allCourseTrainingRequirementsOptions } from '@/services/course-training-requirements';
+import { CoursePrerequisitesEditor } from '@/src/features/course-prerequisites/course-prerequisites-editor';
+import { CourseSkillsEditor } from '@/src/features/course-skills/course-skills-editor';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { CheckCircle2, Loader2, Plus, XIcon } from 'lucide-react';
@@ -82,7 +87,6 @@ import {
   TrainingRequirementsSection,
 } from './training-requirement-section';
 
-type MutationPayload = Record<string, unknown>;
 type CategoryItem = { uuid?: string; name?: string };
 type CategoryMutationResponse = { error?: Record<string, unknown>; message?: string };
 
@@ -119,7 +123,8 @@ type CourseFormProps = {
   showSubmitButton?: boolean;
   initialValues?: Partial<CourseCreationFormValues>;
   detailsDraftRef?: RefObject<CourseCreationFormValues | undefined>;
-  skillsAndPrerequisites?: ReactNode;
+  setupDraftRef?: RefObject<CourseSetupDrafts>;
+  isLive?: boolean;
   editingCourseId?: string;
   courseId?: string;
   requirementDrafts?: DraftsByProvider;
@@ -136,21 +141,28 @@ export type CourseFormRef = {
 };
 
 // ── Saving overlay ────────────────────────────────────────────────────────────
-type SaveStage = 'course' | 'requirements' | 'redirecting' | null;
+type SaveStage = 'course' | 'requirements' | 'prerequisites' | 'skills' | 'redirecting' | null;
 
-function SavingOverlay({ stage }: { stage: SaveStage }) {
+function SavingOverlay({ stage, isUpdate }: { stage: SaveStage; isUpdate: boolean }) {
   if (!stage) return null;
 
   const steps: { key: SaveStage; label: string }[] = [
-    { key: 'course', label: 'Creating your course…' },
+    { key: 'course', label: isUpdate ? 'Saving your course…' : 'Creating your course…' },
     { key: 'requirements', label: 'Saving training requirements…' },
+    { key: 'prerequisites', label: 'Saving prerequisite courses…' },
+    { key: 'skills', label: 'Saving skill tags…' },
     { key: 'redirecting', label: 'Almost there! Opening your course…' },
   ];
 
   const currentIndex = steps.findIndex(s => s.key === stage);
 
   return (
-    <div className='bg-background/80 fixed inset-0 z-50 flex items-center justify-center backdrop-blur-sm'>
+    <div
+      className='bg-background/80 fixed inset-0 z-50 flex items-center justify-center backdrop-blur-sm'
+      role='status'
+      aria-live='polite'
+      aria-label='Saving course setup'
+    >
       <div className='bg-card border-border flex w-full max-w-sm flex-col items-center gap-6 rounded-2xl border p-8 shadow-2xl'>
         <div className='relative flex h-16 w-16 items-center justify-center'>
           <div className='border-primary absolute inset-0 animate-spin rounded-full border-2 border-t-transparent' />
@@ -201,7 +213,8 @@ export const CourseCreationForm = forwardRef<CourseFormRef, CourseFormProps>(
       showSubmitButton,
       initialValues,
       detailsDraftRef,
-      skillsAndPrerequisites,
+      setupDraftRef,
+      isLive = false,
       editingCourseId,
       courseId,
       requirementDrafts,
@@ -219,6 +232,12 @@ export const CourseCreationForm = forwardRef<CourseFormRef, CourseFormProps>(
     const dialogCloseRef = useRef<HTMLButtonElement>(null);
 
     const [saveStage, setSaveStage] = useState<SaveStage>(null);
+    const [createdCourseId, setCreatedCourseId] = useState<string>();
+    const targetCourseUuid = editingCourseId || courseId || createdCourseId;
+    const requirementsSaveRef = useRef<CourseSetupSectionRef>(null);
+    const prerequisitesSaveRef = useRef<CourseSetupSectionRef>(null);
+    const skillsSaveRef = useRef<CourseSetupSectionRef>(null);
+    const savingRef = useRef(false);
 
     // Controls whether the inline requirement form is visible
     const [showRequirementForm, setShowRequirementForm] = useState(false);
@@ -229,11 +248,14 @@ export const CourseCreationForm = forwardRef<CourseFormRef, CourseFormProps>(
     const [existingRequirements, setExistingRequirements] = useState<CourseTrainingRequirement[]>(
       []
     );
-    const controlledRequirementDrafts = requirementDrafts ?? createEmptyDraftsByProvider();
-    const controlledSetRequirementDrafts = setRequirementDrafts ?? (() => undefined);
-    const controlledActiveRequirementProvider = activeRequirementProvider ?? null;
+    const [localRequirementDrafts, setLocalRequirementDrafts] = useState(createEmptyDraftsByProvider);
+    const [localActiveProvider, setLocalActiveProvider] = useState<Provider | null>(null);
+    const controlledRequirementDrafts = requirementDrafts ?? localRequirementDrafts;
+    const controlledSetRequirementDrafts = setRequirementDrafts ?? setLocalRequirementDrafts;
+    const controlledActiveRequirementProvider = setActiveRequirementProvider
+      ? activeRequirementProvider ?? null : localActiveProvider;
     const controlledSetActiveRequirementProvider =
-      setActiveRequirementProvider ?? (() => undefined);
+      setActiveRequirementProvider ?? setLocalActiveProvider;
 
     const form = useForm<CourseCreationFormValues>({
       resolver: zodResolver(courseCreationSchema),
@@ -313,8 +335,8 @@ export const CourseCreationForm = forwardRef<CourseFormRef, CourseFormProps>(
     };
 
     const { data: trainingRequirements } = useQuery({
-      ...allCourseTrainingRequirementsOptions(editingCourseId || courseId),
-      enabled: !!courseId || !!editingCourseId,
+      ...allCourseTrainingRequirementsOptions(targetCourseUuid),
+      enabled: Boolean(targetCourseUuid),
     });
 
     useEffect(() => {
@@ -400,10 +422,7 @@ export const CourseCreationForm = forwardRef<CourseFormRef, CourseFormProps>(
     const { mutate: createCourse, isPending: createCourseIsPending } =
       useMutation(createCourseMutation());
 
-    const { mutate: updateCourseMutation, isPending: updateCourseIsPending } = useMutation({
-      mutationFn: ({ body, uuid }: { body: MutationPayload; uuid: string }) =>
-        updateCourse({ body: body as never, path: { uuid } }),
-    });
+    const { mutate: updateCourseMutation, isPending: updateCourseIsPending } = useMutation(updateCourseMutationOptions());
 
     const addTrainingReqMut = useMutation(addCourseTrainingRequirementMutation());
     const updateTrainingReqMut = useMutation(updateCourseTrainingRequirementMutation());
@@ -440,7 +459,30 @@ export const CourseCreationForm = forwardRef<CourseFormRef, CourseFormProps>(
       }
     }, [creatorShare, form]);
 
+    const savePendingSections = async (uuid: string) => {
+      const failures: string[] = [];
+      for (const section of [
+        { stage: 'requirements', ref: requirementsSaveRef },
+        { stage: 'prerequisites', ref: prerequisitesSaveRef },
+        { stage: 'skills', ref: skillsSaveRef },
+      ] as const) {
+        setSaveStage(section.stage);
+        try {
+          await section.ref.current?.savePending(uuid);
+        } catch (error) {
+          failures.push(getErrorMessage(error, `Could not save ${section.stage}.`));
+        }
+      }
+      if (failures.length) throw new Error(failures.join(' '));
+    };
+
+    const finishSaving = () => {
+      savingRef.current = false;
+      setSaveStage(null);
+    };
+
     const onSubmit = (data: CourseCreationFormValues) => {
+      if (savingRef.current) return;
       const resolvedCourseCreatorUuid = authorUuid;
 
       if (!resolvedCourseCreatorUuid) {
@@ -458,7 +500,7 @@ export const CourseCreationForm = forwardRef<CourseFormRef, CourseFormProps>(
       }
 
       // ── EDIT ──────────────────────────────────────────────────────────────
-      if (editingCourseId) {
+      if (targetCourseUuid) {
         const editBody = {
           total_duration_display: '',
           created_by: authorName,
@@ -477,7 +519,6 @@ export const CourseCreationForm = forwardRef<CourseFormRef, CourseFormProps>(
           duration_hours: 0,
           duration_minutes: 0,
           class_limit: data?.class_limit,
-          status: data?.status || 'draft',
           minimum_training_fee: data?.minimum_training_fee,
           creator_share_percentage: data?.creator_share_percentage,
           instructor_share_percentage: data?.instructor_share_percentage,
@@ -491,41 +532,30 @@ export const CourseCreationForm = forwardRef<CourseFormRef, CourseFormProps>(
           age_upper_limit: data?.age_upper_limit,
         };
 
+        savingRef.current = true;
         setSaveStage('course');
         updateCourseMutation(
-          { body: editBody as MutationPayload, uuid: editingCourseId },
+          { body: editBody, path: { uuid: targetCourseUuid } },
           {
             onError(error) {
-              setSaveStage(null);
+              finishSaving();
               toast.error(error.message || 'Could not save the course.');
             },
-            onSuccess(data) {
-              const respObj = data?.data;
-              const errorObj = data?.error;
-
-              setSaveStage('redirecting');
-              setTimeout(() => setSaveStage(null), 500);
-
-              if (!errorObj && data?.success !== false && respObj) {
-                toast.success(data?.data?.message);
-                queryClient.invalidateQueries({
-                  queryKey: getCourseByUuidQueryKey({ path: { uuid: editingCourseId } }),
+            async onSuccess(response) {
+              try {
+                if (response.error || response.success === false) {
+                  throw new Error(response.message || 'Could not save the course.');
+                }
+                await savePendingSections(targetCourseUuid);
+                await queryClient.invalidateQueries({
+                  queryKey: getCourseByUuidQueryKey({ path: { uuid: targetCourseUuid } }),
                 });
+                toast.success('Course saved successfully.');
                 onSaveSuccess?.();
-                return;
-              }
-
-              if (errorObj && typeof errorObj === 'object') {
-                Object.values(errorObj).forEach(errorMsg => {
-                  if (typeof errorMsg === 'string') toast.error(errorMsg);
-                });
-                return;
-                // @ts-expect-error
-              } else if (data?.message) {
-                // @ts-expect-error
-                toast.error(data.message);
-              } else {
-                toast.error('An unknown error occurred.');
+              } catch (error) {
+                toast.error(getErrorMessage(error, 'Some changes could not be saved. Retry the remaining changes.'));
+              } finally {
+                finishSaving();
               }
             },
           }
@@ -534,6 +564,7 @@ export const CourseCreationForm = forwardRef<CourseFormRef, CourseFormProps>(
       }
 
       // ── CREATE ─────────────────────────────────────────────────────────────
+      savingRef.current = true;
       setSaveStage('course');
 
       createCourse(
@@ -571,26 +602,23 @@ export const CourseCreationForm = forwardRef<CourseFormRef, CourseFormProps>(
         },
         {
           onError(error) {
-            setSaveStage(null);
+            finishSaving();
             toast.error(error?.message);
           },
-          onSuccess: courseResponse => {
-            if (
-              courseResponse.error ||
-              courseResponse.success === false ||
-              !courseResponse.data?.uuid
-            ) {
-              setSaveStage(null);
-              toast.error(courseResponse.message || 'Could not create the course.');
+          onSuccess: async courseResponse => {
+            let createdCourse: Course;
+            try {
+              createdCourse = getCreatedCourse(courseResponse);
+            } catch (error) {
+              finishSaving();
+              toast.error(getErrorMessage(error, 'Could not create the course.'));
               return;
             }
 
-            const newCourseUuid = courseResponse.data.uuid;
-
-            router.replace(`/dashboard/course-creator/courses/create-course?id=${newCourseUuid}`);
-
-            queryClient.invalidateQueries({
-              queryKey: getCourseByUuidQueryKey({ path: { uuid: newCourseUuid } }),
+            const newCourseUuid = createdCourse.uuid;
+            setCreatedCourseId(newCourseUuid);
+            queryClient.setQueryData(getCourseByUuidQueryKey({ path: { uuid: newCourseUuid } }), {
+              success: true, data: createdCourse,
             });
             queryClient.invalidateQueries({
               queryKey: searchCoursesQueryKey({
@@ -601,24 +629,25 @@ export const CourseCreationForm = forwardRef<CourseFormRef, CourseFormProps>(
               }),
             });
 
-            if (typeof successResponse === 'function') {
-              successResponse(courseResponse.data);
-            }
-            onSaveSuccess?.();
-
-            setSaveStage('redirecting');
-            setTimeout(() => {
+            try {
+              await savePendingSections(newCourseUuid);
+              successResponse?.(createdCourse);
+              onSaveSuccess?.();
+              toast.success('Course created successfully.');
+              setSaveStage('redirecting');
               if (postCreateRedirectHref === null) {
+                router.replace(`/dashboard/course-creator/courses/create-course?id=${newCourseUuid}`, { scroll: false });
                 setActiveStep(1);
-                setSaveStage(null);
-                return;
+              } else {
+                const separator = postCreateRedirectHref.includes('?') ? '&' : '?';
+                router.replace(`${postCreateRedirectHref}${separator}id=${newCourseUuid}`);
               }
-
-              const redirectHref = postCreateRedirectHref.includes('?')
-                ? `${postCreateRedirectHref}&id=${newCourseUuid}`
-                : `${postCreateRedirectHref}?id=${newCourseUuid}`;
-              router.replace(redirectHref);
-            }, 600);
+            } catch (error) {
+              successResponse?.(createdCourse);
+              toast.error(`Course created. ${getErrorMessage(error, 'Some changes could not be saved.')} Retry the remaining changes.`);
+            } finally {
+              finishSaving();
+            }
           },
         }
       );
@@ -648,7 +677,7 @@ export const CourseCreationForm = forwardRef<CourseFormRef, CourseFormProps>(
 
     return (
       <>
-        <SavingOverlay stage={saveStage} />
+        <SavingOverlay stage={saveStage} isUpdate={Boolean(targetCourseUuid)} />
 
         <Form {...form}>
           <form
@@ -1053,9 +1082,21 @@ export const CourseCreationForm = forwardRef<CourseFormRef, CourseFormProps>(
               />
             </section>
 
-            {skillsAndPrerequisites && (
-              <section className='grid gap-6 px-6'>{skillsAndPrerequisites}</section>
-            )}
+            <section className='grid gap-6 px-6'>
+              <CourseSkillsEditor
+                courseUuid={targetCourseUuid}
+                saveRef={skillsSaveRef}
+                draftsRef={setupDraftRef}
+                isSaving={isSaving}
+              />
+              <CoursePrerequisitesEditor
+                courseUuid={targetCourseUuid}
+                isLive={isLive}
+                saveRef={prerequisitesSaveRef}
+                draftsRef={setupDraftRef}
+                isSaving={isSaving}
+              />
+            </section>
 
             <section className='px-6'>
               <Card>
@@ -1108,9 +1149,11 @@ export const CourseCreationForm = forwardRef<CourseFormRef, CourseFormProps>(
                   <div className='min-w-0 sm:col-span-3'>
                     <TrainingRequirementsSection
                       existingRequirements={existingRequirements}
+                      saveRef={requirementsSaveRef}
+                      isSaving={isSaving}
                       setExistingRequirements={setExistingRequirements}
                       editingCourseId={editingCourseId}
-                      courseId={courseId}
+                      courseId={targetCourseUuid}
                       draftsByProvider={controlledRequirementDrafts}
                       setDraftsByProvider={controlledSetRequirementDrafts}
                       activeProvider={controlledActiveRequirementProvider}
@@ -1140,7 +1183,7 @@ export const CourseCreationForm = forwardRef<CourseFormRef, CourseFormProps>(
                       Saving…
                     </span>
                   ) : (
-                    'Save Course'
+                    targetCourseUuid ? 'Save Course' : 'Create Course'
                   )}
                 </Button>
               </div>
