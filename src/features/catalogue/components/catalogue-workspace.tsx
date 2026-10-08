@@ -38,6 +38,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { useOrganisation } from '@/context/organisation-context';
 import { useUserProfile } from '@/context/profile-context';
 import { useClassesByIds, useCoursesByIds } from '@/hooks/use-batched-lookups';
+import { STALE_TIMES } from '@/lib/query-client';
 import { publicCourseUrl } from '@/src/features/dashboard/lib/dashboard-url';
 import { extractEntity } from '@/lib/api-helpers';
 import type {
@@ -49,6 +50,8 @@ import type {
   Instructor,
 } from '@/services/client';
 import {
+  getClassDefinitionsForInstructorOptions,
+  getClassDefinitionsForOrganisationOptions,
   getCourseCreatorByUuidOptions,
   getInstructorByUuidOptions,
   listCatalogItemsOptions,
@@ -169,47 +172,52 @@ const buildRows = (items: CommerceCatalogueItem[]): CatalogueRow[] =>
     };
   });
 
-const useTitleMaps = (rows: CatalogueRow[]): TitleMaps => {
+type ScopeMaps = {
+  courseMap: Map<string, Course>;
+  classMap: Map<string, ClassDefinition>;
+};
+
+const toClassMap = (data: { class_definition?: ClassDefinition }[] | undefined) => {
+  const map = new Map<string, ClassDefinition>();
+  for (const item of data ?? []) {
+    const classDef = item?.class_definition;
+    if (classDef?.uuid) map.set(classDef.uuid, classDef);
+  }
+  return map;
+};
+
+/** Courses by batched id, and classes from ONE scope listing (instructor or organisation). */
+const useScopeMaps = (
+  rows: CatalogueRow[],
+  scope: CatalogueScope,
+  ids: { instructorUuid?: string | null; organisationUuid?: string | null }
+): ScopeMaps => {
   const courseIds = useMemo(
     () => Array.from(new Set(rows.map(row => row.courseId).filter(Boolean))) as string[],
     [rows]
   );
-  const classIds = useMemo(
-    () => Array.from(new Set(rows.map(row => row.classId).filter(Boolean))) as string[],
-    [rows]
-  );
-
-  // Batched course lookup, and the classes on screen by id. `/classes` is a visibility-scoped
-  // listing now, not a lookup table: a page of it may not contain the ids we need.
   const { courseMap: courseLookup } = useCoursesByIds(courseIds);
-  const { classDefinitionMap } = useClassesByIds(classIds);
 
-  const classLookup = useMemo(
-    () => new Map<string, ClassDefinition>(Object.entries(classDefinitionMap)),
-    [classDefinitionMap]
-  );
+  const instructorUuid = ids.instructorUuid ?? '';
+  const organisationUuid = ids.organisationUuid ?? '';
+  const instructorClassesQuery = useQuery({
+    ...getClassDefinitionsForInstructorOptions({ path: { instructorUuid } }),
+    enabled: scope === 'instructor' && !!instructorUuid,
+    staleTime: STALE_TIMES.entity,
+  });
+  const organisationClassesQuery = useQuery({
+    ...getClassDefinitionsForOrganisationOptions({ path: { organisationUuid } }),
+    enabled: scope === 'organization' && !!organisationUuid,
+    staleTime: STALE_TIMES.entity,
+  });
+  const scopeClassData =
+    scope === 'instructor'
+      ? instructorClassesQuery.data?.data
+      : scope === 'organization'
+        ? organisationClassesQuery.data?.data
+        : undefined;
 
-  const courseTitleMap = useMemo(() => {
-    const map = new Map<string, string>();
-    courseIds.forEach(courseId => {
-      const course = courseLookup[courseId];
-      if (course?.name && courseId) {
-        map.set(courseId, course.name);
-      }
-    });
-    return map;
-  }, [courseIds, courseLookup]);
-
-  const classTitleMap = useMemo(() => {
-    const map = new Map<string, string>();
-    classIds.forEach(classId => {
-      const classDef = classLookup.get(classId);
-      if (classDef?.title && classId) {
-        map.set(classId, classDef.title);
-      }
-    });
-    return map;
-  }, [classIds, classLookup]);
+  const classMap = useMemo(() => toClassMap(scopeClassData), [scopeClassData]);
 
   const courseMap = useMemo(() => {
     const map = new Map<string, Course>();
@@ -222,18 +230,49 @@ const useTitleMaps = (rows: CatalogueRow[]): TitleMaps => {
     return map;
   }, [courseIds, courseLookup]);
 
+  return { courseMap, classMap };
+};
+
+/** Titles for the rows on screen; only classes the scope listing missed are fetched by id. */
+const useTitleMaps = (rows: CatalogueRow[], scopeMaps: ScopeMaps): TitleMaps => {
+  const missingClassIds = useMemo(
+    () =>
+      Array.from(
+        new Set(
+          rows
+            .map(row => row.classId)
+            .filter((id): id is string => !!id && !scopeMaps.classMap.has(id))
+        )
+      ),
+    [rows, scopeMaps.classMap]
+  );
+  const { classDefinitionMap } = useClassesByIds(missingClassIds);
+
   const classMap = useMemo(() => {
-    const map = new Map<string, ClassDefinition>();
-    classIds.forEach(classId => {
-      const classDef = classLookup.get(classId);
-      if (classDef && classId) {
-        map.set(classId, classDef);
-      }
+    const map = new Map<string, ClassDefinition>(scopeMaps.classMap);
+    for (const [classId, classDef] of Object.entries(classDefinitionMap)) {
+      map.set(classId, classDef);
+    }
+    return map;
+  }, [classDefinitionMap, scopeMaps.classMap]);
+
+  const courseTitleMap = useMemo(() => {
+    const map = new Map<string, string>();
+    scopeMaps.courseMap.forEach((course, courseId) => {
+      if (course?.name) map.set(courseId, course.name);
     });
     return map;
-  }, [classIds, classLookup]);
+  }, [scopeMaps.courseMap]);
 
-  return { courseTitleMap, classTitleMap, courseMap, classMap };
+  const classTitleMap = useMemo(() => {
+    const map = new Map<string, string>();
+    classMap.forEach((classDef, classId) => {
+      if (classDef?.title) map.set(classId, classDef.title);
+    });
+    return map;
+  }, [classMap]);
+
+  return { courseTitleMap, classTitleMap, courseMap: scopeMaps.courseMap, classMap };
 };
 
 const attachTitles = (rows: CatalogueRow[], maps: TitleMaps): CatalogueRow[] =>
@@ -287,9 +326,6 @@ export function CatalogueWorkspace({
     [catalogueQuery.data]
   );
 
-  const titleMaps = useTitleMaps(rows);
-  const rowsWithTitles = useMemo(() => attachTitles(rows, titleMaps), [rows, titleMaps]);
-
   const activeOrgUuid = useMemo(() => {
     if (organisation?.uuid) return organisation.uuid;
     const affiliations = profile?.organisation_affiliations ?? [];
@@ -302,24 +338,29 @@ export function CatalogueWorkspace({
     );
   }, [organisation?.uuid, profile?.organisation_affiliations, profile?.organizations]);
 
+  const scopeMaps = useScopeMaps(rows, scope, {
+    instructorUuid: profile?.instructor?.uuid,
+    organisationUuid: activeOrgUuid,
+  });
+
   const getOrganisationUuidForRow = useMemo(() => {
     return (row: CatalogueRow) => {
       const itemOrg = (row.raw as CatalogueItemWithOrganisation).organisation_uuid;
       if (itemOrg) return itemOrg;
 
-      const classDef = row.classId ? titleMaps.classMap.get(row.classId) : undefined;
+      const classDef = row.classId ? scopeMaps.classMap.get(row.classId) : undefined;
       if (classDef?.organisation_uuid) {
         return classDef.organisation_uuid;
       }
 
-      const course = row.courseId ? titleMaps.courseMap.get(row.courseId) : undefined;
+      const course = row.courseId ? scopeMaps.courseMap.get(row.courseId) : undefined;
       const courseOrg = course ? (course as CourseWithOrganisation).organisation_uuid : undefined;
       if (courseOrg) {
         return courseOrg;
       }
 
       if (classDef?.course_uuid) {
-        const linkedCourse = titleMaps.courseMap.get(classDef.course_uuid);
+        const linkedCourse = scopeMaps.courseMap.get(classDef.course_uuid);
         const linkedOrg = linkedCourse
           ? (linkedCourse as CourseWithOrganisation).organisation_uuid
           : undefined;
@@ -330,7 +371,7 @@ export function CatalogueWorkspace({
 
       return null;
     };
-  }, [titleMaps.classMap, titleMaps.courseMap]);
+  }, [scopeMaps.classMap, scopeMaps.courseMap]);
 
   const filterRowsByScope = useMemo(() => {
     return (row: CatalogueRow) => {
@@ -346,25 +387,18 @@ export function CatalogueWorkspace({
         case 'instructor': {
           const instructorUuid = profile?.instructor?.uuid;
           if (!instructorUuid) return true;
-          const classDef = row.classId ? titleMaps.classMap.get(row.classId) : undefined;
+          const classDef = row.classId ? scopeMaps.classMap.get(row.classId) : undefined;
           const classMatches = classDef?.default_instructor_uuid === instructorUuid;
-          const course = row.courseId ? titleMaps.courseMap.get(row.courseId) : undefined;
+          const course = row.courseId ? scopeMaps.courseMap.get(row.courseId) : undefined;
           const courseMatches = course?.course_creator_uuid === instructorUuid;
           return classMatches || courseMatches;
         }
         case 'course_creator': {
           const creatorUuid = profile?.courseCreator?.uuid;
           if (!creatorUuid) return true;
-          const course = row.courseId ? titleMaps.courseMap.get(row.courseId) : undefined;
-          const directCourseMatch = course?.course_creator_uuid === creatorUuid;
-          const classCourseMatch = (() => {
-            if (!row.classId) return false;
-            const classDef = titleMaps.classMap.get(row.classId);
-            if (!classDef?.course_uuid) return false;
-            const linkedCourse = titleMaps.courseMap.get(classDef.course_uuid);
-            return linkedCourse?.course_creator_uuid === creatorUuid;
-          })();
-          return directCourseMatch || classCourseMatch;
+          // Scoped by the catalogue item's own course, so no class needs fetching to decide.
+          const course = row.courseId ? scopeMaps.courseMap.get(row.courseId) : undefined;
+          return course?.course_creator_uuid === creatorUuid;
         }
         default:
           return true;
@@ -375,14 +409,14 @@ export function CatalogueWorkspace({
     activeOrgUuid,
     profile?.courseCreator?.uuid,
     profile?.instructor?.uuid,
-    titleMaps.classMap,
-    titleMaps.courseMap,
+    scopeMaps.classMap,
+    scopeMaps.courseMap,
     getOrganisationUuidForRow,
   ]);
 
   const scopedRows = useMemo(
-    () => rowsWithTitles.filter(filterRowsByScope),
-    [rowsWithTitles, filterRowsByScope]
+    () => rows.filter(filterRowsByScope),
+    [rows, filterRowsByScope]
   );
 
   const filteredRows = useMemo(() => {
@@ -407,12 +441,18 @@ export function CatalogueWorkspace({
     }
   }, [filteredRows, selectedId]);
 
-  const selectedRow = filteredRows.find(row => row.id === selectedId) ?? null;
+  const selectedBaseRow = filteredRows.find(row => row.id === selectedId) ?? null;
+  const visibleRows = useMemo(() => {
+    const rowsOnScreen = filteredRows.slice(0, displayLimit);
+    return selectedBaseRow && !rowsOnScreen.includes(selectedBaseRow)
+      ? [...rowsOnScreen, selectedBaseRow]
+      : rowsOnScreen;
+  }, [filteredRows, displayLimit, selectedBaseRow]);
 
-  const displayedRows = useMemo(
-    () => filteredRows.slice(0, displayLimit),
-    [filteredRows, displayLimit]
-  );
+  const titleMaps = useTitleMaps(visibleRows, scopeMaps);
+  const titledRows = useMemo(() => attachTitles(visibleRows, titleMaps), [visibleRows, titleMaps]);
+  const displayedRows = useMemo(() => titledRows.slice(0, displayLimit), [titledRows, displayLimit]);
+  const selectedRow = titledRows.find(row => row.id === selectedId) ?? null;
   const hasMore = filteredRows.length > displayLimit;
   const remaining = filteredRows.length - displayLimit;
 
