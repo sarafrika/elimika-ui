@@ -73,6 +73,10 @@
   },
   "plugins": [
     ".biome-plugins/no-enabled-in-query-params.grit",
-    ".biome-plugins/no-form-watch-in-render.grit"
+    ".biome-plugins/no-form-watch-in-render.grit",
+    ".biome-plugins/no-unbounded-use-queries.grit",
+    ".biome-plugins/require-enabled-for-path-options.grit",
+    ".biome-plugins/no-oversized-page-size.grit",
+    ".biome-plugins/no-unoptimized-image.grit"
   ]
 }

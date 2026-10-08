@@ -1,0 +1,21 @@
+or {
+  `useQuery($call)` where {
+    $call <: `$fn($opts)`,
+    $fn <: r"\w+Options",
+    $opts <: contains pair(key = `path`),
+    register_diagnostic(
+      span = $call,
+      message = "Generated *Options with path params needs a top-level `enabled` gate; an undefined id sends a literal {uuid} placeholder (%7B) to the API.",
+      severity = "warn"
+    )
+  },
+  `useQuery({ $props })` where {
+    $props <: contains `$fn($opts)` where { $fn <: r"\w+Options", $opts <: contains pair(key = `path`) },
+    not $props <: contains or { pair(key = `enabled`), `enabled` },
+    register_diagnostic(
+      span = $props,
+      message = "Generated *Options with path params needs a top-level `enabled` gate; an undefined id sends a literal {uuid} placeholder (%7B) to the API.",
+      severity = "warn"
+    )
+  }
+}

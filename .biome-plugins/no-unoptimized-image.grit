@@ -1,0 +1,8 @@
+JsxAttribute() as $attr where {
+  $attr <: or { r"unoptimized", r"unoptimized=[\s\S]+" },
+  register_diagnostic(
+    span = $attr,
+    message = "`unoptimized` ships full-size originals and skips the Next image cache. Serve media through the cacheable proxy and let next/image optimise it.",
+    severity = "warn"
+  )
+}
