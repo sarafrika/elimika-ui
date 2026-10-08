@@ -14,12 +14,12 @@ import {
   SlidersHorizontal,
   Users,
 } from 'lucide-react';
-import Image from 'next/image';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useState } from 'react';
 import { surfaceTheme } from '@/components/data-display';
 import { AsyncSection } from '@/components/data/async-section';
+import { ImageWithFallback } from '@/components/data/image-with-fallback';
 import RichTextRenderer from '@/components/editors/richTextRenders';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -44,7 +44,7 @@ import { useInstructor } from '@/context/instructor-context';
 import { useDifficultyLevels } from '@/hooks/use-difficultyLevels';
 import type { Enrollment } from '@/services/client';
 import { getEnrollmentsForClassOptions } from '@/services/client/@tanstack/react-query.gen';
-import { isAuthenticatedMediaUrl, toAuthenticatedMediaUrl } from '@/src/lib/media-url';
+import { toAuthenticatedMediaUrl } from '@/src/lib/media-url';
 import type { DashboardClass } from './types';
 import { useUserDomain } from '@/src/features/dashboard/context/user-domain-context';
 import { roleScopedDashboardPath } from '@/src/features/dashboard/lib/active-domain-storage';
@@ -306,23 +306,18 @@ export function TrainingClassList({
                       <div className='bg-primary/10 absolute inset-0 z-10' />
 
                       <div className='bg-muted-foreground/10 flex h-full w-full items-center justify-center'>
-                        {cls?.course?.banner_url ? (
-                          <Image
-                            src={
-                              toAuthenticatedMediaUrl(cls.course.banner_url) ||
-                              cls.course.banner_url
-                            }
-                            alt={cls?.title || 'banner'}
-                            className='h-full w-full object-cover transition-transform duration-700 group-hover:scale-110'
-                            width={400}
-                            height={208}
-                            unoptimized={isAuthenticatedMediaUrl(
-                              toAuthenticatedMediaUrl(cls.course.banner_url)
-                            )}
-                          />
-                        ) : (
-                          <BookOpen className='text-muted-foreground/90 h-12 w-12' />
-                        )}
+                        <ImageWithFallback
+                          src={
+                            toAuthenticatedMediaUrl(cls?.course?.banner_url) ||
+                            cls?.course?.banner_url
+                          }
+                          alt={cls?.title || 'banner'}
+                          className='h-full w-full object-cover transition-transform duration-700 group-hover:scale-110'
+                          width={400}
+                          height={208}
+                          sizes='(max-width: 640px) 100vw, 400px'
+                          fallback={<BookOpen className='text-muted-foreground/90 h-12 w-12' />}
+                        />
                       </div>
 
                       {/* Overlays */}

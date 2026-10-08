@@ -18,7 +18,7 @@ import {
   createCartMutation,
   getCartQueryKey,
 } from '@/services/client/@tanstack/react-query.gen';
-import { isAuthenticatedMediaUrl, toAuthenticatedMediaUrl } from '@/src/lib/media-url';
+import { toAuthenticatedMediaUrl } from '@/src/lib/media-url';
 import { useCartStore } from '@/store/cart-store';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import {
@@ -38,7 +38,7 @@ import {
   Star,
   Users,
 } from 'lucide-react';
-import Image from 'next/image';
+import { ImageWithFallback } from '@/components/data/image-with-fallback';
 import Link from 'next/link';
 import { useMemo, useState } from 'react';
 import { toast } from 'sonner';
@@ -301,9 +301,6 @@ export default function EnrollCourseCard({
   const bannerUrl = cls?.course?.banner_url
     ? toAuthenticatedMediaUrl(cls.course.banner_url) || cls.course.banner_url
     : null;
-  const isBannerAuthenticated = cls?.course?.banner_url
-    ? isAuthenticatedMediaUrl(toAuthenticatedMediaUrl(cls.course.banner_url))
-    : false;
 
   // Placeholder rating — swap for real data when available
   const rating = (cls as BundledClass).rating ?? 0;
@@ -317,21 +314,19 @@ export default function EnrollCourseCard({
       <article className='border-border/70 bg-card flex w-full min-w-0 flex-col gap-2.5 rounded-[12px] border p-2 shadow-sm transition-shadow hover:shadow-md'>
         {/* ── Banner ── */}
         <div className='border-border bg-muted relative min-h-[200px] overflow-hidden rounded-[8px] border sm:h-[140px]'>
-          {bannerUrl ? (
-            <Image
-              src={bannerUrl}
-              alt={cls?.title || 'Course banner'}
-              className='h-full w-full object-cover'
-              priority
-              width={400}
-              height={200}
-              unoptimized={isBannerAuthenticated}
-            />
-          ) : (
-            <div className='from-primary/80 to-primary/30 flex h-full min-h-[160px] w-full items-center justify-center bg-gradient-to-br'>
-              <BookOpen className='size-10 text-white/80' />
-            </div>
-          )}
+          <ImageWithFallback
+            src={bannerUrl}
+            alt={cls?.title || 'Course banner'}
+            className='h-full w-full object-cover'
+            width={400}
+            height={200}
+            sizes='(max-width: 640px) 100vw, 400px'
+            fallback={
+              <div className='from-primary/80 to-primary/30 flex h-full min-h-[160px] w-full items-center justify-center bg-gradient-to-br'>
+                <BookOpen className='size-10 text-white/80' />
+              </div>
+            }
+          />
 
           {/* Preview pill */}
           <Button
