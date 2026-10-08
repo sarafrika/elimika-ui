@@ -161,7 +161,6 @@ export function ClassSidebar({
                         alt={classItem.title}
                         fill
                         className='object-cover'
-                        unoptimized={isAuthenticatedMediaUrl(imageUrl)}
                       />
                     ) : (
                       <div className='bg-primary/10 text-primary flex h-full w-full items-center justify-center'>

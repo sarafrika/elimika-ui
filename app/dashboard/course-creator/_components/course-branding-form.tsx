@@ -4,7 +4,7 @@ import { Form, FormControl, FormField, FormItem, FormMessage } from '@/component
 import { Input } from '@/components/ui/input';
 import { useOptionalCourseCreator } from '@/context/course-creator-context';
 import { useInstructor } from '@/context/instructor-context';
-import { isAuthenticatedMediaUrl, toAuthenticatedMediaUrl } from '@/src/lib/media-url';
+import { toAuthenticatedMediaUrl } from '@/src/lib/media-url';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { Upload } from 'lucide-react';
@@ -668,7 +668,7 @@ const CourseBrandingForm = forwardRef<CourseFormRef, CourseFormProps>(
                               width={1200}
                               height={300}
                               className='h-full w-full object-contain'
-                              unoptimized={isAuthenticatedMediaUrl(toAuthenticatedMediaUrl(bannerSource))}
+                              sizes='(max-width: 768px) 100vw, 768px'
                             />
                           </div>
                           {pendingBanner.file && (
@@ -779,9 +779,6 @@ const CourseBrandingForm = forwardRef<CourseFormRef, CourseFormProps>(
                               height={128}
                               alt='Thumbnail Preview'
                               className='h-full w-full object-cover'
-                              unoptimized={isAuthenticatedMediaUrl(
-                                toAuthenticatedMediaUrl(thumbnailSource)
-                              )}
                             />
                           </div>
                           {pendingThumbnail.file && (

@@ -16,7 +16,7 @@ import { cn } from '@/lib/utils';
 import type { Course } from '@/services/client';
 import { ImageWithFallback } from '@/components/data/image-with-fallback';
 import { SearchNotice } from '@/components/search/search-notice';
-import { toAuthenticatedMediaUrl } from '@/src/lib/media-url';
+import { isAuthenticatedMediaUrl, toAuthenticatedMediaUrl } from '@/src/lib/media-url';
 import { FilterBar } from '../components/filter-bar';
 import { SectionBoundary } from '../components/section-boundary';
 import { useAdminStatistics } from '../hooks/use-admin-dashboard';
@@ -103,7 +103,7 @@ export function CoursesPage() {
                   fill
                   sizes='40px'
                   className='object-cover'
-                  unoptimized
+                  unoptimized={!isAuthenticatedMediaUrl(thumbnail)}
                   fallback={
                     <span className='flex size-full items-center justify-center'>
                       <BookOpen className='text-muted-foreground size-4' />

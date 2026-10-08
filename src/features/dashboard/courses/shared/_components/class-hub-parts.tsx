@@ -71,7 +71,7 @@ import {
 } from '@/services/client/@tanstack/react-query.gen';
 import { roleScopedDashboardPath } from '@/src/features/dashboard/lib/active-domain-storage';
 import { invalidateReviewWorkflowQueries } from '@/src/features/dashboard/workflow-query-invalidation';
-import { toAuthenticatedMediaUrl } from '@/src/lib/media-url';
+import { isAuthenticatedMediaUrl, toAuthenticatedMediaUrl } from '@/src/lib/media-url';
 import { type ClassHubViewer, scheduleTotalDuration, sessionDuration } from './class-hub';
 
 /** The instructor record the class details query carries. */
@@ -114,7 +114,8 @@ export function ClassHeaderMedia({
           src={imageUrl || undefined}
           alt=''
           fill
-          unoptimized
+          sizes='(max-width: 1024px) 100vw, 50vw'
+          unoptimized={!isAuthenticatedMediaUrl(imageUrl)}
           className='object-cover'
           fallback={tile}
         />

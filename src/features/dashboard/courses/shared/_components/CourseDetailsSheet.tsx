@@ -54,7 +54,7 @@ import { stripHtml } from '@/src/features/dashboard/courses/shared/_components/c
 import { roleScopedDashboardPath } from '@/src/features/dashboard/lib/active-domain-storage';
 import { ImageWithFallback } from '../../../../../../components/data/image-with-fallback';
 import { Skeleton } from '../../../../../../components/ui/skeleton';
-import { isAuthenticatedMediaUrl, toAuthenticatedMediaUrl } from '../../../../../lib/media-url';
+import { toAuthenticatedMediaUrl } from '../../../../../lib/media-url';
 
 export function CourseDetailsSheet({
   itemId,
@@ -243,7 +243,7 @@ export function CourseDetailsSheet({
               width={800}
               height={320}
               className='h-40 w-full rounded-lg object-cover'
-              unoptimized={isAuthenticatedMediaUrl(toAuthenticatedMediaUrl(coverUrl))}
+              sizes='(max-width: 640px) 100vw, 640px'
               fallback={
                 <div className='from-muted via-muted/50 to-muted flex h-40 w-full items-center justify-center rounded-lg bg-gradient-to-br'>
                   <BookOpen className='text-muted-foreground h-12 w-12' />
