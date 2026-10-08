@@ -7,12 +7,10 @@ import {
   getAssignmentSchedulesOptions,
   getRevenueDashboard1Options,
   getStudentByIdOptions,
-  listPaymentsOptions,
 } from '@/services/client/@tanstack/react-query.gen';
 import type {
   ClassAssignmentSchedule,
   RevenueDashboardDto,
-  RevenuePaymentDto,
   ScheduledInstance,
   Student,
 } from '@/services/client/types.gen';
@@ -133,10 +131,9 @@ const calculateProgress = (instances: ScheduledInstance[]) => {
   return Math.round((completed / eligible.length) * 100);
 };
 
-const pickDisplayCurrency = (dashboard?: RevenueDashboardDto, payments?: RevenuePaymentDto[]) =>
+const pickDisplayCurrency = (dashboard?: RevenueDashboardDto) =>
   dashboard?.estimated_earnings?.[0]?.currency_code ||
   dashboard?.gross_totals?.[0]?.currency_code ||
-  payments?.[0]?.currency_code ||
   'KES';
 
 export function useInstructorOverviewData() {
@@ -240,25 +237,9 @@ export function useInstructorOverviewData() {
     staleTime: 5 * 60 * 1000,
   });
 
-  const { data: paymentsResponse, isLoading: isLoadingPayments } = useQuery({
-    ...listPaymentsOptions({
-      query: {
-        domain: 'instructor',
-        pageable: {
-          page: 0,
-          size: 4,
-          // JPA sorts by entity property: `processedAt`, not the JSON name `processed_at`.
-          sort: ['processedAt,desc'],
-        },
-      },
-    }),
-    enabled: Boolean(instructorUuid),
-    staleTime: 60 * 1000,
-  });
-
+  // listPayments(domain=instructor) is admin-only (always 403 here); the revenue dashboard is the source.
   const revenueDashboard = revenueDashboardResponse?.data;
-  const payments = paymentsResponse?.data?.content ?? [];
-  const displayCurrency = pickDisplayCurrency(revenueDashboard, payments);
+  const displayCurrency = pickDisplayCurrency(revenueDashboard);
 
   const allSchedules = useMemo(
     () =>
@@ -460,47 +441,29 @@ export function useInstructorOverviewData() {
   );
 
   const earningOverview = useMemo<OverviewEarningCard[]>(() => {
-    const summaryCards: OverviewEarningCard[] = revenueDashboard
-      ? [
-        {
-          id: 'estimated-earnings',
-          title: formatMoney(revenueDashboard.estimated_earnings?.[0]?.amount ?? 0, displayCurrency),
-          subtitle: 'Estimated earnings',
-          provider: 'Gross sales',
-          students: formatMoney(revenueDashboard.gross_totals?.[0]?.amount ?? 0, displayCurrency),
-          valueLabel: `${Number(revenueDashboard.order_count ?? 0n)} payments processed`,
-          attendeeInitials: [],
-        },
-        {
-          id: 'average-order-value',
-          title: formatMoney(revenueDashboard.average_order_value?.[0]?.amount ?? 0, displayCurrency),
-          subtitle: 'Average order value',
-          provider: 'Units sold',
-          students: formatCompactNumber(Number(revenueDashboard.units_sold ?? 0n)),
-          valueLabel: `${Number(revenueDashboard.line_item_count ?? 0n)} line items`,
-          attendeeInitials: [],
-        },
-      ]
-      : [];
+    if (!revenueDashboard) return [];
 
-    if (summaryCards.length) {
-      return summaryCards;
-    }
-
-    return payments.slice(0, 2).map((payment, index) => ({
-      id:
-        payment.payment_uuid ??
-        payment.order_uuid ??
-        payment.external_reference ??
-        `payment-${index + 1}`,
-      title: formatMoney(payment.amount, payment.currency_code),
-      subtitle: payment.provider || 'Payment received',
-      provider: payment.status || 'Unknown status',
-      students: payment.external_reference || payment.order_uuid || 'Transaction',
-      valueLabel: formatDateTime(payment.processed_at),
-      attendeeInitials: [],
-    }));
-  }, [displayCurrency, payments, revenueDashboard]);
+    return [
+      {
+        id: 'estimated-earnings',
+        title: formatMoney(revenueDashboard.estimated_earnings?.[0]?.amount ?? 0, displayCurrency),
+        subtitle: 'Estimated earnings',
+        provider: 'Gross sales',
+        students: formatMoney(revenueDashboard.gross_totals?.[0]?.amount ?? 0, displayCurrency),
+        valueLabel: `${Number(revenueDashboard.order_count ?? 0n)} payments processed`,
+        attendeeInitials: [],
+      },
+      {
+        id: 'average-order-value',
+        title: formatMoney(revenueDashboard.average_order_value?.[0]?.amount ?? 0, displayCurrency),
+        subtitle: 'Average order value',
+        provider: 'Units sold',
+        students: formatCompactNumber(Number(revenueDashboard.units_sold ?? 0n)),
+        valueLabel: `${Number(revenueDashboard.line_item_count ?? 0n)} line items`,
+        attendeeInitials: [],
+      },
+    ];
+  }, [displayCurrency, revenueDashboard]);
 
   const stats = useMemo<OverviewStat[]>(
     () => [
@@ -533,7 +496,6 @@ export function useInstructorOverviewData() {
   const isLoading =
     isLoadingClasses ||
     isLoadingRevenue ||
-    isLoadingPayments ||
     isLoadingAssignments ||
     isLoadingWaitlistedStudents;
 
@@ -550,7 +512,6 @@ export function useInstructorOverviewData() {
     // Individual loading states
     isLoadingClasses,
     isLoadingRevenue,
-    isLoadingPayments,
     isLoadingAssignments,
     isLoadingWaitlistedStudents,
   };
