@@ -4,6 +4,7 @@ import { AlertTriangle, Inbox } from 'lucide-react';
 import type { ReactNode } from 'react';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
+import { SectionErrorBoundary } from './section-error-boundary';
 
 /**
  * Graceful-degradation primitive. Wrap each data-dependent region of a page in an
@@ -66,7 +67,11 @@ export function AsyncSection({
       </>
     );
   }
-  return <>{children}</>;
+  return (
+    <SectionErrorBoundary onRetry={onRetry} className={className}>
+      {children}
+    </SectionErrorBoundary>
+  );
 }
 
 export function SectionError({
