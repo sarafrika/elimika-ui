@@ -78,7 +78,10 @@ function CertificationsSettingsContent() {
 
   const student = useStudent();
   const updateGuardianInfo = useMutation(updateStudentMutation());
-  const { data } = useQuery(getStudentByIdOptions({ path: { uuid: student?.uuid as string } }));
+  const { data } = useQuery({
+    ...getStudentByIdOptions({ path: { uuid: student?.uuid as string } }),
+    enabled: !!student?.uuid,
+  });
   const studentInfo: Student | undefined = data;
 
   useEffect(() => {
