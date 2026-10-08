@@ -3,7 +3,10 @@ import type { ReactNode } from 'react';
 import { DashboardUnavailable } from '@/src/features/dashboard/components/dashboard-unavailable';
 import { DashboardClientLayout } from '@/src/features/dashboard/layouts/DashboardClientLayout';
 import { getServerActiveDashboardDomain } from '@/src/features/dashboard/server/active-domain';
-import { resolveDashboardGuard } from '@/src/features/dashboard/server/entry-target';
+import {
+  resolveDashboardBootstrap,
+  resolveDashboardGuard,
+} from '@/src/features/dashboard/server/entry-target';
 
 export default async function DashboardLayout({ children }: { children: ReactNode }) {
   const activeDomain = await getServerActiveDashboardDomain();
@@ -19,8 +22,14 @@ export default async function DashboardLayout({ children }: { children: ReactNod
     return <DashboardUnavailable />;
   }
 
+  const bootstrap = await resolveDashboardBootstrap();
+
   // `activeDomain` is resolved here on the server, so the brand theme it selects
   // (see the [data-dashboard-domain] blocks in app/globals.css) is present in the
   // first painted HTML — no theme flash on load.
-  return <DashboardClientLayout initialDomain={activeDomain}>{children}</DashboardClientLayout>;
+  return (
+    <DashboardClientLayout initialDomain={activeDomain} bootstrap={bootstrap}>
+      {children}
+    </DashboardClientLayout>
+  );
 }

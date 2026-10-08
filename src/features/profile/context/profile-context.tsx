@@ -11,17 +11,8 @@ import { useRouter } from 'next/navigation';
 import { useSession } from 'next-auth/react';
 import { createContext, type ReactNode, useCallback, useContext, useEffect, useMemo } from 'react';
 import type { UserProfileType } from '@/lib/types';
-import {
-  type CourseCreator,
-  type Instructor,
-  type SearchResponse,
-  type Student,
-  searchCourseCreators,
-  searchInstructors,
-  searchStudents,
-  type User,
-} from '@/services/client';
 import { fetchCurrentUser } from '@/services/user/current-user';
+import { loadDomainProfiles } from '@/src/features/profile/lib/load-domain-profiles';
 
 const UserProfileContext = createContext<
   | (Partial<UserProfileType> & {
@@ -34,14 +25,32 @@ const UserProfileContext = createContext<
 
 export const useUserProfile = () => useContext(UserProfileContext);
 
-export default function UserProfileProvider({ children }: { children: ReactNode }) {
+export default function UserProfileProvider({
+  children,
+  initialProfile,
+  initialUpdatedAt,
+}: {
+  children: ReactNode;
+  /** Profile read during the server render; seeds the query so mount fetches nothing. */
+  initialProfile?: UserProfileType | null;
+  initialUpdatedAt?: number;
+}) {
   const { data: session, status } = useSession();
   const qc = useQueryClient();
   const router = useRouter();
 
+  const email =
+    session?.user?.email ?? (status === 'unauthenticated' ? undefined : initialProfile?.email);
+  const seed =
+    initialProfile && email && initialProfile.email?.toLowerCase() === email.toLowerCase()
+      ? initialProfile
+      : undefined;
+
   const { data, isPending, refetch } = useQuery(
-    createQueryOptions(session?.user?.email, {
-      enabled: !!session?.user?.email,
+    createQueryOptions(email, {
+      enabled: !!email,
+      initialData: seed,
+      initialDataUpdatedAt: seed ? initialUpdatedAt : undefined,
     })
   );
 
@@ -61,12 +70,9 @@ export default function UserProfileProvider({ children }: { children: ReactNode 
     await refetch();
   }, [qc, refetch]);
 
-  // isPending (not isLoading): while the session is still resolving the
-  // profile query is disabled, and a disabled query reports isLoading=false.
-  // Consumers (e.g. dashboard domain hydration) treated that as "profile
-  // loaded with no domains" and overwrote the user's saved dashboard choice
-  // with the default on every full page load.
-  const isLoading = status === 'loading' || isPending;
+  // isPending, not isLoading: a disabled query reports isLoading=false, which read as "no domains"
+  // and overwrote the saved dashboard choice. A server-seeded profile need not wait on the session.
+  const isLoading = (status === 'loading' && !seed) || isPending;
 
   const value = useMemo(
     () => ({
@@ -83,68 +89,14 @@ export default function UserProfileProvider({ children }: { children: ReactNode 
 
 async function fetchUserProfile(): Promise<UserProfileType> {
   // Identity comes from the access token, not from a query parameter: the old
-  // `?email_eq=` bootstrap meant the user search had to stay open to every
-  // authenticated caller, which exposed the whole user table.
+  // `?email_eq=` bootstrap exposed the whole user table to every caller.
   const userContent = await fetchCurrentUser();
 
   if (!userContent) {
     throw new Error('User not found');
   }
 
-  const user = { ...userContent, dob: new Date(userContent?.dob ?? Date.now()) } as User &
-    UserProfileType;
-
-  if (user.user_domain && user.user_domain.length > 0) {
-    // The domain profile lookups are independent — run them in parallel.
-    // Sequential awaits here previously delayed every dashboard page by the
-    // sum of all three round trips before any page data could start loading.
-    const searchByUserUuid = { user_uuid_eq: user.uuid };
-
-    const [studentResponse, instructorResponse, courseCreatorResponse] = await Promise.all([
-      user.user_domain.includes('student')
-        ? searchStudents({
-            query: { searchParams: searchByUserUuid, pageable: { page: 0, size: 20 } },
-          }).catch(() => null)
-        : null,
-      user.user_domain.includes('instructor')
-        ? searchInstructors({
-            query: { searchParams: searchByUserUuid, pageable: { page: 0, size: 20 } },
-          }).catch(() => null)
-        : null,
-      user.user_domain.includes('course_creator') && user.uuid
-        ? searchCourseCreators({
-            query: { searchParams: searchByUserUuid, pageable: { page: 0, size: 1 } },
-          }).catch(() => null)
-        : null,
-    ]);
-
-    if (studentResponse && !studentResponse.error && studentResponse.data) {
-      const respData = studentResponse.data as SearchResponse;
-      if (respData.data?.content && respData.data.content.length > 0) {
-        user.student = respData.data.content[0] as unknown as Student;
-      }
-    }
-
-    if (instructorResponse && !instructorResponse.error && instructorResponse.data) {
-      const responseData = instructorResponse.data as SearchResponse;
-      if (responseData.data?.content && responseData.data.content.length > 0) {
-        const instructor = responseData.data.content[0] as unknown as Instructor;
-        user.instructor = instructor as unknown as UserProfileType['instructor'];
-      }
-    }
-
-    if (courseCreatorResponse && !courseCreatorResponse.error && courseCreatorResponse.data) {
-      const creatorData = courseCreatorResponse.data as SearchResponse;
-      const creatorProfile = Array.isArray(creatorData.data?.content)
-        ? (creatorData.data.content[0] as unknown as CourseCreator)
-        : undefined;
-      if (creatorProfile) {
-        user.courseCreator = creatorProfile;
-      }
-    }
-  }
-
-  return user;
+  return loadDomainProfiles(userContent);
 }
 
 function createQueryOptions(
@@ -171,9 +123,7 @@ function createQueryOptions(
       if (!user) return false;
       const isInstructorPending = user.instructor && user.instructor.admin_verified === false;
       const isCreatorPending = user.courseCreator && user.courseCreator.admin_verified === false;
-      const isOrgPending = user.organisation_affiliations?.some(
-        a => a.admin_verified === false
-      );
+      const isOrgPending = user.organisation_affiliations?.some(a => a.admin_verified === false);
       if (isInstructorPending || isCreatorPending || isOrgPending) {
         return 30_000;
       }
