@@ -431,56 +431,44 @@ export function useOrganisationsByIds(ids: string[]) {
   return { organisationMap: map, isLoading };
 }
 
-export function useQuizzesByLessonIds(lessonUuids: string[]) {
-  const uniqueLessonUuids = [...new Set(lessonUuids)];
+const LESSON_CHUNK_SIZE = 50;
+const LESSON_SEARCH_PAGE_SIZE = 200;
+
+/** One `lesson_uuid_in` search per 50 lessons, instead of one search per lesson. */
+function useSearchByLessonIds<T>(lessonUuids: string[], optionsFactory: SearchOptionsFactory) {
+  const lessonChunks = useMemo(() => {
+    const unique = Array.from(new Set(lessonUuids.filter(Boolean))).sort((a, b) =>
+      a.localeCompare(b)
+    );
+    return chunk(unique, LESSON_CHUNK_SIZE);
+  }, [lessonUuids]);
 
   return useQueries({
-    queries: uniqueLessonUuids.map(uuid => ({
-      ...searchQuizzesOptions({
+    queries: lessonChunks.map(lessonChunk => ({
+      ...optionsFactory({
         query: {
-          searchParams: {
-            lessonUuid: uuid,
-          },
-          pageable: {
-            page: 0,
-            size: 100,
-          },
+          searchParams: { lesson_uuid_in: lessonChunk.join(',') },
+          pageable: { page: 0, size: LESSON_SEARCH_PAGE_SIZE },
         },
       }),
+      enabled: lessonChunk.length > 0,
+      staleTime: STALE_TIMES.entity,
     })),
     combine: results => ({
       items: results.flatMap(
-        result => ((result.data as SearchResponse | undefined)?.data?.content ?? []) as Quiz[]
+        result => ((result.data as SearchResponse | undefined)?.data?.content ?? []) as T[]
       ),
       isLoading: results.some(r => r.isLoading),
     }),
   });
 }
 
-export function useAssignmentsByLessonIds(lessonUuids: string[]) {
-  const uniqueLessonUuids = [...new Set(lessonUuids)];
+export function useQuizzesByLessonIds(lessonUuids: string[]) {
+  return useSearchByLessonIds<Quiz>(lessonUuids, searchQuizzesOptions);
+}
 
-  return useQueries({
-    queries: uniqueLessonUuids.map(uuid => ({
-      ...searchAssignmentsOptions({
-        query: {
-          searchParams: {
-            lessonUuid: uuid,
-          },
-          pageable: {
-            page: 0,
-            size: 100,
-          },
-        },
-      }),
-    })),
-    combine: results => ({
-      items: results.flatMap(
-        result => ((result.data as SearchResponse | undefined)?.data?.content ?? []) as Quiz[]
-      ),
-      isLoading: results.some(r => r.isLoading),
-    }),
-  });
+export function useAssignmentsByLessonIds(lessonUuids: string[]) {
+  return useSearchByLessonIds<Assignment>(lessonUuids, searchAssignmentsOptions);
 }
 
 export function useCourseAssessmentsByCourseUuids(courseUuids: string[]) {
