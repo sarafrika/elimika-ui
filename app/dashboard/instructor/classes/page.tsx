@@ -1,5 +1,10 @@
 'use client';
 
+import { useMutation } from '@tanstack/react-query';
+import { NotebookPen, PanelBottom, Search } from 'lucide-react';
+import { useRouter } from 'next/navigation';
+import { useCallback, useEffect, useMemo, useState } from 'react';
+import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import {
@@ -10,6 +15,7 @@ import {
   SheetTitle,
   SheetTrigger,
 } from '@/components/ui/sheet';
+import { Skeleton } from '@/components/ui/skeleton';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useBreadcrumb } from '@/context/breadcrumb-provider';
 import { useClassLessonContent } from '@/hooks/use-class-lesson-content';
@@ -20,11 +26,6 @@ import {
   useInstructorClassesWithSchedules,
 } from '@/hooks/use-instructor-classes-with-schedules';
 import { startScheduledInstanceMutation } from '@/services/client/@tanstack/react-query.gen';
-import { useMutation } from '@tanstack/react-query';
-import { NotebookPen, PanelBottom, Search } from 'lucide-react';
-import { useRouter } from 'next/navigation';
-import { useCallback, useEffect, useMemo, useState } from 'react';
-import { toast } from 'sonner';
 import { useUserProfile } from '../../../../context/profile-context';
 import { ClassDeliveryStatusTab } from './_components/class-delivery-status-tab';
 import { ClassHero, ClassLessonTab, ClassOverviewTab } from './_components/class-overview-tab';
@@ -32,12 +33,12 @@ import { ClassScheduleTab } from './_components/class-schedule-tab';
 import { ClassSidebar } from './_components/class-sidebar';
 import { ClassStudentsTab } from './_components/class-students-tab';
 import {
+  type ClassTab,
   classTabs,
+  type DateFilter,
   dateFilterDescriptions,
   getPreferredScheduleInstance,
   useFilteredInstructorClasses,
-  type ClassTab,
-  type DateFilter,
 } from './_components/new-class-page.utils';
 import { PlaceholderTab } from './_components/placeholder-tab';
 
@@ -454,19 +455,23 @@ export default function NewClassPage() {
               </Sheet>
             </div>
 
-            <ClassHero
-              selectedClass={selectedClass as InstructorClassWithSchedule}
-              difficultyMap={difficultyMap}
-              instructorName={instructor?.full_name}
-              roleLabel={'instructor'}
-              sessionProgress={sessionProgress}
-              remainingSessions={remainingSessions}
-              startLessonHref={startLessonHref}
-              selectedClassUuid={selectedClassUuid}
-              onAddClasses={() =>
-                router.push(`/dashboard/instructor/classes/new?id=${selectedClass?.uuid}`)
-              }
-            />
+            {selectedClass ? (
+              <ClassHero
+                selectedClass={selectedClass}
+                difficultyMap={difficultyMap}
+                instructorName={instructor?.full_name}
+                roleLabel={'instructor'}
+                sessionProgress={sessionProgress}
+                remainingSessions={remainingSessions}
+                startLessonHref={startLessonHref}
+                selectedClassUuid={selectedClassUuid}
+                onAddClasses={() =>
+                  router.push(`/dashboard/instructor/classes/new?id=${selectedClass.uuid}`)
+                }
+              />
+            ) : (
+              <Skeleton className='h-56 rounded-lg' />
+            )}
 
             <div>
               <TabsList className='border-border/70 bg-card/70 hidden h-auto w-full flex-wrap justify-start gap-1 rounded-t-md border p-1.5 shadow-sm md:flex'>

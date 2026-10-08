@@ -2,19 +2,19 @@
 
 import { useInstructor } from '../../../../context/instructor-context';
 import useInstructorClassesWithDetails from '../../../../hooks/use-instructor-classes';
-import TrainingsPage from './overview/page';
+import TrainingsOverview from './_components/trainings-overview';
 
 export default function TrainingManagementPage() {
   const instructor = useInstructor();
   const { classes: classesWithCourseAndInstructor, loading } = useInstructorClassesWithDetails(
-    instructor?.uuid as string
+    instructor?.uuid
   );
 
   return (
     <div>
-      <TrainingsPage
+      <TrainingsOverview
         classesWithCourseAndInstructor={classesWithCourseAndInstructor}
-        loading={false}
+        loading={loading}
       />
 
       {/* <div>

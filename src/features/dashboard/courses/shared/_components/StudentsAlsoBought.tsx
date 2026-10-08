@@ -3,6 +3,7 @@
 import { useQueries } from '@tanstack/react-query';
 import { BookOpen } from 'lucide-react';
 import Link from 'next/link';
+import { surfaceTheme } from '@/components/data-display/page-shell';
 import type { UserDomain } from '@/lib/types';
 import type { Course, CourseReview } from '@/services/client';
 import { getCourseReviewsOptions } from '@/services/client/@tanstack/react-query.gen';
