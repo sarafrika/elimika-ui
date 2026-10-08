@@ -16,10 +16,11 @@ import type {
   GetProgramCoursesResponse,
   GetTrainingProgramByUuidResponse,
 } from '@/services/client/types.gen';
-import { useQuery } from '@tanstack/react-query';
+import { type QueryClient, useQuery, useQueryClient } from '@tanstack/react-query';
 import {
   getClassDefinitionOptions,
   getClassScheduleOptions,
+  getCourseLessonsQueryKey,
   getEnrollmentsForClassOptions,
   getInstructorByUuidOptions,
 } from '../services/client/@tanstack/react-query.gen';
@@ -60,11 +61,14 @@ export type CombinedClassDetailsData = {
  * cycles. The instructor's user profile is the only inherently sequential
  * fetch and runs inside the same step.
  */
-async function fetchClassRelated(params: {
-  courseUuid?: string;
-  programUuid?: string;
-  instructorUuid?: string;
-}) {
+async function fetchClassRelated(
+  params: {
+    courseUuid?: string;
+    programUuid?: string;
+    instructorUuid?: string;
+  },
+  queryClient: QueryClient
+) {
   const { courseUuid, programUuid, instructorUuid } = params;
 
   const [course, lessons, pCourses, program, instructorWithProfile] = await Promise.all([
@@ -83,6 +87,14 @@ async function fetchClassRelated(params: {
     })(),
   ]);
 
+  // Seed the generated lessons key so useCourseLessonsWithContent reuses this list.
+  if (courseUuid && lessons && !lessons.error && lessons.data) {
+    queryClient.setQueryData(
+      getCourseLessonsQueryKey({ path: { courseUuid }, query: { pageable: {} } }),
+      lessons.data
+    );
+  }
+
   return {
     course: course?.data?.data,
     lessons: course ? (lessons?.data?.data?.content ?? []) : [],
@@ -94,6 +106,7 @@ async function fetchClassRelated(params: {
 }
 
 export const useClassDetails = (classId?: string) => {
+  const queryClient = useQueryClient();
   const {
     data: classDefinitionData,
     isLoading: isLoadingClass,
@@ -130,7 +143,7 @@ export const useClassDetails = (classId?: string) => {
 
   const { data: related, isLoading: isLoadingRelated } = useQuery({
     queryKey: ['class-details-related', { courseUuid, programUuid, instructorUuid }],
-    queryFn: () => fetchClassRelated({ courseUuid, programUuid, instructorUuid }),
+    queryFn: () => fetchClassRelated({ courseUuid, programUuid, instructorUuid }, queryClient),
     enabled: Boolean(courseUuid || programUuid || instructorUuid),
     staleTime: 5 * 60 * 1000,
   });
