@@ -1,12 +1,17 @@
 'use client';
 
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { Award, CheckCircle2, FileText, GraduationCap, Loader2, ShieldCheck } from 'lucide-react';
+import { useParams } from 'next/navigation';
+import { useEffect, useMemo, useState } from 'react';
+import { toast } from 'sonner';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { useClassDetails } from '@/hooks/use-class-details';
-import { useClassRoster, type RosterEntry } from '@/hooks/use-class-roster';
+import { type RosterEntry, useClassRoster } from '@/hooks/use-class-roster';
 import { dayjs } from '@/lib/date';
 import {
   createCertificateMutation,
@@ -24,11 +29,6 @@ import {
 import { verifyCertificate } from '@/services/client/sdk.gen';
 import type { Certificate } from '@/services/client/types.gen';
 import { isFullUser } from '@/services/user/is-full-user';
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { Award, CheckCircle2, FileText, GraduationCap, Loader2, ShieldCheck } from 'lucide-react';
-import { useParams } from 'next/navigation';
-import { useEffect, useMemo, useState } from 'react';
-import { toast } from 'sonner';
 import { useUserProfile } from '../../../../../../../context/profile-context';
 import { toAuthenticatedMediaUrl } from '../../../../../../../src/lib/media-url';
 import { buildTemplatePayload } from '../../../../../_components/certificate/AwardCertificatePage';
@@ -133,11 +133,11 @@ const AwardCertificatesPage = () => {
     courseEnrollmentsResp?.data?.content?.find(
       enrollment =>
         enrollment.student_uuid ===
-        (selectedStudent?.student as { data?: { uuid?: string } } | undefined)?.data?.uuid
+        selectedStudent?.student?.data?.uuid
     )?.uuid ?? '';
 
   const studentUuid =
-    selectedStudent?.student?.uuid ?? selectedStudent?.enrollment?.student_uuid ?? '';
+    selectedStudent?.student?.data?.uuid ?? selectedStudent?.enrollment?.student_uuid ?? '';
 
   const courseUuid = course?.uuid ?? classData?.course_uuid ?? '';
   const enrollmentGradeBookQuery = useQuery({
@@ -492,7 +492,7 @@ const AwardCertificatesPage = () => {
 
                 return (
                   <button
-                    key={entry.enrollment?.uuid ?? entry.user?.uuid ?? entry.student?.uuid}
+                    key={entry.enrollment?.uuid ?? entry.user?.uuid ?? entry.student?.data?.uuid}
                     type='button'
                     onClick={() => {
                       setSelectedEnrollmentId(entry.enrollment?.uuid ?? '');

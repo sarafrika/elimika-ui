@@ -1,18 +1,16 @@
-import {
-  getEnrollmentsForClassOptions,
-  getStudentByIdOptions,
-  getUserByUuidOptions,
-} from '@/services/client/@tanstack/react-query.gen';
+import { useQuery } from '@tanstack/react-query';
+import { useMemo } from 'react';
+import { getEnrollmentsForClassOptions } from '@/services/client/@tanstack/react-query.gen';
 import type {
   GetEnrollmentsForClassResponse,
-  GetStudentByIdResponse,
   GetUserByUuidResponse,
+  Student as StudentRecord,
 } from '@/services/client/types.gen';
-import { useQueries, useQuery } from '@tanstack/react-query';
-import { useMemo } from 'react';
+import { useStudentsByIds, useUsersByIds } from './use-batched-lookups';
 
 type Enrollment = NonNullable<GetEnrollmentsForClassResponse['data']>[number];
-type Student = GetStudentByIdResponse;
+// The single-record response wrapper that roster consumers read as `student.data`.
+type Student = { success?: boolean; data?: StudentRecord };
 type User = NonNullable<GetUserByUuidResponse['data']>;
 export type RosterEntry = {
   enrollment: Enrollment;
@@ -41,7 +39,7 @@ export function useClassRoster(classId: string | undefined) {
     enabled: Boolean(classId),
   });
 
-  const allEnrollments = enrollmentQuery?.data?.data ?? [];
+  const allEnrollments = useMemo(() => enrollmentQuery.data?.data ?? [], [enrollmentQuery.data]);
 
   const uniqueEnrollments = useMemo(() => {
     return Object.values(
@@ -52,70 +50,57 @@ export function useClassRoster(classId: string | undefined) {
     );
   }, [allEnrollments]);
 
-  const studentQueries = useQueries({
-    queries: uniqueEnrollments.map(enrol => ({
-      ...getStudentByIdOptions({
-        path: { uuid: enrol?.student_uuid },
-      }),
-      enabled: !!enrol?.student_uuid,
-    })),
-  });
+  const studentIds = useMemo(
+    () => uniqueEnrollments.map(enrollment => enrollment.student_uuid).filter(Boolean),
+    [uniqueEnrollments]
+  );
+  const studentsLookup = useStudentsByIds(studentIds);
+  const studentMap: Record<string, StudentRecord> = studentsLookup.studentMap;
 
-  const students = studentQueries
-    .map(q => q.data)
-    .filter((student): student is Student => Boolean(student));
+  const userIds = useMemo(
+    () =>
+      studentIds
+        .map(id => studentMap[id]?.user_uuid)
+        .filter((id): id is string => Boolean(id)),
+    [studentIds, studentMap]
+  );
+  const usersLookup = useUsersByIds(userIds);
+  const userMap: Record<string, User> = usersLookup.userMap;
 
-  const userQueries = useQueries({
-    queries: students.map(stu => ({
-      ...getUserByUuidOptions({
-        // @ts-expect-error
-        path: { uuid: stu?.data?.user_uuid },
-      }),
-      // @ts-expect-error
-      enabled: !!stu?.data?.user_uuid,
-    })),
-  });
+  const rosterEntryFor = useMemo(
+    () =>
+      (enrollment: Enrollment): RosterEntry => {
+        const record = studentMap[enrollment.student_uuid];
+        const student: Student | undefined = record ? { success: true, data: record } : undefined;
+        const user = record?.user_uuid ? userMap[record.user_uuid] : record ? null : undefined;
+        return { enrollment, student, user };
+      },
+    [studentMap, userMap]
+  );
 
-  const users = userQueries.map(q => q.data?.data).filter((user): user is User => Boolean(user));
+  const roster = useMemo<RosterEntry[]>(
+    () => uniqueEnrollments.map(rosterEntryFor),
+    [uniqueEnrollments, rosterEntryFor]
+  );
 
-  const roster = useMemo<RosterEntry[]>(() => {
-    return uniqueEnrollments.map((enrollment, index) => ({
-      enrollment,
-      student: studentQueries[index]?.data,
-      user: userQueries[index]?.data?.data,
-    }));
-  }, [uniqueEnrollments, studentQueries, userQueries]);
-
-  const rosterAllEnrollments = useMemo<RosterEntry[]>(() => {
-    return allEnrollments.map(enrollment => {
-      // @ts-expect-error
-      const student = students.find(s => s.data.uuid === enrollment.student_uuid);
-      // @ts-expect-error
-      const user = student ? users.find(u => u.uuid === student.data.user_uuid) : null;
-
-      return { enrollment, student, user };
-    });
-  }, [allEnrollments, students, users]);
+  const rosterAllEnrollments = useMemo<RosterEntry[]>(
+    () => allEnrollments.map(rosterEntryFor),
+    [allEnrollments, rosterEntryFor]
+  );
 
   return {
     roster, // unique enrollments
     rosterAllEnrollments, // all enrollments
     uniqueEnrollments,
     allEnrollments,
-    isLoading:
-      enrollmentQuery.isLoading ||
-      studentQueries.some(q => q.isLoading) ||
-      userQueries.some(q => q.isLoading),
+    isLoading: enrollmentQuery.isLoading || studentsLookup.isLoading || usersLookup.isLoading,
 
-    isError:
-      enrollmentQuery.isError ||
-      studentQueries.some(q => q.isError) ||
-      userQueries.some(q => q.isError),
+    isError: enrollmentQuery.isError || studentsLookup.isError || usersLookup.isError,
 
     errors: {
       enrollmentError: enrollmentQuery.error,
-      studentErrors: studentQueries.map(q => q.error),
-      userErrors: userQueries.map(q => q.error),
+      studentErrors: [studentsLookup.error],
+      userErrors: [usersLookup.error],
     },
   };
 }

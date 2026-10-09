@@ -33,6 +33,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { useUserProfile } from '@/context/profile-context';
 import { useTimeZone } from '@/context/timezone-context';
 import { type ClassDetailsScheduleItem, useClassDetails } from '@/hooks/use-class-details';
+import { useAssignmentsByLessonIds, useQuizzesByLessonIds } from '@/hooks/use-batched-lookups';
 import { useClassLessonContent } from '@/hooks/use-class-lesson-content';
 import {
   isStartEligibleRosterEntry,
@@ -50,8 +51,6 @@ import {
   deleteAssignmentScheduleMutation,
   deleteQuizScheduleMutation,
   endScheduledInstanceMutation,
-  getAllAssignmentsOptions,
-  getAllQuizzesOptions,
   getAssignmentAttachmentsOptions,
   getAssignmentSchedulesOptions,
   getAssignmentSchedulesQueryKey,
@@ -1750,7 +1749,7 @@ function RosterPanel({
               return (
                 <button
                   type='button'
-                  key={entry.enrollment?.uuid ?? entry.user?.uuid ?? entry.student?.uuid}
+                  key={entry.enrollment?.uuid ?? entry.user?.uuid ?? entry.student?.data?.uuid}
                   onClick={() => onSelectStudent(entry)}
                   className={`w-full rounded-md border p-2.5 text-left transition-colors ${isSelected
                     ? 'border-primary/30 bg-primary/8'
@@ -2560,6 +2559,7 @@ export default function ClassTrainingPage({
     searchParams.get('enrollment') ? 'evaluation' : 'students'
   );
   // const [activeLefTab, setActiveLeftTab] = useState<'students' | 'lessons' | 'evaluation'>('students');
+  const [isClassWorkSheetOpen, setIsClassWorkSheetOpen] = useState(false);
 
   const classData = data.class;
   const course = data.course ?? data?.pCourses?.[0] ?? null;
@@ -2844,14 +2844,16 @@ export default function ClassTrainingPage({
     }),
     enabled: !!activeLessonCourseUuid,
   });
-  const { data: allAssignments } = useQuery({
-    ...getAllAssignmentsOptions({ query: { pageable: { page: 0, size: 100 } } }),
-    enabled: !!classId,
-  });
-  const { data: allQuizzes } = useQuery({
-    ...getAllQuizzesOptions({ query: { pageable: { page: 0, size: 100 } } }),
-    enabled: !!classId,
-  });
+  // Scoped to this class's lessons: every consumer below filters by lesson anyway.
+  const classLessonUuids = useMemo(
+    () =>
+      lessonModules
+        .map(module => module.lesson.uuid)
+        .filter((lessonUuid): lessonUuid is string => Boolean(lessonUuid)),
+    [lessonModules]
+  );
+  const { items: assignmentOptions } = useAssignmentsByLessonIds(classLessonUuids);
+  const { items: quizOptions } = useQuizzesByLessonIds(classLessonUuids);
   const { data: assignmentSchedules } = useQuery({
     ...getAssignmentSchedulesOptions({ path: { classUuid: classId } }),
     enabled: !!classId,
@@ -2863,8 +2865,6 @@ export default function ClassTrainingPage({
 
   const rubricAssociations: CourseRubricAssociation[] = courseRubricsData?.data?.content ?? [];
   const courseAssessments: CourseAssessment[] = courseAssessmentsData?.data?.content ?? [];
-  const assignmentOptions: Assignment[] = allAssignments?.data?.content ?? [];
-  const quizOptions: Quiz[] = allQuizzes?.data?.content ?? [];
   const assignmentScheduleItems: AssignmentScheduleItem[] = assignmentSchedules?.data ?? [];
   const quizScheduleItems: QuizScheduleItem[] = quizSchedules?.data ?? [];
 
@@ -2884,7 +2884,8 @@ export default function ClassTrainingPage({
   const rubricMatrixQueries = useQueries({
     queries: rubricUuids.map(rubricUuid => ({
       ...getRubricMatrixOptions({ path: { rubricUuid } }),
-      enabled: !!rubricUuid,
+      // Matrices render only in the Class work sheet and the evaluation tab.
+      enabled: !!rubricUuid && (isClassWorkSheetOpen || activeLefTab === 'evaluation'),
     })),
   });
   const notSharedRubricUuids = useMemo(
@@ -3495,7 +3496,7 @@ export default function ClassTrainingPage({
             </SheetContent>
           </Sheet>
 
-          <Sheet>
+          <Sheet open={isClassWorkSheetOpen} onOpenChange={setIsClassWorkSheetOpen}>
             <SheetTrigger asChild>
               <Button
                 variant='ghost'
