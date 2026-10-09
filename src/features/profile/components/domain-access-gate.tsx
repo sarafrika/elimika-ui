@@ -1,16 +1,19 @@
 'use client';
 
+import { ShieldAlert } from 'lucide-react';
+import { usePathname, useRouter } from 'next/navigation';
+import { type ReactNode, useEffect, useMemo } from 'react';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { useOptionalCourseCreator } from '@/context/course-creator-context';
 import { cn } from '@/lib/utils';
 import type { Organisation } from '@/services/client';
 import { useUserDomain } from '@/src/features/dashboard/context/user-domain-context';
 import { roleScopedDashboardPath } from '@/src/features/dashboard/lib/active-domain-storage';
-import { useOrganisation } from '@/src/features/organisation/context/organisation-context';
+import {
+  useOrganisation,
+  useOrganisationLoading,
+} from '@/src/features/organisation/context/organisation-context';
 import { useUserProfile } from '@/src/features/profile/context/profile-context';
-import { ShieldAlert } from 'lucide-react';
-import { usePathname, useRouter } from 'next/navigation';
-import { type ReactNode, useEffect, useMemo } from 'react';
 
 type DomainGateState = {
   renderChildren: boolean;
@@ -40,6 +43,7 @@ export default function DomainAccessGate({ children }: { children: ReactNode }) 
   const userDomain = useUserDomain();
   const courseCreator = useOptionalCourseCreator();
   const organisation = useOrganisation();
+  const organisationLoading = useOrganisationLoading();
   const pathname = usePathname();
   const router = useRouter();
 
@@ -105,6 +109,11 @@ export default function DomainAccessGate({ children }: { children: ReactNode }) 
       return { renderChildren: true };
     }
 
+    // The org record is still resolving: render the page rather than redirecting on "unverified".
+    if ((domain === 'organisation' || domain === 'organisation_user') && organisationLoading) {
+      return { renderChildren: true };
+    }
+
     const config = shared[domain as keyof typeof shared];
 
     if (config.verified) {
@@ -133,6 +142,7 @@ export default function DomainAccessGate({ children }: { children: ReactNode }) 
     profile,
     courseCreator,
     organisation,
+    organisationLoading,
     pathname,
     userDomain.activeDomain,
     organisationVerified,
