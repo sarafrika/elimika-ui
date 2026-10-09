@@ -1,8 +1,9 @@
 'use client';
 
 import { BookOpen } from 'lucide-react';
-import Link from 'next/link';
+import { IntentLink } from '@/components/data/intent-link';
 import { surfaceTheme } from '@/components/data-display/page-shell';
+import { coursePrefetchQuery } from '@/lib/route-prefetch';
 import type { UserDomain } from '@/lib/types';
 import type { CatalogueItem } from '@/services/client';
 import { getContentHref } from '@/src/features/dashboard/courses/shared/_components/courses-data';
@@ -95,9 +96,14 @@ export default function StudentsAlsoBought({ courses, creatorName, activeDomain 
           );
 
           return recordHref ? (
-            <Link key={course.uuid ?? course.title} href={recordHref} className={shellClassName}>
+            <IntentLink
+              key={course.uuid ?? course.title}
+              href={recordHref}
+              prefetchQuery={coursePrefetchQuery(course.uuid)}
+              className={shellClassName}
+            >
               {body}
-            </Link>
+            </IntentLink>
           ) : (
             <div key={course.uuid ?? course.title} className={shellClassName}>
               {body}

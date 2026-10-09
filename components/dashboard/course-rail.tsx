@@ -1,6 +1,7 @@
 import { BookOpen } from 'lucide-react';
 import Link from 'next/link';
 
+import { IntentLink } from '@/components/data/intent-link';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -89,9 +90,9 @@ function CourseRailCard({ course }: { course: CourseRailItem }) {
     </div>
   );
   return course.href ? (
-    <Link href={course.href} className='block focus-visible:outline-none'>
+    <IntentLink href={course.href} className='block focus-visible:outline-none'>
       {inner}
-    </Link>
+    </IntentLink>
   ) : (
     inner
   );

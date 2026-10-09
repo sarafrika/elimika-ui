@@ -1,5 +1,9 @@
 'use client';
 
+import { useQuery } from '@tanstack/react-query';
+import { BookOpen, Lock, SearchX, Sparkles, X } from 'lucide-react';
+import { type ReactNode, useState } from 'react';
+import { IntentLink } from '@/components/data/intent-link';
 import { surfaceTheme } from '@/components/data-display';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -7,14 +11,11 @@ import { EmptyState } from '@/components/ui/empty-state';
 import { Skeleton } from '@/components/ui/skeleton';
 import { isForbidden, isSearchUnavailable } from '@/lib/api-errors';
 import { STALE_TIMES } from '@/lib/query-client';
+import { coursePrefetchQuery } from '@/lib/route-prefetch';
 import { getCourseRecommendationsOptions } from '@/services/client/@tanstack/react-query.gen';
 import type { RecommendedCourse } from '@/services/client/types.gen';
 import { useDiscoveryEvents } from '@/src/features/discovery/discovery-events';
 import { toAuthenticatedMediaUrl } from '@/src/lib/media-url';
-import { useQuery } from '@tanstack/react-query';
-import { BookOpen, Lock, SearchX, Sparkles, X } from 'lucide-react';
-import Link from 'next/link';
-import { type ReactNode, useState } from 'react';
 
 type RecommendationSurface = 'for_you' | 'next_steps';
 
@@ -58,7 +59,12 @@ function RecommendationCard({
       >
         <X className='size-3.5' />
       </Button>
-      <Link href={href} onClick={onOpen} className='flex flex-1 flex-col focus-visible:outline-none'>
+      <IntentLink
+        href={href}
+        prefetchQuery={coursePrefetchQuery(course.course_uuid)}
+        onClick={onOpen}
+        className='flex flex-1 flex-col focus-visible:outline-none'
+      >
         <div className='bg-muted aspect-[16/9] w-full overflow-hidden'>
           {thumbnail ? (
             <img src={thumbnail} alt='' className='size-full object-cover' loading='lazy' />
@@ -81,7 +87,7 @@ function RecommendationCard({
             </ul>
           ) : null}
         </div>
-      </Link>
+      </IntentLink>
     </li>
   );
 }
