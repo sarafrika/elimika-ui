@@ -2,9 +2,9 @@ import 'server-only';
 
 import type { Session } from 'next-auth';
 import { cache } from 'react';
-import type { UserDomain, UserProfileType } from '@/lib/types';
+import type { UserDomain } from '@/lib/types';
 import { auth } from '@/services/auth';
-import { getOrganisationByUuid, type Organisation, type User } from '@/services/client';
+import type { User } from '@/services/client';
 import { fetchCurrentUser } from '@/services/user/current-user';
 import { normalizeStoredUserDomain } from '@/src/features/dashboard/lib/active-domain-storage';
 import {
@@ -12,7 +12,6 @@ import {
   domainToRouteSegment,
   type RoleSegment,
 } from '@/src/features/dashboard/lib/dashboard-url';
-import { loadDomainProfiles } from '@/src/features/profile/lib/load-domain-profiles';
 
 /** The slice of the user record the guards route on. */
 type IdentityUser = {
@@ -294,47 +293,3 @@ function evaluateRoleAccess(identity: Identity, segment: RoleSegment): RoleAcces
 
   return { redirectTo: null, matchedDomain };
 }
-
-export type DashboardBootstrap = {
-  profile: UserProfileType | null;
-  organisation: Organisation | null;
-  /** Server time the data was read, used as the client cache's `dataUpdatedAt`. */
-  fetchedAt: number;
-};
-
-async function loadActiveOrganisation(user: User): Promise<Organisation | null> {
-  const { domains } = toIdentityUser(user);
-  if (!domains.includes('organisation') && !domains.includes('organisation_user')) return null;
-
-  const affiliation =
-    user.organisation_affiliations?.find(org => org.active) ?? user.organisation_affiliations?.[0];
-  const uuid = affiliation?.organisation_uuid;
-  if (!uuid) return null;
-
-  const { data, error } = await getOrganisationByUuid({ path: { uuid } });
-  if (error || !data?.data) return null;
-  return data.data;
-}
-
-/**
- * Seeds the client profile and organisation caches from this render, reusing the
- * request's single `/me` record. Never throws: a miss just leaves the client to fetch.
- */
-export const resolveDashboardBootstrap = cache(async (): Promise<DashboardBootstrap> => {
-  const fetchedAt = Date.now();
-  try {
-    const identity = await resolveIdentity();
-    const user = identity.status === 'authenticated' ? await fetchCurrentUserRecord() : null;
-    if (!user) {
-      return { profile: null, organisation: null, fetchedAt };
-    }
-
-    const [profile, organisation] = await Promise.all([
-      loadDomainProfiles(user).catch(() => null),
-      loadActiveOrganisation(user).catch(() => null),
-    ]);
-    return { profile, organisation, fetchedAt };
-  } catch {
-    return { profile: null, organisation: null, fetchedAt };
-  }
-});
