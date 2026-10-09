@@ -21,19 +21,15 @@ import {
 } from '@/src/features/dashboard/context/dashboard-view-context';
 import { useUserDomain } from '@/src/features/dashboard/context/user-domain-context';
 import { domainFromPath } from '@/src/features/dashboard/lib/dashboard-url';
-import type { DashboardBootstrap } from '@/src/features/dashboard/server/entry-target';
 import { useUserProfile } from '@/src/features/profile/context/profile-context';
 
 export function DashboardClientLayout({
   children,
   initialDomain = null,
-  bootstrap,
 }: {
   children: ReactNode;
   /** Cookie-derived domain resolved on the server, used for the first paint. */
   initialDomain?: UserDomain | null;
-  /** Profile and organisation read during the server render, to seed the client caches. */
-  bootstrap?: DashboardBootstrap;
 }) {
   const pathname = usePathname();
 
@@ -49,11 +45,7 @@ export function DashboardClientLayout({
     // `:root:has([data-dashboard-domain=...])`, which hoists the ramp override onto
     // <html> so portalled UI (dropdowns, sheets, toasts) is themed too.
     <div className='contents' data-dashboard-domain={themeDomain ?? undefined}>
-      <DashboardProviders
-        initialProfile={bootstrap?.profile}
-        initialOrganisation={bootstrap?.organisation}
-        initialUpdatedAt={bootstrap?.fetchedAt}
-      >
+      <DashboardProviders>
         <DashboardLayoutContent>{children}</DashboardLayoutContent>
       </DashboardProviders>
     </div>
