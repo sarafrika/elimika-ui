@@ -25,7 +25,29 @@ export const APPROVAL_QUERY_FRESHNESS = {
 
 export const CLIENT_QUERY_CACHE_STORAGE_KEY = 'elimika-query-cache-v1';
 export const CLIENT_QUERY_CACHE_MAX_AGE_MS = 1000 * 60 * 30;
-export const CLIENT_QUERY_CACHE_BUSTER = 'elimika-query-cache:2026-06-24';
+export const CLIENT_QUERY_CACHE_BUSTER = 'elimika-query-cache:2026-10-09';
+
+/** Generated query ids worth restoring on reload: shell identity, wallet and reference lists. */
+export const PERSISTED_QUERY_IDS: ReadonlySet<string> = Object.freeze(
+  new Set<string>([
+    'getCurrentUser',
+    'getWallet',
+    'getOrganisationByUuid',
+    'getAllCategories',
+    'getRootCategories',
+    'getAllDifficultyLevels',
+    'getAllContentTypes',
+  ])
+);
+
+/** Hand-rolled shell keys: the profile (with domain profiles) and the active organisation. */
+export const PERSISTED_QUERY_KEY_ROOTS: ReadonlySet<string> = Object.freeze(
+  new Set<string>(['profile', 'organization'])
+);
+
+/** Larger entries stay in memory only; an oversized snapshot is dropped, not written. */
+export const PERSIST_MAX_QUERY_BYTES = 64 * 1024;
+export const PERSIST_MAX_TOTAL_BYTES = 512 * 1024;
 
 /** One quick retry for a network blip or 5xx, instead of React Query's 1s/2s/4s backoff. */
 export const QUERY_RETRY_DELAY_MS = 500;
