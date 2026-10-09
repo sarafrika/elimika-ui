@@ -25,6 +25,7 @@ import { DistanceBandBadge, NearMeControl } from '@/src/features/near-me/near-me
 import { useSearchIssue, useSearchQuery } from '@/hooks/use-search-query';
 import {
   getCourseByUuidOptions,
+  getInstructorReviewsOptions,
   listTrainingApplicationsOptions,
   searchSkillsOptions,
   searchTrainingApplicationsOptions,
@@ -33,6 +34,8 @@ import { useUserDomain } from '@/src/features/dashboard/context/user-domain-cont
 import type { SearchInstructor } from '@/src/features/dashboard/courses/types';
 import { roleScopedDashboardPath } from '@/src/features/dashboard/lib/active-domain-storage';
 import { lowestRatesLabel } from '@/src/features/rate-card/application-display';
+import { AsyncSection } from '@/components/data/async-section';
+import { STALE_TIMES } from '@/lib/query-client';
 import { useQuery } from '@tanstack/react-query';
 import {
   ArrowLeft,
@@ -906,7 +909,7 @@ export default function StudentInstructorSearchPage() {
                               <span>{instructor.total_experience_years ?? 0} yrs exp</span>
                               <span className="inline-flex items-center gap-1">
                                 <Star className="h-3 w-3 fill-warning text-warning" />
-                                {instructor.rating ?? '—'} ({instructor.reviews?.length ?? 0} reviews)
+                                {instructor.rating ?? '—'} ({instructor.review_count ?? 0} reviews)
                               </span>
 
                               {instructor?.totalStudents && <span>{instructor?.totalStudents} students</span>}
@@ -1076,54 +1079,7 @@ export default function StudentInstructorSearchPage() {
                   across {selectedInstructor.review_count ?? '—'} reviews
                 </div>
 
-                {/* Reviews */}
-                <div className="space-y-3 mt-2">
-                  {selectedInstructor.reviews?.length ? (
-                    selectedInstructor.reviews.map(review => (
-                      <div
-                        key={review.uuid}
-                        className="rounded-sm border border-border bg-card p-3"
-                      >
-                        <div className="flex items-start justify-between gap-3">
-                          <div className="min-w-0 flex-1">
-                            <div className="flex items-center gap-2">
-                              <h4 className="truncate text-sm font-semibold text-foreground">
-                                {review.headline || ''}
-                              </h4>
-
-                              {review.is_anonymous && (
-                                <span className="rounded-full bg-muted px-2 py-0.5 text-[10px] font-medium text-muted-foreground">
-                                  Anonymous
-                                </span>
-                              )}
-                            </div>
-
-                            <p className="mt-0.5 text-xs text-muted-foreground">
-                              {new Date(review.created_date).toLocaleDateString()}
-                            </p>
-                          </div>
-
-                          <div className="flex shrink-0 items-center gap-1 rounded-full bg-primary/10 px-2 py-1">
-                            <Star className="h-3.5 w-3.5 fill-warning text-warning" />
-                            <span className="text-xs font-semibold">
-                              {Number(review.rating).toFixed(1)}
-                            </span>
-                          </div>
-                        </div>
-
-                        {review.comments && (
-                          <p className="mt-2 line-clamp-3 text-sm text-muted-foreground">
-                            {review.comments}
-                          </p>
-                        )}
-                      </div>
-                    ))
-                  ) : (
-                    <div className="rounded-xl border border-dashed border-border py-8 text-center text-sm text-muted-foreground">
-                      No reviews yet.
-                    </div>
-                  )}
-                </div>
+                <InstructorReviewsList instructorUuid={selectedInstructor.uuid} />
               </TabsContent>
 
               <TabsContent value="availability" className="pt-3 text-sm text-muted-foreground">
@@ -1137,6 +1093,74 @@ export default function StudentInstructorSearchPage() {
       </Sheet>
 
     </div>
+  );
+}
+
+/** Reviews for one instructor, fetched only while the sheet's Reviews tab is mounted. */
+function InstructorReviewsList({ instructorUuid }: { instructorUuid?: string }) {
+  const reviewsQuery = useQuery({
+    ...getInstructorReviewsOptions({ path: { instructorUuid: instructorUuid ?? '' } }),
+    enabled: !!instructorUuid,
+    staleTime: STALE_TIMES.entity,
+  });
+  const reviews = reviewsQuery.data?.data ?? [];
+
+  return (
+    <AsyncSection
+      name="instructor-reviews"
+      loading={reviewsQuery.isLoading && !reviewsQuery.data}
+      error={reviewsQuery.error}
+      empty={reviews.length === 0}
+      onRetry={() => reviewsQuery.refetch()}
+      skeleton={<Skeleton className="mt-2 h-24 w-full" />}
+      emptyState={
+        <div className="mt-2 rounded-xl border border-dashed border-border py-8 text-center text-sm text-muted-foreground">
+          No reviews yet.
+        </div>
+      }
+    >
+      <div className="space-y-3 mt-2">
+        {reviews.map(review => (
+          <div
+            key={review.uuid}
+            className="rounded-sm border border-border bg-card p-3"
+          >
+            <div className="flex items-start justify-between gap-3">
+              <div className="min-w-0 flex-1">
+                <div className="flex items-center gap-2">
+                  <h4 className="truncate text-sm font-semibold text-foreground">
+                    {review.headline || ''}
+                  </h4>
+
+                  {review.is_anonymous && (
+                    <span className="rounded-full bg-muted px-2 py-0.5 text-[10px] font-medium text-muted-foreground">
+                      Anonymous
+                    </span>
+                  )}
+                </div>
+
+                <p className="mt-0.5 text-xs text-muted-foreground">
+                  {new Date(review.created_date).toLocaleDateString()}
+                </p>
+              </div>
+
+              <div className="flex shrink-0 items-center gap-1 rounded-full bg-primary/10 px-2 py-1">
+                <Star className="h-3.5 w-3.5 fill-warning text-warning" />
+                <span className="text-xs font-semibold">
+                  {Number(review.rating).toFixed(1)}
+                </span>
+              </div>
+            </div>
+
+            {review.comments && (
+              <p className="mt-2 line-clamp-3 text-sm text-muted-foreground">
+                {review.comments}
+              </p>
+            )}
+          </div>
+        ))}
+      </div>
+    </AsyncSection>
   );
 }
 
