@@ -572,6 +572,7 @@ import type {
   EvaluateCourseRecommendationsResponse,
   GetProgramModerationHistoryResponse,
   ListPendingProgramsResponse,
+  SummaryResponse,
   GetPendingOrganisationsResponse,
   GetDashboardStatisticsResponse,
   GetDashboardActivityResponse,
@@ -9899,6 +9900,40 @@ export const listPendingProgramsResponseTransformer = async (
   data: any
 ): Promise<ListPendingProgramsResponse> => {
   data = apiResponsePagedDtoTrainingProgramSchemaResponseTransformer(data);
+  return data;
+};
+
+const rumSummaryRowSchemaResponseTransformer = (data: any) => {
+  if (data.samples) {
+    data.samples = BigInt(data.samples.toString());
+  }
+  return data;
+};
+
+const rumSummaryResponseSchemaResponseTransformer = (data: any) => {
+  if (data.from) {
+    data.from = new Date(data.from);
+  }
+  if (data.to) {
+    data.to = new Date(data.to);
+  }
+  if (data.rows) {
+    data.rows = data.rows.map((item: any) => {
+      return rumSummaryRowSchemaResponseTransformer(item);
+    });
+  }
+  return data;
+};
+
+const apiResponseRumSummaryResponseSchemaResponseTransformer = (data: any) => {
+  if (data.data) {
+    data.data = rumSummaryResponseSchemaResponseTransformer(data.data);
+  }
+  return data;
+};
+
+export const summaryResponseTransformer = async (data: any): Promise<SummaryResponse> => {
+  data = apiResponseRumSummaryResponseSchemaResponseTransformer(data);
   return data;
 };
 

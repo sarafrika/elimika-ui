@@ -831,6 +831,10 @@ export type RubricScoring = {
    */
   readonly updated_by?: string;
   /**
+   * **[READ-ONLY]** Classification of performance expectation level.
+   */
+  readonly performance_expectation?: string;
+  /**
    * **[READ-ONLY]** Expected score range for this performance level.
    */
   readonly score_range?: string;
@@ -842,10 +846,6 @@ export type RubricScoring = {
    * **[READ-ONLY]** Feedback category for constructive assessment guidance.
    */
   readonly feedback_category?: string;
-  /**
-   * **[READ-ONLY]** Classification of performance expectation level.
-   */
-  readonly performance_expectation?: string;
 };
 
 export type ApiResponseRubricScoring = {
@@ -1000,13 +1000,13 @@ export type QuizQuestion = {
    */
   readonly question_category?: string;
   /**
-   * **[READ-ONLY]** Formatted question number for display in quiz interface.
-   */
-  readonly question_number?: string;
-  /**
    * **[READ-ONLY]** Human-readable format of the points value.
    */
   readonly points_display?: string;
+  /**
+   * **[READ-ONLY]** Formatted question number for display in quiz interface.
+   */
+  readonly question_number?: string;
 };
 
 export type ApiResponseQuizQuestion = {
@@ -1188,6 +1188,10 @@ export type QuizAttempt = {
    */
   readonly is_completed?: boolean;
   /**
+   * **[READ-ONLY]** Formatted display of the grade information.
+   */
+  readonly grade_display?: string;
+  /**
    * **[READ-ONLY]** Formatted display of the time taken to complete the quiz.
    */
   readonly time_display?: string;
@@ -1199,10 +1203,6 @@ export type QuizAttempt = {
    * **[READ-ONLY]** Comprehensive summary of the quiz attempt performance.
    */
   readonly performance_summary?: string;
-  /**
-   * **[READ-ONLY]** Formatted display of the grade information.
-   */
-  readonly grade_display?: string;
 };
 
 /**
@@ -2313,13 +2313,13 @@ export type Instructor = {
    */
   readonly review_count?: bigint | null;
   /**
-   * **[READ-ONLY]** Indicates if the instructor has both latitude and longitude coordinates configured.
-   */
-  readonly has_location_coordinates?: boolean;
-  /**
    * **[READ-ONLY]** Indicates if the instructor profile is considered complete. Requires bio and professional headline.
    */
   readonly is_profile_complete?: boolean;
+  /**
+   * **[READ-ONLY]** Indicates if the instructor has both latitude and longitude coordinates configured.
+   */
+  readonly has_location_coordinates?: boolean;
   /**
    * **[READ-ONLY]** Formatted location coordinates as a string. Returns null if location coordinates are not available.
    */
@@ -2458,6 +2458,15 @@ export type InstructorProfessionalMembership = {
    */
   readonly summary?: string;
   /**
+   * **[READ-ONLY]** Indicates if the membership record has all essential information.
+   */
+  readonly is_complete?: boolean;
+  /**
+   * **[READ-ONLY]** Human-readable formatted duration of membership.
+   */
+  readonly formatted_duration?: string | null;
+  membership_status?: MembershipStatusEnum;
+  /**
    * **[READ-ONLY]** Formatted membership period showing start and end dates.
    */
   readonly membership_period?: string | null;
@@ -2479,18 +2488,9 @@ export type InstructorProfessionalMembership = {
    */
   readonly is_recent_membership?: boolean;
   /**
-   * **[READ-ONLY]** Indicates if the membership record has all essential information.
-   */
-  readonly is_complete?: boolean;
-  /**
    * **[READ-ONLY]** Duration of membership calculated from start and end dates, in months.
    */
   readonly membership_duration_months?: number | null;
-  membership_status?: MembershipStatusEnum;
-  /**
-   * **[READ-ONLY]** Human-readable formatted duration of membership.
-   */
-  readonly formatted_duration?: string | null;
 };
 
 export type ApiResponseInstructorProfessionalMembership = {
@@ -2565,6 +2565,14 @@ export type InstructorExperience = {
    */
   readonly is_complete?: boolean;
   /**
+   * **[READ-ONLY]** Duration of employment calculated from start and end dates, in months.
+   */
+  readonly duration_in_months?: number | null;
+  /**
+   * **[READ-ONLY]** Human-readable formatted duration of employment.
+   */
+  readonly formatted_duration?: string | null;
+  /**
    * **[READ-ONLY]** Formatted employment period showing start and end dates.
    */
   readonly employment_period?: string | null;
@@ -2585,14 +2593,6 @@ export type InstructorExperience = {
    * **[READ-ONLY]** Calculated years of experience based on start and end dates.
    */
   readonly calculated_years?: number | null;
-  /**
-   * **[READ-ONLY]** Duration of employment calculated from start and end dates, in months.
-   */
-  readonly duration_in_months?: number | null;
-  /**
-   * **[READ-ONLY]** Human-readable formatted duration of employment.
-   */
-  readonly formatted_duration?: string | null;
 };
 
 export type ApiResponseInstructorExperience = {
@@ -4958,13 +4958,13 @@ export type ClassDefinition = {
    */
   readonly duration_minutes?: bigint;
   /**
-   * **[READ-ONLY]** Human-readable capacity information including waitlist availability.
-   */
-  readonly capacity_info?: string;
-  /**
    * **[READ-ONLY]** Human-readable formatted duration.
    */
   readonly duration_formatted?: string;
+  /**
+   * **[READ-ONLY]** Human-readable capacity information including waitlist availability.
+   */
+  readonly capacity_info?: string;
 };
 
 /**
@@ -6004,18 +6004,6 @@ export type ScheduledInstance = {
    */
   readonly duration_minutes?: bigint;
   /**
-   * **[READ-ONLY]** Indicates if the scheduled instance can be cancelled.
-   */
-  readonly can_be_cancelled?: boolean;
-  /**
-   * **[READ-ONLY]** Indicates if the scheduled instance can be explicitly started.
-   */
-  readonly can_be_started?: boolean;
-  /**
-   * **[READ-ONLY]** Indicates if the scheduled instance can be explicitly concluded.
-   */
-  readonly can_be_ended?: boolean;
-  /**
    * **[READ-ONLY]** Human-readable formatted duration.
    */
   readonly duration_formatted?: string;
@@ -6027,6 +6015,18 @@ export type ScheduledInstance = {
    * **[READ-ONLY]** Indicates if the scheduled instance is currently active (ongoing).
    */
   readonly is_currently_active?: boolean;
+  /**
+   * **[READ-ONLY]** Indicates if the scheduled instance can be cancelled.
+   */
+  readonly can_be_cancelled?: boolean;
+  /**
+   * **[READ-ONLY]** Indicates if the scheduled instance can be explicitly started.
+   */
+  readonly can_be_started?: boolean;
+  /**
+   * **[READ-ONLY]** Indicates if the scheduled instance can be explicitly concluded.
+   */
+  readonly can_be_ended?: boolean;
 };
 
 /**
@@ -6545,6 +6545,73 @@ export type ApiResponseProgramReview = {
   data?: ProgramReview;
   message?: string;
   error?: unknown;
+};
+
+/**
+ * A batch of up to 50 real-user performance samples
+ */
+export type RumBatchRequest = {
+  events: Array<RumEventRequest>;
+};
+
+/**
+ * One real-user performance sample
+ */
+export type RumEventRequest = {
+  /**
+   * Route pattern with ids replaced, e.g. /dashboard/courses/[id]
+   */
+  route_template: string;
+  /**
+   * Dashboard domain of the viewer
+   */
+  domain?: string;
+  /**
+   * Metric name, e.g. LCP, INP, TTFB, time_to_data
+   */
+  metric: string;
+  /**
+   * Measured duration in milliseconds
+   */
+  value_ms: number;
+  /**
+   * Page section the sample belongs to, if any
+   */
+  section?: string;
+  /**
+   * Effective connection type
+   */
+  network_type?: string;
+  /**
+   * Coarse device class
+   */
+  device_class?: string;
+  /**
+   * Web app build version
+   */
+  app_version?: string;
+  /**
+   * When the sample was taken (ISO-8601 with offset)
+   */
+  occurred_at: Date;
+};
+
+export type ApiResponseRumIngestResponse = {
+  success?: boolean;
+  data?: RumIngestResponse;
+  message?: string;
+  error?: unknown;
+};
+
+export type RumIngestResponse = {
+  /**
+   * Samples stored
+   */
+  accepted?: number;
+  /**
+   * Samples ignored because their timestamp was outside the accepted window
+   */
+  dropped?: number;
 };
 
 export type ApiResponseOrganisationDocument = {
@@ -7600,21 +7667,21 @@ export type Enrollment = {
    */
   readonly is_active?: boolean;
   /**
-   * **[READ-ONLY]** Indicates if the enrollment can be cancelled.
+   * **[READ-ONLY]** Indicates if the student attended the class.
    */
-  readonly can_be_cancelled?: boolean;
+  readonly did_attend?: boolean;
   /**
    * **[READ-ONLY]** Indicates if attendance has been marked for this enrollment.
    */
   readonly is_attendance_marked?: boolean;
   /**
-   * **[READ-ONLY]** Indicates if the student attended the class.
-   */
-  readonly did_attend?: boolean;
-  /**
    * **[READ-ONLY]** Human-readable description of the enrollment status.
    */
   readonly status_description?: string;
+  /**
+   * **[READ-ONLY]** Indicates if the enrollment can be cancelled.
+   */
+  readonly can_be_cancelled?: boolean;
 };
 
 /**
@@ -9608,13 +9675,13 @@ export type StudentSchedule = {
    */
   readonly duration_minutes?: bigint;
   /**
-   * **[READ-ONLY]** Indicates if this class is upcoming.
-   */
-  readonly is_upcoming?: boolean;
-  /**
    * **[READ-ONLY]** Indicates if the student attended this class.
    */
   readonly did_attend?: boolean;
+  /**
+   * **[READ-ONLY]** Indicates if this class is upcoming.
+   */
+  readonly is_upcoming?: boolean;
 };
 
 export type ApiResponseListInstructorTimeHold = {
@@ -12939,13 +13006,13 @@ export type CourseCategoryMapping = {
    */
   readonly updated_by?: string;
   /**
-   * **[READ-ONLY]** Indicates if both course and category names are populated.
-   */
-  readonly has_names?: boolean;
-  /**
    * **[READ-ONLY]** Human-readable text representing this course-category relationship.
    */
   readonly display_text?: string;
+  /**
+   * **[READ-ONLY]** Indicates if both course and category names are populated.
+   */
+  readonly has_names?: boolean;
 };
 
 export type ApiResponsePagedDtoCourseAssessment = {
@@ -14206,6 +14273,31 @@ export type PagedDtoContentModerationHistory = {
   links?: PageLinks;
 };
 
+export type ApiResponseRumSummaryResponse = {
+  success?: boolean;
+  data?: RumSummaryResponse;
+  message?: string;
+  error?: unknown;
+};
+
+export type RumSummaryResponse = {
+  from?: Date;
+  to?: Date;
+  rows?: Array<RumSummaryRow>;
+};
+
+/**
+ * Percentiles for one route template and metric
+ */
+export type RumSummaryRow = {
+  route_template?: string;
+  metric?: string;
+  samples?: bigint;
+  p50_ms?: number;
+  p95_ms?: number;
+  p99_ms?: number;
+};
+
 export type ApiResponseListString = {
   success?: boolean;
   data?: Array<string>;
@@ -15170,6 +15262,21 @@ export type ProficiencyLevelEnum2 =
   (typeof ProficiencyLevelEnum2)[keyof typeof ProficiencyLevelEnum2];
 
 /**
+ * **[READ-ONLY]** Current status of the membership.
+ */
+export const MembershipStatusEnum = {
+  ACTIVE: 'ACTIVE',
+  INACTIVE: 'INACTIVE',
+  EXPIRED: 'EXPIRED',
+  UNKNOWN: 'UNKNOWN',
+} as const;
+
+/**
+ * **[READ-ONLY]** Current status of the membership.
+ */
+export type MembershipStatusEnum = (typeof MembershipStatusEnum)[keyof typeof MembershipStatusEnum];
+
+/**
  * **[READ-ONLY]** Classification of organisation type based on name keywords.
  */
 export const OrganisationTypeEnum = {
@@ -15185,21 +15292,6 @@ export const OrganisationTypeEnum = {
  * **[READ-ONLY]** Classification of organisation type based on name keywords.
  */
 export type OrganisationTypeEnum = (typeof OrganisationTypeEnum)[keyof typeof OrganisationTypeEnum];
-
-/**
- * **[READ-ONLY]** Current status of the membership.
- */
-export const MembershipStatusEnum = {
-  ACTIVE: 'ACTIVE',
-  INACTIVE: 'INACTIVE',
-  EXPIRED: 'EXPIRED',
-  UNKNOWN: 'UNKNOWN',
-} as const;
-
-/**
- * **[READ-ONLY]** Current status of the membership.
- */
-export type MembershipStatusEnum = (typeof MembershipStatusEnum)[keyof typeof MembershipStatusEnum];
 
 /**
  * **[READ-ONLY]** Classification of experience level based on position title and duration.
@@ -26319,6 +26411,35 @@ export type AddProgramCourseResponses = {
 
 export type AddProgramCourseResponse = AddProgramCourseResponses[keyof AddProgramCourseResponses];
 
+export type IngestData = {
+  body: RumBatchRequest;
+  path?: never;
+  query?: never;
+  url: '/api/v1/perf/rum';
+};
+
+export type IngestErrors = {
+  /**
+   * Not Found
+   */
+  404: ResponseDtoVoid;
+  /**
+   * Internal Server Error
+   */
+  500: ResponseDtoVoid;
+};
+
+export type IngestError = IngestErrors[keyof IngestErrors];
+
+export type IngestResponses = {
+  /**
+   * OK
+   */
+  200: ApiResponseRumIngestResponse;
+};
+
+export type IngestResponse = IngestResponses[keyof IngestResponses];
+
 export type GetAllOrganisationsData = {
   body?: never;
   path?: never;
@@ -27440,6 +27561,7 @@ export type ApplyBulkActionData = {
     status?: string;
     presentation?: string;
     type?: string;
+    uuids?: Array<string>;
   };
   url: '/api/v1/notifications';
 };
@@ -44015,6 +44137,44 @@ export type ListPendingProgramsResponses = {
 
 export type ListPendingProgramsResponse =
   ListPendingProgramsResponses[keyof ListPendingProgramsResponses];
+
+export type SummaryData = {
+  body?: never;
+  path?: never;
+  query?: {
+    /**
+     * Window start (ISO-8601, inclusive)
+     */
+    from?: Date;
+    /**
+     * Window end (ISO-8601, exclusive)
+     */
+    to?: Date;
+  };
+  url: '/api/v1/admin/perf/rum/summary';
+};
+
+export type SummaryErrors = {
+  /**
+   * Not Found
+   */
+  404: ResponseDtoVoid;
+  /**
+   * Internal Server Error
+   */
+  500: ResponseDtoVoid;
+};
+
+export type SummaryError = SummaryErrors[keyof SummaryErrors];
+
+export type SummaryResponses = {
+  /**
+   * OK
+   */
+  200: ApiResponseRumSummaryResponse;
+};
+
+export type SummaryResponse = SummaryResponses[keyof SummaryResponses];
 
 export type IsOrganisationVerifiedData = {
   body?: never;
