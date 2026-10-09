@@ -14,7 +14,7 @@ import {
   Wallet,
 } from 'lucide-react';
 import { signIn, useSession } from 'next-auth/react';
-import { type ReactNode, useEffect, useMemo, useState } from 'react';
+import { type ReactNode, Suspense, use, useEffect, useMemo, useState } from 'react';
 import { PageHeader } from '@/components/dashboard';
 import { SectionError } from '@/components/data/async-section';
 import { surfaceTheme } from '@/components/data-display';
@@ -104,6 +104,233 @@ function StatPill({
   );
 }
 
+/** The server-rendered catalogue page, streamed to the client as a promise. */
+export type ServerCatalogue = { items: PublicCatalogueCourse[]; hasError: boolean };
+
+/** Reads the streamed server catalogue; suspends until the server's read settles. */
+function useServerCatalogue(cataloguePromise: Promise<ServerCatalogue>) {
+  const { items: catalogue, hasError } = use(cataloguePromise);
+  const fallbackItems = useMemo(
+    () =>
+      catalogue.flatMap(entry => {
+        const item = fromPublicCatalogueCourse(entry);
+        return item ? [item] : [];
+      }),
+    [catalogue]
+  );
+  const providerCount = useMemo(
+    () =>
+      new Set(
+        catalogue
+          .map(entry => entry.course.course_creator_uuid ?? entry.creatorName)
+          .filter(Boolean)
+      ).size,
+    [catalogue]
+  );
+  return { fallbackItems, providerCount, hasError };
+}
+
+function StatPills({
+  courses,
+  programmes,
+  providers,
+}: {
+  courses?: number;
+  programmes?: number;
+  providers?: number;
+}) {
+  return (
+    <>
+      {courses !== undefined ? (
+        <StatPill
+          icon={GraduationCap}
+          value={courses}
+          label={courses === 1 ? 'Course' : 'Courses'}
+        />
+      ) : null}
+      {programmes !== undefined ? (
+        <StatPill
+          icon={Layers}
+          value={programmes}
+          label={programmes === 1 ? 'Programme' : 'Programmes'}
+        />
+      ) : null}
+      {providers ? (
+        <StatPill
+          icon={Users}
+          value={providers}
+          label={providers === 1 ? 'Provider' : 'Providers'}
+        />
+      ) : null}
+    </>
+  );
+}
+
+/** Header pills; the course count falls back to the server list while it is being shown. */
+function ServerStatPills({
+  cataloguePromise,
+  courses,
+  programmes,
+  localList,
+}: {
+  cataloguePromise: Promise<ServerCatalogue>;
+  courses?: number;
+  programmes?: number;
+  localList: boolean;
+}) {
+  const { fallbackItems, providerCount } = useServerCatalogue(cataloguePromise);
+  const fallbackCount = localList && fallbackItems.length > 0 ? fallbackItems.length : undefined;
+  return (
+    <StatPills
+      courses={courses ?? fallbackCount}
+      programmes={programmes}
+      providers={providerCount}
+    />
+  );
+}
+
+function ServerCatalogueCount({
+  cataloguePromise,
+}: {
+  cataloguePromise: Promise<ServerCatalogue>;
+}) {
+  const { fallbackItems } = useServerCatalogue(cataloguePromise);
+  return <>{fallbackItems.length} courses and programmes</>;
+}
+
+const SKELETON_GRID = (
+  <div className={GRID} aria-hidden>
+    {Array.from({ length: 6 }, (_, index) => (
+      <CatalogueItemCardSkeleton key={index} />
+    ))}
+  </div>
+);
+
+function ResultsGrid({
+  items,
+  signedIn,
+  page,
+  totalPages,
+  total,
+  first,
+  last,
+  onPage,
+}: {
+  items: CatalogueItem[];
+  signedIn: boolean;
+  page: number;
+  totalPages: number;
+  total: number;
+  first: number;
+  last: number;
+  onPage: (page: number) => void;
+}) {
+  return (
+    <>
+      <ul className={GRID} aria-label='Courses and programmes'>
+        {items.map(item => (
+          <li key={`${item.type}-${item.uuid}`} className='min-w-0'>
+            <CatalogueItemCard item={item} signedIn={signedIn} />
+          </li>
+        ))}
+      </ul>
+      <nav
+        aria-label='Pages'
+        className='flex flex-col items-center justify-between gap-3 pt-1 sm:flex-row'
+      >
+        <span className='text-muted-foreground text-sm tabular-nums'>
+          Showing {first}–{last} of {total}
+        </span>
+        <div className='text-muted-foreground flex items-center gap-2 text-sm'>
+          <Button variant='ghost' size='sm' disabled={page <= 0} onClick={() => onPage(page - 1)}>
+            Previous
+          </Button>
+          <span className='tabular-nums'>
+            Page {page + 1} of {totalPages}
+          </span>
+          <Button
+            variant='ghost'
+            size='sm'
+            disabled={page + 1 >= totalPages}
+            onClick={() => onPage(page + 1)}
+          >
+            Next
+          </Button>
+        </div>
+      </nav>
+    </>
+  );
+}
+
+function ResultCount({ total, noun }: { total: number; noun: string }) {
+  return (
+    <p className='text-muted-foreground text-sm' aria-live='polite'>
+      <span className='text-foreground font-semibold tabular-nums'>{total}</span> {noun}
+    </p>
+  );
+}
+
+/**
+ * The server's catalogue, listed before search answers (so the streamed HTML is crawlable)
+ * and when search is unavailable. An empty list while search is pending stays a skeleton.
+ */
+function ServerCatalogueResults({
+  cataloguePromise,
+  fallback,
+  signedIn,
+  page,
+  onPage,
+}: {
+  cataloguePromise: Promise<ServerCatalogue>;
+  fallback: boolean;
+  signedIn: boolean;
+  page: number;
+  onPage: (page: number) => void;
+}) {
+  const { fallbackItems: items, hasError } = useServerCatalogue(cataloguePromise);
+  if (fallback && hasError) {
+    return (
+      <SectionError
+        title='Unable to load courses'
+        error={{ message: 'Please refresh the page or try again later.' }}
+      />
+    );
+  }
+  if (!fallback && items.length === 0) return SKELETON_GRID;
+
+  const total = items.length;
+  const count = <ResultCount total={total} noun={resultNoun('courses', total)} />;
+  if (total === 0) {
+    return (
+      <>
+        {count}
+        <EmptyState
+          variant='plain'
+          className='border-border bg-muted/30 rounded-2xl border border-dashed'
+          icon={BookOpen}
+          title='No courses available'
+          description='Our catalogue is being updated. Check back soon for new courses.'
+        />
+      </>
+    );
+  }
+  return (
+    <>
+      {count}
+      <ResultsGrid
+        items={items}
+        signedIn={signedIn}
+        page={page}
+        totalPages={1}
+        total={total}
+        first={page * CATALOGUE_PAGE_SIZE + 1}
+        last={total}
+        onPage={onPage}
+      />
+    </>
+  );
+}
+
 /**
  * The public catalogue: one search across published courses and programmes
  * (`GET /api/v1/catalogue/search`), filtered from the facets it answers with. When the
@@ -111,11 +338,9 @@ function StatPill({
  * term and without the filters.
  */
 export function PublicCoursesPage({
-  catalogue,
-  hasError = false,
+  cataloguePromise,
 }: {
-  catalogue: PublicCatalogueCourse[];
-  hasError?: boolean;
+  cataloguePromise: Promise<ServerCatalogue>;
 }) {
   const { status: sessionStatus } = useSession();
   const signedIn = sessionStatus === 'authenticated';
@@ -135,24 +360,6 @@ export function PublicCoursesPage({
   const result = useCatalogueSearch(query);
   const data = result.data;
 
-  const fallbackItems = useMemo(
-    () =>
-      catalogue.flatMap(entry => {
-        const item = fromPublicCatalogueCourse(entry);
-        return item ? [item] : [];
-      }),
-    [catalogue]
-  );
-  const providerCount = useMemo(
-    () =>
-      new Set(
-        catalogue
-          .map(entry => entry.course.course_creator_uuid ?? entry.creatorName)
-          .filter(Boolean)
-      ).size,
-    [catalogue]
-  );
-
   const narrowed = activeFilterCount(filters);
   const unfiltered = !query.q && narrowed === 0;
   // The catalogue's own totals for the header, remembered from an unfiltered answer so
@@ -167,13 +374,11 @@ export function PublicCoursesPage({
   const fallback = result.unavailable;
   // Before the first answer (and in the server-rendered HTML) an unfiltered first page
   // lists the server's catalogue, so the page is crawlable and never blank.
-  const serverFirstPage =
-    !data && !result.error && unfiltered && page === 0 && fallbackItems.length > 0;
-  const localList = fallback || serverFirstPage;
+  const localList = fallback || (!data && !result.error && unfiltered && page === 0);
 
-  const items: CatalogueItem[] = localList ? fallbackItems : (data?.content ?? []);
-  const total = localList ? items.length : Number(data?.metadata?.totalElements ?? items.length);
-  const totalPages = localList ? 1 : Math.max(1, data?.metadata?.totalPages ?? 1);
+  const items: CatalogueItem[] = data?.content ?? [];
+  const total = Number(data?.metadata?.totalElements ?? items.length);
+  const totalPages = Math.max(1, data?.metadata?.totalPages ?? 1);
   const facets: CatalogueFacets | undefined = localList ? undefined : data?.facets;
   const loading = !localList && result.isLoading;
   const otherError = !fallback && result.error && !data ? result.error : null;
@@ -254,9 +459,15 @@ export function PublicCoursesPage({
     <MarketplaceSidebar
       heading='Filters'
       count={
-        catalogueTotal > total
-          ? `${total} of ${catalogueTotal} courses and programmes`
-          : `${total} courses and programmes`
+        localList ? (
+          <Suspense fallback='Courses and programmes'>
+            <ServerCatalogueCount cataloguePromise={cataloguePromise} />
+          </Suspense>
+        ) : catalogueTotal > total ? (
+          `${total} of ${catalogueTotal} courses and programmes`
+        ) : (
+          `${total} courses and programmes`
+        )
       }
       groups={filterGroups}
       footer={
@@ -277,21 +488,23 @@ export function PublicCoursesPage({
     />
   );
 
-  const courseCount =
-    totals.courses ??
-    showFacet?.courses ??
-    (localList && fallbackItems.length > 0 ? fallbackItems.length : undefined);
+  const courseCount = totals.courses ?? showFacet?.courses;
   const programmeCount = totals.programmes ?? showFacet?.programmes;
   const first = total === 0 ? 0 : page * CATALOGUE_PAGE_SIZE + 1;
-  const last = localList ? total : Math.min(total, page * CATALOGUE_PAGE_SIZE + items.length);
+  const last = Math.min(total, page * CATALOGUE_PAGE_SIZE + items.length);
 
   let body: ReactNode;
-  if (fallback && hasError) {
+  if (localList) {
     body = (
-      <SectionError
-        title='Unable to load courses'
-        error={{ message: 'Please refresh the page or try again later.' }}
-      />
+      <Suspense fallback={SKELETON_GRID}>
+        <ServerCatalogueResults
+          cataloguePromise={cataloguePromise}
+          fallback={fallback}
+          signedIn={signedIn}
+          page={page}
+          onPage={setPage}
+        />
+      </Suspense>
     );
   } else if (otherError) {
     body = (
@@ -302,23 +515,7 @@ export function PublicCoursesPage({
       />
     );
   } else if (loading) {
-    body = (
-      <div className={GRID} aria-hidden>
-        {Array.from({ length: 6 }, (_, index) => (
-          <CatalogueItemCardSkeleton key={index} />
-        ))}
-      </div>
-    );
-  } else if (items.length === 0 && localList) {
-    body = (
-      <EmptyState
-        variant='plain'
-        className='border-border bg-muted/30 rounded-2xl border border-dashed'
-        icon={BookOpen}
-        title='No courses available'
-        description='Our catalogue is being updated. Check back soon for new courses.'
-      />
-    );
+    body = SKELETON_GRID;
   } else if (items.length === 0) {
     body = (
       <EmptyState
@@ -349,44 +546,16 @@ export function PublicCoursesPage({
     );
   } else {
     body = (
-      <>
-        <ul className={GRID} aria-label='Courses and programmes'>
-          {items.map(item => (
-            <li key={`${item.type}-${item.uuid}`} className='min-w-0'>
-              <CatalogueItemCard item={item} signedIn={signedIn} />
-            </li>
-          ))}
-        </ul>
-        <nav
-          aria-label='Pages'
-          className='flex flex-col items-center justify-between gap-3 pt-1 sm:flex-row'
-        >
-          <span className='text-muted-foreground text-sm tabular-nums'>
-            Showing {first}–{last} of {total}
-          </span>
-          <div className='text-muted-foreground flex items-center gap-2 text-sm'>
-            <Button
-              variant='ghost'
-              size='sm'
-              disabled={page <= 0}
-              onClick={() => setPage(page - 1)}
-            >
-              Previous
-            </Button>
-            <span className='tabular-nums'>
-              Page {page + 1} of {totalPages}
-            </span>
-            <Button
-              variant='ghost'
-              size='sm'
-              disabled={page + 1 >= totalPages}
-              onClick={() => setPage(page + 1)}
-            >
-              Next
-            </Button>
-          </div>
-        </nav>
-      </>
+      <ResultsGrid
+        items={items}
+        signedIn={signedIn}
+        page={page}
+        totalPages={totalPages}
+        total={total}
+        first={first}
+        last={last}
+        onPage={setPage}
+      />
     );
   }
 
@@ -398,29 +567,14 @@ export function PublicCoursesPage({
           title='Courses and programmes'
           description='One search across every published course and programme.'
           actions={
-            <>
-              {courseCount !== undefined ? (
-                <StatPill
-                  icon={GraduationCap}
-                  value={courseCount}
-                  label={courseCount === 1 ? 'Course' : 'Courses'}
-                />
-              ) : null}
-              {programmeCount !== undefined ? (
-                <StatPill
-                  icon={Layers}
-                  value={programmeCount}
-                  label={programmeCount === 1 ? 'Programme' : 'Programmes'}
-                />
-              ) : null}
-              {providerCount > 0 ? (
-                <StatPill
-                  icon={Users}
-                  value={providerCount}
-                  label={providerCount === 1 ? 'Provider' : 'Providers'}
-                />
-              ) : null}
-            </>
+            <Suspense fallback={<StatPills courses={courseCount} programmes={programmeCount} />}>
+              <ServerStatPills
+                cataloguePromise={cataloguePromise}
+                courses={courseCount}
+                programmes={programmeCount}
+                localList={localList}
+              />
+            </Suspense>
           }
         />
 
@@ -485,7 +639,10 @@ export function PublicCoursesPage({
                     }
                   >
                     <SelectTrigger aria-label='Sort' className='h-10 w-full'>
-                      <ArrowDownUp aria-hidden className='text-muted-foreground hidden size-4 lg:block' />
+                      <ArrowDownUp
+                        aria-hidden
+                        className='text-muted-foreground hidden size-4 lg:block'
+                      />
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
@@ -509,11 +666,8 @@ export function PublicCoursesPage({
               }}
             />
 
-            {loading || otherError || (fallback && hasError) ? null : (
-              <p className='text-muted-foreground text-sm' aria-live='polite'>
-                <span className='text-foreground font-semibold tabular-nums'>{total}</span>{' '}
-                {resultNoun(localList ? 'courses' : show, total)}
-              </p>
+            {localList || loading || otherError ? null : (
+              <ResultCount total={total} noun={resultNoun(show, total)} />
             )}
 
             {body}
