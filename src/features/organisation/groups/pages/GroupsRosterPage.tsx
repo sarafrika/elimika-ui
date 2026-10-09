@@ -41,7 +41,7 @@ import {
 type FilterPatch = Partial<Record<'branch' | 'tier' | 'group' | 'page' | 'size', string | null>>;
 
 // Creating, editing and deleting groups (and their membership) lives in
-// Settings → Academic Groups; this page is read-and-remove only.
+// Settings → Student Groups; this page is read-and-remove only.
 const MANAGE_GROUPS_HREF = dashboardUrl('organisation', 'settings?tab=groups');
 
 export default function GroupsRosterPage() {
@@ -174,7 +174,7 @@ export default function GroupsRosterPage() {
   return (
     <div className='mx-auto w-full max-w-[1600px] space-y-6 px-3 py-4 sm:px-5 lg:px-6 2xl:max-w-[1840px]'>
       <PageHeader
-        title='Academic Groups'
+        title='Student Groups'
         description='View students by branch and class level, and track their enrolment details.'
       />
 

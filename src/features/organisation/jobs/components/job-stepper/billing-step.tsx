@@ -13,7 +13,7 @@ import {
 } from '@/components/class-form';
 import { UpdateRatesDialog } from '@/components/rate-card/update-rates-dialog';
 import { Button } from '@/components/ui/button';
-import type { DeliveryMode, RateBasis, RateCard } from '@/lib/rate-card';
+import type { DeliveryMode, RateBasis, RateCard, SelectableRateBasis } from '@/lib/rate-card';
 
 export function BillingStep({
   offering,
@@ -30,14 +30,14 @@ export function BillingStep({
   creatorName?: string;
   delivery: DeliveryMode;
   basis: RateBasis | null;
-  onBasisChange: (basis: RateBasis) => void;
+  onBasisChange: (basis: SelectableRateBasis) => void;
   service: ServiceKey | null;
   onServiceChange: (service: ServiceKey) => void;
   proposedCard: RateCard | null;
   onRatesAdded: (card: RateCard | null) => void;
 }) {
   const [dialogOpen, setDialogOpen] = useState(false);
-  const [dialogBasis, setDialogBasis] = useState<RateBasis>('per_hour');
+  const [dialogBasis, setDialogBasis] = useState<SelectableRateBasis>('per_hour');
   const [added, setAdded] = useState(false);
   const { kind, parentUuid } = offeringTarget(offering);
   const approver = creatorName?.trim() || 'the course creator';

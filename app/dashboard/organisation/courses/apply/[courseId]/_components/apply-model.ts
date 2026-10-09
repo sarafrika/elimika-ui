@@ -154,7 +154,7 @@ export function validatePricing(card: RateCard, minimumFee?: number | null): str
     ...cardErrors,
     ...(empty > 0
       ? [
-        `${empty} ${empty === 1 ? 'rate is' : 'rates are'} still empty. Every method you offer needs a price per hour, per session and per day.`,
+        `${empty} ${empty === 1 ? 'rate is' : 'rates are'} still empty. Every method you offer needs a price per hour and per day.`,
       ]
       : []),
     ...(tooLow > 0

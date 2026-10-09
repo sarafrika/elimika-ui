@@ -112,7 +112,7 @@ export const UserSchema = {
       example: '+254712345678',
       maxLength: 20,
       minLength: 0,
-      pattern: '^(\\+254|0)?[17]\\d{8}$',
+      pattern: '^\\+[1-9]\\d{6,14}$',
     },
     active: {
       type: 'boolean',
@@ -348,7 +348,7 @@ export const TrainingBranchSchema = {
       description: '**[REQUIRED]** Telephone number of the point of contact for this branch.',
       example: '+254700000000',
       maxLength: 20,
-      pattern: '^(\\+254|0)?\\d{8,9}$',
+      pattern: '^\\+[1-9]\\d{6,14}$',
     },
     active: {
       type: 'boolean',
@@ -599,7 +599,7 @@ export const StudentSchema = {
       example: '+254712345678',
       maxLength: 20,
       minLength: 0,
-      pattern: '^(\\+254|0)?[17]\\d{8}$',
+      pattern: '^\\+[1-9]\\d{6,14}$',
     },
     second_guardian_name: {
       type: ['string', 'null'],
@@ -616,7 +616,7 @@ export const StudentSchema = {
       example: '+254787654321',
       maxLength: 20,
       minLength: 0,
-      pattern: '^(\\+254|0)?[17]\\d{8}$',
+      pattern: '^\\+[1-9]\\d{6,14}$',
     },
     bio: {
       type: ['string', 'null'],
@@ -705,7 +705,7 @@ export const StudentGuardianRequestSchema = {
       example: '+254712345678',
       maxLength: 20,
       minLength: 0,
-      pattern: '^(\\+254|0)?[17]\\d{8}$',
+      pattern: '^\\+[1-9]\\d{6,14}$',
     },
     relationship_type: {
       $ref: '#/components/schemas/RelationshipTypeEnum',
@@ -1662,12 +1662,6 @@ export const RubricScoringSchema = {
       example: 'instructor@sarafrika.com',
       readOnly: true,
     },
-    performance_expectation: {
-      type: 'string',
-      description: '**[READ-ONLY]** Classification of performance expectation level.',
-      example: 'Exceptional Performance',
-      readOnly: true,
-    },
     score_range: {
       type: 'string',
       description: '**[READ-ONLY]** Expected score range for this performance level.',
@@ -1685,6 +1679,12 @@ export const RubricScoringSchema = {
       type: 'string',
       description: '**[READ-ONLY]** Feedback category for constructive assessment guidance.',
       example: 'Excellence',
+      readOnly: true,
+    },
+    performance_expectation: {
+      type: 'string',
+      description: '**[READ-ONLY]** Classification of performance expectation level.',
+      example: 'Exceptional Performance',
       readOnly: true,
     },
   },
@@ -2006,16 +2006,16 @@ export const QuizQuestionSchema = {
       example: 'Multiple Choice Question',
       readOnly: true,
     },
-    points_display: {
-      type: 'string',
-      description: '**[READ-ONLY]** Human-readable format of the points value.',
-      example: '2.0 points',
-      readOnly: true,
-    },
     question_number: {
       type: 'string',
       description: '**[READ-ONLY]** Formatted question number for display in quiz interface.',
       example: 'Question 1',
+      readOnly: true,
+    },
+    points_display: {
+      type: 'string',
+      description: '**[READ-ONLY]** Human-readable format of the points value.',
+      example: '2.0 points',
       readOnly: true,
     },
   },
@@ -2374,12 +2374,6 @@ export const QuizAttemptSchema = {
       example: true,
       readOnly: true,
     },
-    grade_display: {
-      type: 'string',
-      description: '**[READ-ONLY]** Formatted display of the grade information.',
-      example: '85.00 / 100.00 (85%)',
-      readOnly: true,
-    },
     time_display: {
       type: 'string',
       description: '**[READ-ONLY]** Formatted display of the time taken to complete the quiz.',
@@ -2396,6 +2390,12 @@ export const QuizAttemptSchema = {
       type: 'string',
       description: '**[READ-ONLY]** Comprehensive summary of the quiz attempt performance.',
       example: 'Passed on attempt 2 with 85% score',
+      readOnly: true,
+    },
+    grade_display: {
+      type: 'string',
+      description: '**[READ-ONLY]** Formatted display of the grade information.',
+      example: '85.00 / 100.00 (85%)',
       readOnly: true,
     },
   },
@@ -4851,17 +4851,17 @@ export const InstructorSchema = {
       example: 12,
       readOnly: true,
     },
-    is_profile_complete: {
-      type: 'boolean',
-      description:
-        '**[READ-ONLY]** Indicates if the instructor profile is considered complete. Requires bio and professional headline.',
-      example: true,
-      readOnly: true,
-    },
     has_location_coordinates: {
       type: 'boolean',
       description:
         '**[READ-ONLY]** Indicates if the instructor has both latitude and longitude coordinates configured.',
+      example: true,
+      readOnly: true,
+    },
+    is_profile_complete: {
+      type: 'boolean',
+      description:
+        '**[READ-ONLY]** Indicates if the instructor profile is considered complete. Requires bio and professional headline.',
       example: true,
       readOnly: true,
     },
@@ -5148,22 +5148,6 @@ export const InstructorProfessionalMembershipSchema = {
       example: 'IEEE Member (4 years, 3 months) - Active',
       readOnly: true,
     },
-    is_complete: {
-      type: 'boolean',
-      description:
-        '**[READ-ONLY]** Indicates if the membership record has all essential information.',
-      example: true,
-      readOnly: true,
-    },
-    formatted_duration: {
-      type: ['string', 'null'],
-      description: '**[READ-ONLY]** Human-readable formatted duration of membership.',
-      example: '4 years, 3 months',
-      readOnly: true,
-    },
-    membership_status: {
-      $ref: '#/components/schemas/MembershipStatusEnum',
-    },
     membership_period: {
       type: ['string', 'null'],
       description: '**[READ-ONLY]** Formatted membership period showing start and end dates.',
@@ -5201,12 +5185,28 @@ export const InstructorProfessionalMembershipSchema = {
       example: true,
       readOnly: true,
     },
+    is_complete: {
+      type: 'boolean',
+      description:
+        '**[READ-ONLY]** Indicates if the membership record has all essential information.',
+      example: true,
+      readOnly: true,
+    },
     membership_duration_months: {
       type: ['integer', 'null'],
       format: 'int32',
       description:
         '**[READ-ONLY]** Duration of membership calculated from start and end dates, in months.',
       example: 51,
+      readOnly: true,
+    },
+    membership_status: {
+      $ref: '#/components/schemas/MembershipStatusEnum',
+    },
+    formatted_duration: {
+      type: ['string', 'null'],
+      description: '**[READ-ONLY]** Human-readable formatted duration of membership.',
+      example: '4 years, 3 months',
       readOnly: true,
     },
   },
@@ -5367,20 +5367,6 @@ export const InstructorExperienceSchema = {
       example: true,
       readOnly: true,
     },
-    duration_in_months: {
-      type: ['integer', 'null'],
-      format: 'int32',
-      description:
-        '**[READ-ONLY]** Duration of employment calculated from start and end dates, in months.',
-      example: 66,
-      readOnly: true,
-    },
-    formatted_duration: {
-      type: ['string', 'null'],
-      description: '**[READ-ONLY]** Human-readable formatted duration of employment.',
-      example: '5 years, 5 months',
-      readOnly: true,
-    },
     employment_period: {
       type: ['string', 'null'],
       description: '**[READ-ONLY]** Formatted employment period showing start and end dates.',
@@ -5414,6 +5400,20 @@ export const InstructorExperienceSchema = {
       format: 'double',
       description: '**[READ-ONLY]** Calculated years of experience based on start and end dates.',
       example: 5.46,
+      readOnly: true,
+    },
+    duration_in_months: {
+      type: ['integer', 'null'],
+      format: 'int32',
+      description:
+        '**[READ-ONLY]** Duration of employment calculated from start and end dates, in months.',
+      example: 66,
+      readOnly: true,
+    },
+    formatted_duration: {
+      type: ['string', 'null'],
+      description: '**[READ-ONLY]** Human-readable formatted duration of employment.',
+      example: '5 years, 5 months',
       readOnly: true,
     },
   },
@@ -10593,17 +10593,17 @@ conflict_resolution per template:
       example: 90,
       readOnly: true,
     },
-    duration_formatted: {
-      type: 'string',
-      description: '**[READ-ONLY]** Human-readable formatted duration.',
-      example: '1h 30m',
-      readOnly: true,
-    },
     capacity_info: {
       type: 'string',
       description:
         '**[READ-ONLY]** Human-readable capacity information including waitlist availability.',
       example: 'Max 25 participants (waitlist enabled)',
+      readOnly: true,
+    },
+    duration_formatted: {
+      type: 'string',
+      description: '**[READ-ONLY]** Human-readable formatted duration.',
+      example: '1h 30m',
       readOnly: true,
     },
   },
@@ -12890,7 +12890,7 @@ export const GuardianInvitationRegistrationRequestSchema = {
       example: '+254712345678',
       maxLength: 20,
       minLength: 0,
-      pattern: '^(\\+254|0)?[17]\\d{8}$',
+      pattern: '^\\+[1-9]\\d{6,14}$',
     },
     terms_accepted: {
       type: 'boolean',
@@ -13030,12 +13030,11 @@ a link to set a password and verify the address.
     phone_number: {
       type: 'string',
       description: `**Phone Number Validation:**
-- Country: KE
 - Type: Mobile only
-- Format: International (+country code) or local format supported`,
+- Format: E.164 only (+ then country code and number, no spaces), e.g. +254712345678`,
       example: '+254712345678',
       minLength: 1,
-      pattern: '^(\\+254|0)?[17]\\d{8}$',
+      pattern: '^\\+[1-9]\\d{6,14}$',
     },
     dob: {
       type: 'string',
@@ -14834,7 +14833,7 @@ export const GuardianDetailsRequestSchema = {
       example: '+254700000000',
       maxLength: 50,
       minLength: 0,
-      pattern: '^(\\+254|0)?[17]\\d{8}$',
+      pattern: '^\\+[1-9]\\d{6,14}$',
     },
   },
   required: ['guardian_email', 'guardian_name', 'guardian_relationship_type'],
@@ -15352,15 +15351,15 @@ export const EnrollmentSchema = {
       example: true,
       readOnly: true,
     },
-    did_attend: {
-      type: 'boolean',
-      description: '**[READ-ONLY]** Indicates if the student attended the class.',
-      example: false,
-      readOnly: true,
-    },
     is_attendance_marked: {
       type: 'boolean',
       description: '**[READ-ONLY]** Indicates if attendance has been marked for this enrollment.',
+      example: false,
+      readOnly: true,
+    },
+    did_attend: {
+      type: 'boolean',
+      description: '**[READ-ONLY]** Indicates if the student attended the class.',
       example: false,
       readOnly: true,
     },
@@ -17846,7 +17845,7 @@ export const AdminCreateUserRequestDTOSchema = {
       example: '+254700000000',
       maxLength: 50,
       minLength: 0,
-      pattern: '^(\\+254|0)?[17]\\d{8}$',
+      pattern: '^\\+[1-9]\\d{6,14}$',
     },
   },
   required: ['email', 'first_name', 'last_name'],
@@ -17951,7 +17950,7 @@ export const OrganisationUserCreateRequestDTOSchema = {
       example: '+254700000000',
       maxLength: 50,
       minLength: 0,
-      pattern: '^(\\+254|0)?[17]\\d{8}$',
+      pattern: '^\\+[1-9]\\d{6,14}$',
     },
     domain_name: {
       $ref: '#/components/schemas/DomainNameEnum2',
@@ -18941,16 +18940,16 @@ export const StudentScheduleSchema = {
       example: 90,
       readOnly: true,
     },
-    did_attend: {
-      type: 'boolean',
-      description: '**[READ-ONLY]** Indicates if the student attended this class.',
-      example: false,
-      readOnly: true,
-    },
     is_upcoming: {
       type: 'boolean',
       description: '**[READ-ONLY]** Indicates if this class is upcoming.',
       example: true,
+      readOnly: true,
+    },
+    did_attend: {
+      type: 'boolean',
+      description: '**[READ-ONLY]** Indicates if the student attended this class.',
+      example: false,
       readOnly: true,
     },
   },
@@ -19223,12 +19222,6 @@ export const PageSchema = {
       type: 'integer',
       format: 'int32',
     },
-    first: {
-      type: 'boolean',
-    },
-    last: {
-      type: 'boolean',
-    },
     numberOfElements: {
       type: 'integer',
       format: 'int32',
@@ -19238,6 +19231,12 @@ export const PageSchema = {
     },
     pageable: {
       $ref: '#/components/schemas/PageableObject',
+    },
+    first: {
+      type: 'boolean',
+    },
+    last: {
+      type: 'boolean',
     },
     empty: {
       type: 'boolean',
@@ -29397,14 +29396,6 @@ export const ProficiencyLevelEnum2Schema = {
   example: 'EXPERT',
 } as const;
 
-export const MembershipStatusEnumSchema = {
-  type: 'string',
-  description: '**[READ-ONLY]** Current status of the membership.',
-  enum: ['ACTIVE', 'INACTIVE', 'EXPIRED', 'UNKNOWN'],
-  example: 'ACTIVE',
-  readOnly: true,
-} as const;
-
 export const OrganisationTypeEnumSchema = {
   type: 'string',
   description: '**[READ-ONLY]** Classification of organisation type based on name keywords.',
@@ -29417,6 +29408,14 @@ export const OrganisationTypeEnumSchema = {
     'OTHER',
   ],
   example: 'PROFESSIONAL_INSTITUTE',
+  readOnly: true,
+} as const;
+
+export const MembershipStatusEnumSchema = {
+  type: 'string',
+  description: '**[READ-ONLY]** Current status of the membership.',
+  enum: ['ACTIVE', 'INACTIVE', 'EXPIRED', 'UNKNOWN'],
+  example: 'ACTIVE',
   readOnly: true,
 } as const;
 
@@ -30192,7 +30191,7 @@ export const StudentWritableSchema = {
       example: '+254712345678',
       maxLength: 20,
       minLength: 0,
-      pattern: '^(\\+254|0)?[17]\\d{8}$',
+      pattern: '^\\+[1-9]\\d{6,14}$',
     },
     second_guardian_name: {
       type: ['string', 'null'],
@@ -30209,7 +30208,7 @@ export const StudentWritableSchema = {
       example: '+254787654321',
       maxLength: 20,
       minLength: 0,
-      pattern: '^(\\+254|0)?[17]\\d{8}$',
+      pattern: '^\\+[1-9]\\d{6,14}$',
     },
     bio: {
       type: ['string', 'null'],

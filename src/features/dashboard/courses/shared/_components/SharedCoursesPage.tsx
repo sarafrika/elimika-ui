@@ -1961,8 +1961,8 @@ export function SharedCoursesPage({ domain }: SharedCoursesPageProps) {
                       : ''}
                   </p>
                   <p>
-                    Submit your application notes and price each training method you offer per hour,
-                    per session and per day, at or above the creator-set minimum.
+                    Submit your application notes and price each training method you offer per hour
+                    and per day, at or above the creator-set minimum.
                   </p>
                 </>
               )}

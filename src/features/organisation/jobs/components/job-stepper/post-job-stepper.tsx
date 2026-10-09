@@ -52,7 +52,8 @@ import {
   formatRateAmount,
   formatRateBasis,
   getRateBasis,
-  type RateBasis,
+  isSelectableRateBasis,
+  type SelectableRateBasis,
   type RateCard,
   rateFor,
 } from '@/lib/rate-card';
@@ -124,7 +125,7 @@ export function PostJobStepper() {
   const [offering, setOffering] = useState('');
   const [programCategoryUuid, setProgramCategoryUuid] = useState('');
   const [delivery, setDelivery] = useState<DeliveryMode | null>(null);
-  const [basis, setBasis] = useState<RateBasis | null>(null);
+  const [basis, setBasis] = useState<SelectableRateBasis | null>(null);
   const [service, setService] = useState<ServiceKey | null>(null);
   const [addedCards, setAddedCards] = useState<Record<string, RateCard>>({});
   const [place, setPlace] = useState<Place>(EMPTY_PLACE);
@@ -218,7 +219,8 @@ export function PostJobStepper() {
 
     const jobDelivery = (job.location_type as DeliveryMode | undefined) ?? 'IN_PERSON';
     setDelivery(jobDelivery);
-    if (job.rate_basis) setBasis(job.rate_basis);
+    // Legacy per-session jobs must be re-billed per hour or per day.
+    if (isSelectableRateBasis(job.rate_basis)) setBasis(job.rate_basis);
     setService(
       serviceForDelivery(jobDelivery, {
         serviceType: job.service_type,
@@ -324,7 +326,7 @@ export function PostJobStepper() {
     }
   };
 
-  const changeBasis = (next: RateBasis) => {
+  const changeBasis = (next: SelectableRateBasis) => {
     if (next === basis || !delivery) return;
     setBasis(next);
     setSalePrice('');

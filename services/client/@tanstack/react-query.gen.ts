@@ -28455,7 +28455,7 @@ export const getFileQueryKey = (options: Options<GetFileData>) =>
 
 /**
  * Get a stored file by its storage key
- * Serves any stored file (images, videos, documents, certificates) by its canonical storage key.
+ * Serves any stored file (images, videos, documents, certificates) by its canonical storage key. Responses are immutable and carry an ETag. For JPEG/PNG/BMP images, w=320|640|1280 returns a downscaled variant (never upscaled), generated once and cached.
  */
 export const getFileOptions = (options: Options<GetFileData>) => {
   return queryOptions({

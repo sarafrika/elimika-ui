@@ -7,7 +7,7 @@ import { DEFAULT_CURRENCY, validateRateCard } from '@/lib/rate-card';
 
 import type { ApplyAction, ApplyState } from './apply-model';
 
-/** Methods are offered by switching their row on; every offered row prices all three bases. */
+/** Methods are offered by switching their row on; every offered row prices both bases. */
 export function StepPricing({
   state,
   dispatch,
@@ -25,8 +25,7 @@ export function StepPricing({
   return (
     <div className='space-y-4'>
       <p className='text-muted-foreground text-sm'>
-        Switch on each training method you will offer and price it per hour, per session and per
-        day, so any job posted later already has an approved rate. Rates are{' '}
+        Switch on each training method you will offer and price it per hour and per day, so any job posted later already has an approved rate. Rates are{' '}
         {state.card.currency || DEFAULT_CURRENCY} per learner.
       </p>
 

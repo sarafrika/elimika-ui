@@ -22,9 +22,9 @@ import {
   getRateBasis,
   normaliseRateCard,
   offeredMethods,
-  type RateBasis,
   type RateCard,
   rateCardChanges,
+  type SelectableRateBasis,
   validateRateCard,
 } from '@/lib/rate-card';
 import type { TrainingRateUpdate } from '@/services/client';
@@ -44,7 +44,7 @@ type UpdateRatesDialogProps = {
   /** Who approves; falls back to "The course creator" / "The program creator". */
   creatorName?: string | null;
   /** Add-a-basis flow: highlights that column and shows only offered methods. */
-  focusBasis?: RateBasis;
+  focusBasis?: SelectableRateBasis;
   /** Minimum training fee every offered rate must meet. */
   minimum?: number | null;
   onSubmitted?: (update: TrainingRateUpdate | null) => void;

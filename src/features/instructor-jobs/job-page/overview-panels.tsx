@@ -51,7 +51,7 @@ export function OverviewPanel({
             }
           />
           <DetailRow
-            label='Learners'
+            label='Student groups'
             value={learners.length ? learners.join(', ') : 'Open to all learners'}
           />
           <DetailRow

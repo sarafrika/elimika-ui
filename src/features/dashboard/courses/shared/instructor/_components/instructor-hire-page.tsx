@@ -59,7 +59,7 @@ import {
   formatRate,
   formatRateAmount,
   formatRateBasis,
-  type RateBasis,
+  type SelectableRateBasis,
   rateFor,
 } from '@/lib/rate-card';
 import { allCourseTrainingRequirementsOptions } from '@/services/course-training-requirements';
@@ -196,7 +196,7 @@ export default function InstructorHirePage({ courseId, instructorId }: Props) {
 
   const [selectedOffering, setSelectedOffering] = useState('');
   const [delivery, setDelivery] = useState<DeliveryMode | null>(null);
-  const [rateBasis, setRateBasis] = useState<RateBasis | null>(null);
+  const [rateBasis, setRateBasis] = useState<SelectableRateBasis | null>(null);
   const [serviceKey, setServiceKey] = useState<ServiceKey | null>(null);
   const [locationName, setLocationName] = useState('');
   const [locationLatitude, setLocationLatitude] = useState('');
@@ -481,7 +481,7 @@ export default function InstructorHirePage({ courseId, instructorId }: Props) {
     }
   };
 
-  const handleBasisChange = (next: RateBasis) => {
+  const handleBasisChange = (next: SelectableRateBasis) => {
     setRateBasis(next);
     if (!delivery || !serviceKey) return;
     if (rateFor(rateCard, { format: serviceFormat(serviceKey), delivery, basis: next }) === null) {

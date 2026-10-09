@@ -95,7 +95,7 @@ export const zUser = z
           .string()
           .min(0)
           .max(20)
-          .regex(/^(\+254|0)?[17]\d{8}$/),
+          .regex(/^\+[1-9]\d{6,14}$/),
         z.null(),
       ])
       .optional(),
@@ -214,7 +214,7 @@ export const zTrainingBranch = z
     poc_telephone: z
       .string()
       .max(20)
-      .regex(/^(\+254|0)?\d{8,9}$/)
+      .regex(/^\+[1-9]\d{6,14}$/)
       .describe('**[REQUIRED]** Telephone number of the point of contact for this branch.'),
     active: z
       .boolean()
@@ -358,7 +358,7 @@ export const zStudent = z
       .string()
       .min(0)
       .max(20)
-      .regex(/^(\+254|0)?[17]\d{8}$/)
+      .regex(/^\+[1-9]\d{6,14}$/)
       .describe(
         '**[OPTIONAL]** Mobile phone number of the primary guardian. Used for emergency contacts and notifications. Should include country code.'
       )
@@ -370,7 +370,7 @@ export const zStudent = z
           .string()
           .min(0)
           .max(20)
-          .regex(/^(\+254|0)?[17]\d{8}$/),
+          .regex(/^\+[1-9]\d{6,14}$/),
         z.null(),
       ])
       .optional(),
@@ -447,7 +447,7 @@ export const zStudentGuardianRequest = z
           .string()
           .min(0)
           .max(20)
-          .regex(/^(\+254|0)?[17]\d{8}$/),
+          .regex(/^\+[1-9]\d{6,14}$/),
         z.null(),
       ])
       .optional(),
@@ -1060,11 +1060,6 @@ export const zRubricScoring = z
       )
       .readonly()
       .optional(),
-    performance_expectation: z
-      .string()
-      .describe('**[READ-ONLY]** Classification of performance expectation level.')
-      .readonly()
-      .optional(),
     score_range: z
       .string()
       .describe('**[READ-ONLY]** Expected score range for this performance level.')
@@ -1078,6 +1073,11 @@ export const zRubricScoring = z
     feedback_category: z
       .string()
       .describe('**[READ-ONLY]** Feedback category for constructive assessment guidance.')
+      .readonly()
+      .optional(),
+    performance_expectation: z
+      .string()
+      .describe('**[READ-ONLY]** Classification of performance expectation level.')
       .readonly()
       .optional(),
   })
@@ -1300,14 +1300,14 @@ export const zQuizQuestion = z
       .describe('**[READ-ONLY]** Human-readable category of the question type.')
       .readonly()
       .optional(),
-    points_display: z
-      .string()
-      .describe('**[READ-ONLY]** Human-readable format of the points value.')
-      .readonly()
-      .optional(),
     question_number: z
       .string()
       .describe('**[READ-ONLY]** Formatted question number for display in quiz interface.')
+      .readonly()
+      .optional(),
+    points_display: z
+      .string()
+      .describe('**[READ-ONLY]** Human-readable format of the points value.')
       .readonly()
       .optional(),
   })
@@ -1559,11 +1559,6 @@ export const zQuizAttempt = z
       )
       .readonly()
       .optional(),
-    grade_display: z
-      .string()
-      .describe('**[READ-ONLY]** Formatted display of the grade information.')
-      .readonly()
-      .optional(),
     time_display: z
       .string()
       .describe('**[READ-ONLY]** Formatted display of the time taken to complete the quiz.')
@@ -1577,6 +1572,11 @@ export const zQuizAttempt = z
     performance_summary: z
       .string()
       .describe('**[READ-ONLY]** Comprehensive summary of the quiz attempt performance.')
+      .readonly()
+      .optional(),
+    grade_display: z
+      .string()
+      .describe('**[READ-ONLY]** Formatted display of the grade information.')
       .readonly()
       .optional(),
   })
@@ -2839,17 +2839,17 @@ export const zInstructor = z
     distance_band: zDistanceBandEnum.optional(),
     rating_avg: z.union([z.number().readonly(), z.null()]).readonly().optional(),
     review_count: z.union([z.coerce.bigint().readonly(), z.null()]).readonly().optional(),
-    is_profile_complete: z
-      .boolean()
-      .describe(
-        '**[READ-ONLY]** Indicates if the instructor profile is considered complete. Requires bio and professional headline.'
-      )
-      .readonly()
-      .optional(),
     has_location_coordinates: z
       .boolean()
       .describe(
         '**[READ-ONLY]** Indicates if the instructor has both latitude and longitude coordinates configured.'
+      )
+      .readonly()
+      .optional(),
+    is_profile_complete: z
+      .boolean()
+      .describe(
+        '**[READ-ONLY]** Indicates if the instructor profile is considered complete. Requires bio and professional headline.'
       )
       .readonly()
       .optional(),
@@ -2977,13 +2977,6 @@ export const zApiResponseInstructorSkill = z.object({
 });
 
 /**
- * **[READ-ONLY]** Current status of the membership.
- */
-export const zMembershipStatusEnum = z
-  .enum(['ACTIVE', 'INACTIVE', 'EXPIRED', 'UNKNOWN'])
-  .describe('**[READ-ONLY]** Current status of the membership.');
-
-/**
  * **[READ-ONLY]** Classification of organisation type based on name keywords.
  */
 export const zOrganisationTypeEnum = z
@@ -2996,6 +2989,13 @@ export const zOrganisationTypeEnum = z
     'OTHER',
   ])
   .describe('**[READ-ONLY]** Classification of organisation type based on name keywords.');
+
+/**
+ * **[READ-ONLY]** Current status of the membership.
+ */
+export const zMembershipStatusEnum = z
+  .enum(['ACTIVE', 'INACTIVE', 'EXPIRED', 'UNKNOWN'])
+  .describe('**[READ-ONLY]** Current status of the membership.');
 
 /**
  * Professional membership record for instructors including associations, industry bodies, and certification organizations
@@ -3065,13 +3065,6 @@ export const zInstructorProfessionalMembership = z
       .describe('**[READ-ONLY]** Brief summary of the membership for display in listings.')
       .readonly()
       .optional(),
-    is_complete: z
-      .boolean()
-      .describe('**[READ-ONLY]** Indicates if the membership record has all essential information.')
-      .readonly()
-      .optional(),
-    formatted_duration: z.union([z.string().readonly(), z.null()]).readonly().optional(),
-    membership_status: zMembershipStatusEnum.optional(),
     membership_period: z.union([z.string().readonly(), z.null()]).readonly().optional(),
     is_long_standing_member: z
       .boolean()
@@ -3090,10 +3083,17 @@ export const zInstructorProfessionalMembership = z
       .describe('**[READ-ONLY]** Indicates if this membership was started within the last 3 years.')
       .readonly()
       .optional(),
+    is_complete: z
+      .boolean()
+      .describe('**[READ-ONLY]** Indicates if the membership record has all essential information.')
+      .readonly()
+      .optional(),
     membership_duration_months: z
       .union([z.number().int().readonly(), z.null()])
       .readonly()
       .optional(),
+    membership_status: zMembershipStatusEnum.optional(),
+    formatted_duration: z.union([z.string().readonly(), z.null()]).readonly().optional(),
   })
   .describe(
     'Professional membership record for instructors including associations, industry bodies, and certification organizations'
@@ -3189,8 +3189,6 @@ export const zInstructorExperience = z
       .describe('**[READ-ONLY]** Indicates if the experience record has all essential information.')
       .readonly()
       .optional(),
-    duration_in_months: z.union([z.number().int().readonly(), z.null()]).readonly().optional(),
-    formatted_duration: z.union([z.string().readonly(), z.null()]).readonly().optional(),
     employment_period: z.union([z.string().readonly(), z.null()]).readonly().optional(),
     is_long_term_position: z
       .boolean()
@@ -3209,6 +3207,8 @@ export const zInstructorExperience = z
       .readonly()
       .optional(),
     calculated_years: z.union([z.number().readonly(), z.null()]).readonly().optional(),
+    duration_in_months: z.union([z.number().int().readonly(), z.null()]).readonly().optional(),
+    formatted_duration: z.union([z.string().readonly(), z.null()]).readonly().optional(),
   })
   .describe(
     'Professional work experience record for instructors including positions, organizations, responsibilities, and employment duration'
@@ -6155,16 +6155,16 @@ export const zClassDefinition = z
       )
       .readonly()
       .optional(),
-    duration_formatted: z
-      .string()
-      .describe('**[READ-ONLY]** Human-readable formatted duration.')
-      .readonly()
-      .optional(),
     capacity_info: z
       .string()
       .describe(
         '**[READ-ONLY]** Human-readable capacity information including waitlist availability.'
       )
+      .readonly()
+      .optional(),
+    duration_formatted: z
+      .string()
+      .describe('**[READ-ONLY]** Human-readable formatted duration.')
       .readonly()
       .optional(),
   })
@@ -7345,7 +7345,7 @@ export const zGuardianInvitationRegistrationRequest = z
           .string()
           .min(0)
           .max(20)
-          .regex(/^(\+254|0)?[17]\d{8}$/),
+          .regex(/^\+[1-9]\d{6,14}$/),
         z.null(),
       ])
       .optional(),
@@ -7426,9 +7426,9 @@ export const zRegistrationRequest = z
     phone_number: z
       .string()
       .min(1)
-      .regex(/^(\+254|0)?[17]\d{8}$/)
+      .regex(/^\+[1-9]\d{6,14}$/)
       .describe(
-        '**Phone Number Validation:**\n- Country: KE\n- Type: Mobile only\n- Format: International (+country code) or local format supported'
+        '**Phone Number Validation:**\n- Type: Mobile only\n- Format: E.164 only (+ then country code and number, no spaces), e.g. +254712345678'
       ),
     dob: z.string().date().optional(),
     gender: zGenderEnum2.optional(),
@@ -8482,7 +8482,7 @@ export const zGuardianDetailsRequest = z
           .string()
           .min(0)
           .max(50)
-          .regex(/^(\+254|0)?[17]\d{8}$/),
+          .regex(/^\+[1-9]\d{6,14}$/),
         z.null(),
       ])
       .optional(),
@@ -8760,14 +8760,14 @@ export const zEnrollment = z
       .describe('**[READ-ONLY]** Indicates if the enrollment can be cancelled.')
       .readonly()
       .optional(),
-    did_attend: z
-      .boolean()
-      .describe('**[READ-ONLY]** Indicates if the student attended the class.')
-      .readonly()
-      .optional(),
     is_attendance_marked: z
       .boolean()
       .describe('**[READ-ONLY]** Indicates if attendance has been marked for this enrollment.')
+      .readonly()
+      .optional(),
+    did_attend: z
+      .boolean()
+      .describe('**[READ-ONLY]** Indicates if the student attended the class.')
       .readonly()
       .optional(),
     status_description: z
@@ -10229,7 +10229,7 @@ export const zAdminCreateUserRequestDto = z.object({
     .string()
     .min(0)
     .max(50)
-    .regex(/^(\+254|0)?[17]\d{8}$/)
+    .regex(/^\+[1-9]\d{6,14}$/)
     .describe('Optional phone number')
     .optional(),
 });
@@ -10286,7 +10286,7 @@ export const zOrganisationUserCreateRequestDto = z.object({
     .string()
     .min(0)
     .max(50)
-    .regex(/^(\+254|0)?[17]\d{8}$/)
+    .regex(/^\+[1-9]\d{6,14}$/)
     .describe('Optional phone number')
     .optional(),
   domain_name: zDomainNameEnum2,
@@ -10819,14 +10819,14 @@ export const zStudentSchedule = z
       .describe('**[READ-ONLY]** Duration of the scheduled class in minutes.')
       .readonly()
       .optional(),
-    did_attend: z
-      .boolean()
-      .describe('**[READ-ONLY]** Indicates if the student attended this class.')
-      .readonly()
-      .optional(),
     is_upcoming: z
       .boolean()
       .describe('**[READ-ONLY]** Indicates if this class is upcoming.')
+      .readonly()
+      .optional(),
+    did_attend: z
+      .boolean()
+      .describe('**[READ-ONLY]** Indicates if the student attended this class.')
       .readonly()
       .optional(),
   })
@@ -10959,11 +10959,11 @@ export const zPage = z.object({
   size: z.number().int().optional(),
   content: z.array(z.unknown()).optional(),
   number: z.number().int().optional(),
-  first: z.boolean().optional(),
-  last: z.boolean().optional(),
   numberOfElements: z.number().int().optional(),
   sort: zSortObject.optional(),
   pageable: zPageableObject.optional(),
+  first: z.boolean().optional(),
+  last: z.boolean().optional(),
   empty: z.boolean().optional(),
 });
 
@@ -15890,7 +15890,7 @@ export const zStudentWritable = z
       .string()
       .min(0)
       .max(20)
-      .regex(/^(\+254|0)?[17]\d{8}$/)
+      .regex(/^\+[1-9]\d{6,14}$/)
       .describe(
         '**[OPTIONAL]** Mobile phone number of the primary guardian. Used for emergency contacts and notifications. Should include country code.'
       )
@@ -15902,7 +15902,7 @@ export const zStudentWritable = z
           .string()
           .min(0)
           .max(20)
-          .regex(/^(\+254|0)?[17]\d{8}$/),
+          .regex(/^\+[1-9]\d{6,14}$/),
         z.null(),
       ])
       .optional(),
@@ -25383,7 +25383,11 @@ export const zGetFileData = z.object({
   path: z.object({
     key: z.string().describe('Canonical storage key, e.g. course_thumbnails/uuid.jpg'),
   }),
-  query: z.never().optional(),
+  query: z
+    .object({
+      w: z.number().int().describe('Optional variant width in pixels: 320, 640 or 1280').optional(),
+    })
+    .optional(),
 });
 
 /**

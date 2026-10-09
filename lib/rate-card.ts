@@ -1,13 +1,19 @@
 import type { CourseTrainingRateCard, TrainingRateFloorFlags } from '@/services/client';
 
-/** The 12-cell rate card shared by course and program training applications. */
+/** The 8-cell rate card shared by course and program training applications. */
 export type RateCard = CourseTrainingRateCard;
 
 /** Per-cell below-minimum flags the API sends the course or program owner. */
 export type RateFloorFlags = TrainingRateFloorFlags;
 
-/** The unit a rate is quoted in, as the API spells it. */
-export type RateBasis = 'per_hour' | 'per_session' | 'per_day';
+/** A basis that can still be chosen for new classes, jobs and rate cards. */
+export type SelectableRateBasis = 'per_hour' | 'per_day';
+
+/** Retired basis; older classes, jobs and bookings may still carry it. */
+export type LegacyRateBasis = 'per_session';
+
+/** The unit a stored rate is quoted in, as the API spells it (legacy included). */
+export type RateBasis = SelectableRateBasis | LegacyRateBasis;
 
 /** Session format as the API spells it: private (1:1) or group. */
 export type TrainingFormat = 'INDIVIDUAL' | 'GROUP';
@@ -23,9 +29,9 @@ export type MethodPrefix =
   | 'group_online';
 
 /** Cell-name fragment of a rate basis. */
-export type BasisSuffix = 'hourly' | 'session' | 'daily';
+export type BasisSuffix = 'hourly' | 'daily';
 
-/** One of the 12 rate card cells, e.g. `group_online_session_rate`. */
+/** One of the 8 rate card cells, e.g. `group_online_daily_rate`. */
 export type RateCellKey = `${MethodPrefix}_${BasisSuffix}_rate`;
 
 /** A card being edited: cells may still hold raw input strings. */
@@ -41,13 +47,22 @@ export type TrainingMethod = {
 };
 
 export type RateBasisInfo = {
-  value: RateBasis;
+  value: SelectableRateBasis;
   label: string;
   unit: string;
   phrase: string;
   description: string;
   suffix: BasisSuffix;
+  legacy?: false;
 };
+
+/** Display-only info for the retired per-session basis; it has no rate card cell. */
+export type LegacyRateBasisInfo = Omit<RateBasisInfo, 'value' | 'suffix' | 'legacy'> & {
+  value: LegacyRateBasis;
+  legacy: true;
+};
+
+export type RateBasisDisplay = RateBasisInfo | LegacyRateBasisInfo;
 
 export const DEFAULT_CURRENCY = 'KES';
 
@@ -64,7 +79,7 @@ export const TRAINING_METHODS: readonly TrainingMethod[] = [
   { prefix: 'group_online', label: 'Group online', format: 'GROUP', location: 'online' },
 ];
 
-/** The three units a rate can be charged in, in column order. */
+/** The units a rate can be charged in, in column order. */
 export const RATE_BASES: readonly RateBasisInfo[] = [
   {
     value: 'per_hour',
@@ -73,14 +88,6 @@ export const RATE_BASES: readonly RateBasisInfo[] = [
     phrase: 'per hour',
     description: 'Charged for every hour of every session.',
     suffix: 'hourly',
-  },
-  {
-    value: 'per_session',
-    label: 'Per session',
-    unit: 'session',
-    phrase: 'per session',
-    description: 'One flat price per session, whatever its length.',
-    suffix: 'session',
   },
   {
     value: 'per_day',
@@ -92,16 +99,45 @@ export const RATE_BASES: readonly RateBasisInfo[] = [
   },
 ];
 
+/** Shown for classes, jobs and bookings still stored as per session. */
+export const LEGACY_SESSION_BASIS: LegacyRateBasisInfo = {
+  value: 'per_session',
+  label: 'Per session (legacy)',
+  unit: 'session',
+  phrase: 'per session',
+  description: 'One flat price per session. No longer offered for new classes or jobs.',
+  legacy: true,
+};
+
 type MethodRef = TrainingMethod | MethodPrefix;
-type BasisRef = RateBasisInfo | RateBasis;
+type BasisRef = RateBasisInfo | SelectableRateBasis;
 
 function prefixOf(method: MethodRef): MethodPrefix {
   return typeof method === 'string' ? method : method.prefix;
 }
 
-/** The RATE_BASES entry for a basis; unknown or missing values fall back to per hour. */
-export function getRateBasis(basis?: BasisRef | string | null): RateBasisInfo {
+/** True for a basis that can still be chosen (per hour or per day). */
+export function isSelectableRateBasis(basis: unknown): basis is SelectableRateBasis {
+  return RATE_BASES.some(entry => entry.value === basis);
+}
+
+/** True when a stored basis is the retired per-session one. */
+export function isLegacyRateBasis(basis: unknown): basis is LegacyRateBasis {
+  return basis === LEGACY_SESSION_BASIS.value;
+}
+
+/** Display info for a stored basis; per session maps to the legacy entry, unknown to per hour. */
+export function getRateBasis(
+  basis?: RateBasisDisplay | RateBasis | string | null
+): RateBasisDisplay {
   const value = typeof basis === 'object' && basis ? basis.value : basis;
+  if (isLegacyRateBasis(value)) return LEGACY_SESSION_BASIS;
+  return RATE_BASES.find(entry => entry.value === value) ?? RATE_BASES[0]!;
+}
+
+/** The RATE_BASES entry for a selectable basis. */
+function getSelectableBasis(basis: BasisRef): RateBasisInfo {
+  const value = typeof basis === 'object' ? basis.value : basis;
   return RATE_BASES.find(entry => entry.value === value) ?? RATE_BASES[0]!;
 }
 
@@ -112,7 +148,7 @@ export function getTrainingMethod(prefix: MethodPrefix): TrainingMethod {
 
 /** The cell holding a method's rate in a basis. */
 export function cellKey(method: MethodRef, basis: BasisRef): RateCellKey {
-  return `${prefixOf(method)}_${getRateBasis(basis).suffix}_rate`;
+  return `${prefixOf(method)}_${getSelectableBasis(basis).suffix}_rate`;
 }
 
 /** Every cell key, methods × bases in grid order. */
@@ -127,7 +163,7 @@ export function parseRate(value: unknown): number | null {
   return Number.isFinite(parsed) && parsed !== 0 ? parsed : null;
 }
 
-/** True when any of the method's three cells is set. */
+/** True when any of the method's cells is set. */
 export function isMethodOffered(
   card: RateCardInput | null | undefined,
   method: MethodRef
@@ -192,7 +228,7 @@ export function normaliseRateCard(card: RateCardInput | null | undefined): RateC
   return out;
 }
 
-/** Clears one method's three cells, i.e. stops offering it. */
+/** Clears one method's cells, i.e. stops offering it. */
 export function clearMethod(card: RateCard, method: MethodRef): RateCard {
   const next: RateCard = { ...card };
   for (const basis of RATE_BASES) next[cellKey(method, basis)] = null;
@@ -204,7 +240,7 @@ export function rateFor(
   card: RateCardInput | null | undefined,
   { format, delivery, basis }: { format: TrainingFormat; delivery: DeliveryMode; basis: RateBasis }
 ): number | null {
-  if (!card) return null;
+  if (!card || !isSelectableRateBasis(basis)) return null;
   const scope = format === 'INDIVIDUAL' ? 'private' : 'group';
   const location = delivery === 'ONLINE' ? 'online' : 'inperson';
   const value = parseRate(card[cellKey(`${scope}_${location}`, basis)]);
@@ -229,7 +265,7 @@ export function formatRate(
   return `${formatRateAmount(amount, currency)} / ${getRateBasis(basis).unit}`;
 }
 
-/** "per hour" / "per session" / "per day". */
+/** "per hour" / "per day"; legacy per-session values read "per session". */
 export function formatRateBasis(basis: RateBasis | string | null | undefined) {
   return getRateBasis(basis).phrase;
 }

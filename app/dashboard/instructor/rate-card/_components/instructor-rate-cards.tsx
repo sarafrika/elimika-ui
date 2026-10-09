@@ -16,7 +16,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { useInstructor } from '@/context/instructor-context';
 import { useCourseCreatorsByIds } from '@/hooks/use-batched-lookups';
 import { dayjs } from '@/lib/date';
-import { RATE_BASES, type RateBasis } from '@/lib/rate-card';
+import { RATE_BASES, type SelectableRateBasis } from '@/lib/rate-card';
 import { cn } from '@/lib/utils';
 import { dashboardUrl } from '@/src/features/dashboard/lib/dashboard-url';
 import { creatorRole } from '@/src/features/rate-card/application-display';
@@ -28,7 +28,7 @@ import {
 } from '@/src/features/rate-card/hooks';
 import type { TrainingApplicationKind } from '@/src/features/rate-card/types';
 
-type DialogTarget = { entry: TrainingApplicationEntry; focusBasis?: RateBasis };
+type DialogTarget = { entry: TrainingApplicationEntry; focusBasis?: SelectableRateBasis };
 
 const STATUS_ORDER: Record<string, number> = { approved: 0, pending: 1, rejected: 2, revoked: 3 };
 
@@ -180,7 +180,7 @@ function RateCardEntry({
 }: {
   entry: TrainingApplicationEntry;
   creatorName: string | null;
-  highlightBasis?: RateBasis;
+  highlightBasis?: SelectableRateBasis;
   onUpdate: () => void;
 }) {
   const { application, kind } = entry;

@@ -4,11 +4,16 @@ import { CircleCheck, Clock } from 'lucide-react';
 import type { ReactNode } from 'react';
 
 import { Badge } from '@/components/ui/badge';
-import { RATE_BASES, type RateBasis, type RateBasisInfo } from '@/lib/rate-card';
+import {
+  RATE_BASES,
+  type RateBasis,
+  type RateBasisInfo,
+  type SelectableRateBasis,
+} from '@/lib/rate-card';
 import { ChoiceCard } from './choice-card';
 import type { BasisStatus, RateViewer } from './class-form-shared';
 
-/** Only bases the rate card prices can be picked; the rest say why and how to add them. */
+/** Per hour and per day only; bases the card doesn't price say why and how to add them. */
 export function BillingBasisCards({
   value,
   onChange,
@@ -18,8 +23,8 @@ export function BillingBasisCards({
   viewer = 'owner',
 }: {
   value: RateBasis | null;
-  onChange: (basis: RateBasis) => void;
-  statusFor: (basis: RateBasis) => BasisStatus;
+  onChange: (basis: SelectableRateBasis) => void;
+  statusFor: (basis: SelectableRateBasis) => BasisStatus;
   renderAddAction?: (basis: RateBasisInfo) => ReactNode;
   hint?: ReactNode;
   viewer?: RateViewer;
@@ -30,7 +35,7 @@ export function BillingBasisCards({
         {viewer === 'owner' ? 'How are learners billed?' : 'How would you like to be billed?'}
       </legend>
       {hint ? <p className='text-muted-foreground text-xs'>{hint}</p> : null}
-      <div role='radiogroup' aria-label='Billing basis' className='grid gap-3 pt-1 md:grid-cols-3'>
+      <div role='radiogroup' aria-label='Billing basis' className='grid gap-3 pt-1 md:grid-cols-2'>
         {RATE_BASES.map(basis => {
           const status = statusFor(basis.value);
           return (

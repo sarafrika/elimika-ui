@@ -88,7 +88,7 @@ export function describeMissingRates(card: RateCardInput | null | undefined) {
   };
 }
 
-/** The lowest offered rate on each basis, e.g. "KES 620 / hour · KES 1,800 / session". */
+/** The lowest offered rate on each basis, e.g. "KES 620 / hour · KES 4,800 / day". */
 export function lowestRatesLabel(card: RateCardInput | null | undefined): string | undefined {
   const methods = offeredMethods(card);
   const lowest = RATE_BASES.flatMap(basis => {

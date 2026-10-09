@@ -89,7 +89,6 @@ import { StatCard, StatCardSkeleton, surfaceTheme } from '@/components/data-disp
 const BASIS_ICONS = {
   all: BriefcaseBusiness,
   per_hour: Clock,
-  per_session: CalendarDays,
   per_day: Layers,
 };
 

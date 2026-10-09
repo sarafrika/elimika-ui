@@ -77,7 +77,7 @@ const COURSE_OPPORTUNITY_TERMS: readonly CourseOpportunityTerm[] = [
   { k: 'Platform fee', v: '{platformFee} of the sale', requires: ['platformFee'], tone: 'muted' },
   {
     k: 'Your rates',
-    v: 'Per hour, per session and per day, on the application',
+    v: 'Per hour and per day, on the application',
     tone: 'highlight',
   },
 ];

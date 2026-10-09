@@ -374,7 +374,7 @@ export function JobDetailsPage({ jobUuid }: { jobUuid: string }) {
                       }
                     />
                     <DetailRow
-                      label='Target groups'
+                      label='Student groups'
                       value={
                         job.target_groups?.length
                           ? job.target_groups.join(', ')

@@ -831,10 +831,6 @@ export type RubricScoring = {
    */
   readonly updated_by?: string;
   /**
-   * **[READ-ONLY]** Classification of performance expectation level.
-   */
-  readonly performance_expectation?: string;
-  /**
    * **[READ-ONLY]** Expected score range for this performance level.
    */
   readonly score_range?: string;
@@ -846,6 +842,10 @@ export type RubricScoring = {
    * **[READ-ONLY]** Feedback category for constructive assessment guidance.
    */
   readonly feedback_category?: string;
+  /**
+   * **[READ-ONLY]** Classification of performance expectation level.
+   */
+  readonly performance_expectation?: string;
 };
 
 export type ApiResponseRubricScoring = {
@@ -1000,13 +1000,13 @@ export type QuizQuestion = {
    */
   readonly question_category?: string;
   /**
-   * **[READ-ONLY]** Human-readable format of the points value.
-   */
-  readonly points_display?: string;
-  /**
    * **[READ-ONLY]** Formatted question number for display in quiz interface.
    */
   readonly question_number?: string;
+  /**
+   * **[READ-ONLY]** Human-readable format of the points value.
+   */
+  readonly points_display?: string;
 };
 
 export type ApiResponseQuizQuestion = {
@@ -1188,10 +1188,6 @@ export type QuizAttempt = {
    */
   readonly is_completed?: boolean;
   /**
-   * **[READ-ONLY]** Formatted display of the grade information.
-   */
-  readonly grade_display?: string;
-  /**
    * **[READ-ONLY]** Formatted display of the time taken to complete the quiz.
    */
   readonly time_display?: string;
@@ -1203,6 +1199,10 @@ export type QuizAttempt = {
    * **[READ-ONLY]** Comprehensive summary of the quiz attempt performance.
    */
   readonly performance_summary?: string;
+  /**
+   * **[READ-ONLY]** Formatted display of the grade information.
+   */
+  readonly grade_display?: string;
 };
 
 /**
@@ -2313,13 +2313,13 @@ export type Instructor = {
    */
   readonly review_count?: bigint | null;
   /**
-   * **[READ-ONLY]** Indicates if the instructor profile is considered complete. Requires bio and professional headline.
-   */
-  readonly is_profile_complete?: boolean;
-  /**
    * **[READ-ONLY]** Indicates if the instructor has both latitude and longitude coordinates configured.
    */
   readonly has_location_coordinates?: boolean;
+  /**
+   * **[READ-ONLY]** Indicates if the instructor profile is considered complete. Requires bio and professional headline.
+   */
+  readonly is_profile_complete?: boolean;
   /**
    * **[READ-ONLY]** Formatted location coordinates as a string. Returns null if location coordinates are not available.
    */
@@ -2458,15 +2458,6 @@ export type InstructorProfessionalMembership = {
    */
   readonly summary?: string;
   /**
-   * **[READ-ONLY]** Indicates if the membership record has all essential information.
-   */
-  readonly is_complete?: boolean;
-  /**
-   * **[READ-ONLY]** Human-readable formatted duration of membership.
-   */
-  readonly formatted_duration?: string | null;
-  membership_status?: MembershipStatusEnum;
-  /**
    * **[READ-ONLY]** Formatted membership period showing start and end dates.
    */
   readonly membership_period?: string | null;
@@ -2488,9 +2479,18 @@ export type InstructorProfessionalMembership = {
    */
   readonly is_recent_membership?: boolean;
   /**
+   * **[READ-ONLY]** Indicates if the membership record has all essential information.
+   */
+  readonly is_complete?: boolean;
+  /**
    * **[READ-ONLY]** Duration of membership calculated from start and end dates, in months.
    */
   readonly membership_duration_months?: number | null;
+  membership_status?: MembershipStatusEnum;
+  /**
+   * **[READ-ONLY]** Human-readable formatted duration of membership.
+   */
+  readonly formatted_duration?: string | null;
 };
 
 export type ApiResponseInstructorProfessionalMembership = {
@@ -2565,14 +2565,6 @@ export type InstructorExperience = {
    */
   readonly is_complete?: boolean;
   /**
-   * **[READ-ONLY]** Duration of employment calculated from start and end dates, in months.
-   */
-  readonly duration_in_months?: number | null;
-  /**
-   * **[READ-ONLY]** Human-readable formatted duration of employment.
-   */
-  readonly formatted_duration?: string | null;
-  /**
    * **[READ-ONLY]** Formatted employment period showing start and end dates.
    */
   readonly employment_period?: string | null;
@@ -2593,6 +2585,14 @@ export type InstructorExperience = {
    * **[READ-ONLY]** Calculated years of experience based on start and end dates.
    */
   readonly calculated_years?: number | null;
+  /**
+   * **[READ-ONLY]** Duration of employment calculated from start and end dates, in months.
+   */
+  readonly duration_in_months?: number | null;
+  /**
+   * **[READ-ONLY]** Human-readable formatted duration of employment.
+   */
+  readonly formatted_duration?: string | null;
 };
 
 export type ApiResponseInstructorExperience = {
@@ -4958,13 +4958,13 @@ export type ClassDefinition = {
    */
   readonly duration_minutes?: bigint;
   /**
-   * **[READ-ONLY]** Human-readable formatted duration.
-   */
-  readonly duration_formatted?: string;
-  /**
    * **[READ-ONLY]** Human-readable capacity information including waitlist availability.
    */
   readonly capacity_info?: string;
+  /**
+   * **[READ-ONLY]** Human-readable formatted duration.
+   */
+  readonly duration_formatted?: string;
 };
 
 /**
@@ -6232,9 +6232,8 @@ export type RegistrationRequest = {
   email: string;
   /**
    * **Phone Number Validation:**
-   * - Country: KE
    * - Type: Mobile only
-   * - Format: International (+country code) or local format supported
+   * - Format: E.164 only (+ then country code and number, no spaces), e.g. +254712345678
    */
   phone_number: string;
   dob?: Date;
@@ -7605,13 +7604,13 @@ export type Enrollment = {
    */
   readonly can_be_cancelled?: boolean;
   /**
-   * **[READ-ONLY]** Indicates if the student attended the class.
-   */
-  readonly did_attend?: boolean;
-  /**
    * **[READ-ONLY]** Indicates if attendance has been marked for this enrollment.
    */
   readonly is_attendance_marked?: boolean;
+  /**
+   * **[READ-ONLY]** Indicates if the student attended the class.
+   */
+  readonly did_attend?: boolean;
   /**
    * **[READ-ONLY]** Human-readable description of the enrollment status.
    */
@@ -9609,13 +9608,13 @@ export type StudentSchedule = {
    */
   readonly duration_minutes?: bigint;
   /**
-   * **[READ-ONLY]** Indicates if the student attended this class.
-   */
-  readonly did_attend?: boolean;
-  /**
    * **[READ-ONLY]** Indicates if this class is upcoming.
    */
   readonly is_upcoming?: boolean;
+  /**
+   * **[READ-ONLY]** Indicates if the student attended this class.
+   */
+  readonly did_attend?: boolean;
 };
 
 export type ApiResponseListInstructorTimeHold = {
@@ -9739,11 +9738,11 @@ export type Page = {
   size?: number;
   content?: Array<unknown>;
   number?: number;
-  first?: boolean;
-  last?: boolean;
   numberOfElements?: number;
   sort?: SortObject;
   pageable?: PageableObject;
+  first?: boolean;
+  last?: boolean;
   empty?: boolean;
 };
 
@@ -15171,21 +15170,6 @@ export type ProficiencyLevelEnum2 =
   (typeof ProficiencyLevelEnum2)[keyof typeof ProficiencyLevelEnum2];
 
 /**
- * **[READ-ONLY]** Current status of the membership.
- */
-export const MembershipStatusEnum = {
-  ACTIVE: 'ACTIVE',
-  INACTIVE: 'INACTIVE',
-  EXPIRED: 'EXPIRED',
-  UNKNOWN: 'UNKNOWN',
-} as const;
-
-/**
- * **[READ-ONLY]** Current status of the membership.
- */
-export type MembershipStatusEnum = (typeof MembershipStatusEnum)[keyof typeof MembershipStatusEnum];
-
-/**
  * **[READ-ONLY]** Classification of organisation type based on name keywords.
  */
 export const OrganisationTypeEnum = {
@@ -15201,6 +15185,21 @@ export const OrganisationTypeEnum = {
  * **[READ-ONLY]** Classification of organisation type based on name keywords.
  */
 export type OrganisationTypeEnum = (typeof OrganisationTypeEnum)[keyof typeof OrganisationTypeEnum];
+
+/**
+ * **[READ-ONLY]** Current status of the membership.
+ */
+export const MembershipStatusEnum = {
+  ACTIVE: 'ACTIVE',
+  INACTIVE: 'INACTIVE',
+  EXPIRED: 'EXPIRED',
+  UNKNOWN: 'UNKNOWN',
+} as const;
+
+/**
+ * **[READ-ONLY]** Current status of the membership.
+ */
+export type MembershipStatusEnum = (typeof MembershipStatusEnum)[keyof typeof MembershipStatusEnum];
 
 /**
  * **[READ-ONLY]** Classification of experience level based on position title and duration.
@@ -39323,11 +39322,20 @@ export type GetFileData = {
      */
     key: string;
   };
-  query?: never;
+  query?: {
+    /**
+     * Optional variant width in pixels: 320, 640 or 1280
+     */
+    w?: number;
+  };
   url: '/api/v1/files/{key}';
 };
 
 export type GetFileErrors = {
+  /**
+   * Unsupported variant width
+   */
+  400: Blob | File;
   /**
    * File not found
    */

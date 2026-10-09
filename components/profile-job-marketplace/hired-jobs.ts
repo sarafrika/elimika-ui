@@ -1,5 +1,5 @@
 import { formatDateOnly } from '@/lib/date';
-import { formatRate, formatRateAmount } from '@/lib/rate-card';
+import { formatRate, formatRateAmount, isLegacyRateBasis } from '@/lib/rate-card';
 import type { ClassRecurrence } from '@/services/client';
 import { isClassCreatedStatus } from './application-status';
 
@@ -36,10 +36,10 @@ export function jobPay(job: JobPayFields) {
   return formatRate(job.instructor_pay, job.rate_basis);
 }
 
-/** "about KES 27,000", only when the pay is per session and the session count is known. */
+/** "about KES 27,000", only for legacy per-session pay with a known session count. */
 export function estimatedJobTotal(job: JobPayFields & { session_count?: number | null }) {
   const count = job.session_count;
-  if (job.rate_basis !== 'per_session' || typeof job.instructor_pay !== 'number') return null;
+  if (!isLegacyRateBasis(job.rate_basis) || typeof job.instructor_pay !== 'number') return null;
   if (typeof count !== 'number' || count < 1) return null;
   return `about ${formatRateAmount(job.instructor_pay * count)}`;
 }

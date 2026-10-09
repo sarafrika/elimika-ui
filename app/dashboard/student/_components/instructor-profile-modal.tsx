@@ -324,7 +324,7 @@ export const InstructorProfileComponent: React.FC<Props> = ({ instructor, onClos
                     <p className='text-primary'>Pricing Information</p>
                     <p className='text-primary mt-1 text-sm'>
                       Rates are per learner in {matchedCourse?.rate_card?.currency ?? 'KES'}, per
-                      hour, per session or per day depending on how the class is billed.
+                      hour or per day depending on how the class is billed.
                     </p>
                   </div>
                 </div>

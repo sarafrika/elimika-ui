@@ -6,7 +6,6 @@ import {
   ArrowUpWideNarrow,
   BriefcaseBusiness,
   Building2,
-  CalendarDays,
   CheckCircle2,
   Clock,
   Filter,
@@ -113,8 +112,7 @@ const BASIS_TABS = [
   ...RATE_BASES.map(basis => ({
     id: basis.value as string,
     label: basis.label,
-    icon:
-      basis.value === 'per_hour' ? Clock : basis.value === 'per_session' ? CalendarDays : Layers,
+    icon: basis.value === 'per_hour' ? Clock : Layers,
   })),
 ];
 
