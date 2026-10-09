@@ -9,7 +9,6 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { Textarea } from '@/components/ui/textarea';
 import { cn } from '@/lib/utils';
 import {
-  getAssignmentSubmissionsQueryKey,
   getSubmissionAttachmentsOptions,
   submitAssignmentQueryMutation,
   uploadSubmissionAttachmentMutation,
@@ -19,8 +18,10 @@ import { getErrorMessage } from '@/src/features/dashboard/courses/types';
 import {
   getDueSummary,
   getStudentAssignmentSubmissionState,
+  useAssignmentAttachments,
   useStudentAssignmentData,
 } from '@/src/features/dashboard/student-assessment/useStudentAssignmentData';
+import { invalidateGeneratedQueryIds } from '@/src/features/dashboard/workflow-query-invalidation';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import {
   ArrowLeft,
@@ -102,11 +103,15 @@ export default function StudentAssignmentSubmissionPage() {
   const router = useRouter();
   const queryClient = useQueryClient();
 
-  const { assignmentRows, isLoading } = useStudentAssignmentData();
+  const { assignmentRows, isLoading } = useStudentAssignmentData({ includeAttachments: false });
 
   const selectedAssignment = useMemo(
     () => assignmentRows.find(r => r.assignment?.uuid === assignmentId) ?? null,
     [assignmentRows, assignmentId]
+  );
+
+  const { attachments: assignmentAttachments } = useAssignmentAttachments(
+    selectedAssignment?.assignment?.uuid
   );
 
   const [submissionText, setSubmissionText] = useState('');
@@ -213,11 +218,7 @@ export default function StudentAssignmentSubmissionPage() {
       );
 
       await Promise.all([
-        queryClient.invalidateQueries({
-          queryKey: getAssignmentSubmissionsQueryKey({
-            path: { assignmentUuid: selectedAssignment.assignment.uuid },
-          }),
-        }),
+        invalidateGeneratedQueryIds(queryClient, ['searchSubmissions', 'getAssignmentSubmissions']),
         queryClient.invalidateQueries({ queryKey: ['student-assignments'] }),
       ]);
 
@@ -389,7 +390,7 @@ export default function StudentAssignmentSubmissionPage() {
         </CardHeader>
         <CardContent>
           <AttachmentResourceList
-            attachments={toAttachmentResourceItems(selectedAssignment.attachments)}
+            attachments={toAttachmentResourceItems(assignmentAttachments)}
             emptyMessage='No supporting files were attached to this assignment.'
             previewLabel='Read file'
           />

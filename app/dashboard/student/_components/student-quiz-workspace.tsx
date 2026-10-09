@@ -6,11 +6,11 @@ import { EmptyState } from '@/components/ui/empty-state';
 import { Input } from '@/components/ui/input';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useStudent } from '@/context/student-context';
+import { useQuizzesByIds } from '@/hooks/use-batched-lookups';
 import useStudentClassDefinitions from '@/hooks/use-student-class-definition';
 import { cn } from '@/lib/utils';
 import {
   getEnrollmentsForClassOptions,
-  getQuizByUuidOptions,
   getQuizSchedulesOptions,
 } from '@/services/client/@tanstack/react-query.gen';
 import type { ClassQuizSchedule, Enrollment, Quiz, QuizAttempt } from '@/services/client/types.gen';
@@ -202,7 +202,7 @@ function StudentQuizCard({
                 {classMeta.courseTitle}
               </p>
               <h3 className='text-foreground text-base leading-snug font-semibold sm:text-lg'>
-                <span className='line-clamp-2'>{quiz?.title || 'Untitled quiz'}</span>
+                <span className='line-clamp-2'>{quiz ? quiz.title || 'Untitled quiz' : 'Quiz unavailable'}</span>
               </h3>
               <p className='text-muted-foreground truncate text-xs'>{classMeta.classTitle}</p>
             </div>
@@ -352,14 +352,8 @@ export function StudentQuizWorkspace({ embedded = false }: { embedded?: boolean 
     [scheduleRows]
   );
 
-  const quizDetailQueries = useQueries({
-    queries: quizUuids.map(quizUuid => ({
-      ...getQuizByUuidOptions({ path: { uuid: quizUuid } }),
-      enabled: !!quizUuid,
-      staleTime: 5 * 60 * 1000,
-      refetchOnWindowFocus: false,
-    })),
-  });
+  // One uuid_in search instead of a GET per quiz; a quiz it omits renders as unavailable.
+  const { quizMap: quizzesById, isLoading: quizzesLoading } = useQuizzesByIds(quizUuids);
 
   // const quizAttemptQueries = useQueries({
   //   queries: quizUuids.map(quizUuid => ({
@@ -372,12 +366,12 @@ export function StudentQuizWorkspace({ embedded = false }: { embedded?: boolean 
 
   const quizMap = useMemo(() => {
     const map = new Map<string, Quiz>();
-    quizUuids.forEach((quizUuid, index) => {
-      const quiz = quizDetailQueries[index]?.data?.data;
+    for (const quizUuid of quizUuids) {
+      const quiz = quizzesById[quizUuid];
       if (quiz) map.set(quizUuid, quiz);
-    });
+    }
     return map;
-  }, [quizDetailQueries, quizUuids]);
+  }, [quizzesById, quizUuids]);
 
   // const attemptMap = useMemo(() => {
   //   const map = new Map<string, QuizAttempt[]>();
@@ -435,7 +429,7 @@ export function StudentQuizWorkspace({ embedded = false }: { embedded?: boolean 
     classDefinitionsLoading ||
     classEnrollmentQueries.some(q => q.isLoading) ||
     quizScheduleQueries.some(q => q.isLoading) ||
-    quizDetailQueries.some(q => q.isLoading);
+    quizzesLoading;
   // || quizAttemptQueries.some(q => q.isLoading);
 
   // ─── Render ───────────────────────────────────────────────────────────────

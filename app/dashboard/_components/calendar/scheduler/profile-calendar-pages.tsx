@@ -239,30 +239,6 @@ function useClassStudentSummaries(classUuids: Array<string | null | undefined>) 
     return map;
   }, [batchedStudents, uniqueStudentUuids]);
 
-  const studentUserUuids = useMemo(
-    () =>
-      Array.from(
-        new Set(
-          Array.from(studentMap.values())
-            .map(student => student?.user_uuid)
-            .filter((uuid): uuid is string => Boolean(uuid))
-        )
-      ),
-    [studentMap]
-  );
-
-  const { userMap: batchedStudentUsers, isLoading: studentUsersLoading } =
-    useUsersByIds(studentUserUuids);
-
-  const studentProfilesByUuid = useMemo(() => {
-    const map = new Map<string, User>();
-    for (const uuid of studentUserUuids) {
-      const user = batchedStudentUsers[uuid];
-      if (user?.uuid) map.set(uuid, user);
-    }
-    return map;
-  }, [batchedStudentUsers, studentUserUuids]);
-
   const students = useMemo<StudentSummary[]>(
     () =>
       uniqueStudentEntries
@@ -273,14 +249,13 @@ function useClassStudentSummaries(classUuids: Array<string | null | undefined>) 
             return null;
           }
 
-          const user = student.user_uuid ? studentProfilesByUuid.get(student.user_uuid) : undefined;
-
+          // No users/directory hop: names come from the student record, avatars fall back to initials.
           return {
             uuid: student.uuid,
 
-            fullName: student.full_name || user?.full_name || user?.display_name || 'Student',
+            fullName: student.full_name || 'Student',
 
-            avatarUrl: user?.profile_image_url,
+            avatarUrl: undefined,
 
             classDefinitionUuid: entry.classDefinitionUuid,
 
@@ -290,12 +265,12 @@ function useClassStudentSummaries(classUuids: Array<string | null | undefined>) 
           };
         })
         .filter(Boolean) as StudentSummary[],
-    [uniqueStudentEntries, studentMap, studentProfilesByUuid]
+    [uniqueStudentEntries, studentMap]
   );
 
   return {
     isLoading:
-      enrollmentQueries.some(query => query.isLoading) || studentsLoading || studentUsersLoading,
+      enrollmentQueries.some(query => query.isLoading) || studentsLoading,
 
     students,
   };
