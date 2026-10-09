@@ -7,8 +7,10 @@ import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { useOptionalCourseCreator } from '@/context/course-creator-context';
 import { cn } from '@/lib/utils';
 import type { Organisation } from '@/services/client';
+import { DashboardPageSkeleton } from '@/src/features/dashboard/components/dashboard-page-skeleton';
 import { useUserDomain } from '@/src/features/dashboard/context/user-domain-context';
 import { roleScopedDashboardPath } from '@/src/features/dashboard/lib/active-domain-storage';
+import { domainFromPath } from '@/src/features/dashboard/lib/dashboard-url';
 import {
   useOrganisation,
   useOrganisationLoading,
@@ -17,6 +19,8 @@ import { useUserProfile } from '@/src/features/profile/context/profile-context';
 
 type DomainGateState = {
   renderChildren: boolean;
+  /** Verification is still resolving on a locked path: hold the page, not the shell. */
+  pending?: boolean;
   redirect?: string;
   notice?: {
     title: string;
@@ -52,15 +56,16 @@ export default function DomainAccessGate({ children }: { children: ReactNode }) 
   const organisationVerified = hasOrganisation ? organisationVerifiedFlag === true : true;
 
   const state: DomainGateState = useMemo(() => {
-    if (!profile || profile.isLoading) {
+    if (!profile) {
       return { renderChildren: true };
     }
-
-    const domain = userDomain.activeDomain;
+    // The active domain needs the profile; the URL segment names it while that loads.
+    const domain = userDomain.activeDomain ?? (profile.isLoading ? domainFromPath(pathname) : null);
     if (!domain) {
       return { renderChildren: true };
     }
 
+    const profileLoading = profile.isLoading;
     const profilePrefix = roleScopedDashboardPath(domain, PROFILE_PREFIX);
     const accountPrefix = roleScopedDashboardPath(domain, ACCOUNT_PREFIX);
     const organisationProfilePrefix = roleScopedDashboardPath(domain, ORGANISATION_PROFILE_PREFIX);
@@ -109,20 +114,20 @@ export default function DomainAccessGate({ children }: { children: ReactNode }) 
       return { renderChildren: true };
     }
 
-    // The org record is still resolving: render the page rather than redirecting on "unverified".
-    if ((domain === 'organisation' || domain === 'organisation_user') && organisationLoading) {
-      return { renderChildren: true };
-    }
-
     const config = shared[domain as keyof typeof shared];
+    const isAllowed =
+      ('allowedExactPaths' in config && config.allowedExactPaths.some(path => pathname === path)) ||
+      config.allowedPrefixes.some(prefix => pathname.startsWith(prefix));
+
+    // Verification unknown yet: allowed paths render, locked ones wait without redirecting.
+    const isOrgDomain = domain === 'organisation' || domain === 'organisation_user';
+    if (profileLoading || (isOrgDomain && organisationLoading)) {
+      return isAllowed ? { renderChildren: true } : { renderChildren: false, pending: true };
+    }
 
     if (config.verified) {
       return { renderChildren: true };
     }
-
-    const isAllowed =
-      ('allowedExactPaths' in config && config.allowedExactPaths.some(path => pathname === path)) ||
-      config.allowedPrefixes.some(prefix => pathname.startsWith(prefix));
 
     if (!isAllowed) {
       return {
@@ -153,6 +158,10 @@ export default function DomainAccessGate({ children }: { children: ReactNode }) 
       router.replace(state.redirect);
     }
   }, [state, router, pathname]);
+
+  if (state.pending) {
+    return <DashboardPageSkeleton />;
+  }
 
   if (!state.renderChildren) {
     return null;
