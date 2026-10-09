@@ -1750,7 +1750,7 @@ function RosterPanel({
               return (
                 <button
                   type='button'
-                  key={entry.enrollment?.uuid ?? entry.user?.uuid ?? entry.student?.uuid}
+                  key={entry.enrollment?.uuid ?? entry.user?.uuid ?? entry.student?.data?.uuid}
                   onClick={() => onSelectStudent(entry)}
                   className={`w-full rounded-md border p-2.5 text-left transition-colors ${isSelected
                     ? 'border-primary/30 bg-primary/8'

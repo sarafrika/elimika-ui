@@ -1006,7 +1006,7 @@ export default function InstructorTrainingConsole() {
 
                   return (
                     <button
-                      key={entry.enrollment?.uuid ?? entry.user?.uuid ?? entry.student?.uuid}
+                      key={entry.enrollment?.uuid ?? entry.user?.uuid ?? entry.student?.data?.uuid}
                       type='button'
                       onClick={() => setSelectedStudentId(entry.user?.uuid ?? '')}
                       className={cx(
