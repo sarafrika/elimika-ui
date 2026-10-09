@@ -62,7 +62,10 @@ export function DashboardViewProvider({
   );
 
   useEffect(() => {
-    const nextView = mapDomainToView(domain.activeDomain ?? domain.domains[0]);
+    const currentDomain = domain.activeDomain ?? domain.domains[0];
+    // Keep the server-seeded initial view while the profile is still resolving.
+    if (!currentDomain) return;
+    const nextView = mapDomainToView(currentDomain);
     if (nextView && nextView !== view) {
       setViewState(nextView);
     }

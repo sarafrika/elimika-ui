@@ -46,13 +46,19 @@ export function DashboardClientLayout({
     // <html> so portalled UI (dropdowns, sheets, toasts) is themed too.
     <div className='contents' data-dashboard-domain={themeDomain ?? undefined}>
       <DashboardProviders>
-        <DashboardLayoutContent>{children}</DashboardLayoutContent>
+        <DashboardLayoutContent initialDomain={initialDomain}>{children}</DashboardLayoutContent>
       </DashboardProviders>
     </div>
   );
 }
 
-function DashboardLayoutContent({ children }: { children: ReactNode }) {
+function DashboardLayoutContent({
+  children,
+  initialDomain,
+}: {
+  children: ReactNode;
+  initialDomain: UserDomain | null;
+}) {
   const profile = useUserProfile();
   const domain = useUserDomain();
   const pathname = usePathname();
@@ -68,7 +74,9 @@ function DashboardLayoutContent({ children }: { children: ReactNode }) {
   // cookie-derived active domain is only a fallback for non-segment paths
   // (/dashboard root, /dashboard/add-profile, ...).
   const urlDomain = useMemo(() => domainFromPath(pathname) as KnownDomain | null, [pathname]);
-  const effectiveDomain = urlDomain ?? activeDomain;
+  // Until the profile resolves, the server-resolved domain paints the shell immediately.
+  const effectiveDomain =
+    urlDomain ?? activeDomain ?? (domain.isLoading ? (initialDomain as KnownDomain | null) : null);
 
   const normalizedAvailableViews = useMemo(() => {
     const views = userDomains
@@ -87,9 +95,8 @@ function DashboardLayoutContent({ children }: { children: ReactNode }) {
     effectiveDomain === 'organization'
       ? ('organisation' as UserDomain)
       : (effectiveDomain as UserDomain);
-  const showLoader = profile?.isLoading || domain.isLoading || !profile;
-
-  if (showLoader) {
+  // The shell never waits on the profile; only a domain-less first load has nothing to draw.
+  if (!effectiveDomain && (profile?.isLoading || domain.isLoading || !profile)) {
     return <CustomLoader />;
   }
 
@@ -98,7 +105,7 @@ function DashboardLayoutContent({ children }: { children: ReactNode }) {
       <DomainSelection
         domains={selectableDomains}
         onDomainSelect={nextDomain => domain.setActiveDomain(nextDomain)}
-        userName={profile.first_name}
+        userName={profile?.first_name}
       />
     );
   }

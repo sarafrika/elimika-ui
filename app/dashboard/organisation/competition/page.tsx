@@ -168,7 +168,7 @@ function CreateCompetitionDialog({ organisationUuid }: { organisationUuid: strin
             <Button type='button' variant='outline' onClick={() => setOpen(false)}>
               Cancel
             </Button>
-            <Button type='submit' disabled={create.isPending}>
+            <Button type='submit' disabled={!organisationUuid || create.isPending}>
               {create.isPending ? 'Creating…' : 'Create'}
             </Button>
           </DialogFooter>

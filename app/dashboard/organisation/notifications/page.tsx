@@ -336,12 +336,8 @@ function ComposeNotificationDialog() {
             <Button type='button' variant='ghost' onClick={() => setOpen(false)}>
               Cancel
             </Button>
-            <Button type='submit' className='gap-2' disabled={sendM.isPending}>
-              {sendM.isPending ? (
-                <Spinner className='h-4 w-4' />
-              ) : (
-                <Send className='h-4 w-4' />
-              )}
+            <Button type='submit' className='gap-2' disabled={!organisationUuid || sendM.isPending}>
+              {sendM.isPending ? <Spinner className='h-4 w-4' /> : <Send className='h-4 w-4' />}
               {schedule ? 'Schedule' : 'Send now'}
             </Button>
           </DialogFooter>

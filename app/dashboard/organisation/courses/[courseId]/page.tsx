@@ -16,9 +16,10 @@ import { useEffect } from 'react';
 import { surfaceTheme } from '@/components/data-display/page-shell';
 import { EmptyState } from '@/components/ui/empty-state';
 import { useBreadcrumb } from '@/context/breadcrumb-provider';
-import { useOrganisation } from '@/context/organisation-context';
+import { useOrganisation, useOrganisationLoading } from '@/context/organisation-context';
 import { cn } from '@/lib/utils';
 import { CourseRecordPage } from '@/src/features/course-record';
+import { DashboardPageSkeleton } from '@/src/features/dashboard/components/dashboard-page-skeleton';
 
 const COURSES_HREF = '/dashboard/organisation/courses';
 
@@ -27,6 +28,7 @@ export default function OrganisationCourseRecordRoute() {
   const courseUuid =
     typeof params?.courseId === 'string' ? params.courseId : (params?.courseId?.[0] ?? '');
   const organisation = useOrganisation();
+  const organisationLoading = useOrganisationLoading();
   const { replaceBreadcrumbs } = useBreadcrumb();
 
   useEffect(() => {
@@ -42,9 +44,10 @@ export default function OrganisationCourseRecordRoute() {
     ]);
   }, [replaceBreadcrumbs, courseUuid]);
 
-  // `OrganisationProvider` holds children behind its own loader while the
-  // organisation resolves, so a null here is a settled "this account has no
-  // organisation" — not an in-flight request.
+  // The provider no longer blocks children: only a null org after loading means "no organisation".
+  if (!organisation && organisationLoading) {
+    return <DashboardPageSkeleton />;
+  }
   if (!organisation) {
     return (
       <EmptyState

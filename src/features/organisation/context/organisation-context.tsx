@@ -1,10 +1,9 @@
 'use client';
 
 import { queryOptions, type UseQueryOptions, useQuery } from '@tanstack/react-query';
-import { usePathname, useRouter } from 'next/navigation';
+import { useRouter } from 'next/navigation';
 import { useSession } from 'next-auth/react';
 import { createContext, type ReactNode, useContext, useEffect, useMemo, useState } from 'react';
-import CustomLoader from '@/components/custom-loader';
 import type { ApiResponse } from '@/services/client';
 import {
   getOrganisationByUuid,
@@ -12,14 +11,16 @@ import {
   type UserOrganisationAffiliationDto,
 } from '@/services/client';
 import { useUserDomain } from '@/src/features/dashboard/context/user-domain-context';
-import { routeSegmentFromPath } from '@/src/features/dashboard/lib/dashboard-url';
 import { useUserProfile } from '@/src/features/profile/context/profile-context';
 
 type OrganisationContextValue = Organisation | null;
 
 const OrganisationContext = createContext<OrganisationContextValue>(null);
+const OrganisationLoadingContext = createContext(false);
 
 export const useOrganisation = () => useContext(OrganisationContext);
+/** True while an org member's organisation is still resolving; children render meanwhile. */
+export const useOrganisationLoading = () => useContext(OrganisationLoadingContext);
 
 export default function OrganisationProvider({
   children,
@@ -35,7 +36,6 @@ export default function OrganisationProvider({
   const userProfile = useUserProfile();
   const userDomain = useUserDomain();
   const router = useRouter();
-  const pathname = usePathname();
   const identity = session?.identity;
 
   const [storedOrgId, setStoredOrgId] = useState<string | null>(null);
@@ -74,11 +74,6 @@ export default function OrganisationProvider({
     domain === 'organisation' || domain === 'organisation_user';
   const hasOrgDomain =
     userDomain.domains.some(isOrgDomain) || (identity?.domains ?? []).some(isOrgDomain);
-  // Org pages and role-less shared pages (cart, apply-to-train) gate on the org, so they wait;
-  // routes with another role segment (admin, student...) render at once.
-  const routeSegment = routeSegmentFromPath(pathname);
-  const blocksOnOrg = routeSegment === 'organisation' || routeSegment === null;
-
   useEffect(() => {
     if (typeof window !== 'undefined' && storageKey && activeOrgId) {
       window.localStorage.setItem(storageKey, activeOrgId);
@@ -96,7 +91,7 @@ export default function OrganisationProvider({
       ? initialOrganisation
       : undefined;
 
-  const { data, isLoading } = useQuery(
+  const { data, isPending } = useQuery(
     createQueryOptions(activeOrgId, {
       enabled: hasOrgDomain && hydrated && !!activeOrgId && (!!seed || !!session?.user),
       initialData: seed,
@@ -104,25 +99,17 @@ export default function OrganisationProvider({
     })
   );
 
-  if (seed) {
-    return (
-      <OrganisationContext.Provider value={data ?? seed}>{children}</OrganisationContext.Provider>
-    );
-  }
-
-  // If no organisation is attached and user is not in an organisation domain, just render children without fetching
-  if ((!activeOrgId || !session?.user) && !hasOrgDomain) {
-    return <OrganisationContext.Provider value={null}>{children}</OrganisationContext.Provider>;
-  }
-
-  if (hasOrgDomain && !activeOrgId && blocksOnOrg) {
-    return <CustomLoader />;
-  }
+  // Never block children on the org: pages gate their own queries on organisation?.uuid.
+  const value = data ?? seed ?? null;
+  const loading =
+    hasOrgDomain &&
+    !value &&
+    (!hydrated || Boolean(userProfile?.isLoading) || (!!activeOrgId && isPending));
 
   return (
-    <OrganisationContext.Provider value={data ?? null}>
-      {(isLoading || !hydrated) && blocksOnOrg ? <CustomLoader /> : children}
-    </OrganisationContext.Provider>
+    <OrganisationLoadingContext.Provider value={loading}>
+      <OrganisationContext.Provider value={value}>{children}</OrganisationContext.Provider>
+    </OrganisationLoadingContext.Provider>
   );
 }
 
