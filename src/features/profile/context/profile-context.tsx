@@ -11,6 +11,7 @@ import { useRouter } from 'next/navigation';
 import type { SessionIdentity } from 'next-auth';
 import { useSession } from 'next-auth/react';
 import { createContext, type ReactNode, useCallback, useContext, useEffect, useMemo } from 'react';
+import { logger } from '@/lib/logger';
 import type { UserProfileType } from '@/lib/types';
 import { fetchCurrentUser } from '@/services/user/current-user';
 import {
@@ -111,6 +112,12 @@ async function fetchUserProfile(identity?: SessionIdentity): Promise<UserProfile
     stampedRows &&
     userContent.uuid === identity?.uuid &&
     domains.every(domain => knownDomains?.includes(domain));
+  if (stampedRows && !stampFits) {
+    logger.info('profile bootstrap: session stamp stale, refetching domain rows', {
+      stampedDomains: knownDomains,
+      domains,
+    });
+  }
   const rows = stampFits
     ? {
         student: domains.includes('student') ? stampedRows.student : undefined,
