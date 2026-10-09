@@ -1,5 +1,3 @@
-import type { UserDomain } from '@/lib/types';
-import type { CourseTrainingRateCard } from '@/services/client';
 import type { LucideIcon } from 'lucide-react';
 import {
   BookOpen,
@@ -11,6 +9,9 @@ import {
   Music4,
   Users,
 } from 'lucide-react';
+import type { PrefetchQuery } from '@/components/data/intent-link';
+import type { UserDomain } from '@/lib/types';
+import type { CourseTrainingRateCard } from '@/services/client';
 export type CoursesCatalogTab = 'programs' | 'short-courses' | 'all-courses' | 'my-courses';
 
 export type CoursesFilterSection = {
@@ -38,6 +39,7 @@ export type CoursesCatalogCardData = {
   minimumRate?: number;
   showInstructorCta?: boolean;
   detailsHref: string;
+  detailsPrefetchQuery?: PrefetchQuery;
   certificateHref: string;
   enrollHref: string;
   instructorHref: string;

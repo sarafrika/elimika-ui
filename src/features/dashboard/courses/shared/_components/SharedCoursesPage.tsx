@@ -56,6 +56,7 @@ import { useUrlSearchQuery } from '@/hooks/use-url-search-query';
 import { categoryWithDescendants, matchesCategoryFilter } from '@/lib/category-filters';
 import { STALE_TIMES } from '@/lib/query-client';
 import type { RateCard } from '@/lib/rate-card';
+import { catalogItemPrefetchQuery } from '@/lib/route-prefetch';
 import { classifySearchError } from '@/lib/search/query';
 import { enumParam, numberParam, stringParam } from '@/lib/search-state';
 import type { UserDomain } from '@/lib/types';
@@ -445,6 +446,7 @@ const createCatalogCards = (
       showInstructorCta: !isInstructorApplyCard,
 
       detailsHref: roleScopedDashboardPath(domain, item.href),
+      detailsPrefetchQuery: catalogItemPrefetchQuery(item.kind, item.id),
 
       enrollHref: isInstructorApplyCard
         ? getApplyToTrainHref(item.kind, item.id)

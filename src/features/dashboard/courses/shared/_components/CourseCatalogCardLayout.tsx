@@ -1,17 +1,17 @@
 'use client';
 
+import { BookOpen, GraduationCap, type LucideIcon, Play, Star } from 'lucide-react';
+import { type ReactNode, useState } from 'react';
 import { ImageWithFallback } from '@/components/data/image-with-fallback';
+import { IntentLink, type PrefetchQuery } from '@/components/data/intent-link';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
 import { cn } from '@/lib/utils';
 import { toAuthenticatedMediaUrl } from '@/src/lib/media-url';
-import { BookOpen, GraduationCap, type LucideIcon, Play, Star } from 'lucide-react';
-import Link from 'next/link';
-import { type ReactNode, useState } from 'react';
-import type { CoursesCatalogCardData } from './courses-data';
 import { CourseVideoPreviewModal } from './CourseVideoPreviewModal';
+import type { CoursesCatalogCardData } from './courses-data';
 import { StarRatingSummary } from './StarRating';
 
 /**
@@ -28,6 +28,8 @@ export type CourseCatalogCardView = Pick<
   reviewCount?: number;
   /** Where the card opens. Without it the card has no whole-card link; its buttons act. */
   detailsHref?: string;
+  /** The destination's main query, warmed with the route on hover or focus. */
+  detailsPrefetchQuery?: PrefetchQuery;
 };
 
 type CourseCatalogCardLayoutProps = {
@@ -65,12 +67,13 @@ export function CourseCatalogCardLayout({
     <Card className='group border-border relative h-full min-w-0 gap-0 overflow-hidden rounded-2xl py-0 shadow-sm transition-all hover:-translate-y-0.5 hover:shadow-md'>
       {/* Keep the card keyboard accessible while allowing the controls above it to act independently. */}
       {card.detailsHref ? (
-        <Link
+        <IntentLink
           href={card.detailsHref}
+          prefetchQuery={card.detailsPrefetchQuery}
           className='focus-visible:ring-ring absolute inset-0 z-[1] rounded-[inherit] focus-visible:ring-2 focus-visible:outline-none'
         >
           <span className='sr-only'>Open {title}</span>
-        </Link>
+        </IntentLink>
       ) : null}
 
       <div className='relative shrink-0'>
@@ -115,13 +118,14 @@ export function CourseCatalogCardLayout({
           <div className='flex items-start justify-between gap-2'>
             <h3 className='min-w-0 text-base leading-snug font-semibold'>
               {card.detailsHref ? (
-                <Link
+                <IntentLink
                   href={card.detailsHref}
+                  prefetchQuery={card.detailsPrefetchQuery}
                   className='text-foreground hover:text-primary relative z-10 line-clamp-2 hover:underline'
                   title={title}
                 >
                   {titleContent ?? title}
-                </Link>
+                </IntentLink>
               ) : (
                 <span className='text-foreground line-clamp-2' title={title}>
                   {titleContent ?? title}
