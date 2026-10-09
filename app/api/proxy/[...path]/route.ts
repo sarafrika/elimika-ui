@@ -82,6 +82,66 @@ const sanitizeHeaders = (headers: Headers) => {
   }
 };
 
+// Next copies middleware response headers (session cookies) into req.headers, so
+// requests forward only these names. Not exported: route.ts exports are type-checked.
+const FORWARD_HEADER_ALLOWLIST = {
+  authenticated: [
+    'accept',
+    'accept-language',
+    'content-type',
+    'if-none-match',
+    'if-modified-since',
+    'if-match',
+    'range',
+    'if-range',
+    'user-agent',
+    'x-request-id',
+    'x-forwarded-for',
+    ACTING_DOMAIN_HEADER,
+  ],
+  publicFile: [
+    'accept',
+    'accept-language',
+    'if-none-match',
+    'if-modified-since',
+    'range',
+    'if-range',
+    'user-agent',
+  ],
+} as const;
+
+const NEVER_FORWARDED_HEADERS = new Set(['authorization', 'cookie', 'host', 'rsc', 'set-cookie']);
+const NEVER_FORWARDED_PREFIXES = ['x-middleware-', 'next-'];
+
+function isNeverForwarded(name: string) {
+  const lower = name.toLowerCase();
+  return (
+    NEVER_FORWARDED_HEADERS.has(lower) ||
+    HOP_BY_HOP_HEADERS.has(lower) ||
+    NEVER_FORWARDED_PREFIXES.some(prefix => lower.startsWith(prefix))
+  );
+}
+
+function pickForwardHeaders(source: Headers, allowed: readonly string[]) {
+  const headers = new Headers();
+  for (const name of allowed) {
+    const value = source.get(name);
+    if (value !== null && !isNeverForwarded(name)) {
+      headers.set(name, value);
+    }
+  }
+  return headers;
+}
+
+function stripUpstreamSessionHeaders(headers: Headers) {
+  headers.delete('set-cookie');
+  for (const name of Array.from(headers.keys())) {
+    if (name.toLowerCase().startsWith('x-middleware-')) {
+      headers.delete(name);
+    }
+  }
+}
+
 function appendVary(headers: Headers, values: string[]) {
   const existing = headers.get('vary');
   if (existing === '*') {
@@ -104,6 +164,7 @@ function appendVary(headers: Headers, values: string[]) {
 
 function applyPrivateResponseHeaders(headers: Headers, cacheState: CacheState) {
   sanitizeHeaders(headers);
+  stripUpstreamSessionHeaders(headers);
   headers.set('cache-control', 'private, no-store');
   headers.set('x-bff-cache', cacheState);
   appendVary(headers, ['Authorization', 'Cookie', ACTING_DOMAIN_HEADER]);
@@ -155,11 +216,7 @@ function dropVary(headers: Headers, values: string[]) {
 }
 
 async function proxyPublicFile(request: NextRequest, upstreamUrl: URL) {
-  const headers = new Headers(request.headers);
-  headers.delete('host');
-  headers.delete('cookie');
-  headers.delete('authorization');
-  sanitizeHeaders(headers);
+  const headers = pickForwardHeaders(request.headers, FORWARD_HEADER_ALLOWLIST.publicFile);
 
   const upstreamResponse = await fetchUpstream(
     upstreamUrl,
@@ -168,7 +225,7 @@ async function proxyPublicFile(request: NextRequest, upstreamUrl: URL) {
   );
   const responseHeaders = new Headers(upstreamResponse.headers);
   sanitizeHeaders(responseHeaders);
-  responseHeaders.delete('set-cookie');
+  stripUpstreamSessionHeaders(responseHeaders);
   responseHeaders.delete('pragma');
   responseHeaders.delete('expires');
   dropVary(responseHeaders, ['Authorization', 'Cookie', ACTING_DOMAIN_HEADER]);
@@ -229,17 +286,18 @@ const buildUpstreamUrl = (request: NextRequest, path: string[]) => {
 };
 
 const getForwardHeaders = (request: NextRequest, session: AuthSession) => {
-  const headers = new Headers(request.headers);
+  const headers = pickForwardHeaders(request.headers, FORWARD_HEADER_ALLOWLIST.authenticated);
+  const contentLength = request.headers.get('content-length');
+  if (contentLength && request.method !== 'GET' && request.method !== 'HEAD') {
+    headers.set('content-length', contentLength);
+  }
 
-  headers.delete('host');
-  headers.delete('cookie');
-  sanitizeHeaders(headers);
-
-  if (!headers.get('authorization')) {
-    const accessToken = session?.user?.accessToken;
-    if (accessToken) {
-      headers.set('authorization', `Bearer ${accessToken}`);
-    }
+  const incomingAuthorization = request.headers.get('authorization');
+  const accessToken = session?.user?.accessToken;
+  if (incomingAuthorization) {
+    headers.set('authorization', incomingAuthorization);
+  } else if (accessToken) {
+    headers.set('authorization', `Bearer ${accessToken}`);
   }
 
   return headers;
