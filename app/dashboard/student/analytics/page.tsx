@@ -62,7 +62,10 @@ import type {
   QuizAttempt,
   StudentSchedule,
 } from '../../../../services/client/types.gen';
-import { useStudentAssignmentData } from '../../../../src/features/dashboard/student-assessment/useStudentAssignmentData';
+import {
+  useAssignmentAttachments,
+  useStudentAssignmentData,
+} from '../../../../src/features/dashboard/student-assessment/useStudentAssignmentData';
 import { DonutChart } from '../../instructor/analytics/_components/charts/StatusBreakdown';
 import { toAttachmentResourceItems } from '../_components/student-assignment-workspace';
 
@@ -755,7 +758,11 @@ export default function StudentAnalyticsDashboard() {
   );
 
   const { assignmentRows: studentAssignmentRows, isLoading: isStudentAssignmentDataLoading } =
-    useStudentAssignmentData();
+    useStudentAssignmentData({ includeAttachments: false });
+  const { attachments: selectedAssignmentAttachments } = useAssignmentAttachments(
+    selectedSubmission?.assignment?.uuid,
+    isSubmissionSheetOpen
+  );
 
   const assignmentAnalyticsRows = useMemo(() => {
     return studentAssignmentRows
@@ -1538,7 +1545,7 @@ export default function StudentAnalyticsDashboard() {
                   <h3 className='text-foreground text-sm font-semibold'>Assignment Attachments</h3>
                   <div className='mt-3 space-y-3'>
                     <AttachmentResourceList
-                      attachments={selectedSubmission.attachments.map(attachment => ({
+                      attachments={selectedAssignmentAttachments.map(attachment => ({
                         ...attachment,
                         file_size_bytes:
                           typeof attachment.file_size_bytes === 'bigint'

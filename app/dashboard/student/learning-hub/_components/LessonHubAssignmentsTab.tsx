@@ -11,7 +11,6 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { Textarea } from '@/components/ui/textarea';
 import { useStudent } from '@/context/student-context';
 import {
-    getAssignmentSubmissionsQueryKey,
     submitAssignmentQueryMutation,
     uploadSubmissionAttachmentMutation,
 } from '@/services/client/@tanstack/react-query.gen';
@@ -19,10 +18,12 @@ import type { AssignmentSubmission } from '@/services/client/types.gen';
 import {
     getDueSummary,
     getStudentAssignmentSubmissionState,
+    useAssignmentAttachments,
     useStudentAssignmentData,
     type StudentAssignmentFilterTab,
     type StudentAssignmentRow,
 } from '@/src/features/dashboard/student-assessment/useStudentAssignmentData';
+import { invalidateGeneratedQueryIds } from '@/src/features/dashboard/workflow-query-invalidation';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import {
     ArrowRight,
@@ -98,6 +99,10 @@ function AssignmentDetailSheet({
     const submitAssignmentMut = useMutation(submitAssignmentQueryMutation());
     const uploadSubmissionAttachmentMut = useMutation(uploadSubmissionAttachmentMutation());
     const isSubmitting = submitAssignmentMut.isPending || uploadSubmissionAttachmentMut.isPending;
+    const { attachments: assignmentAttachments } = useAssignmentAttachments(
+        assignment?.uuid,
+        Boolean(payload)
+    );
 
     const handleFiles = (files: FileList | null) => {
         if (!files) return;
@@ -159,15 +164,12 @@ function AssignmentDetailSheet({
                 )
             );
 
-            await queryClient.invalidateQueries({
-                queryKey: getAssignmentSubmissionsQueryKey({ path: { assignmentUuid: assignment.uuid } }),
-            });
-            await queryClient.invalidateQueries({ queryKey: ['student-assignments'] });
+            await invalidateGeneratedQueryIds(queryClient, ['searchSubmissions', 'getAssignmentSubmissions']);
 
             toast.success('Assignment submitted successfully.');
             handleClose();
         } catch (error) {
-            toast.error(error?.message);
+            toast.error(error instanceof Error ? error.message : 'Unable to submit this assignment.');
         }
     };
 
@@ -194,9 +196,7 @@ function AssignmentDetailSheet({
                     </div>
 
                     <AttachmentResourceList
-                        attachments={toAttachmentResourceItems(
-                            payload?.row?.attachments as unknown[]
-                        )}
+                        attachments={toAttachmentResourceItems(assignmentAttachments)}
                         emptyMessage='No files were uploaded with the latest submission.'
                         previewLabel='Read file'
                     />
@@ -449,7 +449,7 @@ export default function LessonHubAssignmentsTab() {
     const [active, setActive] = useState<AssignmentViewRow | null>(null);
     const [searchValue, setSearchValue] = useState('');
 
-    const { assignmentRows, isLoading } = useStudentAssignmentData();
+    const { assignmentRows, isLoading } = useStudentAssignmentData({ includeAttachments: false });
 
     const decorated = useMemo(
         () =>
