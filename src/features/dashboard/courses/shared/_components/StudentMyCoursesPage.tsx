@@ -1,19 +1,6 @@
 // @ts-nocheck -- pre-existing @hey-api generated-client type drift (see memory: elimika-ui-typecheck)
 'use client';
 
-import { Button } from '@/components/ui/button';
-import { Skeleton } from '@/components/ui/skeleton';
-import { useUserProfile } from '@/context/profile-context';
-import useStudentClassDefinitions from '@/hooks/use-student-class-definition';
-import { cn } from '@/lib/utils';
-import { getCourseCreatorByUuidOptions } from '@/services/client/@tanstack/react-query.gen';
-import { CoursesCatalogCard } from '@/src/features/dashboard/courses/shared/_components/CoursesCatalogCard';
-import {
-  formatDurationFromParts,
-  getCardPresentation,
-  type CoursesCatalogCardData,
-} from '@/src/features/dashboard/courses/shared/_components/courses-data';
-import { roleScopedDashboardPath } from '@/src/features/dashboard/lib/active-domain-storage';
 import { useQueries } from '@tanstack/react-query';
 import {
   ArrowRight,
@@ -32,6 +19,20 @@ import {
 } from 'lucide-react';
 import Link from 'next/link';
 import { useMemo, useState } from 'react';
+import { Button } from '@/components/ui/button';
+import { Skeleton } from '@/components/ui/skeleton';
+import { useUserProfile } from '@/context/profile-context';
+import useStudentClassDefinitions from '@/hooks/use-student-class-definition';
+import { coursePrefetchQuery } from '@/lib/route-prefetch';
+import { cn } from '@/lib/utils';
+import { getCourseCreatorByUuidOptions } from '@/services/client/@tanstack/react-query.gen';
+import { CoursesCatalogCard } from '@/src/features/dashboard/courses/shared/_components/CoursesCatalogCard';
+import {
+  type CoursesCatalogCardData,
+  formatDurationFromParts,
+  getCardPresentation,
+} from '@/src/features/dashboard/courses/shared/_components/courses-data';
+import { roleScopedDashboardPath } from '@/src/features/dashboard/lib/active-domain-storage';
 
 type CourseStatus = 'in_progress' | 'completed' | 'not_started';
 
@@ -259,6 +260,7 @@ export function StudentMyCoursesPage() {
         ctaKind: 'link',
         showInstructorCta: false,
         detailsHref: roleScopedDashboardPath('student', `/dashboard/courses/${course.uuid}`),
+        detailsPrefetchQuery: coursePrefetchQuery(course.uuid),
         certificateHref: roleScopedDashboardPath(
           'student',
           `/dashboard/credentials/certificate?csid=${student?.uuid}&ccid=${course?.uuid}&clid=${classDetails?.uuid}`

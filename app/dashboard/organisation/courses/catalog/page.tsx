@@ -13,22 +13,16 @@ import {
   Users,
   X,
 } from 'lucide-react';
-import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useEffect, useMemo, useState } from 'react';
 import { toast } from 'sonner';
 
 import { CategoryTabs, filterByCategoryTabs } from '@/components/category-tabs';
+import { IntentLink } from '@/components/data/intent-link';
+import { surfaceTheme } from '@/components/data-display';
 import { FacetChips } from '@/components/search/facet-chips';
 import { SearchQueryInput } from '@/components/search/search-input';
 import { SearchNotice } from '@/components/search/search-notice';
-import { useCoursesByIds } from '@/hooks/use-batched-lookups';
-import { useSearchErrors } from '@/hooks/use-search-query';
-import { useSearchState, useSearchStatePatch } from '@/hooks/use-search-state';
-import { useUrlSearchQuery } from '@/hooks/use-url-search-query';
-import { classifySearchError } from '@/lib/search/query';
-import { enumParam, stringParam } from '@/lib/search-state';
-import { useTypeSearch } from '@/src/features/search/hooks/use-type-search';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
 import {
@@ -40,8 +34,15 @@ import {
 } from '@/components/ui/select';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useOrganisation } from '@/context/organisation-context';
+import { useCoursesByIds } from '@/hooks/use-batched-lookups';
+import { useSearchErrors } from '@/hooks/use-search-query';
+import { useSearchState, useSearchStatePatch } from '@/hooks/use-search-state';
+import { useUrlSearchQuery } from '@/hooks/use-url-search-query';
 import { extractList, extractPage } from '@/lib/api-helpers';
 import { STALE_TIMES } from '@/lib/query-client';
+import { catalogItemPrefetchQuery } from '@/lib/route-prefetch';
+import { classifySearchError } from '@/lib/search/query';
+import { enumParam, stringParam } from '@/lib/search-state';
 import { cn } from '@/lib/utils';
 import type { Course, CourseCreator, DifficultyLevel, TrainingProgram } from '@/services/client';
 import {
@@ -54,8 +55,8 @@ import {
   searchProgramTrainingApplicationsOptions,
   searchTrainingApplicationsOptions,
 } from '@/services/client/@tanstack/react-query.gen';
+import { useTypeSearch } from '@/src/features/search/hooks/use-type-search';
 import { toAuthenticatedMediaUrl } from '@/src/lib/media-url';
-import { surfaceTheme } from '@/components/data-display';
 
 const stripHtml = (html?: string) =>
   (html ?? '')
@@ -641,8 +642,8 @@ export default function CatalogPage() {
                 <div className='flex flex-1 flex-col gap-3 p-3.5 pt-6 sm:p-4'>
                   <div className='min-w-0'>
                     <div className='flex items-start justify-between gap-2'>
-                      <Link
-                        prefetch={false}
+                      <IntentLink
+                        prefetchQuery={catalogItemPrefetchQuery(item.kind, item.id)}
                         href={
                           item.kind === 'program'
                             ? `/dashboard/organisation/courses/available-programs/${item.id}`
@@ -651,7 +652,7 @@ export default function CatalogPage() {
                         className='text-foreground hover:text-primary line-clamp-2 text-base leading-snug font-semibold hover:underline'
                       >
                         {item.name}
-                      </Link>
+                      </IntentLink>
                       {item.kind === 'program' && (
                         <span className='bg-primary/10 text-primary rounded-full px-2 py-0.5 text-[10px] font-medium tracking-wide uppercase'>
                           Program

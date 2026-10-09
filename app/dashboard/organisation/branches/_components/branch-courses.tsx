@@ -1,13 +1,14 @@
 'use client';
 
+import { useQueries } from '@tanstack/react-query';
+import { Book } from 'lucide-react';
+import { useMemo } from 'react';
 import { ImageWithFallback } from '@/components/data/image-with-fallback';
+import { IntentLink } from '@/components/data/intent-link';
+import { coursePrefetchQuery } from '@/lib/route-prefetch';
 import type { Course } from '@/services/client';
 import { getCourseByUuidOptions } from '@/services/client/@tanstack/react-query.gen';
 import { toAuthenticatedMediaUrl } from '@/src/lib/media-url';
-import { useQueries } from '@tanstack/react-query';
-import { Book } from 'lucide-react';
-import Link from 'next/link';
-import { useMemo } from 'react';
 import { Card, CardHeader, CardTitle } from '../../../../../components/ui/card';
 import { Skeleton } from '../../../../../components/ui/skeleton';
 import { useBranchClasses } from './use-branch-classes';
@@ -71,9 +72,10 @@ export default function BranchCourses({
   return (
     <div className='grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3'>
       {courses.map(course => (
-        <Link
+        <IntentLink
           key={course.uuid}
           href={`/dashboard/organisation/courses/${course.uuid}`}
+          prefetchQuery={coursePrefetchQuery(course.uuid)}
           className='group'
         >
           <Card className='hover:border-primary/50 h-full gap-0 overflow-hidden py-0 transition-colors'>
@@ -94,7 +96,7 @@ export default function BranchCourses({
               <CardTitle className='text-base group-hover:underline'>{course.name}</CardTitle>
             </CardHeader>
           </Card>
-        </Link>
+        </IntentLink>
       ))}
     </div>
   );
