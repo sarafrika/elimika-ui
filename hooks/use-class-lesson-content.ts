@@ -1,9 +1,10 @@
-import { useQuery } from '@tanstack/react-query';
+import { useQueries, useQuery } from '@tanstack/react-query';
 import { useMemo } from 'react';
 import { STALE_TIMES } from '@/lib/query-client';
 import {
   getAllContentTypesOptions,
   getCourseLessonsOptions,
+  getLessonContentOptions,
   getProgramCoursesOptions,
 } from '@/services/client/@tanstack/react-query.gen';
 import type {
@@ -64,6 +65,36 @@ export function useClassLessonContent({ courseUuid, programUuid }: UseClassLesso
     refetchOnWindowFocus: false,
   });
 
+  // Staff without course-level access (e.g. a hired instructor) can still read each lesson, so
+  // only then fall back to the per-lesson content endpoint.
+  const needsPerLessonContent =
+    hasCourse &&
+    (courseContentQuery.isError ||
+      (courseContentQuery.isSuccess && !courseContentQuery.data?.data?.full_access));
+  const lessonList = lessonsQuery.data?.data?.content;
+  const perLessonContent = useQueries({
+    queries: needsPerLessonContent
+      ? (lessonList ?? []).flatMap(lesson =>
+          lesson.uuid
+            ? [
+                {
+                  ...getLessonContentOptions({
+                    path: { courseUuid: singleCourseUuid, lessonUuid: lesson.uuid },
+                  }),
+                  staleTime: STALE_TIMES.entity,
+                  refetchOnWindowFocus: false,
+                },
+              ]
+            : []
+        )
+      : [],
+    combine: results => ({
+      byLesson: results,
+      isLoading: results.some(result => result.isLoading),
+      isFetching: results.some(result => result.isFetching),
+    }),
+  });
+
   const contentTypesQuery = useQuery({
     ...getAllContentTypesOptions({ query: { pageable: { page: 0, size: 100 } } }),
     staleTime: STALE_TIMES.reference,
@@ -77,9 +108,21 @@ export function useClassLessonContent({ courseUuid, programUuid }: UseClassLesso
   });
 
   const courseLessonModules = useMemo<ProgramLessonModule[]>(() => {
-    const lessons = lessonsQuery.data?.data?.content ?? [];
+    const lessons = lessonList ?? [];
+    if (needsPerLessonContent) {
+      const withUuid = lessons.filter(lesson => Boolean(lesson.uuid));
+      const contentByUuid = new Map<string, GetLessonContentResponse | undefined>(
+        withUuid.map((lesson, index) => [
+          lesson.uuid as string,
+          perLessonContent.byLesson[index]?.data as GetLessonContentResponse | undefined,
+        ])
+      );
+      return lessons.map(lesson => ({
+        lesson,
+        content: lesson.uuid ? contentByUuid.get(lesson.uuid) : undefined,
+      }));
+    }
     const courseContent: OrganisationCourseContent | undefined = courseContentQuery.data?.data;
-    // Without full access the per-lesson endpoint would deny content too, so lessons stay bare.
     const contentsByLesson = new Map<string, LessonContent[]>();
     if (courseContent?.full_access) {
       for (const lesson of courseContent.lessons ?? []) {
@@ -93,7 +136,7 @@ export function useClassLessonContent({ courseUuid, programUuid }: UseClassLesso
         : undefined;
       return { lesson, content };
     });
-  }, [lessonsQuery.data, courseContentQuery.data]);
+  }, [lessonList, needsPerLessonContent, perLessonContent.byLesson, courseContentQuery.data]);
 
   const contentTypeData = useMemo<ContentType[]>(() => {
     const content = contentTypesQuery.data?.data?.content;
@@ -132,10 +175,13 @@ export function useClassLessonContent({ courseUuid, programUuid }: UseClassLesso
       : contentTypeDetailsMap,
     isLoading: hasProgram
       ? isLoadingProgramCourses || programLessonResult.isLoading
-      : lessonsQuery.isLoading || courseContentQuery.isLoading,
+      : lessonsQuery.isLoading || courseContentQuery.isLoading || perLessonContent.isLoading,
     isFetching: hasProgram
       ? isLoadingProgramCourses || programLessonResult.isFetching
-      : lessonsQuery.isFetching || courseContentQuery.isFetching || contentTypesQuery.isFetching,
+      : lessonsQuery.isFetching ||
+        courseContentQuery.isFetching ||
+        perLessonContent.isFetching ||
+        contentTypesQuery.isFetching,
     lessonModules,
     programCourses,
   };
