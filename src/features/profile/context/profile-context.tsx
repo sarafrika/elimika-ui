@@ -2,6 +2,7 @@
 'use client';
 
 import {
+  type QueryClient,
   queryOptions,
   type UseQueryOptions,
   useQuery,
@@ -14,11 +15,13 @@ import { createContext, type ReactNode, useCallback, useContext, useEffect, useM
 import { logger } from '@/lib/logger';
 import type { UserProfileType } from '@/lib/types';
 import { fetchCurrentUser } from '@/services/user/current-user';
+import { fetchSessionBootstrap } from '@/services/user/session-bootstrap';
 import {
   fetchDomainRows,
   mergeDomainProfiles,
   userDomains,
 } from '@/src/features/profile/lib/load-domain-profiles';
+import { seedSessionBootstrap } from '@/src/features/profile/lib/seed-session-bootstrap';
 
 const UserProfileContext = createContext<
   | (Partial<UserProfileType> & {
@@ -53,7 +56,7 @@ export default function UserProfileProvider({
       : undefined;
 
   const { data, isPending, refetch } = useQuery(
-    createQueryOptions(email, session?.identity, {
+    createQueryOptions(qc, email, session?.identity, {
       enabled: !!email,
       initialData: seed,
       initialDataUpdatedAt: seed ? initialUpdatedAt : undefined,
@@ -93,12 +96,23 @@ export default function UserProfileProvider({
   return <UserProfileContext.Provider value={value}>{children}</UserProfileContext.Provider>;
 }
 
-async function fetchUserProfile(identity?: SessionIdentity): Promise<UserProfileType> {
+// /me/bootstrap seeds the wallet and unread-count caches in the same hop; /users/me is the fallback.
+async function fetchUser(qc: QueryClient) {
+  const bootstrap = await fetchSessionBootstrap();
+  if (!bootstrap?.user) return fetchCurrentUser();
+  seedSessionBootstrap(qc, bootstrap);
+  return bootstrap.user;
+}
+
+async function fetchUserProfile(
+  qc: QueryClient,
+  identity?: SessionIdentity
+): Promise<UserProfileType> {
   // Identity comes from the access token, not from a query parameter: the old
   // `?email_eq=` bootstrap exposed the whole user table to every caller.
   const knownDomains = identity?.uuid && identity.domains?.length ? identity.domains : null;
   const [userContent, stampedRows] = await Promise.all([
-    fetchCurrentUser(),
+    fetchUser(qc),
     knownDomains ? fetchDomainRows(identity.uuid, knownDomains) : null,
   ]);
 
@@ -131,6 +145,7 @@ async function fetchUserProfile(identity?: SessionIdentity): Promise<UserProfile
 }
 
 function createQueryOptions(
+  qc: QueryClient,
   email?: string,
   identity?: SessionIdentity,
   options?: Omit<UseQueryOptions<UserProfileType>, 'queryKey' | 'queryFn' | 'staleTime'>
@@ -145,7 +160,7 @@ function createQueryOptions(
       if (!email) {
         throw new Error('Email is required to fetch profile');
       }
-      return await fetchUserProfile(identity);
+      return await fetchUserProfile(qc, identity);
     },
     staleTime: 1000 * 60 * 2,
     refetchOnWindowFocus: true,
