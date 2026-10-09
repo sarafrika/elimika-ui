@@ -9,13 +9,17 @@ import {
 } from '@/lib/course-creator/offering-counts';
 import { STALE_TIMES } from '@/lib/query-client';
 import {
+  type CourseTrainingApplication,
   getClassDefinitionsForCourse,
   getClassDefinitionsForProgram,
   getCourseEnrollments,
   getProgramEnrollments,
+  type PagedDtoCourseTrainingApplication,
+  type PagedDtoProgramTrainingApplication,
+  type PageMetadata,
+  type ProgramTrainingApplication,
   searchProgramTrainingApplications,
   searchTrainingApplications,
-  type PageMetadata,
 } from '@/services/client';
 import {
   getClassDefinitionsForCourseQueryKey,
@@ -88,7 +92,9 @@ function useApprovedTrainers(type: OfferingReference['type'], ids: string[]) {
             ? await searchTrainingApplications(params)
             : await searchProgramTrainingApplications(params);
         if (error) throw error;
-        const page = checked(data);
+        const page = checked<
+          PagedDtoCourseTrainingApplication | PagedDtoProgramTrainingApplication
+        >(data);
         if (!page.content) throw new Error('Training applications are unavailable');
         nextApprovalPage(page.metadata, pageParam);
         return data;
@@ -106,7 +112,10 @@ function useApprovedTrainers(type: OfferingReference['type'], ids: string[]) {
     if (ids.length && hasNextPage && !isFetching && !isError) void fetchNextPage();
   }, [ids.length, hasNextPage, isFetching, isError, fetchNextPage]);
   const applications = useMemo(
-    () => result.data?.pages.flatMap(page => page?.data?.content ?? []) ?? [],
+    () =>
+      result.data?.pages.flatMap<CourseTrainingApplication | ProgramTrainingApplication>(
+        page => page?.data?.content ?? []
+      ) ?? [],
     [result.data]
   );
 
