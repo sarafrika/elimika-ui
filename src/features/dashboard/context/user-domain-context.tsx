@@ -78,7 +78,7 @@ export function UserDomainProvider({ children }: { children: ReactNode }) {
       storedDomain && domains.includes(storedDomain)
         ? storedDomain
         : domains.length === 1
-          ? domains[0]
+          ? (domains[0] ?? null)
           : null;
 
     setActiveDomainState(nextDomain);
@@ -95,7 +95,7 @@ export function UserDomainProvider({ children }: { children: ReactNode }) {
 
     setActiveDomainState(prev => {
       if (prev && domains.includes(prev)) return prev;
-      return domains.length === 1 ? domains[0] : null;
+      return domains.length === 1 ? (domains[0] ?? null) : null;
     });
   }, [domains, hydrated]);
 

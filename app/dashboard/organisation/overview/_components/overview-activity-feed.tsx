@@ -24,7 +24,7 @@ const CURRENCY_PREFIXES: Record<string, string> = {
 const fullName = (first?: string, last?: string) =>
   [first, last].filter(Boolean).join(' ').trim();
 
-const formatAmount = (amount?: number, currencyCode?: string) => {
+const formatAmount = (amount?: number | null, currencyCode?: string | null) => {
   const prefix = currencyCode
     ? (CURRENCY_PREFIXES[currencyCode] ?? `${currencyCode} `)
     : '';
