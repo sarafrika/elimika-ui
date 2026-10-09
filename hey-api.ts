@@ -1,6 +1,7 @@
 import type { CreateClientConfig } from '@/services/client/client';
 import {
   ACTING_DOMAIN_HEADER,
+  ACTING_DOMAIN_NONE,
   readActingDomain,
 } from '@/src/features/dashboard/lib/active-domain-storage';
 import { API_BASE_URL } from './services/api/base-url';
@@ -73,13 +74,16 @@ function serializeQuery(queryParams: unknown) {
  * user switches dashboards. Reading it per request is the point.
  */
 const actingDomainFetch: typeof globalThis.fetch = async (input, init) => {
-  const actingDomain = readActingDomain();
-  let requestInit = init;
-  if (actingDomain) {
-    const headers = new Headers(init?.headers);
+  // A query pins the domain it is cached under; only unpinned calls read the URL.
+  const headers = new Headers(init?.headers);
+  const pinned = headers.get(ACTING_DOMAIN_HEADER);
+  const actingDomain = pinned ?? readActingDomain();
+  if (actingDomain && actingDomain !== ACTING_DOMAIN_NONE) {
     headers.set(ACTING_DOMAIN_HEADER, actingDomain);
-    requestInit = { ...init, headers };
+  } else {
+    headers.delete(ACTING_DOMAIN_HEADER);
   }
+  const requestInit = { ...init, headers };
 
   const response = await globalThis.fetch(input, requestInit);
   redirectIfSessionExpired(response);

@@ -14,6 +14,7 @@ import {
   CLIENT_QUERY_CACHE_STORAGE_KEY,
   makeQueryClient,
 } from '@/lib/query-client';
+import { noteRenderedPathname } from '@/src/features/dashboard/lib/active-domain-storage';
 import { isVolatileGeneratedQuery } from '@/src/features/dashboard/workflow-query-invalidation';
 
 const ReactQueryDevtools =
@@ -28,6 +29,8 @@ const ReactQueryDevtools =
 export function RootProviders({ children }: { children: ReactNode }) {
   // The dashboard layout mounts its own provider seeded with the server session.
   const pathname = usePathname() ?? '';
+  // Set in render so the new route's queries key on its own dashboard, not the last URL.
+  noteRenderedPathname(pathname || null);
   const ownsSession = pathname !== '/dashboard' && !pathname.startsWith('/dashboard/');
   const [queryClient] = useState(makeQueryClient);
   const [persister] = useState(() =>

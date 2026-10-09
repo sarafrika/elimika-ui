@@ -7,6 +7,7 @@ import type { ReactNode } from 'react';
 import { createContext, useContext, useEffect, useMemo, useRef, useState } from 'react';
 import type { UserDomain } from '@/lib/types';
 import { getDashboardStorageKey } from '@/lib/utils';
+import { isDomainScopedQueryKey } from '@/src/features/dashboard/lib/acting-domain-query-scope';
 import {
   clearPersistedDashboardDomain,
   normalizeStoredUserDomain,
@@ -106,20 +107,8 @@ export function UserDomainProvider({ children }: { children: ReactNode }) {
     setActiveDomainState(prev => (prev === pathnameDomain ? prev : pathnameDomain));
   }, [domains, pathnameDomain]);
 
-  /*
-   * Drop every cached response when the user changes dashboards.
-   *
-   * The API now answers the same request differently depending on the dashboard
-   * it came from — an admin who is also a learner reads a course they have not
-   * enrolled in as an admin on one page and as a prospect on the other. The query
-   * cache is keyed on the endpoint alone and is persisted to sessionStorage, so
-   * without this the previous dashboard's (more privileged) answer would be
-   * replayed on the new one until it went stale, and the server-side cap would
-   * appear not to have worked.
-   *
-   * Only on a real switch: the first resolution from null is a page load, which
-   * has nothing to carry over.
-   */
+  // Domain-scoped queries are cached per dashboard (lib/query-client.ts), so a switch
+  // keeps shell data and only marks the scoped answers stale for a background refresh.
   const queryClient = useQueryClient();
   const previousDomain = useRef<UserDomain | null>(null);
   useEffect(() => {
@@ -127,7 +116,10 @@ export function UserDomainProvider({ children }: { children: ReactNode }) {
     previousDomain.current = activeDomain;
 
     if (previous && activeDomain && previous !== activeDomain) {
-      queryClient.clear();
+      void queryClient.invalidateQueries({
+        predicate: query => isDomainScopedQueryKey(query.queryKey),
+        refetchType: 'none',
+      });
     }
   }, [activeDomain, queryClient]);
 
