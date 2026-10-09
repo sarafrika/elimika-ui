@@ -1,8 +1,9 @@
 'use client';
 
 import { useQuery } from '@tanstack/react-query';
-
 import { WeeklyGrowthChart } from '@/components/dashboard';
+import { AsyncSection } from '@/components/data/async-section';
+import { Skeleton } from '@/components/ui/skeleton';
 import { useOrganisation } from '@/context/organisation-context';
 import { getWeeklyGrowthOptions } from '@/services/client/@tanstack/react-query.gen';
 
@@ -25,5 +26,16 @@ export function OverviewWeeklyGrowth() {
     enrolments: Number(point.enrolments ?? 0),
   }));
 
-  return <WeeklyGrowthChart data={data} />;
+  return (
+    <AsyncSection
+      name='org-overview-weekly-growth'
+      loading={growthQuery.isLoading}
+      error={growthQuery.error}
+      onRetry={() => growthQuery.refetch()}
+      skeleton={<Skeleton className='h-64 w-full rounded-lg' />}
+      errorTitle='Couldn’t load weekly growth'
+    >
+      <WeeklyGrowthChart data={data} />
+    </AsyncSection>
+  );
 }

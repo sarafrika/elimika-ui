@@ -1,8 +1,9 @@
 'use client';
 
 import { useQuery } from '@tanstack/react-query';
-
 import { EnrollmentTrendsChart } from '@/components/dashboard';
+import { AsyncSection } from '@/components/data/async-section';
+import { Skeleton } from '@/components/ui/skeleton';
 import { useOrganisation } from '@/context/organisation-context';
 import { getEnrolmentTrendsOptions } from '@/services/client/@tanstack/react-query.gen';
 
@@ -29,9 +30,18 @@ export function OverviewEnrolmentTrends() {
   }));
 
   return (
-    <EnrollmentTrendsChart
-      data={data}
-      series={[{ key: 'enrolments', name: 'Enrolments', color: 'var(--color-chart-1)' }]}
-    />
+    <AsyncSection
+      name='org-overview-enrolment-trends'
+      loading={trendsQuery.isLoading}
+      error={trendsQuery.error}
+      onRetry={() => trendsQuery.refetch()}
+      skeleton={<Skeleton className='h-64 w-full rounded-lg' />}
+      errorTitle='Couldn’t load enrolment trends'
+    >
+      <EnrollmentTrendsChart
+        data={data}
+        series={[{ key: 'enrolments', name: 'Enrolments', color: 'var(--color-chart-1)' }]}
+      />
+    </AsyncSection>
   );
 }

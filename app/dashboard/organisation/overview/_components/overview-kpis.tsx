@@ -71,6 +71,7 @@ export function OverviewKpis() {
     variant: KpiCardVariant;
     href: string;
     loading: boolean;
+    failed: boolean;
   }> = [
     {
       label: 'Total Members',
@@ -80,6 +81,7 @@ export function OverviewKpis() {
       variant: 'primary',
       href: '/dashboard/organisation/students',
       loading: membersQuery.isLoading,
+      failed: membersQuery.isError,
     },
     {
       label: 'Students',
@@ -89,6 +91,7 @@ export function OverviewKpis() {
       variant: 'green',
       href: '/dashboard/organisation/students',
       loading: studentsQuery.isLoading,
+      failed: studentsQuery.isError,
     },
     {
       label: 'Instructors',
@@ -98,6 +101,7 @@ export function OverviewKpis() {
       variant: 'indigo',
       href: '/dashboard/organisation/instructors',
       loading: instructorsQuery.isLoading,
+      failed: instructorsQuery.isError,
     },
     {
       label: 'Branches',
@@ -107,6 +111,7 @@ export function OverviewKpis() {
       variant: 'coral',
       href: '/dashboard/organisation/branches',
       loading: branchesQuery.isLoading,
+      failed: branchesQuery.isError,
     },
     {
       label: 'Venues',
@@ -116,6 +121,7 @@ export function OverviewKpis() {
       variant: 'indigo',
       href: '/dashboard/organisation/venues',
       loading: venuesQuery.isLoading,
+      failed: venuesQuery.isError,
     },
   ];
 
@@ -128,7 +134,7 @@ export function OverviewKpis() {
           <KpiCard
             key={tile.label}
             title={tile.label}
-            value={tile.value.toLocaleString()}
+            value={tile.failed ? '—' : tile.value.toLocaleString()}
             hint={tile.hint}
             icon={<tile.icon className='h-5 w-5' />}
             variant={tile.variant}

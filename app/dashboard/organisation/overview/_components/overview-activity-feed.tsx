@@ -1,13 +1,13 @@
 'use client';
 
-import { useMemo } from 'react';
 
 import { useQuery } from '@tanstack/react-query';
 import dayjs from 'dayjs';
 import relativeTime from 'dayjs/plugin/relativeTime';
 import { BookOpen, UserPlus, Wallet } from 'lucide-react';
-
+import { useMemo } from 'react';
 import { ActivityFeed, ActivityFeedSkeleton, type ActivityItem } from '@/components/dashboard';
+import { AsyncSection } from '@/components/data/async-section';
 import { useOrganisation } from '@/context/organisation-context';
 import { useStudentsByIds, useUsersByIds } from '@/hooks/use-batched-lookups';
 import { getActivityFeedOptions } from '@/services/client/@tanstack/react-query.gen';
@@ -114,9 +114,16 @@ export function OverviewActivityFeed() {
     [events, studentMap, userMap]
   );
 
-  if (feedQuery.isLoading) {
-    return <ActivityFeedSkeleton />;
-  }
-
-  return <ActivityFeed items={items} />;
+  return (
+    <AsyncSection
+      name='org-overview-activity'
+      loading={feedQuery.isLoading}
+      error={feedQuery.error}
+      onRetry={() => feedQuery.refetch()}
+      skeleton={<ActivityFeedSkeleton />}
+      errorTitle='Couldn’t load recent activity'
+    >
+      <ActivityFeed items={items} />
+    </AsyncSection>
+  );
 }

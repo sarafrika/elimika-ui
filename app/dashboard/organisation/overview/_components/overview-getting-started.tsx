@@ -1,8 +1,9 @@
 'use client';
 
 import { useQuery } from '@tanstack/react-query';
-
 import { GettingStarted, type GettingStartedStep } from '@/components/dashboard';
+import { AsyncSection } from '@/components/data/async-section';
+import { Skeleton } from '@/components/ui/skeleton';
 import { useOrganisation } from '@/context/organisation-context';
 import { extractPage, getTotalFromMetadata } from '@/lib/api-helpers';
 import {
@@ -93,5 +94,16 @@ export function OverviewGettingStarted() {
     },
   ];
 
-  return <GettingStarted steps={steps} />;
+  const queries = [instructorsQuery, studentsQuery, branchesQuery, classesQuery];
+
+  // Steps are derived from counts, so wait for them instead of flashing every step undone.
+  return (
+    <AsyncSection
+      name='org-overview-getting-started'
+      loading={queries.some(query => query.isLoading)}
+      skeleton={<Skeleton className='h-72 w-full rounded-lg' />}
+    >
+      <GettingStarted steps={steps} />
+    </AsyncSection>
+  );
 }

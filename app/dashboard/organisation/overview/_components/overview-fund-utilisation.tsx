@@ -1,10 +1,11 @@
 'use client';
 
-import { useMemo } from 'react';
 
 import { useQuery } from '@tanstack/react-query';
-
+import { useMemo } from 'react';
 import { FundUtilizationChart, type FundUtilizationPoint } from '@/components/dashboard';
+import { AsyncSection } from '@/components/data/async-section';
+import { Skeleton } from '@/components/ui/skeleton';
 import { useOrganisation } from '@/context/organisation-context';
 import { localDate } from '@/lib/date';
 import {
@@ -123,5 +124,19 @@ export function OverviewFundUtilisation() {
     return { data: hasActivity ? points : [], currencyPrefix: prefix };
   }, [revenueQuery.data, sourcesQuery.data, payoutsQuery.data, windowStart]);
 
-  return <FundUtilizationChart data={data} currencyPrefix={currencyPrefix} />;
+  const queries = [revenueQuery, sourcesQuery, payoutsQuery];
+
+  // Partial sources still chart; the section only fails when every source failed.
+  return (
+    <AsyncSection
+      name='org-overview-fund-utilisation'
+      loading={queries.some(query => query.isLoading)}
+      error={queries.every(query => query.error) ? revenueQuery.error : undefined}
+      onRetry={() => queries.forEach(query => query.refetch())}
+      skeleton={<Skeleton className='h-64 w-full rounded-lg' />}
+      errorTitle='Couldn’t load fund utilisation'
+    >
+      <FundUtilizationChart data={data} currencyPrefix={currencyPrefix} />
+    </AsyncSection>
+  );
 }

@@ -2,8 +2,9 @@
 
 import { useQuery } from '@tanstack/react-query';
 import { AlertTriangle, Bell, BellRing, ClipboardCheck, Info, Send, ShieldAlert } from 'lucide-react';
-
-import { AlertPanel, type AlertItem, type AlertSeverity } from '@/components/dashboard';
+import { type AlertItem, AlertPanel, type AlertSeverity } from '@/components/dashboard';
+import { AsyncSection } from '@/components/data/async-section';
+import { Skeleton } from '@/components/ui/skeleton';
 import { useOrganisation } from '@/context/organisation-context';
 import { extractPage } from '@/lib/api-helpers';
 import type { NotificationDto } from '@/services/client';
@@ -126,5 +127,19 @@ export function OverviewAlerts() {
     });
   }
 
-  return <AlertPanel alerts={alerts} />;
+  const queries = [applicationsQuery, notificationsQuery, sentQuery];
+
+  // Each source adds its own alerts; the panel only fails when every source failed.
+  return (
+    <AsyncSection
+      name='org-overview-alerts'
+      loading={queries.some(query => query.isLoading)}
+      error={queries.every(query => query.error) ? notificationsQuery.error : undefined}
+      onRetry={() => queries.forEach(query => query.refetch())}
+      skeleton={<Skeleton className='h-72 w-full rounded-lg' />}
+      errorTitle='Couldn’t load alerts'
+    >
+      <AlertPanel alerts={alerts} />
+    </AsyncSection>
+  );
 }
