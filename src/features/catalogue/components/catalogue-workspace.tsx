@@ -22,7 +22,7 @@ import {
 import Link from 'next/link';
 import { useEffect, useMemo, useState } from 'react';
 import { toast } from 'sonner';
-
+import { AsyncSection } from '@/components/data/async-section';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -38,11 +38,9 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { useOrganisation } from '@/context/organisation-context';
 import { useUserProfile } from '@/context/profile-context';
 import { useClassesByIds, useCoursesByIds } from '@/hooks/use-batched-lookups';
-import { STALE_TIMES } from '@/lib/query-client';
-import { publicCourseUrl } from '@/src/features/dashboard/lib/dashboard-url';
 import { extractEntity } from '@/lib/api-helpers';
+import { STALE_TIMES } from '@/lib/query-client';
 import type {
-  ApiResponseListCommerceCatalogueItem,
   ClassDefinition,
   CommerceCatalogueItem,
   Course,
@@ -52,10 +50,13 @@ import type {
 import {
   getClassDefinitionsForInstructorOptions,
   getClassDefinitionsForOrganisationOptions,
+  getCourseByUuidOptions,
   getCourseCreatorByUuidOptions,
   getInstructorByUuidOptions,
   listCatalogItemsOptions,
+  searchCatalogueOptions,
 } from '@/services/client/@tanstack/react-query.gen';
+import { publicCourseUrl } from '@/src/features/dashboard/lib/dashboard-url';
 
 type CatalogueScope = 'admin' | 'organization' | 'instructor' | 'course_creator';
 
@@ -71,6 +72,10 @@ type CatalogueRow = {
   variantCode: string | null | undefined;
   courseId: string | null | undefined;
   classId: string | null | undefined;
+  /** From the `/search` course snapshot; absent on class rows and admin's plain listing. */
+  courseName: string | null;
+  courseCreatorUuid: string | null;
+  creatorName: string | null;
   createdAt: string | Date | null | undefined;
   updatedAt: string | Date | null | undefined;
   detailsHref: string | null;
@@ -89,8 +94,10 @@ type TitleMaps = {
 
 type CatalogueDetailsQueryState = {
   isLoading: boolean;
-  data?: ApiResponseListCommerceCatalogueItem;
 };
+
+/** Non-admin scopes read one page of `/search`; it carries each course's snapshot. */
+const CATALOGUE_SEARCH_PAGE_SIZE = 200;
 
 const scopeCopy: Record<
   CatalogueScope,
@@ -161,6 +168,9 @@ const buildRows = (items: CommerceCatalogueItem[]): CatalogueRow[] =>
       variantCode: item.variant_code ?? null,
       courseId: item.course_uuid ?? null,
       classId: item.class_definition_uuid ?? null,
+      courseName: item.course?.name ?? null,
+      courseCreatorUuid: item.course?.creator_uuid ?? null,
+      creatorName: item.course?.creator_name ?? null,
       createdAt:
         (item as CommerceCatalogueItem & { created_date?: string | Date | null }).created_date ??
         null,
@@ -186,16 +196,20 @@ const toClassMap = (data: { class_definition?: ClassDefinition }[] | undefined) 
   return map;
 };
 
-/** Courses by batched id, and classes from ONE scope listing (instructor or organisation). */
+/** Courses the snapshot can't answer for, and classes from ONE scope listing. */
 const useScopeMaps = (
   rows: CatalogueRow[],
   scope: CatalogueScope,
   ids: { instructorUuid?: string | null; organisationUuid?: string | null }
 ): ScopeMaps => {
-  const courseIds = useMemo(
-    () => Array.from(new Set(rows.map(row => row.courseId).filter(Boolean))) as string[],
-    [rows]
-  );
+  // The snapshot has no organisation uuid, so the organisation scope still needs the courses.
+  const courseIds = useMemo(() => {
+    const needed = rows
+      .filter(row => scope === 'organization' || !row.courseName)
+      .map(row => row.courseId)
+      .filter((id): id is string => !!id);
+    return Array.from(new Set(needed));
+  }, [rows, scope]);
   const { courseMap: courseLookup } = useCoursesByIds(courseIds);
 
   const instructorUuid = ids.instructorUuid ?? '';
@@ -280,6 +294,9 @@ const attachTitles = (rows: CatalogueRow[], maps: TitleMaps): CatalogueRow[] =>
     if (row.classId && maps.classTitleMap.has(row.classId)) {
       return { ...row, displayTitle: maps.classTitleMap.get(row.classId) as string };
     }
+    if (row.courseName) {
+      return { ...row, displayTitle: row.courseName };
+    }
     if (row.courseId && maps.courseTitleMap.has(row.courseId)) {
       return { ...row, displayTitle: maps.courseTitleMap.get(row.courseId) as string };
     }
@@ -309,11 +326,32 @@ export function CatalogueWorkspace({
 
   const fetchActiveOnly = scope === 'admin' ? false : !includeHidden;
 
-  const catalogueQuery = useQuery({
-    ...listCatalogItemsOptions({
-      query: { active_only: fetchActiveOnly },
-    }),
+  // Admin reviews the whole unbounded listing; every other scope reads the paged search.
+  const listQuery = useQuery({
+    ...listCatalogItemsOptions({ query: { active_only: fetchActiveOnly } }),
+    enabled: scope === 'admin',
+    staleTime: STALE_TIMES.entity,
   });
+  const searchQuery = useQuery({
+    ...searchCatalogueOptions({
+      query: {
+        searchParams: fetchActiveOnly ? { active: 'true' } : {},
+        pageable: { page: 0, size: CATALOGUE_SEARCH_PAGE_SIZE },
+      },
+    }),
+    enabled: scope !== 'admin',
+    staleTime: STALE_TIMES.entity,
+  });
+  const catalogueQuery = scope === 'admin' ? listQuery : searchQuery;
+
+  const catalogueItems = useMemo((): CommerceCatalogueItem[] => {
+    if (scope === 'admin') {
+      if (listQuery.error) return [];
+      return listQuery.data?.data ?? [];
+    }
+    if (searchQuery.error) return [];
+    return searchQuery.data?.data?.content ?? [];
+  }, [scope, listQuery.data, listQuery.error, searchQuery.data, searchQuery.error]);
 
   useEffect(() => {
     if (catalogueQuery.error) {
@@ -321,10 +359,7 @@ export function CatalogueWorkspace({
     }
   }, [catalogueQuery.error]);
 
-  const rows = useMemo(
-    () => buildRows((catalogueQuery.data?.data as CommerceCatalogueItem[]) ?? []),
-    [catalogueQuery.data]
-  );
+  const rows = useMemo(() => buildRows(catalogueItems), [catalogueItems]);
 
   const activeOrgUuid = useMemo(() => {
     if (organisation?.uuid) return organisation.uuid;
@@ -389,16 +424,20 @@ export function CatalogueWorkspace({
           if (!instructorUuid) return true;
           const classDef = row.classId ? scopeMaps.classMap.get(row.classId) : undefined;
           const classMatches = classDef?.default_instructor_uuid === instructorUuid;
-          const course = row.courseId ? scopeMaps.courseMap.get(row.courseId) : undefined;
-          const courseMatches = course?.course_creator_uuid === instructorUuid;
+          const courseCreatorUuid = row.courseId
+            ? (row.courseCreatorUuid ?? scopeMaps.courseMap.get(row.courseId)?.course_creator_uuid)
+            : undefined;
+          const courseMatches = courseCreatorUuid === instructorUuid;
           return classMatches || courseMatches;
         }
         case 'course_creator': {
           const creatorUuid = profile?.courseCreator?.uuid;
           if (!creatorUuid) return true;
-          // Scoped by the catalogue item's own course, so no class needs fetching to decide.
-          const course = row.courseId ? scopeMaps.courseMap.get(row.courseId) : undefined;
-          return course?.course_creator_uuid === creatorUuid;
+          // Scoped by the catalogue item's own course snapshot, so nothing is fetched to decide.
+          if (!row.courseId) return false;
+          const courseCreatorUuid =
+            row.courseCreatorUuid ?? scopeMaps.courseMap.get(row.courseId)?.course_creator_uuid;
+          return courseCreatorUuid === creatorUuid;
         }
         default:
           return true;
@@ -880,12 +919,12 @@ function CatalogueDetailsBody({
 
       {/* Description (if available) */}
       {(() => {
-        const linkedEntity = selectedRow.courseId
-          ? titleMaps.courseMap.get(selectedRow.courseId)
+        const description = selectedRow.courseId
+          ? (titleMaps.courseMap.get(selectedRow.courseId)?.description ??
+            selectedRow.raw.course?.description)
           : selectedRow.classId
-            ? titleMaps.classMap.get(selectedRow.classId)
-            : null;
-        const description = linkedEntity?.description;
+            ? titleMaps.classMap.get(selectedRow.classId)?.description
+            : undefined;
 
         return description ? (
           <div className='border-border/60 bg-muted/30 rounded-[16px] border p-5'>
@@ -913,7 +952,11 @@ function CatalogueDetailsBody({
       />
 
       {/* Pricing - More Prominent */}
-      <CatalogueItemPricing selectedRow={selectedRow} courseMap={titleMaps.courseMap} />
+      <CatalogueItemPricing
+        key={selectedRow.id}
+        selectedRow={selectedRow}
+        courseMap={titleMaps.courseMap}
+      />
 
       {/* Key Information */}
       <div className='space-y-3'>
@@ -978,14 +1021,17 @@ function CatalogueItemCreatorInfo({
   const course = selectedRow.courseId ? courseMap.get(selectedRow.courseId) : null;
   const classDef = selectedRow.classId ? classMap.get(selectedRow.classId) : null;
 
-  const courseCreatorUuid = course?.course_creator_uuid;
+  const courseCreatorUuid = selectedRow.courseCreatorUuid ?? course?.course_creator_uuid;
   const instructorUuid = classDef?.default_instructor_uuid;
+  const snapshotCreatorName = selectedRow.creatorName;
 
+  // The snapshot already names the creator; fetch the profile only for rows without one.
   const { data: creatorData } = useQuery({
     ...getCourseCreatorByUuidOptions({
       path: { uuid: courseCreatorUuid ?? '' },
     }),
-    enabled: Boolean(courseCreatorUuid),
+    enabled: Boolean(courseCreatorUuid) && !snapshotCreatorName,
+    staleTime: STALE_TIMES.entity,
   });
 
   const { data: instructorData } = useQuery({
@@ -995,10 +1041,11 @@ function CatalogueItemCreatorInfo({
     enabled: Boolean(instructorUuid),
   });
 
-  const creator = extractEntity<CourseCreator>(creatorData);
+  const creator = snapshotCreatorName ? null : extractEntity<CourseCreator>(creatorData);
+  const creatorName = snapshotCreatorName ?? creator?.full_name;
   const instructor = extractEntity<Instructor>(instructorData);
 
-  if (!creator && !instructor) return null;
+  if (!creatorName && !instructor) return null;
 
   return (
     <div className='space-y-3'>
@@ -1007,7 +1054,7 @@ function CatalogueItemCreatorInfo({
         People
       </p>
       <div className='grid gap-3 sm:grid-cols-2'>
-        {creator && (
+        {creatorName && (
           <div className='border-border/60 bg-card/80 rounded-[12px] border p-4'>
             <div className='flex items-center gap-3'>
               <div className='bg-primary/10 flex h-10 w-10 items-center justify-center rounded-full'>
@@ -1018,9 +1065,9 @@ function CatalogueItemCreatorInfo({
                   Course Creator
                 </p>
                 <p className='text-foreground mt-1 truncate text-sm font-semibold'>
-                  {creator.full_name}
+                  {creatorName}
                 </p>
-                {creator.website && (
+                {creator?.website && (
                   <p className='text-muted-foreground truncate text-xs'>{creator.website}</p>
                 )}
               </div>
@@ -1060,6 +1107,7 @@ function CatalogueItemPricing({
   courseMap: Map<string, Course>;
 }) {
   const course = selectedRow.courseId ? courseMap.get(selectedRow.courseId) : null;
+  const [showShare, setShowShare] = useState(false);
 
   return (
     <div className='space-y-3'>
@@ -1078,34 +1126,83 @@ function CatalogueItemPricing({
         </p>
 
         {/* Revenue Share Information */}
-        {course &&
-          course.creator_share_percentage !== undefined &&
-          course.instructor_share_percentage !== undefined && (
-            <div className='mt-4 grid gap-3 sm:grid-cols-2'>
-              <div className='border-border/60 bg-card/60 rounded-[10px] border p-3'>
-                <div className='flex items-center gap-2'>
-                  <Percent className='text-primary h-3.5 w-3.5' />
-                  <p className='text-muted-foreground text-[10px] font-medium tracking-wider uppercase'>
-                    Creator Share
-                  </p>
-                </div>
-                <p className='text-foreground mt-1.5 text-lg font-bold'>
-                  {course.creator_share_percentage}%
-                </p>
-              </div>
-              <div className='border-border/60 bg-card/60 rounded-[10px] border p-3'>
-                <div className='flex items-center gap-2'>
-                  <TrendingUp className='text-primary h-3.5 w-3.5' />
-                  <p className='text-muted-foreground text-[10px] font-medium tracking-wider uppercase'>
-                    Instructor Share
-                  </p>
-                </div>
-                <p className='text-foreground mt-1.5 text-lg font-bold'>
-                  {course.instructor_share_percentage}%
-                </p>
-              </div>
-            </div>
-          )}
+        {course ? (
+          <RevenueShareTiles course={course} />
+        ) : selectedRow.courseId ? (
+          showShare ? (
+            <LazyRevenueShare courseId={selectedRow.courseId} />
+          ) : (
+            <Button
+              variant='link'
+              size='sm'
+              className='mt-3 h-auto px-0'
+              onClick={() => setShowShare(true)}
+            >
+              Show revenue share
+            </Button>
+          )
+        ) : null}
+      </div>
+    </div>
+  );
+}
+
+/** Commercial terms are not in the catalogue snapshot, so they load only when asked for. */
+function LazyRevenueShare({ courseId }: { courseId: string }) {
+  const courseQuery = useQuery({
+    ...getCourseByUuidOptions({ path: { uuid: courseId } }),
+    enabled: Boolean(courseId),
+    staleTime: STALE_TIMES.entity,
+  });
+  const course = extractEntity<Course>(courseQuery.data);
+
+  return (
+    <AsyncSection
+      name='catalogue-revenue-share'
+      loading={courseQuery.isLoading && !courseQuery.data}
+      error={courseQuery.error}
+      empty={!course}
+      emptyTitle='No revenue share set'
+      onRetry={() => courseQuery.refetch()}
+      skeleton={<Skeleton className='mt-4 h-16 w-full' />}
+      className='mt-4'
+    >
+      {course ? <RevenueShareTiles course={course} /> : null}
+    </AsyncSection>
+  );
+}
+
+function RevenueShareTiles({ course }: { course: Course }) {
+  if (
+    course.creator_share_percentage === undefined ||
+    course.instructor_share_percentage === undefined
+  ) {
+    return null;
+  }
+
+  return (
+    <div className='mt-4 grid gap-3 sm:grid-cols-2'>
+      <div className='border-border/60 bg-card/60 rounded-[10px] border p-3'>
+        <div className='flex items-center gap-2'>
+          <Percent className='text-primary h-3.5 w-3.5' />
+          <p className='text-muted-foreground text-[10px] font-medium tracking-wider uppercase'>
+            Creator Share
+          </p>
+        </div>
+        <p className='text-foreground mt-1.5 text-lg font-bold'>
+          {course.creator_share_percentage}%
+        </p>
+      </div>
+      <div className='border-border/60 bg-card/60 rounded-[10px] border p-3'>
+        <div className='flex items-center gap-2'>
+          <TrendingUp className='text-primary h-3.5 w-3.5' />
+          <p className='text-muted-foreground text-[10px] font-medium tracking-wider uppercase'>
+            Instructor Share
+          </p>
+        </div>
+        <p className='text-foreground mt-1.5 text-lg font-bold'>
+          {course.instructor_share_percentage}%
+        </p>
       </div>
     </div>
   );
