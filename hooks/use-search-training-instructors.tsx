@@ -2,7 +2,6 @@ import { STALE_TIMES } from '@/lib/query-client';
 import {
   getAllInstructorsOptions,
   getInstructorRatingSummaryOptions,
-  getInstructorReviewsOptions,
   searchExperienceOptions,
   searchSkillsOptions
 } from '@/services/client/@tanstack/react-query.gen';
@@ -23,7 +22,7 @@ import { useUsersByIds } from './use-batched-lookups';
  * Previously fired 5 requests per instructor
  * (profile, reviews, rating summary, experience, skills — 100+ requests for a
  * 20-instructor page). Now: 1 instructor page + 1 batched user lookup +
- * 1 experience search + 1 skills search + N small rating summaries.
+ * 1 experience search + 1 skills search + rating summaries only when not inline.
  */
 /**
  * The rating the instructor list carries itself (`rating_avg`, `review_count`), when the
@@ -61,9 +60,8 @@ function useSearchTrainingInstructors({
   page?: number;
   size?: number;
   /**
-   * `eager` loads a rating summary and the reviews per listed instructor. `lazy` loads
-   * neither: each card fetches its own summary when it is shown. Either way, ratings the
-   * list already carries (`rating_avg`, `review_count`) win and nothing is fetched for them.
+   * `eager` loads a rating summary per instructor the list carries no rating for; `lazy`
+   * leaves it to each card. Full reviews are never loaded here: only a detail view does.
    */
   ratings?: 'eager' | 'lazy';
 } = {}) {
@@ -164,17 +162,6 @@ function useSearchTrainingInstructors({
   });
   const ratingSummaries = ratingSummaryQueries.map(q => q.data?.data ?? null);
 
-  const reviewsQueries = useQueries({
-    queries: instructors.map(instructor => ({
-      ...getInstructorReviewsOptions({
-        path: { instructorUuid: instructor.uuid as string },
-      }),
-      enabled: ratings === 'eager' && !!instructor.uuid,
-      staleTime: STALE_TIMES.entity,
-    })),
-  });
-  const reviews = reviewsQueries.map(q => q.data?.data ?? null);
-
   const instructorsWithProfiles: SearchInstructor[] = instructors.map((instructor, i) => {
     const profile = instructor.user_uuid ? (userMap[instructor.user_uuid] ?? null) : null;
     const expArray = experienceByInstructor.get(instructor.uuid ?? '') ?? [];
@@ -183,7 +170,6 @@ function useSearchTrainingInstructors({
       0
     );
     const ratingSummary = ratingSummaries[i];
-    const review = reviews[i];
     const inline = listRating(instructor);
     const reviewCount =
       inline?.reviewCount ??
@@ -219,7 +205,6 @@ function useSearchTrainingInstructors({
       skill_categories: skillCategories,
       rating: averageRating ?? (instructor as Instructor & { rating?: number }).rating ?? 0,
       review_count: reviewCount,
-      reviews: review,
       ratings_inline: inline !== null,
     };
   });
