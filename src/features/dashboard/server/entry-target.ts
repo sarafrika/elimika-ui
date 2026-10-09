@@ -69,10 +69,13 @@ function normalizeDomains(rawDomains: readonly unknown[]) {
   );
 }
 
+/** The full `/me` record, fetched at most once per request (guard fallback and bootstrap). */
+const fetchCurrentUserRecord = cache(async () => fetchCurrentUser());
+
 /** Ask the API directly. Shared per request by `cache`, like the token read. */
 const fetchIdentity = cache(async (): Promise<Identity> => {
   try {
-    const user = await fetchCurrentUser();
+    const user = await fetchCurrentUserRecord();
     return user
       ? { status: 'authenticated', user: toIdentityUser(user), fromToken: false }
       : { status: 'unavailable' };
@@ -300,7 +303,7 @@ export type DashboardBootstrap = {
 };
 
 async function loadActiveOrganisation(user: User): Promise<Organisation | null> {
-  const domains = extractUserDomains(user);
+  const { domains } = toIdentityUser(user);
   if (!domains.includes('organisation') && !domains.includes('organisation_user')) return null;
 
   const affiliation =
@@ -315,19 +318,20 @@ async function loadActiveOrganisation(user: User): Promise<Organisation | null> 
 
 /**
  * Seeds the client profile and organisation caches from this render, reusing the
- * request's single `/me`. Never throws: a miss just leaves the client to fetch.
+ * request's single `/me` record. Never throws: a miss just leaves the client to fetch.
  */
 export const resolveDashboardBootstrap = cache(async (): Promise<DashboardBootstrap> => {
   const fetchedAt = Date.now();
   try {
     const identity = await resolveIdentity();
-    if (identity.status !== 'authenticated') {
+    const user = identity.status === 'authenticated' ? await fetchCurrentUserRecord() : null;
+    if (!user) {
       return { profile: null, organisation: null, fetchedAt };
     }
 
     const [profile, organisation] = await Promise.all([
-      loadDomainProfiles(identity.user).catch(() => null),
-      loadActiveOrganisation(identity.user).catch(() => null),
+      loadDomainProfiles(user).catch(() => null),
+      loadActiveOrganisation(user).catch(() => null),
     ]);
     return { profile, organisation, fetchedAt };
   } catch {
