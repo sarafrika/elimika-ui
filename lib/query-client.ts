@@ -1,5 +1,12 @@
-import { QueryClient } from '@tanstack/react-query';
+import {
+  type DefaultError,
+  type DefaultedQueryObserverOptions,
+  QueryClient,
+  type QueryKey,
+  type QueryObserverOptions,
+} from '@tanstack/react-query';
 import { retryUnlessClientOrSearchError } from '@/lib/api-errors';
+import { scopeQueryOptionsToActingDomain } from '@/src/features/dashboard/lib/acting-domain-query-scope';
 
 /**
  * staleTime tiers cap how long an answer is reused before the next mount refetches it
@@ -25,13 +32,33 @@ export const APPROVAL_QUERY_FRESHNESS = {
 
 export const CLIENT_QUERY_CACHE_STORAGE_KEY = 'elimika-query-cache-v1';
 export const CLIENT_QUERY_CACHE_MAX_AGE_MS = 1000 * 60 * 30;
-export const CLIENT_QUERY_CACHE_BUSTER = 'elimika-query-cache:2026-06-24';
+export const CLIENT_QUERY_CACHE_BUSTER = 'elimika-query-cache:2026-10-09';
 
 /** One quick retry for a network blip or 5xx, instead of React Query's 1s/2s/4s backoff. */
 export const QUERY_RETRY_DELAY_MS = 500;
 
+/** Every query passes through here, so a domain switch needs no cache wipe. */
+class ActingDomainQueryClient extends QueryClient {
+  override defaultQueryOptions<
+    TQueryFnData = unknown,
+    TError = DefaultError,
+    TData = TQueryFnData,
+    TQueryData = TQueryFnData,
+    TQueryKey extends QueryKey = QueryKey,
+    TPageParam = never,
+  >(
+    options:
+      | QueryObserverOptions<TQueryFnData, TError, TData, TQueryData, TQueryKey, TPageParam>
+      | DefaultedQueryObserverOptions<TQueryFnData, TError, TData, TQueryData, TQueryKey>
+  ): DefaultedQueryObserverOptions<TQueryFnData, TError, TData, TQueryData, TQueryKey> {
+    return super.defaultQueryOptions(
+      options._defaulted ? options : scopeQueryOptionsToActingDomain(options)
+    );
+  }
+}
+
 export function makeQueryClient() {
-  return new QueryClient({
+  return new ActingDomainQueryClient({
     defaultOptions: {
       queries: {
         gcTime: CLIENT_QUERY_CACHE_MAX_AGE_MS,
