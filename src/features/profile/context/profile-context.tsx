@@ -8,11 +8,16 @@ import {
   useQueryClient,
 } from '@tanstack/react-query';
 import { useRouter } from 'next/navigation';
+import type { SessionIdentity } from 'next-auth';
 import { useSession } from 'next-auth/react';
 import { createContext, type ReactNode, useCallback, useContext, useEffect, useMemo } from 'react';
 import type { UserProfileType } from '@/lib/types';
 import { fetchCurrentUser } from '@/services/user/current-user';
-import { loadDomainProfiles } from '@/src/features/profile/lib/load-domain-profiles';
+import {
+  fetchDomainRows,
+  mergeDomainProfiles,
+  userDomains,
+} from '@/src/features/profile/lib/load-domain-profiles';
 
 const UserProfileContext = createContext<
   | (Partial<UserProfileType> & {
@@ -47,7 +52,7 @@ export default function UserProfileProvider({
       : undefined;
 
   const { data, isPending, refetch } = useQuery(
-    createQueryOptions(email, {
+    createQueryOptions(email, session?.identity, {
       enabled: !!email,
       initialData: seed,
       initialDataUpdatedAt: seed ? initialUpdatedAt : undefined,
@@ -87,20 +92,40 @@ export default function UserProfileProvider({
   return <UserProfileContext.Provider value={value}>{children}</UserProfileContext.Provider>;
 }
 
-async function fetchUserProfile(): Promise<UserProfileType> {
+async function fetchUserProfile(identity?: SessionIdentity): Promise<UserProfileType> {
   // Identity comes from the access token, not from a query parameter: the old
   // `?email_eq=` bootstrap exposed the whole user table to every caller.
-  const userContent = await fetchCurrentUser();
+  const knownDomains = identity?.uuid && identity.domains?.length ? identity.domains : null;
+  const [userContent, stampedRows] = await Promise.all([
+    fetchCurrentUser(),
+    knownDomains ? fetchDomainRows(identity.uuid, knownDomains) : null,
+  ]);
 
   if (!userContent) {
     throw new Error('User not found');
   }
 
-  return loadDomainProfiles(userContent);
+  // A stale session stamp (other user, or a domain added since) must not drop a row.
+  const domains = userDomains(userContent);
+  const stampFits =
+    stampedRows &&
+    userContent.uuid === identity?.uuid &&
+    domains.every(domain => knownDomains?.includes(domain));
+  const rows = stampFits
+    ? {
+        student: domains.includes('student') ? stampedRows.student : undefined,
+        instructor: domains.includes('instructor') ? stampedRows.instructor : undefined,
+        courseCreator: domains.includes('course_creator') ? stampedRows.courseCreator : undefined,
+      }
+    : userContent.uuid
+      ? await fetchDomainRows(userContent.uuid, domains)
+      : {};
+  return mergeDomainProfiles(userContent, rows);
 }
 
 function createQueryOptions(
   email?: string,
+  identity?: SessionIdentity,
   options?: Omit<UseQueryOptions<UserProfileType>, 'queryKey' | 'queryFn' | 'staleTime'>
 ) {
   return queryOptions({
@@ -113,7 +138,7 @@ function createQueryOptions(
       if (!email) {
         throw new Error('Email is required to fetch profile');
       }
-      return await fetchUserProfile();
+      return await fetchUserProfile(identity);
     },
     staleTime: 1000 * 60 * 2,
     refetchOnWindowFocus: true,

@@ -22,20 +22,16 @@ function firstContent(response: SearchResult): unknown {
   return page.content[0];
 }
 
-/**
- * Turns a `/users/me` record into the dashboard profile: the user plus its student,
- * instructor and course-creator rows. Runs on the server render and in the client query.
- */
-export async function loadDomainProfiles(userContent: User): Promise<UserProfileType> {
-  const user: UserProfileType = {
-    ...userContent,
-    dob: new Date(userContent?.dob ?? Date.now()),
-  };
-  const domains: string[] = Array.isArray(user.user_domain) ? [...user.user_domain] : [];
-  if (domains.length === 0 || !user.uuid) return user;
+export type DomainRows = {
+  student?: Student;
+  instructor?: UserProfileType['instructor'];
+  courseCreator?: CourseCreator;
+};
 
-  // Independent lookups: sequential awaits used to delay every dashboard by all three.
-  const searchByUserUuid = { user_uuid_eq: user.uuid };
+/** The student, instructor and course-creator rows for a user, looked up in parallel. */
+export async function fetchDomainRows(userUuid: string, domains: string[]): Promise<DomainRows> {
+  if (!userUuid || domains.length === 0) return {};
+  const searchByUserUuid = { user_uuid_eq: userUuid };
   const [studentResponse, instructorResponse, courseCreatorResponse] = await Promise.all([
     domains.includes('student')
       ? searchStudents({
@@ -54,14 +50,39 @@ export async function loadDomainProfiles(userContent: User): Promise<UserProfile
       : null,
   ]);
 
+  const rows: DomainRows = {};
   const student = firstContent(studentResponse);
-  if (isRecord(student)) user.student = student as Student;
-
+  if (isRecord(student)) rows.student = student as Student;
   const instructor = firstContent(instructorResponse);
-  if (isRecord(instructor)) user.instructor = instructor as UserProfileType['instructor'];
-
+  if (isRecord(instructor)) rows.instructor = instructor as UserProfileType['instructor'];
   const courseCreator = firstContent(courseCreatorResponse);
-  if (isRecord(courseCreator)) user.courseCreator = courseCreator as CourseCreator;
+  if (isRecord(courseCreator)) rows.courseCreator = courseCreator as CourseCreator;
+  return rows;
+}
 
+/** The `/users/me` record as a dashboard profile, with the given domain rows attached. */
+export function mergeDomainProfiles(userContent: User, rows: DomainRows): UserProfileType {
+  const user: UserProfileType = {
+    ...userContent,
+    dob: new Date(userContent?.dob ?? Date.now()),
+  };
+  if (rows.student) user.student = rows.student;
+  if (rows.instructor) user.instructor = rows.instructor;
+  if (rows.courseCreator) user.courseCreator = rows.courseCreator;
   return user;
+}
+
+export function userDomains(userContent: User): string[] {
+  return Array.isArray(userContent.user_domain) ? [...userContent.user_domain] : [];
+}
+
+/**
+ * Turns a `/users/me` record into the dashboard profile: the user plus its student,
+ * instructor and course-creator rows. Runs on the server render and in the client query.
+ */
+export async function loadDomainProfiles(userContent: User): Promise<UserProfileType> {
+  const rows = userContent.uuid
+    ? await fetchDomainRows(userContent.uuid, userDomains(userContent))
+    : {};
+  return mergeDomainProfiles(userContent, rows);
 }
