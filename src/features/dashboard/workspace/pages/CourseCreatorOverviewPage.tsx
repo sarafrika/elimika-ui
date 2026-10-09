@@ -5,11 +5,11 @@ import { useCourseCreatorDashboardData } from '@/hooks/course-creator-data';
 import CourseCreatorOverviewContent from '@/src/features/dashboard/workspace/pages/CourseCreatorOverviewContent';
 
 export function CourseCreatorOverviewPage() {
-  const { data } = useCourseCreatorDashboardData();
+  const { data, coursesStatus } = useCourseCreatorDashboardData();
 
   return (
     <CourseCreatorProvider initialData={data}>
-      <CourseCreatorOverviewContent />
+      <CourseCreatorOverviewContent coursesStatus={coursesStatus} />
     </CourseCreatorProvider>
   );
 }
