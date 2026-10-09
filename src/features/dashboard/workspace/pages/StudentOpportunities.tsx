@@ -9,6 +9,8 @@ import {
   TrendingUp,
 } from 'lucide-react';
 import Link from 'next/link';
+import { AsyncSection } from '@/components/data/async-section';
+import { Skeleton } from '@/components/ui/skeleton';
 import { EmptyState } from '../../../../../components/empty-state';
 import { Button } from '../../../../../components/ui/button';
 import {
@@ -18,19 +20,18 @@ import {
   CardHeader,
   CardTitle,
 } from '../../../../../components/ui/card';
-import {
+import { useStudentCredentials } from '../student-overview/useStudentCredentials';
+import type {
   StudentClassInvite,
-  StudentOverviewData,
   StudentOverviewOpportunity,
 } from '../student-overview/useStudentOverviewData';
 
 type StudentOpportunitiesProps = {
   opportunities: StudentOverviewOpportunity[];
   classInvites: StudentClassInvite[];
-  data: StudentOverviewData;
 };
 
-const StudentOpportunities = ({ opportunities, classInvites, data }: StudentOpportunitiesProps) => {
+const StudentOpportunities = ({ opportunities, classInvites }: StudentOpportunitiesProps) => {
   // const sampleOpportunities = [
   //     { role: "Junior Web Developer", org: "Bright Wave Marketing", location: "Nairobi, Kenya", type: "Hybrid · Full-Time", match: 82 },
   //     { role: "UI/UX Design Intern", org: "Coursera", location: "Remote", type: "Part-Time · 3 mo", match: 75 },
@@ -42,8 +43,10 @@ const StudentOpportunities = ({ opportunities, classInvites, data }: StudentOppo
   //     { title: "Workshop: Portfolio Review", when: "Thu · 6:30 PM", host: "Daniel Mwangi" },
   // ];
 
+  const credentialsQuery = useStudentCredentials();
+  const data = credentialsQuery.data;
   const credentials =
-    data?.certificates?.map(cert => {
+    data.certificates.map(cert => {
       const title = cert.course?.name || cert.program?.title;
 
       return {
@@ -53,7 +56,7 @@ const StudentOpportunities = ({ opportunities, classInvites, data }: StudentOppo
           ? 'bg-primary/10 text-primary'
           : 'bg-secondary/10 text-secondary-foreground',
       };
-    }) ?? [];
+    });
 
   return (
     <section className='grid gap-4 lg:grid-cols-3'>
@@ -150,10 +153,24 @@ const StudentOpportunities = ({ opportunities, classInvites, data }: StudentOppo
               <Award className='text-primary h-4 w-4' /> Credentials
             </CardTitle>
             <CardDescription>
-              {data.verifiedSkills} skills · {data?.certificates?.length} certificates · 0 badges
+              {data.verifiedSkills} skills · {data.certificates.length} certificates · 0 badges
             </CardDescription>
           </CardHeader>
           <CardContent>
+            <AsyncSection
+              name='student-overview-credentials'
+              loading={credentialsQuery.isLoading}
+              error={credentialsQuery.error}
+              onRetry={credentialsQuery.refetch}
+              errorTitle='Couldn’t load your credentials'
+              skeleton={
+                <div className='space-y-2'>
+                  {[0, 1, 2].map(item => (
+                    <Skeleton key={item} className='h-8 w-full rounded-md' />
+                  ))}
+                </div>
+              }
+            >
             <ul className='space-y-2'>
               {credentials.map(c => (
                 <li key={c.name} className='flex items-center gap-3'>
@@ -175,6 +192,7 @@ const StudentOpportunities = ({ opportunities, classInvites, data }: StudentOppo
                 description='Complete courses and programs to earn certificates that will appear here.'
               />
             )}
+            </AsyncSection>
 
             {/* // this page should route to student's my skills page, tab credential */}
             <Button asChild variant='outline' className='mt-3 w-full'>
