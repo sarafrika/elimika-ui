@@ -1,5 +1,22 @@
 'use client';
 
+import { useQueryClient } from '@tanstack/react-query';
+import {
+  Award,
+  Bell,
+  CalendarClock,
+  CalendarX2,
+  CheckCircle2,
+  CreditCard,
+  FileCheck2,
+  GraduationCap,
+  type LucideIcon,
+  MessageSquare,
+  UserPlus,
+} from 'lucide-react';
+import Link from 'next/link';
+import { useEffect, useRef, useState } from 'react';
+import { toast } from 'sonner';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import {
@@ -13,31 +30,15 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { absoluteDateTime, parseApiDate, relativeTimeFromNow } from '@/lib/date';
 import { cn } from '@/lib/utils';
 import {
+  type UserNotification,
   useMarkAllNotificationsRead,
   useMarkPopupsSeen,
   useNotificationAction,
   useNotificationCounts,
   useNotifications,
-  type UserNotification,
 } from '@/services/notifications';
 import { invalidateWorkflowQueriesForNotification } from '@/src/features/dashboard/workflow-query-invalidation';
-import { useQueryClient } from '@tanstack/react-query';
-import {
-  Award,
-  Bell,
-  CalendarClock,
-  CalendarX2,
-  CheckCircle2,
-  CreditCard,
-  FileCheck2,
-  GraduationCap,
-  MessageSquare,
-  UserPlus,
-  type LucideIcon,
-} from 'lucide-react';
-import Link from 'next/link';
-import { useEffect, useRef, useState } from 'react';
-import { toast } from 'sonner';
+import { useUserProfile } from '@/src/features/profile/context/profile-context';
 
 type DashboardNotificationsProps = {
   notificationHref: string;
@@ -272,7 +273,12 @@ export function DashboardNotifications({
 
   // Counts drive the badge and gate the popup feed; the recent list only loads when the
   // dropdown opens. Every query is scoped to the active dashboard domain.
-  const countsQuery = useNotificationCounts(domain, { refetchInterval: 60_000 });
+  // Waits for the profile load: /me/bootstrap seeds these counts, so the first fetch is skipped.
+  const profileLoading = useUserProfile()?.isLoading === true;
+  const countsQuery = useNotificationCounts(domain, {
+    refetchInterval: 60_000,
+    enabled: !profileLoading,
+  });
   const popupCount = countsQuery.data?.popup_count ?? 0;
   const recentQuery = useNotifications(
     { page: 0, size: 6, domain },
