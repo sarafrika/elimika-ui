@@ -1742,9 +1742,11 @@ export default function InstructorTrainingConsole() {
                       <h3 className='text-lg font-semibold'>
                         {selectedStudent.user?.full_name || 'Unknown student'}
                       </h3>
-                      <p className='text-muted-foreground text-sm'>
-                        {selectedStudent.user?.email || 'No email available'}
-                      </p>
+                      {selectedStudent.user?.email ? (
+                        <p className='text-muted-foreground text-sm'>
+                          {selectedStudent.user.email}
+                        </p>
+                      ) : null}
                       <Badge
                         variant={
                           getStudentAttendanceState(selectedStudent) === 'present'

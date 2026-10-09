@@ -509,7 +509,7 @@ const AwardCertificatesPage = () => {
                                                     </Badge> */}
                         </div>
                         <p className='text-muted-foreground mt-1 truncate text-xs'>
-                          {entry.user?.email ?? 'No email on file'}
+                          {entry.user?.email ?? '—'}
                         </p>
                       </div>
                     </div>

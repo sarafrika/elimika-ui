@@ -80,7 +80,7 @@ export function ClassStudentsTab({
                         </div>
                       </TableCell>
                       <TableCell className='text-muted-foreground'>
-                        {entry.user?.email ?? 'No email available'}
+                        {entry.user?.email ?? '—'}
                       </TableCell>
                       <TableCell>{formatLabel(entry.enrollment.status)}</TableCell>
                       <TableCell>{formatDateOnly(entry.enrollment.created_date)}</TableCell>
