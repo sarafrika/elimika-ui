@@ -20,10 +20,11 @@ import {
   Wallet,
 } from 'lucide-react';
 import Link from 'next/link';
-import { useRouter } from 'next/navigation';
+import { usePathname, useRouter } from 'next/navigation';
 import { useTheme } from 'next-themes';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { buildWalletAccounts } from '@/app/dashboard/student/wallet/page';
+import { AsyncSection } from '@/components/data/async-section';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -42,6 +43,7 @@ import {
   SheetHeader,
   SheetTitle,
 } from '@/components/ui/sheet';
+import { Skeleton } from '@/components/ui/skeleton';
 import { useSavedCart } from '@/hooks/use-saved-cart';
 import type { UserDomain } from '@/lib/types';
 import { cn } from '@/lib/utils';
@@ -58,6 +60,7 @@ import {
   buildDashboardSwitchPath,
   roleScopedDashboardPath,
 } from '@/src/features/dashboard/lib/active-domain-storage';
+import { domainFromPath } from '@/src/features/dashboard/lib/dashboard-url';
 import { useUserProfile } from '@/src/features/profile/context/profile-context';
 import {
   GlobalSearchSheet,
@@ -130,11 +133,14 @@ function resolveCartResponse(value: unknown): CartResponse | null {
 
 export default function DashboardTopBar() {
   const router = useRouter();
+  const pathname = usePathname();
   const profile = useUserProfile();
   const domain = useUserDomain();
   const logout = useLogout();
 
-  const activeDomain = domain.activeDomain ?? null;
+  // The URL role covers the first paint while the profile (and its domains) is still loading.
+  const activeDomain = domain.activeDomain ?? domainFromPath(pathname) ?? null;
+  const profilePending = Boolean(profile?.isLoading) && !profile?.uuid;
   const createActions = useCreateMenuActions(activeDomain);
 
   // One palette for every dashboard: ⌘K / Ctrl K or `/` opens it from anywhere.
@@ -243,7 +249,12 @@ export default function DashboardTopBar() {
               onWithdraw={() => router.push(`${withdrawHref}?section=withdraw`)}
             />
 
-            <DashboardProfileMenu
+            <AsyncSection
+              name='shell-profile-menu'
+              loading={profilePending}
+              skeleton={<ProfileMenuSkeleton />}
+            >
+              <DashboardProfileMenu
               profileName={profileName}
               profileInitials={profileInitials}
               profileEmail={profile?.email}
@@ -261,6 +272,7 @@ export default function DashboardTopBar() {
                 });
               }}
             />
+            </AsyncSection>
           </div>
         </div>
 
@@ -319,6 +331,15 @@ type DashboardProfileMenuProps = {
   onAddProfile: () => void;
   onLogout: () => Promise<void>;
 };
+
+function ProfileMenuSkeleton() {
+  return (
+    <div className='flex h-10 items-center gap-2 sm:px-3'>
+      <Skeleton className='h-8 w-8 rounded-full' />
+      <Skeleton className='hidden h-4 w-24 md:block' />
+    </div>
+  );
+}
 
 function DashboardProfileMenu({
   profileName,
