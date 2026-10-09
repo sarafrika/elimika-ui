@@ -1,7 +1,7 @@
-import { clearPrivateBffCacheForUser } from '@/lib/api/private-bff-cache';
 import NextAuth, { type NextAuthConfig } from 'next-auth';
 import type { JWT } from 'next-auth/jwt';
 import Keycloak from 'next-auth/providers/keycloak';
+import { clearPrivateBffCacheForUser } from '@/lib/api/private-bff-cache';
 
 /**
  * Decode JWT token to extract claims
@@ -80,6 +80,14 @@ function getTokenCacheUserId(token: unknown): string | undefined {
   return getFirstString(typedToken.id, typedToken.email);
 }
 
+// Lets the client start the organisation fetch alongside `/me` instead of after it.
+function activeOrganisationUuid(
+  affiliations: { active?: boolean; organisation_uuid?: string }[] | null | undefined
+): string | null {
+  const affiliation = affiliations?.find(a => a.active) ?? affiliations?.[0];
+  return affiliation?.organisation_uuid ?? null;
+}
+
 // Stamp who the caller is into the token so server guards need no `/me` per navigation.
 // A failed lookup keeps what the token held; the guards then fall back to the API.
 async function stampIdentity(token: JWT): Promise<JWT> {
@@ -98,6 +106,7 @@ async function stampIdentity(token: JWT): Promise<JWT> {
         uuid: user.uuid,
         domains: rawDomains.filter((d): d is string => typeof d === 'string' && d.length > 0),
         hasOrganisationAffiliation: (user.organisation_affiliations?.length ?? 0) > 0,
+        organisationUuid: activeOrganisationUuid(user.organisation_affiliations),
       },
     };
   } catch {

@@ -53,6 +53,8 @@ declare module 'next-auth' {
     /** Raw `user_domain` values; normalise before use. */
     domains: string[];
     hasOrganisationAffiliation: boolean;
+    /** Active (else first) affiliation's organisation, so the org fetch needs no `/me` first. */
+    organisationUuid?: string | null;
   }
 }
 
