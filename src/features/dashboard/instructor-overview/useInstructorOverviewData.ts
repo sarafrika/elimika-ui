@@ -1,22 +1,25 @@
 // @ts-nocheck -- pre-existing @hey-api generated-client type drift (see memory: elimika-ui-typecheck)
 'use client';
 
+import { useQueries, useQuery } from '@tanstack/react-query';
+import { BarChart3, BookOpen, CheckSquare, GraduationCap, type LucideIcon } from 'lucide-react';
+import { useMemo } from 'react';
 import { useInstructor } from '@/context/instructor-context';
-import { useInstructorClassesWithSchedules } from '@/hooks/use-instructor-classes-with-schedules';
+import { useStudentsByIds } from '@/hooks/use-batched-lookups';
+import {
+  type InstructorClassWithSchedule,
+  useInstructorClassesWithSchedules,
+} from '@/hooks/use-instructor-classes-with-schedules';
+import { STALE_TIMES } from '@/lib/query-client';
 import {
   getAssignmentSchedulesOptions,
   getRevenueDashboard1Options,
-  getStudentByIdOptions,
 } from '@/services/client/@tanstack/react-query.gen';
 import type {
   ClassAssignmentSchedule,
   RevenueDashboardDto,
   ScheduledInstance,
-  Student,
 } from '@/services/client/types.gen';
-import { useQueries, useQuery } from '@tanstack/react-query';
-import { BarChart3, BookOpen, CheckSquare, GraduationCap, type LucideIcon } from 'lucide-react';
-import { useMemo } from 'react';
 import type {
   OverviewCourse,
   OverviewCourseSummary,
@@ -136,159 +139,88 @@ const pickDisplayCurrency = (dashboard?: RevenueDashboardDto) =>
   dashboard?.gross_totals?.[0]?.currency_code ||
   'KES';
 
-export function useInstructorOverviewData() {
+/**
+ * Shared class source for every overview section. It never blocks rendering: each section
+ * reads the per-source loading flags it actually depends on and resolves on its own.
+ */
+export function useOverviewClasses() {
   const instructor = useInstructor();
-  const instructorUuid = instructor?.uuid;
-
-  const { classes: classesWithSchedules, isLoading: isLoadingClasses } =
-    useInstructorClassesWithSchedules(instructorUuid);
+  const {
+    classes: classesWithSchedules,
+    isLoadingDefinitions,
+    isLoadingCourses,
+    isLoadingEnrollments,
+    isLoadingSchedule,
+    error,
+    refetch,
+  } = useInstructorClassesWithSchedules(instructor?.uuid);
 
   const classes = useMemo(
     () => classesWithSchedules.filter(item => item.is_active !== false),
     [classesWithSchedules]
   );
 
-  const classSchedulesMap = useMemo(() => {
-    const map = new Map<string, ScheduledInstance[]>();
-    classes.forEach(cls => {
-      if (!cls.uuid) return;
-      map.set(cls.uuid, cls.schedule ?? []);
-    });
-    return map;
-  }, [classes]);
+  return {
+    classes,
+    isLoadingDefinitions,
+    isLoadingCourses,
+    isLoadingEnrollments,
+    isLoadingSchedule,
+    error,
+    refetch,
+  };
+}
 
-  const classEnrollmentsMap = useMemo(
-    () => new Map(classes.filter(cls => cls.uuid).map(cls => [cls.uuid, cls.enrollments])),
-    [classes]
-  );
+export type OverviewClassesSource = ReturnType<typeof useOverviewClasses>;
+
+const scheduleOf = (cls: InstructorClassWithSchedule) => cls.schedule ?? [];
+
+/** Assignment count across the instructor's classes; feeds the stat card and course summary. */
+export function useOverviewAssignmentCount(classes: InstructorClassWithSchedule[]) {
+  return useQueries({
+    queries: classes
+      .filter(cls => Boolean(cls.uuid))
+      .map(cls => ({
+        ...getAssignmentSchedulesOptions({ path: { classUuid: cls.uuid as string } }),
+        staleTime: STALE_TIMES.live,
+      })),
+    combine: results => ({
+      count: results.reduce(
+        (total, query) => total + ((query.data?.data ?? []) as ClassAssignmentSchedule[]).length,
+        0
+      ),
+      isLoading: results.some(query => query.isLoading),
+    }),
+  });
+}
+
+/** Active courses, learner totals and overall progress; needs definitions, courses, enrolments, schedule. */
+export function useOverviewCourses(source: OverviewClassesSource) {
+  const { classes } = source;
   const { studentsByCourse, totalStudents } = useMemo(
     () => summarizeCourseEnrollments(classes),
     [classes]
   );
 
-  // `combine` gives the result a stable identity (structural sharing), so the
-  // downstream memo chain doesn't recompute on every unrelated render.
-  const { schedules: assignmentSchedules, isLoading: isLoadingAssignments } = useQueries({
-    queries: classes.map(cls => ({
-      ...getAssignmentSchedulesOptions({
-        path: { classUuid: cls.uuid ?? '' },
-      }),
-      enabled: Boolean(cls.uuid),
-      staleTime: 60 * 1000,
-    })),
-    combine: results => ({
-      schedules: results.flatMap(query => (query.data?.data ?? []) as ClassAssignmentSchedule[]),
-      isLoading: results.some(query => query.isLoading),
-    }),
-  });
-
-  const waitlistedEnrollments = useMemo(
-    () =>
-      classes.flatMap(cls =>
-        (classEnrollmentsMap.get(cls.uuid ?? '') ?? [])
-          .filter(enrollment => enrollment.status === 'WAITLISTED')
-          .map(enrollment => ({ classDefinition: cls, enrollment }))
-      ),
-    [classes, classEnrollmentsMap]
-  );
-
-  const waitlistedStudentIds = useMemo(
-    () =>
-      Array.from(
-        new Set(
-          waitlistedEnrollments
-            .map(item => item.enrollment.student_uuid)
-            .filter((value): value is string => Boolean(value))
-        )
-      ),
-    [waitlistedEnrollments]
-  );
-
-  const { students: waitlistedStudents, isLoading: isLoadingWaitlistedStudents } = useQueries({
-    queries: waitlistedStudentIds.map(studentId => ({
-      ...getStudentByIdOptions({ path: { uuid: studentId } }),
-      enabled: Boolean(studentId),
-      staleTime: 5 * 60 * 1000,
-    })),
-    combine: results => ({
-      students: results.map(query => query.data),
-      isLoading: results.some(query => query.isLoading),
-    }),
-  });
-
-  const studentMap = useMemo(() => {
-    const map = new Map<string, Student>();
-    waitlistedStudentIds.forEach((studentId, index) => {
-      const student = waitlistedStudents[index];
-      if (student) {
-        map.set(studentId, student);
-      }
-    });
-    return map;
-  }, [waitlistedStudentIds, waitlistedStudents]);
-
-  const { data: revenueDashboardResponse, isLoading: isLoadingRevenue } = useQuery({
-    ...getRevenueDashboard1Options({
-      query: {
-        domain: 'instructor',
-      },
-    }),
-    enabled: Boolean(instructorUuid),
-    staleTime: 5 * 60 * 1000,
-  });
-
-  // listPayments(domain=instructor) is admin-only (always 403 here); the revenue dashboard is the source.
-  const revenueDashboard = revenueDashboardResponse?.data;
-  const displayCurrency = pickDisplayCurrency(revenueDashboard);
-
-  const allSchedules = useMemo(
-    () =>
-      classes.flatMap(cls =>
-        (classSchedulesMap.get(cls.uuid ?? '') ?? []).map(instance => ({
-          classDefinition: cls,
-          instance,
-          course: cls.course ?? null,
-          enrollments: classEnrollmentsMap.get(cls.uuid ?? '') ?? [],
-        }))
-      ),
-    [classes, classSchedulesMap, classEnrollmentsMap]
-  );
-
-  const courseInstanceMap = useMemo(() => {
-    const map = new Map<string, typeof allSchedules>();
-
-    allSchedules.forEach(item => {
-      const courseId = item.course?.uuid;
-      if (!courseId) return;
-
-      const current = map.get(courseId) ?? [];
-      current.push(item);
-      map.set(courseId, current);
-    });
-
-    return map;
-  }, [allSchedules]);
-
   const activeCourses = useMemo<OverviewCourse[]>(() => {
     const uniqueCourses = new Map<string, OverviewCourse>();
+    const now = new Date();
 
     classes.forEach((cls, index) => {
       const course = cls.course;
       const courseId = course?.uuid;
-
       if (!courseId || uniqueCourses.has(courseId)) return;
 
-      const courseInstances = [...(courseInstanceMap.get(courseId) ?? [])].sort((left, right) => {
-        const leftTime = new Date(left.instance.start_time).getTime();
-        const rightTime = new Date(right.instance.start_time).getTime();
-        return leftTime - rightTime;
-      });
+      const courseInstances = classes
+        .filter(item => item.course?.uuid === courseId)
+        .flatMap(scheduleOf)
+        .sort(
+          (left, right) => new Date(left.start_time).getTime() - new Date(right.start_time).getTime()
+        );
       const selectedInstance =
-        courseInstances.find(item => isFutureLikeInstance(item.instance, new Date())) ??
+        courseInstances.find(instance => isFutureLikeInstance(instance, now)) ??
         courseInstances[0] ??
         null;
-
-      const progress = calculateProgress(classSchedulesMap.get(cls.uuid ?? '') ?? []);
 
       uniqueCourses.set(courseId, {
         id: courseId,
@@ -296,10 +228,10 @@ export function useInstructorOverviewData() {
         provider: course?.category_names?.[0] ?? formatSessionFormat(cls.session_format),
         level: formatSessionFormat(cls.location_type),
         students: studentsByCourse.get(courseId)?.size ?? 0,
-        progress,
+        progress: calculateProgress(scheduleOf(cls)),
         actionLabel: 'View Class',
-        viewHref: selectedInstance?.instance.uuid
-          ? `/dashboard/class-instance/${selectedInstance.instance.uuid}`
+        viewHref: selectedInstance?.uuid
+          ? `/dashboard/class-instance/${selectedInstance.uuid}`
           : `/dashboard/classes/class-training/${cls.uuid ?? ''}`,
         editHref: `/dashboard/classes/overview/${cls.uuid ?? ''}`,
         icon: COURSE_ICONS[index % COURSE_ICONS.length]!,
@@ -307,51 +239,102 @@ export function useInstructorOverviewData() {
     });
 
     return Array.from(uniqueCourses.values());
-  }, [classes, studentsByCourse, classSchedulesMap, courseInstanceMap]);
+  }, [classes, studentsByCourse]);
 
-  const overallProgress = useMemo(() => {
-    const allInstances = classes.flatMap(cls => classSchedulesMap.get(cls.uuid ?? '') ?? []);
-    return calculateProgress(allInstances);
-  }, [classes, classSchedulesMap]);
+  const overallProgress = useMemo(() => calculateProgress(classes.flatMap(scheduleOf)), [classes]);
 
-  const now = new Date();
-  const futureInstances = useMemo(
-    () =>
-      allSchedules
-        .filter(item => isFutureLikeInstance(item.instance, now))
-        .sort(
-          (left, right) =>
-            new Date(left.instance.start_time).getTime() -
-            new Date(right.instance.start_time).getTime()
-        ),
-    [allSchedules, now]
-  );
+  return {
+    activeCourses,
+    totalStudents,
+    overallProgress,
+    isLoading:
+      source.isLoadingDefinitions ||
+      source.isLoadingCourses ||
+      source.isLoadingEnrollments ||
+      source.isLoadingSchedule,
+  };
+}
 
-  const liveSource = useMemo(() => {
-    const imminent = futureInstances.filter(item => {
-      if (item.instance.status !== 'SCHEDULED') {
-        return false;
-      }
+const PENDING_VALUE = '…';
 
-      const start = new Date(item.instance.start_time).getTime();
-      const diff = start - now.getTime();
+export function buildOverviewStats(
+  courses: ReturnType<typeof useOverviewCourses>,
+  assignments: { count: number; isLoading: boolean }
+): OverviewStat[] {
+  return [
+    {
+      label: 'Active Courses',
+      value: formatCompactNumber(courses.activeCourses.length),
+      tone: 'blue',
+    },
+    { label: 'Total Students', value: formatCompactNumber(courses.totalStudents), tone: 'green' },
+    {
+      label: 'Assigned Assignments',
+      value: assignments.isLoading ? PENDING_VALUE : formatCompactNumber(assignments.count),
+      tone: 'red',
+    },
+    { label: 'Course Progress', value: `${courses.overallProgress}%`, tone: 'orange' },
+  ];
+}
 
-      return diff >= 0 && diff <= 1000 * 60 * 60 * 24;
-    });
+export function buildCourseSummary(
+  courses: ReturnType<typeof useOverviewCourses>,
+  assignments: { count: number; isLoading: boolean }
+): OverviewCourseSummary {
+  return {
+    title: 'Training Progress',
+    primaryValue: `${formatCompactNumber(courses.totalStudents)} learners across ${formatCompactNumber(
+      courses.activeCourses.length
+    )} active courses`,
+    secondaryValue: assignments.isLoading
+      ? 'Counting scheduled assignments…'
+      : `${formatCompactNumber(assignments.count)} assignments scheduled`,
+    percent: courses.overallProgress,
+    primaryActionLabel: 'View Classes',
+    secondaryActionLabel: 'Review Assignments',
+  };
+}
 
-    return (imminent.length ? imminent : futureInstances).slice(0, 3);
-  }, [futureInstances, now]);
+function useFutureInstances(classes: InstructorClassWithSchedule[]) {
+  return useMemo(() => {
+    const now = new Date();
+    return classes
+      .flatMap(cls =>
+        scheduleOf(cls).map(instance => ({
+          classDefinition: cls,
+          instance,
+          course: cls.course ?? null,
+          enrollments: cls.enrollments ?? [],
+        }))
+      )
+      .filter(item => isFutureLikeInstance(item.instance, now))
+      .sort(
+        (left, right) =>
+          new Date(left.instance.start_time).getTime() -
+          new Date(right.instance.start_time).getTime()
+      );
+  }, [classes]);
+}
 
-  const liveInstanceIds = new Set(liveSource.map(item => item.instance.uuid).filter(Boolean));
+type FutureInstance = ReturnType<typeof useFutureInstances>[number];
 
-  const upcomingSource = useMemo(
-    () => futureInstances.filter(item => !liveInstanceIds.has(item.instance.uuid)).slice(0, 3),
-    [futureInstances, liveInstanceIds]
-  );
+function pickLiveSource(futureInstances: FutureInstance[]) {
+  const now = Date.now();
+  const imminent = futureInstances.filter(item => {
+    if (item.instance.status !== 'SCHEDULED') return false;
+    const diff = new Date(item.instance.start_time).getTime() - now;
+    return diff >= 0 && diff <= 1000 * 60 * 60 * 24;
+  });
+  return (imminent.length ? imminent : futureInstances).slice(0, 3);
+}
+
+/** Next three sessions (imminent first); needs definitions, schedule and enrolments for counts. */
+export function useOverviewLiveClasses(source: OverviewClassesSource) {
+  const futureInstances = useFutureInstances(source.classes);
 
   const liveClasses = useMemo<OverviewLiveClass[]>(
     () =>
-      liveSource.map(item => {
+      pickLiveSource(futureInstances).map(item => {
         const enrolledCount = item.enrollments.filter(
           enrollment =>
             enrollment.scheduled_instance_uuid === item.instance.uuid &&
@@ -378,12 +361,29 @@ export function useInstructorOverviewData() {
           attendeeInitials: [],
         };
       }),
-    [liveSource]
+    [futureInstances]
   );
 
-  const upcomingClasses = useMemo<OverviewUpcomingClass[]>(
-    () =>
-      upcomingSource.map(item => ({
+  return {
+    liveClasses,
+    isLoading:
+      source.isLoadingDefinitions ||
+      source.isLoadingSchedule ||
+      source.isLoadingCourses ||
+      source.isLoadingEnrollments,
+  };
+}
+
+/** Sessions after the live ones; needs only class definitions and the schedule. */
+export function useOverviewUpcomingClasses(source: OverviewClassesSource) {
+  const futureInstances = useFutureInstances(source.classes);
+
+  const upcomingClasses = useMemo<OverviewUpcomingClass[]>(() => {
+    const liveIds = new Set(pickLiveSource(futureInstances).map(item => item.instance.uuid));
+    return futureInstances
+      .filter(item => !liveIds.has(item.instance.uuid))
+      .slice(0, 3)
+      .map(item => ({
         id: item.classDefinition.uuid ?? '',
         title: item.classDefinition.title,
         scheduleLabel: formatDateTime(item.instance.start_time),
@@ -395,53 +395,95 @@ export function useInstructorOverviewData() {
         href: item.classDefinition.uuid
           ? `/dashboard/class-instance/${item.instance.uuid}`
           : `/dashboard/classes/class-training/${item.classDefinition.uuid ?? ''}`,
-      })),
-    [upcomingSource]
+      }));
+  }, [futureInstances]);
+
+  return {
+    upcomingClasses,
+    isLoading: source.isLoadingDefinitions || source.isLoadingSchedule,
+  };
+}
+
+/** Waitlisted learners awaiting review; student names come from one batched lookup. */
+export function useOverviewClassInvites(source: OverviewClassesSource) {
+  const { classes } = source;
+
+  const waitlistedEnrollments = useMemo(
+    () =>
+      classes.flatMap(cls =>
+        (cls.enrollments ?? [])
+          .filter(enrollment => enrollment.status === 'WAITLISTED')
+          .map(enrollment => ({ classDefinition: cls, enrollment }))
+      ),
+    [classes]
   );
 
-  const classInvites = useMemo<OverviewInvite[]>(
+  const waitlistedStudentIds = useMemo(
     () =>
       waitlistedEnrollments
-        .sort((left, right) => {
-          const leftSchedule = (classSchedulesMap.get(left.classDefinition.uuid ?? '') ?? []).find(
-            instance => instance.uuid === left.enrollment.scheduled_instance_uuid
-          );
-          const rightSchedule = (
-            classSchedulesMap.get(right.classDefinition.uuid ?? '') ?? []
-          ).find(instance => instance.uuid === right.enrollment.scheduled_instance_uuid);
-
-          const leftTime = new Date(
-            leftSchedule?.start_time ?? left.enrollment.created_date ?? 0
-          ).getTime();
-          const rightTime = new Date(
-            rightSchedule?.start_time ?? right.enrollment.created_date ?? 0
-          ).getTime();
-
-          return leftTime - rightTime;
-        })
-        .map(({ classDefinition, enrollment }) => {
-          const relatedInstance = (classSchedulesMap.get(classDefinition.uuid ?? '') ?? []).find(
-            instance => instance.uuid === enrollment.scheduled_instance_uuid
-          );
-          const student = studentMap.get(enrollment.student_uuid);
-
-          return {
-            id:
-              enrollment.uuid ??
-              `${classDefinition.uuid ?? 'class'}-${enrollment.student_uuid ?? 'student'}`,
-            title: relatedInstance?.title || classDefinition.title,
-            host: student?.full_name ?? 'Interested student',
-            schedule: formatDateTime(relatedInstance?.start_time ?? enrollment.created_date),
-            actionLabel: 'Review',
-            actionTone: 'accept' as const,
-          };
-        })
-        .slice(0, 3),
-    [waitlistedEnrollments, classSchedulesMap, studentMap]
+        .map(item => item.enrollment.student_uuid)
+        .filter((value): value is string => Boolean(value)),
+    [waitlistedEnrollments]
   );
+
+  const { studentMap, isLoading: isLoadingStudents } = useStudentsByIds(waitlistedStudentIds);
+
+  const classInvites = useMemo<OverviewInvite[]>(() => {
+    const instanceFor = (item: (typeof waitlistedEnrollments)[number]) =>
+      scheduleOf(item.classDefinition).find(
+        instance => instance.uuid === item.enrollment.scheduled_instance_uuid
+      );
+    const sortTime = (item: (typeof waitlistedEnrollments)[number]) =>
+      new Date(instanceFor(item)?.start_time ?? item.enrollment.created_date ?? 0).getTime();
+
+    return [...waitlistedEnrollments]
+      .sort((left, right) => sortTime(left) - sortTime(right))
+      .slice(0, 3)
+      .map(item => {
+        const { classDefinition, enrollment } = item;
+        const relatedInstance = instanceFor(item);
+        const student = enrollment.student_uuid ? studentMap[enrollment.student_uuid] : undefined;
+
+        return {
+          id:
+            enrollment.uuid ??
+            `${classDefinition.uuid ?? 'class'}-${enrollment.student_uuid ?? 'student'}`,
+          title: relatedInstance?.title || classDefinition.title,
+          host: student?.full_name ?? 'Interested student',
+          schedule: formatDateTime(relatedInstance?.start_time ?? enrollment.created_date),
+          actionLabel: 'Review',
+          actionTone: 'accept' as const,
+        };
+      });
+  }, [waitlistedEnrollments, studentMap]);
+
+  return {
+    classInvites,
+    isLoading:
+      source.isLoadingDefinitions ||
+      source.isLoadingEnrollments ||
+      source.isLoadingSchedule ||
+      isLoadingStudents,
+  };
+}
+
+/** Earnings cards from the revenue dashboard; independent of the class graph. */
+export function useOverviewEarnings() {
+  const instructor = useInstructor();
+  const instructorUuid = instructor?.uuid;
+
+  // listPayments(domain=instructor) is admin-only (always 403 here); the revenue dashboard is the source.
+  const query = useQuery({
+    ...getRevenueDashboard1Options({ query: { domain: 'instructor' } }),
+    enabled: Boolean(instructorUuid),
+    staleTime: STALE_TIMES.entity,
+  });
+
+  const revenueDashboard = query.data?.data;
 
   const earningOverview = useMemo<OverviewEarningCard[]>(() => {
     if (!revenueDashboard) return [];
+    const displayCurrency = pickDisplayCurrency(revenueDashboard);
 
     return [
       {
@@ -463,56 +505,12 @@ export function useInstructorOverviewData() {
         attendeeInitials: [],
       },
     ];
-  }, [displayCurrency, revenueDashboard]);
-
-  const stats = useMemo<OverviewStat[]>(
-    () => [
-      { label: 'Active Courses', value: formatCompactNumber(activeCourses.length), tone: 'blue' },
-      { label: 'Total Students', value: formatCompactNumber(totalStudents), tone: 'green' },
-      {
-        label: 'Assigned Assignments',
-        value: formatCompactNumber(assignmentSchedules.length),
-        tone: 'red',
-      },
-      { label: 'Course Progress', value: `${overallProgress}%`, tone: 'orange' },
-    ],
-    [activeCourses.length, assignmentSchedules.length, overallProgress, totalStudents]
-  );
-
-  const courseSummary = useMemo<OverviewCourseSummary>(
-    () => ({
-      title: 'Training Progress',
-      primaryValue: `${formatCompactNumber(totalStudents)} learners across ${formatCompactNumber(
-        activeCourses.length
-      )} active courses`,
-      secondaryValue: `${formatCompactNumber(assignmentSchedules.length)} assignments scheduled`,
-      percent: overallProgress,
-      primaryActionLabel: 'View Classes',
-      secondaryActionLabel: 'Review Assignments',
-    }),
-    [activeCourses.length, assignmentSchedules.length, overallProgress, totalStudents]
-  );
-
-  const isLoading =
-    isLoadingClasses ||
-    isLoadingRevenue ||
-    isLoadingAssignments ||
-    isLoadingWaitlistedStudents;
+  }, [revenueDashboard]);
 
   return {
-    activeCourses,
-    classInvites,
-    courseSummary,
     earningOverview,
-    liveClasses,
-    stats,
-    upcomingClasses,
-    // Combined loading state
-    isLoading,
-    // Individual loading states
-    isLoadingClasses,
-    isLoadingRevenue,
-    isLoadingAssignments,
-    isLoadingWaitlistedStudents,
+    isLoading: query.isLoading,
+    error: query.error,
+    refetch: query.refetch,
   };
 }

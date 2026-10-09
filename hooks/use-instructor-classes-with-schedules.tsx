@@ -273,5 +273,12 @@ export function useInstructorClassesWithSchedules(instructorUuid?: string) {
     isLoading,
     isPending,
     isError,
+    // Per-source flags let a page resolve each section as soon as its own inputs land.
+    isLoadingDefinitions: classesQuery.isLoading,
+    isLoadingCourses: coursesLoading,
+    isLoadingEnrollments: enrollmentQueries.some(query => query.isLoading),
+    isLoadingSchedule: instructorScheduleQuery.isLoading,
+    error: classesQuery.error ?? instructorScheduleQuery.error ?? null,
+    refetch: () => Promise.all([classesQuery.refetch(), instructorScheduleQuery.refetch()]),
   };
 }
