@@ -208,7 +208,7 @@ export const VOLATILE_GENERATED_QUERY_IDS: ReadonlySet<string> = Object.freeze(
   new Set<string>(Object.values(workflowQueryIds).flat())
 );
 
-function getGeneratedQueryId(queryKey: QueryKey) {
+export function getGeneratedQueryId(queryKey: QueryKey) {
   const head = queryKey[0] as GeneratedQueryKeyHead | unknown;
   if (head && typeof head === 'object' && '_id' in head) {
     const id = (head as GeneratedQueryKeyHead)._id;
