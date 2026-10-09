@@ -766,6 +766,9 @@ import type {
   AddProgramCourseData,
   AddProgramCourseResponses,
   AddProgramCourseErrors,
+  IngestData,
+  IngestResponses,
+  IngestErrors,
   GetAllOrganisationsData,
   GetAllOrganisationsResponses,
   GetAllOrganisationsErrors,
@@ -2256,6 +2259,9 @@ import type {
   ListPendingProgramsData,
   ListPendingProgramsResponses,
   ListPendingProgramsErrors,
+  SummaryData,
+  SummaryResponses,
+  SummaryErrors,
   IsOrganisationVerifiedData,
   IsOrganisationVerifiedResponses,
   IsOrganisationVerifiedErrors,
@@ -2914,6 +2920,7 @@ import {
   evaluateCourseRecommendationsResponseTransformer,
   getProgramModerationHistoryResponseTransformer,
   listPendingProgramsResponseTransformer,
+  summaryResponseTransformer,
   getPendingOrganisationsResponseTransformer,
   getDashboardStatisticsResponseTransformer,
   getDashboardActivityResponseTransformer,
@@ -10413,6 +10420,33 @@ export const addProgramCourse = <ThrowOnError extends boolean = false>(
 };
 
 /**
+ * Ingest real-user performance samples
+ * Accepts up to 50 samples per batch. Anonymous callers are rate limited per IP.
+ */
+export const ingest = <ThrowOnError extends boolean = false>(
+  options: Options<IngestData, ThrowOnError>
+) => {
+  return (options.client ?? _heyApiClient).post<IngestResponses, IngestErrors, ThrowOnError>({
+    security: [
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+    ],
+    url: '/api/v1/perf/rum',
+    ...options,
+    headers: {
+      'Content-Type': 'application/json',
+      ...options.headers,
+    },
+  });
+};
+
+/**
  * Get all organisations
  */
 export const getAllOrganisations = <ThrowOnError extends boolean = false>(
@@ -11309,6 +11343,7 @@ export const listNotifications = <ThrowOnError extends boolean = false>(
 
 /**
  * Apply a bulk notification action
+ * read_all marks matching unread notifications read; popup_seen marks the given uuids (or every unseen POPUP for the domain when none are given) as popup seen, caller-owned only
  */
 export const applyBulkAction = <ThrowOnError extends boolean = false>(
   options: Options<ApplyBulkActionData, ThrowOnError>
@@ -20940,6 +20975,7 @@ export const listInstructorObligations = <ThrowOnError extends boolean = false>(
  *
  * **Common Skills Search Examples:**
  * - `instructorUuid=uuid` - All skills for specific instructor
+ * - `instructor_uuid_in=uuid1,uuid2` - Skills for several instructors in one request
  * - `proficiencyLevel=EXPERT` - Expert level skills only
  * - `proficiencyLevel_in=ADVANCED,EXPERT` - Advanced or expert skills
  * - `proficiencyLevel_noteq=BEGINNER` - Non-beginner skills
@@ -21177,6 +21213,7 @@ export const listMyAgeGroupPresets = <ThrowOnError extends boolean = false>(
  *
  * **Common Experience Search Examples:**
  * - `instructorUuid=uuid` - All experience for specific instructor
+ * - `instructor_uuid_in=uuid1,uuid2` - Experience for several instructors in one request
  * - `isCurrentPosition=true` - Current positions only
  * - `yearsOfExperience_gte=5` - 5+ years experience
  * - `startDate_gte=2020-01-01` - Started in 2020 or later
@@ -22542,6 +22579,12 @@ export const getCourseEnrollments = <ThrowOnError extends boolean = false>(
  *
  * Open to anonymous callers, who resolve to `prospect` and receive the same public
  * summary the catalogue already shows.
+ *
+ * A course the public catalogue does not show (a draft, unapproved, inactive or a
+ * shadow draft) has no public summary. A signed-in `prospect` then receives 200 with
+ * an empty payload — `course_uuid`, `access=prospect`, `full_access=false`,
+ * `total_lessons=0`, no lessons, no reviews and no `course` profile. An anonymous
+ * caller receives 404.
  *
  */
 export const getCourseContent = <ThrowOnError extends boolean = false>(
@@ -25224,6 +25267,30 @@ export const listPendingPrograms = <ThrowOnError extends boolean = false>(
       },
     ],
     url: '/api/v1/admin/programs/pending',
+    ...options,
+  });
+};
+
+/**
+ * Real-user percentiles
+ * p50/p95/p99 per route template and metric for samples in [from, to). Defaults to the last 24 hours.
+ */
+export const summary = <ThrowOnError extends boolean = false>(
+  options?: Options<SummaryData, ThrowOnError>
+) => {
+  return (options?.client ?? _heyApiClient).get<SummaryResponses, SummaryErrors, ThrowOnError>({
+    responseTransformer: summaryResponseTransformer,
+    security: [
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+    ],
+    url: '/api/v1/admin/perf/rum/summary',
     ...options,
   });
 };

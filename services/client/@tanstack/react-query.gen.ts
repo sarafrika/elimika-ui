@@ -256,6 +256,7 @@ import {
   addProgramRequirement,
   getProgramCourses,
   addProgramCourse,
+  ingest,
   getAllOrganisations,
   createOrganisation,
   getTrainingBranchesByOrganisation,
@@ -753,6 +754,7 @@ import {
   getProgramModerationHistory,
   getProgramApprovalStatus,
   listPendingPrograms,
+  summary,
   isOrganisationVerified,
   getPendingOrganisations,
   listTestableEmails,
@@ -1433,6 +1435,9 @@ import type {
   AddProgramCourseData,
   AddProgramCourseError,
   AddProgramCourseResponse,
+  IngestData,
+  IngestError,
+  IngestResponse,
   GetAllOrganisationsData,
   GetAllOrganisationsError,
   GetAllOrganisationsResponse,
@@ -2543,6 +2548,7 @@ import type {
   ListPendingProgramsData,
   ListPendingProgramsError,
   ListPendingProgramsResponse,
+  SummaryData,
   IsOrganisationVerifiedData,
   GetPendingOrganisationsData,
   GetPendingOrganisationsError,
@@ -11118,6 +11124,47 @@ export const addProgramCourseMutation = (
   return mutationOptions;
 };
 
+export const ingestQueryKey = (options: Options<IngestData>) => createQueryKey('ingest', options);
+
+/**
+ * Ingest real-user performance samples
+ * Accepts up to 50 samples per batch. Anonymous callers are rate limited per IP.
+ */
+export const ingestOptions = (options: Options<IngestData>) => {
+  return queryOptions({
+    queryFn: async ({ queryKey, signal }) => {
+      const { data } = await ingest({
+        ...options,
+        ...queryKey[0],
+        signal,
+        throwOnError: true,
+      });
+      return data;
+    },
+    queryKey: ingestQueryKey(options),
+  });
+};
+
+/**
+ * Ingest real-user performance samples
+ * Accepts up to 50 samples per batch. Anonymous callers are rate limited per IP.
+ */
+export const ingestMutation = (
+  options?: Partial<Options<IngestData>>
+): UseMutationOptions<IngestResponse, IngestError, Options<IngestData>> => {
+  const mutationOptions: UseMutationOptions<IngestResponse, IngestError, Options<IngestData>> = {
+    mutationFn: async localOptions => {
+      const { data } = await ingest({
+        ...options,
+        ...localOptions,
+        throwOnError: true,
+      });
+      return data;
+    },
+  };
+  return mutationOptions;
+};
+
 export const getAllOrganisationsQueryKey = (options: Options<GetAllOrganisationsData>) =>
   createQueryKey('getAllOrganisations', options);
 
@@ -12499,6 +12546,7 @@ export const applyBulkActionQueryKey = (options: Options<ApplyBulkActionData>) =
 
 /**
  * Apply a bulk notification action
+ * read_all marks matching unread notifications read; popup_seen marks the given uuids (or every unseen POPUP for the domain when none are given) as popup seen, caller-owned only
  */
 export const applyBulkActionOptions = (options: Options<ApplyBulkActionData>) => {
   return queryOptions({
@@ -12517,6 +12565,7 @@ export const applyBulkActionOptions = (options: Options<ApplyBulkActionData>) =>
 
 /**
  * Apply a bulk notification action
+ * read_all marks matching unread notifications read; popup_seen marks the given uuids (or every unseen POPUP for the domain when none are given) as popup seen, caller-owned only
  */
 export const applyBulkActionMutation = (
   options?: Partial<Options<ApplyBulkActionData>>
@@ -27645,6 +27694,7 @@ export const searchSkillsQueryKey = (options: Options<SearchSkillsData>) =>
  *
  * **Common Skills Search Examples:**
  * - `instructorUuid=uuid` - All skills for specific instructor
+ * - `instructor_uuid_in=uuid1,uuid2` - Skills for several instructors in one request
  * - `proficiencyLevel=EXPERT` - Expert level skills only
  * - `proficiencyLevel_in=ADVANCED,EXPERT` - Advanced or expert skills
  * - `proficiencyLevel_noteq=BEGINNER` - Non-beginner skills
@@ -27685,6 +27735,7 @@ export const searchSkillsInfiniteQueryKey = (
  *
  * **Common Skills Search Examples:**
  * - `instructorUuid=uuid` - All skills for specific instructor
+ * - `instructor_uuid_in=uuid1,uuid2` - Skills for several instructors in one request
  * - `proficiencyLevel=EXPERT` - Expert level skills only
  * - `proficiencyLevel_in=ADVANCED,EXPERT` - Advanced or expert skills
  * - `proficiencyLevel_noteq=BEGINNER` - Non-beginner skills
@@ -28085,6 +28136,7 @@ export const searchExperienceQueryKey = (options: Options<SearchExperienceData>)
  *
  * **Common Experience Search Examples:**
  * - `instructorUuid=uuid` - All experience for specific instructor
+ * - `instructor_uuid_in=uuid1,uuid2` - Experience for several instructors in one request
  * - `isCurrentPosition=true` - Current positions only
  * - `yearsOfExperience_gte=5` - 5+ years experience
  * - `startDate_gte=2020-01-01` - Started in 2020 or later
@@ -28128,6 +28180,7 @@ export const searchExperienceInfiniteQueryKey = (
  *
  * **Common Experience Search Examples:**
  * - `instructorUuid=uuid` - All experience for specific instructor
+ * - `instructor_uuid_in=uuid1,uuid2` - Experience for several instructors in one request
  * - `isCurrentPosition=true` - Current positions only
  * - `yearsOfExperience_gte=5` - 5+ years experience
  * - `startDate_gte=2020-01-01` - Started in 2020 or later
@@ -29976,6 +30029,12 @@ export const getCourseContentQueryKey = (options: Options<GetCourseContentData>)
  *
  * Open to anonymous callers, who resolve to `prospect` and receive the same public
  * summary the catalogue already shows.
+ *
+ * A course the public catalogue does not show (a draft, unapproved, inactive or a
+ * shadow draft) has no public summary. A signed-in `prospect` then receives 200 with
+ * an empty payload — `course_uuid`, `access=prospect`, `full_access=false`,
+ * `total_lessons=0`, no lessons, no reviews and no `course` profile. An anonymous
+ * caller receives 404.
  *
  */
 export const getCourseContentOptions = (options: Options<GetCourseContentData>) => {
@@ -33982,6 +34041,28 @@ export const listPendingProgramsInfiniteOptions = (options: Options<ListPendingP
       queryKey: listPendingProgramsInfiniteQueryKey(options),
     }
   );
+};
+
+export const summaryQueryKey = (options?: Options<SummaryData>) =>
+  createQueryKey('summary', options);
+
+/**
+ * Real-user percentiles
+ * p50/p95/p99 per route template and metric for samples in [from, to). Defaults to the last 24 hours.
+ */
+export const summaryOptions = (options?: Options<SummaryData>) => {
+  return queryOptions({
+    queryFn: async ({ queryKey, signal }) => {
+      const { data } = await summary({
+        ...options,
+        ...queryKey[0],
+        signal,
+        throwOnError: true,
+      });
+      return data;
+    },
+    queryKey: summaryQueryKey(options),
+  });
 };
 
 export const isOrganisationVerifiedQueryKey = (options: Options<IsOrganisationVerifiedData>) =>
