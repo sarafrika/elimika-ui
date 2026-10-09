@@ -101,7 +101,7 @@ interface NotificationListResult {
   hasPrevious: boolean;
 }
 
-interface NotificationCounts {
+export interface NotificationCounts {
   unread_count: number;
   popup_count: number;
 }
@@ -114,7 +114,7 @@ const defaultListParams = {
 const notificationListQueryKey = (params: NotificationListParams = {}) =>
   ['notifications', 'list', normalizeListParams(params)] as const;
 
-const notificationCountsQueryKey = (domain?: string) =>
+export const notificationCountsQueryKey = (domain?: string) =>
   ['notifications', 'counts', domain ?? null] as const;
 
 function normalizeListParams(params: NotificationListParams = {}): NotificationListParams {
