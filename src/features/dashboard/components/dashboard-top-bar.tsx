@@ -220,10 +220,7 @@ export default function DashboardTopBar() {
       <div className='flex flex-col'>
         <div className='flex items-center gap-3 px-1 py-3 sm:px-3 lg:px-4'>
           <div className='hidden min-w-0 flex-1 xl:block'>
-            <GlobalSearchTrigger
-              onOpen={openPalette}
-              className='max-w-2xl 2xl:max-w-3xl'
-            />
+            <GlobalSearchTrigger onOpen={openPalette} className='max-w-2xl 2xl:max-w-3xl' />
           </div>
 
           <div className='ml-auto flex items-center gap-2 sm:gap-3'>
@@ -255,23 +252,23 @@ export default function DashboardTopBar() {
               skeleton={<ProfileMenuSkeleton />}
             >
               <DashboardProfileMenu
-              profileName={profileName}
-              profileInitials={profileInitials}
-              profileEmail={profile?.email}
-              activeDomainLabel={activeDomainLabel}
-              roleLabel={roleLabel}
-              userImage={toAuthenticatedMediaUrl(profile?.profile_image_url) ?? ''}
-              availableDomains={domain.domains}
-              activeDomain={activeDomain}
-              onSwitch={handleDashboardSwitch}
-              onAddProfile={() => router.push('/dashboard/add-profile')}
-              onLogout={async () => {
-                await logout({
-                  clearDomain: domain.clearDomain,
-                  clearProfile: profile?.clearProfile,
-                });
-              }}
-            />
+                profileName={profileName}
+                profileInitials={profileInitials}
+                profileEmail={profile?.email}
+                activeDomainLabel={activeDomainLabel}
+                roleLabel={roleLabel}
+                userImage={toAuthenticatedMediaUrl(profile?.profile_image_url) ?? ''}
+                availableDomains={domain.domains}
+                activeDomain={activeDomain}
+                onSwitch={handleDashboardSwitch}
+                onAddProfile={() => router.push('/dashboard/add-profile')}
+                onLogout={async () => {
+                  await logout({
+                    clearDomain: domain.clearDomain,
+                    clearProfile: profile?.clearProfile,
+                  });
+                }}
+              />
             </AsyncSection>
           </div>
         </div>
@@ -753,7 +750,7 @@ function CreateMenu({ actions, compact = false }: { actions: CreateAction[]; com
           <DropdownMenuItem
             key={a.label}
             onSelect={a.onSelect}
-            className='flex items-start gap-3 py-2 min-w-fit'
+            className='flex min-w-fit items-start gap-3 py-2'
           >
             <span className='bg-primary/10 text-primary mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-md'>
               <a.icon className='h-3.5 w-3.5' />
