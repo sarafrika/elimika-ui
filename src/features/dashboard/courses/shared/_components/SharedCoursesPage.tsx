@@ -46,7 +46,11 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { useInstructor } from '@/context/instructor-context';
 import { useOrganisation } from '@/context/organisation-context';
 import { useUserProfile } from '@/context/profile-context';
-import { useCourseClasses, useCoursesByIds } from '@/hooks/use-batched-lookups';
+import {
+  useCourseClasses,
+  useCourseCreatorsByIds,
+  useCoursesByIds,
+} from '@/hooks/use-batched-lookups';
 import { useCourseEnrollmentsMap } from '@/hooks/use-enrollment-map';
 import { averageRating, useCourseReviewsMap } from '@/hooks/use-reviews-map';
 import { useSearchErrors } from '@/hooks/use-search-query';
@@ -71,7 +75,6 @@ import {
   getCourseLessonsOptions,
   getProgramEnrollmentsOptions,
   getPublishedCoursesOptions,
-  searchCourseCreatorsOptions,
   searchCoursesAndProgrammesOptions,
   searchProgramCoursesOptions,
   searchProgramTrainingApplicationsOptions,
@@ -115,6 +118,7 @@ import {
   matchesCatalogContentType,
   matchesCatalogPrice,
 } from './catalog-filters';
+import { SeenOnScreen, useSeenIds } from './seen-on-screen';
 
 type SharedCoursesPageProps = {
   domain: UserDomain;
@@ -211,32 +215,6 @@ function normalizeApplicationStatus(status?: string | null) {
   return status?.toLowerCase() ?? null;
 }
 
-function isCourseCreatorLookup(value: unknown): value is { uuid?: string; full_name?: string } {
-  return typeof value === 'object' && value !== null && 'uuid' in value;
-}
-
-/**
- * The rows of a `/search` response.
- *
- * The generated client types `searchCourseCreators` as returning a bare `Page`,
- * but the endpoint answers with the platform's `{ success, data: <page>,
- * message }` envelope like every other search — the spec is what drifted, not
- * the server. Walking the shape with `in` keeps the check where the drift is,
- * at runtime, instead of asserting a type the response may not have.
- */
-function searchPageContent(response: unknown): unknown[] {
-  if (typeof response !== 'object' || response === null || !('data' in response)) {
-    return [];
-  }
-
-  const page = response.data;
-  if (typeof page !== 'object' || page === null || !('content' in page)) {
-    return [];
-  }
-
-  return Array.isArray(page.content) ? page.content : [];
-}
-
 /** The generated error unions share no `message`; surface one when there is one. */
 function errorMessage(error: unknown): string | undefined {
   if (typeof error !== 'object' || error === null || !('message' in error)) {
@@ -255,6 +233,7 @@ type CardCounts = {
   classes?: number;
   courseCount?: number;
   categoryNames?: string[];
+  creatorName?: string;
 };
 
 type CatalogueApiSort = NonNullable<NonNullable<SearchCoursesAndProgrammesData['query']>['sort']>;
@@ -278,6 +257,7 @@ function catalogueCounts(item: CatalogueItem): CardCounts {
     classes: toCount(item.class_count),
     courseCount: toCount(item.course_count),
     categoryNames: item.category_names?.length ? item.category_names : undefined,
+    creatorName: item.creator_name || undefined,
   };
 }
 
@@ -399,7 +379,10 @@ const createCatalogCards = (
 
       lessons,
 
-      provider: creatorMap.get(item.creatorUuid) ?? item.creatorName ?? 'Course Creator',
+      provider:
+        creatorMap.get(item.creatorUuid) ??
+        counts?.creatorName ??
+        (item.creatorName || 'Course Creator'),
 
       duration: item.durationLabel,
 
@@ -488,8 +471,10 @@ export function SharedCoursesPage({ domain }: SharedCoursesPageProps) {
   const instructor = useInstructor();
   const organisation = useOrganisation();
   const student = user?.student;
+  const [activeTab, setActiveTab] = useState<CoursesCatalogTab>('all-courses');
+  // The enrolment fan-out (schedules, lessons, quizzes per class) only feeds My Courses.
   const { classDefinitions, loading: studentCoursesLoading } = useStudentClassDefinitions(
-    domain === 'student' ? (student ?? undefined) : undefined
+    domain === 'student' && activeTab === 'my-courses' ? (student ?? undefined) : undefined
   );
 
   const isInstructorDomain = domain === 'instructor';
@@ -507,7 +492,6 @@ export function SharedCoursesPage({ domain }: SharedCoursesPageProps) {
   const [open, setOpen] = useState(false);
   const search = useUrlSearchQuery();
   const patchUrl = useSearchStatePatch();
-  const [activeTab, setActiveTab] = useState<CoursesCatalogTab>('all-courses');
   const [urlCategory] = useSearchState('category', allParam);
   const [urlLevel] = useSearchState('level', allParam);
   const [urlPrice] = useSearchState('price', priceParam);
@@ -578,6 +562,10 @@ export function SharedCoursesPage({ domain }: SharedCoursesPageProps) {
   );
   // One batched lookup turns the page of hits into full courses for the cards.
   const hitLookup = useCoursesByIds(facetMode ? hitIds : []);
+  // Programmes join only the first server page of courses, and never the courses-only view.
+  const showCourses = filters.contentType !== 'programs';
+  const showPrograms =
+    filters.contentType !== 'short-courses' && (!facetMode || currentCatalogPage === 1);
 
   const { data: publishedResponse, isLoading: publishedLoading } = useQuery({
     ...getPublishedCoursesOptions({
@@ -605,6 +593,7 @@ export function SharedCoursesPage({ domain }: SharedCoursesPageProps) {
         ...(search.q ? { q: search.q } : {}),
       },
     }),
+    enabled: showPrograms,
     refetchOnWindowFocus: false,
     placeholderData: keepPreviousData,
   });
@@ -726,9 +715,6 @@ export function SharedCoursesPage({ domain }: SharedCoursesPageProps) {
   );
 
   // Card counts come from the catalogue search, one call per kind mirroring the visible page.
-  const showCourses = filters.contentType !== 'programs';
-  const showPrograms =
-    filters.contentType !== 'short-courses' && (!facetMode || currentCatalogPage === 1);
   const catalogueLevel = CATALOGUE_LEVELS.find(
     level => level === difficultyMap.get(filters.level)?.toLowerCase()
   );
@@ -781,7 +767,8 @@ export function SharedCoursesPage({ domain }: SharedCoursesPageProps) {
     return map;
   }, [courseCatalogueQuery.data, programCatalogueQuery.data]);
 
-  // Per-item fallback, only for visible ids the catalogue did not return (normally none).
+  // Per-item fallback, only for on-screen ids the catalogue did not return (normally none).
+  const { seenIds, markSeen } = useSeenIds();
   const missingCourseIds = useMemo(() => {
     if (!showCourses || courseCatalogueQuery.isPending) return [];
     const visible =
@@ -790,7 +777,10 @@ export function SharedCoursesPage({ domain }: SharedCoursesPageProps) {
         : courses.map(course => course.uuid);
     return [
       ...new Set(
-        visible.filter((uuid): uuid is string => Boolean(uuid) && !catalogueCountMap.has(uuid ?? ''))
+        visible.filter(
+          (uuid): uuid is string =>
+            Boolean(uuid) && seenIds.has(uuid ?? '') && !catalogueCountMap.has(uuid ?? '')
+        )
       ),
     ]
       .sort()
@@ -802,16 +792,20 @@ export function SharedCoursesPage({ domain }: SharedCoursesPageProps) {
     courseCatalogueQuery.isPending,
     courses,
     isStudentDomain,
+    seenIds,
     showCourses,
   ]);
   const missingProgramIds = useMemo(() => {
     if (!showPrograms || programCatalogueQuery.isPending) return [];
     return programs
       .map(program => program.uuid)
-      .filter((uuid): uuid is string => Boolean(uuid) && !catalogueCountMap.has(uuid ?? ''))
+      .filter(
+        (uuid): uuid is string =>
+          Boolean(uuid) && seenIds.has(uuid ?? '') && !catalogueCountMap.has(uuid ?? '')
+      )
       .sort()
       .slice(0, CATALOG_PAGE_SIZE);
-  }, [catalogueCountMap, programCatalogueQuery.isPending, programs, showPrograms]);
+  }, [catalogueCountMap, programCatalogueQuery.isPending, programs, seenIds, showPrograms]);
 
   const { reviewMap } = useCourseReviewsMap(missingCourseIds);
   const { courseEnrollmentMap } = useCourseEnrollmentsMap(missingCourseIds, { countOnly: true });
@@ -1384,35 +1378,28 @@ export function SharedCoursesPage({ domain }: SharedCoursesPageProps) {
       ? organisationCourseApplicationsFetching || organisationProgramApplicationsFetching
       : false;
 
+  // The catalogue names most creators; one batched lookup covers the rest on this page.
   const creatorIds = useMemo(
-    () => Array.from(new Set(filteredItems.map(item => item.creatorUuid).filter(Boolean))),
-    [filteredItems]
+    () => [
+      ...new Set(
+        paginatedItems
+          .filter(item => item.creatorUuid && !countsById.get(item.id)?.creatorName)
+          .map(item => item.creatorUuid)
+      ),
+    ],
+    [countsById, paginatedItems]
   );
-
-  const creatorQuery = useQuery({
-    ...searchCourseCreatorsOptions({
-      query: {
-        searchParams: { uuid_in: creatorIds.join(',') },
-        pageable: { page: 0, size: Math.max(creatorIds.length, 1) },
-      },
-    }),
-    enabled: creatorIds.length > 0,
-    refetchOnWindowFocus: false,
-  });
-
-  const creatorMap = useMemo(() => {
-    const map = new Map<string, string>();
-
-    searchPageContent(creatorQuery.data)
-      .filter(isCourseCreatorLookup)
-      .forEach(creator => {
-        if (creator.uuid) {
-          map.set(creator.uuid, creator.full_name || 'Course Creator');
-        }
-      });
-
-    return map;
-  }, [creatorQuery.data]);
+  const { courseCreatorMap } = useCourseCreatorsByIds(creatorIds);
+  const creatorMap = useMemo(
+    () =>
+      new Map(
+        Object.entries(courseCreatorMap).map(([uuid, creator]) => [
+          uuid,
+          creator.full_name || 'Course Creator',
+        ])
+      ),
+    [courseCreatorMap]
+  );
 
   const applyToTrainCourseMut = useMutation(submitTrainingApplicationMutation());
   const applyToTrainProgramMut = useMutation(submitProgramTrainingApplicationMutation());
@@ -1874,17 +1861,30 @@ export function SharedCoursesPage({ domain }: SharedCoursesPageProps) {
                     <div className={surfaceTheme.cardGrid}>
                       {!isStudentDomain &&
                         catalogCards.map(card => (
-                          <CoursesCatalogCard
-                            type='general'
+                          <SeenOnScreen
                             key={card.id}
-                            card={card}
-                            onPrimaryAction={handleCatalogCardAction}
-                          />
+                            id={card.id}
+                            onSeen={markSeen}
+                            className='min-w-0'
+                          >
+                            <CoursesCatalogCard
+                              type='general'
+                              card={card}
+                              onPrimaryAction={handleCatalogCardAction}
+                            />
+                          </SeenOnScreen>
                         ))}
 
                       {isStudentDomain &&
                         catalogCards.map(card => (
-                          <StudentCoursesCard type='general' key={card.id} card={card} />
+                          <SeenOnScreen
+                            key={card.id}
+                            id={card.id}
+                            onSeen={markSeen}
+                            className='min-w-0'
+                          >
+                            <StudentCoursesCard type='general' card={card} />
+                          </SeenOnScreen>
                         ))}
                     </div>
 
