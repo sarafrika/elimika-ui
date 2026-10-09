@@ -1442,12 +1442,6 @@ export const RubricCriteriaSchema = {
       example: 'instructor@sarafrika.com',
       readOnly: true,
     },
-    is_primary_criteria: {
-      type: 'boolean',
-      description: '**[READ-ONLY]** Indicates if this is a primary assessment criteria.',
-      example: true,
-      readOnly: true,
-    },
     criteria_category: {
       type: 'string',
       description: '**[READ-ONLY]** Category classification of the assessment criteria.',
@@ -1464,6 +1458,12 @@ export const RubricCriteriaSchema = {
       type: 'string',
       description: '**[READ-ONLY]** Formatted criteria number for display in assessment interface.',
       example: 'Criteria 1',
+      readOnly: true,
+    },
+    is_primary_criteria: {
+      type: 'boolean',
+      description: '**[READ-ONLY]** Indicates if this is a primary assessment criteria.',
+      example: true,
       readOnly: true,
     },
   },
@@ -1549,19 +1549,19 @@ export const RubricMatrixSchema = {
         '**[READ-ONLY]** Statistical information about the matrix completion and scoring.',
       readOnly: true,
     },
-    is_complete: {
-      type: 'boolean',
-      description:
-        '**[READ-ONLY]** Whether all matrix cells have been completed with descriptions.',
-      example: true,
-      readOnly: true,
-    },
     expected_cell_count: {
       type: 'integer',
       format: 'int32',
       description:
         '**[READ-ONLY]** Expected number of matrix cells (criteria count × scoring levels count).',
       example: 20,
+      readOnly: true,
+    },
+    is_complete: {
+      type: 'boolean',
+      description:
+        '**[READ-ONLY]** Whether all matrix cells have been completed with descriptions.',
+      example: true,
       readOnly: true,
     },
   },
@@ -1662,6 +1662,12 @@ export const RubricScoringSchema = {
       example: 'instructor@sarafrika.com',
       readOnly: true,
     },
+    performance_expectation: {
+      type: 'string',
+      description: '**[READ-ONLY]** Classification of performance expectation level.',
+      example: 'Exceptional Performance',
+      readOnly: true,
+    },
     score_range: {
       type: 'string',
       description: '**[READ-ONLY]** Expected score range for this performance level.',
@@ -1679,12 +1685,6 @@ export const RubricScoringSchema = {
       type: 'string',
       description: '**[READ-ONLY]** Feedback category for constructive assessment guidance.',
       example: 'Excellence',
-      readOnly: true,
-    },
-    performance_expectation: {
-      type: 'string',
-      description: '**[READ-ONLY]** Classification of performance expectation level.',
-      example: 'Exceptional Performance',
       readOnly: true,
     },
   },
@@ -2006,16 +2006,16 @@ export const QuizQuestionSchema = {
       example: 'Multiple Choice Question',
       readOnly: true,
     },
-    question_number: {
-      type: 'string',
-      description: '**[READ-ONLY]** Formatted question number for display in quiz interface.',
-      example: 'Question 1',
-      readOnly: true,
-    },
     points_display: {
       type: 'string',
       description: '**[READ-ONLY]** Human-readable format of the points value.',
       example: '2.0 points',
+      readOnly: true,
+    },
+    question_number: {
+      type: 'string',
+      description: '**[READ-ONLY]** Formatted question number for display in quiz interface.',
+      example: 'Question 1',
       readOnly: true,
     },
   },
@@ -2374,6 +2374,12 @@ export const QuizAttemptSchema = {
       example: true,
       readOnly: true,
     },
+    grade_display: {
+      type: 'string',
+      description: '**[READ-ONLY]** Formatted display of the grade information.',
+      example: '85.00 / 100.00 (85%)',
+      readOnly: true,
+    },
     time_display: {
       type: 'string',
       description: '**[READ-ONLY]** Formatted display of the time taken to complete the quiz.',
@@ -2390,12 +2396,6 @@ export const QuizAttemptSchema = {
       type: 'string',
       description: '**[READ-ONLY]** Comprehensive summary of the quiz attempt performance.',
       example: 'Passed on attempt 2 with 85% score',
-      readOnly: true,
-    },
-    grade_display: {
-      type: 'string',
-      description: '**[READ-ONLY]** Formatted display of the grade information.',
-      example: '85.00 / 100.00 (85%)',
       readOnly: true,
     },
   },
@@ -4851,11 +4851,11 @@ export const InstructorSchema = {
       example: 12,
       readOnly: true,
     },
-    has_location_coordinates: {
-      type: 'boolean',
+    formatted_location: {
+      type: ['string', 'null'],
       description:
-        '**[READ-ONLY]** Indicates if the instructor has both latitude and longitude coordinates configured.',
-      example: true,
+        '**[READ-ONLY]** Formatted location coordinates as a string. Returns null if location coordinates are not available.',
+      example: '-1.292100, 36.821900',
       readOnly: true,
     },
     is_profile_complete: {
@@ -4865,11 +4865,11 @@ export const InstructorSchema = {
       example: true,
       readOnly: true,
     },
-    formatted_location: {
-      type: ['string', 'null'],
+    has_location_coordinates: {
+      type: 'boolean',
       description:
-        '**[READ-ONLY]** Formatted location coordinates as a string. Returns null if location coordinates are not available.',
-      example: '-1.292100, 36.821900',
+        '**[READ-ONLY]** Indicates if the instructor has both latitude and longitude coordinates configured.',
+      example: true,
       readOnly: true,
     },
   },
@@ -5148,6 +5148,30 @@ export const InstructorProfessionalMembershipSchema = {
       example: 'IEEE Member (4 years, 3 months) - Active',
       readOnly: true,
     },
+    is_complete: {
+      type: 'boolean',
+      description:
+        '**[READ-ONLY]** Indicates if the membership record has all essential information.',
+      example: true,
+      readOnly: true,
+    },
+    formatted_duration: {
+      type: ['string', 'null'],
+      description: '**[READ-ONLY]** Human-readable formatted duration of membership.',
+      example: '4 years, 3 months',
+      readOnly: true,
+    },
+    membership_duration_months: {
+      type: ['integer', 'null'],
+      format: 'int32',
+      description:
+        '**[READ-ONLY]** Duration of membership calculated from start and end dates, in months.',
+      example: 51,
+      readOnly: true,
+    },
+    membership_status: {
+      $ref: '#/components/schemas/MembershipStatusEnum',
+    },
     membership_period: {
       type: ['string', 'null'],
       description: '**[READ-ONLY]** Formatted membership period showing start and end dates.',
@@ -5183,30 +5207,6 @@ export const InstructorProfessionalMembershipSchema = {
       description:
         '**[READ-ONLY]** Indicates if this membership was started within the last 3 years.',
       example: true,
-      readOnly: true,
-    },
-    is_complete: {
-      type: 'boolean',
-      description:
-        '**[READ-ONLY]** Indicates if the membership record has all essential information.',
-      example: true,
-      readOnly: true,
-    },
-    membership_duration_months: {
-      type: ['integer', 'null'],
-      format: 'int32',
-      description:
-        '**[READ-ONLY]** Duration of membership calculated from start and end dates, in months.',
-      example: 51,
-      readOnly: true,
-    },
-    membership_status: {
-      $ref: '#/components/schemas/MembershipStatusEnum',
-    },
-    formatted_duration: {
-      type: ['string', 'null'],
-      description: '**[READ-ONLY]** Human-readable formatted duration of membership.',
-      example: '4 years, 3 months',
       readOnly: true,
     },
   },
@@ -5367,6 +5367,20 @@ export const InstructorExperienceSchema = {
       example: true,
       readOnly: true,
     },
+    duration_in_months: {
+      type: ['integer', 'null'],
+      format: 'int32',
+      description:
+        '**[READ-ONLY]** Duration of employment calculated from start and end dates, in months.',
+      example: 66,
+      readOnly: true,
+    },
+    formatted_duration: {
+      type: ['string', 'null'],
+      description: '**[READ-ONLY]** Human-readable formatted duration of employment.',
+      example: '5 years, 5 months',
+      readOnly: true,
+    },
     employment_period: {
       type: ['string', 'null'],
       description: '**[READ-ONLY]** Formatted employment period showing start and end dates.',
@@ -5400,20 +5414,6 @@ export const InstructorExperienceSchema = {
       format: 'double',
       description: '**[READ-ONLY]** Calculated years of experience based on start and end dates.',
       example: 5.46,
-      readOnly: true,
-    },
-    duration_in_months: {
-      type: ['integer', 'null'],
-      format: 'int32',
-      description:
-        '**[READ-ONLY]** Duration of employment calculated from start and end dates, in months.',
-      example: 66,
-      readOnly: true,
-    },
-    formatted_duration: {
-      type: ['string', 'null'],
-      description: '**[READ-ONLY]** Human-readable formatted duration of employment.',
-      example: '5 years, 5 months',
       readOnly: true,
     },
   },
@@ -10593,17 +10593,17 @@ conflict_resolution per template:
       example: 90,
       readOnly: true,
     },
+    duration_formatted: {
+      type: 'string',
+      description: '**[READ-ONLY]** Human-readable formatted duration.',
+      example: '1h 30m',
+      readOnly: true,
+    },
     capacity_info: {
       type: 'string',
       description:
         '**[READ-ONLY]** Human-readable capacity information including waitlist availability.',
       example: 'Max 25 participants (waitlist enabled)',
-      readOnly: true,
-    },
-    duration_formatted: {
-      type: 'string',
-      description: '**[READ-ONLY]** Human-readable formatted duration.',
-      example: '1h 30m',
       readOnly: true,
     },
   },
@@ -12623,25 +12623,6 @@ export const ScheduledInstanceSchema = {
       example: 90,
       readOnly: true,
     },
-    can_be_cancelled: {
-      type: 'boolean',
-      description: '**[READ-ONLY]** Indicates if the scheduled instance can be cancelled.',
-      example: true,
-      readOnly: true,
-    },
-    can_be_started: {
-      type: 'boolean',
-      description: '**[READ-ONLY]** Indicates if the scheduled instance can be explicitly started.',
-      example: true,
-      readOnly: true,
-    },
-    can_be_ended: {
-      type: 'boolean',
-      description:
-        '**[READ-ONLY]** Indicates if the scheduled instance can be explicitly concluded.',
-      example: false,
-      readOnly: true,
-    },
     duration_formatted: {
       type: 'string',
       description: '**[READ-ONLY]** Human-readable formatted duration.',
@@ -12658,6 +12639,25 @@ export const ScheduledInstanceSchema = {
       type: 'boolean',
       description:
         '**[READ-ONLY]** Indicates if the scheduled instance is currently active (ongoing).',
+      example: false,
+      readOnly: true,
+    },
+    can_be_cancelled: {
+      type: 'boolean',
+      description: '**[READ-ONLY]** Indicates if the scheduled instance can be cancelled.',
+      example: true,
+      readOnly: true,
+    },
+    can_be_started: {
+      type: 'boolean',
+      description: '**[READ-ONLY]** Indicates if the scheduled instance can be explicitly started.',
+      example: true,
+      readOnly: true,
+    },
+    can_be_ended: {
+      type: 'boolean',
+      description:
+        '**[READ-ONLY]** Indicates if the scheduled instance can be explicitly concluded.',
       example: false,
       readOnly: true,
     },
@@ -13601,6 +13601,124 @@ export const ApiResponseProgramReviewSchema = {
       type: 'string',
     },
     error: {},
+  },
+} as const;
+
+export const RumBatchRequestSchema = {
+  type: 'object',
+  description: 'A batch of up to 50 real-user performance samples',
+  properties: {
+    events: {
+      type: 'array',
+      items: {
+        $ref: '#/components/schemas/RumEventRequest',
+      },
+      maxItems: 50,
+      minItems: 0,
+    },
+  },
+  required: ['events'],
+} as const;
+
+export const RumEventRequestSchema = {
+  type: 'object',
+  description: 'One real-user performance sample',
+  properties: {
+    route_template: {
+      type: 'string',
+      description: 'Route pattern with ids replaced, e.g. /dashboard/courses/[id]',
+      example: '/dashboard/overview',
+      maxLength: 255,
+      minLength: 0,
+    },
+    domain: {
+      type: 'string',
+      description: 'Dashboard domain of the viewer',
+      example: 'student',
+      maxLength: 64,
+      minLength: 0,
+    },
+    metric: {
+      type: 'string',
+      description: 'Metric name, e.g. LCP, INP, TTFB, time_to_data',
+      example: 'LCP',
+      maxLength: 64,
+      minLength: 0,
+      pattern: '^[A-Za-z0-9_.:-]+$',
+    },
+    value_ms: {
+      type: 'number',
+      format: 'double',
+      description: 'Measured duration in milliseconds',
+      example: 1830.5,
+      maximum: 3600000,
+    },
+    section: {
+      type: 'string',
+      description: 'Page section the sample belongs to, if any',
+      example: 'enrolments',
+      maxLength: 128,
+      minLength: 0,
+    },
+    network_type: {
+      type: 'string',
+      description: 'Effective connection type',
+      example: '4g',
+      maxLength: 32,
+      minLength: 0,
+    },
+    device_class: {
+      type: 'string',
+      description: 'Coarse device class',
+      example: 'mobile',
+      maxLength: 32,
+      minLength: 0,
+    },
+    app_version: {
+      type: 'string',
+      description: 'Web app build version',
+      example: '1.42.0',
+      maxLength: 64,
+      minLength: 0,
+    },
+    occurred_at: {
+      type: 'string',
+      format: 'date-time',
+      description: 'When the sample was taken (ISO-8601 with offset)',
+    },
+  },
+  required: ['metric', 'occurred_at', 'route_template', 'value_ms'],
+} as const;
+
+export const ApiResponseRumIngestResponseSchema = {
+  type: 'object',
+  properties: {
+    success: {
+      type: 'boolean',
+    },
+    data: {
+      $ref: '#/components/schemas/RumIngestResponse',
+    },
+    message: {
+      type: 'string',
+    },
+    error: {},
+  },
+} as const;
+
+export const RumIngestResponseSchema = {
+  type: 'object',
+  properties: {
+    accepted: {
+      type: 'integer',
+      format: 'int32',
+      description: 'Samples stored',
+    },
+    dropped: {
+      type: 'integer',
+      format: 'int32',
+      description: 'Samples ignored because their timestamp was outside the accepted window',
+    },
   },
 } as const;
 
@@ -15345,10 +15463,10 @@ export const EnrollmentSchema = {
       example: true,
       readOnly: true,
     },
-    can_be_cancelled: {
+    did_attend: {
       type: 'boolean',
-      description: '**[READ-ONLY]** Indicates if the enrollment can be cancelled.',
-      example: true,
+      description: '**[READ-ONLY]** Indicates if the student attended the class.',
+      example: false,
       readOnly: true,
     },
     is_attendance_marked: {
@@ -15357,16 +15475,16 @@ export const EnrollmentSchema = {
       example: false,
       readOnly: true,
     },
-    did_attend: {
-      type: 'boolean',
-      description: '**[READ-ONLY]** Indicates if the student attended the class.',
-      example: false,
-      readOnly: true,
-    },
     status_description: {
       type: 'string',
       description: '**[READ-ONLY]** Human-readable description of the enrollment status.',
       example: 'Student is enrolled in the class',
+      readOnly: true,
+    },
+    can_be_cancelled: {
+      type: 'boolean',
+      description: '**[READ-ONLY]** Indicates if the enrollment can be cancelled.',
+      example: true,
       readOnly: true,
     },
   },
@@ -18940,16 +19058,16 @@ export const StudentScheduleSchema = {
       example: 90,
       readOnly: true,
     },
-    is_upcoming: {
-      type: 'boolean',
-      description: '**[READ-ONLY]** Indicates if this class is upcoming.',
-      example: true,
-      readOnly: true,
-    },
     did_attend: {
       type: 'boolean',
       description: '**[READ-ONLY]** Indicates if the student attended this class.',
       example: false,
+      readOnly: true,
+    },
+    is_upcoming: {
+      type: 'boolean',
+      description: '**[READ-ONLY]** Indicates if this class is upcoming.',
+      example: true,
       readOnly: true,
     },
   },
@@ -19222,6 +19340,12 @@ export const PageSchema = {
       type: 'integer',
       format: 'int32',
     },
+    first: {
+      type: 'boolean',
+    },
+    last: {
+      type: 'boolean',
+    },
     numberOfElements: {
       type: 'integer',
       format: 'int32',
@@ -19231,12 +19355,6 @@ export const PageSchema = {
     },
     pageable: {
       $ref: '#/components/schemas/PageableObject',
-    },
-    first: {
-      type: 'boolean',
-    },
-    last: {
-      type: 'boolean',
     },
     empty: {
       type: 'boolean',
@@ -28244,6 +28362,71 @@ export const PagedDTOContentModerationHistorySchema = {
   },
 } as const;
 
+export const ApiResponseRumSummaryResponseSchema = {
+  type: 'object',
+  properties: {
+    success: {
+      type: 'boolean',
+    },
+    data: {
+      $ref: '#/components/schemas/RumSummaryResponse',
+    },
+    message: {
+      type: 'string',
+    },
+    error: {},
+  },
+} as const;
+
+export const RumSummaryResponseSchema = {
+  type: 'object',
+  properties: {
+    from: {
+      type: 'string',
+      format: 'date-time',
+    },
+    to: {
+      type: 'string',
+      format: 'date-time',
+    },
+    rows: {
+      type: 'array',
+      items: {
+        $ref: '#/components/schemas/RumSummaryRow',
+      },
+    },
+  },
+} as const;
+
+export const RumSummaryRowSchema = {
+  type: 'object',
+  description: 'Percentiles for one route template and metric',
+  properties: {
+    route_template: {
+      type: 'string',
+    },
+    metric: {
+      type: 'string',
+    },
+    samples: {
+      type: 'integer',
+      format: 'int64',
+    },
+    p50_ms: {
+      type: 'number',
+      format: 'double',
+    },
+    p95_ms: {
+      type: 'number',
+      format: 'double',
+    },
+    p99_ms: {
+      type: 'number',
+      format: 'double',
+    },
+  },
+} as const;
+
 export const ApiResponseListStringSchema = {
   type: 'object',
   properties: {
@@ -29396,6 +29579,14 @@ export const ProficiencyLevelEnum2Schema = {
   example: 'EXPERT',
 } as const;
 
+export const MembershipStatusEnumSchema = {
+  type: 'string',
+  description: '**[READ-ONLY]** Current status of the membership.',
+  enum: ['ACTIVE', 'INACTIVE', 'EXPIRED', 'UNKNOWN'],
+  example: 'ACTIVE',
+  readOnly: true,
+} as const;
+
 export const OrganisationTypeEnumSchema = {
   type: 'string',
   description: '**[READ-ONLY]** Classification of organisation type based on name keywords.',
@@ -29408,14 +29599,6 @@ export const OrganisationTypeEnumSchema = {
     'OTHER',
   ],
   example: 'PROFESSIONAL_INSTITUTE',
-  readOnly: true,
-} as const;
-
-export const MembershipStatusEnumSchema = {
-  type: 'string',
-  description: '**[READ-ONLY]** Current status of the membership.',
-  enum: ['ACTIVE', 'INACTIVE', 'EXPIRED', 'UNKNOWN'],
-  example: 'ACTIVE',
   readOnly: true,
 } as const;
 
