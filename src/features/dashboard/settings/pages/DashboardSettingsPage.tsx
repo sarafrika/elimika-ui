@@ -21,6 +21,7 @@ import {
   FormMessage,
 } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
+import { PhoneInput } from '@/components/ui/phone-input';
 import { Separator } from '@/components/ui/separator';
 import Spinner from '@/components/ui/spinner';
 import { Textarea } from '@/components/ui/textarea';
@@ -729,9 +730,9 @@ function DashboardSettingsPageBody({ variant }: DashboardSettingsPageProps) {
                                 <FormItem className='space-y-2 sm:max-w-[calc(50%-0.5rem)]'>
                                   <FormLabel>Phone number</FormLabel>
                                   <FormControl>
-                                    <Input
-                                      placeholder='Phone number'
+                                    <PhoneInput
                                       {...field}
+                                      placeholder='+254 712 345678'
                                       className='border-border/70 bg-background/70 h-11 rounded-md text-sm shadow-none'
                                     />
                                   </FormControl>

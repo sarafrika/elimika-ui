@@ -150,7 +150,7 @@ export function getSettingsVariantConfig(
     ],
     organisation: [
       { value: 'profile', label: 'Institution Profile' },
-      { value: 'groups', label: 'Academic Groups' },
+      { value: 'groups', label: 'Student Groups' },
       { value: 'roles', label: 'Roles & Permissions' },
       { value: 'support', label: 'Support' },
       { value: 'advanced-settings', label: 'Advanced Settings' },

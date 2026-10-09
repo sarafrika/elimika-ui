@@ -535,6 +535,12 @@ import type {
   UpdateAssignmentData,
   UpdateAssignmentResponses,
   UpdateAssignmentErrors,
+  DeleteAgeGroupData,
+  DeleteAgeGroupResponses,
+  DeleteAgeGroupErrors,
+  UpdateAgeGroupData,
+  UpdateAgeGroupResponses,
+  UpdateAgeGroupErrors,
   AdminDeleteSkillData,
   AdminDeleteSkillResponses,
   AdminDeleteSkillErrors,
@@ -841,6 +847,15 @@ import type {
   CreateCompetitionData,
   CreateCompetitionResponses,
   CreateCompetitionErrors,
+  ListOrganisationAgeGroupsData,
+  ListOrganisationAgeGroupsResponses,
+  ListOrganisationAgeGroupsErrors,
+  CreateOrganisationAgeGroupData,
+  CreateOrganisationAgeGroupResponses,
+  CreateOrganisationAgeGroupErrors,
+  SubmitDomainOnboardingData,
+  SubmitDomainOnboardingResponses,
+  SubmitDomainOnboardingErrors,
   ListNotificationsData,
   ListNotificationsResponses,
   ListNotificationsErrors,
@@ -973,6 +988,12 @@ import type {
   CreateAvailabilitySlotData,
   CreateAvailabilitySlotResponses,
   CreateAvailabilitySlotErrors,
+  ListMyAgeGroupsData,
+  ListMyAgeGroupsResponses,
+  ListMyAgeGroupsErrors,
+  CreateMyAgeGroupData,
+  CreateMyAgeGroupResponses,
+  CreateMyAgeGroupErrors,
   CreateLinkData,
   CreateLinkResponses,
   CreateLinkErrors,
@@ -1417,6 +1438,9 @@ import type {
   ModerateOrganisationData,
   ModerateOrganisationResponses,
   ModerateOrganisationErrors,
+  SendTestEmailsData,
+  SendTestEmailsResponses,
+  SendTestEmailsErrors,
   VerifyInstructorData,
   VerifyInstructorResponses,
   VerifyInstructorErrors,
@@ -1776,6 +1800,12 @@ import type {
   Search2Data,
   Search2Responses,
   Search2Errors,
+  GetMyOnboardingData,
+  GetMyOnboardingResponses,
+  GetMyOnboardingErrors,
+  GetDomainOnboardingData,
+  GetDomainOnboardingResponses,
+  GetDomainOnboardingErrors,
   GetCountsData,
   GetCountsResponses,
   GetCountsErrors,
@@ -1821,6 +1851,9 @@ import type {
   SearchMembershipsData,
   SearchMembershipsResponses,
   SearchMembershipsErrors,
+  ListMyAgeGroupPresetsData,
+  ListMyAgeGroupPresetsResponses,
+  ListMyAgeGroupPresetsErrors,
   SearchExperienceData,
   SearchExperienceResponses,
   SearchExperienceErrors,
@@ -2148,6 +2181,9 @@ import type {
   SearchCoursesAndProgrammesData,
   SearchCoursesAndProgrammesResponses,
   SearchCoursesAndProgrammesErrors,
+  SearchApplyToTrainCatalogueData,
+  SearchApplyToTrainCatalogueResponses,
+  SearchApplyToTrainCatalogueErrors,
   GetBookingData,
   GetBookingResponses,
   GetBookingErrors,
@@ -2226,6 +2262,9 @@ import type {
   GetPendingOrganisationsData,
   GetPendingOrganisationsResponses,
   GetPendingOrganisationsErrors,
+  ListTestableEmailsData,
+  ListTestableEmailsResponses,
+  ListTestableEmailsErrors,
   IsInstructorVerifiedData,
   IsInstructorVerifiedResponses,
   IsInstructorVerifiedErrors,
@@ -2499,6 +2538,7 @@ import {
   cancelObligationResponseTransformer,
   listCompetitionsResponseTransformer,
   createCompetitionResponseTransformer,
+  submitDomainOnboardingResponseTransformer,
   listNotificationsResponseTransformer,
   applyActionResponseTransformer,
   listSkillsResponseTransformer,
@@ -2756,6 +2796,8 @@ import {
   listInstructorStudentsResponseTransformer,
   listObligationsResponseTransformer,
   search2ResponseTransformer,
+  getMyOnboardingResponseTransformer,
+  getDomainOnboardingResponseTransformer,
   getCountsResponseTransformer,
   getInvitationByTokenResponseTransformer,
   listMyInvitationsResponseTransformer,
@@ -2854,6 +2896,7 @@ import {
   getCertificateByNumberResponseTransformer,
   getCourseCertificatesResponseTransformer,
   searchCoursesAndProgrammesResponseTransformer,
+  searchApplyToTrainCatalogueResponseTransformer,
   getBookingResponseTransformer,
   getAssignmentSubmissionsResponseTransformer,
   getSubmissionAttachmentsResponseTransformer,
@@ -8060,6 +8103,64 @@ export const updateAssignment = <ThrowOnError extends boolean = false>(
 };
 
 /**
+ * Delete a saved age group
+ * Only its owner. Applications that copied it keep their copy.
+ */
+export const deleteAgeGroup = <ThrowOnError extends boolean = false>(
+  options: Options<DeleteAgeGroupData, ThrowOnError>
+) => {
+  return (options.client ?? _heyApiClient).delete<
+    DeleteAgeGroupResponses,
+    DeleteAgeGroupErrors,
+    ThrowOnError
+  >({
+    security: [
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+    ],
+    url: '/api/v1/age-groups/{ageGroupUuid}',
+    ...options,
+  });
+};
+
+/**
+ * Update a saved age group
+ * Only its owner: the instructor, or the organisation's managers.
+ */
+export const updateAgeGroup = <ThrowOnError extends boolean = false>(
+  options: Options<UpdateAgeGroupData, ThrowOnError>
+) => {
+  return (options.client ?? _heyApiClient).put<
+    UpdateAgeGroupResponses,
+    UpdateAgeGroupErrors,
+    ThrowOnError
+  >({
+    security: [
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+    ],
+    url: '/api/v1/age-groups/{ageGroupUuid}',
+    ...options,
+    headers: {
+      'Content-Type': 'application/json',
+      ...options.headers,
+    },
+  });
+};
+
+/**
  * Delete a skill
  * Removes it from every course and job tag list and unlinks instructor skills (their free text stays). Prefer retiring it with active=false.
  */
@@ -11096,6 +11197,90 @@ export const createCompetition = <ThrowOnError extends boolean = false>(
 };
 
 /**
+ * List an organisation's saved age groups
+ */
+export const listOrganisationAgeGroups = <ThrowOnError extends boolean = false>(
+  options: Options<ListOrganisationAgeGroupsData, ThrowOnError>
+) => {
+  return (options.client ?? _heyApiClient).get<
+    ListOrganisationAgeGroupsResponses,
+    ListOrganisationAgeGroupsErrors,
+    ThrowOnError
+  >({
+    security: [
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+    ],
+    url: '/api/v1/organisations/{organisationUuid}/age-groups',
+    ...options,
+  });
+};
+
+/**
+ * Save an age group for an organisation
+ */
+export const createOrganisationAgeGroup = <ThrowOnError extends boolean = false>(
+  options: Options<CreateOrganisationAgeGroupData, ThrowOnError>
+) => {
+  return (options.client ?? _heyApiClient).post<
+    CreateOrganisationAgeGroupResponses,
+    CreateOrganisationAgeGroupErrors,
+    ThrowOnError
+  >({
+    security: [
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+    ],
+    url: '/api/v1/organisations/{organisationUuid}/age-groups',
+    ...options,
+    headers: {
+      'Content-Type': 'application/json',
+      ...options.headers,
+    },
+  });
+};
+
+/**
+ * Submit a domain's onboarding
+ * Validates the required steps. Domains that need approval move to submitted and admins are asked to review; others are recorded as complete and stay active. 409 when steps are missing, or the domain is already submitted or approved; 404 when the domain was never requested.
+ */
+export const submitDomainOnboarding = <ThrowOnError extends boolean = false>(
+  options: Options<SubmitDomainOnboardingData, ThrowOnError>
+) => {
+  return (options.client ?? _heyApiClient).post<
+    SubmitDomainOnboardingResponses,
+    SubmitDomainOnboardingErrors,
+    ThrowOnError
+  >({
+    responseTransformer: submitDomainOnboardingResponseTransformer,
+    security: [
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+    ],
+    url: '/api/v1/onboarding/{domain}/submit',
+    ...options,
+  });
+};
+
+/**
  * List current user's notifications
  */
 export const listNotifications = <ThrowOnError extends boolean = false>(
@@ -12359,6 +12544,62 @@ export const createAvailabilitySlot = <ThrowOnError extends boolean = false>(
       },
     ],
     url: '/api/v1/instructors/{instructorUuid}/availability/slots',
+    ...options,
+    headers: {
+      'Content-Type': 'application/json',
+      ...options.headers,
+    },
+  });
+};
+
+/**
+ * List my saved age groups
+ */
+export const listMyAgeGroups = <ThrowOnError extends boolean = false>(
+  options?: Options<ListMyAgeGroupsData, ThrowOnError>
+) => {
+  return (options?.client ?? _heyApiClient).get<
+    ListMyAgeGroupsResponses,
+    ListMyAgeGroupsErrors,
+    ThrowOnError
+  >({
+    security: [
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+    ],
+    url: '/api/v1/instructors/me/age-groups',
+    ...options,
+  });
+};
+
+/**
+ * Save an age group of my own
+ */
+export const createMyAgeGroup = <ThrowOnError extends boolean = false>(
+  options: Options<CreateMyAgeGroupData, ThrowOnError>
+) => {
+  return (options.client ?? _heyApiClient).post<
+    CreateMyAgeGroupResponses,
+    CreateMyAgeGroupErrors,
+    ThrowOnError
+  >({
+    security: [
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+    ],
+    url: '/api/v1/instructors/me/age-groups',
     ...options,
     headers: {
       'Content-Type': 'application/json',
@@ -14574,6 +14815,8 @@ export const addCourseCreatorAchievement = <ThrowOnError extends boolean = false
 
 /**
  * Submit current user's course creator onboarding for verification
+ * Delegates to POST /api/v1/onboarding/course_creator/submit (same rules and 409s); kept for one release.
+ * @deprecated
  */
 export const submitCurrentForVerification = <ThrowOnError extends boolean = false>(
   options?: Options<SubmitCurrentForVerificationData, ThrowOnError>
@@ -16619,7 +16862,7 @@ export const verify = <ThrowOnError extends boolean = false>(
 
 /**
  * Approve, reject or revoke a user's domain
- * For domains without a profile review (instructor; students and parents need no approval). Approval opens the domain's dashboard; reject and revoke keep the user on the pending-approval screen.
+ * For domains without a profile review (instructor; students and parents need no approval). Approval opens the domain's dashboard; reject and revoke keep the user on the pending-approval screen. For the instructor domain the instructor profile's admin_verified follows the decision.
  */
 export const moderateUserDomain = <ThrowOnError extends boolean = false>(
   options: Options<ModerateUserDomainData, ThrowOnError>
@@ -16932,6 +17175,37 @@ export const moderateOrganisation = <ThrowOnError extends boolean = false>(
     ],
     url: '/api/v1/admin/organisations/{uuid}/moderate',
     ...options,
+  });
+};
+
+/**
+ * Send sample emails to a test address
+ * Sends one sample of each requested type (all templated types when none are given) through the configured mail server and reports each delivery.
+ */
+export const sendTestEmails = <ThrowOnError extends boolean = false>(
+  options: Options<SendTestEmailsData, ThrowOnError>
+) => {
+  return (options.client ?? _heyApiClient).post<
+    SendTestEmailsResponses,
+    SendTestEmailsErrors,
+    ThrowOnError
+  >({
+    security: [
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+    ],
+    url: '/api/v1/admin/notifications/email-test',
+    ...options,
+    headers: {
+      'Content-Type': 'application/json',
+      ...options.headers,
+    },
   });
 };
 
@@ -18411,7 +18685,7 @@ export const globalSearch = <ThrowOnError extends boolean = false>(
  * | `marketplace_jobs` | `status`, `organisation_uuid`, `branch_uuid`, `course_uuid`, `program_uuid`, `category_uuid`, `location_type`, `session_format`, `starts_at`, `registration_closes_at`, `uuid`, `created_at`, `required_skill_uuids`, `_geo` | `created_at`, `starts_at`, `_geo` |
  * | `organisations` | `active`, `admin_verified`, `country`, `uuid`, `created_at` | `name`, `created_at` |
  * | `people` | `domains`, `organisation_uuids`, `branch_uuids`, `active`, `is_platform_admin`, `is_org_admin`, `uuid`, `created_at`, `email_normalized` | `full_name`, `created_at` |
- * | `programs` | `status`, `is_published`, `admin_approved`, `active`, `is_public`, `course_creator_uuid`, `category_uuid`, `is_free`, `uuid`, `created_at`, `difficulty_uuids`, `program_code` | `title`, `created_at`, `rating_avg`, `rating_bayes`, `popularity_30d`, `enrolment_count` |
+ * | `programs` | `status`, `is_published`, `admin_approved`, `active`, `is_public`, `course_creator_uuid`, `category_uuid`, `is_free`, `uuid`, `created_at`, `difficulty_uuids`, `program_code`, `skill_uuids` | `title`, `created_at`, `rating_avg`, `rating_bayes`, `popularity_30d`, `enrolment_count` |
  * | `rubrics` | `is_public`, `is_active`, `status`, `course_creator_uuid`, `rubric_type`, `usage_count`, `uuid`, `created_at` | `title`, `created_at`, `usage_count` |
  *
  */
@@ -20294,6 +20568,62 @@ export const search2 = <ThrowOnError extends boolean = false>(
 };
 
 /**
+ * Onboarding state of each domain the caller holds
+ * Works while a domain is pending approval.
+ */
+export const getMyOnboarding = <ThrowOnError extends boolean = false>(
+  options?: Options<GetMyOnboardingData, ThrowOnError>
+) => {
+  return (options?.client ?? _heyApiClient).get<
+    GetMyOnboardingResponses,
+    GetMyOnboardingErrors,
+    ThrowOnError
+  >({
+    responseTransformer: getMyOnboardingResponseTransformer,
+    security: [
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+    ],
+    url: '/api/v1/onboarding',
+    ...options,
+  });
+};
+
+/**
+ * Ordered onboarding steps for one domain
+ * Steps marked shared hold user-owned data (account, professional profile, skills wallet), so they show as complete when another domain already filled them. A domain not yet requested returns a preview with requested=false.
+ */
+export const getDomainOnboarding = <ThrowOnError extends boolean = false>(
+  options: Options<GetDomainOnboardingData, ThrowOnError>
+) => {
+  return (options.client ?? _heyApiClient).get<
+    GetDomainOnboardingResponses,
+    GetDomainOnboardingErrors,
+    ThrowOnError
+  >({
+    responseTransformer: getDomainOnboardingResponseTransformer,
+    security: [
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+    ],
+    url: '/api/v1/onboarding/{domain}',
+    ...options,
+  });
+};
+
+/**
  * Get current user's notification counts
  */
 export const getCounts = <ThrowOnError extends boolean = false>(
@@ -20815,6 +21145,33 @@ export const searchMemberships = <ThrowOnError extends boolean = false>(
 };
 
 /**
+ * Age groups to start an application from
+ * The caller's own saved age groups, then those of every organisation they belong to.
+ */
+export const listMyAgeGroupPresets = <ThrowOnError extends boolean = false>(
+  options?: Options<ListMyAgeGroupPresetsData, ThrowOnError>
+) => {
+  return (options?.client ?? _heyApiClient).get<
+    ListMyAgeGroupPresetsResponses,
+    ListMyAgeGroupPresetsErrors,
+    ThrowOnError
+  >({
+    security: [
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+    ],
+    url: '/api/v1/instructors/me/age-group-presets',
+    ...options,
+  });
+};
+
+/**
  * Search instructor experience
  * Search experience records with flexible criteria.
  *
@@ -21037,7 +21394,7 @@ export const getGuardianInvitationByToken = <ThrowOnError extends boolean = fals
 
 /**
  * Get a stored file by its storage key
- * Serves any stored file (images, videos, documents, certificates) by its canonical storage key.
+ * Serves any stored file (images, videos, documents, certificates) by its canonical storage key. Responses are immutable and carry an ETag. For JPEG/PNG/BMP images, w=320|640|1280 returns a downscaled variant (never upscaled), generated once and cached.
  */
 export const getFile = <ThrowOnError extends boolean = false>(
   options: Options<GetFileData, ThrowOnError>
@@ -22899,6 +23256,8 @@ export const searchCourseCreatorMemberships = <ThrowOnError extends boolean = fa
 
 /**
  * Get current user's course creator onboarding state
+ * Superseded by GET /api/v1/onboarding/course_creator; kept for one release.
+ * @deprecated
  */
 export const getCurrentOnboarding = <ThrowOnError extends boolean = false>(
   options?: Options<GetCurrentOnboardingData, ThrowOnError>
@@ -24160,6 +24519,34 @@ export const searchCoursesAndProgrammes = <ThrowOnError extends boolean = false>
 };
 
 /**
+ * Search courses and programmes to apply to train
+ * For instructors whose instructor domain is approved (403 with code DOMAIN_PENDING_APPROVAL while it awaits approval). The public catalogue's courses and programmes in one ranking, filtered by fit: open (not yet applied to, the default), skills (not yet applied to and sharing a skill with the caller's skills wallet) or applied (any application status). Applied items and wallet skills are always the caller's own. Facets: show, category and fit counts, each under every other active filter. my_application and minimum_training_fee are read live; hits no longer public are dropped and the total restated. 503 "Search is unavailable" when search is disabled or unavailable; there is no database fallback.
+ */
+export const searchApplyToTrainCatalogue = <ThrowOnError extends boolean = false>(
+  options?: Options<SearchApplyToTrainCatalogueData, ThrowOnError>
+) => {
+  return (options?.client ?? _heyApiClient).get<
+    SearchApplyToTrainCatalogueResponses,
+    SearchApplyToTrainCatalogueErrors,
+    ThrowOnError
+  >({
+    responseTransformer: searchApplyToTrainCatalogueResponseTransformer,
+    security: [
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+    ],
+    url: '/api/v1/catalogue/apply-to-train',
+    ...options,
+  });
+};
+
+/**
  * Get booking details
  */
 export const getBooking = <ThrowOnError extends boolean = false>(
@@ -24700,7 +25087,7 @@ export const listIndexes = <ThrowOnError extends boolean = false>(
 
 /**
  * List domain requests awaiting review
- * Self-registrations and domain applications by approval status, oldest first. Course creator and organisation requests are decided through their own profile review.
+ * Self-registrations and domain applications by approval status, oldest first. `submitted=true` lists only applications whose onboarding was submitted for review, `submitted=false` only those still being filled in. Course creator and organisation requests are decided through their own profile review.
  */
 export const getRegistrationQueue = <ThrowOnError extends boolean = false>(
   options?: Options<GetRegistrationQueueData, ThrowOnError>
@@ -24892,6 +25279,32 @@ export const getPendingOrganisations = <ThrowOnError extends boolean = false>(
       },
     ],
     url: '/api/v1/admin/organisations/pending',
+    ...options,
+  });
+};
+
+/**
+ * List the notification types that have an email template
+ */
+export const listTestableEmails = <ThrowOnError extends boolean = false>(
+  options?: Options<ListTestableEmailsData, ThrowOnError>
+) => {
+  return (options?.client ?? _heyApiClient).get<
+    ListTestableEmailsResponses,
+    ListTestableEmailsErrors,
+    ThrowOnError
+  >({
+    security: [
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+    ],
+    url: '/api/v1/admin/notifications/email-test/types',
     ...options,
   });
 };

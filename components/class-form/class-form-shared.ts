@@ -205,7 +205,6 @@ export const DEFAULT_DAYS: Record<DayKey, DayRow> = {
   Sun: { active: false, start: '09:00', end: '11:00', allDay: false },
 };
 
-// Target groups are not yet backed — held in state only, ready for the group taxonomy endpoint.
 export const REMINDER_MINUTES: Record<string, number> = {
   '1h': 60,
   '6h': 360,

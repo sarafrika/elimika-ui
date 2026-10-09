@@ -1,6 +1,15 @@
 'use client';
 
-import { ArrowUpRight, Briefcase, CheckCircle2, Sparkles, Target, Trophy } from 'lucide-react';
+import { useQuery } from '@tanstack/react-query';
+import {
+  ArrowUpRight,
+  Briefcase,
+  CheckCircle2,
+  GraduationCap,
+  Sparkles,
+  Target,
+  Trophy,
+} from 'lucide-react';
 
 import { WalletShareButton } from '@/app/dashboard/_components/skills-wallet/WalletShareButton';
 import { EmptyState } from '@/components/ui/empty-state';
@@ -9,6 +18,12 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Progress } from '@/components/ui/progress';
+import { STALE_TIMES } from '@/lib/query-client';
+import {
+  listEducationOptions,
+  listPortfolioOptions,
+} from '@/services/client/@tanstack/react-query.gen';
+import { requireApiData } from '@/src/features/onboarding/lib/user-onboarding';
 
 import {
   Donut,
@@ -36,7 +51,7 @@ type SkillsWalletOverviewTabProps = {
   achievementsFailed?: boolean;
   onRetryAchievements?: () => void;
   onNavigateToTab?: (
-    tab: 'skills' | 'competencies' | 'credentials' | 'portfolio' | 'achievements'
+    tab: 'skills' | 'education' | 'competencies' | 'credentials' | 'portfolio' | 'achievements'
   ) => void;
 };
 
@@ -47,6 +62,16 @@ export function SkillsWalletOverviewTab({
   achievementsFailed,
   onRetryAchievements,
 }: SkillsWalletOverviewTabProps) {
+  const educationQuery = useQuery({
+    ...listEducationOptions(),
+    select: requireApiData,
+    staleTime: STALE_TIMES.entity,
+  });
+  const portfolioQuery = useQuery({
+    ...listPortfolioOptions(),
+    select: requireApiData,
+    staleTime: STALE_TIMES.entity,
+  });
   const stats = [
     {
       icon: Sparkles,
@@ -55,6 +80,19 @@ export function SkillsWalletOverviewTab({
       tint: 'bg-primary/10 text-primary',
       actionLabel: 'View details',
       onAction: () => onNavigateToTab?.('skills'),
+    },
+    {
+      icon: GraduationCap,
+      label: 'Educational Skills',
+      value: educationQuery.isError
+        ? '—'
+        : educationQuery.isPending
+          ? '…'
+          : educationQuery.data?.length ?? 0,
+      sub: 'From education records',
+      tint: 'bg-primary/10 text-primary',
+      actionLabel: 'View details',
+      onAction: () => onNavigateToTab?.('education'),
     },
     {
       icon: Target,
@@ -75,7 +113,7 @@ export function SkillsWalletOverviewTab({
     {
       icon: Briefcase,
       label: 'Projects',
-      value: data.portfolio.length,
+      value: portfolioQuery.isError ? '—' : portfolioQuery.isPending ? '…' : portfolioQuery.data?.length ?? 0,
       tint: 'bg-secondary text-secondary-foreground',
       actionLabel: 'View details',
       onAction: () => onNavigateToTab?.('portfolio'),
@@ -115,7 +153,7 @@ export function SkillsWalletOverviewTab({
         </div>
       </div>
 
-      <div className='grid gap-4 md:grid-cols-2 xl:grid-cols-5'>
+      <div className='grid gap-4 md:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-6'>
         {stats.map(stat => (
           <StatCard key={stat.label} {...stat} actionLabel='View details' />
         ))}
@@ -128,7 +166,7 @@ export function SkillsWalletOverviewTab({
         </p>
       ) : null}
 
-      <div className='grid gap-4 lg:grid-cols-3'>
+      <div className='grid gap-4 lg:grid-cols-2 2xl:grid-cols-4'>
         <Card className='rounded-md'>
           <CardHeader className='pb-3'>
             <div className='flex items-center justify-between'>
@@ -207,6 +245,72 @@ export function SkillsWalletOverviewTab({
                 </div>
               );
             })}
+          </CardContent>
+        </Card>
+
+        <Card className='rounded-md'>
+          <CardHeader className='flex flex-row items-center justify-between gap-2 pb-3'>
+            <CardTitle className='text-base'>Educational Skills</CardTitle>
+            <Button
+              size='sm'
+              variant='ghost'
+              className='text-primary shrink-0'
+              onClick={() => onNavigateToTab?.('education')}
+            >
+              View all <ArrowUpRight className='ml-1 h-3 w-3' />
+            </Button>
+          </CardHeader>
+          <CardContent className='space-y-3'>
+            {educationQuery.isPending ? (
+              <div className='space-y-3' aria-label='Loading educational skills'>
+                <Skeleton className='h-12 w-full' />
+                <Skeleton className='h-12 w-full' />
+              </div>
+            ) : educationQuery.isError ? (
+              <EmptyState
+                variant='compact'
+                title='Unable to load educational skills'
+                action={
+                  <Button
+                    type='button'
+                    variant='outline'
+                    size='sm'
+                    onClick={() => void educationQuery.refetch()}
+                  >
+                    Try again
+                  </Button>
+                }
+              />
+            ) : educationQuery.data?.length ? (
+              educationQuery.data.slice(0, 5).map(education => (
+                <div key={education.uuid} className='flex items-start gap-3'>
+                  <div className='bg-primary/10 text-primary grid h-8 w-8 shrink-0 place-items-center rounded-md'>
+                    <GraduationCap className='h-4 w-4' />
+                  </div>
+                  <div className='min-w-0 flex-1'>
+                    <p className='text-sm font-medium break-words'>
+                      {education.field_of_study || education.qualification}
+                    </p>
+                    {education.field_of_study ? (
+                      <p className='text-muted-foreground text-xs break-words'>
+                        {education.qualification}
+                      </p>
+                    ) : null}
+                    <p className='text-muted-foreground text-xs break-words'>
+                      {education.school_name}
+                      {education.year_completed ? ` · ${education.year_completed}` : ''}
+                    </p>
+                  </div>
+                </div>
+              ))
+            ) : (
+              <EmptyState
+                variant='compact'
+                icon={GraduationCap}
+                title='No educational skills yet'
+                description='Add qualifications in Education to display them here.'
+              />
+            )}
           </CardContent>
         </Card>
 

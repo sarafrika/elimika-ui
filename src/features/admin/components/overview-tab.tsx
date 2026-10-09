@@ -2,12 +2,13 @@
 
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useMemo, useState } from 'react';
-import { useForm, useWatch } from 'react-hook-form';
+import { Controller, useForm, useWatch } from 'react-hook-form';
 import { z } from 'zod';
 
 import { DetailGrid, SectionCard, SectionCardSkeleton, StatusBadge } from '@/components/data-display';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { PhoneInput } from '@/components/ui/phone-input';
 import { Label } from '@/components/ui/label';
 import {
   Select,
@@ -178,7 +179,19 @@ function IdentityForm({ person }: { person: User }) {
           <Field form={form} name='middle_name' label={FIELD_LABELS.middle_name} />
           <Field form={form} name='username' label={FIELD_LABELS.username} required />
           <Field form={form} name='email' label={FIELD_LABELS.email} type='email' required />
-          <Field form={form} name='phone_number' label={FIELD_LABELS.phone_number} />
+          <div className='space-y-1.5'>
+            <Label htmlFor='phone_number' className='text-sm font-semibold'>
+              {FIELD_LABELS.phone_number}
+            </Label>
+            <Controller
+              control={form.control}
+              name='phone_number'
+              render={({ field }) => <PhoneInput id='phone_number' className='rounded-md' {...field} />}
+            />
+            {form.formState.errors.phone_number?.message ? (
+              <p className='text-destructive text-xs'>{String(form.formState.errors.phone_number.message)}</p>
+            ) : null}
+          </div>
           <Field form={form} name='dob' label={FIELD_LABELS.dob} type='date' required />
 
           <div className='space-y-1.5'>

@@ -1,23 +1,5 @@
 'use client';
 
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import {
-  ArrowLeft,
-  ArrowRight,
-  BadgeCheck,
-  BookOpen,
-  CheckCircle2,
-  LayoutGrid,
-  ShieldCheck,
-  UserRound,
-  Wallet,
-} from 'lucide-react';
-import { signIn, useSession } from 'next-auth/react';
-import Link from 'next/link';
-import { useRouter } from 'next/navigation';
-import { type ReactNode, useEffect, useMemo, useState } from 'react';
-import { toast } from 'sonner';
-import { OnboardingSkillsWallet } from '@/src/features/onboarding/components/OnboardingSkillsWallet';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Checkbox } from '@/components/ui/checkbox';
@@ -34,8 +16,8 @@ import {
 } from '@/components/ui/select';
 import { Skeleton } from '@/components/ui/skeleton';
 import Spinner from '@/components/ui/spinner';
-import { getErrorMessage } from '@/lib/error-utils';
 import { httpStatusOf } from '@/lib/api-errors';
+import { getErrorMessage } from '@/lib/error-utils';
 import { STALE_TIMES } from '@/lib/query-client';
 import { cn } from '@/lib/utils';
 import {
@@ -46,6 +28,7 @@ import {
   submitCurrentForVerificationMutation,
   updateCategoriesMutation,
 } from '@/services/client/@tanstack/react-query.gen';
+import { OnboardingSkillsWallet } from '@/src/features/onboarding/components/OnboardingSkillsWallet';
 import {
   creatorOnboardingOptions,
   creatorOnboardingQueryKey,
@@ -63,6 +46,23 @@ import {
   requireApiSuccess,
 } from '@/src/features/onboarding/lib/user-onboarding';
 import { WALLET_SECTIONS } from '@/src/features/onboarding/lib/wallet-sections';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import {
+  ArrowLeft,
+  ArrowRight,
+  BadgeCheck,
+  BookOpen,
+  CheckCircle2,
+  LayoutGrid,
+  ShieldCheck,
+  UserRound,
+  Wallet,
+} from 'lucide-react';
+import { signIn, useSession } from 'next-auth/react';
+import Link from 'next/link';
+import { useRouter } from 'next/navigation';
+import { type ReactNode, useEffect, useMemo, useState } from 'react';
+import { toast } from 'sonner';
 
 const STEPS = [
   { label: 'Sarafrika account', icon: BadgeCheck },
@@ -108,8 +108,8 @@ export default function UserOnboardingPage() {
     authenticated &&
     Boolean(
       (draft.ownerId && draft.ownerId !== userId) ||
-        (draft.registeredEmail &&
-          draft.registeredEmail.toLowerCase() !== session?.user?.email?.toLowerCase())
+      (draft.registeredEmail &&
+        draft.registeredEmail.toLowerCase() !== session?.user?.email?.toLowerCase())
     );
   const needsSignIn = draft.step >= 3 && !authenticated;
   const onboarding = useCourseCreatorOnboarding(
@@ -174,11 +174,11 @@ export default function UserOnboardingPage() {
       current.categories.length
         ? current
         : {
-            ...current,
-            categories: (state.categories ?? []).flatMap(item =>
-              item.category_uuid ? [{ uuid: item.category_uuid, name: '' }] : []
-            ),
-          }
+          ...current,
+          categories: (state.categories ?? []).flatMap(item =>
+            item.category_uuid ? [{ uuid: item.category_uuid, name: '' }] : []
+          ),
+        }
     );
   }, [onboarding.data, restoredCreator]);
   useEffect(() => {
@@ -414,7 +414,7 @@ export default function UserOnboardingPage() {
                         type={name === 'email' ? 'email' : 'text'}
                         autoComplete={
                           { first_name: 'given-name', last_name: 'family-name', email: 'email' }[
-                            name
+                          name
                           ]
                         }
                         required
@@ -598,11 +598,11 @@ export default function UserOnboardingPage() {
                   {!categoriesQuery.data?.content?.some(
                     category => category.uuid && category.is_active !== false
                   ) && (
-                    <EmptyState
-                      title='No categories available'
-                      description='Please try another page or check again later.'
-                    />
-                  )}
+                      <EmptyState
+                        title='No categories available'
+                        description='Please try another page or check again later.'
+                      />
+                    )}
                   <div className='flex items-center justify-between gap-3'>
                     <Button
                       type='button'
@@ -789,7 +789,7 @@ function ChoiceCard({
 }
 function OnboardingFrame({ step, children }: { step: number; children: ReactNode }) {
   return (
-    <div className='bg-muted/40 min-h-screen'>
+    <div data-page='user-onboarding' className='bg-muted/40 min-h-screen'>
       <div className='mx-auto max-w-6xl px-4 py-10 sm:px-6'>
         <h1 className='text-foreground text-2xl font-bold'>User Onboarding</h1>
         <p className='text-muted-foreground mt-1 text-sm'>

@@ -8,6 +8,11 @@ import {
 
 export type ProgramSaveStep = number | 'requirements' | 'assessments' | 'all';
 
+export type ProgramSaveProgress = {
+  steps: { key: string; label: string }[];
+  currentStep: string;
+};
+
 /** Only copy content owned by this step; unfinished fields on other steps stay local. */
 export function programStepBody(
   values: ProgramFormValues,

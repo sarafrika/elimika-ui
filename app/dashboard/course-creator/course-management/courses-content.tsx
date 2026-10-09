@@ -464,8 +464,8 @@ export default function CourseCreatorCoursesContent() {
           </Button>
           <Button className='rounded-sm text-sm' asChild>
             <Link href='/dashboard/course-creator/courses/create-program'>
-              <Layers className='size-4' />
-              Bundle courses
+              <Plus className='size-4' />
+              Create program
             </Link>
           </Button>
         </div>

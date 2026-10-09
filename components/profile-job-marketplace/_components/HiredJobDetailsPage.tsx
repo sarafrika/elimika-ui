@@ -313,7 +313,7 @@ function HiredJobDetails({ job }: { job: ClassMarketplaceJob }) {
                 { label: 'Training ends', value: formatDateOnly(job.academic_period_end_date) },
                 { label: 'Maximum participants', value: job.max_participants ?? 'Not set' },
                 {
-                  label: 'Target groups',
+                  label: 'Student groups',
                   value: job.target_groups?.length ? job.target_groups.join(', ') : 'Not provided',
                 },
                 { label: 'Class visibility', value: jobLabel(job.class_visibility) },

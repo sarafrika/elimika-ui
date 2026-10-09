@@ -196,6 +196,7 @@ import type {
   CancelObligationResponse,
   ListCompetitionsResponse,
   CreateCompetitionResponse,
+  SubmitDomainOnboardingResponse,
   ListNotificationsResponse,
   ApplyActionResponse,
   ListSkillsResponse,
@@ -453,6 +454,8 @@ import type {
   ListInstructorStudentsResponse,
   ListObligationsResponse,
   Search2Response,
+  GetMyOnboardingResponse,
+  GetDomainOnboardingResponse,
   GetCountsResponse,
   GetInvitationByTokenResponse,
   ListMyInvitationsResponse,
@@ -551,6 +554,7 @@ import type {
   GetCertificateByNumberResponse,
   GetCourseCertificatesResponse,
   SearchCoursesAndProgrammesResponse,
+  SearchApplyToTrainCatalogueResponse,
   GetBookingResponse,
   GetAssignmentSubmissionsResponse,
   GetSubmissionAttachmentsResponse,
@@ -3339,6 +3343,9 @@ const domainApplicationSchemaResponseTransformer = (data: any) => {
   if (data.requested_at) {
     data.requested_at = new Date(data.requested_at);
   }
+  if (data.submitted_at) {
+    data.submitted_at = new Date(data.submitted_at);
+  }
   if (data.reviewed_at) {
     data.reviewed_at = new Date(data.reviewed_at);
   }
@@ -4165,6 +4172,30 @@ export const createCompetitionResponseTransformer = async (
   data: any
 ): Promise<CreateCompetitionResponse> => {
   data = apiResponseCompetitionSchemaResponseTransformer(data);
+  return data;
+};
+
+const onboardingSchemaResponseTransformer = (data: any) => {
+  if (data.submitted_at) {
+    data.submitted_at = new Date(data.submitted_at);
+  }
+  if (data.reviewed_at) {
+    data.reviewed_at = new Date(data.reviewed_at);
+  }
+  return data;
+};
+
+const apiResponseOnboardingSchemaResponseTransformer = (data: any) => {
+  if (data.data) {
+    data.data = onboardingSchemaResponseTransformer(data.data);
+  }
+  return data;
+};
+
+export const submitDomainOnboardingResponseTransformer = async (
+  data: any
+): Promise<SubmitDomainOnboardingResponse> => {
+  data = apiResponseOnboardingSchemaResponseTransformer(data);
   return data;
 };
 
@@ -7702,6 +7733,36 @@ export const search2ResponseTransformer = async (data: any): Promise<Search2Resp
   return data;
 };
 
+const onboardingSummarySchemaResponseTransformer = (data: any) => {
+  if (data.submitted_at) {
+    data.submitted_at = new Date(data.submitted_at);
+  }
+  return data;
+};
+
+const apiResponseListOnboardingSummarySchemaResponseTransformer = (data: any) => {
+  if (data.data) {
+    data.data = data.data.map((item: any) => {
+      return onboardingSummarySchemaResponseTransformer(item);
+    });
+  }
+  return data;
+};
+
+export const getMyOnboardingResponseTransformer = async (
+  data: any
+): Promise<GetMyOnboardingResponse> => {
+  data = apiResponseListOnboardingSummarySchemaResponseTransformer(data);
+  return data;
+};
+
+export const getDomainOnboardingResponseTransformer = async (
+  data: any
+): Promise<GetDomainOnboardingResponse> => {
+  data = apiResponseOnboardingSchemaResponseTransformer(data);
+  return data;
+};
+
 const notificationCountsDtoSchemaResponseTransformer = (data: any) => {
   if (data.unread_count) {
     data.unread_count = BigInt(data.unread_count.toString());
@@ -9491,6 +9552,73 @@ export const searchCoursesAndProgrammesResponseTransformer = async (
   return data;
 };
 
+const applyCatalogueItemSchemaResponseTransformer = (data: any) => {
+  if (data.lesson_count) {
+    data.lesson_count = BigInt(data.lesson_count.toString());
+  }
+  if (data.requirement_count) {
+    data.requirement_count = BigInt(data.requirement_count.toString());
+  }
+  return data;
+};
+
+const applyCatalogueFitFacetSchemaResponseTransformer = (data: any) => {
+  if (data.open) {
+    data.open = BigInt(data.open.toString());
+  }
+  if (data.skills) {
+    data.skills = BigInt(data.skills.toString());
+  }
+  if (data.applied) {
+    data.applied = BigInt(data.applied.toString());
+  }
+  return data;
+};
+
+const applyCatalogueFacetsSchemaResponseTransformer = (data: any) => {
+  if (data.show) {
+    data.show = catalogueShowFacetSchemaResponseTransformer(data.show);
+  }
+  if (data.category) {
+    data.category = data.category.map((item: any) => {
+      return catalogueCategoryFacetSchemaResponseTransformer(item);
+    });
+  }
+  if (data.fit) {
+    data.fit = applyCatalogueFitFacetSchemaResponseTransformer(data.fit);
+  }
+  return data;
+};
+
+const applyCatalogueResponseSchemaResponseTransformer = (data: any) => {
+  if (data.content) {
+    data.content = data.content.map((item: any) => {
+      return applyCatalogueItemSchemaResponseTransformer(item);
+    });
+  }
+  if (data.metadata) {
+    data.metadata = pageMetadataSchemaResponseTransformer(data.metadata);
+  }
+  if (data.facets) {
+    data.facets = applyCatalogueFacetsSchemaResponseTransformer(data.facets);
+  }
+  return data;
+};
+
+const apiResponseApplyCatalogueResponseSchemaResponseTransformer = (data: any) => {
+  if (data.data) {
+    data.data = applyCatalogueResponseSchemaResponseTransformer(data.data);
+  }
+  return data;
+};
+
+export const searchApplyToTrainCatalogueResponseTransformer = async (
+  data: any
+): Promise<SearchApplyToTrainCatalogueResponse> => {
+  data = apiResponseApplyCatalogueResponseSchemaResponseTransformer(data);
+  return data;
+};
+
 export const getBookingResponseTransformer = async (data: any): Promise<GetBookingResponse> => {
   data = apiResponseBookingResponseSchemaResponseTransformer(data);
   return data;
@@ -9687,6 +9815,9 @@ export const listIndexesResponseTransformer = async (data: any): Promise<ListInd
 const adminDomainApplicationSchemaResponseTransformer = (data: any) => {
   if (data.requested_at) {
     data.requested_at = new Date(data.requested_at);
+  }
+  if (data.submitted_at) {
+    data.submitted_at = new Date(data.submitted_at);
   }
   if (data.reviewed_at) {
     data.reviewed_at = new Date(data.reviewed_at);

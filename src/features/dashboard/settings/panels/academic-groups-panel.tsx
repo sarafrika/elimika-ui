@@ -247,7 +247,7 @@ export function AcademicGroupsPanel() {
             <div className='min-w-0'>
               <CardTitle className='flex items-center gap-2 text-base font-semibold sm:text-lg'>
                 <GraduationCap className='text-primary size-4 sm:size-5' />
-                Academic Groups
+                Student Groups
               </CardTitle>
               <CardDescription>
                 Schooling tiers (e.g. Grade 1, Form 2) configured per branch. Each stream is its own
@@ -301,7 +301,7 @@ export function AcademicGroupsPanel() {
           ) : branchGroups.length === 0 ? (
             <div className='border-border/70 text-muted-foreground rounded-[16px] border border-dashed p-6 text-center text-sm'>
               <GraduationCap className='mx-auto mb-2 h-6 w-6 opacity-60' />
-              No academic groups for this branch yet.
+              No student groups for this branch yet.
             </div>
           ) : (
             branchGroups.map(group => (
@@ -328,7 +328,7 @@ export function AcademicGroupsPanel() {
       >
         <DialogContent className='max-w-lg'>
           <DialogHeader>
-            <DialogTitle>Add academic group</DialogTitle>
+            <DialogTitle>Add student group</DialogTitle>
             <DialogDescription>
               One group per stream. Capacity is advisory — the platform reports it but never blocks
               enrolment.

@@ -23,9 +23,10 @@ import {
 import type { ContentType, Lesson, LessonContent } from '@/services/client/types.gen';
 import { toAuthenticatedMediaUrl } from '@/src/lib/media-url';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { ArrowDown, ArrowUp, Eye, FileIcon, Pencil, Save, Trash2, UploadCloud, X } from 'lucide-react';
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { ArrowDown, ArrowUp, Eye, FileIcon, Pencil, Plus, Save, Trash2, UploadCloud, X } from 'lucide-react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { toast } from 'sonner';
+import { LessonSavingOverlay, type LessonSaveProgress } from './LessonSavingOverlay';
 import { LessonOutline, type LessonHeaderRenderer } from './lesson-outline';
 import {
   pageContentBody,
@@ -38,6 +39,31 @@ type CourseLesson = Lesson & { uuid: string };
 type PageEntry = { key: string; createdAt: number; content?: LessonContent };
 type PageValues = { title: string; text: string; file: File | null; fileUrl: string };
 const EMPTY_CONTENTS: LessonContent[] = [];
+
+function pageValidationError(values: PageValues, types: ContentType[]) {
+  if (!values.title.trim()) return 'Enter a page title.';
+  if (
+    !values.file &&
+    !values.fileUrl &&
+    !values.text.replace(/<[^>]*>/g, '').replace(/&nbsp;/g, '').trim() &&
+    !/<img\b/i.test(values.text)
+  ) {
+    return 'Add page text or attach a file.';
+  }
+  if (values.file) {
+    try {
+      resolvePageAttachment(values.file, types);
+    } catch (error) {
+      return error instanceof Error ? error.message : 'Unable to attach this file.';
+    }
+  } else if (
+    !values.fileUrl &&
+    !types.some(type => type.uuid && type.name.toUpperCase() === 'TEXT')
+  ) {
+    return 'Page format is unavailable. Please reload and try again.';
+  }
+  return '';
+}
 
 function pageCreatedAt(content: LessonContent) {
   const timestamp = content.created_date ? new Date(content.created_date).getTime() : 0;
@@ -107,14 +133,15 @@ export function LessonContentStack({
         courseId={courseId}
         lessons={lessons}
         isLoading={isLoading}
-        renderPages={(lesson, index, renderHeader) => (
+        renderPages={(lesson, index, renderHeader, saveLesson) => (
           <LessonPages
             courseId={courseId}
             lesson={lesson}
             index={index}
-            contents={lessonContentsMap.get(lesson.uuid) ?? EMPTY_CONTENTS}
+            contents={(lesson?.uuid ? lessonContentsMap.get(lesson.uuid) : undefined) ?? EMPTY_CONTENTS}
             types={types}
             renderHeader={renderHeader}
+            saveLesson={saveLesson}
             loading={isLoading || loadError}
           />
         )}
@@ -130,14 +157,16 @@ function LessonPages({
   contents,
   types,
   renderHeader,
+  saveLesson,
   loading,
 }: {
   courseId: string;
-  lesson: CourseLesson;
+  lesson: CourseLesson | undefined;
   index: number;
   contents: LessonContent[];
   types: ContentType[];
   renderHeader: LessonHeaderRenderer;
+  saveLesson: () => Promise<CourseLesson>;
   loading: boolean;
 }) {
   const [pages, setPages] = useState<PageEntry[]>(() =>
@@ -145,6 +174,18 @@ function LessonPages({
       content.uuid ? [{ key: content.uuid, createdAt: pageCreatedAt(content), content }] : []
     )
   );
+  const pagesRef = useRef(pages);
+  const commitPages = (next: PageEntry[]) => {
+    pagesRef.current = next;
+    setPages(next);
+  };
+  const stagedValues = useRef(new Map<string, { values: PageValues; dirty: boolean }>());
+  const registerValues = useCallback((key: string, values: PageValues | null, dirty: boolean) => {
+    if (values) stagedValues.current.set(key, { values, dirty });
+    else stagedValues.current.delete(key);
+  }, []);
+  const [progress, setSaveProgress] = useState<LessonSaveProgress | null>(null);
+  const [saveError, setSaveError] = useState('');
   const [editingKeys, setEditingKeys] = useState<Set<string>>(() => new Set());
   // Newest first in the editor; retain the lesson's learning order and page numbers.
   const listedPages = useMemo(
@@ -168,8 +209,16 @@ function LessonPages({
   const upload = useMutation(uploadLessonMediaMutation());
   const remove = useMutation(deleteLessonContentMutation());
   const reorder = useMutation(reorderLessonContentMutation());
-  const path = { courseUuid: courseId, lessonUuid: lesson.uuid };
-  const queryKey = getLessonContentQueryKey({ path });
+  // Retain a newly created lesson immediately, including when a later page fails.
+  const savedLessonRef = useRef(lesson);
+  useEffect(() => {
+    if (lesson) savedLessonRef.current = lesson;
+  }, [lesson]);
+  const getPath = () => {
+    const lessonUuid = savedLessonRef.current?.uuid;
+    if (!lessonUuid) throw new Error('Save the lesson before changing saved pages.');
+    return { courseUuid: courseId, lessonUuid };
+  };
   const typeMap = useMemo(
     () =>
       Object.fromEntries(
@@ -180,19 +229,18 @@ function LessonPages({
 
   useEffect(() => {
     if (busy) return;
-    setPages(current => {
-      const known = new Set(current.map(page => page.content?.uuid));
-      const staged = new Set([...uploads.current.values()].map(item => item.content.uuid));
-      const added = sortLessonPages(contents).flatMap(content =>
-        content.uuid &&
-          !known.has(content.uuid) &&
-          !staged.has(content.uuid) &&
-          !removedIds.current.has(content.uuid)
-          ? [{ key: content.uuid, createdAt: pageCreatedAt(content), content }]
-          : []
-      );
-      return added.length ? [...current, ...added] : current;
-    });
+    const current = pagesRef.current;
+    const known = new Set(current.map(page => page.content?.uuid));
+    const staged = new Set([...uploads.current.values()].map(item => item.content.uuid));
+    const added = sortLessonPages(contents).flatMap(content =>
+      content.uuid &&
+        !known.has(content.uuid) &&
+        !staged.has(content.uuid) &&
+        !removedIds.current.has(content.uuid)
+        ? [{ key: content.uuid, createdAt: pageCreatedAt(content), content }]
+        : []
+    );
+    if (added.length) commitPages([...current, ...added]);
   }, [contents, busy]);
 
   const closeEditor = (key: string) => {
@@ -202,9 +250,12 @@ function LessonPages({
       return next;
     });
   };
-  const refresh = () => qc.invalidateQueries({ queryKey });
+  const refresh = () =>
+    savedLessonRef.current
+      ? qc.invalidateQueries({ queryKey: getLessonContentQueryKey({ path: getPath() }) })
+      : Promise.resolve();
   const removeContent = async (contentUuid: string) => {
-    const result = await remove.mutateAsync({ path: { ...path, contentUuid } });
+    const result = await remove.mutateAsync({ path: { ...getPath(), contentUuid } });
     if (
       result &&
       typeof result === 'object' &&
@@ -217,7 +268,7 @@ function LessonPages({
   const persistOrder = async (next: PageEntry[]) => {
     const ids = next.flatMap(page => (page.content?.uuid ? [page.content.uuid] : []));
     try {
-      if (ids.length) assertSuccess(await reorder.mutateAsync({ path, body: ids }));
+      if (ids.length) assertSuccess(await reorder.mutateAsync({ path: getPath(), body: ids }));
       setOrderFailed(false);
       return true;
     } catch {
@@ -227,88 +278,213 @@ function LessonPages({
     }
   };
 
+  const startProgress = (pending: { entry: PageEntry; values: PageValues }[]) => {
+    const steps: LessonSaveProgress['steps'] = [
+      { key: 'lesson', label: savedLessonRef.current ? 'Saving lesson…' : 'Creating lesson…' },
+    ];
+    for (const { entry, values } of pending) {
+      const pageNumber = pagesRef.current.findIndex(page => page.key === entry.key) + 1;
+      const pageLabel = `page ${pageNumber} of ${pagesRef.current.length}`;
+      const attachment = uploads.current.get(entry.key);
+      if (attachment && attachment.file !== values.file) {
+        steps.push({
+          key: `${entry.key}-remove-attachment`,
+          label: `Removing previous attachment (${pageLabel})…`,
+        });
+      }
+      if (values.file && attachment?.file !== values.file) {
+        steps.push({
+          key: `${entry.key}-attachment`,
+          label: `Adding content attachment (${pageLabel})…`,
+        });
+      }
+      steps.push({
+        key: `${entry.key}-content`,
+        label: `${entry.content ? 'Saving' : 'Creating'} lesson content (${pageLabel})…`,
+      });
+      if (entry.content?.uuid && values.file) {
+        steps.push({
+          key: `${entry.key}-finish-attachment`,
+          label: `Finishing content attachment (${pageLabel})…`,
+        });
+      }
+    }
+    steps.push(
+      { key: 'order', label: 'Saving page order…' },
+      { key: 'refresh', label: 'Refreshing lesson…' }
+    );
+    setSaveProgress({ steps, currentStep: 'lesson' });
+  };
+  const setProgress = (currentStep: string) => {
+    setSaveProgress(current => (current ? { ...current, currentStep } : null));
+  };
+
+  const persistPage = async (entry: PageEntry, values: PageValues): Promise<LessonContent> => {
+    const path = getPath();
+    const pageNumber = pagesRef.current.findIndex(page => page.key === entry.key) + 1;
+    let attachment = uploads.current.get(entry.key);
+    if (attachment && attachment.file !== values.file) {
+      if (!attachment.content.uuid) throw new Error('Uploaded page is missing its ID.');
+      setProgress(`${entry.key}-remove-attachment`);
+      await removeContent(attachment.content.uuid);
+      uploads.current.delete(entry.key);
+      attachment = undefined;
+    }
+    const detected = values.file ? resolvePageAttachment(values.file, types) : null;
+    const type =
+      detected?.type ??
+      (values.fileUrl
+        ? types.find(item => item.uuid === entry.content?.content_type_uuid)
+        : types.find(item => item.name.toUpperCase() === 'TEXT'));
+    if (!type?.uuid) throw new Error('Page format is unavailable. Please reload and try again.');
+    if (values.file && !attachment) {
+      setProgress(`${entry.key}-attachment`);
+      const file =
+        values.file.type === detected?.mime
+          ? values.file
+          : new File([values.file], values.file.name, { type: detected?.mime });
+      const result = await upload.mutateAsync({
+        path,
+        body: { file },
+        query: {
+          content_type_uuid: type.uuid,
+          title: values.title.trim(),
+          is_required: entry.content?.is_required ?? true,
+        },
+      });
+      assertSuccess(result);
+      if (!result.data?.uuid || !result.data.file_url)
+        throw new Error('The upload did not return a page and file location.');
+      attachment = { file: values.file, content: result.data };
+      uploads.current.set(entry.key, attachment);
+    }
+    const body = pageContentBody({
+      content: entry.content,
+      lessonUuid: path.lessonUuid,
+      title: values.title,
+      text: values.text,
+      type,
+      fileUrl: attachment?.content.file_url || values.fileUrl,
+      order: pageNumber,
+    });
+    const uuid = entry.content?.uuid ?? attachment?.content.uuid;
+    setProgress(`${entry.key}-content`);
+    const result = uuid
+      ? await update.mutateAsync({ path: { ...path, contentUuid: uuid }, body })
+      : await create.mutateAsync({ path, body });
+    assertSuccess(result);
+    const saved = result.data;
+    if (!saved?.uuid) throw new Error('The saved page did not return an ID.');
+    commitPages(
+      pagesRef.current.map(page => (page.key === entry.key ? { ...page, content: saved } : page))
+    );
+    // Replacing media updates the original page, then removes the temporary upload row.
+    if (attachment?.content.uuid && attachment.content.uuid !== saved.uuid) {
+      setProgress(`${entry.key}-finish-attachment`);
+      try {
+        await removeContent(attachment.content.uuid);
+      } catch {
+        throw new Error(
+          'Page saved, but the temporary upload could not be removed. Save again to retry.'
+        );
+      }
+    }
+    uploads.current.delete(entry.key);
+    return saved;
+  };
+
+  const ensureLesson = async () => {
+    setProgress('lesson');
+    const saved = await saveLesson();
+    savedLessonRef.current = saved;
+  };
+  const reportSaveError = (error: unknown) => {
+    const message = error instanceof Error ? error.message : 'Unable to save this lesson.';
+    setSaveError(message);
+    toast.error(message);
+  };
+  const finishSaving = async () => {
+    setProgress('order');
+    await persistOrder(pagesRef.current);
+    setProgress('refresh');
+    await refresh();
+  };
   const savePage = async (entry: PageEntry, values: PageValues): Promise<LessonContent | null> => {
     if (busyRef.current) return null;
+    const validationError = pageValidationError(values, types);
+    if (validationError) {
+      reportSaveError(new Error(validationError));
+      return null;
+    }
     busyRef.current = true;
     setBusy(entry.key);
+    setSaveError('');
+    startProgress([{ entry, values }]);
     try {
-      let attachment = uploads.current.get(entry.key);
-      if (attachment && attachment.file !== values.file) {
-        if (!attachment.content.uuid) throw new Error('Uploaded page is missing its ID.');
-        await removeContent(attachment.content.uuid);
-        uploads.current.delete(entry.key);
-        attachment = undefined;
-      }
-      const detected = values.file ? resolvePageAttachment(values.file, types) : null;
-      const type =
-        detected?.type ??
-        (values.fileUrl
-          ? types.find(item => item.uuid === entry.content?.content_type_uuid)
-          : types.find(item => item.name.toUpperCase() === 'TEXT'));
-      if (!type?.uuid) throw new Error('Page format is unavailable. Please reload and try again.');
-      if (values.file && !attachment) {
-        const file =
-          values.file.type === detected?.mime
-            ? values.file
-            : new File([values.file], values.file.name, { type: detected?.mime });
-        const result = await upload.mutateAsync({
-          path,
-          body: { file },
-          query: {
-            content_type_uuid: type.uuid,
-            title: values.title.trim(),
-            is_required: entry.content?.is_required ?? true,
-          },
-        });
-        assertSuccess(result);
-        if (!result.data?.uuid || !result.data.file_url)
-          throw new Error('The upload did not return a page and file location.');
-        attachment = { file: values.file, content: result.data };
-        uploads.current.set(entry.key, attachment);
-      }
-      const body = pageContentBody({
-        content: entry.content,
-        lessonUuid: lesson.uuid,
-        title: values.title,
-        text: values.text,
-        type,
-        fileUrl: attachment?.content.file_url || values.fileUrl,
-        order: pages.findIndex(page => page.key === entry.key) + 1,
-      });
-      const uuid = entry.content?.uuid ?? attachment?.content.uuid;
-      const result = uuid
-        ? await update.mutateAsync({ path: { ...path, contentUuid: uuid }, body })
-        : await create.mutateAsync({ path, body });
-      assertSuccess(result);
-      const saved = result.data;
-      if (!saved?.uuid) throw new Error('The saved page did not return an ID.');
-      const next = pages.map(page => (page.key === entry.key ? { ...page, content: saved } : page));
-      setPages(next);
-      // Replacing media updates the original page, then removes the temporary upload row.
-      if (attachment?.content.uuid && attachment.content.uuid !== saved.uuid) {
-        try {
-          await removeContent(attachment.content.uuid);
-          uploads.current.delete(entry.key);
-        } catch {
-          toast.error(
-            'Page saved, but the temporary upload could not be removed. Save the page again to retry.'
-          );
-          return saved;
-        }
-      } else {
-        uploads.current.delete(entry.key);
-      }
-      await persistOrder(next);
-      await refresh();
+      await ensureLesson();
+      const saved = await persistPage(entry, values);
+      await finishSaving();
       toast.success('Page saved');
       return saved;
     } catch (error) {
-      toast.error(error instanceof Error ? error.message : 'Unable to save this page.');
+      reportSaveError(error);
       return null;
     } finally {
       busyRef.current = false;
       setBusy(null);
+      setSaveProgress(null);
     }
+  };
+  const saveAllPages = async () => {
+    if (busyRef.current) return;
+    const pending = pagesRef.current.flatMap((entry, pageIndex) => {
+      const staged = stagedValues.current.get(entry.key);
+      return !entry.content || staged?.dirty ? [{ entry, pageIndex, values: staged?.values }] : [];
+    });
+    for (const page of pending) {
+      const message = page.values ? pageValidationError(page.values, types) : 'Enter page content.';
+      if (message) {
+        reportSaveError(new Error(`Page ${page.pageIndex + 1}: ${message}`));
+        return;
+      }
+    }
+    busyRef.current = true;
+    setBusy('all');
+    setSaveError('');
+    startProgress(
+      pending.flatMap(page => (page.values ? [{ entry: page.entry, values: page.values }] : []))
+    );
+    try {
+      await ensureLesson();
+      for (const page of pending) {
+        if (!page.values) continue;
+        try {
+          await persistPage(page.entry, page.values);
+        } catch (error) {
+          const message = error instanceof Error ? error.message : 'Unable to save this page.';
+          throw new Error(
+            `Page ${page.pageIndex + 1}: ${message} Saved pages have been kept. Save again to continue.`
+          );
+        }
+        // Keep completed pages saved if a later page fails, so retry resumes the remaining pages.
+        stagedValues.current.delete(page.entry.key);
+        closeEditor(page.entry.key);
+      }
+      await finishSaving();
+      toast.success('Lesson and pages saved');
+    } catch (error) {
+      reportSaveError(error);
+    } finally {
+      busyRef.current = false;
+      setBusy(null);
+      setSaveProgress(null);
+    }
+  };
+  const addPage = () => {
+    if (busyRef.current || loading) return;
+    const key = crypto.randomUUID();
+    commitPages([...pagesRef.current, { key, createdAt: Date.now() }]);
+    setEditingKeys(current => new Set(current).add(key));
   };
 
   const movePage = async (pageIndex: number, direction: -1 | 1) => {
@@ -322,7 +498,7 @@ function LessonPages({
     next[target] = source;
     busyRef.current = true;
     setBusy('order');
-    setPages(next);
+    commitPages(next);
     try {
       if (await persistOrder(next)) await refresh();
     } finally {
@@ -343,7 +519,7 @@ function LessonPages({
       }
       if (deleteTarget.content?.uuid) await removeContent(deleteTarget.content.uuid);
       const next = pages.filter(page => page.key !== deleteTarget.key);
-      setPages(next);
+      commitPages(next);
       closeEditor(deleteTarget.key);
       setDeleteTarget(null);
       await persistOrder(next);
@@ -362,13 +538,12 @@ function LessonPages({
       <CardContent className='space-y-3 p-3'>
         {renderHeader({
           pageCount: pages.length,
-          addPage: () => {
-            const key = crypto.randomUUID();
-            setPages(current => [...current, { key, createdAt: Date.now() }]);
-            setEditingKeys(current => new Set(current).add(key));
-          },
+          addPage,
           pagesBusy: !!busy || loading,
+          savePages: () => void saveAllPages(),
         })}
+        <LessonSavingOverlay progress={progress} />
+        {saveError && <p role='alert' className='text-destructive text-sm'>{saveError}</p>}
         {!pages.length && (
           <EmptyState
             variant='plain'
@@ -418,12 +593,13 @@ function LessonPages({
                 last={pageIndex === pages.length - 1}
                 types={types}
                 disabled={!!busy || loading}
-                saving={busy === entry.key && !deleteTarget}
+                saving={(busy === entry.key || busy === 'all') && !deleteTarget}
                 onSave={async values => {
                   const saved = await savePage(entry, values);
                   if (saved) closeEditor(entry.key);
                   return saved;
                 }}
+                onValuesChange={registerValues}
                 onMove={direction => void movePage(pageIndex, direction)}
                 onRemove={() => setDeleteTarget(entry)}
                 onClose={entry.content ? () => closeEditor(entry.key) : undefined}
@@ -432,6 +608,11 @@ function LessonPages({
             )}
           </div>
         ))}
+        {pages.length > 0 && (
+          <Button type='button' variant='outline' size='sm' disabled={!!busy || loading} onClick={addPage}>
+            <Plus className='size-4' /> Add another page
+          </Button>
+        )}
         {orderFailed && (
           <div className='text-destructive flex items-center gap-2 text-sm' role='alert'>
             Page order has not been saved.
@@ -489,6 +670,7 @@ function LessonPageEditor({
   disabled,
   saving,
   onSave,
+  onValuesChange,
   onMove,
   onRemove,
   onClose,
@@ -502,6 +684,7 @@ function LessonPageEditor({
   disabled: boolean;
   saving: boolean;
   onSave: (values: PageValues) => Promise<LessonContent | null>;
+  onValuesChange: (key: string, values: PageValues | null, dirty: boolean) => void;
   onMove: (direction: -1 | 1) => void;
   onRemove: () => void;
   onClose?: () => void;
@@ -518,6 +701,10 @@ function LessonPageEditor({
   const titleRef = useRef<HTMLInputElement>(null);
   const textLabelId = `page-text-${entry.key}`;
   const errorId = `page-error-${entry.key}`;
+  useEffect(() => {
+    onValuesChange(entry.key, { title, text, file, fileUrl }, dirty);
+  }, [entry.key, title, text, file, fileUrl, dirty, onValuesChange]);
+  useEffect(() => () => onValuesChange(entry.key, null, false), [entry.key, onValuesChange]);
   const attach = (files: FileList | null) => {
     if (disabled || !files?.length) return;
     if (files.length !== 1) {
@@ -536,21 +723,10 @@ function LessonPageEditor({
     }
   };
   const submit = async () => {
-    if (!title.trim()) {
-      setError('Enter a page title.');
-      titleRef.current?.focus();
-      return;
-    }
-    if (
-      !file &&
-      !fileUrl &&
-      !text
-        .replace(/<[^>]*>/g, '')
-        .replace(/&nbsp;/g, '')
-        .trim() &&
-      !/<img\b/i.test(text)
-    ) {
-      setError('Add page text or attach a file.');
+    const validationError = pageValidationError({ title, text, file, fileUrl }, types);
+    if (validationError) {
+      setError(validationError);
+      if (!title.trim()) titleRef.current?.focus();
       return;
     }
     setError('');

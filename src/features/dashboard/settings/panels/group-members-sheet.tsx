@@ -61,7 +61,7 @@ type GroupMembersSheetProps = {
 };
 
 /**
- * Roster management for one academic group. Ported from the organisation Groups
+ * Roster management for one student group. Ported from the organisation Student Groups
  * page, which is losing its member UI. The picker derives `existing` from the
  * live membership query — the previous implementation passed a hardcoded empty
  * set, so students already in the group were offered for adding again.

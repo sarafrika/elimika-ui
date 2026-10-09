@@ -54,8 +54,8 @@ const CourseCreationPage = () => {
         {
           async onSuccess(data, _variables, _context) {
             toast.success(data?.message);
-            await invalidateContentModerationWorkflowQueries(queryClient);
             router.push('/dashboard/course-creator/course-management');
+            await invalidateContentModerationWorkflowQueries(queryClient);
           },
           onError: error => {
             toast.error(getErrorMessage(error) || 'Failed to publish course');

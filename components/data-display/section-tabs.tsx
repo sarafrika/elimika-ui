@@ -125,8 +125,8 @@ type SectionTabsProps<T extends string> = {
 
 const LIST = {
   underline:
-    'h-auto w-full justify-start gap-6 overflow-x-auto overflow-y-hidden rounded-none bg-transparent p-0 shadow-[inset_0_-1px_0_0_var(--color-border)]',
-  pill: 'bg-card h-auto w-full justify-start gap-1 overflow-x-auto overflow-y-hidden rounded-2xl border p-1.5 shadow-sm',
+    'thin-scrollbar h-auto w-full justify-start gap-6 overflow-x-auto overflow-y-hidden rounded-none bg-transparent p-0 shadow-[inset_0_-1px_0_0_var(--color-border)]',
+  pill: 'thin-scrollbar bg-card h-auto w-full justify-start gap-1 overflow-x-auto overflow-y-hidden rounded-2xl border p-1.5',
 } as const;
 
 const TRIGGER = {

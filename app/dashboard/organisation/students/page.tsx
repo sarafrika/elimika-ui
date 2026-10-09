@@ -414,7 +414,7 @@ export default function StudentsPage() {
                   <TableHead className='whitespace-nowrap'>Student</TableHead>
                   <TableHead className='whitespace-nowrap'>Wallet ID</TableHead>
                   <TableHead className='whitespace-nowrap'>Institution Ref</TableHead>
-                  <TableHead className='whitespace-nowrap'>Group</TableHead>
+                  <TableHead className='whitespace-nowrap'>Student group</TableHead>
                   <TableHead className='whitespace-nowrap'>Branch</TableHead>
                   <TableHead className='whitespace-nowrap'>Status</TableHead>
                   <TableHead className='whitespace-nowrap'>Attendance</TableHead>
