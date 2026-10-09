@@ -64,6 +64,16 @@ const nextConfig: NextConfig = {
   typescript: {
     ignoreBuildErrors: true,
   },
+  // /public files are not content-hashed: cache a day, revalidate in the background for a week.
+  async headers() {
+    const publicAssetCache = [
+      { key: 'Cache-Control', value: 'public, max-age=86400, stale-while-revalidate=604800' },
+    ];
+    return ['/logos/:path*', '/assets/:path*'].map(source => ({
+      source,
+      headers: publicAssetCache,
+    }));
+  },
 };
 
 export default nextConfig;
