@@ -177,16 +177,17 @@ export function getStudentAssignmentSubmissionState(row: StudentAssignmentRow) {
   };
 }
 
+/** Single page; history beyond this cap is not shown and rows are re-sorted client side. */
 export const STUDENT_SUBMISSION_PAGE_SIZE = 500;
 
 type OwnedEnrollment = { uuid?: string; enrollment_uuid?: string; student_uuid?: string };
 
 type ClassDefinitionEnrollments = {
-  classEnrollments?: OwnedEnrollment[];
   courseEnrollments?: OwnedEnrollment[];
+  studentEnrollments?: { latest_enrollment_uuid?: string }[];
 };
 
-/** Sorted so this hook and useStudentAssignmentData share one submissions search key. */
+/** Course enrollments plus one latest class enrollment per class, so the id list stays bounded. */
 export function collectStudentEnrollmentUuids(
   classDefinitions: ClassDefinitionEnrollments[],
   studentUuid?: string
@@ -194,10 +195,14 @@ export function collectStudentEnrollmentUuids(
   const ids = new Set<string>();
   if (!studentUuid) return [];
   for (const item of classDefinitions) {
-    for (const enrollment of [...(item.classEnrollments ?? []), ...(item.courseEnrollments ?? [])]) {
+    for (const enrollment of item.courseEnrollments ?? []) {
       const id = enrollment.uuid ?? enrollment.enrollment_uuid;
       if (id && enrollment.student_uuid === studentUuid) ids.add(id);
     }
+    const latestClassEnrollment = item.studentEnrollments?.find(
+      enrollment => enrollment.latest_enrollment_uuid
+    )?.latest_enrollment_uuid;
+    if (latestClassEnrollment) ids.add(latestClassEnrollment);
   }
   return Array.from(ids).sort((a, b) => a.localeCompare(b));
 }
@@ -363,28 +368,30 @@ export function useStudentAssignmentData({
     return map;
   }, [assignmentAttachmentQueries, assignmentUuids]);
 
-  const studentEnrollmentUuids = new Set(
-    classItems.map(item => item.courseEnrollmentUuid ?? item.enrollmentUuid).filter(Boolean)
+  const studentEnrollmentUuids = useMemo(
+    () =>
+      new Set(
+        classItems
+          .map(item => item.courseEnrollmentUuid ?? item.enrollmentUuid)
+          .filter((id): id is string => Boolean(id))
+      ),
+    [classItems]
   );
 
   const submissionMap = useMemo(() => {
-    const map = new Map<string, AssignmentSubmission[]>();
-
+    const map = new Map<string, AssignmentSubmission[]>(
+      assignmentUuids.map(uuid => [uuid, [] as AssignmentSubmission[]])
+    );
     const allSubmissions: AssignmentSubmission[] = submissionsResponse?.data?.content ?? [];
 
-    assignmentUuids.forEach(uuid => {
-      const filtered = allSubmissions
-        .filter(
-          sub => sub.assignment_uuid === uuid && studentEnrollmentUuids.has(sub.enrollment_uuid)
-        )
-        .sort((a, b) => {
-          const at = new Date(a.submitted_at ?? a.updated_date ?? a.created_date ?? 0).getTime();
-          const bt = new Date(b.submitted_at ?? b.updated_date ?? b.created_date ?? 0).getTime();
-          return bt - at;
-        });
+    for (const sub of allSubmissions) {
+      if (!sub.assignment_uuid || !studentEnrollmentUuids.has(sub.enrollment_uuid)) continue;
+      map.get(sub.assignment_uuid)?.push(sub);
+    }
 
-      map.set(uuid, filtered);
-    });
+    const timeOf = (sub: AssignmentSubmission) =>
+      new Date(sub.submitted_at ?? sub.updated_date ?? sub.created_date ?? 0).getTime();
+    for (const list of map.values()) list.sort((a, b) => timeOf(b) - timeOf(a));
 
     return map;
   }, [assignmentUuids, studentEnrollmentUuids, submissionsResponse]);
@@ -439,4 +446,15 @@ export function useStudentAssignmentData({
     isLoading,
     student,
   };
+}
+
+/** One assignment's instructor attachments, fetched only when a detail view is open. */
+export function useAssignmentAttachments(assignmentUuid?: string, open = true) {
+  const query = useQuery({
+    ...getAssignmentAttachmentsOptions({ path: { assignmentUuid: assignmentUuid ?? '' } }),
+    enabled: Boolean(open && assignmentUuid),
+    staleTime: STALE_TIMES.entity,
+    refetchOnWindowFocus: false,
+  });
+  return { attachments: query.data?.data ?? [], isLoading: query.isLoading };
 }
