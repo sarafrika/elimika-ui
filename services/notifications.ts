@@ -1,9 +1,10 @@
 // @ts-nocheck -- pre-existing @hey-api generated-client type drift (see memory: elimika-ui-typecheck)
+
+import { type UseQueryOptions, useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { z } from 'zod';
 import { toNumber } from '@/lib/metrics';
 import { STALE_TIMES } from '@/lib/query-client';
 import { fetchClient } from '@/services/api/fetch-client';
-import { useMutation, useQuery, useQueryClient, type UseQueryOptions } from '@tanstack/react-query';
-import { z } from 'zod';
 
 const notificationMetadataSchema = z
   .object({
@@ -123,6 +124,18 @@ function normalizeListParams(params: NotificationListParams = {}): NotificationL
   };
 }
 
+/** Error carrying the HTTP status so the default retry skips 4xx responses. */
+function notificationError(
+  response: { error?: unknown; response?: Response },
+  fallback: string
+): Error & { status?: number } {
+  const message = typeof response.error === 'string' ? response.error : fallback;
+  const error: Error & { status?: number } = new Error(message);
+  const status = response.response?.status;
+  if (typeof status === 'number') error.status = status;
+  return error;
+}
+
 async function fetchNotifications(
   params: NotificationListParams = {}
 ): Promise<NotificationListResult> {
@@ -147,14 +160,12 @@ async function fetchNotifications(
   );
 
   if (response.error) {
-    throw new Error(
-      typeof response.error === 'string' ? response.error : 'Failed to fetch notifications'
-    );
+    throw notificationError(response, 'Failed to fetch notifications');
   }
 
   const parsed = notificationsResponseSchema.parse(response.data ?? {});
   if (parsed.success === false) {
-    throw new Error(parsed.message || 'Failed to fetch notifications');
+    throw notificationError(response, parsed.message || 'Failed to fetch notifications');
   }
 
   const items = parsed.data?.content ?? [];
@@ -187,14 +198,12 @@ async function fetchNotificationCounts(domain?: string): Promise<NotificationCou
   );
 
   if (response.error) {
-    throw new Error(
-      typeof response.error === 'string' ? response.error : 'Failed to fetch notification counts'
-    );
+    throw notificationError(response, 'Failed to fetch notification counts');
   }
 
   const parsed = notificationCountsResponseSchema.parse(response.data ?? {});
   if (parsed.success === false) {
-    throw new Error(parsed.message || 'Failed to fetch notification counts');
+    throw notificationError(response, parsed.message || 'Failed to fetch notification counts');
   }
 
   return parsed.data;
@@ -212,9 +221,7 @@ async function applyNotificationAction(uuid: string, action: 'read' | 'archive' 
   );
 
   if (response.error) {
-    throw new Error(
-      typeof response.error === 'string' ? response.error : 'Failed to update notification'
-    );
+    throw notificationError(response, 'Failed to update notification');
   }
 
   return notificationActionResponseSchema.parse(response.data ?? {});
@@ -231,9 +238,7 @@ async function markAllNotificationsRead(domain?: string) {
   );
 
   if (response.error) {
-    throw new Error(
-      typeof response.error === 'string' ? response.error : 'Failed to mark notifications read'
-    );
+    throw notificationError(response, 'Failed to mark notifications read');
   }
 
   return notificationActionResponseSchema.parse(response.data ?? {});
@@ -256,9 +261,7 @@ async function markPopupsSeenInBulk(uuids: string[], domain?: string, drainAll =
   );
 
   if (response.error) {
-    throw new Error(
-      typeof response.error === 'string' ? response.error : 'Failed to mark popups seen'
-    );
+    throw notificationError(response, 'Failed to mark popups seen');
   }
 
   return notificationActionResponseSchema.parse(response.data ?? {});
