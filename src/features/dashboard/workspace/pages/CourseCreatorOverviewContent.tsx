@@ -1,17 +1,5 @@
 'use client';
 
-import DomainOverviewShell from '@/components/domain-overview-shell';
-import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { useCourseCreator } from '@/context/course-creator-context';
-import type {
-  CourseCreatorAnalyticsSummary,
-  CourseCreatorMonetizationSummary,
-  CourseCreatorTrainingRequirementSummary,
-  CourseCreatorVerificationStatus,
-} from '@/lib/types/course-creator';
-import { useUserDomain } from '@/src/features/dashboard/context/user-domain-context';
-import { roleScopedDashboardPath } from '@/src/features/dashboard/lib/active-domain-storage';
 import { format } from 'date-fns';
 import {
   ArrowRight,
@@ -25,11 +13,31 @@ import {
   Sparkles,
 } from 'lucide-react';
 import Link from 'next/link';
+import type { ReactNode } from 'react';
+import { AsyncSection } from '@/components/data/async-section';
+import DomainOverviewShell from '@/components/domain-overview-shell';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Skeleton } from '@/components/ui/skeleton';
+import { useCourseCreator } from '@/context/course-creator-context';
+import type { CourseCreatorCoursesStatus } from '@/hooks/course-creator-data';
+import type {
+  CourseCreatorAnalyticsSummary,
+  CourseCreatorMonetizationSummary,
+  CourseCreatorTrainingRequirementSummary,
+  CourseCreatorVerificationStatus,
+} from '@/lib/types/course-creator';
+import { useUserDomain } from '@/src/features/dashboard/context/user-domain-context';
+import { roleScopedDashboardPath } from '@/src/features/dashboard/lib/active-domain-storage';
 import { UserDomain } from '../../../../../lib/types';
 
-export default function CourseCreatorOverviewContent() {
+export default function CourseCreatorOverviewContent({
+  coursesStatus,
+}: {
+  coursesStatus: CourseCreatorCoursesStatus;
+}) {
   const { activeDomain } = useUserDomain();
-  const { data, profile } = useCourseCreator();
+  const { data, profile, isLoading: profileLoading } = useCourseCreator();
 
   const analytics = data.analytics;
   const monetization = data.monetization;
@@ -56,9 +64,18 @@ export default function CourseCreatorOverviewContent() {
       }
       leftColumn={
         <>
-          <MetricsGrid metrics={metrics} />
-          <MonetizationCard monetization={monetization} activeDomain={activeDomain} />
-          <TrainingRequirementsCard trainingRequirements={trainingRequirements} activeDomain={activeDomain} />
+          <CoursesSection name='creator-overview-metrics' status={coursesStatus} height='h-64'>
+            <MetricsGrid metrics={metrics} />
+          </CoursesSection>
+          <CoursesSection name='creator-overview-monetization' status={coursesStatus}>
+            <MonetizationCard monetization={monetization} activeDomain={activeDomain} />
+          </CoursesSection>
+          <CoursesSection name='creator-overview-requirements' status={coursesStatus}>
+            <TrainingRequirementsCard
+              trainingRequirements={trainingRequirements}
+              activeDomain={activeDomain}
+            />
+          </CoursesSection>
           {/* <PurchasableCatalogue scope='course_creator' /> */}
           {/* <CourseRecommendationsCard
             description='Courses to learn from, picked for you'
@@ -68,11 +85,42 @@ export default function CourseCreatorOverviewContent() {
       }
       rightColumn={
         <>
-          <VerificationCard verification={verification} />
+          <AsyncSection
+            name='creator-overview-verification'
+            loading={profileLoading}
+            skeleton={<Skeleton className='h-56 w-full rounded-xl' />}
+          >
+            <VerificationCard verification={verification} />
+          </AsyncSection>
           <QuickActionsCard activeDomain={activeDomain} />
         </>
       }
     />
+  );
+}
+
+function CoursesSection({
+  name,
+  status,
+  height = 'h-72',
+  children,
+}: {
+  name: string;
+  status: CourseCreatorCoursesStatus;
+  height?: string;
+  children: ReactNode;
+}) {
+  return (
+    <AsyncSection
+      name={name}
+      loading={status.loading}
+      error={status.error}
+      onRetry={() => status.refetch()}
+      skeleton={<Skeleton className={`${height} w-full rounded-xl`} />}
+      errorTitle='Couldn’t load your courses'
+    >
+      {children}
+    </AsyncSection>
   );
 }
 
