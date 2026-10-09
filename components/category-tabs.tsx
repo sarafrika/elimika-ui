@@ -163,7 +163,7 @@ export function CategoryTabs({
 
         <div
           ref={scrollerRef}
-          className='scrollbar-thin overflow-x-auto scroll-smooth md:px-10'
+          className='thin-scrollbar overflow-x-auto scroll-smooth md:px-10'
           style={{ WebkitOverflowScrolling: 'touch' }}
         >
           <div className='flex min-w-max items-center gap-2 py-1'>

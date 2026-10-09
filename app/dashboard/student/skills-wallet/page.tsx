@@ -98,7 +98,7 @@ export default function SkillsWallet() {
             {tab === 'education' ? <SkillsWalletEducationTab /> : null}
           </SectionTabPanel>
           <SectionTabPanel value='portfolio'>
-            {tab === 'portfolio' ? <SkillsWalletPortfolioTab data={data} /> : null}
+            {tab === 'portfolio' ? <SkillsWalletPortfolioTab /> : null}
           </SectionTabPanel>
           <SectionTabPanel value='credentials'>
             {tab === 'credentials' ? <SkillsWalletCredentialsVaultTab data={data} /> : null}

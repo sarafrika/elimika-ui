@@ -3,6 +3,7 @@
 import DeleteModal from '@/components/custom-modals/delete-modal';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
+import { Card } from '@/components/ui/card';
 import {
   Dialog,
   DialogContent,
@@ -18,6 +19,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
+import { EmptyState } from '@/components/ui/empty-state';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import {
@@ -27,8 +29,16 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
+import { Skeleton } from '@/components/ui/skeleton';
+import Spinner from '@/components/ui/spinner';
 import { Switch } from '@/components/ui/switch';
 import { Textarea } from '@/components/ui/textarea';
+import {
+  practiceActivityListRequest,
+  reorderPracticeActivityPage,
+  sortPracticeActivities,
+} from '@/lib/course-creator/practice-activities';
+import { STALE_TIMES } from '@/lib/query-client';
 import {
   createPracticeActivityMutation,
   deletePracticeActivityMutation,
@@ -41,7 +51,6 @@ import {
   ActivityTypeEnum,
   GroupingEnum,
   type LessonPracticeActivity,
-  type PageMetadata,
   SchemaEnum6 as PracticeActivityStatus,
 } from '@/services/client/types.gen';
 import {
@@ -54,7 +63,6 @@ import {
   useSensors,
 } from '@dnd-kit/core';
 import {
-  arrayMove,
   SortableContext,
   sortableKeyboardCoordinates,
   useSortable,
@@ -76,11 +84,45 @@ import {
   Trash,
   Users,
 } from 'lucide-react';
-import { type FormEvent, useEffect, useState } from 'react';
+import { type FormEvent, useEffect, useMemo, useState } from 'react';
 import { toast } from 'sonner';
 import { Tooltip, TooltipContent, TooltipTrigger } from '../../../../components/ui/tooltip';
+import { PracticeActivityEditor } from './PracticeActivityEditor';
 
 const PRACTICE_ACTIVITY_PAGE_SIZE = 10;
+
+type NewPracticeRow = { id: string; uuid?: string; kind: 'quiz' | 'practical' };
+
+function readNewPracticeRows(key: string, unsavedOnly = true): NewPracticeRow[] {
+  try {
+    const value: unknown = JSON.parse(localStorage.getItem(key) ?? 'null');
+    if (!Array.isArray(value)) return [];
+    return value.flatMap<NewPracticeRow>(item =>
+      item &&
+        typeof item === 'object' &&
+        'id' in item &&
+        typeof item.id === 'string' &&
+        (item.uuid === undefined || typeof item.uuid === 'string') &&
+        (!unsavedOnly || !item.uuid) &&
+        (item.kind === undefined || item.kind === 'quiz' || item.kind === 'practical')
+        ? [{ id: item.id, uuid: item.uuid, kind: item.kind === 'quiz' ? 'quiz' : 'practical' }]
+        : []
+    );
+  } catch {
+    return [];
+  }
+}
+
+function updateStoredPracticeRows(
+  key: string,
+  update: (rows: NewPracticeRow[]) => NewPracticeRow[]
+) {
+  try {
+    localStorage.setItem(key, JSON.stringify(update(readNewPracticeRows(key, false))));
+  } catch {
+    // Keep the API action available when browser storage is unavailable.
+  }
+}
 
 type PracticeActivityFormValues = {
   title: string;
@@ -104,8 +146,8 @@ const defaultPracticeActivityFormValues = (): PracticeActivityFormValues => ({
   materials: '',
   expected_output: '',
   display_order: '',
-  status: PracticeActivityStatus.DRAFT,
-  active: false,
+  status: PracticeActivityStatus.PUBLISHED,
+  active: true,
 });
 
 const getPracticeActivityFormValues = (
@@ -238,7 +280,7 @@ function PracticeActivityDialog({
         </DialogHeader>
 
         <form className='space-y-5' onSubmit={handleSubmit}>
-          <div className='grid gap-4 md:grid-cols-2'>
+          <div className='grid gap-4 md:grid-cols-2 mb-8'>
             <div className='space-y-2 md:col-span-2'>
               <Label htmlFor='practice-title'>Title</Label>
               <Input
@@ -292,7 +334,7 @@ function PracticeActivityDialog({
             </div>
 
             <div className='space-y-2'>
-              <Label htmlFor='practice-estimated-minutes'>Estimated Minutes</Label>
+              <Label htmlFor='practice-estimated-minutes'>Estimated Minutes (optional)</Label>
               <Input
                 id='practice-estimated-minutes'
                 min={1}
@@ -313,6 +355,39 @@ function PracticeActivityDialog({
               />
             </div>
 
+            <div className='space-y-2 md:col-span-2'>
+              <Label htmlFor='practice-instructions'>Practice Activity / Quiz Question</Label>
+              <Textarea
+                id='practice-instructions'
+                rows={4}
+                value={values.instructions}
+                onChange={event => setValue('instructions', event.target.value)}
+                placeholder='Enter the practice question or quiz prompt learners will respond to.'
+              />
+            </div>
+
+            <div className='space-y-2 md:col-span-2'>
+              <Label htmlFor='practice-materials'>Materials (optional)</Label>
+              <Textarea
+                id='practice-materials'
+                rows={3}
+                value={values.materials}
+                onChange={event => setValue('materials', event.target.value)}
+                placeholder='Add one material, link, or handout per line.'
+              />
+            </div>
+
+            <div className='space-y-2 md:col-span-2'>
+              <Label htmlFor='practice-output'>Expected Output (optional)</Label>
+              <Textarea
+                id='practice-output'
+                rows={3}
+                value={values.expected_output}
+                onChange={event => setValue('expected_output', event.target.value)}
+                placeholder='Describe what learners should produce or discuss.'
+              />
+            </div>
+
             <Tooltip>
               <TooltipTrigger asChild>
                 <div className='space-y-2'>
@@ -320,7 +395,7 @@ function PracticeActivityDialog({
                     <Label htmlFor='practice-status'>Status</Label>
 
                     {values.status === 'draft' && (
-                      <span className='text-xs text-destructive'>
+                      <span className='text-destructive text-xs'>
                         (This activity is not visible to users)
                       </span>
                     )}
@@ -329,10 +404,7 @@ function PracticeActivityDialog({
                   <Select
                     value={values.status}
                     onValueChange={value =>
-                      setValue(
-                        'status',
-                        value as LessonPracticeActivity['status']
-                      )
+                      setValue('status', value as LessonPracticeActivity['status'])
                     }
                   >
                     <SelectTrigger id='practice-status' className='w-full'>
@@ -359,10 +431,7 @@ function PracticeActivityDialog({
               <TooltipTrigger asChild>
                 <div className='flex flex-col rounded-md border px-3 py-2'>
                   <div className='flex items-center justify-between gap-2'>
-                    <Label
-                      htmlFor='practice-active'
-                      className='text-sm font-medium'
-                    >
+                    <Label htmlFor='practice-active' className='text-sm font-medium'>
                       Visible
                     </Label>
 
@@ -374,49 +443,14 @@ function PracticeActivityDialog({
                     />
                   </div>
 
-                  <p className='mt-1 text-xs text-muted-foreground'>
+                  <p className='text-muted-foreground mt-1 text-xs'>
                     Publish this activity to allow users to see it.
                   </p>
                 </div>
               </TooltipTrigger>
 
-              <TooltipContent>
-                Publish this activity to allow users to see it.
-              </TooltipContent>
+              <TooltipContent>Publish this activity to allow users to see it.</TooltipContent>
             </Tooltip>
-
-            <div className='space-y-2 md:col-span-2'>
-              <Label htmlFor='practice-instructions'>Instructions</Label>
-              <Textarea
-                id='practice-instructions'
-                rows={4}
-                value={values.instructions}
-                onChange={event => setValue('instructions', event.target.value)}
-                placeholder='Explain how the facilitator should run the activity.'
-              />
-            </div>
-
-            <div className='space-y-2 md:col-span-2'>
-              <Label htmlFor='practice-materials'>Materials</Label>
-              <Textarea
-                id='practice-materials'
-                rows={3}
-                value={values.materials}
-                onChange={event => setValue('materials', event.target.value)}
-                placeholder='Add one material, link, or handout per line.'
-              />
-            </div>
-
-            <div className='space-y-2 md:col-span-2'>
-              <Label htmlFor='practice-output'>Expected Output</Label>
-              <Textarea
-                id='practice-output'
-                rows={3}
-                value={values.expected_output}
-                onChange={event => setValue('expected_output', event.target.value)}
-                placeholder='Describe what learners should produce or discuss.'
-              />
-            </div>
           </div>
 
           <DialogFooter>
@@ -429,6 +463,7 @@ function PracticeActivityDialog({
               Cancel
             </Button>
             <Button type='submit' disabled={isSubmitting}>
+              {isSubmitting && <Spinner />}
               {isSubmitting ? 'Saving...' : 'Save Activity'}
             </Button>
           </DialogFooter>
@@ -448,16 +483,11 @@ function ActivityCardBody({ activity, hideStatusBadges }: ActivityCardBodyProps)
     <div className='min-w-0 space-y-3'>
       <div className='space-y-1'>
         <div className='flex flex-wrap items-center gap-2'>
-          <h3 className='text-foreground text-sm font-semibold'>
-            {activity.title}
-          </h3>
+          <h3 className='text-foreground text-sm font-semibold'>{activity.title}</h3>
 
           {!hideStatusBadges && (
             <>
-              <Badge
-                variant={activity.active ? 'success' : 'outline'}
-                className='text-[10px]'
-              >
+              <Badge variant={activity.active ? 'success' : 'outline'} className='text-[10px]'>
                 {activity.active ? 'Visible' : 'Hidden'}
               </Badge>
 
@@ -468,9 +498,7 @@ function ActivityCardBody({ activity, hideStatusBadges }: ActivityCardBodyProps)
           )}
         </div>
 
-        <p className='text-muted-foreground line-clamp-3 text-xs'>
-          {activity.instructions}
-        </p>
+        <p className='text-muted-foreground line-clamp-3 text-xs'>{activity.instructions}</p>
       </div>
 
       <div className='text-muted-foreground flex flex-wrap gap-3 text-xs'>
@@ -498,11 +526,7 @@ function ActivityCardBody({ activity, hideStatusBadges }: ActivityCardBodyProps)
       {activity.materials && activity.materials.length > 0 && (
         <div className='flex flex-wrap gap-2'>
           {activity.materials.map(material => (
-            <Badge
-              key={material}
-              variant='outline'
-              className='text-[10px]'
-            >
+            <Badge key={material} variant='outline' className='text-[10px]'>
               {material}
             </Badge>
           ))}
@@ -511,8 +535,7 @@ function ActivityCardBody({ activity, hideStatusBadges }: ActivityCardBodyProps)
 
       {activity.expected_output && (
         <p className='text-muted-foreground text-xs'>
-          <span className='text-foreground font-medium'>Output:</span>{' '}
-          {activity.expected_output}
+          <span className='text-foreground font-medium'>Output:</span> {activity.expected_output}
         </p>
       )}
     </div>
@@ -538,7 +561,7 @@ function SortablePracticeActivityCard({
   });
 
   return (
-    <div
+    <Card
       ref={setNodeRef}
       style={{ transform: CSS.Transform.toString(transform), transition }}
       className={`group border-border bg-card/80 dark:border-border/70 dark:bg-card/70 flex w-full flex-col gap-4 rounded-2xl border p-4 shadow-lg ${isDragging ? 'ring-primary/20 shadow-xl ring-2' : ''
@@ -558,7 +581,7 @@ function SortablePracticeActivityCard({
           >
             <GripVertical className='h-4 w-4' />
           </Button>
-          <div className='bg-primary/10 text-primary mt-1 rounded-full p-2 max-w-9 max-h-9'>
+          <div className='bg-primary/10 text-primary mt-1 max-h-9 max-w-9 rounded-full p-2'>
             <ClipboardList className='h-5 w-5' />
           </div>
           <ActivityCardBody activity={activity} />
@@ -569,7 +592,7 @@ function SortablePracticeActivityCard({
             <Button
               variant='ghost'
               size='icon'
-              className='opacity-0 transition-opacity group-hover:opacity-100'
+              className='shrink-0'
               aria-label='Practice activity actions'
             >
               <MoreVertical className='h-4 w-4' />
@@ -588,7 +611,7 @@ function SortablePracticeActivityCard({
           </DropdownMenuContent>
         </DropdownMenu>
       </div>
-    </div>
+    </Card>
   );
 }
 
@@ -596,46 +619,115 @@ type PracticeActivityManagerProps = {
   courseUuid: string | null | undefined;
   lessonUuid: string | null | undefined;
   showHeader?: boolean;
+  showQuizButton?: boolean;
+  showPracticalButton?: boolean;
 };
 
-export function PracticeActivityManager({
+export function PracticeActivityManager(props: PracticeActivityManagerProps) {
+  if (!props.courseUuid || !props.lessonUuid) {
+    return (
+      <EmptyState
+        title='Save the lesson first'
+        description='Practice activities attach to a saved lesson.'
+      />
+    );
+  }
+
+  return (
+    <SavedPracticeActivityManager
+      key={`${props.courseUuid}-${props.lessonUuid}`}
+      {...props}
+      courseUuid={props.courseUuid}
+      lessonUuid={props.lessonUuid}
+    />
+  );
+}
+
+function SavedPracticeActivityManager({
   courseUuid,
   lessonUuid,
   showHeader = true,
-}: PracticeActivityManagerProps) {
+  showQuizButton = true,
+  showPracticalButton = true,
+}: PracticeActivityManagerProps & { courseUuid: string; lessonUuid: string }) {
   const qc = useQueryClient();
 
   const [practicePage, setPracticePage] = useState(0);
+  const [isUpdatingDisplayOrder, setIsUpdatingDisplayOrder] = useState(false);
   const [openPracticeActivityModal, setOpenPracticeActivityModal] = useState(false);
+  const [newPracticeRows, setNewPracticeRows] = useState<NewPracticeRow[]>([]);
+  const [openDraftIds, setOpenDraftIds] = useState<string[]>([]);
+  const [practiceDraftsHydrated, setPracticeDraftsHydrated] = useState(false);
+  const practiceDraftsKey = `elimika:new-practicals:${courseUuid}:${lessonUuid}`;
+
+  useEffect(() => {
+    setNewPracticeRows(readNewPracticeRows(practiceDraftsKey));
+    setPracticeDraftsHydrated(true);
+  }, [practiceDraftsKey]);
+
+  useEffect(() => {
+    if (!practiceDraftsHydrated) return;
+    try {
+      localStorage.setItem(practiceDraftsKey, JSON.stringify(newPracticeRows));
+    } catch {
+      // Drafts stay editable in memory if browser storage is unavailable.
+    }
+  }, [newPracticeRows, practiceDraftsHydrated, practiceDraftsKey]);
   const [openDeletePracticeActivityModal, setOpenDeletePracticeActivityModal] = useState(false);
   const [editingPracticeActivity, setEditingPracticeActivity] =
     useState<LessonPracticeActivity | null>(null);
   const [editingPracticeActivityId, setEditingPracticeActivityId] = useState<string | null>(null);
 
-  const enabled = Boolean(courseUuid && lessonUuid);
-  const practiceActivityListRequest = {
-    path: { courseUuid: courseUuid as string, lessonUuid: lessonUuid as string },
-    query: { pageable: { page: practicePage, size: PRACTICE_ACTIVITY_PAGE_SIZE } },
-  };
-  const practiceActivitiesQueryKey = getPracticeActivitiesQueryKey(practiceActivityListRequest);
-  const practiceActivitiesOptions = getPracticeActivitiesOptions(practiceActivityListRequest);
-  const { data: practiceActivitiesData, isFetching: practiceActivitiesIsFetching } = useQuery({
+  // Match every cached page for this lesson when an activity changes.
+  const practiceActivitiesQueryKey = getPracticeActivitiesQueryKey({
+    path: { courseUuid, lessonUuid },
+    query: { pageable: {} },
+  });
+  const practiceActivitiesOptions = getPracticeActivitiesOptions(
+    practiceActivityListRequest(courseUuid, lessonUuid, practicePage, PRACTICE_ACTIVITY_PAGE_SIZE)
+  );
+  const {
+    data: practiceActivitiesData,
+    isPending: practiceActivitiesIsPending,
+    isError: practiceActivitiesIsError,
+    error: practiceActivitiesError,
+    refetch: refetchPracticeActivities,
+  } = useQuery({
     ...practiceActivitiesOptions,
-    enabled,
+    staleTime: STALE_TIMES.entity,
   });
 
-  const practiceActivities = (practiceActivitiesData?.data?.content ??
-    []) as LessonPracticeActivity[];
-  const practiceMetadata = practiceActivitiesData?.data?.metadata as PageMetadata | undefined;
+  const practiceResponseFailed = Boolean(
+    practiceActivitiesData?.error || practiceActivitiesData?.success === false
+  );
+  const practiceActivities = practiceResponseFailed
+    ? []
+    : (practiceActivitiesData?.data?.content ?? []);
+  const practiceMetadata = practiceResponseFailed
+    ? undefined
+    : practiceActivitiesData?.data?.metadata;
 
   const [orderedPracticeActivities, setOrderedPracticeActivities] = useState<
     LessonPracticeActivity[]
   >([]);
 
   useEffect(() => {
-    setOrderedPracticeActivities(practiceActivities);
+    setOrderedPracticeActivities(sortPracticeActivities(practiceActivities));
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [practiceActivitiesData]);
+
+  const openPracticeRows = useMemo(
+    () => newPracticeRows.filter(row => openDraftIds.includes(row.id)),
+    [newPracticeRows, openDraftIds]
+  );
+
+  const openNewPracticeActivity = (kind: NewPracticeRow['kind']) => {
+    const row = newPracticeRows.find(
+      item => item.kind === kind && !openDraftIds.includes(item.id)
+    ) ?? { id: crypto.randomUUID(), kind };
+    if (!newPracticeRows.includes(row)) setNewPracticeRows(current => [...current, row]);
+    setOpenDraftIds(current => [...current, row.id]);
+  };
 
   const practiceSensors = useSensors(
     useSensor(PointerSensor),
@@ -648,7 +740,10 @@ export function PracticeActivityManager({
 
   const reorderPracticeActivities = useMutation({
     ...reorderPracticeActivitiesMutation(),
-    onSuccess: () => {
+    onSuccess: response => {
+      if (response.error || response.success === false) {
+        toast.error(getErrorMessage(response, 'Unable to reorder practice activities'));
+      }
       qc.invalidateQueries({ queryKey: practiceActivitiesQueryKey });
     },
     onError: error => {
@@ -657,20 +752,57 @@ export function PracticeActivityManager({
     },
   });
 
-  const handlePracticeActivityDragEnd = (event: DragEndEvent) => {
+  const isReordering = reorderPracticeActivities.isPending || isUpdatingDisplayOrder;
+
+  const handlePracticeActivityDragEnd = async (event: DragEndEvent) => {
     const { active, over } = event;
-    if (!over || active.id === over.id || reorderPracticeActivities.isPending) return;
+    if (!over || active.id === over.id || isReordering) return;
     if (!courseUuid || !lessonUuid) return;
 
     const oldIndex = orderedPracticeActivities.findIndex(item => item.uuid === active.id);
     const newIndex = orderedPracticeActivities.findIndex(item => item.uuid === over.id);
     if (oldIndex < 0 || newIndex < 0) return;
 
-    const reordered = arrayMove(orderedPracticeActivities, oldIndex, newIndex);
-    setOrderedPracticeActivities(reordered);
-
+    const reordered = reorderPracticeActivityPage(orderedPracticeActivities, oldIndex, newIndex);
+    if (!reordered) {
+      toast.error('Set a unique display order for each activity before dragging.');
+      return;
+    }
     const orderedUuids = reordered.map(item => item.uuid).filter((uuid): uuid is string => !!uuid);
     if (orderedUuids.length !== reordered.length) return;
+    setOrderedPracticeActivities(reordered);
+
+    if ((practiceMetadata?.totalPages ?? 1) > 1) {
+      setIsUpdatingDisplayOrder(true);
+      try {
+        const responses = await Promise.allSettled(
+          reordered.flatMap(activity => {
+            const previous = orderedPracticeActivities.find(item => item.uuid === activity.uuid);
+            if (!activity.uuid || previous?.display_order === activity.display_order) return [];
+            return [
+              updatePracticeActivity.mutateAsync({
+                path: { courseUuid, lessonUuid, activityUuid: activity.uuid },
+                body: buildPracticeActivityPayload(getPracticeActivityFormValues(activity)),
+              }),
+            ];
+          })
+        );
+        for (const response of responses) {
+          if (response.status === 'rejected') throw response.reason;
+          if (response.value.error || response.value.success === false) {
+            throw new Error(
+              getErrorMessage(response.value, 'Unable to reorder practice activities')
+            );
+          }
+        }
+      } catch (error) {
+        toast.error(getErrorMessage(error, 'Unable to reorder practice activities'));
+      } finally {
+        await qc.invalidateQueries({ queryKey: practiceActivitiesQueryKey });
+        setIsUpdatingDisplayOrder(false);
+      }
+      return;
+    }
 
     reorderPracticeActivities.mutate({
       body: orderedUuids,
@@ -682,12 +814,6 @@ export function PracticeActivityManager({
     setEditingPracticeActivity(null);
     setEditingPracticeActivityId(null);
     setOpenPracticeActivityModal(false);
-  };
-
-  const handleAddPracticeActivity = () => {
-    setEditingPracticeActivity(null);
-    setEditingPracticeActivityId(null);
-    setOpenPracticeActivityModal(true);
   };
 
   const handleEditPracticeActivity = (activity: LessonPracticeActivity) => {
@@ -707,7 +833,7 @@ export function PracticeActivityManager({
 
     try {
       if (editingPracticeActivityId) {
-        await updatePracticeActivity.mutateAsync({
+        const response = await updatePracticeActivity.mutateAsync({
           body: payload,
           path: {
             courseUuid,
@@ -715,12 +841,18 @@ export function PracticeActivityManager({
             activityUuid: editingPracticeActivityId,
           },
         });
+        if (response.error || response.success === false) {
+          throw new Error(response.message || 'Unable to update practice activity');
+        }
         toast.success('Practice activity updated successfully');
       } else {
-        await createPracticeActivity.mutateAsync({
+        const response = await createPracticeActivity.mutateAsync({
           body: payload,
           path: { courseUuid, lessonUuid },
         });
+        if (response.error || response.success === false) {
+          throw new Error(response.message || 'Unable to create practice activity');
+        }
         setPracticePage(0);
         toast.success('Practice activity created successfully');
       }
@@ -736,13 +868,16 @@ export function PracticeActivityManager({
     if (!courseUuid || !lessonUuid || !editingPracticeActivityId) return;
 
     try {
-      await deletePracticeActivity.mutateAsync({
+      const response = await deletePracticeActivity.mutateAsync({
         path: {
           courseUuid,
           lessonUuid,
           activityUuid: editingPracticeActivityId,
         },
       });
+      if (response.error || response.success === false) {
+        throw new Error(getErrorMessage(response, 'Unable to delete practice activity'));
+      }
       await qc.invalidateQueries({ queryKey: practiceActivitiesQueryKey });
       toast.success('Practice activity deleted successfully');
       setOpenDeletePracticeActivityModal(false);
@@ -761,48 +896,62 @@ export function PracticeActivityManager({
   const hasPracticePrevious = practiceMetadata?.hasPrevious ?? practicePage > 0;
   const hasPracticeNext = practiceMetadata?.hasNext ?? practicePageNumber + 1 < practiceTotalPages;
 
-  if (!enabled) {
-    return (
-      <div className='text-muted-foreground flex flex-col items-center justify-center rounded-lg border border-dashed p-6 text-center'>
-        <p className='font-medium'>You need to save the lesson first to add practice activities.</p>
-      </div>
-    );
-  }
-
   return (
     <div className='space-y-4'>
-      {showHeader && (
-        <div className='flex flex-col items-end gap-1 self-end'>
+      <div className={`flex flex-wrap justify-end gap-2 ${showHeader ? 'self-end' : ''}`}>
+        {showQuizButton && (
           <Button
-            onClick={handleAddPracticeActivity}
-            variant='secondary'
+            type='button'
+            variant='outline'
             size='sm'
-            className='flex w-fit items-center gap-1 text-xs'
+            disabled={!practiceDraftsHydrated || practiceActivitiesIsPending}
+            onClick={() => openNewPracticeActivity('quiz')}
+            className='flex w-fit items-center gap-1 text-[13px]'
           >
             <PlusCircle className='h-3.5 w-3.5' />
-            Add Activity
+            Add Quiz
           </Button>
-        </div>
-      )}
-
-      {!showHeader && (
-        <div className='flex justify-end'>
+        )}
+        {showPracticalButton && (
           <Button
-            onClick={handleAddPracticeActivity}
-            variant='secondary'
+            type='button'
+            disabled={!practiceDraftsHydrated || practiceActivitiesIsPending}
+            onClick={() => openNewPracticeActivity('practical')}
+            variant='outline'
             size='sm'
-            className='flex w-fit items-center gap-1 text-xs'
+            className='flex w-fit items-center gap-1 text-[13px]'
           >
             <PlusCircle className='h-3.5 w-3.5' />
-            Add Activity
+            Add Practical
           </Button>
-        </div>
-      )}
+        )}
+      </div>
 
-      {practiceActivitiesIsFetching ? (
+      {orderedPracticeActivities.length > 1 && (
         <p className='text-muted-foreground text-xs'>
-          Loading practice activities...
+          Sorted by display order. Drag activities to change their order.
         </p>
+      )}
+
+      {(practiceActivitiesIsError && !practiceActivitiesData) || practiceResponseFailed ? (
+        <EmptyState
+          title='Unable to load practice activities'
+          description={getErrorMessage(
+            practiceActivitiesError ?? practiceActivitiesData,
+            'Please try again.'
+          )}
+          action={
+            <Button
+              type='button'
+              variant='outline'
+              onClick={() => void refetchPracticeActivities()}
+            >
+              Try again
+            </Button>
+          }
+        />
+      ) : practiceActivitiesIsPending ? (
+        <Skeleton className='h-24 w-full' />
       ) : orderedPracticeActivities.length > 0 ? (
         <DndContext
           sensors={practiceSensors}
@@ -818,7 +967,7 @@ export function PracticeActivityManager({
                 <SortablePracticeActivityCard
                   key={activity.uuid}
                   activity={activity}
-                  isReordering={reorderPracticeActivities.isPending}
+                  isReordering={isReordering}
                   onEdit={handleEditPracticeActivity}
                   onDelete={handleDeletePracticeActivity}
                 />
@@ -826,49 +975,80 @@ export function PracticeActivityManager({
             </div>
           </SortableContext>
         </DndContext>
-      ) : (
+      ) : openPracticeRows.length === 0 ? (
         <div className='text-muted-foreground flex flex-col items-center justify-center rounded-lg border border-dashed p-6 text-center'>
           <EyeOff className='text-muted-foreground mb-2 h-7 w-7' />
           <p className='text-xs font-medium'>No practice activities yet</p>
-          <p className='mt-1 text-xs'>
-            Add activities learners can complete during class.
-          </p>
+          <p className='mt-1 text-xs'>Add activities learners can complete during class.</p>
         </div>
+      ) : null}
+
+      {(showPracticalButton || showQuizButton) && (
+        <>
+          {openPracticeRows.map((row, index) => (
+            <PracticeActivityEditor
+              key={row.id}
+              id={row.id}
+              kind={row.kind}
+              index={orderedPracticeActivities.length + index}
+              courseUuid={courseUuid}
+              lessonUuid={lessonUuid}
+              onPersisted={() => {
+                const update = (rows: NewPracticeRow[]) => rows.filter(item => item.id !== row.id);
+                updateStoredPracticeRows(practiceDraftsKey, update);
+                setNewPracticeRows(update);
+                setOpenDraftIds(current => current.filter(id => id !== row.id));
+                setPracticePage(
+                  Math.max(
+                    0,
+                    Math.ceil((practiceTotalElements + 1) / PRACTICE_ACTIVITY_PAGE_SIZE) - 1
+                  )
+                );
+                toast.success(row.kind === 'quiz' ? 'Quiz saved' : 'Practical activity saved');
+              }}
+              onRemove={() => {
+                const update = (rows: NewPracticeRow[]) => rows.filter(item => item.id !== row.id);
+                updateStoredPracticeRows(practiceDraftsKey, update);
+                setNewPracticeRows(update);
+                setOpenDraftIds(current => current.filter(id => id !== row.id));
+              }}
+            />
+          ))}
+        </>
       )}
 
-      {(practiceTotalPages > 1 ||
-        practiceTotalElements > PRACTICE_ACTIVITY_PAGE_SIZE) && (
-          <div className='mt-2 flex flex-col gap-3 border-t pt-4 text-xs md:flex-row md:items-center md:justify-between'>
-            <p className='text-muted-foreground'>
-              Page {practicePageNumber + 1} of {practiceTotalPages} -{' '}
-              {practiceTotalElements} activities
-            </p>
+      {(practiceTotalPages > 1 || practiceTotalElements > PRACTICE_ACTIVITY_PAGE_SIZE) && (
+        <div className='mt-2 flex flex-col gap-3 border-t pt-4 text-xs md:flex-row md:items-center md:justify-between'>
+          <p className='text-muted-foreground'>
+            Page {practicePageNumber + 1} of {practiceTotalPages} - {practiceTotalElements}{' '}
+            activities
+          </p>
 
-            <div className='flex items-center gap-2'>
-              <Button
-                variant='outline'
-                size='sm'
-                disabled={!hasPracticePrevious}
-                onClick={() => setPracticePage(page => Math.max(page - 1, 0))}
-                className='text-xs'
-              >
-                <ChevronLeft className='h-3.5 w-3.5' />
-                Previous
-              </Button>
+          <div className='flex items-center gap-2'>
+            <Button
+              variant='outline'
+              size='sm'
+              disabled={!hasPracticePrevious}
+              onClick={() => setPracticePage(page => Math.max(page - 1, 0))}
+              className='text-xs'
+            >
+              <ChevronLeft className='h-3.5 w-3.5' />
+              Previous
+            </Button>
 
-              <Button
-                variant='outline'
-                size='sm'
-                disabled={!hasPracticeNext}
-                onClick={() => setPracticePage(page => page + 1)}
-                className='text-xs'
-              >
-                Next
-                <ChevronRight className='h-3.5 w-3.5' />
-              </Button>
-            </div>
+            <Button
+              variant='outline'
+              size='sm'
+              disabled={!hasPracticeNext}
+              onClick={() => setPracticePage(page => page + 1)}
+              className='text-xs'
+            >
+              Next
+              <ChevronRight className='h-3.5 w-3.5' />
+            </Button>
           </div>
-        )}
+        </div>
+      )}
 
       <PracticeActivityDialog
         open={openPracticeActivityModal}
@@ -880,9 +1060,7 @@ export function PracticeActivityManager({
           }
         }}
         activity={editingPracticeActivity}
-        isSubmitting={
-          createPracticeActivity.isPending || updatePracticeActivity.isPending
-        }
+        isSubmitting={createPracticeActivity.isPending || updatePracticeActivity.isPending}
         onSubmit={handleSavePracticeActivity}
       />
 
@@ -911,27 +1089,38 @@ export function PracticeActivityList({
   lessonUuid,
   variant = 'instructor',
 }: PracticeActivityListProps) {
-  const enabled = Boolean(courseUuid && lessonUuid);
-
-  const { data, isFetching } = useQuery({
-    ...getPracticeActivitiesOptions({
-      path: { courseUuid: courseUuid as string, lessonUuid: lessonUuid as string },
-      query: { pageable: { page: 0, size: 50 } },
-    }),
-    enabled,
-  });
-
-  const activities = (data?.data?.content ?? []) as LessonPracticeActivity[];
-  const visibleActivities =
-    variant === 'student' ? activities.filter(activity => activity.active) : activities;
-
-  if (!enabled) {
+  if (!courseUuid || !lessonUuid) {
     return (
       <p className='text-muted-foreground text-sm'>
         Select a lesson to see its practice activities.
       </p>
     );
   }
+
+  return (
+    <SavedPracticeActivityList courseUuid={courseUuid} lessonUuid={lessonUuid} variant={variant} />
+  );
+}
+
+function SavedPracticeActivityList({
+  courseUuid,
+  lessonUuid,
+  variant,
+}: {
+  courseUuid: string;
+  lessonUuid: string;
+  variant: 'instructor' | 'student';
+}) {
+  const { data, isFetching } = useQuery({
+    ...getPracticeActivitiesOptions(practiceActivityListRequest(courseUuid, lessonUuid, 0, 50)),
+    staleTime: STALE_TIMES.entity,
+  });
+
+  const visibleActivities = useMemo(() => {
+    if (data?.error || data?.success === false) return [];
+    const activities = sortPracticeActivities(data?.data?.content ?? []);
+    return variant === 'student' ? activities.filter(activity => activity.active) : activities;
+  }, [data, variant]);
 
   if (isFetching && visibleActivities.length === 0) {
     return <p className='text-muted-foreground text-sm'>Loading practice activities...</p>;
@@ -954,15 +1143,15 @@ export function PracticeActivityList({
   return (
     <div className='space-y-3'>
       {visibleActivities.map(activity => (
-        <div
+        <Card
           key={activity.uuid}
-          className='border-border/70 bg-background flex gap-3 rounded-md border p-3'
+          className='border-border/70 bg-background flex-row gap-3 rounded-md p-3'
         >
           <div className='bg-primary/10 text-primary mt-1 h-fit rounded-full p-2'>
             <ClipboardList className='h-4 w-4' />
           </div>
           <ActivityCardBody activity={activity} hideStatusBadges={variant === 'student'} />
-        </div>
+        </Card>
       ))}
     </div>
   );

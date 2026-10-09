@@ -112,7 +112,7 @@ export const UserSchema = {
       example: '+254712345678',
       maxLength: 20,
       minLength: 0,
-      pattern: '^(\\+254|0)?[17]\\d{8}$',
+      pattern: '^\\+[1-9]\\d{6,14}$',
     },
     active: {
       type: 'boolean',
@@ -348,7 +348,7 @@ export const TrainingBranchSchema = {
       description: '**[REQUIRED]** Telephone number of the point of contact for this branch.',
       example: '+254700000000',
       maxLength: 20,
-      pattern: '^(\\+254|0)?\\d{8,9}$',
+      pattern: '^\\+[1-9]\\d{6,14}$',
     },
     active: {
       type: 'boolean',
@@ -599,7 +599,7 @@ export const StudentSchema = {
       example: '+254712345678',
       maxLength: 20,
       minLength: 0,
-      pattern: '^(\\+254|0)?[17]\\d{8}$',
+      pattern: '^\\+[1-9]\\d{6,14}$',
     },
     second_guardian_name: {
       type: ['string', 'null'],
@@ -616,7 +616,7 @@ export const StudentSchema = {
       example: '+254787654321',
       maxLength: 20,
       minLength: 0,
-      pattern: '^(\\+254|0)?[17]\\d{8}$',
+      pattern: '^\\+[1-9]\\d{6,14}$',
     },
     bio: {
       type: ['string', 'null'],
@@ -705,7 +705,7 @@ export const StudentGuardianRequestSchema = {
       example: '+254712345678',
       maxLength: 20,
       minLength: 0,
-      pattern: '^(\\+254|0)?[17]\\d{8}$',
+      pattern: '^\\+[1-9]\\d{6,14}$',
     },
     relationship_type: {
       $ref: '#/components/schemas/RelationshipTypeEnum',
@@ -1662,12 +1662,6 @@ export const RubricScoringSchema = {
       example: 'instructor@sarafrika.com',
       readOnly: true,
     },
-    performance_expectation: {
-      type: 'string',
-      description: '**[READ-ONLY]** Classification of performance expectation level.',
-      example: 'Exceptional Performance',
-      readOnly: true,
-    },
     score_range: {
       type: 'string',
       description: '**[READ-ONLY]** Expected score range for this performance level.',
@@ -1685,6 +1679,12 @@ export const RubricScoringSchema = {
       type: 'string',
       description: '**[READ-ONLY]** Feedback category for constructive assessment guidance.',
       example: 'Excellence',
+      readOnly: true,
+    },
+    performance_expectation: {
+      type: 'string',
+      description: '**[READ-ONLY]** Classification of performance expectation level.',
+      example: 'Exceptional Performance',
       readOnly: true,
     },
   },
@@ -1859,6 +1859,12 @@ export const QuizSchema = {
       example: 'instructor@sarafrika.com',
       readOnly: true,
     },
+    is_published: {
+      type: 'boolean',
+      description: '**[READ-ONLY]** Indicates if the quiz is published and accessible to students.',
+      example: true,
+      readOnly: true,
+    },
     time_limit_display: {
       type: 'string',
       description: '**[READ-ONLY]** Human-readable format of quiz time limit.',
@@ -1874,12 +1880,6 @@ export const QuizSchema = {
     has_multiple_attempts: {
       type: 'boolean',
       description: '**[READ-ONLY]** Indicates if students can take the quiz multiple times.',
-      example: true,
-      readOnly: true,
-    },
-    is_published: {
-      type: 'boolean',
-      description: '**[READ-ONLY]** Indicates if the quiz is published and accessible to students.',
       example: true,
       readOnly: true,
     },
@@ -1993,12 +1993,6 @@ export const QuizQuestionSchema = {
       example: 'instructor@sarafrika.com',
       readOnly: true,
     },
-    question_number: {
-      type: 'string',
-      description: '**[READ-ONLY]** Formatted question number for display in quiz interface.',
-      example: 'Question 1',
-      readOnly: true,
-    },
     requires_options: {
       type: 'boolean',
       description:
@@ -2010,6 +2004,12 @@ export const QuizQuestionSchema = {
       type: 'string',
       description: '**[READ-ONLY]** Human-readable category of the question type.',
       example: 'Multiple Choice Question',
+      readOnly: true,
+    },
+    question_number: {
+      type: 'string',
+      description: '**[READ-ONLY]** Formatted question number for display in quiz interface.',
+      example: 'Question 1',
       readOnly: true,
     },
     points_display: {
@@ -2707,6 +2707,46 @@ export const ApiResponseProgramAssessmentSchema = {
   },
 } as const;
 
+export const AgeGroupRequestSchema = {
+  type: 'object',
+  description:
+    "An age group in an instructor's training application: a named age band with its own lesson plan",
+  properties: {
+    name: {
+      type: 'string',
+      description: '**[REQUIRED]** Group name, unique within the application.',
+      example: 'Juniors',
+      maxLength: 80,
+      minLength: 0,
+    },
+    min_age: {
+      type: 'integer',
+      format: 'int32',
+      description: "**[REQUIRED]** Youngest age in the group, within the course's age range.",
+      example: 3,
+      maximum: 120,
+      minimum: 0,
+    },
+    max_age: {
+      type: 'integer',
+      format: 'int32',
+      description: "**[REQUIRED]** Oldest age in the group, within the course's age range.",
+      example: 5,
+      maximum: 120,
+      minimum: 0,
+    },
+    lesson_hours: {
+      type: 'array',
+      description:
+        '**[REQUIRED]** Hours for every active lesson of the course (for programs, of all its courses).',
+      items: {
+        $ref: '#/components/schemas/LessonHoursRequest',
+      },
+    },
+  },
+  required: ['lesson_hours', 'max_age', 'min_age', 'name'],
+} as const;
+
 export const CourseTrainingRateCardSchema = {
   type: 'object',
   properties: {
@@ -2777,48 +2817,9 @@ export const CourseTrainingRateCardSchema = {
   },
 } as const;
 
-export const LearnerGroupRequestSchema = {
-  type: 'object',
-  description: "An instructor's learner group: a named age band with its own lesson plan",
-  properties: {
-    name: {
-      type: 'string',
-      description: '**[REQUIRED]** Group name, unique within the application.',
-      example: 'Juniors',
-      maxLength: 80,
-      minLength: 0,
-    },
-    min_age: {
-      type: 'integer',
-      format: 'int32',
-      description: "**[REQUIRED]** Youngest age in the group, within the course's age range.",
-      example: 3,
-      maximum: 120,
-      minimum: 0,
-    },
-    max_age: {
-      type: 'integer',
-      format: 'int32',
-      description: "**[REQUIRED]** Oldest age in the group, within the course's age range.",
-      example: 5,
-      maximum: 120,
-      minimum: 0,
-    },
-    lesson_hours: {
-      type: 'array',
-      description:
-        '**[REQUIRED]** Hours for every active lesson of the course (for programs, of all its courses).',
-      items: {
-        $ref: '#/components/schemas/LessonHoursRequest',
-      },
-    },
-  },
-  required: ['lesson_hours', 'max_age', 'min_age', 'name'],
-} as const;
-
 export const LessonHoursRequestSchema = {
   type: 'object',
-  description: 'Hours a learner group spends on one lesson of the course or program',
+  description: 'Hours an age group spends on one lesson of the course or program',
   properties: {
     lesson_uuid: {
       type: 'string',
@@ -2880,12 +2881,12 @@ export const ProgramTrainingApplicationUpdateRequestSchema = {
         $ref: '#/components/schemas/TrainingRequirementAnswerRequest',
       },
     },
-    learner_groups: {
+    age_groups: {
       type: ['array', 'null'],
       description:
-        'Instructor applicants only: learner groups, each a named age band with hours for every active lesson. Omit to keep what is stored. Organisations must omit it.',
+        'Instructor applicants only: age groups, each a named age band with hours for every active lesson. Required on a new instructor application; on an update, omit to keep what is stored. Organisations must omit it.',
       items: {
-        $ref: '#/components/schemas/LearnerGroupRequest',
+        $ref: '#/components/schemas/AgeGroupRequest',
       },
     },
   },
@@ -2914,25 +2915,9 @@ export const TrainingRequirementAnswerRequestSchema = {
   required: ['has_it', 'requirement_uuid'],
 } as const;
 
-export const ApiResponseProgramTrainingApplicationSchema = {
+export const AgeGroupSchema = {
   type: 'object',
-  properties: {
-    success: {
-      type: 'boolean',
-    },
-    data: {
-      $ref: '#/components/schemas/ProgramTrainingApplication',
-    },
-    message: {
-      type: 'string',
-    },
-    error: {},
-  },
-} as const;
-
-export const LearnerGroupSchema = {
-  type: 'object',
-  description: "An instructor's learner group: a named age band with its own lesson plan",
+  description: 'An application age group: a named age band with its own lesson plan',
   properties: {
     uuid: {
       type: 'string',
@@ -2959,6 +2944,22 @@ export const LearnerGroupSchema = {
         $ref: '#/components/schemas/LessonHours',
       },
     },
+  },
+} as const;
+
+export const ApiResponseProgramTrainingApplicationSchema = {
+  type: 'object',
+  properties: {
+    success: {
+      type: 'boolean',
+    },
+    data: {
+      $ref: '#/components/schemas/ProgramTrainingApplication',
+    },
+    message: {
+      type: 'string',
+    },
+    error: {},
   },
 } as const;
 
@@ -3120,12 +3121,12 @@ export const ProgramTrainingApplicationSchema = {
       },
       readOnly: true,
     },
-    learner_groups: {
+    age_groups: {
       type: ['array', 'null'],
       description:
-        "**[READ-ONLY]** An instructor applicant's learner groups and lesson plans, in their order. Null for non-parties.",
+        "**[READ-ONLY]** An instructor applicant's age groups and lesson plans, in their order. Null for non-parties.",
       items: {
-        $ref: '#/components/schemas/LearnerGroup',
+        $ref: '#/components/schemas/AgeGroup',
       },
       readOnly: true,
     },
@@ -3464,13 +3465,6 @@ export const ProgramCourseSchema = {
       example: 'admin@sarafrika.com',
       readOnly: true,
     },
-    curriculum_summary: {
-      type: 'string',
-      description:
-        "**[READ-ONLY]** Comprehensive summary of the course's role within the program curriculum.",
-      example: 'Required course with prerequisites in sequence position 3',
-      readOnly: true,
-    },
     association_category: {
       type: 'string',
       description:
@@ -3495,6 +3489,13 @@ export const ProgramCourseSchema = {
       type: 'string',
       description: '**[READ-ONLY]** Requirement status of the course within the program.',
       example: 'Mandatory Course',
+      readOnly: true,
+    },
+    curriculum_summary: {
+      type: 'string',
+      description:
+        "**[READ-ONLY]** Comprehensive summary of the course's role within the program curriculum.",
+      example: 'Required course with prerequisites in sequence position 3',
       readOnly: true,
     },
   },
@@ -4857,18 +4858,18 @@ export const InstructorSchema = {
       example: true,
       readOnly: true,
     },
-    formatted_location: {
-      type: ['string', 'null'],
-      description:
-        '**[READ-ONLY]** Formatted location coordinates as a string. Returns null if location coordinates are not available.',
-      example: '-1.292100, 36.821900',
-      readOnly: true,
-    },
     is_profile_complete: {
       type: 'boolean',
       description:
         '**[READ-ONLY]** Indicates if the instructor profile is considered complete. Requires bio and professional headline.',
       example: true,
+      readOnly: true,
+    },
+    formatted_location: {
+      type: ['string', 'null'],
+      description:
+        '**[READ-ONLY]** Formatted location coordinates as a string. Returns null if location coordinates are not available.',
+      example: '-1.292100, 36.821900',
       readOnly: true,
     },
   },
@@ -5147,23 +5148,6 @@ export const InstructorProfessionalMembershipSchema = {
       example: 'IEEE Member (4 years, 3 months) - Active',
       readOnly: true,
     },
-    formatted_duration: {
-      type: ['string', 'null'],
-      description: '**[READ-ONLY]** Human-readable formatted duration of membership.',
-      example: '4 years, 3 months',
-      readOnly: true,
-    },
-    membership_duration_months: {
-      type: ['integer', 'null'],
-      format: 'int32',
-      description:
-        '**[READ-ONLY]** Duration of membership calculated from start and end dates, in months.',
-      example: 51,
-      readOnly: true,
-    },
-    membership_status: {
-      $ref: '#/components/schemas/MembershipStatusEnum',
-    },
     membership_period: {
       type: ['string', 'null'],
       description: '**[READ-ONLY]** Formatted membership period showing start and end dates.',
@@ -5206,6 +5190,23 @@ export const InstructorProfessionalMembershipSchema = {
       description:
         '**[READ-ONLY]** Indicates if the membership record has all essential information.',
       example: true,
+      readOnly: true,
+    },
+    membership_duration_months: {
+      type: ['integer', 'null'],
+      format: 'int32',
+      description:
+        '**[READ-ONLY]** Duration of membership calculated from start and end dates, in months.',
+      example: 51,
+      readOnly: true,
+    },
+    membership_status: {
+      $ref: '#/components/schemas/MembershipStatusEnum',
+    },
+    formatted_duration: {
+      type: ['string', 'null'],
+      description: '**[READ-ONLY]** Human-readable formatted duration of membership.',
+      example: '4 years, 3 months',
       readOnly: true,
     },
   },
@@ -5359,18 +5360,11 @@ export const InstructorExperienceSchema = {
       example: 'Senior Software Developer at Safaricom PLC (5 years, 5 months)',
       readOnly: true,
     },
-    duration_in_months: {
-      type: ['integer', 'null'],
-      format: 'int32',
+    is_complete: {
+      type: 'boolean',
       description:
-        '**[READ-ONLY]** Duration of employment calculated from start and end dates, in months.',
-      example: 66,
-      readOnly: true,
-    },
-    formatted_duration: {
-      type: ['string', 'null'],
-      description: '**[READ-ONLY]** Human-readable formatted duration of employment.',
-      example: '5 years, 5 months',
+        '**[READ-ONLY]** Indicates if the experience record has all essential information.',
+      example: true,
       readOnly: true,
     },
     employment_period: {
@@ -5408,11 +5402,18 @@ export const InstructorExperienceSchema = {
       example: 5.46,
       readOnly: true,
     },
-    is_complete: {
-      type: 'boolean',
+    duration_in_months: {
+      type: ['integer', 'null'],
+      format: 'int32',
       description:
-        '**[READ-ONLY]** Indicates if the experience record has all essential information.',
-      example: true,
+        '**[READ-ONLY]** Duration of employment calculated from start and end dates, in months.',
+      example: 66,
+      readOnly: true,
+    },
+    formatted_duration: {
+      type: ['string', 'null'],
+      description: '**[READ-ONLY]** Human-readable formatted duration of employment.',
+      example: '5 years, 5 months',
       readOnly: true,
     },
   },
@@ -5561,20 +5562,10 @@ export const InstructorEducationSchema = {
       example: 'Master of Science in Computer Science from University of Nairobi (2020)',
       readOnly: true,
     },
-    years_since_completion: {
-      type: ['integer', 'null'],
-      format: 'int32',
-      description: '**[READ-ONLY]** Number of years since the qualification was completed.',
-      example: 4,
-      readOnly: true,
-    },
-    education_level: {
-      $ref: '#/components/schemas/EducationLevelEnum',
-    },
-    has_certificate_number: {
+    is_complete: {
       type: 'boolean',
       description:
-        '**[READ-ONLY]** Indicates if the education record has a certificate number provided.',
+        '**[READ-ONLY]** Indicates if the education record has all essential information.',
       example: true,
       readOnly: true,
     },
@@ -5591,10 +5582,20 @@ export const InstructorEducationSchema = {
       example: '2020 - University of Nairobi',
       readOnly: true,
     },
-    is_complete: {
+    years_since_completion: {
+      type: ['integer', 'null'],
+      format: 'int32',
+      description: '**[READ-ONLY]** Number of years since the qualification was completed.',
+      example: 4,
+      readOnly: true,
+    },
+    education_level: {
+      $ref: '#/components/schemas/EducationLevelEnum',
+    },
+    has_certificate_number: {
       type: 'boolean',
       description:
-        '**[READ-ONLY]** Indicates if the education record has all essential information.',
+        '**[READ-ONLY]** Indicates if the education record has a certificate number provided.',
       example: true,
       readOnly: true,
     },
@@ -6831,12 +6832,12 @@ export const CourseTrainingApplicationUpdateRequestSchema = {
         $ref: '#/components/schemas/TrainingRequirementAnswerRequest',
       },
     },
-    learner_groups: {
+    age_groups: {
       type: ['array', 'null'],
       description:
-        'Instructor applicants only: learner groups, each a named age band with hours for every active lesson. Omit to keep what is stored. Organisations must omit it.',
+        'Instructor applicants only: age groups, each a named age band with hours for every active lesson. Required on a new instructor application; on an update, omit to keep what is stored. Organisations must omit it.',
       items: {
-        $ref: '#/components/schemas/LearnerGroupRequest',
+        $ref: '#/components/schemas/AgeGroupRequest',
       },
     },
   },
@@ -6992,12 +6993,12 @@ export const CourseTrainingApplicationSchema = {
       },
       readOnly: true,
     },
-    learner_groups: {
+    age_groups: {
       type: ['array', 'null'],
       description:
-        "**[READ-ONLY]** An instructor applicant's learner groups and lesson plans, in their order. Null for non-parties.",
+        "**[READ-ONLY]** An instructor applicant's age groups and lesson plans, in their order. Null for non-parties.",
       items: {
-        $ref: '#/components/schemas/LearnerGroup',
+        $ref: '#/components/schemas/AgeGroup',
       },
       readOnly: true,
     },
@@ -7463,15 +7464,15 @@ export const LessonPracticeActivitySchema = {
       description: '**[READ-ONLY]** User who last updated the practice activity.',
       readOnly: true,
     },
+    is_published: {
+      type: 'boolean',
+      description: '**[READ-ONLY]** Whether the activity is published.',
+      readOnly: true,
+    },
     estimated_duration: {
       type: 'string',
       description: '**[READ-ONLY]** Human-readable estimated duration.',
       example: '15 minutes',
-      readOnly: true,
-    },
-    is_published: {
-      type: 'boolean',
-      description: '**[READ-ONLY]** Whether the activity is published.',
       readOnly: true,
     },
   },
@@ -10592,17 +10593,17 @@ conflict_resolution per template:
       example: 90,
       readOnly: true,
     },
-    duration_formatted: {
-      type: 'string',
-      description: '**[READ-ONLY]** Human-readable formatted duration.',
-      example: '1h 30m',
-      readOnly: true,
-    },
     capacity_info: {
       type: 'string',
       description:
         '**[READ-ONLY]** Human-readable capacity information including waitlist availability.',
       example: 'Max 25 participants (waitlist enabled)',
+      readOnly: true,
+    },
+    duration_formatted: {
+      type: 'string',
+      description: '**[READ-ONLY]** Human-readable formatted duration.',
+      example: '1h 30m',
       readOnly: true,
     },
   },
@@ -11916,6 +11917,87 @@ export const ApiResponseAssignmentSchema = {
   },
 } as const;
 
+export const SavedAgeGroupRequestSchema = {
+  type: 'object',
+  description: 'A reusable age group: a named age band with no lesson plan',
+  properties: {
+    name: {
+      type: 'string',
+      description: '**[REQUIRED]** Name, unique for its owner.',
+      example: 'Juniors',
+      maxLength: 80,
+      minLength: 0,
+    },
+    min_age: {
+      type: 'integer',
+      format: 'int32',
+      description: '**[REQUIRED]** Youngest age.',
+      example: 3,
+      maximum: 120,
+      minimum: 0,
+    },
+    max_age: {
+      type: 'integer',
+      format: 'int32',
+      description: '**[REQUIRED]** Oldest age.',
+      example: 5,
+      maximum: 120,
+      minimum: 0,
+    },
+  },
+  required: ['max_age', 'min_age', 'name'],
+} as const;
+
+export const ApiResponseSavedAgeGroupSchema = {
+  type: 'object',
+  properties: {
+    success: {
+      type: 'boolean',
+    },
+    data: {
+      $ref: '#/components/schemas/SavedAgeGroup',
+    },
+    message: {
+      type: 'string',
+    },
+    error: {},
+  },
+} as const;
+
+export const SavedAgeGroupSchema = {
+  type: 'object',
+  description: 'A reusable age group kept by an instructor or organisation',
+  properties: {
+    uuid: {
+      type: 'string',
+      format: 'uuid',
+    },
+    name: {
+      type: 'string',
+    },
+    min_age: {
+      type: 'integer',
+      format: 'int32',
+    },
+    max_age: {
+      type: 'integer',
+      format: 'int32',
+    },
+    owner_type: {
+      $ref: '#/components/schemas/ApplicantTypeEnum',
+    },
+    owner_uuid: {
+      type: 'string',
+      format: 'uuid',
+    },
+    owner_name: {
+      type: ['string', 'null'],
+      description:
+        "The organisation's name for an organisation's group; null for the caller's own.",
+    },
+  },
+} as const;
+
 export const SkillRequestSchema = {
   type: 'object',
   description: 'Creates or replaces a skills taxonomy entry',
@@ -12808,7 +12890,7 @@ export const GuardianInvitationRegistrationRequestSchema = {
       example: '+254712345678',
       maxLength: 20,
       minLength: 0,
-      pattern: '^(\\+254|0)?[17]\\d{8}$',
+      pattern: '^\\+[1-9]\\d{6,14}$',
     },
     terms_accepted: {
       type: 'boolean',
@@ -12948,12 +13030,11 @@ a link to set a password and verify the address.
     phone_number: {
       type: 'string',
       description: `**Phone Number Validation:**
-- Country: KE
 - Type: Mobile only
-- Format: International (+country code) or local format supported`,
+- Format: E.164 only (+ then country code and number, no spaces), e.g. +254712345678`,
       example: '+254712345678',
       minLength: 1,
-      pattern: '^(\\+254|0)?[17]\\d{8}$',
+      pattern: '^\\+[1-9]\\d{6,14}$',
     },
     dob: {
       type: 'string',
@@ -13189,12 +13270,12 @@ export const ProgramTrainingApplicationRequestSchema = {
         $ref: '#/components/schemas/TrainingRequirementAnswerRequest',
       },
     },
-    learner_groups: {
+    age_groups: {
       type: ['array', 'null'],
       description:
-        'Instructor applicants only: learner groups, each a named age band with hours for every active lesson. Omit to keep what is stored. Organisations must omit it.',
+        'Instructor applicants only: age groups, each a named age band with hours for every active lesson. Required on a new instructor application; on an update, omit to keep what is stored. Organisations must omit it.',
       items: {
-        $ref: '#/components/schemas/LearnerGroupRequest',
+        $ref: '#/components/schemas/AgeGroupRequest',
       },
     },
   },
@@ -14752,7 +14833,7 @@ export const GuardianDetailsRequestSchema = {
       example: '+254700000000',
       maxLength: 50,
       minLength: 0,
-      pattern: '^(\\+254|0)?[17]\\d{8}$',
+      pattern: '^\\+[1-9]\\d{6,14}$',
     },
   },
   required: ['guardian_email', 'guardian_name', 'guardian_relationship_type'],
@@ -15276,16 +15357,16 @@ export const EnrollmentSchema = {
       example: false,
       readOnly: true,
     },
-    status_description: {
-      type: 'string',
-      description: '**[READ-ONLY]** Human-readable description of the enrollment status.',
-      example: 'Student is enrolled in the class',
-      readOnly: true,
-    },
     did_attend: {
       type: 'boolean',
       description: '**[READ-ONLY]** Indicates if the student attended the class.',
       example: false,
+      readOnly: true,
+    },
+    status_description: {
+      type: 'string',
+      description: '**[READ-ONLY]** Human-readable description of the enrollment status.',
+      example: 'Student is enrolled in the class',
       readOnly: true,
     },
   },
@@ -15393,12 +15474,12 @@ export const CourseTrainingApplicationRequestSchema = {
         $ref: '#/components/schemas/TrainingRequirementAnswerRequest',
       },
     },
-    learner_groups: {
+    age_groups: {
       type: ['array', 'null'],
       description:
-        'Instructor applicants only: learner groups, each a named age band with hours for every active lesson. Omit to keep what is stored. Organisations must omit it.',
+        'Instructor applicants only: age groups, each a named age band with hours for every active lesson. Required on a new instructor application; on an update, omit to keep what is stored. Organisations must omit it.',
       items: {
-        $ref: '#/components/schemas/LearnerGroupRequest',
+        $ref: '#/components/schemas/AgeGroupRequest',
       },
     },
   },
@@ -17764,7 +17845,7 @@ export const AdminCreateUserRequestDTOSchema = {
       example: '+254700000000',
       maxLength: 50,
       minLength: 0,
-      pattern: '^(\\+254|0)?[17]\\d{8}$',
+      pattern: '^\\+[1-9]\\d{6,14}$',
     },
   },
   required: ['email', 'first_name', 'last_name'],
@@ -17869,7 +17950,7 @@ export const OrganisationUserCreateRequestDTOSchema = {
       example: '+254700000000',
       maxLength: 50,
       minLength: 0,
-      pattern: '^(\\+254|0)?[17]\\d{8}$',
+      pattern: '^\\+[1-9]\\d{6,14}$',
     },
     domain_name: {
       $ref: '#/components/schemas/DomainNameEnum2',
@@ -18859,16 +18940,16 @@ export const StudentScheduleSchema = {
       example: 90,
       readOnly: true,
     },
-    did_attend: {
-      type: 'boolean',
-      description: '**[READ-ONLY]** Indicates if the student attended this class.',
-      example: false,
-      readOnly: true,
-    },
     is_upcoming: {
       type: 'boolean',
       description: '**[READ-ONLY]** Indicates if this class is upcoming.',
       example: true,
+      readOnly: true,
+    },
+    did_attend: {
+      type: 'boolean',
+      description: '**[READ-ONLY]** Indicates if the student attended this class.',
+      example: false,
       readOnly: true,
     },
   },
@@ -21913,6 +21994,25 @@ export const ApiResponseListCompetitionSchema = {
       type: 'array',
       items: {
         $ref: '#/components/schemas/Competition',
+      },
+    },
+    message: {
+      type: 'string',
+    },
+    error: {},
+  },
+} as const;
+
+export const ApiResponseListSavedAgeGroupSchema = {
+  type: 'object',
+  properties: {
+    success: {
+      type: 'boolean',
+    },
+    data: {
+      type: 'array',
+      items: {
+        $ref: '#/components/schemas/SavedAgeGroup',
       },
     },
     message: {
@@ -25028,6 +25128,12 @@ export const CourseAssessmentScoreSchema = {
       example: true,
       readOnly: true,
     },
+    grade_display: {
+      type: 'string',
+      description: '**[READ-ONLY]** Formatted display of the grade information.',
+      example: '87.50 / 100.00 (87.50%)',
+      readOnly: true,
+    },
     score_category: {
       type: 'string',
       description: '**[READ-ONLY]** Formatted category of the score based on performance level.',
@@ -25046,12 +25152,6 @@ export const CourseAssessmentScoreSchema = {
       description:
         '**[READ-ONLY]** Summary indicating the availability and nature of instructor feedback.',
       example: 'Detailed instructor feedback provided',
-      readOnly: true,
-    },
-    grade_display: {
-      type: 'string',
-      description: '**[READ-ONLY]** Formatted display of the grade information.',
-      example: '87.50 / 100.00 (87.50%)',
       readOnly: true,
     },
   },
@@ -29296,14 +29396,6 @@ export const ProficiencyLevelEnum2Schema = {
   example: 'EXPERT',
 } as const;
 
-export const MembershipStatusEnumSchema = {
-  type: 'string',
-  description: '**[READ-ONLY]** Current status of the membership.',
-  enum: ['ACTIVE', 'INACTIVE', 'EXPIRED', 'UNKNOWN'],
-  example: 'ACTIVE',
-  readOnly: true,
-} as const;
-
 export const OrganisationTypeEnumSchema = {
   type: 'string',
   description: '**[READ-ONLY]** Classification of organisation type based on name keywords.',
@@ -29316,6 +29408,14 @@ export const OrganisationTypeEnumSchema = {
     'OTHER',
   ],
   example: 'PROFESSIONAL_INSTITUTE',
+  readOnly: true,
+} as const;
+
+export const MembershipStatusEnumSchema = {
+  type: 'string',
+  description: '**[READ-ONLY]** Current status of the membership.',
+  enum: ['ACTIVE', 'INACTIVE', 'EXPIRED', 'UNKNOWN'],
+  example: 'ACTIVE',
   readOnly: true,
 } as const;
 
@@ -30091,7 +30191,7 @@ export const StudentWritableSchema = {
       example: '+254712345678',
       maxLength: 20,
       minLength: 0,
-      pattern: '^(\\+254|0)?[17]\\d{8}$',
+      pattern: '^\\+[1-9]\\d{6,14}$',
     },
     second_guardian_name: {
       type: ['string', 'null'],
@@ -30108,7 +30208,7 @@ export const StudentWritableSchema = {
       example: '+254787654321',
       maxLength: 20,
       minLength: 0,
-      pattern: '^(\\+254|0)?[17]\\d{8}$',
+      pattern: '^\\+[1-9]\\d{6,14}$',
     },
     bio: {
       type: ['string', 'null'],

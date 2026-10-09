@@ -179,6 +179,8 @@ import {
   deleteAssignment,
   getAssignmentByUuid,
   updateAssignment,
+  deleteAgeGroup,
+  updateAgeGroup,
   adminDeleteSkill,
   adminGetSkill,
   adminUpdateSkill,
@@ -281,6 +283,8 @@ import {
   cancelObligation,
   listCompetitions,
   createCompetition,
+  listOrganisationAgeGroups,
+  createOrganisationAgeGroup,
   submitDomainOnboarding,
   listNotifications,
   applyBulkAction,
@@ -326,6 +330,8 @@ import {
   uploadInstructorDocument,
   getAvailabilitySlots,
   createAvailabilitySlot,
+  listMyAgeGroups,
+  createMyAgeGroup,
   createLink,
   declineGuardianConsent,
   grantGuardianConsent,
@@ -612,6 +618,7 @@ import {
   searchInstructors,
   getOrganisationInstructorSummaries,
   searchMemberships,
+  listMyAgeGroupPresets,
   searchExperience,
   searchEducation,
   searchDocuments,
@@ -1210,6 +1217,11 @@ import type {
   UpdateAssignmentData,
   UpdateAssignmentError,
   UpdateAssignmentResponse,
+  DeleteAgeGroupData,
+  DeleteAgeGroupError,
+  UpdateAgeGroupData,
+  UpdateAgeGroupError,
+  UpdateAgeGroupResponse,
   AdminDeleteSkillData,
   AdminDeleteSkillError,
   AdminGetSkillData,
@@ -1490,6 +1502,10 @@ import type {
   CreateCompetitionData,
   CreateCompetitionError,
   CreateCompetitionResponse,
+  ListOrganisationAgeGroupsData,
+  CreateOrganisationAgeGroupData,
+  CreateOrganisationAgeGroupError,
+  CreateOrganisationAgeGroupResponse,
   SubmitDomainOnboardingData,
   SubmitDomainOnboardingError,
   SubmitDomainOnboardingResponse,
@@ -1599,6 +1615,10 @@ import type {
   CreateAvailabilitySlotData,
   CreateAvailabilitySlotError,
   CreateAvailabilitySlotResponse,
+  ListMyAgeGroupsData,
+  CreateMyAgeGroupData,
+  CreateMyAgeGroupError,
+  CreateMyAgeGroupResponse,
   CreateLinkData,
   CreateLinkError,
   CreateLinkResponse,
@@ -2286,6 +2306,7 @@ import type {
   SearchMembershipsData,
   SearchMembershipsError,
   SearchMembershipsResponse,
+  ListMyAgeGroupPresetsData,
   SearchExperienceData,
   SearchExperienceError,
   SearchExperienceResponse,
@@ -7286,6 +7307,54 @@ export const updateAssignmentMutation = (
 };
 
 /**
+ * Delete a saved age group
+ * Only its owner. Applications that copied it keep their copy.
+ */
+export const deleteAgeGroupMutation = (
+  options?: Partial<Options<DeleteAgeGroupData>>
+): UseMutationOptions<unknown, DeleteAgeGroupError, Options<DeleteAgeGroupData>> => {
+  const mutationOptions: UseMutationOptions<
+    unknown,
+    DeleteAgeGroupError,
+    Options<DeleteAgeGroupData>
+  > = {
+    mutationFn: async localOptions => {
+      const { data } = await deleteAgeGroup({
+        ...options,
+        ...localOptions,
+        throwOnError: true,
+      });
+      return data;
+    },
+  };
+  return mutationOptions;
+};
+
+/**
+ * Update a saved age group
+ * Only its owner: the instructor, or the organisation's managers.
+ */
+export const updateAgeGroupMutation = (
+  options?: Partial<Options<UpdateAgeGroupData>>
+): UseMutationOptions<UpdateAgeGroupResponse, UpdateAgeGroupError, Options<UpdateAgeGroupData>> => {
+  const mutationOptions: UseMutationOptions<
+    UpdateAgeGroupResponse,
+    UpdateAgeGroupError,
+    Options<UpdateAgeGroupData>
+  > = {
+    mutationFn: async localOptions => {
+      const { data } = await updateAgeGroup({
+        ...options,
+        ...localOptions,
+        throwOnError: true,
+      });
+      return data;
+    },
+  };
+  return mutationOptions;
+};
+
+/**
  * Delete a skill
  * Removes it from every course and job tag list and unlinks instructor skills (their free text stays). Prefer retiring it with active=false.
  */
@@ -12236,6 +12305,81 @@ export const createCompetitionMutation = (
   return mutationOptions;
 };
 
+export const listOrganisationAgeGroupsQueryKey = (
+  options: Options<ListOrganisationAgeGroupsData>
+) => createQueryKey('listOrganisationAgeGroups', options);
+
+/**
+ * List an organisation's saved age groups
+ */
+export const listOrganisationAgeGroupsOptions = (
+  options: Options<ListOrganisationAgeGroupsData>
+) => {
+  return queryOptions({
+    queryFn: async ({ queryKey, signal }) => {
+      const { data } = await listOrganisationAgeGroups({
+        ...options,
+        ...queryKey[0],
+        signal,
+        throwOnError: true,
+      });
+      return data;
+    },
+    queryKey: listOrganisationAgeGroupsQueryKey(options),
+  });
+};
+
+export const createOrganisationAgeGroupQueryKey = (
+  options: Options<CreateOrganisationAgeGroupData>
+) => createQueryKey('createOrganisationAgeGroup', options);
+
+/**
+ * Save an age group for an organisation
+ */
+export const createOrganisationAgeGroupOptions = (
+  options: Options<CreateOrganisationAgeGroupData>
+) => {
+  return queryOptions({
+    queryFn: async ({ queryKey, signal }) => {
+      const { data } = await createOrganisationAgeGroup({
+        ...options,
+        ...queryKey[0],
+        signal,
+        throwOnError: true,
+      });
+      return data;
+    },
+    queryKey: createOrganisationAgeGroupQueryKey(options),
+  });
+};
+
+/**
+ * Save an age group for an organisation
+ */
+export const createOrganisationAgeGroupMutation = (
+  options?: Partial<Options<CreateOrganisationAgeGroupData>>
+): UseMutationOptions<
+  CreateOrganisationAgeGroupResponse,
+  CreateOrganisationAgeGroupError,
+  Options<CreateOrganisationAgeGroupData>
+> => {
+  const mutationOptions: UseMutationOptions<
+    CreateOrganisationAgeGroupResponse,
+    CreateOrganisationAgeGroupError,
+    Options<CreateOrganisationAgeGroupData>
+  > = {
+    mutationFn: async localOptions => {
+      const { data } = await createOrganisationAgeGroup({
+        ...options,
+        ...localOptions,
+        throwOnError: true,
+      });
+      return data;
+    },
+  };
+  return mutationOptions;
+};
+
 export const submitDomainOnboardingQueryKey = (options: Options<SubmitDomainOnboardingData>) =>
   createQueryKey('submitDomainOnboarding', options);
 
@@ -14134,6 +14278,75 @@ export const createAvailabilitySlotMutation = (
   > = {
     mutationFn: async localOptions => {
       const { data } = await createAvailabilitySlot({
+        ...options,
+        ...localOptions,
+        throwOnError: true,
+      });
+      return data;
+    },
+  };
+  return mutationOptions;
+};
+
+export const listMyAgeGroupsQueryKey = (options?: Options<ListMyAgeGroupsData>) =>
+  createQueryKey('listMyAgeGroups', options);
+
+/**
+ * List my saved age groups
+ */
+export const listMyAgeGroupsOptions = (options?: Options<ListMyAgeGroupsData>) => {
+  return queryOptions({
+    queryFn: async ({ queryKey, signal }) => {
+      const { data } = await listMyAgeGroups({
+        ...options,
+        ...queryKey[0],
+        signal,
+        throwOnError: true,
+      });
+      return data;
+    },
+    queryKey: listMyAgeGroupsQueryKey(options),
+  });
+};
+
+export const createMyAgeGroupQueryKey = (options: Options<CreateMyAgeGroupData>) =>
+  createQueryKey('createMyAgeGroup', options);
+
+/**
+ * Save an age group of my own
+ */
+export const createMyAgeGroupOptions = (options: Options<CreateMyAgeGroupData>) => {
+  return queryOptions({
+    queryFn: async ({ queryKey, signal }) => {
+      const { data } = await createMyAgeGroup({
+        ...options,
+        ...queryKey[0],
+        signal,
+        throwOnError: true,
+      });
+      return data;
+    },
+    queryKey: createMyAgeGroupQueryKey(options),
+  });
+};
+
+/**
+ * Save an age group of my own
+ */
+export const createMyAgeGroupMutation = (
+  options?: Partial<Options<CreateMyAgeGroupData>>
+): UseMutationOptions<
+  CreateMyAgeGroupResponse,
+  CreateMyAgeGroupError,
+  Options<CreateMyAgeGroupData>
+> => {
+  const mutationOptions: UseMutationOptions<
+    CreateMyAgeGroupResponse,
+    CreateMyAgeGroupError,
+    Options<CreateMyAgeGroupData>
+  > = {
+    mutationFn: async localOptions => {
+      const { data } = await createMyAgeGroup({
         ...options,
         ...localOptions,
         throwOnError: true,
@@ -27841,6 +28054,28 @@ export const searchMembershipsInfiniteOptions = (options: Options<SearchMembersh
   );
 };
 
+export const listMyAgeGroupPresetsQueryKey = (options?: Options<ListMyAgeGroupPresetsData>) =>
+  createQueryKey('listMyAgeGroupPresets', options);
+
+/**
+ * Age groups to start an application from
+ * The caller's own saved age groups, then those of every organisation they belong to.
+ */
+export const listMyAgeGroupPresetsOptions = (options?: Options<ListMyAgeGroupPresetsData>) => {
+  return queryOptions({
+    queryFn: async ({ queryKey, signal }) => {
+      const { data } = await listMyAgeGroupPresets({
+        ...options,
+        ...queryKey[0],
+        signal,
+        throwOnError: true,
+      });
+      return data;
+    },
+    queryKey: listMyAgeGroupPresetsQueryKey(options),
+  });
+};
+
 export const searchExperienceQueryKey = (options: Options<SearchExperienceData>) =>
   createQueryKey('searchExperience', options);
 
@@ -28220,7 +28455,7 @@ export const getFileQueryKey = (options: Options<GetFileData>) =>
 
 /**
  * Get a stored file by its storage key
- * Serves any stored file (images, videos, documents, certificates) by its canonical storage key.
+ * Serves any stored file (images, videos, documents, certificates) by its canonical storage key. Responses are immutable and carry an ETag. For JPEG/PNG/BMP images, w=320|640|1280 returns a downscaled variant (never upscaled), generated once and cached.
  */
 export const getFileOptions = (options: Options<GetFileData>) => {
   return queryOptions({
