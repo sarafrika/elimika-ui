@@ -66,16 +66,18 @@ export default function OrganisationProvider({
   const activeOrgId =
     activeAffiliation?.organisation_uuid ??
     initialOrganisation?.uuid ??
-    identity?.organisationUuid ??
     storedOrgId ??
+    identity?.organisationUuid ??
     null;
 
   const isOrgDomain = (domain: string) =>
     domain === 'organisation' || domain === 'organisation_user';
   const hasOrgDomain =
     userDomain.domains.some(isOrgDomain) || (identity?.domains ?? []).some(isOrgDomain);
-  // Only organisation pages need the org before rendering; other roles must not wait on it.
-  const isOrgRoute = routeSegmentFromPath(pathname) === 'organisation';
+  // Org pages and role-less shared pages (cart, apply-to-train) gate on the org, so they wait;
+  // routes with another role segment (admin, student...) render at once.
+  const routeSegment = routeSegmentFromPath(pathname);
+  const blocksOnOrg = routeSegment === 'organisation' || routeSegment === null;
 
   useEffect(() => {
     if (typeof window !== 'undefined' && storageKey && activeOrgId) {
@@ -96,7 +98,7 @@ export default function OrganisationProvider({
 
   const { data, isLoading } = useQuery(
     createQueryOptions(activeOrgId, {
-      enabled: hasOrgDomain && !!activeOrgId && (!!seed || !!session?.user),
+      enabled: hasOrgDomain && hydrated && !!activeOrgId && (!!seed || !!session?.user),
       initialData: seed,
       initialDataUpdatedAt: seed ? initialUpdatedAt : undefined,
     })
@@ -113,13 +115,13 @@ export default function OrganisationProvider({
     return <OrganisationContext.Provider value={null}>{children}</OrganisationContext.Provider>;
   }
 
-  if (hasOrgDomain && !activeOrgId && isOrgRoute) {
+  if (hasOrgDomain && !activeOrgId && blocksOnOrg) {
     return <CustomLoader />;
   }
 
   return (
     <OrganisationContext.Provider value={data ?? null}>
-      {isLoading && isOrgRoute ? <CustomLoader /> : children}
+      {(isLoading || !hydrated) && blocksOnOrg ? <CustomLoader /> : children}
     </OrganisationContext.Provider>
   );
 }
