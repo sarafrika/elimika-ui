@@ -100,7 +100,7 @@ export function useClassRoster(classId: string | undefined) {
     errors: {
       enrollmentError: enrollmentQuery.error,
       studentErrors: [studentsLookup.error],
-      userErrors: [] as unknown[],
+      userErrors: [usersLookup.error],
     },
   };
 }

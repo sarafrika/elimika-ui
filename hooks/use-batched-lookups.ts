@@ -246,7 +246,7 @@ export function useUsersByIds(ids: string[]) {
 
   const idChunks = useMemo(() => chunk(uniqueIds, DIRECTORY_CHUNK_SIZE), [uniqueIds]);
 
-  const { map, isLoading, isError, refetch } = useQueries({
+  const { map, isLoading, isError, error, refetch } = useQueries({
     queries: idChunks.map(idChunk => ({
       ...getUserDirectoryOptions({ query: { uuid_in: idChunk } }),
       enabled: idChunk.length > 0,
@@ -272,12 +272,13 @@ export function useUsersByIds(ids: string[]) {
         isError: results.some(
           result => result.isError || result.data?.error || result.data?.success === false
         ),
+        error: results.find(result => result.error)?.error ?? null,
         refetch: () => Promise.all(results.map(result => result.refetch())),
       };
     },
   });
 
-  return { userMap: map, isLoading, isError, refetch };
+  return { userMap: map, isLoading, isError, error, refetch };
 }
 
 /**
