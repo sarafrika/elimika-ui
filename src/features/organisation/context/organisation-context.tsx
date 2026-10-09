@@ -1,7 +1,7 @@
 'use client';
 
 import { queryOptions, type UseQueryOptions, useQuery } from '@tanstack/react-query';
-import { useRouter } from 'next/navigation';
+import { usePathname, useRouter } from 'next/navigation';
 import { useSession } from 'next-auth/react';
 import { createContext, type ReactNode, useContext, useEffect, useMemo, useState } from 'react';
 import CustomLoader from '@/components/custom-loader';
@@ -12,6 +12,7 @@ import {
   type UserOrganisationAffiliationDto,
 } from '@/services/client';
 import { useUserDomain } from '@/src/features/dashboard/context/user-domain-context';
+import { routeSegmentFromPath } from '@/src/features/dashboard/lib/dashboard-url';
 import { useUserProfile } from '@/src/features/profile/context/profile-context';
 
 type OrganisationContextValue = Organisation | null;
@@ -34,6 +35,8 @@ export default function OrganisationProvider({
   const userProfile = useUserProfile();
   const userDomain = useUserDomain();
   const router = useRouter();
+  const pathname = usePathname();
+  const identity = session?.identity;
 
   const [storedOrgId, setStoredOrgId] = useState<string | null>(null);
   const [hydrated, setHydrated] = useState(false);
@@ -44,9 +47,9 @@ export default function OrganisationProvider({
     affiliations.find(org => org.active) ?? affiliations[0];
 
   const storageKey = useMemo(() => {
-    const identifier = userProfile?.uuid ?? userProfile?.email;
+    const identifier = userProfile?.uuid ?? identity?.uuid ?? userProfile?.email;
     return identifier ? `organisation:last:${identifier}` : null;
-  }, [userProfile?.uuid, userProfile?.email]);
+  }, [userProfile?.uuid, identity?.uuid, userProfile?.email]);
 
   useEffect(() => {
     if (hydrated) return;
@@ -61,10 +64,20 @@ export default function OrganisationProvider({
   }, [hydrated, storageKey]);
 
   const activeOrgId =
-    activeAffiliation?.organisation_uuid ?? initialOrganisation?.uuid ?? storedOrgId ?? null;
+    activeAffiliation?.organisation_uuid ??
+    initialOrganisation?.uuid ??
+    storedOrgId ??
+    identity?.organisationUuid ??
+    null;
 
+  const isOrgDomain = (domain: string) =>
+    domain === 'organisation' || domain === 'organisation_user';
   const hasOrgDomain =
-    userDomain.domains.includes('organisation') || userDomain.domains.includes('organisation_user');
+    userDomain.domains.some(isOrgDomain) || (identity?.domains ?? []).some(isOrgDomain);
+  // Org pages and role-less shared pages (cart, apply-to-train) gate on the org, so they wait;
+  // routes with another role segment (admin, student...) render at once.
+  const routeSegment = routeSegmentFromPath(pathname);
+  const blocksOnOrg = routeSegment === 'organisation' || routeSegment === null;
 
   useEffect(() => {
     if (typeof window !== 'undefined' && storageKey && activeOrgId) {
@@ -85,7 +98,7 @@ export default function OrganisationProvider({
 
   const { data, isLoading } = useQuery(
     createQueryOptions(activeOrgId, {
-      enabled: hasOrgDomain && !!userProfile && !!activeOrgId && (!!seed || !!session?.user),
+      enabled: hasOrgDomain && hydrated && !!activeOrgId && (!!seed || !!session?.user),
       initialData: seed,
       initialDataUpdatedAt: seed ? initialUpdatedAt : undefined,
     })
@@ -102,13 +115,13 @@ export default function OrganisationProvider({
     return <OrganisationContext.Provider value={null}>{children}</OrganisationContext.Provider>;
   }
 
-  if (hasOrgDomain && !activeOrgId) {
+  if (hasOrgDomain && !activeOrgId && blocksOnOrg) {
     return <CustomLoader />;
   }
 
   return (
     <OrganisationContext.Provider value={data ?? null}>
-      {isLoading ? <CustomLoader /> : children}
+      {(isLoading || !hydrated) && blocksOnOrg ? <CustomLoader /> : children}
     </OrganisationContext.Provider>
   );
 }
