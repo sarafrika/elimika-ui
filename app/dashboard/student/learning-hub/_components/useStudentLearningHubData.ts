@@ -1,15 +1,16 @@
 // @ts-nocheck -- pre-existing @hey-api generated-client type drift (see memory: elimika-ui-typecheck)
 'use client';
 
+import { useAssignmentsByIds, useInstructorsByIds } from '@/hooks/use-batched-lookups';
 import useStudentClassDefinitions from '@/hooks/use-student-class-definition';
+import { STALE_TIMES } from '@/lib/query-client';
 import {
-  getAssignmentByUuidOptions,
+  getAllContentTypesOptions,
   getAssignmentSchedulesOptions,
-  getAssignmentSubmissionsOptions,
   getEnrollmentOverviewForStudentOptions,
-  getInstructorByUuidOptions,
   getScheduledInstanceEnrollmentsForStudentOptions,
   getStudentCertificatesOptions,
+  searchSubmissionsOptions,
 } from '@/services/client/@tanstack/react-query.gen';
 import type {
   Assignment,
@@ -20,6 +21,10 @@ import type {
   StudentClassEnrollmentSummary,
   StudentCourseEnrollmentSummary,
 } from '@/services/client/types.gen';
+import {
+  collectStudentEnrollmentUuids,
+  STUDENT_SUBMISSION_PAGE_SIZE,
+} from '@/src/features/dashboard/student-assessment/useStudentAssignmentData';
 import { useUserProfile } from '@/src/features/profile/context/profile-context';
 import { useQueries, useQuery } from '@tanstack/react-query';
 import { useMemo } from 'react';
@@ -273,6 +278,12 @@ export function useStudentLearningHubData(): LearningHubData {
     student ?? undefined
   );
 
+  // Reference data the lesson drill-down needs; same key, so it dedupes and no longer trails.
+  useQuery({
+    ...getAllContentTypesOptions({ query: { pageable: { page: 0, size: 100 } } }),
+    staleTime: STALE_TIMES.reference,
+  });
+
   const classLearningRoutes = useMemo(() => {
     const routes = new Map<
       string,
@@ -370,49 +381,50 @@ export function useStudentLearningHubData(): LearningHubData {
     [assignmentSchedules]
   );
 
-  const assignmentQueries = useQueries({
-    queries: assignmentIds.map(uuid => ({
-      ...getAssignmentByUuidOptions({ path: { uuid } }),
-      enabled: Boolean(uuid),
-    })),
-  });
+  const { assignmentMap: assignmentsById, isLoading: assignmentsLoading } =
+    useAssignmentsByIds(assignmentIds);
 
-  const assignmentSubmissionsQueries = useQueries({
-    queries: assignmentIds.map(uuid => ({
-      ...getAssignmentSubmissionsOptions({ path: { assignmentUuid: uuid } }),
-      enabled: Boolean(uuid),
-    })),
+  const submissionEnrollmentUuids = useMemo(
+    () => collectStudentEnrollmentUuids(classDefinitions, student?.uuid),
+    [classDefinitions, student?.uuid]
+  );
+
+  const { data: submissionsResponse, isLoading: submissionsLoading } = useQuery({
+    ...searchSubmissionsOptions({
+      query: {
+        searchParams: { enrollment_uuid_in: submissionEnrollmentUuids.join(',') },
+        pageable: { page: 0, size: STUDENT_SUBMISSION_PAGE_SIZE },
+      },
+    }),
+    enabled: submissionEnrollmentUuids.length > 0 && assignmentIds.length > 0,
+    staleTime: STALE_TIMES.live,
+    refetchOnWindowFocus: false,
   });
 
   const assignmentsMap = useMemo(() => {
     const map = new Map<string, Assignment>();
 
-    assignmentQueries.forEach((query, index) => {
-      const assignment = query.data?.data;
-      const uuid = assignmentIds[index];
-
-      if (uuid && assignment) {
-        map.set(uuid, assignment);
-      }
-    });
+    for (const uuid of assignmentIds) {
+      const assignment = assignmentsById[uuid];
+      if (assignment) map.set(uuid, assignment);
+    }
 
     return map;
-  }, [assignmentIds, assignmentQueries]);
+  }, [assignmentIds, assignmentsById]);
 
   const submissionsMap = useMemo(() => {
     const map = new Map<string, AssignmentSubmission[]>();
+    const submissions: AssignmentSubmission[] = submissionsResponse?.data?.content ?? [];
 
-    assignmentSubmissionsQueries.forEach((query, index) => {
-      const uuid = assignmentIds[index];
-      const submissions = query.data?.data ?? [];
-
-      if (uuid) {
-        map.set(uuid, submissions);
-      }
-    });
+    for (const submission of submissions) {
+      if (!submission.assignment_uuid) continue;
+      const existing = map.get(submission.assignment_uuid) ?? [];
+      existing.push(submission);
+      map.set(submission.assignment_uuid, existing);
+    }
 
     return map;
-  }, [assignmentIds, assignmentSubmissionsQueries]);
+  }, [submissionsResponse]);
 
   const certificates = studentCertificatesResponse?.data ?? [];
   const scheduledInstanceEnrollments =
@@ -588,29 +600,19 @@ export function useStudentLearningHubData(): LearningHubData {
     [studentScheduledInstances]
   );
 
-  const instructorQueries = useQueries({
-    queries: instructorUuids.map(uuid => ({
-      ...getInstructorByUuidOptions({ path: { uuid } }),
-      enabled: Boolean(uuid),
-      staleTime: 5 * 60 * 1000,
-      refetchOnWindowFocus: false,
-    })),
-  });
+  const { instructorMap: instructorsById, isLoading: instructorsLoading } =
+    useInstructorsByIds(instructorUuids);
 
   const instructorMap = useMemo(() => {
     const map = new Map<string, Instructor>();
 
-    instructorQueries.forEach((query, index) => {
-      const instructor = query.data?.data;
-      const uuid = instructorUuids[index];
-
-      if (uuid && instructor) {
-        map.set(uuid, instructor);
-      }
-    });
+    for (const uuid of instructorUuids) {
+      const instructor = instructorsById[uuid];
+      if (instructor) map.set(uuid, instructor);
+    }
 
     return map;
-  }, [instructorQueries, instructorUuids]);
+  }, [instructorUuids, instructorsById]);
 
   const certificateMap = useMemo(() => {
     const map = new Map<string, number>();
@@ -807,9 +809,7 @@ export function useStudentLearningHubData(): LearningHubData {
         if (!assignment) return null;
 
         const enrollmentUuids = new Set(
-          item.classInfo.classEnrollments
-            .map(enrollment => enrollment.enrollment_uuid)
-            .filter(Boolean)
+          collectStudentEnrollmentUuids([item.classInfo], student?.uuid)
         );
 
         const latestSubmission =
@@ -843,7 +843,7 @@ export function useStudentLearningHubData(): LearningHubData {
       .map(({ dueTime: _dueTime, ...assignment }) => assignment);
 
     return rows.length > 0 ? rows : [];
-  }, [assignmentSchedules, assignmentsMap, submissionsMap]);
+  }, [assignmentSchedules, assignmentsMap, student?.uuid, submissionsMap]);
 
   const invite = useMemo<LearningHubInvite | null>(() => {
     const item = upcomingClassesList[1] ?? upcomingClassesList[0];
@@ -922,9 +922,9 @@ export function useStudentLearningHubData(): LearningHubData {
       scheduledInstanceEnrollmentsLoading ||
       certificatesLoading ||
       enrollmentOverviewLoading ||
-      instructorQueries.some(query => query.isLoading) ||
+      instructorsLoading ||
       assignmentScheduleQueries.some(query => query.isLoading) ||
-      assignmentQueries.some(query => query.isLoading) ||
-      assignmentSubmissionsQueries.some(query => query.isLoading),
+      assignmentsLoading ||
+      submissionsLoading,
   };
 }

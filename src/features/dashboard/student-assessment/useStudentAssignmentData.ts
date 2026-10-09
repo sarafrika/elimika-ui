@@ -1,11 +1,12 @@
 'use client';
 
+import { useAssignmentsByIds } from '@/hooks/use-batched-lookups';
 import useStudentClassDefinitions from '@/hooks/use-student-class-definition';
+import { STALE_TIMES } from '@/lib/query-client';
 import {
   getAssignmentAttachmentsOptions,
-  getAssignmentByUuidOptions,
   getAssignmentSchedulesOptions,
-  getAssignmentSubmissionsOptions,
+  searchSubmissionsOptions,
 } from '@/services/client/@tanstack/react-query.gen';
 import type {
   Assignment,
@@ -13,7 +14,7 @@ import type {
   AssignmentSubmission,
   ClassAssignmentSchedule,
 } from '@/services/client/types.gen';
-import { useQueries } from '@tanstack/react-query';
+import { useQueries, useQuery } from '@tanstack/react-query';
 import { useMemo } from 'react';
 import { useUserProfile } from '../../profile/context/profile-context';
 
@@ -176,7 +177,39 @@ export function getStudentAssignmentSubmissionState(row: StudentAssignmentRow) {
   };
 }
 
-export function useStudentAssignmentData() {
+export const STUDENT_SUBMISSION_PAGE_SIZE = 500;
+
+type OwnedEnrollment = { uuid?: string; enrollment_uuid?: string; student_uuid?: string };
+
+type ClassDefinitionEnrollments = {
+  classEnrollments?: OwnedEnrollment[];
+  courseEnrollments?: OwnedEnrollment[];
+};
+
+/** Sorted so this hook and useStudentAssignmentData share one submissions search key. */
+export function collectStudentEnrollmentUuids(
+  classDefinitions: ClassDefinitionEnrollments[],
+  studentUuid?: string
+): string[] {
+  const ids = new Set<string>();
+  if (!studentUuid) return [];
+  for (const item of classDefinitions) {
+    for (const enrollment of [...(item.classEnrollments ?? []), ...(item.courseEnrollments ?? [])]) {
+      const id = enrollment.uuid ?? enrollment.enrollment_uuid;
+      if (id && enrollment.student_uuid === studentUuid) ids.add(id);
+    }
+  }
+  return Array.from(ids).sort((a, b) => a.localeCompare(b));
+}
+
+type UseStudentAssignmentDataOptions = {
+  /** Skip per-assignment attachment fetches for summary views that never render them. */
+  includeAttachments?: boolean;
+};
+
+export function useStudentAssignmentData({
+  includeAttachments = true,
+}: UseStudentAssignmentDataOptions = {}) {
   const profile = useUserProfile();
   const student = profile?.student;
 
@@ -269,19 +302,8 @@ export function useStudentAssignmentData() {
     [scheduleRows]
   );
 
-  /**
-   * Assignment details
-   */
-  const assignmentDetailQueries = useQueries({
-    queries: assignmentUuids.map(uuid => ({
-      ...getAssignmentByUuidOptions({
-        path: { uuid },
-      }),
-      enabled: Boolean(student?.uuid && uuid),
-      staleTime: 5 * 60 * 1000,
-      refetchOnWindowFocus: false,
-    })),
-  });
+  const { assignmentMap: assignmentsById, isLoading: assignmentsLoading } =
+    useAssignmentsByIds(assignmentUuids);
 
   /**
    * Assignment attachments
@@ -291,24 +313,30 @@ export function useStudentAssignmentData() {
       ...getAssignmentAttachmentsOptions({
         path: { assignmentUuid: uuid },
       }),
-      enabled: Boolean(student?.uuid && uuid),
+      enabled: Boolean(includeAttachments && student?.uuid && uuid),
       staleTime: 5 * 60 * 1000,
       refetchOnWindowFocus: false,
     })),
   });
 
   /**
-   * Submissions
+   * Submissions: one enrollment-scoped search instead of a request per assignment
    */
-  const assignmentSubmissionQueries = useQueries({
-    queries: assignmentUuids.map(uuid => ({
-      ...getAssignmentSubmissionsOptions({
-        path: { assignmentUuid: uuid },
-      }),
-      // enabled: Boolean(student?.uuid && uuid),
-      staleTime: 60 * 1000,
-      refetchOnWindowFocus: false,
-    })),
+  const submissionEnrollmentUuids = useMemo(
+    () => collectStudentEnrollmentUuids(classDefinitions ?? [], student?.uuid),
+    [classDefinitions, student?.uuid]
+  );
+
+  const { data: submissionsResponse, isLoading: submissionsLoading } = useQuery({
+    ...searchSubmissionsOptions({
+      query: {
+        searchParams: { enrollment_uuid_in: submissionEnrollmentUuids.join(',') },
+        pageable: { page: 0, size: STUDENT_SUBMISSION_PAGE_SIZE },
+      },
+    }),
+    enabled: submissionEnrollmentUuids.length > 0 && assignmentUuids.length > 0,
+    staleTime: STALE_TIMES.live,
+    refetchOnWindowFocus: false,
   });
 
   /**
@@ -317,16 +345,13 @@ export function useStudentAssignmentData() {
   const assignmentMap = useMemo(() => {
     const map = new Map<string, Assignment>();
 
-    assignmentUuids.forEach((uuid, i) => {
-      const assignment = assignmentDetailQueries[i]?.data?.data;
-
-      if (assignment) {
-        map.set(uuid, assignment);
-      }
-    });
+    for (const uuid of assignmentUuids) {
+      const assignment = assignmentsById[uuid];
+      if (assignment) map.set(uuid, assignment);
+    }
 
     return map;
-  }, [assignmentDetailQueries, assignmentUuids]);
+  }, [assignmentsById, assignmentUuids]);
 
   const attachmentsMap = useMemo(() => {
     const map = new Map<string, AssignmentAttachment[]>();
@@ -345,11 +370,13 @@ export function useStudentAssignmentData() {
   const submissionMap = useMemo(() => {
     const map = new Map<string, AssignmentSubmission[]>();
 
-    assignmentUuids.forEach((uuid, i) => {
-      const submissions = assignmentSubmissionQueries[i]?.data?.data ?? [];
+    const allSubmissions: AssignmentSubmission[] = submissionsResponse?.data?.content ?? [];
 
-      const filtered = submissions
-        .filter(sub => studentEnrollmentUuids.has(sub.enrollment_uuid))
+    assignmentUuids.forEach(uuid => {
+      const filtered = allSubmissions
+        .filter(
+          sub => sub.assignment_uuid === uuid && studentEnrollmentUuids.has(sub.enrollment_uuid)
+        )
         .sort((a, b) => {
           const at = new Date(a.submitted_at ?? a.updated_date ?? a.created_date ?? 0).getTime();
           const bt = new Date(b.submitted_at ?? b.updated_date ?? b.created_date ?? 0).getTime();
@@ -360,7 +387,7 @@ export function useStudentAssignmentData() {
     });
 
     return map;
-  }, [assignmentSubmissionQueries, assignmentUuids, studentEnrollmentUuids]);
+  }, [assignmentUuids, studentEnrollmentUuids, submissionsResponse]);
 
   /**
    * Final rows
@@ -403,9 +430,9 @@ export function useStudentAssignmentData() {
   const isLoading =
     classDefinitionsLoading ||
     assignmentScheduleQueries.some(q => q.isLoading) ||
-    assignmentDetailQueries.some(q => q.isLoading) ||
+    assignmentsLoading ||
     assignmentAttachmentQueries.some(q => q.isLoading) ||
-    assignmentSubmissionQueries.some(q => q.isLoading);
+    submissionsLoading;
 
   return {
     assignmentRows,

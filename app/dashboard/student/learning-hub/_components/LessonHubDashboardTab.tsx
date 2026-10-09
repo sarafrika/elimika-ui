@@ -81,7 +81,9 @@ function isClassJoinable(item: {
 
 export function LessonHubDashboardTab({ learningHubData }: LearningHubDataProps) {
     const router = useRouter()
-    const { assignmentRows, isLoading: assignmentsLoading } = useStudentAssignmentData();
+    const { assignmentRows, isLoading: assignmentsLoading } = useStudentAssignmentData({
+        includeAttachments: false,
+    });
     const { activeDomain } = useUserDomain();
     const { studyStreakDays, weeklyStudyMinutes } = useLearningHubStudyMetrics();
 
