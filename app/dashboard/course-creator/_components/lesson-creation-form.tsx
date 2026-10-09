@@ -29,7 +29,6 @@ import {
   getAllContentTypesOptions,
   getCourseLessonQueryKey,
   getCourseLessonsQueryKey,
-  getLessonContentOptions,
   getLessonContentQueryKey,
   updateCourseLessonMutation,
   updateLessonContentMutation,
@@ -196,16 +195,6 @@ export const LessonCreationForm: React.FC<LessonCreationFormProps> = ({
     });
     return map;
   }, [lessons, lessonContentsMap, contentTypeData]);
-
-  const { data } = useQuery({
-    ...getLessonContentOptions({
-      path: {
-        courseUuid: course?.data?.uuid as string,
-        lessonUuid: activeLessonId as string,
-      },
-    }),
-    enabled: !activeLessonId,
-  });
 
   const addLessonMutation = useMutation(addCourseLessonMutation());
   const updateLessonMutation = useMutation(updateCourseLessonMutation());

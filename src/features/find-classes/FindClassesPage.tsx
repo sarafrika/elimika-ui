@@ -36,7 +36,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { useCoursesByIds } from '@/hooks/use-batched-lookups';
 import { useSearchState, useSearchStatePatch } from '@/hooks/use-search-state';
 import { useUrlSearchQuery } from '@/hooks/use-url-search-query';
-import { isSearchUnavailable, retryUnlessClientOrSearchError } from '@/lib/api-errors';
+import { isSearchUnavailable } from '@/lib/api-errors';
 import { formatDate } from '@/lib/date';
 import { STALE_TIMES } from '@/lib/query-client';
 import { classifySearchError } from '@/lib/search/query';
@@ -112,7 +112,6 @@ export function FindClassesPage({ domain }: { domain: 'student' | 'parent' }) {
     ...getAllClassDefinitionsOptions({ query }),
     placeholderData: keepPreviousData,
     staleTime: STALE_TIMES.live,
-    retry: retryUnlessClientOrSearchError,
   });
 
   // The plain listing (no q, no near) does not apply filters on the server: narrow the

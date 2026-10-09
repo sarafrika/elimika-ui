@@ -1,13 +1,7 @@
 'use client';
 
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { GraduationCap, Pencil, Plus, Trash2 } from 'lucide-react';
-import { type FormEvent, useMemo, useState } from 'react';
-import { toast } from 'sonner';
 import DeleteModal from '@/components/custom-modals/delete-modal';
-import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent } from '@/components/ui/card';
 import {
   Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle,
 } from '@/components/ui/dialog';
@@ -22,22 +16,19 @@ import Spinner from '@/components/ui/spinner';
 import { getErrorMessage } from '@/lib/error-utils';
 import { STALE_TIMES } from '@/lib/query-client';
 import {
-  addEducationMutation, deleteEducationMutation, listDocumentsOptions,
+  addEducationMutation, deleteEducationMutation,
   getSummaryQueryKey,
+  listDocumentsOptions,
   listDocumentsQueryKey, listDocumentTypesOptions, listEducationOptions,
   listEducationQueryKey, updateEducationMutation, uploadDocumentMutation,
 } from '@/services/client/@tanstack/react-query.gen';
 import type { UserDocument, UserEducation } from '@/services/client/types.gen';
 import { requireApiData } from '@/src/features/onboarding/lib/user-onboarding';
-import { toAuthenticatedMediaUrl } from '@/src/lib/media-url';
-
-function verificationStatus(documents: UserDocument[]) {
-  if (documents.some(document => document.status === 'Rejected')) return 'Rejected';
-  if (documents.some(document => document.status === 'Expired')) return 'Expired';
-  if (documents.length && documents.every(document => document.is_verified || document.status === 'Approved'))
-    return 'Verified';
-  return 'Pending';
-}
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { Plus } from 'lucide-react';
+import { type FormEvent, useMemo, useState } from 'react';
+import { toast } from 'sonner';
+import { SkillsWalletEducationList, verificationStatus } from './SkillsWalletEducationList';
 
 export function SkillsWalletEducationTab({ readOnly = false }: { readOnly?: boolean }) {
   const queryClient = useQueryClient();
@@ -90,8 +81,8 @@ export function SkillsWalletEducationTab({ readOnly = false }: { readOnly?: bool
   };
 
   return (
-    <div className='space-y-4'>
-      <div className='flex flex-col justify-between gap-3 sm:flex-row sm:items-center'>
+    <div className='space-y-6'>
+      <div className='flex flex-col gap-3 md:flex-row md:items-center md:justify-between'>
         <div>
           <h2 className='text-xl font-semibold'>Education</h2>
           <p className='text-muted-foreground text-sm'>
@@ -99,61 +90,27 @@ export function SkillsWalletEducationTab({ readOnly = false }: { readOnly?: bool
           </p>
         </div>
         {!readOnly && <Button type='button' onClick={() => setEditor({})}>
-          <Plus className='size-4' />Add education
+          <Plus className='mr-2 h-4 w-4' />Add education
         </Button>}
       </div>
       {educationQuery.isLoading || documentsQuery.isLoading ? (
-        <Skeleton className='h-40 w-full' />
+        <div className='space-y-4' aria-label='Loading education'>
+          <Skeleton className='h-16 w-full' />
+          <Skeleton className='h-64 w-full' />
+        </div>
       ) : educationQuery.isError || documentsQuery.isError ? (
         <EmptyState
           title='Unable to load education'
           description='Please try loading your education and evidence again.'
           action={<Button type='button' variant='outline' onClick={() => void refresh()}>Try again</Button>}
         />
-      ) : !educationQuery.data?.length ? (
-        <EmptyState icon={GraduationCap} title='No education added yet' description='Add a qualification with evidence to start your education record.' />
       ) : (
-        <div className='space-y-3'>
-          {educationQuery.data.map(education => {
-            const documents = education.uuid ? documentsByEducation.get(education.uuid) ?? [] : [];
-            return (
-              <Card key={education.uuid}>
-                <CardContent className='space-y-3 p-5'>
-                  <div className='flex items-start justify-between gap-3'>
-                    <div className='min-w-0 space-y-1'>
-                      <h3 className='font-semibold break-words'>{education.qualification}</h3>
-                      <p className='text-muted-foreground text-sm break-words'>{education.school_name}</p>
-                      <p className='text-muted-foreground text-sm'>
-                        {education.field_of_study || 'Field of study not specified'}
-                        {education.year_completed ? ` · ${education.year_completed}` : ''}
-                      </p>
-                    </div>
-                    {!readOnly && <div className='flex shrink-0 gap-1'>
-                      <Button type='button' variant='ghost' size='icon' aria-label={`Edit ${education.qualification}`} disabled={!education.uuid} onClick={() => setEditor({ education })}>
-                        <Pencil className='size-4' />
-                      </Button>
-                      <Button type='button' variant='ghost' size='icon' aria-label={`Delete ${education.qualification}`} disabled={!education.uuid} onClick={() => setDeleting(education)}>
-                        <Trash2 className='text-destructive size-4' />
-                      </Button>
-                    </div>}
-                  </div>
-                  <Badge variant='outline'>{verificationStatus(documents)}</Badge>
-                  {documents.length ? (
-                    <ul className='space-y-1 text-sm'>
-                      {documents.map(document => {
-                        const url = toAuthenticatedMediaUrl(document.file_url);
-                        const label = document.original_filename || document.title || 'Education evidence';
-                        return <li key={document.uuid}>{url ? (
-                          <a className='text-primary break-words underline' href={url} target='_blank' rel='noopener noreferrer'>{label}</a>
-                        ) : <span>{label}</span>}</li>;
-                      })}
-                    </ul>
-                  ) : <p className='text-muted-foreground text-sm'>No evidence uploaded.{!readOnly && ' Edit this qualification to attach evidence.'}</p>}
-                </CardContent>
-              </Card>
-            );
-          })}
-        </div>
+        <SkillsWalletEducationList
+          education={educationQuery.data ?? []}
+          documentsByEducation={documentsByEducation}
+          onEdit={readOnly ? undefined : education => setEditor({ education })}
+          onDelete={readOnly ? undefined : setDeleting}
+        />
       )}
       {editor && (
         <EducationDialog
@@ -174,6 +131,24 @@ export function SkillsWalletEducationTab({ readOnly = false }: { readOnly?: bool
     </div>
   );
 }
+
+export const educationalQualifications = [
+  'No Formal Education',
+  'Primary Education',
+  'Secondary Education',
+  'Vocational / Technical Qualification',
+  'Certificate',
+  'Ordinary National Diploma (OND) / National Diploma (ND)',
+  'Higher National Diploma (HND)',
+  "Bachelor's Degree",
+  'Postgraduate Diploma (PGD)',
+  "Master's Degree",
+  'Doctoral Degree (PhD or equivalent)',
+  'Professional Qualification',
+  'Short Course / Micro-credential',
+  'Postdoctoral / Research Qualification',
+  'Other',
+] as const;
 
 function EducationDialog({ education, documents, onClose, onSaved }: {
   education?: UserEducation;
@@ -281,8 +256,29 @@ function EducationDialog({ education, documents, onClose, onSaved }: {
         <form onSubmit={submit}>
           <fieldset disabled={pending} className='grid gap-4 sm:grid-cols-2'>
             <div className='space-y-2'>
-              <Label htmlFor='education-qualification'>Skill (qualification)</Label>
-              <Input id='education-qualification' placeholder='e.g. Bachelor of Science' required value={draft.qualification} onChange={event => setDraft(value => ({ ...value, qualification: event.target.value }))} />
+              <Label htmlFor='education-qualification'>Qualification</Label>
+              <Select
+                value={draft.qualification}
+                onValueChange={value =>
+                  setDraft(current => ({
+                    ...current,
+                    qualification: value,
+                  }))
+                }
+                disabled={pending}
+                required
+              >
+                <SelectTrigger id='education-qualification' className='w-full'>
+                  <SelectValue placeholder='Select educational qualification' />
+                </SelectTrigger>
+                <SelectContent>
+                  {educationalQualifications.map(qualification => (
+                    <SelectItem key={qualification} value={qualification}>
+                      {qualification}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
             <div className='space-y-2'>
               <Label htmlFor='education-field'>Taxonomy / category (field of study)</Label>

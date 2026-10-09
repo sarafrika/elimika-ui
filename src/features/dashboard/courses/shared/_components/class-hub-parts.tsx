@@ -106,6 +106,7 @@ export function ClassHeaderMedia({
         <video
           src={videoUrl}
           controls
+          preload='none'
           poster={imageUrl || undefined}
           className='h-full w-full object-cover'
         />

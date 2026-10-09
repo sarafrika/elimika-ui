@@ -141,6 +141,19 @@ function getPublicFileCacheControl(status: number) {
   return status === 404 ? PUBLIC_FILE_MISSING_CACHE_CONTROL : 'no-store';
 }
 
+function dropVary(headers: Headers, values: string[]) {
+  const drop = new Set(values.map(value => value.toLowerCase()));
+  const kept = (headers.get('vary') ?? '')
+    .split(',')
+    .map(value => value.trim())
+    .filter(value => value && !drop.has(value.toLowerCase()));
+  if (kept.length > 0) {
+    headers.set('vary', kept.join(', '));
+  } else {
+    headers.delete('vary');
+  }
+}
+
 async function proxyPublicFile(request: NextRequest, upstreamUrl: URL) {
   const headers = new Headers(request.headers);
   headers.delete('host');
@@ -158,6 +171,7 @@ async function proxyPublicFile(request: NextRequest, upstreamUrl: URL) {
   responseHeaders.delete('set-cookie');
   responseHeaders.delete('pragma');
   responseHeaders.delete('expires');
+  dropVary(responseHeaders, ['Authorization', 'Cookie', ACTING_DOMAIN_HEADER]);
   responseHeaders.set('cache-control', getPublicFileCacheControl(upstreamResponse.status));
   responseHeaders.set('x-bff-cache', 'PUBLIC');
 

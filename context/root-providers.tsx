@@ -5,6 +5,7 @@ import { PersistQueryClientProvider } from '@tanstack/react-query-persist-client
 import dynamic from 'next/dynamic';
 import { usePathname } from 'next/navigation';
 import { type ReactNode, useState } from 'react';
+import { RumReporter } from '@/components/perf/rum-reporter';
 import { AuthSessionProvider } from '@/context/auth-session-provider';
 import { TimeZoneProvider } from '@/context/timezone-context';
 import {
@@ -18,10 +19,10 @@ import { isVolatileGeneratedQuery } from '@/src/features/dashboard/workflow-quer
 const ReactQueryDevtools =
   process.env.NODE_ENV === 'development'
     ? dynamic(() =>
-      import('@tanstack/react-query-devtools').then(m => ({
-        default: m.ReactQueryDevtools,
-      }))
-    )
+        import('@tanstack/react-query-devtools').then(m => ({
+          default: m.ReactQueryDevtools,
+        }))
+      )
     : null;
 
 export function RootProviders({ children }: { children: ReactNode }) {
@@ -61,6 +62,7 @@ export function RootProviders({ children }: { children: ReactNode }) {
       ) : (
         <TimeZoneProvider>{children}</TimeZoneProvider>
       )}
+      <RumReporter />
       {ReactQueryDevtools ? <ReactQueryDevtools initialIsOpen={false} /> : null}
     </PersistQueryClientProvider>
   );

@@ -5,10 +5,8 @@ import { useQueries, useQuery } from '@tanstack/react-query';
 import { Button } from '@/components/ui/button';
 import { STALE_TIMES } from '@/lib/query-client';
 import type { Course } from '@/services/client';
-import {
-  getAllDifficultyLevelsOptions,
-  getCourseContentOptions,
-} from '@/services/client/@tanstack/react-query.gen';
+import { getAllDifficultyLevelsOptions } from '@/services/client/@tanstack/react-query.gen';
+import { courseContentQueryOptions } from '@/src/features/course-record/course-content-query';
 import {
   ProgramsCurriculumTab,
   type ProgramCurriculumCourse,
@@ -53,7 +51,7 @@ export function ProgramCurriculumPanel({
   );
   const queries = useQueries({
     queries: ids.map(courseUuid => ({
-      ...getCourseContentOptions({ path: { courseUuid } }),
+      ...courseContentQueryOptions(courseUuid),
       enabled: Boolean(courseUuid),
       staleTime: STALE_TIMES.entity,
     })),

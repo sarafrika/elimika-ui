@@ -171,7 +171,7 @@ export function CourseCatalogCardLayout({
         </div>
 
         {!card.reviewCount ? (
-          <span className='text-xs text-muted-foreground'>No reviews yet</span>
+          <span className='text-muted-foreground text-xs'>No reviews yet</span>
         ) : (
           <StarRatingSummary
             rating={card.rating ?? 0}

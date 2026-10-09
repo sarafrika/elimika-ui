@@ -48,7 +48,6 @@ import {
 import { SearchQueryInput } from '@/components/search/search-input';
 import { SearchNotice } from '@/components/search/search-notice';
 import { useSearchIssue, useSearchQuery } from '@/hooks/use-search-query';
-import { retryUnlessClientOrSearchError } from '@/lib/api-errors';
 import { withQ } from '@/lib/search/params';
 import {
   Select,
@@ -134,7 +133,6 @@ const ProgramsList = ({ onEdit, onPreview, onCreate, creator }: ProgramsListProp
     }),
     enabled: Boolean(creator?.profile?.uuid),
     placeholderData: keepPreviousData,
-    retry: retryUnlessClientOrSearchError,
   });
   const { data: programsData, isLoading } = programsQuery;
   const searchIssue = useSearchIssue(search, programsQuery.error);

@@ -2,7 +2,6 @@
 
 import { keepPreviousData, useQuery } from '@tanstack/react-query';
 import { useSearchErrors } from '@/hooks/use-search-query';
-import { retryUnlessClientOrSearchError } from '@/lib/api-errors';
 import { STALE_TIMES } from '@/lib/query-client';
 import { client } from '@/services/client/client.gen';
 import {
@@ -52,7 +51,6 @@ export function useCatalogueSearch(query: CatalogueSearchQuery) {
     queryFn: ({ signal }) => fetchCatalogueSearch(query, signal),
     placeholderData: keepPreviousData,
     staleTime: STALE_TIMES.live,
-    retry: retryUnlessClientOrSearchError,
   });
   useSearchErrors(query.q, result.error);
 

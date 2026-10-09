@@ -12,7 +12,6 @@ import type {
   InstructorSkill,
 } from '@/services/client/types.gen';
 import type { SearchInstructor } from '@/src/features/dashboard/courses/types';
-import { retryUnlessClientOrSearchError } from '@/lib/api-errors';
 import { keepPreviousData, useQueries, useQuery } from '@tanstack/react-query';
 import { useMemo } from 'react';
 import { useUsersByIds } from './use-batched-lookups';
@@ -83,7 +82,6 @@ function useSearchTrainingInstructors({
       },
     }),
     placeholderData: keepPreviousData,
-    retry: retryUnlessClientOrSearchError,
   });
   const instructors: Instructor[] = useMemo(() => data?.data?.content ?? [], [data]);
 

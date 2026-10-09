@@ -1,0 +1,24 @@
+{
+  "instructor": [
+    "overview",
+    "students",
+    "training-hub",
+    "classes",
+    "trainings",
+    "calendar",
+    "profile/general",
+    "reviews"
+  ],
+  "student": ["overview", "courses", "learning", "schedule", "calendar", "wallet", "profile/general"],
+  "course_creator": [
+    "overview",
+    "courses",
+    "course-management",
+    "pending-approvals",
+    "training-applications",
+    "revenue",
+    "profile/general"
+  ],
+  "organisation": ["overview", "courses", "classes", "instructors", "students", "branches", "jobs", "revenue"],
+  "admin": ["overview", "people", "organisations", "courses", "classes", "inbox", "revenue"]
+}

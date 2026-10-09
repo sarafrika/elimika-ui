@@ -5,11 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { EmptyState } from '@/components/ui/empty-state';
 import { Skeleton } from '@/components/ui/skeleton';
-import {
-  isForbidden,
-  isSearchUnavailable,
-  retryUnlessClientOrSearchError,
-} from '@/lib/api-errors';
+import { isForbidden, isSearchUnavailable } from '@/lib/api-errors';
 import { STALE_TIMES } from '@/lib/query-client';
 import { getCourseRecommendationsOptions } from '@/services/client/@tanstack/react-query.gen';
 import type { RecommendedCourse } from '@/services/client/types.gen';
@@ -117,7 +113,6 @@ function CourseRecommendationRail({
     }),
     enabled,
     staleTime: STALE_TIMES.entity,
-    retry: retryUnlessClientOrSearchError,
   });
   const copy = SURFACE_COPY[surface];
   const headingId = `recommendations-${surface}`;

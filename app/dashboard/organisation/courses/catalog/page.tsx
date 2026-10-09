@@ -1,7 +1,7 @@
 // @ts-nocheck -- 1:1 Lovable port; @hey-api generated-client type drift
 'use client';
 
-import { keepPreviousData, useQuery } from '@tanstack/react-query';
+import { keepPreviousData, useQueries, useQuery } from '@tanstack/react-query';
 import {
   BadgeCheck,
   BookOpen,
@@ -26,7 +26,6 @@ import { useCoursesByIds } from '@/hooks/use-batched-lookups';
 import { useSearchErrors } from '@/hooks/use-search-query';
 import { useSearchState, useSearchStatePatch } from '@/hooks/use-search-state';
 import { useUrlSearchQuery } from '@/hooks/use-url-search-query';
-import { retryUnlessClientOrSearchError } from '@/lib/api-errors';
 import { classifySearchError } from '@/lib/search/query';
 import { enumParam, stringParam } from '@/lib/search-state';
 import { useTypeSearch } from '@/src/features/search/hooks/use-type-search';
@@ -41,24 +40,17 @@ import {
 } from '@/components/ui/select';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useOrganisation } from '@/context/organisation-context';
-import { extractList, extractPage, getTotalFromMetadata } from '@/lib/api-helpers';
+import { extractList, extractPage } from '@/lib/api-helpers';
+import { STALE_TIMES } from '@/lib/query-client';
 import { cn } from '@/lib/utils';
-import type {
-  Course,
-  CourseCreator,
-  CourseReview,
-  DifficultyLevel,
-  TrainingProgram,
-} from '@/services/client';
+import type { Course, CourseCreator, DifficultyLevel, TrainingProgram } from '@/services/client';
 import {
   getAllCategoriesOptions,
   getAllCourseCreatorsOptions,
   getAllDifficultyLevelsOptions,
   getAllTrainingProgramsOptions,
-  getCourseEnrollmentsOptions,
-  getCourseLessonsOptions,
-  getCourseReviewsOptions,
   getPublishedCoursesOptions,
+  searchCoursesAndProgrammesOptions,
   searchProgramTrainingApplicationsOptions,
   searchTrainingApplicationsOptions,
 } from '@/services/client/@tanstack/react-query.gen';
@@ -72,44 +64,12 @@ const stripHtml = (html?: string) =>
     .replace(/\s+/g, ' ')
     .trim();
 
-/** Lazily loads a course's real engagement stats (lessons, enrolments, ratings). */
-function useCourseStats(courseUuid?: string) {
-  const enabled = Boolean(courseUuid);
-  const lessons = useQuery({
-    ...getCourseLessonsOptions({
-      path: { courseUuid: courseUuid ?? '' },
-      query: { pageable: { page: 0, size: 1 } },
-    }),
-    enabled,
-    retry: false,
-  });
-  const enrolments = useQuery({
-    ...getCourseEnrollmentsOptions({
-      path: { courseUuid: courseUuid ?? '' },
-      query: { pageable: { page: 0, size: 1 } },
-    }),
-    enabled,
-    retry: false,
-  });
-  const reviews = useQuery({
-    ...getCourseReviewsOptions({ path: { courseUuid: courseUuid ?? '' } }),
-    enabled,
-    retry: false,
-  });
+type CardCounts = { rating: number; reviews: number; lessons?: number; enrolled?: number };
 
-  const reviewList = extractList<CourseReview>(reviews.data);
-  const reviewCount = reviewList.length;
-  const rating = reviewCount
-    ? reviewList.reduce((s, r) => s + (r.rating ?? 0), 0) / reviewCount
-    : 0;
-
-  return {
-    loading: lessons.isLoading || enrolments.isLoading || reviews.isLoading,
-    lessons: getTotalFromMetadata(extractPage(lessons.data).metadata),
-    enrolled: getTotalFromMetadata(extractPage(enrolments.data).metadata),
-    rating,
-    reviews: reviewCount,
-  };
+function toCount(value: bigint | number | null | undefined): number | undefined {
+  if (value == null) return undefined;
+  const count = Number(value);
+  return Number.isFinite(count) ? count : undefined;
 }
 
 function CourseImage({ src, alt }: { src?: string | null; alt: string }) {
@@ -130,8 +90,11 @@ function CourseImage({ src, alt }: { src?: string | null; alt: string }) {
   );
 }
 
-function CourseStats({ courseUuid }: { courseUuid: string }) {
-  const { loading, lessons, enrolled, rating, reviews } = useCourseStats(courseUuid);
+function CourseStats({ counts, loading }: { counts?: CardCounts; loading: boolean }) {
+  const rating = counts?.rating ?? 0;
+  const reviews = counts?.reviews ?? 0;
+  const lessons = counts?.lessons;
+  const enrolled = counts?.enrolled;
 
   return (
     <>
@@ -140,6 +103,8 @@ function CourseStats({ courseUuid }: { courseUuid: string }) {
         <span className='flex shrink-0 items-center gap-1'>
           {loading ? (
             <Skeleton className='h-3.5 w-16' />
+          ) : !counts ? (
+            <span className='text-muted-foreground font-medium'>—</span>
           ) : reviews > 0 ? (
             <>
               <Star className='fill-warning text-warning h-3.5 w-3.5' />
@@ -156,11 +121,15 @@ function CourseStats({ courseUuid }: { courseUuid: string }) {
       <div className='border-border/60 text-muted-foreground flex flex-wrap items-center justify-between gap-2 border-t pt-3 text-xs'>
         <span className='flex shrink-0 items-center gap-1.5'>
           <BookOpen className='h-3.5 w-3.5' />
-          {loading ? <Skeleton className='h-3 w-14' /> : `${lessons} Lessons`}
+          {loading ? <Skeleton className='h-3 w-14' /> : `${lessons ?? '—'} Lessons`}
         </span>
         <span className='flex shrink-0 items-center gap-1.5'>
           <Users className='h-3.5 w-3.5' />
-          {loading ? <Skeleton className='h-3 w-16' /> : `${enrolled.toLocaleString()} Enrolled`}
+          {loading ? (
+            <Skeleton className='h-3 w-16' />
+          ) : (
+            `${enrolled?.toLocaleString() ?? '—'} Enrolled`
+          )}
         </span>
       </div>
     </>
@@ -171,6 +140,9 @@ const PAGE_SIZES = ['8', '12', '24', '48'];
 const CATALOG_FETCH_SIZE = 200;
 /** One page of course hits, hydrated by a single batched lookup (the lookup's chunk size). */
 const COURSE_HITS_SIZE = 100;
+/** The catalogue search endpoint's page-size maximum; counts page through it. */
+const CATALOGUE_COUNTS_SIZE = 48;
+const CATALOGUE_LEVELS = ['beginner', 'intermediate', 'advanced'] as const;
 const levelParam = stringParam('all');
 const priceParam = enumParam(['all', 'free', 'paid'] as const, 'all');
 
@@ -255,7 +227,6 @@ export default function CatalogPage() {
       },
     }),
     placeholderData: keepPreviousData,
-    retry: retryUnlessClientOrSearchError,
   });
   useSearchErrors(search.q, programsQuery.error);
   const searchIssue = searchDown
@@ -348,6 +319,43 @@ export default function CatalogPage() {
     }
     return hitIds.flatMap(id => (hitLookup.courseMap[id] ? [hitLookup.courseMap[id]] : []));
   }, [searchDown, coursesQuery.data, level, price, hitIds, hitLookup.courseMap]);
+  // Catalogue search pages carry every card's rating, lesson and learner counts.
+  // They follow the same term, level and price as the course hits on screen.
+  const levelName = difficultyByUuid.get(level)?.trim().toLowerCase();
+  const catalogueLevel = CATALOGUE_LEVELS.find(item => item === levelName);
+  const countPages = Math.min(3, Math.max(1, Math.ceil(courses.length / CATALOGUE_COUNTS_SIZE)));
+  const { countsById, countsLoading } = useQueries({
+    queries: Array.from({ length: countPages }, (_, pageIndex) => ({
+      ...searchCoursesAndProgrammesOptions({
+        query: {
+          show: 'courses',
+          sort: search.q ? 'relevance' : 'newest',
+          page: String(pageIndex),
+          size: String(CATALOGUE_COUNTS_SIZE),
+          ...(search.q ? { q: search.q } : {}),
+          ...(catalogueLevel ? { level: [catalogueLevel] } : {}),
+          ...(price === 'all' ? {} : { price: [price] }),
+        },
+      }),
+      staleTime: STALE_TIMES.reference,
+      retry: false,
+    })),
+    combine: results => {
+      const map = new Map<string, CardCounts>();
+      for (const result of results) {
+        for (const item of result.data?.data?.content ?? []) {
+          if (!item.uuid) continue;
+          map.set(item.uuid, {
+            rating: item.rating_avg ?? 0,
+            reviews: toCount(item.review_count) ?? 0,
+            lessons: toCount(item.lesson_count),
+            enrolled: toCount(item.learner_count),
+          });
+        }
+      }
+      return { countsById: map, countsLoading: results.some(result => result.isLoading) };
+    },
+  });
   const programs = useMemo(
     () => extractPage<TrainingProgram>(programsQuery.data).items,
     [programsQuery.data]
@@ -371,51 +379,40 @@ export default function CatalogPage() {
           description: stripHtml(program.description),
           image: null,
           category: program.category_uuid
-            ? categoryByUuid.get(program.category_uuid) ?? 'General'
+            ? (categoryByUuid.get(program.category_uuid) ?? 'General')
             : 'General',
           subject: null,
           programType: program.program_type ?? null,
           level: null,
           instructor:
-            creatorsByUuid.get(program.course_creator_uuid ?? '')?.full_name ??
-            'Course creator',
+            creatorsByUuid.get(program.course_creator_uuid ?? '')?.full_name ?? 'Course creator',
           price: program.price ?? null,
           durationLabel: program.total_duration_display ?? undefined,
-          createdAt: program.created_date
-            ? new Date(program.created_date).getTime()
-            : 0,
+          createdAt: program.created_date ? new Date(program.created_date).getTime() : 0,
         })),
 
       ...courses
         .filter(
           course =>
-            course.admin_approved === true &&
-            !(course.uuid && approvedCourseUuids.has(course.uuid))
+            course.admin_approved === true && !(course.uuid && approvedCourseUuids.has(course.uuid))
         )
         .map(course => ({
           id: course.uuid as string,
           kind: 'course',
           name: course.name,
           description: stripHtml(course.description),
-          image:
-            toAuthenticatedMediaUrl(
-              course.banner_url ?? course.thumbnail_url
-            ) ?? null,
+          image: toAuthenticatedMediaUrl(course.banner_url ?? course.thumbnail_url) ?? null,
           category: course.category_names?.[0] ?? 'General',
           subject: course.category_names?.[1] ?? null,
           programType: null,
           level:
-            (course.difficulty_uuid &&
-              difficultyByUuid.get(course.difficulty_uuid)) ||
+            (course.difficulty_uuid && difficultyByUuid.get(course.difficulty_uuid)) ||
             'All Levels',
           instructor:
-            creatorsByUuid.get(course.course_creator_uuid ?? '')?.full_name ??
-            'Course creator',
+            creatorsByUuid.get(course.course_creator_uuid ?? '')?.full_name ?? 'Course creator',
           price: course.price ?? null,
           durationLabel: course.total_duration_display ?? undefined,
-          createdAt: course.created_date
-            ? new Date(course.created_date).getTime()
-            : 0,
+          createdAt: course.created_date ? new Date(course.created_date).getTime() : 0,
         })),
     ],
     [
@@ -562,8 +559,16 @@ export default function CatalogPage() {
           <FacetChips
             label='Price'
             options={[
-              { value: 'free', label: 'Free', count: searchDown ? undefined : (priceFacet.true ?? 0) },
-              { value: 'paid', label: 'Paid', count: searchDown ? undefined : (priceFacet.false ?? 0) },
+              {
+                value: 'free',
+                label: 'Free',
+                count: searchDown ? undefined : (priceFacet.true ?? 0),
+              },
+              {
+                value: 'paid',
+                label: 'Paid',
+                count: searchDown ? undefined : (priceFacet.false ?? 0),
+              },
             ]}
             selected={price === 'all' ? [] : [price]}
             multiple={false}
@@ -637,17 +642,18 @@ export default function CatalogPage() {
                   <div className='min-w-0'>
                     <div className='flex items-start justify-between gap-2'>
                       <Link
+                        prefetch={false}
                         href={
                           item.kind === 'program'
                             ? `/dashboard/organisation/courses/available-programs/${item.id}`
                             : `/dashboard/organisation/courses/catalog/${item.id}`
                         }
-                        className='text-foreground line-clamp-2 text-base leading-snug font-semibold hover:text-teal-700 hover:underline'
+                        className='text-foreground hover:text-primary line-clamp-2 text-base leading-snug font-semibold hover:underline'
                       >
                         {item.name}
                       </Link>
                       {item.kind === 'program' && (
-                        <span className='bg-primary/10 text-primary rounded-full px-2 py-0.5 text-[10px] font-medium uppercase tracking-wide'>
+                        <span className='bg-primary/10 text-primary rounded-full px-2 py-0.5 text-[10px] font-medium tracking-wide uppercase'>
                           Program
                         </span>
                       )}
@@ -670,12 +676,12 @@ export default function CatalogPage() {
                     <BadgeCheck className='h-3.5 w-3.5 shrink-0 fill-teal-600 text-white' />
                     <span className='text-muted-foreground ml-auto flex shrink-0 items-center gap-1 text-xs'>
                       <Star className='fill-warning text-warning h-3 w-3' />
-                      {item.kind === 'program' ? item.programType ?? 'Program' : item.level}
+                      {item.kind === 'program' ? (item.programType ?? 'Program') : item.level}
                     </span>
                   </div>
 
                   {item.kind === 'course' ? (
-                    <CourseStats courseUuid={item.id} />
+                    <CourseStats counts={countsById.get(item.id)} loading={countsLoading} />
                   ) : (
                     <div className='border-border/60 text-muted-foreground flex flex-wrap items-center justify-between gap-2 border-t pt-3 text-xs'>
                       <span className='flex shrink-0 items-center gap-1.5'>

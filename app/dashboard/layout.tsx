@@ -6,6 +6,7 @@ import { DashboardClientLayout } from '@/src/features/dashboard/layouts/Dashboar
 import { getServerActiveDashboardDomain } from '@/src/features/dashboard/server/active-domain';
 import {
   getRequestSession,
+  resolveDashboardBootstrap,
   resolveDashboardGuard,
 } from '@/src/features/dashboard/server/entry-target';
 
@@ -30,12 +31,16 @@ export default async function DashboardLayout({ children }: { children: ReactNod
     );
   }
 
+  const bootstrap = await resolveDashboardBootstrap();
+
   // `activeDomain` is resolved here on the server, so the brand theme it selects
   // (see the [data-dashboard-domain] blocks in app/globals.css) is present in the
   // first painted HTML — no theme flash on load.
   return (
     <AuthSessionProvider session={session}>
-      <DashboardClientLayout initialDomain={activeDomain}>{children}</DashboardClientLayout>
+      <DashboardClientLayout initialDomain={activeDomain} bootstrap={bootstrap}>
+        {children}
+      </DashboardClientLayout>
     </AuthSessionProvider>
   );
 }

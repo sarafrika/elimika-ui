@@ -22,6 +22,7 @@
     "test": "tsx --import ./scripts/test/stub-server-only.mjs --test \"{app,components,lib,src}/**/*.test.ts\"",
     "test:admin": "tsx --import ./scripts/test/stub-server-only.mjs --test $(find src/features/admin -name '*.test.ts')",
     "perf:admin": "node scripts/perf/admin-budgets.mjs",
+    "perf:gate": "node scripts/perf/route-gate.mjs",
     "verify:admin": "node scripts/verify/admin-smoke.mjs"
   },
   "dependencies": {

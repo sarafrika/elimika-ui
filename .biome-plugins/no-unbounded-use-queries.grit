@@ -1,0 +1,10 @@
+`useQueries({ $props })` where {
+  $props <: contains pair(key = `queries`, value = $queries),
+  $queries <: `$list.map($_)`,
+  not $list <: contains `$_.slice($_)`,
+  register_diagnostic(
+    span = $queries,
+    message = "useQueries over an unbounded list fires one request per row. Batch through hooks/use-batched-lookups.ts (uuid_in) or cap the list with .slice(0, n).",
+    severity = "warn"
+  )
+}

@@ -20,7 +20,6 @@ import {
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import Spinner from '@/components/ui/spinner';
 import { useSearchErrors, useSearchQuery } from '@/hooks/use-search-query';
-import { retryUnlessClientOrSearchError } from '@/lib/api-errors';
 import { STALE_TIMES } from '@/lib/query-client';
 import { SEARCH_UNAVAILABLE_TITLE } from '@/components/search/search-unavailable';
 import { cn } from '@/lib/utils';
@@ -98,7 +97,6 @@ export function EntityCombobox<TData, TKey extends QueryKey = QueryKey>({
     enabled: open,
     placeholderData: keepPreviousData,
     staleTime: STALE_TIMES.entity,
-    retry: retryUnlessClientOrSearchError,
   });
   useSearchErrors(search.q, query.error);
 

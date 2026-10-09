@@ -35,7 +35,6 @@ import {
   getClassDefinitionsForCourseOptions,
   getCourseAssessmentsOptions,
   getCourseByUuidOptions,
-  getCourseContentOptions,
   getCourseEnrollmentsOptions,
   getCourseReviewsOptions,
   searchTrainingApplicationsOptions,
@@ -57,6 +56,7 @@ import {
   type CourseTrainingRequirement,
   courseCapability,
 } from './types';
+import { courseContentQueryOptions } from './course-content-query';
 import { useCourseAccess } from './use-course-access';
 import { useCourseStats, useCourseTrainers, CourseTrainersEnvelope } from './use-course-metrics';
 
@@ -143,7 +143,7 @@ export function useCourseRecord({
   /* ── access ─────────────────────────────────────────────────────────── */
 
   const contentQuery = useQuery({
-    ...getCourseContentOptions({ path: { courseUuid: courseUuid ?? '' } }),
+    ...courseContentQueryOptions(courseUuid ?? ''),
     enabled: on,
     staleTime: STALE_TIMES.entity,
   });

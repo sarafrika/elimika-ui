@@ -201,35 +201,42 @@ export const CoursePricingForm = forwardRef<CourseFormRef, CourseFormProps>(
       if (!targetCourseId) return;
 
       try {
-        await PublishCourse.mutateAsync(
-          { path: { uuid: targetCourseId } },
-          {
-            async onSuccess(data) {
-              toast.success(data?.message || 'Course published successfully');
-              queryClient.invalidateQueries({
-                queryKey: publishCourseQueryKey({ path: { uuid: targetCourseId } }),
-              });
-              queryClient.invalidateQueries({
-                queryKey: getCourseByUuidQueryKey({ path: { uuid: targetCourseId } }),
-              });
-              queryClient.invalidateQueries({
-                queryKey: searchCoursesQueryKey({
-                  query: {
-                    searchParams: { course_creator_uuid_eq: authorUuid },
-                    pageable: {},
-                  },
-                }),
-              });
-              await invalidateContentModerationWorkflowQueries(queryClient);
-              router.push('/dashboard/course-creator/course-management');
-            },
-            onError: error => {
-              toast.error(getErrorMessage(error) || 'Failed to publish course');
-            },
-          }
+        const data = await PublishCourse.mutateAsync({
+          path: { uuid: targetCourseId },
+        });
+
+        router.replace('/dashboard/course-creator/course-management');
+
+        toast.success(data?.message || 'Course published successfully');
+
+        await Promise.all([
+          queryClient.invalidateQueries({
+            queryKey: publishCourseQueryKey({
+              path: { uuid: targetCourseId },
+            }),
+          }),
+          queryClient.invalidateQueries({
+            queryKey: getCourseByUuidQueryKey({
+              path: { uuid: targetCourseId },
+            }),
+          }),
+          queryClient.invalidateQueries({
+            queryKey: searchCoursesQueryKey({
+              query: {
+                searchParams: {
+                  course_creator_uuid_eq: authorUuid,
+                },
+                pageable: {},
+              },
+            }),
+          }),
+          invalidateContentModerationWorkflowQueries(queryClient),
+        ]);
+
+      } catch (error) {
+        toast.error(
+          getErrorMessage(error) || 'Failed to publish course'
         );
-      } catch {
-        // handled by mutation error callback
       }
     };
 

@@ -47,6 +47,7 @@ import type { PendingProgramMedia, ProgramMediaKey } from '../save-program-media
 import { useSaveProgram } from '../use-save-program';
 import ProgramCourses from './ProgramCourses';
 import { ProgramSetup } from './ProgramFields';
+import { ProgramSavingOverlay } from './ProgramSavingOverlay';
 import {
   ProgramAssessment,
   ProgramBranding,
@@ -302,6 +303,7 @@ export default function ProgramEditor({
           description='Build a program step by step, then publish it.'
         />
 
+        <ProgramSavingOverlay progress={save.progress} />
         <Form {...form}>
           <form
             noValidate
@@ -429,23 +431,7 @@ export default function ProgramEditor({
                           description='A category is needed to save a program. Try again once categories are available.'
                         />
                       ) : null}
-                      <ProgramSetup
-                        categories={categories}
-                        programUuid={save.programUuid}
-                        onSaveRequirements={async requirements => {
-                          if (navigationLock.current || save.isPending || evaluationPending)
-                            return false;
-                          navigationLock.current = true;
-                          try {
-                            form.setValue('requirements', requirements, { shouldDirty: true });
-                            if (!validateStep('requirements')) return false;
-                            await persistStep('requirements');
-                            return true;
-                          } finally {
-                            navigationLock.current = false;
-                          }
-                        }}
-                      />
+                      <ProgramSetup categories={categories} />
                       {categoriesQuery.hasNextPage && (
                         <Button
                           type='button'

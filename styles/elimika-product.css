@@ -1318,3 +1318,8 @@
     max-width: 1578px;
   }
 }
+
+/* Keep onboarding text, controls and spacing at their standard desktop sizes. */
+.sw-page:has([data-page='user-onboarding']) {
+  zoom: 1;
+}

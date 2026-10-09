@@ -126,19 +126,11 @@ export function DraftField({
   );
 }
 
-export function ProgramSetup({
-  categories,
-  programUuid,
-  onSaveRequirements,
-}: {
-  categories: Category[];
-  programUuid?: string;
-  onSaveRequirements: (requirements: ProgramFormValues['requirements']) => Promise<boolean>;
-}) {
+export function ProgramSetup({ categories }: { categories: Category[] }) {
   const { control } = useFormContext<ProgramFormValues>();
   return (
     <>
-      <div className='grid gap-4 md:grid-cols-2 lg:grid-cols-4'>
+      <div className='grid items-start gap-4 md:grid-cols-2 lg:grid-cols-4'>
         <ProgramTextField
           name='title'
           label='Program title'
@@ -221,7 +213,7 @@ export function ProgramSetup({
         />
         <DraftField name='subject' label='Subject' />
         <ProgramTextField name='classLimit' label='Class limit' type='number' min={1} />
-        <DraftField name='award' label='Program award' />
+        <DraftField name='award' placeholder='eg. Certificate of award' label='Program award' />
       </div>
       <p className='text-muted-foreground text-xs'>
         Subject and award are kept in your browser draft. Saving keeps the program in its current
@@ -255,7 +247,7 @@ export function ProgramSetup({
           )}
         />
       </div>
-      <ProgramRequirements programUuid={programUuid} onSave={onSaveRequirements} />
+      <ProgramRequirements />
     </>
   );
 }

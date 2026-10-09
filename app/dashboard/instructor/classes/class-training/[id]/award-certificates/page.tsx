@@ -123,9 +123,10 @@ const AwardCertificatesPage = () => {
 
   const { data: courseEnrollmentsResp } = useQuery({
     ...getCourseEnrollmentsOptions({
-      path: { courseUuid: course?.uuid ?? '' },
+      path: { courseUuid: course?.uuid as string },
       query: { pageable: {} },
     }),
+    enabled: !!course?.uuid,
   });
 
   const enrollmentUuid =

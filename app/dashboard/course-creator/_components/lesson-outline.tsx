@@ -2,7 +2,6 @@
 
 import DeleteModal from '@/components/custom-modals/delete-modal';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent } from '@/components/ui/card';
 import { EmptyState } from '@/components/ui/empty-state';
 import { Input } from '@/components/ui/input';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -28,7 +27,15 @@ export type LessonHeaderRenderer = (props: {
   pageCount: number;
   addPage: () => void;
   pagesBusy: boolean;
+  savePages: () => void;
 }) => ReactNode;
+
+export type LessonPagesRenderer = (
+  lesson: SavedLesson | undefined,
+  index: number,
+  renderHeader: LessonHeaderRenderer,
+  saveLesson: () => Promise<SavedLesson>
+) => ReactNode;
 
 function savedLesson(result: {
   error?: unknown;
@@ -51,11 +58,7 @@ export function LessonOutline({
   courseId: string;
   lessons: SavedLesson[];
   isLoading: boolean;
-  renderPages: (
-    lesson: SavedLesson,
-    index: number,
-    renderHeader: LessonHeaderRenderer
-  ) => ReactNode;
+  renderPages: LessonPagesRenderer;
 }) {
   const [entries, setEntries] = useState<LessonEntry[]>(() =>
     [...lessons]
@@ -96,7 +99,10 @@ export function LessonOutline({
   };
   const refresh = async () => {
     await qc.invalidateQueries({
-      queryKey: getCourseLessonsQueryKey({ path: { courseUuid: courseId } }),
+      queryKey: getCourseLessonsQueryKey({
+        path: { courseUuid: courseId },
+        query: { pageable: { page: 0, size: 100 } },
+      }),
     });
   };
   const persistOrder = async () => {
@@ -135,13 +141,11 @@ export function LessonOutline({
   };
 
   const save = async (key: string, title: string) => {
-    if (locked.current) return;
-    if (!title.trim()) {
-      toast.error('Enter a lesson title.');
-      return;
-    }
+    if (locked.current) throw new Error('Wait for the current lesson to finish saving.');
+    if (!title.trim()) throw new Error('Enter a lesson title.');
     const entry = entriesRef.current.find(item => item.key === key);
-    if (!entry) return;
+    if (!entry) throw new Error('This lesson is no longer available.');
+    if (entry.lesson?.title === title.trim()) return entry.lesson;
     locked.current = true;
     setBusy(key);
     try {
@@ -169,9 +173,7 @@ export function LessonOutline({
           path: { courseUuid: courseId, lessonUuid: saved.uuid },
         }),
       });
-      toast.success('Lesson saved');
-    } catch (error) {
-      toast.error(error instanceof Error ? error.message : 'Unable to save lesson.');
+      return saved;
     } finally {
       locked.current = false;
       setBusy(null);
@@ -258,7 +260,7 @@ export function LessonOutline({
             total={entries.length}
             disabled={!!busy}
             saving={busy === entry.key && !deleteTarget}
-            onSave={title => void save(entry.key, title)}
+            onSave={title => save(entry.key, title)}
             onMove={direction => void move(entry.key, direction)}
             onDelete={() => {
               if (entry.lesson) setDeleteTarget(entry);
@@ -323,17 +325,13 @@ function InlineLesson({
   total: number;
   disabled: boolean;
   saving: boolean;
-  onSave: (title: string) => void;
+  onSave: (title: string) => Promise<SavedLesson>;
   onMove: (direction: -1 | 1) => void;
   onDelete: () => void;
-  renderPages: (
-    lesson: SavedLesson,
-    index: number,
-    renderHeader: LessonHeaderRenderer
-  ) => ReactNode;
+  renderPages: LessonPagesRenderer;
 }) {
   const [title, setTitle] = useState(entry.lesson?.title ?? '');
-  const header: LessonHeaderRenderer = ({ pageCount, addPage, pagesBusy }) => (
+  const header: LessonHeaderRenderer = ({ pageCount, addPage, pagesBusy, savePages }) => (
     <div className='flex flex-wrap items-center gap-2'>
       <span
         className='bg-primary/10 text-primary flex size-7 shrink-0 items-center justify-center rounded-md text-xs font-semibold'
@@ -343,6 +341,7 @@ function InlineLesson({
       </span>
       <Input
         value={title}
+        disabled={disabled || pagesBusy}
         onChange={event => setTitle(event.target.value)}
         className='min-w-40 flex-1'
         placeholder='Lesson title'
@@ -351,21 +350,26 @@ function InlineLesson({
       <span className='text-muted-foreground text-xs'>
         {pageCount} {pageCount === 1 ? 'page' : 'pages'}
       </span>
-      <LessonAction
-        label={`Add page to lesson ${index + 1}`}
+      <Button
+        type='button'
         variant='outline'
-        disabled={disabled || pagesBusy || !entry.lesson}
+        size='sm'
+        aria-label={`Add page to lesson ${index + 1}`}
+        disabled={disabled || pagesBusy}
         onClick={addPage}
       >
-        <Plus className='size-4' />
-      </LessonAction>
-      <LessonAction
-        label={saving ? `Saving lesson ${index + 1}` : `Save lesson ${index + 1}`}
+        <Plus className='size-4' /> Add page
+      </Button>
+      <Button
+        type='button'
+        size='sm'
+        aria-label={`Save lesson ${index + 1} and pages`}
         disabled={disabled || pagesBusy}
-        onClick={() => onSave(title)}
+        onClick={savePages}
       >
-        {saving ? <Spinner /> : <Save className='size-4' />}
-      </LessonAction>
+        {saving || pagesBusy ? <Spinner /> : <Save className='size-4' />}
+        {saving || pagesBusy ? 'Saving…' : 'Save lesson and pages'}
+      </Button>
       <LessonAction
         label={`Delete lesson ${index + 1}`}
         variant='ghost'
@@ -392,16 +396,7 @@ function InlineLesson({
       </LessonAction>
     </div>
   );
-  return entry.lesson ? (
-    renderPages(entry.lesson, index, header)
-  ) : (
-    <Card className='gap-0 rounded-md py-0'>
-      <CardContent className='space-y-3 p-3'>
-        {header({ pageCount: 0, addPage: () => { }, pagesBusy: false })}
-        <p className='text-muted-foreground text-sm'>Save the lesson to start adding pages.</p>
-      </CardContent>
-    </Card>
-  );
+  return renderPages(entry.lesson, index, header, () => onSave(title));
 }
 
 function LessonAction({ label, ...props }: ComponentProps<typeof Button> & { label: string }) {

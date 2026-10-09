@@ -1,7 +1,6 @@
 import { getRubricCriteria, getRubricScoring, getScoringLevelsByRubric } from '@/services/client';
 import { searchAssessmentRubricsOptions } from '@/services/client/@tanstack/react-query.gen';
 import { keepPreviousData, useQueries, useQuery } from '@tanstack/react-query';
-import { retryUnlessClientOrSearchError } from '@/lib/api-errors';
 import { withQ } from '@/lib/search/params';
 
 export type RubricScoringLevel = {
@@ -123,7 +122,6 @@ export const useRubricsData = (courseCreatorUuid?: string, refetchTrigger = 0, q
       },
     }),
     placeholderData: keepPreviousData,
-    retry: retryUnlessClientOrSearchError,
   });
 
   const rubricList = (allRubrics?.data?.content ?? []) as unknown as RubricListItem[];

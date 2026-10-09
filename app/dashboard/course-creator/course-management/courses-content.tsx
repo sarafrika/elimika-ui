@@ -43,7 +43,7 @@ import {
   type OfferingCounts,
   type OfferingCountState,
 } from '@/hooks/use-offering-counts';
-import { isSearchUnavailable, retryUnlessClientOrSearchError } from '@/lib/api-errors';
+import { isSearchUnavailable } from '@/lib/api-errors';
 import { STALE_TIMES } from '@/lib/query-client';
 import {
   classifySearchError,
@@ -193,13 +193,11 @@ export default function CourseCreatorCoursesContent() {
     ...courseOptions,
     enabled: !!creatorUuid,
     staleTime: STALE_TIMES.entity,
-    retry: retryUnlessClientOrSearchError,
   });
   const programsQuery = useQuery({
     ...programOptions,
     enabled: !!creatorUuid,
     staleTime: STALE_TIMES.entity,
-    retry: retryUnlessClientOrSearchError,
   });
   const searchError = sentTerm ? (coursesQuery.error ?? programsQuery.error) : null;
   const searchIssue: SearchIssue =
@@ -466,8 +464,8 @@ export default function CourseCreatorCoursesContent() {
           </Button>
           <Button className='rounded-sm text-sm' asChild>
             <Link href='/dashboard/course-creator/courses/create-program'>
-              <Layers className='size-4' />
-              Bundle courses
+              <Plus className='size-4' />
+              Create program
             </Link>
           </Button>
         </div>

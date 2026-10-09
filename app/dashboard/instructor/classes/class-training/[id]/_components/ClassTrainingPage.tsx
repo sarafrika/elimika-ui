@@ -1,7 +1,7 @@
 // @ts-nocheck -- pre-existing @hey-api generated-client type drift (see memory: elimika-ui-typecheck)
 'use client';
 
-import { isForbidden, retryUnlessClientOrSearchError } from '@/lib/api-errors';
+import { isForbidden } from '@/lib/api-errors';
 import { PracticeActivityList } from '@/app/dashboard/course-creator/_components/practice-activity-management';
 import { getPreferredScheduleInstance } from '@/app/dashboard/instructor/classes/_components/new-class-page.utils';
 import ConfirmModal from '@/components/custom-modals/confirm-modal';
@@ -2885,8 +2885,6 @@ export default function ClassTrainingPage({
     queries: rubricUuids.map(rubricUuid => ({
       ...getRubricMatrixOptions({ path: { rubricUuid } }),
       enabled: !!rubricUuid,
-      // A rubric its author has not shared answers 403; that will not change on retry.
-      retry: retryUnlessClientOrSearchError,
     })),
   });
   const notSharedRubricUuids = useMemo(
@@ -2989,6 +2987,7 @@ export default function ClassTrainingPage({
       path: { courseUuid: course?.uuid as string },
       query: { pageable: {} },
     }),
+    enabled: !!course?.uuid,
   });
   const studentEnrollments = courseEnrollmentResp?.data?.content ?? [];
 

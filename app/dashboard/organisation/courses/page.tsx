@@ -16,6 +16,7 @@ import { useCallback, useMemo, useState } from 'react';
 import { toast } from 'sonner';
 
 import { ALL_CATEGORIES, CategoryTabs, filterByCategoryTabs } from '@/components/category-tabs';
+import { ImageWithFallback } from '@/components/data/image-with-fallback';
 import { EmptyState } from '@/components/empty-state';
 import { PageHeader } from '@/components/page-header';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
@@ -95,13 +96,20 @@ const instructorInitials = (i: ClassInstructor) =>
 const instructorName = (i: ClassInstructor) => i?.name ?? '—';
 
 function CourseImage({ src, alt }: { src?: string | null; alt: string }) {
-  if (src) {
-    return <img src={src} alt={alt} className='h-12 w-16 shrink-0 rounded-md object-cover' />;
-  }
   return (
-    <div className='from-primary/15 to-primary/5 flex h-12 w-16 shrink-0 items-center justify-center rounded-md bg-gradient-to-br'>
-      <BookOpen className='text-primary/70 h-5 w-5' />
-    </div>
+    <ImageWithFallback
+      src={src}
+      alt={alt}
+      width={64}
+      height={48}
+      sizes='64px'
+      className='h-12 w-16 shrink-0 rounded-md object-cover'
+      fallback={
+        <div className='from-primary/15 to-primary/5 flex h-12 w-16 shrink-0 items-center justify-center rounded-md bg-gradient-to-br'>
+          <BookOpen className='text-primary/70 h-5 w-5' />
+        </div>
+      }
+    />
   );
 }
 

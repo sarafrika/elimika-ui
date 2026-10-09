@@ -294,7 +294,7 @@ function DashboardCartButton() {
       size='icon'
       className='border-border/70 bg-card/80 hover:border-primary/40 hover:bg-primary/15 relative h-10 w-10 rounded-md shadow-sm transition'
     >
-      <Link href='/dashboard/cart' aria-label={cartLabel} title={cartLabel}>
+      <Link href='/dashboard/cart' prefetch={false} aria-label={cartLabel} title={cartLabel}>
         <ShoppingCart className='h-4 w-4' />
         {itemCount > 0 && (
           <span className='bg-destructive text-destructive-foreground absolute -top-1 -right-1 flex h-5 min-w-5 items-center justify-center rounded-full px-1 text-[10px] font-bold shadow-md'>

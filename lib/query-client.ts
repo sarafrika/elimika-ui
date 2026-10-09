@@ -1,4 +1,5 @@
 import { QueryClient } from '@tanstack/react-query';
+import { retryUnlessClientOrSearchError } from '@/lib/api-errors';
 
 /**
  * staleTime tiers cap how long an answer is reused before the next mount refetches it
@@ -26,12 +27,17 @@ export const CLIENT_QUERY_CACHE_STORAGE_KEY = 'elimika-query-cache-v1';
 export const CLIENT_QUERY_CACHE_MAX_AGE_MS = 1000 * 60 * 30;
 export const CLIENT_QUERY_CACHE_BUSTER = 'elimika-query-cache:2026-06-24';
 
+/** One quick retry for a network blip or 5xx, instead of React Query's 1s/2s/4s backoff. */
+export const QUERY_RETRY_DELAY_MS = 500;
+
 export function makeQueryClient() {
   return new QueryClient({
     defaultOptions: {
       queries: {
         gcTime: CLIENT_QUERY_CACHE_MAX_AGE_MS,
         staleTime: STALE_TIMES.entity,
+        retry: retryUnlessClientOrSearchError,
+        retryDelay: QUERY_RETRY_DELAY_MS,
       },
     },
   });

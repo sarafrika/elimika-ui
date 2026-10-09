@@ -23,9 +23,12 @@ export const useOrganisation = () => useContext(OrganisationContext);
 export default function OrganisationProvider({
   children,
   initialOrganisation,
+  initialUpdatedAt,
 }: {
   children: ReactNode;
+  /** Organisation read during the server render; seeds the query so children render at once. */
   initialOrganisation?: OrganisationContextValue;
+  initialUpdatedAt?: number;
 }) {
   const { data: session } = useSession();
   const userProfile = useUserProfile();
@@ -75,18 +78,22 @@ export default function OrganisationProvider({
     }
   }, [hasOrgDomain, hydrated, activeOrgId, userProfile?.isLoading, router]);
 
+  const seed =
+    initialOrganisation && initialOrganisation.uuid === activeOrgId
+      ? initialOrganisation
+      : undefined;
+
   const { data, isLoading } = useQuery(
     createQueryOptions(activeOrgId, {
-      enabled:
-        !initialOrganisation && hasOrgDomain && !!userProfile && !!session?.user && !!activeOrgId,
+      enabled: hasOrgDomain && !!userProfile && !!activeOrgId && (!!seed || !!session?.user),
+      initialData: seed,
+      initialDataUpdatedAt: seed ? initialUpdatedAt : undefined,
     })
   );
 
-  if (initialOrganisation) {
+  if (seed) {
     return (
-      <OrganisationContext.Provider value={initialOrganisation}>
-        {children}
-      </OrganisationContext.Provider>
+      <OrganisationContext.Provider value={data ?? seed}>{children}</OrganisationContext.Provider>
     );
   }
 
