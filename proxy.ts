@@ -72,11 +72,11 @@ export default auth(req => {
 export const config = {
   matcher: [
     /*
-     * Pages plus the API proxy and media routes (so token refreshes are
-     * persisted), excluding other API routes and Next.js internal files.
+     * Pages plus the API proxy (minus public api/v1/files reads) and media
+     * routes so token refreshes persist; other API routes and _next skipped.
      */
     '/',
-    '/api/proxy/:path*',
+    '/api/proxy/((?!api/v1/files/).*)',
     '/api/media',
     '/((?!api|_next/static|_next/image|favicon.ico).*)',
   ],
