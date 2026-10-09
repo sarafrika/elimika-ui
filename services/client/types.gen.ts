@@ -529,10 +529,6 @@ export type AssessmentRubric = {
    */
   readonly updated_by?: string;
   /**
-   * **[READ-ONLY]** Indicates if the rubric is published and available for use.
-   */
-  readonly is_published?: boolean;
-  /**
    * **[READ-ONLY]** Formatted category of the rubric based on its type.
    */
   readonly rubric_category?: string;
@@ -544,6 +540,10 @@ export type AssessmentRubric = {
    * **[READ-ONLY]** Comprehensive status indicating usage and accessibility.
    */
   readonly usage_status?: string;
+  /**
+   * **[READ-ONLY]** Indicates if the rubric is published and available for use.
+   */
+  readonly is_published?: boolean;
 };
 
 export type ApiResponseAssessmentRubric = {
@@ -734,6 +734,10 @@ export type RubricCriteria = {
    */
   readonly updated_by?: string;
   /**
+   * **[READ-ONLY]** Indicates if this is a primary assessment criteria.
+   */
+  readonly is_primary_criteria?: boolean;
+  /**
    * **[READ-ONLY]** Category classification of the assessment criteria.
    */
   readonly criteria_category?: string;
@@ -745,10 +749,6 @@ export type RubricCriteria = {
    * **[READ-ONLY]** Formatted criteria number for display in assessment interface.
    */
   readonly criteria_number?: string;
-  /**
-   * **[READ-ONLY]** Indicates if this is a primary assessment criteria.
-   */
-  readonly is_primary_criteria?: boolean;
 };
 
 /**
@@ -2313,10 +2313,6 @@ export type Instructor = {
    */
   readonly review_count?: bigint | null;
   /**
-   * **[READ-ONLY]** Formatted location coordinates as a string. Returns null if location coordinates are not available.
-   */
-  readonly formatted_location?: string | null;
-  /**
    * **[READ-ONLY]** Indicates if the instructor profile is considered complete. Requires bio and professional headline.
    */
   readonly is_profile_complete?: boolean;
@@ -2324,6 +2320,10 @@ export type Instructor = {
    * **[READ-ONLY]** Indicates if the instructor has both latitude and longitude coordinates configured.
    */
   readonly has_location_coordinates?: boolean;
+  /**
+   * **[READ-ONLY]** Formatted location coordinates as a string. Returns null if location coordinates are not available.
+   */
+  readonly formatted_location?: string | null;
 };
 
 /**
@@ -2465,10 +2465,6 @@ export type InstructorProfessionalMembership = {
    * **[READ-ONLY]** Human-readable formatted duration of membership.
    */
   readonly formatted_duration?: string | null;
-  /**
-   * **[READ-ONLY]** Duration of membership calculated from start and end dates, in months.
-   */
-  readonly membership_duration_months?: number | null;
   membership_status?: MembershipStatusEnum;
   /**
    * **[READ-ONLY]** Formatted membership period showing start and end dates.
@@ -2491,6 +2487,10 @@ export type InstructorProfessionalMembership = {
    * **[READ-ONLY]** Indicates if this membership was started within the last 3 years.
    */
   readonly is_recent_membership?: boolean;
+  /**
+   * **[READ-ONLY]** Duration of membership calculated from start and end dates, in months.
+   */
+  readonly membership_duration_months?: number | null;
 };
 
 export type ApiResponseInstructorProfessionalMembership = {
@@ -2790,14 +2790,14 @@ export type InstructorDocument = {
    */
   readonly updated_by?: string;
   /**
-   * **[READ-ONLY]** Indicates if the document has expired based on the expiry date.
-   */
-  readonly is_expired?: boolean;
-  /**
    * **[READ-ONLY]** API-relative URL for previewing or downloading the uploaded document.
    */
   readonly file_url?: string;
   verification_status?: VerificationStatusEnum2;
+  /**
+   * **[READ-ONLY]** Indicates if the document has expired based on the expiry date.
+   */
+  readonly is_expired?: boolean;
   /**
    * **[READ-ONLY]** Human-readable formatted file size.
    */
@@ -4179,14 +4179,14 @@ export type CourseCreatorDocumentDto = {
   readonly updated_date?: Date;
   readonly updated_by?: string;
   /**
-   * **[READ-ONLY]** Indicates if the document has expired based on the expiry date.
-   */
-  readonly is_expired?: boolean;
-  /**
    * **[READ-ONLY]** API-relative URL for previewing or downloading the uploaded document.
    */
   readonly file_url?: string;
   verification_status?: VerificationStatusEnum2;
+  /**
+   * **[READ-ONLY]** Indicates if the document has expired based on the expiry date.
+   */
+  readonly is_expired?: boolean;
   /**
    * **[READ-ONLY]** Human-readable formatted file size.
    */
@@ -6004,18 +6004,6 @@ export type ScheduledInstance = {
    */
   readonly duration_minutes?: bigint;
   /**
-   * **[READ-ONLY]** Human-readable formatted duration.
-   */
-  readonly duration_formatted?: string;
-  /**
-   * **[READ-ONLY]** Human-readable date and time range.
-   */
-  readonly time_range?: string;
-  /**
-   * **[READ-ONLY]** Indicates if the scheduled instance is currently active (ongoing).
-   */
-  readonly is_currently_active?: boolean;
-  /**
    * **[READ-ONLY]** Indicates if the scheduled instance can be cancelled.
    */
   readonly can_be_cancelled?: boolean;
@@ -6027,6 +6015,18 @@ export type ScheduledInstance = {
    * **[READ-ONLY]** Indicates if the scheduled instance can be explicitly concluded.
    */
   readonly can_be_ended?: boolean;
+  /**
+   * **[READ-ONLY]** Human-readable formatted duration.
+   */
+  readonly duration_formatted?: string;
+  /**
+   * **[READ-ONLY]** Human-readable date and time range.
+   */
+  readonly time_range?: string;
+  /**
+   * **[READ-ONLY]** Indicates if the scheduled instance is currently active (ongoing).
+   */
+  readonly is_currently_active?: boolean;
 };
 
 /**
@@ -7667,9 +7667,9 @@ export type Enrollment = {
    */
   readonly is_active?: boolean;
   /**
-   * **[READ-ONLY]** Indicates if the student attended the class.
+   * **[READ-ONLY]** Indicates if the enrollment can be cancelled.
    */
-  readonly did_attend?: boolean;
+  readonly can_be_cancelled?: boolean;
   /**
    * **[READ-ONLY]** Indicates if attendance has been marked for this enrollment.
    */
@@ -7679,9 +7679,9 @@ export type Enrollment = {
    */
   readonly status_description?: string;
   /**
-   * **[READ-ONLY]** Indicates if the enrollment can be cancelled.
+   * **[READ-ONLY]** Indicates if the student attended the class.
    */
-  readonly can_be_cancelled?: boolean;
+  readonly did_attend?: boolean;
 };
 
 /**
@@ -9805,11 +9805,11 @@ export type Page = {
   size?: number;
   content?: Array<unknown>;
   number?: number;
-  first?: boolean;
-  last?: boolean;
   numberOfElements?: number;
   sort?: SortObject;
   pageable?: PageableObject;
+  first?: boolean;
+  last?: boolean;
   empty?: boolean;
 };
 
@@ -11107,6 +11107,76 @@ export type ApiResponseNotificationCountsDto = {
 export type NotificationCountsDto = {
   unread_count?: bigint;
   popup_count?: bigint;
+};
+
+export type ApiResponseSessionBootstrap = {
+  success?: boolean;
+  data?: SessionBootstrap;
+  message?: string;
+  error?: unknown;
+};
+
+/**
+ * Summary of the caller's active organisation
+ */
+export type BootstrapActiveOrganisation = {
+  organisation_uuid?: string;
+  organisation_name?: string;
+  domain_in_organisation?: string;
+  branch_uuid?: string;
+  branch_name?: string;
+  active?: boolean;
+};
+
+/**
+ * Role profile UUIDs owned by the caller
+ */
+export type BootstrapRoleProfiles = {
+  student_uuid?: string;
+  instructor_uuid?: string;
+  course_creator_uuid?: string;
+};
+
+export type DomainNotificationCounts = {
+  unread_count?: bigint;
+  popup_count?: bigint;
+};
+
+/**
+ * Composite session bootstrap for the authenticated caller
+ */
+export type SessionBootstrap = {
+  user?: User;
+  profiles?: BootstrapRoleProfiles;
+  /**
+   * Present only for organisation users with an affiliation
+   */
+  active_organisation?: BootstrapActiveOrganisation;
+  /**
+   * Null when the wallet could not be read
+   */
+  wallet?: WalletBalanceSummary;
+  /**
+   * Null when notification counts could not be read
+   */
+  notifications?: UnreadNotificationSummary;
+};
+
+export type UnreadNotificationSummary = {
+  unread_count?: bigint;
+  popup_count?: bigint;
+  by_domain?: {
+    [key: string]: DomainNotificationCounts;
+  };
+};
+
+/**
+ * Read-only wallet balance for one currency
+ */
+export type WalletBalanceSummary = {
+  wallet_uuid?: string;
+  currency_code?: string;
+  balance_amount?: number;
 };
 
 export type ApiResponseListMyInvitation = {
@@ -38710,6 +38780,36 @@ export type GetDocumentFileResponses = {
 };
 
 export type GetDocumentFileResponse = GetDocumentFileResponses[keyof GetDocumentFileResponses];
+
+export type GetSessionBootstrapData = {
+  body?: never;
+  path?: never;
+  query?: never;
+  url: '/api/v1/me/bootstrap';
+};
+
+export type GetSessionBootstrapErrors = {
+  /**
+   * Authenticated caller has no user record
+   */
+  404: ResponseDtoVoid;
+  /**
+   * Internal Server Error
+   */
+  500: ResponseDtoVoid;
+};
+
+export type GetSessionBootstrapError = GetSessionBootstrapErrors[keyof GetSessionBootstrapErrors];
+
+export type GetSessionBootstrapResponses = {
+  /**
+   * Bootstrap retrieved successfully
+   */
+  200: ApiResponseSessionBootstrap;
+};
+
+export type GetSessionBootstrapResponse =
+  GetSessionBootstrapResponses[keyof GetSessionBootstrapResponses];
 
 export type GetInvitationByTokenData = {
   body?: never;

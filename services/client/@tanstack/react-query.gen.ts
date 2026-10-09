@@ -606,6 +606,7 @@ import {
   getDomainOnboarding,
   getCounts,
   getDocumentFile,
+  getSessionBootstrap,
   getInvitationByToken,
   listMyInvitations,
   getInstructorRatingSummary,
@@ -2286,6 +2287,7 @@ import type {
   GetDomainOnboardingData,
   GetCountsData,
   GetDocumentFileData,
+  GetSessionBootstrapData,
   GetInvitationByTokenData,
   ListMyInvitationsData,
   GetInstructorRatingSummaryData,
@@ -27314,6 +27316,28 @@ export const getDocumentFileOptions = (options: Options<GetDocumentFileData>) =>
       return data;
     },
     queryKey: getDocumentFileQueryKey(options),
+  });
+};
+
+export const getSessionBootstrapQueryKey = (options?: Options<GetSessionBootstrapData>) =>
+  createQueryKey('getSessionBootstrap', options);
+
+/**
+ * Get the caller's session bootstrap
+ * Returns the caller's user record (as GET /users/me), role profile UUIDs, active organisation summary, wallet balance and unread notification counts per domain.
+ */
+export const getSessionBootstrapOptions = (options?: Options<GetSessionBootstrapData>) => {
+  return queryOptions({
+    queryFn: async ({ queryKey, signal }) => {
+      const { data } = await getSessionBootstrap({
+        ...options,
+        ...queryKey[0],
+        signal,
+        throwOnError: true,
+      });
+      return data;
+    },
+    queryKey: getSessionBootstrapQueryKey(options),
   });
 };
 

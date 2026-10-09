@@ -1815,6 +1815,9 @@ import type {
   GetDocumentFileData,
   GetDocumentFileResponses,
   GetDocumentFileErrors,
+  GetSessionBootstrapData,
+  GetSessionBootstrapResponses,
+  GetSessionBootstrapErrors,
   GetInvitationByTokenData,
   GetInvitationByTokenResponses,
   GetInvitationByTokenErrors,
@@ -2805,6 +2808,7 @@ import {
   getMyOnboardingResponseTransformer,
   getDomainOnboardingResponseTransformer,
   getCountsResponseTransformer,
+  getSessionBootstrapResponseTransformer,
   getInvitationByTokenResponseTransformer,
   listMyInvitationsResponseTransformer,
   getInstructorRatingSummaryResponseTransformer,
@@ -20700,6 +20704,34 @@ export const getDocumentFile = <ThrowOnError extends boolean = false>(
       },
     ],
     url: '/api/v1/me/profile/documents/{itemUuid}/file',
+    ...options,
+  });
+};
+
+/**
+ * Get the caller's session bootstrap
+ * Returns the caller's user record (as GET /users/me), role profile UUIDs, active organisation summary, wallet balance and unread notification counts per domain.
+ */
+export const getSessionBootstrap = <ThrowOnError extends boolean = false>(
+  options?: Options<GetSessionBootstrapData, ThrowOnError>
+) => {
+  return (options?.client ?? _heyApiClient).get<
+    GetSessionBootstrapResponses,
+    GetSessionBootstrapErrors,
+    ThrowOnError
+  >({
+    responseTransformer: getSessionBootstrapResponseTransformer,
+    security: [
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+    ],
+    url: '/api/v1/me/bootstrap',
     ...options,
   });
 };

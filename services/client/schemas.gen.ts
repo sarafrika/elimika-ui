@@ -1063,12 +1063,6 @@ export const AssessmentRubricSchema = {
       example: 'creator@sarafrika.com',
       readOnly: true,
     },
-    is_published: {
-      type: 'boolean',
-      description: '**[READ-ONLY]** Indicates if the rubric is published and available for use.',
-      example: true,
-      readOnly: true,
-    },
     rubric_category: {
       type: 'string',
       description: '**[READ-ONLY]** Formatted category of the rubric based on its type.',
@@ -1086,6 +1080,12 @@ export const AssessmentRubricSchema = {
       type: 'string',
       description: '**[READ-ONLY]** Comprehensive status indicating usage and accessibility.',
       example: 'Active Public Rubric',
+      readOnly: true,
+    },
+    is_published: {
+      type: 'boolean',
+      description: '**[READ-ONLY]** Indicates if the rubric is published and available for use.',
+      example: true,
       readOnly: true,
     },
   },
@@ -1442,6 +1442,12 @@ export const RubricCriteriaSchema = {
       example: 'instructor@sarafrika.com',
       readOnly: true,
     },
+    is_primary_criteria: {
+      type: 'boolean',
+      description: '**[READ-ONLY]** Indicates if this is a primary assessment criteria.',
+      example: true,
+      readOnly: true,
+    },
     criteria_category: {
       type: 'string',
       description: '**[READ-ONLY]** Category classification of the assessment criteria.',
@@ -1458,12 +1464,6 @@ export const RubricCriteriaSchema = {
       type: 'string',
       description: '**[READ-ONLY]** Formatted criteria number for display in assessment interface.',
       example: 'Criteria 1',
-      readOnly: true,
-    },
-    is_primary_criteria: {
-      type: 'boolean',
-      description: '**[READ-ONLY]** Indicates if this is a primary assessment criteria.',
-      example: true,
       readOnly: true,
     },
   },
@@ -4851,13 +4851,6 @@ export const InstructorSchema = {
       example: 12,
       readOnly: true,
     },
-    formatted_location: {
-      type: ['string', 'null'],
-      description:
-        '**[READ-ONLY]** Formatted location coordinates as a string. Returns null if location coordinates are not available.',
-      example: '-1.292100, 36.821900',
-      readOnly: true,
-    },
     is_profile_complete: {
       type: 'boolean',
       description:
@@ -4870,6 +4863,13 @@ export const InstructorSchema = {
       description:
         '**[READ-ONLY]** Indicates if the instructor has both latitude and longitude coordinates configured.',
       example: true,
+      readOnly: true,
+    },
+    formatted_location: {
+      type: ['string', 'null'],
+      description:
+        '**[READ-ONLY]** Formatted location coordinates as a string. Returns null if location coordinates are not available.',
+      example: '-1.292100, 36.821900',
       readOnly: true,
     },
   },
@@ -5161,14 +5161,6 @@ export const InstructorProfessionalMembershipSchema = {
       example: '4 years, 3 months',
       readOnly: true,
     },
-    membership_duration_months: {
-      type: ['integer', 'null'],
-      format: 'int32',
-      description:
-        '**[READ-ONLY]** Duration of membership calculated from start and end dates, in months.',
-      example: 51,
-      readOnly: true,
-    },
     membership_status: {
       $ref: '#/components/schemas/MembershipStatusEnum',
     },
@@ -5207,6 +5199,14 @@ export const InstructorProfessionalMembershipSchema = {
       description:
         '**[READ-ONLY]** Indicates if this membership was started within the last 3 years.',
       example: true,
+      readOnly: true,
+    },
+    membership_duration_months: {
+      type: ['integer', 'null'],
+      format: 'int32',
+      description:
+        '**[READ-ONLY]** Duration of membership calculated from start and end dates, in months.',
+      example: 51,
       readOnly: true,
     },
   },
@@ -5839,13 +5839,6 @@ export const InstructorDocumentSchema = {
       example: 'admin@sarafrika.com',
       readOnly: true,
     },
-    is_expired: {
-      type: 'boolean',
-      description:
-        '**[READ-ONLY]** Indicates if the document has expired based on the expiry date.',
-      example: false,
-      readOnly: true,
-    },
     file_url: {
       type: 'string',
       description:
@@ -5856,6 +5849,13 @@ export const InstructorDocumentSchema = {
     },
     verification_status: {
       $ref: '#/components/schemas/VerificationStatusEnum2',
+    },
+    is_expired: {
+      type: 'boolean',
+      description:
+        '**[READ-ONLY]** Indicates if the document has expired based on the expiry date.',
+      example: false,
+      readOnly: true,
     },
     file_size_formatted: {
       type: 'string',
@@ -9014,13 +9014,6 @@ export const CourseCreatorDocumentDTOSchema = {
       type: 'string',
       readOnly: true,
     },
-    is_expired: {
-      type: 'boolean',
-      description:
-        '**[READ-ONLY]** Indicates if the document has expired based on the expiry date.',
-      example: false,
-      readOnly: true,
-    },
     file_url: {
       type: 'string',
       description:
@@ -9031,6 +9024,13 @@ export const CourseCreatorDocumentDTOSchema = {
     },
     verification_status: {
       $ref: '#/components/schemas/VerificationStatusEnum2',
+    },
+    is_expired: {
+      type: 'boolean',
+      description:
+        '**[READ-ONLY]** Indicates if the document has expired based on the expiry date.',
+      example: false,
+      readOnly: true,
     },
     file_size_formatted: {
       type: 'string',
@@ -12623,25 +12623,6 @@ export const ScheduledInstanceSchema = {
       example: 90,
       readOnly: true,
     },
-    duration_formatted: {
-      type: 'string',
-      description: '**[READ-ONLY]** Human-readable formatted duration.',
-      example: '1h 30m',
-      readOnly: true,
-    },
-    time_range: {
-      type: 'string',
-      description: '**[READ-ONLY]** Human-readable date and time range.',
-      example: '2024-09-15 09:00 - 10:30',
-      readOnly: true,
-    },
-    is_currently_active: {
-      type: 'boolean',
-      description:
-        '**[READ-ONLY]** Indicates if the scheduled instance is currently active (ongoing).',
-      example: false,
-      readOnly: true,
-    },
     can_be_cancelled: {
       type: 'boolean',
       description: '**[READ-ONLY]** Indicates if the scheduled instance can be cancelled.',
@@ -12658,6 +12639,25 @@ export const ScheduledInstanceSchema = {
       type: 'boolean',
       description:
         '**[READ-ONLY]** Indicates if the scheduled instance can be explicitly concluded.',
+      example: false,
+      readOnly: true,
+    },
+    duration_formatted: {
+      type: 'string',
+      description: '**[READ-ONLY]** Human-readable formatted duration.',
+      example: '1h 30m',
+      readOnly: true,
+    },
+    time_range: {
+      type: 'string',
+      description: '**[READ-ONLY]** Human-readable date and time range.',
+      example: '2024-09-15 09:00 - 10:30',
+      readOnly: true,
+    },
+    is_currently_active: {
+      type: 'boolean',
+      description:
+        '**[READ-ONLY]** Indicates if the scheduled instance is currently active (ongoing).',
       example: false,
       readOnly: true,
     },
@@ -15463,10 +15463,10 @@ export const EnrollmentSchema = {
       example: true,
       readOnly: true,
     },
-    did_attend: {
+    can_be_cancelled: {
       type: 'boolean',
-      description: '**[READ-ONLY]** Indicates if the student attended the class.',
-      example: false,
+      description: '**[READ-ONLY]** Indicates if the enrollment can be cancelled.',
+      example: true,
       readOnly: true,
     },
     is_attendance_marked: {
@@ -15481,10 +15481,10 @@ export const EnrollmentSchema = {
       example: 'Student is enrolled in the class',
       readOnly: true,
     },
-    can_be_cancelled: {
+    did_attend: {
       type: 'boolean',
-      description: '**[READ-ONLY]** Indicates if the enrollment can be cancelled.',
-      example: true,
+      description: '**[READ-ONLY]** Indicates if the student attended the class.',
+      example: false,
       readOnly: true,
     },
   },
@@ -19340,12 +19340,6 @@ export const PageSchema = {
       type: 'integer',
       format: 'int32',
     },
-    first: {
-      type: 'boolean',
-    },
-    last: {
-      type: 'boolean',
-    },
     numberOfElements: {
       type: 'integer',
       format: 'int32',
@@ -19355,6 +19349,12 @@ export const PageSchema = {
     },
     pageable: {
       $ref: '#/components/schemas/PageableObject',
+    },
+    first: {
+      type: 'boolean',
+    },
+    last: {
+      type: 'boolean',
     },
     empty: {
       type: 'boolean',
@@ -22254,6 +22254,147 @@ export const NotificationCountsDTOSchema = {
     popup_count: {
       type: 'integer',
       format: 'int64',
+    },
+  },
+} as const;
+
+export const ApiResponseSessionBootstrapSchema = {
+  type: 'object',
+  properties: {
+    success: {
+      type: 'boolean',
+    },
+    data: {
+      $ref: '#/components/schemas/SessionBootstrap',
+    },
+    message: {
+      type: 'string',
+    },
+    error: {},
+  },
+} as const;
+
+export const BootstrapActiveOrganisationSchema = {
+  type: 'object',
+  description: "Summary of the caller's active organisation",
+  properties: {
+    organisation_uuid: {
+      type: 'string',
+      format: 'uuid',
+    },
+    organisation_name: {
+      type: 'string',
+    },
+    domain_in_organisation: {
+      type: 'string',
+    },
+    branch_uuid: {
+      type: 'string',
+      format: 'uuid',
+    },
+    branch_name: {
+      type: 'string',
+    },
+    active: {
+      type: 'boolean',
+    },
+  },
+} as const;
+
+export const BootstrapRoleProfilesSchema = {
+  type: 'object',
+  description: 'Role profile UUIDs owned by the caller',
+  properties: {
+    student_uuid: {
+      type: 'string',
+      format: 'uuid',
+    },
+    instructor_uuid: {
+      type: 'string',
+      format: 'uuid',
+    },
+    course_creator_uuid: {
+      type: 'string',
+      format: 'uuid',
+    },
+  },
+} as const;
+
+export const DomainNotificationCountsSchema = {
+  type: 'object',
+  properties: {
+    unread_count: {
+      type: 'integer',
+      format: 'int64',
+    },
+    popup_count: {
+      type: 'integer',
+      format: 'int64',
+    },
+  },
+} as const;
+
+export const SessionBootstrapSchema = {
+  type: 'object',
+  description: 'Composite session bootstrap for the authenticated caller',
+  properties: {
+    user: {
+      $ref: '#/components/schemas/User',
+    },
+    profiles: {
+      $ref: '#/components/schemas/BootstrapRoleProfiles',
+    },
+    active_organisation: {
+      type: 'null',
+      $ref: '#/components/schemas/BootstrapActiveOrganisation',
+      description: 'Present only for organisation users with an affiliation',
+    },
+    wallet: {
+      type: 'null',
+      $ref: '#/components/schemas/WalletBalanceSummary',
+      description: 'Null when the wallet could not be read',
+    },
+    notifications: {
+      type: 'null',
+      $ref: '#/components/schemas/UnreadNotificationSummary',
+      description: 'Null when notification counts could not be read',
+    },
+  },
+} as const;
+
+export const UnreadNotificationSummarySchema = {
+  type: 'object',
+  properties: {
+    unread_count: {
+      type: 'integer',
+      format: 'int64',
+    },
+    popup_count: {
+      type: 'integer',
+      format: 'int64',
+    },
+    by_domain: {
+      type: 'object',
+      additionalProperties: {
+        $ref: '#/components/schemas/DomainNotificationCounts',
+      },
+    },
+  },
+} as const;
+
+export const WalletBalanceSummarySchema = {
+  type: 'object',
+  description: 'Read-only wallet balance for one currency',
+  properties: {
+    wallet_uuid: {
+      type: 'string',
+      format: 'uuid',
+    },
+    currency_code: {
+      type: 'string',
+    },
+    balance_amount: {
+      type: 'number',
     },
   },
 } as const;

@@ -457,6 +457,7 @@ import type {
   GetMyOnboardingResponse,
   GetDomainOnboardingResponse,
   GetCountsResponse,
+  GetSessionBootstrapResponse,
   GetInvitationByTokenResponse,
   ListMyInvitationsResponse,
   GetInstructorRatingSummaryResponse,
@@ -7783,6 +7784,40 @@ const apiResponseNotificationCountsDtoSchemaResponseTransformer = (data: any) =>
 
 export const getCountsResponseTransformer = async (data: any): Promise<GetCountsResponse> => {
   data = apiResponseNotificationCountsDtoSchemaResponseTransformer(data);
+  return data;
+};
+
+const unreadNotificationSummarySchemaResponseTransformer = (data: any) => {
+  if (data.unread_count) {
+    data.unread_count = BigInt(data.unread_count.toString());
+  }
+  if (data.popup_count) {
+    data.popup_count = BigInt(data.popup_count.toString());
+  }
+  return data;
+};
+
+const sessionBootstrapSchemaResponseTransformer = (data: any) => {
+  if (data.user) {
+    data.user = userSchemaResponseTransformer(data.user);
+  }
+  if (data.notifications) {
+    data.notifications = unreadNotificationSummarySchemaResponseTransformer(data.notifications);
+  }
+  return data;
+};
+
+const apiResponseSessionBootstrapSchemaResponseTransformer = (data: any) => {
+  if (data.data) {
+    data.data = sessionBootstrapSchemaResponseTransformer(data.data);
+  }
+  return data;
+};
+
+export const getSessionBootstrapResponseTransformer = async (
+  data: any
+): Promise<GetSessionBootstrapResponse> => {
+  data = apiResponseSessionBootstrapSchemaResponseTransformer(data);
   return data;
 };
 

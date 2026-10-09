@@ -663,11 +663,6 @@ export const zAssessmentRubric = z
       )
       .readonly()
       .optional(),
-    is_published: z
-      .boolean()
-      .describe('**[READ-ONLY]** Indicates if the rubric is published and available for use.')
-      .readonly()
-      .optional(),
     rubric_category: z
       .string()
       .describe('**[READ-ONLY]** Formatted category of the rubric based on its type.')
@@ -683,6 +678,11 @@ export const zAssessmentRubric = z
     usage_status: z
       .string()
       .describe('**[READ-ONLY]** Comprehensive status indicating usage and accessibility.')
+      .readonly()
+      .optional(),
+    is_published: z
+      .boolean()
+      .describe('**[READ-ONLY]** Indicates if the rubric is published and available for use.')
       .readonly()
       .optional(),
   })
@@ -898,6 +898,11 @@ export const zRubricCriteria = z
       )
       .readonly()
       .optional(),
+    is_primary_criteria: z
+      .boolean()
+      .describe('**[READ-ONLY]** Indicates if this is a primary assessment criteria.')
+      .readonly()
+      .optional(),
     criteria_category: z
       .string()
       .describe('**[READ-ONLY]** Category classification of the assessment criteria.')
@@ -911,11 +916,6 @@ export const zRubricCriteria = z
     criteria_number: z
       .string()
       .describe('**[READ-ONLY]** Formatted criteria number for display in assessment interface.')
-      .readonly()
-      .optional(),
-    is_primary_criteria: z
-      .boolean()
-      .describe('**[READ-ONLY]** Indicates if this is a primary assessment criteria.')
       .readonly()
       .optional(),
   })
@@ -2839,7 +2839,6 @@ export const zInstructor = z
     distance_band: zDistanceBandEnum.optional(),
     rating_avg: z.union([z.number().readonly(), z.null()]).readonly().optional(),
     review_count: z.union([z.coerce.bigint().readonly(), z.null()]).readonly().optional(),
-    formatted_location: z.union([z.string().readonly(), z.null()]).readonly().optional(),
     is_profile_complete: z
       .boolean()
       .describe(
@@ -2854,6 +2853,7 @@ export const zInstructor = z
       )
       .readonly()
       .optional(),
+    formatted_location: z.union([z.string().readonly(), z.null()]).readonly().optional(),
   })
   .describe('Instructor profile including location data for educational service delivery');
 
@@ -3071,10 +3071,6 @@ export const zInstructorProfessionalMembership = z
       .readonly()
       .optional(),
     formatted_duration: z.union([z.string().readonly(), z.null()]).readonly().optional(),
-    membership_duration_months: z
-      .union([z.number().int().readonly(), z.null()])
-      .readonly()
-      .optional(),
     membership_status: zMembershipStatusEnum.optional(),
     membership_period: z.union([z.string().readonly(), z.null()]).readonly().optional(),
     is_long_standing_member: z
@@ -3092,6 +3088,10 @@ export const zInstructorProfessionalMembership = z
     is_recent_membership: z
       .boolean()
       .describe('**[READ-ONLY]** Indicates if this membership was started within the last 3 years.')
+      .readonly()
+      .optional(),
+    membership_duration_months: z
+      .union([z.number().int().readonly(), z.null()])
       .readonly()
       .optional(),
   })
@@ -3485,11 +3485,6 @@ export const zInstructorDocument = z
       )
       .readonly()
       .optional(),
-    is_expired: z
-      .boolean()
-      .describe('**[READ-ONLY]** Indicates if the document has expired based on the expiry date.')
-      .readonly()
-      .optional(),
     file_url: z
       .string()
       .describe(
@@ -3498,6 +3493,11 @@ export const zInstructorDocument = z
       .readonly()
       .optional(),
     verification_status: zVerificationStatusEnum2.optional(),
+    is_expired: z
+      .boolean()
+      .describe('**[READ-ONLY]** Indicates if the document has expired based on the expiry date.')
+      .readonly()
+      .optional(),
     file_size_formatted: z
       .string()
       .describe('**[READ-ONLY]** Human-readable formatted file size.')
@@ -5191,11 +5191,6 @@ export const zCourseCreatorDocumentDto = z.object({
   created_by: z.string().readonly().optional(),
   updated_date: z.string().datetime().readonly().optional(),
   updated_by: z.string().readonly().optional(),
-  is_expired: z
-    .boolean()
-    .describe('**[READ-ONLY]** Indicates if the document has expired based on the expiry date.')
-    .readonly()
-    .optional(),
   file_url: z
     .string()
     .describe(
@@ -5204,6 +5199,11 @@ export const zCourseCreatorDocumentDto = z.object({
     .readonly()
     .optional(),
   verification_status: zVerificationStatusEnum2.optional(),
+  is_expired: z
+    .boolean()
+    .describe('**[READ-ONLY]** Indicates if the document has expired based on the expiry date.')
+    .readonly()
+    .optional(),
   file_size_formatted: z
     .string()
     .describe('**[READ-ONLY]** Human-readable formatted file size.')
@@ -7187,6 +7187,21 @@ export const zScheduledInstance = z
       .describe('**[READ-ONLY]** Duration of the scheduled instance in minutes.')
       .readonly()
       .optional(),
+    can_be_cancelled: z
+      .boolean()
+      .describe('**[READ-ONLY]** Indicates if the scheduled instance can be cancelled.')
+      .readonly()
+      .optional(),
+    can_be_started: z
+      .boolean()
+      .describe('**[READ-ONLY]** Indicates if the scheduled instance can be explicitly started.')
+      .readonly()
+      .optional(),
+    can_be_ended: z
+      .boolean()
+      .describe('**[READ-ONLY]** Indicates if the scheduled instance can be explicitly concluded.')
+      .readonly()
+      .optional(),
     duration_formatted: z
       .string()
       .describe('**[READ-ONLY]** Human-readable formatted duration.')
@@ -7202,21 +7217,6 @@ export const zScheduledInstance = z
       .describe(
         '**[READ-ONLY]** Indicates if the scheduled instance is currently active (ongoing).'
       )
-      .readonly()
-      .optional(),
-    can_be_cancelled: z
-      .boolean()
-      .describe('**[READ-ONLY]** Indicates if the scheduled instance can be cancelled.')
-      .readonly()
-      .optional(),
-    can_be_started: z
-      .boolean()
-      .describe('**[READ-ONLY]** Indicates if the scheduled instance can be explicitly started.')
-      .readonly()
-      .optional(),
-    can_be_ended: z
-      .boolean()
-      .describe('**[READ-ONLY]** Indicates if the scheduled instance can be explicitly concluded.')
       .readonly()
       .optional(),
   })
@@ -8811,9 +8811,9 @@ export const zEnrollment = z
       .describe('**[READ-ONLY]** Indicates if the enrollment is still active (not cancelled).')
       .readonly()
       .optional(),
-    did_attend: z
+    can_be_cancelled: z
       .boolean()
-      .describe('**[READ-ONLY]** Indicates if the student attended the class.')
+      .describe('**[READ-ONLY]** Indicates if the enrollment can be cancelled.')
       .readonly()
       .optional(),
     is_attendance_marked: z
@@ -8826,9 +8826,9 @@ export const zEnrollment = z
       .describe('**[READ-ONLY]** Human-readable description of the enrollment status.')
       .readonly()
       .optional(),
-    can_be_cancelled: z
+    did_attend: z
       .boolean()
-      .describe('**[READ-ONLY]** Indicates if the enrollment can be cancelled.')
+      .describe('**[READ-ONLY]** Indicates if the student attended the class.')
       .readonly()
       .optional(),
   })
@@ -11015,11 +11015,11 @@ export const zPage = z.object({
   size: z.number().int().optional(),
   content: z.array(z.unknown()).optional(),
   number: z.number().int().optional(),
-  first: z.boolean().optional(),
-  last: z.boolean().optional(),
   numberOfElements: z.number().int().optional(),
   sort: zSortObject.optional(),
   pageable: zPageableObject.optional(),
+  first: z.boolean().optional(),
+  last: z.boolean().optional(),
   empty: z.boolean().optional(),
 });
 
@@ -12291,6 +12291,73 @@ export const zNotificationCountsDto = z.object({
 export const zApiResponseNotificationCountsDto = z.object({
   success: z.boolean().optional(),
   data: zNotificationCountsDto.optional(),
+  message: z.string().optional(),
+  error: z.unknown().optional(),
+});
+
+/**
+ * Role profile UUIDs owned by the caller
+ */
+export const zBootstrapRoleProfiles = z
+  .object({
+    student_uuid: z.string().uuid().optional(),
+    instructor_uuid: z.string().uuid().optional(),
+    course_creator_uuid: z.string().uuid().optional(),
+  })
+  .describe('Role profile UUIDs owned by the caller');
+
+/**
+ * Summary of the caller's active organisation
+ */
+export const zBootstrapActiveOrganisation = z
+  .object({
+    organisation_uuid: z.string().uuid().optional(),
+    organisation_name: z.string().optional(),
+    domain_in_organisation: z.string().optional(),
+    branch_uuid: z.string().uuid().optional(),
+    branch_name: z.string().optional(),
+    active: z.boolean().optional(),
+  })
+  .describe("Summary of the caller's active organisation");
+
+/**
+ * Read-only wallet balance for one currency
+ */
+export const zWalletBalanceSummary = z
+  .object({
+    wallet_uuid: z.string().uuid().optional(),
+    currency_code: z.string().optional(),
+    balance_amount: z.number().optional(),
+  })
+  .describe('Read-only wallet balance for one currency');
+
+export const zDomainNotificationCounts = z.object({
+  unread_count: z.coerce.bigint().optional(),
+  popup_count: z.coerce.bigint().optional(),
+});
+
+export const zUnreadNotificationSummary = z.object({
+  unread_count: z.coerce.bigint().optional(),
+  popup_count: z.coerce.bigint().optional(),
+  by_domain: z.record(zDomainNotificationCounts).optional(),
+});
+
+/**
+ * Composite session bootstrap for the authenticated caller
+ */
+export const zSessionBootstrap = z
+  .object({
+    user: zUser.optional(),
+    profiles: zBootstrapRoleProfiles.optional(),
+    active_organisation: zBootstrapActiveOrganisation.optional(),
+    wallet: zWalletBalanceSummary.optional(),
+    notifications: zUnreadNotificationSummary.optional(),
+  })
+  .describe('Composite session bootstrap for the authenticated caller');
+
+export const zApiResponseSessionBootstrap = z.object({
+  success: z.boolean().optional(),
+  data: zSessionBootstrap.optional(),
   message: z.string().optional(),
   error: z.unknown().optional(),
 });
@@ -25194,6 +25261,17 @@ export const zGetDocumentFileData = z.object({
  * OK
  */
 export const zGetDocumentFileResponse = z.string().describe('OK');
+
+export const zGetSessionBootstrapData = z.object({
+  body: z.never().optional(),
+  path: z.never().optional(),
+  query: z.never().optional(),
+});
+
+/**
+ * Bootstrap retrieved successfully
+ */
+export const zGetSessionBootstrapResponse = zApiResponseSessionBootstrap;
 
 export const zGetInvitationByTokenData = z.object({
   body: z.never().optional(),
