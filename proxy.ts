@@ -73,11 +73,11 @@ export const config = {
   matcher: [
     /*
      * Pages plus the API proxy (minus public api/v1/files reads) and media
-     * routes so token refreshes persist; other API routes and _next skipped.
+     * routes so token refreshes persist; API, _next and /public assets skipped.
      */
     '/',
     '/api/proxy/((?!api/v1/files/).*)',
     '/api/media',
-    '/((?!api|_next/static|_next/image|favicon.ico).*)',
+    '/((?!api|_next/static|_next/image|favicon.ico|logos/|assets/|.*\\.(?:svg|png|jpg|jpeg|gif|webp|avif|ico|woff2?)$).*)',
   ],
 };
