@@ -43,7 +43,7 @@ import { invalidateContentModerationWorkflowQueries } from '@/src/features/dashb
 import { skipToken, useMutation, useQueries, useQuery, useQueryClient } from '@tanstack/react-query';
 import { ArrowLeft, ChevronDown, ChevronUp, Eye, Pencil, PlusCircle, Sparkles, Trash, Undo2 } from 'lucide-react';
 import Link from 'next/link';
-import { useSearchParams } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { toast } from 'sonner';
 import DeleteModal from '../../../../../components/custom-modals/delete-modal';
@@ -223,6 +223,7 @@ function SectionGuard({
 
 export default function CreateCoursePage() {
     const creator = useCourseCreator();
+    const router = useRouter()
     const queryClient = useQueryClient();
     const [step, setStep] = useState(0);
     const [createdCourseId, setCreatedCourseId] = useState<string | null>(null);
@@ -732,6 +733,7 @@ export default function CreateCoursePage() {
             }
 
             toast.success(data.message || 'Course published successfully.');
+            router.push(`/dashboard/course-creator/course-management`);
             await invalidateContentModerationWorkflowQueries(queryClient);
         } catch (err) {
             toast.error(err instanceof Error ? err.message : 'Failed to publish course.');
@@ -878,7 +880,6 @@ export default function CreateCoursePage() {
                                                 }
                                             }}
                                         />
-
                                         <StepNav
                                             previousLabel='Previous step'
                                             nextLabel='Next step'
@@ -905,7 +906,6 @@ export default function CreateCoursePage() {
                                             loadError={lessonContentQueries.some(query => (query.isError && !query.data) || !!query.data?.error || query.data?.success === false)}
                                             onRetry={() => { lessonContentQueries.forEach(query => void query.refetch()); }}
                                         />
-
                                         <StepNav
                                             previousLabel='Previous step'
                                             nextLabel='Next step'
@@ -927,7 +927,7 @@ export default function CreateCoursePage() {
                                         <div>
                                             <p className='text-[15px] font-semibold'>Class Practice Activities</p>
                                             <p className='text-muted-foreground text-xs'>
-                                                Manage reusable class practice activities tied to this skill.
+                                                Add practice quizzes and practicals to each lesson.
                                             </p>
                                         </div>
 
@@ -935,7 +935,7 @@ export default function CreateCoursePage() {
                                             {[...lessonsWithUuid]
                                                 .sort((a, b) => (a.lesson_number ?? 0) - (b.lesson_number ?? 0))
                                                 .map((lesson, index) => (
-                                                    <section key={lesson.uuid} className='relative'>
+                                                    <section key={lesson.uuid} className='border-border flex flex-col gap-3 rounded-md border p-3'>
                                                         {/* Lesson header */}
                                                         <div className='mb-3 flex items-center gap-2'>
                                                             <div className='flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-primary text-xs font-semibold text-primary-foreground'>
@@ -954,11 +954,13 @@ export default function CreateCoursePage() {
                                                         </div>
 
                                                         {/* Activities */}
-                                                        <div className='ml-3 border-l pl-6'>
+                                                        <div className='space-y-3'>
                                                             <PracticeActivityManager
                                                                 courseUuid={resolvedCourseId}
                                                                 lessonUuid={lesson.uuid}
                                                                 showHeader
+                                                                showPracticalButton
+                                                                showQuizButton
                                                             />
                                                         </div>
                                                     </section>
@@ -1242,57 +1244,6 @@ export default function CreateCoursePage() {
                                                 lessonTitle={assessmentToPreview.lessonTitle}
                                             />
                                         )}
-                                        <Sheet open={assessmentSheetOpen} onOpenChange={open => (!open ? closeAssessmentSheet() : setAssessmentSheetOpen(true))}>
-                                            <SheetContent
-                                                side='right'
-                                                className='flex h-full w-full max-w-4xl flex-col overflow-hidden p-0 sm:max-w-4xl'
-                                            >
-                                                <SheetHeader className='px-6 pt-6'>
-                                                    <SheetTitle className='font-semibold text-xl' >
-                                                        {assessmentMode === 'Quiz' ? 'Quiz Builder' : 'Assignment Builder'}
-                                                    </SheetTitle>
-                                                    <SheetDescription>
-                                                        {assessmentMode === 'Quiz'
-                                                            ? 'Create or edit quiz questions for the selected lesson.'
-                                                            : 'Create or edit assignment details for the selected lesson.'}
-                                                    </SheetDescription>
-                                                </SheetHeader>
-
-                                                <div className='overflow-y-auto px-6 pb-6'>
-                                                    <AssessmentCreation
-                                                        key={`${assessmentMode}-${selectedQuizUuid ?? selectedAssignmentUuid ?? 'new'}-${selectedAssessmentLessonId || 'lesson'}`}
-                                                        course={courseApiResponse}
-                                                        lessons={lessonsResponse?.data}
-                                                        lessonContentsMap={lessonContentMap}
-                                                        mode={assessmentMode}
-                                                        selectedLessonId={selectedAssessmentLessonId}
-                                                        selectedLesson={selectedAssessmentLesson}
-                                                        setSelectedLessonId={setSelectedAssessmentLessonId}
-                                                        setSelectedLesson={setSelectedAssessmentLesson}
-                                                        initialQuizUuid={assessmentMode === 'Quiz' ? selectedQuizUuid : null}
-                                                        initialAssignmentUuid={
-                                                            assessmentMode === 'Assignment' ? selectedAssignmentUuid : null
-                                                        }
-                                                        onQuizSaved={() => {
-                                                            closeAssessmentSheet();
-                                                            void refreshAssessmentLists();
-                                                        }}
-                                                        onQuizDeleted={() => {
-                                                            closeAssessmentSheet();
-                                                            void refreshAssessmentLists();
-                                                        }}
-                                                        onAssignmentSaved={() => {
-                                                            closeAssessmentSheet();
-                                                            void refreshAssessmentLists();
-                                                        }}
-                                                        onAssignmentDeleted={() => {
-                                                            closeAssessmentSheet();
-                                                            void refreshAssessmentLists();
-                                                        }}
-                                                    />
-                                                </div>
-                                            </SheetContent>
-                                        </Sheet>
                                         <StepNav
                                             previousLabel='Previous step'
                                             nextLabel='Next step'
@@ -1413,6 +1364,60 @@ export default function CreateCoursePage() {
                     </section>
                 </section>
             </Tabs>
+
+            {assessmentSheetOpen && (
+                <Sheet open={assessmentSheetOpen} onOpenChange={open => (!open ? closeAssessmentSheet() : setAssessmentSheetOpen(true))}>
+                    <SheetContent
+                        side='right'
+                        className='flex h-full w-full max-w-4xl flex-col overflow-hidden p-0 sm:max-w-4xl'
+                    >
+                        <SheetHeader className='px-6 pt-6'>
+                            <SheetTitle className='font-semibold text-xl' >
+                                {assessmentMode === 'Quiz' ? 'Quiz Builder' : 'Assignment Builder'}
+                            </SheetTitle>
+                            <SheetDescription>
+                                {assessmentMode === 'Quiz'
+                                    ? 'Create or edit quiz questions for the selected lesson.'
+                                    : 'Create or edit assignment details for the selected lesson.'}
+                            </SheetDescription>
+                        </SheetHeader>
+
+                        <div className='overflow-y-auto px-6 pb-6'>
+                            <AssessmentCreation
+                                key={`${assessmentMode}-${selectedQuizUuid ?? selectedAssignmentUuid ?? 'new'}-${selectedAssessmentLessonId || 'lesson'}`}
+                                course={courseApiResponse}
+                                lessons={lessonsResponse?.data}
+                                lessonContentsMap={lessonContentMap}
+                                mode={assessmentMode}
+                                selectedLessonId={selectedAssessmentLessonId}
+                                selectedLesson={selectedAssessmentLesson}
+                                setSelectedLessonId={setSelectedAssessmentLessonId}
+                                setSelectedLesson={setSelectedAssessmentLesson}
+                                initialQuizUuid={assessmentMode === 'Quiz' ? selectedQuizUuid : null}
+                                initialAssignmentUuid={
+                                    assessmentMode === 'Assignment' ? selectedAssignmentUuid : null
+                                }
+                                onQuizSaved={() => {
+                                    closeAssessmentSheet();
+                                    void refreshAssessmentLists();
+                                }}
+                                onQuizDeleted={() => {
+                                    closeAssessmentSheet();
+                                    void refreshAssessmentLists();
+                                }}
+                                onAssignmentSaved={() => {
+                                    closeAssessmentSheet();
+                                    void refreshAssessmentLists();
+                                }}
+                                onAssignmentDeleted={() => {
+                                    closeAssessmentSheet();
+                                    void refreshAssessmentLists();
+                                }}
+                            />
+                        </div>
+                    </SheetContent>
+                </Sheet>
+            )}
 
             <DeleteModal
                 open={Boolean(assessmentToDelete)}

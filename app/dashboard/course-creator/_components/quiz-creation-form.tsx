@@ -1,9 +1,7 @@
 'use client';
 
-import { RubricCombobox } from './rubric-combobox';
 import { useQuery } from '@tanstack/react-query';
-import { AlertTriangle, Check, FileText, Plus, Trash2, X } from 'lucide-react';
-import Link from 'next/link';
+import { Check, FileText, Plus, Trash2 } from 'lucide-react';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { toast } from 'sonner';
 import { Button } from '../../../../components/ui/button';
@@ -753,7 +751,7 @@ export const QuizCreationForm = (props: QuizCreationFormProps) => {
         </div>
 
         {/* ── Rubric ──────────────────────────────────────────────────── */}
-        <div className='flex flex-col gap-1.5'>
+        {/* <div className='flex flex-col gap-1.5'>
           <Label className='text-sm font-medium'>Rubric (optional)</Label>
           <p className='text-muted-foreground text-xs'>
             Associate a grading rubric with this quiz
@@ -814,7 +812,7 @@ export const QuizCreationForm = (props: QuizCreationFormProps) => {
                 </div>
               )}
           </>
-        </div>
+        </div> */}
 
         {/* Active toggle */}
         <div className='flex items-center gap-3'>
