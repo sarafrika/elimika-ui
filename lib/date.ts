@@ -149,6 +149,22 @@ export function localDate(value: Date | string): Date {
   return dayjs(value).format('YYYY-MM-DD') as unknown as Date;
 }
 
+// A month-aligned `LocalDate` range around today for timetable/calendar requests that
+// must stay bounded; day-granular strings keep the query key stable all day.
+export function dateWindow({
+  pastMonths,
+  futureMonths,
+}: {
+  pastMonths: number;
+  futureMonths: number;
+}): { start: Date; end: Date } {
+  const today = dayjs();
+  return {
+    start: localDate(today.subtract(pastMonths, 'month').startOf('month').toDate()),
+    end: localDate(today.add(futureMonths, 'month').endOf('month').toDate()),
+  };
+}
+
 // Matches an explicit UTC ("Z") or numeric offset ("+03:00", "-0500") suffix.
 const HAS_TIMEZONE = /(?:Z|[+-]\d{2}:?\d{2})$/i;
 
