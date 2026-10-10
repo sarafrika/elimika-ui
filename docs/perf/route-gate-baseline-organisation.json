@@ -1,0 +1,16 @@
+{
+  "generatedAt": "2026-10-10T16:09:06.869Z",
+  "runs": 1,
+  "source": "post-programme gate run gate-p4-r3 (2026-10-10, local production build against staging); refresh from CI with the workflow_dispatch update_baseline run",
+  "overallP95TimeToDataMs": null,
+  "routes": {
+    "/dashboard/organisation/overview": {
+      "p95TimeToDataMs": 1111,
+      "requests": 8
+    },
+    "/dashboard/organisation/students": {
+      "p95TimeToDataMs": 2801,
+      "requests": 8
+    }
+  }
+}
