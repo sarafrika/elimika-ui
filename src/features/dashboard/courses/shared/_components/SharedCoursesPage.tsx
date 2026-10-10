@@ -4,7 +4,6 @@ import {
   keepPreviousData,
   type QueryClient,
   useMutation,
-  useQueries,
   useQuery,
   useQueryClient,
 } from '@tanstack/react-query';
@@ -46,13 +45,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { useInstructor } from '@/context/instructor-context';
 import { useOrganisation } from '@/context/organisation-context';
 import { useUserProfile } from '@/context/profile-context';
-import {
-  useCourseClasses,
-  useCourseCreatorsByIds,
-  useCoursesByIds,
-} from '@/hooks/use-batched-lookups';
-import { useCourseEnrollmentsMap } from '@/hooks/use-enrollment-map';
-import { averageRating, useCourseReviewsMap } from '@/hooks/use-reviews-map';
+import { useCourseCreatorsByIds, useCoursesByIds } from '@/hooks/use-batched-lookups';
 import { useSearchErrors } from '@/hooks/use-search-query';
 import { useSearchState, useSearchStatePatch } from '@/hooks/use-search-state';
 import useStudentClassDefinitions from '@/hooks/use-student-class-definition';
@@ -70,13 +63,9 @@ import {
   getAllDifficultyLevelsOptions,
   getAllTrainingProgramsOptions,
   getClassDefinitionsForCourseQueryKey,
-  getClassDefinitionsForProgramOptions,
   getClassDefinitionsForProgramQueryKey,
-  getCourseLessonsOptions,
-  getProgramEnrollmentsOptions,
   getPublishedCoursesOptions,
   searchCoursesAndProgrammesOptions,
-  searchProgramCoursesOptions,
   searchProgramTrainingApplicationsOptions,
   searchTrainingApplicationsOptions,
   submitProgramTrainingApplicationMutation,
@@ -85,7 +74,6 @@ import {
 import type {
   CatalogueItem,
   Course,
-  CourseReview,
   GetClassDefinitionsForCourseResponse,
   GetClassDefinitionsForProgramResponse,
   SearchCoursesAndProgrammesData,
@@ -118,7 +106,6 @@ import {
   matchesCatalogContentType,
   matchesCatalogPrice,
 } from './catalog-filters';
-import { SeenOnScreen, useSeenIds } from './seen-on-screen';
 
 type SharedCoursesPageProps = {
   domain: UserDomain;
@@ -224,7 +211,7 @@ function errorMessage(error: unknown): string | undefined {
   return typeof error.message === 'string' ? error.message : undefined;
 }
 
-/** Card counts, from the catalogue search or, for ids it missed, the per-item fallback. */
+/** Card counts, from the catalogue search or, for ids it missed, the course list row. */
 type CardCounts = {
   rating?: number;
   reviewCount?: number;
@@ -309,7 +296,6 @@ const createCatalogCards = (
   courseApplicationMap: Map<string, CatalogTrainingApplicationData>,
   programApplicationMap: Map<string, CatalogTrainingApplicationData>,
   countsById: Map<string, CardCounts>,
-  programCoursesMap: Record<string, Course[]>,
   instructorCountFor: (kind: UnifiedContentItem['kind'], id: string) => number | undefined
 ): CoursesCatalogCardData[] =>
   items.map((item, index) => {
@@ -343,41 +329,14 @@ const createCatalogCards = (
     const counts = countsById.get(item.id);
     const classCount = counts?.classes ?? 0;
 
-    const programAgeRange = (() => {
-      if (item.kind !== 'program') {
-        return { minAge: item.minAge ?? null, maxAge: item.maxAge ?? null };
-      }
+    // Programmes carry no age range of their own; the list card omits it (the detail page shows it).
+    const programAgeRange =
+      item.kind === 'program'
+        ? { minAge: null, maxAge: null }
+        : { minAge: item.minAge ?? null, maxAge: item.maxAge ?? null };
 
-      const youngestCourse = (programCoursesMap[item.id] ?? [])
-        .filter(course => course.age_lower_limit != null || course.age_upper_limit != null)
-        .sort((left, right) => {
-          const leftLower = left.age_lower_limit ?? Number.POSITIVE_INFINITY;
-          const rightLower = right.age_lower_limit ?? Number.POSITIVE_INFINITY;
-          if (leftLower !== rightLower) {
-            return leftLower - rightLower;
-          }
-
-          const leftUpper = left.age_upper_limit ?? Number.POSITIVE_INFINITY;
-          const rightUpper = right.age_upper_limit ?? Number.POSITIVE_INFINITY;
-          return leftUpper - rightUpper;
-        })[0];
-
-      return {
-        minAge: youngestCourse?.age_lower_limit ?? youngestCourse?.age_upper_limit ?? null,
-        maxAge: youngestCourse?.age_upper_limit ?? youngestCourse?.age_lower_limit ?? null,
-      };
-    })();
-
-    const programCategoryNames = (() => {
-      if (item.kind !== 'program') {
-        return item.categoryNames ?? [];
-      }
-
-      if (counts?.categoryNames) return counts.categoryNames;
-      const courses = programCoursesMap[item.id] ?? [];
-      const categories = courses.flatMap(course => course.category_names ?? []);
-      return [...new Set(categories)];
-    })();
+    const programCategoryNames =
+      item.kind === 'program' ? (counts?.categoryNames ?? []) : (item.categoryNames ?? []);
 
     // The catalogue sums a programme's lessons across its member courses.
     const lessons = counts?.lessons;
@@ -465,7 +424,8 @@ const createCatalogCards = (
       maxAge: programAgeRange.maxAge ?? item.maxAge ?? undefined,
       categoryNames: programCategoryNames ?? item.categoryLabels ?? undefined,
 
-      activeClasses: classCount,
+      // Unknown when the catalogue missed this id, so the card hides it.
+      activeClasses: counts?.classes,
       instructorCount: instructorCountFor(item.kind, item.id),
       application,
 
@@ -778,47 +738,7 @@ export function SharedCoursesPage({ domain }: SharedCoursesPageProps) {
     return map;
   }, [courseCatalogueQuery.data, programCatalogueQuery.data]);
 
-  // Per-item fallback, only for on-screen ids the catalogue did not return (normally none).
-  const { seenIds, markSeen } = useSeenIds();
-  const missingCourseIds = useMemo(() => {
-    if (!showCourses || courseCatalogueQuery.isPending) return [];
-    const visible =
-      activeTab === 'my-courses' && isStudentDomain
-        ? classDefinitions.map(definition => definition.course?.uuid)
-        : courses.map(course => course.uuid);
-    return [
-      ...new Set(
-        visible.filter(
-          (uuid): uuid is string =>
-            Boolean(uuid) && seenIds.has(uuid ?? '') && !catalogueCountMap.has(uuid ?? '')
-        )
-      ),
-    ]
-      .sort()
-      .slice(0, CATALOG_PAGE_SIZE);
-  }, [
-    activeTab,
-    catalogueCountMap,
-    classDefinitions,
-    courseCatalogueQuery.isPending,
-    courses,
-    isStudentDomain,
-    seenIds,
-    showCourses,
-  ]);
-  const missingProgramIds = useMemo(() => {
-    if (!showPrograms || programCatalogueQuery.isPending) return [];
-    return programs
-      .map(program => program.uuid)
-      .filter(
-        (uuid): uuid is string =>
-          Boolean(uuid) && seenIds.has(uuid ?? '') && !catalogueCountMap.has(uuid ?? '')
-      )
-      .sort()
-      .slice(0, CATALOG_PAGE_SIZE);
-  }, [catalogueCountMap, programCatalogueQuery.isPending, programs, seenIds, showPrograms]);
-
-  // Enriched list rows carry lessons, rating and creator; only rows without them fan out.
+  // Enriched list rows carry lessons, rating and creator.
   const listCountMap = useMemo(() => {
     const map = new Map<string, CardCounts>();
     const rows = [...courses, ...classDefinitions.map(definition => definition.course)];
@@ -827,50 +747,7 @@ export function SharedCoursesPage({ domain }: SharedCoursesPageProps) {
     }
     return map;
   }, [classDefinitions, courses]);
-  const reviewFallbackIds = useMemo(
-    () => missingCourseIds.filter(uuid => listCountMap.get(uuid)?.reviewCount === undefined),
-    [listCountMap, missingCourseIds]
-  );
-  const lessonFallbackIds = useMemo(
-    () => missingCourseIds.filter(uuid => listCountMap.get(uuid)?.lessons === undefined),
-    [listCountMap, missingCourseIds]
-  );
-
-  const { reviewMap } = useCourseReviewsMap(reviewFallbackIds);
-  const { courseEnrollmentMap } = useCourseEnrollmentsMap(missingCourseIds, { countOnly: true });
-  const { courseClassesMap } = useCourseClasses(missingCourseIds);
-  // Students get 403 on the lessons endpoint, so their fallback leaves lessons unset.
-  const fallbackLessonQueries = useQueries({
-    queries: lessonFallbackIds.slice(0, CATALOG_PAGE_SIZE).map(courseUuid => ({
-      ...getCourseLessonsOptions({
-        path: { courseUuid },
-        query: { pageable: { page: 0, size: 1 } },
-      }),
-      enabled: Boolean(courseUuid) && !isStudentDomain,
-      retry: false,
-      staleTime: STALE_TIMES.entity,
-    })),
-  });
-  const fallbackProgramClassQueries = useQueries({
-    queries: missingProgramIds.slice(0, CATALOG_PAGE_SIZE).map(programUuid => ({
-      ...getClassDefinitionsForProgramOptions({ path: { programUuid } }),
-      enabled: Boolean(programUuid),
-      staleTime: STALE_TIMES.entity,
-      refetchOnWindowFocus: false,
-    })),
-  });
-  const fallbackProgramEnrollmentQueries = useQueries({
-    queries: missingProgramIds.slice(0, CATALOG_PAGE_SIZE).map(programUuid => ({
-      ...getProgramEnrollmentsOptions({
-        path: { programUuid },
-        query: { pageable: { page: 0, size: 1 } },
-      }),
-      enabled: Boolean(programUuid),
-      staleTime: STALE_TIMES.live,
-      refetchOnWindowFocus: false,
-    })),
-  });
-
+  // Ids the catalogue missed keep what their list row carries; other stats stay hidden.
   const countsById = useMemo(() => {
     const map = new Map(catalogueCountMap);
     for (const [uuid, counts] of catalogueCountMap) {
@@ -879,47 +756,11 @@ export function SharedCoursesPage({ domain }: SharedCoursesPageProps) {
         map.set(uuid, { ...counts, creatorName: listed.creatorName });
       }
     }
-    const lessonTotals = new Map(
-      lessonFallbackIds.map((uuid, index) => [
-        uuid,
-        fallbackLessonQueries[index]?.data?.data?.metadata?.totalElements,
-      ])
-    );
-    missingCourseIds.forEach(uuid => {
-      const listed = listCountMap.get(uuid);
-      const reviews = reviewMap[uuid];
-      map.set(uuid, {
-        rating:
-          listed?.reviewCount !== undefined
-            ? listed.rating
-            : averageRating(reviews?.reviews as CourseReview[]),
-        reviewCount: listed?.reviewCount ?? reviews?.count,
-        learners: courseEnrollmentMap[uuid]?.count,
-        lessons: listed?.lessons ?? toCount(lessonTotals.get(uuid)),
-        classes: courseClassesMap[uuid]?.length,
-        creatorName: listed?.creatorName,
-      });
-    });
-    missingProgramIds.forEach((uuid, index) => {
-      map.set(uuid, {
-        learners: toCount(fallbackProgramEnrollmentQueries[index]?.data?.data?.metadata?.totalElements),
-        classes: fallbackProgramClassQueries[index]?.data?.data?.length,
-      });
-    });
+    for (const [uuid, listed] of listCountMap) {
+      if (!map.has(uuid)) map.set(uuid, listed);
+    }
     return map;
-  }, [
-    catalogueCountMap,
-    courseClassesMap,
-    courseEnrollmentMap,
-    fallbackLessonQueries,
-    fallbackProgramClassQueries,
-    fallbackProgramEnrollmentQueries,
-    lessonFallbackIds,
-    listCountMap,
-    missingCourseIds,
-    missingProgramIds,
-    reviewMap,
-  ]);
+  }, [catalogueCountMap, listCountMap]);
 
   const mappedPrograms = useMemo<UnifiedContentItem[]>(
     () =>
@@ -965,8 +806,7 @@ export function SharedCoursesPage({ domain }: SharedCoursesPageProps) {
           category: program.category_uuid ? categoryMap.get(program.category_uuid) ?? '' : '',
           subject: '',
           programType: '',
-          // A training program carries no age limits of its own — the range comes
-          // from its youngest bundled course, resolved in `createCatalogCards`.
+          // A training program carries no age limits of its own; the list card omits them.
           minAge: undefined,
           maxAge: undefined,
         };
@@ -1453,49 +1293,6 @@ export function SharedCoursesPage({ domain }: SharedCoursesPageProps) {
   const applyToTrainCourseMut = useMutation(submitTrainingApplicationMutation());
   const applyToTrainProgramMut = useMutation(submitProgramTrainingApplicationMutation());
 
-  const programUuids = useMemo(
-    () =>
-      paginatedItems
-        .filter(item => item.kind === 'program')
-        .map(item => item.id)
-        .filter(Boolean)
-        .sort(),
-    [paginatedItems]
-  );
-
-  // Program age ranges and category fallbacks come from member courses: one batched
-  // link search, then one batched course lookup, instead of a call per program.
-  const programLinksQuery = useQuery({
-    ...searchProgramCoursesOptions({
-      query: {
-        searchParams: { program_uuid_in: programUuids.join(',') },
-        pageable: { page: 0, size: 200 },
-      },
-    }),
-    enabled: programUuids.length > 0,
-    staleTime: STALE_TIMES.entity,
-    refetchOnWindowFocus: false,
-  });
-  const programLinks = useMemo(
-    () => (programLinksQuery.data?.error ? [] : (programLinksQuery.data?.data?.content ?? [])),
-    [programLinksQuery.data]
-  );
-  const memberCourseIds = useMemo(
-    () => [...new Set(programLinks.map(link => link.course_uuid).filter(Boolean))],
-    [programLinks]
-  );
-  const memberCourses = useCoursesByIds(memberCourseIds);
-
-  const programCoursesMap = useMemo<Record<string, Course[]>>(() => {
-    const map: Record<string, Course[]> = {};
-    for (const link of programLinks) {
-      const course = memberCourses.courseMap[link.course_uuid];
-      if (!course) continue;
-      map[link.program_uuid] = [...(map[link.program_uuid] ?? []), course];
-    }
-    return map;
-  }, [memberCourses.courseMap, programLinks]);
-
   const catalogCards = useMemo(
     () =>
       createCatalogCards(
@@ -1509,7 +1306,6 @@ export function SharedCoursesPage({ domain }: SharedCoursesPageProps) {
         activeCourseApplicationMap,
         activeProgramApplicationMap,
         countsById,
-        programCoursesMap,
         (kind, id) => cachedInstructorCount(qc, kind, id)
       ),
     [
@@ -1523,7 +1319,6 @@ export function SharedCoursesPage({ domain }: SharedCoursesPageProps) {
       activeCourseApplicationMap,
       activeProgramApplicationMap,
       countsById,
-      programCoursesMap,
       qc,
     ]
   );
@@ -1910,30 +1705,20 @@ export function SharedCoursesPage({ domain }: SharedCoursesPageProps) {
                     <div className={surfaceTheme.cardGrid}>
                       {!isStudentDomain &&
                         catalogCards.map(card => (
-                          <SeenOnScreen
-                            key={card.id}
-                            id={card.id}
-                            onSeen={markSeen}
-                            className='min-w-0'
-                          >
+                          <div key={card.id} className='min-w-0'>
                             <CoursesCatalogCard
                               type='general'
                               card={card}
                               onPrimaryAction={handleCatalogCardAction}
                             />
-                          </SeenOnScreen>
+                          </div>
                         ))}
 
                       {isStudentDomain &&
                         catalogCards.map(card => (
-                          <SeenOnScreen
-                            key={card.id}
-                            id={card.id}
-                            onSeen={markSeen}
-                            className='min-w-0'
-                          >
+                          <div key={card.id} className='min-w-0'>
                             <StudentCoursesCard type='general' card={card} />
-                          </SeenOnScreen>
+                          </div>
                         ))}
                     </div>
 
