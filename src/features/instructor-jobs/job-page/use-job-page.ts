@@ -1,6 +1,6 @@
 'use client';
 
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useMemo } from 'react';
 
 import { isLiveApplication } from '@/components/profile-job-marketplace/application-status';
@@ -12,6 +12,7 @@ import {
   useOrganisationsByIds,
   useProgramsByIds,
 } from '@/hooks/use-batched-lookups';
+import { jobFromListCache } from '@/lib/list-row-seed';
 import { STALE_TIMES } from '@/lib/query-client';
 import { getJob } from '@/services/client';
 import {
@@ -19,7 +20,7 @@ import {
   getJobQueryKey,
   listJobsOptions,
 } from '@/services/client/@tanstack/react-query.gen';
-import type { ClassMarketplaceJob } from '@/services/client/types.gen';
+import type { ClassMarketplaceJob, GetJobResponse } from '@/services/client/types.gen';
 
 import { useMyApplicationsByJob, usePendingRates } from '../hooks/use-jobs-readiness';
 import { jobFacts } from '../job-facts';
@@ -27,7 +28,8 @@ import { jobReadiness, rateStandingFor } from '../job-readiness';
 
 /** A missing or malformed job id reads as "not found", never as a failed section. */
 function useJob(jobUuid: string) {
-  return useQuery({
+  const queryClient = useQueryClient();
+  return useQuery<GetJobResponse | null>({
     queryKey: getJobQueryKey({ path: { jobUuid } }),
     queryFn: async ({ signal }) => {
       const { data, error, response } = await getJob({ path: { jobUuid }, signal });
@@ -37,6 +39,7 @@ function useJob(jobUuid: string) {
     },
     enabled: Boolean(jobUuid),
     staleTime: STALE_TIMES.live,
+    placeholderData: () => jobFromListCache(queryClient, jobUuid),
   });
 }
 

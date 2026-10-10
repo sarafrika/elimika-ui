@@ -17,6 +17,15 @@ import { toast } from 'sonner';
 import type { RateBasis } from '@/components/class-form';
 import { AsyncSection } from '@/components/data/async-section';
 import {
+  DetailRow,
+  SectionCard,
+  SectionCardSkeleton,
+  SectionTabPanel,
+  SectionTabs,
+  surfaceTheme,
+  useSectionTab,
+} from '@/components/data-display';
+import {
   JobApplicantsPanel,
   jobApplicationsQueryOptions,
 } from '@/components/profile-job-marketplace/_components/JobApplicantsPanel';
@@ -48,6 +57,8 @@ import {
 } from '@/hooks/use-batched-lookups';
 import { formatDate, formatDateOnly } from '@/lib/date';
 import { getErrorMessage } from '@/lib/error-utils';
+import { jobFromListCache } from '@/lib/list-row-seed';
+import { cn } from '@/lib/utils';
 import type { ClassMarketplaceJob } from '@/services/client';
 import { cancelJobMutation, getJobOptions } from '@/services/client/@tanstack/react-query.gen';
 import { invalidateJobApplicationWorkflowQueries } from '@/src/features/dashboard/workflow-query-invalidation';
@@ -78,16 +89,6 @@ import {
   useJobResourceRows,
 } from './job-sections';
 import { JobSuggestedInstructors } from './job-suggested-instructors';
-import { cn } from '@/lib/utils';
-import {
-  DetailRow,
-  SectionCard,
-  SectionCardSkeleton,
-  SectionTabPanel,
-  SectionTabs,
-  surfaceTheme,
-  useSectionTab,
-} from '@/components/data-display';
 
 function nextStepCopy(
   stage: JobStage,
@@ -118,7 +119,11 @@ export function JobDetailsPage({ jobUuid }: { jobUuid: string }) {
 
   const { value: tab, setValue: changeTab, hrefFor } = useSectionTab(JOB_TABS, 'overview');
 
-  const jobQuery = useQuery({ ...getJobOptions({ path: { jobUuid } }), enabled: Boolean(jobUuid) });
+  const jobQuery = useQuery({
+    ...getJobOptions({ path: { jobUuid } }),
+    enabled: Boolean(jobUuid),
+    placeholderData: () => jobFromListCache(queryClient, jobUuid),
+  });
   const job = jobQuery.data?.data ?? null;
 
   const applicationsQuery = useQuery({

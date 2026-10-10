@@ -1,9 +1,10 @@
 'use client';
 
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useMemo } from 'react';
 
 import { extractEntity, extractList, extractPage, getTotalFromMetadata } from '@/lib/api-helpers';
+import { personFromListCache } from '@/lib/list-row-seed';
 import type {
   AdminUserActivityEvent,
   BookingResponse,
@@ -51,10 +52,12 @@ const SINGLE_PROFILE_PAGE = { page: 0, size: 1 };
 
 /** The person behind the record: name, contact, roles and affiliations. */
 export function usePersonRecord(userUuid: string) {
+  const queryClient = useQueryClient();
   const query = useQuery({
     ...getUserByUuidOptions({ path: { uuid: userUuid } }),
     ...listQuery,
     enabled: Boolean(userUuid),
+    placeholderData: () => personFromListCache(queryClient, userUuid),
   });
 
   const person = useMemo(() => extractEntity<User>(query.data), [query.data]);

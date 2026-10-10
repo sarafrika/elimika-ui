@@ -24,12 +24,11 @@
  * `blocks/*` component, the call belongs here instead.
  */
 
-import { allCourseTrainingRequirementsOptions } from '@/services/course-training-requirements';
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { usePathname } from 'next/navigation';
 import { useMemo } from 'react';
-
 import { useInstructor } from '@/context/instructor-context';
+import { courseFromListCache } from '@/lib/list-row-seed';
 import { STALE_TIMES } from '@/lib/query-client';
 import {
   getClassDefinitionsForCourseOptions,
@@ -40,8 +39,10 @@ import {
   searchTrainingApplicationsOptions,
 } from '@/services/client/@tanstack/react-query.gen';
 import type { CourseEnrollment } from '@/services/client/types.gen';
+import { allCourseTrainingRequirementsOptions } from '@/services/course-training-requirements';
 import { routeSegmentFromPath } from '@/src/features/dashboard/lib/dashboard-url';
 import { useOrganisation } from '@/src/features/organisation/context/organisation-context';
+import { courseContentQueryOptions } from './course-content-query';
 import {
   type ClassDefinition,
   type Course,
@@ -56,9 +57,8 @@ import {
   type CourseTrainingRequirement,
   courseCapability,
 } from './types';
-import { courseContentQueryOptions } from './course-content-query';
 import { useCourseAccess } from './use-course-access';
-import { useCourseStats, useCourseTrainers, CourseTrainersEnvelope } from './use-course-metrics';
+import { CourseTrainersEnvelope, useCourseStats, useCourseTrainers } from './use-course-metrics';
 
 /** How many rows of a paged collection the record ever needs on screen at once. */
 const PAGE_SIZE = 100;
@@ -130,6 +130,7 @@ export function useCourseRecord({
   enabled = true,
 }: UseCourseRecordOptions): CourseRecord {
   const on = enabled && Boolean(courseUuid);
+  const queryClient = useQueryClient();
 
   /* ── blocking ───────────────────────────────────────────────────────── */
 
@@ -137,6 +138,7 @@ export function useCourseRecord({
     ...getCourseByUuidOptions({ path: { uuid: courseUuid ?? '' } }),
     enabled: on,
     staleTime: STALE_TIMES.entity,
+    placeholderData: () => courseFromListCache(queryClient, courseUuid),
   });
   const course = courseQuery.data?.data;
 

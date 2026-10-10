@@ -6,20 +6,21 @@ import { toast } from 'sonner';
 
 import { extractEntity, extractList, extractPage, getTotalFromMetadata } from '@/lib/api-helpers';
 import { getErrorMessage } from '@/lib/error-utils';
+import { classFromListCache } from '@/lib/list-row-seed';
 import {
-  cancelScheduledClass,
   type ClassDefinition,
   type ClassRatingSummary,
+  cancelScheduledClass,
   deactivateClassDefinition,
   type Enrollment,
   markAttendance,
   type ScheduledInstance,
 } from '@/services/client';
 import {
+  getAllClassDefinitionsOptions,
   getClassDefinitionOptions,
   getClassRatingSummaryOptions,
   getClassScheduleOptions,
-  getAllClassDefinitionsOptions,
   getEnrollmentsForInstanceOptions,
   getInstructorScheduleOptions,
 } from '@/services/client/@tanstack/react-query.gen';
@@ -59,10 +60,12 @@ export function useAllClasses(page: number, q?: string) {
 
 /** One class, opened in the drawer. */
 export function useClassDefinition(uuid: string | null) {
+  const queryClient = useQueryClient();
   const query = useQuery({
     ...getClassDefinitionOptions({ path: { uuid: uuid ?? '' } }),
     ...listQuery,
     enabled: Boolean(uuid),
+    placeholderData: () => classFromListCache(queryClient, uuid ?? undefined),
   });
 
   const definition = useMemo(() => {
