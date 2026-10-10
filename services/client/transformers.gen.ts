@@ -451,6 +451,7 @@ import type {
   ListRosterResponse,
   GetCalendarResponse,
   ListBookingsResponse,
+  GetResourceCalendarsResponse,
   ListSentResponse,
   ListInstructorStudentsResponse,
   ListObligationsResponse,
@@ -548,6 +549,7 @@ import type {
   GetClassDefinitionsForInstructorResponse,
   GetClassDefinitionsForCourseResponse,
   GetClassesBatchResponse,
+  GetAssessmentSchedulesResponse,
   GetAllActiveClassDefinitionsResponse,
   SearchCertificateTemplatesResponse,
   GetStudentCertificatesResponse,
@@ -7699,6 +7701,31 @@ export const listBookingsResponseTransformer = async (data: any): Promise<ListBo
   return data;
 };
 
+const organisationResourceCalendarSchemaResponseTransformer = (data: any) => {
+  if (data.entries) {
+    data.entries = data.entries.map((item: any) => {
+      return resourceCalendarEntrySchemaResponseTransformer(item);
+    });
+  }
+  return data;
+};
+
+const apiResponseListOrganisationResourceCalendarSchemaResponseTransformer = (data: any) => {
+  if (data.data) {
+    data.data = data.data.map((item: any) => {
+      return organisationResourceCalendarSchemaResponseTransformer(item);
+    });
+  }
+  return data;
+};
+
+export const getResourceCalendarsResponseTransformer = async (
+  data: any
+): Promise<GetResourceCalendarsResponse> => {
+  data = apiResponseListOrganisationResourceCalendarSchemaResponseTransformer(data);
+  return data;
+};
+
 const apiResponseListNotificationDispatchSchemaResponseTransformer = (data: any) => {
   if (data.data) {
     data.data = data.data.map((item: any) => {
@@ -9531,6 +9558,34 @@ export const getClassesBatchResponseTransformer = async (
   data: any
 ): Promise<GetClassesBatchResponse> => {
   data = apiResponseListClassBatchSummarySchemaResponseTransformer(data);
+  return data;
+};
+
+const classAssessmentSchedulesSchemaResponseTransformer = (data: any) => {
+  if (data.assignment_schedules) {
+    data.assignment_schedules = data.assignment_schedules.map((item: any) => {
+      return classAssignmentScheduleSchemaResponseTransformer(item);
+    });
+  }
+  if (data.quiz_schedules) {
+    data.quiz_schedules = data.quiz_schedules.map((item: any) => {
+      return classQuizScheduleSchemaResponseTransformer(item);
+    });
+  }
+  return data;
+};
+
+const apiResponseClassAssessmentSchedulesSchemaResponseTransformer = (data: any) => {
+  if (data.data) {
+    data.data = classAssessmentSchedulesSchemaResponseTransformer(data.data);
+  }
+  return data;
+};
+
+export const getAssessmentSchedulesResponseTransformer = async (
+  data: any
+): Promise<GetAssessmentSchedulesResponse> => {
+  data = apiResponseClassAssessmentSchedulesSchemaResponseTransformer(data);
   return data;
 };
 

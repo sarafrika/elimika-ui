@@ -598,6 +598,7 @@ import {
   getSummary2,
   getCalendar,
   listBookings,
+  getResourceCalendars,
   listSent,
   listInstructorStudents,
   listObligations,
@@ -721,6 +722,7 @@ import {
   getClassDefinitionsForInstructor,
   getClassDefinitionsForCourse,
   getClassesBatch,
+  getAssessmentSchedules,
   getAllActiveClassDefinitions,
   verifyCertificate,
   searchCertificateTemplates,
@@ -2278,6 +2280,7 @@ import type {
   ListBookingsData,
   ListBookingsError,
   ListBookingsResponse,
+  GetResourceCalendarsData,
   ListSentData,
   ListInstructorStudentsData,
   ListInstructorStudentsError,
@@ -2499,6 +2502,7 @@ import type {
   GetClassDefinitionsForInstructorData,
   GetClassDefinitionsForCourseData,
   GetClassesBatchData,
+  GetAssessmentSchedulesData,
   GetAllActiveClassDefinitionsData,
   VerifyCertificateData,
   SearchCertificateTemplatesData,
@@ -27054,6 +27058,28 @@ export const listBookingsInfiniteOptions = (options: Options<ListBookingsData>) 
   );
 };
 
+export const getResourceCalendarsQueryKey = (options: Options<GetResourceCalendarsData>) =>
+  createQueryKey('getResourceCalendars', options);
+
+/**
+ * Merged calendar view of every active resource of the organisation
+ * The per-resource calendar for all active resources in one request, ordered by resource name. entry_types (comma-separated OPEN_HOURS, BLACKOUT, HOLD, CONFIRMED) optionally filters the entries. Same access rule and date-range cap as the single-resource calendar.
+ */
+export const getResourceCalendarsOptions = (options: Options<GetResourceCalendarsData>) => {
+  return queryOptions({
+    queryFn: async ({ queryKey, signal }) => {
+      const { data } = await getResourceCalendars({
+        ...options,
+        ...queryKey[0],
+        signal,
+        throwOnError: true,
+      });
+      return data;
+    },
+    queryKey: getResourceCalendarsQueryKey(options),
+  });
+};
+
 export const listSentQueryKey = (options: Options<ListSentData>) =>
   createQueryKey('listSent', options);
 
@@ -32745,6 +32771,28 @@ export const getClassesBatchOptions = (options: Options<GetClassesBatchData>) =>
       return data;
     },
     queryKey: getClassesBatchQueryKey(options),
+  });
+};
+
+export const getAssessmentSchedulesQueryKey = (options: Options<GetAssessmentSchedulesData>) =>
+  createQueryKey('getAssessmentSchedules', options);
+
+/**
+ * List assignment and quiz schedules for several classes
+ * class_uuids is comma-separated or repeated, 1 to 100 entries. Classes the caller may not view (same rule as the per-class listings) are omitted. Costs a fixed number of queries per batch.
+ */
+export const getAssessmentSchedulesOptions = (options: Options<GetAssessmentSchedulesData>) => {
+  return queryOptions({
+    queryFn: async ({ queryKey, signal }) => {
+      const { data } = await getAssessmentSchedules({
+        ...options,
+        ...queryKey[0],
+        signal,
+        throwOnError: true,
+      });
+      return data;
+    },
+    queryKey: getAssessmentSchedulesQueryKey(options),
   });
 };
 
