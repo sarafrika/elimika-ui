@@ -18,6 +18,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { toast } from 'sonner';
 
 import { CategoryTabs, filterByCategoryTabs } from '@/components/category-tabs';
+import { ImageWithFallback } from '@/components/data/image-with-fallback';
 import { IntentLink } from '@/components/data/intent-link';
 import { surfaceTheme } from '@/components/data-display';
 import { FacetChips } from '@/components/search/facet-chips';
@@ -74,20 +75,19 @@ function toCount(value: bigint | number | null | undefined): number | undefined 
 }
 
 function CourseImage({ src, alt }: { src?: string | null; alt: string }) {
-  if (src) {
-    return (
-      <img
-        src={src}
-        alt={alt}
-        loading='lazy'
-        className='h-full w-full object-cover transition-transform duration-500 group-hover:scale-105'
-      />
-    );
-  }
   return (
-    <div className='from-primary/15 to-primary/5 flex h-full w-full items-center justify-center bg-gradient-to-br'>
-      <BookOpen className='text-primary/60 h-8 w-8' />
-    </div>
+    <ImageWithFallback
+      src={src}
+      alt={alt}
+      fill
+      sizes='(max-width: 640px) 100vw, (max-width: 1024px) 50vw, (max-width: 1280px) 33vw, 25vw'
+      className='object-cover transition-transform duration-500 group-hover:scale-105'
+      fallback={
+        <div className='from-primary/15 to-primary/5 flex h-full w-full items-center justify-center bg-gradient-to-br'>
+          <BookOpen className='text-primary/60 h-8 w-8' />
+        </div>
+      }
+    />
   );
 }
 

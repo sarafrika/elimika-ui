@@ -62,14 +62,18 @@ export function StudentCoursesCard({ card }: StudentCoursesCardProps) {
               {card.units} units
             </span>
           )}
-          <span className='flex items-center gap-1.5'>
-            <Users className='h-3.5 w-3.5 shrink-0' />
-            {card.enrollmentCount ?? 0} learners
-          </span>
-          <span className='flex items-center gap-1.5'>
-            <CalendarDays className='h-3.5 w-3.5 shrink-0' />
-            {card.activeClasses ?? 0} classes
-          </span>
+          {typeof card.enrollmentCount === 'number' && (
+            <span className='flex items-center gap-1.5'>
+              <Users className='h-3.5 w-3.5 shrink-0' />
+              {card.enrollmentCount} learners
+            </span>
+          )}
+          {typeof card.activeClasses === 'number' && (
+            <span className='flex items-center gap-1.5'>
+              <CalendarDays className='h-3.5 w-3.5 shrink-0' />
+              {card.activeClasses} classes
+            </span>
+          )}
           {typeof card.instructorCount === 'number' && (
             <span className='flex items-center gap-1.5'>
               <UserCheck className='h-3.5 w-3.5 shrink-0' />

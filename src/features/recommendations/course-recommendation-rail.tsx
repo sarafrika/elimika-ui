@@ -3,6 +3,7 @@
 import { useQuery } from '@tanstack/react-query';
 import { BookOpen, Lock, SearchX, Sparkles, X } from 'lucide-react';
 import { type ReactNode, useState } from 'react';
+import { ImageWithFallback } from '@/components/data/image-with-fallback';
 import { IntentLink } from '@/components/data/intent-link';
 import { surfaceTheme } from '@/components/data-display';
 import { Button } from '@/components/ui/button';
@@ -65,14 +66,19 @@ function RecommendationCard({
         onClick={onOpen}
         className='flex flex-1 flex-col focus-visible:outline-none'
       >
-        <div className='bg-muted aspect-[16/9] w-full overflow-hidden'>
-          {thumbnail ? (
-            <img src={thumbnail} alt='' className='size-full object-cover' loading='lazy' />
-          ) : (
-            <div className='text-muted-foreground grid size-full place-items-center'>
-              <BookOpen className='size-6' aria-hidden />
-            </div>
-          )}
+        <div className='bg-muted relative aspect-[16/9] w-full overflow-hidden'>
+          <ImageWithFallback
+            src={thumbnail}
+            alt=''
+            fill
+            sizes='(max-width: 768px) 50vw, 240px'
+            className='object-cover'
+            fallback={
+              <div className='text-muted-foreground grid size-full place-items-center'>
+                <BookOpen className='size-6' aria-hidden />
+              </div>
+            }
+          />
         </div>
         <div className='space-y-1.5 p-3'>
           <p className='line-clamp-2 text-sm font-medium'>{name}</p>
