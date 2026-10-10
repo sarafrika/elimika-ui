@@ -1,7 +1,8 @@
 // @ts-nocheck -- pre-existing @hey-api generated-client type drift (see memory: elimika-ui-typecheck)
+
+import { type QueryClient, useQuery, useQueryClient } from '@tanstack/react-query';
 import {
   getCourseByUuid,
-  getCourseLessons,
   getInstructorByUuid,
   getProgramCourses,
   getTrainingProgramByUuid,
@@ -16,11 +17,10 @@ import type {
   GetProgramCoursesResponse,
   GetTrainingProgramByUuidResponse,
 } from '@/services/client/types.gen';
-import { type QueryClient, useQuery, useQueryClient } from '@tanstack/react-query';
 import {
   getClassDefinitionOptions,
   getClassScheduleOptions,
-  getCourseLessonsQueryKey,
+  getCourseLessonsOptions,
   getEnrollmentsForClassOptions,
   getInstructorByUuidOptions,
 } from '../services/client/@tanstack/react-query.gen';
@@ -73,7 +73,15 @@ async function fetchClassRelated(
 
   const [course, lessons, pCourses, program, instructorWithProfile] = await Promise.all([
     courseUuid ? getCourseByUuid({ path: { uuid: courseUuid } }) : null,
-    courseUuid ? getCourseLessons({ path: { courseUuid }, query: { pageable: {} } }) : null,
+    // Shares the lessons hook's key and staleTime, so concurrent reads dedupe to one request.
+    courseUuid
+      ? queryClient
+          .fetchQuery({
+            ...getCourseLessonsOptions({ path: { courseUuid }, query: { pageable: {} } }),
+            staleTime: 10 * 60 * 1000,
+          })
+          .catch(() => null)
+      : null,
     programUuid ? getProgramCourses({ path: { programUuid } }) : null,
     programUuid ? getTrainingProgramByUuid({ path: { uuid: programUuid } }) : null,
     (async () => {
@@ -87,17 +95,9 @@ async function fetchClassRelated(
     })(),
   ]);
 
-  // Seed the generated lessons key so useCourseLessonsWithContent reuses this list.
-  if (courseUuid && lessons && !lessons.error && lessons.data) {
-    queryClient.setQueryData(
-      getCourseLessonsQueryKey({ path: { courseUuid }, query: { pageable: {} } }),
-      lessons.data
-    );
-  }
-
   return {
     course: course?.data?.data,
-    lessons: course ? (lessons?.data?.data?.content ?? []) : [],
+    lessons: course ? (lessons?.data?.content ?? []) : [],
     pCourses: pCourses?.data?.data ?? [],
     program: program?.data?.data,
     instructor: instructorWithProfile.instructor,
