@@ -19,6 +19,7 @@ import type { AssignmentSubmission } from '@/services/client/types.gen';
 import {
     getDueSummary,
     getStudentAssignmentSubmissionState,
+    useAssignmentAttachments,
     useStudentAssignmentData,
     type StudentAssignmentFilterTab,
     type StudentAssignmentRow,
@@ -78,6 +79,7 @@ function AssignmentDetailSheet({
     const activeEnrollmentUuid = row?.classMeta.courseEnrollmentUuid ?? row?.classMeta.enrollmentUuid;
     const submissionState = row ? getStudentAssignmentSubmissionState(row) : null;
     const canEdit = submissionState?.key !== 'graded' && submissionState?.key !== 'submitted';
+    const { attachments } = useAssignmentAttachments(assignment?.uuid, Boolean(payload));
 
     useEffect(() => {
         if (payload && !loaded) {
@@ -162,6 +164,7 @@ function AssignmentDetailSheet({
             await queryClient.invalidateQueries({
                 queryKey: getAssignmentSubmissionsQueryKey({ path: { assignmentUuid: assignment.uuid } }),
             });
+            await queryClient.invalidateQueries({ queryKey: [{ _id: 'searchSubmissions' }] });
             await queryClient.invalidateQueries({ queryKey: ['student-assignments'] });
 
             toast.success('Assignment submitted successfully.');
@@ -194,9 +197,7 @@ function AssignmentDetailSheet({
                     </div>
 
                     <AttachmentResourceList
-                        attachments={toAttachmentResourceItems(
-                            payload?.row?.attachments as unknown[]
-                        )}
+                        attachments={toAttachmentResourceItems(attachments)}
                         emptyMessage='No files were uploaded with the latest submission.'
                         previewLabel='Read file'
                     />
