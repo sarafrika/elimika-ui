@@ -15,6 +15,7 @@ import {
   UserPlus,
 } from 'lucide-react';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import { useEffect, useRef, useState } from 'react';
 import { toast } from 'sonner';
 import { Badge } from '@/components/ui/badge';
@@ -263,6 +264,7 @@ export function DashboardNotifications({
   const shownPopupIds = useRef<Set<string>>(new Set());
   const invalidatedWorkflowNotificationIds = useRef<Set<string>>(new Set());
   const queryClient = useQueryClient();
+  const router = useRouter();
   const domain = activeDomain ?? undefined;
   const mountedAt = useRef(Date.now());
   const actionMutation = useNotificationAction();
@@ -325,7 +327,7 @@ export function DashboardNotifications({
           ? {
               label: 'Open',
               onClick: () => {
-                window.location.href = popupHref || notificationHref;
+                router.push(popupHref || notificationHref);
               },
             }
           : undefined,
@@ -339,7 +341,7 @@ export function DashboardNotifications({
         action: {
           label: 'View all',
           onClick: () => {
-            window.location.href = notificationHref;
+            router.push(notificationHref);
           },
         },
       });
@@ -350,7 +352,7 @@ export function DashboardNotifications({
       domain,
       drainAll: popupData?.hasNext ?? false,
     });
-  }, [activeDomain, domain, markPopupsSeen, notificationHref, popupData]);
+  }, [activeDomain, domain, markPopupsSeen, notificationHref, popupData, router]);
 
   useEffect(() => {
     const items = [...(popupData?.items ?? []), ...(recentData?.items ?? [])];
