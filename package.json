@@ -19,7 +19,7 @@
     "format": "prettier --write \"./**/*.{ts,tsx,js,jsx,json,css,yaml,yml}\"",
     "format:file": "prettier --write",
     "lint:admin": "node scripts/check-admin-boundary.mjs",
-    "typecheck:ratchet": "node scripts/perf/ts-error-ratchet.mjs",
+    "typecheck:ratchet": "next typegen && node scripts/perf/ts-error-ratchet.mjs",
     "test": "tsx --import ./scripts/test/stub-server-only.mjs --test \"{app,components,lib,src}/**/*.test.ts\"",
     "test:admin": "tsx --import ./scripts/test/stub-server-only.mjs --test $(find src/features/admin -name '*.test.ts')",
     "perf:admin": "node scripts/perf/admin-budgets.mjs",
