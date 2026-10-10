@@ -1755,7 +1755,7 @@ function RosterPanel({
               return (
                 <button
                   type='button'
-                  key={entry.enrollment?.uuid ?? entry.user?.uuid ?? entry.student?.uuid}
+                  key={entry.enrollment?.uuid ?? entry.user?.uuid ?? entry.student?.data?.uuid}
                   onClick={() => onSelectStudent(entry)}
                   className={`w-full rounded-md border p-2.5 text-left transition-colors ${isSelected
                     ? 'border-primary/30 bg-primary/8'
@@ -2565,6 +2565,7 @@ export default function ClassTrainingPage({
     searchParams.get('enrollment') ? 'evaluation' : 'students'
   );
   // const [activeLefTab, setActiveLeftTab] = useState<'students' | 'lessons' | 'evaluation'>('students');
+  const [isClassWorkSheetOpen, setIsClassWorkSheetOpen] = useState(false);
 
   const classData = data.class;
   const course = data.course ?? data?.pCourses?.[0] ?? null;
@@ -2905,7 +2906,8 @@ export default function ClassTrainingPage({
   const rubricMatrixQueries = useQueries({
     queries: rubricUuids.map(rubricUuid => ({
       ...getRubricMatrixOptions({ path: { rubricUuid } }),
-      enabled: !!rubricUuid,
+      // Matrices render only in the Class work sheet and the evaluation tab.
+      enabled: !!rubricUuid && (isClassWorkSheetOpen || activeLefTab === 'evaluation'),
     })),
   });
   const notSharedRubricUuids = useMemo(
@@ -3516,7 +3518,7 @@ export default function ClassTrainingPage({
             </SheetContent>
           </Sheet>
 
-          <Sheet>
+          <Sheet open={isClassWorkSheetOpen} onOpenChange={setIsClassWorkSheetOpen}>
             <SheetTrigger asChild>
               <Button
                 variant='ghost'
