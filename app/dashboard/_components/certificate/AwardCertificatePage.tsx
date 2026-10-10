@@ -142,7 +142,7 @@ const AwardCertificatesPage = () => {
     )?.uuid ?? '';
 
   const studentUuid =
-    selectedStudent?.student?.uuid ?? selectedStudent?.enrollment?.student_uuid ?? '';
+    selectedStudent?.student?.data?.uuid ?? selectedStudent?.enrollment?.student_uuid ?? '';
 
   const courseUuid = course?.uuid ?? classData?.course_uuid ?? '';
   const enrollmentGradeBookQuery = useQuery({
@@ -481,7 +481,7 @@ const AwardCertificatesPage = () => {
 
                 return (
                   <button
-                    key={entry.enrollment?.uuid ?? entry.user?.uuid ?? entry.student?.uuid}
+                    key={entry.enrollment?.uuid ?? entry.user?.uuid ?? entry.student?.data?.uuid}
                     type='button'
                     onClick={() => {
                       setSelectedEnrollmentId(entry.enrollment?.uuid ?? '');
