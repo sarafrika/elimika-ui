@@ -166,19 +166,19 @@ export function useStudentIdentity() {
  * Root queries shared by the overview sections. Identical query keys mean React
  * Query sends each request once, and every section starts it in parallel.
  */
-export function useStudentCourseEnrollments() {
+export function useStudentCourseEnrollments(enabled = true) {
   const { studentUuid, isResolving } = useStudentIdentity();
   const query = useQuery({
     ...getCourseEnrollmentsForStudentOptions({
       path: { studentUuid: studentUuid as string },
       query: { pageable: { page: 0, size: DEFAULT_PAGE_SIZE } },
     }),
-    enabled: Boolean(studentUuid),
+    enabled: enabled && Boolean(studentUuid),
     staleTime: STALE_TIMES.live,
   });
   return {
     enrollments: query.data?.data?.content ?? NO_COURSE_ENROLLMENTS,
-    isLoading: isResolving || (query.isLoading && !query.data),
+    isLoading: enabled && (isResolving || (query.isLoading && !query.data)),
     error: query.error,
     refetch: query.refetch,
   };

@@ -45,17 +45,14 @@ const buildCourseProgress = (certificate: Certificate | undefined, index: number
 
 type ActiveCourseRow = StudentOverviewActiveCourse & { sortValue: number };
 
-/*
- * Course names, instructors, progress and next sessions come from the course-overview
- * composite in one request. Only when it is unavailable do the enrolment rows plus
- * course and creator lookups build the card instead.
- */
+// Names, instructors, progress and next sessions come from the course-overview composite;
+// the enrolment rows plus course and creator lookups run only when it is unavailable.
 export function useStudentActiveCourses(): StudentOverviewSection<StudentOverviewActiveCourse[]> {
   const overview = useStudentCourseOverview();
-  const enrollmentsQuery = useStudentCourseEnrollments();
+  const legacy = overview.needsFallback;
+  const enrollmentsQuery = useStudentCourseEnrollments(legacy);
   const { certificates } = useStudentCertificates();
   const { enrollments } = enrollmentsQuery;
-  const legacy = overview.needsFallback;
 
   const courseIds = useMemo(
     () =>

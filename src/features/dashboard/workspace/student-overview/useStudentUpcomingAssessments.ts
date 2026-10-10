@@ -73,18 +73,15 @@ const formatAssessmentDueLabel = (value?: Date | string | null) => {
   }).format(date)}`;
 };
 
-/*
- * The course-overview composite says which classes still have released, unsubmitted
- * work, so schedules are fetched only for those and labels come from the same rows.
- * When it is unavailable the enrolment lists and entity lookups drive the card.
- */
+// The course-overview composite names the classes with unsubmitted work, so only their
+// schedules load; the enrolment lists and entity lookups run only when it is unavailable.
 export function useStudentUpcomingAssessments(): StudentOverviewSection<
   StudentOverviewAssessment[]
 > {
   const overview = useStudentCourseOverview();
   const legacy = overview.needsFallback;
   const classEnrollmentsQuery = useStudentClassEnrollments(legacy);
-  const courseEnrollmentsQuery = useStudentCourseEnrollments();
+  const courseEnrollmentsQuery = useStudentCourseEnrollments(legacy);
   const classEnrollments = classEnrollmentsQuery.enrollments;
   const courseEnrollments = courseEnrollmentsQuery.enrollments;
 
@@ -241,7 +238,14 @@ export function useStudentUpcomingAssessments(): StudentOverviewSection<
               classUuid => overviewByClass.get(classUuid)?.organisation_uuid
             )
           ),
-    [classIds, classDefinitionMap, legacy, overviewByClass, pendingAssignmentClassIds, pendingQuizClassIds]
+    [
+      classIds,
+      classDefinitionMap,
+      legacy,
+      overviewByClass,
+      pendingAssignmentClassIds,
+      pendingQuizClassIds,
+    ]
   );
   const { courseMap } = useCoursesByIds(classCourseIds);
   const { instructorMap } = useInstructorsByIds(instructorIds);
