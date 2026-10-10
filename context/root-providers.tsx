@@ -1,18 +1,23 @@
 'use client';
 
 import { createSyncStoragePersister } from '@tanstack/query-sync-storage-persister';
-import { PersistQueryClientProvider } from '@tanstack/react-query-persist-client';
+import {
+  PersistQueryClientProvider,
+  removeOldestQuery,
+} from '@tanstack/react-query-persist-client';
 import dynamic from 'next/dynamic';
 import { usePathname } from 'next/navigation';
 import { type ReactNode, useState } from 'react';
 import { RumReporter } from '@/components/perf/rum-reporter';
 import { AuthSessionProvider } from '@/context/auth-session-provider';
 import { TimeZoneProvider } from '@/context/timezone-context';
+import { deserializeQueryCache, serializeQueryCache } from '@/lib/query-cache-serializer';
 import {
   CLIENT_QUERY_CACHE_BUSTER,
   CLIENT_QUERY_CACHE_MAX_AGE_MS,
   CLIENT_QUERY_CACHE_STORAGE_KEY,
   makeQueryClient,
+  STALE_TIMES,
 } from '@/lib/query-client';
 import { noteRenderedPathname } from '@/src/features/dashboard/lib/active-domain-storage';
 import { isVolatileGeneratedQuery } from '@/src/features/dashboard/workflow-query-invalidation';
@@ -38,6 +43,9 @@ export function RootProviders({ children }: { children: ReactNode }) {
       key: CLIENT_QUERY_CACHE_STORAGE_KEY,
       storage: typeof window === 'undefined' ? undefined : window.sessionStorage,
       throttleTime: 1000,
+      serialize: serializeQueryCache,
+      deserialize: deserializeQueryCache,
+      retry: removeOldestQuery,
     })
   );
 
@@ -50,10 +58,12 @@ export function RootProviders({ children }: { children: ReactNode }) {
         persister,
       }}
       onSuccess={() => {
-        // Workflow state changes on the server between visits, so its restored copy may be
-        // painted but never counted as fresh; every other entry keeps its own staleTime tier.
+        // Restored workflow state older than the live tier is painted but not counted as
+        // fresh; every other entry keeps its own staleTime tier.
+        const liveCutoff = Date.now() - STALE_TIMES.live;
         void queryClient.invalidateQueries({
-          predicate: query => isVolatileGeneratedQuery(query.queryKey),
+          predicate: query =>
+            isVolatileGeneratedQuery(query.queryKey) && query.state.dataUpdatedAt < liveCutoff,
           refetchType: 'none',
         });
       }}
