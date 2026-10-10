@@ -1,34 +1,13 @@
 'use client';
 
 import { useQueryClient } from '@tanstack/react-query';
-import {
-  Award,
-  Bell,
-  CalendarClock,
-  CalendarX2,
-  CheckCircle2,
-  CreditCard,
-  FileCheck2,
-  GraduationCap,
-  type LucideIcon,
-  MessageSquare,
-  UserPlus,
-} from 'lucide-react';
-import Link from 'next/link';
+import { Bell } from 'lucide-react';
+import dynamic from 'next/dynamic';
 import { useEffect, useRef, useState } from 'react';
 import { toast } from 'sonner';
-import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuLabel,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu';
-import { ScrollArea } from '@/components/ui/scroll-area';
-import { absoluteDateTime, parseApiDate, relativeTimeFromNow } from '@/lib/date';
-import { cn } from '@/lib/utils';
+import { DropdownMenu, DropdownMenuContent, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
+import { parseApiDate } from '@/lib/date';
 import {
   type UserNotification,
   useMarkAllNotificationsRead,
@@ -40,25 +19,18 @@ import {
 import { invalidateWorkflowQueriesForNotification } from '@/src/features/dashboard/workflow-query-invalidation';
 import { useUserProfile } from '@/src/features/profile/context/profile-context';
 
+// The dropdown body (rows, scroll area, date formatting) loads the first time the bell opens.
+const DashboardNotificationsPanel = dynamic(
+  () => import('./dashboard-notifications-panel').then(mod => mod.DashboardNotificationsPanel),
+  { ssr: false }
+);
+
 type DashboardNotificationsProps = {
   notificationHref: string;
   activeDomain: string | null;
 };
 
-const iconByType: Array<[RegExp, LucideIcon]> = [
-  [/HIRE_BLOCKED/, CalendarX2],
-  [/PAYMENT|RECEIPT/, CreditCard],
-  [/CERTIFICATE|ACHIEVEMENT|MILESTONE/, Award],
-  [/CLASS|DEADLINE|REMINDER|SCHEDULE/, CalendarClock],
-  [/ENROLLMENT/, GraduationCap],
-  [/APPLICATION|INVITATION|REQUEST/, UserPlus],
-  [/DOCUMENT|PROFILE/, FileCheck2],
-  [/MESSAGE/, MessageSquare],
-];
-
-export function notificationIcon(type: string) {
-  return iconByType.find(([pattern]) => pattern.test(type))?.[1] ?? Bell;
-}
+export { notificationIcon } from './notification-icon';
 
 const POPUP_BATCH_SIZE = 20;
 const MAX_POPUP_TOASTS = 3;
@@ -66,60 +38,6 @@ const MAX_POPUP_TOASTS = 3;
 // Notifications that predate mount are already reflected in freshly fetched workflow data.
 function createdAt(notification: UserNotification) {
   return parseApiDate(notification.occurred_at ?? notification.created_at)?.valueOf() ?? 0;
-}
-
-function notificationTime(notification: UserNotification) {
-  const rawDate = notification.occurred_at ?? notification.created_at;
-  return relativeTimeFromNow(rawDate);
-}
-
-function NotificationRow({
-  notification,
-  onRead,
-}: {
-  notification: UserNotification;
-  onRead: (notification: UserNotification) => void;
-}) {
-  const Icon = notificationIcon(notification.type);
-  const unread = notification.status === 'UNREAD';
-  const href = notification.urlPath || '#';
-
-  return (
-    <Link
-      href={href}
-      onClick={() => onRead(notification)}
-      className='hover:bg-muted/60 focus-visible:ring-ring block rounded-md px-3 py-3 transition outline-none focus-visible:ring-2'
-    >
-      <div className='flex gap-3'>
-        <div
-          className={cn(
-            'flex h-9 w-9 shrink-0 items-center justify-center rounded-md',
-            unread ? 'bg-primary/10 text-primary' : 'bg-muted text-muted-foreground'
-          )}
-        >
-          <Icon className='h-4 w-4' />
-        </div>
-
-        <div className='min-w-0 flex-1'>
-          <div className='flex items-start gap-2'>
-            <p className='text-foreground line-clamp-1 text-sm font-semibold'>
-              {notification.title}
-            </p>
-            {unread ? <span className='bg-primary mt-1.5 h-2 w-2 shrink-0 rounded-full' /> : null}
-          </div>
-          <p className='text-muted-foreground mt-1 line-clamp-2 text-xs leading-5'>
-            {notification.body}
-          </p>
-          <p
-            className='text-muted-foreground mt-2 text-[11px]'
-            title={absoluteDateTime(notification.occurred_at ?? notification.created_at)}
-          >
-            {notificationTime(notification)}
-          </p>
-        </div>
-      </div>
-    </Link>
-  );
 }
 
 export const getNotificationUrlPath = (
@@ -385,60 +303,16 @@ export function DashboardNotifications({
       </DropdownMenuTrigger>
 
       <DropdownMenuContent align='end' className='flex h-[480px] w-[min(92vw,380px)] flex-col p-0'>
-        {/* Header */}
-        <div className='flex shrink-0 items-center justify-between px-4 py-3'>
-          <DropdownMenuLabel className='p-0 text-sm font-semibold'>Notifications</DropdownMenuLabel>
-
-          <div className='flex items-center gap-2'>
-            {unreadCount > 0 ? (
-              <Button
-                variant='ghost'
-                size='sm'
-                className='h-8 px-2 text-xs'
-                onClick={() => markAllMutation.mutate()}
-              >
-                <CheckCircle2 className='h-3.5 w-3.5' />
-                Mark read
-              </Button>
-            ) : null}
-
-            <Badge variant='secondary'>{unreadCount}</Badge>
-          </div>
-        </div>
-
-        <DropdownMenuSeparator />
-
-        {/* Scrollable notifications */}
-        <div className='min-h-0 flex-1'>
-          <ScrollArea className='h-full'>
-            <div className='p-2'>
-              {normalizedNotifications.length === 0 ? (
-                <div className='px-4 py-8 text-center'>
-                  <Bell className='text-muted-foreground mx-auto h-8 w-8' />
-                  <p className='text-foreground mt-3 text-sm font-medium'>No notifications</p>
-                  <p className='text-muted-foreground mt-1 text-xs'>You are all caught up.</p>
-                </div>
-              ) : (
-                normalizedNotifications.map(notification => (
-                  <NotificationRow
-                    key={notification.uuid}
-                    notification={notification}
-                    onRead={handleRead}
-                  />
-                ))
-              )}
-            </div>
-          </ScrollArea>
-        </div>
-
-        {/* Sticky footer */}
-        <div className='bg-background shrink-0 border-t p-2'>
-          <Button asChild variant='ghost' className='w-full justify-center text-sm'>
-            <Link href={notificationHref} onClick={() => setOpen(false)}>
-              View all notifications
-            </Link>
-          </Button>
-        </div>
+        {open ? (
+          <DashboardNotificationsPanel
+            notifications={normalizedNotifications}
+            unreadCount={unreadCount}
+            notificationHref={notificationHref}
+            onMarkAll={() => markAllMutation.mutate()}
+            onRead={handleRead}
+            onNavigate={() => setOpen(false)}
+          />
+        ) : null}
       </DropdownMenuContent>
     </DropdownMenu>
   );
